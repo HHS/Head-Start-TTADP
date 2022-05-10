@@ -3,7 +3,7 @@ import { sequelize } from '../../models';
 import { filterAssociation as filter } from '../utils';
 
 function goalInSubQuery(baseQuery, searchTerms, operator, comparator) {
-  return searchTerms.map((term) => sequelize.literal(`"Goal"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(term.trim())})`));
+  return searchTerms.map((term) => sequelize.literal(`"Goal"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(String(term).trim())})`));
 }
 
 /**
