@@ -21,13 +21,10 @@ if (!bypassSockets) {
     host: redisHost,
     port: redisPort,
     redisOpts,
-    uri,
   } = generateRedisConfig();
 
   // IIFE to get around top level awaits
   (async () => {
-    // eslint-disable-next-line no-console
-    console.log({ uri });
     const wss = new WebSocketServer({ server });
     const redisClient = createClient({
       url: `redis://:${redisOpts.redis.password}@${redisHost}:${redisPort}`,
@@ -50,6 +47,8 @@ if (!bypassSockets) {
 
       ws.on('message', async (message) => {
         const { channel, ...data } = JSON.parse(message);
+        // eslint-disable-next-line no-console
+        console.log(JSON.parse(message));
         await redisClient.publish(channel, JSON.stringify(data));
       });
     });

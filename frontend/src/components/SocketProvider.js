@@ -18,8 +18,13 @@ export default function SocketProvider({ children, path }) {
 
   // Create WebSocket connection.
   const socket = useMemo(() => {
+    // eslint-disable-next-line no-console
+    console.log(WS_URL);
     if (!WS_URL || !path) {
-      return null;
+      return {
+        // eslint-disable-next-line no-console
+        send: () => console.log('websocket is unavailable'),
+      };
     }
     const s = new WebSocket(`${WS_URL}${path}`);
 
