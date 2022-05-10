@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { NavLink as Link, withRouter } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChartBar, faBorderAll, faUserFriends } from '@fortawesome/free-solid-svg-icons';
+import { faChartColumn, faBorderAll, faUserFriends } from '@fortawesome/free-solid-svg-icons';
 import './SiteNav.css';
 
 const navLinkClasses = [
@@ -61,7 +61,14 @@ const SiteNav = ({
   return (
     <div>
       <div className="position-relative z-top">
-        <button id="tp-ar-landing-survey" className={`usa-button position-fixed bottom-2 right-1 display-${showActivityReportSurveyButton ? 'block' : 'none'}`} aria-label="Please leave feedback" type="button">Please leave feedback</button>
+        <a
+          href="https://touchpoints.app.cloud.gov/touchpoints/7d519b5e"
+          className={`usa-button position-fixed bottom-2 right-1 display-${showActivityReportSurveyButton ? 'block' : 'none'}`}
+          target="_blank"
+          rel="noreferrer"
+        >
+          Please leave feedback
+        </a>
       </div>
       <div className="smart-hub-sitenav display-flex flex-column pin-y position-fixed z-0 padding-top-9 font-ui text-white smart-hub-bg-blue width-15 tablet:width-card desktop:width-card-lg no-print">
         {authenticated && (
@@ -80,7 +87,7 @@ const SiteNav = ({
                       to="/activity-reports"
                     >
                       <span className="display-none tablet:display-inline padding-right-105">
-                        <FontAwesomeIcon color="white" icon={faChartBar} />
+                        <FontAwesomeIcon color="white" icon={faChartColumn} />
                       </span>
                       Activity Reports
                     </NavLink>

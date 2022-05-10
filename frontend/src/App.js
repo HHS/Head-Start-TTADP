@@ -123,7 +123,7 @@ function App() {
           render={({ match, location }) => (
             <AppWrapper authenticated logout={logout}>
               <SocketProvider path={socketPath(match.params.activityReportId)}>
-                <ActivityReport location={location} match={match} user={user} />
+                <ActivityReport location={location} match={match} />
               </SocketProvider>
             </AppWrapper>
           )}
@@ -171,7 +171,6 @@ function App() {
     <>
       <Helmet titleTemplate="%s - TTA Hub" defaultTitle="TTA Hub">
         <meta charSet="utf-8" />
-        <script src="https://touchpoints.app.cloud.gov/touchpoints/7d519b5e.js" async />
       </Helmet>
       <BrowserRouter>
         {authenticated && (
