@@ -14,20 +14,23 @@ const server = app.listen(port, () => {
   auditLogger.info(`Listening on port ${port}`);
 });
 
-const isTestEnv = !!process.env.BYPASS_SOCKETS;
+const bypassSockets = !!process.env.BYPASS_SOCKETS;
 
-if (!isTestEnv) {
+if (!bypassSockets) {
   const {
     host: redisHost,
     port: redisPort,
     redisOpts,
+    uri,
   } = generateRedisConfig();
 
   // IIFE to get around top level awaits
   (async () => {
+    // eslint-disable-next-line no-console
+    console.log({ uri });
     const wss = new WebSocketServer({ server });
     const redisClient = createClient({
-      url: `redis://default:${redisOpts.redis.password}@${redisHost}:${redisPort}`,
+      url: `redis://:${redisOpts.redis.password}@${redisHost}:${redisPort}`,
     });
     await redisClient.connect();
 

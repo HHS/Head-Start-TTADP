@@ -8,10 +8,12 @@ const generateRedisConfig = () => {
           host,
           port,
           password,
+          uri,
         },
       }],
     } = JSON.parse(process.env.VCAP_SERVICES);
     return {
+      uri,
       host,
       port,
       // TLS needs to be set to an empty object for redis on cloud.gov
@@ -22,6 +24,7 @@ const generateRedisConfig = () => {
   const { REDIS_HOST: host, REDIS_PASS: password } = process.env;
   return {
     host,
+    uri: '',
     port: (process.env.REDIS_PORT || 6379),
     redisOpts: { redis: { password } },
   };
