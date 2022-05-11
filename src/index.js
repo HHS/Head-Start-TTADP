@@ -6,12 +6,11 @@ import { createClient } from 'redis';
 import app from './app';
 import { auditLogger } from './logger';
 import { generateRedisConfig } from './lib/queue';
-// import { socketPublisher, socketSubscriber } from './lib/socket';
 /* eslint-enable import/first */
 
 const port = process.env.PORT || 8080;
 const server = app.listen(port, () => {
-  auditLogger.info(`Listening on port ${port}`);
+  auditLogger.info(`Listening on port ${port} with websockets coming soon`);
 });
 
 const bypassSockets = !!process.env.BYPASS_SOCKETS;
