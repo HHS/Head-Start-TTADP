@@ -16,6 +16,8 @@ const server = app.listen(port, () => {
 
 const bypassSockets = !!process.env.BYPASS_SOCKETS;
 
+auditLogger.info(`Are we bypassing websockets? ${bypassSockets ? 'YES' : 'NO'}`);
+
 if (!bypassSockets) {
   const {
     host: redisHost,
@@ -41,14 +43,15 @@ if (!bypassSockets) {
 
     wss.on('connection', async (ws, req) => {
       channelName = req.url;
+      auditLogger.info(`Attempting to connect to ${channelName}`);
       await subscriber.subscribe(channelName, (message) => {
+        auditLogger.info(`Channel ${channelName} has received a ${message}`);
         ws.send(message);
       });
 
       ws.on('message', async (message) => {
         const { channel, ...data } = JSON.parse(message);
-        // eslint-disable-next-line no-console
-        console.log(JSON.parse(message));
+        auditLogger.info(`Receivned message for ${channel} ${data}`);
         await redisClient.publish(channel, JSON.stringify(data));
       });
     });
