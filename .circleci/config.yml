@@ -1,15 +1,15 @@
 version: 2.1
 orbs:
-  node: circleci/node@4.1.0
+  node: circleci/node@5.0.2
   browser-tools: circleci/browser-tools@1.2.3
 executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: circleci/node:16.13.1-browsers
+      - image: cimg/node:16.14.2-browsers
   docker-postgres-executor:
     docker:
-      - image: circleci/node:16.13.1-browsers
+      - image: cimg/node:16.14.2-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -182,7 +182,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "ttahub-810-fix-touch-points-survey"
+    default: "update-node-to-16.14.2"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "ttahub-275-configure-aws-elastic-search"
