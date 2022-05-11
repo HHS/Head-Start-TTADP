@@ -279,11 +279,11 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     hooks: {
       beforeCreate: (instance) => beforeCreate(instance),
-      beforeUpdate: (report) => beforeCreate(instance),
+      beforeUpdate: (instance) => beforeUpdate(instance),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
-  },
-  sequelize,
-  modelName: 'ActivityReport',
+    },
+    sequelize,
+    modelName: 'ActivityReport',
   });
   return ActivityReport;
 };

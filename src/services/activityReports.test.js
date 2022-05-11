@@ -120,7 +120,7 @@ describe('Activity report service', () => {
         User.bulkCreate([
           mockUserFour,
           mockUserFive,
-        ], { validate: true }),
+        ], { validate: true, individualHooks: true }),
         OtherEntity.create({ id: ALERT_RECIPIENT_ID, name: 'alert otherEntity' }),
         Recipient.create({ name: 'alert recipient', id: ALERT_RECIPIENT_ID }),
         Region.create({ name: 'office 22', id: 22 }),
@@ -267,7 +267,7 @@ describe('Activity report service', () => {
           mockUserThree,
           alertsMockUserOne,
           alertsMockUserTwo,
-        ], { validate: true }),
+        ], { validate: true, individualHooks: true }),
         OtherEntity.create({ id: RECIPIENT_ID, name: 'otherEntity' }),
         Recipient.findOrCreate({ where: { name: 'recipient', id: RECIPIENT_ID } }),
         Region.create({ name: 'office 19', id: 19 }),

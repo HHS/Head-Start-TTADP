@@ -5,6 +5,7 @@ import orderReportsBy from '../lib/orderReportsBy';
 import filtersToScopes from '../scopes';
 import { setReadRegions } from './accessValidation';
 import { syncApprovers } from './activityReportApprovers';
+// import { auditLogger } from '../logger';
 
 import {
   ActivityReport,
@@ -75,7 +76,7 @@ async function saveReportCollaborators(activityReportId, collaborators) {
   if (newCollaborators.length > 0) {
     await ActivityReportCollaborator.bulkCreate(
       newCollaborators,
-      { ignoreDuplicates: true, validate: true },
+      { ignoreDuplicates: true, validate: true, individualHooks: true },
     );
     await ActivityReportCollaborator.destroy(
       {
@@ -143,7 +144,10 @@ async function saveReportRecipients(
     };
   }
 
-  await ActivityRecipient.bulkCreate(newRecipients, { ignoreDuplicates: true, validate: true });
+  await ActivityRecipient.bulkCreate(
+    newRecipients,
+    { ignoreDuplicates: true, validate: true, individualHooks: true },
+  );
   await ActivityRecipient.destroy({ where });
 }
 
@@ -169,7 +173,7 @@ async function saveNotes(activityReportId, notes, isRecipientNotes) {
       activityReportId,
       noteType,
     }));
-    await NextStep.bulkCreate(newNotes, { updateOnDuplicate: ['note', 'updatedAt'], validate: true });
+    await NextStep.bulkCreate(newNotes, { updateOnDuplicate: ['note', 'updatedAt'] });
   }
 }
 
@@ -203,7 +207,7 @@ export function activityReportByLegacyId(legacyId) {
                 [Op.ne]: 'UPLOAD_FAILED',
               },
             },
-            as: 'files',
+            as: 'file',
             required: false,
           },
         ],
@@ -301,7 +305,7 @@ export function activityReportById(activityReportId) {
                 [Op.ne]: 'UPLOAD_FAILED',
               },
             },
-            as: 'files',
+            as: 'file',
             required: false,
           },
         ],
@@ -809,7 +813,7 @@ async function getDownloadableActivityReports(where, separate = true) {
                 [Op.ne]: 'UPLOAD_FAILED',
               },
             },
-            as: 'files',
+            as: 'file',
             required: false,
           },
         ],

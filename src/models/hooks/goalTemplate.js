@@ -1,3 +1,6 @@
+import { auditLogger } from '../../logger';
+import { CREATION_METHOD } from '../../constants';
+
 const { Op } = require('sequelize');
 
 const autoPopulateTemplateNameModifiedAt = (sequelize, instance) => {
@@ -16,7 +19,7 @@ const autoPopulateCreationMethod = (sequelize, instance) => {
         && (!changed.includes('creationMethod')
         || instance.creationMethod === null
         || instance.creationMethod === undefined)) {
-    instance.set('creationMethod', 'Automatic');
+    instance.set('creationMethod', CREATION_METHOD[0]); // 'Automatic'
   }
 };
 
@@ -24,15 +27,15 @@ const propagateTemplateName = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
         && changed.includes('templateName')
-        && instance.creationMethod === 'Automatic') {
+        && instance.creationMethod === CREATION_METHOD[0]) { // 'Automatic'
     await sequelize.models.Goal.update(
-      { name: instance.name },
+      { name: instance.templateName },
       {
         where: {
           [Op.and]: [
             { goalTemplateId: instance.id },
             { onApprovedAR: false },
-            { name: { [Op.not]: instance.name } },
+            { name: { [Op.not]: instance.templateName } },
           ],
         },
         transaction: options.transaction,
@@ -42,8 +45,12 @@ const propagateTemplateName = async (sequelize, instance, options) => {
 };
 
 const beforeValidate = (sequelize, instance) => {
+  auditLogger.info('beforeValidate.a');
   autoPopulateTemplateNameModifiedAt(sequelize, instance);
+  auditLogger.info('beforeValidate.b');
   autoPopulateCreationMethod(sequelize, instance);
+  auditLogger.info('beforeValidate.c');
+  auditLogger.info(JSON.stringify(instance));
 };
 
 const afterUpdate = async (sequelize, instance, options) => {

@@ -1,6 +1,7 @@
 const {
   Model,
 } = require('sequelize');
+const { auditLogger } = require('../logger');
 const { CLOSE_SUSPEND_REASONS } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 const { beforeValidate, afterUpdate } = require('./hooks/goal');
@@ -17,11 +18,11 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       Goal.belongsToMany(models.ActivityReport, { through: models.ActivityReportGoal, foreignKey: 'goalId', as: 'activityReports' });
       Goal.belongsToMany(models.Topic, { through: models.TopicGoal, foreignKey: 'goalId', as: 'topics' });
-      Goal.belongsToMany(models.Recipient, { through: models.GrantGoal, foreignKey: 'goalId', as: 'recipients' });
-      Goal.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grants' });
+      Goal.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
       Goal.hasMany(models.Objective, { foreignKey: 'goalId', as: 'objectives' });
       // Goal.hasOne(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: +'goalTemplates' });
       Goal.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: +'goalTemplates' });
+      Goal.hasMany(models.Goal, { foreignKey: 'supersededBy', as: 'supersedes' });
     }
   }
   Goal.init({
@@ -36,10 +37,16 @@ module.exports = (sequelize, DataTypes) => {
     goalNumber: {
       type: DataTypes.VIRTUAL,
       get() {
-        const { id, grants } = this;
+        const { id, grant } = this;
         let regionId = 0;
-        if (grants && grants.length > 0) {
-          regionId = grants[0].regionId;
+        try {
+          auditLogger.info(JSON.stringify(grant));
+          if (grant) {
+            regionId = grant.regionId;
+          }
+        } catch (e) {
+          auditLogger.error(JSON.stringify(e));
+          throw e;
         }
         return `R${regionId}-G-${id}`;
       },

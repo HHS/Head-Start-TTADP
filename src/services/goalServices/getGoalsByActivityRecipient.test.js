@@ -7,7 +7,7 @@ import {
   Grant,
   ActivityRecipient,
   // GrantGoal,
-  GoalTemplate,
+  // GoalTemplate,
   Goal,
   ActivityReportObjective,
   // ObjectiveTemplate,
@@ -137,29 +137,34 @@ describe('Goals by Recipient Test', () => {
   };
 
   // let objectiveTemplateIds = [];
-  let goalTemplateIds = [];
+  // let goalTemplateIds = [];
 
   let objectiveIds = [];
   let goalIds = [];
 
   beforeAll(async () => {
+    auditLogger.info('beforeAll.a');
     // Create User.
     await User.create(mockGoalUser);
 
+    auditLogger.info('beforeAll.b');
     // Create Recipient.
     await Recipient.create(recipient);
     await Recipient.create(recipient2);
 
+    auditLogger.info('beforeAll.c');
     // Create Grants.
     const savedGrant1 = await Grant.create(grant1);
     const savedGrant2 = await Grant.create(grant2);
     const savedGrant3 = await Grant.create(grant3);
 
+    auditLogger.info('beforeAll.d');
     // Create Reports.
     const savedGoalReport1 = await ActivityReport.create(goalReport1);
     const savedGoalReport2 = await ActivityReport.create(goalReport2);
     const savedGoalReport3 = await ActivityReport.create(goalReport3);
 
+    auditLogger.info('beforeAll.e');
     // Create AR Recipients.
     await ActivityRecipient.create({
       activityReportId: savedGoalReport1.id,
@@ -175,40 +180,10 @@ describe('Goals by Recipient Test', () => {
       activityReportId: savedGoalReport3.id,
       grantId: savedGrant3.id,
     });
-    auditLogger.error(await GoalTemplate.findOrCreate({
-      where: { templateName: 'Goal 1' },
-      default: { templateName: 'Goal 1' },
-    }));
+
+    auditLogger.info('beforeAll.f');
     // Create Goals.
-    const goalTemplates = await Promise.all(
-      [
-        await GoalTemplate.findOrCreate({
-          where: { templateName: 'Goal 1' },
-          default: { templateName: 'Goal 1' },
-        }),
-        await GoalTemplate.findOrCreate({
-          where: { templateName: 'Goal 2' },
-          default: { templateName: 'Goal 2' },
-        }),
-        await GoalTemplate.findOrCreate({
-          where: { templateName: 'Goal 3' },
-          default: { templateName: 'Goal 3' },
-        }),
-        await GoalTemplate.findOrCreate({
-          where: { templateName: 'Goal 4' },
-          default: { templateName: 'Goal 4' },
-        }),
-        await GoalTemplate.findOrCreate({
-          where: { templateName: 'Goal 5' },
-          default: { templateName: 'Goal 5' },
-        }),
-      ],
-    );
-    goalTemplateIds = goalTemplates.map((o) => o.id);
-    if (goalTemplateIds[0] === null) {
-      auditLogger.error(goalTemplateIds[0]);
-      throw new Error();
-    }
+    auditLogger.info('beforeAll.g');
     let goals = [];
     try {
       goals = await Promise.all(
@@ -216,10 +191,10 @@ describe('Goals by Recipient Test', () => {
           // goal 1 (AR1)t
           await Goal.create({
             name: 'Goal 1',
-            status: null,
+            status: 'Not Started',
             timeframe: '12 months',
             isFromSmartsheetTtaPlan: false,
-            goalTemplateId: goalTemplateIds[0],
+            // goalTemplateId: goalTemplateIds[0],
             grantId: 300,
             createdAt: '2021-01-10T19:16:15.842Z',
           }),
@@ -229,50 +204,51 @@ describe('Goals by Recipient Test', () => {
             status: 'Not Started',
             timeframe: '12 months',
             isFromSmartsheetTtaPlan: false,
-            goalTemplateId: goalTemplateIds[1],
+            // goalTemplateId: goalTemplateIds[1],
             grantId: 300,
             createdAt: '2021-02-15T19:16:15.842Z',
           }),
           // goal 3 (AR1)
           await Goal.create({
             name: 'Goal 3',
-            status: 'Active',
+            status: 'In Progress',
             timeframe: '12 months',
             isFromSmartsheetTtaPlan: false,
-            goalTemplateId: goalTemplateIds[2],
+            // goalTemplateId: goalTemplateIds[2],
             grantId: 300,
             createdAt: '2021-03-03T19:16:15.842Z',
           }),
           // goal 4 (AR2)
           await Goal.create({
             name: 'Goal 4',
-            status: 'Active',
+            status: 'In Progress',
             timeframe: '12 months',
             isFromSmartsheetTtaPlan: false,
-            goalTemplateId: goalTemplateIds[3],
+            // goalTemplateId: goalTemplateIds[3],
             grantId: 301,
             createdAt: '2021-04-02T19:16:15.842Z',
           }),
           // goal 5 (AR3 Exclude)
           await Goal.create({
             name: 'Goal 5',
-            status: 'Active',
+            status: 'In Progress',
             timeframe: '12 months',
             isFromSmartsheetTtaPlan: false,
-            goalTemplateId: goalTemplateIds[4],
+            // goalTemplateId: goalTemplateIds[4],
             grantId: 302,
             createdAt: '2021-05-02T19:16:15.842Z',
           }),
         ],
       );
     } catch (err) {
-      auditLogger.error(JSON.stringify(goalTemplateIds));
       auditLogger.error(err);
       throw (err);
     }
 
+    auditLogger.info('beforeAll.h');
     // Get Goal Ids for Delete.
     goalIds = goals.map((o) => o.id);
+    auditLogger.info(JSON.stringify(goalIds));
 
     // Grant Goals.
     // await Promise.all(
@@ -340,11 +316,12 @@ describe('Goals by Recipient Test', () => {
     //   ],
     // );
     // objectiveTemplateIds = objectiveTemplates.map((o) => o.id);
+    auditLogger.info('beforeAll.h2');
     const objectives = await Promise.all(
       [
         // objective 1 (AR1)
         await Objective.create({
-          goalId: goals[0].id,
+          goalId: goalIds[0],
           title: 'objective 1',
           ttaProvided: 'Objective for Goal 1',
           status: 'Not Started',
@@ -352,7 +329,7 @@ describe('Goals by Recipient Test', () => {
         }),
         // objective 2 (AR1)
         await Objective.create({
-          goalId: goals[1].id,
+          goalId: goalIds[1],
           title: 'objective 2',
           ttaProvided: 'Objective for Goal 2',
           status: 'Not Started',
@@ -360,7 +337,7 @@ describe('Goals by Recipient Test', () => {
         }),
         // objective 3 (AR1)
         await Objective.create({
-          goalId: goals[2].id,
+          goalId: goalIds[2],
           title: 'objective 3',
           ttaProvided: 'Objective for Goal 3',
           status: 'In Progress',
@@ -368,7 +345,7 @@ describe('Goals by Recipient Test', () => {
         }),
         // objective 4 (AR1)
         await Objective.create({
-          goalId: goals[2].id,
+          goalId: goalIds[2],
           title: 'objective 4',
           ttaProvided: 'Objective for Goal 3 b',
           status: 'Completed',
@@ -376,7 +353,7 @@ describe('Goals by Recipient Test', () => {
         }),
         // objective 5 (AR2)
         await Objective.create({
-          goalId: goals[3].id,
+          goalId: goalIds[3],
           title: 'objective 5',
           ttaProvided: 'Objective for Goal 4',
           status: 'Not Started',
@@ -384,7 +361,7 @@ describe('Goals by Recipient Test', () => {
         }),
         // objective 6 (AR3)
         await Objective.create({
-          goalId: goals[4].id,
+          goalId: goalIds[4],
           title: 'objective 6',
           ttaProvided: 'Objective for Goal 5 Exclude',
           status: 'Not Started',
@@ -392,9 +369,12 @@ describe('Goals by Recipient Test', () => {
         }),
       ],
     );
+    auditLogger.info(JSON.stringify(objectives));
 
+    auditLogger.info('beforeAll.i');
     // Get Objective Ids for Delete.
     objectiveIds = objectives.map((o) => o.id);
+    auditLogger.info(JSON.stringify(objectiveIds));
 
     // AR Objectives.
     await Promise.all(
@@ -431,6 +411,7 @@ describe('Goals by Recipient Test', () => {
         }),
       ],
     );
+    auditLogger.info('beforeAll.j');
   });
 
   afterAll(async () => {
@@ -469,11 +450,11 @@ describe('Goals by Recipient Test', () => {
         id: goalIds,
       },
     });
-    await GoalTemplate.destroy({
-      where: {
-        id: goalTemplateIds,
-      },
-    });
+    // await GoalTemplate.destroy({
+    //   where: {
+    //     id: goalTemplateIds,
+    //   },
+    // });
 
     // Delete AR and AR Recipient.
     await ActivityRecipient.destroy({ where: { activityReportId: reportIdsToDelete } });
@@ -490,60 +471,69 @@ describe('Goals by Recipient Test', () => {
 
   describe('Retrieves All Goals', () => {
     it('Retrieves Goals by Recipient', async () => {
-      const { count, goalRows } = await getGoalsByActivityRecipient(300, 1, {
-        sortBy: 'createdOn', sortDir: 'desc', offset: 0, limit: 10,
-      });
+      let countx;
+      let goalRowsx;
+      try {
+        const { count, goalRows } = await getGoalsByActivityRecipient(300, 1, {
+          sortBy: 'createdOn', sortDir: 'desc', offset: 0, limit: 10,
+        });
+        countx = count;
+        goalRowsx = goalRows;
+      } catch (err) {
+        auditLogger.info(JSON.stringify(err));
+        throw err;
+      }
 
-      expect(count).toBe(4);
-      expect(goalRows.length).toBe(4);
+      expect(countx).toBe(4);
+      expect(goalRowsx.length).toBe(4);
 
       // Goal 4.
-      expect(moment(goalRows[0].createdOn).format('YYYY-MM-DD')).toBe('2021-04-02');
-      expect(goalRows[0].goalText).toBe('Goal 4');
-      expect(goalRows[0].goalNumber).toBe(`R1-G-${goalRows[0].id}`);
-      expect(goalRows[0].objectiveCount).toBe(1);
-      expect(goalRows[0].reasons).toEqual(['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option']);
-      expect(goalRows[0].goalTopics).toEqual(['Child Assessment, Development, Screening', 'Communication']);
-      expect(goalRows[0].objectives.length).toBe(1);
+      expect(moment(goalRowsx[0].createdOn).format('YYYY-MM-DD')).toBe('2021-04-02');
+      expect(goalRowsx[0].goalText).toBe('Goal 4');
+      expect(goalRowsx[0].goalNumber).toBe(`R1-G-${goalRowsx[0].id}`);
+      expect(goalRowsx[0].objectiveCount).toBe(1);
+      expect(goalRowsx[0].reasons).toEqual(['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option']);
+      expect(goalRowsx[0].goalTopics).toEqual(['Child Assessment, Development, Screening', 'Communication']);
+      expect(goalRowsx[0].objectives.length).toBe(1);
 
       // Goal 3.
-      expect(moment(goalRows[1].createdOn).format('YYYY-MM-DD')).toBe('2021-03-03');
-      expect(goalRows[1].goalText).toBe('Goal 3');
-      expect(goalRows[1].goalNumber).toBe(`R1-G-${goalRows[1].id}`);
-      expect(goalRows[1].objectiveCount).toBe(2);
-      expect(goalRows[1].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRows[1].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
+      expect(moment(goalRowsx[1].createdOn).format('YYYY-MM-DD')).toBe('2021-03-03');
+      expect(goalRowsx[1].goalText).toBe('Goal 3');
+      expect(goalRowsx[1].goalNumber).toBe(`R1-G-${goalRowsx[1].id}`);
+      expect(goalRowsx[1].objectiveCount).toBe(2);
+      expect(goalRowsx[1].reasons).toEqual(['COVID-19 response', 'Complaint']);
+      expect(goalRowsx[1].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
 
       // Goal 3 Objectives.
-      expect(goalRows[1].objectives.length).toBe(2);
-      expect(goalRows[1].objectives[0].title).toBe('objective 4');
-      expect(goalRows[1].objectives[0].ttaProvided).toBe('Objective for Goal 3 b');
-      expect(goalRows[1].objectives[0].endDate).toBe('09/01/2020');
-      expect(goalRows[1].objectives[0].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRows[1].objectives[0].status).toEqual('Completed');
+      expect(goalRowsx[1].objectives.length).toBe(2);
+      expect(goalRowsx[1].objectives[0].title).toBe('objective 4');
+      expect(goalRowsx[1].objectives[0].ttaProvided).toBe('Objective for Goal 3 b');
+      expect(goalRowsx[1].objectives[0].endDate).toBe('09/01/2020');
+      expect(goalRowsx[1].objectives[0].reasons).toEqual(['COVID-19 response', 'Complaint']);
+      expect(goalRowsx[1].objectives[0].status).toEqual('Completed');
 
-      expect(goalRows[1].objectives[1].title).toBe('objective 3');
-      expect(goalRows[1].objectives[1].ttaProvided).toBe('Objective for Goal 3');
-      expect(goalRows[1].objectives[1].endDate).toBe('09/01/2020');
-      expect(goalRows[1].objectives[1].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRows[1].objectives[1].status).toEqual('In Progress');
+      expect(goalRowsx[1].objectives[1].title).toBe('objective 3');
+      expect(goalRowsx[1].objectives[1].ttaProvided).toBe('Objective for Goal 3');
+      expect(goalRowsx[1].objectives[1].endDate).toBe('09/01/2020');
+      expect(goalRowsx[1].objectives[1].reasons).toEqual(['COVID-19 response', 'Complaint']);
+      expect(goalRowsx[1].objectives[1].status).toEqual('In Progress');
       // Goal 2.
-      expect(moment(goalRows[2].createdOn).format('YYYY-MM-DD')).toBe('2021-02-15');
-      expect(goalRows[2].goalText).toBe('Goal 2');
-      expect(goalRows[2].goalNumber).toBe(`R1-G-${goalRows[2].id}`);
-      expect(goalRows[2].objectiveCount).toBe(1);
-      expect(goalRows[2].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRows[2].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
-      expect(goalRows[2].objectives.length).toBe(1);
+      expect(moment(goalRowsx[2].createdOn).format('YYYY-MM-DD')).toBe('2021-02-15');
+      expect(goalRowsx[2].goalText).toBe('Goal 2');
+      expect(goalRowsx[2].goalNumber).toBe(`R1-G-${goalRowsx[2].id}`);
+      expect(goalRowsx[2].objectiveCount).toBe(1);
+      expect(goalRowsx[2].reasons).toEqual(['COVID-19 response', 'Complaint']);
+      expect(goalRowsx[2].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
+      expect(goalRowsx[2].objectives.length).toBe(1);
 
       // Goal 1.
-      expect(moment(goalRows[3].createdOn).format('YYYY-MM-DD')).toBe('2021-01-10');
-      expect(goalRows[3].goalText).toBe('Goal 1');
-      expect(goalRows[3].goalNumber).toBe(`R1-G-${goalRows[3].id}`);
-      expect(goalRows[3].objectiveCount).toBe(1);
-      expect(goalRows[3].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRows[3].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
-      expect(goalRows[3].objectives.length).toBe(1);
+      expect(moment(goalRowsx[3].createdOn).format('YYYY-MM-DD')).toBe('2021-01-10');
+      expect(goalRowsx[3].goalText).toBe('Goal 1');
+      expect(goalRowsx[3].goalNumber).toBe(`R1-G-${goalRowsx[3].id}`);
+      expect(goalRowsx[3].objectiveCount).toBe(1);
+      expect(goalRowsx[3].reasons).toEqual(['COVID-19 response', 'Complaint']);
+      expect(goalRowsx[3].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
+      expect(goalRowsx[3].objectives.length).toBe(1);
     });
   });
 });

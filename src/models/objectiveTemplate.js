@@ -1,4 +1,7 @@
 const { Model } = require('sequelize');
+const { CREATION_METHOD } = require('../constants');
+const { beforeValidate, afterUpdate } = require('./hooks/objectiveTemplate');
+// const { auditLogger } = require('../logger');
 
 module.exports = (sequelize, DataTypes) => {
   class ObjectiveTemplate extends Model {
@@ -32,6 +35,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    creationMethod: {
+      allowNull: false,
+      type: DataTypes.ENUM(Object.keys(CREATION_METHOD).map((k) => CREATION_METHOD[k])),
+    },
     lastUsed: {
       allowNull: true,
       type: DataTypes.DATE,
@@ -44,18 +51,8 @@ module.exports = (sequelize, DataTypes) => {
     sequelize,
     modelName: 'ObjectiveTemplate',
     hooks: {
-      beforeValidate: async (instance) => {
-        const changed = instance.changed();
-        if (Array.isArray(changed) && changed.includes('templateTitle')) {
-          instance.set('templateTitleModifiedAt', new Date());
-        }
-        if (Array.isArray(changed)
-        && (!changed.includes('creationMethod')
-        || instance.creationMethod === null
-        || instance.creationMethod === undefined)) {
-          instance.set('creationMethod', 'Automatic');
-        }
-      },
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });
   return ObjectiveTemplate;

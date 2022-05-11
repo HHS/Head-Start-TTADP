@@ -3,8 +3,13 @@ import * as fs from 'fs';
 import handleErrors from '../../lib/apiErrorHandler';
 import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
 import addToScanQueue from '../../services/scanQueue';
-import createFileMetaData, {
-  updateStatus, getFileById, deleteFile,
+import {
+  deleteFile,
+  getFileById,
+  updateStatus,
+  createActivityReportFileMetaData,
+  createActivityReportObjectiveFileMetaData,
+  createObjectiveFileMetaData,
 } from '../../services/files';
 import ActivityReportPolicy from '../../policies/activityReport';
 import { activityReportById } from '../../services/activityReports';
@@ -117,7 +122,7 @@ export default async function uploadHandler(req, res) {
     }
     fileTypeToUse = altFileType || type;
     fileName = `${uuidv4()}.${fileTypeToUse.ext}`;
-    metadata = await createFileMetaData(
+    metadata = await createActivityReportFileMetaData(
       originalFilename,
       fileName,
       reportId,

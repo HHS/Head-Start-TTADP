@@ -37,7 +37,7 @@ export default async function goalStatusGraph(scopes) {
     raw: true,
     include: [{
       model: Grant,
-      as: 'grants',
+      as: 'grant',
       required: true,
       include: [{
         model: Recipient,

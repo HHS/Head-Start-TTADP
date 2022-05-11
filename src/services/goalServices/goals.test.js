@@ -231,7 +231,7 @@ describe('goalsForGrants', () => {
       include: [
         {
           model: Grant,
-          as: 'grants',
+          as: 'grant',
           attributes: ['id'],
           where: {
             id: [505, 506],

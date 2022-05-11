@@ -141,7 +141,7 @@ describe('Import TTA plan goals', () => {
         },
         {
           model: Grant,
-          as: 'grants',
+          as: 'grant',
           attributes: ['id', 'number', 'regionId'],
           through: {
             attributes: [],
@@ -245,7 +245,7 @@ describe('Import TTA plan goals', () => {
         },
         {
           model: Grant,
-          as: 'grants',
+          as: 'grant',
           attributes: ['id', 'number', 'regionId'],
           through: {
             attributes: [],

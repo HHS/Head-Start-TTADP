@@ -1,4 +1,5 @@
 const { Model } = require('sequelize');
+const { afterCreate, beforeDestroy, afterDestroy } = require('./hooks/objectiveFile');
 
 module.exports = (sequelize, DataTypes) => {
   class ObjectiveFile extends Model {
@@ -23,6 +24,11 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'ObjectiveFile',
+    hooks: {
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+    },
   });
   return ObjectiveFile;
 };
