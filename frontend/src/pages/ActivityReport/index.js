@@ -106,14 +106,15 @@ export function cleanupLocalStorage(id, replacementKey) {
   }
 }
 
-function setConnectionActiveWithError(error, setConnectionActive) {
+function setConnectionActiveWithError(e, setConnectionActive) {
   let connection = false;
   // if we get an "unauthorized" or "not found" responce back from the API, we DON'T
   // display the "network is unavailable" message
-  if (error instanceof HTTPError && ['403', '404'].includes(error.status)) {
+  if (e instanceof HTTPError && ['403', '404'].includes(e.status)) {
     connection = true;
   }
   setConnectionActive(connection);
+  return connection;
 }
 
 /**
@@ -196,14 +197,21 @@ function ActivityReport({
   const [lastSaveTime, updateLastSaveTime] = useState(null);
 
   const [formData, updateFormData, localStorageAvailable] = useARLocalStorage(
-    LOCAL_STORAGE_DATA_KEY(activityReportId), null,
+    LOCAL_STORAGE_DATA_KEY(activityReportId), { ...defaultValues, pageState: defaultPageState },
   );
 
   // retrieve the last time the data was saved to local storage
   const savedToStorageTime = formData ? formData.savedToStorageTime : null;
 
   const [initialAdditionalData, updateAdditionalData] = useLocalStorage(
-    LOCAL_STORAGE_ADDITIONAL_DATA_KEY(activityReportId), {},
+    LOCAL_STORAGE_ADDITIONAL_DATA_KEY(activityReportId), {
+      recipients: {
+        grants: [],
+        otherEntities: [],
+      },
+      collaborators: [],
+      availableApprovers: [],
+    },
   );
   const [isApprover, updateIsApprover] = useState(false);
   // If the user is one of the approvers on this report and is still pending approval.
@@ -294,7 +302,14 @@ function ActivityReport({
           report.calculatedStatus === REPORT_STATUSES.SUBMITTED)
         );
 
-        updateAdditionalData({ recipients, collaborators, availableApprovers });
+        updateAdditionalData({
+          recipients: recipients || {
+            grants: [],
+            otherEntities: [],
+          },
+          collaborators: collaborators || [],
+          availableApprovers: availableApprovers || [],
+        });
 
         let shouldUpdateFromNetwork = true;
 
@@ -355,7 +370,7 @@ function ActivityReport({
 
         updateError();
       } catch (e) {
-        setConnectionActiveWithError(error, setConnectionActive);
+        const connection = setConnectionActiveWithError(e, setConnectionActive);
         const networkErrorMessage = (
           <>
             There&rsquo;s an issue with your connection.
@@ -363,11 +378,12 @@ function ActivityReport({
             Your work is saved on this computer. When this alert disappears, try to submit again.
             <br />
             If you continue to have problems,
+            {' '}
             <a href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">contact us</a>
             .
           </>
         );
-        const errorMsg = formData ? networkErrorMessage : <>Unable to load activity report</>;
+        const errorMsg = !connection ? networkErrorMessage : <>Unable to load activity report</>;
         updateError(errorMsg);
         // If the error was caused by an invalid region, we need a way to communicate that to the
         // component so we can redirect the user. We can do this by updating the form data
@@ -395,7 +411,7 @@ function ActivityReport({
     return <Redirect to="/" />;
   }
 
-  // This error message is a catch all assuming that the network storage is
+  // This error message is a catch all assuming that the network storage is working
   if (error && !formData) {
     return (
       <Alert type="error">
@@ -602,11 +618,6 @@ ActivityReport.propTypes = {
   match: ReactRouterPropTypes.match.isRequired,
   location: ReactRouterPropTypes.location.isRequired,
   region: PropTypes.number,
-  user: PropTypes.shape({
-    id: PropTypes.number,
-    name: PropTypes.string,
-    role: PropTypes.arrayOf(PropTypes.string),
-  }).isRequired,
 };
 
 ActivityReport.defaultProps = {
