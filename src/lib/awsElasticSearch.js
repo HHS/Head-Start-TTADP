@@ -10,9 +10,6 @@ const appEnv = cfenv.getAppEnv();
 const host = appEnv.getServiceURL('aws-elasticsearch');
 const creds = appEnv.getServiceCreds('aws-elasticsearch');
 
-console.log(creds);
-console.log(host);
-
 const createAwsConnector = (credentials, region) => {
   class AmazonConnection extends Connection {
     buildRequestObject(params) {
