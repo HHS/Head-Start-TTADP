@@ -17,10 +17,14 @@ export default function useLocalStorage(key, defaultValue, save = true) {
   const value = useMemo(() => {
     try {
       const curr = window.localStorage.getItem(key);
-      return JSON.parse(curr);
+      if (curr) {
+        return JSON.parse(curr);
+      }
     } catch (error) {
       return defaultValue;
     }
+
+    return defaultValue;
   }, [defaultValue, key]);
 
   const [storedValue, setStoredValue] = useState(value);
