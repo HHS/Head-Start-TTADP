@@ -3357,6 +3357,15 @@ capture-exit@^2.0.0:
   dependencies:
     rsvp "^4.8.4"
 
+cfenv@^1.2.4:
+  version "1.2.4"
+  resolved "https://registry.yarnpkg.com/cfenv/-/cfenv-1.2.4.tgz#4f34b431038fd899b370abd5e3f5046a6a451908"
+  integrity sha512-jWQ+3UXZauYyOXwHpMm74C0wM7+LDQmgMxWBGchg4as7+YyTL0pyx/CZ3dEvJyZVOB4SgKATc5naJky6cd9zYw==
+  dependencies:
+    js-yaml "4.0.x"
+    ports "1.1.x"
+    underscore "1.12.x"
+
 chalk@^2.0.0, chalk@^2.4.2:
   version "2.4.2"
   resolved "https://registry.yarnpkg.com/chalk/-/chalk-2.4.2.tgz#cd42541677a54333cf541a49108c1432b44c9424"
@@ -6816,6 +6825,13 @@ js-stringify@^1.0.2:
   resolved "https://registry.yarnpkg.com/js-tokens/-/js-tokens-4.0.0.tgz#19203fb59991df98e3a287050d4647cdeaf32499"
   integrity sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==
 
+js-yaml@4.0.x:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-4.0.0.tgz#f426bc0ff4b4051926cd588c71113183409a121f"
+  integrity sha512-pqon0s+4ScYUvX30wxQi3PogGFAlUyH0awepWvwkj4jD4v+ova3RiYw8bmA6x2rDrEaj8i/oWKoRxpVNW+Re8Q==
+  dependencies:
+    argparse "^2.0.1"
+
 js-yaml@^3.13.1, js-yaml@^3.14.0:
   version "3.14.1"
   resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-3.14.1.tgz#dae812fdb3825fa306609a8717383c50c36a0537"
@@ -8553,6 +8569,11 @@ popsicle@^12.0.5:
     popsicle-user-agent "^1.0.0"
     servie "^4.3.3"
     throwback "^4.1.0"
+
+ports@1.1.x:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/ports/-/ports-1.1.0.tgz#b701aa285e95dae8c96cda275217724a1f7f6c60"
+  integrity sha1-twGqKF6V2ujJbNonUhdySh9/bGA=
 
 posix-character-classes@^0.1.0:
   version "0.1.1"
@@ -10720,6 +10741,11 @@ underscore.deep@~0.5.1:
   version "0.5.1"
   resolved "https://registry.yarnpkg.com/underscore.deep/-/underscore.deep-0.5.1.tgz#072671f48d68735c34223fcfef63e69e5276cc2b"
   integrity sha1-ByZx9I1oc1w0Ij/P72PmnlJ2zCs=
+
+underscore@1.12.x:
+  version "1.12.1"
+  resolved "https://registry.yarnpkg.com/underscore/-/underscore-1.12.1.tgz#7bb8cc9b3d397e201cf8553336d262544ead829e"
+  integrity sha512-hEQt0+ZLDVUMhebKxL4x1BTtDY7bavVofhZ9KZ4aI26X9SRaE+Y3m83XUL1UP2jn8ynjndwCCpEHdUG+9pP1Tw==
 
 underscore@^1.13.1, underscore@~1.13.1:
   version "1.13.2"

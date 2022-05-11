@@ -185,7 +185,7 @@ parameters:
     default: "ttahub-810-fix-touch-points-survey"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "kw-add-mail"
+    default: "ttahub-275-configure-aws-elastic-search"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
