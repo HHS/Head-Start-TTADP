@@ -1,9 +1,9 @@
-import { auditLogger, logger } from '../logger';
+import { Client, Connection } from '@opensearch-project/opensearch';
+import { defaultProvider } from '@aws-sdk/credential-provider-node';
+import aws4 from 'aws4';
+import cfenv from 'cfenv';
 
-const { Client, Connection } = require('@opensearch-project/opensearch');
-const { defaultProvider } = require('@aws-sdk/credential-provider-node');
-const aws4 = require('aws4');
-const cfenv = require('cfenv');
+import { auditLogger, logger } from '../logger';
 
 const appEnv = cfenv.getAppEnv();
 

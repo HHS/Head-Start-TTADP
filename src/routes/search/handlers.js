@@ -1,4 +1,6 @@
-import { createIndex, addIndexDocument, search, deleteIndex } from '../../lib/awsElasticSearch';
+import {
+  createIndex, addIndexDocument, search, deleteIndex,
+} from '../../lib/awsElasticSearch';
 import handleErrors from '../../lib/apiErrorHandler';
 
 const namespace = 'SERVICE:SITE_SEARCH';
