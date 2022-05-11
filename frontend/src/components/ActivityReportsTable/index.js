@@ -274,7 +274,7 @@ function ActivityReportsTable({
                 {renderColumnHeader('Date started', 'startDate')}
                 {renderColumnHeader('Creator', 'author')}
                 {renderColumnHeader('Created date', 'createdAt')}
-                {renderColumnHeader('Topic(s)', 'topics')}
+                {renderColumnHeader('Topics', 'topics')}
                 {renderColumnHeader('Collaborators', 'collaborators')}
                 {renderColumnHeader('Last saved', 'updatedAt')}
                 {renderColumnHeader('Approved date', 'approvedAt')}

@@ -377,7 +377,7 @@ describe('Table sorting', () => {
   });
 
   it('clicking Topics column header will sort by topics', async () => {
-    const columnHeader = await screen.findByText(/topic\(s\)/i);
+    const columnHeader = await screen.findByText('Topics');
 
     fetchMock.get(
       '/api/activity-reports?sortBy=topics&sortDir=asc&offset=0&limit=10&region.in[]=1',
