@@ -579,6 +579,16 @@ module.exports = {
           default: false,
         }, { transaction });
 
+        await queryInterface.addColumn('Goals', 'precededBy', {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.addColumn('Goals', 'supersededBy', {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        }, { transaction });
+
         await queryInterface.sequelize.query(
           `DO $$
           BEGIN
@@ -633,6 +643,16 @@ module.exports = {
           type: Sequelize.BOOLEAN,
           allowNull: false,
           default: false,
+        }, { transaction });
+
+        await queryInterface.addColumn('Objectives', 'precededBy', {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.addColumn('Objectives', 'supersededBy', {
+          type: Sequelize.INTEGER,
+          allowNull: true,
         }, { transaction });
 
         await queryInterface.sequelize.query(
@@ -1507,6 +1527,138 @@ module.exports = {
           type: Sequelize.DATE,
           allowNull: true,
         }, { transaction });
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
+
+      // Populate goal status for all current goals based on rules defined on TTAHub-813
+      // If the goal is associated with a recipient that only has inactive grants
+      // > all goals = closed
+      // If the goal is associated with an AR is for training, and the objective status is Completed
+      // > goal status = closed
+      // If the goal is associated with an AR and objective is In progress or Completed
+      // > goals status = in progress
+      // If the goal is associated with an AR and only associated with Not started objective(s)
+      // > goals status = not started
+      // If the goal doesn't have a status and no associated ARs and imported from RTTAPA less than
+      // or equal to 1yr ago > goal status = not started
+      // If the goal doesn't have a status and no associated ARs and imported over 1 yr ago
+      // > goal status = closed
+      try {
+        await queryInterface.sequelize.query(
+          `UPDATE "Goals" g0
+          SET status = COALESCE(r1.status,r2.status,r3.status,r4.status,r5.status,r6.status)
+          FROM "Goals" g
+          LEFT JOIN (
+            SELECT
+              "goalId",
+              true "rule",
+              'Closed' status
+            FROM (
+              SELECT
+                g.id "goalId",
+                SUM((gr2.status = 'Active')::int) "active",
+                SUM((gr2.status = 'Inactive')::int) "inactive"
+              FROM "Goals" g
+              JOIN "Grants" gr
+              ON g."grantId" = gr.id
+              JOIN "Grants" gr2
+              ON gr."recipientId" = gr2."recipientId"
+              GROUP BY g.id
+            ) X
+            WHERE "active" = 0
+            AND "inactive" > 0
+          ) r1
+          on g.id = r1."goalId"
+          LEFT JOIN (
+            SELECT
+              "goalId",
+              true "rule",
+              'Closed' status
+            FROM (
+              SELECT
+                  g.id "goalId",
+                  SUM((ar."ttaType" = '{training}')::int) "training",
+                  SUM((ar."ttaType" != '{training}')::int) "not-training"
+              FROM "Goals" g
+              JOIN "Objectives" o
+              ON g.id = o."goalId"
+              AND o.status = 'Complete'
+              JOIN "ActivityReportObjectives" aro
+              ON o.id = aro."objectiveId"
+              JOIN "ActivityReports" ar
+              ON aro."activityReportId" = ar.id
+              GROUP BY g.id
+            ) X
+            WHERE "training" > 0
+            AND "not-training" = 0
+          ) r2
+          on g.id = r2."goalId"
+          LEFT JOIN (
+            SELECT
+              g.id "goalId",
+              true "rule",
+              'In progress' status
+            FROM "Goals" g
+            JOIN "Objectives" o
+            ON g.id = o."goalId"
+            AND o.status in ('In Progress', 'Complete')
+            JOIN "ActivityReportObjectives" aro
+            ON o.id = aro."objectiveId"
+            JOIN "ActivityReports" ar
+            ON aro."activityReportId" = ar.id
+          ) r3
+          on g.id = r3."goalId"
+          LEFT JOIN (
+            SELECT
+              g.id "goalId",
+              true "rule",
+              'Not Started' status
+            FROM "Goals" g
+            JOIN "Objectives" o
+            ON g.id = o."goalId"
+            JOIN "ActivityReportObjectives" aro
+            ON o.id = aro."objectiveId"
+            JOIN "ActivityReports" ar
+            ON aro."activityReportId" = ar.id
+            group by g.id
+            having array_agg(distinct o.status)::text = '{"Not Started"}'
+          ) r4
+          on g.id = r4."goalId"
+          LEFT JOIN (
+            SELECT
+              g.id "goalId",
+              true "rule",
+              'Not Started' status
+            FROM "Goals" g
+            LEFT JOIN "Objectives" o
+            ON g.id = o."goalId"
+            LEFT JOIN "ActivityReportObjectives" aro
+            ON o.id = aro."objectiveId"
+            WHERE aro.id is null
+            AND g."isFromSmartsheetTtaPlan" = true
+            AND NOW() - g."createdAt" < '1 year'
+          ) r5
+          on g.id = r5."goalId"
+          LEFT JOIN (
+            SELECT
+              g.id "goalId",
+              true "rule",
+              'Closed' status
+            FROM "Goals" g
+            LEFT JOIN "Objectives" o
+            ON g.id = o."goalId"
+            LEFT JOIN "ActivityReportObjectives" aro
+            ON o.id = aro."objectiveId"
+            WHERE aro.id is null
+            AND g."isFromSmartsheetTtaPlan" = true
+            AND NOW() - g."createdAt" > '1 year'
+          ) r6
+          on g.id = r6."goalId"
+          WHERE g0.id = g.id;`,
+          { transaction },
+        );
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
         throw (err);

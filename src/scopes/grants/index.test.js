@@ -112,7 +112,7 @@ describe('grant filtersToScopes', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       },
-    ], { validate: true });
+    ], { validate: true, individualHooks: true });
   });
 
   afterAll(async () => {

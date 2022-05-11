@@ -135,7 +135,6 @@ describe('goal filtersToScopes', () => {
           title: 'objective 2',
           ttaProvided: 'asdfadf',
           status: 'Not Started',
-
         }),
         // goal for status
         await Objective.create({
@@ -182,7 +181,7 @@ describe('goal filtersToScopes', () => {
     grant = await createGrant({ regionId: REGION_ID, number: 'BROC1234' });
     otherGrant = await createGrant({ regionId: REGION_ID, number: 'CAUL4567' });
     goals.push(await createGoal({ status: 'Ceased/Suspended', name: 'Goal 6', grantId: grant.id }));
-    goals.push(await createGoal({ status: 'Completed', name: 'Goal 7', grantId: otherGrant.id }));
+    goals.push(await createGoal({ status: 'Closed', name: 'Goal 7', grantId: otherGrant.id }));
 
     reportIds = [emptyReport.id, reportWithReasons.id, reportWithTopics.id];
     objectiveIds = objectives.map((o) => o.id);

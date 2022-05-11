@@ -1,15 +1,14 @@
 import { auditLogger } from '../../logger';
-import { CREATION_METHOD } from '../../constants';
 
 const { Op } = require('sequelize');
 
-const autoPopulateTemplateNameModifiedAt = (sequelize, instance) => {
+const autoPopulateTemplateTitleModifiedAt = (sequelize, instance) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
-    && changed.includes('templateName')
-    && instance.templateName !== null
-    && instance.templateName !== undefined) {
-    instance.set('templateNameModifiedAt', new Date());
+    && changed.includes('templateTitle')
+    && instance.templateTitle !== null
+    && instance.templateTitle !== undefined) {
+    instance.set('templateTitleModifiedAt', new Date());
   }
 };
 
@@ -19,23 +18,23 @@ const autoPopulateCreationMethod = (sequelize, instance) => {
         && (!changed.includes('creationMethod')
         || instance.creationMethod === null
         || instance.creationMethod === undefined)) {
-    instance.set('creationMethod', CREATION_METHOD[0]); // 'Automatic'
+    instance.set('creationMethod', 'Automatic');
   }
 };
 
-const propagateTemplateName = async (sequelize, instance, options) => {
+const propagateTemplateTitle = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
-        && changed.includes('templateName')
-        && instance.creationMethod === CREATION_METHOD[0]) { // 'Automatic'
-    await sequelize.models.Goal.update(
-      { name: instance.templateName },
+        && changed.includes('templateTitle')
+        && instance.creationMethod === 'Automatic') {
+    await sequelize.models.Objective.update(
+      { title: instance.templateTitle },
       {
         where: {
           [Op.and]: [
             { goalTemplateId: instance.id },
             { onApprovedAR: false },
-            { name: { [Op.not]: instance.templateName } },
+            { name: { [Op.not]: instance.templateTitle } },
           ],
         },
         transaction: options.transaction,
@@ -46,7 +45,7 @@ const propagateTemplateName = async (sequelize, instance, options) => {
 
 const beforeValidate = (sequelize, instance) => {
   auditLogger.info('beforeValidate.a');
-  autoPopulateTemplateNameModifiedAt(sequelize, instance);
+  autoPopulateTemplateTitleModifiedAt(sequelize, instance);
   auditLogger.info('beforeValidate.b');
   autoPopulateCreationMethod(sequelize, instance);
   auditLogger.info('beforeValidate.c');
@@ -54,13 +53,13 @@ const beforeValidate = (sequelize, instance) => {
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
-  await propagateTemplateName(sequelize, instance, options);
+  await propagateTemplateTitle(sequelize, instance, options);
 };
 
 export {
-  autoPopulateTemplateNameModifiedAt,
+  autoPopulateTemplateTitleModifiedAt,
   autoPopulateCreationMethod,
-  propagateTemplateName,
+  propagateTemplateTitle,
   beforeValidate,
   afterUpdate,
 };

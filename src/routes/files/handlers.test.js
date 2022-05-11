@@ -3,6 +3,7 @@ import waitFor from 'wait-for-expect';
 import db, {
   File,
   ActivityReport,
+  ActivityReportFile,
   User,
 } from '../../models';
 import app from '../../app';
@@ -57,7 +58,16 @@ describe('File Upload', () => {
     process.env.CURRENT_USER_ID = '2046';
   });
   afterAll(async () => {
-    await File.destroy({ where: { activityReportId: report.dataValues.id } });
+    await File.destroy({
+      include: [
+        {
+          model: ActivityReportFile,
+          as: 'activityReportFiles',
+          required: true,
+          where: { activityReportId: report.dataValues.id },
+        },
+      ],
+     });
     await ActivityReport.destroy({ where: { id: report.dataValues.id } });
     await User.destroy({ where: { id: user.id } });
     process.env = ORIGINAL_ENV; // restore original env

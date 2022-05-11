@@ -1,7 +1,7 @@
 const {
   Model,
 } = require('sequelize');
-const { beforeValidate, afterUpdate } = require('./hooks/goal');
+const { beforeValidate, afterCreate, afterUpdate } = require('./hooks/objective');
 
 /**
  * Objective table. Stores objectives for goals.
@@ -91,6 +91,7 @@ module.exports = (sequelize, DataTypes) => {
     modelName: 'Objective',
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });

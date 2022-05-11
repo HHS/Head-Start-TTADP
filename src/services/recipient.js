@@ -13,6 +13,7 @@ import orderRecipientsBy from '../lib/orderRecipientsBy';
 import { RECIPIENTS_PER_PAGE, GOALS_PER_PAGE } from '../constants';
 import filtersToScopes from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
+import { auditLogger } from '../logger';
 
 export async function allRecipients() {
   return Recipient.findAll({
@@ -171,62 +172,76 @@ export async function getGoalsByActivityRecipient(
     sortBy = 'goalStatus', sortDir = 'desc', offset = 0, limit = GOALS_PER_PAGE, ...filters
   },
 ) {
+  auditLogger.info('q');
   // Scopes.
   const { goal: scopes } = filtersToScopes(filters, 'goal');
 
+  auditLogger.info('r');
   // Paging.
   const limitNum = parseInt(limit, 10);
   const offSetNum = parseInt(offset, 10);
 
+  auditLogger.info('s');
   // Get Goals.
-  const rows = await Goal.findAll({
-    attributes: ['id', 'name', 'status', 'createdAt', 'goalNumber', 'previousStatus',
-      [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Not Started\' THEN 2 WHEN "Goal"."status" = \'In Progress\' THEN 3  WHEN "Goal"."status" = \'Completed\' THEN 4 WHEN "Goal"."status" = \'Ceased/Suspended\' THEN 5 ELSE 6 END'), 'status_sort'],
-    ],
-    where: {
-      [Op.and]: scopes,
-    },
-    include: [
-      {
-        model: Grant,
-        as: 'grants',
-        attributes: ['id', 'recipientId', 'regionId'],
-        where: {
-          regionId,
-          recipientId,
+  let rows;
+  try {
+    rows = await Goal.findAll({
+      attributes: ['id', 'name', 'status', 'createdAt', 'goalNumber', 'previousStatus',
+        [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Not Started\' THEN 2 WHEN "Goal"."status" = \'In Progress\' THEN 3  WHEN "Goal"."status" = \'Closed\' THEN 4 WHEN "Goal"."status" = \'Ceased/Suspended\' THEN 5 ELSE 6 END'), 'status_sort'],
+      ],
+      where: {
+        [Op.and]: scopes,
+      },
+      include: [
+        {
+          model: Grant,
+          as: 'grant',
+          attributes: ['id', 'recipientId', 'regionId'],
+          where: {
+            regionId,
+            recipientId,
+          },
         },
-      },
-      {
-        attributes: ['id', 'title', 'ttaProvided', 'status', 'goalId'],
-        model: Objective,
-        as: 'objectives',
-        required: false,
-        include: [{
-          attributes: ['id', 'reason', 'topics', 'endDate', 'calculatedStatus', 'legacyId', 'regionId'],
-          model: ActivityReport,
-          as: 'activityReports',
+        {
+          attributes: ['id', 'title', 'ttaProvided', 'status', 'goalId'],
+          model: Objective,
+          as: 'objectives',
           required: false,
-        }],
-      },
-    ],
-    order: orderGoalsBy(sortBy, sortDir),
-  });
+          include: [{
+            attributes: ['id', 'reason', 'topics', 'endDate', 'calculatedStatus', 'legacyId', 'regionId'],
+            model: ActivityReport,
+            as: 'activityReports',
+            required: false,
+          }],
+        },
+      ],
+      order: orderGoalsBy(sortBy, sortDir),
+    });
+  } catch (err) {
+    auditLogger.error(JSON.stringify(err));
+    throw err;
+  }
 
+  auditLogger.info('t');
   // Build Array of Goals.
   const goalRows = [];
   let goalCount = 0;
   const count = rows.length;
 
+  auditLogger.info('u');
   // Handle Paging.
   if (offset > 0) {
     rows.splice(0, offSetNum);
   }
 
+  auditLogger.info('v');
   rows.forEach((g) => {
     if (goalCount === limitNum) {
       return;
     }
 
+    auditLogger.info(JSON.stringify(g));
+    auditLogger.info('w');
     const goalToAdd = {
       id: g.id,
       goalStatus: g.status,
@@ -240,9 +255,11 @@ export async function getGoalsByActivityRecipient(
       previousStatus: g.previousStatus,
     };
 
+    auditLogger.info('x');
     // Objectives.
     if (g.objectives) {
       g.objectives.forEach((o) => {
+        auditLogger.info(JSON.stringify(o));
         // Activity Report.
         let activityReport;
         if (o.activityReports && o.activityReports.length > 0) {
@@ -256,6 +273,7 @@ export async function getGoalsByActivityRecipient(
           );
         }
 
+        auditLogger.info('y');
         // Add Objective.
         goalToAdd.objectives.push({
           id: o.id,
@@ -271,6 +289,7 @@ export async function getGoalsByActivityRecipient(
         });
       });
 
+      auditLogger.info('z');
       // Sort Objectives by end date desc.
       goalToAdd.objectives.sort((a, b) => ((
         a.endDate === b.endDate ? a.id < b.id

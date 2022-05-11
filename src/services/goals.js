@@ -75,7 +75,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     },
     {
       model: Grant,
-      as: 'grants',
+      as: 'grant',
       attributes: [
         'id',
         'number',
@@ -118,7 +118,7 @@ export async function goalByIdWithActivityReportsAndRegions(goalId) {
     include: [
       {
         model: Grant,
-        as: 'grants',
+        as: 'grant',
         attributes: ['regionId'],
       },
       {
@@ -371,7 +371,7 @@ export async function goalsForGrants(grantIds) {
     include: [
       {
         model: Grant,
-        as: 'grants',
+        as: 'grant',
         attributes: ['id'],
         where: {
           id: ids,
@@ -400,7 +400,7 @@ export async function removeGoals(goalsToRemove) {
     include: {
       attributes: ['id'],
       model: Grant,
-      as: 'grants',
+      as: 'grant',
       required: true,
     },
   });
