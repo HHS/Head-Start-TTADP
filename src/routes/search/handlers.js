@@ -30,7 +30,6 @@ const documentThree = {
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createSearchIndex(req, res) {
-  console.log('\n\n\nAt END POINT !!!!!!!!!!!!!!!!!!');
   try {
     const {
       index,
@@ -48,7 +47,6 @@ export async function createSearchIndex(req, res) {
 }
 
 export async function addIndexDocuments(req, res) {
-  console.log('\n\n\nAt END POINT !!!!!!!!!!!!!!!!!!');
   try {
     const {
       index,
@@ -65,7 +63,6 @@ export async function addIndexDocuments(req, res) {
 }
 
 export async function searchIndex(req, res) {
-  console.log('\n\n\nAt END POINT !!!!!!!!!!!!!!!!!!');
   try {
     const {
       index,
@@ -81,7 +78,6 @@ export async function searchIndex(req, res) {
 }
 
 export async function deleteSearchIndex(req, res) {
-  console.log('\n\n\nAt END POINT !!!!!!!!!!!!!!!!!!');
   try {
     const {
       index,
