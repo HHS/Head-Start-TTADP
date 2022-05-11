@@ -1,5 +1,4 @@
 import { Client, Connection } from '@opensearch-project/opensearch';
-import { defaultProvider } from '@aws-sdk/credential-provider-node';
 import aws4 from 'aws4';
 import cfenv from 'cfenv';
 
@@ -8,7 +7,8 @@ import { auditLogger, logger } from '../logger';
 const appEnv = cfenv.getAppEnv();
 
 // const host = 'http://localhost:9200'; // e.g. https://my-domain.region.es.amazonaws.com
-const host = appEnv.getServiceURL('es');
+const host = appEnv.getServiceURL('aws-elasticsearch');
+const creds = appEnv.getServiceCreds('aws-elasticsearch');
 
 const createAwsConnector = (credentials, region) => {
   class AmazonConnection extends Connection {
@@ -27,13 +27,16 @@ const createAwsConnector = (credentials, region) => {
   };
 };
 
-const getClient = async () => {
-  const credentials = await defaultProvider()();
-  return new Client({
-    ...createAwsConnector(credentials, 'us-east-1'),
-    node: host,
-  });
-};
+const getClient = async () => new Client({
+  ...createAwsConnector(
+    {
+      accessKeyId: creds.access_key,
+      secretAccessKeyId: creds.secret_key,
+    },
+    'us-gov-west-1',
+  ),
+  node: host,
+});
 /*
   Create an index that can have searchable documents assigned.
 */
