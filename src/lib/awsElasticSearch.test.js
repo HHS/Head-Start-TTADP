@@ -5,7 +5,8 @@ import {
 
 const oldEnv = { ...process.env };
 
-describe('Tests aws elastic search', () => {
+// eslint-disable-next-line jest/no-disabled-tests
+describe.skip('Tests aws elastic search', () => {
   afterEach(() => { process.env = oldEnv; });
   it('create / update / search / delete index', async () => {
     const indexName = 'test-ar-index37';
