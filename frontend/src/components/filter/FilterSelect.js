@@ -36,6 +36,7 @@ export default function FilterSelect({
         outline,
         height: 'auto',
         padding: 0,
+        position: !state.isFocused ? 'absolute' : 'relative',
       };
     },
     control: (provided, state) => {
