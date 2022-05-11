@@ -159,7 +159,7 @@ describe('Landing Page', () => {
 
   test('displays topics column', async () => {
     const topicsColumnHeader = await screen.findByRole('columnheader', {
-      name: /topic\(s\)/i,
+      name: /topics/i,
     });
     expect(topicsColumnHeader).toBeVisible();
   });
