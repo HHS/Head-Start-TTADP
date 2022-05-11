@@ -39,11 +39,12 @@ const createIndex = async (indexName) => {
     const client = await getClient();
 
     // Create index.
-    await client.indices.create({
+    const res = await client.indices.create({
       index: indexName,
     });
 
     logger.info(`AWS OpenSearch: Successfully created index ${indexName}`);
+    return res;
   } catch (error) {
     auditLogger.error(`AWS OpenSearch Error: Unable to create index '${indexName}': ${error.message}`);
     throw error;
@@ -58,13 +59,14 @@ const addIndexDocument = async (indexName, id, document) => {
     const client = await getClient();
 
     // Add a document to an index.
-    await client.index({
+    const res = await client.index({
       index: indexName,
       id,
       body: document,
       refresh: true, // triggers manual refresh.
     });
     logger.info(`AWS OpenSearch: Successfully added document to index ${indexName}`);
+    return res;
   } catch (error) {
     auditLogger.error(`AWS OpenSearch Error: Unable to add document to index '${indexName}': ${error.message}`);
     throw error;
@@ -156,10 +158,11 @@ const deleteIndex = async (indexName) => {
     // Initialize the client.
     const client = await getClient();
 
-    await client.indices.delete({
+    const res = await client.indices.delete({
       index: indexName,
     });
     logger.info(`AWS OpenSearch: Successfully deleted index '${indexName}'`);
+    return res;
   } catch (error) {
     auditLogger.error(`AWS OpenSearch Error: Unable to delete index '${indexName}': ${error.message}`);
     throw error;
