@@ -3,8 +3,12 @@ import { auditLogger, logger } from '../logger';
 const { Client, Connection } = require('@opensearch-project/opensearch');
 const { defaultProvider } = require('@aws-sdk/credential-provider-node');
 const aws4 = require('aws4');
+const cfenv = require('cfenv');
 
-const host = 'http://localhost:9200'; // e.g. https://my-domain.region.es.amazonaws.com
+const appEnv = cfenv.getAppEnv();
+
+// const host = 'http://localhost:9200'; // e.g. https://my-domain.region.es.amazonaws.com
+const host = appEnv.getServiceURL('es');
 
 const createAwsConnector = (credentials, region) => {
   class AmazonConnection extends Connection {
@@ -82,7 +86,7 @@ const search = async (indexName, fields, query) => {
 
     // Create search body.
     const body = {
-      //size: 20,
+      // size: 20,
       query: {
         multi_match: {
           query,
