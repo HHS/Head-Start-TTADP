@@ -30,8 +30,7 @@ services:
       - "./scripts:/app/scripts"
     environment:
       - BACKEND_PROXY=http://backend:8080
-      - FONTAWESOME_NPM_AUTH_TOKEN=$FONTAWESOME_NPM_AUTH_TOKEN
-
+      - FONTAWESOME_NPM_AUTH_TOKEN
   worker:
     build:
       context: .
