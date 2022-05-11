@@ -8,14 +8,14 @@ import { auditLogger } from './logger';
 import { generateRedisConfig } from './lib/queue';
 /* eslint-enable import/first */
 
-const port = process.env.PORT || 8080;
-const server = app.listen(port, () => {
-  auditLogger.info(`Listening on port ${port} with websockets coming soon`);
-});
-
 const bypassSockets = !!process.env.BYPASS_SOCKETS;
 
 auditLogger.info(`Are we bypassing websockets? ${bypassSockets ? 'YES' : 'NO'}`);
+const port = process.env.PORT || 8080;
+const server = app.listen(port, () => {
+  auditLogger.info(`Listening on port ${port}`);
+  auditLogger.info(`BYPASS SOCKETS: ${bypassSockets ? 'YES' : 'NO'}`);
+});
 
 if (!bypassSockets) {
   const {
