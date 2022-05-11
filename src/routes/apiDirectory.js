@@ -18,6 +18,7 @@ import adminRouter from './admin';
 import goalsRouter from './goals';
 import topicsRouter from './topics';
 import transactionWrapper from './transactionWrapper';
+import search from './search';
 
 export const loginPath = '/login';
 
@@ -51,6 +52,7 @@ router.use('/files', filesRouter);
 router.use('/recipient', recipientRouter);
 router.use('/goals', goalsRouter);
 router.use('/topic', topicsRouter);
+router.use('/site-search', search);
 
 const getUser = async (req, res) => {
   const { userId } = req.session;
