@@ -9,7 +9,7 @@ import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
 import './ObjectiveRow.css';
 
 function ObjectiveRow({
-  objective, onCollapseObjectives,
+  objective,
 }) {
   const {
     title,
@@ -95,35 +95,34 @@ function ObjectiveRow({
 
   return (
     <>
-      <tr className="tta-smarthub--objective-row">
-        <td>
-          <button
-            type="button"
-            className="usa-button usa-button--outline tta-smarthub--objective-rows-collapse-button"
-            onClick={() => onCollapseObjectives(true)}
-            aria-label="Return to goals"
-          >
-            Collapse objective(s)
-          </button>
+      <ul className="usa-list usa-list--unstyled display-inline-flex tta-smarthub--goal-row-obj-table-rows margin-bottom-2">
+        <li>
+          <span className="sr-only">Objective:</span>
           {title}
-        </td>
-        <td>
+        </li>
+        <li>
+          <span className="sr-only">Activity report:</span>
           {' '}
           <Link
             to={linkToAr}
           >
             {arNumber}
           </Link>
-        </td>
-        <td>{endDate}</td>
-        <td>
+        </li>
+        <li>
+          <span className="sr-only">End date:</span>
+          {endDate}
+        </li>
+        <li>
+          <span className="sr-only">Reasons:</span>
           {reasons && displayReasonsList(reasons.sort())}
-        </td>
-        <td>
+        </li>
+        <li>
+          <span className="sr-only">Objective status:</span>
           {getObjectiveStatusIcon()}
           {displayObjStatus}
-        </td>
-      </tr>
+        </li>
+      </ul>
     </>
   );
 }
@@ -149,6 +148,5 @@ objectivePropTypes.defaultProps = {
 };
 ObjectiveRow.propTypes = {
   objective: objectivePropTypes.isRequired,
-  onCollapseObjectives: PropTypes.func.isRequired,
 };
 export default ObjectiveRow;
