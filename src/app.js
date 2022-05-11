@@ -26,8 +26,8 @@ app.use(helmet({
     directives: {
       ...omit(helmet.contentSecurityPolicy.getDefaultDirectives(), 'upgrade-insecure-requests', 'block-all-mixed-content', 'script-src', 'img-src', 'default-src'),
       'form-action': ["'self'"],
-      scriptSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e.js'],
-      imgSrc: ["'self'", 'data:', 'https://touchpoints.app.cloud.gov'],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", 'data:'],
       defaultSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e/submissions.json', 'wss://tta-smarthub-sandbox.app.cloud.gov', 'wss://tta-smarthub-dev.app.cloud.gov'],
     },
   },
