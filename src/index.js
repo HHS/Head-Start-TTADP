@@ -14,10 +14,10 @@ auditLogger.info(`Are we bypassing websockets? ${bypassSockets ? 'YES' : 'NO'}`)
 const port = process.env.PORT || 8080;
 const server = app.listen(port, () => {
   auditLogger.info(`Listening on port ${port}`);
-  auditLogger.info(`BYPASS SOCKETS: ${bypassSockets ? 'YES' : 'NO'}`);
 });
 
 if (!bypassSockets) {
+  auditLogger.info(`BYPASS SOCKETS: ${bypassSockets ? 'YES' : 'NO'}`);
   const {
     host: redisHost,
     port: redisPort,
@@ -31,6 +31,7 @@ if (!bypassSockets) {
       url: `redis://:${redisOpts.redis.password}@${redisHost}:${redisPort}`,
     });
     await redisClient.connect();
+    auditLogger.info('connected to redis...');
 
     // We need to set up duplicate connections for subscribing,
     // as once a client is in "subscribe" mode, it can't send
@@ -42,15 +43,15 @@ if (!bypassSockets) {
 
     wss.on('connection', async (ws, req) => {
       channelName = req.url;
-      auditLogger.info(`Attempting to connect to ${channelName}`);
+      auditLogger.info(`Connected to websockets. Attempting to connect to redis ${channelName}`);
       await subscriber.subscribe(channelName, (message) => {
-        auditLogger.info(`Channel ${channelName} has received a ${message}`);
+        auditLogger.info(`Channel ${channelName} has received a message`);
         ws.send(message);
       });
 
       ws.on('message', async (message) => {
         const { channel, ...data } = JSON.parse(message);
-        auditLogger.info(`Receivned message for ${channel} ${data}`);
+        auditLogger.info(`Received message, attempting to publish to ${channel}`);
         await redisClient.publish(channel, JSON.stringify(data));
       });
     });
