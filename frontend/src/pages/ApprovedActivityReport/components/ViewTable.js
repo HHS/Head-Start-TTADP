@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Editor } from 'react-draft-wysiwyg';
 import { v4 as uuidv4 } from 'uuid';
 import { getEditorState } from '../../../utils';
-import './ViewTable.css';
+import './ViewTable.scss';
 
 function renderEditor(data) {
   /**
