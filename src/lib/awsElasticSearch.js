@@ -3,15 +3,38 @@ import { Client, Connection } from '@opensearch-project/opensearch';
 import aws4 from 'aws4';
 import { auditLogger, logger } from '../logger';
 
-const {
-  'aws-elasticsearch': [{
-    credentials: {
+const generateEsConfig = () => {
+  if (process.env.VCAP_SERVICES) {
+    const {
+      'aws-elasticsearch': [{
+        credentials: {
+          host,
+          access_key,
+          secret_key,
+        },
+      }],
+    } = JSON.parse(process.env.VCAP_SERVICES);
+
+    return {
       host,
       access_key,
       secret_key,
-    },
-  }],
-} = JSON.parse(process.env.VCAP_SERVICES);
+    };
+  }
+
+  // Return docker image credentials.
+  return {
+    host: 'http://localhost:9200',
+    access_key: 'admin',
+    secret_key: 'admin',
+  };
+};
+
+const {
+  host,
+  access_key,
+  secret_key,
+} = generateEsConfig();
 
 const createAwsConnector = (credentials, region) => {
   class AmazonConnection extends Connection {
