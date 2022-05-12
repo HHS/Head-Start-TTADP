@@ -1,14 +1,25 @@
+/* eslint-disable camelcase */
 import { Client, Connection } from '@opensearch-project/opensearch';
 import aws4 from 'aws4';
-import cfenv from 'cfenv';
+//import cfenv from 'cfenv';
 
 import { auditLogger, logger } from '../logger';
 
-const appEnv = cfenv.getAppEnv();
+//const appEnv = cfenv.getAppEnv();
 
 // const host = 'http://localhost:9200'; // e.g. https://my-domain.region.es.amazonaws.com
-const host = appEnv.getServiceURL('aws-elasticsearch');
-const creds = appEnv.getServiceCreds('aws-elasticsearch');
+//const host = appEnv.getServiceURL('aws-elasticsearch');
+//const creds = appEnv.getServiceCreds('aws-elasticsearch');
+
+const {
+  'aws-elasticsearch': [{
+    credentials: {
+      host,
+      access_key,
+      secret_key,
+    },
+  }],
+} = JSON.parse(process.env.VCAP_SERVICES);
 
 const createAwsConnector = (credentials, region) => {
   class AmazonConnection extends Connection {
@@ -30,8 +41,8 @@ const createAwsConnector = (credentials, region) => {
 const getClient = async () => new Client({
   ...createAwsConnector(
     {
-      accessKeyId: creds.access_key,
-      secretAccessKey: creds.secret_key,
+      accessKeyId: access_key,
+      secretAccessKey: secret_key,
     },
     'us-gov-west-1',
   ),
