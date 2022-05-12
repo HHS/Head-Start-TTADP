@@ -1,15 +1,7 @@
 /* eslint-disable camelcase */
 import { Client, Connection } from '@opensearch-project/opensearch';
 import aws4 from 'aws4';
-//import cfenv from 'cfenv';
-
 import { auditLogger, logger } from '../logger';
-
-//const appEnv = cfenv.getAppEnv();
-
-// const host = 'http://localhost:9200'; // e.g. https://my-domain.region.es.amazonaws.com
-//const host = appEnv.getServiceURL('aws-elasticsearch');
-//const creds = appEnv.getServiceCreds('aws-elasticsearch');
 
 const {
   'aws-elasticsearch': [{
