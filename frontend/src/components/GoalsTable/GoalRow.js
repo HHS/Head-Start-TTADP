@@ -17,7 +17,8 @@ import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
 import { updateGoalStatus } from '../../fetchers/goals';
 import ObjectiveRow from './ObjectiveRow';
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
-import './GoalRow.css';
+import './GoalRow.scss';
+import colors from '../../colors';
 
 function GoalRow({
   goal,
@@ -126,7 +127,7 @@ function GoalRow({
       return (
         <>
           <Tooltip
-            displayText={<FontAwesomeIcon className="margin-left-1" size="1x" color="#d42240" icon={faFlag} />}
+            displayText={<FontAwesomeIcon className="margin-left-1" size="1x" color={colors.error} icon={faFlag} />}
             screenReadDisplayText={false}
             buttonLabel={`Reason for flag on goal ${goalNumber} is monitoring. Click button to visually reveal this information.`}
             tooltipText="Related to monitoring"
@@ -239,7 +240,7 @@ function GoalRow({
             {
               objectiveCount > 0
                 ? (
-                  <FontAwesomeIcon className="margin-left-1 margin-right-1" size="1x" color="#000000" icon={objectivesExpanded ? faAngleUp : faAngleDown} />
+                  <FontAwesomeIcon className="margin-left-1 margin-right-1" size="1x" color={colors.textInk} icon={objectivesExpanded ? faAngleUp : faAngleDown} />
                 )
                 : null
             }
@@ -259,31 +260,26 @@ function GoalRow({
       </tr>
       <tr className="tta-smarthub--objective-rows">
         <td style={{ borderLeft: objectivesExpanded ? `4px solid ${getStatusColor()}` : '' }} colSpan="6">
-          <table>
+          <div className="tta-smarthub--goal-row-obj-table">
             <caption className="usa-sr-only">
               Objectives for goal
               {' '}
               {goalNumber}
             </caption>
-            <thead>
-              <tr>
-                <th scope="col">Objective</th>
-                <th scope="col">Activity report</th>
-                <th scope="col">End date</th>
-                <th scope="col">Reasons</th>
-                <th scope="col">Objectives status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {objectives.map((obj) => (
-                <ObjectiveRow
-                  key={`objective_${obj.id}`}
-                  objective={obj}
-                  onCollapseObjectives={closeOrOpenObjectives}
-                />
-              ))}
-            </tbody>
-          </table>
+            <ul aria-hidden className="usa-list usa-list--unstyled display-inline-flex tta-smarthub--goal-row-obj-table-header">
+              <li>Objective</li>
+              <li>Activity report</li>
+              <li>End date</li>
+              <li>Reasons</li>
+              <li>Objectives status</li>
+            </ul>
+            {objectives.map((obj) => (
+              <ObjectiveRow
+                key={`objective_${obj.id}`}
+                objective={obj}
+              />
+            ))}
+          </div>
         </td>
       </tr>
       <tr className="height-1" aria-hidden="true" />

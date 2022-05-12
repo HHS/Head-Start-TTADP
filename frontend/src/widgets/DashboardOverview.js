@@ -10,6 +10,7 @@ import './DashboardOverview.css';
 
 import Loader from '../components/Loader';
 import Tooltip from '../components/Tooltip';
+import colors from '../colors';
 
 export function Field({
   label,
@@ -70,8 +71,8 @@ const DASHBOARD_FIELDS = {
         showTooltip={showTooltip}
         tooltipText="The number of approved activity reports."
         icon={faChartBar}
-        iconColor="#148439"
-        backgroundColor="#F0FCF4"
+        iconColor={colors.success}
+        backgroundColor={colors.successLighter}
         label="Activity reports"
         data={data.numReports}
       />
@@ -83,8 +84,8 @@ const DASHBOARD_FIELDS = {
         key="grants-served"
         showTooltip={showTooltip}
         icon={faBuilding}
-        iconColor="#2B7FB9"
-        backgroundColor="#E2EFF7"
+        iconColor={colors.ttahubMediumBlue}
+        backgroundColor={colors.ttahubBlueLight}
         label="Grants served"
         tooltipText="Each grant is only counted once"
         data={data.numGrants}
@@ -98,8 +99,8 @@ const DASHBOARD_FIELDS = {
         showTooltip={showTooltip}
         tooltipText="The number of people in all activities"
         icon={faUserFriends}
-        iconColor="#264A64"
-        backgroundColor="#ECEEF1"
+        iconColor={colors.ttahubBlue}
+        backgroundColor={colors.ttahubBlueLighter}
         label="Participants"
         data={data.numParticipants}
       />
@@ -112,8 +113,8 @@ const DASHBOARD_FIELDS = {
         showTooltip={showTooltip}
         tooltipText="Rounded to the nearest half hour"
         icon={faClock}
-        iconColor="#E29F4D"
-        backgroundColor="#FFF1E0"
+        iconColor={colors.ttahubOrange}
+        backgroundColor={colors.ttahubOrangeLight}
         label="Hours of TTA"
         data={data.sumDuration}
         decimalPlaces={1}
@@ -127,8 +128,8 @@ const DASHBOARD_FIELDS = {
         icon={faUser}
         showTooltip={showTooltip}
         tooltipText="Excludes virtual activities"
-        iconColor="#A12854"
-        backgroundColor="#FFE8F0"
+        iconColor={colors.ttahubMagenta}
+        backgroundColor={colors.ttahubMagentaLight}
         label="In-person activities"
         data={data.inPerson}
       />
@@ -141,8 +142,8 @@ const DASHBOARD_FIELDS = {
         icon={faUser}
         showTooltip={showTooltip}
         label={`${data.numRecipients} ${data.numRecipients === 1 ? 'Recipient' : 'Recipients'} of ${data.totalRecipients}`}
-        iconColor="#A12854"
-        backgroundColor="#FFE8F0"
+        iconColor={colors.ttahubMagenta}
+        backgroundColor={colors.ttahubMagentaLight}
         tooltipText="Recipients have at least one active grant"
         data={data.recipientPercentage}
       />
