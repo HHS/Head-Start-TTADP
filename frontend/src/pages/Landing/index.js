@@ -19,7 +19,7 @@ import UserContext from '../../UserContext';
 import { getReportAlerts, downloadReports } from '../../fetchers/activityReports';
 import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
 import NewReport from './NewReport';
-import './index.css';
+import './index.scss';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite, allRegionsUserHasPermissionTo } from '../../permissions';
 import { ALERTS_PER_PAGE } from '../../Constants';
@@ -33,6 +33,7 @@ import { LANDING_BASE_FILTER_CONFIG, LANDING_FILTER_CONFIG_WITH_REGIONS } from '
 import FilterContext from '../../FilterContext';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
+import colors from '../../colors';
 
 const FILTER_KEY = 'landing-filters';
 
@@ -256,7 +257,7 @@ function Landing() {
                 onClick={() => updateShowAlert(false)}
               >
                 <span className="fa-sm margin-right-2">
-                  <FontAwesomeIcon color="black" icon={faTimesCircle} />
+                  <FontAwesomeIcon color={colors.textInk} icon={faTimesCircle} />
                 </span>
               </Button>
             )}

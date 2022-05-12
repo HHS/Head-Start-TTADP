@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { NavLink as Link, withRouter } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartColumn, faBorderAll, faUserFriends } from '@fortawesome/free-solid-svg-icons';
-import './SiteNav.css';
+import './SiteNav.scss';
 
 const navLinkClasses = [
   'display-block',
@@ -35,7 +35,7 @@ const SiteNav = ({
   location,
 }) => {
   const navItems = [
-    <button type="button" onClick={() => logout(false)} className={`usa-button--unstyled width-full ${navLinkClasses}`}>
+    <button type="button" onClick={() => logout(false)} className={`usa-button--unstyled usa-button--unstyled_logout width-full ${navLinkClasses}`}>
       Logout
     </button>,
   ];
