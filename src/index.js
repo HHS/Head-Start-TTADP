@@ -35,6 +35,9 @@ if (!bypassSockets) {
       const wss = new WebSocketServer({ server });
       const redisClient = createClient({
         url: redisUrl,
+        socket: {
+          tls: {},
+        },
       });
       await redisClient.connect();
       auditLogger.info('connected to redis!');
