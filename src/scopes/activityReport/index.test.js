@@ -1296,7 +1296,6 @@ describe('filtersToScopes', () => {
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       }).catch((err) => auditLogger.error(err));
-      auditLogger.info(JSON.stringify(found[0]));
       expect(found.length).toBe(3);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([reportOne.id, reportTwo.id, reportThree.id]));

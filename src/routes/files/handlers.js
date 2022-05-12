@@ -47,7 +47,7 @@ const altFileTypes = [
 // TODO: handle ActivityReportObjectiveFiles, ObjectiveFiles, and ObjectiveTemplateFiles
 
 export const deleteHandler = async (req, res) => {
-  const { reportId, objectiveId, fileId } = req.params;
+  const { reportId, objectiveId, objectiveTempleteId, fileId } = req.params;
   const user = await userById(req.session.userId);
   const report = await activityReportById(reportId);
   const authorization = new ActivityReportPolicy(user, report);
@@ -58,6 +58,7 @@ export const deleteHandler = async (req, res) => {
   }
   try {
     const file = await getFileById(fileId);
+    if( file.activityReportFiles.length)
     await deleteFileFromS3(file.key);
     await deleteFile(fileId);
     res.status(204).send();
@@ -66,7 +67,7 @@ export const deleteHandler = async (req, res) => {
   }
 };
 
-//TODO: handle ActivityReportObjectiveFiles, ObjectiveFiles, and ObjectiveTemplateFiles
+// TODO: handle ActivityReportObjectiveFiles, ObjectiveFiles, and ObjectiveTemplateFiles
 const parseFormPromise = (req) => new Promise((resolve, reject) => {
   const form = new multiparty.Form();
   form.parse(req, (err, fields, files) => {

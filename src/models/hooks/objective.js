@@ -1,13 +1,11 @@
 import { Op } from 'sequelize';
-import { auditLogger } from '../../logger';
+// import { auditLogger } from '../../logger';
 
 const autoPopulateObjectiveTemplateId = async (sequelize, instance, options) => {
-  auditLogger.info('objective.autoPopulateObjectiveTemplateId.a');
   // eslint-disable-next-line no-prototype-builtins
   if (!instance.hasOwnProperty('objectiveTemplateId')
   || instance.objectiveTemplateId === null
   || instance.objectiveTemplateId === undefined) {
-    auditLogger.info('objective.autoPopulateObjectiveTemplateId.b');
     const goal = await sequelize.models.Goal.findOne({
       where: { id: instance.goalId },
       include: [
@@ -18,8 +16,7 @@ const autoPopulateObjectiveTemplateId = async (sequelize, instance, options) => 
         },
       ],
     });
-    auditLogger.info(JSON.stringify(goal));
-    auditLogger.info('objective.autoPopulateObjectiveTemplateId.c');
+
     const objectiveTemplate = await sequelize.models.ObjectiveTemplate.findOrCreate({
       where: { templateTitle: instance.title, regionId: goal.grant.regionId },
       defaults: {
@@ -30,21 +27,16 @@ const autoPopulateObjectiveTemplateId = async (sequelize, instance, options) => 
       },
       transaction: options.transaction,
     });
-    auditLogger.info('objective.autoPopulateObjectiveTemplateId.d');
     instance.set('objectiveTemplateId', objectiveTemplate[0].id);
-    auditLogger.info('objective.autoPopulateObjectiveTemplateId.e');
   }
 };
 
 const autoPopulateOnApprovedAR = (sequelize, instance) => {
-  auditLogger.info('objective.autoPopulateOnApprovedAR.a');
   // eslint-disable-next-line no-prototype-builtins
   if (!instance.hasOwnProperty('onApprovedAR')
   || instance.onApprovedAR === null
   || instance.onApprovedAR === undefined) {
-    auditLogger.info('objective.autoPopulateOnApprovedAR.b');
     instance.set('onApprovedAR', false);
-    auditLogger.info('objective.autoPopulateOnApprovedAR.c');
   }
 };
 
@@ -63,6 +55,8 @@ const autoPopulateStatusChangeDates = (sequelize, instance) => {
   if (Array.isArray(changed) && changed.includes('status')) {
     const now = new Date();
     switch (instance.status) {
+      case 'Draft':
+        break;
       case 'Not Started':
         if (instance.firstNotStartedAt === null
           && instance.firstNotStartedAt === undefined) {
@@ -130,7 +124,6 @@ const linkObjectiveGoalTemplates = async (sequelize, instance, options) => {
 };
 
 const autoPopulateSupersededBy = async (sequelize, instance, options) => {
-  auditLogger.info('autoPopulateSupersededBy.a');
   // eslint-disable-next-line no-prototype-builtins
   if (instance.hasOwnProperty('precededBy')
   && instance.precededBy !== null
@@ -164,15 +157,10 @@ const propagateTitle = async (sequelize, instance, options) => {
 };
 
 const beforeValidate = async (sequelize, instance, options) => {
-  auditLogger.info('objective.beforeValidate.a');
   await autoPopulateObjectiveTemplateId(sequelize, instance, options);
-  auditLogger.info('objective.beforeValidate.b');
   autoPopulateOnApprovedAR(sequelize, instance);
-  auditLogger.info('objective.beforeValidate.c');
   preventTitleChangeWhenOnApprovedAR(sequelize, instance);
-  auditLogger.info('objective.beforeValidate.d');
   autoPopulateStatusChangeDates(sequelize, instance);
-  auditLogger.info('objective.beforeValidate.e');
 };
 
 const afterCreate = async (sequelize, instance, options) => {

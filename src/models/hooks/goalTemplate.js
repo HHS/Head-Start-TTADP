@@ -1,4 +1,4 @@
-import { auditLogger } from '../../logger';
+// import { auditLogger } from '../../logger';
 import { CREATION_METHOD } from '../../constants';
 
 const { Op } = require('sequelize');
@@ -45,12 +45,8 @@ const propagateTemplateName = async (sequelize, instance, options) => {
 };
 
 const beforeValidate = (sequelize, instance) => {
-  auditLogger.info('beforeValidate.a');
   autoPopulateTemplateNameModifiedAt(sequelize, instance);
-  auditLogger.info('beforeValidate.b');
   autoPopulateCreationMethod(sequelize, instance);
-  auditLogger.info('beforeValidate.c');
-  auditLogger.info(JSON.stringify(instance));
 };
 
 const afterUpdate = async (sequelize, instance, options) => {

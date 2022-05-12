@@ -12,6 +12,7 @@ import {
   sequelize,
   Recipient,
   ActivityReport,
+  ActivityReportGoal,
   Topic,
   Program,
 } from '../models';
@@ -205,7 +206,7 @@ export async function createOrUpdateGoals(goals) {
   const goalIds = await Promise.all(goals.map(async (goalData) => {
     const {
       id,
-      grants,
+      grantId,
       recipientId,
       regionId,
       objectives,
@@ -221,29 +222,24 @@ export async function createOrUpdateGoals(goals) {
       id: id === 'new' ? null : id,
     };
 
-    const [goal] = await Goal.upsert(options);
+    let newGoal;
 
-    const grantGoals = await Promise.all(
-      grants.map((grant) => GrantGoal.findOrCreate({
+    if (Number.isInteger(id)) {
+      newGoal = await Goal.update({ grantId, ...options }, { returning: true });
+    } else {
+      delete fields.id;
+      // In order to reuse goals with matching text we need to do the findOrCreate as the
+      // upsert would not preform the extrea checks and logic now required.
+      newGoal = await Goal.findOrCreate({
         where: {
-          goalId: goal.id,
-          recipientId,
-          grantId: grant.value,
+          grantId,
+          name: options.name,
+          status: { [Op.not]: 'Closed' },
         },
-      })),
-    );
-
-    const grantGoalIds = grantGoals.map((gg) => gg.id);
-
-    // cleanup grant goals
-    await GrantGoal.destroy({
-      where: {
-        id: {
-          [Op.notIn]: grantGoalIds,
-        },
-        goalId: goal.id,
-      },
-    });
+        defaults: { grantId, ...options },
+      });
+      await Goal.update({ grantId, ...options });
+    }
 
     const newObjectives = await Promise.all(
       objectives.map(async (o) => {
@@ -256,10 +252,10 @@ export async function createOrUpdateGoals(goals) {
 
         const where = parseInt(objectiveId, DECIMAL_BASE) ? {
           id: objectiveId,
-          goalId: goal.id,
+          goalId: newGoal.id,
           ...objectiveFields,
         } : {
-          goalId: goal.id,
+          goalId: newGoal.id,
           title: o.title,
           ttaProvided: '',
           status: 'Not started',
@@ -321,9 +317,9 @@ export async function createOrUpdateGoals(goals) {
     );
 
     // this function deletes unused objectives
-    await cleanupObjectivesForGoal(goal.id, newObjectives);
+    await cleanupObjectivesForGoal(newGoal.id, newObjectives);
 
-    return goal.id;
+    return newGoal.id;
   }));
 
   // we have to do this outside of the transaction otherwise
@@ -391,6 +387,7 @@ async function removeActivityReportObjectivesFromReport(reportId, objectiveIdsTo
   });
 }
 
+// TODO: ask Josh what the intent of this is for
 export async function removeGoals(goalsToRemove) {
   const goalsWithGrants = await Goal.findAll({
     attributes: ['id'],
@@ -466,26 +463,54 @@ export async function saveGoalsForReport(goals, report) {
     const goalId = goal.id;
     const fields = goal;
 
-    if (!Number.isInteger(goalId)) {
+    let newGoal;
+
+    if (Number.isInteger(goalId)) {
+      newGoal = await Goal.update(fields, { returning: true });
+    } else {
       delete fields.id;
+      // In order to reuse goals with matching text we need to do the findOrCreate as the
+      // upsert would not preform the extrea checks and logic now required.
+      newGoal = await Goal.findOrCreate({
+        where: {
+          grantId: fields.grantId,
+          name: fields.name,
+          status: { [Op.not]: 'Closed' },
+        },
+        defaults: fields,
+      });
+      await Goal.update(fields);
     }
 
-    // using upsert here and below
-    // - add returning: true to options to get an array of [<Model>,<created>] (postgres only)
-    // - https://sequelize.org/v5/class/lib/model.js~Model.html#static-method-upsert
-    const [newGoal] = await Goal.upsert(fields, { returning: true });
+    // This linkage of goal directly to a report will allow a save to be made even if no objective
+    // has been started.
+    // A hook on ActivityReportGoal will automatically update the status of the goal if required.
+    await ActivityReportGoal.findOrCreate({
+      where: {
+        goalId: newGoal.id,
+        activityReportId: report.id,
+      },
+    });
+
     const newObjectives = await Promise.all(goal.objectives.map(async (objective) => {
       const { id, ...updatedFields } = objective;
       const updatedObjective = { ...updatedFields, goalId: newGoal.id };
 
+      let savedObjective;
       if (Number.isInteger(id)) {
         updatedObjective.id = id;
+        savedObjective = await Objective.update(updatedObjective, { returning: true });
+      } else {
+        savedObjective = await Objective.findOrCreate({
+          where: {
+            goalId: updatedObjective.grantId,
+            title: updatedObjective.title,
+            status: { [Op.not]: 'Completed' },
+          },
+          defaults: updatedObjective,
+        });
+        await Objective.update(updatedObjective);
       }
-
-      const [savedObjective] = await Objective.upsert(
-        updatedObjective,
-        { returning: true },
-      );
 
       await ActivityReportObjective.findOrCreate({
         where: {

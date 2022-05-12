@@ -1,7 +1,4 @@
-const {
-  Model,
-} = require('sequelize');
-const { auditLogger } = require('../logger');
+const { Model } = require('sequelize');
 const { CLOSE_SUSPEND_REASONS } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 const { beforeValidate, afterUpdate } = require('./hooks/goal');
@@ -20,7 +17,6 @@ module.exports = (sequelize, DataTypes) => {
       Goal.belongsToMany(models.Topic, { through: models.TopicGoal, foreignKey: 'goalId', as: 'topics' });
       Goal.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
       Goal.hasMany(models.Objective, { foreignKey: 'goalId', as: 'objectives' });
-      // Goal.hasOne(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: +'goalTemplates' });
       Goal.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: +'goalTemplates' });
       Goal.hasMany(models.Goal, { foreignKey: 'supersededBy', as: 'supersedes' });
     }
@@ -39,14 +35,8 @@ module.exports = (sequelize, DataTypes) => {
       get() {
         const { id, grant } = this;
         let regionId = 0;
-        try {
-          auditLogger.info(JSON.stringify(grant));
-          if (grant) {
-            regionId = grant.regionId;
-          }
-        } catch (e) {
-          auditLogger.error(JSON.stringify(e));
-          throw e;
+        if (grant) {
+          regionId = grant.regionId;
         }
         return `R${regionId}-G-${id}`;
       },

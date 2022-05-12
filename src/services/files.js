@@ -24,7 +24,31 @@ const deleteObjectiveTemplateFile = async (id) => ObjectiveTemplateFile.destroy(
   where: { id },
 });
 
-const getFileById = async (id) => File.findOne({ where: { id } });
+const getFileById = async (id) => File.findOne({
+  where: { id },
+  include: [
+    {
+      model: ActivityReportFile,
+      as: 'activityReportFiles',
+      required: false,
+    },
+    {
+      model: ActivityReportObjectiveFile,
+      as: 'activityReportObjectiveFiles',
+      required: false,
+    },
+    {
+      model: ObjectiveFile,
+      as: 'objectiveFiles',
+      required: false,
+    },
+    {
+      model: ObjectiveTemplateFile,
+      as: 'objectiveTemplateFiles',
+      required: false,
+    },
+  ],
+});
 const getActivityReportFilesById = async (reportId) => ActivityReportFile.findAll({
   where: { activityReportId: reportId },
   include: [
