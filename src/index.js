@@ -10,28 +10,32 @@ import { generateRedisConfig } from './lib/queue';
 
 const bypassSockets = !!process.env.BYPASS_SOCKETS;
 
-auditLogger.info(`Are we bypassing websockets? ${bypassSockets ? 'YES' : 'NO'}`);
 const port = process.env.PORT || 8080;
 const server = app.listen(port, () => {
   auditLogger.info(`Listening on port ${port}`);
 });
 
+auditLogger.info(`Opening websocket connection? ${!bypassSockets ? 'Yes' : 'No'}`);
+
 if (!bypassSockets) {
-  auditLogger.info(`BYPASS SOCKETS: ${bypassSockets ? 'YES' : 'NO'}`);
+  auditLogger.info('We have not bypassed websockets');
   const {
     host: redisHost,
     port: redisPort,
     redisOpts,
   } = generateRedisConfig();
 
+  const redisUrl = `redis://:${redisOpts.redis.password}@${redisHost}:${redisPort}`;
+  auditLogger.info(`attempting to connect to redis @ ${redisUrl}`);
+
   // IIFE to get around top level awaits
   (async () => {
     const wss = new WebSocketServer({ server });
     const redisClient = createClient({
-      url: `redis://:${redisOpts.redis.password}@${redisHost}:${redisPort}`,
+      url: redisUrl,
     });
     await redisClient.connect();
-    auditLogger.info('connected to redis...');
+    auditLogger.info('connected to redis!');
 
     // We need to set up duplicate connections for subscribing,
     // as once a client is in "subscribe" mode, it can't send
