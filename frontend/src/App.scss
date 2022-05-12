@@ -1,5 +1,17 @@
 @use 'colors.scss' as *;
 
+a {
+  color: $text-link;
+}
+
+a:visited {
+  color: $text-visited
+}
+
+.usa-table thead th a {
+  color: $text-ink;
+}
+
 .usa-skipnav:focus {
   z-index: 999999;
 }
