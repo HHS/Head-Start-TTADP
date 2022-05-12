@@ -1,0 +1,10 @@
+@use '../../../../colors.scss' as *;
+
+.smart-hub--creator-notes {
+  padding: 1rem;
+  background-color: $gray-two;
+}
+
+#status {
+  max-width: 270px;
+}
