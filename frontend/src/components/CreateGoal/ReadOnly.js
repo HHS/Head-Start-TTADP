@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import ContextMenu from '../ContextMenu';
 import Modal from '../Modal';
 
-import './ReadOnly.css';
+import './ReadOnly.scss';
 
 export default function ReadOnly({
   onEdit,

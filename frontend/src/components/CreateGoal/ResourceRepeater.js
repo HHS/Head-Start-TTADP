@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import PlusButton from './PlusButton';
 import QuestionTooltip from './QuestionTooltip';
+import colors from '../../colors';
 
 export default function ResourceRepeater({
   resources,
@@ -75,7 +76,7 @@ export default function ResourceRepeater({
                   />
                   { resources.length > 1 ? (
                     <Button unstyled type="button" onClick={() => removeResource(i)}>
-                      <FontAwesomeIcon className="margin-x-1" color="#005ea2" icon={faTrash} />
+                      <FontAwesomeIcon className="margin-x-1" color={colors.ttahubMediumBlue} icon={faTrash} />
                       <span className="sr-only">
                         remove resource
                         {' '}

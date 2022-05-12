@@ -1,3 +1,4 @@
+/* eslint-disable react/forbid-prop-types */
 /*
   Uses `react-dropzone` to allow file uploads. Must be placed inside a `react-hook-form`
   form. Selected files display below the main input in a 2 by 2 grid.
@@ -13,8 +14,8 @@ import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { Button, Alert } from '@trussworks/react-uswds';
 import { uploadFile, deleteFile } from '../fetchers/File';
 import Modal from './Modal';
-
-import './FileUploader.css';
+import colors from '../colors';
+import './FileUploader.scss';
 
 export const upload = async (file, reportId, setErrorMessage) => {
   let res;
@@ -261,7 +262,7 @@ const FileTable = ({ onFileRemoved, files }) => {
                   }}
                 >
                   <span className="fa-sm">
-                    <FontAwesomeIcon color="black" icon={faTrash} />
+                    <FontAwesomeIcon color={colors.textInk} icon={faTrash} />
                   </span>
                 </Button>
               </td>

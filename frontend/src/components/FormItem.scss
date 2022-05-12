@@ -1,0 +1,5 @@
+@use '../colors.scss' as *;
+
+.smart-hub--form-required {
+  color: $error-dark;
+}
