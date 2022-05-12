@@ -5,6 +5,7 @@ import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import Tooltip from '../Tooltip';
 import { filterConfigProp, filterProp } from './props';
 import './FilterPills.css';
+import colors from '../../colors';
 
 /* Pill */
 export function Pill({
@@ -88,7 +89,7 @@ export function Pill({
             onRemoveFilter(id);
           }}
         >
-          <FontAwesomeIcon className="margin-left-1 margin-top-2px  filter-pills-cursor" color="#0166ab" icon={faTimesCircle} />
+          <FontAwesomeIcon className="margin-left-1 margin-top-2px filter-pills-cursor" color={colors.ttahubMediumBlue} icon={faTimesCircle} />
         </button>
       </span>
     </span>

@@ -2,11 +2,16 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faClock, faCheckCircle, faExclamationCircle, faMinusCircle, faFlag,
-} from '@fortawesome/free-solid-svg-icons';
+import { faFlag } from '@fortawesome/free-solid-svg-icons';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
-import './ObjectiveRow.css';
+import './ObjectiveRow.scss';
+import colors from '../../colors';
+import {
+  InProgress,
+  Closed,
+  NoStatus,
+  NotStarted,
+} from './icons';
 
 function ObjectiveRow({
   objective,
@@ -29,7 +34,7 @@ function ObjectiveRow({
     if (reasonsToMonitor.includes(reason)) {
       return (
         <>
-          <FontAwesomeIcon className="margin-left-1" size="1x" color="#d42240" icon={faFlag} />
+          <FontAwesomeIcon className="margin-left-1" size="1x" color={colors.error} icon={faFlag} />
         </>
       );
     }
@@ -81,17 +86,17 @@ function ObjectiveRow({
 
   const displayObjStatus = getGoalDisplayStatusText();
 
-  const getObjectiveStatusIcon = () => {
+  const getObjectiveStatusIcon = (() => {
     if (displayObjStatus === 'In progress') {
-      return <FontAwesomeIcon className="margin-right-1" size="1x" color="#0166ab" icon={faClock} />;
+      return <InProgress />;
     } if (displayObjStatus === 'Closed') {
-      return <FontAwesomeIcon className="margin-right-1" size="1x" color="#148439" icon={faCheckCircle} />;
+      return <Closed />;
     }
     if (displayObjStatus === 'Not started') {
-      return <FontAwesomeIcon className="margin-right-1" size="1x" color="#e2a04d" icon={faMinusCircle} />;
+      return <NotStarted />;
     }
-    return <FontAwesomeIcon className="margin-right-1" size="1x" color="#c5c5c5" icon={faExclamationCircle} />;
-  };
+    return <NoStatus />;
+  })();
 
   return (
     <>
@@ -119,7 +124,7 @@ function ObjectiveRow({
         </li>
         <li>
           <span className="sr-only">Objective status:</span>
-          {getObjectiveStatusIcon()}
+          {getObjectiveStatusIcon}
           {displayObjStatus}
         </li>
       </ul>

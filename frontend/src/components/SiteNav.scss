@@ -1,0 +1,38 @@
+@use '../colors.scss' as *;
+
+@media(min-height: 40em){
+  .smart-hub-sitenav-content-container {
+    overflow-y: hidden;
+  }
+}
+
+.smart-hub-sitenav-separator--after::after,
+.smart-hub-sitenav-separator--before::before
+{
+  display: block;
+  content: "";
+  width: auto;
+  margin: 0 1rem;
+}
+
+.smart-hub-sitenav-separator--after::after
+{
+  border-bottom: 1px solid $text-ink;
+}
+
+.smart-hub-sitenav-separator--before::before
+{
+  border-top: 1px solid $text-ink;
+}
+
+.smart-hub-sitenav-word-wrap--break {
+  word-wrap: break-word;
+}
+
+.usa-button--unstyled.usa-button--unstyled_logout {
+  color: #fff;
+}
+
+.smart-hub-sitenav a:visited {
+  color: #fff;
+}
