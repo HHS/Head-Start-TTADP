@@ -172,16 +172,13 @@ export async function getGoalsByActivityRecipient(
     sortBy = 'goalStatus', sortDir = 'desc', offset = 0, limit = GOALS_PER_PAGE, ...filters
   },
 ) {
-  auditLogger.info('q');
   // Scopes.
   const { goal: scopes } = filtersToScopes(filters, 'goal');
 
-  auditLogger.info('r');
   // Paging.
   const limitNum = parseInt(limit, 10);
   const offSetNum = parseInt(offset, 10);
 
-  auditLogger.info('s');
   // Get Goals.
   let rows;
   try {
@@ -222,26 +219,21 @@ export async function getGoalsByActivityRecipient(
     throw err;
   }
 
-  auditLogger.info('t');
   // Build Array of Goals.
   const goalRows = [];
   let goalCount = 0;
   const count = rows.length;
 
-  auditLogger.info('u');
   // Handle Paging.
   if (offset > 0) {
     rows.splice(0, offSetNum);
   }
 
-  auditLogger.info('v');
   rows.forEach((g) => {
     if (goalCount === limitNum) {
       return;
     }
 
-    auditLogger.info(JSON.stringify(g));
-    auditLogger.info('w');
     const goalToAdd = {
       id: g.id,
       goalStatus: g.status,
@@ -255,11 +247,9 @@ export async function getGoalsByActivityRecipient(
       previousStatus: g.previousStatus,
     };
 
-    auditLogger.info('x');
     // Objectives.
     if (g.objectives) {
       g.objectives.forEach((o) => {
-        auditLogger.info(JSON.stringify(o));
         // Activity Report.
         let activityReport;
         if (o.activityReports && o.activityReports.length > 0) {
@@ -273,7 +263,6 @@ export async function getGoalsByActivityRecipient(
           );
         }
 
-        auditLogger.info('y');
         // Add Objective.
         goalToAdd.objectives.push({
           id: o.id,
@@ -289,7 +278,6 @@ export async function getGoalsByActivityRecipient(
         });
       });
 
-      auditLogger.info('z');
       // Sort Objectives by end date desc.
       goalToAdd.objectives.sort((a, b) => ((
         a.endDate === b.endDate ? a.id < b.id

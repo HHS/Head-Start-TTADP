@@ -1552,54 +1552,42 @@ module.exports = {
           FROM "Goals" g
           LEFT JOIN (
             SELECT
-              "goalId",
+              g.id "goalId",
               true "rule",
               'Closed' status
-            FROM (
-              SELECT
-                g.id "goalId",
-                SUM((gr2.status = 'Active')::int) "active",
-                SUM((gr2.status = 'Inactive')::int) "inactive"
-              FROM "Goals" g
-              JOIN "Grants" gr
-              ON g."grantId" = gr.id
-              JOIN "Grants" gr2
-              ON gr."recipientId" = gr2."recipientId"
-              GROUP BY g.id
-            ) X
-            WHERE "active" = 0
-            AND "inactive" > 0
+            FROM "Goals" g
+            JOIN "Grants" gr
+            ON g."grantId" = gr.id
+            JOIN "Grants" gr2
+            ON gr."recipientId" = gr2."recipientId"
+            GROUP BY g.id
+            HAVING SUM((gr2.status = 'Active')::int) = 0
+            AND SUM((gr2.status = 'Inactive')::int) > 0
           ) r1
           on g.id = r1."goalId"
           LEFT JOIN (
             SELECT
-              "goalId",
+              g.id "goalId",
               true "rule",
               'Closed' status
-            FROM (
-              SELECT
-                  g.id "goalId",
-                  SUM((ar."ttaType" = '{training}')::int) "training",
-                  SUM((ar."ttaType" != '{training}')::int) "not-training"
-              FROM "Goals" g
-              JOIN "Objectives" o
-              ON g.id = o."goalId"
-              AND o.status = 'Complete'
-              JOIN "ActivityReportObjectives" aro
-              ON o.id = aro."objectiveId"
-              JOIN "ActivityReports" ar
-              ON aro."activityReportId" = ar.id
-              GROUP BY g.id
-            ) X
-            WHERE "training" > 0
-            AND "not-training" = 0
+            FROM "Goals" g
+            JOIN "Objectives" o
+            ON g.id = o."goalId"
+            AND o.status = 'Complete'
+            JOIN "ActivityReportObjectives" aro
+            ON o.id = aro."objectiveId"
+            JOIN "ActivityReports" ar
+            ON aro."activityReportId" = ar.id
+            GROUP BY g.id
+            HAVING SUM((ar."ttaType" = '{training}')::int) > 0
+            AND SUM((ar."ttaType" != '{training}')::int) = 0
           ) r2
           on g.id = r2."goalId"
           LEFT JOIN (
             SELECT
               g.id "goalId",
               true "rule",
-              'In progress' status
+              'In Progress' status
             FROM "Goals" g
             JOIN "Objectives" o
             ON g.id = o."goalId"

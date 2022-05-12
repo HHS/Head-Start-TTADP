@@ -143,28 +143,23 @@ describe('Goals by Recipient Test', () => {
   let goalIds = [];
 
   beforeAll(async () => {
-    auditLogger.info('beforeAll.a');
     // Create User.
     await User.create(mockGoalUser);
 
-    auditLogger.info('beforeAll.b');
     // Create Recipient.
     await Recipient.create(recipient);
     await Recipient.create(recipient2);
 
-    auditLogger.info('beforeAll.c');
     // Create Grants.
     const savedGrant1 = await Grant.create(grant1);
     const savedGrant2 = await Grant.create(grant2);
     const savedGrant3 = await Grant.create(grant3);
 
-    auditLogger.info('beforeAll.d');
     // Create Reports.
     const savedGoalReport1 = await ActivityReport.create(goalReport1);
     const savedGoalReport2 = await ActivityReport.create(goalReport2);
     const savedGoalReport3 = await ActivityReport.create(goalReport3);
 
-    auditLogger.info('beforeAll.e');
     // Create AR Recipients.
     await ActivityRecipient.create({
       activityReportId: savedGoalReport1.id,
@@ -181,9 +176,7 @@ describe('Goals by Recipient Test', () => {
       grantId: savedGrant3.id,
     });
 
-    auditLogger.info('beforeAll.f');
     // Create Goals.
-    auditLogger.info('beforeAll.g');
     let goals = [];
     try {
       goals = await Promise.all(
@@ -194,7 +187,6 @@ describe('Goals by Recipient Test', () => {
             status: 'Not Started',
             timeframe: '12 months',
             isFromSmartsheetTtaPlan: false,
-            // goalTemplateId: goalTemplateIds[0],
             grantId: 300,
             createdAt: '2021-01-10T19:16:15.842Z',
           }),
@@ -204,7 +196,6 @@ describe('Goals by Recipient Test', () => {
             status: 'Not Started',
             timeframe: '12 months',
             isFromSmartsheetTtaPlan: false,
-            // goalTemplateId: goalTemplateIds[1],
             grantId: 300,
             createdAt: '2021-02-15T19:16:15.842Z',
           }),
@@ -214,7 +205,6 @@ describe('Goals by Recipient Test', () => {
             status: 'In Progress',
             timeframe: '12 months',
             isFromSmartsheetTtaPlan: false,
-            // goalTemplateId: goalTemplateIds[2],
             grantId: 300,
             createdAt: '2021-03-03T19:16:15.842Z',
           }),
@@ -224,7 +214,6 @@ describe('Goals by Recipient Test', () => {
             status: 'In Progress',
             timeframe: '12 months',
             isFromSmartsheetTtaPlan: false,
-            // goalTemplateId: goalTemplateIds[3],
             grantId: 301,
             createdAt: '2021-04-02T19:16:15.842Z',
           }),
@@ -234,7 +223,6 @@ describe('Goals by Recipient Test', () => {
             status: 'In Progress',
             timeframe: '12 months',
             isFromSmartsheetTtaPlan: false,
-            // goalTemplateId: goalTemplateIds[4],
             grantId: 302,
             createdAt: '2021-05-02T19:16:15.842Z',
           }),
@@ -245,78 +233,10 @@ describe('Goals by Recipient Test', () => {
       throw (err);
     }
 
-    auditLogger.info('beforeAll.h');
     // Get Goal Ids for Delete.
     goalIds = goals.map((o) => o.id);
-    auditLogger.info(JSON.stringify(goalIds));
-
-    // Grant Goals.
-    // await Promise.all(
-    //   [
-    //     // grant goal 1 (AR1)
-    //     await GrantGoal.create({
-    //       recipientId: 300,
-    //       grantId: 300,
-    //       goalId: goals[0].id,
-    //     }),
-    //     // grant goal 2 (AR1)
-    //     await GrantGoal.create({
-    //       recipientId: 300,
-    //       grantId: 300,
-    //       goalId: goals[1].id,
-    //     }),
-    //     // grant goal 3 (AR1)
-    //     await GrantGoal.create({
-    //       recipientId: 300,
-    //       grantId: 300,
-    //       goalId: goals[2].id,
-    //     }),
-    //     // grant goal 4 (AR2)
-    //     await GrantGoal.create({
-    //       recipientId: 300,
-    //       grantId: 301,
-    //       goalId: goals[3].id,
-    //     }),
-    //     // grant goal 5 (AR3 Exclude)
-    //     await GrantGoal.create({
-    //       recipientId: 301,
-    //       grantId: 302,
-    //       goalId: goals[4].id,
-    //     }),
-    //   ],
-    // );
 
     // Crete Objectives.
-    // const objectiveTemplates = await Promise.all(
-    //   [
-    //     await ObjectiveTemplate.findOrCreate({
-    //       where: { templateTitle: 'objective 1' },
-    //       default: { templateTitle: 'objective 1' },
-    //     }),
-    //     await ObjectiveTemplate.findOrCreate({
-    //       where: { templateTitle: 'objective 2' },
-    //       default: { templateTitle: 'objective 2' },
-    //     }),
-    //     await ObjectiveTemplate.findOrCreate({
-    //       where: { templateTitle: 'objective 3' },
-    //       default: { templateTitle: 'objective 3' },
-    //     }),
-    //     await ObjectiveTemplate.findOrCreate({
-    //       where: { templateTitle: 'objective 4' },
-    //       default: { templateTitle: 'objective 4' },
-    //     }),
-    //     await ObjectiveTemplate.findOrCreate({
-    //       where: { templateTitle: 'objective 5' },
-    //       default: { templateTitle: 'objective 5' },
-    //     }),
-    //     await ObjectiveTemplate.findOrCreate({
-    //       where: { templateTitle: 'objective 6' },
-    //       default: { templateTitle: 'objective 6' },
-    //     }),
-    //   ],
-    // );
-    // objectiveTemplateIds = objectiveTemplates.map((o) => o.id);
-    auditLogger.info('beforeAll.h2');
     const objectives = await Promise.all(
       [
         // objective 1 (AR1)
@@ -325,7 +245,6 @@ describe('Goals by Recipient Test', () => {
           title: 'objective 1',
           ttaProvided: 'Objective for Goal 1',
           status: 'Not Started',
-          // objectiveTemplateId: objectiveTemplateIds[0],
         }),
         // objective 2 (AR1)
         await Objective.create({
@@ -333,7 +252,6 @@ describe('Goals by Recipient Test', () => {
           title: 'objective 2',
           ttaProvided: 'Objective for Goal 2',
           status: 'Not Started',
-          // objectiveTemplateId: objectiveTemplateIds[1],
         }),
         // objective 3 (AR1)
         await Objective.create({
@@ -341,7 +259,6 @@ describe('Goals by Recipient Test', () => {
           title: 'objective 3',
           ttaProvided: 'Objective for Goal 3',
           status: 'In Progress',
-          // objectiveTemplateId: objectiveTemplateIds[2],
         }),
         // objective 4 (AR1)
         await Objective.create({
@@ -349,7 +266,6 @@ describe('Goals by Recipient Test', () => {
           title: 'objective 4',
           ttaProvided: 'Objective for Goal 3 b',
           status: 'Completed',
-          // objectiveTemplateId: objectiveTemplateIds[3],
         }),
         // objective 5 (AR2)
         await Objective.create({
@@ -357,7 +273,6 @@ describe('Goals by Recipient Test', () => {
           title: 'objective 5',
           ttaProvided: 'Objective for Goal 4',
           status: 'Not Started',
-          // objectiveTemplateId: objectiveTemplateIds[4],
         }),
         // objective 6 (AR3)
         await Objective.create({
@@ -365,16 +280,12 @@ describe('Goals by Recipient Test', () => {
           title: 'objective 6',
           ttaProvided: 'Objective for Goal 5 Exclude',
           status: 'Not Started',
-          // objectiveTemplateId: objectiveTemplateIds[5],
         }),
       ],
     );
-    auditLogger.info(JSON.stringify(objectives));
 
-    auditLogger.info('beforeAll.i');
     // Get Objective Ids for Delete.
     objectiveIds = objectives.map((o) => o.id);
-    auditLogger.info(JSON.stringify(objectiveIds));
 
     // AR Objectives.
     await Promise.all(
@@ -411,7 +322,6 @@ describe('Goals by Recipient Test', () => {
         }),
       ],
     );
-    auditLogger.info('beforeAll.j');
   });
 
   afterAll(async () => {

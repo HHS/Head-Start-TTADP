@@ -1,4 +1,5 @@
 const { Model } = require('sequelize');
+const { afterCreate, afterUpdate, afterUpsert } = require('./hooks/activityReportObjective');
 
 module.exports = (sequelize, DataTypes) => {
   class ActivityReportObjective extends Model {
@@ -33,6 +34,11 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'ActivityReportObjective',
+    hooks: {
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
+      afterUpsert: async (instance, options) => afterUpsert(sequelize, instance, options),
+    },
   });
   return ActivityReportObjective;
 };
