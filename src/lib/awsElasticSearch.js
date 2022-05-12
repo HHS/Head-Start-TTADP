@@ -31,7 +31,7 @@ const getClient = async () => new Client({
   ...createAwsConnector(
     {
       accessKeyId: creds.access_key,
-      secretAccessKeyId: creds.secret_key,
+      secretAccessKey: creds.secret_key,
     },
     'us-gov-west-1',
   ),
