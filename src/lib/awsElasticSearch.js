@@ -24,7 +24,7 @@ const generateEsConfig = () => {
 
   // Return docker image credentials.
   return {
-    host: 'http://localhost:9200',
+    uri: 'http://localhost:9200',
     access_key: 'admin',
     secret_key: 'admin',
   };
