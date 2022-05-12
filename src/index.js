@@ -20,12 +20,9 @@ auditLogger.info(`Opening websocket connection? ${!bypassSockets ? 'Yes' : 'No'}
 if (!bypassSockets) {
   auditLogger.info('We have not bypassed websockets');
   const {
-    host: redisHost,
-    port: redisPort,
-    redisOpts,
+    uri: redisUrl,
   } = generateRedisConfig();
 
-  const redisUrl = `redis://:${redisOpts.redis.password}@${redisHost}:${redisPort}`;
   auditLogger.info(`attempting to connect to redis @ ${redisUrl}`);
 
   // IIFE to get around top level awaits
@@ -36,7 +33,7 @@ if (!bypassSockets) {
       const redisClient = createClient({
         url: redisUrl,
         socket: {
-          tls: {},
+          tls: true,
         },
       });
       await redisClient.connect();
@@ -67,6 +64,8 @@ if (!bypassSockets) {
 
       wss.on('close', async () => subscriber.unsubscribe(channelName));
     } catch (err) {
+      auditLogger.info('error thrown');
+      auditLogger.info(err);
       auditLogger.error(err);
     }
   })();
