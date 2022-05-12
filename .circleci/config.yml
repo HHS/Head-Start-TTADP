@@ -182,7 +182,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "update-node-to-16.14.2"
+    default: "TTAHUB-467/apply-color-palette"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "kw-add-mail"
@@ -260,6 +260,11 @@ jobs:
     steps:
       - attach_workspace:
           at: .
+      - run:
+          name: Audit checksums of color files
+          command: |
+            chmod 744 ./checkcolorhash.sh
+            ./checkcolorhash.sh;
       - run:
           name: Audit vulnerability of frontend node_modules
           command: |

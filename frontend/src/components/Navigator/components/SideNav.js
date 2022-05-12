@@ -11,7 +11,7 @@ import { Button, Tag, Alert } from '@trussworks/react-uswds';
 import { useMediaQuery } from 'react-responsive';
 import moment from 'moment';
 import Container from '../../Container';
-import './SideNav.css';
+import './SideNav.scss';
 import { REPORT_STATUSES } from '../../../Constants';
 import {
   NOT_STARTED, IN_PROGRESS, COMPLETE,
