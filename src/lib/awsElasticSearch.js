@@ -8,7 +8,7 @@ const generateEsConfig = () => {
     const {
       'aws-elasticsearch': [{
         credentials: {
-          host,
+          uri,
           access_key,
           secret_key,
         },
@@ -16,7 +16,7 @@ const generateEsConfig = () => {
     } = JSON.parse(process.env.VCAP_SERVICES);
 
     return {
-      host,
+      uri,
       access_key,
       secret_key,
     };
@@ -31,7 +31,7 @@ const generateEsConfig = () => {
 };
 
 const {
-  host,
+  uri,
   access_key,
   secret_key,
 } = generateEsConfig();
@@ -61,7 +61,7 @@ const getClient = async () => new Client({
     },
     'us-gov-west-1',
   ),
-  node: host,
+  node: uri,
 });
 /*
   Create an index that can have searchable documents assigned.
