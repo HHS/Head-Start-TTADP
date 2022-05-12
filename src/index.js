@@ -30,37 +30,42 @@ if (!bypassSockets) {
 
   // IIFE to get around top level awaits
   (async () => {
-    const wss = new WebSocketServer({ server });
-    const redisClient = createClient({
-      url: redisUrl,
-    });
-    await redisClient.connect();
-    auditLogger.info('connected to redis!');
+    auditLogger.info('websocket function is being invoked');
+    try {
+      const wss = new WebSocketServer({ server });
+      const redisClient = createClient({
+        url: redisUrl,
+      });
+      await redisClient.connect();
+      auditLogger.info('connected to redis!');
 
-    // We need to set up duplicate connections for subscribing,
-    // as once a client is in "subscribe" mode, it can't send
-    // any other commands (like "publish")
-    const subscriber = redisClient.duplicate();
-    await subscriber.connect();
+      // We need to set up duplicate connections for subscribing,
+      // as once a client is in "subscribe" mode, it can't send
+      // any other commands (like "publish")
+      const subscriber = redisClient.duplicate();
+      await subscriber.connect();
 
-    let channelName = '';
+      let channelName = '';
 
-    wss.on('connection', async (ws, req) => {
-      channelName = req.url;
-      auditLogger.info(`Connected to websockets. Attempting to connect to redis ${channelName}`);
-      await subscriber.subscribe(channelName, (message) => {
-        auditLogger.info(`Channel ${channelName} has received a message`);
-        ws.send(message);
+      wss.on('connection', async (ws, req) => {
+        channelName = req.url;
+        auditLogger.info(`Connected to websockets. Attempting to connect to redis ${channelName}`);
+        await subscriber.subscribe(channelName, (message) => {
+          auditLogger.info(`Channel ${channelName} has received a message`);
+          ws.send(message);
+        });
+
+        ws.on('message', async (message) => {
+          const { channel, ...data } = JSON.parse(message);
+          auditLogger.info(`Received message, attempting to publish to ${channel}`);
+          await redisClient.publish(channel, JSON.stringify(data));
+        });
       });
 
-      ws.on('message', async (message) => {
-        const { channel, ...data } = JSON.parse(message);
-        auditLogger.info(`Received message, attempting to publish to ${channel}`);
-        await redisClient.publish(channel, JSON.stringify(data));
-      });
-    });
-
-    wss.on('close', async () => subscriber.unsubscribe(channelName));
+      wss.on('close', async () => subscriber.unsubscribe(channelName));
+    } catch (err) {
+      auditLogger.error(err);
+    }
   })();
 }
 
