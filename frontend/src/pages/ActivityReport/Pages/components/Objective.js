@@ -10,7 +10,7 @@ import ObjectiveFormItem from './ObjectiveFormItem';
 import ContextMenu from '../../../../components/ContextMenu';
 import RichEditor from '../../../../components/RichEditor';
 import { getEditorState } from '../../../../utils';
-import './Objective.css';
+import './Objective.scss';
 
 const statuses = [
   'Not Started',
