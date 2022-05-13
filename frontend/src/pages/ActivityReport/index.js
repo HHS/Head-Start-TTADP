@@ -110,7 +110,7 @@ function setConnectionActiveWithError(e, setConnectionActive) {
   let connection = false;
   // if we get an "unauthorized" or "not found" responce back from the API, we DON'T
   // display the "network is unavailable" message
-  if (e instanceof HTTPError && ['403', '404'].includes(e.status)) {
+  if (e instanceof HTTPError && [403, 404].includes(e.status)) {
     connection = true;
   }
   setConnectionActive(connection);
@@ -197,7 +197,7 @@ function ActivityReport({
   const [lastSaveTime, updateLastSaveTime] = useState(null);
 
   const [formData, updateFormData, localStorageAvailable] = useARLocalStorage(
-    LOCAL_STORAGE_DATA_KEY(activityReportId), { ...defaultValues, pageState: defaultPageState },
+    LOCAL_STORAGE_DATA_KEY(activityReportId), null,
   );
 
   // retrieve the last time the data was saved to local storage
@@ -217,7 +217,7 @@ function ActivityReport({
   // If the user is one of the approvers on this report and is still pending approval.
   const [isPendingApprover, updateIsPendingApprover] = useState(false);
   const [editable, updateEditable] = useLocalStorage(
-    LOCAL_STORAGE_EDITABLE_KEY(activityReportId), false, currentPage !== 'review',
+    LOCAL_STORAGE_EDITABLE_KEY(activityReportId), (activityReportId === 'new'), currentPage !== 'review',
   );
 
   const [showValidationErrors, updateShowValidationErrors] = useState(false);
@@ -370,13 +370,13 @@ function ActivityReport({
 
         updateError();
       } catch (e) {
-        console.log(e);
         const connection = setConnectionActiveWithError(e, setConnectionActive);
         const networkErrorMessage = (
           <>
-            There&rsquo;s an issue with your connection.
+            {/* eslint-disable-next-line max-len */}
+            There&rsquo;s an issue with your connection. Some sections of this form may not load correctly.
             <br />
-            Your work is saved on this computer. When this alert disappears, try to submit again.
+            Your work is saved on this computer.
             <br />
             If you continue to have problems,
             {' '}
@@ -390,6 +390,10 @@ function ActivityReport({
         // component so we can redirect the user. We can do this by updating the form data
         if (report && parseInt(report.regionId, DECIMAL_BASE) === -1) {
           updateFormData({ regionId: report.regionId });
+        }
+
+        if (formData === null && !connection) {
+          updateFormData({ ...defaultValues, pageState: defaultPageState });
         }
       } finally {
         updateLoading(false);
@@ -421,7 +425,7 @@ function ActivityReport({
     );
   }
 
-  if (!editable && currentPage !== 'review') {
+  if (connectionActive && !editable && currentPage !== 'review') {
     return (
       <Redirect push to={`/activity-reports/${activityReportId}/review`} />
     );
@@ -556,7 +560,7 @@ function ActivityReport({
     <div className="smart-hub-activity-report">
       { error
       && (
-      <Alert type="error">
+      <Alert type="warning">
         {error}
       </Alert>
       )}
