@@ -376,9 +376,7 @@ function ActivityReport({
             {/* eslint-disable-next-line max-len */}
             There&rsquo;s an issue with your connection. Some sections of this form may not load correctly.
             <br />
-            Your work is saved on this computer.
-            <br />
-            If you continue to have problems,
+            Your work is saved on this computer. If you continue to have problems,
             {' '}
             <a href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">contact us</a>
             .
