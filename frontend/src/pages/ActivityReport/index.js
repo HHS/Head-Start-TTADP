@@ -15,10 +15,8 @@ import { useHistory, Redirect } from 'react-router-dom';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
-
 import pages from './Pages';
 import Navigator from '../../components/Navigator';
-
 import './index.scss';
 import { NOT_STARTED } from '../../components/Navigator/constants';
 import { REPORT_STATUSES, DECIMAL_BASE } from '../../Constants';
@@ -36,6 +34,8 @@ import {
 } from '../../fetchers/activityReports';
 import { SocketContext, socketPath } from '../../components/SocketProvider';
 import UserContext from '../../UserContext';
+import useInterval from '../../hooks/useInterval';
+import SocketAlert from './components/SocketAlert';
 
 const defaultValues = {
   ECLKCResourcesUsed: [{ value: '' }],
@@ -156,7 +156,6 @@ function ActivityReport({
   const [showValidationErrors, updateShowValidationErrors] = useState(false);
   const [errorMessage, updateErrorMessage] = useState();
   const [creatorNameWithRole, updateCreatorRoleWithName] = useState('');
-  const [otherEditingUser, updateOtherEditingUser] = useState(null);
   const reportId = useRef();
   const { user } = useContext(UserContext);
 
@@ -164,11 +163,17 @@ function ActivityReport({
 
   const { socket, store } = useContext(SocketContext);
 
-  useEffect(() => {
-    if (store) {
-      updateOtherEditingUser(store);
-    }
-  }, [store]);
+  const INTERVAL_DELAY = 2500;
+  const publishLocation = () => {
+    socket.send(JSON.stringify({
+      page: formData ? formData.pageState : defaultPageState,
+      user: user.name,
+      lastSaveTime,
+      channel: socketPath(activityReportId),
+    }));
+  };
+
+  useInterval(publishLocation, INTERVAL_DELAY);
 
   useEffect(() => {
     // Clear history state once mounted and activityReportId changes. This prevents someone from
@@ -329,13 +334,6 @@ function ActivityReport({
 
     const page = pages.find((p) => p.position === position);
     history.push(`/activity-reports/${reportId.current}/${page.path}`, state);
-
-    socket.send(JSON.stringify({
-      page,
-      user: user.id,
-      lastSaveTime,
-      channel: socketPath(activityReportId),
-    }));
   };
 
   const onSave = async (data) => {
@@ -429,25 +427,7 @@ function ActivityReport({
 
   return (
     <div className="smart-hub-activity-report">
-      { otherEditingUser ? (
-        <Alert type="info">
-          <span>
-            User
-            {' '}
-            {otherEditingUser.user}
-            {' '}
-            is editing
-            {' '}
-            {otherEditingUser.page.label}
-            {' '}
-            on report
-            {' '}
-            {otherEditingUser.activityReportId}
-            .
-            { otherEditingUser.lastSaveTime ? `They last saved at this time ${otherEditingUser.lastSaveTime}` : ''}
-          </span>
-        </Alert>
-      ) : null}
+      <SocketAlert store={store} />
       <Helmet titleTemplate="%s - Activity Report - TTA Hub" defaultTitle="TTA Hub - Activity Report" />
       <Grid row className="flex-justify">
         <Grid col="auto">
