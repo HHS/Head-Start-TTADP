@@ -14,6 +14,7 @@ services:
       - POSTGRES_HOST=postgres_docker
       - REDIS_HOST=redis
       - SMTP_HOST=mailcatcher
+      - FONTAWESOME_NPM_AUTH_TOKEN
     volumes:
       - ".:/app:rw"
   frontend:

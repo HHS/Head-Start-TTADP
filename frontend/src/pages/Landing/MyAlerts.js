@@ -291,8 +291,8 @@ function MyAlerts(props) {
                   {renderColumnHeader('Date started', 'startDate')}
                   {renderColumnHeader('Creator', 'author')}
                   {renderColumnHeader('Created date', 'createdAt')}
-                  {renderColumnHeader('Collaborator(s)', 'collaborators')}
-                  {renderColumnHeader('Approvers(s)', 'approvals', true)}
+                  {renderColumnHeader('Collaborators', 'collaborators')}
+                  {renderColumnHeader('Approvers', 'approvals', true)}
                   {renderColumnHeader('Status', 'calculatedStatus')}
                   <th scope="col" aria-label="..." />
                 </tr>
