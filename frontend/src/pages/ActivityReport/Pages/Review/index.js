@@ -66,7 +66,10 @@ const ReviewSubmit = ({
 
   const editing = calculatedStatus === REPORT_STATUSES.DRAFT
     || calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
-  const items = editing ? reviewItems : reviewItems.map((ri) => ({
+  const items = editing ? reviewItems.map((ri) => ({
+    ...ri,
+    expanded: false,
+  })) : reviewItems.map((ri) => ({
     ...ri,
     expanded: true,
   }));
@@ -137,7 +140,6 @@ ReviewSubmit.propTypes = {
     name: PropTypes.string.isRequired,
     role: PropTypes.arrayOf(PropTypes.string).isRequired,
   }).isRequired,
-  // eslint-disable-next-line react/forbid-prop-types
   reviewItems: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.string.isRequired,

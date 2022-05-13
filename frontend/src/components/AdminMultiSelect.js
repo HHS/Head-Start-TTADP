@@ -71,6 +71,7 @@ AdminMultiSelect.propTypes = {
   onChange: PropTypes.func.isRequired,
   placeholder: PropTypes.string,
   label: PropTypes.string.isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
   options: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
