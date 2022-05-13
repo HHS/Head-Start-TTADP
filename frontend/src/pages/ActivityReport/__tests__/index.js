@@ -41,7 +41,7 @@ describe('ActivityReport', () => {
     fetchMock.get('/api/activity-reports/1', async () => { throw e; });
     renderActivityReport('1', 'activity-summary', true);
     const [alert] = await screen.findAllByTestId('alert');
-    expect(alert).toHaveTextContent('There’s an issue with your connection. Some sections of this form may not load correctly.Your work is saved on this computer.If you continue to have problems, contact us.');
+    expect(alert).toHaveTextContent('There’s an issue with your connection. Some sections of this form may not load correctly.Your work is saved on this computer. If you continue to have problems, contact us.');
   });
 
   describe('allow approvers to edit', () => {
