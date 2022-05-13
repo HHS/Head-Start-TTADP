@@ -1,0 +1,76 @@
+@use '../../colors.scss' as *;
+
+.goals-table .usa-table-container .tta-smarthub--objective-rows td table {
+  border-collapse: separate;
+  border-spacing: 0px 16px;
+}
+
+.goals-table .usa-table .tta-smarthub--objective-rows td,
+.goals-table .usa-table .tta-smarthub--objective-rows thead th {
+  border: none;
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+
+.goals-table .usa-table .tta-smarthub--objective-rows td {
+  padding-top: 0px;
+  border-right: 1px solid $base-light;
+  border-left: 1px solid $base-light;
+  border-bottom: 1px solid $base-light;
+}
+
+.tta-smarthub--goal-row-obj-table-rows,
+.tta-smarthub--objective-rows .usa-list:last-child{
+  background-color: $gray-two;
+  margin-bottom: 16px;
+}
+
+.goals-table .usa-table .tta-smarthub--objective-reasons-list {
+  list-style-type: none;
+}
+
+.tta-smarthub--objective-rows .tta-smarthub--objective-reasons-list li,
+.tta-smarthub--goal-row-obj-table  .tta-smarthub--objective-reasons-list li:first-child {
+  padding: 0px;
+  max-width: 270px;
+  min-width: 270px;
+}
+
+.goals-table .tta-smarthub--objective-rows .tta-smarthub--objective-row td {
+    border: none;
+  }
+
+  /* Objective Cells */
+  .tta-smarthub--goal-row-obj-table li {
+    padding: 24px;
+  }
+
+  .tta-smarthub--goal-row-obj-table li:first-child {
+    max-width: 490px;
+    min-width: 490px;
+  }
+
+  .tta-smarthub--goal-row-obj-table li:nth-child(2) {
+    max-width: 200px;
+    min-width: 200px;
+  }
+
+  .tta-smarthub--goal-row-obj-table li:nth-child(3) {
+    max-width: 140px;
+    min-width: 140px;
+  }
+
+  .tta-smarthub--goal-row-obj-table li:nth-child(4) {
+    max-width: 280px;
+    min-width: 280px;
+  }
+
+  .tta-smarthub--goal-row-obj-table li:nth-child(5) {
+    max-width: 180px;
+    min-width: 180px;
+  }
+
+  .tta-smarthub--goal-row-obj-table-header li {
+    padding-top: 8px;
+    padding-bottom: 16px;
+  }

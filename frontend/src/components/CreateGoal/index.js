@@ -21,6 +21,7 @@ import {
 import { DECIMAL_BASE, REPORT_STATUSES } from '../../Constants';
 import ReadOnly from './ReadOnly';
 import PlusButton from './PlusButton';
+import colors from '../../colors';
 
 const [
   objectiveTextError, objectiveTopicsError, objectiveResourcesError, objectiveStatusError,
@@ -540,7 +541,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
         className="ttahub-recipient-record--tabs_back-to-search margin-left-2 margin-top-4 margin-bottom-3 display-inline-block"
         to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
       >
-        <FontAwesomeIcon className="margin-right-1" color="#0166ab" icon={faArrowLeft} />
+        <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
         <span>Back to Goals & Objectives</span>
       </Link>
       <h1 className="page-heading margin-top-0 margin-bottom-1 margin-left-2">
