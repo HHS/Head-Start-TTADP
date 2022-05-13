@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faChartBar, faUserFriends, faUser, faClock, faBuilding,
+  faChartColumn, faUserFriends, faUser, faClock, faBuilding,
 } from '@fortawesome/free-solid-svg-icons';
 import withWidgetData from './withWidgetData';
 import './DashboardOverview.css';
@@ -70,7 +70,7 @@ const DASHBOARD_FIELDS = {
         key="activity-reports"
         showTooltip={showTooltip}
         tooltipText="The number of approved activity reports."
-        icon={faChartBar}
+        icon={faChartColumn}
         iconColor={colors.success}
         backgroundColor={colors.successLighter}
         label="Activity reports"
