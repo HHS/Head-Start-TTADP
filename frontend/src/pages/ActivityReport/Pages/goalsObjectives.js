@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { Fieldset, Label, Alert } from '@trussworks/react-uswds';
+import { Fieldset, Label } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import { isUndefined } from 'lodash';
@@ -16,6 +16,7 @@ import ObjectivePicker from './components/ObjectivePicker';
 import RecipientReviewSection from './components/RecipientReviewSection';
 import OtherEntityReviewSection from './components/OtherEntityReviewSection';
 import { validateObjectives } from './components/objectiveValidator';
+import ConnectionError from './components/ConnectionError';
 
 const GoalsObjectives = () => {
   const { watch } = useFormContext();
@@ -66,15 +67,10 @@ const GoalsObjectives = () => {
         && (
           <Fieldset className="smart-hub--report-legend margin-top-4" legend="Goals and objectives">
             <div id="goals-and-objectives" />
+            { fetchError && (<ConnectionError />)}
             <GoalPicker
               availableGoals={availableGoals}
             />
-            { fetchError && (
-            <Alert noIcon type="warning">
-              We&rsquo;re having trouble retrieving goals for you right now.
-              Your work is still being saved.
-            </Alert>
-            )}
           </Fieldset>
         )}
     </>

@@ -15,6 +15,7 @@ import MultiSelect from '../../../../../components/MultiSelect';
 import ApproverStatusList from '../../components/ApproverStatusList';
 import DismissingComponentWrapper from '../../../../../components/DismissingComponentWrapper';
 import NetworkContext from '../../../../../NetworkContext';
+import ConnectionError from '../../components/ConnectionError';
 
 const Draft = ({
   availableApprovers,
@@ -118,10 +119,7 @@ const Draft = ({
             manager(s) for approval.
           </p>
           { !connectionActive && (
-            <Alert type="warning" noIcon>
-              We had trouble retrieving available approvers for you. You may not see all available
-              right now. Your work is still saved.
-            </Alert>
+            <ConnectionError />
           )}
           <FormItem
             label="Approving manager"
@@ -159,7 +157,7 @@ const Draft = ({
           There&#39;s an issue with your connection.
           <br />
           { localStorageAvailable ? 'Your work is saved on this computer.' : '' }
-          When this alert disappears, try to submit again.
+          {' '}
           <br />
           If you continue to have problems,
           {' '}
