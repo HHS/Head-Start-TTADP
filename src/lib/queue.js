@@ -16,6 +16,7 @@ const generateRedisConfig = () => {
       uri,
       host,
       port,
+      tlsEnabled: true,
       // TLS needs to be set to an empty object for redis on cloud.gov
       // eslint-disable-next-line no-empty-pattern
       redisOpts: { redis: { password, tls: {} } },
@@ -24,8 +25,9 @@ const generateRedisConfig = () => {
   const { REDIS_HOST: host, REDIS_PASS: password } = process.env;
   return {
     host,
-    uri: '',
+    uri: `redis://:${password}@${host}:${process.env.REDIS_PORT || 6379}`,
     port: (process.env.REDIS_PORT || 6379),
+    tlsEnabled: false,
     redisOpts: { redis: { password } },
   };
 };
