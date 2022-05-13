@@ -19,17 +19,13 @@
 }
 
 .goals-table .usa-table thead th {
-  background-color: white;
-  border-top: solid 1.5px;
-  border-color: #eceef1;
-  border-bottom: none;
+  background-color: #fff;
   padding-right: 0px;
   padding-top: 24px;
   padding-left: 24px;
   padding-bottom: 8px;
-  background-color: white;
+  background-color: #fff;
   border-style: none;
-  color: black;
 }
 
 .goals-table .usa-table-container {
