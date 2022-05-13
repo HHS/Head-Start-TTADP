@@ -4,6 +4,7 @@ import aws4 from 'aws4';
 import { auditLogger, logger } from '../logger';
 
 const generateEsConfig = () => {
+  // Pull from VCAP env variables (cloud.gov)
   if (process.env.VCAP_SERVICES) {
     const {
       'aws-elasticsearch': [{
@@ -66,10 +67,10 @@ const getClient = async () => new Client({
 /*
   Create an index that can have searchable documents assigned.
 */
-const createIndex = async (indexName) => {
+const createIndex = async (indexName, mockClient) => {
   try {
     // Initialize the client.
-    const client = await getClient();
+    const client = mockClient || await getClient();
 
     // Create index.
     const res = await client.indices.create({
@@ -86,10 +87,10 @@ const createIndex = async (indexName) => {
 /*
   Assign a searchable document to an index.
 */
-const addIndexDocument = async (indexName, id, document) => {
+const addIndexDocument = async (indexName, id, document, mockClient) => {
   try {
     // Initialize the client.
-    const client = await getClient();
+    const client = mockClient || await getClient();
 
     // Add a document to an index.
     const res = await client.index({
@@ -108,10 +109,10 @@ const addIndexDocument = async (indexName, id, document) => {
 /*
   Search index documents.
 */
-const search = async (indexName, fields, query) => {
+const search = async (indexName, fields, query, mockClient) => {
   try {
     // Initialize the client.
-    const client = await getClient();
+    const client = mockClient || await getClient();
 
     // Create search body.
     const body = {
@@ -130,7 +131,6 @@ const search = async (indexName, fields, query) => {
       body,
     });
     logger.info(`AWS OpenSearch: Successfully searched the index ${indexName} using query '${query}`);
-
     return res.body.hits;
   } catch (error) {
     auditLogger.error(`AWS OpenSearch Error: Unable to search the index '${indexName}' with query '${query}': ${error.message}`);
@@ -141,10 +141,10 @@ const search = async (indexName, fields, query) => {
 /*
   Update index document.
 */
-const updateIndexDocument = async (indexName, id, body) => {
+const updateIndexDocument = async (indexName, id, body, mockClient) => {
   try {
     // Initialize the client.
-    const client = await getClient();
+    const client = mockClient || await getClient();
 
     // Update index document.
     await client.update({
@@ -164,10 +164,10 @@ const updateIndexDocument = async (indexName, id, body) => {
 /*
   Delete an index document.
 */
-const deleteIndexDocument = async (indexName, id) => {
+const deleteIndexDocument = async (indexName, id, mockClient) => {
   try {
     // Initialize the client.
-    const client = await getClient();
+    const client = mockClient || await getClient();
 
     // Delete index document.
     await client.delete({
@@ -186,10 +186,10 @@ const deleteIndexDocument = async (indexName, id) => {
 /*
   Delete an index.
 */
-const deleteIndex = async (indexName) => {
+const deleteIndex = async (indexName, mockClient) => {
   try {
     // Initialize the client.
-    const client = await getClient();
+    const client = mockClient || await getClient();
 
     const res = await client.indices.delete({
       index: indexName,

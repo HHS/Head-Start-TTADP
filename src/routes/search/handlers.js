@@ -1,5 +1,5 @@
 import {
-  createIndex, addIndexDocument, search, deleteIndex,
+  createIndex, addIndexDocument, search, deleteIndex, updateIndexDocument,
 } from '../../lib/awsElasticSearch';
 import handleErrors from '../../lib/apiErrorHandler';
 
@@ -57,6 +57,24 @@ export async function addIndexDocuments(req, res) {
     const res3 = await addIndexDocument(index, 3, documentThree);
 
     res.json([res1, res2, res3]);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function updateDocument(req, res) {
+  try {
+    const {
+      index,
+    } = req.query;
+
+    const body = {
+      doc: {
+        specialist: 'Bruce Wayne',
+      },
+    };
+    const updatedIndexRes = await updateIndexDocument(index, 1, body);
+    res.json(updatedIndexRes);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
