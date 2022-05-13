@@ -6,7 +6,7 @@ import {
 } from '@trussworks/react-uswds';
 import Modal from './Modal';
 import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '../Constants';
-import './CloseSuspendReasonModal.css';
+import './CloseSuspendReasonModal.scss';
 
 const CloseSuspendReasonModal = ({
   modalRef, goalId, newStatus, onSubmit, resetValues,
