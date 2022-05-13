@@ -1,3 +1,4 @@
+/* eslint-disable react/forbid-prop-types */
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
@@ -8,12 +9,13 @@ import Modal from '../../components/Modal';
 import Container from '../../components/Container';
 import ContextMenu from '../../components/ContextMenu';
 import NewReport from './NewReport';
-import './index.css';
+import './index.scss';
 import { ALERTS_PER_PAGE } from '../../Constants';
 import { deleteReport } from '../../fetchers/activityReports';
 import TooltipWithCollection from '../../components/TooltipWithCollection';
 import Tooltip from '../../components/Tooltip';
 import TableHeader from '../../components/TableHeader';
+import { cleanupLocalStorage } from '../ActivityReport';
 
 export function ReportsRow({ reports, removeAlert, message }) {
   const history = useHistory();
@@ -26,6 +28,7 @@ export function ReportsRow({ reports, removeAlert, message }) {
     }
     await deleteReport(reportId);
     removeAlert(reportId);
+    cleanupLocalStorage(reportId);
   };
 
   const tableRows = reports.map((report, index, { length }) => {
@@ -154,6 +157,7 @@ export function ReportsRow({ reports, removeAlert, message }) {
 }
 
 ReportsRow.propTypes = {
+  // eslint-disable-next-line react/forbid-prop-types
   reports: PropTypes.arrayOf(PropTypes.object).isRequired,
   removeAlert: PropTypes.func.isRequired,
   message: PropTypes.shape({
@@ -290,8 +294,8 @@ function MyAlerts(props) {
                   {renderColumnHeader('Date started', 'startDate')}
                   {renderColumnHeader('Creator', 'author')}
                   {renderColumnHeader('Created date', 'createdAt')}
-                  {renderColumnHeader('Collaborator(s)', 'collaborators')}
-                  {renderColumnHeader('Approvers(s)', 'approvals', true)}
+                  {renderColumnHeader('Collaborators', 'collaborators')}
+                  {renderColumnHeader('Approvers', 'approvals', true)}
                   {renderColumnHeader('Status', 'calculatedStatus')}
                   <th scope="col" aria-label="..." />
                 </tr>
@@ -308,6 +312,7 @@ function MyAlerts(props) {
 }
 
 MyAlerts.propTypes = {
+  // eslint-disable-next-line react/forbid-prop-types
   reports: PropTypes.arrayOf(PropTypes.object),
   newBtn: PropTypes.bool.isRequired,
   alertsSortConfig: PropTypes.shape({ sortBy: PropTypes.string, direction: PropTypes.string }),

@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import Pagination from 'react-js-pagination';
 import ReportMenu from '../pages/Landing/ReportMenu';
+import colors from '../colors';
 
 export function renderTotal(offset, perPage, activePage, reportsCount) {
   const from = offset >= reportsCount ? 0 : offset + 1;
@@ -60,7 +61,7 @@ export default function TableHeader({
                   }}
                 >
                   <FontAwesomeIcon
-                    color="blue"
+                    color={colors.ttahubMediumBlue}
                     inverse
                     icon={faTimesCircle}
                   />

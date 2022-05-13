@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import Container from '../../../components/Container';
-import './RecipientResults.css';
+import './RecipientResults.scss';
 import TableHeader from '../../../components/TableHeader';
 
 export default function RecipientResults(
