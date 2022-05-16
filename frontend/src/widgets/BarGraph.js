@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 // https://github.com/plotly/react-plotly.js/issues/135#issuecomment-501398125
 import Plotly from 'plotly.js-basic-dist';
 import createPlotlyComponent from 'react-plotly.js/factory';
+import colors from '../colors';
 
 import './BarGraph.css';
 
@@ -59,6 +60,9 @@ function BarGraph({ data, yAxisLabel, xAxisLabel }) {
       x: categories.map((category) => topicsWithLineBreaks(category)),
       y: counts,
       hoverinfo: 'y',
+      marker: {
+        color: colors.ttahubMediumBlue,
+      },
     };
 
     const width = categories.length * WIDGET_PER_CATEGORY;

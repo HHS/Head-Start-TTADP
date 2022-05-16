@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import {
   render, screen,
 } from '@testing-library/react';
+import moment from 'moment';
 
 import SideNav from '../SideNav';
 import {
@@ -11,9 +12,22 @@ import {
 } from '../../constants';
 
 import { REPORT_STATUSES } from '../../../../Constants';
+import NetworkContext from '../../../../NetworkContext';
 
 describe('SideNav', () => {
-  const renderNav = (state, onNavigation = () => {}, current = false, errorMessage = null) => {
+  const saveDataDefaults = {
+    connectionActive: true,
+    savedToStorageTime: new Date().toISOString(),
+    lastSaveTime: moment(),
+  };
+
+  const renderNav = (
+    state,
+    onNavigation = () => {},
+    current = false,
+    errorMessage = null,
+    saveData = saveDataDefaults,
+  ) => {
     const pages = [
       {
         label: 'test',
@@ -29,13 +43,19 @@ describe('SideNav', () => {
       },
     ];
 
+    const { connectionActive, lastSaveTime, savedToStorageTime } = saveData;
+
     render(
-      <SideNav
-        pages={pages}
-        skipTo="skip"
-        skipToMessage="message"
-        errorMessage={errorMessage}
-      />,
+      <NetworkContext.Provider value={{ connectionActive }}>
+        <SideNav
+          pages={pages}
+          skipTo="skip"
+          skipToMessage="message"
+          errorMessage={errorMessage}
+          lastSaveTime={lastSaveTime}
+          savedToStorageTime={savedToStorageTime}
+        />
+      </NetworkContext.Provider>,
     );
   };
 
@@ -87,6 +107,66 @@ describe('SideNav', () => {
     renderNav(REPORT_STATUSES.SUBMITTED, () => {}, false, 'error');
     const alert = await screen.findByTestId('alert');
     expect(alert).toBeVisible();
+  });
+
+  it('displays two success messages', async () => {
+    renderNav(REPORT_STATUSES.DRAFT, () => {}, false, null);
+    const alert = await screen.findByTestId('alert');
+
+    expect(alert).toBeVisible();
+    const reggies = [
+      new RegExp('our network at', 'i'),
+      new RegExp('your computer at', 'i'),
+    ];
+
+    const reggiesMeasured = reggies.map((r) => alert.textContent.match(r));
+    expect(reggiesMeasured.length).toBe(2);
+    expect(reggiesMeasured[0].length).toBe(1);
+    expect(reggiesMeasured[1].length).toBe(1);
+  });
+
+  it('displays success message for network save', async () => {
+    const saveData = {
+      connectionActive: true,
+      savedToStorageTime: null,
+      lastSaveTime: moment(),
+    };
+
+    renderNav(REPORT_STATUSES.DRAFT, () => {}, false, null, saveData);
+    const alert = await screen.findByTestId('alert');
+
+    expect(alert).toBeVisible();
+    const reggies = [
+      new RegExp('our network at', 'i'),
+      new RegExp('your computer at', 'i'),
+    ];
+
+    const reggiesMeasured = reggies.map((r) => alert.textContent.match(r));
+    expect(reggiesMeasured.length).toBe(2);
+    expect(reggiesMeasured[0].length).toBe(1);
+    expect(reggiesMeasured[1]).toBe(null);
+  });
+
+  it('displays success message for local storage save', async () => {
+    const saveData = {
+      connectionActive: true,
+      savedToStorageTime: new Date().toISOString(),
+      lastSaveTime: null,
+    };
+
+    renderNav(REPORT_STATUSES.DRAFT, () => {}, false, null, saveData);
+    const alert = await screen.findByTestId('alert');
+
+    expect(alert).toBeVisible();
+    const reggies = [
+      new RegExp('our network at', 'i'),
+      new RegExp('your computer at', 'i'),
+    ];
+
+    const reggiesMeasured = reggies.map((r) => alert.textContent.match(r));
+    expect(reggiesMeasured.length).toBe(2);
+    expect(reggiesMeasured[0]).toBe(null);
+    expect(reggiesMeasured[1].length).toBe(1);
   });
 
   it('clicking a nav item calls onNavigation', () => {
