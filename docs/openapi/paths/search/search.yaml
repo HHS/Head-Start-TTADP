@@ -1,0 +1,43 @@
+get:
+  tags:
+    - search
+  summary: Search aws elasticsearch
+  requestBody:
+    description: Provide index, fields, and query to search.
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            hits:
+              type: array
+              description: |
+                Search result matches.
+  parameters:
+    - name: index
+      in: query
+      description: Name of the index to search
+      required: true
+      style: form
+      schema:
+        type: string
+    - name: fields
+      in: query
+      description: Array of fields to search.
+      required: true
+      style: form
+      schema:
+        type: array
+        minItems: 1
+        items:
+          type: string
+    - name: query
+      in: query
+      description: Search query.
+      required: true
+      style: form
+      schema:
+          type: string
+
+
