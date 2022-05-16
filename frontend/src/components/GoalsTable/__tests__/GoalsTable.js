@@ -1,8 +1,9 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen, waitFor, fireEvent, act,
+  render, screen, waitFor, fireEvent,
 } from '@testing-library/react';
+import { act } from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import fetchMock from 'fetch-mock';
@@ -248,36 +249,36 @@ describe('Goals Table', () => {
 
       await screen.findByRole('cell', { name: '06/15/2021' });
       await screen.findByRole('cell', { name: /this is goal text 1/i });
-      await screen.findByRole('cell', { name: '5 Objective(s)' });
+      await screen.findByRole('cell', { name: '5 Objectives' });
 
       // Not started.
       await screen.findByRole('cell', { name: '05/15/2021' });
       await screen.findByRole('cell', { name: /this is goal text 2/i });
       await screen.findByRole('cell', { name: /nutrition, oral health/i });
-      await screen.findByRole('cell', { name: '2 Objective(s)' });
+      await screen.findByRole('cell', { name: '2 Objectives' });
 
       // Closed.
       await screen.findByRole('cell', { name: '04/15/2021' });
       await screen.findByRole('cell', { name: /this is goal text 3/i });
       await screen.findByRole('cell', { name: /parent and family engagement/i });
-      await screen.findByRole('cell', { name: '4 Objective(s)' });
+      await screen.findByRole('cell', { name: '4 Objectives' });
 
       // Needs status.
       await screen.findByRole('cell', { name: '03/15/2021' });
       await screen.findByRole('cell', { name: /this is goal text 4/i });
       await screen.findByRole('cell', { name: /partnerships and community engagement/i });
-      await screen.findByRole('cell', { name: '3 Objective(s)' });
+      await screen.findByRole('cell', { name: '3 Objectives' });
 
       // Draft.
       await screen.findByRole('cell', { name: '02/15/2021' });
       await screen.findByRole('cell', { name: /this is goal text 5/i });
-      await screen.findByRole('cell', { name: '1 Objective(s)' });
+      await screen.findByRole('cell', { name: '1 Objective' });
 
       // Ceased/Suspended.
       await screen.findByRole('cell', { name: '01/15/2021' });
       await screen.findByRole('cell', { name: /this is goal text 6/i });
       await screen.findByRole('cell', { name: /recordkeeping and reporting/i });
-      await screen.findByRole('cell', { name: '8 Objective(s)' });
+      await screen.findByRole('cell', { name: '8 Objectives' });
     });
   });
 
@@ -296,30 +297,26 @@ describe('Goals Table', () => {
     });
 
     it('Shows the correct objective data', async () => {
-      renderTable(defaultUser);
+      act(() => renderTable(defaultUser));
       await screen.findByText('TTA goals and objectives');
-      const inProgress = await screen.findAllByRole('cell', { name: 'In progress' });
-      expect(inProgress.length).toBe(2);
 
       // Objective 1.
-      await screen.findByRole('cell', { name: /objective 1 title/i });
-      await screen.findByRole('cell', { name: /ar-number-1/i });
-      await screen.findByRole('cell', { name: '06/14/2021' });
-      await screen.findByRole('cell', { name: /monitoring | deficiency/i });
+      await screen.findByText(/objective 1 title/i);
+      await screen.findByRole('link', { name: /ar-number-1/i });
+      await screen.findByText('06/14/2021');
+      await screen.findByText(/monitoring | deficiency/i);
 
       // Objective 2.
-      await screen.findByRole('cell', { name: /objective 2 title/i });
-      await screen.findByRole('cell', { name: /ar-number-2/i });
-      await screen.findByRole('cell', { name: '05/14/2021' });
-      await screen.findByRole('cell', { name: 'Below Competitive Threshold (CLASS)' });
-      await screen.findByRole('cell', { name: /not started/i });
+      await screen.findByText(/objective 2 title/i);
+      await screen.findByRole('link', { name: /ar-number-2/i });
+      await screen.findByText('05/14/2021');
+      await screen.findByText('Below Competitive Threshold (CLASS)');
 
       // Objective 3.
-      await screen.findByRole('cell', { name: /objective 3 title/i });
-      await screen.findByRole('cell', { name: /ar-number-3/i });
-      await screen.findByRole('cell', { name: '04/14/2021' });
-      await screen.findByRole('cell', { name: 'COVID-19 response' });
-      await screen.findByRole('cell', { name: /closed/i });
+      await screen.findByText(/objective 3 title/i);
+      await screen.findByRole('link', { name: /ar-number-3/i });
+      await screen.findByText('04/14/2021');
+      await screen.findByText(/covid-19 response/i);
 
       expect(await screen.findByText(/1-1 of 1/i)).toBeVisible();
       expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
@@ -336,13 +333,10 @@ describe('Goals Table', () => {
       fireEvent.click(expandObjectives);
       expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).not.toBeInTheDocument();
 
-      const collapseButton = await screen.findAllByRole('button', { name: /return to goals/i });
-      fireEvent.click(collapseButton[0]);
+      // Collapse Objectives via click.
+      const collapseButton = await screen.findByRole('button', { name: "Collapse objective's for goal R14-G-4598" });
+      fireEvent.click(collapseButton);
       expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).toBeInTheDocument();
-
-      // We should set focus back to the expand button.
-      const expandWithFocus = await screen.findByRole('button', { name: /expand objective's for goal r14-g-4598/i });
-      expect(expandWithFocus).toHaveFocus();
     });
 
     it('hides the add new goal button if recipient has no active grants', async () => {
@@ -391,10 +385,6 @@ describe('Goals Table', () => {
       await screen.findByText('TTA goals and objectives');
 
       expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/needs status/i);
-      expect(document.querySelector('.fa-circle-exclamation')).toHaveAttribute(
-        'color',
-        '#c5c5c5',
-      );
     });
   });
 
