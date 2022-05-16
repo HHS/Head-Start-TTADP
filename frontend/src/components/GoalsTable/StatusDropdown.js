@@ -1,46 +1,46 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faClock,
-  faCheckCircle,
-  faExclamationCircle,
-  faPencilAlt,
-  faMinusCircle,
-  faTimesCircle,
-} from '@fortawesome/free-solid-svg-icons';
 import './StatusDropdown.css';
+import {
+  InProgress,
+  Closed,
+  NoStatus,
+  NotStarted,
+  Draft,
+  Ceased,
+} from './icons';
+import colors from '../../colors';
 
 const STATUSES = {
   'In Progress': {
     display: 'In progress',
-    color: '#0166ab',
-    icon: <FontAwesomeIcon className="margin-right-1" size="1x" color="#0166ab" icon={faClock} />,
+    color: colors.ttahubMediumBlue,
+    icon: <InProgress />,
   },
   Completed: {
     display: 'Closed',
-    color: '#148439',
-    icon: <FontAwesomeIcon className="margin-right-1" size="1x" color="#148439" icon={faCheckCircle} />,
+    color: colors.success,
+    icon: <Closed />,
   },
   Draft: {
     display: 'Draft',
-    color: '#475260',
-    icon: <FontAwesomeIcon className="margin-right-1" size="1x" color="#475260" icon={faPencilAlt} />,
+    color: colors.ttahubBlue,
+    icon: <Draft />,
   },
   'Not Started': {
     display: 'Not started',
-    color: '#e2a04d',
-    icon: <FontAwesomeIcon className="margin-right-1" size="1x" color="#e2a04d" icon={faMinusCircle} />,
+    color: colors.warning,
+    icon: <NotStarted />,
   },
   'Ceased/Suspended': {
     display: 'Suspended',
-    color: '#b50908',
-    icon: <FontAwesomeIcon className="margin-right-1" size="1x" color="#b50908" icon={faTimesCircle} />,
+    color: colors.errorDark,
+    icon: <Ceased />,
   },
   'Needs Status': {
     display: 'Needs status',
-    color: '#c5c5c5',
-    icon: <FontAwesomeIcon className="margin-right-1" size="1x" color="#c5c5c5" icon={faExclamationCircle} />,
+    color: colors.baseLighter,
+    icon: <NoStatus />,
   },
 };
 

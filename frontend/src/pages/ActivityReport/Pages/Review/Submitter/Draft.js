@@ -14,6 +14,8 @@ import HookFormRichEditor from '../../../../../components/HookFormRichEditor';
 import MultiSelect from '../../../../../components/MultiSelect';
 import ApproverStatusList from '../../components/ApproverStatusList';
 import DismissingComponentWrapper from '../../../../../components/DismissingComponentWrapper';
+import NetworkContext from '../../../../../NetworkContext';
+import ConnectionError from '../../components/ConnectionError';
 
 const Draft = ({
   availableApprovers,
@@ -32,6 +34,7 @@ const Draft = ({
   const hasIncompletePages = incompletePages.length > 0;
   const [justSubmitted, updatedJustSubmitted] = useState(false);
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
+  const { connectionActive, localStorageAvailable } = useContext(NetworkContext);
 
   const { user } = useContext(UserContext);
 
@@ -115,6 +118,9 @@ const Draft = ({
             mode. Please review all information in each section before submitting to your
             manager(s) for approval.
           </p>
+          { !connectionActive && (
+            <ConnectionError />
+          )}
           <FormItem
             label="Approving manager"
             name="approvers"
@@ -146,7 +152,20 @@ const Draft = ({
         >
           Save Draft
         </Button>
-        <Button type="submit">Submit for approval</Button>
+        { !connectionActive && (
+        <Alert type="warning" noIcon>
+          There&#39;s an issue with your connection.
+          <br />
+          { localStorageAvailable ? 'Your work is saved on this computer.' : '' }
+          {' '}
+          <br />
+          If you continue to have problems,
+          {' '}
+          <a href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">contact us</a>
+          .
+        </Alert>
+        )}
+        <Button disabled={!connectionActive} type="submit">Submit for approval</Button>
       </Form>
       <DismissingComponentWrapper
         shown={showSavedDraft}
