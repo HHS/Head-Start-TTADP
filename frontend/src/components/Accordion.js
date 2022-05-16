@@ -39,7 +39,7 @@ export const AccordionItem = ({
   );
 };
 
-const accordionItemPropTypes = {
+const AccordionItemProp = {
   title: PropTypes.string.isRequired,
   content: PropTypes.node.isRequired,
   expanded: PropTypes.bool,
@@ -49,13 +49,13 @@ const accordionItemPropTypes = {
   headingSize: PropTypes.number,
 };
 
-AccordionItem.propTypes = accordionItemPropTypes;
+AccordionItem.propTypes = AccordionItemProp;
 
 AccordionItem.defaultProps = {
+  headingSize: 2,
   className: '',
   handleToggle: () => { },
   expanded: false,
-  headingSize: 2,
 };
 
 export const Accordion = ({
@@ -113,7 +113,7 @@ export const Accordion = ({
 Accordion.propTypes = {
   bordered: PropTypes.bool,
   multiselectable: PropTypes.bool,
-  items: PropTypes.arrayOf(PropTypes.shape(accordionItemPropTypes)).isRequired,
+  items: PropTypes.arrayOf(PropTypes.shape(AccordionItemProp)).isRequired,
   headingSize: PropTypes.number,
 };
 
