@@ -141,6 +141,14 @@ const search = async (indexName, fields, query, mockClient) => {
 /*
   Update index document.
 */
+/* Notes: Body must be in the below format for update. */
+/*
+    const body = {
+      doc: {
+        specialist: 'Bruce Wayne', // We are updating the document field value specialist.
+      },
+    };
+*/
 const updateIndexDocument = async (indexName, id, body, mockClient) => {
   try {
     // Initialize the client.
