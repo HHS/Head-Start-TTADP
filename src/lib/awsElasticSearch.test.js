@@ -1,5 +1,7 @@
 import Mock from '@elastic/elasticsearch-mock';
-import { createIndex, addIndexDocument, search, updateIndexDocument } from './awsElasticSearch';
+import {
+  createIndex, addIndexDocument, search, updateIndexDocument, deleteIndexDocument, deleteIndex,
+} from './awsElasticSearch';
 
 const { Client } = require('@elastic/elasticsearch');
 
@@ -49,27 +51,43 @@ const expectedIndexDocument = {
   index: 'ar-test-index',
 };
 
-/* {
+const documentDeletedExpected = {
   body: {
     _index: 'ar-test-index',
     _type: '_doc',
     _id: '1',
-    _version: 1,
-    result: 'created',
+    _version: 3,
+    result: 'deleted',
     forced_refresh: true,
     _shards: {
       total: 2,
       successful: 1,
       failed: 0,
     },
-    _seq_no: 0,
+    _seq_no: 4,
     _primary_term: 1,
-    acknowledged: true,
-    index: 'ar-test-index',
-    shards_acknowledged: true,
   },
-  statusCode: 201,
-}; */
+  statusCode: 200,
+};
+
+const deleteIndexExpected = {
+  body: {
+    _index: 'ar-test-index',
+    _type: '_doc',
+    _id: '1',
+    _version: 3,
+    result: 'deleted',
+    forced_refresh: true,
+    _shards: {
+      total: 2,
+      successful: 1,
+      failed: 0,
+    },
+    _seq_no: 4,
+    _primary_term: 1,
+  },
+  statusCode: 200,
+};
 
 // Create Index Mock.
 mock.add({
@@ -91,26 +109,21 @@ mock.add({
 
 // Update Index Document Mock.
 mock.add({
-  method: ['PATCH'],
-  path: ['/test-index/_doc/1'],
+  method: ['POST'],
+  path: ['/test-index/_update/1'],
 }, () => expectedIndexCreation);
 
-// Delete
+// Delete Index Document Mock.
+mock.add({
+  method: ['DELETE'],
+  path: ['/test-index/_doc/1'],
+}, () => documentDeletedExpected);
 
-/*
-const expectedSearchCriteria = {
-  index: 'test-index',
-  body:
-{
-  query: {
-    multi_match: {
-      query: 'potter',
-      fields: ['specialist'],
-    },
-  },
-},
-};
-*/
+// Delete Index Mock.
+mock.add({
+  method: ['DELETE'],
+  path: ['/test-index'],
+}, () => deleteIndexExpected);
 
 describe('Tests aws elastic search', () => {
   afterAll(async () => {
@@ -131,8 +144,18 @@ describe('Tests aws elastic search', () => {
     await expect(res).toStrictEqual(expectedSearchResult.body.hits);
   });
 
-/*  it('updates index document', async () => {
+  it('updates index document', async () => {
     const res = await updateIndexDocument(indexName, 1, indexDocumentToAdd, myMockClient);
     await expect(res.body).toStrictEqual(expectedIndexDocument);
   });
-});*/
+
+  it('deletes index document', async () => {
+    const res = await deleteIndexDocument(indexName, 1, myMockClient);
+    await expect(res).toStrictEqual(documentDeletedExpected);
+  });
+
+  it('deletes index', async () => {
+    const res = await deleteIndex(indexName, myMockClient);
+    await expect(res).toStrictEqual(deleteIndexExpected);
+  });
+});

@@ -147,7 +147,7 @@ const updateIndexDocument = async (indexName, id, body, mockClient) => {
     const client = mockClient || await getClient();
 
     // Update index document.
-    await client.update({
+    const res = await client.update({
       index: indexName,
       id,
       body,
@@ -155,6 +155,7 @@ const updateIndexDocument = async (indexName, id, body, mockClient) => {
     });
 
     logger.info(`AWS OpenSearch: Successfully updated document  index ${indexName} for id ${id}`);
+    return res;
   } catch (error) {
     auditLogger.error(`AWS OpenSearch Error: Unable to update the index '${indexName} for id ${id}': ${error.message}`);
     throw error;
@@ -170,13 +171,14 @@ const deleteIndexDocument = async (indexName, id, mockClient) => {
     const client = mockClient || await getClient();
 
     // Delete index document.
-    await client.delete({
+    const res = await client.delete({
       index: indexName,
       id,
       refresh: true, // triggers manual refresh.
     });
 
     logger.info(`AWS OpenSearch: Successfully deleted document '${id}' for index '${indexName}'`);
+    return res;
   } catch (error) {
     auditLogger.error(`AWS OpenSearch Error: Unable to delete document '${id}' for index '${indexName}': ${error.message}`);
     throw error;
