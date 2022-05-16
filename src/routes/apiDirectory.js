@@ -52,7 +52,7 @@ router.use('/files', filesRouter);
 router.use('/recipient', recipientRouter);
 router.use('/goals', goalsRouter);
 router.use('/topic', topicsRouter);
-router.use('/site-search', search);
+router.use('/search', search);
 
 const getUser = async (req, res) => {
   const { userId } = req.session;

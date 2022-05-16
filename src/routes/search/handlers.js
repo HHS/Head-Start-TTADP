@@ -12,11 +12,11 @@ export async function searchIndex(req, res) {
   try {
     const {
       index,
-      searchFields,
-      searchQuery,
+      fields,
+      query,
     } = req.query;
 
-    const searchRes = await search(index, searchFields, searchQuery);
+    const searchRes = await search(index, fields, query);
 
     res.json(searchRes);
   } catch (error) {

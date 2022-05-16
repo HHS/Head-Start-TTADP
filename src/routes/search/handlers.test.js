@@ -30,8 +30,8 @@ describe('search', () => {
     const searchReq = {
       query: {
         index: 'index-test',
-        searchFields: ['specialist'],
-        searchQuery: 'James Bond',
+        fields: ['specialist'],
+        query: 'James Bond',
       },
     };
 
@@ -59,8 +59,8 @@ describe('search', () => {
     const searchReq = {
       query: {
         index: 'index-test',
-        searchFields: ['specialist'],
-        searchQuery: 'James Bond',
+        fields: ['specialist'],
+        query: 'James Bond',
       },
     };
     search.mockResolvedValue([]);
