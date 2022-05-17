@@ -102,9 +102,13 @@ function Dropzone(props) {
     onDrop, minSize: 0, maxSize, accept: 'image/*, .pdf, .docx, .xlsx, .pptx, .doc, .xls, .ppt, .zip, .txt, .csv',
   });
 
+  const rootProps = getRootProps();
+
+  const { role, tabIndex, ...rootPropsNoRole } = rootProps;
+
   return (
     <div
-      {...getRootProps()}
+      {...rootPropsNoRole}
     >
       <input {...getInputProps()} />
       <button type="button" className="usa-button usa-button--outline">
@@ -194,6 +198,7 @@ DeleteFileModal.propTypes = {
   ]).isRequired,
   onFileRemoved: PropTypes.func.isRequired,
   index: PropTypes.number,
+  // eslint-disable-next-line react/forbid-prop-types
   files: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
@@ -275,6 +280,7 @@ const FileTable = ({ onFileRemoved, files }) => {
 
 FileTable.propTypes = {
   onFileRemoved: PropTypes.func.isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
   files: PropTypes.arrayOf(PropTypes.object),
 };
 FileTable.defaultProps = {
@@ -298,13 +304,13 @@ const FileUploader = ({
     <>
       <Dropzone id={id} reportId={reportId} onChange={onFilesAdded} />
       <FileTable onFileRemoved={onFileRemoved} files={files} />
-
     </>
   );
 };
 
 FileUploader.propTypes = {
   onChange: PropTypes.func.isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
   files: PropTypes.arrayOf(PropTypes.object),
   reportId: PropTypes.node.isRequired,
   id: PropTypes.string.isRequired,

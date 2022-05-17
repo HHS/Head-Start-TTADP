@@ -236,7 +236,8 @@ function GoalRow({
           >
             <strong className="margin-left-1">{objectiveCount}</strong>
             {' '}
-            Objective(s)
+            Objective
+            {objectiveCount > 1 ? 's' : ''}
             {
               objectiveCount > 0
                 ? (

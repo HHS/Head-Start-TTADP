@@ -11,7 +11,12 @@ import ViewTable from './components/ViewTable';
 import { getReport, unlockReport } from '../../fetchers/activityReports';
 import { allRegionsUserHasPermissionTo, canUnlockReports } from '../../permissions';
 import Modal from '../../components/Modal';
-import { DATE_DISPLAY_FORMAT } from '../../Constants';
+import {
+  DATE_DISPLAY_FORMAT,
+  LOCAL_STORAGE_DATA_KEY,
+  LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
+  LOCAL_STORAGE_EDITABLE_KEY,
+} from '../../Constants';
 
 /**
  *
@@ -170,6 +175,19 @@ export default function ApprovedActivityReport({ match, user }) {
   });
 
   const modalRef = useRef();
+
+  // cleanup local storage if the report has been submitted or approved
+  useEffect(() => {
+    try {
+      window.localStorage.removeItem(LOCAL_STORAGE_DATA_KEY(report.id));
+      window.localStorage.removeItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY(report.id));
+      window.localStorage.removeItem(LOCAL_STORAGE_EDITABLE_KEY(report.id));
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn('Local storage may not be available: ', e);
+    }
+  },
+  [report.id]);
 
   useEffect(() => {
     const allowedRegions = allRegionsUserHasPermissionTo(user);

@@ -644,6 +644,17 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
     });
 
+    it('trims the string', async () => {
+      const filters = { 'creator.ctn': [' person '] };
+      const { activityReport: scope } = filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
+    });
+
     it('excludes authors that do not partial match', async () => {
       const filters = { 'creator.nctn': ['person'] };
       const { activityReport: scope } = filtersToScopes(filters);
