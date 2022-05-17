@@ -8,6 +8,14 @@ import {
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import Navigator from '../index';
 import { NOT_STARTED } from '../constants';
+import { SocketContext } from '../../SocketProvider';
+import UserContext from '../../../UserContext';
+
+// mocks for socket provider
+const send = jest.fn();
+const socket = { send };
+const store = null;
+const clearStore = jest.fn();
 
 // eslint-disable-next-line react/prop-types
 const Input = ({ name, required }) => {
@@ -65,33 +73,44 @@ const pages = [
 ];
 
 const initialData = { pageState: { 1: NOT_STARTED, 2: NOT_STARTED } };
+const user = {
+  name: 'test@test.com',
+};
 
 describe('Navigator', () => {
   // eslint-disable-next-line arrow-body-style
   const renderNavigator = (currentPage = 'first', onSubmit = () => {}, onSave = () => {}, updatePage = () => {}, updateForm = () => {}) => {
     render(
-      <Navigator
-        editable
-        reportId={1}
-        submitted={false}
-        formData={initialData}
-        updateFormData={updateForm}
-        onReview={() => {}}
-        isApprover={false}
-        defaultValues={{ first: '', second: '' }}
-        pages={pages}
-        currentPage={currentPage}
-        onFormSubmit={onSubmit}
-        updatePage={updatePage}
-        onSave={onSave}
-        updateErrorMessage={() => {}}
-        onResetToDraft={() => {}}
-        updateLastSaveTime={() => {}}
-        showValidationErrors={false}
-        updateShowValidationErrors={() => {}}
-      />,
+      <SocketContext.Provider value={{ socket, store, clearStore }}>
+        <UserContext.Provider value={{ user }}>
+          <Navigator
+            editable
+            reportId={1}
+            submitted={false}
+            formData={initialData}
+            updateFormData={updateForm}
+            onReview={() => {}}
+            isApprover={false}
+            defaultValues={{ first: '', second: '' }}
+            pages={pages}
+            currentPage={currentPage}
+            onFormSubmit={onSubmit}
+            updatePage={updatePage}
+            onSave={onSave}
+            updateErrorMessage={() => {}}
+            onResetToDraft={() => {}}
+            updateLastSaveTime={() => {}}
+            showValidationErrors={false}
+            updateShowValidationErrors={() => {}}
+          />
+        </UserContext.Provider>
+      </SocketContext.Provider>,
     );
   };
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
 
   it('sets dirty forms as "in progress"', async () => {
     renderNavigator();
@@ -130,5 +149,20 @@ describe('Navigator', () => {
     userEvent.click(await screen.findByRole('button', { name: 'first page Not Started' }));
     await waitFor(() => expect(updateForm).toHaveBeenCalledWith({ ...initialData, second: null }));
     await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
+  });
+
+  it('publishes to socket', async () => {
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    renderNavigator('second', () => {}, () => {}, updatePage, updateForm);
+
+    jest.runOnlyPendingTimers();
+    expect(send).toHaveBeenCalled();
+
+    userEvent.click(await screen.findByRole('button', { name: 'first page Not Started' }));
+    await waitFor(() => expect(updateForm).toHaveBeenCalledWith({ ...initialData, second: null }));
+    await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
+
+    expect(clearStore).toHaveBeenCalled();
   });
 });

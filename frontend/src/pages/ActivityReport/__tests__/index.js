@@ -61,7 +61,7 @@ const user = {
 const renderActivityReport = (id, location = 'activity-summary', showLastUpdatedTime = null, userId = 1) => {
   render(
     <Router history={history}>
-      <SocketProvider>
+      <SocketProvider path="/twiddle-dee-doo">
         <UserContext.Provider value={{ user: { ...user, id: userId } }}>
           <ActivityReport
             match={{ params: { currentPage: location, activityReportId: id }, path: '', url: '' }}

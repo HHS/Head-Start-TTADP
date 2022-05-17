@@ -4,7 +4,11 @@
   on the left hand side with each page of the form listed. Clicking on an item in the nav list will
   display that item in the content section. The navigator keeps track of the "state" of each page.
 */
-import React, { useEffect, useState } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useContext,
+} from 'react';
 import PropTypes from 'prop-types';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import {
@@ -14,10 +18,12 @@ import {
   Alert,
 } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import useInterval from '@use-it/interval';
 import moment from 'moment';
-
+import useInterval from '@use-it/interval';
 import Container from '../Container';
+import SocketAlert from '../SocketAlert';
+import { SocketContext, socketPath } from '../SocketProvider';
+import UserContext from '../../UserContext';
 
 import {
   IN_PROGRESS, COMPLETE,
@@ -159,6 +165,24 @@ function Navigator({
     };
   });
 
+  const { socket, store, clearStore } = useContext(SocketContext);
+  const { user } = useContext(UserContext);
+
+  const INTERVAL_DELAY = 4000;
+  const publishLocation = () => {
+    socket.send(JSON.stringify({
+      user: user.name,
+      lastSaveTime,
+      channel: socketPath(reportId, currentPage),
+    }));
+  };
+
+  useInterval(publishLocation, INTERVAL_DELAY);
+
+  useEffect(() => {
+    clearStore();
+  }, [clearStore, currentPage]);
+
   return (
     <Grid row gap>
       <Grid className="smart-hub-sidenav-wrapper no-print" col={12} desktop={{ col: 4 }}>
@@ -171,6 +195,7 @@ function Navigator({
         />
       </Grid>
       <Grid className="smart-hub-navigator-wrapper" col={12} desktop={{ col: 8 }}>
+        <SocketAlert store={store} prefix={`edit-activity-report-${reportId}-${currentPage}`} />
         <FormProvider {...hookForm}>
           <div id="navigator-form">
             {page.review

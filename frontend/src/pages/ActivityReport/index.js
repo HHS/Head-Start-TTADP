@@ -32,10 +32,7 @@ import {
   reviewReport,
   resetToDraft,
 } from '../../fetchers/activityReports';
-import { SocketContext, socketPath } from '../../components/SocketProvider';
 import UserContext from '../../UserContext';
-import useInterval from '../../hooks/useInterval';
-import SocketAlert from './components/SocketAlert';
 
 const defaultValues = {
   ECLKCResourcesUsed: [{ value: '' }],
@@ -160,20 +157,6 @@ function ActivityReport({
   const { user } = useContext(UserContext);
 
   const showLastUpdatedTime = (location.state && location.state.showLastUpdatedTime) || false;
-
-  const { socket, store } = useContext(SocketContext);
-
-  const INTERVAL_DELAY = 2500;
-  const publishLocation = () => {
-    socket.send(JSON.stringify({
-      page: formData ? formData.pageState : defaultPageState,
-      user: user.name,
-      lastSaveTime,
-      channel: socketPath(activityReportId),
-    }));
-  };
-
-  useInterval(publishLocation, INTERVAL_DELAY);
 
   useEffect(() => {
     // Clear history state once mounted and activityReportId changes. This prevents someone from
@@ -427,7 +410,6 @@ function ActivityReport({
 
   return (
     <div className="smart-hub-activity-report">
-      <SocketAlert store={store} />
       <Helmet titleTemplate="%s - Activity Report - TTA Hub" defaultTitle="TTA Hub - Activity Report" />
       <Grid row className="flex-justify">
         <Grid col="auto">

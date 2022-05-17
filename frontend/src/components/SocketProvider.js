@@ -1,13 +1,15 @@
-import React, { createContext, useMemo, useState } from 'react';
+import React, {
+  createContext, useCallback, useMemo, useState,
+} from 'react';
 import PropTypes from 'prop-types';
 
 export const SocketContext = createContext();
 
 const WS_URL = process.env.REACT_APP_WEBSOCKET_URL;
 
-export const socketPath = (activityReportId) => {
+export const socketPath = (activityReportId, page) => {
   if (activityReportId && activityReportId !== 'new') {
-    return `/activity-report/edit/${activityReportId}`;
+    return `/activity-report/edit/${activityReportId}/${page}`;
   }
 
   return '';
@@ -18,8 +20,6 @@ export default function SocketProvider({ children, path }) {
 
   // Create WebSocket connection.
   const socket = useMemo(() => {
-    // eslint-disable-next-line no-console
-    console.log(WS_URL);
     if (!WS_URL || !path) {
       return {
         // eslint-disable-next-line no-console
@@ -40,8 +40,12 @@ export default function SocketProvider({ children, path }) {
     return s;
   }, [path]);
 
+  const clearStore = useCallback(() => setStore(null), []);
+
   return (
-    <SocketContext.Provider value={{ socket, store }}>{children}</SocketContext.Provider>
+    <SocketContext.Provider value={{ socket, store, clearStore }}>
+      {children}
+    </SocketContext.Provider>
   );
 }
 
