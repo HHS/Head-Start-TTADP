@@ -249,36 +249,36 @@ describe('Goals Table', () => {
 
       await screen.findByRole('cell', { name: '06/15/2021' });
       await screen.findByRole('cell', { name: /this is goal text 1/i });
-      await screen.findByRole('cell', { name: '5 Objective(s)' });
+      await screen.findByRole('cell', { name: '5 Objectives' });
 
       // Not started.
       await screen.findByRole('cell', { name: '05/15/2021' });
       await screen.findByRole('cell', { name: /this is goal text 2/i });
       await screen.findByRole('cell', { name: /nutrition, oral health/i });
-      await screen.findByRole('cell', { name: '2 Objective(s)' });
+      await screen.findByRole('cell', { name: '2 Objectives' });
 
       // Closed.
       await screen.findByRole('cell', { name: '04/15/2021' });
       await screen.findByRole('cell', { name: /this is goal text 3/i });
       await screen.findByRole('cell', { name: /parent and family engagement/i });
-      await screen.findByRole('cell', { name: '4 Objective(s)' });
+      await screen.findByRole('cell', { name: '4 Objectives' });
 
       // Needs status.
       await screen.findByRole('cell', { name: '03/15/2021' });
       await screen.findByRole('cell', { name: /this is goal text 4/i });
       await screen.findByRole('cell', { name: /partnerships and community engagement/i });
-      await screen.findByRole('cell', { name: '3 Objective(s)' });
+      await screen.findByRole('cell', { name: '3 Objectives' });
 
       // Draft.
       await screen.findByRole('cell', { name: '02/15/2021' });
       await screen.findByRole('cell', { name: /this is goal text 5/i });
-      await screen.findByRole('cell', { name: '1 Objective(s)' });
+      await screen.findByRole('cell', { name: '1 Objective' });
 
       // Ceased/Suspended.
       await screen.findByRole('cell', { name: '01/15/2021' });
       await screen.findByRole('cell', { name: /this is goal text 6/i });
       await screen.findByRole('cell', { name: /recordkeeping and reporting/i });
-      await screen.findByRole('cell', { name: '8 Objective(s)' });
+      await screen.findByRole('cell', { name: '8 Objectives' });
     });
   });
 

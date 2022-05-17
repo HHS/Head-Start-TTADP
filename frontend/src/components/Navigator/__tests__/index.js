@@ -10,6 +10,7 @@ import Navigator from '../index';
 import { NOT_STARTED } from '../constants';
 import { SocketContext } from '../../SocketProvider';
 import UserContext from '../../../UserContext';
+import NetworkContext from '../../../NetworkContext';
 
 // mocks for socket provider
 const send = jest.fn();
@@ -79,30 +80,37 @@ const user = {
 
 describe('Navigator', () => {
   // eslint-disable-next-line arrow-body-style
-  const renderNavigator = (currentPage = 'first', onSubmit = () => {}, onSave = () => {}, updatePage = () => {}, updateForm = () => {}) => {
+  const renderNavigator = (currentPage = 'first', onSubmit = () => {}, onSave = () => {}, updatePage = () => {}, updateForm = () => {}, onUpdateError = () => {}) => {
     render(
       <SocketContext.Provider value={{ socket, store, clearStore }}>
         <UserContext.Provider value={{ user }}>
-          <Navigator
-            editable
-            reportId={1}
-            submitted={false}
-            formData={initialData}
-            updateFormData={updateForm}
-            onReview={() => {}}
-            isApprover={false}
-            defaultValues={{ first: '', second: '' }}
-            pages={pages}
-            currentPage={currentPage}
-            onFormSubmit={onSubmit}
-            updatePage={updatePage}
-            onSave={onSave}
-            updateErrorMessage={() => {}}
-            onResetToDraft={() => {}}
-            updateLastSaveTime={() => {}}
-            showValidationErrors={false}
-            updateShowValidationErrors={() => {}}
-          />
+          <NetworkContext.Provider value={{
+            connectionActive: true,
+            localStorageAvailable: true,
+          }}
+          >
+            <Navigator
+              editable
+              reportId={1}
+              submitted={false}
+              formData={initialData}
+              updateFormData={updateForm}
+              onReview={() => {}}
+              isApprover={false}
+              defaultValues={{ first: '', second: '' }}
+              pages={pages}
+              currentPage={currentPage}
+              onFormSubmit={onSubmit}
+              updatePage={updatePage}
+              onSave={onSave}
+              updateErrorMessage={onUpdateError}
+              onResetToDraft={() => {}}
+              updateLastSaveTime={() => {}}
+              showValidationErrors={false}
+              updateShowValidationErrors={() => {}}
+              isPendingApprover={false}
+            />
+          </NetworkContext.Provider>
         </UserContext.Provider>
       </SocketContext.Provider>,
     );
@@ -164,5 +172,24 @@ describe('Navigator', () => {
     await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
 
     expect(clearStore).toHaveBeenCalled();
+  });
+
+  it('shows an error when save fails', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+
+    onSave.mockImplementationOnce(async () => {
+      throw new Error();
+    });
+
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const onUpdateError = jest.fn();
+
+    renderNavigator('second', onSubmit, onSave, updatePage, updateForm, onUpdateError);
+    userEvent.click(await screen.findByRole('button', { name: 'first page Not Started' }));
+
+    expect(onSave).toHaveBeenCalled();
+    expect(onUpdateError).toHaveBeenCalled();
   });
 });
