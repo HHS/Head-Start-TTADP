@@ -4,6 +4,7 @@ import { Grid } from '@trussworks/react-uswds';
 import withWidgetData from './withWidgetData';
 import Container from '../components/Container';
 import AccessibleWidgetData from './AccessibleWidgetData';
+import colors from '../colors';
 
 const GOAL_STATUSES = [
   'Not started',
@@ -13,10 +14,10 @@ const GOAL_STATUSES = [
 ];
 
 const STATUS_COLORS = [
-  '#e2a04d',
-  '#0166ab',
-  '#148439',
-  '#b50908',
+  colors.ttahubOrange,
+  colors.ttahubMediumBlue,
+  colors.success,
+  colors.error,
 ];
 
 function Bar({
