@@ -16,7 +16,6 @@ import './index.css';
 
 function ActivityReportsTable({
   filters,
-  onUpdateFilters,
   tableCaption,
 }) {
   const [reports, setReports] = useState([]);
@@ -238,7 +237,6 @@ function ActivityReportsTable({
           title={tableCaption}
           numberOfSelected={numberOfSelectedReports}
           toggleSelectAll={toggleSelectAll}
-          onUpdateFilters={onUpdateFilters}
           handleDownloadAll={handleDownloadAllReports}
           handleDownloadClick={handleDownloadClick}
           count={reportsCount}
@@ -315,12 +313,7 @@ ActivityReportsTable.propTypes = {
       topic: PropTypes.string,
     }),
   ).isRequired,
-  onUpdateFilters: PropTypes.func,
   tableCaption: PropTypes.string.isRequired,
-};
-
-ActivityReportsTable.defaultProps = {
-  onUpdateFilters: () => { },
 };
 
 export default ActivityReportsTable;
