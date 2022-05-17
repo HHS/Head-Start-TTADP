@@ -130,7 +130,7 @@ commands:
       - run:
           name: Push application with deployment vars
           command: |
-            cf push -v --strategy rolling \
+            cf push --strategy rolling \
               --vars-file << parameters.deploy_config_file >> \
               --var AUTH_CLIENT_ID=${<< parameters.auth_client_id >>} \
               --var AUTH_CLIENT_SECRET=${<< parameters.auth_client_secret >>} \
