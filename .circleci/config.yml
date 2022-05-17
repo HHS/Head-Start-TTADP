@@ -182,10 +182,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "websocket-demo"
+    default: "kw-add-ga"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "ttahub-275-configure-aws-elastic-search"
+    default: "websocket-demo"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
