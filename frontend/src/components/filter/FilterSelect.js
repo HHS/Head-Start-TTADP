@@ -37,6 +37,7 @@ export default function FilterSelect({
         height: 'auto',
         padding: 0,
         position: !state.isFocused ? 'absolute' : 'relative',
+        top: 0,
       };
     },
     control: (provided, state) => {
@@ -93,7 +94,7 @@ export default function FilterSelect({
         }
 
         // keep a running total of the characters, but we always have to show the first one
-        if (index === 0 || charCount + selection.length < 18) {
+        if (index === 0 || (charCount + selection.length < 18 && index < 3)) {
           const label = selection.length > 18
             ? `${selection.slice(0, 9)}...${selection.slice(-5)}` : selection;
 
