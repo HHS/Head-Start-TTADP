@@ -18,6 +18,10 @@
   box-sizing: border-box;
 }
 
+.ttahub-filter-select__value-container {
+    position: absolute;
+}
+
 .ttahub-filter-select--cover-all {
     display: none;
 }
