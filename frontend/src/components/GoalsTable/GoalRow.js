@@ -17,7 +17,8 @@ import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
 import { updateGoalStatus } from '../../fetchers/goals';
 import ObjectiveRow from './ObjectiveRow';
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
-import './GoalRow.css';
+import './GoalRow.scss';
+import colors from '../../colors';
 
 function GoalRow({
   goal,
@@ -126,7 +127,7 @@ function GoalRow({
       return (
         <>
           <Tooltip
-            displayText={<FontAwesomeIcon className="margin-left-1" size="1x" color="#d42240" icon={faFlag} />}
+            displayText={<FontAwesomeIcon className="margin-left-1" size="1x" color={colors.error} icon={faFlag} />}
             screenReadDisplayText={false}
             buttonLabel={`Reason for flag on goal ${goalNumber} is monitoring. Click button to visually reveal this information.`}
             tooltipText="Related to monitoring"
@@ -235,11 +236,12 @@ function GoalRow({
           >
             <strong className="margin-left-1">{objectiveCount}</strong>
             {' '}
-            Objective(s)
+            Objective
+            {objectiveCount > 1 ? 's' : ''}
             {
               objectiveCount > 0
                 ? (
-                  <FontAwesomeIcon className="margin-left-1 margin-right-1" size="1x" color="#000000" icon={objectivesExpanded ? faAngleUp : faAngleDown} />
+                  <FontAwesomeIcon className="margin-left-1 margin-right-1" size="1x" color={colors.textInk} icon={objectivesExpanded ? faAngleUp : faAngleDown} />
                 )
                 : null
             }

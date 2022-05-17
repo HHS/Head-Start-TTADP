@@ -5,7 +5,6 @@
   "license": "ISC",
   "dependencies": {
     "@babel/runtime": "^7.12.1",
-    "@fortawesome/fontawesome-free": "^6.1.1",
     "@fortawesome/fontawesome-pro": "^6.1.1",
     "@fortawesome/fontawesome-svg-core": "^6.1.1",
     "@fortawesome/free-regular-svg-icons": "^6.1.1",
@@ -49,6 +48,7 @@
     "react-select": "^4.1.0",
     "react-stickynode": "^4.0.0",
     "react-with-direction": "^1.3.1",
+    "sass": "^1.51.0",
     "url-join": "^4.0.1",
     "use-deep-compare-effect": "^1.6.1",
     "uuid": "^8.3.2"
@@ -177,7 +177,8 @@
       "<rootDir>/src/pages/Widgets/index.js",
       "<rootDir>/src/widgets/Example.js",
       "<rootDir>/src/pages/RegionalDashboard/formatDateRange.js",
-      "<rootDir>/src/pages/RegionalDashboard/constants.js"
+      "<rootDir>/src/pages/RegionalDashboard/constants.js",
+      "<rootDir>/src/pages/makecolors.js"
     ],
     "coverageThreshold": {
       "global": {
