@@ -21,7 +21,10 @@ export function getBrowserProps() {
       hidden: 'webkitHidden',
     };
   }
-  return null;
+  return {
+    visiblity: null,
+    hidden: null,
+  };
 }
 
 export function getIsDocumentHidden(prop) {

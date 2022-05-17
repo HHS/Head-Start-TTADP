@@ -178,7 +178,9 @@
       "<rootDir>/src/widgets/Example.js",
       "<rootDir>/src/pages/RegionalDashboard/formatDateRange.js",
       "<rootDir>/src/pages/RegionalDashboard/constants.js",
-      "<rootDir>/src/pages/makecolors.js"
+      "<rootDir>/src/pages/makecolors.js",
+      "<rootDir>/src/NetworkContext.js",
+      "<rootDir>/src/hooks/helpers.js"
     ],
     "coverageThreshold": {
       "global": {

@@ -23,4 +23,12 @@ describe('usePageVisibility', () => {
       expect(props.visiblity).toBe('webkitvisibilitychange');
     });
   });
+
+  describe('undefined', () => {
+    mockDocumentProperty('hidden', undefined);
+    it('handles undefined', async () => {
+      const props = getBrowserProps();
+      expect(props.visiblity).toBe(null);
+    });
+  });
 });
