@@ -22,3 +22,18 @@ export function mockWindowProperty(property, value) {
     window[property] = originalProperty;
   });
 }
+
+export function mockDocumentProperty(property, value) {
+  const { [property]: originalProperty } = document;
+  delete document[property];
+  beforeAll(() => {
+    Object.defineProperty(document, property, {
+      configurable: true,
+      writable: true,
+      value,
+    });
+  });
+  afterAll(() => {
+    document[property] = originalProperty;
+  });
+}
