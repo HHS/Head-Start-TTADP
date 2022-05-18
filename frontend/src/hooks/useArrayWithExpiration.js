@@ -9,7 +9,7 @@ export const FIVE_MINUTES = 5 * 60 * 1000;
 export default function useArrayWithExpiration(defaultValue) {
   const [state, setState] = useState(defaultValue);
 
-  const push = useCallback((newItem) => {
+  const push = useCallback((name) => {
     const currentTime = new Date();
     const fiveMinutesFromNow = new Date();
     fiveMinutesFromNow.setTime(currentTime.getTime() + FIVE_MINUTES);
@@ -24,9 +24,15 @@ export default function useArrayWithExpiration(defaultValue) {
         return true;
       });
 
+      const expires = fiveMinutesFromNow.toJSON();
+      const existing = stateWithoutExpired.findIndex((item) => name === item.name);
+      if (existing !== -1) {
+        stateWithoutExpired.splice(existing, 1);
+      }
+
       const newItemWithDate = {
-        name: newItem,
-        expires: fiveMinutesFromNow.toJSON(),
+        name,
+        expires,
       };
 
       return [...stateWithoutExpired, newItemWithDate];
