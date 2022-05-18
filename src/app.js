@@ -41,7 +41,7 @@ app.use((req, res, next) => {
 });
 
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'client')));
+  app.use('/static', express.static(path.join(__dirname, 'client', 'static')));
 }
 
 app.use('/api/v1', require('./routes/externalApi').default);
