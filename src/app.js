@@ -17,8 +17,14 @@ import updateGrantsRecipients from './lib/updateGrantsRecipients';
 import { logger, auditLogger, requestLogger } from './logger';
 
 const app = express();
-
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
+const index = fs.readFileSync(path.join(__dirname, 'client', 'index.html')).toString();
+
+const serveIndex = (req, res) => {
+  const noncedIndex = index.replaceAll('__NONCE__', res.locals.nonce);
+  res.set('Content-Type', 'text/html');
+  res.send(noncedIndex);
+};
 
 app.use(requestLogger);
 app.use(express.json({ limit: '2MB' }));
@@ -41,7 +47,8 @@ app.use((req, res, next) => {
 });
 
 if (process.env.NODE_ENV === 'production') {
-  app.use('/static', express.static(path.join(__dirname, 'client', 'static')));
+  app.use('/index.html', serveIndex);
+  app.use(express.static(path.join(__dirname, 'client'), { index: false }));
 }
 
 app.use('/api/v1', require('./routes/externalApi').default);
@@ -69,13 +76,7 @@ app.get(oauth2CallbackPath, cookieSession, async (req, res) => {
 });
 
 if (process.env.NODE_ENV === 'production') {
-  const html = fs.readFileSync(path.join(__dirname, 'client', 'index.html')).toString();
-
-  app.use('*', (req, res) => {
-    const noncedIndex = html.replaceAll('__NONCE__', res.locals.nonce);
-    res.set('Content-Type', 'text/html');
-    res.send(noncedIndex);
-  });
+  app.use('*', serveIndex);
 }
 
 // Set timing parameters.
