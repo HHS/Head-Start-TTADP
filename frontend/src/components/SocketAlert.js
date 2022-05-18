@@ -28,17 +28,18 @@ export default function SocketAlert({ store }) {
     ),
   );
 
+  const message = `${usersToRender.map((user, index) => {
+    if (usersToRender.length > 1 && index + 1 === usersToRender.length) {
+      return `and ${user}`;
+    }
+    return user;
+  }).join(usersToRender.length < 3 ? ' ' : ', ')} ${usersToRender.length === 1 ? 'is' : 'are'} now also working in this section. Your changes may not be saved.`;
+
   return store && usersToRender.length ? (
     <Sticky className="ttahub-socket-alert margin-bottom-2" top={71} enabled={!isMobile}>
       <Alert type="warning">
         <span>
-          <p className="usa-prose margin-top-0">
-            {usersToRender.map((user) => <span key={user}>{user}</span>)}
-            {' '}
-            {usersToRender.length === 1 ? 'is' : 'are'}
-            {' '}
-            now also working in this section. Your changes may not be saved.
-          </p>
+          <p className="usa-prose margin-top-0">{message}</p>
           <p className="usa-prose margin-bottom-0">Check with them before working on this page.</p>
         </span>
       </Alert>
