@@ -52,7 +52,6 @@ describe('goalById', () => {
     objective = await Objective.create({
       goalId: goalOnActivityReport.id,
       title: 'objective test',
-      ttaProvided: 'asdfadf',
       status: 'Not Started',
     });
 
@@ -79,6 +78,7 @@ describe('goalById', () => {
     await ActivityReportObjective.create({
       activityReportId: report.id,
       objectiveId: objective.id,
+      ttaProvided: 'asdfadf',
     });
   });
 

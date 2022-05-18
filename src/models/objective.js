@@ -38,7 +38,6 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
     },
     title: DataTypes.TEXT,
-    ttaProvided: DataTypes.TEXT,
     status: DataTypes.STRING,
     objectiveTemplateId: {
       type: DataTypes.INTEGER,

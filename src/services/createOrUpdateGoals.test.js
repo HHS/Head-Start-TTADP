@@ -10,6 +10,7 @@ import db, {
   Objective,
   ObjectiveResource,
   ObjectiveTopic,
+  ActivityReportObjective,
 } from '../models';
 
 describe.skip('createOrUpdateGoals', () => {
@@ -52,14 +53,12 @@ describe.skip('createOrUpdateGoals', () => {
     objective = await Objective.create({
       goalId: goal.id,
       title: 'This is some serious goal text',
-      ttaProvided: '',
       status: 'Not started',
     });
 
     await Objective.create({
       goalId: goal.id,
       title: 'This objective will be deleted',
-      ttaProvided: '',
       status: 'Not started',
     });
 
@@ -136,7 +135,6 @@ describe.skip('createOrUpdateGoals', () => {
         objectives: [
           {
             id: objective.id,
-            ttaProvided: '',
             status: 'Not started',
             title: 'This is an objective',
             resources: [
@@ -152,7 +150,6 @@ describe.skip('createOrUpdateGoals', () => {
           },
           {
             id: 'new-0',
-            ttaProvided: '',
             status: 'Not started',
             title: 'This is another objective',
             resources: [],
@@ -207,7 +204,6 @@ describe.skip('createOrUpdateGoals', () => {
     const objectiveOnUpdatedGoal = await Objective.findByPk(objective.id, { raw: true });
     expect(objectiveOnUpdatedGoal.id).toBe(objective.id);
     expect(objectiveOnUpdatedGoal.title).toBe('This is an objective');
-    expect(objectiveOnUpdatedGoal.ttaProvided).toBe(objective.ttaProvided);
     expect(objectiveOnUpdatedGoal.status).toBe(objective.status);
 
     const objectiveTopics = await ObjectiveTopic.findAll({

@@ -12,6 +12,7 @@ import {
   Goal,
   GrantGoal,
 } from './models';
+import { auditLogger } from './logger';
 
 import { GOAL_STATUS as GOAL_STATUS_CONST } from './widgets/goalStatusGraph';
 
@@ -137,10 +138,15 @@ export async function createReport(report) {
     userId: foundUser.id,
   });
 
-  Promise.all(recipients.map((grantId) => ActivityRecipient.create({
-    activityReportId: createdReport.id,
-    grantId,
-  })));
+  try {
+    Promise.all(recipients.map((grantId) => ActivityRecipient.create({
+      activityReportId: createdReport.id,
+      grantId,
+    })));
+  } catch (error) {
+    auditLogger.error(JSON.stringify(error));
+    throw error;
+  }
 
   return createdReport;
 }

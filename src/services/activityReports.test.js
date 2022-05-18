@@ -650,10 +650,15 @@ describe('Activity report service', () => {
           calculatedStatus: REPORT_STATUSES.APPROVED,
           topics: topicsTwo,
         });
-        await ActivityRecipient.create({
-          activityReportId: report.id,
-          grantId: firstGrant.id,
-        });
+        try {
+          await ActivityRecipient.create({
+            activityReportId: report.id,
+            grantId: firstGrant.id,
+          });
+        } catch (error) {
+          auditLogger.error(JSON.stringify(error));
+          throw error;
+        }
         latestReport = await ActivityReport.create({
           ...submittedReport,
           calculatedStatus: REPORT_STATUSES.APPROVED,

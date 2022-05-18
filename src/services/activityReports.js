@@ -5,7 +5,7 @@ import orderReportsBy from '../lib/orderReportsBy';
 import filtersToScopes from '../scopes';
 import { setReadRegions } from './accessValidation';
 import { syncApprovers } from './activityReportApprovers';
-// import { auditLogger } from '../logger';
+import { auditLogger } from '../logger';
 
 import {
   ActivityReport,
@@ -144,10 +144,30 @@ async function saveReportRecipients(
     };
   }
 
-  await ActivityRecipient.bulkCreate(
-    newRecipients,
-    { ignoreDuplicates: true, validate: true, individualHooks: true },
+  await Promise.all(
+    newRecipients.map(async (newRecipient) => {
+      if (newRecipient.grantId) {
+        return ActivityRecipient.findOrCreate({
+          where: {
+            activityReportId: newRecipient.activityReportId,
+            grantId: newRecipient.grantId,
+          },
+          defaults: newRecipient,
+        });
+      }
+      if (newRecipient.otherEntityId) {
+        return ActivityRecipient.findOrCreate({
+          where: {
+            activityReportId: newRecipient.activityReportId,
+            otherEntityId: newRecipient.otherEntityId,
+          },
+          defaults: newRecipient,
+        });
+      }
+      return null;
+    }),
   );
+
   await ActivityRecipient.destroy({ where });
 }
 
@@ -625,7 +645,6 @@ export async function createOrUpdate(newActivityReport, report) {
     nonECLKCResourcesUsed,
     ...allFields
   } = newActivityReport;
-
   const previousActivityRecipientType = report && report.activityRecipientType;
   const resources = {};
 
@@ -643,6 +662,7 @@ export async function createOrUpdate(newActivityReport, report) {
   } else {
     savedReport = await create(updatedFields);
   }
+
   if (collaborators) {
     const { id } = savedReport;
     const newCollaborators = collaborators.map(
@@ -650,6 +670,7 @@ export async function createOrUpdate(newActivityReport, report) {
     );
     await saveReportCollaborators(id, newCollaborators);
   }
+
   if (activityRecipients) {
     const { activityRecipientType, id } = savedReport;
     const activityRecipientIds = activityRecipients.map(
@@ -657,10 +678,12 @@ export async function createOrUpdate(newActivityReport, report) {
     );
     await saveReportRecipients(id, activityRecipientIds, activityRecipientType);
   }
+
   if (recipientNextSteps) {
     const { id } = savedReport;
     await saveNotes(id, recipientNextSteps, true);
   }
+
   if (specialistNextSteps) {
     const { id } = savedReport;
     await saveNotes(id, specialistNextSteps, false);
@@ -767,8 +790,9 @@ async function getDownloadableActivityReports(where, separate = true) {
             model: Goal,
             as: 'goal',
           }],
-          attributes: ['id', 'title', 'status', 'ttaProvided'],
+          attributes: ['id', 'title', 'status'],
         }],
+        attributes: ['ttaProvided'],
         order: [['objective', 'goal', 'id'], ['objective', 'id']],
       },
       {

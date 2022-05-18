@@ -36,7 +36,10 @@ module.exports = (sequelize, DataTypes) => {
         if (this.grant) {
           return this.grant.name;
         }
-        return this.otherEntity.name;
+        if (this.otherEntity) {
+          return this.otherEntity.name;
+        }
+        return null;
       },
     },
   }, {

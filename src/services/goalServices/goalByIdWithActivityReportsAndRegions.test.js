@@ -64,7 +64,6 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
     const objective = await Objective.create({
       goalId: goalOnActivityReport.id,
       title: 'objective test',
-      ttaProvided: 'asdfadf',
       status: 'Not Started',
     });
 
@@ -79,6 +78,7 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
     await ActivityReportObjective.create({
       activityReportId: report.id,
       objectiveId: objective.id,
+      ttaProvided: 'asdfadf',
     });
 
     goalOnOneGrant = await Goal.create({
