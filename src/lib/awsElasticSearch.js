@@ -25,9 +25,9 @@ const generateEsConfig = () => {
 
   // Return docker image credentials.
   return {
-    uri: 'http://localhost:9200',
-    access_key: 'admin',
-    secret_key: 'admin',
+    uri: process.env.AWS_ELASTICSEARCH_ENDPOINT,
+    access_key: process.env.AWS_ELASTICSEARCH_ACCESS_KEY,
+    secret_key: process.env.AWS_ELASTICSEARCH_SECRET_KEY,
   };
 };
 
