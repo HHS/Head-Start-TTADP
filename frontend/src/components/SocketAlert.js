@@ -4,12 +4,12 @@ import { Alert } from '@trussworks/react-uswds';
 import Sticky from 'react-stickynode';
 import { useMediaQuery } from 'react-responsive';
 import UserContext from '../UserContext';
-import useSessionWithExpirationValueArray from '../hooks/useSessionWithExpirationValueArray';
+import useArrayWithExpiration from '../hooks/useArrayWithExpiration';
 import usePageVisibility from '../hooks/usePageVisibility';
 import './SocketAlert.css';
 
-export default function SocketAlert({ store, prefix }) {
-  const [users, { push: pushUser }] = useSessionWithExpirationValueArray(prefix, []);
+export default function SocketAlert({ store }) {
+  const [users, { push: pushUser }] = useArrayWithExpiration([]);
   const isPageVisible = usePageVisibility();
   const isMobile = useMediaQuery({ maxWidth: 1023 });
 
@@ -50,7 +50,6 @@ SocketAlert.propTypes = {
   store: PropTypes.shape({
     user: PropTypes.string,
   }),
-  prefix: PropTypes.string.isRequired,
 };
 
 SocketAlert.defaultProps = {

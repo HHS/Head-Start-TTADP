@@ -3,13 +3,11 @@ import {
   useCallback,
   useMemo,
 } from 'react';
-import { storageAvailable } from './helpers';
 
 export const FIVE_MINUTES = 5 * 60 * 1000;
 
-export default function useSessionWithExpirationValueArray(prefix, defaultValue) {
+export default function useArrayWithExpiration(defaultValue) {
   const [state, setState] = useState(defaultValue);
-  const sessionStorageAvailable = useMemo(() => storageAvailable('sessionStorage'), []);
 
   const push = useCallback((newItem) => {
     const currentTime = new Date();
@@ -17,23 +15,9 @@ export default function useSessionWithExpirationValueArray(prefix, defaultValue)
     fiveMinutesFromNow.setTime(currentTime.getTime() + FIVE_MINUTES);
 
     setState((previousState) => {
-      if (!sessionStorageAvailable) {
-        return [...previousState, { name: newItem }];
-      }
-
       const stateWithoutExpired = previousState.filter((currentValue) => {
-        const key = `${prefix}-${currentValue.name}`;
-        const storedUser = sessionStorage.getItem(key);
-
-        if (!storedUser) {
-          return false;
-        }
-
-        const parsedStoredUser = JSON.parse(storedUser);
-        const ageOfStoredUser = currentTime - new Date(parsedStoredUser.expires);
-
+        const ageOfStoredUser = currentTime - new Date(currentValue.expires);
         if (ageOfStoredUser > FIVE_MINUTES) {
-          sessionStorage.removeItem(key); // remove from local storage as a side effect
           return false;
         }
 
@@ -45,11 +29,9 @@ export default function useSessionWithExpirationValueArray(prefix, defaultValue)
         expires: fiveMinutesFromNow.toJSON(),
       };
 
-      sessionStorage.setItem(`${prefix}-${newItem}`, JSON.stringify(newItemWithDate));
-
       return [...stateWithoutExpired, newItemWithDate];
     });
-  }, [prefix, sessionStorageAvailable]);
+  }, []);
 
   // I am saving it this way so that when it is used
   // it is distinguishable from a traditional useState hook

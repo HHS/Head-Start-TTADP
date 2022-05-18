@@ -195,7 +195,7 @@ function Navigator({
         />
       </Grid>
       <Grid className="smart-hub-navigator-wrapper" col={12} desktop={{ col: 8 }}>
-        <SocketAlert store={store} prefix={`edit-activity-report-${reportId}-${currentPage}`} />
+        <SocketAlert store={store} />
         <FormProvider {...hookForm}>
           <div id="navigator-form">
             {page.review
