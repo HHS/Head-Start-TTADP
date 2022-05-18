@@ -7,6 +7,7 @@ import {
   sequelize,
   Goal,
   ActivityReport,
+  ActivityReportObjective,
   Objective,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
@@ -200,11 +201,16 @@ export async function getGoalsByActivityRecipient(
           },
         },
         {
-          attributes: ['id', 'title', 'ttaProvided', 'status', 'goalId'],
+          attributes: ['id', 'title', 'status', 'goalId'],
           model: Objective,
           as: 'objectives',
           required: false,
           include: [{
+            attributes: ['ttaProvided'],
+            model: ActivityReportObjective,
+            as: 'activityReportObjectives',
+            required: false,
+          }, {
             attributes: ['id', 'reason', 'topics', 'endDate', 'calculatedStatus', 'legacyId', 'regionId'],
             model: ActivityReport,
             as: 'activityReports',
@@ -264,6 +270,7 @@ export async function getGoalsByActivityRecipient(
         }
 
         // Add Objective.
+        // TODO: ttaProvided needs to move from ActivityReportObjective to ActivityReportObjective
         goalToAdd.objectives.push({
           id: o.id,
           title: o.title,

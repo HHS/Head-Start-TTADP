@@ -257,7 +257,6 @@ export async function createOrUpdateGoals(goals) {
         } : {
           goalId: newGoal.id,
           title: o.title,
-          ttaProvided: '',
           status: 'Not started',
         };
 

@@ -31,6 +31,7 @@ module.exports = (sequelize, DataTypes) => {
     objectiveId: {
       type: DataTypes.INTEGER,
     },
+    ttaProvided: DataTypes.TEXT,
   }, {
     sequelize,
     modelName: 'ActivityReportObjective',

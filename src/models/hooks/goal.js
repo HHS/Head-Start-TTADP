@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+// import { Op } from 'sequelize';
 import { auditLogger } from '../../logger';
 
 const autoPopulateGoalTemplateId = async (sequelize, instance, options) => {
@@ -10,7 +10,7 @@ const autoPopulateGoalTemplateId = async (sequelize, instance, options) => {
     let goalTemplate;
     try {
       goalTemplate = await sequelize.models.GoalTemplate.findOrCreate({
-        where: { templateName: instance.name, regionId: grant.regionId },
+        where: { hash: sequelize.fn('md5', sequelize.fn('TRIM', instance.name)), regionId: grant.regionId },
         defaults: {
           templateName: instance.name,
           lastUsed: instance.createdAt,
@@ -89,65 +89,6 @@ const autoPopulateStatusChangeDates = (sequelize, instance) => {
   }
 };
 
-const autoPopulateSupersededBy = async (sequelize, instance, options) => {
-  // eslint-disable-next-line no-prototype-builtins
-  if (instance.hasOwnProperty('precededBy')
-  && instance.precededBy !== null
-  && instance.precededBy !== undefined) {
-    await sequelize.models.Goal.update(
-      { supersededBy: instance.id },
-      {
-        where: {
-          [Op.or]: [
-            { id: instance.precededBy },
-            { supersededBy: instance.precededBy },
-          ],
-        },
-        transaction: options.transaction,
-      },
-    );
-  }
-};
-
-const autoSupersedeObjectives = async (sequelize, instance, options) => {
-  // eslint-disable-next-line no-prototype-builtins
-  if (instance.hasOwnProperty('precededBy')
-  && instance.precededBy !== null
-  && instance.precededBy !== undefined) {
-    instance.objectives.forEach(async (o) => {
-      await sequelize.models.Objectives.create({
-        goalId: instance.id,
-        title: o.title,
-        ttaProvided: o.ttaProvided,
-        status: o.status,
-        objectiveTemplateId: o.objectiveTemplateId,
-        onApprovedAR: false,
-        firstNotStartedAt: o.firstNotStartedAt,
-        lastNotStartedAt: o.lastNotStartedAt,
-        firstInProgressAt: o.firstInProgressAt,
-        lastInProgressAt: o.lastInProgressAt,
-        firstSuspendedAt: o.firstSuspendedAt,
-        lastSuspendedAt: o.lastSuspendedAt,
-        firstCompleteAt: o.firstCompleteAt,
-        lastCompleteAt: o.lastCompleteAt,
-        precededBy: o.id,
-      });
-    });
-    await sequelize.models.Goal.update(
-      { supersededBy: instance.id },
-      {
-        where: {
-          [Op.or]: [
-            { id: instance.precededBy },
-            { supersededBy: instance.precededBy },
-          ],
-        },
-        transaction: options.transaction,
-      },
-    );
-  }
-};
-
 const propagateName = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed) && changed.includes('name')) {
@@ -167,10 +108,8 @@ const beforeValidate = async (sequelize, instance, options) => {
   preventNamChangeWhenOnApprovedAR(sequelize, instance);
   autoPopulateStatusChangeDates(sequelize, instance);
 };
-
+// eslint-disable-next-line no-unused-vars
 const afterCreate = async (sequelize, instance, options) => {
-  await autoPopulateSupersededBy(sequelize, instance, options);
-  await autoSupersedeObjectives(sequelize, instance, options);
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
@@ -182,7 +121,6 @@ export {
   autoPopulateOnApprovedAR,
   preventNamChangeWhenOnApprovedAR,
   autoPopulateStatusChangeDates,
-  autoPopulateSupersededBy,
   propagateName,
   beforeValidate,
   afterCreate,

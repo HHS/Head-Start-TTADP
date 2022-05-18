@@ -76,6 +76,7 @@ const mockFile = {
   fileSize: 54417,
 };
 
+// TODO: ttaProvided needs to move from ActivityReportObjective to ActivityReportObjective
 const reportObject = {
   activityRecipientType: 'recipient',
   userId: mockUser.id,

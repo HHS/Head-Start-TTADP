@@ -161,20 +161,33 @@ describe('Goals by Recipient Test', () => {
     const savedGoalReport3 = await ActivityReport.create(goalReport3);
 
     // Create AR Recipients.
-    await ActivityRecipient.create({
-      activityReportId: savedGoalReport1.id,
-      grantId: savedGrant1.id,
-    });
-
-    await ActivityRecipient.create({
-      activityReportId: savedGoalReport2.id,
-      grantId: savedGrant2.id,
-    });
-
-    await ActivityRecipient.create({
-      activityReportId: savedGoalReport3.id,
-      grantId: savedGrant3.id,
-    });
+    try {
+      await ActivityRecipient.create({
+        activityReportId: savedGoalReport1.id,
+        grantId: savedGrant1.id,
+      });
+    } catch (error) {
+      auditLogger.error(JSON.stringify(error));
+      throw error;
+    }
+    try {
+      await ActivityRecipient.create({
+        activityReportId: savedGoalReport2.id,
+        grantId: savedGrant2.id,
+      });
+    } catch (error) {
+      auditLogger.error(JSON.stringify(error));
+      throw error;
+    }
+    try {
+      await ActivityRecipient.create({
+        activityReportId: savedGoalReport3.id,
+        grantId: savedGrant3.id,
+      });
+    } catch (error) {
+      auditLogger.error(JSON.stringify(error));
+      throw error;
+    }
 
     // Create Goals.
     let goals = [];
@@ -243,42 +256,36 @@ describe('Goals by Recipient Test', () => {
         await Objective.create({
           goalId: goalIds[0],
           title: 'objective 1',
-          ttaProvided: 'Objective for Goal 1',
           status: 'Not Started',
         }),
         // objective 2 (AR1)
         await Objective.create({
           goalId: goalIds[1],
           title: 'objective 2',
-          ttaProvided: 'Objective for Goal 2',
           status: 'Not Started',
         }),
         // objective 3 (AR1)
         await Objective.create({
           goalId: goalIds[2],
           title: 'objective 3',
-          ttaProvided: 'Objective for Goal 3',
           status: 'In Progress',
         }),
         // objective 4 (AR1)
         await Objective.create({
           goalId: goalIds[2],
           title: 'objective 4',
-          ttaProvided: 'Objective for Goal 3 b',
           status: 'Completed',
         }),
         // objective 5 (AR2)
         await Objective.create({
           goalId: goalIds[3],
           title: 'objective 5',
-          ttaProvided: 'Objective for Goal 4',
           status: 'Not Started',
         }),
         // objective 6 (AR3)
         await Objective.create({
           goalId: goalIds[4],
           title: 'objective 6',
-          ttaProvided: 'Objective for Goal 5 Exclude',
           status: 'Not Started',
         }),
       ],
@@ -294,31 +301,37 @@ describe('Goals by Recipient Test', () => {
         await ActivityReportObjective.create({
           objectiveId: objectives[0].id,
           activityReportId: savedGoalReport1.id,
+          ttaProvided: 'Objective for Goal 1',
         }),
         // AR 1 Obj 2.
         await ActivityReportObjective.create({
           objectiveId: objectives[1].id,
           activityReportId: savedGoalReport1.id,
+          ttaProvided: 'Objective for Goal 2',
         }),
         // AR 1 Obj 3.
         await ActivityReportObjective.create({
           objectiveId: objectives[2].id,
           activityReportId: savedGoalReport1.id,
+          ttaProvided: 'Objective for Goal 3',
         }),
         // AR 1 Obj 4.
         await ActivityReportObjective.create({
           objectiveId: objectives[3].id,
           activityReportId: savedGoalReport1.id,
+          ttaProvided: 'Objective for Goal 3 b',
         }),
         // AR 2 Obj 5.
         await ActivityReportObjective.create({
           objectiveId: objectives[4].id,
           activityReportId: savedGoalReport2.id,
+          ttaProvided: 'Objective for Goal 4',
         }),
         // AR 3 Obj 6 (Exclude).
         await ActivityReportObjective.create({
           objectiveId: objectives[5].id,
           activityReportId: savedGoalReport3.id,
+          ttaProvided: 'Objective for Goal 5 Exclude',
         }),
       ],
     );
@@ -417,13 +430,13 @@ describe('Goals by Recipient Test', () => {
       // Goal 3 Objectives.
       expect(goalRowsx[1].objectives.length).toBe(2);
       expect(goalRowsx[1].objectives[0].title).toBe('objective 4');
-      expect(goalRowsx[1].objectives[0].ttaProvided).toBe('Objective for Goal 3 b');
+      expect(goalRowsx[1].objectives[0].activityReportObjectives[0].ttaProvided).toBe('Objective for Goal 3 b');
       expect(goalRowsx[1].objectives[0].endDate).toBe('09/01/2020');
       expect(goalRowsx[1].objectives[0].reasons).toEqual(['COVID-19 response', 'Complaint']);
       expect(goalRowsx[1].objectives[0].status).toEqual('Completed');
 
       expect(goalRowsx[1].objectives[1].title).toBe('objective 3');
-      expect(goalRowsx[1].objectives[1].ttaProvided).toBe('Objective for Goal 3');
+      expect(goalRowsx[1].objectives[1].activityReportObjectives[0].ttaProvided).toBe('Objective for Goal 3');
       expect(goalRowsx[1].objectives[1].endDate).toBe('09/01/2020');
       expect(goalRowsx[1].objectives[1].reasons).toEqual(['COVID-19 response', 'Complaint']);
       expect(goalRowsx[1].objectives[1].status).toEqual('In Progress');

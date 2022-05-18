@@ -126,28 +126,24 @@ describe('goal filtersToScopes', () => {
         await Objective.create({
           goalId: goals[0].id,
           title: 'objective 1',
-          ttaProvided: 'asdfadf',
           status: 'Not Started',
         }),
         // goal for topics
         await Objective.create({
           goalId: goals[1].id,
           title: 'objective 2',
-          ttaProvided: 'asdfadf',
           status: 'Not Started',
         }),
         // goal for status
         await Objective.create({
           goalId: goals[2].id,
           title: 'objective 3',
-          ttaProvided: 'asdfadf',
           status: 'Not Started',
         }),
         // goal for startDate
         await Objective.create({
           goalId: goals[3].id,
           title: 'objective 4',
-          ttaProvided: 'asdfadf',
           status: 'Not Started',
         }),
       ],
@@ -159,21 +155,25 @@ describe('goal filtersToScopes', () => {
         await ActivityReportObjective.create({
           objectiveId: objectives[0].id,
           activityReportId: reportWithReasons.id,
+          ttaProvided: 'asdfadf',
         }),
         // goal for topics
         await ActivityReportObjective.create({
           objectiveId: objectives[1].id,
           activityReportId: reportWithTopics.id,
+          ttaProvided: 'asdfadf',
         }),
         // goal for status
         await ActivityReportObjective.create({
           objectiveId: objectives[2].id,
           activityReportId: emptyReport.id,
+          ttaProvided: 'asdfadf',
         }),
         // goal for startDate
         await ActivityReportObjective.create({
           objectiveId: objectives[3].id,
           activityReportId: emptyReport.id,
+          ttaProvided: 'asdfadf',
         }),
       ],
     );

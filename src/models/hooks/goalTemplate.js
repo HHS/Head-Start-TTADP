@@ -3,6 +3,16 @@ import { CREATION_METHOD } from '../../constants';
 
 const { Op } = require('sequelize');
 
+const autoPopulateHash = (sequelize, instance) => {
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('templateName')
+    && instance.templateName !== null
+    && instance.templateName !== undefined) {
+    instance.set('hash', sequelize.fn('md5', sequelize.fn('TRIM', instance.templateName)));
+  }
+};
+
 const autoPopulateTemplateNameModifiedAt = (sequelize, instance) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
@@ -45,6 +55,7 @@ const propagateTemplateName = async (sequelize, instance, options) => {
 };
 
 const beforeValidate = (sequelize, instance) => {
+  autoPopulateHash(sequelize, instance);
   autoPopulateTemplateNameModifiedAt(sequelize, instance);
   autoPopulateCreationMethod(sequelize, instance);
 };

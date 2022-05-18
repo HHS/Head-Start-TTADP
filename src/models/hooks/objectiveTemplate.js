@@ -2,6 +2,16 @@
 
 const { Op } = require('sequelize');
 
+const autoPopulateHash = (sequelize, instance) => {
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('templateTitle')
+    && instance.templateTitle !== null
+    && instance.templateTitle !== undefined) {
+    instance.set('hash', sequelize.fn('md5', sequelize.fn('TRIM', instance.templateTitle)));
+  }
+};
+
 const autoPopulateTemplateTitleModifiedAt = (sequelize, instance) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
@@ -44,6 +54,7 @@ const propagateTemplateTitle = async (sequelize, instance, options) => {
 };
 
 const beforeValidate = (sequelize, instance) => {
+  autoPopulateHash(sequelize, instance);
   autoPopulateTemplateTitleModifiedAt(sequelize, instance);
   autoPopulateCreationMethod(sequelize, instance);
 };

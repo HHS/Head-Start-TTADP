@@ -19,6 +19,7 @@ module.exports = {
         throw (err);
       }
 
+      // A new table to allow linking directly between Activity Reports and Goals
       await queryInterface.createTable('ActivityReportGoals', {
         id: {
           allowNull: false,
@@ -44,6 +45,7 @@ module.exports = {
         },
       }, { transaction });
 
+      // a new table to archive any goals that are not linked to a grant is some manner
       await queryInterface.createTable('DisconnectedGoals', {
         id: {
           allowNull: false,
@@ -104,6 +106,10 @@ module.exports = {
           primaryKey: true,
           type: Sequelize.INTEGER,
         },
+        hash: {
+          allowNull: false,
+          type: Sequelize.TEXT,
+        },
         templateName: {
           allowNull: false,
           type: Sequelize.TEXT,
@@ -136,9 +142,9 @@ module.exports = {
           type: Sequelize.DATE,
         },
         // To support up/down on the migration
-        sourceGoal: {
+        sourceGoals: {
           allowNull: false,
-          type: Sequelize.INTEGER,
+          type: Sequelize.ARRAY(Sequelize.INTEGER),
         },
       }, { transaction });
 
@@ -149,6 +155,10 @@ module.exports = {
           autoIncrement: true,
           primaryKey: true,
           type: Sequelize.INTEGER,
+        },
+        hash: {
+          allowNull: false,
+          type: Sequelize.TEXT,
         },
         templateTitle: {
           allowNull: false,
@@ -182,9 +192,9 @@ module.exports = {
           type: Sequelize.DATE,
         },
         // To support up/down on the migration
-        sourceObjective: {
+        sourceObjectives: {
           allowNull: false,
-          type: Sequelize.INTEGER,
+          type: Sequelize.ARRAY(Sequelize.INTEGER),
         },
       }, { transaction });
 
@@ -302,36 +312,6 @@ module.exports = {
         },
       }, { transaction });
 
-      // Move Topics from goals to objectives
-      try {
-        await queryInterface.sequelize.query(
-          `INSERT INTO "ObjectiveTopics" ("objectiveId", "topicId", "createdAt", "updatedAt")
-          SELECT
-            o.id "objectiveId",
-            tg."topicId",
-            tg."createdAt",
-            tg."updatedAt"
-          FROM "Objectives" o
-          JOIN "TopicGoals" tg
-          on o."goalId" = tg."goalId"
-          LEFT JOIN "ObjectiveTopics" ot
-          ON o.id = ot."objectiveId"
-          WHERE ot.id is null;`,
-          { transaction },
-        );
-      } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
-      }
-
-      // Drop TopicGoals table
-      try {
-        await queryInterface.dropTable('TopicGoals', { transaction });
-      } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
-      }
-
       await queryInterface.createTable('ObjectiveRoles', {
         id: {
           allowNull: false,
@@ -414,6 +394,12 @@ module.exports = {
         },
       }, { transaction });
 
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
       // Disable logging while doing mass updates
       try {
         await queryInterface.sequelize.query(
@@ -426,33 +412,97 @@ module.exports = {
         console.error(err); // eslint-disable-line no-console
         throw (err);
       }
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
 
-      // Populate GoalTemplates from existing Goals
+      // Clean up Roles table and add isSpecialist, deletedAt, & mapsTo columns
       try {
+        await queryInterface.addColumn('Roles', 'isSpecialist', {
+          type: Sequelize.BOOLEAN,
+          allowNull: false,
+          default: false,
+          onUpdate: 'CASCADE',
+        }, { transaction });
+
+        await queryInterface.addColumn('Roles', 'deletedAt', {
+          type: Sequelize.DATE,
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.addColumn('Roles', 'mapsTo', {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        }, { transaction });
+
         await queryInterface.sequelize.query(
-          `INSERT INTO "GoalTemplates" ("templateName", "regionId", "creationMethod", "createdAt", "updatedAt", "lastUsed", "templateNameModifiedAt", "sourceGoal")
-          SELECT DISTINCT
-            g.name,
-            COALESCE(gr."regionId",ar."regionId") "regionId",
-            'Automatic'::"enum_GoalTemplates_creationMethod",
-            NOW() "createdAt",
-            NOW() "updatedAt",
-            g."createdAt" "lastUsed",
-            NOW() "templateNameModifiedAt",
-            g.id "sourceGoal"
-          FROM "Goals" g
-          LEFT JOIN "Objectives" o
-          ON g.id = o."goalId"
-          LEFT JOIN public."ActivityReportObjectives" aro
-          ON o."id" = aro."objectiveId"
-          LEFT JOIN public."ActivityReports" ar
-          ON aro."activityReportId" = ar."id"
-          LEFT JOIN "GrantGoals" gg
-          ON g.id = gg."goalId"
-          LEFT JOIN public."Grants" gr
-          ON gg."grantId" = gr."id"
-          WHERE COALESCE(gr."regionId",ar."regionId") is NOT NULL
-          ORDER BY g.id`,
+          `DO $$
+          BEGIN
+            CREATE TEMP TABLE "TempRoles" AS
+            SELECT
+              MIN(r."id") "id",
+              r.name,
+              r."fullName",
+              MIN(r."createdAt") "createdAt",
+              MAX(r."updatedAt") "updatedAt",
+              MAX(r."updatedAt") "deletedAt",
+              r."isSpecialist",
+              r."mapsTo"
+            FROM "Roles" r
+            GROUP BY  r.name, r."fullName", r."isSpecialist", r."mapsTo"
+            ORDER BY  r.name, r."fullName", r."isSpecialist", r."mapsTo";
+            ------------------------------------------------------------------------------------
+            TRUNCATE TABLE
+              "Roles",
+              "RoleTopics",
+              "ObjectiveRoles",
+              "ObjectiveTemplateRoles"
+            RESTART IDENTITY;
+            ------------------------------------------------------------------------------------
+            INSERT INTO "Roles" (
+              "id",
+              "name",
+              "fullName",
+              "createdAt",
+              "updatedAt",
+              "deletedAt",
+              "isSpecialist",
+              "mapsTo"
+            )
+            SELECT
+              "id",
+              "name",
+              "fullName",
+              "createdAt",
+              "updatedAt",
+              "deletedAt",
+              "isSpecialist",
+              "mapsTo"
+            FROM "TempRoles";
+            ------------------------------------------------------------------------------------
+            UPDATE ONLY "Roles"
+            SET "isSpecialist" = true
+            WHERE "fullName" in (
+              'Family Engagement Specialist',
+              'Health Specialist',
+              'Early Childhood Specialist',
+              'System Specialist',
+              'Grantee Specialist'
+            );
+            ------------------------------------------------------------------------------------
+            UPDATE ONLY "Roles" r1
+            SET
+              "deletedAt" = NOW(),
+              "mapsTo" = r2.id
+            FROM "Roles" r2
+            WHERE r1."fullName" = 'Grants Specialist'
+            AND r2."fullName" = 'Grantee Specialist';
+            ------------------------------------------------------------------------------------
+            DROP TABLE "TempRoles";
+          END$$;`,
           { transaction },
         );
       } catch (err) {
@@ -460,91 +510,12 @@ module.exports = {
         throw (err);
       }
 
-      // Migrate all goals not matched to a regionId to DisconnectedGoals as they are inaccessible
-      try {
-        await queryInterface.sequelize.query(
-          `INSERT INTO "DisconnectedGoals" ("name", "status", "timeframe", "isFromSmartsheetTtaPlan", "createdAt", "updatedAt", "closeSuspendReason", "closeSuspendContext", "endDate", "previousStatus")
-          SELECT DISTINCT
-            "g"."name",
-            "g"."status",
-            "g"."timeframe",
-            "g"."isFromSmartsheetTtaPlan",
-            "g"."createdAt",
-            "g"."updatedAt",
-            ("g"."closeSuspendReason"::TEXT)::"enum_DisconnectedGoals_closeSuspendReason",
-            "g"."closeSuspendContext",
-            "g"."endDate",
-            "g"."previousStatus"
-          FROM "Goals" g
-          LEFT JOIN "Objectives" o
-          ON g.id = o."goalId"
-          LEFT JOIN "ActivityReportObjectives" aro
-          ON o."id" = aro."objectiveId"
-          LEFT JOIN "ActivityReports" ar
-          ON aro."activityReportId" = ar."id"
-          LEFT JOIN "GrantGoals" gg
-          ON g.id = gg."goalId"
-          LEFT JOIN "Grants" gr
-          ON gg."grantId" = gr."id"
-          WHERE COALESCE(gr."regionId",ar."regionId") IS NULL;`,
-          { transaction },
-        );
-      } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
-      }
-
-      // Populate ObjectiveTemplates from existing Objectives linking to GoalTemplates
-      try {
-        await queryInterface.sequelize.query(
-          `INSERT INTO "ObjectiveTemplates" ("templateTitle", "regionId", "creationMethod", "createdAt", "updatedAt", "lastUsed", "templateTitleModifiedAt", "sourceObjective")
-          SELECT DISTINCT
-            o.title,
-            COALESCE(ar."regionId") "regionId",
-            'Automatic'::"enum_ObjectiveTemplates_creationMethod",
-            NOW() "createdAt",
-            NOW() "updatedAt",
-            o."createdAt" "lastUsed",
-            NOW() "templateTitleModifiedAt",
-            o.id "sourceObjective"
-          FROM "Objectives" o
-          LEFT JOIN "ActivityReportObjectives" aro
-          ON o."id" = aro."objectiveId"
-          LEFT JOIN "ActivityReports" ar
-          ON aro."activityReportId" = ar."id"`,
-          { transaction },
-        );
-
-        await queryInterface.sequelize.query(
-          `INSERT INTO "ObjectiveTemplateTopics" ("objectiveTemplateId", "topicId", "createdAt", "updatedAt")
-          SELECT
-            o.id,
-            ot."topicId",
-            ot."createdAt",
-            ot."updatedAt"
-          FROM "ObjectiveTemplates" o
-          JOIN "ObjectiveTopics" ot
-          ON o."sourceObjective" = ot."objectiveId";`,
-          { transaction },
-        );
-
-        await queryInterface.sequelize.query(
-          `INSERT INTO "ObjectiveTemplateResources" ("objectiveTemplateId", "userProvidedUrl", "createdAt", "updatedAt")
-          SELECT
-            ot.id,
-            "or"."userProvidedUrl",
-            "or"."createdAt",
-            "or"."updatedAt"
-          FROM "ObjectiveTemplates" ot
-          JOIN "ObjectiveResources" "or"
-          ON ot."sourceObjective" = "or"."objectiveId";`,
-          { transaction },
-        );
-      } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
-      }
-
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
       // Add the foreign key relation from Goals table to GoalTemplates for recording the parent
       // template leave goalTemplateId nullable for now until it can be populated with the IDs of
       // the parent templates
@@ -588,36 +559,6 @@ module.exports = {
           type: Sequelize.INTEGER,
           allowNull: true,
         }, { transaction });
-
-        await queryInterface.sequelize.query(
-          `DO $$
-          BEGIN
-            CREATE TEMP TABLE "TempGoalsONApprovedARs" AS
-            SELECT distinct
-              g.id "goalId",
-              bool_or(gg.id IS NOT null) OR bool_or(ar."calculatedStatus" = 'approved') "onApprovedAR"
-            FROM "Goals" g
-            LEFT JOIN "Objectives" o
-            ON g.id = o."goalId"
-            LEFT JOIN "ActivityReportObjectives" aro
-            ON o."id" = aro."objectiveId"
-            LEFT JOIN "ActivityReports" ar
-            ON aro."activityReportId" = ar."id"
-            LEFT JOIN "GrantGoals" gg
-            ON g.id = gg."goalId"
-            LEFT JOIN "Grants" gr
-            ON gg."grantId" = gr."id"
-            WHERE COALESCE(gr."regionId",ar."regionId") is NOT NULL
-            group by g.id
-            order by g.id;
-
-            UPDATE ONLY "Goals"
-            SET "onApprovedAR" = goaa."onApprovedAR"
-            FROM "TempGoalsONApprovedARs" goaa
-            WHERE "Goals"."id" = goaa."goalId";
-          END$$;`,
-          { transaction },
-        );
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
         throw (err);
@@ -639,153 +580,278 @@ module.exports = {
           onUpdate: 'CASCADE',
         }, { transaction });
 
+        await queryInterface.addColumn('Objectives', 'otherEntityId', {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          references: {
+            model: {
+              tableName: 'OtherEntities',
+            },
+            key: 'id',
+          },
+          onUpdate: 'CASCADE',
+        }, { transaction });
+
         await queryInterface.addColumn('Objectives', 'onApprovedAR', {
           type: Sequelize.BOOLEAN,
           allowNull: false,
           default: false,
         }, { transaction });
 
-        await queryInterface.addColumn('Objectives', 'precededBy', {
-          type: Sequelize.INTEGER,
+        await queryInterface.addColumn('ActivityReportObjectives', 'ttaProvided', {
+          type: Sequelize.TEXT,
           allowNull: true,
         }, { transaction });
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
 
-        await queryInterface.addColumn('Objectives', 'supersededBy', {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-        }, { transaction });
+      // Move Topics from goals to current objectives
+      try {
+        await queryInterface.sequelize.query(
+          `INSERT INTO "ObjectiveTopics" ("objectiveId", "topicId", "createdAt", "updatedAt")
+          SELECT DISTINCT
+            o.id "objectiveId",
+            tg."topicId",
+            tg."createdAt",
+            tg."updatedAt"
+          FROM "Objectives" o
+          JOIN "TopicGoals" tg
+          on o."goalId" = tg."goalId"
+          LEFT JOIN "ObjectiveTopics" ot
+          ON o.id = ot."objectiveId"
+          WHERE ot.id is null;`,
+          { transaction },
+        );
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
 
+      // Drop TopicGoals table
+      try {
+        await queryInterface.dropTable('TopicGoals', { transaction });
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
+
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
+      // -------------------------------------------------------------------------------------------
+      // Data Migration:
+      //  1. create a unified temptable to match all goals to grants: __all_distinct_grants
+      //  2. Populate GoalTemplates
+      //  3. Populate DisconnectedGoals with the goals that do not link to any grants
+      //  4. Populate ObjectiveTemplates
+      //  5. Populate ObjectiveTemplateTopics
+      //  6. Populate ObjectiveTemplateResources
+      //  7. Populate discrete temp goals per grant, deduplicated and split into progressions
+      //  8. Populate discrete temp objectives per goal per grant or other entity, deduplicated and
+      //    split into progressions
+      //  9. Populate temp objectives topics
+      // 10. Populate temp objectives resources
+      // 11. Populate temp activity report objectivess
+      // 12. Truncate all tables that directly reference goals and objectives
+      // 13. Repopulate Goals from temp table
+      // 14. Repopulate Objectives from temp table
+      // 15. Repopulate ObjectiveTopics from temp table
+      // 16. Repopulate ObjectiveResources from temp table
+      // 17. Repopulate ActivityReportObjectives from temp table
+      // 18. Drop all temp tables used
+      // 19. Drop sourceGoals column from GoalTemplates
+      // 20. Drop sourceObjectives column from ObjectiveTemplates
+      // 21. Populate GoalTemplateObjectiveTemplates
+      // 22. Populate goal status for all goals based on rules defined on TTAHub-813
+      //     1. If the goal is associated with a recipient that only has inactive grants
+      //        > all goals = closed
+      //     2. If the goal is associated with an AR for training, and the objective status is
+      //        Completed
+      //        > goal status = closed
+      //     3. If the goal is associated with an AR and objective is In progress or Completed
+      //        > goals status = in progress
+      //     4. If the goal is associated with an AR and only associated with Not started
+      //        objective(s)
+      //        > goals status = not started
+      //     5. If the goal doesn't have a status and no associated ARs and imported from RTTAPA
+      //        less than or equal to 1yr ago
+      //        > goal status = not started
+      //     6. If the goal doesn't have a status and no associated ARs and imported over 1 yr ago
+      //        > goal status = closed
+      try {
         await queryInterface.sequelize.query(
           `DO $$
           BEGIN
-          CREATE TEMP TABLE "TempObjectivesONApprovedARs" AS
-            SELECT distinct
-              o.id "objectiveId",
-              bool_or(gg.id IS NOT null) OR bool_or(ar."calculatedStatus" = 'approved') "onApprovedAR"
+            -- 1. create a unified temptable to match all goals to grants: __all_distinct_grants
+            CREATE TEMP TABLE "__all_distinct_grants" AS
+            WITH
+              all_grants as (
+                SELECT
+                  "gr"."id" "grantId",
+                  gr.status,
+                  gr."regionId",
+                  g.id "goalId"
+                FROM "Goals" g
+                JOIN "Objectives" o
+                ON g.id = o."goalId"
+                JOIN "ActivityReportObjectives" aro
+                ON o.id = aro."objectiveId"
+                JOIN "ActivityRecipients" arp
+                ON aro."activityReportId" = arp."activityReportId"
+                JOIN "Grants" gr
+                ON arp."grantId" = gr.id
+                UNION
+                SELECT
+                  "gr"."id" "grantId",
+                  gr.status,
+                  gr."regionId",
+                  g.id "goalId"
+                FROM "Goals" g
+                JOIN "GrantGoals" gg
+                ON g.id = gg."goalId"
+                JOIN "Grants" gr
+                ON gg."grantId" = gr.id
+              )
+              SELECT DISTINCT *
+              FROM all_grants;
+            ------------------------------------------------------------------------------------
+            -- 2. Populate GoalTemplates
+            INSERT INTO "GoalTemplates" (
+              "hash",
+              "templateName",
+              "regionId",
+              "creationMethod",
+              "createdAt",
+              "updatedAt",
+              "lastUsed",
+              "templateNameModifiedAt",
+              "sourceGoals")
+            SELECT DISTINCT
+              md5(TRIM(g.name)) "hash",
+              TRIM(g.name) "name",
+              adg."regionId",
+              'Automatic'::"enum_GoalTemplates_creationMethod",
+              min(g."createdAt") "createdAt",
+              NOW() "updatedAt",
+              max(g."createdAt") "lastUsed",
+              NOW() "templateNameModifiedAt",
+              array_agg(DISTINCT g.id) "sourceGoals"
             FROM "Goals" g
-            LEFT JOIN "Objectives" o
-            ON g.id = o."goalId"
+            JOIN "__all_distinct_grants" adg
+            ON g.id = adg."goalId"
+            WHERE adg."regionId" IS NOT NULL
+            GROUP BY
+              md5(TRIM(g.name)),
+              TRIM(g.name),
+              adg."regionId";
+            ------------------------------------------------------------------------------------
+            -- 3. Populate DisconnectedGoals with the goals that do not link to any grants
+            INSERT INTO "DisconnectedGoals" (
+              "name",
+              "status",
+              "timeframe",
+              "isFromSmartsheetTtaPlan",
+              "createdAt",
+              "updatedAt",
+              "closeSuspendReason",
+              "closeSuspendContext",
+              "endDate",
+              "previousStatus")
+            SELECT DISTINCT
+              g."name",
+              g."status",
+              g."timeframe",
+              g."isFromSmartsheetTtaPlan",
+              g."createdAt",
+              g."updatedAt",
+              ("g"."closeSuspendReason"::TEXT)::"enum_DisconnectedGoals_closeSuspendReason",
+              g."closeSuspendContext",
+              g."endDate",
+              g."previousStatus"
+            FROM "Goals" g
+            LEFT JOIN "__all_distinct_grants" adg
+            ON g.id = adg."goalId"
+            WHERE adg."goalId" is null;
+            ------------------------------------------------------------------------------------
+            -- 4. Populate ObjectiveTemplates
+            INSERT INTO "ObjectiveTemplates" (
+              "hash",
+              "templateTitle",
+              "regionId",
+              "creationMethod",
+              "createdAt",
+              "updatedAt",
+              "lastUsed",
+              "templateTitleModifiedAt",
+              "sourceObjectives")
+            SELECT DISTINCT
+              md5(TRIM(o.title)),
+              TRIM(o.title),
+              ar."regionId" "regionId",
+              'Automatic'::"enum_ObjectiveTemplates_creationMethod",
+              min(o."createdAt") "createdAt",
+                NOW() "updatedAt",
+                max(o."createdAt") "lastUsed",
+                NOW() "templateNameModifiedAt",
+              array_agg(DISTINCT o.id) "sourceObjectives"
+            FROM "Objectives" o
             LEFT JOIN "ActivityReportObjectives" aro
             ON o."id" = aro."objectiveId"
             LEFT JOIN "ActivityReports" ar
             ON aro."activityReportId" = ar."id"
-            LEFT JOIN "GrantGoals" gg
-            ON g.id = gg."goalId"
-            LEFT JOIN "Grants" gr
-            ON gg."grantId" = gr."id"
-            WHERE COALESCE(gr."regionId",ar."regionId") is NOT NULL
-            group by o.id
-            order by o.id;
-
-            UPDATE ONLY "Objectives"
-            SET "onApprovedAR" = ooaa."onApprovedAR"
-            FROM "TempObjectivesONApprovedARs" ooaa
-            WHERE "Objectives"."id" = ooaa."objectiveId";
-          END$$;`,
-          { transaction },
-        );
-      } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
-      }
-
-      // Clean up Roles and add isSpecialist columns
-      try {
-        await queryInterface.addColumn('Roles', 'isSpecialist', {
-          type: Sequelize.BOOLEAN,
-          allowNull: false,
-          default: false,
-          onUpdate: 'CASCADE',
-        }, { transaction });
-
-        await queryInterface.addColumn('Roles', 'deletedAt', {
-          type: Sequelize.DATE,
-          allowNull: true,
-        }, { transaction });
-
-        await queryInterface.addColumn('Roles', 'mapsTo', {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-        }, { transaction });
-
-        await queryInterface.sequelize.query(
-          `DO $$
-          BEGIN
-          CREATE TEMP TABLE "TempRoles" AS
-          SELECT
-            MIN(r."id") "id",
-            r.name,
-            r."fullName",
-            MIN(r."createdAt") "createdAt",
-            MAX(r."updatedAt") "updatedAt",
-            MAX(r."updatedAt") "deletedAt",
-            r."isSpecialist",
-            r."mapsTo"
-          FROM "Roles" r
-          GROUP BY  r.name, r."fullName", r."isSpecialist", r."mapsTo"
-          ORDER BY  r.name, r."fullName", r."isSpecialist", r."mapsTo";
-
-          TRUNCATE TABLE
-            "Roles",
-            "RoleTopics",
-            "ObjectiveRoles",
-            "ObjectiveTemplateRoles"
-          RESTART IDENTITY;
-
-          INSERT INTO "Roles" (
-            "id",
-            "name",
-            "fullName",
-            "createdAt",
-            "updatedAt",
-            "deletedAt",
-            "isSpecialist",
-            "mapsTo"
-          )
-          SELECT
-            "id",
-            "name",
-            "fullName",
-            "createdAt",
-            "updatedAt",
-            "deletedAt",
-            "isSpecialist",
-            "mapsTo"
-          FROM "TempRoles";
-
-          UPDATE ONLY "Roles"
-          SET "isSpecialist" = true
-          WHERE "fullName" in (
-            'Family Engagement Specialist',
-            'Health Specialist',
-            'Early Childhood Specialist',
-            'System Specialist',
-            'Grantee Specialist'
-          );
-
-          UPDATE ONLY "Roles" r1
-          SET
-            "deletedAt" = NOW(),
-            "mapsTo" = r2.id
-          FROM "Roles" r2
-          WHERE r1."fullName" = 'Grants Specialist'
-          AND r2."fullName" = 'Grantee Specialist';
-
-          DROP TABLE "TempRoles";
-          END$$;`,
-          { transaction },
-        );
-      } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
-      }
-
-      // populate Goals, TopicGoals, Objectives, ObjectiveTopics, & ObjectiveResources
-      try {
-        await queryInterface.sequelize.query(
-          `DO $$
-          BEGIN
-            CREATE TEMP TABLE "TempGoals"
+            GROUP BY
+              md5(TRIM(o.title)),
+              TRIM(o.title),
+              ar."regionId";
+            ------------------------------------------------------------------------------------
+            -- 5. Populate ObjectiveTemplateTopics
+            INSERT INTO "ObjectiveTemplateTopics" (
+              "objectiveTemplateId",
+              "topicId",
+              "createdAt",
+              "updatedAt")
+            SELECT DISTINCT
+              o.id,
+              ot."topicId",
+              MIN(ot."createdAt"),
+              MAX(ot."updatedAt")
+            FROM "ObjectiveTemplates" o
+            JOIN "ObjectiveTopics" ot
+            ON ot."objectiveId" = any (o."sourceObjectives"::int[])
+            GROUP BY
+              o.id,
+              ot."topicId";
+            ------------------------------------------------------------------------------------
+            -- 6. Populate ObjectiveTemplateResources
+            INSERT INTO "ObjectiveTemplateResources" (
+              "objectiveTemplateId",
+              "userProvidedUrl",
+              "createdAt",
+              "updatedAt")
+            SELECT DISTINCT
+              ot.id,
+              "or"."userProvidedUrl",
+              MIN("or"."createdAt"),
+              MAX("or"."updatedAt")
+            FROM "ObjectiveTemplates" ot
+            JOIN "ObjectiveResources" "or"
+            ON "or"."objectiveId" = any (ot."sourceObjectives"::int[])
+            GROUP BY
+              ot.id,
+              "or"."userProvidedUrl";
+            ------------------------------------------------------------------------------------
+            -- 7. Populate discrete temp goals per grant, deduplicated and split into progressions
+            CREATE TEMP TABLE "__temp_goals"
             (
                 "id" serial,
                 "grantId" integer,
@@ -798,23 +864,332 @@ module.exports = {
                 "closeSuspendReason" "enum_Goals_closeSuspendReason",
                 "closeSuspendContext" text COLLATE pg_catalog."default",
                 "goalTemplateId" integer,
-                "onApprovedAR" boolean
+                "onApprovedAR" boolean,
+                "originalGoalIds" integer[]
             );
 
-            CREATE TEMP TABLE "TempObjectives"
+            WITH
+              goal_data AS (
+                SELECT DISTINCT
+                  adg."grantId",
+                  "g"."id",
+                  "g"."name",
+                  "g"."status",
+                  "g"."timeframe",
+                  "g"."isFromSmartsheetTtaPlan",
+                  "g"."createdAt",
+                  "g"."updatedAt",
+                  "g"."closeSuspendReason",
+                  "g"."closeSuspendContext",
+                  adg.status AS grstatus,
+                  MD5(trim(g.name)) AS gname_md5,
+                  CASE COALESCE(g.status,'')
+                    WHEN 'Draft' THEN 0
+                    WHEN 'Not Started' THEN 1
+                    WHEN 'In Progress' THEN 2
+                    WHEN 'Completed' THEN 4
+                    WHEN 'Closed' THEN 4
+                    WHEN 'Ceased/Suspended' THEN 3
+                    ELSE -1
+                  END AS gstatus_num
+                FROM "Goals" g
+                LEFT JOIN "__all_distinct_grants" adg
+                ON g."id" = adg."goalId"
+              ),
+              orderable_goals AS (
+                SELECT
+                  *,
+                  ROW_NUMBER() OVER (PARTITION BY "grantId", "gname_md5" ORDER BY "updatedAt" ASC, "gstatus_num" ASC) AS "stableOrder"
+                FROM goal_data
+              ),
+              flagged_goals AS (
+                SELECT
+                  *,
+                  CASE
+                    WHEN
+                      (LEAD("gstatus_num") OVER (PARTITION BY "grantId", "gname_md5" ORDER BY "stableOrder")) < "gstatus_num"
+                      OR
+                      (LEAD("gstatus_num") OVER (PARTITION BY "grantId", "gname_md5" ORDER BY "stableOrder")) IS NULL
+                    THEN 1
+                    ELSE 0
+                  END AS "retain_flag"
+                FROM orderable_goals
+              ),
+              goal_progressions as (
+                SELECT
+                  *,
+                  "grantId" || '-' || "gname_md5" || '-' || SUM("retain_flag") OVER (PARTITION BY "grantId", "gname_md5" ORDER BY "stableOrder" DESC ROWS UNBOUNDED PRECEDING) AS "progression_id"
+                FROM flagged_goals
+                ORDER BY "grantId", "gname_md5", "stableOrder"
+              ),
+              goal_merges as (
+                SELECT
+                  gpa."grantId",
+                  gpa.id "primaryId",
+                  gpb.id "subId"
+                FROM goal_progressions gpa
+                LEFT JOIN goal_progressions gpb
+                ON gpa."grantId" = gpb."grantId"
+                AND gpa."progression_id" = gpb."progression_id"
+                AND gpa."retain_flag" = 1
+                AND gpb."retain_flag" = 0
+              ),
+              approved_goals as (
+                SELECT distinct
+                  g.id "goalId",
+                  bool_or(ar."calculatedStatus" = 'approved') "onApprovedAR"
+                FROM "Goals" g
+                LEFT JOIN "Objectives" o
+                ON g.id = o."goalId"
+                LEFT JOIN "ActivityReportObjectives" aro
+                ON o."id" = aro."objectiveId"
+                LEFT JOIN "ActivityReports" ar
+                ON aro."activityReportId" = ar."id"
+                WHERE ar."regionId" is NOT NULL
+                group by g.id
+                order by g.id
+              )
+              INSERT INTO "__temp_goals" (
+                "grantId",
+                "name",
+                "status",
+                "timeframe",
+                "isFromSmartsheetTtaPlan",
+                "createdAt",
+                "updatedAt",
+                "closeSuspendReason",
+                "closeSuspendContext",
+                "goalTemplateId",
+                "onApprovedAR",
+                "originalGoalIds"
+              )
+              SELECT
+                gda."grantId",
+                gda."name",
+                (array_agg(gda."status" order by gda.gstatus_num desc))[1] "status",
+                (array_remove(array_agg(gdb."timeframe" order by gdb."updatedAt"),NULL))[1] "timeframe",
+                SUM(COALESCE(gdb."isFromSmartsheetTtaPlan",false)::int) > 0 "isFromSmartsheetTtaPlan",
+                MIN(gdb."createdAt") "createdAt",
+                MAX(gdb."updatedAt") "updatedAt",
+                (array_remove(array_agg(gdb."closeSuspendReason" order by gdb."updatedAt"),NULL))[1] "closeSuspendReason",
+                (array_remove(array_agg(gdb."closeSuspendContext" order by gdb."updatedAt"),NULL))[1] "closeSuspendContext",
+                gt.id "goalTemplateId",
+                COALESCE(bool_or(ag."onApprovedAR"),false) "onApprovedAR",
+                array_agg(gdb."id") "originalGoalIds"
+              FROM goal_data gda
+              LEFT JOIN goal_merges gm
+              ON gda."grantId" = gm."grantId"
+              and gda."id" = gm."primaryId"
+              LEFT JOIN goal_data gdb
+              ON gdb."grantId" = gm."grantId"
+              and (gdb."id" = gm."primaryId"
+                OR gdb."id" = gm."subId")
+              JOIN "GoalTemplates" gt
+              ON gda.id = any (gt."sourceGoals"::int[])
+              LEFT JOIN approved_goals ag
+              ON gdb."id" = ag."goalId"
+              GROUP BY
+                gda."grantId",
+                gda."name",
+                gt.id
+              order by
+                MIN(gdb."createdAt"),
+                gda."grantId";
+            ------------------------------------------------------------------------------------
+            -- 8. Populate discrete temp objectives per goal per grant or other entity, deduplicated and
+            --    split into progressions
+            CREATE TEMP TABLE "__temp_objectives"
             (
                 "id" serial,
+                "otherEntityId" integer,
                 "goalId" integer,
                 "title" text COLLATE pg_catalog."default",
-                "ttaProvided" text COLLATE pg_catalog."default",
                 "status" character varying(255) COLLATE pg_catalog."default",
                 "createdAt" timestamp with time zone NOT NULL DEFAULT now(),
                 "updatedAt" timestamp with time zone NOT NULL DEFAULT now(),
                 "objectiveTemplateId" integer,
-                "onApprovedAR" boolean
+                "onApprovedAR" boolean,
+                "originalObjectiveIds" integer[]
             );
 
-            CREATE TEMP TABLE "TempObjectiveTopics"
+            WITH
+              otherentity_objectives AS (
+                SELECT DISTINCT
+                  oe.id "otherEntityId",
+                  aro."objectiveId"
+                FROM public."OtherEntities" oe
+                JOIN "ActivityRecipients" ar
+                ON oe.id = ar."otherEntityId"
+                JOIN "ActivityReportObjectives" aro
+                ON ar."activityReportId" = aro."activityReportId"
+                order by oe.id, aro."objectiveId"
+              ),
+              objective_otherentity_data AS (
+                SELECT DISTINCT
+                  oo."otherEntityId",
+                  "o"."id",
+                  "o"."title",
+                  "o"."status",
+                  "o"."createdAt",
+                  "o"."updatedAt",
+                  MD5(trim(o.title)) AS otitle_md5,
+                  CASE COALESCE(o.status,'')
+                    WHEN 'Draft' THEN 0
+                    WHEN 'Not Started' THEN 1
+                    WHEN 'In Progress' THEN 2
+                    WHEN 'Complete' THEN 4
+                    WHEN 'Suspended' THEN 3
+                    ELSE -1
+                  END AS ostatus_num
+                FROM "Objectives" o
+                JOIN "otherentity_objectives" oo
+                ON o."goalId" = oo."objectiveId"
+              ),
+              objective_goal_data AS (
+                SELECT DISTINCT
+                  tg."id" "goalId",
+                  "o"."id",
+                  "o"."title",
+                  "o"."status",
+                  "o"."createdAt",
+                  "o"."updatedAt",
+                  MD5(trim(o.title)) AS otitle_md5,
+                  CASE COALESCE(o.status,'')
+                    WHEN 'Draft' THEN 0
+                    WHEN 'Not Started' THEN 1
+                    WHEN 'In Progress' THEN 2
+                    WHEN 'Complete' THEN 4
+                    WHEN 'Suspended' THEN 3
+                    ELSE -1
+                  END AS ostatus_num
+                FROM "Objectives" o
+                JOIN "__temp_goals" tg
+                ON o."goalId" = any (tg."originalGoalIds"::int[])
+              ),
+              objective_data AS (
+                SELECT
+                  ood."otherEntityId",
+                  null "goalId",
+                  ood."id",
+                  ood."title",
+                  ood."status",
+                  ood."createdAt",
+                  ood."updatedAt",
+                  ood.otitle_md5,
+                  ood.ostatus_num
+                FROM objective_otherentity_data ood
+                UNION
+                SELECT
+                  null "otherEntityId",
+                  ogd."goalId",
+                  ogd."id",
+                  ogd."title",
+                  ogd."status",
+                  ogd."createdAt",
+                  ogd."updatedAt",
+                  ogd.otitle_md5,
+                  ogd.ostatus_num
+                FROM objective_goal_data ogd
+              ),
+              orderable_objectives AS (
+                SELECT
+                  *,
+                  ROW_NUMBER() OVER (PARTITION BY "otherEntityId", "goalId", "otitle_md5" ORDER BY "updatedAt" ASC, ostatus_num ASC) AS "stableOrder"
+                FROM objective_data
+              ),
+              flagged_objectives AS (
+                SELECT
+                  *,
+                  CASE
+                    WHEN
+                      (LEAD("ostatus_num") OVER (PARTITION BY "otherEntityId", "goalId", "otitle_md5" ORDER BY "stableOrder")) < "ostatus_num"
+                      OR
+                      (LEAD("ostatus_num") OVER (PARTITION BY "otherEntityId", "goalId", "otitle_md5" ORDER BY "stableOrder")) IS NULL
+                    THEN 1
+                    ELSE 0
+                  END AS "retain_flag"
+                FROM orderable_objectives
+              ),
+              objective_progressions as (
+                SELECT
+                  *,
+                  "otherEntityId" || '-' || "goalId" || '-' || "otitle_md5" || '-' || SUM("retain_flag") OVER (PARTITION BY "otherEntityId", "goalId", "otitle_md5" ORDER BY "stableOrder" DESC ROWS UNBOUNDED PRECEDING) AS "progression_id"
+                FROM flagged_objectives
+                ORDER BY "otherEntityId", "goalId", "otitle_md5", "stableOrder"
+              ),
+              objective_merges as (
+                SELECT
+                  opa."otherEntityId",
+                  opa."goalId",
+                  opa.id "primaryId",
+                  opb.id "subId"
+                FROM objective_progressions opa
+                LEFT JOIN objective_progressions opb
+                ON COALESCE(opa."otherEntityId",-1) = COALESCE(opa."otherEntityId",-1)
+                AND COALESCE(opa."goalId",-1) = COALESCE(opb."goalId",-1)
+                AND opa."progression_id" = opb."progression_id"
+                AND opa."retain_flag" = 1
+                AND opb."retain_flag" = 0
+              ),
+              approved_objectives as (
+                SELECT distinct
+                  o.id "objectiveId",
+                  bool_or(ar."calculatedStatus" = 'approved') "onApprovedAR"
+                FROM "Objectives" o
+                LEFT JOIN "ActivityReportObjectives" aro
+                ON o."id" = aro."objectiveId"
+                LEFT JOIN "ActivityReports" ar
+                ON aro."activityReportId" = ar."id"
+                group by o.id
+                order by o.id
+              )
+              INSERT INTO "__temp_objectives" (
+                "otherEntityId",
+                "goalId",
+                "title",
+                "status",
+                "createdAt",
+                "updatedAt",
+                "objectiveTemplateId",
+                "onApprovedAR",
+                "originalObjectiveIds"
+              )
+              SELECT
+                oda."otherEntityId",
+                oda."goalId",
+                oda."title",
+                (array_agg(oda."status" order by oda.ostatus_num desc))[1] "status",
+                MIN(odb."createdAt") "createdAt",
+                MAX(odb."updatedAt") "updatedAt",
+                ot.id "objectiveTemplateId",
+                COALESCE(bool_or(ao."onApprovedAR"),false) "onApprovedAR",
+                array_agg(odb."id") "originalObjectiveIds"
+              FROM objective_data oda
+              LEFT JOIN objective_merges om
+              ON COALESCE(oda."otherEntityId",-1) = COALESCE(om."otherEntityId",-1)
+              AND COALESCE(oda."goalId",-1) = COALESCE(om."goalId",-1)
+              AND oda."id" = om."primaryId"
+              LEFT JOIN objective_data odb
+              ON COALESCE(odb."otherEntityId",-1) = COALESCE(om."otherEntityId",-1)
+              AND COALESCE(odb."goalId",-1) = COALESCE(om."goalId",-1)
+              AND (odb."id" = om."primaryId"
+                OR odb."id" = om."subId")
+              JOIN "ObjectiveTemplates" ot
+              ON oda.id = any (ot."sourceObjectives"::int[])
+              LEFT JOIN approved_objectives ao
+              ON odb.id = ao."objectiveId"
+              GROUP BY
+                oda."otherEntityId",
+                oda."goalId",
+                oda."title",
+                ot.id
+              order by
+                MIN(odb."createdAt"),
+                oda."otherEntityId",
+                oda."goalId";
+            ------------------------------------------------------------------------------------
+            -- 9. Populate  temp objectives topics
+            CREATE TEMP TABLE "__temp_objectives_topics"
             (
                 "id" serial,
                 "objectiveId" integer NOT NULL,
@@ -823,7 +1198,26 @@ module.exports = {
                 "updatedAt" timestamp with time zone NOT NULL
             );
 
-            CREATE TEMP TABLE "TempObjectiveResources"
+            INSERT INTO "__temp_objectives_topics" (
+              "objectiveId",
+              "topicId",
+              "createdAt",
+              "updatedAt"
+            )
+            SELECT
+              "o"."id" "objectiveId",
+              "oto"."topicId",
+              MIN("oto"."createdAt"),
+              MAX("oto"."updatedAt")
+            FROM "ObjectiveTopics" "oto"
+            JOIN "__temp_objectives" "o"
+            ON "oto"."id" = any (o."originalObjectiveIds"::int[])
+            GROUP BY
+              "o"."id",
+              "oto"."topicId";
+            ------------------------------------------------------------------------------------
+            -- 10. Populate  temp objectives resources
+            CREATE TEMP TABLE "__temp_objectives_resources"
             (
                 "id" serial,
                 "userProvidedUrl" character varying(255) COLLATE pg_catalog."default" NOT NULL,
@@ -832,16 +1226,73 @@ module.exports = {
                 "updatedAt" timestamp with time zone NOT NULL
             );
 
-            CREATE TEMP TABLE "TempActivityReportObjectives"
+            INSERT INTO "__temp_objectives_resources" (
+              "userProvidedUrl",
+              "objectiveId",
+              "createdAt",
+              "updatedAt"
+            )
+            SELECT
+              "ore"."userProvidedUrl",
+              "o"."id" "objectiveId",
+              MIN("ore"."createdAt"),
+              MAX("ore"."updatedAt")
+            FROM "ObjectiveResources" "ore"
+            JOIN "__temp_objectives" "o"
+            ON "ore"."id" = any (o."originalObjectiveIds"::int[])
+            GROUP BY
+              "ore"."userProvidedUrl",
+              "o"."id";
+            ------------------------------------------------------------------------------------
+            -- 11. Populate temp activity report objectives
+            CREATE TEMP TABLE "__temp_activity_report_objectives"
             (
                 id serial,
                 "activityReportId" integer NOT NULL,
                 "objectiveId" integer NOT NULL,
                 "createdAt" timestamp with time zone NOT NULL DEFAULT now(),
-                "updatedAt" timestamp with time zone NOT NULL DEFAULT now()
+                "updatedAt" timestamp with time zone NOT NULL DEFAULT now(),
+                "ttaProvided" text
             );
 
-            INSERT INTO "TempGoals" (
+            INSERT INTO "__temp_activity_report_objectives" (
+              "activityReportId",
+              "objectiveId",
+              "createdAt",
+              "updatedAt",
+              "ttaProvided"
+            )
+            SELECT
+              "aro"."activityReportId",
+              o."id" "objectiveId",
+              MIN("aro"."createdAt"),
+              MAX("aro"."updatedAt"),
+              TRIM(string_agg(oo."ttaProvided", E'\n'))
+            FROM "ActivityReportObjectives" aro
+            JOIN "__temp_objectives" "o"
+            ON "aro"."id" = any (o."originalObjectiveIds"::int[])
+            JOIN "Objectives" oo
+            ON aro."objectiveId" = oo.id
+            GROUP BY
+              "aro"."activityReportId",
+              o."id";
+            ------------------------------------------------------------------------------------
+            -- 12. Truncate all tables that directly reference goals and objectives
+            TRUNCATE TABLE
+              "ActivityReportGoals",
+              "ActivityReportObjectives",
+              "ObjectiveRoles",
+              "ObjectiveTemplateRoles",
+              "ObjectiveResources",
+              "ObjectiveTopics",
+              "Objectives",
+              "Goals",
+              "GrantGoals"
+            RESTART IDENTITY;
+            ------------------------------------------------------------------------------------
+            -- 13. Repopulate Goals from temp table
+            INSERT INTO "Goals" (
+              "id",
               "grantId",
               "name",
               "status",
@@ -854,172 +1305,46 @@ module.exports = {
               "goalTemplateId",
               "onApprovedAR"
             )
-            SELECT DISTINCT
-              COALESCE("ars"."grantId","gg"."grantId") "grantId",
-              "g"."name",
-              "g"."status",
-              "g"."timeframe",
-              "g"."isFromSmartsheetTtaPlan",
-              "g"."createdAt",
-              "g"."updatedAt",
-              "g"."closeSuspendReason",
-              "g"."closeSuspendContext",
-              "gt"."id" "goalTemplateId",
-              "g"."onApprovedAR"
-            FROM "Goals" g
-            LEFT JOIN "Objectives" o
-            ON g.id = o."goalId"
-            LEFT JOIN "ActivityReportObjectives" aro
-            ON o."id" = aro."objectiveId"
-            LEFT JOIN "ActivityReports" ar
-            ON aro."activityReportId" = ar."id"
-            LEFT JOIN "ActivityRecipients" ars
-            ON ar."id" = ars."activityReportId"
-            LEFT JOIN "GrantGoals" gg
-            ON g.id = gg."goalId"
-            LEFT JOIN "Grants" gr
-            ON gg."grantId" = gr."id"
-            JOIN "GoalTemplates" "gt"
-            ON "g"."id" = "gt"."sourceGoal"
-            WHERE COALESCE(gr."regionId",ar."regionId") is NOT NULL;
-
-            INSERT INTO "TempObjectives" (
+            SELECT
+              "id",
+              "grantId",
+              "name",
+              "status",
+              "timeframe",
+              "isFromSmartsheetTtaPlan",
+              "createdAt",
+              "updatedAt",
+              "closeSuspendReason",
+              "closeSuspendContext",
+              "goalTemplateId",
+              "onApprovedAR"
+            FROM "__temp_goals";
+            ------------------------------------------------------------------------------------
+            -- 14. Repopulate Objectives from temp table
+            INSERT INTO "Objectives"(
+              "id",
+              "otherEntityId",
               "goalId",
               "title",
-              "ttaProvided",
               "status",
               "createdAt",
               "updatedAt",
               "objectiveTemplateId",
               "onApprovedAR"
             )
-            select
-              "g"."id" "goalId",
-              "o"."title",
-              "o"."ttaProvided",
-              "o"."status",
-              "o"."createdAt",
-              "o"."updatedAt",
-              "ot"."id" "objectiveTemplateId",
-              "o"."onApprovedAR"
-            FROM "Objectives" "o"
-            JOIN "ObjectiveTemplates" "ot"
-            ON "o"."id" = "ot"."sourceObjective"
-            LEFT JOIN "GoalTemplates" "gt"
-            ON "gt"."sourceGoal" = "o"."goalId"
-            LEFT JOIN "TempGoals" "g"
-            ON "gt"."id" = "g"."goalTemplateId";
-
-            INSERT INTO "TempObjectiveTopics" (
-              "objectiveId",
-              "topicId",
-              "createdAt",
-              "updatedAt"
-            )
-            SELECT
-              "o"."id" "objectiveId",
-              "oto"."topicId",
-              "oto"."createdAt",
-              "oto"."updatedAt"
-            FROM "ObjectiveTopics" "oto"
-            JOIN "ObjectiveTemplates" "ote"
-            ON "oto"."objectiveId" = "ote"."sourceObjective"
-            JOIN "TempObjectives" "o"
-            ON "ote"."id" = "o"."objectiveTemplateId";
-
-            INSERT INTO "TempObjectiveResources" (
-              "userProvidedUrl",
-              "objectiveId",
-              "createdAt",
-              "updatedAt"
-            )
-            SELECT
-              "ore"."userProvidedUrl",
-              "o"."id" "objectiveId",
-              "ore"."createdAt",
-              "ore"."updatedAt"
-            FROM "ObjectiveResources" "ore"
-            JOIN "ObjectiveTemplates" "ote"
-            ON "ore"."objectiveId" = "ote"."sourceObjective"
-            JOIN "TempObjectives" "o"
-            ON "ote"."id" = "o"."objectiveTemplateId";
-
-            INSERT INTO "TempActivityReportObjectives" (
-              "activityReportId",
-              "objectiveId",
-              "createdAt",
-              "updatedAt"
-            )
-            SELECT
-              "aro"."activityReportId",
-              o."id" "objectiveId",
-              "aro"."createdAt",
-              "aro"."updatedAt"
-            FROM "ActivityReportObjectives" aro
-            JOIN "ObjectiveTemplates" ot
-            ON aro."objectiveId" = ot."sourceObjective"
-            JOIN "TempObjectives" o
-            ON ot.id = o."objectiveTemplateId";
-
-            TRUNCATE TABLE
-              "ActivityReportObjectives",
-              "ObjectiveRoles",
-              "ObjectiveTemplateRoles",
-              "ObjectiveResources",
-              "ObjectiveTopics",
-              "Objectives",
-              "Goals",
-              "GrantGoals"
-            RESTART IDENTITY;
-
-            INSERT INTO "Goals" (
-              "id",
-              "grantId",
-              "name",
-              "status",
-              "timeframe",
-              "isFromSmartsheetTtaPlan",
-              "createdAt",
-              "updatedAt",
-              "closeSuspendReason",
-              "closeSuspendContext",
-              "goalTemplateId"
-            )
             SELECT
               "id",
-              "grantId",
-              "name",
-              "status",
-              "timeframe",
-              "isFromSmartsheetTtaPlan",
-              "createdAt",
-              "updatedAt",
-              "closeSuspendReason",
-              "closeSuspendContext",
-              "goalTemplateId"
-            FROM "TempGoals";
-
-            INSERT INTO "Objectives"(
-              "id",
+              "otherEntityId",
               "goalId",
               "title",
-              "ttaProvided",
               "status",
               "createdAt",
               "updatedAt",
-              "objectiveTemplateId"
-            )
-            SELECT
-              "id",
-              "goalId",
-              "title",
-              "ttaProvided",
-              "status",
-              "createdAt",
-              "updatedAt",
-              "objectiveTemplateId"
-            FROM "TempObjectives";
-
+              "objectiveTemplateId",
+              "onApprovedAR"
+            FROM "__temp_objectives";
+            ------------------------------------------------------------------------------------
+            -- 15. Repopulate ObjectiveTopics from temp table
             INSERT INTO "ObjectiveTopics" (
               "id",
               "objectiveId",
@@ -1033,8 +1358,9 @@ module.exports = {
               "topicId",
               "createdAt",
               "updatedAt"
-            FROM "TempObjectiveTopics";
-
+            FROM "__temp_objectives_topics";
+            ------------------------------------------------------------------------------------
+            -- 16. Repopulate ObjectiveResources from temp table
             INSERT INTO "ObjectiveResources" (
               "id",
               "userProvidedUrl",
@@ -1048,171 +1374,176 @@ module.exports = {
               "objectiveId",
               "createdAt",
               "updatedAt"
-            FROM "TempObjectiveResources";
-
+            FROM "__temp_objectives_resources";
+            ------------------------------------------------------------------------------------
+            -- 17. Repopulate ActivityReportObjectives from temp table
             INSERT INTO "ActivityReportObjectives"(
               "id",
               "activityReportId",
               "objectiveId",
               "createdAt",
-              "updatedAt"
+              "updatedAt",
+              "ttaProvided"
             )
             SELECT
               "id",
               "activityReportId",
               "objectiveId",
               "createdAt",
-              "updatedAt"
-            FROM "TempActivityReportObjectives";
-
+              "updatedAt",
+              "ttaProvided"
+            FROM "__temp_activity_report_objectives";
+            ------------------------------------------------------------------------------------
+            -- 18. Drop all temp tables used
             DROP TABLE
-              "TempGoals",
-              "TempObjectives",
-              "TempObjectiveTopics",
-              "TempObjectiveResources",
-              "TempActivityReportObjectives";
-          END$$;`,
-          { transaction },
-        );
-      } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
-      }
-
-      // Remove unneeded source columns
-      try {
-        await queryInterface.sequelize.query(
-          `DO $$
-          BEGIN
+              "__all_distinct_grants",
+              "__temp_goals",
+              "__temp_objectives",
+              "__temp_objectives_topics",
+              "__temp_objectives_resources",
+              "__temp_activity_report_objectives";
+            ------------------------------------------------------------------------------------
+            -- 19. Drop sourceGoals column from GoalTemplates
             ALTER TABLE "GoalTemplates"
-            DROP COLUMN "sourceGoal";
-
+            DROP COLUMN "sourceGoals";
+            ------------------------------------------------------------------------------------
+            -- 20. Drop sourceObjectives column from ObjectiveTemplates
             ALTER TABLE "ObjectiveTemplates"
-            DROP COLUMN "sourceObjective";
+            DROP COLUMN "sourceObjectives";
+            ------------------------------------------------------------------------------------
+            -- 21. Populate GoalTemplateObjectiveTemplates
+            INSERT INTO "GoalTemplateObjectiveTemplates" (
+              "objectiveTemplateId",
+              "goalTemplateId"
+            )
+            SELECT DISTINCT
+              o."objectiveTemplateId",
+              g."goalTemplateId"
+            FROM "Objectives" o
+            JOIN "Goals" g
+            ON o."goalId" = g."id";
+            ------------------------------------------------------------------------------------
+            -- 22. Populate goal status for all goals based on rules defined on TTAHub-813
+            WITH
+              rule_1 AS (
+                SELECT
+                  g.id "goalId",
+                  'Closed' status
+                FROM "Goals" g
+                JOIN "Grants" gr
+                ON g."grantId" = gr.id
+                JOIN "Grants" gr2
+                ON gr."recipientId" = gr2."recipientId"
+                GROUP BY g.id
+                HAVING SUM((gr2.status = 'Active')::int) = 0
+                AND SUM((gr2.status = 'Inactive')::int) > 0
+              ),
+              rule_2 AS (
+                SELECT
+                  g.id "goalId",
+                  'Closed' status
+                FROM "Goals" g
+                JOIN "Objectives" o
+                ON g.id = o."goalId"
+                AND o.status = 'Complete'
+                JOIN "ActivityReportObjectives" aro
+                ON o.id = aro."objectiveId"
+                JOIN "ActivityReports" ar
+                ON aro."activityReportId" = ar.id
+                GROUP BY g.id
+                HAVING SUM((ar."ttaType" = '{training}')::int) > 0
+                AND SUM((ar."ttaType" != '{training}')::int) = 0
+              ),
+              rule_3 AS (
+                SELECT
+                  g.id "goalId",
+                  'In Progress' status
+                FROM "Goals" g
+                JOIN "Objectives" o
+                ON g.id = o."goalId"
+                AND o.status in ('In Progress', 'Complete')
+                JOIN "ActivityReportObjectives" aro
+                ON o.id = aro."objectiveId"
+                JOIN "ActivityReports" ar
+                ON aro."activityReportId" = ar.id
+              ),
+              rule_4 AS (
+                SELECT
+                  g.id "goalId",
+                  'Not Started' status
+                FROM "Goals" g
+                JOIN "Objectives" o
+                ON g.id = o."goalId"
+                JOIN "ActivityReportObjectives" aro
+                ON o.id = aro."objectiveId"
+                JOIN "ActivityReports" ar
+                ON aro."activityReportId" = ar.id
+                group by g.id
+                having array_agg(distinct o.status)::text = '{"Not Started"}'
+              ),
+              rule_5 AS (
+                SELECT
+                  g.id "goalId",
+                  'Not Started' status
+                FROM "Goals" g
+                LEFT JOIN "Objectives" o
+                ON g.id = o."goalId"
+                LEFT JOIN "ActivityReportObjectives" aro
+                ON o.id = aro."objectiveId"
+                WHERE aro.id is null
+                AND g."isFromSmartsheetTtaPlan" = true
+                AND NOW() - g."createdAt" < '1 year'
+              ),
+              rule_6 AS (
+                SELECT
+                  g.id "goalId",
+                  'Closed' status
+                FROM "Goals" g
+                LEFT JOIN "Objectives" o
+                ON g.id = o."goalId"
+                LEFT JOIN "ActivityReportObjectives" aro
+                ON o.id = aro."objectiveId"
+                WHERE aro.id is null
+                AND g."isFromSmartsheetTtaPlan" = true
+                AND NOW() - g."createdAt" > '1 year'
+              ),
+              status_rules AS (
+                SELECT
+                  g.id "goalId",
+                  COALESCE(g.status, r1.status,r2.status,r3.status,r4.status,r5.status,r6.status) status
+                FROM "Goals" g
+                LEFT JOIN rule_1 r1
+                ON g.id = r1."goalId"
+                LEFT JOIN rule_2 r2
+                ON g.id = r2."goalId"
+                LEFT JOIN rule_3 r3
+                ON g.id = r3."goalId"
+                LEFT JOIN rule_4 r4
+                ON g.id = r4."goalId"
+                LEFT JOIN rule_5 r5
+                ON g.id = r5."goalId"
+                LEFT JOIN rule_6 r6
+                ON g.id = r6."goalId"
+              )
+              UPDATE "Goals" g
+              SET status = sr.status
+              FROM status_rules sr
+              WHERE g.id = sr."goalId";
+            ------------------------------------------------------------------------------------
+            -- 23. Populate ActivityReportGoals
+            INSERT INTO "ActivityReportGoals" (
+              "activityReportId",
+              "goalId"
+            )
+            SELECT
+              aro."activityReportId",
+              o."goalId"
+            FROM "Objectives" o
+            JOIN "ActivityReportObjectives" aro
+            ON o.id = aro."objectiveId"
+            WHERE o."goalId" IS NOT NULL;
+            ------------------------------------------------------------------------------------
           END$$;`,
-          { transaction },
-        );
-      } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
-      }
-
-      // Remove duplicate templates and realign references duplicates to first instance
-      try {
-        await queryInterface.sequelize.query(
-          `DO $$
-          BEGIN
-            CREATE TEMP TABLE "TempObjectiveTemplatesReductionMap" AS
-            SELECT
-              otA.id "primaryTemplateId",
-              otB.id "secondaryTemplateId",
-              otA."regionId",
-              otB."lastUsed"
-            FROM "ObjectiveTemplates" otA
-            JOIN "ObjectiveTemplates" otB
-            ON otA.id < otB.id
-            AND otA."templateTitle" = otB."templateTitle"
-            AND COALESCE(otA."regionId",-1) = COALESCE(otB."regionId",-1);
-
-            UPDATE ONLY "Objectives"
-            SET "objectiveTemplateId" = otrm."primaryTemplateId"
-            FROM "TempObjectiveTemplatesReductionMap" otrm
-            WHERE "objectiveTemplateId" = otrm."secondaryTemplateId";
-
-            UPDATE ONLY "ObjectiveTemplateResources"
-            SET "objectiveTemplateId" = otrm."primaryTemplateId"
-            FROM "TempObjectiveTemplatesReductionMap" otrm
-            WHERE "objectiveTemplateId" = otrm."secondaryTemplateId";
-
-            UPDATE ONLY "ObjectiveTemplateTopics"
-            SET "objectiveTemplateId" = otrm."primaryTemplateId"
-            FROM "TempObjectiveTemplatesReductionMap" otrm
-            WHERE "objectiveTemplateId" = otrm."secondaryTemplateId";
-
-            DELETE FROM "ObjectiveTemplates" ot
-            USING  "TempObjectiveTemplatesReductionMap" otrm
-            WHERE ot.id = otrm."secondaryTemplateId";
-
-            DELETE FROM "ObjectiveTemplateResources" otrA
-            USING "ObjectiveTemplateResources" otrB
-            WHERE otrA.id > otrB.id
-            AND otrA."objectiveTemplateId" = otrB."objectiveTemplateId"
-            AND otrA."userProvidedUrl" = otrB."userProvidedUrl";
-
-            DELETE FROM "ObjectiveTemplateTopics" ottA
-            USING "ObjectiveTemplateTopics" ottB
-            WHERE ottA.id > ottB.id
-            AND ottA."objectiveTemplateId" = ottB."objectiveTemplateId"
-            AND ottA."topicId" = ottB."topicId";
-
-            CREATE TEMP TABLE "TempObjectiveTemplatesReductionMapLastUsed" AS
-            SELECT
-              "primaryTemplateId",
-              min("lastUsed") "lastUsed"
-            FROM "TempObjectiveTemplatesReductionMap"
-            GROUP BY "primaryTemplateId";
-
-            UPDATE ONLY "ObjectiveTemplates"
-            SET "lastUsed" = otrm."lastUsed"
-            FROM "TempObjectiveTemplatesReductionMapLastUsed" otrm
-            WHERE "ObjectiveTemplates".id = otrm."primaryTemplateId"
-            AND "ObjectiveTemplates"."lastUsed" < otrm."lastUsed";
-
-            CREATE TEMP TABLE "TempGoalTemplatesReductionMap" AS
-            SELECT
-              gtA.id "primaryTemplateId",
-              gtB.id "secondaryTemplateId",
-              gtA."regionId",
-              gtB."lastUsed"
-            FROM "GoalTemplates" gtA
-            JOIN "GoalTemplates" gtB
-            ON gtA.id < gtB.id
-            AND gtA."templateName" = gtB."templateName"
-            AND COALESCE(gtA."regionId",-1) = COALESCE(gtB."regionId",-1);
-
-            UPDATE ONLY "Goals"
-            SET "goalTemplateId" = gtrm."primaryTemplateId"
-            FROM "TempGoalTemplatesReductionMap" gtrm
-            WHERE "goalTemplateId" = gtrm."secondaryTemplateId";
-
-            DELETE FROM "GoalTemplates" gt
-            USING  "TempGoalTemplatesReductionMap" gtrm
-            WHERE gt.id = gtrm."secondaryTemplateId";
-
-            CREATE TEMP TABLE "TempGoalTemplatesReductionMapLastUsed" AS
-            SELECT
-              "primaryTemplateId",
-              min("lastUsed") "lastUsed"
-            FROM "TempGoalTemplatesReductionMap"
-            GROUP BY "primaryTemplateId";
-
-            UPDATE ONLY "GoalTemplates"
-            SET "lastUsed" = gtrm."lastUsed"
-            FROM "TempGoalTemplatesReductionMapLastUsed" gtrm
-            WHERE "GoalTemplates".id = gtrm."primaryTemplateId"
-            AND "GoalTemplates"."lastUsed" > gtrm."lastUsed";
-
-            DROP TABLE
-              "TempObjectiveTemplatesReductionMap",
-              "TempGoalTemplatesReductionMap",
-              "TempObjectiveTemplatesReductionMapLastUsed",
-              "TempGoalTemplatesReductionMapLastUsed";
-          END$$;`,
-          { transaction },
-        );
-      } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
-      }
-
-      // Populate GoalTemplateObjectiveTemplates linking  ObjectiveTemplates to GoalTemplates
-      try {
-        await queryInterface.sequelize.query(
-          `INSERT INTO "GoalTemplateObjectiveTemplates" ("objectiveTemplateId", "goalTemplateId")
-          SELECT DISTINCT o."objectiveTemplateId", g."goalTemplateId"
-          FROM "Objectives" o
-          JOIN "Goals" g
-          ON o."goalId" = g."id";`,
           { transaction },
         );
       } catch (err) {
@@ -1422,8 +1753,17 @@ module.exports = {
         await queryInterface.sequelize.query(
           `DO $$
           BEGIN
-            INSERT INTO "ActivityReportFiles" ("activityReportId", "fileId", "createdAt", "updatedAt")
-            SELECT "activityReportId", id, "createdAt", "updatedAt"
+            INSERT INTO "ActivityReportFiles" (
+              "activityReportId",
+              "fileId",
+              "createdAt",
+              "updatedAt"
+            )
+            SELECT
+              "activityReportId",
+              id,
+              "createdAt",
+              "updatedAt"
             FROM "Files";
 
             ALTER TABLE "Files"
@@ -1527,126 +1867,6 @@ module.exports = {
           type: Sequelize.DATE,
           allowNull: true,
         }, { transaction });
-      } catch (err) {
-        console.error(err); // eslint-disable-line no-console
-        throw (err);
-      }
-
-      // Populate goal status for all current goals based on rules defined on TTAHub-813
-      // If the goal is associated with a recipient that only has inactive grants
-      // > all goals = closed
-      // If the goal is associated with an AR is for training, and the objective status is Completed
-      // > goal status = closed
-      // If the goal is associated with an AR and objective is In progress or Completed
-      // > goals status = in progress
-      // If the goal is associated with an AR and only associated with Not started objective(s)
-      // > goals status = not started
-      // If the goal doesn't have a status and no associated ARs and imported from RTTAPA less than
-      // or equal to 1yr ago > goal status = not started
-      // If the goal doesn't have a status and no associated ARs and imported over 1 yr ago
-      // > goal status = closed
-      try {
-        await queryInterface.sequelize.query(
-          `UPDATE "Goals" g0
-          SET status = COALESCE(r1.status,r2.status,r3.status,r4.status,r5.status,r6.status)
-          FROM "Goals" g
-          LEFT JOIN (
-            SELECT
-              g.id "goalId",
-              true "rule",
-              'Closed' status
-            FROM "Goals" g
-            JOIN "Grants" gr
-            ON g."grantId" = gr.id
-            JOIN "Grants" gr2
-            ON gr."recipientId" = gr2."recipientId"
-            GROUP BY g.id
-            HAVING SUM((gr2.status = 'Active')::int) = 0
-            AND SUM((gr2.status = 'Inactive')::int) > 0
-          ) r1
-          on g.id = r1."goalId"
-          LEFT JOIN (
-            SELECT
-              g.id "goalId",
-              true "rule",
-              'Closed' status
-            FROM "Goals" g
-            JOIN "Objectives" o
-            ON g.id = o."goalId"
-            AND o.status = 'Complete'
-            JOIN "ActivityReportObjectives" aro
-            ON o.id = aro."objectiveId"
-            JOIN "ActivityReports" ar
-            ON aro."activityReportId" = ar.id
-            GROUP BY g.id
-            HAVING SUM((ar."ttaType" = '{training}')::int) > 0
-            AND SUM((ar."ttaType" != '{training}')::int) = 0
-          ) r2
-          on g.id = r2."goalId"
-          LEFT JOIN (
-            SELECT
-              g.id "goalId",
-              true "rule",
-              'In Progress' status
-            FROM "Goals" g
-            JOIN "Objectives" o
-            ON g.id = o."goalId"
-            AND o.status in ('In Progress', 'Complete')
-            JOIN "ActivityReportObjectives" aro
-            ON o.id = aro."objectiveId"
-            JOIN "ActivityReports" ar
-            ON aro."activityReportId" = ar.id
-          ) r3
-          on g.id = r3."goalId"
-          LEFT JOIN (
-            SELECT
-              g.id "goalId",
-              true "rule",
-              'Not Started' status
-            FROM "Goals" g
-            JOIN "Objectives" o
-            ON g.id = o."goalId"
-            JOIN "ActivityReportObjectives" aro
-            ON o.id = aro."objectiveId"
-            JOIN "ActivityReports" ar
-            ON aro."activityReportId" = ar.id
-            group by g.id
-            having array_agg(distinct o.status)::text = '{"Not Started"}'
-          ) r4
-          on g.id = r4."goalId"
-          LEFT JOIN (
-            SELECT
-              g.id "goalId",
-              true "rule",
-              'Not Started' status
-            FROM "Goals" g
-            LEFT JOIN "Objectives" o
-            ON g.id = o."goalId"
-            LEFT JOIN "ActivityReportObjectives" aro
-            ON o.id = aro."objectiveId"
-            WHERE aro.id is null
-            AND g."isFromSmartsheetTtaPlan" = true
-            AND NOW() - g."createdAt" < '1 year'
-          ) r5
-          on g.id = r5."goalId"
-          LEFT JOIN (
-            SELECT
-              g.id "goalId",
-              true "rule",
-              'Closed' status
-            FROM "Goals" g
-            LEFT JOIN "Objectives" o
-            ON g.id = o."goalId"
-            LEFT JOIN "ActivityReportObjectives" aro
-            ON o.id = aro."objectiveId"
-            WHERE aro.id is null
-            AND g."isFromSmartsheetTtaPlan" = true
-            AND NOW() - g."createdAt" > '1 year'
-          ) r6
-          on g.id = r6."goalId"
-          WHERE g0.id = g.id;`,
-          { transaction },
-        );
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
         throw (err);

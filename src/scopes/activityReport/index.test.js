@@ -293,18 +293,33 @@ describe('filtersToScopes', () => {
         reportIncluded2 = await ActivityReport.create({ ...draftReport });
         reportExcluded = await ActivityReport.create({ ...draftReport });
 
-        activityRecipientIncluded1 = await ActivityRecipient.create({
-          activityReportId: reportIncluded1.id,
-          grantId: grantIncluded1.id,
-        });
-        activityRecipientIncluded2 = await ActivityRecipient.create({
-          activityReportId: reportIncluded2.id,
-          grantId: grantIncluded2.id,
-        });
-        activityRecipientExcluded = await ActivityRecipient.create({
-          activityReportId: reportExcluded.id,
-          grantId: grantExcluded.id,
-        });
+        try {
+          activityRecipientIncluded1 = await ActivityRecipient.create({
+            activityReportId: reportIncluded1.id,
+            grantId: grantIncluded1.id,
+          });
+        } catch (error) {
+          auditLogger.error(JSON.stringify(error));
+          throw error;
+        }
+        try {
+          activityRecipientIncluded2 = await ActivityRecipient.create({
+            activityReportId: reportIncluded2.id,
+            grantId: grantIncluded2.id,
+          });
+        } catch (error) {
+          auditLogger.error(JSON.stringify(error));
+          throw error;
+        }
+        try {
+          activityRecipientExcluded = await ActivityRecipient.create({
+            activityReportId: reportExcluded.id,
+            grantId: grantExcluded.id,
+          });
+        } catch (error) {
+          auditLogger.error(JSON.stringify(error));
+          throw error;
+        }
         possibleIds = [
           reportIncluded1.id,
           reportIncluded2.id,
@@ -417,14 +432,24 @@ describe('filtersToScopes', () => {
         reportIncluded = await ActivityReport.create({ ...draftReport });
         reportExcluded = await ActivityReport.create({ ...draftReport });
 
-        activityRecipientIncluded = await ActivityRecipient.create({
-          activityReportId: reportIncluded.id,
-          grantId: grantIncluded.id,
-        });
-        activityRecipientExcluded = await ActivityRecipient.create({
-          activityReportId: reportExcluded.id,
-          grantId: grantExcluded.id,
-        });
+        try {
+          activityRecipientIncluded = await ActivityRecipient.create({
+            activityReportId: reportIncluded.id,
+            grantId: grantIncluded.id,
+          });
+        } catch (error) {
+          auditLogger.error(JSON.stringify(error));
+          throw error;
+        }
+        try {
+          activityRecipientExcluded = await ActivityRecipient.create({
+            activityReportId: reportExcluded.id,
+            grantId: grantExcluded.id,
+          });
+        } catch (error) {
+          auditLogger.error(JSON.stringify(error));
+          throw error;
+        }
         possibleIds = [
           reportIncluded.id,
           reportExcluded.id,
@@ -1113,18 +1138,33 @@ describe('filtersToScopes', () => {
       reportIncluded2 = await ActivityReport.create({ ...draftReport });
       reportExcluded = await ActivityReport.create({ ...draftReport });
 
-      activityRecipientIncluded1 = await ActivityRecipient.create({
-        activityReportId: reportIncluded1.id,
-        grantId: grantIncluded1.id,
-      });
-      activityRecipientIncluded2 = await ActivityRecipient.create({
-        activityReportId: reportIncluded2.id,
-        grantId: grantIncluded2.id,
-      });
-      activityRecipientExcluded = await ActivityRecipient.create({
-        activityReportId: reportExcluded.id,
-        grantId: grantExcluded.id,
-      });
+      try {
+        activityRecipientIncluded1 = await ActivityRecipient.create({
+          activityReportId: reportIncluded1.id,
+          grantId: grantIncluded1.id,
+        });
+      } catch (error) {
+        auditLogger.error(JSON.stringify(error));
+        throw error;
+      }
+      try {
+        activityRecipientIncluded2 = await ActivityRecipient.create({
+          activityReportId: reportIncluded2.id,
+          grantId: grantIncluded2.id,
+        });
+      } catch (error) {
+        auditLogger.error(JSON.stringify(error));
+        throw error;
+      }
+      try {
+        activityRecipientExcluded = await ActivityRecipient.create({
+          activityReportId: reportExcluded.id,
+          grantId: grantExcluded.id,
+        });
+      } catch (error) {
+        auditLogger.error(JSON.stringify(error));
+        throw error;
+      }
       possibleIds = [
         reportIncluded1.id,
         reportIncluded2.id,
