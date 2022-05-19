@@ -2,8 +2,8 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Label } from '@trussworks/react-uswds';
 import Select from 'react-select';
-import Req from '../../../../components/Req';
-import selectOptionsReset from '../../../../components/selectOptionsReset';
+import Req from '../Req';
+import selectOptionsReset from '../selectOptionsReset';
 
 export default function SpecialistRole({
   error,
