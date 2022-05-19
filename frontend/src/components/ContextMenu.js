@@ -16,7 +16,7 @@ import './ContextMenu.scss';
 const ESCAPE_KEY_CODE = 27;
 
 function ContextMenu({
-  label, menuItems, backgroundColor, left, up,
+  label, menuItems, backgroundColor, left, up, className, menuClassName,
 }) {
   const [shown, updateShown] = useState(false);
   const defaultClass = 'smart-hub--context-menu';
@@ -69,7 +69,7 @@ function ContextMenu({
       className="position-relative"
     >
       <Button
-        className="smart-hub--context-menu-button smart-hub--button__no-margin"
+        className={`smart-hub--context-menu-button smart-hub--button__no-margin ${className}`}
         unstyled
         aria-haspopup
         onClick={() => { updateShown((previous) => !previous); }}
@@ -81,7 +81,7 @@ function ContextMenu({
       </Button>
       {shown
     && (
-    <div data-testid="menu" className={menuClass} style={{ backgroundColor }}>
+    <div data-testid="menu" className={`${menuClass} ${menuClassName}`} style={{ backgroundColor }}>
       <ul className="usa-list usa-list--unstyled" role="menu">
         {menuItems.map((item) => (
           <li key={item.label} role="menuitem">
@@ -108,12 +108,16 @@ ContextMenu.propTypes = {
   backgroundColor: PropTypes.string,
   left: PropTypes.bool,
   up: PropTypes.bool,
+  className: PropTypes.string,
+  menuClassName: PropTypes.string,
 };
 
 ContextMenu.defaultProps = {
   backgroundColor: 'white',
   left: true,
   up: false,
+  className: '',
+  menuClassName: '',
 };
 
 export default ContextMenu;

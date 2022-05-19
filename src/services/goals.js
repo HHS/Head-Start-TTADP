@@ -101,6 +101,82 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
   ],
 });
 
+export function goalById(id) {
+  return Goal.findOne({
+    attributes: [
+      'endDate',
+      'status',
+      ['id', 'value'],
+      ['name', 'label'],
+      'id',
+      'name',
+    ],
+    where: {
+      id,
+    },
+    include: [
+      {
+        where: {
+          [Op.and]: [
+            {
+              title: {
+                [Op.ne]: '',
+              },
+            },
+            {
+              status: {
+                [Op.not]: 'Complete',
+              },
+            },
+            {
+              status: {
+                [Op.not]: 'Draft',
+              },
+            },
+          ],
+        },
+        attributes: [
+          ['id', 'value'],
+          ['title', 'label'],
+          'title',
+          'status',
+          'ttaProvided',
+        ],
+        model: Objective,
+        as: 'objectives',
+        include: [
+          {
+            model: ObjectiveResource,
+            as: 'resources',
+            attributes: [
+              ['userProvidedUrl', 'value'],
+              ['id', 'key'],
+            ],
+          },
+          {
+            model: Topic,
+            as: 'topics',
+            attributes: [
+              ['id', 'value'],
+              ['name', 'label'],
+            ],
+          },
+          {
+            model: ActivityReport,
+            as: 'activityReports',
+            where: {
+              calculatedStatus: {
+                [Op.not]: REPORT_STATUSES.DELETED,
+              },
+            },
+            required: false,
+          },
+        ],
+      },
+    ],
+  });
+}
+
 export async function goalByIdAndRecipient(id, recipientId) {
   return Goal.findOne(OPTIONS_FOR_GOAL_FORM_QUERY(id, recipientId));
 }
@@ -372,7 +448,7 @@ export async function goalsForGrants(grantIds) {
       {
         model: Grant,
         as: 'grants',
-        attributes: ['id'],
+        attributes: ['id', 'regionId'],
         where: {
           id: ids,
         },

@@ -12,7 +12,7 @@ import './index.scss';
 import Profile from './pages/Profile';
 import TTAHistory from './pages/TTAHistory';
 import GoalsObjectives from './pages/GoalsObjectives';
-import CreateGoal from '../../components/CreateGoal';
+import GoalForm from '../../components/GoalForm';
 
 function PageWithHeading({
   children,
@@ -181,18 +181,26 @@ export default function RecipientRecord({ match }) {
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/goals/:goalId"
-          render={({ match: goalMatch }) => (
-            <FeatureFlag flag="recipient_goals_objectives" renderNotFound>
-              <Helmet>
-                <title>
-                  {goalMatch.params.goalId === 'new'
-                    ? `Create a goal for ${recipientName}`
-                    : `Edit goal ${goalMatch.params.goalId} for ${recipientName}` }
-                </title>
-              </Helmet>
-              <CreateGoal match={goalMatch} regionId={regionId} recipient={recipientData} />
-            </FeatureFlag>
-          )}
+          render={({ match: goalMatch }) => {
+            const { params: { goalId } } = goalMatch;
+            return (
+              <FeatureFlag flag="recipient_goals_objectives" renderNotFound>
+                <Helmet>
+                  <title>
+                    {goalId === 'new'
+                      ? `Create a goal for ${recipientName}`
+                      : `Edit goal ${goalId} for ${recipientName}` }
+                  </title>
+                </Helmet>
+                <GoalForm
+                  id={goalId}
+                  regionId={regionId}
+                  recipient={recipientData}
+                  showRTRnavigation
+                />
+              </FeatureFlag>
+            );
+          }}
         />
         <Route
           render={() => (

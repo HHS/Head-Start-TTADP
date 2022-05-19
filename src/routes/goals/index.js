@@ -3,13 +3,15 @@ import {
   createGoals,
   changeGoalStatus,
   deleteGoal,
-  retrieveGoal,
+  retrieveGoalById,
+  retrieveGoalByIdAndRecipient,
 } from './handlers';
 import transactionWrapper from '../transactionWrapper';
 
 const router = express.Router();
 router.post('/', transactionWrapper(createGoals));
-router.get('/:goalId/recipient/:recipientId', transactionWrapper(retrieveGoal));
+router.get('/:goalId', transactionWrapper(retrieveGoalById));
+router.get('/:goalId/recipient/:recipientId', transactionWrapper(retrieveGoalByIdAndRecipient));
 router.delete('/:goalId', transactionWrapper(deleteGoal));
 router.put('/:goalId/changeStatus', transactionWrapper(changeGoalStatus));
 
