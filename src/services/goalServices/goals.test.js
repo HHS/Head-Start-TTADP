@@ -232,7 +232,10 @@ describe('goalsForGrants', () => {
         {
           model: Grant,
           as: 'grants',
-          attributes: ['id'],
+          attributes: [
+            'id',
+            'regionId',
+          ],
           where: {
             id: [505, 506],
           },

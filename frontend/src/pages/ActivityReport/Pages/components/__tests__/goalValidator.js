@@ -5,21 +5,35 @@ import {
   GOALS_EMPTY,
   UNFINISHED_OBJECTIVES,
   GOAL_MISSING_OBJECTIVE,
+  OBJECTIVE_TOPICS,
+  OBJECTIVE_ROLE,
+  OBJECTIVE_TITLE,
+  OBJECTIVE_TTA,
+  OBJECTIVE_RESOURCES,
 } from '../goalValidator';
 
 const missingTitle = {
   title: '',
   ttaProvided: 'ttaProvided',
+  topics: ['Hello'],
+  resources: [],
+  roles: ['Chief Inspector'],
 };
 
 const missingTTAProvided = {
   title: 'title',
   ttaProvided: '<p></p>',
+  topics: ['Hello'],
+  resources: [],
+  roles: ['Chief Inspector'],
 };
 
 const validObjective = {
   title: 'title',
   ttaProvided: 'ttaProvided',
+  topics: ['Hello'],
+  resources: [],
+  roles: ['Chief Inspector'],
 };
 
 const goalUnfinishedObjective = {
@@ -49,8 +63,10 @@ describe('validateGoals', () => {
           { ...validObjective },
         ];
 
-        const result = unfinishedObjectives(objectives);
+        const setError = jest.fn();
+        const result = unfinishedObjectives(objectives, setError);
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${0}].title`, { message: OBJECTIVE_TITLE });
       });
 
       it('if one objective has "ttaProvided" undefined', () => {
@@ -59,8 +75,46 @@ describe('validateGoals', () => {
           { ...validObjective },
         ];
 
-        const result = unfinishedObjectives(objectives);
+        const setError = jest.fn();
+        const result = unfinishedObjectives(objectives, setError);
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${0}].ttaProvided`, { message: OBJECTIVE_TTA });
+      });
+
+      it('if one objective has no "topics"', () => {
+        const objectives = [
+          { ...validObjective },
+          { ...validObjective, topics: [] },
+        ];
+
+        const setError = jest.fn();
+        const result = unfinishedObjectives(objectives, setError);
+        expect(result).toEqual(UNFINISHED_OBJECTIVES);
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].topics`, { message: OBJECTIVE_TOPICS });
+      });
+
+      it('if one objective has no "roles"', () => {
+        const objectives = [
+          { ...validObjective },
+          { ...validObjective, roles: [] },
+        ];
+
+        const setError = jest.fn();
+        const result = unfinishedObjectives(objectives, setError);
+        expect(result).toEqual(UNFINISHED_OBJECTIVES);
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].roles`, { message: OBJECTIVE_ROLE });
+      });
+
+      it('if one objective has invalid "resources"', () => {
+        const objectives = [
+          { ...validObjective },
+          { ...validObjective, resources: [{ value: '234runwf78n' }] },
+        ];
+
+        const setError = jest.fn();
+        const result = unfinishedObjectives(objectives, setError);
+        expect(result).toEqual(UNFINISHED_OBJECTIVES);
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].resources`, { message: OBJECTIVE_RESOURCES });
       });
     });
 

@@ -7,8 +7,7 @@ import {
 
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import Navigator from '../index';
-import { NOT_STARTED } from '../constants';
-import NetworkContext from '../../../NetworkContext';
+import { NOT_STARTED, COMPLETE } from '../constants';
 
 // eslint-disable-next-line react/prop-types
 const Input = ({ name, required }) => {
@@ -23,7 +22,7 @@ const Input = ({ name, required }) => {
   );
 };
 
-const pages = [
+const defaultPages = [
   {
     position: 1,
     path: 'first',
@@ -69,36 +68,37 @@ const initialData = { pageState: { 1: NOT_STARTED, 2: NOT_STARTED } };
 
 describe('Navigator', () => {
   // eslint-disable-next-line arrow-body-style
-  const renderNavigator = (currentPage = 'first', onSubmit = () => {}, onSave = () => {}, updatePage = () => {}, updateForm = () => {}, onUpdateError = () => {}) => {
+  const renderNavigator = (
+    currentPage = 'first',
+    onSubmit = jest.fn(),
+    onSave = jest.fn(),
+    updatePage = jest.fn(),
+    updateForm = jest.fn(),
+    pages = defaultPages,
+    formData = initialData,
+  ) => {
     render(
-      <NetworkContext.Provider value={{
-        connectionActive: true,
-        localStorageAvailable: true,
-      }}
-      >
-        <Navigator
-          editable
-          reportId={1}
-          submitted={false}
-          formData={initialData}
-          updateFormData={updateForm}
-          onReview={() => {}}
-          isApprover={false}
-          defaultValues={{ first: '', second: '' }}
-          pages={pages}
-          currentPage={currentPage}
-          onFormSubmit={onSubmit}
-          updatePage={updatePage}
-          onSave={onSave}
-          updateErrorMessage={onUpdateError}
-          onResetToDraft={() => {}}
-          updateLastSaveTime={() => {}}
-          showValidationErrors={false}
-          updateShowValidationErrors={() => {}}
-          isPendingApprover={false}
-        />
-
-      </NetworkContext.Provider>,
+      <Navigator
+        editable
+        reportId={1}
+        submitted={false}
+        formData={formData}
+        updateFormData={updateForm}
+        onReview={() => {}}
+        isApprover={false}
+        defaultValues={{ first: '', second: '' }}
+        pages={pages}
+        currentPage={currentPage}
+        onFormSubmit={onSubmit}
+        updatePage={updatePage}
+        onSave={onSave}
+        updateErrorMessage={() => {}}
+        onResetToDraft={() => {}}
+        updateLastSaveTime={() => {}}
+        showValidationErrors={false}
+        updateShowValidationErrors={() => {}}
+        isPendingApprover={false}
+      />,
     );
   };
 
@@ -113,8 +113,13 @@ describe('Navigator', () => {
   it('onContinue calls onSave with correct page position', async () => {
     const onSave = jest.fn();
     renderNavigator('second', () => {}, onSave);
-    userEvent.click(screen.getByRole('button', { name: 'Save & Continue' }));
-    await waitFor(() => expect(onSave).toHaveBeenCalledWith({ pageState: { ...initialData.pageState, 2: 'Complete' }, second: null }));
+    userEvent.click(screen.getByRole('button', { name: 'Save and Continue' }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(
+      {
+        pageState: { ...initialData.pageState, 2: COMPLETE },
+        second: null,
+      },
+    ));
   });
 
   it('submits data when "continuing" from the review page', async () => {
@@ -141,22 +146,69 @@ describe('Navigator', () => {
     await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
   });
 
-  it('shows an error when save fails', async () => {
+  it('shows the correct buttons on the bottom of the page', async () => {
     const onSubmit = jest.fn();
     const onSave = jest.fn();
-
-    onSave.mockImplementationOnce(async () => {
-      throw new Error();
-    });
-
     const updatePage = jest.fn();
     const updateForm = jest.fn();
-    const onUpdateError = jest.fn();
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <>
+          <h1>Goal test</h1>
+        </>
+      ),
+    }];
+    renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages);
+    const saveGoal = await screen.findByRole('button', { name: 'Save goal' });
+    userEvent.click(saveGoal);
+    expect(saveGoal).toBeVisible();
+  });
 
-    renderNavigator('second', onSubmit, onSave, updatePage, updateForm, onUpdateError);
-    userEvent.click(await screen.findByRole('button', { name: 'first page Not Started' }));
+  it('shows the save button when the data is valid', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <>
+          <h1>Goal test</h1>
+        </>
+      ),
+    }];
 
-    expect(onSave).toHaveBeenCalled();
-    expect(onUpdateError).toHaveBeenCalled();
+    const formData = {
+      ...initialData,
+      activityRecipientType: 'grant',
+      isGoalFormClosed: null,
+      goalForEditing: {
+        isNew: true,
+      },
+      goals: [],
+      goalEndDate: '09/01/2020',
+      goalName: 'goal name',
+      'goalForEditing.objectives': [{
+        title: 'objective',
+        topics: ['test'],
+        ttaProvided: 'tta provided',
+        roles: ['test'],
+        resources: [],
+      }],
+    };
+
+    renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages, formData);
+    const saveGoal = await screen.findByRole('button', { name: 'Save goal' });
+    expect(saveGoal.textContent).toBe('Save goal');
+    expect(saveGoal).toBeVisible();
+    userEvent.click(saveGoal);
+    expect(saveGoal.textContent).toBe('Save and Continue');
   });
 });

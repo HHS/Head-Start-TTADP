@@ -6,7 +6,9 @@
 */
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import {
+  FormProvider, useForm,
+} from 'react-hook-form/dist/index.ie11';
 import {
   Form,
   Button,
@@ -16,7 +18,7 @@ import {
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import useInterval from '@use-it/interval';
 import moment from 'moment';
-
+import { v4 as uuidv4 } from 'uuid';
 import Container from '../Container';
 
 import {
@@ -25,6 +27,7 @@ import {
 import SideNav from './components/SideNav';
 import NavigatorHeader from './components/NavigatorHeader';
 import DismissingComponentWrapper from '../DismissingComponentWrapper';
+import { validateGoals } from '../../pages/ActivityReport/Pages/components/goalValidator';
 
 function Navigator({
   editable,
@@ -55,18 +58,27 @@ function Navigator({
   const page = pages.find((p) => p.path === currentPage);
 
   const hookForm = useForm({
-    mode: 'onChange',
+    mode: 'onBlur',
     defaultValues: formData,
     shouldUnregister: false,
   });
-  const pageState = hookForm.watch('pageState');
 
   const {
     formState,
     getValues,
     reset,
     trigger,
+    setValue,
+    setError,
+    watch,
   } = hookForm;
+
+  const pageState = watch('pageState');
+  const isGoalFormClosed = watch('isGoalFormClosed');
+  const selectedGoals = watch('goals');
+  const goalForEditing = watch('goalForEditing');
+  const activityRecipientType = watch('activityRecipientType');
+  const isGoalsObjectivesPage = page.path === 'goals-objectives';
 
   const { isDirty, errors, isValid } = formState;
   const hasErrors = Object.keys(errors).length > 0;
@@ -106,6 +118,41 @@ function Navigator({
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     }
+  };
+  const onGoalFormNavigate = async () => {
+    // the goal form only allows for one goal to be open at a time
+    // but the objectives are stored in a subfield
+    // so we need to access the objectives and bundle them together in order to validate them
+    const fieldArrayName = 'goalForEditing.objectives';
+    const objectives = getValues(fieldArrayName);
+    const name = getValues('goalName');
+    const endDate = getValues('goalEndDate');
+
+    const areGoalsValid = validateGoals(
+      [{
+        ...goalForEditing,
+        name,
+        endDate,
+        objectives,
+      }],
+      setError,
+    );
+    if (areGoalsValid !== true) {
+      return;
+    }
+
+    // save goal to api, come back with new ids for goal and objectives
+
+    setValue('isGoalFormClosed', true);
+    // for now we'll just generate an id for a demo of in-memory stuff
+    const g = goalForEditing.isNew ? {
+      ...goalForEditing, name, endDate, id: uuidv4(),
+    } : { ...goalForEditing };
+    setValue('goals', [...selectedGoals, g]);
+    setValue('goalForEditing', null);
+    setValue('goalForEditing.objectives', []);
+    setValue('goalName', '');
+    setValue('goalEndDate', '');
   };
 
   const onUpdatePage = async (index) => {
@@ -158,6 +205,10 @@ function Navigator({
     };
   });
 
+  // we show the save goals button if the form isn't closed, if we're on the goals and
+  // objectives page and if we aren't just showing objectives
+  const showSaveGoalsButton = isGoalsObjectivesPage && !isGoalFormClosed && activityRecipientType !== 'other-entity';
+
   return (
     <Grid row gap>
       <Grid className="smart-hub-sidenav-wrapper no-print" col={12} desktop={{ col: 4 }}>
@@ -208,9 +259,15 @@ function Navigator({
                 >
                   {page.render(additionalData, formData, reportId)}
                   <div className="display-flex">
-                    <Button disabled={page.position <= 1} outline type="button" onClick={() => { onUpdatePage(page.position - 1); }}>Back</Button>
-                    <Button type="button" onClick={async () => { await onSaveForm(); updateShowSavedDraft(true); }}>Save draft</Button>
-                    <Button className="margin-left-auto margin-right-0" type="button" onClick={onContinue}>Save & Continue</Button>
+                    { showSaveGoalsButton
+                      ? <Button className="margin-right-1" type="button" onClick={onGoalFormNavigate}>Save goal</Button>
+                      : <Button className="margin-right-1" type="button" onClick={onContinue}>Save and Continue</Button> }
+                    <Button className="usa-button--outline" type="button" onClick={async () => { await onSaveForm(); updateShowSavedDraft(true); }}>Save draft</Button>
+                    {
+                      page.position <= 1
+                        ? null
+                        : <Button outline type="button" onClick={() => { onUpdatePage(page.position - 1); }}>Back</Button>
+                    }
                   </div>
                 </Form>
                 <DismissingComponentWrapper
@@ -271,7 +328,10 @@ Navigator.propTypes = {
   reportId: PropTypes.node.isRequired,
   reportCreator: PropTypes.shape({
     name: PropTypes.string,
-    role: PropTypes.arrayOf(PropTypes.string),
+    role: PropTypes.oneOfType([
+      PropTypes.arrayOf(PropTypes.string),
+      PropTypes.string,
+    ]),
   }),
 };
 
