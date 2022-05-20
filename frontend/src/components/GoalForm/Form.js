@@ -38,6 +38,7 @@ export default function Form({
   datePickerKey,
   unchangingApiData,
   fetchError,
+  goalNumber,
 }) {
   const onUpdateText = (e) => setGoalName(e.target.value);
 
@@ -67,19 +68,22 @@ export default function Form({
 
   const objectiveErrors = errors[FORM_FIELD_INDEXES.OBJECTIVES];
 
+  const formTitle = goalNumber ? `Goal ${goalNumber}` : 'Recipient TTA goal';
+  const hasNotStartedObjectives = objectives.some((objective) => objective.status && objective.status.toLowerCase() === 'not started');
+
   return (
     <div className="ttahub-create-goals-form">
       { fetchError ? <Alert type="error" role="alert">{ fetchError }</Alert> : null}
-      <h2 className="margin-bottom-1">Recipient TTA goal</h2>
+      <h2 className="margin-bottom-1">{formTitle}</h2>
       <div>
         <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
         {' '}
         indicates required field
       </div>
 
-      { isOnReport
+      { isOnReport && hasNotStartedObjectives
         ? (
-          <Alert type="warning" noIcon>
+          <Alert type="info" noIcon>
             This goal is used on an activity report
             <br />
             Some fields can&apos;t be edited
@@ -205,6 +209,7 @@ Form.propTypes = {
     }),
   ).isRequired,
   fetchError: PropTypes.string.isRequired,
+  goalNumber: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };
 
 Form.defaultProps = {
