@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+// import { Op } from 'sequelize';
 // import { auditLogger } from '../../logger';
 
 const autoPopulateObjectiveTemplateId = async (sequelize, instance, options) => {
@@ -18,7 +18,7 @@ const autoPopulateObjectiveTemplateId = async (sequelize, instance, options) => 
     });
 
     const objectiveTemplate = await sequelize.models.ObjectiveTemplate.findOrCreate({
-      where: { templateTitle: instance.title, regionId: goal.grant.regionId },
+      where: { hash: sequelize.fn('md5', sequelize.fn('NULLIF', sequelize.fn('TRIM', instance.title), '')), regionId: goal.grant.regionId },
       defaults: {
         templateTitle: instance.title,
         lastUsed: instance.createdAt,

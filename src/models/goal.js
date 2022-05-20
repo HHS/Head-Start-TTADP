@@ -60,7 +60,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     goalTemplateId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: {
           tableName: 'goalTemplates',

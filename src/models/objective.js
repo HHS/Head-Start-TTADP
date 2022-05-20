@@ -46,7 +46,7 @@ module.exports = (sequelize, DataTypes) => {
     status: DataTypes.STRING,
     objectiveTemplateId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: {
           tableName: 'objectiveTemplates',

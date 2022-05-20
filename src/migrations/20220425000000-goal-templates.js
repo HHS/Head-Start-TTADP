@@ -423,7 +423,7 @@ module.exports = {
       try {
         await queryInterface.addColumn('Roles', 'isSpecialist', {
           type: Sequelize.BOOLEAN,
-          allowNull: false,
+          allowNull: true,
           default: false,
           onUpdate: 'CASCADE',
         }, { transaction });
@@ -493,6 +493,14 @@ module.exports = {
               'Grantee Specialist'
             );
             ------------------------------------------------------------------------------------
+            UPDATE ONLY "Roles"
+            SET "isSpecialist" = false
+            WHERE "isSpecialist" IS NULL;
+            ------------------------------------------------------------------------------------
+            ALTER TABLE "Roles"
+            ALTER COLUMN "isSpecialist"
+            SET NOT NULL;
+            ------------------------------------------------------------------------------------
             UPDATE ONLY "Roles" r1
             SET
               "deletedAt" = NOW(),
@@ -546,9 +554,25 @@ module.exports = {
 
         await queryInterface.addColumn('Goals', 'onApprovedAR', {
           type: Sequelize.BOOLEAN,
-          allowNull: false,
           default: false,
+          allowNull: true,
         }, { transaction });
+
+        await queryInterface.sequelize.query(
+          `DO $$
+          BEGIN
+          ------------------------------------------------------------------------------------
+          UPDATE ONLY "Goals"
+          SET "onApprovedAR" = false
+          WHERE "onApprovedAR" IS NULL;
+          ------------------------------------------------------------------------------------
+          ALTER TABLE "Goals"
+          ALTER COLUMN "onApprovedAR"
+          SET NOT NULL;
+          ------------------------------------------------------------------------------------
+          END$$;`,
+          { transaction },
+        );
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
         throw (err);
@@ -584,9 +608,25 @@ module.exports = {
 
         await queryInterface.addColumn('Objectives', 'onApprovedAR', {
           type: Sequelize.BOOLEAN,
-          allowNull: false,
+          allowNull: true,
           default: false,
         }, { transaction });
+
+        await queryInterface.sequelize.query(
+          `DO $$
+          BEGIN
+          ------------------------------------------------------------------------------------
+          UPDATE ONLY "Goals"
+          SET "onApprovedAR" = false
+          WHERE "onApprovedAR" IS NULL;
+          ------------------------------------------------------------------------------------
+          ALTER TABLE "Goals"
+          ALTER COLUMN "onApprovedAR"
+          SET NOT NULL;
+          ------------------------------------------------------------------------------------
+          END$$;`,
+          { transaction },
+        );
 
         await queryInterface.addColumn('ActivityReportObjectives', 'ttaProvided', {
           type: Sequelize.TEXT,
@@ -640,7 +680,7 @@ module.exports = {
       // -------------------------------------------------------------------------------------------
       // -------------------------------------------------------------------------------------------
       // Data Migration:
-      //  1. create a unified temptable to match all goals to grants: __all_distinct_grants
+      //  1. create a unified temptable to match all goals to grants: __all_distinct_grants_goals
       //  2. Populate GoalTemplates
       //  3. Populate DisconnectedGoals with the goals that do not link to any grants
       //  4. Populate ObjectiveTemplates
@@ -651,7 +691,7 @@ module.exports = {
       //    split into progressions
       //  9. Populate temp objectives topics
       // 10. Populate temp objectives resources
-      // 11. Populate temp activity report objectivess
+      // 11. Populate temp activity report objectives
       // 12. Truncate all tables that directly reference goals and objectives
       // 13. Repopulate Goals from temp table
       // 14. Repopulate Objectives from temp table
@@ -682,8 +722,8 @@ module.exports = {
         await queryInterface.sequelize.query(
           `DO $$
           BEGIN
-            -- 1. create a unified temptable to match all goals to grants: __all_distinct_grants
-            CREATE TEMP TABLE "__all_distinct_grants" AS
+            -- 1. create a unified temptable to match all goals to grants: __all_distinct_grants_goals
+            CREATE TEMP TABLE "__all_distinct_grants_goals" AS
             WITH
               all_grants as (
                 SELECT
@@ -727,7 +767,7 @@ module.exports = {
               "templateNameModifiedAt",
               "sourceGoals")
             SELECT DISTINCT
-              md5(TRIM(g.name)) "hash",
+              md5(NULLIF(TRIM(g.name),'')) "hash",
               TRIM(g.name) "name",
               adg."regionId",
               'Automatic'::"enum_GoalTemplates_creationMethod",
@@ -737,9 +777,10 @@ module.exports = {
               NOW() "templateNameModifiedAt",
               array_agg(DISTINCT g.id) "sourceGoals"
             FROM "Goals" g
-            JOIN "__all_distinct_grants" adg
+            JOIN "__all_distinct_grants_goals" adg
             ON g.id = adg."goalId"
             WHERE adg."regionId" IS NOT NULL
+            AND NULLIF(TRIM(g.name),'') IS NOT NULL
             GROUP BY
               md5(TRIM(g.name)),
               TRIM(g.name),
@@ -769,7 +810,7 @@ module.exports = {
               g."endDate",
               g."previousStatus"
             FROM "Goals" g
-            LEFT JOIN "__all_distinct_grants" adg
+            LEFT JOIN "__all_distinct_grants_goals" adg
             ON g.id = adg."goalId"
             WHERE adg."goalId" is null;
             ------------------------------------------------------------------------------------
@@ -785,7 +826,7 @@ module.exports = {
               "templateTitleModifiedAt",
               "sourceObjectives")
             SELECT DISTINCT
-              md5(TRIM(o.title)),
+              md5(nullif(TRIM(o.title),'')),
               TRIM(o.title),
               ar."regionId" "regionId",
               'Automatic'::"enum_ObjectiveTemplates_creationMethod",
@@ -799,6 +840,7 @@ module.exports = {
             ON o."id" = aro."objectiveId"
             LEFT JOIN "ActivityReports" ar
             ON aro."activityReportId" = ar."id"
+            WHERE NULLIF(TRIM(o.title),'') IS NOT NULL
             GROUP BY
               md5(TRIM(o.title)),
               TRIM(o.title),
@@ -864,7 +906,7 @@ module.exports = {
                   adg."grantId",
                   "g"."id",
                   "g"."name",
-                  "g"."status",
+                  NULLIF(TRIM("g"."status"),'') "status",
                   "g"."timeframe",
                   "g"."isFromSmartsheetTtaPlan",
                   "g"."createdAt",
@@ -873,7 +915,7 @@ module.exports = {
                   "g"."closeSuspendContext",
                   adg.status AS grstatus,
                   MD5(trim(g.name)) AS gname_md5,
-                  CASE COALESCE(g.status,'')
+                  CASE COALESCE(NULLIF(TRIM(g.status),''),'')
                     WHEN 'Draft' THEN 0
                     WHEN 'Not Started' THEN 1
                     WHEN 'In Progress' THEN 2
@@ -881,9 +923,10 @@ module.exports = {
                     WHEN 'Closed' THEN 4
                     WHEN 'Ceased/Suspended' THEN 3
                     ELSE -1
-                  END AS gstatus_num
+                  END AS gstatus_num,
+                  adg."regionId"
                 FROM "Goals" g
-                LEFT JOIN "__all_distinct_grants" adg
+                JOIN "__all_distinct_grants_goals" adg
                 ON g."id" = adg."goalId"
               ),
               orderable_goals AS (
@@ -929,13 +972,12 @@ module.exports = {
                   g.id "goalId",
                   bool_or(ar."calculatedStatus" = 'approved') "onApprovedAR"
                 FROM "Goals" g
-                LEFT JOIN "Objectives" o
+                JOIN "Objectives" o
                 ON g.id = o."goalId"
-                LEFT JOIN "ActivityReportObjectives" aro
+                JOIN "ActivityReportObjectives" aro
                 ON o."id" = aro."objectiveId"
-                LEFT JOIN "ActivityReports" ar
+                JOIN "ActivityReports" ar
                 ON aro."activityReportId" = ar."id"
-                WHERE ar."regionId" is NOT NULL
                 group by g.id
                 order by g.id
               )
@@ -956,7 +998,7 @@ module.exports = {
               SELECT
                 gda."grantId",
                 gda."name",
-                (array_agg(gda."status" order by gda.gstatus_num desc))[1] "status",
+                (array_agg(NULLIF(TRIM(gda."status"),'') order by gda.gstatus_num desc))[1] "status",
                 (array_remove(array_agg(gdb."timeframe" order by gdb."updatedAt"),NULL))[1] "timeframe",
                 SUM(COALESCE(gdb."isFromSmartsheetTtaPlan",false)::int) > 0 "isFromSmartsheetTtaPlan",
                 MIN(gdb."createdAt") "createdAt",
@@ -967,15 +1009,16 @@ module.exports = {
                 COALESCE(bool_or(ag."onApprovedAR"),false) "onApprovedAR",
                 array_agg(gdb."id") "originalGoalIds"
               FROM goal_data gda
-              LEFT JOIN goal_merges gm
+              JOIN goal_merges gm
               ON gda."grantId" = gm."grantId"
               and gda."id" = gm."primaryId"
               LEFT JOIN goal_data gdb
               ON gdb."grantId" = gm."grantId"
-              and (gdb."id" = gm."primaryId"
+              AND (gdb."id" = gm."primaryId"
                 OR gdb."id" = gm."subId")
               JOIN "GoalTemplates" gt
               ON gda.id = any (gt."sourceGoals"::int[])
+              AND gda."regionId" = gt."regionId"
               LEFT JOIN approved_goals ag
               ON gdb."id" = ag."goalId"
               GROUP BY
@@ -1006,10 +1049,13 @@ module.exports = {
               otherentity_objectives AS (
                 SELECT DISTINCT
                   oe.id "otherEntityId",
-                  aro."objectiveId"
+                  aro."objectiveId",
+                  a."regionId"
                 FROM public."OtherEntities" oe
                 JOIN "ActivityRecipients" ar
                 ON oe.id = ar."otherEntityId"
+                JOIN "ActivityReports" a
+                ON ar."activityReportId" = a.id
                 JOIN "ActivityReportObjectives" aro
                 ON ar."activityReportId" = aro."activityReportId"
                 order by oe.id, aro."objectiveId"
@@ -1030,7 +1076,8 @@ module.exports = {
                     WHEN 'Complete' THEN 4
                     WHEN 'Suspended' THEN 3
                     ELSE -1
-                  END AS ostatus_num
+                  END AS ostatus_num,
+                  oo."regionId"
                 FROM "Objectives" o
                 JOIN "otherentity_objectives" oo
                 ON o."goalId" = oo."objectiveId"
@@ -1051,10 +1098,13 @@ module.exports = {
                     WHEN 'Complete' THEN 4
                     WHEN 'Suspended' THEN 3
                     ELSE -1
-                  END AS ostatus_num
+                  END AS ostatus_num,
+                  gr."regionId"
                 FROM "Objectives" o
                 JOIN "__temp_goals" tg
                 ON o."goalId" = any (tg."originalGoalIds"::int[])
+                JOIN "Grants" gr
+                ON tg."grantId" = gr.id
               ),
               objective_data AS (
                 SELECT
@@ -1066,7 +1116,8 @@ module.exports = {
                   ood."createdAt",
                   ood."updatedAt",
                   ood.otitle_md5,
-                  ood.ostatus_num
+                  ood.ostatus_num,
+                  ood."regionId"
                 FROM objective_otherentity_data ood
                 UNION
                 SELECT
@@ -1078,7 +1129,8 @@ module.exports = {
                   ogd."createdAt",
                   ogd."updatedAt",
                   ogd.otitle_md5,
-                  ogd.ostatus_num
+                  ogd.ostatus_num,
+                  ogd."regionId"
                 FROM objective_goal_data ogd
               ),
               orderable_objectives AS (
@@ -1166,6 +1218,7 @@ module.exports = {
                 OR odb."id" = om."subId")
               JOIN "ObjectiveTemplates" ot
               ON oda.id = any (ot."sourceObjectives"::int[])
+              AND oda."regionId" = ot."regionId"
               LEFT JOIN approved_objectives ao
               ON odb.id = ao."objectiveId"
               GROUP BY
@@ -1386,7 +1439,7 @@ module.exports = {
             ------------------------------------------------------------------------------------
             -- 18. Drop all temp tables used
             DROP TABLE
-              "__all_distinct_grants",
+              "__all_distinct_grants_goals",
               "__temp_goals",
               "__temp_objectives",
               "__temp_objectives_topics",
@@ -1404,14 +1457,21 @@ module.exports = {
             -- 21. Populate GoalTemplateObjectiveTemplates
             INSERT INTO "GoalTemplateObjectiveTemplates" (
               "objectiveTemplateId",
-              "goalTemplateId"
+              "goalTemplateId",
+              "createdAt",
+              "updatedAt"
             )
-            SELECT DISTINCT
+            SELECT
               o."objectiveTemplateId",
-              g."goalTemplateId"
+              g."goalTemplateId",
+              MIN(o."createdAt"),
+              MAX(o."updatedAt")
             FROM "Objectives" o
             JOIN "Goals" g
-            ON o."goalId" = g."id";
+            ON o."goalId" = g."id"
+            GROUP BY
+              o."objectiveTemplateId",
+              g."goalTemplateId";
             ------------------------------------------------------------------------------------
             -- 22. Populate goal status for all goals based on rules defined on TTAHub-813
             WITH
@@ -1523,15 +1583,22 @@ module.exports = {
             -- 23. Populate ActivityReportGoals
             INSERT INTO "ActivityReportGoals" (
               "activityReportId",
-              "goalId"
+              "goalId",
+              "createdAt",
+              "updatedAt"
             )
             SELECT
               aro."activityReportId",
-              o."goalId"
+              o."goalId",
+              MIN(aro."createdAt"),
+              MAX(aro."updatedAt")
             FROM "Objectives" o
             JOIN "ActivityReportObjectives" aro
             ON o.id = aro."objectiveId"
-            WHERE o."goalId" IS NOT NULL;
+            WHERE o."goalId" IS NOT NULL
+            GROUP BY
+              aro."activityReportId",
+              o."goalId";
             ------------------------------------------------------------------------------------
           END$$;`,
           { transaction },
@@ -1544,22 +1611,7 @@ module.exports = {
       // Make goalTemplateId & grantId required
       await queryInterface.changeColumn(
         'Goals',
-        'goalTemplateId',
-        { type: Sequelize.INTEGER, allowNull: false },
-        { transaction },
-      );
-
-      await queryInterface.changeColumn(
-        'Goals',
         'grantId',
-        { type: Sequelize.INTEGER, allowNull: false },
-        { transaction },
-      );
-
-      // Make objectiveTemplateId required
-      await queryInterface.changeColumn(
-        'Objectives',
-        'objectiveTemplateId',
         { type: Sequelize.INTEGER, allowNull: false },
         { transaction },
       );

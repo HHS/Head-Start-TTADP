@@ -10,7 +10,7 @@ const autoPopulateGoalTemplateId = async (sequelize, instance, options) => {
     let goalTemplate;
     try {
       goalTemplate = await sequelize.models.GoalTemplate.findOrCreate({
-        where: { hash: sequelize.fn('md5', sequelize.fn('TRIM', instance.name)), regionId: grant.regionId },
+        where: { hash: sequelize.fn('md5', sequelize.fn('NULLIF', sequelize.fn('TRIM', instance.name), '')), regionId: grant.regionId },
         defaults: {
           templateName: instance.name,
           lastUsed: instance.createdAt,
