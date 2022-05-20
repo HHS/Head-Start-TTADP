@@ -1,16 +1,29 @@
-/* eslint-disable no-unused-vars */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Dropdown } from '@trussworks/react-uswds';
+import { FormGroup, Label, Dropdown } from '@trussworks/react-uswds';
 
 export default function ObjectiveStatus({
   status,
-  isOnApprovedReport,
   goalStatus,
   onChangeStatus,
+  inputName,
 }) {
   if (goalStatus === 'Draft') {
     return null;
+  }
+
+  if (status.toLowerCase() === 'complete') {
+    return (
+      <FormGroup>
+        <Label htmlFor={inputName}>
+          Text input label
+        </Label>
+        <Dropdown name={inputName} onChange={onChangeStatus}>
+          <option>In progress</option>
+          <option>Complete</option>
+        </Dropdown>
+      </FormGroup>
+    );
   }
 
   return (
@@ -23,7 +36,7 @@ export default function ObjectiveStatus({
 
 ObjectiveStatus.propTypes = {
   status: PropTypes.string.isRequired,
-  isOnApprovedReport: PropTypes.bool.isRequired,
   goalStatus: PropTypes.string.isRequired,
+  inputName: PropTypes.string.isRequired,
   onChangeStatus: PropTypes.func.isRequired,
 };

@@ -70,12 +70,16 @@ export default function Form({
 
   const formTitle = goalNumber ? `Goal ${goalNumber}` : 'Recipient TTA goal';
   const hasNotStartedObjectives = objectives.some((objective) => objective.status && objective.status.toLowerCase() === 'not started');
+  const hasInProgressObjectives = objectives.some((objective) => objective.status && objective.status.toLowerCase() === 'in progress');
+
+  const showApprovedReportAlert = isOnApprovedReport && hasInProgressObjectives;
+  const showNotStartedAlert = isOnReport && hasNotStartedObjectives && !showApprovedReportAlert;
 
   return (
     <div className="ttahub-create-goals-form">
       { fetchError ? <Alert type="error" role="alert">{ fetchError }</Alert> : null}
-      <div className="display-flex flex-align-center">
-        <h2>{formTitle}</h2>
+      <div className="display-flex flex-align-center margin-y-2">
+        <h2 className="margin-0">{formTitle}</h2>
         { status.toLowerCase() === 'draft'
         && (
           <span className="usa-tag smart-hub--table-tag-status smart-hub--status-draft padding-x-105 padding-y-1 margin-left-2">Draft</span>
@@ -87,13 +91,23 @@ export default function Form({
         indicates required field
       </div>
 
-      { isOnReport && hasNotStartedObjectives
-        ? (
+      {
+        showNotStartedAlert ? (
           <Alert type="info" noIcon>
             <p className="usa-prose">This goal is used on an activity report, so some fields can&apos;t be edited.</p>
           </Alert>
         )
-        : null }
+          : null
+      }
+
+      {
+        showApprovedReportAlert ? (
+          <Alert type="info" noIcon>
+            <p className="usa-prose">Field entries that are used on an activity report can no longer be edited.</p>
+          </Alert>
+        )
+          : null
+      }
 
       <h3 className="margin-top-4 margin-bottom-3">Goal summary</h3>
 
