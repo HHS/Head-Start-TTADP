@@ -31,6 +31,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     'status',
     [sequelize.col('grants.regionId'), 'regionId'],
     [sequelize.col('grants.recipient.id'), 'recipientId'],
+    'goalNumber',
   ],
   where: {
     id,

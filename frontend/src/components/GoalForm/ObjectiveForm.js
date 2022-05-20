@@ -1,8 +1,6 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
-import {
-  Button,
-} from '@trussworks/react-uswds';
+import { Button } from '@trussworks/react-uswds';
 import ObjectiveTitle from './ObjectiveTitle';
 import ObjectiveTopics from './ObjectiveTopics';
 import ResourceRepeater from './ResourceRepeater';
@@ -10,9 +8,14 @@ import {
   OBJECTIVE_FORM_FIELD_INDEXES, validateListOfResources, OBJECTIVE_ERROR_MESSAGES,
 } from './constants';
 import { REPORT_STATUSES } from '../../Constants';
+import SpecialistRole from './SpecialistRole';
+import ObjectiveStatus from './ObjectiveStatus';
 
 const [
-  objectiveTitleError, objectiveTopicsError, objectiveResourcesError,
+  objectiveTitleError,
+  objectiveTopicsError,
+  objectiveResourcesError,
+  objectiveRoleError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
 export default function ObjectiveForm({
@@ -28,7 +31,7 @@ export default function ObjectiveForm({
 }) {
   // the parent objective data from props
   const {
-    title, topics, resources, status,
+    title, topics, resources, status, roles,
   } = objective;
   const isOnReport = useMemo(() => (
     objective.activityReports && objective.activityReports.length > 0
@@ -46,6 +49,8 @@ export default function ObjectiveForm({
   const onChangeTitle = (e) => setObjective({ ...objective, title: e.target.value });
   const onChangeTopics = (newTopics) => setObjective({ ...objective, topics: newTopics });
   const setResources = (newResources) => setObjective({ ...objective, resources: newResources });
+  const onChangeRole = (newRole) => setObjective({ ...objective, roles: newRole });
+  const onChangeStatus = (newStatus) => setObjective({ ...objective, status: newStatus });
 
   // validate different fields
   const validateObjectiveTitle = () => {
@@ -64,6 +69,17 @@ export default function ObjectiveForm({
     if (!topics.length) {
       const newErrors = [...errors];
       newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.TOPICS, 1, <span className="usa-error-message">{objectiveTopicsError}</span>);
+      setObjectiveError(index, newErrors);
+    } else {
+      const newErrors = [...errors];
+      newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.TOPICS, 1, <></>);
+      setObjectiveError(index, newErrors);
+    }
+  };
+  const validateSpecialistRole = () => {
+    if (!topics.length) {
+      const newErrors = [...errors];
+      newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.ROLE, 1, <span className="usa-error-message">{objectiveRoleError}</span>);
       setObjectiveError(index, newErrors);
     } else {
       const newErrors = [...errors];
@@ -102,6 +118,14 @@ export default function ObjectiveForm({
         status={status}
       />
 
+      <SpecialistRole
+        error={errors[OBJECTIVE_FORM_FIELD_INDEXES.ROLE]}
+        onChange={onChangeRole}
+        selectedRoles={roles || []}
+        validateSpecialistRole={validateSpecialistRole}
+        options={[]}
+      />
+
       <ObjectiveTopics
         error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TOPICS]}
         savedTopics={data && data.topics ? data.topics : []}
@@ -123,14 +147,12 @@ export default function ObjectiveForm({
         status={status}
       />
 
-      { goalStatus !== 'Draft'
-        ? (
-          <>
-            <p className="usa-prose margin-bottom-0 text-bold">Objective status</p>
-            <p className="usa-prose margin-top-0">{status}</p>
-          </>
-        )
-        : null }
+      <ObjectiveStatus
+        status={status}
+        isOnApprovedReport={isOnApprovedReport}
+        goalStatus={goalStatus}
+        onChangeStatus={onChangeStatus}
+      />
     </div>
   );
 }
@@ -164,6 +186,7 @@ ObjectiveForm.propTypes = {
       label: PropTypes.string,
       value: PropTypes.number,
     })),
+    roles: PropTypes.arrayOf(PropTypes.string),
     activityReports: PropTypes.arrayOf(PropTypes.shape({
       id: PropTypes.number,
     })),
