@@ -65,6 +65,7 @@ const afterUpdate = async (sequelize, instance, options) => {
 };
 
 export {
+  autoPopulateHash,
   autoPopulateTemplateNameModifiedAt,
   autoPopulateCreationMethod,
   propagateTemplateName,

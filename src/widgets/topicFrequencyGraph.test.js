@@ -103,12 +103,6 @@ describe('Topics and frequency graph widget', () => {
       where: user,
       defaults: user,
     })));
-
-    // await User.bulkCreate([
-    //   mockUser,
-    //   mockUserTwo,
-    //   mockUserThree,
-    // ], { validate: true, individualHooks: true });
     await Recipient.create({ name: 'recipient', id: RECIPIENT_ID });
     await Region.create({ name: 'office 17', id: 17 });
     await Region.create({ name: 'office 18', id: 18 });

@@ -13,6 +13,7 @@ module.exports = (sequelize, DataTypes) => {
   class Objective extends Model {
     static associate(models) {
       Objective.belongsToMany(models.ActivityReport, { through: models.ActivityReportObjective, foreignKey: 'objectiveId', as: 'activityReports' });
+      Objective.belongsTo(models.OtherEntity, { foreignKey: 'otherEntityId', as: 'otherEntity' });
       Objective.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });
       Objective.hasMany(models.ObjectiveResource, { foreignKey: 'objectiveId', as: 'resources' });
       // Objective.belongsToMany(models.Topic,
@@ -33,6 +34,10 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   Objective.init({
+    otherEntityId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     goalId: {
       type: DataTypes.INTEGER,
       allowNull: true,

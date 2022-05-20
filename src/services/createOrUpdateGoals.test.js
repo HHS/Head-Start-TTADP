@@ -10,7 +10,6 @@ import db, {
   Objective,
   ObjectiveResource,
   ObjectiveTopic,
-  ActivityReportObjective,
 } from '../models';
 
 describe.skip('createOrUpdateGoals', () => {

@@ -31,6 +31,10 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: true,
       primaryKey: true,
     },
+    hash: {
+      allowNull: false,
+      type: DataTypes.TEXT,
+    },
     templateTitle: {
       type: DataTypes.TEXT,
       allowNull: false,
