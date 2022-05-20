@@ -74,7 +74,13 @@ export default function Form({
   return (
     <div className="ttahub-create-goals-form">
       { fetchError ? <Alert type="error" role="alert">{ fetchError }</Alert> : null}
-      <h2 className="margin-bottom-1">{formTitle}</h2>
+      <div className="display-flex flex-align-center">
+        <h2>{formTitle}</h2>
+        { status.toLowerCase() === 'draft'
+        && (
+          <span className="usa-tag smart-hub--table-tag-status smart-hub--status-draft padding-x-105 padding-y-1 margin-left-2">Draft</span>
+        )}
+      </div>
       <div>
         <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
         {' '}
@@ -84,9 +90,7 @@ export default function Form({
       { isOnReport && hasNotStartedObjectives
         ? (
           <Alert type="info" noIcon>
-            This goal is used on an activity report
-            <br />
-            Some fields can&apos;t be edited
+            <p className="usa-prose">This goal is used on an activity report, so some fields can&apos;t be edited.</p>
           </Alert>
         )
         : null }
