@@ -31,21 +31,25 @@ const getFileById = async (id) => File.findOne({
       model: ActivityReportFile,
       as: 'activityReportFiles',
       required: false,
+      attributes: ['id', 'activityReportId'],
     },
     {
       model: ActivityReportObjectiveFile,
-      as: 'activityReportObjectiveFiles',
+      as: 'reportObjectiveFiles',
       required: false,
+      attributes: ['id', 'activityReportObjectiveId'],
     },
     {
       model: ObjectiveFile,
       as: 'objectiveFiles',
       required: false,
+      attributes: ['id', 'objectiveId'],
     },
     {
       model: ObjectiveTemplateFile,
       as: 'objectiveTemplateFiles',
       required: false,
+      attributes: ['id', 'objectiveTemplateId'],
     },
   ],
 });
@@ -110,7 +114,6 @@ const createActivityReportFileMetaData = async (
   fileSize,
 ) => {
   const newFile = {
-    // activityReportId: reportId,
     originalFileName,
     key: s3FileName,
     status: UPLOADING,
@@ -118,7 +121,14 @@ const createActivityReportFileMetaData = async (
   };
   let file;
   try {
-    file = await File.create(newFile);
+    file = await File.findOrCreate({
+      where: {
+        originalFileName: newFile.originalFileName,
+        key: newFile.s3FileName,
+        fileSize: newFile.fileSize,
+      },
+      defaults: newFile,
+    });
     await ActivityReportFile.create({ activityReportId: reportId, fileId: file.id });
     return file.dataValues;
   } catch (error) {
@@ -134,7 +144,6 @@ const createActivityReportObjectiveFileMetaData = async (
   fileSize,
 ) => {
   const newFile = {
-    // activityReportId: reportId,
     originalFileName,
     key: s3FileName,
     status: UPLOADING,
@@ -142,7 +151,14 @@ const createActivityReportObjectiveFileMetaData = async (
   };
   let file;
   try {
-    file = await File.create(newFile);
+    file = await File.findOrCreate({
+      where: {
+        originalFileName: newFile.originalFileName,
+        key: newFile.s3FileName,
+        fileSize: newFile.fileSize,
+      },
+      defaults: newFile,
+    });
     await ActivityReportFile.create({ activityReportId: reportId, objectiveId, fileId: file.id });
     return file.dataValues;
   } catch (error) {
@@ -157,7 +173,6 @@ const createObjectiveFileMetaData = async (
   fileSize,
 ) => {
   const newFile = {
-    // activityReportId: reportId,
     originalFileName,
     key: s3FileName,
     status: UPLOADING,
@@ -165,8 +180,44 @@ const createObjectiveFileMetaData = async (
   };
   let file;
   try {
-    file = await File.create(newFile);
+    file = await File.findOrCreate({
+      where: {
+        originalFileName: newFile.originalFileName,
+        key: newFile.s3FileName,
+        fileSize: newFile.fileSize,
+      },
+      defaults: newFile,
+    });
     await ObjectiveFile.create({ objectiveId, fileId: file.id });
+    return file.dataValues;
+  } catch (error) {
+    return error;
+  }
+};
+
+const createObjectiveTemplateFileMetaData = async (
+  originalFileName,
+  s3FileName,
+  objectiveTemplateId,
+  fileSize,
+) => {
+  const newFile = {
+    originalFileName,
+    key: s3FileName,
+    status: UPLOADING,
+    fileSize,
+  };
+  let file;
+  try {
+    file = await File.findOrCreate({
+      where: {
+        originalFileName: newFile.originalFileName,
+        key: newFile.s3FileName,
+        fileSize: newFile.fileSize,
+      },
+      defaults: newFile,
+    });
+    await ObjectiveTemplateFile.create({ objectiveTemplateId, fileId: file.id });
     return file.dataValues;
   } catch (error) {
     return error;
@@ -188,4 +239,5 @@ export {
   createActivityReportFileMetaData,
   createActivityReportObjectiveFileMetaData,
   createObjectiveFileMetaData,
+  createObjectiveTemplateFileMetaData,
 };

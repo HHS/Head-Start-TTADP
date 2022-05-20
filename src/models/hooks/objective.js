@@ -123,26 +123,6 @@ const linkObjectiveGoalTemplates = async (sequelize, instance, options) => {
   }
 };
 
-const autoPopulateSupersededBy = async (sequelize, instance, options) => {
-  // eslint-disable-next-line no-prototype-builtins
-  if (instance.hasOwnProperty('precededBy')
-  && instance.precededBy !== null
-  && instance.precededBy !== undefined) {
-    await sequelize.models.Objective.update(
-      { supersededBy: instance.id },
-      {
-        where: {
-          [Op.or]: [
-            { id: instance.precededBy },
-            { supersededBy: instance.precededBy },
-          ],
-        },
-        transaction: options.transaction,
-      },
-    );
-  }
-};
-
 const propagateTitle = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed) && changed.includes('title')) {
@@ -165,7 +145,6 @@ const beforeValidate = async (sequelize, instance, options) => {
 
 const afterCreate = async (sequelize, instance, options) => {
   await linkObjectiveGoalTemplates(sequelize, instance, options);
-  await autoPopulateSupersededBy(sequelize, instance, options);
 };
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateTitle(sequelize, instance, options);

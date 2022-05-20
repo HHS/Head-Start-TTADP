@@ -549,16 +549,6 @@ module.exports = {
           allowNull: false,
           default: false,
         }, { transaction });
-
-        await queryInterface.addColumn('Goals', 'precededBy', {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-        }, { transaction });
-
-        await queryInterface.addColumn('Goals', 'supersededBy', {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-        }, { transaction });
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
         throw (err);
@@ -1571,6 +1561,13 @@ module.exports = {
         'Objectives',
         'objectiveTemplateId',
         { type: Sequelize.INTEGER, allowNull: false },
+        { transaction },
+      );
+
+      // Remove ttaProvided from Objectives as it now resides on ActivityReportObjectives
+      await queryInterface.removeColumn(
+        'Objectives',
+        'ttaProvided',
         { transaction },
       );
 

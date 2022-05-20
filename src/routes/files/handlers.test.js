@@ -67,7 +67,7 @@ describe('File Upload', () => {
           where: { activityReportId: report.dataValues.id },
         },
       ],
-     });
+    });
     await ActivityReport.destroy({ where: { id: report.dataValues.id } });
     await User.destroy({ where: { id: user.id } });
     process.env = ORIGINAL_ENV; // restore original env

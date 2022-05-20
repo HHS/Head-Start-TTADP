@@ -32,6 +32,20 @@ module.exports = (sequelize, DataTypes) => {
     fullName: {
       type: DataTypes.STRING,
     },
+    isSpecialist: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      default: false,
+      onUpdate: 'CASCADE',
+    },
+    deletedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    mapsTo: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'Role',

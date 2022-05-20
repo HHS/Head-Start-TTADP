@@ -18,7 +18,6 @@ module.exports = (sequelize, DataTypes) => {
       Goal.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
       Goal.hasMany(models.Objective, { foreignKey: 'goalId', as: 'objectives' });
       Goal.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: +'goalTemplates' });
-      Goal.hasMany(models.Goal, { foreignKey: 'supersededBy', as: 'supersedes' });
     }
   }
   Goal.init({
