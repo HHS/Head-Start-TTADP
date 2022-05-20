@@ -152,6 +152,7 @@ export default function ObjectiveForm({
         isOnApprovedReport={isOnApprovedReport}
         goalStatus={goalStatus}
         onChangeStatus={onChangeStatus}
+        inputName={`objective-status-${index}`}
       />
     </div>
   );
