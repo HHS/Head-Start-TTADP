@@ -77,9 +77,14 @@ describe('Navigator', () => {
     updateForm = jest.fn(),
     pages = defaultPages,
     formData = initialData,
+    onUpdateError = jest.fn(),
   ) => {
     render(
-      <NetworkContext.Provider value={{ connectionActive: true }}>
+      <NetworkContext.Provider value={{
+        connectionActive: true,
+        localStorageAvailable: true,
+      }}
+      >
         <Navigator
           editable
           reportId={1}
@@ -94,7 +99,7 @@ describe('Navigator', () => {
           onFormSubmit={onSubmit}
           updatePage={updatePage}
           onSave={onSave}
-          updateErrorMessage={() => {}}
+          updateErrorMessage={onUpdateError}
           onResetToDraft={() => {}}
           updateLastSaveTime={() => {}}
           showValidationErrors={false}
@@ -214,5 +219,24 @@ describe('Navigator', () => {
     expect(saveGoal).toBeVisible();
     userEvent.click(saveGoal);
     expect(saveGoal.textContent).toBe('Save and Continue');
+  });
+
+  it('shows an error when save fails', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+
+    onSave.mockImplementationOnce(async () => {
+      throw new Error();
+    });
+
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const onUpdateError = jest.fn();
+
+    renderNavigator('second', onSubmit, onSave, updatePage, updateForm, defaultPages, initialData, onUpdateError);
+    userEvent.click(await screen.findByRole('button', { name: 'first page Not Started' }));
+
+    expect(onSave).toHaveBeenCalled();
+    expect(onUpdateError).toHaveBeenCalled();
   });
 });

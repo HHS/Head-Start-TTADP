@@ -278,22 +278,8 @@ describe('ActivityReport', () => {
     it('displays the context', async () => {
       fetchMock.get('/api/activity-reports/1', formData());
       renderActivityReport(1);
-      expect(await screen.findByRole('group', { name: /context/i })).toBeVisible();
-      expect(await screen.findByText(/sample context/i)).toBeVisible();
-    });
-
-    it('displays context in review', async () => {
-      const data = formData();
-      fetchMock.get('/api/activity-reports/1', {
-        ...data,
-        goals: [],
-        calculatedStatus: REPORT_STATUSES.SUBMITTED,
-        submissionStatus: REPORT_STATUSES.SUBMITTED,
-      });
-      renderActivityReport(1, 'review');
-      expect(await screen.findByText(/sample context/i)).toBeVisible();
-      const contextLabels = screen.queryAllByText(/context/i);
-      expect(contextLabels.length).toBe(3);
+      const contextGroup = await screen.findByRole('group', { name: /context/i });
+      expect(contextGroup).toBeVisible();
     });
 
     it('calls "report update"', async () => {
@@ -333,9 +319,7 @@ describe('ActivityReport', () => {
         const recipientSelectbox = await within(recipientField).findByText(/- select -/i);
 
         reactSelectEvent.openMenu(recipientSelectbox);
-
-        const recipientNames = await screen.findByText(/recipient names/i);
-        expect(await within(recipientNames).queryAllByText(/recipient name/i).length).toBe(2);
+        expect(within(recipientField).queryAllByText(/recipient name/i).length).toBe(2);
       });
 
       it('Other entity', async () => {
