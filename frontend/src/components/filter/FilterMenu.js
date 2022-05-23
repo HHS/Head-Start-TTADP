@@ -9,6 +9,7 @@ import FilterItem from './FilterItem';
 import usePrevious from '../../hooks/usePrevious';
 import { filterProp, filterConfigProp } from './props';
 import FilterErrorContext from './FilterErrorContext';
+import './FilterMenu.css';
 
 /**
  * Renders the entire filter menu and contains the logic for toggling it's visibility
