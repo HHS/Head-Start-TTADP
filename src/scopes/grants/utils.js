@@ -3,13 +3,13 @@ import { sequelize } from '../../models';
 import { filterAssociation as filter } from '../utils';
 
 function grantInSubQuery(baseQuery, searchTerms, operator, comparator) {
-  return searchTerms.map((term) => sequelize.literal(`"grants"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(`%${term}%`)})`));
+  return searchTerms.map((term) => sequelize.literal(`"grants"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(`%${String(term).trim()}%`)})`));
 }
 
 export function expandArrayContains(key, array, exclude) {
   const comparator = exclude ? Op.notILike : Op.iLike;
   const scopes = array.map((member) => {
-    const normalizedMember = `%${member}%`;
+    const normalizedMember = `%${member.trim()}%`;
     return {
       [key]: {
         [comparator]: normalizedMember, // sequelize escapes this automatically :)

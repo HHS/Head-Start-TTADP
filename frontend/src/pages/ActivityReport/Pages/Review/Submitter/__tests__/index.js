@@ -8,6 +8,7 @@ import { createMemoryHistory } from 'history';
 import { useForm, FormProvider } from 'react-hook-form/dist/index.ie11';
 
 import Submitter from '../index';
+import NetworkContext from '../../../../../../NetworkContext';
 import { REPORT_STATUSES, SCOPE_IDS } from '../../../../../../Constants';
 import UserContext from '../../../../../../UserContext';
 
@@ -75,13 +76,15 @@ const renderReview = (
   render(
     <Router history={history}>
       <UserContext.Provider value={{ user }}>
-        <RenderSubmitter
-          onFormSubmit={onFormSubmit}
-          formData={formData}
-          onResetToDraft={resetToDraft}
-          onSave={onSave}
-          pages={pages}
-        />
+        <NetworkContext.Provider value={{ connectionActive: true, localStorageAvailable: true }}>
+          <RenderSubmitter
+            onFormSubmit={onFormSubmit}
+            formData={formData}
+            onResetToDraft={resetToDraft}
+            onSave={onSave}
+            pages={pages}
+          />
+        </NetworkContext.Provider>
       </UserContext.Provider>
     </Router>,
   );

@@ -8,6 +8,7 @@ import {
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import Navigator from '../index';
 import { NOT_STARTED, COMPLETE } from '../constants';
+import NetworkContext from '../../../NetworkContext';
 
 // eslint-disable-next-line react/prop-types
 const Input = ({ name, required }) => {
@@ -76,29 +77,37 @@ describe('Navigator', () => {
     updateForm = jest.fn(),
     pages = defaultPages,
     formData = initialData,
+    onUpdateError = jest.fn(),
   ) => {
     render(
-      <Navigator
-        editable
-        reportId={1}
-        submitted={false}
-        formData={formData}
-        updateFormData={updateForm}
-        onReview={() => {}}
-        isApprover={false}
-        defaultValues={{ first: '', second: '' }}
-        pages={pages}
-        currentPage={currentPage}
-        onFormSubmit={onSubmit}
-        updatePage={updatePage}
-        onSave={onSave}
-        updateErrorMessage={() => {}}
-        onResetToDraft={() => {}}
-        updateLastSaveTime={() => {}}
-        showValidationErrors={false}
-        updateShowValidationErrors={() => {}}
-        isPendingApprover={false}
-      />,
+      <NetworkContext.Provider value={{
+        connectionActive: true,
+        localStorageAvailable: true,
+      }}
+      >
+        <Navigator
+          editable
+          reportId={1}
+          submitted={false}
+          formData={formData}
+          updateFormData={updateForm}
+          onReview={() => {}}
+          isApprover={false}
+          defaultValues={{ first: '', second: '' }}
+          pages={pages}
+          currentPage={currentPage}
+          onFormSubmit={onSubmit}
+          updatePage={updatePage}
+          onSave={onSave}
+          updateErrorMessage={onUpdateError}
+          onResetToDraft={() => {}}
+          updateLastSaveTime={() => {}}
+          showValidationErrors={false}
+          updateShowValidationErrors={() => {}}
+          isPendingApprover={false}
+        />
+
+      </NetworkContext.Provider>,
     );
   };
 
@@ -210,5 +219,24 @@ describe('Navigator', () => {
     expect(saveGoal).toBeVisible();
     userEvent.click(saveGoal);
     expect(saveGoal.textContent).toBe('Save and Continue');
+  });
+
+  it('shows an error when save fails', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+
+    onSave.mockImplementationOnce(async () => {
+      throw new Error();
+    });
+
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const onUpdateError = jest.fn();
+
+    renderNavigator('second', onSubmit, onSave, updatePage, updateForm, defaultPages, initialData, onUpdateError);
+    userEvent.click(await screen.findByRole('button', { name: 'first page Not Started' }));
+
+    expect(onSave).toHaveBeenCalled();
+    expect(onUpdateError).toHaveBeenCalled();
   });
 });
