@@ -18,7 +18,11 @@ import { logger, auditLogger, requestLogger } from './logger';
 
 const app = express();
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
-const index = fs.readFileSync(path.join(__dirname, 'client', 'index.html')).toString();
+let index;
+
+if (process.env.NODE_ENV === 'production') {
+  index = fs.readFileSync(path.join(__dirname, 'client', 'index.html')).toString();
+}
 
 const serveIndex = (req, res) => {
   const noncedIndex = index.replaceAll('__NONCE__', res.locals.nonce);
@@ -36,9 +40,9 @@ app.use((req, res, next) => {
     directives: {
       ...omit(helmet.contentSecurityPolicy.getDefaultDirectives(), 'upgrade-insecure-requests', 'block-all-mixed-content', 'script-src', 'img-src', 'default-src'),
       'form-action': ["'self'"],
-      scriptSrc: ["'self'", 'https://touchpoints.app.cloud.gov*', '*.googletagmanager.com'],
+      scriptSrc: ["'self'", '*.googletagmanager.com'],
       scriptSrcElem: ["'self'", 'https://*.googletagmanager.com', `'nonce-${res.locals.nonce}'`],
-      imgSrc: ["'self'", 'data:', 'https://touchpoints.app.cloud.gov', 'www.googletagmanager.com', '*.google-analytics.com'],
+      imgSrc: ["'self'", 'data:', 'www.googletagmanager.com', '*.google-analytics.com'],
       connectSrc: ["'self'", '*.google-analytics.com', '*.analytics.google.com', '*.googletagmanager.com'],
       defaultSrc: ["'self'"],
     },
