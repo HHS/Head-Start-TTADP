@@ -3,20 +3,20 @@
   the nav items passed in as props. This component has lots of custom styles
   defined. Note the nav is no longer stickied once we hit mobile widths (640px)
 */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { startCase } from 'lodash';
 import Sticky from 'react-stickynode';
 import { Button, Tag, Alert } from '@trussworks/react-uswds';
 import { useMediaQuery } from 'react-responsive';
 import moment from 'moment';
-
 import Container from '../../Container';
 import './SideNav.scss';
 import { REPORT_STATUSES } from '../../../Constants';
 import {
   NOT_STARTED, IN_PROGRESS, COMPLETE,
 } from '../constants';
+import NetworkContext from '../../../NetworkContext';
 
 const tagClass = (state) => {
   switch (state) {
@@ -38,7 +38,7 @@ const tagClass = (state) => {
 };
 
 function SideNav({
-  pages, skipTo, skipToMessage, lastSaveTime, errorMessage,
+  pages, skipTo, skipToMessage, lastSaveTime, errorMessage, savedToStorageTime,
 }) {
   const [fade, updateFade] = useState(true);
 
@@ -68,6 +68,11 @@ function SideNav({
     </li>
   ));
 
+  const onAnimationEnd = () => updateFade(false);
+  const DATE_DISPLAY_SAVED_FORMAT = 'MM/DD/YYYY [at] h:mm a';
+
+  const { connectionActive } = useContext(NetworkContext);
+
   return (
     <Sticky className="smart-hub-sidenav" top={100} enabled={!isMobile}>
       <Container padding={0}>
@@ -78,16 +83,40 @@ function SideNav({
       </Container>
       {errorMessage
         && (
-          <Alert type="error" onAnimationEnd={() => { updateFade(false); }} slim noIcon className={`smart-hub--save-alert ${fade ? 'alert-fade' : ''}`}>
+          <Alert type="error" onAnimationEnd={onAnimationEnd} slim noIcon className={`smart-hub--save-alert ${fade ? 'alert-fade' : ''}`}>
             {errorMessage}
           </Alert>
         )}
-      {lastSaveTime && !errorMessage
+      {(lastSaveTime || savedToStorageTime) && !errorMessage
         && (
-          <Alert onAnimationEnd={() => { updateFade(false); }} aria-atomic aria-live="polite" type="success" slim noIcon className={`smart-hub--save-alert ${fade ? 'alert-fade' : ''}`}>
-            This report was last saved on
-            {' '}
-            {lastSaveTime.format('MM/DD/YYYY [at] h:mm a')}
+          <Alert
+            onAnimationEnd={onAnimationEnd}
+            aria-atomic
+            aria-live="polite"
+            type="success"
+            slim
+            noIcon
+            className={`smart-hub--save-alert padding-y-2 ${fade ? 'alert-fade' : ''}`}
+          >
+            Autosaved on:
+            <br />
+            <ul className="margin-y-0">
+              {(lastSaveTime && connectionActive)
+                ? (
+                  <li>
+                    our network at
+                    {' '}
+                    {lastSaveTime.format(DATE_DISPLAY_SAVED_FORMAT)}
+                  </li>
+                ) : null}
+              { savedToStorageTime && (
+              <li>
+                your computer at
+                {' '}
+                {moment(savedToStorageTime).format(DATE_DISPLAY_SAVED_FORMAT)}
+              </li>
+              )}
+            </ul>
           </Alert>
         )}
     </Sticky>
@@ -107,11 +136,13 @@ SideNav.propTypes = {
   skipToMessage: PropTypes.string.isRequired,
   errorMessage: PropTypes.string,
   lastSaveTime: PropTypes.instanceOf(moment),
+  savedToStorageTime: PropTypes.string,
 };
 
 SideNav.defaultProps = {
   lastSaveTime: undefined,
   errorMessage: undefined,
+  savedToStorageTime: undefined,
 };
 
 export default SideNav;
