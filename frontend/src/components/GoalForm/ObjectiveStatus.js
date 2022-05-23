@@ -8,11 +8,19 @@ export default function ObjectiveStatus({
   onChangeStatus,
   inputName,
 }) {
+  // if the goal is a draft, any objectives added
+  // will have to be draft as well
+
   if (goalStatus === 'Draft') {
     return null;
   }
 
-  if (status.toLowerCase() === 'complete') {
+  // if the objective has been completed or is "in progress"
+  // we need a control to change status
+
+  const showDropdown = status.toLowerCase() === 'complete' || status.toLowerCase() === 'in progress';
+
+  if (showDropdown) {
     return (
       <FormGroup>
         <Label htmlFor={inputName}>
@@ -25,6 +33,8 @@ export default function ObjectiveStatus({
       </FormGroup>
     );
   }
+
+  // otherwise, we simply display the status as a read only indicator, not a form field
 
   return (
     <>
