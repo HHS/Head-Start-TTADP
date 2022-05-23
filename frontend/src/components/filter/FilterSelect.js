@@ -36,8 +36,6 @@ export default function FilterSelect({
         outline,
         height: 'auto',
         padding: 0,
-        position: !state.isFocused ? 'absolute' : 'relative',
-        top: 0,
       };
     },
     control: (provided, state) => {
@@ -71,6 +69,10 @@ export default function FilterSelect({
     valueContainer: (provided) => ({
       ...provided,
       maxHeight: '100%',
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      top: 0,
     }),
   };
 
