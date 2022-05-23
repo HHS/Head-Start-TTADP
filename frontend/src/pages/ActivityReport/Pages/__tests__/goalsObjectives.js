@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import React from 'react';
@@ -15,7 +15,7 @@ import NetworkContext from '../../../../NetworkContext';
 const goalUrl = join('api', 'activity-reports', 'goals');
 
 const RenderGoalsObjectives = ({
-  grantIds, activityRecipientType, goals = [], isGoalFormClosed = false,
+  grantIds, activityRecipientType, goals = [], isGoalFormClosed = false, connectionActive = true,
 }) => {
   const activityRecipients = grantIds.map((activityRecipientId) => ({ activityRecipientId }));
   const data = { activityRecipientType, activityRecipients };
@@ -33,7 +33,7 @@ const RenderGoalsObjectives = ({
     },
   });
   return (
-    <NetworkContext.Provider value={{ connectionActive: true, localStorageAvailable: true }}>
+    <NetworkContext.Provider value={{ connectionActive, localStorageAvailable: true }}>
       <FormProvider {...hookForm}>
         {goalsObjectives.render()}
       </FormProvider>
@@ -41,15 +41,24 @@ const RenderGoalsObjectives = ({
   );
 };
 
-const renderGoals = (grantIds, activityRecipientType, goals = [], isGoalFormClosed = false) => {
+const renderGoals = (
+  grantIds,
+  activityRecipientType,
+  goals = [],
+  isGoalFormClosed = false,
+  throwFetchError = false,
+) => {
   const query = grantIds.map((id) => `grantIds=${id}`).join('&');
-  fetchMock.get(join(goalUrl, `?${query}`), goals);
+  const fetchResponse = throwFetchError ? async () => { throw new Error(); } : goals;
+
+  fetchMock.get(join(goalUrl, `?${query}`), fetchResponse);
   render(
     <RenderGoalsObjectives
       grantIds={grantIds}
       activityRecipientType={activityRecipientType}
       goals={goals}
       isGoalFormClosed={isGoalFormClosed}
+      connectionActive={!throwFetchError}
     />,
   );
 };
@@ -74,6 +83,18 @@ describe('goals objectives', () => {
     fetchMock.get('/api/topic', []);
   });
   afterEach(() => fetchMock.restore());
+
+  describe('fetch errors', () => {
+    it('shows error messages', async () => {
+      const goals = [];
+      const isGoalFormClosed = false;
+      const throwFetchError = true;
+
+      renderGoals([1], 'recipient', goals, isGoalFormClosed, throwFetchError);
+      expect(await screen.findByText('Connection error. Cannot load options.')).toBeVisible();
+    });
+  });
+
   describe('when activity recipient type is "recipient"', () => {
     it('the display goals section is displayed', async () => {
       renderGoals([1], 'recipient');
@@ -129,7 +150,12 @@ describe('goals objectives', () => {
       userEvent.click(actions);
       const button = await screen.findByRole('button', { name: /delete goal 1234567/i });
       userEvent.click(button);
-      expect(await screen.findByText('Goal summary')).toBeVisible();
+      const modal = await screen.findByTestId('modalWindow');
+      const deletor = await within(modal).findByText('Delete');
+      const goalSummary = await screen.findByText('Goal summary');
+      expect(goalSummary).toBeVisible();
+      userEvent.click(deletor);
+      expect(goalSummary).not.toBeVisible();
     });
   });
 

@@ -76,7 +76,12 @@ body {
 
 /* ========== some form resets ========== */
 
-.usa-button:not(.usa-button--outline, .usa-button--unstyled, :disabled) {
+.usa-button:not(
+  .usa-button--outline, 
+  .usa-button--unstyled, 
+  .usa-button--secondary,
+  :disabled
+) {
   background-color: $ttahub-medium-blue;
 }
 
