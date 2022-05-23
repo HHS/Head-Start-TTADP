@@ -18,8 +18,8 @@ import {
   OBJECTIVE_TTA,
   OBJECTIVE_TOPICS,
 } from './goalValidator';
-import './Objective.css';
 import { validateListOfResources } from '../../../../components/GoalForm/constants';
+import './Objective.scss';
 
 export default function Objective({
   objective,

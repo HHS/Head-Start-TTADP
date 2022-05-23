@@ -52,6 +52,7 @@ function Navigator({
   updateShowValidationErrors,
   errorMessage,
   updateErrorMessage,
+  savedToStorageTime,
 }) {
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
   const page = pages.find((p) => p.path === currentPage);
@@ -115,9 +116,7 @@ function Navigator({
       await onSave(data);
       updateLastSaveTime(moment());
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.log(error);
-      updateErrorMessage('Unable to save activity report');
+      updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     }
   };
   const onGoalFormNavigate = async () => {
@@ -219,6 +218,7 @@ function Navigator({
           pages={navigatorPages}
           lastSaveTime={lastSaveTime}
           errorMessage={errorMessage}
+          savedToStorageTime={savedToStorageTime}
         />
       </Grid>
       <Grid className="smart-hub-navigator-wrapper" col={12} desktop={{ col: 8 }}>
@@ -303,6 +303,7 @@ Navigator.propTypes = {
   errorMessage: PropTypes.string,
   updateErrorMessage: PropTypes.func.isRequired,
   lastSaveTime: PropTypes.instanceOf(moment),
+  savedToStorageTime: PropTypes.string,
   updateLastSaveTime: PropTypes.func.isRequired,
   showValidationErrors: PropTypes.bool.isRequired,
   updateShowValidationErrors: PropTypes.func.isRequired,
@@ -338,6 +339,7 @@ Navigator.defaultProps = {
   additionalData: {},
   autoSaveInterval: 1000 * 60 * 2,
   lastSaveTime: null,
+  savedToStorageTime: null,
   errorMessage: '',
   reportCreator: {
     name: null,

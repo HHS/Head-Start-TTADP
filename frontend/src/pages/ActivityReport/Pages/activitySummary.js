@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {
+  useState, useEffect, useRef, useContext,
+} from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
@@ -24,6 +26,8 @@ import HookFormRichEditor from '../../../components/HookFormRichEditor';
 import HtmlReviewItem from './Review/HtmlReviewItem';
 import Section from './Review/ReviewSection';
 import { reportIsEditable } from '../../../utils';
+import ConnectionError from './components/ConnectionError';
+import NetworkContext from '../../../NetworkContext';
 
 const ActivitySummary = ({
   recipients,
@@ -46,6 +50,8 @@ const ActivitySummary = ({
   const pageState = watch('pageState');
   const isVirtual = watch('deliveryMethod') === 'virtual';
   const { otherEntities: rawOtherEntities, grants: rawGrants } = recipients;
+
+  const { connectionActive } = useContext(NetworkContext);
 
   const grants = rawGrants.map((recipient) => ({
     label: recipient.name,
@@ -147,6 +153,11 @@ const ActivitySummary = ({
           </FormItem>
         </div>
         <div className="margin-top-2">
+          {!disableRecipients
+          && !connectionActive
+          && !selectedRecipients.length
+            ? <ConnectionError />
+            : null}
           <FormItem
             label={recipientLabel}
             name="activityRecipients"
@@ -165,6 +176,7 @@ const ActivitySummary = ({
           </FormItem>
         </div>
         <div className="margin-top-2">
+          {!connectionActive && !collaborators.length ? <ConnectionError /> : null }
           <FormItem
             label="Collaborating Specialists"
             name="collaborators"

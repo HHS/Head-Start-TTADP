@@ -8,7 +8,7 @@ import { getRecipient } from '../../fetchers/recipient';
 import RecipientTabs from './components/RecipientTabs';
 import FeatureFlag from '../../components/FeatureFlag';
 import { HTTPError } from '../../fetchers';
-import './index.css';
+import './index.scss';
 import Profile from './pages/Profile';
 import TTAHistory from './pages/TTAHistory';
 import GoalsObjectives from './pages/GoalsObjectives';

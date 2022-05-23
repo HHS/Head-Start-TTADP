@@ -17,6 +17,7 @@ import Req from '../../../components/Req';
 import ReadOnly from '../../../components/GoalForm/ReadOnly';
 import PlusButton from '../../../components/GoalForm/PlusButton';
 import OtherEntity from './components/OtherEntity';
+import ConnectionError from './components/ConnectionError';
 
 const GoalsObjectives = () => {
   const {
@@ -28,6 +29,7 @@ const GoalsObjectives = () => {
   const isRecipientReport = activityRecipientType === 'recipient';
   const grantIds = isRecipientReport ? recipients.map((r) => r.activityRecipientId) : [];
 
+  const [fetchError, setFetchError] = useState(false);
   const [availableGoals, updateAvailableGoals] = useState([]);
   const hasGrants = grantIds.length > 0;
 
@@ -58,9 +60,15 @@ const GoalsObjectives = () => {
 
   useDeepCompareEffect(() => {
     const fetch = async () => {
-      if (isRecipientReport && hasGrants) {
-        const fetchedGoals = await getGoals(grantIds);
-        updateAvailableGoals(fetchedGoals);
+      try {
+        if (isRecipientReport && hasGrants) {
+          const fetchedGoals = await getGoals(grantIds);
+          updateAvailableGoals(fetchedGoals);
+        }
+
+        setFetchError(false);
+      } catch (error) {
+        setFetchError(true);
       }
     };
     fetch();
@@ -192,6 +200,7 @@ const GoalsObjectives = () => {
         ? (
           <>
             <h3 className="margin-bottom-0 margin-top-4">Goal summary</h3>
+            { fetchError ? <ConnectionError /> : null }
             <Fieldset className="margin-0">
               <GoalPicker
                 availableGoals={availableGoals}
