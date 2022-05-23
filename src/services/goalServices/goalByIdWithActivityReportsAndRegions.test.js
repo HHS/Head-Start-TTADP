@@ -49,7 +49,7 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
 
     goalOnActivityReport = await Goal.create({
       name: 'Goal on activity report',
-      status: 'In progress',
+      status: 'In Progress',
       timeframe: '12 months',
       isFromSmartsheetTtaPlan: false,
       id: faker.datatype.number({ min: 64000 }),
@@ -83,7 +83,7 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
 
     goalOnOneGrant = await Goal.create({
       name: 'Goal on one grant',
-      status: 'In progress',
+      status: 'In Progress',
       timeframe: '12 months',
       isFromSmartsheetTtaPlan: false,
     });
@@ -96,7 +96,7 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
 
     goalOnTwoGrants = await Goal.create({
       name: 'Goal on two grants',
-      status: 'In progress',
+      status: 'In Progress',
       timeframe: '12 months',
       isFromSmartsheetTtaPlan: false,
     });

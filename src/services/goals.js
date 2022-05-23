@@ -257,7 +257,7 @@ export async function createOrUpdateGoals(goals) {
         } : {
           goalId: newGoal.id,
           title: o.title,
-          status: 'Not started',
+          status: 'Not Started',
         };
 
         const [objective] = await Objective.upsert(

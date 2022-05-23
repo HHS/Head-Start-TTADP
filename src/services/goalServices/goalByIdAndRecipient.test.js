@@ -37,7 +37,7 @@ describe('goalById', () => {
 
     goalOnActivityReport = await Goal.create({
       name: 'Goal on activity report',
-      status: 'In progress',
+      status: 'In Progress',
       timeframe: '12 months',
       isFromSmartsheetTtaPlan: false,
       id: faker.datatype.number({ min: 64000 }),

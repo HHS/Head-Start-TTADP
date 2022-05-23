@@ -708,9 +708,9 @@ module.exports = {
       //     2. If the goal is associated with an AR for training, and the objective status is
       //        Completed
       //        > goal status = closed
-      //     3. If the goal is associated with an AR and objective is In progress or Completed
-      //        > goals status = in progress
-      //     4. If the goal is associated with an AR and only associated with Not started
+      //     3. If the goal is associated with an AR and objective is In Progress or Completed
+      //        > goals status = In Progress
+      //     4. If the goal is associated with an AR and only associated with Not Started
       //        objective(s)
       //        > goals status = not started
       //     5. If the goal doesn't have a status and no associated ARs and imported from RTTAPA
@@ -1579,6 +1579,14 @@ module.exports = {
               SET status = sr.status
               FROM status_rules sr
               WHERE g.id = sr."goalId";
+
+              UPDATE "Goals" g
+              SET status = 'Suspended'
+              WHERE g.status = 'Ceased/Suspended';
+
+              UPDATE "Goals" g
+              SET status = 'Closed'
+              WHERE g.status = 'Completed';
             ------------------------------------------------------------------------------------
             -- 23. Populate ActivityReportGoals
             INSERT INTO "ActivityReportGoals" (
