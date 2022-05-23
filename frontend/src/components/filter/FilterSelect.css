@@ -44,6 +44,10 @@
     left: 1px;
 }
 
+.ttahub-filter-select__control--menu-is-open .ttahub-filter-select__value-container{
+    position: relative;
+}
+
 .ttahub-filter-select__has-cover-all:not(:focus-within) .ttahub-filter-select__clear-indicator {
     display: none;
 }
