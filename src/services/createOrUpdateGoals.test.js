@@ -52,13 +52,13 @@ describe.skip('createOrUpdateGoals', () => {
     objective = await Objective.create({
       goalId: goal.id,
       title: 'This is some serious goal text',
-      status: 'Not started',
+      status: 'Not Started',
     });
 
     await Objective.create({
       goalId: goal.id,
       title: 'This objective will be deleted',
-      status: 'Not started',
+      status: 'Not Started',
     });
 
     await ObjectiveResource.create({
@@ -134,7 +134,7 @@ describe.skip('createOrUpdateGoals', () => {
         objectives: [
           {
             id: objective.id,
-            status: 'Not started',
+            status: 'Not Started',
             title: 'This is an objective',
             resources: [
               {
@@ -149,7 +149,7 @@ describe.skip('createOrUpdateGoals', () => {
           },
           {
             id: 'new-0',
-            status: 'Not started',
+            status: 'Not Started',
             title: 'This is another objective',
             resources: [],
             topics: [

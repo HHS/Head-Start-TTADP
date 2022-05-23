@@ -112,7 +112,7 @@ describe('goal filtersToScopes', () => {
         // goal for startDate
         await Goal.create({
           name: 'Goal 5',
-          status: 'Ceased/Suspended',
+          status: 'Suspended',
           timeframe: '12 months',
           isFromSmartsheetTtaPlan: false,
           createdAt: new Date('2021-01-10'),
@@ -180,7 +180,7 @@ describe('goal filtersToScopes', () => {
 
     grant = await createGrant({ regionId: REGION_ID, number: 'BROC1234' });
     otherGrant = await createGrant({ regionId: REGION_ID, number: 'CAUL4567' });
-    goals.push(await createGoal({ status: 'Ceased/Suspended', name: 'Goal 6', grantId: grant.id }));
+    goals.push(await createGoal({ status: 'Suspended', name: 'Goal 6', grantId: grant.id }));
     goals.push(await createGoal({ status: 'Closed', name: 'Goal 7', grantId: otherGrant.id }));
 
     reportIds = [emptyReport.id, reportWithReasons.id, reportWithTopics.id];
