@@ -1313,7 +1313,7 @@ module.exports = {
               TRIM(string_agg(oo."ttaProvided", E'\n'))
             FROM "ActivityReportObjectives" aro
             JOIN "__temp_objectives" "o"
-            ON "aro"."id" = any (o."originalObjectiveIds"::int[])
+            ON "aro"."objectiveId" = any (o."originalObjectiveIds"::int[])
             JOIN "Objectives" oo
             ON aro."objectiveId" = oo.id
             GROUP BY
