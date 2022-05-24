@@ -24,8 +24,6 @@ export default function SocketProvider({ children, path }) {
 
   // Create WebSocket connection.
   const socket = useMemo(() => {
-    console.log(path);
-
     if (!WS_URL || !path) {
       return {
         // eslint-disable-next-line no-console
