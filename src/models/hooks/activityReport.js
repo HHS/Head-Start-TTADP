@@ -182,6 +182,35 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
   }
 };
 
+const automaticStatusChangeOnAprovalForGoals = async (sequelize, instance, options) => {
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('calculatedStatus')
+    && instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
+    && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
+    const goals = await sequelize.models.Goal.findAll(
+      {
+        where: {
+          status: ['Draft', 'Not Started'],
+        },
+        include: [
+          {
+            model: sequelize.models.ActivityReport,
+            as: 'activityReports',
+            required: true,
+            where: { activityReportId: instance.id },
+          },
+        ],
+        transaction: options.transaction,
+      },
+    );
+    await Promise.all(goals.map(async (goal) => {
+      goal.set('status', 'In Progress');
+      return goal.save();
+    }));
+  }
+};
+
 const beforeCreate = async (instance) => {
   copyStatus(instance);
 };
@@ -191,11 +220,13 @@ const beforeUpdate = async (instance) => {
 };
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateApprovedStatus(sequelize, instance, options);
+  await automaticStatusChangeOnAprovalForGoals(sequelize, instance, options);
 };
 
 export {
   copyStatus,
   propagateApprovedStatus,
+  automaticStatusChangeOnAprovalForGoals,
   beforeCreate,
   beforeUpdate,
   afterUpdate,
