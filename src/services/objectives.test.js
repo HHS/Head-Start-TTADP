@@ -48,13 +48,13 @@ describe('Objectives DB service', () => {
     objective = await Objective.create({
       title: 'title',
       ttaProvided: 'tta provided',
-      status: 'status',
+      status: 'Draft',
     });
 
     secondObjective = await Objective.create({
       title: 'second title',
       ttaProvided: 'tta provided',
-      status: 'status',
+      status: 'Draft',
     });
 
     await ActivityReportObjective.create({

@@ -10,22 +10,22 @@ const propagateCreateToTemplate = async (sequelize, instance, options) => {
     include: [
       {
         model: sequelize.models.ObjectiveTemplate,
-        as: 'objectivesTemplate',
+        as: 'objectiveTemplate',
         required: true,
         attributes: ['id', 'creationMethod'],
       },
     ],
     transaction: options.transaction,
   });
-  if (objective.objectivesTemplate.creationMethod === CREATION_METHOD[0]) { // 'Automatic'
+  if (objective.objectiveTemplate.creationMethod === CREATION_METHOD[0]) { // 'Automatic'
     const ott = await sequelize.models.ObjectiveTemplateTopic.findOrCreate({
       where: {
         objectiveTemplateId: objective.objectiveTemplateId,
         topicId: instance.topicId,
       },
       defaults: {
-        objectiveTemplateId: instance.objective.objectiveTemplateId,
-        fileId: instance.fileId,
+        objectiveTemplateId: objective.objectiveTemplateId,
+        topicId: instance.topicId,
       },
       transaction: options.transaction,
     });
@@ -47,14 +47,14 @@ const propagateDestroyToTemplate = async (sequelize, instance, options) => {
     include: [
       {
         model: sequelize.models.ObjectiveTemplate,
-        as: 'objectivesTemplate',
+        as: 'objectiveTemplate',
         required: true,
         attributes: ['id', 'creationMethod'],
       },
     ],
     transaction: options.transaction,
   });
-  if (objective.objectivesTemplate.creationMethod === CREATION_METHOD[0]) { // 'Automatic'
+  if (objective.objectiveTemplate.creationMethod === CREATION_METHOD[0]) { // 'Automatic'
     const ott = await sequelize.models.ObjectiveTemplateTopic.findOne({
       attributes: ['id'],
       where: {
@@ -64,7 +64,7 @@ const propagateDestroyToTemplate = async (sequelize, instance, options) => {
       include: [
         {
           model: sequelize.models.ObjectiveTemplate,
-          as: 'objectivesTemplate',
+          as: 'objectiveTemplate',
           required: true,
           include: [
             {
@@ -79,7 +79,7 @@ const propagateDestroyToTemplate = async (sequelize, instance, options) => {
       ],
       transaction: options.transaction,
     });
-    if (ott.objectivesTemplate.objectives.length > 0) {
+    if (ott.objectiveTemplate.objectives.length > 0) {
       await sequelize.models.ObjectiveTemplateTopic.update(
         {
           updatedAt: new Date(),

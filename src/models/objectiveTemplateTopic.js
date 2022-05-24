@@ -2,19 +2,19 @@ const { Model } = require('sequelize');
 const { auditLogger } = require('../logger');
 
 /**
-   * ObjectiveRole table. Junction table
-   * between Objectives and roles
+   * ObjectiveTopic table. Junction table
+   * between Objectives and topics
    * @param {} sequelize
    * @param {*} DataTypes
    */
 module.exports = (sequelize, DataTypes) => {
-  class ObjectiveTemplateRole extends Model {
+  class ObjectiveTemplateTopic extends Model {
     static associate(models) {
-      ObjectiveTemplateRole.belongsTo(models.ObjectiveTemplate, { foreignKey: 'objectiveTemplateId', onDelete: 'cascade', as: 'objectiveTemplate' });
-      ObjectiveTemplateRole.belongsTo(models.Role, { foreignKey: 'roleId', onDelete: 'cascade', as: 'role' });
+      ObjectiveTemplateTopic.belongsTo(models.ObjectiveTemplate, { foreignKey: 'objectiveTemplateId', onDelete: 'cascade', as: 'objectiveTemplate' });
+      ObjectiveTemplateTopic.belongsTo(models.Topic, { foreignKey: 'topicId', onDelete: 'cascade', as: 'topic' });
     }
   }
-  ObjectiveTemplateRole.init({
+  ObjectiveTemplateTopic.init({
     id: {
       allowNull: false,
       autoIncrement: true,
@@ -25,13 +25,13 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    roleId: {
+    topicId: {
       type: DataTypes.STRING,
       allowNull: false,
     },
   }, {
     sequelize,
-    modelName: 'ObjectiveTemplateRole',
+    modelName: 'ObjectiveTemplateTopic',
   });
-  return ObjectiveTemplateRole;
+  return ObjectiveTemplateTopic;
 };
