@@ -17,12 +17,12 @@ const propagateDestroyToFile = async (sequelize, instance, options) => {
     include: [
       {
         model: sequelize.models.ActivityReportFile,
-        as: 'activityReportFiles',
+        as: 'reportFiles',
         required: true,
       },
       {
         model: sequelize.models.ActivityReportObjectiveFile,
-        as: 'activityReportObjectiveFiles',
+        as: 'reportObjectiveFiles',
         required: true,
       },
       {
@@ -38,8 +38,8 @@ const propagateDestroyToFile = async (sequelize, instance, options) => {
     ],
     transaction: options.transaction,
   });
-  if (file.activityReportFiles.length === 0
-    && file.activityReportObjectiveFiles.length === 0
+  if (file.reportFiles.length === 0
+    && file.reportObjectiveFiles.length === 0
     && file.objectiveFiles.length === 0
     && file.objectiveTemplateFiles.length === 0) {
     await sequelize.models.File.destroy({

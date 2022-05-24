@@ -216,7 +216,7 @@ export function activityReportByLegacyId(legacyId) {
     include: [
       {
         model: ActivityReportFile,
-        as: 'activityReportFiles',
+        as: 'reportFiles',
         required: false,
         separate: true,
         include: [
@@ -314,7 +314,7 @@ export function activityReportById(activityReportId) {
       },
       {
         model: ActivityReportFile,
-        as: 'activityReportFiles',
+        as: 'reportFiles',
         required: false,
         separate: true,
         include: [
@@ -826,7 +826,7 @@ async function getDownloadableActivityReports(where, separate = true) {
       },
       {
         model: ActivityReportFile,
-        as: 'activityReportFiles',
+        as: 'reportFiles',
         required: false,
         separate: true,
         include: [
