@@ -19,7 +19,7 @@ executors:
           POSTGRES_DB: ttasmarthub
   machine-executor:
     machine:
-      image: ubuntu-2004:current
+      image: circleci/classic:latest
 commands:
   create_combined_yarnlock:
     description: "Concatenate all yarn.json files into single file.
@@ -185,7 +185,7 @@ parameters:
     default: "TTAHUB-467/apply-color-palette"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "TTAHUB-785/update-job-image"
+    default: "prepare-for-view-goals"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
