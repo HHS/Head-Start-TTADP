@@ -49,7 +49,11 @@ describe('goalById', () => {
       status: 'Not Started',
     });
 
-    const topic = await Topic.findOne();
+    const [topic] = await Topic.findOrCreate({
+      where: {
+        name: 'test',
+      },
+    });
 
     await ObjectiveTopic.create({
       topicId: topic.id,
