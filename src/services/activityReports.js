@@ -22,6 +22,7 @@ import {
   Objective,
   Program,
   ActivityReportObjective,
+  CollaboratorRole,
 } from '../models';
 
 import { removeUnusedGoalsObjectivesFromReport, saveGoalsForReport } from './goals';
@@ -275,9 +276,19 @@ export function activityReportById(activityReportId) {
         as: 'author',
       },
       {
-        model: User,
-        as: 'collaborators',
         required: false,
+        model: ActivityReportCollaborator,
+        as: 'activityReportCollaborators',
+        include: [
+          {
+            model: User,
+            as: 'user',
+          },
+          {
+            model: CollaboratorRole,
+            as: 'collaboratorRoles',
+          },
+        ],
       },
       {
         model: File,
@@ -428,10 +439,16 @@ export function activityReports(
           as: 'author',
         },
         {
-          model: User,
-          attributes: ['id', 'name', 'role', 'fullName'],
-          as: 'collaborators',
-          through: { attributes: [] },
+          required: false,
+          model: ActivityReportCollaborator,
+          as: 'activityReportCollaborators',
+          include: [
+            {
+              model: User,
+              as: 'user',
+              attributes: ['id', 'name', 'role', 'fullName'],
+            },
+          ],
         },
         {
           model: ActivityReportApprover,
@@ -491,7 +508,7 @@ export async function activityReportAlerts(userId, {
                 ],
               },
               {
-                [Op.or]: [{ userId }, { '$collaborators.id$': userId }],
+                [Op.or]: [{ userId }, { '$activityReportCollaborators->user.id$': userId }],
               },
             ],
           },
@@ -558,11 +575,17 @@ export async function activityReportAlerts(userId, {
           as: 'author',
         },
         {
-          model: User,
-          attributes: ['id', 'name', 'role', 'fullName'],
-          as: 'collaborators',
-          duplicating: true,
-          through: { attributes: [] },
+          required: false,
+          model: ActivityReportCollaborator,
+          as: 'activityReportCollaborators',
+          include: [
+            {
+              model: User,
+              as: 'user',
+              attributes: ['id', 'name', 'role', 'fullName'],
+              duplicating: true,
+            },
+          ],
         },
         {
           model: ActivityReportApprover,
@@ -623,6 +646,13 @@ export async function createOrUpdate(newActivityReport, report) {
   } else {
     savedReport = await create(updatedFields);
   }
+  /* if (activityReportCollaborators) {
+    const { id } = savedReport;
+    const newCollaborators = activityReportCollaborators.map(
+      (c) => c.user.id,
+    );
+    await saveReportCollaborators(id, newCollaborators);
+  } */
   if (collaborators) {
     const { id } = savedReport;
     const newCollaborators = collaborators.map(
