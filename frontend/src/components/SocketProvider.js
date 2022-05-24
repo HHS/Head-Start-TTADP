@@ -8,7 +8,7 @@ export const SocketContext = createContext();
 const WS_URL = process.env.REACT_APP_WEBSOCKET_URL;
 
 export const socketPath = (activityReportId, page) => {
-  if (activityReportId && activityReportId !== 'new') {
+  if (activityReportId && activityReportId !== 'new' && page) {
     return `/activity-report/edit/${activityReportId}/${page}`;
   }
 
@@ -18,12 +18,19 @@ export const socketPath = (activityReportId, page) => {
 export default function SocketProvider({ children, path }) {
   const [store, setStore] = useState(null);
 
+  const clearStore = useCallback(() => {
+    setStore(null);
+  }, []);
+
   // Create WebSocket connection.
   const socket = useMemo(() => {
+    console.log(path);
+
     if (!WS_URL || !path) {
       return {
         // eslint-disable-next-line no-console
         send: () => console.log('websocket is unavailable'),
+        close: () => {},
       };
     }
     const s = new WebSocket(`${WS_URL}${path}`);
@@ -31,16 +38,24 @@ export default function SocketProvider({ children, path }) {
     // we don't want to send bufferdata, but json
     s.binaryType = 'arraybuffer';
 
+    s.addEventListener('open', () => clearStore());
+
     // Listen for messages
     s.addEventListener('message', (event) => {
-      const data = JSON.parse(event.data);
-      setStore(data);
+      if (s.readyState === s.OPEN) {
+        const data = JSON.parse(event.data);
+        setStore(data);
+      }
     });
 
-    return s;
-  }, [path]);
+    s.addEventListener('error', () => {
+      s.close();
+    });
 
-  const clearStore = useCallback(() => setStore(null), []);
+    s.addEventListener('close', () => clearStore());
+
+    return s;
+  }, [clearStore, path]);
 
   return (
     <SocketContext.Provider value={{ socket, store, clearStore }}>
