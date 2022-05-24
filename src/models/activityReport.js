@@ -32,7 +32,7 @@ module.exports = (sequelize, DataTypes) => {
         as: 'collaborators',
       });
       ActivityReport.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
-      ActivityReport.hasMany(models.ActivityReportFile, { foreignKey: 'activityReportId', as: 'activityReportFiles' });
+      ActivityReport.hasMany(models.ActivityReportFile, { foreignKey: 'activityReportId', as: 'reportFiles' });
       ActivityReport.belongsToMany(models.File, {
         through: models.ActivityReportFile,
         // The key in the join table that points to the model defined in this file
