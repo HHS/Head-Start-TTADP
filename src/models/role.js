@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
   class Role extends Model {
     static associate(models) {
       Role.belongsToMany(models.Topic, {
-        through: models.RoleTopic, foreignKey: 'roleId', as: 'topics',
+        through: models.RoleTopic, foreignKey: 'roleId', as: 'topics', otherKey: 'topicId',
       });
       Role.belongsToMany(models.Objective, {
         through: models.ObjectiveRole,
