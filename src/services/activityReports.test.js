@@ -376,8 +376,8 @@ describe('Activity report service', () => {
           ...reportObject,
           collaborators: [{ id: mockUser.id }],
         });
-        expect(report.collaborators.length).toBe(1);
-        expect(report.collaborators[0].name).toBe(mockUser.name);
+        expect(report.activityReportCollaborators.length).toBe(1);
+        expect(report.activityReportCollaborators[0].user.name).toBe(mockUser.name);
       });
 
       it('handles notes being created', async () => {
@@ -673,7 +673,7 @@ describe('Activity report service', () => {
           sortBy: 'collaborators', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1'], 'reportId.nctn': idsToExclude,
         });
         expect(rows.length).toBe(5);
-        expect(rows[0].collaborators[0].name).toBe(mockUser.name);
+        expect(rows[0].activityReportCollaborators[0].user.name).toBe(mockUser.name);
       });
 
       it('retrieves reports sorted by id', async () => {
