@@ -2,8 +2,7 @@
 // import { auditLogger } from '../../logger';
 
 const automaticStatusChangeOnUse = async (sequelize, instance, options) => {
-  await sequelize.models.Objective.update(
-    { status: 'In Progress' },
+  const objective = await sequelize.models.Objective.findOne(
     {
       where: {
         id: instance.objectiveId,
@@ -12,6 +11,10 @@ const automaticStatusChangeOnUse = async (sequelize, instance, options) => {
       transaction: options.transaction,
     },
   );
+  if (objective) {
+    objective.status = 'In Progress';
+    return objective.save();
+  }
 };
 
 const afterCreate = async (sequelize, instance, options) => {
