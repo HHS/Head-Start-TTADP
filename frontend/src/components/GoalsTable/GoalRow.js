@@ -46,6 +46,7 @@ function GoalRow({
   const [closeSuspendGoalId, setCloseSuspendGoalId] = useState(0);
   const [closeSuspendStatus, setCloseSuspendStatus] = useState('');
   const [resetModalValues, setResetModalValues] = useState(false);
+  const [statusChangeError, setStatusChangeError] = useState(false);
   const closeSuspendModalRef = useRef();
 
   const showCloseSuspendGoalModal = (status, goalId) => {
@@ -61,18 +62,26 @@ function GoalRow({
     closeSuspendReason = null,
     closeSuspendContext = null,
   ) => {
-    const updatedGoal = await updateGoalStatus(
-      goalId,
-      goalStatus,
-      status,
-      closeSuspendReason,
-      closeSuspendContext,
-    );
-    if (closeSuspendReason && closeSuspendModalRef.current.modalIsOpen) {
+    try {
+      const updatedGoal = await updateGoalStatus(
+        goalId,
+        goalStatus,
+        status,
+        closeSuspendReason,
+        closeSuspendContext,
+      );
+      if (closeSuspendReason && closeSuspendModalRef.current.modalIsOpen) {
       // Close from a close suspend reason submit.
-      closeSuspendModalRef.current.toggleModal(false);
+        closeSuspendModalRef.current.toggleModal(false);
+      }
+      updateGoal(updatedGoal);
+      const inFocus = document.querySelector(':focus');
+      if (inFocus) {
+        inFocus.blur();
+      }
+    } catch (err) {
+      setStatusChangeError(goalId);
     }
-    updateGoal(updatedGoal);
   };
 
   const onUpdateGoalStatus = (newStatus) => {
@@ -172,7 +181,7 @@ function GoalRow({
   };
 
   const contextMenuLabel = `Actions for goal ${id}`;
-  const showContextMenu = true;
+  const showContextMenu = false;
   const menuItems = [
     {
       label: 'Edit',
@@ -192,6 +201,7 @@ function GoalRow({
         modalRef={closeSuspendModalRef}
         onSubmit={performGoalStatusUpdate}
         resetValues={resetModalValues}
+        error={statusChangeError}
       />
       <tr className={`tta-smarthub--goal-row ${!objectivesExpanded ? 'tta-smarthub--goal-row-collapsed' : ''}`} key={`goal_row_${id}`}>
         <td style={{ borderLeft: objectivesExpanded ? `4px solid ${getStatusColor()}` : '' }}>
