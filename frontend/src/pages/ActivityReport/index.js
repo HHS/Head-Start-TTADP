@@ -53,7 +53,7 @@ const defaultValues = {
   activityType: [],
   additionalNotes: null,
   attachments: [],
-  collaborators: [],
+  activityReportCollaborators: [],
   context: '',
   deliveryMethod: null,
   duration: '',
@@ -243,10 +243,8 @@ function ActivityReport({
   const convertReportToFormData = (fetchedReport) => {
     const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed);
     const nonECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.nonECLKCResourcesUsed);
-    const collaborators = fetchedReport.activityReportCollaborators
-      ? fetchedReport.activityReportCollaborators.map((c) => c.user) : [];
     return {
-      ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed, collaborators,
+      ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed,
     };
   };
 

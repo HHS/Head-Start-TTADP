@@ -618,7 +618,7 @@ export async function createOrUpdate(newActivityReport, report) {
     goals,
     objectivesWithGoals,
     objectivesWithoutGoals,
-    collaborators,
+    activityReportCollaborators,
     activityRecipients,
     attachments,
     author,
@@ -646,17 +646,10 @@ export async function createOrUpdate(newActivityReport, report) {
   } else {
     savedReport = await create(updatedFields);
   }
-  /* if (activityReportCollaborators) {
+  if (activityReportCollaborators) {
     const { id } = savedReport;
     const newCollaborators = activityReportCollaborators.map(
       (c) => c.user.id,
-    );
-    await saveReportCollaborators(id, newCollaborators);
-  } */
-  if (collaborators) {
-    const { id } = savedReport;
-    const newCollaborators = collaborators.map(
-      (g) => g.id,
     );
     await saveReportCollaborators(id, newCollaborators);
   }
