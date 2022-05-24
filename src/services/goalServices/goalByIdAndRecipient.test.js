@@ -134,7 +134,6 @@ describe('goalById', () => {
     expect(goal.objectives[0].topics.length).toBe(1);
     expect(goal.objectives[0].resources.length).toBe(1);
     expect(goal.objectives[0].resources[0].dataValues.value).toBe('http://www.google.com');
-    expect(goal.grants.length).toBe(1);
-    expect(goal.grants[0].id).toBe(grantForReport.id);
+    expect(goal.grant.id).toBe(grantForReport.id);
   });
 });
