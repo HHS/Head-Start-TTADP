@@ -13,7 +13,12 @@ const { beforeValidate, afterUpdate } = require('./hooks/goal');
 module.exports = (sequelize, DataTypes) => {
   class Goal extends Model {
     static associate(models) {
-      Goal.belongsToMany(models.ActivityReport, { through: models.ActivityReportGoal, foreignKey: 'goalId', as: 'activityReports' });
+      Goal.belongsToMany(models.ActivityReport, {
+        through: models.ActivityReportGoal,
+        foreignKey: 'goalId',
+        otherKey: 'activityReportId',
+        as: 'activityReports',
+      });
       Goal.belongsToMany(models.Topic, { through: models.TopicGoal, foreignKey: 'goalId', as: 'topics' });
       Goal.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
       Goal.hasMany(models.Objective, { foreignKey: 'goalId', as: 'objectives' });
