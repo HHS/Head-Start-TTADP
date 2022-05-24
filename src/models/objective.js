@@ -33,7 +33,7 @@ module.exports = (sequelize, DataTypes) => {
         otherKey: 'roleId',
         as: 'roles',
       });
-      Objective.belongsTo(models.ObjectiveTemplate, { foreignKey: 'objectiveTemplateId', as: +'objectiveTemplates', onDelete: 'cascade' });
+      Objective.belongsTo(models.ObjectiveTemplate, { foreignKey: 'objectiveTemplateId', as: 'objectiveTemplate', onDelete: 'cascade' });
       Objective.hasMany(models.ObjectiveFile, { foreignKey: 'objectiveId', as: 'objectiveFiles' });
       Objective.belongsToMany(models.File, {
         through: models.ObjectiveFile,

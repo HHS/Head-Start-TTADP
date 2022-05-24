@@ -10,14 +10,14 @@ const propagateCreateToTemplate = async (sequelize, instance, options) => {
     include: [
       {
         model: sequelize.models.ObjectiveTemplate,
-        as: 'objectivesTemplate',
+        as: 'objectiveTemplate',
         required: true,
         attributes: ['id', 'creationMethod'],
       },
     ],
     transaction: options.transaction,
   });
-  if (objective.objectivesTemplate.creationMethod === CREATION_METHOD[0]) { // 'Automatic'
+  if (objective.objectiveTemplate.creationMethod === CREATION_METHOD[0]) { // 'Automatic'
     const otf = await sequelize.models.ObjectiveTemplateFile.findOrCreate({
       where: {
         objectiveTemplateId: objective.objectiveTemplateId,
@@ -57,14 +57,14 @@ const propagateDestroyToTemplate = async (sequelize, instance, options) => {
     include: [
       {
         model: sequelize.models.ObjectiveTemplate,
-        as: 'objectivesTemplate',
+        as: 'objectiveTemplate',
         required: true,
         attributes: ['id', 'creationMethod'],
       },
     ],
     transaction: options.transaction,
   });
-  if (objective.objectivesTemplate.creationMethod === CREATION_METHOD[0]) { // 'Automatic'
+  if (objective.objectiveTemplate.creationMethod === CREATION_METHOD[0]) { // 'Automatic'
     const otfs = await sequelize.models.ObjectiveTemplateFile.findOne({
       attributes: ['id'],
       where: {
@@ -74,7 +74,7 @@ const propagateDestroyToTemplate = async (sequelize, instance, options) => {
       include: [
         {
           model: sequelize.models.ObjectiveTemplate,
-          as: 'objectivesTemplate',
+          as: 'objectiveTemplate',
           required: true,
           include: [
             {
@@ -89,7 +89,7 @@ const propagateDestroyToTemplate = async (sequelize, instance, options) => {
       ],
       transaction: options.transaction,
     });
-    if (otfs.objectivesTemplate.objectives.length > 0) {
+    if (otfs.objectiveTemplate.objectives.length > 0) {
       await sequelize.models.ObjectiveTemplateFile.update(
         {
           updatedAt: new Date(),

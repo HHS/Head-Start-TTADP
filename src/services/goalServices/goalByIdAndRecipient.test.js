@@ -2,7 +2,6 @@ import faker from '@faker-js/faker';
 import db, {
   Recipient,
   Grant,
-  GrantGoal,
   Goal,
   ActivityReportObjective,
   Objective,
@@ -39,14 +38,9 @@ describe('goalById', () => {
       name: 'Goal on activity report',
       status: 'In Progress',
       timeframe: '12 months',
+      grantId: grantForReport.id,
       isFromSmartsheetTtaPlan: false,
       id: faker.datatype.number({ min: 64000 }),
-    });
-
-    await GrantGoal.create({
-      goalId: goalOnActivityReport.id,
-      grantId: grantForReport.id,
-      recipientId: grantRecipient.id,
     });
 
     objective = await Objective.create({
@@ -108,12 +102,6 @@ describe('goalById', () => {
     });
 
     await destroyReport(report);
-
-    await GrantGoal.destroy({
-      where: {
-        goalId: goalOnActivityReport.id,
-      },
-    });
 
     await Goal.destroy({
       where: {

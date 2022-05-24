@@ -53,6 +53,8 @@ const autoPopulateStatusChangeDates = (sequelize, instance) => {
     const now = new Date();
     const { status } = instance;
     switch (status) {
+      case '':
+      case null:
       case 'Draft':
         break;
       case 'Not Started':
