@@ -1,28 +1,61 @@
 // import { Op } from 'sequelize';
-// import { auditLogger } from '../../logger';
+import { auditLogger } from '../../logger';
 
 const autoPopulateObjectiveTemplateId = async (sequelize, instance, options) => {
   // eslint-disable-next-line no-prototype-builtins
   if (!instance.hasOwnProperty('objectiveTemplateId')
   || instance.objectiveTemplateId === null
   || instance.objectiveTemplateId === undefined) {
-    const goal = await sequelize.models.Goal.findOne({
-      where: { id: instance.goalId },
-      include: [
-        {
-          model: sequelize.models.Grant,
-          as: 'grant',
-          attributes: ['regionId'],
-        },
-      ],
-    });
+    let regionId = null;
+    // eslint-disable-next-line no-prototype-builtins
+    if (instance.hasOwnProperty('goalId')
+    && instance.goalId !== null
+    && instance.goalId !== undefined) {
+      const goal = await sequelize.models.Goal.findOne({
+        where: { id: instance.goalId },
+        include: [
+          {
+            model: sequelize.models.Grant,
+            as: 'grant',
+            attributes: ['regionId'],
+          },
+        ],
+      });
+      regionId = goal.grant.regionId;
+      // eslint-disable-next-line no-prototype-builtins
+    } else if (instance.hasOwnProperty('otherEntityId')
+    && instance.otherEntityId !== null
+    && instance.otherEntityId !== undefined) {
+      try {
+        const otherEntity = await sequelize.models.OtherEntity.findAll({
+          attributes: [
+            [sequelize.literal('array_agg(`ActivityReports`.regionId)'), 'regionIds'],
+          ],
+          where: { id: instance.otherEntityId },
+          include: [
+            {
+              model: sequelize.models.ActivityReport,
+              as: 'activityReports',
+              attribites: [],
+            },
+          ],
+          group: ['id'],
+        });
+        if (otherEntity.regionIds.length === 1) {
+          [regionId] = otherEntity.regionIds;
+        }
+      } catch (err) {
+        auditLogger.error(JSON.stringify(err));
+        throw err;
+      }
+    }
 
     const objectiveTemplate = await sequelize.models.ObjectiveTemplate.findOrCreate({
-      where: { hash: sequelize.fn('md5', sequelize.fn('NULLIF', sequelize.fn('TRIM', instance.title), '')), regionId: goal.grant.regionId },
+      where: { hash: sequelize.fn('md5', sequelize.fn('NULLIF', sequelize.fn('TRIM', instance.title), '')), regionId },
       defaults: {
         templateTitle: instance.title,
         lastUsed: instance.createdAt,
-        regionId: goal.grant.regionId,
+        regionId,
         creationMethod: 'Automatic',
       },
       transaction: options.transaction,
