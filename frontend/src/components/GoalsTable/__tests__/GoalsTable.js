@@ -563,7 +563,7 @@ describe('Goals Table', () => {
 
     it('Sets goal status with reason', async () => {
       fetchMock.reset();
-      fetchMock.put('/api/recipient/4598/changeStatus', {
+      fetchMock.put('/api/goals/4598/changeStatus', {
         id: 4598,
         status: 'Completed',
         createdOn: '06/15/2021',
@@ -576,7 +576,7 @@ describe('Goals Table', () => {
 
       // Open Context Menu.
       const changeStatus = await screen.findByRole('combobox', { name: /Change status for goal 4598/i });
-      userEvent.selectOptions(changeStatus, 'Completed');
+      userEvent.selectOptions(changeStatus, 'Closed');
 
       // Select a reason.
       const reasonRadio = await screen.findByRole('radio', { name: /duplicate goal/i, hidden: true });
@@ -592,7 +592,7 @@ describe('Goals Table', () => {
 
     it('Sets goal status without reason', async () => {
       fetchMock.reset();
-      fetchMock.put('/api/recipient/65479/changeStatus', {
+      fetchMock.put('/api/goals/65479/changeStatus', {
         id: 65479,
         goalStatus: 'In Progress',
         createdOn: '06/15/2021',

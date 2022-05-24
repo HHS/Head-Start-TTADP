@@ -59,7 +59,7 @@ export async function changeGoalStatus(req, res) {
       return;
     }
 
-    if (!new Goal(user, goal).canEdit()) {
+    if (!new Goal(user, goal).canChangeStatus()) {
       res.sendStatus(401);
       return;
     }

@@ -187,7 +187,11 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
 
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
   return Goal.findOne({
-    attributes: ['name', 'id', 'status'],
+    attributes: [
+      'name',
+      'id',
+      'status',
+    ],
     where: {
       id: goalId,
     },
@@ -203,7 +207,7 @@ export async function goalByIdWithActivityReportsAndRegions(goalId) {
         as: 'objectives',
         required: false,
         include: [{
-          attributes: ['id'],
+          attributes: ['id', 'calculatedStatus'],
           model: ActivityReport,
           as: 'activityReports',
           required: false,
@@ -610,22 +614,18 @@ export async function updateGoalStatusById(
   closeSuspendReason,
   closeSuspendContext,
 ) {
-  /* TODO:
-    Disable for now until goals are unique grants. ?????
-  */
-
-  // return sequelize.transaction(async (transaction) => {
-  //   const updatedGoal = await Goal.update(
-  //     {
-  //       status: newStatus,
-  //       closeSuspendReason,
-  //       closeSuspendContext,
-  //       previousStatus: oldStatus,
-  //     },
-  //     { where: { id: goalId }, returning: true, transaction },
-  //   );
-  //   return updatedGoal[1][0];
-  // });
+  return sequelize.transaction(async (transaction) => {
+    const updatedGoal = await Goal.update(
+      {
+        status: newStatus,
+        closeSuspendReason,
+        closeSuspendContext,
+        previousStatus: oldStatus,
+      },
+      { where: { id: goalId }, returning: true, transaction },
+    );
+    return updatedGoal[1][0];
+  });
 }
 
 export async function destroyGoal(goalId) {

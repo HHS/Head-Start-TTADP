@@ -173,7 +173,7 @@ function GoalsTable({
                 {renderColumnHeader('Goal text (Goal ID)', 'goalText', false)}
                 {renderColumnHeader('Goal topics', 'goalTopics', false)}
                 {renderColumnHeader('Objectives', 'objectiveCount', false)}
-                <th scope="col" aria-label="context menu" />
+                {/* <th scope="col" aria-label="context menu" /> */}
               </tr>
             </thead>
             <tbody>
