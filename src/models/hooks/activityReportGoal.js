@@ -1,33 +1,17 @@
 // const { Op } = require('sequelize');
 // import { auditLogger } from '../../logger';
 
-const automaticStatusChangeOnUse = async (sequelize, instance, options) => {
-  await sequelize.models.Goal.update(
-    { status: 'In Progress' },
-    {
-      where: {
-        id: instance.goalId,
-        status: ['Draft', 'Not Started', 'Suspended'],
-      },
-      transaction: options.transaction,
-    },
-  );
-};
-
+// eslint-disable-next-line no-unused-vars
 const afterCreate = async (sequelize, instance, options) => {
-  await automaticStatusChangeOnUse(sequelize, instance, options);
 };
-
+// eslint-disable-next-line no-unused-vars
 const afterUpdate = async (sequelize, instance, options) => {
-  await automaticStatusChangeOnUse(sequelize, instance, options);
 };
-
+// eslint-disable-next-line no-unused-vars
 const afterUpsert = async (sequelize, instance, options) => {
-  await automaticStatusChangeOnUse(sequelize, instance, options);
 };
 
 export {
-  automaticStatusChangeOnUse,
   afterCreate,
   afterUpdate,
   afterUpsert,
