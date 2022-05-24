@@ -243,7 +243,11 @@ function ActivityReport({
   const convertReportToFormData = (fetchedReport) => {
     const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed);
     const nonECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.nonECLKCResourcesUsed);
-    return { ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed };
+    const collaborators = fetchedReport.activityReportCollaborators
+      ? fetchedReport.activityReportCollaborators.map((c) => c.user) : [];
+    return {
+      ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed, collaborators,
+    };
   };
 
   // cleanup local storage if the report has been submitted or approved

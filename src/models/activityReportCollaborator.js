@@ -5,6 +5,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       ActivityReportCollaborator.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });
       ActivityReportCollaborator.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+      ActivityReportCollaborator.hasMany(models.CollaboratorRole, { foreignKey: 'activityReportCollaboratorId', as: 'collaboratorRoles' });
     }
   }
   ActivityReportCollaborator.init({
