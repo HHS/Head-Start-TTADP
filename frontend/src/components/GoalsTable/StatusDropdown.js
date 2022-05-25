@@ -22,6 +22,11 @@ const STATUSES = {
     color: colors.success,
     icon: <Closed />,
   },
+  Closed: {
+    display: 'Closed',
+    color: colors.success,
+    icon: <Closed />,
+  },
   Draft: {
     display: 'Draft',
     color: colors.ttahubBlue,
