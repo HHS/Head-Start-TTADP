@@ -9,6 +9,7 @@ module.exports = {
     activityReportCollaboratorId: {
       type: Sequelize.INTEGER,
       allowNull: false,
+      onDelete: 'CASCADE',
       references: {
         model: {
           tableName: 'ActivityReportCollaborators',
