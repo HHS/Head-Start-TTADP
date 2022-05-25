@@ -1688,7 +1688,7 @@ module.exports = {
           primaryKey: true,
           type: Sequelize.INTEGER,
         },
-        activityReporObjectivetId: {
+        activityReportObjectiveId: {
           allowNull: false,
           type: Sequelize.INTEGER,
           references: {
@@ -1725,7 +1725,7 @@ module.exports = {
           primaryKey: true,
           type: Sequelize.INTEGER,
         },
-        objectivetId: {
+        objectiveId: {
           allowNull: false,
           type: Sequelize.INTEGER,
           references: {
@@ -1762,7 +1762,7 @@ module.exports = {
           primaryKey: true,
           type: Sequelize.INTEGER,
         },
-        objectivetTemplateId: {
+        objectiveTemplateId: {
           allowNull: false,
           type: Sequelize.INTEGER,
           references: {
