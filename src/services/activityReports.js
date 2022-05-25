@@ -72,11 +72,45 @@ async function saveReportCollaborators(activityReportId, collaborators) {
     userId: collaborator,
   }));
 
+  // Get the currently saved activity report collaborators.
+  const savedCollaborators = await ActivityReportCollaborator.findAll({
+    where: { activityReportId },
+    include: [
+      {
+        model: User,
+        as: 'user',
+      },
+      {
+        model: CollaboratorRole,
+        as: 'collaboratorRoles',
+      },
+    ],
+  });
+
+  // Get list of collaborator roles to delete.
+  const reportCollaboratorsUserIds = collaborators.map((u) => u.id);
+  const collaboratorsToRemove = savedCollaborators.filter(
+    (u) => !reportCollaboratorsUserIds.includes(parseInt(u.user.id, 10)),
+  ).map((c) => c.id);
+
+  // Remove deleted collaborator roles.
+  await CollaboratorRole.destroy(
+    {
+      where: {
+        activityReportCollaboratorId: {
+          [Op.in]: collaboratorsToRemove,
+        },
+      },
+    },
+  );
+
+  // Create and delete activity report collaborators.
   if (newCollaborators.length > 0) {
     await ActivityReportCollaborator.bulkCreate(
       newCollaborators,
       { ignoreDuplicates: true },
     );
+
     await ActivityReportCollaborator.destroy(
       {
         where: {
@@ -96,6 +130,41 @@ async function saveReportCollaborators(activityReportId, collaborators) {
       },
     );
   }
+
+  // Get updated collaborator roles.
+  const updatedReportCollaborators = await ActivityReportCollaborator.findAll({
+    where: { activityReportId },
+    include: [
+      {
+        model: User,
+        as: 'user',
+      },
+      {
+        model: CollaboratorRole,
+        as: 'collaboratorRoles',
+      },
+    ],
+  });
+
+  // Get collaborator roles to add.
+  const rolesToAdd = updatedReportCollaborators.filter(
+    (c) => !c.collaboratorRoles.length
+      && c.user.role.length,
+  );
+
+  // If we have collaborators missing roles.
+  let updatedRoles = [];
+  rolesToAdd.forEach((collaborator) => {
+    // Set collaborator roles.
+    const { role } = collaborator.user;
+    // Concat list of collaborator role updates promises.
+    updatedRoles = updatedRoles.concat(role.map((r) => CollaboratorRole.findOrCreate(
+      { where: { activityReportCollaboratorId: collaborator.id, role: r } },
+    )));
+  });
+
+  // Resolve all role update promises.
+  await Promise.all(updatedRoles);
 }
 
 async function saveReportRecipients(
@@ -239,18 +308,18 @@ export function activityReportById(activityReportId) {
             as: 'grant',
             required: false,
             include:
-            [
-              {
-                model: Recipient,
-                as: 'recipient',
-                attributes: ['name'],
-              },
-              {
-                model: Program,
-                as: 'programs',
-                attributes: ['programType'],
-              },
-            ],
+              [
+                {
+                  model: Recipient,
+                  as: 'recipient',
+                  attributes: ['name'],
+                },
+                {
+                  model: Program,
+                  as: 'programs',
+                  attributes: ['programType'],
+                },
+              ],
           },
           {
             model: OtherEntity,
@@ -532,11 +601,11 @@ export async function activityReportAlerts(userId, {
           '(SELECT name as collaboratorName FROM "Users" join "ActivityReportCollaborators" on "Users"."id" = "ActivityReportCollaborators"."userId" and  "ActivityReportCollaborators"."activityReportId" = "ActivityReport"."id" limit 1)',
         ),
         sequelize.literal(
-        // eslint-disable-next-line quotes
+          // eslint-disable-next-line quotes
           `(SELECT "OtherEntities".name as otherEntityName from "OtherEntities" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" AND "ActivityRecipients"."otherEntityId" = "OtherEntities".id order by otherEntityName ${sortDir} limit 1)`,
         ),
         sequelize.literal(
-        // eslint-disable-next-line quotes
+          // eslint-disable-next-line quotes
           `(SELECT "Recipients".name as recipientName FROM "Recipients" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" JOIN "Grants" ON "Grants"."id" = "ActivityRecipients"."grantId" AND "Recipients"."id" = "Grants"."recipientId" order by recipientName ${sortDir} limit 1)`,
         ),
         // eslint-disable-next-line quotes
@@ -651,7 +720,7 @@ export async function createOrUpdate(newActivityReport, report) {
     const newCollaborators = activityReportCollaborators.map(
       (c) => c.user.id,
     );
-    await saveReportCollaborators(id, newCollaborators);
+    await saveReportCollaborators(id, newCollaborators, activityReportCollaborators);
   }
   if (activityRecipients) {
     const { activityRecipientType, id } = savedReport;

@@ -512,7 +512,6 @@ export default {
   review: false,
   render: (additionalData) => {
     const { recipients, collaborators } = additionalData;
-    console.log('Additional Data: ', additionalData);
     return (
       <ActivitySummary
         recipients={recipients}
