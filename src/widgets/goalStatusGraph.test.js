@@ -60,17 +60,17 @@ describe('goalStatusGraph', () => {
       recipientId,
     }));
 
-    goals.push(await createGoal({
-      status: '',
-      grantId,
-      recipientId,
-    }));
+    // goals.push(await createGoal({
+    //   status: '',
+    //   grantId,
+    //   recipientId,
+    // }));
 
-    goals.push(await createGoal({
-      status: null,
-      grantId,
-      recipientId,
-    }));
+    // goals.push(await createGoal({
+    //   status: null,
+    //   grantId,
+    //   recipientId,
+    // }));
     response = await goalStatusGraph({ goal: { id: goals.map((g) => g.id) } });
   });
 
@@ -117,19 +117,19 @@ describe('goalStatusGraph', () => {
   });
 
   describe('it ignores status of', () => {
-    it('null', () => {
-      const notDefined = response.null;
-      expect(notDefined).toBeUndefined();
-    });
+    // it('null', () => {
+    //   const notDefined = response.null;
+    //   expect(notDefined).toBeUndefined();
+    // });
 
     it('draft', () => {
       const draft = response[GOAL_STATUS.DRAFT];
       expect(draft).toBeUndefined();
     });
 
-    it('empty string', () => {
-      const empty = response[''];
-      expect(empty).toBeUndefined();
-    });
+    // it('empty string', () => {
+    //   const empty = response[''];
+    //   expect(empty).toBeUndefined();
+    // });
   });
 });
