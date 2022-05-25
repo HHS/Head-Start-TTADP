@@ -20,6 +20,48 @@ import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
 import './GoalRow.scss';
 import colors from '../../colors';
 
+function ObjectiveButton({
+  closeOrOpenObjectives,
+  objectiveCount,
+  objectivesExpanded,
+  goalNumber,
+  expandObjectivesRef,
+}) {
+  if (objectiveCount < 1) {
+    return (
+      <span className="text-no-underline text-ink text-middle tta-smarthub--goal-row-objectives tta-smarthub--goal-row-objectives-disabled">
+        <strong className="margin-left-1">{objectiveCount}</strong>
+        {' '}
+        Objectives
+      </span>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      ref={expandObjectivesRef}
+      className="usa-button--unstyled text-no-underline text-ink text-middle tta-smarthub--goal-row-objectives tta-smarthub--goal-row-objectives-enabled"
+      onClick={() => closeOrOpenObjectives(false)}
+      aria-label={`${objectivesExpanded ? 'Collapse' : 'Expand'} objective's for goal ${goalNumber}`}
+    >
+      <strong className="margin-left-1">{objectiveCount}</strong>
+      {' '}
+      Objective
+      {objectiveCount > 1 ? 's' : ''}
+      <FontAwesomeIcon className="margin-left-1 margin-right-1" size="1x" color={colors.textInk} icon={objectivesExpanded ? faAngleUp : faAngleDown} />
+    </button>
+  );
+}
+
+ObjectiveButton.propTypes = {
+  closeOrOpenObjectives: PropTypes.func.isRequired,
+  objectiveCount: PropTypes.number.isRequired,
+  objectivesExpanded: PropTypes.bool.isRequired,
+  goalNumber: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  expandObjectivesRef: PropTypes.instanceOf(Element).isRequired,
+};
+
 function GoalRow({
   goal,
   updateGoal,
@@ -236,26 +278,13 @@ function GoalRow({
             : displayGoalTopics}
         </td>
         <td>
-          <button
-            type="button"
-            ref={expandObjectivesRef}
-            className={`usa-button--unstyled text-no-underline text-ink text-middle tta-smarthub--goal-row-objectives-${objectiveCount > 0 ? 'enabled' : 'disabled'}`}
-            onClick={() => closeOrOpenObjectives(false)}
-            aria-label={`${objectivesExpanded ? 'Collapse' : 'Expand'} objective's for goal ${goalNumber}`}
-            tabIndex={0}
-          >
-            <strong className="margin-left-1">{objectiveCount}</strong>
-            {' '}
-            Objective
-            {objectiveCount > 1 ? 's' : ''}
-            {
-              objectiveCount > 0
-                ? (
-                  <FontAwesomeIcon className="margin-left-1 margin-right-1" size="1x" color={colors.textInk} icon={objectivesExpanded ? faAngleUp : faAngleDown} />
-                )
-                : null
-            }
-          </button>
+          <ObjectiveButton
+            closeOrOpenObjectives={closeOrOpenObjectives}
+            objectiveCount={objectiveCount}
+            objectivesExpanded={objectivesExpanded}
+            goalNumber={goalNumber}
+            expandObjectivesRef={expandObjectivesRef}
+          />
         </td>
         <td>
           {showContextMenu
