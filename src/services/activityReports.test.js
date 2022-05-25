@@ -319,7 +319,7 @@ describe('Activity report service', () => {
           additionalNotes: null,
           approvingManagerId: null,
           attachments: [],
-          collaborators: [],
+          activityReportCollaborators: [],
           context: '',
           deliveryMethod: null,
           duration: null,
@@ -618,7 +618,7 @@ describe('Activity report service', () => {
         await createOrUpdate({
           ...submittedReport,
           calculatedStatus: REPORT_STATUSES.APPROVED,
-          collaborators: [{ id: mockUser.id }],
+          activityReportCollaborators: [{ user: { id: mockUser.id } }],
         });
         await ActivityReport.create({
           ...submittedReport,
