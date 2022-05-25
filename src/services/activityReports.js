@@ -72,38 +72,6 @@ async function saveReportCollaborators(activityReportId, collaborators) {
     userId: collaborator,
   }));
 
-  // Get the currently saved activity report collaborators.
-  const savedCollaborators = await ActivityReportCollaborator.findAll({
-    where: { activityReportId },
-    include: [
-      {
-        model: User,
-        as: 'user',
-      },
-      {
-        model: CollaboratorRole,
-        as: 'collaboratorRoles',
-      },
-    ],
-  });
-
-  // Get list of collaborator roles to delete.
-  const reportCollaboratorsUserIds = collaborators.map((u) => u.id);
-  const collaboratorsToRemove = savedCollaborators.filter(
-    (u) => !reportCollaboratorsUserIds.includes(parseInt(u.user.id, 10)),
-  ).map((c) => c.id);
-
-  // Remove deleted collaborator roles.
-  await CollaboratorRole.destroy(
-    {
-      where: {
-        activityReportCollaboratorId: {
-          [Op.in]: collaboratorsToRemove,
-        },
-      },
-    },
-  );
-
   // Create and delete activity report collaborators.
   if (newCollaborators.length > 0) {
     await ActivityReportCollaborator.bulkCreate(
