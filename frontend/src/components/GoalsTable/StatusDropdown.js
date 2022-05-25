@@ -17,6 +17,12 @@ const STATUSES = {
     color: colors.ttahubMediumBlue,
     icon: <InProgress />,
   },
+  Closed: {
+    display: 'Closed',
+    color: colors.success,
+    icon: <Closed />,
+  },
+  // my database has "completed" goals in it, not sure why so leaving it in case of breakage
   Completed: {
     display: 'Closed',
     color: colors.success,
