@@ -299,7 +299,6 @@ export function activityReportById(activityReportId) {
           ['title', 'label'],
           'id',
           'title',
-          'ttaProvided',
           'status',
           'goalId',
         ],
