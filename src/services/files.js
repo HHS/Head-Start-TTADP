@@ -1,8 +1,11 @@
 import {
+  ActivityReport,
   ActivityReportFile,
   ActivityReportObjectiveFile,
   File,
+  Objective,
   ObjectiveFile,
+  ObjectiveTemplate,
   ObjectiveTemplateFile,
 } from '../models';
 import { FILE_STATUSES } from '../constants';
@@ -27,6 +30,21 @@ const deleteObjectiveTemplateFile = async (id) => ObjectiveTemplateFile.destroy(
 const getFileById = async (id) => File.findOne({
   where: { id },
   include: [
+    {
+      model: ActivityReport,
+      as: 'reports',
+      required: false,
+    },
+    {
+      model: Objective,
+      as: 'objectives',
+      required: false,
+    },
+    {
+      model: ObjectiveTemplate,
+      as: 'objectiveTemplates',
+      required: false,
+    },
     {
       model: ActivityReportFile,
       as: 'reportFiles',
@@ -119,21 +137,16 @@ const createActivityReportFileMetaData = async (
     status: UPLOADING,
     fileSize,
   };
-  let file;
-  try {
-    file = await File.findOrCreate({
-      where: {
-        originalFileName: newFile.originalFileName,
-        key: newFile.s3FileName,
-        fileSize: newFile.fileSize,
-      },
-      defaults: newFile,
-    });
-    await ActivityReportFile.create({ activityReportId: reportId, fileId: file.id });
-    return file.dataValues;
-  } catch (error) {
-    return error;
-  }
+  const [file] = await File.findOrCreate({
+    where: {
+      originalFileName: newFile.originalFileName,
+      key: newFile.key,
+      fileSize: newFile.fileSize,
+    },
+    defaults: newFile,
+  });
+  await ActivityReportFile.create({ activityReportId: reportId, fileId: file.id });
+  return file.dataValues;
 };
 
 const createActivityReportObjectiveFileMetaData = async (
@@ -149,21 +162,17 @@ const createActivityReportObjectiveFileMetaData = async (
     status: UPLOADING,
     fileSize,
   };
-  let file;
-  try {
-    file = await File.findOrCreate({
-      where: {
-        originalFileName: newFile.originalFileName,
-        key: newFile.s3FileName,
-        fileSize: newFile.fileSize,
-      },
-      defaults: newFile,
-    });
-    await ActivityReportFile.create({ activityReportId: reportId, objectiveId, fileId: file.id });
-    return file.dataValues;
-  } catch (error) {
-    return error;
-  }
+  const [file] = await File.findOrCreate({
+    where: {
+      originalFileName: newFile.originalFileName,
+      key: newFile.key,
+      fileSize: newFile.fileSize,
+    },
+    defaults: newFile,
+  });
+  await ActivityReportObjectiveFile
+    .create({ activityReportId: reportId, objectiveId, fileId: file.id });
+  return file.dataValues;
 };
 
 const createObjectiveFileMetaData = async (
@@ -178,21 +187,16 @@ const createObjectiveFileMetaData = async (
     status: UPLOADING,
     fileSize,
   };
-  let file;
-  try {
-    file = await File.findOrCreate({
-      where: {
-        originalFileName: newFile.originalFileName,
-        key: newFile.s3FileName,
-        fileSize: newFile.fileSize,
-      },
-      defaults: newFile,
-    });
-    await ObjectiveFile.create({ objectiveId, fileId: file.id });
-    return file.dataValues;
-  } catch (error) {
-    return error;
-  }
+  const [file] = await File.findOrCreate({
+    where: {
+      originalFileName: newFile.originalFileName,
+      key: newFile.s3FileName,
+      fileSize: newFile.fileSize,
+    },
+    defaults: newFile,
+  });
+  await ObjectiveFile.create({ objectiveId, fileId: file.id });
+  return file.dataValues;
 };
 
 const createObjectiveTemplateFileMetaData = async (
@@ -207,21 +211,16 @@ const createObjectiveTemplateFileMetaData = async (
     status: UPLOADING,
     fileSize,
   };
-  let file;
-  try {
-    file = await File.findOrCreate({
-      where: {
-        originalFileName: newFile.originalFileName,
-        key: newFile.s3FileName,
-        fileSize: newFile.fileSize,
-      },
-      defaults: newFile,
-    });
-    await ObjectiveTemplateFile.create({ objectiveTemplateId, fileId: file.id });
-    return file.dataValues;
-  } catch (error) {
-    return error;
-  }
+  const [file] = await File.findOrCreate({
+    where: {
+      originalFileName: newFile.originalFileName,
+      key: newFile.s3FileName,
+      fileSize: newFile.fileSize,
+    },
+    defaults: newFile,
+  });
+  await ObjectiveTemplateFile.create({ objectiveTemplateId, fileId: file.id });
+  return file.dataValues;
 };
 
 export {
