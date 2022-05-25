@@ -374,7 +374,7 @@ describe('Activity report service', () => {
       it('handles reports with collaborators', async () => {
         const report = await createOrUpdate({
           ...reportObject,
-          collaborators: [{ id: mockUser.id }],
+          activityReportCollaborators: [{ user: { id: mockUser.id } }],
         });
         expect(report.activityReportCollaborators.length).toBe(1);
         expect(report.activityReportCollaborators[0].user.name).toBe(mockUser.name);
