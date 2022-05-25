@@ -465,12 +465,12 @@ export async function saveGoalsForReport(goals, report) {
     let newGoal;
 
     if (Number.isInteger(goalId)) {
-      newGoal = await Goal.update(fields, { returning: true });
+      newGoal = await Goal.update(fields, { where: { id: goalId } });
     } else {
       delete fields.id;
       // In order to reuse goals with matching text we need to do the findOrCreate as the
       // upsert would not preform the extrea checks and logic now required.
-      newGoal = await Goal.findOrCreate({
+      [newGoal] = await Goal.findOrCreate({
         where: {
           grantId: fields.grantId,
           name: fields.name,
@@ -478,7 +478,6 @@ export async function saveGoalsForReport(goals, report) {
         },
         defaults: fields,
       });
-      await Goal.update(fields);
     }
 
     // This linkage of goal directly to a report will allow a save to be made even if no objective
@@ -498,17 +497,16 @@ export async function saveGoalsForReport(goals, report) {
       let savedObjective;
       if (Number.isInteger(id)) {
         updatedObjective.id = id;
-        savedObjective = await Objective.update(updatedObjective, { returning: true });
+        savedObjective = await Objective.update(updatedObjective);
       } else {
-        savedObjective = await Objective.findOrCreate({
+        [savedObjective] = await Objective.findOrCreate({
           where: {
-            goalId: updatedObjective.grantId,
+            goalId: updatedObjective.goalId,
             title: updatedObjective.title,
             status: { [Op.not]: 'Completed' },
           },
           defaults: updatedObjective,
         });
-        await Objective.update(updatedObjective);
       }
 
       await ActivityReportObjective.findOrCreate({
@@ -526,29 +524,6 @@ export async function saveGoalsForReport(goals, report) {
 
   const currentObjectives = currentGoals.map((g) => g.objectives).flat();
   return removeUnusedGoalsObjectivesFromReport(report.id, currentObjectives);
-}
-
-export async function copyGoalsToGrants(goals, grantIds) {
-  const grants = await Grant.findAll({
-    where: {
-      id: grantIds,
-    },
-  });
-
-  const grantGoals = [];
-  goals.forEach((goal) => {
-    grants.forEach((grant) => {
-      grantGoals.push({
-        grantId: grant.id,
-        recipientId: grant.recipientId,
-        goalId: goal.id,
-      });
-    });
-  });
-
-  // await GrantGoal.bulkCreate(grantGoals, {
-  //   ignoreDuplicates: true,
-  // });
 }
 
 export async function updateGoalStatusById(
