@@ -59,7 +59,10 @@ ObjectiveButton.propTypes = {
   objectiveCount: PropTypes.number.isRequired,
   objectivesExpanded: PropTypes.bool.isRequired,
   goalNumber: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  expandObjectivesRef: PropTypes.instanceOf(Element).isRequired,
+  expandObjectivesRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  ]).isRequired,
 };
 
 function GoalRow({
