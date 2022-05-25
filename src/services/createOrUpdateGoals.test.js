@@ -52,15 +52,13 @@ describe.skip('createOrUpdateGoals', () => {
     objective = await Objective.create({
       goalId: goal.id,
       title: 'This is some serious goal text',
-      ttaProvided: '',
-      status: 'Not started',
+      status: 'Not Started',
     });
 
     await Objective.create({
       goalId: goal.id,
       title: 'This objective will be deleted',
-      ttaProvided: '',
-      status: 'Not started',
+      status: 'Not Started',
     });
 
     await ObjectiveResource.create({
@@ -136,8 +134,7 @@ describe.skip('createOrUpdateGoals', () => {
         objectives: [
           {
             id: objective.id,
-            ttaProvided: '',
-            status: 'Not started',
+            status: 'Not Started',
             title: 'This is an objective',
             resources: [
               {
@@ -152,8 +149,7 @@ describe.skip('createOrUpdateGoals', () => {
           },
           {
             id: 'new-0',
-            ttaProvided: '',
-            status: 'Not started',
+            status: 'Not Started',
             title: 'This is another objective',
             resources: [],
             topics: [
@@ -207,7 +203,6 @@ describe.skip('createOrUpdateGoals', () => {
     const objectiveOnUpdatedGoal = await Objective.findByPk(objective.id, { raw: true });
     expect(objectiveOnUpdatedGoal.id).toBe(objective.id);
     expect(objectiveOnUpdatedGoal.title).toBe('This is an objective');
-    expect(objectiveOnUpdatedGoal.ttaProvided).toBe(objective.ttaProvided);
     expect(objectiveOnUpdatedGoal.status).toBe(objective.status);
 
     const objectiveTopics = await ObjectiveTopic.findAll({

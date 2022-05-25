@@ -13,7 +13,19 @@ module.exports = (sequelize, DataTypes) => {
   class Role extends Model {
     static associate(models) {
       Role.belongsToMany(models.Topic, {
-        through: models.RoleTopic, foreignKey: 'roleId', as: 'topics',
+        through: models.RoleTopic, foreignKey: 'roleId', as: 'topics', otherKey: 'topicId',
+      });
+      Role.belongsToMany(models.Objective, {
+        through: models.ObjectiveRole,
+        foreignKey: 'roleId',
+        otherKey: 'objectiveId',
+        as: 'objectives',
+      });
+      Role.belongsToMany(models.ObjectiveTemplate, {
+        through: models.ObjectiveTemplateRole,
+        foreignKey: 'roleId',
+        otherKey: 'objectiveTemplateId',
+        as: 'objectiveTemplates',
       });
     }
   }
@@ -29,6 +41,20 @@ module.exports = (sequelize, DataTypes) => {
     },
     fullName: {
       type: DataTypes.STRING,
+    },
+    isSpecialist: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      default: false,
+      onUpdate: 'CASCADE',
+    },
+    deletedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    mapsTo: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
   }, {
     sequelize,

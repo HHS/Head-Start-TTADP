@@ -42,6 +42,10 @@ main() {
       esac
     done
 
+    docker-compose \
+        -f 'docker-compose.test.yml' \
+        down --volumes --remove-orphans
+
     log "Running tests in using test config 'docker-compose.test.yml'"
     # Start containers
     if [[ $docker == "true" ]]; then
