@@ -13,7 +13,7 @@ import { REPORT_STATUSES } from '../constants';
 import topicFrequencyGraph from './topicFrequencyGraph';
 
 const GRANT_ID = 4040;
-const RECIPIENT_ID = 5050;
+const RECIPIENT_ID = 1; // 5050;
 
 const mockUser = {
   id: 9945620,
@@ -50,7 +50,7 @@ const reportObject = {
   lastUpdatedById: mockUser.id,
   ECLKCResourcesUsed: ['test'],
   activityRecipients: [
-    { activityRecipientId: GRANT_ID },
+    { activityRecipientId: RECIPIENT_ID, grantId: GRANT_ID },
   ],
   numberOfParticipants: 11,
   deliveryMethod: 'in-person',
@@ -95,11 +95,14 @@ const regionOneReportWithDifferentTopics = {
 
 describe('Topics and frequency graph widget', () => {
   beforeAll(async () => {
-    await User.bulkCreate([
+    await Promise.all([
       mockUser,
       mockUserTwo,
       mockUserThree,
-    ]);
+    ].map(async (user) => User.findOrCreate({
+      where: user,
+      defaults: user,
+    })));
     await Recipient.create({ name: 'recipient', id: RECIPIENT_ID });
     await Region.create({ name: 'office 17', id: 17 });
     await Region.create({ name: 'office 18', id: 18 });
@@ -111,12 +114,21 @@ describe('Topics and frequency graph widget', () => {
       status: 'Active',
       startDate: new Date('2000/01/01'),
     });
-    await ActivityReport.bulkCreate([
+    await Promise.all([
       regionOneReport,
       regionOneReportDistinctDate,
       regionTwoReport,
       regionOneReportWithDifferentTopics,
-    ]);
+    ].map(async (report) => ActivityReport.findOrCreate({
+      where: report,
+      defaults: report,
+    })));
+    // await ActivityReport.bulkCreate([
+    //   regionOneReport,
+    //   regionOneReportDistinctDate,
+    //   regionTwoReport,
+    //   regionOneReportWithDifferentTopics,
+    // ], { validate: true, individualHooks: true });
 
     await ActivityReportCollaborator.create({
       id: 2000,

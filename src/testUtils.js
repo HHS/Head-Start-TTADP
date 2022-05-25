@@ -8,9 +8,11 @@ import {
   Recipient,
   Grant,
   Region,
+  GoalTemplate,
   Goal,
   GrantGoal,
 } from './models';
+import { auditLogger } from './logger';
 
 import { GOAL_STATUS as GOAL_STATUS_CONST } from './widgets/goalStatusGraph';
 
@@ -136,10 +138,15 @@ export async function createReport(report) {
     userId: foundUser.id,
   });
 
-  Promise.all(recipients.map((grantId) => ActivityRecipient.create({
-    activityReportId: createdReport.id,
-    grantId,
-  })));
+  try {
+    Promise.all(recipients.map((grantId) => ActivityRecipient.create({
+      activityReportId: createdReport.id,
+      grantId,
+    })));
+  } catch (error) {
+    auditLogger.error(JSON.stringify(error));
+    throw error;
+  }
 
   return createdReport;
 }
@@ -236,9 +243,22 @@ export async function createGoal(goal) {
   if (!grant) {
     grant = await createGrant({});
   }
-
-  const dbGoal = await Goal.create({ ...defaultGoal(), ...goal });
-  await GrantGoal.create({ grantId: grant.id, goalId: dbGoal.id, recipientId: grant.recipientId });
+  const dg = defaultGoal();
+  const dbGoalTemplate = await GoalTemplate.findOrCreate({
+    where: { templateName: dg.name },
+    defaults: { templateName: dg.name },
+  });
+  const dbGoal = await Goal.create({
+    ...dg,
+    ...goal,
+    grantId: grant.id,
+    goalTemplateId: dbGoalTemplate.id,
+  });
+  // await GrantGoal.create({
+  //   grantId: grant.id,
+  //   goalId: dbGoal.id,
+  //   recipientId: grant.recipientId,
+  // });
   return dbGoal;
 }
 
