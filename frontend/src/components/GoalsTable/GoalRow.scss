@@ -73,7 +73,7 @@
 
 }
 .tta-smarthub--goal-row td:nth-child(3) .svg-inline--fa {
-vertical-align: top;
+  vertical-align: top;
 }
 
 .tta-smarthub--goal-row td:nth-child(3) .smart-hub-tooltip button {
@@ -90,12 +90,13 @@ vertical-align: top;
   background-color: white;
   border-top: solid 1.5px;
   border-bottom: none;
-  padding-right: 0px;
-  padding-top: 0px;
-  padding-left: 0px;
-  padding-bottom: 8px;
   background-color: white;
   border-style: none;
   color: $text-ink;
   font-weight: 700;
+}
+
+.tta-smarthub--goal-row-obj-table-header li {
+  // inherits display: table-cell from ObjectiveRow.scss
+  vertical-align: bottom;
 }
