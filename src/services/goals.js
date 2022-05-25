@@ -442,7 +442,7 @@ export async function goalsForGrants(grantIds) {
     include: [
       {
         model: Grant,
-        as: 'grants',
+        as: 'grant',
         attributes: ['id', 'regionId'],
         where: {
           id: ids,
@@ -545,7 +545,7 @@ export async function saveGoalsForReport(goals, report) {
     } else {
       delete fields.id;
       // In order to reuse goals with matching text we need to do the findOrCreate as the
-      // upsert would not preform the extrea checks and logic now required.
+      // upsert would not preform the extra checks and logic now required.
       newGoal = await Goal.findOrCreate({
         where: {
           grantId: fields.grantId,
