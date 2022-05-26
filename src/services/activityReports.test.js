@@ -30,6 +30,7 @@ const mockUser = {
   name: 'user1115665161',
   hsesUsername: 'user1115665161',
   hsesUserId: 'user1115665161',
+  role: ['Grants Specialist'],
 };
 
 const mockUserTwo = {
@@ -47,6 +48,7 @@ const mockUserThree = {
   name: 'user39861962',
   hsesUserId: 'user39861962',
   hsesUsername: 'user39861962',
+  role: [],
 };
 
 const mockUserFour = {
@@ -55,6 +57,7 @@ const mockUserFour = {
   name: 'user49861962',
   hsesUserId: 'user49861962',
   hsesUsername: 'user49861962',
+  role: [],
 };
 
 const mockUserFive = {
@@ -63,6 +66,7 @@ const mockUserFive = {
   name: 'user55861962',
   hsesUserId: 'user55861962',
   hsesUsername: 'user55861962',
+  role: [],
 };
 
 const alertsMockUserOne = {
@@ -71,6 +75,7 @@ const alertsMockUserOne = {
   name: 'a',
   hsesUserId: 'a',
   hsesUsername: 'a',
+  role: [],
 };
 
 const alertsMockUserTwo = {
@@ -79,6 +84,7 @@ const alertsMockUserTwo = {
   name: 'b',
   hsesUserId: 'b',
   hsesUsername: 'b',
+  role: [],
 };
 
 const reportObject = {
