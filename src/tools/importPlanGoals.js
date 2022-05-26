@@ -3,7 +3,13 @@
 import parse from 'csv-parse/lib/sync';
 import { downloadFile } from '../lib/s3';
 import {
-  Role, Topic, RoleTopic, Goal, TopicGoal, Grant, GrantGoal,
+  Role,
+  Topic,
+  RoleTopic,
+  Goal,
+  // TopicGoal,
+  Grant,
+  // GrantGoal,
 } from '../models';
 
 const hubRoles = [
@@ -205,15 +211,15 @@ export default async function importGoals(fileKey, region) {
         ignoreDuplicates: true,
       },
     );
-    await TopicGoal.bulkCreate(cleanTopicGoals, {
-      ignoreDuplicates: true,
-    });
-    await GrantGoal.bulkCreate(
-      cleanGrantGoals,
-      {
-        ignoreDuplicates: true,
-      },
-    );
+    // await TopicGoal.bulkCreate(cleanTopicGoals, {
+    //   ignoreDuplicates: true,
+    //   validate: true,
+    // await GrantGoal.bulkCreate(
+    //   cleanGrantGoals,
+    //   {
+    //     ignoreDuplicates: true,
+    //   },
+    // );
   } catch (err) {
     // eslint-disable-next-line no-console
     console.log(err);

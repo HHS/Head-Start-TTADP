@@ -2,12 +2,16 @@ import { Op } from 'sequelize';
 import { filterAssociation } from './utils';
 
 const reasonFilter = `
-SELECT DISTINCT g.id
-FROM "ActivityReports" ar
-INNER JOIN "ActivityReportObjectives" aro ON ar."id" = aro."activityReportId"
-INNER JOIN "Objectives" o ON aro."objectiveId" = o.id
-INNER JOIN "Goals" g ON o."goalId" = g.id
-WHERE ARRAY_TO_STRING(ar."reason", ',')`;
+SELECT
+  DISTINCT "Goals"."id"
+FROM "ActivityReports" "ActivityReports"
+INNER JOIN "ActivityReportObjectives" "ActivityReportObjectives"
+ON "ActivityReports"."id" = "ActivityReportObjectives"."activityReportId"
+INNER JOIN "Objectives" "Objective"
+ON "ActivityReportObjectives"."objectiveId" = "Objective"."id"
+INNER JOIN "Goals" "Goals"
+ON "Objective"."goalId" = "Goals"."id"
+WHERE ARRAY_TO_STRING("ActivityReports"."reason", ',')`;
 
 export function withReasons(reasons) {
   return {

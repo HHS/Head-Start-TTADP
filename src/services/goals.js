@@ -8,12 +8,13 @@ import {
   ObjectiveResource,
   ObjectiveTopic,
   ActivityReportObjective,
-  GrantGoal,
+  // GrantGoal,
+  sequelize,
   Recipient,
   ActivityReport,
+  ActivityReportGoal,
   Topic,
   Program,
-  sequelize,
 } from '../models';
 import { DECIMAL_BASE, REPORT_STATUSES } from '../constants';
 
@@ -76,7 +77,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     },
     {
       model: Grant,
-      as: 'grants',
+      as: 'grant',
       attributes: [
         'id',
         'number',
@@ -195,7 +196,7 @@ export async function goalByIdWithActivityReportsAndRegions(goalId) {
     include: [
       {
         model: Grant,
-        as: 'grants',
+        as: 'grant',
         attributes: ['regionId'],
       },
       {
@@ -271,141 +272,135 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
 export async function createOrUpdateGoals(goals) {
   // per a discussion with Patrice, we are disabling the backend "for real"
   // for now (until the feature is ready to go)
-  return goals;
+  // return goals;
 
-  // // there can only be one on the goal form (multiple grants maybe, but one recipient)
-  // // we will need this after the transaction, as trying to do a find all within a transaction
-  // // yields the previous data values
-  // let recipient;
+  // there can only be one on the goal form (multiple grants maybe, but one recipient)
+  // we will need this after the transaction, as trying to do a find all within a transaction
+  // yields the previous data values
+  let recipient;
 
   // eslint-disable-next-line max-len
-  // const goalIds = await sequelize.transaction(async (transaction) => Promise.all(goals.map(async (goalData) => {
-  //   const {
-  //     id, grants, recipientId, regionId, objectives,
-  //     ...fields
-  //   } = goalData;
+  const goalIds = await Promise.all(goals.map(async (goalData) => {
+    const {
+      id,
+      grantId,
+      recipientId,
+      regionId,
+      objectives,
+      ...fields
+    } = goalData;
 
-  //   // there can only be one on the goal form (multiple grants maybe, but one recipient)
-  //   recipient = recipientId;
+    // there can only be one on the goal form (multiple grants maybe, but one recipient)
+    recipient = recipientId; // TODO: this is wrong
 
-  //   const options = {
-  //     ...fields,
-  //     isFromSmartsheetTtaPlan: false,
-  //     id: id === 'new' ? null : id,
-  //   };
+    const options = {
+      ...fields,
+      isFromSmartsheetTtaPlan: false,
+      id: id === 'new' ? null : id,
+    };
 
-  //   const [goal] = await Goal.upsert(options, { transaction });
+    let newGoal;
 
-  //   const grantGoals = await Promise.all(
-  //     grants.map((grant) => GrantGoal.findOrCreate({
-  //       where: {
-  //         goalId: goal.id,
-  //         recipientId,
-  //         grantId: grant.value,
-  //       },
-  //       transaction,
-  //     })),
-  //   );
+    if (Number.isInteger(id)) {
+      newGoal = await Goal.update({ grantId, ...options }, { returning: true });
+    } else {
+      delete fields.id;
+      // In order to reuse goals with matching text we need to do the findOrCreate as the
+      // upsert would not preform the extrea checks and logic now required.
+      newGoal = await Goal.findOrCreate({
+        where: {
+          grantId,
+          name: options.name,
+          status: { [Op.not]: 'Closed' },
+        },
+        defaults: { grantId, ...options },
+      });
+      await Goal.update({ grantId, ...options });
+    }
 
-  //   const grantGoalIds = grantGoals.map((gg) => gg.id);
+    const newObjectives = await Promise.all(
+      objectives.map(async (o) => {
+        const {
+          id: objectiveId,
+          resources,
+          topics,
+          ...objectiveFields
+        } = o;
 
-  //   // cleanup grant goals
-  //   await GrantGoal.destroy({
-  //     where: {
-  //       id: {
-  //         [Op.notIn]: grantGoalIds,
-  //       },
-  //       goalId: goal.id,
-  //     },
-  //   });
+        const where = parseInt(objectiveId, DECIMAL_BASE) ? {
+          id: objectiveId,
+          goalId: newGoal.id,
+          ...objectiveFields,
+        } : {
+          goalId: newGoal.id,
+          title: o.title,
+          status: 'Not Started',
+        };
 
-  //   const newObjectives = await Promise.all(
-  //     objectives.map(async (o) => {
-  //       const {
-  //         id: objectiveId,
-  //         resources,
-  //         topics,
-  //         ...objectiveFields
-  //       } = o;
+        const [objective] = await Objective.upsert(
+          where,
+        );
 
-  //       const where = parseInt(objectiveId, DECIMAL_BASE) ? {
-  //         id: objectiveId,
-  //         goalId: goal.id,
-  //         ...objectiveFields,
-  //       } : {
-  //         goalId: goal.id,
-  //         title: o.title,
-  //         ttaProvided: '',
-  //         status: 'Not started',
-  //       };
+        // topics
+        const objectiveTopics = await Promise.all(
+          (topics.map((ot) => ObjectiveTopic.findOrCreate({
+            where: {
+              objectiveId: objective.id,
+              topicId: ot.value,
+            },
+          }))),
+        );
 
-  //       const [objective] = await Objective.upsert(
-  //         where,
-  //         { transaction },
-  //       );
+        // cleanup objective topics
+        await ObjectiveTopic.destroy({
+          where: {
+            id: {
+              [Op.notIn]: objectiveTopics.length ? objectiveTopics.map(([ot]) => ot.id) : [],
+            },
+            objectiveId: objective.id,
+          },
+        });
 
-  //       // topics
-  //       const objectiveTopics = await Promise.all(
-  //         (topics.map((ot) => ObjectiveTopic.findOrCreate({
-  //           where: {
-  //             objectiveId: objective.id,
-  //             topicId: ot.value,
-  //           },
-  //           transaction,
-  //         }))),
-  //       );
+        // resources
+        const objectiveResources = await Promise.all(
+          resources.filter(({ value }) => value).map(
+            ({ value }) => ObjectiveResource.findOrCreate({
+              where: {
+                userProvidedUrl: value,
+                objectiveId: objective.id,
+              },
+            }),
+          ),
+        );
 
-  //       // cleanup objective topics
-  //       await ObjectiveTopic.destroy({
-  //         where: {
-  //           id: {
-  //             [Op.notIn]: objectiveTopics.length ? objectiveTopics.map(([ot]) => ot.id) : [],
-  //           },
-  //           objectiveId: objective.id,
-  //         },
-  //       });
+        // cleanup objective resources
+        await ObjectiveResource.destroy({
+          where: {
+            id: {
+              [Op.notIn]: objectiveResources.length
+                ? objectiveResources.map(([or]) => or.id) : [],
+            },
+            objectiveId: objective.id,
+          },
+        });
 
-  //       // resources
-  //       const objectiveResources = await Promise.all(
-  //         resources.filter(({ value }) => value).map(
-  //           ({ value }) => ObjectiveResource.findOrCreate({
-  //             where: {
-  //               userProvidedUrl: value,
-  //               objectiveId: objective.id,
-  //             },
-  //             transaction,
-  //           }),
-  //         ),
-  //       );
+        return {
+          ...objective.dataValues,
+          topics,
+          resources,
+        };
+      }),
+    );
 
-  //       // cleanup objective resources
-  //       await ObjectiveResource.destroy({
-  //         where: {
-  //           id: {
-  //             [Op.notIn]: objectiveResources.length
-  //               ? objectiveResources.map(([or]) => or.id) : [],
-  //           },
-  //           objectiveId: objective.id,
-  //         },
-  //       });
+    // this function deletes unused objectives
+    await cleanupObjectivesForGoal(newGoal.id, newObjectives);
 
-  //       return {
-  //         ...objective.dataValues,
-  //         topics,
-  //         resources,
-  //       };
-  //     }),
-  //   );
+    return newGoal.id;
+  }));
 
-  //   // this function deletes unused objectives
-  //   await cleanupObjectivesForGoal(goal.id, newObjectives);
-
-  //   return goal.id;
-  // })));
-
-  // // we have to do this outside of the transaction otherwise
-  // // we get the old values
-  // return goalsByIdAndRecipient(goalIds, recipient);
+  // we have to do this outside of the transaction otherwise
+  // we get the old values
+  return goalsByIdAndRecipient(goalIds, recipient);
 }
 
 export async function goalsForGrants(grantIds) {
@@ -468,6 +463,7 @@ async function removeActivityReportObjectivesFromReport(reportId, objectiveIdsTo
   });
 }
 
+// TODO: ask Josh what the intent of this is for
 export async function removeGoals(goalsToRemove) {
   const goalsWithGrants = await Goal.findAll({
     attributes: ['id'],
@@ -477,7 +473,7 @@ export async function removeGoals(goalsToRemove) {
     include: {
       attributes: ['id'],
       model: Grant,
-      as: 'grants',
+      as: 'grant',
       required: true,
     },
   });
@@ -543,26 +539,54 @@ export async function saveGoalsForReport(goals, report) {
     const goalId = goal.id;
     const fields = goal;
 
-    if (!Number.isInteger(goalId)) {
+    let newGoal;
+
+    if (Number.isInteger(goalId)) {
+      newGoal = await Goal.update(fields, { returning: true });
+    } else {
       delete fields.id;
+      // In order to reuse goals with matching text we need to do the findOrCreate as the
+      // upsert would not preform the extrea checks and logic now required.
+      newGoal = await Goal.findOrCreate({
+        where: {
+          grantId: fields.grantId,
+          name: fields.name,
+          status: { [Op.not]: 'Closed' },
+        },
+        defaults: fields,
+      });
+      await Goal.update(fields);
     }
 
-    // using upsert here and below
-    // - add returning: true to options to get an array of [<Model>,<created>] (postgres only)
-    // - https://sequelize.org/v5/class/lib/model.js~Model.html#static-method-upsert
-    const [newGoal] = await Goal.upsert(fields, { returning: true });
+    // This linkage of goal directly to a report will allow a save to be made even if no objective
+    // has been started.
+    // A hook on ActivityReportGoal will automatically update the status of the goal if required.
+    await ActivityReportGoal.findOrCreate({
+      where: {
+        goalId: newGoal.id,
+        activityReportId: report.id,
+      },
+    });
+
     const newObjectives = await Promise.all(goal.objectives.map(async (objective) => {
       const { id, ...updatedFields } = objective;
       const updatedObjective = { ...updatedFields, goalId: newGoal.id };
 
+      let savedObjective;
       if (Number.isInteger(id)) {
         updatedObjective.id = id;
+        savedObjective = await Objective.update(updatedObjective, { returning: true });
+      } else {
+        savedObjective = await Objective.findOrCreate({
+          where: {
+            goalId: updatedObjective.grantId,
+            title: updatedObjective.title,
+            status: { [Op.not]: 'Completed' },
+          },
+          defaults: updatedObjective,
+        });
+        await Objective.update(updatedObjective);
       }
-
-      const [savedObjective] = await Objective.upsert(
-        updatedObjective,
-        { returning: true },
-      );
 
       await ActivityReportObjective.findOrCreate({
         where: {
@@ -599,9 +623,9 @@ export async function copyGoalsToGrants(goals, grantIds) {
     });
   });
 
-  await GrantGoal.bulkCreate(grantGoals, {
-    ignoreDuplicates: true,
-  });
+  // await GrantGoal.bulkCreate(grantGoals, {
+  //   ignoreDuplicates: true,
+  // });
 }
 
 export async function updateGoalStatusById(
@@ -611,22 +635,16 @@ export async function updateGoalStatusById(
   closeSuspendReason,
   closeSuspendContext,
 ) {
-  /* TODO:
-    Disable for now until goals are unique grants. ?????
-  */
-
-  // return sequelize.transaction(async (transaction) => {
-  //   const updatedGoal = await Goal.update(
-  //     {
-  //       status: newStatus,
-  //       closeSuspendReason,
-  //       closeSuspendContext,
-  //       previousStatus: oldStatus,
-  //     },
-  //     { where: { id: goalId }, returning: true, transaction },
-  //   );
-  //   return updatedGoal[1][0];
-  // });
+  const updatedGoal = await Goal.update(
+    {
+      status: newStatus,
+      closeSuspendReason,
+      closeSuspendContext,
+      previousStatus: oldStatus,
+    },
+    { where: { id: goalId }, returning: true },
+  );
+  return updatedGoal[1][0];
 }
 
 export async function destroyGoal(goalId) {

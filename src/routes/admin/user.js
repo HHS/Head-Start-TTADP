@@ -92,7 +92,7 @@ export async function updateUser(req, res) {
       },
     );
     await Permission.destroy({ where: { userId } });
-    await Permission.bulkCreate(requestUser.permissions);
+    await Permission.bulkCreate(requestUser.permissions, { validate: true, individualHooks: true });
     auditLogger.warn(`User ${req.session.userId} updated User: ${userId} and set permissions: ${JSON.stringify(requestUser.permissions)}`);
     const user = await userById(userId);
     res.json(user);
