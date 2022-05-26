@@ -189,7 +189,7 @@ function GoalsTable({
                 <GoalRow
                   key={goal.id}
                   goal={goal}
-                  openMenuUp={index > displayGoals.length - 1}
+                  openMenuUp={index === displayGoals.length - 1}
                   updateGoal={updateGoal}
                   recipientId={recipientId}
                   regionId={regionId}
