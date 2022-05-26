@@ -4,7 +4,7 @@ import { createOrUpdateGoals } from './goals';
 import db, {
   Goal,
   Grant,
-  GrantGoal,
+  // GrantGoal,
   Recipient,
   Topic,
   Objective,
@@ -86,11 +86,11 @@ describe.skip('createOrUpdateGoals', () => {
       },
     });
 
-    await GrantGoal.destroy({
-      where: {
-        goalId: newGoals.map((g) => g.id),
-      },
-    });
+    // await GrantGoal.destroy({
+    //   where: {
+    //     goalId: newGoals.map((g) => g.id),
+    //   },
+    // });
 
     await Goal.destroy({
       where: {
