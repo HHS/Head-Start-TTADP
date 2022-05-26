@@ -8,9 +8,11 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import fetchMock from 'fetch-mock';
 import UserContext from '../../../UserContext';
+import FilterContext from '../../../FilterContext';
 import AriaLiveContext from '../../../AriaLiveContext';
 import GoalsTable from '../GoalsTable';
 import { REPORT_STATUSES, SCOPE_IDS } from '../../../Constants';
+import { mockWindowProperty } from '../../../testHelpers';
 
 jest.mock('../../../fetchers/helpers');
 
@@ -207,14 +209,16 @@ const renderTable = (user, hasActiveGrants = true) => {
     <MemoryRouter>
       <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
         <UserContext.Provider value={{ user }}>
-          <GoalsTable
-            filters={[]}
-            recipientId={recipientId}
-            regionId={regionId}
-            onUpdateFilters={() => { }}
-            hasActiveGrants={hasActiveGrants}
-            showNewGoals={false}
-          />
+          <FilterContext.Provider value={{ filterKey: 'goalsTable' }}>
+            <GoalsTable
+              filters={[]}
+              recipientId={recipientId}
+              regionId={regionId}
+              onUpdateFilters={() => { }}
+              hasActiveGrants={hasActiveGrants}
+              showNewGoals={false}
+            />
+          </FilterContext.Provider>
         </UserContext.Provider>
       </AriaLiveContext.Provider>
     </MemoryRouter>,
@@ -222,6 +226,12 @@ const renderTable = (user, hasActiveGrants = true) => {
 };
 
 describe('Goals Table', () => {
+  mockWindowProperty('sessionStorage', {
+    setItem: jest.fn(),
+    getItem: jest.fn(),
+    removeItem: jest.fn(),
+  });
+
   beforeAll(() => {
     delete global.window.location;
 
@@ -537,6 +547,8 @@ describe('Goals Table', () => {
 
       renderTable(defaultUser);
 
+      screen.logTestingPlaygroundURL(document.querySelector('.pagination'));
+
       const pageTwo = await screen.findByRole('link', {
         name: /go to page number 2/i,
       });
@@ -571,7 +583,7 @@ describe('Goals Table', () => {
       fetchMock.reset();
       fetchMock.put('/api/goals/4598/changeStatus', {
         id: 4598,
-        status: 'Completed',
+        status: 'Closed',
         createdOn: '06/15/2021',
         goalText: 'This is goal text 1.',
         goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
@@ -582,7 +594,7 @@ describe('Goals Table', () => {
 
       // Open Context Menu.
       const changeStatus = await screen.findByRole('combobox', { name: /Change status for goal 4598/i });
-      userEvent.selectOptions(changeStatus, 'Completed');
+      userEvent.selectOptions(changeStatus, 'Closed');
 
       // Select a reason.
       const reasonRadio = await screen.findByRole('radio', { name: /duplicate goal/i, hidden: true });

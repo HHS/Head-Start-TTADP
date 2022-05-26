@@ -22,8 +22,8 @@ const CloseSuspendReasonModal = ({
     setShowValidationError(false);
   }, [resetValues]);
 
-  const reasonDisplayStatus = newStatus === 'Completed' ? 'closing' : 'suspending';
-  const reasonRadioOptions = newStatus === 'Completed' ? GOAL_CLOSE_REASONS : GOAL_SUSPEND_REASONS;
+  const reasonDisplayStatus = newStatus === 'Closed' ? 'closing' : 'suspending';
+  const reasonRadioOptions = newStatus === 'Closed' ? GOAL_CLOSE_REASONS : GOAL_SUSPEND_REASONS;
   const ReasonChanged = (e) => {
     setCloseSuspendReason(e.target.value);
     setShowValidationError(false);
