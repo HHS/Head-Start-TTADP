@@ -21,7 +21,17 @@ describe('Activity report print and share view', () => {
     author: {
       fullName: 'Captain Tim Tina Boat',
     },
-    activityReportCollaborators: [{ user: { fullName: 'Test' } }, { user: { fullName: 'Test 2' } }],
+    activityReportCollaborators: [
+      {
+        fullName: 'Test',
+        fullNameSubstituteRoles: 'Test',
+        user: { fullName: 'Test' },
+      },
+      {
+        fullName: 'Test 2',
+        fullNameSubstituteRoles: 'Test 2',
+        user: { fullName: 'Test 2' },
+      }],
     approvers: [
       {
         id: 1, status: '', note: '', User: { id: 1, fullName: 'John Q Fullname' },

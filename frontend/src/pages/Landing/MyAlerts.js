@@ -51,10 +51,9 @@ export function ReportsRow({ reports, removeAlert, message }) {
     ));
 
     const approversToolTipText = approvers ? approvers.map((a) => a.User.fullName) : [];
-
     const collaboratorNames = activityReportCollaborators
       ? activityReportCollaborators.map((collaborator) => (
-        collaborator.user.fullName)) : [];
+        collaborator.fullName)) : [];
 
     const idKey = `my_alerts_${id}`;
     const idLink = `/activity-reports/${id}`;
