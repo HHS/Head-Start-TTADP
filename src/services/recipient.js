@@ -194,7 +194,7 @@ export async function getGoalsByActivityRecipient(
         {
           model: Grant,
           as: 'grant',
-          attributes: ['id', 'recipientId', 'regionId'],
+          attributes: ['id', 'recipientId', 'regionId', 'number'],
           where: {
             regionId,
             recipientId,
@@ -211,7 +211,15 @@ export async function getGoalsByActivityRecipient(
             as: 'activityReportObjectives',
             required: false,
           }, {
-            attributes: ['id', 'reason', 'topics', 'endDate', 'calculatedStatus', 'legacyId', 'regionId'],
+            attributes: [
+              'id',
+              'reason',
+              'topics',
+              'endDate',
+              'calculatedStatus',
+              'legacyId',
+              'regionId',
+            ],
             model: ActivityReport,
             as: 'activityReports',
             required: false,
@@ -282,6 +290,9 @@ export async function getGoalsByActivityRecipient(
           endDate: activityReport ? activityReport.endDate : null,
           reasons: activityReport ? activityReport.reason : null,
           status: o.status,
+          grantNumbers: g.grants ? Array.from(
+            new Set(g.grants.map((grant) => grant.number)),
+          ) : [],
         });
       });
 
