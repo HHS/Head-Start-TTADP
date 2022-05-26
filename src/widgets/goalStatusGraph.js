@@ -7,6 +7,7 @@ export const GOAL_STATUS = {
   NOT_STARTED: 'Not Started',
   IN_PROGRESS: 'In Progress',
   CLOSED: 'Closed',
+  COMPLETED: 'Completed',
   CEASED: 'Ceased/Suspended',
   DRAFT: 'Draft',
 };
@@ -15,6 +16,7 @@ const STATUSES_TO_INCLUDE = [
   GOAL_STATUS.NOT_STARTED,
   GOAL_STATUS.IN_PROGRESS,
   GOAL_STATUS.CLOSED,
+  GOAL_STATUS.COMPLETED,
   GOAL_STATUS.CEASED,
 ];
 
@@ -60,7 +62,7 @@ export default async function goalStatusGraph(scopes) {
     total,
     'Not started': goals[GOAL_STATUS.NOT_STARTED],
     'In progress': goals[GOAL_STATUS.IN_PROGRESS],
-    Closed: goals[GOAL_STATUS.CLOSED],
+    Closed: goals[GOAL_STATUS.CLOSED] + goals[GOAL_STATUS.COMPLETED],
     Suspended: goals[GOAL_STATUS.CEASED],
   };
 }
