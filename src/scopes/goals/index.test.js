@@ -4,7 +4,12 @@ import {
 } from '../../testUtils';
 import filtersToScopes from '../index';
 import db, {
-  Goal, Objective, ActivityReportObjective, Recipient, Grant,
+  Goal,
+  // GoalTemplate,
+  Objective,
+  ActivityReportObjective,
+  Recipient,
+  Grant,
 } from '../../models';
 
 const REGION_ID = 10;
@@ -41,6 +46,31 @@ describe('goal filtersToScopes', () => {
       activityRecipients: [],
       region: 15,
     });
+    // const goalTemplates = await Promise.all(
+    //   [
+    //     await GoalTemplate.findOrCreate({
+    //       where: { templateName: 'Goal 1' },
+    //       defaults: { templateName: 'Goal 1', lastUsed: db.sequelize.fn('NOW') },
+    //     }),
+    //     await GoalTemplate.findOrCreate({
+    //       where: { templateName: 'Goal 2' },
+    //       defaults: { templateName: 'Goal 2', lastUsed: db.sequelize.fn('NOW') },
+    //     }),
+    //     await GoalTemplate.findOrCreate({
+    //       where: { templateName: 'Goal 3' },
+    //       defaults: { templateName: 'Goal 3', lastUsed: db.sequelize.fn('NOW') },
+    //     }),
+    //     await GoalTemplate.findOrCreate({
+    //       where: { templateName: 'Goal 4' },
+    //       defaults: { templateName: 'Goal 4', lastUsed: db.sequelize.fn('NOW') },
+    //     }),
+    //     await GoalTemplate.findOrCreate({
+    //       where: { templateName: 'Goal 5' },
+    //       defaults: { templateName: 'Goal 5', lastUsed: db.sequelize.fn('NOW') },
+    //     }),
+    //   ],
+    // );
+    // const goalTemplateIds = goalTemplates.map((o) => o.id);
     const goals = await Promise.all(
       [
         // goal for reasons
@@ -50,6 +80,7 @@ describe('goal filtersToScopes', () => {
           timeframe: '12 months',
           isFromSmartsheetTtaPlan: false,
           createdAt: new Date('2021-01-02'),
+          // goalTemplateId: goalTemplateIds[0],
         }),
         // goal for topics
         await Goal.create({
@@ -58,6 +89,7 @@ describe('goal filtersToScopes', () => {
           timeframe: '12 months',
           isFromSmartsheetTtaPlan: false,
           createdAt: new Date('2021-01-02'),
+          // goalTemplateId: goalTemplateIds[1],
         }),
         // goal for status
         await Goal.create({
@@ -66,6 +98,7 @@ describe('goal filtersToScopes', () => {
           timeframe: '12 months',
           isFromSmartsheetTtaPlan: false,
           createdAt: new Date('2021-01-02'),
+          // goalTemplateId: goalTemplateIds[2],
         }),
         // goal for status
         await Goal.create({
@@ -74,14 +107,16 @@ describe('goal filtersToScopes', () => {
           timeframe: '12 months',
           isFromSmartsheetTtaPlan: false,
           createdAt: new Date('2021-01-02'),
+          // goalTemplateId: goalTemplateIds[3],
         }),
         // goal for startDate
         await Goal.create({
           name: 'Goal 5',
-          status: 'Ceased/Suspended',
+          status: 'Suspended',
           timeframe: '12 months',
           isFromSmartsheetTtaPlan: false,
           createdAt: new Date('2021-01-10'),
+          // goalTemplateId: goalTemplateIds[4],
         }),
       ],
     );
@@ -91,29 +126,24 @@ describe('goal filtersToScopes', () => {
         await Objective.create({
           goalId: goals[0].id,
           title: 'objective 1',
-          ttaProvided: 'asdfadf',
           status: 'Not Started',
         }),
         // goal for topics
         await Objective.create({
           goalId: goals[1].id,
           title: 'objective 2',
-          ttaProvided: 'asdfadf',
           status: 'Not Started',
-
         }),
         // goal for status
         await Objective.create({
           goalId: goals[2].id,
           title: 'objective 3',
-          ttaProvided: 'asdfadf',
           status: 'Not Started',
         }),
         // goal for startDate
         await Objective.create({
           goalId: goals[3].id,
           title: 'objective 4',
-          ttaProvided: 'asdfadf',
           status: 'Not Started',
         }),
       ],
@@ -125,29 +155,33 @@ describe('goal filtersToScopes', () => {
         await ActivityReportObjective.create({
           objectiveId: objectives[0].id,
           activityReportId: reportWithReasons.id,
+          ttaProvided: 'asdfadf',
         }),
         // goal for topics
         await ActivityReportObjective.create({
           objectiveId: objectives[1].id,
           activityReportId: reportWithTopics.id,
+          ttaProvided: 'asdfadf',
         }),
         // goal for status
         await ActivityReportObjective.create({
           objectiveId: objectives[2].id,
           activityReportId: emptyReport.id,
+          ttaProvided: 'asdfadf',
         }),
         // goal for startDate
         await ActivityReportObjective.create({
           objectiveId: objectives[3].id,
           activityReportId: emptyReport.id,
+          ttaProvided: 'asdfadf',
         }),
       ],
     );
 
     grant = await createGrant({ regionId: REGION_ID, number: 'BROC1234' });
     otherGrant = await createGrant({ regionId: REGION_ID, number: 'CAUL4567' });
-    goals.push(await createGoal({ status: 'Ceased/Suspended', name: 'Goal 6', grantId: grant.id }));
-    goals.push(await createGoal({ status: 'Completed', name: 'Goal 7', grantId: otherGrant.id }));
+    goals.push(await createGoal({ status: 'Suspended', name: 'Goal 6', grantId: grant.id }));
+    goals.push(await createGoal({ status: 'Closed', name: 'Goal 7', grantId: otherGrant.id }));
 
     reportIds = [emptyReport.id, reportWithReasons.id, reportWithTopics.id];
     objectiveIds = objectives.map((o) => o.id);

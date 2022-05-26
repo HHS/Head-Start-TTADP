@@ -162,6 +162,7 @@ function sortObjectives(a, b) {
    * Create an object with goals and objectives. Used by transformGoalsAndObjectives
    * @param {Array<Objectives>} objectiveRecords
    */
+// TODO: ttaProvided needs to move from ActivityReportObjective to ActivityReportObjective
 function makeGoalsAndObjectivesObject(objectiveRecords) {
   objectiveRecords.sort(sortObjectives);
   let objectiveNum = 0;
@@ -263,7 +264,7 @@ const arTransformers = [
   'activityRecipientType',
   'ECLKCResourcesUsed',
   'nonECLKCResourcesUsed',
-  transformRelatedModel('attachments', 'originalFileName'),
+  transformRelatedModel('files', 'originalFileName'),
   transformGoalsAndObjectives,
   transformRelatedModel('recipientNextSteps', 'note'),
   transformRelatedModel('specialistNextSteps', 'note'),

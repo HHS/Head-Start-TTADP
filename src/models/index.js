@@ -10,6 +10,7 @@ const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || 'development';
 const config = require('../../config/config')[env];
 const audit = require('./auditModelGenerator');
+const { auditLogger } = require('../logger');
 
 Sequelize.useCLS(namespace);
 const db = {};
@@ -30,11 +31,16 @@ fs
     && (file !== 'auditModelGenerator.js')
     && (file.slice(-3) === '.js'))
   .forEach((file) => {
-    const modelDef = require(path.join(__dirname, file));
-    const model = modelDef(sequelize, Sequelize);
-    const auditModel = audit.generateAuditModel(sequelize, model);
-    db[model.name] = model;
-    db[auditModel.name] = auditModel;
+    try {
+      const modelDef = require(path.join(__dirname, file));
+      const model = modelDef(sequelize, Sequelize);
+      const auditModel = audit.generateAuditModel(sequelize, model);
+      db[model.name] = model;
+      db[auditModel.name] = auditModel;
+    } catch (error) {
+      auditLogger.error(error);
+      auditLogger.error(file);
+    }
   });
 
 Object.keys(db).forEach((modelName) => {

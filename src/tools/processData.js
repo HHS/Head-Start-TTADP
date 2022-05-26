@@ -387,6 +387,7 @@ const processData = async (mockReport) => sequelize.transaction(async () => {
       }),
     );
     if (imported) {
+      // TODO: ttaProvided needs to move from ActivityReportObjective to ActivityReportObjective
       const newImported = {
         additionalNotesForThisActivity: await processHtml(
           imported.additionalNotesForThisActivity,

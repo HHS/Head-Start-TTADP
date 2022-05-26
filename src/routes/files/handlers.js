@@ -3,8 +3,18 @@ import * as fs from 'fs';
 import handleErrors from '../../lib/apiErrorHandler';
 import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
 import addToScanQueue from '../../services/scanQueue';
-import createFileMetaData, {
-  updateStatus, getFileById, deleteFile,
+import {
+  deleteFile,
+  deleteActivityReportFile,
+  deleteActivityReportObjectiveFile,
+  deleteObjectiveFile,
+  deleteObjectiveTemplateFile,
+  getFileById,
+  updateStatus,
+  createActivityReportFileMetaData,
+  createActivityReportObjectiveFileMetaData,
+  createObjectiveFileMetaData,
+  createObjectiveTemplateFileMetaData,
 } from '../../services/files';
 import ActivityReportPolicy from '../../policies/activityReport';
 import { activityReportById } from '../../services/activityReports';
@@ -40,8 +50,65 @@ const altFileTypes = [
   },
 ];
 
-export const deleteHandler = async (req, res) => {
-  const { reportId, fileId } = req.params;
+const deleteHandler = async (req, res) => {
+  const {
+    reportId,
+    reportObjectiveId,
+    objectiveId,
+    objectiveTempleteId,
+    fileId,
+  } = req.params;
+  const user = await userById(req.session.userId);
+  const report = await activityReportById(reportId);
+  const authorization = new ActivityReportPolicy(user, report);
+
+  if (!authorization.canUpdate()) {
+    res.sendStatus(403);
+    return;
+  }
+  try {
+    let file = await getFileById(fileId);
+    if (reportId
+      && reportId in file.reportFiles.map((r) => r.activityReportId)) {
+      const rf = file.reportFiles.find((r) => r.reportId === reportId);
+      deleteActivityReportFile(rf.id);
+    } else if (reportObjectiveId
+      && reportObjectiveId in file.reportObjectiveFiles.map((aro) => aro.reportObjectiveId)) {
+      const rof = file.reportObjectiveFiles.find((r) => r.reportObjectiveId === reportObjectiveId);
+      deleteActivityReportObjectiveFile(rof.id);
+    } else if (objectiveId
+      && objectiveId in file.objectiveFiles.map((r) => r.objectiveId)) {
+      const of = file.objectiveFiles.find((r) => r.objectiveId === objectiveId);
+      deleteObjectiveFile(of.id);
+    } else if (objectiveTempleteId
+      && objectiveTempleteId in file.objectiveTemplateFiles.map((r) => r.objectiveTempleteId)) {
+      const otf = file.objectiveTemplateFiles
+        .find((r) => r.objectiveTempleteId === objectiveTempleteId);
+      deleteObjectiveTemplateFile(otf.id);
+    }
+    file = await getFileById(fileId);
+    if (file.reports.length
+      + file.reportObjectiveFiles.length
+      + file.objectives.length
+      + file.objectiveTemplates.length === 0) {
+      await deleteFileFromS3(file.key);
+      await deleteFile(fileId);
+    }
+    res.status(204).send();
+  } catch (error) {
+    handleErrors(req, res, error, logContext);
+  }
+};
+
+const linkHandler = async (req, res) => {
+  const {
+    reportId,
+    reportObjectiveId,
+    objectiveId,
+    objectiveTempleteId,
+    fileId,
+  } = req.params;
+
   const user = await userById(req.session.userId);
   const report = await activityReportById(reportId);
   const authorization = new ActivityReportPolicy(user, report);
@@ -52,14 +119,46 @@ export const deleteHandler = async (req, res) => {
   }
   try {
     const file = await getFileById(fileId);
-    await deleteFileFromS3(file.key);
-    await deleteFile(fileId);
+    if (reportId
+      && !(reportId in file.reportFiles.map((r) => r.activityReportId))) {
+      createActivityReportFileMetaData(
+        file.originalFilename,
+        file.fileName,
+        reportId,
+        file.size,
+      );
+    } else if (reportObjectiveId
+      && !(reportObjectiveId in file.reportObjectiveFiles.map((aro) => aro.reportObjectiveId))) {
+      createActivityReportObjectiveFileMetaData(
+        file.originalFilename,
+        file.fileName,
+        reportObjectiveId,
+        file.size,
+      );
+    } else if (objectiveId
+      && !(objectiveId in file.objectiveFiles.map((r) => r.objectiveId))) {
+      createObjectiveFileMetaData(
+        file.originalFilename,
+        file.fileName,
+        reportId,
+        file.size,
+      );
+    } else if (objectiveTempleteId
+      && !(objectiveTempleteId in file.objectiveTemplateFiles.map((r) => r.objectiveTempleteId))) {
+      createObjectiveTemplateFileMetaData(
+        file.originalFilename,
+        file.fileName,
+        objectiveTempleteId,
+        file.size,
+      );
+    }
     res.status(204).send();
   } catch (error) {
     handleErrors(req, res, error, logContext);
   }
 };
 
+// TODO: handle ActivityReportObjectiveFiles, ObjectiveFiles, and ObjectiveTemplateFiles
 const parseFormPromise = (req) => new Promise((resolve, reject) => {
   const form = new multiparty.Form();
   form.parse(req, (err, fields, files) => {
@@ -70,9 +169,14 @@ const parseFormPromise = (req) => new Promise((resolve, reject) => {
   });
 });
 
-export default async function uploadHandler(req, res) {
+const uploadHandler = async (req, res) => {
   const [fields, files] = await parseFormPromise(req);
-  const { reportId } = fields;
+  const {
+    reportId,
+    reportObjectiveId,
+    objectiveId,
+    objectiveTempleteId,
+  } = fields;
   let buffer;
   let metadata;
   let fileName;
@@ -94,8 +198,8 @@ export default async function uploadHandler(req, res) {
     if (!size) {
       return res.status(400).send({ error: 'fileSize required' });
     }
-    if (!reportId) {
-      return res.status(400).send({ error: 'reportId required' });
+    if (!reportId && !reportObjectiveId && !objectiveId && !objectiveTempleteId) {
+      return res.status(400).send({ error: 'an id of either reportId, reportObjectiveId, objectiveId, or objectiveTempleteId is required' });
     }
     buffer = fs.readFileSync(path);
     /*
@@ -115,12 +219,35 @@ export default async function uploadHandler(req, res) {
     }
     fileTypeToUse = altFileType || type;
     fileName = `${uuidv4()}.${fileTypeToUse.ext}`;
-    metadata = await createFileMetaData(
-      originalFilename,
-      fileName,
-      reportId,
-      size,
-    );
+    if (reportId) {
+      metadata = await createActivityReportFileMetaData(
+        originalFilename,
+        fileName,
+        reportId,
+        size,
+      );
+    } else if (reportObjectiveId) {
+      metadata = await createActivityReportObjectiveFileMetaData(
+        originalFilename,
+        fileName,
+        reportId,
+        size,
+      );
+    } else if (objectiveId) {
+      metadata = await createObjectiveFileMetaData(
+        originalFilename,
+        fileName,
+        reportId,
+        size,
+      );
+    } else if (objectiveTempleteId) {
+      metadata = await createObjectiveTemplateFileMetaData(
+        originalFilename,
+        fileName,
+        reportId,
+        size,
+      );
+    }
   } catch (err) {
     return handleErrors(req, res, err, logContext);
   }
@@ -142,4 +269,10 @@ export default async function uploadHandler(req, res) {
     auditLogger.error(`${logContext} Failed to queue ${metadata.originalFileName}. Error: ${err}`);
     return updateStatus(metadata.id, QUEUEING_FAILED);
   }
-}
+};
+
+export {
+  deleteHandler,
+  linkHandler,
+  uploadHandler,
+};

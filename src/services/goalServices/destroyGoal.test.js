@@ -50,7 +50,7 @@ describe.skip('destroyGoal handler', () => {
       goalId: goal.id,
       status: 'Not Started',
       title: 'Make everything ok',
-      ttaProvided: 'No',
+      // ttaProvided: 'No',
     });
 
     await ObjectiveResource.create({
