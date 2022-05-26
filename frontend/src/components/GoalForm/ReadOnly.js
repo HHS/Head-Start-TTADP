@@ -1,29 +1,10 @@
 import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
-import { Editor } from 'react-draft-wysiwyg';
 import ContextMenu from '../ContextMenu';
 import Modal from '../Modal';
-import { getEditorState } from '../../utils';
-import './ReadOnly.css';
+import ReadOnlyObjective from './ReadOnlyObjective';
+import './ReadOnly.scss';
 
-const TTAProvided = ({ tta }) => {
-  const defaultEditorState = getEditorState(tta);
-  return (
-    <>
-      <h4 className="margin-bottom-1">TTA provided</h4>
-      <Editor
-        readOnly
-        className="margin-top-0"
-        toolbarHidden
-        defaultEditorState={defaultEditorState}
-      />
-    </>
-  );
-};
-
-TTAProvided.propTypes = {
-  tta: PropTypes.string.isRequired,
-};
 export default function ReadOnly({
   onEdit,
   onDelete,
@@ -91,47 +72,7 @@ export default function ReadOnly({
                 </>
               ) : null }
               { goal.objectives.map((objective) => (
-                <div key={`objective${objective.id}`}>
-                  <h3>Objective summary</h3>
-                  <h4 className="margin-bottom-1">Objective</h4>
-                  <p className="margin-top-0">{objective.title}</p>
-
-                  {objective.topics && objective.topics.length
-                    ? (
-                      <>
-                        <h4 className="margin-bottom-1">Topics</h4>
-                        <p className="margin-top-0">{objective.topics.map((topic) => topic.label).join('; ')}</p>
-                      </>
-                    ) : null }
-
-                  {objective.resources && objective.resources.length
-                    ? (
-                      <>
-                        <h4 className="margin-bottom-1">Resource links</h4>
-                        <ul className="usa-list usa-list--unstyled">
-                          { objective.resources.map((resource) => (
-                            <li key={resource.key}>{resource.value}</li>
-                          ))}
-                        </ul>
-                      </>
-                    )
-                    : null }
-
-                  {objective.roles && objective.roles.length
-                    ? (
-                      <>
-                        <h4 className="margin-bottom-1">Specialist roles</h4>
-                        <ul className="usa-list usa-list--unstyled">
-                          { objective.roles.map((role) => (
-                            <li key={role}>{role}</li>
-                          ))}
-                        </ul>
-                      </>
-                    )
-                    : null }
-
-                  {objective.ttaProvided ? <TTAProvided tta={objective.ttaProvided} /> : null}
-                </div>
+                <ReadOnlyObjective key={`objective${objective.id}`} objective={objective} />
               ))}
             </div>
           </div>

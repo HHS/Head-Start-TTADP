@@ -11,7 +11,7 @@ export default function PlusButton({
 }) {
   return (
     <Button type="button" unstyled onClick={onClick}>
-      <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faPlusCircle} />
+      <FontAwesomeIcon className=" margin-right-1" color={colors.ttahubMediumBlue} icon={faPlusCircle} />
       {text}
     </Button>
   );

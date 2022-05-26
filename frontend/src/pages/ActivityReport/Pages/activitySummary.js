@@ -21,13 +21,12 @@ import {
   REASONS as reasons,
   TARGET_POPULATIONS as targetPopulations,
 } from '../../../Constants';
+import ConnectionError from './components/ConnectionError';
+import NetworkContext from '../../../NetworkContext';
 import HookFormRichEditor from '../../../components/HookFormRichEditor';
-
 import HtmlReviewItem from './Review/HtmlReviewItem';
 import Section from './Review/ReviewSection';
 import { reportIsEditable } from '../../../utils';
-import ConnectionError from './components/ConnectionError';
-import NetworkContext from '../../../NetworkContext';
 
 const ActivitySummary = ({
   recipients,
