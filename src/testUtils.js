@@ -10,7 +10,7 @@ import {
   Region,
   GoalTemplate,
   Goal,
-  GrantGoal,
+  // GrantGoal,
 } from './models';
 import { auditLogger } from './logger';
 
@@ -254,17 +254,10 @@ export async function createGoal(goal) {
     grantId: grant.id,
     goalTemplateId: dbGoalTemplate.id,
   });
-  // await GrantGoal.create({
-  //   grantId: grant.id,
-  //   goalId: dbGoal.id,
-  //   recipientId: grant.recipientId,
-  // });
   return dbGoal;
 }
 
 export async function destroyGoal(goal) {
-  const { id: goalId } = goal;
-  await GrantGoal.destroy({ where: { goalId } });
   return Goal.destroy({
     where: {
       id: goal.id,
