@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import './StatusDropdown.css';
 import {
@@ -10,6 +10,9 @@ import {
   Ceased,
 } from './icons';
 import colors from '../../colors';
+import UserContext from '../../UserContext';
+import { canChangeGoalStatus } from '../../permissions';
+import { DECIMAL_BASE } from '../../Constants';
 
 const STATUSES = {
   'In Progress': {
@@ -51,12 +54,19 @@ const STATUSES = {
 };
 
 export default function StatusDropdown({
-  goalId, status, onUpdateGoalStatus, previousStatus,
+  goalId,
+  status,
+  onUpdateGoalStatus,
+  previousStatus,
+  regionId,
 }) {
+  const { user } = useContext(UserContext);
   const key = status || 'Needs Status';
   const { icon, display } = STATUSES[key];
 
-  if (status === 'Draft' || status === 'Completed' || status === 'Closed') {
+  const isReadOnly = (status === 'Draft' || status === 'Completed' || status === 'Closed') || !canChangeGoalStatus(user, parseInt(regionId, DECIMAL_BASE));
+
+  if (isReadOnly) {
     return (
       <>
         {icon}
@@ -120,6 +130,7 @@ StatusDropdown.propTypes = {
   onUpdateGoalStatus: PropTypes.func.isRequired,
   status: PropTypes.string,
   previousStatus: PropTypes.string,
+  regionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
 };
 
 StatusDropdown.defaultProps = {
