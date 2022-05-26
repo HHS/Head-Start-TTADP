@@ -23,6 +23,10 @@
   list-style-type: none;
 }
 
+.tta-smarthub--objective-rows .tta-smarthub--objective-reasons-list li {
+  display: list-item;
+}
+
 .tta-smarthub--objective-rows .tta-smarthub--objective-reasons-list li,
 .tta-smarthub--goal-row-obj-table  .tta-smarthub--objective-reasons-list li:first-child {
   padding: 0px;
