@@ -12,6 +12,8 @@ import GoalsObjectives from '../GoalsObjectives';
 import { formatDateRange } from '../../../../utils';
 import UserContext from '../../../../UserContext';
 import { SCOPE_IDS } from '../../../../Constants';
+import FilterContext from '../../../../FilterContext';
+import { mockWindowProperty } from '../../../../testHelpers';
 
 const memoryHistory = createMemoryHistory();
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
@@ -93,22 +95,29 @@ describe('Goals and Objectives', () => {
     render(
       <Router history={memoryHistory}>
         <UserContext.Provider value={{ user }}>
-          <GoalsObjectives
-            recipientId="401"
-            regionId="1"
-            recipient={recipient}
-            location={{
-              state: { ids }, hash: '', pathname: '', search: '',
-            }}
-          />
+          <FilterContext.Provider value={{ filterKey: 'test' }}>
+            <GoalsObjectives
+              recipientId="401"
+              regionId="1"
+              recipient={recipient}
+              location={{
+                state: { ids }, hash: '', pathname: '', search: '',
+              }}
+            />
+          </FilterContext.Provider>
         </UserContext.Provider>
       </Router>,
     );
   };
 
+  mockWindowProperty('sessionStorage', {
+    setItem: jest.fn(),
+    getItem: jest.fn(),
+    removeItem: jest.fn(),
+  });
+
   beforeEach(async () => {
     fetchMock.reset();
-
     // Default.
     const goalsUrl = `/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5&createDate.win=${yearToDate}`;
     fetchMock.get(goalsUrl, { count: 1, goalRows: goals });
