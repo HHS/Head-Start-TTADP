@@ -7,29 +7,8 @@ import {
   Topic,
   RoleTopic,
   Goal,
-  // TopicGoal,
   Grant,
-  // GrantGoal,
 } from '../models';
-
-const hubRoles = [
-  { name: 'RPM', fullName: 'Regional Program Manager' },
-  { name: 'COR', fullName: 'Contracting Officer\'s Representative' },
-  { name: 'SPS', fullName: 'Supervisory Program Specialist' },
-  { name: 'PS', fullName: 'Program Specialist' },
-  { name: 'GS', fullName: 'Grants Specialist' },
-  { name: 'CO', fullName: 'Central Office: TTA and Comprehensive Services Division' },
-  { name: 'CO', fullName: 'Central Office: Other Divisions' },
-  { name: 'TTAC', fullName: 'TTAC' },
-  { name: 'AA', fullName: 'Admin. Assistant' },
-  { name: 'ECM', fullName: 'Early Childhood Manager' },
-  { name: 'ECS', fullName: 'Early Childhood Specialist' },
-  { name: 'FES', fullName: 'Family Engagement Specialist' },
-  { name: 'GSM', fullName: 'Grantee Specialist Manager' },
-  { name: 'GS', fullName: 'Grantee Specialist' },
-  { name: 'HS', fullName: 'Health Specialist' },
-  { name: 'SS', fullName: 'System Specialist' },
-];
 
 async function parseCsv(fileKey) {
   let recipients = {};
@@ -39,15 +18,6 @@ async function parseCsv(fileKey) {
     columns: true,
   });
   return recipients;
-}
-
-async function prePopulateRoles() {
-  await Role.bulkCreate(
-    hubRoles,
-    {
-      updateOnDuplicate: ['updatedAt'],
-    },
-  );
 }
 
 const grantNumRE = /\s(?<grantNumber>[0-9]{2}[A-Z]{2}[0-9]+)(?:[,\s]|$)/g;
@@ -86,9 +56,6 @@ export default async function importGoals(fileKey, region) {
   try {
     const cleanRoleTopics = [];
     const cleanGrantGoals = [];
-    const cleanTopicGoals = [];
-
-    await prePopulateRoles();
 
     for await (const el of recipients) {
       let currentGrants = [];
@@ -133,10 +100,12 @@ export default async function importGoals(fileKey, region) {
                       const trimmedRole = role.trim();
                       let roleId;
                       if (trimmedRole === 'GS') { // Special case for 'GS' since it's non-unique
-                        const [dbRole] = await Role.findOrCreate({ where: { name: trimmedRole, fullName: 'Grantee Specialist' } });
+                        const [dbRole] = await Role.findOrCreate({ where: { name: trimmedRole, fullName: 'Grantee Specialist' }, defaults: { isSpecialist: false } });
                         roleId = dbRole.id;
                       } else {
-                        const [dbRole] = await Role.findOrCreate({ where: { name: trimmedRole } });
+                        const [dbRole] = await Role.findOrCreate({
+                          where: { name: trimmedRole }, defaults: { isSpecialist: false },
+                        });
                         roleId = dbRole.id;
                       }
                       // associate topic with roles
@@ -146,10 +115,6 @@ export default async function importGoals(fileKey, region) {
                       }
                     }
                   }
-                  // Add topic to junction with goal
-                  cleanTopicGoals.push(
-                    { topicId, goalName: currentGoalName },
-                  ); // we don't have goal's id at this point yet
                 }
               }
             } else {
@@ -171,18 +136,6 @@ export default async function importGoals(fileKey, region) {
 
       for await (const goal of currentGoals) {
         if (goal) { // ignore the dummy element at index 0
-          const [dbGoal] = await Goal.findOrCreate({
-            where: { name: goal.name, isFromSmartsheetTtaPlan: true },
-            defaults: goal,
-          });
-          goalId = dbGoal.id;
-          // add goal id to cleanTopicGoals
-          cleanTopicGoals.forEach((tp) => {
-            if (tp.goalName === dbGoal.name) {
-              // eslint-disable-next-line no-param-reassign
-              tp.goalId = goalId;
-            }
-          });
           for await (const grant of currentGrants) {
             const fullGrant = { number: grant.trim(), regionId };
             const dbGrant = await Grant.findOne({ where: { ...fullGrant }, attributes: ['id', 'recipientId'] });
@@ -192,6 +145,13 @@ export default async function importGoals(fileKey, region) {
               throw new Error('error');
             }
             grantId = dbGrant.id;
+            const [dbGoal] = await Goal.findOrCreate({
+              where: { grantId, name: goal.name, isFromSmartsheetTtaPlan: true },
+              defaults: goal,
+            });
+
+            goalId = dbGoal.id;
+
             currentRecipientId = dbGrant.recipientId;
             const plan = { recipientId: currentRecipientId, grantId, goalId };
             if (!cleanGrantGoals.some((e) => e.recipientId === currentRecipientId
@@ -211,17 +171,8 @@ export default async function importGoals(fileKey, region) {
         ignoreDuplicates: true,
       },
     );
-    // await TopicGoal.bulkCreate(cleanTopicGoals, {
-    //   ignoreDuplicates: true,
-    //   validate: true,
-    // await GrantGoal.bulkCreate(
-    //   cleanGrantGoals,
-    //   {
-    //     ignoreDuplicates: true,
-    //   },
-    // );
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.log(err);
+    console.error(err);
   }
 }
