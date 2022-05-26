@@ -52,6 +52,8 @@ export default function ObjectiveForm({
   const onChangeRole = (newRole) => setObjective({ ...objective, roles: newRole });
   const onChangeStatus = (newStatus) => setObjective({ ...objective, status: newStatus });
 
+  const availableSpecialistRoles = ['Grantee Specialist', 'Health Specialist', 'Family Engagement Specialist', 'Early Childhood Specialist', 'Systems Specialist'];
+
   // validate different fields
   const validateObjectiveTitle = () => {
     if (!title) {
@@ -123,7 +125,7 @@ export default function ObjectiveForm({
         onChange={onChangeRole}
         selectedRoles={roles || []}
         validateSpecialistRole={validateSpecialistRole}
-        options={[]}
+        options={availableSpecialistRoles}
       />
 
       <ObjectiveTopics
