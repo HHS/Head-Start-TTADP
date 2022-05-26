@@ -56,7 +56,7 @@ export default function StatusDropdown({
   const key = status || 'Needs Status';
   const { icon, display } = STATUSES[key];
 
-  if (status === 'Draft' || status === 'Completed') {
+  if (status === 'Draft' || status === 'Completed' || status === 'Closed') {
     return (
       <>
         {icon}
