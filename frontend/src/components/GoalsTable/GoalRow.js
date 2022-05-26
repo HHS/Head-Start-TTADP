@@ -256,6 +256,7 @@ function GoalRow({
             onUpdateGoalStatus={onUpdateGoalStatus}
             previousStatus={previousStatus}
             regionId={regionId}
+            up={openMenuUp}
           />
         </td>
         <td>{moment(createdOn, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT)}</td>
