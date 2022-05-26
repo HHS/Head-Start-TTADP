@@ -3,20 +3,39 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import StatusDropdown from '../StatusDropdown';
+import UserContext from '../../../UserContext';
+import { SCOPE_IDS } from '../../../Constants';
+
+const user = {
+  permissions: [
+    {
+      regionId: 1,
+      scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+    },
+    {
+      regionId: 5,
+      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+    },
+  ],
+};
 
 describe('StatusDropdown', () => {
   const renderStatusDropdown = (
     status,
     onUpdateGoalStatus,
     previousStatus = 'Not Started',
+    regionId = '1',
   ) => {
     render((
-      <StatusDropdown
-        goalId={345345}
-        status={status}
-        onUpdateGoalStatus={onUpdateGoalStatus}
-        previousStatus={previousStatus}
-      />
+      <UserContext.Provider value={{ user }}>
+        <StatusDropdown
+          goalId={345345}
+          regionId={regionId}
+          status={status}
+          onUpdateGoalStatus={onUpdateGoalStatus}
+          previousStatus={previousStatus}
+        />
+      </UserContext.Provider>
     ));
   };
 
@@ -73,6 +92,14 @@ describe('StatusDropdown', () => {
   it('no select on completed', async () => {
     const onUpdate = jest.fn();
     renderStatusDropdown('Completed', onUpdate);
+
+    const selects = document.querySelector('select');
+    expect(selects).toBe(null);
+  });
+
+  it('no select on read only', async () => {
+    const onUpdate = jest.fn();
+    renderStatusDropdown('In Progress', onUpdate, 'Not Started', '5');
 
     const selects = document.querySelector('select');
     expect(selects).toBe(null);
