@@ -85,6 +85,7 @@ export default function GoalForm({
 
   const [alert, setAlert] = useState({ message: '', type: 'success' });
   const [goalId, setGoalId] = useState(goalDefaults.id);
+  const [goalNumber, setGoalNumber] = useState('');
 
   const [errors, setErrors] = useState(FORM_FIELD_DEFAULT_ERRORS);
 
@@ -110,6 +111,7 @@ export default function GoalForm({
         setStatus(goal.status);
         setEndDate(goal.endDate);
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
+        setGoalNumber(goal.goalNumber);
 
         const apiData = {};
 
@@ -159,7 +161,7 @@ export default function GoalForm({
           newObjs.push(newObjective);
           // this is the format of an objective error
           // three JSX nodes representing each of three possible errors
-          objErrors.push([<></>, <></>, <></>]);
+          objErrors.push([<></>, <></>, <></>, <></>]);
 
           return [newObjs, objErrors];
         }, [[], []]);
@@ -466,6 +468,7 @@ export default function GoalForm({
     setEndDate(goal.endDate);
     setStatus(goal.status);
     setGoalId(goal.id);
+    setGoalNumber(goal.number);
 
     setSelectedGrants(goal.grants);
 
@@ -602,6 +605,7 @@ export default function GoalForm({
             isOnApprovedReport={isOnApprovedReport}
             status={status || 'Needs status'}
             unchangingApiData={unchangingApiData}
+            goalNumber={goalNumber}
           />
           )}
 
