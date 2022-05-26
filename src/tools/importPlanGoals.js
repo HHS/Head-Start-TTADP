@@ -85,7 +85,7 @@ export default async function importGoals(fileKey, region) {
   const regionId = region;
   try {
     const cleanRoleTopics = [];
-    const cleanGrantGoals = [];
+    // const cleanGrantGoals = [];
     const cleanTopicGoals = [];
 
     await prePopulateRoles();
@@ -166,8 +166,8 @@ export default async function importGoals(fileKey, region) {
 
       // after each row
       let goalId;
-      let grantId;
-      let currentRecipientId;
+      // let grantId;
+      // let currentRecipientId;
 
       for await (const goal of currentGoals) {
         if (goal) { // ignore the dummy element at index 0
@@ -191,14 +191,14 @@ export default async function importGoals(fileKey, region) {
               console.log(`Couldn't find grant: ${fullGrant.number}. Exiting...`);
               throw new Error('error');
             }
-            grantId = dbGrant.id;
-            currentRecipientId = dbGrant.recipientId;
-            const plan = { recipientId: currentRecipientId, grantId, goalId };
-            if (!cleanGrantGoals.some((e) => e.recipientId === currentRecipientId
-                            && e.grantId === grantId
-                            && e.goalId === goalId)) {
-              cleanGrantGoals.push(plan);
-            }
+            // grantId = dbGrant.id;
+            // currentRecipientId = dbGrant.recipientId;
+            // const plan = { recipientId: currentRecipientId, grantId, goalId };
+            // if (!cleanGrantGoals.some((e) => e.recipientId === currentRecipientId
+            //                 && e.grantId === grantId
+            //                 && e.goalId === goalId)) {
+            //   cleanGrantGoals.push(plan);
+            // }
           }
         }
       }
