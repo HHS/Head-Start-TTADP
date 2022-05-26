@@ -692,7 +692,7 @@ export async function createOrUpdate(newActivityReport, report) {
     const newCollaborators = activityReportCollaborators.map(
       (c) => c.user.id,
     );
-    await saveReportCollaborators(id, newCollaborators, activityReportCollaborators);
+    await saveReportCollaborators(id, newCollaborators);
   }
   if (activityRecipients) {
     const { activityRecipientType, id } = savedReport;
