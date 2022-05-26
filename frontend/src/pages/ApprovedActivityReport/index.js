@@ -215,7 +215,9 @@ export default function ApprovedActivityReport({ match, user }) {
         const arRecipients = data.activityRecipients.map((arRecipient) => arRecipient.name).sort().join(', ');
         const targetPopulations = data.targetPopulations.map((population) => population).join(', '); // Approvers.
         const approvingManagers = data.approvers.map((a) => a.User.fullName).join(', ');
-        const collaborators = data.activityReportCollaborators.map((a) => a.user);
+        const collaborators = data.activityReportCollaborators.map(
+          (a) => a.fullNameSubstituteRoles, // Match what we show on the landing.
+        );
 
         // Approver Notes.
         const managerNotes = data.approvers.map((a) => `
@@ -471,7 +473,7 @@ export default function ApprovedActivityReport({ match, user }) {
           <p>
             <strong>Collaborators:</strong>
             {' '}
-            {collaborators.map((collaborator) => collaborator.fullName).join(', ')}
+            {collaborators.map((collaborator) => collaborator).join(', ')}
           </p>
           <p>
             <strong>Managers:</strong>

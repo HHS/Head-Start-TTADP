@@ -489,6 +489,10 @@ export function activityReports(
               as: 'user',
               attributes: ['id', 'name', 'role', 'fullName'],
             },
+            {
+              model: CollaboratorRole,
+              as: 'collaboratorRoles',
+            },
           ],
         },
         {
@@ -625,6 +629,10 @@ export async function activityReportAlerts(userId, {
               as: 'user',
               attributes: ['id', 'name', 'role', 'fullName'],
               duplicating: true,
+            },
+            {
+              model: CollaboratorRole,
+              as: 'collaboratorRoles',
             },
           ],
         },
