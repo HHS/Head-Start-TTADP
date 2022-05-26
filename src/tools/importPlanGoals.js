@@ -131,8 +131,8 @@ export default async function importGoals(fileKey, region) {
 
       // after each row
       let goalId;
-      let grantId;
-      let currentRecipientId;
+      // let grantId;
+      // let currentRecipientId;
 
       for await (const goal of currentGoals) {
         if (goal) { // ignore the dummy element at index 0
@@ -144,21 +144,11 @@ export default async function importGoals(fileKey, region) {
               console.log(`Couldn't find grant: ${fullGrant.number}. Exiting...`);
               throw new Error('error');
             }
-            grantId = dbGrant.id;
-            const [dbGoal] = await Goal.findOrCreate({
+            const grantId = dbGrant.id;
+            await Goal.findOrCreate({
               where: { grantId, name: goal.name, isFromSmartsheetTtaPlan: true },
               defaults: goal,
             });
-
-            goalId = dbGoal.id;
-
-            currentRecipientId = dbGrant.recipientId;
-            const plan = { recipientId: currentRecipientId, grantId, goalId };
-            if (!cleanGrantGoals.some((e) => e.recipientId === currentRecipientId
-                            && e.grantId === grantId
-                            && e.goalId === goalId)) {
-              cleanGrantGoals.push(plan);
-            }
           }
         }
       }
