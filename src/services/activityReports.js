@@ -121,18 +121,22 @@ async function saveReportCollaborators(activityReportId, collaborators) {
   );
 
   // If we have collaborators missing roles.
-  let updatedRoles = [];
-  rolesToAdd.forEach((collaborator) => {
+  if (rolesToAdd && rolesToAdd.length > 0) {
+    let updatedRoles = [];
+    rolesToAdd.forEach((collaborator) => {
     // Set collaborator roles.
-    const { role } = collaborator.user;
-    // Concat list of collaborator role updates promises.
-    updatedRoles = updatedRoles.concat(role.map((r) => CollaboratorRole.findOrCreate(
-      { where: { activityReportCollaboratorId: collaborator.id, role: r } },
-    )));
-  });
+      const { role } = collaborator.user;
+      // Concat list of collaborator role updates promises.
+      updatedRoles = updatedRoles.concat(role.map((r) => CollaboratorRole.findOrCreate(
+        { where: { activityReportCollaboratorId: collaborator.id, role: r } },
+      )));
+    });
 
-  // Resolve all role update promises.
-  await Promise.all(updatedRoles);
+    // Resolve all role update promises.
+    if (updatedRoles && updatedRoles.length > 0) {
+      await Promise.all(updatedRoles);
+    }
+  }
 }
 
 async function saveReportRecipients(
