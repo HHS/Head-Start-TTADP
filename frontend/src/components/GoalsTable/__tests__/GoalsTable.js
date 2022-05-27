@@ -120,6 +120,7 @@ const goalWithObjectives = [{
     status: 'In Progress',
     id: 345345345,
     ttaProvided: '',
+    grantNumbers: [],
   },
   {
     title: 'Objective 2 Title',
@@ -132,6 +133,7 @@ const goalWithObjectives = [{
     status: 'Not Started',
     id: 234234253,
     ttaProvided: '',
+    grantNumbers: [],
   },
   {
     title: 'Objective 3 Title',
@@ -144,6 +146,7 @@ const goalWithObjectives = [{
     status: 'Complete',
     id: 2938234,
     ttaProvided: '',
+    grantNumbers: [],
   },
   {
     title: 'Objective 4 Title',
@@ -156,6 +159,7 @@ const goalWithObjectives = [{
     status: 'In Progress',
     id: 255384234,
     ttaProvided: '',
+    grantNumbers: ['200342cat'],
   },
   {
     title: 'Objective 5 Title',
@@ -168,6 +172,7 @@ const goalWithObjectives = [{
     status: 'Unknown Status',
     id: 298398934834,
     ttaProvided: '',
+    grantNumbers: [],
   },
   ],
 },
@@ -193,6 +198,7 @@ const noStatusGoalWithOneObjective = [{
     status: 'In Progress',
     id: 2832434,
     ttaProvided: '',
+    grantNumbers: [],
   }],
 }];
 
