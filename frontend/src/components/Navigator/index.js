@@ -167,7 +167,7 @@ function Navigator({
   const { socket, store, clearStore } = useContext(SocketContext);
   const { user } = useContext(UserContext);
 
-  const INTERVAL_DELAY = 4000;
+  const INTERVAL_DELAY = 10000; // TEN SECONDS
   const publishLocation = () => {
     socket.send(JSON.stringify({
       user: user.name,

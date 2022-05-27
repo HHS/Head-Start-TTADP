@@ -1,5 +1,8 @@
 import React, {
-  createContext, useCallback, useMemo, useState,
+  createContext,
+  useCallback,
+  useEffect,
+  useState,
 } from 'react';
 import PropTypes from 'prop-types';
 
@@ -17,20 +20,20 @@ export const socketPath = (activityReportId, page) => {
 
 export default function SocketProvider({ children, path }) {
   const [store, setStore] = useState(null);
+  const [socket, setSocket] = useState({
+    send: () => {},
+    close: () => {},
+  });
 
   const clearStore = useCallback(() => {
     setStore(null);
   }, []);
 
-  // Create WebSocket connection.
-  const socket = useMemo(() => {
+  useEffect(() => {
     if (!WS_URL || !path) {
-      return {
-        // eslint-disable-next-line no-console
-        send: () => console.log('websocket is unavailable'),
-        close: () => {},
-      };
+      return;
     }
+
     const s = new WebSocket(`${WS_URL}${path}`);
 
     // we don't want to send bufferdata, but json
@@ -48,11 +51,12 @@ export default function SocketProvider({ children, path }) {
 
     s.addEventListener('error', () => {
       s.close();
+      clearStore();
     });
 
     s.addEventListener('close', () => clearStore());
 
-    return s;
+    setSocket(s);
   }, [clearStore, path]);
 
   return (
