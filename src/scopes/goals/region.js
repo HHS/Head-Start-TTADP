@@ -6,7 +6,7 @@ SELECT
   "Goals"."id"
 FROM "Goals" "Goals"
 INNER JOIN "Grants" "Grants"
-ON "Goals"."goalId" = "Grants"."id"
+ON "Goals"."grantId" = "Grants"."id"
 WHERE "Grants"."regionId"`;
 
 export function withRegion(ids) {
