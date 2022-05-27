@@ -344,27 +344,13 @@ describe('activityReportToCsvRecord', () => {
     expect(recipientInfo).toEqual('test1 - grant number 1 - 1\ntest2 - grant number 2 - 2\ntest3 - grant number 3 - 3\ntest4 - grant number 4 - 4');
   });
 
-  it('transforms goals and objectives into many values', async () => {
-    const report = await ActivityReport.create(mockReport);
-    await Promise.all(mockGoals.map((mg) => Goal.create(mg)));
-
-    const objectiveIds = mockObjectives.map(async (mo) => {
-      const objective = await Objective.create({ ...mo, goalId: mo.goal.id });
-      await ActivityReportObjective.create({
-        activityReportId: report.id,
-        objectiveId: objective.id,
+  it('transforms goals and objectives into many values', () => {
+    const objectives = mockObjectives.map((mo) => ({
+      ...mo,
+      activityReportObjectives: [{
         ttaProvided: mo.ttaProvided,
-      });
-      return objective.id;
-    });
-    const oid = await Promise.all(objectiveIds);
-
-    const objectives = await Objective.findAll({
-      where: {
-        id: oid,
-      },
-      include: [{ model: Goal, as: 'goal' }, { model: ActivityReportObjective, as: 'activityReportObjectives' }],
-    });
+      }],
+    }));
 
     const output = makeGoalsAndObjectivesObject(objectives);
     expect(output).toEqual({
