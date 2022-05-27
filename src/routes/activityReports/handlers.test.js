@@ -688,6 +688,8 @@ describe('Activity Report handlers', () => {
         },
         activityReportCollaborators: [
           {
+            fullName: 'Jarty, , SS, GS',
+            fullNameSubstituteRoles: 'Jarty, SS, GS',
             user: {
               name: 'Jarty',
               role: ['System Specialist', 'Grantee Specialist'],
