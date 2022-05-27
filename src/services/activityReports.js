@@ -876,6 +876,10 @@ async function getDownloadableActivityReports(where, separate = true) {
           model: User,
           as: 'user',
           attributes: ['id', 'name', 'role', 'fullName'],
+        },
+        {
+          model: CollaboratorRole,
+          as: 'collaboratorRoles',
         }],
       },
       {

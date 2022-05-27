@@ -45,7 +45,7 @@ const logContext = {
 
 export const LEGACY_WARNING = 'Reports done before March 17, 2021 may have blank fields. These were done in a SmartSheet, not the TTA Hub.';
 
-async function sendActivityReportCSV(reports, res) {
+async function sendActivityReportCSV(reports, res, isAlerts = false) {
   const csvRows = await Promise.all(reports.map((r) => activityReportToCsvRecord(r)));
 
   // base options
@@ -73,7 +73,8 @@ async function sendActivityReportCSV(reports, res) {
           header: 'Creator',
         },
         {
-          key: 'collaborators',
+          // Alerts export should match what we show.
+          key: isAlerts ? 'alertCollaborators' : 'collaborators',
           header: 'Collaborators',
         },
         {
@@ -671,7 +672,7 @@ export async function downloadAllAlerts(req, res) {
     const query = await setReadRegions(req.query, userId);
     const rows = await getAllDownloadableActivityReportAlerts(userId, query);
 
-    await sendActivityReportCSV(rows, res);
+    await sendActivityReportCSV(rows, res, true);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }

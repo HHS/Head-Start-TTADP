@@ -1,7 +1,7 @@
 const { Model } = require('sequelize');
 
 const generateFullName = (user, collaboratorRoles, substituteUserRoles = false) => {
-  const roles = collaboratorRoles.map((r) => r.role).sort();
+  const roles = collaboratorRoles ? collaboratorRoles.map((r) => r.role).sort() : [];
 
   if (!roles.length && substituteUserRoles) {
     return user.fullName;
