@@ -19,7 +19,7 @@ executors:
           POSTGRES_DB: ttasmarthub
   machine-executor:
     machine:
-      image: circleci/classic:latest
+      image: ubuntu-2004:current
 commands:
   create_combined_yarnlock:
     description: "Concatenate all yarn.json files into single file.
@@ -185,7 +185,7 @@ parameters:
     default: "kw-add-ga"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "websocket-demo"
+    default: "TTAHUB-785/update-job-image"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
