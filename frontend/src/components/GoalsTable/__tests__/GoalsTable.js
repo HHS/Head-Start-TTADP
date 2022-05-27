@@ -547,8 +547,6 @@ describe('Goals Table', () => {
 
       renderTable(defaultUser);
 
-      screen.logTestingPlaygroundURL(document.querySelector('.pagination'));
-
       const pageTwo = await screen.findByRole('link', {
         name: /go to page number 2/i,
       });
@@ -593,8 +591,10 @@ describe('Goals Table', () => {
       });
 
       // Open Context Menu.
-      const changeStatus = await screen.findByRole('combobox', { name: /Change status for goal 4598/i });
-      userEvent.selectOptions(changeStatus, 'Closed');
+      const changeStatus = await screen.findByRole('button', { name: /Change status for goal 4598/i });
+      userEvent.click(changeStatus);
+      const closed = await screen.findByRole('button', { name: /Closed/i });
+      userEvent.click(closed);
 
       // Select a reason.
       const reasonRadio = await screen.findByRole('radio', { name: /duplicate goal/i, hidden: true });
@@ -626,8 +626,10 @@ describe('Goals Table', () => {
       expect(fetchMock.called()).toBe(false);
 
       // Open Context Menu.
-      const changeStatus = await screen.findByRole('combobox', { name: /Change status for goal 65479/i });
-      act(() => userEvent.selectOptions(changeStatus, 'In Progress'));
+      const changeStatus = await screen.findByRole('button', { name: /Change status for goal 65479/i });
+      userEvent.click(changeStatus);
+      const inProgress = await screen.findByRole('button', { name: /In Progress/i });
+      userEvent.click(inProgress);
 
       // Verify goal status change.
       expect(fetchMock.called()).toBe(true);
