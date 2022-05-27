@@ -404,6 +404,9 @@ describe('Activity report service', () => {
         expect(activityReportCollaborator).not.toBe(null);
         expect(activityReportCollaborator.length).toBe(1);
         expect(activityReportCollaborator[0].collaboratorRoles.length).toBe(2);
+        activityReportCollaborator[0].collaboratorRoles.sort(
+          (a, b) => ((a.role > b.role) ? 1 : -1),
+        );
         expect(activityReportCollaborator[0].collaboratorRoles[0].role).toBe('Grants Specialist');
         expect(activityReportCollaborator[0].collaboratorRoles[1].role).toBe('Health Specialist');
 
@@ -462,6 +465,9 @@ describe('Activity report service', () => {
         expect(activityReportCollaborator).not.toBe(null);
         expect(activityReportCollaborator.length).toBe(1);
         expect(activityReportCollaborator[0].collaboratorRoles.length).toBe(2);
+        activityReportCollaborator[0].collaboratorRoles.sort(
+          (a, b) => ((a.role > b.role) ? 1 : -1),
+        );
         expect(activityReportCollaborator[0].collaboratorRoles[0].role).toBe('Grants Specialist');
         expect(activityReportCollaborator[0].collaboratorRoles[1].role).toBe('Health Specialist');
 
