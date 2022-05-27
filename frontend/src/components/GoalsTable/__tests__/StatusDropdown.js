@@ -43,11 +43,18 @@ describe('StatusDropdown', () => {
     const onUpdate = jest.fn();
     renderStatusDropdown('Not Started', onUpdate);
 
-    const options = document.querySelectorAll('option');
-    expect(options.length).toBe(4);
+    let options = await screen.findAllByRole('button');
+    expect(options.length).toBe(1);
 
-    const select = await screen.findByRole('combobox', { name: /change status for goal 345345/i });
-    userEvent.selectOptions(select, 'In progress');
+    const select = await screen.findByRole('button', { name: /change status for goal 345345/i });
+    userEvent.click(select);
+
+    options = await screen.findAllByRole('button');
+    expect(options.length).toBe(5); // 4 + 1
+
+    const inProgress = await screen.findByRole('button', { name: /in progress/i });
+    userEvent.click(inProgress);
+
     expect(onUpdate).toHaveBeenCalledWith('In Progress');
   });
 
@@ -55,16 +62,22 @@ describe('StatusDropdown', () => {
     const onUpdate = jest.fn();
     renderStatusDropdown('In Progress', onUpdate);
 
-    const options = document.querySelectorAll('option');
-    expect(options.length).toBe(3);
+    const select = await screen.findByRole('button', { name: /change status for goal 345345/i });
+    userEvent.click(select);
+
+    const options = await screen.findAllByRole('button');
+    expect(options.length).toBe(4);
   });
 
   it('displays the previous status correctly on suspended', async () => {
     const onUpdate = jest.fn();
     renderStatusDropdown('Ceased/Suspended', onUpdate, 'Not Started');
 
-    const options = document.querySelectorAll('option');
-    expect(options.length).toBe(2);
+    const select = await screen.findByRole('button', { name: /change status for goal 345345/i });
+    userEvent.click(select);
+
+    const options = await screen.findAllByRole('button');
+    expect(options.length).toBe(3);
 
     const labels = Array.from(options).map((option) => option.textContent);
     expect(labels).toContain('Not started');
@@ -75,8 +88,11 @@ describe('StatusDropdown', () => {
     const onUpdate = jest.fn();
     renderStatusDropdown('Ceased/Suspended', onUpdate, '');
 
-    const options = document.querySelectorAll('option');
-    expect(options.length).toBe(1);
+    const select = await screen.findByRole('button', { name: /change status for goal 345345/i });
+    userEvent.click(select);
+
+    const options = await screen.findAllByRole('button');
+    expect(options.length).toBe(2);
     const labels = Array.from(options).map((option) => option.textContent);
     expect(labels).toContain('Closed');
   });
@@ -85,23 +101,31 @@ describe('StatusDropdown', () => {
     const onUpdate = jest.fn();
     renderStatusDropdown('Draft', onUpdate);
 
-    const selects = document.querySelector('select');
-    expect(selects).toBe(null);
+    const buttons = document.querySelector('button');
+    expect(buttons).toBe(null);
   });
 
   it('no select on completed', async () => {
     const onUpdate = jest.fn();
     renderStatusDropdown('Completed', onUpdate);
 
-    const selects = document.querySelector('select');
-    expect(selects).toBe(null);
+    const buttons = document.querySelector('button');
+    expect(buttons).toBe(null);
+  });
+
+  it('no select on closed', async () => {
+    const onUpdate = jest.fn();
+    renderStatusDropdown('Closed', onUpdate);
+
+    const buttons = document.querySelector('button');
+    expect(buttons).toBe(null);
   });
 
   it('no select on read only', async () => {
     const onUpdate = jest.fn();
     renderStatusDropdown('In Progress', onUpdate, 'Not Started', '5');
 
-    const selects = document.querySelector('select');
-    expect(selects).toBe(null);
+    const buttons = document.querySelector('button');
+    expect(buttons).toBe(null);
   });
 });
