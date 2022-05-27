@@ -64,7 +64,7 @@ function Menu({
     return '';
   };
 
-  const menuClass = `${defaultClass} ${placementClass()}`;
+  const menuClass = `${defaultClass} shadow-1 ${placementClass()}`;
 
   const onClick = () => updateShown((previous) => !previous);
 
