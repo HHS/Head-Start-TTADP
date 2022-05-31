@@ -59,7 +59,6 @@ const activityReports = [
     activityReportCollaborators: [
       {
         fullName: 'Orange, GS',
-        fullNameSubstituteRoles: 'Orange, GS',
         user: {
           fullName: 'Orange, GS',
           name: 'Orange',
@@ -68,7 +67,6 @@ const activityReports = [
       },
       {
         fullName: 'Hermione Granger, SS',
-        fullNameSubstituteRoles: 'Hermione Granger, SS',
         user: {
           fullName: 'Hermione Granger, SS',
           name: 'Hermione Granger',
@@ -110,7 +108,6 @@ const activityReports = [
     activityReportCollaborators: [
       {
         fullName: 'Cucumber User, GS',
-        fullNameSubstituteRoles: 'Cucumber User, GS',
         user: {
           fullName: 'Cucumber User, GS',
           name: 'Cucumber User',
@@ -119,7 +116,6 @@ const activityReports = [
       },
       {
         fullName: 'Hermione Granger, SS',
-        fullNameSubstituteRoles: 'Hermione Granger, SS',
         user: {
           fullName: 'Hermione Granger, SS',
           name: 'Hermione Granger',
@@ -163,7 +159,6 @@ export const activityReportsSorted = [
     activityReportCollaborators: [
       {
         fullName: 'Cucumber User, GS',
-        fullNameSubstituteRoles: 'Cucumber User, GS',
         user: {
           fullName: 'Cucumber User, GS',
           name: 'Cucumber User',
@@ -172,7 +167,6 @@ export const activityReportsSorted = [
       },
       {
         fullName: 'Hermione Granger, SS',
-        fullNameSubstituteRoles: 'Hermione Granger, SS',
         user: {
           fullName: 'Hermione Granger, SS',
           name: 'Hermione Granger',
@@ -240,7 +234,6 @@ export const activityReportsSorted = [
     activityReportCollaborators: [
       {
         fullName: 'Orange, GS',
-        fullNameSubstituteRoles: 'Orange, GS',
         user: {
           fullName: 'Orange, GS',
           name: 'Orange',
@@ -249,7 +242,6 @@ export const activityReportsSorted = [
       },
       {
         fullName: 'Hermione Granger, SS',
-        fullNameSubstituteRoles: 'Hermione Granger, SS',
         user: {
           fullName: 'Hermione Granger, SS',
           name: 'Hermione Granger',
@@ -322,7 +314,6 @@ export const generateXFakeReports = (count, status = []) => {
         activityReportCollaborators: [
           {
             fullName: 'Orange, GS',
-            fullNameSubstituteRoles: 'Orange, GS',
             user: {
               fullName: 'Orange, GS',
               name: 'Orange',
@@ -331,7 +322,6 @@ export const generateXFakeReports = (count, status = []) => {
           },
           {
             fullName: 'Hermione Granger, SS',
-            fullNameSubstituteRoles: 'Hermione Granger, SS',
             user: {
               fullName: 'Hermione Granger, SS',
               name: 'Hermione Granger',
