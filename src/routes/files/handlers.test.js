@@ -2,7 +2,6 @@ import { validate } from 'uuid';
 import waitFor from 'wait-for-expect';
 import db, {
   File,
-  ActivityRecipient,
   ActivityReport,
   ActivityReportFile,
   User,
