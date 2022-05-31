@@ -13,7 +13,7 @@ describe('Close Suspend Goal Reason', () => {
   const ModalComponent = (
     {
       goalId = 1,
-      newStatus = 'Completed',
+      newStatus = 'Closed',
       onSubmit = () => { },
       resetValues = false,
     },
@@ -31,6 +31,7 @@ describe('Close Suspend Goal Reason', () => {
           modalRef={modalRef}
           onSubmit={onSubmit}
           resetValues={resetValues}
+          error={false}
         />
       </div>
     );
