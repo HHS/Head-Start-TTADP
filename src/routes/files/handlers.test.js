@@ -69,7 +69,10 @@ describe('File Upload', () => {
         },
       ],
     });
-    await Promise.all(files.map(async (file) => File.destroy({ where: { id: file.id } })));
+    await Promise.all(files.map(async (file) => {
+      ActivityReportFile.destroy({ where: { fileId: file.id } });
+      File.destroy({ where: { id: file.id } });
+    }));
     await ActivityReport.destroy({ where: { id: report.dataValues.id } });
     await User.destroy({ where: { id: user.id } });
     process.env = ORIGINAL_ENV; // restore original env
