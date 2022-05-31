@@ -356,7 +356,6 @@ export const truncateAuditTables = async () => {
 const processData = async (mockReport) => sequelize.transaction(async () => {
   const activityReportId = mockReport ? mockReport.id : null;
   const where = activityReportId ? { id: activityReportId } : {};
-  const filesWhere = activityReportId ? { activityReportId } : {};
   const userIds = mockReport ? [3000, 3001, 3002, 3003] : null;
 
   const recipientsGrants = mockReport ? mockReport.imported.granteeName : null;
@@ -364,9 +363,7 @@ const processData = async (mockReport) => sequelize.transaction(async () => {
     where,
   });
 
-  const files = await File.findAll({
-    where: filesWhere,
-  });
+  const files = await File.findAll();
 
   const promises = [];
 
