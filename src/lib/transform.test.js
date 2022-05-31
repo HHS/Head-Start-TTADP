@@ -2,6 +2,7 @@ import { REPORT_STATUSES } from '../constants';
 import {
   ActivityReport,
   Goal,
+  ActivityReportObjective,
   Objective,
   User,
   ActivityRecipient,
@@ -46,19 +47,22 @@ describe('activityReportToCsvRecord', () => {
     {
       name: 'Goal 1',
       id: 2080,
-      status: 'Fake',
+      status: 'Not Started',
+      grantId: 1,
       timeframe: 'None',
     },
     {
       name: 'Goal 2',
       id: 2081,
-      status: 'Fake',
+      status: 'Not Started',
+      grantId: 1,
       timeframe: 'None',
     },
     {
       name: 'Goal 3',
       id: 2082,
-      status: 'Fake',
+      status: 'Not Started',
+      grantId: 1,
       timeframe: 'None',
     },
   ];
@@ -68,42 +72,42 @@ describe('activityReportToCsvRecord', () => {
       id: 11,
       title: 'Objective 1.1',
       ttaProvided: 'Training',
-      status: 'Fake',
+      status: 'Completed',
       goal: mockGoals[0],
     },
     {
       id: 12,
       title: 'Objective 1.2',
       ttaProvided: 'Training',
-      status: 'Fake',
+      status: 'Completed',
       goal: mockGoals[0],
     },
     {
       id: 13,
       title: 'Objective 2.1',
       ttaProvided: 'Training',
-      status: '',
+      status: 'Completed',
       goal: mockGoals[1],
     },
     {
       id: 14,
       title: 'Objective 2.2',
       ttaProvided: 'Training',
-      status: '',
+      status: 'Completed',
       goal: mockGoals[1],
     },
     {
       id: 15,
       title: 'Objective 2.3',
       ttaProvided: 'Training',
-      status: '',
+      status: 'Completed',
       goal: mockGoals[1],
     },
     {
       id: 16,
       title: 'Objective 3.1',
       ttaProvided: 'Training',
-      status: '',
+      status: 'Completed',
       goal: mockGoals[2],
     },
   ];
@@ -173,7 +177,7 @@ describe('activityReportToCsvRecord', () => {
   const mockReport = {
     id: 209914,
     regionId: 14,
-    reason: 'Test CSV Export',
+    reason: ['Test CSV Export'],
     submissionStatus: 'approved',
     calculatedStatus: REPORT_STATUSES.APPROVED,
     numberOfParticipants: 12,
@@ -340,31 +344,37 @@ describe('activityReportToCsvRecord', () => {
     expect(recipientInfo).toEqual('test1 - grant number 1 - 1\ntest2 - grant number 2 - 2\ntest3 - grant number 3 - 3\ntest4 - grant number 4 - 4');
   });
 
-  it('transforms goals and objectives into many values', async () => {
-    const objectives = await Objective.build(mockObjectives, { include: [{ model: Goal, as: 'goal' }] });
+  it('transforms goals and objectives into many values', () => {
+    const objectives = mockObjectives.map((mo) => ({
+      ...mo,
+      activityReportObjectives: [{
+        ttaProvided: mo.ttaProvided,
+      }],
+    }));
+
     const output = makeGoalsAndObjectivesObject(objectives);
     expect(output).toEqual({
       'goal-1': 'Goal 1',
       'objective-1.1': 'Objective 1.1',
       'objective-1.1-ttaProvided': 'Training',
-      'objective-1.1-status': 'Fake',
+      'objective-1.1-status': 'Completed',
       'objective-1.2': 'Objective 1.2',
       'objective-1.2-ttaProvided': 'Training',
-      'objective-1.2-status': 'Fake',
+      'objective-1.2-status': 'Completed',
       'goal-2': 'Goal 2',
       'objective-2.1': 'Objective 2.1',
       'objective-2.1-ttaProvided': 'Training',
-      'objective-2.1-status': '',
+      'objective-2.1-status': 'Completed',
       'objective-2.2': 'Objective 2.2',
       'objective-2.2-ttaProvided': 'Training',
-      'objective-2.2-status': '',
+      'objective-2.2-status': 'Completed',
       'objective-2.3': 'Objective 2.3',
       'objective-2.3-ttaProvided': 'Training',
-      'objective-2.3-status': '',
+      'objective-2.3-status': 'Completed',
       'goal-3': 'Goal 3',
       'objective-3.1': 'Objective 3.1',
       'objective-3.1-ttaProvided': 'Training',
-      'objective-3.1-status': '',
+      'objective-3.1-status': 'Completed',
     });
   });
 
