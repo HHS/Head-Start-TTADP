@@ -73,8 +73,7 @@ async function sendActivityReportCSV(reports, res, isAlerts = false) {
           header: 'Creator',
         },
         {
-          // Alerts export should match what we show.
-          key: isAlerts ? 'alertCollaborators' : 'collaborators',
+          key: 'collaborators',
           header: 'Collaborators',
         },
         {
