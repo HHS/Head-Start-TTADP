@@ -55,7 +55,6 @@ export default async function importGoals(fileKey, region) {
   const regionId = region;
   try {
     const cleanRoleTopics = [];
-    const cleanGrantGoals = [];
 
     for await (const el of recipients) {
       let currentGrants = [];
@@ -128,11 +127,6 @@ export default async function importGoals(fileKey, region) {
           }
         }
       }
-
-      // after each row
-      let goalId;
-      // let grantId;
-      // let currentRecipientId;
 
       for await (const goal of currentGoals) {
         if (goal) { // ignore the dummy element at index 0
