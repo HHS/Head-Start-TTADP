@@ -1,4 +1,4 @@
-import db, { User, ActivityReport, ActivityRecipient } from '..';
+import db, { User, ActivityReport } from '..';
 import { REPORT_STATUSES } from '../../constants';
 import { activityReportById } from '../../services/activityReports';
 
