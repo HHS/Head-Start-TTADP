@@ -3,13 +3,12 @@ import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Fieldset, Label } from '@trussworks/react-uswds';
 import NextStepsRepeater from './components/NextStepsRepeater';
-import FormItem from '../../../components/FormItem';
 import ReviewPage from './Review/ReviewPage';
 
 const NextSteps = ({ activityRecipientType }) => {
   // Create labels.
   const labelDisplayName = activityRecipientType === 'other-entity' ? 'Other entities' : "Recipient's";
-  const tipDisplayName = activityRecipientType === 'other-entity' ? 'other entity' : 'recipient';
+  //const tipDisplayName = activityRecipientType === 'other-entity' ? 'other entity' : 'recipient';
 
   return (
     <>
@@ -18,37 +17,21 @@ const NextSteps = ({ activityRecipientType }) => {
       </Helmet>
       <Fieldset id="specialist-field-set" key="specialist-field-set" className="smart-hub--report-legend margin-top-3">
         <Label htmlFor="input-type-text" error>Specialist&apos;s next steps</Label>
-        <FormItem
-          id="specialist-next-steps-form-item"
-          key="specialist-next-steps-form-item"
-          label="What have you agreed to do next?"
+        <NextStepsRepeater
+          id="specialist-next-steps-repeater-id"
+          key="specialist-next-steps-repeater"
           name="specialistNextSteps"
-          fieldSetWrapper
-        >
-          <NextStepsRepeater
-            id="specialist-next-steps-repeater-id"
-            key="specialist-next-steps-repeater"
-            name="specialistNextSteps"
-            ariaName="Specialist Next Steps"
-          />
-        </FormItem>
+          ariaName="Specialist Next Steps"
+        />
       </Fieldset>
       <Fieldset id="recipient-field-set" key="recipient-field-set" className="smart-hub--report-legend margin-top-3">
         <Label htmlFor="input-type-text" error>{`${labelDisplayName} next steps`}</Label>
-        <FormItem
-          id="recipient-next-steps-form-item"
-          key="recipient-next-steps-form-item"
-          label={`What has the ${tipDisplayName} agreed to do next?`}
+        <NextStepsRepeater
+          id="recipient-next-steps-repeater-id"
+          key="recipient-next-steps-repeater"
           name="recipientNextSteps"
-          fieldSetWrapper
-        >
-          <NextStepsRepeater
-            id="recipient-next-steps-repeater-id"
-            key="recipient-next-steps-repeater"
-            name="recipientNextSteps"
-            ariaName="Recipient Next Steps"
-          />
-        </FormItem>
+          ariaName="Recipient Next Steps"
+        />
       </Fieldset>
     </>
   );
