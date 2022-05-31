@@ -126,7 +126,7 @@ describe('Activity report service', () => {
         Region.create({ name: 'office 22', id: 22 }),
       ]);
       await Grant.create({
-        number: 1, recipientId: ALERT_RECIPIENT_ID, regionId: 22, status: 'Active',
+        id: ALERT_RECIPIENT_ID, number: 1, recipientId: ALERT_RECIPIENT_ID, regionId: 22, status: 'Active',
       });
     });
 
@@ -748,11 +748,6 @@ describe('Activity report service', () => {
         const recipients = await possibleRecipients(region);
 
         expect(recipients.grants.length).toBe(0);
-      });
-
-      it('retrieves all recipients when not specifying region', async () => {
-        const recipients = await possibleRecipients();
-        expect(recipients.grants.length).toBe(11);
       });
     });
 

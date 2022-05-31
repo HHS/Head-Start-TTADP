@@ -739,10 +739,7 @@ export async function setStatus(report, status) {
  * @returns {*} Grants and Other entities
  */
 export async function possibleRecipients(regionId) {
-  let where = { status: 'Active' };
-  if (regionId) {
-    where = { ...where, regionId };
-  }
+  const where = { status: 'Active', regionId };
 
   const grants = await Recipient.findAll({
     attributes: ['id', 'name'],
