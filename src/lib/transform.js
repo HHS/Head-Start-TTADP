@@ -245,7 +245,7 @@ const arTransformers = [
   'creatorName',
   transformRelatedModel('lastUpdatedBy', 'name'),
   'requester',
-  transformCollaborators('activityReportCollaborators', 'fullName', 'alertCollaborators'),
+  transformCollaborators('activityReportCollaborators', 'fullName', 'collaborators'),
   transformApproversModel('name'),
   'targetPopulations',
   'virtualDeliveryType',
