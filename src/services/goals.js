@@ -138,6 +138,9 @@ export async function goalByIdWithActivityReportsAndRegions(goalId) {
   });
 }
 
+// eslint-disable-next-line no-empty-function
+export async function copyGoalsToGrants(goals, grantIds) {}
+
 async function cleanupObjectivesForGoal(goalId, currentObjectives) {
   // get all objectives not currently on a goal
   const orphanedObjectives = await Objective.findAll({
