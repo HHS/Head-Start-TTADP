@@ -408,7 +408,6 @@ describe('Activity report service', () => {
           (a, b) => ((a.role > b.role) ? 1 : -1),
         );
         expect(activityReportCollaborator[0].fullName).toBe('user1115665161, GS, HS');
-        expect(activityReportCollaborator[0].fullNameSubstituteRoles).toBe('user1115665161, GS, HS');
         expect(activityReportCollaborator[0].collaboratorRoles[0].role).toBe('Grants Specialist');
         expect(activityReportCollaborator[0].collaboratorRoles[1].role).toBe('Health Specialist');
 
@@ -419,7 +418,6 @@ describe('Activity report service', () => {
         expect(activityReportCollaborator).not.toBe(null);
         expect(activityReportCollaborator.length).toBe(1);
         expect(activityReportCollaborator[0].fullName).toBe('user265157914, COR');
-        expect(activityReportCollaborator[0].fullNameSubstituteRoles).toBe('user265157914, COR');
         expect(activityReportCollaborator[0].collaboratorRoles.length).toBe(1);
         expect(activityReportCollaborator[0].collaboratorRoles[0].role).toBe('COR');
 
@@ -430,7 +428,6 @@ describe('Activity report service', () => {
         expect(activityReportCollaborator).not.toBe(null);
         expect(activityReportCollaborator.length).toBe(1);
         expect(activityReportCollaborator[0].fullName).toBe('user39861962');
-        expect(activityReportCollaborator[0].fullNameSubstituteRoles).toBe('user39861962');
         expect(activityReportCollaborator[0].collaboratorRoles.length).toBe(0);
       });
 

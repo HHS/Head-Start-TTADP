@@ -42,7 +42,7 @@ function ReportRow({
 
   const collaboratorNames = activityReportCollaborators
     ? activityReportCollaborators.map((collaborator) => (
-      collaborator.fullNameSubstituteRoles)) : [];
+      collaborator.fullName)) : [];
 
   const viewOrEditLink = calculatedStatus === 'approved' ? `/activity-reports/view/${id}` : `/activity-reports/${id}`;
   const linkTarget = legacyId ? `/activity-reports/legacy/${legacyId}` : viewOrEditLink;

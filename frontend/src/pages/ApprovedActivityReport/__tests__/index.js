@@ -24,12 +24,10 @@ describe('Activity report print and share view', () => {
     activityReportCollaborators: [
       {
         fullName: 'Test',
-        fullNameSubstituteRoles: 'Test',
         user: { fullName: 'Test' },
       },
       {
         fullName: 'Test 2',
-        fullNameSubstituteRoles: 'Test 2',
         user: { fullName: 'Test 2' },
       }],
     approvers: [

@@ -216,7 +216,7 @@ export default function ApprovedActivityReport({ match, user }) {
         const targetPopulations = data.targetPopulations.map((population) => population).join(', '); // Approvers.
         const approvingManagers = data.approvers.map((a) => a.User.fullName).join(', ');
         const collaborators = data.activityReportCollaborators.map(
-          (a) => a.fullNameSubstituteRoles, // Match what we show on the landing.
+          (a) => a.fullName,
         );
 
         // Approver Notes.

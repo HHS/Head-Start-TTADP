@@ -1,12 +1,10 @@
 const { Model } = require('sequelize');
 
-const generateFullName = (user, collaboratorRoles, substituteUserRoles = false) => {
-  const roles = collaboratorRoles ? collaboratorRoles.map((r) => r.role).sort() : [];
-
-  if (!roles.length && substituteUserRoles) {
-    return user.fullName;
+const generateFullName = (user, collaboratorRoles) => {
+  if (!collaboratorRoles.length) {
+    return user.fullName; // Contains name and roles from user.
   }
-
+  const roles = collaboratorRoles.map((r) => r.role).sort();
   const combinedRoles = roles.reduce((result, val) => {
     if (val) {
       return val === 'TTAC' || val === 'COR' ? `${result}, ${val}` : `${result}, ${val.split(' ').map((word) => word[0]).join('')}`;
@@ -36,18 +34,7 @@ module.exports = (sequelize, DataTypes) => {
     fullName: {
       type: DataTypes.VIRTUAL,
       get() {
-        return this.collaboratorRoles
-          ? generateFullName(this.user, this.collaboratorRoles)
-          : this.user.name;
-      },
-    },
-    fullNameSubstituteRoles: {
-      type: DataTypes.VIRTUAL,
-      get() {
-        // If the report was created before we saved collaborator roles.
-        // We can use this field to ensure roles showed as they did before.
-        // Otherwise it will pull from the 'CollaboratorRoles' table.
-        return generateFullName(this.user, this.collaboratorRoles, true);
+        return generateFullName(this.user, this.collaboratorRoles);
       },
     },
   }, {
