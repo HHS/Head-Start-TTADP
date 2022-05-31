@@ -117,19 +117,9 @@ describe('goalStatusGraph', () => {
   });
 
   describe('it ignores status of', () => {
-    // it('null', () => {
-    //   const notDefined = response.null;
-    //   expect(notDefined).toBeUndefined();
-    // });
-
     it('draft', () => {
       const draft = response[GOAL_STATUS.DRAFT];
       expect(draft).toBeUndefined();
     });
-
-    // it('empty string', () => {
-    //   const empty = response[''];
-    //   expect(empty).toBeUndefined();
-    // });
   });
 });
