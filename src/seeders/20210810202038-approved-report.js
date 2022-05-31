@@ -55,6 +55,8 @@ module.exports = {
     await queryInterface.bulkInsert('ActivityReports', reports);
     await queryInterface.bulkInsert('ActivityRecipients', recipients);
     await queryInterface.bulkInsert('ActivityReportApprovers', approvers);
+    await queryInterface.sequelize.query(`ALTER SEQUENCE "ActivityReports_id_seq" RESTART WITH ${reports[reports.length - 1].id + 1};`);
+    await queryInterface.sequelize.query(`ALTER SEQUENCE "ActivityParticipants_id_seq" RESTART WITH ${recipients[recipients.length - 1].id + 1};`);
   },
 
   down: async (queryInterface) => {

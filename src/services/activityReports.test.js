@@ -126,7 +126,7 @@ describe('Activity report service', () => {
         Region.create({ name: 'office 22', id: 22 }),
       ]);
       await Grant.create({
-        id: ALERT_RECIPIENT_ID, number: 1, recipientId: ALERT_RECIPIENT_ID, regionId: 22, status: 'Active',
+        number: 1, recipientId: ALERT_RECIPIENT_ID, regionId: 22, status: 'Active',
       });
     });
 
@@ -144,7 +144,7 @@ describe('Activity report service', () => {
       await User.destroy({ where: { id: userIds } });
       await Permission.destroy({ where: { userId: userIds } });
       await OtherEntity.destroy({ where: { id: ALERT_RECIPIENT_ID } });
-      await Grant.destroy({ where: { id: [ALERT_RECIPIENT_ID] } });
+      await Grant.destroy({ where: { recipientId: [ALERT_RECIPIENT_ID] } });
       await Recipient.destroy({ where: { id: [ALERT_RECIPIENT_ID] } });
       await Region.destroy({ where: { id: 22 } });
     });

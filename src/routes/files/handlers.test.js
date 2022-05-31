@@ -2,6 +2,7 @@ import { validate } from 'uuid';
 import waitFor from 'wait-for-expect';
 import db, {
   File,
+  ActivityRecipient,
   ActivityReport,
   ActivityReportFile,
   User,
@@ -58,7 +59,7 @@ describe('File Upload', () => {
     process.env.CURRENT_USER_ID = '2046';
   });
   afterAll(async () => {
-    await File.destroy({
+    const files = await File.findAll({
       include: [
         {
           model: ActivityReportFile,
@@ -68,6 +69,7 @@ describe('File Upload', () => {
         },
       ],
     });
+    await Promise.all(files.map(async (file) => File.destroy({ where: { id: file.id } })));
     await ActivityReport.destroy({ where: { id: report.dataValues.id } });
     await User.destroy({ where: { id: user.id } });
     process.env = ORIGINAL_ENV; // restore original env
