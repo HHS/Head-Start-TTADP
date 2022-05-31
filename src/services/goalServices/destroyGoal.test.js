@@ -4,7 +4,6 @@ import { destroyGoal } from '../goals';
 import db, {
   Goal,
   Grant,
-  GrantGoal,
   Recipient,
   Objective,
   ObjectiveResource,

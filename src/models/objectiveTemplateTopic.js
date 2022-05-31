@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { auditLogger } = require('../logger');
+// const { auditLogger } = require('../logger');
 
 /**
    * ObjectiveTopic table. Junction table

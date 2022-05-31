@@ -1,9 +1,6 @@
 import { REPORT_STATUSES } from '../constants';
 import {
   ActivityReport,
-  Goal,
-  ActivityReportObjective,
-  Objective,
   User,
   ActivityRecipient,
   ActivityReportApprover,
