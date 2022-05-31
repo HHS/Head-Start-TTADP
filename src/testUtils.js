@@ -175,14 +175,10 @@ export async function destroyReport(report) {
 
   await Promise.all(dbReport.activityRecipients.map(async (recipient) => {
     const grant = await Grant.findByPk(recipient.grantId);
-    await ActivityRecipient.destroy({
-      where: {
-        id: recipient.id,
-      },
-    });
 
-    let results = await ActivityRecipient.findAll({ where: { grantId: grant.id } });
-    if (results.length === 0) {
+    const otherRecipients = await ActivityRecipient.findAll({ where: { grantId: grant.id } });
+    const otherGoals = await Goal.findAll({ where: { grantId: grant.id } });
+    if (otherRecipients.length === 0 && otherGoals.length === 0) {
       await Grant.destroy({
         where: {
           id: grant.id,
@@ -190,7 +186,7 @@ export async function destroyReport(report) {
       });
     }
 
-    results = await Grant.findAll({ where: { recipientId: grant.recipientId } });
+    const results = await Grant.findAll({ where: { recipientId: grant.recipientId } });
     if (results.length === 0) {
       await Recipient.destroy({
         where: {
