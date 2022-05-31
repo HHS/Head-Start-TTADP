@@ -282,6 +282,7 @@ export async function getGoalsByActivityRecipient(
           endDate: activityReport ? activityReport.endDate : null,
           reasons: activityReport ? activityReport.reason : null,
           status: o.status,
+          activityReportObjectives: o.activityReportObjectives,
         });
       });
 

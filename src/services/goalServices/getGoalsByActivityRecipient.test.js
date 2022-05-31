@@ -195,7 +195,7 @@ describe('Goals by Recipient Test', () => {
       goals = await Promise.all(
         [
           // goal 1 (AR1)t
-          await Goal.create({
+          Goal.create({
             name: 'Goal 1',
             status: 'Not Started',
             timeframe: '12 months',
@@ -204,7 +204,7 @@ describe('Goals by Recipient Test', () => {
             createdAt: '2021-01-10T19:16:15.842Z',
           }),
           // goal 2 (AR1)
-          await Goal.create({
+          Goal.create({
             name: 'Goal 2',
             status: 'Not Started',
             timeframe: '12 months',
@@ -213,7 +213,7 @@ describe('Goals by Recipient Test', () => {
             createdAt: '2021-02-15T19:16:15.842Z',
           }),
           // goal 3 (AR1)
-          await Goal.create({
+          Goal.create({
             name: 'Goal 3',
             status: 'In Progress',
             timeframe: '12 months',
@@ -222,7 +222,7 @@ describe('Goals by Recipient Test', () => {
             createdAt: '2021-03-03T19:16:15.842Z',
           }),
           // goal 4 (AR2)
-          await Goal.create({
+          Goal.create({
             name: 'Goal 4',
             status: 'In Progress',
             timeframe: '12 months',
@@ -231,7 +231,7 @@ describe('Goals by Recipient Test', () => {
             createdAt: '2021-04-02T19:16:15.842Z',
           }),
           // goal 5 (AR3 Exclude)
-          await Goal.create({
+          Goal.create({
             name: 'Goal 5',
             status: 'In Progress',
             timeframe: '12 months',
@@ -253,37 +253,37 @@ describe('Goals by Recipient Test', () => {
     const objectives = await Promise.all(
       [
         // objective 1 (AR1)
-        await Objective.create({
+        Objective.create({
           goalId: goalIds[0],
           title: 'objective 1',
           status: 'Not Started',
         }),
         // objective 2 (AR1)
-        await Objective.create({
+        Objective.create({
           goalId: goalIds[1],
           title: 'objective 2',
           status: 'Not Started',
         }),
         // objective 3 (AR1)
-        await Objective.create({
+        Objective.create({
           goalId: goalIds[2],
           title: 'objective 3',
           status: 'In Progress',
         }),
         // objective 4 (AR1)
-        await Objective.create({
+        Objective.create({
           goalId: goalIds[2],
           title: 'objective 4',
           status: 'Completed',
         }),
         // objective 5 (AR2)
-        await Objective.create({
+        Objective.create({
           goalId: goalIds[3],
           title: 'objective 5',
           status: 'Not Started',
         }),
         // objective 6 (AR3)
-        await Objective.create({
+        Objective.create({
           goalId: goalIds[4],
           title: 'objective 6',
           status: 'Not Started',
@@ -298,37 +298,37 @@ describe('Goals by Recipient Test', () => {
     await Promise.all(
       [
         // AR 1 Obj 1.
-        await ActivityReportObjective.create({
+        ActivityReportObjective.create({
           objectiveId: objectives[0].id,
           activityReportId: savedGoalReport1.id,
           ttaProvided: 'Objective for Goal 1',
         }),
         // AR 1 Obj 2.
-        await ActivityReportObjective.create({
+        ActivityReportObjective.create({
           objectiveId: objectives[1].id,
           activityReportId: savedGoalReport1.id,
           ttaProvided: 'Objective for Goal 2',
         }),
         // AR 1 Obj 3.
-        await ActivityReportObjective.create({
+        ActivityReportObjective.create({
           objectiveId: objectives[2].id,
           activityReportId: savedGoalReport1.id,
           ttaProvided: 'Objective for Goal 3',
         }),
         // AR 1 Obj 4.
-        await ActivityReportObjective.create({
+        ActivityReportObjective.create({
           objectiveId: objectives[3].id,
           activityReportId: savedGoalReport1.id,
           ttaProvided: 'Objective for Goal 3 b',
         }),
         // AR 2 Obj 5.
-        await ActivityReportObjective.create({
+        ActivityReportObjective.create({
           objectiveId: objectives[4].id,
           activityReportId: savedGoalReport2.id,
           ttaProvided: 'Objective for Goal 4',
         }),
         // AR 3 Obj 6 (Exclude).
-        await ActivityReportObjective.create({
+        ActivityReportObjective.create({
           objectiveId: objectives[5].id,
           activityReportId: savedGoalReport3.id,
           ttaProvided: 'Objective for Goal 5 Exclude',
