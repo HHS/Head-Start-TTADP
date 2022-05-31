@@ -12,6 +12,7 @@ const { beforeValidate, afterCreate, afterUpdate } = require('./hooks/objective'
 module.exports = (sequelize, DataTypes) => {
   class Objective extends Model {
     static associate(models) {
+      Objective.hasMany(models.ActivityReportObjective, { foreignKey: 'objectiveId', as: 'activityReportObjectives' });
       Objective.belongsToMany(models.ActivityReport, {
         through: models.ActivityReportObjective,
         foreignKey: 'objectiveId',

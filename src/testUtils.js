@@ -173,7 +173,7 @@ export async function destroyReport(report) {
     },
   });
 
-  const destroys = dbReport.activityRecipients.map(async (recipient) => {
+  await Promise.all(dbReport.activityRecipients.map(async (recipient) => {
     const grant = await Grant.findByPk(recipient.grantId);
     await ActivityRecipient.destroy({
       where: {
@@ -198,9 +198,8 @@ export async function destroyReport(report) {
         },
       });
     }
-  });
+  }));
 
-  await Promise.all(destroys);
   await ActivityReport.destroy({
     where: {
       id: report.id,
