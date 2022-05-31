@@ -13,6 +13,7 @@ import './GoalTable.css';
 import { getRecipientGoals } from '../../fetchers/recipient';
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
 import { updateGoalStatus } from '../../fetchers/goals';
+import useSessionSort from '../../hooks/useSessionSort';
 
 function GoalsTable({
   recipientId,
@@ -65,12 +66,7 @@ function GoalsTable({
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Grid and Paging.
-  const [activePage, setActivePage] = useState(1);
-  const [goalsCount, setGoalsCount] = useState(0);
-  const [offset, setOffset] = useState(0);
-  const [perPage] = useState(GOALS_PER_PAGE);
-  const [sortConfig, setSortConfig] = useState(showNewGoals
+  const defaultSort = showNewGoals
     ? {
       sortBy: 'createdOn',
       direction: 'desc',
@@ -78,7 +74,16 @@ function GoalsTable({
     : {
       sortBy: 'goalStatus',
       direction: 'asc',
-    });
+    };
+
+  // Grid and Paging.
+  const [sortConfig, setSortConfig] = useSessionSort({
+    ...defaultSort,
+    activePage: 1,
+    offset: 0,
+  }, `goalsTable/${recipientId}/${regionId}`);
+
+  const [goalsCount, setGoalsCount] = useState(0);
 
   useEffect(() => {
     async function fetchGoals() {
@@ -90,8 +95,8 @@ function GoalsTable({
           regionId,
           sortConfig.sortBy,
           sortConfig.direction,
-          offset,
-          perPage,
+          sortConfig.offset,
+          GOALS_PER_PAGE,
           filterQuery,
         );
         setGoals(goalRows);
@@ -105,12 +110,13 @@ function GoalsTable({
       setLoading(false);
     }
     fetchGoals();
-  }, [sortConfig, offset, perPage, filters, recipientId, regionId, showNewGoals]);
+  }, [sortConfig, filters, recipientId, regionId, showNewGoals]);
 
   const handlePageChange = (pageNumber) => {
     if (!loading) {
-      setActivePage(pageNumber);
-      setOffset((pageNumber - 1) * perPage);
+      setSortConfig({
+        ...sortConfig, activePage: pageNumber, offset: (pageNumber - 1) * GOALS_PER_PAGE,
+      });
     }
   };
 
@@ -123,9 +129,9 @@ function GoalsTable({
     ) {
       direction = 'desc';
     }
-    setActivePage(1);
-    setOffset(0);
-    setSortConfig({ sortBy, direction });
+    setSortConfig({
+      ...sortConfig, sortBy, direction, activePage: 1, offset: 0,
+    });
   };
 
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
@@ -174,7 +180,9 @@ function GoalsTable({
   const updateGoal = (newGoal) => {
     // Update Status on Goal.
     const newGoals = goals.map(
-      (g) => (g.id === newGoal.id ? { ...g, goalStatus: newGoal.status } : g),
+      (g) => (g.id === newGoal.id ? {
+        ...g, goalStatus: newGoal.status, previousStatus: newGoal.previousStatus,
+      } : g),
     );
     setGoals(newGoals);
   };
@@ -201,9 +209,9 @@ function GoalsTable({
         <GoalsTableHeader
           title="TTA goals and objectives"
           count={goalsCount || 0}
-          activePage={activePage}
-          offset={offset}
-          perPage={perPage}
+          activePage={sortConfig.activePage}
+          offset={sortConfig.offset}
+          perPage={GOALS_PER_PAGE}
           handlePageChange={handlePageChange}
           recipientId={recipientId}
           regionId={regionId}
@@ -229,7 +237,7 @@ function GoalsTable({
                 <GoalRow
                   key={goal.id}
                   goal={goal}
-                  openMenuUp={index > displayGoals.length - 1}
+                  openMenuUp={index >= displayGoals.length - 2} // the last two should open "up"
                   updateGoal={updateGoal}
                   recipientId={recipientId}
                   regionId={regionId}

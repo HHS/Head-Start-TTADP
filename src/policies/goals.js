@@ -1,4 +1,5 @@
 import { find, isUndefined } from 'lodash';
+import { REPORT_STATUSES } from '../constants';
 import SCOPES from '../middleware/scopeConstants';
 
 export default class Goal {
@@ -16,8 +17,7 @@ export default class Goal {
       return false;
     }
 
-    const regions = this.goal.grants.map((grant) => grant.regionId);
-    return regions.every((region) => this.canWriteInRegion(region));
+    return this.canWriteInRegions();
   }
 
   canCreate() {
@@ -26,6 +26,11 @@ export default class Goal {
 
   canEdit() {
     return this.canDelete();
+  }
+
+  canWriteInRegions() {
+    const regions = this.goal.grants.map((grant) => grant.regionId);
+    return regions.every((region) => this.canWriteInRegion(region));
   }
 
   // refactored to take a region id rather than directly check
@@ -66,11 +71,29 @@ export default class Goal {
   // you can see the structure expected in the conditions below
   //
   // TODO - it's been noted that this would be a great candidate for a virtual field
+  // note about above todo - is that possible?
   isOnApprovedActivityReports() {
     return this.goal.objectives
       && this.goal.objectives.length
-      && this.goal.objectives[0].activityReports
-      && this.goal.objectives[0].activityReports.length;
+      && this.goal.objectives.some((objective) => (
+        objective.activityReports
+        && objective.activityReports.length
+        && objective.activityReports.some(
+          (report) => report.calculatedStatus === REPORT_STATUSES.APPROVED,
+        )
+      ));
+  }
+
+  isOnActivityReports() {
+    return this.goal.objectives
+      && this.goal.objectives.length
+      && this.goal.objectives.some((objective) => (
+        objective.activityReports && objective.activityReports.length
+      ));
+  }
+
+  canChangeStatus() {
+    return this.canWriteInRegions();
   }
 
   canView() {

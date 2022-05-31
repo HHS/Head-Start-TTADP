@@ -11,6 +11,7 @@ import GoalStatusGraph from '../../../widgets/GoalStatusGraph';
 import GoalsTable from '../../../components/GoalsTable/GoalsTable';
 import UserContext from '../../../UserContext';
 import { getUserRegions } from '../../../permissions';
+import FilterContext from '../../../FilterContext';
 
 export default function GoalsObjectives({
   recipientId, regionId, recipient, location,
@@ -79,13 +80,15 @@ export default function GoalsObjectives({
             <GoalStatusGraph filters={filtersToApply} />
           </Grid>
         </Grid>
-        <GoalsTable
-          recipientId={recipientId}
-          regionId={regionId}
-          filters={expandFilters(filters)}
-          hasActiveGrants={hasActiveGrants}
-          showNewGoals={showNewGoals || false}
-        />
+        <FilterContext.Provider value={{ filterKey: FILTER_KEY }}>
+          <GoalsTable
+            recipientId={recipientId}
+            regionId={regionId}
+            filters={expandFilters(filters)}
+            hasActiveGrants={hasActiveGrants}
+            showNewGoals={showNewGoals || false}
+          />
+        </FilterContext.Provider>
       </div>
     </>
   );

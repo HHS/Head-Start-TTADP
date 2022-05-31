@@ -62,7 +62,7 @@ function ObjectiveRow({
     },
     {
       stored: 'Complete',
-      display: 'Closed',
+      display: 'Complete',
     },
     {
       stored: 'Not Started',
@@ -90,7 +90,7 @@ function ObjectiveRow({
   const getObjectiveStatusIcon = (() => {
     if (displayObjStatus === 'In progress') {
       return <InProgress />;
-    } if (displayObjStatus === 'Closed') {
+    } if (displayObjStatus === 'Complete') {
       return <Closed />;
     }
     if (displayObjStatus === 'Not started') {
