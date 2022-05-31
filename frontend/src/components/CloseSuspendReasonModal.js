@@ -9,7 +9,7 @@ import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '../Constants';
 import './CloseSuspendReasonModal.scss';
 
 const CloseSuspendReasonModal = ({
-  modalRef, goalId, newStatus, onSubmit, resetValues,
+  modalRef, goalId, newStatus, onSubmit, resetValues, oldGoalStatus,
 }) => {
   const [closeSuspendReason, setCloseSuspendReason] = useState('');
   const [closeSuspendContext, setCloseSuspendContext] = useState('');
@@ -24,7 +24,7 @@ const CloseSuspendReasonModal = ({
 
   const reasonDisplayStatus = newStatus === 'Completed' ? 'closing' : 'suspending';
   const reasonRadioOptions = newStatus === 'Completed' ? GOAL_CLOSE_REASONS : GOAL_SUSPEND_REASONS;
-  const ReasonChanged = (e) => {
+  const reasonChanged = (e) => {
     setCloseSuspendReason(e.target.value);
     setShowValidationError(false);
   };
@@ -33,13 +33,17 @@ const CloseSuspendReasonModal = ({
     <Radio
       id={`radio-reason-${goalId}-${i + 1}`}
       key={`radio-reason-${goalId}-${i + 1}`}
-      onChange={ReasonChanged}
+      onChange={reasonChanged}
       name="closeSuspendReason"
       label={r}
       value={r}
       className="smart-hub--report-checkbox"
       checked={closeSuspendReason === r}
     />
+    // <>
+    // <input type="radio" id={`reason-${goalId}-1`} value={r} />
+    // <label htmlFor={`reason-${goalId}-1`}>
+    // </>
   ));
   const contextChanged = (e) => {
     setCloseSuspendContext(e.target.value);
@@ -49,7 +53,7 @@ const CloseSuspendReasonModal = ({
     if (!closeSuspendReason) {
       setShowValidationError(true);
     } else {
-      onSubmit(goalId, newStatus, closeSuspendReason, closeSuspendContext);
+      onSubmit(goalId, newStatus, oldGoalStatus, closeSuspendReason, closeSuspendContext);
     }
   };
 
@@ -74,7 +78,9 @@ const CloseSuspendReasonModal = ({
             <Fieldset>
               <legend className="sr-only">
                 Why are you
+                {' '}
                 {reasonDisplayStatus}
+                {' '}
                 this goal?
               </legend>
               {showValidationError ? <ErrorMessage>{`Please select a reason for ${reasonDisplayStatus} goal.`}</ErrorMessage> : null}
@@ -112,6 +118,7 @@ CloseSuspendReasonModal.propTypes = {
   newStatus: PropTypes.string.isRequired,
   onSubmit: PropTypes.func.isRequired,
   resetValues: PropTypes.bool.isRequired,
+  oldGoalStatus: PropTypes.string.isRequired,
 };
 
 export default CloseSuspendReasonModal;
