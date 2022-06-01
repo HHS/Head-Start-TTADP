@@ -22,8 +22,8 @@ export async function createOrUpdateGoals(goals) {
 
 export async function updateGoalStatus(
   goalId,
-  oldStatus,
   newStatus,
+  oldStatus,
   closeSuspendReason,
   closeSuspendContext,
 ) {

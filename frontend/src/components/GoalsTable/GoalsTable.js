@@ -28,12 +28,14 @@ function GoalsTable({
   // Close/Suspend Reason Modal.
   const [closeSuspendGoalId, setCloseSuspendGoalId] = useState(0);
   const [closeSuspendStatus, setCloseSuspendStatus] = useState('');
+  const [closeSuspendOldStatus, setCloseSuspendOldStatus] = useState(null);
   const [resetModalValues, setResetModalValues] = useState(false);
   const closeSuspendModalRef = useRef();
 
-  const showCloseSuspendGoalModal = (status, goalId) => {
+  const showCloseSuspendGoalModal = (status, goalId, oldGoalStatus) => {
     setCloseSuspendGoalId(goalId);
     setCloseSuspendStatus(status);
+    setCloseSuspendOldStatus(oldGoalStatus);
     setResetModalValues(!resetModalValues); // Always flip to trigger form reset useEffect.
     closeSuspendModalRef.current.toggleModal(true);
   };
@@ -56,6 +58,7 @@ function GoalsTable({
       // Close from a close suspend reason submit.
       closeSuspendModalRef.current.toggleModal(false);
     }
+
     const newGoals = goals.map(
       (g) => (g.id === updatedGoal.id ? { ...g, goalStatus: updatedGoal.status } : g),
     );
@@ -177,16 +180,6 @@ function GoalsTable({
 
   const displayGoals = goals && goals.length ? goals : [];
 
-  const updateGoal = (newGoal) => {
-    // Update Status on Goal.
-    const newGoals = goals.map(
-      (g) => (g.id === newGoal.id ? {
-        ...g, goalStatus: newGoal.status, previousStatus: newGoal.previousStatus,
-      } : g),
-    );
-    setGoals(newGoals);
-  };
-
   return (
     <>
       {error && (
@@ -199,12 +192,12 @@ function GoalsTable({
       <Container className="goals-table maxw-full overflow-x-hidden" padding={0} loading={loading} loadingLabel="Goals table loading">
         <CloseSuspendReasonModal
           id="close-suspend-reason-modal"
-          key="close-suspend-reason-modal"
           goalId={closeSuspendGoalId}
           newStatus={closeSuspendStatus}
           modalRef={closeSuspendModalRef}
           onSubmit={performGoalStatusUpdate}
           resetValues={resetModalValues}
+          oldGoalStatus={closeSuspendOldStatus}
         />
         <GoalsTableHeader
           title="TTA goals and objectives"
@@ -238,7 +231,6 @@ function GoalsTable({
                   key={goal.id}
                   goal={goal}
                   openMenuUp={index >= displayGoals.length - 2} // the last two should open "up"
-                  updateGoal={updateGoal}
                   recipientId={recipientId}
                   regionId={regionId}
                   showCloseSuspendGoalModal={showCloseSuspendGoalModal}
