@@ -96,7 +96,7 @@ export default function NextStepsRepeater({
   return (
     <>
       <div className="ttahub-next-steps-repeater">
-        { fields.map((item, index) => (
+        {fields.map((item, index) => (
           <div key={`${stepType}-parent-div-${index + 1}`}>
             <FormItem
               id={`${stepType}-next-steps-form-item-step`}
@@ -110,12 +110,15 @@ export default function NextStepsRepeater({
                 className="margin-top-1"
                 error={blurStepValidations[index]}
               >
-                {blurStepValidations[index] || (errors[name] && errors[name][index].note)
+                {blurStepValidations[index] || (errors[name]
+                  && errors[name][index] && errors[name][index].note)
                   ? <ErrorMessage>Enter a next step</ErrorMessage>
                   : null}
                 <div
                   key={`${stepType}-next-step-flex-step-${index + 1}`}
-                  className={`display-flex ${blurStepValidations[index] || (errors[name] && errors[name][index].note) ? 'blank-next-step' : ''}`}
+                  className={`display-flex ${blurStepValidations[index]
+                    || (errors[name] && errors[name][index]
+                      && errors[name][index].note) ? 'blank-next-step' : ''}`}
                 >
                   <Label
                     htmlFor={`${stepType}-next-step-${index + 1}`}
@@ -138,7 +141,7 @@ export default function NextStepsRepeater({
                     style={{ height: !heights[index] ? `${DEFAULT_STEP_HEIGHT}px` : heights[index] }}
                     onChange={(e) => onStepTextChanged(e, index)}
                   />
-                  { canDelete ? (
+                  {canDelete ? (
                     <Button
                       className="margin-top-0"
                       unstyled
@@ -150,7 +153,7 @@ export default function NextStepsRepeater({
                       <span className="sr-only">
                         remove step
                         {' '}
-                        { index + 1 }
+                        {index + 1}
                       </span>
                     </Button>
                   ) : null}
@@ -169,12 +172,16 @@ export default function NextStepsRepeater({
                 className="margin-top-1"
                 error={blurDateValidations[index]}
               >
-                {blurDateValidations[index] || (errors[name] && errors[name][index].completeDate)
+                {blurDateValidations[index]
+                || (errors[name] && errors[name][index]
+                && errors[name][index].completeDate)
                   ? <ErrorMessage>Enter a complete date</ErrorMessage>
                   : null}
                 <div
                   key={`${stepType}-next-step-flex-date-${index + 1}`}
-                  className={`display-flex ${blurStepValidations[index] || (errors[name] && errors[name][index].note) ? 'blank-next-step' : ''}`}
+                  className={`${blurDateValidations[index]
+                    || (errors[name] && errors[name][index]
+                    && errors[name][index].completeDate) ? 'blank-next-step' : ''}`}
                 >
                   <Label
                     htmlFor={`${stepType}-next-step-complete-date${index + 1}`}
@@ -208,9 +215,9 @@ export default function NextStepsRepeater({
                 unstyled
                 onClick={onAddNewStep}
                 data-testid={
-                   `${name === 'specialistNextSteps'
-                     ? 'specialist' : 'recipient'}NextSteps-button`
-                   }
+                  `${name === 'specialistNextSteps'
+                    ? 'specialist' : 'recipient'}NextSteps-button`
+                }
               >
                 <FontAwesomeIcon className="margin-right-1" color="#005ea2" icon={faPlusCircle} />
                 Add next step
@@ -218,7 +225,7 @@ export default function NextStepsRepeater({
             )
             : null
 
-                  }
+        }
       </div>
     </>
   );

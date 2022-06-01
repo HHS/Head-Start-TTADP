@@ -87,8 +87,8 @@ export const findWhatsChanged = (object, base) => {
 
     if (current === 'specialistNextSteps' || current === 'recipientNextSteps') {
       if (object[current] && object[current].length) {
+        accumulator[current] = [];
         object[current].forEach((step) => {
-          accumulator[current] = [];
           if (!step.completeDate || !moment(step.completeDate, 'MM/DD/YYYY').isValid()) {
             const newStep = { ...step };
             newStep.completeDate = null;
