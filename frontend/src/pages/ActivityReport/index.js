@@ -313,16 +313,16 @@ function ActivityReport({
 
         let shouldUpdateFromNetwork = true;
 
-        // this if statemenrt compares the "saved to storage time" and the
+        // this if statement compares the "saved to storage time" and the
         // time retrieved from the network (report.updatedAt)
-        // and whichever is newe "wins"
+        // and whichever is newer "wins"
 
         if (formData && savedToStorageTime) {
           const updatedAtFromNetwork = moment(report.updatedAt);
           const updatedAtFromLocalStorage = moment(savedToStorageTime);
           if (updatedAtFromNetwork.isValid() && updatedAtFromLocalStorage.isValid()) {
             const storageIsNewer = updatedAtFromLocalStorage.isAfter(updatedAtFromNetwork);
-            if (storageIsNewer) {
+            if (storageIsNewer && formData.calculatedStatus === REPORT_STATUSES.DRAFT) {
               shouldUpdateFromNetwork = false;
             }
           }
