@@ -49,7 +49,7 @@ const defaultValues = {
   duration: '',
   endDate: null,
   goals: [],
-  recipientNextSteps: [{ id: null, note: '' }],
+  recipientNextSteps: [{ id: null, note: '', completeDate: null }],
   recipients: [],
   nonECLKCResourcesUsed: [{ value: '' }],
   numberOfParticipants: null,
@@ -59,7 +59,7 @@ const defaultValues = {
   participants: [],
   reason: [],
   requester: '',
-  specialistNextSteps: [{ id: null, note: '' }],
+  specialistNextSteps: [{ id: null, note: '', completeDate: null }],
   startDate: null,
   calculatedStatus: REPORT_STATUSES.DRAFT,
   targetPopulations: [],
@@ -81,6 +81,22 @@ export const findWhatsChanged = (object, base) => {
     if (current === 'startDate' || current === 'endDate') {
       if (!object[current] || !moment(object[current], 'MM/DD/YYYY').isValid()) {
         accumulator[current] = null;
+        return accumulator;
+      }
+    }
+
+    if (current === 'specialistNextSteps' || current === 'recipientNextSteps') {
+      if (object[current] && object[current].length) {
+        object[current].forEach((step) => {
+          accumulator[current] = [];
+          if (!step.completeDate || !moment(step.completeDate, 'MM/DD/YYYY').isValid()) {
+            const newStep = { ...step };
+            newStep.completeDate = null;
+            accumulator[current].push(newStep);
+          } else {
+            accumulator[current].push(step);
+          }
+        });
         return accumulator;
       }
     }
@@ -210,8 +226,8 @@ function ActivityReport({
         const isMatchingApprover = report.approvers.filter((a) => a.User && a.User.id === user.id);
 
         const canWriteAsCollaboratorOrAuthor = (isCollaborator || isAuthor)
-        && (report.calculatedStatus === REPORT_STATUSES.DRAFT
-          || report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
+          && (report.calculatedStatus === REPORT_STATUSES.DRAFT
+            || report.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
 
         const canWriteAsApprover = (isMatchingApprover && isMatchingApprover.length > 0 && (
           report.calculatedStatus === REPORT_STATUSES.SUBMITTED)
@@ -243,7 +259,7 @@ function ActivityReport({
         const canWriteReport = canWriteAsCollaboratorOrAuthor
           || (
             canWriteAsApprover
-             && !approverHasMarkedReport
+            && !approverHasMarkedReport
           );
 
         updateEditable(canWriteReport);

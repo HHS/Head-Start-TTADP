@@ -18,7 +18,7 @@ export default function NextStepsRepeater({
 }) {
   const [heights, setHeights] = useState([]);
   const [blurStepValidations, setBlurStepValidations] = useState([]);
-  // const [blurDateValidations, setBlurDateValidations] = useState([]);
+  const [blurDateValidations, setBlurDateValidations] = useState([]);
   const [showAddStepButton, setShowStepButton] = useState(false);
 
   const {
@@ -44,7 +44,7 @@ export default function NextStepsRepeater({
     const fieldArray = allValues[name] || [];
     const canAdd = fieldArray.every((field) => field.note !== '');
     if (canAdd) {
-      append({ id: null, note: '' });
+      append({ id: null, note: '', completeDate: null });
     }
   };
 
@@ -58,11 +58,9 @@ export default function NextStepsRepeater({
     setBlurStepValidations(updatedStepBlurValidations);
 
     // Remove Date Validation.
-    /*
     const updatedDateBlurValidations = blurDateValidations ? [...blurDateValidations] : [];
     updatedDateBlurValidations.splice(index, 1);
     setBlurDateValidations(updatedDateBlurValidations);
-    */
 
     // Remove Height.
     const updatedHeights = [...heights];
@@ -76,15 +74,14 @@ export default function NextStepsRepeater({
     existingValidations[i] = !note;
     setBlurStepValidations(existingValidations);
   };
-  /*
+
   const validateDateOnBlur = (date, i) => {
     // Set Date Blur Validation State.
-    console.log('Date Passed: ', date, i);
     const existingDateValidations = blurDateValidations ? [...blurDateValidations] : [];
     existingDateValidations[i] = !date;
     setBlurDateValidations(existingDateValidations);
   };
-*/
+
   const onStepTextChanged = (e, index) => {
     // Adjust Text Area Height If Greater than Default Height.
     const existingHeights = [...heights];
@@ -95,10 +92,7 @@ export default function NextStepsRepeater({
   };
 
   const stepType = name === 'specialistNextSteps' ? 'specialist' : 'recipient';
-  // console.log('Name: ', name);
-  // console.log('Errors: ', errors);
-  // console.log('Blur Date Validations: ,', blurDateValidations);
-  //console.log('Items: ', fields);
+
   return (
     <>
       <div className="ttahub-next-steps-repeater">
@@ -173,13 +167,14 @@ export default function NextStepsRepeater({
               <FormGroup
                 key={`${stepType}-next-step-form-group-date-${index + 1}`}
                 className="margin-top-1"
+                error={blurDateValidations[index]}
               >
-                {(errors[name] && errors[name][index].completeDate)
+                {blurDateValidations[index] || (errors[name] && errors[name][index].completeDate)
                   ? <ErrorMessage>Enter a complete date</ErrorMessage>
                   : null}
                 <div
                   key={`${stepType}-next-step-flex-date-${index + 1}`}
-                  className={`display-flex ${(errors[name] && errors[name][index].completeDate) ? 'blank-next-step-date' : ''}`}
+                  className={`display-flex ${blurStepValidations[index] || (errors[name] && errors[name][index].note) ? 'blank-next-step' : ''}`}
                 >
                   <Label
                     htmlFor={`${stepType}-next-step-complete-date${index + 1}`}
@@ -195,6 +190,7 @@ export default function NextStepsRepeater({
                     control={control}
                     name={`${name}[${index}].completeDate`}
                     value={item.completeDate}
+                    onBlur={({ target: { value } }) => validateDateOnBlur(value, index)}
                   />
                 </div>
               </FormGroup>
