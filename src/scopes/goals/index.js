@@ -6,6 +6,7 @@ import { withTopics, withoutTopics } from './topics';
 import { withReasons, withoutReasons } from './reasons';
 import { withRecipientId } from './recipientId';
 import { withRegion, withoutRegion } from './region';
+import { withRoles, withoutRoles } from './role';
 import { withGrantNumber, withoutGrantNumber } from './grantNumber';
 
 export const topicToQuery = {
@@ -33,6 +34,10 @@ export const topicToQuery = {
   region: {
     in: (query) => withRegion(query),
     nin: (query) => withoutRegion(query),
+  },
+  role: {
+    in: (query) => withRoles(query),
+    nin: (query) => withoutRoles(query),
   },
   grantNumber: {
     in: (query) => withGrantNumber(query),

@@ -19,6 +19,7 @@ import SCOPES from '../middleware/scopeConstants';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '../constants';
 
 import { createReport, destroyReport } from '../testUtils';
+import { auditLogger } from '../logger';
 
 const RECIPIENT_ID = 30;
 const RECIPIENT_ID_SORTING = 31;
@@ -119,7 +120,7 @@ describe('Activity report service', () => {
         User.bulkCreate([
           mockUserFour,
           mockUserFive,
-        ]),
+        ], { validate: true, individualHooks: true }),
         OtherEntity.create({ id: ALERT_RECIPIENT_ID, name: 'alert otherEntity' }),
         Recipient.create({ name: 'alert recipient', id: ALERT_RECIPIENT_ID }),
         Region.create({ name: 'office 22', id: 22 }),
@@ -143,7 +144,7 @@ describe('Activity report service', () => {
       await User.destroy({ where: { id: userIds } });
       await Permission.destroy({ where: { userId: userIds } });
       await OtherEntity.destroy({ where: { id: ALERT_RECIPIENT_ID } });
-      await Grant.destroy({ where: { id: [ALERT_RECIPIENT_ID] } });
+      await Grant.destroy({ where: { recipientId: [ALERT_RECIPIENT_ID] } });
       await Recipient.destroy({ where: { id: [ALERT_RECIPIENT_ID] } });
       await Region.destroy({ where: { id: 22 } });
     });
@@ -266,7 +267,7 @@ describe('Activity report service', () => {
           mockUserThree,
           alertsMockUserOne,
           alertsMockUserTwo,
-        ]),
+        ], { validate: true, individualHooks: true }),
         OtherEntity.create({ id: RECIPIENT_ID, name: 'otherEntity' }),
         Recipient.findOrCreate({ where: { name: 'recipient', id: RECIPIENT_ID } }),
         Region.create({ name: 'office 19', id: 19 }),
@@ -341,10 +342,10 @@ describe('Activity report service', () => {
           targetPopulations: [],
           topics: [],
           pageState: {
-            1: 'Not started',
-            2: 'Not started',
-            3: 'Not started',
-            4: 'Not started',
+            1: 'Not Started',
+            2: 'Not Started',
+            3: 'Not Started',
+            4: 'Not Started',
           },
           userId: mockUser.id,
           regionId: 1,
@@ -388,7 +389,13 @@ describe('Activity report service', () => {
           recipientNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
         };
         // When that report is created
-        const report = await createOrUpdate(reportObjectWithNotes);
+        let report;
+        try {
+          report = await createOrUpdate(reportObjectWithNotes);
+        } catch (err) {
+          auditLogger.error(err);
+          throw err;
+        }
         // Then we see that it was saved correctly
         expect(report.specialistNextSteps.length).toBe(2);
         expect(report.recipientNextSteps.length).toBe(2);
@@ -406,7 +413,13 @@ describe('Activity report service', () => {
         };
 
         // When that report is created
-        const report = await createOrUpdate(reportWithNotes);
+        let report;
+        try {
+          report = await createOrUpdate(reportWithNotes);
+        } catch (err) {
+          auditLogger.error(err);
+          throw err;
+        }
 
         // Then we see that it was saved correctly
         expect(report.recipientNextSteps.length).toBe(0);
@@ -424,7 +437,13 @@ describe('Activity report service', () => {
         };
 
         // When that report is created
-        const report = await createOrUpdate(reportWithNotes);
+        let report;
+        try {
+          report = await createOrUpdate(reportWithNotes);
+        } catch (err) {
+          auditLogger.error(err);
+          throw err;
+        }
 
         // Then we see that it was saved correctly
         expect(report.specialistNextSteps.length).toBe(0);
@@ -631,10 +650,15 @@ describe('Activity report service', () => {
           calculatedStatus: REPORT_STATUSES.APPROVED,
           topics: topicsTwo,
         });
-        await ActivityRecipient.create({
-          activityReportId: report.id,
-          grantId: firstGrant.id,
-        });
+        try {
+          await ActivityRecipient.create({
+            activityReportId: report.id,
+            grantId: firstGrant.id,
+          });
+        } catch (error) {
+          auditLogger.error(JSON.stringify(error));
+          throw error;
+        }
         latestReport = await ActivityReport.create({
           ...submittedReport,
           calculatedStatus: REPORT_STATUSES.APPROVED,
@@ -724,11 +748,6 @@ describe('Activity report service', () => {
         const recipients = await possibleRecipients(region);
 
         expect(recipients.grants.length).toBe(0);
-      });
-
-      it('retrieves all recipients when not specifying region', async () => {
-        const recipients = await possibleRecipients();
-        expect(recipients.grants.length).toBe(11);
       });
     });
 
@@ -915,22 +934,28 @@ describe('Activity report service', () => {
 
     it('handles results with less items then the limit', async () => {
       const ids = reports.map((r) => r.id);
+      ids.sort();
       const where = {
         id: ids,
       };
 
       const res = await batchQuery({ where }, 100);
-      expect(res.map((r) => r.id)).toEqual(ids);
+      const resIds = res.map((r) => r.id);
+      resIds.sort();
+      expect(resIds).toEqual(ids);
     });
 
     it('handles results with more items then the limit', async () => {
       const ids = reports.map((r) => r.id);
+      ids.sort();
       const where = {
         id: ids,
       };
 
       const res = await batchQuery({ where }, 1);
-      expect(res.map((r) => r.id)).toEqual(ids);
+      const resIds = res.map((r) => r.id);
+      resIds.sort();
+      expect(resIds).toEqual(ids);
     });
   });
 });
