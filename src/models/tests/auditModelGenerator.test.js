@@ -151,6 +151,8 @@ describe('Audit System', () => {
           throw (err);
         }
 
+        triggers.sort();
+
         expect(triggers)
           .toEqual([{
             name: 'ZALNoDeleteTTests',

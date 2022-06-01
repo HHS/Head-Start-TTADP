@@ -3,6 +3,7 @@ import waitFor from 'wait-for-expect';
 import db, {
   File,
   ActivityReport,
+  ActivityReportFile,
   User,
 } from '../../models';
 import app from '../../app';
@@ -57,7 +58,20 @@ describe('File Upload', () => {
     process.env.CURRENT_USER_ID = '2046';
   });
   afterAll(async () => {
-    await File.destroy({ where: { activityReportId: report.dataValues.id } });
+    const files = await File.findAll({
+      include: [
+        {
+          model: ActivityReportFile,
+          as: 'reportFiles',
+          required: true,
+          where: { activityReportId: report.dataValues.id },
+        },
+      ],
+    });
+    await Promise.all(files.map(async (file) => {
+      ActivityReportFile.destroy({ where: { fileId: file.id } });
+      File.destroy({ where: { id: file.id } });
+    }));
     await ActivityReport.destroy({ where: { id: report.dataValues.id } });
     await User.destroy({ where: { id: user.id } });
     process.env = ORIGINAL_ENV; // restore original env
@@ -96,7 +110,8 @@ describe('File Upload', () => {
       expect(file.dataValues.id).toBe(fileId);
       expect(file.dataValues.status).not.toBe(null);
       expect(file.dataValues.originalFileName).toBe('testfile.pdf');
-      expect(file.dataValues.activityReportId).toBe(report.dataValues.id);
+      const arf = await ActivityReportFile.findOne({ where: { fileId } });
+      expect(arf.activityReportId).toBe(report.dataValues.id);
       expect(validate(uuid)).toBe(true);
     });
     it('allows an admin to upload a file', async () => {
@@ -124,7 +139,8 @@ describe('File Upload', () => {
       expect(file.dataValues.id).toBe(fileId);
       expect(file.dataValues.status).not.toBe(null);
       expect(file.dataValues.originalFileName).toBe('testfile.pdf');
-      expect(file.dataValues.activityReportId).toBe(report.dataValues.id);
+      const arf = await ActivityReportFile.findOne({ where: { fileId } });
+      expect(arf.activityReportId).toBe(report.dataValues.id);
       expect(validate(uuid)).toBe(true);
     });
     it('tests an unauthorized delete', async () => {
@@ -132,7 +148,7 @@ describe('File Upload', () => {
         canUpdate: () => false,
       }));
       await request(app)
-        .delete(`/api/files/${report.dataValues.id}/1`)
+        .delete(`/api/files/r/${report.dataValues.id}/1`)
         .expect(403)
         .then(() => expect(deleteFileFromS3).not.toHaveBeenCalled());
     });
@@ -141,7 +157,7 @@ describe('File Upload', () => {
         canUpdate: () => true,
       }));
       await request(app)
-        .delete(`/api/files/${report.dataValues.id}/`)
+        .delete(`/api/files/r/${report.dataValues.id}/`)
         .expect(400)
         .then(() => expect(deleteFileFromS3).not.toHaveBeenCalled());
     });
@@ -157,7 +173,7 @@ describe('File Upload', () => {
         fileSize: 0,
       });
       await request(app)
-        .delete(`/api/files/${report.dataValues.id}/${file.id}`)
+        .delete(`/api/files/r/${report.dataValues.id}/${file.id}`)
         .expect(204);
       expect(deleteFileFromS3).toHaveBeenCalledWith(file.dataValues.key);
       const noFile = await File.findOne({ where: { id: file.id } });
@@ -173,7 +189,7 @@ describe('File Upload', () => {
       await request(app)
         .post('/api/files')
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(400, { error: 'reportId required' });
+        .expect(400, { error: 'an id of either reportId, reportObjectiveId, objectiveId, or objectiveTempleteId is required' });
       await expect(uploadFile).not.toHaveBeenCalled();
     });
     it('tests a file upload without a file', async () => {

@@ -5,11 +5,13 @@ import orderReportsBy from '../lib/orderReportsBy';
 import filtersToScopes from '../scopes';
 import { setReadRegions } from './accessValidation';
 import { syncApprovers } from './activityReportApprovers';
+// import { auditLogger } from '../logger';
 
 import {
   ActivityReport,
   ActivityReportApprover,
   ActivityReportCollaborator,
+  ActivityReportFile,
   sequelize,
   ActivityRecipient,
   File,
@@ -74,7 +76,7 @@ async function saveReportCollaborators(activityReportId, collaborators) {
   if (newCollaborators.length > 0) {
     await ActivityReportCollaborator.bulkCreate(
       newCollaborators,
-      { ignoreDuplicates: true },
+      { ignoreDuplicates: true, validate: true, individualHooks: true },
     );
     await ActivityReportCollaborator.destroy(
       {
@@ -142,7 +144,30 @@ async function saveReportRecipients(
     };
   }
 
-  await ActivityRecipient.bulkCreate(newRecipients, { ignoreDuplicates: true });
+  await Promise.all(
+    newRecipients.map(async (newRecipient) => {
+      if (newRecipient.grantId) {
+        return ActivityRecipient.findOrCreate({
+          where: {
+            activityReportId: newRecipient.activityReportId,
+            grantId: newRecipient.grantId,
+          },
+          defaults: newRecipient,
+        });
+      }
+      if (newRecipient.otherEntityId) {
+        return ActivityRecipient.findOrCreate({
+          where: {
+            activityReportId: newRecipient.activityReportId,
+            otherEntityId: newRecipient.otherEntityId,
+          },
+          defaults: newRecipient,
+        });
+      }
+      return null;
+    }),
+  );
+
   await ActivityRecipient.destroy({ where });
 }
 
@@ -190,14 +215,22 @@ export function activityReportByLegacyId(legacyId) {
     },
     include: [
       {
-        model: File,
-        where: {
-          status: {
-            [Op.ne]: 'UPLOAD_FAILED',
-          },
-        },
-        as: 'attachments',
+        model: ActivityReportFile,
+        as: 'reportFiles',
         required: false,
+        separate: true,
+        include: [
+          {
+            model: File,
+            where: {
+              status: {
+                [Op.ne]: 'UPLOAD_FAILED',
+              },
+            },
+            as: 'file',
+            required: false,
+          },
+        ],
       },
       {
         model: ActivityReportApprover,
@@ -280,15 +313,22 @@ export function activityReportById(activityReportId) {
         required: false,
       },
       {
-        model: File,
-        where: {
-          status: {
-            [Op.ne]: 'UPLOAD_FAILED',
-          },
-        },
-        as: 'attachments',
+        model: ActivityReportFile,
+        as: 'reportFiles',
         required: false,
         separate: true,
+        include: [
+          {
+            model: File,
+            where: {
+              status: {
+                [Op.ne]: 'UPLOAD_FAILED',
+              },
+            },
+            as: 'file',
+            required: false,
+          },
+        ],
       },
       {
         model: NextStep,
@@ -597,7 +637,7 @@ export async function createOrUpdate(newActivityReport, report) {
     objectivesWithoutGoals,
     collaborators,
     activityRecipients,
-    attachments,
+    files,
     author,
     recipientNextSteps,
     specialistNextSteps,
@@ -605,7 +645,6 @@ export async function createOrUpdate(newActivityReport, report) {
     nonECLKCResourcesUsed,
     ...allFields
   } = newActivityReport;
-
   const previousActivityRecipientType = report && report.activityRecipientType;
   const resources = {};
 
@@ -623,6 +662,7 @@ export async function createOrUpdate(newActivityReport, report) {
   } else {
     savedReport = await create(updatedFields);
   }
+
   if (collaborators) {
     const { id } = savedReport;
     const newCollaborators = collaborators.map(
@@ -630,6 +670,7 @@ export async function createOrUpdate(newActivityReport, report) {
     );
     await saveReportCollaborators(id, newCollaborators);
   }
+
   if (activityRecipients) {
     const { activityRecipientType, id } = savedReport;
     const activityRecipientIds = activityRecipients.map(
@@ -637,10 +678,12 @@ export async function createOrUpdate(newActivityReport, report) {
     );
     await saveReportRecipients(id, activityRecipientIds, activityRecipientType);
   }
+
   if (recipientNextSteps) {
     const { id } = savedReport;
     await saveNotes(id, recipientNextSteps, true);
   }
+
   if (specialistNextSteps) {
     const { id } = savedReport;
     await saveNotes(id, specialistNextSteps, false);
@@ -696,10 +739,7 @@ export async function setStatus(report, status) {
  * @returns {*} Grants and Other entities
  */
 export async function possibleRecipients(regionId) {
-  let where = { status: 'Active' };
-  if (regionId) {
-    where = { ...where, regionId };
-  }
+  const where = { status: 'Active', regionId };
 
   const grants = await Recipient.findAll({
     attributes: ['id', 'name'],
@@ -747,8 +787,9 @@ async function getDownloadableActivityReports(where, separate = true) {
             model: Goal,
             as: 'goal',
           }],
-          attributes: ['id', 'title', 'status', 'ttaProvided'],
+          attributes: ['id', 'title', 'status'],
         }],
+        attributes: ['ttaProvided'],
         order: [['objective', 'goal', 'id'], ['objective', 'id']],
       },
       {
@@ -781,15 +822,22 @@ async function getDownloadableActivityReports(where, separate = true) {
         ],
       },
       {
-        model: File,
-        where: {
-          status: {
-            [Op.ne]: 'UPLOAD_FAILED',
-          },
-        },
-        as: 'attachments',
-        separate,
+        model: ActivityReportFile,
+        as: 'reportFiles',
         required: false,
+        separate: true,
+        include: [
+          {
+            model: File,
+            where: {
+              status: {
+                [Op.ne]: 'UPLOAD_FAILED',
+              },
+            },
+            as: 'file',
+            required: false,
+          },
+        ],
       },
       {
         model: User,

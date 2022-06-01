@@ -6,6 +6,7 @@ import {
 import { removeUnusedGoalsObjectivesFromReport } from './goals';
 
 export async function saveObjectivesForReport(objectives, report) {
+  // TODO: ttaProvided needs to move from objective to ActivityReportObjective
   const objectivesToCreate = objectives.map(({
     ttaProvided,
     title,

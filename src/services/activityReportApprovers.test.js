@@ -1,5 +1,5 @@
 import db, {
-  ActivityReport, ActivityReportApprover, User, sequelize,
+  ActivityRecipient, ActivityReport, ActivityReportApprover, User, sequelize,
 } from '../models';
 import { upsertApprover, syncApprovers } from './activityReportApprovers';
 import { activityReportById } from './activityReports';
@@ -72,6 +72,7 @@ describe('activityReportApprovers services', () => {
       where: { activityReportId: reportIds },
       force: true,
     });
+    await ActivityRecipient.destroy({ where: { activityReportId: reportIds } });
     await ActivityReport.destroy({ where: { id: reportIds } });
     await User.destroy({
       where: { id: [mockUser.id, mockUserTwo.id, mockManager.id, secondMockManager.id] },
@@ -205,7 +206,7 @@ describe('activityReportApprovers services', () => {
         userId: secondMockManager.id,
         status: APPROVER_STATUSES.NEEDS_ACTION,
         note: 'do x, y, x',
-      }]);
+      }], { validate: true, individualHooks: true });
       // remove mockManager
       const afterRemove = await syncApprovers(report.id);
       // check removed
