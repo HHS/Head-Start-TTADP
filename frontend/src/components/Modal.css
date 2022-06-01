@@ -1,16 +1,16 @@
-.popup-modal h2 {
+.usa-modal h2 {
     font-family: 'Source Sans Pro Web', 'Helvetica Neue', Helvetica, 'Roboto, Arial', sans-serif;
 }
 
-.popup-modal .usa-button--secondary {
+.usa-modal .usa-button--secondary {
     margin-left: 8px;
 }
 
-.popup-modal .usa-modal__main {
+.usa-modal .usa-modal__main {
     margin: 0px;
 }
 
-.popup-modal button {
+.usa-modal button {
     margin-left: 0px;
     margin-right: 14px;
     padding: 9px 38px 9px 38px;
@@ -18,6 +18,6 @@
     font-weight: 600;
 }
 
-.popup-modal:not(.show-close-x) .usa-modal__close {
+.usa-modal:not(.show-close-x) .usa-modal__close {
     display: none;
 }

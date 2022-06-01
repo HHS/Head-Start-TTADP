@@ -40,10 +40,6 @@ const CloseSuspendReasonModal = ({
       className="smart-hub--report-checkbox"
       checked={closeSuspendReason === r}
     />
-    // <>
-    // <input type="radio" id={`reason-${goalId}-1`} value={r} />
-    // <label htmlFor={`reason-${goalId}-1`}>
-    // </>
   ));
   const contextChanged = (e) => {
     setCloseSuspendContext(e.target.value);
@@ -65,7 +61,7 @@ const CloseSuspendReasonModal = ({
         modalId="CloseSuspendReasonModal"
         title={`Why are you ${reasonDisplayStatus} this goal?`}
         okButtonText="Submit"
-        okButtonAriaLabel={`This button will submit your reason for ${reasonDisplayStatus} the goal.`}
+        okButtonAriaLabel="Change goal status"
         okButtonCss="usa-button--primary"
         cancelButtonCss="usa-button--unstyled"
         showTitleRequired
@@ -76,13 +72,6 @@ const CloseSuspendReasonModal = ({
         >
           <FormGroup error={showValidationError}>
             <Fieldset>
-              <legend className="sr-only">
-                Why are you
-                {' '}
-                {reasonDisplayStatus}
-                {' '}
-                this goal?
-              </legend>
               {showValidationError ? <ErrorMessage>{`Please select a reason for ${reasonDisplayStatus} goal.`}</ErrorMessage> : null}
               {
                 generateReasonRadioButtons()
