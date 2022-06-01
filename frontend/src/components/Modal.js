@@ -25,13 +25,14 @@ const Modal = ({
   forceAction,
 
 }) => (
-  <div className={`popup-modal ${showCloseX ? 'show-close-x' : ''}`}>
+  <>
     <TrussWorksModal
       ref={modalRef}
       id={`${modalId}`}
       isLarge={isLarge}
       aria-labelledby={`${modalId}-heading`}
       forceAction={forceAction}
+      className={`${showCloseX ? 'show-close-x' : ''}`}
     >
       <ModalHeading className="font-sans" id={`${modalId}-heading`}>
         {title}
@@ -68,7 +69,7 @@ const Modal = ({
         </ButtonGroup>
       </ModalFooter>
     </TrussWorksModal>
-  </div>
+  </>
 );
 
 Modal.propTypes = {
