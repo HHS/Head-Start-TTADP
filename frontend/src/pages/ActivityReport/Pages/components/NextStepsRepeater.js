@@ -131,7 +131,6 @@ export default function NextStepsRepeater({
                   {' '}
                   {index + 1}
                 </Label>
-
                 <Textarea
                   key={item.key}
                   id={`${stepType}-next-step-${index + 1}`}
@@ -188,7 +187,7 @@ export default function NextStepsRepeater({
                     && errors[name][index].completeDate) ? 'blank-next-step' : ''}`}
               >
                 <Label
-                  htmlFor={`${stepType}-next-step-date-${index + 1}`}
+                  htmlFor={`${name}[${index}].completeDate`}
                   className="sr-only"
                 >
                   Next step
