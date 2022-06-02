@@ -190,11 +190,10 @@ export default function NextStepsRepeater({
                   htmlFor={`${name}[${index}].completeDate`}
                   className="sr-only"
                 >
-                  Next step
+                  Next step complete date
                   {' '}
                   {index + 1}
                   {' '}
-                  complete date
                 </Label>
                 <ControlledDatePicker
                   key={item.key}

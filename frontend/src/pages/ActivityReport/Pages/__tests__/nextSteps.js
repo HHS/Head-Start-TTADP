@@ -133,7 +133,7 @@ describe('next steps', () => {
 
   it('can change step for specialist', async () => {
     renderNextSteps(
-      [{ note: 'Step 1', id: 1 }],
+      [{ note: 'Step 1', id: 1, completeDate: '06/02/2022' }],
     );
     const stepText = await screen.findByRole('textbox', { name: /next step 1/i });
     fireEvent.change(stepText, { target: { value: 'This is my changed step text.' } });
@@ -142,7 +142,7 @@ describe('next steps', () => {
 
   it('can change step for recipient', async () => {
     renderNextSteps(
-      [], [{ note: 'Step 1', id: 2 }],
+      [], [{ note: 'Step 1', id: 2, completeDate: '06/02/2022' }],
     );
     const stepText = await screen.findByRole('textbox', { name: /next step 1/i });
     fireEvent.change(stepText, { target: { value: 'This is my changed step text.' } });
