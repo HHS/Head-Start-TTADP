@@ -45,36 +45,30 @@
 
 // objective
 .tta-smarthub--goal-row-obj-table li:first-child {
-  min-width: 500px;
-  max-width: 500px;
+  width: 480px;
 }
 
 // activity reports
 .tta-smarthub--goal-row-obj-table li:nth-child(2) {
-  max-width: 135px;
-  min-width: 135px;
+  width: 135px;
 }
 
 // grant numbers
 .tta-smarthub--goal-row-obj-table li:nth-child(3) {
-  max-width: 130px;
-  min-width: 130px;
+  width: 130px;
 }
 
 // end date
 .tta-smarthub--goal-row-obj-table li:nth-child(4) {
-  max-width: 130px;
-  min-width: 130px;
+  width: 130px;
 }
 
 // reasons
 .tta-smarthub--goal-row-obj-table li:nth-child(5) {
-  max-width: 290px;
-  min-width: 290px;
+  width: 290px;
 }
 
 // obj status
 .tta-smarthub--goal-row-obj-table li:nth-child(6) {
-  max-width: 135px;
-  min-width: 135px;
+  width: 140px;
 }

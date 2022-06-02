@@ -49,7 +49,7 @@ function ObjectiveButton({
       {' '}
       Objective
       {objectiveCount > 1 ? 's' : ''}
-      <FontAwesomeIcon className="margin-left-1 margin-right-1" size="1x" color={colors.textInk} icon={objectivesExpanded ? faAngleUp : faAngleDown} />
+      <FontAwesomeIcon className="margin-left-1" size="1x" color={colors.textInk} icon={objectivesExpanded ? faAngleUp : faAngleDown} />
     </button>
   );
 }
@@ -249,7 +249,7 @@ function GoalRow({
         error={statusChangeError}
       />
       <tr className={`tta-smarthub--goal-row ${!objectivesExpanded ? 'tta-smarthub--goal-row-collapsed' : ''}`} key={`goal_row_${id}`}>
-        <td style={{ borderLeft: objectivesExpanded ? `4px solid ${getStatusColor()}` : '' }}>
+        <td style={objectivesExpanded ? { borderLeft: `4px solid ${getStatusColor()}` } : { borderLeft: `1px solid ${colors.baseLightest}`, paddingLeft: '25px' }}>
           <StatusDropdown
             goalId={id}
             status={goalStatus}
@@ -282,7 +282,7 @@ function GoalRow({
             )
             : displayGoalTopics}
         </td>
-        <td>
+        <td className="padding-right-0 text-right">
           <ObjectiveButton
             closeOrOpenObjectives={closeOrOpenObjectives}
             objectiveCount={objectiveCount}
@@ -304,7 +304,11 @@ function GoalRow({
         </td>
       </tr>
       <tr className="tta-smarthub--objective-rows">
-        <td className="padding-top-0" style={{ borderLeft: objectivesExpanded ? `4px solid ${getStatusColor()}` : '' }} colSpan="6">
+        <td
+          className="padding-top-0"
+          style={objectivesExpanded ? { borderLeft: `4px solid ${getStatusColor()}` } : { borderLeft: `1px solid ${colors.baseLightest}`, paddingLeft: '25px' }}
+          colSpan="6"
+        >
           <div className="tta-smarthub--goal-row-obj-table padding-bottom-1">
             <ul aria-hidden className="usa-list usa-list--unstyled display-inline-block tta-smarthub--goal-row-obj-table-header padding-0">
               <li className="padding-x-3 padding-y-0">Objective</li>

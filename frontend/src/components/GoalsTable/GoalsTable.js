@@ -9,7 +9,7 @@ import GoalsTableHeader from './GoalsTableHeader';
 import Container from '../Container';
 import GoalRow from './GoalRow';
 import { GOALS_PER_PAGE } from '../../Constants';
-import './GoalTable.css';
+import './GoalTable.scss';
 import { getRecipientGoals } from '../../fetchers/recipient';
 import useSessionSort from '../../hooks/useSessionSort';
 
@@ -96,7 +96,7 @@ function GoalsTable({
   };
 
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
-  const renderColumnHeader = (displayName, name, allowSort = true) => {
+  const renderColumnHeader = (displayName, name, allowSort = true, align = 'left') => {
     const sortClassName = getClassNamesFor(name);
     let fullAriaSort;
     switch (sortClassName) {
@@ -112,7 +112,7 @@ function GoalsTable({
     }
 
     return (
-      <th scope="col" aria-sort={fullAriaSort}>
+      <th scope="col" aria-sort={fullAriaSort} className={`text-${align}`}>
         {
           allowSort
             ? (
@@ -169,7 +169,7 @@ function GoalsTable({
           regionId={regionId}
           hasActiveGrants={hasActiveGrants}
         />
-        <div className="usa-table-container">
+        <div className="usa-table-container padding-x-3">
           <Table fullWidth scrollable>
             <caption className="usa-sr-only">
               TTA goals and objective count with sorting and pagination
@@ -180,7 +180,7 @@ function GoalsTable({
                 {renderColumnHeader('Created on', 'createdOn')}
                 {renderColumnHeader('Goal text (Goal ID)', 'goalText', false)}
                 {renderColumnHeader('Goal topics', 'goalTopics', false)}
-                {renderColumnHeader('Objectives', 'objectiveCount', false)}
+                {renderColumnHeader('Objectives', 'objectiveCount', false, 'right')}
                 <th scope="col" aria-label="context menu" />
               </tr>
             </thead>

@@ -102,11 +102,11 @@ function ObjectiveRow({
   return (
     <>
       <ul className="usa-list usa-list--unstyled display-inline-block tta-smarthub--goal-row-obj-table-rows">
-        <li className="padding-x-3 padding-y-2">
+        <li className="padding-2">
           <span className="sr-only">Objective:</span>
           {title}
         </li>
-        <li className="padding-x-3 padding-y-2">
+        <li className="padding-2">
           <span className="sr-only">Activity reports:</span>
           {' '}
           <Link
@@ -115,7 +115,7 @@ function ObjectiveRow({
             {arNumber}
           </Link>
         </li>
-        <li className="padding-x-3 padding-y-2">
+        <li className="padding-2">
           <span className="sr-only">Grant numbers:</span>
           {grantNumbers.map((grantNumber) => (
             <>
@@ -124,15 +124,15 @@ function ObjectiveRow({
             </>
           ))}
         </li>
-        <li className="padding-x-3 padding-y-2">
+        <li className="padding-2">
           <span className="sr-only">End date:</span>
           {endDate}
         </li>
-        <li className="padding-x-3 padding-y-2">
+        <li className="padding-2">
           <span className="sr-only">Reasons:</span>
           {reasons && displayReasonsList(reasons.sort())}
         </li>
-        <li className="padding-x-3 padding-y-2">
+        <li className="padding-2">
           <span className="sr-only">Objective status:</span>
           {getObjectiveStatusIcon}
           {displayObjStatus}
