@@ -24,13 +24,13 @@ function ReportRow({
     activityRecipients,
     startDate,
     topics,
-    collaborators,
     lastSaved,
     calculatedStatus,
     approvedAt,
     createdAt,
     legacyId,
     creatorName,
+    activityReportCollaborators,
   } = report;
 
   const [trClassname, setTrClassname] = useState('tta-smarthub--report-row');
@@ -40,8 +40,9 @@ function ReportRow({
     ar.grant ? ar.grant.recipient.name : ar.name
   ));
 
-  const collaboratorNames = collaborators && collaborators.map((collaborator) => (
-    collaborator.fullName));
+  const collaboratorNames = activityReportCollaborators
+    ? activityReportCollaborators.map((collaborator) => (
+      collaborator.fullName)) : [];
 
   const viewOrEditLink = calculatedStatus === 'approved' ? `/activity-reports/view/${id}` : `/activity-reports/${id}`;
   const linkTarget = legacyId ? `/activity-reports/legacy/${legacyId}` : viewOrEditLink;
@@ -161,9 +162,11 @@ export const reportPropTypes = PropTypes.shape({
   createdAt: PropTypes.string,
   startDate: PropTypes.string.isRequired,
   topics: PropTypes.arrayOf(PropTypes.string).isRequired,
-  collaborators: PropTypes.arrayOf(
+  activityReportCollaborators: PropTypes.arrayOf(
     PropTypes.shape({
-      fullName: PropTypes.string,
+      user: PropTypes.shape({
+        fullName: PropTypes.string,
+      }),
     }),
   ),
   lastSaved: PropTypes.string,
