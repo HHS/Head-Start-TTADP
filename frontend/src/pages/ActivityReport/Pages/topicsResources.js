@@ -104,12 +104,12 @@ const ReviewSection = () => {
   const {
     nonECLKCResources,
     ECLKCResources,
-    attachments,
+    files,
     calculatedStatus,
     topics: formTopics,
   } = watch();
 
-  const hasAttachments = attachments && attachments.length > 0;
+  const hasAttachments = files && files.length > 0;
   const canEdit = reportIsEditable(calculatedStatus);
 
   return (
@@ -164,7 +164,7 @@ const ReviewSection = () => {
         title="Attachments"
         canEdit={canEdit}
       >
-        {attachments.map((file) => (
+        {files.map((file) => (
           <FileReviewItem
             key={file.url.url}
             filename={file.originalFileName}
