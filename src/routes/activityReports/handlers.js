@@ -557,7 +557,6 @@ export async function saveReport(req, res) {
       res.sendStatus(404);
       return;
     }
-
     const user = await userById(req.session.userId);
     const authorization = new ActivityReport(user, report);
     if (!authorization.canUpdate()) {

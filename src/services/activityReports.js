@@ -74,10 +74,9 @@ async function saveReportCollaborators(activityReportId, collaborators) {
   }));
 
   if (newCollaborators.length > 0) {
-    await ActivityReportCollaborator.bulkCreate(
-      newCollaborators,
-      { ignoreDuplicates: true, validate: true, individualHooks: true },
-    );
+    await Promise.all(newCollaborators.map((where) => (
+      ActivityReportCollaborator.findOrCreate({ where })
+    )));
     await ActivityReportCollaborator.destroy(
       {
         where: {
@@ -313,22 +312,14 @@ export function activityReportById(activityReportId) {
         required: false,
       },
       {
-        model: ActivityReportFile,
-        as: 'reportFiles',
-        required: false,
-        separate: true,
-        include: [
-          {
-            model: File,
-            where: {
-              status: {
-                [Op.ne]: 'UPLOAD_FAILED',
-              },
-            },
-            as: 'file',
-            required: false,
+        model: File,
+        where: {
+          status: {
+            [Op.ne]: 'UPLOAD_FAILED',
           },
-        ],
+        },
+        as: 'files',
+        required: false,
       },
       {
         model: NextStep,
@@ -643,6 +634,7 @@ export async function createOrUpdate(newActivityReport, report) {
     specialistNextSteps,
     ECLKCResourcesUsed,
     nonECLKCResourcesUsed,
+    attachments,
     ...allFields
   } = newActivityReport;
   const previousActivityRecipientType = report && report.activityRecipientType;

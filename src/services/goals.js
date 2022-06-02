@@ -472,8 +472,8 @@ export async function saveGoalsForReport(goals, report) {
     } else {
       delete fields.id;
       // In order to reuse goals with matching text we need to do the findOrCreate as the
-      // upsert would not preform the extrea checks and logic now required.
-      [newGoal] = await Goal.findOrCreate({
+      // upsert would not preform the extra checks and logic now required.
+      const foundOrCreatedGoal = await Goal.findOrCreate({
         where: {
           grantId: fields.grantId,
           name: fields.name,
@@ -481,7 +481,12 @@ export async function saveGoalsForReport(goals, report) {
         },
         defaults: fields,
       });
+
+      console.log({ foundOrCreatedGoal });
+      [newGoal] = foundOrCreatedGoal;
     }
+
+    console.log({ newGoal });
 
     // This linkage of goal directly to a report will allow a save to be made even if no objective
     // has been started.
