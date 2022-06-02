@@ -65,7 +65,7 @@ export default function GoalsObjectives({
         </title>
       </Helmet>
       <div className="margin-x-2 maxw-widescreen" id="recipientGoalsObjectives">
-        <div className="display-flex flex-wrap margin-bottom-2" data-testid="filter-panel">
+        <div className="display-flex flex-wrap margin-top-3 margin-bottom-2" data-testid="filter-panel">
           <FilterPanel
             onRemoveFilter={onRemoveFilter}
             onApplyFilters={setFilters}

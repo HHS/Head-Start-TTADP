@@ -45,6 +45,10 @@
   border-top: 1px solid $base-lightest;
 }
 
+.goals-table .usa-table td.padding-right-0 {
+  padding: 24px 0 24px 24px;
+}
+
 .goals-table .usa-table .tta-smarthub--goal-row-collapsed td {
   border-bottom: 1px solid $base-lightest
 }
@@ -71,7 +75,7 @@
 
 }
 .tta-smarthub--goal-row td:nth-child(3) .svg-inline--fa {
-  vertical-align: top;
+vertical-align: top;
 }
 
 .tta-smarthub--goal-row td:nth-child(3) .smart-hub-tooltip button {
@@ -88,13 +92,12 @@
   background-color: white;
   border-top: solid 1.5px;
   border-bottom: none;
+  padding-right: 0px;
+  padding-top: 0px;
+  padding-left: 0px;
+  padding-bottom: 8px;
   background-color: white;
   border-style: none;
   color: $text-ink;
   font-weight: 700;
-}
-
-.tta-smarthub--goal-row-obj-table-header li {
-  // inherits display: table-cell from ObjectiveRow.scss
-  vertical-align: bottom;
 }
