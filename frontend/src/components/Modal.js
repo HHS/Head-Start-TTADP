@@ -38,14 +38,14 @@ const Modal = ({
           {title}
         </ModalHeading>
         {showTitleRequired ? (
-          <span className="display-flex smart-hub--form-required"> (required)</span>
+          <span className="display-flex smart-hub--form-required padding-left-1">(required)</span>
         ) : null }
       </div>
       <div>
         {children}
       </div>
       <ModalFooter>
-        <ButtonGroup className="flex-justify-center">
+        <ButtonGroup>
           {
             showOkButton
               ? (
