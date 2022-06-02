@@ -2,20 +2,20 @@
     font-family: 'Source Sans Pro Web', 'Helvetica Neue', Helvetica, 'Roboto, Arial', sans-serif;
 }
 
-.usa-modal .usa-button--secondary {
-    margin-left: 8px;
+.usa-modal .smart-hub--form-required {
+    line-height: 1.85;
 }
 
 .usa-modal .usa-modal__main {
     margin: 0px;
 }
 
-.usa-modal button {
-    margin-left: 0px;
-    margin-right: 14px;
-    padding: 9px 38px 9px 38px;
-    font-size: medium;
-    font-weight: 600;
+.usa-modal .usa-button-group__item:empty {
+    display: none;
+}
+
+.usa-modal .usa-button-group__item .usa-button--unstyled {
+  padding: .75rem 1.25rem
 }
 
 .usa-modal:not(.show-close-x) .usa-modal__close {

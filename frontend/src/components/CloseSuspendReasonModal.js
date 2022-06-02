@@ -6,7 +6,6 @@ import {
 } from '@trussworks/react-uswds';
 import Modal from './Modal';
 import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '../Constants';
-import './CloseSuspendReasonModal.scss';
 
 const CloseSuspendReasonModal = ({
   modalRef, goalId, newStatus, onSubmit, resetValues, error, oldGoalStatus,
@@ -70,7 +69,7 @@ const CloseSuspendReasonModal = ({
           name={`close-suspend-reason-form-goal-${goalId}`}
           key={`close-suspend-reason-form-goal-${goalId}`}
         >
-          <FormGroup error={showValidationError}>
+          <FormGroup error={showValidationError} className="margin-top-0">
             <Fieldset>
               {showValidationError ? <ErrorMessage>{`Please select a reason for ${reasonDisplayStatus} goal.`}</ErrorMessage> : null}
               {
