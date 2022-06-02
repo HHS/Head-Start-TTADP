@@ -262,7 +262,6 @@ const ActivitySummary = ({
                   setEndDate={setEndDate}
                   maxDate={endDate}
                   isStartDate
-                  required="this is a test"
                 />
               </FormItem>
             </Grid>

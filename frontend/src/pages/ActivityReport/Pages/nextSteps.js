@@ -8,7 +8,6 @@ import ReviewPage from './Review/ReviewPage';
 const NextSteps = ({ activityRecipientType }) => {
   // Create labels.
   const labelDisplayName = activityRecipientType === 'other-entity' ? 'Other entities' : "Recipient's";
-  //const tipDisplayName = activityRecipientType === 'other-entity' ? 'other entity' : 'recipient';
 
   return (
     <>

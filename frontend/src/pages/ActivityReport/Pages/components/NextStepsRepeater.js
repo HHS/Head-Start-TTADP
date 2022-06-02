@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import moment from 'moment';
 import {
   FormGroup, Label, Button, Textarea, ErrorMessage,
 } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useFormContext, useFieldArray } from 'react-hook-form/dist/index.ie11';
 import { faTrash, faPlusCircle } from '@fortawesome/free-solid-svg-icons';
-import FormItem from '../../../../components/FormItem';
 import './NextStepsRepeater.css';
 import ControlledDatePicker from '../../../../components/ControlledDatePicker';
 
@@ -34,7 +34,8 @@ export default function NextStepsRepeater({
   useEffect(() => {
     const allValues = getValues();
     const fieldArray = allValues[name] || [];
-    setShowStepButton(fieldArray.every((field) => field.note !== ''));
+    setShowStepButton(fieldArray.every((field) => field.note !== ''
+      && (field.completeDate && moment(field.completeDate, 'MM/DD/YYYY').isValid())));
   }, [fields, getValues, name]);
 
   const canDelete = fields.length > 1;
@@ -42,7 +43,8 @@ export default function NextStepsRepeater({
   const onAddNewStep = () => {
     const allValues = getValues();
     const fieldArray = allValues[name] || [];
-    const canAdd = fieldArray.every((field) => field.note !== '');
+    const canAdd = fieldArray.every((field) => field.note !== ''
+      && (field.completeDate && moment(field.completeDate, 'MM/DD/YYYY').isValid()));
     if (canAdd) {
       append({ id: null, note: '', completeDate: null });
     }
@@ -100,10 +102,17 @@ export default function NextStepsRepeater({
           <div key={`${stepType}-parent-div-${index + 1}`}>
             <FormGroup
               key={`${stepType}-next-step-form-group-step-${index + 1}`}
-              className="margin-top-1"
+              className="margin-top-2 margin-bottom-2"
               error={blurStepValidations[index] || (errors[name] && errors[name][index]
                 && errors[name][index].note)}
             >
+              <legend>
+                {`Step: ${index + 1}`}
+                <span className="smart-hub--form-required font-family-sans font-ui-xs text-secondary-dark">
+                  {' '}
+                  *
+                </span>
+              </legend>
               {blurStepValidations[index] || (errors[name]
                 && errors[name][index] && errors[name][index].note)
                 ? <ErrorMessage>Enter a next step</ErrorMessage>
@@ -122,6 +131,7 @@ export default function NextStepsRepeater({
                   {' '}
                   {index + 1}
                 </Label>
+
                 <Textarea
                   key={item.key}
                   id={`${stepType}-next-step-${index + 1}`}
@@ -155,10 +165,17 @@ export default function NextStepsRepeater({
             </FormGroup>
             <FormGroup
               key={`${stepType}-next-step-form-group-date-${index + 1}`}
-              className="margin-top-1"
+              className="margin-top-1 margin-bottom-3"
               error={blurDateValidations[index] || (errors[name] && errors[name][index]
                 && errors[name][index].completeDate)}
             >
+              <legend>
+                When do you anticipate completing this step?
+                <span className="smart-hub--form-required font-family-sans font-ui-xs text-secondary-dark">
+                  {' '}
+                  *
+                </span>
+              </legend>
               {blurDateValidations[index]
                 || (errors[name] && errors[name][index]
                   && errors[name][index].completeDate)
@@ -171,20 +188,23 @@ export default function NextStepsRepeater({
                     && errors[name][index].completeDate) ? 'blank-next-step' : ''}`}
               >
                 <Label
-                  htmlFor={`${stepType}-next-step-complete-date${index + 1}`}
+                  htmlFor={`${stepType}-next-step-date-${index + 1}`}
                   className="sr-only"
                 >
-                  Next step complete date
+                  Next step
                   {' '}
                   {index + 1}
+                  {' '}
+                  complete date
                 </Label>
                 <ControlledDatePicker
                   key={item.key}
-                  id={`${stepType}-next-step-dat-${index + 1}`}
+                  id={`${stepType}-next-step-date-${index + 1}`}
                   control={control}
                   name={`${name}[${index}].completeDate`}
                   value={item.completeDate}
                   onBlur={({ target: { value } }) => validateDateOnBlur(value, index)}
+                  dataTestId={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}StepCompleteDate-input`}
                 />
               </div>
             </FormGroup>
@@ -192,7 +212,7 @@ export default function NextStepsRepeater({
         ))}
       </div>
 
-      <div className="margin-05 margin-bottom-4">
+      <div className="margin-05 margin-top-1 margin-bottom-1">
         {
           showAddStepButton
             ? (

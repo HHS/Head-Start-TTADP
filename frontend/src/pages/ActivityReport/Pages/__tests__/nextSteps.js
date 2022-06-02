@@ -45,28 +45,33 @@ describe('next steps', () => {
   it('displays correct labels for other entity', async () => {
     // When a user is on the next steps page
     renderNextSteps([{ note: '', id: 1 }], [{ note: '', id: 2 }], 'other-entity');
-    expect(await screen.findByText(/what has the other entity agreed to do next\?/i)).toBeVisible();
+    expect(await screen.findByText(/other entities next steps/i)).toBeVisible();
   });
 
-  it('displays both specialists and recipient questions', async () => {
+  it('displays both specialists and recipient steps', async () => {
     // When a user is on the next steps page
     renderNextSteps([{ note: '', id: 1 }], [{ note: '', id: 2 }]);
 
     // Then they can see prompts for both Specialist and Recipients
     expect(await screen.findByText(/specialist's next steps/i)).toBeVisible();
-    expect(await screen.findByText(/what have you agreed to do next\?/i)).toBeVisible();
     expect(await screen.findByTestId(SPECIALIST_INPUT)).toBeVisible();
+
     expect(screen.queryByText(SPECIALIST_BUTTON)).toBeNull();
 
+    expect((await screen.findAllByTestId('date-picker-external-input')).length).toBe(2);
+    expect((await screen.findAllByText('When do you anticipate completing this step?')).length).toBe(2);
+
     expect(await screen.findByText(/recipient's next steps/i)).toBeVisible();
-    expect(await screen.findByText(/what has the recipient agreed to do next\?/i)).toBeVisible();
     expect(await screen.findByTestId(RECIPIENT_INPUT)).toBeVisible();
     expect(screen.queryByText(RECIPIENT_BUTTON)).toBeNull();
   });
 
   it('displays user can add new steps', async () => {
     // When a user is on the next steps page
-    renderNextSteps([{ note: 'First Specialist Step', id: 1 }], [{ note: 'First Recipient Step', id: 2 }]);
+    renderNextSteps(
+      [{ note: 'First Specialist Step', completeDate: '06/02/2022', id: 1 }],
+      [{ note: 'First Recipient Step', completeDate: '06/03/2022', id: 2 }],
+    );
 
     // Add new steps.
     const newStepButtons = screen.queryAllByRole('button', { name: /add next step/i });
@@ -82,7 +87,10 @@ describe('next steps', () => {
   it('can add and delete an entry for specialist', async () => {
     // Given a user wants the add a new entry
     renderNextSteps(
-      [{ note: 'pikachu', id: 1 }, { note: 'bulbasaur', id: 30 }],
+      [
+        { note: 'pikachu', completeDate: '06/02/2022', id: 1 },
+        { note: 'bulbasaur', completeDate: '06/03/2022', id: 30 },
+      ],
     );
 
     // Add new Specialist Step.
@@ -103,7 +111,10 @@ describe('next steps', () => {
     // Given a user wants the add a new entry
     renderNextSteps(
       [],
-      [{ note: 'pikachu', id: 1 }, { note: 'bulbasaur', id: 30 }],
+      [
+        { note: 'pikachu', completeDate: '06/02/2022', id: 1 },
+        { note: 'bulbasaur', completeDate: '06/03/2022', id: 30 },
+      ],
     );
 
     // Add new Recipient Step.
