@@ -140,6 +140,24 @@ describe('next steps', () => {
     await waitFor(() => expect(stepText).toHaveValue('This is my changed step text.'));
   });
 
+  it('can change date for specialist', async () => {
+    renderNextSteps(
+      [{ note: 'Step 1', id: 1, completeDate: '06/02/2022' }],
+    );
+
+    // Change date.
+    const dateInput = await screen.findByTestId('date-picker-external-input');
+    userEvent.clear(dateInput);
+    userEvent.type(dateInput, '06/03/2022');
+
+    // Change focus.
+    const stepText = await screen.findByRole('textbox', { name: /next step 1/i });
+    userEvent.click(stepText);
+
+    // Assert date change.
+    await waitFor(() => expect(dateInput).toHaveValue('06/03/2022'));
+  });
+
   it('can change step for recipient', async () => {
     renderNextSteps(
       [], [{ note: 'Step 1', id: 2, completeDate: '06/02/2022' }],
@@ -147,5 +165,23 @@ describe('next steps', () => {
     const stepText = await screen.findByRole('textbox', { name: /next step 1/i });
     fireEvent.change(stepText, { target: { value: 'This is my changed step text.' } });
     await waitFor(() => expect(stepText).toHaveValue('This is my changed step text.'));
+  });
+
+  it('can change date for recipient', async () => {
+    renderNextSteps(
+      [], [{ note: 'Step 2', id: 2, completeDate: '06/03/2022' }],
+    );
+
+    // Change date.
+    const dateInput = await screen.findByTestId('date-picker-external-input');
+    userEvent.clear(dateInput);
+    userEvent.type(dateInput, '06/04/2022');
+
+    // Change focus.
+    const stepText = await screen.findByRole('textbox', { name: /next step 1/i });
+    userEvent.click(stepText);
+
+    // Assert date change.
+    await waitFor(() => expect(dateInput).toHaveValue('06/04/2022'));
   });
 });
