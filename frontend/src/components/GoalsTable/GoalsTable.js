@@ -32,6 +32,8 @@ function GoalsTable({
   const [resetModalValues, setResetModalValues] = useState(false);
   const closeSuspendModalRef = useRef();
 
+  const queryString = useRef(filtersToQueryString(filters));
+
   const showCloseSuspendGoalModal = (status, goalId, oldGoalStatus) => {
     setCloseSuspendGoalId(goalId);
     setCloseSuspendStatus(status);
@@ -89,9 +91,8 @@ function GoalsTable({
   const [goalsCount, setGoalsCount] = useState(0);
 
   useEffect(() => {
-    async function fetchGoals() {
+    async function fetchGoals(query) {
       setLoading(true);
-      const filterQuery = filtersToQueryString(filters);
       try {
         const { count, goalRows } = await getRecipientGoals(
           recipientId,
@@ -100,7 +101,7 @@ function GoalsTable({
           sortConfig.direction,
           sortConfig.offset,
           GOALS_PER_PAGE,
-          filterQuery,
+          query,
         );
         setGoals(goalRows);
         setGoalsCount(count);
@@ -112,8 +113,14 @@ function GoalsTable({
       }
       setLoading(false);
     }
-    fetchGoals();
-  }, [sortConfig, filters, recipientId, regionId, showNewGoals]);
+    const filterQuery = filtersToQueryString(filters);
+    if (filterQuery !== queryString.current) {
+      setSortConfig({ ...sortConfig, activePage: 1, offset: 0 });
+      queryString.current = filterQuery;
+      return;
+    }
+    fetchGoals(filterQuery);
+  }, [sortConfig, filters, recipientId, regionId, showNewGoals, setSortConfig]);
 
   const handlePageChange = (pageNumber) => {
     if (!loading) {
