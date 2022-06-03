@@ -19,7 +19,6 @@ export async function createGoals(req, res) {
   try {
     const { goals } = req.body;
 
-    // check permissions
     const user = await userById(req.session.userId);
 
     let canCreate = true;
