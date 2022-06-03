@@ -101,7 +101,7 @@ function ObjectiveRow({
 
   return (
     <>
-      <ul className="usa-list usa-list--unstyled display-inline-block tta-smarthub--goal-row-obj-table-rows">
+      <ul className="usa-list usa-list--unstyled display-flex tta-smarthub--goal-row-obj-table-rows">
         <li className="padding-2">
           <span className="sr-only">Objective:</span>
           {title}

@@ -310,13 +310,13 @@ function GoalRow({
           colSpan="6"
         >
           <div className="tta-smarthub--goal-row-obj-table padding-bottom-1">
-            <ul aria-hidden className="usa-list usa-list--unstyled display-inline-block tta-smarthub--goal-row-obj-table-header padding-0">
-              <li className="padding-x-3 padding-y-0">Objective</li>
-              <li className="padding-x-3 padding-y-0">Activity reports</li>
-              <li className="padding-x-3 padding-y-0">Grant numbers</li>
-              <li className="padding-x-3 padding-y-0">End date</li>
-              <li className="padding-x-3 padding-y-0">Reasons</li>
-              <li className="padding-x-3 padding-y-0 text-right">Objectives status</li>
+            <ul aria-hidden className="usa-list usa-list--unstyled tta-smarthub--goal-row-obj-table-header padding-0 display-flex">
+              <li className="padding-x-2 flex-align-self-end">Objective</li>
+              <li className="padding-x-2 flex-align-self-end">Activity reports</li>
+              <li className="padding-x-2 flex-align-self-end">Grant numbers</li>
+              <li className="padding-x-2 flex-align-self-end">End date</li>
+              <li className="padding-x-2 flex-align-self-end">Reasons</li>
+              <li className="padding-x-2 flex-align-self-end text-right">Objectives status</li>
             </ul>
             {objectives.map((obj) => (
               <ObjectiveRow
