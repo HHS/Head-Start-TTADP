@@ -46,13 +46,15 @@ describe('Activity report print and share view', () => {
     topics: ['Tea', 'cookies'],
     ECLKCResourcesUsed: ['http://website'],
     nonECLKCResourcesUsed: ['http://betterwebsite'],
-    attachments: [],
+    files: [],
     context: '',
     goals: [],
     objectivesWithoutGoals: [
       {
         title: 'Objective',
-        ttaProvided: 'All of it',
+        ActivityReportObjective: {
+          ttaProvided: 'All of it',
+        },
       },
     ],
     additionalNotes: '',
@@ -116,7 +118,9 @@ describe('Activity report print and share view', () => {
         objectives: [
           {
             title: 'Test',
-            ttaProvided: 'Why not?',
+            ActivityReportObjective: {
+              ttaProvided: 'Why not?',
+            },
           },
         ],
       }],
