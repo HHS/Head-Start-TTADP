@@ -12,7 +12,7 @@ import db, {
   ObjectiveTopic,
 } from '../models';
 
-describe.skip('createOrUpdateGoals', () => {
+describe('createOrUpdateGoals', () => {
   afterEach(async () => {
     jest.clearAllMocks();
   });
@@ -46,6 +46,7 @@ describe.skip('createOrUpdateGoals', () => {
     goal = await Goal.create({
       name: 'This is some serious goal text',
       status: 'Draft',
+      grantId: grants[0].id,
     });
     topic = await Topic.findOne();
 
@@ -86,12 +87,6 @@ describe.skip('createOrUpdateGoals', () => {
       },
     });
 
-    // await GrantGoal.destroy({
-    //   where: {
-    //     goalId: newGoals.map((g) => g.id),
-    //   },
-    // });
-
     await Goal.destroy({
       where: {
         id: newGoals.map((g) => g.id),
@@ -118,12 +113,8 @@ describe.skip('createOrUpdateGoals', () => {
       recipientId: recipient.id,
       regionId: 1,
       name: 'This is some serious goal text',
+      grantId: goal.grantId,
       status: 'Draft',
-      grants: [
-        {
-          value: grants[0].id,
-        },
-      ],
     };
 
     newGoals = await createOrUpdateGoals([
@@ -162,15 +153,8 @@ describe.skip('createOrUpdateGoals', () => {
       },
       {
         ...basicGoal,
+        grantId: grants[1].id,
         objectives: [],
-        grants: [
-          {
-            value: grants[1].id,
-          },
-          {
-            value: grants[0].id,
-          },
-        ],
       },
     ]);
 
@@ -181,11 +165,10 @@ describe.skip('createOrUpdateGoals', () => {
 
     const updatedGoal = newGoals.find((g) => g.id === goal.id);
     expect(updatedGoal.status).toBe('Not Started');
-    expect(updatedGoal.name).toBe('This is some serious goal text');
-    expect(updatedGoal.grants.length).toBe(1);
-    expect(updatedGoal.grants[0].value).toBe(grants[0].id);
-    expect(updatedGoal.regionId).toBe(1);
-    expect(updatedGoal.recipientId).toBe(recipient.id);
+    expect(updatedGoal.getDataValue('goalName')).toBe('This is some serious goal text');
+    expect(updatedGoal.grant.id).toBe(grants[0].id);
+    expect(updatedGoal.grant.regionId).toBe(1);
+    expect(updatedGoal.grant.recipientId).toBe(recipient.id);
 
     const objectivesOnUpdatedGoal = await Objective.findAll({
       where: {
@@ -227,12 +210,9 @@ describe.skip('createOrUpdateGoals', () => {
 
     const newGoal = newGoals.find((g) => g.id !== goal.id);
     expect(newGoal.status).toBe('Draft');
-    expect(newGoal.name).toBe('This is some serious goal text');
-    expect(newGoal.grants.length).toBe(2);
-    const grantIds = newGoal.grants.map((g) => g.value);
-    expect(grantIds).toContain(grants[0].id);
-    expect(grantIds).toContain(grants[1].id);
-    expect(newGoal.regionId).toBe(1);
-    expect(newGoal.recipientId).toBe(recipient.id);
+    expect(newGoal.getDataValue('goalName')).toBe('This is some serious goal text');
+    expect(newGoal.grant.id).toBe(grants[1].id);
+    expect(newGoal.grant.regionId).toBe(1);
+    expect(newGoal.grant.recipientId).toBe(recipient.id);
   });
 });
