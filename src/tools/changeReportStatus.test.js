@@ -42,4 +42,8 @@ describe('changeStatus', () => {
 
     await ActivityReport.destroy({ where: { id: deletedReport.id } });
   });
+
+  it('handles unknown ids', async () => {
+    await expect(changeReportStatus('-1', 'deleted')).resolves.not.toThrowError();
+  });
 });
