@@ -81,6 +81,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         'id',
         'number',
         'regionId',
+        'recipientId',
       ],
       include: [
         {
@@ -219,21 +220,25 @@ export async function createOrUpdateGoals(goals) {
     // there can only be one on the goal form (multiple grants maybe, but one recipient)
     recipient = recipientId; // TODO: this is wrong
 
-    const options = {
+    let options = {
       ...fields,
       isFromSmartsheetTtaPlan: false,
-      id: id === 'new' ? null : id,
     };
+
+    if ((id !== 'new' && id !== undefined)) {
+      options = { ...options, id };
+    }
 
     let newGoal;
 
     if (Number.isInteger(id)) {
-      newGoal = await Goal.update({ grantId, ...options }, { returning: true });
+      const res = await Goal.update({ grantId, ...options }, { where: { id }, returning: true });
+      [, [newGoal]] = res;
     } else {
       delete fields.id;
       // In order to reuse goals with matching text we need to do the findOrCreate as the
       // upsert would not preform the extrea checks and logic now required.
-      newGoal = await Goal.findOrCreate({
+      [newGoal] = await Goal.findOrCreate({
         where: {
           grantId,
           name: options.name,
@@ -241,7 +246,6 @@ export async function createOrUpdateGoals(goals) {
         },
         defaults: { grantId, ...options },
       });
-      await Goal.update({ grantId, ...options });
     }
 
     const newObjectives = await Promise.all(
@@ -266,7 +270,6 @@ export async function createOrUpdateGoals(goals) {
         const [objective] = await Objective.upsert(
           where,
         );
-
         // topics
         const objectiveTopics = await Promise.all(
           (topics.map((ot) => ObjectiveTopic.findOrCreate({
