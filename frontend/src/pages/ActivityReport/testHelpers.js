@@ -52,7 +52,7 @@ export const formData = () => ({
   goals: [],
   updatedAt: new Date().toISOString(),
   creatorRole: 'Reporter',
-  attachments: [],
+  files: [],
   creatorNameWithRole: 'test',
 });
 

@@ -56,7 +56,7 @@ function calculateGoalsAndObjectives(report) {
     data.push(objective.title);
 
     headings.push(`TTA Provided ${displayNumber}`);
-    data.push(objective.ttaProvided);
+    data.push(objective.ActivityReportObjective.ttaProvided);
   });
 
   return [headings, data];
