@@ -58,8 +58,8 @@ export default async function goalStatusGraph(scopes) {
 
   return {
     total,
-    'Not Started': goals[GOAL_STATUS.NOT_STARTED],
-    'In Progress': goals[GOAL_STATUS.IN_PROGRESS],
+    'Not started': goals[GOAL_STATUS.NOT_STARTED],
+    'In progress': goals[GOAL_STATUS.IN_PROGRESS],
     Closed: goals[GOAL_STATUS.CLOSED],
     Suspended: goals[GOAL_STATUS.SUSPENDED],
   };
