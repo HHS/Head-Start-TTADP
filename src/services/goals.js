@@ -509,40 +509,15 @@ export async function saveGoalsForReport(goals, report) {
         updatedObjective.id = id;
         [, [savedObjective]] = await Objective.update(updatedObjective, { returning: true });
       } else {
-        try {
-          // const existing = await Objective.findOne({
-          //   where: {
-          //     goalId: updatedObjective.goalId,
-          //     title: updatedObjective.title,
-          //     status: { [Op.not]: 'Completed' },
-          //   },
-          // });
-
-          // if (existing) {
-          //   savedObjective = await Objective.update(updatedObjective, {
-          //     where: {
-          //       id: existing.id,
-          //     },
-          //   });
-          // } else {
-          //   console.log({ updatedObjective });
-          //   savedObjective = await Objective.create(updatedObjective);
-          // }
-
-          [savedObjective] = await Objective.findOrCreate({
-            where: {
-              goalId: updatedObjective.goalId,
-              title: updatedObjective.title,
-              status: { [Op.not]: 'Completed' },
-            },
-            defaults: updatedObjective,
-          });
-        } catch (err) {
-          console.log({ err });
-        }
+        [savedObjective] = await Objective.findOrCreate({
+          where: {
+            goalId: updatedObjective.goalId,
+            title: updatedObjective.title,
+            status: { [Op.not]: 'Completed' },
+          },
+          defaults: updatedObjective,
+        });
       }
-
-      console.log({ savedObjective });
 
       await ActivityReportObjective.findOrCreate({
         where: {
