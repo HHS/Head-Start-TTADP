@@ -20,6 +20,7 @@ function Menu({
   up,
   buttonTestId,
   buttonText,
+  className,
 }) {
   const [shown, updateShown] = useState(false);
   const defaultClass = 'smart-hub--menu';
@@ -74,7 +75,7 @@ function Menu({
       className="position-relative"
     >
       <Button
-        className="smart-hub--menu-button smart-hub--button__no-margin"
+        className={`smart-hub--menu-button smart-hub--button__no-margin ${className}`}
         unstyled
         aria-haspopup
         onClick={onClick}
@@ -115,6 +116,7 @@ Menu.propTypes = {
   up: PropTypes.bool,
   buttonTestId: PropTypes.string,
   buttonText: PropTypes.oneOfType([PropTypes.node, PropTypes.string]).isRequired,
+  className: PropTypes.string,
 };
 
 Menu.defaultProps = {
@@ -122,6 +124,7 @@ Menu.defaultProps = {
   left: true,
   up: false,
   buttonTestId: 'ttahub-menu-button',
+  className: '',
 };
 
 export default Menu;

@@ -1,6 +1,5 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
-import './StatusDropdown.css';
 import {
   InProgress,
   Closed,
@@ -14,6 +13,7 @@ import UserContext from '../../UserContext';
 import { canChangeGoalStatus } from '../../permissions';
 import { DECIMAL_BASE } from '../../Constants';
 import Menu from '../Menu';
+import './StatusDropdown.css';
 
 const STATUSES = {
   'In Progress': {
@@ -149,6 +149,7 @@ export default function StatusDropdown({
       menuItems={options}
       left={false}
       up={up}
+      className="ttahub-status-select"
       buttonText={(
         <>
           {icon}
