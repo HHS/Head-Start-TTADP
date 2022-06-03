@@ -1,19 +1,5 @@
 @use '../../colors.scss' as *;
 
-.goals-table .usa-table-container .tta-smarthub--objective-rows td table {
-  border-collapse: separate;
-  border-spacing: 0px 16px;
-}
-
-
-.goals-table .usa-table .tta-smarthub--objective-rows td {
-  padding-top: 0px;
-  border-top: 0;
-  border-right: 1px solid $base-lightest;
-  border-left: 1px solid $base-lightest;
-  border-bottom: 1px solid $base-lightest;
-}
-
 .tta-smarthub--goal-row-obj-table-rows,
 .tta-smarthub--objective-rows .usa-list:last-child{
   background-color: $gray-two;
@@ -34,42 +20,38 @@
   min-width: 270px;
 }
 
-.goals-table .tta-smarthub--objective-rows .tta-smarthub--objective-row td {
-    border: none;
-}
-
 // objective
 .tta-smarthub--goal-row-obj-table li:first-child {
-  // width: 480px;
-  flex: 1 1 auto;
+  width: 480px;
+  // flex: 1 1 auto;
 }
 
 // activity reports
 .tta-smarthub--goal-row-obj-table li:nth-child(2) {
-  // width: 135px;
-  flex: 0 0 120px;
+  width: 135px;
+  // flex: 0 0 120px;
 }
 
 // grant numbers
 .tta-smarthub--goal-row-obj-table li:nth-child(3) {
-  // width: 130px;
-  flex: 0 0 100px;
+  width: 130px;
+  // flex: 0 0 100px;
 }
 
 // end date
 .tta-smarthub--goal-row-obj-table li:nth-child(4) {
-  // width: 130px;
-  flex: 0 0 80px;
+  width: 130px;
+  // flex: 0 0 80px;
 }
 
 // reasons
 .tta-smarthub--goal-row-obj-table li:nth-child(5) {
-  flex: 0 0 250px;
-  // width: 290px;
+  // flex: 0 0 250px;
+  width: 290px;
 }
 
 // obj status
 .tta-smarthub--goal-row-obj-table li:nth-child(6) {
-  // width: 140px;
-  flex: 0 0 140px;
+  width: 140px;
+  // flex: 0 0 140px;
 }
