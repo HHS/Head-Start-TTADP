@@ -52,7 +52,7 @@ const defaultValues = {
   activityRecipients: [],
   activityType: [],
   additionalNotes: null,
-  attachments: [],
+  files: [],
   collaborators: [],
   context: '',
   deliveryMethod: null,

@@ -468,7 +468,8 @@ export async function saveGoalsForReport(goals, report) {
     let newGoal;
 
     if (Number.isInteger(goalId)) {
-      newGoal = await Goal.update(fields, { where: { id: goalId } });
+      // look at this syntax can you believe this is javascript these days
+      [, [newGoal]] = await Goal.update(fields, { where: { id: goalId }, returning: true });
     } else {
       delete fields.id;
       // In order to reuse goals with matching text we need to do the findOrCreate as the
@@ -482,11 +483,8 @@ export async function saveGoalsForReport(goals, report) {
         defaults: fields,
       });
 
-      console.log({ foundOrCreatedGoal });
       [newGoal] = foundOrCreatedGoal;
     }
-
-    console.log({ newGoal });
 
     // This linkage of goal directly to a report will allow a save to be made even if no objective
     // has been started.
@@ -499,28 +497,58 @@ export async function saveGoalsForReport(goals, report) {
     });
 
     const newObjectives = await Promise.all(goal.objectives.map(async (objective) => {
-      const { id, ...updatedFields } = objective;
+      const {
+        id, new: isNew, ttaProvided, ...updatedFields
+      } = objective;
+
       const updatedObjective = { ...updatedFields, goalId: newGoal.id };
 
       let savedObjective;
+
       if (Number.isInteger(id)) {
         updatedObjective.id = id;
-        savedObjective = await Objective.update(updatedObjective);
+        [, [savedObjective]] = await Objective.update(updatedObjective, { returning: true });
       } else {
-        [savedObjective] = await Objective.findOrCreate({
-          where: {
-            goalId: updatedObjective.goalId,
-            title: updatedObjective.title,
-            status: { [Op.not]: 'Completed' },
-          },
-          defaults: updatedObjective,
-        });
+        try {
+          // const existing = await Objective.findOne({
+          //   where: {
+          //     goalId: updatedObjective.goalId,
+          //     title: updatedObjective.title,
+          //     status: { [Op.not]: 'Completed' },
+          //   },
+          // });
+
+          // if (existing) {
+          //   savedObjective = await Objective.update(updatedObjective, {
+          //     where: {
+          //       id: existing.id,
+          //     },
+          //   });
+          // } else {
+          //   console.log({ updatedObjective });
+          //   savedObjective = await Objective.create(updatedObjective);
+          // }
+
+          [savedObjective] = await Objective.findOrCreate({
+            where: {
+              goalId: updatedObjective.goalId,
+              title: updatedObjective.title,
+              status: { [Op.not]: 'Completed' },
+            },
+            defaults: updatedObjective,
+          });
+        } catch (err) {
+          console.log({ err });
+        }
       }
+
+      console.log({ savedObjective });
 
       await ActivityReportObjective.findOrCreate({
         where: {
           objectiveId: savedObjective.id,
           activityReportId: report.id,
+          ttaProvided,
         },
       });
       return savedObjective;
