@@ -54,6 +54,7 @@ const defaultValues = {
   additionalNotes: null,
   files: [],
   collaborators: [],
+  activityReportCollaborators: [],
   context: '',
   deliveryMethod: null,
   duration: '',

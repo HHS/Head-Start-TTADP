@@ -167,15 +167,15 @@ const ActivitySummary = ({
           {!connectionActive && !collaborators.length ? <ConnectionError /> : null }
           <FormItem
             label="Collaborating Specialists"
-            name="collaborators"
+            name="activityReportCollaborators"
             required={false}
           >
             <MultiSelect
-              name="collaborators"
+              name="activityReportCollaborators"
               control={control}
               required={false}
-              valueProperty="id"
-              labelProperty="name"
+              valueProperty="user.id"
+              labelProperty="user.fullName"
               simple={false}
               options={collaborators.map((user) => ({ value: user.id, label: user.name }))}
             />
@@ -460,7 +460,7 @@ const sections = [
       { label: 'Recipient or other entity', name: 'activityRecipientType', sort: true },
       { label: 'Activity Participants', name: 'activityRecipients', path: 'name' },
       {
-        label: 'Collaborating specialist(s)', name: 'collaborators', path: 'name', sort: true,
+        label: 'Collaborating specialist(s)', name: 'activityReportCollaborators', path: 'user.fullName', sort: true,
       },
       { label: 'Target Populations addressed', name: 'targetPopulations', sort: true },
     ],
