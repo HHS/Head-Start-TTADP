@@ -80,6 +80,15 @@ const defaultValues = {
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
 const defaultPageState = mapValues(pagesByPos, () => NOT_STARTED);
 
+const formatGoalsFromAPI = (goals) => goals.map((goal) => {
+  const objectives = goal.objectives.map((objective) => ({
+    ...objective,
+    ttaProvided: objective.ActivityReportObjective.ttaProvided,
+  }));
+
+  return { ...goal, objectives };
+});
+
 export function cleanupLocalStorage(id, replacementKey) {
   try {
     if (replacementKey) {
@@ -241,9 +250,12 @@ function ActivityReport({
   }, [activityReportId, history]);
 
   const convertReportToFormData = (fetchedReport) => {
+    const goals = formatGoalsFromAPI(fetchedReport.goals);
     const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed);
     const nonECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.nonECLKCResourcesUsed);
-    return { ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed };
+    return {
+      ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed, goals,
+    };
   };
 
   // cleanup local storage if the report has been submitted or approved
