@@ -14,18 +14,13 @@ const logContext = {
 };
 
 export async function validateUserAuthForAccess(userId) {
-  try {
-    const userPermission = await Permission.findOne({
-      where: {
-        userId,
-        scopeId: SITE_ACCESS,
-      },
-    });
-    return userPermission !== null;
-  } catch (error) {
-    logger.error(`${JSON.stringify({ ...logContext })} - Access error - ${error}`);
-    throw error;
-  }
+  const userPermission = await Permission.findOne({
+    where: {
+      userId,
+      scopeId: SITE_ACCESS,
+    },
+  });
+  return userPermission !== null;
 }
 
 export async function validateUserAuthForAdmin(userId) {
@@ -61,7 +56,7 @@ export async function getUserReadRegions(userId) {
         ],
       },
     });
-    return readRegions ? readRegions.map((p) => p.regionId) : [];
+    return readRegions.map((p) => p.regionId);
   } catch (error) {
     logger.error(`${JSON.stringify({ ...logContext })} - Read region retrieval error - ${error}`);
     throw error;

@@ -4,6 +4,7 @@ import {
   validateUserAuthForAdmin,
   getUserReadRegions,
   setReadRegions,
+  isCentralOffice,
 } from './accessValidation';
 import SCOPES from '../middleware/scopeConstants';
 
@@ -44,6 +45,22 @@ const setupUser = async (user) => {
 describe('accessValidation', () => {
   afterAll(async () => {
     await db.sequelize.close();
+  });
+
+  describe('isCentralOffice', () => {
+    it('is true for CO users', async () => {
+      await setupUser({ ...mockUser, homeRegionId: 14 });
+      const isCentralOfficeUser = await isCentralOffice(mockUser.id);
+      expect(isCentralOfficeUser).toBeTruthy();
+      await User.destroy({ where: { id: mockUser.id } });
+    });
+
+    it('is false for non CO users', async () => {
+      await setupUser({ ...mockUser, homeRegionId: 1 });
+      const isCentralOfficeUser = await isCentralOffice(mockUser.id);
+      expect(isCentralOfficeUser).toBeFalsy();
+      await User.destroy({ where: { id: mockUser.id } });
+    });
   });
 
   describe('validateUserAuthForAccess', () => {
@@ -191,6 +208,27 @@ describe('accessValidation', () => {
       const queryWithFilteredRegions = await setReadRegions(query, mockUser.id);
 
       expect(queryWithFilteredRegions).toStrictEqual({ 'region.in': [] });
+    });
+
+    it('returns all read regions for central office users', async () => {
+      await Permission.create({
+        scopeId: READ_REPORTS,
+        userId: mockUser.id,
+        regionId: 14,
+      });
+      await Permission.create({
+        scopeId: READ_WRITE_REPORTS,
+        userId: mockUser.id,
+        regionId: 13,
+      });
+
+      const query = { 'region.in': [14] };
+      const queryWithFilteredRegions = await setReadRegions(query, mockUser.id);
+      const queryRegions = queryWithFilteredRegions['region.in'];
+
+      [14, 13].forEach((region) => {
+        expect(queryRegions).toContain(region);
+      });
     });
 
     it('returns an empty array if a user does not exist in database', async () => {
