@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import {
   Table, Grid, Alert,
@@ -11,6 +11,8 @@ import GoalRow from './GoalRow';
 import { GOALS_PER_PAGE } from '../../Constants';
 import './GoalTable.scss';
 import { getRecipientGoals } from '../../fetchers/recipient';
+import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
+import { updateGoalStatus } from '../../fetchers/goals';
 import useSessionSort from '../../hooks/useSessionSort';
 
 function GoalsTable({
@@ -22,6 +24,46 @@ function GoalsTable({
 }) {
   // Goal Data.
   const [goals, setGoals] = useState([]);
+
+  // Close/Suspend Reason Modal.
+  const [closeSuspendGoalId, setCloseSuspendGoalId] = useState(0);
+  const [closeSuspendStatus, setCloseSuspendStatus] = useState('');
+  const [closeSuspendOldStatus, setCloseSuspendOldStatus] = useState(null);
+  const [resetModalValues, setResetModalValues] = useState(false);
+  const closeSuspendModalRef = useRef();
+
+  const showCloseSuspendGoalModal = (status, goalId, oldGoalStatus) => {
+    setCloseSuspendGoalId(goalId);
+    setCloseSuspendStatus(status);
+    setCloseSuspendOldStatus(oldGoalStatus);
+    setResetModalValues(!resetModalValues); // Always flip to trigger form reset useEffect.
+    closeSuspendModalRef.current.toggleModal(true);
+  };
+
+  const performGoalStatusUpdate = async (
+    goalId,
+    newGoalStatus,
+    oldGoalStatus,
+    closeSuspendReason = null,
+    closeSuspendContext = null,
+  ) => {
+    const updatedGoal = await updateGoalStatus(
+      goalId,
+      newGoalStatus,
+      oldGoalStatus,
+      closeSuspendReason,
+      closeSuspendContext,
+    );
+    if (closeSuspendReason && closeSuspendModalRef.current.modalIsOpen) {
+      // Close from a close suspend reason submit.
+      closeSuspendModalRef.current.toggleModal(false);
+    }
+
+    const newGoals = goals.map(
+      (g) => (g.id === updatedGoal.id ? { ...g, goalStatus: updatedGoal.status } : g),
+    );
+    setGoals(newGoals);
+  };
 
   // Page Behavior.
   const [error, setError] = useState('');
@@ -138,16 +180,6 @@ function GoalsTable({
 
   const displayGoals = goals && goals.length ? goals : [];
 
-  const updateGoal = (newGoal) => {
-    // Update Status on Goal.
-    const newGoals = goals.map(
-      (g) => (g.id === newGoal.id ? {
-        ...g, goalStatus: newGoal.status, previousStatus: newGoal.previousStatus,
-      } : g),
-    );
-    setGoals(newGoals);
-  };
-
   return (
     <>
       {error && (
@@ -158,6 +190,15 @@ function GoalsTable({
       </Grid>
       )}
       <Container className="goals-table maxw-full overflow-x-hidden" padding={0} loading={loading} loadingLabel="Goals table loading">
+        <CloseSuspendReasonModal
+          id="close-suspend-reason-modal"
+          goalId={closeSuspendGoalId}
+          newStatus={closeSuspendStatus}
+          modalRef={closeSuspendModalRef}
+          onSubmit={performGoalStatusUpdate}
+          resetValues={resetModalValues}
+          oldGoalStatus={closeSuspendOldStatus}
+        />
         <GoalsTableHeader
           title="TTA goals and objectives"
           count={goalsCount || 0}
@@ -190,9 +231,10 @@ function GoalsTable({
                   key={goal.id}
                   goal={goal}
                   openMenuUp={index >= displayGoals.length - 2} // the last two should open "up"
-                  updateGoal={updateGoal}
                   recipientId={recipientId}
                   regionId={regionId}
+                  showCloseSuspendGoalModal={showCloseSuspendGoalModal}
+                  performGoalStatusUpdate={performGoalStatusUpdate}
                 />
               ))}
             </tbody>
