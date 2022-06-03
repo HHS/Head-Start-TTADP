@@ -38,15 +38,6 @@ module.exports = (sequelize, DataTypes) => {
       ActivityReport.belongsTo(models.User, { foreignKey: 'lastUpdatedById', as: 'lastUpdatedBy' });
       ActivityReport.hasMany(models.ActivityRecipient, { foreignKey: 'activityReportId', as: 'activityRecipients' });
       ActivityReport.hasMany(models.ActivityReportCollaborator, { foreignKey: 'activityReportId', as: 'activityReportCollaborators' });
-      ActivityReport.belongsToMany(models.User, {
-        through: models.ActivityReportCollaborator,
-        // The key in the join table that points to the model defined in this file
-        foreignKey: 'activityReportId',
-        // The key in the join table that points to the "target" of the belongs to many (Users in
-        // this case)
-        otherKey: 'userId',
-        as: 'collaborators',
-      });
       ActivityReport.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
       ActivityReport.hasMany(models.File, { foreignKey: 'activityReportId', as: 'attachments' });
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'specialistNextSteps' });

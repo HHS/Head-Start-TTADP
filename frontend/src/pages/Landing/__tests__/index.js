@@ -465,7 +465,6 @@ describe('My alerts sorting', () => {
     fetchMock.get(`${base}`, { count: 0, rows: [] });
 
     fireEvent.click(columnHeaders[0]);
-
     const firstCell = /Cucumber User, GS Hermione Granger, SS click to visually reveal the collaborators for R14-AR-2$/i;
     const secondCell = /Orange, GS Hermione Granger, SS click to visually reveal the collaborators for R14-AR-1$/i;
     await waitFor(() => expect(screen.getAllByRole('cell')[5]).toHaveTextContent(firstCell));
