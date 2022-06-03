@@ -501,16 +501,27 @@ export async function saveGoalsForReport(goals, report) {
 
     const newObjectives = await Promise.all(goal.objectives.map(async (objective) => {
       const {
-        id, new: isNew, ttaProvided, ...updatedFields
+        id,
+        new: isNew,
+        ttaProvided,
+        ActivityReportObjective: aro,
+        title,
+        status,
+        ...updatedFields
       } = objective;
 
-      const updatedObjective = { ...updatedFields, goalId: newGoal.id };
+      const updatedObjective = {
+        ...updatedFields, title, status, goalId: newGoal.id,
+      };
 
       let savedObjective;
 
       if (Number.isInteger(id)) {
-        updatedObjective.id = id;
-        [, [savedObjective]] = await Objective.update(updatedObjective, { returning: true });
+        savedObjective = await Objective.findByPk(id);
+        await savedObjective.update({
+          title,
+          status,
+        });
       } else {
         [savedObjective] = await Objective.findOrCreate({
           where: {
@@ -522,13 +533,15 @@ export async function saveGoalsForReport(goals, report) {
         });
       }
 
-      await ActivityReportObjective.findOrCreate({
+      const [arObjective] = await ActivityReportObjective.findOrCreate({
         where: {
           objectiveId: savedObjective.id,
           activityReportId: report.id,
-          ttaProvided,
         },
       });
+
+      await arObjective.update({ ttaProvided });
+
       return savedObjective;
     }));
 

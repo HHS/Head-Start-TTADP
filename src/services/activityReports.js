@@ -814,22 +814,14 @@ async function getDownloadableActivityReports(where, separate = true) {
         ],
       },
       {
-        model: ActivityReportFile,
-        as: 'reportFiles',
-        required: false,
-        separate: true,
-        include: [
-          {
-            model: File,
-            where: {
-              status: {
-                [Op.ne]: 'UPLOAD_FAILED',
-              },
-            },
-            as: 'file',
-            required: false,
+        model: File,
+        where: {
+          status: {
+            [Op.ne]: 'UPLOAD_FAILED',
           },
-        ],
+        },
+        as: 'files',
+        required: false,
       },
       {
         model: User,

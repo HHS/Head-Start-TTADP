@@ -41,7 +41,7 @@ function calculateGoalsAndObjectives(report) {
         data.push(objective.title);
 
         headings.push(`TTA Provided ${objectiveDisplayNumber}`);
-        data.push(objective.ttaProvided);
+        data.push(objective.ActivityReportObjective.ttaProvided);
       });
     });
 
@@ -234,7 +234,7 @@ export default function ApprovedActivityReport({ match, user }) {
         const topics = formatSimpleArray(data.topics);
         const ECLKCResources = createResourceMarkup(data.ECLKCResourcesUsed);
         const nonECLKCResourcesUsed = createResourceMarkup(data.nonECLKCResourcesUsed);
-        const attachments = mapAttachments(data.attachments);
+        const attachments = mapAttachments(data.files);
 
         // third table
         const {

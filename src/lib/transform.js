@@ -170,7 +170,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
 
   return objectiveRecords.reduce((accum, objective) => {
     const {
-      goal, title, status, activityReportObjectives,
+      goal, title, status, ttaProvided,
     } = objective;
     const goalName = goal ? goal.name : null;
     const newGoal = goalName && !Object.values(accum).includes(goalName);
@@ -214,7 +214,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       enumerable: true,
     });
     Object.defineProperty(accum, `objective-${objectiveId}-ttaProvided`, {
-      value: convert(activityReportObjectives.map((aro) => aro.ttaProvided).join('\n')),
+      value: convert(ttaProvided),
       enumerable: true,
     });
     objectiveNum += 1;
@@ -232,7 +232,9 @@ function transformGoalsAndObjectives(report) {
   let obj = {};
   const { activityReportObjectives } = report;
   if (activityReportObjectives) {
-    const objectiveRecords = activityReportObjectives.map((aro) => aro.objective);
+    const objectiveRecords = activityReportObjectives.map((aro) => (
+      { ...aro.objective, ttaProvided: aro.ttaProvided }
+    ));
     if (objectiveRecords) {
       obj = makeGoalsAndObjectivesObject(objectiveRecords);
     }
