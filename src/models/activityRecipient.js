@@ -6,6 +6,13 @@ module.exports = (sequelize, DataTypes) => {
       ActivityRecipient.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId' });
       ActivityRecipient.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
       ActivityRecipient.belongsTo(models.OtherEntity, { foreignKey: 'otherEntityId', as: 'otherEntity' });
+
+      ActivityRecipient.addScope('defaultScope', {
+        include: [
+          { model: models.Grant, as: 'grant' },
+          { model: models.OtherEntity, as: 'otherEntity' },
+        ],
+      });
     }
   }
   ActivityRecipient.init({
@@ -33,10 +40,10 @@ module.exports = (sequelize, DataTypes) => {
     name: {
       type: DataTypes.VIRTUAL,
       get() {
-        if (this.grant) {
+        if (this.grantId && this.grant) {
           return this.grant.name;
         }
-        if (this.otherEntity) {
+        if (this.otherEntityId && this.otherEntity) {
           return this.otherEntity.name;
         }
         return null;

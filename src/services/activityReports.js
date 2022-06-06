@@ -725,6 +725,7 @@ export async function createOrUpdate(newActivityReport, report) {
   } else {
     savedReport = await create(updatedFields);
   }
+
   if (activityReportCollaborators) {
     const { id } = savedReport;
     const newCollaborators = activityReportCollaborators.map(
