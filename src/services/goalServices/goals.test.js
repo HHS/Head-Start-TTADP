@@ -24,11 +24,12 @@ describe('Goals DB service', () => {
     beforeEach(() => {
       ActivityReportObjective.findAll = jest.fn().mockResolvedValue([]);
       ActivityReportObjective.destroy = jest.fn();
+      ActivityReportObjective.findOrCreate = jest.fn().mockResolvedValue([{ update: jest.fn() }]);
       Goal.findAll = jest.fn().mockResolvedValue([]);
       Goal.findOne = jest.fn().mockResolvedValue();
       Goal.findOrCreate = jest.fn().mockResolvedValue([{ id: 1 }, false]);
       Goal.destroy = jest.fn();
-      Goal.update = jest.fn().mockResolvedValue({ id: 1 });
+      Goal.update = jest.fn().mockResolvedValue([1, [{ id: 1 }]]);
       Objective.destroy = jest.fn();
       ActivityReportGoal.findOrCreate = jest.fn().mockResolvedValue();
       ActivityReportObjective.create = jest.fn();
@@ -138,12 +139,16 @@ describe('Goals DB service', () => {
         name: 'name',
         objectives: [],
       };
+
       await saveGoalsForReport([existingGoal], { id: 1 });
       expect(Goal.update).toHaveBeenCalledWith({
         id: 1,
         name: 'name',
         objectives: [],
-      }, { where: { id: 1 } });
+      }, {
+        where: { id: 1 },
+        returning: true,
+      });
     });
 
     test.todo('can update an existing goal');
@@ -158,7 +163,9 @@ describe('Goals DB service', () => {
 
       const goalWithNewObjective = {
         ...existingGoal,
-        objectives: [{ goalId: 1, title: 'title' }],
+        objectives: [{
+          goalId: 1, title: 'title', ttaProvided: '', ActivityReportObjective: {}, status: '',
+        }],
       };
       await saveGoalsForReport([goalWithNewObjective], { id: 1 });
       expect(Objective.findOrCreate).toHaveBeenCalledWith({
@@ -167,7 +174,7 @@ describe('Goals DB service', () => {
           title: 'title',
           status: { [Op.not]: 'Completed' },
         },
-        defaults: { goalId: 1, title: 'title' },
+        defaults: { goalId: 1, title: 'title', status: '' },
       });
     });
 
@@ -175,12 +182,15 @@ describe('Goals DB service', () => {
       const existingGoal = {
         id: 1,
         name: 'name',
-        objectives: [{ title: 'title', id: 1 }],
+        objectives: [{ title: 'title', id: 1, status: 'Closed' }],
         update: jest.fn(),
       };
 
+      const update = jest.fn();
+      Objective.findByPk = jest.fn().mockResolvedValue({ update });
+
       await saveGoalsForReport([existingGoal], { id: 1 });
-      expect(Objective.update).toHaveBeenCalledWith({ id: 1, goalId: 1, title: 'title' });
+      expect(update).toHaveBeenCalledWith({ title: 'title', status: 'Closed' });
     });
   });
 });
