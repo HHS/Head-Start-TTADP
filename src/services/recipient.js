@@ -97,7 +97,6 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
   const q = `%${query}%`;
   const limit = RECIPIENTS_PER_PAGE;
 
-  console.log('yo')
   const rows = await Recipient.findAll({
     attributes: [
       [sequelize.literal('DISTINCT COUNT(*) OVER()'), 'count'],
@@ -155,7 +154,6 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
     offset,
     order: orderRecipientsBy(sortBy, direction),
   });
-  console.log('mo')
   // handle zero results
   const firstRow = rows[0];
   const count = firstRow ? firstRow.count : 0;
@@ -180,7 +178,6 @@ export async function getGoalsByActivityRecipient(
   const limitNum = parseInt(limit, 10);
   const offSetNum = parseInt(offset, 10);
 
-  console.log("yo")
   // Get Goals.
   const rows = await Goal.findAll({
     attributes: ['id', 'name', 'status', 'createdAt', 'goalNumber', 'previousStatus',
@@ -237,7 +234,6 @@ export async function getGoalsByActivityRecipient(
     ],
     order: orderGoalsBy(sortBy, sortDir),
   });
-  console.log("mo")
 
   // Build Array of Goals.
   const goalRows = [];
