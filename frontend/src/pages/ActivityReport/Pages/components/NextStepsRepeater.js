@@ -9,6 +9,7 @@ import { useFormContext, useFieldArray } from 'react-hook-form/dist/index.ie11';
 import { faTrash, faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 import './NextStepsRepeater.css';
 import ControlledDatePicker from '../../../../components/ControlledDatePicker';
+import { DATE_DISPLAY_FORMAT } from '../../../../Constants';
 
 const DEFAULT_STEP_HEIGHT = 80;
 
@@ -20,6 +21,8 @@ export default function NextStepsRepeater({
   const [blurStepValidations, setBlurStepValidations] = useState([]);
   const [blurDateValidations, setBlurDateValidations] = useState([]);
   const [showAddStepButton, setShowStepButton] = useState(false);
+
+  const todaysDate = moment().format(DATE_DISPLAY_FORMAT);
 
   const {
     register, control, getValues, errors,
@@ -106,13 +109,15 @@ export default function NextStepsRepeater({
               error={blurStepValidations[index] || (errors[name] && errors[name][index]
                 && errors[name][index].note)}
             >
-              <legend>
-                {`Step: ${index + 1}`}
+              <Label
+                htmlFor={`${stepType}-next-step-${index + 1}`}
+              >
+                {`Step ${index + 1}`}
                 <span className="smart-hub--form-required font-family-sans font-ui-xs text-secondary-dark">
                   {' '}
                   *
                 </span>
-              </legend>
+              </Label>
               {blurStepValidations[index] || (errors[name]
                 && errors[name][index] && errors[name][index].note)
                 ? <ErrorMessage>Enter a next step</ErrorMessage>
@@ -123,14 +128,6 @@ export default function NextStepsRepeater({
                   || (errors[name] && errors[name][index]
                     && errors[name][index].note) ? 'blank-next-step' : ''}`}
               >
-                <Label
-                  htmlFor={`${stepType}-next-step-${index + 1}`}
-                  className="sr-only"
-                >
-                  Next step
-                  {' '}
-                  {index + 1}
-                </Label>
                 <Textarea
                   key={item.key}
                   id={`${stepType}-next-step-${index + 1}`}
@@ -168,13 +165,15 @@ export default function NextStepsRepeater({
               error={blurDateValidations[index] || (errors[name] && errors[name][index]
                 && errors[name][index].completeDate)}
             >
-              <legend>
-                When do you anticipate completing this step?
+              <Label
+                htmlFor={`${name}[${index}].completeDate`}
+              >
+                {`When do you anticipate completing step ${index + 1}?`}
                 <span className="smart-hub--form-required font-family-sans font-ui-xs text-secondary-dark">
                   {' '}
                   *
                 </span>
-              </legend>
+              </Label>
               {blurDateValidations[index]
                 || (errors[name] && errors[name][index]
                   && errors[name][index].completeDate)
@@ -186,15 +185,6 @@ export default function NextStepsRepeater({
                   || (errors[name] && errors[name][index]
                     && errors[name][index].completeDate) ? 'blank-next-step' : ''}`}
               >
-                <Label
-                  htmlFor={`${name}[${index}].completeDate`}
-                  className="sr-only"
-                >
-                  Next step complete date
-                  {' '}
-                  {index + 1}
-                  {' '}
-                </Label>
                 <ControlledDatePicker
                   key={item.key}
                   id={`${stepType}-next-step-date-${index + 1}`}
@@ -202,6 +192,7 @@ export default function NextStepsRepeater({
                   name={`${name}[${index}].completeDate`}
                   value={item.completeDate}
                   onBlur={({ target: { value } }) => validateDateOnBlur(value, index)}
+                  minDate={todaysDate}
                   dataTestId={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}StepCompleteDate-input`}
                 />
               </div>

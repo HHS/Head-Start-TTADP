@@ -124,7 +124,7 @@ ControlledDatePicker.propTypes = {
 
 ControlledDatePicker.defaultProps = {
   minDate: '09/01/2020',
-  maxDate: moment().format(DATE_DISPLAY_FORMAT),
+  maxDate: '',
   isStartDate: false,
   setEndDate: () => {},
   onBlur: () => {},
