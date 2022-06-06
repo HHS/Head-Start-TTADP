@@ -84,13 +84,13 @@ const Topics = ({ topics }) => {
 
     return (
       <ul className="usa-list usa-list--unstyled">
-        {truncated.slice(0, 3).map((topic) => <li>{topic}</li>)}
+        {truncated.slice(0, 3).map((topic) => <li key={topic}>{topic}</li>)}
         <li>
           <Tooltip
             screenReadDisplayText={false}
             displayText={tooltipLabel}
             buttonLabel={topics.slice(-howManyMore).join(' ')}
-            tooltipText={topics.slice(-howManyMore).map((topic) => <span className="width-card display-block padding-bottom-1">{topic}</span>)}
+            tooltipText={topics.slice(-howManyMore).map((topic) => <span key={topic} className="width-card display-block padding-bottom-1">{topic}</span>)}
           />
         </li>
       </ul>
@@ -99,7 +99,7 @@ const Topics = ({ topics }) => {
 
   return (
     <ul className="usa-list usa-list--unstyled">
-      {truncated.map((topic) => <li>{topic}</li>)}
+      {truncated.map((topic) => <li key={topic}>{topic}</li>)}
     </ul>
   );
 };
