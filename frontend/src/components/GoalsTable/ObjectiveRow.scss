@@ -16,42 +16,42 @@
 .tta-smarthub--objective-rows .tta-smarthub--objective-reasons-list li,
 .tta-smarthub--goal-row-obj-table  .tta-smarthub--objective-reasons-list li:first-child {
   padding: 0px;
-  max-width: 270px;
-  min-width: 270px;
+  // max-width: 270px;
+  // min-width: 270px;
 }
 
 // objective
 .tta-smarthub--goal-row-obj-table li:first-child {
-  width: 480px;
-  // flex: 1 1 auto;
+  // width: 480px;
+  flex: 1 1 auto;
 }
 
 // activity reports
 .tta-smarthub--goal-row-obj-table li:nth-child(2) {
-  width: 135px;
-  // flex: 0 0 120px;
+  // width: 135px;
+  flex: 0 0 120px;
 }
 
 // grant numbers
 .tta-smarthub--goal-row-obj-table li:nth-child(3) {
-  width: 130px;
-  // flex: 0 0 100px;
+  // width: 130px;
+  flex: 0 0 120px;
 }
 
 // end date
 .tta-smarthub--goal-row-obj-table li:nth-child(4) {
-  width: 130px;
-  // flex: 0 0 80px;
+  // width: 130px;
+  flex: 0 0 95px;
 }
 
 // reasons
 .tta-smarthub--goal-row-obj-table li:nth-child(5) {
-  // flex: 0 0 250px;
-  width: 290px;
+  flex: 0 0 250px;
+  // width: 290px;
 }
 
 // obj status
 .tta-smarthub--goal-row-obj-table li:nth-child(6) {
-  width: 140px;
-  // flex: 0 0 140px;
+  // width: 140px;
+  flex: 0 0 140px;
 }
