@@ -327,6 +327,12 @@ const ActivitySummary = ({
           </Grid>
         </div>
       </Fieldset>
+      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Context">
+        <Label htmlFor="context">Provide background or context for this activity</Label>
+        <div className="smart-hub--text-area__resize-vertical margin-top-1">
+          <HookFormRichEditor ariaLabel="Context" name="context" id="context" />
+        </div>
+      </Fieldset>
       <Fieldset className="smart-hub--report-legend margin-top-4" legend="Training or Technical Assistance">
         <div id="tta" />
         <div className="margin-top-2">
@@ -436,12 +442,7 @@ const ActivitySummary = ({
               </Grid>
             </Grid>
           </FormItem>
-          <Fieldset className="smart-hub--report-legend margin-top-4" legend="Context">
-            <Label htmlFor="context">Provide background or context for this activity</Label>
-            <div className="smart-hub--text-area__resize-vertical margin-top-1">
-              <HookFormRichEditor ariaLabel="Context" name="context" id="context" />
-            </div>
-          </Fieldset>
+
         </div>
       </Fieldset>
     </>
