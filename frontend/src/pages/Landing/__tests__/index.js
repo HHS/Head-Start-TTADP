@@ -159,7 +159,7 @@ describe('Landing Page', () => {
 
   test('displays topics column', async () => {
     const topicsColumnHeader = await screen.findByRole('columnheader', {
-      name: /topic\(s\)/i,
+      name: /topics/i,
     });
     expect(topicsColumnHeader).toBeVisible();
   });
@@ -457,8 +457,7 @@ describe('My alerts sorting', () => {
   });
 
   it('is enabled for Collaborator(s)', async () => {
-    const columnHeaders = await screen.findAllByText(/collaborator\(s\)/i);
-    expect(columnHeaders.length).toBe(2);
+    const columnHeaders = await screen.findAllByText(/collaborators/i);
     fetchMock.reset();
 
     fetchMock.get('/api/activity-reports/alerts?sortBy=collaborators&sortDir=asc&offset=0&limit=10&region.in[]=1',
@@ -466,7 +465,6 @@ describe('My alerts sorting', () => {
     fetchMock.get(`${base}`, { count: 0, rows: [] });
 
     fireEvent.click(columnHeaders[0]);
-
     const firstCell = /Cucumber User, GS Hermione Granger, SS click to visually reveal the collaborators for R14-AR-2$/i;
     const secondCell = /Orange, GS Hermione Granger, SS click to visually reveal the collaborators for R14-AR-1$/i;
     await waitFor(() => expect(screen.getAllByRole('cell')[5]).toHaveTextContent(firstCell));

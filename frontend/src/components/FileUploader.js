@@ -1,3 +1,4 @@
+/* eslint-disable react/forbid-prop-types */
 /*
   Uses `react-dropzone` to allow file uploads. Must be placed inside a `react-hook-form`
   form. Selected files display below the main input in a 2 by 2 grid.
@@ -13,8 +14,8 @@ import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { Button, Alert } from '@trussworks/react-uswds';
 import { uploadFile, deleteFile } from '../fetchers/File';
 import Modal from './Modal';
-
-import './FileUploader.css';
+import colors from '../colors';
+import './FileUploader.scss';
 
 export const upload = async (file, reportId, setErrorMessage) => {
   let res;
@@ -101,9 +102,13 @@ function Dropzone(props) {
     onDrop, minSize: 0, maxSize, accept: 'image/*, .pdf, .docx, .xlsx, .pptx, .doc, .xls, .ppt, .zip, .txt, .csv',
   });
 
+  const rootProps = getRootProps();
+
+  const { role, tabIndex, ...rootPropsNoRole } = rootProps;
+
   return (
     <div
-      {...getRootProps()}
+      {...rootPropsNoRole}
     >
       <input {...getInputProps()} />
       <button type="button" className="usa-button usa-button--outline">
@@ -193,6 +198,7 @@ DeleteFileModal.propTypes = {
   ]).isRequired,
   onFileRemoved: PropTypes.func.isRequired,
   index: PropTypes.number,
+  // eslint-disable-next-line react/forbid-prop-types
   files: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
@@ -256,7 +262,7 @@ const FileTable = ({ onFileRemoved, files }) => {
                   }}
                 >
                   <span className="fa-sm">
-                    <FontAwesomeIcon color="black" icon={faTrash} />
+                    <FontAwesomeIcon color={colors.textInk} icon={faTrash} />
                   </span>
                 </Button>
               </td>
@@ -274,6 +280,7 @@ const FileTable = ({ onFileRemoved, files }) => {
 
 FileTable.propTypes = {
   onFileRemoved: PropTypes.func.isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
   files: PropTypes.arrayOf(PropTypes.object),
 };
 FileTable.defaultProps = {
@@ -297,13 +304,13 @@ const FileUploader = ({
     <>
       <Dropzone id={id} reportId={reportId} onChange={onFilesAdded} />
       <FileTable onFileRemoved={onFileRemoved} files={files} />
-
     </>
   );
 };
 
 FileUploader.propTypes = {
   onChange: PropTypes.func.isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
   files: PropTypes.arrayOf(PropTypes.object),
   reportId: PropTypes.node.isRequired,
   id: PropTypes.string.isRequired,

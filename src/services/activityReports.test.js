@@ -30,6 +30,7 @@ const mockUser = {
   name: 'user1115665161',
   hsesUsername: 'user1115665161',
   hsesUserId: 'user1115665161',
+  role: ['Grants Specialist', 'Health Specialist'],
 };
 
 const mockUserTwo = {
@@ -47,6 +48,7 @@ const mockUserThree = {
   name: 'user39861962',
   hsesUserId: 'user39861962',
   hsesUsername: 'user39861962',
+  role: [],
 };
 
 const mockUserFour = {
@@ -55,6 +57,7 @@ const mockUserFour = {
   name: 'user49861962',
   hsesUserId: 'user49861962',
   hsesUsername: 'user49861962',
+  role: [],
 };
 
 const mockUserFive = {
@@ -63,6 +66,7 @@ const mockUserFive = {
   name: 'user55861962',
   hsesUserId: 'user55861962',
   hsesUsername: 'user55861962',
+  role: [],
 };
 
 const alertsMockUserOne = {
@@ -71,6 +75,7 @@ const alertsMockUserOne = {
   name: 'a',
   hsesUserId: 'a',
   hsesUsername: 'a',
+  role: [],
 };
 
 const alertsMockUserTwo = {
@@ -79,6 +84,7 @@ const alertsMockUserTwo = {
   name: 'b',
   hsesUserId: 'b',
   hsesUsername: 'b',
+  role: [],
 };
 
 const reportObject = {
@@ -149,7 +155,7 @@ describe('Activity report service', () => {
     });
 
     it('retrieves myalerts', async () => {
-    // Add User Permissions.
+      // Add User Permissions.
       await Permission.create({
         userId: mockUserFour.id,
         regionId: 1,
@@ -319,7 +325,7 @@ describe('Activity report service', () => {
           additionalNotes: null,
           approvingManagerId: null,
           attachments: [],
-          collaborators: [],
+          activityReportCollaborators: [],
           context: '',
           deliveryMethod: null,
           duration: null,
@@ -374,14 +380,112 @@ describe('Activity report service', () => {
       it('handles reports with collaborators', async () => {
         const report = await createOrUpdate({
           ...reportObject,
-          collaborators: [{ id: mockUser.id }],
+          activityReportCollaborators: [{ user: { id: mockUser.id } }],
         });
-        expect(report.collaborators.length).toBe(1);
-        expect(report.collaborators[0].name).toBe(mockUser.name);
+        expect(report.activityReportCollaborators.length).toBe(1);
+        expect(report.activityReportCollaborators[0].user.name).toBe(mockUser.name);
+      });
+
+      it('creates a new report and sets collaborator roles', async () => {
+        const report = await createOrUpdate({
+          ...reportObject,
+          activityReportCollaborators: [
+            { user: { id: mockUser.id } },
+            { user: { id: mockUserTwo.id } },
+            { user: { id: mockUserThree.id } },
+          ],
+        });
+        expect(report.activityReportCollaborators.length).toBe(3);
+
+        // Mock User 1.
+        let activityReportCollaborator = report.activityReportCollaborators.filter(
+          (u) => u.user.name === mockUser.name,
+        );
+        expect(activityReportCollaborator).not.toBe(null);
+        expect(activityReportCollaborator.length).toBe(1);
+        expect(activityReportCollaborator[0].collaboratorRoles.length).toBe(2);
+        activityReportCollaborator[0].collaboratorRoles.sort(
+          (a, b) => ((a.role > b.role) ? 1 : -1),
+        );
+        expect(activityReportCollaborator[0].fullName).toBe('user1115665161, GS, HS');
+        expect(activityReportCollaborator[0].collaboratorRoles[0].role).toBe('Grants Specialist');
+        expect(activityReportCollaborator[0].collaboratorRoles[1].role).toBe('Health Specialist');
+
+        // Mock User 2.
+        activityReportCollaborator = report.activityReportCollaborators.filter(
+          (c) => c.user.name === mockUserTwo.name,
+        );
+        expect(activityReportCollaborator).not.toBe(null);
+        expect(activityReportCollaborator.length).toBe(1);
+        expect(activityReportCollaborator[0].fullName).toBe('user265157914, COR');
+        expect(activityReportCollaborator[0].collaboratorRoles.length).toBe(1);
+        expect(activityReportCollaborator[0].collaboratorRoles[0].role).toBe('COR');
+
+        // Mock User 3.
+        activityReportCollaborator = report.activityReportCollaborators.filter(
+          (c) => c.user.name === mockUserThree.name,
+        );
+        expect(activityReportCollaborator).not.toBe(null);
+        expect(activityReportCollaborator.length).toBe(1);
+        expect(activityReportCollaborator[0].fullName).toBe('user39861962');
+        expect(activityReportCollaborator[0].collaboratorRoles.length).toBe(0);
+      });
+
+      it('updates collaborator roles on a already saved report', async () => {
+        const report = await ActivityReport.create({
+          ...reportObject,
+          id: 3438,
+          activityReportCollaborators: [
+            { user: { id: mockUserTwo.id } },
+            { user: { id: mockUserThree.id } }, // Missing role.
+          ],
+        });
+        // Add role to user.
+        await User.update(
+          { role: ['System Specialist'] },
+          {
+            where: { id: mockUserThree.id },
+          },
+        );
+
+        const updatedReport = await createOrUpdate(
+          {
+            ...report,
+            // Remove collaborator 2.
+            activityReportCollaborators: [
+              { user: { id: mockUser.id } },
+              { user: { id: mockUserThree.id } },
+            ],
+          },
+          report,
+        );
+        expect(updatedReport.activityReportCollaborators.length).toBe(2);
+
+        // Mock User 1.
+        let activityReportCollaborator = updatedReport.activityReportCollaborators.filter(
+          (u) => u.user.name === mockUser.name,
+        );
+        expect(activityReportCollaborator).not.toBe(null);
+        expect(activityReportCollaborator.length).toBe(1);
+        expect(activityReportCollaborator[0].collaboratorRoles.length).toBe(2);
+        activityReportCollaborator[0].collaboratorRoles.sort(
+          (a, b) => ((a.role > b.role) ? 1 : -1),
+        );
+        expect(activityReportCollaborator[0].collaboratorRoles[0].role).toBe('Grants Specialist');
+        expect(activityReportCollaborator[0].collaboratorRoles[1].role).toBe('Health Specialist');
+
+        // Mock User 3.
+        activityReportCollaborator = updatedReport.activityReportCollaborators.filter(
+          (c) => c.user.name === mockUserThree.name,
+        );
+        expect(activityReportCollaborator).not.toBe(null);
+        expect(activityReportCollaborator.length).toBe(1);
+        expect(activityReportCollaborator[0].collaboratorRoles.length).toBe(1);
+        expect(activityReportCollaborator[0].collaboratorRoles[0].role).toBe('System Specialist'); // Updated role.
       });
 
       it('handles notes being created', async () => {
-      // Given an report with some notes
+        // Given an report with some notes
         const reportObjectWithNotes = {
           ...reportObject,
           specialistNextSteps: [{ note: 'i am groot', completeDate: '2022-05-31T12:00:00Z' }, { note: 'harry', completeDate: '2022-06-10T12:00:00Z' }],
@@ -399,8 +503,8 @@ describe('Activity report service', () => {
       });
 
       it('handles specialist notes being created', async () => {
-      // Given a report with specliasts notes
-      // And no recipient notes
+        // Given a report with specliasts notes
+        // And no recipient notes
         const reportWithNotes = {
           ...reportObject,
           specialistNextSteps: [{ note: 'i am groot', completeDate: '2022-05-31T12:00:00Z' }, { note: 'harry', completeDate: '2022-06-10T12:00:00Z' }],
@@ -418,8 +522,8 @@ describe('Activity report service', () => {
       });
 
       it('handles recipient notes being created', async () => {
-      // Given a report with recipient notes
-      // And not specialist notes
+        // Given a report with recipient notes
+        // And not specialist notes
         const reportWithNotes = {
           ...reportObject,
           specialistNextSteps: [],
@@ -437,7 +541,7 @@ describe('Activity report service', () => {
       });
 
       it('handles specialist notes being updated', async () => {
-      // Given a report with some notes
+        // Given a report with some notes
         const reportWithNotes = {
           ...reportObject,
           specialistNextSteps: [{ note: 'i am groot', completeDate: '2022-06-01T12:00:00Z' }, { note: 'harry', completeDate: '2022-06-02T12:00:00Z' }],
@@ -458,7 +562,7 @@ describe('Activity report service', () => {
       });
 
       it('handles recipient notes being updated', async () => {
-      // Given a report with some notes
+        // Given a report with some notes
         const reportWithNotes = {
           ...reportObject,
           specialistNextSteps: [{ note: 'i am groot' }, { note: 'harry' }],
@@ -479,7 +583,7 @@ describe('Activity report service', () => {
       });
 
       it('handles notes being updated to empty', async () => {
-      // Given a report with some notes
+        // Given a report with some notes
         const reportWithNotes = {
           ...reportObject,
           specialistNextSteps: [{ note: 'i am groot', completeDate: '2022-06-01T12:00:00Z' }, { note: 'harry', completeDate: '2022-06-02T12:00:00Z' }],
@@ -501,7 +605,7 @@ describe('Activity report service', () => {
       });
 
       it('handles notes being the same', async () => {
-      // Given a report with some notes
+        // Given a report with some notes
         const reportWithNotes = {
           ...reportObject,
           specialistNextSteps: [{ note: 'i am groot', completeDate: '2022-06-01T12:00:00Z' }, { note: 'harry', completeDate: '2022-06-02T12:00:00Z' }],
@@ -575,9 +679,9 @@ describe('Activity report service', () => {
         expect(foundReport.approvers[0].User.get('fullName')).toEqual(`${mockUserTwo.name}, ${mockUserTwo.role[0]}`);
       });
       it('excludes soft deleted approvers', async () => {
-      // To include deleted approvers in future add paranoid: false
-      // attribute to include object for ActivityReportApprover
-      // https://sequelize.org/master/manual/paranoid.html#behavior-with-other-queries
+        // To include deleted approvers in future add paranoid: false
+        // attribute to include object for ActivityReportApprover
+        // https://sequelize.org/master/manual/paranoid.html#behavior-with-other-queries
         const report = await ActivityReport.create(submittedReport);
         // Create needs_action approver
         const toDeleteApproval = await ActivityReportApprover.create({
@@ -628,7 +732,7 @@ describe('Activity report service', () => {
         await createOrUpdate({
           ...submittedReport,
           calculatedStatus: REPORT_STATUSES.APPROVED,
-          collaborators: [{ id: mockUser.id }],
+          activityReportCollaborators: [{ user: { id: mockUser.id } }],
         });
         await ActivityReport.create({
           ...submittedReport,
@@ -683,7 +787,7 @@ describe('Activity report service', () => {
           sortBy: 'collaborators', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1'], 'reportId.nctn': idsToExclude,
         });
         expect(rows.length).toBe(5);
-        expect(rows[0].collaborators[0].name).toBe(mockUser.name);
+        expect(rows[0].activityReportCollaborators[0].user.name).toBe(mockUser.name);
       });
 
       it('retrieves reports sorted by id', async () => {

@@ -53,7 +53,6 @@ function ActivityReportsTable({
           perPage,
           filterQuery,
         );
-
         setReports(rows);
         setReportsCount(count || 0);
         setError('');
@@ -274,8 +273,8 @@ function ActivityReportsTable({
                 {renderColumnHeader('Date started', 'startDate')}
                 {renderColumnHeader('Creator', 'author')}
                 {renderColumnHeader('Created date', 'createdAt')}
-                {renderColumnHeader('Topic(s)', 'topics')}
-                {renderColumnHeader('Collaborator(s)', 'collaborators')}
+                {renderColumnHeader('Topics', 'topics')}
+                {renderColumnHeader('Collaborators', 'collaborators')}
                 {renderColumnHeader('Last saved', 'updatedAt')}
                 {renderColumnHeader('Approved date', 'approvedAt')}
                 <th scope="col" aria-label="context menu" />

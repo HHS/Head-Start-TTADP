@@ -4,7 +4,7 @@ import { REPORT_STATUSES } from '../constants';
 
 function activityReport(
   author,
-  collaborator,
+  activityReportCollaborator,
   approvers,
   submissionStatus = REPORT_STATUSES.DRAFT,
   calculatedStatus = null,
@@ -12,14 +12,14 @@ function activityReport(
   const report = {
     userId: author,
     regionId: 1,
-    collaborators: [],
+    activityReportCollaborators: [],
     approvers: [],
     submissionStatus,
     calculatedStatus,
   };
 
-  if (collaborator) {
-    report.collaborators.push(collaborator);
+  if (activityReportCollaborator) {
+    report.activityReportCollaborators.push(activityReportCollaborator);
   }
 
   if (approvers) {
@@ -66,7 +66,7 @@ function user(write, read, admin, approve, id = 1) {
 }
 
 const author = user(true, false, false, false, 1);
-const collaborator = user(true, false, false, false, 2);
+const activityReportCollaborator = { user: user(true, false, false, false, 2) };
 const manager = user(true, false, false, false, 3);
 const otherUser = user(false, true, false, false, 4);
 const canNotReadRegion = user(false, false, false, false, 5);
@@ -131,8 +131,8 @@ describe('Activity Report policies', () => {
       });
 
       it('is true if the user is a collaborator', () => {
-        const report = activityReport(author.id, collaborator);
-        const policy = new ActivityReport(collaborator, report);
+        const report = activityReport(author.id, activityReportCollaborator);
+        const policy = new ActivityReport(activityReportCollaborator.user, report);
         expect(policy.canUpdate()).toBeTruthy();
       });
 
@@ -256,19 +256,19 @@ describe('Activity Report policies', () => {
     it('is true for collaborators', () => {
       const report = activityReport(
         author.id,
-        collaborator,
+        activityReportCollaborator,
         null,
         REPORT_STATUSES.SUBMITTED,
         REPORT_STATUSES.SUBMITTED,
       );
-      const policy = new ActivityReport(collaborator, report);
+      const policy = new ActivityReport(activityReportCollaborator.user, report);
       expect(policy.canReset()).toBeTruthy();
     });
 
     it('is false for other users', () => {
       const report = activityReport(
         author.id,
-        collaborator,
+        activityReportCollaborator,
         null,
         REPORT_STATUSES.SUBMITTED,
         REPORT_STATUSES.SUBMITTED,
@@ -307,8 +307,8 @@ describe('Activity Report policies', () => {
       });
 
       it('is true for the collaborator', () => {
-        const report = activityReport(author.id, collaborator);
-        const policy = new ActivityReport(collaborator, report);
+        const report = activityReport(author.id, activityReportCollaborator);
+        const policy = new ActivityReport(activityReportCollaborator.user, report);
         expect(policy.canGet()).toBeTruthy();
       });
 
@@ -390,8 +390,8 @@ describe('Activity Report policies', () => {
     });
 
     it('is false for any non-admin/non-author user of draft report', () => {
-      const report = activityReport(author.id, collaborator);
-      const policy = new ActivityReport(collaborator, report);
+      const report = activityReport(author.id, activityReportCollaborator);
+      const policy = new ActivityReport(activityReportCollaborator.user, report);
       expect(policy.canDelete()).toBeFalsy();
     });
 

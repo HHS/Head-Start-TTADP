@@ -6,12 +6,17 @@ import { Redirect } from 'react-router-dom';
 import moment from 'moment-timezone';
 import { Helmet } from 'react-helmet';
 import Container from '../../components/Container';
-import './index.css';
+import './index.scss';
 import ViewTable from './components/ViewTable';
 import { getReport, unlockReport } from '../../fetchers/activityReports';
 import { allRegionsUserHasPermissionTo, canUnlockReports } from '../../permissions';
 import Modal from '../../components/Modal';
-import { DATE_DISPLAY_FORMAT } from '../../Constants';
+import {
+  DATE_DISPLAY_FORMAT,
+  LOCAL_STORAGE_DATA_KEY,
+  LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
+  LOCAL_STORAGE_EDITABLE_KEY,
+} from '../../Constants';
 
 /**
  *
@@ -171,6 +176,19 @@ export default function ApprovedActivityReport({ match, user }) {
 
   const modalRef = useRef();
 
+  // cleanup local storage if the report has been submitted or approved
+  useEffect(() => {
+    try {
+      window.localStorage.removeItem(LOCAL_STORAGE_DATA_KEY(report.id));
+      window.localStorage.removeItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY(report.id));
+      window.localStorage.removeItem(LOCAL_STORAGE_EDITABLE_KEY(report.id));
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn('Local storage may not be available: ', e);
+    }
+  },
+  [report.id]);
+
   useEffect(() => {
     const allowedRegions = allRegionsUserHasPermissionTo(user);
 
@@ -197,6 +215,9 @@ export default function ApprovedActivityReport({ match, user }) {
         const arRecipients = data.activityRecipients.map((arRecipient) => arRecipient.name).sort().join(', ');
         const targetPopulations = data.targetPopulations.map((population) => population).join(', '); // Approvers.
         const approvingManagers = data.approvers.map((a) => a.User.fullName).join(', ');
+        const collaborators = data.activityReportCollaborators.map(
+          (a) => a.fullName,
+        );
 
         // Approver Notes.
         const managerNotes = data.approvers.map((a) => `
@@ -220,7 +241,7 @@ export default function ApprovedActivityReport({ match, user }) {
 
         // third table
         const {
-          context, id, displayId, additionalNotes, collaborators,
+          context, id, displayId, additionalNotes,
         } = data;
         const [goalsAndObjectiveHeadings, goalsAndObjectives] = calculateGoalsAndObjectives(data);
 
@@ -317,7 +338,6 @@ export default function ApprovedActivityReport({ match, user }) {
       </>
     );
   }
-
   const {
     reportId,
     displayId,
@@ -453,7 +473,7 @@ export default function ApprovedActivityReport({ match, user }) {
           <p>
             <strong>Collaborators:</strong>
             {' '}
-            {collaborators.map((collaborator) => collaborator.fullName).join(', ')}
+            {collaborators.map((collaborator) => collaborator).join(', ')}
           </p>
           <p>
             <strong>Managers:</strong>

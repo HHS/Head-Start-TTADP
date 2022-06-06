@@ -14,7 +14,6 @@ import { TTAHISTORY_FILTER_CONFIG } from './constants';
 import UserContext from '../../../UserContext';
 import { getUserRegions } from '../../../permissions';
 
-import './TTAHistory.css';
 import useSessionFiltersAndReflectInUrl from '../../../hooks/useSessionFiltersAndReflectInUrl';
 
 const defaultDate = formatDateRange({

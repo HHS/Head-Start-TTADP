@@ -19,10 +19,17 @@ import moment from 'moment';
 import pages from './Pages';
 import Navigator from '../../components/Navigator';
 
-import './index.css';
+import './index.scss';
 import { NOT_STARTED } from '../../components/Navigator/constants';
-import { REPORT_STATUSES, DECIMAL_BASE } from '../../Constants';
+import {
+  REPORT_STATUSES,
+  DECIMAL_BASE,
+  LOCAL_STORAGE_DATA_KEY,
+  LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
+  LOCAL_STORAGE_EDITABLE_KEY,
+} from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
+import useARLocalStorage from '../../hooks/useARLocalStorage';
 import {
   submitReport,
   saveReport,
@@ -34,6 +41,9 @@ import {
   reviewReport,
   resetToDraft,
 } from '../../fetchers/activityReports';
+import useLocalStorage from '../../hooks/useLocalStorage';
+import NetworkContext, { isOnlineMode } from '../../NetworkContext';
+import { HTTPError } from '../../fetchers';
 import UserContext from '../../UserContext';
 
 const defaultValues = {
@@ -43,7 +53,7 @@ const defaultValues = {
   activityType: [],
   additionalNotes: null,
   attachments: [],
-  collaborators: [],
+  activityReportCollaborators: [],
   context: '',
   deliveryMethod: null,
   duration: '',
@@ -69,6 +79,43 @@ const defaultValues = {
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
 const defaultPageState = mapValues(pagesByPos, () => NOT_STARTED);
+
+export function cleanupLocalStorage(id, replacementKey) {
+  try {
+    if (replacementKey) {
+      window.localStorage.setItem(
+        LOCAL_STORAGE_DATA_KEY(replacementKey),
+        window.localStorage.getItem(LOCAL_STORAGE_DATA_KEY(id)),
+      );
+      window.localStorage.setItem(
+        LOCAL_STORAGE_EDITABLE_KEY(replacementKey),
+        window.localStorage.getItem(LOCAL_STORAGE_EDITABLE_KEY(id)),
+      );
+      window.localStorage.setItem(
+        LOCAL_STORAGE_ADDITIONAL_DATA_KEY(replacementKey),
+        window.localStorage.getItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY(id)),
+      );
+    }
+
+    window.localStorage.removeItem(LOCAL_STORAGE_DATA_KEY(id));
+    window.localStorage.removeItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY(id));
+    window.localStorage.removeItem(LOCAL_STORAGE_EDITABLE_KEY(id));
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn('Local storage may not be available: ', e);
+  }
+}
+
+function setConnectionActiveWithError(e, setConnectionActive) {
+  let connection = false;
+  // if we get an "unauthorized" or "not found" responce back from the API, we DON'T
+  // display the "network is unavailable" message
+  if (e instanceof HTTPError && [403, 404].includes(e.status)) {
+    connection = true;
+  }
+  setConnectionActive(connection);
+  return connection;
+}
 
 /**
  * compares two objects using lodash "isEqual" and returns the difference
@@ -158,23 +205,50 @@ function ActivityReport({
   match, location, region,
 }) {
   const { params: { currentPage, activityReportId } } = match;
+
   const history = useHistory();
   const [error, updateError] = useState();
   const [loading, updateLoading] = useState(true);
-  const [formData, updateFormData] = useState();
-  const [initialAdditionalData, updateAdditionalData] = useState({});
+
+  const [lastSaveTime, updateLastSaveTime] = useState(null);
+
+  const [formData, updateFormData, localStorageAvailable] = useARLocalStorage(
+    LOCAL_STORAGE_DATA_KEY(activityReportId), null,
+  );
+
+  // retrieve the last time the data was saved to local storage
+  const savedToStorageTime = formData ? formData.savedToStorageTime : null;
+
+  const [initialAdditionalData, updateAdditionalData] = useLocalStorage(
+    LOCAL_STORAGE_ADDITIONAL_DATA_KEY(activityReportId), {
+      recipients: {
+        grants: [],
+        otherEntities: [],
+      },
+      collaborators: [],
+      availableApprovers: [],
+    },
+  );
   const [isApprover, updateIsApprover] = useState(false);
   // If the user is one of the approvers on this report and is still pending approval.
   const [isPendingApprover, updateIsPendingApprover] = useState(false);
-  const [editable, updateEditable] = useState(false);
-  const [lastSaveTime, updateLastSaveTime] = useState();
+  const [editable, updateEditable] = useLocalStorage(
+    LOCAL_STORAGE_EDITABLE_KEY(activityReportId), (activityReportId === 'new'), currentPage !== 'review',
+  );
+
   const [showValidationErrors, updateShowValidationErrors] = useState(false);
   const [errorMessage, updateErrorMessage] = useState();
+  // this attempts to track whether or not we're online
+  // (or at least, if the backend is responding)
+  const [connectionActive, setConnectionActive] = useState(true);
+
   const [creatorNameWithRole, updateCreatorRoleWithName] = useState('');
   const reportId = useRef();
   const { user } = useContext(UserContext);
 
-  const showLastUpdatedTime = (location.state && location.state.showLastUpdatedTime) || false;
+  const showLastUpdatedTime = (
+    location.state && location.state.showLastUpdatedTime && connectionActive
+  ) || false;
 
   useEffect(() => {
     // Clear history state once mounted and activityReportId changes. This prevents someone from
@@ -185,8 +259,20 @@ function ActivityReport({
   const convertReportToFormData = (fetchedReport) => {
     const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed);
     const nonECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.nonECLKCResourcesUsed);
-    return { ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed };
+    return {
+      ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed,
+    };
   };
+
+  // cleanup local storage if the report has been submitted or approved
+  useEffect(() => {
+    if (formData
+      && (formData.calculatedStatus === REPORT_STATUSES.APPROVED
+      || formData.calculatedStatus === REPORT_STATUSES.SUBMITTED)
+    ) {
+      cleanupLocalStorage(activityReportId);
+    }
+  }, [activityReportId, formData]);
 
   const userHasOneRole = user && user.role && user.role.length === 1;
 
@@ -196,6 +282,8 @@ function ActivityReport({
 
       try {
         updateLoading(true);
+        reportId.current = activityReportId;
+
         if (activityReportId !== 'new') {
           const fetchedReport = await getReport(activityReportId);
           report = convertReportToFormData(fetchedReport);
@@ -215,7 +303,6 @@ function ActivityReport({
         ];
 
         const [recipients, collaborators, availableApprovers] = await Promise.all(apiCalls);
-        reportId.current = activityReportId;
 
         const isCollaborator = report.collaborators
           && report.collaborators.find((u) => u.id === user.id);
@@ -233,11 +320,42 @@ function ActivityReport({
           report.calculatedStatus === REPORT_STATUSES.SUBMITTED)
         );
 
-        updateAdditionalData({ recipients, collaborators, availableApprovers });
-        updateCreatorRoleWithName(report.creatorNameWithRole);
-        updateFormData(report);
+        updateAdditionalData({
+          recipients: recipients || {
+            grants: [],
+            otherEntities: [],
+          },
+          collaborators: collaborators || [],
+          availableApprovers: availableApprovers || [],
+        });
 
-        // ***Determine if the current user matches any of the approvers for this activity report.
+        let shouldUpdateFromNetwork = true;
+
+        // this if statement compares the "saved to storage time" and the
+        // time retrieved from the network (report.updatedAt)
+        // and whichever is newer "wins"
+
+        if (formData && savedToStorageTime) {
+          const updatedAtFromNetwork = moment(report.updatedAt);
+          const updatedAtFromLocalStorage = moment(savedToStorageTime);
+          if (updatedAtFromNetwork.isValid() && updatedAtFromLocalStorage.isValid()) {
+            const storageIsNewer = updatedAtFromLocalStorage.isAfter(updatedAtFromNetwork);
+            if (storageIsNewer && formData.calculatedStatus === REPORT_STATUSES.DRAFT) {
+              shouldUpdateFromNetwork = false;
+            }
+          }
+        }
+
+        //
+        if (shouldUpdateFromNetwork && activityReportId !== 'new') {
+          updateFormData({ ...formData, ...report });
+        } else {
+          updateFormData({ ...report, ...formData });
+        }
+
+        updateCreatorRoleWithName(report.creatorNameWithRole);
+
+        // Determine if the current user matches any of the approvers for this activity report.
         // If author or collab and the report is in EDIT state we are NOT currently an approver.
 
         if (isMatchingApprover && isMatchingApprover.length > 0) {
@@ -270,11 +388,28 @@ function ActivityReport({
 
         updateError();
       } catch (e) {
-        updateError('Unable to load activity report');
+        const connection = setConnectionActiveWithError(e, setConnectionActive);
+        const networkErrorMessage = (
+          <>
+            {/* eslint-disable-next-line max-len */}
+            There&rsquo;s an issue with your connection. Some sections of this form may not load correctly.
+            <br />
+            Your work is saved on this computer. If you continue to have problems,
+            {' '}
+            <a href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">contact us</a>
+            .
+          </>
+        );
+        const errorMsg = !connection ? networkErrorMessage : <>Unable to load activity report</>;
+        updateError(errorMsg);
         // If the error was caused by an invalid region, we need a way to communicate that to the
         // component so we can redirect the user. We can do this by updating the form data
         if (report && parseInt(report.regionId, DECIMAL_BASE) === -1) {
           updateFormData({ regionId: report.regionId });
+        }
+
+        if (formData === null && !connection) {
+          updateFormData({ ...defaultValues, pageState: defaultPageState });
         }
       } finally {
         updateLoading(false);
@@ -297,7 +432,8 @@ function ActivityReport({
     return <Redirect to="/" />;
   }
 
-  if (error) {
+  // This error message is a catch all assuming that the network storage is working
+  if (error && !formData) {
     return (
       <Alert type="error">
         {error}
@@ -305,7 +441,7 @@ function ActivityReport({
     );
   }
 
-  if (!editable && currentPage !== 'review') {
+  if (connectionActive && !editable && currentPage !== 'review') {
     return (
       <Redirect push to={`/activity-reports/${activityReportId}/review`} />
     );
@@ -339,45 +475,53 @@ function ActivityReport({
 
   const onSave = async (data) => {
     const approverIds = data.approvers.map((a) => a.User.id);
-    if (reportId.current === 'new') {
-      const { startDate, endDate, ...fields } = data;
-      let startDateToSave = startDate;
-      if (startDateToSave === 'Invalid date' || startDateToSave === '' || !moment(startDateToSave, 'MM/DD/YYYY').isValid()) {
-        startDateToSave = null;
-      }
+    try {
+      if (reportId.current === 'new') {
+        const { startDate, endDate, ...fields } = data;
+        let startDateToSave = startDate;
+        if (startDateToSave === 'Invalid date' || startDateToSave === '' || !moment(startDateToSave, 'MM/DD/YYYY').isValid()) {
+          startDateToSave = null;
+        }
 
-      let endDateToSave = endDate;
-      if (endDateToSave === 'Invalid date' || endDateToSave === '' || !moment(endDateToSave, 'MM/DD/YYYY').isValid()) {
-        endDateToSave = null;
-      }
-      const savedReport = await createReport(
-        {
-          ...fields,
-          startDate: startDateToSave,
-          endDate: endDateToSave,
-          regionId: formData.regionId,
-          approverUserIds: approverIds,
-        },
-      );
+        let endDateToSave = endDate;
+        if (endDateToSave === 'Invalid date' || endDateToSave === '' || !moment(endDateToSave, 'MM/DD/YYYY').isValid()) {
+          endDateToSave = null;
+        }
+        const savedReport = await createReport(
+          {
+            ...fields,
+            startDate: startDateToSave,
+            endDate: endDateToSave,
+            regionId: formData.regionId,
+            approverUserIds: approverIds,
+          },
+        );
 
-      /*
-        Since the new state of formData depends on the previous state we need to update
-        inside a function. See https://reactjs.org/docs/hooks-reference.html#functional-updates
-      */
-      updateFormData(updateGoals(savedReport));
-      reportId.current = savedReport.id;
-      window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
-    } else {
-      // if it isn't a new report, we compare it to the last response from the backend (formData)
-      // and pass only the updated to save report
-      const creatorRole = !data.creatorRole && userHasOneRole ? user.role[0] : data.creatorRole;
-      const updatedFields = findWhatsChanged({ ...data, creatorRole }, formData);
-      const updatedReport = await saveReport(
-        reportId.current, { ...updatedFields, approverUserIds: approverIds },
-        {},
-      );
-      updateFormData(updateGoals(updatedReport));
-      updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
+        if (!savedReport) {
+          throw new Error('Report not found');
+        }
+
+        reportId.current = savedReport.id;
+
+        cleanupLocalStorage('new', savedReport.id);
+
+        window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
+
+        setConnectionActive(true);
+        updateCreatorRoleWithName(savedReport.creatorNameWithRole);
+      } else {
+        // if it isn't a new report, we compare it to the last response from the backend (formData)
+        // and pass only the updated to save report
+        const creatorRole = !data.creatorRole && userHasOneRole ? user.role[0] : data.creatorRole;
+        const updatedFields = findWhatsChanged({ ...data, creatorRole }, formData);
+        const updatedReport = await saveReport(
+          reportId.current, { ...updatedFields, approverUserIds: approverIds }, {},
+        );
+        setConnectionActive(true);
+        updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
+      }
+    } catch (e) {
+      setConnectionActiveWithError(error, setConnectionActive);
     }
   };
 
@@ -398,6 +542,8 @@ function ActivityReport({
       },
     );
     updateEditable(false);
+
+    cleanupLocalStorage(activityReportId);
   };
 
   const onReview = async (data) => {
@@ -428,6 +574,12 @@ function ActivityReport({
 
   return (
     <div className="smart-hub-activity-report">
+      { error
+      && (
+      <Alert type="warning">
+        {error}
+      </Alert>
+      )}
       <Helmet titleTemplate="%s - Activity Report - TTA Hub" defaultTitle="TTA Hub - Activity Report" />
       <Grid row className="flex-justify">
         <Grid col="auto">
@@ -446,30 +598,39 @@ function ActivityReport({
           )}
         </Grid>
       </Grid>
-      <Navigator
-        key={currentPage}
-        editable={editable}
-        updatePage={updatePage}
-        reportCreator={reportCreator}
-        showValidationErrors={showValidationErrors}
-        updateShowValidationErrors={updateShowValidationErrors}
-        lastSaveTime={lastSaveTime}
-        updateLastSaveTime={updateLastSaveTime}
-        reportId={reportId.current}
-        currentPage={currentPage}
-        additionalData={initialAdditionalData}
-        formData={formData}
-        updateFormData={updateFormData}
-        pages={pages}
-        onFormSubmit={onFormSubmit}
-        onSave={onSave}
-        onResetToDraft={onResetToDraft}
-        isApprover={isApprover}
-        isPendingApprover={isPendingApprover} // is an approver and is pending their approval.
-        onReview={onReview}
-        errorMessage={errorMessage}
-        updateErrorMessage={updateErrorMessage}
-      />
+      <NetworkContext.Provider value={
+        {
+          connectionActive: isOnlineMode && connectionActive,
+          localStorageAvailable,
+        }
+      }
+      >
+        <Navigator
+          key={currentPage}
+          editable={editable}
+          updatePage={updatePage}
+          reportCreator={reportCreator}
+          showValidationErrors={showValidationErrors}
+          updateShowValidationErrors={updateShowValidationErrors}
+          lastSaveTime={lastSaveTime}
+          updateLastSaveTime={updateLastSaveTime}
+          reportId={reportId.current}
+          currentPage={currentPage}
+          additionalData={initialAdditionalData}
+          formData={formData}
+          updateFormData={updateFormData}
+          pages={pages}
+          onFormSubmit={onFormSubmit}
+          onSave={onSave}
+          onResetToDraft={onResetToDraft}
+          isApprover={isApprover}
+          isPendingApprover={isPendingApprover} // is an approver and is pending their approval.
+          onReview={onReview}
+          errorMessage={errorMessage}
+          updateErrorMessage={updateErrorMessage}
+          savedToStorageTime={savedToStorageTime}
+        />
+      </NetworkContext.Provider>
     </div>
   );
 }
@@ -478,11 +639,6 @@ ActivityReport.propTypes = {
   match: ReactRouterPropTypes.match.isRequired,
   location: ReactRouterPropTypes.location.isRequired,
   region: PropTypes.number,
-  user: PropTypes.shape({
-    id: PropTypes.number,
-    name: PropTypes.string,
-    role: PropTypes.arrayOf(PropTypes.string),
-  }).isRequired,
 };
 
 ActivityReport.defaultProps = {

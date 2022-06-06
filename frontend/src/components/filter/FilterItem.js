@@ -2,9 +2,10 @@ import React, { useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import './FilterItem.css';
+import './FilterItem.scss';
 import FilterErrorContext from './FilterErrorContext';
 import { filterProp } from './props';
+import colors from '../../colors';
 
 const CANCEL_ARIA = 'discard changes and close filter menu';
 
@@ -190,7 +191,7 @@ export default function FilterItem({
         onClick={onRemove}
       >
         <span className="desktop:display-none margin-right-1">Remove filter</span>
-        <FontAwesomeIcon color="gray" icon={faTimesCircle} />
+        <FontAwesomeIcon color={colors.baseDark} icon={faTimesCircle} />
       </button>
     </div>
   );

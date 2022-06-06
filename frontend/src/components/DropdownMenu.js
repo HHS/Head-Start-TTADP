@@ -125,7 +125,7 @@ export default function DropdownMenu({
         {!styleAsSelect && <img className="margin-left-1" src={triangleDown} alt="" aria-hidden="true" /> }
       </button>
 
-      <div className="smart-hub--dropdown-menu--contents no-print" ref={menuContents} hidden={!menuIsOpen || disabled}>
+      <div className="smart-hub--dropdown-menu--contents shadow-2 no-print" ref={menuContents} hidden={!menuIsOpen || disabled}>
         {children}
         { showCancel
           ? (

@@ -2,14 +2,19 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faClock, faCheckCircle, faExclamationCircle, faMinusCircle, faFlag,
-} from '@fortawesome/free-solid-svg-icons';
+import { faFlag } from '@fortawesome/free-solid-svg-icons';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
-import './ObjectiveRow.css';
+import './ObjectiveRow.scss';
+import colors from '../../colors';
+import {
+  InProgress,
+  Closed,
+  NoStatus,
+  NotStarted,
+} from './icons';
 
 function ObjectiveRow({
-  objective, onCollapseObjectives,
+  objective,
 }) {
   const {
     title,
@@ -20,6 +25,7 @@ function ObjectiveRow({
     endDate,
     reasons,
     status,
+    grantNumbers,
   } = objective;
 
   const viewOrEditLink = arStatus === 'approved' ? `/activity-reports/view/${arId}` : `/activity-reports/${arId}`;
@@ -29,7 +35,7 @@ function ObjectiveRow({
     if (reasonsToMonitor.includes(reason)) {
       return (
         <>
-          <FontAwesomeIcon className="margin-left-1" size="1x" color="#d42240" icon={faFlag} />
+          <FontAwesomeIcon className="margin-left-1" size="1x" color={colors.error} icon={faFlag} />
         </>
       );
     }
@@ -81,49 +87,57 @@ function ObjectiveRow({
 
   const displayObjStatus = getGoalDisplayStatusText();
 
-  const getObjectiveStatusIcon = () => {
+  const getObjectiveStatusIcon = (() => {
     if (displayObjStatus === 'In progress') {
-      return <FontAwesomeIcon className="margin-right-1" size="1x" color="#0166ab" icon={faClock} />;
+      return <InProgress />;
     } if (displayObjStatus === 'Closed') {
-      return <FontAwesomeIcon className="margin-right-1" size="1x" color="#148439" icon={faCheckCircle} />;
+      return <Closed />;
     }
     if (displayObjStatus === 'Not started') {
-      return <FontAwesomeIcon className="margin-right-1" size="1x" color="#e2a04d" icon={faMinusCircle} />;
+      return <NotStarted />;
     }
-    return <FontAwesomeIcon className="margin-right-1" size="1x" color="#c5c5c5" icon={faExclamationCircle} />;
-  };
+    return <NoStatus />;
+  })();
 
   return (
     <>
-      <tr className="tta-smarthub--objective-row">
-        <td>
-          <button
-            type="button"
-            className="usa-button usa-button--outline tta-smarthub--objective-rows-collapse-button"
-            onClick={() => onCollapseObjectives(true)}
-            aria-label="Return to goals"
-          >
-            Collapse objective(s)
-          </button>
+      <ul className="usa-list usa-list--unstyled display-inline-block tta-smarthub--goal-row-obj-table-rows">
+        <li className="padding-x-3 padding-y-2">
+          <span className="sr-only">Objective:</span>
           {title}
-        </td>
-        <td>
+        </li>
+        <li className="padding-x-3 padding-y-2">
+          <span className="sr-only">Activity reports:</span>
           {' '}
           <Link
             to={linkToAr}
           >
             {arNumber}
           </Link>
-        </td>
-        <td>{endDate}</td>
-        <td>
+        </li>
+        <li className="padding-x-3 padding-y-2">
+          <span className="sr-only">Grant numbers:</span>
+          {grantNumbers.map((grantNumber) => (
+            <>
+              <span key={grantNumber}>{grantNumber}</span>
+              <br />
+            </>
+          ))}
+        </li>
+        <li className="padding-x-3 padding-y-2">
+          <span className="sr-only">End date:</span>
+          {endDate}
+        </li>
+        <li className="padding-x-3 padding-y-2">
+          <span className="sr-only">Reasons:</span>
           {reasons && displayReasonsList(reasons.sort())}
-        </td>
-        <td>
-          {getObjectiveStatusIcon()}
+        </li>
+        <li className="padding-x-3 padding-y-2">
+          <span className="sr-only">Objective status:</span>
+          {getObjectiveStatusIcon}
           {displayObjStatus}
-        </td>
-      </tr>
+        </li>
+      </ul>
     </>
   );
 }
@@ -139,6 +153,7 @@ export const objectivePropTypes = PropTypes.shape({
   endDate: PropTypes.string,
   reasons: PropTypes.arrayOf(PropTypes.string),
   status: PropTypes.string.isRequired,
+  grantNumbers: PropTypes.arrayOf(PropTypes.string),
 });
 
 objectivePropTypes.defaultProps = {
@@ -149,6 +164,5 @@ objectivePropTypes.defaultProps = {
 };
 ObjectiveRow.propTypes = {
   objective: objectivePropTypes.isRequired,
-  onCollapseObjectives: PropTypes.func.isRequired,
 };
 export default ObjectiveRow;

@@ -6,7 +6,7 @@ import {
   Label, FormGroup, ErrorMessage, Fieldset,
 } from '@trussworks/react-uswds';
 
-import './FormItem.css';
+import './FormItem.scss';
 
 const labelPropTypes = {
   label: PropTypes.node.isRequired,
