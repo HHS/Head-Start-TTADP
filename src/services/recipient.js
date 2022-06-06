@@ -281,6 +281,9 @@ export async function getGoalsByActivityRecipient(
         endDate: activityReport ? activityReport.endDate : null,
         reasons: activityReport ? activityReport.reason : null,
         status: o.status,
+        grantNumbers: g.grants ? Array.from(
+          new Set(g.grants.map((grant) => grant.number)),
+        ) : [],
         activityReportObjectives: o.activityReportObjectives,
       });
     });
