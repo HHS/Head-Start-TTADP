@@ -93,7 +93,8 @@
     "minimist": "^1.2.6",
     "moment": "^2.29.2",
     "nanoid": "^3.2.0",
-    "node-fetch": "^2.6.7"
+    "node-fetch": "^2.6.7",
+    "protobufjs": "^6.11.3"
   },
   "eslintConfig": {
     "extends": [
@@ -181,9 +182,13 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.12.1",
+    "@elastic/elasticsearch": "^8.2.0-patch.1",
+    "@elastic/elasticsearch-mock": "^2.0.0",
     "@faker-js/faker": "^6.0.0",
+    "@opensearch-project/opensearch": "^1.1.0",
     "adm-zip": "^0.5.1",
     "aws-sdk": "^2.826.0",
+    "aws4": "^1.11.0",
     "axios": "^0.24.0",
     "bull": "^4.2.0",
     "cheerio": "^1.0.0-rc.10",
