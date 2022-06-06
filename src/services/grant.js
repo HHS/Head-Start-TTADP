@@ -28,7 +28,7 @@ export async function cdiGrants(unassigned, active) {
 }
 
 export async function statesByGrantRegion(regions) {
-  const grants = await Grant.findAll({
+  const grants = await Grant.unscoped().findAll({
     attributes: [
       [sequelize.fn('DISTINCT', sequelize.col('stateCode')), 'stateCode'],
     ],
