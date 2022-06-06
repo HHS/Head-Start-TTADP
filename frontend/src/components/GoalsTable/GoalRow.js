@@ -63,6 +63,51 @@ ObjectiveButton.propTypes = {
   ]).isRequired,
 };
 
+const Topics = ({ topics }) => {
+  if (!topics.length) {
+    return null;
+  }
+
+  const SUBSTRING_LENGTH = 24;
+
+  const truncated = topics.map((topic) => {
+    if (topic.length > SUBSTRING_LENGTH) {
+      return `${topic.substring(0, SUBSTRING_LENGTH)}...`;
+    }
+
+    return topic;
+  });
+
+  if (topics.length > 3) {
+    const howManyMore = topics.length - 3;
+    const tooltipLabel = `+ ${howManyMore} more`;
+
+    return (
+      <ul className="usa-list usa-list--unstyled">
+        {truncated.slice(0, 3).map((topic) => <li>{topic}</li>)}
+        <li>
+          <Tooltip
+            screenReadDisplayText={false}
+            displayText={tooltipLabel}
+            buttonLabel={topics.slice(-howManyMore).join(' ')}
+            tooltipText={topics.slice(-howManyMore).map((topic) => <span className="width-card display-block padding-bottom-1">{topic}</span>)}
+          />
+        </li>
+      </ul>
+    );
+  }
+
+  return (
+    <ul className="usa-list usa-list--unstyled">
+      {truncated.map((topic) => <li>{topic}</li>)}
+    </ul>
+  );
+};
+
+Topics.propTypes = {
+  topics: PropTypes.arrayOf(PropTypes.string).isRequired,
+};
+
 function GoalRow({
   goal,
   openMenuUp,
@@ -103,27 +148,27 @@ function GoalRow({
     {
       stored: 'In Progress',
       display: 'In progress',
-      color: '#0166ab',
+      color: colors.ttahubMediumBlue,
     },
     {
       stored: 'Completed',
       display: 'Closed',
-      color: '#148439',
+      color: colors.successDarker,
     },
     {
       stored: 'Draft',
       display: 'Draft',
-      color: '#475260',
+      color: colors.baseDarkest,
     },
     {
       stored: 'Not Started',
       display: 'Not started',
-      color: '#e2a04d',
+      color: colors.ttahubOrange,
     },
     {
       stored: 'Ceased/Suspended',
       display: 'Suspended',
-      color: '#b50908',
+      color: colors.errorDark,
     },
     {
       stored: 'Needs Status',
@@ -149,20 +194,6 @@ function GoalRow({
     }
     return null;
   };
-
-  let showToolTip = false;
-  const toolTipChars = 39;
-  const truncateGoalTopics = (goalTopicsToTruncate) => {
-    let queryToReturn = goalTopicsToTruncate.join(', ');
-    if (queryToReturn.length > toolTipChars) {
-      queryToReturn = queryToReturn.substring(0, toolTipChars);
-      queryToReturn += '...';
-      showToolTip = true;
-    }
-    return queryToReturn;
-  };
-
-  const displayGoalTopics = truncateGoalTopics(goalTopics);
 
   const closeOrOpenObjectives = (collapseFromObjectives) => {
     if (collapseFromObjectives && expandObjectivesRef.current) {
@@ -193,6 +224,19 @@ function GoalRow({
     },
   ];
 
+  const containerStyle = objectivesExpanded ? {
+    borderLeft: `4px solid ${getStatusColor()}`,
+    borderBottom: `1px solid ${colors.baseLighter}`,
+    borderRight: `1px solid ${colors.baseLighter}`,
+    borderTop: 0,
+  } : {
+    borderTop: 0,
+    borderLeft: `1px solid ${colors.baseLighter}`,
+    borderBottom: `1px solid ${colors.baseLighter}`,
+    borderRight: `1px solid ${colors.baseLighter}`,
+    paddingLeft: '25px',
+  };
+
   return (
     <>
       <tr className={`tta-smarthub--goal-row ${!objectivesExpanded ? 'tta-smarthub--goal-row-collapsed' : ''}`} key={`goal_row_${id}`}>
@@ -216,18 +260,7 @@ function GoalRow({
           {determineFlagStatus()}
         </td>
         <td className="text-wrap maxw-mobile">
-          {showToolTip
-            ? (
-              <Tooltip
-                displayText={displayGoalTopics}
-                screenReadDisplayText={false}
-                buttonLabel={`${goalTopics.join(', ')} click to visually reveal`}
-                tooltipText={goalTopics.join(', ')}
-                hideUnderline={false}
-                svgLineTo={300}
-              />
-            )
-            : displayGoalTopics}
+          <Topics topics={goalTopics} />
         </td>
         <td className="padding-right-0 text-right">
           <ObjectiveButton
@@ -253,7 +286,7 @@ function GoalRow({
       <tr className="tta-smarthub--objective-rows">
         <td
           className="padding-top-0"
-          style={objectivesExpanded ? { borderLeft: `4px solid ${getStatusColor()}` } : { borderLeft: `1px solid ${colors.baseLightest}`, paddingLeft: '25px' }}
+          style={containerStyle}
           colSpan="6"
         >
           <div className="tta-smarthub--goal-row-obj-table padding-bottom-1">
