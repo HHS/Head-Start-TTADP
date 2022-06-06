@@ -42,6 +42,10 @@ const renderNextSteps = (specialist = [], recipient = [], activityRecipientType 
 };
 
 describe('next steps', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('displays correct labels for other entity', async () => {
     // When a user is on the next steps page
     renderNextSteps([{ note: '', id: 1 }], [{ note: '', id: 2 }], 'other-entity');
@@ -129,6 +133,20 @@ describe('next steps', () => {
   });
 
   it('can change step for specialist', async () => {
+    renderNextSteps(
+      [{ note: 'Step 1', id: 1, completeDate: '06/02/2022' }],
+    );
+    const stepText = await screen.findByRole('textbox', { name: /step 1 \*/i });
+    fireEvent.change(stepText, { target: { value: 'This is my changed step text.' } });
+    await waitFor(() => expect(stepText).toHaveValue('This is my changed step text.'));
+  });
+
+  it('auto grows step height', async () => {
+    Object.defineProperty(Element.prototype, 'scrollHeight', {
+      value: 300,
+      writable: true,
+      configurable: true,
+    });
     renderNextSteps(
       [{ note: 'Step 1', id: 1, completeDate: '06/02/2022' }],
     );
