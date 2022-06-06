@@ -270,19 +270,20 @@ describe('Goals Table', () => {
       // Not started.
       await screen.findByRole('cell', { name: '05/15/2021' });
       await screen.findByRole('cell', { name: /this is goal text 2/i });
-      await screen.findByRole('cell', { name: /nutrition, oral health/i });
+
+      await screen.findByRole('cell', { name: /nutrition/i });
       await screen.findByRole('cell', { name: '2 Objectives' });
 
       // Closed.
       await screen.findByRole('cell', { name: '04/15/2021' });
       await screen.findByRole('cell', { name: /this is goal text 3/i });
-      await screen.findByRole('cell', { name: /parent and family engagement/i });
+      await screen.findByRole('cell', { name: /parent and family/i });
       await screen.findByRole('cell', { name: '4 Objectives' });
 
       // Needs status.
       await screen.findByRole('cell', { name: '03/15/2021' });
       await screen.findByRole('cell', { name: /this is goal text 4/i });
-      await screen.findByRole('cell', { name: /partnerships and community engagement/i });
+      await screen.findByRole('cell', { name: /partnerships and/i });
       await screen.findByRole('cell', { name: '3 Objectives' });
 
       // Draft.
@@ -293,7 +294,7 @@ describe('Goals Table', () => {
       // Ceased/Suspended.
       await screen.findByRole('cell', { name: '01/15/2021' });
       await screen.findByRole('cell', { name: /this is goal text 6/i });
-      await screen.findByRole('cell', { name: /recordkeeping and reporting/i });
+      await screen.findByRole('cell', { name: /recordkeeping and/i });
       await screen.findByRole('cell', { name: '8 Objectives' });
     });
   });
