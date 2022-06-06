@@ -175,7 +175,6 @@ describe('next steps', () => {
     userEvent.type(dateInput, '06/04/2022');
 
     // Change focus.
-    screen.debug(undefined, 100000);
     const stepText = await screen.findByRole('textbox', { name: /step 1 \*/i });
     userEvent.click(stepText);
 
