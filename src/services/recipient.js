@@ -14,7 +14,6 @@ import orderRecipientsBy from '../lib/orderRecipientsBy';
 import { RECIPIENTS_PER_PAGE, GOALS_PER_PAGE } from '../constants';
 import filtersToScopes from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
-import { auditLogger } from '../logger';
 
 export async function allRecipients() {
   return Recipient.findAll({
@@ -181,49 +180,62 @@ export async function getGoalsByActivityRecipient(
   const offSetNum = parseInt(offset, 10);
 
   // Get Goals.
-  let rows;
-  try {
-    rows = await Goal.findAll({
-      attributes: ['id', 'name', 'status', 'createdAt', 'goalNumber', 'previousStatus',
-        [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Not Started\' THEN 2 WHEN "Goal"."status" = \'In Progress\' THEN 3  WHEN "Goal"."status" = \'Closed\' THEN 4 WHEN "Goal"."status" = \'Suspended\' THEN 5 ELSE 6 END'), 'status_sort'],
-      ],
-      where: {
-        [Op.and]: scopes,
-      },
-      include: [
-        {
-          model: Grant,
-          as: 'grant',
-          attributes: ['id', 'recipientId', 'regionId'],
-          where: {
-            regionId,
-            recipientId,
-          },
+  const rows = await Goal.findAll({
+    attributes: ['id', 'name', 'status', 'createdAt', 'goalNumber', 'previousStatus',
+      [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Not Started\' THEN 2 WHEN "Goal"."status" = \'In Progress\' THEN 3  WHEN "Goal"."status" = \'Closed\' THEN 4 WHEN "Goal"."status" = \'Suspended\' THEN 5 ELSE 6 END'), 'status_sort'],
+    ],
+    where: {
+      [Op.and]: scopes,
+    },
+    include: [
+      {
+        model: Grant,
+        as: 'grants',
+        attributes: [
+          'id', 'recipientId', 'regionId', 'number',
+        ],
+        where: {
+          regionId,
+          recipientId,
         },
-        {
-          attributes: ['id', 'title', 'status', 'goalId'],
-          model: Objective,
-          as: 'objectives',
-          required: false,
-          include: [{
+      },
+      {
+        attributes: [
+          'id',
+          'title',
+          'ttaProvided',
+          'status',
+          'goalId',
+        ],
+        model: Objective,
+        as: 'objectives',
+        required: false,
+        include: [
+          {
             attributes: ['ttaProvided'],
             model: ActivityReportObjective,
             as: 'activityReportObjectives',
             required: false,
-          }, {
-            attributes: ['id', 'reason', 'topics', 'endDate', 'calculatedStatus', 'legacyId', 'regionId'],
+          },
+          {
+            attributes: [
+              'id',
+              'reason',
+              'topics',
+              'endDate',
+              'calculatedStatus',
+              'legacyId',
+              'regionId',
+            ],
             model: ActivityReport,
             as: 'activityReports',
             required: false,
-          }],
-        },
-      ],
-      order: orderGoalsBy(sortBy, sortDir),
-    });
-  } catch (err) {
-    auditLogger.error(JSON.stringify(err));
-    throw err;
-  }
+          },
+        ],
+      },
+    ],
+    order: orderGoalsBy(sortBy, sortDir),
+  });
 
   // Build Array of Goals.
   const goalRows = [];
@@ -269,7 +281,6 @@ export async function getGoalsByActivityRecipient(
       }
 
       // Add Objective.
-      // TODO: ttaProvided needs to move from ActivityReportObjective to ActivityReportObjective
       goalToAdd.objectives.push({
         id: o.id,
         title: o.title,
@@ -282,9 +293,11 @@ export async function getGoalsByActivityRecipient(
         reasons: activityReport ? activityReport.reason : null,
         status: o.status,
         activityReportObjectives: o.activityReportObjectives,
+        grantNumbers: g.grants ? Array.from(
+          new Set(g.grants.map((grant) => grant.number)),
+        ) : [],
       });
     });
-
     // Sort Objectives by end date desc.
     goalToAdd.objectives.sort((a, b) => ((
       a.endDate === b.endDate ? a.id < b.id
