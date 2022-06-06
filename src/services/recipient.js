@@ -14,7 +14,6 @@ import orderRecipientsBy from '../lib/orderRecipientsBy';
 import { RECIPIENTS_PER_PAGE, GOALS_PER_PAGE } from '../constants';
 import filtersToScopes from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
-import { auditLogger } from '../logger';
 
 export async function allRecipients() {
   return Recipient.findAll({
@@ -51,7 +50,7 @@ export async function recipientById(recipientId, grantScopes) {
           'annualFundingMonth',
           'numberWithProgramTypes',
         ],
-        model: Grant,
+        model: Grant.unscoped(),
         as: 'grants',
         where: [{
           [Op.and]: [
@@ -98,6 +97,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
   const q = `%${query}%`;
   const limit = RECIPIENTS_PER_PAGE;
 
+  console.log('yo')
   const rows = await Recipient.findAll({
     attributes: [
       [sequelize.literal('DISTINCT COUNT(*) OVER()'), 'count'],
@@ -124,7 +124,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
     },
     include: [{
       attributes: [],
-      model: Grant,
+      model: Grant.unscoped(),
       as: 'grants',
       required: true,
       where: [{
@@ -155,7 +155,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
     offset,
     order: orderRecipientsBy(sortBy, direction),
   });
-
+  console.log('mo')
   // handle zero results
   const firstRow = rows[0];
   const count = firstRow ? firstRow.count : 0;
@@ -180,50 +180,64 @@ export async function getGoalsByActivityRecipient(
   const limitNum = parseInt(limit, 10);
   const offSetNum = parseInt(offset, 10);
 
+  console.log("yo")
   // Get Goals.
-  let rows;
-  try {
-    rows = await Goal.findAll({
-      attributes: ['id', 'name', 'status', 'createdAt', 'goalNumber', 'previousStatus',
-        [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Not Started\' THEN 2 WHEN "Goal"."status" = \'In Progress\' THEN 3  WHEN "Goal"."status" = \'Closed\' THEN 4 WHEN "Goal"."status" = \'Suspended\' THEN 5 ELSE 6 END'), 'status_sort'],
-      ],
-      where: {
-        [Op.and]: scopes,
-      },
-      include: [
-        {
-          model: Grant,
-          as: 'grant',
-          attributes: ['id', 'recipientId', 'regionId'],
-          where: {
-            regionId,
-            recipientId,
-          },
+  const rows = await Goal.findAll({
+    attributes: ['id', 'name', 'status', 'createdAt', 'goalNumber', 'previousStatus',
+      [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Not Started\' THEN 2 WHEN "Goal"."status" = \'In Progress\' THEN 3  WHEN "Goal"."status" = \'Closed\' THEN 4 WHEN "Goal"."status" = \'Suspended\' THEN 5 ELSE 6 END'), 'status_sort'],
+    ],
+    where: {
+      [Op.and]: scopes,
+    },
+    include: [
+      {
+        model: Grant,
+        as: 'grant',
+        attributes: [
+          'id', 'recipientId', 'regionId', 'number',
+        ],
+        where: {
+          regionId,
+          recipientId,
         },
-        {
-          attributes: ['id', 'title', 'status', 'goalId'],
-          model: Objective,
-          as: 'objectives',
-          required: false,
-          include: [{
+      },
+      {
+        attributes: [
+          'id',
+          'title',
+          'status',
+          'goalId',
+        ],
+        model: Objective,
+        as: 'objectives',
+        required: false,
+        include: [
+          {
             attributes: ['ttaProvided'],
             model: ActivityReportObjective,
             as: 'activityReportObjectives',
             required: false,
-          }, {
-            attributes: ['id', 'reason', 'topics', 'endDate', 'calculatedStatus', 'legacyId', 'regionId'],
+          },
+          {
+            attributes: [
+              'id',
+              'reason',
+              'topics',
+              'endDate',
+              'calculatedStatus',
+              'legacyId',
+              'regionId',
+            ],
             model: ActivityReport,
             as: 'activityReports',
             required: false,
-          }],
-        },
-      ],
-      order: orderGoalsBy(sortBy, sortDir),
-    });
-  } catch (err) {
-    auditLogger.error(JSON.stringify(err));
-    throw err;
-  }
+          },
+        ],
+      },
+    ],
+    order: orderGoalsBy(sortBy, sortDir),
+  });
+  console.log("mo")
 
   // Build Array of Goals.
   const goalRows = [];
@@ -269,7 +283,6 @@ export async function getGoalsByActivityRecipient(
       }
 
       // Add Objective.
-      // TODO: ttaProvided needs to move from ActivityReportObjective to ActivityReportObjective
       goalToAdd.objectives.push({
         id: o.id,
         title: o.title,
@@ -281,13 +294,10 @@ export async function getGoalsByActivityRecipient(
         endDate: activityReport ? activityReport.endDate : null,
         reasons: activityReport ? activityReport.reason : null,
         status: o.status,
-        grantNumbers: g.grants ? Array.from(
-          new Set(g.grants.map((grant) => grant.number)),
-        ) : [],
         activityReportObjectives: o.activityReportObjectives,
+        grantNumbers: g.grant.number,
       });
     });
-
     // Sort Objectives by end date desc.
     goalToAdd.objectives.sort((a, b) => ((
       a.endDate === b.endDate ? a.id < b.id

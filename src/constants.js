@@ -26,6 +26,8 @@ export const REPORTS_PER_PAGE = 10;
 export const RECIPIENTS_PER_PAGE = 12;
 export const GOALS_PER_PAGE = 5;
 
+export const SEARCH_RESULTS_PER_PAGE = 23;
+
 export const APPROVER_STATUSES = {
   APPROVED: 'approved',
   NEEDS_ACTION: 'needs_action',
