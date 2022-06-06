@@ -197,7 +197,7 @@ describe('Goals by Recipient Test', () => {
           // goal 1 (AR1)t
           Goal.create({
             name: 'Goal 1',
-            status: 'Not Started',
+            status: '',
             timeframe: '12 months',
             isFromSmartsheetTtaPlan: false,
             grantId: 300,
@@ -238,6 +238,22 @@ describe('Goals by Recipient Test', () => {
             isFromSmartsheetTtaPlan: false,
             grantId: 302,
             createdAt: '2021-05-02T19:16:15.842Z',
+          }),
+          Goal.create({
+            name: 'Goal not on report, no objective',
+            status: 'Closed',
+            timeframe: '12 months',
+            isFromSmartsheetTtaPlan: false,
+            grantId: 300,
+            createdAt: '2021-01-10T19:16:15.842Z',
+          }),
+          Goal.create({
+            name: 'Goal not on report, with objective',
+            status: 'Closed',
+            timeframe: '12 months',
+            isFromSmartsheetTtaPlan: false,
+            grantId: 300,
+            createdAt: '2021-01-10T19:16:15.842Z',
           }),
         ],
       );
@@ -286,6 +302,12 @@ describe('Goals by Recipient Test', () => {
         Objective.create({
           goalId: goalIds[4],
           title: 'objective 6',
+          status: 'Not Started',
+        }),
+        // objective 7
+        Objective.create({
+          goalId: goalIds[6],
+          title: 'objective 7',
           status: 'Not Started',
         }),
       ],
@@ -356,28 +378,12 @@ describe('Goals by Recipient Test', () => {
       },
     });
 
-    // await ObjectiveTemplate.destroy({
-    //   where: {
-    //     id: objectiveTemplateIds,
-    //   },
-    // });
-
-    // Delete Grant Goals.
-    // const grantGoalsToDelete = await GrantGoal.findAll({ where: { recipientId: [300, 301] } });
-    // const grantGoalIdsToDelete = grantGoalsToDelete.map((grantGoal) => grantGoal.id);
-    // await GrantGoal.destroy({ where: { id: grantGoalIdsToDelete } });
-
     // Delete Goals.
     await Goal.destroy({
       where: {
         id: goalIds,
       },
     });
-    // await GoalTemplate.destroy({
-    //   where: {
-    //     id: goalTemplateIds,
-    //   },
-    // });
 
     // Delete AR and AR Recipient.
     await ActivityRecipient.destroy({ where: { activityReportId: reportIdsToDelete } });
@@ -393,6 +399,21 @@ describe('Goals by Recipient Test', () => {
   });
 
   describe('Retrieves All Goals', () => {
+    it('Uses default sorting', async () => {
+      const { goalRows } = await getGoalsByActivityRecipient(300, 1, { sortDir: 'asc' });
+      expect(goalRows[0].goalText).toBe('Goal 1');
+    });
+
+    it('honors offset', async () => {
+      const { goalRows } = await getGoalsByActivityRecipient(300, 1, { offset: 1, sortDir: 'asc' });
+      expect(goalRows[0].goalText).toBe('Goal 2');
+    });
+
+    it('honors limit', async () => {
+      const { goalRows } = await getGoalsByActivityRecipient(300, 1, { limit: 1 });
+      expect(goalRows.length).toBe(1);
+    });
+
     it('Retrieves Goals by Recipient', async () => {
       let countx;
       let goalRowsx;
@@ -407,8 +428,8 @@ describe('Goals by Recipient Test', () => {
         throw err;
       }
 
-      expect(countx).toBe(4);
-      expect(goalRowsx.length).toBe(4);
+      expect(countx).toBe(6);
+      expect(goalRowsx.length).toBe(6);
 
       // Goal 4.
       expect(moment(goalRowsx[0].createdOn).format('YYYY-MM-DD')).toBe('2021-04-02');

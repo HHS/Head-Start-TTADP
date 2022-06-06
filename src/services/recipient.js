@@ -254,49 +254,44 @@ export async function getGoalsByActivityRecipient(
     };
 
     // Objectives.
-    if (g.objectives) {
-      g.objectives.forEach((o) => {
-        // Activity Report.
-        let activityReport;
-        if (o.activityReports && o.activityReports.length > 0) {
-          // eslint-disable-next-line prefer-destructuring
-          activityReport = o.activityReports[0];
-          goalToAdd.goalTopics = Array.from(
-            new Set([...goalToAdd.goalTopics, ...activityReport.topics]),
-          );
-          goalToAdd.reasons = Array.from(
-            new Set([...goalToAdd.reasons, ...activityReport.reason]),
-          );
-        }
+    g.objectives.forEach((o) => {
+      // Activity Report.
+      let activityReport;
+      if (o.activityReports && o.activityReports.length > 0) {
+        // eslint-disable-next-line prefer-destructuring
+        activityReport = o.activityReports[0];
+        goalToAdd.goalTopics = Array.from(
+          new Set([...goalToAdd.goalTopics, ...activityReport.topics]),
+        );
+        goalToAdd.reasons = Array.from(
+          new Set([...goalToAdd.reasons, ...activityReport.reason]),
+        );
+      }
 
-        // Add Objective.
-        // TODO: ttaProvided needs to move from ActivityReportObjective to ActivityReportObjective
-        goalToAdd.objectives.push({
-          id: o.id,
-          title: o.title,
-          arId: activityReport ? activityReport.id : null,
-          arNumber: activityReport ? activityReport.displayId : null,
-          arStatus: activityReport ? activityReport.calculatedStatus : null,
-          arLegacyId: activityReport ? activityReport.legacyId : null,
-          ttaProvided: o.ttaProvided,
-          endDate: activityReport ? activityReport.endDate : null,
-          reasons: activityReport ? activityReport.reason : null,
-          status: o.status,
-          grantNumbers: g.grants ? Array.from(
-            new Set(g.grants.map((grant) => grant.number)),
-          ) : [],
-          activityReportObjectives: o.activityReportObjectives,
-        });
+      // Add Objective.
+      // TODO: ttaProvided needs to move from ActivityReportObjective to ActivityReportObjective
+      goalToAdd.objectives.push({
+        id: o.id,
+        title: o.title,
+        arId: activityReport ? activityReport.id : null,
+        arNumber: activityReport ? activityReport.displayId : null,
+        arStatus: activityReport ? activityReport.calculatedStatus : null,
+        arLegacyId: activityReport ? activityReport.legacyId : null,
+        ttaProvided: o.ttaProvided,
+        endDate: activityReport ? activityReport.endDate : null,
+        reasons: activityReport ? activityReport.reason : null,
+        status: o.status,
+        activityReportObjectives: o.activityReportObjectives,
       });
+    });
 
-      // Sort Objectives by end date desc.
-      goalToAdd.objectives.sort((a, b) => ((
-        a.endDate === b.endDate ? a.id < b.id
-          : a.endDate < b.endDate) ? 1 : -1));
-      goalToAdd.objectiveCount = goalToAdd.objectives.length;
-      goalRows.push(goalToAdd);
-      goalCount += 1;
-    }
+    // Sort Objectives by end date desc.
+    goalToAdd.objectives.sort((a, b) => ((
+      a.endDate === b.endDate ? a.id < b.id
+        : a.endDate < b.endDate) ? 1 : -1));
+    goalToAdd.objectiveCount = goalToAdd.objectives.length;
+    goalRows.push(goalToAdd);
+    goalCount += 1;
   });
 
   return { count, goalRows };
