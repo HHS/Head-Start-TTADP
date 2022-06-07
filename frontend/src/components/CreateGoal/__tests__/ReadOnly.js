@@ -19,6 +19,8 @@ describe('ReadOnly', () => {
     render((
       <ReadOnly
         createdGoals={createdGoals}
+        onEdit={jest.fn()}
+        onDelete={jest.fn()}
       />
     ));
   };

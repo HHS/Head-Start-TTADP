@@ -138,10 +138,13 @@ const canEditOrCreateGoals = (user, region) => {
  */
 const getUserRegions = (user) => allRegionsUserHasPermissionTo(user);
 
+const canChangeGoalStatus = (user, region) => canEditOrCreateGoals(user, region);
+
 export {
   isAdmin as default,
   getRegionWithReadWrite,
   hasReadWrite,
   getUserRegions,
   canEditOrCreateGoals,
+  canChangeGoalStatus,
 };
