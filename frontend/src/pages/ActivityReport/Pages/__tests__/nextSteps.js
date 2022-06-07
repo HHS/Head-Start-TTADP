@@ -43,7 +43,11 @@ const renderNextSteps = (specialist = [], recipient = [], activityRecipientType 
 
 describe('next steps', () => {
   afterEach(() => {
-    jest.clearAllMocks();
+    Object.defineProperty(Element.prototype, 'scrollHeight', {
+      value: 80,
+      writable: true,
+      configurable: true,
+    });
   });
 
   it('displays correct labels for other entity', async () => {
