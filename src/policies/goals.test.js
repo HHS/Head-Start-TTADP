@@ -13,9 +13,7 @@ describe('Goals policies', () => {
             ],
           },
         ],
-        grants: [
-          { regionId: 2 },
-        ],
+        grant: { regionId: 2 },
       };
       const user = {
         permissions: [
@@ -33,9 +31,7 @@ describe('Goals policies', () => {
     it('returns false if user\'s permissions don\'t match the region', async () => {
       const goal = {
         objectives: [],
-        grants: [
-          { regionId: 2 },
-        ],
+        grant: { regionId: 2 },
       };
       const user = {
         permissions: [
@@ -53,9 +49,8 @@ describe('Goals policies', () => {
     it('returns true otherwise', async () => {
       const goal = {
         objectives: [],
-        grants: [
-          { regionId: 2 },
-        ],
+        grant: { regionId: 2 },
+
       };
       const user = {
         permissions: [
