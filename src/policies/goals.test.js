@@ -1,5 +1,6 @@
 import Goal from './goals';
 import SCOPES from '../middleware/scopeConstants';
+import { REPORT_STATUSES } from '../constants';
 
 describe('Goals policies', () => {
   describe('canDelete && canEdit', () => {
@@ -8,7 +9,7 @@ describe('Goals policies', () => {
         objectives: [
           {
             activityReports: [
-              { id: 1 },
+              { id: 1, calculatedStatus: REPORT_STATUSES.APPROVED },
             ],
           },
         ],

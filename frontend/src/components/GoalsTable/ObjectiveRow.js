@@ -62,7 +62,7 @@ function ObjectiveRow({
     },
     {
       stored: 'Complete',
-      display: 'Closed',
+      display: 'Complete',
     },
     {
       stored: 'Not Started',
@@ -90,7 +90,7 @@ function ObjectiveRow({
   const getObjectiveStatusIcon = (() => {
     if (displayObjStatus === 'In progress') {
       return <InProgress />;
-    } if (displayObjStatus === 'Closed') {
+    } if (displayObjStatus === 'Complete') {
       return <Closed />;
     }
     if (displayObjStatus === 'Not started') {
@@ -101,12 +101,12 @@ function ObjectiveRow({
 
   return (
     <>
-      <ul className="usa-list usa-list--unstyled display-inline-block tta-smarthub--goal-row-obj-table-rows">
-        <li className="padding-x-3 padding-y-2">
+      <ul className="usa-list usa-list--unstyled display-flex tta-smarthub--goal-row-obj-table-rows margin-bottom-1 padding-2">
+        <li className="padding-x-105 padding-y-0 padding-left-0">
           <span className="sr-only">Objective:</span>
           {title}
         </li>
-        <li className="padding-x-3 padding-y-2">
+        <li className="padding-x-105 padding-y-0">
           <span className="sr-only">Activity reports:</span>
           {' '}
           <Link
@@ -115,7 +115,7 @@ function ObjectiveRow({
             {arNumber}
           </Link>
         </li>
-        <li className="padding-x-3 padding-y-2">
+        <li className="padding-x-105 padding-y-0">
           <span className="sr-only">Grant numbers:</span>
           {grantNumbers.map((grantNumber) => (
             <>
@@ -124,15 +124,15 @@ function ObjectiveRow({
             </>
           ))}
         </li>
-        <li className="padding-x-3 padding-y-2">
+        <li className="padding-x-105 padding-y-0">
           <span className="sr-only">End date:</span>
           {endDate}
         </li>
-        <li className="padding-x-3 padding-y-2">
+        <li className="padding-x-105 padding-y-0">
           <span className="sr-only">Reasons:</span>
           {reasons && displayReasonsList(reasons.sort())}
         </li>
-        <li className="padding-x-3 padding-y-2">
+        <li className="padding-x-105 padding-y-0 padding-right-0">
           <span className="sr-only">Objective status:</span>
           {getObjectiveStatusIcon}
           {displayObjStatus}

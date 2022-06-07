@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import {
   Table, Grid, Alert,
@@ -9,8 +9,11 @@ import GoalsTableHeader from './GoalsTableHeader';
 import Container from '../Container';
 import GoalRow from './GoalRow';
 import { GOALS_PER_PAGE } from '../../Constants';
-import './GoalTable.css';
+import './GoalTable.scss';
 import { getRecipientGoals } from '../../fetchers/recipient';
+import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
+import { updateGoalStatus } from '../../fetchers/goals';
+import useSessionSort from '../../hooks/useSessionSort';
 
 function GoalsTable({
   recipientId,
@@ -22,16 +25,53 @@ function GoalsTable({
   // Goal Data.
   const [goals, setGoals] = useState([]);
 
+  // Close/Suspend Reason Modal.
+  const [closeSuspendGoalId, setCloseSuspendGoalId] = useState(0);
+  const [closeSuspendStatus, setCloseSuspendStatus] = useState('');
+  const [closeSuspendOldStatus, setCloseSuspendOldStatus] = useState(null);
+  const [resetModalValues, setResetModalValues] = useState(false);
+  const closeSuspendModalRef = useRef();
+
+  const queryString = useRef(filtersToQueryString(filters));
+
+  const showCloseSuspendGoalModal = (status, goalId, oldGoalStatus) => {
+    setCloseSuspendGoalId(goalId);
+    setCloseSuspendStatus(status);
+    setCloseSuspendOldStatus(oldGoalStatus);
+    setResetModalValues(!resetModalValues); // Always flip to trigger form reset useEffect.
+    closeSuspendModalRef.current.toggleModal(true);
+  };
+
+  const performGoalStatusUpdate = async (
+    goalId,
+    newGoalStatus,
+    oldGoalStatus,
+    closeSuspendReason = null,
+    closeSuspendContext = null,
+  ) => {
+    const updatedGoal = await updateGoalStatus(
+      goalId,
+      newGoalStatus,
+      oldGoalStatus,
+      closeSuspendReason,
+      closeSuspendContext,
+    );
+    if (closeSuspendReason && closeSuspendModalRef.current.modalIsOpen) {
+      // Close from a close suspend reason submit.
+      closeSuspendModalRef.current.toggleModal(false);
+    }
+
+    const newGoals = goals.map(
+      (g) => (g.id === updatedGoal.id ? { ...g, goalStatus: updatedGoal.status } : g),
+    );
+    setGoals(newGoals);
+  };
+
   // Page Behavior.
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Grid and Paging.
-  const [activePage, setActivePage] = useState(1);
-  const [goalsCount, setGoalsCount] = useState(0);
-  const [offset, setOffset] = useState(0);
-  const [perPage] = useState(GOALS_PER_PAGE);
-  const [sortConfig, setSortConfig] = useState(showNewGoals
+  const defaultSort = showNewGoals
     ? {
       sortBy: 'createdOn',
       direction: 'desc',
@@ -39,21 +79,29 @@ function GoalsTable({
     : {
       sortBy: 'goalStatus',
       direction: 'asc',
-    });
+    };
+
+  // Grid and Paging.
+  const [sortConfig, setSortConfig] = useSessionSort({
+    ...defaultSort,
+    activePage: 1,
+    offset: 0,
+  }, `goalsTable/${recipientId}/${regionId}`);
+
+  const [goalsCount, setGoalsCount] = useState(0);
 
   useEffect(() => {
-    async function fetchGoals() {
+    async function fetchGoals(query) {
       setLoading(true);
-      const filterQuery = filtersToQueryString(filters);
       try {
         const { count, goalRows } = await getRecipientGoals(
           recipientId,
           regionId,
           sortConfig.sortBy,
           sortConfig.direction,
-          offset,
-          perPage,
-          filterQuery,
+          sortConfig.offset,
+          GOALS_PER_PAGE,
+          query,
         );
         setGoals(goalRows);
         setGoalsCount(count);
@@ -65,13 +113,20 @@ function GoalsTable({
       }
       setLoading(false);
     }
-    fetchGoals();
-  }, [sortConfig, offset, perPage, filters, recipientId, regionId, showNewGoals]);
+    const filterQuery = filtersToQueryString(filters);
+    if (filterQuery !== queryString.current) {
+      setSortConfig({ ...sortConfig, activePage: 1, offset: 0 });
+      queryString.current = filterQuery;
+      return;
+    }
+    fetchGoals(filterQuery);
+  }, [sortConfig, filters, recipientId, regionId, showNewGoals, setSortConfig]);
 
   const handlePageChange = (pageNumber) => {
     if (!loading) {
-      setActivePage(pageNumber);
-      setOffset((pageNumber - 1) * perPage);
+      setSortConfig({
+        ...sortConfig, activePage: pageNumber, offset: (pageNumber - 1) * GOALS_PER_PAGE,
+      });
     }
   };
 
@@ -84,13 +139,13 @@ function GoalsTable({
     ) {
       direction = 'desc';
     }
-    setActivePage(1);
-    setOffset(0);
-    setSortConfig({ sortBy, direction });
+    setSortConfig({
+      ...sortConfig, sortBy, direction, activePage: 1, offset: 0,
+    });
   };
 
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
-  const renderColumnHeader = (displayName, name, allowSort = true) => {
+  const renderColumnHeader = (displayName, name, allowSort = true, align = 'left') => {
     const sortClassName = getClassNamesFor(name);
     let fullAriaSort;
     switch (sortClassName) {
@@ -106,7 +161,7 @@ function GoalsTable({
     }
 
     return (
-      <th scope="col" aria-sort={fullAriaSort}>
+      <th scope="col" aria-sort={fullAriaSort} className={`text-${align}`}>
         {
           allowSort
             ? (
@@ -132,14 +187,6 @@ function GoalsTable({
 
   const displayGoals = goals && goals.length ? goals : [];
 
-  const updateGoal = (newGoal) => {
-    // Update Status on Goal.
-    const newGoals = goals.map(
-      (g) => (g.id === newGoal.id ? { ...g, goalStatus: newGoal.status } : g),
-    );
-    setGoals(newGoals);
-  };
-
   return (
     <>
       {error && (
@@ -150,18 +197,27 @@ function GoalsTable({
       </Grid>
       )}
       <Container className="goals-table maxw-full overflow-x-hidden" padding={0} loading={loading} loadingLabel="Goals table loading">
+        <CloseSuspendReasonModal
+          id="close-suspend-reason-modal"
+          goalId={closeSuspendGoalId}
+          newStatus={closeSuspendStatus}
+          modalRef={closeSuspendModalRef}
+          onSubmit={performGoalStatusUpdate}
+          resetValues={resetModalValues}
+          oldGoalStatus={closeSuspendOldStatus}
+        />
         <GoalsTableHeader
           title="TTA goals and objectives"
           count={goalsCount || 0}
-          activePage={activePage}
-          offset={offset}
-          perPage={perPage}
+          activePage={sortConfig.activePage}
+          offset={sortConfig.offset}
+          perPage={GOALS_PER_PAGE}
           handlePageChange={handlePageChange}
           recipientId={recipientId}
           regionId={regionId}
           hasActiveGrants={hasActiveGrants}
         />
-        <div className="usa-table-container">
+        <div className="usa-table-container padding-x-3">
           <Table fullWidth scrollable>
             <caption className="usa-sr-only">
               TTA goals and objective count with sorting and pagination
@@ -172,7 +228,7 @@ function GoalsTable({
                 {renderColumnHeader('Created on', 'createdOn')}
                 {renderColumnHeader('Goal text (Goal ID)', 'goalText', false)}
                 {renderColumnHeader('Goal topics', 'goalTopics', false)}
-                {renderColumnHeader('Objectives', 'objectiveCount', false)}
+                {renderColumnHeader('Objectives', 'objectiveCount', false, 'right')}
                 <th scope="col" aria-label="context menu" />
               </tr>
             </thead>
@@ -181,10 +237,11 @@ function GoalsTable({
                 <GoalRow
                   key={goal.id}
                   goal={goal}
-                  openMenuUp={index > displayGoals.length - 1}
-                  updateGoal={updateGoal}
+                  openMenuUp={index >= displayGoals.length - 2} // the last two should open "up"
                   recipientId={recipientId}
                   regionId={regionId}
+                  showCloseSuspendGoalModal={showCloseSuspendGoalModal}
+                  performGoalStatusUpdate={performGoalStatusUpdate}
                 />
               ))}
             </tbody>

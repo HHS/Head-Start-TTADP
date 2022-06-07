@@ -12,11 +12,6 @@ import FilterTopicSelect from './FilterTopicSelect';
 import FilterStatus from './FilterStatus';
 import FilterSelect from './FilterSelect';
 
-const YEAR_TO_DATE = formatDateRange({
-  yearToDate: true,
-  forDateTime: true,
-});
-
 const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true });
 
 const EMPTY_MULTI_SELECT = {
@@ -36,7 +31,7 @@ export const createDateFilter = {
   display: 'Create date',
   conditions: DATE_CONDITIONS,
   defaultValues: {
-    'is within': YEAR_TO_DATE,
+    'is within': '',
     'is on or after': '',
     'is on or before': '',
     is: LAST_THIRTY_DAYS,

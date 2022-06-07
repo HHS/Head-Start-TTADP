@@ -2,14 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Form, FormGroup, ErrorMessage, Label, Fieldset, Radio, Textarea,
+  Form, FormGroup, ErrorMessage, Label, Fieldset, Radio, Textarea, Alert,
 } from '@trussworks/react-uswds';
 import Modal from './Modal';
 import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '../Constants';
-import './CloseSuspendReasonModal.scss';
 
 const CloseSuspendReasonModal = ({
-  modalRef, goalId, newStatus, onSubmit, resetValues,
+  modalRef, goalId, newStatus, onSubmit, resetValues, error, oldGoalStatus,
 }) => {
   const [closeSuspendReason, setCloseSuspendReason] = useState('');
   const [closeSuspendContext, setCloseSuspendContext] = useState('');
@@ -22,9 +21,9 @@ const CloseSuspendReasonModal = ({
     setShowValidationError(false);
   }, [resetValues]);
 
-  const reasonDisplayStatus = newStatus === 'Completed' ? 'closing' : 'suspending';
-  const reasonRadioOptions = newStatus === 'Completed' ? GOAL_CLOSE_REASONS : GOAL_SUSPEND_REASONS;
-  const ReasonChanged = (e) => {
+  const reasonDisplayStatus = newStatus === 'Closed' ? 'closing' : 'suspending';
+  const reasonRadioOptions = newStatus === 'Closed' ? GOAL_CLOSE_REASONS : GOAL_SUSPEND_REASONS;
+  const reasonChanged = (e) => {
     setCloseSuspendReason(e.target.value);
     setShowValidationError(false);
   };
@@ -33,7 +32,7 @@ const CloseSuspendReasonModal = ({
     <Radio
       id={`radio-reason-${goalId}-${i + 1}`}
       key={`radio-reason-${goalId}-${i + 1}`}
-      onChange={ReasonChanged}
+      onChange={reasonChanged}
       name="closeSuspendReason"
       label={r}
       value={r}
@@ -49,7 +48,7 @@ const CloseSuspendReasonModal = ({
     if (!closeSuspendReason) {
       setShowValidationError(true);
     } else {
-      onSubmit(goalId, newStatus, closeSuspendReason, closeSuspendContext);
+      onSubmit(goalId, newStatus, oldGoalStatus, closeSuspendReason, closeSuspendContext);
     }
   };
 
@@ -61,7 +60,7 @@ const CloseSuspendReasonModal = ({
         modalId="CloseSuspendReasonModal"
         title={`Why are you ${reasonDisplayStatus} this goal?`}
         okButtonText="Submit"
-        okButtonAriaLabel={`This button will submit your reason for ${reasonDisplayStatus} the goal.`}
+        okButtonAriaLabel="Change goal status"
         okButtonCss="usa-button--primary"
         cancelButtonCss="usa-button--unstyled"
         showTitleRequired
@@ -70,13 +69,8 @@ const CloseSuspendReasonModal = ({
           name={`close-suspend-reason-form-goal-${goalId}`}
           key={`close-suspend-reason-form-goal-${goalId}`}
         >
-          <FormGroup error={showValidationError}>
+          <FormGroup error={showValidationError} className="margin-top-0">
             <Fieldset>
-              <legend className="sr-only">
-                Why are you
-                {reasonDisplayStatus}
-                this goal?
-              </legend>
               {showValidationError ? <ErrorMessage>{`Please select a reason for ${reasonDisplayStatus} goal.`}</ErrorMessage> : null}
               {
                 generateReasonRadioButtons()
@@ -85,7 +79,7 @@ const CloseSuspendReasonModal = ({
           </FormGroup>
           <FormGroup>
             <Fieldset>
-              <Label className="font-weight-normal" htmlFor="input-type-text" error>
+              <Label className="font-weight-normal" htmlFor="close-suspend-reason-context" error>
                 Additional context
               </Label>
               <Textarea
@@ -98,6 +92,7 @@ const CloseSuspendReasonModal = ({
             </Fieldset>
           </FormGroup>
         </Form>
+        {goalId === error ? <Alert type="warning">There was an error updating the goal status</Alert> : null }
       </Modal>
     </div>
   );
@@ -112,6 +107,11 @@ CloseSuspendReasonModal.propTypes = {
   newStatus: PropTypes.string.isRequired,
   onSubmit: PropTypes.func.isRequired,
   resetValues: PropTypes.bool.isRequired,
+  oldGoalStatus: PropTypes.string.isRequired,
+  error: PropTypes.oneOfType([
+    PropTypes.bool,
+    PropTypes.number,
+  ]).isRequired,
 };
 
 export default CloseSuspendReasonModal;
