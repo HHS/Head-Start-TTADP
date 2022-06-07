@@ -45,7 +45,7 @@ export default function NextStepsRepeater({
 
   const onAddNewStep = () => {
     const allValues = getValues();
-    const fieldArray = allValues[name];
+    const fieldArray = allValues[name] || [];
     const canAdd = fieldArray.every((field) => field.note !== ''
       && (field.completeDate && moment(field.completeDate, 'MM/DD/YYYY').isValid()));
     if (canAdd) {

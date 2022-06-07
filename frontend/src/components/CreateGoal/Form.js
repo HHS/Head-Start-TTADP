@@ -5,6 +5,7 @@ import {
   Alert,
 } from '@trussworks/react-uswds';
 import ObjectiveForm from './ObjectiveForm';
+import './Form.css';
 import PlusButton from './PlusButton';
 import GrantSelect from './GrantSelect';
 import GoalText from './GoalText';
@@ -14,7 +15,6 @@ import {
   OBJECTIVE_DEFAULT_ERRORS,
   FORM_FIELD_INDEXES,
 } from './constants';
-import './Form.scss';
 
 export default function Form({
   possibleGrants,

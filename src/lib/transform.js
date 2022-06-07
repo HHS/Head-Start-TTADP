@@ -63,7 +63,7 @@ function transformRelatedModel(field, prop) {
   return transformer;
 }
 
-function transformCollaborators(joinTable, field, fieldName) {
+function transformCollaborators(joinTable, table, field, fieldName) {
   function transformer(instance) {
     const obj = {};
     let records = instance[joinTable];
@@ -71,7 +71,7 @@ function transformCollaborators(joinTable, field, fieldName) {
       if (!Array.isArray(records)) {
         records = [records];
       }
-      const value = records.map((r) => r[field]).sort().join('\n');
+      const value = records.map((r) => r[table][field]).sort().join('\n');
       Object.defineProperty(obj, fieldName, {
         value,
         enumerable: true,
@@ -245,7 +245,7 @@ const arTransformers = [
   'creatorName',
   transformRelatedModel('lastUpdatedBy', 'name'),
   'requester',
-  transformCollaborators('activityReportCollaborators', 'fullName', 'collaborators'),
+  transformCollaborators('activityReportCollaborators', 'user', 'fullName', 'collaborators'),
   transformApproversModel('name'),
   'targetPopulations',
   'virtualDeliveryType',

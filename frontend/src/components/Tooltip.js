@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 
-import './Tooltip.scss';
+import './Tooltip.css';
 
 export default function Tooltip({
   displayText,

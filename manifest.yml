@@ -29,7 +29,6 @@ applications:
       - ttahub-((env))
       - ttahub-redis-((env))
       - ttahub-document-upload-((env))
-      - ttahub-elasticsearch-((env))
     processes:
     - type: web
       instances: ((web_instances))

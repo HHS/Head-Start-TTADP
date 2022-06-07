@@ -364,20 +364,20 @@ describe('Table sorting', () => {
   });
 
   it('clicking Collaborators column header will sort by collaborators', async () => {
-    const columnHeader = await screen.findByRole('columnheader', { name: /collaborators/i });
+    const columnHeader = await screen.findByText(/collaborator\(s\)/i);
 
     fetchMock.get(
       '/api/activity-reports?sortBy=collaborators&sortDir=asc&offset=0&limit=10&region.in[]=1',
       { count: 2, rows: activityReportsSorted },
     );
-    await waitFor(() => expect(screen.getAllByRole('cell')[16]).toHaveTextContent('Cucumber User, GS Hermione Granger, SS'));
-    await waitFor(() => expect(screen.getAllByRole('cell')[6]).toHaveTextContent('Orange, GS Hermione Granger, SS'));
 
     act(() => fireEvent.click(columnHeader));
+    await waitFor(() => expect(screen.getAllByRole('cell')[6]).toHaveTextContent('Cucumber User, GS Hermione Granger, SS'));
+    await waitFor(() => expect(screen.getAllByRole('cell')[16]).toHaveTextContent('Orange, GS Hermione Granger, SS'));
   });
 
   it('clicking Topics column header will sort by topics', async () => {
-    const columnHeader = await screen.findByText('Topics');
+    const columnHeader = await screen.findByText(/topic\(s\)/i);
 
     fetchMock.get(
       '/api/activity-reports?sortBy=topics&sortDir=asc&offset=0&limit=10&region.in[]=1',

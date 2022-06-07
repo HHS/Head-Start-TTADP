@@ -10,7 +10,6 @@ import ObjectivePicker from './components/ObjectivePicker';
 import RecipientReviewSection from './components/RecipientReviewSection';
 import OtherEntityReviewSection from './components/OtherEntityReviewSection';
 import { validateObjectives } from './components/objectiveValidator';
-import ConnectionError from './components/ConnectionError';
 
 const GoalsObjectives = () => {
   const { watch } = useFormContext();
@@ -19,21 +18,14 @@ const GoalsObjectives = () => {
   const isRecipientReport = activityRecipientType === 'recipient';
   const grantIds = isRecipientReport ? recipients.map((r) => r.activityRecipientId) : [];
 
-  const [fetchError, setFetchError] = useState(false);
   const [availableGoals, updateAvailableGoals] = useState([]);
   const hasGrants = grantIds.length > 0;
 
   useDeepCompareEffect(() => {
     const fetch = async () => {
-      try {
-        if (isRecipientReport && hasGrants) {
-          const fetchedGoals = await getGoals(grantIds);
-          updateAvailableGoals(fetchedGoals);
-        }
-
-        setFetchError(false);
-      } catch (error) {
-        setFetchError(true);
+      if (isRecipientReport && hasGrants) {
+        const fetchedGoals = await getGoals(grantIds);
+        updateAvailableGoals(fetchedGoals);
       }
     };
     fetch();
@@ -53,13 +45,12 @@ const GoalsObjectives = () => {
       )}
       {showGoals
         && (
-          <Fieldset className="smart-hub--report-legend margin-top-4" legend="Goals and objectives">
-            <div id="goals-and-objectives" />
-            { fetchError && (<ConnectionError />)}
-            <GoalPicker
-              availableGoals={availableGoals}
-            />
-          </Fieldset>
+        <Fieldset className="smart-hub--report-legend margin-top-4" legend="Goals and objectives">
+          <div id="goals-and-objectives" />
+          <GoalPicker
+            availableGoals={availableGoals}
+          />
+        </Fieldset>
         )}
     </>
   );

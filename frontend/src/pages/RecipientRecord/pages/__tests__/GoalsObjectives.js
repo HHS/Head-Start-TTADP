@@ -147,7 +147,7 @@ describe('Goals and Objectives', () => {
     expect(screen.getAllByRole('cell')[1]).toHaveTextContent('06/15/2021');
     expect(screen.getAllByRole('cell')[2]).toHaveTextContent(/this is goal text 1/i);
     expect(screen.getAllByRole('cell')[3]).toHaveTextContent(/human resources, safety practices, program planning and services/i);
-    expect(screen.getAllByRole('cell')[4]).toHaveTextContent('5 Objectives');
+    expect(screen.getAllByRole('cell')[4]).toHaveTextContent('5 Objective(s)');
   });
 
   it('renders correctly when filter is changed', async () => {
@@ -187,13 +187,13 @@ describe('Goals and Objectives', () => {
     await screen.findByRole('cell', { name: '06/15/2021' });
     await screen.findByRole('cell', { name: /this is goal text 1/i });
     await screen.findByRole('cell', { name: /human resources, safety practices, program planning and services/i });
-    await screen.findByRole('cell', { name: '5 Objectives' });
+    await screen.findByRole('cell', { name: '5 Objective(s)' });
 
     await screen.findByRole('cell', { name: /not started/i });
     await screen.findByRole('cell', { name: '07/15/2021' });
     await screen.findByRole('cell', { name: /this is goal text 2/i });
     await screen.findByRole('cell', { name: 'Program Planning and Services' });
-    await screen.findByRole('cell', { name: '1 Objective' });
+    await screen.findByRole('cell', { name: '1 Objective(s)' });
 
     expect(await screen.findByText(/1-2 of 2/i)).toBeVisible();
   });

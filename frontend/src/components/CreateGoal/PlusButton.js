@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { Button } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
-import colors from '../../colors';
 
 export default function PlusButton({
   onClick,
@@ -11,7 +10,7 @@ export default function PlusButton({
 }) {
   return (
     <Button type="button" unstyled onClick={onClick}>
-      <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faPlusCircle} />
+      <FontAwesomeIcon className="margin-right-1" color="#005ea2" icon={faPlusCircle} />
       {text}
     </Button>
   );

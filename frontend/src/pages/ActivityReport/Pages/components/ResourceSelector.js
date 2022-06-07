@@ -7,7 +7,6 @@ import { Button, Textarea } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
-import colors from '../../../../colors';
 
 const ResourceSelector = ({ name, ariaName }) => {
   const { register, control, getValues } = useFormContext();
@@ -41,7 +40,7 @@ const ResourceSelector = ({ name, ariaName }) => {
           />
           {canDelete && (
           <Button onClick={() => remove(index)} aria-label={`remove ${ariaName} ${index + 1}`} className="smart-hub--remove-resource padding-left-2" unstyled type="button">
-            <FontAwesomeIcon color={colors.textInk} icon={faTrash} />
+            <FontAwesomeIcon color="black" icon={faTrash} />
           </Button>
           )}
         </div>
@@ -52,8 +51,8 @@ const ResourceSelector = ({ name, ariaName }) => {
         onClick={onAddNewResource}
       >
         <span className="fa-layers fa-fw">
-          <FontAwesomeIcon color={colors.ttahubMediumBlue} size="lg" icon={faCircle} />
-          <FontAwesomeIcon color={colors.ttahubMediumBlue} size="xs" icon={faPlus} />
+          <FontAwesomeIcon color="#0166ab" size="lg" icon={faCircle} />
+          <FontAwesomeIcon color="#0166ab" size="xs" icon={faPlus} />
         </span>
         <span className="margin-left-1">
           Add New Resource

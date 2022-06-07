@@ -4,7 +4,7 @@
   "description": "Office of Head Start Training & Technical Assistance Data Platform\r =============================================",
   "main": "index.js",
   "engines": {
-    "node": "16.14.2"
+    "node": "16.13.1"
   },
   "scripts": {
     "axe:ci": "axe --exit --show-errors --load-delay 1000 `cat axe-urls` --dir ./reports/",
@@ -64,7 +64,6 @@
     "docker:db:migrate:undo": "docker-compose run --rm backend node_modules/.bin/sequelize db:migrate:undo",
     "docker:db:seed": "docker-compose run --rm backend yarn db:seed",
     "docker:db:seed:undo": "docker-compose run --rm backend yarn db:seed:undo",
-    "docker:makecolors": "docker-compose run --rm frontend yarn makecolors",
     "import:reports:local": "./node_modules/.bin/babel-node ./src/tools/importSSActivityReports.js",
     "import:reports": "node ./build/server/tools/importSSActivityReports.js",
     "import:goals:local": "./node_modules/.bin/babel-node ./src/tools/importTTAPlanGoals.js",
@@ -75,16 +74,13 @@
     "reconcile:legacy:local": "./node_modules/.bin/babel-node ./src/tools/reconcileLegacyReports.js",
     "processData:local": "./node_modules/.bin/babel-node ./src/tools/processDataCLI.js",
     "changeReportStatus": "node ./build/server/tools/changeReportStatusCLI.js",
-    "changeReportStatus:local": "./node_modules/.bin/babel-node ./src/tools/changeReportStatusCLI.js",
-    "makecolors": "node ./src/makecolors.js"
+    "changeReportStatus:local": "./node_modules/.bin/babel-node ./src/tools/changeReportStatusCLI.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/adhocteam/Head-Start-TTADP.git"
   },
   "resolutions": {
-    "axe-core": "4.3.5",
-    "@axe-core/webdriverjs": "4.3.2",
     "ansi-regex": "^5.0.1",
     "colors": "1.4.0",
     "follow-redirects": "^1.14.8",
@@ -93,8 +89,7 @@
     "minimist": "^1.2.6",
     "moment": "^2.29.2",
     "nanoid": "^3.2.0",
-    "node-fetch": "^2.6.7",
-    "protobufjs": "^6.11.3"
+    "node-fetch": "^2.6.7"
   },
   "eslintConfig": {
     "extends": [
@@ -182,13 +177,9 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.12.1",
-    "@elastic/elasticsearch": "^8.2.0-patch.1",
-    "@elastic/elasticsearch-mock": "^2.0.0",
     "@faker-js/faker": "^6.0.0",
-    "@opensearch-project/opensearch": "^1.1.0",
     "adm-zip": "^0.5.1",
     "aws-sdk": "^2.826.0",
-    "aws4": "^1.11.0",
     "axios": "^0.24.0",
     "bull": "^4.2.0",
     "cheerio": "^1.0.0-rc.10",

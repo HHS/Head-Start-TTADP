@@ -2,9 +2,7 @@ import stringify from 'csv-stringify/lib/sync';
 import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
 import {
-  ActivityReport as ActivityReportModel,
-  ActivityReportApprover,
-  User as UserModel,
+  ActivityReport as ActivityReportModel, ActivityReportApprover, User as UserModel,
 } from '../../models';
 import ActivityReport from '../../policies/activityReport';
 import User from '../../policies/user';
@@ -572,11 +570,11 @@ export async function saveReport(req, res) {
     // join the updated report with the model object retrieved from the API
     // since we may not get all fields in the request body
     const savedReport = await createOrUpdate({ ...report, ...newReport }, report);
-    if (savedReport.activityReportCollaborators) {
+    if (savedReport.collaborators) {
       // only include collaborators that aren't already in the report
-      const newCollaborators = savedReport.activityReportCollaborators.filter((c) => {
-        const oldCollaborators = report.activityReportCollaborators.map((x) => x.user.email);
-        return !oldCollaborators.includes(c.user.email);
+      const newCollaborators = savedReport.collaborators.filter((c) => {
+        const oldCollaborators = report.collaborators.map((x) => x.email);
+        return !oldCollaborators.includes(c.email);
       });
       collaboratorAssignedNotification(savedReport, newCollaborators);
     }
@@ -610,10 +608,10 @@ export async function createReport(req, res) {
       res.sendStatus(403);
       return;
     }
-    // updateCollaboratorRoles(newReport);
+
     const report = await createOrUpdate(newReport);
-    if (report.activityReportCollaborators) {
-      collaboratorAssignedNotification(report, report.activityReportCollaborators);
+    if (report.collaborators) {
+      collaboratorAssignedNotification(report, report.collaborators);
     }
     res.json(report);
   } catch (error) {

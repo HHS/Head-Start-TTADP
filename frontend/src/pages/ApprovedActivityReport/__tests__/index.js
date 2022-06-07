@@ -21,15 +21,7 @@ describe('Activity report print and share view', () => {
     author: {
       fullName: 'Captain Tim Tina Boat',
     },
-    activityReportCollaborators: [
-      {
-        fullName: 'Test',
-        user: { fullName: 'Test' },
-      },
-      {
-        fullName: 'Test 2',
-        user: { fullName: 'Test 2' },
-      }],
+    collaborators: ['Test', 'Test 2'],
     approvers: [
       {
         id: 1, status: '', note: '', User: { id: 1, fullName: 'John Q Fullname' },
@@ -185,7 +177,7 @@ describe('Activity report print and share view', () => {
     await waitFor(() => {
       expect(screen.getByText(/technical assistance, virtual \(phone\)/i)).toBeInTheDocument();
       expect(screen.getByText('Goal')).toBeInTheDocument();
-      expect(screen.getByText(/test 2/i)).toBeInTheDocument();
+      expect(screen.getByText(/test/i)).toBeInTheDocument();
     });
   });
 

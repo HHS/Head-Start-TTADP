@@ -1,11 +1,12 @@
 import React, { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
+import { v4 as uuidv4 } from 'uuid';
 import { Grid } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import useSessionFiltersAndReflectInUrl from '../../../hooks/useSessionFiltersAndReflectInUrl';
 import FilterPanel from '../../../components/filter/FilterPanel';
-import { expandFilters } from '../../../utils';
+import { expandFilters, formatDateRange } from '../../../utils';
 import { getGoalsAndObjectivesFilterConfig } from './constants';
 import GoalStatusGraph from '../../../widgets/GoalStatusGraph';
 import GoalsTable from '../../../components/GoalsTable/GoalsTable';
@@ -18,12 +19,18 @@ export default function GoalsObjectives({
   const { user } = useContext(UserContext);
   const regions = useMemo(() => getUserRegions(user), [user]);
   const showNewGoals = location.state && location.state.ids && location.state.ids.length > 0;
+  const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
 
   const FILTER_KEY = 'goals-objectives-filters';
 
   const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
     FILTER_KEY,
-    [],
+    [{
+      id: uuidv4(),
+      topic: 'createDate',
+      condition: 'is within',
+      query: yearToDate,
+    }],
   );
 
   const possibleGrants = recipient.grants;

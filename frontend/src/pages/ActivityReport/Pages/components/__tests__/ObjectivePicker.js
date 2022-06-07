@@ -54,6 +54,21 @@ describe('ObjectivePicker', () => {
     expect(buttons.length).toBe(1);
   });
 
+  it('can update objectives', async () => {
+    render(<RenderObjective objectivesWithoutGoals={objectives} />);
+
+    const button = await screen.findByRole('button', { name: 'Edit or delete objective 1' });
+    userEvent.click(button);
+    const edit = await screen.findByRole('button', { name: 'Edit' });
+    userEvent.click(edit);
+    const titleEditbox = await screen.findByRole('textbox', { name: 'title for objective 1' });
+    userEvent.type(titleEditbox, 'test');
+    const save = await screen.findByRole('button', { name: 'Save objective 1' });
+    userEvent.click(save);
+    const title = await screen.findByText(withText('Objective: titletest'));
+    expect(title).toBeVisible();
+  });
+
   it('can add additional objectives', async () => {
     render(<RenderObjective objectivesWithoutGoals={objectives} />);
     const button = await screen.findByRole('button', { name: 'add objective' });

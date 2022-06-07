@@ -6,8 +6,8 @@ import withWidgetData from './withWidgetData';
 import AccessibleWidgetData from './AccessibleWidgetData';
 
 import Container from '../components/Container';
-import colors from '../colors';
-import './TotalHrsAndRecipientGraph.scss';
+
+import './TotalHrsAndRecipientGraph.css';
 
 export function TotalHrsAndRecipientGraph({ data, loading }) {
   // the state for which lines to show
@@ -46,15 +46,14 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         line: {
           dash: 'solid',
           width: 3,
-          // color: '#2e4a62',
-          color: colors.ttahubBlue,
+          color: '#2e4a62',
         },
         marker: {
           size: 12,
         },
         hoverlabel: {
           font: { color: '#ffffff', size: '16' },
-          bgcolor: colors.textInk,
+          bgcolor: '#21272d',
         },
       },
       {
@@ -67,7 +66,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         line: {
           dash: 'dash',
           width: 3,
-          color: colors.ttahubOrange,
+          color: '#d9a15b',
         },
         marker: {
           size: 14,
@@ -75,7 +74,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         },
         hoverlabel: {
           font: { color: '#ffffff', size: '16' },
-          bgcolor: colors.textInk,
+          bgcolor: '#21272d',
         },
       },
 
@@ -89,7 +88,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         line: {
           dash: 'longdash',
           width: 3,
-          color: colors.ttahubMediumDeepTeal,
+          color: '#3d8142',
         },
         marker: {
           symbol: 'square',
@@ -97,7 +96,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         },
         hoverlabel: {
           font: { color: '#ffffff', size: '16' },
-          bgcolor: colors.smartHubTextInk,
+          bgcolor: '#21272d',
         },
       }];
 
@@ -112,7 +111,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         },
       },
       font: {
-        color: colors.smartHubTextInk,
+        color: '#1b1b1b',
       },
       margin: {
         l: 50,
@@ -135,7 +134,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
           font: {
             family: 'Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif',
             size: 18,
-            color: colors.smartHubTextInk,
+            color: '#1b1b1b',
           },
         },
       },
@@ -154,7 +153,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
           font: {
             family: 'Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif',
             size: 18,
-            color: colors.smartHubTextInk,
+            color: '#1b1b1b',
           },
         },
       },
@@ -224,6 +223,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
                 <LegendControl id="show-training-checkbox" label="Training" selected={showTraining} setSelected={setShowTraining} shape="triangle" />
                 <LegendControl id="show-both-checkbox" label="Both" selected={showBoth} setSelected={setShowBoth} shape="square" />
               </fieldset>
+
               <div data-testid="lines" ref={lines} />
             </div>
           )}

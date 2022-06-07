@@ -60,7 +60,5 @@
   $ref: './widgets/reasonList.yaml'
 '/widgets/topicAndFrequencyGraph':
   $ref: './widgets/topicAndFrequencyGraph.yaml'
-'/search':
-  $ref: './search/search.yaml'
 
 

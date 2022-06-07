@@ -5,14 +5,10 @@
   "license": "ISC",
   "dependencies": {
     "@babel/runtime": "^7.12.1",
-    "@fortawesome/fontawesome-pro": "^6.1.1",
-    "@fortawesome/fontawesome-svg-core": "^6.1.1",
-    "@fortawesome/free-regular-svg-icons": "^6.1.1",
-    "@fortawesome/free-solid-svg-icons": "^6.1.1",
-    "@fortawesome/pro-duotone-svg-icons": "^6.1.1",
-    "@fortawesome/pro-light-svg-icons": "^6.1.1",
-    "@fortawesome/pro-regular-svg-icons": "^6.1.1",
-    "@fortawesome/pro-solid-svg-icons": "^6.1.1",
+    "@fortawesome/fontawesome-free": "^5.15.1",
+    "@fortawesome/fontawesome-svg-core": "^1.2.32",
+    "@fortawesome/free-regular-svg-icons": "^5.15.2",
+    "@fortawesome/free-solid-svg-icons": "^5.15.1",
     "@fortawesome/react-fontawesome": "^0.1.11",
     "@hookform/error-message": "^0.0.5",
     "@trussworks/react-uswds": "2.7.0",
@@ -48,13 +44,12 @@
     "react-select": "^4.1.0",
     "react-stickynode": "^4.0.0",
     "react-with-direction": "^1.3.1",
-    "sass": "^1.51.0",
     "url-join": "^4.0.1",
     "use-deep-compare-effect": "^1.6.1",
     "uuid": "^8.3.2"
   },
   "engines": {
-    "node": "16.14.2"
+    "node": "16.13.1"
   },
   "scripts": {
     "start": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts start",
@@ -177,8 +172,7 @@
       "<rootDir>/src/pages/Widgets/index.js",
       "<rootDir>/src/widgets/Example.js",
       "<rootDir>/src/pages/RegionalDashboard/formatDateRange.js",
-      "<rootDir>/src/pages/RegionalDashboard/constants.js",
-      "<rootDir>/src/pages/makecolors.js"
+      "<rootDir>/src/pages/RegionalDashboard/constants.js"
     ],
     "coverageThreshold": {
       "global": {

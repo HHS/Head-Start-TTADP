@@ -1,0 +1,96 @@
+
+@media(min-width: 1090px){
+  .ttahub--show-accessible-data-button {
+    flex: 1;
+    text-align: right;
+  }
+}
+
+
+.ttahub--total-hrs-recipient-graph-legend label {
+  font-size: 16px;
+  padding-right: 32px;
+}
+
+.ttahub-total-hours-container {
+  height: calc( 100% - 1.5rem);
+}
+
+.ttahub--total-hrs-recipient-graph-legend label::after {
+  height: 3px;
+  content: " ";
+  width: 80px;
+  display: inline-block;
+  margin-left: 10px;
+  margin-bottom: 2px;
+}
+
+.ttahub--total-hrs-recipient-graph-legend div:nth-child(2) label::after {
+  background-color: #2e4a62; /* Technical assistance */
+}
+
+.ttahub--total-hrs-recipient-graph-legend div:nth-child(3) label::after {
+  border-top: 3px dashed #d9a15b; /* training */
+  height: 3px;
+  background-color: #ffffff00;
+}
+
+.ttahub--total-hrs-recipient-graph-legend div:nth-child(4) label::after {
+  border-top: 3px dashed #3d8142; /* both */
+  height: 3px;
+  background-color: #ffffff00;
+}
+
+.ttahub--total-hrs-recipient-graph-legend .usa-checkbox::after {  
+  content: '';
+  height: 9px;
+  position: absolute;
+  right: 4.2rem;
+  top: 7px;
+  width: 9px;
+}
+
+/* both */
+.ttahub--total-hrs-recipient-graph-legend .usa-checkbox.square::after {
+  background: #3d8142;
+}
+
+/* technical assistance */
+.ttahub--total-hrs-recipient-graph-legend .usa-checkbox.circle::after {
+  background: #2e4a62;
+  border-radius: 50%;
+  height: 12px;
+  width: 12px;
+}
+
+/* training */
+.ttahub--total-hrs-recipient-graph-legend .usa-checkbox.triangle::after {
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;  
+  border-bottom: 10px solid #d9a15b;
+  height: 0;
+  width: 0;
+  right: 4rem;   
+  z-index: 1;
+}
+
+/* this adds a white line around the triangle to make it stand out a bit more*/
+.ttahub--total-hrs-recipient-graph-legend .usa-checkbox.triangle::before {
+  content: '';
+  border-left: 11px solid transparent;
+  border-right: 11px solid transparent;  
+  border-bottom: 11px solid white;
+  height: 0;
+  width: 0;
+  position: absolute;
+  right: calc(4rem - 1px);   
+  top: 6px;  
+  z-index: 1;
+}
+
+
+@media(max-width: 1500px){
+  .ttahub--total-hrs-recipient-graph-apply-filters-container {
+    width: 100%;
+  }
+}

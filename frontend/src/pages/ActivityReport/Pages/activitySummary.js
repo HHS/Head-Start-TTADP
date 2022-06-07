@@ -1,6 +1,4 @@
-import React, {
-  useState, useEffect, useRef, useContext,
-} from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
@@ -22,10 +20,9 @@ import {
   TARGET_POPULATIONS as targetPopulations,
 } from '../../../Constants';
 import HookFormRichEditor from '../../../components/HookFormRichEditor';
+
 import HtmlReviewItem from './Review/HtmlReviewItem';
 import Section from './Review/ReviewSection';
-import ConnectionError from './components/ConnectionError';
-import NetworkContext from '../../../NetworkContext';
 import { reportIsEditable } from '../../../utils';
 
 const ActivitySummary = ({
@@ -49,8 +46,6 @@ const ActivitySummary = ({
   const pageState = watch('pageState');
   const isVirtual = watch('deliveryMethod') === 'virtual';
   const { otherEntities: rawOtherEntities, grants: rawGrants } = recipients;
-
-  const { connectionActive } = useContext(NetworkContext);
 
   const grants = rawGrants.map((recipient) => ({
     label: recipient.name,
@@ -152,11 +147,6 @@ const ActivitySummary = ({
           </FormItem>
         </div>
         <div className="margin-top-2">
-          {!disableRecipients
-          && !connectionActive
-          && !selectedRecipients.length
-            ? <ConnectionError />
-            : null}
           <FormItem
             label={recipientLabel}
             name="activityRecipients"
@@ -175,18 +165,17 @@ const ActivitySummary = ({
           </FormItem>
         </div>
         <div className="margin-top-2">
-          {!connectionActive && !collaborators.length ? <ConnectionError /> : null }
           <FormItem
             label="Collaborating Specialists"
-            name="activityReportCollaborators"
+            name="collaborators"
             required={false}
           >
             <MultiSelect
-              name="activityReportCollaborators"
+              name="collaborators"
               control={control}
               required={false}
-              valueProperty="user.id"
-              labelProperty="user.fullName"
+              valueProperty="id"
+              labelProperty="name"
               simple={false}
               placeholderText={placeholderText}
               options={collaborators.map((user) => ({ value: user.id, label: user.name }))}
@@ -483,7 +472,7 @@ const sections = [
       { label: 'Recipient or other entity', name: 'activityRecipientType', sort: true },
       { label: 'Activity Participants', name: 'activityRecipients', path: 'name' },
       {
-        label: 'Collaborating specialist(s)', name: 'activityReportCollaborators', path: 'user.fullName', sort: true,
+        label: 'Collaborating specialists', name: 'collaborators', path: 'name', sort: true,
       },
       { label: 'Target Populations addressed', name: 'targetPopulations', sort: true },
     ],

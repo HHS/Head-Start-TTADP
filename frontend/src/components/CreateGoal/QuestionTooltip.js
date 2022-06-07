@@ -4,12 +4,11 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import Tooltip from '../Tooltip';
 import './QuestionTooltip.css';
-import colors from '../../colors';
 
 export default function QuestionTooltip({ text }) {
   return (
     <Tooltip
-      displayText={<FontAwesomeIcon color={colors.ttahubMediumBlue} icon={faQuestionCircle} />}
+      displayText={<FontAwesomeIcon color="#005ea2" icon={faQuestionCircle} />}
       tooltipText={text}
       hideUnderline
       buttonLabel={text}

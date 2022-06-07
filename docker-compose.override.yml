@@ -14,7 +14,6 @@ services:
       - POSTGRES_HOST=postgres_docker
       - REDIS_HOST=redis
       - SMTP_HOST=mailcatcher
-      - FONTAWESOME_NPM_AUTH_TOKEN
     volumes:
       - ".:/app:rw"
   frontend:
@@ -30,7 +29,6 @@ services:
       - "./scripts:/app/scripts"
     environment:
       - BACKEND_PROXY=http://backend:8080
-      - FONTAWESOME_NPM_AUTH_TOKEN
   worker:
     build:
       context: .

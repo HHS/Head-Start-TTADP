@@ -6,7 +6,6 @@ import { Alert, Button } from '@trussworks/react-uswds';
 import Container from '../../components/Container';
 import './ReportMenu.css';
 import Loader from '../../components/Loader';
-import colors from '../../colors';
 
 export const MAXIMUM_EXPORTED_REPORTS = 20000;
 
@@ -70,7 +69,7 @@ function ReportMenu({
           size="1x"
           className="margin-left-1"
           style={{ paddingBottom: '2px' }}
-          color={colors.ttahubMediumBlue}
+          color="#005ea2"
           icon={faSortDown}
         />
       </button>

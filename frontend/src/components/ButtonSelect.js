@@ -3,8 +3,7 @@ import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import DropdownMenu from './DropdownMenu';
-import './ButtonSelect.scss';
-import colors from '../colors';
+import './ButtonSelect.css';
 
 /**
  *
@@ -96,7 +95,7 @@ function ButtonSelect(props) {
               }}
             >
               {option.label}
-              {option.value === checked ? <FontAwesomeIcon className="smart-hub--button-select-checkmark" size="1x" color={colors.ttahubMediumBlue} icon={faCheck} /> : null}
+              {option.value === checked ? <FontAwesomeIcon className="smart-hub--button-select-checkmark" size="1x" color="#005ea2" icon={faCheck} /> : null}
             </button>
           ))}
         </fieldset>

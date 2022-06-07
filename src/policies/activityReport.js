@@ -130,13 +130,7 @@ export default class ActivityReport {
   }
 
   isCollaborator() {
-    if (!this.activityReport.activityReportCollaborators
-      || this.activityReport.activityReportCollaborators.length === 0) {
-      return false;
-    }
-
-    return this.activityReport
-      .activityReportCollaborators.some((collab) => collab.user.id === this.user.id);
+    return this.activityReport.collaborators.some((user) => user.id === this.user.id);
   }
 
   isApprovingManager() {

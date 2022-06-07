@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 import { Button } from '@trussworks/react-uswds';
 import DatePicker from '../DatePicker';
-import './DateRangePicker.scss';
+import './DateRangePicker.css';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 
 const QUERY_DATE_FORMAT = 'YYYY/MM/DD';

@@ -29,7 +29,6 @@ import _ from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import arrowBoth from '../images/arrow-both.svg';
 import useSpellCheck from '../hooks/useSpellCheck';
-import colors from '../colors';
 
 export const DropdownIndicator = (props) => (
   // eslint-disable-next-line react/jsx-props-no-spreading
@@ -89,7 +88,7 @@ function MultiSelect({
       fontFamily: 'SourceSansPro',
       textTransform: 'capitalize',
       fontSize: '14px',
-      color: colors.smartHubTextInk,
+      color: '#21272d',
       lineHeight: '22px',
     }),
     control: (provided, state) => ({

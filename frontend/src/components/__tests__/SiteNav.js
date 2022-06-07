@@ -51,7 +51,7 @@ describe('SiteNav', () => {
     });
 
     test('nav items are not visible', () => {
-      expect(screen.queryAllByRole('link').length).toBe(1);
+      expect(screen.queryAllByRole('link').length).toBe(0);
     });
   });
 });

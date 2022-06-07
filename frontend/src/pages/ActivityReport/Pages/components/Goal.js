@@ -4,7 +4,7 @@ import { Button, Label, TextInput } from '@trussworks/react-uswds';
 
 import Objective from './Objective';
 import ContextMenu from '../../../../components/ContextMenu';
-import './Goal.scss';
+import './Goal.css';
 
 const Goals = ({
   name,

@@ -11,7 +11,7 @@ function RequestPermissions() {
           </h1>
           <div className="text-center">
             <p className="margin-bottom-4">
-              <a className="usa-button display-inline-block margin-x-1" href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">
+              <a className="usa-button smart-hub-bg-blue-primary display-inline-block margin-x-1" href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">
                 Request Permission
               </a>
             </p>

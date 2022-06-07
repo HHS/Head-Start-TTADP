@@ -204,7 +204,7 @@ export const collaboratorAssignedNotification = (report, newCollaborators) => {
     try {
       const data = {
         report,
-        newCollaborator: collaborator.user,
+        newCollaborator: collaborator,
       };
       notificationQueue.add('collaboratorAssigned', data);
     } catch (err) {

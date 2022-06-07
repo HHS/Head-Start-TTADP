@@ -42,13 +42,6 @@ const renderNextSteps = (specialist = [], recipient = [], activityRecipientType 
 };
 
 describe('next steps', () => {
-  it('renders correctly with no steps', async () => {
-    renderNextSteps(undefined, undefined);
-    expect(await screen.findByText(/specialist's next steps/i)).toBeVisible();
-    expect(await screen.findByText(/specialist's next steps/i)).toBeVisible();
-    expect(await screen.findByText(/recipient's next steps/i)).toBeVisible();
-  });
-
   it('displays correct labels for other entity', async () => {
     // When a user is on the next steps page
     renderNextSteps([{ note: '', id: 1 }], [{ note: '', id: 2 }], 'other-entity');
@@ -144,20 +137,6 @@ describe('next steps', () => {
     await waitFor(() => expect(stepText).toHaveValue('This is my changed step text.'));
   });
 
-  it('auto grows step height', async () => {
-    Object.defineProperty(Element.prototype, 'scrollHeight', {
-      value: 300,
-      writable: true,
-      configurable: true,
-    });
-    renderNextSteps(
-      [{ note: 'Step 1', id: 1, completeDate: '06/02/2022' }],
-    );
-    const stepText = await screen.findByRole('textbox', { name: /step 1 \*/i });
-    fireEvent.change(stepText, { target: { value: 'This is my changed step text.' } });
-    await waitFor(() => expect(stepText).toHaveValue('This is my changed step text.'));
-  });
-
   it('can change date for specialist', async () => {
     renderNextSteps(
       [{ note: 'Step 1', id: 1, completeDate: '06/02/2022' }],
@@ -196,6 +175,7 @@ describe('next steps', () => {
     userEvent.type(dateInput, '06/04/2022');
 
     // Change focus.
+    screen.debug(undefined, 100000);
     const stepText = await screen.findByRole('textbox', { name: /step 1 \*/i });
     userEvent.click(stepText);
 

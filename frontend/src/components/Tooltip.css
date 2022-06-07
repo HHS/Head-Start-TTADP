@@ -1,0 +1,67 @@
+.smart-hub-tooltip .smart-hub--ellipsis{
+    font-size: 15px;
+    position: relative;
+}
+
+.smart-hub-tooltip .ttahub-tooltip-underline {
+    position: absolute;
+    max-width: 100%;
+    left: 0;
+    bottom: 0;
+    right: 0;
+}
+
+.smart-hub-tooltip .usa-button,
+.smart-hub-tooltip .usa-button:hover {
+    text-decoration: none;
+}
+
+.smart-hub--ellipsis {
+    color: #21272D;
+    display: inline-block;
+    overflow-x: hidden;
+    overflow-y: visible;
+    max-width: 175px;   
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+.smart-hub--ellipsis > span {  
+    position: relative;
+}
+
+.smart-hub-tooltip {
+    display: inline-block;
+    position: relative;
+}
+
+.smart-hub-tooltip button {
+    line-height: 1.7;    
+}
+
+.smart-hub-tooltip:hover .usa-tooltip__body,
+.smart-hub-tooltip.show-tooltip .usa-tooltip__body{        
+    animation: fadein;
+    /* This ensures the tool tips stays while the user is hovering.  */
+    animation-fill-mode: forwards;
+    animation-duration: 500ms;
+    animation-fill-mode: forwards;
+    animation-iteration-count: 1;
+    bottom: 1.5rem;
+    display: inline-block;
+    left: -25%;
+    line-height: 1; 
+    position: absolute;
+    white-space: normal;
+    max-width: 200px;
+}
+
+@keyframes fadein {
+    0% {      
+        opacity: 0;
+    }
+
+    100% {    
+        opacity: 1;
+    }
+}

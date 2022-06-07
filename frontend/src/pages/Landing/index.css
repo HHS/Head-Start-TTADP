@@ -1,0 +1,264 @@
+.pagination {
+  white-space: nowrap;
+  margin-bottom: 0px;
+  padding-left: 20px;
+}
+
+.pagination li {
+  display: inline-block;
+}
+
+.pagination li a {
+  color: #3c4146;
+  text-align: center;
+  text-decoration: none;
+  margin: 9px;
+}
+
+.pagination li.active {
+  background-image: url(../../images/blue-circle.png);
+  background-repeat: no-repeat;
+  background-position: center center;
+  padding: 10px 0px 10px 0px;
+}
+
+.landing .disabled {
+  display: none;
+}
+
+.pagination li.active a {
+  font-weight: bold;
+  color: white;
+  outline: none;
+}
+
+div.smart-hub--total-count {
+  background-color: #ebe6e6;
+  align-self: center;
+  display: inline;
+}
+
+.smart-hub--link-next {
+  text-decoration-line: underline !important;
+  color: #0166ab !important;
+  margin-left: 12px;
+}
+
+.smart-hub--link-prev {
+  text-decoration-line: underline !important;
+  color: #0166ab !important;
+  margin-right: 12px;
+}
+
+.smart-hub--link-pagination {
+  text-decoration: none;
+  padding: 2px;
+}
+
+.smart-hub-bg-vivid {
+  background-color: #0166ab;
+}
+
+.landing .smart-hub--table-nav {
+  position: relative;
+  font-size: 16px;
+  font-weight: 500;
+  font-family: Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial,
+    sans-serif;
+}
+
+#alertsTotalCount {
+  position: absolute;
+  font-size: 16px;
+  font-weight: 500;
+  font-family: Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial,
+    sans-serif;
+  margin-top: 27px;
+  margin-left: 900px;
+  display: none;
+}
+
+h1.landing {
+  font-size: 40px;
+  font-family: "Merriweather", serif;
+  font-weight: 700;
+  white-space: nowrap;
+  margin-right: 0px;
+}
+
+.landing .usa-table {
+  line-height: 2.5;
+}
+
+.landing .usa-table thead th a {
+  cursor: pointer;
+}
+
+.landing .usa-table thead th {
+  white-space: nowrap;
+  background-color: white;
+  border-top: solid 1.5px;
+  border-color: #eceef1;
+  border-bottom: none;
+  padding-right: 0px;
+}
+
+.landing .usa-table td {
+  background-color: transparent;
+  border-style: none;
+  font-size: 15px;
+  min-width: 120px;
+  white-space: nowrap;
+}
+
+.landing .usa-table td:first-child,
+.landing .usa-table td:last-child{
+  min-width: auto;
+}
+
+.landing .usa-table .usa-checkbox__label::before{
+  position: relative;
+}
+
+.landing .usa-table th {
+  font-size: 15px;
+  white-space: nowrap;
+  background-color: transparent;
+  border-style: none;
+  color: black;
+}
+
+.smart-hub--blue a {
+  color: #3c72ae;
+}
+
+.landing .usa-alert .usa-alert--error {
+  margin-bottom: 20px;
+  background-color: #148439;
+}
+
+.landing .smart-hub--context-menu-button {
+  padding: 2px;
+}
+
+.smart-hub--status-draft {
+  background: #e2eff7;
+  color: #0166ab;
+}
+
+.smart-hub--status-submitted {
+  background: #eceef1;
+  color: #475260;
+}
+
+.smart-hub--status-approved {
+  background: #f0fcf4;
+  color: #148439;
+}
+
+.smart-hub--status-needs_action {
+  background: #f9e0e4;
+  color: #d42240;
+}
+
+.smart-hub--status- {
+  display: none;
+}
+
+.smart-hub--status-null {
+  display: none;
+}
+
+.smart-hub--table-tag-status {
+  text-align: center;
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+
+
+.usa-button.smart-hub--button__no-margin {
+  margin-left: 0px;
+}
+
+.smart-hub--plus {
+  font-size: 40px;
+}
+
+.smart-hub--new-report {
+  margin-left: 10px;
+  margin-top: 7px;
+  float: right;
+}
+
+.smart-hub--new-report-btn {
+  line-height: 0.5;
+  min-width: 220px;
+  background-color: #0166ab;
+  max-height: 44px;
+  border-radius: 5px;
+  padding: 0.7rem 1.25rem 0.75rem 1.25rem;
+}
+
+.smart-hub--create-new-report {
+  padding-top: 30px;
+}
+thead th > .sortable {
+  position: relative;
+}
+thead th > .sortable::after {
+  content: "";
+  background-image: url(../../images/sort_both.png);
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  display: inline-block;
+  position: absolute;
+  right: -15px;
+  top: -2px;
+  width: 10px;
+  height: 20px;
+}
+
+thead th > .sortable.asc::after {
+  background-image: url(../../images/sort_asc.png);
+}
+
+thead th > .sortable.desc::after {
+  background-image: url(../../images/sort_desc.png);
+}
+
+a.asc {
+  outline: none !important;
+}
+
+a.desc {
+  outline: none !important;
+}
+
+.landing .usa-alert {
+  padding: 20px;
+}
+
+.inline-size {
+  inline-size: fit-content;
+}
+
+.simplebar-scrollbar:before {
+  background: #c5c5c5;
+}
+
+.smart-hub--reports-button {
+  display: block;
+  text-decoration: none;
+  width: 100%;
+  height: 100%;
+  color: black;
+}
+
+.smart-hub--menu-button__open {
+  background-color: #eceef1;
+}
+
+.fba-modal .fba-modal-dialog {
+  margin-top: 120px;
+}

@@ -10,7 +10,6 @@ import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
 
 import goalsObjectives from '../goalsObjectives';
-import NetworkContext from '../../../../NetworkContext';
 
 const goalUrl = join('api', 'activity-reports', 'goals');
 
@@ -24,11 +23,9 @@ const RenderGoalsObjectives = ({
     defaultValues: { goals: [], objectivesWithoutGoals: [], ...data },
   });
   return (
-    <NetworkContext.Provider value={{ connectionActive: true, localStorageAvailable: true }}>
-      <FormProvider {...hookForm}>
-        {goalsObjectives.render()}
-      </FormProvider>
-    </NetworkContext.Provider>
+    <FormProvider {...hookForm}>
+      {goalsObjectives.render()}
+    </FormProvider>
   );
 };
 

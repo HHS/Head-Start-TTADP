@@ -1,10 +1,9 @@
-/* eslint-disable react/forbid-prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Label } from '@trussworks/react-uswds';
 import Select, { components } from 'react-select';
-import colors from '../colors';
+
 import arrowBoth from '../images/arrow-both.svg';
 
 const DropdownIndicator = (props) => (
@@ -18,7 +17,7 @@ const Placeholder = (props) => <components.Placeholder {...props} />;
 const styles = {
   container: (provided, state) => {
     // To match the focus indicator provided by uswds
-    const outline = state.isFocused ? `0.25rem solid ${colors.blueVividFocus};` : '';
+    const outline = state.isFocused ? '0.25rem solid #2491ff;' : '';
     return {
       ...provided,
       outline,
@@ -26,14 +25,15 @@ const styles = {
   },
   control: (provided) => ({
     ...provided,
-    borderColor: colors.baseDark,
+    borderColor: '#565c65',
     backgroundColor: 'white',
     borderRadius: '0',
     '&:hover': {
-      borderColor: colors.baseDark,
+      borderColor: '#565c65',
     },
   }),
   indicatorSeparator: () => ({ display: 'none' }),
+  placeholder: () => ({ color: '#1D1D1D' }),
 };
 
 const getValues = (value) => (value.map((v) => ({
@@ -71,7 +71,6 @@ AdminMultiSelect.propTypes = {
   onChange: PropTypes.func.isRequired,
   placeholder: PropTypes.string,
   label: PropTypes.string.isRequired,
-  // eslint-disable-next-line react/forbid-prop-types
   options: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 

@@ -1,0 +1,10 @@
+.ttahub-recipient-results .usa-table .usa-button--unstyled {
+    color: black;
+    font-size: 1em;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.ttahub-recipient-results .usa-table td {
+    white-space: unset;
+}

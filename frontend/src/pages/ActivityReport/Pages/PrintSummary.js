@@ -8,7 +8,7 @@ const PrintSummary = ({ reportCreator = {} }) => {
   const { name = null, role = null } = reportCreator;
   let creatorText = null;
 
-  if (name && role && role.join) {
+  if (name && role) {
     creatorText = `${name}, ${role.join(', ')}`;
   } else if (name) {
     creatorText = name;

@@ -37,7 +37,7 @@ function Unauthenticated({ loggedOut, timedOut }) {
             <p id="login-description">
               You must log in with HSES in order to access the Office of Head Start TTA Hub.
             </p>
-            <Link referrerPolicy="same-origin" className="usa-button display-block margin-x-1 margin-top-4" variant="unstyled" href="/api/login">
+            <Link referrerPolicy="same-origin" className="usa-button smart-hub-bg-blue-primary display-block margin-x-1 margin-top-4" variant="unstyled" href="/api/login">
               Log In with HSES
             </Link>
           </div>

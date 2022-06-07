@@ -158,8 +158,7 @@ export function filtersToQueryString(filters, region) {
   });
   const queryFragments = filtersWithValues.map((filter) => {
     const con = QUERY_CONDITIONS[filter.condition];
-    const q = String(filter.query).trim();
-    return `${filter.topic}.${con}=${encodeURIComponent(q)}`;
+    return `${filter.topic}.${con}=${encodeURIComponent(filter.query)}`;
   });
   if (region && (parseInt(region, DECIMAL_BASE) !== -1)) {
     queryFragments.push(`region.in[]=${parseInt(region, DECIMAL_BASE)}`);

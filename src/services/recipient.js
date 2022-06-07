@@ -190,41 +190,23 @@ export async function getGoalsByActivityRecipient(
       {
         model: Grant,
         as: 'grants',
-        attributes: [
-          'id', 'recipientId', 'regionId', 'number',
-        ],
+        attributes: ['id', 'recipientId', 'regionId'],
         where: {
           regionId,
           recipientId,
         },
       },
       {
-        attributes: [
-          'id',
-          'title',
-          'ttaProvided',
-          'status',
-          'goalId',
-        ],
+        attributes: ['id', 'title', 'ttaProvided', 'status', 'goalId'],
         model: Objective,
         as: 'objectives',
         required: false,
-        include: [
-          {
-            attributes: [
-              'id',
-              'reason',
-              'topics',
-              'endDate',
-              'calculatedStatus',
-              'legacyId',
-              'regionId',
-            ],
-            model: ActivityReport,
-            as: 'activityReports',
-            required: false,
-          },
-        ],
+        include: [{
+          attributes: ['id', 'reason', 'topics', 'endDate', 'calculatedStatus', 'legacyId', 'regionId'],
+          model: ActivityReport,
+          as: 'activityReports',
+          required: false,
+        }],
       },
     ],
     order: orderGoalsBy(sortBy, sortDir),
@@ -286,9 +268,6 @@ export async function getGoalsByActivityRecipient(
           endDate: activityReport ? activityReport.endDate : null,
           reasons: activityReport ? activityReport.reason : null,
           status: o.status,
-          grantNumbers: g.grants ? Array.from(
-            new Set(g.grants.map((grant) => grant.number)),
-          ) : [],
         });
       });
 
