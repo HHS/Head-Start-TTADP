@@ -385,8 +385,8 @@ describe('Activity report service', () => {
       // Given an report with some notes
         const reportObjectWithNotes = {
           ...reportObject,
-          specialistNextSteps: [{ note: 'i am groot' }, { note: 'harry' }],
-          recipientNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
+          specialistNextSteps: [{ note: 'i am groot', completeDate: '2022-05-31T12:00:00Z' }, { note: 'harry', completeDate: '2022-06-10T12:00:00Z' }],
+          recipientNextSteps: [{ note: 'One Piece', completeDate: '2022-06-02T12:00:00Z' }, { note: 'Toy Story', completeDate: '2022-06-22T12:00:00Z' }],
         };
         // When that report is created
         let report;
@@ -400,7 +400,9 @@ describe('Activity report service', () => {
         expect(report.specialistNextSteps.length).toBe(2);
         expect(report.recipientNextSteps.length).toBe(2);
         expect(report.specialistNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['i am groot', 'harry']));
+        expect(report.specialistNextSteps.map((n) => n.completeDate)).toEqual(expect.arrayContaining(['05/31/2022', '06/10/2022']));
         expect(report.recipientNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['One Piece', 'Toy Story']));
+        expect(report.recipientNextSteps.map((n) => n.completeDate)).toEqual(expect.arrayContaining(['06/02/2022', '06/22/2022']));
       });
 
       it('handles specialist notes being created', async () => {
@@ -408,7 +410,7 @@ describe('Activity report service', () => {
       // And no recipient notes
         const reportWithNotes = {
           ...reportObject,
-          specialistNextSteps: [{ note: 'i am groot' }, { note: 'harry' }],
+          specialistNextSteps: [{ note: 'i am groot', completeDate: '2022-05-31T12:00:00Z' }, { note: 'harry', completeDate: '2022-06-10T12:00:00Z' }],
           recipientNextSteps: [],
         };
 
@@ -425,6 +427,7 @@ describe('Activity report service', () => {
         expect(report.recipientNextSteps.length).toBe(0);
         expect(report.specialistNextSteps.length).toBe(2);
         expect(report.specialistNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['i am groot', 'harry']));
+        expect(report.specialistNextSteps.map((n) => n.completeDate)).toEqual(expect.arrayContaining(['05/31/2022', '06/10/2022']));
       });
 
       it('handles recipient notes being created', async () => {
@@ -433,7 +436,7 @@ describe('Activity report service', () => {
         const reportWithNotes = {
           ...reportObject,
           specialistNextSteps: [],
-          recipientNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
+          recipientNextSteps: [{ note: 'One Piece', completeDate: '2022-06-02T12:00:00Z' }, { note: 'Toy Story', completeDate: '2022-06-22T12:00:00Z' }],
         };
 
         // When that report is created
@@ -449,25 +452,28 @@ describe('Activity report service', () => {
         expect(report.specialistNextSteps.length).toBe(0);
         expect(report.recipientNextSteps.length).toBe(2);
         expect(report.recipientNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['One Piece', 'Toy Story']));
+        expect(report.recipientNextSteps.map((n) => n.completeDate)).toEqual(expect.arrayContaining(['06/02/2022', '06/22/2022']));
       });
 
       it('handles specialist notes being updated', async () => {
       // Given a report with some notes
         const reportWithNotes = {
           ...reportObject,
-          specialistNextSteps: [{ note: 'i am groot' }, { note: 'harry' }],
+          specialistNextSteps: [{ note: 'i am groot', completeDate: '2022-06-01T12:00:00Z' }, { note: 'harry', completeDate: '2022-06-02T12:00:00Z' }],
           recipientNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
         };
         const report = await ActivityReport.create(reportWithNotes);
 
         // When the report is updated with new set of specialist notes
-        const notes = { specialistNextSteps: [{ note: 'harry' }, { note: 'spongebob' }] };
+        const notes = { specialistNextSteps: [{ note: 'harry', completeDate: '2022-06-04T12:00:00Z' }, { note: 'spongebob', completeDate: '2022-06-06T12:00:00Z' }] };
         const updatedReport = await createOrUpdate(notes, report);
 
         // Then we see it was updated correctly
         expect(updatedReport.id).toBe(report.id);
         expect(updatedReport.specialistNextSteps.map((n) => n.note))
           .toEqual(expect.arrayContaining(['harry', 'spongebob']));
+        expect(updatedReport.specialistNextSteps.map((n) => n.completeDate))
+          .toEqual(expect.arrayContaining(['06/04/2022', '06/06/2022']));
       });
 
       it('handles recipient notes being updated', async () => {
@@ -475,26 +481,28 @@ describe('Activity report service', () => {
         const reportWithNotes = {
           ...reportObject,
           specialistNextSteps: [{ note: 'i am groot' }, { note: 'harry' }],
-          recipientNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
+          recipientNextSteps: [{ note: 'One Piece', completeDate: '2022-06-01T12:00:00Z' }, { note: 'Toy Story', completeDate: '2022-06-02T12:00:00Z' }],
         };
         const report = await ActivityReport.create(reportWithNotes);
 
         // When the report is updated with new set of recipient notes
-        const notes = { recipientNextSteps: [{ note: 'One Piece' }, { note: 'spongebob' }] };
+        const notes = { recipientNextSteps: [{ note: 'One Piece', completeDate: '2022-06-04T12:00:00Z' }, { note: 'spongebob', completeDate: '2022-06-06T12:00:00Z' }] };
         const updatedReport = await createOrUpdate(notes, report);
 
         // Then we see it was updated correctly
         expect(updatedReport.id).toBe(report.id);
         expect(updatedReport.recipientNextSteps.map((n) => n.note))
           .toEqual(expect.arrayContaining(['One Piece', 'spongebob']));
+        expect(updatedReport.recipientNextSteps.map((n) => n.completeDate))
+          .toEqual(expect.arrayContaining(['06/04/2022', '06/06/2022']));
       });
 
       it('handles notes being updated to empty', async () => {
       // Given a report with some notes
         const reportWithNotes = {
           ...reportObject,
-          specialistNextSteps: [{ note: 'i am groot' }, { note: 'harry' }],
-          recipientNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
+          specialistNextSteps: [{ note: 'i am groot', completeDate: '2022-06-01T12:00:00Z' }, { note: 'harry', completeDate: '2022-06-02T12:00:00Z' }],
+          recipientNextSteps: [{ note: 'One Piece', completeDate: '2022-06-03T12:00:00Z' }, { note: 'Toy Story', completeDate: '2022-06-04T12:00:00Z' }],
         };
         const report = await ActivityReport.create(reportWithNotes);
 
@@ -515,8 +523,8 @@ describe('Activity report service', () => {
       // Given a report with some notes
         const reportWithNotes = {
           ...reportObject,
-          specialistNextSteps: [{ note: 'i am groot' }, { note: 'harry' }],
-          recipientNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
+          specialistNextSteps: [{ note: 'i am groot', completeDate: '2022-06-01T12:00:00Z' }, { note: 'harry', completeDate: '2022-06-02T12:00:00Z' }],
+          recipientNextSteps: [{ note: 'One Piece', completeDate: '2022-06-03T12:00:00Z' }, { note: 'Toy Story', completeDate: '2022-06-04T12:00:00Z' }],
         };
         const report = await createOrUpdate(reportWithNotes);
         const recipientIds = report.recipientNextSteps.map((note) => note.id);
@@ -533,10 +541,12 @@ describe('Activity report service', () => {
         // And we are re-using the same old ids
         expect(updatedReport.id).toBe(report.id);
         expect(updatedReport.recipientNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['One Piece', 'Toy Story']));
+        expect(updatedReport.recipientNextSteps.map((n) => n.completeDate)).toEqual(expect.arrayContaining(['06/03/2022', '06/04/2022']));
         expect(updatedReport.recipientNextSteps.map((n) => n.id))
           .toEqual(expect.arrayContaining(recipientIds));
 
         expect(updatedReport.specialistNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['i am groot', 'harry']));
+        expect(updatedReport.specialistNextSteps.map((n) => n.completeDate)).toEqual(expect.arrayContaining(['06/01/2022', '06/02/2022']));
         expect(updatedReport.specialistNextSteps.map((n) => n.id))
           .toEqual(expect.arrayContaining(specialistsIds));
       });
