@@ -132,7 +132,7 @@ function GoalRow({
   const history = useHistory();
 
   const onUpdateGoalStatus = (newStatus) => {
-    if (newStatus === 'Completed' || newStatus === 'Closed' || newStatus === 'Ceased/Suspended') {
+    if (newStatus === 'Completed' || newStatus === 'Closed' || newStatus === 'Ceased/Suspended' || newStatus === 'Suspended') {
       // Must provide reason for Close or Suspend.
       showCloseSuspendGoalModal(newStatus, id);
     } else {
