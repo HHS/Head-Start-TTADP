@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import moment from 'moment';
 import {
   FormGroup, Label, Button, Textarea, ErrorMessage,
 } from '@trussworks/react-uswds';
@@ -7,6 +8,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useFormContext, useFieldArray } from 'react-hook-form/dist/index.ie11';
 import { faTrash, faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 import './NextStepsRepeater.css';
+import ControlledDatePicker from '../../../../components/ControlledDatePicker';
+import { DATE_DISPLAY_FORMAT } from '../../../../Constants';
 
 const DEFAULT_STEP_HEIGHT = 80;
 
@@ -15,8 +18,11 @@ export default function NextStepsRepeater({
   ariaName,
 }) {
   const [heights, setHeights] = useState([]);
-  const [blurValidations, setBlurValidations] = useState([]);
+  const [blurStepValidations, setBlurStepValidations] = useState([]);
+  const [blurDateValidations, setBlurDateValidations] = useState([]);
   const [showAddStepButton, setShowStepButton] = useState(false);
+
+  const todaysDate = moment().format(DATE_DISPLAY_FORMAT);
 
   const {
     register, control, getValues, errors,
@@ -31,7 +37,8 @@ export default function NextStepsRepeater({
   useEffect(() => {
     const allValues = getValues();
     const fieldArray = allValues[name] || [];
-    setShowStepButton(fieldArray.every((field) => field.note !== ''));
+    setShowStepButton(fieldArray.every((field) => field.note !== ''
+      && (field.completeDate && moment(field.completeDate, 'MM/DD/YYYY').isValid())));
   }, [fields, getValues, name]);
 
   const canDelete = fields.length > 1;
@@ -39,9 +46,10 @@ export default function NextStepsRepeater({
   const onAddNewStep = () => {
     const allValues = getValues();
     const fieldArray = allValues[name] || [];
-    const canAdd = fieldArray.every((field) => field.note !== '');
+    const canAdd = fieldArray.every((field) => field.note !== ''
+      && (field.completeDate && moment(field.completeDate, 'MM/DD/YYYY').isValid()));
     if (canAdd) {
-      append({ id: null, note: '' });
+      append({ id: null, note: '', completeDate: null });
     }
   };
 
@@ -49,10 +57,15 @@ export default function NextStepsRepeater({
     // Remove from Array.
     remove(index);
 
-    // Remove Validation State.
-    const updatedBlurValidations = blurValidations ? [...blurValidations] : [];
-    updatedBlurValidations.splice(index, 1);
-    setBlurValidations(updatedBlurValidations);
+    // Remove Step Validation State.
+    const updatedStepBlurValidations = blurStepValidations ? [...blurStepValidations] : [];
+    updatedStepBlurValidations.splice(index, 1);
+    setBlurStepValidations(updatedStepBlurValidations);
+
+    // Remove Date Validation.
+    const updatedDateBlurValidations = blurDateValidations ? [...blurDateValidations] : [];
+    updatedDateBlurValidations.splice(index, 1);
+    setBlurDateValidations(updatedDateBlurValidations);
 
     // Remove Height.
     const updatedHeights = [...heights];
@@ -60,11 +73,18 @@ export default function NextStepsRepeater({
     setHeights(updatedHeights);
   };
 
-  const validateOnBlur = (note, i) => {
-    // Set Blur Validation State.
-    const existingValidations = blurValidations ? [...blurValidations] : [];
+  const validateStepOnBlur = (note, i) => {
+    // Set Step Blur Validation State.
+    const existingValidations = blurStepValidations ? [...blurStepValidations] : [];
     existingValidations[i] = !note;
-    setBlurValidations(existingValidations);
+    setBlurStepValidations(existingValidations);
+  };
+
+  const validateDateOnBlur = (date, i) => {
+    // Set Date Blur Validation State.
+    const existingDateValidations = blurDateValidations ? [...blurDateValidations] : [];
+    existingDateValidations[i] = !date;
+    setBlurDateValidations(existingDateValidations);
   };
 
   const onStepTextChanged = (e, index) => {
@@ -76,68 +96,112 @@ export default function NextStepsRepeater({
     }
   };
 
+  const stepType = name === 'specialistNextSteps' ? 'specialist' : 'recipient';
+
   return (
     <>
       <div className="ttahub-next-steps-repeater">
-        { fields.map((item, index) => (
-          <FormGroup
-            key={`next-step-form-group-${index + 1}`}
-            className="margin-top-1"
-            error={blurValidations[index]}
-          >
-            {
-                blurValidations[index] || (errors[name] && errors[name][index])
-                  ? <ErrorMessage>Enter a next step</ErrorMessage>
-                  : null
-                }
-            <div
-              key={`next-step-flex-${index + 1}`}
-              className={`display-flex ${blurValidations[index] || (errors[name] && errors[name][index]) ? 'blank-next-step' : ''}`}
+        {fields.map((item, index) => (
+          <div key={`${stepType}-parent-div-${index + 1}`}>
+            <FormGroup
+              key={`${stepType}-next-step-form-group-step-${index + 1}`}
+              className="margin-top-2 margin-bottom-2"
+              error={blurStepValidations[index] || (errors[name] && errors[name][index]
+                && errors[name][index].note)}
             >
               <Label
-                htmlFor={`${name === 'specialistNextSteps'
-                  ? 'specialist' : 'recipient'}-next-step-${index + 1}`}
-                className="sr-only"
+                htmlFor={`${stepType}-next-step-${index + 1}`}
               >
-                Next step
-                {' '}
-                { index + 1 }
+                {`Step ${index + 1}`}
+                <span className="smart-hub--form-required font-family-sans font-ui-xs text-secondary-dark">
+                  {' '}
+                  *
+                </span>
               </Label>
-              <Textarea
-                key={item.key}
-                id={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}-next-step-${index + 1}`}
-                className="height-10 minh-5 smart-hub--text-area__resize-vertical"
-                name={`${name}[${index}].note`}
-                type="text"
-                defaultValue={item.note}
-                inputRef={register({ required: 'Enter a next step' })}
-                onBlur={({ target: { value } }) => validateOnBlur(value, index)}
-                data-testid={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}NextSteps-input`}
-                style={{ height: !heights[index] ? `${DEFAULT_STEP_HEIGHT}px` : heights[index] }}
-                onChange={(e) => onStepTextChanged(e, index)}
-              />
-              { canDelete ? (
-                <Button
-                  className="margin-top-0"
-                  unstyled
-                  type="button"
-                  aria-label={`remove ${ariaName} ${index + 1}`}
-                  onClick={() => onRemoveStep(index)}
-                >
-                  <FontAwesomeIcon className="margin-x-1" color="#000" icon={faTrash} />
-                  <span className="sr-only">
-                    remove step
-                    {' '}
-                    { index + 1 }
-                  </span>
-                </Button>
-              ) : null}
-            </div>
-          </FormGroup>
+              {blurStepValidations[index] || (errors[name]
+                && errors[name][index] && errors[name][index].note)
+                ? <ErrorMessage>Enter a next step</ErrorMessage>
+                : null}
+              <div
+                key={`${stepType}-next-step-flex-step-${index + 1}`}
+                className={`display-flex ${blurStepValidations[index]
+                  || (errors[name] && errors[name][index]
+                    && errors[name][index].note) ? 'blank-next-step' : ''}`}
+              >
+                <Textarea
+                  key={item.key}
+                  id={`${stepType}-next-step-${index + 1}`}
+                  className="height-10 minh-5 smart-hub--text-area__resize-vertical"
+                  name={`${name}[${index}].note`}
+                  type="text"
+                  defaultValue={item.note}
+                  inputRef={register({ required: 'Enter a next step' })}
+                  onBlur={({ target: { value } }) => validateStepOnBlur(value, index)}
+                  data-testid={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}NextSteps-input`}
+                  style={{ height: !heights[index] ? `${DEFAULT_STEP_HEIGHT}px` : heights[index] }}
+                  onChange={(e) => onStepTextChanged(e, index)}
+                />
+                {canDelete ? (
+                  <Button
+                    className="margin-top-0"
+                    unstyled
+                    type="button"
+                    aria-label={`remove ${ariaName} ${index + 1}`}
+                    onClick={() => onRemoveStep(index)}
+                  >
+                    <FontAwesomeIcon className="margin-x-1" color="#000" icon={faTrash} />
+                    <span className="sr-only">
+                      remove step
+                      {' '}
+                      {index + 1}
+                    </span>
+                  </Button>
+                ) : null}
+              </div>
+            </FormGroup>
+            <FormGroup
+              key={`${stepType}-next-step-form-group-date-${index + 1}`}
+              className="margin-top-1 margin-bottom-3"
+              error={blurDateValidations[index] || (errors[name] && errors[name][index]
+                && errors[name][index].completeDate)}
+            >
+              <Label
+                htmlFor={`${name}[${index}].completeDate`}
+              >
+                {`When do you anticipate completing step ${index + 1}?`}
+                <span className="smart-hub--form-required font-family-sans font-ui-xs text-secondary-dark">
+                  {' '}
+                  *
+                </span>
+              </Label>
+              {blurDateValidations[index]
+                || (errors[name] && errors[name][index]
+                  && errors[name][index].completeDate)
+                ? <ErrorMessage>Enter a complete date</ErrorMessage>
+                : null}
+              <div
+                key={`${stepType}-next-step-flex-date-${index + 1}`}
+                className={`${blurDateValidations[index]
+                  || (errors[name] && errors[name][index]
+                    && errors[name][index].completeDate) ? 'blank-next-step' : ''}`}
+              >
+                <ControlledDatePicker
+                  key={item.key}
+                  id={`${stepType}-next-step-date-${index + 1}`}
+                  control={control}
+                  name={`${name}[${index}].completeDate`}
+                  value={item.completeDate}
+                  onBlur={({ target: { value } }) => validateDateOnBlur(value, index)}
+                  minDate={todaysDate}
+                  dataTestId={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}StepCompleteDate-input`}
+                />
+              </div>
+            </FormGroup>
+          </div>
         ))}
       </div>
 
-      <div className="margin-05 margin-bottom-4">
+      <div className="margin-05 margin-top-1 margin-bottom-1">
         {
           showAddStepButton
             ? (
@@ -146,9 +210,9 @@ export default function NextStepsRepeater({
                 unstyled
                 onClick={onAddNewStep}
                 data-testid={
-                   `${name === 'specialistNextSteps'
-                     ? 'specialist' : 'recipient'}NextSteps-button`
-                   }
+                  `${name === 'specialistNextSteps'
+                    ? 'specialist' : 'recipient'}NextSteps-button`
+                }
               >
                 <FontAwesomeIcon className="margin-right-1" color="#005ea2" icon={faPlusCircle} />
                 Add next step
@@ -156,7 +220,7 @@ export default function NextStepsRepeater({
             )
             : null
 
-                  }
+        }
       </div>
     </>
   );
