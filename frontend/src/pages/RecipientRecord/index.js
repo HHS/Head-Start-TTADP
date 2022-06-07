@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
+import { Link } from 'react-router-dom';
 import { Switch, Route } from 'react-router';
 import { DECIMAL_BASE } from '../../Constants';
 import { getRecipient } from '../../fetchers/recipient';
@@ -13,6 +14,7 @@ import Profile from './pages/Profile';
 import TTAHistory from './pages/TTAHistory';
 import GoalsObjectives from './pages/GoalsObjectives';
 import CreateGoal from '../../components/CreateGoal';
+import PrintGoals from './pages/PrintGoals';
 
 function PageWithHeading({
   children,
@@ -20,10 +22,11 @@ function PageWithHeading({
   recipientId,
   error,
   recipientNameWithRegion,
+  backLink,
 }) {
   return (
     <>
-      <RecipientTabs region={regionId} recipientId={recipientId} />
+      <RecipientTabs region={regionId} recipientId={recipientId} backLink={backLink} />
       {
             error ? (
               <div className="usa-alert usa-alert--error" role="alert">
@@ -52,10 +55,13 @@ PageWithHeading.propTypes = {
   recipientId: PropTypes.string.isRequired,
   error: PropTypes.string,
   recipientNameWithRegion: PropTypes.string.isRequired,
+  backLink: PropTypes.node,
 };
 
 PageWithHeading.defaultProps = {
   error: '',
+  backLink: <Link className="ttahub-recipient-record--tabs_back-to-search margin-top-2 margin-bottom-3 display-inline-block" to="/recipient-tta-records">Back to search</Link>,
+
 };
 
 export default function RecipientRecord({ match }) {
@@ -156,6 +162,29 @@ export default function RecipientRecord({ match }) {
                 regionId={regionId}
                 recipientSummary={recipientData}
               />
+            </PageWithHeading>
+          )}
+        />
+        <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/goals-objectives/print"
+          render={({ location }) => (
+            <PageWithHeading
+              regionId={regionId}
+              recipientId={recipientId}
+              error={error}
+              recipientNameWithRegion={`TTA goals for ${recipientNameWithRegion}`}
+              backLink={(
+                <Link
+                  className="ttahub-recipient-record--tabs_back-to-search margin-top-2 margin-bottom-3 display-inline-block"
+                  to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives`}
+                >
+                  Back to goals table
+                </Link>
+              )}
+            >
+              <FeatureFlag flag="recipient_goals_objectives" renderNotFound>
+                <PrintGoals location={location} />
+              </FeatureFlag>
             </PageWithHeading>
           )}
         />
