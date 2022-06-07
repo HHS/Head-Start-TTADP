@@ -17,7 +17,7 @@ export default class Goal {
       return false;
     }
 
-    return this.canWriteInRegions();
+    return this.canWriteInRegion(this.goal.grant.regionId);
   }
 
   canCreate() {

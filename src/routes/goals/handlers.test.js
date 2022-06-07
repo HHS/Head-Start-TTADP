@@ -286,7 +286,7 @@ describe('changeGoalStatus', () => {
 
     goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
       objectives: [],
-      grants: [{ regionId: 2 }],
+      grant: { regionId: 2 },
     });
 
     await changeGoalStatus(req, mockResponse);
@@ -320,7 +320,7 @@ describe('changeGoalStatus', () => {
 
     goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
       objectives: [],
-      grants: [{ regionId: 2 }],
+      grant: { regionId: 2 },
     });
 
     await changeGoalStatus(req, mockResponse);
@@ -394,7 +394,7 @@ describe('deleteGoal', () => {
 
     goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
       objectives: [],
-      grants: [{ regionId: 2 }],
+      grant: { regionId: 2 },
     });
 
     await deleteGoal(req, mockResponse);
@@ -414,7 +414,7 @@ describe('deleteGoal', () => {
 
     goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
       objectives: [],
-      grants: [{ regionId: 2 }],
+      grant: { regionId: 2 },
     });
 
     userById.mockResolvedValueOnce({
