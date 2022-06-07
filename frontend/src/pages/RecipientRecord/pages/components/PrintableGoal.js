@@ -1,30 +1,31 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import PrintableObjective from './PrintableObjective';
+import { ROW_CLASS, FIRST_COLUMN_CLASS, SECOND_COLUMN_CLASS } from './constants';
 
 export default function PrintableGoal({ goal }) {
   return (
-    <div className="padding-2">
-      <h2>
+    <div className="padding-x-3 padding-top-3 padding-bottom-2">
+      <h2 className="margin-top-0">
         Goal
         {' '}
         {goal.goalNumber}
       </h2>
-      <div className="display-flex padding-105 no-break-within">
-        <div className="text-bold width-card-lg">Goal status</div>
-        <div className="flex-1">{goal.goalStatus}</div>
+      <div className={ROW_CLASS}>
+        <p className={FIRST_COLUMN_CLASS}>Goal status</p>
+        <p className={SECOND_COLUMN_CLASS}>{goal.goalStatus}</p>
       </div>
-      <div className="display-flex padding-105 no-break-within">
-        <div className="text-bold width-card-lg ">Grant number</div>
-        <div className="flex-1">{goal.grantNumber}</div>
+      <div className={ROW_CLASS}>
+        <p className={FIRST_COLUMN_CLASS}>Grant number</p>
+        <p className={SECOND_COLUMN_CLASS}>{goal.grantNumber}</p>
       </div>
-      <div className="display-flex padding-105  no-break-within">
-        <div className="text-bold width-card-lg">Recipient&apos;s goal</div>
-        <div className="flex-1">{goal.goalText}</div>
+      <div className={ROW_CLASS}>
+        <p className={FIRST_COLUMN_CLASS}>Recipient&apos;s goal</p>
+        <p className={SECOND_COLUMN_CLASS}>{goal.goalText}</p>
       </div>
-      <div className="display-flex padding-105 no-break-within">
-        <div className="text-bold width-card-lg">Topics</div>
-        <div className="flex-1">{goal.goalTopics.join(', ')}</div>
+      <div className={ROW_CLASS}>
+        <p className={FIRST_COLUMN_CLASS}>Topics</p>
+        <p className={SECOND_COLUMN_CLASS}>{goal.goalTopics.join(', ')}</p>
       </div>
       {goal.objectives.map(((objective) => (
         <PrintableObjective
