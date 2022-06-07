@@ -42,12 +42,11 @@ const renderNextSteps = (specialist = [], recipient = [], activityRecipientType 
 };
 
 describe('next steps', () => {
-  afterEach(() => {
-    Object.defineProperty(Element.prototype, 'scrollHeight', {
-      value: 80,
-      writable: true,
-      configurable: true,
-    });
+  it('renders correctly with no steps', async () => {
+    renderNextSteps(undefined, undefined);
+    expect(await screen.findByText(/specialist's next steps/i)).toBeVisible();
+    expect(await screen.findByText(/specialist's next steps/i)).toBeVisible();
+    expect(await screen.findByText(/recipient's next steps/i)).toBeVisible();
   });
 
   it('displays correct labels for other entity', async () => {
