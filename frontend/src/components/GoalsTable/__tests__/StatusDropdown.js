@@ -66,12 +66,12 @@ describe('StatusDropdown', () => {
     userEvent.click(select);
 
     const options = await screen.findAllByRole('button');
-    expect(options.length).toBe(4);
+    expect(options.length).toBe(3);
   });
 
   it('displays the previous status correctly on suspended', async () => {
     const onUpdate = jest.fn();
-    renderStatusDropdown('Ceased/Suspended', onUpdate, 'Not Started');
+    renderStatusDropdown('Suspended', onUpdate, 'Not Started');
 
     const select = await screen.findByRole('button', { name: /change status for goal 345345/i });
     userEvent.click(select);
@@ -86,7 +86,7 @@ describe('StatusDropdown', () => {
 
   it('falls back correctly when there is no previous on suspended', async () => {
     const onUpdate = jest.fn();
-    renderStatusDropdown('Ceased/Suspended', onUpdate, '');
+    renderStatusDropdown('Suspended', onUpdate, '');
 
     const select = await screen.findByRole('button', { name: /change status for goal 345345/i });
     userEvent.click(select);

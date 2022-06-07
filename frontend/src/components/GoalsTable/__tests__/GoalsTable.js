@@ -91,7 +91,7 @@ const goals = [{
 },
 {
   id: 65481,
-  goalStatus: 'Ceased/Suspended',
+  goalStatus: 'Suspended',
   createdOn: '2021-01-15',
   goalText: 'This is goal text 6.',
   goalTopics: ['Recordkeeping and Reporting'],
@@ -122,7 +122,7 @@ const goalWithObjectives = [{
     status: 'In Progress',
     id: 345345345,
     ttaProvided: '',
-    grantNumbers: [],
+    grantNumber: '',
   },
   {
     title: 'Objective 2 Title',
@@ -135,7 +135,7 @@ const goalWithObjectives = [{
     status: 'Not Started',
     id: 234234253,
     ttaProvided: '',
-    grantNumbers: [],
+    grantNumber: '',
   },
   {
     title: 'Objective 3 Title',
@@ -148,7 +148,7 @@ const goalWithObjectives = [{
     status: 'Complete',
     id: 2938234,
     ttaProvided: '',
-    grantNumbers: [],
+    grantNumber: '',
   },
   {
     title: 'Objective 4 Title',
@@ -161,7 +161,7 @@ const goalWithObjectives = [{
     status: 'In Progress',
     id: 255384234,
     ttaProvided: '',
-    grantNumbers: ['200342cat'],
+    grantNumber: '200342cat',
   },
   {
     title: 'Objective 5 Title',
@@ -174,7 +174,7 @@ const goalWithObjectives = [{
     status: 'Unknown Status',
     id: 298398934834,
     ttaProvided: '',
-    grantNumbers: [],
+    grantNumber: '',
   },
   ],
 },
@@ -200,7 +200,7 @@ const noStatusGoalWithOneObjective = [{
     status: 'In Progress',
     id: 2832434,
     ttaProvided: '',
-    grantNumbers: [],
+    grantNumber: '',
   }],
 }];
 
@@ -468,7 +468,7 @@ describe('Goals Table', () => {
       await screen.findByText('TTA goals and objectives');
 
       const cells = await screen.findAllByRole('cell');
-      expect(cells[0]).toHaveTextContent('Not started');
+      expect(cells[0]).toHaveTextContent('Suspended');
 
       // Desc (via button press).
       const goalsAsc = [...goals];
