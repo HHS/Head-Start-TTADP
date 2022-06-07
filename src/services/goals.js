@@ -560,16 +560,16 @@ export async function updateGoalStatusById(
   closeSuspendReason,
   closeSuspendContext,
 ) {
-  const updatedGoal = await Goal.update(
-    {
-      status: newStatus,
-      closeSuspendReason,
-      closeSuspendContext,
-      previousStatus: oldStatus,
-    },
-    { where: { id: goalId }, returning: true },
-  );
-  return updatedGoal[1][0];
+  const id = parseInt(goalId, DECIMAL_BASE);
+  const g = await Goal.findByPk(id);
+
+  await g.update({
+    status: newStatus,
+    closeSuspendReason,
+    closeSuspendContext,
+    previousStatus: oldStatus,
+  });
+  return g;
 }
 
 export async function destroyGoal(goalId) {

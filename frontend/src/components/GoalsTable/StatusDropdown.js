@@ -42,7 +42,7 @@ const STATUSES = {
     color: colors.warning,
     icon: <NotStarted />,
   },
-  'Ceased/Suspended': {
+  Suspended: {
     display: 'Suspended',
     color: colors.errorDark,
     icon: <Ceased />,
@@ -81,7 +81,7 @@ export default function StatusDropdown({
     // if the goal is ceased and has no "status suspended from" in the db you can only close it
     // otherwise, if it is ceased and has a status suspended from, you get that as an
     // additional option
-    if (status === 'Ceased/Suspended') {
+    if (status === 'Ceased/Suspended' || status === 'Suspended') {
       if (!STATUSES[previousStatus]) {
         return [
           {
@@ -120,7 +120,20 @@ export default function StatusDropdown({
         },
         {
           label: 'Suspended',
-          onClick: () => onUpdateGoalStatus('Ceased/Suspended'),
+          onClick: () => onUpdateGoalStatus('Suspended'),
+        },
+      ];
+    }
+
+    if (status === 'In Progress') {
+      return [
+        {
+          label: 'Closed',
+          onClick: () => onUpdateGoalStatus('Closed'),
+        },
+        {
+          label: 'Suspended',
+          onClick: () => onUpdateGoalStatus('Suspended'),
         },
       ];
     }
@@ -136,7 +149,7 @@ export default function StatusDropdown({
       },
       {
         label: 'Suspended',
-        onClick: () => onUpdateGoalStatus('Ceased/Suspended'),
+        onClick: () => onUpdateGoalStatus('Suspended'),
       },
     ];
   };

@@ -25,7 +25,7 @@ function ObjectiveRow({
     endDate,
     reasons,
     status,
-    grantNumbers,
+    grantNumber,
   } = objective;
 
   const viewOrEditLink = arStatus === 'approved' ? `/activity-reports/view/${arId}` : `/activity-reports/${arId}`;
@@ -103,11 +103,11 @@ function ObjectiveRow({
     <>
       <ul className="usa-list usa-list--unstyled display-flex tta-smarthub--goal-row-obj-table-rows margin-bottom-1 padding-2">
         <li className="padding-x-105 padding-y-0 padding-left-0">
-          <span className="sr-only">Objective:</span>
+          <span className="sr-only">Objective </span>
           {title}
         </li>
         <li className="padding-x-105 padding-y-0">
-          <span className="sr-only">Activity reports:</span>
+          <span className="sr-only">Activity reports </span>
           {' '}
           <Link
             to={linkToAr}
@@ -116,24 +116,19 @@ function ObjectiveRow({
           </Link>
         </li>
         <li className="padding-x-105 padding-y-0">
-          <span className="sr-only">Grant numbers:</span>
-          {grantNumbers.map((grantNumber) => (
-            <>
-              <span key={grantNumber}>{grantNumber}</span>
-              <br />
-            </>
-          ))}
+          <span className="sr-only">Grant number </span>
+          {grantNumber}
         </li>
         <li className="padding-x-105 padding-y-0">
-          <span className="sr-only">End date:</span>
+          <span className="sr-only">End date </span>
           {endDate}
         </li>
         <li className="padding-x-105 padding-y-0">
-          <span className="sr-only">Reasons:</span>
+          <span className="sr-only">Reasons </span>
           {reasons && displayReasonsList(reasons.sort())}
         </li>
         <li className="padding-x-105 padding-y-0 padding-right-0">
-          <span className="sr-only">Objective status:</span>
+          <span className="sr-only">Objective status </span>
           {getObjectiveStatusIcon}
           {displayObjStatus}
         </li>
@@ -153,7 +148,7 @@ export const objectivePropTypes = PropTypes.shape({
   endDate: PropTypes.string,
   reasons: PropTypes.arrayOf(PropTypes.string),
   status: PropTypes.string.isRequired,
-  grantNumbers: PropTypes.arrayOf(PropTypes.string),
+  grantNumber: PropTypes.string,
 });
 
 objectivePropTypes.defaultProps = {

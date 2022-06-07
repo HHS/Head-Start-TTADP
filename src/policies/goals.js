@@ -29,7 +29,7 @@ export default class Goal {
   }
 
   canWriteInRegions() {
-    const regions = this.goal.grants.map((grant) => grant.regionId);
+    const regions = this.goal.grant.map((grant) => grant.regionId);
     return regions.every((region) => this.canWriteInRegion(region));
   }
 
@@ -93,7 +93,7 @@ export default class Goal {
   }
 
   canChangeStatus() {
-    return this.canWriteInRegions();
+    return this.canWriteInRegion(this.goal.grant.regionId);
   }
 
   canView() {
