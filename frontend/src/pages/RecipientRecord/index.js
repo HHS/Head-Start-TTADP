@@ -187,7 +187,11 @@ export default function RecipientRecord({ match }) {
               )}
             >
               <FeatureFlag flag="recipient_goals_objectives" renderNotFound>
-                <PrintGoals location={location} />
+                <PrintGoals
+                  recipientId={recipientId}
+                  regionId={regionId}
+                  location={location}
+                />
               </FeatureFlag>
             </PageWithHeading>
           )}
