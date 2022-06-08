@@ -59,18 +59,6 @@ describe('goalStatusGraph', () => {
       grantId,
       recipientId,
     }));
-
-    // goals.push(await createGoal({
-    //   status: '',
-    //   grantId,
-    //   recipientId,
-    // }));
-
-    // goals.push(await createGoal({
-    //   status: null,
-    //   grantId,
-    //   recipientId,
-    // }));
     response = await goalStatusGraph({ goal: { id: goals.map((g) => g.id) } });
   });
 
