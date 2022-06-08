@@ -262,6 +262,7 @@ export async function getGoalsByActivityRecipient(
       reasons: [],
       objectives: [],
       previousStatus: g.previousStatus,
+      grantNumber: g.grant.number,
     };
 
     // Objectives.
