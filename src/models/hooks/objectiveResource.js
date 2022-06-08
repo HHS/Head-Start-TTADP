@@ -1,5 +1,3 @@
-// const { Op } = require('sequelize');
-// import { auditLogger } from '../../logger';
 import { CREATION_METHOD } from '../../constants';
 
 // When a new resource is added to an objective, add the resource to the template or update the

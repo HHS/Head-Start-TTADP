@@ -1,6 +1,3 @@
-// const { Op } = require('sequelize');
-// import { auditLogger } from '../../logger';
-
 const checkForUseOnApprovedReport = async (sequelize, instance, options) => {
   const activityReport = await sequelize.models.ActivityReport.findOne({
     where: { id: instance.activityReportId },
@@ -18,22 +15,22 @@ const propagateDestroyToFile = async (sequelize, instance, options) => {
       {
         model: sequelize.models.ActivityReportFile,
         as: 'reportFiles',
-        required: true,
+        required: false,
       },
       {
         model: sequelize.models.ActivityReportObjectiveFile,
         as: 'reportObjectiveFiles',
-        required: true,
+        required: false,
       },
       {
         model: sequelize.models.ObjectiveFile,
         as: 'objectiveFiles',
-        required: true,
+        required: false,
       },
       {
         model: sequelize.models.ObjectiveTemplateFile,
         as: 'objectiveTemplateFiles',
-        required: true,
+        required: false,
       },
     ],
     transaction: options.transaction,
