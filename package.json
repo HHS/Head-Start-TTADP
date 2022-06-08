@@ -80,7 +80,8 @@
     "changeReportStatus": "node ./build/server/tools/changeReportStatusCLI.js",
     "changeReportStatus:local": "./node_modules/.bin/babel-node ./src/tools/changeReportStatusCLI.js",
     "makecolors": "node ./src/makecolors.js",
-    "restoreTopics": "node ./src/tools/restoreTopicsCLI.js"
+    "restoreTopics": "node ./src/tools/restoreTopicsCLI.js",
+    "restoreTopics:local": "./node_modules/.bin/babel-node ./src/tools/restoreTopicsCLI.js"
   },
   "repository": {
     "type": "git",

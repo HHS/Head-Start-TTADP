@@ -1,4 +1,5 @@
 /* eslint-disable no-restricted-syntax */
+import { Op } from 'sequelize';
 import {
   sequelize,
   Topic,
@@ -6,11 +7,6 @@ import {
 } from '../models';
 import topicData from './restoreTopics.Topics';
 import topicGoalData from './restoreTopics.TopicGoals';
-
-/**
- * changeReportStatus script changes status of activity reports based on ids and status.
- * The script expects a comma separated ids and the new status.
- */
 
 export default async function restoreTopics() {
   await sequelize.transaction(async (transaction) => {
@@ -34,6 +30,7 @@ export default async function restoreTopics() {
 
     const topicCollisions = await Topic.findAll({
       where: { id: topicData.map((td) => td.id) },
+      paranoid: false,
       transaction,
     });
 
@@ -57,39 +54,82 @@ export default async function restoreTopics() {
     await Promise.all(topicData.map(async (td) => Topic.create({ ...td }, { transaction })));
 
     await sequelize.query(
-      `
-      PERFORM setval('"Topics_id_seq"', max(id)+1) FROM "Topics";
-      `,
+      `DO $$ BEGIN
+        PERFORM SETVAL('"Topics_id_seq"', MAX(id)+1) FROM "Topics";
+      END$$;`,
       { transaction },
     );
 
-    await Promise.all(topicGoalData.map(async (tgd) => {
-      const topic = await Topic.findOne({
-        where: { id: tgd.topicId },
-        transaction,
-      });
+    const topicMappings = await Topic.findAll({
+      attributes: [
+        ['id', 'topicId'],
+        ['mapsTo', 'mapsTo'],
+      ],
+      where: { deletedAt: { [Op.not]: null } },
+      order: ['id'],
+      paranoid: false,
+      transaction,
+    });
 
-      const topicGoal = await TopicGoal.findOrCreate({
-        where: { topicId: topic.mapsTo, goalId: tgd.goalId },
-        default: { ...tgd },
-        transaction,
-      });
+    const processedTopicGoalDataPass1 = topicGoalData
+      .map((tgd) => {
+        const { topicId, ...newTgd } = tgd;
+        const tm = topicMappings.find((t) => t.get('topicId') === topicId);
+        if (tm) {
+          newTgd.topicId = tm.get('mapsTo');
+        } else {
+          newTgd.topicId = null;
+        }
+        return newTgd;
+      })
+      .filter((tgd) => tgd.topicId !== null);
+    const processedTopicGoalDataPass2 = processedTopicGoalDataPass1
+      .map((tgd) => {
+        const { createdAt, updatedAt, ...newTgd } = tgd;
+        const matching = processedTopicGoalDataPass1
+          .filter((x) => x.goalId === newTgd.goalId && x.topicId === newTgd.topicId);
+        const createdAts = matching.map((m) => m.createdAt);
+        const updatedAts = matching.map((m) => m.updatedAt);
+        createdAts.sort();
+        updatedAts.sort();
+        // eslint-disable-next-line prefer-destructuring
+        newTgd.createdAt = createdAts[0];
+        newTgd.updatedAt = updatedAts[updatedAts.length - 1];
+        return newTgd;
+      })
+      .filter((x, i, a) => a
+        .findIndex((ax) => ax.goalId === x.goalId && ax.topicId === x.topicId) === i);
 
-      await TopicGoal.update(
-        {
-          createdAt: sequelize.fn('LEAST', topicGoal.createdAt, tgd.createdAt),
-          updatedAt: sequelize.fn('GREATEST', topicGoal.updatedAt, tgd.updatedAt),
-        },
-        {
-          where: { id: topicGoal.id },
+    await Promise.all(processedTopicGoalDataPass2.map(async (tgd) => {
+      try {
+        const topicGoal = await TopicGoal.findOne({
+          where: { topicId: tgd.topicId, goalId: tgd.goalId },
           transaction,
-        },
-      );
+        });
+
+        if (topicGoal) {
+          if (topicGoal.createdAt > tgd.createdAt) {
+            topicGoal.createdAt = tgd.createdAt;
+          }
+          if (topicGoal.updatedAt < tgd.updatedAt) {
+            topicGoal.updatedAt = tgd.updatedAt;
+          }
+          await topicGoal.save({ transaction });
+        } else {
+          if (tgd.topicId === null) {
+            throw new Error('topicId must not be null');
+          }
+          await TopicGoal.create({ ...tgd }, { transaction });
+        }
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
 
       await sequelize.query(
-        `
-        PERFORM setval('"TopicGoals_id_seq"', max(id)+1) FROM "TopicGoals";
-        `,
+        `DO $$ BEGIN
+          PERFORM SETVAL('"TopicGoals_id_seq"', MAX(id)+1) FROM "TopicGoals";
+        END$$;`,
         { transaction },
       );
     }));
