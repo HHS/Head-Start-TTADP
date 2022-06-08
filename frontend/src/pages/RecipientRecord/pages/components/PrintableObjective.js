@@ -18,7 +18,7 @@ export default function PrintableObjective({ objective }) {
         <p className={SECOND_COLUMN_CLASS}>{objective.arId}</p>
       </div>
       <div className={ROW_CLASS}>
-        <p className={FIRST_COLUMN_CLASS}>Grant number</p>
+        <p className={FIRST_COLUMN_CLASS}>Grant numbers</p>
         <p className={SECOND_COLUMN_CLASS}>{objective.grantNumber}</p>
       </div>
       <div className={ROW_CLASS}>

@@ -23,7 +23,7 @@ export default function PrintableGoal({ goal }) {
         </p>
       </div>
       <div className={ROW_CLASS}>
-        <p className={FIRST_COLUMN_CLASS}>Grant number</p>
+        <p className={FIRST_COLUMN_CLASS}>Grant numbers</p>
         <p className={SECOND_COLUMN_CLASS}>{goal.grantNumber}</p>
       </div>
       <div className={ROW_CLASS}>
