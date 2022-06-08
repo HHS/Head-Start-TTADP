@@ -18,11 +18,6 @@ module.exports = (sequelize, DataTypes) => {
         through: models.TopicGoal, foreignKey: 'topicId', as: 'goals',
       });
       Topic.belongsToMany(models.Objective, { through: models.ObjectiveTopic, foreignKey: 'topicId', as: 'objectives' });
-      Topic.addScope('defaultScope', {
-        where: {
-          deletedAt: null,
-        },
-      });
     }
   }
   Topic.init({
@@ -30,6 +25,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
+    },
+    mapsTo: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
   }, {
     sequelize,
