@@ -57,14 +57,20 @@ describe('PrintGoals', () => {
     ],
   };
 
-  const renderPrintGoals = (selectedGoals = goals) => {
+  const renderPrintGoals = (selectedGoals = goals, noLocationState = false) => {
+    const location = {
+      state: null, hash: '', pathname: '', search: '',
+    };
+
+    if (!noLocationState) {
+      location.state = { selectedGoals };
+    }
+
     render(
       <Router history={memoryHistory}>
         <UserContext.Provider value={{ user }}>
           <PrintGoals
-            location={{
-              state: { selectedGoals }, hash: '', pathname: '', search: '',
-            }}
+            location={location}
           />
         </UserContext.Provider>
       </Router>,
@@ -81,8 +87,13 @@ describe('PrintGoals', () => {
     expect(await screen.findByText('Empathy, Generosity, Friendship')).toBeVisible();
   });
 
-  it('handles no goals in state', async () => {
+  it('handles no location', async () => {
     renderPrintGoals([]);
+    expect(await screen.findByText('Select goals before printing.')).toBeVisible();
+  });
+
+  it('handles no goals in state', async () => {
+    renderPrintGoals(null, true);
     expect(await screen.findByText('Select goals before printing.')).toBeVisible();
   });
 });
