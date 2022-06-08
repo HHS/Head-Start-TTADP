@@ -1,0 +1,6 @@
+@media print {
+    .ttahub-recipient-record--heading.print-goals {
+        font-size: 22px;
+        margin: 1em 2em;
+    }
+}

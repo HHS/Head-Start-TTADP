@@ -23,6 +23,7 @@ function PageWithHeading({
   error,
   recipientNameWithRegion,
   backLink,
+  slug,
 }) {
   return (
     <>
@@ -38,7 +39,7 @@ function PageWithHeading({
               </div>
             ) : (
               <>
-                <h1 className="ttahub-recipient-record--heading page-heading margin-top-0 margin-bottom-1 margin-left-2">
+                <h1 className={`ttahub-recipient-record--heading ${slug} page-heading margin-top-0 margin-bottom-1 margin-left-2`}>
                   {recipientNameWithRegion}
                 </h1>
                 {children}
@@ -56,12 +57,13 @@ PageWithHeading.propTypes = {
   error: PropTypes.string,
   recipientNameWithRegion: PropTypes.string.isRequired,
   backLink: PropTypes.node,
+  slug: PropTypes.string,
 };
 
 PageWithHeading.defaultProps = {
   error: '',
   backLink: <Link className="ttahub-recipient-record--tabs_back-to-search margin-top-2 margin-bottom-3 display-inline-block" to="/recipient-tta-records">Back to search</Link>,
-
+  slug: '',
 };
 
 export default function RecipientRecord({ match }) {
@@ -139,6 +141,7 @@ export default function RecipientRecord({ match }) {
               recipientId={recipientId}
               error={error}
               recipientNameWithRegion={recipientNameWithRegion}
+              slug="tta-history"
             >
               <TTAHistory
                 recipientId={recipientId}
@@ -173,6 +176,7 @@ export default function RecipientRecord({ match }) {
               recipientId={recipientId}
               error={error}
               recipientNameWithRegion={`TTA goals for ${recipientNameWithRegion}`}
+              slug="print-goals"
               backLink={(
                 <Link
                   className="ttahub-recipient-record--tabs_back-to-search margin-top-2 margin-bottom-3 display-inline-block"
