@@ -36,13 +36,16 @@ function calculateGoalsAndObjectives(report) {
       const displayNumber = index + 1;
       headings.push(`Goal ${displayNumber}`);
       data.push(goal.name);
+      headings.push(`Goal ${displayNumber} Status`);
+      data.push(goal.status);
       goal.objectives.forEach((objective, idx) => {
         const objectiveDisplayNumber = idx + 1;
         headings.push(`Objective ${objectiveDisplayNumber}`);
         data.push(objective.title);
-
         headings.push(`TTA Provided ${objectiveDisplayNumber}`);
         data.push(objective.ActivityReportObjective.ttaProvided);
+        headings.push(`Objective ${objectiveDisplayNumber} status`);
+        data.push(objective.status);
       });
     });
 
