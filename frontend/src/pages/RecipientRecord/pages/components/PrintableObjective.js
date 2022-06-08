@@ -1,10 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { ROW_CLASS, FIRST_COLUMN_CLASS, SECOND_COLUMN_CLASS } from './constants';
+import { STATUSES } from '../../../../components/GoalsTable/StatusDropdown';
 
 export default function PrintableObjective({ objective }) {
+  const key = objective.status || 'Needs Status';
+  const { icon } = STATUSES[key];
+
   return (
-    <div className="border-1px margin-bottom-1">
+    <div className="border-1px margin-y-1">
       <div className={ROW_CLASS}>
         <p className={FIRST_COLUMN_CLASS}>Objective</p>
         <p className={SECOND_COLUMN_CLASS}>{objective.title}</p>
@@ -27,7 +31,10 @@ export default function PrintableObjective({ objective }) {
       </div>
       <div className={ROW_CLASS}>
         <p className={FIRST_COLUMN_CLASS}>Objective status</p>
-        <p className={SECOND_COLUMN_CLASS}>{objective.status}</p>
+        <p className={SECOND_COLUMN_CLASS}>
+          {icon}
+          {objective.status}
+        </p>
       </div>
     </div>
   );
