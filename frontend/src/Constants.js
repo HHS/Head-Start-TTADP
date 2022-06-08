@@ -109,22 +109,24 @@ export const TARGET_POPULATIONS = [
 ];
 
 export const ROLES = [
-  'Admin. Assistant',
   'Central Office',
+  'Other Federal Staff',
+  'National Center',
   'COR',
+  'Supervisory Program Specialist',
+  'Program Specialist',
+  'Grants Specialist',
+  'Customer Service Contract',
+  'Regional Program Manager',
+  'TTAC',
+  'Admin. Assistant',
   'Early Childhood Manager',
   'Early Childhood Specialist',
   'Family Engagement Specialist',
   'Grantee Specialist Manager',
   'Grantee Specialist',
-  'Grants Specialist',
   'Health Specialist',
-  'National Center',
-  'Program Specialist',
-  'Regional Program Manager',
-  'Supervisory Program Specialist',
   'System Specialist',
-  'TTAC',
 ];
 
 export const OTHER_ENTITY_TYPES = [
