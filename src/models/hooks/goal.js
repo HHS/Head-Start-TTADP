@@ -1,29 +1,19 @@
-// import { Op } from 'sequelize';
-import { auditLogger } from '../../logger';
-
 const autoPopulateGoalTemplateId = async (sequelize, instance, options) => {
   // eslint-disable-next-line no-prototype-builtins
   if (!instance.hasOwnProperty('goalTemplateId')
   || instance.goalTemplateId === null
   || instance.goalTemplateId === undefined) {
     const grant = await sequelize.models.Grant.findOne({ where: { id: instance.grantId } });
-    let goalTemplate;
-    try {
-      goalTemplate = await sequelize.models.GoalTemplate.findOrCreate({
-        where: { hash: sequelize.fn('md5', sequelize.fn('NULLIF', sequelize.fn('TRIM', instance.name), '')), regionId: grant.regionId },
-        defaults: {
-          templateName: instance.name,
-          lastUsed: instance.createdAt,
-          regionId: grant.regionId,
-          creationMethod: 'Automatic',
-        },
-        transaction: options.transaction,
-      });
-    } catch (err) {
-      auditLogger.error(err);
-      auditLogger.error(JSON.stringify(err));
-      throw err;
-    }
+    const goalTemplate = await sequelize.models.GoalTemplate.findOrCreate({
+      where: { hash: sequelize.fn('md5', sequelize.fn('NULLIF', sequelize.fn('TRIM', instance.name), '')), regionId: grant.regionId },
+      defaults: {
+        templateName: instance.name,
+        lastUsed: instance.createdAt,
+        regionId: grant.regionId,
+        creationMethod: 'Automatic',
+      },
+      transaction: options.transaction,
+    });
     instance.set('goalTemplateId', goalTemplate[0].id);
   }
 };
@@ -110,9 +100,6 @@ const beforeValidate = async (sequelize, instance, options) => {
   preventNamChangeWhenOnApprovedAR(sequelize, instance);
   autoPopulateStatusChangeDates(sequelize, instance);
 };
-// eslint-disable-next-line no-unused-vars
-const afterCreate = async (sequelize, instance, options) => {
-};
 
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateName(sequelize, instance, options);
@@ -125,6 +112,5 @@ export {
   autoPopulateStatusChangeDates,
   propagateName,
   beforeValidate,
-  afterCreate,
   afterUpdate,
 };
