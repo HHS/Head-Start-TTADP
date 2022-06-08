@@ -125,6 +125,7 @@ export const USER_ROLES = [
   'Grantee Specialist',
   'Health Specialist',
   'System Specialist',
+  'National Center',
 ];
 
 export const CLOSE_SUSPEND_REASONS = [
