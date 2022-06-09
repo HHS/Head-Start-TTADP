@@ -38,8 +38,8 @@ fs
       db[model.name] = model;
       db[auditModel.name] = auditModel;
     } catch (error) {
-      auditLogger.error(error);
-      auditLogger.error(file);
+      auditLogger.error(JSON.stringify({ error, file }));
+      throw error;
     }
   });
 

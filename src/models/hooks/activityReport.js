@@ -1,6 +1,5 @@
 const { Op } = require('sequelize');
 const { REPORT_STATUSES } = require('../../constants');
-const { auditLogger } = require('../../logger');
 
 /**
  * Helper function called by model hooks.
@@ -26,50 +25,45 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
     && instance.calculatedStatus !== REPORT_STATUSES.APPROVED) {
       // eslint-disable-next-line max-len
       // TODO: Run extensive check and update where required all used goals and objectives as not onApprovedAR
-      let objectives;
-      try {
-        objectives = await sequelize.models.ActivityReportObjective.findAll(
-          {
-            attributes: [
-              ['"Objective".id', 'objectiveId'],
-              [sequelize.cast(sequelize.fn('ARRAY_AGG', sequelize.fn('DISTINCT', sequelize.col('"ActivityReport".id'))), 'TEXT'), 'statuses'],
-            ],
-            group: '"Objective".id',
-            distinct: true,
-            where: { activityReportId: instance.id },
-            include: [
-              {
-                model: sequelize.models.Objective,
-                as: 'objectives',
-                attributes: ['id'],
-                required: true,
-                include: [
-                  {
-                    model: sequelize.models.ActivityReportObjective,
-                    as: 'objectives',
-                    attributes: ['id'],
-                    required: true,
-                    include: [
-                      {
-                        model: sequelize.models.ActivityReport,
-                        as: 'objectives',
-                        attributes: ['id'],
-                        required: true,
-                        where: {
-                          calculatedStatus: { [Op.not]: REPORT_STATUSES.APPROVED },
-                          activityReportId: { [Op.not]: instance.id },
-                        },
+      const objectives = await sequelize.models.ActivityReportObjective.findAll(
+        {
+          attributes: [
+            ['"Objective".id', 'objectiveId'],
+            [sequelize.cast(sequelize.fn('ARRAY_AGG', sequelize.fn('DISTINCT', sequelize.col('"ActivityReport".id'))), 'TEXT'), 'statuses'],
+          ],
+          group: '"Objective".id',
+          distinct: true,
+          where: { activityReportId: instance.id },
+          include: [
+            {
+              model: sequelize.models.Objective,
+              as: 'objectives',
+              attributes: ['id'],
+              required: true,
+              include: [
+                {
+                  model: sequelize.models.ActivityReportObjective,
+                  as: 'objectives',
+                  attributes: ['id'],
+                  required: true,
+                  include: [
+                    {
+                      model: sequelize.models.ActivityReport,
+                      as: 'objectives',
+                      attributes: ['id'],
+                      required: true,
+                      where: {
+                        calculatedStatus: { [Op.not]: REPORT_STATUSES.APPROVED },
+                        activityReportId: { [Op.not]: instance.id },
                       },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        );
-      } catch (err) {
-        auditLogger.error(JSON.stringify({ err, stack: new Error().stack }));
-      }
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      );
 
       const affectedObjectives = objectives.filter((o) => !o.statuses.includes('approved')).map((o) => o.objectiveId);
 

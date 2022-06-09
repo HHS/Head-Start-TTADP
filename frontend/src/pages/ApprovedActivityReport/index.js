@@ -16,6 +16,7 @@ import {
   LOCAL_STORAGE_DATA_KEY,
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
   LOCAL_STORAGE_EDITABLE_KEY,
+  DATEPICKER_VALUE_FORMAT,
 } from '../../Constants';
 
 /**
@@ -27,11 +28,11 @@ function calculateGoalsAndObjectives(report) {
   const headings = [];
   const data = [];
 
-  if (report.goals.length > 0) {
+  if (report.goalsAndObjectives.length > 0) {
     // assume recipient
-    const { goals } = report;
+    const { goalsAndObjectives } = report;
 
-    goals.forEach((goal, index) => {
+    goalsAndObjectives.forEach((goal, index) => {
       const displayNumber = index + 1;
       headings.push(`Goal ${displayNumber}`);
       data.push(goal.name);
@@ -42,7 +43,7 @@ function calculateGoalsAndObjectives(report) {
         headings.push(`Objective ${objectiveDisplayNumber}`);
         data.push(objective.title);
         headings.push(`TTA Provided ${objectiveDisplayNumber}`);
-        data.push(objective.ActivityReportObjective.ttaProvided);
+        data.push(objective.ttaProvided);
         headings.push(`Objective ${objectiveDisplayNumber} status`);
         data.push(objective.status);
       });
@@ -230,8 +231,8 @@ export default function ApprovedActivityReport({ match, user }) {
         const attendees = formatSimpleArray(data.participants);
         const participantCount = data.numberOfParticipants.toString();
         const reasons = formatSimpleArray(data.reason);
-        const startDate = moment(data.startDate, DATE_DISPLAY_FORMAT).format('MMMM D, YYYY');
-        const endDate = moment(data.endDate, DATE_DISPLAY_FORMAT).format('MMMM D, YYYY');
+        const startDate = moment(data.startDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
+        const endDate = moment(data.endDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
         const duration = `${data.duration} hours`;
         const method = formatMethod(data.ttaType, data.virtualDeliveryType);
         const requester = formatRequester(data.requester);

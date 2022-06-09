@@ -289,33 +289,21 @@ describe('filtersToScopes', () => {
         reportIncluded2 = await ActivityReport.create({ ...draftReport });
         reportExcluded = await ActivityReport.create({ ...draftReport });
 
-        try {
-          activityRecipientIncluded1 = await ActivityRecipient.create({
-            activityReportId: reportIncluded1.id,
-            grantId: grantIncluded1.id,
-          });
-        } catch (error) {
-          auditLogger.error(JSON.stringify(error));
-          throw error;
-        }
-        try {
-          activityRecipientIncluded2 = await ActivityRecipient.create({
-            activityReportId: reportIncluded2.id,
-            grantId: grantIncluded2.id,
-          });
-        } catch (error) {
-          auditLogger.error(JSON.stringify(error));
-          throw error;
-        }
-        try {
-          activityRecipientExcluded = await ActivityRecipient.create({
-            activityReportId: reportExcluded.id,
-            grantId: grantExcluded.id,
-          });
-        } catch (error) {
-          auditLogger.error(JSON.stringify(error));
-          throw error;
-        }
+        activityRecipientIncluded1 = await ActivityRecipient.create({
+          activityReportId: reportIncluded1.id,
+          grantId: grantIncluded1.id,
+        });
+
+        activityRecipientIncluded2 = await ActivityRecipient.create({
+          activityReportId: reportIncluded2.id,
+          grantId: grantIncluded2.id,
+        });
+
+        activityRecipientExcluded = await ActivityRecipient.create({
+          activityReportId: reportExcluded.id,
+          grantId: grantExcluded.id,
+        });
+
         possibleIds = [
           reportIncluded1.id,
           reportIncluded2.id,
