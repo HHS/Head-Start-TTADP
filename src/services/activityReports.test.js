@@ -4,7 +4,7 @@ import db, {
 } from '../models';
 import {
   createOrUpdate,
-  activityReportById,
+  activityReportAndRecipientsById,
   possibleRecipients,
   activityReports,
   activityReportAlerts,
@@ -368,14 +368,14 @@ describe('Activity report service', () => {
         const report = await createOrUpdate(reportObject);
         const endARCount = await ActivityReport.findAll({ where: { userId: mockUser.id } });
         expect(endARCount.length - beginningARCount.length).toBe(1);
-        expect(report.activityRecipients[0].grant.id).toBe(RECIPIENT_ID);
+        expect(report.activityRecipients[0].activityRecipientId).toBe(RECIPIENT_ID);
         // Check afterCreate copySubmissionStatus hook
         expect(report.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
       });
 
       it('creates a new report with other-entity recipient', async () => {
         const report = await createOrUpdate({ ...reportObject, activityRecipientType: 'other-entity' });
-        expect(report.activityRecipients[0].otherEntity.id).toBe(RECIPIENT_ID);
+        expect(report.activityRecipients[0].activityRecipientId).toBe(RECIPIENT_ID);
       });
 
       it('handles reports with collaborators', async () => {
@@ -626,12 +626,14 @@ describe('Activity report service', () => {
         const recipientIds = report.recipientNextSteps.map((note) => note.id);
         const specialistsIds = report.specialistNextSteps.map((note) => note.id);
 
+        const [freshlyUpdated] = await activityReportAndRecipientsById(report.id);
+
         // When the report is updated with same notes
         const notes = {
           specialistNextSteps: report.specialistNextSteps,
           recipientNextSteps: report.recipientNextSteps,
         };
-        const updatedReport = await createOrUpdate(notes, report);
+        const updatedReport = await createOrUpdate(notes, freshlyUpdated);
 
         // Then we see nothing changes
         // And we are re-using the same old ids
@@ -668,11 +670,11 @@ describe('Activity report service', () => {
       });
     });
 
-    describe('activityReportById', () => {
+    describe('activityReportAndRecipientsById', () => {
       it('retrieves an activity report', async () => {
         const report = await ActivityReport.create(reportObject);
 
-        const foundReport = await activityReportById(report.id);
+        const [foundReport] = await activityReportAndRecipientsById(report.id);
         expect(foundReport.id).toBe(report.id);
         expect(foundReport.ECLKCResourcesUsed).toEqual(['test']);
       });
@@ -684,7 +686,7 @@ describe('Activity report service', () => {
           status: APPROVER_STATUSES.APPROVED,
           note: 'great job from user 2',
         });
-        const foundReport = await activityReportById(report.id);
+        const [foundReport] = await activityReportAndRecipientsById(report.id);
         expect(foundReport.approvers[0].User.get('fullName')).toEqual(`${mockUserTwo.name}, ${mockUserTwo.role[0]}`);
       });
       it('excludes soft deleted approvers', async () => {
@@ -711,7 +713,7 @@ describe('Activity report service', () => {
           where: { id: toDeleteApproval.id },
           individualHooks: true,
         });
-        const foundReport = await activityReportById(report.id);
+        const [foundReport] = await activityReportAndRecipientsById(report.id);
         // Show both approvers
         expect(foundReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
         expect(foundReport.approvers.length).toEqual(1);

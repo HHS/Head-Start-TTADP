@@ -113,7 +113,7 @@ describe('Goals DB service', () => {
     it('creates new goals', async () => {
       await saveGoalsForReport([
         {
-          id: 'new', grantId: 1, name: 'name', status: 'Closed', objectives: [],
+          id: 'new', grantIds: [1], name: 'name', status: 'Closed', objectives: [],
         },
       ], { id: 1 });
       expect(Goal.findOrCreate).toHaveBeenCalledWith({
@@ -138,6 +138,7 @@ describe('Goals DB service', () => {
         id: 1,
         name: 'name',
         objectives: [],
+        grantIds: [],
       };
 
       await saveGoalsForReport([existingGoal], { id: 1 });
@@ -159,6 +160,7 @@ describe('Goals DB service', () => {
         name: 'name',
         objectives: [],
         update: jest.fn(),
+        grantIds: [1],
       };
 
       const goalWithNewObjective = {
@@ -184,6 +186,7 @@ describe('Goals DB service', () => {
         name: 'name',
         objectives: [{ title: 'title', id: 1, status: 'Closed' }],
         update: jest.fn(),
+        grantIds: [1],
       };
 
       const update = jest.fn();
