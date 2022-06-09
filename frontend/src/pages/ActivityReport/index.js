@@ -53,7 +53,7 @@ const defaultValues = {
   activityType: [],
   additionalNotes: null,
   attachments: [],
-  collaborators: [],
+  activityReportCollaborators: [],
   context: '',
   deliveryMethod: null,
   duration: '',
@@ -243,7 +243,9 @@ function ActivityReport({
   const convertReportToFormData = (fetchedReport) => {
     const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed);
     const nonECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.nonECLKCResourcesUsed);
-    return { ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed };
+    return {
+      ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed,
+    };
   };
 
   // cleanup local storage if the report has been submitted or approved
