@@ -25,6 +25,7 @@ function ObjectiveRow({
     endDate,
     reasons,
     status,
+    grantNumbers,
   } = objective;
 
   const viewOrEditLink = arStatus === 'approved' ? `/activity-reports/view/${arId}` : `/activity-reports/${arId}`;
@@ -100,13 +101,13 @@ function ObjectiveRow({
 
   return (
     <>
-      <ul className="usa-list usa-list--unstyled display-inline-flex tta-smarthub--goal-row-obj-table-rows margin-bottom-2">
-        <li>
+      <ul className="usa-list usa-list--unstyled display-inline-block tta-smarthub--goal-row-obj-table-rows">
+        <li className="padding-x-3 padding-y-2">
           <span className="sr-only">Objective:</span>
           {title}
         </li>
-        <li>
-          <span className="sr-only">Activity report:</span>
+        <li className="padding-x-3 padding-y-2">
+          <span className="sr-only">Activity reports:</span>
           {' '}
           <Link
             to={linkToAr}
@@ -114,15 +115,24 @@ function ObjectiveRow({
             {arNumber}
           </Link>
         </li>
-        <li>
+        <li className="padding-x-3 padding-y-2">
+          <span className="sr-only">Grant numbers:</span>
+          {grantNumbers.map((grantNumber) => (
+            <>
+              <span key={grantNumber}>{grantNumber}</span>
+              <br />
+            </>
+          ))}
+        </li>
+        <li className="padding-x-3 padding-y-2">
           <span className="sr-only">End date:</span>
           {endDate}
         </li>
-        <li>
+        <li className="padding-x-3 padding-y-2">
           <span className="sr-only">Reasons:</span>
           {reasons && displayReasonsList(reasons.sort())}
         </li>
-        <li>
+        <li className="padding-x-3 padding-y-2">
           <span className="sr-only">Objective status:</span>
           {getObjectiveStatusIcon}
           {displayObjStatus}
@@ -143,6 +153,7 @@ export const objectivePropTypes = PropTypes.shape({
   endDate: PropTypes.string,
   reasons: PropTypes.arrayOf(PropTypes.string),
   status: PropTypes.string.isRequired,
+  grantNumbers: PropTypes.arrayOf(PropTypes.string),
 });
 
 objectivePropTypes.defaultProps = {
