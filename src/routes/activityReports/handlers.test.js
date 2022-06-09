@@ -267,7 +267,6 @@ describe('Activity Report handlers', () => {
       await reviewReport(approvedReportRequest, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);
       expect(approvalNotification).toHaveBeenCalled();
-      expect(copyGoalsToGrants).toHaveBeenCalled();
     });
     it('returns the new needs action status', async () => { // here
       const mockApproverRecord = {
@@ -299,13 +298,13 @@ describe('Activity Report handlers', () => {
       expect(copyGoalsToGrants).not.toHaveBeenCalled();
     });
     it('handles unauthorizedRequests', async () => {
-      activityReportAndRecipientsById.mockResolvedValue({
+      activityReportAndRecipientsById.mockResolvedValue([{
         calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
         activityRecipientType: 'recipient',
       }, [
         {
           activityRecipientId: 10,
-        }]);
+        }]]);
       ActivityReport.mockImplementationOnce(() => ({
         canReview: () => false,
       }));
