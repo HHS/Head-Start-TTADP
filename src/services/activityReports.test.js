@@ -4,7 +4,7 @@ import db, {
 } from '../models';
 import {
   createOrUpdate,
-  activityReportById,
+  activityReportAndRecipientsById,
   possibleRecipients,
   activityReports,
   activityReportAlerts,
@@ -668,11 +668,11 @@ describe('Activity report service', () => {
       });
     });
 
-    describe('activityReportById', () => {
+    describe('activityReportAndRecipientsById', () => {
       it('retrieves an activity report', async () => {
         const report = await ActivityReport.create(reportObject);
 
-        const foundReport = await activityReportById(report.id);
+        const [foundReport] = await activityReportAndRecipientsById(report.id);
         expect(foundReport.id).toBe(report.id);
         expect(foundReport.ECLKCResourcesUsed).toEqual(['test']);
       });
@@ -684,7 +684,7 @@ describe('Activity report service', () => {
           status: APPROVER_STATUSES.APPROVED,
           note: 'great job from user 2',
         });
-        const foundReport = await activityReportById(report.id);
+        const [foundReport] = await activityReportAndRecipientsById(report.id);
         expect(foundReport.approvers[0].User.get('fullName')).toEqual(`${mockUserTwo.name}, ${mockUserTwo.role[0]}`);
       });
       it('excludes soft deleted approvers', async () => {
@@ -711,7 +711,7 @@ describe('Activity report service', () => {
           where: { id: toDeleteApproval.id },
           individualHooks: true,
         });
-        const foundReport = await activityReportById(report.id);
+        const [foundReport] = await activityReportAndRecipientsById(report.id);
         // Show both approvers
         expect(foundReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
         expect(foundReport.approvers.length).toEqual(1);

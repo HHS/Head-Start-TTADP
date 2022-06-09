@@ -1,7 +1,7 @@
 import ActivityReportsPresenter from '../../../serializers/activityReports';
 import ActivityReport from '../../../policies/activityReport';
 import { notFound, unauthorized } from '../../../serializers/errorResponses';
-import { activityReportById } from '../../../services/activityReports';
+import { activityReportAndRecipientsById } from '../../../services/activityReports';
 import { getReportByDisplayId } from './handlers';
 
 jest.mock('../../../services/users', () => ({
@@ -11,7 +11,7 @@ jest.mock('../../../middleware/authMiddleware', () => ({
   currentUserId: jest.fn(),
 }));
 jest.mock('../../../services/activityReports', () => ({
-  activityReportById: jest.fn(),
+  activityReportAndRecipientsById: jest.fn(),
 }));
 jest.mock('../../../serializers/activityReports');
 jest.mock('../../../serializers/errorResponses');
@@ -31,7 +31,7 @@ describe('External API Activity Report handlers', () => {
 
     it('returns a found report', async () => {
       const report = jest.fn();
-      activityReportById.mockResolvedValue(report);
+      activityReportAndRecipientsById.mockResolvedValue(report);
       ActivityReport.mockImplementationOnce(() => ({
         canGet: () => true,
       }));
@@ -45,7 +45,7 @@ describe('External API Activity Report handlers', () => {
     });
 
     it('handles a missing report', async () => {
-      activityReportById.mockResolvedValue(null);
+      activityReportAndRecipientsById.mockResolvedValue(null);
 
       await getReportByDisplayId(mockRequest, mockResponse);
 
@@ -54,7 +54,7 @@ describe('External API Activity Report handlers', () => {
 
     it('handles an unauthorized user', async () => {
       const report = jest.fn();
-      activityReportById.mockResolvedValue(report);
+      activityReportAndRecipientsById.mockResolvedValue(report);
       ActivityReport.mockImplementationOnce(() => ({
         canGet: () => false,
       }));
