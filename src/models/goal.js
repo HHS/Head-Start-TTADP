@@ -2,7 +2,6 @@ const { Model } = require('sequelize');
 const { CLOSE_SUSPEND_REASONS } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 const { beforeValidate, afterUpdate } = require('./hooks/goal');
-// const { auditLogger } = require('../logger');
 
 /**
  * Goals table. Stores goals for tta.
