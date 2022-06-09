@@ -104,13 +104,13 @@ describe('submitReport', () => {
 
     await submitReport(request, mockResponse);
     expect(assignedNotification).toHaveBeenCalled();
-    expect(mockResponse.json).toHaveBeenCalledWith(expect.arrayContaining([{
+    expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining({
       calculatedStatus: REPORT_STATUSES.SUBMITTED,
       approvers: [
         expect.objectContaining({ status: null, note: null }),
         expect.objectContaining({ status: null, note: null }),
       ],
-    }]));
+    }));
   });
   it('resets NEEDS_ACTION approver statuses', async () => {
     const submittedReport = await ActivityReport.create({
@@ -133,12 +133,12 @@ describe('submitReport', () => {
 
     await submitReport(request, mockResponse);
     expect(assignedNotification).toHaveBeenCalled();
-    expect(mockResponse.json).toHaveBeenCalledWith(expect.arrayContaining([{
+    expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining({
       calculatedStatus: REPORT_STATUSES.SUBMITTED,
       approvers: [
         expect.objectContaining({ status: null, note: 'make changes x, y, z' }),
       ],
-    }]));
+    }));
   });
   it('resets to NEEDS_ACTION on unlock', async () => {
     const submittedReport = await ActivityReport.create({
