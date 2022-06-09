@@ -77,7 +77,8 @@ describe('Goals by Recipient Test', () => {
     lastUpdatedById: mockGoalUser.id,
     ECLKCResourcesUsed: ['test'],
     activityRecipients: [{ grantId: 300 }],
-    submissionStatus: REPORT_STATUSES.SUBMITTED,
+    submissionStatus: REPORT_STATUSES.APPROVED,
+    calculatedStatus: REPORT_STATUSES.APPROVED,
     oldApprovingManagerId: 1,
     numberOfParticipants: 1,
     deliveryMethod: 'method',
@@ -99,7 +100,8 @@ describe('Goals by Recipient Test', () => {
     lastUpdatedById: mockGoalUser.id,
     ECLKCResourcesUsed: ['test'],
     activityRecipients: [{ grantId: 301 }],
-    submissionStatus: REPORT_STATUSES.SUBMITTED,
+    submissionStatus: REPORT_STATUSES.APPROVED,
+    calculatedStatus: REPORT_STATUSES.APPROVED,
     oldApprovingManagerId: 1,
     numberOfParticipants: 1,
     deliveryMethod: 'method',
@@ -121,7 +123,8 @@ describe('Goals by Recipient Test', () => {
     lastUpdatedById: mockGoalUser.id,
     ECLKCResourcesUsed: ['test'],
     activityRecipients: [{ grantId: 302 }],
-    submissionStatus: REPORT_STATUSES.SUBMITTED,
+    submissionStatus: REPORT_STATUSES.APPROVED,
+    calculatedStatus: REPORT_STATUSES.APPROVED,
     oldApprovingManagerId: 1,
     numberOfParticipants: 1,
     deliveryMethod: 'method',
@@ -135,9 +138,6 @@ describe('Goals by Recipient Test', () => {
     topics: ['Child Assessment, Development, Screening', 'Communication'],
     ttaType: ['type'],
   };
-
-  // let objectiveTemplateIds = [];
-  // let goalTemplateIds = [];
 
   let objectiveIds = [];
   let goalIds = [];
@@ -159,6 +159,13 @@ describe('Goals by Recipient Test', () => {
     const savedGoalReport1 = await ActivityReport.create(goalReport1);
     const savedGoalReport2 = await ActivityReport.create(goalReport2);
     const savedGoalReport3 = await ActivityReport.create(goalReport3);
+    const savedGoalReport4 = await ActivityReport.create(
+      {
+        ...goalReport1,
+        submissionStatus: REPORT_STATUSES.DRAFT,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      },
+    );
 
     // Create AR Recipients.
     try {
@@ -188,13 +195,22 @@ describe('Goals by Recipient Test', () => {
       auditLogger.error(JSON.stringify(error));
       throw error;
     }
+    try {
+      await ActivityRecipient.create({
+        activityReportId: savedGoalReport4.id,
+        grantId: savedGrant3.id,
+      });
+    } catch (error) {
+      auditLogger.error(JSON.stringify(error));
+      throw error;
+    }
 
     // Create Goals.
     let goals = [];
     try {
       goals = await Promise.all(
         [
-          // goal 1 (AR1)t
+          // goal 1 (AR1)
           Goal.create({
             name: 'Goal 1',
             status: '',
@@ -202,6 +218,7 @@ describe('Goals by Recipient Test', () => {
             isFromSmartsheetTtaPlan: false,
             grantId: 300,
             createdAt: '2021-01-10T19:16:15.842Z',
+            onApprovedAR: true,
           }),
           // goal 2 (AR1)
           Goal.create({
@@ -211,6 +228,7 @@ describe('Goals by Recipient Test', () => {
             isFromSmartsheetTtaPlan: false,
             grantId: 300,
             createdAt: '2021-02-15T19:16:15.842Z',
+            onApprovedAR: true,
           }),
           // goal 3 (AR1)
           Goal.create({
@@ -220,6 +238,7 @@ describe('Goals by Recipient Test', () => {
             isFromSmartsheetTtaPlan: false,
             grantId: 300,
             createdAt: '2021-03-03T19:16:15.842Z',
+            onApprovedAR: true,
           }),
           // goal 4 (AR2)
           Goal.create({
@@ -229,6 +248,7 @@ describe('Goals by Recipient Test', () => {
             isFromSmartsheetTtaPlan: false,
             grantId: 301,
             createdAt: '2021-04-02T19:16:15.842Z',
+            onApprovedAR: true,
           }),
           // goal 5 (AR3 Exclude)
           Goal.create({
@@ -238,6 +258,7 @@ describe('Goals by Recipient Test', () => {
             isFromSmartsheetTtaPlan: false,
             grantId: 302,
             createdAt: '2021-05-02T19:16:15.842Z',
+            onApprovedAR: true,
           }),
           Goal.create({
             name: 'Goal not on report, no objective',
@@ -246,6 +267,7 @@ describe('Goals by Recipient Test', () => {
             isFromSmartsheetTtaPlan: false,
             grantId: 300,
             createdAt: '2021-01-10T19:16:15.842Z',
+            onApprovedAR: true,
           }),
           Goal.create({
             name: 'Goal not on report, with objective',
@@ -254,6 +276,18 @@ describe('Goals by Recipient Test', () => {
             isFromSmartsheetTtaPlan: false,
             grantId: 300,
             createdAt: '2021-01-10T19:16:15.842Z',
+            onApprovedAR: true,
+          }),
+          // goal 6 (AR4)
+          Goal.create({
+            name: 'Goal on Draft report',
+            status: '',
+            timeframe: '1 month',
+            isFromSmartsheetTtaPlan: false,
+            grantId: 300,
+            createdAt: '2021-01-10T19:16:15.842Z',
+            onApprovedAR: false,
+
           }),
         ],
       );
@@ -310,6 +344,12 @@ describe('Goals by Recipient Test', () => {
           title: 'objective 7',
           status: 'Not Started',
         }),
+        // objective 8
+        Objective.create({
+          goalId: goalIds[7],
+          title: 'objective 8',
+          status: 'Not Started',
+        }),
       ],
     );
 
@@ -354,6 +394,12 @@ describe('Goals by Recipient Test', () => {
           objectiveId: objectives[5].id,
           activityReportId: savedGoalReport3.id,
           ttaProvided: 'Objective for Goal 5 Exclude',
+        }),
+        // AR 4 Draft Obj 8 (Exclude).
+        ActivityReportObjective.create({
+          objectiveId: objectives[7].id,
+          activityReportId: savedGoalReport4.id,
+          ttaProvided: 'Objective for Goal 6 Draft report Exclude',
         }),
       ],
     );
@@ -461,6 +507,7 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx[1].objectives[1].endDate).toBe('09/01/2020');
       expect(goalRowsx[1].objectives[1].reasons).toEqual(['COVID-19 response', 'Complaint']);
       expect(goalRowsx[1].objectives[1].status).toEqual('In Progress');
+
       // Goal 2.
       expect(moment(goalRowsx[2].createdOn).format('YYYY-MM-DD')).toBe('2021-02-15');
       expect(goalRowsx[2].goalText).toBe('Goal 2');

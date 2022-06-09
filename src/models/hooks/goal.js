@@ -30,9 +30,8 @@ const autoPopulateGoalTemplateId = async (sequelize, instance, options) => {
 
 const autoPopulateOnApprovedAR = (sequelize, instance) => {
   // eslint-disable-next-line no-prototype-builtins
-  if (!instance.hasOwnProperty('onApprovedAR')
-  || instance.onApprovedAR === null
-  || instance.onApprovedAR === undefined) {
+  if (instance.onApprovedAR === undefined
+    || instance.onApprovedAR === null) {
     instance.set('onApprovedAR', false);
   }
 };
@@ -40,7 +39,7 @@ const autoPopulateOnApprovedAR = (sequelize, instance) => {
 const preventNamChangeWhenOnApprovedAR = (sequelize, instance) => {
   if (instance.onApprovedAR === true) {
     const changed = instance.changed();
-    if (Array.isArray(changed)
+    if (instance.id !== null && Array.isArray(changed)
           && changed.includes('name')) {
       throw new Error('Goal name change now allowed for goals on approved activity reports.');
     }
