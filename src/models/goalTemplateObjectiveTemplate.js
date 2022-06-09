@@ -1,4 +1,3 @@
-// File name needs to be non-standard so the modules load in the correct order.
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {

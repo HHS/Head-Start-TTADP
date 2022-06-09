@@ -1,6 +1,5 @@
-// const { Op } = require('sequelize');
-// import { auditLogger } from '../../logger';
 import { CREATION_METHOD } from '../../constants';
+import { propagateDestroyToFile } from './genericFile';
 
 // When a new file is added to an objective, add the file to the template or update the
 // updatedAt value.
@@ -107,44 +106,6 @@ const propagateDestroyToTemplate = async (sequelize, instance, options) => {
         },
       );
     }
-  }
-};
-
-const propagateDestroyToFile = async (sequelize, instance, options) => {
-  const file = await sequelize.models.File.FindOne({
-    where: { id: instance.fileId },
-    include: [
-      {
-        model: sequelize.models.ActivityReportFile,
-        as: 'reportFiles',
-        required: true,
-      },
-      {
-        model: sequelize.models.ActivityReportObjectiveFile,
-        as: 'reportObjectiveFiles',
-        required: true,
-      },
-      {
-        model: sequelize.models.ObjectiveFile,
-        as: 'objectiveFiles',
-        required: true,
-      },
-      {
-        model: sequelize.models.ObjectiveTemplateFile,
-        as: 'objectiveTemplateFiles',
-        required: true,
-      },
-    ],
-    transaction: options.transaction,
-  });
-  if (file.reportFiles.length === 0
-    && file.reportObjectiveFiles.length === 0
-    && file.objectiveFiles.length === 0
-    && file.objectiveTemplateFiles.length === 0) {
-    await sequelize.models.File.destroy({
-      where: { id: file.id },
-      transaction: options.transaction,
-    });
   }
 };
 
