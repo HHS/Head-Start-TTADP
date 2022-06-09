@@ -19,17 +19,19 @@ const components = {
 };
 
 const createObjective = () => ({
-  title: '', ttaProvided: '<p></p>', status: 'Not Started', id: uuidv4(), new: true,
+  title: '', ttaProvided: '<p></p>', status: 'Not Started', id: uuidv4(), isNew: true,
 });
 
 const GoalPicker = ({
   availableGoals,
+  grantIds,
 }) => {
   const {
     control, setValue,
   } = useFormContext();
   const [inMemoryGoals, updateInMemoryGoals] = useState([]);
   const selectedGoals = useWatch({ name: 'goals' });
+
   // availableGoals: goals passed into GoalPicker. getGoals returns GrantGoals
   // inMemoryGoals: unsaved goals, deselected goals
   // selectedGoals: goals selected by user in MultiSelect
@@ -47,6 +49,7 @@ const GoalPicker = ({
       const goal = {
         ...oldGoal,
         name,
+        grantIds,
       };
       const updatedGoals = cloneDeep(selectedGoals);
       updatedGoals[index] = goal;
@@ -57,7 +60,7 @@ const GoalPicker = ({
   const onUpdateObjectives = (index, objectives) => {
     const newGoals = cloneDeep(selectedGoals);
     newGoals[index].objectives = objectives;
-    // When objecttives are added/updated, make sure they are attached to available goals
+    // When objectives are added/updated, make sure they are attached to available goals
     updateInMemoryGoals(newGoals);
     setValue('goals', newGoals);
   };
@@ -74,6 +77,7 @@ const GoalPicker = ({
       return {
         ...goal,
         objectives,
+        grantIds,
       };
     });
     // Preserve deselected goals so they can be re-reselected
@@ -85,11 +89,14 @@ const GoalPicker = ({
   };
 
   const onNewGoalChange = (newGoal) => {
+    const i = uuidv4();
     const goal = {
-      id: uuidv4(),
-      new: true,
+      id: i,
+      isNew: true,
       name: newGoal,
       objectives: [createObjective()],
+      grantIds,
+      status: 'Not Started',
     };
     setValue('goals', [...selectedGoals, goal]);
     updateInMemoryGoals((oldGoals) => [...oldGoals, goal]);
@@ -153,6 +160,7 @@ const GoalPicker = ({
 };
 
 GoalPicker.propTypes = {
+  grantIds: PropTypes.arrayOf(PropTypes.number).isRequired,
   availableGoals: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string,

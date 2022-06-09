@@ -17,7 +17,7 @@ import {
   createObjectiveTemplateFileMetaData,
 } from '../../services/files';
 import ActivityReportPolicy from '../../policies/activityReport';
-import { activityReportById } from '../../services/activityReports';
+import { activityReportAndRecipientsById } from '../../services/activityReports';
 import { userById } from '../../services/users';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
 import { auditLogger } from '../../logger';
@@ -59,7 +59,7 @@ const deleteHandler = async (req, res) => {
     fileId,
   } = req.params;
   const user = await userById(req.session.userId);
-  const report = await activityReportById(reportId);
+  const [report] = await activityReportAndRecipientsById(reportId);
   const authorization = new ActivityReportPolicy(user, report);
 
   if (!authorization.canUpdate()) {
@@ -110,7 +110,7 @@ const linkHandler = async (req, res) => {
   } = req.params;
 
   const user = await userById(req.session.userId);
-  const report = await activityReportById(reportId);
+  const [report] = await activityReportAndRecipientsById(reportId);
   const authorization = new ActivityReportPolicy(user, report);
 
   if (!authorization.canUpdate()) {
@@ -183,7 +183,7 @@ const uploadHandler = async (req, res) => {
   let fileTypeToUse;
 
   const user = await userById(req.session.userId);
-  const report = await activityReportById(reportId);
+  const [report] = await activityReportAndRecipientsById(reportId);
   const authorization = new ActivityReportPolicy(user, report);
 
   if (!(authorization.canUpdate() || (await validateUserAuthForAdmin(req.session.userId)))) {
