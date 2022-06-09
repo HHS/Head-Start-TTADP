@@ -19,7 +19,7 @@ Given('I am on the landing page', async () => {
     page.waitForNavigation(),
     await page.goto(`${scope.uri}/activity-reports/new`),
   ]);
-  await scope.context.currentPage.waitForSelector('h1');
+  await scope.context.currentPage.waitForSelector('#main-content > div.smart-hub-activity-report > div.grid-row.flex-justify > div.grid-col-auto.flex-align-self-center > div');
 });
 
 When('I select {string}', async (inputLabel) => {

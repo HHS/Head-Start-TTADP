@@ -27,6 +27,7 @@ services:
       - "./scripts:/app/scripts"
     environment:
       - BACKEND_PROXY=http://test-backend:8080
+      - FONTAWESOME_NPM_AUTH_TOKEN
     networks:
       - ttadp-test
   test-db:
