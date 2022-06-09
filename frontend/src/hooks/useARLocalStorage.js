@@ -20,9 +20,7 @@ export default function useARLocalStorage(key, defaultValue) {
 
     if (storedValue
       && storedValue.calculatedStatus
-      && (storedValue.calculatedStatus === REPORT_STATUSES.APPROVED
-        || storedValue.calculatedStatus === REPORT_STATUSES.SUBMITTED
-      )
+      && storedValue.calculatedStatus !== REPORT_STATUSES.DRAFT
     ) {
       toSave = false;
     }
