@@ -122,6 +122,25 @@ const report = {
   approvingManager: mockManager,
   displayId: 'mockreport-1',
   regionId: 1,
+
+};
+
+const activityRecipients = undefined;
+const goalsAndObjectives = undefined;
+
+const byIdResponse = [
+  {
+    displayId: report.displayId,
+    dataValues: report,
+  },
+  activityRecipients,
+  goalsAndObjectives,
+];
+
+const expected = {
+  ...report,
+  activityRecipients,
+  goalsAndObjectives,
 };
 
 describe('Activity Report handlers', () => {
@@ -233,13 +252,12 @@ describe('Activity Report handlers', () => {
         status: approvedReportRequest.body.status,
         note: approvedReportRequest.body.note,
       };
-      activityReportAndRecipientsById.mockResolvedValue({
+      activityReportAndRecipientsById.mockResolvedValue([{
         calculatedStatus: REPORT_STATUSES.APPROVED,
         activityRecipientType: 'recipient',
-        activityRecipients: [{
-          activityRecipientId: 10,
-        }],
-      });
+      }, [{
+        activityRecipientId: 10,
+      }]]);
       ActivityReport.mockImplementationOnce(() => ({
         canReview: () => true,
       }));
@@ -259,13 +277,15 @@ describe('Activity Report handlers', () => {
         status: needsActionReportRequest.body.status,
         note: needsActionReportRequest.body.note,
       };
-      activityReportAndRecipientsById.mockResolvedValue({
+      activityReportAndRecipientsById.mockResolvedValue([{
         calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
         activityRecipientType: 'recipient',
-        activityRecipients: [{
-          activityRecipientId: 10,
-        }],
-      });
+      },
+      [{
+        activityRecipientId: 10,
+      },
+      ]]);
+
       ActivityReport.mockImplementationOnce(() => ({
         canReview: () => true,
       }));
@@ -282,10 +302,10 @@ describe('Activity Report handlers', () => {
       activityReportAndRecipientsById.mockResolvedValue({
         calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
         activityRecipientType: 'recipient',
-        activityRecipients: [{
+      }, [
+        {
           activityRecipientId: 10,
-        }],
-      });
+        }]);
       ActivityReport.mockImplementationOnce(() => ({
         canReview: () => false,
       }));
@@ -306,7 +326,7 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementationOnce(() => ({
         canUpdate: () => true,
       }));
-      activityReportAndRecipientsById.mockResolvedValue(report);
+      activityReportAndRecipientsById.mockResolvedValue(byIdResponse);
       const mockApprovers = [{
         activityReportId: 1,
         userId: mockManager.id,
@@ -339,7 +359,7 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementationOnce(() => ({
         canUpdate: () => false,
       }));
-      activityReportAndRecipientsById.mockResolvedValue(report);
+      activityReportAndRecipientsById.mockResolvedValue(byIdResponse);
       userById.mockResolvedValue({
         id: mockUser.id,
       });
@@ -396,17 +416,17 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementationOnce(() => ({
         canUpdate: () => true,
       }));
-      activityReportAndRecipientsById.mockResolvedValue(report);
+      activityReportAndRecipientsById.mockResolvedValue(byIdResponse);
       createOrUpdate.mockResolvedValue(report);
       userById.mockResolvedValue({
         id: mockUser.id,
       });
       await saveReport(request, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith(report);
+      expect(mockResponse.json).toHaveBeenCalledWith(expected);
     });
 
     it('handles unauthorized requests', async () => {
-      activityReportAndRecipientsById.mockResolvedValue(report);
+      activityReportAndRecipientsById.mockResolvedValue(byIdResponse);
       ActivityReport.mockImplementationOnce(() => ({
         canUpdate: () => false,
       }));
@@ -418,7 +438,7 @@ describe('Activity Report handlers', () => {
     });
 
     it('handles reports that are not found', async () => {
-      activityReportAndRecipientsById.mockResolvedValue(null);
+      activityReportAndRecipientsById.mockResolvedValue([null]);
       await saveReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
     });
@@ -440,23 +460,23 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementationOnce(() => ({
         canGet: () => true,
       }));
-      activityReportAndRecipientsById.mockResolvedValue(report);
+      activityReportAndRecipientsById.mockResolvedValue(byIdResponse);
       userById.mockResolvedValue({
         id: mockUser.id,
       });
 
       await getReport(request, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith(report);
+      expect(mockResponse.json).toHaveBeenCalledWith(expected);
     });
 
     it('handles reports that are not found', async () => {
-      activityReportAndRecipientsById.mockResolvedValue(null);
+      activityReportAndRecipientsById.mockResolvedValue([null]);
       await getReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
     });
 
     it('handles unauthorized requests', async () => {
-      activityReportAndRecipientsById.mockResolvedValue(report);
+      activityReportAndRecipientsById.mockResolvedValue([report]);
       ActivityReport.mockImplementationOnce(() => ({
         canGet: () => false,
       }));

@@ -31,7 +31,7 @@ describe('External API Activity Report handlers', () => {
 
     it('returns a found report', async () => {
       const report = jest.fn();
-      activityReportAndRecipientsById.mockResolvedValue(report);
+      activityReportAndRecipientsById.mockResolvedValue([report]);
       ActivityReport.mockImplementationOnce(() => ({
         canGet: () => true,
       }));
@@ -54,7 +54,7 @@ describe('External API Activity Report handlers', () => {
 
     it('handles an unauthorized user', async () => {
       const report = jest.fn();
-      activityReportAndRecipientsById.mockResolvedValue(report);
+      activityReportAndRecipientsById.mockResolvedValue([report]);
       ActivityReport.mockImplementationOnce(() => ({
         canGet: () => false,
       }));
