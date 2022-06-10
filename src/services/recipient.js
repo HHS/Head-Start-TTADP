@@ -291,7 +291,7 @@ export async function getGoalsByActivityRecipient(
         arLegacyId: activityReport ? activityReport.legacyId : null,
         ttaProvided: o.ttaProvided,
         endDate: activityReport ? activityReport.endDate : null,
-        reasons: activityReport ? activityReport.reason : null,
+        reasons: activityReport ? activityReport.reason : [],
         status: o.status,
         activityReportObjectives: o.activityReportObjectives,
         grantNumber: g.grant.number,

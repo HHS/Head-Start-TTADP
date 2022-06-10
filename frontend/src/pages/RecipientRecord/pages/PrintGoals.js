@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
-// import { Alert } from '@trussworks/react-uswds';
+import { Alert } from '@trussworks/react-uswds';
 import { getRecipientGoals } from '../../../fetchers/recipient';
 import PrintableGoal from './components/PrintableGoal';
 import PrintToPdf from '../../../components/PrintToPDF';
@@ -46,13 +46,13 @@ export default function PrintGoals({ location, recipientId, regionId }) {
     return 'Loading...';
   }
 
-  // if (!selectedGoals.length) {
-  //   return (
-  //     <Alert type="info" headingLevel="h2" heading={<>Something went wrong</>}>
-  //       <span className="usa-prose">Select goals before printing.</span>
-  //     </Alert>
-  //   );
-  // }
+  if (!goals.length) {
+    return (
+      <Alert type="info" headingLevel="h2" heading={<>Something went wrong</>}>
+        <span className="usa-prose">Select goals before printing.</span>
+      </Alert>
+    );
+  }
 
   return (
     <div className="margin-top-2 margin-left-2 ttahub-print-goals">
