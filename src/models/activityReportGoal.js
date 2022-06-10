@@ -16,9 +16,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     activityReportId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
     goalId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
   }, {
     sequelize,
