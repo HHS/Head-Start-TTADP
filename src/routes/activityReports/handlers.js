@@ -590,6 +590,7 @@ export async function saveReport(req, res) {
         const oldCollaborators = report.activityReportCollaborators.map((x) => x.user.email);
         return !oldCollaborators.includes(c.user.email);
       });
+
       collaboratorAssignedNotification(savedReport, newCollaborators);
     }
 
