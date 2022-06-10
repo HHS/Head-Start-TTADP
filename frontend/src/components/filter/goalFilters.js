@@ -28,7 +28,7 @@ const handleArrayQuery = (q) => {
 
 export const createDateFilter = {
   id: 'createDate',
-  display: 'Create date',
+  display: 'Created on',
   conditions: DATE_CONDITIONS,
   defaultValues: {
     'is within': '',
@@ -72,7 +72,7 @@ export const reasonsFilter = {
 
 export const statusFilter = {
   id: 'status',
-  display: 'Status',
+  display: 'Goal status',
   conditions: FILTER_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: handleArrayQuery,
@@ -87,7 +87,7 @@ export const statusFilter = {
 
 export const topicsFilter = {
   id: 'topic',
-  display: 'Topics',
+  display: 'Goal topics',
   conditions: FILTER_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: handleArrayQuery,
