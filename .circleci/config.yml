@@ -185,7 +185,7 @@ parameters:
     default: "js-update-boundary-diagram"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "TTAHUB-785/update-job-image"
+    default: "integrate-new-db-schema"
     type: string
   prod_new_relic_app_id:
     default: "877570491"

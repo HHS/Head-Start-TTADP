@@ -1,8 +1,8 @@
-export function activityReportById(activityReportId) {
-  return {
+export function activityReportAndRecipientsById(activityReportId) {
+  return [{
     id: activityReportId,
     resourcesUsed: 'resources',
-  };
+  }, []];
 }
 
 export async function createOrUpdate(newActivityReport, report) {

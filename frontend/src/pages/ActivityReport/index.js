@@ -27,6 +27,8 @@ import {
   LOCAL_STORAGE_DATA_KEY,
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
   LOCAL_STORAGE_EDITABLE_KEY,
+  DATE_DISPLAY_FORMAT,
+  DATEPICKER_VALUE_FORMAT,
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
 import useARLocalStorage from '../../hooks/useARLocalStorage';
@@ -52,7 +54,8 @@ const defaultValues = {
   activityRecipients: [],
   activityType: [],
   additionalNotes: null,
-  attachments: [],
+  files: [],
+  collaborators: [],
   activityReportCollaborators: [],
   context: '',
   deliveryMethod: null,
@@ -241,10 +244,13 @@ function ActivityReport({
   }, [activityReportId, history]);
 
   const convertReportToFormData = (fetchedReport) => {
+    const goals = fetchedReport.goalsAndObjectives;
     const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed);
     const nonECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.nonECLKCResourcesUsed);
+    const endDate = fetchedReport.endDate ? moment(fetchedReport.endDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : '';
+    const startDate = fetchedReport.startDate ? moment(fetchedReport.startDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : '';
     return {
-      ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed,
+      ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed, goals, endDate, startDate,
     };
   };
 

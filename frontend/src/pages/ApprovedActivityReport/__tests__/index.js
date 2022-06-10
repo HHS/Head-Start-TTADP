@@ -45,8 +45,8 @@ describe('Activity report print and share view', () => {
     participants: ['Commander of Pants', 'Princess of Castles'],
     numberOfParticipants: 3,
     reason: ['Needed it'],
-    startDate: '08/01/1968',
-    endDate: '08/02/1969',
+    startDate: '1968-08-01',
+    endDate: '1969-08-02',
     duration: 6.5,
     ttaType: ['training'],
     virtualDeliveryType: 'Phone',
@@ -54,13 +54,15 @@ describe('Activity report print and share view', () => {
     topics: ['Tea', 'cookies'],
     ECLKCResourcesUsed: ['http://website'],
     nonECLKCResourcesUsed: ['http://betterwebsite'],
-    attachments: [],
+    files: [],
     context: '',
-    goals: [],
+    goalsAndObjectives: [],
     objectivesWithoutGoals: [
       {
         title: 'Objective',
-        ttaProvided: 'All of it',
+        ActivityReportObjective: {
+          ttaProvided: 'All of it',
+        },
       },
     ],
     additionalNotes: '',
@@ -119,12 +121,14 @@ describe('Activity report print and share view', () => {
       nonECLKCResourcesUsed: [''],
       ttaType: ['technical assistance'],
       objectivesWithoutGoals: [],
-      goals: [{
+      goalsAndObjectives: [{
         name: 'Goal',
         objectives: [
           {
             title: 'Test',
-            ttaProvided: 'Why not?',
+            ActivityReportObjective: {
+              ttaProvided: 'Why not?',
+            },
           },
         ],
       }],

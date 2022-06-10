@@ -444,11 +444,11 @@ describe('Filter Menu', () => {
     const [topics] = await screen.findAllByRole('combobox', { name: /topic/i });
 
     // all the filters work
-    userEvent.selectOptions(topics, 'Status');
+    userEvent.selectOptions(topics, 'Goal status');
     let [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
-    userEvent.selectOptions(topics, 'Create date');
+    userEvent.selectOptions(topics, 'Created on');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is within');
 
@@ -456,12 +456,11 @@ describe('Filter Menu', () => {
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
-    userEvent.selectOptions(topics, 'Topics');
+    userEvent.selectOptions(topics, 'Goal topics');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
-    userEvent.selectOptions(conditions, 'is');
 
-    userEvent.selectOptions(topics, 'Create date');
+    userEvent.selectOptions(topics, 'Created on');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is within');
 
@@ -469,7 +468,7 @@ describe('Filter Menu', () => {
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
-    userEvent.selectOptions(topics, 'Topics');
+    userEvent.selectOptions(topics, 'Goal topics');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 

@@ -84,12 +84,12 @@ describe('goalStatusGraph', () => {
 
   describe('it counts status of', () => {
     it('not started', () => {
-      const notStarted = response['Not Started'];
+      const notStarted = response['Not started'];
       expect(notStarted).toBe(2);
     });
 
     it('in progress', () => {
-      const inProgress = response['In Progress'];
+      const inProgress = response['In progress'];
       expect(inProgress).toBe(3);
     });
 

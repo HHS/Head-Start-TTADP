@@ -23,7 +23,7 @@ const GoalsObjectives = () => {
   const recipients = watch('activityRecipients');
   const activityRecipientType = watch('activityRecipientType');
   const isRecipientReport = activityRecipientType === 'recipient';
-  const grantIds = isRecipientReport ? recipients.map((r) => r.activityRecipientId) : [];
+  const grantIds = isRecipientReport ? recipients.map((r) => r.id || r.value) : [];
 
   const [fetchError, setFetchError] = useState(false);
   const [availableGoals, updateAvailableGoals] = useState([]);
@@ -69,6 +69,7 @@ const GoalsObjectives = () => {
             <div id="goals-and-objectives" />
             { fetchError && (<ConnectionError />)}
             <GoalPicker
+              grantIds={grantIds}
               availableGoals={availableGoals}
             />
           </Fieldset>
