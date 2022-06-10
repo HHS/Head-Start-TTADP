@@ -238,7 +238,9 @@ function GoalsTable({
                 <GoalRow
                   key={goal.id}
                   goal={goal}
-                  openMenuUp={index >= displayGoals.length - 2} // the last two should open "up"
+                  openMenuUp={
+                    index >= displayGoals.length - 2 && index !== 0
+                  } // the last two should open "up"
                   recipientId={recipientId}
                   regionId={regionId}
                   showCloseSuspendGoalModal={showCloseSuspendGoalModal}

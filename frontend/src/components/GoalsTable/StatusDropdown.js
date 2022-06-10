@@ -109,27 +109,6 @@ export default function StatusDropdown({
       ];
     }
 
-    if (status !== 'In Progress') {
-      return [
-        {
-          label: 'Not started',
-          onClick: () => onUpdateGoalStatus('Not Started'),
-        },
-        {
-          label: 'In progress',
-          onClick: () => onUpdateGoalStatus('In Progress'),
-        },
-        {
-          label: 'Closed',
-          onClick: () => onUpdateGoalStatus('Closed'),
-        },
-        {
-          label: 'Suspended',
-          onClick: () => onUpdateGoalStatus('Suspended'),
-        },
-      ];
-    }
-
     if (status === 'In Progress') {
       return [
         {

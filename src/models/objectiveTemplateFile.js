@@ -17,9 +17,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     objectiveTemplateId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
     fileId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
   }, {
     sequelize,

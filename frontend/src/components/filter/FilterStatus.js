@@ -23,8 +23,8 @@ const options = [
     value: 'Closed',
   },
   {
-    label: 'Ceased/suspended',
-    value: 'Ceased/suspended',
+    label: 'Suspended',
+    value: 'Suspended',
   },
 ];
 

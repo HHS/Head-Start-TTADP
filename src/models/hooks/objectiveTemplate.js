@@ -1,6 +1,5 @@
-// import { auditLogger } from '../../logger';
-
-const { Op } = require('sequelize');
+import { Op } from 'sequelize';
+import { AUTOMATIC_CREATION } from '../../constants';
 
 const autoPopulateHash = (sequelize, instance) => {
   const changed = instance.changed();
@@ -28,7 +27,7 @@ const autoPopulateCreationMethod = (sequelize, instance) => {
         && (!changed.includes('creationMethod')
         || instance.creationMethod === null
         || instance.creationMethod === undefined)) {
-    instance.set('creationMethod', 'Automatic');
+    instance.set('creationMethod', AUTOMATIC_CREATION);
   }
 };
 
@@ -36,7 +35,7 @@ const propagateTemplateTitle = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
         && changed.includes('templateTitle')
-        && instance.creationMethod === 'Automatic') {
+        && instance.creationMethod === AUTOMATIC_CREATION) {
     await sequelize.models.Objective.update(
       { title: instance.templateTitle },
       {
