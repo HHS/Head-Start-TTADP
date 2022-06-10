@@ -5,11 +5,15 @@ import {
 } from '@testing-library/react';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
+import fetchMock from 'fetch-mock';
 import PrintGoals from '../PrintGoals';
 import UserContext from '../../../../UserContext';
 import { SCOPE_IDS } from '../../../../Constants';
 
 const memoryHistory = createMemoryHistory();
+
+const RECIPIENT_ID = '123456';
+const REGION_ID = '1';
 
 describe('PrintGoals', () => {
   const goals = [
@@ -57,27 +61,29 @@ describe('PrintGoals', () => {
     ],
   };
 
-  const renderPrintGoals = (selectedGoals = goals, noLocationState = false) => {
+  const renderPrintGoals = () => {
     const location = {
       state: null, hash: '', pathname: '', search: '',
     };
-
-    if (!noLocationState) {
-      location.state = { selectedGoals };
-    }
 
     render(
       <Router history={memoryHistory}>
         <UserContext.Provider value={{ user }}>
           <PrintGoals
             location={location}
+            recipientId={RECIPIENT_ID}
+            regionId={REGION_ID}
           />
         </UserContext.Provider>
       </Router>,
     );
   };
 
-  it('renders goals from history', async () => {
+  beforeAll(async () => {
+    fetchMock.get(`/api/recipient/${RECIPIENT_ID}/region/${REGION_ID}/goals?sortBy=updatedAt&sortDir=desc&offset=0&limit=false`, { count: 5, goalRows: goals });
+  });
+
+  it('renders goals from API', async () => {
     renderPrintGoals();
     expect(await screen.findByText('This is goal text 1.')).toBeVisible();
     expect(await screen.findByText('Human Resources, Safety Practices, Program Planning and Services')).toBeVisible();
@@ -85,15 +91,5 @@ describe('PrintGoals', () => {
     expect(await screen.findByText('Human Resources, Safety Practices')).toBeVisible();
     expect(await screen.findByText('this is an objective')).toBeVisible();
     expect(await screen.findByText('Empathy, Generosity, Friendship')).toBeVisible();
-  });
-
-  it('handles no location', async () => {
-    renderPrintGoals([]);
-    expect(await screen.findByText('Select goals before printing.')).toBeVisible();
-  });
-
-  it('handles no goals in state', async () => {
-    renderPrintGoals(null, true);
-    expect(await screen.findByText('Select goals before printing.')).toBeVisible();
   });
 });
