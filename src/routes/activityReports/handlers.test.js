@@ -122,7 +122,6 @@ const report = {
   approvingManager: mockManager,
   displayId: 'mockreport-1',
   regionId: 1,
-
 };
 
 const activityRecipients = undefined;
@@ -343,9 +342,19 @@ describe('Activity Report handlers', () => {
       jest.spyOn(ActivityReportModel, 'findByPk').mockResolvedValueOnce(reportAfterSubmit);
       const approverUpdate = jest.spyOn(ActivityReportApprover, 'update').mockImplementation();
       await submitReport(request, mockResponse);
-      expect(createOrUpdate).toHaveBeenCalledWith({
-        additionalNotes: 'notes', submissionStatus: REPORT_STATUSES.SUBMITTED,
-      }, report);
+      const { displayId, ...r } = report;
+      expect(createOrUpdate).toHaveBeenCalledWith(
+        {
+          additionalNotes: 'notes', submissionStatus: REPORT_STATUSES.SUBMITTED,
+        },
+        {
+          dataValues: {
+            ...r,
+            displayId,
+          },
+          displayId,
+        },
+      );
       expect(syncApprovers).toHaveBeenCalledWith(1, [mockManager.id, secondMockManager.id]);
       expect(assignedNotification).toHaveBeenCalled();
       expect(approverUpdate).toHaveBeenCalledWith({ status: null }, {
@@ -533,13 +542,21 @@ describe('Activity Report handlers', () => {
     };
 
     it('returns the updated report', async () => {
-      const result = { status: 'draft' };
+      const result = { status: 'draft', displayId: 'mockreport-1' };
+      activityReportAndRecipientsById.mockResolvedValue([report]);
       ActivityReport.mockImplementation(() => ({
         canReset: () => true,
       }));
-      setStatus.mockResolvedValue(result);
+      const setStatusResolvedValue = [{ dataValues: { ...result } }, [], []];
+      setStatus.mockResolvedValue(setStatusResolvedValue);
       await resetToDraft(request, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith(result);
+      const jsonResponse = {
+        ...result,
+        displayId: result.displayId,
+        activityRecipients: [],
+        goalsAndObjectives: [],
+      };
+      expect(mockResponse.json).toHaveBeenCalledWith(jsonResponse);
     });
 
     it('handles unauthorized', async () => {
