@@ -50,7 +50,7 @@ describe('StatusDropdown', () => {
     userEvent.click(select);
 
     options = await screen.findAllByRole('button');
-    expect(options.length).toBe(5); // 4 + 1
+    expect(options.length).toBe(4);
 
     const inProgress = await screen.findByRole('button', { name: /in progress/i });
     userEvent.click(inProgress);
@@ -127,5 +127,82 @@ describe('StatusDropdown', () => {
 
     const buttons = document.querySelector('button');
     expect(buttons).toBe(null);
+  });
+
+  describe('passes the correct parameters', () => {
+    describe('not started', () => {
+      test('suspended', async () => {
+        const onUpdate = jest.fn();
+        renderStatusDropdown('Not Started', onUpdate);
+
+        const select = await screen.findByRole('button', { name: /change status for goal 345345/i });
+        userEvent.click(select);
+
+        const suspended = await screen.findByRole('button', { name: /suspended/i });
+        userEvent.click(suspended);
+
+        expect(onUpdate).toHaveBeenCalledWith('Suspended');
+      });
+      test('closed', async () => {
+        const onUpdate = jest.fn();
+        renderStatusDropdown('Not Started', onUpdate);
+
+        const select = await screen.findByRole('button', { name: /change status for goal 345345/i });
+        userEvent.click(select);
+
+        const closed = await screen.findByRole('button', { name: /closed/i });
+        userEvent.click(closed);
+        expect(onUpdate).toHaveBeenCalledWith('Closed');
+      });
+    });
+    describe('in progress', () => {
+      test('suspended', async () => {
+        const onUpdate = jest.fn();
+        renderStatusDropdown('In Progress', onUpdate);
+
+        const select = await screen.findByRole('button', { name: /change status for goal 345345/i });
+        userEvent.click(select);
+
+        const suspended = await screen.findByRole('button', { name: /suspended/i });
+        userEvent.click(suspended);
+
+        expect(onUpdate).toHaveBeenCalledWith('Suspended');
+      });
+    });
+    describe('suspended', () => {
+      test('closed, no previous', async () => {
+        const onUpdate = jest.fn();
+        renderStatusDropdown('Suspended', onUpdate, null);
+
+        const select = await screen.findByRole('button', { name: /change status for goal 345345/i });
+        userEvent.click(select);
+
+        const closed = await screen.findByRole('button', { name: /closed/i });
+        userEvent.click(closed);
+        expect(onUpdate).toHaveBeenCalledWith('Closed');
+      });
+      test('closed', async () => {
+        const onUpdate = jest.fn();
+        renderStatusDropdown('Suspended', onUpdate, 'In Progress');
+
+        const select = await screen.findByRole('button', { name: /change status for goal 345345/i });
+        userEvent.click(select);
+
+        const closed = await screen.findByRole('button', { name: /closed/i });
+        userEvent.click(closed);
+        expect(onUpdate).toHaveBeenCalledWith('Closed');
+      });
+      test('previous', async () => {
+        const onUpdate = jest.fn();
+        renderStatusDropdown('Suspended', onUpdate, 'In Progress');
+
+        const select = await screen.findByRole('button', { name: /change status for goal 345345/i });
+        userEvent.click(select);
+
+        const inProgress = await screen.findByRole('button', { name: /in progress/i });
+        userEvent.click(inProgress);
+        expect(onUpdate).toHaveBeenCalledWith('In Progress');
+      });
+    });
   });
 });
