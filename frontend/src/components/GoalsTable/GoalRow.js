@@ -134,7 +134,7 @@ function GoalRow({
   const onUpdateGoalStatus = (newStatus) => {
     if (newStatus === 'Completed' || newStatus === 'Closed' || newStatus === 'Ceased/Suspended' || newStatus === 'Suspended') {
       // Must provide reason for Close or Suspend.
-      showCloseSuspendGoalModal(newStatus, id);
+      showCloseSuspendGoalModal(newStatus, id, goalStatus);
     } else {
       performGoalStatusUpdate(id, newStatus, goalStatus);
     }

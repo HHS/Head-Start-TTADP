@@ -32,6 +32,7 @@ describe('Close Suspend Goal Reason', () => {
           onSubmit={onSubmit}
           resetValues={resetValues}
           error={false}
+          oldGoalStatus=""
         />
       </div>
     );
