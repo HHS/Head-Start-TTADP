@@ -12,4 +12,4 @@ function generateFullName(user, collaboratorRoles) {
   return combinedRoles.length > 0 ? `${user.name}${combinedRoles}` : user.name;
 }
 
-export default generateFullName;
+module.exports = generateFullName;
