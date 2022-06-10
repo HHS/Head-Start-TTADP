@@ -8,7 +8,6 @@ import {
   ObjectiveResource,
   ObjectiveTopic,
   ActivityReportObjective,
-  // GrantGoal,
   sequelize,
   Recipient,
   ActivityReport,
@@ -549,7 +548,7 @@ export async function saveGoalsForReport(goals, report) {
       }));
     } else {
       const {
-        objectives, grantIds, status: discardedStatus, id: goalId, ...fields
+        objectives, grantIds, status: discardedStatus, grant, id: goalId, ...fields
       } = goal;
 
       const existingGoal = await Goal.findByPk(goalId);

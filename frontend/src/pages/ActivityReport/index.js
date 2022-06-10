@@ -244,7 +244,13 @@ function ActivityReport({
   }, [activityReportId, history]);
 
   const convertReportToFormData = (fetchedReport) => {
-    const goals = fetchedReport.goalsAndObjectives;
+    let grantIds = [];
+    if (fetchedReport.activityRecipientType === 'recipient' && fetchedReport.activityRecipients) {
+      grantIds = fetchedReport.activityRecipients.map(({ id }) => id);
+    }
+
+    const goals = fetchedReport.goalsAndObjectives.map((goal) => ({ ...goal, grantIds }));
+
     const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed);
     const nonECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.nonECLKCResourcesUsed);
     const endDate = fetchedReport.endDate ? moment(fetchedReport.endDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : '';
@@ -338,9 +344,9 @@ function ActivityReport({
 
         //
         if (shouldUpdateFromNetwork && activityReportId !== 'new') {
-          updateFormData({ ...formData, ...report });
+          updateFormData({ ...formData, ...report }, true);
         } else {
-          updateFormData({ ...report, ...formData });
+          updateFormData({ ...report, ...formData }, true);
         }
 
         updateCreatorRoleWithName(report.creatorNameWithRole);
@@ -395,11 +401,11 @@ function ActivityReport({
         // If the error was caused by an invalid region, we need a way to communicate that to the
         // component so we can redirect the user. We can do this by updating the form data
         if (report && parseInt(report.regionId, DECIMAL_BASE) === -1) {
-          updateFormData({ regionId: report.regionId });
+          updateFormData({ regionId: report.regionId }, true);
         }
 
         if (formData === null && !connection) {
-          updateFormData({ ...defaultValues, pageState: defaultPageState });
+          updateFormData({ ...defaultValues, pageState: defaultPageState }, true);
         }
       } finally {
         updateLoading(false);
@@ -530,6 +536,7 @@ function ActivityReport({
         calculatedStatus: response.calculatedStatus,
         approvers: response.approvers,
       },
+      true,
     );
     updateEditable(false);
 
@@ -543,7 +550,7 @@ function ActivityReport({
   const onResetToDraft = async () => {
     const fetchedReport = await resetToDraft(reportId.current);
     const report = convertReportToFormData(fetchedReport);
-    updateFormData(report);
+    updateFormData(report, true);
     updateEditable(true);
   };
 
