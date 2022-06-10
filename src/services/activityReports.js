@@ -876,7 +876,12 @@ export async function createOrUpdate(newActivityReport, report) {
   }
 
   const [r, recips, gAndOs] = await activityReportAndRecipientsById(savedReport.id);
-  return { ...r.dataValues, activityRecipients: recips, goalsAndObjectives: gAndOs };
+  return {
+    ...r.dataValues,
+    displayId: r.displayId,
+    activityRecipients: recips,
+    goalsAndObjectives: gAndOs,
+  };
 }
 
 export async function setStatus(report, status) {
