@@ -591,8 +591,6 @@ export async function saveReport(req, res) {
         return !oldCollaborators.includes(c.user.email);
       });
 
-      console.log(savedReport);
-
       collaboratorAssignedNotification(savedReport, newCollaborators);
     }
 
