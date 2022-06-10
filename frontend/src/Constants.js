@@ -230,6 +230,7 @@ export const ESCAPE_KEY_CODES = ['Escape', 'Esc'];
 
 export const DATE_FMT = 'YYYY/MM/DD';
 export const DATE_DISPLAY_FORMAT = 'MM/DD/YYYY';
+export const DATEPICKER_VALUE_FORMAT = 'YYYY-MM-DD';
 export const EARLIEST_INC_FILTER_DATE = moment('2020-08-31');
 
 const LOCAL_STORAGE_CACHE_NUMBER = '0.1';

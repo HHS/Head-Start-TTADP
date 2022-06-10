@@ -154,6 +154,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
     offset,
     order: orderRecipientsBy(sortBy, direction),
   });
+
   // handle zero results
   const firstRow = rows[0];
   const count = firstRow ? firstRow.count : 0;
@@ -291,7 +292,7 @@ export async function getGoalsByActivityRecipient(
         reasons: activityReport ? activityReport.reason : null,
         status: o.status,
         activityReportObjectives: o.activityReportObjectives,
-        grantNumbers: g.grant.number,
+        grantNumber: g.grant.number,
       });
     });
     // Sort Objectives by end date desc.

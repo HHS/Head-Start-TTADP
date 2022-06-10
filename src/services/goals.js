@@ -463,72 +463,143 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
   return removeGoals(goalIdsToRemove);
 }
 
-export async function saveGoalsForReport(goals, report) {
-  const currentGoals = await Promise.all(goals.map(async (goal) => {
-    const goalId = goal.id;
-    const fields = goal;
+async function createObjectivesForGoal(goal, objectives, report) {
+  return Promise.all(objectives.map(async (objective) => {
+    const {
+      id,
+      isNew,
+      ttaProvided,
+      ActivityReportObjective: aro,
+      title,
+      status,
+      ...updatedFields
+    } = objective;
 
-    let newGoal;
+    const updatedObjective = {
+      ...updatedFields, title, status, goalId: goal.id,
+    };
 
-    if (Number.isInteger(goalId)) {
-      newGoal = await Goal.update(fields, { where: { id: goalId } });
+    let savedObjective;
+
+    if (!isNew) {
+      savedObjective = await Objective.findByPk(id);
+      await savedObjective.update({
+        title,
+        status,
+      });
     } else {
-      delete fields.id;
-      // In order to reuse goals with matching text we need to do the findOrCreate as the
-      // upsert would not preform the extrea checks and logic now required.
-      [newGoal] = await Goal.findOrCreate({
+      [savedObjective] = await Objective.findOrCreate({
         where: {
-          grantId: fields.grantId,
-          name: fields.name,
-          status: { [Op.not]: 'Closed' },
+          goalId: updatedObjective.goalId,
+          title: updatedObjective.title,
+          status: { [Op.not]: 'Completed' },
         },
-        defaults: fields,
+        defaults: updatedObjective,
       });
     }
 
-    // This linkage of goal directly to a report will allow a save to be made even if no objective
-    // has been started.
-    // A hook on ActivityReportGoal will automatically update the status of the goal if required.
-    await ActivityReportGoal.findOrCreate({
+    const [arObjective] = await ActivityReportObjective.findOrCreate({
       where: {
-        goalId: newGoal.id,
+        objectiveId: savedObjective.id,
         activityReportId: report.id,
       },
     });
 
-    const newObjectives = await Promise.all(goal.objectives.map(async (objective) => {
-      const { id, ...updatedFields } = objective;
-      const updatedObjective = { ...updatedFields, goalId: newGoal.id };
+    await arObjective.update({ ttaProvided });
 
-      let savedObjective;
-      if (Number.isInteger(id)) {
-        updatedObjective.id = id;
-        savedObjective = await Objective.update(updatedObjective);
-      } else {
-        [savedObjective] = await Objective.findOrCreate({
+    return savedObjective;
+  }));
+}
+
+export async function saveGoalsForReport(goals, report) {
+  let currentObjectives = [];
+
+  await Promise.all((goals.map(async (goal) => {
+    let newGoals = [];
+
+    const status = goal.status ? goal.status : 'Not Started';
+
+    // we have a param to determine if goals are new
+    if (goal.isNew) {
+      const {
+        isNew, objectives, id, grantIds, status: discardedStatus, ...fields
+      } = goal;
+
+      newGoals = await Promise.all(goal.grantIds.map(async (grantId) => {
+        const [newGoal] = await Goal.findOrCreate({
           where: {
-            goalId: updatedObjective.goalId,
-            title: updatedObjective.title,
-            status: { [Op.not]: 'Completed' },
+            name: fields.name,
+            grantId,
+            status: { [Op.not]: 'Closed' },
           },
-          defaults: updatedObjective,
+          defaults: { ...fields, status },
         });
-      }
 
-      await ActivityReportObjective.findOrCreate({
+        await ActivityReportGoal.findOrCreate({
+          where: {
+            goalId: newGoal.id,
+            activityReportId: report.id,
+          },
+        });
+
+        const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
+        currentObjectives = [...currentObjectives, ...newGoalObjectives];
+
+        return newGoal;
+      }));
+    } else {
+      const {
+        objectives, grantIds, status: discardedStatus, id: goalId, ...fields
+      } = goal;
+
+      const existingGoal = await Goal.findByPk(goalId);
+      await existingGoal.update({ status, ...fields });
+      // eslint-disable-next-line max-len
+      const existingGoalObjectives = await createObjectivesForGoal(existingGoal, objectives, report);
+      currentObjectives = [...currentObjectives, ...existingGoalObjectives];
+
+      await ActivityReportGoal.findOrCreate({
         where: {
-          objectiveId: savedObjective.id,
+          goalId: existingGoal.id,
           activityReportId: report.id,
         },
       });
-      return savedObjective;
-    }));
 
-    newGoal.objectives = newObjectives;
-    return newGoal;
-  }));
+      newGoals = await Promise.all(goal.grantIds.map(async (grantId) => {
+        if (grantId === existingGoal.grantId) {
+          return existingGoal;
+        }
 
-  const currentObjectives = currentGoals.map((g) => g.objectives).flat();
+        const [newGoal] = await Goal.findOrCreate({
+          where: {
+            goalTemplateId: existingGoal.goalTemplateId,
+            grantId,
+            status: {
+              [Op.not]: 'Closed',
+            },
+          },
+          defaults: { ...fields, status },
+        });
+
+        await newGoal.update({ ...fields, status });
+
+        await ActivityReportGoal.findOrCreate({
+          where: {
+            goalId: newGoal.id,
+            activityReportId: report.id,
+          },
+        });
+
+        const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
+        currentObjectives = [...currentObjectives, ...newGoalObjectives];
+
+        return newGoal;
+      }));
+    }
+
+    return newGoals;
+  })));
+
   return removeUnusedGoalsObjectivesFromReport(report.id, currentObjectives);
 }
 
@@ -539,16 +610,16 @@ export async function updateGoalStatusById(
   closeSuspendReason,
   closeSuspendContext,
 ) {
-  const updatedGoal = await Goal.update(
-    {
-      status: newStatus,
-      closeSuspendReason,
-      closeSuspendContext,
-      previousStatus: oldStatus,
-    },
-    { where: { id: goalId }, returning: true },
-  );
-  return updatedGoal[1][0];
+  const id = parseInt(goalId, DECIMAL_BASE);
+  const g = await Goal.findByPk(id);
+
+  await g.update({
+    status: newStatus,
+    closeSuspendReason,
+    closeSuspendContext,
+    previousStatus: oldStatus,
+  });
+  return g;
 }
 
 export async function destroyGoal(goalId) {

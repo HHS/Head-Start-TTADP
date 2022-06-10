@@ -14,18 +14,107 @@ import ContextMenu from '../ContextMenu';
 import Tooltip from '../Tooltip';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
-import { updateGoalStatus } from '../../fetchers/goals';
 import ObjectiveRow from './ObjectiveRow';
-import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
 import './GoalRow.scss';
 import colors from '../../colors';
 
+function ObjectiveButton({
+  closeOrOpenObjectives,
+  objectiveCount,
+  objectivesExpanded,
+  goalNumber,
+  expandObjectivesRef,
+}) {
+  if (objectiveCount < 1) {
+    return (
+      <span className="text-no-underline text-ink text-middle tta-smarthub--goal-row-objectives tta-smarthub--goal-row-objectives-disabled">
+        <strong className="margin-left-1">{objectiveCount}</strong>
+        {' '}
+        Objectives
+      </span>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      ref={expandObjectivesRef}
+      className="usa-button--unstyled text-no-underline text-ink text-middle tta-smarthub--goal-row-objectives tta-smarthub--goal-row-objectives-enabled"
+      onClick={() => closeOrOpenObjectives(false)}
+      aria-label={`${objectivesExpanded ? 'Collapse' : 'Expand'} objective's for goal ${goalNumber}`}
+    >
+      <strong className="margin-left-1">{objectiveCount}</strong>
+      {' '}
+      Objective
+      {objectiveCount > 1 ? 's' : ''}
+      <FontAwesomeIcon className="margin-left-1" size="1x" color={colors.textInk} icon={objectivesExpanded ? faAngleUp : faAngleDown} />
+    </button>
+  );
+}
+
+ObjectiveButton.propTypes = {
+  closeOrOpenObjectives: PropTypes.func.isRequired,
+  objectiveCount: PropTypes.number.isRequired,
+  objectivesExpanded: PropTypes.bool.isRequired,
+  goalNumber: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  expandObjectivesRef: PropTypes.oneOfType([
+    PropTypes.func,
+    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  ]).isRequired,
+};
+
+const Topics = ({ topics }) => {
+  if (!topics.length) {
+    return null;
+  }
+
+  const SUBSTRING_LENGTH = 24;
+
+  const truncated = topics.map((topic) => {
+    if (topic.length > SUBSTRING_LENGTH) {
+      return `${topic.substring(0, SUBSTRING_LENGTH)}...`;
+    }
+
+    return topic;
+  });
+
+  if (topics.length > 3) {
+    const howManyMore = topics.length - 3;
+    const tooltipLabel = `+ ${howManyMore} more`;
+
+    return (
+      <ul className="usa-list usa-list--unstyled">
+        {truncated.slice(0, 3).map((topic) => <li key={topic}>{topic}</li>)}
+        <li>
+          <Tooltip
+            screenReadDisplayText={false}
+            displayText={tooltipLabel}
+            buttonLabel={topics.slice(-howManyMore).join(' ')}
+            tooltipText={topics.slice(-howManyMore).map((topic) => <span key={topic} className="width-card display-block padding-bottom-1">{topic}</span>)}
+          />
+        </li>
+      </ul>
+    );
+  }
+
+  return (
+    <ul className="usa-list usa-list--unstyled">
+      {truncated.map((topic) => <li key={topic}>{topic}</li>)}
+    </ul>
+  );
+};
+
+Topics.propTypes = {
+  topics: PropTypes.arrayOf(PropTypes.string).isRequired,
+};
+
 function GoalRow({
   goal,
-  updateGoal,
   openMenuUp,
   recipientId,
   regionId,
+  showCloseSuspendGoalModal,
+  performGoalStatusUpdate,
 }) {
   const {
     id,
@@ -42,45 +131,12 @@ function GoalRow({
 
   const history = useHistory();
 
-  // Close/Suspend Reason Modal.
-  const [closeSuspendGoalId, setCloseSuspendGoalId] = useState(0);
-  const [closeSuspendStatus, setCloseSuspendStatus] = useState('');
-  const [resetModalValues, setResetModalValues] = useState(false);
-  const closeSuspendModalRef = useRef();
-
-  const showCloseSuspendGoalModal = (status, goalId) => {
-    setCloseSuspendGoalId(goalId);
-    setCloseSuspendStatus(status);
-    setResetModalValues(!resetModalValues); // Always flip to trigger form reset useEffect.
-    closeSuspendModalRef.current.toggleModal(true);
-  };
-
-  const performGoalStatusUpdate = async (
-    goalId,
-    status,
-    closeSuspendReason = null,
-    closeSuspendContext = null,
-  ) => {
-    const updatedGoal = await updateGoalStatus(
-      goalId,
-      goalStatus,
-      status,
-      closeSuspendReason,
-      closeSuspendContext,
-    );
-    if (closeSuspendReason && closeSuspendModalRef.current.modalIsOpen) {
-      // Close from a close suspend reason submit.
-      closeSuspendModalRef.current.toggleModal(false);
-    }
-    updateGoal(updatedGoal);
-  };
-
   const onUpdateGoalStatus = (newStatus) => {
-    if (newStatus === 'Completed' || newStatus === 'Ceased/Suspended') {
+    if (newStatus === 'Completed' || newStatus === 'Closed' || newStatus === 'Ceased/Suspended' || newStatus === 'Suspended') {
       // Must provide reason for Close or Suspend.
-      showCloseSuspendGoalModal(newStatus, id);
+      showCloseSuspendGoalModal(newStatus, id, goalStatus);
     } else {
-      performGoalStatusUpdate(id, newStatus);
+      performGoalStatusUpdate(id, newStatus, goalStatus);
     }
   };
 
@@ -92,27 +148,27 @@ function GoalRow({
     {
       stored: 'In Progress',
       display: 'In progress',
-      color: '#0166ab',
+      color: colors.ttahubMediumBlue,
     },
     {
       stored: 'Completed',
       display: 'Closed',
-      color: '#148439',
+      color: colors.successDarker,
     },
     {
       stored: 'Draft',
       display: 'Draft',
-      color: '#475260',
+      color: colors.baseDarkest,
     },
     {
       stored: 'Not Started',
       display: 'Not started',
-      color: '#e2a04d',
+      color: colors.ttahubOrange,
     },
     {
       stored: 'Ceased/Suspended',
       display: 'Suspended',
-      color: '#b50908',
+      color: colors.errorDark,
     },
     {
       stored: 'Needs Status',
@@ -139,20 +195,6 @@ function GoalRow({
     return null;
   };
 
-  let showToolTip = false;
-  const toolTipChars = 39;
-  const truncateGoalTopics = (goalTopicsToTruncate) => {
-    let queryToReturn = goalTopicsToTruncate.join(', ');
-    if (queryToReturn.length > toolTipChars) {
-      queryToReturn = queryToReturn.substring(0, toolTipChars);
-      queryToReturn += '...';
-      showToolTip = true;
-    }
-    return queryToReturn;
-  };
-
-  const displayGoalTopics = truncateGoalTopics(goalTopics);
-
   const closeOrOpenObjectives = (collapseFromObjectives) => {
     if (collapseFromObjectives && expandObjectivesRef.current) {
       expandObjectivesRef.current.focus();
@@ -172,7 +214,7 @@ function GoalRow({
   };
 
   const contextMenuLabel = `Actions for goal ${id}`;
-  const showContextMenu = true;
+  const showContextMenu = false;
   const menuItems = [
     {
       label: 'Edit',
@@ -182,24 +224,30 @@ function GoalRow({
     },
   ];
 
+  const containerStyle = objectivesExpanded ? {
+    borderLeft: `4px solid ${getStatusColor()}`,
+    borderBottom: `1px solid ${colors.baseLighter}`,
+    borderRight: `1px solid ${colors.baseLighter}`,
+    borderTop: 0,
+  } : {
+    borderTop: 0,
+    borderLeft: `1px solid ${colors.baseLighter}`,
+    borderBottom: `1px solid ${colors.baseLighter}`,
+    borderRight: `1px solid ${colors.baseLighter}`,
+    paddingLeft: '25px',
+  };
+
   return (
     <>
-      <CloseSuspendReasonModal
-        id={`close-suspend-reason-modal-${id}`}
-        key={`close-suspend-reason-modal-${id}`}
-        goalId={closeSuspendGoalId}
-        newStatus={closeSuspendStatus}
-        modalRef={closeSuspendModalRef}
-        onSubmit={performGoalStatusUpdate}
-        resetValues={resetModalValues}
-      />
       <tr className={`tta-smarthub--goal-row ${!objectivesExpanded ? 'tta-smarthub--goal-row-collapsed' : ''}`} key={`goal_row_${id}`}>
-        <td style={{ borderLeft: objectivesExpanded ? `4px solid ${getStatusColor()}` : '' }}>
+        <td style={objectivesExpanded ? { borderLeft: `4px solid ${getStatusColor()}` } : { borderLeft: `1px solid ${colors.baseLightest}`, paddingLeft: '25px' }}>
           <StatusDropdown
             goalId={id}
             status={goalStatus}
             onUpdateGoalStatus={onUpdateGoalStatus}
             previousStatus={previousStatus}
+            regionId={regionId}
+            up={openMenuUp}
           />
         </td>
         <td>{moment(createdOn, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT)}</td>
@@ -212,40 +260,16 @@ function GoalRow({
           {determineFlagStatus()}
         </td>
         <td className="text-wrap maxw-mobile">
-          {showToolTip
-            ? (
-              <Tooltip
-                displayText={displayGoalTopics}
-                screenReadDisplayText={false}
-                buttonLabel={`${goalTopics.join(', ')} click to visually reveal`}
-                tooltipText={goalTopics.join(', ')}
-                hideUnderline={false}
-                svgLineTo={300}
-              />
-            )
-            : displayGoalTopics}
+          <Topics topics={goalTopics} />
         </td>
-        <td>
-          <button
-            type="button"
-            ref={expandObjectivesRef}
-            className={`usa-button--unstyled text-no-underline text-ink text-middle tta-smarthub--goal-row-objectives-${objectiveCount > 0 ? 'enabled' : 'disabled'}`}
-            onClick={() => closeOrOpenObjectives(false)}
-            aria-label={`${objectivesExpanded ? 'Collapse' : 'Expand'} objective's for goal ${goalNumber}`}
-            tabIndex={0}
-          >
-            <strong className="margin-left-1">{objectiveCount}</strong>
-            {' '}
-            Objective
-            {objectiveCount > 1 ? 's' : ''}
-            {
-              objectiveCount > 0
-                ? (
-                  <FontAwesomeIcon className="margin-left-1 margin-right-1" size="1x" color={colors.textInk} icon={objectivesExpanded ? faAngleUp : faAngleDown} />
-                )
-                : null
-            }
-          </button>
+        <td className="padding-right-0 text-right">
+          <ObjectiveButton
+            closeOrOpenObjectives={closeOrOpenObjectives}
+            objectiveCount={objectiveCount}
+            objectivesExpanded={objectivesExpanded}
+            goalNumber={goalNumber}
+            expandObjectivesRef={expandObjectivesRef}
+          />
         </td>
         <td>
           {showContextMenu
@@ -260,15 +284,19 @@ function GoalRow({
         </td>
       </tr>
       <tr className="tta-smarthub--objective-rows">
-        <td className="padding-top-0" style={{ borderLeft: objectivesExpanded ? `4px solid ${getStatusColor()}` : '' }} colSpan="6">
+        <td
+          className="padding-top-0"
+          style={containerStyle}
+          colSpan="6"
+        >
           <div className="tta-smarthub--goal-row-obj-table padding-bottom-1">
-            <ul aria-hidden className="usa-list usa-list--unstyled display-inline-block tta-smarthub--goal-row-obj-table-header padding-0">
-              <li className="padding-x-3 padding-y-0">Objective</li>
-              <li className="padding-x-3 padding-y-0">Activity reports</li>
-              <li className="padding-x-3 padding-y-0">Grant numbers</li>
-              <li className="padding-x-3 padding-y-0">End date</li>
-              <li className="padding-x-3 padding-y-0">Reasons</li>
-              <li className="padding-x-3 padding-y-0 text-right">Objectives status</li>
+            <ul aria-hidden className="usa-list usa-list--unstyled tta-smarthub--goal-row-obj-table-header padding-top-0 padding-x-2 padding-bottom-1 display-flex">
+              <li className="padding-x-105 padding-y-0 padding-left-0 flex-align-self-end">Objective</li>
+              <li className="padding-x-105 padding-y-0 flex-align-self-end">Activity reports</li>
+              <li className="padding-x-105 padding-y-0 flex-align-self-end">Grant numbers</li>
+              <li className="padding-x-105 padding-y-0 flex-align-self-end">End date</li>
+              <li className="padding-x-105 padding-y-0 flex-align-self-end">Reasons</li>
+              <li className="padding-x-105 padding-y-0 padding-right-0 flex-align-self-end">Objectives status</li>
             </ul>
             {objectives.map((obj) => (
               <ObjectiveRow
@@ -315,7 +343,8 @@ GoalRow.propTypes = {
   goal: goalPropTypes.isRequired,
   recipientId: PropTypes.string.isRequired,
   regionId: PropTypes.string.isRequired,
-  updateGoal: PropTypes.func.isRequired,
   openMenuUp: PropTypes.bool.isRequired,
+  showCloseSuspendGoalModal: PropTypes.func.isRequired,
+  performGoalStatusUpdate: PropTypes.func.isRequired,
 };
 export default GoalRow;

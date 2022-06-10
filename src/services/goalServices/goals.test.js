@@ -20,22 +20,33 @@ describe('Goals DB service', () => {
     await sequelize.close();
   });
 
+  const existingGoalUpdate = jest.fn();
+  const existingObjectiveUpdate = jest.fn();
+
   describe('saveGoalsForReport', () => {
     beforeEach(() => {
       ActivityReportObjective.findAll = jest.fn().mockResolvedValue([]);
       ActivityReportObjective.destroy = jest.fn();
+      ActivityReportObjective.findOrCreate = jest.fn().mockResolvedValue([{ update: jest.fn() }]);
+      ActivityReportObjective.create = jest.fn();
+
       Goal.findAll = jest.fn().mockResolvedValue([]);
       Goal.findOne = jest.fn().mockResolvedValue();
-      Goal.findOrCreate = jest.fn().mockResolvedValue([{ id: 1 }, false]);
+      Goal.findByPk = jest.fn().mockResolvedValue({
+        update: existingGoalUpdate, grantId: 1, id: 1,
+      });
+      Goal.findOrCreate = jest.fn().mockResolvedValue([{ id: 1, update: jest.fn() }, false]);
       Goal.destroy = jest.fn();
-      Goal.update = jest.fn().mockResolvedValue({ id: 1 });
-      Objective.destroy = jest.fn();
-      ActivityReportGoal.findOrCreate = jest.fn().mockResolvedValue();
-      ActivityReportObjective.create = jest.fn();
+      Goal.update = jest.fn().mockResolvedValue([1, [{ id: 1 }]]);
       Goal.create = jest.fn().mockResolvedValue({ id: 1 });
+
+      ActivityReportGoal.findOrCreate = jest.fn().mockResolvedValue();
+
+      Objective.destroy = jest.fn();
       Objective.create = jest.fn().mockResolvedValue({ id: 1 });
       Objective.findOrCreate = jest.fn().mockResolvedValue([{ id: 1 }]);
       Objective.update = jest.fn().mockResolvedValue({ id: 1 });
+      Objective.findByPk = jest.fn().mockResolvedValue({ update: existingObjectiveUpdate });
     });
 
     describe('with removed goals', () => {
@@ -112,14 +123,12 @@ describe('Goals DB service', () => {
     it('creates new goals', async () => {
       await saveGoalsForReport([
         {
-          id: 'new', grantId: 1, name: 'name', status: 'Closed', objectives: [],
+          isNew: true, grantIds: [1], name: 'name', status: 'Closed', objectives: [],
         },
       ], { id: 1 });
       expect(Goal.findOrCreate).toHaveBeenCalledWith({
         defaults: {
-          grantId: 1,
           name: 'name',
-          objectives: [],
           status: 'Closed',
         },
         where: {
@@ -137,13 +146,14 @@ describe('Goals DB service', () => {
         id: 1,
         name: 'name',
         objectives: [],
+        grantIds: [1, 2],
       };
+
       await saveGoalsForReport([existingGoal], { id: 1 });
-      expect(Goal.update).toHaveBeenCalledWith({
-        id: 1,
+      expect(existingGoalUpdate).toHaveBeenCalledWith({
         name: 'name',
-        objectives: [],
-      }, { where: { id: 1 } });
+        status: 'Not Started',
+      });
     });
 
     test.todo('can update an existing goal');
@@ -154,11 +164,14 @@ describe('Goals DB service', () => {
         name: 'name',
         objectives: [],
         update: jest.fn(),
+        grantIds: [1],
       };
 
       const goalWithNewObjective = {
         ...existingGoal,
-        objectives: [{ goalId: 1, title: 'title' }],
+        objectives: [{
+          isNew: true, goalId: 1, title: 'title', ttaProvided: '', ActivityReportObjective: {}, status: '',
+        }],
       };
       await saveGoalsForReport([goalWithNewObjective], { id: 1 });
       expect(Objective.findOrCreate).toHaveBeenCalledWith({
@@ -167,7 +180,7 @@ describe('Goals DB service', () => {
           title: 'title',
           status: { [Op.not]: 'Completed' },
         },
-        defaults: { goalId: 1, title: 'title' },
+        defaults: { goalId: 1, title: 'title', status: '' },
       });
     });
 
@@ -175,12 +188,13 @@ describe('Goals DB service', () => {
       const existingGoal = {
         id: 1,
         name: 'name',
-        objectives: [{ title: 'title', id: 1 }],
+        objectives: [{ title: 'title', id: 1, status: 'Closed' }],
         update: jest.fn(),
+        grantIds: [1],
       };
 
       await saveGoalsForReport([existingGoal], { id: 1 });
-      expect(Objective.update).toHaveBeenCalledWith({ id: 1, goalId: 1, title: 'title' });
+      expect(existingObjectiveUpdate).toHaveBeenCalledWith({ title: 'title', status: 'Closed' });
     });
   });
 });
