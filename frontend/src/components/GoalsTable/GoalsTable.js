@@ -233,12 +233,12 @@ function GoalsTable({
               </tr>
             </thead>
             <tbody>
-              {displayGoals.map((goal, index, arr) => (
+              {displayGoals.map((goal, index) => (
                 <GoalRow
                   key={goal.id}
                   goal={goal}
                   openMenuUp={
-                    index >= displayGoals.length - 2 && arr.length > 3
+                    index >= displayGoals.length - 2 && index !== 0
                   } // the last two should open "up"
                   recipientId={recipientId}
                   regionId={regionId}
