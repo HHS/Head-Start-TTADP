@@ -27,6 +27,7 @@ export default async function goalStatusGraph(scopes) {
         scopes.goal,
         {
           status: {
+            onApprovedAR: true,
             [Op.in]: STATUSES_TO_INCLUDE,
           },
         },
