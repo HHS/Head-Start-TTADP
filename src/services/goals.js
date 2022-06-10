@@ -8,7 +8,6 @@ import {
   ObjectiveResource,
   ObjectiveTopic,
   ActivityReportObjective,
-  // GrantGoal,
   sequelize,
   Recipient,
   ActivityReport,
@@ -463,93 +462,143 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
   return removeGoals(goalIdsToRemove);
 }
 
-export async function saveGoalsForReport(goals, report) {
-  const currentGoals = await Promise.all(goals.map(async (goal) => {
-    const goalId = goal.id;
-    const fields = goal;
+async function createObjectivesForGoal(goal, objectives, report) {
+  return Promise.all(objectives.map(async (objective) => {
+    const {
+      id,
+      isNew,
+      ttaProvided,
+      ActivityReportObjective: aro,
+      title,
+      status,
+      ...updatedFields
+    } = objective;
 
-    let newGoal;
+    const updatedObjective = {
+      ...updatedFields, title, status, goalId: goal.id,
+    };
 
-    if (Number.isInteger(goalId)) {
-      // look at this syntax can you believe this is javascript these days
-      [, [newGoal]] = await Goal.update(fields, { where: { id: goalId }, returning: true });
-    } else {
-      delete fields.id;
-      // In order to reuse goals with matching text we need to do the findOrCreate as the
-      // upsert would not preform the extra checks and logic now required.
-      const foundOrCreatedGoal = await Goal.findOrCreate({
-        where: {
-          grantId: fields.grantId,
-          name: fields.name,
-          status: { [Op.not]: 'Closed' },
-        },
-        defaults: fields,
+    let savedObjective;
+
+    if (!isNew) {
+      savedObjective = await Objective.findByPk(id);
+      await savedObjective.update({
+        title,
+        status,
       });
-
-      [newGoal] = foundOrCreatedGoal;
+    } else {
+      [savedObjective] = await Objective.findOrCreate({
+        where: {
+          goalId: updatedObjective.goalId,
+          title: updatedObjective.title,
+          status: { [Op.not]: 'Completed' },
+        },
+        defaults: updatedObjective,
+      });
     }
 
-    // This linkage of goal directly to a report will allow a save to be made even if no objective
-    // has been started.
-    // A hook on ActivityReportGoal will automatically update the status of the goal if required.
-    await ActivityReportGoal.findOrCreate({
+    const [arObjective] = await ActivityReportObjective.findOrCreate({
       where: {
-        goalId: newGoal.id,
+        objectiveId: savedObjective.id,
         activityReportId: report.id,
       },
     });
 
-    const newObjectives = await Promise.all(goal.objectives.map(async (objective) => {
+    await arObjective.update({ ttaProvided });
+
+    return savedObjective;
+  }));
+}
+
+export async function saveGoalsForReport(goals, report) {
+  let currentObjectives = [];
+
+  await Promise.all((goals.map(async (goal) => {
+    let newGoals = [];
+
+    const status = goal.status ? goal.status : 'Not Started';
+
+    // we have a param to determine if goals are new
+    if (goal.isNew) {
       const {
-        id,
-        new: isNew,
-        ttaProvided,
-        ActivityReportObjective: aro,
-        title,
-        status,
-        ...updatedFields
-      } = objective;
+        isNew, objectives, id, grantIds, status: discardedStatus, ...fields
+      } = goal;
 
-      const updatedObjective = {
-        ...updatedFields, title, status, goalId: newGoal.id,
-      };
-
-      let savedObjective;
-
-      if (Number.isInteger(id)) {
-        savedObjective = await Objective.findByPk(id);
-        await savedObjective.update({
-          title,
-          status,
-        });
-      } else {
-        [savedObjective] = await Objective.findOrCreate({
+      newGoals = await Promise.all(goal.grantIds.map(async (grantId) => {
+        const [newGoal] = await Goal.findOrCreate({
           where: {
-            goalId: updatedObjective.goalId,
-            title: updatedObjective.title,
-            status: { [Op.not]: 'Completed' },
+            name: fields.name,
+            grantId,
+            status: { [Op.not]: 'Closed' },
           },
-          defaults: updatedObjective,
+          defaults: { ...fields, status },
         });
-      }
 
-      const [arObjective] = await ActivityReportObjective.findOrCreate({
+        await ActivityReportGoal.findOrCreate({
+          where: {
+            goalId: newGoal.id,
+            activityReportId: report.id,
+          },
+        });
+
+        const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
+        currentObjectives = [...currentObjectives, ...newGoalObjectives];
+
+        return newGoal;
+      }));
+    } else {
+      const {
+        objectives, grantIds, status: discardedStatus, grant, id: goalId, ...fields
+      } = goal;
+
+      const existingGoal = await Goal.findByPk(goalId);
+      await existingGoal.update({ status, ...fields });
+      // eslint-disable-next-line max-len
+      const existingGoalObjectives = await createObjectivesForGoal(existingGoal, objectives, report);
+      currentObjectives = [...currentObjectives, ...existingGoalObjectives];
+
+      await ActivityReportGoal.findOrCreate({
         where: {
-          objectiveId: savedObjective.id,
+          goalId: existingGoal.id,
           activityReportId: report.id,
         },
       });
 
-      await arObjective.update({ ttaProvided });
+      newGoals = await Promise.all(goal.grantIds.map(async (grantId) => {
+        if (grantId === existingGoal.grantId) {
+          return existingGoal;
+        }
 
-      return savedObjective;
-    }));
+        const [newGoal] = await Goal.findOrCreate({
+          where: {
+            goalTemplateId: existingGoal.goalTemplateId,
+            grantId,
+            status: {
+              [Op.not]: 'Closed',
+            },
+          },
+          defaults: { ...fields, status },
+        });
 
-    newGoal.objectives = newObjectives;
-    return newGoal;
-  }));
+        await newGoal.update({ ...fields, status });
 
-  const currentObjectives = currentGoals.map((g) => g.objectives).flat();
+        await ActivityReportGoal.findOrCreate({
+          where: {
+            goalId: newGoal.id,
+            activityReportId: report.id,
+          },
+        });
+
+        const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
+        currentObjectives = [...currentObjectives, ...newGoalObjectives];
+
+        return newGoal;
+      }));
+    }
+
+    return newGoals;
+  })));
+
   return removeUnusedGoalsObjectivesFromReport(report.id, currentObjectives);
 }
 

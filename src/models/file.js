@@ -41,10 +41,6 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   File.init({
-    // activityReportId: {
-    //   allowNull: false,
-    //   type: DataTypes.INTEGER,
-    // },
     originalFileName: {
       allowNull: false,
       type: DataTypes.STRING,
