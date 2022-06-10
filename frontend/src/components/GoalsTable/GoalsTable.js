@@ -233,11 +233,13 @@ function GoalsTable({
               </tr>
             </thead>
             <tbody>
-              {displayGoals.map((goal, index) => (
+              {displayGoals.map((goal, index, arr) => (
                 <GoalRow
                   key={goal.id}
                   goal={goal}
-                  openMenuUp={index >= displayGoals.length - 2} // the last two should open "up"
+                  openMenuUp={
+                    index >= displayGoals.length - 2 && arr.length > 3
+                  } // the last two should open "up"
                   recipientId={recipientId}
                   regionId={regionId}
                   showCloseSuspendGoalModal={showCloseSuspendGoalModal}
