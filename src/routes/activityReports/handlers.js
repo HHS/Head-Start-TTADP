@@ -328,7 +328,6 @@ export async function reviewReport(req, res) {
 
     res.json(savedApprover);
   } catch (error) {
-    console.log(error);
     await handleErrors(req, res, error, logContext);
   }
 }
