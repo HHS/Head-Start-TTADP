@@ -45,7 +45,7 @@ describe('External API Activity Report handlers', () => {
     });
 
     it('handles a missing report', async () => {
-      activityReportAndRecipientsById.mockResolvedValue(null);
+      activityReportAndRecipientsById.mockResolvedValue([null]);
 
       await getReportByDisplayId(mockRequest, mockResponse);
 
