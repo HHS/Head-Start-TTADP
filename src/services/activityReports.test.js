@@ -368,14 +368,14 @@ describe('Activity report service', () => {
         const report = await createOrUpdate(reportObject);
         const endARCount = await ActivityReport.findAll({ where: { userId: mockUser.id } });
         expect(endARCount.length - beginningARCount.length).toBe(1);
-        expect(report.activityRecipients[0].activityRecipientId).toBe(RECIPIENT_ID);
+        expect(report.activityRecipients[0].id).toBe(RECIPIENT_ID);
         // Check afterCreate copySubmissionStatus hook
         expect(report.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
       });
 
       it('creates a new report with other-entity recipient', async () => {
         const report = await createOrUpdate({ ...reportObject, activityRecipientType: 'other-entity' });
-        expect(report.activityRecipients[0].activityRecipientId).toBe(RECIPIENT_ID);
+        expect(report.activityRecipients[0].id).toBe(RECIPIENT_ID);
       });
 
       it('handles reports with collaborators', async () => {
@@ -653,8 +653,11 @@ describe('Activity report service', () => {
           approverUserIds: [mockUserTwo.id],
         };
         // Calls syncApprovers when approverUserIds is present
-        const report = await createOrUpdate(reportWithApprovers);
-        expect(report.approvers[0].User.id).toEqual(mockUserTwo.id);
+        const newReport = await createOrUpdate(reportWithApprovers);
+        expect(newReport.approvers[0].User.id).toEqual(mockUserTwo.id);
+
+        const [report] = await activityReportAndRecipientsById(newReport.id);
+
         // When syncApprovers is undefined, skip call, avoid removing approvers
         const reportTwo = await createOrUpdate({ ...reportObject, regionId: 3 }, report);
         expect(reportTwo.approvers[0].User.id).toEqual(mockUserTwo.id);
