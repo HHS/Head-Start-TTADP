@@ -1,4 +1,4 @@
-import { CREATION_METHOD } from '../../constants';
+import { AUTOMATIC_CREATION } from '../../constants';
 import { propagateDestroyToFile } from './genericFile';
 
 // When a new file is added to an objective, add the file to the template or update the
@@ -16,7 +16,7 @@ const propagateCreateToTemplate = async (sequelize, instance, options) => {
     ],
     transaction: options.transaction,
   });
-  if (objective.objectiveTemplate.creationMethod === CREATION_METHOD[0]) { // 'Automatic'
+  if (objective.objectiveTemplate.creationMethod === AUTOMATIC_CREATION) {
     const otf = await sequelize.models.ObjectiveTemplateFile.findOrCreate({
       where: {
         objectiveTemplateId: objective.objectiveTemplateId,
@@ -63,7 +63,7 @@ const propagateDestroyToTemplate = async (sequelize, instance, options) => {
     ],
     transaction: options.transaction,
   });
-  if (objective.objectiveTemplate.creationMethod === CREATION_METHOD[0]) { // 'Automatic'
+  if (objective.objectiveTemplate.creationMethod === AUTOMATIC_CREATION) {
     const otfs = await sequelize.models.ObjectiveTemplateFile.findOne({
       attributes: ['id'],
       where: {

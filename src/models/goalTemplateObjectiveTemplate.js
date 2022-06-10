@@ -16,9 +16,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     goalTemplateId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
     objectiveTemplateId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
   }, {
     sequelize,

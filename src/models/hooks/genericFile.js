@@ -37,6 +37,6 @@ const propagateDestroyToFile = async (sequelize, instance, options) => {
 };
 
 export {
-  // eslint-disable-next-line
+  // eslint-disable-next-line import/prefer-default-export
   propagateDestroyToFile,
 };
