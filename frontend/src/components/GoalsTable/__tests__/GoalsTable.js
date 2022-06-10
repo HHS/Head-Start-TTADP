@@ -21,7 +21,7 @@ const oldWindowLocation = window.location;
 const mockAnnounce = jest.fn();
 const recipientId = '1000';
 const regionId = '1';
-const baseWithRegionOne = `/api/recipient/${recipientId}/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5`;
+const baseWithRegionOne = `/api/recipient/${recipientId}/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10`;
 
 const defaultUser = {
   name: 'test@test.com',
@@ -261,7 +261,7 @@ describe('Goals Table', () => {
     it('Shows the correct data', async () => {
       renderTable(defaultUser);
       await screen.findByText('TTA goals and objectives');
-      expect(await screen.findByText(/1-5 of 6/i)).toBeVisible();
+      expect(await screen.findByText(/1-6 of 6/i)).toBeVisible();
 
       await screen.findByRole('cell', { name: '06/15/2021' });
       await screen.findByRole('cell', { name: /this is goal text 1/i });
@@ -427,7 +427,7 @@ describe('Goals Table', () => {
       const columnHeaderAsc = await screen.findByRole('button', { name: /created on\. activate to sort ascending/i });
       const sortedGoalsAsc = gaolsAsc.sort((a, b) => ((a.createdOn > b.createdOn) ? 1 : -1));
       fetchMock.get(
-        `/api/recipient/${recipientId}/region/1/goals?sortBy=createdOn&sortDir=asc&offset=0&limit=5`,
+        `/api/recipient/${recipientId}/region/1/goals?sortBy=createdOn&sortDir=asc&offset=0&limit=10`,
         { count: 6, goalRows: sortedGoalsAsc },
       );
       expect(screen.getAllByRole('cell')[1]).toHaveTextContent('06/15/2021');
@@ -442,7 +442,7 @@ describe('Goals Table', () => {
       const gaolsDesc = [...goals];
       const sortedGoalsDesc = gaolsDesc.sort((a, b) => ((a.createdOn < b.createdOn) ? 1 : -1));
       fetchMock.get(
-        `/api/recipient/${recipientId}/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=5`,
+        `/api/recipient/${recipientId}/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=10`,
         { count: 6, goalRows: sortedGoalsDesc },
       );
 
@@ -459,7 +459,7 @@ describe('Goals Table', () => {
       const goalsDesc = [...goals];
       const sortedGoalsDesc = goalsDesc.sort((a, b) => ((a.goalStatus < b.goalStatus) ? 1 : -1));
       fetchMock.get(
-        `/api/recipient/${recipientId}/region/1/goals?sortBy=goalStatus&sortDir=desc&offset=0&limit=5`,
+        `/api/recipient/${recipientId}/region/1/goals?sortBy=goalStatus&sortDir=desc&offset=0&limit=10`,
         { count: 6, goalRows: sortedGoalsDesc },
       );
       expect(screen.getAllByRole('cell')[0]).toHaveTextContent('In progress');
@@ -474,7 +474,7 @@ describe('Goals Table', () => {
       const goalsAsc = [...goals];
       const sortedGoalsAsc = goalsAsc.sort((a, b) => ((a.goalStatus > b.goalStatus) ? 1 : -1));
       fetchMock.get(
-        `/api/recipient/${recipientId}/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5`,
+        `/api/recipient/${recipientId}/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10`,
         { count: 6, goalRows: sortedGoalsAsc }, { overwriteRoutes: true },
       );
 
@@ -484,7 +484,7 @@ describe('Goals Table', () => {
       expect(columnHeaderAsc).toHaveFocus();
       fireEvent.keyPress(columnHeaderAsc, { key: 'Enter', code: 13, charCode: 13 });
       await screen.findByText('TTA goals and objectives');
-      const [cell] = await screen.findAllByRole('cell'); // cell[0]
+      const [cell] = await screen.findAllByRole('cell');
       expect(cell).toHaveTextContent('Needs status');
     });
   });
@@ -533,32 +533,6 @@ describe('Goals Table', () => {
       fireEvent.click(pageOne);
       const cells = await screen.findAllByRole('cell');
       expect(cells.length).toBe(42);
-    });
-
-    it('clicking on the second page updates page values', async () => {
-      await screen.findByRole('link', {
-        name: /go to page number 1/i,
-      });
-
-      fetchMock.reset();
-      fetchMock.get(
-        baseWithRegionOne,
-        { count: 6, goalRows: [goals[0], goals[1], goals[2], goals[3], goals[4]] },
-      );
-
-      renderTable(defaultUser);
-
-      const pageTwo = await screen.findByRole('link', {
-        name: /go to page number 2/i,
-      });
-
-      fetchMock.get(
-        `/api/recipient/${recipientId}/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=5&limit=5`,
-        { count: 6, goalRows: [goals[5]] },
-      );
-
-      fireEvent.click(pageTwo);
-      await waitFor(() => expect(screen.getByText(/6-6 of 6/i)).toBeVisible());
     });
   });
 

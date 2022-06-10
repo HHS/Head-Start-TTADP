@@ -384,7 +384,6 @@ function ActivityReport({
 
         updateError();
       } catch (e) {
-        console.log(e);
         const connection = setConnectionActiveWithError(e, setConnectionActive);
         const networkErrorMessage = (
           <>
