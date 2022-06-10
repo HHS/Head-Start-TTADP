@@ -301,6 +301,7 @@ export async function reviewReport(req, res) {
 
     const user = await userById(userId);
     const [report] = await activityReportAndRecipientsById(activityReportId);
+
     const authorization = new ActivityReport(user, report);
 
     if (!authorization.canReview()) {
@@ -315,17 +316,9 @@ export async function reviewReport(req, res) {
       userId,
     });
 
-    const [
-      reviewedReport,
-    ] = await activityReportAndRecipientsById(activityReportId);
+    const [reviewedReport] = await activityReportAndRecipientsById(activityReportId);
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
-      // if (reviewedReport.activityRecipientType === 'recipient') {
-      //   await copyGoalsToGrants(
-      //     reviewedReport.goals,
-      //     activityRecipients.map((recipient) => recipient.activityRecipientId),
-      //   );
-      // }
       reportApprovedNotification(reviewedReport);
     }
 
