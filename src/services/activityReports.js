@@ -515,7 +515,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
  * @param {*} limit - size of the slice
  * @returns {Promise<any>} - returns a promise with total reports count and the reports slice
  */
-export function activityReports(
+export async function activityReports(
   {
     sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE, ...filters
   },
@@ -532,7 +532,7 @@ export function activityReports(
     where.legacyId = { [Op.eq]: null };
   }
 
-  return ActivityReport.findAndCountAll(
+  const reports = await ActivityReport.findAndCountAll(
     {
       where,
       attributes: [
@@ -566,32 +566,6 @@ export function activityReports(
         ),
       ],
       include: [
-        {
-          model: ActivityRecipient,
-          attributes: ['id', 'name', 'activityRecipientId', 'grantId', 'otherEntityId'],
-          as: 'activityRecipients',
-          required: false,
-          include: [
-            {
-              model: Grant,
-              attributes: ['id', 'number'],
-              as: 'grant',
-              required: false,
-              include: [
-                {
-                  model: Recipient,
-                  as: 'recipient',
-                  attributes: ['name'],
-                },
-              ],
-            },
-            {
-              model: OtherEntity,
-              as: 'otherEntity',
-              required: false,
-            },
-          ],
-        },
         {
           model: User,
           attributes: ['name', 'role', 'fullName', 'homeRegionId'],
@@ -635,6 +609,15 @@ export function activityReports(
       subQuery: false,
     },
   );
+
+  const recipients = await ActivityRecipient.findAll({
+    where: {
+      activityReportId: reports.rows.map(({ id }) => id),
+    },
+    attributes: ['id', 'name', 'activityRecipientId', 'activityReportId'],
+  });
+
+  return { ...reports, recipients };
 }
 /**
  * Retrieves alerts based on the following logic:
@@ -652,7 +635,7 @@ export async function activityReportAlerts(userId, {
 }) {
   const updatedFilters = await setReadRegions(filters, userId);
   const { activityReport: scopes } = filtersToScopes(updatedFilters);
-  return ActivityReport.findAndCountAll(
+  const reports = await ActivityReport.findAndCountAll(
     {
       where: {
         [Op.and]: scopes,
@@ -698,43 +681,16 @@ export async function activityReportAlerts(userId, {
           '(SELECT name as collaboratorName FROM "Users" join "ActivityReportCollaborators" on "Users"."id" = "ActivityReportCollaborators"."userId" and  "ActivityReportCollaborators"."activityReportId" = "ActivityReport"."id" limit 1)',
         ),
         sequelize.literal(
-          // eslint-disable-next-line quotes
           `(SELECT "OtherEntities".name as otherEntityName from "OtherEntities" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" AND "ActivityRecipients"."otherEntityId" = "OtherEntities".id order by otherEntityName ${sortDir} limit 1)`,
         ),
         sequelize.literal(
-          // eslint-disable-next-line quotes
           `(SELECT "Recipients".name as recipientName FROM "Recipients" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" JOIN "Grants" ON "Grants"."id" = "ActivityRecipients"."grantId" AND "Recipients"."id" = "Grants"."recipientId" order by recipientName ${sortDir} limit 1)`,
         ),
+
         // eslint-disable-next-line quotes
         [sequelize.literal(`(SELECT  CASE WHEN COUNT(1) = 0 THEN '0' ELSE  CONCAT(SUM(CASE WHEN COALESCE("ActivityReportApprovers".status,'needs_action') = 'approved' THEN 1 ELSE 0 END), ' of ', COUNT(1)) END FROM "ActivityReportApprovers" WHERE "ActivityReportApprovers"."activityReportId" = "ActivityReport"."id" AND "deletedAt" IS NULL limit 1)`), 'pendingApprovals'],
       ],
       include: [
-        {
-          model: ActivityRecipient,
-          attributes: ['id', 'name', 'activityRecipientId'],
-          as: 'activityRecipients',
-          required: false,
-          include: [
-            {
-              model: Grant,
-              attributes: ['id', 'number'],
-              as: 'grant',
-              required: false,
-              include: [
-                {
-                  model: Recipient,
-                  as: 'recipient',
-                  attributes: ['name'],
-                },
-              ],
-            },
-            {
-              model: OtherEntity,
-              as: 'otherEntity',
-              required: false,
-            },
-          ],
-        },
         {
           model: User,
           attributes: ['name', 'role', 'fullName', 'homeRegionId'],
@@ -778,6 +734,15 @@ export async function activityReportAlerts(userId, {
       subQuery: false,
     },
   );
+
+  const recipients = await ActivityRecipient.findAll({
+    where: {
+      activityReportId: reports.rows.map(({ id }) => id),
+    },
+    attributes: ['id', 'name', 'activityRecipientId', 'activityReportId'],
+  });
+
+  return { ...reports, recipients };
 }
 
 export async function createOrUpdate(newActivityReport, report) {

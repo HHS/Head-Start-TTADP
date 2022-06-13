@@ -37,7 +37,7 @@ function ReportRow({
 
   const history = useHistory();
   const recipients = activityRecipients && activityRecipients.map((ar) => (
-    ar.grant ? ar.grant.recipient.name : ar.name
+    ar.name
   ));
 
   const collaboratorNames = activityReportCollaborators
