@@ -645,7 +645,10 @@ export function activityReports(
  * @param {*} userId
  */
 export async function activityReportAlerts(userId, {
-  sortBy = 'startDate', sortDir = 'desc', offset = 0, ...filters
+  sortBy = 'startDate',
+  sortDir = 'desc',
+  offset = 0,
+  ...filters
 }) {
   const updatedFilters = await setReadRegions(filters, userId);
   const { activityReport: scopes } = filtersToScopes(updatedFilters);
