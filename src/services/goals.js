@@ -391,6 +391,17 @@ async function removeActivityReportObjectivesFromReport(reportId, objectiveIdsTo
   });
 }
 
+async function removeActivityReportGoalsFromReport(reportId, goalIdsToRemove) {
+  return ActivityReportGoal.destroy({
+    where: {
+      activityReportId: reportId,
+      goalId: {
+        [Op.notIn]: goalIdsToRemove,
+      },
+    },
+  });
+}
+
 // TODO: ask Josh what the intent of this is for
 export async function removeGoals(goalsToRemove) {
   const goalsWithGrants = await Goal.findAll({
@@ -512,10 +523,8 @@ async function createObjectivesForGoal(goal, objectives, report) {
 
 export async function saveGoalsForReport(goals, report) {
   let currentObjectives = [];
-
-  await Promise.all((goals.map(async (goal) => {
+  const currentGoals = await Promise.all((goals.map(async (goal) => {
     let newGoals = [];
-
     const status = goal.status ? goal.status : 'Not Started';
 
     // we have a param to determine if goals are new
@@ -598,6 +607,9 @@ export async function saveGoalsForReport(goals, report) {
 
     return newGoals;
   })));
+
+  const currentGoalIds = currentGoals.flat().map((g) => g.id);
+  await removeActivityReportGoalsFromReport(report.id, currentGoalIds);
 
   return removeUnusedGoalsObjectivesFromReport(report.id, currentObjectives);
 }
