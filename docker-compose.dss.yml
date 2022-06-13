@@ -12,13 +12,14 @@ services:
     depends_on:
       - db
     environment:
-      POSTGRES_HOST: postgres_docker
-      NODE_ENV: production
-      POSTGRES_USERNAME: postgres
-      POSTGRES_PASSWORD: secretpass
-      POSTGRES_DB: ttasmarthub
-      DATABASE_URL: postgres://postgres:secretpass@postgres_docker:5432/ttasmarthub
-      SESSION_SECRET: notasecret
+      - POSTGRES_HOST=postgres_docker
+      - NODE_ENV=production
+      - POSTGRES_USERNAME=postgres
+      - POSTGRES_PASSWORD=secretpass
+      - POSTGRES_DB=ttasmarthub
+      - DATABASE_URL=postgres://postgres:secretpass@postgres_docker:5432/ttasmarthub
+      - SESSION_SECRET=notasecret
+      - FONTAWESOME_NPM_AUTH_TOKEN
     volumes:
       - ".:/app:rw"
   db:
