@@ -175,7 +175,7 @@ function calculatePreviousStatus(goal) {
   // and also check the status
   if (goal.objectives.length) {
     const onAr = goal.objectives.some((objective) => objective.activityReports.length);
-    const isCompletedOrInProgress = goal.objectives.some((objective) => objective.status === 'In Progress' || objective.status === 'Completed');
+    const isCompletedOrInProgress = goal.objectives.some((objective) => objective.status === 'In Progress' || objective.status === 'Complete');
 
     if (onAr && isCompletedOrInProgress) {
       return 'In Progress';
