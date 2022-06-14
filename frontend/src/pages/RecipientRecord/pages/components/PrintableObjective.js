@@ -7,29 +7,31 @@ export default function PrintableObjective({ objective }) {
   const key = objective.status || 'Needs Status';
   const { icon } = STATUSES[key];
 
+  const rowClass = `ttahub-printable-objective ${ROW_CLASS}`;
+
   return (
     <div className="border-1px margin-y-1">
-      <div className={ROW_CLASS}>
+      <div className={rowClass}>
         <p className={FIRST_COLUMN_CLASS}>Objective</p>
         <p className={SECOND_COLUMN_CLASS}>{objective.title}</p>
       </div>
-      <div className={ROW_CLASS}>
+      <div className={rowClass}>
         <p className={FIRST_COLUMN_CLASS}>Activity reports</p>
         <p className={SECOND_COLUMN_CLASS}>{objective.arId}</p>
       </div>
-      <div className={ROW_CLASS}>
+      <div className={rowClass}>
         <p className={FIRST_COLUMN_CLASS}>Grant numbers</p>
         <p className={SECOND_COLUMN_CLASS}>{objective.grantNumber}</p>
       </div>
-      <div className={ROW_CLASS}>
+      <div className={rowClass}>
         <p className={FIRST_COLUMN_CLASS}>End date</p>
         <p className={SECOND_COLUMN_CLASS}>{objective.endDate}</p>
       </div>
-      <div className={ROW_CLASS}>
+      <div className={rowClass}>
         <p className={FIRST_COLUMN_CLASS}>Reasons</p>
         <p className={SECOND_COLUMN_CLASS}>{objective.reasons.join(', ')}</p>
       </div>
-      <div className={ROW_CLASS}>
+      <div className={rowClass}>
         <p className={FIRST_COLUMN_CLASS}>Objective status</p>
         <p className={SECOND_COLUMN_CLASS}>
           {icon}

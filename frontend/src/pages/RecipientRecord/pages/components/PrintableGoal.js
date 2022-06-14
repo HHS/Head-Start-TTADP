@@ -9,7 +9,7 @@ export default function PrintableGoal({ goal }) {
   const { icon } = STATUSES[key];
 
   return (
-    <div className="padding-x-3 padding-top-3 padding-bottom-2">
+    <div className="ttahub-printable-goal padding-x-3 padding-top-3 padding-bottom-2">
       <h2 className="margin-top-0">
         Goal
         {' '}
