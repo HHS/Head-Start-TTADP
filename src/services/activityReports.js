@@ -326,6 +326,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
   const goalTemplateIds = [];
   const goalText = [];
 
+  // TODO - explore a way to move this query inline to the ActivityReport.findOne
   const goalsAndObjectives = allGoalsAndObjectives.reduce((previousValue, currentValue) => {
     if (goalTemplateIds.includes(currentValue.goalTemplateId)
       || goalText.includes(currentValue.name)) {
@@ -351,43 +352,6 @@ export async function activityReportAndRecipientsById(activityReportId) {
 
     return [...previousValue, goal];
   }, []);
-
-  // console.log({ goalsAndObjectives });
-
-  /** export async function goalsByIdAndRecipient(ids, recipientId) {
-  return Goal.findAll({
-    where: {
-      id: ids,
-    },
-    attributes: [
-      'goalTemplateId',
-      ['name', 'goalName'],
-      'status',
-      [sequelize.fn('ARRAY_AGG', sequelize.col('id')), 'ids'],
-      [sequelize.fn('ARRAY_AGG', sequelize.col('objectives.ids')), 'objectiveIds'],
-      [sequelize.fn('ARRAY_AGG', sequelize.col('objectives.title')), 'objectiveTitles'],
-      [sequelize.fn('ARRAY_AGG', sequelize.col('objectives.status')), 'objectiveStatus'],
-    ],
-    group: [
-      'goalTemplateId',
-      'name',
-      'status',
-    ],
-    include: [
-      {
-        model: Objective,
-        as: 'objectives',
-        attributes: [
-          'title',
-          [sequelize.fn('ARRAY_AGG', sequelize.col('id')), 'ids'],
-          'status',
-          'objectiveTemplateId',
-        ],
-        group: ['objectiveTemplateId', 'name', 'status'],
-      },
-    ],
-  });
-} */
 
   const recipients = await ActivityRecipient.findAll({
     where: {
