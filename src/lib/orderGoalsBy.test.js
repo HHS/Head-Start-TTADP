@@ -8,12 +8,21 @@ describe('orderGoalsBy', () => {
       [
         sequelize.literal('status_sort asc'),
       ],
+      [
+        'createdAt',
+        'DESC',
+      ],
     ]);
 
     const two = orderGoalsBy('createdOn', 'desc');
-    expect(two).toStrictEqual([[
-      'createdAt', 'desc',
-    ]]);
+    expect(two).toStrictEqual([
+      [
+        'createdAt', 'desc',
+      ],
+      [
+        sequelize.literal('status_sort ASC'),
+      ],
+    ]);
 
     const three = orderGoalsBy('fuzzbucket', 'desc');
     expect(three).toStrictEqual('');
