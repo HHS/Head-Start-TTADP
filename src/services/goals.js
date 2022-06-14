@@ -378,7 +378,7 @@ export async function goalsForGrants(grantIds) {
         },
       },
     ],
-    order: ['createdAt'],
+    order: ['name'],
   });
 }
 

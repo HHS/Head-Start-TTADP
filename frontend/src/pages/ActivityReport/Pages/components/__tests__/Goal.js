@@ -12,6 +12,7 @@ import userEvent from '@testing-library/user-event';
 
 import Goal from '../Goal';
 import { DECIMAL_BASE } from '../../../../../Constants';
+import { withText } from '../../../../../testHelpers';
 
 let id = 0;
 
@@ -22,6 +23,7 @@ const RenderGoal = ({
   onUpdate = () => {},
   onUpdateObjectives = () => {},
   objectives = [],
+  number = null,
   createObjective = () => {
     id += 1;
     return { key: id.toString(DECIMAL_BASE), title: '', ttaProvided: '' };
@@ -40,6 +42,7 @@ const RenderGoal = ({
         onUpdateObjectives={onUpdateObjectives}
         goalIndex={0}
         name={name}
+        number={number}
       />
     </FormProvider>
   );
@@ -49,6 +52,12 @@ describe('Goal', () => {
   it('renders name', async () => {
     render(<RenderGoal name="test goal" />);
     const goal = await screen.findByText('test goal');
+    expect(goal).toBeVisible();
+  });
+
+  it('shows goal number', async () => {
+    render(<RenderGoal name="test goal" number="G-123" />);
+    const goal = await screen.findByText('(G-123)', { exact: false });
     expect(goal).toBeVisible();
   });
 

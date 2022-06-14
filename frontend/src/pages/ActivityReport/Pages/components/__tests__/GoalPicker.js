@@ -50,6 +50,26 @@ describe('GoalPicker', () => {
       expect(first).toBeVisible();
       expect(second).toBeVisible();
     });
+
+    it('shows goal number', async () => {
+      const availableGoals = [
+        {
+          id: 1, name: 'goal to edit', goalNumber: 'G-123', new: true, objectives: [],
+        },
+      ];
+      const selectedGoals = [];
+
+      render(
+        <RenderGoal
+          availableGoals={availableGoals}
+          selectedGoals={selectedGoals}
+        />,
+      );
+
+      const select = await screen.findByPlaceholderText('Select goal(s) or type here to create a new goal');
+      selectEvent.openMenu(select);
+      expect(screen.getByText(/G-123:/i)).toBeInTheDocument();
+    });
   });
 
   describe('new goals', () => {
