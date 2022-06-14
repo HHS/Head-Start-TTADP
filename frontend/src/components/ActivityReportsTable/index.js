@@ -54,8 +54,6 @@ function ActivityReportsTable({
           filterQuery,
         );
 
-        console.log(count);
-
         setReports(rows);
         setReportsCount(count || 0);
         setError('');
