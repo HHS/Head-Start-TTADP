@@ -23,6 +23,7 @@ const STATUSES_TO_INCLUDE = [
 export default async function goalStatusGraph(scopes) {
   const goalsFromDb = await Goal.findAll({
     where: {
+      onApprovedAR: true,
       [Op.and]: [
         scopes.goal,
         {

@@ -20,44 +20,52 @@ describe('goalStatusGraph', () => {
       status: GOAL_STATUS.NOT_STARTED,
       grantId,
       recipientId,
+      onApprovedAR: true,
     }));
     goals.push(await createGoal({
       status: GOAL_STATUS.NOT_STARTED,
       grantId,
       recipientId,
+      onApprovedAR: true,
     }));
 
     goals.push(await createGoal({
       status: GOAL_STATUS.IN_PROGRESS,
       grantId,
       recipientId,
+      onApprovedAR: true,
     }));
     goals.push(await createGoal({
       status: GOAL_STATUS.IN_PROGRESS,
       grantId,
       recipientId,
+      onApprovedAR: true,
     }));
     goals.push(await createGoal({
       status: GOAL_STATUS.IN_PROGRESS,
       grantId,
       recipientId,
+      onApprovedAR: true,
     }));
 
     goals.push(await createGoal({
       status: GOAL_STATUS.CLOSED,
       grantId,
       recipientId,
+      onApprovedAR: true,
     }));
     goals.push(await createGoal({
       status: GOAL_STATUS.CLOSED,
       grantId,
       recipientId,
+      onApprovedAR: true,
     }));
 
     goals.push(await createGoal({
       status: GOAL_STATUS.DRAFT,
       grantId,
       recipientId,
+      onApprovedAR: true,
     }));
     response = await goalStatusGraph({ goal: { id: goals.map((g) => g.id) } });
   });

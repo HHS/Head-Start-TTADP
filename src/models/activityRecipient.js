@@ -40,10 +40,10 @@ module.exports = (sequelize, DataTypes) => {
     name: {
       type: DataTypes.VIRTUAL,
       get() {
-        if (this.grantId && this.grant) {
+        if (this.grant) {
           return this.grant.name;
         }
-        if (this.otherEntityId && this.otherEntity) {
+        if (this.otherEntity) {
           return this.otherEntity.name;
         }
         return null;
