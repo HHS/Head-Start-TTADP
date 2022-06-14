@@ -12,7 +12,6 @@ import userEvent from '@testing-library/user-event';
 
 import Goal from '../Goal';
 import { DECIMAL_BASE } from '../../../../../Constants';
-import { withText } from '../../../../../testHelpers';
 
 let id = 0;
 
