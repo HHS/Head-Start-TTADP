@@ -124,7 +124,11 @@ const GoalPicker = ({
             rules={{
               validate: validateGoals,
             }}
-            options={uniqueAvailableGoals.map((goal) => ({ value: goal.id, label: goal.name }))}
+            options={uniqueAvailableGoals.map((goal) => ({
+              value: goal.id,
+              label: goal.name,
+              number: goal.goalNumber,
+            }))}
             singleRowInput
             multiSelectOptions={{
               isClearable: false,
@@ -144,6 +148,7 @@ const GoalPicker = ({
               id={goal.id}
               objectives={goal.objectives}
               name={goal.name}
+              number={goal.goalNumber}
               isEditable={goal.isNew === true || !goal.onApprovedAR}
               createObjective={createObjective}
               onRemoveGoal={() => onRemoveGoal(goal.id)}

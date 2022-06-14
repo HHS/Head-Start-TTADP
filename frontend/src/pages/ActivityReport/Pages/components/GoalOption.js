@@ -21,7 +21,11 @@ const Option = (props) => {
     isSelected,
     innerRef,
     innerProps,
+    data,
   } = props;
+
+  const { number } = data;
+
   return (
     <div
       style={getStyles('option', { ...props, isSelected: false })}
@@ -38,7 +42,17 @@ const Option = (props) => {
     >
       <div className="display-flex" style={{ whiteSpace: 'pre-wrap' }}>
         <Checkbox readOnly checked={isSelected} />
-        {children}
+
+        <span>
+          { number ? (
+            <strong>
+              {number}
+              :
+              {' '}
+            </strong>
+          ) : null }
+          { children }
+        </span>
       </div>
     </div>
   );

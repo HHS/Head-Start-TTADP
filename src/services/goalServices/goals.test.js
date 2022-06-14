@@ -236,7 +236,7 @@ describe('goalsForGrants', () => {
           },
         },
       ],
-      order: ['createdAt'],
+      order: ['name'],
     });
   });
 });

@@ -35,12 +35,8 @@ module.exports = (sequelize, DataTypes) => {
     goalNumber: {
       type: DataTypes.VIRTUAL,
       get() {
-        const { id, grant } = this;
-        let regionId = 0;
-        if (grant) {
-          regionId = grant.regionId;
-        }
-        return `R${regionId}-G-${id}`;
+        const { id } = this;
+        return `G-${id}`;
       },
     },
     closeSuspendReason: {
