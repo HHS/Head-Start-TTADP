@@ -50,12 +50,38 @@ export const getReport = async (reportId) => {
 
 export const getReports = async (sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE, filters) => {
   const reports = await get(`${activityReportUrl}?sortBy=${sortBy}&sortDir=${sortDir}&offset=${offset}&limit=${limit}${filters ? `&${filters}` : ''}`);
-  return reports.json();
+  const json = await reports.json();
+  const { count, rows: rawRows, recipients } = json;
+
+  const rows = rawRows.map((row) => ({
+    ...row,
+    activityRecipients: recipients.filter(
+      (recipient) => recipient.activityReportId === row.id,
+    ),
+  }));
+
+  return {
+    rows,
+    count,
+  };
 };
 
 export const getReportAlerts = async (sortBy = 'startDate', sortDir = 'asc', offset = 0, limit = ALERTS_PER_PAGE, filters) => {
   const reports = await get(`${activityReportAlertUrl}?sortBy=${sortBy}&sortDir=${sortDir}&offset=${offset}&limit=${limit}${filters ? `&${filters}` : ''}`);
-  return reports.json();
+  const json = await reports.json();
+  const { alertsCount, alerts: rawAlerts, recipients } = json;
+
+  const alerts = rawAlerts.map((alert) => ({
+    ...alert,
+    activityRecipients: recipients.filter(
+      (recipient) => recipient.activityReportId === alert.id,
+    ),
+  }));
+
+  return {
+    alerts,
+    alertsCount,
+  };
 };
 
 export const getRecipients = async (region) => {
