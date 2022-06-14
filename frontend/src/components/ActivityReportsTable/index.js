@@ -53,6 +53,9 @@ function ActivityReportsTable({
           perPage,
           filterQuery,
         );
+
+        console.log(count);
+
         setReports(rows);
         setReportsCount(count || 0);
         setError('');
