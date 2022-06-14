@@ -517,7 +517,11 @@ export async function activityReportAndRecipientsById(activityReportId) {
  */
 export async function activityReports(
   {
-    sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE, ...filters
+    sortBy = 'updatedAt',
+    sortDir = 'desc',
+    offset = 0,
+    limit = REPORTS_PER_PAGE,
+    ...filters
   },
   excludeLegacy = false,
 ) {
@@ -615,9 +619,13 @@ export async function activityReports(
       activityReportId: reports.rows.map(({ id }) => id),
     },
     attributes: ['id', 'name', 'activityRecipientId', 'activityReportId'],
+    // sorting these just so the order is testable
     order: [
       [
-        sequelize.literal(`name ${sortDir}`),
+        sequelize.literal(`"grant.recipient.name" ${sortDir}`),
+      ],
+      [
+        sequelize.literal(`"otherEntity.name" ${sortDir}`),
       ],
     ],
   });
