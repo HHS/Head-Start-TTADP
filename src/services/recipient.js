@@ -165,11 +165,39 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
   };
 }
 
+function calculatePreviousStatus(goal) {
+  // if we have a previous status recorded, return that
+  if (goal.previousStatus) {
+    return goal.previousStatus;
+  }
+
+  // otherwise we check to see if there is the goal is on an activity report,
+  // and also check the status
+  if (goal.objectives.length) {
+    const onAr = goal.objectives.some((objective) => objective.activityReports.length);
+    const isCompletedOrInProgress = goal.objectives.some((objective) => objective.status === 'In Progress' || objective.status === 'Complete');
+
+    if (onAr && isCompletedOrInProgress) {
+      return 'In Progress';
+    }
+
+    if (onAr && !isCompletedOrInProgress) {
+      return 'Not Started';
+    }
+  }
+
+  return null;
+}
+
 export async function getGoalsByActivityRecipient(
   recipientId,
   regionId,
   {
-    sortBy = 'goalStatus', sortDir = 'desc', offset = 0, limit = GOALS_PER_PAGE, ...filters
+    sortBy = 'goalStatus',
+    sortDir = 'desc',
+    offset = 0,
+    limit = GOALS_PER_PAGE,
+    ...filters
   },
 ) {
   // Scopes.
@@ -262,8 +290,8 @@ export async function getGoalsByActivityRecipient(
       goalTopics: [],
       reasons: [],
       objectives: [],
-      previousStatus: g.previousStatus,
       grantNumber: g.grant.number,
+      previousStatus: calculatePreviousStatus(g),
     };
 
     // Objectives.

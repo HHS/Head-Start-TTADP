@@ -40,6 +40,7 @@ describe('Activity report print and share view', () => {
       },
     ],
     targetPopulations: ['Mid size sedans'],
+    activityRecipientType: 'recipient',
     specialistNextSteps: [],
     recipientNextSteps: [],
     participants: ['Commander of Pants', 'Princess of Castles'],

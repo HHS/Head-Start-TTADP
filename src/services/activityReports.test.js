@@ -820,11 +820,13 @@ describe('Activity report service', () => {
       });
 
       it('retrieves reports sorted by activity recipients', async () => {
-        const { rows } = await activityReports({
+        const { rows, recipients } = await activityReports({
           sortBy: 'activityRecipients', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1', '2'], 'reportId.nctn': idsToExclude,
         });
+
         expect(rows.length).toBe(6);
-        expect(rows[0].activityRecipients[0].grantId).toBe(firstGrant.id);
+
+        expect(rows[0].id).toBe(recipients[0].activityReportId);
       });
 
       it('retrieves reports sorted by sorted topics', async () => {
