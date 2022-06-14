@@ -545,7 +545,11 @@ export async function getReportAlerts(req, res) {
   if (!alertsWithCount) {
     res.sendStatus(404);
   } else {
-    res.json({ alertsCount: alertsWithCount.count, alerts: alertsWithCount.rows });
+    res.json({
+      alertsCount: alertsWithCount.count,
+      alerts: alertsWithCount.rows,
+      recipients: alertsWithCount.recipients,
+    });
   }
 }
 
