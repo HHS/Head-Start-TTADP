@@ -615,6 +615,11 @@ export async function activityReports(
       activityReportId: reports.rows.map(({ id }) => id),
     },
     attributes: ['id', 'name', 'activityRecipientId', 'activityReportId'],
+    order: [
+      [
+        sequelize.literal(`name ${sortDir}`),
+      ],
+    ],
   });
 
   return { ...reports, recipients };
