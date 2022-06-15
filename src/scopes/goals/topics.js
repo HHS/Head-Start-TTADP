@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import { filterAssociation } from './utils';
 
+/* TODO: Switch for New Goal Creation. */
 /*
 const topicFilter = `
 SELECT
