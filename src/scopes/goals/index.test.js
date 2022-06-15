@@ -42,6 +42,7 @@ describe('goal filtersToScopes', () => {
     reportWithReasons = await createReport({
       calculatedStatus: 'approved',
       reason: ['Full Enrollment'],
+      topics: ['CLASS: Emotional Support'],
       activityRecipients: [],
       region: 15,
     });
@@ -49,6 +50,7 @@ describe('goal filtersToScopes', () => {
       calculatedStatus: 'approved',
       reason: ['Complaint'],
       activityRecipients: [],
+      topics: ['Behavioral / Mental Health / Trauma'],
       region: 15,
     });
 
