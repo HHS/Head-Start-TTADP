@@ -1,3 +1,5 @@
+@use '../../colors' as *;
+
 .goals-table .usa-table-container,
 .goals-table .usa-checkbox__label {
   margin-top: 0px;
@@ -25,12 +27,11 @@
   padding-left: 24px;
   padding-bottom: 8px;
   background-color: #fff;
-  border-style: none;
+  border: 0;
+  border-top: 1.5px solid  $base-lighter;
 }
 
 .goals-table .usa-table-container {
-  margin-left: 24px;
-  margin-right: 24px;
   padding-bottom: 16px;
   overflow-x: auto;
 }
@@ -48,11 +49,6 @@
 }
 .goals-table .usa-table .usa-checkbox__label::before {
   position: relative;
-}
-
-.goals-table .padding-0 > .desktop\:display-flex:first-child{
-  margin-left: 24px;
-  margin-right: 24px;
 }
 
 .goals-table .smart-hub--total-count {

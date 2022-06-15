@@ -482,6 +482,8 @@ module.exports = {
               "isSpecialist",
               "mapsTo"
             FROM "TempRoles";
+
+            PERFORM SETVAL('"Roles_id_seq"', COALESCE((SELECT MAX(id) +1 FROM "Roles"), 1), false);
             ------------------------------------------------------------------------------------
             UPDATE ONLY "Roles"
             SET "isSpecialist" = true
@@ -1362,6 +1364,8 @@ module.exports = {
               "goalTemplateId",
               "onApprovedAR"
             FROM "__temp_goals";
+
+            PERFORM SETVAL('"Goals_id_seq"', COALESCE((SELECT MAX(id) +1 FROM "Goals"), 1), false);
             ------------------------------------------------------------------------------------
             -- 14. Repopulate Objectives from temp table
             INSERT INTO "Objectives"(
@@ -1386,6 +1390,8 @@ module.exports = {
               "objectiveTemplateId",
               "onApprovedAR"
             FROM "__temp_objectives";
+
+            PERFORM SETVAL('"Objectives_id_seq"', COALESCE((SELECT MAX(id) +1 FROM "Objectives"), 1), false);
             ------------------------------------------------------------------------------------
             -- 15. Repopulate ObjectiveTopics from temp table
             INSERT INTO "ObjectiveTopics" (
@@ -1402,6 +1408,8 @@ module.exports = {
               "createdAt",
               "updatedAt"
             FROM "__temp_objectives_topics";
+
+            PERFORM SETVAL('"ObjectiveTopics_id_seq"', COALESCE((SELECT MAX(id) +1 FROM "ObjectiveTopics"), 1), false);
             ------------------------------------------------------------------------------------
             -- 16. Repopulate ObjectiveResources from temp table
             INSERT INTO "ObjectiveResources" (
@@ -1418,6 +1426,8 @@ module.exports = {
               "createdAt",
               "updatedAt"
             FROM "__temp_objectives_resources";
+
+            PERFORM SETVAL('"ObjectiveResources_id_seq"', COALESCE((SELECT MAX(id) +1 FROM "ObjectiveResources"), 1), false);
             ------------------------------------------------------------------------------------
             -- 17. Repopulate ActivityReportObjectives from temp table
             INSERT INTO "ActivityReportObjectives"(
@@ -1436,6 +1446,8 @@ module.exports = {
               "updatedAt",
               "ttaProvided"
             FROM "__temp_activity_report_objectives";
+
+            PERFORM SETVAL('"ActivityReportObjectives_id_seq"', COALESCE((SELECT MAX(id) +1 FROM "ActivityReportObjectives"), 1), false);
             ------------------------------------------------------------------------------------
             -- 18. Drop all temp tables used
             DROP TABLE
@@ -1688,7 +1700,7 @@ module.exports = {
           primaryKey: true,
           type: Sequelize.INTEGER,
         },
-        activityReporObjectivetId: {
+        activityReportObjectiveId: {
           allowNull: false,
           type: Sequelize.INTEGER,
           references: {
@@ -1725,7 +1737,7 @@ module.exports = {
           primaryKey: true,
           type: Sequelize.INTEGER,
         },
-        objectivetId: {
+        objectiveId: {
           allowNull: false,
           type: Sequelize.INTEGER,
           references: {
@@ -1762,7 +1774,7 @@ module.exports = {
           primaryKey: true,
           type: Sequelize.INTEGER,
         },
-        objectivetTemplateId: {
+        objectiveTemplateId: {
           allowNull: false,
           type: Sequelize.INTEGER,
           references: {

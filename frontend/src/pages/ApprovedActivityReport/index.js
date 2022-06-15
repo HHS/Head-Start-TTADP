@@ -16,6 +16,7 @@ import {
   LOCAL_STORAGE_DATA_KEY,
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
   LOCAL_STORAGE_EDITABLE_KEY,
+  DATEPICKER_VALUE_FORMAT,
 } from '../../Constants';
 
 /**
@@ -27,21 +28,24 @@ function calculateGoalsAndObjectives(report) {
   const headings = [];
   const data = [];
 
-  if (report.goals.length > 0) {
+  if (report.goalsAndObjectives.length > 0) {
     // assume recipient
-    const { goals } = report;
+    const { goalsAndObjectives } = report;
 
-    goals.forEach((goal, index) => {
+    goalsAndObjectives.forEach((goal, index) => {
       const displayNumber = index + 1;
       headings.push(`Goal ${displayNumber}`);
       data.push(goal.name);
+      headings.push(`Goal ${displayNumber} Status`);
+      data.push(goal.status);
       goal.objectives.forEach((objective, idx) => {
         const objectiveDisplayNumber = idx + 1;
         headings.push(`Objective ${objectiveDisplayNumber}`);
         data.push(objective.title);
-
         headings.push(`TTA Provided ${objectiveDisplayNumber}`);
         data.push(objective.ttaProvided);
+        headings.push(`Objective ${objectiveDisplayNumber} status`);
+        data.push(objective.status);
       });
     });
 
@@ -56,7 +60,7 @@ function calculateGoalsAndObjectives(report) {
     data.push(objective.title);
 
     headings.push(`TTA Provided ${displayNumber}`);
-    data.push(objective.ttaProvided);
+    data.push(objective.ActivityReportObjective.ttaProvided);
   });
 
   return [headings, data];
@@ -207,14 +211,18 @@ export default function ApprovedActivityReport({ match, user }) {
         }
 
         // first table
-        let recipientType = data.activityRecipients[0].grantId ? 'Recipient' : 'Other entity';
+        const isRecipient = data.activityRecipientType === 'recipient';
+        let recipientType = isRecipient ? 'Recipient' : 'Other entity';
         if (data.activityRecipients.length > 1) {
-          recipientType = data.activityRecipients[0].grantId ? 'Recipients' : 'Other entities';
+          recipientType = isRecipient ? 'Recipients' : 'Other entities';
         }
 
         const arRecipients = data.activityRecipients.map((arRecipient) => arRecipient.name).sort().join(', ');
         const targetPopulations = data.targetPopulations.map((population) => population).join(', '); // Approvers.
         const approvingManagers = data.approvers.map((a) => a.User.fullName).join(', ');
+        const collaborators = data.activityReportCollaborators.map(
+          (a) => a.fullName,
+        );
 
         // Approver Notes.
         const managerNotes = data.approvers.map((a) => `
@@ -224,8 +232,8 @@ export default function ApprovedActivityReport({ match, user }) {
         const attendees = formatSimpleArray(data.participants);
         const participantCount = data.numberOfParticipants.toString();
         const reasons = formatSimpleArray(data.reason);
-        const startDate = moment(data.startDate, DATE_DISPLAY_FORMAT).format('MMMM D, YYYY');
-        const endDate = moment(data.endDate, DATE_DISPLAY_FORMAT).format('MMMM D, YYYY');
+        const startDate = moment(data.startDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
+        const endDate = moment(data.endDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
         const duration = `${data.duration} hours`;
         const method = formatMethod(data.ttaType, data.virtualDeliveryType);
         const requester = formatRequester(data.requester);
@@ -234,11 +242,11 @@ export default function ApprovedActivityReport({ match, user }) {
         const topics = formatSimpleArray(data.topics);
         const ECLKCResources = createResourceMarkup(data.ECLKCResourcesUsed);
         const nonECLKCResourcesUsed = createResourceMarkup(data.nonECLKCResourcesUsed);
-        const attachments = mapAttachments(data.attachments);
+        const attachments = mapAttachments(data.files);
 
         // third table
         const {
-          context, id, displayId, additionalNotes, collaborators,
+          context, id, displayId, additionalNotes,
         } = data;
         const [goalsAndObjectiveHeadings, goalsAndObjectives] = calculateGoalsAndObjectives(data);
 
@@ -335,7 +343,6 @@ export default function ApprovedActivityReport({ match, user }) {
       </>
     );
   }
-
   const {
     reportId,
     displayId,
@@ -471,7 +478,7 @@ export default function ApprovedActivityReport({ match, user }) {
           <p>
             <strong>Collaborators:</strong>
             {' '}
-            {collaborators.map((collaborator) => collaborator.fullName).join(', ')}
+            {collaborators.map((collaborator) => collaborator).join(', ')}
           </p>
           <p>
             <strong>Managers:</strong>

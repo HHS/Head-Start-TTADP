@@ -20,7 +20,6 @@ export async function createGoals(req, res) {
   try {
     const { goals } = req.body;
 
-    // check permissions
     const user = await userById(req.session.userId);
 
     let canCreate = true;
@@ -59,7 +58,7 @@ export async function changeGoalStatus(req, res) {
       return;
     }
 
-    if (!new Goal(user, goal).canEdit()) {
+    if (!new Goal(user, goal).canChangeStatus()) {
       res.sendStatus(401);
       return;
     }

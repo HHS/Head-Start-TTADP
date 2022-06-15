@@ -27,7 +27,7 @@ const GoalsObjectives = () => {
   const activityRecipientType = watch('activityRecipientType');
 
   const isRecipientReport = activityRecipientType === 'recipient';
-  const grantIds = isRecipientReport ? recipients.map((r) => r.activityRecipientId) : [];
+  const grantIds = isRecipientReport ? recipients.map((r) => r.id || r.value) : [];
 
   const [fetchError, setFetchError] = useState(false);
   const [availableGoals, updateAvailableGoals] = useState([]);

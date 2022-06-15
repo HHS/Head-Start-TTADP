@@ -2,13 +2,15 @@ import stringify from 'csv-stringify/lib/sync';
 import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
 import {
-  ActivityReport as ActivityReportModel, ActivityReportApprover, User as UserModel,
+  ActivityReport as ActivityReportModel,
+  ActivityReportApprover,
+  User as UserModel,
 } from '../../models';
 import ActivityReport from '../../policies/activityReport';
 import User from '../../policies/user';
 import {
   possibleRecipients,
-  activityReportById,
+  activityReportAndRecipientsById,
   createOrUpdate,
   activityReports,
   setStatus,
@@ -19,7 +21,7 @@ import {
   getAllDownloadableActivityReports,
 } from '../../services/activityReports';
 import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
-import { goalsForGrants, copyGoalsToGrants } from '../../services/goals';
+import { goalsForGrants } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
 import { APPROVER_STATUSES, REPORT_STATUSES, DECIMAL_BASE } from '../../constants';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
@@ -298,7 +300,8 @@ export async function reviewReport(req, res) {
     const { userId } = req.session;
 
     const user = await userById(userId);
-    const report = await activityReportById(activityReportId);
+    const [report] = await activityReportAndRecipientsById(activityReportId);
+
     const authorization = new ActivityReport(user, report);
 
     if (!authorization.canReview()) {
@@ -313,15 +316,9 @@ export async function reviewReport(req, res) {
       userId,
     });
 
-    const reviewedReport = await activityReportById(activityReportId);
+    const [reviewedReport] = await activityReportAndRecipientsById(activityReportId);
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
-      if (reviewedReport.activityRecipientType === 'recipient') {
-        await copyGoalsToGrants(
-          reviewedReport.goals,
-          reviewedReport.activityRecipients.map((recipient) => recipient.activityRecipientId),
-        );
-      }
       reportApprovedNotification(reviewedReport);
     }
 
@@ -340,7 +337,7 @@ export async function resetToDraft(req, res) {
     const { activityReportId } = req.params;
 
     const user = await userById(req.session.userId);
-    const report = await activityReportById(activityReportId);
+    const [report] = await activityReportAndRecipientsById(activityReportId);
     const authorization = new ActivityReport(user, report);
 
     if (!authorization.canReset()) {
@@ -348,8 +345,16 @@ export async function resetToDraft(req, res) {
       return;
     }
 
-    const savedReport = await setStatus(report, REPORT_STATUSES.DRAFT);
-    res.json(savedReport);
+    const [
+      savedReport, activityRecipients, goalsAndObjectives,
+    ] = await setStatus(report, REPORT_STATUSES.DRAFT);
+
+    res.json({
+      ...savedReport.dataValues,
+      displayId: report.displayId,
+      activityRecipients,
+      goalsAndObjectives,
+    });
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
@@ -365,7 +370,7 @@ export async function softDeleteReport(req, res) {
   try {
     const { activityReportId } = req.params;
 
-    const report = await activityReportById(activityReportId);
+    const [report] = await activityReportAndRecipientsById(activityReportId);
     const user = await userById(req.session.userId);
     const authorization = new ActivityReport(user, report);
 
@@ -390,7 +395,7 @@ export async function softDeleteReport(req, res) {
 export async function unlockReport(req, res) {
   try {
     const { activityReportId } = req.params;
-    const report = await activityReportById(activityReportId);
+    const [report] = await activityReportAndRecipientsById(activityReportId);
     const user = await userById(req.session.userId);
     const authorization = new ActivityReport(user, report);
     if (!authorization.canUnlock()) {
@@ -421,7 +426,7 @@ export async function submitReport(req, res) {
     const { approverUserIds, additionalNotes, creatorRole } = req.body;
 
     const user = await userById(req.session.userId);
-    const report = await activityReportById(activityReportId);
+    const [report] = await activityReportAndRecipientsById(activityReportId);
     const authorization = new ActivityReport(user, report);
 
     if (!authorization.canUpdate()) {
@@ -475,7 +480,7 @@ export async function submitReport(req, res) {
 
 export async function getActivityRecipients(req, res) {
   const { region } = req.query;
-  const targetRegion = region ? parseInt(region, DECIMAL_BASE) : undefined;
+  const targetRegion = parseInt(region, DECIMAL_BASE);
   const activityRecipients = await possibleRecipients(targetRegion);
   res.json(activityRecipients);
 }
@@ -488,7 +493,9 @@ export async function getActivityRecipients(req, res) {
  */
 export async function getReport(req, res) {
   const { activityReportId } = req.params;
-  const report = await activityReportById(activityReportId);
+  const [
+    report, activityRecipients, goalsAndObjectives,
+  ] = await activityReportAndRecipientsById(activityReportId);
   if (!report) {
     res.sendStatus(404);
     return;
@@ -501,7 +508,12 @@ export async function getReport(req, res) {
     return;
   }
 
-  res.json(report);
+  res.json({
+    ...report.dataValues,
+    displayId: report.displayId,
+    activityRecipients,
+    goalsAndObjectives,
+  });
 }
 
 /**
@@ -533,7 +545,11 @@ export async function getReportAlerts(req, res) {
   if (!alertsWithCount) {
     res.sendStatus(404);
   } else {
-    res.json({ alertsCount: alertsWithCount.count, alerts: alertsWithCount.rows });
+    res.json({
+      alertsCount: alertsWithCount.count,
+      alerts: alertsWithCount.rows,
+      recipients: alertsWithCount.recipients,
+    });
   }
 }
 
@@ -552,12 +568,11 @@ export async function saveReport(req, res) {
     }
     const userId = parseInt(req.session.userId, 10);
     const { activityReportId } = req.params;
-    const report = await activityReportById(activityReportId);
+    const [report, activityRecipients] = await activityReportAndRecipientsById(activityReportId);
     if (!report) {
       res.sendStatus(404);
       return;
     }
-
     const user = await userById(req.session.userId);
     const authorization = new ActivityReport(user, report);
     if (!authorization.canUpdate()) {
@@ -569,13 +584,17 @@ export async function saveReport(req, res) {
 
     // join the updated report with the model object retrieved from the API
     // since we may not get all fields in the request body
-    const savedReport = await createOrUpdate({ ...report, ...newReport }, report);
-    if (savedReport.collaborators) {
+    const savedReport = await createOrUpdate({
+      ...report, activityRecipients, ...newReport,
+    }, report);
+
+    if (savedReport.activityReportCollaborators) {
       // only include collaborators that aren't already in the report
-      const newCollaborators = savedReport.collaborators.filter((c) => {
-        const oldCollaborators = report.collaborators.map((x) => x.email);
-        return !oldCollaborators.includes(c.email);
+      const newCollaborators = savedReport.activityReportCollaborators.filter((c) => {
+        const oldCollaborators = report.activityReportCollaborators.map((x) => x.user.email);
+        return !oldCollaborators.includes(c.user.email);
       });
+
       collaboratorAssignedNotification(savedReport, newCollaborators);
     }
 
@@ -608,10 +627,10 @@ export async function createReport(req, res) {
       res.sendStatus(403);
       return;
     }
-
+    // updateCollaboratorRoles(newReport);
     const report = await createOrUpdate(newReport);
-    if (report.collaborators) {
-      collaboratorAssignedNotification(report, report.collaborators);
+    if (report.activityReportCollaborators) {
+      collaboratorAssignedNotification(report, report.activityReportCollaborators);
     }
     res.json(report);
   } catch (error) {

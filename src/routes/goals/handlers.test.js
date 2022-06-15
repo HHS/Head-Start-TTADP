@@ -168,6 +168,7 @@ describe('retrieve goal', () => {
 describe('createGoals', () => {
   afterAll(async () => {
     jest.clearAllMocks();
+    userById.mockReset();
   });
 
   it('checks permissions', async () => {
@@ -251,7 +252,11 @@ describe('createGoals', () => {
   });
 });
 
-describe.skip('changeGoalStatus', () => {
+describe('changeGoalStatus', () => {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    userById.mockReset();
+  });
   const goalWhere = { name: 'My updated goal' };
 
   it('updates status goal by id', async () => {
@@ -263,17 +268,17 @@ describe.skip('changeGoalStatus', () => {
         newStatus: 'New Status',
         closeSuspendReason: 'TTA complete',
         closeSuspendContext: 'Sample context.',
-        regionId: 1,
+        regionId: 2,
       },
       session: {
         userId: 1,
       },
     };
-    updateGoalStatusById.mockResolvedValue(goalWhere);
-    userById.mockResolvedValue({
+    updateGoalStatusById.mockResolvedValueOnce(goalWhere);
+    userById.mockResolvedValueOnce({
       permissions: [
         {
-          regionId: 1,
+          regionId: 2,
           scopeId: SCOPES.READ_WRITE_REPORTS,
         },
       ],
@@ -281,7 +286,7 @@ describe.skip('changeGoalStatus', () => {
 
     goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
       objectives: [],
-      grants: [{ regionId: 1 }],
+      grant: { regionId: 2 },
     });
 
     await changeGoalStatus(req, mockResponse);
@@ -307,7 +312,7 @@ describe.skip('changeGoalStatus', () => {
     userById.mockResolvedValue({
       permissions: [
         {
-          regionId: 1,
+          regionId: 2,
           scopeId: SCOPES.READ_REPORTS,
         },
       ],
@@ -315,7 +320,7 @@ describe.skip('changeGoalStatus', () => {
 
     goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
       objectives: [],
-      grants: [{ regionId: 1 }],
+      grant: { regionId: 2 },
     });
 
     await changeGoalStatus(req, mockResponse);
@@ -331,7 +336,7 @@ describe.skip('changeGoalStatus', () => {
         newStatus: 'New Status',
         closeSuspendReason: 'TTA complete',
         closeSuspendContext: 'Sample context.',
-        regionId: 1,
+        regionId: 2,
       },
       session: {
         userId: 1,
@@ -341,7 +346,7 @@ describe.skip('changeGoalStatus', () => {
     userById.mockResolvedValue({
       permissions: [
         {
-          regionId: 1,
+          regionId: 2,
           scopeId: SCOPES.READ_WRITE_REPORTS,
         },
       ],
@@ -365,6 +370,7 @@ describe.skip('changeGoalStatus', () => {
 describe('deleteGoal', () => {
   afterAll(async () => {
     jest.clearAllMocks();
+    jest.resetModules();
   });
 
   it('checks permissions', async () => {
@@ -388,7 +394,7 @@ describe('deleteGoal', () => {
 
     goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
       objectives: [],
-      grants: [{ regionId: 2 }],
+      grant: { regionId: 2 },
     });
 
     await deleteGoal(req, mockResponse);
@@ -408,7 +414,7 @@ describe('deleteGoal', () => {
 
     goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
       objectives: [],
-      grants: [{ regionId: 2 }],
+      grant: { regionId: 2 },
     });
 
     userById.mockResolvedValueOnce({

@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
 import useSpellCheck from '../../hooks/useSpellCheck';
+import './FilterSelect.css';
 
 export default function FilterSelect({
   onApply,
@@ -29,7 +30,7 @@ export default function FilterSelect({
   const styles = {
     container: (provided, state) => {
       // To match the focus indicator provided by uswds
-      const outline = state.isFocused ? '0.25rem solid #2491ff;' : '';
+      const outline = state.isFocused ? '0.25rem solid #2491ff' : '';
       return {
         ...provided,
         outline,
@@ -47,13 +48,8 @@ export default function FilterSelect({
         boxShadow: '0',
         // Match uswds disabled style
         opacity: state.isDisabled ? '0.7' : '1',
-
         overflow: state.isFocused ? 'visible' : 'hidden',
-        position: !state.isFocused ? 'absolute' : 'relative',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: state.isFocused && selected.length ? 'auto' : 0,
+        maxHeight: state.isFocused ? 'auto' : '40px',
       };
     },
     indicatorsContainer: (provided) => ({
@@ -67,11 +63,16 @@ export default function FilterSelect({
       ...provided,
       zIndex: 2,
     }),
-    multiValue: (provided) => ({ ...provided }),
-    multiValueLabel: (provided) => ({ ...provided }),
+    multiValue: (provided) => ({
+      ...provided,
+    }),
     valueContainer: (provided) => ({
       ...provided,
       maxHeight: '100%',
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      top: 0,
     }),
   };
 
@@ -79,22 +80,76 @@ export default function FilterSelect({
     onApply(selected.map((selection) => selection[key]));
   };
 
+  const showTruncated = selectedValues.length > 1;
+
+  let coverAll = () => <></>;
+
+  if (showTruncated) {
+    coverAll = () => {
+      let charCount = 0;
+      let andMoreShown = false;
+
+      const truncated = selectedValues.map((selection, index) => {
+        // if the "and x more tags" message has been shown
+        if (andMoreShown) {
+          return null;
+        }
+
+        // keep a running total of the characters, but we always have to show the first one
+        if (index === 0 || (charCount + selection.length < 18 && index < 3)) {
+          const label = selection.length > 18
+            ? `${selection.slice(0, 9)}...${selection.slice(-5)}` : selection;
+
+          charCount += label.length;
+
+          return (
+            <span key={selection} className="ttahub-filter-select--label flex-align-self-center">{label}</span>
+          );
+        }
+
+        andMoreShown = true;
+
+        return (
+          <span key={selection} className="ttahub-filter-select--label flex-align-self-center">
+            +
+            {' '}
+            {selectedValues.length - index}
+            {' '}
+            more tag
+            {selectedValues.length - index > 1 ? 's' : ''}
+          </span>
+        );
+      });
+
+      return andMoreShown ? (
+        <div className="ttahub-filter-select--cover-all position-absolute padding-x-1">
+          {truncated}
+        </div>
+      ) : <></>;
+    };
+  }
+
   return (
-    <Select
-      placeholder={labelText}
-      aria-label={labelText}
-      inputId={inputId}
-      onChange={onChange}
-      options={options}
-      styles={styles}
-      components={{
-        DropdownIndicator: null,
-      }}
-      className="usa-select"
-      closeMenuOnSelect={false}
-      value={value}
-      isMulti
-    />
+    <div className={`ttahub-filter-select position-relative ${coverAll().props.children ? 'ttahub-filter-select__has-cover-all' : ''}`}>
+      <Select
+        placeholder={labelText}
+        aria-label={labelText}
+        inputId={inputId}
+        onChange={onChange}
+        options={options}
+        styles={styles}
+        classNamePrefix="ttahub-filter-select"
+        components={{
+          DropdownIndicator: null,
+        }}
+        className="usa-select"
+        closeMenuOnSelect={false}
+        value={value}
+        isMulti
+        menuShouldScrollIntoView={false}
+      />
+      {coverAll()}
+    </div>
   );
 }
 

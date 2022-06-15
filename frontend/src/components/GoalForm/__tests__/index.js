@@ -293,7 +293,6 @@ describe('create goal', () => {
     const deleteButton = within(await screen.findByTestId('menu')).getByRole('button', { name: /delete/i });
     userEvent.click(deleteButton);
     userEvent.tab();
-    userEvent.tab();
 
     const modalDeleteButton = document.querySelector(':focus');
     expect(modalDeleteButton.textContent).toBe('Delete');
@@ -362,7 +361,6 @@ describe('create goal', () => {
 
     const deleteButton = within(await screen.findByTestId('menu')).getByRole('button', { name: /delete/i });
     userEvent.click(deleteButton);
-    userEvent.tab();
     userEvent.tab();
 
     const modalDeleteButton = document.querySelector(':focus');

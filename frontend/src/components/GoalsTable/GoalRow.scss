@@ -1,12 +1,12 @@
 @use '../../colors' as *;
 
 .goals-table .usa-table .tta-smarthub--goal-row td:first-child {
-  border-left: 1px solid $base-lightest;
+  border-left: 1px solid $base-lighter;
   min-width: 170px;
 }
 
 .goals-table .usa-table .tta-smarthub--goal-row td:last-child {
-  border-right: 1px solid $base-lightest;
+  border-right: 1px solid $base-lighter;
 }
 
 .goals-table .usa-table .tta-smarthub--goal-row td:nth-child(2) {
@@ -26,14 +26,12 @@
   min-width: 168px;
 }
 
-.goals-table .usa-table .tta-smarthub--goal-row-objectives-enabled {
-  cursor: pointer;
+.tta-smarthub--goal-row-objectives {
   color: $text-ink;
 }
 
-.goals-table .usa-table .tta-smarthub--goal-row-objectives-disabled {
-  cursor: default;
-  pointer-events: none;
+.goals-table .usa-table .tta-smarthub--goal-row-objectives-enabled {
+  cursor: pointer;
 }
 
 .goals-table .usa-table td {
@@ -44,11 +42,15 @@
   line-height: 1.5;
   vertical-align: top;
   padding: 24px;
-  border-top: 1px solid $base-lightest;
+  border-top: 1px solid $base-lighter;
+}
+
+.goals-table .usa-table td.padding-right-0 {
+  padding: 24px 0 24px 24px;
 }
 
 .goals-table .usa-table .tta-smarthub--goal-row-collapsed td {
-  border-bottom: 1px solid $base-lightest
+  border-bottom: 1px solid $base-lighter;
 }
 
 .goals-table .usa-table .tta-smarthub--goal-row-collapsed  +  .tta-smarthub--objective-rows {
@@ -80,20 +82,10 @@ vertical-align: top;
   line-height: 0;
 }
 
-.tta-smarthub--goal-row td:nth-child(4) .smart-hub-tooltip button {
-  line-height: 1.7;
-  vertical-align: baseline;
-}
-
-
 .tta-smarthub--goal-row-obj-table-header {
   background-color: white;
   border-top: solid 1.5px;
   border-bottom: none;
-  padding-right: 0px;
-  padding-top: 0px;
-  padding-left: 0px;
-  padding-bottom: 8px;
   background-color: white;
   border-style: none;
   color: $text-ink;

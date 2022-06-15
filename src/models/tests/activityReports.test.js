@@ -1,6 +1,6 @@
 import db, { User, ActivityReport } from '..';
 import { REPORT_STATUSES } from '../../constants';
-import { activityReportById } from '../../services/activityReports';
+import { activityReportAndRecipientsById } from '../../services/activityReports';
 
 describe('Activity Reports model', () => {
   afterAll(async () => {
@@ -95,17 +95,17 @@ describe('Activity Reports model', () => {
 
     it('Properly generates creator with role', async () => {
       // Has both creator and role.
-      let foundReport = await activityReportById(60);
+      let [foundReport] = await activityReportAndRecipientsById(60);
       expect(foundReport.creatorNameWithRole).toEqual('Joe Green, TTAC');
       expect(foundReport.creatorName).toEqual('Joe Green, TTAC');
 
       // Has only creator.
-      foundReport = await activityReportById(61);
+      [foundReport] = await activityReportAndRecipientsById(61);
       expect(foundReport.creatorNameWithRole).toEqual('Joe Green');
       expect(foundReport.creatorName).toEqual('Joe Green');
 
       // Properly converts role to acronym.
-      foundReport = await activityReportById(62);
+      [foundReport] = await activityReportAndRecipientsById(62);
       expect(foundReport.creatorNameWithRole).toEqual('Joe Green, ECM');
       expect(foundReport.creatorName).toEqual('Joe Green, ECM');
     });

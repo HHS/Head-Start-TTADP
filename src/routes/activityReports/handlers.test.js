@@ -19,7 +19,7 @@ import {
   LEGACY_WARNING,
 } from './handlers';
 import {
-  activityReportById,
+  activityReportAndRecipientsById,
   createOrUpdate,
   possibleRecipients,
   setStatus,
@@ -45,7 +45,7 @@ import { APPROVER_STATUSES, REPORT_STATUSES } from '../../constants';
 import SCOPES from '../../middleware/scopeConstants';
 
 jest.mock('../../services/activityReports', () => ({
-  activityReportById: jest.fn(),
+  activityReportAndRecipientsById: jest.fn(),
   createOrUpdate: jest.fn(),
   possibleRecipients: jest.fn(),
   review: jest.fn(),
@@ -122,6 +122,24 @@ const report = {
   approvingManager: mockManager,
   displayId: 'mockreport-1',
   regionId: 1,
+};
+
+const activityRecipients = undefined;
+const goalsAndObjectives = undefined;
+
+const byIdResponse = [
+  {
+    displayId: report.displayId,
+    dataValues: report,
+  },
+  activityRecipients,
+  goalsAndObjectives,
+];
+
+const expected = {
+  ...report,
+  activityRecipients,
+  goalsAndObjectives,
 };
 
 describe('Activity Report handlers', () => {
@@ -233,13 +251,12 @@ describe('Activity Report handlers', () => {
         status: approvedReportRequest.body.status,
         note: approvedReportRequest.body.note,
       };
-      activityReportById.mockResolvedValue({
+      activityReportAndRecipientsById.mockResolvedValue([{
         calculatedStatus: REPORT_STATUSES.APPROVED,
         activityRecipientType: 'recipient',
-        activityRecipients: [{
-          activityRecipientId: 10,
-        }],
-      });
+      }, [{
+        activityRecipientId: 10,
+      }]]);
       ActivityReport.mockImplementationOnce(() => ({
         canReview: () => true,
       }));
@@ -249,7 +266,6 @@ describe('Activity Report handlers', () => {
       await reviewReport(approvedReportRequest, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);
       expect(approvalNotification).toHaveBeenCalled();
-      expect(copyGoalsToGrants).toHaveBeenCalled();
     });
     it('returns the new needs action status', async () => { // here
       const mockApproverRecord = {
@@ -259,13 +275,15 @@ describe('Activity Report handlers', () => {
         status: needsActionReportRequest.body.status,
         note: needsActionReportRequest.body.note,
       };
-      activityReportById.mockResolvedValue({
+      activityReportAndRecipientsById.mockResolvedValue([{
         calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
         activityRecipientType: 'recipient',
-        activityRecipients: [{
-          activityRecipientId: 10,
-        }],
-      });
+      },
+      [{
+        activityRecipientId: 10,
+      },
+      ]]);
+
       ActivityReport.mockImplementationOnce(() => ({
         canReview: () => true,
       }));
@@ -279,13 +297,13 @@ describe('Activity Report handlers', () => {
       expect(copyGoalsToGrants).not.toHaveBeenCalled();
     });
     it('handles unauthorizedRequests', async () => {
-      activityReportById.mockResolvedValue({
+      activityReportAndRecipientsById.mockResolvedValue([{
         calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
         activityRecipientType: 'recipient',
-        activityRecipients: [{
+      }, [
+        {
           activityRecipientId: 10,
-        }],
-      });
+        }]]);
       ActivityReport.mockImplementationOnce(() => ({
         canReview: () => false,
       }));
@@ -306,7 +324,7 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementationOnce(() => ({
         canUpdate: () => true,
       }));
-      activityReportById.mockResolvedValue(report);
+      activityReportAndRecipientsById.mockResolvedValue(byIdResponse);
       const mockApprovers = [{
         activityReportId: 1,
         userId: mockManager.id,
@@ -324,9 +342,19 @@ describe('Activity Report handlers', () => {
       jest.spyOn(ActivityReportModel, 'findByPk').mockResolvedValueOnce(reportAfterSubmit);
       const approverUpdate = jest.spyOn(ActivityReportApprover, 'update').mockImplementation();
       await submitReport(request, mockResponse);
-      expect(createOrUpdate).toHaveBeenCalledWith({
-        additionalNotes: 'notes', submissionStatus: REPORT_STATUSES.SUBMITTED,
-      }, report);
+      const { displayId, ...r } = report;
+      expect(createOrUpdate).toHaveBeenCalledWith(
+        {
+          additionalNotes: 'notes', submissionStatus: REPORT_STATUSES.SUBMITTED,
+        },
+        {
+          dataValues: {
+            ...r,
+            displayId,
+          },
+          displayId,
+        },
+      );
       expect(syncApprovers).toHaveBeenCalledWith(1, [mockManager.id, secondMockManager.id]);
       expect(assignedNotification).toHaveBeenCalled();
       expect(approverUpdate).toHaveBeenCalledWith({ status: null }, {
@@ -339,7 +367,7 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementationOnce(() => ({
         canUpdate: () => false,
       }));
-      activityReportById.mockResolvedValue(report);
+      activityReportAndRecipientsById.mockResolvedValue(byIdResponse);
       userById.mockResolvedValue({
         id: mockUser.id,
       });
@@ -396,17 +424,17 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementationOnce(() => ({
         canUpdate: () => true,
       }));
-      activityReportById.mockResolvedValue(report);
+      activityReportAndRecipientsById.mockResolvedValue(byIdResponse);
       createOrUpdate.mockResolvedValue(report);
       userById.mockResolvedValue({
         id: mockUser.id,
       });
       await saveReport(request, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith(report);
+      expect(mockResponse.json).toHaveBeenCalledWith(expected);
     });
 
     it('handles unauthorized requests', async () => {
-      activityReportById.mockResolvedValue(report);
+      activityReportAndRecipientsById.mockResolvedValue(byIdResponse);
       ActivityReport.mockImplementationOnce(() => ({
         canUpdate: () => false,
       }));
@@ -418,7 +446,7 @@ describe('Activity Report handlers', () => {
     });
 
     it('handles reports that are not found', async () => {
-      activityReportById.mockResolvedValue(null);
+      activityReportAndRecipientsById.mockResolvedValue([null]);
       await saveReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
     });
@@ -440,23 +468,23 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementationOnce(() => ({
         canGet: () => true,
       }));
-      activityReportById.mockResolvedValue(report);
+      activityReportAndRecipientsById.mockResolvedValue(byIdResponse);
       userById.mockResolvedValue({
         id: mockUser.id,
       });
 
       await getReport(request, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith(report);
+      expect(mockResponse.json).toHaveBeenCalledWith(expected);
     });
 
     it('handles reports that are not found', async () => {
-      activityReportById.mockResolvedValue(null);
+      activityReportAndRecipientsById.mockResolvedValue([null]);
       await getReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
     });
 
     it('handles unauthorized requests', async () => {
-      activityReportById.mockResolvedValue(report);
+      activityReportAndRecipientsById.mockResolvedValue([report]);
       ActivityReport.mockImplementationOnce(() => ({
         canGet: () => false,
       }));
@@ -514,13 +542,21 @@ describe('Activity Report handlers', () => {
     };
 
     it('returns the updated report', async () => {
-      const result = { status: 'draft' };
+      const result = { status: 'draft', displayId: 'mockreport-1' };
+      activityReportAndRecipientsById.mockResolvedValue([report]);
       ActivityReport.mockImplementation(() => ({
         canReset: () => true,
       }));
-      setStatus.mockResolvedValue(result);
+      const setStatusResolvedValue = [{ dataValues: { ...result } }, [], []];
+      setStatus.mockResolvedValue(setStatusResolvedValue);
       await resetToDraft(request, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith(result);
+      const jsonResponse = {
+        ...result,
+        displayId: result.displayId,
+        activityRecipients: [],
+        goalsAndObjectives: [],
+      };
+      expect(mockResponse.json).toHaveBeenCalledWith(jsonResponse);
     });
 
     it('handles unauthorized', async () => {
@@ -688,6 +724,7 @@ describe('Activity Report handlers', () => {
         },
         activityReportCollaborators: [
           {
+            fullName: 'Jarty, SS, GS',
             user: {
               name: 'Jarty',
               role: ['System Specialist', 'Grantee Specialist'],

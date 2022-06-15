@@ -99,12 +99,12 @@ module.exports = {
     await queryInterface.bulkInsert('GoalTemplates', goalTemplates, { validate: true, individualHooks: true });
     await queryInterface.bulkInsert('Goals', goals, { validate: true, individualHooks: true });
 
-    await queryInterface.sequelize.query('ALTER SEQUENCE "GoalTemplates_id_seq" RESTART WITH 10;');
-    await queryInterface.sequelize.query('ALTER SEQUENCE "Goals_id_seq" RESTART WITH 10;');
+    await queryInterface.sequelize.query(`ALTER SEQUENCE "GoalTemplates_id_seq" RESTART WITH ${goalTemplates[goalTemplates.length - 1].id + 1};`);
+    await queryInterface.sequelize.query(`ALTER SEQUENCE "Goals_id_seq" RESTART WITH ${goals[goals.length - 1].id + 1};`);
   },
 
   down: async (queryInterface) => {
     await queryInterface.bulkDelete('Goals', null);
-    await queryInterface.bulkDelete('GrantGoals', null);
+    await queryInterface.bulkDelete('GoalTemplates', null);
   },
 };
