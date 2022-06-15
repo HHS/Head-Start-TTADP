@@ -9,6 +9,7 @@ import {
   ActivityReport,
   ActivityReportObjective,
   Objective,
+  // Topic,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
 import { RECIPIENTS_PER_PAGE, GOALS_PER_PAGE } from '../constants';
@@ -239,6 +240,12 @@ export async function getGoalsByActivityRecipient(
         as: 'objectives',
         required: false,
         include: [
+          /* TODO: Switch for New Goal Creation. */
+          /* {
+            model: Topic,
+            as: 'topics',
+            required: false,
+          }, */
           {
             attributes: ['ttaProvided'],
             model: ActivityReportObjective,
@@ -300,13 +307,25 @@ export async function getGoalsByActivityRecipient(
       if (o.activityReports && o.activityReports.length > 0) {
         // eslint-disable-next-line prefer-destructuring
         activityReport = o.activityReports[0];
+        /* TODO: Switch for New Goal Creation (Remove). */
         goalToAdd.goalTopics = Array.from(
           new Set([...goalToAdd.goalTopics, ...activityReport.topics]),
         );
+
         goalToAdd.reasons = Array.from(
           new Set([...goalToAdd.reasons, ...activityReport.reason]),
         );
       }
+
+      /* TODO: Switch for New Goal Creation. */
+      // Add Objective Topics.
+      /*
+      o.topics.forEach((t) => {
+        goalToAdd.goalTopics = Array.from(
+          new Set([...goalToAdd.goalTopics, t.name]),
+        );
+      });
+      */
 
       // Add Objective.
       goalToAdd.objectives.push({
