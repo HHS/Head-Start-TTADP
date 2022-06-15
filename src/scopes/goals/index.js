@@ -14,7 +14,7 @@ export const topicToQuery = {
     bef: (query) => beforeCreateDate(query),
     aft: (query) => afterCreateDate(query),
     win: (query) => withinCreateDate(query),
-    is: (query) => withinCreateDate(query),
+    in: (query) => withinCreateDate(query),
   },
   status: {
     in: (query) => withStatus(query),

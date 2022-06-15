@@ -1,4 +1,3 @@
-// File name needs to be non-standard so the modules load in the correct order.
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
@@ -17,9 +16,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     goalTemplateId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
     objectiveTemplateId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
   }, {
     sequelize,

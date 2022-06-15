@@ -21,7 +21,15 @@ describe('Activity report print and share view', () => {
     author: {
       fullName: 'Captain Tim Tina Boat',
     },
-    collaborators: ['Test', 'Test 2'],
+    activityReportCollaborators: [
+      {
+        fullName: 'Test',
+        user: { fullName: 'Test' },
+      },
+      {
+        fullName: 'Test 2',
+        user: { fullName: 'Test 2' },
+      }],
     approvers: [
       {
         id: 1, status: '', note: '', User: { id: 1, fullName: 'John Q Fullname' },
@@ -32,13 +40,14 @@ describe('Activity report print and share view', () => {
       },
     ],
     targetPopulations: ['Mid size sedans'],
+    activityRecipientType: 'recipient',
     specialistNextSteps: [],
     recipientNextSteps: [],
     participants: ['Commander of Pants', 'Princess of Castles'],
     numberOfParticipants: 3,
     reason: ['Needed it'],
-    startDate: '08/01/1968',
-    endDate: '08/02/1969',
+    startDate: '1968-08-01',
+    endDate: '1969-08-02',
     duration: 6.5,
     ttaType: ['training'],
     virtualDeliveryType: 'Phone',
@@ -46,13 +55,15 @@ describe('Activity report print and share view', () => {
     topics: ['Tea', 'cookies'],
     ECLKCResourcesUsed: ['http://website'],
     nonECLKCResourcesUsed: ['http://betterwebsite'],
-    attachments: [],
+    files: [],
     context: '',
-    goals: [],
+    goalsAndObjectives: [],
     objectivesWithoutGoals: [
       {
         title: 'Objective',
-        ttaProvided: 'All of it',
+        ActivityReportObjective: {
+          ttaProvided: 'All of it',
+        },
       },
     ],
     additionalNotes: '',
@@ -111,12 +122,14 @@ describe('Activity report print and share view', () => {
       nonECLKCResourcesUsed: [''],
       ttaType: ['technical assistance'],
       objectivesWithoutGoals: [],
-      goals: [{
+      goalsAndObjectives: [{
         name: 'Goal',
         objectives: [
           {
             title: 'Test',
-            ttaProvided: 'Why not?',
+            ActivityReportObjective: {
+              ttaProvided: 'Why not?',
+            },
           },
         ],
       }],
@@ -177,7 +190,7 @@ describe('Activity report print and share view', () => {
     await waitFor(() => {
       expect(screen.getByText(/technical assistance, virtual \(phone\)/i)).toBeInTheDocument();
       expect(screen.getByText('Goal')).toBeInTheDocument();
-      expect(screen.getByText(/test/i)).toBeInTheDocument();
+      expect(screen.getByText(/test 2/i)).toBeInTheDocument();
     });
   });
 

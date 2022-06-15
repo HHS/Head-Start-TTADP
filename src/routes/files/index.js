@@ -14,11 +14,11 @@ const router = express.Router();
 /**
  * API for file uploads
  */
-router.post('/', transactionWrapper(linkHandler));
+router.post('/link/', transactionWrapper(linkHandler));
 router.post('/', transactionWrapper(uploadHandler));
-router.delete('/:reportId?/:fileId?', checkReportIdParam, checkFileIdParam, transactionWrapper(deleteHandler));
-router.delete('/:reportObjectiveId?/:fileId?', checkReportObjectiveIdParam, checkFileIdParam, transactionWrapper(deleteHandler));
-router.delete('/:objectiveId?/:fileId?', checkObjectiveIdParam, checkFileIdParam, transactionWrapper(deleteHandler));
-router.delete('/:objectiveTemplateId?/:fileId?', checkObjectiveTemplateIdParam, checkFileIdParam, transactionWrapper(deleteHandler));
+router.delete('/r/:reportId?/:fileId?', checkReportIdParam, checkFileIdParam, transactionWrapper(deleteHandler));
+router.delete('/ro/:reportObjectiveId?/:fileId?', checkReportObjectiveIdParam, checkFileIdParam, transactionWrapper(deleteHandler));
+router.delete('/o/:objectiveId?/:fileId?', checkObjectiveIdParam, checkFileIdParam, transactionWrapper(deleteHandler));
+router.delete('/ot/:objectiveTemplateId?/:fileId?', checkObjectiveTemplateIdParam, checkFileIdParam, transactionWrapper(deleteHandler));
 
 export default router;

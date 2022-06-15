@@ -1,6 +1,6 @@
 import waitFor from 'wait-for-expect';
 import db, {
-  ActivityReport, User, Objective, ActivityReportObjective, sequelize,
+  ActivityRecipient, ActivityReport, User, Objective, ActivityReportObjective, sequelize,
 } from '../models';
 import { REPORT_STATUSES } from '../constants';
 
@@ -77,6 +77,7 @@ describe('Objectives DB service', () => {
     const objectiveIds = aros.map((aro) => aro.objectiveId);
     await ActivityReportObjective.destroy({ where: { activityReportId: report.id } });
     await Objective.destroy({ where: { id: objectiveIds } });
+    await ActivityRecipient.destroy({ where: { activityReportId: report.id } });
     await ActivityReport.destroy({ where: { id: report.id } });
     await User.destroy({ where: { id: mockUser.id } });
     await db.sequelize.close();

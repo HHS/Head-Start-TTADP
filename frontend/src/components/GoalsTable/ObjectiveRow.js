@@ -25,6 +25,7 @@ function ObjectiveRow({
     endDate,
     reasons,
     status,
+    grantNumber,
   } = objective;
 
   const viewOrEditLink = arStatus === 'approved' ? `/activity-reports/view/${arId}` : `/activity-reports/${arId}`;
@@ -61,7 +62,11 @@ function ObjectiveRow({
     },
     {
       stored: 'Complete',
-      display: 'Closed',
+      display: 'Complete',
+    },
+    {
+      stored: 'Completed',
+      display: 'Completed',
     },
     {
       stored: 'Not Started',
@@ -89,7 +94,7 @@ function ObjectiveRow({
   const getObjectiveStatusIcon = (() => {
     if (displayObjStatus === 'In progress') {
       return <InProgress />;
-    } if (displayObjStatus === 'Closed') {
+    } if (displayObjStatus === 'Complete' || displayObjStatus === 'Completed') {
       return <Closed />;
     }
     if (displayObjStatus === 'Not started') {
@@ -100,13 +105,13 @@ function ObjectiveRow({
 
   return (
     <>
-      <ul className="usa-list usa-list--unstyled display-inline-flex tta-smarthub--goal-row-obj-table-rows margin-bottom-2">
-        <li>
-          <span className="sr-only">Objective:</span>
+      <ul className="usa-list usa-list--unstyled display-flex tta-smarthub--goal-row-obj-table-rows margin-bottom-1 padding-2">
+        <li className="padding-x-105 padding-y-0 padding-left-0">
+          <span className="sr-only">Objective </span>
           {title}
         </li>
-        <li>
-          <span className="sr-only">Activity report:</span>
+        <li className="padding-x-105 padding-y-0">
+          <span className="sr-only">Activity reports </span>
           {' '}
           <Link
             to={linkToAr}
@@ -114,16 +119,20 @@ function ObjectiveRow({
             {arNumber}
           </Link>
         </li>
-        <li>
-          <span className="sr-only">End date:</span>
+        <li className="padding-x-105 padding-y-0">
+          <span className="sr-only">Grant number </span>
+          {grantNumber}
+        </li>
+        <li className="padding-x-105 padding-y-0">
+          <span className="sr-only">End date </span>
           {endDate}
         </li>
-        <li>
-          <span className="sr-only">Reasons:</span>
+        <li className="padding-x-105 padding-y-0">
+          <span className="sr-only">Reasons </span>
           {reasons && displayReasonsList(reasons.sort())}
         </li>
-        <li>
-          <span className="sr-only">Objective status:</span>
+        <li className="padding-x-105 padding-y-0 padding-right-0">
+          <span className="sr-only">Objective status </span>
           {getObjectiveStatusIcon}
           {displayObjStatus}
         </li>
@@ -143,6 +152,7 @@ export const objectivePropTypes = PropTypes.shape({
   endDate: PropTypes.string,
   reasons: PropTypes.arrayOf(PropTypes.string),
   status: PropTypes.string.isRequired,
+  grantNumber: PropTypes.string,
 });
 
 objectivePropTypes.defaultProps = {

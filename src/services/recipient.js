@@ -14,7 +14,6 @@ import orderRecipientsBy from '../lib/orderRecipientsBy';
 import { RECIPIENTS_PER_PAGE, GOALS_PER_PAGE } from '../constants';
 import filtersToScopes from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
-import { auditLogger } from '../logger';
 
 export async function allRecipients() {
   return Recipient.findAll({
@@ -51,7 +50,7 @@ export async function recipientById(recipientId, grantScopes) {
           'annualFundingMonth',
           'numberWithProgramTypes',
         ],
-        model: Grant,
+        model: Grant.unscoped(),
         as: 'grants',
         where: [{
           [Op.and]: [
@@ -124,7 +123,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
     },
     include: [{
       attributes: [],
-      model: Grant,
+      model: Grant.unscoped(),
       as: 'grants',
       required: true,
       where: [{
@@ -166,11 +165,39 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
   };
 }
 
+function calculatePreviousStatus(goal) {
+  // if we have a previous status recorded, return that
+  if (goal.previousStatus) {
+    return goal.previousStatus;
+  }
+
+  // otherwise we check to see if there is the goal is on an activity report,
+  // and also check the status
+  if (goal.objectives.length) {
+    const onAr = goal.objectives.some((objective) => objective.activityReports.length);
+    const isCompletedOrInProgress = goal.objectives.some((objective) => objective.status === 'In Progress' || objective.status === 'Complete');
+
+    if (onAr && isCompletedOrInProgress) {
+      return 'In Progress';
+    }
+
+    if (onAr && !isCompletedOrInProgress) {
+      return 'Not Started';
+    }
+  }
+
+  return null;
+}
+
 export async function getGoalsByActivityRecipient(
   recipientId,
   regionId,
   {
-    sortBy = 'goalStatus', sortDir = 'desc', offset = 0, limit = GOALS_PER_PAGE, ...filters
+    sortBy = 'goalStatus',
+    sortDir = 'desc',
+    offset = 0,
+    limit = GOALS_PER_PAGE,
+    ...filters
   },
 ) {
   // Scopes.
@@ -181,49 +208,62 @@ export async function getGoalsByActivityRecipient(
   const offSetNum = parseInt(offset, 10);
 
   // Get Goals.
-  let rows;
-  try {
-    rows = await Goal.findAll({
-      attributes: ['id', 'name', 'status', 'createdAt', 'goalNumber', 'previousStatus',
-        [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Not Started\' THEN 2 WHEN "Goal"."status" = \'In Progress\' THEN 3  WHEN "Goal"."status" = \'Closed\' THEN 4 WHEN "Goal"."status" = \'Suspended\' THEN 5 ELSE 6 END'), 'status_sort'],
-      ],
-      where: {
-        [Op.and]: scopes,
-      },
-      include: [
-        {
-          model: Grant,
-          as: 'grant',
-          attributes: ['id', 'recipientId', 'regionId'],
-          where: {
-            regionId,
-            recipientId,
-          },
+  const rows = await Goal.findAll({
+    attributes: ['id', 'name', 'status', 'createdAt', 'goalNumber', 'previousStatus',
+      [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Not Started\' THEN 2 WHEN "Goal"."status" = \'In Progress\' THEN 3  WHEN "Goal"."status" = \'Closed\' THEN 4 WHEN "Goal"."status" = \'Suspended\' THEN 5 ELSE 6 END'), 'status_sort'],
+    ],
+    where: {
+      onApprovedAR: true,
+      [Op.and]: scopes,
+    },
+    include: [
+      {
+        model: Grant,
+        as: 'grant',
+        attributes: [
+          'id', 'recipientId', 'regionId', 'number',
+        ],
+        where: {
+          regionId,
+          recipientId,
         },
-        {
-          attributes: ['id', 'title', 'status', 'goalId'],
-          model: Objective,
-          as: 'objectives',
-          required: false,
-          include: [{
+      },
+      {
+        attributes: [
+          'id',
+          'title',
+          'status',
+          'goalId',
+        ],
+        model: Objective,
+        as: 'objectives',
+        required: false,
+        include: [
+          {
             attributes: ['ttaProvided'],
             model: ActivityReportObjective,
             as: 'activityReportObjectives',
             required: false,
-          }, {
-            attributes: ['id', 'reason', 'topics', 'endDate', 'calculatedStatus', 'legacyId', 'regionId'],
+          },
+          {
+            attributes: [
+              'id',
+              'reason',
+              'topics',
+              'endDate',
+              'calculatedStatus',
+              'legacyId',
+              'regionId',
+            ],
             model: ActivityReport,
             as: 'activityReports',
             required: false,
-          }],
-        },
-      ],
-      order: orderGoalsBy(sortBy, sortDir),
-    });
-  } catch (err) {
-    auditLogger.error(JSON.stringify(err));
-    throw err;
-  }
+          },
+        ],
+      },
+    ],
+    order: orderGoalsBy(sortBy, sortDir),
+  });
 
   // Build Array of Goals.
   const goalRows = [];
@@ -250,49 +290,47 @@ export async function getGoalsByActivityRecipient(
       goalTopics: [],
       reasons: [],
       objectives: [],
-      previousStatus: g.previousStatus,
+      previousStatus: calculatePreviousStatus(g),
     };
 
     // Objectives.
-    if (g.objectives) {
-      g.objectives.forEach((o) => {
-        // Activity Report.
-        let activityReport;
-        if (o.activityReports && o.activityReports.length > 0) {
-          // eslint-disable-next-line prefer-destructuring
-          activityReport = o.activityReports[0];
-          goalToAdd.goalTopics = Array.from(
-            new Set([...goalToAdd.goalTopics, ...activityReport.topics]),
-          );
-          goalToAdd.reasons = Array.from(
-            new Set([...goalToAdd.reasons, ...activityReport.reason]),
-          );
-        }
+    g.objectives.forEach((o) => {
+      // Activity Report.
+      let activityReport;
+      if (o.activityReports && o.activityReports.length > 0) {
+        // eslint-disable-next-line prefer-destructuring
+        activityReport = o.activityReports[0];
+        goalToAdd.goalTopics = Array.from(
+          new Set([...goalToAdd.goalTopics, ...activityReport.topics]),
+        );
+        goalToAdd.reasons = Array.from(
+          new Set([...goalToAdd.reasons, ...activityReport.reason]),
+        );
+      }
 
-        // Add Objective.
-        // TODO: ttaProvided needs to move from ActivityReportObjective to ActivityReportObjective
-        goalToAdd.objectives.push({
-          id: o.id,
-          title: o.title,
-          arId: activityReport ? activityReport.id : null,
-          arNumber: activityReport ? activityReport.displayId : null,
-          arStatus: activityReport ? activityReport.calculatedStatus : null,
-          arLegacyId: activityReport ? activityReport.legacyId : null,
-          ttaProvided: o.ttaProvided,
-          endDate: activityReport ? activityReport.endDate : null,
-          reasons: activityReport ? activityReport.reason : null,
-          status: o.status,
-        });
+      // Add Objective.
+      goalToAdd.objectives.push({
+        id: o.id,
+        title: o.title,
+        arId: activityReport ? activityReport.id : null,
+        arNumber: activityReport ? activityReport.displayId : null,
+        arStatus: activityReport ? activityReport.calculatedStatus : null,
+        arLegacyId: activityReport ? activityReport.legacyId : null,
+        ttaProvided: o.ttaProvided,
+        endDate: activityReport ? activityReport.endDate : null,
+        reasons: activityReport ? activityReport.reason : null,
+        status: o.status,
+        activityReportObjectives: o.activityReportObjectives,
+        grantNumber: g.grant.number,
       });
-
-      // Sort Objectives by end date desc.
-      goalToAdd.objectives.sort((a, b) => ((
-        a.endDate === b.endDate ? a.id < b.id
-          : a.endDate < b.endDate) ? 1 : -1));
-      goalToAdd.objectiveCount = goalToAdd.objectives.length;
-      goalRows.push(goalToAdd);
-      goalCount += 1;
-    }
+    });
+    // Sort Objectives by end date desc.
+    goalToAdd.objectives.sort((a, b) => ((
+      a.endDate === b.endDate ? a.id < b.id
+        : a.endDate < b.endDate) ? 1 : -1));
+    goalToAdd.objectiveCount = goalToAdd.objectives.length;
+    goalRows.push(goalToAdd);
+    goalCount += 1;
   });
 
   return { count, goalRows };

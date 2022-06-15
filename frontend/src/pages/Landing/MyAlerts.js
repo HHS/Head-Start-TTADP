@@ -37,24 +37,23 @@ export function ReportsRow({ reports, removeAlert, message }) {
       displayId,
       activityRecipients,
       startDate,
-      collaborators,
       calculatedStatus,
       pendingApprovals,
       approvers,
       createdAt,
       creatorName,
+      activityReportCollaborators,
     } = report;
 
     const justSubmitted = message && message.reportId === id;
-
     const recipients = activityRecipients.map((ar) => (
-      ar.grant ? ar.grant.recipient.name : ar.name
+      ar.grant ? ar.grant.recipient.name : ar.otherEntity.name
     ));
 
     const approversToolTipText = approvers ? approvers.map((a) => a.User.fullName) : [];
-
-    const collaboratorNames = collaborators && collaborators.map((collaborator) => (
-      collaborator.fullName));
+    const collaboratorNames = activityReportCollaborators
+      ? activityReportCollaborators.map((collaborator) => (
+        collaborator.fullName)) : [];
 
     const idKey = `my_alerts_${id}`;
     const idLink = `/activity-reports/${id}`;

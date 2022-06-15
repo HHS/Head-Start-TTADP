@@ -20,9 +20,7 @@ export default function useARLocalStorage(key, defaultValue) {
 
     if (storedValue
       && storedValue.calculatedStatus
-      && (storedValue.calculatedStatus === REPORT_STATUSES.APPROVED
-        || storedValue.calculatedStatus === REPORT_STATUSES.SUBMITTED
-      )
+      && storedValue.calculatedStatus !== REPORT_STATUSES.DRAFT
     ) {
       toSave = false;
     }
@@ -33,8 +31,8 @@ export default function useARLocalStorage(key, defaultValue) {
   // we return the setter with a passthrough function that also adds local storage timestamps
   // to the report data object, that way we can show them on the relevant alerts and stuff
   // on the frontend
-  return [storedValue, (formData) => {
-    const savedToStorageTime = new Date().toISOString();
+  return [storedValue, (formData, updateSavedTime = false) => {
+    const savedToStorageTime = updateSavedTime ? new Date().toISOString() : null;
     const createdInLocalStorage = formData.createdInLocalStorage || savedToStorageTime;
     if (saveReport) {
       setStoredValue({

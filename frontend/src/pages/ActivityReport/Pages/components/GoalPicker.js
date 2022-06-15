@@ -140,6 +140,7 @@ const GoalPicker = ({
 };
 
 GoalPicker.propTypes = {
+  // grantIds: PropTypes.arrayOf(PropTypes.number).isRequired,
   availableGoals: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string,

@@ -5,97 +5,26 @@
   to that label. Be sure to pass in a description of the menu in the `label` prop. This prop
   is used as ellipsis' aria-label.
 */
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEllipsisH } from '@fortawesome/free-solid-svg-icons';
-import { Button } from '@trussworks/react-uswds';
 import colors from '../colors';
-import './ContextMenu.scss';
-
-const ESCAPE_KEY_CODE = 27;
+import Menu from './Menu';
 
 function ContextMenu({
-  label, menuItems, backgroundColor, left, up, className, menuClassName,
+  label, menuItems, backgroundColor, left, up,
 }) {
-  const [shown, updateShown] = useState(false);
-  const defaultClass = 'smart-hub--context-menu';
-
-  const onEscape = useCallback((event) => {
-    if (event.keyCode === ESCAPE_KEY_CODE) {
-      updateShown(false);
-    }
-  }, [updateShown]);
-
-  useEffect(() => {
-    document.addEventListener('keydown', onEscape, false);
-    return () => {
-      document.removeEventListener('keydown', onEscape, false);
-      updateShown(false);
-    };
-  }, [onEscape]);
-
-  const onBlur = (e) => {
-    const { currentTarget } = e;
-
-    setTimeout(() => {
-      if (!currentTarget.contains(document.activeElement) && shown) {
-        updateShown(false);
-      }
-    }, 0);
-  };
-
-  const placementClass = () => {
-    if (left && up) {
-      return 'smart-hub--context-menu__left_and_up';
-    }
-
-    if (left) {
-      return 'smart-hub--context-menu__left';
-    }
-
-    if (up) {
-      return 'smart-hub--context-menu__up';
-    }
-
-    return '';
-  };
-
-  const menuClass = `${defaultClass} ${placementClass()}`;
-
   return (
-    <div
-      onBlur={onBlur}
-      className="position-relative"
-    >
-      <Button
-        className={`smart-hub--context-menu-button smart-hub--button__no-margin ${className}`}
-        unstyled
-        aria-haspopup
-        onClick={() => { updateShown((previous) => !previous); }}
-        aria-label={label}
-        type="button"
-        data-testid="ellipsis-button"
-      >
-        <FontAwesomeIcon color={colors.textInk} icon={faEllipsisH} />
-      </Button>
-      {shown
-    && (
-    <div data-testid="menu" className={`${menuClass} ${menuClassName}`} style={{ backgroundColor }}>
-      <ul className="usa-list usa-list--unstyled" role="menu">
-        {menuItems.map((item) => (
-          <li key={item.label} role="menuitem">
-            <Button type="button" onClick={() => { updateShown(false); item.onClick(); }} unstyled className="smart-hub--context-menu-button smart-hub--button__no-margin">
-              <div className="smart-hub--context-menu-item-label">
-                {item.label}
-              </div>
-            </Button>
-          </li>
-        ))}
-      </ul>
-    </div>
-    )}
-    </div>
+    <Menu
+      label={label}
+      menuItems={menuItems}
+      backgroundColor={backgroundColor}
+      left={left}
+      up={up}
+      buttonText={<FontAwesomeIcon color={colors.textInk} icon={faEllipsisH} />}
+      buttonTestId="ellipsis-button"
+    />
   );
 }
 
@@ -108,16 +37,12 @@ ContextMenu.propTypes = {
   backgroundColor: PropTypes.string,
   left: PropTypes.bool,
   up: PropTypes.bool,
-  className: PropTypes.string,
-  menuClassName: PropTypes.string,
 };
 
 ContextMenu.defaultProps = {
   backgroundColor: 'white',
   left: true,
   up: false,
-  className: '',
-  menuClassName: '',
 };
 
 export default ContextMenu;

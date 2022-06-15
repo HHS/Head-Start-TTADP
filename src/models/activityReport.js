@@ -4,7 +4,6 @@ const { isEqual, uniqWith } = require('lodash');
 const { REPORT_STATUSES, USER_ROLES } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 const { beforeCreate, beforeUpdate, afterUpdate } = require('./hooks/activityReport');
-// const { auditLogger } = require('../logger');
 
 const generateCreatorNameWithRole = (ar) => {
   const creatorName = ar.author ? ar.author.name : '';
@@ -22,23 +21,11 @@ module.exports = (sequelize, DataTypes) => {
       ActivityReport.belongsTo(models.User, { foreignKey: 'lastUpdatedById', as: 'lastUpdatedBy' });
       ActivityReport.hasMany(models.ActivityRecipient, { foreignKey: 'activityReportId', as: 'activityRecipients' });
       ActivityReport.hasMany(models.ActivityReportCollaborator, { foreignKey: 'activityReportId', as: 'activityReportCollaborators' });
-      ActivityReport.belongsToMany(models.User, {
-        through: models.ActivityReportCollaborator,
-        // The key in the join table that points to the model defined in this file
-        foreignKey: 'activityReportId',
-        // The key in the join table that points to the "target" of the belongs to many (Users in
-        // this case)
-        otherKey: 'userId',
-        as: 'collaborators',
-      });
       ActivityReport.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
       ActivityReport.hasMany(models.ActivityReportFile, { foreignKey: 'activityReportId', as: 'reportFiles' });
       ActivityReport.belongsToMany(models.File, {
         through: models.ActivityReportFile,
-        // The key in the join table that points to the model defined in this file
         foreignKey: 'activityReportId',
-        // The key in the join table that points to the "target" of the belongs to many (Users in
-        // this case)
         otherKey: 'fileId',
         as: 'files',
       });
@@ -278,8 +265,8 @@ module.exports = (sequelize, DataTypes) => {
     },
   }, {
     hooks: {
-      beforeCreate: (instance) => beforeCreate(instance),
-      beforeUpdate: (instance) => beforeUpdate(instance),
+      beforeCreate: async (instance) => beforeCreate(instance),
+      beforeUpdate: async (instance) => beforeUpdate(instance),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
     sequelize,

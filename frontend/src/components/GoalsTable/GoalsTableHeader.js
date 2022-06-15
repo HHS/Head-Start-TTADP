@@ -35,11 +35,13 @@ export default function GoalsTableHeader({
   const { user } = useContext(UserContext);
   const hasButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
 
+  const showAddNewButton = hasActiveGrants && hasButtonPermissions && false;
+
   return (
-    <div className="desktop:display-flex">
+    <div className="desktop:display-flex padding-x-3">
       <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2">
         <h2 className="font-body-lg margin-left-2 margin-right-1 margin-y-3">{title}</h2>
-        { hasActiveGrants && hasButtonPermissions ? (
+        { showAddNewButton ? (
           <span className="smart-hub--table-controls desktop:margin-x-2 desktop:margin-y-0 margin-2 display-flex flex-row flex-align-center">
             <Link
               to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/new`}

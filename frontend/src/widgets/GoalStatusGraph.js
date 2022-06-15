@@ -129,11 +129,11 @@ export function GoalStatusChart({ data, loading }) {
         : (
           <>
             <div className="border-top border-gray-5">
-              <h3>
+              <p className="usa-prose text-bold">
                 {data.total}
                 {' '}
                 goals
-              </h3>
+              </p>
               {bars.map(({
                 count, percentage, label, color, ratio, total,
               }) => (

@@ -4,7 +4,6 @@ import {
 } from './index';
 
 const goalsUrl = join('/', 'api', 'goals');
-const recipientUrl = join('/', 'api', 'recipient');
 
 export async function goalById(goalId) {
   const url = join(goalsUrl, goalId);
@@ -29,12 +28,12 @@ export async function createOrUpdateGoals(goals) {
 
 export async function updateGoalStatus(
   goalId,
-  oldStatus,
   newStatus,
+  oldStatus,
   closeSuspendReason,
   closeSuspendContext,
 ) {
-  const recipientGoalsUrl = join(recipientUrl, goalId.toString(), 'changeStatus');
+  const recipientGoalsUrl = join(goalsUrl, goalId.toString(), 'changeStatus');
   const updatedGoal = await put(
     recipientGoalsUrl,
     {

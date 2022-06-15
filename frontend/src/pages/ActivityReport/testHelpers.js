@@ -50,9 +50,10 @@ export const formData = () => ({
   topics: 'first',
   userId: 1,
   goals: [],
+  goalsAndObjectives: [],
   updatedAt: new Date().toISOString(),
   creatorRole: 'Reporter',
-  attachments: [],
+  files: [],
   creatorNameWithRole: 'test',
 });
 
