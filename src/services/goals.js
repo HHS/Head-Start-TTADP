@@ -557,7 +557,13 @@ export async function saveGoalsForReport(goals, report) {
       }));
     } else {
       const {
-        objectives, grantIds, status: discardedStatus, grant, id: goalId, ...fields
+        objectives,
+        grantIds,
+        status: discardedStatus,
+        grant,
+        grantId,
+        id: goalId,
+        ...fields
       } = goal;
 
       const existingGoal = await Goal.findByPk(goalId);
@@ -573,15 +579,15 @@ export async function saveGoalsForReport(goals, report) {
         },
       });
 
-      newGoals = await Promise.all(goal.grantIds.map(async (grantId) => {
-        if (grantId === existingGoal.grantId) {
+      newGoals = await Promise.all(grantIds.map(async (gId) => {
+        if (gId === existingGoal.grantId) {
           return existingGoal;
         }
 
         const [newGoal] = await Goal.findOrCreate({
           where: {
             goalTemplateId: existingGoal.goalTemplateId,
-            grantId,
+            grantId: gId,
             status: {
               [Op.not]: 'Closed',
             },
@@ -610,7 +616,6 @@ export async function saveGoalsForReport(goals, report) {
 
   const currentGoalIds = currentGoals.flat().map((g) => g.id);
   await removeActivityReportGoalsFromReport(report.id, currentGoalIds);
-
   return removeUnusedGoalsObjectivesFromReport(report.id, currentObjectives);
 }
 
