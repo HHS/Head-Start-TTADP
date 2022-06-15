@@ -12,6 +12,7 @@ import {
   ActivityReportObjective,
   // ObjectiveTemplate,
   Objective,
+  /* TODO: Switch for New Goal Creation. */
   // ObjectiveTopic,
   // Topic,
 } from '../../models';
@@ -143,6 +144,8 @@ describe('Goals by Recipient Test', () => {
 
   let objectiveIds = [];
   let goalIds = [];
+
+  /* TODO: Switch for New Goal Creation. */
   // let topicIds = [];
   // let objectiveTopicIds = [];
 
@@ -359,6 +362,8 @@ describe('Goals by Recipient Test', () => {
 
     // Get Objective Ids for Delete.
     objectiveIds = objectives.map((o) => o.id);
+
+    /* TODO: Switch for New Goal Creation. */
     /*
     // Create Objective Topics.
     const topics = await Promise.all([
@@ -463,6 +468,8 @@ describe('Goals by Recipient Test', () => {
         id: objectiveIds,
       },
     });
+
+    /* TODO: Switch for New Goal Creation. */
     /*
     // Delete Objective Topics.
     await ObjectiveTopic.destroy({
