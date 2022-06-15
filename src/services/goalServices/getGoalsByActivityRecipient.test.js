@@ -12,8 +12,8 @@ import {
   ActivityReportObjective,
   // ObjectiveTemplate,
   Objective,
-  ObjectiveTopic,
-  Topic,
+  // ObjectiveTopic,
+  // Topic,
 } from '../../models';
 
 import { getGoalsByActivityRecipient } from '../recipient';
@@ -143,8 +143,8 @@ describe('Goals by Recipient Test', () => {
 
   let objectiveIds = [];
   let goalIds = [];
-  let topicIds = [];
-  let objectiveTopicIds = [];
+  // let topicIds = [];
+  // let objectiveTopicIds = [];
 
   beforeAll(async () => {
     // Create User.
@@ -359,7 +359,7 @@ describe('Goals by Recipient Test', () => {
 
     // Get Objective Ids for Delete.
     objectiveIds = objectives.map((o) => o.id);
-
+    /*
     // Create Objective Topics.
     const topics = await Promise.all([
       Topic.create({
@@ -394,6 +394,7 @@ describe('Goals by Recipient Test', () => {
     );
 
     objectiveTopicIds = objectiveTopics.map((o) => o.id);
+      */
 
     // AR Objectives.
     await Promise.all(
@@ -462,7 +463,7 @@ describe('Goals by Recipient Test', () => {
         id: objectiveIds,
       },
     });
-
+    /*
     // Delete Objective Topics.
     await ObjectiveTopic.destroy({
       where: {
@@ -476,7 +477,7 @@ describe('Goals by Recipient Test', () => {
         id: topicIds,
       },
     });
-
+    */
     // Delete Goals.
     await Goal.destroy({
       where: {
@@ -536,6 +537,7 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx[0].goalNumber).toBe(`R1-G-${goalRowsx[0].id}`);
       expect(goalRowsx[0].objectiveCount).toBe(1);
       expect(goalRowsx[0].reasons).toEqual(['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option']);
+      expect(goalRowsx[0].goalTopics).toEqual(['Child Assessment, Development, Screening', 'Communication']);
       expect(goalRowsx[0].objectives.length).toBe(1);
 
       // Goal 3.
@@ -544,7 +546,8 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx[1].goalNumber).toBe(`R1-G-${goalRowsx[1].id}`);
       expect(goalRowsx[1].objectiveCount).toBe(2);
       expect(goalRowsx[1].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRowsx[1].goalTopics).toEqual(['objective topic 2', 'objective topic 3']);
+      expect(goalRowsx[1].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
+      // expect(goalRowsx[1].goalTopics).toEqual(['objective topic 2', 'objective topic 3']);
 
       // Goal 3 Objectives.
       expect(goalRowsx[1].objectives.length).toBe(2);
@@ -566,6 +569,7 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx[2].goalNumber).toBe(`R1-G-${goalRowsx[2].id}`);
       expect(goalRowsx[2].objectiveCount).toBe(1);
       expect(goalRowsx[2].reasons).toEqual(['COVID-19 response', 'Complaint']);
+      expect(goalRowsx[2].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
       expect(goalRowsx[2].objectives.length).toBe(1);
 
       // Goal 1.
@@ -574,7 +578,8 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx[3].goalNumber).toBe(`R1-G-${goalRowsx[3].id}`);
       expect(goalRowsx[3].objectiveCount).toBe(1);
       expect(goalRowsx[3].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRowsx[3].goalTopics).toEqual(['objective topic 1']);
+      expect(goalRowsx[3].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
+      // expect(goalRowsx[3].goalTopics).toEqual(['objective topic 1']);
       expect(goalRowsx[3].objectives.length).toBe(1);
     });
   });
