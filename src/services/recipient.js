@@ -12,7 +12,7 @@ import {
   // Topic,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
-import { RECIPIENTS_PER_PAGE, GOALS_PER_PAGE } from '../constants';
+import { RECIPIENTS_PER_PAGE, GOALS_PER_PAGE, REPORT_STATUSES } from '../constants';
 import filtersToScopes from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
 
@@ -239,6 +239,9 @@ export async function getGoalsByActivityRecipient(
         model: Objective,
         as: 'objectives',
         required: false,
+        where: {
+          onApprovedAR: true,
+        },
         include: [
           /* TODO: Switch for New Goal Creation. */
           /* {
@@ -265,6 +268,9 @@ export async function getGoalsByActivityRecipient(
             model: ActivityReport,
             as: 'activityReports',
             required: false,
+            where: {
+              calculatedStatus: REPORT_STATUSES.APPROVED,
+            },
           },
         ],
       },
