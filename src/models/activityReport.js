@@ -229,9 +229,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.JSONB,
       comment: 'Storage for raw values from smartsheet CSV imports',
     },
-    topics: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
-    },
     sortedTopics: {
       type: DataTypes.VIRTUAL,
       get() {
