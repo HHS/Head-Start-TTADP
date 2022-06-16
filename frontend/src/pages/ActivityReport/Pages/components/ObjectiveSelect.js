@@ -14,13 +14,6 @@ export default function ObjectiveSelect({
   onRemove,
   noObjectiveError,
 }) {
-  let selection = selectedObjectives;
-
-  if (selectedObjectives.id) {
-    const { id, ...fields } = selectedObjectives;
-    selection = fields;
-  }
-
   return (
     <>
       <div className="display-flex flex-justify maxw-mobile-lg margin-top-5">
@@ -39,7 +32,7 @@ export default function ObjectiveSelect({
           options={options}
           styles={selectOptionsReset}
           placeholder="- Select -"
-          value={selection}
+          value={selectedObjectives}
         />
       </Label>
     </>
