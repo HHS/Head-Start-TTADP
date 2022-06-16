@@ -510,6 +510,10 @@ async function createObjectivesForGoal(goal, objectives, report) {
         },
         defaults: updatedObjective,
       });
+
+      if (status !== savedObjective.status) {
+        await savedObjective.update({ status }, { individualHooks: true });
+      }
     }
 
     const [arObjective] = await ActivityReportObjective.findOrCreate({
