@@ -1,5 +1,5 @@
 import db, {
-  sequelize,
+  // sequelize,
   ActivityReport,
   ActivityRecipient,
   ActivityReportGoal,
@@ -15,8 +15,8 @@ import { REPORT_STATUSES } from '../../constants';
 import { auditLogger } from '../../logger';
 import {
   copyStatus,
-  propagateApprovedStatus,
-  automaticStatusChangeOnAprovalForGoals,
+  // propagateApprovedStatus,
+  // automaticStatusChangeOnAprovalForGoals,
 } from '../hooks/activityReport';
 
 function sleep(milliseconds) {
@@ -234,7 +234,9 @@ describe('Activity Reports model', () => {
       where: { id: objectives.map((o) => o.id) },
     });
 
-    auditLogger.error(JSON.stringify({ location: 'preReport', preReport, goalsPre, objectivesPre }));
+    auditLogger.error(JSON.stringify({
+      location: 'preReport', preReport, goalsPre, objectivesPre,
+    }));
     await ActivityReport.update(
       { calculatedStatus: REPORT_STATUSES.APPROVED },
       { where: { id: report.id }, individualHooks: true },
@@ -265,7 +267,9 @@ describe('Activity Reports model', () => {
       where: { id: objectives.map((o) => o.id) },
     });
 
-    auditLogger.error(JSON.stringify({ location: 'postReport', postReport, goalsPost, objectivesPost }));
+    auditLogger.error(JSON.stringify({
+      location: 'postReport', postReport, goalsPost, objectivesPost,
+    }));
     // auditLogger.error(JSON.stringify(goalsPost));
     expect(goalsPost[0].onApprovedAR).not.toEqual(goalsPre[0].onApprovedAR);
     expect(objectivesPost[0].onApprovedAR).not.toEqual(objectivesPre[0].onApprovedAR);
@@ -304,8 +308,6 @@ describe('Activity Reports model', () => {
     expect(goalsPost2[0].onApprovedAR).not.toEqual(goalsPost[0].onApprovedAR);
     expect(objectivesPost2[0].onApprovedAR).not.toEqual(objectivesPost[0].onApprovedAR);
   });
-  // it('automaticStatusChangeOnAprovalForGoals', async () => {
-  // });
 
   it('activityRecipientId', async () => {
     expect(activityRecipients[0].activityRecipientId).toEqual(grant.id);

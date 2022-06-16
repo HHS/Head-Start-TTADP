@@ -71,8 +71,6 @@ describe('Goals', () => {
       const goal = await Goal.findOne({ where: { grantId: grant.id } });
       expect(goal.goalNumber).toEqual(`G-${goal.id}`);
     });
-    // it('propagateName', async () => {
-    // });
   });
   it('autoPopulateOnApprovedAR', async () => {
     let instance = {
