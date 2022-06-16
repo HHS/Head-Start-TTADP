@@ -65,6 +65,7 @@ export async function assignCDIGrant(grant, regionId, recipientId) {
   }, {
     fields: ['regionId', 'recipientId'],
     returning: true,
+    individualHooks: true,
   });
   return updatedGrant;
 }

@@ -47,6 +47,7 @@ const propagateTemplateName = async (sequelize, instance, options) => {
           ],
         },
         transaction: options.transaction,
+        individualHooks: true,
       },
     );
   }

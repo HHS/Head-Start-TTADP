@@ -89,6 +89,7 @@ export async function updateUser(req, res) {
       {
         include: [{ model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] }],
         where: { id: userId },
+        individualHooks: true,
       },
     );
     await Permission.destroy({ where: { userId } });

@@ -448,7 +448,7 @@ module.exports = {
               r."fullName",
               MIN(r."createdAt") "createdAt",
               MAX(r."updatedAt") "updatedAt",
-              MAX(r."updatedAt") "deletedAt",
+              MAX(r."deletedAt") "deletedAt",
               r."isSpecialist",
               r."mapsTo"
             FROM "Roles" r
@@ -485,7 +485,7 @@ module.exports = {
 
             PERFORM SETVAL('"Roles_id_seq"', COALESCE((SELECT MAX(id) +1 FROM "Roles"), 1), false);
             ------------------------------------------------------------------------------------
-            UPDATE ONLY "Roles"
+            UPDATE "Roles"
             SET "isSpecialist" = true
             WHERE "fullName" in (
               'Family Engagement Specialist',
@@ -495,7 +495,7 @@ module.exports = {
               'Grantee Specialist'
             );
             ------------------------------------------------------------------------------------
-            UPDATE ONLY "Roles"
+            UPDATE "Roles"
             SET "isSpecialist" = false
             WHERE "isSpecialist" IS NULL;
             ------------------------------------------------------------------------------------
@@ -527,7 +527,7 @@ module.exports = {
       // -------------------------------------------------------------------------------------------
       // -------------------------------------------------------------------------------------------
       // Add the foreign key relation from Goals table to GoalTemplates for recording the parent
-      // template leave goalTemplateId nullable for now until it can be populated with the IDs of
+      // template. Leave goalTemplateId nullable for now until it can be populated with the IDs of
       // the parent templates
       try {
         await queryInterface.addColumn('Goals', 'goalTemplateId', {
@@ -581,7 +581,7 @@ module.exports = {
       }
 
       // Add the foreign key relation from Objectives table to ObjectiveTemplates for recording the
-      // parent template leave goalTemplateId nullable for now until it can be populated with the
+      // parent template. Leave goalTemplateId nullable for now until it can be populated with the
       // IDs of the parent templates
       try {
         await queryInterface.addColumn('Objectives', 'objectiveTemplateId', {
@@ -618,11 +618,11 @@ module.exports = {
           `DO $$
           BEGIN
           ------------------------------------------------------------------------------------
-          UPDATE ONLY "Goals"
+          UPDATE ONLY "Objectives"
           SET "onApprovedAR" = false
           WHERE "onApprovedAR" IS NULL;
           ------------------------------------------------------------------------------------
-          ALTER TABLE "Goals"
+          ALTER TABLE "Objectives"
           ALTER COLUMN "onApprovedAR"
           SET NOT NULL;
           ------------------------------------------------------------------------------------
@@ -645,21 +645,64 @@ module.exports = {
       // -------------------------------------------------------------------------------------------
       // -------------------------------------------------------------------------------------------
 
-      // Move Topics from goals to current objectives
       try {
+        // Move Topics from Goals &  Activity Reports to current objectives
         await queryInterface.sequelize.query(
           `INSERT INTO "ObjectiveTopics" ("objectiveId", "topicId", "createdAt", "updatedAt")
-          SELECT DISTINCT
-            o.id "objectiveId",
-            tg."topicId",
-            tg."createdAt",
-            tg."updatedAt"
-          FROM "Objectives" o
-          JOIN "TopicGoals" tg
-          on o."goalId" = tg."goalId"
-          LEFT JOIN "ObjectiveTopics" ot
-          ON o.id = ot."objectiveId"
-          WHERE ot.id is null;`,
+          SELECT
+              gtart."objectiveId",
+              gtart."topicId",
+              MIN(gtart."createdAt") "createdAt",
+              MAX(gtart."updatedAt") "updatedAt"
+          FROM (
+              SELECT
+                  o.id "objectiveId",
+                  tg."topicId",
+                  MIN(tg."createdAt") "createdAt",
+                  MAX(tg."updatedAt") "updatedAt"
+              FROM "Objectives" o
+              JOIN "TopicGoals" tg
+              on o."goalId" = tg."goalId"
+              LEFT JOIN "ObjectiveTopics" ot
+              ON o.id = ot."objectiveId"
+              WHERE ot.id is null
+              GROUP BY
+                  o.id,
+                  tg."topicId"
+              UNION
+              SELECT
+                  art."objectiveId",
+                  t.id "topicId",
+                  MIN(art."createdAt") "createdAt",
+                  MAX(art."updatedAt") "updatedAt"
+              FROM (
+                  SELECT
+                      aro."objectiveId",
+                      UNNEST(ar.topics) topic,
+                      MIN(ar."createdAt") "createdAt",
+                      MAX(ar."updatedAt") "updatedAt"
+                  FROM "ActivityReports" ar
+                  JOIN "ActivityReportObjectives" aro
+                  ON ar.id = aro."activityReportId"
+                  GROUP BY
+                      aro."objectiveId",
+                      UNNEST(ar.topics)
+                  ) art
+              LEFT JOIN "Topics" t
+              ON art.topic = t.name
+              AND t."deletedAt" is null
+              LEFT JOIN "ObjectiveTopics" ot
+              ON art."objectiveId" = ot."objectiveId"
+              AND t.id = ot."topicId"
+              WHERE ot.id IS null
+              AND  t.id IS NOT null
+              GROUP BY
+                  art."objectiveId",
+                  t.id
+              ) gtart
+          GROUP BY
+              gtart."objectiveId",
+              gtart."topicId";`,
           { transaction },
         );
       } catch (err) {
@@ -667,9 +710,10 @@ module.exports = {
         throw (err);
       }
 
-      // Drop TopicGoals table
+      // Drop TopicGoals table & remove topics column from ActivityReports
       try {
         await queryInterface.dropTable('TopicGoals', { transaction });
+        await queryInterface.removeColumn('ActivityReports', 'topics', { transaction });
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
         throw (err);
