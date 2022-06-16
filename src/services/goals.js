@@ -141,10 +141,10 @@ export function goalById(id) {
           ['title', 'label'],
           'title',
           'status',
-          'ttaProvided',
         ],
         model: Objective,
         as: 'objectives',
+        required: false,
         include: [
           {
             model: ObjectiveResource,
@@ -153,6 +153,15 @@ export function goalById(id) {
               ['userProvidedUrl', 'value'],
               ['id', 'key'],
             ],
+            required: false,
+          },
+          {
+            model: ActivityReportObjective,
+            as: 'activityReportObjectives',
+            attributes: [
+              'ttaProvided',
+            ],
+            required: false,
           },
           {
             model: Topic,
@@ -161,6 +170,7 @@ export function goalById(id) {
               ['id', 'value'],
               ['name', 'label'],
             ],
+            required: false,
           },
           {
             model: ActivityReport,
@@ -271,14 +281,11 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
  * @param {Object} goals
  * @returns created or updated goal with grant goals
  */
-export async function createOrUpdateGoals(goals) {
-  // per a discussion with Patrice, we are disabling the backend "for real"
-  // for now (until the feature is ready to go)
-  // return goals;
-
+export async function createOrUpdateGoals(goals, report) {
   // there can only be one on the goal form (multiple grants maybe, but one recipient)
   // we will need this after the transaction, as trying to do a find all within a transaction
   // yields the previous data values
+
   let recipient;
 
   // eslint-disable-next-line max-len
@@ -291,9 +298,6 @@ export async function createOrUpdateGoals(goals) {
       objectives,
       ...fields
     } = goalData;
-
-    // there can only be one on the goal form (multiple grants maybe, but one recipient)
-    recipient = recipientId; // TODO: this is wrong
 
     let options = {
       ...fields,
