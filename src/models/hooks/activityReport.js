@@ -61,7 +61,9 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
           having: sequelize.literal('count(DISTINCT "activityReports"."calculatedStatus") > 0'),
         });
       } catch (e) {
-        auditLogger.error(JSON.stringify({ location: __filename, type: 'objectives', e, objectives }));
+        auditLogger.error(JSON.stringify({
+          location: __filename, type: 'objectives', e, objectives,
+        }));
         throw e;
       }
       auditLogger.error(JSON.stringify({ type: 'objectives', objectives }));
@@ -123,7 +125,9 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
           transaction: options.transaction,
         });
       } catch (e) {
-        auditLogger.error(JSON.stringify({ location: __filename, type: 'goals', e, goals }));
+        auditLogger.error(JSON.stringify({
+          location: __filename, type: 'goals', e, goals,
+        }));
         throw e;
       }
       auditLogger.error(JSON.stringify({ type: 'goals', goals }));
@@ -153,7 +157,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
             {
               attributes: [],
               model: sequelize.models.ActivityReportObjective,
-              as: 'objective',
+              as: 'activityReportObjectives',
               required: true,
               where: { activityReportId: instance.id },
             },

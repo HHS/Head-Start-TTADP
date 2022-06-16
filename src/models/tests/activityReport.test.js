@@ -81,6 +81,10 @@ const sampleReport = {
   oldApprovingManagerId: 1,
   numberOfParticipants: 1,
   deliveryMethod: 'method',
+  activityRecipientType: 'test',
+  creatorRole: 'COR',
+  topics: ['topic'],
+  participants: ['test'],
   duration: 0,
   endDate: '2020-01-01T12:00:00Z',
   startDate: '2020-01-01T12:00:00Z',
@@ -89,7 +93,7 @@ const sampleReport = {
   reason: ['reason'],
   ttaType: ['type'],
   regionId: 2,
-  targetPopulations: [],
+  targetPopulations: ['target pop'],
   author: {
     fullName: 'Kiwi, GS',
     name: 'Kiwi',
@@ -234,12 +238,12 @@ describe('Activity Reports model', () => {
       where: { id: objectives.map((o) => o.id) },
     });
 
-    auditLogger.error(JSON.stringify({ location: 'preReport', preReport, goalsPre, objectivesPre }));
-    await ActivityReport.update(
-      { calculatedStatus: REPORT_STATUSES.APPROVED },
-      { where: { id: report.id }, individualHooks: true },
+    auditLogger.error(JSON.stringify({
+      location: 'preReport', preReport, goalsPre, objectivesPre,
+    }));
+    await preReport.update(
+      { calculatedStatus: REPORT_STATUSES.APPROVED, submissionStatus: REPORT_STATUSES.SUBMITTED },
     );
-    sleep(5000);
     const postReport = await ActivityReport.findOne(
       { where: { id: report.id }, individualHooks: true },
     );
@@ -265,7 +269,6 @@ describe('Activity Reports model', () => {
       where: { id: objectives.map((o) => o.id) },
     });
 
-    auditLogger.error(JSON.stringify({ location: 'postReport', postReport, goalsPost, objectivesPost }));
     // auditLogger.error(JSON.stringify(goalsPost));
     expect(goalsPost[0].onApprovedAR).not.toEqual(goalsPre[0].onApprovedAR);
     expect(objectivesPost[0].onApprovedAR).not.toEqual(objectivesPre[0].onApprovedAR);
