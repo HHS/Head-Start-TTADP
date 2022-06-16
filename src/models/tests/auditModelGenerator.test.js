@@ -351,6 +351,7 @@ describe('Audit System', () => {
         {
           where: { id: addedUser.id },
           transaction: t,
+          individualHooks: true,
         },
       );
 

@@ -3,9 +3,8 @@ import { auditLogger } from '../../logger';
 
 const autoPopulateObjectiveTemplateId = async (sequelize, instance, options) => {
   // eslint-disable-next-line no-prototype-builtins
-  if (!instance.hasOwnProperty('objectiveTemplateId')
-  || instance.objectiveTemplateId === null
-  || instance.objectiveTemplateId === undefined) {
+  if (instance.objectiveTemplateId === undefined
+  || instance.objectiveTemplateId === null) {
     let regionId = null;
     // eslint-disable-next-line no-prototype-builtins
     if (instance.hasOwnProperty('goalId')
@@ -23,9 +22,8 @@ const autoPopulateObjectiveTemplateId = async (sequelize, instance, options) => 
       });
       regionId = goal.grant.regionId;
       // eslint-disable-next-line no-prototype-builtins
-    } else if (instance.hasOwnProperty('otherEntityId')
-    && instance.otherEntityId !== null
-    && instance.otherEntityId !== undefined) {
+    } else if (instance.otherEntityId !== undefined
+    && instance.otherEntityId !== null) {
       try {
         const otherEntity = await sequelize.models.OtherEntity.findAll({
           attributes: [
@@ -151,6 +149,7 @@ const linkObjectiveGoalTemplates = async (sequelize, instance, options) => {
       {
         where: { id: gtot.id },
         transaction: options.transaction,
+        individualHooks: true,
       },
     );
   }
@@ -158,12 +157,17 @@ const linkObjectiveGoalTemplates = async (sequelize, instance, options) => {
 
 const propagateTitle = async (sequelize, instance, options) => {
   const changed = instance.changed();
+  auditLogger.error(JSON.stringify({ changed, instance }));
   if (Array.isArray(changed) && changed.includes('title')) {
     await sequelize.models.ObjectiveTemplate.update(
-      { templateTitle: instance.title },
+      {
+        hash: sequelize.fn('md5', sequelize.fn('NULLIF', sequelize.fn('TRIM', instance.title), '')),
+        templateTitle: instance.title,
+      },
       {
         where: { id: instance.goalTemplateId },
         transaction: options.transaction,
+        individualHooks: true,
       },
     );
   }

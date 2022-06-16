@@ -446,6 +446,7 @@ describe('Activity report service', () => {
           { role: ['System Specialist'] },
           {
             where: { id: mockUserThree.id },
+            individualHooks: true,
           },
         );
 

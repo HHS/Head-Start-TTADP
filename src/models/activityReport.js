@@ -133,9 +133,6 @@ module.exports = (sequelize, DataTypes) => {
     participants: {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
-    topics: {
-      type: DataTypes.ARRAY(DataTypes.STRING),
-    },
     context: {
       type: DataTypes.TEXT,
     },

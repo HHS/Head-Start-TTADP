@@ -1,9 +1,14 @@
+import { GOAL_STATUS } from '../../constants';
+
 const autoPopulateGoalTemplateId = async (sequelize, instance, options) => {
-  // eslint-disable-next-line no-prototype-builtins
-  if (!instance.hasOwnProperty('goalTemplateId')
-  || instance.goalTemplateId === null
-  || instance.goalTemplateId === undefined) {
-    const grant = await sequelize.models.Grant.findOne({ where: { id: instance.grantId } });
+  if (instance.goalTemplateId === undefined
+  || instance.goalTemplateId === null) {
+    const grant = await sequelize.models.Grant.findOne({
+      attributes: ['regionId'],
+      where: { id: instance.grantId },
+      transaction: options.transaction,
+      include: false,
+    });
     const goalTemplate = await sequelize.models.GoalTemplate.findOrCreate({
       where: { hash: sequelize.fn('md5', sequelize.fn('NULLIF', sequelize.fn('TRIM', instance.name), '')), regionId: grant.regionId },
       defaults: {
@@ -19,7 +24,6 @@ const autoPopulateGoalTemplateId = async (sequelize, instance, options) => {
 };
 
 const autoPopulateOnApprovedAR = (sequelize, instance) => {
-  // eslint-disable-next-line no-prototype-builtins
   if (instance.onApprovedAR === undefined
     || instance.onApprovedAR === null) {
     instance.set('onApprovedAR', false);
@@ -29,8 +33,9 @@ const autoPopulateOnApprovedAR = (sequelize, instance) => {
 const preventNamChangeWhenOnApprovedAR = (sequelize, instance) => {
   if (instance.onApprovedAR === true) {
     const changed = instance.changed();
-    if (instance.id !== null && Array.isArray(changed)
-          && changed.includes('name')) {
+    if (instance.id !== null
+      && Array.isArray(changed)
+      && changed.includes('name')) {
       throw new Error('Goal name change now allowed for goals on approved activity reports.');
     }
   }
@@ -38,38 +43,40 @@ const preventNamChangeWhenOnApprovedAR = (sequelize, instance) => {
 
 const autoPopulateStatusChangeDates = (sequelize, instance) => {
   const changed = instance.changed();
-  if (Array.isArray(changed) && changed.includes('status')) {
+  if (Array.isArray(changed)
+    && changed.includes('status')) {
     const now = new Date();
     const { status } = instance;
     switch (status) {
-      case '':
+      case undefined:
       case null:
-      case 'Draft':
+      case '':
+      case GOAL_STATUS.DRAFT:
         break;
-      case 'Not Started':
+      case GOAL_STATUS.NOT_STARTED:
         if (instance.firstNotStartedAt === null
-          && instance.firstNotStartedAt === undefined) {
+          || instance.firstNotStartedAt === undefined) {
           instance.set('firstNotStartedAt', now);
         }
         instance.set('lastNotStartedAt', now);
         break;
-      case 'In Progress':
+      case GOAL_STATUS.IN_PROGRESS:
         if (instance.firstInProgressAt === null
-          && instance.firstInProgressAt === undefined) {
+          || instance.firstInProgressAt === undefined) {
           instance.set('firstInProgressAt', now);
         }
         instance.set('lastInProgressAt', now);
         break;
-      case 'Suspended':
+      case GOAL_STATUS.SUSPENDED:
         if (instance.firstSuspendedAt === null
-          && instance.firstSuspendedAt === undefined) {
+          || instance.firstSuspendedAt === undefined) {
           instance.set('firstSuspendedAt', now);
         }
         instance.set('lastSuspendedAt', now);
         break;
-      case 'Closed':
+      case GOAL_STATUS.CLOSED:
         if (instance.firstClosedAt === null
-          && instance.firstClosedAt === undefined) {
+          || instance.firstClosedAt === undefined) {
           instance.set('firstClosedAt', now);
         }
         instance.set('lastClosedAt', now);
@@ -88,6 +95,7 @@ const propagateName = async (sequelize, instance, options) => {
       {
         where: { id: instance.goalTemplateId },
         transaction: options.transaction,
+        individualHooks: true,
       },
     );
   }

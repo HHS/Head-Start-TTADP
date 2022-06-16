@@ -231,7 +231,11 @@ export async function createOrUpdateGoals(goals) {
     let newGoal;
 
     if (Number.isInteger(id)) {
-      const res = await Goal.update({ grantId, ...options }, { where: { id }, returning: true });
+      const res = await Goal.update({ grantId, ...options }, {
+        where: { id },
+        returning: true,
+        individualHooks: true,
+      });
       [, [newGoal]] = res;
     } else {
       delete fields.id;
@@ -496,7 +500,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       await savedObjective.update({
         title,
         status,
-      });
+      }, { individualHooks: true });
     } else {
       [savedObjective] = await Objective.findOrCreate({
         where: {
@@ -515,7 +519,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       },
     });
 
-    await arObjective.update({ ttaProvided });
+    await arObjective.update({ ttaProvided }, { individualHooks: true });
 
     return savedObjective;
   }));
@@ -567,7 +571,7 @@ export async function saveGoalsForReport(goals, report) {
       } = goal;
 
       const existingGoal = await Goal.findByPk(goalId);
-      await existingGoal.update({ status, ...fields });
+      await existingGoal.update({ status, ...fields }, { individualHooks: true });
       // eslint-disable-next-line max-len
       const existingGoalObjectives = await createObjectivesForGoal(existingGoal, objectives, report);
       currentObjectives = [...currentObjectives, ...existingGoalObjectives];
@@ -595,7 +599,7 @@ export async function saveGoalsForReport(goals, report) {
           defaults: { ...fields, status },
         });
 
-        await newGoal.update({ ...fields, status });
+        await newGoal.update({ ...fields, status }, { individualHooks: true });
 
         await ActivityReportGoal.findOrCreate({
           where: {
@@ -634,7 +638,7 @@ export async function updateGoalStatusById(
     closeSuspendReason,
     closeSuspendContext,
     previousStatus: oldStatus,
-  });
+  }, { individualHooks: true });
   return g;
 }
 

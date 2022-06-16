@@ -25,7 +25,6 @@ const reports = [
     reason: ['Child Incidents'],
     targetPopulations: ['Children with disabilities'],
     participants: ['Regional Head Start Association'],
-    topics: ['coaching'],
     ttaType: ['training'],
     pageState: JSON.stringify({
       1: 'Complete', 2: 'Complete', 3: 'Complete', 4: 'Complete',
