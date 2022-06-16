@@ -713,7 +713,6 @@ module.exports = {
       // Drop TopicGoals table & remove topics column from ActivityReports
       try {
         await queryInterface.dropTable('TopicGoals', { transaction });
-        await queryInterface.removeColumn('ActivityReports', 'topics', { transaction });
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
         throw (err);
