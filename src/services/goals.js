@@ -502,17 +502,25 @@ async function createObjectivesForGoal(goal, objectives, report) {
         status,
       }, { individualHooks: true });
     } else {
-      [savedObjective] = await Objective.findOrCreate({
+      const objectiveTitle = updatedObjective.title ? updatedObjective.title.trim() : '';
+
+      const existingObjective = await Objective.findOne({
         where: {
           goalId: updatedObjective.goalId,
-          title: updatedObjective.title,
+          title: objectiveTitle,
           status: { [Op.not]: 'Completed' },
         },
-        defaults: updatedObjective,
       });
 
-      if (status !== savedObjective.status) {
-        await savedObjective.update({ status }, { individualHooks: true });
+      if (existingObjective) {
+        await existingObjective.update({ status }, { individualHooks: true });
+        savedObjective = existingObjective;
+      } else {
+        savedObjective = await Objective.create({
+          ...updatedObjective,
+          title: objectiveTitle,
+          status,
+        });
       }
     }
 
