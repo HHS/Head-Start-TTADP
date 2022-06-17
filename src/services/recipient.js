@@ -240,7 +240,7 @@ export async function getGoalsByActivityRecipient(
         as: 'objectives',
         required: false,
         where: {
-          // onApprovedAR: true,
+          onApprovedAR: true,
         },
         include: [
           /* TODO: Switch for New Goal Creation. */

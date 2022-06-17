@@ -19,8 +19,9 @@ import { validateObjectives } from './components/objectiveValidator';
 import ConnectionError from './components/ConnectionError';
 
 const GoalsObjectives = () => {
-  const { watch } = useFormContext();
+  const { watch, setValue } = useFormContext();
   const recipients = watch('activityRecipients');
+  const goalsOnForm = watch('goals');
   const activityRecipientType = watch('activityRecipientType');
   const isRecipientReport = activityRecipientType === 'recipient';
   const grantIds = isRecipientReport ? recipients.map((r) => r.id || r.value) : [];
@@ -34,6 +35,22 @@ const GoalsObjectives = () => {
       try {
         if (isRecipientReport && hasGrants) {
           const fetchedGoals = await getGoals(grantIds);
+
+          const selectedGoals = goalsOnForm.map((g) => {
+            if (!g.isNew) {
+              return g;
+            }
+
+            const existingGoal = fetchedGoals.find((fetchedGoal) => fetchedGoal.name === g.name);
+
+            if (existingGoal) {
+              return { ...existingGoal, objectives: g.objectives, grantIds };
+            }
+
+            return g;
+          });
+
+          setValue('goals', selectedGoals);
           updateAvailableGoals(fetchedGoals);
         }
 
