@@ -15,11 +15,13 @@ export default function GrantSelect({
   setSelectedGrants,
   possibleGrants,
   validateGrantNumbers,
+  inputName,
+  label,
 }) {
   return (
     <FormGroup error={error.props.children}>
-      <Label htmlFor="recipientGrantNumbers" className={isOnReport ? 'text-bold' : ''}>
-        Recipient grant numbers
+      <Label htmlFor={inputName} className={isOnReport ? 'text-bold' : ''}>
+        {label}
         {' '}
         {!isOnReport ? <Req /> : null }
       </Label>
@@ -30,7 +32,7 @@ export default function GrantSelect({
           {error}
           <Select
             placeholder=""
-            inputId="recipientGrantNumbers"
+            inputId={inputName}
             onChange={setSelectedGrants}
             options={possibleGrants}
             styles={selectOptionsReset}
@@ -62,4 +64,11 @@ GrantSelect.propTypes = {
     value: PropTypes.number,
   })).isRequired,
   validateGrantNumbers: PropTypes.func.isRequired,
+  inputName: PropTypes.string,
+  label: PropTypes.string,
+};
+
+GrantSelect.defaultProps = {
+  inputName: 'recipientGrantNumbers',
+  label: 'Recipient grant numbers',
 };
