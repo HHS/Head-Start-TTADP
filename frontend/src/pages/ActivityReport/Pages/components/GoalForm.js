@@ -11,7 +11,6 @@ import {
   GOAL_NAME_ERROR,
 } from '../../../../components/GoalForm/constants';
 import { NO_ERROR, ERROR_FORMAT } from './constants';
-import GrantSelect from '../../../../components/GoalForm/GrantSelect';
 
 export default function GoalForm({
   goal,
@@ -19,15 +18,7 @@ export default function GoalForm({
   roles,
 }) {
   // pull the errors out of the form context
-  const { errors, getValues } = useFormContext();
-
-  const activityRecipients = getValues('activityRecipients');
-  const possibleRecipients = activityRecipients.map((recipient) => ({
-    value: recipient.id,
-    label: recipient.name,
-  }));
-
-  const recipientDefault = possibleRecipients.length === 1 ? possibleRecipients : [];
+  const { errors } = useFormContext();
 
   // memoize whether or not the end date is required, so we only
   // do it when the goal changes from new to not new
@@ -77,24 +68,6 @@ export default function GoalForm({
     defaultValue: goal && goal.name ? goal.name : '',
   });
 
-  const {
-    field: {
-      onChange: onUpdateGrants,
-      onBlur: onBlurGrants,
-      value: goalGrants,
-      name: goalGrantsInputName,
-    },
-  } = useController({
-    name: 'goalGrants',
-    rules: {
-      required: {
-        value: true,
-        message: GOAL_NAME_ERROR,
-      },
-    },
-    defaultValue: recipientDefault,
-  });
-
   // when the goal is updated in the selection, we want to update
   // the fields via the useController functions
   useEffect(() => {
@@ -123,18 +96,6 @@ export default function GoalForm({
 
   return (
     <>
-      {possibleRecipients.length > 1
-        ? (
-          <GrantSelect
-            error={NO_ERROR}
-            label="Recipients for goal"
-            selectedGrants={goalGrants}
-            setSelectedGrants={onUpdateGrants}
-            possibleGrants={possibleRecipients}
-            validateGrantNumbers={onBlurGrants}
-            inputName={goalGrantsInputName}
-          />
-        ) : null }
       <GoalText
         error={errors.goalName ? ERROR_FORMAT(errors.goalName.message) : NO_ERROR}
         isOnReport={false}
@@ -143,7 +104,6 @@ export default function GoalForm({
         onUpdateText={onUpdateText}
         inputName={goalTextInputName}
       />
-
       { endDateRequired
         ? (
           <GoalDate
@@ -154,10 +114,8 @@ export default function GoalForm({
             datePickerKey="end-date-key"
             inputName={goalEndDateInputName}
           />
-
         )
         : null }
-
       <Objectives
         goalId={goal.id}
         objectives={objectives}
