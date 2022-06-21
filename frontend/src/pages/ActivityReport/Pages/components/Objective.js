@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import { useController } from 'react-hook-form/dist/index.ie11';
@@ -92,7 +92,9 @@ export default function Objective({
     defaultValue: objective.resources,
   });
 
-  const defaultRoles = roles.length === 1 ? roles : objective.roles;
+  const defaultRoles = useMemo(() => (
+    roles.length === 1 ? roles : objective.roles
+  ), [objective.roles, roles]);
 
   const {
     field: {
@@ -125,7 +127,7 @@ export default function Objective({
         notEmptyTag: (value) => (value && value.trim() !== '<p></p>') || OBJECTIVE_TTA,
       },
     },
-    defaultValue: objective.ttaProvided,
+    defaultValue: objective.ttaProvided ? objective.ttaProvided : '',
   });
 
   const {
@@ -148,6 +150,12 @@ export default function Objective({
   const onChangeObjective = (newObjective) => {
     setSelectedObjectives(newObjective);
   };
+
+  useEffect(() => {
+    if (defaultRoles.length === 1 && !objectiveRoles.length) {
+      onChangeRoles(defaultRoles);
+    }
+  }, [defaultRoles, objectiveRoles.length, onChangeRoles]);
 
   useEffect(() => {
     // firing these off as side effects updates all the fields

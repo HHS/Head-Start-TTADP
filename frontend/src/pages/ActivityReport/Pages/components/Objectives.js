@@ -40,9 +40,10 @@ export default function Objectives({
     NEW_OBJECTIVE(),
     // filter out used objectives and return them in them in a format that react-select understands
     ...objectives.filter((objective) => !objectiveIds.includes(objective.id)).map((objective) => ({
+      ...objective,
       label: objective.title,
       value: objective.id,
-      ...objective,
+      isNew: false,
     })),
   ];
 
