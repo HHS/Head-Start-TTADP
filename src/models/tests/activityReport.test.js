@@ -1,5 +1,6 @@
 import db, {
-  sequelize,
+  // TODO: Commented to pass linter.
+  // sequelize,
   ActivityReport,
   ActivityRecipient,
   ActivityReportGoal,
@@ -15,8 +16,9 @@ import { REPORT_STATUSES } from '../../constants';
 import { auditLogger } from '../../logger';
 import {
   copyStatus,
-  propagateApprovedStatus,
-  automaticStatusChangeOnAprovalForGoals,
+  // TODO: Commented to pass linter.
+  // propagateApprovedStatus,
+  // automaticStatusChangeOnAprovalForGoals,
 } from '../hooks/activityReport';
 
 function sleep(milliseconds) {
@@ -244,9 +246,14 @@ describe('Activity Reports model', () => {
     await preReport.update(
       { calculatedStatus: REPORT_STATUSES.APPROVED, submissionStatus: REPORT_STATUSES.SUBMITTED },
     );
+
+    // TODO: Commented to pass linter.
+    /*
     const postReport = await ActivityReport.findOne(
       { where: { id: report.id }, individualHooks: true },
     );
+    */
+
     // auditLogger.error(JSON.stringify(goalsPre));
     // instance.changed = () => ['calculatedStatus'];
     // // eslint-disable-next-line no-unused-vars
@@ -307,6 +314,7 @@ describe('Activity Reports model', () => {
     expect(goalsPost2[0].onApprovedAR).not.toEqual(goalsPost[0].onApprovedAR);
     expect(objectivesPost2[0].onApprovedAR).not.toEqual(objectivesPost[0].onApprovedAR);
   });
+  // eslint-disable-next-line jest/no-commented-out-tests
   // it('automaticStatusChangeOnAprovalForGoals', async () => {
   // });
 
