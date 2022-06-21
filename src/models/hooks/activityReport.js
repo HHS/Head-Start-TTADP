@@ -1,6 +1,8 @@
 const { Op } = require('sequelize');
 const { REPORT_STATUSES } = require('../../constants');
 const { auditLogger } = require('../../logger');
+const { findOrCreateGoalTemplate } = require('./goal');
+const { findOrCreateObjectiveTemplate } = require('./objective');
 
 /**
  * Helper function called by model hooks.
@@ -16,6 +18,96 @@ const copyStatus = (instance) => {
   if (submissionStatus === REPORT_STATUSES.DRAFT
     || submissionStatus === REPORT_STATUSES.DELETED) {
     instance.set('calculatedStatus', submissionStatus);
+  }
+};
+
+const propogateSubmissionStatus = async (sequelize, instance, options) => {
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('submissionStatus')
+    && instance.submissionStatus === REPORT_STATUSES.SUBMITTED) {
+    let goals;
+    try {
+      goals = await sequelize.models.Goal.findAll({
+        where: { goalTemplateId: null },
+        include: [
+          {
+            attributes: [],
+            through: { attributes: [] },
+            model: sequelize.models.ActivityReport,
+            as: 'activityReports',
+            required: false,
+            where: {
+              id: instance.id,
+            },
+          },
+        ],
+        includeIgnoreAttributes: false,
+        transaction: options.transaction,
+      });
+      const templateIds = await Promise.all(goals.map(async (goal) => findOrCreateGoalTemplate(
+        sequelize,
+        options.transaction,
+        instance.regionId,
+        goal.name,
+        goal.createdAt,
+        goal.updatedAt,
+      )));
+      await Promise.all(goals.map(async (goal, i) => sequelize.models.Goal.update(
+        { goalTemplateId: templateIds[i] },
+        {
+          where: { id: goal.id },
+          transaction: options.transaction,
+        },
+      )));
+    } catch (e) {
+      auditLogger.error(JSON.stringify({ e }));
+      throw e;
+    }
+
+    let objectives;
+    try {
+      objectives = await sequelize.models.Objective.findAll({
+        where: { objectiveTemplateId: null },
+        include: [
+          {
+            attributes: [],
+            through: { attributes: [] },
+            model: sequelize.models.ActivityReport,
+            as: 'activityReports',
+            required: false,
+            where: {
+              id: instance.id,
+            },
+          },
+        ],
+        includeIgnoreAttributes: false,
+        transaction: options.transaction,
+      });
+      const templateIds = await Promise.all(objectives.map(async (
+        objective,
+      ) => findOrCreateObjectiveTemplate(
+        sequelize,
+        options.transaction,
+        instance.regionId,
+        objective.title,
+        objective.createdAt,
+        objective.updatedAt,
+      )));
+      await Promise.all(objectives.map(async (
+        objective,
+        i,
+      ) => sequelize.models.Objective.update(
+        { objectiveTemplateId: templateIds[i] },
+        {
+          where: { id: objective.id },
+          transaction: options.transaction,
+        },
+      )));
+    } catch (e) {
+      auditLogger.error(JSON.stringify({ e }));
+      throw e;
+    }
   }
 };
 
@@ -231,6 +323,7 @@ const beforeUpdate = async (instance) => {
   copyStatus(instance);
 };
 const afterUpdate = async (sequelize, instance, options) => {
+  await propogateSubmissionStatus(sequelize, instance, options);
   await propagateApprovedStatus(sequelize, instance, options);
   await automaticStatusChangeOnAprovalForGoals(sequelize, instance, options);
 };
