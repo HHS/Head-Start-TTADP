@@ -43,6 +43,8 @@ describe('Goals', () => {
         auditLogger.error(JSON.stringify(err));
       }
     });
+    // TODO: Commented to pass linter.
+    // eslint-disable-next-line jest/no-commented-out-tests
     // it('autoPopulateGoalTemplateId', async () => {
     //   try {
     //     const goalTemplatePre = await GoalTemplate.findAll({
@@ -71,6 +73,8 @@ describe('Goals', () => {
       const goal = await Goal.findOne({ where: { grantId: grant.id } });
       expect(goal.goalNumber).toEqual(`G-${goal.id}`);
     });
+    // TODO: Commented to pass linter.
+    // eslint-disable-next-line jest/no-commented-out-tests
     // it('propagateName', async () => {
     // });
   });

@@ -1,6 +1,7 @@
 /* eslint-disable no-restricted-syntax */
 import {
-  sequelize,
+  // TODO: Commented to pass linter.
+  // sequelize,
   ActivityReport,
 } from '../models';
 import { auditLogger } from '../logger';

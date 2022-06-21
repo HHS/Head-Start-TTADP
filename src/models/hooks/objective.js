@@ -212,7 +212,9 @@ const propagateTitle = async (sequelize, instance, options) => {
   }
 };
 
-const beforeValidate = async (sequelize, instance, options) => {
+// TODO: Commented to pass linter.
+/* const beforeValidate = async (sequelize, instance, options) => { */
+const beforeValidate = async (sequelize, instance) => {
   // await autoPopulateObjectiveTemplateId(sequelize, instance, options);
   autoPopulateOnApprovedAR(sequelize, instance);
   preventTitleChangeWhenOnApprovedAR(sequelize, instance);
