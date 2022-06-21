@@ -1,27 +1,41 @@
 import { GOAL_STATUS } from '../../constants';
 
-const autoPopulateGoalTemplateId = async (sequelize, instance, options) => {
-  if (instance.goalTemplateId === undefined
-  || instance.goalTemplateId === null) {
-    const grant = await sequelize.models.Grant.findOne({
-      attributes: ['regionId'],
-      where: { id: instance.grantId },
-      transaction: options.transaction,
-      include: false,
-    });
-    const goalTemplate = await sequelize.models.GoalTemplate.findOrCreate({
-      where: { hash: sequelize.fn('md5', sequelize.fn('NULLIF', sequelize.fn('TRIM', instance.name), '')), regionId: grant.regionId },
-      defaults: {
-        templateName: instance.name,
-        lastUsed: instance.createdAt,
-        regionId: grant.regionId,
-        creationMethod: 'Automatic',
-      },
-      transaction: options.transaction,
-    });
-    instance.set('goalTemplateId', goalTemplate[0].id);
-  }
+const findOrCreateGoalTemplate = async (sequelize, transaction, regionId, name, createdAt) => {
+  const goalTemplate = await sequelize.models.GoalTemplate.findOrCreate({
+    where: {
+      hash: sequelize.fn('md5', sequelize.fn('NULLIF', sequelize.fn('TRIM', name), '')),
+      regionId,
+    },
+    defaults: {
+      templateName: name,
+      lastUsed: createdAt,
+      regionId,
+      creationMethod: 'Automatic',
+    },
+    transaction,
+  });
+  return goalTemplate[0].id;
 };
+
+// const autoPopulateGoalTemplateId = async (sequelize, instance, options) => {
+//   if (instance.goalTemplateId === undefined
+//   || instance.goalTemplateId === null) {
+//     const grant = await sequelize.models.Grant.findOne({
+//       attributes: ['regionId'],
+//       where: { id: instance.grantId },
+//       transaction: options.transaction,
+//       include: false,
+//     });
+//     const templateId = await findOrCreateGoalTemplate(
+//       sequelize,
+//       options,
+//       grant.regionId,
+//       instance.name,
+//       instance.createdAt,
+//     );
+//     instance.set('goalTemplateId', templateId);
+//   }
+// };
 
 const autoPopulateOnApprovedAR = (sequelize, instance) => {
   if (instance.onApprovedAR === undefined
@@ -102,7 +116,7 @@ const propagateName = async (sequelize, instance, options) => {
 };
 
 const beforeValidate = async (sequelize, instance, options) => {
-  await autoPopulateGoalTemplateId(sequelize, instance, options);
+  // await autoPopulateGoalTemplateId(sequelize, instance, options);
   autoPopulateOnApprovedAR(sequelize, instance);
   preventNamChangeWhenOnApprovedAR(sequelize, instance);
   autoPopulateStatusChangeDates(sequelize, instance);
@@ -113,7 +127,8 @@ const afterUpdate = async (sequelize, instance, options) => {
 };
 
 export {
-  autoPopulateGoalTemplateId,
+  findOrCreateGoalTemplate,
+  // autoPopulateGoalTemplateId,
   autoPopulateOnApprovedAR,
   preventNamChangeWhenOnApprovedAR,
   autoPopulateStatusChangeDates,
