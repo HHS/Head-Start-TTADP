@@ -288,8 +288,9 @@ function ActivityReport({
 
         const [recipients, collaborators, availableApprovers] = await Promise.all(apiCalls);
 
-        const isCollaborator = report.collaborators
-          && report.collaborators.find((u) => u.id === user.id);
+        const isCollaborator = report.activityReportCollaborators
+          && report.activityReportCollaborators.find((u) => u.userId === user.id);
+
         const isAuthor = report.userId === user.id;
 
         // The report can be edited if its in draft OR needs_action state.
