@@ -120,7 +120,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
       // eslint-disable-next-line max-len
       // TODO: Run extensive check and update where required all used goals and objectives as not onApprovedAR
       let objectives;
-      console.log('11')
+      console.log('11');
       try {
         objectives = await sequelize.models.Objective.findAll({
           attributes: [
