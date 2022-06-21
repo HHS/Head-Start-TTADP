@@ -281,7 +281,7 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
  * @param {Object} goals
  * @returns created or updated goal with grant goals
  */
-export async function createOrUpdateGoals(goals, report) {
+export async function createOrUpdateGoals(goals) {
   // there can only be one on the goal form (multiple grants maybe, but one recipient)
   // we will need this after the transaction, as trying to do a find all within a transaction
   // yields the previous data values

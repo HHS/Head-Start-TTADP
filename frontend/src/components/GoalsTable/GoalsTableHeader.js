@@ -35,7 +35,7 @@ export default function GoalsTableHeader({
   const { user } = useContext(UserContext);
   const hasButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
 
-  const showAddNewButton = hasActiveGrants && hasButtonPermissions && false;
+  const showAddNewButton = hasActiveGrants && hasButtonPermissions;
 
   return (
     <div className="desktop:display-flex padding-x-3">
