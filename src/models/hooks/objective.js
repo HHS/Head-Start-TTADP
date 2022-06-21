@@ -1,74 +1,112 @@
 // import { Op } from 'sequelize';
 import { auditLogger } from '../../logger';
 
-const autoPopulateObjectiveTemplateId = async (sequelize, instance, options) => {
-  // eslint-disable-next-line no-prototype-builtins
-  if (!instance.hasOwnProperty('objectiveTemplateId')
-  || instance.objectiveTemplateId === null
-  || instance.objectiveTemplateId === undefined) {
-    let regionId = null;
-    // eslint-disable-next-line no-prototype-builtins
-    if (instance.hasOwnProperty('goalId')
-    && instance.goalId !== null
-    && instance.goalId !== undefined) {
-      const goal = await sequelize.models.Goal.findOne({
-        where: { id: instance.goalId },
-        include: [
-          {
-            model: sequelize.models.Grant,
-            as: 'grant',
-            attributes: ['regionId'],
-          },
-        ],
-      });
-      regionId = goal.grant.regionId;
-      // eslint-disable-next-line no-prototype-builtins
-    } else if (instance.hasOwnProperty('otherEntityId')
-    && instance.otherEntityId !== null
-    && instance.otherEntityId !== undefined) {
-      try {
-        const otherEntity = await sequelize.models.OtherEntity.findAll({
-          attributes: [
-            [sequelize.literal('array_agg(`ActivityReports`.regionId)'), 'regionIds'],
-          ],
-          where: { id: instance.otherEntityId },
-          include: [
-            {
-              model: sequelize.models.ActivityReport,
-              as: 'activityReports',
-              attribites: [],
-            },
-          ],
-          group: ['id'],
-        });
-        if (otherEntity.regionIds.length === 1) {
-          [regionId] = otherEntity.regionIds;
-        }
-      } catch (err) {
-        auditLogger.error(JSON.stringify(err));
-        throw err;
-      }
-    }
-
-    const objectiveTemplate = await sequelize.models.ObjectiveTemplate.findOrCreate({
-      where: { hash: sequelize.fn('md5', sequelize.fn('NULLIF', sequelize.fn('TRIM', instance.title), '')), regionId },
-      defaults: {
-        templateTitle: instance.title,
-        lastUsed: instance.createdAt,
-        regionId,
-        creationMethod: 'Automatic',
-      },
-      transaction: options.transaction,
-    });
-    instance.set('objectiveTemplateId', objectiveTemplate[0].id);
-  }
+const findOrCreateObjectiveTemplate = async (
+  sequelize,
+  transaction,
+  regionId,
+  title,
+  createdAt,
+) => {
+  const objectiveTemplate = await sequelize.models.ObjectiveTemplate.findOrCreate({
+    where: {
+      hash: sequelize.fn('md5', sequelize.fn('NULLIF', sequelize.fn('TRIM', title), '')),
+      regionId,
+    },
+    defaults: {
+      templateTitle: title,
+      lastUsed: createdAt,
+      regionId,
+      creationMethod: 'Automatic',
+    },
+    transaction,
+  });
+  return objectiveTemplate[0].id;
 };
+
+// const autoPopulateObjectiveTemplateId = async (sequelize, instance, options) => {
+//   try {
+//     if (instance.objectiveTemplateId === undefined
+//     || instance.objectiveTemplateId === null) {
+//       if (instance.id !== undefined) {
+//         const objective = await sequelize.models.Objective.findOne({
+//           where: { id: instance.id },
+//           transaction: options.transaction,
+//         });
+//         if (objective) {
+//           if (objective.objectiveTemplateId !== undefined
+//             && objective.objectiveTemplateId !== null) {
+//             return;
+//           }
+//           instance.set('title', objective.title);
+//         }
+//       }
+//       if (instance.title === undefined || instance.title === null) {
+//         auditLogger.error(JSON.stringify(instance));
+//         const err = new Error('Objective title is required');
+//         auditLogger.error(JSON.stringify(err));
+//         auditLogger.error(JSON.stringify(err.stack));
+//         throw err;
+//       }
+//       let regionId = null;
+//       if (instance.goalId !== undefined
+//       && instance.goalId !== null) {
+//         const goal = await sequelize.models.Goal.findOne({
+//           where: { id: instance.goalId },
+//           include: [
+//             {
+//               model: sequelize.models.Grant,
+//               as: 'grant',
+//               attributes: ['regionId'],
+//             },
+//           ],
+//         });
+//         regionId = goal.grant.regionId;
+//       } else if (instance.otherEntityId !== undefined
+//       && instance.otherEntityId !== null) {
+//         try {
+//           const otherEntity = await sequelize.models.OtherEntity.findAll({
+//             attributes: [
+//               [sequelize.literal('array_agg(`ActivityReports`.regionId)'), 'regionIds'],
+//             ],
+//             where: { id: instance.otherEntityId },
+//             include: [
+//               {
+//                 model: sequelize.models.ActivityReport,
+//                 as: 'activityReports',
+//                 attribites: [],
+//               },
+//             ],
+//             group: ['id'],
+//           });
+//           if (otherEntity.regionIds.length === 1) {
+//             [regionId] = otherEntity.regionIds;
+//           }
+//         } catch (err) {
+//           auditLogger.error(JSON.stringify(err));
+//           throw err;
+//         }
+//       }
+
+//       const templateId = await findOrCreateObjectiveTemplate(
+//         sequelize,
+//         options,
+//         regionId,
+//         instance.title,
+//         instance.createdAt,
+//       );
+//       instance.set('objectiveTemplateId', templateId);
+//     }
+//   } catch (err) {
+//     auditLogger.error(JSON.stringify(err));
+//     throw err;
+//   }
+// };
 
 const autoPopulateOnApprovedAR = (sequelize, instance) => {
   // eslint-disable-next-line no-prototype-builtins
-  if (!instance.hasOwnProperty('onApprovedAR')
-  || instance.onApprovedAR === null
-  || instance.onApprovedAR === undefined) {
+  if (instance.onApprovedAR === undefined
+    || instance.onApprovedAR === null) {
     instance.set('onApprovedAR', false);
   }
 };
@@ -92,28 +130,28 @@ const autoPopulateStatusChangeDates = (sequelize, instance) => {
         break;
       case 'Not Started':
         if (instance.firstNotStartedAt === null
-          && instance.firstNotStartedAt === undefined) {
+          || instance.firstNotStartedAt === undefined) {
           instance.set('firstNotStartedAt', now);
         }
         instance.set('lastNotStartedAt', now);
         break;
       case 'In Progress':
         if (instance.firstInProgressAt === null
-          && instance.firstInProgressAt === undefined) {
+          || instance.firstInProgressAt === undefined) {
           instance.set('firstInProgressAt', now);
         }
         instance.set('lastInProgressAt', now);
         break;
       case 'Suspended':
         if (instance.firstSuspendedAt === null
-          && instance.firstSuspendedAt === undefined) {
+          || instance.firstSuspendedAt === undefined) {
           instance.set('firstSuspendedAt', now);
         }
         instance.set('lastSuspendedAt', now);
         break;
       case 'Completed':
         if (instance.firstCompleteAt === null
-          && instance.firstCompleteAt === undefined) {
+          || instance.firstCompleteAt === undefined) {
           instance.set('firstCompleteAt', now);
         }
         instance.set('lastCompleteAt', now);
@@ -126,9 +164,8 @@ const autoPopulateStatusChangeDates = (sequelize, instance) => {
 
 const linkObjectiveGoalTemplates = async (sequelize, instance, options) => {
   // eslint-disable-next-line no-prototype-builtins
-  if (instance.hasOwnProperty('goalId')
-  && instance.goalId !== null
-  && instance.goalId !== undefined) {
+  if (instance.goalId !== undefined
+    && instance.goalId !== null) {
     const goal = await sequelize.models.Goal.findOne({
       where: { id: instance.goalId },
       transaction: options.transaction,
@@ -139,7 +176,7 @@ const linkObjectiveGoalTemplates = async (sequelize, instance, options) => {
         objectiveTemplateId: instance.objectiveTemplateId,
       },
       defaults: {
-        goalTemplateId: instance.goal.goalTemplateId,
+        goalTemplateId: goal.goalTemplateId,
         objectiveTemplateId: instance.objectiveTemplateId,
       },
       transaction: options.transaction,
@@ -151,6 +188,7 @@ const linkObjectiveGoalTemplates = async (sequelize, instance, options) => {
       {
         where: { id: gtot.id },
         transaction: options.transaction,
+        individualHooks: true,
       },
     );
   }
@@ -158,19 +196,24 @@ const linkObjectiveGoalTemplates = async (sequelize, instance, options) => {
 
 const propagateTitle = async (sequelize, instance, options) => {
   const changed = instance.changed();
+  auditLogger.error(JSON.stringify({ changed, instance }));
   if (Array.isArray(changed) && changed.includes('title')) {
     await sequelize.models.ObjectiveTemplate.update(
-      { templateTitle: instance.title },
+      {
+        hash: sequelize.fn('md5', sequelize.fn('NULLIF', sequelize.fn('TRIM', instance.title), '')),
+        templateTitle: instance.title,
+      },
       {
         where: { id: instance.goalTemplateId },
         transaction: options.transaction,
+        individualHooks: true,
       },
     );
   }
 };
 
-const beforeValidate = async (sequelize, instance, options) => {
-  await autoPopulateObjectiveTemplateId(sequelize, instance, options);
+const beforeValidate = async (sequelize, instance) => {
+  // await autoPopulateObjectiveTemplateId(sequelize, instance, options);
   autoPopulateOnApprovedAR(sequelize, instance);
   preventTitleChangeWhenOnApprovedAR(sequelize, instance);
   autoPopulateStatusChangeDates(sequelize, instance);
@@ -184,7 +227,8 @@ const afterUpdate = async (sequelize, instance, options) => {
 };
 
 export {
-  autoPopulateObjectiveTemplateId,
+  findOrCreateObjectiveTemplate,
+  // autoPopulateObjectiveTemplateId,
   autoPopulateOnApprovedAR,
   preventTitleChangeWhenOnApprovedAR,
   linkObjectiveGoalTemplates,

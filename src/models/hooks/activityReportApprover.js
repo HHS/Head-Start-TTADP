@@ -56,7 +56,7 @@ const afterCreate = async (sequelize, instance) => {
       calculatedStatus: newCalculatedStatus,
     }, {
       where: { id: instance.activityReportId },
-      hooks: false,
+      individualHooks: true,
     });
   }
   // End
@@ -83,7 +83,7 @@ const afterDestroy = async (sequelize, instance) => {
       calculatedStatus: newCalculatedStatus,
     }, {
       where: { id: instance.activityReportId },
-      hooks: false,
+      individualHooks: true,
     });
   }
 };
@@ -110,7 +110,7 @@ const afterRestore = async (sequelize, instance) => {
       calculatedStatus: newCalculatedStatus,
     }, {
       where: { id: instance.activityReportId },
-      hooks: false,
+      individualHooks: true,
     });
   }
   // End
@@ -138,7 +138,7 @@ const afterUpdate = async (sequelize, instance) => {
       calculatedStatus: newCalculatedStatus,
     }, {
       where: { id: instance.activityReportId },
-      hooks: false,
+      individualHooks: true,
     });
   }
   // End
@@ -189,7 +189,7 @@ const afterUpsert = async (sequelize, created) => {
 
     await sequelize.models.ActivityReport.update(updatedFields, {
       where: { id: instance.activityReportId },
-      hooks: false,
+      individualHooks: true,
     });
   }
   // End

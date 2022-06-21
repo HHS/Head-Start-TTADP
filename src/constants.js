@@ -142,3 +142,11 @@ export const CREATION_METHOD = [
   AUTOMATIC_CREATION,
   CURATED_CREATION,
 ];
+
+export const GOAL_STATUS = {
+  DRAFT: 'Draft',
+  NOT_STARTED: 'Not Started',
+  IN_PROGRESS: 'In Progress',
+  SUSPENDED: 'Suspended',
+  CLOSED: 'Closed',
+};

@@ -118,7 +118,10 @@ const getObjectiveTemplateFilesById = async (objectiveTemplateId) => ObjectiveTe
 const updateStatus = async (fileId, fileStatus) => {
   let file;
   try {
-    file = await File.update({ status: fileStatus }, { where: { id: fileId } });
+    file = await File.update({ status: fileStatus }, {
+      where: { id: fileId },
+      individualHooks: true,
+    });
     return file.dataValues;
   } catch (error) {
     return error;

@@ -313,7 +313,11 @@ export async function createOrUpdateGoals(goals) {
     let newGoal;
 
     if (Number.isInteger(id)) {
-      const res = await Goal.update({ grantId, ...options }, { where: { id }, returning: true });
+      const res = await Goal.update({ grantId, ...options }, {
+        where: { id },
+        returning: true,
+        individualHooks: true,
+      });
       [, [newGoal]] = res;
     } else {
       delete fields.id;
@@ -578,16 +582,28 @@ async function createObjectivesForGoal(goal, objectives, report) {
       await savedObjective.update({
         title,
         status,
-      });
+      }, { individualHooks: true });
     } else {
-      [savedObjective] = await Objective.findOrCreate({
+      const objectiveTitle = updatedObjective.title ? updatedObjective.title.trim() : '';
+
+      const existingObjective = await Objective.findOne({
         where: {
           goalId: updatedObjective.goalId,
-          title: updatedObjective.title,
+          title: objectiveTitle,
           status: { [Op.not]: 'Completed' },
         },
-        defaults: updatedObjective,
       });
+
+      if (existingObjective) {
+        await existingObjective.update({ status }, { individualHooks: true });
+        savedObjective = existingObjective;
+      } else {
+        savedObjective = await Objective.create({
+          ...updatedObjective,
+          title: objectiveTitle,
+          status,
+        });
+      }
     }
 
     const [arObjective] = await ActivityReportObjective.findOrCreate({
@@ -597,7 +613,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       },
     });
 
-    await arObjective.update({ ttaProvided });
+    await arObjective.update({ ttaProvided }, { individualHooks: true });
 
     await Promise.all((objective.topics.map((ot) => ObjectiveTopic.findOrCreate({
       where: {
@@ -680,7 +696,7 @@ export async function saveGoalsForReport(goals, report) {
       } = goal;
 
       const existingGoal = await Goal.findByPk(goalId);
-      await existingGoal.update({ status, ...fields });
+      await existingGoal.update({ status, ...fields }, { individualHooks: true });
       // eslint-disable-next-line max-len
       const existingGoalObjectives = await createObjectivesForGoal(existingGoal, objectives, report);
       currentObjectives = [...currentObjectives, ...existingGoalObjectives];
@@ -708,7 +724,7 @@ export async function saveGoalsForReport(goals, report) {
           defaults: { ...fields, status },
         });
 
-        await newGoal.update({ ...fields, status });
+        await newGoal.update({ ...fields, status }, { individualHooks: true });
 
         await ActivityReportGoal.findOrCreate({
           where: {
@@ -747,7 +763,7 @@ export async function updateGoalStatusById(
     closeSuspendReason,
     closeSuspendContext,
     previousStatus: oldStatus,
-  });
+  }, { individualHooks: true });
   return g;
 }
 
