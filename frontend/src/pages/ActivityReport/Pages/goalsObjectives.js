@@ -55,7 +55,7 @@ const GoalsObjectives = () => {
     },
   } = useController({
     name: 'isGoalFormClosed',
-    defaultValue: false,
+    defaultValue: selectedGoals.length > 0,
   });
 
   useDeepCompareEffect(() => {
@@ -63,7 +63,8 @@ const GoalsObjectives = () => {
       try {
         if (isRecipientReport && hasGrants) {
           const fetchedGoals = await getGoals(grantIds);
-          updateAvailableGoals(fetchedGoals);
+          const formattedGoals = fetchedGoals.map((g) => ({ ...g, grantIds }));
+          updateAvailableGoals(formattedGoals);
         }
 
         setFetchError(false);
@@ -203,6 +204,7 @@ const GoalsObjectives = () => {
             { fetchError ? <ConnectionError /> : null }
             <Fieldset className="margin-0">
               <GoalPicker
+                grantIds={grantIds}
                 availableGoals={availableGoals}
                 roles={roles}
               />

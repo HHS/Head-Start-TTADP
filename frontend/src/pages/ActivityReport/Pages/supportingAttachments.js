@@ -40,7 +40,7 @@ const SupportingAttachments = ({
           defaultValue={[]}
           control={control}
           render={({ onChange, value }) => (
-            <FileUploader files={value} onChange={onChange} reportId={reportId} id="attachments" />
+            <FileUploader files={value} onChange={onChange} reportId={reportId} id="files" />
           )}
         />
       </Fieldset>
@@ -55,11 +55,11 @@ SupportingAttachments.propTypes = {
 const ReviewSection = () => {
   const { watch } = useFormContext();
   const {
-    attachments,
+    files,
     calculatedStatus,
   } = watch();
 
-  const hasAttachments = attachments && attachments.length > 0;
+  const hasAttachments = files && files.length > 0;
   const canEdit = reportIsEditable(calculatedStatus);
 
   return (
@@ -68,11 +68,11 @@ const ReviewSection = () => {
         hidePrint={!hasAttachments}
         key="Attachments"
         basePath="supporting-attachments"
-        anchor="attachments"
+        anchor="files"
         title="Attachments"
         canEdit={canEdit}
       >
-        {attachments.map((file) => (
+        {files.map((file) => (
           <FileReviewItem
             key={file.url.url}
             filename={file.originalFileName}

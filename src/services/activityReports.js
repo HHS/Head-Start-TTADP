@@ -20,6 +20,7 @@ import {
   OtherEntity,
   Goal,
   User,
+  Role,
   NextStep,
   Objective,
   Program,
@@ -312,6 +313,10 @@ export async function activityReportAndRecipientsById(activityReportId) {
         required: false,
         include: [
           {
+            model: Role,
+            as: 'roles',
+          },
+          {
             attributes: ['ttaProvided', 'activityReportId'],
             model: ActivityReportObjective,
             as: 'activityReportObjectives',
@@ -319,6 +324,23 @@ export async function activityReportAndRecipientsById(activityReportId) {
               activityReportId: arId,
             },
             required: true,
+          },
+          {
+            attributes: [
+              ['id', 'value'],
+              ['name', 'label'],
+            ],
+            model: Topic,
+            as: 'topics',
+            required: false,
+          },
+          {
+            attributes: [
+              ['userProvidedUrl', 'value'],
+            ],
+            model: ObjectiveResource,
+            as: 'resources',
+            required: false,
           },
         ],
       },
@@ -615,9 +637,11 @@ export async function activityReports(
     },
   );
 
+  const reportIds = reports.rows.map(({ id }) => id);
+
   const recipients = await ActivityRecipient.findAll({
     where: {
-      activityReportId: reports.rows.map(({ id }) => id),
+      activityReportId: reportIds,
     },
     attributes: ['id', 'name', 'activityRecipientId', 'activityReportId'],
     // sorting these just so the order is testable
@@ -631,7 +655,31 @@ export async function activityReports(
     ],
   });
 
-  return { ...reports, recipients };
+  const topics = await Topic.findAll({
+    attributes: ['name', 'id'],
+    include: [
+      {
+        model: Objective,
+        attributes: ['id'],
+        as: 'objectives',
+        required: true,
+        include: {
+          attributes: ['activityReportId', 'objectiveId'],
+          model: ActivityReportObjective,
+          as: 'activityReportObjectives',
+          required: true,
+          where: {
+            activityReportId: reportIds,
+          },
+        },
+      },
+    ],
+    order: [
+      ['name', sortDir],
+    ],
+  });
+
+  return { ...reports, recipients, topics };
 }
 /**
  * Retrieves alerts based on the following logic:

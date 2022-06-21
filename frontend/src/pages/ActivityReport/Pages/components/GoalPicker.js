@@ -14,7 +14,7 @@ import { validateGoals } from './goalValidator';
 import './GoalPicker.css';
 import GoalForm from './GoalForm';
 
-export const newGoal = () => ({
+export const newGoal = (grantIds) => ({
   value: uuidv4(),
   number: false,
   label: 'Create new goal',
@@ -24,6 +24,7 @@ export const newGoal = () => ({
   id: 'new',
   isNew: true,
   endDate: '',
+  grantIds,
 });
 
 const components = {
@@ -32,7 +33,7 @@ const components = {
 };
 
 const GoalPicker = ({
-  availableGoals, roles,
+  availableGoals, roles, grantIds,
 }) => {
   const {
     control, setValue,
@@ -55,7 +56,7 @@ const GoalPicker = ({
         validateGoal: (g) => validateGoals([g]) === true,
       },
     },
-    defaultValue: newGoal(),
+    defaultValue: newGoal(grantIds),
   });
 
   // for fetching topic options from API
@@ -78,7 +79,7 @@ const GoalPicker = ({
   // We need options with the number and also we need to add the
   // "create new goal to the front of all the options"
   const options = [
-    newGoal(),
+    newGoal(grantIds),
     ...uniqueAvailableGoals.map(({
       goalNumber,
       ...goal
@@ -140,7 +141,7 @@ const GoalPicker = ({
 };
 
 GoalPicker.propTypes = {
-  // grantIds: PropTypes.arrayOf(PropTypes.number).isRequired,
+  grantIds: PropTypes.arrayOf(PropTypes.number).isRequired,
   availableGoals: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string,

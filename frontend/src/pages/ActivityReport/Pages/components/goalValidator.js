@@ -70,6 +70,7 @@ export const unfinishedGoals = (goals, setError = () => {}) => {
       }
     } else {
       setError('goalForEditing.objectives', { message: GOAL_MISSING_OBJECTIVE });
+
       return GOAL_MISSING_OBJECTIVE;
     }
   }

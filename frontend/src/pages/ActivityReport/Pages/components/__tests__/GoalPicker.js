@@ -60,7 +60,7 @@ describe('GoalPicker', () => {
 
   it('you can select a goal', async () => {
     const availableGoals = [{
-      ...newGoal(),
+      ...newGoal([]),
       label: 'Goal 1',
       value: 1,
     }];
@@ -78,7 +78,7 @@ describe('GoalPicker', () => {
 
   it('you can select a goal with no selected goals', async () => {
     const availableGoals = [{
-      ...newGoal(),
+      ...newGoal([]),
       label: 'Goal 1',
       value: 1,
     }];

@@ -15,6 +15,7 @@ export const NEW_OBJECTIVE = () => ({
   topics: [],
   roles: [],
   status: 'Not Started',
+  isNew: true,
 });
 
 export const OBJECTIVE_PROP = PropTypes.shape({

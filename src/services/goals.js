@@ -14,6 +14,8 @@ import {
   ActivityReportGoal,
   Topic,
   Program,
+  ObjectiveRole,
+  Role,
 } from '../models';
 import { DECIMAL_BASE, REPORT_STATUSES } from '../constants';
 
@@ -571,7 +573,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
 
     let savedObjective;
 
-    if (!isNew) {
+    if (!isNew && id) {
       savedObjective = await Objective.findByPk(id);
       await savedObjective.update({
         title,
@@ -596,6 +598,37 @@ async function createObjectivesForGoal(goal, objectives, report) {
     });
 
     await arObjective.update({ ttaProvided });
+
+    await Promise.all((objective.topics.map((ot) => ObjectiveTopic.findOrCreate({
+      where: {
+        objectiveId: savedObjective.id,
+        topicId: ot.value,
+      },
+    }))));
+
+    await Promise.all(
+      objective.resources.filter(({ value }) => value).map(
+        ({ value }) => ObjectiveResource.findOrCreate({
+          where: {
+            userProvidedUrl: value,
+            objectiveId: savedObjective.id,
+          },
+        }),
+      ),
+    );
+
+    const roles = await Role.findAll({
+      where: {
+        fullName: objective.roles,
+      },
+    });
+
+    await Promise.all(roles.map((r) => ObjectiveRole.findOrCreate({
+      where: {
+        roleId: r.id,
+        objectiveId: savedObjective.id,
+      },
+    })));
 
     return savedObjective;
   }));

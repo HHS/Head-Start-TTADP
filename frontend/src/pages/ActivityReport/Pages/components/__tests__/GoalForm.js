@@ -14,7 +14,7 @@ import GoalForm from '../GoalForm';
 describe('GoalForm', () => {
   const Form = ({ id }) => {
     const goal = {
-      ...newGoal(),
+      ...newGoal([]),
       id,
       isNew: id === 'new',
     };
