@@ -1,6 +1,5 @@
 /* eslint-disable no-restricted-syntax */
 import {
-  sequelize,
   ActivityReport,
 } from '../models';
 import { auditLogger } from '../logger';
