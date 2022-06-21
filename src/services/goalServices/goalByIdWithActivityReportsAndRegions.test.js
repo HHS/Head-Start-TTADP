@@ -22,7 +22,6 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
     recipientForFirstGrant = await Recipient.create({
       id: faker.datatype.number({ min: 64000 }), name: faker.random.alphaNumeric(6),
     });
-
     firstGrant = await Grant.create({
       number: recipientForFirstGrant.id,
       recipientId: recipientForFirstGrant.id,
@@ -30,7 +29,6 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
       regionId: 1,
       id: faker.datatype.number({ min: 64000 }),
     });
-
     goalOnActivityReport = await Goal.create({
       name: 'Goal on activity report',
       status: 'In Progress',
@@ -39,13 +37,11 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
       isFromSmartsheetTtaPlan: false,
       id: faker.datatype.number({ min: 64000 }),
     });
-
     const objective = await Objective.create({
       goalId: goalOnActivityReport.id,
       title: 'objective test',
       status: 'Not Started',
     });
-
     report = await createReport({
       regionId: 1,
       activityRecipients: [
@@ -53,13 +49,11 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
       ],
       calculatedStatus: REPORT_STATUSES.APPROVED,
     });
-
     await ActivityReportObjective.create({
       activityReportId: report.id,
       objectiveId: objective.id,
       ttaProvided: 'asdfadf',
     });
-
     goalOnOneGrant = await Goal.create({
       name: 'Goal on one grant',
       status: 'In Progress',

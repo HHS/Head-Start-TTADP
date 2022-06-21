@@ -246,14 +246,15 @@ function ActivityReport({
     history.replace();
   }, [activityReportId, history]);
 
+  const convertGoalsToFormData = (goals, grantIds) => goals.map((goal) => ({ ...goal, grantIds }));
+
   const convertReportToFormData = (fetchedReport) => {
     let grantIds = [];
     if (fetchedReport.activityRecipientType === 'recipient' && fetchedReport.activityRecipients) {
       grantIds = fetchedReport.activityRecipients.map(({ id }) => id);
     }
 
-    const goals = fetchedReport.goalsAndObjectives.map((goal) => ({ ...goal, grantIds }));
-
+    const goals = convertGoalsToFormData(fetchedReport.goalsAndObjectives, grantIds);
     const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed);
     const nonECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.nonECLKCResourcesUsed);
     const endDate = fetchedReport.endDate ? moment(fetchedReport.endDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : '';

@@ -112,7 +112,7 @@ describe('Update grants and recipients', () => {
     await processFiles();
     const grant = await Grant.findOne({ where: { id: 11630 } });
     // simulate updating an existing grant with null stateCode
-    await grant.update({ stateCode: null });
+    await grant.update({ stateCode: null }, { individualHooks: true });
     const grantWithNullStateCode = await Grant.findOne({ where: { id: 11630 } });
     expect(grantWithNullStateCode.stateCode).toBeNull();
     await processFiles();
@@ -124,7 +124,7 @@ describe('Update grants and recipients', () => {
     await processFiles();
     const grant = await Grant.findOne({ where: { id: 11630 } });
     // simulate updating an existing grant with null stateCode
-    await grant.update({ annualFundingMonth: null });
+    await grant.update({ annualFundingMonth: null }, { individualHooks: true });
     const grantWithNullAfm = await Grant.findOne({ where: { id: 11630 } });
     expect(grantWithNullAfm.annualFundingMonth).toBeNull();
     await processFiles();

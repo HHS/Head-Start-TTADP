@@ -35,6 +35,7 @@ const propagateCreateToTemplate = async (sequelize, instance, options) => {
       {
         where: { id: otf.id },
         transaction: options.transaction,
+        individualHooks: true,
       },
     );
   }
@@ -96,6 +97,7 @@ const propagateDestroyToTemplate = async (sequelize, instance, options) => {
         {
           where: { id: otfs.id },
           transaction: options.transaction,
+          individualHooks: true,
         },
       );
     } else {

@@ -1,6 +1,4 @@
-// const { Op } = require('sequelize');
-// import { auditLogger } from '../../logger';
-import { CREATION_METHOD } from '../../constants';
+import { AUTOMATIC_CREATION } from '../../constants';
 
 // When a new resource is added to an objective, add the resource to the template or update the
 // updatedAt value.
@@ -17,13 +15,9 @@ const propagateCreateToTemplate = async (sequelize, instance, options) => {
     ],
     transaction: options.transaction,
   });
-  if (objective.objectiveTemplate.creationMethod === CREATION_METHOD[0]) { // 'Automatic'
+  if (objective.objectiveTemplate.creationMethod === AUTOMATIC_CREATION) { // 'Automatic'
     const ott = await sequelize.models.ObjectiveTemplateTopic.findOrCreate({
       where: {
-        objectiveTemplateId: objective.objectiveTemplateId,
-        topicId: instance.topicId,
-      },
-      defaults: {
         objectiveTemplateId: objective.objectiveTemplateId,
         topicId: instance.topicId,
       },
@@ -36,6 +30,7 @@ const propagateCreateToTemplate = async (sequelize, instance, options) => {
       {
         where: { id: ott.id },
         transaction: options.transaction,
+        individualHooks: true,
       },
     );
   }
@@ -54,7 +49,7 @@ const propagateDestroyToTemplate = async (sequelize, instance, options) => {
     ],
     transaction: options.transaction,
   });
-  if (objective.objectiveTemplate.creationMethod === CREATION_METHOD[0]) { // 'Automatic'
+  if (objective.objectiveTemplate.creationMethod === AUTOMATIC_CREATION) { // 'Automatic'
     const ott = await sequelize.models.ObjectiveTemplateTopic.findOne({
       attributes: ['id'],
       where: {
@@ -87,6 +82,7 @@ const propagateDestroyToTemplate = async (sequelize, instance, options) => {
         {
           where: { id: ott.id },
           transaction: options.transaction,
+          individualHooks: true,
         },
       );
     } else {

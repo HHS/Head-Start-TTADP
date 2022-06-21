@@ -8,4 +8,4 @@ function generateFullName(name, role) {
   return combinedRoles.length > 0 ? `${name}${combinedRoles}` : name;
 }
 
-export default generateFullName;
+module.exports = generateFullName;
