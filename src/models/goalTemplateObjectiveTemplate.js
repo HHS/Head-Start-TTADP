@@ -4,7 +4,7 @@ module.exports = (sequelize, DataTypes) => {
   class GoalTemplateObjectiveTemplate extends Model {
     static associate(models) {
       GoalTemplateObjectiveTemplate.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: 'goalTemplate' });
-      GoalTemplateObjectiveTemplate.belongsTo(models.ObjectiveTemplate, { foreignKey: 'fileId', as: 'objectiveTemplate' });
+      GoalTemplateObjectiveTemplate.belongsTo(models.ObjectiveTemplate, { foreignKey: 'objectiveTemplateId', as: 'objectiveTemplate' });
     }
   }
   GoalTemplateObjectiveTemplate.init({
