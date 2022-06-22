@@ -267,7 +267,7 @@ describe('Activity Reports model', () => {
       where: { id: objectives.map((o) => o.id) },
     });
 
-    // auditLogger.error(JSON.stringify(goalsPost));
+    auditLogger.error(JSON.stringify({ objectivesPre, objectivesPost }));
     expect(goalsPost[0].onApprovedAR).not.toEqual(goalsPre[0].onApprovedAR);
     expect(objectivesPost[0].onApprovedAR).not.toEqual(objectivesPre[0].onApprovedAR);
 
@@ -275,7 +275,6 @@ describe('Activity Reports model', () => {
       { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
       { where: { id: report.id }, individualHooks: true },
     );
-    sleep(5000);
 
     // // eslint-disable-next-line no-unused-vars
     // instance.previous = (x) => REPORT_STATUSES.APPROVED;
@@ -296,11 +295,6 @@ describe('Activity Reports model', () => {
       ],
       where: { id: objectives.map((o) => o.id) },
     });
-    await ActivityReport.update(
-      { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
-      { where: { id: report.id }, individualHooks: true },
-    );
-    sleep(5000);
 
     expect(goalsPost2[0].onApprovedAR).not.toEqual(goalsPost[0].onApprovedAR);
     expect(objectivesPost2[0].onApprovedAR).not.toEqual(objectivesPost[0].onApprovedAR);
