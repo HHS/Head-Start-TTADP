@@ -53,7 +53,7 @@ const propagateDestroyToTemplate = async (sequelize, instance, options) => {
   });
   if (objective
     && objective.objectiveTemplateId !== null
-    && objective.objectiveTemplate.creationMethod === AUTOMATIC_CREATION) { // 'Automatic'
+    && objective.objectiveTemplate.creationMethod === AUTOMATIC_CREATION) {
     const ott = await sequelize.models.ObjectiveTemplateTopic.findOne({
       attributes: ['id'],
       where: {

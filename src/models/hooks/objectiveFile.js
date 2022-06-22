@@ -19,7 +19,7 @@ const propagateCreateToTemplate = async (sequelize, instance, options) => {
   if (objective
     && objective.objectiveTemplateId !== null
     && objective.objectiveTemplate.creationMethod === AUTOMATIC_CREATION) {
-    const otf = await sequelize.models.ObjectiveTemplateFile.findOrCreate({
+    const [otf] = await sequelize.models.ObjectiveTemplateFile.findOrCreate({
       where: {
         objectiveTemplateId: objective.objectiveTemplateId,
         fileId: instance.fileId,
