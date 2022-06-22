@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { ROW_CLASS, FIRST_COLUMN_CLASS, SECOND_COLUMN_CLASS } from './constants';
 import { STATUSES } from '../../../../components/GoalsTable/StatusDropdown';
-import NewLineList from './NewLineList';
+import List from './List';
 
 export default function PrintableObjective({ objective }) {
   const key = objective.status || 'Needs Status';
@@ -30,7 +30,7 @@ export default function PrintableObjective({ objective }) {
       </div>
       <div className={rowClass}>
         <p className={FIRST_COLUMN_CLASS}>Reasons</p>
-        <p className={SECOND_COLUMN_CLASS}><NewLineList list={objective.reasons} /></p>
+        <List className={SECOND_COLUMN_CLASS} list={objective.reasons} />
       </div>
       <div className={rowClass}>
         <p className={FIRST_COLUMN_CLASS}>Objective status</p>
