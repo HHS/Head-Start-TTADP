@@ -174,13 +174,10 @@ describe('Goals DB service', () => {
         }],
       };
       await saveGoalsForReport([goalWithNewObjective], { id: 1 });
-      expect(Objective.findOrCreate).toHaveBeenCalledWith({
-        where: {
-          goalId: 1,
-          title: 'title',
-          status: { [Op.not]: 'Completed' },
-        },
-        defaults: { goalId: 1, title: 'title', status: '' },
+      expect(Objective.create).toHaveBeenCalledWith({
+        goalId: 1,
+        title: 'title',
+        status: '',
       });
     });
 
