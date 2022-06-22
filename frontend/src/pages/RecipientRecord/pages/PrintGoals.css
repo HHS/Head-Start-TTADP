@@ -7,12 +7,8 @@
     .ttahub-print-goals h2 {
         font-size: 16pt;
     }
-
-    .ttahub-printable-goal {
-        padding: 0 !important;
-    }
-     
-    .ttahub-printable-goal .no-break-within:not(.ttahub-printable-objective){
+   
+    .ttahub-printable-goal .no-break-within{
         padding-left: 0 !important;
     }
 }

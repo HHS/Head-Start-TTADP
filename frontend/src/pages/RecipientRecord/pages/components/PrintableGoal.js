@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import PrintableObjective from './PrintableObjective';
 import { ROW_CLASS, FIRST_COLUMN_CLASS, SECOND_COLUMN_CLASS } from './constants';
 import { STATUSES } from '../../../../components/GoalsTable/StatusDropdown';
+import NewLineList from './NewLineList';
 
 export default function PrintableGoal({ goal }) {
   const key = goal.goalStatus || 'Needs Status';
@@ -10,7 +11,7 @@ export default function PrintableGoal({ goal }) {
 
   return (
     <div className="ttahub-printable-goal padding-x-3 padding-top-3 padding-bottom-2">
-      <h2 className="margin-top-0">
+      <h2 className="margin-top-0 padding-bottom-1 border-bottom-1px">
         Goal
         {' '}
         {goal.goalNumber}
@@ -32,7 +33,7 @@ export default function PrintableGoal({ goal }) {
       </div>
       <div className={ROW_CLASS}>
         <p className={FIRST_COLUMN_CLASS}>Topics</p>
-        <p className={SECOND_COLUMN_CLASS}>{goal.goalTopics.join(', ')}</p>
+        <p className={SECOND_COLUMN_CLASS}><NewLineList list={goal.goalTopics} /></p>
       </div>
       {goal.objectives.map(((objective) => (
         <PrintableObjective
