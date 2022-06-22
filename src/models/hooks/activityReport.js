@@ -159,7 +159,6 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
         throw e;
       }
       auditLogger.error(JSON.stringify({ type: 'objectives', objectives }));
-
       if (objectives && objectives.length > 0) {
         await sequelize.models.Objective.update(
           { onApprovedAR: false },
@@ -173,7 +172,6 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
           },
         );
       }
-
       let goals;
       try {
         goals = await sequelize.models.Goal.findAll({
@@ -223,7 +221,6 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
         throw e;
       }
       auditLogger.error(JSON.stringify({ type: 'goals', goals }));
-
       if (goals && goals.length > 0) {
         await sequelize.models.Goal.update(
           { onApprovedAR: false },
@@ -258,23 +255,22 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
           transaction: options.transaction,
         },
       );
-      auditLogger.error(JSON.stringify(objectivesAndGoals));
       await sequelize.models.Objective.update(
         { onApprovedAR: true },
         {
           where: {
-            id: { $in: objectivesAndGoals.map((o) => o.objectiveId) },
+            id: objectivesAndGoals.map((o) => o.objectiveId),
             onApprovedAR: false,
           },
           transaction: options.transaction,
           individualHooks: true,
         },
       );
-      await sequelize.models.Goals.update(
+      await sequelize.models.Goal.update(
         { onApprovedAR: true },
         {
           where: {
-            id: { $in: objectivesAndGoals.map((o) => o.goalId) },
+            id: objectivesAndGoals.map((o) => o.goalId),
             onApprovedAR: false,
           },
           transaction: options.transaction,
@@ -301,7 +297,7 @@ const automaticStatusChangeOnAprovalForGoals = async (sequelize, instance, optio
             model: sequelize.models.ActivityReport,
             as: 'activityReports',
             required: true,
-            where: { activityReportId: instance.id },
+            where: { id: instance.id },
           },
         ],
         transaction: options.transaction,
@@ -315,7 +311,6 @@ const automaticStatusChangeOnAprovalForGoals = async (sequelize, instance, optio
 };
 
 const beforeCreate = async (instance) => {
-  auditLogger.error(JSON.stringify(instance));
   copyStatus(instance);
 };
 
