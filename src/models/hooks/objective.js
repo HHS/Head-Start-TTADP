@@ -165,8 +165,11 @@ const autoPopulateStatusChangeDates = (sequelize, instance) => {
 const linkObjectiveGoalTemplates = async (sequelize, instance, options) => {
   // eslint-disable-next-line no-prototype-builtins
   if (instance.goalId !== undefined
-    && instance.goalId !== null) {
+    && instance.goalId !== null
+    && instance.objectiveTemplateId !== undefined
+    && instance.objectiveTemplateId !== null) {
     const goal = await sequelize.models.Goal.findOne({
+      attributes: ['goalTemplateId'],
       where: { id: instance.goalId },
       transaction: options.transaction,
     });
@@ -219,11 +222,9 @@ const beforeValidate = async (sequelize, instance, options) => {
   autoPopulateStatusChangeDates(sequelize, instance);
 };
 
-const afterCreate = async (sequelize, instance, options) => {
-  await linkObjectiveGoalTemplates(sequelize, instance, options);
-};
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateTitle(sequelize, instance, options);
+  await linkObjectiveGoalTemplates(sequelize, instance, options);
 };
 
 export {
@@ -234,6 +235,5 @@ export {
   linkObjectiveGoalTemplates,
   propagateTitle,
   beforeValidate,
-  afterCreate,
   afterUpdate,
 };
