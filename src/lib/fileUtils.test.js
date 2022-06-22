@@ -3,7 +3,7 @@ import { fileHash } from './fileUtils';
 describe('fileUtils', () => {
   it('fileHash', () => {
     expect(fileHash('./src/lib/fileUtils.test.hash'))
-      .toStrictEqual('d5c29a15ce6af61c44efc3cafdd5ba3f1747e21c93df528f3f44b98f55b1d812');
+      .toStrictEqual('94782dd987baf2016ca27379beb578ee7dd8485c5bc4c297649a2bc6d70df67f');
     expect(fileHash('bad path')).toStrictEqual(null);
     expect(fileHash('')).toStrictEqual(null);
     expect(fileHash(null)).toStrictEqual(null);
