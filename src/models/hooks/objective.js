@@ -173,7 +173,7 @@ const linkObjectiveGoalTemplates = async (sequelize, instance, options) => {
       where: { id: instance.goalId },
       transaction: options.transaction,
     });
-    const gtot = await sequelize.models.GoalTemplateObjectiveTemplate.findOrCreate({
+    const [gtot] = await sequelize.models.GoalTemplateObjectiveTemplate.findOrCreate({
       where: {
         goalTemplateId: goal.goalTemplateId,
         objectiveTemplateId: instance.objectiveTemplateId,
@@ -184,7 +184,7 @@ const linkObjectiveGoalTemplates = async (sequelize, instance, options) => {
       },
       transaction: options.transaction,
     });
-    await sequelize.models.goalTemplateObjectiveTemplate.update(
+    await sequelize.models.GoalTemplateObjectiveTemplate.update(
       {
         updatedAt: new Date(),
       },
@@ -215,7 +215,7 @@ const propagateTitle = async (sequelize, instance, options) => {
   }
 };
 
-const beforeValidate = async (sequelize, instance, options) => {
+const beforeValidate = async (sequelize, instance) => {
   // await autoPopulateObjectiveTemplateId(sequelize, instance, options);
   autoPopulateOnApprovedAR(sequelize, instance);
   preventTitleChangeWhenOnApprovedAR(sequelize, instance);
