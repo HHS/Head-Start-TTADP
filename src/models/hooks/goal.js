@@ -118,7 +118,7 @@ const propagateName = async (sequelize, instance, options) => {
   }
 };
 
-const beforeValidate = async (sequelize, instance, options) => {
+const beforeValidate = async (sequelize, instance) => {
   // await autoPopulateGoalTemplateId(sequelize, instance, options);
   autoPopulateOnApprovedAR(sequelize, instance);
   preventNamChangeWhenOnApprovedAR(sequelize, instance);

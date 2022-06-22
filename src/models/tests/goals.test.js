@@ -43,36 +43,10 @@ describe('Goals', () => {
         auditLogger.error(JSON.stringify(err));
       }
     });
-    // it('autoPopulateGoalTemplateId', async () => {
-    //   try {
-    //     const goalTemplatePre = await GoalTemplate.findAll({
-    //       where: { templateName: mockGoal.name },
-    //     });
-    //     const goal = await Goal.create({ ...mockGoal, grantId: grant.id });
-    //     const goalTemplatePost = await GoalTemplate.findAll({
-    //       where: { templateName: mockGoal.name },
-    //     });
-    //     expect(goalTemplatePre).toEqual([]);
-    //     expect(goalTemplatePost.length).toEqual(1);
-    //     expect(goalTemplatePost[0].id).toEqual(goal.goalTemplateId);
-    //     expect(goalTemplatePost[0].templateName).toEqual(goal.name);
-
-    //     const goal2 = await Goal.create({ name: `    ${mockGoal.name}    `, grantId: grant.id });
-    //     const goalTemplatePost2 = await GoalTemplate.findAll({
-    //       where: { templateName: mockGoal.name },
-    //     });
-    //     expect(goalTemplatePost2.length).toEqual(1);
-    //     expect(goal2.goalTemplateId).toEqual(goal.goalTemplateId);
-    //   } catch (err) {
-    //     auditLogger.error(JSON.stringify(err));
-    //   }
-    // });
     it('goalNumber', async () => {
       const goal = await Goal.findOne({ where: { grantId: grant.id } });
       expect(goal.goalNumber).toEqual(`G-${goal.id}`);
     });
-    // it('propagateName', async () => {
-    // });
   });
   it('autoPopulateOnApprovedAR', async () => {
     let instance = {

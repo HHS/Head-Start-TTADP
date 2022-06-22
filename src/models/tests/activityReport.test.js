@@ -1,5 +1,4 @@
 import db, {
-  sequelize,
   ActivityReport,
   ActivityRecipient,
   ActivityReportGoal,
@@ -15,8 +14,7 @@ import { REPORT_STATUSES } from '../../constants';
 import { auditLogger } from '../../logger';
 import {
   copyStatus,
-  propagateApprovedStatus,
-  automaticStatusChangeOnAprovalForGoals,
+
 } from '../hooks/activityReport';
 
 function sleep(milliseconds) {
@@ -244,7 +242,7 @@ describe('Activity Reports model', () => {
     await preReport.update(
       { calculatedStatus: REPORT_STATUSES.APPROVED, submissionStatus: REPORT_STATUSES.SUBMITTED },
     );
-    const postReport = await ActivityReport.findOne(
+    await ActivityReport.findOne(
       { where: { id: report.id }, individualHooks: true },
     );
     // auditLogger.error(JSON.stringify(goalsPre));
@@ -307,8 +305,6 @@ describe('Activity Reports model', () => {
     expect(goalsPost2[0].onApprovedAR).not.toEqual(goalsPost[0].onApprovedAR);
     expect(objectivesPost2[0].onApprovedAR).not.toEqual(objectivesPost[0].onApprovedAR);
   });
-  // it('automaticStatusChangeOnAprovalForGoals', async () => {
-  // });
 
   it('activityRecipientId', async () => {
     expect(activityRecipients[0].activityRecipientId).toEqual(grant.id);
