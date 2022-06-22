@@ -128,12 +128,7 @@ export function goalById(id) {
             },
             {
               status: {
-                [Op.not]: 'Complete',
-              },
-            },
-            {
-              status: {
-                [Op.not]: 'Draft',
+                [Op.notIn]: ['Complete', 'Draft'],
               },
             },
           ],
@@ -522,7 +517,7 @@ async function removeObjectives(currentObjectiveIds) {
 }
 
 export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObjectives) {
-  const previousObjectives = await ActivityReportObjective.findAll({
+  const previousActivityReportObjectives = await ActivityReportObjective.findAll({
     where: {
       activityReportId: reportId,
     },
@@ -542,7 +537,7 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
 
   const currentObjectiveIds = currentObjectives.map((o) => o.id);
 
-  const activityReportObjectivesToRemove = previousObjectives.filter(
+  const activityReportObjectivesToRemove = previousActivityReportObjectives.filter(
     (aro) => !currentObjectiveIds.includes(aro.objectiveId),
   );
 
