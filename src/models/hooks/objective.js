@@ -165,12 +165,15 @@ const autoPopulateStatusChangeDates = (sequelize, instance) => {
 const linkObjectiveGoalTemplates = async (sequelize, instance, options) => {
   // eslint-disable-next-line no-prototype-builtins
   if (instance.goalId !== undefined
-    && instance.goalId !== null) {
+    && instance.goalId !== null
+    && instance.objectiveTemplateId !== undefined
+    && instance.objectiveTemplateId !== null) {
     const goal = await sequelize.models.Goal.findOne({
+      attributes: ['goalTemplateId'],
       where: { id: instance.goalId },
       transaction: options.transaction,
     });
-    const gtot = await sequelize.models.GoalTemplateObjectiveTemplate.findOrCreate({
+    const [gtot] = await sequelize.models.GoalTemplateObjectiveTemplate.findOrCreate({
       where: {
         goalTemplateId: goal.goalTemplateId,
         objectiveTemplateId: instance.objectiveTemplateId,
@@ -181,7 +184,7 @@ const linkObjectiveGoalTemplates = async (sequelize, instance, options) => {
       },
       transaction: options.transaction,
     });
-    await sequelize.models.goalTemplateObjectiveTemplate.update(
+    await sequelize.models.GoalTemplateObjectiveTemplate.update(
       {
         updatedAt: new Date(),
       },
@@ -212,8 +215,6 @@ const propagateTitle = async (sequelize, instance, options) => {
   }
 };
 
-// TODO: Commented to pass linter.
-/* const beforeValidate = async (sequelize, instance, options) => { */
 const beforeValidate = async (sequelize, instance) => {
   // await autoPopulateObjectiveTemplateId(sequelize, instance, options);
   autoPopulateOnApprovedAR(sequelize, instance);
@@ -221,11 +222,9 @@ const beforeValidate = async (sequelize, instance) => {
   autoPopulateStatusChangeDates(sequelize, instance);
 };
 
-const afterCreate = async (sequelize, instance, options) => {
-  await linkObjectiveGoalTemplates(sequelize, instance, options);
-};
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateTitle(sequelize, instance, options);
+  await linkObjectiveGoalTemplates(sequelize, instance, options);
 };
 
 export {
@@ -236,6 +235,5 @@ export {
   linkObjectiveGoalTemplates,
   propagateTitle,
   beforeValidate,
-  afterCreate,
   afterUpdate,
 };

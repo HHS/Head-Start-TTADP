@@ -105,7 +105,6 @@ describe('saveGoalsForReport (more tests)', () => {
     goal = await Goal.create({
       name: 'This is an existing goal',
       status: 'In Progress',
-      goalTemplateId: faker.datatype.number({ min: 90000 }),
       grantId: grantOne.id,
       previousStatus: 'Not Started',
     });
@@ -117,7 +116,6 @@ describe('saveGoalsForReport (more tests)', () => {
 
     objective = await Objective.create({
       goalId: goal.id,
-      objectiveTemplateId: faker.datatype.number({ min: 90000 }),
       status: 'In Progress',
       title: 'This is an existing objective',
     });
