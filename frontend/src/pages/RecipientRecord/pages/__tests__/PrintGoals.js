@@ -86,10 +86,17 @@ describe('PrintGoals', () => {
   it('renders goals from API', async () => {
     renderPrintGoals();
     expect(await screen.findByText('This is goal text 1.')).toBeVisible();
-    expect(await screen.findByText('Human Resources, Safety Practices, Program Planning and Services')).toBeVisible();
+    const hr = await screen.findAllByText('Human Resources');
+    expect(hr.length).toBe(2);
+    hr.forEach((e) => expect(e).toBeVisible());
+    const sp = await screen.findAllByText('Safety Practices');
+    expect(sp.length).toBe(2);
+    sp.forEach((e) => expect(e).toBeVisible());
+    expect(await screen.findByText('Program Planning and Services')).toBeVisible();
     expect(await screen.findByText('This is goal text 2.')).toBeVisible();
-    expect(await screen.findByText('Human Resources, Safety Practices')).toBeVisible();
     expect(await screen.findByText('this is an objective')).toBeVisible();
-    expect(await screen.findByText('Empathy, Generosity, Friendship')).toBeVisible();
+    expect(await screen.findByText('Empathy')).toBeVisible();
+    expect(await screen.findByText('Generosity')).toBeVisible();
+    expect(await screen.findByText('Friendship')).toBeVisible();
   });
 });
