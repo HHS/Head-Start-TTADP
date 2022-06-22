@@ -109,12 +109,15 @@ export const TARGET_POPULATIONS = [
 ];
 
 export const ROLES = [
+  'Central Office',
+  'Other Federal Staff',
+  'National Center',
   'Regional Program Manager',
   'COR',
   'Supervisory Program Specialist',
   'Program Specialist',
   'Grants Specialist',
-  'Central Office',
+  'Customer Service Contract',
   'TTAC',
   'Admin. Assistant',
   'Early Childhood Manager',
