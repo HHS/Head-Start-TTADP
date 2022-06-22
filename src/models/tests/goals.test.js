@@ -68,8 +68,9 @@ describe('Goals', () => {
     //   }
     // });
     it('goalNumber', async () => {
-      const goal = await Goal.findOne({ where: { grantId: grant.id } });
+      const goal = await Goal.create({ ...mockGoal, grantId: grant.id });
       expect(goal.goalNumber).toEqual(`G-${goal.id}`);
+      await Goal.destroy({ where: { id: goal.id } });
     });
     // it('propagateName', async () => {
     // });
