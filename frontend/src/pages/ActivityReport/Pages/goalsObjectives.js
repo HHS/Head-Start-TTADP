@@ -25,7 +25,6 @@ const GoalsObjectives = () => {
   const activityRecipientType = watch('activityRecipientType');
   const isRecipientReport = activityRecipientType === 'recipient';
   const grantIds = isRecipientReport ? recipients.map((r) => r.id || r.value) : [];
-  console.log(grantIds);
 
   const [fetchError, setFetchError] = useState(false);
   const [availableGoals, updateAvailableGoals] = useState([]);
@@ -34,6 +33,7 @@ const GoalsObjectives = () => {
   useDeepCompareEffect(() => {
     const fetch = async () => {
       try {
+        console.log({ grantIds, isRecipientReport, hasGrants });
         if (isRecipientReport && hasGrants) {
           const fetchedGoals = await getGoals(grantIds);
 
