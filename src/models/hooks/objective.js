@@ -114,8 +114,9 @@ const autoPopulateOnApprovedAR = (sequelize, instance) => {
 const preventTitleChangeWhenOnApprovedAR = (sequelize, instance) => {
   if (instance.onApprovedAR === true) {
     const changed = instance.changed();
-    if (Array.isArray(changed)
-          && changed.includes('title')) {
+    if (instance.id !== null
+        && Array.isArray(changed)
+        && changed.includes('title')) {
       throw new Error('Objective title change not allowed for objectives on approved activity reports.');
     }
   }
