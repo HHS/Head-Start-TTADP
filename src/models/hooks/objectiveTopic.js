@@ -15,7 +15,8 @@ const propagateCreateToTemplate = async (sequelize, instance, options) => {
     ],
     transaction: options.transaction,
   });
-  if (objective.objectiveTemplate.creationMethod === AUTOMATIC_CREATION) { // 'Automatic'
+  if (objective
+    && objective.objectiveTemplate.creationMethod === AUTOMATIC_CREATION) { // 'Automatic'
     const ott = await sequelize.models.ObjectiveTemplateTopic.findOrCreate({
       where: {
         objectiveTemplateId: objective.objectiveTemplateId,
