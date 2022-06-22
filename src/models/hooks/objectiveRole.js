@@ -18,7 +18,7 @@ const propagateCreateToTemplate = async (sequelize, instance, options) => {
   if (objective
     && objective.objectiveTemplateId !== null
     && objective.objectiveTemplate.creationMethod === AUTOMATIC_CREATION) {
-    const otr = await sequelize.models.ObjectiveTemplateRole.findOrCreate({
+    const [otr] = await sequelize.models.ObjectiveTemplateRole.findOrCreate({
       where: {
         objectiveTemplateId: objective.objectiveTemplateId,
         roleId: instance.roleId,
