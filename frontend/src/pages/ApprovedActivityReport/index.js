@@ -239,7 +239,7 @@ export default function ApprovedActivityReport({ match, user }) {
         const requester = formatRequester(data.requester);
 
         // second table
-        const topics = formatSimpleArray(data.topics);
+        const topics = formatSimpleArray(data.topics || []);
         const ECLKCResources = createResourceMarkup(data.ECLKCResourcesUsed);
         const nonECLKCResourcesUsed = createResourceMarkup(data.nonECLKCResourcesUsed);
         const attachments = mapAttachments(data.files);
