@@ -33,7 +33,6 @@ const GoalsObjectives = () => {
   useDeepCompareEffect(() => {
     const fetch = async () => {
       try {
-        console.log({ grantIds, isRecipientReport, hasGrants });
         if (isRecipientReport && hasGrants) {
           const fetchedGoals = await getGoals(grantIds);
 
