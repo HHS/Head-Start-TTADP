@@ -122,7 +122,7 @@ describe('Navigator', () => {
   it('onContinue calls onSave with correct page position', async () => {
     const onSave = jest.fn();
     renderNavigator('second', () => {}, onSave);
-    userEvent.click(screen.getByRole('button', { name: 'Save and Continue' }));
+    userEvent.click(screen.getByRole('button', { name: 'Save and continue' }));
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(
       {
         pageState: { ...initialData.pageState, 2: COMPLETE },
@@ -220,7 +220,7 @@ describe('Navigator', () => {
     expect(saveGoal.textContent).toBe('Save goal');
     expect(saveGoal).toBeVisible();
     userEvent.click(saveGoal);
-    expect(saveGoal.textContent).toBe('Save and Continue');
+    expect(saveGoal.textContent).toBe('Save and continue');
   });
 
   it('shows an error when save fails', async () => {

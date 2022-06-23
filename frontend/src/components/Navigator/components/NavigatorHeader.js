@@ -1,23 +1,20 @@
-/*
-  USWDS step indicator header, grabbed from https://designsystem.digital.gov/components/step-indicator/
-  The uswds react library we use doesn't have this component yet.
-*/
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 
 const NavigatorHeader = ({ label, titleOverride, formData }) => {
+  const heading = useRef();
+
   useEffect(() => {
-    document.getElementsByClassName('usa-step-indicator__heading-text')[0].focus();
+    if (heading) {
+      heading.current.focus();
+    }
   }, []);
 
   const finalLabel = titleOverride ? titleOverride(formData) : label;
 
   return (
-    <div className="usa-step-indicator__header">
-      <h2 className="usa-step-indicator__heading">
-        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
-        <span tabIndex="0" className="usa-step-indicator__heading-text">{finalLabel}</span>
-      </h2>
+    <div className="padding-top-2">
+      <h2 className="font-family-serif" ref={heading}>{finalLabel}</h2>
     </div>
   );
 };
