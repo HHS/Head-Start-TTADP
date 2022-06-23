@@ -15,9 +15,9 @@ const propagateCreateToTemplate = async (sequelize, instance, options) => {
     ],
     transaction: options.transaction,
   });
-  if (
-    objective && objective.objectiveTemplate.creationMethod === AUTOMATIC_CREATION
-  ) { // 'Automatic'
+  if (objective
+    && objective.objectiveTemplateId !== null
+    && objective.objectiveTemplate.creationMethod === AUTOMATIC_CREATION) {
     const [ott] = await sequelize.models.ObjectiveTemplateTopic.findOrCreate({
       where: {
         objectiveTemplateId: objective.objectiveTemplateId,
@@ -51,9 +51,9 @@ const propagateDestroyToTemplate = async (sequelize, instance, options) => {
     ],
     transaction: options.transaction,
   });
-  if (
-    objective && objective.objectiveTemplate.creationMethod === AUTOMATIC_CREATION
-  ) { // 'Automatic'
+  if (objective
+    && objective.objectiveTemplateId !== null
+    && objective.objectiveTemplate.creationMethod === AUTOMATIC_CREATION) {
     const ott = await sequelize.models.ObjectiveTemplateTopic.findOne({
       attributes: ['id'],
       where: {

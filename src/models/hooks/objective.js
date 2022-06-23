@@ -114,8 +114,9 @@ const autoPopulateOnApprovedAR = (sequelize, instance) => {
 const preventTitleChangeWhenOnApprovedAR = (sequelize, instance) => {
   if (instance.onApprovedAR === true) {
     const changed = instance.changed();
-    if (Array.isArray(changed)
-          && changed.includes('title')) {
+    if (instance.id !== null
+        && Array.isArray(changed)
+        && changed.includes('title')) {
       throw new Error('Objective title change not allowed for objectives on approved activity reports.');
     }
   }
@@ -163,11 +164,12 @@ const autoPopulateStatusChangeDates = (sequelize, instance) => {
 };
 
 const linkObjectiveGoalTemplates = async (sequelize, instance, options) => {
-  // eslint-disable-next-line no-prototype-builtins
+  const changed = instance.changed();
   if (instance.goalId !== undefined
     && instance.goalId !== null
     && instance.objectiveTemplateId !== undefined
-    && instance.objectiveTemplateId !== null) {
+    && instance.objectiveTemplateId !== null
+    && Array.isArray(changed) && changed.includes('objectiveTemplateId')) {
     const goal = await sequelize.models.Goal.findOne({
       attributes: ['goalTemplateId'],
       where: { id: instance.goalId },
@@ -215,6 +217,60 @@ const propagateTitle = async (sequelize, instance, options) => {
   }
 };
 
+const propagateMetadataToTemplate = async (sequelize, instance, options) => {
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('objectiveTemplateId')) {
+    const files = await sequelize.models.ObjectiveFile.findAll({
+      where: { objectiveId: instance.id },
+      transaction: options.transaction,
+    });
+    await Promise.all(files.map(async (file) => sequelize.models.ObjectiveTemplateFile
+      .findOrCreate({
+        where: {
+          objectiveTemplateId: instance.objectiveTemplateId,
+          fileid: file.fileId,
+        },
+      })));
+
+    const resources = await sequelize.models.ObjectiveResource.findAll({
+      where: { objectiveId: instance.id },
+      transaction: options.transaction,
+    });
+    await Promise.all(resources.map(async (resource) => sequelize.models.ObjectiveTemplateResource
+      .findOrCreate({
+        where: {
+          objectiveTemplateId: instance.objectiveTemplateId,
+          userProvidedUrl: resource.userProvidedUrl,
+        },
+      })));
+
+    const rolls = await sequelize.models.ObjectiveRole.findAll({
+      where: { objectiveId: instance.id },
+      transaction: options.transaction,
+    });
+    await Promise.all(rolls.map(async (roll) => sequelize.models.ObjectiveTemplateRole
+      .findOrCreate({
+        where: {
+          objectiveTemplateId: instance.objectiveTemplateId,
+          rollId: roll.rollId,
+        },
+      })));
+
+    const topics = await sequelize.models.ObjectiveTopics.findAll({
+      where: { objectiveId: instance.id },
+      transaction: options.transaction,
+    });
+    await Promise.all(topics.map(async (topic) => sequelize.models.ObjectiveTemplateTopics
+      .findOrCreate({
+        where: {
+          objectiveTemplateId: instance.objectiveTemplateId,
+          topicId: topic.topicId,
+        },
+      })));
+  }
+};
+
 const beforeValidate = async (sequelize, instance) => {
   // await autoPopulateObjectiveTemplateId(sequelize, instance, options);
   autoPopulateOnApprovedAR(sequelize, instance);
@@ -224,6 +280,7 @@ const beforeValidate = async (sequelize, instance) => {
 
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateTitle(sequelize, instance, options);
+  await propagateMetadataToTemplate(sequelize, instance, options);
   await linkObjectiveGoalTemplates(sequelize, instance, options);
 };
 
