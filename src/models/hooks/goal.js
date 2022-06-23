@@ -103,7 +103,10 @@ const autoPopulateStatusChangeDates = (sequelize, instance) => {
 
 const propagateName = async (sequelize, instance, options) => {
   const changed = instance.changed();
-  if (Array.isArray(changed) && changed.includes('name')) {
+  if (Array.isArray(changed)
+    && changed.includes('name')
+    && instance.goalTemplateId !== null
+    && instance.goalTemplateId !== undefined) {
     await sequelize.models.GoalTemplate.update(
       { templateName: instance.name },
       {
