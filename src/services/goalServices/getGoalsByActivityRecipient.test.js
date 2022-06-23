@@ -314,48 +314,56 @@ describe('Goals by Recipient Test', () => {
           goalId: goalIds[0],
           title: 'objective 1',
           status: 'Not Started',
+          onApprovedAR: true,
         }),
         // objective 2 (AR1)
         Objective.create({
           goalId: goalIds[1],
           title: 'objective 2',
           status: 'Not Started',
+          onApprovedAR: true,
         }),
         // objective 3 (AR1)
         Objective.create({
           goalId: goalIds[2],
           title: 'objective 3',
           status: 'In Progress',
+          onApprovedAR: true,
         }),
         // objective 4 (AR1)
         Objective.create({
           goalId: goalIds[2],
           title: 'objective 4',
           status: 'Completed',
+          onApprovedAR: true,
         }),
         // objective 5 (AR2)
         Objective.create({
           goalId: goalIds[3],
           title: 'objective 5',
           status: 'Not Started',
+          onApprovedAR: true,
         }),
         // objective 6 (AR3)
         Objective.create({
           goalId: goalIds[4],
           title: 'objective 6',
           status: 'Not Started',
+          onApprovedAR: true,
         }),
         // objective 7
         Objective.create({
           goalId: goalIds[6],
           title: 'objective 7',
           status: 'Not Started',
+          onApprovedAR: true,
         }),
         // objective 8
         Objective.create({
           goalId: goalIds[7],
           title: 'objective 8',
           status: 'Not Started',
+          onApprovedAR: false,
         }),
       ],
     );
