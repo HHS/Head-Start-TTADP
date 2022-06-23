@@ -11,7 +11,7 @@ export default function PrintableObjective({ objective }) {
   const rowClass = `ttahub-printable-objective ${ROW_CLASS}`;
 
   return (
-    <div className="margin-bottom-1 margin-top-4">
+    <div className="margin-bottom-1 margin-top-2">
       <div className={rowClass}>
         <p className={FIRST_COLUMN_CLASS}>Objective</p>
         <p className={SECOND_COLUMN_CLASS}>{objective.title}</p>
