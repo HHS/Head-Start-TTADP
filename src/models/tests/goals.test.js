@@ -1,5 +1,4 @@
-import { auditLogger } from '../../logger';
-import {
+import db, {
   Recipient,
   Goal,
   GoalTemplate,
@@ -34,14 +33,11 @@ describe('Goals', () => {
       grant = await Grant.create({ ...mockGrant, recipientId: recipient.id });
     });
     afterAll(async () => {
-      try {
-        await Goal.destroy({ where: { grantId: grant.id } });
-        await GoalTemplate.destroy({ where: { templateName: mockGoal.name } });
-        await Grant.destroy({ where: { id: grant.id } });
-        await Recipient.destroy({ where: { id: recipient.id } });
-      } catch (err) {
-        auditLogger.error(JSON.stringify(err));
-      }
+      await Goal.destroy({ where: { grantId: grant.id } });
+      await GoalTemplate.destroy({ where: { templateName: mockGoal.name } });
+      await Grant.destroy({ where: { id: grant.id } });
+      await Recipient.destroy({ where: { id: recipient.id } });
+      await db.sequelize.close();
     });
     it('goalNumber', async () => {
       const goal = await Goal.create({ ...mockGoal, grantId: grant.id });
