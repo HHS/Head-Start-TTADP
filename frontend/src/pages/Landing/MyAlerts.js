@@ -27,11 +27,11 @@ export function ReportsRow({ reports, removeAlert, message }) {
       modalRef.current.toggleModal(false);
     }
     await deleteReport(reportId);
-    console.log('test');
+    console.log('test 1');
     removeAlert(reportId);
-    console.log('test');
+    console.log('test 2');
     cleanupLocalStorage(reportId);
-    console.log('test');
+    console.log('test 3');
   };
 
   const tableRows = reports.map((report, index, { length }) => {
