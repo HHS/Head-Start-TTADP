@@ -178,7 +178,7 @@ const ActivitySummary = ({
         <div className="margin-top-2">
           {!connectionActive && !collaborators.length ? <ConnectionError /> : null }
           <FormItem
-            label="Collaborating Specialists"
+            label="Collaborating specialists"
             name="activityReportCollaborators"
             required={false}
           >
@@ -196,7 +196,7 @@ const ActivitySummary = ({
         </div>
         <div className="margin-top-2">
           <FormItem
-            label="Target Populations addressed"
+            label="Target populations addressed"
             name="targetPopulations"
             required
           >
@@ -210,7 +210,7 @@ const ActivitySummary = ({
           </FormItem>
         </div>
       </Fieldset>
-      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Reason for Activity">
+      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Reason for activity">
         <div id="reasons" />
         <div className="margin-top-2">
           <FormItem
@@ -257,7 +257,7 @@ const ActivitySummary = ({
           <Grid row>
             <Grid col={8}>
               <FormItem
-                label="Start Date"
+                label="Start date"
                 name="startDate"
                 id="startDate-label"
                 htmlFor="startDate"
@@ -282,7 +282,7 @@ const ActivitySummary = ({
           <Grid row>
             <Grid col={8}>
               <FormItem
-                label="End Date"
+                label="End date"
                 name="endDate"
                 id="endDate-label"
                 htmlFor="endDate"
@@ -328,7 +328,7 @@ const ActivitySummary = ({
           </Grid>
         </div>
       </Fieldset>
-      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Training or Technical Assistance">
+      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Training or technical assistance">
         <div id="tta" />
         <div className="margin-top-2">
           <FormItem

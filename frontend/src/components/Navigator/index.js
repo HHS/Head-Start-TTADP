@@ -153,6 +153,19 @@ function Navigator({
     setValue('goalForEditing.objectives', []);
     setValue('goalName', '');
     setValue('goalEndDate', '');
+
+    const { status, ...values } = getValues();
+    const data = { ...formData, ...values };
+
+    updateFormData(data, true);
+
+    try {
+      // Always clear the previous error message before a save.
+      updateErrorMessage();
+      await onSave(data);
+    } catch (error) {
+      updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
+    }
   };
 
   const onUpdatePage = async (index) => {
@@ -261,7 +274,7 @@ function Navigator({
                   <div className="display-flex">
                     { showSaveGoalsButton
                       ? <Button className="margin-right-1" type="button" onClick={onGoalFormNavigate}>Save goal</Button>
-                      : <Button className="margin-right-1" type="button" onClick={onContinue}>Save and Continue</Button> }
+                      : <Button className="margin-right-1" type="button" onClick={onContinue}>Save and continue</Button> }
                     <Button className="usa-button--outline" type="button" onClick={async () => { await onSaveForm(); updateShowSavedDraft(true); }}>Save draft</Button>
                     {
                       page.position <= 1

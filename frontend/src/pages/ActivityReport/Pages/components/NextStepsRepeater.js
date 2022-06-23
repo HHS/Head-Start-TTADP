@@ -5,7 +5,9 @@ import {
 } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useFormContext, useFieldArray } from 'react-hook-form/dist/index.ie11';
-import { faTrash, faPlusCircle } from '@fortawesome/free-solid-svg-icons';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faPlusCircle } from '@fortawesome/pro-regular-svg-icons';
+import colors from '../../../../colors';
 import './NextStepsRepeater.css';
 
 const DEFAULT_STEP_HEIGHT = 80;
@@ -150,7 +152,7 @@ export default function NextStepsRepeater({
                      ? 'specialist' : 'recipient'}NextSteps-button`
                    }
               >
-                <FontAwesomeIcon className="margin-right-1" color="#005ea2" icon={faPlusCircle} />
+                <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faPlusCircle} />
                 Add next step
               </Button>
             )
