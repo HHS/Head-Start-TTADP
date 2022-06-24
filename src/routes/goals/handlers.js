@@ -1,5 +1,6 @@
 import {
   updateGoalStatusById,
+  createOrUpdateGoalsForActivityReport,
   createOrUpdateGoals,
   destroyGoal,
   goalById,
@@ -15,6 +16,26 @@ const namespace = 'SERVICE:GOALS';
 const logContext = {
   namespace,
 };
+
+export async function createGoal(req, res) {
+  try {
+    const { goal, activityReportId } = req.body;
+
+    const user = await userById(req.session.userId);
+
+    const canCreate = new Goal(user, null, goal.regionId).canCreate();
+
+    if (!canCreate) {
+      res.sendStatus(401);
+      return;
+    }
+
+    const newGoal = await createOrUpdateGoalsForActivityReport(goal, activityReportId);
+    res.json(newGoal);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
 
 export async function createGoals(req, res) {
   try {

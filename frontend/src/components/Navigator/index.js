@@ -28,6 +28,7 @@ import SideNav from './components/SideNav';
 import NavigatorHeader from './components/NavigatorHeader';
 import DismissingComponentWrapper from '../DismissingComponentWrapper';
 import { validateGoals } from '../../pages/ActivityReport/Pages/components/goalValidator';
+import { saveGoalForReport } from '../../fetchers/activityReports';
 
 function Navigator({
   editable,
@@ -119,6 +120,7 @@ function Navigator({
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     }
   };
+
   const onGoalFormNavigate = async () => {
     // the goal form only allows for one goal to be open at a time
     // but the objectives are stored in a subfield
@@ -128,44 +130,49 @@ function Navigator({
     const name = getValues('goalName');
     const endDate = getValues('goalEndDate');
 
+    const goal = {
+      ...goalForEditing,
+      name,
+      endDate,
+      objectives,
+      regionId: formData.regionId,
+    };
+
+    // validate goals will check the form and set errors
+    // where appropriate
     const areGoalsValid = validateGoals(
-      [{
-        ...goalForEditing,
-        name,
-        endDate,
-        objectives,
-      }],
+      [goal],
       setError,
     );
+
     if (areGoalsValid !== true) {
       return;
     }
 
     // save goal to api, come back with new ids for goal and objectives
+    try {
+      const savedGoal = await saveGoalForReport({ goal, activityReportId: reportId });
+
+      console.log(savedGoal);
+
+      return;
+    } catch (error) {
+      updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
+    }
 
     setValue('isGoalFormClosed', true);
     // for now we'll just generate an id for a demo of in-memory stuff
     const g = goalForEditing.isNew ? {
-      ...goalForEditing, name, endDate, id: uuidv4(),
+      ...goalForEditing,
+      name,
+      endDate,
+      id: uuidv4(),
     } : { ...goalForEditing };
     setValue('goals', [...selectedGoals, g]);
     setValue('goalForEditing', null);
     setValue('goalForEditing.objectives', []);
     setValue('goalName', '');
     setValue('goalEndDate', '');
-
-    const { status, ...values } = getValues();
-    const data = { ...formData, ...values };
-
-    updateFormData(data, true);
-
-    try {
-      // Always clear the previous error message before a save.
-      updateErrorMessage();
-      await onSave(data);
-    } catch (error) {
-      updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
-    }
   };
 
   const onUpdatePage = async (index) => {
@@ -311,6 +318,7 @@ Navigator.propTypes = {
   formData: PropTypes.shape({
     calculatedStatus: PropTypes.string,
     pageState: PropTypes.shape({}),
+    regionId: PropTypes.number.isRequired,
   }).isRequired,
   updateFormData: PropTypes.func.isRequired,
   errorMessage: PropTypes.string,

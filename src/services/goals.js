@@ -185,6 +185,80 @@ export function goalById(id) {
   });
 }
 
+export function goalByIdAndActivityReport(goalId, activityReportId) {
+  return Goal.findOne({
+    attributes: [
+      'endDate',
+      'status',
+      ['id', 'value'],
+      ['name', 'label'],
+      'id',
+      'name',
+    ],
+    where: {
+      id: goalId,
+    },
+    include: [
+      {
+        where: {
+          [Op.and]: [
+            {
+              title: {
+                [Op.ne]: '',
+              },
+            },
+            {
+              status: {
+                [Op.notIn]: ['Complete'],
+              },
+            },
+          ],
+        },
+        attributes: [
+          'id',
+          'title',
+          'title',
+          'status',
+        ],
+        model: Objective,
+        as: 'objectives',
+        required: false,
+        include: [
+          {
+            model: ObjectiveResource,
+            as: 'resources',
+            attributes: [
+              ['userProvidedUrl', 'value'],
+              ['id', 'key'],
+            ],
+            required: false,
+          },
+          {
+            model: ActivityReportObjective,
+            as: 'activityReportObjectives',
+            attributes: [
+              'ttaProvided',
+            ],
+            required: true,
+            where: {
+              activityReportId,
+            },
+          },
+          {
+            model: Topic,
+            as: 'topics',
+            attributes: [
+              ['id', 'value'],
+              ['name', 'label'],
+            ],
+            required: false,
+          },
+        ],
+      },
+    ],
+  });
+}
+
 export async function goalByIdAndRecipient(id, recipientId) {
   return Goal.findOne(OPTIONS_FOR_GOAL_FORM_QUERY(id, recipientId));
 }
@@ -255,6 +329,37 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
       id: orphanedObjectiveIds,
     },
   });
+}
+
+export async function createOrUpdateGoalsForActivityReport(goal, reportId) {
+  const activityReportId = parseInt(reportId, DECIMAL_BASE);
+
+  const {
+    grantIds,
+    isNew,
+    status: goalStatus,
+    ...fields
+  } = goal;
+
+  const status = goalStatus || 'Not Started';
+
+  const newGoals = await Promise.all(grantIds.map(async (grantId) => {
+    let newGoal;
+    if (isNew) {
+      [newGoal] = await Goal.findOrCreate({
+        where: {
+          ...fields,
+          grantId,
+          status,
+        },
+      });
+    }
+    return newGoal;
+  }));
+
+  return newGoals;
+
+  // return goalsByIdAndActivityReport(id, activityReportId);
 }
 
 /**
