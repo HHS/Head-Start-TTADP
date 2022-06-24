@@ -96,6 +96,12 @@ export const getGoals = async (grantIds) => {
   return goals.json();
 };
 
+export const saveGoalForReport = async (data) => {
+  const url = join(activityReportUrl, 'goals');
+  const goals = await post(url, data);
+  return goals.json();
+};
+
 export const getCollaborators = async (region) => {
   const url = join('/', 'api', 'users', 'collaborators', `?region=${region}`);
   const collaborators = await get(url);
