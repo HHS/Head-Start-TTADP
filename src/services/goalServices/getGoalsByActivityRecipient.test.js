@@ -310,56 +310,56 @@ describe('Goals by Recipient Test', () => {
     const objectives = await Promise.all(
       [
         // objective 1 (AR1)
-        Objective.create({
+        await Objective.create({
           goalId: goalIds[0],
           title: 'objective 1',
           status: 'Not Started',
           onApprovedAR: true,
         }),
         // objective 2 (AR1)
-        Objective.create({
+        await Objective.create({
           goalId: goalIds[1],
           title: 'objective 2',
           status: 'Not Started',
           onApprovedAR: true,
         }),
         // objective 3 (AR1)
-        Objective.create({
+        await Objective.create({
           goalId: goalIds[2],
           title: 'objective 3',
           status: 'In Progress',
           onApprovedAR: true,
         }),
         // objective 4 (AR1)
-        Objective.create({
+        await Objective.create({
           goalId: goalIds[2],
           title: 'objective 4',
           status: 'Completed',
           onApprovedAR: true,
         }),
         // objective 5 (AR2)
-        Objective.create({
+        await Objective.create({
           goalId: goalIds[3],
           title: 'objective 5',
           status: 'Not Started',
           onApprovedAR: true,
         }),
         // objective 6 (AR3)
-        Objective.create({
+        await Objective.create({
           goalId: goalIds[4],
           title: 'objective 6',
           status: 'Not Started',
           onApprovedAR: true,
         }),
         // objective 7
-        Objective.create({
+        await Objective.create({
           goalId: goalIds[6],
           title: 'objective 7',
           status: 'Not Started',
           onApprovedAR: true,
         }),
         // objective 8
-        Objective.create({
+        await Objective.create({
           goalId: goalIds[7],
           title: 'objective 8',
           status: 'Not Started',
@@ -566,17 +566,17 @@ describe('Goals by Recipient Test', () => {
 
       // Goal 3 Objectives.
       expect(goalRowsx[1].objectives.length).toBe(2);
-      expect(goalRowsx[1].objectives[0].title).toBe('objective 3');
-      expect(goalRowsx[1].objectives[0].activityReportObjectives[0].ttaProvided).toBe('Objective for Goal 3');
+      expect(goalRowsx[1].objectives[0].title).toBe('objective 4');
+      expect(goalRowsx[1].objectives[0].activityReportObjectives[0].ttaProvided).toBe('Objective for Goal 3 b');
       expect(goalRowsx[1].objectives[0].endDate).toBe('09/01/2020');
       expect(goalRowsx[1].objectives[0].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRowsx[1].objectives[0].status).toEqual('In Progress');
+      expect(goalRowsx[1].objectives[0].status).toEqual('Completed');
 
-      expect(goalRowsx[1].objectives[1].title).toBe('objective 4');
-      expect(goalRowsx[1].objectives[1].activityReportObjectives[0].ttaProvided).toBe('Objective for Goal 3 b');
+      expect(goalRowsx[1].objectives[1].title).toBe('objective 3');
+      expect(goalRowsx[1].objectives[1].activityReportObjectives[0].ttaProvided).toBe('Objective for Goal 3');
       expect(goalRowsx[1].objectives[1].endDate).toBe('09/01/2020');
       expect(goalRowsx[1].objectives[1].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRowsx[1].objectives[1].status).toEqual('Completed');
+      expect(goalRowsx[1].objectives[1].status).toEqual('In Progress');
 
       // Goal 2.
       expect(moment(goalRowsx[2].createdOn).format('YYYY-MM-DD')).toBe('2021-02-15');
