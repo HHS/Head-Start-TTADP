@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import { filterAssociation } from './utils';
+import { sequelize } from '../../models';
 
 /* TODO: Switch for New Goal Creation. */
 /*
@@ -24,7 +25,7 @@ const topicFilter = (options) => {
           INNER JOIN "ActivityReportGoals" arg ON ar.id = arg."activityReportId"
           INNER JOIN "Goals" g ON arg."goalId" = g.id
           INNER JOIN "Grants" gr ON g."grantId" = gr."id"
-          WHERE ${useRecipient ? `gr."recipientId' = ${options.recipientId} AND ` : ''}
+          WHERE ${useRecipient ? `gr."recipientId" = ${sequelize.escape(options.recipientId)} AND ` : ''}
           ARRAY_TO_STRING(ar."topics", ',')`;
 };
 
