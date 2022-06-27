@@ -562,7 +562,6 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx[1].objectiveCount).toBe(2);
       expect(goalRowsx[1].reasons).toEqual(['COVID-19 response', 'Complaint']);
       expect(goalRowsx[1].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
-      // expect(goalRowsx[1].goalTopics).toEqual(['objective topic 2', 'objective topic 3']);
 
       // Goal 3 Objectives.
       expect(goalRowsx[1].objectives.length).toBe(2);

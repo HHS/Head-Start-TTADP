@@ -180,30 +180,6 @@ const goalWithObjectives = [{
 },
 ];
 
-const noStatusGoalWithOneObjective = [{
-  id: 4459,
-  goalStatus: null,
-  createdOn: '2021-06-15',
-  goalText: 'This is a goal with a single objectives',
-  goalTopics: ['Human Resources'],
-  objectiveCount: 4,
-  goalNumbers: ['R14-G-4459'],
-  reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
-  objectives: [{
-    title: 'Objective 1 Title',
-    arId: 1,
-    arNumber: 'ar-number-1',
-    arLegacyId: null,
-    arStatus: 'In Progress',
-    endDate: '06/14/2021',
-    reasons: ['Monitoring | Deficiency'],
-    status: 'In Progress',
-    id: 2832434,
-    ttaProvided: '',
-    grantNumber: '',
-  }],
-}];
-
 const renderTable = (user, hasActiveGrants = true) => {
   render(
     <MemoryRouter>
@@ -380,21 +356,6 @@ describe('Goals Table', () => {
 
       const link = screen.queryByRole('link', { name: /Add new goal/i });
       expect(link).toBe(null);
-    });
-  });
-
-  describe('Table displays correct colors', () => {
-    beforeEach(async () => {
-      fetchMock.reset();
-      fetchMock.get(
-        baseWithRegionOne,
-        { count: 1, goalRows: noStatusGoalWithOneObjective },
-      );
-    });
-
-    afterEach(() => {
-      window.location.assign.mockReset();
-      fetchMock.restore();
     });
   });
 
