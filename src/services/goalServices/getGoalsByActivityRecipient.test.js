@@ -549,7 +549,7 @@ describe('Goals by Recipient Test', () => {
       // Goal 4.
       expect(moment(goalRowsx[0].createdOn).format('YYYY-MM-DD')).toBe('2021-04-02');
       expect(goalRowsx[0].goalText).toBe('Goal 4');
-      expect(goalRowsx[0].goalNumbers).toBe([`G-${goalRowsx[0].id}`]);
+      expect(goalRowsx[0].goalNumbers).toStrictEqual([`G-${goalRowsx[0].id}`]);
       expect(goalRowsx[0].objectiveCount).toBe(1);
       expect(goalRowsx[0].reasons).toEqual(['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option']);
       expect(goalRowsx[0].goalTopics).toEqual(['Child Assessment, Development, Screening', 'Communication']);
@@ -558,7 +558,7 @@ describe('Goals by Recipient Test', () => {
       // Goal 3.
       expect(moment(goalRowsx[1].createdOn).format('YYYY-MM-DD')).toBe('2021-03-03');
       expect(goalRowsx[1].goalText).toBe('Goal 3');
-      expect(goalRowsx[1].goalNumber).toBe(`G-${goalRowsx[1].id}`);
+      expect(goalRowsx[1].goalNumbers).toStrictEqual([`G-${goalRowsx[1].id}`]);
       expect(goalRowsx[1].objectiveCount).toBe(2);
       expect(goalRowsx[1].reasons).toEqual(['COVID-19 response', 'Complaint']);
       expect(goalRowsx[1].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
@@ -580,7 +580,7 @@ describe('Goals by Recipient Test', () => {
       // Goal 2.
       expect(moment(goalRowsx[2].createdOn).format('YYYY-MM-DD')).toBe('2021-02-15');
       expect(goalRowsx[2].goalText).toBe('Goal 2');
-      expect(goalRowsx[2].goalNumber).toBe(`G-${goalRowsx[2].id}`);
+      expect(goalRowsx[2].goalNumbers).toStrictEqual([`G-${goalRowsx[2].id}`]);
       expect(goalRowsx[2].objectiveCount).toBe(1);
       expect(goalRowsx[2].reasons).toEqual(['COVID-19 response', 'Complaint']);
       expect(goalRowsx[2].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
@@ -589,7 +589,7 @@ describe('Goals by Recipient Test', () => {
       // Goal 1.
       expect(moment(goalRowsx[3].createdOn).format('YYYY-MM-DD')).toBe('2021-01-10');
       expect(goalRowsx[3].goalText).toBe('Goal 1');
-      expect(goalRowsx[3].goalNumber).toBe(`G-${goalRowsx[3].id}`);
+      expect(goalRowsx[3].goalNumbers).toStrictEqual([`G-${goalRowsx[3].id}`]);
       expect(goalRowsx[3].objectiveCount).toBe(1);
       expect(goalRowsx[3].reasons).toEqual(['COVID-19 response', 'Complaint']);
       expect(goalRowsx[3].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
