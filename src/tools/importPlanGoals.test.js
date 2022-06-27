@@ -88,7 +88,9 @@ describe('Import TTA plan goals', () => {
       expect(goal.timeframe).toBe('Dates to be determined by October 30, 2020');
       expect(goal.isFromSmartsheetTtaPlan).toBe(true);
       expect(goal.grant).toEqual(
-        expect.objectContaining({ id: expect.anything(), number: '14CH00002', regionId: 14 }),
+        expect.objectContaining({
+          id: expect.anything(), number: '14CH00002', recipient: expect.anything(), regionId: 14,
+        }),
       );
     });
 

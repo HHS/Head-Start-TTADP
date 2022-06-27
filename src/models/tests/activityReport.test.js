@@ -1,6 +1,4 @@
 import db, {
-  // TODO: Commented to pass linter.
-  // sequelize,
   ActivityReport,
   ActivityRecipient,
   ActivityReportGoal,
@@ -16,19 +14,8 @@ import { REPORT_STATUSES } from '../../constants';
 import { auditLogger } from '../../logger';
 import {
   copyStatus,
-  // TODO: Commented to pass linter.
-  // propagateApprovedStatus,
-  // automaticStatusChangeOnAprovalForGoals,
-} from '../hooks/activityReport';
 
-function sleep(milliseconds) {
-  const start = new Date().getTime();
-  for (let i = 0; i < 1e7; i += 1) {
-    if ((new Date().getTime() - start) > milliseconds) {
-      break;
-    }
-  }
-}
+} from '../hooks/activityReport';
 
 const mockUser = {
   name: 'Joe Green',
@@ -217,10 +204,6 @@ describe('Activity Reports model', () => {
     expect(instance.calculatedStatus).not.toEqual(REPORT_STATUSES.NEEDS_ACTION);
   });
   it('propagateApprovedStatus', async () => {
-    // const instance = {
-    //   id: report.id,
-    //   changed: () => [],
-    // };
     const preReport = await ActivityReport.findOne(
       { where: { id: report.id }, individualHooks: true },
     );
@@ -240,26 +223,12 @@ describe('Activity Reports model', () => {
       where: { id: objectives.map((o) => o.id) },
     });
 
-    auditLogger.error(JSON.stringify({
-      location: 'preReport', preReport, goalsPre, objectivesPre,
-    }));
     await preReport.update(
       { calculatedStatus: REPORT_STATUSES.APPROVED, submissionStatus: REPORT_STATUSES.SUBMITTED },
     );
-
-    // TODO: Commented to pass linter.
-    /*
-    const postReport = await ActivityReport.findOne(
+    await ActivityReport.findOne(
       { where: { id: report.id }, individualHooks: true },
     );
-    */
-
-    // auditLogger.error(JSON.stringify(goalsPre));
-    // instance.changed = () => ['calculatedStatus'];
-    // // eslint-disable-next-line no-unused-vars
-    // instance.previous = (x) => REPORT_STATUSES.SUBMITTED;
-    // instance.calculatedStatus = REPORT_STATUSES.APPROVED;
-    // propagateApprovedStatus(sequelize, instance, { transaction: null });
 
     const goalsPost = await Goal.findAll({
       attributes: [
@@ -276,7 +245,6 @@ describe('Activity Reports model', () => {
       where: { id: objectives.map((o) => o.id) },
     });
 
-    // auditLogger.error(JSON.stringify(goalsPost));
     expect(goalsPost[0].onApprovedAR).not.toEqual(goalsPre[0].onApprovedAR);
     expect(objectivesPost[0].onApprovedAR).not.toEqual(objectivesPre[0].onApprovedAR);
 
@@ -284,12 +252,6 @@ describe('Activity Reports model', () => {
       { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
       { where: { id: report.id }, individualHooks: true },
     );
-    sleep(5000);
-
-    // // eslint-disable-next-line no-unused-vars
-    // instance.previous = (x) => REPORT_STATUSES.APPROVED;
-    // instance.calculatedStatus = REPORT_STATUSES.NEEDS_ACTION;
-    // propagateApprovedStatus(sequelize, instance, { transaction: null });
 
     const goalsPost2 = await Goal.findAll({
       attributes: [
@@ -305,18 +267,10 @@ describe('Activity Reports model', () => {
       ],
       where: { id: objectives.map((o) => o.id) },
     });
-    await ActivityReport.update(
-      { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
-      { where: { id: report.id }, individualHooks: true },
-    );
-    sleep(5000);
 
     expect(goalsPost2[0].onApprovedAR).not.toEqual(goalsPost[0].onApprovedAR);
     expect(objectivesPost2[0].onApprovedAR).not.toEqual(objectivesPost[0].onApprovedAR);
   });
-  // eslint-disable-next-line jest/no-commented-out-tests
-  // it('automaticStatusChangeOnAprovalForGoals', async () => {
-  // });
 
   it('activityRecipientId', async () => {
     expect(activityRecipients[0].activityRecipientId).toEqual(grant.id);
