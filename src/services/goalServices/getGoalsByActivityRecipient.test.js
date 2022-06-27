@@ -549,7 +549,7 @@ describe('Goals by Recipient Test', () => {
       // Goal 4.
       expect(moment(goalRowsx[0].createdOn).format('YYYY-MM-DD')).toBe('2021-04-02');
       expect(goalRowsx[0].goalText).toBe('Goal 4');
-      expect(goalRowsx[0].goalNumber).toBe(`G-${goalRowsx[0].id}`);
+      expect(goalRowsx[0].goalNumbers).toBe([`G-${goalRowsx[0].id}`]);
       expect(goalRowsx[0].objectiveCount).toBe(1);
       expect(goalRowsx[0].reasons).toEqual(['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option']);
       expect(goalRowsx[0].goalTopics).toEqual(['Child Assessment, Development, Screening', 'Communication']);

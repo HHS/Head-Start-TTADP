@@ -190,6 +190,9 @@ function calculatePreviousStatus(goal) {
   return null;
 }
 
+// todo- reflect other changes in ui
+// todo- similar rollup in activityreports fetcher
+
 export async function getGoalsByActivityRecipient(
   recipientId,
   regionId,
@@ -208,76 +211,125 @@ export async function getGoalsByActivityRecipient(
   const limitNum = parseInt(limit, 10);
   const offSetNum = parseInt(offset, 10);
 
-  // Get Goals.
-  const rows = await Goal.findAll({
-    attributes: ['id', 'name', 'status', 'createdAt', 'goalNumber', 'previousStatus', 'onApprovedAR',
+  const goals = await Goal.findAll({
+    attributes: [
+      [sequelize.fn('ARRAY_AGG', sequelize.col('"Goal"."id"')), 'ids'],
+      [sequelize.fn('ARRAY_AGG', sequelize.col('"grant"."id"')), 'grantIds'],
+      [sequelize.fn('ARRAY_AGG', sequelize.col('"grant"."number"')), 'grantNumbers'],
       [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Not Started\' THEN 2 WHEN "Goal"."status" = \'In Progress\' THEN 3  WHEN "Goal"."status" = \'Closed\' THEN 4 WHEN "Goal"."status" = \'Suspended\' THEN 5 ELSE 6 END'), 'status_sort'],
+      'name',
+      'createdAt',
+      'status',
     ],
+    group: ['"Goal"."name"', 'status_sort', '"Goal"."createdAt"', '"Goal"."status'],
     where: {
       onApprovedAR: true,
       [Op.and]: scopes,
     },
     include: [
       {
-        model: Grant,
+        model: Grant.unscoped(),
         as: 'grant',
-        attributes: [
-          'id', 'recipientId', 'regionId', 'number',
-        ],
+        attributes: [],
         where: {
           regionId,
           recipientId,
         },
       },
-      {
-        attributes: [
-          'id',
-          'title',
-          'status',
-          'goalId',
-          'onApprovedAR',
-        ],
-        model: Objective,
-        as: 'objectives',
-        required: false,
-        where: {
-          onApprovedAR: true,
-        },
-        include: [
-          /* TODO: Switch for New Goal Creation. */
-          /* {
-            model: Topic,
-            as: 'topics',
-            required: false,
-          }, */
-          {
-            attributes: ['ttaProvided'],
-            model: ActivityReportObjective,
-            as: 'activityReportObjectives',
-            required: false,
-          },
-          {
-            attributes: [
-              'id',
-              'reason',
-              'topics',
-              'endDate',
-              'calculatedStatus',
-              'legacyId',
-              'regionId',
-            ],
-            model: ActivityReport,
-            as: 'activityReports',
-            required: false,
-            where: {
-              calculatedStatus: REPORT_STATUSES.APPROVED,
-            },
-          },
-        ],
-      },
     ],
     order: orderGoalsBy(sortBy, sortDir),
   });
+
+  const rows = await Promise.all(goals.map(async (g) => {
+    const { grantNumbers, ids: goalIds } = g.dataValues;
+
+    const goalRows = await Goal.findAll({
+      attributes: [
+        'id',
+        'name',
+        'status',
+        'createdAt',
+        'goalNumber',
+        'previousStatus',
+      ],
+      where: {
+        id: goalIds,
+      },
+    });
+
+    const rawObjectives = await Objective.findAll({
+      attributes: [
+        [sequelize.fn('ARRAY_AGG', sequelize.col('Objective.id')), 'ids'],
+        'title',
+        'status',
+      ],
+      where: {
+        onApprovedAR: true,
+        goalId: goalIds,
+      },
+      group: ['title', 'status'],
+      raw: true,
+    });
+
+    const objectives = await Promise.all(rawObjectives.map(async (objectiveGroup) => {
+      const activityReports = await ActivityReport.findAll({
+        attributes: [
+          'id',
+          'reason',
+          'topics',
+          'endDate',
+          'calculatedStatus',
+          'legacyId',
+          'regionId',
+        ],
+        model: ActivityReport,
+        as: 'activityReport',
+        required: false,
+        where: {
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        },
+        include: [
+          {
+            model: Objective,
+            as: 'objectivesWithGoals',
+            where: {
+              id: objectiveGroup.ids,
+            },
+            attributes: ['id'],
+            required: true,
+          },
+        ],
+      });
+
+      const activityReportObjectives = await ActivityReportObjective.findAll({
+        attributes: ['ttaProvided'],
+        where: {
+          objectiveId: objectiveGroup.ids,
+        },
+      });
+
+      return {
+        ...objectiveGroup,
+        activityReportObjective: activityReportObjectives,
+        activityReports,
+      };
+    }));
+
+    // return goalRows;
+    return goalRows.reduce((previous, current) => {
+      const { goalNumber, dataValues } = current;
+
+      return {
+        ...previous,
+        ...dataValues,
+        goalNumbers: [...previous.goalNumbers, goalNumber],
+      };
+    }, {
+      goalNumbers: [],
+      objectives,
+      grantNumbers,
+    });
+  }));
 
   // Build Array of Goals.
   const goalRows = [];
@@ -299,7 +351,7 @@ export async function getGoalsByActivityRecipient(
       goalStatus: g.status,
       createdOn: g.createdAt,
       goalText: g.name,
-      goalNumber: g.goalNumber,
+      goalNumbers: g.goalNumbers,
       objectiveCount: 0,
       goalTopics: [],
       reasons: [],
@@ -324,16 +376,6 @@ export async function getGoalsByActivityRecipient(
         );
       }
 
-      /* TODO: Switch for New Goal Creation. */
-      // Add Objective Topics.
-      /*
-      o.topics.forEach((t) => {
-        goalToAdd.goalTopics = Array.from(
-          new Set([...goalToAdd.goalTopics, t.name]),
-        );
-      });
-      */
-
       // Add Objective.
       goalToAdd.objectives.push({
         id: o.id,
@@ -347,7 +389,7 @@ export async function getGoalsByActivityRecipient(
         reasons: activityReport ? activityReport.reason : null,
         status: o.status,
         activityReportObjectives: o.activityReportObjectives,
-        grantNumber: g.grant.number,
+        grantNumbers: g.grantNumbers,
       });
     });
     // Sort Objectives by end date desc.

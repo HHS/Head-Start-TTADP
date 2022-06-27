@@ -359,7 +359,28 @@ export async function goalsForGrants(grantIds) {
   */
 
   return Goal.findAll({
+    attributes: [
+      [sequelize.fn(
+        'ARRAY_AGG',
+        sequelize.fn(
+          'DISTINCT',
+          sequelize.col('grant.id'),
+        ),
+      ), 'grantIds'],
+      [sequelize.fn(
+        'ARRAY_AGG',
+        sequelize.fn(
+          'DISTINCT',
+          sequelize.col('"Goal"."id"'),
+        ),
+      ), 'goalIds'],
+      'name',
+      'status',
+      'onApprovedAR',
+    ],
+    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."onApprovedAR"'],
     where: {
+      '$grant.id$': ids,
       [Op.or]: [
         {
           status: 'Not Started',
@@ -374,12 +395,9 @@ export async function goalsForGrants(grantIds) {
     },
     include: [
       {
-        model: Grant,
+        model: Grant.unscoped(),
         as: 'grant',
-        attributes: ['id'],
-        where: {
-          id: ids,
-        },
+        attributes: [],
       },
     ],
     order: ['name'],

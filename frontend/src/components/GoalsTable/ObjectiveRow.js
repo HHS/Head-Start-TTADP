@@ -25,7 +25,7 @@ function ObjectiveRow({
     endDate,
     reasons,
     status,
-    grantNumber,
+    grantNumbers,
   } = objective;
 
   const viewOrEditLink = arStatus === 'approved' ? `/activity-reports/view/${arId}` : `/activity-reports/${arId}`;
@@ -121,7 +121,7 @@ function ObjectiveRow({
         </li>
         <li className="padding-x-105 padding-y-0">
           <span className="sr-only">Grant number </span>
-          {grantNumber}
+          {grantNumbers.join(' ')}
         </li>
         <li className="padding-x-105 padding-y-0">
           <span className="sr-only">End date </span>
@@ -152,7 +152,7 @@ export const objectivePropTypes = PropTypes.shape({
   endDate: PropTypes.string,
   reasons: PropTypes.arrayOf(PropTypes.string),
   status: PropTypes.string.isRequired,
-  grantNumber: PropTypes.string,
+  grantNumbers: PropTypes.arrayOf(PropTypes.string),
 });
 
 objectivePropTypes.defaultProps = {
@@ -160,6 +160,7 @@ objectivePropTypes.defaultProps = {
   arLegacyId: null,
   endDate: null,
   reasons: [],
+  grantNumbers: [],
 };
 ObjectiveRow.propTypes = {
   objective: objectivePropTypes.isRequired,

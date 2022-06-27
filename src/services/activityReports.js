@@ -323,21 +323,18 @@ export async function activityReportAndRecipientsById(activityReportId) {
     ],
   });
 
-  const goalTemplateIds = [];
-  const goalText = [];
-
   // TODO - explore a way to move this query inline to the ActivityReport.findOne
   const goalsAndObjectives = allGoalsAndObjectives.reduce((previousValue, currentValue) => {
-    if (goalTemplateIds.includes(currentValue.goalTemplateId)
-      || goalText.includes(currentValue.name)) {
+    const existingGoal = previousValue.find((g) => g.name === currentValue.name);
+
+    if (existingGoal) {
+      existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.goalNumber];
       return previousValue;
     }
 
-    goalText.push(currentValue.name);
-    goalTemplateIds.push(currentValue.goalTemplateId);
-
     const goal = {
       ...currentValue.dataValues,
+      goalNumbers: [currentValue.goalNumber],
       objectives: currentValue.objectives.map((objective) => {
         const ttaProvided = objective.activityReportObjectives
           && objective.activityReportObjectives[0]

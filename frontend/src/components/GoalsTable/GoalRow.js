@@ -123,13 +123,14 @@ function GoalRow({
     goalText,
     goalTopics,
     objectiveCount,
-    goalNumber,
     reasons,
     objectives,
     previousStatus,
   } = goal;
 
   const history = useHistory();
+
+  const goalNumbers = goal.goalNumbers.join(', ');
 
   const onUpdateGoalStatus = (newStatus) => {
     if (newStatus === 'Completed' || newStatus === 'Closed' || newStatus === 'Ceased/Suspended' || newStatus === 'Suspended') {
@@ -170,11 +171,6 @@ function GoalRow({
       display: 'Suspended',
       color: colors.errorDark,
     },
-    {
-      stored: 'Needs Status',
-      display: 'Needs status',
-      color: '#c5c5c5',
-    },
   ];
 
   const determineFlagStatus = () => {
@@ -185,7 +181,7 @@ function GoalRow({
           <Tooltip
             displayText={<FontAwesomeIcon className="margin-left-1" size="1x" color={colors.error} icon={faFlag} />}
             screenReadDisplayText={false}
-            buttonLabel={`Reason for flag on goal ${goalNumber} is monitoring. Click button to visually reveal this information.`}
+            buttonLabel={`Reason for flag on goal ${goalNumbers} is monitoring. Click button to visually reveal this information.`}
             tooltipText="Related to monitoring"
             hideUnderline
           />
@@ -210,7 +206,7 @@ function GoalRow({
         return goalStatusDisplay.color;
       }
     }
-    return '#c5c5c5';
+    return colors.baseLighter;
   };
 
   const contextMenuLabel = `Actions for goal ${id}`;
@@ -255,7 +251,7 @@ function GoalRow({
           {goalText}
           {' '}
           (
-          {goalNumber}
+          {goalNumbers}
           )
           {determineFlagStatus()}
         </td>
@@ -267,7 +263,7 @@ function GoalRow({
             closeOrOpenObjectives={closeOrOpenObjectives}
             objectiveCount={objectiveCount}
             objectivesExpanded={objectivesExpanded}
-            goalNumber={goalNumber}
+            goalNumber={goal.goalNumbers.join('')}
             expandObjectivesRef={expandObjectivesRef}
           />
         </td>
@@ -330,7 +326,7 @@ export const goalPropTypes = PropTypes.shape({
   goalTopics: PropTypes.arrayOf(PropTypes.string).isRequired,
   reasons: PropTypes.arrayOf(PropTypes.string).isRequired,
   objectiveCount: PropTypes.number.isRequired,
-  goalNumber: PropTypes.string.isRequired,
+  goalNumbers: PropTypes.arrayOf(PropTypes.string.isRequired),
   objectives: PropTypes.arrayOf(objectivePropTypes),
   previousStatus: PropTypes.string,
 });
