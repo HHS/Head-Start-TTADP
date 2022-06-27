@@ -352,7 +352,7 @@ export async function getGoalsByActivityRecipient(
     });
     // Sort Objectives by end date desc.
     goalToAdd.objectives.sort((a, b) => ((
-      a.endDate === b.endDate ? a.title > b.title
+      a.endDate === b.endDate ? a.id < b.id
         : a.endDate < b.endDate) ? 1 : -1));
     goalToAdd.objectiveCount = goalToAdd.objectives.length;
     goalRows.push(goalToAdd);
