@@ -2,13 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Form, FormGroup, ErrorMessage, Label, Fieldset, Radio, Textarea, Alert,
+  Form, FormGroup, ErrorMessage, Label, Fieldset, Radio, Textarea,
 } from '@trussworks/react-uswds';
 import Modal from './Modal';
 import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '../Constants';
 
 const CloseSuspendReasonModal = ({
-  modalRef, goalId, newStatus, onSubmit, resetValues, error, oldGoalStatus,
+  modalRef, goalId, newStatus, onSubmit, resetValues, oldGoalStatus,
 }) => {
   const [closeSuspendReason, setCloseSuspendReason] = useState('');
   const [closeSuspendContext, setCloseSuspendContext] = useState('');
@@ -92,7 +92,6 @@ const CloseSuspendReasonModal = ({
             </Fieldset>
           </FormGroup>
         </Form>
-        {goalId === error ? <Alert type="warning">There was an error updating the goal status</Alert> : null }
       </Modal>
     </div>
   );
@@ -107,11 +106,11 @@ CloseSuspendReasonModal.propTypes = {
   newStatus: PropTypes.string.isRequired,
   onSubmit: PropTypes.func.isRequired,
   resetValues: PropTypes.bool.isRequired,
-  oldGoalStatus: PropTypes.string.isRequired,
-  error: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.number,
-  ]).isRequired,
+  oldGoalStatus: PropTypes.string,
+};
+
+CloseSuspendReasonModal.defaultProps = {
+  oldGoalStatus: '',
 };
 
 export default CloseSuspendReasonModal;
