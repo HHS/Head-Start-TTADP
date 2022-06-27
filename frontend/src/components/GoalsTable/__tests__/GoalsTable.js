@@ -11,7 +11,7 @@ import UserContext from '../../../UserContext';
 import FilterContext from '../../../FilterContext';
 import AriaLiveContext from '../../../AriaLiveContext';
 import GoalsTable from '../GoalsTable';
-import { REPORT_STATUSES, SCOPE_IDS } from '../../../Constants';
+import { SCOPE_IDS } from '../../../Constants';
 import { mockWindowProperty } from '../../../testHelpers';
 
 jest.mock('../../../fetchers/helpers');
@@ -113,68 +113,73 @@ const goalWithObjectives = [{
   reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
   objectives: [{
     title: 'Objective 1 Title',
-    arId: 1,
-    arNumber: 'ar-number-1',
-    arLegacyId: null,
-    arStatus: 'In Progress',
     endDate: '06/14/2021',
     reasons: ['Monitoring | Deficiency'],
     status: 'In Progress',
     id: 345345345,
     ttaProvided: '',
     grantNumbers: ['1'],
+    activityReports: [{
+      id: 1,
+      number: 'ar-number-1',
+      legacyId: null,
+    }],
   },
   {
     title: 'Objective 2 Title',
-    arId: 2,
-    arNumber: 'ar-number-2',
-    arLegacyId: null,
-    arStatus: 'Not Started',
     endDate: '05/14/2021',
     reasons: ['Below Competitive Threshold (CLASS)'],
     status: 'Not Started',
     id: 234234253,
     ttaProvided: '',
     grantNumbers: ['1'],
+    activityReports: [{
+      id: 2,
+      number: 'ar-number-2',
+      legacyId: null,
+    }],
   },
   {
     title: 'Objective 3 Title',
-    arId: 3,
-    arNumber: 'ar-number-3',
-    arLegacyId: null,
-    arStatus: REPORT_STATUSES.APPROVED,
     endDate: '04/14/2021',
     reasons: ['COVID-19 response'],
     status: 'Complete',
     id: 2938234,
     ttaProvided: '',
     grantNumbers: ['1'],
+    activityReports: [{
+      id: 3,
+      number: 'ar-number-3',
+      legacyId: null,
+    }],
   },
   {
     title: 'Objective 4 Title',
-    arId: 4,
-    arNumber: 'ar-number-4',
-    arLegacyId: 'ar-legacy-4',
-    arStatus: REPORT_STATUSES.APPROVED,
     endDate: '03/14/2021',
     reasons: ['New Staff / Turnover'],
     status: 'In Progress',
     id: 255384234,
     ttaProvided: '',
     grantNumbers: ['200342cat'],
+    activityReports: [{
+      id: 4,
+      number: 'ar-number-4',
+      legacyId: null,
+    }],
   },
   {
     title: 'Objective 5 Title',
-    arId: 5,
-    arNumber: 'ar-number-5',
-    arLegacyId: null,
-    arStatus: REPORT_STATUSES.APPROVED,
     endDate: '02/14/2021',
     reasons: ['Complaint'],
     status: 'Unknown Status',
     id: 298398934834,
     ttaProvided: '',
     grantNumbers: ['1'],
+    activityReports: [{
+      id: 5,
+      number: 'ar-number-5',
+      legacyId: null,
+    }],
   },
   ],
 },

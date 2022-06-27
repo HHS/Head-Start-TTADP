@@ -292,7 +292,7 @@ function GoalRow({
               <li className="padding-x-105 padding-y-0 flex-align-self-end">Grant numbers</li>
               <li className="padding-x-105 padding-y-0 flex-align-self-end">End date</li>
               <li className="padding-x-105 padding-y-0 flex-align-self-end">Reasons</li>
-              <li className="padding-x-105 padding-y-0 padding-right-0 flex-align-self-end">Objectives status</li>
+              <li className="padding-x-105 padding-y-0 padding-right-0 flex-align-self-end">Objective status</li>
             </ul>
             {objectives.map((obj) => (
               <ObjectiveRow
