@@ -92,6 +92,7 @@ const GoalPicker = ({
     const i = uuidv4();
     const goal = {
       id: i,
+      goalIds: [],
       isNew: true,
       name: newGoal,
       objectives: [createObjective()],
@@ -127,7 +128,7 @@ const GoalPicker = ({
             options={uniqueAvailableGoals.map((goal) => ({
               value: goal.id,
               label: goal.name,
-              number: goal.goalNumber,
+              number: goal.goalIds.map((g) => (`G-${g}`)).join(', '),
             }))}
             singleRowInput
             multiSelectOptions={{

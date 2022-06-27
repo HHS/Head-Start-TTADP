@@ -41,7 +41,7 @@ const goals = [{
   goalText: 'This is goal text 1.',
   goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
   objectiveCount: 5,
-  goalNumber: 'R14-G-4598',
+  goalNumbers: ['R14-G-4598'],
   reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
   objectives: [],
 },
@@ -52,7 +52,7 @@ const goals = [{
   goalText: 'This is goal text 2.',
   goalTopics: ['Nutrition', 'Oral Health'],
   objectiveCount: 2,
-  goalNumber: 'R14-G-8547',
+  goalNumbers: ['R14-G-8547'],
   reasons: ['Below Competitive Threshold (CLASS)'],
   objectives: [],
 },
@@ -63,7 +63,7 @@ const goals = [{
   goalText: 'This is goal text 3.',
   goalTopics: ['Parent and Family Engagement'],
   objectiveCount: 4,
-  goalNumber: 'R14-G-65478',
+  goalNumbers: ['R14-G-65478'],
   reasons: ['Monitoring | Area of Concern'],
   objectives: [],
 },
@@ -74,7 +74,7 @@ const goals = [{
   goalText: 'This is goal text 4.',
   goalTopics: ['Partnerships and Community Engagement'],
   objectiveCount: 3,
-  goalNumber: 'R14-G-65479',
+  goalNumbers: ['R14-G-65479'],
   reasons: ['COVID-19 response'],
   objectives: [],
 },
@@ -85,7 +85,7 @@ const goals = [{
   goalText: 'This is goal text 5.',
   goalTopics: ['Safety Practices'],
   objectiveCount: 1,
-  goalNumber: 'R14-G-65480',
+  goalNumbers: ['R14-G-65480'],
   reasons: ['New Recipient'],
   objectives: [],
 },
@@ -96,7 +96,7 @@ const goals = [{
   goalText: 'This is goal text 6.',
   goalTopics: ['Recordkeeping and Reporting'],
   objectiveCount: 8,
-  goalNumber: 'R14-G-65481',
+  goalNumbers: ['R14-G-65481'],
   reasons: ['School Readiness Goals'],
   objectives: [],
 },
@@ -109,7 +109,7 @@ const goalWithObjectives = [{
   goalText: 'This is a goal with objectives',
   goalTopics: ['Human Resources'],
   objectiveCount: 4,
-  goalNumber: 'R14-G-4598',
+  goalNumbers: ['R14-G-4598'],
   reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
   objectives: [{
     title: 'Objective 1 Title',
@@ -122,7 +122,7 @@ const goalWithObjectives = [{
     status: 'In Progress',
     id: 345345345,
     ttaProvided: '',
-    grantNumber: '',
+    grantNumbers: ['1'],
   },
   {
     title: 'Objective 2 Title',
@@ -135,7 +135,7 @@ const goalWithObjectives = [{
     status: 'Not Started',
     id: 234234253,
     ttaProvided: '',
-    grantNumber: '',
+    grantNumbers: ['1'],
   },
   {
     title: 'Objective 3 Title',
@@ -148,7 +148,7 @@ const goalWithObjectives = [{
     status: 'Complete',
     id: 2938234,
     ttaProvided: '',
-    grantNumber: '',
+    grantNumbers: ['1'],
   },
   {
     title: 'Objective 4 Title',
@@ -161,7 +161,7 @@ const goalWithObjectives = [{
     status: 'In Progress',
     id: 255384234,
     ttaProvided: '',
-    grantNumber: '200342cat',
+    grantNumbers: ['200342cat'],
   },
   {
     title: 'Objective 5 Title',
@@ -174,7 +174,7 @@ const goalWithObjectives = [{
     status: 'Unknown Status',
     id: 298398934834,
     ttaProvided: '',
-    grantNumber: '',
+    grantNumbers: ['1'],
   },
   ],
 },
@@ -187,7 +187,7 @@ const noStatusGoalWithOneObjective = [{
   goalText: 'This is a goal with a single objectives',
   goalTopics: ['Human Resources'],
   objectiveCount: 4,
-  goalNumber: 'R14-G-4459',
+  goalNumbers: ['R14-G-4459'],
   reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
   objectives: [{
     title: 'Objective 1 Title',
@@ -395,13 +395,6 @@ describe('Goals Table', () => {
     afterEach(() => {
       window.location.assign.mockReset();
       fetchMock.restore();
-    });
-
-    it('Selects the correct color for goals with null status', async () => {
-      renderTable(defaultUser);
-      await screen.findByText('TTA goals and objectives');
-
-      expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/needs status/i);
     });
   });
 

@@ -35,7 +35,6 @@ const GoalsObjectives = () => {
       try {
         if (isRecipientReport && hasGrants) {
           const fetchedGoals = await getGoals(grantIds);
-
           const selectedGoals = goalsOnForm.map((g) => {
             if (!g.isNew) {
               return g;
@@ -51,7 +50,11 @@ const GoalsObjectives = () => {
           });
 
           setValue('goals', selectedGoals);
-          updateAvailableGoals(fetchedGoals);
+
+          // we map these goals so we have a single unique value to use in <GoalPicker /> as a value
+          // here, the first id in the goalIds (there will always be a goal Id, and it will
+          // always be unique)
+          updateAvailableGoals(fetchedGoals.map((g) => ({ ...g, id: g.goalIds[0] })));
         }
 
         setFetchError(false);

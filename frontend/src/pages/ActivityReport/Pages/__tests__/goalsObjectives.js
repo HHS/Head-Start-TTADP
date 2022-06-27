@@ -27,6 +27,7 @@ const RenderGoalsObjectives = ({
       goals: [{
         id: 1,
         name: 'This is a test goal',
+        goalIds: [1],
         objectives: [{
           id: 1,
           title: 'title',
@@ -158,6 +159,7 @@ describe('goals objectives', () => {
     it('fetched goals are autoselected', async () => {
       const goals = [{
         name: 'This is a test goal',
+        goalIds: [1],
         objectives: [{
           id: 1,
           title: 'title',
