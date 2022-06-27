@@ -251,6 +251,7 @@ export async function getGoalsByActivityRecipient(
         'createdAt',
         'goalNumber',
         'previousStatus',
+        // [sequelize.literal(``)]
       ],
       where: {
         id: goalIds,
