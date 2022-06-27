@@ -25,8 +25,8 @@ export const topicToQuery = {
     nin: (query, options) => withoutTopics(query, options),
   },
   reason: {
-    in: (query) => withReasons(query),
-    nin: (query) => withoutReasons(query),
+    in: (query, options) => withReasons(query, options),
+    nin: (query, options) => withoutReasons(query, options),
   },
   recipientId: {
     ctn: (query) => withRecipientId(query),
