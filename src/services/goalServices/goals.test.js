@@ -153,7 +153,7 @@ describe('Goals DB service', () => {
       expect(existingGoalUpdate).toHaveBeenCalledWith({
         name: 'name',
         status: 'Not Started',
-      });
+      }, { individualHooks: true });
     });
 
     test.todo('can update an existing goal');
@@ -174,13 +174,10 @@ describe('Goals DB service', () => {
         }],
       };
       await saveGoalsForReport([goalWithNewObjective], { id: 1 });
-      expect(Objective.findOrCreate).toHaveBeenCalledWith({
-        where: {
-          goalId: 1,
-          title: 'title',
-          status: { [Op.not]: 'Completed' },
-        },
-        defaults: { goalId: 1, title: 'title', status: '' },
+      expect(Objective.create).toHaveBeenCalledWith({
+        goalId: 1,
+        title: 'title',
+        status: '',
       });
     });
 
@@ -194,7 +191,7 @@ describe('Goals DB service', () => {
       };
 
       await saveGoalsForReport([existingGoal], { id: 1 });
-      expect(existingObjectiveUpdate).toHaveBeenCalledWith({ title: 'title', status: 'Closed' });
+      expect(existingObjectiveUpdate).toHaveBeenCalledWith({ title: 'title', status: 'Closed' }, { individualHooks: true });
     });
   });
 });

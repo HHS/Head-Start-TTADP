@@ -150,7 +150,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
           ],
           includeIgnoreAttributes: false,
           group: sequelize.literal('"Objective"."id"'),
-          having: sequelize.literal('count(DISTINCT "activityReports"."calculatedStatus") > 0'),
+          having: sequelize.literal('count(DISTINCT "activityReports"."calculatedStatus") = 0'),
         });
       } catch (e) {
         auditLogger.error(JSON.stringify({
@@ -164,7 +164,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
           { onApprovedAR: false },
           {
             where: {
-              id: { $in: objectives.map((o) => o.id) },
+              id: { [Op.in]: objectives.map((o) => o.id) },
               onApprovedAR: true,
             },
             transaction: options.transaction,
@@ -211,7 +211,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
           ],
           includeIgnoreAttributes: false,
           group: sequelize.literal('"Goal"."id"'),
-          having: sequelize.literal('count(DISTINCT "activityReports"."calculatedStatus") > 0'),
+          having: sequelize.literal('count(DISTINCT "activityReports"."calculatedStatus") = 0'),
           transaction: options.transaction,
         });
       } catch (e) {
@@ -226,7 +226,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
           { onApprovedAR: false },
           {
             where: {
-              id: { $in: goals.map((o) => o.goalId) },
+              id: { [Op.in]: goals.map((g) => g.id) },
               onApprovedAR: true,
             },
             transaction: options.transaction,
@@ -259,7 +259,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
         { onApprovedAR: true },
         {
           where: {
-            id: objectivesAndGoals.map((o) => o.objectiveId),
+            id: objectivesAndGoals.map((o) => o.id),
             onApprovedAR: false,
           },
           transaction: options.transaction,

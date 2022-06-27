@@ -6,23 +6,31 @@ import {
 import ObjectiveTopics from '../ObjectiveTopics';
 
 describe('ObjectiveTopics', () => {
-  const renderObjectiveTopics = () => render((
+  const renderObjectiveTopics = (savedTopics) => render((
     <ObjectiveTopics
       error={<></>}
-      savedTopics={[{
-        value: 1,
-        label: 'Lack of digestible solids',
-      }]}
+      savedTopics={savedTopics}
       topicOptions={[]}
       validateObjectiveTopics={jest.fn()}
       topics={[]}
       onChangeTopics={jest.fn()}
+      status="In Progress"
     />
   ));
 
   it('displays the correct label', async () => {
-    renderObjectiveTopics();
+    const savedTopics = [{
+      value: 1,
+      label: 'Lack of digestible solids',
+    }];
+    renderObjectiveTopics(savedTopics);
     const label = await screen.findByText(/Add more topics/i);
+    expect(label).toBeVisible();
+  });
+
+  it('handles no saved topics', async () => {
+    renderObjectiveTopics([]);
+    const label = await screen.findByText(/Topics/i);
     expect(label).toBeVisible();
   });
 });
