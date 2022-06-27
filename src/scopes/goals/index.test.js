@@ -11,6 +11,7 @@ import db, {
   ObjectiveTopic,
   Topic,
   Grant,
+  ActivityReportGoal,
 } from '../../models';
 
 const REGION_ID = 10;
@@ -25,6 +26,7 @@ describe('goal filtersToScopes', () => {
   let grant;
   let otherGrant;
   let goalGrant;
+  let activityReportGoalIds;
   const ots = [];
 
   beforeAll(async () => {
@@ -103,6 +105,19 @@ describe('goal filtersToScopes', () => {
         }),
       ],
     );
+
+    // Activity Report Goals.
+    const activityReportGoals = await Promise.all(
+      [
+        ActivityReportGoal.create({
+          activityReportId: reportWithTopics.id,
+          goalId: goals[1].id,
+        }),
+      ],
+    );
+
+    activityReportGoalIds = activityReportGoals.map((o) => o.id);
+
     const objectives = await Promise.all(
       [
         // goal for reasons
@@ -208,6 +223,12 @@ describe('goal filtersToScopes', () => {
     await Objective.destroy({
       where: {
         id: objectiveIds,
+      },
+    });
+
+    await ActivityReportGoal.destroy({
+      where: {
+        id: activityReportGoalIds,
       },
     });
 
