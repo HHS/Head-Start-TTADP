@@ -25,6 +25,7 @@ describe('goal filtersToScopes', () => {
   let reportWithTopics;
   let grant;
   let topicsGrant;
+  let reasonsGrant;
   let otherGrant;
   let goalGrant;
   let activityReportGoalIds;
@@ -34,6 +35,7 @@ describe('goal filtersToScopes', () => {
     goalGrant = await createGrant();
     grant = await createGrant({ regionId: REGION_ID, number: 'BROC1234' });
     topicsGrant = await createGrant({ regionId: REGION_ID, number: 'DSWEC56R78' });
+    reasonsGrant = await createGrant({ regionId: REGION_ID, number: 'JNDC532548' });
     otherGrant = await createGrant({ regionId: 11, number: 'CAUL4567' });
 
     emptyReport = await createReport({
@@ -47,7 +49,7 @@ describe('goal filtersToScopes', () => {
       calculatedStatus: 'approved',
       reason: ['Full Enrollment'],
       topics: ['CLASS: Emotional Support'],
-      activityRecipients: [],
+      activityRecipients: [{ grantId: reasonsGrant.id }],
       region: 15,
     });
     reportWithTopics = await createReport({
@@ -67,7 +69,7 @@ describe('goal filtersToScopes', () => {
           timeframe: '12 months',
           isFromSmartsheetTtaPlan: false,
           createdAt: new Date('2021-01-02'),
-          grantId: goalGrant.id,
+          grantId: reasonsGrant.id,
         }),
         // goal for topics
         await Goal.create({
@@ -111,6 +113,10 @@ describe('goal filtersToScopes', () => {
     // Activity Report Goals.
     const activityReportGoals = await Promise.all(
       [
+        ActivityReportGoal.create({
+          activityReportId: reportWithReasons.id,
+          goalId: goals[0].id,
+        }),
         ActivityReportGoal.create({
           activityReportId: reportWithTopics.id,
           goalId: goals[1].id,
@@ -178,6 +184,7 @@ describe('goal filtersToScopes', () => {
         await ActivityReportObjective.create({
           objectiveId: objectives[0].id,
           activityReportId: reportWithReasons.id,
+          grantId: reasonsGrant.id,
           ttaProvided: 'asdfadf',
         }),
         // goal for topics
@@ -248,13 +255,13 @@ describe('goal filtersToScopes', () => {
 
     await Grant.destroy({
       where: {
-        id: [grant.id, otherGrant.id, topicsGrant.id],
+        id: [grant.id, otherGrant.id, topicsGrant.id, reasonsGrant.id],
       },
     });
 
     await Recipient.destroy({
       where: {
-        id: [grant.recipientId, topicsGrant.recipientId],
+        id: [grant.recipientId, topicsGrant.recipientId, reasonsGrant.recipientId],
       },
     });
 
@@ -380,9 +387,55 @@ describe('goal filtersToScopes', () => {
       expect(found.length).toBe(1);
       expect(found.map((g) => g.name)).toContain('Goal 1');
     });
+    it('filters by reason with recipient', async () => {
+      const filters = { 'reason.in': 'Full Enrollment' };
+      const { goal: scope } = filtersToScopes(
+        filters,
+        {
+          goal: {
+            recipientId: reasonsGrant.recipientId,
+          },
+        },
+      );
+      const found = await Goal.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            {
+              id: possibleGoalIds,
+            },
+          ],
+        },
+      });
+
+      expect(found.length).toBe(1);
+      expect(found.map((g) => g.name)).toContain('Goal 1');
+    });
     it('filters out by reason', async () => {
       const filters = { 'reason.nin': 'Full Enrollment' };
       const { goal: scope } = filtersToScopes(filters);
+      const found = await Goal.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            { id: possibleGoalIds },
+          ],
+        },
+      });
+
+      expect(found.length).toBe(6);
+      expect(found.map((g) => g.name)).not.toContain('Goal 1');
+    });
+    it('filters out by reason with recipient', async () => {
+      const filters = { 'reason.nin': 'Full Enrollment' };
+      const { goal: scope } = filtersToScopes(
+        filters,
+        {
+          goal: {
+            recipientId: reasonsGrant.recipientId,
+          },
+        },
+      );
       const found = await Goal.findAll({
         where: {
           [Op.and]: [
