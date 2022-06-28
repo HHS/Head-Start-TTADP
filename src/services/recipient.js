@@ -413,8 +413,15 @@ export async function getGoalsByActivityRecipient(
     goalRows: [],
   });
 
+  if (limitNum) {
+    return {
+      count: r.goalRows.length,
+      goalRows: r.goalRows.slice(offSetNum, offSetNum + limitNum),
+    };
+  }
+
   return {
     count: r.goalRows.length,
-    goalRows: r.goalRows.slice(offSetNum, offSetNum + limitNum),
+    goalRows: r.goalRows.slice(offSetNum),
   };
 }
