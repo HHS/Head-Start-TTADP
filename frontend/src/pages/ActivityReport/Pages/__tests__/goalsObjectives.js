@@ -27,6 +27,7 @@ const RenderGoalsObjectives = ({
       goals: [{
         id: 1,
         name: 'This is a test goal',
+        isNew: true,
         goalIds: [1],
         objectives: [{
           id: 1,
@@ -48,9 +49,15 @@ const RenderGoalsObjectives = ({
   );
 };
 
-const renderGoals = (grantIds, activityRecipientType, goals = []) => {
+const renderGoals = (grantIds, activityRecipientType, goals = [], fetchError) => {
   const query = grantIds.map((id) => `grantIds=${id}`).join('&');
-  fetchMock.get(join(goalUrl, `?${query}`), goals);
+  const url = join(goalUrl, `?${query}`);
+  if (!fetchError) {
+    fetchMock.get(url, goals);
+  } else {
+    fetchMock.get(url, 500);
+  }
+
   render(
     <RenderGoalsObjectives
       grantIds={grantIds}
@@ -87,6 +94,13 @@ describe('goals objectives', () => {
       renderGoals([], 'recipient');
       await screen.findByText('Context');
       expect(screen.queryByText('Goals and objectives')).toBeNull();
+    });
+  });
+
+  describe('handles fetch error', () => {
+    it('handles it like I SAID', async () => {
+      renderGoals([1], 'recipient', [], true);
+      expect(await screen.findByText('Connection error. Cannot load options.')).toBeVisible();
     });
   });
 
