@@ -654,22 +654,28 @@ export async function saveGoalsForReport(goals, report) {
 }
 
 export async function updateGoalStatusById(
-  goalId,
+  goalIds,
   oldStatus,
   newStatus,
   closeSuspendReason,
   closeSuspendContext,
 ) {
-  const id = parseInt(goalId, DECIMAL_BASE);
-  const g = await Goal.findByPk(id);
-
-  await g.update({
+  const g = await Goal.update({
     status: newStatus,
     closeSuspendReason,
     closeSuspendContext,
     previousStatus: oldStatus,
-  }, { individualHooks: true });
-  return g;
+  }, {
+    where: {
+      id: goalIds,
+    },
+    returning: true,
+    individualHooks: true,
+  });
+
+  const [, updated] = g;
+
+  return updated;
 }
 
 export async function destroyGoal(goalId) {

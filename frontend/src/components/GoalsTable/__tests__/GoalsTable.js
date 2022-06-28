@@ -36,6 +36,7 @@ const defaultUser = {
 
 const goals = [{
   id: 4598,
+  ids: [4598],
   goalStatus: 'In Progress',
   createdOn: '2021-06-15',
   goalText: 'This is goal text 1.',
@@ -47,6 +48,7 @@ const goals = [{
 },
 {
   id: 8547,
+  ids: [8547],
   goalStatus: 'Not Started',
   createdOn: '2021-05-15',
   goalText: 'This is goal text 2.',
@@ -58,6 +60,7 @@ const goals = [{
 },
 {
   id: 65478,
+  ids: [65478],
   goalStatus: 'Completed',
   createdOn: '2021-04-15',
   goalText: 'This is goal text 3.',
@@ -69,6 +72,7 @@ const goals = [{
 },
 {
   id: 65479,
+  ids: [65479],
   goalStatus: '', // Needs Status.
   createdOn: '2021-03-15',
   goalText: 'This is goal text 4.',
@@ -80,6 +84,7 @@ const goals = [{
 },
 {
   id: 65480,
+  ids: [65480],
   goalStatus: 'Draft',
   createdOn: '2021-02-15',
   goalText: 'This is goal text 5.',
@@ -91,6 +96,7 @@ const goals = [{
 },
 {
   id: 65481,
+  ids: [65481],
   goalStatus: 'Suspended',
   createdOn: '2021-01-15',
   goalText: 'This is goal text 6.',
@@ -104,6 +110,7 @@ const goals = [{
 
 const goalWithObjectives = [{
   id: 4458,
+  ids: [4458],
   goalStatus: 'In Progress',
   createdOn: '2021-06-15',
   goalText: 'This is a goal with objectives',
@@ -513,7 +520,7 @@ describe('Goals Table', () => {
 
     it('Sets goal status with reason', async () => {
       fetchMock.reset();
-      fetchMock.put('/api/goals/4598/changeStatus', {
+      fetchMock.put('/api/goals/changeStatus', [{
         id: 4598,
         status: 'Closed',
         createdOn: '06/15/2021',
@@ -522,7 +529,7 @@ describe('Goals Table', () => {
         objectiveCount: 5,
         goalNumber: 'R14-G-4598',
         reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
-      });
+      }]);
 
       // Open Context Menu.
       const changeStatus = await screen.findByRole('button', { name: /Change status for goal 4598/i });
@@ -544,7 +551,7 @@ describe('Goals Table', () => {
 
     it('Sets goal status without reason', async () => {
       fetchMock.reset();
-      fetchMock.put('/api/goals/65479/changeStatus', {
+      fetchMock.put('/api/goals/changeStatus', [{
         id: 65479,
         goalStatus: 'In Progress',
         createdOn: '06/15/2021',
@@ -555,7 +562,7 @@ describe('Goals Table', () => {
         reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
         objectives: [],
         previousStatus: 'Needs status',
-      });
+      }]);
 
       expect(fetchMock.called()).toBe(false);
 

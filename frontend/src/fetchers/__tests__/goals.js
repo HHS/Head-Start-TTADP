@@ -5,7 +5,7 @@ describe('goals fetcher', () => {
   beforeEach(() => fetchMock.reset());
 
   it('test updates goals status', async () => {
-    fetchMock.put('/api/goals/4598/changeStatus', {
+    fetchMock.put('/api/goals/changeStatus', [{
       id: 4598,
       status: 'Completed',
       createdOn: '06/15/2021',
@@ -14,7 +14,7 @@ describe('goals fetcher', () => {
       objectiveCount: 5,
       goalNumber: 'R14-G-4598',
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
-    });
+    }]);
     await updateGoalStatus('4598', 'In Progress');
     expect(fetchMock.called()).toBeTruthy();
   });

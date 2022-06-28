@@ -379,6 +379,7 @@ export async function getGoalsByActivityRecipient(
     );
 
     if (existingGoal) {
+      existingGoal.ids = [...existingGoal.ids, current.id];
       existingGoal.goalNumbers = [...existingGoal.goalNumbers, current.goalNumber];
       existingGoal.objectives = reduceObjectives(current, existingGoal);
       existingGoal.objectiveCount = existingGoal.objectives.length;
@@ -390,6 +391,7 @@ export async function getGoalsByActivityRecipient(
 
     const goalToAdd = {
       id: current.id,
+      ids: [current.id],
       goalStatus: current.status,
       createdOn: current.createdAt,
       goalText: current.name.trim(),
