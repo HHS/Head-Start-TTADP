@@ -184,14 +184,12 @@ describe('goal filtersToScopes', () => {
         await ActivityReportObjective.create({
           objectiveId: objectives[0].id,
           activityReportId: reportWithReasons.id,
-          grantId: reasonsGrant.id,
           ttaProvided: 'asdfadf',
         }),
         // goal for topics
         await ActivityReportObjective.create({
           objectiveId: objectives[1].id,
           activityReportId: reportWithTopics.id,
-          grantId: topicsGrant.id,
           ttaProvided: 'asdfadf',
         }),
         // goal for status
@@ -516,7 +514,7 @@ describe('goal filtersToScopes', () => {
       const filters = { 'topic.nin': 'Behavioral / Mental Health / Trauma' };
       const { goal: scope } = filtersToScopes(filters, {
         goal: {
-          recipientId: goalGrant.recipientId,
+          recipientId: topicsGrant.recipientId,
         },
       });
       const found = await Goal.findAll({
