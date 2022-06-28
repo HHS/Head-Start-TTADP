@@ -117,7 +117,8 @@ function GoalRow({
   performGoalStatusUpdate,
 }) {
   const {
-    id,
+    id, // for keys and such, from the api
+    ids, // all rolled up ids
     goalStatus,
     createdOn,
     goalText,
@@ -135,9 +136,9 @@ function GoalRow({
   const onUpdateGoalStatus = (newStatus) => {
     if (newStatus === 'Completed' || newStatus === 'Closed' || newStatus === 'Ceased/Suspended' || newStatus === 'Suspended') {
       // Must provide reason for Close or Suspend.
-      showCloseSuspendGoalModal(newStatus, id, goalStatus);
+      showCloseSuspendGoalModal(newStatus, ids, goalStatus);
     } else {
-      performGoalStatusUpdate(id, newStatus, goalStatus);
+      performGoalStatusUpdate(ids, newStatus, goalStatus);
     }
   };
 
@@ -320,6 +321,7 @@ export const objectivePropTypes = PropTypes.shape({
 
 export const goalPropTypes = PropTypes.shape({
   id: PropTypes.number.isRequired,
+  ids: PropTypes.arrayOf(PropTypes.number),
   goalStatus: PropTypes.string,
   createdOn: PropTypes.string.isRequired,
   goalText: PropTypes.string.isRequired,
