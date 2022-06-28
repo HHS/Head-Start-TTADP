@@ -296,6 +296,9 @@ const automaticStatusChangeOnAprovalForGoals = async (sequelize, instance, optio
           {
             model: sequelize.models.Objective,
             as: 'objectives',
+            where: {
+              status: ['In Progress', 'Completed'],
+            },
           },
           {
             model: sequelize.models.ActivityReport,
@@ -308,11 +311,8 @@ const automaticStatusChangeOnAprovalForGoals = async (sequelize, instance, optio
       },
     );
 
-    // Goals updated to 'In Progress' must have at least one objective 'Completed' or 'In Progress'.
-    const goalsToUpdate = goals.filter((g) => g.objectives.some((o) => o.status === 'In Progress' || o.status === 'Completed'));
-
     // Update Goal status to 'In Progress'.
-    await Promise.all(goalsToUpdate.map(async (goal) => {
+    await Promise.all(goals.map(async (goal) => {
       goal.set('status', 'In Progress');
       return goal.save();
     }));
