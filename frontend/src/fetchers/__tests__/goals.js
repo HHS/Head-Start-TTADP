@@ -12,10 +12,10 @@ describe('goals fetcher', () => {
       goalText: 'This is goal text 1.',
       goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
       objectiveCount: 5,
-      goalNumber: 'R14-G-4598',
+      goalNumber: 'G-4598',
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
     }]);
-    await updateGoalStatus('4598', 'In Progress');
+    await updateGoalStatus([4598], 'In Progress');
     expect(fetchMock.called()).toBeTruthy();
   });
 });

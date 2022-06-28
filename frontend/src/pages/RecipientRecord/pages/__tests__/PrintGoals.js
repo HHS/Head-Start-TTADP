@@ -24,7 +24,7 @@ describe('PrintGoals', () => {
       goalText: 'This is goal text 1.',
       goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
       objectiveCount: 5,
-      goalNumber: 'R14-G-4598',
+      goalNumber: 'G-4598',
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
       objectives: [],
     },
@@ -35,7 +35,7 @@ describe('PrintGoals', () => {
       goalText: 'This is goal text 2.',
       goalTopics: ['Human Resources', 'Safety Practices'],
       objectiveCount: 5,
-      goalNumber: 'R14-G-4598',
+      goalNumber: 'G-4598',
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
       objectives: [
         {

@@ -166,6 +166,36 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
   };
 }
 
+function dedupeAndSortObjectivesAndReports(objectives) {
+  return objectives.reduce((previous, objective) => {
+    // eslint-disable-next-line max-len
+    const existingObjective = previous.find((o) => (o.title.trim() === objective.title.trim() && o.status === objective.status));
+
+    if (existingObjective) {
+      // if the objective exists, we also have to make sure all
+      // the reports are combined into one list
+
+      // eslint-disable-next-line max-len
+      existingObjective.activityReports = objective.activityReports.reduce((existingReports, currentReport) => {
+        const existingReport = existingReports.find((report) => report.id === currentReport.id);
+        if (existingReport) {
+          return existingReports;
+        }
+
+        return [...existingReports, currentReport];
+      }, existingObjective.activityReports);
+      return previous;
+    }
+
+    return [
+      ...previous,
+      objective,
+    ];
+  }, []).sort((a, b) => ((
+    a.endDate === b.endDate ? a.id < b.id
+      : a.endDate < b.endDate) ? 1 : -1)); // we also have to sort the objectives
+}
+
 function reduceObjectives(response, goal) {
   const current = goal;
 
@@ -229,33 +259,7 @@ function reduceObjectives(response, goal) {
 
   // this is to dedupe (our first pass dedupes objectives from rolled up goals,
   // this dedupes objectives from the same goal)
-  return objectives.reduce((previous, objective) => {
-    // eslint-disable-next-line max-len
-    const existingObjective = previous.find((o) => (o.title.trim() === objective.title.trim() && o.status === objective.status));
-
-    if (existingObjective) {
-      // if the objective exists, we also have to make sure all
-      // the reports are combined into one list
-
-      // eslint-disable-next-line max-len
-      existingObjective.activityReports = objective.activityReports.reduce((existingReports, currentReport) => {
-        const existingReport = existingReports.find((report) => report.id === currentReport.id);
-        if (existingReport) {
-          return existingReports;
-        }
-
-        return [...existingReports, currentReport];
-      }, existingObjective.activityReports);
-      return previous;
-    }
-
-    return [
-      ...previous,
-      objective,
-    ];
-  }, []).sort((a, b) => ((
-    a.endDate === b.endDate ? a.id < b.id
-      : a.endDate < b.endDate) ? 1 : -1)); // we also have to sort the objectives
+  return dedupeAndSortObjectivesAndReports(objectives);
 }
 
 function calculatePreviousStatus(goal) {
