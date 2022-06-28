@@ -7,6 +7,7 @@ import PrintableGoal from './components/PrintableGoal';
 import PrintToPdf from '../../../components/PrintToPDF';
 import './PrintGoals.css';
 
+const OFFSET = 0;
 export default function PrintGoals({ location, recipientId, regionId }) {
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +26,7 @@ export default function PrintGoals({ location, recipientId, regionId }) {
           regionId,
           sortConfig.sortBy,
           sortConfig.direction,
-          sortConfig.offset,
+          OFFSET,
           false,
           '',
         );
