@@ -58,7 +58,6 @@ export default async function goalStatusGraph(scopes) {
         required: true,
       }],
     }],
-    logging: console.log,
   });
 
   let total = 0;
