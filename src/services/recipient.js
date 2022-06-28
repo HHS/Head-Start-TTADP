@@ -358,6 +358,7 @@ export async function getGoalsByActivityRecipient(
               'endDate',
               'calculatedStatus',
               'legacyId',
+              'regionId',
             ],
             model: ActivityReport,
             as: 'activityReports',
