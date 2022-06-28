@@ -19,7 +19,8 @@ import {
 
 import { getGoalsByActivityRecipient } from '../recipient';
 import { REPORT_STATUSES } from '../../constants';
-import { auditLogger } from '../../logger';
+
+const NEEDLE = 'This objective title should not appear in recipient 3';
 
 describe('Goals by Recipient Test', () => {
   const recipient = {
@@ -32,9 +33,14 @@ describe('Goals by Recipient Test', () => {
     name: 'Recipient 2 with Goals',
   };
 
+  const recipient3 = {
+    id: 302,
+    name: 'Recipient 3 with Goals',
+  };
+
   const grant1 = {
     id: 300,
-    recipientId: 300,
+    recipientId: recipient.id,
     regionId: 1,
     number: '12345',
     programSpecialistName: 'George',
@@ -45,7 +51,7 @@ describe('Goals by Recipient Test', () => {
 
   const grant2 = {
     id: 301,
-    recipientId: 300,
+    recipientId: recipient.id,
     regionId: 1,
     number: '12346',
     programSpecialistName: 'Joe',
@@ -56,9 +62,20 @@ describe('Goals by Recipient Test', () => {
 
   const grant3 = {
     id: 302,
-    recipientId: 301,
+    recipientId: recipient2.id,
     regionId: 1,
     number: '12334',
+    programSpecialistName: 'Joe',
+    status: 'Active',
+    endDate: new Date(2020, 10, 2),
+    grantSpecialistName: 'Glen',
+  };
+
+  const grant4 = {
+    id: 304,
+    recipientId: recipient3.id,
+    regionId: 1,
+    number: '12335',
     programSpecialistName: 'Joe',
     status: 'Active',
     endDate: new Date(2020, 10, 2),
@@ -142,6 +159,58 @@ describe('Goals by Recipient Test', () => {
     ttaType: ['type'],
   };
 
+  const goalReport4 = {
+    ...goalReport1,
+    submissionStatus: REPORT_STATUSES.DRAFT,
+    calculatedStatus: REPORT_STATUSES.DRAFT,
+  };
+
+  const goalReport5 = {
+    activityRecipientType: 'recipient',
+    userId: mockGoalUser.id,
+    regionId: 1,
+    lastUpdatedById: mockGoalUser.id,
+    ECLKCResourcesUsed: ['test'],
+    activityRecipients: [{ grantId: grant3.id }, { grantId: grant4.id }],
+    submissionStatus: REPORT_STATUSES.APPROVED,
+    calculatedStatus: REPORT_STATUSES.APPROVED,
+    oldApprovingManagerId: 1,
+    numberOfParticipants: 1,
+    deliveryMethod: 'method',
+    duration: 0,
+    endDate: '2020-10-01T12:00:00Z',
+    startDate: '2020-10-01T12:00:00Z',
+    requester: 'requester',
+    targetPopulations: ['pop'],
+    participants: ['participants'],
+    reason: ['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option'],
+    topics: ['Child Assessment, Development, Screening', 'Communication'],
+    ttaType: ['type'],
+  };
+
+  const goalReport6 = {
+    activityRecipientType: 'recipient',
+    userId: mockGoalUser.id,
+    regionId: 1,
+    lastUpdatedById: mockGoalUser.id,
+    ECLKCResourcesUsed: ['test'],
+    activityRecipients: [{ grantId: grant4.id }],
+    submissionStatus: REPORT_STATUSES.APPROVED,
+    calculatedStatus: REPORT_STATUSES.APPROVED,
+    oldApprovingManagerId: 1,
+    numberOfParticipants: 1,
+    deliveryMethod: 'method',
+    duration: 0,
+    endDate: '2020-10-01T12:00:00Z',
+    startDate: '2020-10-01T12:00:00Z',
+    requester: 'requester',
+    targetPopulations: ['pop'],
+    participants: ['participants'],
+    reason: ['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option'],
+    topics: ['Child Assessment, Development, Screening', 'Communication'],
+    ttaType: ['type'],
+  };
+
   let objectiveIds = [];
   let goalIds = [];
 
@@ -156,152 +225,176 @@ describe('Goals by Recipient Test', () => {
     // Create Recipient.
     await Recipient.create(recipient);
     await Recipient.create(recipient2);
+    await Recipient.create(recipient3);
 
     // Create Grants.
     const savedGrant1 = await Grant.create(grant1);
     const savedGrant2 = await Grant.create(grant2);
     const savedGrant3 = await Grant.create(grant3);
+    const savedGrant4 = await Grant.create(grant4);
 
     // Create Reports.
     const savedGoalReport1 = await ActivityReport.create(goalReport1);
     const savedGoalReport2 = await ActivityReport.create(goalReport2);
     const savedGoalReport3 = await ActivityReport.create(goalReport3);
-    const savedGoalReport4 = await ActivityReport.create(
-      {
-        ...goalReport1,
-        submissionStatus: REPORT_STATUSES.DRAFT,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-      },
-    );
+    const savedGoalReport4 = await ActivityReport.create(goalReport4);
+    const savedGoalReport5 = await ActivityReport.create(goalReport5);
+    const savedGoalReport6 = await ActivityReport.create(goalReport6);
 
     // Create AR Recipients.
-    try {
-      await ActivityRecipient.create({
-        activityReportId: savedGoalReport1.id,
-        grantId: savedGrant1.id,
-      });
-    } catch (error) {
-      auditLogger.error(JSON.stringify(error));
-      throw error;
-    }
-    try {
-      await ActivityRecipient.create({
-        activityReportId: savedGoalReport2.id,
-        grantId: savedGrant2.id,
-      });
-    } catch (error) {
-      auditLogger.error(JSON.stringify(error));
-      throw error;
-    }
-    try {
-      await ActivityRecipient.create({
-        activityReportId: savedGoalReport3.id,
-        grantId: savedGrant3.id,
-      });
-    } catch (error) {
-      auditLogger.error(JSON.stringify(error));
-      throw error;
-    }
-    try {
-      await ActivityRecipient.create({
-        activityReportId: savedGoalReport4.id,
-        grantId: savedGrant3.id,
-      });
-    } catch (error) {
-      auditLogger.error(JSON.stringify(error));
-      throw error;
-    }
+    await ActivityRecipient.create({
+      activityReportId: savedGoalReport1.id,
+      grantId: savedGrant1.id,
+    });
+
+    await ActivityRecipient.create({
+      activityReportId: savedGoalReport2.id,
+      grantId: savedGrant2.id,
+    });
+
+    await ActivityRecipient.create({
+      activityReportId: savedGoalReport3.id,
+      grantId: savedGrant3.id,
+    });
+
+    await ActivityRecipient.create({
+      activityReportId: savedGoalReport4.id,
+      grantId: savedGrant3.id,
+    });
+
+    await ActivityRecipient.create({
+      activityReportId: savedGoalReport5.id,
+      grantId: savedGrant3.id,
+    });
+
+    await ActivityRecipient.create({
+      activityReportId: savedGoalReport5.id,
+      grantId: savedGrant4.id,
+    });
+
+    await ActivityRecipient.create({
+      activityReportId: savedGoalReport6.id,
+      grantId: savedGrant4.id,
+    });
 
     // Create Goals.
-    let goals = [];
-    try {
-      goals = await Promise.all(
-        [
-          // goal 1 (AR1)
-          Goal.create({
-            name: 'Goal 1',
-            status: '',
-            timeframe: '12 months',
-            isFromSmartsheetTtaPlan: false,
-            grantId: 300,
-            createdAt: '2021-01-10T19:16:15.842Z',
-            onApprovedAR: true,
-          }),
-          // goal 2 (AR1)
-          Goal.create({
-            name: 'Goal 2',
-            status: 'Not Started',
-            timeframe: '12 months',
-            isFromSmartsheetTtaPlan: false,
-            grantId: 300,
-            createdAt: '2021-02-15T19:16:15.842Z',
-            onApprovedAR: true,
-          }),
-          // goal 3 (AR1)
-          Goal.create({
-            name: 'Goal 3',
-            status: 'In Progress',
-            timeframe: '12 months',
-            isFromSmartsheetTtaPlan: false,
-            grantId: 300,
-            createdAt: '2021-03-03T19:16:15.842Z',
-            onApprovedAR: true,
-          }),
-          // goal 4 (AR2)
-          Goal.create({
-            name: 'Goal 4',
-            status: 'In Progress',
-            timeframe: '12 months',
-            isFromSmartsheetTtaPlan: false,
-            grantId: 301,
-            createdAt: '2021-04-02T19:16:15.842Z',
-            onApprovedAR: true,
-          }),
-          // goal 5 (AR3 Exclude)
-          Goal.create({
-            name: 'Goal 5',
-            status: 'In Progress',
-            timeframe: '12 months',
-            isFromSmartsheetTtaPlan: false,
-            grantId: 302,
-            createdAt: '2021-05-02T19:16:15.842Z',
-            onApprovedAR: true,
-          }),
-          Goal.create({
-            name: 'Goal not on report, no objective',
-            status: 'Closed',
-            timeframe: '12 months',
-            isFromSmartsheetTtaPlan: false,
-            grantId: 300,
-            createdAt: '2021-01-10T19:16:15.842Z',
-            onApprovedAR: true,
-          }),
-          Goal.create({
-            name: 'Goal not on report, with objective',
-            status: 'Closed',
-            timeframe: '12 months',
-            isFromSmartsheetTtaPlan: false,
-            grantId: 300,
-            createdAt: '2021-01-10T19:16:15.842Z',
-            onApprovedAR: true,
-          }),
-          // goal 6 (AR4)
-          Goal.create({
-            name: 'Goal on Draft report',
-            status: '',
-            timeframe: '1 month',
-            isFromSmartsheetTtaPlan: false,
-            grantId: 300,
-            createdAt: '2021-01-10T19:16:15.842Z',
-            onApprovedAR: false,
+    const goals = await Promise.all(
+      [
+        // goal 1 (AR1)
+        Goal.create({
+          name: 'Goal 1',
+          status: '',
+          timeframe: '12 months',
+          isFromSmartsheetTtaPlan: false,
+          grantId: 300,
+          createdAt: '2021-01-10T19:16:15.842Z',
+          onApprovedAR: true,
+        }),
+        // goal 2 (AR1)
+        Goal.create({
+          name: 'Goal 2',
+          status: 'Not Started',
+          timeframe: '12 months',
+          isFromSmartsheetTtaPlan: false,
+          grantId: 300,
+          createdAt: '2021-02-15T19:16:15.842Z',
+          onApprovedAR: true,
+        }),
+        // goal 3 (AR1)
+        Goal.create({
+          name: 'Goal 3',
+          status: 'In Progress',
+          timeframe: '12 months',
+          isFromSmartsheetTtaPlan: false,
+          grantId: 300,
+          createdAt: '2021-03-03T19:16:15.842Z',
+          onApprovedAR: true,
+        }),
+        // goal 4 (AR2)
+        Goal.create({
+          name: 'Goal 4',
+          status: 'In Progress',
+          timeframe: '12 months',
+          isFromSmartsheetTtaPlan: false,
+          grantId: 301,
+          createdAt: '2021-04-02T19:16:15.842Z',
+          onApprovedAR: true,
+        }),
+        // goal 5 (AR3 Exclude)
+        Goal.create({
+          name: 'Goal 5',
+          status: 'In Progress',
+          timeframe: '12 months',
+          isFromSmartsheetTtaPlan: false,
+          grantId: 302,
+          createdAt: '2021-05-02T19:16:15.842Z',
+          onApprovedAR: true,
+        }),
+        // 6
+        Goal.create({
+          name: 'Goal not on report, no objective',
+          status: 'Closed',
+          timeframe: '12 months',
+          isFromSmartsheetTtaPlan: false,
+          grantId: 300,
+          createdAt: '2021-01-10T19:16:15.842Z',
+          onApprovedAR: true,
+        }),
+        // 7
+        Goal.create({
+          name: 'Goal not on report, with objective',
+          status: 'Closed',
+          timeframe: '12 months',
+          isFromSmartsheetTtaPlan: false,
+          grantId: 300,
+          createdAt: '2021-01-10T19:16:15.842Z',
+          onApprovedAR: true,
+        }),
+        // 8
+        Goal.create({
+          name: 'Goal on Draft report',
+          status: '',
+          timeframe: '1 month',
+          isFromSmartsheetTtaPlan: false,
+          grantId: 300,
+          createdAt: '2021-01-10T19:16:15.842Z',
+          onApprovedAR: false,
+        }),
 
-          }),
-        ],
-      );
-    } catch (err) {
-      auditLogger.error(err);
-      throw (err);
-    }
+        // 9
+        Goal.create({
+          name: 'This is a goal for 2 recipients',
+          status: '',
+          timeframe: '1 month',
+          isFromSmartsheetTtaPlan: false,
+          grantId: grant3.id,
+          createdAt: '2021-01-10T19:16:15.842Z',
+          onApprovedAR: false,
+        }),
+
+        // 10
+        Goal.create({
+          name: 'This is a goal for 2 recipients',
+          status: '',
+          timeframe: '1 month',
+          isFromSmartsheetTtaPlan: false,
+          grantId: grant4.id,
+          createdAt: '2021-01-10T19:16:15.842Z',
+          onApprovedAR: false,
+        }),
+
+        // 11
+        Goal.create({
+          name: 'This is a goal for 1 recipient but that recipient sometimes appears on multirecipient reports',
+          status: '',
+          timeframe: '1 month',
+          isFromSmartsheetTtaPlan: false,
+          grantId: grant4.id,
+          createdAt: '2021-01-10T19:16:15.842Z',
+          onApprovedAR: false,
+        }),
+      ],
+    );
 
     // Get Goal Ids for Delete.
     goalIds = goals.map((o) => o.id);
@@ -365,6 +458,31 @@ describe('Goals by Recipient Test', () => {
           status: 'Not Started',
           onApprovedAR: false,
         }),
+
+        // 9
+        await Objective.create({
+          goalId: goalIds[9],
+          title: 'This objective title should appear in recipient 3',
+          status: 'Not Started',
+          onApprovedAR: false,
+        }),
+
+        // 10
+        await Objective.create({
+          goalId: goalIds[10],
+          title: 'This objective title should appear in recipient 3',
+          status: 'Not Started',
+          onApprovedAR: false,
+        }),
+
+        // 11
+        await Objective.create({
+          goalId: goalIds[11],
+          title: NEEDLE,
+          status: 'Not Started',
+          onApprovedAR: false,
+        }),
+
       ],
     );
 
@@ -454,6 +572,24 @@ describe('Goals by Recipient Test', () => {
           activityReportId: savedGoalReport4.id,
           ttaProvided: 'Objective for Goal 6 Draft report Exclude',
         }),
+
+        ActivityReportObjective.create({
+          objectiveId: objectives[9].id,
+          activityReportId: savedGoalReport5.id,
+          ttaProvided: 'html tags',
+        }),
+
+        ActivityReportObjective.create({
+          objectiveId: objectives[10].id,
+          activityReportId: savedGoalReport5.id,
+          ttaProvided: 'html tags',
+        }),
+
+        ActivityReportObjective.create({
+          objectiveId: objectives[11].id,
+          activityReportId: savedGoalReport6.id,
+          ttaProvided: 'more html tags',
+        }),
       ],
     );
   });
@@ -530,18 +666,11 @@ describe('Goals by Recipient Test', () => {
     });
 
     it('Retrieves Goals by Recipient', async () => {
-      let countx;
-      let goalRowsx;
-      try {
-        const { count, goalRows } = await getGoalsByActivityRecipient(300, 1, {
-          sortBy: 'createdOn', sortDir: 'desc', offset: 0, limit: 10,
-        });
-        countx = count;
-        goalRowsx = goalRows;
-      } catch (err) {
-        auditLogger.info(JSON.stringify(err));
-        throw err;
-      }
+      const { count, goalRows } = await getGoalsByActivityRecipient(300, 1, {
+        sortBy: 'createdOn', sortDir: 'desc', offset: 0, limit: 10,
+      });
+      const countx = count;
+      const goalRowsx = goalRows;
 
       expect(countx).toBe(6);
       expect(goalRowsx.length).toBe(6);
@@ -592,6 +721,26 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx[3].reasons).toEqual(['COVID-19 response', 'Complaint']);
       expect(goalRowsx[3].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
       expect(goalRowsx[3].objectives.length).toBe(1);
+    });
+
+    it('associates objectives with the proper recipients', async () => {
+      const { goalRows } = await getGoalsByActivityRecipient(recipient2.id, 1, {
+        sortBy: 'createdOn', sortDir: 'desc', offset: 0, limit: 10,
+      });
+
+      // eslint-disable-next-line max-len
+      const objectives = goalRows.reduce((previous, current) => ([...previous, current.objectives]), []);
+      const titles = objectives.map((objective) => objective.title);
+      expect(titles).not.toContain(NEEDLE);
+
+      const { goalRows: moreGoalRows } = await getGoalsByActivityRecipient(recipient3.id, 1, {
+        sortBy: 'createdOn', sortDir: 'desc', offset: 0, limit: 10,
+      });
+
+      // eslint-disable-next-line max-len
+      const moreObjectives = moreGoalRows.reduce((previous, current) => ([...previous, current.objectives]), []);
+      const moreTitles = moreObjectives.map((objective) => objective.title);
+      expect(moreTitles).toContain(NEEDLE);
     });
   });
 });
