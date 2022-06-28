@@ -373,19 +373,7 @@ export async function getGoalsByActivityRecipient(
     order: orderGoalsBy(sortBy, sortDir),
   });
 
-  // Build Array of Goals.
-  let goalCount = 0;
-
-  // Handle Paging.
-  if (offset > 0) {
-    rows.splice(0, offSetNum);
-  }
-
   const r = rows.reduce((previous, current) => {
-    if (goalCount === limitNum) {
-      return previous;
-    }
-
     const existingGoal = previous.goalRows.find(
       (g) => g.goalStatus === current.status && g.goalText.trim() === current.name.trim(),
     );
@@ -396,12 +384,9 @@ export async function getGoalsByActivityRecipient(
       existingGoal.objectiveCount = existingGoal.objectives.length;
 
       return {
-        count: previous.count,
         goalRows: previous.goalRows,
       };
     }
-
-    goalCount += 1;
 
     const goalToAdd = {
       id: current.id,
@@ -420,13 +405,14 @@ export async function getGoalsByActivityRecipient(
     goalToAdd.objectiveCount = goalToAdd.objectives.length;
 
     return {
-      count: previous.count,
       goalRows: [...previous.goalRows, goalToAdd],
     };
   }, {
-    count: rows.length,
     goalRows: [],
   });
 
-  return r;
+  return {
+    count: r.goalRows.length,
+    goalRows: r.goalRows.slice(offSetNum, offSetNum + limitNum),
+  };
 }

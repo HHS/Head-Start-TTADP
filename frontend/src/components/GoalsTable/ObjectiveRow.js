@@ -124,7 +124,7 @@ function ObjectiveRow({
         </li>
         <li className="padding-x-105 padding-y-0">
           <span className="sr-only">Grant number </span>
-          {grantNumbers.join(' ')}
+          {grantNumbers.join(', ')}
         </li>
         <li className="padding-x-105 padding-y-0">
           <span className="sr-only">End date </span>
