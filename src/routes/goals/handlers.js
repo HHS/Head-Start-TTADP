@@ -54,19 +54,22 @@ export async function changeGoalStatus(req, res) {
 
     let status = false;
 
-    ids.forEach(async (goalId) => {
+    await Promise.all(ids.map(async (goalId) => {
       if (!status) {
         const goal = await goalByIdWithActivityReportsAndRegions(goalId);
 
         if (!goal) {
           status = 404;
+          return status;
         }
 
         if (!new Goal(user, goal).canChangeStatus()) {
           status = 401;
+          return status;
         }
       }
-    });
+      return status;
+    }));
 
     if (status) {
       res.sendStatus(status);
