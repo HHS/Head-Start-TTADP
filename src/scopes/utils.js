@@ -52,7 +52,7 @@ export function withinDateRange(dates, property) {
   }, []);
 }
 
-export function createFiltersToScopes(filters, topicToQuery) {
+export function createFiltersToScopes(filters, topicToQuery, options) {
   const validFilters = pickBy(filters, (query, topicAndCondition) => {
     const [topic, condition] = topicAndCondition.split('.');
     if (!(topic in topicToQuery)) {
@@ -63,7 +63,7 @@ export function createFiltersToScopes(filters, topicToQuery) {
 
   return map(validFilters, (query, topicAndCondition) => {
     const [topic, condition] = topicAndCondition.split('.');
-    return topicToQuery[topic][condition]([query].flat());
+    return topicToQuery[topic][condition]([query].flat(), options);
   });
 }
 

@@ -18,6 +18,7 @@ import {
   LOCAL_STORAGE_EDITABLE_KEY,
   DATEPICKER_VALUE_FORMAT,
 } from '../../Constants';
+import PrintToPdf from '../../components/PrintToPDF';
 
 /**
  *
@@ -431,7 +432,9 @@ export default function ApprovedActivityReport({ match, user }) {
         {navigator && navigator.clipboard
           ? <button type="button" className="usa-button no-print" disabled={modalRef && modalRef.current ? modalRef.current.modalIsOpen : false} onClick={handleCopyUrl}>Copy URL Link</button>
           : null}
-        <button type="button" className="usa-button no-print" disabled={modalRef && modalRef.current ? modalRef.current.modalIsOpen : false} onClick={() => window.print()}>Print to PDF</button>
+        <PrintToPdf
+          disabled={modalRef && modalRef.current ? modalRef.current.modalIsOpen : false}
+        />
         {user && user.permissions && canUnlockReports(user)
           ? <ModalToggleButton type="button" className="usa-button usa-button--outline no-print" modalRef={modalRef} opener>Unlock report</ModalToggleButton>
           : null}

@@ -15,7 +15,7 @@ import { DECIMAL_BASE } from '../../Constants';
 import Menu from '../Menu';
 import './StatusDropdown.css';
 
-const STATUSES = {
+export const STATUSES = {
   'In Progress': {
     display: 'In progress',
     color: colors.ttahubMediumBlue,
@@ -29,6 +29,11 @@ const STATUSES = {
   // my database has "completed" goals in it, not sure why so leaving it in case of breakage
   Completed: {
     display: 'Closed',
+    color: colors.success,
+    icon: <Closed />,
+  },
+  Complete: {
+    display: 'Complete',
     color: colors.success,
     icon: <Closed />,
   },

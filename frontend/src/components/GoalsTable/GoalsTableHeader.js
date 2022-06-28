@@ -3,7 +3,8 @@ import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import Pagination from 'react-js-pagination';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
+import { Button } from '@trussworks/react-uswds';
 import UserContext from '../../UserContext';
 import { canEditOrCreateGoals } from '../../permissions';
 import { DECIMAL_BASE } from '../../Constants';
@@ -31,11 +32,19 @@ export default function GoalsTableHeader({
   recipientId,
   regionId,
   hasActiveGrants,
+  selectedGoals,
 }) {
+  const history = useHistory();
   const { user } = useContext(UserContext);
   const hasButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
 
   const showAddNewButton = hasActiveGrants && hasButtonPermissions && false;
+
+  const onPrint = () => {
+    history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives/print`, {
+      selectedGoals,
+    });
+  };
 
   return (
     <div className="desktop:display-flex padding-x-3">
@@ -55,6 +64,12 @@ export default function GoalsTableHeader({
             </Link>
           </span>
         ) : null }
+        <Button
+          className="display-flex flex-align-center usa-button usa-button--unstyled margin-x-3 margin-y-3"
+          onClick={onPrint}
+        >
+          Preview and print
+        </Button>
       </div>
       {!hidePagination && (
         <span className="smart-hub--table-nav">
@@ -102,6 +117,7 @@ GoalsTableHeader.propTypes = {
   regionId: PropTypes.string.isRequired,
   recipientId: PropTypes.string.isRequired,
   hasActiveGrants: PropTypes.bool.isRequired,
+  selectedGoals: PropTypes.arrayOf(PropTypes.shape({ id: PropTypes.number })).isRequired,
 };
 
 GoalsTableHeader.defaultProps = {
