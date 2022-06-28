@@ -253,7 +253,9 @@ function reduceObjectives(response, goal) {
       ...previous,
       objective,
     ];
-  }, []);
+  }, []).sort((a, b) => ((
+    a.endDate === b.endDate ? a.id < b.id
+      : a.endDate < b.endDate) ? 1 : -1)); // we also have to sort the objectives
 }
 
 function calculatePreviousStatus(goal) {
@@ -356,7 +358,6 @@ export async function getGoalsByActivityRecipient(
               'endDate',
               'calculatedStatus',
               'legacyId',
-              'regionId',
             ],
             model: ActivityReport,
             as: 'activityReports',
