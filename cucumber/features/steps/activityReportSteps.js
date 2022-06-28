@@ -1,3 +1,4 @@
+/* eslint-disable import/no-extraneous-dependencies */
 require('dotenv').config();
 const {
   Given, Then, When,
@@ -34,7 +35,7 @@ Then('I see {string} as an option in the {string} multiselect', async (expectedO
   const selector = `//label[text()='${dropdownLabel}']//div`;
   const multiselect = await page.$x(selector);
   await multiselect[0].click();
-  const elements = await page.$x(`//label[text()='${dropdownLabel}']//div//div[2]//div//div`)
+  const elements = await page.$x(`//label[text()='${dropdownLabel}']//div//div[2]//div//div`);
   let found = false;
 
   for (let i = 0; i < elements.length; i += 1) {

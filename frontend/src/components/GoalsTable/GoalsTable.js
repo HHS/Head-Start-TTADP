@@ -216,6 +216,7 @@ function GoalsTable({
           recipientId={recipientId}
           regionId={regionId}
           hasActiveGrants={hasActiveGrants}
+          selectedGoals={sortConfig}
         />
         <div className="usa-table-container padding-x-3">
           <Table fullWidth scrollable>

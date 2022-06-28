@@ -171,6 +171,10 @@ button:not([disabled]):focus {
     display: unset;
   }
 
+  .no-break-within {
+    break-inside: avoid;
+  }
+
   /* Hide things that don't need to be printed
    * ':empty' doesn't work on <textarea>, so we need to check values and set 'no-print' if empty
    * */
