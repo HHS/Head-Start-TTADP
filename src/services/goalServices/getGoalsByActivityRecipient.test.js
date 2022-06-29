@@ -574,6 +574,12 @@ describe('Goals by Recipient Test', () => {
         }),
 
         ActivityReportObjective.create({
+          objectiveId: objectives[8].id,
+          activityReportId: savedGoalReport5.id,
+          ttaProvided: 'html tags',
+        }),
+
+        ActivityReportObjective.create({
           objectiveId: objectives[9].id,
           activityReportId: savedGoalReport5.id,
           ttaProvided: 'html tags',
@@ -581,12 +587,6 @@ describe('Goals by Recipient Test', () => {
 
         ActivityReportObjective.create({
           objectiveId: objectives[10].id,
-          activityReportId: savedGoalReport5.id,
-          ttaProvided: 'html tags',
-        }),
-
-        ActivityReportObjective.create({
-          objectiveId: objectives[11].id,
           activityReportId: savedGoalReport6.id,
           ttaProvided: 'more html tags',
         }),
