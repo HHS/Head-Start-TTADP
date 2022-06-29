@@ -42,7 +42,7 @@ const goals = [{
   goalText: 'This is goal text 1.',
   goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
   objectiveCount: 5,
-  goalNumbers: ['R14-G-4598'],
+  goalNumbers: ['G-4598'],
   reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
   objectives: [],
 },
@@ -54,7 +54,7 @@ const goals = [{
   goalText: 'This is goal text 2.',
   goalTopics: ['Nutrition', 'Oral Health'],
   objectiveCount: 2,
-  goalNumbers: ['R14-G-8547'],
+  goalNumbers: ['G-8547'],
   reasons: ['Below Competitive Threshold (CLASS)'],
   objectives: [],
 },
@@ -66,7 +66,7 @@ const goals = [{
   goalText: 'This is goal text 3.',
   goalTopics: ['Parent and Family Engagement'],
   objectiveCount: 4,
-  goalNumbers: ['R14-G-65478'],
+  goalNumbers: ['G-65478'],
   reasons: ['Monitoring | Area of Concern'],
   objectives: [],
 },
@@ -78,7 +78,7 @@ const goals = [{
   goalText: 'This is goal text 4.',
   goalTopics: ['Partnerships and Community Engagement'],
   objectiveCount: 3,
-  goalNumbers: ['R14-G-65479'],
+  goalNumbers: ['G-65479'],
   reasons: ['COVID-19 response'],
   objectives: [],
 },
@@ -90,7 +90,7 @@ const goals = [{
   goalText: 'This is goal text 5.',
   goalTopics: ['Safety Practices'],
   objectiveCount: 1,
-  goalNumbers: ['R14-G-65480'],
+  goalNumbers: ['G-65480'],
   reasons: ['New Recipient'],
   objectives: [],
 },
@@ -102,7 +102,7 @@ const goals = [{
   goalText: 'This is goal text 6.',
   goalTopics: ['Recordkeeping and Reporting'],
   objectiveCount: 8,
-  goalNumbers: ['R14-G-65481'],
+  goalNumbers: ['G-65481'],
   reasons: ['School Readiness Goals'],
   objectives: [],
 },
@@ -116,7 +116,7 @@ const goalWithObjectives = [{
   goalText: 'This is a goal with objectives',
   goalTopics: ['Human Resources'],
   objectiveCount: 4,
-  goalNumbers: ['R14-G-4598'],
+  goalNumbers: ['G-4598'],
   reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
   objectives: [{
     title: 'Objective 1 Title',
@@ -334,12 +334,12 @@ describe('Goals Table', () => {
       expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).toBeInTheDocument();
 
       // Expand Objectives via click.
-      const expandObjectives = await screen.findByRole('button', { name: "Expand objective's for goal R14-G-4598" });
+      const expandObjectives = await screen.findByRole('button', { name: "Expand objective's for goal G-4598" });
       fireEvent.click(expandObjectives);
       expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).not.toBeInTheDocument();
 
       // Collapse Objectives via click.
-      const collapseButton = await screen.findByRole('button', { name: "Collapse objective's for goal R14-G-4598" });
+      const collapseButton = await screen.findByRole('button', { name: "Collapse objective's for goal G-4598" });
       fireEvent.click(collapseButton);
       expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).toBeInTheDocument();
     });
@@ -527,7 +527,7 @@ describe('Goals Table', () => {
         goalText: 'This is goal text 1.',
         goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
         objectiveCount: 5,
-        goalNumber: 'R14-G-4598',
+        goalNumber: 'G-4598',
         reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
       }]);
 
@@ -558,7 +558,7 @@ describe('Goals Table', () => {
         goalText: 'This is goal text 1.',
         goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
         objectiveCount: 0,
-        goalNumber: 'R14-G-65479',
+        goalNumber: 'G-65479',
         reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
         objectives: [],
         previousStatus: 'Needs status',
