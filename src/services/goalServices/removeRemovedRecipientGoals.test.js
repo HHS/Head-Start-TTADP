@@ -12,7 +12,7 @@ import db, {
 import { REPORT_STATUSES } from '../../constants';
 import { activityReportAndRecipientsById, createOrUpdate } from '../activityReports';
 
-describe('removeRemovedRecipientGoals', () => {
+describe('removeRemovedRecipientsGoals', () => {
   let multiRecipientReport;
   let grantOne;
   let grantTwo;
@@ -68,11 +68,6 @@ describe('removeRemovedRecipientGoals', () => {
       activityReportId: multiRecipientReport.id,
       grantId: grantTwo.id,
     });
-
-    // add goals for all recipients
-    // query, check
-    // delete recipients
-    // go on
 
     firstGoal = await Goal.create({
       name: 'This is an existing goal',
