@@ -641,8 +641,8 @@ describe('Goals by Recipient Test', () => {
     await ActivityReport.destroy({ where: { id: reportIdsToDelete } });
 
     // Delete Recipient, Grant, User.
-    await Grant.destroy({ where: { id: [300, 301, 302] } });
-    await Recipient.destroy({ where: { id: [300, 301] } });
+    await Grant.destroy({ where: { id: [300, 301, 302, 304] } });
+    await Recipient.destroy({ where: { id: [300, 301, 302] } });
     await User.destroy({ where: { id: mockGoalUser.id } });
 
     // Close SQL Connection.
@@ -729,8 +729,11 @@ describe('Goals by Recipient Test', () => {
       });
 
       // eslint-disable-next-line max-len
-      const objectives = goalRows.reduce((previous, current) => ([...previous, current.objectives]), []);
+      const objectives = goalRows.reduce((previous, current) => ([...previous, ...current.objectives]), []);
       const titles = objectives.map((objective) => objective.title);
+
+      console.log({ goalRows, objectives, titles });
+
       expect(titles).not.toContain(NEEDLE);
 
       const { goalRows: moreGoalRows } = await getGoalsByActivityRecipient(recipient3.id, 1, {
