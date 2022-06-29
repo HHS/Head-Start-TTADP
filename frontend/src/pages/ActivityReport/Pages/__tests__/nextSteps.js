@@ -45,7 +45,6 @@ describe('next steps', () => {
   it('renders correctly with no steps', async () => {
     renderNextSteps(undefined, undefined);
     expect(await screen.findByText(/specialist's next steps/i)).toBeVisible();
-    expect(await screen.findByText(/specialist's next steps/i)).toBeVisible();
     expect(await screen.findByText(/recipient's next steps/i)).toBeVisible();
   });
 
