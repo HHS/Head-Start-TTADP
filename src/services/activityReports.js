@@ -27,7 +27,7 @@ import {
   CollaboratorRole,
 } from '../models';
 
-import { removeUnusedGoalsObjectivesFromReport, saveGoalsForReport } from './goals';
+import { removeUnusedGoalsObjectivesFromReport, saveGoalsForReport, removeRemovedRecipientsGoals } from './goals';
 
 import { saveObjectivesForReport } from './objectives';
 
@@ -738,6 +738,7 @@ export async function createOrUpdate(newActivityReport, report) {
     ECLKCResourcesUsed,
     nonECLKCResourcesUsed,
     attachments,
+    recipientsWhomHaveGoalsThatShouldBeRemoved,
     ...allFields
   } = newActivityReport;
   const previousActivityRecipientType = report && report.activityRecipientType;
@@ -812,6 +813,10 @@ export async function createOrUpdate(newActivityReport, report) {
     await saveObjectivesForReport(objectivesWithoutGoals, savedReport);
   } else if (activityRecipientType === 'recipient' && goals) {
     await saveGoalsForReport(goals, savedReport);
+  }
+
+  if (recipientsWhomHaveGoalsThatShouldBeRemoved) {
+    await removeRemovedRecipientsGoals(recipientsWhomHaveGoalsThatShouldBeRemoved, savedReport);
   }
 
   // Approvers are removed if approverUserIds is an empty array
