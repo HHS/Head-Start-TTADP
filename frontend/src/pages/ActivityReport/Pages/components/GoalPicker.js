@@ -128,7 +128,7 @@ const GoalPicker = ({
             options={uniqueAvailableGoals.map((goal) => ({
               value: goal.id,
               label: goal.name,
-              number: goal.goalIds.map((g) => (`G-${g}`)).join(', '),
+              number: goal.goalIds ? goal.goalIds.map((g) => (`G-${g}`)).join(', ') : `G-${goal.id}`,
             }))}
             singleRowInput
             multiSelectOptions={{

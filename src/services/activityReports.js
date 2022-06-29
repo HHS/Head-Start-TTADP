@@ -329,12 +329,14 @@ export async function activityReportAndRecipientsById(activityReportId) {
 
     if (existingGoal) {
       existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.goalNumber];
+      existingGoal.goalIds = [...existingGoal.goalIds, currentValue.id];
       return previousValue;
     }
 
     const goal = {
       ...currentValue.dataValues,
       goalNumbers: [currentValue.goalNumber],
+      goalIds: [currentValue.id],
       objectives: currentValue.objectives.map((objective) => {
         const ttaProvided = objective.activityReportObjectives
           && objective.activityReportObjectives[0]
