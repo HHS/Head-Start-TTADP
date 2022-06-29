@@ -660,6 +660,8 @@ export async function saveGoalsForReport(goals, report) {
         },
       });
 
+      const { goalTemplateId } = existingGoals[0];
+
       await Promise.all(existingGoals.map(async (existingGoal) => {
         await existingGoal.update({ status, ...fields }, { individualHooks: true });
         // eslint-disable-next-line max-len
@@ -681,7 +683,7 @@ export async function saveGoalsForReport(goals, report) {
 
         const [newGoal] = await Goal.findOrCreate({
           where: {
-            goalTemplateId: existingGoal.goalTemplateId,
+            goalTemplateId,
             grantId: gId,
             status: {
               [Op.not]: 'Closed',
