@@ -2,17 +2,19 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Form, FormGroup, ErrorMessage, Label, Fieldset, Radio, Textarea, Alert,
+  Form, FormGroup, ErrorMessage, Label, Fieldset, Radio, Textarea,
 } from '@trussworks/react-uswds';
 import Modal from './Modal';
 import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '../Constants';
 
 const CloseSuspendReasonModal = ({
-  modalRef, goalId, newStatus, onSubmit, resetValues, error, oldGoalStatus,
+  modalRef, goalIds, newStatus, onSubmit, resetValues, oldGoalStatus,
 }) => {
   const [closeSuspendReason, setCloseSuspendReason] = useState('');
   const [closeSuspendContext, setCloseSuspendContext] = useState('');
   const [showValidationError, setShowValidationError] = useState(false);
+
+  const key = goalIds.join();
 
   useEffect(() => {
     // Every time we show the modal reset the form.
@@ -28,10 +30,10 @@ const CloseSuspendReasonModal = ({
     setShowValidationError(false);
   };
 
-  const generateReasonRadioButtons = () => reasonRadioOptions.map((r, i) => (
+  const generateReasonRadioButtons = () => reasonRadioOptions.map((r) => (
     <Radio
-      id={`radio-reason-${goalId}-${i + 1}`}
-      key={`radio-reason-${goalId}-${i + 1}`}
+      id={r.trim().replace(' ', '-').toLowerCase()}
+      key={r}
       onChange={reasonChanged}
       name="closeSuspendReason"
       label={r}
@@ -48,7 +50,7 @@ const CloseSuspendReasonModal = ({
     if (!closeSuspendReason) {
       setShowValidationError(true);
     } else {
-      onSubmit(goalId, newStatus, oldGoalStatus, closeSuspendReason, closeSuspendContext);
+      onSubmit(goalIds, newStatus, oldGoalStatus, closeSuspendReason, closeSuspendContext);
     }
   };
 
@@ -66,8 +68,7 @@ const CloseSuspendReasonModal = ({
         showTitleRequired
       >
         <Form
-          name={`close-suspend-reason-form-goal-${goalId}`}
-          key={`close-suspend-reason-form-goal-${goalId}`}
+          key={`close-suspend-reason-form-goal-${key}`}
         >
           <FormGroup error={showValidationError} className="margin-top-0">
             <Fieldset>
@@ -92,7 +93,6 @@ const CloseSuspendReasonModal = ({
             </Fieldset>
           </FormGroup>
         </Form>
-        {goalId === error ? <Alert type="warning">There was an error updating the goal status</Alert> : null }
       </Modal>
     </div>
   );
@@ -103,15 +103,15 @@ CloseSuspendReasonModal.propTypes = {
     PropTypes.func,
     PropTypes.shape(),
   ]).isRequired,
-  goalId: PropTypes.number.isRequired,
+  goalIds: PropTypes.arrayOf(PropTypes.number).isRequired,
   newStatus: PropTypes.string.isRequired,
   onSubmit: PropTypes.func.isRequired,
   resetValues: PropTypes.bool.isRequired,
-  oldGoalStatus: PropTypes.string.isRequired,
-  error: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.number,
-  ]).isRequired,
+  oldGoalStatus: PropTypes.string,
+};
+
+CloseSuspendReasonModal.defaultProps = {
+  oldGoalStatus: '',
 };
 
 export default CloseSuspendReasonModal;
