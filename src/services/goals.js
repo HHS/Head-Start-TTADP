@@ -1,6 +1,4 @@
-/* eslint-disable no-unused-vars */
 import { Op } from 'sequelize';
-import { auditLogger } from '../logger';
 import {
   Goal,
   Grant,
@@ -16,12 +14,6 @@ import {
   Program,
 } from '../models';
 import { DECIMAL_BASE, REPORT_STATUSES } from '../constants';
-
-const namespace = 'SERVICE:GOALS';
-
-const logContext = {
-  namespace,
-};
 
 const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
   attributes: [
@@ -139,7 +131,7 @@ export async function goalByIdWithActivityReportsAndRegions(goalId) {
 }
 
 // eslint-disable-next-line no-empty-function
-export async function copyGoalsToGrants(goals, grantIds) {}
+export async function copyGoalsToGrants() {}
 
 async function cleanupObjectivesForGoal(goalId, currentObjectives) {
   // get all objectives not currently on a goal
@@ -480,6 +472,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
   await ActivityReportGoal.destroy({
     where: {
       goalId: goalIds,
+      activityReportId: report.id,
     },
   });
 
@@ -507,6 +500,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
   return Goal.destroy({
     where: {
       id: goalIds,
+      onApprovedAR: false,
     },
   });
 }
