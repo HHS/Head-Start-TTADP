@@ -14,7 +14,6 @@ import { REPORT_STATUSES } from '../../constants';
 import { auditLogger } from '../../logger';
 import {
   copyStatus,
-
 } from '../hooks/activityReport';
 
 const mockUser = {
