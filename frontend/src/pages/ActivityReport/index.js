@@ -140,6 +140,18 @@ export const findWhatsChanged = (object, base) => {
       return accumulator;
     }
 
+    // this block intends to fix an issue where multi recipients are removed from a report
+    // after goals have been saved we pass up the removed recipients so that their specific links
+    // to the activity report/goals will be severed on the backend
+    if (current === 'activityRecipients' && !isEqual(base[current], object[current])) {
+      // eslint-disable-next-line max-len
+      const grantIds = object.activityRecipients.map((activityRecipient) => activityRecipient.activityRecipientId);
+      // eslint-disable-next-line max-len
+      accumulator.recipientsWhomHaveGoalsThatShouldBeRemoved = base.activityRecipients.filter((baseData) => (
+        !grantIds.includes(baseData.activityRecipientId)
+      )).map((activityRecipient) => activityRecipient.activityRecipientId);
+    }
+
     if (!isEqual(base[current], object[current])) {
       accumulator[current] = object[current];
     }
@@ -147,7 +159,9 @@ export const findWhatsChanged = (object, base) => {
     return accumulator;
   }
 
-  return Object.keys(object).reduce(reduction, {});
+  // we sort these so they traverse in a particular order
+  // (ActivityRecipients before goals, in particular)
+  return Object.keys(object).sort().reduce(reduction, {});
 };
 
 export const unflattenResourcesUsed = (array) => {

@@ -457,6 +457,60 @@ async function removeObjectives(currentObjectiveIds) {
   });
 }
 
+export async function removeRemovedRecipientsGoals(removedRecipientIds, report) {
+  const goals = await Goal.findAll({
+    attributes: ['id'],
+    where: {
+      grantId: removedRecipientIds,
+    },
+    include: [
+      {
+        model: ActivityReport,
+        as: 'activityReports',
+        required: true,
+        where: {
+          id: report.id,
+        },
+      },
+    ],
+  });
+
+  const goalIds = goals.map((goal) => goal.id);
+
+  await ActivityReportGoal.destroy({
+    where: {
+      goalId: goalIds,
+    },
+  });
+
+  const objectives = await Objective.findAll({
+    attributes: ['id'],
+    where: {
+      goalId: goalIds,
+    },
+  });
+
+  const objectiveIds = objectives.map((objective) => objective.id);
+
+  await ActivityReportObjective.destroy({
+    where: {
+      objectiveId: objectiveIds,
+    },
+  });
+
+  await Objective.destroy({
+    where: {
+      id: objectiveIds,
+    },
+  });
+
+  return Goal.destroy({
+    where: {
+      id: goalIds,
+    },
+  });
+}
+
 export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObjectives) {
   const previousObjectives = await ActivityReportObjective.findAll({
     where: {
@@ -596,25 +650,32 @@ export async function saveGoalsForReport(goals, report) {
         status: discardedStatus,
         grant,
         grantId,
-        id: goalId,
+        goalIds,
         ...fields
       } = goal;
 
-      const existingGoal = await Goal.findByPk(goalId);
-      await existingGoal.update({ status, ...fields }, { individualHooks: true });
-      // eslint-disable-next-line max-len
-      const existingGoalObjectives = await createObjectivesForGoal(existingGoal, objectives, report);
-      currentObjectives = [...currentObjectives, ...existingGoalObjectives];
-
-      await ActivityReportGoal.findOrCreate({
+      const existingGoals = await Goal.findAll({
         where: {
-          goalId: existingGoal.id,
-          activityReportId: report.id,
+          id: goalIds,
         },
       });
 
+      await Promise.all(existingGoals.map(async (existingGoal) => {
+        await existingGoal.update({ status, ...fields }, { individualHooks: true });
+        // eslint-disable-next-line max-len
+        const existingGoalObjectives = await createObjectivesForGoal(existingGoal, objectives, report);
+        currentObjectives = [...currentObjectives, ...existingGoalObjectives];
+        await ActivityReportGoal.findOrCreate({
+          where: {
+            goalId: existingGoal.id,
+            activityReportId: report.id,
+          },
+        });
+      }));
+
       newGoals = await Promise.all(grantIds.map(async (gId) => {
-        if (gId === existingGoal.grantId) {
+        const existingGoal = existingGoals.find((g) => g.grantId === gId);
+        if (existingGoal) {
           return existingGoal;
         }
 

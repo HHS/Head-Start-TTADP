@@ -369,7 +369,7 @@ describe('Goals by Recipient Test', () => {
           isFromSmartsheetTtaPlan: false,
           grantId: grant3.id,
           createdAt: '2021-01-10T19:16:15.842Z',
-          onApprovedAR: false,
+          onApprovedAR: true,
         }),
 
         // 10
@@ -380,7 +380,7 @@ describe('Goals by Recipient Test', () => {
           isFromSmartsheetTtaPlan: false,
           grantId: grant4.id,
           createdAt: '2021-01-10T19:16:15.842Z',
-          onApprovedAR: false,
+          onApprovedAR: true,
         }),
 
         // 11
@@ -391,7 +391,7 @@ describe('Goals by Recipient Test', () => {
           isFromSmartsheetTtaPlan: false,
           grantId: grant4.id,
           createdAt: '2021-01-10T19:16:15.842Z',
-          onApprovedAR: false,
+          onApprovedAR: true,
         }),
       ],
     );
@@ -461,26 +461,26 @@ describe('Goals by Recipient Test', () => {
 
         // 9
         await Objective.create({
-          goalId: goalIds[9],
+          goalId: goalIds[8],
           title: 'This objective title should appear in recipient 3',
           status: 'Not Started',
-          onApprovedAR: false,
+          onApprovedAR: true,
         }),
 
         // 10
         await Objective.create({
-          goalId: goalIds[10],
+          goalId: goalIds[9],
           title: 'This objective title should appear in recipient 3',
           status: 'Not Started',
-          onApprovedAR: false,
+          onApprovedAR: true,
         }),
 
         // 11
         await Objective.create({
-          goalId: goalIds[11],
+          goalId: goalIds[10],
           title: NEEDLE,
           status: 'Not Started',
-          onApprovedAR: false,
+          onApprovedAR: true,
         }),
 
       ],
@@ -641,8 +641,17 @@ describe('Goals by Recipient Test', () => {
     await ActivityReport.destroy({ where: { id: reportIdsToDelete } });
 
     // Delete Recipient, Grant, User.
-    await Grant.destroy({ where: { id: [300, 301, 302, 304] } });
-    await Recipient.destroy({ where: { id: [300, 301, 302] } });
+    await Grant.destroy({
+      where: {
+        id: [
+          grant1.id,
+          grant2.id,
+          grant3.id,
+          grant4.id,
+        ],
+      },
+    });
+    await Recipient.destroy({ where: { id: [recipient.id, recipient2.id, recipient3.id] } });
     await User.destroy({ where: { id: mockGoalUser.id } });
 
     // Close SQL Connection.
@@ -651,22 +660,22 @@ describe('Goals by Recipient Test', () => {
 
   describe('Retrieves All Goals', () => {
     it('Uses default sorting', async () => {
-      const { goalRows } = await getGoalsByActivityRecipient(300, 1, { sortDir: 'asc' });
+      const { goalRows } = await getGoalsByActivityRecipient(recipient.id, 1, { sortDir: 'asc' });
       expect(goalRows[0].goalText).toBe('Goal 1');
     });
 
     it('honors offset', async () => {
-      const { goalRows } = await getGoalsByActivityRecipient(300, 1, { offset: 1, sortDir: 'asc' });
+      const { goalRows } = await getGoalsByActivityRecipient(recipient.id, 1, { offset: 1, sortDir: 'asc' });
       expect(goalRows[0].goalText).toBe('Goal 2');
     });
 
     it('honors limit', async () => {
-      const { goalRows } = await getGoalsByActivityRecipient(300, 1, { limit: 1 });
+      const { goalRows } = await getGoalsByActivityRecipient(recipient.id, 1, { limit: 1 });
       expect(goalRows.length).toBe(1);
     });
 
     it('Retrieves Goals by Recipient', async () => {
-      const { count, goalRows } = await getGoalsByActivityRecipient(300, 1, {
+      const { count, goalRows } = await getGoalsByActivityRecipient(recipient.id, 1, {
         sortBy: 'createdOn', sortDir: 'desc', offset: 0, limit: 10,
       });
       const countx = count;
@@ -732,8 +741,6 @@ describe('Goals by Recipient Test', () => {
       const objectives = goalRows.reduce((previous, current) => ([...previous, ...current.objectives]), []);
       const titles = objectives.map((objective) => objective.title);
 
-      console.log({ goalRows, objectives, titles });
-
       expect(titles).not.toContain(NEEDLE);
 
       const { goalRows: moreGoalRows } = await getGoalsByActivityRecipient(recipient3.id, 1, {
@@ -741,8 +748,9 @@ describe('Goals by Recipient Test', () => {
       });
 
       // eslint-disable-next-line max-len
-      const moreObjectives = moreGoalRows.reduce((previous, current) => ([...previous, current.objectives]), []);
+      const moreObjectives = moreGoalRows.reduce((previous, current) => ([...previous, ...current.objectives]), []);
       const moreTitles = moreObjectives.map((objective) => objective.title);
+
       expect(moreTitles).toContain(NEEDLE);
     });
   });
