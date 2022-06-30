@@ -83,7 +83,8 @@ export default function NextStepsRepeater({
   const validateDateOnBlur = (date, i) => {
     // Set Date Blur Validation State.
     const existingDateValidations = blurDateValidations ? [...blurDateValidations] : [];
-    existingDateValidations[i] = !date;
+    const momentDate = moment(date);
+    existingDateValidations[i] = !date || !momentDate.isValid();
     setBlurDateValidations(existingDateValidations);
   };
 
@@ -183,7 +184,7 @@ export default function NextStepsRepeater({
                 key={`${stepType}-next-step-flex-date-${index + 1}`}
                 className={`${blurDateValidations[index]
                   || (errors[name] && errors[name][index]
-                    && errors[name][index].completeDate) ? 'blank-next-step' : ''}`}
+                    && errors[name][index].completeDate) ? 'blank-next-step-date' : ''}`}
               >
                 <ControlledDatePicker
                   key={item.key}
