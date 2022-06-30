@@ -7,7 +7,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useFormContext, useFieldArray } from 'react-hook-form/dist/index.ie11';
 import { faTrash, faPlusCircle } from '@fortawesome/free-solid-svg-icons';
-import './NextStepsRepeater.css';
+import './NextStepsRepeater.scss';
 import ControlledDatePicker from '../../../../components/ControlledDatePicker';
 import { DATE_DISPLAY_FORMAT } from '../../../../Constants';
 
@@ -178,7 +178,7 @@ export default function NextStepsRepeater({
               {blurDateValidations[index]
                 || (errors[name] && errors[name][index]
                   && errors[name][index].completeDate)
-                ? <ErrorMessage>Enter a complete date</ErrorMessage>
+                ? <ErrorMessage>Enter a valid date</ErrorMessage>
                 : null}
               <div
                 key={`${stepType}-next-step-flex-date-${index + 1}`}
