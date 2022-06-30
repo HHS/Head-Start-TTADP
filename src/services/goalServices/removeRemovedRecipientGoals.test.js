@@ -14,14 +14,18 @@ import { activityReportAndRecipientsById, createOrUpdate } from '../activityRepo
 
 describe('removeRemovedRecipientsGoals', () => {
   let multiRecipientReport;
+  let secondReport;
   let grantOne;
   let grantTwo;
   let recipients = [];
   let grants = [];
   let firstGoal;
   let secondGoal;
+  let thirdGoal;
+  let fourthGoal;
   let firstObjective;
   let secondObjective;
+  let thirdObjective;
 
   beforeAll(async () => {
     const recipientOne = await Recipient.create(
@@ -114,12 +118,58 @@ describe('removeRemovedRecipientsGoals', () => {
       objectiveId: secondObjective.id,
       activityReportId: multiRecipientReport.id,
     });
+
+    thirdGoal = await Goal.create({
+      name: 'This is another existing goal',
+      status: 'In Progress',
+      grantId: grantOne.id,
+      previousStatus: 'Not Started',
+    });
+
+    await ActivityReportGoal.create({
+      goalId: thirdGoal.id,
+      activityReportId: multiRecipientReport.id,
+    });
+
+    fourthGoal = await Goal.create({
+      name: 'This is another existing goal',
+      status: 'In Progress',
+      grantId: grantTwo.id,
+      previousStatus: 'Not Started',
+      onApprovedAR: true,
+    });
+
+    await ActivityReportGoal.create({
+      goalId: fourthGoal.id,
+      activityReportId: multiRecipientReport.id,
+    });
+
+    // Activity report for multiple recipients
+    secondReport = await ActivityReport.create({
+      submissionStatus: REPORT_STATUSES.DRAFT,
+      regionId: 1,
+      userId: 1,
+      activityRecipientType: 'recipient',
+    });
+
+    thirdObjective = await Objective.create({
+      goalId: fourthGoal.id,
+      status: 'In Progress',
+      title: 'This is an existing objective on an unrelated report',
+    });
+
+    await ActivityReportObjective.create({
+      activityReportId: secondReport.id,
+      objectiveId: thirdObjective.id,
+    });
   });
 
   afterAll(async () => {
+    const reportIds = [multiRecipientReport.id, secondReport.id];
+
     const arObjectives = await ActivityReportObjective.findAll({
       where: {
-        activityReportId: multiRecipientReport.id,
+        activityReportId: reportIds,
       },
     });
 
@@ -127,7 +177,7 @@ describe('removeRemovedRecipientsGoals', () => {
 
     await ActivityReportObjective.destroy({
       where: {
-        activityReportId: multiRecipientReport.id,
+        activityReportId: reportIds,
       },
     });
 
@@ -139,7 +189,7 @@ describe('removeRemovedRecipientsGoals', () => {
 
     await ActivityReportGoal.destroy({
       where: {
-        activityReportId: multiRecipientReport.id,
+        activityReportId: reportIds,
       },
     });
 
@@ -151,13 +201,13 @@ describe('removeRemovedRecipientsGoals', () => {
 
     await ActivityRecipient.destroy({
       where: {
-        activityReportId: multiRecipientReport.id,
+        activityReportId: reportIds,
       },
     });
 
     await ActivityReport.destroy({
       where: {
-        id: multiRecipientReport.id,
+        id: reportIds,
       },
     });
 
@@ -177,9 +227,10 @@ describe('removeRemovedRecipientsGoals', () => {
       report, , goalsAndObjectives,
     ] = await activityReportAndRecipientsById(multiRecipientReport.id);
 
-    expect(goalsAndObjectives.length).toBe(1);
-    const [goal] = goalsAndObjectives;
+    expect(goalsAndObjectives.length).toBe(2);
+    const [goal, goalNumberTwo] = goalsAndObjectives;
     expect(goal.goalIds.length).toBe(2);
+    expect(goalNumberTwo.goalIds.length).toBe(2);
 
     const currentObjectives = await Objective.findAll({
       include: [
@@ -206,9 +257,10 @@ describe('removeRemovedRecipientsGoals', () => {
       , , goalsAndObjectivesAgain,
     ] = await activityReportAndRecipientsById(multiRecipientReport.id);
 
-    expect(goalsAndObjectivesAgain.length).toBe(1);
-    const [goalAgain] = goalsAndObjectivesAgain;
+    expect(goalsAndObjectivesAgain.length).toBe(2);
+    const [goalAgain, secondGoalAgain] = goalsAndObjectivesAgain;
     expect(goalAgain.goalIds.length).toBe(1);
+    expect(secondGoalAgain.goalIds.length).toBe(1);
 
     const updatedObjectives = await Objective.findAll({
       include: [
@@ -223,5 +275,12 @@ describe('removeRemovedRecipientsGoals', () => {
       ],
     });
     expect(updatedObjectives.length).toBe(1);
+
+    // we check to see it doesn't delete goals & objectives that are in use elsewhere
+    const checkThisGoal = await Goal.findByPk(fourthGoal.id);
+    expect(checkThisGoal).toBeTruthy();
+
+    const checkThisObjective = await Objective.findByPk(thirdObjective.id);
+    expect(checkThisObjective).toBeTruthy();
   });
 });

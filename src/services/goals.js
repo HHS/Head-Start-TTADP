@@ -480,7 +480,15 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
     attributes: ['id'],
     where: {
       goalId: goalIds,
+      '$activityReportObjectives.activityReportId$': report.id,
     },
+    include: [
+      {
+        model: ActivityReportObjective,
+        as: 'activityReportObjectives',
+        required: true,
+      },
+    ],
   });
 
   const objectiveIds = objectives.map((objective) => objective.id);
