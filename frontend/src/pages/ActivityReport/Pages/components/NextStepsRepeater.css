@@ -3,17 +3,9 @@
   max-width: 460px;
 }
 
-/*.usa-form-group--error .usa-date-picker__wrapper .usa-input[type="text"] */
-.usa-form-group--error .usa-date-picker__wrapper .usa-input[type="text"]
-{
-  border: 1px solid #565c65;
-}
-
 /* Outline a blank step onBlur or form Validation */
 .ttahub-next-steps-repeater .usa-form-group--error .blank-next-step textarea ,
-.usa-form-group--error .ttahub-next-steps-repeater .blank-next-step textarea,
-.ttahub-next-steps-repeater .usa-form-group--error .blank-next-step-date .usa-date-picker__wrapper .usa-input[type="text"] ,
-.usa-form-group--error .ttahub-next-steps-repeater .blank-next-step-date .usa-date-picker__wrapper .usa-input[type="text"]
+.usa-form-group--error .ttahub-next-steps-repeater .blank-next-step textarea
 {
     border: 2px solid #b50909;
 }
