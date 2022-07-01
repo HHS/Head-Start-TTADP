@@ -147,7 +147,7 @@ export const findWhatsChanged = (object, base) => {
       // eslint-disable-next-line max-len
       const grantIds = object.activityRecipients.map((activityRecipient) => activityRecipient.activityRecipientId);
       // eslint-disable-next-line max-len
-      accumulator.recipientsWhomHaveGoalsThatShouldBeRemoved = base.activityRecipients.filter((baseData) => (
+      accumulator.recipientsWhoHaveGoalsThatShouldBeRemoved = base.activityRecipients.filter((baseData) => (
         !grantIds.includes(baseData.activityRecipientId)
       )).map((activityRecipient) => activityRecipient.activityRecipientId);
     }
