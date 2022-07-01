@@ -248,7 +248,7 @@ describe('removeRemovedRecipientsGoals', () => {
     expect(currentObjectives.length).toBe(2);
 
     const newReport = {
-      recipientsWhomHaveGoalsThatShouldBeRemoved: [grantTwo.id],
+      recipientsWhoHaveGoalsThatShouldBeRemoved: [grantTwo.id],
     };
 
     await createOrUpdate(newReport, report);

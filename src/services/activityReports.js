@@ -738,7 +738,7 @@ export async function createOrUpdate(newActivityReport, report) {
     ECLKCResourcesUsed,
     nonECLKCResourcesUsed,
     attachments,
-    recipientsWhomHaveGoalsThatShouldBeRemoved,
+    recipientsWhoHaveGoalsThatShouldBeRemoved,
     ...allFields
   } = newActivityReport;
   const previousActivityRecipientType = report && report.activityRecipientType;
@@ -815,8 +815,8 @@ export async function createOrUpdate(newActivityReport, report) {
     await saveGoalsForReport(goals, savedReport);
   }
 
-  if (recipientsWhomHaveGoalsThatShouldBeRemoved) {
-    await removeRemovedRecipientsGoals(recipientsWhomHaveGoalsThatShouldBeRemoved, savedReport);
+  if (recipientsWhoHaveGoalsThatShouldBeRemoved) {
+    await removeRemovedRecipientsGoals(recipientsWhoHaveGoalsThatShouldBeRemoved, savedReport);
   }
 
   // Approvers are removed if approverUserIds is an empty array
