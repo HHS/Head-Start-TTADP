@@ -265,13 +265,24 @@ function ActivityReport({
       grantIds = fetchedReport.activityRecipients.map(({ id }) => id);
     }
 
+    const activityRecipients = fetchedReport.activityRecipients.map((ar) => ({
+      activityRecipientId: ar.id,
+      name: ar.name,
+    }));
+
     const goals = convertGoalsToFormData(fetchedReport.goalsAndObjectives, grantIds);
     const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed);
     const nonECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.nonECLKCResourcesUsed);
     const endDate = fetchedReport.endDate ? moment(fetchedReport.endDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : '';
     const startDate = fetchedReport.startDate ? moment(fetchedReport.startDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : '';
     return {
-      ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed, goals, endDate, startDate,
+      ...fetchedReport,
+      activityRecipients,
+      ECLKCResourcesUsed,
+      nonECLKCResourcesUsed,
+      goals,
+      endDate,
+      startDate,
     };
   };
 
