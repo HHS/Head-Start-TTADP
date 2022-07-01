@@ -150,6 +150,12 @@ export const findWhatsChanged = (object, base) => {
       accumulator.recipientsWhoHaveGoalsThatShouldBeRemoved = base.activityRecipients.filter((baseData) => (
         !grantIds.includes(baseData.activityRecipientId)
       )).map((activityRecipient) => activityRecipient.activityRecipientId);
+
+      // if we change activity recipients we should always ship the goals up as well
+      // we do hit recipients first, so if they were somehow both changed before the API was hit
+      // (unlikely since they are on different parts of the form)
+      // the goals that were changed would overwrite the next line
+      accumulator.goals = base.goals.map((goal) => ({ ...goal, grantIds }));
     }
 
     if (!isEqual(base[current], object[current])) {
