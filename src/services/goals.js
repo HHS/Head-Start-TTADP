@@ -653,6 +653,8 @@ export async function saveGoalsForReport(goals, report) {
         grant,
         grantId,
         goalIds,
+        id, // this is unique and we can't trying to set this
+        onApprovedAR, // we don't want to set this manually
         ...fields
       } = goal;
 
