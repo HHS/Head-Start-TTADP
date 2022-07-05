@@ -472,6 +472,12 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
 
   const goalIds = goals.map((goal) => goal.id);
 
+  // we only delete goals with 1 activity report,
+  // implicitly that means the 1 activity report is the one we are removing
+  const goalsToDelete = goals.filter(
+    (goal) => goal.activityReports.length === 1,
+  );
+
   await ActivityReportGoal.destroy({
     where: {
       goalId: goalIds,
@@ -486,11 +492,11 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
     },
     include: [
       {
-        model: ActivityReportObjective,
-        as: 'activityReportObjectives',
+        model: ActivityReport,
+        as: 'activityReports',
         required: true,
         where: {
-          activityReportId: report.id,
+          id: report.id,
         },
       },
     ],
@@ -505,15 +511,21 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
     },
   });
 
+  // same as above, we only delete objectives that aren't in use elsewhere
+  const objectivesToDelete = objectives.filter(
+    (objective) => objective.activityReports.length === 1,
+  );
+
   await Objective.destroy({
     where: {
-      id: objectiveIds,
+      id: objectivesToDelete.map((objective) => objective.id),
+      onApprovedAR: false,
     },
   });
 
   return Goal.destroy({
     where: {
-      id: goalIds,
+      id: goalsToDelete.map((goal) => goal.id),
       onApprovedAR: false,
     },
   });
