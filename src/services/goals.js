@@ -498,7 +498,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
 
   const objectiveIds = objectives.map((objective) => objective.id);
 
-  await ActivityReportObjective.findAll({
+  await ActivityReportObjective.destroy({
     where: {
       objectiveId: objectiveIds,
       activityReportId: report.id,
