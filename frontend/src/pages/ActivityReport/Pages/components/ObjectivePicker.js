@@ -19,6 +19,22 @@ const ObjectivePicker = () => {
   } = useFormContext();
   const objectives = watch(OBJECTIVE_LABEL);
 
+  const dedupedObjectives = objectives.reduce(
+    (os, objective) => {
+      const exists = os.find((o) => (
+        o.title === objective.title
+      ));
+
+      if (exists) {
+        exists.ids = [...exists.ids, objective.id];
+        return os;
+      }
+
+      return [...os, { ...objective, ids: [objective.id] }];
+    },
+    [],
+  );
+
   register(OBJECTIVE_LABEL, {
     validate: (e) => validateObjectives(e),
   });
@@ -43,7 +59,7 @@ const ObjectivePicker = () => {
         name={OBJECTIVE_LABEL}
         fieldSetWrapper
       >
-        {objectives.map((objective, objectiveIndex) => (
+        {dedupedObjectives.map((objective, objectiveIndex) => (
           <div className="margin-top-1" key={objective.id}>
             <Objective
               parentLabel={OBJECTIVE_LABEL}

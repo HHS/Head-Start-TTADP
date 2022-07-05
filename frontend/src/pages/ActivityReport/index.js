@@ -257,7 +257,12 @@ function ActivityReport({
     const endDate = fetchedReport.endDate ? moment(fetchedReport.endDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : '';
     const startDate = fetchedReport.startDate ? moment(fetchedReport.startDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : '';
     return {
-      ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed, goals, endDate, startDate,
+      ...fetchedReport,
+      ECLKCResourcesUsed,
+      nonECLKCResourcesUsed,
+      goals,
+      endDate,
+      startDate,
     };
   };
 
