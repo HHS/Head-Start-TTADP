@@ -30,7 +30,7 @@ export default function ObjectiveTopics({
         )
         : null}
 
-      { status !== 'Complete' ? (
+      { (status !== 'Complete' && status !== 'Suspended') ? (
         <FormGroup error={error.props.children}>
           <Label htmlFor={inputName}>
             { savedTopics && savedTopics.length
