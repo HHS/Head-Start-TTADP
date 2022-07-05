@@ -809,14 +809,14 @@ export async function createOrUpdate(newActivityReport, report) {
     await removeUnusedGoalsObjectivesFromReport(report.id, []);
   }
 
+  if (recipientsWhoHaveGoalsThatShouldBeRemoved) {
+    await removeRemovedRecipientsGoals(recipientsWhoHaveGoalsThatShouldBeRemoved, savedReport);
+  }
+
   if (activityRecipientType === 'other-entity' && objectivesWithoutGoals) {
     await saveObjectivesForReport(objectivesWithoutGoals, savedReport);
   } else if (activityRecipientType === 'recipient' && goals) {
-    await saveGoalsForReport(goals, savedReport);
-  }
-
-  if (recipientsWhoHaveGoalsThatShouldBeRemoved) {
-    await removeRemovedRecipientsGoals(recipientsWhoHaveGoalsThatShouldBeRemoved, savedReport);
+    await saveGoalsForReport(goals, savedReport, recipientsWhoHaveGoalsThatShouldBeRemoved);
   }
 
   // Approvers are removed if approverUserIds is an empty array
