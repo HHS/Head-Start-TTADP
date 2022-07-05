@@ -582,10 +582,15 @@ export async function saveReport(req, res) {
 
     newReport.lastUpdatedById = userId;
 
+    // we don't want to pass in objectives without goals here, as the format
+    // expected for that save function is different than the format expected
+    // in saveObjectivesForReport
+    const { objectivesWithoutGoals, ...existingReport } = report.dataValues;
+
     // join the updated report with the model object retrieved from the API
     // since we may not get all fields in the request body
     const savedReport = await createOrUpdate({
-      ...report, activityRecipients, ...newReport,
+      ...existingReport, activityRecipients, ...newReport,
     }, report);
 
     if (savedReport.activityReportCollaborators) {

@@ -86,7 +86,7 @@ const GoalsObjectives = () => {
       </Fieldset>
       {!isRecipientReport && (
         <Fieldset className="smart-hub--report-legend margin-top-4" legend="Objectives for other entity TTA">
-          <ObjectivePicker />
+          <ObjectivePicker recipientIds={recipients.map((r) => r.id)} />
         </Fieldset>
       )}
       {showGoals
