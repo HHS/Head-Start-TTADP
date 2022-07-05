@@ -29,7 +29,6 @@ describe('ActivityReport', () => {
   });
 
   afterEach(() => fetchMock.restore());
-  console.log('test');
 
   beforeEach(() => {
     fetchMock.get('/api/activity-reports/activity-recipients?region=1', recipients);
