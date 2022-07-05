@@ -416,7 +416,6 @@ async function removeActivityReportGoalsFromReport(reportId, goalIdsToRemove) {
   });
 }
 
-// TODO: ask Josh what the intent of this is for
 export async function removeGoals(goalsToRemove) {
   const goalsWithGrants = await Goal.findAll({
     attributes: ['id'],
@@ -450,6 +449,10 @@ async function removeObjectives(currentObjectiveIds) {
 }
 
 export async function removeRemovedRecipientsGoals(removedRecipientIds, report) {
+  if (!removedRecipientIds) {
+    return null;
+  }
+
   const goals = await Goal.findAll({
     attributes: ['id'],
     where: {
@@ -480,22 +483,25 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
     attributes: ['id'],
     where: {
       goalId: goalIds,
-      '$activityReportObjectives.activityReportId$': report.id,
     },
     include: [
       {
         model: ActivityReportObjective,
         as: 'activityReportObjectives',
         required: true,
+        where: {
+          activityReportId: report.id,
+        },
       },
     ],
   });
 
   const objectiveIds = objectives.map((objective) => objective.id);
 
-  await ActivityReportObjective.destroy({
+  await ActivityReportObjective.findAll({
     where: {
       objectiveId: objectiveIds,
+      activityReportId: report.id,
     },
   });
 
@@ -514,7 +520,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
 }
 
 export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObjectives) {
-  const previousObjectives = await ActivityReportObjective.findAll({
+  const previousActivityReportObjectives = await ActivityReportObjective.findAll({
     where: {
       activityReportId: reportId,
     },
@@ -534,7 +540,7 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
 
   const currentObjectiveIds = currentObjectives.map((o) => o.id);
 
-  const activityReportObjectivesToRemove = previousObjectives.filter(
+  const activityReportObjectivesToRemove = previousActivityReportObjectives.filter(
     (aro) => !currentObjectiveIds.includes(aro.objectiveId),
   );
 
@@ -552,7 +558,8 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
 }
 
 async function createObjectivesForGoal(goal, objectives, report) {
-  return Promise.all(objectives.map(async (objective) => {
+  // we don't want to create objectives with blank titles
+  return Promise.all(objectives.filter((o) => o.title).map(async (objective) => {
     const {
       id,
       isNew,
@@ -620,7 +627,7 @@ export async function saveGoalsForReport(goals, report) {
     // we have a param to determine if goals are new
     if (goal.isNew) {
       const {
-        isNew, objectives, id, grantIds, status: discardedStatus, ...fields
+        isNew, objectives, id, grantIds, status: discardedStatus, onApprovedAR, ...fields
       } = goal;
 
       newGoals = await Promise.all(goal.grantIds.map(async (grantId) => {
