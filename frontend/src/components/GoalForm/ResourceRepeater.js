@@ -48,7 +48,7 @@ export default function ResourceRepeater({
           </>
         )
         : null }
-      { status !== 'Complete' ? (
+      { (status !== 'Complete' && status !== 'Suspended') ? (
         <FormGroup error={error.props.children}>
           <div ref={resourcesWrapper}>
             <Label htmlFor="resources">
@@ -88,7 +88,7 @@ export default function ResourceRepeater({
               ))}
             </div>
 
-            <div className="margin-top-0 margin-bottom-4">
+            <div className="margin-top-1 margin-bottom-4">
               <PlusButton text="Add new resource" onClick={addResource} />
             </div>
           </div>

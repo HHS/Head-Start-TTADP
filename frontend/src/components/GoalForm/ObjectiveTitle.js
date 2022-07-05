@@ -13,7 +13,7 @@ export default function ObjectiveTitle({
   status,
   inputName,
 }) {
-  const readOnly = isOnApprovedReport || status === 'Complete';
+  const readOnly = isOnApprovedReport || status === 'Complete' || status === 'Suspended';
 
   return (
     <FormGroup className="margin-top-1" error={error.props.children}>

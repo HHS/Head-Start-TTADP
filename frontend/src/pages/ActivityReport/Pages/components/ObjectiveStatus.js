@@ -6,6 +6,7 @@ const statuses = [
   'Not Started',
   'In Progress',
   'Complete',
+  'Suspended',
 ];
 
 export default function ObjectiveStatus({
