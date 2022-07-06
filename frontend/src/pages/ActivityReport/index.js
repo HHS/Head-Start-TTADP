@@ -267,27 +267,10 @@ function ActivityReport({
 
   const convertObjectivesWithoutGoalsToFormData = (
     objectives, recipientIds,
-  ) => objectives.reduce(
-    (os, objective) => {
-      const exists = os.find((o) => (
-        o.title === objective.title
-      ));
-
-      if (exists) {
-        exists.recipientIds = recipientIds;
-        exists.ids = [...exists.ids, objective.id];
-        return os;
-      }
-
-      return [...os, {
-        ...objective,
-        ids: [objective.id],
-        recipientIds,
-        ttaProvided: objective.ActivityReportObjective.ttaProvided,
-      }];
-    },
-    [],
-  );
+  ) => objectives.map((objective) => ({
+    ...objective,
+    recipientIds,
+  }));
 
   const convertReportToFormData = (fetchedReport) => {
     let grantIds = [];
