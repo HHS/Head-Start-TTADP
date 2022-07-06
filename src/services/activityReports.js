@@ -26,6 +26,7 @@ import {
   ActivityReportObjective,
   ObjectiveResource,
   Topic,
+  CollaboratorRole,
 } from '../models';
 
 import { removeUnusedGoalsObjectivesFromReport, saveGoalsForReport } from './goals';
@@ -75,11 +76,13 @@ async function saveReportCollaborators(activityReportId, collaborators) {
     userId: collaborator,
   }));
 
+  // Create and delete activity report collaborators.
   if (newCollaborators.length > 0) {
     await ActivityReportCollaborator.bulkCreate(
       newCollaborators,
       { ignoreDuplicates: true, validate: true, individualHooks: true },
     );
+
     await ActivityReportCollaborator.destroy(
       {
         where: {
@@ -98,6 +101,45 @@ async function saveReportCollaborators(activityReportId, collaborators) {
         },
       },
     );
+  }
+
+  // Get updated collaborator roles.
+  const updatedReportCollaborators = await ActivityReportCollaborator.findAll({
+    where: { activityReportId },
+    include: [
+      {
+        model: User,
+        as: 'user',
+      },
+      {
+        model: CollaboratorRole,
+        as: 'collaboratorRoles',
+      },
+    ],
+  });
+
+  // Get collaborator roles to add.
+  const rolesToAdd = updatedReportCollaborators.filter(
+    (c) => !c.collaboratorRoles.length
+      && c.user.role.length,
+  );
+
+  // If we have collaborators missing roles.
+  if (rolesToAdd && rolesToAdd.length > 0) {
+    let updatedRoles = [];
+    rolesToAdd.forEach((collaborator) => {
+    // Set collaborator roles.
+      const { role } = collaborator.user;
+      // Concat list of collaborator role updates promises.
+      updatedRoles = updatedRoles.concat(role.map((r) => CollaboratorRole.findOrCreate(
+        { where: { activityReportCollaboratorId: collaborator.id, role: r } },
+      )));
+    });
+
+    // Resolve all role update promises.
+    if (updatedRoles && updatedRoles.length > 0) {
+      await Promise.all(updatedRoles);
+    }
   }
 }
 
@@ -274,18 +316,18 @@ export function activityReportById(activityReportId) {
             as: 'grant',
             required: false,
             include:
-            [
-              {
-                model: Recipient,
-                as: 'recipient',
-                attributes: ['name'],
-              },
-              {
-                model: Program,
-                as: 'programs',
-                attributes: ['programType'],
-              },
-            ],
+              [
+                {
+                  model: Recipient,
+                  as: 'recipient',
+                  attributes: ['name'],
+                },
+                {
+                  model: Program,
+                  as: 'programs',
+                  attributes: ['programType'],
+                },
+              ],
           },
           {
             model: OtherEntity,
@@ -347,9 +389,19 @@ export function activityReportById(activityReportId) {
         as: 'author',
       },
       {
-        model: User,
-        as: 'collaborators',
         required: false,
+        model: ActivityReportCollaborator,
+        as: 'activityReportCollaborators',
+        include: [
+          {
+            model: User,
+            as: 'user',
+          },
+          {
+            model: CollaboratorRole,
+            as: 'collaboratorRoles',
+          },
+        ],
       },
       {
         model: ActivityReportFile,
@@ -507,10 +559,20 @@ export function activityReports(
           as: 'author',
         },
         {
-          model: User,
-          attributes: ['id', 'name', 'role', 'fullName'],
-          as: 'collaborators',
-          through: { attributes: [] },
+          required: false,
+          model: ActivityReportCollaborator,
+          as: 'activityReportCollaborators',
+          include: [
+            {
+              model: User,
+              as: 'user',
+              attributes: ['id', 'name', 'role', 'fullName'],
+            },
+            {
+              model: CollaboratorRole,
+              as: 'collaboratorRoles',
+            },
+          ],
         },
         {
           model: ActivityReportApprover,
@@ -570,7 +632,7 @@ export async function activityReportAlerts(userId, {
                 ],
               },
               {
-                [Op.or]: [{ userId }, { '$collaborators.id$': userId }],
+                [Op.or]: [{ userId }, { '$activityReportCollaborators->user.id$': userId }],
               },
             ],
           },
@@ -594,11 +656,11 @@ export async function activityReportAlerts(userId, {
           '(SELECT name as collaboratorName FROM "Users" join "ActivityReportCollaborators" on "Users"."id" = "ActivityReportCollaborators"."userId" and  "ActivityReportCollaborators"."activityReportId" = "ActivityReport"."id" limit 1)',
         ),
         sequelize.literal(
-        // eslint-disable-next-line quotes
+          // eslint-disable-next-line quotes
           `(SELECT "OtherEntities".name as otherEntityName from "OtherEntities" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" AND "ActivityRecipients"."otherEntityId" = "OtherEntities".id order by otherEntityName ${sortDir} limit 1)`,
         ),
         sequelize.literal(
-        // eslint-disable-next-line quotes
+          // eslint-disable-next-line quotes
           `(SELECT "Recipients".name as recipientName FROM "Recipients" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" JOIN "Grants" ON "Grants"."id" = "ActivityRecipients"."grantId" AND "Recipients"."id" = "Grants"."recipientId" order by recipientName ${sortDir} limit 1)`,
         ),
         // eslint-disable-next-line quotes
@@ -637,11 +699,21 @@ export async function activityReportAlerts(userId, {
           as: 'author',
         },
         {
-          model: User,
-          attributes: ['id', 'name', 'role', 'fullName'],
-          as: 'collaborators',
-          duplicating: true,
-          through: { attributes: [] },
+          required: false,
+          model: ActivityReportCollaborator,
+          as: 'activityReportCollaborators',
+          include: [
+            {
+              model: User,
+              as: 'user',
+              attributes: ['id', 'name', 'role', 'fullName'],
+              duplicating: true,
+            },
+            {
+              model: CollaboratorRole,
+              as: 'collaboratorRoles',
+            },
+          ],
         },
         {
           model: ActivityReportApprover,
@@ -674,7 +746,7 @@ export async function createOrUpdate(newActivityReport, report) {
     goals,
     objectivesWithGoals,
     objectivesWithoutGoals,
-    collaborators,
+    activityReportCollaborators,
     activityRecipients,
     files,
     author,
@@ -701,11 +773,10 @@ export async function createOrUpdate(newActivityReport, report) {
   } else {
     savedReport = await create(updatedFields);
   }
-
-  if (collaborators) {
+  if (activityReportCollaborators) {
     const { id } = savedReport;
-    const newCollaborators = collaborators.map(
-      (g) => g.id,
+    const newCollaborators = activityReportCollaborators.map(
+      (c) => c.user.id,
     );
     await saveReportCollaborators(id, newCollaborators);
   }
@@ -894,6 +965,10 @@ async function getDownloadableActivityReports(where, separate = true) {
           model: User,
           as: 'user',
           attributes: ['id', 'name', 'role', 'fullName'],
+        },
+        {
+          model: CollaboratorRole,
+          as: 'collaboratorRoles',
         }],
       },
       {

@@ -53,7 +53,7 @@ const defaultValues = {
   activityType: [],
   additionalNotes: null,
   attachments: [],
-  collaborators: [],
+  activityReportCollaborators: [],
   context: '',
   deliveryMethod: null,
   duration: '',
@@ -243,7 +243,9 @@ function ActivityReport({
   const convertReportToFormData = (fetchedReport) => {
     const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed);
     const nonECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.nonECLKCResourcesUsed);
-    return { ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed };
+    return {
+      ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed,
+    };
   };
 
   // cleanup local storage if the report has been submitted or approved
@@ -286,8 +288,9 @@ function ActivityReport({
 
         const [recipients, collaborators, availableApprovers] = await Promise.all(apiCalls);
 
-        const isCollaborator = report.collaborators
-          && report.collaborators.find((u) => u.id === user.id);
+        const isCollaborator = report.activityReportCollaborators
+          && report.activityReportCollaborators.find((u) => u.userId === user.id);
+
         const isAuthor = report.userId === user.id;
 
         // The report can be edited if its in draft OR needs_action state.
@@ -313,16 +316,16 @@ function ActivityReport({
 
         let shouldUpdateFromNetwork = true;
 
-        // this if statemenrt compares the "saved to storage time" and the
+        // this if statement compares the "saved to storage time" and the
         // time retrieved from the network (report.updatedAt)
-        // and whichever is newe "wins"
+        // and whichever is newer "wins"
 
         if (formData && savedToStorageTime) {
           const updatedAtFromNetwork = moment(report.updatedAt);
           const updatedAtFromLocalStorage = moment(savedToStorageTime);
           if (updatedAtFromNetwork.isValid() && updatedAtFromLocalStorage.isValid()) {
             const storageIsNewer = updatedAtFromLocalStorage.isAfter(updatedAtFromNetwork);
-            if (storageIsNewer) {
+            if (storageIsNewer && formData.calculatedStatus === REPORT_STATUSES.DRAFT) {
               shouldUpdateFromNetwork = false;
             }
           }
