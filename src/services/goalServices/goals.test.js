@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import {
-  copyGoalsToGrants, saveGoalsForReport, goalsForGrants,
+  saveGoalsForReport, goalsForGrants,
 } from '../goals';
 import {
   sequelize,
@@ -8,7 +8,7 @@ import {
   Grant,
   Objective,
   ActivityReportObjective,
-  GrantGoal,
+  ActivityReportGoal,
 } from '../../models';
 
 describe('Goals DB service', () => {
@@ -20,57 +20,33 @@ describe('Goals DB service', () => {
     await sequelize.close();
   });
 
-  describe('copyGoalsToGrants', () => {
-    it('creates a new grantGoal for every grant goal pair', async () => {
-      Grant.findAll = jest.fn();
-      Grant.findAll.mockResolvedValue([{ id: 1, recipientId: 1 }, { id: 2, recipientId: 1 }]);
-
-      GrantGoal.bulkCreate = jest.fn();
-
-      await copyGoalsToGrants([{ id: 1 }, { id: 2 }], [1, 2]);
-
-      const expected = [
-        {
-          grantId: 1,
-          recipientId: 1,
-          goalId: 1,
-        },
-        {
-          grantId: 1,
-          recipientId: 1,
-          goalId: 2,
-        },
-        {
-          grantId: 2,
-          recipientId: 1,
-          goalId: 1,
-        },
-        {
-          grantId: 2,
-          recipientId: 1,
-          goalId: 2,
-        },
-      ];
-      expect(GrantGoal.bulkCreate).toHaveBeenCalledWith(
-        expect.arrayContaining(expected),
-        expect.anything(),
-      );
-    });
-  });
+  const existingGoalUpdate = jest.fn();
+  const existingObjectiveUpdate = jest.fn();
 
   describe('saveGoalsForReport', () => {
     beforeEach(() => {
       ActivityReportObjective.findAll = jest.fn().mockResolvedValue([]);
       ActivityReportObjective.destroy = jest.fn();
+      ActivityReportObjective.findOrCreate = jest.fn().mockResolvedValue([{ update: jest.fn() }]);
+      ActivityReportObjective.create = jest.fn();
+
       Goal.findAll = jest.fn().mockResolvedValue([]);
       Goal.findOne = jest.fn().mockResolvedValue();
+      Goal.findByPk = jest.fn().mockResolvedValue({
+        update: existingGoalUpdate, grantId: 1, id: 1,
+      });
+      Goal.findOrCreate = jest.fn().mockResolvedValue([{ id: 1, update: jest.fn() }, false]);
       Goal.destroy = jest.fn();
-      Goal.upsert = jest.fn().mockResolvedValue([{ id: 1 }]);
-      Objective.destroy = jest.fn();
-      ActivityReportObjective.create = jest.fn();
+      Goal.update = jest.fn().mockResolvedValue([1, [{ id: 1 }]]);
       Goal.create = jest.fn().mockResolvedValue({ id: 1 });
+
+      ActivityReportGoal.findOrCreate = jest.fn().mockResolvedValue();
+
+      Objective.destroy = jest.fn();
       Objective.create = jest.fn().mockResolvedValue({ id: 1 });
-      Objective.upsert = jest.fn().mockResolvedValue([{ id: 1 }]);
+      Objective.findOrCreate = jest.fn().mockResolvedValue([{ id: 1 }]);
+      Objective.update = jest.fn().mockResolvedValue({ id: 1 });
+      Objective.findByPk = jest.fn().mockResolvedValue({ update: existingObjectiveUpdate });
     });
 
     describe('with removed goals', () => {
@@ -145,11 +121,24 @@ describe('Goals DB service', () => {
     });
 
     it('creates new goals', async () => {
-      await saveGoalsForReport([{ id: 'new', name: 'name', objectives: [] }], { id: 1 });
-      expect(Goal.upsert).toHaveBeenCalledWith({
-        name: 'name',
-        objectives: [],
-      }, { returning: true });
+      await saveGoalsForReport([
+        {
+          isNew: true, grantIds: [1], name: 'name', status: 'Closed', objectives: [],
+        },
+      ], { id: 1 });
+      expect(Goal.findOrCreate).toHaveBeenCalledWith({
+        defaults: {
+          name: 'name',
+          status: 'Closed',
+        },
+        where: {
+          grantId: 1,
+          name: 'name',
+          status: {
+            [Op.not]: 'Closed',
+          },
+        },
+      });
     });
 
     it('can use existing goals', async () => {
@@ -157,9 +146,14 @@ describe('Goals DB service', () => {
         id: 1,
         name: 'name',
         objectives: [],
+        grantIds: [1, 2],
       };
+
       await saveGoalsForReport([existingGoal], { id: 1 });
-      expect(Goal.upsert).toHaveBeenCalledWith({ id: 1, name: 'name', objectives: [] }, { returning: true });
+      expect(existingGoalUpdate).toHaveBeenCalledWith({
+        name: 'name',
+        status: 'Not Started',
+      }, { individualHooks: true });
     });
 
     test.todo('can update an existing goal');
@@ -170,33 +164,34 @@ describe('Goals DB service', () => {
         name: 'name',
         objectives: [],
         update: jest.fn(),
+        grantIds: [1],
       };
-
-      Goal.upsert.mockResolvedValue([{ id: 1 }]);
 
       const goalWithNewObjective = {
         ...existingGoal,
-        objectives: [{ title: 'title' }],
+        objectives: [{
+          isNew: true, goalId: 1, title: 'title', ttaProvided: '', ActivityReportObjective: {}, status: '',
+        }],
       };
       await saveGoalsForReport([goalWithNewObjective], { id: 1 });
-      expect(Objective.upsert).toHaveBeenCalledWith({
+      expect(Objective.create).toHaveBeenCalledWith({
         goalId: 1,
         title: 'title',
-      }, { returning: true });
+        status: '',
+      });
     });
 
     it('can update existing objectives', async () => {
       const existingGoal = {
         id: 1,
         name: 'name',
-        objectives: [{ title: 'title', id: 1 }],
+        objectives: [{ title: 'title', id: 1, status: 'Closed' }],
         update: jest.fn(),
+        grantIds: [1],
       };
 
-      Goal.upsert.mockResolvedValue([{ id: 1 }]);
-
       await saveGoalsForReport([existingGoal], { id: 1 });
-      expect(Objective.upsert).toHaveBeenCalledWith({ id: 1, goalId: 1, title: 'title' }, { returning: true });
+      expect(existingObjectiveUpdate).toHaveBeenCalledWith({ title: 'title', status: 'Closed' }, { individualHooks: true });
     });
   });
 });
@@ -214,34 +209,10 @@ describe('goalsForGrants', () => {
 
     await goalsForGrants([506]);
 
-    expect(Goal.findAll).toHaveBeenCalledWith({
-      where: {
-        [Op.or]: [
-          {
-            status: 'Not Started',
-          },
-          {
-            status: 'In Progress',
-          },
-          {
-            status: null,
-          },
-        ],
-      },
-      include: [
-        {
-          model: Grant,
-          as: 'grants',
-          attributes: [
-            'id',
-            'regionId',
-          ],
-          where: {
-            id: [505, 506],
-          },
-        },
-      ],
-      order: ['createdAt'],
-    });
+    const { where } = Goal.findAll.mock.calls[0][0];
+    expect(where['$grant.id$']).toStrictEqual([
+      505,
+      506,
+    ]);
   });
 });

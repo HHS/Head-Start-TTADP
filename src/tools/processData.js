@@ -196,7 +196,7 @@ export const hideUsers = async (userIds) => {
         email: faker.internet.email(),
         phoneNumber: faker.phone.phoneNumber(),
         name: faker.name.findName(),
-      }),
+      }, { individualHooks: true }),
     );
   }
 
@@ -229,7 +229,7 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
     promises.push(
       recipient.update({
         name: faker.company.companyName(),
-      }),
+      }, { individualHooks: true }),
     );
   }
   const grants = await Grant.findAll({
@@ -256,7 +256,7 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
         programSpecialistEmail: programSpecialist.email,
         grantSpecialistName: grantSpecialist.name,
         grantSpecialistEmail: grantSpecialist.email,
-      }),
+      }, { individualHooks: true }),
     );
   }
   await Promise.all(promises);
@@ -321,7 +321,7 @@ export const bootstrapUsers = async () => {
     };
     if (user) {
       id = user.id;
-      userPromises.push(user.update(newUser));
+      userPromises.push(user.update(newUser, { individualHooks: true }));
       for (const permission of givePermissions(id)) {
         userPromises.push(Permission.findOrCreate({ where: permission }));
       }
@@ -356,7 +356,6 @@ export const truncateAuditTables = async () => {
 const processData = async (mockReport) => sequelize.transaction(async () => {
   const activityReportId = mockReport ? mockReport.id : null;
   const where = activityReportId ? { id: activityReportId } : {};
-  const filesWhere = activityReportId ? { activityReportId } : {};
   const userIds = mockReport ? [3000, 3001, 3002, 3003] : null;
 
   const recipientsGrants = mockReport ? mockReport.imported.granteeName : null;
@@ -364,9 +363,7 @@ const processData = async (mockReport) => sequelize.transaction(async () => {
     where,
   });
 
-  const files = await File.findAll({
-    where: filesWhere,
-  });
+  const files = await File.findAll();
 
   const promises = [];
 
@@ -384,7 +381,7 @@ const processData = async (mockReport) => sequelize.transaction(async () => {
         managerNotes: await processHtml(report.managerNotes),
         additionalNotes: await processHtml(report.additionalNotes),
         context: await processHtml(report.context),
-      }),
+      }, { individualHooks: true }),
     );
     if (imported) {
       // TODO: ttaProvided needs to move from ActivityReportObjective to ActivityReportObjective
@@ -442,7 +439,7 @@ const processData = async (mockReport) => sequelize.transaction(async () => {
         topics: imported.topics,
         ttaProvidedAndGranteeProgressMade: imported.ttaProvidedAndGranteeProgressMade,
       };
-      promises.push(report.update({ imported: newImported }));
+      promises.push(report.update({ imported: newImported }, { individualHooks: true }));
     }
   }
 
@@ -450,7 +447,7 @@ const processData = async (mockReport) => sequelize.transaction(async () => {
     promises.push(
       file.update({
         originalFileName: convertFileName(file.originalFileName),
-      }),
+      }, { individualHooks: true }),
     );
   }
 

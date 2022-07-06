@@ -79,8 +79,8 @@ describe('Region Permission Modal', () => {
     render(<PermissionModal filters={filtersToPass} />);
 
     // Check modal is visible.
-    const modalElement = document.querySelector('.popup-modal');
-    expect(modalElement.firstChild).toHaveClass('is-visible');
+    const modalElement = document.querySelector('.usa-modal-wrapper');
+    expect(modalElement).toHaveClass('is-visible');
   });
 
   it('correctly hides the modal', async () => {
@@ -103,8 +103,8 @@ describe('Region Permission Modal', () => {
     render(<PermissionModal filters={filtersToPass} />);
 
     // Check modal is visible.
-    const modalElement = document.querySelector('.popup-modal');
-    expect(modalElement.firstChild).toHaveClass('is-hidden');
+    const modalElement = document.querySelector('.usa-modal-wrapper');
+    expect(modalElement).toHaveClass('is-hidden');
   });
 
   it('correctly shows filters with my regions', async () => {
@@ -139,8 +139,8 @@ describe('Region Permission Modal', () => {
     expect(showFiltersFn).toHaveBeenCalled();
 
     // Modal has closed.
-    const modalElement = document.querySelector('.popup-modal');
-    expect(modalElement.firstChild).toHaveClass('is-hidden');
+    const modalElement = document.querySelector('.usa-modal-wrapper');
+    expect(modalElement).toHaveClass('is-hidden');
   });
 
   it('correctly shows filters with my regions when smart sheet button clicked', async () => {
@@ -175,8 +175,8 @@ describe('Region Permission Modal', () => {
     expect(showFiltersFn).toHaveBeenCalled();
 
     // Modal has closed.
-    const modalElement = document.querySelector('.popup-modal');
-    expect(modalElement.firstChild).toHaveClass('is-hidden');
+    const modalElement = document.querySelector('.usa-modal-wrapper');
+    expect(modalElement).toHaveClass('is-hidden');
   });
 
   it('region is not filters are ignored', async () => {
@@ -194,8 +194,8 @@ describe('Region Permission Modal', () => {
     render(<PermissionModal filters={filtersToPass} showFilterWithMyRegions={showFiltersFn} />);
 
     // Modal is hidden.
-    const modalElement = document.querySelector('.popup-modal');
-    expect(modalElement.firstChild).toHaveClass('is-hidden');
+    const modalElement = document.querySelector('.usa-modal-wrapper');
+    expect(modalElement).toHaveClass('is-hidden');
   });
 
   it('correctly shows the header with a single denied regions', async () => {

@@ -13,7 +13,7 @@ import { REPORT_STATUSES } from '../constants';
 import topicFrequencyGraph from './topicFrequencyGraph';
 
 const GRANT_ID = 4040;
-const RECIPIENT_ID = 1; // 5050;
+const RECIPIENT_ID = 5050;
 
 const mockUser = {
   id: 9945620,
@@ -95,14 +95,12 @@ const regionOneReportWithDifferentTopics = {
 
 describe('Topics and frequency graph widget', () => {
   beforeAll(async () => {
-    await Promise.all([
+    await User.bulkCreate([
       mockUser,
       mockUserTwo,
       mockUserThree,
-    ].map(async (user) => User.findOrCreate({
-      where: user,
-      defaults: user,
-    })));
+    ]);
+
     await Recipient.create({ name: 'recipient', id: RECIPIENT_ID });
     await Region.create({ name: 'office 17', id: 17 });
     await Region.create({ name: 'office 18', id: 18 });
@@ -114,21 +112,12 @@ describe('Topics and frequency graph widget', () => {
       status: 'Active',
       startDate: new Date('2000/01/01'),
     });
-    await Promise.all([
+    await ActivityReport.bulkCreate([
       regionOneReport,
       regionOneReportDistinctDate,
       regionTwoReport,
       regionOneReportWithDifferentTopics,
-    ].map(async (report) => ActivityReport.findOrCreate({
-      where: report,
-      defaults: report,
-    })));
-    // await ActivityReport.bulkCreate([
-    //   regionOneReport,
-    //   regionOneReportDistinctDate,
-    //   regionTwoReport,
-    //   regionOneReportWithDifferentTopics,
-    // ], { validate: true, individualHooks: true });
+    ]);
 
     await ActivityReportCollaborator.create({
       id: 2000,

@@ -77,10 +77,7 @@ body {
 /* ========== some form resets ========== */
 
 .usa-button:not(
-  .usa-button--outline, 
-  .usa-button--unstyled, 
-  .usa-button--secondary,
-  :disabled
+  .usa-button--outline, .usa-button--unstyled, :disabled, .usa-modal__close, .usa-button--secondary
 ) {
   background-color: $ttahub-medium-blue;
 }
@@ -172,6 +169,10 @@ button:not([disabled]):focus {
 
   .print-only {
     display: unset;
+  }
+
+  .no-break-within {
+    break-inside: avoid;
   }
 
   /* Hide things that don't need to be printed

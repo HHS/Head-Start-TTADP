@@ -232,7 +232,9 @@ function transformGoalsAndObjectives(report) {
   let obj = {};
   const { activityReportObjectives } = report;
   if (activityReportObjectives) {
-    const objectiveRecords = activityReportObjectives.map((aro) => aro.objective);
+    const objectiveRecords = activityReportObjectives.map((aro) => (
+      { ...aro.objective, ttaProvided: aro.ttaProvided }
+    ));
     if (objectiveRecords) {
       obj = makeGoalsAndObjectivesObject(objectiveRecords);
     }

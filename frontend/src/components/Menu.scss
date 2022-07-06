@@ -1,6 +1,6 @@
 @use '../colors.scss' as *;
 
-.smart-hub--context-menu-button {
+.smart-hub--menu-button {
   display: block;
   text-decoration: none;
   width: 100%;
@@ -8,28 +8,24 @@
   color: $text-ink;
 }
 
-.smart-hub--context-menu-button:hover {
+.smart-hub--menu-button:hover {
   text-decoration: none;
   color: $text-ink;
 }
 
-.smart-hub--context-menu {
+.smart-hub--menu {
   position: absolute;
   z-index: 1;
 }
 
-.smart-hub--context-menu__left_and_up {
+.smart-hub--menu__left_and_up {
   transform: translateY(-120%) translateX(-90%); 
 }
 
-.smart-hub--context-menu__left {
+.smart-hub--menu__left {
   transform: translateX(-90%); 
 }
 
-.smart-hub--context-menu__left_up {
+.smart-hub--menu__up {
   transform: translateY(-120%); 
-}
-
-.smart-hub--context-menu-item-label {
-  padding: 12px 24px 12px 12px;
 }

@@ -7,10 +7,7 @@ import {
 } from '@trussworks/react-uswds';
 
 // this is the format used in every place we see
-import { DATE_DISPLAY_FORMAT } from '../Constants';
-
-// this is the format accepted (but seemingly, not returned) by the react DatePicker component
-const DATEPICKER_VALUE_FORMAT = 'YYYY-MM-DD';
+import { DATE_DISPLAY_FORMAT, DATEPICKER_VALUE_FORMAT } from '../Constants';
 
 // the only props we **need** to provide are name and control
 // (control being necessary to implement this component within react hook form)

@@ -33,6 +33,7 @@ const RecipientReviewSection = () => {
                 <span className="text-bold">Goal:</span>
                 {' '}
                 {goal.name}
+                {goal.goalNumber && ` (${goal.goalNumber})`}
               </span>
               <div className="padding-left-2 margin-top-2">
                 <>

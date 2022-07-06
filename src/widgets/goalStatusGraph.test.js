@@ -20,56 +20,52 @@ describe('goalStatusGraph', () => {
       status: GOAL_STATUS.NOT_STARTED,
       grantId,
       recipientId,
+      onApprovedAR: true,
     }));
     goals.push(await createGoal({
       status: GOAL_STATUS.NOT_STARTED,
       grantId,
       recipientId,
+      onApprovedAR: true,
     }));
 
     goals.push(await createGoal({
       status: GOAL_STATUS.IN_PROGRESS,
       grantId,
       recipientId,
+      onApprovedAR: true,
     }));
     goals.push(await createGoal({
       status: GOAL_STATUS.IN_PROGRESS,
       grantId,
       recipientId,
+      onApprovedAR: true,
     }));
     goals.push(await createGoal({
       status: GOAL_STATUS.IN_PROGRESS,
       grantId,
       recipientId,
+      onApprovedAR: true,
     }));
 
     goals.push(await createGoal({
       status: GOAL_STATUS.CLOSED,
       grantId,
       recipientId,
+      onApprovedAR: true,
     }));
     goals.push(await createGoal({
       status: GOAL_STATUS.CLOSED,
       grantId,
       recipientId,
+      onApprovedAR: true,
     }));
 
     goals.push(await createGoal({
       status: GOAL_STATUS.DRAFT,
       grantId,
       recipientId,
-    }));
-
-    goals.push(await createGoal({
-      status: '',
-      grantId,
-      recipientId,
-    }));
-
-    goals.push(await createGoal({
-      status: null,
-      grantId,
-      recipientId,
+      onApprovedAR: true,
     }));
     response = await goalStatusGraph({ goal: { id: goals.map((g) => g.id) } });
   });
@@ -96,12 +92,12 @@ describe('goalStatusGraph', () => {
 
   describe('it counts status of', () => {
     it('not started', () => {
-      const notStarted = response['Not Started'];
+      const notStarted = response['Not started'];
       expect(notStarted).toBe(2);
     });
 
     it('in progress', () => {
-      const inProgress = response['In Progress'];
+      const inProgress = response['In progress'];
       expect(inProgress).toBe(3);
     });
 
@@ -117,19 +113,9 @@ describe('goalStatusGraph', () => {
   });
 
   describe('it ignores status of', () => {
-    it('null', () => {
-      const notDefined = response.null;
-      expect(notDefined).toBeUndefined();
-    });
-
     it('draft', () => {
       const draft = response[GOAL_STATUS.DRAFT];
       expect(draft).toBeUndefined();
-    });
-
-    it('empty string', () => {
-      const empty = response[''];
-      expect(empty).toBeUndefined();
     });
   });
 });

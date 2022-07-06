@@ -14,19 +14,19 @@ export const topicToQuery = {
     bef: (query) => beforeCreateDate(query),
     aft: (query) => afterCreateDate(query),
     win: (query) => withinCreateDate(query),
-    is: (query) => withinCreateDate(query),
+    in: (query) => withinCreateDate(query),
   },
   status: {
     in: (query) => withStatus(query),
     nin: (query) => withoutStatus(query),
   },
   topic: {
-    in: (query) => withTopics(query),
-    nin: (query) => withoutTopics(query),
+    in: (query, options) => withTopics(query, options),
+    nin: (query, options) => withoutTopics(query, options),
   },
   reason: {
-    in: (query) => withReasons(query),
-    nin: (query) => withoutReasons(query),
+    in: (query, options) => withReasons(query, options),
+    nin: (query, options) => withoutReasons(query, options),
   },
   recipientId: {
     ctn: (query) => withRecipientId(query),
@@ -45,6 +45,6 @@ export const topicToQuery = {
   },
 };
 
-export function goalsFiltersToScopes(filters) {
-  return createFiltersToScopes(filters, topicToQuery);
+export function goalsFiltersToScopes(filters, options) {
+  return createFiltersToScopes(filters, topicToQuery, options);
 }

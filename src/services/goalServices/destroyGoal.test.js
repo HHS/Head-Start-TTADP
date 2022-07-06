@@ -4,7 +4,6 @@ import { destroyGoal } from '../goals';
 import db, {
   Goal,
   Grant,
-  GrantGoal,
   Recipient,
   Objective,
   ObjectiveResource,
@@ -40,11 +39,11 @@ describe.skip('destroyGoal handler', () => {
       status: 'Not Started',
     });
 
-    await GrantGoal.create({
-      recipientId: recipient.id,
-      grantId: grant.id,
-      goalId: goal.id,
-    });
+    // await GrantGoal.create({
+    //   recipientId: recipient.id,
+    //   grantId: grant.id,
+    //   goalId: goal.id,
+    // });
 
     objective = await Objective.create({
       goalId: goal.id,
@@ -72,11 +71,11 @@ describe.skip('destroyGoal handler', () => {
       },
     });
 
-    await GrantGoal.destroy({
-      where: {
-        goalId: goal.id,
-      },
-    });
+    // await GrantGoal.destroy({
+    //   where: {
+    //     goalId: goal.id,
+    //   },
+    // });
 
     await Goal.destroy({
       where: {
@@ -108,11 +107,11 @@ describe.skip('destroyGoal handler', () => {
       },
     });
 
-    let foundGrantGoal = await GrantGoal.findAll({
-      where: {
-        goalId: goal.id,
-      },
-    });
+    // let foundGrantGoal = await GrantGoal.findAll({
+    //   where: {
+    //     goalId: goal.id,
+    //   },
+    // });
 
     let foundObjective = await Objective.findAll({
       where: {
@@ -128,7 +127,7 @@ describe.skip('destroyGoal handler', () => {
     });
 
     expect(foundGoal.length).toBe(1);
-    expect(foundGrantGoal.length).toBe(1);
+    // expect(foundGrantGoal.length).toBe(1);
     expect(foundObjective.length).toBe(1);
     expect(foundObjectiveResource.length).toBe(1);
 
@@ -143,11 +142,11 @@ describe.skip('destroyGoal handler', () => {
       },
     });
 
-    foundGrantGoal = await GrantGoal.findAll({
-      where: {
-        goalId: goal.id,
-      },
-    });
+    // foundGrantGoal = await GrantGoal.findAll({
+    //   where: {
+    //     goalId: goal.id,
+    //   },
+    // });
 
     foundObjective = await Objective.findAll({
       where: {
@@ -163,7 +162,7 @@ describe.skip('destroyGoal handler', () => {
     });
 
     expect(foundGoal.length).toBe(0);
-    expect(foundGrantGoal.length).toBe(0);
+    // expect(foundGrantGoal.length).toBe(0);
     expect(foundObjective.length).toBe(0);
     expect(foundObjectiveResource.length).toBe(0);
   });

@@ -1,6 +1,4 @@
-// const { Op } = require('sequelize');
-// import { auditLogger } from '../../logger';
-import { CREATION_METHOD } from '../../constants';
+import { AUTOMATIC_CREATION } from '../../constants';
 
 // When a new resource is added to an objective, add the resource to the template or update the
 // updatedAt value.
@@ -17,13 +15,11 @@ const propagateCreateToTemplate = async (sequelize, instance, options) => {
     ],
     transaction: options.transaction,
   });
-  if (objective.objectiveTemplate.creationMethod === CREATION_METHOD[0]) { // 'Automatic'
-    const otr = await sequelize.models.ObjectiveTemplateResource.findOrCreate({
+  if (objective
+    && objective.objectiveTemplateId !== null
+    && objective.objectiveTemplate.creationMethod === AUTOMATIC_CREATION) {
+    const [otr] = await sequelize.models.ObjectiveTemplateResource.findOrCreate({
       where: {
-        objectiveTemplateId: objective.objectiveTemplateId,
-        userProvidedUrl: instance.userProvidedUrl,
-      },
-      defaults: {
         objectiveTemplateId: objective.objectiveTemplateId,
         userProvidedUrl: instance.userProvidedUrl,
       },
@@ -36,6 +32,7 @@ const propagateCreateToTemplate = async (sequelize, instance, options) => {
       {
         where: { id: otr.id },
         transaction: options.transaction,
+        individualHooks: true,
       },
     );
   }
@@ -54,7 +51,9 @@ const propagateDestroyToTemplate = async (sequelize, instance, options) => {
     ],
     transaction: options.transaction,
   });
-  if (objective.objectiveTemplate.creationMethod === CREATION_METHOD[0]) { // 'Automatic'
+  if (objective
+    && objective.objectiveTemplateId !== null
+    && objective.objectiveTemplate.creationMethod === AUTOMATIC_CREATION) {
     const otr = await sequelize.models.ObjectiveTemplateResource.findOne({
       attributes: ['id'],
       where: {
@@ -87,6 +86,7 @@ const propagateDestroyToTemplate = async (sequelize, instance, options) => {
         {
           where: { id: otr.id },
           transaction: options.transaction,
+          individualHooks: true,
         },
       );
     } else {
