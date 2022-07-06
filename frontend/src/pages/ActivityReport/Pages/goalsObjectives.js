@@ -29,7 +29,7 @@ const GoalsObjectives = () => {
       return r.grant.id;
     }
 
-    return r.id || r.value;
+    return r.activityRecipientId;
   }) : [];
 
   const [fetchError, setFetchError] = useState(false);

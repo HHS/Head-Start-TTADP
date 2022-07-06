@@ -140,6 +140,24 @@ export const findWhatsChanged = (object, base) => {
       return accumulator;
     }
 
+    // this block intends to fix an issue where multi recipients are removed from a report
+    // after goals have been saved we pass up the removed recipients so that their specific links
+    // to the activity report/goals will be severed on the backend
+    if (current === 'activityRecipients' && !isEqual(base[current], object[current])) {
+      // eslint-disable-next-line max-len
+      const grantIds = object.activityRecipients.map((activityRecipient) => activityRecipient.activityRecipientId);
+      // eslint-disable-next-line max-len
+      accumulator.recipientsWhoHaveGoalsThatShouldBeRemoved = base.activityRecipients.filter((baseData) => (
+        !grantIds.includes(baseData.activityRecipientId)
+      )).map((activityRecipient) => activityRecipient.activityRecipientId);
+
+      // if we change activity recipients we should always ship the goals up as well
+      // we do hit recipients first, so if they were somehow both changed before the API was hit
+      // (unlikely since they are on different parts of the form)
+      // the goals that were changed would overwrite the next line
+      accumulator.goals = base.goals.map((goal) => ({ ...goal, grantIds }));
+    }
+
     if (!isEqual(base[current], object[current])) {
       accumulator[current] = object[current];
     }
@@ -147,7 +165,9 @@ export const findWhatsChanged = (object, base) => {
     return accumulator;
   }
 
-  return Object.keys(object).reduce(reduction, {});
+  // we sort these so they traverse in a particular order
+  // (ActivityRecipients before goals, in particular)
+  return Object.keys(object).sort().reduce(reduction, {});
 };
 
 export const unflattenResourcesUsed = (array) => {
@@ -278,6 +298,11 @@ function ActivityReport({
       otherEntities = fetchedReport.activityRecipients.map(({ id }) => id);
     }
 
+    const activityRecipients = fetchedReport.activityRecipients.map((ar) => ({
+      activityRecipientId: ar.id,
+      name: ar.name,
+    }));
+
     const goals = convertGoalsToFormData(fetchedReport.goalsAndObjectives, grantIds);
     const objectivesWithoutGoals = convertObjectivesWithoutGoalsToFormData(
       fetchedReport.objectivesWithoutGoals, otherEntities,
@@ -288,6 +313,7 @@ function ActivityReport({
     const startDate = fetchedReport.startDate ? moment(fetchedReport.startDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : '';
     return {
       ...fetchedReport,
+      activityRecipients,
       ECLKCResourcesUsed,
       nonECLKCResourcesUsed,
       goals,

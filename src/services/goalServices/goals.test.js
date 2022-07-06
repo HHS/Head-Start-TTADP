@@ -30,10 +30,12 @@ describe('Goals DB service', () => {
       ActivityReportObjective.findOrCreate = jest.fn().mockResolvedValue([{ update: jest.fn() }]);
       ActivityReportObjective.create = jest.fn();
 
-      Goal.findAll = jest.fn().mockResolvedValue([]);
+      Goal.findAll = jest.fn().mockResolvedValue([{
+        goalTemplateId: 1, update: existingGoalUpdate, id: 1,
+      }]);
       Goal.findOne = jest.fn().mockResolvedValue();
       Goal.findByPk = jest.fn().mockResolvedValue({
-        update: existingGoalUpdate, grantId: 1, id: 1,
+        update: existingGoalUpdate, grantId: 1, id: 1, goalTemplateId: 1,
       });
       Goal.findOrCreate = jest.fn().mockResolvedValue([{ id: 1, update: jest.fn() }, false]);
       Goal.destroy = jest.fn();
@@ -147,6 +149,7 @@ describe('Goals DB service', () => {
         name: 'name',
         objectives: [],
         grantIds: [1, 2],
+        goalIds: [1],
       };
 
       await saveGoalsForReport([existingGoal], { id: 1 });
@@ -165,6 +168,7 @@ describe('Goals DB service', () => {
         objectives: [],
         update: jest.fn(),
         grantIds: [1],
+        goalIds: [1],
       };
 
       const goalWithNewObjective = {
@@ -188,6 +192,7 @@ describe('Goals DB service', () => {
         objectives: [{ title: 'title', id: 1, status: 'Closed' }],
         update: jest.fn(),
         grantIds: [1],
+        goalIds: [1],
       };
 
       await saveGoalsForReport([existingGoal], { id: 1 });
