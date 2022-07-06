@@ -1,6 +1,4 @@
-/* eslint-disable no-unused-vars */
 import { Op } from 'sequelize';
-import { auditLogger } from '../logger';
 import {
   Goal,
   Grant,
@@ -16,12 +14,6 @@ import {
   Program,
 } from '../models';
 import { DECIMAL_BASE, REPORT_STATUSES } from '../constants';
-
-const namespace = 'SERVICE:GOALS';
-
-const logContext = {
-  namespace,
-};
 
 const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
   attributes: [
@@ -139,7 +131,7 @@ export async function goalByIdWithActivityReportsAndRegions(goalId) {
 }
 
 // eslint-disable-next-line no-empty-function
-export async function copyGoalsToGrants(goals, grantIds) {}
+export async function copyGoalsToGrants() {}
 
 async function cleanupObjectivesForGoal(goalId, currentObjectives) {
   // get all objectives not currently on a goal
@@ -424,7 +416,6 @@ async function removeActivityReportGoalsFromReport(reportId, goalIdsToRemove) {
   });
 }
 
-// TODO: ask Josh what the intent of this is for
 export async function removeGoals(goalsToRemove) {
   const goalsWithGrants = await Goal.findAll({
     attributes: ['id'],
@@ -457,8 +448,95 @@ async function removeObjectives(currentObjectiveIds) {
   });
 }
 
+export async function removeRemovedRecipientsGoals(removedRecipientIds, report) {
+  if (!removedRecipientIds) {
+    return null;
+  }
+
+  const reportId = parseInt(sequelize.escape(report.id), DECIMAL_BASE);
+
+  const goals = await Goal.findAll({
+    attributes: [
+      'id',
+      [
+        sequelize.literal(`((select count(*) from "ActivityReportGoals" where "ActivityReportGoals"."goalId" = "Goal"."id" and "ActivityReportGoals"."activityReportId" not in (${reportId}))::int > 0)`),
+        'onOtherAr',
+      ],
+    ],
+    where: {
+      grantId: removedRecipientIds,
+    },
+    include: [
+      {
+        model: ActivityReport,
+        as: 'activityReports',
+        required: true,
+        where: {
+          id: reportId,
+        },
+      },
+    ],
+  });
+
+  const goalIds = goals.map((goal) => goal.id);
+  const goalsToDelete = goals.filter((goal) => !goal.get('onOtherAr')).map((goal) => goal.id);
+
+  await ActivityReportGoal.destroy({
+    where: {
+      goalId: goalIds,
+      activityReportId: reportId,
+    },
+  });
+
+  const objectives = await Objective.findAll({
+    attributes: [
+      'id',
+      [sequelize.literal(`((select count(*) from "ActivityReportObjectives" where "ActivityReportObjectives"."objectiveId" = "Objective"."id" and "ActivityReportObjectives"."activityReportId" not in (${reportId}))::int > 0)`), 'onOtherAr'],
+    ],
+    where: {
+      goalId: goalIds,
+    },
+    include: [
+      {
+        model: ActivityReport,
+        as: 'activityReports',
+        required: true,
+        where: {
+          id: reportId,
+        },
+      },
+    ],
+  });
+
+  const objectiveIds = objectives.map((objective) => objective.id);
+  const objectivesToDelete = objectives.filter(
+    (objective) => !objective.get('onOtherAr'),
+  ).map((objective) => objective.id);
+
+  await ActivityReportObjective.destroy({
+    where: {
+      objectiveId: objectiveIds,
+      activityReportId: reportId,
+    },
+  });
+
+  await Objective.destroy({
+    where: {
+      id: objectivesToDelete,
+      onApprovedAR: false,
+    },
+  });
+
+  return Goal.destroy({
+    where: {
+      id: goalsToDelete,
+      onApprovedAR: false,
+    },
+  });
+}
+
 export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObjectives) {
-  const previousObjectives = await ActivityReportObjective.findAll({
+  const previousActivityReportObjectives = await ActivityReportObjective.findAll({
     where: {
       activityReportId: reportId,
     },
@@ -478,7 +556,7 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
 
   const currentObjectiveIds = currentObjectives.map((o) => o.id);
 
-  const activityReportObjectivesToRemove = previousObjectives.filter(
+  const activityReportObjectivesToRemove = previousActivityReportObjectives.filter(
     (aro) => !currentObjectiveIds.includes(aro.objectiveId),
   );
 
@@ -496,7 +574,8 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
 }
 
 async function createObjectivesForGoal(goal, objectives, report) {
-  return Promise.all(objectives.map(async (objective) => {
+  // we don't want to create objectives with blank titles
+  return Promise.all(objectives.filter((o) => o.title).map(async (objective) => {
     const {
       id,
       isNew,
@@ -564,7 +643,7 @@ export async function saveGoalsForReport(goals, report) {
     // we have a param to determine if goals are new
     if (goal.isNew) {
       const {
-        isNew, objectives, id, grantIds, status: discardedStatus, ...fields
+        isNew, objectives, id, grantIds, status: discardedStatus, onApprovedAR, ...fields
       } = goal;
 
       newGoals = await Promise.all(goal.grantIds.map(async (grantId) => {
@@ -596,31 +675,42 @@ export async function saveGoalsForReport(goals, report) {
         status: discardedStatus,
         grant,
         grantId,
-        id: goalId,
+        goalIds,
+        id, // this is unique and we can't trying to set this
+        onApprovedAR, // we don't want to set this manually
         ...fields
       } = goal;
 
-      const existingGoal = await Goal.findByPk(goalId);
-      await existingGoal.update({ status, ...fields }, { individualHooks: true });
-      // eslint-disable-next-line max-len
-      const existingGoalObjectives = await createObjectivesForGoal(existingGoal, objectives, report);
-      currentObjectives = [...currentObjectives, ...existingGoalObjectives];
-
-      await ActivityReportGoal.findOrCreate({
+      const existingGoals = await Goal.findAll({
         where: {
-          goalId: existingGoal.id,
-          activityReportId: report.id,
+          id: goalIds,
         },
       });
 
+      const { goalTemplateId } = existingGoals[0];
+
+      await Promise.all(existingGoals.map(async (existingGoal) => {
+        await existingGoal.update({ status, ...fields }, { individualHooks: true });
+        // eslint-disable-next-line max-len
+        const existingGoalObjectives = await createObjectivesForGoal(existingGoal, objectives, report);
+        currentObjectives = [...currentObjectives, ...existingGoalObjectives];
+        await ActivityReportGoal.findOrCreate({
+          where: {
+            goalId: existingGoal.id,
+            activityReportId: report.id,
+          },
+        });
+      }));
+
       newGoals = await Promise.all(grantIds.map(async (gId) => {
-        if (gId === existingGoal.grantId) {
+        const existingGoal = existingGoals.find((g) => g.grantId === gId);
+        if (existingGoal) {
           return existingGoal;
         }
 
         const [newGoal] = await Goal.findOrCreate({
           where: {
-            goalTemplateId: existingGoal.goalTemplateId,
+            goalTemplateId,
             grantId: gId,
             status: {
               [Op.not]: 'Closed',
