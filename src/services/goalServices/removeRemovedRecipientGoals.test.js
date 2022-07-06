@@ -136,7 +136,7 @@ describe('removeRemovedRecipientsGoals', () => {
       status: 'In Progress',
       grantId: grantTwo.id,
       previousStatus: 'Not Started',
-      onApprovedAR: true,
+      onApprovedAR: false,
     });
 
     await ActivityReportGoal.create({
@@ -144,12 +144,16 @@ describe('removeRemovedRecipientsGoals', () => {
       activityReportId: multiRecipientReport.id,
     });
 
-    // Activity report for multiple recipients
     secondReport = await ActivityReport.create({
       submissionStatus: REPORT_STATUSES.DRAFT,
       regionId: 1,
       userId: 1,
       activityRecipientType: 'recipient',
+    });
+
+    await ActivityReportGoal.create({
+      goalId: fourthGoal.id,
+      activityReportId: secondReport.id,
     });
 
     thirdObjective = await Objective.create({
@@ -167,14 +171,6 @@ describe('removeRemovedRecipientsGoals', () => {
   afterAll(async () => {
     const reportIds = [multiRecipientReport.id, secondReport.id];
 
-    const arObjectives = await ActivityReportObjective.findAll({
-      where: {
-        activityReportId: reportIds,
-      },
-    });
-
-    const objectiveIds = arObjectives.map((aro) => aro.objectiveId);
-
     await ActivityReportObjective.destroy({
       where: {
         activityReportId: reportIds,
@@ -183,7 +179,7 @@ describe('removeRemovedRecipientsGoals', () => {
 
     await Objective.destroy({
       where: {
-        id: objectiveIds,
+        id: [firstObjective.id, secondObjective.id, thirdObjective.id],
       },
     });
 
