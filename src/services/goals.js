@@ -453,8 +453,16 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
     return null;
   }
 
+  const reportId = parseInt(sequelize.escape(report.id), DECIMAL_BASE);
+
   const goals = await Goal.findAll({
-    attributes: ['id'],
+    attributes: [
+      'id',
+      [
+        sequelize.literal(`((select count(*) from "ActivityReportGoals" where "ActivityReportGoals"."goalId" = "Goal"."id" and "ActivityReportGoals"."activityReportId" not in (${reportId})) > 0)`),
+        'onOtherAr',
+      ],
+    ],
     where: {
       grantId: removedRecipientIds,
     },
@@ -464,29 +472,27 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
         as: 'activityReports',
         required: true,
         where: {
-          id: report.id,
+          id: reportId,
         },
       },
     ],
   });
 
   const goalIds = goals.map((goal) => goal.id);
-
-  // we only delete goals with 1 activity report,
-  // implicitly that means the 1 activity report is the one we are removing
-  const goalsToDelete = goals.filter(
-    (goal) => goal.activityReports.length === 1,
-  );
+  const goalsToDelete = goals.filter((goal) => !goal.onOtherAr).map((goal) => goal.id);
 
   await ActivityReportGoal.destroy({
     where: {
       goalId: goalIds,
-      activityReportId: report.id,
+      activityReportId: reportId,
     },
   });
 
   const objectives = await Objective.findAll({
-    attributes: ['id'],
+    attributes: [
+      'id',
+      [sequelize.literal(`((select count(*) from "ActivityReportObjectives" where "ActivityReportObjectives"."objectiveId" = "Objective"."id" and "ActivityReportObjectives"."activityReportId" not in (${reportId})) > 0)`), 'onOtherAr'],
+    ],
     where: {
       goalId: goalIds,
     },
@@ -496,25 +502,23 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
         as: 'activityReports',
         required: true,
         where: {
-          id: report.id,
+          id: reportId,
         },
       },
     ],
   });
 
   const objectiveIds = objectives.map((objective) => objective.id);
+  const objectivesToDelete = objectives.filter(
+    (objective) => !objective.onOtherAr,
+  ).map((objective) => objective.id);
 
   await ActivityReportObjective.destroy({
     where: {
       objectiveId: objectiveIds,
-      activityReportId: report.id,
+      activityReportId: reportId,
     },
   });
-
-  // same as above, we only delete objectives that aren't in use elsewhere
-  const objectivesToDelete = objectives.filter(
-    (objective) => objective.activityReports.length === 1,
-  );
 
   await Objective.destroy({
     where: {
