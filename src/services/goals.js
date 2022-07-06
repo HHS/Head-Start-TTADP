@@ -31,8 +31,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     'endDate',
     ['name', 'goalName'],
     'status',
-    [sequelize.col('grants.regionId'), 'regionId'],
-    [sequelize.col('grants.recipient.id'), 'recipientId'],
+    [sequelize.col('grant.regionId'), 'regionId'],
+    [sequelize.col('grant.recipient.id'), 'recipientId'],
     'goalNumber',
   ],
   where: {
@@ -265,6 +265,7 @@ export async function goalByIdAndRecipient(id, recipientId) {
 }
 
 export async function goalsByIdAndRecipient(ids, recipientId) {
+  console.log('\n\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Recipient Id', recipientId);
   return Goal.findAll(OPTIONS_FOR_GOAL_FORM_QUERY(ids, recipientId));
 }
 
@@ -388,7 +389,6 @@ export async function createOrUpdateGoals(goals) {
   // there can only be one on the goal form (multiple grants maybe, but one recipient)
   // we will need this after the transaction, as trying to do a find all within a transaction
   // yields the previous data values
-
   let recipient;
 
   // eslint-disable-next-line max-len
@@ -402,6 +402,9 @@ export async function createOrUpdateGoals(goals) {
       ...fields
     } = goalData;
 
+    // there can only be one on the goal form (multiple grants maybe, but one recipient)
+    recipient = recipientId; // TODO: this is wrong
+
     let options = {
       ...fields,
       isFromSmartsheetTtaPlan: false,
@@ -412,7 +415,6 @@ export async function createOrUpdateGoals(goals) {
     }
 
     let newGoal;
-
     if (Number.isInteger(id)) {
       const res = await Goal.update({ grantId, ...options }, {
         where: { id },
@@ -512,7 +514,6 @@ export async function createOrUpdateGoals(goals) {
 
     return newGoal.id;
   }));
-
   // we have to do this outside of the transaction otherwise
   // we get the old values
   return goalsByIdAndRecipient(goalIds, recipient);
@@ -733,37 +734,42 @@ async function createObjectivesForGoal(goal, objectives, report) {
     });
 
     await arObjective.update({ ttaProvided }, { individualHooks: true });
+    if (objective.topics) {
+      await Promise.all((objective.topics.map((ot) => ObjectiveTopic.findOrCreate({
+        where: {
+          objectiveId: savedObjective.id,
+          topicId: ot.value,
+        },
+      }))));
+    }
 
-    await Promise.all((objective.topics.map((ot) => ObjectiveTopic.findOrCreate({
-      where: {
-        objectiveId: savedObjective.id,
-        topicId: ot.value,
-      },
-    }))));
+    if (objective.resources) {
+      await Promise.all(
+        objective.resources.filter(({ value }) => value).map(
+          ({ value }) => ObjectiveResource.findOrCreate({
+            where: {
+              userProvidedUrl: value,
+              objectiveId: savedObjective.id,
+            },
+          }),
+        ),
+      );
+    }
 
-    await Promise.all(
-      objective.resources.filter(({ value }) => value).map(
-        ({ value }) => ObjectiveResource.findOrCreate({
-          where: {
-            userProvidedUrl: value,
-            objectiveId: savedObjective.id,
-          },
-        }),
-      ),
-    );
+    if (objective.roles) {
+      const roles = await Role.findAll({
+        where: {
+          fullName: objective.roles,
+        },
+      });
 
-    const roles = await Role.findAll({
-      where: {
-        fullName: objective.roles,
-      },
-    });
-
-    await Promise.all(roles.map((r) => ObjectiveRole.findOrCreate({
-      where: {
-        roleId: r.id,
-        objectiveId: savedObjective.id,
-      },
-    })));
+      await Promise.all(roles.map((r) => ObjectiveRole.findOrCreate({
+        where: {
+          roleId: r.id,
+          objectiveId: savedObjective.id,
+        },
+      })));
+    }
 
     return savedObjective;
   }));
