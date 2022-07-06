@@ -31,14 +31,18 @@ describe('Objectives DB service', () => {
       title: 'first objective',
       ttaProvided: 'tta first',
       status: 'In Progress',
-      new: true,
+      isNew: true,
+      recipientIds: [1],
+      ids: ['uuid'],
     },
     {
       id: 'uuid2',
       title: 'second objective',
       ttaProvided: 'tta second',
       status: 'In Progress',
-      new: true,
+      isNew: true,
+      recipientIds: [1],
+      ids: ['uuid2'],
     },
   ];
 
@@ -49,17 +53,19 @@ describe('Objectives DB service', () => {
       title: 'title',
       ttaProvided: 'tta provided',
       status: 'Draft',
+      otherEntityId: 1,
     });
 
     secondObjective = await Objective.create({
       title: 'second title',
-      ttaProvided: 'tta provided',
       status: 'Draft',
+      otherEntityId: 1,
     });
 
     await ActivityReportObjective.create({
       objectiveId: objective.id,
       activityReportId: report.id,
+      ttaProvided: 'tta provided',
     });
 
     await ActivityReportObjective.create({
@@ -68,7 +74,14 @@ describe('Objectives DB service', () => {
     });
 
     await sequelize.transaction(async () => {
-      await saveObjectivesForReport([...objectives, objective], report);
+      await saveObjectivesForReport([...objectives, {
+        id: objective.id,
+        title: objective.title,
+        ttaProvided: 'tta provided',
+        status: objective.status,
+        recipientIds: [1],
+        ids: [objective.id],
+      }], report);
     });
   });
 

@@ -6,10 +6,6 @@ import {
 import { removeUnusedGoalsObjectivesFromReport } from './goals';
 
 export async function saveObjectivesForReport(objectives, report) {
-  if (!objectives) {
-    return null;
-  }
-
   const updatedObjectives = await Promise.all(objectives.map(async (objective) => {
     if (objective.isNew) {
       return Promise.all(objective.recipientIds.map(async (recipient) => {
@@ -28,7 +24,7 @@ export async function saveObjectivesForReport(objectives, report) {
           },
         });
 
-        await aro.update({ ttaProvided: objective.ttaProvided });
+        await aro.update({ ttaProvided: objective.ttaProvided }, { individualHooks: true });
 
         return newObjective;
       }));
@@ -53,7 +49,7 @@ export async function saveObjectivesForReport(objectives, report) {
         await existingObjective.update({
           status: objective.status,
           title: objective.title,
-        });
+        }, { individualHooks: true });
 
         return existingObjective;
       }

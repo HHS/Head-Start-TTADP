@@ -55,6 +55,7 @@ export const formData = () => ({
   creatorRole: 'Reporter',
   files: [],
   creatorNameWithRole: 'test',
+  objectivesWithoutGoals: [],
 });
 
 export const renderActivityReport = (id, location = 'activity-summary', showLastUpdatedTime = null, userId = 1) => {
