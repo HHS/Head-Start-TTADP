@@ -42,31 +42,39 @@ const renderNextSteps = (specialist = [], recipient = [], activityRecipientType 
 };
 
 describe('next steps', () => {
+  it('renders correctly with no steps', async () => {
+    renderNextSteps(undefined, undefined);
+    expect(await screen.findByText(/specialist's next steps/i)).toBeVisible();
+    expect(await screen.findByText(/recipient's next steps/i)).toBeVisible();
+  });
+
   it('displays correct labels for other entity', async () => {
     // When a user is on the next steps page
     renderNextSteps([{ note: '', id: 1 }], [{ note: '', id: 2 }], 'other-entity');
-    expect(await screen.findByText(/what has the other entity agreed to do next\?/i)).toBeVisible();
+    expect(await screen.findByText(/other entities next steps/i)).toBeVisible();
   });
 
-  it('displays both specialists and recipient questions', async () => {
+  it('displays both specialists and recipient steps', async () => {
     // When a user is on the next steps page
     renderNextSteps([{ note: '', id: 1 }], [{ note: '', id: 2 }]);
 
     // Then they can see prompts for both Specialist and Recipients
     expect(await screen.findByText(/specialist's next steps/i)).toBeVisible();
-    expect(await screen.findByText(/what have you agreed to do next\?/i)).toBeVisible();
     expect(await screen.findByTestId(SPECIALIST_INPUT)).toBeVisible();
     expect(screen.queryByText(SPECIALIST_BUTTON)).toBeNull();
 
+    expect((await screen.findAllByTestId('date-picker-external-input')).length).toBe(2);
     expect(await screen.findByText(/recipient's next steps/i)).toBeVisible();
-    expect(await screen.findByText(/what has the recipient agreed to do next\?/i)).toBeVisible();
     expect(await screen.findByTestId(RECIPIENT_INPUT)).toBeVisible();
     expect(screen.queryByText(RECIPIENT_BUTTON)).toBeNull();
   });
 
   it('displays user can add new steps', async () => {
     // When a user is on the next steps page
-    renderNextSteps([{ note: 'First Specialist Step', id: 1 }], [{ note: 'First Recipient Step', id: 2 }]);
+    renderNextSteps(
+      [{ note: 'First Specialist Step', completeDate: '06/02/2022', id: 1 }],
+      [{ note: 'First Recipient Step', completeDate: '06/03/2022', id: 2 }],
+    );
 
     // Add new steps.
     const newStepButtons = screen.queryAllByRole('button', { name: /add next step/i });
@@ -75,14 +83,17 @@ describe('next steps', () => {
     userEvent.click(newStepButtons[1]);
 
     // Verify new steps are created.
-    const newSteps = screen.queryAllByRole('textbox', { name: /next step 2/i });
+    const newSteps = screen.queryAllByRole('textbox', { name: /step 2 \*/i });
     expect(newSteps.length).toBe(2);
   });
 
   it('can add and delete an entry for specialist', async () => {
     // Given a user wants the add a new entry
     renderNextSteps(
-      [{ note: 'pikachu', id: 1 }, { note: 'bulbasaur', id: 30 }],
+      [
+        { note: 'pikachu', completeDate: '06/02/2022', id: 1 },
+        { note: 'bulbasaur', completeDate: '06/03/2022', id: 30 },
+      ],
     );
 
     // Add new Specialist Step.
@@ -103,7 +114,10 @@ describe('next steps', () => {
     // Given a user wants the add a new entry
     renderNextSteps(
       [],
-      [{ note: 'pikachu', id: 1 }, { note: 'bulbasaur', id: 30 }],
+      [
+        { note: 'pikachu', completeDate: '06/02/2022', id: 1 },
+        { note: 'bulbasaur', completeDate: '06/03/2022', id: 30 },
+      ],
     );
 
     // Add new Recipient Step.
@@ -122,19 +136,69 @@ describe('next steps', () => {
 
   it('can change step for specialist', async () => {
     renderNextSteps(
-      [{ note: 'Step 1', id: 1 }],
+      [{ note: 'Step 1', id: 1, completeDate: '06/02/2022' }],
     );
-    const stepText = await screen.findByRole('textbox', { name: /next step 1/i });
+    const stepText = await screen.findByRole('textbox', { name: /step 1 \*/i });
     fireEvent.change(stepText, { target: { value: 'This is my changed step text.' } });
     await waitFor(() => expect(stepText).toHaveValue('This is my changed step text.'));
   });
 
-  it('can change step for recipient', async () => {
+  it('auto grows step height', async () => {
+    Object.defineProperty(Element.prototype, 'scrollHeight', {
+      value: 300,
+      writable: true,
+      configurable: true,
+    });
     renderNextSteps(
-      [], [{ note: 'Step 1', id: 2 }],
+      [{ note: 'Step 1', id: 1, completeDate: '06/02/2022' }],
     );
-    const stepText = await screen.findByRole('textbox', { name: /next step 1/i });
+    const stepText = await screen.findByRole('textbox', { name: /step 1 \*/i });
     fireEvent.change(stepText, { target: { value: 'This is my changed step text.' } });
     await waitFor(() => expect(stepText).toHaveValue('This is my changed step text.'));
+  });
+
+  it('can change date for specialist', async () => {
+    renderNextSteps(
+      [{ note: 'Step 1', id: 1, completeDate: '06/02/2022' }],
+    );
+
+    // Change date.
+    const dateInput = await screen.findByTestId('date-picker-external-input');
+    userEvent.clear(dateInput);
+    userEvent.type(dateInput, '06/03/2022');
+
+    // Change focus.
+    const stepText = await screen.findByRole('textbox', { name: /step 1 \*/i });
+    userEvent.click(stepText);
+
+    // Assert date change.
+    await waitFor(() => expect(dateInput).toHaveValue('06/03/2022'));
+  });
+
+  it('can change step for recipient', async () => {
+    renderNextSteps(
+      [], [{ note: 'Step 1', id: 2, completeDate: '06/02/2022' }],
+    );
+    const stepText = await screen.findByRole('textbox', { name: /step 1 \*/i });
+    fireEvent.change(stepText, { target: { value: 'This is my changed step text.' } });
+    await waitFor(() => expect(stepText).toHaveValue('This is my changed step text.'));
+  });
+
+  it('can change date for recipient', async () => {
+    renderNextSteps(
+      [], [{ note: 'Step 2', id: 2, completeDate: '06/03/2022' }],
+    );
+
+    // Change date.
+    const dateInput = await screen.findByTestId('date-picker-external-input');
+    userEvent.clear(dateInput);
+    userEvent.type(dateInput, '06/04/2022');
+
+    // Change focus.
+    const stepText = await screen.findByRole('textbox', { name: /step 1 \*/i });
+    userEvent.click(stepText);
+
+    // Assert date change.
+    await waitFor(() => expect(dateInput).toHaveValue('06/04/2022'));
   });
 });

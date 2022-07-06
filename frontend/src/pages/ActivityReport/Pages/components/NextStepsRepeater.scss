@@ -1,0 +1,13 @@
+
+@use '../../../../colors.scss' as *;
+
+.usa-form .ttahub-next-steps-repeater .usa-textarea {
+  max-width: 460px;
+}
+
+/* Outline a blank step onBlur or form Validation */
+.ttahub-next-steps-repeater .usa-form-group--error .blank-next-step textarea ,
+.usa-form-group--error .ttahub-next-steps-repeater .blank-next-step textarea
+{
+    border: 2px solid $error-dark;
+}

@@ -18,18 +18,12 @@ function ObjectiveRow({
 }) {
   const {
     title,
-    arId,
-    arNumber,
-    arLegacyId,
-    arStatus,
     endDate,
     reasons,
     status,
-    grantNumber,
+    grantNumbers,
+    activityReports,
   } = objective;
-
-  const viewOrEditLink = arStatus === 'approved' ? `/activity-reports/view/${arId}` : `/activity-reports/${arId}`;
-  const linkToAr = arLegacyId ? `/activity-reports/legacy/${arLegacyId}` : viewOrEditLink;
 
   const determineReasonMonitorStatus = (reason) => {
     if (reasonsToMonitor.includes(reason)) {
@@ -112,16 +106,25 @@ function ObjectiveRow({
         </li>
         <li className="padding-x-105 padding-y-0">
           <span className="sr-only">Activity reports </span>
-          {' '}
-          <Link
-            to={linkToAr}
-          >
-            {arNumber}
-          </Link>
+          <ul className="usa-list usa-list--unstyled ttahub-objective-row-activity-report-list">
+            {activityReports.map((report) => {
+              const viewOrEditLink = `/activity-reports/view/${report.id}`;
+              const linkToAr = report.legacyId ? `/activity-reports/legacy/${report.legacyId}` : viewOrEditLink;
+              return (
+                <li key={report.id}>
+                  <Link
+                    to={linkToAr}
+                  >
+                    {report.number}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
         </li>
         <li className="padding-x-105 padding-y-0">
           <span className="sr-only">Grant number </span>
-          {grantNumber}
+          {grantNumbers.join(', ')}
         </li>
         <li className="padding-x-105 padding-y-0">
           <span className="sr-only">End date </span>
@@ -144,15 +147,15 @@ function ObjectiveRow({
 export const objectivePropTypes = PropTypes.shape({
   id: PropTypes.number.isRequired,
   title: PropTypes.string.isRequired,
-  arId: PropTypes.number.isRequired,
-  arLegacyId: PropTypes.string,
-  arNumber: PropTypes.string.isRequired,
-  arStatus: PropTypes.string.isRequired,
-  ttaProvided: PropTypes.string.isRequired,
   endDate: PropTypes.string,
   reasons: PropTypes.arrayOf(PropTypes.string),
   status: PropTypes.string.isRequired,
-  grantNumber: PropTypes.string,
+  grantNumbers: PropTypes.arrayOf(PropTypes.string),
+  activityReports: PropTypes.arrayOf(PropTypes.shape({
+    legacyId: PropTypes.string,
+    number: PropTypes.string,
+    id: PropTypes.number,
+  })),
 });
 
 objectivePropTypes.defaultProps = {
@@ -160,6 +163,8 @@ objectivePropTypes.defaultProps = {
   arLegacyId: null,
   endDate: null,
   reasons: [],
+  grantNumbers: [],
+  activityReports: [],
 };
 ObjectiveRow.propTypes = {
   objective: objectivePropTypes.isRequired,
