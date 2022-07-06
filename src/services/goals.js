@@ -265,7 +265,6 @@ export async function goalByIdAndRecipient(id, recipientId) {
 }
 
 export async function goalsByIdAndRecipient(ids, recipientId) {
-  console.log('\n\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Recipient Id', recipientId);
   return Goal.findAll(OPTIONS_FOR_GOAL_FORM_QUERY(ids, recipientId));
 }
 
