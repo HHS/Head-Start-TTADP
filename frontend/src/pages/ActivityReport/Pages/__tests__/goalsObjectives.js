@@ -16,7 +16,7 @@ import NetworkContext from '../../../../NetworkContext';
 const goalUrl = join('api', 'activity-reports', 'goals');
 
 const RenderGoalsObjectives = ({
-  grantIds, activityRecipientType, goals = [], isGoalFormClosed = false, connectionActive = true,
+  grantIds, activityRecipientType, isGoalFormClosed = false, connectionActive = true,
 }) => {
   const activityRecipients = grantIds.map((activityRecipientId) => ({
     activityRecipientId, id: activityRecipientId,
