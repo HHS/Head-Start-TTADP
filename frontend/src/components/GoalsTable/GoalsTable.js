@@ -26,7 +26,7 @@ function GoalsTable({
   const [goals, setGoals] = useState([]);
 
   // Close/Suspend Reason Modal.
-  const [closeSuspendGoalId, setCloseSuspendGoalId] = useState(0);
+  const [closeSuspendGoalIds, setCloseSuspendGoalIds] = useState([]);
   const [closeSuspendStatus, setCloseSuspendStatus] = useState('');
   const [closeSuspendOldStatus, setCloseSuspendOldStatus] = useState(null);
   const [resetModalValues, setResetModalValues] = useState(false);
@@ -34,8 +34,8 @@ function GoalsTable({
 
   const queryString = useRef(filtersToQueryString(filters));
 
-  const showCloseSuspendGoalModal = (status, goalId, oldGoalStatus) => {
-    setCloseSuspendGoalId(goalId);
+  const showCloseSuspendGoalModal = (status, goalIds, oldGoalStatus) => {
+    setCloseSuspendGoalIds(goalIds);
     setCloseSuspendStatus(status);
     setCloseSuspendOldStatus(oldGoalStatus);
     setResetModalValues(!resetModalValues); // Always flip to trigger form reset useEffect.
@@ -43,14 +43,14 @@ function GoalsTable({
   };
 
   const performGoalStatusUpdate = async (
-    goalId,
+    goalIds,
     newGoalStatus,
     oldGoalStatus,
     closeSuspendReason = null,
     closeSuspendContext = null,
   ) => {
     const updatedGoal = await updateGoalStatus(
-      goalId,
+      goalIds,
       newGoalStatus,
       oldGoalStatus,
       closeSuspendReason,
@@ -61,8 +61,10 @@ function GoalsTable({
       closeSuspendModalRef.current.toggleModal(false);
     }
 
+    const updatedGoalIds = updatedGoal.map(({ id }) => id);
+
     const newGoals = goals.map(
-      (g) => (g.id === updatedGoal.id ? { ...g, goalStatus: updatedGoal.status } : g),
+      (g) => (updatedGoalIds.includes(g.id) ? { ...g, goalStatus: newGoalStatus } : g),
     );
     setGoals(newGoals);
   };
@@ -199,7 +201,7 @@ function GoalsTable({
       <Container className="goals-table maxw-full overflow-x-hidden" padding={0} loading={loading} loadingLabel="Goals table loading">
         <CloseSuspendReasonModal
           id="close-suspend-reason-modal"
-          goalId={closeSuspendGoalId}
+          goalIds={closeSuspendGoalIds}
           newStatus={closeSuspendStatus}
           modalRef={closeSuspendModalRef}
           onSubmit={performGoalStatusUpdate}
@@ -216,6 +218,7 @@ function GoalsTable({
           recipientId={recipientId}
           regionId={regionId}
           hasActiveGrants={hasActiveGrants}
+          selectedGoals={sortConfig}
         />
         <div className="usa-table-container padding-x-3">
           <Table fullWidth scrollable>

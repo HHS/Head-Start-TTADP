@@ -31,8 +31,9 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     'endDate',
     ['name', 'goalName'],
     'status',
-    [sequelize.col('grant.regionId'), 'regionId'],
-    [sequelize.col('grant.recipient.id'), 'recipientId'],
+    [sequelize.col('grants.regionId'), 'regionId'],
+    [sequelize.col('grants.recipient.id'), 'recipientId'],
+    'goalNumber',
   ],
   where: {
     id,
@@ -541,7 +542,28 @@ export async function goalsForGrants(grantIds) {
   */
 
   return Goal.findAll({
+    attributes: [
+      [sequelize.fn(
+        'ARRAY_AGG',
+        sequelize.fn(
+          'DISTINCT',
+          sequelize.col('grant.id'),
+        ),
+      ), 'grantIds'],
+      [sequelize.fn(
+        'ARRAY_AGG',
+        sequelize.fn(
+          'DISTINCT',
+          sequelize.col('"Goal"."id"'),
+        ),
+      ), 'goalIds'],
+      'name',
+      'status',
+      'onApprovedAR',
+    ],
+    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."onApprovedAR"'],
     where: {
+      '$grant.id$': ids,
       [Op.or]: [
         {
           status: 'Not Started',
@@ -556,12 +578,9 @@ export async function goalsForGrants(grantIds) {
     },
     include: [
       {
-        model: Grant,
+        model: Grant.unscoped(),
         as: 'grant',
-        attributes: ['id', 'regionId'],
-        where: {
-          id: ids,
-        },
+        attributes: [],
       },
     ],
     order: ['name'],
@@ -849,22 +868,28 @@ export async function saveGoalsForReport(goals, report) {
 }
 
 export async function updateGoalStatusById(
-  goalId,
+  goalIds,
   oldStatus,
   newStatus,
   closeSuspendReason,
   closeSuspendContext,
 ) {
-  const id = parseInt(goalId, DECIMAL_BASE);
-  const g = await Goal.findByPk(id);
-
-  await g.update({
+  const g = await Goal.update({
     status: newStatus,
     closeSuspendReason,
     closeSuspendContext,
     previousStatus: oldStatus,
-  }, { individualHooks: true });
-  return g;
+  }, {
+    where: {
+      id: goalIds,
+    },
+    returning: true,
+    individualHooks: true,
+  });
+
+  const [, updated] = g;
+
+  return updated;
 }
 
 export async function destroyGoal(goalId) {

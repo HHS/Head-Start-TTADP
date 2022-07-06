@@ -16,7 +16,7 @@ describe('GoalStatusChart', () => {
     Suspended: 25,
   };
 
-  const renderGoalStatusChart = (data) => render(<GoalStatusChart data={data} />);
+  const renderGoalStatusChart = (data) => render(<GoalStatusChart data={data} loading={false} />);
 
   it('renders the bar graph', async () => {
     renderGoalStatusChart(testData);

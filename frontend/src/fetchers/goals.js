@@ -27,16 +27,17 @@ export async function createOrUpdateGoals(goals) {
 }
 
 export async function updateGoalStatus(
-  goalId,
+  goalIds,
   newStatus,
   oldStatus,
   closeSuspendReason,
   closeSuspendContext,
 ) {
-  const recipientGoalsUrl = join(goalsUrl, goalId.toString(), 'changeStatus');
+  const recipientGoalsUrl = join(goalsUrl, 'changeStatus');
   const updatedGoal = await put(
     recipientGoalsUrl,
     {
+      goalIds,
       oldStatus,
       newStatus,
       closeSuspendReason,

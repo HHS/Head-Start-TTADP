@@ -21,13 +21,12 @@ import {
   REASONS as reasons,
   TARGET_POPULATIONS as targetPopulations,
 } from '../../../Constants';
+import ConnectionError from './components/ConnectionError';
+import NetworkContext from '../../../NetworkContext';
 import HookFormRichEditor from '../../../components/HookFormRichEditor';
-
 import HtmlReviewItem from './Review/HtmlReviewItem';
 import Section from './Review/ReviewSection';
 import { reportIsEditable } from '../../../utils';
-import ConnectionError from './components/ConnectionError';
-import NetworkContext from '../../../NetworkContext';
 
 const ActivitySummary = ({
   recipients,
@@ -274,7 +273,6 @@ const ActivitySummary = ({
                   setEndDate={setEndDate}
                   maxDate={endDate}
                   isStartDate
-                  required="this is a test"
                 />
               </FormItem>
             </Grid>
@@ -328,7 +326,13 @@ const ActivitySummary = ({
           </Grid>
         </div>
       </Fieldset>
-      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Training or technical assistance">
+      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Context">
+        <Label htmlFor="context">Provide background or context for this activity</Label>
+        <div className="smart-hub--text-area__resize-vertical margin-top-1">
+          <HookFormRichEditor ariaLabel="Context" name="context" id="context" />
+        </div>
+      </Fieldset>
+      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Training or Technical Assistance">
         <div id="tta" />
         <div className="margin-top-2">
           <FormItem
@@ -437,12 +441,7 @@ const ActivitySummary = ({
               </Grid>
             </Grid>
           </FormItem>
-          <Fieldset className="smart-hub--report-legend margin-top-4" legend="Context">
-            <Label htmlFor="context">Provide background or context for this activity</Label>
-            <div className="smart-hub--text-area__resize-vertical margin-top-1">
-              <HookFormRichEditor ariaLabel="Context" name="context" id="context" />
-            </div>
-          </Fieldset>
+
         </div>
       </Fieldset>
     </>

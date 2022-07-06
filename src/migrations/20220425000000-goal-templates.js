@@ -1096,7 +1096,7 @@ module.exports = {
                   oe.id "otherEntityId",
                   aro."objectiveId",
                   a."regionId"
-                FROM public."OtherEntities" oe
+                FROM "OtherEntities" oe
                 JOIN "ActivityRecipients" ar
                 ON oe.id = ar."otherEntityId"
                 JOIN "ActivityReports" a
@@ -1125,7 +1125,8 @@ module.exports = {
                   oo."regionId"
                 FROM "Objectives" o
                 JOIN "otherentity_objectives" oo
-                ON o."goalId" = oo."objectiveId"
+                ON o."id" = oo."objectiveId"
+                WHERE "o"."title" IS NOT null
               ),
               objective_goal_data AS (
                 SELECT DISTINCT

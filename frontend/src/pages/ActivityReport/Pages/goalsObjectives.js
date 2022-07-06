@@ -13,11 +13,11 @@ import { validateGoals } from './components/goalValidator';
 import RecipientReviewSection from './components/RecipientReviewSection';
 import OtherEntityReviewSection from './components/OtherEntityReviewSection';
 import { validateObjectives } from './components/objectiveValidator';
+import ConnectionError from './components/ConnectionError';
 import Req from '../../../components/Req';
 import ReadOnly from '../../../components/GoalForm/ReadOnly';
 import PlusButton from '../../../components/GoalForm/PlusButton';
 import OtherEntity from './components/OtherEntity';
-import ConnectionError from './components/ConnectionError';
 
 const GoalsObjectives = () => {
   const {
@@ -27,7 +27,13 @@ const GoalsObjectives = () => {
   const activityRecipientType = watch('activityRecipientType');
 
   const isRecipientReport = activityRecipientType === 'recipient';
-  const grantIds = isRecipientReport ? recipients.map((r) => r.id || r.value) : [];
+  const grantIds = isRecipientReport ? recipients.map((r) => {
+    if (r.grant) {
+      return r.grant.id;
+    }
+
+    return r.id || r.value;
+  }) : [];
 
   const [fetchError, setFetchError] = useState(false);
   const [availableGoals, updateAvailableGoals] = useState([]);
@@ -201,7 +207,7 @@ const GoalsObjectives = () => {
         ? (
           <>
             <h3 className="margin-bottom-0 margin-top-4">Goal summary</h3>
-            { fetchError ? <ConnectionError /> : null }
+            { fetchError && (<ConnectionError />)}
             <Fieldset className="margin-0">
               <GoalPicker
                 grantIds={grantIds}

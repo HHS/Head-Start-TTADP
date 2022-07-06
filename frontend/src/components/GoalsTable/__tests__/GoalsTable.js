@@ -11,7 +11,7 @@ import UserContext from '../../../UserContext';
 import FilterContext from '../../../FilterContext';
 import AriaLiveContext from '../../../AriaLiveContext';
 import GoalsTable from '../GoalsTable';
-import { REPORT_STATUSES, SCOPE_IDS } from '../../../Constants';
+import { SCOPE_IDS } from '../../../Constants';
 import { mockWindowProperty } from '../../../testHelpers';
 
 jest.mock('../../../fetchers/helpers');
@@ -36,67 +36,73 @@ const defaultUser = {
 
 const goals = [{
   id: 4598,
+  ids: [4598],
   goalStatus: 'In Progress',
   createdOn: '2021-06-15',
   goalText: 'This is goal text 1.',
   goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
   objectiveCount: 5,
-  goalNumber: 'R14-G-4598',
+  goalNumbers: ['G-4598'],
   reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
   objectives: [],
 },
 {
   id: 8547,
+  ids: [8547],
   goalStatus: 'Not Started',
   createdOn: '2021-05-15',
   goalText: 'This is goal text 2.',
   goalTopics: ['Nutrition', 'Oral Health'],
   objectiveCount: 2,
-  goalNumber: 'R14-G-8547',
+  goalNumbers: ['G-8547'],
   reasons: ['Below Competitive Threshold (CLASS)'],
   objectives: [],
 },
 {
   id: 65478,
+  ids: [65478],
   goalStatus: 'Completed',
   createdOn: '2021-04-15',
   goalText: 'This is goal text 3.',
   goalTopics: ['Parent and Family Engagement'],
   objectiveCount: 4,
-  goalNumber: 'R14-G-65478',
+  goalNumbers: ['G-65478'],
   reasons: ['Monitoring | Area of Concern'],
   objectives: [],
 },
 {
   id: 65479,
+  ids: [65479],
   goalStatus: '', // Needs Status.
   createdOn: '2021-03-15',
   goalText: 'This is goal text 4.',
   goalTopics: ['Partnerships and Community Engagement'],
   objectiveCount: 3,
-  goalNumber: 'R14-G-65479',
+  goalNumbers: ['G-65479'],
   reasons: ['COVID-19 response'],
   objectives: [],
 },
 {
   id: 65480,
+  ids: [65480],
   goalStatus: 'Draft',
   createdOn: '2021-02-15',
   goalText: 'This is goal text 5.',
   goalTopics: ['Safety Practices'],
   objectiveCount: 1,
-  goalNumber: 'R14-G-65480',
+  goalNumbers: ['G-65480'],
   reasons: ['New Recipient'],
   objectives: [],
 },
 {
   id: 65481,
+  ids: [65481],
   goalStatus: 'Suspended',
   createdOn: '2021-01-15',
   goalText: 'This is goal text 6.',
   goalTopics: ['Recordkeeping and Reporting'],
   objectiveCount: 8,
-  goalNumber: 'R14-G-65481',
+  goalNumbers: ['G-65481'],
   reasons: ['School Readiness Goals'],
   objectives: [],
 },
@@ -104,105 +110,87 @@ const goals = [{
 
 const goalWithObjectives = [{
   id: 4458,
+  ids: [4458],
   goalStatus: 'In Progress',
   createdOn: '2021-06-15',
   goalText: 'This is a goal with objectives',
   goalTopics: ['Human Resources'],
   objectiveCount: 4,
-  goalNumber: 'R14-G-4598',
+  goalNumbers: ['G-4598'],
   reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
   objectives: [{
     title: 'Objective 1 Title',
-    arId: 1,
-    arNumber: 'ar-number-1',
-    arLegacyId: null,
-    arStatus: 'In Progress',
     endDate: '06/14/2021',
     reasons: ['Monitoring | Deficiency'],
     status: 'In Progress',
     id: 345345345,
     ttaProvided: '',
-    grantNumber: '',
+    grantNumbers: ['1'],
+    activityReports: [{
+      id: 1,
+      number: 'ar-number-1',
+      legacyId: null,
+    }],
   },
   {
     title: 'Objective 2 Title',
-    arId: 2,
-    arNumber: 'ar-number-2',
-    arLegacyId: null,
-    arStatus: 'Not Started',
     endDate: '05/14/2021',
     reasons: ['Below Competitive Threshold (CLASS)'],
     status: 'Not Started',
     id: 234234253,
     ttaProvided: '',
-    grantNumber: '',
+    grantNumbers: ['1'],
+    activityReports: [{
+      id: 2,
+      number: 'ar-number-2',
+      legacyId: null,
+    }],
   },
   {
     title: 'Objective 3 Title',
-    arId: 3,
-    arNumber: 'ar-number-3',
-    arLegacyId: null,
-    arStatus: REPORT_STATUSES.APPROVED,
     endDate: '04/14/2021',
     reasons: ['COVID-19 response'],
     status: 'Complete',
     id: 2938234,
     ttaProvided: '',
-    grantNumber: '',
+    grantNumbers: ['1'],
+    activityReports: [{
+      id: 3,
+      number: 'ar-number-3',
+      legacyId: null,
+    }],
   },
   {
     title: 'Objective 4 Title',
-    arId: 4,
-    arNumber: 'ar-number-4',
-    arLegacyId: 'ar-legacy-4',
-    arStatus: REPORT_STATUSES.APPROVED,
     endDate: '03/14/2021',
     reasons: ['New Staff / Turnover'],
     status: 'In Progress',
     id: 255384234,
     ttaProvided: '',
-    grantNumber: '200342cat',
+    grantNumbers: ['200342cat'],
+    activityReports: [{
+      id: 4,
+      number: 'ar-number-4',
+      legacyId: null,
+    }],
   },
   {
     title: 'Objective 5 Title',
-    arId: 5,
-    arNumber: 'ar-number-5',
-    arLegacyId: null,
-    arStatus: REPORT_STATUSES.APPROVED,
     endDate: '02/14/2021',
     reasons: ['Complaint'],
     status: 'Unknown Status',
     id: 298398934834,
     ttaProvided: '',
-    grantNumber: '',
+    grantNumbers: ['1'],
+    activityReports: [{
+      id: 5,
+      number: 'ar-number-5',
+      legacyId: null,
+    }],
   },
   ],
 },
 ];
-
-const noStatusGoalWithOneObjective = [{
-  id: 4459,
-  goalStatus: null,
-  createdOn: '2021-06-15',
-  goalText: 'This is a goal with a single objectives',
-  goalTopics: ['Human Resources'],
-  objectiveCount: 4,
-  goalNumber: 'R14-G-4459',
-  reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
-  objectives: [{
-    title: 'Objective 1 Title',
-    arId: 1,
-    arNumber: 'ar-number-1',
-    arLegacyId: null,
-    arStatus: 'In Progress',
-    endDate: '06/14/2021',
-    reasons: ['Monitoring | Deficiency'],
-    status: 'In Progress',
-    id: 2832434,
-    ttaProvided: '',
-    grantNumber: '',
-  }],
-}];
 
 const renderTable = (user, hasActiveGrants = true) => {
   render(
@@ -346,12 +334,12 @@ describe('Goals Table', () => {
       expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).toBeInTheDocument();
 
       // Expand Objectives via click.
-      const expandObjectives = await screen.findByRole('button', { name: "Expand objective's for goal R14-G-4598" });
+      const expandObjectives = await screen.findByRole('button', { name: "Expand objective's for goal G-4598" });
       fireEvent.click(expandObjectives);
       expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).not.toBeInTheDocument();
 
       // Collapse Objectives via click.
-      const collapseButton = await screen.findByRole('button', { name: "Collapse objective's for goal R14-G-4598" });
+      const collapseButton = await screen.findByRole('button', { name: "Collapse objective's for goal G-4598" });
       fireEvent.click(collapseButton);
       expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).toBeInTheDocument();
     });
@@ -380,28 +368,6 @@ describe('Goals Table', () => {
 
       const link = screen.queryByRole('link', { name: /Add new goal/i });
       expect(link).toBe(null);
-    });
-  });
-
-  describe('Table displays correct colors', () => {
-    beforeEach(async () => {
-      fetchMock.reset();
-      fetchMock.get(
-        baseWithRegionOne,
-        { count: 1, goalRows: noStatusGoalWithOneObjective },
-      );
-    });
-
-    afterEach(() => {
-      window.location.assign.mockReset();
-      fetchMock.restore();
-    });
-
-    it('Selects the correct color for goals with null status', async () => {
-      renderTable(defaultUser);
-      await screen.findByText('TTA goals and objectives');
-
-      expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/needs status/i);
     });
   });
 
@@ -554,16 +520,16 @@ describe('Goals Table', () => {
 
     it('Sets goal status with reason', async () => {
       fetchMock.reset();
-      fetchMock.put('/api/goals/4598/changeStatus', {
+      fetchMock.put('/api/goals/changeStatus', [{
         id: 4598,
         status: 'Closed',
         createdOn: '06/15/2021',
         goalText: 'This is goal text 1.',
         goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
         objectiveCount: 5,
-        goalNumber: 'R14-G-4598',
+        goalNumber: 'G-4598',
         reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
-      });
+      }]);
 
       // Open Context Menu.
       const changeStatus = await screen.findByRole('button', { name: /Change status for goal 4598/i });
@@ -585,18 +551,18 @@ describe('Goals Table', () => {
 
     it('Sets goal status without reason', async () => {
       fetchMock.reset();
-      fetchMock.put('/api/goals/65479/changeStatus', {
+      fetchMock.put('/api/goals/changeStatus', [{
         id: 65479,
         goalStatus: 'In Progress',
         createdOn: '06/15/2021',
         goalText: 'This is goal text 1.',
         goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
         objectiveCount: 0,
-        goalNumber: 'R14-G-65479',
+        goalNumber: 'G-65479',
         reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
         objectives: [],
         previousStatus: 'Needs status',
-      });
+      }]);
 
       expect(fetchMock.called()).toBe(false);
 
