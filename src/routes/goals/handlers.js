@@ -10,6 +10,7 @@ import {
 import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
 import { userById } from '../../services/users';
+import { DECIMAL_BASE } from '../../constants';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -66,26 +67,39 @@ export async function createGoals(req, res) {
 
 export async function changeGoalStatus(req, res) {
   try {
-    const { goalId } = req.params;
     const {
-      newStatus, closeSuspendReason, closeSuspendContext, oldStatus,
+      goalIds, newStatus, closeSuspendReason, closeSuspendContext, oldStatus,
     } = req.body;
 
     const user = await userById(req.session.userId);
-    const goal = await goalByIdWithActivityReportsAndRegions(goalId);
+    const ids = goalIds.map((id) => parseInt(id, DECIMAL_BASE));
 
-    if (!goal) {
-      res.sendStatus(404);
-      return;
-    }
+    let status = false;
 
-    if (!new Goal(user, goal).canChangeStatus()) {
-      res.sendStatus(401);
+    await Promise.all(ids.map(async (goalId) => {
+      if (!status) {
+        const goal = await goalByIdWithActivityReportsAndRegions(goalId);
+
+        if (!goal) {
+          status = 404;
+          return status;
+        }
+
+        if (!new Goal(user, goal).canChangeStatus()) {
+          status = 401;
+          return status;
+        }
+      }
+      return status;
+    }));
+
+    if (status) {
+      res.sendStatus(status);
       return;
     }
 
     const updatedGoal = await updateGoalStatusById(
-      goalId,
+      ids,
       oldStatus,
       newStatus,
       closeSuspendReason,

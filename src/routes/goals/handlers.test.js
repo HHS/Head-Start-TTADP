@@ -256,15 +256,14 @@ describe('changeGoalStatus', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     userById.mockReset();
+    goalByIdWithActivityReportsAndRegions.mockReset();
   });
   const goalWhere = { name: 'My updated goal' };
 
   it('updates status goal by id', async () => {
     const req = {
-      params: {
-        goalId: 100000,
-      },
       body: {
+        goalIds: [100000],
         newStatus: 'New Status',
         closeSuspendReason: 'TTA complete',
         closeSuspendContext: 'Sample context.',
@@ -284,7 +283,7 @@ describe('changeGoalStatus', () => {
       ],
     });
 
-    goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
+    goalByIdWithActivityReportsAndRegions.mockResolvedValue({
       objectives: [],
       grant: { regionId: 2 },
     });
@@ -295,10 +294,8 @@ describe('changeGoalStatus', () => {
 
   it('returns a 401 based on permissions checks', async () => {
     const req = {
-      params: {
-        goalId: 100000,
-      },
       body: {
+        goalIds: [100000],
         newStatus: 'New Status',
         closeSuspendReason: 'TTA complete',
         closeSuspendContext: 'Sample context.',
@@ -318,7 +315,7 @@ describe('changeGoalStatus', () => {
       ],
     });
 
-    goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
+    goalByIdWithActivityReportsAndRegions.mockResolvedValue({
       objectives: [],
       grant: { regionId: 2 },
     });
@@ -329,10 +326,8 @@ describe('changeGoalStatus', () => {
 
   it('returns a 404 when a goal can\'t be found', async () => {
     const req = {
-      params: {
-        goalId: 100000,
-      },
       body: {
+        goalIds: [100000],
         newStatus: 'New Status',
         closeSuspendReason: 'TTA complete',
         closeSuspendContext: 'Sample context.',
@@ -352,7 +347,7 @@ describe('changeGoalStatus', () => {
       ],
     });
 
-    goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce(null);
+    goalByIdWithActivityReportsAndRegions.mockResolvedValue(null);
 
     updateGoalStatusById.mockResolvedValue(null);
     await changeGoalStatus(req, mockResponse);

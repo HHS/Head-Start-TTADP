@@ -13,6 +13,6 @@ router.post('/', transactionWrapper(createGoals));
 router.get('/:goalId', transactionWrapper(retrieveGoalById));
 router.get('/:goalId/recipient/:recipientId', transactionWrapper(retrieveGoalByIdAndRecipient));
 router.delete('/:goalId', transactionWrapper(deleteGoal));
-router.put('/:goalId/changeStatus', transactionWrapper(changeGoalStatus));
+router.put('/changeStatus', transactionWrapper(changeGoalStatus));
 
 export default router;
