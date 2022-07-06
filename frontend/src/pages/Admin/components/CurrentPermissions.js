@@ -8,7 +8,7 @@ function CurrentPermissions({ regions, scope }) {
   const regionMsg = `${regionsStr} ${regions.join(', ')}`;
   const { name } = scopeFromId(scope);
   return (
-    <li>
+    <li className="margin-bottom-2">
       <strong>{name}</strong>
       {': '}
       {regionMsg}

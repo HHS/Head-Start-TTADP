@@ -27,7 +27,6 @@ describe('FilterSelect', () => {
 
   it('contracts the contents when there are long selections', async () => {
     renderFilterSelect();
-    screen.logTestingPlaygroundURL();
     expect(await screen.findByText('clue but ...noble')).toBeVisible();
     expect(await screen.findByText('+ 1 more tag')).toBeVisible();
   });
