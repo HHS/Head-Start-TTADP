@@ -459,7 +459,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
     attributes: [
       'id',
       [
-        sequelize.literal(`((select count(*) from "ActivityReportGoals" where "ActivityReportGoals"."goalId" = "Goal"."id" and "ActivityReportGoals"."activityReportId" not in (${reportId})) > 0)`),
+        sequelize.literal(`((select count(*) from "ActivityReportGoals" where "ActivityReportGoals"."goalId" = "Goal"."id" and "ActivityReportGoals"."activityReportId" not in (${reportId}))::int > 0)`),
         'onOtherAr',
       ],
     ],
@@ -479,7 +479,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
   });
 
   const goalIds = goals.map((goal) => goal.id);
-  const goalsToDelete = goals.filter((goal) => !goal.onOtherAr).map((goal) => goal.id);
+  const goalsToDelete = goals.filter((goal) => !goal.get('onOtherAr')).map((goal) => goal.id);
 
   await ActivityReportGoal.destroy({
     where: {
@@ -491,7 +491,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
   const objectives = await Objective.findAll({
     attributes: [
       'id',
-      [sequelize.literal(`((select count(*) from "ActivityReportObjectives" where "ActivityReportObjectives"."objectiveId" = "Objective"."id" and "ActivityReportObjectives"."activityReportId" not in (${reportId})) > 0)`), 'onOtherAr'],
+      [sequelize.literal(`((select count(*) from "ActivityReportObjectives" where "ActivityReportObjectives"."objectiveId" = "Objective"."id" and "ActivityReportObjectives"."activityReportId" not in (${reportId}))::int > 0)`), 'onOtherAr'],
     ],
     where: {
       goalId: goalIds,
@@ -510,7 +510,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
 
   const objectiveIds = objectives.map((objective) => objective.id);
   const objectivesToDelete = objectives.filter(
-    (objective) => !objective.onOtherAr,
+    (objective) => !objective.get('onOtherAr'),
   ).map((objective) => objective.id);
 
   await ActivityReportObjective.destroy({
@@ -522,14 +522,14 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
 
   await Objective.destroy({
     where: {
-      id: objectivesToDelete.map((objective) => objective.id),
+      id: objectivesToDelete,
       onApprovedAR: false,
     },
   });
 
   return Goal.destroy({
     where: {
-      id: goalsToDelete.map((goal) => goal.id),
+      id: goalsToDelete,
       onApprovedAR: false,
     },
   });

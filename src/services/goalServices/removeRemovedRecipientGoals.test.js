@@ -278,5 +278,19 @@ describe('removeRemovedRecipientsGoals', () => {
 
     const checkThisObjective = await Objective.findByPk(thirdObjective.id);
     expect(checkThisObjective).toBeTruthy();
+
+    // lastly, we check to make sure the correct goals are deleted
+    const existingGoals = await Goal.findAll({
+      attributes: ['id'],
+      where: {
+        id: [firstGoal.id, secondGoal.id, thirdGoal.id, fourthGoal.id],
+      },
+    });
+
+    const existingGoalIds = existingGoals.map((g) => g.id);
+    expect(existingGoalIds.length).toBe(3);
+    expect(existingGoalIds).toContain(firstGoal.id);
+    expect(existingGoalIds).toContain(thirdGoal.id);
+    expect(existingGoalIds).toContain(fourthGoal.id);
   });
 });

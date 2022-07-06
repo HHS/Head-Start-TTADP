@@ -806,13 +806,13 @@ export async function createOrUpdate(newActivityReport, report) {
 
   const activityRecipientType = recipientType();
 
+  if (recipientsWhoHaveGoalsThatShouldBeRemoved) {
+    await removeRemovedRecipientsGoals(recipientsWhoHaveGoalsThatShouldBeRemoved, savedReport);
+  }
+
   if (previousActivityRecipientType
     && previousActivityRecipientType !== report.activityRecipientType) {
     await removeUnusedGoalsObjectivesFromReport(report.id, []);
-  }
-
-  if (recipientsWhoHaveGoalsThatShouldBeRemoved) {
-    await removeRemovedRecipientsGoals(recipientsWhoHaveGoalsThatShouldBeRemoved, savedReport);
   }
 
   if (activityRecipientType === 'other-entity' && objectivesWithoutGoals) {
