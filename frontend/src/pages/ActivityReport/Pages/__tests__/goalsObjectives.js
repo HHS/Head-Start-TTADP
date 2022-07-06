@@ -9,6 +9,7 @@ import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import join from 'url-join';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
+import selectEvent from 'react-select-event';
 import goalsObjectives from '../goalsObjectives';
 import NetworkContext from '../../../../NetworkContext';
 
@@ -17,18 +18,31 @@ const goalUrl = join('api', 'activity-reports', 'goals');
 const RenderGoalsObjectives = ({
   grantIds, activityRecipientType, goals = [], isGoalFormClosed = false, connectionActive = true,
 }) => {
-  const activityRecipients = grantIds.map((activityRecipientId) => ({ activityRecipientId }));
+  const activityRecipients = grantIds.map((activityRecipientId) => ({
+    activityRecipientId, id: activityRecipientId,
+  }));
   const data = { activityRecipientType, activityRecipients };
   const hookForm = useForm({
     mode: 'onChange',
     defaultValues: {
-      goals,
-      objectivesWithoutGoals: [],
       author: {
         role: 'central office',
       },
       isGoalFormClosed,
       collaborators: [],
+      goals: [{
+        id: 1,
+        name: 'This is a test goal',
+        isNew: true,
+        goalIds: [1],
+        objectives: [{
+          id: 1,
+          title: 'title',
+          ttaProvided: 'tta',
+          status: 'In Progress',
+        }],
+      }],
+      objectivesWithoutGoals: [],
       ...data,
     },
   });
@@ -159,6 +173,13 @@ describe('goals objectives', () => {
     });
   });
 
+  describe('handles fetch error', () => {
+    it('handles it like I SAID', async () => {
+      renderGoals([1], 'recipient', [], true);
+      expect(await screen.findByText('Connection error. Cannot load options.')).toBeVisible();
+    });
+  });
+
   describe('when activity recipient type is not "recipient"', () => {
     it('the objectives section is displayed', async () => {
       renderGoals([1], 'otherEntity');
@@ -230,6 +251,42 @@ describe('goals objectives', () => {
         const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'recipient', goals });
         expect(complete).toBeTruthy();
       });
+    });
+
+    it('fetched goals are autoselected', async () => {
+      const goals = [{
+        name: 'This is a test goal',
+        goalIds: [1],
+        objectives: [{
+          id: 1,
+          title: 'title',
+          ttaProvided: 'tta',
+          status: 'In Progress',
+        }],
+      }];
+
+      renderGoals([3], 'recipient', goals);
+
+      const select = document.querySelector('#goals input');
+      selectEvent.openMenu(select);
+
+      expect(screen.getByText(/This is a test goal/i, { selector: 'span' })).toBeInTheDocument();
+    });
+
+    it('does not fetch if there are no grants', async () => {
+      const goals = [{
+        name: 'This is a test goal',
+        objectives: [{
+          id: 1,
+          title: 'title',
+          ttaProvided: 'tta',
+          status: 'In Progress',
+        }],
+      }];
+
+      expect(fetchMock.called()).toBe(false);
+      renderGoals([], 'recipient', goals);
+      expect(fetchMock.called()).toBe(false);
     });
   });
 

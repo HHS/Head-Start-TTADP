@@ -2,7 +2,6 @@ const { Model } = require('sequelize');
 const { CLOSE_SUSPEND_REASONS } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 const { beforeValidate, afterUpdate } = require('./hooks/goal');
-// const { auditLogger } = require('../logger');
 
 /**
  * Goals table. Stores goals for tta.
@@ -18,12 +17,6 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'goalId',
         otherKey: 'activityReportId',
         as: 'activityReports',
-      });
-      Goal.belongsToMany(models.Topic, {
-        through: models.TopicGoal,
-        otherKey: 'topicId',
-        foreignKey: 'goalId',
-        as: 'topics',
       });
       Goal.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
       Goal.hasMany(models.Objective, { foreignKey: 'goalId', as: 'objectives' });
@@ -42,12 +35,8 @@ module.exports = (sequelize, DataTypes) => {
     goalNumber: {
       type: DataTypes.VIRTUAL,
       get() {
-        const { id, grant } = this;
-        let regionId = 0;
-        if (grant) {
-          regionId = grant.regionId;
-        }
-        return `R${regionId}-G-${id}`;
+        const { id } = this;
+        return `G-${id}`;
       },
     },
     closeSuspendReason: {

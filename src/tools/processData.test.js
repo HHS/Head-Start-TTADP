@@ -219,7 +219,7 @@ describe('processData', () => {
   it('transforms user emails, recipientName in the ActivityReports table (imported)', async () => {
     const report = await ActivityReport.create(reportObject);
     mockActivityReportFile.activityReportId = report.id;
-    await ActivityReportFile.destroy(mockActivityReportFile);
+    await ActivityReportFile.destroy({ where: { id: mockActivityReportFile.id } });
     const file = await File.create(mockFile);
     await processData(report);
     const transformedReport = await ActivityReport.findOne({ where: { id: report.id } });

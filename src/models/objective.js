@@ -1,7 +1,7 @@
 const {
   Model,
 } = require('sequelize');
-const { beforeValidate, afterCreate, afterUpdate } = require('./hooks/objective');
+const { beforeValidate, afterUpdate } = require('./hooks/objective');
 
 /**
  * Objective table. Stores objectives for goals.
@@ -12,6 +12,7 @@ const { beforeValidate, afterCreate, afterUpdate } = require('./hooks/objective'
 module.exports = (sequelize, DataTypes) => {
   class Objective extends Model {
     static associate(models) {
+      Objective.hasMany(models.ActivityReportObjective, { foreignKey: 'objectiveId', as: 'activityReportObjectives' });
       Objective.belongsToMany(models.ActivityReport, {
         through: models.ActivityReportObjective,
         foreignKey: 'objectiveId',
@@ -108,7 +109,6 @@ module.exports = (sequelize, DataTypes) => {
     modelName: 'Objective',
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
-      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });

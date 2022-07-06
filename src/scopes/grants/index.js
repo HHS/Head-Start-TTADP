@@ -40,11 +40,12 @@ export const topicToQuery = {
   },
 };
 
-export function grantsFiltersToScopes(filters, subset) {
+export function grantsFiltersToScopes(filters, options) {
+  const isSubset = options && options.subset;
   const validFilters = pickBy(filters, (query, topicAndCondition) => {
     const [topic, condition] = topicAndCondition.split('.');
 
-    if ((topic === 'startDate' || topic === 'endDate') && subset) {
+    if ((topic === 'startDate' || topic === 'endDate') && isSubset) {
       return condition in topicToQuery.activeWithin;
     }
 
@@ -58,7 +59,7 @@ export function grantsFiltersToScopes(filters, subset) {
   return map(validFilters, (query, topicAndCondition) => {
     const [topic, condition] = topicAndCondition.split('.');
 
-    if ((topic === 'startDate' || topic === 'endDate') && subset) {
+    if ((topic === 'startDate' || topic === 'endDate') && isSubset) {
       return topicToQuery.activeWithin[condition]([query].flat());
     }
 

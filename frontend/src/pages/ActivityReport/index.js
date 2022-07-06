@@ -27,6 +27,8 @@ import {
   LOCAL_STORAGE_DATA_KEY,
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
   LOCAL_STORAGE_EDITABLE_KEY,
+  DATE_DISPLAY_FORMAT,
+  DATEPICKER_VALUE_FORMAT,
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
 import useARLocalStorage from '../../hooks/useARLocalStorage';
@@ -52,7 +54,8 @@ const defaultValues = {
   activityRecipients: [],
   activityType: [],
   additionalNotes: null,
-  attachments: [],
+  files: [],
+  collaborators: [],
   activityReportCollaborators: [],
   context: '',
   deliveryMethod: null,
@@ -240,11 +243,57 @@ function ActivityReport({
     history.replace();
   }, [activityReportId, history]);
 
+  const convertGoalsToFormData = (goals, grantIds) => goals.map((goal) => ({ ...goal, grantIds }));
+
+  const convertObjectivesWithoutGoalsToFormData = (
+    objectives, recipientIds,
+  ) => objectives.reduce(
+    (os, objective) => {
+      const exists = os.find((o) => (
+        o.title === objective.title
+      ));
+
+      if (exists) {
+        exists.recipientIds = recipientIds;
+        exists.ids = [...exists.ids, objective.id];
+        return os;
+      }
+
+      return [...os, {
+        ...objective,
+        ids: [objective.id],
+        recipientIds,
+        ttaProvided: objective.ActivityReportObjective.ttaProvided,
+      }];
+    },
+    [],
+  );
+
   const convertReportToFormData = (fetchedReport) => {
+    let grantIds = [];
+    let otherEntities = [];
+    if (fetchedReport.activityRecipientType === 'recipient' && fetchedReport.activityRecipients) {
+      grantIds = fetchedReport.activityRecipients.map(({ id }) => id);
+    } else {
+      otherEntities = fetchedReport.activityRecipients.map(({ id }) => id);
+    }
+
+    const goals = convertGoalsToFormData(fetchedReport.goalsAndObjectives, grantIds);
+    const objectivesWithoutGoals = convertObjectivesWithoutGoalsToFormData(
+      fetchedReport.objectivesWithoutGoals, otherEntities,
+    );
     const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed);
     const nonECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.nonECLKCResourcesUsed);
+    const endDate = fetchedReport.endDate ? moment(fetchedReport.endDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : '';
+    const startDate = fetchedReport.startDate ? moment(fetchedReport.startDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : '';
     return {
-      ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed,
+      ...fetchedReport,
+      ECLKCResourcesUsed,
+      nonECLKCResourcesUsed,
+      goals,
+      endDate,
+      startDate,
+      objectivesWithoutGoals,
     };
   };
 
@@ -333,9 +382,9 @@ function ActivityReport({
 
         //
         if (shouldUpdateFromNetwork && activityReportId !== 'new') {
-          updateFormData({ ...formData, ...report });
+          updateFormData({ ...formData, ...report }, true);
         } else {
-          updateFormData({ ...report, ...formData });
+          updateFormData({ ...report, ...formData }, true);
         }
 
         updateCreatorRoleWithName(report.creatorNameWithRole);
@@ -390,11 +439,11 @@ function ActivityReport({
         // If the error was caused by an invalid region, we need a way to communicate that to the
         // component so we can redirect the user. We can do this by updating the form data
         if (report && parseInt(report.regionId, DECIMAL_BASE) === -1) {
-          updateFormData({ regionId: report.regionId });
+          updateFormData({ regionId: report.regionId }, true);
         }
 
         if (formData === null && !connection) {
-          updateFormData({ ...defaultValues, pageState: defaultPageState });
+          updateFormData({ ...defaultValues, pageState: defaultPageState }, true);
         }
       } finally {
         updateLoading(false);
@@ -525,6 +574,7 @@ function ActivityReport({
         calculatedStatus: response.calculatedStatus,
         approvers: response.approvers,
       },
+      true,
     );
     updateEditable(false);
 
@@ -538,7 +588,7 @@ function ActivityReport({
   const onResetToDraft = async () => {
     const fetchedReport = await resetToDraft(reportId.current);
     const report = convertReportToFormData(fetchedReport);
-    updateFormData(report);
+    updateFormData(report, true);
     updateEditable(true);
   };
 

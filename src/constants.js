@@ -139,7 +139,17 @@ export const CLOSE_SUSPEND_REASONS = [
   'Regional Office request',
 ];
 
+export const AUTOMATIC_CREATION = 'Automatic';
+export const CURATED_CREATION = 'Curated';
 export const CREATION_METHOD = [
-  'Automatic',
-  'Curated',
+  AUTOMATIC_CREATION,
+  CURATED_CREATION,
 ];
+
+export const GOAL_STATUS = {
+  DRAFT: 'Draft',
+  NOT_STARTED: 'Not Started',
+  IN_PROGRESS: 'In Progress',
+  SUSPENDED: 'Suspended',
+  CLOSED: 'Closed',
+};

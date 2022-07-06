@@ -12,6 +12,9 @@ import {
   ActivityReportObjective,
   // ObjectiveTemplate,
   Objective,
+  /* TODO: Switch for New Goal Creation. */
+  // ObjectiveTopic,
+  // Topic,
 } from '../../models';
 
 import { getGoalsByActivityRecipient } from '../recipient';
@@ -77,7 +80,8 @@ describe('Goals by Recipient Test', () => {
     lastUpdatedById: mockGoalUser.id,
     ECLKCResourcesUsed: ['test'],
     activityRecipients: [{ grantId: 300 }],
-    submissionStatus: REPORT_STATUSES.SUBMITTED,
+    submissionStatus: REPORT_STATUSES.APPROVED,
+    calculatedStatus: REPORT_STATUSES.APPROVED,
     oldApprovingManagerId: 1,
     numberOfParticipants: 1,
     deliveryMethod: 'method',
@@ -99,7 +103,8 @@ describe('Goals by Recipient Test', () => {
     lastUpdatedById: mockGoalUser.id,
     ECLKCResourcesUsed: ['test'],
     activityRecipients: [{ grantId: 301 }],
-    submissionStatus: REPORT_STATUSES.SUBMITTED,
+    submissionStatus: REPORT_STATUSES.APPROVED,
+    calculatedStatus: REPORT_STATUSES.APPROVED,
     oldApprovingManagerId: 1,
     numberOfParticipants: 1,
     deliveryMethod: 'method',
@@ -121,7 +126,8 @@ describe('Goals by Recipient Test', () => {
     lastUpdatedById: mockGoalUser.id,
     ECLKCResourcesUsed: ['test'],
     activityRecipients: [{ grantId: 302 }],
-    submissionStatus: REPORT_STATUSES.SUBMITTED,
+    submissionStatus: REPORT_STATUSES.APPROVED,
+    calculatedStatus: REPORT_STATUSES.APPROVED,
     oldApprovingManagerId: 1,
     numberOfParticipants: 1,
     deliveryMethod: 'method',
@@ -136,11 +142,12 @@ describe('Goals by Recipient Test', () => {
     ttaType: ['type'],
   };
 
-  // let objectiveTemplateIds = [];
-  // let goalTemplateIds = [];
-
   let objectiveIds = [];
   let goalIds = [];
+
+  /* TODO: Switch for New Goal Creation. */
+  // let topicIds = [];
+  // let objectiveTopicIds = [];
 
   beforeAll(async () => {
     // Create User.
@@ -159,6 +166,13 @@ describe('Goals by Recipient Test', () => {
     const savedGoalReport1 = await ActivityReport.create(goalReport1);
     const savedGoalReport2 = await ActivityReport.create(goalReport2);
     const savedGoalReport3 = await ActivityReport.create(goalReport3);
+    const savedGoalReport4 = await ActivityReport.create(
+      {
+        ...goalReport1,
+        submissionStatus: REPORT_STATUSES.DRAFT,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      },
+    );
 
     // Create AR Recipients.
     try {
@@ -188,56 +202,99 @@ describe('Goals by Recipient Test', () => {
       auditLogger.error(JSON.stringify(error));
       throw error;
     }
+    try {
+      await ActivityRecipient.create({
+        activityReportId: savedGoalReport4.id,
+        grantId: savedGrant3.id,
+      });
+    } catch (error) {
+      auditLogger.error(JSON.stringify(error));
+      throw error;
+    }
 
     // Create Goals.
     let goals = [];
     try {
       goals = await Promise.all(
         [
-          // goal 1 (AR1)t
-          await Goal.create({
+          // goal 1 (AR1)
+          Goal.create({
             name: 'Goal 1',
-            status: 'Not Started',
+            status: '',
             timeframe: '12 months',
             isFromSmartsheetTtaPlan: false,
             grantId: 300,
             createdAt: '2021-01-10T19:16:15.842Z',
+            onApprovedAR: true,
           }),
           // goal 2 (AR1)
-          await Goal.create({
+          Goal.create({
             name: 'Goal 2',
             status: 'Not Started',
             timeframe: '12 months',
             isFromSmartsheetTtaPlan: false,
             grantId: 300,
             createdAt: '2021-02-15T19:16:15.842Z',
+            onApprovedAR: true,
           }),
           // goal 3 (AR1)
-          await Goal.create({
+          Goal.create({
             name: 'Goal 3',
             status: 'In Progress',
             timeframe: '12 months',
             isFromSmartsheetTtaPlan: false,
             grantId: 300,
             createdAt: '2021-03-03T19:16:15.842Z',
+            onApprovedAR: true,
           }),
           // goal 4 (AR2)
-          await Goal.create({
+          Goal.create({
             name: 'Goal 4',
             status: 'In Progress',
             timeframe: '12 months',
             isFromSmartsheetTtaPlan: false,
             grantId: 301,
             createdAt: '2021-04-02T19:16:15.842Z',
+            onApprovedAR: true,
           }),
           // goal 5 (AR3 Exclude)
-          await Goal.create({
+          Goal.create({
             name: 'Goal 5',
             status: 'In Progress',
             timeframe: '12 months',
             isFromSmartsheetTtaPlan: false,
             grantId: 302,
             createdAt: '2021-05-02T19:16:15.842Z',
+            onApprovedAR: true,
+          }),
+          Goal.create({
+            name: 'Goal not on report, no objective',
+            status: 'Closed',
+            timeframe: '12 months',
+            isFromSmartsheetTtaPlan: false,
+            grantId: 300,
+            createdAt: '2021-01-10T19:16:15.842Z',
+            onApprovedAR: true,
+          }),
+          Goal.create({
+            name: 'Goal not on report, with objective',
+            status: 'Closed',
+            timeframe: '12 months',
+            isFromSmartsheetTtaPlan: false,
+            grantId: 300,
+            createdAt: '2021-01-10T19:16:15.842Z',
+            onApprovedAR: true,
+          }),
+          // goal 6 (AR4)
+          Goal.create({
+            name: 'Goal on Draft report',
+            status: '',
+            timeframe: '1 month',
+            isFromSmartsheetTtaPlan: false,
+            grantId: 300,
+            createdAt: '2021-01-10T19:16:15.842Z',
+            onApprovedAR: false,
+
           }),
         ],
       );
@@ -257,36 +314,56 @@ describe('Goals by Recipient Test', () => {
           goalId: goalIds[0],
           title: 'objective 1',
           status: 'Not Started',
+          onApprovedAR: true,
         }),
         // objective 2 (AR1)
         await Objective.create({
           goalId: goalIds[1],
           title: 'objective 2',
           status: 'Not Started',
+          onApprovedAR: true,
         }),
         // objective 3 (AR1)
         await Objective.create({
           goalId: goalIds[2],
           title: 'objective 3',
           status: 'In Progress',
+          onApprovedAR: true,
         }),
         // objective 4 (AR1)
         await Objective.create({
           goalId: goalIds[2],
           title: 'objective 4',
           status: 'Completed',
+          onApprovedAR: true,
         }),
         // objective 5 (AR2)
         await Objective.create({
           goalId: goalIds[3],
           title: 'objective 5',
           status: 'Not Started',
+          onApprovedAR: true,
         }),
         // objective 6 (AR3)
         await Objective.create({
           goalId: goalIds[4],
           title: 'objective 6',
           status: 'Not Started',
+          onApprovedAR: true,
+        }),
+        // objective 7
+        await Objective.create({
+          goalId: goalIds[6],
+          title: 'objective 7',
+          status: 'Not Started',
+          onApprovedAR: true,
+        }),
+        // objective 8
+        await Objective.create({
+          goalId: goalIds[7],
+          title: 'objective 8',
+          status: 'Not Started',
+          onApprovedAR: false,
         }),
       ],
     );
@@ -294,44 +371,88 @@ describe('Goals by Recipient Test', () => {
     // Get Objective Ids for Delete.
     objectiveIds = objectives.map((o) => o.id);
 
+    /* TODO: Switch for New Goal Creation. */
+    /*
+    // Create Objective Topics.
+    const topics = await Promise.all([
+      Topic.create({
+        name: 'objective topic 1',
+      }),
+      Topic.create({
+        name: 'objective topic 2',
+      }),
+      Topic.create({
+        name: 'objective topic 3',
+      }),
+    ]);
+
+    topicIds = topics.map((o) => o.id);
+
+    // Assign Objective Topics.
+    const objectiveTopics = await Promise.all(
+      [
+        await ObjectiveTopic.create({
+          topicId: topicIds[0],
+          objectiveId: objectiveIds[0],
+        }),
+        await ObjectiveTopic.create({
+          topicId: topicIds[1],
+          objectiveId: objectiveIds[2],
+        }),
+        await ObjectiveTopic.create({
+          topicId: topicIds[2],
+          objectiveId: objectiveIds[3],
+        }),
+      ],
+    );
+
+    objectiveTopicIds = objectiveTopics.map((o) => o.id);
+      */
+
     // AR Objectives.
     await Promise.all(
       [
         // AR 1 Obj 1.
-        await ActivityReportObjective.create({
+        ActivityReportObjective.create({
           objectiveId: objectives[0].id,
           activityReportId: savedGoalReport1.id,
           ttaProvided: 'Objective for Goal 1',
         }),
         // AR 1 Obj 2.
-        await ActivityReportObjective.create({
+        ActivityReportObjective.create({
           objectiveId: objectives[1].id,
           activityReportId: savedGoalReport1.id,
           ttaProvided: 'Objective for Goal 2',
         }),
         // AR 1 Obj 3.
-        await ActivityReportObjective.create({
+        ActivityReportObjective.create({
           objectiveId: objectives[2].id,
           activityReportId: savedGoalReport1.id,
           ttaProvided: 'Objective for Goal 3',
         }),
         // AR 1 Obj 4.
-        await ActivityReportObjective.create({
+        ActivityReportObjective.create({
           objectiveId: objectives[3].id,
           activityReportId: savedGoalReport1.id,
           ttaProvided: 'Objective for Goal 3 b',
         }),
         // AR 2 Obj 5.
-        await ActivityReportObjective.create({
+        ActivityReportObjective.create({
           objectiveId: objectives[4].id,
           activityReportId: savedGoalReport2.id,
           ttaProvided: 'Objective for Goal 4',
         }),
         // AR 3 Obj 6 (Exclude).
-        await ActivityReportObjective.create({
+        ActivityReportObjective.create({
           objectiveId: objectives[5].id,
           activityReportId: savedGoalReport3.id,
           ttaProvided: 'Objective for Goal 5 Exclude',
+        }),
+        // AR 4 Draft Obj 8 (Exclude).
+        ActivityReportObjective.create({
+          objectiveId: objectives[7].id,
+          activityReportId: savedGoalReport4.id,
+          ttaProvided: 'Objective for Goal 6 Draft report Exclude',
         }),
       ],
     );
@@ -356,28 +477,28 @@ describe('Goals by Recipient Test', () => {
       },
     });
 
-    // await ObjectiveTemplate.destroy({
-    //   where: {
-    //     id: objectiveTemplateIds,
-    //   },
-    // });
+    /* TODO: Switch for New Goal Creation. */
+    /*
+    // Delete Objective Topics.
+    await ObjectiveTopic.destroy({
+      where: {
+        id: objectiveTopicIds,
+      },
+    });
 
-    // Delete Grant Goals.
-    // const grantGoalsToDelete = await GrantGoal.findAll({ where: { recipientId: [300, 301] } });
-    // const grantGoalIdsToDelete = grantGoalsToDelete.map((grantGoal) => grantGoal.id);
-    // await GrantGoal.destroy({ where: { id: grantGoalIdsToDelete } });
-
+    // Delete Topics.
+    await Topic.destroy({
+      where: {
+        id: topicIds,
+      },
+    });
+    */
     // Delete Goals.
     await Goal.destroy({
       where: {
         id: goalIds,
       },
     });
-    // await GoalTemplate.destroy({
-    //   where: {
-    //     id: goalTemplateIds,
-    //   },
-    // });
 
     // Delete AR and AR Recipient.
     await ActivityRecipient.destroy({ where: { activityReportId: reportIdsToDelete } });
@@ -393,6 +514,21 @@ describe('Goals by Recipient Test', () => {
   });
 
   describe('Retrieves All Goals', () => {
+    it('Uses default sorting', async () => {
+      const { goalRows } = await getGoalsByActivityRecipient(300, 1, { sortDir: 'asc' });
+      expect(goalRows[0].goalText).toBe('Goal 1');
+    });
+
+    it('honors offset', async () => {
+      const { goalRows } = await getGoalsByActivityRecipient(300, 1, { offset: 1, sortDir: 'asc' });
+      expect(goalRows[0].goalText).toBe('Goal 2');
+    });
+
+    it('honors limit', async () => {
+      const { goalRows } = await getGoalsByActivityRecipient(300, 1, { limit: 1 });
+      expect(goalRows.length).toBe(1);
+    });
+
     it('Retrieves Goals by Recipient', async () => {
       let countx;
       let goalRowsx;
@@ -407,13 +543,13 @@ describe('Goals by Recipient Test', () => {
         throw err;
       }
 
-      expect(countx).toBe(4);
-      expect(goalRowsx.length).toBe(4);
+      expect(countx).toBe(6);
+      expect(goalRowsx.length).toBe(6);
 
       // Goal 4.
       expect(moment(goalRowsx[0].createdOn).format('YYYY-MM-DD')).toBe('2021-04-02');
       expect(goalRowsx[0].goalText).toBe('Goal 4');
-      expect(goalRowsx[0].goalNumber).toBe(`R1-G-${goalRowsx[0].id}`);
+      expect(goalRowsx[0].goalNumbers).toStrictEqual([`G-${goalRowsx[0].id}`]);
       expect(goalRowsx[0].objectiveCount).toBe(1);
       expect(goalRowsx[0].reasons).toEqual(['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option']);
       expect(goalRowsx[0].goalTopics).toEqual(['Child Assessment, Development, Screening', 'Communication']);
@@ -422,7 +558,7 @@ describe('Goals by Recipient Test', () => {
       // Goal 3.
       expect(moment(goalRowsx[1].createdOn).format('YYYY-MM-DD')).toBe('2021-03-03');
       expect(goalRowsx[1].goalText).toBe('Goal 3');
-      expect(goalRowsx[1].goalNumber).toBe(`R1-G-${goalRowsx[1].id}`);
+      expect(goalRowsx[1].goalNumbers).toStrictEqual([`G-${goalRowsx[1].id}`]);
       expect(goalRowsx[1].objectiveCount).toBe(2);
       expect(goalRowsx[1].reasons).toEqual(['COVID-19 response', 'Complaint']);
       expect(goalRowsx[1].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
@@ -430,20 +566,19 @@ describe('Goals by Recipient Test', () => {
       // Goal 3 Objectives.
       expect(goalRowsx[1].objectives.length).toBe(2);
       expect(goalRowsx[1].objectives[0].title).toBe('objective 4');
-      expect(goalRowsx[1].objectives[0].activityReportObjectives[0].ttaProvided).toBe('Objective for Goal 3 b');
       expect(goalRowsx[1].objectives[0].endDate).toBe('09/01/2020');
       expect(goalRowsx[1].objectives[0].reasons).toEqual(['COVID-19 response', 'Complaint']);
       expect(goalRowsx[1].objectives[0].status).toEqual('Completed');
 
       expect(goalRowsx[1].objectives[1].title).toBe('objective 3');
-      expect(goalRowsx[1].objectives[1].activityReportObjectives[0].ttaProvided).toBe('Objective for Goal 3');
       expect(goalRowsx[1].objectives[1].endDate).toBe('09/01/2020');
       expect(goalRowsx[1].objectives[1].reasons).toEqual(['COVID-19 response', 'Complaint']);
       expect(goalRowsx[1].objectives[1].status).toEqual('In Progress');
+
       // Goal 2.
       expect(moment(goalRowsx[2].createdOn).format('YYYY-MM-DD')).toBe('2021-02-15');
       expect(goalRowsx[2].goalText).toBe('Goal 2');
-      expect(goalRowsx[2].goalNumber).toBe(`R1-G-${goalRowsx[2].id}`);
+      expect(goalRowsx[2].goalNumbers).toStrictEqual([`G-${goalRowsx[2].id}`]);
       expect(goalRowsx[2].objectiveCount).toBe(1);
       expect(goalRowsx[2].reasons).toEqual(['COVID-19 response', 'Complaint']);
       expect(goalRowsx[2].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
@@ -452,7 +587,7 @@ describe('Goals by Recipient Test', () => {
       // Goal 1.
       expect(moment(goalRowsx[3].createdOn).format('YYYY-MM-DD')).toBe('2021-01-10');
       expect(goalRowsx[3].goalText).toBe('Goal 1');
-      expect(goalRowsx[3].goalNumber).toBe(`R1-G-${goalRowsx[3].id}`);
+      expect(goalRowsx[3].goalNumbers).toStrictEqual([`G-${goalRowsx[3].id}`]);
       expect(goalRowsx[3].objectiveCount).toBe(1);
       expect(goalRowsx[3].reasons).toEqual(['COVID-19 response', 'Complaint']);
       expect(goalRowsx[3].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);

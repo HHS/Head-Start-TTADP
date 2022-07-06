@@ -79,8 +79,6 @@ export async function processFiles(hashSumHex) {
         {
           updateOnDuplicate: ['name', 'recipientType', 'updatedAt'],
           transaction,
-          validate: true,
-          individualHooks: true,
         },
       );
 
@@ -156,8 +154,6 @@ export async function processFiles(hashSumHex) {
         {
           updateOnDuplicate: ['number', 'regionId', 'recipientId', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth'],
           transaction,
-          validate: true,
-          individualHooks: true,
         },
       );
 
@@ -166,8 +162,6 @@ export async function processFiles(hashSumHex) {
         {
           updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth'],
           transaction,
-          validate: true,
-          individualHooks: true,
         },
       );
 
@@ -190,6 +184,7 @@ export async function processFiles(hashSumHex) {
             fields: ['oldGrantId'],
             sideEffects: false,
             transaction,
+            individualHooks: true,
           },
         )
       ));
@@ -201,8 +196,6 @@ export async function processFiles(hashSumHex) {
         {
           updateOnDuplicate: ['programType', 'startYear', 'startDate', 'endDate', 'status', 'name'],
           transaction,
-          validate: true,
-          individualHooks: true,
         },
       );
     });

@@ -12,6 +12,8 @@ import GoalsObjectives from '../GoalsObjectives';
 import { formatDateRange } from '../../../../utils';
 import UserContext from '../../../../UserContext';
 import { SCOPE_IDS } from '../../../../Constants';
+import FilterContext from '../../../../FilterContext';
+import { mockWindowProperty } from '../../../../testHelpers';
 
 const memoryHistory = createMemoryHistory();
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
@@ -24,31 +26,31 @@ describe('Goals and Objectives', () => {
     goalText: 'This is goal text 1.',
     goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
     objectiveCount: 5,
-    goalNumber: 'R14-G-4598',
+    goalNumbers: ['G-4598'],
     reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
     objectives: [],
   },
   ];
 
   const noFilterGoals = [{
-    id: 4598,
+    id: 4599,
     goalStatus: 'In Progress',
     createdOn: '2021-06-15',
     goalText: 'This is goal text 1.',
     goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
     objectiveCount: 5,
-    goalNumber: 'R14-G-4598',
+    goalNumbers: ['G-4599'],
     reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
     objectives: [],
   },
   {
-    id: 4599,
+    id: 4600,
     goalStatus: 'Not Started',
     createdOn: '2021-07-15',
     goalText: 'This is goal text 2.',
     goalTopics: ['Program Planning and Services'],
     objectiveCount: 1,
-    goalNumber: 'R14-G-4599',
+    goalNumbers: ['G-4600'],
     reasons: ['Monitoring | Deficiency'],
     objectives: [],
   },
@@ -56,13 +58,13 @@ describe('Goals and Objectives', () => {
 
   const filterStatusGoals = [
     {
-      id: 4599,
+      id: 4601,
       goalStatus: 'Not Started',
       createdOn: '2021-07-15',
       goalText: 'This is goal text 2.',
       goalTopics: ['Program Planning and Services'],
       objectiveCount: 1,
-      goalNumber: 'R14-G-4599',
+      goalNumbers: ['G-4601'],
       reasons: ['Monitoring | Deficiency'],
       objectives: [],
     },
@@ -93,32 +95,39 @@ describe('Goals and Objectives', () => {
     render(
       <Router history={memoryHistory}>
         <UserContext.Provider value={{ user }}>
-          <GoalsObjectives
-            recipientId="401"
-            regionId="1"
-            recipient={recipient}
-            location={{
-              state: { ids }, hash: '', pathname: '', search: '',
-            }}
-          />
+          <FilterContext.Provider value={{ filterKey: 'test' }}>
+            <GoalsObjectives
+              recipientId="401"
+              regionId="1"
+              recipient={recipient}
+              location={{
+                state: { ids }, hash: '', pathname: '', search: '',
+              }}
+            />
+          </FilterContext.Provider>
         </UserContext.Provider>
       </Router>,
     );
   };
 
+  mockWindowProperty('sessionStorage', {
+    setItem: jest.fn(),
+    getItem: jest.fn(),
+    removeItem: jest.fn(),
+  });
+
   beforeEach(async () => {
     fetchMock.reset();
-
     // Default.
-    const goalsUrl = `/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5&createDate.win=${yearToDate}`;
+    const goalsUrl = `/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&createDate.win=${yearToDate}`;
     fetchMock.get(goalsUrl, { count: 1, goalRows: goals });
 
     // Filters Status.
-    const filterStatusUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5&status.in[]=Not%20started';
+    const filterStatusUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20started';
     fetchMock.get(filterStatusUrl, { count: 1, goalRows: filterStatusGoals });
 
     // No Filters.
-    const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5';
+    const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
     fetchMock.get(noFilterUrl, { count: 2, goalRows: noFilterGoals });
 
     const statusRes = {
@@ -146,7 +155,7 @@ describe('Goals and Objectives', () => {
     expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
     expect(screen.getAllByRole('cell')[1]).toHaveTextContent('06/15/2021');
     expect(screen.getAllByRole('cell')[2]).toHaveTextContent(/this is goal text 1/i);
-    expect(screen.getAllByRole('cell')[3]).toHaveTextContent(/human resources, safety practices, program planning and services/i);
+    expect(screen.getAllByRole('cell')[3]).toHaveTextContent(/Human ResourcesSafety PracticesProgram Planning and Ser/i);
     expect(screen.getAllByRole('cell')[4]).toHaveTextContent('5 Objectives');
   });
 
@@ -186,13 +195,12 @@ describe('Goals and Objectives', () => {
     await screen.findByRole('cell', { name: /in progress/i });
     await screen.findByRole('cell', { name: '06/15/2021' });
     await screen.findByRole('cell', { name: /this is goal text 1/i });
-    await screen.findByRole('cell', { name: /human resources, safety practices, program planning and services/i });
+    await screen.findByRole('cell', { name: /Human Resources/i });
     await screen.findByRole('cell', { name: '5 Objectives' });
 
     await screen.findByRole('cell', { name: /not started/i });
     await screen.findByRole('cell', { name: '07/15/2021' });
     await screen.findByRole('cell', { name: /this is goal text 2/i });
-    await screen.findByRole('cell', { name: 'Program Planning and Services' });
     await screen.findByRole('cell', { name: '1 Objective' });
 
     expect(await screen.findByText(/1-2 of 2/i)).toBeVisible();
@@ -200,7 +208,7 @@ describe('Goals and Objectives', () => {
 
   it('sorts by created on desc when new goals are created', async () => {
     // Created New Goal.
-    const newGoalsUrl = '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=5';
+    const newGoalsUrl = '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=10';
     fetchMock.get(newGoalsUrl, {
       count: 3,
       goalRows: [

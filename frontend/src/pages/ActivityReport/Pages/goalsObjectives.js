@@ -24,10 +24,17 @@ const GoalsObjectives = () => {
     watch, setValue, getValues, setError,
   } = useFormContext();
   const recipients = watch('activityRecipients');
+  const goalsOnForm = watch('goals');
   const activityRecipientType = watch('activityRecipientType');
 
   const isRecipientReport = activityRecipientType === 'recipient';
-  const grantIds = isRecipientReport ? recipients.map((r) => r.activityRecipientId) : [];
+  const grantIds = isRecipientReport ? recipients.map((r) => {
+    if (r.grant) {
+      return r.grant.id;
+    }
+
+    return r.id || r.value;
+  }) : [];
 
   const [fetchError, setFetchError] = useState(false);
   const [availableGoals, updateAvailableGoals] = useState([]);
@@ -63,7 +70,26 @@ const GoalsObjectives = () => {
       try {
         if (isRecipientReport && hasGrants) {
           const fetchedGoals = await getGoals(grantIds);
-          updateAvailableGoals(fetchedGoals);
+          const selectedGoals = goalsOnForm.map((g) => {
+            if (!g.isNew) {
+              return g;
+            }
+
+            const existingGoal = fetchedGoals.find((fetchedGoal) => fetchedGoal.name === g.name);
+
+            if (existingGoal) {
+              return { ...existingGoal, objectives: g.objectives, grantIds };
+            }
+
+            return g;
+          });
+
+          setValue('goals', selectedGoals);
+
+          // we map these goals so we have a single unique value to use in <GoalPicker /> as a value
+          // here, the first id in the goalIds (there will always be a goal Id, and it will
+          // always be unique)
+          updateAvailableGoals(fetchedGoals.map((g) => ({ ...g, id: g.goalIds[0] })));
         }
 
         setFetchError(false);

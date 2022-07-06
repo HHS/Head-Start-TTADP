@@ -1,11 +1,10 @@
-// File name needs to be non-standard so the modules load in the correct order.
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
   class GoalTemplateObjectiveTemplate extends Model {
     static associate(models) {
       GoalTemplateObjectiveTemplate.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: 'goalTemplate' });
-      GoalTemplateObjectiveTemplate.belongsTo(models.ObjectiveTemplate, { foreignKey: 'fileId', as: 'objectiveTemplate' });
+      GoalTemplateObjectiveTemplate.belongsTo(models.ObjectiveTemplate, { foreignKey: 'objectiveTemplateId', as: 'objectiveTemplate' });
     }
   }
   GoalTemplateObjectiveTemplate.init({
@@ -17,9 +16,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     goalTemplateId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
     objectiveTemplateId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
   }, {
     sequelize,
