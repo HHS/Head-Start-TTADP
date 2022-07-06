@@ -12,7 +12,7 @@ import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '../../Constants';
 describe('Close Suspend Goal Reason', () => {
   const ModalComponent = (
     {
-      goalId = 1,
+      goalIds = [1],
       newStatus = 'Closed',
       onSubmit = () => { },
       resetValues = false,
@@ -26,7 +26,7 @@ describe('Close Suspend Goal Reason', () => {
         <ModalToggleButton modalRef={modalRef} opener>Open</ModalToggleButton>
         <ModalToggleButton modalRef={modalRef} closer>Close</ModalToggleButton>
         <CloseSuspendReasonModal
-          goalId={goalId}
+          goalIds={goalIds}
           newStatus={newStatus}
           modalRef={modalRef}
           onSubmit={onSubmit}

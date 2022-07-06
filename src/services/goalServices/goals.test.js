@@ -209,34 +209,10 @@ describe('goalsForGrants', () => {
 
     await goalsForGrants([506]);
 
-    expect(Goal.findAll).toHaveBeenCalledWith({
-      where: {
-        [Op.or]: [
-          {
-            status: 'Not Started',
-          },
-          {
-            status: 'In Progress',
-          },
-          {
-            status: null,
-          },
-        ],
-      },
-      include: [
-        {
-          model: Grant,
-          as: 'grants',
-          attributes: [
-            'id',
-            'regionId',
-          ],
-          where: {
-            id: [505, 506],
-          },
-        },
-      ],
-      order: ['name'],
-    });
+    const { where } = Goal.findAll.mock.calls[0][0];
+    expect(where['$grant.id$']).toStrictEqual([
+      505,
+      506,
+    ]);
   });
 });

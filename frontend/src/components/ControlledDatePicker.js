@@ -19,6 +19,7 @@ export default function ControlledDatePicker({
   maxDate,
   setEndDate,
   isStartDate,
+  onBlur,
 }) {
   /**
    * we don't want to compute these fields multiple times if we don't have to,
@@ -98,6 +99,7 @@ export default function ControlledDatePicker({
       onChange={datePickerOnChange}
       minDate={min.datePicker}
       maxDate={max.datePicker}
+      onBlur={onBlur}
     />
   );
 }
@@ -114,12 +116,14 @@ ControlledDatePicker.propTypes = {
   }).isRequired,
   isStartDate: PropTypes.bool,
   setEndDate: PropTypes.func,
+  onBlur: PropTypes.func,
 };
 
 ControlledDatePicker.defaultProps = {
   minDate: '09/01/2020',
-  maxDate: moment().format(DATE_DISPLAY_FORMAT),
+  maxDate: '',
   isStartDate: false,
   setEndDate: () => {},
   value: '',
+  onBlur: () => {},
 };

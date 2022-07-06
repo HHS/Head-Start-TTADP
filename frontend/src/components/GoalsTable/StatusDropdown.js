@@ -15,7 +15,7 @@ import { DECIMAL_BASE } from '../../Constants';
 import Menu from '../Menu';
 import './StatusDropdown.css';
 
-const STATUSES = {
+export const STATUSES = {
   'In Progress': {
     display: 'In progress',
     color: colors.ttahubMediumBlue,

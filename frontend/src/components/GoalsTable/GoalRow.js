@@ -117,13 +117,13 @@ function GoalRow({
   performGoalStatusUpdate,
 }) {
   const {
-    id,
+    id, // for keys and such, from the api
+    ids, // all rolled up ids
     goalStatus,
     createdOn,
     goalText,
     goalTopics,
     objectiveCount,
-    goalNumber,
     reasons,
     objectives,
     previousStatus,
@@ -131,12 +131,14 @@ function GoalRow({
 
   const history = useHistory();
 
+  const goalNumbers = goal.goalNumbers.join(', ');
+
   const onUpdateGoalStatus = (newStatus) => {
     if (newStatus === 'Completed' || newStatus === 'Closed' || newStatus === 'Ceased/Suspended' || newStatus === 'Suspended') {
       // Must provide reason for Close or Suspend.
-      showCloseSuspendGoalModal(newStatus, id, goalStatus);
+      showCloseSuspendGoalModal(newStatus, ids, goalStatus);
     } else {
-      performGoalStatusUpdate(id, newStatus, goalStatus);
+      performGoalStatusUpdate(ids, newStatus, goalStatus);
     }
   };
 
@@ -170,11 +172,6 @@ function GoalRow({
       display: 'Suspended',
       color: colors.errorDark,
     },
-    {
-      stored: 'Needs Status',
-      display: 'Needs status',
-      color: '#c5c5c5',
-    },
   ];
 
   const determineFlagStatus = () => {
@@ -185,7 +182,7 @@ function GoalRow({
           <Tooltip
             displayText={<FontAwesomeIcon className="margin-left-1" size="1x" color={colors.error} icon={faFlag} />}
             screenReadDisplayText={false}
-            buttonLabel={`Reason for flag on goal ${goalNumber} is monitoring. Click button to visually reveal this information.`}
+            buttonLabel={`Reason for flag on goal ${goalNumbers} is monitoring. Click button to visually reveal this information.`}
             tooltipText="Related to monitoring"
             hideUnderline
           />
@@ -210,7 +207,7 @@ function GoalRow({
         return goalStatusDisplay.color;
       }
     }
-    return '#c5c5c5';
+    return colors.baseLighter;
   };
 
   const contextMenuLabel = `Actions for goal ${id}`;
@@ -255,7 +252,7 @@ function GoalRow({
           {goalText}
           {' '}
           (
-          {goalNumber}
+          {goalNumbers}
           )
           {determineFlagStatus()}
         </td>
@@ -267,7 +264,7 @@ function GoalRow({
             closeOrOpenObjectives={closeOrOpenObjectives}
             objectiveCount={objectiveCount}
             objectivesExpanded={objectivesExpanded}
-            goalNumber={goalNumber}
+            goalNumber={goal.goalNumbers.join('')}
             expandObjectivesRef={expandObjectivesRef}
           />
         </td>
@@ -296,7 +293,7 @@ function GoalRow({
               <li className="padding-x-105 padding-y-0 flex-align-self-end">Grant numbers</li>
               <li className="padding-x-105 padding-y-0 flex-align-self-end">End date</li>
               <li className="padding-x-105 padding-y-0 flex-align-self-end">Reasons</li>
-              <li className="padding-x-105 padding-y-0 padding-right-0 flex-align-self-end">Objectives status</li>
+              <li className="padding-x-105 padding-y-0 padding-right-0 flex-align-self-end">Objective status</li>
             </ul>
             {objectives.map((obj) => (
               <ObjectiveRow
@@ -324,13 +321,14 @@ export const objectivePropTypes = PropTypes.shape({
 
 export const goalPropTypes = PropTypes.shape({
   id: PropTypes.number.isRequired,
+  ids: PropTypes.arrayOf(PropTypes.number),
   goalStatus: PropTypes.string,
   createdOn: PropTypes.string.isRequired,
   goalText: PropTypes.string.isRequired,
   goalTopics: PropTypes.arrayOf(PropTypes.string).isRequired,
   reasons: PropTypes.arrayOf(PropTypes.string).isRequired,
   objectiveCount: PropTypes.number.isRequired,
-  goalNumber: PropTypes.string.isRequired,
+  goalNumbers: PropTypes.arrayOf(PropTypes.string.isRequired),
   objectives: PropTypes.arrayOf(objectivePropTypes),
   previousStatus: PropTypes.string,
 });

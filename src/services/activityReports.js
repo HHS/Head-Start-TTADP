@@ -233,10 +233,11 @@ async function saveNotes(activityReportId, notes, isRecipientNotes) {
     const newNotes = notes.map((note) => ({
       id: note.id ? parseInt(note.id, DECIMAL_BASE) : undefined,
       note: note.note,
+      completeDate: note.completeDate,
       activityReportId,
       noteType,
     }));
-    await NextStep.bulkCreate(newNotes, { updateOnDuplicate: ['note', 'updatedAt'] });
+    await NextStep.bulkCreate(newNotes, { updateOnDuplicate: ['note', 'completeDate', 'updatedAt'] });
   }
 }
 
@@ -347,21 +348,20 @@ export async function activityReportAndRecipientsById(activityReportId) {
     ],
   });
 
-  const goalTemplateIds = [];
-  const goalText = [];
-
   // TODO - explore a way to move this query inline to the ActivityReport.findOne
   const goalsAndObjectives = allGoalsAndObjectives.reduce((previousValue, currentValue) => {
-    if (goalTemplateIds.includes(currentValue.goalTemplateId)
-      || goalText.includes(currentValue.name)) {
+    const existingGoal = previousValue.find((g) => g.name === currentValue.name);
+
+    if (existingGoal) {
+      existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.goalNumber];
+      existingGoal.goalIds = [...existingGoal.goalIds, currentValue.id];
       return previousValue;
     }
 
-    goalText.push(currentValue.name);
-    goalTemplateIds.push(currentValue.goalTemplateId);
-
     const goal = {
       ...currentValue.dataValues,
+      goalNumbers: [currentValue.goalNumber],
+      goalIds: [currentValue.id],
       objectives: currentValue.objectives.map((objective) => {
         const ttaProvided = objective.activityReportObjectives
           && objective.activityReportObjectives[0]
@@ -488,7 +488,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
             [Op.eq]: 'SPECIALIST',
           },
         },
-        attributes: ['note', 'id'],
+        attributes: ['note', 'completeDate', 'id'],
         as: 'specialistNextSteps',
         required: false,
         separate: true,
@@ -500,7 +500,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
             [Op.eq]: 'RECIPIENT',
           },
         },
-        attributes: ['note', 'id'],
+        attributes: ['note', 'completeDate', 'id'],
         as: 'recipientNextSteps',
         required: false,
         separate: true,
@@ -830,11 +830,13 @@ export async function createOrUpdate(newActivityReport, report) {
   const resources = {};
 
   if (ECLKCResourcesUsed) {
-    resources.ECLKCResourcesUsed = ECLKCResourcesUsed.map((item) => item.value);
+    resources.ECLKCResourcesUsed = ECLKCResourcesUsed.filter((item) => item)
+      .map((item) => item.value);
   }
 
   if (nonECLKCResourcesUsed) {
-    resources.nonECLKCResourcesUsed = nonECLKCResourcesUsed.map((item) => item.value);
+    resources.nonECLKCResourcesUsed = nonECLKCResourcesUsed.filter((item) => item)
+      .map((item) => item.value);
   }
 
   const updatedFields = { ...allFields, ...resources };
@@ -843,7 +845,6 @@ export async function createOrUpdate(newActivityReport, report) {
   } else {
     savedReport = await create(updatedFields);
   }
-
   if (activityReportCollaborators) {
     const { id } = savedReport;
     const newCollaborators = activityReportCollaborators.map(

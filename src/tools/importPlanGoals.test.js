@@ -81,6 +81,9 @@ describe('Import TTA plan goals', () => {
           model: Grant,
           as: 'grant',
           attributes: ['id', 'number', 'regionId'],
+          where: {
+            number: '14CH00002',
+          },
         }],
       });
       expect(goal.name).toBe('Expand children\'s experiences with high quality early learning to prepare them for Kindergarten');

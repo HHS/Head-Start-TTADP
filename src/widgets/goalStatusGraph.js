@@ -34,7 +34,17 @@ export default async function goalStatusGraph(scopes) {
       ],
     },
     // BIGINT (type returned from count) gets converted to string. Explicitly set count to int
-    attributes: [sequelize.literal('COUNT(DISTINCT("Goal".id))::int'), 'status'],
+    attributes: [
+      [
+        sequelize.cast(sequelize.fn(
+          'COUNT',
+          sequelize.fn(
+            'DISTINCT',
+            sequelize.fn('TRIM', sequelize.col('"Goal".name')),
+          ),
+        ), 'int'),
+        'count'],
+      'status'],
     group: ['"Goal".status'],
     includeIgnoreAttributes: false,
     raw: true,

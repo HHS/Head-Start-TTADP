@@ -1,3 +1,5 @@
+@use '../../../../mixins.scss';
+
 .usa-error-message + .usa-textarea {
-    border: 2px solid #b50909;
+  @include mixins.error;
 }

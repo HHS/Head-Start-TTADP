@@ -248,19 +248,55 @@ function ActivityReport({
 
   const convertGoalsToFormData = (goals, grantIds) => goals.map((goal) => ({ ...goal, grantIds }));
 
+  const convertObjectivesWithoutGoalsToFormData = (
+    objectives, recipientIds,
+  ) => objectives.reduce(
+    (os, objective) => {
+      const exists = os.find((o) => (
+        o.title === objective.title
+      ));
+
+      if (exists) {
+        exists.recipientIds = recipientIds;
+        exists.ids = [...exists.ids, objective.id];
+        return os;
+      }
+
+      return [...os, {
+        ...objective,
+        ids: [objective.id],
+        recipientIds,
+        ttaProvided: objective.ActivityReportObjective.ttaProvided,
+      }];
+    },
+    [],
+  );
+
   const convertReportToFormData = (fetchedReport) => {
     let grantIds = [];
+    let otherEntities = [];
     if (fetchedReport.activityRecipientType === 'recipient' && fetchedReport.activityRecipients) {
       grantIds = fetchedReport.activityRecipients.map(({ id }) => id);
+    } else {
+      otherEntities = fetchedReport.activityRecipients.map(({ id }) => id);
     }
 
     const goals = convertGoalsToFormData(fetchedReport.goalsAndObjectives, grantIds);
+    const objectivesWithoutGoals = convertObjectivesWithoutGoalsToFormData(
+      fetchedReport.objectivesWithoutGoals, otherEntities,
+    );
     const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed);
     const nonECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.nonECLKCResourcesUsed);
     const endDate = fetchedReport.endDate ? moment(fetchedReport.endDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : '';
     const startDate = fetchedReport.startDate ? moment(fetchedReport.startDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : '';
     return {
-      ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed, goals, endDate, startDate,
+      ...fetchedReport,
+      ECLKCResourcesUsed,
+      nonECLKCResourcesUsed,
+      goals,
+      endDate,
+      startDate,
+      objectivesWithoutGoals,
     };
   };
 
