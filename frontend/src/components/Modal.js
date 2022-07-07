@@ -81,7 +81,7 @@ Modal.propTypes = {
     PropTypes.shape(),
   ]).isRequired,
   modalId: PropTypes.string.isRequired,
-  onOk: PropTypes.func,
+  onOk: PropTypes.func.isRequired,
   title: PropTypes.string.isRequired,
   okButtonText: PropTypes.string,
   okButtonAriaLabel: PropTypes.string,
@@ -99,7 +99,6 @@ Modal.propTypes = {
 };
 
 Modal.defaultProps = {
-  onOk: () => { },
   okButtonAriaLabel: null,
   okButtonText: '',
   showCloseX: false,

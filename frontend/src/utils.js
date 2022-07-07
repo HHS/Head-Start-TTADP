@@ -106,7 +106,7 @@ export function expandFilters(filters) {
   return arr;
 }
 
-function decodeQueryParam(param) {
+export function decodeQueryParam(param) {
   const query = decodeURIComponent(param);
   if (query.includes(',')) {
     return query.split(',');
