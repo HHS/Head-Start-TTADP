@@ -2,9 +2,9 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
 import {
-  render, screen, waitFor, within,
+  render, screen, waitFor, within, act,
 } from '@testing-library/react';
-
+import fetchMock from 'fetch-mock';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import Navigator from '../index';
 import { NOT_STARTED, COMPLETE } from '../constants';
@@ -219,7 +219,8 @@ describe('Navigator', () => {
     const saveGoal = await screen.findByRole('button', { name: 'Save goal' });
     expect(saveGoal.textContent).toBe('Save goal');
     expect(saveGoal).toBeVisible();
-    userEvent.click(saveGoal);
+    fetchMock.post('/api/activityReports/goals', 200);
+    await act(async () => userEvent.click(saveGoal));
     expect(saveGoal.textContent).toBe('Save and continue');
   });
 

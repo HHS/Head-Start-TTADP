@@ -154,7 +154,7 @@ describe('ActivityReport', () => {
 
       // we're just checking to see if the "local backup" message is shown, the
       // updatedAt from network won't be shown
-      const alert = screen.queryByTestId('alert');
+      const alert = await screen.findByTestId('alert');
 
       const reggies = [
         new RegExp('your computer at', 'i'),

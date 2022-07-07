@@ -27,7 +27,7 @@ const RenderSupportingAttachmentsReview = ({ data }) => {
 
 describe('Supporting Attachments', () => {
   const data = {
-    attachments: [{ originalFileName: 'original file name', url: { url: 'http://localhost/attachment' }, status: 'APPROVED' }],
+    files: [{ originalFileName: 'original file name', url: { url: 'http://localhost/attachment' }, status: 'APPROVED' }],
   };
 
   describe('review page', () => {

@@ -15,7 +15,6 @@ import { useHistory, Redirect } from 'react-router-dom';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
-
 import pages from './Pages';
 import Navigator from '../../components/Navigator';
 
@@ -31,7 +30,8 @@ import {
   DATEPICKER_VALUE_FORMAT,
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
-// import useARLocalStorage from '../../hooks/useARLocalStorage';
+import useARLocalStorage from '../../hooks/useARLocalStorage';
+
 import {
   submitReport,
   saveReport,
@@ -199,12 +199,9 @@ function ActivityReport({
 
   const [lastSaveTime, updateLastSaveTime] = useState(null);
 
-  const [formData, updateFormData] = useState(null);
-  const localStorageAvailable = false;
-
-  // const [formData, updateFormData, localStorageAvailable] = useARLocalStorage(
-  //   LOCAL_STORAGE_DATA_KEY(activityReportId), null,
-  // );
+  const [formData, updateFormData, localStorageAvailable] = useARLocalStorage(
+    LOCAL_STORAGE_DATA_KEY(activityReportId), null,
+  );
 
   // retrieve the last time the data was saved to local storage
   const savedToStorageTime = formData ? formData.savedToStorageTime : null;
