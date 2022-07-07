@@ -64,7 +64,7 @@ const renderGoals = (
   throwFetchError = false,
 ) => {
   const query = grantIds.map((id) => `grantIds=${id}`).join('&');
-  const fetchResponse = throwFetchError ? async () => { throw new Error(); } : goals;
+  const fetchResponse = throwFetchError ? 500 : goals;
 
   fetchMock.get(join(goalUrl, `?${query}`), fetchResponse);
   render(
@@ -113,7 +113,7 @@ describe('goals objectives', () => {
   describe('when activity recipient type is "recipient"', () => {
     it('the display goals section is displayed', async () => {
       renderGoals([1], 'recipient');
-      expect(await screen.findByText('Goal summary')).toBeVisible();
+      expect(await screen.findByText('Goal summary', { selector: '.margin-bottom-0.margin-top-4' })).toBeVisible();
     });
 
     it('the display goals shows a warning if no grants are selected', async () => {
@@ -146,9 +146,9 @@ describe('goals objectives', () => {
       }];
       const isGoalFormClosed = true;
       renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed);
-      const actions = await screen.findByRole('button', { name: /actions for goal 1234567/i });
+      const actions = await screen.findByRole('button', { name: /actions for goal 1/i });
       userEvent.click(actions);
-      const button = await screen.findByRole('button', { name: /edit goal 1234567/i });
+      const button = await screen.findByRole('button', { name: /edit goal 1/i });
       userEvent.click(button);
       expect(await screen.findByText('Goal summary')).toBeVisible();
     });
@@ -161,9 +161,9 @@ describe('goals objectives', () => {
       }];
       const isGoalFormClosed = true;
       renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed);
-      const actions = await screen.findByRole('button', { name: /actions for goal 1234567/i });
+      const actions = await screen.findByRole('button', { name: /actions for goal 1/i });
       userEvent.click(actions);
-      const button = await screen.findByRole('button', { name: /delete goal 1234567/i });
+      const button = await screen.findByRole('button', { name: /delete goal 1/i });
       userEvent.click(button);
       const modal = await screen.findByTestId('modalWindow');
       const deletor = await within(modal).findByText('Delete');
@@ -176,7 +176,12 @@ describe('goals objectives', () => {
 
   describe('handles fetch error', () => {
     it('handles it like I SAID', async () => {
-      renderGoals([1], 'recipient', [], true);
+      const goals = [];
+      const recipientType = 'recipient';
+      const grants = [1];
+      const isGoalFormClosed = false;
+      const throwFetchError = true;
+      renderGoals(grants, recipientType, goals, isGoalFormClosed, throwFetchError);
       expect(await screen.findByText('Connection error. Cannot load options.')).toBeVisible();
     });
   });
@@ -252,26 +257,6 @@ describe('goals objectives', () => {
         const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'recipient', goals });
         expect(complete).toBeTruthy();
       });
-    });
-
-    it('fetched goals are autoselected', async () => {
-      const goals = [{
-        name: 'This is a test goal',
-        goalIds: [1],
-        objectives: [{
-          id: 1,
-          title: 'title',
-          ttaProvided: 'tta',
-          status: 'In Progress',
-        }],
-      }];
-
-      renderGoals([3], 'recipient', goals);
-
-      const select = document.querySelector('#goals input');
-      selectEvent.openMenu(select);
-
-      expect(screen.getByText(/This is a test goal/i, { selector: 'span' })).toBeInTheDocument();
     });
 
     it('does not fetch if there are no grants', async () => {

@@ -151,10 +151,7 @@ function Navigator({
 
     // save goal to api, come back with new ids for goal and objectives
     try {
-      const savedGoal = await saveGoalForReport({ goal, activityReportId: reportId });
-
-      console.log(savedGoal);
-
+      await saveGoalForReport({ goal, activityReportId: reportId });
       return;
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
