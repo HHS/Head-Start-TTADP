@@ -27,7 +27,7 @@ import {
   CollaboratorRole,
 } from '../models';
 
-import { removeUnusedGoalsObjectivesFromReport, saveGoalsForReport } from './goals';
+import { removeUnusedGoalsObjectivesFromReport, saveGoalsForReport, removeRemovedRecipientsGoals } from './goals';
 
 import { saveObjectivesForReport } from './objectives';
 
@@ -738,17 +738,20 @@ export async function createOrUpdate(newActivityReport, report) {
     ECLKCResourcesUsed,
     nonECLKCResourcesUsed,
     attachments,
+    recipientsWhoHaveGoalsThatShouldBeRemoved,
     ...allFields
   } = newActivityReport;
   const previousActivityRecipientType = report && report.activityRecipientType;
   const resources = {};
 
   if (ECLKCResourcesUsed) {
-    resources.ECLKCResourcesUsed = ECLKCResourcesUsed.map((item) => item.value);
+    resources.ECLKCResourcesUsed = ECLKCResourcesUsed.filter((item) => item)
+      .map((item) => item.value);
   }
 
   if (nonECLKCResourcesUsed) {
-    resources.nonECLKCResourcesUsed = nonECLKCResourcesUsed.map((item) => item.value);
+    resources.nonECLKCResourcesUsed = nonECLKCResourcesUsed.filter((item) => item)
+      .map((item) => item.value);
   }
 
   const updatedFields = { ...allFields, ...resources };
@@ -803,6 +806,10 @@ export async function createOrUpdate(newActivityReport, report) {
 
   const activityRecipientType = recipientType();
 
+  if (recipientsWhoHaveGoalsThatShouldBeRemoved) {
+    await removeRemovedRecipientsGoals(recipientsWhoHaveGoalsThatShouldBeRemoved, savedReport);
+  }
+
   if (previousActivityRecipientType
     && previousActivityRecipientType !== report.activityRecipientType) {
     await removeUnusedGoalsObjectivesFromReport(report.id, []);
@@ -811,7 +818,7 @@ export async function createOrUpdate(newActivityReport, report) {
   if (activityRecipientType === 'other-entity' && objectivesWithoutGoals) {
     await saveObjectivesForReport(objectivesWithoutGoals, savedReport);
   } else if (activityRecipientType === 'recipient' && goals) {
-    await saveGoalsForReport(goals, savedReport);
+    await saveGoalsForReport(goals, savedReport, recipientsWhoHaveGoalsThatShouldBeRemoved);
   }
 
   // Approvers are removed if approverUserIds is an empty array

@@ -29,7 +29,7 @@ const GoalsObjectives = () => {
       return r.grant.id;
     }
 
-    return r.id || r.value;
+    return r.activityRecipientId;
   }) : [];
 
   const [fetchError, setFetchError] = useState(false);
@@ -86,7 +86,7 @@ const GoalsObjectives = () => {
       </Fieldset>
       {!isRecipientReport && (
         <Fieldset className="smart-hub--report-legend margin-top-4" legend="Objectives for other entity TTA">
-          <ObjectivePicker />
+          <ObjectivePicker recipientIds={recipients.map((r) => r.id)} />
         </Fieldset>
       )}
       {showGoals
