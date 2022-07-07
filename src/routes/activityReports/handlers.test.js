@@ -140,6 +140,7 @@ const expected = {
   ...report,
   activityRecipients,
   goalsAndObjectives,
+  objectivesWithoutGoals: [],
 };
 
 describe('Activity Report handlers', () => {
