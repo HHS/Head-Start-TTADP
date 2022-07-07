@@ -206,6 +206,7 @@ function MultiSelect({
         ...rules,
       }}
       name={name}
+      defaultValue={[]}
     />
   );
 }
