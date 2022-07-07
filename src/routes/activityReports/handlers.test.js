@@ -122,6 +122,7 @@ const report = {
   approvingManager: mockManager,
   displayId: 'mockreport-1',
   regionId: 1,
+  objectivesWithoutGoals: [],
 };
 
 const activityRecipients = undefined;
@@ -131,6 +132,7 @@ const byIdResponse = [
   {
     displayId: report.displayId,
     dataValues: report,
+    objectivesWithoutGoals: [],
   },
   activityRecipients,
   goalsAndObjectives,
@@ -354,6 +356,7 @@ describe('Activity Report handlers', () => {
             displayId,
           },
           displayId,
+          objectivesWithoutGoals: [],
         },
       );
       expect(syncApprovers).toHaveBeenCalledWith(1, [mockManager.id, secondMockManager.id]);
@@ -543,7 +546,7 @@ describe('Activity Report handlers', () => {
     };
 
     it('returns the updated report', async () => {
-      const result = { status: 'draft', displayId: 'mockreport-1' };
+      const result = { status: 'draft', displayId: 'mockreport-1', objectivesWithoutGoals: [] };
       activityReportAndRecipientsById.mockResolvedValue([report]);
       ActivityReport.mockImplementation(() => ({
         canReset: () => true,
@@ -556,6 +559,7 @@ describe('Activity Report handlers', () => {
         displayId: result.displayId,
         activityRecipients: [],
         goalsAndObjectives: [],
+        objectivesWithoutGoals: [],
       };
       expect(mockResponse.json).toHaveBeenCalledWith(jsonResponse);
     });
