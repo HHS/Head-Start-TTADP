@@ -30,10 +30,12 @@ module.exports = {
         activityReportId: {
           allowNull: false,
           type: Sequelize.INTEGER,
+          references: { model: { tableName: 'ActivityReports' }, key: 'id' },
         },
         goalId: {
           allowNull: false,
           type: Sequelize.INTEGER,
+          references: { model: { tableName: 'Goals' }, key: 'id' },
         },
         createdAt: {
           allowNull: false,
@@ -117,6 +119,7 @@ module.exports = {
         regionId: {
           type: Sequelize.INTEGER,
           allowNull: true,
+          references: { model: { tableName: 'Regions' }, key: 'id' },
         },
         creationMethod: {
           allowNull: false,
@@ -167,6 +170,7 @@ module.exports = {
         regionId: {
           type: Sequelize.INTEGER,
           allowNull: true,
+          references: { model: { tableName: 'Regions' }, key: 'id' },
         },
         creationMethod: {
           allowNull: false,
@@ -492,7 +496,8 @@ module.exports = {
               'Health Specialist',
               'Early Childhood Specialist',
               'System Specialist',
-              'Grantee Specialist'
+              'Grantee Specialist',
+              'Grants Specialist'
             );
             ------------------------------------------------------------------------------------
             UPDATE "Roles"
@@ -763,6 +768,7 @@ module.exports = {
       //        > goal status = not started
       //     6. If the goal doesn't have a status and no associated ARs and imported over 1 yr ago
       //        > goal status = closed
+      // 24. Drop GrantGoals
       try {
         await queryInterface.sequelize.query(
           `DO $$
@@ -1663,6 +1669,9 @@ module.exports = {
             GROUP BY
               aro."activityReportId",
               o."goalId";
+            ------------------------------------------------------------------------------------
+            -- 24. Drop GrantGoals
+            DROP TABLE "GrantGoals";
             ------------------------------------------------------------------------------------
           END$$;`,
           { transaction },
