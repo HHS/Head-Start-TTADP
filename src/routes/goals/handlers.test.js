@@ -59,9 +59,9 @@ describe('retrieve goal', () => {
 
     goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
       objectives: [],
-      grants: [{
+      grant: {
         regionId: 2,
-      }],
+      },
     });
 
     await retrieveGoalByIdAndRecipient(req, mockResponse);
@@ -90,7 +90,7 @@ describe('retrieve goal', () => {
 
     goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
       objectives: [],
-      grants: [{ regionId: 2 }],
+      grant: { regionId: 2 },
     });
 
     goalByIdAndRecipient.mockResolvedValueOnce({});
@@ -121,7 +121,7 @@ describe('retrieve goal', () => {
 
     goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
       objectives: [],
-      grants: [{ regionId: 2 }],
+      grant: { regionId: 2 },
     });
 
     goalByIdAndRecipient.mockResolvedValueOnce(null);
@@ -180,6 +180,9 @@ describe('createGoals', () => {
       session: {
         userId: 1,
       },
+      body: {
+        goals: [{ regionId: 1 }],
+      },
     };
 
     userById.mockResolvedValueOnce({
@@ -204,6 +207,9 @@ describe('createGoals', () => {
       },
       session: {
         userId: 1,
+      },
+      body: {
+        goals: [{ regionId: 2 }],
       },
     };
 
