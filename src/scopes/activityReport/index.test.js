@@ -275,9 +275,9 @@ describe('filtersToScopes', () => {
       let possibleIds;
 
       beforeAll(async () => {
-        recipientIncluded1 = await Recipient.create({ id: 50, name: '1234' });
-        recipientIncluded2 = await Recipient.create({ id: 51, name: 'testing 1234' });
-        recipientExcluded = await Recipient.create({ id: 52, name: '4321' });
+        recipientIncluded1 = await Recipient.create({ id: 50, name: '1234', uei: 'NNA5N2KHMGN2', });
+        recipientIncluded2 = await Recipient.create({ id: 51, name: 'testing 1234', uei: 'NNA5N2KHMBA2', });
+        recipientExcluded = await Recipient.create({ id: 52, name: '4321', uei: 'NNA5N2KHMBC2', });
 
         grantIncluded1 = await Grant.create({
           id: recipientIncluded1.id, number: 1234, recipientId: recipientIncluded1.id,
@@ -404,8 +404,8 @@ describe('filtersToScopes', () => {
       let possibleIds;
 
       beforeAll(async () => {
-        recipientIncluded = await Recipient.create({ id: 54, name: '1234' });
-        recipientExcluded = await Recipient.create({ id: 56, name: '4321' });
+        recipientIncluded = await Recipient.create({ id: 54, name: '1234', uei: 'NNA5N2KHMGN2', });
+        recipientExcluded = await Recipient.create({ id: 56, name: '4321', uei: 'NNA5N2KHMBA2', });
 
         grantIncluded = await Grant.create({
           id: recipientIncluded.id, number: 2234, recipientId: recipientIncluded.id,
@@ -1106,9 +1106,9 @@ describe('filtersToScopes', () => {
     let possibleIds;
 
     beforeAll(async () => {
-      recipientIncluded1 = await Recipient.create({ id: 120, name: 'Recipient 1 PS' });
-      recipientIncluded2 = await Recipient.create({ id: 121, name: 'Recipient 2 PS' });
-      recipientExcluded = await Recipient.create({ id: 122, name: 'Recipient 3 PS' });
+      recipientIncluded1 = await Recipient.create({ id: 120, name: 'Recipient 1 PS', uei: 'NNA5N2KHMGN2', });
+      recipientIncluded2 = await Recipient.create({ id: 121, name: 'Recipient 2 PS', uei: 'NNA5N2KHMBA2', });
+      recipientExcluded = await Recipient.create({ id: 122, name: 'Recipient 3 PS', uei: 'NNA5N2KHMBC2', });
 
       grantIncluded1 = await Grant.create({
         id: recipientIncluded1.id, number: 64968, recipientId: recipientIncluded1.id, programSpecialistName: 'Pat Bowman',

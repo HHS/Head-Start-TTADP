@@ -87,6 +87,7 @@ export async function createRecipient(recipient) {
   return Recipient.create({
     id: faker.datatype.number({ min: 10000, max: 100000 }),
     name: faker.company.companyName(),
+    uei: 'NNA5N2KHMGN2',
     ...recipient,
   });
 }

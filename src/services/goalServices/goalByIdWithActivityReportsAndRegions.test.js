@@ -24,11 +24,11 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
 
   beforeAll(async () => {
     recipientForFirstGrant = await Recipient.create({
-      id: faker.datatype.number({ min: 64000 }), name: faker.random.alphaNumeric(6),
+      id: faker.datatype.number({ min: 64000 }), name: faker.random.alphaNumeric(6), uei: faker.datatype.string(12),
     });
 
     recipientForSecondGrant = await Recipient.create({
-      id: faker.datatype.number({ min: 64000 }), name: faker.random.alphaNumeric(6),
+      id: faker.datatype.number({ min: 64000 }), name: faker.random.alphaNumeric(6), uei: faker.datatype.string(12),
     });
 
     firstGrant = await Grant.create({

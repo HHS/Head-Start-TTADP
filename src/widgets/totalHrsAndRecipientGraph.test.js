@@ -82,7 +82,7 @@ describe('Total Hrs and Recipient Graph widget', () => {
       { name: 'office 133', id: 133 },
       { name: 'office 188', id: 188 },
     ]);
-    await Recipient.create({ name: 'recipient', id: RECIPIENT_ID });
+    await Recipient.create({ name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2', });
     await Grant.bulkCreate([{
       id: GRANT_ID_ONE,
       number: GRANT_ID_ONE,
