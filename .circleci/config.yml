@@ -182,10 +182,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "js-update-boundary-diagram"
+    default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "TTAHUB-785/update-job-image"
+    default: "TTAHUB-747/initial_db_migration"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
