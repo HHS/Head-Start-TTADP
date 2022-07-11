@@ -59,7 +59,7 @@ function Navigator({
   const page = pages.find((p) => p.path === currentPage);
 
   const hookForm = useForm({
-    mode: 'onBlur',
+    mode: 'onChange', // 'onBlur' fails existing date picker validations.
     defaultValues: formData,
     shouldUnregister: false,
   });
