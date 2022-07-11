@@ -83,8 +83,8 @@ let regionOneReportFour;
 describe('Dashboard overview widget', () => {
   beforeAll(async () => {
     let results = await User.create(mockUser);
-    results = await Recipient.create({ name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2', });
-    results = await Recipient.create({ name: 'recipient 2', id: RECIPIENT_TWO_ID, uei: 'NNA5N2KHMGM2', });
+    results = await Recipient.create({ name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' });
+    results = await Recipient.create({ name: 'recipient 2', id: RECIPIENT_TWO_ID, uei: 'NNA5N2KHMGM2' });
     results = await Region.create({ name: 'office 1717', id: REGION_ONE_ID });
     results = await Region.create({ name: 'office 1818', id: REGION_TWO_ID });
     results = await Promise.all([
