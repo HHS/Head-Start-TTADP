@@ -126,7 +126,7 @@ const regionOneDraftReport = {
 describe('Reason list widget', () => {
   beforeAll(async () => {
     await User.create(mockUser);
-    await Recipient.create({ name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2', });
+    await Recipient.create({ name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' });
     await Grant.bulkCreate([{
       id: GRANT_ID_ONE, number: GRANT_ID_ONE, recipientId: RECIPIENT_ID, regionId: 3, status: 'Active',
     }, {
