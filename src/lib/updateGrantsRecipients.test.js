@@ -87,6 +87,7 @@ describe('Update grants and recipients', () => {
 
     const recipient = await Recipient.findOne({ where: { id: 1335 } });
     expect(recipient).toBeDefined();
+    expect(recipient.uei).toBe('some');
     expect(recipient.name).toBe('Agency 1, Inc.');
 
     const recipient7782 = await Recipient.findOne({ where: { id: 7782 } });
