@@ -18,11 +18,13 @@ import { REPORT_STATUSES } from '../../constants';
 describe('Goals by Recipient Test', () => {
   const recipient = {
     id: 300,
+    uei: 'NNA5N2KHMGN2',
     name: 'Recipient with Goals',
   };
 
   const recipient2 = {
     id: 301,
+    uei: 'NNA5N2KHMGM2',
     name: 'Recipient 2 with Goals',
   };
 

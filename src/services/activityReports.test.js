@@ -127,7 +127,7 @@ describe('Activity report service', () => {
           mockUserFive,
         ]),
         OtherEntity.create({ id: ALERT_RECIPIENT_ID, name: 'alert otherEntity' }),
-        Recipient.create({ name: 'alert recipient', id: ALERT_RECIPIENT_ID }),
+        Recipient.create({ name: 'alert recipient', id: ALERT_RECIPIENT_ID, uei: 'NNA5N2KHMGN2', }),
         Region.create({ name: 'office 22', id: 22 }),
       ]);
       await Grant.create({
@@ -710,7 +710,7 @@ describe('Activity report service', () => {
       beforeAll(async () => {
         const topicsOne = ['topic d', 'topic c'];
         const topicsTwo = ['topic b', 'topic a'];
-        const firstRecipient = await Recipient.create({ id: RECIPIENT_ID_SORTING, name: 'aaaa' });
+        const firstRecipient = await Recipient.create({ id: RECIPIENT_ID_SORTING, name: 'aaaa', uei: 'NNA5N2KHMGM2',  });
         firstGrant = await Grant.create({ id: RECIPIENT_ID_SORTING, number: 'anumber', recipientId: firstRecipient.id });
 
         await ActivityReport.create({
