@@ -1,13 +1,13 @@
 /* eslint-disable max-len */
 module.exports = {
   up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(async (transaction) => queryInterface.addColumn(
-    'Recipient',
+    'Recipients',
     'uei',
-    { type: Sequelize.DataTypes.STRING, allowNull: false },
+    { type: Sequelize.DataTypes.STRING, defaultValue: '', allowNull: false },
     { transaction },
   )),
   down: async (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => queryInterface.removeColumn(
-    'Recipient',
+    'Recipients',
     'uei',
     { transaction },
   )),
