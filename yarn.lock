@@ -1359,10 +1359,10 @@
     find-my-way "^5.2.0"
     into-stream "^6.0.0"
 
-"@elastic/elasticsearch@^8.2.0-patch.1":
-  version "8.2.0-patch.1"
-  resolved "https://registry.yarnpkg.com/@elastic/elasticsearch/-/elasticsearch-8.2.0-patch.1.tgz#494f3c20df796cd4877aa5bea87ed1bc6d06089a"
-  integrity sha512-ROx9WLPoRrJ/NvT3NEz/4ZhzvGRmB1dSvhkNyuQ+LoHSR2kh4CFqFmxoFtJmWN1uqbw8WvQ0AmMCyLbDI04IVA==
+"@elastic/elasticsearch@^8.2.1":
+  version "8.2.1"
+  resolved "https://registry.yarnpkg.com/@elastic/elasticsearch/-/elasticsearch-8.2.1.tgz#7fbced5f4e13b50c6ccaaf642e8ba4e8e62b71e1"
+  integrity sha512-Kwerd8DfNZdBGgl7fkn+20kXkw1QePB3goTv5QwW9poo2d4VbPE0EChmh6irpXWAGsVSYiKr8x6bh8dH5YdylA==
   dependencies:
     "@elastic/transport" "^8.2.0"
     tslib "^2.4.0"
@@ -1434,7 +1434,18 @@
     "@grpc/proto-loader" "^0.6.4"
     "@types/node" ">=12.12.47"
 
-"@grpc/proto-loader@^0.6.4", "@grpc/proto-loader@^0.6.9":
+"@grpc/proto-loader@^0.6.13":
+  version "0.6.13"
+  resolved "https://registry.yarnpkg.com/@grpc/proto-loader/-/proto-loader-0.6.13.tgz#008f989b72a40c60c96cd4088522f09b05ac66bc"
+  integrity sha512-FjxPYDRTn6Ec3V0arm1FtSpmP6V50wuph2yILpyvTKzjc76oDdoihXqM1DzOW5ubvCC8GivfCnNtfaRE8myJ7g==
+  dependencies:
+    "@types/long" "^4.0.1"
+    lodash.camelcase "^4.3.0"
+    long "^4.0.0"
+    protobufjs "^6.11.3"
+    yargs "^16.2.0"
+
+"@grpc/proto-loader@^0.6.4":
   version "0.6.11"
   resolved "https://registry.yarnpkg.com/@grpc/proto-loader/-/proto-loader-0.6.11.tgz#07d8a0e8851ec383492c4e05eeaa45c215845750"
   integrity sha512-MRiPjTjNgKxMupQ0M8mM9Mcljb2aZvE3Y/oEv+dacozIs2TwTdiPbvfkZpMeghfjGtoDJhDjyCtmFzJcjdDTUQ==
@@ -7600,13 +7611,13 @@ neo-async@^2.6.0:
   resolved "https://registry.yarnpkg.com/neo-async/-/neo-async-2.6.2.tgz#b4aafb93e3aeb2d8174ca53cf163ab7d7308305f"
   integrity sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==
 
-newrelic@^8.7.0:
-  version "8.10.0"
-  resolved "https://registry.yarnpkg.com/newrelic/-/newrelic-8.10.0.tgz#b3e9531e0690cc241588c953601ea6cd1634318c"
-  integrity sha512-7gBtVsdblR074M262zuyMIrkOCIzJ+uJsmKrRfqkoqFos0ck/SpnahNSp+Q5LDiVq3Q+03G3sBVErK2yShv6iQ==
+newrelic@^8.15.0:
+  version "8.15.0"
+  resolved "https://registry.yarnpkg.com/newrelic/-/newrelic-8.15.0.tgz#ee1c6f60eeb089c3d5dc06408d4b31246b57d6b0"
+  integrity sha512-3B1tpzAqYNO9zuNANbEiPw2TP43Na1VQSASxbzmWUWKCoW4+jUMjd9eYfBVdNtb0kc9SLKCJuvvbqauHJiSdBA==
   dependencies:
     "@grpc/grpc-js" "^1.5.5"
-    "@grpc/proto-loader" "^0.6.9"
+    "@grpc/proto-loader" "^0.6.13"
     "@newrelic/aws-sdk" "^4.1.1"
     "@newrelic/koa" "^6.1.1"
     "@newrelic/superagent" "^5.1.0"
@@ -7617,6 +7628,7 @@ newrelic@^8.7.0:
     json-stringify-safe "^5.0.0"
     readable-stream "^3.6.0"
     semver "^5.3.0"
+    winston-transport "^4.5.0"
   optionalDependencies:
     "@newrelic/native-metrics" "^8.0.0"
 
