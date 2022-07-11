@@ -19,7 +19,6 @@ module.exports = (sequelize, DataTypes) => {
     uei: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
     },
     name: {
       type: DataTypes.STRING,
