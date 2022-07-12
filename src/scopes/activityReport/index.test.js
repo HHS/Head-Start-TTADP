@@ -756,7 +756,7 @@ describe('filtersToScopes', () => {
       await ActivityReport.destroy({
         where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
       });
-      await User.ActivityReportCollaborator({
+      await ActivityReportCollaborator.destroy({
         where: {
           id: [
             includedActivityReportCollaborator1.id,
