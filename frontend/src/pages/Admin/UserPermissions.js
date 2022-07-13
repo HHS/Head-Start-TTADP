@@ -92,7 +92,7 @@ function UserPermissions({
           {_.map(globalPermissions, (checked, scopeId) => {
             const { name, description } = scopeFromId(scopeId);
             return (
-              <Grid key={name} col={12}>
+              <Grid className="margin-bottom-2" key={name} col={12}>
                 <Checkbox
                   checked={checked}
                   onChange={onGlobalPermissionChange}
