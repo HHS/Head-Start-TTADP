@@ -50,7 +50,7 @@ const preventNamChangeWhenOnApprovedAR = (sequelize, instance) => {
     if (instance.id !== null
       && Array.isArray(changed)
       && changed.includes('name')) {
-      throw new Error('Goal name change now allowed for goals on approved activity reports.');
+      throw new Error('Goal name change not allowed for goals on approved activity reports.');
     }
   }
 };
