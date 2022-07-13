@@ -134,7 +134,7 @@ export default async function restoreTopics() {
       );
     }));
 
-    // Disable logging while doing mass updates
+    // Enable logging while doing structural updates
     try {
       await sequelize.query(
         `
