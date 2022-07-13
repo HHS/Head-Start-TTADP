@@ -21,7 +21,7 @@ import { activityReportAndRecipientsById } from '../../services/activityReports'
 import { userById } from '../../services/users';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
 import { auditLogger } from '../../logger';
-import { FILE_STATUSES } from '../../constants';
+import { FILE_STATUSES, DECIMAL_BASE } from '../../constants';
 
 const fileType = require('file-type');
 const multiparty = require('multiparty');
@@ -58,6 +58,7 @@ const deleteHandler = async (req, res) => {
     objectiveTempleteId,
     fileId,
   } = req.params;
+  /*
   const user = await userById(req.session.userId);
   const [report] = await activityReportAndRecipientsById(reportId);
   const authorization = new ActivityReportPolicy(user, report);
@@ -65,32 +66,40 @@ const deleteHandler = async (req, res) => {
   if (!authorization.canUpdate()) {
     res.sendStatus(403);
     return;
-  }
+  } */
+
   try {
     let file = await getFileById(fileId);
-    if (reportId
-      && reportId in file.reportFiles.map((r) => r.activityReportId)) {
+
+    if (reportId) {
       const rf = file.reportFiles.find((r) => r.reportId === reportId);
-      deleteActivityReportFile(rf.id);
-    } else if (reportObjectiveId
-      && reportObjectiveId in file.reportObjectiveFiles.map((aro) => aro.reportObjectiveId)) {
+      if (rf) {
+        await deleteActivityReportFile(rf.id);
+      }
+    } else if (reportObjectiveId) {
       const rof = file.reportObjectiveFiles.find((r) => r.reportObjectiveId === reportObjectiveId);
-      deleteActivityReportObjectiveFile(rof.id);
-    } else if (objectiveId
-      && objectiveId in file.objectiveFiles.map((r) => r.objectiveId)) {
-      const of = file.objectiveFiles.find((r) => r.objectiveId === objectiveId);
-      deleteObjectiveFile(of.id);
-    } else if (objectiveTempleteId
-      && objectiveTempleteId in file.objectiveTemplateFiles.map((r) => r.objectiveTempleteId)) {
+      if (rof) {
+        await deleteActivityReportObjectiveFile(rof.id);
+      }
+    } else if (objectiveId) {
+      const of = file.objectiveFiles.find(
+        (r) => r.objectiveId === parseInt(objectiveId, DECIMAL_BASE),
+      );
+      if (of) {
+        await deleteObjectiveFile(of.id);
+      }
+    } else if (objectiveTempleteId) {
       const otf = file.objectiveTemplateFiles
         .find((r) => r.objectiveTempleteId === objectiveTempleteId);
-      deleteObjectiveTemplateFile(otf.id);
+      if (otf) {
+        await deleteObjectiveTemplateFile(otf.id);
+      }
     }
     file = await getFileById(fileId);
     if (file.reports.length
       + file.reportObjectiveFiles.length
-      + file.objectives.length
-      + file.objectiveTemplates.length === 0) {
+      + file.objectiveFiles.length
+      + file.objectiveTemplateFiles.length === 0) {
       await deleteFileFromS3(file.key);
       await deleteFile(fileId);
     }
@@ -182,6 +191,7 @@ const uploadHandler = async (req, res) => {
   let fileName;
   let fileTypeToUse;
 
+  /*
   const user = await userById(req.session.userId);
   const [report] = await activityReportAndRecipientsById(reportId);
   const authorization = new ActivityReportPolicy(user, report);
@@ -189,7 +199,7 @@ const uploadHandler = async (req, res) => {
   if (!(authorization.canUpdate() || (await validateUserAuthForAdmin(req.session.userId)))) {
     return res.sendStatus(403);
   }
-
+  */
   try {
     if (!files.file) {
       return res.status(400).send({ error: 'file required' });
@@ -218,7 +228,7 @@ const uploadHandler = async (req, res) => {
       altFileType = { ext: matchingAltType[0].ext, mime: matchingAltType[0].mime };
     }
     fileTypeToUse = altFileType || type;
-    fileName = `${uuidv4()}.${fileTypeToUse.ext}`;
+    fileName = `${uuidv4()}${fileTypeToUse.ext}`;
     if (reportId) {
       metadata = await createActivityReportFileMetaData(
         originalFilename,
@@ -237,7 +247,7 @@ const uploadHandler = async (req, res) => {
       metadata = await createObjectiveFileMetaData(
         originalFilename,
         fileName,
-        reportId,
+        objectiveId,
         size,
       );
     } else if (objectiveTempleteId) {
