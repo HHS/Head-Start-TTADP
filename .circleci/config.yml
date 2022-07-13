@@ -6,10 +6,10 @@ executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: cimg/node:16.14.2-browsers
+      - image: cimg/node:16.15.1-browsers
   docker-postgres-executor:
     docker:
-      - image: cimg/node:16.14.2-browsers
+      - image: cimg/node:16.15.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -182,10 +182,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "js-update-boundary-diagram"
+    default: "main"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "TTAHUB-785/update-job-image"
+    default: "TTAHUB-747/initial_db_migration"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -370,9 +370,6 @@ jobs:
               name: Create production robot
               command: ./bin/robot-factory
       - run:
-          name: Build frontend assets
-          command: yarn --cwd frontend run build
-      - run:
           name: Install Cloud Foundry
           command: |
             curl -v -L -o cf-cli_amd64.deb 'https://packages.cloudfoundry.org/stable?release=debian64&version=v7&source=github'
@@ -383,6 +380,14 @@ jobs:
               - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.sandbox_git_url >>]
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.sandbox_git_branch >>]
           steps:
+            - run:
+                name: Build frontend assets
+                command: yarn --cwd frontend run build
+                environment:
+                  REACT_APP_GTM_ENABLED: $SANDBOX_GTM_ENABLED
+                  REACT_APP_GTM_ID: $GLOBAL_GTM_ID
+                  REACT_APP_GTM_AUTH: $SANDBOX_GTM_AUTH
+                  REACT_APP_GTM_PREVIEW: $SANDBOX_GTM_PREVIEW
             - cf_deploy:
                 app_name: tta-smarthub-sandbox
                 auth_client_id: SANDBOX_AUTH_CLIENT_ID
@@ -416,6 +421,14 @@ jobs:
               - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.dev_git_url >>]
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.dev_git_branch >>]
           steps:
+            - run:
+                name: Build frontend assets
+                command: yarn --cwd frontend run build
+                environment:
+                  REACT_APP_GTM_ENABLED: $DEV_GTM_ENABLED
+                  REACT_APP_GTM_ID: $GLOBAL_GTM_ID
+                  REACT_APP_GTM_AUTH: $DEV_GTM_AUTH
+                  REACT_APP_GTM_PREVIEW: $DEV_GTM_PREVIEW
             - cf_deploy:
                 app_name: tta-smarthub-dev
                 auth_client_id: DEV_AUTH_CLIENT_ID
@@ -449,6 +462,14 @@ jobs:
               - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.staging_git_url >>]
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.staging_git_branch >>]
           steps:
+            - run:
+                name: Build frontend assets
+                command: yarn --cwd frontend run build
+                environment:
+                  REACT_APP_GTM_ENABLED: $STAGING_GTM_ENABLED
+                  REACT_APP_GTM_ID: $GLOBAL_GTM_ID
+                  REACT_APP_GTM_AUTH: $STAGING_GTM_AUTH
+                  REACT_APP_GTM_PREVIEW: $STAGING_GTM_PREVIEW
             - cf_deploy:
                 app_name: tta-smarthub-staging
                 auth_client_id: STAGING_AUTH_CLIENT_ID
@@ -480,6 +501,14 @@ jobs:
               - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.prod_git_url >>]
               - equal: [<< pipeline.git.branch >>, << pipeline.parameters.prod_git_branch >>]
           steps:
+            - run:
+                name: Build frontend assets
+                command: yarn --cwd frontend run build
+                environment:
+                  REACT_APP_GTM_ENABLED: $PROD_GTM_ENABLED
+                  REACT_APP_GTM_ID: $GLOBAL_GTM_ID
+                  REACT_APP_GTM_AUTH: $PROD_GTM_AUTH
+                  REACT_APP_GTM_PREVIEW: $PROD_GTM_PREVIEW
             - cf_deploy:
                 app_name: tta-smarthub-prod
                 auth_client_id: PROD_AUTH_CLIENT_ID
