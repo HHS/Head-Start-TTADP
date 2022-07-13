@@ -27,7 +27,7 @@ const [
   objectiveTextError, objectiveTopicsError, objectiveResourcesError, objectiveStatusError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
-const formatGrantsFromApi = (grants) => grants.map((grant) => {
+const formatGrantsFromApi = (grant) => {
   const programTypes = [...new Set(grant.programs.map(({ programType }) => programType))].sort();
   const numberWithProgramTypes = `${grant.number} ${programTypes}`;
   return {
@@ -35,7 +35,7 @@ const formatGrantsFromApi = (grants) => grants.map((grant) => {
     label: numberWithProgramTypes,
     id: grant.id,
   };
-});
+};
 
 export default function CreateGoal({ recipient, regionId, match }) {
   const { params: { goalId: urlId } } = match;
@@ -359,20 +359,22 @@ export default function CreateGoal({ recipient, regionId, match }) {
     }
 
     try {
+      const newGoals = selectedGrants.map((g) => ({
+        grantId: g.value,
+        name: goalName,
+        status,
+        endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
+        regionId: parseInt(regionId, DECIMAL_BASE),
+        recipientId: recipient.id,
+        objectives,
+        id: goalId,
+      }));
       const goals = [
         ...createdGoals,
-        {
-          grants: selectedGrants,
-          name: goalName,
-          status,
-          endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
-          regionId: parseInt(regionId, DECIMAL_BASE),
-          recipientId: recipient.id,
-          objectives,
-          id: goalId,
-        }];
-
-      await createOrUpdateGoals(goals);
+        ...newGoals,
+      ];
+      const updatedGoal = await createOrUpdateGoals(goals);
+      setObjectives(updatedGoal[0].objectives);
 
       setAlert({
         message: `Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`,
@@ -404,37 +406,41 @@ export default function CreateGoal({ recipient, regionId, match }) {
     }
 
     try {
+      const newGoals = selectedGrants.map((g) => ({
+        grantId: g.value,
+        name: goalName,
+        status,
+        endDate,
+        regionId: parseInt(regionId, DECIMAL_BASE),
+        recipientId: recipient.id,
+        objectives: objectives.map((objective) => {
+          const apiData = unchangingApiData[objective.id];
+          if (apiData) {
+            const topicsFromApi = apiData.topics;
+            const resourcesFromApi = apiData.resources;
+            const filesFromApi = apiData.files;
+            return {
+              ...objective,
+              topics: [...objective.topics, ...topicsFromApi],
+              resources: [...objective.resources, ...resourcesFromApi],
+              files: [...objective.files, ...filesFromApi],
+            };
+          }
+
+          return objective;
+        }),
+        id: goalId,
+      }));
       const goals = [
         ...createdGoals,
-        {
-          grants: selectedGrants,
-          name: goalName,
-          status,
-          endDate,
-          regionId: parseInt(regionId, DECIMAL_BASE),
-          recipientId: recipient.id,
-          objectives: objectives.map((objective) => {
-            const apiData = unchangingApiData[objective.id];
-            if (apiData) {
-              const topicsFromApi = apiData.topics;
-              const resourcesFromApi = apiData.resources;
-              return {
-                ...objective,
-                topics: [...objective.topics, ...topicsFromApi],
-                resources: [...objective.resources, ...resourcesFromApi],
-              };
-            }
-
-            return objective;
-          }),
-          id: goalId,
-        }];
+        ...newGoals,
+      ];
 
       const newCreatedGoals = await createOrUpdateGoals(goals);
 
       setCreatedGoals(newCreatedGoals.map((goal) => ({
         ...goal,
-        grants: formatGrantsFromApi(goal.grants),
+        grant: formatGrantsFromApi(goal.grant),
       })));
 
       clearForm();

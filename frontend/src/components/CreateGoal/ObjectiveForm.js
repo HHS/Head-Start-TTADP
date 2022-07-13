@@ -6,6 +6,7 @@ import {
 import ObjectiveTitle from './ObjectiveTitle';
 import ObjectiveTopics from './ObjectiveTopics';
 import ResourceRepeater from './ResourceRepeater';
+import ObjectiveFiles from './ObjectiveFiles';
 import {
   OBJECTIVE_FORM_FIELD_INDEXES, validateListOfResources, OBJECTIVE_ERROR_MESSAGES,
 } from './constants';
@@ -28,7 +29,7 @@ export default function ObjectiveForm({
 }) {
   // the parent objective data from props
   const {
-    title, topics, resources, status,
+    title, topics, resources, status, files,
   } = objective;
   const isOnReport = useMemo(() => (
     objective.activityReports && objective.activityReports.length > 0
@@ -46,6 +47,9 @@ export default function ObjectiveForm({
   const onChangeTitle = (e) => setObjective({ ...objective, title: e.target.value });
   const onChangeTopics = (newTopics) => setObjective({ ...objective, topics: newTopics });
   const setResources = (newResources) => setObjective({ ...objective, resources: newResources });
+  const onChangeFiles = (e) => {
+    setObjective({ ...objective, files: e });
+  };
 
   // validate different fields
   const validateObjectiveTitle = () => {
@@ -123,6 +127,12 @@ export default function ObjectiveForm({
         status={status}
       />
 
+      <ObjectiveFiles
+        files={files}
+        onChangeFiles={onChangeFiles}
+        objectiveId={objective.id}
+      />
+
       { goalStatus !== 'Draft'
         ? (
           <>
@@ -164,6 +174,8 @@ ObjectiveForm.propTypes = {
       label: PropTypes.string,
       value: PropTypes.number,
     })),
+    // eslint-disable-next-line react/forbid-prop-types
+    files: PropTypes.arrayOf(PropTypes.object),
     activityReports: PropTypes.arrayOf(PropTypes.shape({
       id: PropTypes.number,
     })),
@@ -186,6 +198,7 @@ ObjectiveForm.defaultProps = {
     topics: [],
     activityReports: [],
     resources: [],
+    files: [],
     status: '',
   },
 };

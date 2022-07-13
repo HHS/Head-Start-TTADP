@@ -12,6 +12,7 @@ import {
   ActivityReportGoal,
   Topic,
   Program,
+  File,
 } from '../models';
 import { DECIMAL_BASE, REPORT_STATUSES } from '../constants';
 
@@ -52,6 +53,10 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
             ['id', 'value'],
             ['name', 'label'],
           ],
+        },
+        {
+          model: File,
+          as: 'files',
         },
         {
           model: ActivityReport,
