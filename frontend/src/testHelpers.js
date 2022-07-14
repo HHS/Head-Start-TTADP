@@ -1,3 +1,23 @@
+export const convertToResponse = (
+  reports,
+  isAlerts = false,
+  count = reports.length,
+) => reports.reduce((previous, current) => {
+  const { activityRecipients, ...report } = current;
+  const recipients = activityRecipients.map((recipient) => (
+    {
+      ...recipient,
+      activityReportId: report.id,
+    }
+  ));
+
+  return {
+    [isAlerts ? 'alerts' : 'rows']: [...previous[isAlerts ? 'alerts' : 'rows'], report],
+    recipients: [...previous.recipients, ...recipients],
+    [isAlerts ? 'alertsCount' : 'count']: count,
+  };
+}, { [isAlerts ? 'alertsCount' : 'count']: count, [isAlerts ? 'alerts' : 'rows']: [], recipients: [] });
+
 export const withText = (text) => (content, node) => {
   const hasText = (n) => n.textContent === text;
   const nodeHasText = hasText(node);

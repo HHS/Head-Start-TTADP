@@ -15,6 +15,9 @@ import {
 } from '../activityReports';
 import { REPORTS_PER_PAGE } from '../../Constants';
 
+const response = { rows: [], count: 0, recipients: [] };
+const alerts = { alertsCount: 0, alerts: [], recipients: [] };
+
 describe('activityReports fetcher', () => {
   afterEach(() => fetchMock.restore());
 
@@ -28,7 +31,7 @@ describe('activityReports fetcher', () => {
         filters: 'filters',
       };
 
-      fetchMock.get(join('api', 'activity-reports'), [], { query });
+      fetchMock.get(join('api', 'activity-reports'), response, { query });
       await getReports(undefined, undefined, undefined, undefined, 'filters=filters');
       expect(fetchMock.called()).toBeTruthy();
     });
@@ -42,7 +45,7 @@ describe('activityReports fetcher', () => {
         filters: 'filters',
       };
 
-      fetchMock.get(join('api', 'activity-reports'), [], { query });
+      fetchMock.get(join('api', 'activity-reports'), response, { query });
       await getReports('updatedAt', 'desc', 0, REPORTS_PER_PAGE, 'filters=filters');
       expect(fetchMock.called()).toBeTruthy();
     });
@@ -57,7 +60,7 @@ describe('activityReports fetcher', () => {
         limit: 10,
       };
 
-      fetchMock.get(join('api', 'activity-reports', 'alerts'), [], { query });
+      fetchMock.get(join('api', 'activity-reports', 'alerts'), alerts, { query });
       await getReportAlerts(undefined, undefined, undefined, undefined, 'filters=filters');
       expect(fetchMock.called()).toBeTruthy();
     });
@@ -71,7 +74,7 @@ describe('activityReports fetcher', () => {
         filters: 'filters',
       };
 
-      fetchMock.get(join('api', 'activity-reports', 'alerts'), [], { query });
+      fetchMock.get(join('api', 'activity-reports', 'alerts'), alerts, { query });
       await getReportAlerts('updatedAt', 'desc', 0, REPORTS_PER_PAGE, 'filters=filters');
       expect(fetchMock.called()).toBeTruthy();
     });

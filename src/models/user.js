@@ -1,20 +1,11 @@
 const { Model } = require('sequelize');
 const isEmail = require('validator/lib/isEmail');
 const { USER_ROLES } = require('../constants');
+const generateFullName = require('./hooks/user');
 
 const featureFlags = [
   'recipient_goals_objectives',
 ];
-
-const generateFullName = (name, role) => {
-  const combinedRoles = Array.isArray(role) ? role.reduce((result, val) => {
-    if (val) {
-      return val === 'TTAC' || val === 'COR' ? `${result}, ${val}` : `${result}, ${val.split(' ').map((word) => word[0]).join('')}`;
-    }
-    return '';
-  }, []) : [];
-  return combinedRoles.length > 0 ? `${name}${combinedRoles}` : name;
-};
 
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {

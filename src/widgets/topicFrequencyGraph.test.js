@@ -50,7 +50,7 @@ const reportObject = {
   lastUpdatedById: mockUser.id,
   ECLKCResourcesUsed: ['test'],
   activityRecipients: [
-    { activityRecipientId: GRANT_ID },
+    { activityRecipientId: RECIPIENT_ID, grantId: GRANT_ID },
   ],
   numberOfParticipants: 11,
   deliveryMethod: 'in-person',
@@ -100,6 +100,7 @@ describe('Topics and frequency graph widget', () => {
       mockUserTwo,
       mockUserThree,
     ]);
+
     await Recipient.create({ name: 'recipient', id: RECIPIENT_ID });
     await Region.create({ name: 'office 17', id: 17 });
     await Region.create({ name: 'office 18', id: 18 });

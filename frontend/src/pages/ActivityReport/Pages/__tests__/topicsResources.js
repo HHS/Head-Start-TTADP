@@ -43,7 +43,7 @@ const RenderTopicsResources = () => {
 
 describe('Topics & resources', () => {
   const data = {
-    attachments: [{ originalFileName: 'attachment', url: { url: 'http://localhost/attachment' }, status: 'APPROVED' }],
+    files: [{ originalFileName: 'attachment', url: { url: 'http://localhost/attachment' }, status: 'APPROVED' }],
     ECLKCResourcesUsed: [{ value: 'eclkc' }],
     nonECLKCResourcesUsed: [{ value: 'nonEclkc' }],
     topics: 'topics',

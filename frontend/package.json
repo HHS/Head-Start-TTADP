@@ -15,7 +15,7 @@
     "@fortawesome/pro-solid-svg-icons": "^6.1.1",
     "@fortawesome/react-fontawesome": "^0.1.11",
     "@hookform/error-message": "^0.0.5",
-    "@trussworks/react-uswds": "2.7.0",
+    "@trussworks/react-uswds": "3.0.2",
     "@use-it/interval": "^1.0.0",
     "draft-js": "^0.11.7",
     "draftjs-to-html": "^0.9.1",
@@ -178,7 +178,8 @@
       "<rootDir>/src/widgets/Example.js",
       "<rootDir>/src/pages/RegionalDashboard/formatDateRange.js",
       "<rootDir>/src/pages/RegionalDashboard/constants.js",
-      "<rootDir>/src/pages/makecolors.js"
+      "<rootDir>/src/pages/makecolors.js",
+      "<rootDir>/src/NetworkContext.js"      
     ],
     "coverageThreshold": {
       "global": {

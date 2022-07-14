@@ -3,24 +3,7 @@ const moment = require('moment');
 const { isEqual, uniqWith } = require('lodash');
 const { REPORT_STATUSES, USER_ROLES } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
-
-/**
- * Helper function called by model hooks.
- * Updates current model instance's calculatedStatus field.
- * Background: calculatedStatus is updated to 'submitted', 'needs_review', and 'approved'
- * based on hooks on the ActivityReportApprovers. Before submission though,
- * we want calculatedStatus to function like submissionStatus so developers
- * only have to check calculatedStatus to determine overall report status.
- * @param {*} report - current model instance
- */
-function copyStatus(report) {
-  const { submissionStatus } = report;
-  if (submissionStatus === REPORT_STATUSES.DRAFT
-    || submissionStatus === REPORT_STATUSES.DELETED) {
-    // eslint-disable-next-line no-param-reassign
-    report.calculatedStatus = submissionStatus;
-  }
-}
+const { beforeCreate, beforeUpdate, afterUpdate } = require('./hooks/activityReport');
 
 const generateCreatorNameWithRole = (ar) => {
   const creatorName = ar.author ? ar.author.name : '';
@@ -39,7 +22,13 @@ module.exports = (sequelize, DataTypes) => {
       ActivityReport.hasMany(models.ActivityRecipient, { foreignKey: 'activityReportId', as: 'activityRecipients' });
       ActivityReport.hasMany(models.ActivityReportCollaborator, { foreignKey: 'activityReportId', as: 'activityReportCollaborators' });
       ActivityReport.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
-      ActivityReport.hasMany(models.File, { foreignKey: 'activityReportId', as: 'attachments' });
+      ActivityReport.hasMany(models.ActivityReportFile, { foreignKey: 'activityReportId', as: 'reportFiles' });
+      ActivityReport.belongsToMany(models.File, {
+        through: models.ActivityReportFile,
+        foreignKey: 'activityReportId',
+        otherKey: 'fileId',
+        as: 'files',
+      });
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'specialistNextSteps' });
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'recipientNextSteps' });
       ActivityReport.hasMany(models.ActivityReportApprover, { foreignKey: 'activityReportId', as: 'approvers', hooks: true });
@@ -275,16 +264,13 @@ module.exports = (sequelize, DataTypes) => {
       },
     },
   }, {
+    hooks: {
+      beforeCreate: async (instance) => beforeCreate(instance),
+      beforeUpdate: async (instance) => beforeUpdate(instance),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
+    },
     sequelize,
     modelName: 'ActivityReport',
-    hooks: {
-      beforeCreate: (report) => {
-        copyStatus(report);
-      },
-      beforeUpdate: (report) => {
-        copyStatus(report);
-      },
-    },
   });
   return ActivityReport;
 };

@@ -11,6 +11,6 @@ const router = express.Router();
 router.post('/', transactionWrapper(createGoals));
 router.get('/:goalId/recipient/:recipientId', transactionWrapper(retrieveGoal));
 router.delete('/:goalId', transactionWrapper(deleteGoal));
-router.put('/:goalId/changeStatus', transactionWrapper(changeGoalStatus));
+router.put('/changeStatus', transactionWrapper(changeGoalStatus));
 
 export default router;
