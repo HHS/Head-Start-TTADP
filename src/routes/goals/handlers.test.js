@@ -168,6 +168,7 @@ describe('retrieve goal', () => {
 describe('createGoals', () => {
   afterAll(async () => {
     jest.clearAllMocks();
+    userById.mockReset();
   });
 
   it('checks permissions', async () => {
@@ -251,37 +252,40 @@ describe('createGoals', () => {
   });
 });
 
-describe.skip('changeGoalStatus', () => {
+describe('changeGoalStatus', () => {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    userById.mockReset();
+    goalByIdWithActivityReportsAndRegions.mockReset();
+  });
   const goalWhere = { name: 'My updated goal' };
 
   it('updates status goal by id', async () => {
     const req = {
-      params: {
-        goalId: 100000,
-      },
       body: {
+        goalIds: [100000],
         newStatus: 'New Status',
         closeSuspendReason: 'TTA complete',
         closeSuspendContext: 'Sample context.',
-        regionId: 1,
+        regionId: 2,
       },
       session: {
         userId: 1,
       },
     };
-    updateGoalStatusById.mockResolvedValue(goalWhere);
-    userById.mockResolvedValue({
+    updateGoalStatusById.mockResolvedValueOnce(goalWhere);
+    userById.mockResolvedValueOnce({
       permissions: [
         {
-          regionId: 1,
+          regionId: 2,
           scopeId: SCOPES.READ_WRITE_REPORTS,
         },
       ],
     });
 
-    goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
+    goalByIdWithActivityReportsAndRegions.mockResolvedValue({
       objectives: [],
-      grants: [{ regionId: 1 }],
+      grant: { regionId: 2 },
     });
 
     await changeGoalStatus(req, mockResponse);
@@ -290,10 +294,8 @@ describe.skip('changeGoalStatus', () => {
 
   it('returns a 401 based on permissions checks', async () => {
     const req = {
-      params: {
-        goalId: 100000,
-      },
       body: {
+        goalIds: [100000],
         newStatus: 'New Status',
         closeSuspendReason: 'TTA complete',
         closeSuspendContext: 'Sample context.',
@@ -307,15 +309,15 @@ describe.skip('changeGoalStatus', () => {
     userById.mockResolvedValue({
       permissions: [
         {
-          regionId: 1,
+          regionId: 2,
           scopeId: SCOPES.READ_REPORTS,
         },
       ],
     });
 
-    goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
+    goalByIdWithActivityReportsAndRegions.mockResolvedValue({
       objectives: [],
-      grants: [{ regionId: 1 }],
+      grant: { regionId: 2 },
     });
 
     await changeGoalStatus(req, mockResponse);
@@ -324,14 +326,12 @@ describe.skip('changeGoalStatus', () => {
 
   it('returns a 404 when a goal can\'t be found', async () => {
     const req = {
-      params: {
-        goalId: 100000,
-      },
       body: {
+        goalIds: [100000],
         newStatus: 'New Status',
         closeSuspendReason: 'TTA complete',
         closeSuspendContext: 'Sample context.',
-        regionId: 1,
+        regionId: 2,
       },
       session: {
         userId: 1,
@@ -341,13 +341,13 @@ describe.skip('changeGoalStatus', () => {
     userById.mockResolvedValue({
       permissions: [
         {
-          regionId: 1,
+          regionId: 2,
           scopeId: SCOPES.READ_WRITE_REPORTS,
         },
       ],
     });
 
-    goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce(null);
+    goalByIdWithActivityReportsAndRegions.mockResolvedValue(null);
 
     updateGoalStatusById.mockResolvedValue(null);
     await changeGoalStatus(req, mockResponse);
@@ -365,6 +365,7 @@ describe.skip('changeGoalStatus', () => {
 describe('deleteGoal', () => {
   afterAll(async () => {
     jest.clearAllMocks();
+    jest.resetModules();
   });
 
   it('checks permissions', async () => {
@@ -388,7 +389,7 @@ describe('deleteGoal', () => {
 
     goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
       objectives: [],
-      grants: [{ regionId: 2 }],
+      grant: { regionId: 2 },
     });
 
     await deleteGoal(req, mockResponse);
@@ -408,7 +409,7 @@ describe('deleteGoal', () => {
 
     goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
       objectives: [],
-      grants: [{ regionId: 2 }],
+      grant: { regionId: 2 },
     });
 
     userById.mockResolvedValueOnce({

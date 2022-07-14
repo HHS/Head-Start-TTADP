@@ -179,7 +179,7 @@ describe('ActivityReport', () => {
       // load the report
       fetchMock.get('/api/activity-reports/3', {
         ...data,
-        goals: [],
+        goalsAndObjectives: [],
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
         submissionStatus: REPORT_STATUSES.SUBMITTED,
       });
