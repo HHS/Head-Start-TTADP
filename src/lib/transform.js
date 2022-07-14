@@ -2,6 +2,32 @@ import moment from 'moment';
 import { convert } from 'html-to-text';
 import { DATE_FORMAT } from '../constants';
 
+export function deduplicateObjectivesWithoutGoals(objectives) {
+  if (!objectives || !objectives.length) {
+    return [];
+  }
+
+  return objectives.reduce(
+    (os, objective) => {
+      const exists = os.find((o) => (
+        o.title === objective.title
+      ));
+
+      if (exists) {
+        exists.ids = [...exists.ids, objective.id];
+        return os;
+      }
+
+      return [...os, {
+        ...objective.dataValues,
+        ids: [objective.id],
+        ttaProvided: objective.ActivityReportObjective.ttaProvided,
+      }];
+    },
+    [],
+  );
+}
+
 function transformDate(field) {
   function transformer(instance) {
     let value = '';
@@ -162,6 +188,7 @@ function sortObjectives(a, b) {
    * Create an object with goals and objectives. Used by transformGoalsAndObjectives
    * @param {Array<Objectives>} objectiveRecords
    */
+// TODO: ttaProvided needs to move from ActivityReportObjective to ActivityReportObjective
 function makeGoalsAndObjectivesObject(objectiveRecords) {
   objectiveRecords.sort(sortObjectives);
   let objectiveNum = 0;
@@ -231,7 +258,9 @@ function transformGoalsAndObjectives(report) {
   let obj = {};
   const { activityReportObjectives } = report;
   if (activityReportObjectives) {
-    const objectiveRecords = activityReportObjectives.map((aro) => aro.objective);
+    const objectiveRecords = activityReportObjectives.map((aro) => (
+      { ...aro.objective, ttaProvided: aro.ttaProvided }
+    ));
     if (objectiveRecords) {
       obj = makeGoalsAndObjectivesObject(objectiveRecords);
     }
@@ -263,7 +292,7 @@ const arTransformers = [
   'activityRecipientType',
   'ECLKCResourcesUsed',
   'nonECLKCResourcesUsed',
-  transformRelatedModel('attachments', 'originalFileName'),
+  transformRelatedModel('files', 'originalFileName'),
   transformGoalsAndObjectives,
   transformRelatedModel('recipientNextSteps', 'note'),
   transformRelatedModel('specialistNextSteps', 'note'),

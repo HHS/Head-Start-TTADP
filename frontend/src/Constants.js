@@ -225,7 +225,7 @@ export const ALERTS_PER_PAGE = 10;
 export const RECIPIENTS_PER_PAGE = 12;
 export const GOVERNMENT_HOSTNAME_EXTENSION = '.ohs.acf.hhs.gov';
 export const ESCAPE_KEY_CODE = 27;
-export const GOALS_PER_PAGE = 5;
+export const GOALS_PER_PAGE = 10;
 
 // In Internet Explorer (tested on release 9 and 11) and Firefox 36 and earlier
 // the Esc key returns "Esc" instead of "Escape".
@@ -233,6 +233,7 @@ export const ESCAPE_KEY_CODES = ['Escape', 'Esc'];
 
 export const DATE_FMT = 'YYYY/MM/DD';
 export const DATE_DISPLAY_FORMAT = 'MM/DD/YYYY';
+export const DATEPICKER_VALUE_FORMAT = 'YYYY-MM-DD';
 export const EARLIEST_INC_FILTER_DATE = moment('2020-08-31');
 
 const LOCAL_STORAGE_CACHE_NUMBER = '0.1';

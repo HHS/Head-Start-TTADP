@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import { v4 as uuidv4 } from 'uuid';
 import { Button } from '@trussworks/react-uswds';
@@ -9,11 +10,16 @@ import { validateObjectives } from './objectiveValidator';
 
 const OBJECTIVE_LABEL = 'objectivesWithoutGoals';
 
-const createObjective = () => ({
-  title: '', ttaProvided: '', status: 'Not Started', id: uuidv4(), new: true,
+const createObjective = (recipientIds) => ({
+  title: '',
+  ttaProvided: '',
+  status: 'Not Started',
+  id: uuidv4(),
+  isNew: true,
+  recipientIds,
 });
 
-const ObjectivePicker = () => {
+const ObjectivePicker = ({ recipientIds }) => {
   const {
     watch, setValue, register,
   } = useFormContext();
@@ -58,7 +64,7 @@ const ObjectivePicker = () => {
       <Button
         type="button"
         onClick={() => {
-          setValue(OBJECTIVE_LABEL, [...objectives, createObjective()]);
+          setValue(OBJECTIVE_LABEL, [...objectives, createObjective(recipientIds)]);
         }}
         outline
         aria-label="add objective"
@@ -67,6 +73,10 @@ const ObjectivePicker = () => {
       </Button>
     </div>
   );
+};
+
+ObjectivePicker.propTypes = {
+  recipientIds: PropTypes.arrayOf(PropTypes.number).isRequired,
 };
 
 export default ObjectivePicker;
