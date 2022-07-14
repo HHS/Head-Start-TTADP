@@ -217,11 +217,7 @@ describe('filtersToScopes', () => {
       afterAll(async () => {
         await ActivityRecipient.destroy({
           where: {
-            id: [
-              activityRecipientIncluded1.id,
-              activityRecipientIncluded2.id,
-              activityRecipientExcluded.id,
-            ],
+            activityReportId: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id],
           },
         });
         await ActivityReport.destroy({
@@ -297,14 +293,17 @@ describe('filtersToScopes', () => {
           activityReportId: reportIncluded1.id,
           grantId: grantIncluded1.id,
         });
+
         activityRecipientIncluded2 = await ActivityRecipient.create({
           activityReportId: reportIncluded2.id,
           grantId: grantIncluded2.id,
         });
+
         activityRecipientExcluded = await ActivityRecipient.create({
           activityReportId: reportExcluded.id,
           grantId: grantExcluded.id,
         });
+
         possibleIds = [
           reportIncluded1.id,
           reportIncluded2.id,
@@ -316,11 +315,7 @@ describe('filtersToScopes', () => {
       afterAll(async () => {
         await ActivityRecipient.destroy({
           where: {
-            id: [
-              activityRecipientIncluded1.id,
-              activityRecipientIncluded2.id,
-              activityRecipientExcluded.id,
-            ],
+            activityReportId: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id],
           },
         });
         await ActivityReport.destroy({
@@ -434,10 +429,7 @@ describe('filtersToScopes', () => {
       afterAll(async () => {
         await ActivityRecipient.destroy({
           where: {
-            id: [
-              activityRecipientIncluded.id,
-              activityRecipientExcluded.id,
-            ],
+            activityReportId: [reportIncluded.id, reportExcluded.id],
           },
         });
         await ActivityReport.destroy({
@@ -1147,11 +1139,7 @@ describe('filtersToScopes', () => {
     afterAll(async () => {
       await ActivityRecipient.destroy({
         where: {
-          id: [
-            activityRecipientIncluded1.id,
-            activityRecipientIncluded2.id,
-            activityRecipientExcluded.id,
-          ],
+          activityReportId: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id],
         },
       });
       await ActivityReport.destroy({
@@ -1307,7 +1295,6 @@ describe('filtersToScopes', () => {
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       }).catch((err) => auditLogger.error(err));
-      auditLogger.info(JSON.stringify(found));
       expect(found.length).toBe(3);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([reportOne.id, reportTwo.id, reportThree.id]));
@@ -1646,11 +1633,7 @@ describe('filtersToScopes', () => {
     afterAll(async () => {
       await ActivityRecipient.destroy({
         where: {
-          id: [
-            activityRecipientIncluded1.id,
-            activityRecipientIncluded2.id,
-            activityRecipientExcluded.id,
-          ],
+          activityReportId: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id],
         },
       });
       await ActivityReport.destroy({

@@ -52,7 +52,7 @@
   $ref: './recipient/recipient-search.yaml'
 '/recipient/goals/{recipientId}':
   $ref: './recipient/recipient-goals.yaml'
-'/goals/{goalId}/changeStatus':
+'/goals/changeStatus':
   $ref: './goals/goal-status.yaml'
 '/widgets/overview':
   $ref: './widgets/overview.yaml'

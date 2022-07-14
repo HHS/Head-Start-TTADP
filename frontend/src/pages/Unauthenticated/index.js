@@ -10,7 +10,7 @@ import logo2x from '../../images/eclkc-blocks-logo-156.png';
 function Unauthenticated({ loggedOut, timedOut }) {
   let msg = 'You have successfully logged out of the TTA Hub';
   let type = 'success';
-  let heading = 'Logout Successful';
+  let heading = <>Logout Successful</>;
 
   if (timedOut) {
     msg = 'You have been logged out due to inactivity';
@@ -27,12 +27,11 @@ function Unauthenticated({ loggedOut, timedOut }) {
           <h1 id="welcome-message" className="font-serif-xl text-center margin-4">
             Welcome to the TTA Hub
           </h1>
-          {loggedOut
-          && (
-          <Alert type={type} heading={heading}>
-            {msg}
-          </Alert>
-          )}
+          {loggedOut ? (
+            <Alert type={type} heading={heading} headingLevel="h2">
+              {msg}
+            </Alert>
+          ) : null}
           <div className="text-center margin-top-4">
             <p id="login-description">
               You must log in with HSES in order to access the Office of Head Start TTA Hub.

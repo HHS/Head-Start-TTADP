@@ -31,7 +31,7 @@ const models = {
  * that the scopes returned should be to produce a total subset based on which model is
  * specified. that feels like a bit of word salad, so hopefully that makes sense.
  *
- * In the current use case for this option, we are somtimes query for activity reports
+ * In the current use case for this option, we are sometimes query for activity reports
  * as the main model but in the overview widgets we also need a matching subset of grants
  * so this specifies that the grant query should be returned as a subset based on the activity
  * report filters. I'm not sure about the naming here.
@@ -44,7 +44,7 @@ export default function filtersToScopes(filters, options) {
   return Object.keys(models).reduce((scopes, model) => {
     // we make em an object like so
     Object.assign(scopes, {
-      [model]: models[model](filters, options && options[model] && options[model].subset),
+      [model]: models[model](filters, options && options[model]),
     });
     return scopes;
   }, {});

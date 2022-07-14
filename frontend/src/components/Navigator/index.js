@@ -97,7 +97,7 @@ function Navigator({
     const { status, ...values } = getValues();
     const data = { ...formData, ...values, pageState: newNavigatorState() };
 
-    updateFormData(data);
+    updateFormData(data, true);
     try {
       // Always clear the previous error message before a save.
       updateErrorMessage();

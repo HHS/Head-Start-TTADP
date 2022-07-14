@@ -1,6 +1,6 @@
 import waitFor from 'wait-for-expect';
 import db, {
-  ActivityReport, User, Objective, ActivityReportObjective, sequelize,
+  ActivityRecipient, ActivityReport, User, Objective, ActivityReportObjective, sequelize,
 } from '../models';
 import { REPORT_STATUSES } from '../constants';
 
@@ -31,14 +31,18 @@ describe('Objectives DB service', () => {
       title: 'first objective',
       ttaProvided: 'tta first',
       status: 'In Progress',
-      new: true,
+      isNew: true,
+      recipientIds: [1],
+      ids: ['uuid'],
     },
     {
       id: 'uuid2',
       title: 'second objective',
       ttaProvided: 'tta second',
       status: 'In Progress',
-      new: true,
+      isNew: true,
+      recipientIds: [1],
+      ids: ['uuid2'],
     },
   ];
 
@@ -48,18 +52,20 @@ describe('Objectives DB service', () => {
     objective = await Objective.create({
       title: 'title',
       ttaProvided: 'tta provided',
-      status: 'status',
+      status: 'Draft',
+      otherEntityId: 1,
     });
 
     secondObjective = await Objective.create({
       title: 'second title',
-      ttaProvided: 'tta provided',
-      status: 'status',
+      status: 'Draft',
+      otherEntityId: 1,
     });
 
     await ActivityReportObjective.create({
       objectiveId: objective.id,
       activityReportId: report.id,
+      ttaProvided: 'tta provided',
     });
 
     await ActivityReportObjective.create({
@@ -68,7 +74,14 @@ describe('Objectives DB service', () => {
     });
 
     await sequelize.transaction(async () => {
-      await saveObjectivesForReport([...objectives, objective], report);
+      await saveObjectivesForReport([...objectives, {
+        id: objective.id,
+        title: objective.title,
+        ttaProvided: 'tta provided',
+        status: objective.status,
+        recipientIds: [1],
+        ids: [objective.id],
+      }], report);
     });
   });
 
@@ -77,6 +90,7 @@ describe('Objectives DB service', () => {
     const objectiveIds = aros.map((aro) => aro.objectiveId);
     await ActivityReportObjective.destroy({ where: { activityReportId: report.id } });
     await Objective.destroy({ where: { id: objectiveIds } });
+    await ActivityRecipient.destroy({ where: { activityReportId: report.id } });
     await ActivityReport.destroy({ where: { id: report.id } });
     await User.destroy({ where: { id: mockUser.id } });
     await db.sequelize.close();
