@@ -67,7 +67,7 @@ describe('Goals', () => {
     expect(instance.onApprovedAR).toEqual(true);
   });
   it('preventNamChangeWhenOnApprovedAR', async () => {
-    const errorMsg = 'Goal name change now allowed for goals on approved activity reports.';
+    const errorMsg = 'Goal name change not allowed for goals on approved activity reports.';
     let instance = {
       changed: () => [],
     };
