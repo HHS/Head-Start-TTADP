@@ -13,9 +13,15 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       Grant.belongsTo(models.Region, { foreignKey: 'regionId' });
       Grant.belongsTo(models.Recipient, { foreignKey: 'recipientId', as: 'recipient' });
-      Grant.belongsToMany(models.Goal, { through: models.GrantGoal, foreignKey: 'grantId', as: 'goals' });
+      Grant.hasMany(models.Goal, { foreignKey: 'grantId', as: 'goals' });
       Grant.hasMany(models.Program, { foreignKey: 'grantId', as: 'programs' });
       Grant.hasMany(models.ActivityRecipient, { foreignKey: 'grantId', as: 'activityRecipients' });
+
+      Grant.addScope('defaultScope', {
+        include: [
+          { model: models.Recipient, as: 'recipient' },
+        ],
+      });
     }
   }
   Grant.init({
@@ -63,7 +69,10 @@ module.exports = (sequelize, DataTypes) => {
     name: {
       type: DataTypes.VIRTUAL,
       get() {
-        return `${this.recipient.name} - ${this.numberWithProgramTypes}`;
+        if (this.recipient) {
+          return `${this.recipient.name} - ${this.numberWithProgramTypes}`;
+        }
+        return `${this.numberWithProgramTypes}`;
       },
     },
     numberWithProgramTypes: {

@@ -22,7 +22,7 @@ export default function Tooltip({
 
   return (
     <span className={cssClasses} data-testid="tooltip">
-      <div aria-hidden="true" className="usa-tooltip__body usa-tooltip__body--top">{tooltipText}</div>
+      <div aria-hidden="true" className="usa-tooltip__body usa-tooltip__body--top maxw-card-lg">{tooltipText}</div>
       <button type="button" className="usa-button usa-button--unstyled" onClick={onClick}>
         <span className="smart-hub--ellipsis">
           <span aria-hidden={!screenReadDisplayText}>

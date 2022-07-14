@@ -107,6 +107,14 @@ describe('goalFilters', () => {
       expect(grantNumberInput).toBeInTheDocument();
     });
 
+    it('displays the correct values', async () => {
+      const q = grantFilter.displayQuery([
+        'number',
+      ]);
+
+      expect(q).toBe('number EHS');
+    });
+
     it('calls onApply', async () => {
       const apply = jest.fn();
       renderFilter(() => grantFilter.renderInput('1', 'test', [], apply));

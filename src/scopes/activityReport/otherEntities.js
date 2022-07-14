@@ -16,7 +16,15 @@ const acceptedOtherEntities = [
 ];
 
 function otherEntityReportIdQUery(otherEntitiesIn) {
-  return `SELECT a."id" FROM  "ActivityReports" a INNER JOIN "ActivityRecipients" ar ON a.id = ar."activityReportId" INNER JOIN "OtherEntities" o ON ar."otherEntityId" = o.id WHERE o."name" IN (${otherEntitiesIn})`;
+  return `
+  SELECT
+  "ActivityReports"."id"
+  FROM  "ActivityReports" "ActivityReports"
+  INNER JOIN "ActivityRecipients" "ActivityRecipients"
+  ON "ActivityReports".id = "ActivityRecipients"."activityReportId"
+  INNER JOIN "OtherEntities" "OtherEntities"
+  ON "ActivityRecipients"."otherEntityId" = "OtherEntities".id
+  WHERE "OtherEntities"."name" IN (${otherEntitiesIn})`;
 }
 
 function generateWhere(escapedSearchTerms, exclude) {
