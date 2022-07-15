@@ -14,6 +14,7 @@ import { hsesAuth } from './middleware/authMiddleware';
 import { retrieveUserDetails } from './services/currentUser';
 import cookieSession from './middleware/sessionMiddleware';
 import updateGrantsRecipients from './lib/updateGrantsRecipients';
+import dbMaintenance from './lib/dbMaintenance';
 import { logger, auditLogger, requestLogger } from './logger';
 
 const app = express();
@@ -83,23 +84,40 @@ if (process.env.NODE_ENV === 'production') {
   app.use('*', serveIndex);
 }
 
-// Set timing parameters.
-// Run at 4 am ET
-const schedule = '0 4 * * *';
-const timezone = 'America/New_York';
-
-const runJob = () => {
-  try {
-    return updateGrantsRecipients();
-  } catch (error) {
-    auditLogger.error(`Error processing HSES file: ${error}`);
-    logger.error(error.stack);
-  }
-  return false;
-};
-
 // Run only on one instance
 if (process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') {
+  // Set timing parameters.
+  // Run at 4 am ET
+  const schedule = '0 4 * * *';
+  const timezone = 'America/New_York';
+
+  const runJob = () => {
+    try {
+      return updateGrantsRecipients();
+    } catch (error) {
+      auditLogger.error(`Error processing HSES file: ${error}`);
+      logger.error(error.stack);
+    }
+    return false;
+  };
+  const job = new CronJob(schedule, () => runJob(), null, true, timezone);
+  job.start();
+}
+if (process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') {
+  // Set timing parameters.
+  // Run at 1 am ET Sun
+  const schedule = '0 1 * * 7';
+  const timezone = 'America/New_York';
+
+  const runJob = () => {
+    try {
+      return dbMaintenance();
+    } catch (error) {
+      auditLogger.error(`Error running db maintenance: ${error}`);
+      logger.error(error.stack);
+    }
+    return false;
+  };
   const job = new CronJob(schedule, () => runJob(), null, true, timezone);
   job.start();
 }
