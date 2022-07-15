@@ -63,16 +63,16 @@ describe('create goal', () => {
     timeframe: null,
     createdAt: '2022-03-09T19:20:45.818Z',
     updatedAt: '2022-03-09T19:20:45.818Z',
-    grants: [
+    grant:
       {
         value: 1, label: 'Turtle 1', programs: [], id: 1,
       },
-    ],
     recipientId: 1,
     regionId: 1,
     objectives: [{
       activityReports: [],
       title: 'test',
+      files: [],
       topics: [
         {
           value: 4,

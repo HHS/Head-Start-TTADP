@@ -73,6 +73,12 @@ export default function ReadOnly({
                       <li key={resource.key}>{resource.value}</li>
                     ))}
                   </ul>
+                  <h4 className="margin-bottom-1">Resources</h4>
+                  <ul className="usa-list usa-list--unstyled">
+                    { objective.files.map((f) => (
+                      <li key={f.originalFileName}>{f.originalFileName}</li>
+                    ))}
+                  </ul>
                 </div>
               ))}
             </div>

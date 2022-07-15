@@ -131,6 +131,8 @@ export default function ObjectiveForm({
         files={files}
         onChangeFiles={onChangeFiles}
         objectiveId={objective.id}
+        isOnApprovedReport={isOnApprovedReport || false}
+        status={status}
       />
 
       { goalStatus !== 'Draft'
