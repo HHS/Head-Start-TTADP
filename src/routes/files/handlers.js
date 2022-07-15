@@ -19,7 +19,7 @@ import {
 import ActivityReportPolicy from '../../policies/activityReport';
 import { activityReportAndRecipientsById } from '../../services/activityReports';
 import { userById } from '../../services/users';
-import { validateUserAuthForAdmin } from '../../services/accessValidation';
+// import { validateUserAuthForAdmin } from '../../services/accessValidation';
 import { auditLogger } from '../../logger';
 import { FILE_STATUSES, DECIMAL_BASE } from '../../constants';
 

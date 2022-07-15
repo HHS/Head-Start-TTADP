@@ -28,8 +28,8 @@ const [
 ] = OBJECTIVE_ERROR_MESSAGES;
 
 const formatGrantsFromApi = (grant) => {
-  const programTypes = [...new Set(grant.programs.map(({ programType }) => programType))].sort();
-  const numberWithProgramTypes = `${grant.number} ${programTypes}`;
+  const programTypes = [...new Set(grant.programs.map((p) => p.programType))].sort();
+  const numberWithProgramTypes = `${grant.label} ${programTypes}`;
   return {
     value: grant.id,
     label: numberWithProgramTypes,
@@ -374,7 +374,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
         ...newGoals,
       ];
       const updatedGoal = await createOrUpdateGoals(goals);
-      setObjectives(updatedGoal[0].objectives);
+      setObjectives(updatedGoal ? [...updatedGoal.objectives] : []);
 
       setAlert({
         message: `Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`,
@@ -471,7 +471,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
     setStatus(goal.status);
     setGoalId(goal.id);
 
-    setSelectedGrants(goal.grants);
+    setSelectedGrants(goal.grant);
 
     // we need to update the date key so it re-renders all the
     // date pickers, as they are uncontrolled inputs
