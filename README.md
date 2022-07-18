@@ -434,6 +434,7 @@ Once you have that version number, you need to update it in the following files
 You should also update it where it is specified this README file.
 
 You would then need to rebuild the relevant browser images (docker will likely need to pull new ones) and run ```yarn docker:deps``` to rebuild your dependencies.
+If you are using NVM, you can set intall a new node version with ```nvm install VERSION``` and set it to be the default version of node via ```nvm alias default VERSION```.
 
 <!-- Links -->
 
