@@ -744,12 +744,12 @@ export async function createOrUpdate(newActivityReport, report) {
   const previousActivityRecipientType = report && report.activityRecipientType;
   const resources = {};
 
-  if (ECLKCResourcesUsed && ECLKCResourcesUsed.length) {
+  if (ECLKCResourcesUsed) {
     resources.ECLKCResourcesUsed = ECLKCResourcesUsed.filter((item) => item)
       .map((item) => (item.value ? item.value : item));
   }
 
-  if (nonECLKCResourcesUsed && nonECLKCResourcesUsed.length) {
+  if (nonECLKCResourcesUsed) {
     resources.nonECLKCResourcesUsed = nonECLKCResourcesUsed.filter((item) => item)
       .map((item) => (item.value ? item.value : item));
   }
