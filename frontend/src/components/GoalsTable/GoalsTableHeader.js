@@ -1,14 +1,13 @@
-import React from 'react';
-// import React, { useContext } from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import Pagination from 'react-js-pagination';
 import { Link, useHistory } from 'react-router-dom';
 import { Button } from '@trussworks/react-uswds';
-// import UserContext from '../../UserContext';
-// import { canEditOrCreateGoals } from '../../permissions';
-// import { DECIMAL_BASE } from '../../Constants';
+import UserContext from '../../UserContext';
+import { canEditOrCreateGoals } from '../../permissions';
+import { DECIMAL_BASE } from '../../Constants';
 
 export function renderTotal(offset, perPage, activePage, count) {
   const from = offset >= count ? 0 : offset + 1;
@@ -32,14 +31,14 @@ export default function GoalsTableHeader({
   hidePagination,
   recipientId,
   regionId,
-  // hasActiveGrants,
+  hasActiveGrants,
   selectedGoals,
 }) {
   const history = useHistory();
-  // const { user } = useContext(UserContext);
-  // const hasButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
+  const { user } = useContext(UserContext);
+  const hasButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
 
-  const showAddNewButton = true; // hasActiveGrants && hasButtonPermissions && false;
+  const showAddNewButton = hasActiveGrants && hasButtonPermissions && false;
 
   const onPrint = () => {
     history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives/print`, {
@@ -117,7 +116,7 @@ GoalsTableHeader.propTypes = {
   handlePageChange: PropTypes.func,
   regionId: PropTypes.string.isRequired,
   recipientId: PropTypes.string.isRequired,
-  // hasActiveGrants: PropTypes.bool.isRequired,
+  hasActiveGrants: PropTypes.bool.isRequired,
   selectedGoals: PropTypes.arrayOf(PropTypes.shape({ id: PropTypes.number })).isRequired,
 };
 
