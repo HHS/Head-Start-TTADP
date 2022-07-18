@@ -8,7 +8,7 @@ import './ReportMenu.css';
 import Loader from '../../components/Loader';
 import colors from '../../colors';
 
-export const MAXIMUM_EXPORTED_REPORTS = 20000;
+export const MAXIMUM_EXPORTED_REPORTS = 2000;
 
 function ReportMenu({
   onExportAll,
