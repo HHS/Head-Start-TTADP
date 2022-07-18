@@ -31,7 +31,7 @@ const Modal = ({
       isLarge={isLarge}
       aria-labelledby={`${modalId}-heading`}
       forceAction={forceAction}
-      className={`${showCloseX ? 'show-close-x' : ''}`}
+      className={`ttahub-modal ${showCloseX ? 'show-close-x' : ''}`}
     >
       <div className="display-flex">
         <ModalHeading className="font-sans margin-0 display-flex" id={`${modalId}-heading`}>

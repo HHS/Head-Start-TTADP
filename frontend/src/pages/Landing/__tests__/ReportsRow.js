@@ -46,13 +46,14 @@ describe('ReportsRow', () => {
 
   it('calls remove alert and cleans up local storage', async () => {
     fetchMock.delete('/api/activity-reports/1', 204);
+    fetchMock.delete('/api/activity-reports/0', 204);
     const removeAlert = jest.fn();
     renderReportsRow(removeAlert);
     const [context] = await screen.findAllByRole('button', { name: /view activity report 1/i });
     userEvent.click(context);
     const [deleteButton] = await screen.findAllByRole('button', { name: /delete/i });
     userEvent.click(deleteButton);
-    const confirmDelete = await screen.findByRole('button', { name: /This button will permanently delete the report/i });
+    const confirmDelete = document.querySelector('[aria-label="This button will permanently delete the report."]');
     userEvent.click(confirmDelete);
     expect(fetchMock.called()).toBe(true);
     await waitFor(() => expect(removeAlert).toHaveBeenCalled());
