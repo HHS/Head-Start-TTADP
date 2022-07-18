@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { NavLink } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import FeatureFlag from '../../../components/FeatureFlag';
 import './RecipientTabs.scss';
 import colors from '../../../colors';
 
@@ -21,11 +20,9 @@ export default function RecipientTabs({ region, recipientId, backLink }) {
           <li className={liClass}>
             <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/tta-history`}>TTA History</NavLink>
           </li>
-          <FeatureFlag flag="recipient_goals_objectives">
-            <li className={liClass}>
-              <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/goals-objectives`}>Goals & Objectives</NavLink>
-            </li>
-          </FeatureFlag>
+          <li className={liClass}>
+            <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/goals-objectives`}>Goals & Objectives</NavLink>
+          </li>
         </ul>
       </nav>
       <FontAwesomeIcon className="margin-left-2 margin-right-1" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
