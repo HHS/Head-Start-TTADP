@@ -324,37 +324,6 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
   });
 }
 
-export async function createOrUpdateGoalsForActivityReport(goal) {
-  // const activityReportId = parseInt(reportId, DECIMAL_BASE);
-
-  const {
-    grantIds,
-    isNew,
-    status: goalStatus,
-    ...fields
-  } = goal;
-
-  const status = goalStatus || 'Not Started';
-
-  const newGoals = await Promise.all(grantIds.map(async (grantId) => {
-    let newGoal;
-    if (isNew) {
-      [newGoal] = await Goal.findOrCreate({
-        where: {
-          ...fields,
-          grantId,
-          status,
-        },
-      });
-    }
-    return newGoal;
-  }));
-
-  return newGoals;
-
-  // return goalsByIdAndActivityReport(id, activityReportId);
-}
-
 /**
  * Goals is an array of an object with the following keys
     id,
@@ -985,6 +954,13 @@ export async function updateGoalStatusById(
   const [, updated] = g;
 
   return updated;
+}
+
+export async function createOrUpdateGoalsForActivityReport(goal, reportId) {
+  const activityReportId = parseInt(reportId, DECIMAL_BASE);
+  const report = await ActivityReport.findByPk(activityReportId);
+  const goals = await saveGoalsForReport([goal], report);
+  return goals;
 }
 
 export async function destroyGoal(goalId) {
