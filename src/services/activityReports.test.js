@@ -274,7 +274,7 @@ describe('Activity report service', () => {
           alertsMockUserTwo,
         ]),
         OtherEntity.create({ id: RECIPIENT_ID, name: 'otherEntity' }),
-        Recipient.findOrCreate({ where: { name: 'recipient', id: RECIPIENT_ID } }),
+        Recipient.findOrCreate({ where: { name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGA2' } }),
         Region.create({ name: 'office 19', id: 19 }),
       ]);
       await Grant.create({

@@ -154,8 +154,8 @@ describe('processData', () => {
     await User.findOrCreate({ where: mockCollaboratorOne });
     await User.findOrCreate({ where: mockCollaboratorTwo });
 
-    await Recipient.findOrCreate({ where: { name: 'Agency One, Inc.', id: RECIPIENT_ID_ONE } });
-    await Recipient.findOrCreate({ where: { name: 'Agency Two', id: RECIPIENT_ID_TWO } });
+    await Recipient.findOrCreate({ where: { name: 'Agency One, Inc.', id: RECIPIENT_ID_ONE, uei: 'NNA5N2KHMGM2' } });
+    await Recipient.findOrCreate({ where: { name: 'Agency Two', id: RECIPIENT_ID_TWO, uei: 'NNA5N2KHMGA2' } });
     await Grant.findOrCreate({
       where: {
         id: GRANT_ID_ONE,
