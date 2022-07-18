@@ -67,3 +67,60 @@ export function checkReportIdParam(req, res, next) {
   auditLogger.error(msg);
   return res.status(httpCodes.BAD_REQUEST).send(msg);
 }
+
+/**
+ *  Check reportObjectiveId req param
+ *
+ * This middleware validates that the Activity Report Objective id supplied
+ * by the reportObjectiveId query param is an integer before we proceed with the request
+ * @param {*} req - request
+ * @param {*} res - response
+ * @param {*} next - next middleware
+ */
+export function checkReportObjectiveIdParam(req, res, next) {
+  if (req.params && req.params.reportObjectiveId && canBeInt(req.params.reportObjectiveId)) {
+    return next();
+  }
+
+  const msg = `${errorMessage}: reportObjectiveId ${req.params ? (req.params.reportObjectiveId || 'undefined') : 'undefined'}`;
+  auditLogger.error(msg);
+  return res.status(httpCodes.BAD_REQUEST).send(msg);
+}
+
+/**
+ *  Check objectiveId req param
+ *
+ * This middleware validates that the Objective id supplied
+ * by the objectiveId query param is an integer before we proceed with the request
+ * @param {*} req - request
+ * @param {*} res - response
+ * @param {*} next - next middleware
+ */
+export function checkObjectiveIdParam(req, res, next) {
+  if (req.params && req.params.objectiveId && canBeInt(req.params.objectiveId)) {
+    return next();
+  }
+
+  const msg = `${errorMessage}: objectiveId ${req.params ? (req.params.objectiveId || 'undefined') : 'undefined'}`;
+  auditLogger.error(msg);
+  return res.status(httpCodes.BAD_REQUEST).send(msg);
+}
+
+/**
+ *  Check objectiveTemplateId req param
+ *
+ * This middleware validates that the Objective Template id supplied
+ * by the objectiveTemplateId query param is an integer before we proceed with the request
+ * @param {*} req - request
+ * @param {*} res - response
+ * @param {*} next - next middleware
+ */
+export function checkObjectiveTemplateIdParam(req, res, next) {
+  if (req.params && req.params.objectiveTemplateId && canBeInt(req.params.objectiveTemplateId)) {
+    return next();
+  }
+
+  const msg = `${errorMessage}: objectiveTemplateId ${req.params ? (req.params.objectiveTemplateId || 'undefined') : 'undefined'}`;
+  auditLogger.error(msg);
+  return res.status(httpCodes.BAD_REQUEST).send(msg);
+}

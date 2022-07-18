@@ -8,9 +8,11 @@ import {
   Recipient,
   Grant,
   Region,
+  GoalTemplate,
   Goal,
-  GrantGoal,
+  // GrantGoal,
 } from './models';
+import { auditLogger } from './logger';
 
 import { GOAL_STATUS as GOAL_STATUS_CONST } from './widgets/goalStatusGraph';
 
@@ -92,7 +94,7 @@ export async function createRecipient(recipient) {
   });
 }
 
-export async function createGrant(grant) {
+export async function createGrant(grant = {}) {
   let g = await Recipient.findByPk(grant.recipientId);
   if (!g) {
     g = await createRecipient({});
@@ -137,10 +139,15 @@ export async function createReport(report) {
     userId: foundUser.id,
   });
 
-  Promise.all(recipients.map((grantId) => ActivityRecipient.create({
-    activityReportId: createdReport.id,
-    grantId,
-  })));
+  try {
+    Promise.all(recipients.map((grantId) => ActivityRecipient.create({
+      activityReportId: createdReport.id,
+      grantId,
+    })));
+  } catch (error) {
+    auditLogger.error(JSON.stringify(error));
+    throw error;
+  }
 
   return createdReport;
 }
@@ -167,16 +174,12 @@ export async function destroyReport(report) {
     },
   });
 
-  const destroys = dbReport.activityRecipients.map(async (recipient) => {
+  await Promise.all(dbReport.activityRecipients.map(async (recipient) => {
     const grant = await Grant.findByPk(recipient.grantId);
-    await ActivityRecipient.destroy({
-      where: {
-        id: recipient.id,
-      },
-    });
 
-    let results = await ActivityRecipient.findAll({ where: { grantId: grant.id } });
-    if (results.length === 0) {
+    const otherRecipients = await ActivityRecipient.findAll({ where: { grantId: grant.id } });
+    const otherGoals = await Goal.findAll({ where: { grantId: grant.id } });
+    if (otherRecipients.length === 0 && otherGoals.length === 0) {
       await Grant.destroy({
         where: {
           id: grant.id,
@@ -184,7 +187,7 @@ export async function destroyReport(report) {
       });
     }
 
-    results = await Grant.findAll({ where: { recipientId: grant.recipientId } });
+    const results = await Grant.findAll({ where: { recipientId: grant.recipientId } });
     if (results.length === 0) {
       await Recipient.destroy({
         where: {
@@ -192,9 +195,8 @@ export async function destroyReport(report) {
         },
       });
     }
-  });
+  }));
 
-  await Promise.all(destroys);
   await ActivityReport.destroy({
     where: {
       id: report.id,
@@ -237,15 +239,21 @@ export async function createGoal(goal) {
   if (!grant) {
     grant = await createGrant({});
   }
-
-  const dbGoal = await Goal.create({ ...defaultGoal(), ...goal });
-  await GrantGoal.create({ grantId: grant.id, goalId: dbGoal.id, recipientId: grant.recipientId });
+  const dg = defaultGoal();
+  const dbGoalTemplate = await GoalTemplate.findOrCreate({
+    where: { templateName: dg.name },
+    defaults: { templateName: dg.name },
+  });
+  const dbGoal = await Goal.create({
+    ...dg,
+    ...goal,
+    grantId: grant.id,
+    goalTemplateId: dbGoalTemplate.id,
+  });
   return dbGoal;
 }
 
 export async function destroyGoal(goal) {
-  const { id: goalId } = goal;
-  await GrantGoal.destroy({ where: { goalId } });
   return Goal.destroy({
     where: {
       id: goal.id,

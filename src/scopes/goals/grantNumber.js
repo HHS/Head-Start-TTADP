@@ -1,7 +1,13 @@
 import { Op } from 'sequelize';
 import { sequelize } from '../../models';
 
-const grantNumberQuery = 'SELECT "Goals"."id" FROM "Goals" INNER JOIN "GrantGoals" ON "GrantGoals"."goalId" = "Goals"."id" INNER JOIN "Grants" ON "Grants"."id" = "GrantGoals"."grantId" WHERE "Grants"."number"';
+const grantNumberQuery = `
+  SELECT
+    "Goals"."id"
+  FROM "Goals" "Goals"
+  INNER JOIN "Grants" "Grants"
+  ON "Goals"."grantId" = "Grants"."id"
+  WHERE "Grants"."number"`;
 
 export function withGrantNumber(grantNumber) {
   const numbers = grantNumber.map((gn) => sequelize.escape(`%${gn}%`));

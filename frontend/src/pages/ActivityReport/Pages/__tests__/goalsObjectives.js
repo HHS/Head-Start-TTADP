@@ -8,7 +8,7 @@ import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import join from 'url-join';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
-
+import selectEvent from 'react-select-event';
 import goalsObjectives from '../goalsObjectives';
 import NetworkContext from '../../../../NetworkContext';
 
@@ -17,11 +17,28 @@ const goalUrl = join('api', 'activity-reports', 'goals');
 const RenderGoalsObjectives = ({
   grantIds, activityRecipientType,
 }) => {
-  const activityRecipients = grantIds.map((activityRecipientId) => ({ activityRecipientId }));
+  const activityRecipients = grantIds.map((activityRecipientId) => ({
+    activityRecipientId, id: activityRecipientId,
+  }));
   const data = { activityRecipientType, activityRecipients };
   const hookForm = useForm({
     mode: 'onChange',
-    defaultValues: { goals: [], objectivesWithoutGoals: [], ...data },
+    defaultValues: {
+      goals: [{
+        id: 1,
+        name: 'This is a test goal',
+        isNew: true,
+        goalIds: [1],
+        objectives: [{
+          id: 1,
+          title: 'title',
+          ttaProvided: 'tta',
+          status: 'In Progress',
+        }],
+      }],
+      objectivesWithoutGoals: [],
+      ...data,
+    },
   });
   return (
     <NetworkContext.Provider value={{ connectionActive: true, localStorageAvailable: true }}>
@@ -32,14 +49,19 @@ const RenderGoalsObjectives = ({
   );
 };
 
-const renderGoals = (grantIds, activityRecipientType, initialData, goals = []) => {
+const renderGoals = (grantIds, activityRecipientType, goals = [], fetchError) => {
   const query = grantIds.map((id) => `grantIds=${id}`).join('&');
-  fetchMock.get(join(goalUrl, `?${query}`), goals);
+  const url = join(goalUrl, `?${query}`);
+  if (!fetchError) {
+    fetchMock.get(url, goals);
+  } else {
+    fetchMock.get(url, 500);
+  }
+
   render(
     <RenderGoalsObjectives
       grantIds={grantIds}
       activityRecipientType={activityRecipientType}
-      initialData={initialData}
     />,
   );
 };
@@ -72,6 +94,13 @@ describe('goals objectives', () => {
       renderGoals([], 'recipient');
       await screen.findByText('Context');
       expect(screen.queryByText('Goals and objectives')).toBeNull();
+    });
+  });
+
+  describe('handles fetch error', () => {
+    it('handles it like I SAID', async () => {
+      renderGoals([1], 'recipient', [], true);
+      expect(await screen.findByText('Connection error. Cannot load options.')).toBeVisible();
     });
   });
 
@@ -139,6 +168,42 @@ describe('goals objectives', () => {
         const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'recipient', goals });
         expect(complete).toBeTruthy();
       });
+    });
+
+    it('fetched goals are autoselected', async () => {
+      const goals = [{
+        name: 'This is a test goal',
+        goalIds: [1],
+        objectives: [{
+          id: 1,
+          title: 'title',
+          ttaProvided: 'tta',
+          status: 'In Progress',
+        }],
+      }];
+
+      renderGoals([3], 'recipient', goals);
+
+      const select = document.querySelector('#goals input');
+      selectEvent.openMenu(select);
+
+      expect(screen.getByText(/This is a test goal/i, { selector: 'span' })).toBeInTheDocument();
+    });
+
+    it('does not fetch if there are no grants', async () => {
+      const goals = [{
+        name: 'This is a test goal',
+        objectives: [{
+          id: 1,
+          title: 'title',
+          ttaProvided: 'tta',
+          status: 'In Progress',
+        }],
+      }];
+
+      expect(fetchMock.called()).toBe(false);
+      renderGoals([], 'recipient', goals);
+      expect(fetchMock.called()).toBe(false);
     });
   });
 

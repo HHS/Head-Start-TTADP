@@ -11,7 +11,6 @@ const {
 module.exports = (sequelize, DataTypes) => {
   class Recipient extends Model {
     static associate(models) {
-      Recipient.belongsToMany(models.Goal, { through: models.GrantGoal, foreignKey: 'recipientId', as: 'goals' });
       Recipient.hasMany(models.Grant, { as: 'grants', foreignKey: 'recipientId' });
     }
   }

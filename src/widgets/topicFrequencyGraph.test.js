@@ -50,7 +50,7 @@ const reportObject = {
   lastUpdatedById: mockUser.id,
   ECLKCResourcesUsed: ['test'],
   activityRecipients: [
-    { activityRecipientId: GRANT_ID },
+    { activityRecipientId: RECIPIENT_ID, grantId: GRANT_ID },
   ],
   numberOfParticipants: 11,
   deliveryMethod: 'in-person',

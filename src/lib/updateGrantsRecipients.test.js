@@ -3,7 +3,7 @@ import axios from 'axios';
 import fs from 'mz/fs';
 import updateGrantsRecipients, { processFiles } from './updateGrantsRecipients';
 import db, {
-  sequelize, Recipient, Grant, Program, ZALGrant,
+  sequelize, Recipient, Grant, Program, ZALGrant, ActivityRecipient,
 } from '../models';
 
 jest.mock('axios');
@@ -13,7 +13,7 @@ jest.mock('./fileUtils', () => ({
   fileHash: () => 'hash',
 }));
 
-const SMALLEST_GRANT_ID = 100;
+const SMALLEST_GRANT_ID = 1000;
 
 describe('Update HSES data', () => {
   beforeEach(() => {
@@ -67,11 +67,13 @@ describe('Update HSES data', () => {
 describe('Update grants and recipients', () => {
   beforeAll(async () => {
     await Program.destroy({ where: { id: [1, 2, 3, 4] } });
+    await ActivityRecipient.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterEach(async () => {
     await Program.destroy({ where: { id: [1, 2, 3, 4] } });
+    await ActivityRecipient.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
@@ -111,7 +113,7 @@ describe('Update grants and recipients', () => {
     await processFiles();
     const grant = await Grant.findOne({ where: { id: 11630 } });
     // simulate updating an existing grant with null stateCode
-    await grant.update({ stateCode: null });
+    await grant.update({ stateCode: null }, { individualHooks: true });
     const grantWithNullStateCode = await Grant.findOne({ where: { id: 11630 } });
     expect(grantWithNullStateCode.stateCode).toBeNull();
     await processFiles();
@@ -123,7 +125,7 @@ describe('Update grants and recipients', () => {
     await processFiles();
     const grant = await Grant.findOne({ where: { id: 11630 } });
     // simulate updating an existing grant with null stateCode
-    await grant.update({ annualFundingMonth: null });
+    await grant.update({ annualFundingMonth: null }, { individualHooks: true });
     const grantWithNullAfm = await Grant.findOne({ where: { id: 11630 } });
     expect(grantWithNullAfm.annualFundingMonth).toBeNull();
     await processFiles();
@@ -177,14 +179,14 @@ describe('Update grants and recipients', () => {
 
   it('should not exclude recipients with only inactive grants', async () => {
     await processFiles();
-    const recipient = await Recipient.findOne({ where: { id: 119 } });
+    const recipient = await Recipient.findOne({ where: { id: 1119 } });
     expect(recipient).not.toBeNull();
   });
 
   it('should update an existing recipient if it exists in smarthub', async () => {
-    const [dbRecipient] = await Recipient.findOrCreate({ where: { id: 119, name: 'Multi ID Agency', uei: 'NNA5N2KHMGM2' } });
+    const [dbRecipient] = await Recipient.findOrCreate({ where: { id: 1119, name: 'Multi ID Agency', uei: 'NNA5N2KHMGM2' } });
     await processFiles();
-    const recipient = await Recipient.findOne({ where: { id: 119 } });
+    const recipient = await Recipient.findOne({ where: { id: 1119 } });
     expect(recipient).not.toBeNull();
     // Same recipient, but with a different id and having an active grant
     expect(recipient.updatedAt).not.toEqual(dbRecipient.updatedAt);
@@ -192,8 +194,8 @@ describe('Update grants and recipients', () => {
   });
 
   it('should update an existing grant if it exists in smarthub', async () => {
-    await Recipient.findOrCreate({ where: { id: 119, name: 'Multi ID Agency', uei: 'NNA5N2KHMGM2' } });
-    const [dbGrant] = await Grant.findOrCreate({ where: { id: 5151, number: '90CI4444', recipientId: 119 } });
+    await Recipient.findOrCreate({ where: { id: 1119, name: 'Multi ID Agency', uei: 'NNA5N2KHMGM2' } });
+    const [dbGrant] = await Grant.findOrCreate({ where: { id: 5151, number: '90CI4444', recipientId: 1119 } });
     await processFiles();
     const grant = await Grant.findOne({ where: { id: 5151 } });
     expect(grant).not.toBeNull();
@@ -206,7 +208,7 @@ describe('Update grants and recipients', () => {
     const grant = await Grant.findOne({ where: { id: 11630 } });
     expect(grant.cdi).toBeTruthy();
     expect(grant.regionId).toBe(13);
-    expect(grant.recipientId).toBe(119);
+    expect(grant.recipientId).toBe(1119);
   });
 
   it('should update cdi grants', async () => {

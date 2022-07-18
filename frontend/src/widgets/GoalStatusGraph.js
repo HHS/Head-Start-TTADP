@@ -1,10 +1,13 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, {
+  useEffect, useMemo, useState, useRef,
+} from 'react';
 import PropTypes from 'prop-types';
-import { Grid } from '@trussworks/react-uswds';
+import { Grid, ModalToggleButton } from '@trussworks/react-uswds';
 import withWidgetData from './withWidgetData';
 import Container from '../components/Container';
 import AccessibleWidgetData from './AccessibleWidgetData';
 import colors from '../colors';
+import VanillaModal from '../components/VanillaModal';
 
 const GOAL_STATUSES = [
   'Not started',
@@ -77,6 +80,8 @@ export function GoalStatusChart({ data, loading }) {
     () => GOAL_STATUSES.map((status) => ({ data: [status, data[status]] })), [data],
   );
 
+  const modalRef = useRef();
+
   useEffect(() => {
     if (!data) {
       return;
@@ -101,7 +106,7 @@ export function GoalStatusChart({ data, loading }) {
 
   return (
     <Container className="ttahub--goal-status-graph" padding={3} loading={loading} loadingLabel="goal statuses by number loading">
-      <Grid row className="position-relative margin-bottom-2">
+      <Grid row className="position-relative margin-bottom-1">
         <Grid className="flex-align-self-center desktop:display-flex flex-align-center" desktop={{ col: 'auto' }} mobileLg={{ col: 10 }}>
           <h2 className="margin-0">
             Number of goals by status
@@ -118,6 +123,38 @@ export function GoalStatusChart({ data, loading }) {
           </button>
         </Grid>
       </Grid>
+      <Grid row className="margin-bottom-2">
+        <ModalToggleButton unstyled className="usa-button usa-button--unstyled usa-prose" modalRef={modalRef} opener>
+          What does each status mean?
+        </ModalToggleButton>
+        <VanillaModal modalRef={modalRef} heading="Goal status guide">
+          <>
+            <h3 className="margin-bottom-0">Not started</h3>
+            <p className="usa-prose margin-0">Goal is approved, but TTA hasn&apos;t begun. Goal cannot be edited.</p>
+            <h3 className="margin-bottom-0">In progress</h3>
+            <p className="usa-prose margin-0">
+              TTA is being provided to the recipient. More TTA related to this goal is anticipated.
+            </p>
+            <h3 className="margin-bottom-0">Suspended</h3>
+            <p className="usa-prose margin-0">One of the following conditions exists:</p>
+            <ul className="usa-list margin-0">
+              <li>TTA paused due to staff changes</li>
+              <li>Recipient requested RO pause TTA</li>
+              <li>Recipient not responding</li>
+              <li>Regional office and recipient agree to pause TTA</li>
+            </ul>
+            <h3 className="margin-bottom-0">Closed</h3>
+            <p className="usa-prose margin-0">One of the following conditions exists:</p>
+            <ul className="usa-list margin-0">
+              <li>TTA for goal is complete</li>
+              <li>Recipient discontinues TTA for goal</li>
+              <li>Recipient and RO agree to end TTA for goal</li>
+              <li>Goal is a duplicate of another goal</li>
+            </ul>
+          </>
+        </VanillaModal>
+      </Grid>
+
       { showAccessibleData
         ? (
           <AccessibleWidgetData
@@ -129,11 +166,11 @@ export function GoalStatusChart({ data, loading }) {
         : (
           <>
             <div className="border-top border-gray-5">
-              <h3>
+              <p className="usa-prose text-bold">
                 {data.total}
                 {' '}
                 goals
-              </h3>
+              </p>
               {bars.map(({
                 count, percentage, label, color, ratio, total,
               }) => (

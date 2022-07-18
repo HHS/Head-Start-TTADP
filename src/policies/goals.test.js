@@ -1,5 +1,6 @@
 import Goal from './goals';
 import SCOPES from '../middleware/scopeConstants';
+import { REPORT_STATUSES } from '../constants';
 
 describe('Goals policies', () => {
   describe('canDelete && canEdit', () => {
@@ -8,13 +9,11 @@ describe('Goals policies', () => {
         objectives: [
           {
             activityReports: [
-              { id: 1 },
+              { id: 1, calculatedStatus: REPORT_STATUSES.APPROVED },
             ],
           },
         ],
-        grants: [
-          { regionId: 2 },
-        ],
+        grant: { regionId: 2 },
       };
       const user = {
         permissions: [
@@ -32,9 +31,7 @@ describe('Goals policies', () => {
     it('returns false if user\'s permissions don\'t match the region', async () => {
       const goal = {
         objectives: [],
-        grants: [
-          { regionId: 2 },
-        ],
+        grant: { regionId: 2 },
       };
       const user = {
         permissions: [
@@ -52,9 +49,8 @@ describe('Goals policies', () => {
     it('returns true otherwise', async () => {
       const goal = {
         objectives: [],
-        grants: [
-          { regionId: 2 },
-        ],
+        grant: { regionId: 2 },
+
       };
       const user = {
         permissions: [

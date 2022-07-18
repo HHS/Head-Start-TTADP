@@ -5,11 +5,13 @@ import orderReportsBy from '../lib/orderReportsBy';
 import filtersToScopes from '../scopes';
 import { setReadRegions } from './accessValidation';
 import { syncApprovers } from './activityReportApprovers';
+// import { auditLogger } from '../logger';
 
 import {
   ActivityReport,
   ActivityReportApprover,
   ActivityReportCollaborator,
+  ActivityReportFile,
   sequelize,
   ActivityRecipient,
   File,
@@ -25,7 +27,7 @@ import {
   CollaboratorRole,
 } from '../models';
 
-import { removeUnusedGoalsObjectivesFromReport, saveGoalsForReport } from './goals';
+import { removeUnusedGoalsObjectivesFromReport, saveGoalsForReport, removeRemovedRecipientsGoals } from './goals';
 
 import { saveObjectivesForReport } from './objectives';
 
@@ -74,11 +76,9 @@ async function saveReportCollaborators(activityReportId, collaborators) {
 
   // Create and delete activity report collaborators.
   if (newCollaborators.length > 0) {
-    await ActivityReportCollaborator.bulkCreate(
-      newCollaborators,
-      { ignoreDuplicates: true },
-    );
-
+    await Promise.all(newCollaborators.map((where) => (
+      ActivityReportCollaborator.findOrCreate({ where })
+    )));
     await ActivityReportCollaborator.destroy(
       {
         where: {
@@ -184,7 +184,30 @@ async function saveReportRecipients(
     };
   }
 
-  await ActivityRecipient.bulkCreate(newRecipients, { ignoreDuplicates: true });
+  await Promise.all(
+    newRecipients.map(async (newRecipient) => {
+      if (newRecipient.grantId) {
+        return ActivityRecipient.findOrCreate({
+          where: {
+            activityReportId: newRecipient.activityReportId,
+            grantId: newRecipient.grantId,
+          },
+          defaults: newRecipient,
+        });
+      }
+      if (newRecipient.otherEntityId) {
+        return ActivityRecipient.findOrCreate({
+          where: {
+            activityReportId: newRecipient.activityReportId,
+            otherEntityId: newRecipient.otherEntityId,
+          },
+          defaults: newRecipient,
+        });
+      }
+      return null;
+    }),
+  );
+
   await ActivityRecipient.destroy({ where });
 }
 
@@ -232,14 +255,22 @@ export function activityReportByLegacyId(legacyId) {
     },
     include: [
       {
-        model: File,
-        where: {
-          status: {
-            [Op.ne]: 'UPLOAD_FAILED',
-          },
-        },
-        as: 'attachments',
+        model: ActivityReportFile,
+        as: 'reportFiles',
         required: false,
+        separate: true,
+        include: [
+          {
+            model: File,
+            where: {
+              status: {
+                [Op.ne]: 'UPLOAD_FAILED',
+              },
+            },
+            as: 'file',
+            required: false,
+          },
+        ],
       },
       {
         model: ActivityReportApprover,
@@ -258,48 +289,97 @@ export function activityReportByLegacyId(legacyId) {
   });
 }
 
-export function activityReportById(activityReportId) {
-  return ActivityReport.findOne({
-    attributes: { exclude: ['imported', 'legacyId'] },
-    where: {
-      id: {
-        [Op.eq]: activityReportId,
-      },
-    },
+export async function activityReportAndRecipientsById(activityReportId) {
+  const arId = parseInt(activityReportId, DECIMAL_BASE);
+
+  // goals
+  const allGoalsAndObjectives = await Goal.findAll({
     include: [
       {
-        model: ActivityRecipient,
-        attributes: ['id', 'name', 'activityRecipientId', 'grantId', 'otherEntityId'],
-        as: 'activityRecipients',
+        attributes: ['id'],
+        model: ActivityReport,
+        as: 'activityReports',
+        where: {
+          id: arId,
+        },
+        required: true,
+      },
+      {
+        model: Objective,
+        as: 'objectives',
         required: false,
-        separate: true,
         include: [
           {
-            model: Grant,
-            attributes: ['id', 'number'],
-            as: 'grant',
-            required: false,
-            include:
-              [
-                {
-                  model: Recipient,
-                  as: 'recipient',
-                  attributes: ['name'],
-                },
-                {
-                  model: Program,
-                  as: 'programs',
-                  attributes: ['programType'],
-                },
-              ],
-          },
-          {
-            model: OtherEntity,
-            as: 'otherEntity',
-            required: false,
+            attributes: ['ttaProvided', 'activityReportId'],
+            model: ActivityReportObjective,
+            as: 'activityReportObjectives',
+            where: {
+              activityReportId: arId,
+            },
+            required: true,
           },
         ],
       },
+    ],
+  });
+
+  // TODO - explore a way to move this query inline to the ActivityReport.findOne
+  const goalsAndObjectives = allGoalsAndObjectives.reduce((previousValue, currentValue) => {
+    const existingGoal = previousValue.find((g) => g.name === currentValue.name);
+
+    if (existingGoal) {
+      existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.goalNumber];
+      existingGoal.goalIds = [...existingGoal.goalIds, currentValue.id];
+      return previousValue;
+    }
+
+    const goal = {
+      ...currentValue.dataValues,
+      goalNumbers: [currentValue.goalNumber],
+      goalIds: [currentValue.id],
+      objectives: currentValue.objectives.map((objective) => {
+        const ttaProvided = objective.activityReportObjectives
+          && objective.activityReportObjectives[0]
+          ? objective.activityReportObjectives[0].ttaProvided : '';
+
+        return {
+          ...objective.dataValues,
+          ttaProvided,
+        };
+      }),
+    };
+
+    return [...previousValue, goal];
+  }, []);
+
+  const recipients = await ActivityRecipient.findAll({
+    where: {
+      activityReportId: arId,
+    },
+    attributes: [
+      'id',
+      'name',
+      'activityRecipientId',
+    ],
+  });
+
+  const activityRecipients = recipients.map((recipient) => {
+    const name = recipient.otherEntity ? recipient.otherEntity.name : recipient.grant.name;
+    const activityRecipientId = recipient.otherEntity
+      ? recipient.otherEntity.dataValues.id : recipient.grant.dataValues.id;
+
+    return {
+      id: activityRecipientId,
+      name,
+    };
+  });
+
+  const report = await ActivityReport.findOne({
+    attributes: { exclude: ['imported', 'legacyId'] },
+    where: {
+      id: arId,
+    },
+    include: [
       {
         model: Objective,
         as: 'objectivesWithGoals',
@@ -338,9 +418,8 @@ export function activityReportById(activityReportId) {
             [Op.ne]: 'UPLOAD_FAILED',
           },
         },
-        as: 'attachments',
+        as: 'files',
         required: false,
-        separate: true,
       },
       {
         model: NextStep,
@@ -384,6 +463,8 @@ export function activityReportById(activityReportId) {
       [{ model: Objective, as: 'objectivesWithGoals' }, 'id', 'ASC'],
     ],
   });
+
+  return [report, activityRecipients, goalsAndObjectives];
 }
 
 /**
@@ -397,9 +478,13 @@ export function activityReportById(activityReportId) {
  * @param {*} limit - size of the slice
  * @returns {Promise<any>} - returns a promise with total reports count and the reports slice
  */
-export function activityReports(
+export async function activityReports(
   {
-    sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE, ...filters
+    sortBy = 'updatedAt',
+    sortDir = 'desc',
+    offset = 0,
+    limit = REPORTS_PER_PAGE,
+    ...filters
   },
   excludeLegacy = false,
 ) {
@@ -414,7 +499,7 @@ export function activityReports(
     where.legacyId = { [Op.eq]: null };
   }
 
-  return ActivityReport.findAndCountAll(
+  const reports = await ActivityReport.findAndCountAll(
     {
       where,
       attributes: [
@@ -448,32 +533,6 @@ export function activityReports(
         ),
       ],
       include: [
-        {
-          model: ActivityRecipient,
-          attributes: ['id', 'name', 'activityRecipientId', 'grantId', 'otherEntityId'],
-          as: 'activityRecipients',
-          required: false,
-          include: [
-            {
-              model: Grant,
-              attributes: ['id', 'number'],
-              as: 'grant',
-              required: false,
-              include: [
-                {
-                  model: Recipient,
-                  as: 'recipient',
-                  attributes: ['name'],
-                },
-              ],
-            },
-            {
-              model: OtherEntity,
-              as: 'otherEntity',
-              required: false,
-            },
-          ],
-        },
         {
           model: User,
           attributes: ['name', 'role', 'fullName', 'homeRegionId'],
@@ -517,6 +576,24 @@ export function activityReports(
       subQuery: false,
     },
   );
+
+  const recipients = await ActivityRecipient.findAll({
+    where: {
+      activityReportId: reports.rows.map(({ id }) => id),
+    },
+    attributes: ['id', 'name', 'activityRecipientId', 'activityReportId'],
+    // sorting these just so the order is testable
+    order: [
+      [
+        sequelize.literal(`"grant.recipient.name" ${sortDir}`),
+      ],
+      [
+        sequelize.literal(`"otherEntity.name" ${sortDir}`),
+      ],
+    ],
+  });
+
+  return { ...reports, recipients };
 }
 /**
  * Retrieves alerts based on the following logic:
@@ -527,11 +604,14 @@ export function activityReports(
  * @param {*} userId
  */
 export async function activityReportAlerts(userId, {
-  sortBy = 'startDate', sortDir = 'desc', offset = 0, ...filters
+  sortBy = 'startDate',
+  sortDir = 'desc',
+  offset = 0,
+  ...filters
 }) {
   const updatedFilters = await setReadRegions(filters, userId);
   const { activityReport: scopes } = filtersToScopes(updatedFilters);
-  return ActivityReport.findAndCountAll(
+  const reports = await ActivityReport.findAndCountAll(
     {
       where: {
         [Op.and]: scopes,
@@ -577,43 +657,16 @@ export async function activityReportAlerts(userId, {
           '(SELECT name as collaboratorName FROM "Users" join "ActivityReportCollaborators" on "Users"."id" = "ActivityReportCollaborators"."userId" and  "ActivityReportCollaborators"."activityReportId" = "ActivityReport"."id" limit 1)',
         ),
         sequelize.literal(
-          // eslint-disable-next-line quotes
           `(SELECT "OtherEntities".name as otherEntityName from "OtherEntities" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" AND "ActivityRecipients"."otherEntityId" = "OtherEntities".id order by otherEntityName ${sortDir} limit 1)`,
         ),
         sequelize.literal(
-          // eslint-disable-next-line quotes
           `(SELECT "Recipients".name as recipientName FROM "Recipients" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" JOIN "Grants" ON "Grants"."id" = "ActivityRecipients"."grantId" AND "Recipients"."id" = "Grants"."recipientId" order by recipientName ${sortDir} limit 1)`,
         ),
+
         // eslint-disable-next-line quotes
         [sequelize.literal(`(SELECT  CASE WHEN COUNT(1) = 0 THEN '0' ELSE  CONCAT(SUM(CASE WHEN COALESCE("ActivityReportApprovers".status,'needs_action') = 'approved' THEN 1 ELSE 0 END), ' of ', COUNT(1)) END FROM "ActivityReportApprovers" WHERE "ActivityReportApprovers"."activityReportId" = "ActivityReport"."id" AND "deletedAt" IS NULL limit 1)`), 'pendingApprovals'],
       ],
       include: [
-        {
-          model: ActivityRecipient,
-          attributes: ['id', 'name', 'activityRecipientId'],
-          as: 'activityRecipients',
-          required: false,
-          include: [
-            {
-              model: Grant,
-              attributes: ['id', 'number'],
-              as: 'grant',
-              required: false,
-              include: [
-                {
-                  model: Recipient,
-                  as: 'recipient',
-                  attributes: ['name'],
-                },
-              ],
-            },
-            {
-              model: OtherEntity,
-              as: 'otherEntity',
-              required: false,
-            },
-          ],
-        },
         {
           model: User,
           attributes: ['name', 'role', 'fullName', 'homeRegionId'],
@@ -657,6 +710,15 @@ export async function activityReportAlerts(userId, {
       subQuery: false,
     },
   );
+
+  const recipients = await ActivityRecipient.findAll({
+    where: {
+      activityReportId: reports.rows.map(({ id }) => id),
+    },
+    attributes: ['id', 'name', 'activityRecipientId', 'activityReportId'],
+  });
+
+  return { ...reports, recipients };
 }
 
 export async function createOrUpdate(newActivityReport, report) {
@@ -669,24 +731,27 @@ export async function createOrUpdate(newActivityReport, report) {
     objectivesWithoutGoals,
     activityReportCollaborators,
     activityRecipients,
-    attachments,
+    files,
     author,
     recipientNextSteps,
     specialistNextSteps,
     ECLKCResourcesUsed,
     nonECLKCResourcesUsed,
+    attachments,
+    recipientsWhoHaveGoalsThatShouldBeRemoved,
     ...allFields
   } = newActivityReport;
-
   const previousActivityRecipientType = report && report.activityRecipientType;
   const resources = {};
 
   if (ECLKCResourcesUsed) {
-    resources.ECLKCResourcesUsed = ECLKCResourcesUsed.map((item) => item.value);
+    resources.ECLKCResourcesUsed = ECLKCResourcesUsed.filter((item) => item)
+      .map((item) => item.value);
   }
 
   if (nonECLKCResourcesUsed) {
-    resources.nonECLKCResourcesUsed = nonECLKCResourcesUsed.map((item) => item.value);
+    resources.nonECLKCResourcesUsed = nonECLKCResourcesUsed.filter((item) => item)
+      .map((item) => item.value);
   }
 
   const updatedFields = { ...allFields, ...resources };
@@ -695,6 +760,7 @@ export async function createOrUpdate(newActivityReport, report) {
   } else {
     savedReport = await create(updatedFields);
   }
+
   if (activityReportCollaborators) {
     const { id } = savedReport;
     const newCollaborators = activityReportCollaborators.map(
@@ -702,17 +768,21 @@ export async function createOrUpdate(newActivityReport, report) {
     );
     await saveReportCollaborators(id, newCollaborators);
   }
+
   if (activityRecipients) {
-    const { activityRecipientType, id } = savedReport;
+    const { activityRecipientType: typeOfRecipient, id: savedReportId } = savedReport;
     const activityRecipientIds = activityRecipients.map(
       (g) => g.activityRecipientId,
     );
-    await saveReportRecipients(id, activityRecipientIds, activityRecipientType);
+
+    await saveReportRecipients(savedReportId, activityRecipientIds, typeOfRecipient);
   }
+
   if (recipientNextSteps) {
     const { id } = savedReport;
     await saveNotes(id, recipientNextSteps, true);
   }
+
   if (specialistNextSteps) {
     const { id } = savedReport;
     await saveNotes(id, specialistNextSteps, false);
@@ -736,6 +806,10 @@ export async function createOrUpdate(newActivityReport, report) {
 
   const activityRecipientType = recipientType();
 
+  if (recipientsWhoHaveGoalsThatShouldBeRemoved) {
+    await removeRemovedRecipientsGoals(recipientsWhoHaveGoalsThatShouldBeRemoved, savedReport);
+  }
+
   if (previousActivityRecipientType
     && previousActivityRecipientType !== report.activityRecipientType) {
     await removeUnusedGoalsObjectivesFromReport(report.id, []);
@@ -744,7 +818,7 @@ export async function createOrUpdate(newActivityReport, report) {
   if (activityRecipientType === 'other-entity' && objectivesWithoutGoals) {
     await saveObjectivesForReport(objectivesWithoutGoals, savedReport);
   } else if (activityRecipientType === 'recipient' && goals) {
-    await saveGoalsForReport(goals, savedReport);
+    await saveGoalsForReport(goals, savedReport, recipientsWhoHaveGoalsThatShouldBeRemoved);
   }
 
   // Approvers are removed if approverUserIds is an empty array
@@ -752,11 +826,18 @@ export async function createOrUpdate(newActivityReport, report) {
     await syncApprovers(savedReport.id, approverUserIds);
   }
 
-  return activityReportById(savedReport.id);
+  const [r, recips, gAndOs] = await activityReportAndRecipientsById(savedReport.id);
+  return {
+    ...r.dataValues,
+    displayId: r.displayId,
+    activityRecipients: recips,
+    goalsAndObjectives: gAndOs,
+  };
 }
 
 export async function setStatus(report, status) {
-  return report.update({ submissionStatus: status });
+  await report.update({ submissionStatus: status });
+  return activityReportAndRecipientsById(report.id);
 }
 
 /*
@@ -768,10 +849,7 @@ export async function setStatus(report, status) {
  * @returns {*} Grants and Other entities
  */
 export async function possibleRecipients(regionId) {
-  let where = { status: 'Active' };
-  if (regionId) {
-    where = { ...where, regionId };
-  }
+  const where = { status: 'Active', regionId };
 
   const grants = await Recipient.findAll({
     attributes: ['id', 'name'],
@@ -819,8 +897,9 @@ async function getDownloadableActivityReports(where, separate = true) {
             model: Goal,
             as: 'goal',
           }],
-          attributes: ['id', 'title', 'status', 'ttaProvided'],
+          attributes: ['id', 'title', 'status'],
         }],
+        attributes: ['ttaProvided'],
         order: [['objective', 'goal', 'id'], ['objective', 'id']],
       },
       {
@@ -859,8 +938,7 @@ async function getDownloadableActivityReports(where, separate = true) {
             [Op.ne]: 'UPLOAD_FAILED',
           },
         },
-        as: 'attachments',
-        separate,
+        as: 'files',
         required: false,
       },
       {

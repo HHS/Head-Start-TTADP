@@ -4,7 +4,7 @@ import db, {
 } from '../models';
 import {
   createOrUpdate,
-  activityReportById,
+  activityReportAndRecipientsById,
   possibleRecipients,
   activityReports,
   activityReportAlerts,
@@ -19,6 +19,7 @@ import SCOPES from '../middleware/scopeConstants';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '../constants';
 
 import { createReport, destroyReport } from '../testUtils';
+import { auditLogger } from '../logger';
 
 const RECIPIENT_ID = 30;
 const RECIPIENT_ID_SORTING = 31;
@@ -125,7 +126,7 @@ describe('Activity report service', () => {
         User.bulkCreate([
           mockUserFour,
           mockUserFive,
-        ]),
+        ], { validate: true, individualHooks: true }),
         OtherEntity.create({ id: ALERT_RECIPIENT_ID, name: 'alert otherEntity' }),
         Recipient.create({ name: 'alert recipient', id: ALERT_RECIPIENT_ID, uei: 'NNA5N2KHMGN2' }),
         Region.create({ name: 'office 22', id: 22 }),
@@ -149,7 +150,7 @@ describe('Activity report service', () => {
       await User.destroy({ where: { id: userIds } });
       await Permission.destroy({ where: { userId: userIds } });
       await OtherEntity.destroy({ where: { id: ALERT_RECIPIENT_ID } });
-      await Grant.destroy({ where: { id: [ALERT_RECIPIENT_ID] } });
+      await Grant.destroy({ where: { recipientId: [ALERT_RECIPIENT_ID] } });
       await Recipient.destroy({ where: { id: [ALERT_RECIPIENT_ID] } });
       await Region.destroy({ where: { id: 22 } });
     });
@@ -272,7 +273,7 @@ describe('Activity report service', () => {
           mockUserThree,
           alertsMockUserOne,
           alertsMockUserTwo,
-        ]),
+        ], { validate: true, individualHooks: true }),
         OtherEntity.create({ id: RECIPIENT_ID, name: 'otherEntity' }),
         Recipient.findOrCreate({ where: { name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGA2' } }),
         Region.create({ name: 'office 19', id: 19 }),
@@ -347,10 +348,10 @@ describe('Activity report service', () => {
           targetPopulations: [],
           topics: [],
           pageState: {
-            1: 'Not started',
-            2: 'Not started',
-            3: 'Not started',
-            4: 'Not started',
+            1: 'Not Started',
+            2: 'Not Started',
+            3: 'Not Started',
+            4: 'Not Started',
           },
           userId: mockUser.id,
           regionId: 1,
@@ -367,14 +368,14 @@ describe('Activity report service', () => {
         const report = await createOrUpdate(reportObject);
         const endARCount = await ActivityReport.findAll({ where: { userId: mockUser.id } });
         expect(endARCount.length - beginningARCount.length).toBe(1);
-        expect(report.activityRecipients[0].grant.id).toBe(RECIPIENT_ID);
+        expect(report.activityRecipients[0].id).toBe(RECIPIENT_ID);
         // Check afterCreate copySubmissionStatus hook
         expect(report.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
       });
 
       it('creates a new report with other-entity recipient', async () => {
         const report = await createOrUpdate({ ...reportObject, activityRecipientType: 'other-entity' });
-        expect(report.activityRecipients[0].otherEntity.id).toBe(RECIPIENT_ID);
+        expect(report.activityRecipients[0].id).toBe(RECIPIENT_ID);
       });
 
       it('handles reports with collaborators', async () => {
@@ -445,6 +446,7 @@ describe('Activity report service', () => {
           { role: ['System Specialist'] },
           {
             where: { id: mockUserThree.id },
+            individualHooks: true,
           },
         );
 
@@ -492,7 +494,13 @@ describe('Activity report service', () => {
           recipientNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
         };
         // When that report is created
-        const report = await createOrUpdate(reportObjectWithNotes);
+        let report;
+        try {
+          report = await createOrUpdate(reportObjectWithNotes);
+        } catch (err) {
+          auditLogger.error(err);
+          throw err;
+        }
         // Then we see that it was saved correctly
         expect(report.specialistNextSteps.length).toBe(2);
         expect(report.recipientNextSteps.length).toBe(2);
@@ -510,7 +518,13 @@ describe('Activity report service', () => {
         };
 
         // When that report is created
-        const report = await createOrUpdate(reportWithNotes);
+        let report;
+        try {
+          report = await createOrUpdate(reportWithNotes);
+        } catch (err) {
+          auditLogger.error(err);
+          throw err;
+        }
 
         // Then we see that it was saved correctly
         expect(report.recipientNextSteps.length).toBe(0);
@@ -528,7 +542,13 @@ describe('Activity report service', () => {
         };
 
         // When that report is created
-        const report = await createOrUpdate(reportWithNotes);
+        let report;
+        try {
+          report = await createOrUpdate(reportWithNotes);
+        } catch (err) {
+          auditLogger.error(err);
+          throw err;
+        }
 
         // Then we see that it was saved correctly
         expect(report.specialistNextSteps.length).toBe(0);
@@ -607,12 +627,14 @@ describe('Activity report service', () => {
         const recipientIds = report.recipientNextSteps.map((note) => note.id);
         const specialistsIds = report.specialistNextSteps.map((note) => note.id);
 
+        const [freshlyUpdated] = await activityReportAndRecipientsById(report.id);
+
         // When the report is updated with same notes
         const notes = {
           specialistNextSteps: report.specialistNextSteps,
           recipientNextSteps: report.recipientNextSteps,
         };
-        const updatedReport = await createOrUpdate(notes, report);
+        const updatedReport = await createOrUpdate(notes, freshlyUpdated);
 
         // Then we see nothing changes
         // And we are re-using the same old ids
@@ -632,8 +654,11 @@ describe('Activity report service', () => {
           approverUserIds: [mockUserTwo.id],
         };
         // Calls syncApprovers when approverUserIds is present
-        const report = await createOrUpdate(reportWithApprovers);
-        expect(report.approvers[0].User.id).toEqual(mockUserTwo.id);
+        const newReport = await createOrUpdate(reportWithApprovers);
+        expect(newReport.approvers[0].User.id).toEqual(mockUserTwo.id);
+
+        const [report] = await activityReportAndRecipientsById(newReport.id);
+
         // When syncApprovers is undefined, skip call, avoid removing approvers
         const reportTwo = await createOrUpdate({ ...reportObject, regionId: 3 }, report);
         expect(reportTwo.approvers[0].User.id).toEqual(mockUserTwo.id);
@@ -649,11 +674,11 @@ describe('Activity report service', () => {
       });
     });
 
-    describe('activityReportById', () => {
+    describe('activityReportAndRecipientsById', () => {
       it('retrieves an activity report', async () => {
         const report = await ActivityReport.create(reportObject);
 
-        const foundReport = await activityReportById(report.id);
+        const [foundReport] = await activityReportAndRecipientsById(report.id);
         expect(foundReport.id).toBe(report.id);
         expect(foundReport.ECLKCResourcesUsed).toEqual(['test']);
       });
@@ -665,7 +690,7 @@ describe('Activity report service', () => {
           status: APPROVER_STATUSES.APPROVED,
           note: 'great job from user 2',
         });
-        const foundReport = await activityReportById(report.id);
+        const [foundReport] = await activityReportAndRecipientsById(report.id);
         expect(foundReport.approvers[0].User.get('fullName')).toEqual(`${mockUserTwo.name}, ${mockUserTwo.role[0]}`);
       });
       it('excludes soft deleted approvers', async () => {
@@ -692,7 +717,7 @@ describe('Activity report service', () => {
           where: { id: toDeleteApproval.id },
           individualHooks: true,
         });
-        const foundReport = await activityReportById(report.id);
+        const [foundReport] = await activityReportAndRecipientsById(report.id);
         // Show both approvers
         expect(foundReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
         expect(foundReport.approvers.length).toEqual(1);
@@ -735,10 +760,15 @@ describe('Activity report service', () => {
           calculatedStatus: REPORT_STATUSES.APPROVED,
           topics: topicsTwo,
         });
-        await ActivityRecipient.create({
-          activityReportId: report.id,
-          grantId: firstGrant.id,
-        });
+        try {
+          await ActivityRecipient.create({
+            activityReportId: report.id,
+            grantId: firstGrant.id,
+          });
+        } catch (error) {
+          auditLogger.error(JSON.stringify(error));
+          throw error;
+        }
         latestReport = await ActivityReport.create({
           ...submittedReport,
           calculatedStatus: REPORT_STATUSES.APPROVED,
@@ -791,11 +821,13 @@ describe('Activity report service', () => {
       });
 
       it('retrieves reports sorted by activity recipients', async () => {
-        const { rows } = await activityReports({
+        const { rows, recipients } = await activityReports({
           sortBy: 'activityRecipients', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1', '2'], 'reportId.nctn': idsToExclude,
         });
+
         expect(rows.length).toBe(6);
-        expect(rows[0].activityRecipients[0].grantId).toBe(firstGrant.id);
+
+        expect(rows[0].id).toBe(recipients[0].activityReportId);
       });
 
       it('retrieves reports sorted by sorted topics', async () => {
@@ -828,11 +860,6 @@ describe('Activity report service', () => {
         const recipients = await possibleRecipients(region);
 
         expect(recipients.grants.length).toBe(0);
-      });
-
-      it('retrieves all recipients when not specifying region', async () => {
-        const recipients = await possibleRecipients();
-        expect(recipients.grants.length).toBe(11);
       });
     });
 
@@ -1019,22 +1046,28 @@ describe('Activity report service', () => {
 
     it('handles results with less items then the limit', async () => {
       const ids = reports.map((r) => r.id);
+      ids.sort();
       const where = {
         id: ids,
       };
 
       const res = await batchQuery({ where }, 100);
-      expect(res.map((r) => r.id)).toEqual(ids);
+      const resIds = res.map((r) => r.id);
+      resIds.sort();
+      expect(resIds).toEqual(ids);
     });
 
     it('handles results with more items then the limit', async () => {
       const ids = reports.map((r) => r.id);
+      ids.sort();
       const where = {
         id: ids,
       };
 
       const res = await batchQuery({ where }, 1);
-      expect(res.map((r) => r.id)).toEqual(ids);
+      const resIds = res.map((r) => r.id);
+      resIds.sort();
+      expect(resIds).toEqual(ids);
     });
   });
 });

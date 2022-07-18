@@ -21,6 +21,7 @@ describe.skip('Change Goal Status', () => {
       timeframe: '12 months',
       isFromSmartsheetTtaPlan: false,
       createdAt: new Date('2021-01-02'),
+      grantId: 1,
     });
   });
   afterAll(async () => {
