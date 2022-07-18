@@ -37,6 +37,7 @@ describe('Goals by Recipient Test', () => {
 
   const recipient3 = {
     id: 302,
+    uei: 'NNA5N2KHMGA2',
     name: 'Recipient 3 with Goals',
   };
 
