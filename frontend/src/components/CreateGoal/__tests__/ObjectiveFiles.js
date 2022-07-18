@@ -7,7 +7,6 @@ import {
 import userEvent from '@testing-library/user-event';
 import ObjectiveFiles from '../ObjectiveFiles';
 
-
 describe('ObjectiveFiles', () => {
   it('shows the read only view', async () => {
     render(<ObjectiveFiles
