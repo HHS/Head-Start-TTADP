@@ -33,7 +33,7 @@ import {
   reportApprovedNotification,
   collaboratorAssignedNotification,
 } from '../../lib/mailer';
-import { activityReportToCsvRecord, extractListOfGoalsAndObjectives } from '../../lib/transform';
+import { activityReportToCsvRecord, extractListOfGoalsAndObjectives, deduplicateObjectivesWithoutGoals } from '../../lib/transform';
 
 const { APPROVE_REPORTS } = SCOPES;
 
@@ -508,11 +508,14 @@ export async function getReport(req, res) {
     return;
   }
 
+  const { objectivesWithoutGoals, ...data } = report.dataValues;
+
   res.json({
-    ...report.dataValues,
+    ...data,
     displayId: report.displayId,
     activityRecipients,
     goalsAndObjectives,
+    objectivesWithoutGoals: deduplicateObjectivesWithoutGoals(objectivesWithoutGoals),
   });
 }
 
