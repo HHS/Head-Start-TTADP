@@ -47,7 +47,7 @@ export default function GoalForm({
         ) || GOAL_DATE_ERROR,
       },
     },
-    defaultValue: goal && goal.endDate ? goal.endDate : '',
+    defaultValue: goal && goal.endDate ? goal.endDate : ' ',
   });
 
   const {
