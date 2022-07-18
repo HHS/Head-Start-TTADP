@@ -1,18 +1,5 @@
 const { Model } = require('sequelize');
-
-const generateFullName = (user, collaboratorRoles) => {
-  const roles = collaboratorRoles ? collaboratorRoles.map((r) => r.role).sort() : [];
-  if (!roles.length) {
-    return user.fullName;
-  }
-  const combinedRoles = roles.reduce((result, val) => {
-    if (val) {
-      return val === 'TTAC' || val === 'COR' ? `${result}, ${val}` : `${result}, ${val.split(' ').map((word) => word[0]).join('')}`;
-    }
-    return '';
-  }, []);
-  return combinedRoles.length > 0 ? `${user.name}${combinedRoles}` : user.name;
-};
+const generateFullName = require('./hooks/activityReportCollaborator');
 
 module.exports = (sequelize, DataTypes) => {
   class ActivityReportCollaborator extends Model {
@@ -48,4 +35,9 @@ module.exports = (sequelize, DataTypes) => {
     ],
   });
   return ActivityReportCollaborator;
+};
+
+export {
+  // eslint-disable-next-line
+  generateFullName,
 };

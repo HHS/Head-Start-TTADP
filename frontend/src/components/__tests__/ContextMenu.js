@@ -62,7 +62,7 @@ describe('ContextMenu', () => {
       const button = await screen.findByTestId('ellipsis-button');
       userEvent.click(button);
       const menu = await screen.findByTestId('menu');
-      expect(menu).not.toHaveClass('smart-hub--context-menu__left');
+      expect(menu).not.toHaveClass('smart-hub--menu__left');
     });
 
     it('can be shifted up', async () => {
@@ -70,7 +70,7 @@ describe('ContextMenu', () => {
       const button = await screen.findByTestId('ellipsis-button');
       userEvent.click(button);
       const menu = await screen.findByTestId('menu');
-      expect(menu).toHaveClass('smart-hub--context-menu__up');
+      expect(menu).toHaveClass('smart-hub--menu__up');
     });
 
     it('can be shifted up and left', async () => {
@@ -78,7 +78,7 @@ describe('ContextMenu', () => {
       const button = await screen.findByTestId('ellipsis-button');
       userEvent.click(button);
       const menu = await screen.findByTestId('menu');
-      expect(menu).toHaveClass('smart-hub--context-menu__left_and_up');
+      expect(menu).toHaveClass('smart-hub--menu__left_and_up');
     });
 
     it('ignores keypresses that are not escape', async () => {

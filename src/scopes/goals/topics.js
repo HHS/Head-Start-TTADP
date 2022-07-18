@@ -1,26 +1,46 @@
 import { Op } from 'sequelize';
 import { filterAssociation } from './utils';
+import { sequelize } from '../../models';
 
+/* TODO: Switch for New Goal Creation. */
+/*
 const topicFilter = `
-SELECT DISTINCT g.id
-FROM "ActivityReports" ar
-INNER JOIN "ActivityReportObjectives" aro ON ar."id" = aro."activityReportId"
-INNER JOIN "Objectives" o ON aro."objectiveId" = o.id
-INNER JOIN "Goals" g ON o."goalId" = g.id
-WHERE ARRAY_TO_STRING(ar."topics", ',')`;
+SELECT
+  DISTINCT "Goal"."id"
+FROM "Objectives" "Objectives"
+INNER JOIN "ObjectiveTopics" "ObjectiveTopics"
+ON "Objectives"."id" = "ObjectiveTopics"."objectiveId"
+INNER JOIN "Topics" "Topics"
+ON "ObjectiveTopics"."topicId" = "Topics"."id"
+INNER JOIN "Goals" "Goal"
+ON "Objectives"."goalId" = "Goal"."id"
+WHERE "Topics"."name"`;
+*/
 
-export function withTopics(topics) {
+const topicFilter = (options) => {
+  const useRecipient = options && options.recipientId;
+  return `
+          SELECT DISTINCT g.id
+          FROM "ActivityReports" ar
+          INNER JOIN "ActivityReportGoals" arg ON ar.id = arg."activityReportId"
+          INNER JOIN "Goals" g ON arg."goalId" = g.id
+          INNER JOIN "Grants" gr ON g."grantId" = gr."id"
+          WHERE ${useRecipient ? `gr."recipientId" = ${sequelize.escape(options.recipientId)} AND ` : ''}
+          ARRAY_TO_STRING(ar."topics", ',')`;
+};
+
+export function withTopics(topics, options) {
   return {
     [Op.or]: [
-      filterAssociation(topicFilter, topics, false),
+      filterAssociation(topicFilter(options), topics, false),
     ],
   };
 }
 
-export function withoutTopics(topics) {
+export function withoutTopics(topics, options) {
   return {
     [Op.and]: [
-      filterAssociation(topicFilter, topics, true),
+      filterAssociation(topicFilter(options), topics, true),
     ],
   };
 }

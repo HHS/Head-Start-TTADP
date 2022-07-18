@@ -65,6 +65,9 @@
     "docker:db:seed": "docker-compose run --rm backend yarn db:seed",
     "docker:db:seed:undo": "docker-compose run --rm backend yarn db:seed:undo",
     "docker:makecolors": "docker-compose run --rm frontend yarn makecolors",
+    "docker:yarn": "docker-compose run yarn",
+    "docker:yarn:fe": "docker-compose run --rm frontend  yarn",
+    "docker:yarn:be": "docker-compose run --rm backend yarn",
     "import:reports:local": "./node_modules/.bin/babel-node ./src/tools/importSSActivityReports.js",
     "import:reports": "node ./build/server/tools/importSSActivityReports.js",
     "import:goals:local": "./node_modules/.bin/babel-node ./src/tools/importTTAPlanGoals.js",
@@ -76,7 +79,9 @@
     "processData:local": "./node_modules/.bin/babel-node ./src/tools/processDataCLI.js",
     "changeReportStatus": "node ./build/server/tools/changeReportStatusCLI.js",
     "changeReportStatus:local": "./node_modules/.bin/babel-node ./src/tools/changeReportStatusCLI.js",
-    "makecolors": "node ./src/makecolors.js"
+    "makecolors": "node ./src/makecolors.js",
+    "restoreTopics": "node ./build/server/tools/restoreTopicsCLI.js",
+    "restoreTopics:local": "./node_modules/.bin/babel-node ./src/tools/restoreTopicsCLI.js"
   },
   "repository": {
     "type": "git",
@@ -132,10 +137,10 @@
     ],
     "coverageThreshold": {
       "global": {
-        "statements": 90,
-        "functions": 90,
-        "branches": 81,
-        "lines": 90
+        "statements": 85,
+        "functions": 70,
+        "branches": 70,
+        "lines": 85
       }
     }
   },

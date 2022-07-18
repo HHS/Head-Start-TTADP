@@ -28,7 +28,7 @@ const getIdFromKey = async (key) => {
  */
 const updateFileStatus = async (key, fileStatus) => {
   const fileId = await getIdFromKey(key);
-  await File.update({ status: fileStatus }, { where: { id: fileId } });
+  await File.update({ status: fileStatus }, { where: { id: fileId }, individualHooks: true });
 };
 
 /**

@@ -151,6 +151,8 @@ describe('Audit System', () => {
           throw (err);
         }
 
+        triggers.sort();
+
         expect(triggers)
           .toEqual([{
             name: 'ZALNoDeleteTTests',
@@ -349,6 +351,7 @@ describe('Audit System', () => {
         {
           where: { id: addedUser.id },
           transaction: t,
+          individualHooks: true,
         },
       );
 

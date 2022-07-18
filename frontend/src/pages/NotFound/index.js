@@ -10,7 +10,7 @@ function NotFound() {
       <Helmet>
         <title>Home</title>
       </Helmet>
-      <Alert type="error" heading="Not Found">
+      <Alert type="error" heading="Not Found" headingLevel="h1">
         Page Not Found, please go to the
         {' '}
         <Link to="/">Home page</Link>

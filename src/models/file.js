@@ -9,14 +9,38 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      File.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId' });
+      File.hasMany(models.ActivityReportFile, { foreignKey: 'fileId', as: 'reportFiles' });
+      File.hasMany(models.ActivityReportObjectiveFile, { foreignKey: 'fileId', as: 'reportObjectiveFiles' });
+      File.hasMany(models.ObjectiveFile, { foreignKey: 'fileId', as: 'objectiveFiles' });
+      File.hasMany(models.ObjectiveTemplateFile, { foreignKey: 'fileId', as: 'objectiveTemplateFiles' });
+
+      File.belongsToMany(models.ActivityReport, {
+        through: models.ActivityReportFile,
+        foreignKey: 'fileId',
+        otherKey: 'activityReportId',
+        as: 'reports',
+      });
+      File.belongsToMany(models.ActivityReportObjective, {
+        through: models.ActivityReportObjectiveFile,
+        foreignKey: 'fileId',
+        otherKey: 'activityReportObjectiveId',
+        as: 'reportObjectives',
+      });
+      File.belongsToMany(models.Objective, {
+        through: models.ObjectiveFile,
+        foreignKey: 'fileId',
+        otherKey: 'objectiveId',
+        as: 'objectives',
+      });
+      File.belongsToMany(models.ObjectiveTemplate, {
+        through: models.ObjectiveTemplateFile,
+        foreignKey: 'fileId',
+        otherKey: 'objectiveTemplateId',
+        as: 'objectiveTemplates',
+      });
     }
   }
   File.init({
-    activityReportId: {
-      allowNull: false,
-      type: DataTypes.INTEGER,
-    },
     originalFileName: {
       allowNull: false,
       type: DataTypes.STRING,

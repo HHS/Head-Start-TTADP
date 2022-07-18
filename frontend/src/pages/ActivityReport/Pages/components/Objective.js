@@ -15,7 +15,7 @@ import './Objective.scss';
 const statuses = [
   'Not Started',
   'In Progress',
-  'Complete',
+  'Completed',
 ];
 
 const EMPTY_TEXT_BOX = '<p></p>';

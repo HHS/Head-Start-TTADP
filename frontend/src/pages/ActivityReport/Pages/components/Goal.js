@@ -15,6 +15,7 @@ const Goals = ({
   objectives,
   onUpdateObjectives,
   createObjective,
+  number,
 }) => {
   const [editing, updateEditing] = useState(false);
   const [goalName, updateGoalName] = useState(name);
@@ -80,6 +81,7 @@ const Goals = ({
     <p className="margin-y-0">
       <span className="text-bold">Goal: </span>
       { name }
+      {number && ` (${number})`}
     </p>
   );
 
@@ -137,7 +139,12 @@ Goals.propTypes = {
   goalIndex: PropTypes.number.isRequired,
   onUpdateGoal: PropTypes.func.isRequired,
   onRemoveGoal: PropTypes.func.isRequired,
+  number: PropTypes.string,
   onUpdateObjectives: PropTypes.func.isRequired,
+};
+
+Goals.defaultProps = {
+  number: null,
 };
 
 export default Goals;

@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-export */
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
@@ -14,7 +15,7 @@ import Landing from '../index';
 import activityReports, { activityReportsSorted, generateXFakeReports, overviewRegionOne } from '../mocks';
 import { getAllAlertsDownloadURL } from '../../../fetchers/helpers';
 import { filtersToQueryString } from '../../../utils';
-import { mockWindowProperty } from '../../../testHelpers';
+import { mockWindowProperty, convertToResponse } from '../../../testHelpers';
 
 jest.mock('../../../fetchers/helpers');
 
@@ -52,6 +53,8 @@ const renderLanding = (user) => {
   );
 };
 
+const response = convertToResponse(activityReports);
+
 describe('Landing Page', () => {
   mockWindowProperty('localStorage', {
     setItem: jest.fn(),
@@ -59,10 +62,11 @@ describe('Landing Page', () => {
     removeItem: jest.fn(),
   });
   beforeEach(async () => {
-    fetchMock.get(base, { count: 2, rows: activityReports });
+    fetchMock.get(base, response);
     fetchMock.get(baseAlerts, {
       alertsCount: 0,
       alerts: [],
+      recipients: [],
     });
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
 
@@ -177,7 +181,7 @@ describe('Landing Page', () => {
   });
 
   test('displays the correct recipients', async () => {
-    const recipient = await screen.findByRole('button', { name: /johnston-romaguera johnston-romaguera recipient name click to visually reveal the recipients for r14-ar-1/i });
+    const recipient = await screen.findByRole('button', { name: /Johnston-Romaguera - 14CH00003 Johnston-Romaguera - 14CH00002 Recipient Name - 14CH1234 click to visually reveal the recipients for R14-AR-1/i });
     const otherEntity = await screen.findByRole('cell', {
       name: /qris system/i,
     });
@@ -244,11 +248,11 @@ describe('Landing page table menus & selections', () => {
         fetchMock.reset();
         fetchMock.get(
           baseAlerts,
-          { count: 10, alerts: generateXFakeReports(10) },
+          convertToResponse(generateXFakeReports(10), true),
         );
         fetchMock.get(
           base,
-          { count: 10, rows: [] },
+          { count: 10, rows: [], recipients: [] },
         );
         fetchMock.get(defaultOverviewUrl, overviewRegionOne);
 
@@ -336,13 +340,10 @@ describe('My alerts sorting', () => {
     fetchMock.reset();
 
     // Alerts.
-    fetchMock.get(baseAlerts, {
-      alertsCount: 2,
-      alerts: activityReports,
-    });
+    fetchMock.get(baseAlerts, convertToResponse(activityReports, true));
 
     // Activity Reports.
-    fetchMock.get(base, { count: 0, rows: [] });
+    fetchMock.get(base, { count: 0, rows: [], recipients: [] });
 
     // Overview.
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
@@ -378,7 +379,7 @@ describe('My alerts sorting', () => {
     await waitFor(() => expect(screen.getAllByRole('cell')[16]).toHaveTextContent(/needs action/i));
 
     fetchMock.get('/api/activity-reports/alerts?sortBy=calculatedStatus&sortDir=desc&offset=0&limit=10&region.in[]=1',
-      { alertsCount: 2, alerts: activityReportsSorted });
+      convertToResponse(activityReportsSorted, true));
 
     fireEvent.click(statusColumnHeaders[0]);
     await waitFor(() => expect(screen.getAllByRole('cell')[7]).toHaveTextContent(/needs action/i));
@@ -390,10 +391,10 @@ describe('My alerts sorting', () => {
     expect(reportIdHeaders.length).toBe(2);
     fetchMock.reset();
     fetchMock.get('/api/activity-reports/alerts?sortBy=regionId&sortDir=asc&offset=0&limit=10&region.in[]=1',
-      { alertsCount: 2, alerts: activityReports });
+      convertToResponse(activityReports, true));
     fetchMock.get(
       base,
-      { count: 0, rows: [] },
+      { count: 0, rows: [], recipients: [] },
     );
     const columnHeaders = await screen.findAllByText(/report id/i);
     fireEvent.click(columnHeaders[0]);
@@ -408,10 +409,10 @@ describe('My alerts sorting', () => {
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
     fetchMock.get('/api/activity-reports/alerts?sortBy=activityRecipients&sortDir=asc&offset=0&limit=10',
-      { alertsCount: 2, alerts: activityReports });
+      convertToResponse(activityReports, true));
     fetchMock.get(
       base,
-      { count: 0, rows: [] },
+      { count: 0, rows: [], recipients: [] },
     );
 
     fireEvent.click(columnHeaders[0]);
@@ -426,10 +427,10 @@ describe('My alerts sorting', () => {
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
     fetchMock.get('/api/activity-reports/alerts?sortBy=startDate&sortDir=asc&offset=0&limit=10&region.in[]=1',
-      { alertsCount: 2, alerts: activityReportsSorted });
+      convertToResponse(activityReportsSorted, true));
     fetchMock.get(
       base,
-      { count: 0, rows: [] },
+      { count: 0, rows: [], recipients: [] },
     );
 
     fireEvent.click(columnHeaders[0]);
@@ -444,10 +445,10 @@ describe('My alerts sorting', () => {
     expect(columnHeaders.length).toBe(2);
     fetchMock.reset();
     fetchMock.get('/api/activity-reports/alerts?sortBy=author&sortDir=asc&offset=0&limit=10&region.in[]=1',
-      { alertsCount: 2, alerts: activityReportsSorted });
+      convertToResponse(activityReportsSorted, true));
     fetchMock.get(
       base,
-      { count: 0, rows: [] },
+      { count: 0, rows: [], recipients: [] },
     );
 
     fireEvent.click(columnHeaders[0]);
@@ -461,8 +462,8 @@ describe('My alerts sorting', () => {
     fetchMock.reset();
 
     fetchMock.get('/api/activity-reports/alerts?sortBy=collaborators&sortDir=asc&offset=0&limit=10&region.in[]=1',
-      { alertsCount: 2, alerts: activityReportsSorted });
-    fetchMock.get(`${base}`, { count: 0, rows: [] });
+      convertToResponse(activityReportsSorted, true));
+    fetchMock.get(`${base}`, { count: 0, rows: [], recipients: [] });
 
     fireEvent.click(columnHeaders[0]);
     const firstCell = /Cucumber User, GS Hermione Granger, SS click to visually reveal the collaborators for R14-AR-2$/i;
@@ -478,11 +479,11 @@ describe('handleApplyFilters', () => {
     delete window.location;
     window.location = new URL('https://www.test.gov');
     mockFetchWithRegionOne();
-    fetchMock.get(base, { count: 2, rows: activityReports });
-    fetchMock.get(baseAlerts, { alertsCount: 0, alerts: [] });
+    fetchMock.get(base, convertToResponse(activityReports));
+    fetchMock.get(baseAlerts, { alertsCount: 0, alerts: [], recipients: [] });
 
     fetchMock.get(`${defaultOverviewUrl}&${inTest}`, overviewRegionOne);
-    fetchMock.get(`${baseAlerts}&${inTest}`, { alertsCount: 0, alerts: [] });
+    fetchMock.get(`${baseAlerts}&${inTest}`, { alertsCount: 0, alerts: [], recipients: [] });
   });
 
   afterEach(() => fetchMock.restore());
@@ -533,20 +534,18 @@ describe('handleApplyAlertFilters', () => {
   beforeEach(() => {
     delete window.location;
     window.location = new URL('https://www.test.gov');
-    fetchMock.get(baseAlerts, {
-      count: 10,
-      alerts: generateXFakeReports(10),
-    });
+    fetchMock.get(baseAlerts, convertToResponse(generateXFakeReports(10), true));
 
     fetchMock.get(base,
-      { count: 1, rows: generateXFakeReports(1) });
+      convertToResponse(generateXFakeReports(1), true));
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
     fetchMock.get(`${base}&${inTest}`, {
       count: 0,
       rows: [],
+      recipients: [],
     });
     fetchMock.get(`${defaultOverviewUrl}&${inTest}`, overviewRegionOne);
-    fetchMock.get(`${baseAlerts}&${inTest}`, { alertsCount: 0, alerts: [] });
+    fetchMock.get(`${baseAlerts}&${inTest}`, { alertsCount: 0, alerts: [], recipients: [] });
   });
 
   afterEach(() => fetchMock.restore());

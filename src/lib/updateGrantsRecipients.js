@@ -185,6 +185,7 @@ export async function processFiles(hashSumHex) {
             fields: ['oldGrantId'],
             sideEffects: false,
             transaction,
+            individualHooks: true,
           },
         )
       ));
