@@ -56,7 +56,6 @@ const hasReportAuthorization = async (userId, reportId) => {
   const user = await userById(userId);
   const [report] = await activityReportAndRecipientsById(reportId);
   const authorization = new ActivityReportPolicy(user, report);
-
   if (!authorization.canUpdate()) {
     return false;
   }
@@ -71,12 +70,11 @@ const deleteHandler = async (req, res) => {
     objectiveTemplateId,
     fileId,
   } = req.params;
-
   try {
     let file = await getFileById(fileId);
 
     if (reportId) {
-      if (!hasReportAuthorization(req.session.userId, reportId)) {
+      if (!await hasReportAuthorization(req.session.userId, reportId)) {
         res.sendStatus(403);
         return;
       }
@@ -88,7 +86,11 @@ const deleteHandler = async (req, res) => {
       const activityReportObjective = ActivityReportObjective.findOne(
         { where: { id: reportObjectiveId } },
       );
-      if (!hasReportAuthorization(req.session.userId, activityReportObjective.activityReportId)) {
+      if (!await hasReportAuthorization(
+        req.session.userId,
+        activityReportObjective.activityReportId,
+      )
+      ) {
         res.sendStatus(403);
         return;
       }
@@ -215,15 +217,6 @@ const uploadHandler = async (req, res) => {
   let fileName;
   let fileTypeToUse;
 
-  /*
-  const user = await userById(req.session.userId);
-  const [report] = await activityReportAndRecipientsById(reportId);
-  const authorization = new ActivityReportPolicy(user, report);
-
-  if (!(authorization.canUpdate() || (await validateUserAuthForAdmin(req.session.userId)))) {
-    return res.sendStatus(403);
-  }
-  */
   try {
     if (!files.file) {
       return res.status(400).send({ error: 'file required' });
@@ -254,7 +247,7 @@ const uploadHandler = async (req, res) => {
     fileTypeToUse = altFileType || type;
     fileName = `${uuidv4()}${fileTypeToUse.ext}`;
     if (reportId) {
-      if (!(hasReportAuthorization(req.session.userId, reportId)
+      if (!(await hasReportAuthorization(req.session.userId, reportId)
         || (await validateUserAuthForAdmin(req.session.userId)))) {
         return res.sendStatus(403);
       }
@@ -268,7 +261,10 @@ const uploadHandler = async (req, res) => {
       const activityReportObjective = ActivityReportObjective.findOne(
         { where: { id: reportObjectiveId } },
       );
-      if (!(hasReportAuthorization(req.session.userId, activityReportObjective.activityReportId)
+      if (!(await hasReportAuthorization(
+        req.session.userId,
+        activityReportObjective.activityReportId,
+      )
       || (await validateUserAuthForAdmin(req.session.userId)))) {
         return res.sendStatus(403);
       }
