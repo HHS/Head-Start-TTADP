@@ -105,8 +105,7 @@ describe('File Upload', () => {
         file = await File.findOne({ where: { id: fileId } });
         expect(file).not.toBeNull();
       });
-
-      const uuid = file.dataValues.key.slice(0, -4);
+      const uuid = file.dataValues.key.slice(0, -3);
       expect(file.dataValues.id).toBe(fileId);
       expect(file.dataValues.status).not.toBe(null);
       expect(file.dataValues.originalFileName).toBe('testfile.pdf');
@@ -135,7 +134,7 @@ describe('File Upload', () => {
         expect(file).not.toBeNull();
       });
 
-      const uuid = file.dataValues.key.slice(0, -4);
+      const uuid = file.dataValues.key.slice(0, -3);
       expect(file.dataValues.id).toBe(fileId);
       expect(file.dataValues.status).not.toBe(null);
       expect(file.dataValues.originalFileName).toBe('testfile.pdf');
