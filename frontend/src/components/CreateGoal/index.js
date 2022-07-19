@@ -37,6 +37,9 @@ const formatGrantsFromApi = (grant) => {
   };
 };
 
+// this is the default error state for an objective (no errors, only empty fragments)
+const BLANK_OBJECTIVE_ERROR = [<></>, <></>, <></>];
+
 export default function CreateGoal({ recipient, regionId, match }) {
   const { params: { goalId: urlId } } = match;
 
@@ -84,12 +87,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
   const [alert, setAlert] = useState({ message: '', type: 'success' });
   const [goalId, setGoalId] = useState(goalDefaults.id);
 
-  const [errors, setEs] = useState(FORM_FIELD_DEFAULT_ERRORS);
-
-  const setErrors = (e) => {
-    console.log({ e });
-    setEs(e);
-  };
+  const [errors, setErrors] = useState(FORM_FIELD_DEFAULT_ERRORS);
 
   const isOnReport = useMemo(() => objectives.some(
     (objective) => objective.activityReports && objective.activityReports.length > 0,
@@ -359,6 +357,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
     if (!isValidDraft()) {
       return;
     }
+
     try {
       const newGoals = selectedGrants.map((g) => ({
         grantId: g.value,
@@ -375,11 +374,22 @@ export default function CreateGoal({ recipient, regionId, match }) {
         ...newGoals,
       ];
       const updatedGoal = await createOrUpdateGoals(goals);
-      const updatedGoals = updatedGoal && updatedGoal.length > 0
+
+      const updatedObjectives = updatedGoal && updatedGoal.length > 0
         && updatedGoal[0] && updatedGoal[0].objectives && updatedGoal[0].objectives.length > 0
         ? [...updatedGoal[0].objectives]
         : [];
-      setObjectives(updatedGoals);
+
+      // when we parse the objectives from the API, we have to make sure that we have
+      // an error object for each objective.
+      // todo - refactor setObjectives to just handle both as a function or a new hook or something
+      const newErrors = [...errors];
+      const objectiveErrors = updatedObjectives.map(() => BLANK_OBJECTIVE_ERROR);
+
+      newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES, 1, objectiveErrors);
+      setErrors(newErrors);
+      setObjectives(updatedObjectives);
+
       setAlert({
         message: `Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`,
         type: 'success',
