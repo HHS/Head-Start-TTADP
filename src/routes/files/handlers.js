@@ -99,7 +99,7 @@ const deleteHandler = async (req, res) => {
         await deleteActivityReportObjectiveFile(rof.id);
       }
     } else if (objectiveId) {
-      const objective = Objective.findOne(
+      const objective = await Objective.findOne(
         { where: { id: objectiveId } },
       );
       const objectivePolicy = ObjectivePolicy(objective);
@@ -275,7 +275,7 @@ const uploadHandler = async (req, res) => {
         size,
       );
     } else if (objectiveId) {
-      const objective = Objective.findOne(
+      const objective = await Objective.findOne(
         { where: { id: objectiveId } },
       );
       const objectivePolicy = ObjectivePolicy(objective);
