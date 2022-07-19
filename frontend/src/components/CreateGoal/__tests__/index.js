@@ -86,7 +86,7 @@ describe('create goal', () => {
           value: 'https://search.marginalia.nu/',
         },
       ],
-      id: 'new0',
+      id: 1,
     }],
   }];
 
@@ -164,6 +164,8 @@ describe('create goal', () => {
         },
       ],
     };
+
+    console.log('\n\n\n--------------------------------------------------------Start of Test');
     renderForm(recipient);
 
     await screen.findByRole('heading', { name: 'Goal summary' });

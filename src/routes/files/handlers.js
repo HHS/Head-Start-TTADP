@@ -16,10 +16,12 @@ import {
   createObjectiveFileMetaData,
   createObjectiveTemplateFileMetaData,
 } from '../../services/files';
+import { ActivityReportObjective, Objective } from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
+import ObjectivePolicy from '../../policies/objective';
 import { activityReportAndRecipientsById } from '../../services/activityReports';
 import { userById } from '../../services/users';
-// import { validateUserAuthForAdmin } from '../../services/accessValidation';
+import { validateUserAuthForAdmin } from '../../services/accessValidation';
 import { auditLogger } from '../../logger';
 import { FILE_STATUSES, DECIMAL_BASE } from '../../constants';
 
@@ -50,47 +52,69 @@ const altFileTypes = [
   },
 ];
 
+const hasReportAuthorization = async (userId, reportId) => {
+  const user = await userById(userId);
+  const [report] = await activityReportAndRecipientsById(reportId);
+  const authorization = new ActivityReportPolicy(user, report);
+
+  if (!authorization.canUpdate()) {
+    return false;
+  }
+  return true;
+};
+
 const deleteHandler = async (req, res) => {
   const {
     reportId,
     reportObjectiveId,
     objectiveId,
-    objectiveTempleteId,
+    objectiveTemplateId,
     fileId,
   } = req.params;
-  /*
-  const user = await userById(req.session.userId);
-  const [report] = await activityReportAndRecipientsById(reportId);
-  const authorization = new ActivityReportPolicy(user, report);
-
-  if (!authorization.canUpdate()) {
-    res.sendStatus(403);
-    return;
-  } */
 
   try {
     let file = await getFileById(fileId);
 
     if (reportId) {
+      if (!hasReportAuthorization(req.session.userId, reportId)) {
+        res.sendStatus(403);
+        return;
+      }
       const rf = file.reportFiles.find((r) => r.reportId === reportId);
       if (rf) {
         await deleteActivityReportFile(rf.id);
       }
     } else if (reportObjectiveId) {
+      const activityReportObjective = ActivityReportObjective.findOne(
+        { where: { id: reportObjectiveId } },
+      );
+      if (!hasReportAuthorization(req.session.userId, activityReportObjective.activityReportId)) {
+        res.sendStatus(403);
+        return;
+      }
       const rof = file.reportObjectiveFiles.find((r) => r.reportObjectiveId === reportObjectiveId);
       if (rof) {
         await deleteActivityReportObjectiveFile(rof.id);
       }
     } else if (objectiveId) {
+      const objective = Objective.findOne(
+        { where: { id: objectiveId } },
+      );
+      const objectivePolicy = ObjectivePolicy(objective);
+      if (!objectivePolicy.canUpdate()) {
+        res.sendStatus(403);
+        return;
+      }
       const of = file.objectiveFiles.find(
         (r) => r.objectiveId === parseInt(objectiveId, DECIMAL_BASE),
       );
       if (of) {
         await deleteObjectiveFile(of.id);
       }
-    } else if (objectiveTempleteId) {
+    } else if (objectiveTemplateId) {
+      // TODO: Determine how to handle permissions for objective templates.
       const otf = file.objectiveTemplateFiles
-        .find((r) => r.objectiveTempleteId === objectiveTempleteId);
+        .find((r) => r.objectiveTempleteId === objectiveTemplateId);
       if (otf) {
         await deleteObjectiveTemplateFile(otf.id);
       }
@@ -230,6 +254,10 @@ const uploadHandler = async (req, res) => {
     fileTypeToUse = altFileType || type;
     fileName = `${uuidv4()}${fileTypeToUse.ext}`;
     if (reportId) {
+      if (!(hasReportAuthorization(req.session.userId, reportId)
+        || (await validateUserAuthForAdmin(req.session.userId)))) {
+        return res.sendStatus(403);
+      }
       metadata = await createActivityReportFileMetaData(
         originalFilename,
         fileName,
@@ -237,6 +265,13 @@ const uploadHandler = async (req, res) => {
         size,
       );
     } else if (reportObjectiveId) {
+      const activityReportObjective = ActivityReportObjective.findOne(
+        { where: { id: reportObjectiveId } },
+      );
+      if (!(hasReportAuthorization(req.session.userId, activityReportObjective.activityReportId)
+      || (await validateUserAuthForAdmin(req.session.userId)))) {
+        return res.sendStatus(403);
+      }
       metadata = await createActivityReportObjectiveFileMetaData(
         originalFilename,
         fileName,
@@ -244,6 +279,14 @@ const uploadHandler = async (req, res) => {
         size,
       );
     } else if (objectiveId) {
+      const objective = Objective.findOne(
+        { where: { id: objectiveId } },
+      );
+      const objectivePolicy = ObjectivePolicy(objective);
+      if (!(objectivePolicy.canUpdate()
+      || (await validateUserAuthForAdmin(req.session.userId)))) {
+        return res.sendStatus(403);
+      }
       metadata = await createObjectiveFileMetaData(
         originalFilename,
         fileName,
@@ -251,6 +294,7 @@ const uploadHandler = async (req, res) => {
         size,
       );
     } else if (objectiveTempleteId) {
+      // TODO: Determine how to handle permissions for objective templates.
       metadata = await createObjectiveTemplateFileMetaData(
         originalFilename,
         fileName,

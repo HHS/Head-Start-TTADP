@@ -240,16 +240,19 @@ export default function CreateGoal({ recipient, regionId, match }) {
   };
 
   const validateGrantNumbers = () => {
+    console.log('Grant 1');
     let error = <></>;
-
+    console.log('Grant 2');
     if (!selectedGrants.length) {
       error = <span className="usa-error-message">Select at least one recipient grant number</span>;
     }
-
+    console.log('Grant 3', errors);
     const newErrors = [...errors];
+    console.log('Grant 4', newErrors);
     newErrors.splice(FORM_FIELD_INDEXES.GRANTS, 1, error);
+    console.log('Grant 5', newErrors);
     setErrors(newErrors);
-
+    console.log('Grant 6', error.props.children);
     return !error.props.children;
   };
 
@@ -258,6 +261,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
    * @returns bool
    */
   const validateObjectives = () => {
+    console.log('Objectives Validate: ', objectives);
     if (!objectives.length) {
       return true;
     }
@@ -354,10 +358,12 @@ export default function CreateGoal({ recipient, regionId, match }) {
   };
 
   const onSaveDraft = async () => {
+    console.log('On Save Draft');
     if (!isValidDraft()) {
+      console.log('Invalid Draft');
       return;
     }
-
+    console.log('On Save Draft2');
     try {
       const newGoals = selectedGrants.map((g) => ({
         grantId: g.value,
@@ -374,13 +380,21 @@ export default function CreateGoal({ recipient, regionId, match }) {
         ...newGoals,
       ];
       const updatedGoal = await createOrUpdateGoals(goals);
-      setObjectives(updatedGoal ? [...updatedGoal.objectives] : []);
-
+      console.log('\n\n\n>>>>>>>>>>>>>>>>>> Before Set', updatedGoal);
+      console.log('\n\n\n>>>>>>>>>>>>>>>>>> Before Set Obj', updatedGoal[0].objectives);
+      const updatedGoals = updatedGoal && updatedGoal.length > 0
+        && updatedGoal[0] && updatedGoal[0].objectives && updatedGoal[0].objectives.length > 0
+        ? [...updatedGoal[0].objectives] //? [...updatedGoal[0].objectives.map((o) => ({ ...o }))]
+        : [];
+      //setObjectives(updatedGoals);
+      setObjectives(updatedGoals);
+      console.log('\n\n\n>>>>>>>>>>>>>>>>>> After Set', updatedGoals);
       setAlert({
         message: `Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`,
         type: 'success',
       });
     } catch (error) {
+      console.log('\n\n\n\nzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzError: ', error);
       setAlert({
         message: 'There was an error saving your goal',
         type: 'error',
