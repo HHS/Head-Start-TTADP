@@ -115,20 +115,23 @@ export default function Form({
         datePickerKey={datePickerKey}
       />
 
-      { objectives.map((objective, i) => (
-        <ObjectiveForm
-          index={i}
-          objective={objective}
-          removeObjective={removeObjective}
-          setObjectiveError={setObjectiveError}
-          key={objective.id}
-          errors={objectiveErrors[i]}
-          setObjective={(data) => setObjective(data, i)}
-          topicOptions={topicOptions}
-          goalStatus={status}
-          unchangingApiData={unchangingApiData}
-        />
-      ))}
+      { objectives.map((objective, i) => {
+        console.log({ objectiveErrors, i });
+        return (
+          <ObjectiveForm
+            index={i}
+            objective={objective}
+            removeObjective={removeObjective}
+            setObjectiveError={setObjectiveError}
+            key={objective.id}
+            errors={objectiveErrors[i]}
+            setObjective={(data) => setObjective(data, i)}
+            topicOptions={topicOptions}
+            goalStatus={status}
+            unchangingApiData={unchangingApiData}
+          />
+        );
+      })}
 
       <div className="margin-top-6">
         <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />
