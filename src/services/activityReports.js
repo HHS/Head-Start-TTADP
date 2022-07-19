@@ -746,12 +746,12 @@ export async function createOrUpdate(newActivityReport, report) {
 
   if (ECLKCResourcesUsed) {
     resources.ECLKCResourcesUsed = ECLKCResourcesUsed.filter((item) => item)
-      .map((item) => item.value);
+      .map((item) => (item.value ? item.value : item));
   }
 
   if (nonECLKCResourcesUsed) {
     resources.nonECLKCResourcesUsed = nonECLKCResourcesUsed.filter((item) => item)
-      .map((item) => item.value);
+      .map((item) => (item.value ? item.value : item));
   }
 
   const updatedFields = { ...allFields, ...resources };

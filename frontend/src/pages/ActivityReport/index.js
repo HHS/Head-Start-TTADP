@@ -533,6 +533,8 @@ function ActivityReport({
         const savedReport = await createReport(
           {
             ...fields,
+            ECLKCResourcesUsed: data.ECLKCResourcesUsed.map((r) => (r.value)),
+            nonECLKCResourcesUsed: data.nonECLKCResourcesUsed.map((r) => (r.value)),
             startDate: startDateToSave,
             endDate: endDateToSave,
             regionId: formData.regionId,
