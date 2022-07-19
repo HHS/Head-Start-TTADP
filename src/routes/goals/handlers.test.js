@@ -173,9 +173,11 @@ describe('createGoals', () => {
 
   it('checks permissions', async () => {
     const req = {
-      params: {
-        goalId: 2,
-        recipientId: 2,
+      body: {
+        goals: [{
+          goalId: 2,
+          recipientId: 2,
+        }],
       },
       session: {
         userId: 1,
@@ -201,9 +203,11 @@ describe('createGoals', () => {
 
   it('handles success', async () => {
     const req = {
-      params: {
-        goalId: 2,
-        recipientId: 2,
+      body: {
+        goals: [{
+          goalId: 2,
+          recipientId: 2,
+        }],
       },
       session: {
         userId: 1,
@@ -230,9 +234,11 @@ describe('createGoals', () => {
 
   it('handles failures', async () => {
     const req = {
-      params: {
-        goalId: 2,
-        recipientId: 2,
+      body: {
+        goals: [{
+          goalId: 2,
+          recipientId: 2,
+        }],
       },
       session: {
         userId: 1,
