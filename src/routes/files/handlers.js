@@ -16,11 +16,12 @@ import {
   createObjectiveFileMetaData,
   createObjectiveTemplateFileMetaData,
 } from '../../services/files';
-import { ActivityReportObjective, Objective } from '../../models';
+import { ActivityReportObjective } from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
 import ObjectivePolicy from '../../policies/objective';
 import { activityReportAndRecipientsById } from '../../services/activityReports';
 import { userById } from '../../services/users';
+import { getObjectiveById } from '../../services/objectives';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
 import { auditLogger } from '../../logger';
 import { FILE_STATUSES, DECIMAL_BASE } from '../../constants';
@@ -52,8 +53,7 @@ const altFileTypes = [
   },
 ];
 
-const hasReportAuthorization = async (userId, reportId) => {
-  const user = await userById(userId);
+const hasReportAuthorization = async (user, reportId) => {
   const [report] = await activityReportAndRecipientsById(reportId);
   const authorization = new ActivityReportPolicy(user, report);
   if (!authorization.canUpdate()) {
@@ -70,11 +70,14 @@ const deleteHandler = async (req, res) => {
     objectiveTemplateId,
     fileId,
   } = req.params;
+
+  const user = await userById(req.session.userId);
+
   try {
     let file = await getFileById(fileId);
 
     if (reportId) {
-      if (!await hasReportAuthorization(req.session.userId, reportId)) {
+      if (!await hasReportAuthorization(user, reportId)) {
         res.sendStatus(403);
         return;
       }
@@ -87,7 +90,7 @@ const deleteHandler = async (req, res) => {
         { where: { id: reportObjectiveId } },
       );
       if (!await hasReportAuthorization(
-        req.session.userId,
+        user,
         activityReportObjective.activityReportId,
       )
       ) {
@@ -99,10 +102,8 @@ const deleteHandler = async (req, res) => {
         await deleteActivityReportObjectiveFile(rof.id);
       }
     } else if (objectiveId) {
-      const objective = await Objective.findOne(
-        { where: { id: objectiveId } },
-      );
-      const objectivePolicy = ObjectivePolicy(objective);
+      const objective = await getObjectiveById(objectiveId);
+      const objectivePolicy = new ObjectivePolicy(objective, user);
       if (!objectivePolicy.canUpdate()) {
         res.sendStatus(403);
         return;
@@ -217,6 +218,8 @@ const uploadHandler = async (req, res) => {
   let fileName;
   let fileTypeToUse;
 
+  const user = await userById(req.session.userId);
+
   try {
     if (!files.file) {
       return res.status(400).send({ error: 'file required' });
@@ -247,7 +250,7 @@ const uploadHandler = async (req, res) => {
     fileTypeToUse = altFileType || type;
     fileName = `${uuidv4()}${fileTypeToUse.ext}`;
     if (reportId) {
-      if (!(await hasReportAuthorization(req.session.userId, reportId)
+      if (!(await hasReportAuthorization(user, reportId)
         || (await validateUserAuthForAdmin(req.session.userId)))) {
         return res.sendStatus(403);
       }
@@ -262,7 +265,7 @@ const uploadHandler = async (req, res) => {
         { where: { id: reportObjectiveId } },
       );
       if (!(await hasReportAuthorization(
-        req.session.userId,
+        user,
         activityReportObjective.activityReportId,
       )
       || (await validateUserAuthForAdmin(req.session.userId)))) {
@@ -275,10 +278,8 @@ const uploadHandler = async (req, res) => {
         size,
       );
     } else if (objectiveId) {
-      const objective = await Objective.findOne(
-        { where: { id: objectiveId } },
-      );
-      const objectivePolicy = ObjectivePolicy(objective);
+      const objective = await getObjectiveById(objectiveId);
+      const objectivePolicy = new ObjectivePolicy(objective, user);
       if (!(objectivePolicy.canUpdate()
       || (await validateUserAuthForAdmin(req.session.userId)))) {
         return res.sendStatus(403);
