@@ -833,7 +833,7 @@ module.exports = {
             WHERE adg."regionId" IS NOT NULL
             AND NULLIF(TRIM(g.name),'') IS NOT NULL
             GROUP BY
-              md5(TRIM(g.name)),
+              md5(NULLIF(TRIM(g.name),'')),
               TRIM(g.name),
               adg."regionId";
             ------------------------------------------------------------------------------------
@@ -893,7 +893,7 @@ module.exports = {
             ON aro."activityReportId" = ar."id"
             WHERE NULLIF(TRIM(o.title),'') IS NOT NULL
             GROUP BY
-              md5(TRIM(o.title)),
+              md5(nullif(TRIM(o.title),'')),
               TRIM(o.title),
               ar."regionId";
             ------------------------------------------------------------------------------------
