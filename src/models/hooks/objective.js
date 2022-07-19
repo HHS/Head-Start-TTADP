@@ -1,6 +1,3 @@
-// import { Op } from 'sequelize';
-import { auditLogger } from '../../logger';
-
 const findOrCreateObjectiveTemplate = async (
   sequelize,
   transaction,
@@ -23,85 +20,6 @@ const findOrCreateObjectiveTemplate = async (
   });
   return objectiveTemplate[0].id;
 };
-
-// const autoPopulateObjectiveTemplateId = async (sequelize, instance, options) => {
-//   try {
-//     if (instance.objectiveTemplateId === undefined
-//     || instance.objectiveTemplateId === null) {
-//       if (instance.id !== undefined) {
-//         const objective = await sequelize.models.Objective.findOne({
-//           where: { id: instance.id },
-//           transaction: options.transaction,
-//         });
-//         if (objective) {
-//           if (objective.objectiveTemplateId !== undefined
-//             && objective.objectiveTemplateId !== null) {
-//             return;
-//           }
-//           instance.set('title', objective.title);
-//         }
-//       }
-//       if (instance.title === undefined || instance.title === null) {
-//         auditLogger.error(JSON.stringify(instance));
-//         const err = new Error('Objective title is required');
-//         auditLogger.error(JSON.stringify(err));
-//         auditLogger.error(JSON.stringify(err.stack));
-//         throw err;
-//       }
-//       let regionId = null;
-//       if (instance.goalId !== undefined
-//       && instance.goalId !== null) {
-//         const goal = await sequelize.models.Goal.findOne({
-//           where: { id: instance.goalId },
-//           include: [
-//             {
-//               model: sequelize.models.Grant,
-//               as: 'grant',
-//               attributes: ['regionId'],
-//             },
-//           ],
-//         });
-//         regionId = goal.grant.regionId;
-//       } else if (instance.otherEntityId !== undefined
-//       && instance.otherEntityId !== null) {
-//         try {
-//           const otherEntity = await sequelize.models.OtherEntity.findAll({
-//             attributes: [
-//               [sequelize.literal('array_agg(`ActivityReports`.regionId)'), 'regionIds'],
-//             ],
-//             where: { id: instance.otherEntityId },
-//             include: [
-//               {
-//                 model: sequelize.models.ActivityReport,
-//                 as: 'activityReports',
-//                 attribites: [],
-//               },
-//             ],
-//             group: ['id'],
-//           });
-//           if (otherEntity.regionIds.length === 1) {
-//             [regionId] = otherEntity.regionIds;
-//           }
-//         } catch (err) {
-//           auditLogger.error(JSON.stringify(err));
-//           throw err;
-//         }
-//       }
-
-//       const templateId = await findOrCreateObjectiveTemplate(
-//         sequelize,
-//         options,
-//         regionId,
-//         instance.title,
-//         instance.createdAt,
-//       );
-//       instance.set('objectiveTemplateId', templateId);
-//     }
-//   } catch (err) {
-//     auditLogger.error(JSON.stringify(err));
-//     throw err;
-//   }
-// };
 
 const autoPopulateOnApprovedAR = (sequelize, instance) => {
   // eslint-disable-next-line no-prototype-builtins
@@ -201,7 +119,6 @@ const linkObjectiveGoalTemplates = async (sequelize, instance, options) => {
 
 const propagateTitle = async (sequelize, instance, options) => {
   const changed = instance.changed();
-  auditLogger.error(JSON.stringify({ changed, instance }));
   if (Array.isArray(changed) && changed.includes('title')) {
     await sequelize.models.ObjectiveTemplate.update(
       {
