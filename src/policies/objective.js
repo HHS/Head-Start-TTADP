@@ -2,7 +2,8 @@ import { find, isUndefined } from 'lodash';
 import SCOPES from '../middleware/scopeConstants';
 
 export default class Objective {
-  constructor(objective) {
+  constructor(objective, user) {
+    this.user = user;
     this.objective = objective;
   }
 
