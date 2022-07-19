@@ -182,9 +182,6 @@ describe('createGoals', () => {
       session: {
         userId: 1,
       },
-      body: {
-        goals: [{ regionId: 1 }],
-      },
     };
 
     userById.mockResolvedValueOnce({
@@ -211,9 +208,6 @@ describe('createGoals', () => {
       },
       session: {
         userId: 1,
-      },
-      body: {
-        goals: [{ regionId: 2 }],
       },
     };
 
