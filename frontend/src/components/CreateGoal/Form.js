@@ -65,7 +65,6 @@ export default function Form({
     setObjectives(obj);
   };
 
-  console.log('\n\n\nObjective Form Errors: ', errors[FORM_FIELD_INDEXES.OBJECTIVES]);
   const objectiveErrors = errors[FORM_FIELD_INDEXES.OBJECTIVES];
 
   return (
