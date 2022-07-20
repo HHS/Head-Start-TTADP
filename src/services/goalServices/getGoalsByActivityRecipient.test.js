@@ -19,6 +19,7 @@ import {
 
 import { getGoalsByActivityRecipient } from '../recipient';
 import { REPORT_STATUSES } from '../../constants';
+import { auditLogger } from '../../logger';
 
 const NEEDLE = 'This objective title should not appear in recipient 3';
 
@@ -393,6 +394,17 @@ describe('Goals by Recipient Test', () => {
           createdAt: '2021-01-10T19:16:15.842Z',
           onApprovedAR: true,
         }),
+
+        // 12
+        Goal.create({
+          name: 'This is an imported goals for 1 recipient',
+          status: '',
+          timeframe: '1 month',
+          isFromSmartsheetTtaPlan: true,
+          grantId: grant4.id,
+          createdAt: '2021-01-10T19:16:15.842Z',
+          onApprovedAR: false,
+        }),
       ],
     );
 
@@ -730,6 +742,19 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx[3].reasons).toEqual(['COVID-19 response', 'Complaint']);
       expect(goalRowsx[3].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
       expect(goalRowsx[3].objectives.length).toBe(1);
+    });
+
+    it('Retrieves All Goals by Recipient', async () => {
+      const { count, goalRows } = await getGoalsByActivityRecipient(recipient3.id, 1, {
+        sortBy: 'createdOn', sortDir: 'desc', offset: 0, limit: 20,
+      });
+
+      const countx = count;
+      const goalRowsx = goalRows;
+      auditLogger.error(JSON.stringify(goalRowsx));
+      expect(countx).toBe(3);
+      expect(goalRowsx.length).toBe(3);
+      expect(goalRowsx[2].objectiveCount).toBe(0);
     });
 
     it('associates objectives with the proper recipients', async () => {
