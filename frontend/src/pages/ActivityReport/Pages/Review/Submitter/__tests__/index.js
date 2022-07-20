@@ -288,12 +288,12 @@ describe('Submitter review page', () => {
   describe('creator role when report is draft', () => {
     it('hides with single role', async () => {
       renderReview(REPORT_STATUSES.DRAFT, () => { }, true, () => { }, () => { }, [], { ...defaultUser, role: ['Health Specialist'] });
-      expect(screen.queryByRole('combobox', { name: /creator role \(required\)/i })).toBeNull();
+      expect(screen.queryByRole('combobox', { name: /creator role */i })).toBeNull();
     });
 
     it('displays with multiple roles', async () => {
       renderReview(REPORT_STATUSES.DRAFT, () => { }, true, () => { }, () => { }, [], { ...defaultUser, role: ['COR', 'Health Specialist', 'TTAC'] });
-      const roleSelector = await screen.findByRole('combobox', { name: /creator role \(required\)/i });
+      const roleSelector = await screen.findByRole('combobox', { name: /creator role */i });
       expect(roleSelector.length).toBe(4);
       userEvent.selectOptions(roleSelector, 'COR');
       userEvent.selectOptions(roleSelector, 'Health Specialist');
@@ -302,7 +302,7 @@ describe('Submitter review page', () => {
 
     it('adds now missing role', async () => {
       renderReview(REPORT_STATUSES.DRAFT, () => { }, true, () => { }, () => { }, [], { ...defaultUser, role: ['Health Specialist', 'TTAC'] }, 'COR');
-      const roleSelector = await screen.findByRole('combobox', { name: /creator role \(required\)/i });
+      const roleSelector = await screen.findByRole('combobox', { name: /creator role */i });
       expect(roleSelector.length).toBe(4);
       expect(await screen.findByText(/cor/i)).toBeVisible();
       userEvent.selectOptions(roleSelector, 'COR');

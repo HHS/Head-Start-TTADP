@@ -28,17 +28,27 @@ export const withText = (text) => (content, node) => {
   return nodeHasText && childrenDontHaveText;
 };
 
-export function mockWindowProperty(property, value) {
-  const { [property]: originalProperty } = window;
-  delete window[property];
+function mockProperty(obj, property, value) {
+  const { [property]: originalProperty } = obj;
+  // eslint-disable-next-line no-param-reassign
+  delete obj[property];
   beforeAll(() => {
-    Object.defineProperty(window, property, {
+    Object.defineProperty(obj, property, {
       configurable: true,
       writable: true,
       value,
     });
   });
   afterAll(() => {
-    window[property] = originalProperty;
+    // eslint-disable-next-line no-param-reassign
+    obj[property] = originalProperty;
   });
+}
+
+export function mockNavigatorProperty(property, value) {
+  mockProperty(navigator, property, value);
+}
+
+export function mockWindowProperty(property, value) {
+  mockProperty(window, property, value);
 }

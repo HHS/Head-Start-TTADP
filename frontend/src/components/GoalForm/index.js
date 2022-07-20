@@ -7,9 +7,8 @@ import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
 import { Alert, Button } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import ReactRouterPropTypes from 'react-router-prop-types';
 import Container from '../Container';
-import { createOrUpdateGoals, deleteGoal, goalById } from '../../fetchers/goals';
+import { createOrUpdateGoals, deleteGoal, goalByIdAndRecipient } from '../../fetchers/goals';
 import { getTopics } from '../../fetchers/topics';
 import Form from './Form';
 import {
@@ -17,6 +16,9 @@ import {
   FORM_FIELD_DEFAULT_ERRORS,
   validateListOfResources,
   OBJECTIVE_ERROR_MESSAGES,
+  GOAL_NAME_ERROR,
+  GOAL_DATE_ERROR,
+  SELECT_GRANTS_ERROR,
 } from './constants';
 import { DECIMAL_BASE, REPORT_STATUSES } from '../../Constants';
 import ReadOnly from './ReadOnly';
@@ -40,9 +42,9 @@ const formatGrantsFromApi = (grant) => {
 // this is the default error state for an objective (no errors, only empty fragments)
 const BLANK_OBJECTIVE_ERROR = [<></>, <></>, <></>];
 
-export default function CreateGoal({ recipient, regionId, match }) {
-  const { params: { goalId: urlId } } = match;
-
+export default function GoalForm({
+  recipient, regionId, id, showRTRnavigation,
+}) {
   const history = useHistory();
 
   const possibleGrants = recipient.grants.map((g) => ({
@@ -56,8 +58,8 @@ export default function CreateGoal({ recipient, regionId, match }) {
     status: 'Draft',
     grants: possibleGrants.length === 1 ? [possibleGrants[0]] : [],
     objectives: [],
-    id: urlId,
-  }), [possibleGrants, urlId]);
+    id,
+  }), [possibleGrants, id]);
 
   const [showForm, setShowForm] = useState(true);
   const [fetchError, setFetchError] = useState('');
@@ -86,6 +88,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
 
   const [alert, setAlert] = useState({ message: '', type: 'success' });
   const [goalId, setGoalId] = useState(goalDefaults.id);
+  const [goalNumber, setGoalNumber] = useState('');
 
   const [errors, setErrors] = useState(FORM_FIELD_DEFAULT_ERRORS);
 
@@ -104,13 +107,14 @@ export default function CreateGoal({ recipient, regionId, match }) {
     async function fetchGoal() {
       setFetchAttempted(true); // as to only fetch once
       try {
-        const goal = await goalById(urlId, recipient.id.toString());
+        const goal = await goalByIdAndRecipient(id, recipient.id.toString());
 
         // the API sends us back things in a format we expect
         setGoalName(goal.goalName);
         setStatus(goal.status);
         setEndDate(goal.endDate);
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
+        setGoalNumber(goal.goalNumber);
 
         const apiData = {};
 
@@ -160,7 +164,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
           newObjs.push(newObjective);
           // this is the format of an objective error
           // three JSX nodes representing each of three possible errors
-          objErrors.push([<></>, <></>, <></>]);
+          objErrors.push([<></>, <></>, <></>, <></>]);
 
           return [newObjs, objErrors];
         }, [[], []]);
@@ -177,10 +181,10 @@ export default function CreateGoal({ recipient, regionId, match }) {
     }
 
     // only fetch once, on load, and only if the id isn't 'new'
-    if (!fetchAttempted && urlId !== 'new') {
+    if (!fetchAttempted && id !== 'new') {
       fetchGoal();
     }
-  }, [errors, fetchAttempted, recipient.id, urlId]);
+  }, [errors, fetchAttempted, recipient.id, id]);
 
   // for fetching topic options from API
   useEffect(() => {
@@ -215,7 +219,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
     let error = <></>;
 
     if (!goalName) {
-      error = <span className="usa-error-message">Enter the recipient&apos;s goal</span>;
+      error = <span className="usa-error-message">{GOAL_NAME_ERROR}</span>;
     }
 
     const newErrors = [...errors];
@@ -233,7 +237,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
     let error = <></>;
 
     if (!endDate || !moment(endDate, 'MM/DD/YYYY').isValid()) {
-      error = <span className="usa-error-message">Enter a valid date</span>;
+      error = <span className="usa-error-message">{GOAL_DATE_ERROR}</span>;
     }
 
     const newErrors = [...errors];
@@ -245,7 +249,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
   const validateGrantNumbers = () => {
     let error = <></>;
     if (!selectedGrants.length) {
-      error = <span className="usa-error-message">Select at least one recipient grant number</span>;
+      error = <span className="usa-error-message">{SELECT_GRANTS_ERROR}</span>;
     }
     const newErrors = [...errors];
     newErrors.splice(FORM_FIELD_INDEXES.GRANTS, 1, error);
@@ -484,6 +488,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
     setEndDate(goal.endDate);
     setStatus(goal.status);
     setGoalId(goal.id);
+    setGoalNumber(goal.number);
 
     setSelectedGrants(goal.grant);
 
@@ -559,13 +564,15 @@ export default function CreateGoal({ recipient, regionId, match }) {
 
   return (
     <>
-      <Link
-        className="ttahub-recipient-record--tabs_back-to-search margin-left-2 margin-top-4 margin-bottom-3 display-inline-block"
-        to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
-      >
-        <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
-        <span>Back to Goals & Objectives</span>
-      </Link>
+      { showRTRnavigation ? (
+        <Link
+          className="ttahub-recipient-record--tabs_back-to-search margin-left-2 margin-top-4 margin-bottom-3 display-inline-block"
+          to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
+        >
+          <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
+          <span>Back to Goals & Objectives</span>
+        </Link>
+      ) : null }
       <h1 className="page-heading margin-top-0 margin-bottom-1 margin-left-2">
         TTA Goals for
         {' '}
@@ -584,7 +591,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
               onEdit={onEdit}
             />
             <div className="margin-bottom-4">
-              {!showForm && urlId === 'new'
+              {!showForm && id === 'new'
                 ? (
                   <PlusButton onClick={() => setShowForm(true)} text="Add another goal" />
                 ) : null }
@@ -620,6 +627,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
             isOnApprovedReport={isOnApprovedReport}
             status={status || 'Needs status'}
             unchangingApiData={unchangingApiData}
+            goalNumber={goalNumber}
           />
           )}
 
@@ -646,8 +654,8 @@ export default function CreateGoal({ recipient, regionId, match }) {
   );
 }
 
-CreateGoal.propTypes = {
-  match: ReactRouterPropTypes.match.isRequired,
+GoalForm.propTypes = {
+  id: PropTypes.oneOfType([PropTypes.number.isRequired, PropTypes.string.isRequired]).isRequired,
   recipient: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
@@ -659,4 +667,9 @@ CreateGoal.propTypes = {
     ),
   }).isRequired,
   regionId: PropTypes.string.isRequired,
+  showRTRnavigation: PropTypes.bool,
+};
+
+GoalForm.defaultProps = {
+  showRTRnavigation: false,
 };

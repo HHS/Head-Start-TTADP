@@ -15,7 +15,6 @@ import { useHistory, Redirect } from 'react-router-dom';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
-
 import pages from './Pages';
 import Navigator from '../../components/Navigator';
 
@@ -32,6 +31,7 @@ import {
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
 import useARLocalStorage from '../../hooks/useARLocalStorage';
+
 import {
   submitReport,
   saveReport,
@@ -62,7 +62,7 @@ const defaultValues = {
   duration: '',
   endDate: null,
   goals: [],
-  recipientNextSteps: [],
+  recipientNextSteps: [{ id: null, note: '' }],
   recipients: [],
   nonECLKCResourcesUsed: [{ value: '' }],
   numberOfParticipants: null,
@@ -72,7 +72,7 @@ const defaultValues = {
   participants: [],
   reason: [],
   requester: '',
-  specialistNextSteps: [],
+  specialistNextSteps: [{ id: null, note: '' }],
   startDate: null,
   calculatedStatus: REPORT_STATUSES.DRAFT,
   targetPopulations: [],
@@ -533,6 +533,8 @@ function ActivityReport({
         const savedReport = await createReport(
           {
             ...fields,
+            ECLKCResourcesUsed: data.ECLKCResourcesUsed.map((r) => (r.value)),
+            nonECLKCResourcesUsed: data.nonECLKCResourcesUsed.map((r) => (r.value)),
             startDate: startDateToSave,
             endDate: endDateToSave,
             regionId: formData.regionId,

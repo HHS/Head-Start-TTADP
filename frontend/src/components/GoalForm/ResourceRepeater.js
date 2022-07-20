@@ -9,6 +9,7 @@ import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import PlusButton from './PlusButton';
 import QuestionTooltip from './QuestionTooltip';
 import colors from '../../colors';
+import './ResourceRepeater.css';
 
 export default function ResourceRepeater({
   resources,
@@ -48,11 +49,11 @@ export default function ResourceRepeater({
           </>
         )
         : null }
-      { status !== 'Complete' ? (
+      { (status !== 'Complete' && status !== 'Suspended') ? (
         <FormGroup error={error.props.children}>
           <div ref={resourcesWrapper}>
             <Label htmlFor="resources">
-              Add resource link
+              Links to TTA resources used
               <QuestionTooltip
                 text="Copy and paste addresses of web pages describing resources used for this objective. Usually this is an ECLKC page."
               />
@@ -88,7 +89,7 @@ export default function ResourceRepeater({
               ))}
             </div>
 
-            <div className="margin-top-2 margin-bottom-4">
+            <div className="ttahub-resource-repeater--add-new margin-top-2 margin-bottom-4">
               <PlusButton text="Add new resource" onClick={addResource} />
             </div>
           </div>

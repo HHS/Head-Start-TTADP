@@ -5,9 +5,8 @@ import {
   FormGroup, Label,
 } from '@trussworks/react-uswds';
 
-import {
-  SELECT_STYLES,
-} from './constants';
+import selectOptionsReset from '../selectOptionsReset';
+import Req from '../Req';
 
 export default function GrantSelect({
   error,
@@ -16,13 +15,15 @@ export default function GrantSelect({
   setSelectedGrants,
   possibleGrants,
   validateGrantNumbers,
+  inputName,
+  label,
 }) {
   return (
     <FormGroup error={error.props.children}>
-      <Label htmlFor="recipientGrantNumbers" className={isOnReport ? 'text-bold' : ''}>
-        Recipient grant numbers
+      <Label htmlFor={inputName} className={isOnReport ? 'text-bold' : ''}>
+        {label}
         {' '}
-        {!isOnReport ? <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span> : null }
+        {!isOnReport ? <Req /> : null }
       </Label>
       {selectedGrants.length === 1 || isOnReport ? (
         <p className="margin-top-0 usa-prose">{selectedGrants.map((grant) => grant.label).join(', ')}</p>
@@ -31,10 +32,10 @@ export default function GrantSelect({
           {error}
           <Select
             placeholder=""
-            inputId="recipientGrantNumbers"
+            inputId={inputName}
             onChange={setSelectedGrants}
             options={possibleGrants}
-            styles={SELECT_STYLES}
+            styles={selectOptionsReset}
             components={{
               DropdownIndicator: null,
             }}
@@ -63,4 +64,11 @@ GrantSelect.propTypes = {
     value: PropTypes.number,
   })).isRequired,
   validateGrantNumbers: PropTypes.func.isRequired,
+  inputName: PropTypes.string,
+  label: PropTypes.string,
+};
+
+GrantSelect.defaultProps = {
+  inputName: 'recipientGrantNumbers',
+  label: 'Recipient grant numbers',
 };

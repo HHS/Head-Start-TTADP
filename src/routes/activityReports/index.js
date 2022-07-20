@@ -19,6 +19,7 @@ import {
   downloadAllReports,
   downloadAllAlerts,
 } from './handlers';
+import { createGoal } from '../goals/handlers';
 import { checkActivityReportIdParam } from '../../middleware/checkIdParamMiddleware';
 import { nameTransactionByBase, nameTransactionByPath } from '../../middleware/newRelicMiddleware';
 import userAdminAccessMiddleware from '../../middleware/userAdminAccessMiddleware';
@@ -34,6 +35,7 @@ router.post('/', transactionWrapper(createReport));
 router.get('/approvers', transactionWrapper(getApprovers));
 router.get('/activity-recipients', transactionWrapper(getActivityRecipients));
 router.get('/goals', transactionWrapper(getGoals));
+router.post('/goals', transactionWrapper(createGoal));
 router.get('/alerts', nameTransactionByPath, transactionWrapper(getReportAlerts));
 router.get('/alerts/download-all', transactionWrapper(downloadAllAlerts));
 router.get('/legacy/:legacyReportId', transactionWrapper(getLegacyReport));

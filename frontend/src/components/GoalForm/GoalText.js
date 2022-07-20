@@ -10,10 +10,11 @@ export default function GoalText({
   goalName,
   validateGoalName,
   onUpdateText,
+  inputName,
 }) {
   return (
     <FormGroup error={error.props.children}>
-      <Label htmlFor="goalText" className={isOnReport ? 'text-bold' : ''}>
+      <Label htmlFor={inputName} className={isOnReport ? 'text-bold' : ''}>
         Recipient&apos;s goal
         {' '}
         {!isOnReport ? <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span> : null }
@@ -23,7 +24,14 @@ export default function GoalText({
       ) : (
         <>
           {error}
-          <Textarea onBlur={validateGoalName} id="goalText" name="goalText" required value={goalName} onChange={onUpdateText} />
+          <Textarea
+            onBlur={validateGoalName}
+            id={inputName}
+            name={inputName}
+            value={goalName}
+            onChange={onUpdateText}
+            required
+          />
         </>
       )}
     </FormGroup>
@@ -36,4 +44,9 @@ GoalText.propTypes = {
   goalName: PropTypes.string.isRequired,
   validateGoalName: PropTypes.func.isRequired,
   onUpdateText: PropTypes.func.isRequired,
+  inputName: PropTypes.string,
+};
+
+GoalText.defaultProps = {
+  inputName: 'goalText',
 };

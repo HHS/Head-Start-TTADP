@@ -2,29 +2,39 @@ import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import ContextMenu from '../ContextMenu';
 import Modal from '../Modal';
-
+import ReadOnlyObjective from './ReadOnlyObjective';
 import './ReadOnly.scss';
 
 export default function ReadOnly({
   onEdit,
   onDelete,
   createdGoals,
+  hideEdit,
 }) {
   const modalRef = useRef();
 
   return (
     <>
       { createdGoals.map((goal, index) => {
-        const menuItems = [
+        let menuItems = [
           {
-            label: 'Edit',
+            label: `Edit goal ${goal.id}`,
             onClick: () => onEdit(goal, index),
           },
           {
-            label: 'Delete',
+            label: `Delete goal ${goal.id}`,
             onClick: () => modalRef.current.toggleModal(true),
           },
         ];
+
+        if (hideEdit) {
+          menuItems = [
+            {
+              label: `Delete goal ${goal.id}`,
+              onClick: () => modalRef.current.toggleModal(true),
+            },
+          ];
+        }
 
         return (
           <div key={`goal${goal.id}`}>
@@ -47,6 +57,7 @@ export default function ReadOnly({
                 <ContextMenu
                   label={`Actions for Goal ${goal.id}`}
                   menuItems={menuItems}
+                  menuClassName="width-card"
                 />
               </div>
               <h3>Goal summary</h3>
@@ -61,25 +72,7 @@ export default function ReadOnly({
                 </>
               ) : null }
               { goal.objectives.map((objective) => (
-                <div key={`objective${objective.id}`}>
-                  <h3>Objective summary</h3>
-                  <h4 className="margin-bottom-1">Objective</h4>
-                  <p className="margin-top-0">{objective.title}</p>
-                  <h4 className="margin-bottom-1">Topics</h4>
-                  <p className="margin-top-0">{objective.topics.map((topic) => topic.label).join('; ')}</p>
-                  <h4 className="margin-bottom-1">Resource link</h4>
-                  <ul className="usa-list usa-list--unstyled">
-                    { objective.resources.map((resource) => (
-                      <li key={resource.key}>{resource.value}</li>
-                    ))}
-                  </ul>
-                  <h4 className="margin-bottom-1">Resources</h4>
-                  <ul className="usa-list usa-list--unstyled">
-                    { objective.files.map((f) => (
-                      <li key={f.originalFileName}>{f.originalFileName}</li>
-                    ))}
-                  </ul>
-                </div>
+                <ReadOnlyObjective key={`objective${objective.id}`} objective={objective} />
               ))}
             </div>
           </div>
@@ -101,4 +94,9 @@ ReadOnly.propTypes = {
   })).isRequired,
   onEdit: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
+  hideEdit: PropTypes.bool,
+};
+
+ReadOnly.defaultProps = {
+  hideEdit: false,
 };

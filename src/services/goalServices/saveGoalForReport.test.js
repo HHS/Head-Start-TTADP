@@ -8,10 +8,19 @@ import db, {
   ActivityRecipient,
   ActivityReportGoal,
   ActivityReportObjective,
+  User,
 } from '../../models';
 import { REPORT_STATUSES } from '../../constants';
 import { saveGoalsForReport } from '../goals';
 import { activityReportAndRecipientsById } from '../activityReports';
+
+const mockUser = {
+  id: 54253461,
+  homeRegionId: 1,
+  name: 'user5426861',
+  hsesUsername: 'user5426861',
+  hsesUserId: '5426861',
+};
 
 describe('saveGoalsForReport (more tests)', () => {
   let activityReportForNewGoal;
@@ -26,6 +35,7 @@ describe('saveGoalsForReport (more tests)', () => {
   let objective;
 
   beforeAll(async () => {
+    await User.create(mockUser);
     const recipientOne = await Recipient.create(
       { id: faker.datatype.number({ min: 90000 }), name: faker.company.companyName() },
     );
@@ -57,7 +67,7 @@ describe('saveGoalsForReport (more tests)', () => {
     activityReportForNewGoal = await ActivityReport.create({
       submissionStatus: REPORT_STATUSES.DRAFT,
       regionId: 1,
-      userId: 1,
+      userId: mockUser.id,
       activityRecipientType: 'recipient',
     });
 
@@ -65,14 +75,14 @@ describe('saveGoalsForReport (more tests)', () => {
     multiRecipientReport = await ActivityReport.create({
       submissionStatus: REPORT_STATUSES.DRAFT,
       regionId: 1,
-      userId: 1,
+      userId: mockUser.id,
       activityRecipientType: 'recipient',
     });
 
     reportWeArentWorryingAbout = await ActivityReport.create({
       submissionStatus: REPORT_STATUSES.DRAFT,
       regionId: 1,
-      userId: 1,
+      userId: mockUser.id,
       activityRecipientType: 'recipient',
     });
 
@@ -118,6 +128,7 @@ describe('saveGoalsForReport (more tests)', () => {
       goalId: goal.id,
       status: 'In Progress',
       title: 'This is an existing objective',
+      topics: [],
     });
 
     await ActivityReportObjective.create({
@@ -181,6 +192,8 @@ describe('saveGoalsForReport (more tests)', () => {
     await Promise.all(
       recipients.map(async (r) => Recipient.destroy({ where: { id: r.id } })),
     );
+
+    await User.destroy({ where: { id: [mockUser.id] } });
 
     await db.sequelize.close();
   });

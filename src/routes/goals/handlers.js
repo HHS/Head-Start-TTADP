@@ -1,7 +1,9 @@
 import {
   updateGoalStatusById,
+  createOrUpdateGoalsForActivityReport,
   createOrUpdateGoals,
   destroyGoal,
+  goalById,
   goalByIdWithActivityReportsAndRegions,
   goalByIdAndRecipient,
 } from '../../services/goals';
@@ -15,6 +17,26 @@ const namespace = 'SERVICE:GOALS';
 const logContext = {
   namespace,
 };
+
+export async function createGoal(req, res) {
+  try {
+    const { goal, activityReportId } = req.body;
+
+    const user = await userById(req.session.userId);
+
+    const canCreate = new Goal(user, null, goal.regionId).canCreate();
+
+    if (!canCreate) {
+      res.sendStatus(401);
+      return;
+    }
+
+    const newGoal = await createOrUpdateGoalsForActivityReport(goal, activityReportId);
+    res.json(newGoal);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
 
 export async function createGoals(req, res) {
   try {
@@ -123,7 +145,36 @@ export async function deleteGoal(req, res) {
   }
 }
 
-export async function retrieveGoal(req, res) {
+export async function retrieveGoalById(req, res) {
+  try {
+    const { goalId } = req.params;
+
+    const user = await userById(req.session.userId);
+    const goal = await goalByIdWithActivityReportsAndRegions(goalId);
+
+    const policy = new Goal(user, goal);
+
+    if (!policy.canView()) {
+      res.sendStatus(401);
+      return;
+    }
+
+    const gId = parseInt(goalId, 10);
+
+    const retrievedGoal = await goalById(gId);
+
+    if (!retrievedGoal) {
+      res.sendStatus(404);
+      return;
+    }
+
+    res.json(retrievedGoal);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function retrieveGoalByIdAndRecipient(req, res) {
   try {
     const { goalId, recipientId } = req.params;
 

@@ -509,6 +509,7 @@ export default function ApprovedActivityReport({ match, user }) {
               'Attendees',
               'Method of contact',
               'Requested by',
+              'Context',
             ]
           }
           className="activity-summary-table"
@@ -525,6 +526,7 @@ export default function ApprovedActivityReport({ match, user }) {
               attendees,
               method,
               requester,
+              context,
             ]
           }
 
@@ -550,12 +552,10 @@ export default function ApprovedActivityReport({ match, user }) {
         <ViewTable
           caption="TTA Provided"
           headings={[
-            'Context',
             ...goalsAndObjectiveHeadings,
           ]}
           data={
             [
-              context,
               ...goalsAndObjectives,
             ]
           }
