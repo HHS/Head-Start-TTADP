@@ -926,6 +926,8 @@ export async function saveGoalsForReport(goals, report) {
     return newGoals;
   })));
 
+  console.log({ currentGoals });
+
   const currentGoalIds = currentGoals.flat().map((g) => g.id);
   await removeActivityReportGoalsFromReport(report.id, currentGoalIds);
   return removeUnusedGoalsObjectivesFromReport(report.id, currentObjectives);
@@ -960,6 +962,7 @@ export async function createOrUpdateGoalsForActivityReport(goal, reportId) {
   const activityReportId = parseInt(reportId, DECIMAL_BASE);
   const report = await ActivityReport.findByPk(activityReportId);
   const goals = await saveGoalsForReport([goal], report);
+  console.log({ goals });
   return goals;
 }
 
