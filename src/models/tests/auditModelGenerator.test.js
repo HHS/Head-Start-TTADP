@@ -99,7 +99,8 @@ describe('Audit System', () => {
               table_catalog,
               table_name
             FROM information_schema.tables
-            WHERE table_name like '%Tests';`,
+            WHERE table_name like '%Tests'
+            ORDER BY table_name;`,
             {
               type: db.sequelize.QueryTypes.SELECT,
               transaction: t,
