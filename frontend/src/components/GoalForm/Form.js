@@ -38,6 +38,7 @@ export default function Form({
   datePickerKey,
   unchangingApiData,
   fetchError,
+  goalNumber,
 }) {
   const onUpdateText = (e) => setGoalName(e.target.value);
 
@@ -67,27 +68,48 @@ export default function Form({
 
   const objectiveErrors = errors[FORM_FIELD_INDEXES.OBJECTIVES];
 
+  const formTitle = goalNumber ? `Goal ${goalNumber}` : 'Recipient TTA goal';
+  const hasNotStartedObjectives = objectives.some((objective) => objective.status && objective.status.toLowerCase() === 'not started');
+  const hasInProgressObjectives = objectives.some((objective) => objective.status && objective.status.toLowerCase() === 'in progress');
+
+  const showApprovedReportAlert = isOnApprovedReport && hasInProgressObjectives;
+  const showNotStartedAlert = isOnReport && hasNotStartedObjectives && !showApprovedReportAlert;
+
   return (
     <div className="ttahub-create-goals-form">
       { fetchError ? <Alert type="error" role="alert">{ fetchError }</Alert> : null}
-      <h2>Recipient TTA goal</h2>
+      <div className="display-flex flex-align-center margin-y-2">
+        <h2 className="margin-0">{formTitle}</h2>
+        { status.toLowerCase() === 'draft'
+        && (
+          <span className="usa-tag smart-hub--table-tag-status smart-hub--status-draft padding-x-105 padding-y-1 margin-left-2">Draft</span>
+        )}
+      </div>
       <div>
         <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
         {' '}
         indicates required field
       </div>
 
-      { isOnReport
-        ? (
-          <Alert type="warning" noIcon>
-            This goal is used on an activity report
-            <br />
-            Some fields can&apos;t be edited
+      {
+        showNotStartedAlert ? (
+          <Alert type="info" noIcon>
+            <p className="usa-prose">This goal is used on an activity report, so some fields can&apos;t be edited.</p>
           </Alert>
         )
-        : null }
+          : null
+      }
 
-      <h3>Goal summary</h3>
+      {
+        showApprovedReportAlert ? (
+          <Alert type="info" noIcon>
+            <p className="usa-prose">Field entries that are used on an activity report can no longer be edited.</p>
+          </Alert>
+        )
+          : null
+      }
+
+      <h3 className="margin-top-4 margin-bottom-3">Goal summary</h3>
 
       <GrantSelect
         selectedGrants={selectedGrants}
@@ -205,6 +227,7 @@ Form.propTypes = {
     }),
   ).isRequired,
   fetchError: PropTypes.string.isRequired,
+  goalNumber: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };
 
 Form.defaultProps = {

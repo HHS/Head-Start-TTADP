@@ -1,195 +1,302 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form/dist/index.ie11';
-import { Editor } from 'react-draft-wysiwyg';
+import { v4 as uuidv4 } from 'uuid';
+import { useController } from 'react-hook-form/dist/index.ie11';
+import ObjectiveTitle from '../../../../components/GoalForm/ObjectiveTitle';
+import { REPORT_STATUSES } from '../../../../Constants';
+import SpecialistRole from '../../../../components/GoalForm/SpecialistRole';
+import ObjectiveTopics from '../../../../components/GoalForm/ObjectiveTopics';
+import ResourceRepeater from '../../../../components/GoalForm/ResourceRepeater';
+import ObjectiveTta from './ObjectiveTta';
+import ObjectiveStatus from './ObjectiveStatus';
+import ObjectiveSelect from './ObjectiveSelect';
+import { OBJECTIVE_PROP, NO_ERROR, ERROR_FORMAT } from './constants';
 import {
-  Tag, Label, TextInput, Dropdown, Grid,
-} from '@trussworks/react-uswds';
-
-import ObjectiveFormItem from './ObjectiveFormItem';
-import ContextMenu from '../../../../components/ContextMenu';
-import RichEditor from '../../../../components/RichEditor';
-import { getEditorState } from '../../../../utils';
+  OBJECTIVE_TITLE,
+  OBJECTIVE_ROLE,
+  OBJECTIVE_RESOURCES,
+  OBJECTIVE_TTA,
+  OBJECTIVE_TOPICS,
+} from './goalValidator';
+import { validateListOfResources } from '../../../../components/GoalForm/constants';
 import './Objective.scss';
 
-const statuses = [
-  'Not Started',
-  'In Progress',
-  'Completed',
-];
-
-const EMPTY_TEXT_BOX = '<p></p>';
-
-const Objective = ({
-  objectiveAriaLabel,
+export default function Objective({
   objective,
-  onRemove,
-  onUpdate,
-  parentLabel,
-}) => {
-  const firstInput = useRef();
-  const { errors, trigger } = useFormContext();
-  const isValid = !errors[parentLabel];
+  topicOptions,
+  options,
+  index,
+  remove,
+  fieldArrayName,
+  errors,
+  roles,
+}) {
+  const [selectedObjectives, setSelectedObjectives] = useState(objective);
+
+  /**
+   * add controllers for all the controlled fields
+   * react hook form uses uncontrolled fields by default
+   * but we want to keep the logic in one place for the AR/RTR
+   * if at all possible
+   */
+
+  const {
+    field: {
+      onChange: onChangeTitle,
+      onBlur: onBlurTitle,
+      value: objectiveTitle,
+      name: objectiveTitleInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].title`,
+    rules: {
+      required: {
+        value: true,
+        message: OBJECTIVE_TITLE,
+      },
+    },
+    defaultValue: objective.title,
+  });
+
+  const {
+    field: {
+      onChange: onChangeTopics,
+      onBlur: onBlurTopics,
+      value: objectiveTopics,
+      name: objectiveTopicsInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].topics`,
+    rules: {
+      validate: {
+        notEmpty: (value) => (value && value.length) || OBJECTIVE_TOPICS,
+      },
+    },
+    defaultValue: objective.topics,
+  });
+
+  const {
+    field: {
+      onChange: onChangeResources,
+      onBlur: onBlurResources,
+      value: objectiveResources,
+      name: objectiveResourcesInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].resources`,
+    rules: {
+      validate: {
+        allResourcesAreValid: (value) => validateListOfResources(value) || OBJECTIVE_RESOURCES,
+      },
+    },
+    defaultValue: objective.resources,
+  });
+
+  const defaultRoles = useMemo(() => (
+    roles.length === 1 ? roles : objective.roles
+  ), [objective.roles, roles]);
+
+  const {
+    field: {
+      onChange: onChangeRoles,
+      onBlur: onBlurRoles,
+      value: objectiveRoles,
+      name: objectiveRolesInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].roles`,
+    rules: {
+      validate: {
+        notEmpty: (value) => (value && value.length) || OBJECTIVE_ROLE,
+      },
+    },
+    defaultValue: defaultRoles,
+  });
+
+  const {
+    field: {
+      onChange: onChangeTta,
+      onBlur: onBlurTta,
+      value: objectiveTta,
+      name: objectiveTtaInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].ttaProvided`,
+    rules: {
+      validate: {
+        notEmptyTag: (value) => (value && value.trim() !== '<p></p>') || OBJECTIVE_TTA,
+      },
+    },
+    defaultValue: objective.ttaProvided ? objective.ttaProvided : '',
+  });
+
+  const {
+    field: {
+      onChange: onChangeStatus,
+      onBlur: onBlurStatus,
+      value: objectiveStatus,
+      name: objectiveStatusInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].status`,
+    rules: { required: true },
+    defaultValue: objective.status || 'Not Started',
+  });
+
+  const isOnApprovedReport = objective.activityReports && objective.activityReports.some(
+    (report) => report.status === REPORT_STATUSES.APPROVED,
+  );
+
+  const onChangeObjective = (newObjective) => {
+    setSelectedObjectives(newObjective);
+  };
 
   useEffect(() => {
-    if (firstInput.current) {
-      firstInput.current.focus();
+    if (defaultRoles.length === 1 && !objectiveRoles.length) {
+      onChangeRoles(defaultRoles);
     }
-  }, []);
+  }, [defaultRoles, objectiveRoles.length, onChangeRoles]);
 
-  const onChange = (e) => {
-    onUpdate({
-      ...objective,
-      [e.target.name]: e.target.value,
-    });
-  };
+  useEffect(() => {
+    // firing these off as side effects updates all the fields
+    // and seems a little less janky visually than handling it all in
+    // "onChangeObjective". Note that react hook form v7 offers an "update"
+    // function w/ useFieldArray, so this can be removed and the above function
+    // simplified if we get around to moving to that
+    onChangeResources(selectedObjectives.resources);
+    onChangeRoles(selectedObjectives.roles || []);
+    onChangeTitle(selectedObjectives.title);
+    onChangeTta(selectedObjectives.ttaProvided);
+    onChangeStatus(selectedObjectives.status);
+    onChangeTopics(selectedObjectives.topics);
+  }, [
+    onChangeResources,
+    onChangeRoles,
+    onChangeStatus,
+    onChangeTitle,
+    onChangeTopics,
+    onChangeTta,
+    fieldArrayName,
+    index,
+    selectedObjectives,
+    // this last value is the only thing that should be changing, when a new objective is
+    // selected from the dropdown. the others, I would assume, are refs that won't be changing
+  ]);
 
-  const { title, ttaProvided, status } = objective;
-  const defaultShowEdit = !(title && (ttaProvided !== EMPTY_TEXT_BOX) && status);
-  const [showEdit, updateShowEdit] = useState(defaultShowEdit);
+  let savedTopics = [];
+  let savedResources = [];
 
-  const updateEdit = (isEditing) => {
-    if (isEditing) {
-      updateShowEdit(true);
-    } else if (title && ttaProvided !== EMPTY_TEXT_BOX) {
-      updateShowEdit(false);
-    } else {
-      trigger(parentLabel);
-    }
+  if (isOnApprovedReport) {
+    savedTopics = objective.topics;
+    savedResources = objective.resources;
+  }
 
-    if (!isValid) {
-      trigger(parentLabel);
-    }
-  };
+  const resourcesForRepeater = objectiveResources && objectiveResources.length ? objectiveResources : [{ key: uuidv4(), value: '' }];
 
-  const menuItems = [
-    {
-      label: 'Edit',
-      onClick: () => { updateEdit(true); },
-    },
-    {
-      label: 'Delete',
-      onClick: onRemove,
-    },
-  ];
-
-  const contextMenuLabel = `Edit or delete objective ${objectiveAriaLabel}`;
+  const onRemove = () => remove(index);
 
   return (
-    <div className="smart-hub--objective">
-      {showEdit && (
-        <>
-          <div className="display-flex flex-align-end">
-            <div className="margin-top-0 margin-left-auto">
-              <ContextMenu
-                label={contextMenuLabel}
-                menuItems={[{
-                  label: 'Delete',
-                  onClick: onRemove,
-                }]}
-              />
-            </div>
-          </div>
-          <ObjectiveFormItem
-            showErrors={!isValid}
-            className="margin-top-0"
-            message="Please enter the title for this objective"
-            label="Objective"
-            value={title}
-          >
-            <TextInput
-              name="title"
-              aria-label={`title for objective ${objectiveAriaLabel}`}
-              onChange={onChange}
-              inputRef={firstInput}
-              value={title}
-              spellCheck="true"
-            />
-          </ObjectiveFormItem>
-          <ObjectiveFormItem
-            showErrors={!isValid}
-            message="Please enter the TTA provided for this objective"
-            label="TTA Provided"
-            value={ttaProvided}
-          >
-            <div className="smart-hub--text-area__resize-vertical">
-              <RichEditor
-                value={ttaProvided}
-                ariaLabel={`TTA provided for objective ${objectiveAriaLabel}`}
-                defaultValue={ttaProvided}
-                onChange={(content) => {
-                  onUpdate({
-                    ...objective,
-                    ttaProvided: content,
-                  });
-                }}
-              />
-            </div>
-          </ObjectiveFormItem>
-          <Grid row gap>
-            <Grid col={4}>
-              <Label>
-                Status
-                <Dropdown
-                  name="status"
-                  onChange={onChange}
-                  value={status}
-                  aria-label={`Status for objective ${objectiveAriaLabel}`}
-                >
-                  {statuses.map((possibleStatus) => (
-                    <option
-                      key={possibleStatus}
-                      value={possibleStatus}
-                    >
-                      {possibleStatus}
-                    </option>
-                  ))}
-                </Dropdown>
-              </Label>
-            </Grid>
-          </Grid>
-        </>
-      )}
-      {!showEdit
-      && (
-        <>
-          <div className="display-flex flex-align-end">
-            <div className="margin-top-0 margin-left-auto">
-              <ContextMenu
-                label={contextMenuLabel}
-                menuItems={menuItems}
-              />
-            </div>
-          </div>
-          <p className="smart-hub--objective-title margin-top-0">
-            <span className="text-bold">Objective: </span>
-            {title}
-          </p>
-          <p>
-            <span className="text-bold">TTA Provided: </span>
-          </p>
-          <Editor readOnly toolbarHidden defaultEditorState={getEditorState(ttaProvided)} />
-          <Tag className="smart-hub--objective-tag">{status}</Tag>
-        </>
-      )}
-    </div>
+    <>
+      <ObjectiveSelect
+        onChange={onChangeObjective}
+        selectedObjectives={selectedObjectives}
+        options={options}
+        onRemove={onRemove}
+      />
+      <ObjectiveTitle
+        error={errors.title
+          ? ERROR_FORMAT(errors.title.message)
+          : NO_ERROR}
+        isOnApprovedReport={isOnApprovedReport || false}
+        title={objectiveTitle}
+        onChangeTitle={onChangeTitle}
+        validateObjectiveTitle={onBlurTitle}
+        status={objectiveStatus}
+        inputName={objectiveTitleInputName}
+      />
+      <SpecialistRole
+        isOnApprovedReport={isOnApprovedReport || false}
+        error={errors.roles
+          ? ERROR_FORMAT(errors.roles.message)
+          : NO_ERROR}
+        onChange={onChangeRoles}
+        selectedRoles={objectiveRoles}
+        inputName={objectiveRolesInputName}
+        validateSpecialistRole={onBlurRoles}
+        options={roles}
+      />
+      <ObjectiveTopics
+        error={errors.topics
+          ? ERROR_FORMAT(errors.topics.message)
+          : NO_ERROR}
+        savedTopics={savedTopics}
+        topicOptions={topicOptions}
+        validateObjectiveTopics={onBlurTopics}
+        topics={isOnApprovedReport ? [] : objectiveTopics}
+        onChangeTopics={onChangeTopics}
+        inputName={objectiveTopicsInputName}
+        status={objectiveStatus}
+      />
+      <ResourceRepeater
+        resources={isOnApprovedReport ? [] : resourcesForRepeater}
+        setResources={onChangeResources}
+        error={errors.resources
+          ? ERROR_FORMAT(errors.resources.message)
+          : NO_ERROR}
+        validateResources={onBlurResources}
+        savedResources={savedResources}
+        status={objectiveStatus}
+        inputName={objectiveResourcesInputName}
+      />
+      <ObjectiveTta
+        ttaProvided={objectiveTta}
+        onChangeTTA={onChangeTta}
+        inputName={objectiveTtaInputName}
+        status={objectiveStatus}
+        isOnApprovedReport={isOnApprovedReport || false}
+        error={errors.ttaProvided
+          ? ERROR_FORMAT(errors.ttaProvided.message)
+          : NO_ERROR}
+        validateTta={onBlurTta}
+      />
+      <ObjectiveStatus
+        onBlur={onBlurStatus}
+        inputName={objectiveStatusInputName}
+        status={objectiveStatus}
+        onChangeStatus={onChangeStatus}
+      />
+    </>
   );
-};
+}
 
 Objective.propTypes = {
-  objective: PropTypes.shape({
-    title: PropTypes.string,
-    ttaProvided: PropTypes.string,
-    status: PropTypes.string,
+  index: PropTypes.number.isRequired,
+  objective: OBJECTIVE_PROP.isRequired,
+  errors: PropTypes.shape({
+    ttaProvided: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+    title: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+    resources: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+    roles: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+    topics: PropTypes.shape({
+      message: PropTypes.string,
+    }),
   }).isRequired,
-  onRemove: PropTypes.func.isRequired,
-  onUpdate: PropTypes.func.isRequired,
-  parentLabel: PropTypes.string.isRequired,
-  objectiveAriaLabel: PropTypes.string,
+  topicOptions: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.number,
+    label: PropTypes.string,
+  })).isRequired,
+  options: PropTypes.arrayOf(
+    OBJECTIVE_PROP,
+  ).isRequired,
+  remove: PropTypes.func.isRequired,
+  fieldArrayName: PropTypes.string.isRequired,
+  roles: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
-
-Objective.defaultProps = {
-  objectiveAriaLabel: '',
-};
-
-export default Objective;

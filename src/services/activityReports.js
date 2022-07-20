@@ -20,10 +20,13 @@ import {
   OtherEntity,
   Goal,
   User,
+  Role,
   NextStep,
   Objective,
   Program,
   ActivityReportObjective,
+  ObjectiveResource,
+  Topic,
   CollaboratorRole,
 } from '../models';
 
@@ -230,10 +233,11 @@ async function saveNotes(activityReportId, notes, isRecipientNotes) {
     const newNotes = notes.map((note) => ({
       id: note.id ? parseInt(note.id, DECIMAL_BASE) : undefined,
       note: note.note,
+      completeDate: note.completeDate,
       activityReportId,
       noteType,
     }));
-    await NextStep.bulkCreate(newNotes, { updateOnDuplicate: ['note', 'updatedAt'] });
+    await NextStep.bulkCreate(newNotes, { updateOnDuplicate: ['note', 'completeDate', 'updatedAt'] });
   }
 }
 
@@ -310,6 +314,10 @@ export async function activityReportAndRecipientsById(activityReportId) {
         required: false,
         include: [
           {
+            model: Role,
+            as: 'roles',
+          },
+          {
             attributes: ['ttaProvided', 'activityReportId'],
             model: ActivityReportObjective,
             as: 'activityReportObjectives',
@@ -317,6 +325,23 @@ export async function activityReportAndRecipientsById(activityReportId) {
               activityReportId: arId,
             },
             required: true,
+          },
+          {
+            attributes: [
+              ['id', 'value'],
+              ['name', 'label'],
+            ],
+            model: Topic,
+            as: 'topics',
+            required: false,
+          },
+          {
+            attributes: [
+              ['userProvidedUrl', 'value'],
+            ],
+            model: ObjectiveResource,
+            as: 'resources',
+            required: false,
           },
         ],
       },
@@ -381,12 +406,47 @@ export async function activityReportAndRecipientsById(activityReportId) {
     },
     include: [
       {
+        attributes: [
+          ['id', 'value'],
+          ['title', 'label'],
+          'id',
+          'title',
+          'status',
+          'goalId',
+        ],
         model: Objective,
         as: 'objectivesWithGoals',
-        include: [{
-          model: Goal,
-          as: 'goal',
-        }],
+        include: [
+          {
+            model: Goal,
+            as: 'goal',
+            attributes: [
+              ['id', 'value'],
+              ['name', 'label'],
+              'id',
+              'name',
+              'status',
+              'endDate',
+              'goalNumber',
+            ],
+          },
+          {
+            model: ObjectiveResource,
+            as: 'resources',
+            attributes: [
+              ['userProvidedUrl', 'value'],
+              ['id', 'key'],
+            ],
+          },
+          {
+            model: Topic,
+            as: 'topics',
+            attributes: [
+              ['id', 'value'],
+              ['name', 'label'],
+            ],
+          },
+        ],
       },
       {
         model: Objective,
@@ -428,7 +488,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
             [Op.eq]: 'SPECIALIST',
           },
         },
-        attributes: ['note', 'id'],
+        attributes: ['note', 'completeDate', 'id'],
         as: 'specialistNextSteps',
         required: false,
         separate: true,
@@ -440,7 +500,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
             [Op.eq]: 'RECIPIENT',
           },
         },
-        attributes: ['note', 'id'],
+        attributes: ['note', 'completeDate', 'id'],
         as: 'recipientNextSteps',
         required: false,
         separate: true,
@@ -577,9 +637,11 @@ export async function activityReports(
     },
   );
 
+  const reportIds = reports.rows.map(({ id }) => id);
+
   const recipients = await ActivityRecipient.findAll({
     where: {
-      activityReportId: reports.rows.map(({ id }) => id),
+      activityReportId: reportIds,
     },
     attributes: ['id', 'name', 'activityRecipientId', 'activityReportId'],
     // sorting these just so the order is testable
@@ -593,7 +655,31 @@ export async function activityReports(
     ],
   });
 
-  return { ...reports, recipients };
+  const topics = await Topic.findAll({
+    attributes: ['name', 'id'],
+    include: [
+      {
+        model: Objective,
+        attributes: ['id'],
+        as: 'objectives',
+        required: true,
+        include: {
+          attributes: ['activityReportId', 'objectiveId'],
+          model: ActivityReportObjective,
+          as: 'activityReportObjectives',
+          required: true,
+          where: {
+            activityReportId: reportIds,
+          },
+        },
+      },
+    ],
+    order: [
+      ['name', sortDir],
+    ],
+  });
+
+  return { ...reports, recipients, topics };
 }
 /**
  * Retrieves alerts based on the following logic:
@@ -746,12 +832,12 @@ export async function createOrUpdate(newActivityReport, report) {
 
   if (ECLKCResourcesUsed) {
     resources.ECLKCResourcesUsed = ECLKCResourcesUsed.filter((item) => item)
-      .map((item) => item.value);
+      .map((item) => (item.value ? item.value : item));
   }
 
   if (nonECLKCResourcesUsed) {
     resources.nonECLKCResourcesUsed = nonECLKCResourcesUsed.filter((item) => item)
-      .map((item) => item.value);
+      .map((item) => (item.value ? item.value : item));
   }
 
   const updatedFields = { ...allFields, ...resources };
@@ -760,7 +846,6 @@ export async function createOrUpdate(newActivityReport, report) {
   } else {
     savedReport = await create(updatedFields);
   }
-
   if (activityReportCollaborators) {
     const { id } = savedReport;
     const newCollaborators = activityReportCollaborators.map(

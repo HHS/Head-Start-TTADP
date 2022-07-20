@@ -12,12 +12,13 @@ export default function GoalDate({
   endDate,
   validateEndDate,
   datePickerKey,
+  inputName,
 }) {
   const f = formatEndDateForPicker(endDate);
 
   return (
     <FormGroup error={error.props.children}>
-      <Label htmlFor="goalEndDate">
+      <Label htmlFor={inputName}>
         Estimated close date (mm/dd/yyyy)
         {' '}
         <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
@@ -25,8 +26,8 @@ export default function GoalDate({
       </Label>
       {error}
       <DatePicker
-        id="goalEndDate"
-        name="goalEndDate"
+        id={inputName}
+        name={inputName}
         onChange={setEndDate}
         defaultValue={f}
         onBlur={validateEndDate}
@@ -43,8 +44,10 @@ GoalDate.propTypes = {
   endDate: PropTypes.string, // can come back from the API as null
   validateEndDate: PropTypes.func.isRequired,
   datePickerKey: PropTypes.string.isRequired,
+  inputName: PropTypes.string,
 };
 
 GoalDate.defaultProps = {
   endDate: '',
+  inputName: 'goalEndDate',
 };

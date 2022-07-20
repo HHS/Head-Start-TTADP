@@ -13,6 +13,8 @@ import {
   Topic,
   Program,
   File,
+  ObjectiveRole,
+  Role,
 } from '../models';
 import { DECIMAL_BASE, REPORT_STATUSES } from '../constants';
 
@@ -24,6 +26,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     'status',
     [sequelize.col('grant.regionId'), 'regionId'],
     [sequelize.col('grant.recipient.id'), 'recipientId'],
+    'goalNumber',
   ],
   where: {
     id,
@@ -98,6 +101,161 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     },
   ],
 });
+
+export function goalById(id) {
+  return Goal.findOne({
+    attributes: [
+      'endDate',
+      'status',
+      ['id', 'value'],
+      ['name', 'label'],
+      'id',
+      'name',
+    ],
+    where: {
+      id,
+    },
+    include: [
+      {
+        where: {
+          [Op.and]: [
+            {
+              title: {
+                [Op.ne]: '',
+              },
+            },
+            {
+              status: {
+                [Op.notIn]: ['Complete', 'Draft'],
+              },
+            },
+          ],
+        },
+        attributes: [
+          ['id', 'value'],
+          ['title', 'label'],
+          'title',
+          'status',
+        ],
+        model: Objective,
+        as: 'objectives',
+        required: false,
+        include: [
+          {
+            model: ObjectiveResource,
+            as: 'resources',
+            attributes: [
+              ['userProvidedUrl', 'value'],
+              ['id', 'key'],
+            ],
+            required: false,
+          },
+          {
+            model: ActivityReportObjective,
+            as: 'activityReportObjectives',
+            attributes: [
+              'ttaProvided',
+            ],
+            required: false,
+          },
+          {
+            model: Topic,
+            as: 'topics',
+            attributes: [
+              ['id', 'value'],
+              ['name', 'label'],
+            ],
+            required: false,
+          },
+          {
+            model: ActivityReport,
+            as: 'activityReports',
+            where: {
+              calculatedStatus: {
+                [Op.not]: REPORT_STATUSES.DELETED,
+              },
+            },
+            required: false,
+          },
+        ],
+      },
+    ],
+  });
+}
+
+export function goalByIdAndActivityReport(goalId, activityReportId) {
+  return Goal.findOne({
+    attributes: [
+      'endDate',
+      'status',
+      ['id', 'value'],
+      ['name', 'label'],
+      'id',
+      'name',
+    ],
+    where: {
+      id: goalId,
+    },
+    include: [
+      {
+        where: {
+          [Op.and]: [
+            {
+              title: {
+                [Op.ne]: '',
+              },
+            },
+            {
+              status: {
+                [Op.notIn]: ['Complete'],
+              },
+            },
+          ],
+        },
+        attributes: [
+          'id',
+          'title',
+          'title',
+          'status',
+        ],
+        model: Objective,
+        as: 'objectives',
+        required: false,
+        include: [
+          {
+            model: ObjectiveResource,
+            as: 'resources',
+            attributes: [
+              ['userProvidedUrl', 'value'],
+              ['id', 'key'],
+            ],
+            required: false,
+          },
+          {
+            model: ActivityReportObjective,
+            as: 'activityReportObjectives',
+            attributes: [
+              'ttaProvided',
+            ],
+            required: true,
+            where: {
+              activityReportId,
+            },
+          },
+          {
+            model: Topic,
+            as: 'topics',
+            attributes: [
+              ['id', 'value'],
+              ['name', 'label'],
+            ],
+            required: false,
+          },
+        ],
+      },
+    ],
+  });
+}
 
 export async function goalByIdAndRecipient(id, recipientId) {
   return Goal.findOne(OPTIONS_FOR_GOAL_FORM_QUERY(id, recipientId));
@@ -193,10 +351,6 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
  * @returns created or updated goal with grant goals
  */
 export async function createOrUpdateGoals(goals) {
-  // per a discussion with Patrice, we are disabling the backend "for real"
-  // for now (until the feature is ready to go)
-  // return goals;
-
   // there can only be one on the goal form (multiple grants maybe, but one recipient)
   // we will need this after the transaction, as trying to do a find all within a transaction
   // yields the previous data values
@@ -225,7 +379,6 @@ export async function createOrUpdateGoals(goals) {
     }
 
     let newGoal;
-
     if (Number.isInteger(id)) {
       const res = await Goal.update({ grantId, ...options }, {
         where: { id },
@@ -325,7 +478,6 @@ export async function createOrUpdateGoals(goals) {
 
     return newGoal.id;
   }));
-
   // we have to do this outside of the transaction otherwise
   // we get the old values
   return goalsByIdAndRecipient(goalIds, recipient);
@@ -596,7 +748,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
 
     let savedObjective;
 
-    if (!isNew) {
+    if (!isNew && id) {
       savedObjective = await Objective.findByPk(id);
       await savedObjective.update({
         title,
@@ -633,6 +785,42 @@ async function createObjectivesForGoal(goal, objectives, report) {
     });
 
     await arObjective.update({ ttaProvided }, { individualHooks: true });
+    if (objective.topics) {
+      await Promise.all((objective.topics.map((ot) => ObjectiveTopic.findOrCreate({
+        where: {
+          objectiveId: savedObjective.id,
+          topicId: ot.value,
+        },
+      }))));
+    }
+
+    if (objective.resources) {
+      await Promise.all(
+        objective.resources.filter(({ value }) => value).map(
+          ({ value }) => ObjectiveResource.findOrCreate({
+            where: {
+              userProvidedUrl: value,
+              objectiveId: savedObjective.id,
+            },
+          }),
+        ),
+      );
+    }
+
+    if (objective.roles) {
+      const roles = await Role.findAll({
+        where: {
+          fullName: objective.roles,
+        },
+      });
+
+      await Promise.all(roles.map((r) => ObjectiveRole.findOrCreate({
+        where: {
+          roleId: r.id,
+          objectiveId: savedObjective.id,
+        },
+      })));
+    }
 
     return savedObjective;
   }));
@@ -770,6 +958,13 @@ export async function updateGoalStatusById(
   const [, updated] = g;
 
   return updated;
+}
+
+export async function createOrUpdateGoalsForActivityReport(goal, reportId) {
+  const activityReportId = parseInt(reportId, DECIMAL_BASE);
+  const report = await ActivityReport.findByPk(activityReportId);
+  const goals = await saveGoalsForReport([goal], report);
+  return goals;
 }
 
 export async function destroyGoal(goalId) {
