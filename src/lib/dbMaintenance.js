@@ -51,10 +51,9 @@ const vacuumTables = async (tables) => Promise.all(tables.map(async (data) => {
       type: QueryTypes.RAW,
       raw: true,
       rawErrors: true,
-      logging: console.log,
     });
   } catch (err) {
-    logJob('VACUUM', 'table', data.schemaname, data.relname, err.code);
+    await logJob('VACUUM', 'table', data.schemaname, data.relname, err.code);
     throw err;
   }
   return logJob('VACUUM', 'table', data.schemaname, data.relname, null);
@@ -66,10 +65,9 @@ const reindexTables = async (tables) => Promise.all(tables.map(async (data) => {
       type: QueryTypes.RAW,
       raw: true,
       rawErrors: true,
-      logging: console.log,
     });
   } catch (err) {
-    logJob('REINDEX', 'table', data.schemaname, data.relname, err.code);
+    await logJob('REINDEX', 'table', data.schemaname, data.relname, err.code);
     throw err;
   }
   return logJob('REINDEX', 'table', data.schemaname, data.relname, null);
