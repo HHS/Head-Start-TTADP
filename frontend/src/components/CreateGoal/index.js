@@ -504,6 +504,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
       if (objective.activityReports && objective.activityReports.length) {
         newObjectives.push({
           ...objective,
+          files: [],
           resources: [],
           topics: [],
         });
@@ -511,6 +512,7 @@ export default function CreateGoal({ recipient, regionId, match }) {
         objectiveApiData[objective.id] = {
           resources: objective.resources.map((value) => ({ ...value, isFromApi: true })),
           topics: objective.topics.map((value) => ({ ...value, isFromApi: true })),
+          files: objective.files.map((value) => ({ ...value, isFromApi: true })),
         };
       } else {
         newObjectives.push({
