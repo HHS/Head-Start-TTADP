@@ -29,15 +29,18 @@ const [
   objectiveTextError, objectiveTopicsError, objectiveResourcesError, objectiveStatusError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
-const formatGrantsFromApi = (grants) => grants.map((grant) => {
-  const programTypes = [...new Set(grant.programs.map(({ programType }) => programType))].sort();
-  const numberWithProgramTypes = `${grant.number} ${programTypes}`;
+const formatGrantsFromApi = (grant) => {
+  const programTypes = [...new Set(grant.programs.map((p) => p.programType))].sort();
+  const numberWithProgramTypes = `${grant.label} ${programTypes}`;
   return {
     value: grant.id,
     label: numberWithProgramTypes,
     id: grant.id,
   };
-});
+};
+
+// this is the default error state for an objective (no errors, only empty fragments)
+const BLANK_OBJECTIVE_ERROR = [<></>, <></>, <></>];
 
 export default function GoalForm({
   recipient, regionId, id, showRTRnavigation,
@@ -245,15 +248,12 @@ export default function GoalForm({
 
   const validateGrantNumbers = () => {
     let error = <></>;
-
     if (!selectedGrants.length) {
       error = <span className="usa-error-message">{SELECT_GRANTS_ERROR}</span>;
     }
-
     const newErrors = [...errors];
     newErrors.splice(FORM_FIELD_INDEXES.GRANTS, 1, error);
     setErrors(newErrors);
-
     return !error.props.children;
   };
 
@@ -330,7 +330,7 @@ export default function GoalForm({
   const isValidNotStarted = () => (
     validateGrantNumbers() && validateGoalName() && validateEndDate() && validateObjectives()
   );
-  const isValidDraft = () => validateEndDate() || validateGrantNumbers() || validateGoalName();
+  const isValidDraft = () => validateGrantNumbers() || validateGoalName() || validateEndDate();
 
   /**
    * button click handlers
@@ -363,20 +363,36 @@ export default function GoalForm({
     }
 
     try {
+      const newGoals = selectedGrants.map((g) => ({
+        grantId: g.value,
+        name: goalName,
+        status,
+        endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
+        regionId: parseInt(regionId, DECIMAL_BASE),
+        recipientId: recipient.id,
+        objectives,
+        id: goalId,
+      }));
       const goals = [
         ...createdGoals,
-        {
-          grants: selectedGrants,
-          name: goalName,
-          status,
-          endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
-          regionId: parseInt(regionId, DECIMAL_BASE),
-          recipientId: recipient.id,
-          objectives,
-          id: goalId,
-        }];
+        ...newGoals,
+      ];
+      const updatedGoal = await createOrUpdateGoals(goals);
 
-      await createOrUpdateGoals(goals);
+      const updatedObjectives = updatedGoal && updatedGoal.length > 0
+        && updatedGoal[0] && updatedGoal[0].objectives && updatedGoal[0].objectives.length > 0
+        ? [...updatedGoal[0].objectives]
+        : [];
+
+      // when we parse the objectives from the API, we have to make sure that we have
+      // an error object for each objective.
+      // todo - refactor setObjectives to just handle both as a function or a new hook or something
+      const newErrors = [...errors];
+      const objectiveErrors = updatedObjectives.map(() => BLANK_OBJECTIVE_ERROR);
+
+      newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES, 1, objectiveErrors);
+      setErrors(newErrors);
+      setObjectives(updatedObjectives);
 
       setAlert({
         message: `Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`,
@@ -408,37 +424,41 @@ export default function GoalForm({
     }
 
     try {
+      const newGoals = selectedGrants.map((g) => ({
+        grantId: g.value,
+        name: goalName,
+        status,
+        endDate,
+        regionId: parseInt(regionId, DECIMAL_BASE),
+        recipientId: recipient.id,
+        objectives: objectives.map((objective) => {
+          const apiData = unchangingApiData[objective.id];
+          if (apiData) {
+            const topicsFromApi = apiData.topics;
+            const resourcesFromApi = apiData.resources;
+            const filesFromApi = apiData.files;
+            return {
+              ...objective,
+              topics: [...objective.topics, ...topicsFromApi],
+              resources: [...objective.resources, ...resourcesFromApi],
+              files: [...objective.files, ...filesFromApi],
+            };
+          }
+
+          return objective;
+        }),
+        id: goalId,
+      }));
       const goals = [
         ...createdGoals,
-        {
-          grants: selectedGrants,
-          name: goalName,
-          status,
-          endDate,
-          regionId: parseInt(regionId, DECIMAL_BASE),
-          recipientId: recipient.id,
-          objectives: objectives.map((objective) => {
-            const apiData = unchangingApiData[objective.id];
-            if (apiData) {
-              const topicsFromApi = apiData.topics;
-              const resourcesFromApi = apiData.resources;
-              return {
-                ...objective,
-                topics: [...objective.topics, ...topicsFromApi],
-                resources: [...objective.resources, ...resourcesFromApi],
-              };
-            }
-
-            return objective;
-          }),
-          id: goalId,
-        }];
+        ...newGoals,
+      ];
 
       const newCreatedGoals = await createOrUpdateGoals(goals);
 
       setCreatedGoals(newCreatedGoals.map((goal) => ({
         ...goal,
-        grants: formatGrantsFromApi(goal.grants),
+        grant: formatGrantsFromApi(goal.grant),
       })));
 
       clearForm();
@@ -470,7 +490,7 @@ export default function GoalForm({
     setGoalId(goal.id);
     setGoalNumber(goal.number);
 
-    setSelectedGrants(goal.grants);
+    setSelectedGrants(goal.grant);
 
     // we need to update the date key so it re-renders all the
     // date pickers, as they are uncontrolled inputs
@@ -489,6 +509,7 @@ export default function GoalForm({
       if (objective.activityReports && objective.activityReports.length) {
         newObjectives.push({
           ...objective,
+          files: [],
           resources: [],
           topics: [],
         });
@@ -496,6 +517,7 @@ export default function GoalForm({
         objectiveApiData[objective.id] = {
           resources: objective.resources.map((value) => ({ ...value, isFromApi: true })),
           topics: objective.topics.map((value) => ({ ...value, isFromApi: true })),
+          files: objective.files.map((value) => ({ ...value, isFromApi: true })),
         };
       } else {
         newObjectives.push({

@@ -2,6 +2,8 @@
 import {
   Objective,
   ActivityReportObjective,
+  Goal,
+  Grant,
 } from '../models';
 import { removeUnusedGoalsObjectivesFromReport } from './goals';
 
@@ -76,4 +78,26 @@ export async function saveObjectivesForReport(objectives, report) {
 
   const currentObjectives = updatedObjectives.flat();
   return removeUnusedGoalsObjectivesFromReport(report.id, currentObjectives);
+}
+
+export async function getObjectiveById(objectiveId) {
+  return Objective.findOne({
+    attributes: ['id', 'title', 'status'],
+    where: {
+      id: objectiveId,
+    },
+    include: [
+      {
+        model: Goal,
+        as: 'goal',
+        include: [
+          {
+            model: Grant,
+            as: 'grant',
+            attributes: ['regionId'],
+          },
+        ],
+      },
+    ],
+  });
 }
