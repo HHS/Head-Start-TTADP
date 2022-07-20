@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
   FormGroup, Label, Radio,
@@ -18,6 +18,11 @@ export default function ObjectiveFiles({
   const [useFiles, setUseFiles] = useState();
   const readOnly = isOnApprovedReport || status === 'Complete';
 
+  useEffect(() => {
+    if (hasFiles) {
+      setUseFiles(true);
+    }
+  }, [hasFiles]);
   return (
     <>
       {
