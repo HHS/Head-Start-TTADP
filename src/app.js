@@ -14,7 +14,7 @@ import { hsesAuth } from './middleware/authMiddleware';
 import { retrieveUserDetails } from './services/currentUser';
 import cookieSession from './middleware/sessionMiddleware';
 import updateGrantsRecipients from './lib/updateGrantsRecipients';
-import dbMaintenance from './lib/dbMaintenance';
+import { dbMaintenance } from './lib/dbMaintenance';
 import { logger, auditLogger, requestLogger } from './logger';
 
 const app = express();
