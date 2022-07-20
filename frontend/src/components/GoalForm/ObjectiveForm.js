@@ -4,6 +4,7 @@ import { Button } from '@trussworks/react-uswds';
 import ObjectiveTitle from './ObjectiveTitle';
 import ObjectiveTopics from './ObjectiveTopics';
 import ResourceRepeater from './ResourceRepeater';
+import ObjectiveFiles from './ObjectiveFiles';
 import {
   OBJECTIVE_FORM_FIELD_INDEXES, validateListOfResources, OBJECTIVE_ERROR_MESSAGES,
 } from './constants';
@@ -31,7 +32,7 @@ export default function ObjectiveForm({
 }) {
   // the parent objective data from props
   const {
-    title, topics, resources, status, roles,
+    title, topics, resources, status, roles, files,
   } = objective;
   const isOnReport = useMemo(() => (
     objective.activityReports && objective.activityReports.length > 0
@@ -49,6 +50,9 @@ export default function ObjectiveForm({
   const onChangeTitle = (e) => setObjective({ ...objective, title: e.target.value });
   const onChangeTopics = (newTopics) => setObjective({ ...objective, topics: newTopics });
   const setResources = (newResources) => setObjective({ ...objective, resources: newResources });
+  const onChangeFiles = (e) => {
+    setObjective({ ...objective, files: e });
+  };
   const onChangeRole = (newRole) => setObjective({ ...objective, roles: newRole });
   const onChangeStatus = (newStatus) => setObjective({ ...objective, status: newStatus });
 
@@ -156,6 +160,15 @@ export default function ObjectiveForm({
         onChangeStatus={onChangeStatus}
         inputName={`objective-status-${index}`}
       />
+
+      <ObjectiveFiles
+        files={files}
+        onChangeFiles={onChangeFiles}
+        objectiveId={objective.id}
+        isOnApprovedReport={isOnApprovedReport || false}
+        status={status}
+      />
+
     </div>
   );
 }
@@ -189,6 +202,14 @@ ObjectiveForm.propTypes = {
       label: PropTypes.string,
       value: PropTypes.number,
     })),
+    files: PropTypes.arrayOf(PropTypes.shape({
+      originalFileName: PropTypes.string,
+      fileSize: PropTypes.number,
+      status: PropTypes.string,
+      url: PropTypes.shape({
+        url: PropTypes.string,
+      }),
+    })),
     roles: PropTypes.arrayOf(PropTypes.string),
     activityReports: PropTypes.arrayOf(PropTypes.shape({
       id: PropTypes.number,
@@ -212,6 +233,7 @@ ObjectiveForm.defaultProps = {
     topics: [],
     activityReports: [],
     resources: [],
+    files: [],
     status: '',
   },
 };

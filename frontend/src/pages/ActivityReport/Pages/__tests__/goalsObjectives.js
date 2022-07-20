@@ -36,6 +36,10 @@ const RenderGoalsObjectives = ({
         name: 'This is a test goal',
         isNew: true,
         goalIds: [1],
+        grant:
+        {
+          value: 1, label: 'Turtle 1', programs: [], id: 1,
+        },
         objectives: [{
           id: 1,
           title: 'title',

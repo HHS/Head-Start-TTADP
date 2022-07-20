@@ -343,7 +343,6 @@ describe('Goals Table', () => {
       fireEvent.click(collapseButton);
       expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).toBeInTheDocument();
     });
-
     it('hides the add new goal button if recipient has no active grants', async () => {
       renderTable(defaultUser, false);
       await screen.findByText('TTA goals and objectives');
@@ -351,7 +350,6 @@ describe('Goals Table', () => {
       const link = screen.queryByRole('link', { name: /Add new goal/i });
       expect(link).toBe(null);
     });
-
     it('hides the add new goal button if user doesn\'t have permissions', async () => {
       const user = {
         ...defaultUser,

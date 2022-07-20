@@ -55,16 +55,16 @@ describe('create goal', () => {
     timeframe: null,
     createdAt: '2022-03-09T19:20:45.818Z',
     updatedAt: '2022-03-09T19:20:45.818Z',
-    grants: [
+    grant:
       {
         value: 1, label: 'Turtle 1', programs: [], id: 1,
       },
-    ],
     recipientId: 1,
     regionId: 1,
     objectives: [{
       activityReports: [],
       title: 'test',
+      files: [],
       topics: [
         {
           value: 4,
@@ -78,7 +78,7 @@ describe('create goal', () => {
           value: 'https://search.marginalia.nu/',
         },
       ],
-      id: 'new0',
+      id: 1,
     }],
   }];
 
@@ -156,6 +156,7 @@ describe('create goal', () => {
         },
       ],
     };
+
     renderForm(recipient);
 
     await screen.findByRole('heading', { name: 'Goal summary' });

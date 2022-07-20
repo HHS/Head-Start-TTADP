@@ -50,6 +50,19 @@ export default function ReadOnlyObjective({ objective }) {
         )
         : null }
 
+      {objective.files && objective.files.length
+        ? (
+          <>
+            <h4 className="margin-bottom-1">Resources</h4>
+            <ul className="usa-list usa-list--unstyled">
+              { objective.files.map((f) => (
+                <li key={f.originalFileName}>{f.originalFileName}</li>
+              ))}
+            </ul>
+          </>
+        )
+        : null }
+
       {objective.roles && objective.roles.length
         ? (
           <>
@@ -64,6 +77,7 @@ export default function ReadOnlyObjective({ objective }) {
         : null }
 
       {objective.ttaProvided ? <TTAProvided tta={objective.ttaProvided} /> : null}
+
     </div>
   );
 }
@@ -74,6 +88,14 @@ ReadOnlyObjective.propTypes = {
     ttaProvided: PropTypes.string,
     resources: PropTypes.arrayOf(PropTypes.string),
     topics: PropTypes.arrayOf(PropTypes.string),
+    files: PropTypes.arrayOf(PropTypes.shape({
+      originalFileName: PropTypes.string,
+      fileSize: PropTypes.number,
+      status: PropTypes.string,
+      url: PropTypes.shape({
+        url: PropTypes.string,
+      }),
+    })),
     title: PropTypes.string,
     id: PropTypes.number,
   }).isRequired,

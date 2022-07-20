@@ -20,5 +20,8 @@ export default function QuestionTooltip({ text }) {
 }
 
 QuestionTooltip.propTypes = {
-  text: PropTypes.string.isRequired,
+  text: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.node,
+  ]).isRequired,
 };

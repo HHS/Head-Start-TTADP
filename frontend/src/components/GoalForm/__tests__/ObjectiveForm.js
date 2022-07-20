@@ -18,6 +18,7 @@ const [
 describe('ObjectiveForm', () => {
   const defaultObjective = {
     title: 'This is an objective',
+    files: [],
     topics: [
       {
         value: 0,
