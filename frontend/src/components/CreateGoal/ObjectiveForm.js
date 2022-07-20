@@ -176,8 +176,14 @@ ObjectiveForm.propTypes = {
       label: PropTypes.string,
       value: PropTypes.number,
     })),
-    // eslint-disable-next-line react/forbid-prop-types
-    files: PropTypes.arrayOf(PropTypes.object),
+    files: PropTypes.arrayOf(PropTypes.shape({
+      originalFileName: PropTypes.string,
+      fileSize: PropTypes.number,
+      status: PropTypes.string,
+      url: PropTypes.shape({
+        url: PropTypes.string,
+      }),
+    })),
     activityReports: PropTypes.arrayOf(PropTypes.shape({
       id: PropTypes.number,
     })),

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  FormGroup, Label, Radio,
+  Label, Radio, Fieldset,
 } from '@trussworks/react-uswds';
 import FileUploader from '../FileUploader';
 import QuestionTooltip from './QuestionTooltip';
@@ -15,14 +15,9 @@ export default function ObjectiveFiles({
   status,
 }) {
   const hasFiles = files && files.length > 0;
-  const [useFiles, setUseFiles] = useState();
+  const [useFiles, setUseFiles] = useState(hasFiles);
   const readOnly = isOnApprovedReport || status === 'Complete';
 
-  useEffect(() => {
-    if (hasFiles) {
-      setUseFiles(true);
-    }
-  }, [hasFiles]);
   return (
     <>
       {
@@ -34,14 +29,14 @@ export default function ObjectiveFiles({
           </>
         )
         : (
-          <FormGroup className="margin-top-1">
-            <Label>
+          <Fieldset className="ttahub-objective-files margin-top-1">
+            <legend>
               Do you plan to use any TTA resources that aren&apos;t available as a link?
               {' '}
               <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
               <QuestionTooltip
                 text={(
-                  <div className="ttahub-objective-files-tool-tip ">
+                  <div>
                     Examples include:
                     <ul className="usa-list">
                       <li>Presentation slides from PD events</li>
@@ -51,7 +46,7 @@ export default function ObjectiveFiles({
                   </div>
 )}
               />
-            </Label>
+            </legend>
             <Radio
               label="Yes"
               id="add-objective-files-yes"
@@ -81,7 +76,7 @@ export default function ObjectiveFiles({
                   )
                   : null
         }
-          </FormGroup>
+          </Fieldset>
         )
       }
     </>
@@ -89,9 +84,18 @@ export default function ObjectiveFiles({
 }
 
 ObjectiveFiles.propTypes = {
-  objectiveId: PropTypes.number.isRequired,
-  // eslint-disable-next-line react/forbid-prop-types
-  files: PropTypes.arrayOf(PropTypes.object),
+  objectiveId: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number,
+  ]).isRequired,
+  files: PropTypes.arrayOf(PropTypes.shape({
+    originalFileName: PropTypes.string,
+    fileSize: PropTypes.number,
+    status: PropTypes.string,
+    url: PropTypes.shape({
+      url: PropTypes.string,
+    }),
+  })),
   onChangeFiles: PropTypes.func.isRequired,
   isOnApprovedReport: PropTypes.bool.isRequired,
   status: PropTypes.string.isRequired,
