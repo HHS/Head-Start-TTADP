@@ -49,7 +49,7 @@ import { HTTPError } from '../../fetchers';
 import UserContext from '../../UserContext';
 
 const defaultValues = {
-  ECLKCResourcesUsed: [{ value: '' }],
+  ECLKCResourcesUsed: [],
   activityRecipientType: '',
   activityRecipients: [],
   activityType: [],
@@ -64,7 +64,7 @@ const defaultValues = {
   goals: [],
   recipientNextSteps: [],
   recipients: [],
-  nonECLKCResourcesUsed: [{ value: '' }],
+  nonECLKCResourcesUsed: [],
   numberOfParticipants: null,
   objectivesWithoutGoals: [],
   otherResources: [],
@@ -533,6 +533,8 @@ function ActivityReport({
         const savedReport = await createReport(
           {
             ...fields,
+            ECLKCResourcesUsed: data.ECLKCResourcesUsed.map((r) => (r.value)),
+            nonECLKCResourcesUsed: data.nonECLKCResourcesUsed.map((r) => (r.value)),
             startDate: startDateToSave,
             endDate: endDateToSave,
             regionId: formData.regionId,

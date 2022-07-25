@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 import { useFormContext, useFieldArray } from 'react-hook-form/dist/index.ie11';
@@ -27,6 +27,12 @@ const ResourceSelector = ({ name, ariaName }) => {
       append({ value: '' });
     }
   };
+
+  useEffect(() => {
+    if (fields.length === 0) {
+      append({ value: '' });
+    }
+  }, [append, fields]);
 
   return (
     <>
