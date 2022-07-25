@@ -19,6 +19,7 @@ import './FileUploader.scss';
 
 export const upload = async (file, reportId, setErrorMessage) => {
   let res;
+
   try {
     const data = new FormData();
     data.append('reportId', reportId);
@@ -95,11 +96,12 @@ function Dropzone(props) {
   const [errorMessage, setErrorMessage] = useState();
   const onDrop = (e) => handleDrop(e, reportId, id, onChange, setErrorMessage);
   const maxSize = 30000000;
+  const minSize = 1; // at least 1 byte
 
   const {
     fileRejections, getRootProps, getInputProps,
   } = useDropzone({
-    onDrop, minSize: 0, maxSize, accept: 'image/*, .pdf, .docx, .xlsx, .pptx, .doc, .xls, .ppt, .zip, .txt, .csv',
+    onDrop, minSize, maxSize, accept: 'image/*, .pdf, .docx, .xlsx, .pptx, .doc, .xls, .ppt, .zip, .txt, .csv',
   });
 
   const rootProps = getRootProps();
