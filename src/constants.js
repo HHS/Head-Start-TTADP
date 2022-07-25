@@ -6,6 +6,34 @@ export const REPORT_STATUSES = {
   NEEDS_ACTION: 'needs_action',
 };
 
+export const ENTITY_STATUSES = {
+  DRAFT: 'draft',
+  DELETED: 'deleted',
+  SUBMITTED: 'submitted',
+  APPROVED: 'approved',
+  NEEDS_ACTION: 'needs_action',
+};
+
+export const ENTITY_TYPES = {
+  ACTIVITYREPORT: 'ActivityReport',
+  GOAL: 'Goal',
+  GOALTEMPLATE: 'GoalTemplate',
+  OBJECTIVE: 'Objective',
+  OBJECTIVETEMPLATE: 'ObjectiveTemplate',
+};
+
+export const COLLABORATOR_TYPES = {
+  EDITOR: 'Editor',
+  OWNER: 'Owner',
+  INSTANTIATOR: 'Instantiator',
+  RATIFIER: 'Ratifier',
+};
+
+export const RATIFIER_STATUSES = {
+  NEEDS_ACTION: 'needs_action',
+  RATIFIED: 'ratified',
+};
+
 export const FILE_STATUSES = {
   UPLOADING: 'UPLOADING',
   UPLOADED: 'UPLOADED',
