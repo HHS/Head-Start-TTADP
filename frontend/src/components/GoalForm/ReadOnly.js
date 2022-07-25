@@ -61,8 +61,8 @@ export default function ReadOnly({
                 />
               </div>
               <h3>Goal summary</h3>
-              {goal.grants.length ? <h4 className="margin-bottom-1">Recipient grant numbers</h4> : null }
-              { goal.grants.map((g) => <p key={`grant${g.value}`}>{g.label}</p>) }
+              <h4 className="margin-bottom-1">Recipient grant numbers</h4>
+              <p key={`grant${goal.grant.value}`}>{goal.grant.label}</p>
               <h4 className="margin-bottom-1">Goal</h4>
               <p className="margin-top-0">{goal.goalName}</p>
               {goal.endDate ? (
@@ -84,12 +84,11 @@ export default function ReadOnly({
 
 ReadOnly.propTypes = {
   createdGoals: PropTypes.arrayOf(PropTypes.shape({
-    grants: PropTypes.arrayOf(
+    grant:
       PropTypes.shape({
         label: PropTypes.string,
         value: PropTypes.number,
       }),
-    ),
     goalName: PropTypes.string,
     endDate: PropTypes.string,
   })).isRequired,

@@ -16,12 +16,15 @@ import {
   createObjectiveFileMetaData,
   createObjectiveTemplateFileMetaData,
 } from '../../services/files';
+import { ActivityReportObjective } from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
+import ObjectivePolicy from '../../policies/objective';
 import { activityReportAndRecipientsById } from '../../services/activityReports';
 import { userById } from '../../services/users';
+import { getObjectiveById } from '../../services/objectives';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
 import { auditLogger } from '../../logger';
-import { FILE_STATUSES } from '../../constants';
+import { FILE_STATUSES, DECIMAL_BASE } from '../../constants';
 
 const fileType = require('file-type');
 const multiparty = require('multiparty');
@@ -50,47 +53,80 @@ const altFileTypes = [
   },
 ];
 
+const hasReportAuthorization = async (user, reportId) => {
+  const [report] = await activityReportAndRecipientsById(reportId);
+  const authorization = new ActivityReportPolicy(user, report);
+  if (!authorization.canUpdate()) {
+    return false;
+  }
+  return true;
+};
+
 const deleteHandler = async (req, res) => {
   const {
     reportId,
     reportObjectiveId,
     objectiveId,
-    objectiveTempleteId,
+    objectiveTemplateId,
     fileId,
   } = req.params;
-  const user = await userById(req.session.userId);
-  const [report] = await activityReportAndRecipientsById(reportId);
-  const authorization = new ActivityReportPolicy(user, report);
 
-  if (!authorization.canUpdate()) {
-    res.sendStatus(403);
-    return;
-  }
+  const user = await userById(req.session.userId);
+
   try {
     let file = await getFileById(fileId);
-    if (reportId
-      && reportId in file.reportFiles.map((r) => r.activityReportId)) {
+
+    if (reportId) {
+      if (!await hasReportAuthorization(user, reportId)) {
+        res.sendStatus(403);
+        return;
+      }
       const rf = file.reportFiles.find((r) => r.reportId === reportId);
-      deleteActivityReportFile(rf.id);
-    } else if (reportObjectiveId
-      && reportObjectiveId in file.reportObjectiveFiles.map((aro) => aro.reportObjectiveId)) {
+      if (rf) {
+        await deleteActivityReportFile(rf.id);
+      }
+    } else if (reportObjectiveId) {
+      const activityReportObjective = ActivityReportObjective.findOne(
+        { where: { id: reportObjectiveId } },
+      );
+      if (!await hasReportAuthorization(
+        user,
+        activityReportObjective.activityReportId,
+      )
+      ) {
+        res.sendStatus(403);
+        return;
+      }
       const rof = file.reportObjectiveFiles.find((r) => r.reportObjectiveId === reportObjectiveId);
-      deleteActivityReportObjectiveFile(rof.id);
-    } else if (objectiveId
-      && objectiveId in file.objectiveFiles.map((r) => r.objectiveId)) {
-      const of = file.objectiveFiles.find((r) => r.objectiveId === objectiveId);
-      deleteObjectiveFile(of.id);
-    } else if (objectiveTempleteId
-      && objectiveTempleteId in file.objectiveTemplateFiles.map((r) => r.objectiveTempleteId)) {
+      if (rof) {
+        await deleteActivityReportObjectiveFile(rof.id);
+      }
+    } else if (objectiveId) {
+      const objective = await getObjectiveById(objectiveId);
+      const objectivePolicy = new ObjectivePolicy(objective, user);
+      if (!objectivePolicy.canUpdate()) {
+        res.sendStatus(403);
+        return;
+      }
+      const of = file.objectiveFiles.find(
+        (r) => r.objectiveId === parseInt(objectiveId, DECIMAL_BASE),
+      );
+      if (of) {
+        await deleteObjectiveFile(of.id);
+      }
+    } else if (objectiveTemplateId) {
+      // TODO: Determine how to handle permissions for objective templates.
       const otf = file.objectiveTemplateFiles
-        .find((r) => r.objectiveTempleteId === objectiveTempleteId);
-      deleteObjectiveTemplateFile(otf.id);
+        .find((r) => r.objectiveTempleteId === objectiveTemplateId);
+      if (otf) {
+        await deleteObjectiveTemplateFile(otf.id);
+      }
     }
     file = await getFileById(fileId);
     if (file.reports.length
       + file.reportObjectiveFiles.length
-      + file.objectives.length
-      + file.objectiveTemplates.length === 0) {
+      + file.objectiveFiles.length
+      + file.objectiveTemplateFiles.length === 0) {
       await deleteFileFromS3(file.key);
       await deleteFile(fileId);
     }
@@ -183,12 +219,6 @@ const uploadHandler = async (req, res) => {
   let fileTypeToUse;
 
   const user = await userById(req.session.userId);
-  const [report] = await activityReportAndRecipientsById(reportId);
-  const authorization = new ActivityReportPolicy(user, report);
-
-  if (!(authorization.canUpdate() || (await validateUserAuthForAdmin(req.session.userId)))) {
-    return res.sendStatus(403);
-  }
 
   try {
     if (!files.file) {
@@ -218,8 +248,12 @@ const uploadHandler = async (req, res) => {
       altFileType = { ext: matchingAltType[0].ext, mime: matchingAltType[0].mime };
     }
     fileTypeToUse = altFileType || type;
-    fileName = `${uuidv4()}.${fileTypeToUse.ext}`;
+    fileName = `${uuidv4()}${fileTypeToUse.ext}`;
     if (reportId) {
+      if (!(await hasReportAuthorization(user, reportId)
+        || (await validateUserAuthForAdmin(req.session.userId)))) {
+        return res.sendStatus(403);
+      }
       metadata = await createActivityReportFileMetaData(
         originalFilename,
         fileName,
@@ -227,6 +261,16 @@ const uploadHandler = async (req, res) => {
         size,
       );
     } else if (reportObjectiveId) {
+      const activityReportObjective = ActivityReportObjective.findOne(
+        { where: { id: reportObjectiveId } },
+      );
+      if (!(await hasReportAuthorization(
+        user,
+        activityReportObjective.activityReportId,
+      )
+      || (await validateUserAuthForAdmin(req.session.userId)))) {
+        return res.sendStatus(403);
+      }
       metadata = await createActivityReportObjectiveFileMetaData(
         originalFilename,
         fileName,
@@ -234,13 +278,20 @@ const uploadHandler = async (req, res) => {
         size,
       );
     } else if (objectiveId) {
+      const objective = await getObjectiveById(objectiveId);
+      const objectivePolicy = new ObjectivePolicy(objective, user);
+      if (!(objectivePolicy.canUpdate()
+      || (await validateUserAuthForAdmin(req.session.userId)))) {
+        return res.sendStatus(403);
+      }
       metadata = await createObjectiveFileMetaData(
         originalFilename,
         fileName,
-        reportId,
+        objectiveId,
         size,
       );
     } else if (objectiveTempleteId) {
+      // TODO: Determine how to handle permissions for objective templates.
       metadata = await createObjectiveTemplateFileMetaData(
         originalFilename,
         fileName,

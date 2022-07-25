@@ -193,7 +193,7 @@ const createObjectiveFileMetaData = async (
   const [file] = await File.findOrCreate({
     where: {
       originalFileName: newFile.originalFileName,
-      key: newFile.s3FileName,
+      key: newFile.key,
       fileSize: newFile.fileSize,
     },
     defaults: newFile,
