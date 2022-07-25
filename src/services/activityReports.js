@@ -721,7 +721,7 @@ export async function activityReportAlerts(userId, {
   return { ...reports, recipients };
 }
 
-function formatResources(resources) {
+export function formatResources(resources) {
   return resources.reduce((acc, resource) => {
     // skip empties
     if (!resource) {
