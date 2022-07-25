@@ -69,7 +69,7 @@ export async function processFiles(hashSumHex) {
       const recipientsNonDelegates = agency.agencies.agency.filter((a) => grantRecipients.some((gg) => gg.agency_id === a.agency_id && a.agency_id !== '5'));
       const recipientsForDb = recipientsNonDelegates.map((g) => ({
         id: parseInt(g.agency_id, 10),
-        uei: g.uei,
+        uei: valueFromXML(g.uei),
         name: g.agency_name,
         recipientType: valueFromXML(g.agency_type),
       }));
