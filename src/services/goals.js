@@ -12,6 +12,7 @@ import {
   ActivityReportGoal,
   Topic,
   Program,
+  File,
   ObjectiveRole,
   Role,
 } from '../models';
@@ -55,6 +56,10 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
             ['id', 'value'],
             ['name', 'label'],
           ],
+        },
+        {
+          model: File,
+          as: 'files',
         },
         {
           model: ActivityReport,
@@ -350,7 +355,6 @@ export async function createOrUpdateGoals(goals) {
   // we will need this after the transaction, as trying to do a find all within a transaction
   // yields the previous data values
   let recipient;
-
   // eslint-disable-next-line max-len
   const goalIds = await Promise.all(goals.map(async (goalData) => {
     const {
