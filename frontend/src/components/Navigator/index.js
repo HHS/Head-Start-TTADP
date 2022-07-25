@@ -18,7 +18,6 @@ import {
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import useInterval from '@use-it/interval';
 import moment from 'moment';
-import { v4 as uuidv4 } from 'uuid';
 import Container from '../Container';
 
 import {
@@ -151,27 +150,25 @@ function Navigator({
       return;
     }
 
+    let newGoals = selectedGoals;
+
     // save goal to api, come back with new ids for goal and objectives
     try {
-      await saveGoalForReport({ goal, activityReportId: reportId });
-      return;
+      newGoals = await saveGoalForReport({ goal, activityReportId: reportId });
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     }
 
     setValue('isGoalFormClosed', true);
-    // for now we'll just generate an id for a demo of in-memory stuff
-    const g = goalForEditing.isNew ? {
-      ...goalForEditing,
-      name,
-      endDate,
-      id: uuidv4(),
-    } : { ...goalForEditing };
-    setValue('goals', [...selectedGoals, g]);
+    setValue('goals', newGoals);
     setValue('goalForEditing', null);
     setValue('goalForEditing.objectives', []);
     setValue('goalName', '');
     setValue('goalEndDate', '');
+
+    // the form value is updated but the react state is not
+    // so here we go (todo - why are there two sources of truth?)
+    updateFormData({ ...formData, goals: newGoals });
   };
 
   const onUpdatePage = async (index) => {
