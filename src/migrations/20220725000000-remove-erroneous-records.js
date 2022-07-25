@@ -135,34 +135,42 @@ module.exports = {
             ON eog."goalId" = og."goalId"
             AND eog.objectives = og.objectives;
             ------------------------------------------------------------------------------------
+            -- DELETE 34754
             DELETE FROM "ActivityReportObjectives" aro
             USING "erroneousAROs" earo
             WHERE aro.id = earo."aroId";
             ------------------------------------------------------------------------------------
+            -- DELETE 28357
             DELETE FROM "ActivityReportGoals" arg
-            USING "erroneousAROs" earo
-            WHERE aro.id = earo."aroId";
+            USING "erroneousARGs" earg
+            WHERE arg.id = earg."argId";
             ------------------------------------------------------------------------------------
+            -- DELETE 0
             DELETE FROM "ObjectiveFiles" "of"
             USING "erroneousObjectives" eo
             WHERE "of"."objectiveId" = eo."objectiveId";
             ------------------------------------------------------------------------------------
+            -- DELETE 0
             DELETE FROM "ObjectiveResources" "or"
             USING "erroneousObjectives" eo
             WHERE "or"."objectiveId" = eo."objectiveId";
             ------------------------------------------------------------------------------------
+            -- DELETE 0
             DELETE FROM "ObjectiveRoles" "or"
             USING "erroneousObjectives" eo
             WHERE "or"."objectiveId" = eo."objectiveId";
             ------------------------------------------------------------------------------------
+            -- DELETE 3951
             DELETE FROM "ObjectiveTopics" ot
             USING "erroneousObjectives" eo
             WHERE ot."objectiveId" = eo."objectiveId";
             ------------------------------------------------------------------------------------
+            -- DELETE 29591
             DELETE FROM "Objectives" o
             USING "erroneousObjectives" eo
             WHERE o.id = eo."objectiveId";
             ------------------------------------------------------------------------------------
+            -- DELETE 4
             DELETE FROM "Goals" g
             USING "erroneousGoals" eg
             WHERE g.id = eg."goalId";
