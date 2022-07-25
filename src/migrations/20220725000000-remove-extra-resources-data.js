@@ -16,12 +16,14 @@ module.exports = {
         `UPDATE "ActivityReports" SET "nonECLKCResourcesUsed" =
           (select array_remove("nonECLKCResourcesUsed", '{"value":""}'))
           where  '{"value":""}' = ANY ("nonECLKCResourcesUsed");`,
-        { transaction });
+        { transaction },
+      );
       await queryInterface.sequelize.query(
         `UPDATE "ActivityReports" SET "ECLKCResourcesUsed" =
             (select array_remove("ECLKCResourcesUsed", '{"value":""}'))
             where  '{"value":""}' = ANY ("ECLKCResourcesUsed");`,
-        { transaction });
+        { transaction },
+      );
     },
   ),
   down: async () => { },
