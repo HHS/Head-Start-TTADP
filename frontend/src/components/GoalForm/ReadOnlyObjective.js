@@ -33,7 +33,7 @@ export default function ReadOnlyObjective({ objective }) {
         ? (
           <>
             <h4 className="margin-bottom-1">Topics</h4>
-            <p className="margin-top-0">{objective.topics.map((topic) => topic.label).join('; ')}</p>
+            <p className="margin-top-0">{objective.topics.map((topic) => topic.label).join(', ')}</p>
           </>
         ) : null }
 

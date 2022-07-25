@@ -960,9 +960,34 @@ export async function updateGoalStatusById(
   return updated;
 }
 
+function reduceObjectives(newObjectives, currentObjectives = []) {
+  return newObjectives.reduce((objectives, objective) => {
+    const exists = objectives.find((o) => (
+      o.name === objective.name && o.status === objective.status
+    ));
+
+    if (exists) {
+      exists.ids = [...exists.ids, ...objective.id];
+      return objectives;
+    }
+
+    return [...objectives, {
+      ...objective.dataValues,
+      ids: [objective.id],
+      // there will only be one, the activity report objective is queried by activity report id
+      ttaProvided: objective.activityReportObjectives[0].ttaProvided,
+    }];
+  }, currentObjectives);
+}
+
 export async function getGoalsForReport(reportId) {
-  return Goal.findAll({
+  const goals = await Goal.findAll({
     include: [
+      {
+        model: Grant,
+        as: 'grant',
+        required: true,
+      },
       {
         model: ActivityReport,
         as: 'activityReports',
@@ -988,10 +1013,13 @@ export async function getGoalsForReport(reportId) {
           {
             model: Topic,
             as: 'topics',
+            // these need to be renamed to match the frontend form names
+            attributes: [['name', 'label'], ['id', 'value']],
           },
           {
             model: ObjectiveResource,
             as: 'resources',
+            attributes: [['userProvidedUrl', 'value']],
           },
           {
             model: File,
@@ -1001,6 +1029,28 @@ export async function getGoalsForReport(reportId) {
       },
     ],
   });
+
+  return goals.reduce((previous, current) => {
+    const exists = previous.find((g) => g.title === current.title && g.status === current.status);
+
+    if (exists) {
+      exists.grants.push(current.grant);
+      exists.goalIds.push(current.id);
+
+      // rollup objectives
+
+      return previous;
+    }
+
+    const g = {
+      ...current.dataValues,
+      goalIds: [current.id],
+      grants: [current.grant.dataValues],
+      objectives: reduceObjectives(current.objectives),
+    };
+
+    return [...previous, g];
+  }, []);
 }
 
 export async function createOrUpdateGoalsForActivityReport(goal, reportId) {
