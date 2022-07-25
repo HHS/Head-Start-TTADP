@@ -930,8 +930,6 @@ export async function saveGoalsForReport(goals, report) {
     return newGoals;
   })));
 
-  console.log({ currentGoals });
-
   const currentGoalIds = currentGoals.flat().map((g) => g.id);
   await removeActivityReportGoalsFromReport(report.id, currentGoalIds);
   return removeUnusedGoalsObjectivesFromReport(report.id, currentObjectives);
@@ -962,12 +960,55 @@ export async function updateGoalStatusById(
   return updated;
 }
 
+export async function getGoalsForReport(reportId) {
+  return Goal.findAll({
+    include: [
+      {
+        model: ActivityReport,
+        as: 'activityReports',
+        where: {
+          id: reportId,
+        },
+        required: true,
+        // get goals for a particular AR
+      },
+      {
+        model: Objective,
+        as: 'objectives',
+        include: [
+          {
+            model: ActivityReportObjective,
+            as: 'activityReportObjectives',
+            where: {
+              activityReportId: reportId,
+            },
+            required: true,
+            // we need this in case an objective was used on one report but not on another
+          },
+          {
+            model: Topic,
+            as: 'topics',
+          },
+          {
+            model: ObjectiveResource,
+            as: 'resources',
+          },
+          {
+            model: File,
+            as: 'files',
+          },
+        ],
+      },
+    ],
+  });
+}
+
 export async function createOrUpdateGoalsForActivityReport(goal, reportId) {
   const activityReportId = parseInt(reportId, DECIMAL_BASE);
   const report = await ActivityReport.findByPk(activityReportId);
-  const goals = await saveGoalsForReport([goal], report);
-  console.log({ goals });
-  return goals;
+  await saveGoalsForReport([goal], report);
+
+  return getGoalsForReport(activityReportId);
 }
 
 export async function destroyGoal(goalId) {
