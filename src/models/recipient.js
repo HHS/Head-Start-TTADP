@@ -17,7 +17,7 @@ module.exports = (sequelize, DataTypes) => {
   Recipient.init({
     uei: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     name: {
       type: DataTypes.STRING,
