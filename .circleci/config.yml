@@ -182,7 +182,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "TTAHUB-747/initial_db_migration"
+    default: "TTAHUB-926/kw-remove-extra-data"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "TTAHUB-747/initial_db_migration"
