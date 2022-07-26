@@ -928,28 +928,6 @@ async function getDownloadableActivityReports(where, separate = true) {
         as: 'activityRecipients',
         required: false,
         separate,
-        include: [
-          {
-            model: Grant,
-            attributes: ['id', 'number', 'programSpecialistName', 'recipientInfo', 'programTypes'],
-            as: 'grant',
-            include: [
-              {
-                model: Recipient,
-                as: 'recipient',
-              },
-              {
-                model: Program,
-                as: 'programs',
-                attributes: ['programType'],
-              },
-            ],
-          },
-          {
-            model: OtherEntity,
-            as: 'otherEntity',
-          },
-        ],
       },
       {
         model: File,
