@@ -37,48 +37,29 @@ module.exports = {
           `DO $$
           BEGIN
             CREATE TEMP TABLE "erroneousAROs" AS
-            WITH
-              "AROs" AS (
-                SELECT
-                  aro."activityReportId",
-                  aro.id "aroId",
-                  aro."objectiveId",
-                  o."goalId",
-                  g."grantId"
-                FROM  "ActivityReportObjectives" aro
-                JOIN "Objectives" o
-                ON aro."objectiveId" = o.id
-                JOIN "Goals" g
-                ON o."goalId" = g.id
-              )
             SELECT
-              aros."aroId",
-              aros."objectiveId"
-            FROM "AROs" aros
+              aro.id "aroId",
+              aro."objectiveId"
+            FROM  "ActivityReportObjectives" aro
+            JOIN "Objectives" o
+            ON aro."objectiveId" = o.id
+            JOIN "Goals" g
+            ON o."goalId" = g.id
             LEFT JOIN "ActivityRecipients" r
-            ON aros."activityReportId" = r."activityReportId"
-            AND aros."grantId" = r."grantId"
+            ON aro."activityReportId" = r."activityReportId"
+            AND g."grantId" = r."grantId"
             WHERE r.id IS NULL;
             ------------------------------------------------------------------------------------
             CREATE TEMP TABLE "erroneousARGs" AS
-            WITH
-              "ARGs" AS (
-                SELECT
-                  arg."activityReportId",
-                  arg.id "argId",
-                  arg."goalId",
-                  g."grantId"
-                FROM  "ActivityReportGoals" arg
-                JOIN "Goals" g
-                ON arg."goalId" = g.id
-              )
             SELECT
-              args."argId",
-              args."goalId"
-            FROM "ARGs" args
+              arg.id "argId",
+              arg."goalId"
+            FROM  "ActivityReportGoals" arg
+            JOIN "Goals" g
+            ON arg."goalId" = g.id
             LEFT JOIN "ActivityRecipients" r
-            ON args."activityReportId" = r."activityReportId"
-            AND args."grantId" = r."grantId"
+            ON arg."activityReportId" = r."activityReportId"
+            AND g."grantId" = r."grantId"
             WHERE r.id is null;
             ------------------------------------------------------------------------------------
             CREATE TEMP TABLE "erroneousObjectives" AS
@@ -135,42 +116,42 @@ module.exports = {
             ON eog."goalId" = og."goalId"
             AND eog.objectives = og.objectives;
             ------------------------------------------------------------------------------------
-            -- DELETE 34754
+            -- EXPECTED TO DELETE 34754
             DELETE FROM "ActivityReportObjectives" aro
             USING "erroneousAROs" earo
             WHERE aro.id = earo."aroId";
             ------------------------------------------------------------------------------------
-            -- DELETE 28357
+            -- EXPECTED TO DELETE 28357
             DELETE FROM "ActivityReportGoals" arg
             USING "erroneousARGs" earg
             WHERE arg.id = earg."argId";
             ------------------------------------------------------------------------------------
-            -- DELETE 0
+            -- EXPECTED TO DELETE 0
             DELETE FROM "ObjectiveFiles" "of"
             USING "erroneousObjectives" eo
             WHERE "of"."objectiveId" = eo."objectiveId";
             ------------------------------------------------------------------------------------
-            -- DELETE 0
+            -- EXPECTED TO DELETE 0
             DELETE FROM "ObjectiveResources" "or"
             USING "erroneousObjectives" eo
             WHERE "or"."objectiveId" = eo."objectiveId";
             ------------------------------------------------------------------------------------
-            -- DELETE 0
+            -- EXPECTED TO DELETE 0
             DELETE FROM "ObjectiveRoles" "or"
             USING "erroneousObjectives" eo
             WHERE "or"."objectiveId" = eo."objectiveId";
             ------------------------------------------------------------------------------------
-            -- DELETE 3951
+            -- EXPECTED TO DELETE 3951
             DELETE FROM "ObjectiveTopics" ot
             USING "erroneousObjectives" eo
             WHERE ot."objectiveId" = eo."objectiveId";
             ------------------------------------------------------------------------------------
-            -- DELETE 29591
+            -- EXPECTED TO DELETE 29591
             DELETE FROM "Objectives" o
             USING "erroneousObjectives" eo
             WHERE o.id = eo."objectiveId";
             ------------------------------------------------------------------------------------
-            -- DELETE 4
+            -- EXPECTED TO DELETE 4
             DELETE FROM "Goals" g
             USING "erroneousGoals" eg
             WHERE g.id = eg."goalId";
