@@ -77,7 +77,6 @@ export default function ReadOnlyObjective({ objective }) {
         : null }
 
       {objective.ttaProvided ? <TTAProvided tta={objective.ttaProvided} /> : null}
-
     </div>
   );
 }

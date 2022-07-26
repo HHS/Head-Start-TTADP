@@ -72,7 +72,7 @@ export default function ReadOnly({
                 </>
               ) : null }
               { goal.objectives.map((objective) => (
-                <ReadOnlyObjective key={`objective${objective.id}`} objective={objective} />
+                <ReadOnlyObjective key={`read-only-objective-${objective.id}`} objective={objective} />
               ))}
             </div>
           </div>
