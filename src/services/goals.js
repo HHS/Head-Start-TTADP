@@ -963,7 +963,7 @@ export async function updateGoalStatusById(
 function reduceObjectives(newObjectives, currentObjectives = []) {
   return newObjectives.reduce((objectives, objective) => {
     const exists = objectives.find((o) => (
-      o.name === objective.name && o.status === objective.status
+      o.name === objective.title && o.status === objective.status
     ));
 
     if (exists) {
@@ -1031,7 +1031,7 @@ export async function getGoalsForReport(reportId) {
   });
 
   return goals.reduce((previous, current) => {
-    const exists = previous.find((g) => g.title === current.title && g.status === current.status);
+    const exists = previous.find((g) => g.name === current.name && g.status === current.status);
 
     if (exists) {
       exists.grants.push(current.grant);
