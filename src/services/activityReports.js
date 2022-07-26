@@ -807,6 +807,28 @@ export async function activityReportAlerts(userId, {
   return { ...reports, recipients };
 }
 
+export function formatResources(resources) {
+  return resources.reduce((acc, resource) => {
+    // skip empties
+    if (!resource) {
+      return acc;
+    }
+
+    // if we have a value, grab it
+    if (resource.value !== undefined) {
+      if (resource.value) {
+        return [...acc, resource.value];
+      }
+      // if the above statement is not truthy, we don't want to add it to the array
+      return acc;
+    }
+
+    // otherwise, we just return the resource, under the assumption that
+    // its a string
+    return [...acc, resource];
+  }, []);
+}
+
 export async function createOrUpdate(newActivityReport, report) {
   let savedReport;
   const {
@@ -831,13 +853,11 @@ export async function createOrUpdate(newActivityReport, report) {
   const resources = {};
 
   if (ECLKCResourcesUsed) {
-    resources.ECLKCResourcesUsed = ECLKCResourcesUsed.filter((item) => item)
-      .map((item) => (item.value ? item.value : item));
+    resources.ECLKCResourcesUsed = formatResources(ECLKCResourcesUsed);
   }
 
   if (nonECLKCResourcesUsed) {
-    resources.nonECLKCResourcesUsed = nonECLKCResourcesUsed.filter((item) => item)
-      .map((item) => (item.value ? item.value : item));
+    resources.nonECLKCResourcesUsed = formatResources(nonECLKCResourcesUsed);
   }
 
   const updatedFields = { ...allFields, ...resources };
