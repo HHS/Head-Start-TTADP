@@ -83,7 +83,7 @@
     "restoreTopics": "node ./build/server/tools/restoreTopicsCLI.js",
     "restoreTopics:local": "./node_modules/.bin/babel-node ./src/tools/restoreTopicsCLI.js",
     "removeCruftFromArResources": "node ./build/server/tools/removeCruftFromArResourcesCLI.js",
-    "removeCruftFromArResoureces:local": "./node_modules/.bin/babel-node ./src/tools/removeCruftFromArResourcesCLI.js"
+    "removeCruftFromArResources:local": "./node_modules/.bin/babel-node ./src/tools/removeCruftFromArResourcesCLI.js"
   },
   "repository": {
     "type": "git",
