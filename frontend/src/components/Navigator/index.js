@@ -27,7 +27,8 @@ import SideNav from './components/SideNav';
 import NavigatorHeader from './components/NavigatorHeader';
 import DismissingComponentWrapper from '../DismissingComponentWrapper';
 import { validateGoals } from '../../pages/ActivityReport/Pages/components/goalValidator';
-import { saveGoalForReport } from '../../fetchers/activityReports';
+import { saveGoalsForReport } from '../../fetchers/activityReports';
+import GoalFormContext from '../../GoalFormContext';
 
 function Navigator({
   editable,
@@ -55,6 +56,7 @@ function Navigator({
   savedToStorageTime,
 }) {
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
+
   const page = pages.find((p) => p.path === currentPage);
 
   const hookForm = useForm({
@@ -76,8 +78,10 @@ function Navigator({
   } = hookForm;
 
   const pageState = watch('pageState');
-  const isGoalFormClosed = watch('isGoalFormClosed');
   const selectedGoals = watch('goals');
+
+  const [isGoalFormClosed, toggleGoalForm] = useState(selectedGoals.length > 0);
+
   const goalForEditing = watch('goalForEditing');
   const activityRecipientType = watch('activityRecipientType');
   const isGoalsObjectivesPage = page.path === 'goals-objectives';
@@ -154,12 +158,18 @@ function Navigator({
 
     // save goal to api, come back with new ids for goal and objectives
     try {
-      newGoals = await saveGoalForReport({ goal, activityReportId: reportId });
+      newGoals = await saveGoalsForReport(
+        {
+          goals: [...selectedGoals, goal],
+          activityReportId: reportId,
+          regionId: formData.regionId,
+        },
+      );
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     }
 
-    setValue('isGoalFormClosed', true);
+    toggleGoalForm(true);
     setValue('goals', newGoals);
     setValue('goalForEditing', null);
     setValue('goalForEditing.objectives', []);
@@ -238,9 +248,10 @@ function Navigator({
         />
       </Grid>
       <Grid className="smart-hub-navigator-wrapper" col={12} desktop={{ col: 8 }}>
-        <FormProvider {...hookForm}>
-          <div id="navigator-form">
-            {page.review
+        <GoalFormContext.Provider value={{ isGoalFormClosed, toggleGoalForm }}>
+          <FormProvider {...hookForm}>
+            <div id="navigator-form">
+              {page.review
             && page.render(
               formData,
               onFormSubmit,
@@ -255,7 +266,7 @@ function Navigator({
               updateShowValidationErrors,
               lastSaveTime,
             )}
-            {!page.review
+              {!page.review
             && (
               <Container skipTopPadding>
                 <NavigatorHeader
@@ -301,8 +312,9 @@ function Navigator({
                 </DismissingComponentWrapper>
               </Container>
             )}
-          </div>
-        </FormProvider>
+            </div>
+          </FormProvider>
+        </GoalFormContext.Provider>
       </Grid>
     </Grid>
   );

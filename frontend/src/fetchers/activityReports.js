@@ -96,7 +96,7 @@ export const getGoals = async (grantIds) => {
   return goals.json();
 };
 
-export const saveGoalForReport = async (data) => {
+export const saveGoalsForReport = async (data) => {
   const url = join(activityReportUrl, 'goals');
   const goals = await post(url, data);
   return goals.json();
