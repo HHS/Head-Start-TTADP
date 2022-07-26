@@ -49,7 +49,7 @@ import { HTTPError } from '../../fetchers';
 import UserContext from '../../UserContext';
 
 const defaultValues = {
-  ECLKCResourcesUsed: [{ value: '' }],
+  ECLKCResourcesUsed: [],
   activityRecipientType: '',
   activityRecipients: [],
   activityType: [],
@@ -64,7 +64,7 @@ const defaultValues = {
   goals: [],
   recipientNextSteps: [{ id: null, note: '' }],
   recipients: [],
-  nonECLKCResourcesUsed: [{ value: '' }],
+  nonECLKCResourcesUsed: [],
   numberOfParticipants: null,
   objectivesWithoutGoals: [],
   otherResources: [],
