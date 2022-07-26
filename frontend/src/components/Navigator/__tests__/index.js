@@ -199,7 +199,6 @@ describe('Navigator', () => {
     const formData = {
       ...initialData,
       activityRecipientType: 'grant',
-      isGoalFormClosed: null,
       goalForEditing: {
         isNew: true,
       },

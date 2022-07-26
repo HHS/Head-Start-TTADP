@@ -1036,6 +1036,7 @@ export async function getGoalsForReport(reportId) {
     if (exists) {
       exists.grants.push(current.grant);
       exists.goalIds.push(current.id);
+      exists.grantIds.push(current.grant.id);
 
       // rollup objectives
 
@@ -1046,6 +1047,7 @@ export async function getGoalsForReport(reportId) {
       ...current.dataValues,
       goalIds: [current.id],
       grants: [current.grant.dataValues],
+      grantIds: [current.grant.id],
       objectives: reduceObjectives(current.objectives),
     };
 
@@ -1053,11 +1055,10 @@ export async function getGoalsForReport(reportId) {
   }, []);
 }
 
-export async function createOrUpdateGoalsForActivityReport(goal, reportId) {
+export async function createOrUpdateGoalsForActivityReport(goals, reportId) {
   const activityReportId = parseInt(reportId, DECIMAL_BASE);
   const report = await ActivityReport.findByPk(activityReportId);
-  await saveGoalsForReport([goal], report);
-
+  await saveGoalsForReport(goals, report);
   return getGoalsForReport(activityReportId);
 }
 

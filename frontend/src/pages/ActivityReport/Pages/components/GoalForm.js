@@ -87,7 +87,7 @@ export default function GoalForm({
       setObjectives(data.objectives);
     }
 
-    if (!goal.isNew) {
+    if (!goal.isNew && goal.id) {
       fetchData();
     } else {
       setObjectives([]);
