@@ -83,13 +83,13 @@ export default function ObjectiveForm({
     }
   };
   const validateSpecialistRole = () => {
-    if (!topics.length) {
+    if (!roles.length) {
       const newErrors = [...errors];
       newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.ROLE, 1, <span className="usa-error-message">{objectiveRoleError}</span>);
       setObjectiveError(index, newErrors);
     } else {
       const newErrors = [...errors];
-      newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.TOPICS, 1, <></>);
+      newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.ROLE, 1, <></>);
       setObjectiveError(index, newErrors);
     }
   };
