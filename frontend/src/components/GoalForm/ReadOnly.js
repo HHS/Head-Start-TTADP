@@ -18,11 +18,11 @@ export default function ReadOnly({
       { createdGoals.map((goal, index) => {
         let menuItems = [
           {
-            label: `Edit goal ${goal.id}`,
+            label: 'Edit',
             onClick: () => onEdit(goal, index),
           },
           {
-            label: `Delete goal ${goal.id}`,
+            label: 'Delete',
             onClick: () => modalRef.current.toggleModal(true),
           },
         ];
@@ -30,7 +30,7 @@ export default function ReadOnly({
         if (hideEdit) {
           menuItems = [
             {
-              label: `Delete goal ${goal.id}`,
+              label: 'Delete',
               onClick: () => modalRef.current.toggleModal(true),
             },
           ];
@@ -65,7 +65,7 @@ export default function ReadOnly({
                 ? (
                   <>
                     <h4 className="margin-bottom-1">Recipient grant numbers</h4>
-                    <p>{goal.grant.label}</p>
+                    <p>{goal.grants.map((grant) => grant.label).join(', ')}</p>
                   </>
                 )
                 : null }
