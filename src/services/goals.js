@@ -542,21 +542,26 @@ export async function createOrUpdateGoals(goals) {
         // objective roles
         const roles = await Role.findAll({
           where: {
-            name: roleNames,
+            fullName: roleNames,
           },
         });
 
-        const objectiveRoles = await Promise.all((roles.map((role) => ObjectiveRole.findOrCreate({
-          roleId: role.id,
-          objectiveId: objective.id,
-        }))));
+        const objectiveRoles = await Promise.all((roles.map(async (role) => {
+          const [r] = await ObjectiveRole.findOrCreate({
+            where: {
+              roleId: role.id,
+              objectiveId: objective.id,
+            },
+          });
+          return r;
+        })));
 
         // cleanup objective roles
         await ObjectiveRole.destroy({
           where: {
             id: {
               [Op.notIn]: objectiveRoles.length
-                ? objectiveRoles.map(([or]) => or.id) : [],
+                ? objectiveRoles.map((or) => or.id) : [],
             },
             objectiveId: objective.id,
           },

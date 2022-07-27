@@ -482,6 +482,7 @@ export default function GoalForm({
             const filesFromApi = apiData.files;
             return {
               ...objective,
+              roles: objective.roles.map((role) => role.fullName),
               topics: [...objective.topics, ...topicsFromApi],
               resources: [...objective.resources, ...resourcesFromApi],
               files: [...objective.files, ...filesFromApi],
@@ -501,6 +502,10 @@ export default function GoalForm({
       setCreatedGoals(newCreatedGoals.map((goal) => ({
         ...goal,
         grants: formatGrantsFromApi(goal.grants),
+        objectives: goal.objectives.map((objective) => ({
+          ...objective,
+          roles: objective.roles.map((role) => role.fullName),
+        })),
       })));
 
       clearForm();
