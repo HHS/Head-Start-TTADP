@@ -539,6 +539,9 @@ export async function goalsForGrants(grantIds) {
         {
           status: null,
         },
+        {
+          status: 'Draft',
+        },
       ],
     },
     include: [
