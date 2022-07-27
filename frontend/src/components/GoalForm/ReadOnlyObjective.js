@@ -86,7 +86,9 @@ ReadOnlyObjective.propTypes = {
     roles: PropTypes.arrayOf(PropTypes.string),
     ttaProvided: PropTypes.string,
     resources: PropTypes.arrayOf(PropTypes.string),
-    topics: PropTypes.arrayOf(PropTypes.string),
+    topics: PropTypes.arrayOf(PropTypes.shape({
+      label: PropTypes.string,
+    })),
     files: PropTypes.arrayOf(PropTypes.shape({
       originalFileName: PropTypes.string,
       fileSize: PropTypes.number,
