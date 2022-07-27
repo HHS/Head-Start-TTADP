@@ -62,6 +62,10 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
           as: 'files',
         },
         {
+          model: Role,
+          as: 'roles',
+        },
+        {
           model: ActivityReport,
           as: 'activityReports',
           where: {
@@ -102,6 +106,81 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
   ],
 });
 
+function reduceObjectives(newObjectives, currentObjectives = []) {
+  return newObjectives.reduce((objectives, objective) => {
+    const exists = objectives.find((o) => (
+      o.title === objective.title && o.status === objective.status
+    ));
+
+    if (exists) {
+      exists.ids = [...exists.ids, objective.id];
+      return objectives;
+    }
+
+    // since this method is used to rollup both objectives on and off activity reports
+    // we need to handle the case where there is TTA provided and TTA not provided
+    // NOTE: there will only be one activity report objective, it is queried by activity report id
+    const ttaProvided = objective.activityReportObjectives
+      ? objective.activityReportObjectives[0].ttaProvided : null;
+
+    return [...objectives, {
+      ...objective.dataValues,
+      ids: [objective.id],
+      ttaProvided,
+
+    }];
+  }, currentObjectives);
+}
+
+/**
+ * Dedupes goals by name + status, as well as objectives by title + status
+ * @param {Object[]} goals
+ * @returns {Object[]} array of deduped goals
+ */
+function reduceGoals(goals) {
+  return goals.reduce((previousValue, currentValue) => {
+    const existingGoal = previousValue.find((g) => g.name === currentValue.name);
+
+    if (existingGoal) {
+      existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.goalNumber];
+      existingGoal.goalIds = [...existingGoal.goalIds, currentValue.id];
+      existingGoal.grants = [
+        ...existingGoal.grants,
+        {
+          ...currentValue.grant.dataValues,
+          recipient: currentValue.grant.recipient.dataValues,
+          name: currentValue.grant.name,
+        },
+      ];
+      existingGoal.grantIds = [...existingGoal.grantIds, currentValue.grant.id];
+      existingGoal.objectives = reduceObjectives(currentValue.objectives, existingGoal.objectives);
+      return previousValue;
+    }
+
+    const goal = {
+      ...currentValue.dataValues,
+      goalNumbers: [currentValue.goalNumber],
+      goalIds: [currentValue.id],
+      grants: [
+        {
+          ...currentValue.grant.dataValues,
+          recipient: currentValue.grant.recipient.dataValues,
+          name: currentValue.grant.name,
+        },
+      ],
+      grantIds: [currentValue.grant.id],
+      objectives: reduceObjectives(currentValue.objectives),
+    };
+
+    return [...previousValue, goal];
+  }, []);
+}
+
+/**
+ *
+ * @param {number} id
+ * @returns {Promise{Object}}
+ */
 export function goalById(id) {
   return Goal.findOne({
     attributes: [
@@ -183,6 +262,12 @@ export function goalById(id) {
   });
 }
 
+/**
+ *
+ * @param {*} goalId
+ * @param {*} activityReportId
+ * @returns {Promise<Object>}
+ */
 export function goalByIdAndActivityReport(goalId, activityReportId) {
   return Goal.findOne({
     attributes: [
@@ -262,7 +347,9 @@ export async function goalByIdAndRecipient(id, recipientId) {
 }
 
 export async function goalsByIdAndRecipient(ids, recipientId) {
-  return Goal.findAll(OPTIONS_FOR_GOAL_FORM_QUERY(ids, recipientId));
+  const goals = await Goal.findAll(OPTIONS_FOR_GOAL_FORM_QUERY(ids, recipientId));
+  // dedupe the goals & objectives with shared names + titles
+  return reduceGoals(goals);
 }
 
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
@@ -352,8 +439,6 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
  */
 export async function createOrUpdateGoals(goals) {
   // there can only be one on the goal form (multiple grants maybe, but one recipient)
-  // we will need this after the transaction, as trying to do a find all within a transaction
-  // yields the previous data values
   let recipient;
   // eslint-disable-next-line max-len
   const goalIds = await Promise.all(goals.map(async (goalData) => {
@@ -363,42 +448,30 @@ export async function createOrUpdateGoals(goals) {
       recipientId,
       regionId,
       objectives,
+      status,
       ...fields
     } = goalData;
 
     // there can only be one on the goal form (multiple grants maybe, but one recipient)
-    recipient = recipientId; // TODO: this is wrong
+    recipient = recipientId;
 
-    let options = {
+    const options = {
       ...fields,
       isFromSmartsheetTtaPlan: false,
     };
 
-    if ((id !== 'new' && id !== undefined)) {
-      options = { ...options, id };
-    }
+    // In order to reuse goals with matching text we need to do the findOrCreate as the
+    // upsert would not preform the extra checks and logic now required.
+    const [newGoal] = await Goal.findOrCreate({
+      where: {
+        grantId,
+        name: options.name,
+        status: { [Op.not]: 'Closed' },
+      },
+      defaults: { status },
+    });
 
-    let newGoal;
-    if (Number.isInteger(id)) {
-      const res = await Goal.update({ grantId, ...options }, {
-        where: { id },
-        returning: true,
-        individualHooks: true,
-      });
-      [, [newGoal]] = res;
-    } else {
-      delete fields.id;
-      // In order to reuse goals with matching text we need to do the findOrCreate as the
-      // upsert would not preform the extrea checks and logic now required.
-      [newGoal] = await Goal.findOrCreate({
-        where: {
-          grantId,
-          name: options.name,
-          status: { [Op.not]: 'Closed' },
-        },
-        defaults: { grantId, ...options },
-      });
-    }
+    await newGoal.update(options);
 
     const newObjectives = await Promise.all(
       objectives.map(async (o) => {
@@ -406,6 +479,7 @@ export async function createOrUpdateGoals(goals) {
           id: objectiveId,
           resources,
           topics,
+          roles: roleNames,
           ...objectiveFields
         } = o;
 
@@ -465,6 +539,29 @@ export async function createOrUpdateGoals(goals) {
           },
         });
 
+        // objective roles
+        const roles = await Role.findAll({
+          where: {
+            name: roleNames,
+          },
+        });
+
+        const objectiveRoles = await Promise.all((roles.map((role) => ObjectiveRole.findOrCreate({
+          roleId: role.id,
+          objectiveId: objective.id,
+        }))));
+
+        // cleanup objective roles
+        await ObjectiveRole.destroy({
+          where: {
+            id: {
+              [Op.notIn]: objectiveRoles.length
+                ? objectiveRoles.map(([or]) => or.id) : [],
+            },
+            objectiveId: objective.id,
+          },
+        });
+
         return {
           ...objective.dataValues,
           topics,
@@ -480,6 +577,7 @@ export async function createOrUpdateGoals(goals) {
   }));
   // we have to do this outside of the transaction otherwise
   // we get the old values
+
   return goalsByIdAndRecipient(goalIds, recipient);
 }
 
@@ -963,26 +1061,6 @@ export async function updateGoalStatusById(
   return updated;
 }
 
-function reduceObjectives(newObjectives, currentObjectives = []) {
-  return newObjectives.reduce((objectives, objective) => {
-    const exists = objectives.find((o) => (
-      o.title === objective.title && o.status === objective.status
-    ));
-
-    if (exists) {
-      exists.ids = [...exists.ids, objective.id];
-      return objectives;
-    }
-
-    return [...objectives, {
-      ...objective.dataValues,
-      ids: [objective.id],
-      // there will only be one, the activity report objective is queried by activity report id
-      ttaProvided: objective.activityReportObjectives[0].ttaProvided,
-    }];
-  }, currentObjectives);
-}
-
 export async function getGoalsForReport(reportId) {
   const goals = await Goal.findAll({
     include: [
@@ -1037,42 +1115,8 @@ export async function getGoalsForReport(reportId) {
     ],
   });
 
-  return goals.reduce((previousValue, currentValue) => {
-    const existingGoal = previousValue.find((g) => g.name === currentValue.name);
-
-    if (existingGoal) {
-      existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.goalNumber];
-      existingGoal.goalIds = [...existingGoal.goalIds, currentValue.id];
-      existingGoal.grants = [
-        ...existingGoal.grants,
-        {
-          ...currentValue.grant.dataValues,
-          recipient: currentValue.grant.recipient.dataValues,
-          name: currentValue.grant.name,
-        },
-      ];
-      existingGoal.grantIds = [...existingGoal.grantIds, currentValue.grant.id];
-      existingGoal.objectives = reduceObjectives(currentValue.objectives, existingGoal.objectives);
-      return previousValue;
-    }
-
-    const goal = {
-      ...currentValue.dataValues,
-      goalNumbers: [currentValue.goalNumber],
-      goalIds: [currentValue.id],
-      grants: [
-        {
-          ...currentValue.grant.dataValues,
-          recipient: currentValue.grant.recipient.dataValues,
-          name: currentValue.grant.name,
-        },
-      ],
-      grantIds: [currentValue.grant.id],
-      objectives: reduceObjectives(currentValue.objectives),
-    };
-
-    return [...previousValue, goal];
-  }, []);
+  // dedupe the goals & objectives
+  return reduceGoals(goals);
 }
 
 export async function createOrUpdateGoalsForActivityReport(goals, reportId) {

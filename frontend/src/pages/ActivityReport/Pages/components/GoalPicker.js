@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { uniqBy } from 'lodash';
 import PropTypes from 'prop-types';
@@ -13,8 +13,6 @@ import selectOptionsReset from '../../../../components/selectOptionsReset';
 import { validateGoals } from './goalValidator';
 import './GoalPicker.css';
 import GoalForm from './GoalForm';
-import GoalFormContext from '../../../../GoalFormContext';
-import ContextMenu from '../../../../components/ContextMenu';
 
 export const newGoal = (grantIds) => ({
   value: uuidv4(),
@@ -42,7 +40,8 @@ const GoalPicker = ({
   } = useFormContext();
   const [topicOptions, setTopicOptions] = useState([]);
 
-  const { toggleGoalForm } = useContext(GoalFormContext);
+  // this is commented out because it's used by the code below, which is pending a todo resolve
+  // const { toggleGoalForm } = useContext(GoalFormContext);
 
   const selectedGoals = useWatch({ name: 'goals' });
   const selectedIds = selectedGoals ? selectedGoals.map((g) => g.id) : [];
@@ -105,16 +104,17 @@ const GoalPicker = ({
     onChange(goal);
   };
 
-  const menuItems = [
-    {
-      label: 'Clear',
-      onClick: () => toggleGoalForm(true),
-    },
-  ];
+  // todo - ask UI team about this scenario
+  // const menuItems = [
+  //   {
+  //     label: 'Clear',
+  //     onClick: () => toggleGoalForm(true),
+  //   },
+  // ];
 
   return (
     <>
-      <ContextMenu label="Clear new goal" menuItems={menuItems} />
+      {/* <ContextMenu label="Clear new goal" menuItems={menuItems} /> */}
       <div className="margin-top-3 position-relative">
         <Label>
           Select recipient&apos;s goal

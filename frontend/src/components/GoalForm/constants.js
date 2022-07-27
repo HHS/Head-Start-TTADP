@@ -14,15 +14,17 @@ export const isValidUrl = (attempted) => {
 export const GOAL_NAME_ERROR = 'Enter the recipient\'s goal';
 export const GOAL_DATE_ERROR = 'Enter a valid date';
 export const SELECT_GRANTS_ERROR = 'Select at least one recipient grant number';
+export const OBJECTIVES_EMPTY = 'Every report must have at least one objective';
 
 export const FORM_FIELD_INDEXES = {
   GRANTS: 0,
   NAME: 1,
   END_DATE: 2,
-  OBJECTIVES: 3,
+  OBJECTIVES_EMPTY: 3,
+  OBJECTIVES: 4,
 };
 
-export const FORM_FIELD_DEFAULT_ERRORS = [<></>, <></>, <></>, []];
+export const FORM_FIELD_DEFAULT_ERRORS = [<></>, <></>, <></>, <></>, []];
 
 export const OBJECTIVE_DEFAULTS = (l) => ({
   title: '',

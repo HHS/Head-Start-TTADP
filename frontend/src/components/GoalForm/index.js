@@ -19,6 +19,8 @@ import {
   GOAL_NAME_ERROR,
   GOAL_DATE_ERROR,
   SELECT_GRANTS_ERROR,
+  OBJECTIVES_EMPTY,
+  OBJECTIVE_DEFAULT_ERRORS,
 } from './constants';
 import { DECIMAL_BASE, REPORT_STATUSES } from '../../Constants';
 import ReadOnly from './ReadOnly';
@@ -29,15 +31,14 @@ const [
   objectiveTextError, objectiveTopicsError, objectiveResourcesError, objectiveStatusError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
-const formatGrantsFromApi = (grant) => {
-  const programTypes = [...new Set(grant.programs.map((p) => p.programType))].sort();
-  const numberWithProgramTypes = `${grant.label} ${programTypes}`;
+const formatGrantsFromApi = (grants) => grants.map((grant) => {
+  const programTypes = grant.programs.map(({ programType }) => programType).join(', ');
   return {
     value: grant.id,
-    label: numberWithProgramTypes,
+    label: `${grant.number} - ${programTypes}`,
     id: grant.id,
   };
-};
+});
 
 // this is the default error state for an objective (no errors, only empty fragments)
 const BLANK_OBJECTIVE_ERROR = [<></>, <></>, <></>];
@@ -76,7 +77,6 @@ export default function GoalForm({
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
 
   // we need to set this key to get the component to re-render (uncontrolled input)
-  // the idea is that if we need to add another date picker we can just re-render them all at once
   const [datePickerKey, setDatePickerKey] = useState('DPK-00');
 
   const [status, setStatus] = useState(goalDefaults.status);
@@ -87,7 +87,6 @@ export default function GoalForm({
   const [unchangingApiData, setUnchangingApiData] = useState({});
 
   const [alert, setAlert] = useState({ message: '', type: 'success' });
-  const [goalId, setGoalId] = useState(goalDefaults.id);
   const [goalNumber, setGoalNumber] = useState('');
 
   const [errors, setErrors] = useState(FORM_FIELD_DEFAULT_ERRORS);
@@ -263,7 +262,11 @@ export default function GoalForm({
    */
   const validateObjectives = () => {
     if (!objectives.length) {
-      return true;
+      const error = <span className="usa-error-message">{OBJECTIVES_EMPTY}</span>;
+      const newErrors = [...errors];
+      newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES_EMPTY, 1, error);
+      setErrors(newErrors);
+      return OBJECTIVE_DEFAULT_ERRORS;
     }
 
     const newErrors = [...errors];
@@ -325,12 +328,34 @@ export default function GoalForm({
     return isValid;
   };
 
+  const clearEmptyObjectiveError = () => {
+    const error = <></>;
+    const newErrors = [...errors];
+    newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES_EMPTY, 1, error);
+    setErrors(newErrors);
+  };
+
   // quick shorthands to check to see if our fields are good to save to the different states
   // (different validations for not started and draft)
   const isValidNotStarted = () => (
-    validateGrantNumbers() && validateGoalName() && validateEndDate() && validateObjectives()
+    validateGrantNumbers()
+    && validateGoalName()
+    && validateEndDate()
+    && validateObjectives()
+    && objectives.length
   );
   const isValidDraft = () => validateGrantNumbers() || validateGoalName() || validateEndDate();
+
+  const updateObjectives = (updatedObjectives) => {
+    // when we set a new set of objectives
+    // an error object for each objective.
+    const newErrors = [...errors];
+    const objectiveErrors = updatedObjectives.map(() => BLANK_OBJECTIVE_ERROR);
+
+    newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES, 1, objectiveErrors);
+    setErrors(newErrors);
+    setObjectives(updatedObjectives);
+  };
 
   /**
    * button click handlers
@@ -341,7 +366,35 @@ export default function GoalForm({
     e.preventDefault();
 
     try {
-      const goals = await createOrUpdateGoals(createdGoals);
+      const gs = createdGoals.reduce((acc, goal) => {
+        const newGoals = goal.grantIds.map((g) => ({
+          grantId: g,
+          name: goalName,
+          status,
+          endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
+          regionId: parseInt(regionId, DECIMAL_BASE),
+          recipientId: recipient.id,
+          objectives: objectives.map((objective) => {
+            const apiData = unchangingApiData[objective.id];
+            if (apiData) {
+              const topicsFromApi = apiData.topics;
+              const resourcesFromApi = apiData.resources;
+              const filesFromApi = apiData.files;
+              return {
+                ...objective,
+                topics: [...objective.topics, ...topicsFromApi],
+                resources: [...objective.resources, ...resourcesFromApi],
+                files: [...objective.files, ...filesFromApi],
+              };
+            }
+            return objective;
+          }),
+        }));
+
+        return [...acc, ...newGoals];
+      }, []);
+
+      const goals = await createOrUpdateGoals(gs);
 
       // on success, redirect back to RTR Goals & Objectives page
       // once integrated into the AR, this will probably have to be turned into a prop function
@@ -371,28 +424,19 @@ export default function GoalForm({
         regionId: parseInt(regionId, DECIMAL_BASE),
         recipientId: recipient.id,
         objectives,
-        id: goalId,
       }));
       const goals = [
         ...createdGoals,
         ...newGoals,
       ];
-      const updatedGoal = await createOrUpdateGoals(goals);
+      const updatedGoals = await createOrUpdateGoals(goals);
 
-      const updatedObjectives = updatedGoal && updatedGoal.length > 0
-        && updatedGoal[0] && updatedGoal[0].objectives && updatedGoal[0].objectives.length > 0
-        ? [...updatedGoal[0].objectives]
+      const updatedObjectives = updatedGoals && updatedGoals.length > 0
+        && updatedGoals[0] && updatedGoals[0].objectives && updatedGoals[0].objectives.length > 0
+        ? [...updatedGoals[0].objectives]
         : [];
 
-      // when we parse the objectives from the API, we have to make sure that we have
-      // an error object for each objective.
-      // todo - refactor setObjectives to just handle both as a function or a new hook or something
-      const newErrors = [...errors];
-      const objectiveErrors = updatedObjectives.map(() => BLANK_OBJECTIVE_ERROR);
-
-      newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES, 1, objectiveErrors);
-      setErrors(newErrors);
-      setObjectives(updatedObjectives);
+      updateObjectives(updatedObjectives);
 
       setAlert({
         message: `Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`,
@@ -412,7 +456,6 @@ export default function GoalForm({
     setEndDate(goalDefaults.endDate);
     setStatus(goalDefaults.status);
     setSelectedGrants(goalDefaults.grants);
-    setGoalId(goalDefaults.id);
     setShowForm(false);
     setObjectives([]);
     setDatePickerKey('DPK-00');
@@ -444,11 +487,10 @@ export default function GoalForm({
               files: [...objective.files, ...filesFromApi],
             };
           }
-
           return objective;
         }),
-        id: goalId,
       }));
+
       const goals = [
         ...createdGoals,
         ...newGoals,
@@ -458,7 +500,7 @@ export default function GoalForm({
 
       setCreatedGoals(newCreatedGoals.map((goal) => ({
         ...goal,
-        grant: formatGrantsFromApi(goal.grant),
+        grants: formatGrantsFromApi(goal.grants),
       })));
 
       clearForm();
@@ -487,10 +529,8 @@ export default function GoalForm({
     setGoalName(goal.goalName);
     setEndDate(goal.endDate);
     setStatus(goal.status);
-    setGoalId(goal.id);
     setGoalNumber(goal.number);
-
-    setSelectedGrants(goal.grant);
+    setSelectedGrants(goal.grants);
 
     // we need to update the date key so it re-renders all the
     // date pickers, as they are uncontrolled inputs
@@ -620,8 +660,8 @@ export default function GoalForm({
             validateGrantNumbers={validateGrantNumbers}
             objectives={objectives}
             setObjectives={setObjectives}
-            validateObjectives={validateObjectives}
             setObjectiveError={setObjectiveError}
+            clearEmptyObjectiveError={clearEmptyObjectiveError}
             topicOptions={topicOptions}
             isOnReport={isOnReport}
             isOnApprovedReport={isOnApprovedReport}
