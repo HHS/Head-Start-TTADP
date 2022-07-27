@@ -963,11 +963,11 @@ export async function updateGoalStatusById(
 function reduceObjectives(newObjectives, currentObjectives = []) {
   return newObjectives.reduce((objectives, objective) => {
     const exists = objectives.find((o) => (
-      o.name === objective.title && o.status === objective.status
+      o.title === objective.title && o.status === objective.status
     ));
 
     if (exists) {
-      exists.ids = [...exists.ids, ...objective.id];
+      exists.ids = [...exists.ids, objective.id];
       return objectives;
     }
 
@@ -1011,6 +1011,10 @@ export async function getGoalsForReport(reportId) {
             // we need this in case an objective was used on one report but not on another
           },
           {
+            model: Role,
+            as: 'roles',
+          },
+          {
             model: Topic,
             as: 'topics',
             // these need to be renamed to match the frontend form names
@@ -1030,28 +1034,41 @@ export async function getGoalsForReport(reportId) {
     ],
   });
 
-  return goals.reduce((previous, current) => {
-    const exists = previous.find((g) => g.name === current.name && g.status === current.status);
+  return goals.reduce((previousValue, currentValue) => {
+    const existingGoal = previousValue.find((g) => g.name === currentValue.name);
 
-    if (exists) {
-      exists.grants.push(current.grant);
-      exists.goalIds.push(current.id);
-      exists.grantIds.push(current.grant.id);
-
-      // rollup objectives
-
-      return previous;
+    if (existingGoal) {
+      existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.goalNumber];
+      existingGoal.goalIds = [...existingGoal.goalIds, currentValue.id];
+      existingGoal.grants = [
+        ...existingGoal.grants,
+        {
+          ...currentValue.grant.dataValues,
+          recipient: currentValue.grant.recipient.dataValues,
+          name: currentValue.grant.name,
+        },
+      ];
+      existingGoal.grantIds = [...existingGoal.grantIds, currentValue.grant.id];
+      existingGoal.objectives = reduceObjectives(currentValue.objectives, existingGoal.objectives);
+      return previousValue;
     }
 
-    const g = {
-      ...current.dataValues,
-      goalIds: [current.id],
-      grants: [current.grant.dataValues],
-      grantIds: [current.grant.id],
-      objectives: reduceObjectives(current.objectives),
+    const goal = {
+      ...currentValue.dataValues,
+      goalNumbers: [currentValue.goalNumber],
+      goalIds: [currentValue.id],
+      grants: [
+        {
+          ...currentValue.grant.dataValues,
+          recipient: currentValue.grant.recipient.dataValues,
+          name: currentValue.grant.name,
+        },
+      ],
+      grantIds: [currentValue.grant.id],
+      objectives: reduceObjectives(currentValue.objectives),
     };
 
-    return [...previous, g];
+    return [...previousValue, goal];
   }, []);
 }
 

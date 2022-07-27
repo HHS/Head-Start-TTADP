@@ -20,7 +20,6 @@ import {
   OtherEntity,
   Goal,
   User,
-  Role,
   NextStep,
   Objective,
   Program,
@@ -29,8 +28,12 @@ import {
   Topic,
   CollaboratorRole,
 } from '../models';
-
-import { removeUnusedGoalsObjectivesFromReport, saveGoalsForReport, removeRemovedRecipientsGoals } from './goals';
+import {
+  removeUnusedGoalsObjectivesFromReport,
+  saveGoalsForReport,
+  removeRemovedRecipientsGoals,
+  getGoalsForReport,
+} from './goals';
 
 import { saveObjectivesForReport } from './objectives';
 
@@ -296,86 +299,8 @@ export function activityReportByLegacyId(legacyId) {
 export async function activityReportAndRecipientsById(activityReportId) {
   const arId = parseInt(activityReportId, DECIMAL_BASE);
 
-  // goals
-  const allGoalsAndObjectives = await Goal.findAll({
-    include: [
-      {
-        attributes: ['id'],
-        model: ActivityReport,
-        as: 'activityReports',
-        where: {
-          id: arId,
-        },
-        required: true,
-      },
-      {
-        model: Objective,
-        as: 'objectives',
-        required: false,
-        include: [
-          {
-            model: Role,
-            as: 'roles',
-          },
-          {
-            attributes: ['ttaProvided', 'activityReportId'],
-            model: ActivityReportObjective,
-            as: 'activityReportObjectives',
-            where: {
-              activityReportId: arId,
-            },
-            required: true,
-          },
-          {
-            attributes: [
-              ['id', 'value'],
-              ['name', 'label'],
-            ],
-            model: Topic,
-            as: 'topics',
-            required: false,
-          },
-          {
-            attributes: [
-              ['userProvidedUrl', 'value'],
-            ],
-            model: ObjectiveResource,
-            as: 'resources',
-            required: false,
-          },
-        ],
-      },
-    ],
-  });
-
   // TODO - explore a way to move this query inline to the ActivityReport.findOne
-  const goalsAndObjectives = allGoalsAndObjectives.reduce((previousValue, currentValue) => {
-    const existingGoal = previousValue.find((g) => g.name === currentValue.name);
-
-    if (existingGoal) {
-      existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.goalNumber];
-      existingGoal.goalIds = [...existingGoal.goalIds, currentValue.id];
-      return previousValue;
-    }
-
-    const goal = {
-      ...currentValue.dataValues,
-      goalNumbers: [currentValue.goalNumber],
-      goalIds: [currentValue.id],
-      objectives: currentValue.objectives.map((objective) => {
-        const ttaProvided = objective.activityReportObjectives
-          && objective.activityReportObjectives[0]
-          ? objective.activityReportObjectives[0].ttaProvided : '';
-
-        return {
-          ...objective.dataValues,
-          ttaProvided,
-        };
-      }),
-    };
-
-    return [...previousValue, goal];
-  }, []);
+  const goalsAndObjectives = await getGoalsForReport(arId);
 
   const recipients = await ActivityRecipient.findAll({
     where: {
