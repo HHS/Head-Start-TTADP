@@ -61,8 +61,14 @@ export default function ReadOnly({
                 />
               </div>
               <h3>Goal summary</h3>
-              <h4 className="margin-bottom-1">Recipient grant numbers</h4>
-              {/* todo - fix this <p>{goal.grant.label}</p> */}
+              { goal.grants && goal.grants.length
+                ? (
+                  <>
+                    <h4 className="margin-bottom-1">Recipient grant numbers</h4>
+                    <p>{goal.grant.label}</p>
+                  </>
+                )
+                : null }
               <h4 className="margin-bottom-1">Goal</h4>
               <p className="margin-top-0">{goal.goalName}</p>
               {goal.endDate ? (
