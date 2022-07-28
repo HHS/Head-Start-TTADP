@@ -47,6 +47,20 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
           attributes: [
             ['userProvidedUrl', 'value'],
             ['id', 'key'],
+            [
+              sequelize.literal(`
+                (
+                  SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
+                  INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
+                  INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
+                  INNER JOIN "ObjectiveResources" "or" ON "or"."objectiveId" = "o"."id"      
+                  WHERE "o"."id" = "objectives"."id" 
+                  AND "or"."id" = "objectives->resources"."id"
+                  AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
+                ) > 0
+              `),
+              'isOnApprovedReport',
+            ],
           ],
         },
         {
@@ -55,6 +69,20 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
           attributes: [
             ['id', 'value'],
             ['name', 'label'],
+            [
+              sequelize.literal(`
+                (
+                  SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
+                  INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
+                  INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
+                  INNER JOIN "ObjectiveTopics" "ot" ON "ot"."objectiveId" = "o"."id"      
+                  WHERE "o"."id" = "objectives"."id" 
+                  AND "ot"."topicId" = "objectives->topics"."id"
+                  AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
+                ) > 0
+              `),
+              'isOnApprovedReport',
+            ],
           ],
         },
         {
@@ -64,6 +92,23 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         {
           model: Role,
           as: 'roles',
+          attributes: [
+            'fullName',
+            [
+              sequelize.literal(`
+                (
+                  SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
+                  INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
+                  INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
+                  INNER JOIN "ObjectiveRoles" "or" ON "or"."objectiveId" = "o"."id"      
+                  WHERE "o"."id" = "objectives"."id" 
+                  AND "or"."roleId" = "objectives->roles"."id"
+                  AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
+                ) > 0
+              `),
+              'isOnApprovedReport',
+            ],
+          ],
         },
         {
           model: ActivityReport,
