@@ -30,9 +30,10 @@ export const OBJECTIVE_DEFAULTS = (l) => ({
   title: '',
   topics: [],
   resources: [{ key: uuidv4(), value: '' }],
-  id: `new${l}`,
-  status: 'Not started',
+  id: `new-${l}`,
+  status: 'Not Started',
   roles: [],
+  isNew: true,
 });
 
 export const OBJECTIVE_FORM_FIELD_INDEXES = {
