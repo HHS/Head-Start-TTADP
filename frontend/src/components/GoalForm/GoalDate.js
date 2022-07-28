@@ -4,7 +4,6 @@ import {
   DatePicker, FormGroup, Label,
 } from '@trussworks/react-uswds';
 import QuestionTooltip from './QuestionTooltip';
-import { formatEndDateForPicker } from './constants';
 
 export default function GoalDate({
   error,
@@ -14,8 +13,6 @@ export default function GoalDate({
   datePickerKey,
   inputName,
 }) {
-  const f = formatEndDateForPicker(endDate);
-
   return (
     <FormGroup error={error.props.children}>
       <Label htmlFor={inputName}>
@@ -29,7 +26,7 @@ export default function GoalDate({
         id={inputName}
         name={inputName}
         onChange={setEndDate}
-        defaultValue={f}
+        defaultValue={endDate}
         onBlur={validateEndDate}
         key={datePickerKey}
         required

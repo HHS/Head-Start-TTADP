@@ -298,7 +298,7 @@ describe('saveGoalsForReport (more tests)', () => {
 
     const newGoals = [
       {
-        id: beforeGoal.goalId,
+        goalIds: [beforeGoal.goalId],
         name: goalName,
         objectives: [],
         grantIds: [grantOne.id],
@@ -445,6 +445,7 @@ describe('saveGoalsForReport (more tests)', () => {
 
     const newGoals = [
       {
+        goalIds: existingGoal.id,
         id: existingGoal.id,
         name: existingGoal.name,
         objectives: [],
@@ -452,6 +453,7 @@ describe('saveGoalsForReport (more tests)', () => {
         status: 'Not Started',
       },
       {
+        goalIds: [otherExistingGoal.id],
         id: otherExistingGoal.id,
         name: otherExistingGoal.name,
         objectives: [],
@@ -509,6 +511,7 @@ describe('saveGoalsForReport (more tests)', () => {
 
     const newGoals = [
       {
+        goalIds: [existingGoal.id],
         id: existingGoal.id,
         name: existingGoal.name,
         objectives: [],

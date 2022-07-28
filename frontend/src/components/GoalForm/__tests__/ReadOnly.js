@@ -9,7 +9,7 @@ describe('ReadOnly', () => {
   const createdGoals = [
     {
       goalName: 'Sample goal',
-      grants: [],
+      grant: [],
       objectives: [],
       endDate: null,
     },

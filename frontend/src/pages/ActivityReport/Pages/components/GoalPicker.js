@@ -40,9 +40,13 @@ const GoalPicker = ({
   } = useFormContext();
   const [topicOptions, setTopicOptions] = useState([]);
 
+  // this is commented out because it's used by the code below, which is pending a todo resolve
+  // const { toggleGoalForm } = useContext(GoalFormContext);
+
   const selectedGoals = useWatch({ name: 'goals' });
   const selectedIds = selectedGoals ? selectedGoals.map((g) => g.id) : [];
-  const allAvailableGoals = availableGoals.filter((goal) => !selectedIds.includes(goal.id));
+  const allAvailableGoals = availableGoals // excludes already selected goals from the dropdown
+    .filter((goal) => goal.goalIds.every((id) => !selectedIds.includes(id)));
 
   const {
     field: {
@@ -74,7 +78,7 @@ const GoalPicker = ({
     fetchTopics();
   }, []);
 
-  const uniqueAvailableGoals = uniqBy(allAvailableGoals, 'id');
+  const uniqueAvailableGoals = uniqBy(allAvailableGoals, 'name');
 
   // We need options with the number and also we need to add the
   // "create new goal to the front of all the options"
@@ -100,43 +104,55 @@ const GoalPicker = ({
     onChange(goal);
   };
 
+  // todo - ask UI team about this scenario
+  // const menuItems = [
+  //   {
+  //     label: 'Clear',
+  //     onClick: () => toggleGoalForm(true),
+  //   },
+  // ];
+
   return (
-    <div className="margin-top-3">
-      <Label>
-        Select recipient&apos;s goal
-        {' '}
-        <Req />
-        <Select
-          name="goalForEditing"
-          control={control}
-          components={components}
-          onChange={onSelectGoal}
-          rules={{
-            validate: validateGoals,
-          }}
-          className="usa-select"
-          options={options}
-          styles={{
-            ...selectOptionsReset,
-            option: (provided) => ({
-              ...provided,
-              marginBottom: '0.5em',
-            }),
-          }}
-          placeholder="- Select -"
-          value={goalForEditing}
-        />
-      </Label>
-      {goalForEditing ? (
-        <div>
-          <GoalForm
-            topicOptions={topicOptions}
-            roles={roles}
-            goal={goalForEditing}
+    <>
+      {/* <ContextMenu label="Clear new goal" menuItems={menuItems} /> */}
+      <div className="margin-top-3 position-relative">
+        <Label>
+          Select recipient&apos;s goal
+          {' '}
+          <Req />
+          <Select
+            name="goalForEditing"
+            control={control}
+            components={components}
+            onChange={onSelectGoal}
+            rules={{
+              validate: validateGoals,
+            }}
+            className="usa-select"
+            options={options}
+            styles={{
+              ...selectOptionsReset,
+              option: (provided) => ({
+                ...provided,
+                marginBottom: '0.5em',
+              }),
+            }}
+            placeholder="- Select -"
+            value={goalForEditing}
           />
-        </div>
-      ) : null }
-    </div>
+        </Label>
+        {goalForEditing ? (
+          <div>
+            <GoalForm
+              topicOptions={topicOptions}
+              roles={roles}
+              goal={goalForEditing}
+            />
+          </div>
+        ) : null}
+      </div>
+
+    </>
   );
 };
 

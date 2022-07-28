@@ -22,10 +22,10 @@ describe('GoalStatusChart', () => {
     renderGoalStatusChart(testData);
     expect(await screen.findByText('300 goals')).toBeVisible();
 
-    await screen.findByText('Not started');
-    await screen.findByText('In progress');
-    await screen.findByText('Suspended');
-    await screen.findByText('Closed');
+    await screen.findByText('Not started', { selector: 'span' });
+    await screen.findByText('In progress', { selector: 'span' });
+    await screen.findByText('Suspended', { selector: 'span' });
+    await screen.findByText('Closed', { selector: 'span' });
 
     const twentyFives = await screen.findAllByText(/25\/300/i);
     expect(twentyFives.length).toBe(2);
@@ -41,5 +41,18 @@ describe('GoalStatusChart', () => {
     const button = await screen.findByRole('button', { name: /display goal statuses by number as a table/i });
     userEvent.click(button);
     expect(await screen.findByRole('columnheader', { name: /status/i })).toBeVisible();
+  });
+
+  it('you can open and close the modal with goal status info', async () => {
+    renderGoalStatusChart(testData);
+
+    const modal = document.querySelector('#modal-goal-status-guide');
+    expect(modal.classList.contains('is-hidden')).toBe(true);
+    const button = await screen.findByRole('button', { name: /what does each status mean/i });
+    userEvent.click(button);
+    expect(modal.classList.contains('is-hidden')).toBe(false);
+    const closeButton = document.querySelector('.usa-modal__close');
+    userEvent.click(closeButton);
+    expect(modal.classList.contains('is-hidden')).toBe(true);
   });
 });

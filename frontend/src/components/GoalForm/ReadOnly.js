@@ -18,11 +18,11 @@ export default function ReadOnly({
       { createdGoals.map((goal, index) => {
         let menuItems = [
           {
-            label: `Edit goal ${goal.id}`,
+            label: 'Edit',
             onClick: () => onEdit(goal, index),
           },
           {
-            label: `Delete goal ${goal.id}`,
+            label: 'Delete',
             onClick: () => modalRef.current.toggleModal(true),
           },
         ];
@@ -30,7 +30,7 @@ export default function ReadOnly({
         if (hideEdit) {
           menuItems = [
             {
-              label: `Delete goal ${goal.id}`,
+              label: 'Delete',
               onClick: () => modalRef.current.toggleModal(true),
             },
           ];
@@ -61,8 +61,14 @@ export default function ReadOnly({
                 />
               </div>
               <h3>Goal summary</h3>
-              {goal.grants.length ? <h4 className="margin-bottom-1">Recipient grant numbers</h4> : null }
-              { goal.grants.map((g) => <p key={`grant${g.value}`}>{g.label}</p>) }
+              { goal.grants && goal.grants.length
+                ? (
+                  <>
+                    <h4 className="margin-bottom-1">Recipient grant numbers</h4>
+                    <p>{goal.grants.map((grant) => grant.label).join(', ')}</p>
+                  </>
+                )
+                : null }
               <h4 className="margin-bottom-1">Goal</h4>
               <p className="margin-top-0">{goal.goalName}</p>
               {goal.endDate ? (
@@ -72,7 +78,7 @@ export default function ReadOnly({
                 </>
               ) : null }
               { goal.objectives.map((objective) => (
-                <ReadOnlyObjective key={`objective${objective.id}`} objective={objective} />
+                <ReadOnlyObjective key={`read-only-objective-${objective.id}`} objective={objective} />
               ))}
             </div>
           </div>
@@ -84,12 +90,11 @@ export default function ReadOnly({
 
 ReadOnly.propTypes = {
   createdGoals: PropTypes.arrayOf(PropTypes.shape({
-    grants: PropTypes.arrayOf(
+    grant:
       PropTypes.shape({
         label: PropTypes.string,
         value: PropTypes.number,
       }),
-    ),
     goalName: PropTypes.string,
     endDate: PropTypes.string,
   })).isRequired,

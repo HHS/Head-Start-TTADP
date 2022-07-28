@@ -1,6 +1,7 @@
+/* eslint-disable import/prefer-default-export */
 import { unfinishedObjectives } from './goalValidator';
 
-export const OBJECTIVES_EMPTY = 'Every report must have at least one objective';
+import { OBJECTIVES_EMPTY } from '../../../../components/GoalForm/constants';
 
 export const validateObjectives = (objectives) => {
   if (objectives.length < 1) {

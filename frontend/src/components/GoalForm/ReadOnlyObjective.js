@@ -33,7 +33,7 @@ export default function ReadOnlyObjective({ objective }) {
         ? (
           <>
             <h4 className="margin-bottom-1">Topics</h4>
-            <p className="margin-top-0">{objective.topics.map((topic) => topic.label).join('; ')}</p>
+            <p className="margin-top-0">{objective.topics.map((topic) => topic.label).join(', ')}</p>
           </>
         ) : null }
 
@@ -44,6 +44,19 @@ export default function ReadOnlyObjective({ objective }) {
             <ul className="usa-list usa-list--unstyled">
               { objective.resources.map((resource) => (
                 <li key={resource.key}>{resource.value}</li>
+              ))}
+            </ul>
+          </>
+        )
+        : null }
+
+      {objective.files && objective.files.length
+        ? (
+          <>
+            <h4 className="margin-bottom-1">Resources</h4>
+            <ul className="usa-list usa-list--unstyled">
+              { objective.files.map((f) => (
+                <li key={f.originalFileName}>{f.originalFileName}</li>
               ))}
             </ul>
           </>
@@ -73,7 +86,17 @@ ReadOnlyObjective.propTypes = {
     roles: PropTypes.arrayOf(PropTypes.string),
     ttaProvided: PropTypes.string,
     resources: PropTypes.arrayOf(PropTypes.string),
-    topics: PropTypes.arrayOf(PropTypes.string),
+    topics: PropTypes.arrayOf(PropTypes.shape({
+      label: PropTypes.string,
+    })),
+    files: PropTypes.arrayOf(PropTypes.shape({
+      originalFileName: PropTypes.string,
+      fileSize: PropTypes.number,
+      status: PropTypes.string,
+      url: PropTypes.shape({
+        url: PropTypes.string,
+      }),
+    })),
     title: PropTypes.string,
     id: PropTypes.number,
   }).isRequired,

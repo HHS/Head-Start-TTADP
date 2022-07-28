@@ -1,4 +1,7 @@
 import join from 'url-join';
+import {
+  destroy,
+} from './index';
 
 const fileUrl = join('/', 'api', 'files');
 
@@ -14,13 +17,13 @@ export const uploadFile = async (data) => {
   return res.json();
 };
 
-export const deleteFile = async (fileId, reportId) => {
-  const res = await fetch(join(fileUrl, reportId.toString(), fileId.toString()), {
-    method: 'DELETE',
-    credentials: 'same-origin',
-  });
-  if (!res.ok) {
-    throw new Error(res.statusText);
-  }
+export const deleteFile = async (fileId, reportId, objectiveId) => {
+  const url = join(
+    fileUrl,
+    reportId ? 'r' : 'o',
+    reportId ? reportId.toString() : objectiveId.toString(),
+    fileId.toString(),
+  );
+  const res = await destroy(url);
   return res;
 };

@@ -14,6 +14,7 @@ import {
   getAllDownloadableActivityReportAlerts,
   setStatus,
   batchQuery,
+  formatResources,
 } from './activityReports';
 import SCOPES from '../middleware/scopeConstants';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '../constants';
@@ -114,6 +115,27 @@ const submittedReport = {
   topics: ['topics'],
   ttaType: ['type'],
 };
+
+describe('formatResources', () => {
+  it('skips empties', () => {
+    const resources = ['', 'a'];
+    const result = formatResources(resources);
+
+    expect(result).toStrictEqual(['a']);
+  });
+
+  it('handles objects with an empty value', () => {
+    const resources = ['', 'a', { value: '' }];
+    const result = formatResources(resources);
+    expect(result).toStrictEqual(['a']);
+  });
+
+  it('handles multiple types of data thrown at it', () => {
+    const resources = ['', 'a', { value: '' }, { value: 'c' }, 'b', null];
+    const result = formatResources(resources);
+    expect(result).toStrictEqual(['a', 'c', 'b']);
+  });
+});
 
 describe('Activity report service', () => {
   afterAll(async () => {

@@ -7,9 +7,8 @@ import {
   sequelize,
   Goal,
   ActivityReport,
-  ActivityReportObjective,
   Objective,
-  // Topic,
+  ActivityRecipient,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
 import { RECIPIENTS_PER_PAGE, GOALS_PER_PAGE, REPORT_STATUSES } from '../constants';
@@ -318,7 +317,10 @@ export async function getGoalsByActivityRecipient(
       [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Not Started\' THEN 2 WHEN "Goal"."status" = \'In Progress\' THEN 3  WHEN "Goal"."status" = \'Closed\' THEN 4 WHEN "Goal"."status" = \'Suspended\' THEN 5 ELSE 6 END'), 'status_sort'],
     ],
     where: {
-      onApprovedAR: true,
+      [Op.or]: [
+        { onApprovedAR: true },
+        { isFromSmartsheetTtaPlan: true },
+      ],
       [Op.and]: scopes,
     },
     include: [
@@ -349,11 +351,6 @@ export async function getGoalsByActivityRecipient(
         },
         include: [
           {
-            attributes: ['ttaProvided'],
-            model: ActivityReportObjective,
-            as: 'activityReportObjectives',
-            required: false,
-          }, {
             attributes: [
               'id',
               'reason',
@@ -365,10 +362,29 @@ export async function getGoalsByActivityRecipient(
             ],
             model: ActivityReport,
             as: 'activityReports',
-            required: false,
+            required: true,
             where: {
               calculatedStatus: REPORT_STATUSES.APPROVED,
             },
+            include: [
+              {
+                model: ActivityRecipient,
+                as: 'activityRecipients',
+                attributes: ['activityReportId', 'grantId'],
+                required: true,
+                include: [
+                  {
+                    required: true,
+                    model: Grant,
+                    as: 'grant',
+                    attributes: ['id', 'recipientId'],
+                    where: {
+                      recipientId,
+                    },
+                  },
+                ],
+              },
+            ],
           },
         ],
       },

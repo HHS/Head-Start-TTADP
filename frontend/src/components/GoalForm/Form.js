@@ -39,16 +39,17 @@ export default function Form({
   unchangingApiData,
   fetchError,
   goalNumber,
+  clearEmptyObjectiveError,
 }) {
   const onUpdateText = (e) => setGoalName(e.target.value);
 
   const onAddNewObjectiveClick = () => {
     // copy existing state, add a blank
     const obj = [...objectives.map((o) => ({ ...o })), OBJECTIVE_DEFAULTS(objectives.length)];
-
-    // save
-    setObjectives(obj);
     setObjectiveError(obj.length - 1, OBJECTIVE_DEFAULT_ERRORS);
+    setObjectives(obj);
+
+    clearEmptyObjectiveError();
   };
 
   const removeObjective = (index) => {
@@ -144,7 +145,10 @@ export default function Form({
           removeObjective={removeObjective}
           setObjectiveError={setObjectiveError}
           key={objective.id}
-          errors={objectiveErrors[i]}
+          // the errors object is created after the objective (in a successive render)
+          // so we use the default "empty" errors as a fallback for that one render only
+          // that way we don't get the white screen of death
+          errors={objectiveErrors[i] || OBJECTIVE_DEFAULT_ERRORS}
           setObjective={(data) => setObjective(data, i)}
           topicOptions={topicOptions}
           goalStatus={status}
@@ -153,6 +157,7 @@ export default function Form({
       ))}
 
       <div className="margin-top-6">
+        {errors[FORM_FIELD_INDEXES.OBJECTIVES_EMPTY]}
         <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />
       </div>
 
@@ -228,6 +233,7 @@ Form.propTypes = {
   ).isRequired,
   fetchError: PropTypes.string.isRequired,
   goalNumber: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  clearEmptyObjectiveError: PropTypes.func.isRequired,
 };
 
 Form.defaultProps = {

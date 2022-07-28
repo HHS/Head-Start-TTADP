@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
@@ -10,14 +9,14 @@ import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import join from 'url-join';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
-import selectEvent from 'react-select-event';
 import goalsObjectives from '../goalsObjectives';
 import NetworkContext from '../../../../NetworkContext';
+import GoalFormContext from '../../../../GoalFormContext';
 
 const goalUrl = join('api', 'activity-reports', 'goals');
 
 const RenderGoalsObjectives = ({
-  grantIds, activityRecipientType, isGoalFormClosed = false, connectionActive = true,
+  grantIds, activityRecipientType, connectionActive = true,
 }) => {
   const activityRecipients = grantIds.map((activityRecipientId) => ({
     activityRecipientId, id: activityRecipientId,
@@ -29,13 +28,16 @@ const RenderGoalsObjectives = ({
       author: {
         role: 'central office',
       },
-      isGoalFormClosed,
       collaborators: [],
       goals: [{
         id: 1,
         name: 'This is a test goal',
         isNew: true,
         goalIds: [1],
+        grant:
+        {
+          value: 1, label: 'Turtle 1', programs: [], id: 1,
+        },
         objectives: [{
           id: 1,
           title: 'title',
@@ -68,13 +70,14 @@ const renderGoals = (
 
   fetchMock.get(join(goalUrl, `?${query}`), fetchResponse);
   render(
-    <RenderGoalsObjectives
-      grantIds={grantIds}
-      activityRecipientType={activityRecipientType}
-      goals={goals}
-      isGoalFormClosed={isGoalFormClosed}
-      connectionActive={!throwFetchError}
-    />,
+    <GoalFormContext.Provider value={{ isGoalFormClosed }}>
+      <RenderGoalsObjectives
+        grantIds={grantIds}
+        activityRecipientType={activityRecipientType}
+        goals={goals}
+        connectionActive={!throwFetchError}
+      />
+    </GoalFormContext.Provider>,
   );
 };
 

@@ -25,7 +25,7 @@ export default function GrantSelect({
         {' '}
         {!isOnReport ? <Req /> : null }
       </Label>
-      {selectedGrants.length === 1 || isOnReport ? (
+      {possibleGrants.length === 1 || isOnReport ? (
         <p className="margin-top-0 usa-prose">{selectedGrants.map((grant) => grant.label).join(', ')}</p>
       ) : (
         <>
