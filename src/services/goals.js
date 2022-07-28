@@ -27,6 +27,18 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     [sequelize.col('grant.regionId'), 'regionId'],
     [sequelize.col('grant.recipient.id'), 'recipientId'],
     'goalNumber',
+    [
+      sequelize.literal(`
+        (
+          SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
+          INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
+          INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
+          WHERE "o"."id" = "objectives"."id"         
+        ) > 0
+      `),
+      'onAnyReport',
+    ],
+    'onApprovedAR',
   ],
   where: {
     id,
@@ -37,6 +49,18 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         'title',
         'id',
         'status',
+        'onApprovedAr',
+        [
+          sequelize.literal(`
+            (
+              SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
+              INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
+              INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
+              WHERE "o"."id" = "objectives"."id"         
+            ) > 0
+          `),
+          'onAnyReport',
+        ],
       ],
       model: Objective,
       as: 'objectives',
