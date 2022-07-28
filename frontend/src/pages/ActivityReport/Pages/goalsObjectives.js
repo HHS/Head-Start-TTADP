@@ -146,18 +146,23 @@ const GoalsObjectives = () => {
   });
 
   // we need to figure out our options based on author/collaborator roles
-  const collaborators = watch('collaborators');
+  const collaborators = watch('activityReportCollaborators');
   const author = watch('author');
 
   // create an exclusive set of roles
   // from the collaborators & author
   const roles = useMemo(() => {
     const collabs = collaborators || [];
-    const auth = author || { role: '' };
+    const auth = author || { role: [] };
+    const authorRoles = auth.role.flat();
+
+    const collaboratorRoles = collabs.map((c) => (
+      c.collaboratorRoles ? c.collaboratorRoles.map((r) => r.role) : []
+    )).flat();
 
     return Array.from(
       new Set(
-        [...collabs, auth].map(({ role }) => role).flat(),
+        [...collaboratorRoles, ...authorRoles],
       ),
     );
   }, [author, collaborators]);

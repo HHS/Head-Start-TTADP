@@ -123,11 +123,14 @@ function reduceObjectives(newObjectives, currentObjectives = []) {
     const ttaProvided = objective.activityReportObjectives
       ? objective.activityReportObjectives[0].ttaProvided : null;
 
+    const roles = objective.roles.map((role) => role.fullName);
+
     return [...objectives, {
       ...objective.dataValues,
       ids: [objective.id],
       ttaProvided,
       isNew: false,
+      roles,
     }];
   }, currentObjectives);
 }
