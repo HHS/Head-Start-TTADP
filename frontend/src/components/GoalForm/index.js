@@ -19,6 +19,8 @@ import {
   GOAL_NAME_ERROR,
   GOAL_DATE_ERROR,
   SELECT_GRANTS_ERROR,
+  OBJECTIVES_EMPTY,
+  OBJECTIVE_DEFAULT_ERRORS,
 } from './constants';
 import { DECIMAL_BASE, REPORT_STATUSES } from '../../Constants';
 import ReadOnly from './ReadOnly';
@@ -30,14 +32,16 @@ const [
 ] = OBJECTIVE_ERROR_MESSAGES;
 
 const formatGrantsFromApi = (grants) => grants.map((grant) => {
-  const programTypes = [...new Set(grant.programs.map(({ programType }) => programType))].sort();
-  const numberWithProgramTypes = `${grant.number} ${programTypes}`;
+  const programTypes = grant.programs.map(({ programType }) => programType).join(', ');
   return {
     value: grant.id,
-    label: numberWithProgramTypes,
+    label: `${grant.number} - ${programTypes}`,
     id: grant.id,
   };
 });
+
+// this is the default error state for an objective (no errors, only empty fragments)
+const BLANK_OBJECTIVE_ERROR = [<></>, <></>, <></>];
 
 export default function GoalForm({
   recipient, regionId, id, showRTRnavigation,
@@ -73,7 +77,6 @@ export default function GoalForm({
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
 
   // we need to set this key to get the component to re-render (uncontrolled input)
-  // the idea is that if we need to add another date picker we can just re-render them all at once
   const [datePickerKey, setDatePickerKey] = useState('DPK-00');
 
   const [status, setStatus] = useState(goalDefaults.status);
@@ -84,7 +87,6 @@ export default function GoalForm({
   const [unchangingApiData, setUnchangingApiData] = useState({});
 
   const [alert, setAlert] = useState({ message: '', type: 'success' });
-  const [goalId, setGoalId] = useState(goalDefaults.id);
   const [goalNumber, setGoalNumber] = useState('');
 
   const [errors, setErrors] = useState(FORM_FIELD_DEFAULT_ERRORS);
@@ -245,15 +247,12 @@ export default function GoalForm({
 
   const validateGrantNumbers = () => {
     let error = <></>;
-
     if (!selectedGrants.length) {
       error = <span className="usa-error-message">{SELECT_GRANTS_ERROR}</span>;
     }
-
     const newErrors = [...errors];
     newErrors.splice(FORM_FIELD_INDEXES.GRANTS, 1, error);
     setErrors(newErrors);
-
     return !error.props.children;
   };
 
@@ -263,7 +262,11 @@ export default function GoalForm({
    */
   const validateObjectives = () => {
     if (!objectives.length) {
-      return true;
+      const error = <span className="usa-error-message">{OBJECTIVES_EMPTY}</span>;
+      const newErrors = [...errors];
+      newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES_EMPTY, 1, error);
+      setErrors(newErrors);
+      return OBJECTIVE_DEFAULT_ERRORS;
     }
 
     const newErrors = [...errors];
@@ -325,12 +328,34 @@ export default function GoalForm({
     return isValid;
   };
 
+  const clearEmptyObjectiveError = () => {
+    const error = <></>;
+    const newErrors = [...errors];
+    newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES_EMPTY, 1, error);
+    setErrors(newErrors);
+  };
+
   // quick shorthands to check to see if our fields are good to save to the different states
   // (different validations for not started and draft)
   const isValidNotStarted = () => (
-    validateGrantNumbers() && validateGoalName() && validateEndDate() && validateObjectives()
+    validateGrantNumbers()
+    && validateGoalName()
+    && validateEndDate()
+    && validateObjectives()
+    && objectives.length
   );
-  const isValidDraft = () => validateEndDate() || validateGrantNumbers() || validateGoalName();
+  const isValidDraft = () => validateGrantNumbers() || validateGoalName() || validateEndDate();
+
+  const updateObjectives = (updatedObjectives) => {
+    // when we set a new set of objectives
+    // an error object for each objective.
+    const newErrors = [...errors];
+    const objectiveErrors = updatedObjectives.map(() => BLANK_OBJECTIVE_ERROR);
+
+    newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES, 1, objectiveErrors);
+    setErrors(newErrors);
+    setObjectives(updatedObjectives);
+  };
 
   /**
    * button click handlers
@@ -341,7 +366,35 @@ export default function GoalForm({
     e.preventDefault();
 
     try {
-      const goals = await createOrUpdateGoals(createdGoals);
+      const gs = createdGoals.reduce((acc, goal) => {
+        const newGoals = goal.grantIds.map((g) => ({
+          grantId: g,
+          name: goalName,
+          status,
+          endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
+          regionId: parseInt(regionId, DECIMAL_BASE),
+          recipientId: recipient.id,
+          objectives: objectives.map((objective) => {
+            const apiData = unchangingApiData[objective.id];
+            if (apiData) {
+              const topicsFromApi = apiData.topics;
+              const resourcesFromApi = apiData.resources;
+              const filesFromApi = apiData.files;
+              return {
+                ...objective,
+                topics: [...objective.topics, ...topicsFromApi],
+                resources: [...objective.resources, ...resourcesFromApi],
+                files: [...objective.files, ...filesFromApi],
+              };
+            }
+            return objective;
+          }),
+        }));
+
+        return [...acc, ...newGoals];
+      }, []);
+
+      const goals = await createOrUpdateGoals(gs);
 
       // on success, redirect back to RTR Goals & Objectives page
       // once integrated into the AR, this will probably have to be turned into a prop function
@@ -363,20 +416,27 @@ export default function GoalForm({
     }
 
     try {
+      const newGoals = selectedGrants.map((g) => ({
+        grantId: g.value,
+        name: goalName,
+        status,
+        endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
+        regionId: parseInt(regionId, DECIMAL_BASE),
+        recipientId: recipient.id,
+        objectives,
+      }));
       const goals = [
         ...createdGoals,
-        {
-          grants: selectedGrants,
-          name: goalName,
-          status,
-          endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
-          regionId: parseInt(regionId, DECIMAL_BASE),
-          recipientId: recipient.id,
-          objectives,
-          id: goalId,
-        }];
+        ...newGoals,
+      ];
+      const updatedGoals = await createOrUpdateGoals(goals);
 
-      await createOrUpdateGoals(goals);
+      const updatedObjectives = updatedGoals && updatedGoals.length > 0
+        && updatedGoals[0] && updatedGoals[0].objectives && updatedGoals[0].objectives.length > 0
+        ? [...updatedGoals[0].objectives]
+        : [];
+
+      updateObjectives(updatedObjectives);
 
       setAlert({
         message: `Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`,
@@ -396,7 +456,6 @@ export default function GoalForm({
     setEndDate(goalDefaults.endDate);
     setStatus(goalDefaults.status);
     setSelectedGrants(goalDefaults.grants);
-    setGoalId(goalDefaults.id);
     setShowForm(false);
     setObjectives([]);
     setDatePickerKey('DPK-00');
@@ -408,37 +467,45 @@ export default function GoalForm({
     }
 
     try {
+      const newGoals = selectedGrants.map((g) => ({
+        grantId: g.value,
+        name: goalName,
+        status,
+        endDate,
+        regionId: parseInt(regionId, DECIMAL_BASE),
+        recipientId: recipient.id,
+        objectives: objectives.map((objective) => {
+          const apiData = unchangingApiData[objective.id];
+          if (apiData) {
+            const topicsFromApi = apiData.topics;
+            const resourcesFromApi = apiData.resources;
+            const filesFromApi = apiData.files;
+            return {
+              ...objective,
+              roles: objective.roles.map((role) => role.fullName),
+              topics: [...objective.topics, ...topicsFromApi],
+              resources: [...objective.resources, ...resourcesFromApi],
+              files: [...objective.files, ...filesFromApi],
+            };
+          }
+          return objective;
+        }),
+      }));
+
       const goals = [
         ...createdGoals,
-        {
-          grants: selectedGrants,
-          name: goalName,
-          status,
-          endDate,
-          regionId: parseInt(regionId, DECIMAL_BASE),
-          recipientId: recipient.id,
-          objectives: objectives.map((objective) => {
-            const apiData = unchangingApiData[objective.id];
-            if (apiData) {
-              const topicsFromApi = apiData.topics;
-              const resourcesFromApi = apiData.resources;
-              return {
-                ...objective,
-                topics: [...objective.topics, ...topicsFromApi],
-                resources: [...objective.resources, ...resourcesFromApi],
-              };
-            }
-
-            return objective;
-          }),
-          id: goalId,
-        }];
+        ...newGoals,
+      ];
 
       const newCreatedGoals = await createOrUpdateGoals(goals);
 
       setCreatedGoals(newCreatedGoals.map((goal) => ({
         ...goal,
         grants: formatGrantsFromApi(goal.grants),
+        objectives: goal.objectives.map((objective) => ({
+          ...objective,
+          roles: objective.roles.map((role) => role.fullName),
+        })),
       })));
 
       clearForm();
@@ -467,9 +534,7 @@ export default function GoalForm({
     setGoalName(goal.goalName);
     setEndDate(goal.endDate);
     setStatus(goal.status);
-    setGoalId(goal.id);
     setGoalNumber(goal.number);
-
     setSelectedGrants(goal.grants);
 
     // we need to update the date key so it re-renders all the
@@ -489,6 +554,7 @@ export default function GoalForm({
       if (objective.activityReports && objective.activityReports.length) {
         newObjectives.push({
           ...objective,
+          files: [],
           resources: [],
           topics: [],
         });
@@ -496,6 +562,7 @@ export default function GoalForm({
         objectiveApiData[objective.id] = {
           resources: objective.resources.map((value) => ({ ...value, isFromApi: true })),
           topics: objective.topics.map((value) => ({ ...value, isFromApi: true })),
+          files: objective.files.map((value) => ({ ...value, isFromApi: true })),
         };
       } else {
         newObjectives.push({
@@ -598,8 +665,8 @@ export default function GoalForm({
             validateGrantNumbers={validateGrantNumbers}
             objectives={objectives}
             setObjectives={setObjectives}
-            validateObjectives={validateObjectives}
             setObjectiveError={setObjectiveError}
+            clearEmptyObjectiveError={clearEmptyObjectiveError}
             topicOptions={topicOptions}
             isOnReport={isOnReport}
             isOnApprovedReport={isOnApprovedReport}

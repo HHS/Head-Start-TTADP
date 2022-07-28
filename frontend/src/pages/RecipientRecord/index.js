@@ -186,13 +186,12 @@ export default function RecipientRecord({ match }) {
                 </Link>
               )}
             >
-              <FeatureFlag flag="recipient_goals_objectives" renderNotFound>
-                <PrintGoals
-                  recipientId={recipientId}
-                  regionId={regionId}
-                  location={location}
-                />
-              </FeatureFlag>
+              <PrintGoals
+                recipientId={recipientId}
+                regionId={regionId}
+                location={location}
+              />
+
             </PageWithHeading>
           )}
         />
@@ -205,14 +204,12 @@ export default function RecipientRecord({ match }) {
               error={error}
               recipientNameWithRegion={recipientNameWithRegion}
             >
-              <FeatureFlag flag="recipient_goals_objectives" renderNotFound>
-                <GoalsObjectives
-                  location={location}
-                  recipientId={recipientId}
-                  regionId={regionId}
-                  recipient={recipientData}
-                />
-              </FeatureFlag>
+              <GoalsObjectives
+                location={location}
+                recipientId={recipientId}
+                regionId={regionId}
+                recipient={recipientData}
+              />
             </PageWithHeading>
           )}
         />

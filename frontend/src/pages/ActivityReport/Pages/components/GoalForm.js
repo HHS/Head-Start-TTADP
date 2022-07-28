@@ -47,7 +47,7 @@ export default function GoalForm({
         ) || GOAL_DATE_ERROR,
       },
     },
-    defaultValue: goal && goal.endDate ? goal.endDate : '',
+    defaultValue: goal && goal.endDate ? goal.endDate : ' ',
   });
 
   const {
@@ -87,7 +87,7 @@ export default function GoalForm({
       setObjectives(data.objectives);
     }
 
-    if (!goal.isNew) {
+    if (!goal.isNew && goal.id) {
       fetchData();
     } else {
       setObjectives([]);

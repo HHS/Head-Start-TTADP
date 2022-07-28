@@ -2,7 +2,7 @@
 // disabling prop spreading to use the "register" function from react hook form the same
 // way they did in thier examples
 /* eslint-disable arrow-body-style */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useContext } from 'react';
 import { Helmet } from 'react-helmet';
 import { Alert, Fieldset } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -18,11 +18,15 @@ import Req from '../../../components/Req';
 import ReadOnly from '../../../components/GoalForm/ReadOnly';
 import PlusButton from '../../../components/GoalForm/PlusButton';
 import OtherEntity from './components/OtherEntity';
+import GoalFormContext from '../../../GoalFormContext';
 
 const GoalsObjectives = () => {
   const {
     watch, setValue, getValues, setError,
   } = useFormContext();
+
+  const { isGoalFormClosed, toggleGoalForm } = useContext(GoalFormContext);
+
   const recipients = watch('activityRecipients');
   const activityRecipientType = watch('activityRecipientType');
 
@@ -32,7 +36,7 @@ const GoalsObjectives = () => {
       return r.grant.id;
     }
 
-    return r.id || r.value;
+    return r.activityRecipientId;
   }) : [];
 
   const [fetchError, setFetchError] = useState(false);
@@ -52,16 +56,6 @@ const GoalsObjectives = () => {
       },
     },
     defaultValue: [],
-  });
-
-  const {
-    field: {
-      onChange: toggleGoalForm,
-      value: isGoalFormClosed,
-    },
-  } = useController({
-    name: 'isGoalFormClosed',
-    defaultValue: selectedGoals.length > 0,
   });
 
   useDeepCompareEffect(() => {
@@ -85,7 +79,7 @@ const GoalsObjectives = () => {
 
   const addNewGoal = () => {
     toggleGoalForm(false);
-    setValue('goalForEditing', newGoal);
+    setValue('goalForEditing', newGoal(grantIds));
   };
 
   const onDelete = (goalId) => {
@@ -152,18 +146,23 @@ const GoalsObjectives = () => {
   });
 
   // we need to figure out our options based on author/collaborator roles
-  const collaborators = watch('collaborators');
+  const collaborators = watch('activityReportCollaborators');
   const author = watch('author');
 
   // create an exclusive set of roles
   // from the collaborators & author
   const roles = useMemo(() => {
     const collabs = collaborators || [];
-    const auth = author || { role: '' };
+    const auth = author || { role: [] };
+    const authorRoles = auth.role.flat();
+
+    const collaboratorRoles = collabs.map((c) => (
+      c.collaboratorRoles ? c.collaboratorRoles.map((r) => r.role) : []
+    )).flat();
 
     return Array.from(
       new Set(
-        [...collabs, auth].map(({ role }) => role).flat(),
+        [...collaboratorRoles, ...authorRoles],
       ),
     );
   }, [author, collaborators]);
@@ -177,7 +176,6 @@ const GoalsObjectives = () => {
         <Req className="margin-right-1" />
         indicates required field
       </p>
-
       {/**
         * on non-recipient reports, only objectives are shown
       */}

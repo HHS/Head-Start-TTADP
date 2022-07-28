@@ -63,7 +63,10 @@ Tooltip.propTypes = {
     PropTypes.string,
     PropTypes.arrayOf(PropTypes.node),
   ]).isRequired,
-  buttonLabel: PropTypes.string.isRequired,
+  buttonLabel: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.node,
+  ]).isRequired,
   screenReadDisplayText: PropTypes.bool,
   hideUnderline: PropTypes.bool,
   svgLineTo: PropTypes.number,

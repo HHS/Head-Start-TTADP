@@ -18,21 +18,21 @@ const logContext = {
   namespace,
 };
 
-export async function createGoal(req, res) {
+export async function createGoalsForReport(req, res) {
   try {
-    const { goal, activityReportId } = req.body;
+    const { goals, activityReportId, regionId } = req.body;
 
     const user = await userById(req.session.userId);
 
-    const canCreate = new Goal(user, null, goal.regionId).canCreate();
+    const canCreate = new Goal(user, null, regionId).canCreate();
 
     if (!canCreate) {
       res.sendStatus(401);
       return;
     }
 
-    const newGoal = await createOrUpdateGoalsForActivityReport(goal, activityReportId);
-    res.json(newGoal);
+    const newGoals = await createOrUpdateGoalsForActivityReport(goals, activityReportId);
+    res.json(newGoals);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
