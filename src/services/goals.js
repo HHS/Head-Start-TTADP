@@ -127,7 +127,7 @@ function reduceObjectives(newObjectives, currentObjectives = []) {
       ...objective.dataValues,
       ids: [objective.id],
       ttaProvided,
-
+      isNew: false,
     }];
   }, currentObjectives);
 }
@@ -170,6 +170,7 @@ function reduceGoals(goals) {
       ],
       grantIds: [currentValue.grant.id],
       objectives: reduceObjectives(currentValue.objectives),
+      isNew: false,
     };
 
     return [...previousValue, goal];
@@ -473,29 +474,69 @@ export async function createOrUpdateGoals(goals) {
 
     await newGoal.update(options);
 
+    // before we create objectives, we have to unpack them to make the creation a little cleaner
+    // if an objective was new, then it will not have an id but "isNew" will be true
+    // since the goals are packed up, the objectives are too and this may create a situation where
+    // an objective belonging to one goal will be looped over as part of creating another goal
+    // so we first unpack and then, if the objective already exists, it is safe to update all the
+    // data except the goal ID, which we update only if "isNew" is true
+    // we will have to be careful and watch for edge cases where isNew is a misrepresentative value
+
+    const objectivesToCreateOrUpdate = objectives.reduce((arr, o) => {
+      if (o.isNew) {
+        return [...arr, o];
+      }
+
+      if (o.ids && o.ids.length) {
+        return [...arr, ...o.ids.map((objectiveId) => ({ ...o, id: objectiveId }))];
+      }
+
+      return [...arr, o];
+    }, []);
+
     const newObjectives = await Promise.all(
-      objectives.map(async (o) => {
+      objectivesToCreateOrUpdate.map(async (o) => {
         const {
-          id: objectiveId,
           resources,
           topics,
           roles: roleNames,
-          ...objectiveFields
+          title,
+          status: objectiveStatus,
+          id: objectiveId,
+          isNew,
         } = o;
 
-        const where = parseInt(objectiveId, DECIMAL_BASE) ? {
-          id: objectiveId,
-          goalId: newGoal.id,
-          ...objectiveFields,
-        } : {
-          goalId: newGoal.id,
-          title: o.title,
-          status: 'Not Started',
-        };
+        let objective;
 
-        const [objective] = await Objective.upsert(
-          where,
-        );
+        if (isNew) {
+          [objective] = await Objective.findOrCreate({
+            where: {
+              goalId: newGoal.id,
+              title,
+            },
+          });
+        } else {
+          objective = await Objective.findOne({
+            where: {
+              id: objectiveId,
+              goalId: newGoal.id,
+            },
+          });
+
+          if (!objective) {
+            objective = await Objective.create({
+              status: objectiveStatus,
+              title,
+              goalId: newGoal.id,
+            });
+          }
+        }
+
+        await objective.update({
+          title,
+          status: objectiveStatus,
+        });
+
         // topics
         const objectiveTopics = await Promise.all(
           (topics.map((ot) => ObjectiveTopic.findOrCreate({
