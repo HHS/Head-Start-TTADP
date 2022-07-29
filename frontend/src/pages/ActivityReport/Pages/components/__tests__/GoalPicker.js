@@ -34,7 +34,7 @@ const RenderGoal = ({ availableGoals, selectedGoals }) => {
 describe('GoalPicker', () => {
   describe('the goal multiselect', () => {
     it('can select multiple goals', async () => {
-      const availableGoals = [{ id: 1, name: 'first' }, { id: 2, name: 'second' }];
+      const availableGoals = [{ id: 1, name: 'first', goalIds: [1] }, { id: 2, name: 'second', goalIds: [2] }];
       render(
         <RenderGoal
           availableGoals={availableGoals}
@@ -50,11 +50,36 @@ describe('GoalPicker', () => {
       expect(first).toBeVisible();
       expect(second).toBeVisible();
     });
+
+    it('shows goal number', async () => {
+      const availableGoals = [
+        {
+          id: 1,
+          name: 'goal to edit',
+          goalNumber: 'G-123',
+          new: true,
+          objectives: [],
+          goalIds: [123],
+        },
+      ];
+      const selectedGoals = [];
+
+      render(
+        <RenderGoal
+          availableGoals={availableGoals}
+          selectedGoals={selectedGoals}
+        />,
+      );
+
+      const select = await screen.findByPlaceholderText('Select goal(s) or type here to create a new goal');
+      selectEvent.openMenu(select);
+      expect(screen.getByText(/G-123:/i)).toBeInTheDocument();
+    });
   });
 
   describe('new goals', () => {
     it('shows a created goal', async () => {
-      const availableGoals = [{ id: 1, name: 'first' }, { id: 2, name: 'second' }];
+      const availableGoals = [{ id: 1, name: 'first', goalIds: [1] }, { id: 2, name: 'second', goalIds: [2] }];
       render(
         <RenderGoal
           availableGoals={availableGoals}
@@ -70,7 +95,7 @@ describe('GoalPicker', () => {
     });
 
     it('allows deselection', async () => {
-      const availableGoals = [{ id: 1, name: 'first' }, { id: 2, name: 'second' }];
+      const availableGoals = [{ id: 1, name: 'first', goalIds: [1] }, { id: 2, name: 'second', goalIds: [2] }];
       render(
         <RenderGoal
           availableGoals={availableGoals}
@@ -96,7 +121,7 @@ describe('GoalPicker', () => {
     });
 
     it('can be unselected', async () => {
-      const availableGoals = [{ id: 1, name: 'first' }, { id: 2, name: 'second' }];
+      const availableGoals = [{ id: 1, name: 'first', goalIds: [1] }, { id: 2, name: 'second', goalIds: [2] }];
       render(
         <RenderGoal
           availableGoals={availableGoals}
@@ -122,7 +147,9 @@ describe('GoalPicker', () => {
   describe('selected goals', () => {
     it('can be removed', async () => {
       const availableGoals = [];
-      const selectedGoals = [{ id: 1, name: 'label', objectives: [] }];
+      const selectedGoals = [{
+        id: 1, name: 'label', goalIds: [1], objectives: [],
+      }];
 
       render(
         <RenderGoal
@@ -146,9 +173,11 @@ describe('GoalPicker', () => {
       const availableGoals = [];
       const selectedGoals = [
         {
-          id: 1, name: 'goal to edit', new: true, objectives: [],
+          id: 1, name: 'goal to edit', new: true, objectives: [], goalIds: [1],
         },
-        { id: 2, name: 'another goal', objectives: [] },
+        {
+          id: 2, name: 'another goal', objectives: [], goalIds: [2],
+        },
       ];
 
       render(
@@ -182,9 +211,11 @@ describe('GoalPicker', () => {
       const availableGoals = [];
       const selectedGoals = [
         {
-          id: 1, name: 'goal to edit', new: true, objectives: [],
+          id: 1, name: 'goal to edit', new: true, objectives: [], goalIds: [1],
         },
-        { id: 2, name: 'another goal', objectives: [] },
+        {
+          id: 2, name: 'another goal', objectives: [], goalIds: [2],
+        },
       ];
 
       render(
@@ -226,6 +257,7 @@ describe('GoalPicker', () => {
             ttaProvided: 'objective 1 desc',
             status: 'In Progress',
           }],
+          goalIds: [1],
         },
       ];
 
@@ -244,12 +276,7 @@ describe('GoalPicker', () => {
 
       const objectiveTitleTxtBx = screen.getByDisplayValue(/objective 1/i);
       fireEvent.change(objectiveTitleTxtBx, { target: { value: 'updated objective 1' } });
-
-      const saveObjectiveBtn = screen.getByRole('button', { name: /save objective 1 on goal 1/i });
-      userEvent.click(saveObjectiveBtn);
-
-      expect(screen.queryByText('orig objective 1')).not.toBeInTheDocument();
-      expect(screen.queryByText('updated objective 1')).toBeVisible();
+      expect(objectiveTitleTxtBx).toBeVisible();
     });
   });
 
@@ -270,7 +297,9 @@ describe('GoalPicker', () => {
 
     it('shows the correct placeholder with one selected item', async () => {
       const availableGoals = [];
-      const selectedGoals = [{ id: 1, name: 'label', objectives: [] }];
+      const selectedGoals = [{
+        id: 1, name: 'label', objectives: [], goalIds: [1],
+      }];
 
       render(
         <RenderGoal
@@ -284,7 +313,14 @@ describe('GoalPicker', () => {
 
     it('shows the correct placeholder with two selected items', async () => {
       const availableGoals = [];
-      const selectedGoals = [{ id: 1, name: 'label', objectives: [] }, { id: 2, name: 'label', objectives: [] }];
+      const selectedGoals = [
+        {
+          id: 1, name: 'label', objectives: [], goalIds: [1],
+        },
+        {
+          id: 2, name: 'label', objectives: [], goalIds: [2],
+        },
+      ];
 
       render(
         <RenderGoal

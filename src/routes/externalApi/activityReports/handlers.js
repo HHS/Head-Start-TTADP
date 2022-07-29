@@ -2,7 +2,7 @@ import ActivityReport from '../../../policies/activityReport';
 import ActivityReportsPresenter from '../../../serializers/activityReports';
 import { notFound, unauthorized } from '../../../serializers/errorResponses';
 import { userById } from '../../../services/users';
-import { activityReportById } from '../../../services/activityReports';
+import { activityReportAndRecipientsById } from '../../../services/activityReports';
 import handleErrors from '../../../lib/apiErrorHandler';
 import { currentUserId } from '../../../services/currentUser';
 
@@ -15,7 +15,7 @@ export async function getReportByDisplayId(req, res) {
   try {
     const { displayId } = req.params;
     const id = displayId.replace(/^R\d{2}-AR-/, '');
-    const report = await activityReportById(id);
+    const [report] = await activityReportAndRecipientsById(id);
     if (!report) {
       notFound(res, `Report ${displayId} could not be found`);
       return;

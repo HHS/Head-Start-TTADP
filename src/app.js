@@ -1,4 +1,5 @@
 import {} from 'dotenv/config';
+import fs from 'fs';
 import express from 'express';
 import helmet from 'helmet';
 import path from 'path';
@@ -7,6 +8,7 @@ import { omit } from 'lodash';
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import { CronJob } from 'cron';
 import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 
 import { hsesAuth } from './middleware/authMiddleware';
 import { retrieveUserDetails } from './services/currentUser';
@@ -15,26 +17,42 @@ import updateGrantsRecipients from './lib/updateGrantsRecipients';
 import { logger, auditLogger, requestLogger } from './logger';
 
 const app = express();
-
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
+let index;
+
+if (process.env.NODE_ENV === 'production') {
+  index = fs.readFileSync(path.join(__dirname, 'client', 'index.html')).toString();
+}
+
+const serveIndex = (req, res) => {
+  const noncedIndex = index.replaceAll('__NONCE__', res.locals.nonce);
+  res.set('Content-Type', 'text/html');
+  res.send(noncedIndex);
+};
 
 app.use(requestLogger);
 app.use(express.json({ limit: '2MB' }));
 app.use(express.urlencoded({ extended: true }));
-app.use(helmet({
-  contentSecurityPolicy: {
+
+app.use((req, res, next) => {
+  res.locals.nonce = crypto.randomBytes(16).toString('hex');
+  const cspMiddleware = helmet.contentSecurityPolicy({
     directives: {
       ...omit(helmet.contentSecurityPolicy.getDefaultDirectives(), 'upgrade-insecure-requests', 'block-all-mixed-content', 'script-src', 'img-src', 'default-src'),
       'form-action': ["'self'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", 'data:'],
-      defaultSrc: ["'self'", 'https://touchpoints.app.cloud.gov/touchpoints/7d519b5e/submissions.json', 'wss://tta-smarthub-sandbox.app.cloud.gov', 'wss://tta-smarthub-dev.app.cloud.gov'],
+      scriptSrc: ["'self'", '*.googletagmanager.com'],
+      scriptSrcElem: ["'self'", 'https://*.googletagmanager.com', `'nonce-${res.locals.nonce}'`],
+      imgSrc: ["'self'", 'data:', 'www.googletagmanager.com', '*.google-analytics.com'],
+      connectSrc: ["'self'", '*.google-analytics.com', '*.analytics.google.com', '*.googletagmanager.com'],
+      defaultSrc: ["'self'", 'wss://tta-smarthub-sandbox.app.cloud.gov', 'wss://tta-smarthub-dev.app.cloud.gov'],
     },
-  },
-}));
+  });
+  cspMiddleware(req, res, next);
+});
 
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'client')));
+  app.use('/index.html', serveIndex);
+  app.use(express.static(path.join(__dirname, 'client'), { index: false }));
 }
 
 app.use('/api/v1', require('./routes/externalApi').default);
@@ -62,9 +80,7 @@ app.get(oauth2CallbackPath, cookieSession, async (req, res) => {
 });
 
 if (process.env.NODE_ENV === 'production') {
-  app.use('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'client', 'index.html'));
-  });
+  app.use('*', serveIndex);
 }
 
 // Set timing parameters.

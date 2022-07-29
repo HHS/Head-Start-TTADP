@@ -2,7 +2,6 @@ import faker from '@faker-js/faker';
 import db, {
   Recipient,
   Grant,
-  GrantGoal,
   Goal,
   ActivityReportObjective,
   Objective,
@@ -37,26 +36,24 @@ describe('goalById', () => {
 
     goalOnActivityReport = await Goal.create({
       name: 'Goal on activity report',
-      status: 'In progress',
+      status: 'In Progress',
       timeframe: '12 months',
+      grantId: grantForReport.id,
       isFromSmartsheetTtaPlan: false,
       id: faker.datatype.number({ min: 64000 }),
-    });
-
-    await GrantGoal.create({
-      goalId: goalOnActivityReport.id,
-      grantId: grantForReport.id,
-      recipientId: grantRecipient.id,
     });
 
     objective = await Objective.create({
       goalId: goalOnActivityReport.id,
       title: 'objective test',
-      ttaProvided: 'asdfadf',
       status: 'Not Started',
     });
 
-    const topic = await Topic.findOne();
+    const [topic] = await Topic.findOrCreate({
+      where: {
+        name: 'test',
+      },
+    });
 
     await ObjectiveTopic.create({
       topicId: topic.id,
@@ -79,6 +76,7 @@ describe('goalById', () => {
     await ActivityReportObjective.create({
       activityReportId: report.id,
       objectiveId: objective.id,
+      ttaProvided: 'asdfadf',
     });
   });
 
@@ -108,12 +106,6 @@ describe('goalById', () => {
     });
 
     await destroyReport(report);
-
-    await GrantGoal.destroy({
-      where: {
-        goalId: goalOnActivityReport.id,
-      },
-    });
 
     await Goal.destroy({
       where: {
@@ -146,7 +138,6 @@ describe('goalById', () => {
     expect(goal.objectives[0].topics.length).toBe(1);
     expect(goal.objectives[0].resources.length).toBe(1);
     expect(goal.objectives[0].resources[0].dataValues.value).toBe('http://www.google.com');
-    expect(goal.grants.length).toBe(1);
-    expect(goal.grants[0].id).toBe(grantForReport.id);
+    expect(goal.grant.id).toBe(grantForReport.id);
   });
 });

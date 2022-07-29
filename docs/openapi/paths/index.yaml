@@ -52,7 +52,7 @@
   $ref: './recipient/recipient-search.yaml'
 '/recipient/goals/{recipientId}':
   $ref: './recipient/recipient-goals.yaml'
-'/goals/{goalId}/changeStatus':
+'/goals/changeStatus':
   $ref: './goals/goal-status.yaml'
 '/widgets/overview':
   $ref: './widgets/overview.yaml'
@@ -60,5 +60,7 @@
   $ref: './widgets/reasonList.yaml'
 '/widgets/topicAndFrequencyGraph':
   $ref: './widgets/topicAndFrequencyGraph.yaml'
+'/search':
+  $ref: './search/search.yaml'
 
 

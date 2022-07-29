@@ -6,6 +6,13 @@ module.exports = (sequelize, DataTypes) => {
       ActivityRecipient.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId' });
       ActivityRecipient.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
       ActivityRecipient.belongsTo(models.OtherEntity, { foreignKey: 'otherEntityId', as: 'otherEntity' });
+
+      ActivityRecipient.addScope('defaultScope', {
+        include: [
+          { model: models.Grant, as: 'grant' },
+          { model: models.OtherEntity, as: 'otherEntity' },
+        ],
+      });
     }
   }
   ActivityRecipient.init({
@@ -36,7 +43,10 @@ module.exports = (sequelize, DataTypes) => {
         if (this.grant) {
           return this.grant.name;
         }
-        return this.otherEntity.name;
+        if (this.otherEntity) {
+          return this.otherEntity.name;
+        }
+        return null;
       },
     },
   }, {

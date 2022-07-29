@@ -6,6 +6,7 @@ import { withTopics, withoutTopics } from './topics';
 import { withReasons, withoutReasons } from './reasons';
 import { withRecipientId } from './recipientId';
 import { withRegion, withoutRegion } from './region';
+import { withRoles, withoutRoles } from './role';
 import { withGrantNumber, withoutGrantNumber } from './grantNumber';
 
 export const topicToQuery = {
@@ -13,19 +14,19 @@ export const topicToQuery = {
     bef: (query) => beforeCreateDate(query),
     aft: (query) => afterCreateDate(query),
     win: (query) => withinCreateDate(query),
-    is: (query) => withinCreateDate(query),
+    in: (query) => withinCreateDate(query),
   },
   status: {
     in: (query) => withStatus(query),
     nin: (query) => withoutStatus(query),
   },
   topic: {
-    in: (query) => withTopics(query),
-    nin: (query) => withoutTopics(query),
+    in: (query, options) => withTopics(query, options),
+    nin: (query, options) => withoutTopics(query, options),
   },
   reason: {
-    in: (query) => withReasons(query),
-    nin: (query) => withoutReasons(query),
+    in: (query, options) => withReasons(query, options),
+    nin: (query, options) => withoutReasons(query, options),
   },
   recipientId: {
     ctn: (query) => withRecipientId(query),
@@ -34,12 +35,16 @@ export const topicToQuery = {
     in: (query) => withRegion(query),
     nin: (query) => withoutRegion(query),
   },
+  role: {
+    in: (query) => withRoles(query),
+    nin: (query) => withoutRoles(query),
+  },
   grantNumber: {
     in: (query) => withGrantNumber(query),
     nin: (query) => withoutGrantNumber(query),
   },
 };
 
-export function goalsFiltersToScopes(filters) {
-  return createFiltersToScopes(filters, topicToQuery);
+export function goalsFiltersToScopes(filters, options) {
+  return createFiltersToScopes(filters, topicToQuery, options);
 }

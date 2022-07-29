@@ -25,6 +25,8 @@ import {
   LOCAL_STORAGE_DATA_KEY,
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
   LOCAL_STORAGE_EDITABLE_KEY,
+  DATE_DISPLAY_FORMAT,
+  DATEPICKER_VALUE_FORMAT,
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
 import useARLocalStorage from '../../hooks/useARLocalStorage';
@@ -45,13 +47,14 @@ import { HTTPError } from '../../fetchers';
 import UserContext from '../../UserContext';
 
 const defaultValues = {
-  ECLKCResourcesUsed: [{ value: '' }],
+  ECLKCResourcesUsed: [],
   activityRecipientType: '',
   activityRecipients: [],
   activityType: [],
   additionalNotes: null,
-  attachments: [],
+  files: [],
   collaborators: [],
+  activityReportCollaborators: [],
   context: '',
   deliveryMethod: null,
   duration: '',
@@ -59,7 +62,7 @@ const defaultValues = {
   goals: [],
   recipientNextSteps: [],
   recipients: [],
-  nonECLKCResourcesUsed: [{ value: '' }],
+  nonECLKCResourcesUsed: [],
   numberOfParticipants: null,
   objectivesWithoutGoals: [],
   otherResources: [],
@@ -135,6 +138,24 @@ export const findWhatsChanged = (object, base) => {
       return accumulator;
     }
 
+    // this block intends to fix an issue where multi recipients are removed from a report
+    // after goals have been saved we pass up the removed recipients so that their specific links
+    // to the activity report/goals will be severed on the backend
+    if (current === 'activityRecipients' && !isEqual(base[current], object[current])) {
+      // eslint-disable-next-line max-len
+      const grantIds = object.activityRecipients.map((activityRecipient) => activityRecipient.activityRecipientId);
+      // eslint-disable-next-line max-len
+      accumulator.recipientsWhoHaveGoalsThatShouldBeRemoved = base.activityRecipients.filter((baseData) => (
+        !grantIds.includes(baseData.activityRecipientId)
+      )).map((activityRecipient) => activityRecipient.activityRecipientId);
+
+      // if we change activity recipients we should always ship the goals up as well
+      // we do hit recipients first, so if they were somehow both changed before the API was hit
+      // (unlikely since they are on different parts of the form)
+      // the goals that were changed would overwrite the next line
+      accumulator.goals = base.goals.map((goal) => ({ ...goal, grantIds }));
+    }
+
     if (!isEqual(base[current], object[current])) {
       accumulator[current] = object[current];
     }
@@ -142,7 +163,9 @@ export const findWhatsChanged = (object, base) => {
     return accumulator;
   }
 
-  return Object.keys(object).reduce(reduction, {});
+  // we sort these so they traverse in a particular order
+  // (ActivityRecipients before goals, in particular)
+  return Object.keys(object).sort().reduce(reduction, {});
 };
 
 export const unflattenResourcesUsed = (array) => {
@@ -238,10 +261,47 @@ function ActivityReport({
     history.replace();
   }, [activityReportId, history]);
 
+  const convertGoalsToFormData = (goals, grantIds) => goals.map((goal) => ({ ...goal, grantIds }));
+
+  const convertObjectivesWithoutGoalsToFormData = (
+    objectives, recipientIds,
+  ) => objectives.map((objective) => ({
+    ...objective,
+    recipientIds,
+  }));
+
   const convertReportToFormData = (fetchedReport) => {
+    let grantIds = [];
+    let otherEntities = [];
+    if (fetchedReport.activityRecipientType === 'recipient' && fetchedReport.activityRecipients) {
+      grantIds = fetchedReport.activityRecipients.map(({ id }) => id);
+    } else {
+      otherEntities = fetchedReport.activityRecipients.map(({ id }) => id);
+    }
+
+    const activityRecipients = fetchedReport.activityRecipients.map((ar) => ({
+      activityRecipientId: ar.id,
+      name: ar.name,
+    }));
+
+    const goals = convertGoalsToFormData(fetchedReport.goalsAndObjectives, grantIds);
+    const objectivesWithoutGoals = convertObjectivesWithoutGoalsToFormData(
+      fetchedReport.objectivesWithoutGoals, otherEntities,
+    );
     const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed);
     const nonECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.nonECLKCResourcesUsed);
-    return { ...fetchedReport, ECLKCResourcesUsed, nonECLKCResourcesUsed };
+    const endDate = fetchedReport.endDate ? moment(fetchedReport.endDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : '';
+    const startDate = fetchedReport.startDate ? moment(fetchedReport.startDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : '';
+    return {
+      ...fetchedReport,
+      activityRecipients,
+      ECLKCResourcesUsed,
+      nonECLKCResourcesUsed,
+      goals,
+      endDate,
+      startDate,
+      objectivesWithoutGoals,
+    };
   };
 
   // cleanup local storage if the report has been submitted or approved
@@ -284,8 +344,9 @@ function ActivityReport({
 
         const [recipients, collaborators, availableApprovers] = await Promise.all(apiCalls);
 
-        const isCollaborator = report.collaborators
-          && report.collaborators.find((u) => u.id === user.id);
+        const isCollaborator = report.activityReportCollaborators
+          && report.activityReportCollaborators.find((u) => u.userId === user.id);
+
         const isAuthor = report.userId === user.id;
 
         // The report can be edited if its in draft OR needs_action state.
@@ -311,16 +372,16 @@ function ActivityReport({
 
         let shouldUpdateFromNetwork = true;
 
-        // this if statemenrt compares the "saved to storage time" and the
+        // this if statement compares the "saved to storage time" and the
         // time retrieved from the network (report.updatedAt)
-        // and whichever is newe "wins"
+        // and whichever is newer "wins"
 
         if (formData && savedToStorageTime) {
           const updatedAtFromNetwork = moment(report.updatedAt);
           const updatedAtFromLocalStorage = moment(savedToStorageTime);
           if (updatedAtFromNetwork.isValid() && updatedAtFromLocalStorage.isValid()) {
             const storageIsNewer = updatedAtFromLocalStorage.isAfter(updatedAtFromNetwork);
-            if (storageIsNewer) {
+            if (storageIsNewer && formData.calculatedStatus === REPORT_STATUSES.DRAFT) {
               shouldUpdateFromNetwork = false;
             }
           }
@@ -328,9 +389,9 @@ function ActivityReport({
 
         //
         if (shouldUpdateFromNetwork && activityReportId !== 'new') {
-          updateFormData({ ...formData, ...report });
+          updateFormData({ ...formData, ...report }, true);
         } else {
-          updateFormData({ ...report, ...formData });
+          updateFormData({ ...report, ...formData }, true);
         }
 
         updateCreatorRoleWithName(report.creatorNameWithRole);
@@ -385,11 +446,11 @@ function ActivityReport({
         // If the error was caused by an invalid region, we need a way to communicate that to the
         // component so we can redirect the user. We can do this by updating the form data
         if (report && parseInt(report.regionId, DECIMAL_BASE) === -1) {
-          updateFormData({ regionId: report.regionId });
+          updateFormData({ regionId: report.regionId }, true);
         }
 
         if (formData === null && !connection) {
-          updateFormData({ ...defaultValues, pageState: defaultPageState });
+          updateFormData({ ...defaultValues, pageState: defaultPageState }, true);
         }
       } finally {
         updateLoading(false);
@@ -470,6 +531,8 @@ function ActivityReport({
         const savedReport = await createReport(
           {
             ...fields,
+            ECLKCResourcesUsed: data.ECLKCResourcesUsed.map((r) => (r.value)),
+            nonECLKCResourcesUsed: data.nonECLKCResourcesUsed.map((r) => (r.value)),
             startDate: startDateToSave,
             endDate: endDateToSave,
             regionId: formData.regionId,
@@ -520,6 +583,7 @@ function ActivityReport({
         calculatedStatus: response.calculatedStatus,
         approvers: response.approvers,
       },
+      true,
     );
     updateEditable(false);
 
@@ -533,7 +597,7 @@ function ActivityReport({
   const onResetToDraft = async () => {
     const fetchedReport = await resetToDraft(reportId.current);
     const report = convertReportToFormData(fetchedReport);
-    updateFormData(report);
+    updateFormData(report, true);
     updateEditable(true);
   };
 

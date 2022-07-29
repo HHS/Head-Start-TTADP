@@ -1,7 +1,13 @@
 import { Op } from 'sequelize';
 import { filterAssociation } from './utils';
 
-const grantNumberSql = 'SELECT "ActivityRecipients"."activityReportId" FROM "Grants" INNER JOIN "ActivityRecipients" ON "ActivityRecipients"."grantId" = "Grants"."id" WHERE "Grants".number';
+const grantNumberSql = `
+SELECT
+  "ActivityRecipients"."activityReportId"
+FROM "Grants" "Grants"
+INNER JOIN "ActivityRecipients" "ActivityRecipients"
+ON "ActivityRecipients"."grantId" = "Grants"."id"
+WHERE "Grants"."number"`;
 
 export function withGrantNumber(numbers) {
   return {
