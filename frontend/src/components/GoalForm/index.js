@@ -465,7 +465,6 @@ export default function GoalForm({
         type: 'success',
       });
     } catch (error) {
-      console.log(error);
       setAlert({
         message: 'There was an error saving your goal',
         type: 'error',
