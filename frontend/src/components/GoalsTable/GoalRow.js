@@ -211,7 +211,7 @@ function GoalRow({
   };
 
   const contextMenuLabel = `Actions for goal ${id}`;
-  const showContextMenu = false;
+  const showContextMenu = true;
   const menuItems = [
     {
       label: 'Edit',

@@ -144,7 +144,7 @@ export default function GoalForm({
               ],
               topics: [],
             };
-            // otherwise, topics are fine, but we still need to checkt to see if there
+            // otherwise, topics are fine, but we still need to check to see if there
             // are no resources so we can show the 1 empty box
           } else if (!objective.resources.length) {
             newObjective = {
@@ -159,6 +159,8 @@ export default function GoalForm({
               ],
             };
           }
+
+          newObjective.roles = objective.roles.map((r) => r.fullName);
 
           newObjs.push(newObjective);
           // this is the format of an objective error
