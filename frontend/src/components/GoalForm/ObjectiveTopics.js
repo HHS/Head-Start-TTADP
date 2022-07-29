@@ -5,35 +5,73 @@ import {
 } from '@trussworks/react-uswds';
 import Select from 'react-select';
 import selectOptionsReset from '../selectOptionsReset';
+import UnusedData from './UnusedData';
 
 export default function ObjectiveTopics({
   error,
-  savedTopics,
   topicOptions,
   validateObjectiveTopics,
   topics,
   onChangeTopics,
   status,
   inputName,
+  isOnReport,
+  isOnApprovedReport,
 }) {
-  const savedTopicIds = savedTopics ? savedTopics.map(({ value }) => value) : [];
+  const readOnly = status === 'Suspended' || (status === 'Not Started' && isOnReport);
+
+  if (readOnly) {
+    if (!topics.length) {
+      return null;
+    }
+
+    return (
+      <>
+        <p className="usa-prose text-bold margin-bottom-1">
+          Topics
+        </p>
+        <ul className="usa-list usa-list--unstyled">
+          {topics.map((topic) => (<li key={topic.value}>{topic.label}</li>))}
+        </ul>
+      </>
+    );
+  }
+
+  const { editableTopics, fixedTopics } = topics.reduce((acc, topic) => {
+    if (topic.isOnApprovedReport) {
+      acc.fixedTopics.push(topic);
+    } else {
+      acc.editableTopics.push(topic);
+    }
+
+    return acc;
+  }, { editableTopics: [], fixedTopics: [] });
+
+  const savedTopicIds = fixedTopics ? fixedTopics.map(({ value }) => value) : [];
   const filteredOptions = topicOptions.filter((option) => !savedTopicIds.includes(option.value));
 
   return (
     <>
-      { savedTopics && savedTopics.length
+      { fixedTopics && fixedTopics.length
         ? (
           <>
             <p className="usa-prose margin-bottom-0 text-bold">Topics</p>
-            <p className="usa-prose margin-top-0">{savedTopics.map((topic) => topic.label).join(', ')}</p>
+            <ul className="usa-list usa-list--unstyled">
+              {fixedTopics.map((topic) => (<li key={topic.value}>{topic.label}</li>))}
+              {isOnApprovedReport
+                ? editableTopics.map((topic) => (
+                  <UnusedData key={topic.value} value={topic.label} />
+                ))
+                : null}
+            </ul>
           </>
         )
         : null}
 
-      { (status !== 'Complete' && status !== 'Suspended') ? (
+      { !isOnApprovedReport ? (
         <FormGroup error={error.props.children}>
           <Label htmlFor={inputName}>
-            { savedTopics && savedTopics.length
+            { topics && topics.length
               ? <>Add more topics</>
               : (
                 <>
@@ -56,7 +94,7 @@ export default function ObjectiveTopics({
             isMulti
             options={filteredOptions}
             onBlur={validateObjectiveTopics}
-            value={topics}
+            value={editableTopics}
             onChange={onChangeTopics}
             closeMenuOnSelect={false}
           />
@@ -68,10 +106,6 @@ export default function ObjectiveTopics({
 
 ObjectiveTopics.propTypes = {
   error: PropTypes.node.isRequired,
-  savedTopics: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    value: PropTypes.number,
-  })),
   topicOptions: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string,
     value: PropTypes.number,
@@ -84,9 +118,10 @@ ObjectiveTopics.propTypes = {
   onChangeTopics: PropTypes.func.isRequired,
   status: PropTypes.string.isRequired,
   inputName: PropTypes.string,
+  isOnReport: PropTypes.bool.isRequired,
+  isOnApprovedReport: PropTypes.bool.isRequired,
 };
 
 ObjectiveTopics.defaultProps = {
-  savedTopics: [],
   inputName: 'topics',
 };

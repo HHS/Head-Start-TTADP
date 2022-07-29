@@ -39,7 +39,6 @@ describe('ObjectiveForm', () => {
     removeObjective = jest.fn(),
     setObjectiveError = jest.fn(),
     setObjective = jest.fn(),
-    unchangingApiData = {},
   ) => {
     render((
       <ObjectiveForm
@@ -50,7 +49,6 @@ describe('ObjectiveForm', () => {
         objective={objective}
         setObjective={setObjective}
         errors={[<></>, <></>, <></>]}
-        unchangingApiData={unchangingApiData}
         goalStatus="Draft"
         topicOptions={[
           'Behavioral / Mental Health / Trauma',
@@ -110,19 +108,12 @@ describe('ObjectiveForm', () => {
     const removeObjective = jest.fn();
     const setObjectiveError = jest.fn();
     const setObjective = jest.fn();
-    const unchangingApiData = {
-      [defaultObjective.id]: {
-        resources: [{ key: 'sdf', value: 'gee-whix.com' }],
-        topics: [],
-      },
-    };
 
     renderObjectiveForm(
       defaultObjective,
       removeObjective,
       setObjectiveError,
       setObjective,
-      unchangingApiData,
     );
 
     const label = await screen.findByText('Resource links');

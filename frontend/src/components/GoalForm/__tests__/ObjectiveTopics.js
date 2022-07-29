@@ -15,6 +15,7 @@ describe('ObjectiveTopics', () => {
       topics={[]}
       onChangeTopics={jest.fn()}
       status="In Progress"
+      isOnReport={false}
     />
   ));
 

@@ -27,7 +27,6 @@ export default function ObjectiveForm({
   setObjective,
   errors,
   topicOptions,
-  unchangingApiData,
   goalStatus,
 }) {
   // the parent objective data from props
@@ -43,8 +42,6 @@ export default function ObjectiveForm({
       report.status === REPORT_STATUSES.APPROVED
     )))
   ), [objective.activityReports]);
-
-  const data = unchangingApiData[objective.id];
 
   // onchange handlers
   const onChangeTitle = (e) => setObjective({ ...objective, title: e.target.value });
@@ -118,6 +115,7 @@ export default function ObjectiveForm({
       <ObjectiveTitle
         error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TITLE]}
         isOnApprovedReport={isOnApprovedReport || false}
+        isOnReport={isOnReport || false}
         title={title}
         onChangeTitle={onChangeTitle}
         validateObjectiveTitle={validateObjectiveTitle}
@@ -130,21 +128,24 @@ export default function ObjectiveForm({
         selectedRoles={roles || []}
         validateSpecialistRole={validateSpecialistRole}
         options={availableSpecialistRoles}
+        isOnReport={isOnReport || false}
+        isOnApprovedReport={isOnApprovedReport || false}
+        status={status}
       />
 
       <ObjectiveTopics
         error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TOPICS]}
-        savedTopics={data && data.topics ? data.topics : []}
         topicOptions={topicOptions}
         validateObjectiveTopics={validateObjectiveTopics}
         topics={topics}
         onChangeTopics={onChangeTopics}
         status={status}
+        isOnReport={isOnReport || false}
+        isOnApprovedReport={isOnApprovedReport || false}
       />
 
       <ResourceRepeater
         resources={resources}
-        savedResources={data && data.resources ? data.resources : []}
         setResources={setResources}
         validateResources={validateResources}
         error={errors[OBJECTIVE_FORM_FIELD_INDEXES.RESOURCES]}
@@ -156,6 +157,7 @@ export default function ObjectiveForm({
       <ObjectiveStatus
         status={status}
         isOnApprovedReport={isOnApprovedReport}
+        isOnReport={isOnReport || false}
         goalStatus={goalStatus}
         onChangeStatus={onChangeStatus}
         inputName={`objective-status-${index}`}
@@ -166,6 +168,7 @@ export default function ObjectiveForm({
         onChangeFiles={onChangeFiles}
         objectiveId={objective.id}
         isOnApprovedReport={isOnApprovedReport || false}
+        isOnReport={isOnReport || false}
         status={status}
       />
 
@@ -175,18 +178,6 @@ export default function ObjectiveForm({
 
 ObjectiveForm.propTypes = {
   goalStatus: PropTypes.string.isRequired,
-  unchangingApiData: PropTypes.objectOf(
-    PropTypes.shape({
-      resources: PropTypes.arrayOf(PropTypes.shape({
-        key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-        value: PropTypes.string,
-      })),
-      topics: PropTypes.arrayOf(PropTypes.shape({
-        label: PropTypes.string,
-        value: PropTypes.number,
-      })),
-    }),
-  ).isRequired,
   index: PropTypes.number.isRequired,
   removeObjective: PropTypes.func.isRequired,
   errors: PropTypes.arrayOf(PropTypes.node).isRequired,

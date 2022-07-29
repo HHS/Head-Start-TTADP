@@ -13,10 +13,28 @@ export default function ObjectiveFiles({
   onChangeFiles,
   isOnApprovedReport,
   status,
+  isOnReport,
 }) {
   const hasFiles = files && files.length > 0;
   const [useFiles, setUseFiles] = useState(hasFiles);
-  const readOnly = isOnApprovedReport || status === 'Complete';
+  const readOnly = isOnApprovedReport || status === 'Complete' || (status === 'Not Started' && isOnReport);
+
+  if (readOnly) {
+    if (!hasFiles) {
+      return null;
+    }
+
+    return (
+      <>
+        <p className="usa-prose text-bold margin-bottom-1">
+          Resource files
+        </p>
+        <ul className="usa-list usa-list--unstyled">
+          {files.map((file) => (<li key={file.originalFileName}>{file.originalFileName}</li>))}
+        </ul>
+      </>
+    );
+  }
 
   return (
     <>
@@ -98,6 +116,7 @@ ObjectiveFiles.propTypes = {
   })),
   onChangeFiles: PropTypes.func.isRequired,
   isOnApprovedReport: PropTypes.bool.isRequired,
+  isOnReport: PropTypes.bool.isRequired,
   status: PropTypes.string.isRequired,
 };
 

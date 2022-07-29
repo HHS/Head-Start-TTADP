@@ -78,6 +78,19 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                   INNER JOIN "ObjectiveResources" "or" ON "or"."objectiveId" = "o"."id"      
                   WHERE "o"."id" = "objectives"."id" 
                   AND "or"."id" = "objectives->resources"."id"
+                ) > 0
+              `),
+              'onAnyReport',
+            ],
+            [
+              sequelize.literal(`
+                (
+                  SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
+                  INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
+                  INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
+                  INNER JOIN "ObjectiveResources" "or" ON "or"."objectiveId" = "o"."id"      
+                  WHERE "o"."id" = "objectives"."id" 
+                  AND "or"."id" = "objectives->resources"."id"
                   AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
                 ) > 0
               `),
@@ -91,6 +104,19 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
           attributes: [
             ['id', 'value'],
             ['name', 'label'],
+            [
+              sequelize.literal(`
+                (
+                  SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
+                  INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
+                  INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
+                  INNER JOIN "ObjectiveTopics" "ot" ON "ot"."objectiveId" = "o"."id"      
+                  WHERE "o"."id" = "objectives"."id" 
+                  AND "ot"."topicId" = "objectives->topics"."id"
+                ) > 0
+              `),
+              'onAnyReport',
+            ],
             [
               sequelize.literal(`
                 (
@@ -116,6 +142,19 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
           as: 'roles',
           attributes: [
             'fullName',
+            [
+              sequelize.literal(`
+                (
+                  SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
+                  INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
+                  INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
+                  INNER JOIN "ObjectiveRoles" "or" ON "or"."objectiveId" = "o"."id"      
+                  WHERE "o"."id" = "objectives"."id" 
+                  AND "or"."roleId" = "objectives->roles"."id"
+                ) > 0
+              `),
+              'onAnyReport',
+            ],
             [
               sequelize.literal(`
                 (
@@ -967,6 +1006,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
 
     if (!isNew && id) {
       savedObjective = await Objective.findByPk(id);
+
       await savedObjective.update({
         title,
         status,
