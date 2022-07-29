@@ -143,14 +143,20 @@ export default function Objective({
     defaultValue: objective.status || 'Not Started',
   });
 
-  const isOnApprovedReport = objective.activityReports && objective.activityReports.some(
-    (report) => report.status === REPORT_STATUSES.APPROVED,
-  );
+  const isOnApprovedReport = useMemo(() => objective.activityReports
+    && objective.activityReports.some(
+      (report) => report.status === REPORT_STATUSES.APPROVED,
+    ), [objective.activityReports]);
+
+  const isOnReport = useMemo(() => (
+    objective.activityReports && objective.activityReports.length
+  ), [objective.activityReports]);
 
   const onChangeObjective = (newObjective) => {
     setSelectedObjectives(newObjective);
   };
 
+  // we need to auto select an objective role if there is only one available
   useEffect(() => {
     if (defaultRoles.length === 1 && !objectiveRoles.length) {
       onChangeRoles(defaultRoles);
@@ -216,6 +222,8 @@ export default function Objective({
       />
       <SpecialistRole
         isOnApprovedReport={isOnApprovedReport || false}
+        isOnReport={isOnReport || false}
+        status={objectiveStatus}
         error={errors.roles
           ? ERROR_FORMAT(errors.roles.message)
           : NO_ERROR}
@@ -233,12 +241,15 @@ export default function Objective({
         topicOptions={topicOptions}
         validateObjectiveTopics={onBlurTopics}
         topics={isOnApprovedReport ? [] : objectiveTopics}
+        isOnReport={isOnReport || false}
+        isOnApprovedReport={isOnApprovedReport || false}
         onChangeTopics={onChangeTopics}
         inputName={objectiveTopicsInputName}
         status={objectiveStatus}
       />
       <ResourceRepeater
         resources={isOnApprovedReport ? [] : resourcesForRepeater}
+        isOnReport={isOnReport || false}
         setResources={onChangeResources}
         error={errors.resources
           ? ERROR_FORMAT(errors.resources.message)

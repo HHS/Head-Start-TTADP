@@ -36,7 +36,6 @@ export default function Form({
   isOnReport,
   status,
   datePickerKey,
-  unchangingApiData,
   fetchError,
   goalNumber,
   clearEmptyObjectiveError,
@@ -70,6 +69,7 @@ export default function Form({
   const objectiveErrors = errors[FORM_FIELD_INDEXES.OBJECTIVES];
 
   const formTitle = goalNumber ? `Goal ${goalNumber}` : 'Recipient TTA goal';
+
   const hasNotStartedObjectives = objectives.some((objective) => objective.status && objective.status.toLowerCase() === 'not started');
   const hasInProgressObjectives = objectives.some((objective) => objective.status && objective.status.toLowerCase() === 'in progress');
 
@@ -152,7 +152,6 @@ export default function Form({
           setObjective={(data) => setObjective(data, i)}
           topicOptions={topicOptions}
           goalStatus={status}
-          unchangingApiData={unchangingApiData}
         />
       ))}
 
@@ -219,18 +218,6 @@ Form.propTypes = {
   })).isRequired,
   status: PropTypes.string.isRequired,
   datePickerKey: PropTypes.string.isRequired,
-  unchangingApiData: PropTypes.objectOf(
-    PropTypes.shape({
-      resources: PropTypes.arrayOf(PropTypes.shape({
-        key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-        value: PropTypes.string,
-      })),
-      topics: PropTypes.arrayOf(PropTypes.shape({
-        label: PropTypes.string,
-        value: PropTypes.number,
-      })),
-    }),
-  ).isRequired,
   fetchError: PropTypes.string.isRequired,
   goalNumber: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   clearEmptyObjectiveError: PropTypes.func.isRequired,

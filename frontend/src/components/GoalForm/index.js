@@ -82,10 +82,6 @@ export default function GoalForm({
   const [status, setStatus] = useState(goalDefaults.status);
   const [objectives, setObjectives] = useState(goalDefaults.objectives);
 
-  // this will hold the topics and resources for objectives retrieved from the API
-  // in the case where that data is NOT editable
-  const [unchangingApiData, setUnchangingApiData] = useState({});
-
   const [alert, setAlert] = useState({ message: '', type: 'success' });
   const [goalNumber, setGoalNumber] = useState('');
 
@@ -114,8 +110,7 @@ export default function GoalForm({
         setEndDate(goal.endDate);
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
         setGoalNumber(goal.goalNumber);
-
-        const apiData = {};
+        setSelectedGrants(formatGrantsFromApi([goal.grant]));
 
         // this is a lot of work to avoid two loops through the goal.objectives
         // but I'm sure you'll agree its totally worth it
@@ -126,27 +121,7 @@ export default function GoalForm({
           const [newObjs, objErrors] = previous;
           let newObjective = objective;
 
-          // if the objective is on an AR, then we have to segregate the data
-          if (objective.activityReports && objective.activityReports.length) {
-            apiData[objective.id] = {};
-            apiData[objective.id].topics = objective.topics;
-            apiData[objective.id].resources = objective.resources;
-
-            newObjective = {
-              ...objective,
-              resources: [
-              // this is the expected format of a blank resource
-              // all objectives start off with one
-                {
-                  key: uuidv4(),
-                  value: '',
-                },
-              ],
-              topics: [],
-            };
-            // otherwise, topics are fine, but we still need to check to see if there
-            // are no resources so we can show the 1 empty box
-          } else if (!objective.resources.length) {
+          if (!objective.resources.length) {
             newObjective = {
               ...objective,
               resources: [
@@ -175,7 +150,6 @@ export default function GoalForm({
         setErrors(newErrors);
 
         setObjectives(newObjectives);
-        setUnchangingApiData(apiData);
       } catch (err) {
         setFetchError('There was an error loading your goal');
       }
@@ -285,8 +259,7 @@ export default function GoalForm({
         ];
       }
 
-      if (!objective.topics.length
-        || (unchangingApiData[objective.id] && !unchangingApiData[objective.id].topics.length)) {
+      if (!objective.topics.length) {
         isValid = false;
         return [
           <></>,
@@ -376,21 +349,7 @@ export default function GoalForm({
           endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
           regionId: parseInt(regionId, DECIMAL_BASE),
           recipientId: recipient.id,
-          objectives: objectives.map((objective) => {
-            const apiData = unchangingApiData[objective.id];
-            if (apiData) {
-              const topicsFromApi = apiData.topics;
-              const resourcesFromApi = apiData.resources;
-              const filesFromApi = apiData.files;
-              return {
-                ...objective,
-                topics: [...objective.topics, ...topicsFromApi],
-                resources: [...objective.resources, ...resourcesFromApi],
-                files: [...objective.files, ...filesFromApi],
-              };
-            }
-            return objective;
-          }),
+          objectives,
         }));
 
         return [...acc, ...newGoals];
@@ -476,22 +435,7 @@ export default function GoalForm({
         endDate,
         regionId: parseInt(regionId, DECIMAL_BASE),
         recipientId: recipient.id,
-        objectives: objectives.map((objective) => {
-          const apiData = unchangingApiData[objective.id];
-          if (apiData) {
-            const topicsFromApi = apiData.topics;
-            const resourcesFromApi = apiData.resources;
-            const filesFromApi = apiData.files;
-            return {
-              ...objective,
-              roles: objective.roles.map((role) => role.fullName),
-              topics: [...objective.topics, ...topicsFromApi],
-              resources: [...objective.resources, ...resourcesFromApi],
-              files: [...objective.files, ...filesFromApi],
-            };
-          }
-          return objective;
-        }),
+        objectives,
       }));
 
       const goals = [
@@ -544,38 +488,7 @@ export default function GoalForm({
     // PS - endDate can be null
     setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
 
-    // objectives need some special help
-    const { objectives: goalObjectives } = goal;
-
-    const newObjectives = [];
-    const objectiveApiData = {};
-
-    // we need to break out certain fields that will only allow adding data to them
-    // not deleting existing data
-    goalObjectives.forEach((objective) => {
-      if (objective.activityReports && objective.activityReports.length) {
-        newObjectives.push({
-          ...objective,
-          files: [],
-          resources: [],
-          topics: [],
-        });
-
-        objectiveApiData[objective.id] = {
-          resources: objective.resources.map((value) => ({ ...value, isFromApi: true })),
-          topics: objective.topics.map((value) => ({ ...value, isFromApi: true })),
-          files: objective.files.map((value) => ({ ...value, isFromApi: true })),
-        };
-      } else {
-        newObjectives.push({
-          ...objective,
-          resources: objective.resources.map((value) => value),
-        });
-      }
-    });
-
-    setUnchangingApiData(objectiveApiData);
-    setObjectives(newObjectives);
+    setObjectives(goal.objectives);
 
     setShowForm(true);
   };
@@ -673,7 +586,6 @@ export default function GoalForm({
             isOnReport={isOnReport}
             isOnApprovedReport={isOnApprovedReport}
             status={status || 'Needs status'}
-            unchangingApiData={unchangingApiData}
             goalNumber={goalNumber}
           />
           )}

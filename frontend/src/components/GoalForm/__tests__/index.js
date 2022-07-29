@@ -659,6 +659,7 @@ describe('create goal', () => {
           status: 'Not Started',
           resources: [],
           topics: [topicsFromApi[0]],
+          activityReports: [],
         },
       ],
     });
