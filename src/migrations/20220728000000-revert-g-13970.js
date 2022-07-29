@@ -18,7 +18,7 @@ module.exports = {
            status = 'In Progress',
            "closeSuspendReason" = NULL,
            "closeSuspendContext" = NULL
-         WHERE id = 13970;`,
+         WHERE id IN (13970, 33134, 33132, 33133, 33131, 32561, 32562, 32563, 32560, 27334, 34063, 31864);`,
         { transaction },
       );
     },
