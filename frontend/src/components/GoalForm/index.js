@@ -44,7 +44,10 @@ const formatGrantsFromApi = (grants) => grants.map((grant) => {
 const BLANK_OBJECTIVE_ERROR = [<></>, <></>, <></>];
 
 export default function GoalForm({
-  recipient, regionId, id, showRTRnavigation,
+  recipient,
+  regionId,
+  id,
+  showRTRnavigation,
 }) {
   const history = useHistory();
 
@@ -107,7 +110,7 @@ export default function GoalForm({
         // the API sends us back things in a format we expect
         setGoalName(goal.goalName);
         setStatus(goal.status);
-        setEndDate(goal.endDate);
+        setEndDate(goal.endDate ? moment(goal.endDate, 'MM/DD/YYYY').format('YYYY-MM-DD') : '');
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
         setGoalNumber(goal.goalNumber);
         setSelectedGrants(formatGrantsFromApi([goal.grant]));
@@ -229,6 +232,7 @@ export default function GoalForm({
     const newErrors = [...errors];
     newErrors.splice(FORM_FIELD_INDEXES.GRANTS, 1, error);
     setErrors(newErrors);
+
     return !error.props.children;
   };
 
@@ -461,6 +465,7 @@ export default function GoalForm({
         type: 'success',
       });
     } catch (error) {
+      console.log(error);
       setAlert({
         message: 'There was an error saving your goal',
         type: 'error',
