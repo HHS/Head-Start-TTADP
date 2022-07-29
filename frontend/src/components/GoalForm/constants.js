@@ -1,5 +1,4 @@
 import React from 'react';
-import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
 
 export const isValidUrl = (attempted) => {
@@ -73,17 +72,4 @@ export const validateListOfResources = (resources) => {
   }
 
   return true;
-};
-
-export const formatEndDateForPicker = (endDate) => {
-  if (!endDate || endDate === 'Invalid date') {
-    return null;
-  }
-
-  const parsed = moment(endDate, 'MM/DD/YYYY');
-  if (parsed.isValid()) {
-    return parsed.format('YYYY-MM-DD');
-  }
-
-  return null;
 };
