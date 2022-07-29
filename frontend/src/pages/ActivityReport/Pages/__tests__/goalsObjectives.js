@@ -1,7 +1,9 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
-import { render, screen, within } from '@testing-library/react';
+import {
+  render, screen, within, act,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import React from 'react';
@@ -26,7 +28,7 @@ const RenderGoalsObjectives = ({
     mode: 'onChange',
     defaultValues: {
       author: {
-        role: 'central office',
+        role: ['central office'],
       },
       collaborators: [],
       goals: [{
@@ -34,10 +36,11 @@ const RenderGoalsObjectives = ({
         name: 'This is a test goal',
         isNew: true,
         goalIds: [1],
-        grant:
-        {
-          value: 1, label: 'Turtle 1', programs: [], id: 1,
-        },
+        grants: [
+          {
+            value: 1, label: 'Turtle 1', programs: [], id: 1,
+          },
+        ],
         objectives: [{
           id: 1,
           title: 'title',
@@ -64,17 +67,17 @@ const renderGoals = (
   goals = [],
   isGoalFormClosed = false,
   throwFetchError = false,
+  toggleGoalForm = jest.fn(),
 ) => {
   const query = grantIds.map((id) => `grantIds=${id}`).join('&');
   const fetchResponse = throwFetchError ? 500 : goals;
 
   fetchMock.get(join(goalUrl, `?${query}`), fetchResponse);
   render(
-    <GoalFormContext.Provider value={{ isGoalFormClosed }}>
+    <GoalFormContext.Provider value={{ isGoalFormClosed, toggleGoalForm }}>
       <RenderGoalsObjectives
         grantIds={grantIds}
         activityRecipientType={activityRecipientType}
-        goals={goals}
         connectionActive={!throwFetchError}
       />
     </GoalFormContext.Provider>,
@@ -125,20 +128,22 @@ describe('goals objectives', () => {
       expect(await screen.findByText(/To create goals, first select a recipient/i)).toBeVisible();
     });
 
-    it('you can click the little button', async () => {
+    it('you can click the little add new button', async () => {
       const sampleGoals = [{
         name: 'Test',
         id: 1234567,
         objectives: [],
       }];
+
+      const throwFetchError = false;
+      const toggleGoalForm = jest.fn();
       const isGoalFormClosed = true;
-      renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed);
+      renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed, throwFetchError, toggleGoalForm);
       const button = await screen.findByRole('button', { name: /add new goal/i });
-      let summaries = await screen.findAllByText('Goal summary');
+      const summaries = await screen.findAllByText('Goal summary');
       expect(summaries.length).toBe(1);
-      userEvent.click(button);
-      summaries = await screen.findAllByText('Goal summary');
-      expect(summaries.length).toBe(2);
+      act(() => userEvent.click(button));
+      expect(toggleGoalForm).toHaveBeenCalledWith(false);
     });
 
     it('you can edit a goal', async () => {
@@ -148,12 +153,15 @@ describe('goals objectives', () => {
         objectives: [],
       }];
       const isGoalFormClosed = true;
-      renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed);
+      const throwFetchError = false;
+      const toggleGoalForm = jest.fn();
+
+      renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed, throwFetchError, toggleGoalForm);
       const actions = await screen.findByRole('button', { name: /actions for goal 1/i });
       userEvent.click(actions);
-      const button = await screen.findByRole('button', { name: /edit goal 1/i });
-      userEvent.click(button);
-      expect(await screen.findByText('Goal summary')).toBeVisible();
+      const [button] = await screen.findAllByRole('button', { name: 'Edit' });
+      act(() => userEvent.click(button));
+      expect(toggleGoalForm).toHaveBeenCalledWith(false);
     });
 
     it('you can delete a goal', async () => {
@@ -166,7 +174,7 @@ describe('goals objectives', () => {
       renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed);
       const actions = await screen.findByRole('button', { name: /actions for goal 1/i });
       userEvent.click(actions);
-      const button = await screen.findByRole('button', { name: /delete goal 1/i });
+      const [button] = await screen.findAllByRole('button', { name: 'Delete' });
       userEvent.click(button);
       const modal = await screen.findByTestId('modalWindow');
       const deletor = await within(modal).findByText('Delete');

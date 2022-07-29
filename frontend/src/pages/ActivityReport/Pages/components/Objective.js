@@ -219,6 +219,7 @@ export default function Objective({
         validateObjectiveTitle={onBlurTitle}
         status={objectiveStatus}
         inputName={objectiveTitleInputName}
+        isOnReport={isOnReport || false} // todo - fix this for being on AR
       />
       <SpecialistRole
         isOnApprovedReport={isOnApprovedReport || false}

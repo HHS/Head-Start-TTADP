@@ -65,7 +65,7 @@ const defaultPages = [
   },
 ];
 
-const initialData = { pageState: { 1: NOT_STARTED, 2: NOT_STARTED } };
+const initialData = { pageState: { 1: NOT_STARTED, 2: NOT_STARTED }, regionId: 1, goals: [] };
 
 describe('Navigator', () => {
   // eslint-disable-next-line arrow-body-style
@@ -125,7 +125,11 @@ describe('Navigator', () => {
     userEvent.click(screen.getByRole('button', { name: 'Save and continue' }));
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(
       {
-        pageState: { ...initialData.pageState, 2: COMPLETE },
+        pageState: {
+          ...initialData.pageState, 2: COMPLETE,
+        },
+        regionId: 1,
+        goals: [],
         second: null,
       },
     ));

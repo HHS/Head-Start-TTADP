@@ -17,10 +17,12 @@ describe('ObjectiveFiles', () => {
       onChangeFiles={jest.fn()}
       objectiveId={1}
       isOnApprovedReport
+      isOnReport
       status="Complete"
     />);
-    expect(await screen.findByText('Resources')).toBeVisible();
-    expect(screen.getByText(/testfile1\.txt, testfile2\.txt/i)).toBeVisible();
+    expect(await screen.findByText('Resource files')).toBeVisible();
+    expect(screen.getByText(/testfile1\.txt/i)).toBeVisible();
+    expect(screen.getByText(/testfile2\.txt/i)).toBeVisible();
   });
 
   it('hides and shows file upload', async () => {
