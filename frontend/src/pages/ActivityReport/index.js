@@ -469,7 +469,7 @@ function ActivityReport({
     );
   }
 
-  // If no region was able to be found, we will re-reoute user to the main page
+  // If no region was able to be found, we will re-reroute user to the main page
   // FIXME: when re-routing user show a message explaining what happened
   if (formData && parseInt(formData.regionId, DECIMAL_BASE) === -1) {
     return <Redirect to="/" />;
