@@ -131,7 +131,7 @@ describe('Reason list widget', () => {
       id: GRANT_ID_ONE, number: GRANT_ID_ONE, recipientId: RECIPIENT_ID, regionId: 3, status: 'Active',
     }, {
       id: GRANT_ID_TWO, number: GRANT_ID_TWO, recipientId: RECIPIENT_ID, regionId: 3, status: 'Active',
-    }]);
+    }], { validate: true, individualHooks: true });
 
     const reportOne = await ActivityReport.findOne({ where: { duration: 1, reason: ['Below Competitive Threshold (CLASS)'] } });
     await createOrUpdate(regionOneReportA, reportOne);

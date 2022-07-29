@@ -6,14 +6,15 @@ import {
 } from '@trussworks/react-uswds';
 import Modal from './Modal';
 import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '../Constants';
-import './CloseSuspendReasonModal.scss';
 
 const CloseSuspendReasonModal = ({
-  modalRef, goalId, newStatus, onSubmit, resetValues,
+  modalRef, goalIds, newStatus, onSubmit, resetValues, oldGoalStatus,
 }) => {
   const [closeSuspendReason, setCloseSuspendReason] = useState('');
   const [closeSuspendContext, setCloseSuspendContext] = useState('');
   const [showValidationError, setShowValidationError] = useState(false);
+
+  const key = goalIds.join();
 
   useEffect(() => {
     // Every time we show the modal reset the form.
@@ -22,18 +23,18 @@ const CloseSuspendReasonModal = ({
     setShowValidationError(false);
   }, [resetValues]);
 
-  const reasonDisplayStatus = newStatus === 'Completed' ? 'closing' : 'suspending';
-  const reasonRadioOptions = newStatus === 'Completed' ? GOAL_CLOSE_REASONS : GOAL_SUSPEND_REASONS;
-  const ReasonChanged = (e) => {
+  const reasonDisplayStatus = newStatus === 'Closed' ? 'closing' : 'suspending';
+  const reasonRadioOptions = newStatus === 'Closed' ? GOAL_CLOSE_REASONS : GOAL_SUSPEND_REASONS;
+  const reasonChanged = (e) => {
     setCloseSuspendReason(e.target.value);
     setShowValidationError(false);
   };
 
-  const generateReasonRadioButtons = () => reasonRadioOptions.map((r, i) => (
+  const generateReasonRadioButtons = () => reasonRadioOptions.map((r) => (
     <Radio
-      id={`radio-reason-${goalId}-${i + 1}`}
-      key={`radio-reason-${goalId}-${i + 1}`}
-      onChange={ReasonChanged}
+      id={r.trim().replace(' ', '-').toLowerCase()}
+      key={r}
+      onChange={reasonChanged}
       name="closeSuspendReason"
       label={r}
       value={r}
@@ -49,7 +50,7 @@ const CloseSuspendReasonModal = ({
     if (!closeSuspendReason) {
       setShowValidationError(true);
     } else {
-      onSubmit(goalId, newStatus, closeSuspendReason, closeSuspendContext);
+      onSubmit(goalIds, newStatus, oldGoalStatus, closeSuspendReason, closeSuspendContext);
     }
   };
 
@@ -61,22 +62,16 @@ const CloseSuspendReasonModal = ({
         modalId="CloseSuspendReasonModal"
         title={`Why are you ${reasonDisplayStatus} this goal?`}
         okButtonText="Submit"
-        okButtonAriaLabel={`This button will submit your reason for ${reasonDisplayStatus} the goal.`}
+        okButtonAriaLabel="Change goal status"
         okButtonCss="usa-button--primary"
         cancelButtonCss="usa-button--unstyled"
         showTitleRequired
       >
         <Form
-          name={`close-suspend-reason-form-goal-${goalId}`}
-          key={`close-suspend-reason-form-goal-${goalId}`}
+          key={`close-suspend-reason-form-goal-${key}`}
         >
-          <FormGroup error={showValidationError}>
+          <FormGroup error={showValidationError} className="margin-top-0">
             <Fieldset>
-              <legend className="sr-only">
-                Why are you
-                {reasonDisplayStatus}
-                this goal?
-              </legend>
               {showValidationError ? <ErrorMessage>{`Please select a reason for ${reasonDisplayStatus} goal.`}</ErrorMessage> : null}
               {
                 generateReasonRadioButtons()
@@ -85,7 +80,7 @@ const CloseSuspendReasonModal = ({
           </FormGroup>
           <FormGroup>
             <Fieldset>
-              <Label className="font-weight-normal" htmlFor="input-type-text" error>
+              <Label className="font-weight-normal" htmlFor="close-suspend-reason-context" error>
                 Additional context
               </Label>
               <Textarea
@@ -108,10 +103,15 @@ CloseSuspendReasonModal.propTypes = {
     PropTypes.func,
     PropTypes.shape(),
   ]).isRequired,
-  goalId: PropTypes.number.isRequired,
+  goalIds: PropTypes.arrayOf(PropTypes.number).isRequired,
   newStatus: PropTypes.string.isRequired,
   onSubmit: PropTypes.func.isRequired,
   resetValues: PropTypes.bool.isRequired,
+  oldGoalStatus: PropTypes.string,
+};
+
+CloseSuspendReasonModal.defaultProps = {
+  oldGoalStatus: '',
 };
 
 export default CloseSuspendReasonModal;

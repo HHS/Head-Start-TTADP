@@ -43,7 +43,7 @@ describe('File Scanner tests', () => {
     expect(mockFindOne).toBeCalledWith({ where: { key: fileKey } });
     expect(mockUpdate).toBeCalledWith(
       { status: FILE_STATUSES.APPROVED },
-      { where: { id: 1 } },
+      { where: { id: 1 }, individualHooks: true },
     );
   });
   it('tests a dirty file scan', async () => {
@@ -56,7 +56,7 @@ describe('File Scanner tests', () => {
     expect(mockFindOne).toBeCalledWith({ where: { key: fileKey } });
     expect(mockUpdate).toBeCalledWith(
       { status: FILE_STATUSES.REJECTED },
-      { where: { id: 1 } },
+      { where: { id: 1 }, individualHooks: true },
     );
   });
   it('tests an error', async () => {

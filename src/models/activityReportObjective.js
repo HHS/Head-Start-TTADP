@@ -5,6 +5,13 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       ActivityReportObjective.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });
       ActivityReportObjective.belongsTo(models.Objective, { foreignKey: 'objectiveId', as: 'objective' });
+      ActivityReportObjective.hasMany(models.ActivityReportObjectiveFile, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveFiles' });
+      ActivityReportObjective.belongsToMany(models.File, {
+        through: models.ActivityReportObjectiveFile,
+        foreignKey: 'activityReportObjectiveId',
+        otherKey: 'fileId',
+        as: 'files',
+      });
     }
   }
   ActivityReportObjective.init({
@@ -20,6 +27,7 @@ module.exports = (sequelize, DataTypes) => {
     objectiveId: {
       type: DataTypes.INTEGER,
     },
+    ttaProvided: DataTypes.TEXT,
   }, {
     sequelize,
     modelName: 'ActivityReportObjective',

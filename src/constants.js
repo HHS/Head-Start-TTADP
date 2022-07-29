@@ -26,6 +26,8 @@ export const REPORTS_PER_PAGE = 10;
 export const RECIPIENTS_PER_PAGE = 12;
 export const GOALS_PER_PAGE = 5;
 
+export const SEARCH_RESULTS_PER_PAGE = 23;
+
 export const APPROVER_STATUSES = {
   APPROVED: 'approved',
   NEEDS_ACTION: 'needs_action',
@@ -123,6 +125,9 @@ export const USER_ROLES = [
   'Grantee Specialist',
   'Health Specialist',
   'System Specialist',
+  'National Center',
+  'Customer Service Contract',
+  'Other Federal Staff',
 ];
 
 export const CLOSE_SUSPEND_REASONS = [
@@ -133,3 +138,18 @@ export const CLOSE_SUSPEND_REASONS = [
   'Recipient is not responding',
   'Regional Office request',
 ];
+
+export const AUTOMATIC_CREATION = 'Automatic';
+export const CURATED_CREATION = 'Curated';
+export const CREATION_METHOD = [
+  AUTOMATIC_CREATION,
+  CURATED_CREATION,
+];
+
+export const GOAL_STATUS = {
+  DRAFT: 'Draft',
+  NOT_STARTED: 'Not Started',
+  IN_PROGRESS: 'In Progress',
+  SUSPENDED: 'Suspended',
+  CLOSED: 'Closed',
+};

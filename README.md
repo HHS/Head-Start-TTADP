@@ -35,7 +35,7 @@ those services are already running on your machine.
 #### Docker
 
 1. Make sure Docker is installed. To check run `docker ps`.
-2. Make sure you have Node 16.13.1 installed.
+2. Make sure you have Node 16.15.1 installed.
 4. Copy `.env.example` to `.env`.
 6. Change the `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the "Values for local development" section of the "Development Credentials" document. If you don't have access to this document, please ask in the hs-vendors-ohs-tta channel of the gsa-tts slack channel.
 7. Optionally, set `CURRENT_USER` to your current user's uid:gid. This will cause files created by docker compose to be owned by your user instead of root.
@@ -434,6 +434,7 @@ Once you have that version number, you need to update it in the following files
 You should also update it where it is specified this README file.
 
 You would then need to rebuild the relevant browser images (docker will likely need to pull new ones) and run ```yarn docker:deps``` to rebuild your dependencies.
+If you are using NVM, you can set intall a new node version with ```nvm install VERSION``` and set it to be the default version of node via ```nvm alias default VERSION```.
 
 <!-- Links -->
 

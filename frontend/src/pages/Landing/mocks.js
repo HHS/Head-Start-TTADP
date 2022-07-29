@@ -56,16 +56,22 @@ const activityReports = [
       role: 'Grants Specialist',
       homeRegionId: 14,
     },
-    collaborators: [
+    activityReportCollaborators: [
       {
         fullName: 'Orange, GS',
-        name: 'Orange',
-        role: 'Grants Specialist',
+        user: {
+          fullName: 'Orange, GS',
+          name: 'Orange',
+          role: 'Grants Specialist',
+        },
       },
       {
         fullName: 'Hermione Granger, SS',
-        name: 'Hermione Granger',
-        role: 'System Specialist',
+        user: {
+          fullName: 'Hermione Granger, SS',
+          name: 'Hermione Granger',
+          role: 'System Specialist',
+        },
       },
     ],
   },
@@ -99,16 +105,22 @@ const activityReports = [
       role: 'Grants Specialist',
       homeRegionId: 14,
     },
-    collaborators: [
+    activityReportCollaborators: [
       {
         fullName: 'Cucumber User, GS',
-        name: 'Cucumber User',
-        role: 'Grantee Specialist',
+        user: {
+          fullName: 'Cucumber User, GS',
+          name: 'Cucumber User',
+          role: 'Grantee Specialist',
+        },
       },
       {
         fullName: 'Hermione Granger, SS',
-        name: 'Hermione Granger',
-        role: 'System Specialist',
+        user: {
+          fullName: 'Hermione Granger, SS',
+          name: 'Hermione Granger',
+          role: 'System Specialist',
+        },
       },
     ],
   },
@@ -144,16 +156,22 @@ export const activityReportsSorted = [
       role: 'Grants Specialist',
       homeRegionId: 14,
     },
-    collaborators: [
+    activityReportCollaborators: [
       {
         fullName: 'Cucumber User, GS',
-        name: 'Cucumber User',
-        role: 'Grantee Specialist',
+        user: {
+          fullName: 'Cucumber User, GS',
+          name: 'Cucumber User',
+          role: 'Grantee Specialist',
+        },
       },
       {
         fullName: 'Hermione Granger, SS',
-        name: 'Hermione Granger',
-        role: 'System Specialist',
+        user: {
+          fullName: 'Hermione Granger, SS',
+          name: 'Hermione Granger',
+          role: 'System Specialist',
+        },
       },
     ],
   },
@@ -213,16 +231,22 @@ export const activityReportsSorted = [
       role: 'Grants Specialist',
       homeRegionId: 14,
     },
-    collaborators: [
+    activityReportCollaborators: [
       {
         fullName: 'Orange, GS',
-        name: 'Orange',
-        role: 'Grants Specialist',
+        user: {
+          fullName: 'Orange, GS',
+          name: 'Orange',
+          role: 'Grants Specialist',
+        },
       },
       {
         fullName: 'Hermione Granger, SS',
-        name: 'Hermione Granger',
-        role: 'System Specialist',
+        user: {
+          fullName: 'Hermione Granger, SS',
+          name: 'Hermione Granger',
+          role: 'System Specialist',
+        },
       },
     ],
   },
@@ -287,16 +311,22 @@ export const generateXFakeReports = (count) => {
           role: 'Grants Specialist',
           homeRegionId: 14,
         },
-        collaborators: [
+        activityReportCollaborators: [
           {
             fullName: 'Orange, GS',
-            name: 'Orange',
-            role: 'Grants Specialist',
+            user: {
+              fullName: 'Orange, GS',
+              name: 'Orange',
+              role: 'Grants Specialist',
+            },
           },
           {
             fullName: 'Hermione Granger, SS',
-            name: 'Hermione Granger',
-            role: 'System Specialist',
+            user: {
+              fullName: 'Hermione Granger, SS',
+              name: 'Hermione Granger',
+              role: 'System Specialist',
+            },
           },
         ],
       },

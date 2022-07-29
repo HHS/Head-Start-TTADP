@@ -12,11 +12,6 @@ import FilterTopicSelect from './FilterTopicSelect';
 import FilterStatus from './FilterStatus';
 import FilterSelect from './FilterSelect';
 
-const YEAR_TO_DATE = formatDateRange({
-  yearToDate: true,
-  forDateTime: true,
-});
-
 const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true });
 
 const EMPTY_MULTI_SELECT = {
@@ -33,10 +28,10 @@ const handleArrayQuery = (q) => {
 
 export const createDateFilter = {
   id: 'createDate',
-  display: 'Create date',
+  display: 'Created on',
   conditions: DATE_CONDITIONS,
   defaultValues: {
-    'is within': YEAR_TO_DATE,
+    'is within': '',
     'is on or after': '',
     'is on or before': '',
     is: LAST_THIRTY_DAYS,
@@ -77,7 +72,7 @@ export const reasonsFilter = {
 
 export const statusFilter = {
   id: 'status',
-  display: 'Status',
+  display: 'Goal status',
   conditions: FILTER_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: handleArrayQuery,
@@ -92,7 +87,7 @@ export const statusFilter = {
 
 export const topicsFilter = {
   id: 'topic',
-  display: 'Topics',
+  display: 'Goal topics',
   conditions: FILTER_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: handleArrayQuery,

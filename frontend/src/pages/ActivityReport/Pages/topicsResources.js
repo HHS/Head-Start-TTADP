@@ -80,14 +80,13 @@ const TopicsResources = ({
       </Fieldset>
       <Fieldset legend="Supporting attachments" className="smart-hub--report-legend margin-top-4">
         <div id="attachments" />
-        <Label htmlFor="attachments">Upload resources not available online, agenda, service plans, sign-in sheets, etc.</Label>
+        <Label htmlFor="files">Upload resources not available online, agenda, service plans, sign-in sheets, etc.</Label>
         <span className="usa-hint">Max size: 30 MB | File types: images, .pdf, .docx, .xlsx, .pptx, .doc, .xls, .ppt, .zip, .txt, .csv</span>
         <Controller
-          name="attachments"
+          name="files"
           defaultValue={[]}
-          control={control}
           render={({ onChange, value }) => (
-            <FileUploader files={value} onChange={onChange} reportId={reportId} id="attachments" />
+            <FileUploader files={value} onChange={onChange} reportId={reportId} id="files" />
           )}
         />
       </Fieldset>
@@ -104,12 +103,12 @@ const ReviewSection = () => {
   const {
     nonECLKCResources,
     ECLKCResources,
-    attachments,
+    files,
     calculatedStatus,
     topics: formTopics,
   } = watch();
 
-  const hasAttachments = attachments && attachments.length > 0;
+  const hasAttachments = files && files.length > 0;
   const canEdit = reportIsEditable(calculatedStatus);
 
   return (
@@ -164,7 +163,7 @@ const ReviewSection = () => {
         title="Attachments"
         canEdit={canEdit}
       >
-        {attachments.map((file) => (
+        {files.map((file) => (
           <FileReviewItem
             key={file.url.url}
             filename={file.originalFileName}

@@ -7,7 +7,8 @@ export const GOAL_STATUS = {
   NOT_STARTED: 'Not Started',
   IN_PROGRESS: 'In Progress',
   CLOSED: 'Closed',
-  CEASED: 'Ceased/Suspended',
+  SUSPENDED: 'Suspended',
+  COMPLETED: 'Completed',
   DRAFT: 'Draft',
 };
 
@@ -15,12 +16,14 @@ const STATUSES_TO_INCLUDE = [
   GOAL_STATUS.NOT_STARTED,
   GOAL_STATUS.IN_PROGRESS,
   GOAL_STATUS.CLOSED,
-  GOAL_STATUS.CEASED,
+  GOAL_STATUS.SUSPENDED,
+  GOAL_STATUS.COMPLETED,
 ];
 
 export default async function goalStatusGraph(scopes) {
   const goalsFromDb = await Goal.findAll({
     where: {
+      onApprovedAR: true,
       [Op.and]: [
         scopes.goal,
         {
@@ -31,13 +34,23 @@ export default async function goalStatusGraph(scopes) {
       ],
     },
     // BIGINT (type returned from count) gets converted to string. Explicitly set count to int
-    attributes: [sequelize.literal('COUNT(DISTINCT("Goal".id))::int'), 'status'],
+    attributes: [
+      [
+        sequelize.cast(sequelize.fn(
+          'COUNT',
+          sequelize.fn(
+            'DISTINCT',
+            sequelize.fn('TRIM', sequelize.col('"Goal".name')),
+          ),
+        ), 'int'),
+        'count'],
+      'status'],
     group: ['"Goal".status'],
     includeIgnoreAttributes: false,
     raw: true,
     include: [{
       model: Grant,
-      as: 'grants',
+      as: 'grant',
       required: true,
       include: [{
         model: Recipient,
@@ -60,7 +73,7 @@ export default async function goalStatusGraph(scopes) {
     total,
     'Not started': goals[GOAL_STATUS.NOT_STARTED],
     'In progress': goals[GOAL_STATUS.IN_PROGRESS],
-    Closed: goals[GOAL_STATUS.CLOSED],
-    Suspended: goals[GOAL_STATUS.CEASED],
+    Suspended: goals[GOAL_STATUS.SUSPENDED],
+    Closed: goals[GOAL_STATUS.CLOSED] + goals[GOAL_STATUS.COMPLETED],
   };
 }
