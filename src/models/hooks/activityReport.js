@@ -113,7 +113,6 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
 
 const propagateApprovedStatus = async (sequelize, instance, options) => {
   const changed = instance.changed();
-  auditLogger.error(JSON.stringify({ changed, previous: instance.previous('calculatedStatus'), instance }));
   if (Array.isArray(changed) && changed.includes('calculatedStatus')) {
     if (instance.previous('calculatedStatus') === REPORT_STATUSES.APPROVED
       && instance.calculatedStatus !== REPORT_STATUSES.APPROVED) {
@@ -158,7 +157,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
         }));
         throw e;
       }
-      auditLogger.error(JSON.stringify({ type: 'objectives', objectives }));
+
       if (objectives && objectives.length > 0) {
         await sequelize.models.Objective.update(
           { onApprovedAR: false },
@@ -220,7 +219,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
         }));
         throw e;
       }
-      auditLogger.error(JSON.stringify({ type: 'goals', goals }));
+
       if (goals && goals.length > 0) {
         await sequelize.models.Goal.update(
           { onApprovedAR: false },

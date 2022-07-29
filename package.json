@@ -212,7 +212,7 @@
     "express-http-context": "^1.2.4",
     "express-unless": "^1.0.0",
     "express-winston": "^4.0.5",
-    "file-type": "^16.5.3",
+    "file-type": "^16.5.4",
     "form-data": "^4.0.0",
     "helmet": "^5.1.0",
     "html-to-text": "^8.1.0",
