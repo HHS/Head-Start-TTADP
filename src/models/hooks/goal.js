@@ -14,7 +14,7 @@ const findOrCreateGoalTemplate = async (sequelize, transaction, regionId, name, 
     },
     transaction,
   });
-  return goalTemplate[0].id;
+  return { id: goalTemplate[0].id, name };
 };
 
 // const autoPopulateGoalTemplateId = async (sequelize, instance, options) => {
