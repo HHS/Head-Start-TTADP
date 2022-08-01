@@ -133,10 +133,7 @@ GoalForm.propTypes = {
       value: PropTypes.number,
       label: PropTypes.string,
     })).isRequired,
-    goalIds: PropTypes.arrayOf(PropTypes.shape({
-      value: PropTypes.number,
-      label: PropTypes.string,
-    })),
+    goalIds: PropTypes.arrayOf(PropTypes.number).isRequired,
     value: PropTypes.oneOfType([
       PropTypes.number,
       PropTypes.string,
