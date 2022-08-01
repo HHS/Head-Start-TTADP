@@ -147,7 +147,8 @@ export async function deleteGoal(req, res) {
 
 export async function retrieveGoalsByIds(req, res) {
   try {
-    const { goalIds } = req.params;
+    let { goalIds } = req.query;
+    goalIds = Array.isArray(goalIds) ? goalIds : [goalIds];
     const user = await userById(req.session.userId);
 
     let canView = true;
