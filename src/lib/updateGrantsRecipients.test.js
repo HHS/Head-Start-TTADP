@@ -89,7 +89,12 @@ describe('Update grants and recipients', () => {
 
     const recipient = await Recipient.findOne({ where: { id: 1335 } });
     expect(recipient).toBeDefined();
+    expect(recipient.uei).toBe('NNA5N2KHMGN2');
     expect(recipient.name).toBe('Agency 1, Inc.');
+
+    const recipient7709 = await Recipient.findOne({ where: { id: 7709 } });
+    expect(recipient7709).toBeDefined();
+    expect(recipient7709.uei).toBeNull();
 
     const recipient7782 = await Recipient.findOne({ where: { id: 7782 } });
     expect(recipient7782).toBeDefined();
@@ -183,7 +188,7 @@ describe('Update grants and recipients', () => {
   });
 
   it('should update an existing recipient if it exists in smarthub', async () => {
-    const [dbRecipient] = await Recipient.findOrCreate({ where: { id: 1119, name: 'Multi ID Agency' } });
+    const [dbRecipient] = await Recipient.findOrCreate({ where: { id: 1119, name: 'Multi ID Agency', uei: 'NNA5N2KHMGM2' } });
     await processFiles();
     const recipient = await Recipient.findOne({ where: { id: 1119 } });
     expect(recipient).not.toBeNull();
@@ -193,7 +198,7 @@ describe('Update grants and recipients', () => {
   });
 
   it('should update an existing grant if it exists in smarthub', async () => {
-    await Recipient.findOrCreate({ where: { id: 1119, name: 'Multi ID Agency' } });
+    await Recipient.findOrCreate({ where: { id: 1119, name: 'Multi ID Agency', uei: 'NNA5N2KHMGM2' } });
     const [dbGrant] = await Grant.findOrCreate({ where: { id: 5151, number: '90CI4444', recipientId: 1119 } });
     await processFiles();
     const grant = await Grant.findOne({ where: { id: 5151 } });
@@ -211,7 +216,7 @@ describe('Update grants and recipients', () => {
   });
 
   it('should update cdi grants', async () => {
-    await Recipient.findOrCreate({ where: { id: 500, name: 'Another Agency' } });
+    await Recipient.findOrCreate({ where: { id: 500, name: 'Another Agency', uei: 'NNA5N2KHMGA2' } });
     await Grant.create({
       status: 'Inactive', regionId: 5, id: 11630, number: '13CDI0001', recipientId: 500,
     });
