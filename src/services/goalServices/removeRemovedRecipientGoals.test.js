@@ -29,11 +29,19 @@ describe('removeRemovedRecipientsGoals', () => {
 
   beforeAll(async () => {
     const recipientOne = await Recipient.create(
-      { id: faker.datatype.number({ min: 90000 }), name: faker.company.companyName() },
+      {
+        id: faker.datatype.number({ min: 90000 }),
+        name: faker.company.companyName(),
+        uei: faker.datatype.string(12),
+      },
     );
 
     const recipientTwo = await Recipient.create(
-      { id: faker.datatype.number({ min: 90000 }), name: faker.company.companyName() },
+      {
+        id: faker.datatype.number({ min: 90000 }),
+        name: faker.company.companyName(),
+        uei: faker.datatype.string(12),
+      },
     );
 
     recipients = [recipientOne, recipientTwo];
