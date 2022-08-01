@@ -11,7 +11,18 @@ describe('ObjectiveTopics', () => {
       error={<></>}
       topicOptions={[]}
       validateObjectiveTopics={jest.fn()}
-      topics={[]}
+      topics={[
+        {
+          value: 1,
+          label: 'Dancing but too fast',
+          isOnApprovedReport: true,
+        },
+        {
+          value: 2,
+          label: 'Dancing but too slow',
+          isOnApprovedReport: false,
+        },
+      ]}
       onChangeTopics={jest.fn()}
       status="In Progress"
       isOnReport={false}
@@ -23,5 +34,9 @@ describe('ObjectiveTopics', () => {
     renderObjectiveTopics();
     const label = await screen.findByText('Topics');
     expect(label).toBeVisible();
+    expect(screen.getByText(/add more topics/i)).toBeVisible();
+    const fastDancing = await screen.findByRole('listitem');
+    expect(fastDancing).toHaveTextContent('Dancing but too fast');
+    expect(screen.getByText(/dancing but too slow/i)).toBeVisible();
   });
 });
