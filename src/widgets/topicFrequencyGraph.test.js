@@ -100,8 +100,7 @@ describe('Topics and frequency graph widget', () => {
       mockUserTwo,
       mockUserThree,
     ]);
-
-    await Recipient.create({ name: 'recipient', id: RECIPIENT_ID });
+    await Recipient.create({ name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' });
     await Region.create({ name: 'office 17', id: 17 });
     await Region.create({ name: 'office 18', id: 18 });
     await Grant.create({
