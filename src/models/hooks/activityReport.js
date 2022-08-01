@@ -45,16 +45,23 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
         includeIgnoreAttributes: false,
         transaction: options.transaction,
       });
-      const templateIds = await Promise.all(goals.map(async (goal) => findOrCreateGoalTemplate(
-        sequelize,
-        options.transaction,
-        instance.regionId,
-        goal.name,
-        goal.createdAt,
-        goal.updatedAt,
-      )));
-      await Promise.all(goals.map(async (goal, i) => sequelize.models.Goal.update(
-        { goalTemplateId: templateIds[i] },
+      const distinctGoals = [...new Map(goals.map((goal) => [goal.name, goal])).values()];
+      const distinctTemplateIds = await Promise.all(distinctGoals
+        .map(async (goal) => findOrCreateGoalTemplate(
+          sequelize,
+          options.transaction,
+          instance.regionId,
+          goal.name,
+          goal.createdAt,
+          goal.updatedAt,
+        )));
+      goals = goals.map((goal) => {
+        const goalTemplateId = distinctTemplateIds[distinctTemplateIds
+          .map((dtId) => dtId.name).indexOf(goal.name)];
+        return { ...goal, goalTemplateId };
+      });
+      await Promise.all(goals.map(async (goal) => sequelize.models.Goal.update(
+        { goalTemplateId: goals.goalTemplateId },
         {
           where: { id: goal.id },
           transaction: options.transaction,
@@ -84,21 +91,24 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
         includeIgnoreAttributes: false,
         transaction: options.transaction,
       });
-      const templateIds = await Promise.all(objectives.map(async (
-        objective,
-      ) => findOrCreateObjectiveTemplate(
-        sequelize,
-        options.transaction,
-        instance.regionId,
-        objective.title,
-        objective.createdAt,
-        objective.updatedAt,
-      )));
-      await Promise.all(objectives.map(async (
-        objective,
-        i,
-      ) => sequelize.models.Objective.update(
-        { objectiveTemplateId: templateIds[i] },
+      const distinctObjectives = [...new Map(objectives
+        .map((objective) => [objective.title, objective])).values()];
+      const distinctTemplateIds = await Promise.all(distinctObjectives
+        .map(async (objective) => findOrCreateObjectiveTemplate(
+          sequelize,
+          options.transaction,
+          instance.regionId,
+          objective.title,
+          objective.createdAt,
+          objective.updatedAt,
+        )));
+      objectives = objectives.map((objective) => {
+        const objectiveTemplateId = distinctTemplateIds[distinctTemplateIds
+          .map((dtId) => dtId.title).indexOf(objective.title)];
+        return { ...objective, objectiveTemplateId };
+      });
+      await Promise.all(objectives.map(async (objective) => sequelize.models.Objective.update(
+        { objectiveTemplateId: objectives.objectiveTemplateId },
         {
           where: { id: objective.id },
           transaction: options.transaction,
