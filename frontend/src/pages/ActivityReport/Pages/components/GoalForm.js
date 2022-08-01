@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 import { useController, useFormContext } from 'react-hook-form/dist/index.ie11';
 import GoalText from '../../../../components/GoalForm/GoalText';
-import { goalById } from '../../../../fetchers/goals';
+import { goalsByIds } from '../../../../fetchers/goals';
 import Objectives from './Objectives';
 import GoalDate from '../../../../components/GoalForm/GoalDate';
 import {
@@ -83,16 +83,15 @@ export default function GoalForm({
    */
   useEffect(() => {
     async function fetchData() {
-      const data = await goalById(goal.id.toString());
+      const data = await goalsByIds(goal.goalIds);
       setObjectives(data.objectives);
     }
-
-    if (!goal.isNew && goal.id) {
+    if (!goal.isNew && goal.goalIds) {
       fetchData();
     } else {
       setObjectives([]);
     }
-  }, [goal.id, goal.isNew]);
+  }, [goal.goalIds, goal.isNew]);
 
   return (
     <>
@@ -130,10 +129,14 @@ export default function GoalForm({
 
 GoalForm.propTypes = {
   goal: PropTypes.shape({
-    id: PropTypes.oneOfType([
-      PropTypes.number,
-      PropTypes.string,
-    ]),
+    id: PropTypes.arrayOf(PropTypes.shape({
+      value: PropTypes.number,
+      label: PropTypes.string,
+    })).isRequired,
+    goalIds: PropTypes.arrayOf(PropTypes.shape({
+      value: PropTypes.number,
+      label: PropTypes.string,
+    })),
     value: PropTypes.oneOfType([
       PropTypes.number,
       PropTypes.string,
