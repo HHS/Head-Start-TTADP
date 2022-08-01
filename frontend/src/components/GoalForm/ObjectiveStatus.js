@@ -29,7 +29,7 @@ export default function ObjectiveStatus({
         <Label htmlFor={inputName}>
           Objective status
         </Label>
-        <Dropdown name={inputName} onChange={onChange} value={status}>
+        <Dropdown name={inputName} onChange={onChange} value={status} id={inputName}>
           <option>In Progress</option>
           <option>Completed</option>
         </Dropdown>
