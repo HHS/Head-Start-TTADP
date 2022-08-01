@@ -248,7 +248,9 @@ function reduceObjectives(newObjectives, currentObjectives = []) {
  */
 function reduceGoals(goals) {
   return goals.reduce((previousValue, currentValue) => {
-    const existingGoal = previousValue.find((g) => g.name === currentValue.name);
+    const existingGoal = previousValue.find((g) => (
+      g.name === currentValue.name && g.status === currentValue.status
+    ));
 
     if (existingGoal) {
       existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.goalNumber];
@@ -291,8 +293,8 @@ function reduceGoals(goals) {
  * @param {number} id
  * @returns {Promise{Object}}
  */
-export function goalById(id) {
-  return Goal.findOne({
+export async function goalsByIds(id) {
+  const goals = await Goal.findAll({
     attributes: [
       'endDate',
       'status',
@@ -370,6 +372,8 @@ export function goalById(id) {
       },
     ],
   });
+
+  return reduceGoals(goals);
 }
 
 /**
