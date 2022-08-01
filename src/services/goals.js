@@ -248,7 +248,9 @@ function reduceObjectives(newObjectives, currentObjectives = []) {
  */
 function reduceGoals(goals) {
   return goals.reduce((previousValue, currentValue) => {
-    const existingGoal = previousValue.find((g) => g.name === currentValue.name);
+    const existingGoal = previousValue.find((g) => (
+      g.name === currentValue.name && g.status === currentValue.status
+    ));
 
     if (existingGoal) {
       existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.goalNumber];
@@ -581,7 +583,10 @@ export async function createOrUpdateGoals(goals) {
       defaults: { status },
     });
 
-    await newGoal.update(options);
+    await newGoal.update(
+      { ...options, status },
+      { individualHooks: true },
+    );
 
     // before we create objectives, we have to unpack them to make the creation a little cleaner
     // if an objective was new, then it will not have an id but "isNew" will be true
@@ -593,6 +598,7 @@ export async function createOrUpdateGoals(goals) {
 
     const objectivesToCreateOrUpdate = objectives.reduce((arr, o) => {
       if (o.isNew) {
+        // eslint-disable-next-line no-param-reassign
         return [...arr, o];
       }
 
@@ -624,7 +630,7 @@ export async function createOrUpdateGoals(goals) {
               title,
             },
           });
-        } else {
+        } else if (objectiveId) {
           objective = await Objective.findOne({
             where: {
               id: objectiveId,
@@ -644,11 +650,11 @@ export async function createOrUpdateGoals(goals) {
         await objective.update({
           title,
           status: objectiveStatus,
-        });
+        }, { individualHooks: true });
 
         // topics
         const objectiveTopics = await Promise.all(
-          (topics.map((ot) => ObjectiveTopic.findOrCreate({
+          (topics.map(async (ot) => ObjectiveTopic.findOrCreate({
             where: {
               objectiveId: objective.id,
               topicId: ot.value,
@@ -721,6 +727,7 @@ export async function createOrUpdateGoals(goals) {
           ...objective.dataValues,
           topics,
           resources,
+          roles,
         };
       }),
     );
@@ -730,6 +737,7 @@ export async function createOrUpdateGoals(goals) {
 
     return newGoal.id;
   }));
+
   // we have to do this outside of the transaction otherwise
   // we get the old values
 
