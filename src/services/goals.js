@@ -227,6 +227,8 @@ function reduceObjectives(newObjectives, currentObjectives = []) {
     // we need to handle the case where there is TTA provided and TTA not provided
     // NOTE: there will only be one activity report objective, it is queried by activity report id
     const ttaProvided = objective.activityReportObjectives
+        && objective.activityReportObjectives[0]
+        && objective.activityReportObjectives[0].ttaProvided
       ? objective.activityReportObjectives[0].ttaProvided : null;
 
     const roles = objective.roles.map((role) => role.fullName);
@@ -308,6 +310,12 @@ export async function goalsByIds(id) {
     },
     include: [
       {
+        model: Grant,
+        as: 'grant',
+      },
+      {
+        model: Objective,
+        as: 'objectives',
         where: {
           [Op.and]: [
             {
@@ -328,8 +336,6 @@ export async function goalsByIds(id) {
           'title',
           'status',
         ],
-        model: Objective,
-        as: 'objectives',
         required: false,
         include: [
           {
@@ -348,6 +354,10 @@ export async function goalsByIds(id) {
               'ttaProvided',
             ],
             required: false,
+          },
+          {
+            model: Role,
+            as: 'roles',
           },
           {
             model: Topic,
