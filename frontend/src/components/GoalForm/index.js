@@ -1,4 +1,3 @@
-/* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useEffect, useState, useMemo } from 'react';
 import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
@@ -348,12 +347,12 @@ export default function GoalForm({
       const gs = createdGoals.reduce((acc, goal) => {
         const newGoals = goal.grantIds.map((g) => ({
           grantId: g,
-          name: goalName,
+          name: goal.goalName,
           status,
-          endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
+          endDate: goal.endDate && goal.endDate !== 'Invalid date' ? goal.endDate : null,
           regionId: parseInt(regionId, DECIMAL_BASE),
           recipientId: recipient.id,
-          objectives,
+          objectives: goal.objectives,
         }));
 
         return [...acc, ...newGoals];
