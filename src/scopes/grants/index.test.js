@@ -7,18 +7,22 @@ import {
 const recipients = [
   {
     id: 13259,
+    uei: 'NNA5N2KHMGN2',
     name: 'recipient 13259',
   },
   {
     id: 13269,
+    uei: 'NNA5N2KHMBA2',
     name: 'recipient 13269',
   },
   {
     id: 13279,
+    uei: 'NNA5N2KHMBC2',
     name: 'recipient 13279',
   },
   {
     id: 13289,
+    uei: 'NNA5N2KHMGBV2',
     name: 'recipient 13279',
   },
 ];
