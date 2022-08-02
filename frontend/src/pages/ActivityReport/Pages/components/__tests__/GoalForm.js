@@ -17,6 +17,7 @@ describe('GoalForm', () => {
       ...newGoal([]),
       id,
       isNew: id === 'new',
+      goalIds: [123],
     };
 
     const hookForm = useForm({
@@ -55,7 +56,7 @@ describe('GoalForm', () => {
 
   it('fetches data for existing goals', async () => {
     const goalId = 123;
-    fetchMock.get(`/api/goals/${goalId}`, {
+    fetchMock.get(`/api/goals?goalIds=${goalId}`, [{
       endDate: '',
       status: '',
       value: goalId,
@@ -63,7 +64,7 @@ describe('GoalForm', () => {
       id: goalId,
       name: 'Test',
       objectives: [],
-    });
+    }]);
 
     renderGoalForm(goalId);
     expect(fetchMock.called()).toBe(true);
