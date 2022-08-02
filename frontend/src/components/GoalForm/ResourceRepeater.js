@@ -18,6 +18,7 @@ export default function ResourceRepeater({
   validateResources,
   status,
   isOnReport,
+  isLoading,
 }) {
   const resourcesWrapper = useRef();
 
@@ -105,6 +106,7 @@ export default function ResourceRepeater({
                   placeholder="https://"
                   onChange={({ target: { value } }) => updateResource(value, i)}
                   value={r.value}
+                  disabled={isLoading}
                 />
                 { resources.length > 1 ? (
                   <Button unstyled type="button" onClick={() => removeResource(i)}>
@@ -139,4 +141,9 @@ ResourceRepeater.propTypes = {
   validateResources: PropTypes.func.isRequired,
   status: PropTypes.string.isRequired,
   isOnReport: PropTypes.bool.isRequired,
+  isLoading: PropTypes.bool,
+};
+
+ResourceRepeater.defaultProps = {
+  isLoading: false,
 };

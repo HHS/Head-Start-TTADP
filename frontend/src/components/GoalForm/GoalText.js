@@ -11,6 +11,7 @@ export default function GoalText({
   validateGoalName,
   onUpdateText,
   inputName,
+  isLoading,
 }) {
   return (
     <FormGroup error={error.props.children}>
@@ -31,6 +32,7 @@ export default function GoalText({
             value={goalName}
             onChange={onUpdateText}
             required
+            disabled={isLoading}
           />
         </>
       )}
@@ -45,8 +47,10 @@ GoalText.propTypes = {
   validateGoalName: PropTypes.func.isRequired,
   onUpdateText: PropTypes.func.isRequired,
   inputName: PropTypes.string,
+  isLoading: PropTypes.bool,
 };
 
 GoalText.defaultProps = {
   inputName: 'goalText',
+  isLoading: false,
 };
