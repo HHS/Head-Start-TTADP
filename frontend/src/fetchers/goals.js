@@ -5,9 +5,9 @@ import {
 
 const goalsUrl = join('/', 'api', 'goals');
 
-export async function goalsByIds(goalIds) {
+export async function goalsByIdsAndActivityReport(goalIds, reportId) {
   const params = goalIds.map((goalId) => `goalIds=${goalId}`);
-  const url = join(goalsUrl, `?${params.join('&')}`);
+  const url = join(goalsUrl, `?reportId=${reportId}&${params.join('&')}`);
   const response = await get(url);
   return response.json();
 }

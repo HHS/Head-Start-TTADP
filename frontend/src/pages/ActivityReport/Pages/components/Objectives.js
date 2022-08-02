@@ -34,7 +34,7 @@ export default function Objectives({
     defaultValues,
   });
 
-  const objectiveIds = fields ? fields.map(({ value }) => value) : [];
+  const objectiveIds = fields ? fields.map(({ value, id }) => id || value) : [];
 
   const options = [
     NEW_OBJECTIVE(),

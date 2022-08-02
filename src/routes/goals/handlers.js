@@ -3,7 +3,7 @@ import {
   createOrUpdateGoalsForActivityReport,
   createOrUpdateGoals,
   destroyGoal,
-  goalsByIds,
+  goalsByIdsAndActivityReport,
   goalByIdWithActivityReportsAndRegions,
   goalByIdAndRecipient,
 } from '../../services/goals';
@@ -148,6 +148,7 @@ export async function deleteGoal(req, res) {
 export async function retrieveGoalsByIds(req, res) {
   try {
     let { goalIds } = req.query;
+    const { reportId } = req.query;
     goalIds = Array.isArray(goalIds) ? goalIds : [goalIds];
     const user = await userById(req.session.userId);
 
@@ -166,7 +167,7 @@ export async function retrieveGoalsByIds(req, res) {
     }
 
     const gIds = goalIds.map((g) => parseInt(g, 10));
-    const retrievedGoal = await goalsByIds(gIds);
+    const retrievedGoal = await goalsByIdsAndActivityReport(gIds, reportId);
 
     if (!retrievedGoal) {
       res.sendStatus(404);

@@ -3,6 +3,7 @@
 // way they did in thier examples
 /* eslint-disable arrow-body-style */
 import React, { useState, useMemo, useContext } from 'react';
+import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert, Fieldset } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -20,7 +21,7 @@ import PlusButton from '../../../components/GoalForm/PlusButton';
 import OtherEntity from './components/OtherEntity';
 import GoalFormContext from '../../../GoalFormContext';
 
-const GoalsObjectives = () => {
+const GoalsObjectives = ({ reportId }) => {
   const {
     watch, setValue, getValues, setError,
   } = useFormContext();
@@ -211,6 +212,7 @@ const GoalsObjectives = () => {
                 grantIds={grantIds}
                 availableGoals={availableGoals}
                 roles={roles}
+                reportId={reportId}
               />
             </Fieldset>
           </>
@@ -232,7 +234,9 @@ const GoalsObjectives = () => {
   );
 };
 
-GoalsObjectives.propTypes = {};
+GoalsObjectives.propTypes = {
+  reportId: PropTypes.number.isRequired,
+};
 
 const ReviewSection = () => {
   const { watch } = useFormContext();
@@ -277,7 +281,10 @@ export default {
     return activityRecipientType !== 'recipient' || validateGoals(formData.goals) === true;
   },
   reviewSection: () => <ReviewSection />,
-  render: () => (
-    <GoalsObjectives />
+  render: (_additionalData, _formData, reportId) => (
+
+    <GoalsObjectives
+      reportId={reportId}
+    />
   ),
 };
