@@ -84,7 +84,6 @@ export default function GoalForm({
   useEffect(() => {
     async function fetchData() {
       const data = await goalsByIds(goal.goalIds);
-      console.log('Objectives From DB', data[0].objectives);
       setObjectives(data[0].objectives);
     }
     if (!goal.isNew && goal.goalIds) {
