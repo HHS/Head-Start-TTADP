@@ -17,6 +17,7 @@ export default function ObjectiveTopics({
   inputName,
   isOnReport,
   isOnApprovedReport,
+  isLoading,
 }) {
   const readOnly = status === 'Suspended' || (status === 'Not Started' && isOnReport);
 
@@ -97,6 +98,7 @@ export default function ObjectiveTopics({
             value={editableTopics}
             onChange={onChangeTopics}
             closeMenuOnSelect={false}
+            isDisabled={isLoading}
           />
         </FormGroup>
       ) : null }
@@ -120,8 +122,10 @@ ObjectiveTopics.propTypes = {
   inputName: PropTypes.string,
   isOnReport: PropTypes.bool.isRequired,
   isOnApprovedReport: PropTypes.bool.isRequired,
+  isLoading: PropTypes.bool,
 };
 
 ObjectiveTopics.defaultProps = {
   inputName: 'topics',
+  isLoading: false,
 };

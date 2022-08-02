@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Button } from '@trussworks/react-uswds';
 import ObjectiveTitle from './ObjectiveTitle';
@@ -11,6 +11,7 @@ import {
 import { REPORT_STATUSES } from '../../Constants';
 import SpecialistRole from './SpecialistRole';
 import ObjectiveStatus from './ObjectiveStatus';
+import GoalFormLoadingContext from '../../GoalFormLoadingContext';
 
 const [
   objectiveTitleError,
@@ -42,6 +43,8 @@ export default function ObjectiveForm({
       report.status === REPORT_STATUSES.APPROVED
     )))
   ), [objective.activityReports]);
+
+  const { isLoading } = useContext(GoalFormLoadingContext);
 
   // onchange handlers
   const onChangeTitle = (e) => setObjective({ ...objective, title: e.target.value });
@@ -120,6 +123,7 @@ export default function ObjectiveForm({
         onChangeTitle={onChangeTitle}
         validateObjectiveTitle={validateObjectiveTitle}
         status={status}
+        isLoading={isLoading}
       />
 
       <SpecialistRole
@@ -131,6 +135,7 @@ export default function ObjectiveForm({
         isOnReport={isOnReport || false}
         isOnApprovedReport={isOnApprovedReport || false}
         status={status}
+        isLoading={isLoading}
       />
 
       <ObjectiveTopics
@@ -142,6 +147,7 @@ export default function ObjectiveForm({
         status={status}
         isOnReport={isOnReport || false}
         isOnApprovedReport={isOnApprovedReport || false}
+        isLoading={isLoading}
       />
 
       <ResourceRepeater
@@ -152,6 +158,7 @@ export default function ObjectiveForm({
         isOnReport={isOnReport || false}
         isOnApprovedReport={isOnApprovedReport || false}
         status={status}
+        isLoading={isLoading}
       />
 
       <ObjectiveStatus
@@ -161,6 +168,7 @@ export default function ObjectiveForm({
         goalStatus={goalStatus}
         onChangeStatus={onChangeStatus}
         inputName={`objective-status-${index}`}
+        isLoading={isLoading}
       />
 
       <ObjectiveFiles
@@ -170,6 +178,7 @@ export default function ObjectiveForm({
         isOnApprovedReport={isOnApprovedReport || false}
         isOnReport={isOnReport || false}
         status={status}
+        isLoading={isLoading}
       />
 
     </div>

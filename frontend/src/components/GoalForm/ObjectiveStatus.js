@@ -8,6 +8,7 @@ export default function ObjectiveStatus({
   onChangeStatus,
   inputName,
   isOnReport,
+  isLoading,
 }) {
   // if the goal is a draft, any objectives added
   // will have to be draft as well
@@ -29,7 +30,13 @@ export default function ObjectiveStatus({
         <Label htmlFor={inputName}>
           Objective status
         </Label>
-        <Dropdown name={inputName} onChange={onChange} value={status} id={inputName}>
+        <Dropdown
+          name={inputName}
+          onChange={onChange}
+          value={status}
+          id={inputName}
+          disabled={isLoading}
+        >
           <option>In Progress</option>
           <option>Completed</option>
         </Dropdown>
@@ -53,4 +60,9 @@ ObjectiveStatus.propTypes = {
   inputName: PropTypes.string.isRequired,
   onChangeStatus: PropTypes.func.isRequired,
   isOnReport: PropTypes.bool.isRequired,
+  isLoading: PropTypes.bool,
+};
+
+ObjectiveStatus.defaultProps = {
+  isLoading: false,
 };

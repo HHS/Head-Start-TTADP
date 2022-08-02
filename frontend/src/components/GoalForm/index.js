@@ -1,4 +1,6 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, {
+  useEffect, useState, useMemo,
+} from 'react';
 import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -25,6 +27,7 @@ import { DECIMAL_BASE, REPORT_STATUSES } from '../../Constants';
 import ReadOnly from './ReadOnly';
 import PlusButton from './PlusButton';
 import colors from '../../colors';
+import GoalFormLoadingContext from '../../GoalFormLoadingContext';
 
 const [
   objectiveTextError, objectiveTopicsError, objectiveResourcesError, objectiveStatusError,
@@ -88,6 +91,8 @@ export default function GoalForm({
   const [goalNumber, setGoalNumber] = useState('');
 
   const [errors, setErrors] = useState(FORM_FIELD_DEFAULT_ERRORS);
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const isOnReport = useMemo(() => objectives.some(
     (objective) => objective.activityReports && objective.activityReports.length > 0,
@@ -154,11 +159,14 @@ export default function GoalForm({
         setObjectives(newObjectives);
       } catch (err) {
         setFetchError('There was an error loading your goal');
+      } finally {
+        setIsLoading(false);
       }
     }
 
     // only fetch once, on load, and only if the id isn't 'new'
     if (!fetchAttempted && id !== 'new') {
+      setIsLoading(true);
       fetchGoal();
     }
   }, [errors, fetchAttempted, recipient.id, id]);
@@ -166,13 +174,20 @@ export default function GoalForm({
   // for fetching topic options from API
   useEffect(() => {
     async function fetchTopics() {
-      const topicsFromApi = await getTopics();
+      setIsLoading(true);
+      try {
+        const topicsFromApi = await getTopics();
 
-      const topicsAsOptions = topicsFromApi.map((topic) => ({
-        label: topic.name,
-        value: topic.id,
-      }));
-      setTopicOptions(topicsAsOptions);
+        const topicsAsOptions = topicsFromApi.map((topic) => ({
+          label: topic.name,
+          value: topic.id,
+        }));
+        setTopicOptions(topicsAsOptions);
+      } catch (err) {
+        setFetchError('There was an error loading topics');
+      } finally {
+        setIsLoading(false);
+      }
     }
 
     fetchTopics();
@@ -342,7 +357,7 @@ export default function GoalForm({
   // on form submit
   const onSubmit = async (e) => {
     e.preventDefault();
-
+    setIsLoading(true);
     try {
       const gs = createdGoals.reduce((acc, goal) => {
         const newGoals = goal.grantIds.map((g) => ({
@@ -371,6 +386,8 @@ export default function GoalForm({
         message: 'There was an error saving your goal',
         type: 'error',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -378,6 +395,8 @@ export default function GoalForm({
     if (!isValidDraft()) {
       return;
     }
+
+    setIsLoading(true);
 
     try {
       const newGoals = selectedGrants.map((g) => ({
@@ -411,6 +430,8 @@ export default function GoalForm({
         message: 'There was an error saving your goal',
         type: 'error',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -430,6 +451,7 @@ export default function GoalForm({
       return;
     }
 
+    setIsLoading(true);
     try {
       const newGoals = selectedGrants.map((g) => ({
         grantId: g.value,
@@ -467,6 +489,8 @@ export default function GoalForm({
         message: 'There was an error saving your goal',
         type: 'error',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -501,6 +525,7 @@ export default function GoalForm({
    * @param {Number} g
    */
   const onDelete = async (g) => {
+    setIsLoading(true);
     try {
       const success = await deleteGoal(g, regionId);
 
@@ -521,6 +546,8 @@ export default function GoalForm({
         message: 'There was an error deleting your goal',
         type: 'error',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -545,71 +572,73 @@ export default function GoalForm({
       </h1>
 
       <Container className="margin-y-2 margin-left-2 width-tablet padding-top-1" skipTopPadding>
-        { createdGoals.length ? (
-          <>
-            <ReadOnly
-              createdGoals={createdGoals}
-              onDelete={onDelete}
-              onEdit={onEdit}
+        <GoalFormLoadingContext.Provider value={{ isLoading }}>
+          { createdGoals.length ? (
+            <>
+              <ReadOnly
+                createdGoals={createdGoals}
+                onDelete={onDelete}
+                onEdit={onEdit}
+              />
+              <div className="margin-bottom-4">
+                {!showForm && id === 'new'
+                  ? (
+                    <PlusButton onClick={() => setShowForm(true)} text="Add another goal" />
+                  ) : null }
+              </div>
+            </>
+          ) : null }
+
+          <form onSubmit={onSubmit}>
+            { showForm && (
+            <Form
+              fetchError={fetchError}
+              onSaveDraft={onSaveDraft}
+              possibleGrants={possibleGrants}
+              selectedGrants={selectedGrants}
+              setSelectedGrants={setSelectedGrants}
+              goalName={goalName}
+              setGoalName={setGoalName}
+              recipient={recipient}
+              regionId={regionId}
+              endDate={endDate}
+              setEndDate={setEndDate}
+              datePickerKey={datePickerKey}
+              errors={errors}
+              validateGoalName={validateGoalName}
+              validateEndDate={validateEndDate}
+              validateGrantNumbers={validateGrantNumbers}
+              objectives={objectives}
+              setObjectives={setObjectives}
+              setObjectiveError={setObjectiveError}
+              clearEmptyObjectiveError={clearEmptyObjectiveError}
+              topicOptions={topicOptions}
+              isOnReport={isOnReport}
+              isOnApprovedReport={isOnApprovedReport}
+              status={status || 'Needs status'}
+              goalNumber={goalNumber}
             />
-            <div className="margin-bottom-4">
-              {!showForm && id === 'new'
-                ? (
-                  <PlusButton onClick={() => setShowForm(true)} text="Add another goal" />
-                ) : null }
+            )}
+
+            <div className="margin-top-4">
+              { showForm && !createdGoals.length ? (
+                <Link
+                  to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
+                  className=" usa-button usa-button--outline"
+                >
+                  Cancel
+                </Link>
+              ) : null }
+              { showForm && createdGoals.length ? (
+                <Button type="button" outline onClick={clearForm} data-testid="create-goal-form-cancel">Cancel</Button>
+              ) : null }
+              <Button type="button" outline onClick={onSaveDraft}>Save draft</Button>
+              { showForm ? <Button type="button" onClick={onSaveAndContinue}>Save and continue</Button> : null }
+              { !showForm ? <Button type="submit">Submit goal</Button> : null }
+              { alert.message ? <Alert role="alert" className="margin-y-2" type={alert.type}>{alert.message}</Alert> : null }
             </div>
-          </>
-        ) : null }
-
-        <form onSubmit={onSubmit}>
-          { showForm && (
-          <Form
-            fetchError={fetchError}
-            onSaveDraft={onSaveDraft}
-            possibleGrants={possibleGrants}
-            selectedGrants={selectedGrants}
-            setSelectedGrants={setSelectedGrants}
-            goalName={goalName}
-            setGoalName={setGoalName}
-            recipient={recipient}
-            regionId={regionId}
-            endDate={endDate}
-            setEndDate={setEndDate}
-            datePickerKey={datePickerKey}
-            errors={errors}
-            validateGoalName={validateGoalName}
-            validateEndDate={validateEndDate}
-            validateGrantNumbers={validateGrantNumbers}
-            objectives={objectives}
-            setObjectives={setObjectives}
-            setObjectiveError={setObjectiveError}
-            clearEmptyObjectiveError={clearEmptyObjectiveError}
-            topicOptions={topicOptions}
-            isOnReport={isOnReport}
-            isOnApprovedReport={isOnApprovedReport}
-            status={status || 'Needs status'}
-            goalNumber={goalNumber}
-          />
-          )}
-
-          <div className="margin-top-4">
-            { showForm && !createdGoals.length ? (
-              <Link
-                to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
-                className=" usa-button usa-button--outline"
-              >
-                Cancel
-              </Link>
-            ) : null }
-            { showForm && createdGoals.length ? (
-              <Button type="button" outline onClick={clearForm} data-testid="create-goal-form-cancel">Cancel</Button>
-            ) : null }
-            <Button type="button" outline onClick={onSaveDraft}>Save draft</Button>
-            { showForm ? <Button type="button" onClick={onSaveAndContinue}>Save and continue</Button> : null }
-            { !showForm ? <Button type="submit">Submit goal</Button> : null }
-            { alert.message ? <Alert role="alert" className="margin-y-2" type={alert.type}>{alert.message}</Alert> : null }
-          </div>
-        </form>
+          </form>
+        </GoalFormLoadingContext.Provider>
       </Container>
     </>
   );

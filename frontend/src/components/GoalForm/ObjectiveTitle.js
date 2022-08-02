@@ -13,6 +13,7 @@ export default function ObjectiveTitle({
   validateObjectiveTitle,
   status,
   inputName,
+  isLoading,
 }) {
   const readOnly = useMemo(() => (isOnApprovedReport || status === 'Complete' || status === 'Suspended' || (status === 'Not Started' && isOnReport) || (status === 'In Progress' && isOnReport)),
     [isOnApprovedReport, isOnReport, status]);
@@ -36,6 +37,7 @@ export default function ObjectiveTitle({
             onChange={onChangeTitle}
             onBlur={validateObjectiveTitle}
             required
+            disabled={isLoading}
           />
         </>
       )}
@@ -52,8 +54,10 @@ ObjectiveTitle.propTypes = {
   onChangeTitle: PropTypes.func.isRequired,
   status: PropTypes.string.isRequired,
   inputName: PropTypes.string,
+  isLoading: PropTypes.bool,
 };
 
 ObjectiveTitle.defaultProps = {
   inputName: 'objectiveTitle',
+  isLoading: false,
 };
