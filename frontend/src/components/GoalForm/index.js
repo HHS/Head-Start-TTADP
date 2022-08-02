@@ -453,7 +453,6 @@ export default function GoalForm({
         grants: formatGrantsFromApi(goal.grants),
         objectives: goal.objectives.map((objective) => ({
           ...objective,
-          roles: objective.roles.map((role) => role.fullName),
         })),
       })));
 
