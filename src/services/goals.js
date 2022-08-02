@@ -348,14 +348,6 @@ export async function goalsByIds(id) {
             required: false,
           },
           {
-            model: ActivityReportObjective,
-            as: 'activityReportObjectives',
-            attributes: [
-              'ttaProvided',
-            ],
-            required: false,
-          },
-          {
             model: Role,
             as: 'roles',
           },
