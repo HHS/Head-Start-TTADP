@@ -227,6 +227,8 @@ function reduceObjectives(newObjectives, currentObjectives = []) {
     // we need to handle the case where there is TTA provided and TTA not provided
     // NOTE: there will only be one activity report objective, it is queried by activity report id
     const ttaProvided = objective.activityReportObjectives
+        && objective.activityReportObjectives[0]
+        && objective.activityReportObjectives[0].ttaProvided
       ? objective.activityReportObjectives[0].ttaProvided : null;
 
     const roles = objective.roles.map((role) => role.fullName);
@@ -293,8 +295,8 @@ function reduceGoals(goals) {
  * @param {number} id
  * @returns {Promise{Object}}
  */
-export function goalById(id) {
-  return Goal.findOne({
+export async function goalsByIds(id) {
+  const goals = await Goal.findAll({
     attributes: [
       'endDate',
       'status',
@@ -308,6 +310,12 @@ export function goalById(id) {
     },
     include: [
       {
+        model: Grant,
+        as: 'grant',
+      },
+      {
+        model: Objective,
+        as: 'objectives',
         where: {
           [Op.and]: [
             {
@@ -328,8 +336,6 @@ export function goalById(id) {
           'title',
           'status',
         ],
-        model: Objective,
-        as: 'objectives',
         required: false,
         include: [
           {
@@ -342,12 +348,8 @@ export function goalById(id) {
             required: false,
           },
           {
-            model: ActivityReportObjective,
-            as: 'activityReportObjectives',
-            attributes: [
-              'ttaProvided',
-            ],
-            required: false,
+            model: Role,
+            as: 'roles',
           },
           {
             model: Topic,
@@ -372,6 +374,8 @@ export function goalById(id) {
       },
     ],
   });
+
+  return reduceGoals(goals);
 }
 
 /**

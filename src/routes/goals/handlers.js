@@ -3,7 +3,7 @@ import {
   createOrUpdateGoalsForActivityReport,
   createOrUpdateGoals,
   destroyGoal,
-  goalById,
+  goalsByIds,
   goalByIdWithActivityReportsAndRegions,
   goalByIdAndRecipient,
 } from '../../services/goals';
@@ -145,23 +145,28 @@ export async function deleteGoal(req, res) {
   }
 }
 
-export async function retrieveGoalById(req, res) {
+export async function retrieveGoalsByIds(req, res) {
   try {
-    const { goalId } = req.params;
-
+    let { goalIds } = req.query;
+    goalIds = Array.isArray(goalIds) ? goalIds : [goalIds];
     const user = await userById(req.session.userId);
-    const goal = await goalByIdWithActivityReportsAndRegions(goalId);
 
-    const policy = new Goal(user, goal);
+    let canView = true;
+    goalIds.forEach(async (id) => {
+      const goal = await goalByIdWithActivityReportsAndRegions(id);
+      const policy = new Goal(user, goal);
+      if (!policy.canView()) {
+        canView = false;
+      }
+    });
 
-    if (!policy.canView()) {
+    if (!canView) {
       res.sendStatus(401);
       return;
     }
 
-    const gId = parseInt(goalId, 10);
-
-    const retrievedGoal = await goalById(gId);
+    const gIds = goalIds.map((g) => parseInt(g, 10));
+    const retrievedGoal = await goalsByIds(gIds);
 
     if (!retrievedGoal) {
       res.sendStatus(404);
