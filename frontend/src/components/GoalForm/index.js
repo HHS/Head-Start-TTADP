@@ -111,8 +111,6 @@ export default function GoalForm({
       try {
         const goal = await goalByIdAndRecipient(id, recipient.id.toString());
 
-        console.log('timing');
-
         // the API sends us back things in a format we expect
         setGoalName(goal.goalName);
         setStatus(goal.status);
