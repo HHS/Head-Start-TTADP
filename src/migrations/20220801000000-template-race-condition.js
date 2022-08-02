@@ -33,7 +33,7 @@ module.exports = {
             JOIN "GoalTemplates" dgt
             ON gt.hash = dgt.hash
             AND gt.id < dgt.id
-            GROUP BY 2,3,4;;
+            GROUP BY 2,3,4;
             ------------------------------------------------------------------------------------
             UPDATE "Goals" g
             SET
@@ -63,8 +63,35 @@ module.exports = {
               "updatedAt" = gtd."updatedAt",
               "lastUsed" = gtd."lastUsed",
               "templateNameModifiedAt" = gtd."templateNameModifiedAt"
-            USING "GoalTemplateDates" gtd
+            FROM "GoalTemplateDates" gtd
             WHERE gt.id = gtd."goalTemplateId";
+            ------------------------------------------------------------------------------------
+            WITH
+              "GoalTemplateObjectiveTemplatesToUpdate" AS (
+                SELECT
+                  gtot.id "goalTemplateObjectiveTemplateId",
+                  tdgt."goalTemplateId",
+                  tdgt."duplicateGoalTemplateId",
+                  gtot."objectiveTemplateId",
+                  gtot."createdAt",
+                  gtot."updatedAt"
+                FROM "GoalTemplateObjectiveTemplates" gtot
+                JOIN "TempDuplicateGoalTemplates" tdgt
+                ON gtot."objectiveTemplateId" = tdgt."duplicateGoalTemplateId"
+                LEFT JOIN "GoalTemplateObjectiveTemplates" gtot2
+                ON tdgt."goalTemplateId" = gtot2."goalTemplateId"
+                AND gtot."objectiveTemplateId" = gtot2."objectiveTemplateId"
+                WHERE gtot2.id IS NULL
+              )
+            UPDATE "GoalTemplateObjectiveTemplates" gtot
+            SET  "goalTemplateId" = gtotu."goalTemplateId"
+            FROM "GoalTemplateObjectiveTemplatesToUpdate" gtotu
+            WHERE gtot.id = gtotu."goalTemplateObjectiveTemplateId";
+            ------------------------------------------------------------------------------------
+            UPDATE "GoalTemplateObjectiveTemplates" gtot
+            SET  "goalTemplateId" = tdgt."goalTemplateId"
+            FROM "TempDuplicateGoalTemplates" tdgt
+            WHERE gtot."goalTemplateId" = tdgt."duplicateGoalTemplateId";
             ------------------------------------------------------------------------------------
             DELETE FROM "GoalTemplates" gt
             USING "TempDuplicateGoalTemplates" tdgt
@@ -88,7 +115,7 @@ module.exports = {
             JOIN "ObjectiveTemplates" dot
             ON ot.hash = dot.hash
             AND ot.id < dot.id
-            GROUP BY 2,3,4;;
+            GROUP BY 2,3,4;
             ------------------------------------------------------------------------------------
             UPDATE "Objectives" o
             SET
@@ -118,12 +145,146 @@ module.exports = {
               "updatedAt" = otd."updatedAt",
               "lastUsed" = otd."lastUsed",
               "templateTitleModifiedAt" = otd."templateTitleModifiedAt"
-            USING "ObjectiveTemplateDates" otd
+            FROM "ObjectiveTemplateDates" otd
             WHERE ot.id = otd."objectiveTemplateId";
+            ------------------------------------------------------------------------------------
+            WITH
+              "GoalTemplateObjectiveTemplatesToUpdate" AS (
+                SELECT
+                  gtot.id "goalTemplateObjectiveTemplateId",
+                  tdot."objectiveTemplateId",
+                  tdot."duplicateObjectiveTemplateId",
+                  gtot."goalTemplateId",
+                  gtot."createdAt",
+                  gtot."updatedAt"
+                FROM "GoalTemplateObjectiveTemplates" gtot
+                JOIN "TempDuplicateObjectiveTemplates" tdot
+                ON gtot."objectiveTemplateId" = tdot."duplicateObjectiveTemplateId"
+                LEFT JOIN "GoalTemplateObjectiveTemplates" gtot2
+                ON tdot."objectiveTemplateId" = gtot2."objectiveTemplateId"
+                AND gtot."goalTemplateId" = gtot2."goalTemplateId"
+                WHERE gtot2.id IS NULL
+              )
+            UPDATE "GoalTemplateObjectiveTemplates" gtot
+            SET  "objectiveTemplateId" = gtotu."objectiveTemplateId"
+            FROM "GoalTemplateObjectiveTemplatesToUpdate" gtotu
+            WHERE gtot.id = gtotu."goalTemplateObjectiveTemplateId";
+            ------------------------------------------------------------------------------------
+            DELETE FROM "GoalTemplateObjectiveTemplates" gtot
+            USING "TempDuplicateObjectiveTemplates" tdot
+            WHERE gtot."objectiveTemplateId" = tdot."duplicateObjectiveTemplateId";
+            ------------------------------------------------------------------------------------
+            WITH
+              "ObjectiveTemplateFilesToUpdate" AS (
+                SELECT
+                  otf.id "objectiveTemplateFileId",
+                  tdot."objectiveTemplateId",
+                  tdot."duplicateObjectiveTemplateId",
+                  otf."fileId",
+                  otf."createdAt",
+                  otf."updatedAt"
+                FROM "ObjectiveTemplateFiles" otf
+                JOIN "TempDuplicateObjectiveTemplates" tdot
+                ON otf."objectiveTemplateId" = tdot."duplicateObjectiveTemplateId"
+                LEFT JOIN "ObjectiveTemplateFiles" otf2
+                ON tdot."objectiveTemplateId" = otf2."objectiveTemplateId"
+                AND otf."fileId" = otf2."fileId"
+                WHERE otf2.id IS NULL
+              )
+            UPDATE "ObjectiveTemplateFiles" otf
+            SET
+              "objectiveTemplateId" = otfu."objectiveTemplateId"
+            FROM "ObjectiveTemplateFilesToUpdate" otfu
+            WHERE otf.id = otfu."objectiveTemplateFileId";
+            ------------------------------------------------------------------------------------
+            DELETE FROM "ObjectiveTemplateFiles" otf
+            USING "TempDuplicateObjectiveTemplates" tdot
+            WHERE otf."objectiveTemplateId" = tdot."duplicateObjectiveTemplateId";
+            ------------------------------------------------------------------------------------
+            WITH
+              "ObjectiveTemplateResourcesToUpdate" AS (
+                SELECT
+                  otr.id "objectiveTemplateResourceId",
+                  tdot."objectiveTemplateId",
+                  tdot."duplicateObjectiveTemplateId",
+                  otr."userProvidedUrl",
+                  otr."createdAt",
+                  otr."updatedAt"
+                FROM "ObjectiveTemplateResources" otr
+                JOIN "TempDuplicateObjectiveTemplates" tdot
+                ON otr."objectiveTemplateId" = tdot."duplicateObjectiveTemplateId"
+                LEFT JOIN "ObjectiveTemplateResources" otr2
+                ON tdot."objectiveTemplateId" = otr2."objectiveTemplateId"
+                AND otr."userProvidedUrl" = otr2."userProvidedUrl"
+                WHERE otr2.id IS NULL
+              )
+            UPDATE "ObjectiveTemplateResources" otr
+            SET
+              "objectiveTemplateId" = otru."objectiveTemplateId"
+            FROM "ObjectiveTemplateResourcesToUpdate" otru
+            WHERE otr.id = otru."objectiveTemplateResourceId";
+            ------------------------------------------------------------------------------------
+            DELETE FROM "ObjectiveTemplateResources" otr
+            USING "TempDuplicateObjectiveTemplates" tdot
+            WHERE otr."objectiveTemplateId" = tdot."duplicateObjectiveTemplateId";
+            ------------------------------------------------------------------------------------
+            WITH
+              "ObjectiveTemplateRolesToUpdate" AS (
+                SELECT
+                  otr.id "objectiveTemplateRoleId",
+                  tdot."objectiveTemplateId",
+                  tdot."duplicateObjectiveTemplateId",
+                  otr."roleId",
+                  otr."createdAt",
+                  otr."updatedAt"
+                FROM "ObjectiveTemplateRoles" otr
+                JOIN "TempDuplicateObjectiveTemplates" tdot
+                ON otr."objectiveTemplateId" = tdot."duplicateObjectiveTemplateId"
+                LEFT JOIN "ObjectiveTemplateRoles" otr2
+                ON tdot."objectiveTemplateId" = otr2."objectiveTemplateId"
+                AND otr."roleId" = otr2."roleId"
+                WHERE otr2.id IS NULL
+              )
+            UPDATE "ObjectiveTemplateRoles" otr
+            SET
+              "objectiveTemplateId" = otru."objectiveTemplateId"
+            FROM "ObjectiveTemplateRolesToUpdate" otru
+            WHERE otr.id = otru."objectiveTemplateRoleId";
+            ------------------------------------------------------------------------------------
+            DELETE FROM "ObjectiveTemplateRoles" otr
+            USING "TempDuplicateObjectiveTemplates" tdot
+            WHERE otr."objectiveTemplateId" = tdot."duplicateObjectiveTemplateId";
+            ------------------------------------------------------------------------------------
+            WITH
+              "ObjectiveTemplateTopicsToUpdate" AS (
+                SELECT
+                  ott.id "objectiveTemplateTopicId",
+                  tdot."objectiveTemplateId",
+                  tdot."duplicateObjectiveTemplateId",
+                  ott."topicId",
+                  ott."createdAt",
+                  ott."updatedAt"
+                FROM "ObjectiveTemplateTopics" ott
+                JOIN "TempDuplicateObjectiveTemplates" tdot
+                ON ott."objectiveTemplateId" = tdot."duplicateObjectiveTemplateId"
+                LEFT JOIN "ObjectiveTemplateTopics" ott2
+                ON tdot."objectiveTemplateId" = ott2."objectiveTemplateId"
+                AND ott."topicId" = ott2."topicId"
+                WHERE ott2.id IS NULL
+              )
+            UPDATE "ObjectiveTemplateTopics" ott
+            SET
+              "objectiveTemplateId" = ottu."objectiveTemplateId"
+            FROM "ObjectiveTemplateTopicsToUpdate" ottu
+            WHERE ott.id = ottu."objectiveTemplateTopicId";
+            ------------------------------------------------------------------------------------
+            DELETE FROM "ObjectiveTemplateTopics" ott
+            USING "TempDuplicateObjectiveTemplates" tdot
+            WHERE ott."objectiveTemplateId" = tdot."duplicateObjectiveTemplateId";
             ------------------------------------------------------------------------------------
             DELETE FROM "ObjectiveTemplates" ot
             USING "TempDuplicateObjectiveTemplates" tdot
-            WHERE ot."id" = tdgt."duplicateObjectiveTemplateId";
+            WHERE ot."id" = tdot."duplicateObjectiveTemplateId";
             ------------------------------------------------------------------------------------
             DROP TABLE "TempDuplicateObjectiveTemplates";
           END$$;`,
