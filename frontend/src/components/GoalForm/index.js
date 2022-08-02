@@ -108,62 +108,60 @@ export default function GoalForm({
   useEffect(() => {
     async function fetchGoal() {
       setFetchAttempted(true); // as to only fetch once
-      setTimeout(async () => {
-        try {
-          const goal = await goalByIdAndRecipient(id, recipient.id.toString());
+      try {
+        const goal = await goalByIdAndRecipient(id, recipient.id.toString());
 
-          // for these, the API sends us back things in a format we expect
-          setGoalName(goal.goalName);
-          setStatus(goal.status);
-          setEndDate(goal.endDate ? moment(goal.endDate, 'MM/DD/YYYY').format('YYYY-MM-DD') : '');
-          setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
-          setGoalNumber(goal.goalNumber);
-          setSelectedGrants(formatGrantsFromApi([goal.grant]));
+        // for these, the API sends us back things in a format we expect
+        setGoalName(goal.goalName);
+        setStatus(goal.status);
+        setEndDate(goal.endDate ? moment(goal.endDate, 'MM/DD/YYYY').format('YYYY-MM-DD') : '');
+        setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
+        setGoalNumber(goal.goalNumber);
+        setSelectedGrants(formatGrantsFromApi([goal.grant]));
 
-          // this is a lot of work to avoid two loops through the goal.objectives
-          // but I'm sure you'll agree its totally worth it
-          const [
-            newObjectives, // return objectives w/ resources and topics formatted as expected
-            objectiveErrors, // and we need a matching error for each objective
-          ] = goal.objectives.reduce((previous, objective) => {
-            const [newObjs, objErrors] = previous;
-            let newObjective = objective;
+        // this is a lot of work to avoid two loops through the goal.objectives
+        // but I'm sure you'll agree its totally worth it
+        const [
+          newObjectives, // return objectives w/ resources and topics formatted as expected
+          objectiveErrors, // and we need a matching error for each objective
+        ] = goal.objectives.reduce((previous, objective) => {
+          const [newObjs, objErrors] = previous;
+          let newObjective = objective;
 
-            if (!objective.resources.length) {
-              newObjective = {
-                ...objective,
-                resources: [
+          if (!objective.resources.length) {
+            newObjective = {
+              ...objective,
+              resources: [
                 // this is the expected format of a blank resource
                 // all objectives start off with one
-                  {
-                    key: uuidv4(),
-                    value: '',
-                  },
-                ],
-              };
-            }
+                {
+                  key: uuidv4(),
+                  value: '',
+                },
+              ],
+            };
+          }
 
-            newObjective.roles = objective.roles.map((r) => r.fullName);
+          newObjective.roles = objective.roles.map((r) => r.fullName);
 
-            newObjs.push(newObjective);
-            // this is the format of an objective error
-            // three JSX nodes representing each of three possible errors
-            objErrors.push([<></>, <></>, <></>, <></>]);
+          newObjs.push(newObjective);
+          // this is the format of an objective error
+          // three JSX nodes representing each of three possible errors
+          objErrors.push([<></>, <></>, <></>, <></>]);
 
-            return [newObjs, objErrors];
-          }, [[], []]);
+          return [newObjs, objErrors];
+        }, [[], []]);
 
-          const newErrors = [...errors];
-          newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES, 1, objectiveErrors);
-          setErrors(newErrors);
+        const newErrors = [...errors];
+        newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES, 1, objectiveErrors);
+        setErrors(newErrors);
 
-          setObjectives(newObjectives);
-        } catch (err) {
-          setFetchError('There was an error loading your goal');
-        } finally {
-          setIsLoading(false);
-        }
-      }, 5000);
+        setObjectives(newObjectives);
+      } catch (err) {
+        setFetchError('There was an error loading your goal');
+      } finally {
+        setIsLoading(false);
+      }
     }
 
     if (!fetchAttempted && id !== 'new' && !isLoading) {
