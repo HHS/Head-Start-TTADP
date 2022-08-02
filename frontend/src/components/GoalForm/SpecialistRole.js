@@ -15,6 +15,7 @@ export default function SpecialistRole({
   status,
   isOnApprovedReport,
   isOnReport,
+  isLoading,
 }) {
   // if there is only one option, we just set the objectives to be
   // that value without any UI
@@ -74,6 +75,7 @@ export default function SpecialistRole({
         onBlur={validateSpecialistRole}
         closeMenuOnSelect={false}
         isMulti
+        isDisabled={isLoading}
       />
     </Label>
   );
@@ -89,9 +91,11 @@ SpecialistRole.propTypes = {
   status: PropTypes.string.isRequired,
   isOnApprovedReport: PropTypes.bool.isRequired,
   isOnReport: PropTypes.bool.isRequired,
+  isLoading: PropTypes.bool,
 };
 
 SpecialistRole.defaultProps = {
   selectedRoles: [],
   inputName: 'objectiveRoles',
+  isLoading: false,
 };

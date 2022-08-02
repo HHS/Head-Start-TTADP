@@ -17,6 +17,7 @@ export default function GrantSelect({
   validateGrantNumbers,
   inputName,
   label,
+  isLoading,
 }) {
   return (
     <FormGroup error={error.props.children}>
@@ -44,6 +45,7 @@ export default function GrantSelect({
             value={selectedGrants}
             isMulti
             onBlur={validateGrantNumbers}
+            isDisabled={isLoading}
           />
         </>
       )}
@@ -66,9 +68,11 @@ GrantSelect.propTypes = {
   validateGrantNumbers: PropTypes.func.isRequired,
   inputName: PropTypes.string,
   label: PropTypes.string,
+  isLoading: PropTypes.bool,
 };
 
 GrantSelect.defaultProps = {
   inputName: 'recipientGrantNumbers',
   label: 'Recipient grant numbers',
+  isLoading: false,
 };
