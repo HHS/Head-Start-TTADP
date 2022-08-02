@@ -1,7 +1,7 @@
 /*
  * Copied from https://github.com/JedWatson/react-select/blob/master/packages/react-select/src/components/SingleValue.tsx
  * Changes:
- * - Show the goal number when selected
+ * - Show the objective id when selected
  */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/prop-types */
@@ -14,9 +14,9 @@ const SingleValue = (
     children, className, cx, data, getStyles, isDisabled, innerProps,
   } = props;
 
-  const { goalIds } = data;
+  const { ids } = data;
 
-  const label = goalIds ? goalIds.map((id) => `G-${id}`).join(', ') : '';
+  const label = ids ? ids.map((id) => `${id}`).join(', ') : '';
 
   return (
     <div
