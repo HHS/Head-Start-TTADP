@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 import { useController, useFormContext } from 'react-hook-form/dist/index.ie11';
 import GoalText from '../../../../components/GoalForm/GoalText';
-import { goalsByIds } from '../../../../fetchers/goals';
+import { goalsByIdsAndActivityReport } from '../../../../fetchers/goals';
 import Objectives from './Objectives';
 import GoalDate from '../../../../components/GoalForm/GoalDate';
 import {
@@ -16,6 +16,7 @@ export default function GoalForm({
   goal,
   topicOptions,
   roles,
+  reportId,
 }) {
   // pull the errors out of the form context
   const { errors } = useFormContext();
@@ -83,7 +84,7 @@ export default function GoalForm({
    */
   useEffect(() => {
     async function fetchData() {
-      const data = await goalsByIds(goal.goalIds);
+      const data = await goalsByIdsAndActivityReport(goal.goalIds, reportId);
       setObjectives(data[0].objectives);
     }
     if (!goal.isNew && goal.goalIds) {
@@ -91,7 +92,7 @@ export default function GoalForm({
     } else {
       setObjectives([]);
     }
-  }, [goal.goalIds, goal.isNew]);
+  }, [goal.goalIds, goal.isNew, reportId]);
 
   return (
     <>
@@ -148,4 +149,5 @@ GoalForm.propTypes = {
     label: PropTypes.string,
   })).isRequired,
   roles: PropTypes.arrayOf(PropTypes.string).isRequired,
+  reportId: PropTypes.number.isRequired,
 };

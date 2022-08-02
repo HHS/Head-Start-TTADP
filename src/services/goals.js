@@ -295,7 +295,7 @@ function reduceGoals(goals) {
  * @param {number} id
  * @returns {Promise{Object}}
  */
-export async function goalsByIds(id) {
+export async function goalsByIdsAndActivityReport(id, activityReportId) {
   const goals = await Goal.findAll({
     attributes: [
       'endDate',
@@ -346,6 +346,17 @@ export async function goalsByIds(id) {
               ['id', 'key'],
             ],
             required: false,
+          },
+          {
+            model: ActivityReportObjective,
+            as: 'activityReportObjectives',
+            attributes: [
+              'ttaProvided',
+            ],
+            required: false,
+            where: {
+              activityReportId,
+            },
           },
           {
             model: Role,

@@ -33,7 +33,7 @@ const components = {
 };
 
 const GoalPicker = ({
-  availableGoals, roles, grantIds,
+  availableGoals, roles, grantIds, reportId,
 }) => {
   const {
     control, setValue,
@@ -147,6 +147,7 @@ const GoalPicker = ({
               topicOptions={topicOptions}
               roles={roles}
               goal={goalForEditing}
+              reportId={reportId}
             />
           </div>
         ) : null}
@@ -165,6 +166,7 @@ GoalPicker.propTypes = {
     }),
   ).isRequired,
   roles: PropTypes.arrayOf(PropTypes.string).isRequired,
+  reportId: PropTypes.number.isRequired,
 };
 
 export default GoalPicker;
