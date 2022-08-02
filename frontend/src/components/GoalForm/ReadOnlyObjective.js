@@ -77,6 +77,15 @@ export default function ReadOnlyObjective({ objective }) {
         : null }
 
       {objective.ttaProvided ? <TTAProvided tta={objective.ttaProvided} /> : null}
+
+      {objective.status
+        ? (
+          <>
+            <h4 className="margin-bottom-1">Status</h4>
+            <p className="margin-top-0">{objective.status}</p>
+          </>
+        )
+        : null }
     </div>
   );
 }
@@ -99,5 +108,6 @@ ReadOnlyObjective.propTypes = {
     })),
     title: PropTypes.string,
     id: PropTypes.number,
+    status: PropTypes.string,
   }).isRequired,
 };
