@@ -27,6 +27,17 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     [sequelize.col('grant.regionId'), 'regionId'],
     [sequelize.col('grant.recipient.id'), 'recipientId'],
     'goalNumber',
+    [
+      sequelize.literal(`
+        (
+          SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
+          INNER JOIN "ActivityReportGoals" "arg" ON "arg"."activityReportId" = "ar"."id"
+          WHERE "arg"."goalId" = "Goal"."id"         
+        ) > 0
+      `),
+      'onAnyReport',
+    ],
+    'onApprovedAR',
   ],
   where: {
     id,
@@ -37,6 +48,17 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         'title',
         'id',
         'status',
+        'onApprovedAR',
+        [
+          sequelize.literal(`
+            (
+              SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
+              INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
+              WHERE "aro"."objectiveId" = "objectives"."id"         
+            ) > 0
+          `),
+          'onAnyReport',
+        ],
       ],
       model: Objective,
       as: 'objectives',
@@ -47,6 +69,19 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
           attributes: [
             ['userProvidedUrl', 'value'],
             ['id', 'key'],
+            [
+              sequelize.literal(`
+                (
+                  SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
+                  INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
+                  INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
+                  INNER JOIN "ObjectiveResources" "or" ON "or"."objectiveId" = "o"."id"      
+                  WHERE "o"."id" = "objectives"."id" 
+                  AND "or"."id" = "objectives->resources"."id"
+                ) > 0
+              `),
+              'onAnyReport',
+            ],
             [
               sequelize.literal(`
                 (
@@ -78,6 +113,19 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                   INNER JOIN "ObjectiveTopics" "ot" ON "ot"."objectiveId" = "o"."id"      
                   WHERE "o"."id" = "objectives"."id" 
                   AND "ot"."topicId" = "objectives->topics"."id"
+                ) > 0
+              `),
+              'onAnyReport',
+            ],
+            [
+              sequelize.literal(`
+                (
+                  SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
+                  INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
+                  INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
+                  INNER JOIN "ObjectiveTopics" "ot" ON "ot"."objectiveId" = "o"."id"      
+                  WHERE "o"."id" = "objectives"."id" 
+                  AND "ot"."topicId" = "objectives->topics"."id"
                   AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
                 ) > 0
               `),
@@ -94,6 +142,19 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
           as: 'roles',
           attributes: [
             'fullName',
+            [
+              sequelize.literal(`
+                (
+                  SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
+                  INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
+                  INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
+                  INNER JOIN "ObjectiveRoles" "or" ON "or"."objectiveId" = "o"."id"      
+                  WHERE "o"."id" = "objectives"."id" 
+                  AND "or"."roleId" = "objectives->roles"."id"
+                ) > 0
+              `),
+              'onAnyReport',
+            ],
             [
               sequelize.literal(`
                 (
@@ -166,6 +227,8 @@ function reduceObjectives(newObjectives, currentObjectives = []) {
     // we need to handle the case where there is TTA provided and TTA not provided
     // NOTE: there will only be one activity report objective, it is queried by activity report id
     const ttaProvided = objective.activityReportObjectives
+        && objective.activityReportObjectives[0]
+        && objective.activityReportObjectives[0].ttaProvided
       ? objective.activityReportObjectives[0].ttaProvided : null;
 
     const roles = objective.roles.map((role) => role.fullName);
@@ -187,7 +250,9 @@ function reduceObjectives(newObjectives, currentObjectives = []) {
  */
 function reduceGoals(goals) {
   return goals.reduce((previousValue, currentValue) => {
-    const existingGoal = previousValue.find((g) => g.name === currentValue.name);
+    const existingGoal = previousValue.find((g) => (
+      g.name === currentValue.name && g.status === currentValue.status
+    ));
 
     if (existingGoal) {
       existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.goalNumber];
@@ -230,8 +295,8 @@ function reduceGoals(goals) {
  * @param {number} id
  * @returns {Promise{Object}}
  */
-export function goalById(id) {
-  return Goal.findOne({
+export async function goalsByIds(id) {
+  const goals = await Goal.findAll({
     attributes: [
       'endDate',
       'status',
@@ -245,6 +310,12 @@ export function goalById(id) {
     },
     include: [
       {
+        model: Grant,
+        as: 'grant',
+      },
+      {
+        model: Objective,
+        as: 'objectives',
         where: {
           [Op.and]: [
             {
@@ -265,8 +336,6 @@ export function goalById(id) {
           'title',
           'status',
         ],
-        model: Objective,
-        as: 'objectives',
         required: false,
         include: [
           {
@@ -279,12 +348,8 @@ export function goalById(id) {
             required: false,
           },
           {
-            model: ActivityReportObjective,
-            as: 'activityReportObjectives',
-            attributes: [
-              'ttaProvided',
-            ],
-            required: false,
+            model: Role,
+            as: 'roles',
           },
           {
             model: Topic,
@@ -309,6 +374,8 @@ export function goalById(id) {
       },
     ],
   });
+
+  return reduceGoals(goals);
 }
 
 /**
@@ -520,7 +587,10 @@ export async function createOrUpdateGoals(goals) {
       defaults: { status },
     });
 
-    await newGoal.update(options);
+    await newGoal.update(
+      { ...options, status },
+      { individualHooks: true },
+    );
 
     // before we create objectives, we have to unpack them to make the creation a little cleaner
     // if an objective was new, then it will not have an id but "isNew" will be true
@@ -532,6 +602,7 @@ export async function createOrUpdateGoals(goals) {
 
     const objectivesToCreateOrUpdate = objectives.reduce((arr, o) => {
       if (o.isNew) {
+        // eslint-disable-next-line no-param-reassign
         return [...arr, o];
       }
 
@@ -563,7 +634,7 @@ export async function createOrUpdateGoals(goals) {
               title,
             },
           });
-        } else {
+        } else if (objectiveId) {
           objective = await Objective.findOne({
             where: {
               id: objectiveId,
@@ -583,11 +654,11 @@ export async function createOrUpdateGoals(goals) {
         await objective.update({
           title,
           status: objectiveStatus,
-        });
+        }, { individualHooks: true });
 
         // topics
         const objectiveTopics = await Promise.all(
-          (topics.map((ot) => ObjectiveTopic.findOrCreate({
+          (topics.map(async (ot) => ObjectiveTopic.findOrCreate({
             where: {
               objectiveId: objective.id,
               topicId: ot.value,
@@ -660,6 +731,7 @@ export async function createOrUpdateGoals(goals) {
           ...objective.dataValues,
           topics,
           resources,
+          roles,
         };
       }),
     );
@@ -669,6 +741,7 @@ export async function createOrUpdateGoals(goals) {
 
     return newGoal.id;
   }));
+
   // we have to do this outside of the transaction otherwise
   // we get the old values
 
@@ -945,6 +1018,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
 
     if (!isNew && id) {
       savedObjective = await Objective.findByPk(id);
+
       await savedObjective.update({
         title,
         status,

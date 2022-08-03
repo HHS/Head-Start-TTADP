@@ -16,10 +16,30 @@ export default function ResourceRepeater({
   setResources,
   error,
   validateResources,
-  savedResources,
   status,
+  isOnReport,
+  isLoading,
 }) {
   const resourcesWrapper = useRef();
+
+  const readOnly = status === 'Suspended' || (status === 'Not Started' && isOnReport);
+
+  if (readOnly) {
+    if (!resources.length) {
+      return null;
+    }
+
+    return (
+      <>
+        <p className="usa-prose text-bold margin-bottom-1">Resource links</p>
+        <ul className="usa-list usa-list--unstyled">
+          {resources.map((resource) => (
+            <li key={resource.key}>{resource.value}</li>
+          ))}
+        </ul>
+      </>
+    );
+  }
 
   const addResource = () => {
     const newResources = [...resources, { key: uuidv4(), value: '' }];
@@ -39,62 +59,74 @@ export default function ResourceRepeater({
     setResources(newResources);
   };
 
+  const { editableResources, fixedResources } = resources.reduce((acc, resource) => {
+    if (resource.isOnApprovedReport) {
+      acc.fixedResources.push(resource);
+    } else {
+      acc.editableResources.push(resource);
+    }
+
+    return acc;
+  }, { editableResources: [], fixedResources: [] });
+
   return (
     <>
-      { savedResources && savedResources.length
-        ? (
-          <>
-            <p className="usa-prose margin-bottom-0 text-bold">Resource links</p>
-            <p className="usa-prose margin-top-0">{savedResources.map(({ value }) => value).join(', ')}</p>
-          </>
-        )
-        : null }
-      { (status !== 'Complete' && status !== 'Suspended') ? (
-        <FormGroup error={error.props.children}>
-          <div ref={resourcesWrapper}>
-            <Label htmlFor="resources">
-              Links to TTA resources used
-              <QuestionTooltip
-                text="Copy and paste addresses of web pages describing resources used for this objective. Usually this is an ECLKC page."
-              />
-            </Label>
-            {error}
-            <div className="ttahub-resource-repeater">
-              { resources.map((r, i) => (
-                <div key={r.key} className="display-flex" id="resources">
-                  <Label htmlFor={`resource-${i + 1}`} className="sr-only">
-                    Resource
-                    {' '}
-                    { i + 1 }
-                  </Label>
-                  <TextInput
-                    id={`resource-${i + 1}`}
-                    onBlur={validateResources}
-                    type="url"
-                    placeholder="https://"
-                    onChange={({ target: { value } }) => updateResource(value, i)}
-                    value={r.value}
-                  />
-                  { resources.length > 1 ? (
-                    <Button unstyled type="button" onClick={() => removeResource(i)}>
-                      <FontAwesomeIcon className="margin-x-1" color={colors.ttahubMediumBlue} icon={faTrash} />
-                      <span className="sr-only">
-                        remove resource
-                        {' '}
-                        { i + 1 }
-                      </span>
-                    </Button>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-
-            <div className="ttahub-resource-repeater--add-new margin-top-2 margin-bottom-4">
-              <PlusButton text="Add new resource" onClick={addResource} />
-            </div>
-          </div>
-        </FormGroup>
+      { fixedResources.length ? (
+        <>
+          <p className="usa-prose text-bold margin-bottom-1">Resource links</p>
+          <ul className="usa-list usa-list--unstyled">
+            {fixedResources.map((resource) => (
+              <li key={resource.key}>{resource.value}</li>
+            ))}
+          </ul>
+        </>
       ) : null }
+
+      <FormGroup error={error.props.children}>
+        <div ref={resourcesWrapper}>
+          <Label htmlFor="resources" className={!fixedResources.length ? 'text-bold' : ''}>
+            {!fixedResources.length ? 'Resource links' : 'Add resource link'}
+            <QuestionTooltip
+              text="Copy and paste addresses of web pages describing resources used for this objective. Usually this is an ECLKC page."
+            />
+          </Label>
+          {error}
+          <div className="ttahub-resource-repeater">
+            { editableResources.map((r, i) => (
+              <div key={r.key} className="display-flex" id="resources">
+                <Label htmlFor={`resource-${i + 1}`} className="sr-only">
+                  Resource
+                  {' '}
+                  { i + 1 }
+                </Label>
+                <TextInput
+                  id={`resource-${i + 1}`}
+                  onBlur={validateResources}
+                  type="url"
+                  placeholder="https://"
+                  onChange={({ target: { value } }) => updateResource(value, i)}
+                  value={r.value}
+                  disabled={isLoading}
+                />
+                { resources.length > 1 ? (
+                  <Button unstyled type="button" onClick={() => removeResource(i)}>
+                    <FontAwesomeIcon className="margin-x-1" color={colors.ttahubMediumBlue} icon={faTrash} />
+                    <span className="sr-only">
+                      remove resource
+                      {' '}
+                      { i + 1 }
+                    </span>
+                  </Button>
+                ) : null}
+              </div>
+            ))}
+          </div>
+
+          <div className="ttahub-resource-repeater--add-new margin-top-2 margin-bottom-4">
+            <PlusButton text="Add new resource" onClick={addResource} />
+          </div>
+        </div>
+      </FormGroup>
     </>
   );
 }
@@ -107,9 +139,11 @@ ResourceRepeater.propTypes = {
   setResources: PropTypes.func.isRequired,
   error: PropTypes.node.isRequired,
   validateResources: PropTypes.func.isRequired,
-  savedResources: PropTypes.arrayOf(PropTypes.shape({
-    key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    value: PropTypes.string,
-  })).isRequired,
   status: PropTypes.string.isRequired,
+  isOnReport: PropTypes.bool.isRequired,
+  isLoading: PropTypes.bool,
+};
+
+ResourceRepeater.defaultProps = {
+  isLoading: false,
 };

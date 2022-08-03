@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Button } from '@trussworks/react-uswds';
 import ObjectiveTitle from './ObjectiveTitle';
@@ -11,6 +11,7 @@ import {
 import { REPORT_STATUSES } from '../../Constants';
 import SpecialistRole from './SpecialistRole';
 import ObjectiveStatus from './ObjectiveStatus';
+import GoalFormLoadingContext from '../../GoalFormLoadingContext';
 
 const [
   objectiveTitleError,
@@ -27,7 +28,6 @@ export default function ObjectiveForm({
   setObjective,
   errors,
   topicOptions,
-  unchangingApiData,
   goalStatus,
 }) {
   // the parent objective data from props
@@ -44,7 +44,7 @@ export default function ObjectiveForm({
     )))
   ), [objective.activityReports]);
 
-  const data = unchangingApiData[objective.id];
+  const { isLoading } = useContext(GoalFormLoadingContext);
 
   // onchange handlers
   const onChangeTitle = (e) => setObjective({ ...objective, title: e.target.value });
@@ -118,10 +118,12 @@ export default function ObjectiveForm({
       <ObjectiveTitle
         error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TITLE]}
         isOnApprovedReport={isOnApprovedReport || false}
+        isOnReport={isOnReport || false}
         title={title}
         onChangeTitle={onChangeTitle}
         validateObjectiveTitle={validateObjectiveTitle}
         status={status}
+        isLoading={isLoading}
       />
 
       <SpecialistRole
@@ -130,35 +132,43 @@ export default function ObjectiveForm({
         selectedRoles={roles || []}
         validateSpecialistRole={validateSpecialistRole}
         options={availableSpecialistRoles}
+        isOnReport={isOnReport || false}
+        isOnApprovedReport={isOnApprovedReport || false}
+        status={status}
+        isLoading={isLoading}
       />
 
       <ObjectiveTopics
         error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TOPICS]}
-        savedTopics={data && data.topics ? data.topics : []}
         topicOptions={topicOptions}
         validateObjectiveTopics={validateObjectiveTopics}
         topics={topics}
         onChangeTopics={onChangeTopics}
         status={status}
+        isOnReport={isOnReport || false}
+        isOnApprovedReport={isOnApprovedReport || false}
+        isLoading={isLoading}
       />
 
       <ResourceRepeater
         resources={resources}
-        savedResources={data && data.resources ? data.resources : []}
         setResources={setResources}
         validateResources={validateResources}
         error={errors[OBJECTIVE_FORM_FIELD_INDEXES.RESOURCES]}
         isOnReport={isOnReport || false}
         isOnApprovedReport={isOnApprovedReport || false}
         status={status}
+        isLoading={isLoading}
       />
 
       <ObjectiveStatus
         status={status}
         isOnApprovedReport={isOnApprovedReport}
+        isOnReport={isOnReport || false}
         goalStatus={goalStatus}
         onChangeStatus={onChangeStatus}
         inputName={`objective-status-${index}`}
+        isLoading={isLoading}
       />
 
       <ObjectiveFiles
@@ -166,7 +176,9 @@ export default function ObjectiveForm({
         onChangeFiles={onChangeFiles}
         objectiveId={objective.id}
         isOnApprovedReport={isOnApprovedReport || false}
+        isOnReport={isOnReport || false}
         status={status}
+        isLoading={isLoading}
       />
 
     </div>
@@ -175,18 +187,6 @@ export default function ObjectiveForm({
 
 ObjectiveForm.propTypes = {
   goalStatus: PropTypes.string.isRequired,
-  unchangingApiData: PropTypes.objectOf(
-    PropTypes.shape({
-      resources: PropTypes.arrayOf(PropTypes.shape({
-        key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-        value: PropTypes.string,
-      })),
-      topics: PropTypes.arrayOf(PropTypes.shape({
-        label: PropTypes.string,
-        value: PropTypes.number,
-      })),
-    }),
-  ).isRequired,
   index: PropTypes.number.isRequired,
   removeObjective: PropTypes.func.isRequired,
   errors: PropTypes.arrayOf(PropTypes.node).isRequired,

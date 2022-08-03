@@ -12,11 +12,34 @@ export default function SpecialistRole({
   inputName,
   validateSpecialistRole,
   options,
+  status,
+  isOnApprovedReport,
+  isOnReport,
+  isLoading,
 }) {
   // if there is only one option, we just set the objectives to be
   // that value without any UI
   if (options.length === 1) {
     return null;
+  }
+
+  const readOnly = isOnApprovedReport || status === 'Suspended' || (status === 'Not Started' && isOnReport);
+
+  if (readOnly) {
+    if (!selectedRoles.length) {
+      return null;
+    }
+
+    return (
+      <>
+        <p className="usa-prose text-bold margin-bottom-1">
+          Specialist roles
+        </p>
+        <ul className="usa-list usa-list--unstyled">
+          {selectedRoles.map((role) => (<li key={role}>{role}</li>))}
+        </ul>
+      </>
+    );
   }
 
   // format them in a way react select can understand
@@ -52,6 +75,7 @@ export default function SpecialistRole({
         onBlur={validateSpecialistRole}
         closeMenuOnSelect={false}
         isMulti
+        isDisabled={isLoading}
       />
     </Label>
   );
@@ -64,9 +88,14 @@ SpecialistRole.propTypes = {
   inputName: PropTypes.string,
   validateSpecialistRole: PropTypes.func.isRequired,
   options: PropTypes.arrayOf(PropTypes.string).isRequired,
+  status: PropTypes.string.isRequired,
+  isOnApprovedReport: PropTypes.bool.isRequired,
+  isOnReport: PropTypes.bool.isRequired,
+  isLoading: PropTypes.bool,
 };
 
 SpecialistRole.defaultProps = {
   selectedRoles: [],
   inputName: 'objectiveRoles',
+  isLoading: false,
 };

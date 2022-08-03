@@ -55,14 +55,17 @@ describe('create goal', () => {
     timeframe: null,
     createdAt: '2022-03-09T19:20:45.818Z',
     updatedAt: '2022-03-09T19:20:45.818Z',
-    grant:
-      {
-        value: 1, label: 'Turtle 1', programs: [], id: 1,
-      },
+    grants: [{
+      value: 1, label: 'Turtle 1', programs: [], id: 1,
+    }],
+    grantIds: [1],
+    goalIds: [64175],
     recipientId: 1,
     regionId: 1,
     objectives: [{
+      ids: [1],
       activityReports: [],
+      roles: ['Student'],
       title: 'test',
       files: [],
       topics: [
@@ -127,6 +130,18 @@ describe('create goal', () => {
     await selectEvent.select(combo, ['Turtle 1']);
 
     const cancel = await screen.findByRole('link', { name: 'Cancel' });
+
+    const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
+    userEvent.click(newObjective);
+
+    const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
+    userEvent.type(objectiveText, 'test');
+
+    const topics = await screen.findByLabelText(/topics \*/i);
+    await selectEvent.select(topics, ['CLASS: Instructional Support']);
+
+    const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
+    userEvent.type(resourceOne, 'https://search.marginalia.nu/');
 
     userEvent.click(save);
 
@@ -242,8 +257,23 @@ describe('create goal', () => {
 
     fetchMock.restore();
     fetchMock.post('/api/goals', postResponse);
+
+    const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
+    userEvent.click(newObjective);
+
+    const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
+    userEvent.type(objectiveText, 'test');
+
+    const topics = await screen.findByLabelText(/topics \*/i);
+    await selectEvent.select(topics, ['CLASS: Instructional Support']);
+
+    const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
+    userEvent.type(resourceOne, 'https://search.marginalia.nu/');
+
+    expect(fetchMock.called()).toBe(false);
     userEvent.click(save);
 
+    expect(fetchMock.called()).toBeTruthy();
     alert = await screen.findByRole('alert');
     expect(alert.textContent).toBe(`Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`);
 
@@ -278,6 +308,18 @@ describe('create goal', () => {
 
     const ed = await screen.findByRole('textbox', { name: /Estimated close date \(mm\/dd\/yyyy\) \*/i });
     userEvent.type(ed, '08/15/2023');
+
+    const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
+    userEvent.click(newObjective);
+
+    const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
+    userEvent.type(objectiveText, 'test');
+
+    const topics = await screen.findByLabelText(/topics \*/i);
+    await selectEvent.select(topics, ['CLASS: Instructional Support']);
+
+    const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
+    userEvent.type(resourceOne, 'https://search.marginalia.nu/');
 
     const save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
@@ -327,6 +369,18 @@ describe('create goal', () => {
     let ed = await screen.findByRole('textbox', { name: /Estimated close date \(mm\/dd\/yyyy\) \*/i });
     userEvent.type(ed, '08/15/2023');
 
+    let newObjective = await screen.findByRole('button', { name: 'Add new objective' });
+    userEvent.click(newObjective);
+
+    let objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
+    userEvent.type(objectiveText, 'test');
+
+    let topics = await screen.findByLabelText(/topics \*/i);
+    await selectEvent.select(topics, ['CLASS: Instructional Support']);
+
+    let resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
+    userEvent.type(resourceOne, 'https://search.marginalia.nu/');
+
     const cancel = await screen.findByRole('link', { name: 'Cancel' });
     let save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
@@ -351,6 +405,18 @@ describe('create goal', () => {
 
     ed = await screen.findByRole('textbox', { name: /Estimated close date \(mm\/dd\/yyyy\) \*/i });
     userEvent.type(ed, '08/15/2023');
+
+    newObjective = await screen.findByRole('button', { name: 'Add new objective' });
+    userEvent.click(newObjective);
+
+    objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
+    userEvent.type(objectiveText, 'test');
+
+    topics = await screen.findByLabelText(/topics \*/i);
+    await selectEvent.select(topics, ['CLASS: Instructional Support']);
+
+    resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
+    userEvent.type(resourceOne, 'https://search.marginalia.nu/');
 
     save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
@@ -558,9 +624,17 @@ describe('create goal', () => {
       goalName: 'This is a goal name',
       status: 'Not Started',
       endDate: '10/08/2021',
+      grant: {
+        id: 1,
+        number: '1',
+        programs: [{
+          programType: 'EHS',
+        }],
+      },
       objectives: [
         {
           id: 1238474,
+          roles: [],
           title: 'This is an objective',
           status: 'Not Started',
           resources: [],
@@ -586,8 +660,16 @@ describe('create goal', () => {
       goalName: 'This is a goal name',
       status: 'Draft',
       endDate: '10/08/2021',
+      grant: {
+        id: 1,
+        number: '1',
+        programs: [{
+          programType: 'EHS',
+        }],
+      },
       objectives: [
         {
+          roles: [],
           id: 1238474,
           title: 'This is an objective',
           status: 'Not Started',
@@ -614,6 +696,13 @@ describe('create goal', () => {
       goalName: 'This is a goal name',
       status: 'Not Started',
       endDate: '10/08/2021',
+      grant: {
+        id: 1,
+        number: '1',
+        programs: [{
+          programType: 'EHS',
+        }],
+      },
       objectives: [
         {
           id: 1238474,
@@ -621,6 +710,7 @@ describe('create goal', () => {
           status: 'Not Started',
           resources: [],
           topics: [topicsFromApi[0]],
+          roles: [],
           activityReports: [
             {
               status: REPORT_STATUSES.SUBMITTED,
@@ -652,6 +742,13 @@ describe('create goal', () => {
       goalName: 'This is a goal name',
       status: 'In Progress',
       endDate: '10/08/2021',
+      grant: {
+        id: 1,
+        number: '1',
+        programs: [{
+          programType: 'EHS',
+        }],
+      },
       objectives: [
         {
           id: 1238474,
@@ -659,6 +756,8 @@ describe('create goal', () => {
           status: 'Not Started',
           resources: [],
           topics: [topicsFromApi[0]],
+          activityReports: [],
+          roles: [],
         },
       ],
     });

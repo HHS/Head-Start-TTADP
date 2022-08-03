@@ -7,6 +7,8 @@ export default function ObjectiveStatus({
   goalStatus,
   onChangeStatus,
   inputName,
+  isOnReport,
+  isLoading,
 }) {
   // if the goal is a draft, any objectives added
   // will have to be draft as well
@@ -18,17 +20,25 @@ export default function ObjectiveStatus({
   // if the objective has been completed or is "in progress"
   // we need a control to change status
 
-  const showDropdown = status.toLowerCase() === 'complete' || status.toLowerCase() === 'in progress';
+  const showDropdown = !(status.toLowerCase() === 'not started' && isOnReport);
+
+  const onChange = (e) => onChangeStatus(e.target.value);
 
   if (showDropdown) {
     return (
       <FormGroup>
         <Label htmlFor={inputName}>
-          Text input label
+          Objective status
         </Label>
-        <Dropdown name={inputName} onChange={onChangeStatus}>
-          <option>In progress</option>
-          <option>Complete</option>
+        <Dropdown
+          name={inputName}
+          onChange={onChange}
+          value={status}
+          id={inputName}
+          disabled={isLoading}
+        >
+          <option>In Progress</option>
+          <option>Completed</option>
         </Dropdown>
       </FormGroup>
     );
@@ -49,4 +59,10 @@ ObjectiveStatus.propTypes = {
   goalStatus: PropTypes.string.isRequired,
   inputName: PropTypes.string.isRequired,
   onChangeStatus: PropTypes.func.isRequired,
+  isOnReport: PropTypes.bool.isRequired,
+  isLoading: PropTypes.bool,
+};
+
+ObjectiveStatus.defaultProps = {
+  isLoading: false,
 };

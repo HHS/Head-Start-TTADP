@@ -12,6 +12,7 @@ export default function GoalDate({
   validateEndDate,
   datePickerKey,
   inputName,
+  isLoading,
 }) {
   return (
     <FormGroup error={error.props.children}>
@@ -29,6 +30,7 @@ export default function GoalDate({
         defaultValue={endDate}
         onBlur={validateEndDate}
         key={datePickerKey}
+        disabled={isLoading}
         required
       />
     </FormGroup>
@@ -42,9 +44,11 @@ GoalDate.propTypes = {
   validateEndDate: PropTypes.func.isRequired,
   datePickerKey: PropTypes.string.isRequired,
   inputName: PropTypes.string,
+  isLoading: PropTypes.bool,
 };
 
 GoalDate.defaultProps = {
   endDate: '',
   inputName: 'goalEndDate',
+  isLoading: false,
 };
