@@ -20,7 +20,7 @@ function sleep(milliseconds) {
     }
   }
 }
-const mockRecipient = { id: 5001, name: 'Bobs Builders' };
+const mockRecipient = { id: 5001, name: 'Bobs Builders', uei: 'NNA5N2KHMGM2' };
 const mockGrant = { id: 6001, number: '1234567890', regionId: 2 };
 const mockGoal = { name: 'build a playground' };
 
