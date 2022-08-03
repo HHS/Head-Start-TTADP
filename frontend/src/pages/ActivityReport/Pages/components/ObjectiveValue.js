@@ -14,7 +14,7 @@ const SingleValue = (
     children, className, cx, data, getStyles, isDisabled, innerProps,
   } = props;
 
-  const { ids } = data;
+  const { ids, title } = data;
 
   const label = ids ? ids.map((id) => `${id}`).join(', ') : '';
 
@@ -37,7 +37,7 @@ const SingleValue = (
           {' '}
         </strong>
       ) : null }
-      { children }
+      { children || title }
     </div>
   );
 };
