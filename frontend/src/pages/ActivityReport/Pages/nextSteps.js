@@ -1,4 +1,5 @@
 import React from 'react';
+import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Fieldset } from '@trussworks/react-uswds';
@@ -70,5 +71,22 @@ export default {
   render: (_additionalData, formData) => {
     const { activityRecipientType } = formData;
     return (<NextSteps activityRecipientType={activityRecipientType} />);
+  },
+  isPageComplete: (formData, formState) => {
+    const { isValid } = formState;
+    if (isValid) {
+      return true;
+    }
+
+    const { specialistNextSteps, participantNextSteps } = formData;
+    if (!specialistNextSteps || !participantNextSteps) {
+      return false;
+    }
+
+    if (![...specialistNextSteps, ...participantNextSteps].every((step) => step.note && moment(step.completeDate, 'MM/DD/YYYY').isValid())) {
+      return false;
+    }
+
+    return true;
   },
 };
