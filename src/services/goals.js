@@ -625,6 +625,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       where: {
         objectiveId: savedObjective.id,
         activityReportId: report.id,
+        status: savedObjective.status,
       },
     });
 
@@ -660,6 +661,7 @@ export async function saveGoalsForReport(goals, report) {
           where: {
             goalId: newGoal.id,
             activityReportId: report.id,
+            status: newGoal.status,
           },
         });
 
@@ -698,6 +700,7 @@ export async function saveGoalsForReport(goals, report) {
           where: {
             goalId: existingGoal.id,
             activityReportId: report.id,
+            status: existingGoal.status,
           },
         });
       }));
@@ -725,6 +728,7 @@ export async function saveGoalsForReport(goals, report) {
           where: {
             goalId: newGoal.id,
             activityReportId: report.id,
+            status: newGoal.status,
           },
         });
 

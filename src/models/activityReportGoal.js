@@ -22,6 +22,7 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    status: DataTypes.STRING,
   }, {
     sequelize,
     modelName: 'ActivityReportGoal',

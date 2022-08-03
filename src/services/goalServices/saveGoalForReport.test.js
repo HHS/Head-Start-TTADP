@@ -120,6 +120,7 @@ describe('saveGoalsForReport (more tests)', () => {
     await ActivityReportGoal.create({
       goalId: goal.id,
       activityReportId: reportWeArentWorryingAbout.id,
+      status: goal.status,
     });
 
     objective = await Objective.create({
@@ -132,6 +133,7 @@ describe('saveGoalsForReport (more tests)', () => {
       ttaProvided: 'Some delightful TTA',
       activityReportId: reportWeArentWorryingAbout.id,
       objectiveId: objective.id,
+      status: objective.status,
     });
   });
 

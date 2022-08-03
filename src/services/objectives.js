@@ -1,9 +1,35 @@
 /* eslint-disable import/prefer-default-export */
 import {
   Objective,
+  ObjectiveResource,
+  ObjectiveRole,
+  ObjectiveTopic,
   ActivityReportObjective,
+  ActivityReportObjectiveResource,
+  ActivityReportObjectiveRole,
+  ActivityReportObjectiveTopic,
 } from '../models';
 import { removeUnusedGoalsObjectivesFromReport } from './goals';
+
+export async function cacheObjectiveMetadata(objectiveId, activityReportObjectiveId) {
+  const resources = await ObjectiveResource.findAll({ where: { objectiveId } });
+  const roles = await ObjectiveRole.findAll({ where: { objectiveId } });
+  const topics = await ObjectiveTopic.findAll({ where: { objectiveId } });
+  return Promise.all([
+    Promise.all(resources.map(async (resource) => ActivityReportObjectiveResource.upsert({
+      activityReportObjectiveId,
+      userProvidedUrl: resource.userProvidedUrl,
+    }))),
+    Promise.all(roles.map(async (role) => ActivityReportObjectiveRole.upsert({
+      activityReportObjectiveId,
+      roleId: role.roleId,
+    }))),
+    Promise.all(topics.map(async (topic) => ActivityReportObjectiveTopic.upsert({
+      activityReportObjectiveId,
+      topicId: topic.topicId,
+    }))),
+  ]);
+}
 
 export async function saveObjectivesForReport(objectives, report) {
   const updatedObjectives = await Promise.all(objectives.map(async (objective) => {
@@ -24,7 +50,12 @@ export async function saveObjectivesForReport(objectives, report) {
           },
         });
 
-        await aro.update({ ttaProvided: objective.ttaProvided }, { individualHooks: true });
+        await aro.update({
+          ttaProvided: objective.ttaProvided,
+          status: newObjective.status,
+        }, { individualHooks: true });
+
+        await cacheObjectiveMetadata(newObjective.id, aro.id);
 
         return newObjective;
       }));
@@ -38,13 +69,16 @@ export async function saveObjectivesForReport(objectives, report) {
       });
 
       if (existingObjective) {
-        await ActivityReportObjective.findOrCreate({
+        const [aro] = await ActivityReportObjective.findOrCreate({
           where: {
             ttaProvided: objective.ttaProvided,
             objectiveId: existingObjective.id,
             activityReportId: report.id,
+            status: objective.status,
           },
         });
+
+        await cacheObjectiveMetadata(existingObjective.id, aro.id);
 
         await existingObjective.update({
           status: objective.status,
@@ -62,13 +96,16 @@ export async function saveObjectivesForReport(objectives, report) {
         },
       });
 
-      await ActivityReportObjective.create({
+      const [aro] = await ActivityReportObjective.create({
         where: {
           ttaProvided: objective.ttaProvided,
           objectiveId: newObjective.id,
           activityReportId: report.id,
+          status: objective.status,
         },
       });
+
+      await cacheObjectiveMetadata(newObjective.id, aro.id);
 
       return newObjective;
     }));

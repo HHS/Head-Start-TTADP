@@ -79,6 +79,7 @@ describe('goalById', () => {
       activityReportId: report.id,
       objectiveId: objective.id,
       ttaProvided: 'asdfadf',
+      status: objective.status,
     });
   });
 

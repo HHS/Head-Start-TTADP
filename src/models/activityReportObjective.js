@@ -27,6 +27,7 @@ module.exports = (sequelize, DataTypes) => {
     objectiveId: {
       type: DataTypes.INTEGER,
     },
+    status: DataTypes.STRING,
     ttaProvided: DataTypes.TEXT,
   }, {
     sequelize,
