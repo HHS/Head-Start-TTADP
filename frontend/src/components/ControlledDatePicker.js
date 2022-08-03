@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import { useController } from 'react-hook-form/dist/index.ie11';
@@ -65,13 +65,18 @@ export default function ControlledDatePicker({
   }
 
   const {
-    field: { onChange },
+    field: { onChange, onBlur: onFieldBlur },
   } = useController({
     name,
     control,
     rules: { validate },
     defaultValue: formattedValue,
   });
+
+  const handleOnBlur = useCallback((e) => {
+    onFieldBlur(e);
+    onBlur(e);
+  }, [onBlur, onFieldBlur]);
 
   const datePickerOnChange = (d) => {
     if (isStartDate) {
@@ -99,7 +104,7 @@ export default function ControlledDatePicker({
       onChange={datePickerOnChange}
       minDate={min.datePicker}
       maxDate={max.datePicker}
-      onBlur={onBlur}
+      onBlur={(e) => handleOnBlur(e)}
     />
   );
 }
