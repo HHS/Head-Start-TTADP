@@ -10,6 +10,7 @@ describe('ObjectiveTitle', () => {
     render(<ObjectiveTitle
       error={<></>}
       isOnApprovedReport
+      isOnReport
       title="Objective title"
       validateObjectiveTitle={jest.fn()}
       onChangeTitle={jest.fn()}

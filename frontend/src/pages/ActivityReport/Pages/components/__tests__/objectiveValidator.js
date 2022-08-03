@@ -1,7 +1,7 @@
 import {
   validateObjectives,
-  OBJECTIVES_EMPTY,
 } from '../objectiveValidator';
+import { OBJECTIVES_EMPTY } from '../../../../../components/GoalForm/constants';
 
 import { UNFINISHED_OBJECTIVES } from '../goalValidator';
 

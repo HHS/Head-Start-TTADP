@@ -47,7 +47,7 @@ export async function userByEmail(email) {
 
 export async function usersWithPermissions(regions, scopes) {
   return User.findAll({
-    attributes: ['id', 'name'],
+    attributes: ['id', 'name', 'role'],
     raw: true,
     where: {
       [Op.and]: [

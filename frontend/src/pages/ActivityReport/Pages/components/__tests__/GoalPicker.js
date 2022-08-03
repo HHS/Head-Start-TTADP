@@ -15,6 +15,7 @@ const defaultSelectedGoals = [
   {
     label: '123',
     value: 123,
+    goalIds: [123],
   },
 ];
 
@@ -36,6 +37,7 @@ const GP = ({ availableGoals, selectedGoals }) => {
       <GoalPicker
         availableGoals={availableGoals}
         roles={['central office']}
+        grantIds={[]}
       />
     </FormProvider>
   );
@@ -63,6 +65,7 @@ describe('GoalPicker', () => {
       ...newGoal([]),
       label: 'Goal 1',
       value: 1,
+      goalIds: [1],
     }];
 
     renderGoalPicker(availableGoals);
@@ -81,6 +84,7 @@ describe('GoalPicker', () => {
       ...newGoal([]),
       label: 'Goal 1',
       value: 1,
+      goalIds: [1],
     }];
 
     renderGoalPicker(availableGoals, null);

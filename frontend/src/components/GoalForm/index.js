@@ -1,5 +1,6 @@
-/* eslint-disable jsx-a11y/label-has-associated-control */
-import React, { useEffect, useState, useMemo } from 'react';
+import React, {
+  useEffect, useState, useMemo,
+} from 'react';
 import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -26,6 +27,7 @@ import { DECIMAL_BASE, REPORT_STATUSES } from '../../Constants';
 import ReadOnly from './ReadOnly';
 import PlusButton from './PlusButton';
 import colors from '../../colors';
+import GoalFormLoadingContext from '../../GoalFormLoadingContext';
 
 const [
   objectiveTextError, objectiveTopicsError, objectiveResourcesError, objectiveStatusError,
@@ -44,7 +46,10 @@ const formatGrantsFromApi = (grants) => grants.map((grant) => {
 const BLANK_OBJECTIVE_ERROR = [<></>, <></>, <></>];
 
 export default function GoalForm({
-  recipient, regionId, id, showRTRnavigation,
+  recipient,
+  regionId,
+  id,
+  showRTRnavigation,
 }) {
   const history = useHistory();
 
@@ -82,14 +87,12 @@ export default function GoalForm({
   const [status, setStatus] = useState(goalDefaults.status);
   const [objectives, setObjectives] = useState(goalDefaults.objectives);
 
-  // this will hold the topics and resources for objectives retrieved from the API
-  // in the case where that data is NOT editable
-  const [unchangingApiData, setUnchangingApiData] = useState({});
-
   const [alert, setAlert] = useState({ message: '', type: 'success' });
   const [goalNumber, setGoalNumber] = useState('');
 
   const [errors, setErrors] = useState(FORM_FIELD_DEFAULT_ERRORS);
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const isOnReport = useMemo(() => objectives.some(
     (objective) => objective.activityReports && objective.activityReports.length > 0,
@@ -108,14 +111,13 @@ export default function GoalForm({
       try {
         const goal = await goalByIdAndRecipient(id, recipient.id.toString());
 
-        // the API sends us back things in a format we expect
+        // for these, the API sends us back things in a format we expect
         setGoalName(goal.goalName);
         setStatus(goal.status);
-        setEndDate(goal.endDate);
+        setEndDate(goal.endDate ? moment(goal.endDate, 'MM/DD/YYYY').format('YYYY-MM-DD') : '');
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
         setGoalNumber(goal.goalNumber);
-
-        const apiData = {};
+        setSelectedGrants(formatGrantsFromApi([goal.grant]));
 
         // this is a lot of work to avoid two loops through the goal.objectives
         // but I'm sure you'll agree its totally worth it
@@ -126,32 +128,12 @@ export default function GoalForm({
           const [newObjs, objErrors] = previous;
           let newObjective = objective;
 
-          // if the objective is on an AR, then we have to segregate the data
-          if (objective.activityReports && objective.activityReports.length) {
-            apiData[objective.id] = {};
-            apiData[objective.id].topics = objective.topics;
-            apiData[objective.id].resources = objective.resources;
-
+          if (!objective.resources.length) {
             newObjective = {
               ...objective,
               resources: [
-              // this is the expected format of a blank resource
-              // all objectives start off with one
-                {
-                  key: uuidv4(),
-                  value: '',
-                },
-              ],
-              topics: [],
-            };
-            // otherwise, topics are fine, but we still need to check to see if there
-            // are no resources so we can show the 1 empty box
-          } else if (!objective.resources.length) {
-            newObjective = {
-              ...objective,
-              resources: [
-              // this is the expected format of a blank resource
-              // all objectives start off with one
+                // this is the expected format of a blank resource
+                // all objectives start off with one
                 {
                   key: uuidv4(),
                   value: '',
@@ -175,30 +157,38 @@ export default function GoalForm({
         setErrors(newErrors);
 
         setObjectives(newObjectives);
-        setUnchangingApiData(apiData);
       } catch (err) {
         setFetchError('There was an error loading your goal');
+      } finally {
+        setIsLoading(false);
       }
     }
 
+    if (!fetchAttempted && id !== 'new' && !isLoading) {
+      setIsLoading(true);
+    }
+
     // only fetch once, on load, and only if the id isn't 'new'
-    if (!fetchAttempted && id !== 'new') {
+    if (!fetchAttempted && id !== 'new' && isLoading) {
       fetchGoal();
     }
-  }, [errors, fetchAttempted, recipient.id, id]);
+  }, [errors, fetchAttempted, recipient.id, id, isLoading]);
 
   // for fetching topic options from API
   useEffect(() => {
     async function fetchTopics() {
-      const topicsFromApi = await getTopics();
+      try {
+        const topicsFromApi = await getTopics();
 
-      const topicsAsOptions = topicsFromApi.map((topic) => ({
-        label: topic.name,
-        value: topic.id,
-      }));
-      setTopicOptions(topicsAsOptions);
+        const topicsAsOptions = topicsFromApi.map((topic) => ({
+          label: topic.name,
+          value: topic.id,
+        }));
+        setTopicOptions(topicsAsOptions);
+      } catch (err) {
+        setFetchError('There was an error loading topics');
+      }
     }
-
     fetchTopics();
   }, []);
 
@@ -255,6 +245,7 @@ export default function GoalForm({
     const newErrors = [...errors];
     newErrors.splice(FORM_FIELD_INDEXES.GRANTS, 1, error);
     setErrors(newErrors);
+
     return !error.props.children;
   };
 
@@ -285,8 +276,7 @@ export default function GoalForm({
         ];
       }
 
-      if (!objective.topics.length
-        || (unchangingApiData[objective.id] && !unchangingApiData[objective.id].topics.length)) {
+      if (!objective.topics.length) {
         isValid = false;
         return [
           <></>,
@@ -366,31 +356,17 @@ export default function GoalForm({
   // on form submit
   const onSubmit = async (e) => {
     e.preventDefault();
-
+    setIsLoading(true);
     try {
       const gs = createdGoals.reduce((acc, goal) => {
         const newGoals = goal.grantIds.map((g) => ({
           grantId: g,
-          name: goalName,
+          name: goal.goalName,
           status,
-          endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
+          endDate: goal.endDate && goal.endDate !== 'Invalid date' ? goal.endDate : null,
           regionId: parseInt(regionId, DECIMAL_BASE),
           recipientId: recipient.id,
-          objectives: objectives.map((objective) => {
-            const apiData = unchangingApiData[objective.id];
-            if (apiData) {
-              const topicsFromApi = apiData.topics;
-              const resourcesFromApi = apiData.resources;
-              const filesFromApi = apiData.files;
-              return {
-                ...objective,
-                topics: [...objective.topics, ...topicsFromApi],
-                resources: [...objective.resources, ...resourcesFromApi],
-                files: [...objective.files, ...filesFromApi],
-              };
-            }
-            return objective;
-          }),
+          objectives: goal.objectives,
         }));
 
         return [...acc, ...newGoals];
@@ -409,6 +385,8 @@ export default function GoalForm({
         message: 'There was an error saving your goal',
         type: 'error',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -416,6 +394,8 @@ export default function GoalForm({
     if (!isValidDraft()) {
       return;
     }
+
+    setIsLoading(true);
 
     try {
       const newGoals = selectedGrants.map((g) => ({
@@ -449,6 +429,8 @@ export default function GoalForm({
         message: 'There was an error saving your goal',
         type: 'error',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -468,6 +450,7 @@ export default function GoalForm({
       return;
     }
 
+    setIsLoading(true);
     try {
       const newGoals = selectedGrants.map((g) => ({
         grantId: g.value,
@@ -476,22 +459,7 @@ export default function GoalForm({
         endDate,
         regionId: parseInt(regionId, DECIMAL_BASE),
         recipientId: recipient.id,
-        objectives: objectives.map((objective) => {
-          const apiData = unchangingApiData[objective.id];
-          if (apiData) {
-            const topicsFromApi = apiData.topics;
-            const resourcesFromApi = apiData.resources;
-            const filesFromApi = apiData.files;
-            return {
-              ...objective,
-              roles: objective.roles.map((role) => role.fullName),
-              topics: [...objective.topics, ...topicsFromApi],
-              resources: [...objective.resources, ...resourcesFromApi],
-              files: [...objective.files, ...filesFromApi],
-            };
-          }
-          return objective;
-        }),
+        objectives,
       }));
 
       const goals = [
@@ -506,7 +474,6 @@ export default function GoalForm({
         grants: formatGrantsFromApi(goal.grants),
         objectives: goal.objectives.map((objective) => ({
           ...objective,
-          roles: objective.roles.map((role) => role.fullName),
         })),
       })));
 
@@ -521,6 +488,8 @@ export default function GoalForm({
         message: 'There was an error saving your goal',
         type: 'error',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -544,38 +513,7 @@ export default function GoalForm({
     // PS - endDate can be null
     setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
 
-    // objectives need some special help
-    const { objectives: goalObjectives } = goal;
-
-    const newObjectives = [];
-    const objectiveApiData = {};
-
-    // we need to break out certain fields that will only allow adding data to them
-    // not deleting existing data
-    goalObjectives.forEach((objective) => {
-      if (objective.activityReports && objective.activityReports.length) {
-        newObjectives.push({
-          ...objective,
-          files: [],
-          resources: [],
-          topics: [],
-        });
-
-        objectiveApiData[objective.id] = {
-          resources: objective.resources.map((value) => ({ ...value, isFromApi: true })),
-          topics: objective.topics.map((value) => ({ ...value, isFromApi: true })),
-          files: objective.files.map((value) => ({ ...value, isFromApi: true })),
-        };
-      } else {
-        newObjectives.push({
-          ...objective,
-          resources: objective.resources.map((value) => value),
-        });
-      }
-    });
-
-    setUnchangingApiData(objectiveApiData);
-    setObjectives(newObjectives);
+    setObjectives(goal.objectives);
 
     setShowForm(true);
   };
@@ -586,6 +524,7 @@ export default function GoalForm({
    * @param {Number} g
    */
   const onDelete = async (g) => {
+    setIsLoading(true);
     try {
       const success = await deleteGoal(g, regionId);
 
@@ -606,6 +545,8 @@ export default function GoalForm({
         message: 'There was an error deleting your goal',
         type: 'error',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -630,72 +571,73 @@ export default function GoalForm({
       </h1>
 
       <Container className="margin-y-2 margin-left-2 width-tablet padding-top-1" skipTopPadding>
-        { createdGoals.length ? (
-          <>
-            <ReadOnly
-              createdGoals={createdGoals}
-              onDelete={onDelete}
-              onEdit={onEdit}
+        <GoalFormLoadingContext.Provider value={{ isLoading }}>
+          { createdGoals.length ? (
+            <>
+              <ReadOnly
+                createdGoals={createdGoals}
+                onDelete={onDelete}
+                onEdit={onEdit}
+              />
+              <div className="margin-bottom-4">
+                {!showForm && id === 'new'
+                  ? (
+                    <PlusButton onClick={() => setShowForm(true)} text="Add another goal" />
+                  ) : null }
+              </div>
+            </>
+          ) : null }
+
+          <form onSubmit={onSubmit}>
+            { showForm && (
+            <Form
+              fetchError={fetchError}
+              onSaveDraft={onSaveDraft}
+              possibleGrants={possibleGrants}
+              selectedGrants={selectedGrants}
+              setSelectedGrants={setSelectedGrants}
+              goalName={goalName}
+              setGoalName={setGoalName}
+              recipient={recipient}
+              regionId={regionId}
+              endDate={endDate}
+              setEndDate={setEndDate}
+              datePickerKey={datePickerKey}
+              errors={errors}
+              validateGoalName={validateGoalName}
+              validateEndDate={validateEndDate}
+              validateGrantNumbers={validateGrantNumbers}
+              objectives={objectives}
+              setObjectives={setObjectives}
+              setObjectiveError={setObjectiveError}
+              clearEmptyObjectiveError={clearEmptyObjectiveError}
+              topicOptions={topicOptions}
+              isOnReport={isOnReport}
+              isOnApprovedReport={isOnApprovedReport}
+              status={status || 'Needs status'}
+              goalNumber={goalNumber}
             />
-            <div className="margin-bottom-4">
-              {!showForm && id === 'new'
-                ? (
-                  <PlusButton onClick={() => setShowForm(true)} text="Add another goal" />
-                ) : null }
+            )}
+
+            <div className="margin-top-4">
+              { showForm && !createdGoals.length ? (
+                <Link
+                  to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
+                  className=" usa-button usa-button--outline"
+                >
+                  Cancel
+                </Link>
+              ) : null }
+              { showForm && createdGoals.length ? (
+                <Button type="button" outline onClick={clearForm} data-testid="create-goal-form-cancel">Cancel</Button>
+              ) : null }
+              <Button type="button" outline onClick={onSaveDraft}>Save draft</Button>
+              { showForm ? <Button type="button" onClick={onSaveAndContinue}>Save and continue</Button> : null }
+              { !showForm ? <Button type="submit">Submit goal</Button> : null }
+              { alert.message ? <Alert role="alert" className="margin-y-2" type={alert.type}>{alert.message}</Alert> : null }
             </div>
-          </>
-        ) : null }
-
-        <form onSubmit={onSubmit}>
-          { showForm && (
-          <Form
-            fetchError={fetchError}
-            onSaveDraft={onSaveDraft}
-            possibleGrants={possibleGrants}
-            selectedGrants={selectedGrants}
-            setSelectedGrants={setSelectedGrants}
-            goalName={goalName}
-            setGoalName={setGoalName}
-            recipient={recipient}
-            regionId={regionId}
-            endDate={endDate}
-            setEndDate={setEndDate}
-            datePickerKey={datePickerKey}
-            errors={errors}
-            validateGoalName={validateGoalName}
-            validateEndDate={validateEndDate}
-            validateGrantNumbers={validateGrantNumbers}
-            objectives={objectives}
-            setObjectives={setObjectives}
-            setObjectiveError={setObjectiveError}
-            clearEmptyObjectiveError={clearEmptyObjectiveError}
-            topicOptions={topicOptions}
-            isOnReport={isOnReport}
-            isOnApprovedReport={isOnApprovedReport}
-            status={status || 'Needs status'}
-            unchangingApiData={unchangingApiData}
-            goalNumber={goalNumber}
-          />
-          )}
-
-          <div className="margin-top-4">
-            { showForm && !createdGoals.length ? (
-              <Link
-                to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
-                className=" usa-button usa-button--outline"
-              >
-                Cancel
-              </Link>
-            ) : null }
-            { showForm && createdGoals.length ? (
-              <Button type="button" outline onClick={clearForm} data-testid="create-goal-form-cancel">Cancel</Button>
-            ) : null }
-            <Button type="button" outline onClick={onSaveDraft}>Save draft</Button>
-            { showForm ? <Button type="button" onClick={onSaveAndContinue}>Save and continue</Button> : null }
-            { !showForm ? <Button type="submit">Submit goal</Button> : null }
-            { alert.message ? <Alert role="alert" className="margin-y-2" type={alert.type}>{alert.message}</Alert> : null }
-          </div>
-        </form>
+          </form>
+        </GoalFormLoadingContext.Provider>
       </Container>
     </>
   );

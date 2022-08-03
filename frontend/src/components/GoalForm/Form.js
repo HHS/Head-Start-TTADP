@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import {
   Alert,
@@ -9,11 +9,13 @@ import PlusButton from './PlusButton';
 import GrantSelect from './GrantSelect';
 import GoalText from './GoalText';
 import GoalDate from './GoalDate';
+import Loader from '../Loader';
 import {
   OBJECTIVE_DEFAULTS,
   OBJECTIVE_DEFAULT_ERRORS,
   FORM_FIELD_INDEXES,
 } from './constants';
+import GoalFormLoadingContext from '../../GoalFormLoadingContext';
 import './Form.scss';
 
 export default function Form({
@@ -36,11 +38,12 @@ export default function Form({
   isOnReport,
   status,
   datePickerKey,
-  unchangingApiData,
   fetchError,
   goalNumber,
   clearEmptyObjectiveError,
 }) {
+  const { isLoading } = useContext(GoalFormLoadingContext);
+
   const onUpdateText = (e) => setGoalName(e.target.value);
 
   const onAddNewObjectiveClick = () => {
@@ -70,6 +73,7 @@ export default function Form({
   const objectiveErrors = errors[FORM_FIELD_INDEXES.OBJECTIVES];
 
   const formTitle = goalNumber ? `Goal ${goalNumber}` : 'Recipient TTA goal';
+
   const hasNotStartedObjectives = objectives.some((objective) => objective.status && objective.status.toLowerCase() === 'not started');
   const hasInProgressObjectives = objectives.some((objective) => objective.status && objective.status.toLowerCase() === 'in progress');
 
@@ -78,6 +82,7 @@ export default function Form({
 
   return (
     <div className="ttahub-create-goals-form">
+      <Loader loading={isLoading} loadingLabel="Loading" text="Loading" />
       { fetchError ? <Alert type="error" role="alert">{ fetchError }</Alert> : null}
       <div className="display-flex flex-align-center margin-y-2">
         <h2 className="margin-0">{formTitle}</h2>
@@ -119,6 +124,7 @@ export default function Form({
         possibleGrants={possibleGrants}
         validateGrantNumbers={validateGrantNumbers}
         error={errors[FORM_FIELD_INDEXES.GRANTS]}
+        isLoading={isLoading}
       />
 
       <GoalText
@@ -127,6 +133,7 @@ export default function Form({
         isOnReport={isOnReport}
         validateGoalName={validateGoalName}
         onUpdateText={onUpdateText}
+        isLoading={isLoading}
       />
 
       <GoalDate
@@ -136,6 +143,7 @@ export default function Form({
         endDate={endDate}
         validateEndDate={validateEndDate}
         datePickerKey={datePickerKey}
+        isLoading={isLoading}
       />
 
       { objectives.map((objective, i) => (
@@ -152,7 +160,6 @@ export default function Form({
           setObjective={(data) => setObjective(data, i)}
           topicOptions={topicOptions}
           goalStatus={status}
-          unchangingApiData={unchangingApiData}
         />
       ))}
 
@@ -219,18 +226,6 @@ Form.propTypes = {
   })).isRequired,
   status: PropTypes.string.isRequired,
   datePickerKey: PropTypes.string.isRequired,
-  unchangingApiData: PropTypes.objectOf(
-    PropTypes.shape({
-      resources: PropTypes.arrayOf(PropTypes.shape({
-        key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-        value: PropTypes.string,
-      })),
-      topics: PropTypes.arrayOf(PropTypes.shape({
-        label: PropTypes.string,
-        value: PropTypes.number,
-      })),
-    }),
-  ).isRequired,
   fetchError: PropTypes.string.isRequired,
   goalNumber: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   clearEmptyObjectiveError: PropTypes.func.isRequired,

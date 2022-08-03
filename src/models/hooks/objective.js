@@ -119,14 +119,16 @@ const linkObjectiveGoalTemplates = async (sequelize, instance, options) => {
 
 const propagateTitle = async (sequelize, instance, options) => {
   const changed = instance.changed();
-  if (Array.isArray(changed) && changed.includes('title')) {
+  if (Array.isArray(changed) && changed.includes('title') && instance.goalTemplateId) {
     await sequelize.models.ObjectiveTemplate.update(
       {
         hash: sequelize.fn('md5', sequelize.fn('NULLIF', sequelize.fn('TRIM', instance.title), '')),
         templateTitle: instance.title,
       },
       {
-        where: { id: instance.goalTemplateId },
+        where: {
+          id: instance.goalTemplateId,
+        },
         transaction: options.transaction,
         individualHooks: true,
       },
