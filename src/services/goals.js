@@ -235,6 +235,7 @@ function reduceObjectives(newObjectives, currentObjectives = []) {
 
     return [...objectives, {
       ...objective.dataValues,
+      value: objective.id,
       ids: [objective.id],
       ttaProvided,
       isNew: false,
@@ -609,7 +610,7 @@ export async function createOrUpdateGoals(goals) {
     // an objective belonging to one goal will be looped over as part of creating another goal
     // so we first unpack and then, if the objective already exists, it is safe to update all the
     // data except the goal ID, which we update only if "isNew" is true
-    // we will have to be careful and watch for edge cases where isNew is a misrepresentative value
+    // we will have to be careful and watch for edge cases where isNew is a misrepresentation value
 
     const objectivesToCreateOrUpdate = objectives.reduce((arr, o) => {
       if (o.isNew) {
