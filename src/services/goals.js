@@ -332,7 +332,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
           ],
         },
         attributes: [
-          ['id', 'value'],
+          'id',
           ['title', 'label'],
           'title',
           'status',
