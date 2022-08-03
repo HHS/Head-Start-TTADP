@@ -111,7 +111,7 @@ export default function GoalForm({
       try {
         const goal = await goalByIdAndRecipient(id, recipient.id.toString());
 
-        // the API sends us back things in a format we expect
+        // for these, the API sends us back things in a format we expect
         setGoalName(goal.goalName);
         setStatus(goal.status);
         setEndDate(goal.endDate ? moment(goal.endDate, 'MM/DD/YYYY').format('YYYY-MM-DD') : '');
@@ -132,8 +132,8 @@ export default function GoalForm({
             newObjective = {
               ...objective,
               resources: [
-              // this is the expected format of a blank resource
-              // all objectives start off with one
+                // this is the expected format of a blank resource
+                // all objectives start off with one
                 {
                   key: uuidv4(),
                   value: '',
@@ -164,17 +164,19 @@ export default function GoalForm({
       }
     }
 
-    // only fetch once, on load, and only if the id isn't 'new'
-    if (!fetchAttempted && id !== 'new') {
+    if (!fetchAttempted && id !== 'new' && !isLoading) {
       setIsLoading(true);
+    }
+
+    // only fetch once, on load, and only if the id isn't 'new'
+    if (!fetchAttempted && id !== 'new' && isLoading) {
       fetchGoal();
     }
-  }, [errors, fetchAttempted, recipient.id, id]);
+  }, [errors, fetchAttempted, recipient.id, id, isLoading]);
 
   // for fetching topic options from API
   useEffect(() => {
     async function fetchTopics() {
-      setIsLoading(true);
       try {
         const topicsFromApi = await getTopics();
 
@@ -185,11 +187,8 @@ export default function GoalForm({
         setTopicOptions(topicsAsOptions);
       } catch (err) {
         setFetchError('There was an error loading topics');
-      } finally {
-        setIsLoading(false);
       }
     }
-
     fetchTopics();
   }, []);
 
