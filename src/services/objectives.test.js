@@ -66,11 +66,13 @@ describe('Objectives DB service', () => {
       objectiveId: objective.id,
       activityReportId: report.id,
       ttaProvided: 'tta provided',
+      status: objective.status,
     });
 
     await ActivityReportObjective.create({
       objectiveId: secondObjective.id,
       activityReportId: report.id,
+      status: secondObjective.status,
     });
 
     await sequelize.transaction(async () => {

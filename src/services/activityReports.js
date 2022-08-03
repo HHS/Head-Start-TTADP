@@ -24,6 +24,7 @@ import {
   Objective,
   Program,
   ActivityReportObjective,
+  ActivityReportGoal,
   CollaboratorRole,
 } from '../models';
 
@@ -919,8 +920,19 @@ async function getDownloadableActivityReports(where, separate = true) {
           }],
           attributes: ['id', 'title', 'status'],
         }],
-        attributes: ['ttaProvided'],
+        attributes: ['ttaProvided', 'status'],
         order: [['objective', 'goal', 'id'], ['objective', 'id']],
+      },
+      {
+        model: ActivityReportGoal,
+        as: 'activityReportGoals',
+        separate,
+        include: [{
+          model: Goal,
+          as: 'goal',
+        }],
+        attributes: ['status'],
+        order: [['goal', 'id']],
       },
       {
         model: ActivityRecipient,
