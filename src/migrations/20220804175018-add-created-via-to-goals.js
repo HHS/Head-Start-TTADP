@@ -16,9 +16,13 @@ module.exports = {
       UPDATE "Goals" SET "createdVia" = 'activityReport' WHERE "isFromSmartsheetTtaPlan" IS NULL OR "isFromSmartsheetTtaPlan" = false;
     `, { transaction });
   }),
-  down: async (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => queryInterface.removeColumn(
-    'Goals',
-    'createdVia',
-    { transaction },
-  )),
+   down: async (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => {
+    const query = 'DROP TYPE public."enum_Goals_createdVia";';
+    await queryInterface.removeColumn(
+      'Goals',
+      'createdVia',
+      { transaction },
+    );
+    await queryInterface.sequelize.query(query, { transaction });
+  }),
 };
