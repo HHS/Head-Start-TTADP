@@ -104,17 +104,8 @@ const GoalPicker = ({
     onChange(goal);
   };
 
-  // todo - ask UI team about this scenario
-  // const menuItems = [
-  //   {
-  //     label: 'Clear',
-  //     onClick: () => toggleGoalForm(true),
-  //   },
-  // ];
-
   return (
     <>
-      {/* <ContextMenu label="Clear new goal" menuItems={menuItems} /> */}
       <div className="margin-top-3 position-relative">
         <Label>
           Select recipient&apos;s goal

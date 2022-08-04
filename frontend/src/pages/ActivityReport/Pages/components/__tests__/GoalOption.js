@@ -32,7 +32,7 @@ describe('GoalOption', () => {
 
   it('displays a bold option when appropriate', async () => {
     const data = {
-      number: 'asdfasdf',
+      goalIds: [1, 2, 3],
     };
     renderGoalOption(data);
     expect(document.querySelector('strong')).toBeTruthy();

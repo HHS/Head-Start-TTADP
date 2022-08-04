@@ -11,10 +11,14 @@ const SingleValue = (
   props,
 ) => {
   const {
-    children, className, cx, data, getStyles, isDisabled, innerProps,
+    className, cx, data, getStyles, isDisabled, innerProps, children,
   } = props;
 
-  const { number } = data;
+  const { goalIds, name } = data;
+
+  const numbers = goalIds ? goalIds.map((id) => `G-${id}`).join(', ') : '';
+
+  const label = children || name;
 
   return (
     <div
@@ -28,14 +32,14 @@ const SingleValue = (
       )}
       {...innerProps}
     >
-      { number ? (
+      { numbers ? (
         <strong>
-          {number}
+          {numbers}
           :
           {' '}
         </strong>
       ) : null }
-      { children }
+      { label }
     </div>
   );
 };

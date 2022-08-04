@@ -20,7 +20,9 @@ const Option = (props) => {
     data,
   } = props;
 
-  const { number } = data;
+  const { goalIds } = data;
+
+  const label = goalIds ? goalIds.map((id) => `G-${id}`).join(', ') : '';
 
   return (
     <div
@@ -37,9 +39,9 @@ const Option = (props) => {
       {...innerProps}
     >
       <div>
-        { number ? (
+        { label ? (
           <strong>
-            {number}
+            {label}
             :
             {' '}
           </strong>
