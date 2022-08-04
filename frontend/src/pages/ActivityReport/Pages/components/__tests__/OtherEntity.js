@@ -50,7 +50,7 @@ describe('OtherEntity', () => {
   it('renders created objectives', async () => {
     render(<RenderOtherEntity objectivesWithoutGoals={objectives} />);
 
-    const title = await screen.findByText('title');
+    const title = await screen.findByText('title', { selector: 'textarea' });
     expect(title).toBeVisible();
   });
 

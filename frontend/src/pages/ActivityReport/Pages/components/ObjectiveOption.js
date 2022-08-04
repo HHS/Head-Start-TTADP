@@ -20,9 +20,9 @@ const Option = (props) => {
     data,
   } = props;
 
-  const { goalIds } = data;
+  const { ids } = data;
 
-  const label = goalIds ? goalIds.map((id) => `G-${id}`).join(', ') : '';
+  const label = ids ? ids.map((id) => `${id}`).join(', ') : '';
 
   return (
     <div
