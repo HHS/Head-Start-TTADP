@@ -60,7 +60,7 @@ const GoalPicker = ({
         validateGoal: (g) => validateGoals([g]) === true,
       },
     },
-    defaultValue: newGoal(grantIds),
+    defaultValue: '',
   });
 
   // for fetching topic options from API
