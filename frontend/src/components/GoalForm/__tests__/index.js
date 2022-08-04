@@ -48,7 +48,7 @@ describe('create goal', () => {
 
   const postResponse = [{
     id: 64175,
-    goalName: 'This is goal text',
+    name: 'This is goal text',
     status: 'Draft',
     endDate: '08/15/2023',
     isFromSmartsheetTtaPlan: false,
@@ -117,7 +117,7 @@ describe('create goal', () => {
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    const ed = await screen.findByRole('textbox', { name: /Estimated close date \(mm\/dd\/yyyy\) \*/i });
+    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
     userEvent.type(ed, '08/15/2023');
 
     const save = await screen.findByRole('button', { name: /save and continue/i });
@@ -200,7 +200,7 @@ describe('create goal', () => {
     userEvent.click(save);
     await screen.findByText('Enter a valid date');
 
-    const ed = await screen.findByRole('textbox', { name: /Estimated close date \(mm\/dd\/yyyy\) \*/i });
+    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
     userEvent.type(ed, 'apple season');
 
     userEvent.click(save);
@@ -243,7 +243,7 @@ describe('create goal', () => {
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    const ed = await screen.findByRole('textbox', { name: /Estimated close date \(mm\/dd\/yyyy\) \*/i });
+    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
     userEvent.type(ed, '08/15/2023');
 
     const save = await screen.findByRole('button', { name: /save and continue/i });
@@ -306,7 +306,7 @@ describe('create goal', () => {
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    const ed = await screen.findByRole('textbox', { name: /Estimated close date \(mm\/dd\/yyyy\) \*/i });
+    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
     userEvent.type(ed, '08/15/2023');
 
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
@@ -366,7 +366,7 @@ describe('create goal', () => {
     let goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    let ed = await screen.findByRole('textbox', { name: /Estimated close date \(mm\/dd\/yyyy\) \*/i });
+    let ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
     userEvent.type(ed, '08/15/2023');
 
     let newObjective = await screen.findByRole('button', { name: 'Add new objective' });
@@ -403,7 +403,7 @@ describe('create goal', () => {
     goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is more goal text');
 
-    ed = await screen.findByRole('textbox', { name: /Estimated close date \(mm\/dd\/yyyy\) \*/i });
+    ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
     userEvent.type(ed, '08/15/2023');
 
     newObjective = await screen.findByRole('button', { name: 'Add new objective' });
@@ -456,7 +456,7 @@ describe('create goal', () => {
     let goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    const ed = await screen.findByRole('textbox', { name: /Estimated close date \(mm\/dd\/yyyy\) \*/i });
+    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
     userEvent.type(ed, '08/15/2023');
 
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
@@ -511,7 +511,7 @@ describe('create goal', () => {
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    const ed = await screen.findByRole('textbox', { name: /Estimated close date \(mm\/dd\/yyyy\) \*/i });
+    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
     userEvent.type(ed, '08/15/2023');
 
     const cancel = await screen.findByRole('link', { name: 'Cancel' });
@@ -565,7 +565,7 @@ describe('create goal', () => {
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    const ed = await screen.findByRole('textbox', { name: /Estimated close date \(mm\/dd\/yyyy\) \*/i });
+    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
     userEvent.type(ed, '08/15/2023');
 
     let newObjective = await screen.findByRole('button', { name: 'Add new objective' });
@@ -621,7 +621,7 @@ describe('create goal', () => {
 
   it('fetches and prepopulates goal data given an appropriate ID', async () => {
     fetchMock.get('/api/goals/12389/recipient/1', {
-      goalName: 'This is a goal name',
+      name: 'This is a goal name',
       status: 'Not Started',
       endDate: '10/08/2021',
       grant: {
@@ -651,13 +651,13 @@ describe('create goal', () => {
     expect(goalName).toBeVisible();
     expect(objectiveTitle).toBeVisible();
 
-    const endDate = await screen.findByRole('textbox', { name: /Estimated close date/i });
+    const endDate = await screen.findByRole('textbox', { name: /anticipated close date/i });
     expect(endDate.value).toBe('10/08/2021');
   });
 
   it('draft goals don\'t show status dropdowns', async () => {
     fetchMock.get('/api/goals/12389/recipient/1', {
-      goalName: 'This is a goal name',
+      name: 'This is a goal name',
       status: 'Draft',
       endDate: '10/08/2021',
       grant: {
@@ -687,13 +687,13 @@ describe('create goal', () => {
     expect(goalName).toBeVisible();
     expect(objectiveTitle).toBeVisible();
 
-    const endDate = await screen.findByRole('textbox', { name: /Estimated close date/i });
+    const endDate = await screen.findByRole('textbox', { name: /anticipated close date/i });
     expect(endDate.value).toBe('10/08/2021');
   });
 
   it('not started goals on AR', async () => {
     fetchMock.get('/api/goals/12389/recipient/1', {
-      goalName: 'This is a goal name',
+      name: 'This is a goal name',
       status: 'Not Started',
       endDate: '10/08/2021',
       grant: {
@@ -733,13 +733,13 @@ describe('create goal', () => {
     await screen.findByText(/Some fields can't be edited/i);
 
     // only close date should be editable
-    const endDate = await screen.findByRole('textbox', { name: /Estimated close date/i });
+    const endDate = await screen.findByRole('textbox', { name: /anticipated close date/i });
     expect(endDate.value).toBe('10/08/2021');
   });
 
   it('the correct fields are read only when the goal is in progress', async () => {
     fetchMock.get('/api/goals/12389/recipient/1', {
-      goalName: 'This is a goal name',
+      name: 'This is a goal name',
       status: 'In Progress',
       endDate: '10/08/2021',
       grant: {
@@ -770,7 +770,7 @@ describe('create goal', () => {
     expect(goalName).toBeVisible();
     expect(objectiveTitle).toBeVisible();
 
-    const endDate = await screen.findByRole('textbox', { name: /Estimated close date/i });
+    const endDate = await screen.findByRole('textbox', { name: /anticipated close date/i });
     expect(endDate.value).toBe('10/08/2021');
   });
 });

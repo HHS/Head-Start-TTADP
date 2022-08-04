@@ -75,7 +75,7 @@ describe('GoalForm', () => {
     renderGoalForm(goalId);
     expect(fetchMock.called()).toBe(false);
 
-    const endDate = await screen.findByText(/estimated close date/i);
+    const endDate = await screen.findByText(/anticipated close date/i);
     expect(endDate).toBeVisible();
   });
 });
