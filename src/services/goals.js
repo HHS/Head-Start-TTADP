@@ -219,7 +219,8 @@ function reduceObjectives(newObjectives, currentObjectives = []) {
     ));
 
     if (exists) {
-      exists.ids = [...exists.ids, objective.id];
+      const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
+      exists.ids = [...exists.ids, id];
       return objectives;
     }
 
@@ -233,10 +234,12 @@ function reduceObjectives(newObjectives, currentObjectives = []) {
 
     const roles = objective.roles.map((role) => role.fullName);
 
+    const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
+
     return [...objectives, {
       ...objective.dataValues,
-      value: objective.id,
-      ids: [objective.id],
+      value: id,
+      ids: [id],
       ttaProvided,
       isNew: false,
       roles,

@@ -1,7 +1,7 @@
 /*
  * Copied from https://github.com/JedWatson/react-select/blob/master/packages/react-select/src/components/SingleValue.tsx
  * Changes:
- * - Show the goal number when selected
+ * - Show the objective id when selected
  */
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable react/prop-types */
@@ -11,14 +11,12 @@ const SingleValue = (
   props,
 ) => {
   const {
-    className, cx, data, getStyles, isDisabled, innerProps, children,
+    children, className, cx, data, getStyles, isDisabled, innerProps,
   } = props;
 
-  const { goalIds, name } = data;
+  const { ids, title } = data;
 
-  const numbers = goalIds ? goalIds.map((id) => `G-${id}`).join(', ') : '';
-
-  const label = children || name;
+  const label = ids ? ids.map((id) => `${id}`).join(', ') : '';
 
   return (
     <div
@@ -32,14 +30,14 @@ const SingleValue = (
       )}
       {...innerProps}
     >
-      { numbers ? (
+      { label ? (
         <strong>
-          {numbers}
+          {label}
           :
           {' '}
         </strong>
       ) : null }
-      { label }
+      { children || title }
     </div>
   );
 };
