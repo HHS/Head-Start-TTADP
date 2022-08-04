@@ -5,7 +5,14 @@ import Select from 'react-select';
 import Req from '../../../../components/Req';
 import selectOptionsReset from '../../../../components/selectOptionsReset';
 import { OBJECTIVE_PROP } from './constants';
+import Option from './ObjectiveOption';
+import SingleValue from './ObjectiveValue';
 import './ObjectiveSelect.css';
+
+const components = {
+  Option,
+  SingleValue,
+};
 
 export default function ObjectiveSelect({
   onChange,
@@ -33,6 +40,7 @@ export default function ObjectiveSelect({
           styles={selectOptionsReset}
           placeholder="- Select -"
           value={selectedObjectives}
+          components={components}
         />
       </Label>
     </>

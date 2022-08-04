@@ -65,6 +65,6 @@ const RenderObjective = ({
 describe('Objective', () => {
   it('renders an objective', async () => {
     render(<RenderObjective />);
-    expect(await screen.findByText(/This is an objective title/i)).toBeVisible();
+    expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
   });
 });
