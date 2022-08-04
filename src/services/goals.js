@@ -22,7 +22,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
   attributes: [
     'id',
     'endDate',
-    ['name', 'goalName'],
+    'name',
     'status',
     [sequelize.col('grant.regionId'), 'regionId'],
     [sequelize.col('grant.recipient.id'), 'recipientId'],
@@ -252,7 +252,7 @@ function reduceObjectives(newObjectives, currentObjectives = []) {
  * @returns {Object[]} array of deduped goals
  */
 function reduceGoals(goals) {
-  return goals.reduce((previousValue, currentValue) => {
+  const r = goals.reduce((previousValue, currentValue) => {
     const existingGoal = previousValue.find((g) => (
       g.name === currentValue.name && g.status === currentValue.status
     ));
@@ -266,6 +266,7 @@ function reduceGoals(goals) {
           ...currentValue.grant.dataValues,
           recipient: currentValue.grant.recipient.dataValues,
           name: currentValue.grant.name,
+          goalId: currentValue.id,
         },
       ];
       existingGoal.grantIds = [...existingGoal.grantIds, currentValue.grant.id];
@@ -282,6 +283,7 @@ function reduceGoals(goals) {
           ...currentValue.grant.dataValues,
           recipient: currentValue.grant.recipient.dataValues,
           name: currentValue.grant.name,
+          goalId: currentValue.id,
         },
       ],
       grantIds: [currentValue.grant.id],
@@ -291,6 +293,8 @@ function reduceGoals(goals) {
 
     return [...previousValue, goal];
   }, []);
+
+  return r;
 }
 
 /**

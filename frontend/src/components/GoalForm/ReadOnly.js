@@ -73,7 +73,7 @@ export default function ReadOnly({
               <p className="margin-top-0">{goal.goalName}</p>
               {goal.endDate ? (
                 <>
-                  <h4 className="margin-bottom-1">Estimated close date</h4>
+                  <h4 className="margin-bottom-1">Anticipated close date</h4>
                   <p className="margin-top-0">{goal.endDate}</p>
                 </>
               ) : null }
