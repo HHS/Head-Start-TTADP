@@ -120,6 +120,7 @@ describe('createOrUpdateGoals', () => {
       {
         ...basicGoal,
         id: goal.id,
+        createdVia: 'activityReport',
         status: 'Not Started',
         objectives: [
           {
@@ -171,6 +172,7 @@ describe('createOrUpdateGoals', () => {
     expect(updatedGoal.status).toBe('Not Started');
     expect(updatedGoal.goalName).toBe('This is some serious goal text');
     expect(updatedGoal.grantIds.length).toBe(1);
+    expect(updatedGoal.createdVia).toBe('activityReport');
     expect(updatedGoal.grantIds).toContain(grants[0].id);
 
     const grantRegions = updatedGoal.grants.map((g) => g.regionId);
@@ -223,5 +225,6 @@ describe('createOrUpdateGoals', () => {
     expect(newGoal.grant.id).toBe(grants[1].id);
     expect(newGoal.grant.regionId).toBe(1);
     expect(newGoal.grant.recipientId).toBe(recipient.id);
+    expect(newGoal.createdVia).toBe('rtr');
   });
 });

@@ -27,6 +27,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     [sequelize.col('grant.regionId'), 'regionId'],
     [sequelize.col('grant.recipient.id'), 'recipientId'],
     'goalNumber',
+    'createdVia',
     [
       sequelize.literal(`
         (
@@ -473,7 +474,7 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
 
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
   return Goal.findOne({
-    attributes: ['name', 'id', 'status'],
+    attributes: ['name', 'id', 'status', 'createdVia'],
     where: {
       id: goalId,
     },
@@ -568,6 +569,7 @@ export async function createOrUpdateGoals(goals) {
       regionId,
       objectives,
       status,
+      createdVia,
       ...fields
     } = goalData;
 
@@ -591,7 +593,7 @@ export async function createOrUpdateGoals(goals) {
     });
 
     await newGoal.update(
-      { ...options, status },
+      { ...options, status, createdVia: createdVia || 'rtr' },
       { individualHooks: true },
     );
 
@@ -1107,7 +1109,13 @@ export async function saveGoalsForReport(goals, report) {
     // we have a param to determine if goals are new
     if (goal.isNew) {
       const {
-        isNew, objectives, id, grantIds, status: discardedStatus, onApprovedAR, ...fields
+        isNew,
+        objectives,
+        id, grantIds,
+        status: discardedStatus,
+        onApprovedAR,
+        createdVia,
+        ...fields
       } = goal;
 
       newGoals = await Promise.all(goal.grantIds.map(async (grantId) => {
@@ -1142,6 +1150,7 @@ export async function saveGoalsForReport(goals, report) {
         goalIds,
         id, // this is unique and we can't trying to set this
         onApprovedAR, // we don't want to set this manually
+        createdVia,
         ...fields
       } = goal;
 
@@ -1183,7 +1192,7 @@ export async function saveGoalsForReport(goals, report) {
           defaults: { ...fields, status },
         });
 
-        await newGoal.update({ ...fields, status }, { individualHooks: true });
+        await newGoal.update({ ...fields, status, createdVia: createdVia || 'activityReport' }, { individualHooks: true });
 
         await ActivityReportGoal.findOrCreate({
           where: {
