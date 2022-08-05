@@ -27,6 +27,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     [sequelize.col('grant.regionId'), 'regionId'],
     [sequelize.col('grant.recipient.id'), 'recipientId'],
     'goalNumber',
+    'createdVia',
     [
       sequelize.literal(`
         (
@@ -473,7 +474,7 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
 
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
   return Goal.findOne({
-    attributes: ['name', 'id', 'status'],
+    attributes: ['name', 'id', 'status', 'createdVia'],
     where: {
       id: goalId,
     },
