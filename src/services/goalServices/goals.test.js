@@ -62,21 +62,8 @@ describe('Goals DB service', () => {
           },
         ]);
         await saveGoalsForReport([], { id: 1 });
-
-        expect(Objective.destroy).toHaveBeenCalledWith(
-          {
-            where: [
-              {
-                id: [1],
-              },
-              sequelize.where(sequelize.literal(`
-                (SELECT COUNT(DISTINCT aro."id") FROM "Objectives" 
-                INNER JOIN "ActivityReportObjectives" aro ON "aro"."objectiveId" = "Objectives"."id"
-                WHERE "objectiveId" = "Objectives"."id")        
-              `), Op.eq, 0),
-            ],
-          },
-        );
+        expect(Objective.destroy).toHaveBeenCalled();
+        expect(Objective.destroy.mock.calls[0][0].where[0].id).toContain(1);
       });
 
       it('deletes the ActivityReportObjective', async () => {
