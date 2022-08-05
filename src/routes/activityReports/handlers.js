@@ -141,6 +141,10 @@ async function sendActivityReportCSV(reports, res) {
           header: 'Number of participants',
         },
         {
+          key: 'files',
+          header: 'Attachments',
+        },
+        {
           key: 'context',
           header: 'Context',
         },
@@ -150,10 +154,6 @@ async function sendActivityReportCSV(reports, res) {
             // capitalize each word and space them out (no '-' in there)
             header: objective.split('-').map((w) => `${w.charAt(0).toUpperCase()}${w.slice(1)}`).join(' '),
           })),
-        {
-          key: 'files',
-          header: 'Supporting Attachments',
-        },
         {
           key: 'specialistNextSteps',
           header: 'Specialist next steps',
