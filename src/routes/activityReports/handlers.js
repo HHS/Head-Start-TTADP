@@ -151,6 +151,10 @@ async function sendActivityReportCSV(reports, res) {
             header: objective.split('-').map((w) => `${w.charAt(0).toUpperCase()}${w.slice(1)}`).join(' '),
           })),
         {
+          key: 'files',
+          header: 'Supporting Attachments',
+        },
+        {
           key: 'specialistNextSteps',
           header: 'Specialist next steps',
         },

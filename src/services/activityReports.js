@@ -26,6 +26,9 @@ import {
   ActivityReportObjective,
   ActivityReportGoal,
   CollaboratorRole,
+  Role,
+  Topic,
+  ActivityReportObjectiveResource,
 } from '../models';
 
 import { removeUnusedGoalsObjectivesFromReport, saveGoalsForReport, removeRemovedRecipientsGoals } from './goals';
@@ -910,6 +913,8 @@ async function getDownloadableActivityReports(where, separate = true) {
       {
         model: ActivityReportObjective,
         as: 'activityReportObjectives',
+        attributes: ['ttaProvided', 'status'],
+        order: [['objective', 'goal', 'id'], ['objective', 'id']],
         separate,
         include: [{
           model: Objective,
@@ -917,11 +922,27 @@ async function getDownloadableActivityReports(where, separate = true) {
           include: [{
             model: Goal,
             as: 'goal',
-          }],
+          },
+          ],
           attributes: ['id', 'title', 'status'],
-        }],
-        attributes: ['ttaProvided', 'status'],
-        order: [['objective', 'goal', 'id'], ['objective', 'id']],
+        },
+        {
+          model: ActivityReportObjectiveResource,
+          as: 'activityReportObjectiveResources',
+        },
+        {
+          model: Topic,
+          as: 'topics',
+        },
+        {
+          model: Role,
+          as: 'roles',
+        },
+        {
+          model: File,
+          as: 'files',
+        },
+        ],
       },
       {
         model: ActivityReportGoal,
