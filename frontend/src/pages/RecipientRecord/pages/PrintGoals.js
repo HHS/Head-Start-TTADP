@@ -8,6 +8,7 @@ import PrintToPdf from '../../../components/PrintToPDF';
 import './PrintGoals.css';
 import FilterContext from '../../../FilterContext';
 import useSessionFiltersAndReflectInUrl from '../../../hooks/useSessionFiltersAndReflectInUrl';
+import { expandFilters, filtersToQueryString } from '../../../utils';
 
 const OFFSET = 0;
 export default function PrintGoals({ location, recipientId, regionId }) {
@@ -27,7 +28,7 @@ export default function PrintGoals({ location, recipientId, regionId }) {
       ? location.state.selectedGoals
       : [];
 
-    async function fetchGoals() {
+    async function fetchGoals(query) {
       setLoading(true);
       try {
         const { goalRows } = await getRecipientGoals(
@@ -37,7 +38,7 @@ export default function PrintGoals({ location, recipientId, regionId }) {
           sortConfig.direction,
           OFFSET,
           false,
-          '',
+          query,
         );
         setGoals(goalRows);
         setError('');
@@ -49,8 +50,10 @@ export default function PrintGoals({ location, recipientId, regionId }) {
       setLoading(false);
     }
 
-    fetchGoals();
-  }, [location.state, recipientId, regionId]);
+    const filterQuery = filtersToQueryString(expandFilters(filters));
+
+    fetchGoals(filterQuery);
+  }, [location.state, recipientId, regionId, filters, filterKey]);
 
   if (loading) {
     return 'Loading...';
