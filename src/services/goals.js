@@ -239,6 +239,7 @@ function reduceObjectives(newObjectives, currentObjectives = []) {
 
     return [...objectives, {
       ...objective.dataValues,
+      value: id,
       ids: [id],
       ttaProvided,
       isNew: false,
@@ -299,7 +300,7 @@ function reduceGoals(goals) {
  * @param {number} id
  * @returns {Promise{Object}}
  */
-export async function goalsByIds(id) {
+export async function goalsByIdsAndActivityReport(id, activityReportId) {
   const goals = await Goal.findAll({
     attributes: [
       'endDate',
@@ -335,7 +336,7 @@ export async function goalsByIds(id) {
           ],
         },
         attributes: [
-          ['id', 'value'],
+          'id',
           ['title', 'label'],
           'title',
           'status',
@@ -350,6 +351,17 @@ export async function goalsByIds(id) {
               ['id', 'key'],
             ],
             required: false,
+          },
+          {
+            model: ActivityReportObjective,
+            as: 'activityReportObjectives',
+            attributes: [
+              'ttaProvided',
+            ],
+            required: false,
+            where: {
+              activityReportId,
+            },
           },
           {
             model: Role,
@@ -603,7 +615,7 @@ export async function createOrUpdateGoals(goals) {
     // an objective belonging to one goal will be looped over as part of creating another goal
     // so we first unpack and then, if the objective already exists, it is safe to update all the
     // data except the goal ID, which we update only if "isNew" is true
-    // we will have to be careful and watch for edge cases where isNew is a misrepresentative value
+    // we will have to be careful and watch for edge cases where isNew is a misrepresentation value
 
     const objectivesToCreateOrUpdate = objectives.reduce((arr, o) => {
       if (o.isNew) {
