@@ -65,9 +65,16 @@ describe('Goals DB service', () => {
 
         expect(Objective.destroy).toHaveBeenCalledWith(
           {
-            where: {
-              id: [1],
-            },
+            where: [
+              {
+                id: [1],
+              },
+              sequelize.where(sequelize.literal(`
+                (SELECT COUNT(DISTINCT aro."id") FROM "Objectives" 
+                INNER JOIN "ActivityReportObjectives" aro ON "aro"."objectiveId" = "Objectives"."id"
+                WHERE "objectiveId" = "Objectives"."id")        
+              `), Op.eq, 0),
+            ],
           },
         );
       });
