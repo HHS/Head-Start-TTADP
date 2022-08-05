@@ -52,13 +52,12 @@ export const unfinishedObjectives = (objectives, setError = () => {}) => {
 export const unfinishedGoals = (goals, setError = () => {}) => {
   for (let i = 0; i < goals.length; i += 1) {
     const goal = goals[i];
-    const endDateRequired = (goal.isNew);
 
     if (!goal.name) {
       setError('goalName', { message: GOAL_NAME_ERROR });
     }
 
-    if (endDateRequired && !goal.endDate) {
+    if (!goal.endDate) {
       setError('goalEndDate', { message: GOAL_DATE_ERROR });
     }
 
