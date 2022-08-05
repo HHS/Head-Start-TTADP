@@ -7,6 +7,11 @@ import {
   Grant,
   Recipient,
   ActivityReportCollaborator,
+  ActivityReportObjective,
+  ActivityReportObjectiveResource,
+  Topic,
+  Role,
+  File,
 } from '../models';
 import { activityReportToCsvRecord, makeGoalsAndObjectivesObject, extractListOfGoalsAndObjectives } from './transform';
 
@@ -171,6 +176,19 @@ describe('activityReportToCsvRecord', () => {
     },
   ];
 
+  const mockActivityReportObjective = [
+    {
+      id: 1,
+      objectiveId: 1,
+      activityReportId: 209914,
+      status: 'Not Started',
+      roles: [{ fullName: 'role 1' }, { fullName: 'role 2' }, { fullName: 'role 3' }],
+      topics: [{ name: 'topic 1' }, { name: 'topic 2' }, { name: 'topic 3' }],
+      activityReportObjectiveResources: [{ userProvidedUrl: 'https://test1.gov' }, { userProvidedUrl: 'https://test2.gov' }],
+      files: [{ originalFileName: 'file1.txt' }, { originalFileName: 'file2.pdf' }],
+    },
+  ];
+
   const mockReport = {
     id: 209914,
     regionId: 14,
@@ -190,6 +208,7 @@ describe('activityReportToCsvRecord', () => {
     approvedAt: new Date(),
     activityRecipients: mockActivityRecipients,
     approvers: mockApprovers,
+    activityReportObjectives: mockActivityReportObjective,
   };
 
   it('transforms arrays of strings into strings', async () => {
@@ -327,11 +346,43 @@ describe('activityReportToCsvRecord', () => {
           model: ActivityReportApprover,
           as: 'approvers',
           include: [{ model: User }],
-        }],
+        },
+        {
+          model: ActivityReportObjective,
+          as: 'activityReportObjectives',
+          include: [
+            {
+              model: ActivityReportObjectiveResource,
+              as: 'activityReportObjectiveResources',
+            },
+            {
+              model: Topic,
+              as: 'topics',
+            },
+            {
+              model: Role,
+              as: 'roles',
+            },
+            {
+              model: File,
+              as: 'files',
+            },
+          ],
+        },
+      ],
     });
     const output = await activityReportToCsvRecord(report);
     const {
-      creatorName, lastUpdatedBy, collaborators, programSpecialistName, approvers, recipientInfo,
+      creatorName,
+      lastUpdatedBy,
+      collaborators,
+      programSpecialistName,
+      approvers,
+      recipientInfo,
+      'objective-1.1-specialistRole': roles,
+      'objective-1.1-topics': topics,
+      'objective-1.1-resourcesLinks': resources,
+      'objective-1.1-nonResourceLinks': files,
     } = output;
     expect(creatorName).toEqual('Arthur, GS');
     expect(lastUpdatedBy).toEqual('Arthur');
@@ -339,6 +390,10 @@ describe('activityReportToCsvRecord', () => {
     expect(programSpecialistName).toEqual('Program Specialist 1\nProgram Specialist 2\nProgram Specialist 4');
     expect(approvers).toEqual('Test Approver 1\nTest Approver 2\nTest Approver 3');
     expect(recipientInfo).toEqual('test1 - grant number 1 - 1\ntest2 - grant number 2 - 2\ntest3 - grant number 3 - 3\ntest4 - grant number 4 - 4');
+    expect(roles).toEqual('role 1\nrole 2\nrole 3');
+    expect(topics).toEqual('topic 1\ntopic 2\ntopic 3');
+    expect(resources).toEqual('https://test1.gov\nhttps://test2.gov');
+    expect(files).toEqual('file1.txt\nfile2.pdf');
   });
 
   it('transforms goals and objectives into many values', () => {
