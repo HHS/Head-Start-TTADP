@@ -15,6 +15,8 @@ import TTAHistory from './pages/TTAHistory';
 import GoalsObjectives from './pages/GoalsObjectives';
 import CreateGoal from '../../components/CreateGoal';
 import PrintGoals from './pages/PrintGoals';
+import FilterContext from '../../FilterContext';
+import { GOALS_OBJECTIVES_FILTER_KEY } from './pages/constants';
 
 function PageWithHeading({
   children,
@@ -186,11 +188,13 @@ export default function RecipientRecord({ match }) {
                 </Link>
               )}
             >
-              <PrintGoals
-                recipientId={recipientId}
-                regionId={regionId}
-                location={location}
-              />
+              <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY }}>
+                <PrintGoals
+                  recipientId={recipientId}
+                  regionId={regionId}
+                  location={location}
+                />
+              </FilterContext.Provider>
 
             </PageWithHeading>
           )}

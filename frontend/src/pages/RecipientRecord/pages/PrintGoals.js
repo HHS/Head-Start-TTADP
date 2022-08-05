@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Alert } from '@trussworks/react-uswds';
@@ -6,12 +6,21 @@ import { getRecipientGoals } from '../../../fetchers/recipient';
 import PrintableGoal from './components/PrintableGoal';
 import PrintToPdf from '../../../components/PrintToPDF';
 import './PrintGoals.css';
+import FilterContext from '../../../FilterContext';
+import useSessionFiltersAndReflectInUrl from '../../../hooks/useSessionFiltersAndReflectInUrl';
 
 const OFFSET = 0;
 export default function PrintGoals({ location, recipientId, regionId }) {
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [, setError] = useState('');
+
+  const { filterKey } = useContext(FilterContext);
+
+  const [filters] = useSessionFiltersAndReflectInUrl(
+    filterKey,
+    [],
+  );
 
   useEffect(() => {
     const sortConfig = location.state && location.state.selectedGoals
