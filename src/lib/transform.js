@@ -188,16 +188,23 @@ function sortObjectives(a, b) {
    * Create an object with goals and objectives. Used by transformGoalsAndObjectives
    * @param {Array<Objectives>} objectiveRecords
    */
-// TODO: ttaProvided needs to move from ActivityReportObjective to ActivityReportObjective
 function makeGoalsAndObjectivesObject(objectiveRecords) {
   objectiveRecords.sort(sortObjectives);
   let objectiveNum = 0;
   let goalNum = 0;
+  let objectiveId;
+  let lastObjectiveTitle = null;
 
   return objectiveRecords.reduce((accum, objective) => {
     const {
       goal, title, status, ttaProvided,
     } = objective;
+
+    if (lastObjectiveTitle === title) {
+      return accum;
+    }
+
+    lastObjectiveTitle = title;
     const goalName = goal ? goal.name : null;
     const newGoal = goalName && !Object.values(accum).includes(goalName);
 
@@ -207,10 +214,10 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
         value: goalName,
         enumerable: true,
       });
-      // Object.defineProperty(accum, `goal-${goalNum}-status`, {
-      //   value: goal.status,
-      //   enumerable: true,
-      // });
+      Object.defineProperty(accum, `goal-${goalNum}-status`, {
+        value: goal.status,
+        enumerable: true,
+      });
       objectiveNum = 1;
     }
 
@@ -229,7 +236,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       objectiveNum = 1;
     }
 
-    const objectiveId = `${goalNum}.${objectiveNum}`;
+    objectiveId = `${goalNum}.${objectiveNum}`;
 
     Object.defineProperty(accum, `objective-${objectiveId}`, {
       value: title,

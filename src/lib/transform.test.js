@@ -62,6 +62,13 @@ describe('activityReportToCsvRecord', () => {
       grantId: 1,
       timeframe: 'None',
     },
+    {
+      name: 'Goal 3',
+      id: 2083,
+      status: 'Not Started',
+      grantId: 2,
+      timeframe: 'None',
+    },
   ];
 
   const mockObjectives = [
@@ -102,6 +109,13 @@ describe('activityReportToCsvRecord', () => {
     },
     {
       id: 16,
+      title: 'Objective 3.1',
+      ttaProvided: 'Training',
+      status: 'Completed',
+      goal: mockGoals[2],
+    },
+    {
+      id: 17,
       title: 'Objective 3.1',
       ttaProvided: 'Training',
       status: 'Completed',
@@ -352,6 +366,7 @@ describe('activityReportToCsvRecord', () => {
     const output = makeGoalsAndObjectivesObject(objectives);
     expect(output).toEqual({
       'goal-1': 'Goal 1',
+      'goal-1-status': 'Not Started',
       'objective-1.1': 'Objective 1.1',
       'objective-1.1-ttaProvided': 'Training',
       'objective-1.1-status': 'Completed',
@@ -359,6 +374,7 @@ describe('activityReportToCsvRecord', () => {
       'objective-1.2-ttaProvided': 'Training',
       'objective-1.2-status': 'Completed',
       'goal-2': 'Goal 2',
+      'goal-2-status': 'Not Started',
       'objective-2.1': 'Objective 2.1',
       'objective-2.1-ttaProvided': 'Training',
       'objective-2.1-status': 'Completed',
@@ -369,6 +385,7 @@ describe('activityReportToCsvRecord', () => {
       'objective-2.3-ttaProvided': 'Training',
       'objective-2.3-status': 'Completed',
       'goal-3': 'Goal 3',
+      'goal-3-status': 'Not Started',
       'objective-3.1': 'Objective 3.1',
       'objective-3.1-ttaProvided': 'Training',
       'objective-3.1-status': 'Completed',
