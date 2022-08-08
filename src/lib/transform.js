@@ -193,23 +193,29 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
   objectiveRecords.sort(sortObjectives);
   let objectiveNum = 0;
   let goalNum = 0;
+  const goalIds = {};
 
-  return objectiveRecords.reduce((accum, objective) => {
+  return objectiveRecords.reduce((prevAccum, objective) => {
+    const accum = { ...prevAccum };
     const {
       goal, title, status, ttaProvided, roles, topics, files, resources,
     } = objective;
     const goalId = goal ? goal.id : null;
     const goalName = goal ? goal.name : null;
-    const newGoal = goalId && !Object.values(accum).includes(goalId);
+    const newGoal = goalName && !Object.values(accum).includes(goalName);
 
     if (newGoal) {
       goalNum += 1;
 
       // Goal Id.
       Object.defineProperty(accum, `goal-${goalNum}-id`, {
-        value: goalId,
+        value: `${goalId}`,
+        writable: true,
         enumerable: true,
       });
+
+      // Add goal id to list.
+      goalIds[goalName] = [goalId];
 
       // Goal Name.
       Object.defineProperty(accum, `goal-${goalNum}`, {
@@ -221,6 +227,10 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       //   enumerable: true,
       // });
       objectiveNum = 1;
+    } else {
+      // Update existing ids.
+      goalIds[goalName].push(goalId);
+      accum[`goal-${goalNum}-id`] = goalIds[goalName].join('\n');
     }
 
     // goal number should be at least 1
