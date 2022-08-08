@@ -60,7 +60,7 @@ export default function GoalsTableHeader({
                 color="white"
                 icon={faPlus}
               />
-              <span className="margin-x-1">Add new goal</span>
+              <span className="margin-x-1">Add new goals</span>
             </Link>
           </span>
         ) : null }
