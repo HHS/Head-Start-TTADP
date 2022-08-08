@@ -252,9 +252,7 @@ function ActivityReportsTable({
           downloadAllButtonRef={downloadAllButtonRef}
           downloadSelectedButtonRef={downloadSelectedButtonRef}
         />
-        {/* a scrollable element must be keyboard accessible */}
-        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
-        <div className="usa-table-container--scrollable" tabIndex={0}>
+        <div className="usa-table-container--scrollable">
           <Table fullWidth striped>
             <caption className="usa-sr-only">
               {tableCaption}
