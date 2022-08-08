@@ -193,16 +193,31 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
   objectiveRecords.sort(sortObjectives);
   let objectiveNum = 0;
   let goalNum = 0;
+  const goalIds = {};
 
-  return objectiveRecords.reduce((accum, objective) => {
+  return objectiveRecords.reduce((prevAccum, objective) => {
+    const accum = { ...prevAccum };
     const {
-      goal, title, status, ttaProvided,
+      goal, title, status, ttaProvided, roles, topics, files, resources,
     } = objective;
+    const goalId = goal ? goal.id : null;
     const goalName = goal ? goal.name : null;
     const newGoal = goalName && !Object.values(accum).includes(goalName);
 
     if (newGoal) {
       goalNum += 1;
+
+      // Goal Id.
+      Object.defineProperty(accum, `goal-${goalNum}-id`, {
+        value: `${goalId}`,
+        writable: true,
+        enumerable: true,
+      });
+
+      // Add goal id to list.
+      goalIds[goalName] = [goalId];
+
+      // Goal Name.
       Object.defineProperty(accum, `goal-${goalNum}`, {
         value: goalName,
         enumerable: true,
@@ -212,6 +227,10 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       //   enumerable: true,
       // });
       objectiveNum = 1;
+    } else if (goalIds[goalName] && !goalIds[goalName].includes(goalId)) {
+      // Update existing ids.
+      goalIds[goalName].push(goalId);
+      accum[`goal-${goalNum}-id`] = goalIds[goalName].join('\n');
     }
 
     // goal number should be at least 1
@@ -233,6 +252,34 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
 
     Object.defineProperty(accum, `objective-${objectiveId}`, {
       value: title,
+      enumerable: true,
+    });
+
+    // Activity Report Objective: Specialist Roles.
+    const objSpecialistRoles = roles.map((r) => r.fullName);
+    Object.defineProperty(accum, `objective-${objectiveId}-specialistRole`, {
+      value: objSpecialistRoles.join('\n'),
+      enumerable: true,
+    });
+
+    // Activity Report Objective: Topics.
+    const objTopics = topics.map((t) => t.name);
+    Object.defineProperty(accum, `objective-${objectiveId}-topics`, {
+      value: objTopics.join('\n'),
+      enumerable: true,
+    });
+
+    // Activity Report Objective: Resources Links.
+    const objResources = resources.map((r) => r.userProvidedUrl);
+    Object.defineProperty(accum, `objective-${objectiveId}-resourcesLinks`, {
+      value: objResources.join('\n'),
+      enumerable: true,
+    });
+
+    // Activity Report Objective: Non-Resource Links (Files).
+    const objFiles = files.map((f) => f.originalFileName);
+    Object.defineProperty(accum, `objective-${objectiveId}-nonResourceLinks`, {
+      value: objFiles.join('\n'),
       enumerable: true,
     });
     Object.defineProperty(accum, `objective-${objectiveId}-status`, {
@@ -259,7 +306,14 @@ function transformGoalsAndObjectives(report) {
   const { activityReportObjectives } = report;
   if (activityReportObjectives) {
     const objectiveRecords = activityReportObjectives.map((aro) => (
-      { ...aro.objective, ttaProvided: aro.ttaProvided }
+      {
+        ...aro.objective,
+        ttaProvided: aro.ttaProvided,
+        roles: aro.roles,
+        topics: aro.topics,
+        files: aro.files,
+        resources: aro.activityReportObjectiveResources,
+      }
     ));
     if (objectiveRecords) {
       obj = makeGoalsAndObjectivesObject(objectiveRecords);
