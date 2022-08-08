@@ -62,9 +62,10 @@ export const OBJECTIVE_ERROR_MESSAGES = [
 export const validateListOfResources = (resources) => {
   if (resources.length > 1 || (resources.length === 1 && resources[0].value)) {
     const allValidResources = resources.reduce((a, c) => {
-      if (a) {
+      if (a && c.value) {
         return isValidUrl(c.value);
       }
+
       return a;
     }, true);
 
