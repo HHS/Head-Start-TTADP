@@ -16,7 +16,9 @@ export default function TableWidget(
 ) {
   return (
     <Container className="smarthub-table-widget shadow-2" padding={3} loading={loading} loadingLabel={loadingLabel}>
-      <div className="usa-table-container--scrollable margin-top-0">
+      {/* a scrollable element must be keyboard accessible */}
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+      <div className="usa-table-container--scrollable margin-top-0" tabIndex={0}>
         <Table fullWidth striped bordered={false}>
           <caption className="smart-hub--table-widget-caption">
             <div className="display-flex flex-wrap flex-align-center">

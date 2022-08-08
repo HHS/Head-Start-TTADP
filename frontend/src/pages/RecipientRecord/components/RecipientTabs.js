@@ -12,7 +12,7 @@ export default function RecipientTabs({ region, recipientId, backLink }) {
 
   return (
     <div className="ttahub-recipient-record--tabs no-print">
-      <nav className="ttahub-recipient-record--tabs_nav bg-white">
+      <nav className="ttahub-recipient-record--tabs_nav bg-white" aria-label="Recipient links">
         <ul className="display-flex margin-0 margin-bottom-2 padding-0">
           <li className={liClass}>
             <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/profile`}>Profile</NavLink>

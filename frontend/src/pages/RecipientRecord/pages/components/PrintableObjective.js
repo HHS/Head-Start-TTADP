@@ -6,7 +6,7 @@ import List from './List';
 
 export default function PrintableObjective({ objective }) {
   const key = objective.status || 'Needs Status';
-  const { icon } = STATUSES[key];
+  const { icon } = STATUSES[key] ? STATUSES[key] : STATUSES['Needs Status'];
 
   const rowClass = `ttahub-printable-objective ${ROW_CLASS}`;
 
