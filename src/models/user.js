@@ -1,6 +1,5 @@
 const { Model } = require('sequelize');
 const isEmail = require('validator/lib/isEmail');
-const { USER_ROLES } = require('../constants');
 const generateFullName = require('./hooks/user');
 
 const featureFlags = [
@@ -15,6 +14,12 @@ module.exports = (sequelize, DataTypes) => {
         through: models.Permission, foreignKey: 'userId', as: 'scopes', timestamps: false,
       });
       User.hasMany(models.Permission, { foreignKey: 'userId', as: 'permissions' });
+      User.belongsToMany(models.Role, {
+        through: models.UserRole,
+        otherKey: 'roleId',
+        foreignKey: 'userId',
+        as: 'roles',
+      });
     }
   }
   User.init({
@@ -58,7 +63,6 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
     },
-    role: DataTypes.ARRAY(DataTypes.ENUM(USER_ROLES)),
     flags: DataTypes.ARRAY(DataTypes.ENUM(featureFlags)),
     fullName: {
       type: DataTypes.VIRTUAL,

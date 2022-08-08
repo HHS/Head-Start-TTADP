@@ -20,6 +20,7 @@ function UserInfo({ user, onUserChange }) {
   if (lastLogin && lastLogin !== '') {
     lastLogin = moment(lastLogin).format('lll Z');
   }
+
   return (
     <>
       <Fieldset className="margin-bottom-2" legend="User Profile">
@@ -61,7 +62,7 @@ function UserInfo({ user, onUserChange }) {
             <AdminMultiSelect
               id="user-roles"
               name="role"
-              value={user.role}
+              value={user.roles.map((role) => (role.fullName))}
               onChange={onUserChange}
               placeholder="Select roles..."
               label="Role(s)"
@@ -103,7 +104,9 @@ UserInfo.propTypes = {
     email: PropTypes.string,
     name: PropTypes.string,
     homeRegionId: PropTypes.number,
-    role: PropTypes.arrayOf(PropTypes.string),
+    roles: PropTypes.arrayOf(PropTypes.shape({
+      fullName: PropTypes.string,
+    })),
     hsesUserId: PropTypes.string,
     hsesUsername: PropTypes.string,
     hsesAuthorities: PropTypes.arrayOf(PropTypes.string),

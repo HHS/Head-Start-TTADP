@@ -27,6 +27,12 @@ module.exports = (sequelize, DataTypes) => {
         otherKey: 'objectiveTemplateId',
         as: 'objectiveTemplates',
       });
+      Role.belongsToMany(models.User, {
+        through: models.UserRole,
+        foreignKey: 'roleId',
+        otherKey: 'userId',
+        as: 'users',
+      });
     }
   }
   Role.init({

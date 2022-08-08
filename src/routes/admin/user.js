@@ -1,6 +1,6 @@
 import express from 'express';
 import {
-  User, Permission, sequelize,
+  User, Permission, Role, sequelize,
 } from '../../models';
 import { featureFlags } from '../../models/user';
 import { userById, userAttributes } from '../../services/users';
@@ -38,10 +38,21 @@ export async function getUser(req, res) {
  */
 export async function getUsers(req, res) {
   try {
-    const users = await User.findAll({
+    const users = await User.unscoped().findAll({
       attributes: userAttributes,
       include: [
-        { model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] },
+        {
+          model: Permission,
+          as: 'permissions',
+        },
+        {
+          model: Role,
+          as: 'roles',
+          attributes: ['id', 'fullName'],
+        },
+      ],
+      order: [
+        [sequelize.fn('CONCAT', sequelize.col('"User"."name"'), sequelize.col('email')), 'ASC'],
       ],
     });
     res.json(users);
@@ -63,7 +74,13 @@ export async function createUser(req, res) {
     user = await User.create(
       newUser,
       {
-        include: [{ model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] }],
+        include: [
+          {
+            model: Permission,
+            as: 'permissions',
+            attributes: ['userId', 'scopeId', 'regionId'],
+          },
+        ],
       },
     );
     auditLogger.info(`User ${req.session.userId} created new User: ${user.id}`);
