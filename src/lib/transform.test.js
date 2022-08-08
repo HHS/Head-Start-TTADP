@@ -407,7 +407,7 @@ describe('activityReportToCsvRecord', () => {
 
     const output = makeGoalsAndObjectivesObject(objectives);
     expect(output).toEqual({
-      'goal-1-id': 2080,
+      'goal-1-id': '2080',
       'goal-1': 'Goal 1',
       'objective-1.1': 'Objective 1.1',
       'objective-1.1-specialistRole': 'Role 1',
@@ -423,7 +423,7 @@ describe('activityReportToCsvRecord', () => {
       'objective-1.2-nonResourceLinks': 'TestFile.docx',
       'objective-1.2-ttaProvided': 'Training',
       'objective-1.2-status': 'Completed',
-      'goal-2-id': 2081,
+      'goal-2-id': '2081',
       'goal-2': 'Goal 2',
       'objective-2.1': 'Objective 2.1',
       'objective-2.1-specialistRole': 'Role 1',
@@ -446,7 +446,7 @@ describe('activityReportToCsvRecord', () => {
       'objective-2.3-nonResourceLinks': 'TestFile.docx',
       'objective-2.3-ttaProvided': 'Training',
       'objective-2.3-status': 'Completed',
-      'goal-3-id': 2082,
+      'goal-3-id': '2082',
       'goal-3': 'Goal 3',
       'objective-3.1': 'Objective 3.1',
       'objective-3.1-specialistRole': 'Role 1',
