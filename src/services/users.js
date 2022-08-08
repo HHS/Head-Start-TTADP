@@ -14,7 +14,6 @@ export const userAttributes = [
   'email',
   'phoneNumber',
   'homeRegionId',
-  'role',
   'lastLogin',
   'flags',
 ];
