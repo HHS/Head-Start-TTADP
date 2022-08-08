@@ -173,19 +173,17 @@ function RecipientSearch({ user }) {
             </button>
           </form>
         </Grid>
-        <main>
-          <RecipientResults
-            recipients={rows}
-            loading={loading}
-            activePage={activePage}
-            offset={offset}
-            perPage={RECIPIENTS_PER_PAGE}
-            count={count}
-            handlePageChange={handlePageChange}
-            requestSort={requestSort}
-            sortConfig={sortConfig}
-          />
-        </main>
+        <RecipientResults
+          recipients={rows}
+          loading={loading}
+          activePage={activePage}
+          offset={offset}
+          perPage={RECIPIENTS_PER_PAGE}
+          count={count}
+          handlePageChange={handlePageChange}
+          requestSort={requestSort}
+          sortConfig={sortConfig}
+        />
       </div>
     </>
   );
