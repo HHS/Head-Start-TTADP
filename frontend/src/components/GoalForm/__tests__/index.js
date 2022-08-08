@@ -597,9 +597,15 @@ describe('create goal', () => {
     addNewResource = await screen.findByRole('button', { name: 'Add new resource' });
     userEvent.click(addNewResource);
 
+    const resourceThree = await screen.findByRole('textbox', { name: 'Resource 3' });
+    userEvent.type(resourceThree, 'NOT A LINK NOT A LINK HAHAHAHA');
+
     userEvent.click(save);
 
     await screen.findByText(objectiveResourcesError);
+
+    addNewResource = await screen.findByRole('button', { name: 'Add new resource' });
+    userEvent.click(addNewResource);
 
     const removeResource = await screen.findByRole('button', { name: /remove resource 3/i });
     userEvent.click(removeResource);

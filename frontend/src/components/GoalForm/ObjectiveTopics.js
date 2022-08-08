@@ -1,4 +1,5 @@
 import React from 'react';
+import { v4 as uuid } from 'uuid';
 import PropTypes from 'prop-types';
 import {
   FormGroup, Label,
@@ -32,7 +33,7 @@ export default function ObjectiveTopics({
           Topics
         </p>
         <ul className="usa-list usa-list--unstyled">
-          {topics.map((topic) => (<li key={topic.value}>{topic.label}</li>))}
+          {topics.map((topic) => (<li key={uuid()}>{topic.label}</li>))}
         </ul>
       </>
     );
