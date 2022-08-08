@@ -79,7 +79,7 @@ const SiteNav = ({
                 <p className="font-sans-3xs margin-bottom-2 desktop:margin-bottom-5">{user.email}</p>
               </div>
             </div>
-            <nav className="display-flex flex-column flex-justify flex-1">
+            <nav className="display-flex flex-column flex-justify flex-1" aria-label="main navigation">
               <div className="width-full margin-bottom-2 margin-top-2 desktop:margin-top-6">
                 <ul className="add-list-reset">
                   <li>
