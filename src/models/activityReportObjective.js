@@ -6,11 +6,26 @@ module.exports = (sequelize, DataTypes) => {
       ActivityReportObjective.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });
       ActivityReportObjective.belongsTo(models.Objective, { foreignKey: 'objectiveId', as: 'objective' });
       ActivityReportObjective.hasMany(models.ActivityReportObjectiveFile, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveFiles' });
+      ActivityReportObjective.hasMany(models.ActivityReportObjectiveRole, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveRoles' });
+      ActivityReportObjective.hasMany(models.ActivityReportObjectiveTopic, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveTopics' });
+      ActivityReportObjective.hasMany(models.ActivityReportObjectiveResource, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveResources' });
       ActivityReportObjective.belongsToMany(models.File, {
         through: models.ActivityReportObjectiveFile,
         foreignKey: 'activityReportObjectiveId',
         otherKey: 'fileId',
         as: 'files',
+      });
+      ActivityReportObjective.belongsToMany(models.Topic, {
+        through: models.ActivityReportObjectiveTopic,
+        foreignKey: 'activityReportObjectiveId',
+        otherKey: 'topicId',
+        as: 'topics',
+      });
+      ActivityReportObjective.belongsToMany(models.Role, {
+        through: models.ActivityReportObjectiveRole,
+        foreignKey: 'activityReportObjectiveId',
+        otherKey: 'roleId',
+        as: 'roles',
       });
     }
   }

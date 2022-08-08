@@ -141,18 +141,6 @@ async function sendActivityReportCSV(reports, res) {
           header: 'Number of participants',
         },
         {
-          key: 'topics',
-          header: 'Topics covered',
-        },
-        {
-          key: 'ECLKCResourcesUsed',
-          header: 'ECLKC resources',
-        },
-        {
-          key: 'nonECLKCResourcesUsed',
-          header: 'Non-ECLKC resources',
-        },
-        {
           key: 'files',
           header: 'Attachments',
         },
@@ -189,6 +177,22 @@ async function sendActivityReportCSV(reports, res) {
         {
           key: 'recipientInfo',
           header: 'Recipient name - Grant number - Recipient ID',
+        },
+        {
+          key: 'topics',
+          header: 'Legacy Topics covered',
+        },
+        {
+          key: 'ECLKCResourcesUsed',
+          header: 'Legacy ECLKC resources',
+        },
+        {
+          key: 'nonECLKCResourcesUsed',
+          header: 'Legacy Non-ECLKC resources',
+        },
+        {
+          key: 'files',
+          header: 'Legacy Attachments',
         },
       ],
     };
