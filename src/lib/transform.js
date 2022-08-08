@@ -200,7 +200,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
     } = objective;
     const goalId = goal ? goal.id : null;
     const goalName = goal ? goal.name : null;
-    const newGoal = goalName && !Object.values(accum).includes(goalName);
+    const newGoal = goalId && !Object.values(accum).includes(goalId);
 
     if (newGoal) {
       goalNum += 1;
