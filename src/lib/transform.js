@@ -227,7 +227,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       //   enumerable: true,
       // });
       objectiveNum = 1;
-    } else {
+    } else if (goalIds[goalName] && !goalIds[goalName].includes(goalId)) {
       // Update existing ids.
       goalIds[goalName].push(goalId);
       accum[`goal-${goalNum}-id`] = goalIds[goalName].join('\n');
