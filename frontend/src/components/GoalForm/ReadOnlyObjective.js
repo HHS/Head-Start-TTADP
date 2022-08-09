@@ -8,7 +8,7 @@ const TTAProvided = ({ tta }) => {
   const defaultEditorState = getEditorState(tta);
   return (
     <>
-      <h4 className="margin-bottom-1 margin-top-0">TTA provided</h4>
+      <h4 className="margin-bottom-1">TTA provided</h4>
       <Editor
         readOnly
         className="margin-top-0"
