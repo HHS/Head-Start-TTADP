@@ -113,11 +113,11 @@ export default function GoalForm({
     <>
       <GoalText
         error={errors.goalName ? ERROR_FORMAT(errors.goalName.message) : NO_ERROR}
-        isOnReport={false}
         goalName={goalText}
         validateGoalName={onBlurGoalText}
         onUpdateText={onUpdateText}
         inputName={goalTextInputName}
+        isOnReport={goal.onApprovedAR || false}
       />
 
       <GoalDate
@@ -155,6 +155,7 @@ GoalForm.propTypes = {
     name: PropTypes.string,
     endDate: PropTypes.string,
     isNew: PropTypes.bool,
+    onApprovedAR: PropTypes.bool,
   }).isRequired,
   topicOptions: PropTypes.arrayOf(PropTypes.shape({
     value: PropTypes.number,
