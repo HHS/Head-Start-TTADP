@@ -95,7 +95,7 @@ function Navigator({
     }
 
     const currentPageState = pageState[page.position];
-    const isComplete = page.isPageComplete ? page.isPageComplete(getValues()) : isValid;
+    const isComplete = page.isPageComplete ? page.isPageComplete(getValues(), formState) : isValid;
     const newPageState = { ...pageState };
 
     if (isComplete) {
