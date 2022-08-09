@@ -69,13 +69,13 @@ module.exports = {
           allowNull: false,
           type: Sequelize.DATE,
         },
-      }, { 
-          uniqueKeys: {
-              userId_roleId_unique: {
-                 fields: ['userId', 'roleId']
-              }
+      }, {
+        uniqueKeys: {
+          userId_roleId_unique: {
+            fields: ['userId', 'roleId'],
           },
-          transaction,
+        },
+        transaction,
       });
 
       await queryInterface.sequelize.query(
