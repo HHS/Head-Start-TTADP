@@ -36,6 +36,7 @@ describe('GoalForm', () => {
           goal={goal}
           roles={[]}
           topicOptions={[{ label: 'Coaching', value: 1 }]}
+          reportId={1}
         />
       </FormProvider>
     );
@@ -56,7 +57,7 @@ describe('GoalForm', () => {
 
   it('fetches data for existing goals', async () => {
     const goalId = 123;
-    fetchMock.get(`/api/goals?goalIds=${goalId}`, [{
+    fetchMock.get(`/api/goals?reportId=1&goalIds=${goalId}`, [{
       endDate: '',
       status: '',
       value: goalId,
