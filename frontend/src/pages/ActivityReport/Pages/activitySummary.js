@@ -303,8 +303,8 @@ const ActivitySummary = ({
                       required: 'Please enter the duration of the activity',
                       valueAsNumber: true,
                       pattern: { value: /^\d+(\.[0,5]{1})?$/, message: 'Duration must be rounded to the nearest half hour' },
-                      min: { value: 0, message: 'Duration can not be negative' },
-                      max: { value: 99.5, message: 'Duration must be less than 100 hours' },
+                      min: { value: 0.5, message: 'Duration must be greater than 0 hours' },
+                      max: { value: 99, message: 'Duration must be less than or equal to 99 hours' },
                     })
                   }
                 />
