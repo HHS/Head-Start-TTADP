@@ -69,7 +69,14 @@ module.exports = {
           allowNull: false,
           type: Sequelize.DATE,
         },
-      }, { transaction });
+      }, { 
+          uniqueKeys: {
+              userId_roleId_unique: {
+                 fields: ['userId', 'roleId']
+              }
+          },
+          transaction,
+      });
 
       await queryInterface.sequelize.query(
         `DO
