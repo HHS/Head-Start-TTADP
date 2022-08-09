@@ -31,7 +31,12 @@ export default function useLocalStorage(key, defaultValue, save = true) {
 
   useEffect(() => {
     if (save && localStorageAvailable) {
-      window.localStorage.setItem(key, JSON.stringify(storedValue));
+      try {
+        window.localStorage.setItem(key, JSON.stringify(storedValue));
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.log('local storage unavailable');
+      }
     }
   }, [key, localStorageAvailable, save, storedValue]);
 
