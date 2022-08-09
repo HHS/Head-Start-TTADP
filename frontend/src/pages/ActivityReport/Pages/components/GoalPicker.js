@@ -24,6 +24,7 @@ export const newGoal = (grantIds) => ({
   id: 'new',
   isNew: true,
   endDate: '',
+  onApprovedAR: false,
   grantIds,
 });
 
