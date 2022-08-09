@@ -61,7 +61,7 @@ function UserInfo({ user, onUserChange }) {
           <Grid col={12}>
             <AdminMultiSelect
               id="user-roles"
-              name="role"
+              name="roles"
               value={user.roles.map((role) => (role.fullName))}
               onChange={onUserChange}
               placeholder="Select roles..."
