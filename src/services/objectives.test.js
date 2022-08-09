@@ -129,7 +129,7 @@ describe('Objectives DB service', () => {
     const aros = await ActivityReportObjective.findAll({ where: { activityReportId: report.id } });
     const objectiveIds = aros.map((aro) => aro.objectiveId);
     await ActivityReportObjective.destroy({ where: { activityReportId: report.id } });
-    await Objective.destroy({ where: { id: objectiveIds } });
+    await Objective.destroy({ where: { id: [...objectiveIds, objective.id, secondObjective.id] } });
     await ActivityRecipient.destroy({ where: { activityReportId: report.id } });
     await ActivityReport.destroy({ where: { id: report.id } });
 

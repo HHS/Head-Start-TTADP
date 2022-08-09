@@ -503,9 +503,6 @@ export async function goalByIdWithActivityReportsAndRegions(goalId) {
   });
 }
 
-// eslint-disable-next-line no-empty-function
-export async function copyGoalsToGrants() {}
-
 async function cleanupObjectivesForGoal(goalId, currentObjectives) {
   // get all objectives not currently on a goal
   const orphanedObjectives = await Objective.findAll({
@@ -873,9 +870,16 @@ export async function removeGoals(goalsToRemove) {
 
 async function removeObjectives(currentObjectiveIds) {
   return Objective.destroy({
-    where: {
-      id: currentObjectiveIds,
-    },
+    where: [
+      {
+        id: currentObjectiveIds,
+      },
+      sequelize.where(sequelize.literal(`
+        (SELECT COUNT(DISTINCT aro."id") FROM "Objectives" 
+        INNER JOIN "ActivityReportObjectives" aro ON "aro"."objectiveId" = "Objectives"."id"
+        WHERE "objectiveId" = "Objectives"."id")        
+      `), Op.eq, 0),
+    ],
   });
 }
 

@@ -172,7 +172,6 @@ function Navigator({
     toggleGoalForm(true);
     setValue('goals', newGoals);
     setValue('goalForEditing', null);
-    setValue('goalForEditing.objectives', []);
     setValue('goalName', '');
     setValue('goalEndDate', '');
 

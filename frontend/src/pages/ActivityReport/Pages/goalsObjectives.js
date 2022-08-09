@@ -99,6 +99,7 @@ const GoalsObjectives = () => {
       const goalForEditingObjectives = getValues('goalForEditing.objectives') ? [...getValues('goalForEditing.objectives')] : [];
       const name = getValues('goalName');
       const endDate = getValues('goalEndDate');
+
       const areGoalsValid = validateGoals(
         [{
           ...currentlyEditing,

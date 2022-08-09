@@ -62,14 +62,8 @@ describe('Goals DB service', () => {
           },
         ]);
         await saveGoalsForReport([], { id: 1 });
-
-        expect(Objective.destroy).toHaveBeenCalledWith(
-          {
-            where: {
-              id: [1],
-            },
-          },
-        );
+        expect(Objective.destroy).toHaveBeenCalled();
+        expect(Objective.destroy.mock.calls[0][0].where[0].id).toContain(1);
       });
 
       it('deletes the ActivityReportObjective', async () => {
