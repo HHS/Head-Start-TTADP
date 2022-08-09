@@ -2,12 +2,13 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Editor } from 'react-draft-wysiwyg';
 import { getEditorState } from '../../utils';
+import './ReadOnlyObjective.scss';
 
 const TTAProvided = ({ tta }) => {
   const defaultEditorState = getEditorState(tta);
   return (
     <>
-      <h4 className="margin-bottom-1">TTA provided</h4>
+      <h4 className="margin-bottom-1 margin-top-0">TTA provided</h4>
       <Editor
         readOnly
         className="margin-top-0"
@@ -24,7 +25,7 @@ TTAProvided.propTypes = {
 
 export default function ReadOnlyObjective({ objective }) {
   return (
-    <div>
+    <div className="ttahub-goal-form-objective-summary">
       <h3>Objective summary</h3>
       <h4 className="margin-bottom-1">Objective</h4>
       <p className="margin-top-0">{objective.title}</p>
