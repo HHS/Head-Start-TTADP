@@ -27,6 +27,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     [sequelize.col('grant.regionId'), 'regionId'],
     [sequelize.col('grant.recipient.id'), 'recipientId'],
     'goalNumber',
+    'createdVia',
     [
       sequelize.literal(`
         (
@@ -238,6 +239,7 @@ function reduceObjectives(newObjectives, currentObjectives = []) {
 
     return [...objectives, {
       ...objective.dataValues,
+      value: id,
       ids: [id],
       ttaProvided,
       isNew: false,
@@ -302,7 +304,7 @@ function reduceGoals(goals) {
  * @param {number} id
  * @returns {Promise{Object}}
  */
-export async function goalsByIds(id) {
+export async function goalsByIdsAndActivityReport(id, activityReportId) {
   const goals = await Goal.findAll({
     attributes: [
       'endDate',
@@ -338,7 +340,7 @@ export async function goalsByIds(id) {
           ],
         },
         attributes: [
-          ['id', 'value'],
+          'id',
           ['title', 'label'],
           'title',
           'status',
@@ -353,6 +355,17 @@ export async function goalsByIds(id) {
               ['id', 'key'],
             ],
             required: false,
+          },
+          {
+            model: ActivityReportObjective,
+            as: 'activityReportObjectives',
+            attributes: [
+              'ttaProvided',
+            ],
+            required: false,
+            where: {
+              activityReportId,
+            },
           },
           {
             model: Role,
@@ -477,7 +490,7 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
 
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
   return Goal.findOne({
-    attributes: ['name', 'id', 'status'],
+    attributes: ['name', 'id', 'status', 'createdVia'],
     where: {
       id: goalId,
     },
@@ -569,6 +582,7 @@ export async function createOrUpdateGoals(goals) {
       regionId,
       objectives,
       status,
+      createdVia,
       ...fields
     } = goalData;
 
@@ -592,7 +606,7 @@ export async function createOrUpdateGoals(goals) {
     });
 
     await newGoal.update(
-      { ...options, status },
+      { ...options, status, createdVia: createdVia || 'rtr' },
       { individualHooks: true },
     );
 
@@ -602,7 +616,7 @@ export async function createOrUpdateGoals(goals) {
     // an objective belonging to one goal will be looped over as part of creating another goal
     // so we first unpack and then, if the objective already exists, it is safe to update all the
     // data except the goal ID, which we update only if "isNew" is true
-    // we will have to be careful and watch for edge cases where isNew is a misrepresentative value
+    // we will have to be careful and watch for edge cases where isNew is a misrepresentation value
 
     const objectivesToCreateOrUpdate = objectives.reduce((arr, o) => {
       if (o.isNew) {
@@ -1115,7 +1129,13 @@ export async function saveGoalsForReport(goals, report) {
     // we have a param to determine if goals are new
     if (goal.isNew) {
       const {
-        isNew, objectives, id, grantIds, status: discardedStatus, onApprovedAR, ...fields
+        isNew,
+        objectives,
+        id, grantIds,
+        status: discardedStatus,
+        onApprovedAR,
+        createdVia,
+        ...fields
       } = goal;
 
       newGoals = await Promise.all(goal.grantIds.map(async (grantId) => {
@@ -1150,6 +1170,7 @@ export async function saveGoalsForReport(goals, report) {
         goalIds,
         id, // this is unique and we can't trying to set this
         onApprovedAR, // we don't want to set this manually
+        createdVia,
         ...fields
       } = goal;
 
@@ -1191,7 +1212,7 @@ export async function saveGoalsForReport(goals, report) {
           defaults: { ...fields, status },
         });
 
-        await newGoal.update({ ...fields, status }, { individualHooks: true });
+        await newGoal.update({ ...fields, status, createdVia: createdVia || 'activityReport' }, { individualHooks: true });
 
         await ActivityReportGoal.findOrCreate({
           where: {

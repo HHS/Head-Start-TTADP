@@ -7,7 +7,7 @@ import List from './List';
 
 export default function PrintableGoal({ goal }) {
   const key = goal.goalStatus || 'Needs Status';
-  const { icon } = STATUSES[key];
+  const { icon } = STATUSES[key] ? STATUSES[key] : STATUSES['Needs Status'];
 
   return (
     <div className="ttahub-printable-goal padding-x-3 padding-top-3 padding-bottom-2 margin-top-5">
