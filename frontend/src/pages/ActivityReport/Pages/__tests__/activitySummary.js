@@ -38,18 +38,18 @@ const RenderActivitySummary = () => {
 
 describe('activity summary', () => {
   describe('duration validation', () => {
-    it('shows an error for negative values', async () => {
+    it('shows an error for values < 0.5', async () => {
       const { container } = render(<RenderActivitySummary />);
       const input = container.querySelector('#duration');
-      userEvent.type(input, '-1');
-      expect(await screen.findByText('Duration can not be negative')).toBeInTheDocument();
+      userEvent.type(input, '0');
+      expect(await screen.findByText('Duration must be greater than 0 hours')).toBeInTheDocument();
     });
 
-    it('shows an error for numbers higher than 99.5', async () => {
+    it('shows an error for numbers > 99', async () => {
       const { container } = render(<RenderActivitySummary />);
       const input = container.querySelector('#duration');
-      userEvent.type(input, '100');
-      expect(await screen.findByText('Duration must be less than 100 hours')).toBeInTheDocument();
+      userEvent.type(input, '99.5');
+      expect(await screen.findByText('Duration must be less than or equal to 99 hours')).toBeInTheDocument();
     });
   });
 });
