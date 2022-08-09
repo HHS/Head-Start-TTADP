@@ -1,6 +1,6 @@
 import express from 'express';
 import {
-  User, Permission, Role, sequelize,
+  User, Permission, Role, UserRole, sequelize,
 } from '../../models';
 import { featureFlags } from '../../models/user';
 import { userById, userAttributes } from '../../services/users';
@@ -38,7 +38,7 @@ export async function getUser(req, res) {
  */
 export async function getUsers(req, res) {
   try {
-    const users = await User.unscoped().findAll({
+    const users = await User.findAll({
       attributes: userAttributes,
       include: [
         {
@@ -110,9 +110,21 @@ export async function updateUser(req, res) {
       },
     );
     await Permission.destroy({ where: { userId } });
-    // await Role.destroy({ where: { userId } });
     await Permission.bulkCreate(requestUser.permissions, { validate: true, individualHooks: true });
-    // await Role.bulkCreate(requestUser.roles, { validate: true, individualHooks: true });
+
+    // User roles are handled a bit more clumsily
+    await UserRole.destroy({ where: { userId } });
+    await Promise.all((requestUser.roles.map(async (role) => {
+      const r = await Role.findOne({ where: { fullName: role.fullName } });
+      if (r) {
+        return UserRole.create({
+          roleId: r.id,
+          userId,
+        });
+      }
+      return null;
+    })));
+
     auditLogger.warn(`User ${req.session.userId} updated User: ${userId} and set permissions: ${JSON.stringify(requestUser.permissions)}`);
     const user = await userById(userId);
     res.json(user);
