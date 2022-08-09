@@ -84,23 +84,29 @@ module.exports = {
         DECLARE
             u record;
         BEGIN
-        FOR u IN SELECT "id" as user_id, unnest("role")::text as user_role FROM "Users" WHERE array_length("role", 1) > 0
-          LOOP               
-              INSERT INTO "UserRoles" 
-                  (
-                      "userId", 
-                      "roleId",
-                      "createdAt",
-                      "updatedAt"
-                  ) 
-              VALUES 
-                  (
-                      u.user_id, 
-                     (SELECT "id" from "Roles" WHERE u.user_role = "Roles"."fullName"),
-                     now(),
-                     now()
-                  );
-          END LOOP; 
+     WITH
+         "RolesForUser" as (
+             SELECT
+                 id "userId",
+                 UNNEST("role")::text "roleName"
+             FROM "Users"
+         )
+     INSERT INTO "UserRoles"
+     (
+          "userId",
+          "roleId",
+          "createdAt",
+          "updatedAt"
+      )
+      SELECT DISTINCT
+          rfu."userId",
+          r.id "roleId",
+          now() "createdAt",
+          now() "updatedAt"
+      FROM "RolesForUser" rfu
+      JOIN "Roles" r
+      ON rfu."roleName" = r."fullName"
+      ORDER BY 1,2;
         END;
         $$
         LANGUAGE plpgsql;
