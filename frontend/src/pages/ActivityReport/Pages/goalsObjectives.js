@@ -154,11 +154,11 @@ const GoalsObjectives = ({ reportId }) => {
   // from the collaborators & author
   const roles = useMemo(() => {
     const collabs = collaborators || [];
-    const auth = author || { role: [] };
-    const authorRoles = auth.role.flat();
+    const auth = author || { roles: [] };
+    const authorRoles = auth.roles.map((r) => r.fullName);
 
     const collaboratorRoles = collabs.map((c) => (
-      c.collaboratorRoles ? c.collaboratorRoles.map((r) => r.role) : []
+      c.collaboratorRoles ? c.collaboratorRoles.map((r) => r.fullName) : []
     )).flat();
 
     return Array.from(

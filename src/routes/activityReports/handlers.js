@@ -3,6 +3,7 @@ import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
 import {
   ActivityReport as ActivityReportModel,
+  Role,
   ActivityReportApprover,
   User as UserModel,
 } from '../../models';
@@ -466,7 +467,13 @@ export async function submitReport(req, res) {
           include: [
             {
               model: UserModel,
-              attributes: ['id', 'name', 'role', 'fullName'],
+              attributes: ['id', 'name', 'fullName'],
+              include: [
+                {
+                  model: Role,
+                  as: 'roles',
+                },
+              ],
             },
           ],
         },

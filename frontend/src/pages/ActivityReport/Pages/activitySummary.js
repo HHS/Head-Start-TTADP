@@ -192,7 +192,7 @@ const ActivitySummary = ({
               options={collaborators.map((user) => ({
                 // we want the role construction here to match what later is returned from the
                 // database, so we do this weirdo mapping thing here
-                value: user.id, label: user.name, role: user.role.map((r) => ({ role: r })),
+                value: user.id, label: user.name, roles: user.roles.map((r) => r.fullName),
               }))}
             />
           </FormItem>

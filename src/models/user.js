@@ -1,6 +1,6 @@
 const { Model } = require('sequelize');
 const isEmail = require('validator/lib/isEmail');
-const generateFullName = require('./hooks/user');
+const generateFullName = require('./helpers/generateFullName');
 
 const featureFlags = [
   'recipient_goals_objectives',
@@ -67,16 +67,11 @@ module.exports = (sequelize, DataTypes) => {
     fullName: {
       type: DataTypes.VIRTUAL,
       get() {
-        return generateFullName(this.name, this.role);
+        return generateFullName(this.name, this.roles);
       },
     },
     lastLogin: DataTypes.DATE,
   }, {
-    defaultScope: {
-      order: [
-        [sequelize.fn('CONCAT', sequelize.col('name'), sequelize.col('email')), 'ASC'],
-      ],
-    },
     sequelize,
     modelName: 'User',
   });
