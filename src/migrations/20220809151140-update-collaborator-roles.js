@@ -38,19 +38,10 @@ module.exports = {
 
       // remove old column from users table
       await queryInterface.sequelize.query(
-        `DO
-        $$
-        DECLARE
-            u record;
-        BEGIN
-        FOR u IN SELECT "id" as collaborator_role_id, "role" as "collaborator_role" FROM "CollaboratorRoles"
-          LOOP               
-            UPDATE "CollaboratorRoles" SET "roleId" = (SELECT "id" from "Roles" WHERE u.collaborator_role = "Roles"."fullName") WHERE id = u.collaborator_role_id;
-          END LOOP; 
-          END;
-        $$
-        LANGUAGE plpgsql;
-        `,
+        `UPDATE "CollaboratorRoles" cr
+        SET "roleId" = r.id
+        FROM "Roles" r
+        WHERE cr.role = r."fullName";`,
         { transaction },
       );
 
