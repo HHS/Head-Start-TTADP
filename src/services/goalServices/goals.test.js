@@ -42,6 +42,7 @@ describe('Goals DB service', () => {
       Goal.update = jest.fn().mockResolvedValue([1, [{ id: 1 }]]);
       Goal.create = jest.fn().mockResolvedValue({ id: 1 });
 
+      ActivityReportGoal.findAll = jest.fn().mockResolvedValue([]);
       ActivityReportGoal.findOrCreate = jest.fn().mockResolvedValue();
 
       Objective.destroy = jest.fn();
@@ -53,9 +54,26 @@ describe('Goals DB service', () => {
 
     describe('with removed goals', () => {
       it('deletes the objective', async () => {
-        ActivityReportObjective.findAll.mockResolvedValue([
+        // Find this objective to delete.
+        ActivityReportObjective.findAll.mockResolvedValueOnce([
           {
             objectiveId: 1,
+            objective: {
+              goalId: 1,
+            },
+          },
+          {
+            objectiveId: 2,
+            objective: {
+              goalId: 1,
+            },
+          },
+        ]);
+
+        // Prevent the delete of objective 2.
+        ActivityReportObjective.findAll.mockResolvedValueOnce([
+          {
+            objectiveId: 2,
             objective: {
               goalId: 1,
             },
@@ -77,7 +95,7 @@ describe('Goals DB service', () => {
         });
       });
 
-      it('deletes goals not attached to a grant', async () => {
+      it('deletes goals not being used by ActivityReportGoals', async () => {
         ActivityReportObjective.findAll.mockResolvedValue([
           {
             objectiveId: 1,
@@ -101,16 +119,23 @@ describe('Goals DB service', () => {
           },
         ]);
 
-        Goal.findAll.mockResolvedValue([
+        ActivityReportGoal.findAll.mockResolvedValue([
           {
-            id: 1,
+            goalId: 1,
           },
         ]);
 
         await saveGoalsForReport([], { id: 1 });
         expect(Goal.destroy).toHaveBeenCalledWith({
           where: {
-            id: [2],
+            [Op.and]: [
+              {
+                id: [2],
+              },
+              {
+                createdVia: 'activityReport',
+              },
+            ],
           },
         });
       });
@@ -124,6 +149,7 @@ describe('Goals DB service', () => {
       ], { id: 1 });
       expect(Goal.findOrCreate).toHaveBeenCalledWith({
         defaults: {
+          createdVia: 'activityReport',
           name: 'name',
           status: 'Closed',
         },
