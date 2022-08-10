@@ -859,40 +859,54 @@ async function removeActivityReportGoalsFromReport(reportId, goalIdsToRemove) {
 }
 
 export async function removeGoals(goalsToRemove) {
-  const goalsWithGrants = await Goal.findAll({
-    attributes: ['id'],
+  // Get goals being used by ActivityReportGoals.
+  const usedGoalIds = await ActivityReportGoal.findAll({
+    attributes: [
+      'goalId',
+    ],
     where: {
-      id: goalsToRemove,
-    },
-    include: {
-      attributes: ['id'],
-      model: Grant,
-      as: 'grant',
-      required: true,
+      goalId: goalsToRemove,
     },
   });
 
-  const goalIdsToKeep = goalsWithGrants.map((g) => g.id);
-  const goalsWithoutGrants = goalsToRemove.filter((id) => !goalIdsToKeep.includes(id));
+  // Create array of goals to delete.
+  const goalsToDelete = goalsToRemove.filter((o) => !usedGoalIds.includes(o));
 
+  // Delete goals not being used that where createdVia 'ActivityReports'.
   return Goal.destroy({
     where: {
-      id: goalsWithoutGrants,
+      [Op.and]: [
+        {
+          id: goalsToDelete,
+        },
+        {
+          createdVia: 'activityReport',
+        },
+      ],
     },
   });
 }
 
 async function removeObjectives(currentObjectiveIds) {
+  // Get objectives being used by ActivityReportObjectives.
+  const usedObjectiveIds = await ActivityReportObjective.findAll({
+    attributes: [
+      'objectiveId',
+    ],
+    where: {
+      objectiveId: currentObjectiveIds,
+    },
+  });
+
+  // Create array of objectives to delete.
+  const objectivesToDelete = currentObjectiveIds.filter((o) => !usedObjectiveIds.includes(o));
+
+  // Delete objectives not being used.
   return Objective.destroy({
     where: [
       {
-        id: currentObjectiveIds,
+        id: objectivesToDelete,
       },
-      sequelize.where(sequelize.literal(`
-        (SELECT COUNT(DISTINCT aro."id") FROM "Objectives" 
-        INNER JOIN "ActivityReportObjectives" aro ON "aro"."objectiveId" = "Objectives"."id"
-        WHERE "objectiveId" = "Objectives"."id")        
-      `), Op.eq, 0),
     ],
   });
 }
@@ -1145,7 +1159,7 @@ export async function saveGoalsForReport(goals, report) {
             grantId,
             status: { [Op.not]: 'Closed' },
           },
-          defaults: { ...fields, status },
+          defaults: { ...fields, status, createdVia: 'activityReport' },
         });
 
         await ActivityReportGoal.findOrCreate({
