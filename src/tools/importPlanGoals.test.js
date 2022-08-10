@@ -20,7 +20,6 @@ describe('Import TTA plan goals', () => {
       try {
         const fileName = 'GranteeTTAPlanTest.csv';
         downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
-        await Role.destroy({ where: {} });
         await Topic.destroy({ where: {}, force: true });
         await Goal.destroy({ where: {} });
         await importGoals(fileName, 14);
