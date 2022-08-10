@@ -908,11 +908,23 @@ async function removeObjectives(currentObjectiveIds) {
   const objectivesToDelete = currentObjectiveIds.filter((o) => !usedObjectiveIds.includes(o));
 
   // Delete objectives not being used.
+  const objectiveIdsWhere = objectivesToDelete && objectivesToDelete.length ? `g.id IN (${objectivesToDelete.join(',')}) AND ` : '';
   return Objective.destroy({
     where: [
       {
         id: objectivesToDelete,
       },
+      sequelize.where(
+        sequelize.literal(`
+      (SELECT COUNT(DISTINCT g."id")
+      FROM "Objectives"
+      INNER JOIN "Goals" g ON "Objectives"."goalId" = "g"."id"
+      WHERE ${objectiveIdsWhere}
+       g."createdVia" = 'rtr')`),
+        {
+          [Op.eq]: 0,
+        },
+      ),
     ],
   });
 }
