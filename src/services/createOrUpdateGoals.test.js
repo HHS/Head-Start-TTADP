@@ -166,7 +166,7 @@ describe('createOrUpdateGoals', () => {
 
     const [, { goalIds }] = newGoals;
     expect(goalIds.length).toBe(1);
-    console.log({ haystack: goalIds, needle: goal.id });
+
     expect(goalIds).toContain(goal.id);
 
     const [, updatedGoal] = newGoals;
