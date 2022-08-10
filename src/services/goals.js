@@ -860,7 +860,7 @@ async function removeActivityReportGoalsFromReport(reportId, goalIdsToRemove) {
 
 export async function removeGoals(goalsToRemove) {
   // Get goals being used by ActivityReportGoals.
-  const usedGoalIds = await ActivityReportGoal.findAll({
+  const usedGoals = await ActivityReportGoal.findAll({
     attributes: [
       'goalId',
     ],
@@ -868,6 +868,9 @@ export async function removeGoals(goalsToRemove) {
       goalId: goalsToRemove,
     },
   });
+
+  // Get distinct list of goal ids.
+  const usedGoalIds = [...new Set(usedGoals.map((g) => g.goalId))];
 
   // Create array of goals to delete.
   const goalsToDelete = goalsToRemove.filter((o) => !usedGoalIds.includes(o));
@@ -889,7 +892,7 @@ export async function removeGoals(goalsToRemove) {
 
 async function removeObjectives(currentObjectiveIds) {
   // Get objectives being used by ActivityReportObjectives.
-  const usedObjectiveIds = await ActivityReportObjective.findAll({
+  const usedObjectives = await ActivityReportObjective.findAll({
     attributes: [
       'objectiveId',
     ],
@@ -897,6 +900,9 @@ async function removeObjectives(currentObjectiveIds) {
       objectiveId: currentObjectiveIds,
     },
   });
+
+  // Get distinct list of objecitve ids.
+  const usedObjectiveIds = [...new Set(usedObjectives.map((o) => o.objectiveId))];
 
   // Create array of objectives to delete.
   const objectivesToDelete = currentObjectiveIds.filter((o) => !usedObjectiveIds.includes(o));
