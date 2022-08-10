@@ -6,13 +6,13 @@ import {
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
+import { act } from 'react-dom/test-utils';
 import PrintGoals from '../PrintGoals';
 import UserContext from '../../../../UserContext';
 import { SCOPE_IDS } from '../../../../Constants';
 import { filtersToQueryString } from '../../../../utils';
 import FilterContext from '../../../../FilterContext';
 import { GOALS_OBJECTIVES_FILTER_KEY } from '../constants';
-import { act } from 'react-dom/test-utils';
 
 const memoryHistory = createMemoryHistory();
 
@@ -72,7 +72,7 @@ describe('PrintGoals', () => {
 
     render(
       <Router history={memoryHistory}>
-        <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY}}>
+        <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY }}>
           <UserContext.Provider value={{ user }}>
             <PrintGoals
               location={location}
@@ -85,7 +85,7 @@ describe('PrintGoals', () => {
     );
   };
 
-  const filters = [ { topic: 'status', condition: 'is', query: ['Closed'] } ];
+  const filters = [{ topic: 'status', condition: 'is', query: ['Closed'] }];
   const filteredMockURL = `/api/recipient/${RECIPIENT_ID}/region/${REGION_ID}/goals?sortBy=updatedAt&sortDir=desc&offset=0&limit=false&${filtersToQueryString(filters)}`;
 
   beforeAll(async () => {
@@ -118,6 +118,6 @@ describe('PrintGoals', () => {
 
     // Expect that the mocked URL, which includes the filtered query was called.
     // This asserts that PrintGoals is respecting filters provided by FilterContext.
-    expect(fetchMock.called(filteredMockURL));
+    expect(fetchMock.called(filteredMockURL)).toBe(true);
   });
 });
