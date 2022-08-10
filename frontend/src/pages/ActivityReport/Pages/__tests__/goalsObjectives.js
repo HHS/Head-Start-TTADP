@@ -28,7 +28,11 @@ const RenderGoalsObjectives = ({
     mode: 'onChange',
     defaultValues: {
       author: {
-        role: ['central office'],
+        roles: [
+          {
+            fullName: 'central office',
+          },
+        ],
       },
       collaborators: [],
       goals: [{
