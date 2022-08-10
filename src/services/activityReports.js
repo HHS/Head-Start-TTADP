@@ -5,7 +5,6 @@ import orderReportsBy from '../lib/orderReportsBy';
 import filtersToScopes from '../scopes';
 import { setReadRegions } from './accessValidation';
 import { syncApprovers } from './activityReportApprovers';
-// import { auditLogger } from '../logger';
 
 import {
   ActivityReport,
@@ -119,21 +118,17 @@ async function saveReportCollaborators(activityReportId, collaborators) {
           },
         ],
       },
-      {
-        model: Role,
-        as: 'collaboratorRoles',
-      },
     ],
   });
 
   if (updatedReportCollaborators && updatedReportCollaborators.length > 0) {
-    await Promise.all(updatedReportCollaborators.map((collaborator) => (
-      Promise.all(collaborator.user.roles.map(async (role) => CollaboratorRole.findOrCreate({
-        where: {
-          activityReportCollaboratorId: collaborator.id,
-          roleId: role.id,
-        },
-      }))))));
+    // eslint-disable-next-line max-len
+    await Promise.all(updatedReportCollaborators.map((collaborator) => Promise.all(collaborator.user.roles.map(async (role) => CollaboratorRole.findOrCreate({
+      where: {
+        activityReportCollaboratorId: collaborator.id,
+        roleId: role.id,
+      },
+    })))));
   }
 }
 
@@ -379,7 +374,9 @@ export async function activityReportAndRecipientsById(activityReportId) {
         model: User,
         as: 'author',
         include: [
-          { model: Role, as: 'roles' },
+          {
+            model: Role, as: 'roles', order: [['name', 'ASC']],
+          },
         ],
       },
       {
@@ -391,12 +388,13 @@ export async function activityReportAndRecipientsById(activityReportId) {
             model: User,
             as: 'user',
             include: [
-              { model: Role, as: 'roles' },
+              { model: Role, as: 'roles', order: [['name', 'ASC']] },
             ],
           },
           {
             model: Role,
             as: 'collaboratorRoles',
+            order: [['name', 'ASC']],
           },
         ],
       },
