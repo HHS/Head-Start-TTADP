@@ -44,6 +44,7 @@ module.exports = {
         userId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Users',
@@ -54,6 +55,7 @@ module.exports = {
         roleId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          onDelete: 'CASCADE',
           references: {
             model: {
               tableName: 'Roles',
