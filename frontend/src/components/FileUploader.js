@@ -43,7 +43,6 @@ export const handleDrop = async (e, reportId, objectiveId, id, onChange, setErro
     return;
   }
 
-  // console.log('Verify Objective Id: ', objectiveId, Number.isNaN(objectiveId));
   if (typeof objectiveId === 'string') {
     setErrorMessage('A TTA Objective must be entered before adding attachments');
     return;
