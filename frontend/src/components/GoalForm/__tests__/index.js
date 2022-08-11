@@ -287,7 +287,7 @@ describe('create goal', () => {
     expect(alert.textContent).toBe('There was an error saving your goal');
   });
 
-  it('deletes goals', async () => {
+  it('removes goals', async () => {
     fetchMock.post('/api/goals', postResponse);
 
     const recipient = {
@@ -333,14 +333,8 @@ describe('create goal', () => {
     fetchMock.delete('/api/goals/64175', JSON.stringify(1));
     expect(fetchMock.called()).toBe(false);
 
-    const deleteButton = within(await screen.findByTestId('menu')).getByRole('button', { name: /delete/i });
+    const deleteButton = within(await screen.findByTestId('menu')).getByRole('button', { name: /remove/i });
     userEvent.click(deleteButton);
-    userEvent.tab();
-
-    const modalDeleteButton = document.querySelector(':focus');
-    expect(modalDeleteButton.textContent).toBe('Delete');
-
-    userEvent.click(modalDeleteButton);
     await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     expect(fetchMock.called()).toBeTruthy();
   });
@@ -426,14 +420,8 @@ describe('create goal', () => {
     const goalActions = await screen.findByRole('button', { name: /actions for goal/i });
     userEvent.click(goalActions);
 
-    const deleteButton = within(await screen.findByTestId('menu')).getByRole('button', { name: /delete/i });
+    const deleteButton = within(await screen.findByTestId('menu')).getByRole('button', { name: /remove/i });
     userEvent.click(deleteButton);
-    userEvent.tab();
-
-    const modalDeleteButton = document.querySelector(':focus');
-    expect(modalDeleteButton.textContent).toBe('Delete');
-
-    userEvent.click(modalDeleteButton);
     await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
   });
 
