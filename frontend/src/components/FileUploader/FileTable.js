@@ -4,10 +4,35 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@trussworks/react-uswds';
 import DeleteFileModal from './DeleteFileModal';
-import { getStatus } from './constants';
 import colors from '../../colors';
 
-const FileTable = ({ onFileRemoved, files }) => {
+const getStatus = (status) => {
+  switch (status) {
+    case 'UPLOADING':
+      return 'Uploading';
+    case 'UPLOADED':
+      return 'Uploaded';
+    case 'UPLOAD_FAILED':
+      return 'Upload Failed';
+    case 'SCANNING_QUEUED':
+      return 'Scanning';
+    case 'QUEUEING_FAILED':
+      return 'Upload Failed';
+    case 'SCANNING':
+      return 'Scanning';
+    case 'APPROVED':
+      return 'Approved';
+    case 'REJECTED':
+      return 'Rejected';
+    case 'PENDING':
+      return 'Pending';
+    default:
+      break;
+  }
+  return 'Upload Failed';
+};
+
+const FileTable = ({ onFileRemoved, files, config }) => {
   const [index, setIndex] = useState(null);
   const modalRef = useRef();
   const handleDelete = (newIndex) => {
@@ -41,15 +66,15 @@ const FileTable = ({ onFileRemoved, files }) => {
         </thead>
         <tbody>
           {files.map((file, currentIndex) => (
-            <tr key={`file-${file.id}`} id={`files-table-row-${currentIndex}`}>
+            <tr key={`file-${file[config.id]}`} id={`files-table-row-${currentIndex}`}>
               <td className="files-table--file-name">
-                {file.originalFileName}
+                {file[config.name]}
               </td>
               <td>
-                {`${(file.fileSize / 1000).toFixed(1)} KB`}
+                {`${(file[config.size] / 1000).toFixed(1)} KB`}
               </td>
               <td>
-                {getStatus(file.status)}
+                {getStatus(file[config.status])}
               </td>
               <td>
                 <Button
@@ -83,9 +108,21 @@ FileTable.propTypes = {
   onFileRemoved: PropTypes.func.isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   files: PropTypes.arrayOf(PropTypes.object),
+  config: PropTypes.shape({
+    size: PropTypes.string,
+    name: PropTypes.string,
+    id: PropTypes.string,
+    status: PropTypes.string,
+  }),
 };
 FileTable.defaultProps = {
   files: [],
+  config: {
+    size: 'fileSize',
+    name: 'originalFileName',
+    id: 'id',
+    status: 'status',
+  },
 };
 
 export default FileTable;

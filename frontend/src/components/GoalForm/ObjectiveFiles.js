@@ -3,9 +3,9 @@ import PropTypes from 'prop-types';
 import {
   Label, Radio, Fieldset,
 } from '@trussworks/react-uswds';
-import FileUploader from '../FileUploader';
 import QuestionTooltip from './QuestionTooltip';
 import './ObjectiveFiles.scss';
+import ObjectiveFileUploader from '../FileUploader/ObjectiveFileUploader';
 
 export default function ObjectiveFiles({
   objectiveId,
@@ -89,7 +89,7 @@ export default function ObjectiveFiles({
                         <Label htmlFor="files">Attach any available non-link resources</Label>
                         <span>Example file types: .pdf, .ppt (max size 30 MB)</span>
                       </div>
-                      <FileUploader files={files} onChange={onChangeFiles} objectiveId={objectiveId} id="files" />
+                      <ObjectiveFileUploader files={files} onChange={onChangeFiles} objectiveId={objectiveId} id="files" />
                     </>
                   )
                   : null

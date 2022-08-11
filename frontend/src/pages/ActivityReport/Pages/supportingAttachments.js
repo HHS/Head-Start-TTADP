@@ -7,8 +7,8 @@ import {
 } from '@trussworks/react-uswds';
 import Section from './Review/ReviewSection';
 import FileReviewItem from './Review/FileReviewItem';
-import FileUploader from '../../../components/FileUploader';
 import { reportIsEditable } from '../../../utils';
+import ActivityReportFileUploader from '../../../components/FileUploader/ActivityReportFileUploader';
 
 const SupportingAttachments = ({
   reportId,
@@ -40,7 +40,7 @@ const SupportingAttachments = ({
           defaultValue={[]}
           control={control}
           render={({ onChange, value }) => (
-            <FileUploader files={value} onChange={onChange} reportId={reportId} id="files" />
+            <ActivityReportFileUploader files={value} onChange={onChange} reportId={reportId} id="files" />
           )}
         />
       </Fieldset>
