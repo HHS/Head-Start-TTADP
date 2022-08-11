@@ -1,52 +1,37 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import ContextMenu from '../ContextMenu';
-import Modal from '../Modal';
 import ReadOnlyObjective from './ReadOnlyObjective';
 import './ReadOnly.scss';
 
 export function ReadOnlyGoal({
   onEdit,
-  onDelete,
+  onRemove,
   hideEdit,
   goal,
   index,
 }) {
-  const modalRef = useRef();
   let menuItems = [
     {
       label: 'Edit',
       onClick: () => onEdit(goal, index),
     },
     {
-      label: 'Delete',
-      onClick: () => modalRef.current.toggleModal(true),
+      label: 'Remove',
+      onClick: () => onRemove(goal.id),
     },
   ];
 
   if (hideEdit) {
     menuItems = [
       {
-        label: 'Delete',
-        onClick: () => modalRef.current.toggleModal(true),
+        label: 'Remove',
+        onClick: () => onRemove(goal.id),
       },
     ];
   }
   return (
     <div key={`goal${goal.id}`}>
-      <Modal
-        modalRef={modalRef}
-        title="Delete this goal"
-        modalId={`goal${goal.id}Modal`}
-        onOk={async () => onDelete(goal.id)}
-        okButtonText="Delete"
-      >
-        <>
-          <span>Are you sure you want to delete this goal?</span>
-          <br />
-          <span>This action cannot be undone.</span>
-        </>
-      </Modal>
       <div className="ttahub-goal-form-goal-summary padding-4 margin-y-4 position-relative">
         <h2 className="margin-top-0">Recipient TTA goal</h2>
         <div className="position-absolute pin-top pin-right padding-4">
@@ -83,7 +68,7 @@ export function ReadOnlyGoal({
 
 ReadOnlyGoal.propTypes = {
   onEdit: PropTypes.func.isRequired,
-  onDelete: PropTypes.func.isRequired,
+  onRemove: PropTypes.func.isRequired,
   hideEdit: PropTypes.bool,
   index: PropTypes.number.isRequired,
   goal: PropTypes.shape({
@@ -126,7 +111,7 @@ ReadOnlyGoal.defaultProps = {
 
 export default function ReadOnly({
   onEdit,
-  onDelete,
+  onRemove,
   createdGoals,
   hideEdit,
 }) {
@@ -136,7 +121,7 @@ export default function ReadOnly({
         <div key={`read-only-goal-${goal.id}`}>
           <ReadOnlyGoal
             onEdit={onEdit}
-            onDelete={onDelete}
+            onRemove={onRemove}
             hideEdit={hideEdit}
             goal={goal}
             index={index}
@@ -158,7 +143,7 @@ ReadOnly.propTypes = {
     endDate: PropTypes.string,
   })).isRequired,
   onEdit: PropTypes.func.isRequired,
-  onDelete: PropTypes.func.isRequired,
+  onRemove: PropTypes.func.isRequired,
   hideEdit: PropTypes.bool,
 };
 

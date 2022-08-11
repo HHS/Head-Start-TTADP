@@ -20,7 +20,7 @@ describe('ReadOnly', () => {
       <ReadOnly
         createdGoals={createdGoals}
         onEdit={jest.fn()}
-        onDelete={jest.fn()}
+        onRemove={jest.fn()}
       />
     ));
   };
