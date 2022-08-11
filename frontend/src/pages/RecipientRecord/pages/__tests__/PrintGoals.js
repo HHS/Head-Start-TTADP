@@ -110,14 +110,14 @@ describe('PrintGoals', () => {
     expect(await screen.findByText('Friendship')).toBeVisible();
   });
 
-  it('builds a URL to query based on filters provided by FilterContext', async () => {
-    // Filters are retrieved with `useSessionFiltersAndReflectInUrl`, so put them in sessionStorage.
-    window.sessionStorage.setItem(GOALS_OBJECTIVES_FILTER_KEY, JSON.stringify(filters));
+  it('builds a URL to query based on filters provided by window.location.search', async () => {
+    delete window.location;
+    window.location = { search: filtersToQueryString(filters) };
 
     act(renderPrintGoals);
 
     // Expect that the mocked URL, which includes the filtered query was called.
-    // This asserts that PrintGoals is respecting filters provided by FilterContext.
+    // This asserts that PrintGoals is respecting filters included in window.location.search.
     expect(fetchMock.called(filteredMockURL)).toBe(true);
   });
 });
