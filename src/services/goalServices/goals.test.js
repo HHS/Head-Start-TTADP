@@ -53,7 +53,7 @@ describe('Goals DB service', () => {
     });
 
     describe('with removed goals', () => {
-      it('deletes the objective', async () => {
+      it('does not delete the objective', async () => {
         // Find this objective to delete.
         ActivityReportObjective.findAll.mockResolvedValueOnce([
           {
@@ -80,8 +80,7 @@ describe('Goals DB service', () => {
           },
         ]);
         await saveGoalsForReport([], { id: 1 });
-        expect(Objective.destroy).toHaveBeenCalled();
-        expect(Objective.destroy.mock.calls[0][0].where[0].id).toContain(1);
+        expect(Objective.destroy).not.toHaveBeenCalled();
       });
 
       it('deletes the ActivityReportObjective', async () => {
@@ -95,7 +94,7 @@ describe('Goals DB service', () => {
         });
       });
 
-      it('deletes goals not being used by ActivityReportGoals', async () => {
+      it('does not delete goals not being used by ActivityReportGoals', async () => {
         ActivityReportObjective.findAll.mockResolvedValue([
           {
             objectiveId: 1,
@@ -126,18 +125,7 @@ describe('Goals DB service', () => {
         ]);
 
         await saveGoalsForReport([], { id: 1 });
-        expect(Goal.destroy).toHaveBeenCalledWith({
-          where: {
-            [Op.and]: [
-              {
-                id: [2],
-              },
-              {
-                createdVia: 'activityReport',
-              },
-            ],
-          },
-        });
+        expect(Goal.destroy).not.toHaveBeenCalled();
       });
     });
 
