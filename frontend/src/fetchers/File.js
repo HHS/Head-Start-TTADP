@@ -17,11 +17,22 @@ export const uploadFile = async (data) => {
   return res.json();
 };
 
-export const deleteFile = async (fileId, reportId, objectiveId) => {
+export const deleteObjectiveFile = async (fileId, objectiveId) => {
   const url = join(
     fileUrl,
-    reportId ? 'r' : 'o',
-    reportId ? reportId.toString() : objectiveId.toString(),
+    'o',
+    objectiveId.toString(),
+    fileId.toString(),
+  );
+  const res = await destroy(url);
+  return res;
+};
+
+export const deleteReportFile = async (fileId, reportId) => {
+  const url = join(
+    fileUrl,
+    'r',
+    reportId.toString(),
     fileId.toString(),
   );
   const res = await destroy(url);

@@ -10,15 +10,13 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { useDropzone } from 'react-dropzone';
 import { Alert, ErrorMessage } from '@trussworks/react-uswds';
-import { handleDrop } from './constants';
 import FileRejections from './FileRejections';
 
-export default function Dropzone(props) {
-  const {
-    onChange, id, reportId, objectiveId,
-  } = props;
+export default function Dropzone({
+  handleDrop,
+}) {
   const [errorMessage, setErrorMessage] = useState();
-  const onDrop = (e) => handleDrop(e, reportId, objectiveId, id, onChange, setErrorMessage);
+  const onDrop = (e) => handleDrop(e, setErrorMessage);
   const maxSize = 30000000;
   const minSize = 1; // at least 1 byte
 
@@ -58,14 +56,5 @@ export default function Dropzone(props) {
 }
 
 Dropzone.propTypes = {
-  onChange: PropTypes.func.isRequired,
-  reportId: PropTypes.node,
-  objectiveId: PropTypes.node,
-  id: PropTypes.string.isRequired,
-};
-
-Dropzone.defaultProps = {
-  reportId: null,
-  objectiveId: null,
-
+  handleDrop: PropTypes.func.isRequired,
 };
