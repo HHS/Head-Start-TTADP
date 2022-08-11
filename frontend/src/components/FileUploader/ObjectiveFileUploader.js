@@ -38,22 +38,48 @@ const ObjectiveFileUploader = ({
 }) => {
   const onFileRemoved = async (removedFileIndex) => {
     const file = files[removedFileIndex];
-    const remainingFiles = files.filter((f) => f.id !== file.id);
-    onChange(remainingFiles);
-    await deleteObjectiveFile(file.id, objectiveId);
+    const copyOfFiles = [...files];
+    copyOfFiles.splice(removedFileIndex, 1);
+    onChange(copyOfFiles);
+
+    if (file.id) {
+      await deleteObjectiveFile(file.id, objectiveId);
+    }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleDrop = async (e, setErrorMessage) => {
-    const newFiles = e.map((file) => upload(file, objectiveId, setErrorMessage));
-    Promise.all(newFiles).then((values) => {
-      onChange(values);
-    });
+    onChange([...files, ...e]);
+    // const newFiles = e.map((file) => upload(file, objectiveId, setErrorMessage));
+    // Promise.all(newFiles).then((values) => {
+    //   onChange(values);
+    // });
   };
+
+  const config = {
+    size: 'size',
+    name: 'path',
+    id: 'id',
+    status: 'status',
+  };
+
+  const filesForTable = files.map((file) => {
+    const status = 'PENDING';
+    const fileId = file.lastModified;
+    // console.log({ file, fileId, status });
+    return {
+      ...file,
+      name: file.name,
+      size: file.size,
+      status,
+      id: fileId,
+    };
+  });
 
   return (
     <>
       <Dropzone id={id} handleDrop={handleDrop} />
-      <FileTable onFileRemoved={onFileRemoved} files={files} />
+      <FileTable onFileRemoved={onFileRemoved} files={filesForTable} config={config} />
     </>
   );
 };
@@ -63,7 +89,7 @@ ObjectiveFileUploader.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   files: PropTypes.arrayOf(PropTypes.object),
   objectiveId: PropTypes.number.isRequired,
-  id: PropTypes.string.isRequired,
+  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };
 
 ObjectiveFileUploader.defaultProps = {
