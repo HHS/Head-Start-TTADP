@@ -534,7 +534,7 @@ export default function GoalForm({
    * HTTP
    * @param {Number} g
    */
-  const onDelete = async (g) => {
+  const onRemove = async (g) => {
     setIsLoading(true);
     try {
       const success = await deleteGoal(g, regionId);
@@ -587,7 +587,7 @@ export default function GoalForm({
             <>
               <ReadOnly
                 createdGoals={createdGoals}
-                onDelete={onDelete}
+                onRemove={onRemove}
                 onEdit={onEdit}
               />
               <div className="margin-bottom-4">
