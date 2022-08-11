@@ -422,12 +422,6 @@ describe('create goal', () => {
 
     const deleteButton = within(await screen.findByTestId('menu')).getByRole('button', { name: /remove/i });
     userEvent.click(deleteButton);
-    userEvent.tab();
-
-    // const modalDeleteButton = document.querySelector(':focus');
-    // expect(modalDeleteButton.textContent).toBe('Delete');
-
-    // userEvent.click(modalDeleteButton);
     await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
   });
 
