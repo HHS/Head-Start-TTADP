@@ -7,7 +7,7 @@ import {
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 
-import nextSteps from '../nextSteps';
+import nextSteps, { isPageComplete } from '../nextSteps';
 
 const SPECIALIST_INPUT = 'specialistNextSteps-input';
 const SPECIALIST_BUTTON = 'specialistNextSteps-button';
@@ -200,5 +200,56 @@ describe('next steps', () => {
 
     // Assert date change.
     await waitFor(() => expect(dateInput).toHaveValue('06/04/2022'));
+  });
+});
+
+describe('isPageComplete for Next steps', () => {
+  it('returns true if validated by hook form', async () => {
+    const result = isPageComplete({}, { isValid: true });
+    expect(result).toBe(true);
+  });
+
+  it('returns false if either data point is missing', async () => {
+    const result = isPageComplete({ specialistNextSteps: [] }, { isValid: false });
+    expect(result).toBe(false);
+  });
+
+  it('returns false if no next steps are provided', async () => {
+    const result = isPageComplete({
+      specialistNextSteps: [], participantNextSteps: [],
+    }, { isValid: false });
+    expect(result).toBe(false);
+  });
+
+  it('returns false if no note was provided on one step', async () => {
+    const result = isPageComplete({
+      specialistNextSteps: [{
+        note: '',
+        completeDate: '09/17/2017',
+      }],
+      participantNextSteps: [
+        {
+          note: 'A step sir',
+          completeDate: '09/17/2017',
+        },
+      ],
+    }, { isValid: false });
+    expect(result).toBe(false);
+  });
+
+  it('returns false if an invalid date was provided on one step', async () => {
+    const result = isPageComplete({
+      specialistNextSteps: [{
+        note: 'a step',
+        completeDate: '09/17/2017',
+      }],
+      participantNextSteps: [
+        {
+          note: 'A step sir',
+          completeDate: 'a step a step a step',
+        },
+      ],
+    }, { isValid: false });
+    expect(result).toBe(false);
   });
 });

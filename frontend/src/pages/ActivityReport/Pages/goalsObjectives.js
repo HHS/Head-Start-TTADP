@@ -83,7 +83,7 @@ const GoalsObjectives = ({ reportId }) => {
     setValue('goalForEditing', newGoal(grantIds));
   };
 
-  const onDelete = (goalId) => {
+  const onRemove = (goalId) => {
     const copyOfSelectedGoals = selectedGoals.map((goal) => ({ ...goal }));
     const index = copyOfSelectedGoals.findIndex((goal) => goal.id === goalId);
 
@@ -100,6 +100,7 @@ const GoalsObjectives = ({ reportId }) => {
       const goalForEditingObjectives = getValues('goalForEditing.objectives') ? [...getValues('goalForEditing.objectives')] : [];
       const name = getValues('goalName');
       const endDate = getValues('goalEndDate');
+
       const areGoalsValid = validateGoals(
         [{
           ...currentlyEditing,
@@ -194,7 +195,7 @@ const GoalsObjectives = ({ reportId }) => {
       { goalsForReview.length ? (
         <ReadOnly
           onEdit={onEdit}
-          onDelete={onDelete}
+          onRemove={onRemove}
           createdGoals={goalsForReview}
         />
       ) : null }

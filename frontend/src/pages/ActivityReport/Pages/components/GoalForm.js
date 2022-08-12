@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
+import { v4 as uuid } from 'uuid';
 import { useController, useFormContext } from 'react-hook-form/dist/index.ie11';
 import GoalText from '../../../../components/GoalForm/GoalText';
 import { goalsByIdsAndActivityReport } from '../../../../fetchers/goals';
@@ -21,16 +22,19 @@ export default function GoalForm({
   // pull the errors out of the form context
   const { errors } = useFormContext();
 
-  // memoize whether or not the end date is required, so we only
-  // do it when the goal changes from new to not new
-  const endDateRequired = useMemo(() => goal.isNew, [goal.isNew]);
-
   /**
    * add controllers for all the controlled fields
    * react hook form uses uncontrolled fields by default
    * but we want to keep the logic in one place for the AR/RTR
    * if at all possible
    */
+
+  const defaultEndDate = useMemo(() => (goal && goal.endDate ? goal.endDate : ''), [goal]);
+  const defaultName = useMemo(() => (goal && goal.name ? goal.name : ''), [goal]);
+
+  // the date picker component, as always, presents special challenges, it needs a key updated
+  // to re-render appropriately
+  const [datePickerKey, setDatePickerKey] = useState(uuid());
 
   const {
     field: {
@@ -44,11 +48,11 @@ export default function GoalForm({
     rules: {
       validate: {
         isValidDate: (value) => (
-          !endDateRequired || (value && moment(value, 'MM/DD/YYYY').isValid())
+          (value && moment(value, 'MM/DD/YYYY').isValid())
         ) || GOAL_DATE_ERROR,
       },
     },
-    defaultValue: goal && goal.endDate ? goal.endDate : ' ',
+    defaultValue: defaultEndDate,
   });
 
   const {
@@ -66,15 +70,26 @@ export default function GoalForm({
         message: GOAL_NAME_ERROR,
       },
     },
-    defaultValue: goal && goal.name ? goal.name : '',
+    defaultValue: defaultName,
   });
 
   // when the goal is updated in the selection, we want to update
   // the fields via the useController functions
   useEffect(() => {
-    onUpdateText(goal.name);
-    onUpdateDate(goal.endDate);
-  }, [goal.endDate, goal.name, onUpdateDate, onUpdateText]);
+    onUpdateText(goal.name ? goal.name : defaultName);
+
+    const newEndDate = goal.endDate ? goal.endDate : defaultEndDate;
+    onUpdateDate(newEndDate);
+    setDatePickerKey(uuid());
+  }, [
+    defaultEndDate,
+    defaultName,
+    goal.endDate,
+    goal.name,
+    onUpdateDate,
+    onUpdateText,
+    setDatePickerKey,
+  ]);
 
   const [objectives, setObjectives] = useState([]);
 
@@ -98,26 +113,23 @@ export default function GoalForm({
     <>
       <GoalText
         error={errors.goalName ? ERROR_FORMAT(errors.goalName.message) : NO_ERROR}
-        isOnReport={false}
         goalName={goalText}
         validateGoalName={onBlurGoalText}
         onUpdateText={onUpdateText}
         inputName={goalTextInputName}
+        isOnReport={goal.onApprovedAR || false}
       />
-      { endDateRequired
-        ? (
-          <GoalDate
-            error={errors.goalEndDate ? ERROR_FORMAT(errors.goalEndDate.message) : NO_ERROR}
-            setEndDate={onUpdateDate}
-            endDate={goalEndDate}
-            validateEndDate={onBlurDate}
-            datePickerKey="end-date-key"
-            inputName={goalEndDateInputName}
-          />
-        )
-        : null }
+
+      <GoalDate
+        error={errors.goalEndDate ? ERROR_FORMAT(errors.goalEndDate.message) : NO_ERROR}
+        setEndDate={onUpdateDate}
+        endDate={goalEndDate}
+        validateEndDate={onBlurDate}
+        datePickerKey={datePickerKey}
+        inputName={goalEndDateInputName}
+      />
+
       <Objectives
-        goalId={goal.id}
         objectives={objectives}
         topicOptions={topicOptions}
         roles={roles}
@@ -143,6 +155,7 @@ GoalForm.propTypes = {
     name: PropTypes.string,
     endDate: PropTypes.string,
     isNew: PropTypes.bool,
+    onApprovedAR: PropTypes.bool,
   }).isRequired,
   topicOptions: PropTypes.arrayOf(PropTypes.shape({
     value: PropTypes.number,

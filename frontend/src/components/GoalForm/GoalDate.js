@@ -17,7 +17,7 @@ export default function GoalDate({
   return (
     <FormGroup error={error.props.children}>
       <Label htmlFor={inputName}>
-        Estimated close date (mm/dd/yyyy)
+        Anticipated close date (mm/dd/yyyy)
         {' '}
         <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
         <QuestionTooltip text="When do you expect to end TTA work and mark this goal as closed?" />
