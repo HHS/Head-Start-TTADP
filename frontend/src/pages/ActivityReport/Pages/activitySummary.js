@@ -8,6 +8,7 @@ import { isEmpty, isUndefined } from 'lodash';
 import {
   Fieldset, Radio, Grid, TextInput, Checkbox, Label,
 } from '@trussworks/react-uswds';
+import moment from 'moment';
 import ReviewPage from './Review/ReviewPage';
 import MultiSelect from '../../../components/MultiSelect';
 import {
@@ -556,6 +557,77 @@ const ReviewSection = () => {
   );
 };
 
+export const isPageComplete = (formData, formState) => {
+  const { isValid } = formState;
+  if (isValid) {
+    return true;
+  }
+
+  const {
+    // strings
+    activityRecipientType,
+    requester,
+    deliveryMethod,
+    virtualDeliveryType,
+
+    // arrays
+    activityRecipients,
+    targetPopulations: targetPopulationsArray,
+    reason,
+    ttaType,
+    participants,
+
+    // numbers
+    duration,
+    numberOfParticipants,
+
+    // dates
+    startDate,
+    endDate,
+  } = formData;
+
+  const stringsToValidate = [
+    activityRecipientType,
+    requester,
+    deliveryMethod,
+  ];
+
+  if (!stringsToValidate.every((str) => str)) {
+    return false;
+  }
+
+  const arraysToValidate = [
+    activityRecipients,
+    targetPopulationsArray,
+    reason,
+    ttaType,
+    participants,
+  ];
+
+  if (!arraysToValidate.every((arr) => arr.length)) {
+    return false;
+  }
+
+  const numbersToValidate = [
+    duration,
+    numberOfParticipants,
+  ];
+
+  if (!numbersToValidate.every((num) => num && Number.isNaN(num) === false)) {
+    return false;
+  }
+
+  if (![startDate, endDate].every((date) => moment(date, 'MM/DD/YYYY').isValid())) {
+    return false;
+  }
+
+  if (deliveryMethod === 'virtual' && !virtualDeliveryType) {
+    return false;
+  }
+
+  return true;
+};
+
 export default {
   position: 1,
   label: 'Activity summary',
@@ -571,4 +643,5 @@ export default {
       />
     );
   },
+  isPageComplete,
 };

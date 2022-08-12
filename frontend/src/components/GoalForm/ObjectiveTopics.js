@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import {
   FormGroup, Label,
@@ -19,9 +19,11 @@ export default function ObjectiveTopics({
   isOnApprovedReport,
   isLoading,
 }) {
+  const initialSelection = useRef(topics.length);
+
   const readOnly = status === 'Suspended' || (status === 'Not Started' && isOnReport);
 
-  if (readOnly) {
+  if (readOnly && initialSelection.current) {
     if (!topics.length) {
       return null;
     }

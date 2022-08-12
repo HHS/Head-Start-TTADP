@@ -183,7 +183,7 @@ function App() {
             {!authenticated && (authError === 403
               ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>
               : (
-                <AppWrapper>
+                <AppWrapper logout={logout}>
                   <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
                 </AppWrapper>
               )
