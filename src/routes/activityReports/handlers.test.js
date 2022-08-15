@@ -31,7 +31,6 @@ import {
   getAllDownloadableActivityReportAlerts,
 } from '../../services/activityReports';
 import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
-import { copyGoalsToGrants } from '../../services/goals';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
 import { userById, usersWithPermissions } from '../../services/users';
 import ActivityReport from '../../policies/activityReport';
@@ -297,7 +296,6 @@ describe('Activity Report handlers', () => {
       await reviewReport(needsActionReportRequest, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);
       expect(changesRequestedNotification).toHaveBeenCalled();
-      expect(copyGoalsToGrants).not.toHaveBeenCalled();
     });
     it('handles unauthorizedRequests', async () => {
       activityReportAndRecipientsById.mockResolvedValue([{

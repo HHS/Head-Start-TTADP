@@ -59,7 +59,7 @@ export default function GoalForm({
   }));
 
   const goalDefaults = useMemo(() => ({
-    goalName: '',
+    name: '',
     endDate: null,
     status: 'Draft',
     grants: possibleGrants.length === 1 ? [possibleGrants[0]] : [],
@@ -77,7 +77,7 @@ export default function GoalForm({
   // this is for the topic options returned from the API
   const [topicOptions, setTopicOptions] = useState([]);
 
-  const [goalName, setGoalName] = useState(goalDefaults.goalName);
+  const [goalName, setGoalName] = useState(goalDefaults.name);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
 
@@ -112,7 +112,7 @@ export default function GoalForm({
         const goal = await goalByIdAndRecipient(id, recipient.id.toString());
 
         // for these, the API sends us back things in a format we expect
-        setGoalName(goal.goalName);
+        setGoalName(goal.name);
         setStatus(goal.status);
         setEndDate(goal.endDate ? moment(goal.endDate, 'MM/DD/YYYY').format('YYYY-MM-DD') : '');
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
@@ -359,9 +359,9 @@ export default function GoalForm({
     setIsLoading(true);
     try {
       const gs = createdGoals.reduce((acc, goal) => {
-        const newGoals = goal.grantIds.map((g) => ({
-          grantId: g,
-          name: goal.goalName,
+        const newGoals = goal.grants.map((grant) => ({
+          grantId: grant.id,
+          name: goal.name,
           status,
           endDate: goal.endDate && goal.endDate !== 'Invalid date' ? goal.endDate : null,
           regionId: parseInt(regionId, DECIMAL_BASE),
@@ -436,7 +436,7 @@ export default function GoalForm({
 
   const clearForm = () => {
     // clear our form fields
-    setGoalName(goalDefaults.goalName);
+    setGoalName(goalDefaults.name);
     setEndDate(goalDefaults.endDate);
     setStatus(goalDefaults.status);
     setSelectedGrants(goalDefaults.grants);
@@ -463,7 +463,18 @@ export default function GoalForm({
       }));
 
       const goals = [
-        ...createdGoals,
+        ...createdGoals.reduce((acc, goal) => {
+          const g = goal.grants.map((grant) => ({
+            grantId: grant.id,
+            name: goal.name,
+            status,
+            endDate: goal.endDate && goal.endDate !== 'Invalid date' ? goal.endDate : null,
+            regionId: parseInt(regionId, DECIMAL_BASE),
+            recipientId: recipient.id,
+            objectives: goal.objectives,
+          }));
+          return [...acc, ...g];
+        }, []),
         ...newGoals,
       ];
 
@@ -502,7 +513,7 @@ export default function GoalForm({
     setCreatedGoals(newCreatedGoals);
 
     // then repopulate the form
-    setGoalName(goal.goalName);
+    setGoalName(goal.name);
     setEndDate(goal.endDate);
     setStatus(goal.status);
     setGoalNumber(goal.number);
@@ -523,7 +534,7 @@ export default function GoalForm({
    * HTTP
    * @param {Number} g
    */
-  const onDelete = async (g) => {
+  const onRemove = async (g) => {
     setIsLoading(true);
     try {
       const success = await deleteGoal(g, regionId);
@@ -576,7 +587,7 @@ export default function GoalForm({
             <>
               <ReadOnly
                 createdGoals={createdGoals}
-                onDelete={onDelete}
+                onRemove={onRemove}
                 onEdit={onEdit}
               />
               <div className="margin-bottom-4">
