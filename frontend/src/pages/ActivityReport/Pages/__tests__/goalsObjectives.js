@@ -2,7 +2,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import {
-  render, screen, within, act,
+  render, screen, act,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
@@ -168,7 +168,7 @@ describe('goals objectives', () => {
       expect(toggleGoalForm).toHaveBeenCalledWith(false);
     });
 
-    it('you can delete a goal', async () => {
+    it('you can remove a goal', async () => {
       const sampleGoals = [{
         name: 'Test',
         id: 1234567,
@@ -176,16 +176,15 @@ describe('goals objectives', () => {
       }];
       const isGoalFormClosed = true;
       renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed);
-      const actions = await screen.findByRole('button', { name: /actions for goal 1/i });
-      userEvent.click(actions);
-      const [button] = await screen.findAllByRole('button', { name: 'Delete' });
-      userEvent.click(button);
-      const modal = await screen.findByTestId('modalWindow');
-      const deletor = await within(modal).findByText('Delete');
       const goalSummary = await screen.findByText('Goal summary');
       expect(goalSummary).toBeVisible();
-      userEvent.click(deletor);
+      const actions = await screen.findByRole('button', { name: /actions for goal 1/i });
+      userEvent.click(actions);
+      const [button] = await screen.findAllByRole('button', { name: 'Remove' });
+      userEvent.click(button);
       expect(goalSummary).not.toBeVisible();
+      const addNewGoal = await screen.findByRole('button', { name: /add new goal/i });
+      expect(addNewGoal).toBeVisible();
     });
   });
 

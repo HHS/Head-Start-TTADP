@@ -175,9 +175,23 @@ describe('saveGoalsForReport (more tests)', () => {
       },
     });
 
-    await Goal.destroy({
+    const goalsToDestroy = await Goal.findAll({
       where: {
         grantId: [grantOne.id, grantTwo.id],
+      },
+    });
+
+    const goalIdsToDestroy = goalsToDestroy.map((g) => g.id);
+
+    await Objective.destroy({
+      where: {
+        goalId: goalIdsToDestroy,
+      },
+    });
+
+    await Goal.destroy({
+      where: {
+        id: goalIdsToDestroy,
       },
     });
 

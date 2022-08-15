@@ -208,7 +208,7 @@ describe('Navigator', () => {
       },
       goals: [],
       goalEndDate: '09/01/2020',
-      goalName: 'goal name',
+      name: 'goal name',
       'goalForEditing.objectives': [{
         title: 'objective',
         topics: ['test'],

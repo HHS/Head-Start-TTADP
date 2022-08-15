@@ -10,7 +10,6 @@ export default function Objectives({
   objectives,
   topicOptions,
   roles,
-  goalId,
   noObjectiveError,
 }) {
   const { errors, getValues } = useFormContext();
@@ -93,7 +92,6 @@ export default function Objectives({
               errors={objectiveErrors}
               remove={remove}
               fieldArrayName={fieldArrayName}
-              errorLabel={goalId}
               roles={roles}
             />
           );
@@ -112,9 +110,5 @@ Objectives.propTypes = {
     OBJECTIVE_PROP,
   ).isRequired,
   roles: PropTypes.arrayOf(PropTypes.string).isRequired,
-  goalId: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.number,
-  ]).isRequired,
   noObjectiveError: PropTypes.node.isRequired,
 };
