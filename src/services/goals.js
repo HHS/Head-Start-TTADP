@@ -22,7 +22,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
   attributes: [
     'id',
     'endDate',
-    ['name', 'goalName'],
+    'name',
     'status',
     [sequelize.col('grant.regionId'), 'regionId'],
     [sequelize.col('grant.recipient.id'), 'recipientId'],
@@ -254,7 +254,7 @@ function reduceObjectives(newObjectives, currentObjectives = []) {
  * @returns {Object[]} array of deduped goals
  */
 function reduceGoals(goals) {
-  return goals.reduce((previousValue, currentValue) => {
+  const r = goals.reduce((previousValue, currentValue) => {
     const existingGoal = previousValue.find((g) => (
       g.name === currentValue.name && g.status === currentValue.status
     ));
@@ -268,6 +268,7 @@ function reduceGoals(goals) {
           ...currentValue.grant.dataValues,
           recipient: currentValue.grant.recipient.dataValues,
           name: currentValue.grant.name,
+          goalId: currentValue.id,
         },
       ];
       existingGoal.grantIds = [...existingGoal.grantIds, currentValue.grant.id];
@@ -284,6 +285,7 @@ function reduceGoals(goals) {
           ...currentValue.grant.dataValues,
           recipient: currentValue.grant.recipient.dataValues,
           name: currentValue.grant.name,
+          goalId: currentValue.id,
         },
       ],
       grantIds: [currentValue.grant.id],
@@ -293,6 +295,8 @@ function reduceGoals(goals) {
 
     return [...previousValue, goal];
   }, []);
+
+  return r;
 }
 
 /**
@@ -511,9 +515,6 @@ export async function goalByIdWithActivityReportsAndRegions(goalId) {
     ],
   });
 }
-
-// eslint-disable-next-line no-empty-function
-export async function copyGoalsToGrants() {}
 
 async function cleanupObjectivesForGoal(goalId, currentObjectives) {
   // get all objectives not currently on a goal
@@ -857,37 +858,84 @@ async function removeActivityReportGoalsFromReport(reportId, goalIdsToRemove) {
   });
 }
 
+/// TTAHUB-949: Uncomment to remove Goals not associated
+///  with any ActivityReportGoals or createVia 'ActivityReport'.
+/*
 export async function removeGoals(goalsToRemove) {
-  const goalsWithGrants = await Goal.findAll({
-    attributes: ['id'],
+  // Get goals being used by ActivityReportGoals.
+  const usedGoals = await ActivityReportGoal.findAll({
+    attributes: [
+      'goalId',
+    ],
     where: {
-      id: goalsToRemove,
-    },
-    include: {
-      attributes: ['id'],
-      model: Grant,
-      as: 'grant',
-      required: true,
+      goalId: goalsToRemove,
     },
   });
 
-  const goalIdsToKeep = goalsWithGrants.map((g) => g.id);
-  const goalsWithoutGrants = goalsToRemove.filter((id) => !goalIdsToKeep.includes(id));
+  // Get distinct list of goal ids.
+  const usedGoalIds = [...new Set(usedGoals.map((g) => g.goalId))];
 
+  // Create array of goals to delete.
+  const goalsToDelete = goalsToRemove.filter((o) => !usedGoalIds.includes(o));
+
+  // Delete goals not being used that where createdVia 'ActivityReports'.
   return Goal.destroy({
     where: {
-      id: goalsWithoutGrants,
+      [Op.and]: [
+        {
+          id: goalsToDelete,
+        },
+        {
+          createdVia: 'activityReport',
+        },
+      ],
     },
   });
 }
-
+*/
+/// TTAHUB-949: Uncomment to remove Objectives not associated
+///  with any ActivityReportObjectives or createVia 'ActivityReport'.
+/*
 async function removeObjectives(currentObjectiveIds) {
-  return Objective.destroy({
+  // Get objectives being used by ActivityReportObjectives.
+  const usedObjectives = await ActivityReportObjective.findAll({
+    attributes: [
+      'objectiveId',
+    ],
     where: {
-      id: currentObjectiveIds,
+      objectiveId: currentObjectiveIds,
     },
   });
+
+  // Get distinct list of objective ids.
+  const usedObjectiveIds = [...new Set(usedObjectives.map((o) => o.objectiveId))];
+
+  // Create array of objectives to delete.
+  const objectivesToDelete = currentObjectiveIds.filter((o) => !usedObjectiveIds.includes(o));
+
+  // Delete objectives not being used.
+  const objectiveIdsWhere = objectivesToDelete && objectivesToDelete.length ?
+    `g.id IN (${objectivesToDelete.join(',')}) AND ` : '';
+  return Objective.destroy({
+    where: [
+      {
+        id: objectivesToDelete,
+      },
+      sequelize.where(
+        sequelize.literal(`
+      (SELECT COUNT(DISTINCT g."id")
+      FROM "Objectives"
+      INNER JOIN "Goals" g ON "Objectives"."goalId" = "g"."id"
+      WHERE ${objectiveIdsWhere}
+       g."createdVia" = 'rtr')`),
+        {
+          [Op.eq]: 0,
+        },
+      ),
+    ],
+  });
 }
+*/
 
 export async function removeRemovedRecipientsGoals(removedRecipientIds, report) {
   if (!removedRecipientIds) {
@@ -1002,16 +1050,22 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
   );
 
   const objectiveIdsToRemove = activityReportObjectivesToRemove.map((aro) => aro.objectiveId);
-  const goals = activityReportObjectivesToRemove.map((aro) => aro.objective.goal);
 
+  /// TTAHUB-949: Uncomment to remove unused Goals and Objectives.
+  /*
+  const goals = activityReportObjectivesToRemove.map((aro) => aro.objective.goal);
   const goalIdsToRemove = goals.filter((g) => g).filter((goal) => {
     const objectiveIds = goal.objectives.map((o) => o.id);
     return objectiveIds.every((oId) => objectiveIdsToRemove.includes(oId));
   }).map((g) => g.id);
+  */
 
   await removeActivityReportObjectivesFromReport(reportId, objectiveIdsToRemove);
+  /// TTAHUB-949: Uncomment to remove unused Goals and Objectives.
+  /*
   await removeObjectives(objectiveIdsToRemove);
   return removeGoals(goalIdsToRemove);
+  */
 }
 
 async function createObjectivesForGoal(goal, objectives, report) {
@@ -1137,7 +1191,7 @@ export async function saveGoalsForReport(goals, report) {
             grantId,
             status: { [Op.not]: 'Closed' },
           },
-          defaults: { ...fields, status },
+          defaults: { ...fields, status, createdVia: 'activityReport' },
         });
 
         await ActivityReportGoal.findOrCreate({
@@ -1255,6 +1309,17 @@ export async function updateGoalStatusById(
 
 export async function getGoalsForReport(reportId) {
   const goals = await Goal.findAll({
+    /// TODO: If we need a count of other reports using this goal.
+    /* attributes: {
+      include: [[sequelize.literal(`
+                (
+                SELECT COUNT("ar"."id")
+                FROM "ActivityReports" "ar"
+                INNER JOIN "ActivityReportGoals" "arg" ON "arg"."activityReportId" = "ar"."id"
+                WHERE "arg"."goalId" = "Goal"."id" AND "arg"."activityReportId" != ${reportId}
+              )
+    `), 'onOtherAR']],
+    }, */
     include: [
       {
         model: Grant,

@@ -317,6 +317,17 @@ export async function activityReportAndRecipientsById(activityReportId) {
     };
   });
 
+  // TTAHUB-949: Determine how many other AR's are using these goals.
+  /*
+  const users = await sequelize.query("SELECT * FROM `users`", { type: QueryTypes.SELECT });
+  sequelize.literal(
+    `(SELECT arg.goalId AS goalId, COUNT(arg.id) AS reportsUsingGoal
+      FROM "ActivityReportGoals" arg
+      INNER JOIN "Goals" g ON arg."goalId" = g.id
+      WHERE arg."activityReportId" != ${arId} AND  AND g."createdVia" = 'activityReport'
+      GROUP BY g.id)`),
+      */
+
   const report = await ActivityReport.findOne({
     attributes: { exclude: ['imported', 'legacyId'] },
     where: {
