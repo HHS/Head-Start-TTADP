@@ -95,7 +95,7 @@ function Navigator({
     }
 
     const currentPageState = pageState[page.position];
-    const isComplete = page.isPageComplete ? page.isPageComplete(getValues()) : isValid;
+    const isComplete = page.isPageComplete ? page.isPageComplete(getValues(), formState) : isValid;
     const newPageState = { ...pageState };
 
     if (isComplete) {
@@ -172,7 +172,6 @@ function Navigator({
     toggleGoalForm(true);
     setValue('goals', newGoals);
     setValue('goalForEditing', null);
-    setValue('goalForEditing.objectives', []);
     setValue('goalName', '');
     setValue('goalEndDate', '');
 

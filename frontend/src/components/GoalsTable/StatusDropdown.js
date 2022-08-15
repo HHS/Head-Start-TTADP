@@ -32,6 +32,11 @@ export const STATUSES = {
     color: colors.success,
     icon: <Closed />,
   },
+  Complete: {
+    display: 'Complete',
+    color: colors.success,
+    icon: <Closed />,
+  },
   Draft: {
     display: 'Draft',
     color: colors.ttahubBlue,

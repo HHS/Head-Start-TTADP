@@ -24,6 +24,7 @@ export const newGoal = (grantIds) => ({
   id: 'new',
   isNew: true,
   endDate: '',
+  onApprovedAR: false,
   grantIds,
 });
 
@@ -60,7 +61,7 @@ const GoalPicker = ({
         validateGoal: (g) => validateGoals([g]) === true,
       },
     },
-    defaultValue: newGoal(grantIds),
+    defaultValue: '',
   });
 
   // for fetching topic options from API

@@ -170,7 +170,7 @@ describe('createOrUpdateGoals', () => {
 
     const [, updatedGoal] = newGoals;
     expect(updatedGoal.status).toBe('Not Started');
-    expect(updatedGoal.goalName).toBe('This is some serious goal text');
+    expect(updatedGoal.name).toBe('This is some serious goal text');
     expect(updatedGoal.grantIds.length).toBe(1);
     expect(updatedGoal.createdVia).toBe('activityReport');
     expect(updatedGoal.grantIds).toContain(grants[0].id);
@@ -221,7 +221,7 @@ describe('createOrUpdateGoals', () => {
 
     const newGoal = newGoals.find((g) => g.id !== goal.id);
     expect(newGoal.status).toBe('Draft');
-    expect(newGoal.goalName).toBe('This is some serious goal text');
+    expect(newGoal.name).toBe('This is some serious goal text');
     expect(newGoal.grant.id).toBe(grants[1].id);
     expect(newGoal.grant.regionId).toBe(1);
     expect(newGoal.grant.recipientId).toBe(recipient.id);

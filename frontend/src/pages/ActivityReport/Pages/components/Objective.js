@@ -172,7 +172,7 @@ export default function Objective({
     onChangeResources(selectedObjectives.resources);
     onChangeRoles(selectedObjectives.roles || []);
     onChangeTitle(selectedObjectives.title);
-    onChangeTta(selectedObjectives.ttaProvided);
+    onChangeTta(selectedObjectives.ttaProvided || '');
     onChangeStatus(selectedObjectives.status);
     onChangeTopics(selectedObjectives.topics);
   }, [

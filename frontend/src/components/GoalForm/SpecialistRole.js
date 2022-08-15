@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Label } from '@trussworks/react-uswds';
 import Select from 'react-select';
@@ -17,19 +17,13 @@ export default function SpecialistRole({
   isOnReport,
   isLoading,
 }) {
-  // if there is only one option, we just set the objectives to be
-  // that value without any UI
-  if (options.length === 1) {
-    return null;
-  }
+  // we want the *initial* selection stored in a safe place
+  // so that the form field doesn't suddenly go read-only
+  const initialSelection = useRef(selectedRoles.length);
 
   const readOnly = isOnApprovedReport || status === 'Suspended' || (status === 'Not Started' && isOnReport);
 
-  if (readOnly) {
-    if (!selectedRoles.length) {
-      return null;
-    }
-
+  if (readOnly && initialSelection.current) {
     return (
       <>
         <p className="usa-prose text-bold margin-bottom-1">
