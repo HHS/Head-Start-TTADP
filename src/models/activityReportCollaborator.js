@@ -26,7 +26,9 @@ module.exports = (sequelize, DataTypes) => {
     fullName: {
       type: DataTypes.VIRTUAL,
       get() {
-        return generateFullName(this.user.name, this.collaboratorRoles);
+        const collaboratorRoles = this.collaboratorRoles && this.collaboratorRoles.length
+          ? this.collaboratorRoles : this.user.roles;
+        return generateFullName(this.user.name, collaboratorRoles);
       },
     },
   }, {
