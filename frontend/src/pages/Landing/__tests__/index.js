@@ -33,7 +33,7 @@ const dateFilterWithRegionOne = filtersToQueryString(filtersWithRegionOne);
 
 const base = '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=1';
 const baseAlerts = '/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10&region.in[]=1';
-
+const cleanupUrl = '/api/activity-reports/storage-cleanup';
 const defaultOverviewUrl = '/api/widgets/overview?region.in[]=1';
 const inTest = 'reportId.ctn[]=test';
 
@@ -69,7 +69,7 @@ describe('Landing Page', () => {
       recipients: [],
     });
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
-
+    fetchMock.get(cleanupUrl, []);
     const user = {
       name: 'test@test.com',
       permissions: [
@@ -255,7 +255,7 @@ describe('Landing page table menus & selections', () => {
           { count: 10, rows: [], recipients: [] },
         );
         fetchMock.get(defaultOverviewUrl, overviewRegionOne);
-
+        fetchMock.get(cleanupUrl, []);
         window.location = {
           assign: jest.fn(),
         };
@@ -347,6 +347,9 @@ describe('My alerts sorting', () => {
 
     // Overview.
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
+
+    // local storage cleanup
+    fetchMock.get(cleanupUrl, []);
 
     const user = {
       name: 'test@test.com',
@@ -481,6 +484,7 @@ describe('handleApplyFilters', () => {
     mockFetchWithRegionOne();
     fetchMock.get(base, convertToResponse(activityReports));
     fetchMock.get(baseAlerts, { alertsCount: 0, alerts: [], recipients: [] });
+    fetchMock.get(cleanupUrl, []);
 
     fetchMock.get(`${defaultOverviewUrl}&${inTest}`, overviewRegionOne);
     fetchMock.get(`${baseAlerts}&${inTest}`, { alertsCount: 0, alerts: [], recipients: [] });
@@ -535,7 +539,7 @@ describe('handleApplyAlertFilters', () => {
     delete window.location;
     window.location = new URL('https://www.test.gov');
     fetchMock.get(baseAlerts, convertToResponse(generateXFakeReports(10), true));
-
+    fetchMock.get(cleanupUrl, []);
     fetchMock.get(base,
       convertToResponse(generateXFakeReports(1), true));
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
