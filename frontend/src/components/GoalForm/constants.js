@@ -43,7 +43,7 @@ export const OBJECTIVE_FORM_FIELD_INDEXES = {
   ROLE: 4,
 };
 
-export const OBJECTIVE_DEFAULT_ERRORS = [<></>, <></>, <></>, <></>];
+export const OBJECTIVE_DEFAULT_ERRORS = [<></>, <></>, <></>, <></>, <></>];
 
 export const TTA_OBJECTIVE_ERROR = 'Enter the TTA objective';
 export const OBJECTIVE_TOPIC_ERROR = 'Select at least one topic';

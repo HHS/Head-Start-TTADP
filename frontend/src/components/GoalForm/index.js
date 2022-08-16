@@ -10,6 +10,7 @@ import { Alert, Button } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import Container from '../Container';
 import { createOrUpdateGoals, deleteGoal, goalByIdAndRecipient } from '../../fetchers/goals';
+import { uploadFile } from '../../fetchers/File';
 import { getTopics } from '../../fetchers/topics';
 import Form from './Form';
 import {
@@ -390,6 +391,105 @@ export default function GoalForm({
     }
   };
 
+  // to do -> make this a little more asynchronous somehow
+  // also need to alias the backend SQL to return the right
+  // stuff for the files table
+  const onUploadFile = async (file, objective, setErrorMessage) => {
+    // The first thing we need to know is... does this objective need to be created?
+    setIsLoading(true);
+
+    if (objective.isNew) {
+      // if so, we save the objective to the database first
+      try {
+        // but to do that, we first need to save the goals
+        const newGoals = selectedGrants.map((g) => ({
+          grantId: g.value,
+          name: goalName,
+          status,
+          endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
+          regionId: parseInt(regionId, DECIMAL_BASE),
+          recipientId: recipient.id,
+          objectives,
+        }));
+
+        // so we save them, as before creating one for each grant
+        const savedGoals = await createOrUpdateGoals(newGoals);
+
+        // and then we pluck out the objectives from the newly saved goals
+        // (there will be only "one")
+        const updatedObjectives = savedGoals.reduce((p, c) => [...p, ...c.objectives], []);
+
+        let res = { ids: [] };
+
+        // grab all the objectives that match our file's objective
+        // then we save the file, once for each objective
+        await Promise.all(updatedObjectives
+          .filter((o) => objective.title === o.title)
+          .map(async (o) => {
+            // make a copy of objectives
+            const newObjectives = objectives.map((obj) => ({ ...obj }));
+            // find the objective to update
+            const objectiveToUpdate = newObjectives.find((obj) => obj.title === o.title);
+
+            // update the ids fields
+            objectiveToUpdate.ids = o.ids;
+            objectiveToUpdate.id = o.id;
+
+            // set our new objectives
+            setObjectives(newObjectives);
+
+            const data = new FormData();
+            data.append('objectiveId', o.id);
+            data.append('file', file);
+            const response = await uploadFile(data);
+            res = { ...response, ids: [...res.ids, response.id] };
+            return response; // we should return something if we are mapping
+          }));
+
+        setErrorMessage(null);
+
+        return {
+          id: res.id, path: file.name, size: file.size, status: 'UPLOADED', url: res.url, ids: [res.ids],
+        };
+      } catch (error) {
+        setErrorMessage(`${file.name} failed to upload`);
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      // if the objective is not new, we take a simpler path
+      try {
+        let res = { ids: [] };
+
+        // an objective that's been saved should have a set of IDS
+        // in the case that it has been rolled up to match a goal for multiple grants
+        await Promise.all(objective.ids.map(async (objectiveId) => {
+          // but if so, we repeat the process here
+          const data = new FormData();
+          data.append('objectiveId', objectiveId);
+          data.append('file', file);
+          const response = await uploadFile(data);
+          res = { ...response, ids: [...res.ids, response.id] };
+        }));
+
+        setErrorMessage(null);
+
+        // no need to update objectives here, since the files will be individually updated
+
+        return {
+          id: res.id, lastModified: file.lastModified, path: file.name, size: file.size, status: 'UPLOADED', url: res.url, ids: [res.ids],
+        };
+      } catch (error) {
+        setErrorMessage(`${file.name} failed to upload`);
+        console.log(error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    return null;
+  };
+
   const onSaveDraft = async () => {
     if (!isValidDraft()) {
       return;
@@ -627,6 +727,7 @@ export default function GoalForm({
               isOnApprovedReport={isOnApprovedReport}
               status={status || 'Needs status'}
               goalNumber={goalNumber}
+              onUploadFile={onUploadFile}
             />
             )}
 

@@ -41,6 +41,7 @@ export default function Form({
   fetchError,
   goalNumber,
   clearEmptyObjectiveError,
+  onUploadFile,
 }) {
   const { isLoading } = useContext(GoalFormLoadingContext);
 
@@ -159,6 +160,7 @@ export default function Form({
           errors={objectiveErrors[i] || OBJECTIVE_DEFAULT_ERRORS}
           setObjective={(data) => setObjective(data, i)}
           topicOptions={topicOptions}
+          onUploadFile={onUploadFile}
           goalStatus={status}
         />
       ))}
@@ -229,6 +231,7 @@ Form.propTypes = {
   fetchError: PropTypes.string.isRequired,
   goalNumber: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   clearEmptyObjectiveError: PropTypes.func.isRequired,
+  onUploadFile: PropTypes.func.isRequired,
 };
 
 Form.defaultProps = {
