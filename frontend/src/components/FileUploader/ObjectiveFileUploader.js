@@ -14,7 +14,7 @@ import Dropzone from './Dropzone';
 import './FileUploader.scss';
 
 const ObjectiveFileUploader = ({
-  onChange, files, objective, id, upload,
+  onChange, files, objective, id, upload, index,
 }) => {
   const objectiveId = objective.id;
 
@@ -30,10 +30,37 @@ const ObjectiveFileUploader = ({
   };
 
   const handleDrop = async (e, setErrorMessage) => {
-    const newFiles = e.map((file) => upload(file, objective, setErrorMessage));
-    Promise.all(newFiles).then((values) => {
-      onChange([...files, ...values]);
+    const newFiles = await Promise.all(
+      e.map((file) => upload(file, objective, setErrorMessage, index)),
+    );
+
+    let objectives;
+    let setObjectives;
+    let objectiveIndex;
+
+    const values = newFiles.map((file) => {
+      if (!objectives) {
+        objectives = file.objectives;
+      }
+
+      if (!setObjectives) {
+        setObjectives = file.setObjectives;
+      }
+
+      if (!objectiveIndex) {
+        objectiveIndex = file.index;
+      }
+
+      const {
+        objectives: a, setObjectives: b, index: c, ...fields
+      } = file;
+
+      return fields;
     });
+
+    const copyOfObjectives = objectives.map((o) => ({ ...o }));
+    copyOfObjectives[objectiveIndex].files = [...files, ...values];
+    setObjectives(copyOfObjectives);
   };
 
   const config = {
@@ -99,6 +126,7 @@ ObjectiveFileUploader.propTypes = {
   }).isRequired,
   id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   upload: PropTypes.func.isRequired,
+  index: PropTypes.number.isRequired,
 };
 
 ObjectiveFileUploader.defaultProps = {
