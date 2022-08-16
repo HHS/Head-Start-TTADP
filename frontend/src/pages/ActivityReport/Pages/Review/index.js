@@ -93,7 +93,6 @@ const ReviewSubmit = ({
             lastSaveTime={lastSaveTime}
           >
             <>
-
               <Accordion bordered={false} items={items} />
             </>
           </Submitter>
