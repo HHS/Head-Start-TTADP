@@ -16,13 +16,18 @@ import { v4 as uuidv4 } from 'uuid';
 import { Link, useHistory } from 'react-router-dom';
 import AriaLiveContext from '../../AriaLiveContext';
 import UserContext from '../../UserContext';
-import { getReportAlerts, downloadReports } from '../../fetchers/activityReports';
+import { getReportAlerts, downloadReports, getReportsForLocalStorageCleanup } from '../../fetchers/activityReports';
 import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
 import NewReport from './NewReport';
 import './index.scss';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite, allRegionsUserHasPermissionTo } from '../../permissions';
-import { ALERTS_PER_PAGE } from '../../Constants';
+import {
+  ALERTS_PER_PAGE,
+  LOCAL_STORAGE_DATA_KEY,
+  LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
+  LOCAL_STORAGE_EDITABLE_KEY,
+} from '../../Constants';
 import { filtersToQueryString, expandFilters } from '../../utils';
 import Overview from '../../widgets/Overview';
 import './TouchPoints.css';
@@ -34,6 +39,7 @@ import FilterContext from '../../FilterContext';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
 import colors from '../../colors';
+import { storageAvailable } from '../../hooks/helpers';
 
 const FILTER_KEY = 'landing-filters';
 
@@ -51,6 +57,8 @@ export function renderTotal(offset, perPage, activePage, reportsCount) {
 
 function Landing() {
   const { user } = useContext(UserContext);
+
+  const localStorageAvailable = useMemo(() => storageAvailable('localStorage'), []);
 
   // Determine Default Region.
   const regions = allRegionsUserHasPermissionTo(user);
@@ -230,6 +238,27 @@ function Landing() {
 
   const filterConfig = hasMultipleRegions
     ? LANDING_FILTER_CONFIG_WITH_REGIONS : LANDING_BASE_FILTER_CONFIG;
+
+  useEffect(() => {
+    async function cleanupReports() {
+      const reportsForCleanup = await getReportsForLocalStorageCleanup();
+      try {
+        reportsForCleanup.forEach(async (report) => {
+          window.localStorage.removeItem(LOCAL_STORAGE_DATA_KEY(report.id));
+          window.localStorage.removeItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY(report.id));
+          window.localStorage.removeItem(LOCAL_STORAGE_EDITABLE_KEY(report.id));
+        });
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.log('Error cleaning up reports', err);
+      }
+    }
+
+    if (localStorageAvailable) {
+      cleanupReports();
+    }
+    // local storage available won't change, so this is fine.
+  }, [localStorageAvailable]);
 
   return (
     <>
