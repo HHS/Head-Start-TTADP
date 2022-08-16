@@ -598,13 +598,13 @@ export async function activityReports(
 }
 
 export async function activityReportsForCleanup(userId) {
-  const sixMonthsAgo = moment().subtract(6, 'months').format('YYYY-MM-DD');
+  const threeMonthsAgo = moment().subtract(3, 'months').format('YYYY-MM-DD');
 
   return ActivityReport.findAll(
     {
       where: {
-        // we only cleanup reports from the last six months
-        createdAt: { [Op.gt]: sixMonthsAgo },
+        // we only cleanup reports from the last three months
+        createdAt: { [Op.gt]: threeMonthsAgo },
         [Op.or]: [
           // if the report is created by a user and not in draft status, it is eligible for cleanup
           {

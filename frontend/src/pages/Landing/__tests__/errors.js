@@ -17,6 +17,7 @@ const mockAnnounce = jest.fn();
 
 const base = '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10';
 const baseAlerts = '/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10';
+const cleanupUrl = '/api/activity-reports/storage-cleanup';
 
 const withRegionOne = '&region.in[]=1';
 const baseAlertsWithRegionOne = `${baseAlerts}${withRegionOne}`;
@@ -43,6 +44,7 @@ describe('Landing Page error', () => {
     fetchMock.get(baseAlerts, { alertsCount: 0, alerts: [] });
     fetchMock.get(overviewUrlWithRegionOne, overviewRegionOne);
     fetchMock.get(baseAlertsWithRegionOne, { alertsCount: 0, alerts: [] });
+    fetchMock.get(cleanupUrl, []);
   });
 
   it('handles errors by displaying an error message', async () => {

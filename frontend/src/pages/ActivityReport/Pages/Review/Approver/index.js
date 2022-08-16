@@ -47,7 +47,7 @@ const Approver = ({
   const pendingApprovalCount = approvers ? approvers.filter((a) => !a.status || a.status === 'needs_action').length : 0;
   const approverCount = approvers ? approvers.length : 0;
 
-  const approverIsAlsoCreator = approvers.some((a) => a.User.id === author.id);
+  const approverIsAlsoCreator = approvers ? approvers.some((a) => a.User.id === author.id) : false;
 
   // if a user is an approver and they are also the creator of the report, the logic below
   // needs to account for what they'll see
