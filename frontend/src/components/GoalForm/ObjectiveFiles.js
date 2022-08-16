@@ -8,13 +8,15 @@ import './ObjectiveFiles.scss';
 import ObjectiveFileUploader from '../FileUploader/ObjectiveFileUploader';
 
 export default function ObjectiveFiles({
-  objectiveId,
+  objective,
   files,
   onChangeFiles,
   isOnApprovedReport,
   status,
   isOnReport,
+  onUploadFile,
 }) {
+  const objectiveId = objective.id;
   const hasFiles = files && files.length > 0;
   const [useFiles, setUseFiles] = useState(hasFiles);
   const readOnly = isOnApprovedReport || status === 'Complete' || (status === 'Not Started' && isOnReport);
@@ -67,17 +69,15 @@ export default function ObjectiveFiles({
             </legend>
             <Radio
               label="Yes"
-              id="add-objective-files-yes"
-              key="add-objective-files-yes"
-              name="lock-add-objective-files"
+              id={`add-objective-files-yes-${objectiveId}`}
+              name={`add-objective-files-${objectiveId}`}
               checked={useFiles}
               onChange={() => setUseFiles(true)}
             />
             <Radio
               label="No"
-              id="add-objective-files-no"
-              key="add-objective-files-no"
-              name="lock-add-objective-files"
+              id={`add-objective-files-no-${objectiveId}`}
+              name={`add-objective-files-${objectiveId}`}
               checked={!useFiles}
               onChange={() => setUseFiles(false)}
             />
@@ -89,7 +89,13 @@ export default function ObjectiveFiles({
                         <Label htmlFor="files">Attach any available non-link resources</Label>
                         <span>Example file types: .pdf, .ppt (max size 30 MB)</span>
                       </div>
-                      <ObjectiveFileUploader files={files} onChange={onChangeFiles} objectiveId={objectiveId} id="files" />
+                      <ObjectiveFileUploader
+                        files={files}
+                        onChange={onChangeFiles}
+                        objective={objective}
+                        upload={onUploadFile}
+                        id={`files-${objectiveId}`}
+                      />
                     </>
                   )
                   : null
@@ -102,10 +108,35 @@ export default function ObjectiveFiles({
 }
 
 ObjectiveFiles.propTypes = {
-  objectiveId: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.number,
-  ]).isRequired,
+  objective: PropTypes.shape({
+    isNew: PropTypes.bool,
+    id: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number,
+    ]),
+    title: PropTypes.string,
+    topics: PropTypes.arrayOf(PropTypes.shape({
+      label: PropTypes.string,
+      value: PropTypes.number,
+    })),
+    files: PropTypes.arrayOf(PropTypes.shape({
+      originalFileName: PropTypes.string,
+      fileSize: PropTypes.number,
+      status: PropTypes.string,
+      url: PropTypes.shape({
+        url: PropTypes.string,
+      }),
+    })),
+    roles: PropTypes.arrayOf(PropTypes.string),
+    activityReports: PropTypes.arrayOf(PropTypes.shape({
+      id: PropTypes.number,
+    })),
+    resources: PropTypes.arrayOf(PropTypes.shape({
+      key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      value: PropTypes.string,
+    })),
+    status: PropTypes.string,
+  }).isRequired,
   files: PropTypes.arrayOf(PropTypes.shape({
     originalFileName: PropTypes.string,
     fileSize: PropTypes.number,
@@ -118,6 +149,7 @@ ObjectiveFiles.propTypes = {
   isOnApprovedReport: PropTypes.bool.isRequired,
   isOnReport: PropTypes.bool.isRequired,
   status: PropTypes.string.isRequired,
+  onUploadFile: PropTypes.func.isRequired,
 };
 
 ObjectiveFiles.defaultProps = {

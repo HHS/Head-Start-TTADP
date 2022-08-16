@@ -28,6 +28,7 @@ export default function ObjectiveForm({
   setObjective,
   errors,
   topicOptions,
+  onUploadFile,
   goalStatus,
 }) {
   // the parent objective data from props
@@ -171,15 +172,18 @@ export default function ObjectiveForm({
         isLoading={isLoading}
       />
 
-      <ObjectiveFiles
-        files={files}
-        onChangeFiles={onChangeFiles}
-        objectiveId={objective.id}
-        isOnApprovedReport={isOnApprovedReport || false}
-        isOnReport={isOnReport || false}
-        status={status}
-        isLoading={isLoading}
-      />
+      { title && (
+        <ObjectiveFiles
+          files={files}
+          onChangeFiles={onChangeFiles}
+          objective={objective}
+          isOnApprovedReport={isOnApprovedReport || false}
+          isOnReport={isOnReport || false}
+          status={status}
+          isLoading={isLoading}
+          onUploadFile={onUploadFile}
+        />
+      )}
 
     </div>
   );
@@ -193,6 +197,7 @@ ObjectiveForm.propTypes = {
   setObjectiveError: PropTypes.func.isRequired,
   setObjective: PropTypes.func.isRequired,
   objective: PropTypes.shape({
+    isNew: PropTypes.bool,
     id: PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.number,
@@ -224,6 +229,7 @@ ObjectiveForm.propTypes = {
     label: PropTypes.string,
     value: PropTypes.number,
   })).isRequired,
+  onUploadFile: PropTypes.func.isRequired,
 };
 
 ObjectiveForm.defaultProps = {

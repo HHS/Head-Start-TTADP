@@ -8,34 +8,16 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { deleteObjectiveFile, uploadFile } from '../../fetchers/File';
+import { deleteObjectiveFile } from '../../fetchers/File';
 import FileTable from './FileTable';
 import Dropzone from './Dropzone';
 import './FileUploader.scss';
 
-export const upload = async (file, objectiveId, setErrorMessage) => {
-  let res;
-
-  try {
-    const data = new FormData();
-    data.append('objectiveId', objectiveId);
-    data.append('file', file);
-    res = await uploadFile(data);
-  } catch (error) {
-    setErrorMessage(`${file.name} failed to upload`);
-    // eslint-disable-next-line no-console
-    console.log(error);
-    return null;
-  }
-  setErrorMessage(null);
-  return {
-    id: res.id, originalFileName: file.name, fileSize: file.size, status: 'UPLOADED', url: res.url,
-  };
-};
-
 const ObjectiveFileUploader = ({
-  onChange, files, objectiveId, id,
+  onChange, files, objective, id, upload,
 }) => {
+  const objectiveId = objective.id;
+
   const onFileRemoved = async (removedFileIndex) => {
     const file = files[removedFileIndex];
     const copyOfFiles = [...files];
@@ -47,13 +29,11 @@ const ObjectiveFileUploader = ({
     }
   };
 
-  // eslint-disable-next-line no-unused-vars
   const handleDrop = async (e, setErrorMessage) => {
-    onChange([...files, ...e]);
-    // const newFiles = e.map((file) => upload(file, objectiveId, setErrorMessage));
-    // Promise.all(newFiles).then((values) => {
-    //   onChange(values);
-    // });
+    const newFiles = e.map((file) => upload(file, objective, setErrorMessage));
+    Promise.all(newFiles).then((values) => {
+      onChange([...files, ...values]);
+    });
   };
 
   const config = {
@@ -71,7 +51,7 @@ const ObjectiveFileUploader = ({
       ...file,
       name: file.name,
       size: file.size,
-      status,
+      status: file.status || status,
       id: fileId,
     };
   });
@@ -88,8 +68,37 @@ ObjectiveFileUploader.propTypes = {
   onChange: PropTypes.func.isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   files: PropTypes.arrayOf(PropTypes.object),
-  objectiveId: PropTypes.number.isRequired,
+  objective: PropTypes.shape({
+    isNew: PropTypes.bool,
+    id: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number,
+    ]),
+    title: PropTypes.string,
+    topics: PropTypes.arrayOf(PropTypes.shape({
+      label: PropTypes.string,
+      value: PropTypes.number,
+    })),
+    files: PropTypes.arrayOf(PropTypes.shape({
+      originalFileName: PropTypes.string,
+      fileSize: PropTypes.number,
+      status: PropTypes.string,
+      url: PropTypes.shape({
+        url: PropTypes.string,
+      }),
+    })),
+    roles: PropTypes.arrayOf(PropTypes.string),
+    activityReports: PropTypes.arrayOf(PropTypes.shape({
+      id: PropTypes.number,
+    })),
+    resources: PropTypes.arrayOf(PropTypes.shape({
+      key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      value: PropTypes.string,
+    })),
+    status: PropTypes.string,
+  }).isRequired,
   id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  upload: PropTypes.func.isRequired,
 };
 
 ObjectiveFileUploader.defaultProps = {
