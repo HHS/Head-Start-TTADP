@@ -15,6 +15,7 @@ export default function ObjectiveFiles({
   status,
   isOnReport,
   onUploadFile,
+  index,
 }) {
   const objectiveId = objective.id;
   const hasFiles = files && files.length > 0;
@@ -64,7 +65,7 @@ export default function ObjectiveFiles({
                       <li>Other OHS-provided resources</li>
                     </ul>
                   </div>
-)}
+                )}
               />
             </legend>
             <Radio
@@ -95,6 +96,7 @@ export default function ObjectiveFiles({
                         objective={objective}
                         upload={onUploadFile}
                         id={`files-${objectiveId}`}
+                        index={index}
                       />
                     </>
                   )
@@ -150,6 +152,7 @@ ObjectiveFiles.propTypes = {
   isOnReport: PropTypes.bool.isRequired,
   status: PropTypes.string.isRequired,
   onUploadFile: PropTypes.func.isRequired,
+  index: PropTypes.number.isRequired,
 };
 
 ObjectiveFiles.defaultProps = {

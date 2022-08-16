@@ -137,6 +137,14 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         {
           model: File,
           as: 'files',
+          attributes: [
+            ['originalFileName', 'path'],
+            'status',
+            'id',
+            'key',
+            ['fileSize', 'size'],
+            ['id', 'lastModified'],
+          ],
         },
         {
           model: Role,

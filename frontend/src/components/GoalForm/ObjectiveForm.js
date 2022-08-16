@@ -182,6 +182,7 @@ export default function ObjectiveForm({
           status={status}
           isLoading={isLoading}
           onUploadFile={onUploadFile}
+          index={index}
         />
       )}
 

@@ -391,12 +391,11 @@ export default function GoalForm({
     }
   };
 
-  // to do -> make this a little more asynchronous somehow
-  // also need to alias the backend SQL to return the right
-  // stuff for the files table
-  const onUploadFile = async (file, objective, setErrorMessage) => {
+  const onUploadFile = async (file, objective, setFileUploadErrorMessage, index) => {
     // The first thing we need to know is... does this objective need to be created?
     setIsLoading(true);
+
+    let objectiveIds = objective.ids ? objective.ids : [];
 
     if (objective.isNew) {
       // if so, we save the objective to the database first
@@ -417,74 +416,60 @@ export default function GoalForm({
 
         // and then we pluck out the objectives from the newly saved goals
         // (there will be only "one")
-        const updatedObjectives = savedGoals.reduce((p, c) => [...p, ...c.objectives], []);
+        objectiveIds = savedGoals.reduce((p, c) => {
+          const newObjectives = c.objectives.reduce((prev, o) => {
+            if (objective.title === o.title) {
+              return [
+                ...prev,
+                o.id,
+                ...o.ids,
+              ];
+            }
 
-        let res = { ids: [] };
+            return prev;
+          }, []);
 
-        // grab all the objectives that match our file's objective
-        // then we save the file, once for each objective
-        await Promise.all(updatedObjectives
-          .filter((o) => objective.title === o.title)
-          .map(async (o) => {
-            // make a copy of objectives
-            const newObjectives = objectives.map((obj) => ({ ...obj }));
-            // find the objective to update
-            const objectiveToUpdate = newObjectives.find((obj) => obj.title === o.title);
-
-            // update the ids fields
-            objectiveToUpdate.ids = o.ids;
-            objectiveToUpdate.id = o.id;
-
-            // set our new objectives
-            setObjectives(newObjectives);
-
-            const data = new FormData();
-            data.append('objectiveId', o.id);
-            data.append('file', file);
-            const response = await uploadFile(data);
-            res = { ...response, ids: [...res.ids, response.id] };
-            return response; // we should return something if we are mapping
-          }));
-
-        setErrorMessage(null);
-
-        return {
-          id: res.id, path: file.name, size: file.size, status: 'UPLOADED', url: res.url, ids: [res.ids],
-        };
-      } catch (error) {
-        setErrorMessage(`${file.name} failed to upload`);
-      } finally {
-        setIsLoading(false);
+          return Array.from(new Set([...p, ...newObjectives]));
+        }, []);
+      } catch (err) {
+        setFileUploadErrorMessage('File could not be uploaded');
       }
-    } else {
-      // if the objective is not new, we take a simpler path
-      try {
-        let res = { ids: [] };
+    }
 
-        // an objective that's been saved should have a set of IDS
-        // in the case that it has been rolled up to match a goal for multiple grants
-        await Promise.all(objective.ids.map(async (objectiveId) => {
-          // but if so, we repeat the process here
-          const data = new FormData();
-          data.append('objectiveId', objectiveId);
-          data.append('file', file);
-          const response = await uploadFile(data);
-          res = { ...response, ids: [...res.ids, response.id] };
-        }));
+    try {
+      let res = { ids: [] };
 
-        setErrorMessage(null);
+      // an objective that's been saved should have a set of IDS
+      // in the case that it has been rolled up to match a goal for multiple grants
+      await Promise.all(objectiveIds.map(async (objectiveId) => {
+        // but if so, we repeat the process here
+        const data = new FormData();
+        data.append('objectiveId', objectiveId);
+        data.append('file', file);
+        const response = await uploadFile(data);
+        res = { ...response, ids: [...res.ids, response.id] };
+      }));
 
-        // no need to update objectives here, since the files will be individually updated
+      setFileUploadErrorMessage(null);
 
-        return {
-          id: res.id, lastModified: file.lastModified, path: file.name, size: file.size, status: 'UPLOADED', url: res.url, ids: [res.ids],
-        };
-      } catch (error) {
-        setErrorMessage(`${file.name} failed to upload`);
-        console.log(error);
-      } finally {
-        setIsLoading(false);
-      }
+      // no need to update objectives here, since the files will be individually updated
+
+      return {
+        id: res.id,
+        lastModified: file.lastModified,
+        path: file.name,
+        size: file.size,
+        status: 'UPLOADED',
+        url: res.url,
+        ids: [res.ids],
+        objectives,
+        setObjectives,
+        index,
+      };
+    } catch (error) {
+      setFileUploadErrorMessage(`${file.name} failed to upload`);
+    } finally {
+      setIsLoading(false);
     }
 
     return null;
