@@ -45,24 +45,23 @@ module.exports = {
 
       // Update `mapsTo` field of existing topics to point to new topics
       await queryInterface.sequelize.query(
-        `UPDATE "Topics" t1 SET "mapsTo" = t2.id, "deletedAt" = current_timestamp FROM "Topics" t2 WHERE t1.name = 'Teaching Practices / Teacher-Child Interactions' AND t2.name = 'Teaching / Caregiving Practices' AND t1."deletedAt" IS NULL;`,
+        'UPDATE "Topics" t1 SET "mapsTo" = t2.id, "deletedAt" = current_timestamp FROM "Topics" t2 WHERE t1.name = \'Teaching Practices / Teacher-Child Interactions\' AND t2.name = \'Teaching / Caregiving Practices\' AND t1."deletedAt" IS NULL;',
         { transaction },
       );
 
       await queryInterface.sequelize.query(
-        `UPDATE "Topics" t1 SET "mapsTo" = t2.id, "deletedAt" = current_timestamp FROM "Topics" t2 WHERE t1.name = 'Teaching Practices / Teacher-Child Interactions' AND t2.name = 'Teaching / Caregiving Practices' AND t1."deletedAt" IS NULL;`,
+        'UPDATE "Topics" t1 SET "mapsTo" = t2.id, "deletedAt" = current_timestamp FROM "Topics" t2 WHERE t1.name = \'Teaching Practices / Teacher-Child Interactions\' AND t2.name = \'Teaching / Caregiving Practices\' AND t1."deletedAt" IS NULL;',
         { transaction },
       );
-
 
       // Update `topics` column of existing ActivityReport records to use the new topics:
       await queryInterface.sequelize.query(
-        `UPDATE "ActivityReports" SET topics = array_replace(topics, 'Child Assessment, Development, Screening', 'Child Screening and Assessment') WHERE topics @> '{"Child Assessment, Development, Screening"}';`,
+        'UPDATE "ActivityReports" SET topics = array_replace(topics, \'Child Assessment, Development, Screening\', \'Child Screening and Assessment\') WHERE topics @> \'{"Child Assessment, Development, Screening"}\';',
         { transaction },
       );
 
       await queryInterface.sequelize.query(
-        `UPDATE "ActivityReports" SET topics = array_replace(topics, 'Teaching Practices / Teacher-Child Interactions', 'Teaching / Caregiving Practices') WHERE topics @> '{"Teaching Practices / Teacher-Child Interactions"}';`,
+        'UPDATE "ActivityReports" SET topics = array_replace(topics, \'Teaching Practices / Teacher-Child Interactions\', \'Teaching / Caregiving Practices\') WHERE topics @> \'{"Teaching Practices / Teacher-Child Interactions"}\';',
         { transaction },
       );
 
