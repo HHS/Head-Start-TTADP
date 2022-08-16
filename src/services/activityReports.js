@@ -637,7 +637,7 @@ export async function activityReportsForCleanup(userId) {
       include: [
         {
           model: User,
-          attributes: ['name', 'role', 'fullName', 'homeRegionId'],
+          attributes: ['id'],
           as: 'author',
         },
         {
@@ -648,24 +648,20 @@ export async function activityReportsForCleanup(userId) {
             {
               model: User,
               as: 'user',
-              attributes: ['id', 'name', 'role', 'fullName'],
+              attributes: ['id'],
               duplicating: true,
-            },
-            {
-              model: CollaboratorRole,
-              as: 'collaboratorRoles',
             },
           ],
         },
         {
           model: ActivityReportApprover,
-          attributes: ['id', 'status', 'note'],
+          attributes: ['id'],
           as: 'approvers',
           required: false,
           include: [
             {
               model: User,
-              attributes: ['id', 'name', 'role', 'fullName'],
+              attributes: ['id'],
             },
           ],
         },

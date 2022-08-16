@@ -12,6 +12,7 @@ import {
   deleteReport,
   downloadReports,
   unlockReport,
+  getReportsForLocalStorageCleanup,
 } from '../activityReports';
 import { REPORTS_PER_PAGE } from '../../Constants';
 
@@ -149,6 +150,14 @@ describe('activityReports fetcher', () => {
       // const status = { status: 200 };
       fetchMock.get('url', new Blob());
       await downloadReports('url');
+      expect(fetchMock.called()).toBeTruthy();
+    });
+  });
+
+  describe('getReportsForLocalStorageCleanup', () => {
+    it('returns as expected', async () => {
+      fetchMock.get(join('api', 'activity-reports', 'storage-cleanup'), []);
+      await getReportsForLocalStorageCleanup();
       expect(fetchMock.called()).toBeTruthy();
     });
   });
