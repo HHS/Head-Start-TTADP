@@ -35,8 +35,6 @@ const dateFilter = filtersToQueryString(filters);
 const base = `/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${dateFilter}`;
 const baseAlerts = `/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10&${dateFilter}`;
 
-const cleanupUrl = '/api/activity-reports/storage-cleanup';
-
 const withRegionOne = '&region.in[]=1';
 const baseAlertsWithRegionOne = `${baseAlerts}${withRegionOne}`;
 const baseWithRegionOne = `${base}${withRegionOne}`;
@@ -65,7 +63,6 @@ describe('handles region filter', () => {
   beforeEach(() => {
     delete window.location;
     window.location = new URL('https://www.test.gov');
-    fetchMock.get(cleanupUrl, []);
   });
 
   afterEach(() => fetchMock.restore());
