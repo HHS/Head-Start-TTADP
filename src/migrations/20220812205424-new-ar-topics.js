@@ -1,7 +1,6 @@
-'use strict';
-
+/* eslint-disable max-len */
 module.exports = {
-  async up(queryInterface, Sequelize) {
+  async up(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const loggedUser = '0';
       const sessionSig = __filename;
@@ -43,9 +42,16 @@ module.exports = {
         { transaction },
       );
 
+      // --------------------------------------------
       // Update `mapsTo` field of existing topics to point to new topics
       await queryInterface.sequelize.query(
-        'UPDATE "Topics" t1 SET "mapsTo" = t2.id, "deletedAt" = current_timestamp FROM "Topics" t2 WHERE t1.name = \'Teaching Practices / Teacher-Child Interactions\' AND t2.name = \'Teaching / Caregiving Practices\' AND t1."deletedAt" IS NULL;',
+        'UPDATE "Topics" t1 SET "mapsTo" = t2.id, "deletedAt" = current_timestamp FROM "Topics" t2 WHERE t1.name = \'Child Assessment, Development, Screening\' AND t2.name = \'Child Screening and Assessment\' AND t1."deletedAt" IS NULL;',
+        { transaction },
+      );
+
+      // Update `mapsTo` in topics for all topics that share the same old name - does NOT update deletedAt (would violate constraint [name-deletedAt-mapsTo])
+      await queryInterface.sequelize.query(
+        'UPDATE "Topics" t1 SET "mapsTo" = t2.id FROM "Topics" t2 WHERE t1.name = \'Child Assessment, Development, Screening\' AND t2.name = \'Child Screening and Assessment\' AND t2."deletedAt" IS NULL;',
         { transaction },
       );
 
@@ -54,6 +60,12 @@ module.exports = {
         { transaction },
       );
 
+      await queryInterface.sequelize.query(
+        'UPDATE "Topics" t1 SET "mapsTo" = t2.id FROM "Topics" t2 WHERE t1.name = \'Teaching Practices / Teacher-Child Interactions\' AND t2.name = \'Teaching / Caregiving Practices\' AND t2."deletedAt" IS NULL;',
+        { transaction },
+      );
+
+      // --------------------------------------------
       // Update `topics` column of existing ActivityReport records to use the new topics:
       await queryInterface.sequelize.query(
         'UPDATE "ActivityReports" SET topics = array_replace(topics, \'Child Assessment, Development, Screening\', \'Child Screening and Assessment\') WHERE topics @> \'{"Child Assessment, Development, Screening"}\';',
@@ -75,7 +87,7 @@ module.exports = {
     });
   },
 
-  async down(queryInterface, Sequelize) {
+  async down(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const loggedUser = '0';
       const sessionSig = __filename;
@@ -94,6 +106,43 @@ module.exports = {
         `
           SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
           `,
+        { transaction },
+      );
+
+      // Delete all the new topics
+      await queryInterface.sequelize.query(
+        'DELETE FROM "Topics" WHERE name IN (\'Child Screening and Assessment\', \'Teaching / Caregiving Practices\', \'Disabilities Services\', \'Ongoing Monitoring Management System\', \'Training and Professional Development\') AND "deletedAt" IS NULL;',
+        { transaction },
+      );
+
+      // Revert the values in the topics array column of ActivityReports to their previous values.
+      await queryInterface.sequelize.query(
+        'UPDATE "ActivityReports" SET topics = array_replace(topics, \'Child Screening and Assessment\', \'Child Assessment, Development, Screening\') WHERE topics @> \'{"Child Screening and Assessment"}\';',
+        { transaction },
+      );
+
+      await queryInterface.sequelize.query(
+        'UPDATE "ActivityReports" SET topics = array_replace(topics, \'Teaching / Caregiving Practices\', \'Teaching Practices / Teacher-Child Interactions\') WHERE topics @> \'{"Teaching / Caregiving Practices"}\';',
+        { transaction },
+      );
+
+      // "Un-delete" the recently deleted topics.
+      await queryInterface.sequelize.query(
+        'UPDATE "Topics" SET "mapsTo" = null, "deletedAt" = null WHERE name = \'Child Assessment, Development, Screening\' AND "deletedAt" = (SELECT max("deletedAt") FROM "Topics" WHERE name = \'Child Assessment, Development, Screening\');',
+        { transaction },
+      );
+      await queryInterface.sequelize.query(
+        'UPDATE "Topics" SET "mapsTo" = null, "deletedAt" = null WHERE name = \'Teaching Practices / Teacher-Child Interactions\' AND "deletedAt" = (SELECT max("deletedAt") FROM "Topics" WHERE name = \'Teaching Practices / Teacher-Child Interactions\');',
+        { transaction },
+      );
+
+      // Now, any deleted topics that share this name should map to this undeleted topic
+      await queryInterface.sequelize.query(
+        'UPDATE "Topics" t1 SET "mapsTo" = t2.id FROM "Topics" t2 WHERE t1.name = \'Child Assessment, Development, Screening\' AND t1."deletedAt" IS NOT NULL AND t2.name = \'Child Assessment, Development, Screening\' AND t2."deletedAt" is NULL;',
+        { transaction },
+      );
+      await queryInterface.sequelize.query(
+        'UPDATE "Topics" t1 SET "mapsTo" = t2.id FROM "Topics" t2 WHERE t1.name = \'Teaching Practices / Teacher-Child Interactions\' AND t1."deletedAt" IS NOT NULL AND t2.name = \'Teaching Practices / Teacher-Child Interactions\' AND t2."deletedAt" is NULL;',
         { transaction },
       );
 
