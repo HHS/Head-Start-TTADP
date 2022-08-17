@@ -189,14 +189,14 @@ describe('Audit System', () => {
           throw (err);
         }
 
-        expect(routines)
+        expect(routines.sort((a, b) => a.name.localeCompare(b.name)))
           .toEqual([
             { name: 'ZALFTests' },
             { name: 'ZALNoDeleteFTests' },
             { name: 'ZALNoTruncateFTests' },
             { name: 'ZALNoUpdateFTests' },
             { name: 'ZALTruncateFTests' },
-          ]);
+          ].sort((a, b) => a.name.localeCompare(b.name)));
 
         const hooks = [
           'beforeBulkCreate',
