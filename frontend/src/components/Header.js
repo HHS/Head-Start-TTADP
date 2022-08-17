@@ -17,7 +17,7 @@ function Header() {
           </div>
         </div>
         <div className="flex-column flex-align-self-center margin-right-2">
-          <HeaderUserMenu name="John Doe" />
+          <HeaderUserMenu />
         </div>
       </div>
     </header>
