@@ -143,7 +143,15 @@ module.exports = {
 
       // Delete all the new topics
       await queryInterface.sequelize.query(
-        'DELETE FROM "Topics" WHERE name IN (\'Child Screening and Assessment\', \'Teaching / Caregiving Practices\', \'Disabilities Services\', \'Ongoing Monitoring Management System\', \'Training and Professional Development\') AND "deletedAt" IS NULL;',
+        `DELETE FROM "Topics" 
+        WHERE name IN (
+            'Child Screening and Assessment',
+            'Teaching / Caregiving Practices',
+            'Disabilities Services',
+            'Ongoing Monitoring Management System',
+            'Training and Professional Development'
+        ) 
+        AND "deletedAt" IS NULL;`,
         { transaction },
       );
 
