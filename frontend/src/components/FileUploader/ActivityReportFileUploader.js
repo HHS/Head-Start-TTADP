@@ -58,7 +58,7 @@ const ActivityReportFileUploader = ({
 
   return (
     <>
-      <Dropzone id={id} handleDrop={handleDrop} />
+      <Dropzone inputName={id} handleDrop={handleDrop} />
       <FileTable onFileRemoved={onFileRemoved} files={files} />
     </>
   );

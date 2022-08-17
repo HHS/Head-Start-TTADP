@@ -128,6 +128,25 @@ const updateStatus = async (fileId, fileStatus) => {
   }
 };
 
+const createFileMetaData = async (originalFileName, s3FileName, fileSize) => {
+  const newFile = {
+    originalFileName,
+    key: s3FileName,
+    status: UPLOADING,
+    fileSize,
+  };
+  const [file] = await File.findOrCreate({
+    where: {
+      originalFileName: newFile.originalFileName,
+      key: newFile.key,
+      fileSize: newFile.fileSize,
+    },
+    defaults: newFile,
+  });
+
+  return file.dataValues;
+};
+
 const createActivityReportFileMetaData = async (
   originalFileName,
   s3FileName,
@@ -238,6 +257,7 @@ export {
   getObjectiveFilesById,
   getObjectiveTemplateFilesById,
   updateStatus,
+  createFileMetaData,
   createActivityReportFileMetaData,
   createActivityReportObjectiveFileMetaData,
   createObjectiveFileMetaData,

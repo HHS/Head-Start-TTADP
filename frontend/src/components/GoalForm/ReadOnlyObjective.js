@@ -56,9 +56,23 @@ export default function ReadOnlyObjective({ objective }) {
           <>
             <h4 className="margin-bottom-1">Resources</h4>
             <ul className="usa-list usa-list--unstyled">
-              { objective.files.map((f) => (
-                <li key={f.originalFileName}>{f.originalFileName}</li>
-              ))}
+              { objective.files.map((f) => {
+                const fileName = f.originalFileName || f.path;
+
+                if (f.url && f.url.url && !f.url.error) {
+                  return (
+                    <li key={fileName}>
+                      <a href={f.url.url}>{fileName}</a>
+                    </li>
+                  );
+                }
+
+                return (
+                  <li key={fileName}>
+                    {fileName}
+                  </li>
+                );
+              })}
             </ul>
           </>
         )
@@ -101,6 +115,7 @@ ReadOnlyObjective.propTypes = {
     })),
     files: PropTypes.arrayOf(PropTypes.shape({
       originalFileName: PropTypes.string,
+      path: PropTypes.string,
       fileSize: PropTypes.number,
       status: PropTypes.string,
       url: PropTypes.shape({

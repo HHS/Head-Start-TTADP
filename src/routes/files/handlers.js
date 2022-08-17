@@ -15,6 +15,7 @@ import {
   createActivityReportObjectiveFileMetaData,
   createObjectiveFileMetaData,
   createObjectiveTemplateFileMetaData,
+  createFileMetaData,
 } from '../../services/files';
 import { ActivityReportObjective } from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
@@ -25,6 +26,7 @@ import { getObjectiveById } from '../../services/objectives';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
 import { auditLogger } from '../../logger';
 import { FILE_STATUSES, DECIMAL_BASE } from '../../constants';
+import Users from '../../policies/user';
 
 const fileType = require('file-type');
 const multiparty = require('multiparty');
@@ -60,6 +62,33 @@ const hasReportAuthorization = async (user, reportId) => {
     return false;
   }
   return true;
+};
+
+const deleteOnlyFile = async (req, res) => {
+  const { fileId } = req.params;
+
+  const user = await userById(req.session.userId);
+  const policy = new Users(user);
+  if (!policy.canWriteInAtLeastOneRegion) {
+    return res.status(400).send({ error: 'Write permissions required' });
+  }
+
+  try {
+    const file = await getFileById(fileId);
+    if (!file) {
+      return res.status(404).send({ error: 'File not found' });
+    }
+    if (file.reports.length
+    + file.reportObjectiveFiles.length
+    + file.objectiveFiles.length
+    + file.objectiveTemplateFiles.length === 0) {
+      await deleteFileFromS3(file.key);
+      await deleteFile(fileId);
+    }
+    return res.status(204).send();
+  } catch (error) {
+    return handleErrors(req, res, error, logContext);
+  }
 };
 
 const deleteHandler = async (req, res) => {
@@ -205,6 +234,82 @@ const parseFormPromise = (req) => new Promise((resolve, reject) => {
   });
 });
 
+const determineFileTypeFromPath = async (filePath) => {
+  const type = await fileType.fromFile(filePath);
+  let altFileType;
+  if (!type) {
+    const matchingAltType = altFileTypes.filter((t) => filePath.endsWith(t.ext));
+    if (!matchingAltType || !matchingAltType.length > 0) {
+      return false;
+    }
+    altFileType = { ext: matchingAltType[0].ext, mime: matchingAltType[0].mime };
+  }
+
+  return altFileType || type;
+};
+
+const onlyFileUploadHandler = async (req, res) => {
+  const [, files] = await parseFormPromise(req);
+  let buffer;
+  let metadata;
+  let fileName;
+  let fileTypeToUse;
+
+  try {
+    const user = await userById(req.session.userId);
+
+    const policy = new Users(user);
+    if (!policy.canWriteInAtLeastOneRegion) {
+      return res.status(400).send({ error: 'Write permissions required' });
+    }
+
+    if (!files.file) {
+      return res.status(400).send({ error: 'file required' });
+    }
+    const { path, originalFilename, size } = files.file[0];
+    if (!size) {
+      return res.status(400).send({ error: 'fileSize required' });
+    }
+    buffer = fs.readFileSync(path);
+    /*
+      * NOTE: file-type: https://github.com/sindresorhus/file-type
+      * This package is for detecting binary-based file formats,
+      * !NOT text-based formats like .txt, .csv, .svg, etc.
+      * We need to handle TXT and CSV in our code.
+      */
+
+    fileTypeToUse = await determineFileTypeFromPath(path);
+    if (!fileTypeToUse) {
+      return res.status(500).send('Could not determine file type');
+    }
+    fileName = `${uuidv4()}${fileTypeToUse.ext}`;
+
+    metadata = await createFileMetaData(originalFilename, fileName, size);
+  } catch (error) {
+    return handleErrors(req, res, error, logContext);
+  }
+
+  try {
+    const uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
+    const url = getPresignedURL(uploadedFile.key);
+    await updateStatus(metadata.id, UPLOADED);
+    res.status(200).send({ ...metadata, url });
+  } catch (err) {
+    if (metadata) {
+      await updateStatus(metadata.id, UPLOAD_FAILED);
+    }
+    return handleErrors(req, res, err, logContext);
+  }
+  try {
+    await addToScanQueue({ key: metadata.key });
+    return updateStatus(metadata.id, QUEUED);
+  } catch (err) {
+    auditLogger.error(`${logContext} Failed to queue ${metadata.originalFileName}. Error: ${err}`);
+    await updateStatus(metadata.id, QUEUEING_FAILED);
+    return handleErrors(req, res, err, logContext);
+  }
+};
+
 const uploadHandler = async (req, res) => {
   const [fields, files] = await parseFormPromise(req);
   const {
@@ -232,22 +337,12 @@ const uploadHandler = async (req, res) => {
       return res.status(400).send({ error: 'an id of either reportId, reportObjectiveId, objectiveId, or objectiveTempleteId is required' });
     }
     buffer = fs.readFileSync(path);
-    /*
-      * NOTE: file-type: https://github.com/sindresorhus/file-type
-      * This package is for detecting binary-based file formats,
-      * !NOT text-based formats like .txt, .csv, .svg, etc.
-      * We need to handle TXT and CSV in our code.
-      */
-    const type = await fileType.fromFile(path);
-    let altFileType;
-    if (!type) {
-      const matchingAltType = altFileTypes.filter((t) => path.endsWith(t.ext));
-      if (!matchingAltType || !matchingAltType.length > 0) {
-        return res.status(400).send('Could not determine file type');
-      }
-      altFileType = { ext: matchingAltType[0].ext, mime: matchingAltType[0].mime };
+
+    fileTypeToUse = await determineFileTypeFromPath(path);
+    if (!fileTypeToUse) {
+      return res.status(500).send('Could not determine file type');
     }
-    fileTypeToUse = altFileType || type;
+
     fileName = `${uuidv4()}${fileTypeToUse.ext}`;
     if (reportId) {
       if (!(await hasReportAuthorization(user, reportId)
@@ -326,4 +421,6 @@ export {
   deleteHandler,
   linkHandler,
   uploadHandler,
+  onlyFileUploadHandler,
+  deleteOnlyFile,
 };
