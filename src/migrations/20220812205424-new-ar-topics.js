@@ -1,4 +1,11 @@
 /* eslint-disable max-len */
+
+// An array of objects with the old and new topic names.
+const topicMapping = [
+  { oldName: 'Child Assessment, Development, Screening', newName: 'Child Screening and Assessment' },
+  { oldName: 'Teaching Practices / Teacher-Child Interactions', newName: 'Teaching / Caregiving Practices' },
+];
+
 module.exports = {
   async up(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
@@ -44,70 +51,39 @@ module.exports = {
 
       // --------------------------------------------
       // Update `mapsTo` field of existing topics to point to new topics
-      await queryInterface.sequelize.query(
+      await Promise.all(topicMapping.map(({ oldName, newName }) => queryInterface.sequelize.query(
         `UPDATE "Topics" t1 
         SET 
             "mapsTo" = t2.id, 
             "deletedAt" = current_timestamp 
         FROM "Topics" t2 
-        WHERE t1.name = 'Child Assessment, Development, Screening' 
-        AND t2.name = 'Child Screening and Assessment' 
+        WHERE t1.name = '${oldName}' 
+        AND t2.name = '${newName}' 
         AND t1."deletedAt" IS NULL;`,
         { transaction },
-      );
+      )));
 
       // Update `mapsTo` in topics for all topics that share the same old name - does NOT update deletedAt (would violate constraint [name-deletedAt-mapsTo])
-      await queryInterface.sequelize.query(
+      await Promise.all(topicMapping.map(({ oldName, newName }) => queryInterface.sequelize.query(
         `UPDATE "Topics" t1 
         SET 
             "mapsTo" = t2.id 
         FROM "Topics" t2 
-        WHERE t1.name = 'Child Assessment, Development, Screening' 
-        AND t2.name = 'Child Screening and Assessment' 
+        WHERE t1.name = '${oldName}' 
+        AND t2.name = '${newName}' 
         AND t2."deletedAt" IS NULL;`,
         { transaction },
-      );
-
-      await queryInterface.sequelize.query(
-        `UPDATE "Topics" t1 
-        SET 
-            "mapsTo" = t2.id, 
-            "deletedAt" = current_timestamp 
-        FROM "Topics" t2 
-        WHERE t1.name = 'Teaching Practices / Teacher-Child Interactions' 
-        AND t2.name = 'Teaching / Caregiving Practices' 
-        AND t1."deletedAt" IS NULL;`,
-        { transaction },
-      );
-
-      await queryInterface.sequelize.query(
-        `UPDATE "Topics" t1 
-        SET 
-            "mapsTo" = t2.id 
-        FROM "Topics" t2 
-        WHERE t1.name = 'Teaching Practices / Teacher-Child Interactions' 
-        AND t2.name = 'Teaching / Caregiving Practices' 
-        AND t2."deletedAt" IS NULL;`,
-        { transaction },
-      );
+      )));
 
       // --------------------------------------------
       // Update `topics` column of existing ActivityReport records to use the new topics:
-      await queryInterface.sequelize.query(
+      await Promise.all(topicMapping.map(({ oldName, newName }) => queryInterface.sequelize.query(
         `UPDATE "ActivityReports" 
         SET 
-            topics = array_replace(topics, 'Child Assessment, Development, Screening', 'Child Screening and Assessment') 
-        WHERE topics @> '{"Child Assessment, Development, Screening"}';`,
+            topics = array_replace(topics, '${oldName}', '${newName}') 
+        WHERE topics @> '{"${oldName}"}';`,
         { transaction },
-      );
-
-      await queryInterface.sequelize.query(
-        `UPDATE "ActivityReports" 
-        SET
-            topics = array_replace(topics, 'Teaching Practices / Teacher-Child Interactions', 'Teaching / Caregiving Practices') 
-        WHERE topics @> '{"Teaching Practices / Teacher-Child Interactions"}';`,
-        { transaction },
-      );
+      )));
 
       // Enable audit logging
       await queryInterface.sequelize.query(
@@ -156,71 +132,40 @@ module.exports = {
       );
 
       // Revert the values in the topics array column of ActivityReports to their previous values.
-      await queryInterface.sequelize.query(
-        `UPDATE "ActivityReports" .
+      await Promise.all(topicMapping.map(({ oldName, newName }) => queryInterface.sequelize.query(
+        `UPDATE "ActivityReports"
         SET 
-            topics = array_replace(topics, 'Child Screening and Assessment', 'Child Assessment, Development, Screening') 
-        WHERE topics @> '{"Child Screening and Assessment"}';`,
+            topics = array_replace(topics, '${newName}', '${oldName}') 
+        WHERE topics @> '{"${newName}"}';`,
         { transaction },
-      );
-
-      await queryInterface.sequelize.query(
-        `UPDATE "ActivityReports" 
-        SET 
-            topics = array_replace(topics, 'Teaching / Caregiving Practices', 'Teaching Practices / Teacher-Child Interactions') 
-        WHERE topics @> '{"Teaching / Caregiving Practices"}';`,
-        { transaction },
-      );
+      )));
 
       // "Un-delete" the recently deleted topics.
-      await queryInterface.sequelize.query(
+      await Promise.all(topicMapping.map(({ oldName }) => queryInterface.sequelize.query(
         `UPDATE "Topics" 
         SET 
             "mapsTo" = null,
             "deletedAt" = null 
-        WHERE name = 'Child Assessment, Development, Screening' 
+        WHERE name = '${oldName}' 
         AND "deletedAt" = (
             SELECT max("deletedAt") 
             FROM "Topics" 
-            WHERE name = 'Child Assessment, Development, Screening');`,
+            WHERE name = '${oldName}');`,
         { transaction },
-      );
-      await queryInterface.sequelize.query(
-        `UPDATE "Topics" 
-        SET
-            "mapsTo" = null,
-            "deletedAt" = null 
-        WHERE name = 'Teaching Practices / Teacher-Child Interactions' 
-        AND "deletedAt" = (
-            SELECT max("deletedAt") 
-            FROM "Topics" 
-            WHERE name = 'Teaching Practices / Teacher-Child Interactions');`,
-        { transaction },
-      );
+      )));
 
       // Now, any deleted topics that share this name should map to this undeleted topic
-      await queryInterface.sequelize.query(
+      await Promise.all(topicMapping.map(({ oldName }) => queryInterface.sequelize.query(
         `UPDATE "Topics" t1 
         SET 
             "mapsTo" = t2.id 
         FROM "Topics" t2 
-        WHERE t1.name = 'Child Assessment, Development, Screening' 
+        WHERE t1.name = '${oldName}' 
         AND t1."deletedAt" IS NOT NULL 
-        AND t2.name = 'Child Assessment, Development, Screening' 
+        AND t2.name = '${oldName}' 
         AND t2."deletedAt" is NULL;`,
         { transaction },
-      );
-      await queryInterface.sequelize.query(
-        `UPDATE "Topics" t1 
-        SET
-            "mapsTo" = t2.id 
-        FROM "Topics" t2 
-        WHERE t1.name = 'Teaching Practices / Teacher-Child Interactions' 
-        AND t1."deletedAt" IS NOT NULL 
-        AND t2.name = 'Teaching Practices / Teacher-Child Interactions' 
-        AND t2."deletedAt" is NULL;`,
-        { transaction },
-      );
+      )));
 
       // Enable audit logging
       await queryInterface.sequelize.query(
