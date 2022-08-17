@@ -29,6 +29,18 @@ export const uploadFile = async (data) => {
   return res.json();
 };
 
+export const uploadObjectivesFile = async (data) => {
+  const res = await fetch(join(fileUrl, 'objectives'), {
+    method: 'POST',
+    credentials: 'same-origin',
+    body: data,
+  });
+  if (!res.ok) {
+    throw new Error(res.statusText);
+  }
+  return res.json();
+};
+
 export const deleteObjectiveFile = async (fileId, objectiveId) => {
   const url = join(
     fileUrl,

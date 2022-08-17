@@ -16,6 +16,7 @@ import {
   createObjectiveFileMetaData,
   createObjectiveTemplateFileMetaData,
   createFileMetaData,
+  createObjectivesFileMetaData,
 } from '../../services/files';
 import { ActivityReportObjective } from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
@@ -401,7 +402,88 @@ const uploadHandler = async (req, res) => {
     const uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
     const url = getPresignedURL(uploadedFile.key);
     await updateStatus(metadata.id, UPLOADED);
-    res.status(200).send({ id: metadata.id, url });
+    res.status(200).send({ ...metadata, url });
+  } catch (err) {
+    if (metadata) {
+      await updateStatus(metadata.id, UPLOAD_FAILED);
+    }
+    return handleErrors(req, res, err, logContext);
+  }
+  try {
+    await addToScanQueue({ key: metadata.key });
+    return updateStatus(metadata.id, QUEUED);
+  } catch (err) {
+    auditLogger.error(`${logContext} Failed to queue ${metadata.originalFileName}. Error: ${err}`);
+    return updateStatus(metadata.id, QUEUEING_FAILED);
+  }
+};
+
+const uploadObjectivesFile = async (req, res) => {
+  const [fields, files] = await parseFormPromise(req);
+  let {
+    objectiveIds,
+  } = fields;
+  let buffer;
+  let metadata;
+  let fileName;
+  let fileTypeToUse;
+
+  const user = await userById(req.session.userId);
+
+  try {
+    if (!files.file) {
+      return res.status(400).send({ error: 'file required' });
+    }
+    const { path, originalFilename, size } = files.file[0];
+    if (!size) {
+      return res.status(400).send({ error: 'fileSize required' });
+    }
+
+    objectiveIds = JSON.parse(objectiveIds);
+
+    if (!objectiveIds || !objectiveIds.length) {
+      return res.status(400).send({ error: 'objective ids are required' });
+    }
+    buffer = fs.readFileSync(path);
+
+    fileTypeToUse = await determineFileTypeFromPath(path);
+    if (!fileTypeToUse) {
+      return res.status(500).send('Could not determine file type');
+    }
+
+    fileName = `${uuidv4()}${fileTypeToUse.ext}`;
+
+    const authorizations = await Promise.all(objectiveIds.map(async (objectiveId) => {
+      const objective = await getObjectiveById(objectiveId);
+      const objectivePolicy = new ObjectivePolicy(objective, user);
+      if (!objectivePolicy.canUpdate()) {
+        const admin = await validateUserAuthForAdmin(req.session.userId);
+        if (!admin) {
+          return false;
+        }
+      }
+      return true;
+    }));
+
+    if (!authorizations.every((auth) => auth)) {
+      return res.sendStatus(403);
+    }
+
+    metadata = await createObjectivesFileMetaData(
+      originalFilename,
+      fileName,
+      objectiveIds,
+      size,
+    );
+  } catch (err) {
+    return handleErrors(req, res, err, logContext);
+  }
+
+  try {
+    const uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
+    const url = getPresignedURL(uploadedFile.key);
+    await updateStatus(metadata.id, UPLOADED);
+    res.status(200).send({ ...metadata, url });
   } catch (err) {
     if (metadata) {
       await updateStatus(metadata.id, UPLOAD_FAILED);
@@ -423,4 +505,5 @@ export {
   uploadHandler,
   onlyFileUploadHandler,
   deleteOnlyFile,
+  uploadObjectivesFile,
 };

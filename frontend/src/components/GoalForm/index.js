@@ -10,7 +10,7 @@ import { Alert, Button } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import Container from '../Container';
 import { createOrUpdateGoals, deleteGoal, goalByIdAndRecipient } from '../../fetchers/goals';
-import { uploadFile } from '../../fetchers/File';
+import { uploadObjectivesFile } from '../../fetchers/File';
 import { getTopics } from '../../fetchers/topics';
 import Form from './Form';
 import {
@@ -437,31 +437,16 @@ export default function GoalForm({
     }
 
     try {
-      let res = { ids: [] };
-
       // an objective that's been saved should have a set of IDS
       // in the case that it has been rolled up to match a goal for multiple grants
-      await Promise.all(objectiveIds.map(async (objectiveId) => {
-        // but if so, we repeat the process here
-        const data = new FormData();
-        data.append('objectiveId', objectiveId);
-        data.append('file', file);
-        const response = await uploadFile(data);
-        res = { ...response, ids: [...res.ids, response.id] };
-      }));
-
+      const data = new FormData();
+      data.append('objectiveIds', JSON.stringify(objectiveIds));
+      data.append('file', file);
+      const response = await uploadObjectivesFile(data);
       setFileUploadErrorMessage(null);
 
-      // no need to update objectives here, since the files will be individually updated
-
       return {
-        id: res.id,
-        lastModified: file.lastModified,
-        path: file.name,
-        size: file.size,
-        status: 'UPLOADED',
-        url: res.url,
-        ids: [res.ids],
+        ...response,
         objectives,
         setObjectives,
         index,
