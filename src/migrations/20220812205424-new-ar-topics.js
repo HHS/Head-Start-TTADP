@@ -160,7 +160,15 @@ module.exports = {
 
       // "Un-delete" the recently deleted topics.
       await queryInterface.sequelize.query(
-        'UPDATE "Topics" SET "mapsTo" = null, "deletedAt" = null WHERE name = \'Child Assessment, Development, Screening\' AND "deletedAt" = (SELECT max("deletedAt") FROM "Topics" WHERE name = \'Child Assessment, Development, Screening\');',
+        `UPDATE "Topics" 
+        SET 
+            "mapsTo" = null,
+            "deletedAt" = null 
+        WHERE name = 'Child Assessment, Development, Screening' 
+        AND "deletedAt" = (
+            SELECT max("deletedAt") 
+            FROM "Topics" 
+            WHERE name = 'Child Assessment, Development, Screening');`,
         { transaction },
       );
       await queryInterface.sequelize.query(
