@@ -45,7 +45,14 @@ module.exports = {
       // --------------------------------------------
       // Update `mapsTo` field of existing topics to point to new topics
       await queryInterface.sequelize.query(
-        'UPDATE "Topics" t1 SET "mapsTo" = t2.id, "deletedAt" = current_timestamp FROM "Topics" t2 WHERE t1.name = \'Child Assessment, Development, Screening\' AND t2.name = \'Child Screening and Assessment\' AND t1."deletedAt" IS NULL;',
+        `UPDATE "Topics" t1 
+        SET 
+            "mapsTo" = t2.id, 
+            "deletedAt" = current_timestamp 
+        FROM "Topics" t2 
+        WHERE t1.name = 'Child Assessment, Development, Screening' 
+        AND t2.name = 'Child Screening and Assessment' 
+        AND t1."deletedAt" IS NULL;`,
         { transaction },
       );
 
