@@ -20,8 +20,6 @@ import {
   GOAL_NAME_ERROR,
   GOAL_DATE_ERROR,
   SELECT_GRANTS_ERROR,
-  OBJECTIVES_EMPTY,
-  OBJECTIVE_DEFAULT_ERRORS,
 } from './constants';
 import { DECIMAL_BASE, REPORT_STATUSES } from '../../Constants';
 import ReadOnly from './ReadOnly';
@@ -255,11 +253,7 @@ export default function GoalForm({
    */
   const validateObjectives = () => {
     if (!objectives.length) {
-      const error = <span className="usa-error-message">{OBJECTIVES_EMPTY}</span>;
-      const newErrors = [...errors];
-      newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES_EMPTY, 1, error);
-      setErrors(newErrors);
-      return OBJECTIVE_DEFAULT_ERRORS;
+      return true;
     }
 
     const newErrors = [...errors];
@@ -334,7 +328,6 @@ export default function GoalForm({
     && validateGoalName()
     && validateEndDate()
     && validateObjectives()
-    && objectives.length
   );
   const isValidDraft = () => validateGrantNumbers() || validateGoalName() || validateEndDate();
 
