@@ -21,6 +21,7 @@ const Review = ({
   approverStatusList,
   pendingOtherApprovals,
   pages,
+  showDraftViewForApproverAndCreator,
 }) => {
   const { handleSubmit, register, watch } = useFormContext();
   const watchTextValue = watch('note');
@@ -77,24 +78,26 @@ const Review = ({
             />
           </div>
         </Fieldset>
-        <FormItem
-          name="status"
-          label="Choose report status"
-          className="margin-bottom-3"
-        >
-          <Dropdown
-            id="status"
+        { !showDraftViewForApproverAndCreator ? (
+          <FormItem
             name="status"
-            defaultValue={hasBeenReviewed
-              ? thisApprovingManager[0].status : ''}
-            inputRef={register({ required: true })}
+            label="Choose report status"
+            className="margin-bottom-3"
           >
-            <option name="default" value="" disabled hidden>- Select -</option>
-            {managerReportStatuses.map((status) => (
-              <option key={status} value={status}>{_.startCase(status)}</option>
-            ))}
-          </Dropdown>
-        </FormItem>
+            <Dropdown
+              id="status"
+              name="status"
+              defaultValue={hasBeenReviewed
+                ? thisApprovingManager[0].status : ''}
+              inputRef={register({ required: true })}
+            >
+              <option name="default" value="" disabled hidden>- Select -</option>
+              {managerReportStatuses.map((status) => (
+                <option key={status} value={status}>{_.startCase(status)}</option>
+              ))}
+            </Dropdown>
+          </FormItem>
+        ) : <div className="margin-bottom-3" />}
         <ApproverStatusList approverStatus={approverStatusList} />
         {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
         <Button disabled={hasIncompletePages} type="submit">{hasBeenReviewed ? 'Re-submit' : 'Submit'}</Button>
@@ -111,6 +114,7 @@ Review.propTypes = {
     approver: PropTypes.string,
     status: PropTypes.string,
   })),
+  showDraftViewForApproverAndCreator: PropTypes.bool.isRequired,
   pages: PropTypes.arrayOf(PropTypes.shape({
     state: PropTypes.string,
     review: PropTypes.bool,

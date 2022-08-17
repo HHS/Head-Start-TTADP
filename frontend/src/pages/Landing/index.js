@@ -22,7 +22,9 @@ import NewReport from './NewReport';
 import './index.scss';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite, allRegionsUserHasPermissionTo } from '../../permissions';
-import { ALERTS_PER_PAGE } from '../../Constants';
+import {
+  ALERTS_PER_PAGE,
+} from '../../Constants';
 import { filtersToQueryString, expandFilters } from '../../utils';
 import Overview from '../../widgets/Overview';
 import './TouchPoints.css';
