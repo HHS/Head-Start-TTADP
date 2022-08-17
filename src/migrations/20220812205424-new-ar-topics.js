@@ -94,7 +94,10 @@ module.exports = {
       // --------------------------------------------
       // Update `topics` column of existing ActivityReport records to use the new topics:
       await queryInterface.sequelize.query(
-        'UPDATE "ActivityReports" SET topics = array_replace(topics, \'Child Assessment, Development, Screening\', \'Child Screening and Assessment\') WHERE topics @> \'{"Child Assessment, Development, Screening"}\';',
+        `UPDATE "ActivityReports" 
+        SET 
+            topics = array_replace(topics, 'Child Assessment, Development, Screening', 'Child Screening and Assessment') 
+        WHERE topics @> '{"Child Assessment, Development, Screening"}';`,
         { transaction },
       );
 
