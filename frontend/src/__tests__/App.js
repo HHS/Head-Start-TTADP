@@ -13,12 +13,14 @@ describe('App', () => {
   afterEach(() => fetchMock.restore());
   const userUrl = join('api', 'user');
   const logoutUrl = join('api', 'logout');
+  const cleanupUrl = join('api', 'activity-reports', 'storage-cleanup');
 
   describe('when authenticated', () => {
     beforeEach(async () => {
       const user = { name: 'name' };
       fetchMock.get(userUrl, { ...user });
       fetchMock.get(logoutUrl, 200);
+      fetchMock.get(cleanupUrl, []);
       render(<App />);
       await screen.findByText('Activity Reports');
     });
