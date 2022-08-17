@@ -170,7 +170,14 @@ module.exports = {
 
       // Now, any deleted topics that share this name should map to this undeleted topic
       await queryInterface.sequelize.query(
-        'UPDATE "Topics" t1 SET "mapsTo" = t2.id FROM "Topics" t2 WHERE t1.name = \'Child Assessment, Development, Screening\' AND t1."deletedAt" IS NOT NULL AND t2.name = \'Child Assessment, Development, Screening\' AND t2."deletedAt" is NULL;',
+        `UPDATE "Topics" t1 
+        SET 
+            "mapsTo" = t2.id 
+        FROM "Topics" t2 
+        WHERE t1.name = 'Child Assessment, Development, Screening' 
+        AND t1."deletedAt" IS NOT NULL 
+        AND t2.name = 'Child Assessment, Development, Screening' 
+        AND t2."deletedAt" is NULL;`,
         { transaction },
       );
       await queryInterface.sequelize.query(
