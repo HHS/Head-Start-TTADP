@@ -102,7 +102,10 @@ module.exports = {
       );
 
       await queryInterface.sequelize.query(
-        'UPDATE "ActivityReports" SET topics = array_replace(topics, \'Teaching Practices / Teacher-Child Interactions\', \'Teaching / Caregiving Practices\') WHERE topics @> \'{"Teaching Practices / Teacher-Child Interactions"}\';',
+        `UPDATE "ActivityReports" 
+        SET
+            topics = array_replace(topics, 'Teaching Practices / Teacher-Child Interactions', 'Teaching / Caregiving Practices') 
+        WHERE topics @> '{"Teaching Practices / Teacher-Child Interactions"}';`,
         { transaction },
       );
 
