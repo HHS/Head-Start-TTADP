@@ -6,7 +6,7 @@ import { Button } from '@trussworks/react-uswds';
 import DeleteFileModal from './DeleteFileModal';
 import colors from '../../colors';
 
-const getStatus = (status) => {
+export const getStatus = (status) => {
   switch (status) {
     case 'UPLOADING':
       return 'Uploading';
