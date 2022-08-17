@@ -149,7 +149,10 @@ module.exports = {
 
       // Revert the values in the topics array column of ActivityReports to their previous values.
       await queryInterface.sequelize.query(
-        'UPDATE "ActivityReports" SET topics = array_replace(topics, \'Child Screening and Assessment\', \'Child Assessment, Development, Screening\') WHERE topics @> \'{"Child Screening and Assessment"}\';',
+        `UPDATE "ActivityReports" .
+        SET 
+            topics = array_replace(topics, 'Child Screening and Assessment', 'Child Assessment, Development, Screening') 
+        WHERE topics @> '{"Child Screening and Assessment"}';`,
         { transaction },
       );
 
