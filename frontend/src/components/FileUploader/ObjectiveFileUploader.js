@@ -8,13 +8,14 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { deleteObjectiveFile } from '../../fetchers/File';
+import { deleteObjectiveFile, deleteFile } from '../../fetchers/File';
 import FileTable from './FileTable';
 import Dropzone from './Dropzone';
 import './FileUploader.scss';
+import { DECIMAL_BASE } from '../../Constants';
 
 const ObjectiveFileUploader = ({
-  onChange, files, objective, id, upload, index,
+  onChange, files, objective, id, upload, index, inputName, onBlur,
 }) => {
   const objectiveId = objective.id;
 
@@ -24,8 +25,10 @@ const ObjectiveFileUploader = ({
     copyOfFiles.splice(removedFileIndex, 1);
     onChange(copyOfFiles);
 
-    if (file.id) {
+    if (file.id && !Number.isNaN(parseInt(objectiveId, DECIMAL_BASE))) {
       await deleteObjectiveFile(file.id, objectiveId);
+    } else if (file.id) {
+      await deleteFile(file.id);
     }
   };
 
@@ -58,26 +61,26 @@ const ObjectiveFileUploader = ({
       return fields;
     });
 
-    const copyOfObjectives = objectives.map((o) => ({ ...o }));
-    copyOfObjectives[objectiveIndex].files = [...files, ...values];
-    setObjectives(copyOfObjectives);
-  };
-
-  const config = {
-    size: 'size',
-    name: 'path',
-    id: 'id',
-    status: 'status',
+    // on the goals and objectives form, we have this extra step to update the objectives
+    if (objectives && setObjectives) {
+      const copyOfObjectives = objectives.map((o) => ({ ...o }));
+      copyOfObjectives[objectiveIndex].files = [...files, ...values];
+      setObjectives(copyOfObjectives);
+    } else {
+      // else we just update the files array for local display
+      // this method could conceivably lead to orphaned files
+      onChange([...files, ...values]);
+    }
   };
 
   const filesForTable = files.map((file) => {
     const status = 'PENDING';
-    const fileId = file.lastModified;
-    // console.log({ file, fileId, status });
+    const fileId = file.id || file.lastModified;
+
     return {
       ...file,
-      name: file.name,
-      size: file.size,
+      originalFileName: file.name || file.originalFileName,
+      fileSize: file.size || file.fileSize,
       status: file.status || status,
       id: fileId,
     };
@@ -85,8 +88,8 @@ const ObjectiveFileUploader = ({
 
   return (
     <>
-      <Dropzone id={id} handleDrop={handleDrop} />
-      <FileTable onFileRemoved={onFileRemoved} files={filesForTable} config={config} />
+      <Dropzone handleDrop={handleDrop} onBlur={onBlur} inputName={inputName || id} />
+      <FileTable onFileRemoved={onFileRemoved} files={filesForTable} />
     </>
   );
 };
@@ -127,6 +130,8 @@ ObjectiveFileUploader.propTypes = {
   id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   upload: PropTypes.func.isRequired,
   index: PropTypes.number.isRequired,
+  inputName: PropTypes.string.isRequired,
+  onBlur: PropTypes.func.isRequired,
 };
 
 ObjectiveFileUploader.defaultProps = {

@@ -5,6 +5,18 @@ import {
 
 const fileUrl = join('/', 'api', 'files');
 
+export const uploadOnlyFile = async (data) => {
+  const res = await fetch(join(fileUrl, 'upload'), {
+    method: 'POST',
+    credentials: 'same-origin',
+    body: data,
+  });
+  if (!res.ok) {
+    throw new Error(res.statusText);
+  }
+  return res.json();
+};
+
 export const uploadFile = async (data) => {
   const res = await fetch(fileUrl, {
     method: 'POST',
@@ -22,6 +34,15 @@ export const deleteObjectiveFile = async (fileId, objectiveId) => {
     fileUrl,
     'o',
     objectiveId.toString(),
+    fileId.toString(),
+  );
+  const res = await destroy(url);
+  return res;
+};
+
+export const deleteFile = async (fileId) => {
+  const url = join(
+    fileUrl,
     fileId.toString(),
   );
   const res = await destroy(url);

@@ -32,7 +32,7 @@ const getStatus = (status) => {
   return 'Upload Failed';
 };
 
-const FileTable = ({ onFileRemoved, files, config }) => {
+const FileTable = ({ onFileRemoved, files }) => {
   const [index, setIndex] = useState(null);
   const modalRef = useRef();
   const handleDelete = (newIndex) => {
@@ -66,15 +66,15 @@ const FileTable = ({ onFileRemoved, files, config }) => {
         </thead>
         <tbody>
           {files.map((file, currentIndex) => (
-            <tr key={`file-${file[config.id]}`} id={`files-table-row-${currentIndex}`}>
+            <tr key={`file-${file.id}`} id={`files-table-row-${currentIndex}`}>
               <td className="files-table--file-name">
-                {file[config.name]}
+                {file.originalFileName}
               </td>
               <td>
-                {`${(file[config.size] / 1000).toFixed(1)} KB`}
+                {`${(file.fileSize / 1000).toFixed(1)} KB`}
               </td>
               <td>
-                {getStatus(file[config.status])}
+                {getStatus(file.status)}
               </td>
               <td>
                 <Button
@@ -108,21 +108,10 @@ FileTable.propTypes = {
   onFileRemoved: PropTypes.func.isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   files: PropTypes.arrayOf(PropTypes.object),
-  config: PropTypes.shape({
-    size: PropTypes.string,
-    name: PropTypes.string,
-    id: PropTypes.string,
-    status: PropTypes.string,
-  }),
 };
 FileTable.defaultProps = {
   files: [],
-  config: {
-    size: 'fileSize',
-    name: 'originalFileName',
-    id: 'id',
-    status: 'status',
-  },
+
 };
 
 export default FileTable;

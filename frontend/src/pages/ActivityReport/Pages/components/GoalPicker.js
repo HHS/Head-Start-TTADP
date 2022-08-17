@@ -158,7 +158,10 @@ GoalPicker.propTypes = {
     }),
   ).isRequired,
   roles: PropTypes.arrayOf(PropTypes.string).isRequired,
-  reportId: PropTypes.number.isRequired,
+  reportId: PropTypes.oneOfType([
+    PropTypes.number,
+    PropTypes.string,
+  ]).isRequired,
 };
 
 export default GoalPicker;

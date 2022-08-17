@@ -13,7 +13,7 @@ import { Alert, ErrorMessage } from '@trussworks/react-uswds';
 import FileRejections from './FileRejections';
 
 export default function Dropzone({
-  handleDrop,
+  handleDrop, onBlur, inputName,
 }) {
   const [errorMessage, setErrorMessage] = useState();
   const onDrop = (e) => handleDrop(e, setErrorMessage);
@@ -34,7 +34,7 @@ export default function Dropzone({
     <div
       {...rootPropsNoRole}
     >
-      <input {...getInputProps()} />
+      <input {...getInputProps()} onBlur={onBlur} name={inputName} />
       <button type="button" className="usa-button usa-button--outline">
         Select and upload
       </button>
@@ -57,4 +57,10 @@ export default function Dropzone({
 
 Dropzone.propTypes = {
   handleDrop: PropTypes.func.isRequired,
+  onBlur: PropTypes.func,
+  inputName: PropTypes.string.isRequired,
+};
+
+Dropzone.defaultProps = {
+  onBlur: () => {},
 };

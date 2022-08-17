@@ -7,6 +7,7 @@ import { REPORT_STATUSES } from '../../../../Constants';
 import SpecialistRole from '../../../../components/GoalForm/SpecialistRole';
 import ObjectiveTopics from '../../../../components/GoalForm/ObjectiveTopics';
 import ResourceRepeater from '../../../../components/GoalForm/ResourceRepeater';
+import ObjectiveFiles from '../../../../components/GoalForm/ObjectiveFiles';
 import ObjectiveTta from './ObjectiveTta';
 import ObjectiveStatus from './ObjectiveStatus';
 import ObjectiveSelect from './ObjectiveSelect';
@@ -20,6 +21,7 @@ import {
 } from './goalValidator';
 import { validateListOfResources } from '../../../../components/GoalForm/constants';
 import './Objective.scss';
+import { uploadOnlyFile } from '../../../../fetchers/File';
 
 export default function Objective({
   objective,
@@ -90,6 +92,18 @@ export default function Objective({
       },
     },
     defaultValue: objective.resources,
+  });
+
+  const {
+    field: {
+      onChange: onChangeFiles,
+      onBlur: onBlurFiles,
+      value: objectiveFiles,
+      name: objectiveFilesInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].files`,
+    defaultValue: objective.files,
   });
 
   const defaultRoles = useMemo(() => (
@@ -175,6 +189,7 @@ export default function Objective({
     onChangeTta(selectedObjectives.ttaProvided || '');
     onChangeStatus(selectedObjectives.status);
     onChangeTopics(selectedObjectives.topics);
+    onChangeFiles(selectedObjectives.files);
   }, [
     onChangeResources,
     onChangeRoles,
@@ -184,6 +199,7 @@ export default function Objective({
     onChangeTta,
     fieldArrayName,
     index,
+    onChangeFiles,
     selectedObjectives,
     // this last value is the only thing that should be changing, when a new objective is
     // selected from the dropdown. the others, I would assume, are refs that won't be changing
@@ -200,6 +216,16 @@ export default function Objective({
   const resourcesForRepeater = objectiveResources && objectiveResources.length ? objectiveResources : [{ key: uuidv4(), value: '' }];
 
   const onRemove = () => remove(index);
+
+  const onUploadFile = (file) => {
+    try {
+      const data = new FormData();
+      data.append('file', file);
+      return uploadOnlyFile(data);
+    } catch (error) {
+      return null;
+    }
+  };
 
   return (
     <>
@@ -259,6 +285,18 @@ export default function Objective({
         savedResources={savedResources}
         status={objectiveStatus}
         inputName={objectiveResourcesInputName}
+      />
+      <ObjectiveFiles
+        objective={objective}
+        files={objectiveFiles}
+        onChangeFiles={onChangeFiles}
+        isOnApprovedReport={isOnApprovedReport || false}
+        status={objectiveStatus}
+        isOnReport={isOnReport || false}
+        onUploadFile={onUploadFile}
+        index={index}
+        onBlur={onBlurFiles}
+        inputName={objectiveFilesInputName}
       />
       <ObjectiveTta
         ttaProvided={objectiveTta}

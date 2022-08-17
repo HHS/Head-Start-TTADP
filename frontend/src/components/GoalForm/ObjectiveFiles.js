@@ -16,6 +16,8 @@ export default function ObjectiveFiles({
   isOnReport,
   onUploadFile,
   index,
+  inputName,
+  onBlur,
 }) {
   const objectiveId = objective.id;
   const hasFiles = files && files.length > 0;
@@ -97,6 +99,8 @@ export default function ObjectiveFiles({
                         upload={onUploadFile}
                         id={`files-${objectiveId}`}
                         index={index}
+                        onBlur={onBlur}
+                        inputName={inputName}
                       />
                     </>
                   )
@@ -153,8 +157,12 @@ ObjectiveFiles.propTypes = {
   status: PropTypes.string.isRequired,
   onUploadFile: PropTypes.func.isRequired,
   index: PropTypes.number.isRequired,
+  inputName: PropTypes.string,
+  onBlur: PropTypes.func,
 };
 
 ObjectiveFiles.defaultProps = {
   files: [],
+  inputName: '',
+  onBlur: () => {},
 };
