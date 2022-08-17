@@ -1,0 +1,18 @@
+@use '../colors.scss' as *;
+
+.unstyled-btn {
+  border: none;
+  background-color: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  outline: inherit;
+  padding: 0;
+}
+
+.user-menu {
+  /** the first child with class .usa-sidenav__item should have no border-top */
+  & .usa-sidenav__item:first-child {
+    border-top: 0;
+  }
+}
