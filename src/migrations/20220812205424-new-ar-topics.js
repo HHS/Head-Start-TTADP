@@ -164,7 +164,15 @@ module.exports = {
         { transaction },
       );
       await queryInterface.sequelize.query(
-        'UPDATE "Topics" SET "mapsTo" = null, "deletedAt" = null WHERE name = \'Teaching Practices / Teacher-Child Interactions\' AND "deletedAt" = (SELECT max("deletedAt") FROM "Topics" WHERE name = \'Teaching Practices / Teacher-Child Interactions\');',
+        `UPDATE "Topics" 
+        SET
+            "mapsTo" = null,
+            "deletedAt" = null 
+        WHERE name = 'Teaching Practices / Teacher-Child Interactions' 
+        AND "deletedAt" = (
+            SELECT max("deletedAt") 
+            FROM "Topics" 
+            WHERE name = 'Teaching Practices / Teacher-Child Interactions');`,
         { transaction },
       );
 
