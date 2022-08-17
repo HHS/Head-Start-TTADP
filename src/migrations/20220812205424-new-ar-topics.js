@@ -58,7 +58,13 @@ module.exports = {
 
       // Update `mapsTo` in topics for all topics that share the same old name - does NOT update deletedAt (would violate constraint [name-deletedAt-mapsTo])
       await queryInterface.sequelize.query(
-        'UPDATE "Topics" t1 SET "mapsTo" = t2.id FROM "Topics" t2 WHERE t1.name = \'Child Assessment, Development, Screening\' AND t2.name = \'Child Screening and Assessment\' AND t2."deletedAt" IS NULL;',
+        `UPDATE "Topics" t1 
+        SET 
+            "mapsTo" = t2.id 
+        FROM "Topics" t2 
+        WHERE t1.name = 'Child Assessment, Development, Screening' 
+        AND t2.name = 'Child Screening and Assessment' 
+        AND t2."deletedAt" IS NULL;`,
         { transaction },
       );
 
