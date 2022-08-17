@@ -8,7 +8,7 @@ import NavLink from './NavLink';
 import UserContext from '../UserContext';
 import isAdmin from '../permissions';
 
-function HeaderUserMenu({ name = '' }) {
+function HeaderUserMenu() {
   const { user, logout } = useContext(UserContext);
   const userIsAdmin = isAdmin(user);
 
@@ -55,7 +55,7 @@ function HeaderUserMenu({ name = '' }) {
       onClick={onClick}
       ref={clickOutsideRef}
     >
-      <Avatar name={name} />
+      <Avatar name={user.name} />
     </button>
   );
 
@@ -68,6 +68,7 @@ function HeaderUserMenu({ name = '' }) {
       PropTypes.func,
     ]),
   };
+
   Av.defaultProps = {
     onClick: () => {},
     disabled: false,
@@ -79,21 +80,18 @@ function HeaderUserMenu({ name = '' }) {
     <DropdownMenu
       Trigger={Av}
       onApply={() => {}}
-      buttonText={name}
+      buttonText={user.name}
       showApplyButton={false}
       direction="left"
-      canBlur={() => false}
     >
       <div className="user-menu">
-        <h4 className="margin-0 display-block padding-2 border-bottom border-gray-10">{name}</h4>
+        <h4 className="margin-0 display-block padding-2 border-bottom border-gray-10">
+          {user.name}
+        </h4>
         <SideNav className="user-menu" items={menuItems} />
       </div>
     </DropdownMenu>
   );
 }
-
-HeaderUserMenu.propTypes = {
-  name: PropTypes.string.isRequired,
-};
 
 export default HeaderUserMenu;
