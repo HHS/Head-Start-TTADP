@@ -3,8 +3,9 @@ import React from 'react';
 import {
   render, fireEvent, waitFor, act, screen,
 } from '@testing-library/react';
-import * as fileFetcher from '../../fetchers/File';
-import FileUploader, { FileRejections, getStatus, upload } from '../FileUploader';
+import FileRejections from '../FileRejections';
+import { getStatus } from '../FileTable';
+import ActivityReportFileUploader from '../ActivityReportFileUploader';
 
 describe('getStatus tests', () => {
   it('returns the correct statuses', () => {
@@ -28,21 +29,7 @@ describe('getStatus tests', () => {
   });
 });
 
-describe('upload tests', () => {
-  const mockFile = { name: 'MockFile', size: 2000 };
-  const mockSetErrorMessage = jest.fn();
-  it('can upload a file and return the correct information', async () => {
-    const mockFileUpload = jest.spyOn(fileFetcher, 'uploadFile').mockImplementation(async () => ({ id: 1, url: 'url' }));
-    const got = await upload(mockFile, 1, 0, mockSetErrorMessage);
-    expect(got).toStrictEqual({
-      id: 1, originalFileName: mockFile.name, fileSize: mockFile.size, status: 'UPLOADED', url: 'url',
-    });
-    expect(mockFileUpload).toHaveBeenCalled();
-    expect(mockSetErrorMessage).toHaveBeenCalledWith(null);
-  });
-});
-
-describe('FileUploader', () => {
+describe('ActivityReportFileUploader', () => {
   const dispatchEvt = (node, type, data) => {
     const event = new Event(type, { bubbles: true });
     Object.assign(event, data);
@@ -72,11 +59,11 @@ describe('FileUploader', () => {
   it('onDrop adds calls the onChange method', async () => {
     const mockOnChange = jest.fn();
     const data = mockData([file('file', 1)]);
-    const ui = <FileUploader reportId="3" id="attachment" onChange={mockOnChange} files={[]} />;
+    const ui = <ActivityReportFileUploader reportId="3" id="attachment" onChange={mockOnChange} files={[]} />;
     const { container, rerender } = render(ui);
     const dropzone = container.querySelector('div');
 
-    await dispatchEvt(dropzone, 'drop', data);
+    dispatchEvt(dropzone, 'drop', data);
     await flushPromises(rerender, ui);
 
     expect(mockOnChange).toHaveBeenCalled();
@@ -85,7 +72,7 @@ describe('FileUploader', () => {
   it('checks that onDrop does not run if reportId is new', async () => {
     const mockOnChange = jest.fn();
     const data = mockData([file('file')]);
-    const ui = <FileUploader reportId="new" id="attachment" onChange={mockOnChange} files={[]} />;
+    const ui = <ActivityReportFileUploader reportId="new" id="attachment" onChange={mockOnChange} files={[]} />;
     const { container, rerender } = render(ui);
     const dropzone = container.querySelector('div');
 
@@ -96,14 +83,14 @@ describe('FileUploader', () => {
   });
 
   it('files are properly displayed', () => {
-    render(<FileUploader reportId="new" id="attachment" onChange={() => { }} files={[file('fileOne', 1), file('fileTwo', 2)]} />);
+    render(<ActivityReportFileUploader reportId="new" id="attachment" onChange={() => { }} files={[file('fileOne', 1), file('fileTwo', 2)]} />);
     expect(screen.getByText('fileOne')).toBeVisible();
     expect(screen.getByText('fileTwo')).toBeVisible();
   });
 
   it('files can be removed', () => {
     const mockOnChange = jest.fn();
-    render(<FileUploader reportId="new" id="attachment" onChange={mockOnChange} files={[{ id: 1, originalFileName: 'fileOne' }, { id: 2, originalFileName: 'fileTwo' }]} />);
+    render(<ActivityReportFileUploader reportId="new" id="attachment" onChange={mockOnChange} files={[{ id: 1, originalFileName: 'fileOne' }, { id: 2, originalFileName: 'fileTwo' }]} />);
     const fileTwo = screen.getByText('fileTwo');
     fireEvent.click(fileTwo.parentNode.lastChild.firstChild);
     const deleteButton = screen.getByText('Delete');
@@ -112,7 +99,7 @@ describe('FileUploader', () => {
   });
   it('files are not removed if cancel is pressed', () => {
     const mockOnChange = jest.fn();
-    render(<FileUploader reportId="new" id="attachment" onChange={mockOnChange} files={[{ id: 1, originalFileName: 'fileOne' }, { id: 2, originalFileName: 'fileTwo' }]} />);
+    render(<ActivityReportFileUploader reportId="new" id="attachment" onChange={mockOnChange} files={[{ id: 1, originalFileName: 'fileOne' }, { id: 2, originalFileName: 'fileTwo' }]} />);
     const fileTwo = screen.getByText('fileTwo');
     fireEvent.click(fileTwo.parentNode.lastChild.firstChild);
     const cancelButton = screen.getByText('Cancel');
