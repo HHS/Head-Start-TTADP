@@ -174,7 +174,14 @@ module.exports = {
         { transaction },
       );
       await queryInterface.sequelize.query(
-        'UPDATE "Topics" t1 SET "mapsTo" = t2.id FROM "Topics" t2 WHERE t1.name = \'Teaching Practices / Teacher-Child Interactions\' AND t1."deletedAt" IS NOT NULL AND t2.name = \'Teaching Practices / Teacher-Child Interactions\' AND t2."deletedAt" is NULL;',
+        `UPDATE "Topics" t1 
+        SET
+            "mapsTo" = t2.id 
+        FROM "Topics" t2 
+        WHERE t1.name = 'Teaching Practices / Teacher-Child Interactions' 
+        AND t1."deletedAt" IS NOT NULL 
+        AND t2.name = 'Teaching Practices / Teacher-Child Interactions' 
+        AND t2."deletedAt" is NULL;`,
         { transaction },
       );
 
