@@ -76,14 +76,6 @@ module.exports = {
         WHERE topics @> '{"${oldName}"}';`,
         { transaction },
       )));
-
-      // Enable audit logging
-      await queryInterface.sequelize.query(
-        `
-          SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
-          `,
-        { transaction },
-      );
     });
   },
 
