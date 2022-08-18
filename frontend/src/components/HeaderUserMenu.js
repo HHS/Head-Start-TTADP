@@ -1,28 +1,71 @@
 import React, { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { SideNav } from '@trussworks/react-uswds';
+import { Link } from '@trussworks/react-uswds';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import Avatar from './Avatar';
 import DropdownMenu from './DropdownMenu';
 import './HeaderUserMenu.scss';
 import NavLink from './NavLink';
 import UserContext from '../UserContext';
 import isAdmin from '../permissions';
+import colors from '../colors';
+
+function UserMenuNav({ items }) {
+  return (
+    <div>
+      <ul className="user-menu-nav">
+        {items.map((item, i) => (
+          <li key={i}>
+            {item}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+UserMenuNav.propTypes = {
+  items: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
+};
 
 function HeaderUserMenu() {
   const { user, logout } = useContext(UserContext);
   const userIsAdmin = isAdmin(user);
 
   const menuItems = useMemo(() => [
-    { label: 'Account', to: '/account' },
-    { label: 'User Guide', to: '/guide' },
-    { label: 'Contact Support', to: '/support' },
-    { space: true },
-    { label: 'Admin', to: '/admin', showIfAdmin: true },
-    { divider: true, showIfAdmin: true },
-    { label: 'Log out', to: '/logout', fn: () => logout(false) },
+    { key: 1, label: 'Account Management', to: '/account' },
+    {
+      key: 2,
+      label: 'User guide',
+      to: 'https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/',
+      external: true,
+    },
+    {
+      key: 3,
+      label: 'Contact support',
+      to: 'https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a',
+      external: true,
+    },
+    { key: 4, space: true },
+    {
+      key: 5,
+      label: 'Admin',
+      to: '/admin',
+      showIfAdmin: true,
+    },
+    { key: 6, divider: true, showIfAdmin: false },
+    {
+      key: 7,
+      label: 'Log out',
+      to: '/logout',
+      fn: () => logout(false),
+    },
   ].map(({
+    key,
     label,
     to,
+    external = false,
     divider = false,
     space = false,
     showIfAdmin = false,
@@ -31,11 +74,19 @@ function HeaderUserMenu() {
     if (showIfAdmin && !userIsAdmin) return false;
     if (divider) return <hr />;
     if (space) return <div className="height-6" />;
-    return <NavLink key={to} to={to} fn={fn}>{label}</NavLink>;
+    if (external) {
+      return (
+        <Link key={key} className="usa-nav__link" href={to}>
+          {label}
+          <FontAwesomeIcon className="margin-left-2" color={colors.ttahubMediumBlue} icon={faUpRightFromSquare} />
+        </Link>
+      );
+    }
+    return <NavLink key={key} to={to} fn={fn}>{label}</NavLink>;
   }).filter(Boolean), [userIsAdmin, logout]);
 
+  /** If we don't have a user context, don't show the user menu. */
   if (!user) {
-    // return <Avatar name=" " />;
     return <></>;
   }
 
@@ -50,6 +101,7 @@ function HeaderUserMenu() {
     <button
       disabled={disabled}
       aria-label={buttonAriaLabel}
+      alt={buttonAriaLabel}
       type="button"
       className="unstyled-btn display-flex flex-align-center flex-justify-center"
       onClick={onClick}
@@ -84,11 +136,14 @@ function HeaderUserMenu() {
       showApplyButton={false}
       direction="left"
     >
-      <div className="user-menu">
-        <h4 className="margin-0 display-block padding-2 border-bottom border-gray-10">
-          {user.name}
+      <div className="user-menu-dropdown">
+        <h4 className="margin-0 display-flex flex-align-center padding-2 border-bottom border-gray-10">
+          <Avatar name={user.name} />
+          <span className="margin-left-2">
+            {user.name}
+          </span>
         </h4>
-        <SideNav className="user-menu" items={menuItems} />
+        <UserMenuNav items={menuItems} />
       </div>
     </DropdownMenu>
   );
