@@ -30,6 +30,7 @@ import ApprovedActivityReport from './pages/ApprovedActivityReport';
 import RecipientRecord from './pages/RecipientRecord';
 import RecipientSearch from './pages/RecipientSearch';
 import AppWrapper from './components/AppWrapper';
+import AccountManagement from './pages/AccountManagement';
 
 function App() {
   const [user, updateUser] = useState();
@@ -138,6 +139,13 @@ function App() {
           path="/regional-dashboard"
           render={() => (
             <AppWrapper authenticated logout={logout}><RegionalDashboard user={user} /></AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/account"
+          render={() => (
+            <AppWrapper authenticated logout={logout}><AccountManagement user={user} /></AppWrapper>
           )}
         />
         {admin && (
