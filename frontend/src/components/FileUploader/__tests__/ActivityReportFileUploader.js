@@ -3,9 +3,9 @@ import React from 'react';
 import {
   render, fireEvent, waitFor, act, screen,
 } from '@testing-library/react';
+import fetchMock from 'fetch-mock';
 import FileRejections from '../FileRejections';
-
-import ActivityReportFileUploader from '../ActivityReportFileUploader';
+import ActivityReportFileUploader, { upload } from '../ActivityReportFileUploader';
 
 describe('ActivityReportFileUploader', () => {
   const dispatchEvt = (node, type, data) => {
@@ -37,7 +37,7 @@ describe('ActivityReportFileUploader', () => {
   it('onDrop adds calls the onChange method', async () => {
     const mockOnChange = jest.fn();
     const data = mockData([file('file', 1)]);
-    const ui = <ActivityReportFileUploader reportId="3" id="attachment" onChange={mockOnChange} files={[]} />;
+    const ui = <ActivityReportFileUploader reportId={1} id="attachment" onChange={mockOnChange} files={[]} />;
     const { container, rerender } = render(ui);
     const dropzone = container.querySelector('div');
 
@@ -123,6 +123,31 @@ describe('ActivityReportFileUploader', () => {
 
       expect(screen.getByText(/file rejection 2/i)).toBeVisible();
       expect(screen.getByText(/file is incomplete/i)).toBeVisible();
+    });
+  });
+
+  describe('upload', () => {
+    afterEach(async () => fetchMock.restore());
+    it('uploads files', async () => {
+      fetchMock.post('/api/files', {
+        id: 1,
+        name: 'test',
+        size: 1,
+        url: 1,
+      });
+      const setErrorMessage = jest.fn();
+      const response = await upload({ size: 1, name: 'test' }, 1, setErrorMessage);
+      expect(response.id).toBe(1);
+      expect(response.originalFileName).toBe('test');
+      expect(response.fileSize).toBe(1);
+      expect(response.status).toBe('UPLOADED');
+      expect(response.url).toBe(1);
+    });
+    it('sets error message if upload fails', async () => {
+      fetchMock.post('/api/files', 400);
+      const setErrorMessage = jest.fn();
+      await upload({ name: 'test' }, 1, setErrorMessage);
+      expect(setErrorMessage).toHaveBeenCalledWith('test failed to upload');
     });
   });
 });

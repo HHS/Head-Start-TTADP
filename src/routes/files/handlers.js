@@ -341,7 +341,7 @@ const uploadHandler = async (req, res) => {
 
     fileTypeToUse = await determineFileTypeFromPath(path);
     if (!fileTypeToUse) {
-      return res.status(500).send('Could not determine file type');
+      return res.status(400).send('Could not determine file type');
     }
 
     fileName = `${uuidv4()}${fileTypeToUse.ext}`;
