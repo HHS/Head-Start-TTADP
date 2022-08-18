@@ -201,15 +201,45 @@ export default function GoalForm({
 
   // form field validation functions
 
+  /** @returns bool */
+  const validateGoalNameAndRecipients = (messages = [
+    GOAL_NAME_ERROR,
+    SELECT_GRANTS_ERROR,
+  ]) => {
+    let validName = true;
+    let validRecipients = true;
+
+    if (!goalName) {
+      validName = false;
+    }
+
+    if (!selectedGrants.length) {
+      validRecipients = false;
+    }
+
+    const newErrors = [...errors];
+    if (!validName) {
+      newErrors.splice(FORM_FIELD_INDEXES.NAME, 1, <span className="usa-error-message">{messages[0]}</span>);
+    }
+
+    if (!validRecipients) {
+      newErrors.splice(FORM_FIELD_INDEXES.GRANTS, 1, <span className="usa-error-message">{messages[1]}</span>);
+    }
+
+    setErrors(newErrors);
+
+    return validName && validRecipients;
+  };
+
   /**
    *
    * @returns bool
    */
-  const validateGoalName = () => {
+  const validateGoalName = (message = GOAL_NAME_ERROR) => {
     let error = <></>;
 
     if (!goalName) {
-      error = <span className="usa-error-message">{GOAL_NAME_ERROR}</span>;
+      error = <span className="usa-error-message">{message}</span>;
     }
 
     const newErrors = [...errors];
@@ -236,10 +266,10 @@ export default function GoalForm({
     return !error.props.children;
   };
 
-  const validateGrantNumbers = () => {
+  const validateGrantNumbers = (message = SELECT_GRANTS_ERROR) => {
     let error = <></>;
     if (!selectedGrants.length) {
-      error = <span className="usa-error-message">{SELECT_GRANTS_ERROR}</span>;
+      error = <span className="usa-error-message">{message}</span>;
     }
     const newErrors = [...errors];
     newErrors.splice(FORM_FIELD_INDEXES.GRANTS, 1, error);
@@ -681,6 +711,7 @@ export default function GoalForm({
               validateGoalName={validateGoalName}
               validateEndDate={validateEndDate}
               validateGrantNumbers={validateGrantNumbers}
+              validateGoalNameAndRecipients={validateGoalNameAndRecipients}
               objectives={objectives}
               setObjectives={setObjectives}
               setObjectiveError={setObjectiveError}

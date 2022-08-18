@@ -13,7 +13,7 @@ describe('File fetcher', () => {
     expect(res.id).toBe(1);
   });
   it('test that the file gets deleted', async () => {
-    fetchMock.deleteOnce(join(fileApiUrl, 'r', '1', '1'), 200);
+    fetchMock.deleteOnce(join(fileApiUrl, '1'), 200);
     const res = await deleteFile(1, 1);
     expect(res.status).toBe(200);
   });

@@ -18,6 +18,8 @@ import {
 import GoalFormLoadingContext from '../../GoalFormLoadingContext';
 import './Form.scss';
 
+const BEFORE_OBJECTIVES_CREATE_GOAL = 'Enter a goal before adding an objective';
+const BEFORE_OBJECTIVES_SELECT_RECIPIENTS = 'Select a grant number before adding an objective';
 export default function Form({
   possibleGrants,
   selectedGrants,
@@ -30,6 +32,7 @@ export default function Form({
   validateGoalName,
   validateEndDate,
   validateGrantNumbers,
+  validateGoalNameAndRecipients,
   objectives,
   setObjectives,
   setObjectiveError,
@@ -48,6 +51,14 @@ export default function Form({
   const onUpdateText = (e) => setGoalName(e.target.value);
 
   const onAddNewObjectiveClick = () => {
+    // first we validate the goal text and the recipients
+    if (!validateGoalNameAndRecipients([
+      BEFORE_OBJECTIVES_CREATE_GOAL,
+      BEFORE_OBJECTIVES_SELECT_RECIPIENTS,
+    ])) {
+      return;
+    }
+
     // copy existing state, add a blank
     const obj = [...objectives.map((o) => ({ ...o })), OBJECTIVE_DEFAULTS(objectives.length)];
     setObjectiveError(obj.length - 1, OBJECTIVE_DEFAULT_ERRORS);
@@ -232,6 +243,7 @@ Form.propTypes = {
   goalNumber: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   clearEmptyObjectiveError: PropTypes.func.isRequired,
   onUploadFile: PropTypes.func.isRequired,
+  validateGoalNameAndRecipients: PropTypes.func.isRequired,
 };
 
 Form.defaultProps = {
