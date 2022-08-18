@@ -69,7 +69,10 @@ ActivityReportFileUploader.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   files: PropTypes.arrayOf(PropTypes.object),
   reportId: PropTypes.number.isRequired,
-  id: PropTypes.string.isRequired,
+  id: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number,
+  ]).isRequired,
 };
 
 ActivityReportFileUploader.defaultProps = {

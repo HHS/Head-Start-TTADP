@@ -18,8 +18,8 @@ import {
 import GoalFormLoadingContext from '../../GoalFormLoadingContext';
 import './Form.scss';
 
-const BEFORE_OBJECTIVES_CREATE_GOAL = 'Enter a goal before adding an objective';
-const BEFORE_OBJECTIVES_SELECT_RECIPIENTS = 'Select a grant number before adding an objective';
+export const BEFORE_OBJECTIVES_CREATE_GOAL = 'Enter a goal before adding an objective';
+export const BEFORE_OBJECTIVES_SELECT_RECIPIENTS = 'Select a grant number before adding an objective';
 export default function Form({
   possibleGrants,
   selectedGrants,
