@@ -3,10 +3,13 @@
 .avatar {
   color: white;
   font-size: 1.5rem;
-  background-color: $ttahub-blue;
+  font-weight: 500;
+  background-color: $ttahub-medium-blue;
   border-radius: 50%;
   width: 40px;
   height: 40px;
+  min-width: 40px;
+  min-height: 40px;
   border: none;
   padding: 0;
 }
