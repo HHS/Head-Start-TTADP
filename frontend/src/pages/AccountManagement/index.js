@@ -14,7 +14,7 @@ import Avatar from '../../components/Avatar';
 import './index.scss';
 import UserContext from '../../UserContext';
 
-const frequencyErrorMessage = 'Please select an email frequency preference';
+const frequencyErrorMessage = 'Please select a frequency preference';
 
 const frequencyMap = [
   { key: 'never', label: 'Do not notify me' },
