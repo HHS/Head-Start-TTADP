@@ -6,16 +6,15 @@
 // react-dropzone examples all use prop spreading. Disabling the eslint no prop spreading
 // rules https://github.com/react-dropzone/react-dropzone
 /* eslint-disable react/jsx-props-no-spreading */
-import React, { useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { useDropzone } from 'react-dropzone';
-import { Alert, ErrorMessage } from '@trussworks/react-uswds';
+import { Alert } from '@trussworks/react-uswds';
 import FileRejections from './FileRejections';
 
 export default function Dropzone({
-  handleDrop, onBlur, inputName,
+  handleDrop, onBlur, inputName, setErrorMessage,
 }) {
-  const [errorMessage, setErrorMessage] = useState();
   const onDrop = (e) => handleDrop(e, setErrorMessage);
   const maxSize = 30000000;
   const minSize = 1; // at least 1 byte
@@ -38,12 +37,6 @@ export default function Dropzone({
       <button type="button" className="usa-button usa-button--outline">
         Select and upload
       </button>
-      {errorMessage
-          && (
-            <ErrorMessage className="margin-bottom-1">
-              {errorMessage}
-            </ErrorMessage>
-          )}
 
       {fileRejections.length > 0
           && (
@@ -59,6 +52,7 @@ Dropzone.propTypes = {
   handleDrop: PropTypes.func.isRequired,
   onBlur: PropTypes.func,
   inputName: PropTypes.string.isRequired,
+  setErrorMessage: PropTypes.func.isRequired,
 };
 
 Dropzone.defaultProps = {

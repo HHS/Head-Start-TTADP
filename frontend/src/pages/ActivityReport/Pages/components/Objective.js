@@ -217,12 +217,13 @@ export default function Objective({
 
   const onRemove = () => remove(index);
 
-  const onUploadFile = (file) => {
+  const onUploadFile = (file, _objective, setError) => {
     try {
       const data = new FormData();
       data.append('file', file);
       return uploadOnlyFile(data);
     } catch (error) {
+      setError('File failed to upload');
       return null;
     }
   };

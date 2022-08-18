@@ -66,18 +66,27 @@ describe('ObjectiveFileUploader', () => {
 
   it('files are properly displayed and can be removed', () => {
     const mockOnChange = jest.fn();
-    render(<RenderFileUploader onChange={mockOnChange} files={[file('fileOne', 1, null), file('fileTwo', null)]} />);
+    render(<RenderFileUploader onChange={mockOnChange} files={[file('fileOne', 1, null), file('fileTwo', null), file('fileThree', 'abc')]} />);
     expect(screen.getByText('fileOne')).toBeVisible();
     expect(screen.getByText('fileTwo')).toBeVisible();
     expect(screen.getByText('Pending')).toBeVisible();
     const fileTwo = screen.getByText('fileTwo');
     fireEvent.click(fileTwo.parentNode.lastChild.firstChild);
-    const deleteButton = screen.getByText('Delete');
+    let deleteButton = screen.getByText('Delete');
     fireEvent.click(deleteButton);
     expect(mockOnChange).toHaveBeenCalledWith([
       {
         id: 1, originalFileName: 'fileOne', fileSize: 2000, lastModified: 123456, status: null,
       },
+      {
+        id: 'abc', originalFileName: 'fileThree', fileSize: 2000, lastModified: 123456, status: 'Uploaded',
+      },
     ]);
+
+    const fileThree = screen.getByText('fileThree');
+    fireEvent.click(fileThree.parentNode.lastChild.firstChild);
+    deleteButton = screen.getByText('Delete');
+    fireEvent.click(deleteButton);
+    expect(mockOnChange).toHaveBeenCalledTimes(2);
   });
 });

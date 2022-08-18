@@ -37,7 +37,7 @@ describe('ActivityReportFileUploader', () => {
   it('onDrop adds calls the onChange method', async () => {
     const mockOnChange = jest.fn();
     const data = mockData([file('file', 1)]);
-    const ui = <ActivityReportFileUploader reportId={1} id="attachment" onChange={mockOnChange} files={[]} />;
+    const ui = <ActivityReportFileUploader setErrorMessage={jest.fn()} reportId={1} id="attachment" onChange={mockOnChange} files={[]} />;
     const { container, rerender } = render(ui);
     const dropzone = container.querySelector('div');
 
@@ -50,7 +50,7 @@ describe('ActivityReportFileUploader', () => {
   it('checks that onDrop does not run if reportId is new', async () => {
     const mockOnChange = jest.fn();
     const data = mockData([file('file')]);
-    const ui = <ActivityReportFileUploader reportId="new" id="attachment" onChange={mockOnChange} files={[]} />;
+    const ui = <ActivityReportFileUploader reportId="new" setErrorMessage={jest.fn()} id="attachment" onChange={mockOnChange} files={[]} />;
     const { container, rerender } = render(ui);
     const dropzone = container.querySelector('div');
 
@@ -61,14 +61,14 @@ describe('ActivityReportFileUploader', () => {
   });
 
   it('files are properly displayed', () => {
-    render(<ActivityReportFileUploader reportId="new" id="attachment" onChange={() => { }} files={[file('fileOne', 1), file('fileTwo', 2)]} />);
+    render(<ActivityReportFileUploader reportId="new" setErrorMessage={jest.fn()} id="attachment" onChange={() => { }} files={[file('fileOne', 1), file('fileTwo', 2)]} />);
     expect(screen.getByText('fileOne')).toBeVisible();
     expect(screen.getByText('fileTwo')).toBeVisible();
   });
 
   it('files can be removed', () => {
     const mockOnChange = jest.fn();
-    render(<ActivityReportFileUploader reportId="new" id="attachment" onChange={mockOnChange} files={[{ id: 1, originalFileName: 'fileOne' }, { id: 2, originalFileName: 'fileTwo' }]} />);
+    render(<ActivityReportFileUploader reportId="new" setErrorMessage={jest.fn()} id="attachment" onChange={mockOnChange} files={[{ id: 1, originalFileName: 'fileOne' }, { id: 2, originalFileName: 'fileTwo' }]} />);
     const fileTwo = screen.getByText('fileTwo');
     fireEvent.click(fileTwo.parentNode.lastChild.firstChild);
     const deleteButton = screen.getByText('Delete');
@@ -77,7 +77,7 @@ describe('ActivityReportFileUploader', () => {
   });
   it('files are not removed if cancel is pressed', () => {
     const mockOnChange = jest.fn();
-    render(<ActivityReportFileUploader reportId="new" id="attachment" onChange={mockOnChange} files={[{ id: 1, originalFileName: 'fileOne' }, { id: 2, originalFileName: 'fileTwo' }]} />);
+    render(<ActivityReportFileUploader reportId="new" setErrorMessage={jest.fn()} id="attachment" onChange={mockOnChange} files={[{ id: 1, originalFileName: 'fileOne' }, { id: 2, originalFileName: 'fileTwo' }]} />);
     const fileTwo = screen.getByText('fileTwo');
     fireEvent.click(fileTwo.parentNode.lastChild.firstChild);
     const cancelButton = screen.getByText('Cancel');

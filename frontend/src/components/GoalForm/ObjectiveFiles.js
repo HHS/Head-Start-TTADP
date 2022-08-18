@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Label, Radio, Fieldset,
+  Label, Radio, Fieldset, FormGroup, ErrorMessage,
 } from '@trussworks/react-uswds';
 import QuestionTooltip from './QuestionTooltip';
 import './ObjectiveFiles.scss';
@@ -22,6 +22,8 @@ export default function ObjectiveFiles({
   const objectiveId = objective.id;
   const hasFiles = files && files.length > 0;
   const [useFiles, setUseFiles] = useState(hasFiles);
+  const [fileError, setFileError] = useState();
+
   const readOnly = isOnApprovedReport || status === 'Complete' || (status === 'Not Started' && isOnReport);
 
   if (readOnly) {
@@ -88,20 +90,28 @@ export default function ObjectiveFiles({
                 useFiles
                   ? (
                     <>
-                      <div className="margin-top-2 margin-bottom-1">
+                      <FormGroup className="ttahub-objective-files-dropzone margin-top-2 margin-bottom-1" error={fileError}>
                         <Label htmlFor="files">Attach any available non-link resources</Label>
-                        <span>Example file types: .pdf, .ppt (max size 30 MB)</span>
-                      </div>
-                      <ObjectiveFileUploader
-                        files={files}
-                        onChange={onChangeFiles}
-                        objective={objective}
-                        upload={onUploadFile}
-                        id={`files-${objectiveId}`}
-                        index={index}
-                        onBlur={onBlur}
-                        inputName={inputName}
-                      />
+                        <span className="usa-hint display-block margin-top-0 margin-bottom-1">Example file types: .pdf, .ppt (max size 30 MB)</span>
+                        {fileError
+                      && (
+                        <ErrorMessage className="margin-bottom-1">
+                          {fileError}
+                        </ErrorMessage>
+                      )}
+                        <ObjectiveFileUploader
+                          files={files}
+                          onChange={onChangeFiles}
+                          objective={objective}
+                          upload={onUploadFile}
+                          id={`files-${objectiveId}`}
+                          index={index}
+                          onBlur={onBlur}
+                          inputName={inputName}
+                          error={fileError}
+                          setError={setFileError}
+                        />
+                      </FormGroup>
                     </>
                   )
                   : null

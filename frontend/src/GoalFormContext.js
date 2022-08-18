@@ -1,8 +1,5 @@
 import React from 'react';
 
-const GoalFormContext = React.createContext({
-  isGoalFormClosed: false,
-  toggleGoalForm: () => {},
-});
+const GoalFormContext = React.createContext({});
 
 export default GoalFormContext;
