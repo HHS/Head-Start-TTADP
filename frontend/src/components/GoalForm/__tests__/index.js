@@ -2,7 +2,12 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import moment from 'moment';
 import {
-  render, screen, within,
+  render,
+  screen,
+  within,
+  waitFor,
+  act,
+  fireEvent,
 } from '@testing-library/react';
 import selectEvent from 'react-select-event';
 import fetchMock from 'fetch-mock';
@@ -12,6 +17,7 @@ import userEvent from '@testing-library/user-event';
 import CreateGoal from '../index';
 import { OBJECTIVE_ERROR_MESSAGES } from '../constants';
 import { REPORT_STATUSES } from '../../../Constants';
+import { BEFORE_OBJECTIVES_CREATE_GOAL, BEFORE_OBJECTIVES_SELECT_RECIPIENTS } from '../Form';
 
 const [
   objectiveTitleError, objectiveTopicsError, objectiveResourcesError,
@@ -101,6 +107,27 @@ describe('create goal', () => {
   beforeEach(async () => {
     fetchMock.restore();
     fetchMock.get('/api/topic', topicsFromApi);
+  });
+
+  it('you cannot add objectives before filling in basic goal info', async () => {
+    renderForm();
+    const addObjectiveButton = await screen.findByRole('button', { name: 'Add new objective' });
+    userEvent.click(addObjectiveButton);
+    await screen.findByText(BEFORE_OBJECTIVES_CREATE_GOAL);
+    await screen.findByText(BEFORE_OBJECTIVES_SELECT_RECIPIENTS);
+
+    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    userEvent.type(goalText, 'This is goal text');
+    userEvent.click(addObjectiveButton);
+
+    await screen.findByText(BEFORE_OBJECTIVES_SELECT_RECIPIENTS);
+    await waitFor(() => expect(screen.queryByText(BEFORE_OBJECTIVES_CREATE_GOAL)).toBeNull());
+
+    const combo = await screen.findByLabelText(/Recipient grant numbers/i);
+    await selectEvent.select(combo, ['Turtle 1']);
+    userEvent.click(addObjectiveButton);
+
+    await screen.findByRole('heading', { name: 'Objective summary' });
   });
 
   it('you can create a goal', async () => {
@@ -611,6 +638,75 @@ describe('create goal', () => {
     const submit = await screen.findByRole('button', { name: /submit goal/i });
     userEvent.click(submit);
     expect(fetchMock.called()).toBe(true);
+  });
+
+  it('can add objective files', async () => {
+    const recipient = {
+      id: 2,
+      grants: [
+        {
+          id: 2,
+          numberWithProgramTypes: 'Turtle 2',
+        },
+      ],
+    };
+
+    renderForm(recipient);
+
+    await screen.findByRole('heading', { name: 'Goal summary' });
+    fetchMock.restore();
+    fetchMock.post('/api/goals', postResponse);
+
+    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    userEvent.type(goalText, 'This is goal text');
+
+    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
+    userEvent.type(ed, '08/15/2023');
+
+    const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
+    userEvent.click(newObjective);
+
+    expect(document.querySelectorAll('ttahub-objective-files').length).toBe(0);
+
+    const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
+    userEvent.type(objectiveText, 'This is objective text');
+
+    const yes = await screen.findByRole('radio', { name: 'Yes' });
+    const no = await screen.findByRole('radio', { name: 'No' });
+
+    expect(no.checked).toBe(true);
+    act(() => userEvent.click(yes));
+    expect(yes.checked).toBe(true);
+
+    await screen.findByText('Attach any available non-link resources');
+
+    const dispatchEvt = (node, type, data) => {
+      const event = new Event(type, { bubbles: true });
+      Object.assign(event, data);
+      fireEvent(node, event);
+    };
+
+    const mockData = (files) => ({
+      dataTransfer: {
+        files,
+        items: files.map((file) => ({
+          kind: 'file',
+          type: file.type,
+          getAsFile: () => file,
+        })),
+        types: ['Files'],
+      },
+    });
+
+    const file = (name, id, status = 'Uploaded') => ({
+      originalFileName: name, id, fileSize: 2000, status, lastModified: 123456,
+    });
+
+    const data = mockData([file('file.csv', 1)]);
+
+    const dropzone = await screen.findByRole('button', { name: 'Select and upload' });
+    act(() => dispatchEvt(dropzone, 'drop', data));
+    await waitFor(() => fetchMock.called('/api/files/objectives'));
   });
 
   it('fetches and prepopulates goal data given an appropriate ID', async () => {
