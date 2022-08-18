@@ -321,9 +321,6 @@ export async function getGoalsByActivityRecipient(
           {
             onApprovedAR: true,
           },
-          {
-            createdVia: 'activityReport',
-          },
         ],
         { isFromSmartsheetTtaPlan: true },
         { createdVia: 'rtr' },
