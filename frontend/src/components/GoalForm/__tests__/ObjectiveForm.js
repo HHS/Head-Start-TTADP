@@ -30,6 +30,7 @@ describe('ObjectiveForm', () => {
     ],
     id: 123,
     status: 'Not started',
+    roles: [],
   };
 
   const index = 1;
@@ -39,6 +40,7 @@ describe('ObjectiveForm', () => {
     removeObjective = jest.fn(),
     setObjectiveError = jest.fn(),
     setObjective = jest.fn(),
+    goalStatus = 'Draft',
   ) => {
     render((
       <ObjectiveForm
@@ -49,7 +51,7 @@ describe('ObjectiveForm', () => {
         objective={objective}
         setObjective={setObjective}
         errors={[<></>, <></>, <></>]}
-        goalStatus="Draft"
+        goalStatus={goalStatus}
         topicOptions={[
           'Behavioral / Mental Health / Trauma',
           'Child Assessment, Development, Screening',
@@ -102,6 +104,29 @@ describe('ObjectiveForm', () => {
     userEvent.click(resourceOne);
 
     expect(setObjectiveError).toHaveBeenCalledWith(index, [<span className="usa-error-message">{objectiveTextError}</span>, <></>, <></>]);
+  });
+
+  it('you can change role and status', async () => {
+    const removeObjective = jest.fn();
+    const setObjectiveError = jest.fn();
+    const setObjective = jest.fn();
+
+    renderObjectiveForm(
+      { ...defaultObjective, status: 'In Progress' },
+      removeObjective,
+      setObjectiveError,
+      setObjective,
+      'In Progress',
+    );
+
+    const statusSelect = await screen.findByLabelText('Objective status');
+    userEvent.selectOptions(statusSelect, 'Completed');
+
+    expect(setObjective).toHaveBeenCalledWith({ ...defaultObjective, status: 'Completed' });
+
+    const roleSelect = await screen.findByLabelText(/Specialist roles providing TTA/i);
+    await selectEvent.select(roleSelect, 'Grantee Specialist');
+    expect(setObjective).toHaveBeenCalledWith({ ...defaultObjective, status: 'In Progress', roles: ['Grantee Specialist'] });
   });
 
   it('displays the correct label based on resources from api', async () => {

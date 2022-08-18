@@ -20,6 +20,8 @@ const [
   objectiveRoleError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
+const availableSpecialistRoles = ['Grantee Specialist', 'Health Specialist', 'Family Engagement Specialist', 'Early Childhood Specialist', 'Systems Specialist'];
+
 export default function ObjectiveForm({
   index,
   removeObjective,
@@ -56,8 +58,6 @@ export default function ObjectiveForm({
   };
   const onChangeRole = (newRole) => setObjective({ ...objective, roles: newRole });
   const onChangeStatus = (newStatus) => setObjective({ ...objective, status: newStatus });
-
-  const availableSpecialistRoles = ['Grantee Specialist', 'Health Specialist', 'Family Engagement Specialist', 'Early Childhood Specialist', 'Systems Specialist'];
 
   // validate different fields
   const validateObjectiveTitle = () => {
