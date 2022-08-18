@@ -10,9 +10,39 @@
   padding: 0;
 }
 
-.user-menu {
+div.user-menu-dropdown {
   /** the first child with class .usa-sidenav__item should have no border-top */
   & .usa-sidenav__item:first-child {
     border-top: 0;
+  }
+}
+
+ul.user-menu-nav {
+  list-style: none;
+  padding: 0;
+  min-width: 250px;
+
+  & > li > hr {
+    border-top: 1px solid $base-lighter;
+    border-bottom: 0px;
+  }
+
+  & > li > a.usa-nav__link {
+    width: 100%;
+    display: block;
+    padding: 0.75rem 1rem;
+    text-decoration: underline;
+    cursor: pointer;
+    border-left: 4px solid transparent;
+    color: $ttahub-medium-blue;
+
+    &:hover {
+      background-color: $gray-two;
+    }
+
+    &.usa-current {
+      border-left: 4px solid $ttahub-medium-blue;
+      text-decoration: none;
+    }
   }
 }
