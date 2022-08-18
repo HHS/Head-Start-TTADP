@@ -22,20 +22,20 @@ export const upload = async (file, reportId, setErrorMessage) => {
     data.append('reportId', reportId);
     data.append('file', file);
     res = await uploadFile(data);
+    setErrorMessage(null);
+    return {
+      id: res.id, originalFileName: file.name, fileSize: file.size, status: 'UPLOADED', url: res.url,
+    };
   } catch (error) {
     setErrorMessage(`${file.name} failed to upload`);
     // eslint-disable-next-line no-console
     console.log(error);
     return null;
   }
-  setErrorMessage(null);
-  return {
-    id: res.id, originalFileName: file.name, fileSize: file.size, status: 'UPLOADED', url: res.url,
-  };
 };
 
 const ActivityReportFileUploader = ({
-  onChange, files, reportId, id,
+  onChange, files, reportId, id, setErrorMessage,
 }) => {
   const onFileRemoved = async (removedFileIndex) => {
     const file = files[removedFileIndex];
@@ -44,7 +44,7 @@ const ActivityReportFileUploader = ({
     await deleteReportFile(file.id, reportId);
   };
 
-  const handleDrop = async (e, setErrorMessage) => {
+  const handleDrop = async (e) => {
     if (reportId === 'new') {
       setErrorMessage('Cannot save attachments without a recipient or other entity selected');
       return;
@@ -52,7 +52,7 @@ const ActivityReportFileUploader = ({
 
     const newFiles = e.map((file) => upload(file, reportId, setErrorMessage));
     Promise.all(newFiles).then((values) => {
-      onChange(values);
+      onChange(values.filter((file) => file));
     });
   };
 
@@ -73,6 +73,7 @@ ActivityReportFileUploader.propTypes = {
     PropTypes.string,
     PropTypes.number,
   ]).isRequired,
+  setErrorMessage: PropTypes.func.isRequired,
 };
 
 ActivityReportFileUploader.defaultProps = {

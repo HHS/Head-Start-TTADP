@@ -15,7 +15,7 @@ import './FileUploader.scss';
 import { DECIMAL_BASE } from '../../Constants';
 
 const ObjectiveFileUploader = ({
-  onChange, files, objective, id, upload, index, inputName, onBlur,
+  onChange, files, objective, id, upload, index, inputName, onBlur, setError,
 }) => {
   const objectiveId = objective.id;
 
@@ -32,9 +32,9 @@ const ObjectiveFileUploader = ({
     }
   };
 
-  const handleDrop = async (e, setErrorMessage) => {
+  const handleDrop = async (e) => {
     const newFiles = await Promise.all(
-      e.map((file) => upload(file, objective, setErrorMessage, index)),
+      e.map((file) => upload(file, objective, setError, index)),
     );
 
     let objectives;
@@ -132,6 +132,7 @@ ObjectiveFileUploader.propTypes = {
   index: PropTypes.number.isRequired,
   inputName: PropTypes.string.isRequired,
   onBlur: PropTypes.func.isRequired,
+  setError: PropTypes.func.isRequired,
 };
 
 ObjectiveFileUploader.defaultProps = {
