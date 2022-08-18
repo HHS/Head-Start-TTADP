@@ -69,7 +69,7 @@ const renderReview = (
   calculatedStatus, onFormReview, reviewed, approvers = defaultApprover, pages = defaultPages,
 ) => {
   const formData = {
-    author: { name: 'user' },
+    author: { name: 'user', id: 4 },
     additionalNotes: '',
     calculatedStatus,
     approvers,
@@ -139,7 +139,9 @@ describe('Approver review page', () => {
       expect(await screen.findByText(/these are my needs action notes 2\./i)).toBeVisible();
       expect(await screen.findByText(/no creator notes/i)).toBeVisible();
       expect(await screen.findByText(/these are my approved notes 1\./i)).toBeVisible();
-      expect(await screen.findByText(/choose report status/i)).toBeVisible();
+
+      const statuses = screen.queryAllByLabelText('Choose report status (Required)');
+      expect(statuses.length).toBe(1);
     });
 
     it('a report can\'t be submitted with incomplete pages', async () => {
@@ -171,8 +173,48 @@ describe('Approver review page', () => {
         },
       ];
       renderReview(REPORT_STATUSES.APPROVED, () => { }, false, approverWithNotes);
+      const alert = document.querySelector('.usa-alert');
+      expect(alert).not.toBe(null);
       expect(await screen.findByText(/these are my sample notes 2\./i)).toBeVisible();
       expect(await screen.findByText(/no creator notes/i)).toBeVisible();
+    });
+  });
+
+  describe('when approver is creator', () => {
+    it('does not show an alert', async () => {
+      const calculatedStatus = REPORT_STATUSES.DRAFT;
+      const onFormReview = jest.fn();
+      const reviewed = false;
+      const approvers = [
+        {
+          id: 1, status: null, note: '', User: { id: 4, fullName: 'name' },
+        },
+      ];
+      const pages = defaultPages;
+      renderReview(
+        calculatedStatus, onFormReview, reviewed, approvers, pages,
+      );
+
+      const alert = document.querySelector('.usa-alert');
+      expect(alert).toBe(null);
+    });
+
+    it('does not show a status dropdown', async () => {
+      const calculatedStatus = REPORT_STATUSES.DRAFT;
+      const onFormReview = jest.fn();
+      const reviewed = false;
+      const approvers = [
+        {
+          id: 1, status: null, note: '', User: { id: 4, fullName: 'name' },
+        },
+      ];
+      const pages = defaultPages;
+      renderReview(
+        calculatedStatus, onFormReview, reviewed, approvers, pages,
+      );
+
+      const statuses = screen.queryAllByLabelText('Choose report status (Required)');
+      expect(statuses.length).toBe(0);
     });
   });
 });
