@@ -21,14 +21,6 @@ module.exports = {
         { transaction },
       );
 
-      // Disable audit logging
-      await queryInterface.sequelize.query(
-        `
-          SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
-          `,
-        { transaction },
-      );
-
       // Create new topics:
       // - Child Screening and Assessment
       // - Teaching / Caregiving Practices
