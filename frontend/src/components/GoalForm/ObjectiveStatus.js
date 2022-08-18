@@ -22,6 +22,8 @@ export default function ObjectiveStatus({
 
   const showDropdown = !(status.toLowerCase() === 'not started' && isOnReport);
 
+  console.log({ showDropdown });
+
   const onChange = (e) => onChangeStatus(e.target.value);
 
   if (showDropdown) {
