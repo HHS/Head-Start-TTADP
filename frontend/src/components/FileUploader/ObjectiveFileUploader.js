@@ -92,7 +92,12 @@ const ObjectiveFileUploader = ({
 
   return (
     <>
-      <Dropzone handleDrop={handleDrop} onBlur={onBlur} inputName={inputName || id} />
+      <Dropzone
+        handleDrop={handleDrop}
+        onBlur={onBlur}
+        inputName={inputName || id}
+        setErrorMessage={setError}
+      />
       <FileTable onFileRemoved={onFileRemoved} files={filesForTable} />
     </>
   );
