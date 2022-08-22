@@ -23,12 +23,15 @@ import {
   NextStep,
   Objective,
   Program,
-  ActivityReportObjective,
   ActivityReportGoal,
+  ActivityReportObjective,
+  ActivityReportObjectiveFile,
+  ActivityReportObjectiveResource,
+  ActivityReportObjectiveRole,
+  ActivityReportObjectiveTopic,
   CollaboratorRole,
   Role,
   Topic,
-  ActivityReportObjectiveResource,
 } from '../models';
 
 import { removeUnusedGoalsObjectivesFromReport, saveGoalsForReport, removeRemovedRecipientsGoals } from './goals';
@@ -321,6 +324,28 @@ export async function activityReportAndRecipientsById(activityReportId) {
               activityReportId: arId,
             },
             required: true,
+            include: [
+              {
+                attributes: ['originalFileName', 'key', 'status', 'fileSize'],
+                model: File,
+                as: 'files',
+              },
+              {
+                attributes: ['userProvidedUrl'],
+                model: ActivityReportObjectiveResource,
+                as: 'activityReportObjectiveResources',
+              },
+              {
+                attributes: ['name', 'fullName'],
+                model: Role,
+                as: 'roles',
+              },
+              {
+                attributes: ['name'],
+                model: Topic,
+                as: 'topics',
+              },
+            ],
           },
         ],
       },

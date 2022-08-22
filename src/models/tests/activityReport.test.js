@@ -61,7 +61,7 @@ const mockGrant = {
   grantSpecialistName: null,
   grantSpecialistEmail: null,
   stateCode: 'NY',
-  anualFundingMonth: 'October',
+  annualFundingMonth: 'October',
 };
 
 const sampleReport = {

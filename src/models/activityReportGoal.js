@@ -1,4 +1,6 @@
 const { Model } = require('sequelize');
+const { CLOSE_SUSPEND_REASONS } = require('../constants');
+const { formatDate } = require('../lib/modelHelpers');
 
 module.exports = (sequelize, DataTypes) => {
   class ActivityReportGoal extends Model {
@@ -22,7 +24,20 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    name: DataTypes.TEXT,
     status: DataTypes.STRING,
+    timeframe: DataTypes.STRING,
+    closeSuspendReason: {
+      allowNull: true,
+      type: DataTypes.ENUM(Object.keys(CLOSE_SUSPEND_REASONS).map((k) => CLOSE_SUSPEND_REASONS[k])),
+    },
+    endDate: {
+      type: DataTypes.DATEONLY,
+      get: formatDate,
+    },
+    closeSuspendContext: {
+      type: DataTypes.TEXT,
+    },
   }, {
     sequelize,
     modelName: 'ActivityReportGoal',

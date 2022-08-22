@@ -14,6 +14,7 @@ import {
   Program,
 } from '../models';
 import { DECIMAL_BASE, REPORT_STATUSES } from '../constants';
+import { cacheObjectiveMetadata, cacheGoalMetadata } from './reportCache';
 
 const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
   attributes: [
@@ -621,15 +622,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       }
     }
 
-    const [arObjective] = await ActivityReportObjective.findOrCreate({
-      where: {
-        objectiveId: savedObjective.id,
-        activityReportId: report.id,
-        status: savedObjective.status,
-      },
-    });
-
-    await arObjective.update({ ttaProvided }, { individualHooks: true });
+    await cacheObjectiveMetadata(savedObjective, report.id, objective.ttaProvided);
 
     return savedObjective;
   }));
@@ -657,13 +650,7 @@ export async function saveGoalsForReport(goals, report) {
           defaults: { ...fields, status },
         });
 
-        await ActivityReportGoal.findOrCreate({
-          where: {
-            goalId: newGoal.id,
-            activityReportId: report.id,
-            status: newGoal.status,
-          },
-        });
+        await cacheGoalMetadata(newGoal, report.id);
 
         const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
         currentObjectives = [...currentObjectives, ...newGoalObjectives];
@@ -696,13 +683,8 @@ export async function saveGoalsForReport(goals, report) {
         // eslint-disable-next-line max-len
         const existingGoalObjectives = await createObjectivesForGoal(existingGoal, objectives, report);
         currentObjectives = [...currentObjectives, ...existingGoalObjectives];
-        await ActivityReportGoal.findOrCreate({
-          where: {
-            goalId: existingGoal.id,
-            activityReportId: report.id,
-            status: existingGoal.status,
-          },
-        });
+
+        await cacheGoalMetadata(existingGoal, report.id);
       }));
 
       newGoals = await Promise.all(grantIds.map(async (gId) => {
@@ -724,13 +706,7 @@ export async function saveGoalsForReport(goals, report) {
 
         await newGoal.update({ ...fields, status }, { individualHooks: true });
 
-        await ActivityReportGoal.findOrCreate({
-          where: {
-            goalId: newGoal.id,
-            activityReportId: report.id,
-            status: newGoal.status,
-          },
-        });
+        await cacheGoalMetadata(newGoal, report.id);
 
         const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
         currentObjectives = [...currentObjectives, ...newGoalObjectives];
