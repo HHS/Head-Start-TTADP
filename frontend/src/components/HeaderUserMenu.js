@@ -15,9 +15,9 @@ function UserMenuNav({ items }) {
   return (
     <div>
       <ul className="user-menu-nav">
-        {items.map((item, i) => (
-          <li key={i}>
-            {item}
+        {items.map(({ key, element }) => (
+          <li key={key}>
+            {element}
           </li>
         ))}
       </ul>
@@ -72,17 +72,20 @@ function HeaderUserMenu() {
     fn = null,
   }) => {
     if (showIfAdmin && !userIsAdmin) return false;
-    if (divider) return <hr />;
-    if (space) return <div className="height-6" />;
+    if (divider) return { key, element: <hr /> };
+    if (space) return { key, element: <div className="height-6" /> };
     if (external) {
-      return (
-        <Link key={key} className="usa-nav__link" href={to}>
-          {label}
-          <FontAwesomeIcon className="margin-left-2" color={colors.ttahubMediumBlue} icon={faUpRightFromSquare} />
-        </Link>
-      );
+      return {
+        key,
+        element: (
+          <Link key={key} className="usa-nav__link" href={to}>
+            {label}
+            <FontAwesomeIcon className="margin-left-2" color={colors.ttahubMediumBlue} icon={faUpRightFromSquare} />
+          </Link>
+        ),
+      };
     }
-    return <NavLink key={key} to={to} fn={fn}>{label}</NavLink>;
+    return { key, element: <NavLink key={key} to={to} fn={fn}>{label}</NavLink> };
   }).filter(Boolean), [userIsAdmin, logout]);
 
   /** If we don't have a user context, don't show the user menu. */
