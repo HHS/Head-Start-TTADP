@@ -15,14 +15,8 @@ import FileRejections from './FileRejections';
 export default function Dropzone({
   handleDrop, onBlur, inputName, setErrorMessage,
 }) {
-  const onDrop = (e) => {
-    console.log(e);
-    try {
-      handleDrop(e, setErrorMessage);
-    } catch (err) {
-      console.log(err);
-    }
-  };
+  const onDrop = (e) => handleDrop(e, setErrorMessage);
+
   const maxSize = 30000000;
   const minSize = 1; // at least 1 byte
 
