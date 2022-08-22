@@ -16,6 +16,7 @@ export default function Dropzone({
   handleDrop, onBlur, inputName, setErrorMessage,
 }) {
   const onDrop = (e) => {
+    console.log(e);
     try {
       handleDrop(e, setErrorMessage);
     } catch (err) {
