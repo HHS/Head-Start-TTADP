@@ -17,6 +17,7 @@ import {
   downloadAllReports,
   downloadAllAlerts,
   LEGACY_WARNING,
+  getReportsForLocalStorageCleanup,
 } from './handlers';
 import {
   activityReportAndRecipientsById,
@@ -29,6 +30,7 @@ import {
   getDownloadableActivityReportsByIds,
   getAllDownloadableActivityReports,
   getAllDownloadableActivityReportAlerts,
+  activityReportsForCleanup,
 } from '../../services/activityReports';
 import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
@@ -55,6 +57,7 @@ jest.mock('../../services/activityReports', () => ({
   getAllDownloadableActivityReportAlerts: jest.fn(),
   getAllDownloadableActivityReports: jest.fn(),
   getDownloadableActivityReportsByIds: jest.fn(),
+  activityReportsForCleanup: jest.fn(),
 }));
 
 jest.mock('../../services/activityReportApprovers', () => ({
@@ -310,6 +313,21 @@ describe('Activity Report handlers', () => {
       }));
       await reviewReport(needsActionReportRequest, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+  });
+
+  describe('getReportsForLocalStorageCleanup', () => {
+    it('returns reports for cleanup', async () => {
+      const reportsToCleanup = [{ id: 1 }];
+      activityReportsForCleanup.mockImplementationOnce(() => reportsToCleanup);
+      await getReportsForLocalStorageCleanup(mockRequest, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith(reportsToCleanup);
+    });
+
+    it('handles none found', async () => {
+      activityReportsForCleanup.mockImplementationOnce(() => null);
+      await getReportsForLocalStorageCleanup(mockRequest, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
     });
   });
 
