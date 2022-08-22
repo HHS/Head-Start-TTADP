@@ -37,6 +37,8 @@ const ObjectiveFileUploader = ({
       e.map((file) => upload(file, objective, setError, index)),
     );
 
+    console.log(newFiles);
+
     let objectives;
     let setObjectives;
     let objectiveIndex;
