@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import { useController } from 'react-hook-form/dist/index.ie11';
-import ObjectiveTitle from '../../../../components/GoalForm/ObjectiveTitle';
+import ObjectiveTitle from './ObjectiveTitle';
 import { REPORT_STATUSES } from '../../../../Constants';
 import SpecialistRole from '../../../../components/GoalForm/SpecialistRole';
 import ObjectiveTopics from '../../../../components/GoalForm/ObjectiveTopics';
