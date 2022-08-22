@@ -33,14 +33,52 @@ module.exports = {
       }
 
       try {
+        await queryInterface.addColumn('ActivityReportGoals', 'name', {
+          type: Sequelize.STRING,
+          allowNull: true,
+        }, { transaction });
+
         await queryInterface.addColumn('ActivityReportGoals', 'status', {
           type: Sequelize.STRING,
           allowNull: true,
         }, { transaction });
 
+        await queryInterface.addColumn('ActivityReportGoals', 'timeframe', {
+          type: Sequelize.STRING,
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.addColumn('ActivityReportGoals', 'closeSuspendReason', {
+          type: Sequelize.ENUM([
+            'Duplicate goal',
+            'Recipient request',
+            'TTA complete',
+            'Key staff turnover / vacancies',
+            'Recipient is not responding',
+            'Regional Office request',
+          ]),
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.addColumn('ActivityReportGoals', 'closeSuspendContext', {
+          type: Sequelize.STRING,
+          allowNull: true,
+        }, { transaction });
+
+        await queryInterface.addColumn('ActivityReportGoals', 'endDate', {
+          type: Sequelize.DATE,
+          allowNull: true,
+        }, { transaction });
+
         await queryInterface.sequelize.query(
           `UPDATE ONLY "ActivityReportGoals" arg
-          SET "status" = g.status
+          SET
+            "name" = g."name",
+            "status" = g."status",
+            "timeframe" = g."timeframe",
+            "closeSuspendReason" = g."closeSuspendReason"::text::"enum_ActivityReportGoals_closeSuspendReason",
+            "closeSuspendContext" = g."closeSuspendContext",
+            "endDate" = g."endDate"
           FROM "Goals" g
           WHERE arg."goalId" = g.id;`,
           { transaction },
@@ -51,6 +89,11 @@ module.exports = {
       }
 
       try {
+        await queryInterface.addColumn('ActivityReportObjectives', 'title', {
+          type: Sequelize.STRING,
+          allowNull: true,
+        }, { transaction });
+
         await queryInterface.addColumn('ActivityReportObjectives', 'status', {
           type: Sequelize.STRING,
           allowNull: true,
@@ -58,7 +101,9 @@ module.exports = {
 
         await queryInterface.sequelize.query(
           ` UPDATE ONLY "ActivityReportObjectives" aro
-          SET "status" = o.status
+          SET
+            "title" = o."title",
+            "status" = o.status
           FROM "Objectives" o
           WHERE aro."objectiveId" = o.id;`,
           { transaction },
@@ -82,18 +127,23 @@ module.exports = {
       }
 
       try {
+        await queryInterface.addConstraint('ActivityReportObjectiveFiles', {
+          fields: ['activityReportObjectiveId', 'fileId'],
+          type: 'unique',
+          transaction,
+        });
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
+
+      try {
         await queryInterface.createTable('ActivityReportObjectiveResources', {
           id: {
             allowNull: false,
             autoIncrement: true,
             primaryKey: true,
             type: Sequelize.INTEGER,
-          },
-          userProvidedUrl: {
-            type: Sequelize.STRING,
-            allowNull: false,
-            onUpdate: 'CASCADE',
-            onDelete: 'CASCADE',
           },
           activityReportObjectiveId: {
             type: Sequelize.INTEGER,
@@ -107,6 +157,12 @@ module.exports = {
             onUpdate: 'CASCADE',
             onDelete: 'CASCADE',
           },
+          userProvidedUrl: {
+            type: Sequelize.STRING,
+            allowNull: false,
+            onUpdate: 'CASCADE',
+            onDelete: 'CASCADE',
+          },
           createdAt: {
             allowNull: false,
             type: Sequelize.DATE,
@@ -116,6 +172,12 @@ module.exports = {
             type: Sequelize.DATE,
           },
         }, { transaction });
+
+        await queryInterface.addConstraint('ActivityReportObjectiveResources', {
+          fields: ['activityReportObjectiveId', 'userProvidedUrl'],
+          type: 'unique',
+          transaction,
+        });
 
         await queryInterface.sequelize.query(
           `INSERT INTO "ActivityReportObjectiveResources"
@@ -182,6 +244,12 @@ module.exports = {
           },
         }, { transaction });
 
+        await queryInterface.addConstraint('"ActivityReportObjectiveRoles"', {
+          fields: ['activityReportObjectiveId', 'roleId'],
+          type: 'unique',
+          transaction,
+        });
+
         await queryInterface.sequelize.query(
           `INSERT INTO "ActivityReportObjectiveRoles"
           (
@@ -246,6 +314,12 @@ module.exports = {
             type: Sequelize.DATE,
           },
         }, { transaction });
+
+        await queryInterface.addConstraint('"ActivityReportObjectiveTopics"', {
+          fields: ['activityReportObjectiveId', 'topicId'],
+          type: 'unique',
+          transaction,
+        });
 
         await queryInterface.sequelize.query(
           `INSERT INTO "ActivityReportObjectiveTopics"

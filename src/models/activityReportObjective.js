@@ -1,4 +1,5 @@
 const { Model } = require('sequelize');
+const { beforeDestroy } = require('./hooks/activityReportObjective');
 
 module.exports = (sequelize, DataTypes) => {
   class ActivityReportObjective extends Model {
@@ -42,11 +43,15 @@ module.exports = (sequelize, DataTypes) => {
     objectiveId: {
       type: DataTypes.INTEGER,
     },
+    title: DataTypes.TEXT,
     status: DataTypes.STRING,
     ttaProvided: DataTypes.TEXT,
   }, {
     sequelize,
     modelName: 'ActivityReportObjective',
+    hooks: {
+      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
+    },
   });
   return ActivityReportObjective;
 };
