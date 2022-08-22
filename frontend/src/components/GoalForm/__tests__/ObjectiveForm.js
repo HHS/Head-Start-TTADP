@@ -12,7 +12,7 @@ import {
 } from '../constants';
 
 const [
-  objectiveTextError, objectiveTopicsError,
+  objectiveTextError, objectiveTopicsError, , objectiveRoleError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
 describe('ObjectiveForm', () => {
@@ -93,7 +93,7 @@ describe('ObjectiveForm', () => {
 
     expect(setObjectiveError).toHaveBeenCalledWith(index, [<></>, <span className="usa-error-message">{objectiveTopicsError}</span>, <></>]);
 
-    await selectEvent.select(topics, ['Coaching']);
+    await selectEvent.select(topics, ['Coaching', 'Communication']);
 
     userEvent.click(topics);
     userEvent.click(resourceOne);
@@ -125,6 +125,10 @@ describe('ObjectiveForm', () => {
     expect(setObjective).toHaveBeenCalledWith({ ...defaultObjective, status: 'Completed' });
 
     const roleSelect = await screen.findByLabelText(/Specialist roles providing TTA/i);
+    userEvent.click(roleSelect);
+    userEvent.click(statusSelect);
+    expect(setObjectiveError).toHaveBeenCalledWith(index, [<></>, <></>, <></>, <span className="usa-error-message">{objectiveRoleError}</span>]);
+
     await selectEvent.select(roleSelect, 'Grantee Specialist');
     expect(setObjective).toHaveBeenCalledWith({ ...defaultObjective, status: 'In Progress', roles: ['Grantee Specialist'] });
   });
