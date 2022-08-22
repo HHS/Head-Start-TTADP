@@ -33,13 +33,9 @@ const ObjectiveFileUploader = ({
   };
 
   const handleDrop = async (e) => {
-    console.log({ e });
-
     const newFiles = await Promise.all(
       e.map((file) => upload(file, objective, setError, index)),
     );
-
-    console.log(newFiles);
 
     let objectives;
     let setObjectives;
@@ -64,8 +60,6 @@ const ObjectiveFileUploader = ({
 
       return fields;
     });
-
-    console.log({ objectives, setObjectives, objectiveIndex });
 
     // on the goals and objectives form, we have this extra step to update the objectives
     if (objectives && setObjectives) {

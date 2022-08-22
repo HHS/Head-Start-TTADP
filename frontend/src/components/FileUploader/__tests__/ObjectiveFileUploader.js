@@ -17,16 +17,17 @@ describe('ObjectiveFileUploader', () => {
     await act(() => waitFor(() => rerender(ui)));
   };
 
-  const RenderFileUploader = ({ onChange, files }) => (
+  const RenderFileUploader = ({ onChange, files, upload = jest.fn() }) => (
     <ObjectiveFileUploader
       onChange={onChange}
       files={files}
       objective={{ id: 1 }}
       id="id"
-      upload={jest.fn()}
+      upload={upload}
       index={0}
       inputName="inputName"
       onBlur={jest.fn()}
+      setError={jest.fn()}
     />
   );
 
@@ -63,6 +64,42 @@ describe('ObjectiveFileUploader', () => {
 
     expect(mockOnChange).toHaveBeenCalled();
   });
+
+  // it('updates the state', async () => {
+  //   const mockOnChange = jest.fn();
+  //   const data = mockData([file('file', 1)]);
+  //   const setObjectives = jest.fn();
+  //   const upload = jest.fn((a, b, c) => {
+  //     console.log({ a, b, c });
+
+  //     return new Promise((resolve) => {
+  //       resolve([
+  //         {
+  //           ...file('file', 1),
+  //           setObjectives,
+  //           objectives: [{ id: 1 }],
+  //           index: 0,
+  //         },
+  //       ]);
+  //     });
+  //   });
+
+  //   const FileUploader = (
+  //     <RenderFileUploader
+  //       files={[]}
+  //       onChange={mockOnChange}
+  //       upload={upload}
+  //     />
+  //   );
+  //   const { container, rerender } = render(FileUploader);
+  //   const dropzone = container.querySelector('div');
+
+  //   dispatchEvt(dropzone, 'drop', data);
+  //   await flushPromises(rerender, FileUploader);
+
+  //   expect(mockOnChange).not.toHaveBeenCalled();
+  //   expect(setObjectives).toHaveBeenCalled();
+  // });
 
   it('files are properly displayed and can be removed', () => {
     const mockOnChange = jest.fn();
