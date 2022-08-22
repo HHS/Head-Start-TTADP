@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import { Op } from 'sequelize';
+import moment from 'moment';
 import { REPORT_STATUSES, DECIMAL_BASE, REPORTS_PER_PAGE } from '../constants';
 import orderReportsBy from '../lib/orderReportsBy';
 import filtersToScopes from '../scopes';
@@ -621,6 +622,84 @@ export async function activityReports(
 
   return { ...reports, recipients };
 }
+
+export async function activityReportsForCleanup(userId) {
+  const threeMonthsAgo = moment().subtract(3, 'months').format('YYYY-MM-DD');
+
+  return ActivityReport.findAll(
+    {
+      where: {
+        // we only cleanup reports from the last three months
+        createdAt: { [Op.gt]: threeMonthsAgo },
+        [Op.or]: [
+          // if the report is created by a user and not in draft status, it is eligible for cleanup
+          {
+            [Op.and]: {
+              userId,
+              calculatedStatus: {
+                [Op.ne]: REPORT_STATUSES.DRAFT,
+              },
+            },
+          },
+          {
+            // if the user is an approver on the report, it is eligible for cleanup
+            '$approvers.userId$': userId,
+          },
+          {
+            // if the user is an collaborator, and the report is not in draft,
+            // it is eligible for cleanup
+            '$activityReportCollaborators->user.id$': userId,
+            calculatedStatus: {
+              [Op.ne]: REPORT_STATUSES.DRAFT,
+            },
+          },
+        ],
+      },
+      attributes: [
+        'id',
+        'calculatedStatus',
+        'userId',
+      ],
+      include: [
+        {
+          model: User,
+          attributes: ['id'],
+          as: 'author',
+        },
+        {
+          required: false,
+          model: ActivityReportCollaborator,
+          as: 'activityReportCollaborators',
+          include: [
+            {
+              model: User,
+              as: 'user',
+              attributes: ['id'],
+              duplicating: true,
+            },
+          ],
+        },
+        {
+          model: ActivityReportApprover,
+          attributes: ['id'],
+          as: 'approvers',
+          required: false,
+          include: [
+            {
+              model: User,
+              attributes: ['id'],
+            },
+          ],
+        },
+      ],
+      distinct: true,
+    },
+    {
+      subQuery: false,
+    },
+  );
+}
+
 /**
  * Retrieves alerts based on the following logic:
  * One or both of these high level conditions are true -
