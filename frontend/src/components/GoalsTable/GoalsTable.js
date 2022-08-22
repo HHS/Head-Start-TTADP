@@ -198,7 +198,7 @@ function GoalsTable({
         </Alert>
       </Grid>
       )}
-      <Container className="goals-table maxw-full overflow-x-hidden" padding={0} loading={loading} loadingLabel="Goals table loading">
+      <Container className="goals-table maxw-full overflow-x-hidden" paddingX={0} paddingY={0} loading={loading} loadingLabel="Goals table loading">
         <CloseSuspendReasonModal
           id="close-suspend-reason-modal"
           goalIds={closeSuspendGoalIds}

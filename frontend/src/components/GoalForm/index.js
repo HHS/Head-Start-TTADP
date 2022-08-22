@@ -665,7 +665,7 @@ export default function GoalForm({
           <span>Back to Goals & Objectives</span>
         </Link>
       ) : null }
-      <h1 className="page-heading margin-top-0 margin-bottom-1 margin-left-2">
+      <h1 className="page-heading margin-top-0 margin-bottom-0 margin-left-2">
         TTA Goals for
         {' '}
         {recipient.name}
@@ -674,7 +674,7 @@ export default function GoalForm({
         {regionId}
       </h1>
 
-      <Container className="margin-y-2 margin-left-2 width-tablet padding-top-1" skipTopPadding>
+      <Container className="margin-y-3 margin-left-2 width-tablet" paddingX={4} paddingY={5}>
         <GoalFormLoadingContext.Provider value={{ isLoading }}>
           { createdGoals.length ? (
             <>
