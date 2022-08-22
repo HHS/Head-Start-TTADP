@@ -317,11 +317,7 @@ export async function getGoalsByActivityRecipient(
     ],
     where: {
       [Op.or]: [
-        [
-          {
-            onApprovedAR: true,
-          },
-        ],
+        { onApprovedAR: true },
         { isFromSmartsheetTtaPlan: true },
         { createdVia: 'rtr' },
       ],
