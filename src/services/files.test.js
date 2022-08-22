@@ -11,6 +11,9 @@ import {
 } from './files';
 
 describe('files service', () => {
+  afterAll(async () => {
+    await db.sequelize.close();
+  });
   describe('createFileMetaData', () => {
     let filesForCreateFileMetaData;
     beforeAll(async () => {
@@ -30,8 +33,6 @@ describe('files service', () => {
           id: filesForCreateFileMetaData.map((file) => file.id),
         },
       });
-
-      await db.sequelize.close();
     });
 
     it('creates a file where needed', async () => {
@@ -98,8 +99,6 @@ describe('files service', () => {
           id: filesForObjectiveFileMetaData.map((file) => file.id),
         },
       });
-
-      await db.sequelize.close();
     });
 
     it('creates a file where needed', async () => {
