@@ -130,7 +130,9 @@ const cacheGoalMetadata = async (goal, reportId) => {
       }),
     ]);
   } catch (err) {
-    auditLogger.error(JSON.stringify({ err, goal, reportId, arg }));
+    auditLogger.error(JSON.stringify({
+      err, goal, reportId, arg,
+    }));
     throw err;
   }
 };
