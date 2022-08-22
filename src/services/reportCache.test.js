@@ -1,4 +1,3 @@
-import { Op } from 'sequelize';
 import {
   User,
   Recipient,
@@ -24,7 +23,6 @@ import {
   cacheObjectiveMetadata,
 } from './reportCache';
 import { REPORT_STATUSES } from '../constants';
-import { auditLogger } from '../logger';
 
 describe('reportCache', () => {
   const mockUser = {
@@ -259,7 +257,7 @@ describe('reportCache', () => {
       expect(aro.activityReportObjectiveFiles).toEqual([]);
       expect(aro.activityReportObjectiveResources).toEqual([]);
       expect(aro.activityReportObjectiveRoles).toEqual([]);
-      expect(aro.activityReportObjectiveTopics).toEqual([]);
+      expect(aro.activityReportObjectiveTopics).toEqual([]);s
     });
     it('add to cache', async () => {
       await cacheObjectiveMetadata(objective, report.id, null);
