@@ -63,6 +63,8 @@ const ObjectiveFileUploader = ({
       return fields;
     });
 
+    console.log({ objectives, setObjectives, objectiveIndex });
+
     // on the goals and objectives form, we have this extra step to update the objectives
     if (objectives && setObjectives) {
       const copyOfObjectives = objectives.map((o) => ({ ...o }));
