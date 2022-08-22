@@ -18,6 +18,7 @@ import {
   softDeleteReport,
   downloadAllReports,
   downloadAllAlerts,
+  getReportsForLocalStorageCleanup,
 } from './handlers';
 import { createGoalsForReport } from '../goals/handlers';
 import { checkActivityReportIdParam } from '../../middleware/checkIdParamMiddleware';
@@ -37,6 +38,7 @@ router.get('/activity-recipients', transactionWrapper(getActivityRecipients));
 router.get('/goals', transactionWrapper(getGoals));
 router.post('/goals', transactionWrapper(createGoalsForReport));
 router.get('/alerts', nameTransactionByPath, transactionWrapper(getReportAlerts));
+router.get('/storage-cleanup', nameTransactionByPath, transactionWrapper(getReportsForLocalStorageCleanup));
 router.get('/alerts/download-all', transactionWrapper(downloadAllAlerts));
 router.get('/legacy/:legacyReportId', transactionWrapper(getLegacyReport));
 router.get('/download', transactionWrapper(downloadReports));
