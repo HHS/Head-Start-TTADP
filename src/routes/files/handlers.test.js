@@ -17,12 +17,10 @@ import * as queue from '../../services/scanQueue';
 import { REPORT_STATUSES, FILE_STATUSES } from '../../constants';
 import ActivityReportPolicy from '../../policies/activityReport';
 import ObjectivePolicy from '../../policies/objective';
-import UserPolicy from '../../policies/user';
 import * as Files from '../../services/files';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
 
 jest.mock('../../policies/activityReport');
-jest.mock('../../policies/user');
 jest.mock('../../policies/objective');
 jest.mock('../../services/accessValidation', () => ({
   validateUserAuthForAdmin: jest.fn().mockResolvedValue(false),
@@ -86,8 +84,6 @@ describe('File Upload', () => {
   let objective;
   let grant;
   let recipient;
-  let lonelyFile = null;
-
   beforeAll(async () => {
     user = await User.create(mockUser);
     report = await ActivityReport.create(reportObject);
@@ -132,8 +128,6 @@ describe('File Upload', () => {
       ObjectiveFile.destroy({ where: { fileId: objFile.id } });
       File.destroy({ where: { id: objFile.id } });
     }));
-
-    await File.destroy({ where: { id: lonelyFile.id } });
 
     await ActivityReport.destroy({ where: { id: report.dataValues.id } });
     await Objective.destroy({ where: { id: objective.dataValues.id } });
@@ -273,27 +267,6 @@ describe('File Upload', () => {
       expect(of.objectiveId).toBe(objective.dataValues.id);
       expect(validate(uuid)).toBe(true);
     });
-
-    it('tests a lonely file upload', async () => {
-      UserPolicy.mockImplementation(() => ({
-        canWriteInAtLeastOneRegion: () => true,
-      }));
-      uploadFile.mockResolvedValue({ key: 'key' });
-      const response = await request(app)
-        .post('/api/files/upload')
-        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(200);
-      fileId = response.body.id;
-      expect(uploadFile).toHaveBeenCalled();
-      expect(mockAddToScanQueue).toHaveBeenCalled();
-      expect(lonelyFile).toBeNull();
-      lonelyFile = await File.findOne({ where: { id: fileId } });
-      expect(lonelyFile).not.toBeNull();
-      expect(lonelyFile.dataValues.id).toBe(fileId);
-      expect(lonelyFile.dataValues.status).not.toBe(null);
-      expect(lonelyFile.dataValues.originalFileName).toBe('testfile.pdf');
-    });
-
     it('allows an admin to upload a objective file', async () => {
       ObjectivePolicy.mockImplementation(() => ({
         canUpdate: () => false,
