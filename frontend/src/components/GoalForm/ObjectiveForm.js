@@ -111,7 +111,7 @@ export default function ObjectiveForm({
   return (
     <div className="margin-top-5 ttahub-create-goals-objective-form">
       <div className="display-flex flex-justify maxw-mobile-lg">
-        <h3>Objective summary</h3>
+        <h3 className="margin-bottom-0">Objective summary</h3>
         { !isOnReport
           && (<Button type="button" unstyled onClick={() => removeObjective(index)} aria-label={`Remove objective ${index + 1}`}>Remove this objective</Button>)}
       </div>

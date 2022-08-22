@@ -67,7 +67,7 @@ export default function RecipientResults(
   };
 
   return (
-    <Container className="landing ttahub-recipient-results maxw-desktop" padding={0} loading={loading} loadingLabel="Recipient search results loading">
+    <Container className="landing ttahub-recipient-results maxw-desktop" paddingX={0} paddingY={0} loading={loading} loadingLabel="Recipient search results loading">
       <TableHeader
         title="Recipients"
         hideMenu

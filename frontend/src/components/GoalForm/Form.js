@@ -96,7 +96,7 @@ export default function Form({
     <div className="ttahub-create-goals-form">
       <Loader loading={isLoading} loadingLabel="Loading" text="Loading" />
       { fetchError ? <Alert type="error" role="alert">{ fetchError }</Alert> : null}
-      <div className="display-flex flex-align-center margin-y-2">
+      <div className="display-flex flex-align-center margin-top-2 margin-bottom-1">
         <h2 className="margin-0">{formTitle}</h2>
         { status.toLowerCase() === 'draft'
         && (
@@ -176,7 +176,7 @@ export default function Form({
         />
       ))}
 
-      <div className="margin-top-6">
+      <div className="margin-top-4">
         {errors[FORM_FIELD_INDEXES.OBJECTIVES_EMPTY]}
         <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />
       </div>

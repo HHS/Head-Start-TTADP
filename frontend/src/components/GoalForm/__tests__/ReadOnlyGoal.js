@@ -8,8 +8,8 @@ import ReadOnlyGoal from '../ReadOnlyGoal';
 
 describe('ReadOnlyGoal', () => {
   const createdGoal = {
-    goalName: 'Sample goal',
-    grant: [],
+    name: 'Sample goal',
+    grant: {},
     objectives: [],
     endDate: null,
     id: 1,
