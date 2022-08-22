@@ -44,12 +44,25 @@ const Approver = ({
   };
   const { author } = formData;
 
-  const pendingApprovalCount = approvers ? approvers.filter((a) => a.status === null || a.status === 'needs_action').length : 0;
+  const pendingApprovalCount = approvers ? approvers.filter((a) => !a.status || a.status === 'needs_action').length : 0;
   const approverCount = approvers ? approvers.length : 0;
 
-  const renderTopAlert = () => (
-    <Alert type="info" noIcon slim className="margin-bottom-1 no-print">
-      {review && (
+  const approverIsAlsoCreator = approvers ? approvers.some((a) => a.User.id === author.id) : false;
+
+  // if a user is an approver and they are also the creator of the report, the logic below
+  // needs to account for what they'll see
+  const showDraftViewForApproverAndCreator = (
+    approverIsAlsoCreator && calculatedStatus === REPORT_STATUSES.DRAFT
+  );
+
+  const renderTopAlert = () => {
+    if (showDraftViewForApproverAndCreator) {
+      return null;
+    }
+
+    return (
+      <Alert type="info" noIcon slim className="margin-bottom-1 no-print">
+        {review && (
         <>
           <span className="text-bold">
             {author.name}
@@ -66,14 +79,15 @@ const Approver = ({
           <br />
           Please review all information in each section before submitting.
         </>
-      )}
-      {approved && (
+        )}
+        {approved && (
         <>
           This report has been approved and is no longer editable
         </>
-      )}
-    </Alert>
-  );
+        )}
+      </Alert>
+    );
+  };
 
   return (
     <>
@@ -97,7 +111,7 @@ const Approver = ({
           && approved
           && <Redirect to={{ pathname: '/activity-reports', state: { message: { ...message, status: 'approved' } } }} />}
 
-        {review
+        {(review || showDraftViewForApproverAndCreator)
           && (
             <Review
               pendingOtherApprovals={pendingOtherApprovals}
@@ -105,6 +119,7 @@ const Approver = ({
               onFormReview={onFormReview}
               approverStatusList={approvers}
               pages={pages}
+              showDraftViewForApproverAndCreator={showDraftViewForApproverAndCreator}
             />
           )}
         {approved
@@ -135,6 +150,7 @@ Approver.propTypes = {
     ),
     author: PropTypes.shape({
       name: PropTypes.string,
+      id: PropTypes.number,
     }),
     id: PropTypes.number,
     displayId: PropTypes.string,
