@@ -257,7 +257,7 @@ describe('reportCache', () => {
       expect(aro.activityReportObjectiveFiles).toEqual([]);
       expect(aro.activityReportObjectiveResources).toEqual([]);
       expect(aro.activityReportObjectiveRoles).toEqual([]);
-      expect(aro.activityReportObjectiveTopics).toEqual([]);s
+      expect(aro.activityReportObjectiveTopics).toEqual([]);
     });
     it('add to cache', async () => {
       await cacheObjectiveMetadata(objective, report.id, null);
