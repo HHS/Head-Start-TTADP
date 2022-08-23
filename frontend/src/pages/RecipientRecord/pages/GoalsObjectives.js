@@ -6,7 +6,7 @@ import ReactRouterPropTypes from 'react-router-prop-types';
 import useSessionFiltersAndReflectInUrl from '../../../hooks/useSessionFiltersAndReflectInUrl';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import { expandFilters } from '../../../utils';
-import { getGoalsAndObjectivesFilterConfig } from './constants';
+import { getGoalsAndObjectivesFilterConfig, GOALS_OBJECTIVES_FILTER_KEY } from './constants';
 import GoalStatusGraph from '../../../widgets/GoalStatusGraph';
 import GoalsTable from '../../../components/GoalsTable/GoalsTable';
 import UserContext from '../../../UserContext';
@@ -19,10 +19,9 @@ export default function GoalsObjectives({
   const { user } = useContext(UserContext);
   const regions = useMemo(() => getUserRegions(user), [user]);
   const showNewGoals = location.state && location.state.ids && location.state.ids.length > 0;
-  const FILTER_KEY = 'goals-objectives-filters';
 
   const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
-    FILTER_KEY,
+    GOALS_OBJECTIVES_FILTER_KEY,
     [],
   );
 
@@ -79,7 +78,7 @@ export default function GoalsObjectives({
             <GoalStatusGraph filters={filtersToApply} />
           </Grid>
         </Grid>
-        <FilterContext.Provider value={{ filterKey: FILTER_KEY }}>
+        <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY }}>
           <GoalsTable
             recipientId={recipientId}
             regionId={regionId}
