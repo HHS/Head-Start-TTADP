@@ -3,6 +3,7 @@ import { Op } from 'sequelize';
 import {
   User,
   Permission,
+  UserValidationStatus,
 } from '../models';
 
 export const userAttributes = [
@@ -29,6 +30,7 @@ export async function userById(userId) {
     },
     include: [
       { model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] },
+      { model: UserValidationStatus, as: 'validationStatus', attributes: ['userId', 'type', 'validatedAt'] },
     ],
     order: [
       [{ model: Permission, as: 'permissions' }, 'regionId', 'ASC'],
