@@ -19,7 +19,8 @@ module.exports = (sequelize, DataTypes) => {
       type: { type: DataTypes.STRING, allowNull: false },
       validatedAt: { allowNull: true, type: DataTypes.DATE },
     },
-    { sequelize, modelName: 'UserValidationStatus' },
+    // freezeTableName because it wants to pluralize to UserValidationStatuses.
+    { sequelize, modelName: 'UserValidationStatus', freezeTableName: true },
   );
 
   return UserValidationStatus;
