@@ -15,6 +15,8 @@ import TTAHistory from './pages/TTAHistory';
 import GoalsObjectives from './pages/GoalsObjectives';
 import CreateGoal from '../../components/CreateGoal';
 import PrintGoals from './pages/PrintGoals';
+import FilterContext from '../../FilterContext';
+import { GOALS_OBJECTIVES_FILTER_KEY } from './pages/constants';
 
 function PageWithHeading({
   children,
@@ -180,17 +182,19 @@ export default function RecipientRecord({ match }) {
               backLink={(
                 <Link
                   className="ttahub-recipient-record--tabs_back-to-search margin-top-2 margin-bottom-3 display-inline-block"
-                  to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives`}
+                  to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives${window.location.search}`}
                 >
                   Back to goals table
                 </Link>
               )}
             >
-              <PrintGoals
-                recipientId={recipientId}
-                regionId={regionId}
-                location={location}
-              />
+              <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY }}>
+                <PrintGoals
+                  recipientId={recipientId}
+                  regionId={regionId}
+                  location={location}
+                />
+              </FilterContext.Provider>
 
             </PageWithHeading>
           )}
