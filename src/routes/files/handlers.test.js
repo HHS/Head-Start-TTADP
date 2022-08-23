@@ -13,7 +13,7 @@ import db, {
 } from '../../models';
 import app from '../../app';
 import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
-import * as queue from '../../services/scanQueue';
+import * as scanQueue from '../../services/scanQueue';
 import { REPORT_STATUSES, FILE_STATUSES } from '../../constants';
 import ActivityReportPolicy from '../../policies/activityReport';
 import ObjectivePolicy from '../../policies/objective';
@@ -34,6 +34,7 @@ const request = require('supertest');
 const ORIGINAL_ENV = process.env;
 
 jest.mock('../../lib/s3');
+jest.mock('../../lib/queue');
 
 const mockUser = {
   id: 2046,
@@ -44,7 +45,8 @@ const mockUser = {
 
 const mockSession = jest.fn();
 mockSession.userId = mockUser.id;
-const mockAddToScanQueue = jest.spyOn(queue, 'default').mockImplementation(() => jest.fn());
+
+const mockAddToScanQueue = jest.spyOn(scanQueue, 'default').mockImplementation(() => jest.fn());
 
 const reportObject = {
   activityRecipientType: 'recipient',
@@ -86,7 +88,6 @@ describe('File Upload', () => {
   let objective;
   let grant;
   let recipient;
-  let lonelyFile = null;
 
   beforeAll(async () => {
     user = await User.create(mockUser);
@@ -101,48 +102,68 @@ describe('File Upload', () => {
     process.env.CURRENT_USER_ID = '2046';
   });
   afterAll(async () => {
-    const files = await File.findAll({
-      include: [
-        {
-          model: ActivityReportFile,
-          as: 'reportFiles',
-          required: true,
-          where: { activityReportId: report.dataValues.id },
-        },
-      ],
-    });
+    try {
+      const files = await File.findAll({
+        include: [
+          {
+            model: ActivityReportFile,
+            as: 'reportFiles',
+            required: true,
+            where: { activityReportId: report.dataValues.id },
+          },
+        ],
+      });
 
-    const objectiveFiles = await File.findAll({
-      include: [
-        {
-          model: ObjectiveFile,
-          as: 'objectiveFiles',
-          required: true,
-          where: { objectiveId: objective.dataValues.id },
-        },
-      ],
-    });
+      const objectiveFiles = await File.findAll({
+        include: [
+          {
+            model: ObjectiveFile,
+            as: 'objectiveFiles',
+            required: true,
+            where: { objectiveId: objective.dataValues.id },
+          },
+        ],
+      });
 
-    await Promise.all(files.map(async (file) => {
-      ActivityReportFile.destroy({ where: { fileId: file.id } });
-      File.destroy({ where: { id: file.id } });
-    }));
+      await Promise.all(files.map(async (file) => {
+        ActivityReportFile.destroy({ where: { fileId: file.id } });
+        File.destroy({ where: { id: file.id } });
+      }));
 
-    await Promise.all(objectiveFiles.map(async (objFile) => {
-      ObjectiveFile.destroy({ where: { fileId: objFile.id } });
-      File.destroy({ where: { id: objFile.id } });
-    }));
+      await Promise.all(objectiveFiles.map(async (objFile) => {
+        ObjectiveFile.destroy({ where: { fileId: objFile.id } });
+        File.destroy({ where: { id: objFile.id } });
+      }));
 
-    await File.destroy({ where: { id: lonelyFile.id } });
+      // cleanup any leftovers, like from the lonely file test
+      const testFiles = await File.findAll({ where: { originalFileName: 'testfile.pdf' } });
+      await Promise.all(
+        [
+          ObjectiveFile.destroy({
+            where: {
+              fileId: testFiles.map((file) => file.id),
+            },
+          }),
+          ActivityReportFile.destroy({
+            where: {
+              fileId: testFiles.map((file) => file.id),
+            },
+          }),
+        ],
+      );
+      await File.destroy({ where: { originalFileName: 'testfile.pdf' } });
 
-    await ActivityReport.destroy({ where: { id: report.dataValues.id } });
-    await Objective.destroy({ where: { id: objective.dataValues.id } });
-    await Goal.destroy({ where: { id: goal.id } });
-    await Grant.destroy({ where: { id: grant.id } });
-    await Recipient.destroy({ where: { id: recipient.id } });
-    await User.destroy({ where: { id: user.id } });
-    process.env = ORIGINAL_ENV; // restore original env
-    await db.sequelize.close();
+      await ActivityReport.destroy({ where: { id: report.dataValues.id } });
+      await Objective.destroy({ where: { id: objective.dataValues.id } });
+      await Goal.destroy({ where: { id: goal.id } });
+      await Grant.destroy({ where: { id: grant.id } });
+      await Recipient.destroy({ where: { id: recipient.id } });
+      await User.destroy({ where: { id: user.id } });
+      process.env = ORIGINAL_ENV; // restore original env
+      await db.sequelize.close();
+    } catch (err) {
+      console.log(err);
+    }
   });
   beforeEach(() => {
     jest.clearAllMocks();
@@ -286,12 +307,15 @@ describe('File Upload', () => {
       fileId = response.body.id;
       expect(uploadFile).toHaveBeenCalled();
       expect(mockAddToScanQueue).toHaveBeenCalled();
-      expect(lonelyFile).toBeNull();
-      lonelyFile = await File.findOne({ where: { id: fileId } });
-      expect(lonelyFile).not.toBeNull();
-      expect(lonelyFile.dataValues.id).toBe(fileId);
-      expect(lonelyFile.dataValues.status).not.toBe(null);
-      expect(lonelyFile.dataValues.originalFileName).toBe('testfile.pdf');
+
+      await waitFor(async () => {
+        const lonelyFile = await File.findByPk(fileId);
+
+        expect(lonelyFile).not.toBeNull();
+        expect(lonelyFile.dataValues.id).toBe(fileId);
+        expect(lonelyFile.dataValues.status).not.toBe(null);
+        expect(lonelyFile.dataValues.originalFileName).toBe('testfile.pdf');
+      });
     });
 
     it('allows an admin to upload a objective file', async () => {
