@@ -102,68 +102,64 @@ describe('File Upload', () => {
     process.env.CURRENT_USER_ID = '2046';
   });
   afterAll(async () => {
-    try {
-      const files = await File.findAll({
-        include: [
-          {
-            model: ActivityReportFile,
-            as: 'reportFiles',
-            required: true,
-            where: { activityReportId: report.dataValues.id },
+    const files = await File.findAll({
+      include: [
+        {
+          model: ActivityReportFile,
+          as: 'reportFiles',
+          required: true,
+          where: { activityReportId: report.dataValues.id },
+        },
+      ],
+    });
+
+    const objectiveFiles = await File.findAll({
+      include: [
+        {
+          model: ObjectiveFile,
+          as: 'objectiveFiles',
+          required: true,
+          where: { objectiveId: objective.dataValues.id },
+        },
+      ],
+    });
+
+    await Promise.all(files.map(async (file) => {
+      ActivityReportFile.destroy({ where: { fileId: file.id } });
+      File.destroy({ where: { id: file.id } });
+    }));
+
+    await Promise.all(objectiveFiles.map(async (objFile) => {
+      ObjectiveFile.destroy({ where: { fileId: objFile.id } });
+      File.destroy({ where: { id: objFile.id } });
+    }));
+
+    // cleanup any leftovers, like from the lonely file test
+    const testFiles = await File.findAll({ where: { originalFileName: 'testfile.pdf' } });
+    await Promise.all(
+      [
+        ObjectiveFile.destroy({
+          where: {
+            fileId: testFiles.map((file) => file.id),
           },
-        ],
-      });
-
-      const objectiveFiles = await File.findAll({
-        include: [
-          {
-            model: ObjectiveFile,
-            as: 'objectiveFiles',
-            required: true,
-            where: { objectiveId: objective.dataValues.id },
+        }),
+        ActivityReportFile.destroy({
+          where: {
+            fileId: testFiles.map((file) => file.id),
           },
-        ],
-      });
+        }),
+      ],
+    );
+    await File.destroy({ where: { originalFileName: 'testfile.pdf' } });
 
-      await Promise.all(files.map(async (file) => {
-        ActivityReportFile.destroy({ where: { fileId: file.id } });
-        File.destroy({ where: { id: file.id } });
-      }));
-
-      await Promise.all(objectiveFiles.map(async (objFile) => {
-        ObjectiveFile.destroy({ where: { fileId: objFile.id } });
-        File.destroy({ where: { id: objFile.id } });
-      }));
-
-      // cleanup any leftovers, like from the lonely file test
-      const testFiles = await File.findAll({ where: { originalFileName: 'testfile.pdf' } });
-      await Promise.all(
-        [
-          ObjectiveFile.destroy({
-            where: {
-              fileId: testFiles.map((file) => file.id),
-            },
-          }),
-          ActivityReportFile.destroy({
-            where: {
-              fileId: testFiles.map((file) => file.id),
-            },
-          }),
-        ],
-      );
-      await File.destroy({ where: { originalFileName: 'testfile.pdf' } });
-
-      await ActivityReport.destroy({ where: { id: report.dataValues.id } });
-      await Objective.destroy({ where: { id: objective.dataValues.id } });
-      await Goal.destroy({ where: { id: goal.id } });
-      await Grant.destroy({ where: { id: grant.id } });
-      await Recipient.destroy({ where: { id: recipient.id } });
-      await User.destroy({ where: { id: user.id } });
-      process.env = ORIGINAL_ENV; // restore original env
-      await db.sequelize.close();
-    } catch (err) {
-      console.log(err);
-    }
+    await ActivityReport.destroy({ where: { id: report.dataValues.id } });
+    await Objective.destroy({ where: { id: objective.dataValues.id } });
+    await Goal.destroy({ where: { id: goal.id } });
+    await Grant.destroy({ where: { id: grant.id } });
+    await Recipient.destroy({ where: { id: recipient.id } });
+    await User.destroy({ where: { id: user.id } });
+    process.env = ORIGINAL_ENV; // restore original env
+    await db.sequelize.close();
   });
   beforeEach(() => {
     jest.clearAllMocks();
