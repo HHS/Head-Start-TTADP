@@ -54,10 +54,13 @@ export const validateVerificationToken = async (userId, token, type) => {
     throw new Error('Invalid token pair');
   }
 
+<<<<<<< HEAD
   if (pair.validatedAt) {
     throw new Error('Token already validated');
   }
 
+=======
+>>>>>>> 495c61ac (Add token service.)
   const secret = process.env.JWT_SECRET;
   const payload = jwt.verify(token, secret);
 
@@ -69,8 +72,11 @@ export const validateVerificationToken = async (userId, token, type) => {
     throw new Error('Invalid type');
   }
 
+<<<<<<< HEAD
   pair.set('validatedAt', new Date());
   await pair.save();
 
+=======
+>>>>>>> 495c61ac (Add token service.)
   return payload;
 };
