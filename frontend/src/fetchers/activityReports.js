@@ -6,6 +6,7 @@ import { DECIMAL_BASE, REPORTS_PER_PAGE, ALERTS_PER_PAGE } from '../Constants';
 
 const activityReportUrl = join('/', 'api', 'activity-reports');
 const activityReportAlertUrl = join('/', 'api', 'activity-reports', 'alerts');
+const activityReportsLocalStorageCleanupUrl = join('/', 'api', 'activity-reports', 'storage-cleanup');
 
 export const legacyReportById = async (legacyId) => {
   const res = await get(join(activityReportUrl, 'legacy', legacyId));
@@ -64,6 +65,11 @@ export const getReports = async (sortBy = 'updatedAt', sortDir = 'desc', offset 
     rows,
     count,
   };
+};
+
+export const getReportsForLocalStorageCleanup = async () => {
+  const reports = await get(activityReportsLocalStorageCleanupUrl);
+  return reports.json();
 };
 
 export const getReportAlerts = async (sortBy = 'startDate', sortDir = 'asc', offset = 0, limit = ALERTS_PER_PAGE, filters) => {

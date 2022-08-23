@@ -18,7 +18,7 @@ export default function PrintGoals({ location, recipientId, regionId }) {
       ? location.state.selectedGoals
       : [];
 
-    async function fetchGoals() {
+    async function fetchGoals(query) {
       setLoading(true);
       try {
         const { goalRows } = await getRecipientGoals(
@@ -28,7 +28,7 @@ export default function PrintGoals({ location, recipientId, regionId }) {
           sortConfig.direction,
           OFFSET,
           false,
-          '',
+          query,
         );
         setGoals(goalRows);
         setError('');
@@ -40,8 +40,9 @@ export default function PrintGoals({ location, recipientId, regionId }) {
       setLoading(false);
     }
 
-    fetchGoals();
-  }, [location.state, recipientId, regionId]);
+    const filterQuery = window.location.search.replace(/^\?/, '');
+    fetchGoals(filterQuery);
+  }, [location.state, location.search, recipientId, regionId]);
 
   if (loading) {
     return 'Loading...';
