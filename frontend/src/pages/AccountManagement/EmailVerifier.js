@@ -13,6 +13,10 @@ export default function EmailVerifier({ updateUser }) {
   const [verified, setVerified] = useState(null);
 
   useEffect(() => {
+    if (verified) {
+      return;
+    }
+
     verifyEmailToken(token)
       .then(() => {
         setVerified(true);
@@ -33,7 +37,7 @@ export default function EmailVerifier({ updateUser }) {
         updateUser(newUser);
       })
       .catch(() => setVerified(false));
-  }, [token, updateUser, user]);
+  }, [token, updateUser, user, verified]);
 
   return (
     <>
