@@ -137,7 +137,7 @@ function EmailPreferencesForm({ disabled }) {
   };
 
   return (
-    <Form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 'unset' }}>
+    <Form disabled={disabled} onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 'unset' }}>
       <Fieldset>
         <Radio
           id="allImmediately"
