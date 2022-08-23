@@ -43,6 +43,10 @@ export const validateVerificationToken = async (userId, token, type) => {
     throw new Error('Invalid token pair');
   }
 
+  if (pair.validatedAt) {
+    throw new Error('Token already validated');
+  }
+
   const secret = process.env.JWT_SECRET;
   const payload = jwt.verify(token, secret);
 
