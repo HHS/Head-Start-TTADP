@@ -19,6 +19,7 @@ import {
   getDownloadableActivityReportsByIds,
   getAllDownloadableActivityReportAlerts,
   getAllDownloadableActivityReports,
+  activityReportsForCleanup,
 } from '../../services/activityReports';
 import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
 import { goalsForGrants } from '../../services/goals';
@@ -553,6 +554,23 @@ export async function getReportAlerts(req, res) {
       alerts: alertsWithCount.rows,
       recipients: alertsWithCount.recipients,
     });
+  }
+}
+
+/**
+ * Retrieve activity report alerts
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function getReportsForLocalStorageCleanup(req, res) {
+  const { userId } = req.session;
+  const reportsToCleanup = await activityReportsForCleanup(userId);
+
+  if (!reportsToCleanup) {
+    res.sendStatus(404);
+  } else {
+    res.json(reportsToCleanup);
   }
 }
 

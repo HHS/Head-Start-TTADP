@@ -316,13 +316,15 @@ const ActivitySummary = ({
                   name="duration"
                   type="number"
                   min={0}
+                  max={99.5}
                   step={0.5}
                   inputRef={
                     register({
                       required: 'Enter duration',
                       valueAsNumber: true,
                       pattern: { value: /^\d+(\.[0,5]{1})?$/, message: 'Duration must be rounded to the nearest half hour' },
-                      min: { value: 0, message: 'Duration can not be negative' },
+                      min: { value: 0.5, message: 'Duration must be greater than 0 hours' },
+                      max: { value: 99, message: 'Duration must be less than or equal to 99 hours' },
                     })
                   }
                 />
