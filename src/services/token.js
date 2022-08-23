@@ -54,5 +54,8 @@ export const validateVerificationToken = async (userId, token, type) => {
     throw new Error('Invalid type');
   }
 
+  pair.set('validatedAt', new Date());
+  await pair.save();
+
   return payload;
 };
