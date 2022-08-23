@@ -46,7 +46,7 @@ export const userSettingsById = async (userId) => UserSetting.findAll({
  * @param {number} userId
  * @returns {Promise<void>}
  */
-export const userEmailSettingsById = async (userId) => UserSetting.findAll({
+const userEmailSettingsById = async (userId) => UserSetting.findAll({
   where: {
     userId: { [Op.eq]: userId },
     key: { [Op.in]: Object.values(USER_SETTINGS.EMAIL.KEYS) },
