@@ -1,6 +1,8 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import {
+  Alert,
   Button,
   Dropdown,
   Fieldset,
@@ -19,6 +21,7 @@ import {
   updateSettings,
   getEmailSettings,
 } from '../../fetchers/settings';
+import { requestVerificationEmail } from '../../fetchers/users';
 
 const emailPreferenceErrorMessage = 'Please select a frequency preference';
 
@@ -101,7 +104,7 @@ function CustomizeEmailPreferencesForm() {
   );
 }
 
-function EmailPreferencesForm() {
+function EmailPreferencesForm({ disabled }) {
   const {
     register,
     handleSubmit,
@@ -128,10 +131,11 @@ function EmailPreferencesForm() {
   };
 
   return (
-    <Form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 'unset' }}>
+    <Form disabled={disabled} onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 'unset' }}>
       <Fieldset>
         <Radio
           id="allImmediately"
+          disabled={disabled}
           name="emailPreference"
           value="subscribe"
           label="Send me all TTA Hub related emails immediately"
@@ -140,6 +144,7 @@ function EmailPreferencesForm() {
         />
         <Radio
           id="customized"
+          disabled={disabled}
           name="emailPreference"
           value="customized"
           label="Let me customize the emails I want"
@@ -154,6 +159,7 @@ function EmailPreferencesForm() {
         </div>
         <Radio
           id="unsubscribe"
+          disabled={disabled}
           name="emailPreference"
           value="unsubscribe"
           label="Unsubscribe me from all TTA Hub emails"
@@ -162,13 +168,17 @@ function EmailPreferencesForm() {
         />
         <p className="usa-error-message">{errors.emailPreference && errors.emailPreference.message}</p>
       </Fieldset>
-      <Button type="submit">Save Preferences</Button>
-      <Button type="reset" outline>
+      <Button disabled={disabled} type="submit">Save Preferences</Button>
+      <Button disabled={disabled} type="reset" outline>
         Cancel
       </Button>
     </Form>
   );
 }
+
+EmailPreferencesForm.propTypes = {
+  disabled: PropTypes.bool.isRequired,
+};
 
 function AccountManagement() {
   const { user } = useContext(UserContext);
@@ -198,6 +208,18 @@ function AccountManagement() {
       })
       .catch(() => {});
   }, [setValue]);
+  const [emailValidated, setEmailValidated] = useState(null);
+  const [emailVerificationSent, setEmailVerificationSent] = useState(false);
+
+  useEffect(() => {
+    const emailValidationStatus = user.validationStatus.find(({ type }) => type === 'email');
+    if (emailValidationStatus && emailValidationStatus.validatedAt) {
+      setEmailValidated(true);
+      return;
+    }
+
+    setEmailValidated(false);
+  }, [user.validationStatus]);
 
   const lastLoginFormatted = new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
@@ -206,6 +228,20 @@ function AccountManagement() {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(user.lastLogin));
+
+  const sendVerificationEmail = () => {
+    requestVerificationEmail()
+      .then(() => {
+        setEmailVerificationSent(true);
+      })
+      .catch((error) => {
+        console.error('Error sending verification email', error);
+      });
+  };
+
+  const asdf = () => {
+    setEmailVerificationSent(false);
+  };
 
   return (
     <>
@@ -237,13 +273,49 @@ function AccountManagement() {
       {/* Email preferences box */}
       <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
         <h1 className="margin-bottom-1">Email preferences</h1>
+
+        {!emailValidated && !emailVerificationSent && (
+          <Alert
+            role="alert"
+            className="margin-top-4 margin-bottom-4"
+            type="info"
+            heading="Please verify your email address"
+            headingLevel="h4"
+          >
+            Before you can receive TTA Hub emails, you must verify your email address.
+            Please check your email for a verificaiton link.
+            <Button className="display-block margin-top-3" onClick={sendVerificationEmail}>Resend verification email</Button>
+          </Alert>
+        )}
+
+        {!emailValidated && emailVerificationSent && (
+          <Alert
+            role="alert"
+            className="margin-top-4 margin-bottom-4"
+            type="info"
+            heading="Please check your email"
+            headingLevel="h4"
+          >
+            An email should be delivered to your inbox
+            shortly with a link to verify your email address.
+            <Button
+              outline
+              className="display-block margin-top-3"
+              onClick={asdf}
+            >
+              I have not received an email yet
+            </Button>
+          </Alert>
+        )}
+
+        {/* <FormProvider {...emailPrefsFormContext}> */}
         <FormProvider
-          register={register}
-          handleSubmit={handleSubmit}
-          watch={watch}
-          formState={formState}
+          register={emailPrefsFormContext.register}
+          handleSubmit={emailPrefsFormContext.handleSubmit}
+          watch={emailPrefsFormContext.watch}
+          formState={emailPrefsFormContext.formState}
         >
-          <EmailPreferencesForm />
+          <EmailPreferencesForm disabled={!emailValidated} />
         </FormProvider>
       </div>
     </>

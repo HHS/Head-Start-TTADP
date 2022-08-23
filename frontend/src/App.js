@@ -39,6 +39,7 @@ import {
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
   LOCAL_STORAGE_EDITABLE_KEY,
 } from './Constants';
+import EmailVerifier from './pages/AccountManagement/EmailVerifier';
 
 function App() {
   const [user, updateUser] = useState();
@@ -176,6 +177,19 @@ function App() {
           path="/account"
           render={() => (
             <AppWrapper authenticated logout={logout}><AccountManagement user={user} /></AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/account/verify-email/:token"
+          render={() => (
+            <AppWrapper
+              authenticated
+              logout={logout}
+            >
+              {/* EmailVerifier needs updateUser because validationStatus is stored in context. */}
+              <EmailVerifier user={user} updateUser={updateUser} />
+            </AppWrapper>
           )}
         />
         {admin && (
