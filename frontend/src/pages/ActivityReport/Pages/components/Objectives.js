@@ -30,6 +30,7 @@ export default function Objectives({
     remove,
   } = useFieldArray({
     name: fieldArrayName,
+    keyName: 'key', // because 'id' is the default key switch it to use 'key'.
     defaultValues,
   });
 
