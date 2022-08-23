@@ -1,12 +1,13 @@
 import express from 'express';
 import {
-  User, Permission, sequelize,
+  User, Permission, sequelize, UserSetting,
 } from '../../models';
 import { featureFlags } from '../../models/user';
 import { userById, userAttributes } from '../../services/users';
 import handleErrors from '../../lib/apiErrorHandler';
 import { auditLogger } from '../../logger';
 import transactionWrapper from '../transactionWrapper';
+import { USER_SETTINGS } from '../../constants';
 
 const namespace = 'SERVICE:USER';
 
@@ -66,6 +67,18 @@ export async function createUser(req, res) {
         include: [{ model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] }],
       },
     );
+
+    // Create user settings for the user.
+    const now = new Date();
+    const defaultSettings = Object.values(USER_SETTINGS.EMAIL.KEYS).map((key) => ({
+      userId: user.id,
+      key,
+      value: USER_SETTINGS.EMAIL.VALUES.NEVER,
+      createdAt: now,
+      updatedAt: now,
+    }));
+    await UserSetting.bulkCreate(defaultSettings);
+
     auditLogger.info(`User ${req.session.userId} created new User: ${user.id}`);
     res.json(user);
   } catch (error) {
@@ -114,6 +127,10 @@ export async function deleteUser(req, res) {
   try {
     await sequelize.transaction(async (transaction) => {
       const result = await User.destroy({ where: { id: userId }, transaction });
+
+      // Remove any settings related to this user.
+      await UserSetting.destroy({ where: { userId }, transaction });
+
       res.json(result);
     });
   } catch (error) {
