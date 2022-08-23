@@ -11,6 +11,7 @@ import { UserValidationStatus } from '../models';
  * stored in the payload to be verified later
  * @returns {string} - token
  */
+
 export const createAndStoreVerificationToken = async (userId, type) => {
   const secret = process.env.JWT_SECRET;
   const payload = { userId, type };
