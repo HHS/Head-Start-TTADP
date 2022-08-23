@@ -82,7 +82,6 @@ function CustomizeEmailPreferencesForm() {
                 name={keyName}
                 inputRef={register({ required: frequencyErrorMessage })}
               >
-                <option value="">- Select -</option>
                 {frequencyMap.map(({ key, label }) => (
                   <option key={key} value={key}>
                     {label}
