@@ -155,25 +155,27 @@ export const GOAL_STATUS = {
 };
 
 /**
- * e.g.
+ * Stored in `UserSettings` table, e.g.:
  * userId: 111, key: 'reportSubmittedForReview', value: 'immediately',
  */
-export const EMAIL_TYPE_KEYS = [
-  // Receive an email when an activity report is submitted for your approval.
-  'emailWhenReportSubmittedForReview',
-  // Receive an email when an activity report you created or are a collaborator on needs an action.
-  'emailWhenChangeRequested',
-  // Receive an email when an activity report you created or are a collaborator on is approved.
-  'emailWhenReportApproval',
-  // Receive an email when you are added as a collaborator to an activity report.
-  'emailWhenAppointedCollaborator',
-];
-
-// Each of the above email type keys can be of any of the following values.
-export const EMAIL_TYPE_VALUES = {
-  NEVER: 'never',
-  IMMEDIATELY: 'immediately',
-  DAILY_DIGEST: 'dailyDigest',
-  WEEKLY_DIGEST: 'weeklyDigest',
-  MONTHLY_DIGEST: 'monthlyDigest',
+export const USER_SETTINGS = {
+  EMAIL: {
+    KEYS: {
+      // Email you when an activity report is submitted for your approval.
+      SUBMITTED_FOR_REVIEW: 'emailWhenReportSubmittedForReview',
+      // Email you when an activity report you created or are a collaborator on needs an action.
+      CHANGE_REQUESTED: 'emailWhenChangeRequested',
+      // Email you when an activity report you created or are a collaborator on is approved.
+      APPROVAL: 'emailWhenReportApproval',
+      // Email you when you are added as a collaborator to an activity report.
+      COLLABORATOR_ADDED: 'emailWhenAppointedCollaborator',
+    },
+    VALUES: {
+      NEVER: 'never',
+      IMMEDIATELY: 'immediately',
+      DAILY_DIGEST: 'dailyDigest',
+      WEEKLY_DIGEST: 'weeklyDigest',
+      MONTHLY_DIGEST: 'monthlyDigest',
+    },
+  },
 };
