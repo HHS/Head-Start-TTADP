@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { EMAIL_TYPE_KEYS, EMAIL_TYPE_VALUES } from '../constants';
+import { USER_SETTINGS } from '../constants';
 import { UserSetting } from '../models';
 
 /**
@@ -49,7 +49,7 @@ export const userSettingsById = async (userId) => UserSetting.findAll({
 export const userEmailSettingsById = async (userId) => UserSetting.findAll({
   where: {
     userId: { [Op.eq]: userId },
-    key: { [Op.in]: EMAIL_TYPE_KEYS },
+    key: { [Op.in]: Object.values(USER_SETTINGS.EMAIL.KEYS) },
   },
 });
 
@@ -61,7 +61,7 @@ export const unsubscribeAll = async (userId) => {
   const settings = await userEmailSettingsById(userId);
 
   return Promise.all(
-    settings.map((setting) => saveSetting(setting, EMAIL_TYPE_VALUES.NEVER)),
+    settings.map((setting) => saveSetting(setting, USER_SETTINGS.EMAIL.VALUES.NEVER)),
   );
 };
 
@@ -73,6 +73,6 @@ export const subscribeAll = async (userId) => {
   const settings = await userEmailSettingsById(userId);
 
   return Promise.all(
-    settings.map((setting) => saveSetting(setting, EMAIL_TYPE_VALUES.IMMEDIATELY)),
+    settings.map((setting) => saveSetting(setting, USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY)),
   );
 };
