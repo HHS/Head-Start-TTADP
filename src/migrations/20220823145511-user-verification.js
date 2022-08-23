@@ -16,7 +16,7 @@ module.exports = {
         },
         // 'email', 'phone', etc.
         type: { allowNull: false, type: Sequelize.STRING },
-        token: { allowNull: false, type: Sequelize.STRING },
+        token: { allowNull: true, type: Sequelize.STRING },
         validatedAt: { allowNull: true, type: Sequelize.DATE },
         createdAt: { allowNull: false, type: Sequelize.DATE },
         updatedAt: { allowNull: false, type: Sequelize.DATE },
