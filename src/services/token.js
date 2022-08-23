@@ -11,14 +11,25 @@ import { UserValidationStatus } from '../models';
  * stored in the payload to be verified later
  * @returns {string} - token
  */
-export const createAndStoreVerificationToken = (userId, type) => {
+export const createAndStoreVerificationToken = async (userId, type) => {
   const secret = process.env.JWT_SECRET;
   const payload = { userId, type };
   const options = { expiresIn: '7d' };
   const token = jwt.sign(payload, secret, options);
 
-  UserValidationStatus.create({ userId, token, type });
+  const row = await UserValidationStatus.findOne({ where: { userId, type } });
 
+  if (row) {
+    row.set('token', token);
+    // If we're creating a new verification token, we likely also
+    // want to ensure that the current validation status is null.
+    row.set('validatedAt', null);
+    row.save();
+
+    return token;
+  }
+
+  await UserValidationStatus.create({ userId, token, type });
   return token;
 };
 
