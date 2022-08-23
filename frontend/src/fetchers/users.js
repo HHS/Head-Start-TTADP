@@ -1,8 +1,16 @@
 /* eslint-disable import/prefer-default-export */
 import join from 'url-join';
-import { get } from './index';
+import { get, post } from './index';
 
 export const getStateCodes = async () => {
   const res = await get(join('/', 'api', 'users', 'stateCodes'));
   return res.json();
+};
+
+export const requestVerificationEmail = async () => {
+  await post(join('/', 'api', 'users', 'send-verification-email'));
+};
+
+export const verifyEmailToken = async (token) => {
+  await post(join('/', 'api', 'users', 'verify-email', token));
 };
