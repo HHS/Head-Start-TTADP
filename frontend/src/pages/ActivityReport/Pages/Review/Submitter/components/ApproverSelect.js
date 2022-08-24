@@ -54,15 +54,6 @@ const styles = {
   }),
 };
 
-// name="approvers"
-// valueProperty="User.id"
-// labelProperty="User.fullName"
-// simple={false}
-// control={control}
-// options={availableApprovers.map((a) => ({ value: a.id, label: a.name }))}
-// inputRef={register({
-//    required: 'At least one manager must be assigned to the report before submitting' })}
-
 function ApproverSelect({
   name,
   options,
@@ -132,7 +123,7 @@ function ApproverSelect({
     <Select
       onBlur={onBlurSelect}
       className="ttahub-multi-select margin-top-1"
-      id={name}
+      id={`${name}-container`}
       value={getValues(selectValue)}
       onChange={onChange}
       inputId={name}
