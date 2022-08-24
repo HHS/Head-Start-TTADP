@@ -31,6 +31,7 @@ import RecipientRecord from './pages/RecipientRecord';
 import RecipientSearch from './pages/RecipientSearch';
 import AppWrapper from './components/AppWrapper';
 import AccountManagement from './pages/AccountManagement';
+import EmailVerifier from './pages/AccountManagement/EmailVerifier';
 
 import { getReportsForLocalStorageCleanup } from './fetchers/activityReports';
 import { storageAvailable } from './hooks/helpers';
@@ -176,6 +177,19 @@ function App() {
           path="/account"
           render={() => (
             <AppWrapper authenticated logout={logout}><AccountManagement user={user} /></AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/account/verify-email/:token"
+          render={() => (
+            <AppWrapper
+              authenticated
+              logout={logout}
+            >
+              {/* EmailVerifier needs updateUser because validationStatus is stored in context. */}
+              <EmailVerifier user={user} updateUser={updateUser} />
+            </AppWrapper>
           )}
         />
         {admin && (
