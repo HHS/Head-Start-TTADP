@@ -11,7 +11,6 @@ const {
   ActivityReportObjectiveRole,
   ActivityReportObjectiveTopic,
 } = require('../models');
-// const { auditLogger } = require('../logger');
 
 const cacheFiles = async (objectiveId, activityReportObjectiveId) => {
   const files = await ObjectiveFile.findAll({ where: { objectiveId } });
@@ -19,7 +18,7 @@ const cacheFiles = async (objectiveId, activityReportObjectiveId) => {
     Promise.all(files.map(async (file) => ActivityReportObjectiveFile.upsert({
       activityReportObjectiveId,
       fileId: file.fileId,
-    }))),
+    }, { returning: true }))),
     ActivityReportObjectiveFile.destroy({
       where: {
         activityReportObjectiveId,
@@ -36,7 +35,7 @@ const cacheResources = async (objectiveId, activityReportObjectiveId) => {
     Promise.all(resources.map(async (resource) => ActivityReportObjectiveResource.upsert({
       activityReportObjectiveId,
       userProvidedUrl: resource.userProvidedUrl,
-    }))),
+    }, { returning: true }))),
     ActivityReportObjectiveResource.destroy({
       where: {
         activityReportObjectiveId,
@@ -53,7 +52,7 @@ const cacheRoles = async (objectiveId, activityReportObjectiveId) => {
     Promise.all(roles.map(async (role) => ActivityReportObjectiveRole.upsert({
       activityReportObjectiveId,
       roleId: role.roleId,
-    }))),
+    }, { returning: true }))),
     ActivityReportObjectiveRole.destroy({
       where: {
         activityReportObjectiveId,
@@ -70,7 +69,7 @@ const cacheTopics = async (objectiveId, activityReportObjectiveId) => {
     Promise.all(topics.map(async (topic) => ActivityReportObjectiveTopic.upsert({
       activityReportObjectiveId,
       topicId: topic.topicId,
-    }))),
+    }, { returning: true }))),
     ActivityReportObjectiveTopic.destroy({
       where: {
         activityReportObjectiveId,
