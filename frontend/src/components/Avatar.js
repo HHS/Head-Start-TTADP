@@ -2,11 +2,14 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import './Avatar.scss';
 
-function Avatar({ name = '' }) {
+function Avatar({ name }) {
   const initial = name.charAt(0).toUpperCase();
 
   return (
-    <div className="avatar display-flex flex-align-center flex-justify-center">
+    <div
+      data-testid="avatar"
+      className="avatar display-flex flex-align-center flex-justify-center"
+    >
       {initial}
     </div>
   );
