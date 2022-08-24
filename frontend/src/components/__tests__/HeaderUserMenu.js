@@ -40,16 +40,18 @@ describe('HeaderUserMenu', () => {
       afterEach(() => fetchMock.restore());
 
       it('displays the logout button', async () => {
-        expect(await screen.findByText('Log out')).toBeVisible();
+        const logoutLink = screen.getByRole('link', { name: 'Log out' });
+        expect(logoutLink).toBeVisible();
       });
     });
 
-    describe('as admin  user', () => {
+    describe('as admin user', () => {
       beforeEach(async () => before(true));
       afterEach(() => fetchMock.restore());
 
       it('displays the admin button', async () => {
-        expect(await screen.findByText('Admin')).toBeVisible();
+        const adminLink = screen.getByRole('link', { name: 'Admin' });
+        expect(adminLink).toBeVisible();
       });
     });
 
@@ -58,8 +60,8 @@ describe('HeaderUserMenu', () => {
       afterEach(() => fetchMock.restore());
 
       it('logs the user out', async () => {
-        const logout = await screen.findByText('Log out');
-        fireEvent.click(logout);
+        const logoutLink = screen.getByRole('link', { name: 'Log out' });
+        fireEvent.click(logoutLink);
         expect(await screen.findByText('Log In with HSES')).toBeVisible();
         expect(await screen.findByText('Logout Successful')).toBeVisible();
       });
