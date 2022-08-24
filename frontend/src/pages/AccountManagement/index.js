@@ -153,7 +153,11 @@ function EmailPreferencesForm() {
   };
 
   return (
-    <Form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 'unset' }}>
+    <Form
+      className="margin-top-5"
+      onSubmit={handleSubmit(onSubmit)}
+      style={{ maxWidth: 'unset' }} // remove the 20rem default
+    >
       <Fieldset>
         <Radio
           id="allImmediately"
