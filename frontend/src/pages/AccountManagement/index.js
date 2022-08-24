@@ -1,6 +1,8 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import {
+  Alert,
   Button,
   Dropdown,
   Fieldset,
@@ -19,6 +21,7 @@ import {
   updateSettings,
   getEmailSettings,
 } from '../../fetchers/settings';
+import { requestVerificationEmail } from '../../fetchers/users';
 
 const emailPreferenceErrorMessage = 'Please select a frequency preference';
 
@@ -53,11 +56,13 @@ const emailTypesMap = [
   },
 ];
 
-function CustomizeEmailPreferencesForm() {
+function CustomizeEmailPreferencesForm({ disabled }) {
   const {
     register,
     formState: { errors },
   } = useFormContext();
+
+  if (disabled) return null;
 
   return (
     <div>
@@ -100,6 +105,10 @@ function CustomizeEmailPreferencesForm() {
     </div>
   );
 }
+
+CustomizeEmailPreferencesForm.propTypes = {
+  disabled: PropTypes.bool.isRequired,
+};
 
 function EmailPreferencesForm() {
   const {
@@ -199,6 +208,33 @@ function AccountManagement() {
       .catch(() => {});
   }, [setValue]);
 
+  const [emailValidated, setEmailValidated] = useState(null);
+  const [emailVerificationSent, setEmailVerificationSent] = useState(false);
+
+  useEffect(() => {
+    const emailValidationStatus = user.validationStatus.find(({ type }) => type === 'email');
+    if (emailValidationStatus && emailValidationStatus.validatedAt) {
+      setEmailValidated(true);
+      return;
+    }
+
+    setEmailValidated(false);
+  }, [user.validationStatus]);
+
+  const sendVerificationEmail = () => {
+    requestVerificationEmail()
+      .then(() => {
+        setEmailVerificationSent(true);
+      })
+      .catch((error) => {
+        console.error('Error sending verification email', error);
+      });
+  };
+
+  const claimNotReceived = () => {
+    setEmailVerificationSent(false);
+  };
+
   const lastLoginFormatted = new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
     month: '2-digit',
@@ -237,13 +273,49 @@ function AccountManagement() {
       {/* Email preferences box */}
       <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
         <h1 className="margin-bottom-1">Email preferences</h1>
+
+        {!emailValidated && !emailVerificationSent && (
+          <Alert
+            role="alert"
+            className="margin-top-4 margin-bottom-4"
+            type="info"
+            heading="Please verify your email address"
+            headingLevel="h4"
+          >
+            Before you can receive TTA Hub emails, you must verify your email address.
+            Please check your email for a verificaiton link.
+            <Button className="display-block margin-top-3" onClick={sendVerificationEmail}>Resend verification email</Button>
+          </Alert>
+        )}
+
+        {!emailValidated && emailVerificationSent && (
+          <Alert
+            role="alert"
+            className="margin-top-4 margin-bottom-4"
+            type="info"
+            heading="Please check your email"
+            headingLevel="h4"
+          >
+            An email should be delivered to your inbox
+            shortly with a link to verify your email address.
+            <Button
+              outline
+              className="display-block margin-top-3"
+              onClick={claimNotReceived}
+            >
+              I have not received an email yet
+            </Button>
+          </Alert>
+        )}
+
         <FormProvider
           register={register}
           handleSubmit={handleSubmit}
           watch={watch}
           formState={formState}
         >
-          <EmailPreferencesForm />
+          <EmailPreferencesForm disabled={!emailValidated} />
+
         </FormProvider>
       </div>
     </>

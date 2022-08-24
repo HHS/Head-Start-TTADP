@@ -131,6 +131,8 @@ export async function deleteUser(req, res) {
       // Remove any settings related to this user.
       await UserSetting.destroy({ where: { userId }, transaction });
 
+      // TODO: Should this user's validation statuses be removed from `UserValidationStatus`,
+      // or should we preserve it?
       res.json(result);
     });
   } catch (error) {
