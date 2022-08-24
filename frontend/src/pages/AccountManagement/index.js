@@ -246,7 +246,7 @@ function AccountManagement() {
       });
   };
 
-  const asdf = () => {
+  const claimNotReceived = () => {
     setEmailVerificationSent(false);
   };
 
@@ -308,7 +308,7 @@ function AccountManagement() {
             <Button
               outline
               className="display-block margin-top-3"
-              onClick={asdf}
+              onClick={claimNotReceived}
             >
               I have not received an email yet
             </Button>
