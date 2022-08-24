@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
       ActivityReportObjectiveResource.belongsTo(models.ActivityReportObjective, {
         foreignKey: 'activityReportObjectiveId',
         onDelete: 'cascade',
-        as: 'activityReportObjectiveResource',
+        as: 'activityReportObjective',
       });
     }
   }

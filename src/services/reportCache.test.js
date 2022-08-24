@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import {
   User,
   Recipient,
@@ -23,6 +24,7 @@ import {
   cacheObjectiveMetadata,
 } from './reportCache';
 import { REPORT_STATUSES } from '../constants';
+import { auditLogger } from '../logger';
 
 describe('reportCache', () => {
   const mockUser = {
@@ -68,7 +70,7 @@ describe('reportCache', () => {
 
   const mockGoal = {
     name: 'Goal 1',
-    id: 2080,
+    id: 2085,
     status: 'Not Started',
     timeframe: 'None',
   };
@@ -93,19 +95,19 @@ describe('reportCache', () => {
   };
 
   const mockFiles = [{
-    id: 140000,
+    id: 140001,
     originalFileName: 'test01.pdf',
     key: '508bdc9e-8dec-4d64-b83d-59a72a4f2353.pdf',
     status: 'APPROVED',
     fileSize: 54417,
   }, {
-    id: 140001,
+    id: 140002,
     originalFileName: 'test02.pdf',
     key: '508bdc9e-8dec-4d64-b83d-59a72a4f2354.pdf',
     status: 'APPROVED',
     fileSize: 54417,
   }, {
-    id: 140002,
+    id: 140003,
     originalFileName: 'test03.pdf',
     key: '508bdc9e-8dec-4d64-b83d-59a72a4f2355.pdf',
     status: 'APPROVED',
@@ -191,19 +193,37 @@ describe('reportCache', () => {
   });
 
   afterAll(async () => {
-    await Promise.all(objectiveTopics.map(async (objectiveTopic) => objectiveTopic.destroy()));
-    await Promise.all(objectiveResources.map(
-      async (objectiveResource) => objectiveResource.destroy(),
-    ));
-    await Promise.all(objectiveRoles.map(async (objectiveRole) => objectiveRole.destroy()));
-    await Promise.all(objectiveFiles.map(async (objectiveFile) => objectiveFile.destroy()));
+    await ObjectiveTopic.destroy({ where: { objectiveId: objective.id } });
+    await ObjectiveResource.destroy({ where: { objectiveId: objective.id } });
+    await ObjectiveRole.destroy({ where: { objectiveId: objective.id } });
+    await ObjectiveFile.destroy({ where: { objectiveId: objective.id } });
     await Promise.all(files.map(async (file) => file.destroy()));
     await activityRecipient.destroy();
-    await report.destroy();
-    await grant.destroy();
-    await recipient.destroy();
+    await ActivityReportGoal.destroy({ where: { goalId: goal.id } });
+    const aroFiles = await ActivityReportObjectiveFile
+      .findAll({ include: { model: ActivityReportObjective, as: 'activityReportObjective', where: { objectiveId: objective.id } } });
+    await ActivityReportObjectiveFile
+      .destroy({ where: { id: { [Op.in]: aroFiles.map((aroFile) => aroFile.id) } } });
+    const aroResources = await ActivityReportObjectiveResource
+      .findAll({ include: { model: ActivityReportObjective, as: 'activityReportObjective', where: { objectiveId: objective.id } } });
+    await ActivityReportObjectiveResource
+      .destroy({ where: { id: { [Op.in]: aroResources.map((aroResource) => aroResource.id) } } });
+    const aroRoles = await ActivityReportObjectiveRole
+      .findAll({ include: { model: ActivityReportObjective, as: 'activityReportObjective', where: { objectiveId: objective.id } } });
+    await ActivityReportObjectiveRole
+      .destroy({ where: { id: { [Op.in]: aroRoles.map((aroRole) => aroRole.id) } } });
+    const aroTopics = await ActivityReportObjectiveTopic
+      .findAll({ include: { model: ActivityReportObjective, as: 'activityReportObjective', where: { objectiveId: objective.id } } });
+    await ActivityReportObjectiveTopic
+      .destroy({ where: { id: { [Op.in]: aroTopics.map((aroTopic) => aroTopic.id) } } });
+    await ActivityReportObjective.destroy({ where: { objectiveId: objective.id } });
+    await ActivityReport.destroy({ where: { id: report.id } });
+    await Objective.destroy({ where: { id: objective.id } });
+    await Goal.destroy({ where: { id: goal.id } });
+    await Grant.destroy({ where: { id: grant.id } });
+    await Recipient.destroy({ where: { id: recipient.id } });
     await Promise.all(roles.map(async (role) => role.destroy()));
-    await user.destroy();
+    await User.destroy({ where: { id: user.id } });
   });
 
   describe('cache', () => {
