@@ -13,7 +13,7 @@ describe('UserSetting service', () => {
   });
 
   beforeEach(async () => {
-    const ids = [999, 1000];
+    const ids = [9998, 9999];
     const now = new Date();
 
     const create = () => Promise.all(ids.map(async (id) => {
@@ -42,8 +42,8 @@ describe('UserSetting service', () => {
   });
 
   afterEach(async () => {
-    await UserSetting.destroy({ where: { userId: [999, 1000] } });
-    await User.destroy({ where: { id: [999, 1000] } });
+    await UserSetting.destroy({ where: { userId: [9998, 9999] } });
+    await User.destroy({ where: { id: [9998, 9999] } });
   });
 
   describe('saveSettings', () => {
@@ -59,9 +59,9 @@ describe('UserSetting service', () => {
     ];
 
     it('saves the settings', async () => {
-      await saveSettings(999, settings);
+      await saveSettings(9998, settings);
       const found = await UserSetting.findAll({
-        where: { userId: 999, value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY },
+        where: { userId: 9998, value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY },
       });
       expect(found.length).toBe(2);
     });
@@ -69,16 +69,16 @@ describe('UserSetting service', () => {
 
   describe('userSettingsById', () => {
     it('retrieves the correct settings', async () => {
-      const settings = await userSettingsById(999);
+      const settings = await userSettingsById(9998);
       expect(settings.length).toBe(4);
     });
   });
 
   describe('subscribeAll', () => {
     it('sets all email settings to immediate frequency', async () => {
-      await subscribeAll(999);
+      await subscribeAll(9998);
       const found = await UserSetting.findAll({
-        where: { userId: 999, value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY },
+        where: { userId: 9998, value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY },
       });
       expect(found.length).toBe(4);
     });
@@ -86,9 +86,9 @@ describe('UserSetting service', () => {
 
   describe('unsubscribeAll', () => {
     it('sets all email settings to never frequency', async () => {
-      await unsubscribeAll(999);
+      await unsubscribeAll(9998);
       const found = await UserSetting.findAll({
-        where: { userId: 999, value: USER_SETTINGS.EMAIL.VALUES.NEVER },
+        where: { userId: 9998, value: USER_SETTINGS.EMAIL.VALUES.NEVER },
       });
       expect(found.length).toBe(4);
     });
