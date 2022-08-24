@@ -88,7 +88,7 @@ const Draft = ({
                   <Dropdown
                     id="creatorRole"
                     name="creatorRole"
-                    inputRef={register({ required: 'A creator role must be assigned to the report before submitting' })}
+                    inputRef={register({ required: 'Select one' })}
                   >
                     <option name="default" value="" disabled hidden>- Select -</option>
                     {completeUserRoles().map((role) => (
