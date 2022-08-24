@@ -57,7 +57,7 @@ describe('Goals DB service', () => {
       Objective.create = jest.fn().mockResolvedValue({ id: 1 });
       Objective.findOrCreate = jest.fn().mockResolvedValue([{ id: 1 }]);
       Objective.update = jest.fn().mockResolvedValue({ id: 1 });
-      Objective.findByPk = jest.fn().mockResolvedValue({ update: existingObjectiveUpdate });
+      Objective.findByPk = jest.fn().mockResolvedValue({ id: 1, update: existingObjectiveUpdate });
     });
 
     describe('with removed goals', () => {
