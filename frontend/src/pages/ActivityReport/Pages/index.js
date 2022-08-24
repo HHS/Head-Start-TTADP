@@ -37,11 +37,9 @@ const reviewPage = {
       onSaveForm,
       allPages,
       reportCreator,
-      updateShowValidationErrors,
       lastSaveTime,
     ) => (
       <ReviewSubmit
-        updateShowValidationErrors={updateShowValidationErrors}
         availableApprovers={additionalData.availableApprovers}
         onSubmit={onSubmit}
         onSaveForm={onSaveForm}

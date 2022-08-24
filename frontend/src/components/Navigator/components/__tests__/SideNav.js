@@ -2,10 +2,9 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
 import {
-  render, screen,
+  render, screen, waitFor,
 } from '@testing-library/react';
 import moment from 'moment';
-
 import SideNav from '../SideNav';
 import {
   NOT_STARTED, IN_PROGRESS, COMPLETE,
@@ -24,21 +23,28 @@ describe('SideNav', () => {
   const renderNav = (
     state,
     onNavigation = () => {},
-    current = false,
+    current = 'test',
     errorMessage = null,
     saveData = saveDataDefaults,
+    isGoalFormClosed = true,
   ) => {
     const pages = [
       {
         label: 'test',
         state,
-        current,
+        current: current === 'test',
         onNavigation,
       },
       {
         label: 'second',
         state: '',
-        current,
+        current: current === 'second',
+        onNavigation,
+      },
+      {
+        label: 'Goals and objectives',
+        current: current === 'Goals and objectives',
+        state: '',
         onNavigation,
       },
     ];
@@ -54,6 +60,7 @@ describe('SideNav', () => {
           errorMessage={errorMessage}
           lastSaveTime={lastSaveTime}
           savedToStorageTime={savedToStorageTime}
+          isGoalFormClosed={isGoalFormClosed}
         />
       </NetworkContext.Provider>,
     );
@@ -178,8 +185,44 @@ describe('SideNav', () => {
   });
 
   it('the currently selected page has the current class', () => {
-    renderNav(REPORT_STATUSES.SUBMITTED, () => {}, true);
+    renderNav(REPORT_STATUSES.SUBMITTED, () => {}, 'test');
     const submitted = screen.getByRole('button', { name: 'test Submitted' });
     expect(submitted).toHaveClass('smart-hub--navigator-link-active');
+  });
+
+  describe('the modal', () => {
+    const onNavigation = jest.fn();
+    beforeEach(async () => {
+      renderNav(REPORT_STATUSES.DRAFT, onNavigation, 'Goals and objectives', null, saveDataDefaults, false);
+      const navTo = await screen.findByText(/goals and objectives/i);
+      userEvent.click(navTo);
+    });
+
+    it('handles the close button', async () => {
+      await waitFor(() => {
+        expect(document.querySelector(('.usa-modal-wrapper.is-visible'))).toBeTruthy();
+      });
+
+      const continueWithoutSaving = await screen.findByText(/continue without saving/i);
+      userEvent.click(continueWithoutSaving);
+
+      await waitFor(() => {
+        expect(onNavigation).toHaveBeenCalled();
+      });
+    });
+
+    it('handles the stay here', async () => {
+      await waitFor(() => {
+        expect(document.querySelector(('.usa-modal-wrapper.is-visible'))).toBeTruthy();
+      });
+
+      const stayHere = await screen.findByText(/stay here/i);
+      userEvent.click(stayHere);
+
+      await waitFor(() => {
+        expect(document.querySelector(('.usa-modal-wrapper.is-visible'))).toBeFalsy();
+        expect(document.querySelector(('.usa-modal-wrapper.is-hidden'))).toBeTruthy();
+      });
+    });
   });
 });

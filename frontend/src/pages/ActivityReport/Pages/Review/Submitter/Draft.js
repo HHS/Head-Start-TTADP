@@ -7,15 +7,14 @@ import {
   Form, Fieldset, Button, Alert, Dropdown,
 } from '@trussworks/react-uswds';
 import UserContext from '../../../../../UserContext';
-
 import IncompletePages from '../IncompletePages';
 import FormItem from '../../../../../components/FormItem';
 import HookFormRichEditor from '../../../../../components/HookFormRichEditor';
-import MultiSelect from '../../../../../components/MultiSelect';
 import ApproverStatusList from '../../components/ApproverStatusList';
 import DismissingComponentWrapper from '../../../../../components/DismissingComponentWrapper';
 import NetworkContext from '../../../../../NetworkContext';
 import ConnectionError from '../../components/ConnectionError';
+import ApproverSelect from './components/ApproverSelect';
 
 const Draft = ({
   availableApprovers,
@@ -29,7 +28,7 @@ const Draft = ({
   creatorRole,
 }) => {
   const {
-    watch, handleSubmit, control, register,
+    watch, handleSubmit, register,
   } = useFormContext();
   const hasIncompletePages = incompletePages.length > 0;
   const [justSubmitted, updatedJustSubmitted] = useState(false);
@@ -125,16 +124,11 @@ const Draft = ({
             label="Approving manager"
             name="approvers"
           >
-            <MultiSelect
-              id="approvingManagerId"
+            <ApproverSelect
               name="approvers"
-              control={control}
               valueProperty="User.id"
               labelProperty="User.fullName"
-              simple={false}
-              required="At least one manager must be assigned to the report before submitting"
               options={availableApprovers.map((a) => ({ value: a.id, label: a.name }))}
-              inputRef={register({ required: true })}
             />
           </FormItem>
         </Fieldset>
