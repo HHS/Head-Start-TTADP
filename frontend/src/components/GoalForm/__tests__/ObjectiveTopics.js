@@ -37,7 +37,7 @@ describe('ObjectiveTopics', () => {
     expect(screen.getByText(/add more topics/i)).toBeVisible();
     const fastDancing = await screen.findByRole('listitem');
     expect(fastDancing).toHaveTextContent('Dancing but too fast');
-    expect(screen.getByText(/dancing but too slow/i)).toBeVisible();;
+    expect(screen.getByText(/dancing but too slow/i)).toBeVisible();
   });
 
   it('displays the correct data on approved report', async () => {
