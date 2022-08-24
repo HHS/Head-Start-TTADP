@@ -1,6 +1,7 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import {
+  Alert,
   Button,
   Dropdown,
   Fieldset,
@@ -109,7 +110,30 @@ function EmailPreferencesForm() {
     formState: { errors },
   } = useFormContext();
 
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+
   const emailPreference = watch('emailPreference');
+
+  useEffect(() => {
+    if (!saveError) return;
+    setTimeout(() => {
+      setSaveError(false);
+    }, 4000);
+  }, [saveError]);
+
+  useEffect(() => {
+    if (!saveSuccess) return;
+    setTimeout(() => {
+      setSaveSuccess(false);
+    }, 4000);
+  }, [saveSuccess]);
+
+  // Selecting a new radio button should remove the success/error message.
+  useEffect(() => {
+    setSaveSuccess(false);
+    setSaveError(false);
+  }, [emailPreference]);
 
   const onSubmit = async (formData) => {
     const newSettings = emailTypesMap.reduce((acc, { keyName }) => {
@@ -122,8 +146,9 @@ function EmailPreferencesForm() {
       if (pref === 'subscribe') await subscribe();
       else if (pref === 'unsubscribe') await unsubscribe();
       else if (pref === 'customized') await updateSettings(newSettings);
+      setSaveSuccess(true);
     } catch (error) {
-      console.error(error);
+      setSaveError(error.message ? error.message : error);
     }
   };
 
@@ -162,6 +187,16 @@ function EmailPreferencesForm() {
         />
         <p className="usa-error-message">{errors.emailPreference && errors.emailPreference.message}</p>
       </Fieldset>
+      {saveError && (
+        <Alert type="error">
+          {saveError}
+        </Alert>
+      )}
+      {saveSuccess && (
+        <Alert type="success">
+          Your email preferences have been saved.
+        </Alert>
+      )}
       <Button type="submit">Save Preferences</Button>
       <Button type="reset" outline>
         Cancel
