@@ -12,7 +12,7 @@ const createdObjective = {
   files: [{ originalFileName: 'test1.txt' },
     { originalFileName: 'test2.txt' }],
   roles: [],
-  ttaProvided: '',
+  ttaProvided: '<p>sample tta provided</p>',
   status: '',
 };
 
@@ -28,5 +28,6 @@ describe('ReadOnlyObjective', () => {
     expect(await screen.findByText('Sample Objective')).toBeVisible();
     expect(await screen.findByText('test1.txt')).toBeVisible();
     expect(await screen.findByText('test2.txt')).toBeVisible();
+    expect(await screen.findByText('sample tta provided')).toBeVisible();
   });
 });
