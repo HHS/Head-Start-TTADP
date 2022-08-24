@@ -208,6 +208,7 @@ function AccountManagement() {
       })
       .catch(() => {});
   }, [setValue]);
+
   const [emailValidated, setEmailValidated] = useState(null);
   const [emailVerificationSent, setEmailVerificationSent] = useState(false);
 
@@ -308,12 +309,11 @@ function AccountManagement() {
           </Alert>
         )}
 
-        {/* <FormProvider {...emailPrefsFormContext}> */}
         <FormProvider
-          register={emailPrefsFormContext.register}
-          handleSubmit={emailPrefsFormContext.handleSubmit}
-          watch={emailPrefsFormContext.watch}
-          formState={emailPrefsFormContext.formState}
+          register={register}
+          handleSubmit={handleSubmit}
+          watch={watch}
+          formState={formState}
         >
           <EmailPreferencesForm disabled={!emailValidated} />
         </FormProvider>
