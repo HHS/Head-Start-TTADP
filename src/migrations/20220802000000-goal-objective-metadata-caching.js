@@ -34,7 +34,7 @@ module.exports = {
 
       try {
         await queryInterface.addColumn('ActivityReportGoals', 'name', {
-          type: Sequelize.STRING,
+          type: Sequelize.TEXT,
           allowNull: true,
         }, { transaction });
 
@@ -90,7 +90,7 @@ module.exports = {
 
       try {
         await queryInterface.addColumn('ActivityReportObjectives', 'title', {
-          type: Sequelize.STRING,
+          type: Sequelize.TEXT,
           allowNull: true,
         }, { transaction });
 
