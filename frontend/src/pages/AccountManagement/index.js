@@ -110,7 +110,7 @@ CustomizeEmailPreferencesForm.propTypes = {
   disabled: PropTypes.bool.isRequired,
 };
 
-function EmailPreferencesForm() {
+function EmailPreferencesForm({ disabled }) {
   const {
     register,
     handleSubmit,
@@ -143,6 +143,7 @@ function EmailPreferencesForm() {
           id="allImmediately"
           name="emailPreference"
           value="subscribe"
+          disabled={disabled}
           label="Send me all TTA Hub related emails immediately"
           inputRef={register({ required: emailPreferenceErrorMessage })}
           className="margin-bottom-3"
@@ -151,6 +152,7 @@ function EmailPreferencesForm() {
           id="customized"
           name="emailPreference"
           value="customized"
+          disabled={disabled}
           label="Let me customize the emails I want"
           inputRef={register({ required: emailPreferenceErrorMessage })}
           className="margin-bottom-3"
@@ -159,12 +161,13 @@ function EmailPreferencesForm() {
           className="margin-bottom-3"
           style={{ display: emailPreference === 'customized' ? 'block' : 'none' }}
         >
-          <CustomizeEmailPreferencesForm />
+          <CustomizeEmailPreferencesForm disabled={disabled} />
         </div>
         <Radio
           id="unsubscribe"
           name="emailPreference"
           value="unsubscribe"
+          disabled={disabled}
           label="Unsubscribe me from all TTA Hub emails"
           inputRef={register({ required: emailPreferenceErrorMessage })}
           className="margin-bottom-3"
@@ -178,6 +181,10 @@ function EmailPreferencesForm() {
     </Form>
   );
 }
+
+EmailPreferencesForm.propTypes = {
+  disabled: PropTypes.bool.isRequired,
+};
 
 function AccountManagement() {
   const { user } = useContext(UserContext);
