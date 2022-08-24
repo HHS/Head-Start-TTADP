@@ -288,6 +288,7 @@ function AccountManagement() {
             type="info"
             heading="Please verify your email address"
             headingLevel="h4"
+            noIcon
           >
             Before you can receive TTA Hub emails, you must verify your email address.
             Please check your email for a verificaiton link.
@@ -302,6 +303,7 @@ function AccountManagement() {
             type="info"
             heading="Please check your email"
             headingLevel="h4"
+            noIcon
           >
             An email should be delivered to your inbox
             shortly with a link to verify your email address.
