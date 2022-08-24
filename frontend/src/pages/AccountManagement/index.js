@@ -56,11 +56,13 @@ const emailTypesMap = [
   },
 ];
 
-function CustomizeEmailPreferencesForm() {
+function CustomizeEmailPreferencesForm({ disabled }) {
   const {
     register,
     formState: { errors },
   } = useFormContext();
+
+  if (disabled) return null;
 
   return (
     <div>
@@ -104,6 +106,10 @@ function CustomizeEmailPreferencesForm() {
   );
 }
 
+CustomizeEmailPreferencesForm.propTypes = {
+  disabled: PropTypes.bool.isRequired,
+};
+
 function EmailPreferencesForm({ disabled }) {
   const {
     register,
@@ -131,7 +137,7 @@ function EmailPreferencesForm({ disabled }) {
   };
 
   return (
-    <Form disabled={disabled} onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 'unset' }}>
+    <Form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 'unset' }}>
       <Fieldset>
         <Radio
           id="allImmediately"
@@ -155,7 +161,7 @@ function EmailPreferencesForm({ disabled }) {
           className="margin-bottom-3"
           style={{ display: emailPreference === 'customized' ? 'block' : 'none' }}
         >
-          <CustomizeEmailPreferencesForm />
+          <CustomizeEmailPreferencesForm disabled={disabled} />
         </div>
         <Radio
           id="unsubscribe"
