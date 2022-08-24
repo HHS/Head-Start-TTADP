@@ -230,7 +230,7 @@ function App() {
         <UserContext.Provider value={{ user, authenticated, logout }}>
           <Header />
           <AriaLiveContext.Provider value={{ announce }}>
-            <SiteNav admin={admin} authenticated={authenticated} logout={logout} user={user} />
+            <SiteNav authenticated={authenticated} user={user} />
 
             {!authenticated && (authError === 403
               ? <AppWrapper><RequestPermissions /></AppWrapper>
