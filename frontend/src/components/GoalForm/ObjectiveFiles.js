@@ -19,9 +19,6 @@ export default function ObjectiveFiles({
   const [useFiles, setUseFiles] = useState(hasFiles);
   const readOnly = isOnApprovedReport || status === 'Complete' || (status === 'Not Started' && isOnReport);
 
-  console.log('\n\n\n------------------ Readonly: ', readOnly);
-  console.log('\n\n\n------------------ hasFiles: ', hasFiles);
-
   if (readOnly) {
     if (!hasFiles) {
       return null;
