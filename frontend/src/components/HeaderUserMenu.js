@@ -109,6 +109,7 @@ function HeaderUserMenu() {
       aria-label={buttonAriaLabel}
       alt={buttonAriaLabel}
       type="button"
+      data-testid="header-avatar"
       className="unstyled-btn display-flex flex-align-center flex-justify-center"
       onClick={onClick}
       ref={clickOutsideRef}
@@ -142,7 +143,7 @@ function HeaderUserMenu() {
       showApplyButton={false}
       direction="left"
     >
-      <div className="user-menu-dropdown">
+      <div className="user-menu-dropdown" data-testid="user-menu-dropdown">
         <h4 className="margin-0 display-flex flex-align-center padding-2 border-bottom border-gray-10">
           <Avatar name={user.name} />
           <span className="margin-left-2">
