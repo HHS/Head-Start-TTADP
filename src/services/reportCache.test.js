@@ -24,7 +24,6 @@ import {
   cacheObjectiveMetadata,
 } from './reportCache';
 import { REPORT_STATUSES } from '../constants';
-import { auditLogger } from '../logger';
 
 describe('reportCache', () => {
   const mockUser = {

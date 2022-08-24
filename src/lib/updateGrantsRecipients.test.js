@@ -3,7 +3,7 @@ import axios from 'axios';
 import fs from 'mz/fs';
 import updateGrantsRecipients, { processFiles } from './updateGrantsRecipients';
 import db, {
-  sequelize, Recipient, Goal, Grant, Objective, Program, ZALGrant, ActivityRecipient,
+  sequelize, Recipient, Goal, Grant, Program, ZALGrant, ActivityRecipient,
 } from '../models';
 
 jest.mock('axios');
