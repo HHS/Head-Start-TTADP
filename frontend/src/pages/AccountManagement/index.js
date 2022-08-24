@@ -315,7 +315,6 @@ function AccountManagement() {
           </Alert>
         )}
 
-        {/* <FormProvider {...emailPrefsFormContext}> */}
         <FormProvider
           register={register}
           handleSubmit={handleSubmit}
