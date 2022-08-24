@@ -11,7 +11,7 @@ const {
   ActivityReportObjectiveRole,
   ActivityReportObjectiveTopic,
 } = require('../models');
-const { auditLogger } = require('../logger');
+// const { auditLogger } = require('../logger');
 
 const cacheFiles = async (objectiveId, activityReportObjectiveId) => {
   const files = await ObjectiveFile.findAll({ where: { objectiveId } });
@@ -83,13 +83,13 @@ const cacheTopics = async (objectiveId, activityReportObjectiveId) => {
 
 const cacheObjectiveMetadata = async (objective, reportId, ttaProvided) => {
   const objectiveId = objective.id;
-  const aro = await ActivityReportObjective.findOrCreate({
+  const [aro] = await ActivityReportObjective.findOrCreate({
     where: {
       objectiveId,
       activityReportId: reportId,
     },
   });
-  const activityReportObjectiveId = aro[0].id;
+  const activityReportObjectiveId = aro.id;
   return Promise.all([
     await ActivityReportObjective.update({
       title: objective.title,
@@ -99,42 +99,34 @@ const cacheObjectiveMetadata = async (objective, reportId, ttaProvided) => {
       where: { id: activityReportObjectiveId },
       individualHooks: true,
     }),
-    cacheFiles(objectiveId, activityReportObjectiveId),
-    cacheResources(objectiveId, activityReportObjectiveId),
-    cacheRoles(objectiveId, activityReportObjectiveId),
-    cacheTopics(objectiveId, activityReportObjectiveId),
+    await cacheFiles(objectiveId, activityReportObjectiveId),
+    await cacheResources(objectiveId, activityReportObjectiveId),
+    await cacheRoles(objectiveId, activityReportObjectiveId),
+    await cacheTopics(objectiveId, activityReportObjectiveId),
   ]);
 };
 
 const cacheGoalMetadata = async (goal, reportId) => {
-  let arg;
-  try {
-    [arg] = await ActivityReportGoal.findOrCreate({
-      where: {
-        goalId: goal.id,
-        activityReportId: reportId,
-      },
-    });
-    const activityReportGoalId = arg.id;
-    return Promise.all([
-      await ActivityReportGoal.update({
-        name: goal.name,
-        status: goal.status,
-        timeframe: goal.timeframe,
-        closeSuspendReason: goal.closeSuspendReason,
-        closeSuspendContext: goal.closeSuspendContext,
-        endDate: goal.endDate,
-      }, {
-        where: { id: activityReportGoalId },
-        individualHooks: true,
-      }),
-    ]);
-  } catch (err) {
-    auditLogger.error(JSON.stringify({
-      err, goal, reportId, arg,
-    }));
-    throw err;
-  }
+  const [arg] = await ActivityReportGoal.findOrCreate({
+    where: {
+      goalId: goal.id,
+      activityReportId: reportId,
+    },
+  });
+  const activityReportGoalId = arg.id;
+  return Promise.all([
+    await ActivityReportGoal.update({
+      name: goal.name,
+      status: goal.status,
+      timeframe: goal.timeframe,
+      closeSuspendReason: goal.closeSuspendReason,
+      closeSuspendContext: goal.closeSuspendContext,
+      endDate: goal.endDate,
+    }, {
+      where: { id: activityReportGoalId },
+      individualHooks: true,
+    }),
+  ]);
 };
 
 export {
