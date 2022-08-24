@@ -79,8 +79,8 @@ const ActivitySummary = ({
     if (previousActivityRecipientType.current !== activityRecipientType
       && previousActivityRecipientType.current !== ''
       && previousActivityRecipientType.current !== null) {
-      setValue('activityRecipients', [], { shouldValidate: true });
-      setValue('participants', [], { shouldValidate: true });
+      setValue('activityRecipients', [], { shouldValidate: false });
+      setValue('participants', [], { shouldValidate: false });
       // Goals and objectives (page 3) has required fields when the recipient
       // type is recipient, so we need to make sure that page is set as "not started"
       // when recipient type is changed and we need to clear out any previously
@@ -141,6 +141,7 @@ const ActivitySummary = ({
               className="smart-hub--report-checkbox"
               inputRef={register({ required: 'Select one' })}
               required
+              // onChange={() => { console.log('firing')}}
             />
             <Radio
               id="category-other-entity"
@@ -149,6 +150,7 @@ const ActivitySummary = ({
               value="other-entity"
               className="smart-hub--report-checkbox"
               inputRef={register({ required: 'Select one' })}
+              // onChange={() => { console.log('firing')}}
             />
           </FormItem>
         </div>
@@ -278,6 +280,7 @@ const ActivitySummary = ({
                   setEndDate={setEndDate}
                   maxDate={endDate}
                   isStartDate
+                  inputId="startDate"
                 />
               </FormItem>
             </Grid>
@@ -298,6 +301,7 @@ const ActivitySummary = ({
                 <ControlledDatePicker
                   control={control}
                   name="endDate"
+                  inputId="endDate"
                   value={endDate}
                   minDate={startDate}
                   key={endDateKey}
@@ -376,7 +380,7 @@ const ActivitySummary = ({
           </FormItem>
           <div aria-live="polite">
             {isVirtual && (
-            <div className="margin-top-2 smart-hub--virtual-delivery-group">
+            <div className="margin-top-2">
               <FormItem
                 label="Please specify how the virtual event was conducted."
                 name="virtualDeliveryType"

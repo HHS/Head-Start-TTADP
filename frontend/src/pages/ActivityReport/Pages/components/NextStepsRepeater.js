@@ -85,7 +85,7 @@ export default function NextStepsRepeater({
   const validateDateOnBlur = (date, i) => {
     // Set Date Blur Validation State.
     const existingDateValidations = blurDateValidations ? [...blurDateValidations] : [];
-    const momentDate = moment(date);
+    const momentDate = moment(date, 'MM/DD/YYYY');
     existingDateValidations[i] = !date || !momentDate.isValid();
     setBlurDateValidations(existingDateValidations);
   };
@@ -105,9 +105,8 @@ export default function NextStepsRepeater({
     <>
       <div className="ttahub-next-steps-repeater">
         {fields.map((item, index) => (
-          <div key={`${stepType}-parent-div-${index + 1}`}>
+          <div key={item.key}>
             <FormGroup
-              key={`${stepType}-next-step-form-group-step-${index + 1}`}
               className="margin-top-2 margin-bottom-2"
               error={blurStepValidations[index] || (errors[name] && errors[name][index]
                 && errors[name][index].note)}
@@ -126,17 +125,14 @@ export default function NextStepsRepeater({
                 ? <ErrorMessage>Enter a next step</ErrorMessage>
                 : null}
               <div
-                key={`${stepType}-next-step-flex-step-${index + 1}`}
                 className={`display-flex ${blurStepValidations[index]
                   || (errors[name] && errors[name][index]
                     && errors[name][index].note) ? 'blank-next-step' : ''}`}
               >
                 <Textarea
-                  key={item.key}
                   id={`${stepType}-next-step-${index + 1}`}
                   className="height-10 minh-5 smart-hub--text-area__resize-vertical"
                   name={`${name}[${index}].note`}
-                  type="text"
                   defaultValue={item.note}
                   inputRef={register({ required: 'Enter a next step' })}
                   onBlur={({ target: { value } }) => validateStepOnBlur(value, index)}
@@ -163,13 +159,12 @@ export default function NextStepsRepeater({
               </div>
             </FormGroup>
             <FormGroup
-              key={`${stepType}-next-step-form-group-date-${index + 1}`}
               className="margin-top-1 margin-bottom-3"
               error={blurDateValidations[index] || (errors[name] && errors[name][index]
                 && errors[name][index].completeDate)}
             >
               <Label
-                htmlFor={`${name}[${index}].completeDate`}
+                htmlFor={`${stepType}-next-step-date-${index + 1}`}
               >
                 {`When do you anticipate completing step ${index + 1}?`}
                 <span className="smart-hub--form-required font-family-sans font-ui-xs text-secondary-dark">
@@ -183,14 +178,12 @@ export default function NextStepsRepeater({
                 ? <ErrorMessage>Enter a valid date</ErrorMessage>
                 : null}
               <div
-                key={`${stepType}-next-step-flex-date-${index + 1}`}
                 className={`${blurDateValidations[index]
                   || (errors[name] && errors[name][index]
                     && errors[name][index].completeDate) ? 'blank-next-step-date' : ''}`}
               >
                 <ControlledDatePicker
-                  key={item.key}
-                  id={`${stepType}-next-step-date-${index + 1}`}
+                  inputId={`${stepType}-next-step-date-${index + 1}`}
                   control={control}
                   name={`${name}[${index}].completeDate`}
                   value={item.completeDate}
@@ -204,27 +197,25 @@ export default function NextStepsRepeater({
         ))}
       </div>
 
-      <div className="margin-05 margin-top-1 margin-bottom-1">
-        {
-          showAddStepButton
-            ? (
-              <Button
-                type="button"
-                unstyled
-                onClick={onAddNewStep}
-                data-testid={
-                  `${name === 'specialistNextSteps'
-                    ? 'specialist' : 'recipient'}NextSteps-button`
-                }
-              >
-                <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faPlusCircle} />
-                Add next step
-              </Button>
-            )
-            : null
-
+      {
+        showAddStepButton
+          ? (
+            <Button
+              type="button"
+              unstyled
+              onClick={onAddNewStep}
+              className="ttahub-next-steps__add-step-button"
+              data-testid={
+                `${name === 'specialistNextSteps'
+                  ? 'specialist' : 'recipient'}NextSteps-button`
+              }
+            >
+              <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faPlusCircle} />
+              Add next step
+            </Button>
+          )
+          : null
         }
-      </div>
     </>
   );
 }
