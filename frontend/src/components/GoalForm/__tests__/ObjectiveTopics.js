@@ -6,7 +6,7 @@ import {
 import ObjectiveTopics from '../ObjectiveTopics';
 
 describe('ObjectiveTopics', () => {
-  const renderObjectiveTopics = () => render((
+  const renderObjectiveTopics = (isOnApprovedReport = false) => render((
     <ObjectiveTopics
       error={<></>}
       topicOptions={[]}
@@ -26,7 +26,7 @@ describe('ObjectiveTopics', () => {
       onChangeTopics={jest.fn()}
       status="In Progress"
       isOnReport={false}
-      isOnApprovedReport={false}
+      isOnApprovedReport={isOnApprovedReport}
     />
   ));
 
@@ -37,6 +37,15 @@ describe('ObjectiveTopics', () => {
     expect(screen.getByText(/add more topics/i)).toBeVisible();
     const fastDancing = await screen.findByRole('listitem');
     expect(fastDancing).toHaveTextContent('Dancing but too fast');
-    expect(screen.getByText(/dancing but too slow/i)).toBeVisible();
+    expect(screen.getByText(/dancing but too slow/i)).toBeVisible();;
+  });
+
+  it('displays the correct data on approved report', async () => {
+    renderObjectiveTopics(true);
+    const label = await screen.findByText('Topics');
+    expect(label).toBeVisible();
+
+    expect(await screen.findByText(/dancing but too slow/i)).toBeVisible();
+    expect(await screen.findByText(/dancing but too fast/i)).toBeVisible();
   });
 });
