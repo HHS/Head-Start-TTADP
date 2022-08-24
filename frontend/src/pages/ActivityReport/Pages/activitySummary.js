@@ -141,7 +141,6 @@ const ActivitySummary = ({
               className="smart-hub--report-checkbox"
               inputRef={register({ required: 'Select one' })}
               required
-              // onChange={() => { console.log('firing')}}
             />
             <Radio
               id="category-other-entity"
@@ -150,7 +149,6 @@ const ActivitySummary = ({
               value="other-entity"
               className="smart-hub--report-checkbox"
               inputRef={register({ required: 'Select one' })}
-              // onChange={() => { console.log('firing')}}
             />
           </FormItem>
         </div>

@@ -87,7 +87,7 @@ function ApproverSelect({
     name,
     rules: {
       validate: {
-        notEmpty: (value) => (value && value.length) || 'At least one manager must be assigned to the report before submitting',
+        notEmpty: (value) => (value && value.length) || 'Select at least one manager',
       },
     },
     defaultValue: null,
