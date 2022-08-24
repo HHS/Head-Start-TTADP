@@ -14,6 +14,7 @@ import {
   getAllDownloadableActivityReportAlerts,
   setStatus,
   batchQuery,
+  formatResources,
 } from './activityReports';
 import SCOPES from '../middleware/scopeConstants';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '../constants';
@@ -115,6 +116,27 @@ const submittedReport = {
   ttaType: ['type'],
 };
 
+describe('formatResources', () => {
+  it('skips empties', () => {
+    const resources = ['', 'a'];
+    const result = formatResources(resources);
+
+    expect(result).toStrictEqual(['a']);
+  });
+
+  it('handles objects with an empty value', () => {
+    const resources = ['', 'a', { value: '' }];
+    const result = formatResources(resources);
+    expect(result).toStrictEqual(['a']);
+  });
+
+  it('handles multiple types of data thrown at it', () => {
+    const resources = ['', 'a', { value: '' }, { value: 'c' }, 'b', null];
+    const result = formatResources(resources);
+    expect(result).toStrictEqual(['a', 'c', 'b']);
+  });
+});
+
 describe('Activity report service', () => {
   afterAll(async () => {
     await db.sequelize.close();
@@ -128,7 +150,7 @@ describe('Activity report service', () => {
           mockUserFive,
         ], { validate: true, individualHooks: true }),
         OtherEntity.create({ id: ALERT_RECIPIENT_ID, name: 'alert otherEntity' }),
-        Recipient.create({ name: 'alert recipient', id: ALERT_RECIPIENT_ID }),
+        Recipient.create({ name: 'alert recipient', id: ALERT_RECIPIENT_ID, uei: 'NNA5N2KHMGN2' }),
         Region.create({ name: 'office 22', id: 22 }),
       ]);
       await Grant.create({
@@ -275,7 +297,7 @@ describe('Activity report service', () => {
           alertsMockUserTwo,
         ], { validate: true, individualHooks: true }),
         OtherEntity.create({ id: RECIPIENT_ID, name: 'otherEntity' }),
-        Recipient.findOrCreate({ where: { name: 'recipient', id: RECIPIENT_ID } }),
+        Recipient.findOrCreate({ where: { name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGA2' } }),
         Region.create({ name: 'office 19', id: 19 }),
       ]);
       await Grant.create({
@@ -735,7 +757,7 @@ describe('Activity report service', () => {
       beforeAll(async () => {
         const topicsOne = ['topic d', 'topic c'];
         const topicsTwo = ['topic b', 'topic a'];
-        const firstRecipient = await Recipient.create({ id: RECIPIENT_ID_SORTING, name: 'aaaa' });
+        const firstRecipient = await Recipient.create({ id: RECIPIENT_ID_SORTING, name: 'aaaa', uei: 'NNA5N2KHMGM2' });
         firstGrant = await Grant.create({ id: RECIPIENT_ID_SORTING, number: 'anumber', recipientId: firstRecipient.id });
 
         await ActivityReport.create({

@@ -61,7 +61,7 @@ const grants = [
 
 describe('Grant DB service', () => {
   beforeAll(async () => {
-    await Recipient.create({ name: 'recipient', id: 129129 });
+    await Recipient.create({ name: 'recipient', id: 129129, uei: 'NNA5N2KHMGN2' });
     await Region.create(
       {
         id: 129129,

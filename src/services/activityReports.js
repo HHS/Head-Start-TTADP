@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import { Op } from 'sequelize';
+import moment from 'moment';
 import { REPORT_STATUSES, DECIMAL_BASE, REPORTS_PER_PAGE } from '../constants';
 import orderReportsBy from '../lib/orderReportsBy';
 import filtersToScopes from '../scopes';
@@ -595,6 +596,84 @@ export async function activityReports(
 
   return { ...reports, recipients };
 }
+
+export async function activityReportsForCleanup(userId) {
+  const threeMonthsAgo = moment().subtract(3, 'months').format('YYYY-MM-DD');
+
+  return ActivityReport.findAll(
+    {
+      where: {
+        // we only cleanup reports from the last three months
+        createdAt: { [Op.gt]: threeMonthsAgo },
+        [Op.or]: [
+          // if the report is created by a user and not in draft status, it is eligible for cleanup
+          {
+            [Op.and]: {
+              userId,
+              calculatedStatus: {
+                [Op.ne]: REPORT_STATUSES.DRAFT,
+              },
+            },
+          },
+          {
+            // if the user is an approver on the report, it is eligible for cleanup
+            '$approvers.userId$': userId,
+          },
+          {
+            // if the user is an collaborator, and the report is not in draft,
+            // it is eligible for cleanup
+            '$activityReportCollaborators->user.id$': userId,
+            calculatedStatus: {
+              [Op.ne]: REPORT_STATUSES.DRAFT,
+            },
+          },
+        ],
+      },
+      attributes: [
+        'id',
+        'calculatedStatus',
+        'userId',
+      ],
+      include: [
+        {
+          model: User,
+          attributes: ['id'],
+          as: 'author',
+        },
+        {
+          required: false,
+          model: ActivityReportCollaborator,
+          as: 'activityReportCollaborators',
+          include: [
+            {
+              model: User,
+              as: 'user',
+              attributes: ['id'],
+              duplicating: true,
+            },
+          ],
+        },
+        {
+          model: ActivityReportApprover,
+          attributes: ['id'],
+          as: 'approvers',
+          required: false,
+          include: [
+            {
+              model: User,
+              attributes: ['id'],
+            },
+          ],
+        },
+      ],
+      distinct: true,
+    },
+    {
+      subQuery: false,
+    },
+  );
+}
+
 /**
  * Retrieves alerts based on the following logic:
  * One or both of these high level conditions are true -
@@ -721,6 +800,28 @@ export async function activityReportAlerts(userId, {
   return { ...reports, recipients };
 }
 
+export function formatResources(resources) {
+  return resources.reduce((acc, resource) => {
+    // skip empties
+    if (!resource) {
+      return acc;
+    }
+
+    // if we have a value, grab it
+    if (resource.value !== undefined) {
+      if (resource.value) {
+        return [...acc, resource.value];
+      }
+      // if the above statement is not truthy, we don't want to add it to the array
+      return acc;
+    }
+
+    // otherwise, we just return the resource, under the assumption that
+    // its a string
+    return [...acc, resource];
+  }, []);
+}
+
 export async function createOrUpdate(newActivityReport, report) {
   let savedReport;
   const {
@@ -745,13 +846,11 @@ export async function createOrUpdate(newActivityReport, report) {
   const resources = {};
 
   if (ECLKCResourcesUsed) {
-    resources.ECLKCResourcesUsed = ECLKCResourcesUsed.filter((item) => item)
-      .map((item) => (item.value ? item.value : item));
+    resources.ECLKCResourcesUsed = formatResources(ECLKCResourcesUsed);
   }
 
   if (nonECLKCResourcesUsed) {
-    resources.nonECLKCResourcesUsed = nonECLKCResourcesUsed.filter((item) => item)
-      .map((item) => (item.value ? item.value : item));
+    resources.nonECLKCResourcesUsed = formatResources(nonECLKCResourcesUsed);
   }
 
   const updatedFields = { ...allFields, ...resources };
@@ -908,28 +1007,6 @@ async function getDownloadableActivityReports(where, separate = true) {
         as: 'activityRecipients',
         required: false,
         separate,
-        include: [
-          {
-            model: Grant,
-            attributes: ['id', 'number', 'programSpecialistName', 'recipientInfo', 'programTypes'],
-            as: 'grant',
-            include: [
-              {
-                model: Recipient,
-                as: 'recipient',
-              },
-              {
-                model: Program,
-                as: 'programs',
-                attributes: ['programType'],
-              },
-            ],
-          },
-          {
-            model: OtherEntity,
-            as: 'otherEntity',
-          },
-        ],
       },
       {
         model: File,
