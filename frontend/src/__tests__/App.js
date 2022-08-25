@@ -2,7 +2,7 @@ import React from 'react';
 import '@testing-library/jest-dom';
 import join from 'url-join';
 import {
-  screen, render, fireEvent,
+  screen, render,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import App from '../App';
@@ -12,30 +12,6 @@ describe('App', () => {
 
   afterEach(() => fetchMock.restore());
   const userUrl = join('api', 'user');
-  const logoutUrl = join('api', 'logout');
-  const cleanupUrl = join('api', 'activity-reports', 'storage-cleanup');
-
-  describe('when authenticated', () => {
-    beforeEach(async () => {
-      const user = { name: 'name' };
-      fetchMock.get(userUrl, { ...user });
-      fetchMock.get(logoutUrl, 200);
-      fetchMock.get(cleanupUrl, []);
-      render(<App />);
-      await screen.findByText('Activity Reports');
-    });
-
-    it('displays the logout button', async () => {
-      expect(await screen.findByText('Logout')).toBeVisible();
-    });
-
-    it('can log the user out when "logout" is pressed', async () => {
-      const logout = await screen.findByText('Logout');
-      fireEvent.click(logout);
-      expect(await screen.findByText(loginText)).toBeVisible();
-      expect(await screen.findByText('Logout Successful')).toBeVisible();
-    });
-  });
 
   describe('when unauthenticated', () => {
     it('displays the login button', async () => {
