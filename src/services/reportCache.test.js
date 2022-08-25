@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import {
+import db, {
   User,
   Recipient,
   Grant,
