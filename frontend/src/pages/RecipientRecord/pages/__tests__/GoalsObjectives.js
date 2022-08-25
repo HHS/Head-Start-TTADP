@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen, act,
+  render, screen, act, waitFor,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
@@ -204,6 +204,53 @@ describe('Goals and Objectives', () => {
     expect(await screen.findByText(/1-2 of 2/i)).toBeVisible();
   });
 
+  it('will update goals status', async () => {
+    fetchMock.restore();
+
+    const response = [{
+      id: 4598,
+      goalStatus: 'Not Started',
+      createdOn: '2021-06-15',
+      goalText: 'This is goal text 1.',
+      goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
+      objectiveCount: 5,
+      goalNumbers: ['G-4598'],
+      reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
+      objectives: [],
+    },
+    ];
+
+    const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
+    fetchMock.get(noFilterUrl, { count: 2, goalRows: response, statuses: defaultStatuses });
+
+    act(() => renderGoalsAndObjectives());
+
+    const statusMenuToggle = await screen.findByRole('button', { name: 'Change status for goal 4598' });
+    fetchMock.restore();
+    expect(fetchMock.called()).toBe(false);
+    fetchMock.put('/api/goals/changeStatus', [response[0]]);
+    userEvent.click(statusMenuToggle);
+    userEvent.click(await screen.findByRole('button', { name: /In Progress/i }));
+    expect(fetchMock.called()).toBeTruthy();
+  });
+
+  it('will sort by the column buttons', async () => {
+    act(() => renderGoalsAndObjectives());
+
+    fetchMock.restore();
+    fetchMock.get('/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=asc&offset=0&limit=10', { count: 1, goalRows: goals, statuses: defaultStatuses });
+    const sortCreatedAsc = await screen.findByRole('button', { name: /Created on. Activate to sort ascending/i });
+    userEvent.click(sortCreatedAsc);
+
+    await waitFor(() => expect(fetchMock.called()).toBeTruthy());
+
+    const sortCreatedDesc = await screen.findByRole('button', { name: /Created on. Activate to sort descending/i });
+    fetchMock.restore();
+    fetchMock.get('/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=10', { count: 1, goalRows: goals, statuses: defaultStatuses });
+    userEvent.click(sortCreatedDesc);
+    expect(fetchMock.called()).toBeTruthy();
+  });
+
   it('sorts by created on desc when new goals are created', async () => {
     // Created New Goal.
     const newGoalsUrl = '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=10';
@@ -219,5 +266,15 @@ describe('Goals and Objectives', () => {
     act(() => renderGoalsAndObjectives([1]));
     // If api request contains 3 we know it included the desired sort.
     expect(await screen.findByText(/1-3 of 3/i)).toBeVisible();
+  });
+
+  it('handles a fetch error', async () => {
+    fetchMock.restore();
+    // Created New Goal.
+    const newGoalsUrl = '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=10';
+    fetchMock.get(newGoalsUrl, 500);
+    act(() => renderGoalsAndObjectives([1]));
+
+    expect(await screen.findByText(/Unable to fetch goals/i)).toBeVisible();
   });
 });
