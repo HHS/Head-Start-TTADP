@@ -223,6 +223,7 @@ describe('reportCache', () => {
     await Recipient.destroy({ where: { id: recipient.id } });
     await Promise.all(roles.map(async (role) => role.destroy()));
     await User.destroy({ where: { id: user.id } });
+   await db.sequelize.close();
   });
 
   describe('cache', () => {
