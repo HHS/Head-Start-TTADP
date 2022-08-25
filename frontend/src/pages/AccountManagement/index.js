@@ -12,6 +12,7 @@ import {
   Radio,
 } from '@trussworks/react-uswds';
 import { useForm, FormProvider, useFormContext } from 'react-hook-form';
+import { useParams } from 'react-router';
 import Avatar from '../../components/Avatar';
 import './index.scss';
 import UserContext from '../../UserContext';
@@ -22,6 +23,7 @@ import {
   getEmailSettings,
 } from '../../fetchers/settings';
 import { requestVerificationEmail } from '../../fetchers/users';
+import EmailVerifier from './EmailVerifier';
 
 const emailPreferenceErrorMessage = 'Please select a frequency preference';
 
@@ -124,20 +126,6 @@ function EmailPreferencesForm({ disabled }) {
 
   const emailPreference = watch('emailPreference');
 
-  useEffect(() => {
-    if (!saveError) return;
-    setTimeout(() => {
-      setSaveError(false);
-    }, 4000);
-  }, [saveError]);
-
-  useEffect(() => {
-    if (!saveSuccess) return;
-    setTimeout(() => {
-      setSaveSuccess(false);
-    }, 4000);
-  }, [saveSuccess]);
-
   // Selecting a new radio button should remove the success/error message.
   useEffect(() => {
     setSaveSuccess(false);
@@ -229,8 +217,9 @@ EmailPreferencesForm.propTypes = {
   disabled: PropTypes.bool.isRequired,
 };
 
-function AccountManagement() {
+function AccountManagement({ updateUser }) {
   const { user } = useContext(UserContext);
+  const { token } = useParams();
 
   const {
     register,
@@ -260,6 +249,7 @@ function AccountManagement() {
 
   const [emailValidated, setEmailValidated] = useState(null);
   const [emailVerificationSent, setEmailVerificationSent] = useState(false);
+  const [verificationEmailSendError, setVerificationEmailSendError] = useState(false);
 
   useEffect(() => {
     const emailValidationStatus = user.validationStatus.find(({ type }) => type === 'email');
@@ -277,12 +267,8 @@ function AccountManagement() {
         setEmailVerificationSent(true);
       })
       .catch((error) => {
-        console.error('Error sending verification email', error);
+        setVerificationEmailSendError(error.message ? error.message : error);
       });
-  };
-
-  const claimNotReceived = () => {
-    setEmailVerificationSent(false);
   };
 
   const lastLoginFormatted = new Intl.DateTimeFormat('en-US', {
@@ -300,6 +286,8 @@ function AccountManagement() {
       </Helmet>
 
       <h1 className="landing">Account Management</h1>
+
+      <EmailVerifier token={token} updateUser={updateUser} />
 
       {/* Profile box */}
       <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
@@ -325,53 +313,42 @@ function AccountManagement() {
         <h1 className="margin-bottom-1">Email preferences</h1>
 
         {!emailValidated && !emailVerificationSent && (
-          <Alert
-            role="alert"
-            className="margin-top-4 margin-bottom-4"
-            type="info"
-            heading="Please verify your email address"
-            headingLevel="h4"
-            noIcon
-          >
+          <p>
             Before you can receive TTA Hub emails, you must verify your email address.
-            Please check your email for a verificaiton link.
-            <Button className="display-block margin-top-3" onClick={sendVerificationEmail}>Resend verification email</Button>
-          </Alert>
+            <Button className="display-block margin-top-3" onClick={sendVerificationEmail}>Send verification email</Button>
+          </p>
         )}
 
         {!emailValidated && emailVerificationSent && (
-          <Alert
-            role="alert"
-            className="margin-top-4 margin-bottom-4"
-            type="info"
-            heading="Please check your email"
-            headingLevel="h4"
-            noIcon
-          >
-            An email should be delivered to your inbox
-            shortly with a link to verify your email address.
-            <Button
-              outline
-              className="display-block margin-top-3"
-              onClick={claimNotReceived}
-            >
-              I have not received an email yet
-            </Button>
+          <div>
+            An email should be delivered to you shortly with a link to verify your email address.
+          </div>
+        )}
+
+        {verificationEmailSendError && (
+          <Alert type="error">
+            {verificationEmailSendError}
           </Alert>
         )}
 
-        <FormProvider
-          register={register}
-          handleSubmit={handleSubmit}
-          watch={watch}
-          formState={formState}
-        >
-          <EmailPreferencesForm disabled={!emailValidated} />
+        {emailValidated && (
+          <FormProvider
+            register={register}
+            handleSubmit={handleSubmit}
+            watch={watch}
+            formState={formState}
+          >
+            <EmailPreferencesForm disabled={!emailValidated} />
+          </FormProvider>
+        )}
 
-        </FormProvider>
       </div>
     </>
   );
 }
+
+AccountManagement.propTypes = {
+  updateUser: PropTypes.func.isRequired,
+};
 
 export default AccountManagement;
