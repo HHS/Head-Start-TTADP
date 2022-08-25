@@ -15,11 +15,11 @@ const {
 const cacheFiles = async (objectiveId, activityReportObjectiveId) => {
   const files = await ObjectiveFile.findAll({ where: { objectiveId } });
   return Promise.all([
-    Promise.all(files.map(async (file) => ActivityReportObjectiveFile.upsert({
+    await Promise.all(files.map(async (file) => ActivityReportObjectiveFile.upsert({
       activityReportObjectiveId,
       fileId: file.fileId,
     }, { returning: true }))),
-    ActivityReportObjectiveFile.destroy({
+    await ActivityReportObjectiveFile.destroy({
       where: {
         activityReportObjectiveId,
         fileId: { [Op.notIn]: files.map((file) => file.fileId) },
@@ -32,11 +32,11 @@ const cacheFiles = async (objectiveId, activityReportObjectiveId) => {
 const cacheResources = async (objectiveId, activityReportObjectiveId) => {
   const resources = await ObjectiveResource.findAll({ where: { objectiveId } });
   return Promise.all([
-    Promise.all(resources.map(async (resource) => ActivityReportObjectiveResource.upsert({
+    await Promise.all(resources.map(async (resource) => ActivityReportObjectiveResource.upsert({
       activityReportObjectiveId,
       userProvidedUrl: resource.userProvidedUrl,
     }, { returning: true }))),
-    ActivityReportObjectiveResource.destroy({
+    await ActivityReportObjectiveResource.destroy({
       where: {
         activityReportObjectiveId,
         userProvidedUrl: { [Op.notIn]: resources.map((resource) => resource.userProvidedUrl) },
@@ -49,11 +49,11 @@ const cacheResources = async (objectiveId, activityReportObjectiveId) => {
 const cacheRoles = async (objectiveId, activityReportObjectiveId) => {
   const roles = await ObjectiveRole.findAll({ where: { objectiveId } });
   return Promise.all([
-    Promise.all(roles.map(async (role) => ActivityReportObjectiveRole.upsert({
+    await Promise.all(roles.map(async (role) => ActivityReportObjectiveRole.upsert({
       activityReportObjectiveId,
       roleId: role.roleId,
     }, { returning: true }))),
-    ActivityReportObjectiveRole.destroy({
+    await ActivityReportObjectiveRole.destroy({
       where: {
         activityReportObjectiveId,
         roleId: { [Op.notIn]: roles.map((role) => role.roleId) },
@@ -66,11 +66,11 @@ const cacheRoles = async (objectiveId, activityReportObjectiveId) => {
 const cacheTopics = async (objectiveId, activityReportObjectiveId) => {
   const topics = await ObjectiveTopic.findAll({ where: { objectiveId } });
   return Promise.all([
-    Promise.all(topics.map(async (topic) => ActivityReportObjectiveTopic.upsert({
+    await Promise.all(topics.map(async (topic) => ActivityReportObjectiveTopic.upsert({
       activityReportObjectiveId,
       topicId: topic.topicId,
     }, { returning: true }))),
-    ActivityReportObjectiveTopic.destroy({
+    await ActivityReportObjectiveTopic.destroy({
       where: {
         activityReportObjectiveId,
         topicId: { [Op.notIn]: topics.map((topic) => topic.topicId) },
