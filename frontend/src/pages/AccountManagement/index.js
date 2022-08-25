@@ -70,7 +70,6 @@ function CustomizeEmailPreferencesForm() {
           </Grid>
         </Grid>
 
-        {/* Changes requested to activity report */}
         {emailTypesMap.map(({ name, description, keyName }) => (
           <Grid row key={keyName}>
             <Grid tablet={{ col: 12 }} desktop={{ col: 8 }}>
@@ -202,11 +201,11 @@ function EmailPreferencesForm() {
         </Alert>
       )}
       {saveSuccess && (
-        <Alert type="success">
+        <Alert type="success" data-testid="email-prefs-save-success-message">
           Your email preferences have been saved.
         </Alert>
       )}
-      <Button type="submit">Save Preferences</Button>
+      <Button data-testid="email-prefs-submit" type="submit">Save Preferences</Button>
       <Button type="reset" outline>
         Cancel
       </Button>
