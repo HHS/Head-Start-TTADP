@@ -85,6 +85,7 @@ function CustomizeEmailPreferencesForm() {
               <Dropdown
                 id={keyName}
                 name={keyName}
+                data-testid={`${keyName}-dropdown`}
                 inputRef={register({ required: emailPreferenceErrorMessage })}
               >
                 {frequencyMap.map(({ key, label }) => (
@@ -154,6 +155,7 @@ function EmailPreferencesForm() {
 
   return (
     <Form
+      data-testid="email-preferences-form"
       className="margin-top-5"
       onSubmit={handleSubmit(onSubmit)}
       style={{ maxWidth: 'unset' }} // remove the 20rem default
@@ -161,6 +163,7 @@ function EmailPreferencesForm() {
       <Fieldset>
         <Radio
           id="allImmediately"
+          data-testid="radio-subscribe"
           name="emailPreference"
           value="subscribe"
           label="Send me all TTA Hub related emails immediately"
@@ -169,6 +172,7 @@ function EmailPreferencesForm() {
         />
         <Radio
           id="customized"
+          data-testid="radio-customized"
           name="emailPreference"
           value="customized"
           label="Let me customize the emails I want"
@@ -183,6 +187,7 @@ function EmailPreferencesForm() {
         </div>
         <Radio
           id="unsubscribe"
+          data-testid="radio-unsubscribe"
           name="emailPreference"
           value="unsubscribe"
           label="Unsubscribe me from all TTA Hub emails"
