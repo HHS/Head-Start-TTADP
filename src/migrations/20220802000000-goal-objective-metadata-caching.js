@@ -61,7 +61,7 @@ module.exports = {
         }, { transaction });
 
         await queryInterface.addColumn('ActivityReportGoals', 'closeSuspendContext', {
-          type: Sequelize.STRING,
+          type: Sequelize.TEXT,
           allowNull: true,
         }, { transaction });
 
