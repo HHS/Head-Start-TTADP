@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
+import { MemoryRouter } from 'react-router';
 import AccountManagement from '..';
 import UserContext from '../../../UserContext';
 
@@ -10,6 +11,7 @@ describe('AccountManagement', () => {
   const normalUser = {
     name: 'user1',
     lastLogin: now,
+    validationStatus: [{ type: 'email', validatedAt: now }],
   };
 
   const keys = [
@@ -35,11 +37,13 @@ describe('AccountManagement', () => {
     const user = u || normalUser;
 
     render(
-      <UserContext.Provider value={{ user }}>
-        <AccountManagement
-          user={user}
-        />
-      </UserContext.Provider>,
+      <MemoryRouter>
+        <UserContext.Provider value={{ user }}>
+          <AccountManagement
+            updateUser={() => {}}
+          />
+        </UserContext.Provider>
+      </MemoryRouter>,
     );
   };
 
