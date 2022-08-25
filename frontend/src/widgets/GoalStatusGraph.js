@@ -104,6 +104,10 @@ export function GoalStatusChart({ data, loading }) {
     updateShowAccessibleData((current) => !current);
   }
 
+  if (!data) {
+    return null;
+  }
+
   return (
     <Container className="ttahub--goal-status-graph" padding={3} loading={loading} loadingLabel="goal statuses by number loading">
       <Grid row className="position-relative margin-bottom-1">

@@ -18,6 +18,14 @@ import { mockWindowProperty } from '../../../../testHelpers';
 const memoryHistory = createMemoryHistory();
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
 
+const defaultStatuses = {
+  total: 0,
+  'Not started': 0,
+  'In progress': 0,
+  Closed: 0,
+  Suspended: 0,
+};
+
 describe('Goals and Objectives', () => {
   const goals = [{
     id: 4598,
@@ -120,28 +128,17 @@ describe('Goals and Objectives', () => {
     fetchMock.reset();
     // Default.
     const goalsUrl = `/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&createDate.win=${yearToDate}`;
-    fetchMock.get(goalsUrl, { count: 1, goalRows: goals });
+    fetchMock.get(goalsUrl, { count: 1, goalRows: goals, statuses: defaultStatuses });
 
     // Filters Status.
     const filterStatusUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20started';
-    fetchMock.get(filterStatusUrl, { count: 1, goalRows: filterStatusGoals });
+    fetchMock.get(filterStatusUrl, {
+      count: 1, goalRows: filterStatusGoals, statuses: defaultStatuses,
+    });
 
     // No Filters.
     const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
-    fetchMock.get(noFilterUrl, { count: 2, goalRows: noFilterGoals });
-
-    const statusRes = {
-      total: 0, 'Not started': 0, 'In progress': 0, Closed: 0, Suspended: 0,
-    };
-
-    const goalStatusGraph = `/api/widgets/goalStatusGraph?createDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
-    fetchMock.get(goalStatusGraph, statusRes);
-
-    const goalStatusGraphWStatus = '/api/widgets/goalStatusGraph?status.in[]=Not%20started&region.in[]=1&recipientId.ctn[]=401';
-    fetchMock.get(goalStatusGraphWStatus, statusRes);
-
-    const goalStatusGraphUnfiltered = '/api/widgets/goalStatusGraph?region.in[]=1&recipientId.ctn[]=401';
-    fetchMock.get(goalStatusGraphUnfiltered, statusRes);
+    fetchMock.get(noFilterUrl, { count: 2, goalRows: noFilterGoals, statuses: defaultStatuses });
   });
 
   afterEach(() => {
@@ -162,7 +159,8 @@ describe('Goals and Objectives', () => {
   it('renders correctly when filter is changed', async () => {
     // Default with 2 Rows.
     const goalsUrl = `/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5&createDate.win=${yearToDate}`;
-    fetchMock.get(goalsUrl, { count: 2, goalRows: noFilterGoals }, { overwriteRoutes: true });
+    fetchMock.get(goalsUrl,
+      { count: 2, goalRows: noFilterGoals, statuses: defaultStatuses }, { overwriteRoutes: true });
 
     act(() => renderGoalsAndObjectives());
 
@@ -216,6 +214,7 @@ describe('Goals and Objectives', () => {
         { id: 2, ...goals[0] },
         { id: 3, ...goals[0] },
       ],
+      statuses: defaultStatuses,
     });
     act(() => renderGoalsAndObjectives([1]));
     // If api request contains 3 we know it included the desired sort.
