@@ -1,21 +1,18 @@
 import { Alert } from '@trussworks/react-uswds';
-import { Link } from 'react-router-dom';
 import React, { useContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Helmet } from 'react-helmet';
-import { useParams } from 'react-router';
+import { useHistory } from 'react-router';
 import { verifyEmailToken } from '../../fetchers/users';
 import UserContext from '../../UserContext';
 
-export default function EmailVerifier({ updateUser }) {
-  const { token } = useParams();
+export default function EmailVerifier({ token, updateUser }) {
   const { user } = useContext(UserContext);
   const [verified, setVerified] = useState(null);
+  const { replace } = useHistory();
 
   useEffect(() => {
-    if (verified) {
-      return;
-    }
+    if (verified) return;
+    if (!token) return;
 
     verifyEmailToken(token)
       .then(() => {
@@ -36,22 +33,19 @@ export default function EmailVerifier({ updateUser }) {
 
         updateUser(newUser);
       })
-      .catch(() => setVerified(false));
-  }, [token, updateUser, user, verified]);
+      .catch(() => {
+        setVerified(false);
+      })
+      .finally(() => {
+        replace('/account');
+      });
+  }, [token, updateUser, user, verified, replace]);
 
   return (
     <>
-      <Helmet>
-        <title>Email verification</title>
-      </Helmet>
-
-      <h1 className="landing">Email verification</h1>
-
       {verified === true && (
         <Alert type="success">
           Your email has been verified!
-          <br />
-          <Link to="/account">Go back to account management</Link>
         </Alert>
       )}
 
@@ -59,12 +53,10 @@ export default function EmailVerifier({ updateUser }) {
         <Alert type="error">
           Your email could not be verified.
           Please return to account management to request a new verification email.
-          <br />
-          <Link to="/account">Go back to account management</Link>
         </Alert>
       )}
 
-      {verified === null && (
+      {token && verified === null && (
         <Alert type="info">
           Please wait while your email is being verified...
         </Alert>
@@ -75,4 +67,9 @@ export default function EmailVerifier({ updateUser }) {
 
 EmailVerifier.propTypes = {
   updateUser: PropTypes.func.isRequired,
+  token: PropTypes.string,
+};
+
+EmailVerifier.defaultProps = {
+  token: null,
 };
