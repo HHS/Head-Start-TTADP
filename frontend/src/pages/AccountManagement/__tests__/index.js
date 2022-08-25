@@ -155,5 +155,32 @@ describe('AccountManagement', () => {
         expect(fetchMock.calls().length).toBe(2);
       });
     });
+
+    describe('failure', () => {
+      beforeEach(async () => {
+        fetchMock.get('/api/settings/email', cust);
+        fetchMock.put('/api/settings', 400);
+        renderAM();
+        await screen.findByText('Account Management');
+      });
+
+      afterEach(() => fetchMock.restore());
+
+      it('fetch failure shows error message', async () => {
+        expect(fetchMock.calls().length).toBe(1);
+        const button = screen.getByTestId('email-prefs-submit');
+
+        await act(async () => {
+          fireEvent.click(button);
+          await waitFor(() => {
+            const success = screen.getByTestId('email-prefs-save-fail-message');
+            expect(success).toBeVisible();
+          });
+        });
+
+        expect(fetchMock.called('/api/settings')).toBeTruthy();
+        expect(fetchMock.calls().length).toBe(2);
+      });
+    });
   });
 });
