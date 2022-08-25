@@ -12,8 +12,8 @@ import VanillaModal from '../components/VanillaModal';
 const GOAL_STATUSES = [
   'Not started',
   'In progress',
-  'Closed',
   'Suspended',
+  'Closed',
 ];
 
 const STATUS_COLORS = [
