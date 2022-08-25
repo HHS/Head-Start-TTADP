@@ -196,7 +196,7 @@ function EmailPreferencesForm() {
         <p className="usa-error-message">{errors.emailPreference && errors.emailPreference.message}</p>
       </Fieldset>
       {saveError && (
-        <Alert type="error">
+        <Alert type="error" data-testid="email-prefs-save-fail-message">
           {saveError}
         </Alert>
       )}
