@@ -89,6 +89,7 @@ function CustomizeEmailPreferencesForm({ disabled }) {
               <Dropdown
                 id={keyName}
                 name={keyName}
+                data-testid={`${keyName}-dropdown`}
                 inputRef={register({ required: emailPreferenceErrorMessage })}
               >
                 {frequencyMap.map(({ key, label }) => (
@@ -118,7 +119,30 @@ function EmailPreferencesForm({ disabled }) {
     formState: { errors },
   } = useFormContext();
 
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+
   const emailPreference = watch('emailPreference');
+
+  useEffect(() => {
+    if (!saveError) return;
+    setTimeout(() => {
+      setSaveError(false);
+    }, 4000);
+  }, [saveError]);
+
+  useEffect(() => {
+    if (!saveSuccess) return;
+    setTimeout(() => {
+      setSaveSuccess(false);
+    }, 4000);
+  }, [saveSuccess]);
+
+  // Selecting a new radio button should remove the success/error message.
+  useEffect(() => {
+    setSaveSuccess(false);
+    setSaveError(false);
+  }, [emailPreference]);
 
   const onSubmit = async (formData) => {
     const newSettings = emailTypesMap.reduce((acc, { keyName }) => {
@@ -131,16 +155,23 @@ function EmailPreferencesForm({ disabled }) {
       if (pref === 'subscribe') await subscribe();
       else if (pref === 'unsubscribe') await unsubscribe();
       else if (pref === 'customized') await updateSettings(newSettings);
+      setSaveSuccess(true);
     } catch (error) {
-      console.error(error);
+      setSaveError(error.message ? error.message : error);
     }
   };
 
   return (
-    <Form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 'unset' }}>
+    <Form
+      data-testid="email-preferences-form"
+      className="margin-top-5"
+      onSubmit={handleSubmit(onSubmit)}
+      style={{ maxWidth: 'unset' }} // remove the 20rem default
+    >
       <Fieldset>
         <Radio
           id="allImmediately"
+          data-testid="radio-subscribe"
           name="emailPreference"
           value="subscribe"
           disabled={disabled}
@@ -150,6 +181,7 @@ function EmailPreferencesForm({ disabled }) {
         />
         <Radio
           id="customized"
+          data-testid="radio-customized"
           name="emailPreference"
           value="customized"
           disabled={disabled}
@@ -165,6 +197,7 @@ function EmailPreferencesForm({ disabled }) {
         </div>
         <Radio
           id="unsubscribe"
+          data-testid="radio-unsubscribe"
           name="emailPreference"
           value="unsubscribe"
           disabled={disabled}
@@ -174,6 +207,16 @@ function EmailPreferencesForm({ disabled }) {
         />
         <p className="usa-error-message">{errors.emailPreference && errors.emailPreference.message}</p>
       </Fieldset>
+      {saveError && (
+        <Alert type="error">
+          {saveError}
+        </Alert>
+      )}
+      {saveSuccess && (
+        <Alert type="success">
+          Your email preferences have been saved.
+        </Alert>
+      )}
       <Button type="submit">Save Preferences</Button>
       <Button type="reset" outline>
         Cancel
