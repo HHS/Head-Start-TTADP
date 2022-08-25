@@ -5,7 +5,8 @@ import {
 } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
+import { Router } from 'react-router';
+import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
@@ -193,10 +194,11 @@ const goalWithObjectives = [{
 const handlePageChange = jest.fn();
 const requestSort = jest.fn();
 const setGoals = jest.fn();
+const history = createMemoryHistory();
 
 const renderTable = ({ goals, goalsCount }, user, hasActiveGrants = true) => {
   render(
-    <MemoryRouter>
+    <Router history={history}>
       <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
         <UserContext.Provider value={{ user }}>
           <GoalsTable
@@ -221,7 +223,7 @@ const renderTable = ({ goals, goalsCount }, user, hasActiveGrants = true) => {
           />
         </UserContext.Provider>
       </AriaLiveContext.Provider>
-    </MemoryRouter>,
+    </Router>,
   );
 };
 
@@ -469,6 +471,7 @@ describe('Goals Table', () => {
     });
 
     it('Sets goal status without reason', async () => {
+      history.push = jest.fn();
       fetchMock.reset();
       fetchMock.put('/api/goals/changeStatus', [{
         id: 65479,
@@ -494,6 +497,12 @@ describe('Goals Table', () => {
       // Verify goal status change.
       await waitFor(() => expect(fetchMock.called()).toBeTruthy());
       expect(setGoals).toHaveBeenCalled();
+
+      // print goals
+      const printButton = await screen.findByRole('button', { name: /Preview and print/i });
+      userEvent.click(printButton);
+
+      expect(history.push).toHaveBeenCalled();
     });
   });
 });

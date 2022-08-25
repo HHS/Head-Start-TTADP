@@ -19,8 +19,8 @@ const GOAL_STATUSES = [
 const STATUS_COLORS = [
   colors.ttahubOrange,
   colors.ttahubMediumBlue,
-  colors.success,
   colors.error,
+  colors.success,
 ];
 
 function Bar({

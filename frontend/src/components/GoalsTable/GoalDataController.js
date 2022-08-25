@@ -81,11 +81,10 @@ function GoalDataController({
         setData(response);
         setError('');
       } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error(e);
         setError('Unable to fetch goals');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     const filterQuery = filtersToQueryString(filters);
     if (filterQuery !== queryString.current) {
@@ -97,11 +96,9 @@ function GoalDataController({
   }, [sortConfig, filters, recipientId, regionId, showNewGoals, setSortConfig]);
 
   const handlePageChange = (pageNumber) => {
-    if (!loading) {
-      setSortConfig({
-        ...sortConfig, activePage: pageNumber, offset: (pageNumber - 1) * GOALS_PER_PAGE,
-      });
-    }
+    setSortConfig({
+      ...sortConfig, activePage: pageNumber, offset: (pageNumber - 1) * GOALS_PER_PAGE,
+    });
   };
 
   const requestSort = (sortBy) => {
