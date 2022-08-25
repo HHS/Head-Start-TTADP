@@ -30,6 +30,7 @@ export default function Objective({
   fieldArrayName,
   errors,
   roles,
+  onObjectiveChange,
 }) {
   const [selectedObjective, setSelectedObjective] = useState(objective);
 
@@ -160,6 +161,7 @@ export default function Objective({
     onChangeStatus(newObjective.status);
     onChangeRoles(newObjective.roles || []);
     onChangeTopics(newObjective.topics);
+    onObjectiveChange(newObjective, index); // Call parent on objective change.
   };
 
   // we need to auto select an objective role if there is only one available
@@ -291,4 +293,5 @@ Objective.propTypes = {
   remove: PropTypes.func.isRequired,
   fieldArrayName: PropTypes.string.isRequired,
   roles: PropTypes.arrayOf(PropTypes.string).isRequired,
+  onObjectiveChange: PropTypes.func.isRequired,
 };
