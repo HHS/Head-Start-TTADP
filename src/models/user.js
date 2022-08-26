@@ -15,6 +15,7 @@ module.exports = (sequelize, DataTypes) => {
         through: models.Permission, foreignKey: 'userId', as: 'scopes', timestamps: false,
       });
       User.hasMany(models.Permission, { foreignKey: 'userId', as: 'permissions' });
+      User.hasMany(models.ActivityReport, { foreignKey: 'userId', as: 'reports', hooks: true });
     }
   }
   User.init({
