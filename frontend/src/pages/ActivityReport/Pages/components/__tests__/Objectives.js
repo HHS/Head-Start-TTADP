@@ -1,5 +1,7 @@
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@testing-library/react';
+import {
+  render, screen, waitFor,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
@@ -65,12 +67,23 @@ describe('Objectives', () => {
     await selectEvent.select(select, ['Create a new objective']);
     await waitFor(() => expect(screen.queryByText(/objective status/i)).not.toBeNull());
   });
-  it('allows for the selection of an objective', async () => {
+  it('allows for the selection and changing of an objective', async () => {
     const objectiveOptions = [{
       value: 3,
-      label: 'Test objective',
-      title: 'Test objective',
+      label: 'Test objective 1',
+      title: 'Test objective 1',
       ttaProvided: '<p>hello</p>',
+      activityReports: [],
+      resources: [],
+      topics: [],
+      roles: [],
+      status: 'Not Started',
+    },
+    {
+      value: 4,
+      label: 'Test objective 2',
+      title: 'Test objective 2',
+      ttaProvided: '<p>hello 2</p>',
       activityReports: [],
       resources: [],
       topics: [],
@@ -78,15 +91,20 @@ describe('Objectives', () => {
       status: 'Not Started',
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
-    const select = await screen.findByLabelText(/Select TTA objective/i);
+    let select = await screen.findByLabelText(/Select TTA objective/i);
     expect(screen.queryByText(/objective status/i)).toBeNull();
-    await selectEvent.select(select, ['Test objective']);
 
+    // Initial objective select.
+    await selectEvent.select(select, ['Test objective 1']);
     const r = await screen.findByLabelText(/resource 1/i);
     userEvent.type(r, 'GARG');
     userEvent.click(await screen.findByText(/blur me/i));
-
     await waitFor(() => expect(screen.queryByText(/objective status/i)).not.toBeNull());
+
+    // Change Objective.
+    select = await screen.findByLabelText(/Select TTA objective/i);
+    await selectEvent.select(select, ['Test objective 2']);
+    await screen.findByLabelText(/test objective 2/i);
   });
   it('the button adds a new objective', async () => {
     const objectiveOptions = [{
