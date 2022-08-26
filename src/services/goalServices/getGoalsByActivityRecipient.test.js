@@ -136,7 +136,7 @@ describe('Goals by Recipient Test', () => {
     targetPopulations: ['pop'],
     participants: ['participants'],
     reason: ['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option'],
-    topics: ['Child Assessment, Development, Screening', 'Communication'],
+    topics: ['Child Screening and Assessment', 'Communication'],
     ttaType: ['type'],
   };
 
@@ -159,7 +159,7 @@ describe('Goals by Recipient Test', () => {
     targetPopulations: ['pop'],
     participants: ['participants'],
     reason: ['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option'],
-    topics: ['Child Assessment, Development, Screening', 'Communication'],
+    topics: ['Child Screening and Assessment', 'Communication'],
     ttaType: ['type'],
   };
 
@@ -188,7 +188,7 @@ describe('Goals by Recipient Test', () => {
     targetPopulations: ['pop'],
     participants: ['participants'],
     reason: ['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option'],
-    topics: ['Child Assessment, Development, Screening', 'Communication'],
+    topics: ['Child Screening and Assessment', 'Communication'],
     ttaType: ['type'],
   };
 
@@ -211,7 +211,7 @@ describe('Goals by Recipient Test', () => {
     targetPopulations: ['pop'],
     participants: ['participants'],
     reason: ['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option'],
-    topics: ['Child Assessment, Development, Screening', 'Communication'],
+    topics: ['Child Screening and Assessment', 'Communication'],
     ttaType: ['type'],
   };
 
@@ -705,7 +705,7 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx[0].goalNumbers).toStrictEqual([`G-${goalRowsx[0].id}`]);
       expect(goalRowsx[0].objectiveCount).toBe(1);
       expect(goalRowsx[0].reasons).toEqual(['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option']);
-      expect(goalRowsx[0].goalTopics).toEqual(['Child Assessment, Development, Screening', 'Communication']);
+      expect(goalRowsx[0].goalTopics).toEqual(['Child Screening and Assessment', 'Communication']);
       expect(goalRowsx[0].objectives.length).toBe(1);
 
       // Goal 3.

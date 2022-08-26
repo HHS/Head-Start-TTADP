@@ -100,7 +100,8 @@
     "nanoid": "^3.2.0",
     "node-fetch": "^2.6.7",
     "protobufjs": "^6.11.3",
-    "got": "^11.8.5"
+    "got": "^11.8.5",
+    "undici": "^5.8.0"
   },
   "eslintConfig": {
     "extends": [
