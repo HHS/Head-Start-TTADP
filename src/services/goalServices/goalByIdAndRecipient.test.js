@@ -135,7 +135,7 @@ describe('goalById', () => {
     const goal = await goalByIdAndRecipient(goalOnActivityReport.id, grantRecipient.id);
     // seems to be something with the aliasing attributes that requires
     // them to be accessed in this way
-    expect(goal.dataValues.goalName).toBe('Goal on activity report');
+    expect(goal.dataValues.name).toBe('Goal on activity report');
     expect(goal.objectives.length).toBe(1);
     expect(goal.objectives[0].activityReports.length).toBe(1);
     expect(goal.objectives[0].topics.length).toBe(1);

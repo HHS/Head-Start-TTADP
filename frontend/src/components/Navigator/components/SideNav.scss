@@ -1,7 +1,6 @@
 @use '../../../colors.scss' as *;
 
 .smart-hub--navigator-link-active {
-  background-color: $gray-two;
   color: $ttahub-medium-blue;
   font-weight: bold;
   border-left: 2px solid $ttahub-medium-blue;

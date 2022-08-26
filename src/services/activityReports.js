@@ -27,12 +27,17 @@ import {
   ActivityReportGoal,
   ActivityReportObjective,
   ActivityReportObjectiveResource,
+  ObjectiveResource,
+  Topic,
   CollaboratorRole,
   Role,
-  Topic,
 } from '../models';
-
-import { removeUnusedGoalsObjectivesFromReport, saveGoalsForReport, removeRemovedRecipientsGoals } from './goals';
+import {
+  removeUnusedGoalsObjectivesFromReport,
+  saveGoalsForReport,
+  removeRemovedRecipientsGoals,
+  getGoalsForReport,
+} from './goals';
 
 import { saveObjectivesForReport } from './objectives';
 
@@ -235,10 +240,11 @@ async function saveNotes(activityReportId, notes, isRecipientNotes) {
     const newNotes = notes.map((note) => ({
       id: note.id ? parseInt(note.id, DECIMAL_BASE) : undefined,
       note: note.note,
+      completeDate: note.completeDate,
       activityReportId,
       noteType,
     }));
-    await NextStep.bulkCreate(newNotes, { updateOnDuplicate: ['note', 'updatedAt'] });
+    await NextStep.bulkCreate(newNotes, { updateOnDuplicate: ['note', 'completeDate', 'updatedAt'] });
   }
 }
 
@@ -297,87 +303,8 @@ export function activityReportByLegacyId(legacyId) {
 export async function activityReportAndRecipientsById(activityReportId) {
   const arId = parseInt(activityReportId, DECIMAL_BASE);
 
-  // goals
-  const allGoalsAndObjectives = await Goal.findAll({
-    include: [
-      {
-        attributes: ['id'],
-        model: ActivityReport,
-        as: 'activityReports',
-        where: {
-          id: arId,
-        },
-        required: true,
-      },
-      {
-        model: Objective,
-        as: 'objectives',
-        required: false,
-        include: [
-          {
-            attributes: ['ttaProvided', 'activityReportId'],
-            model: ActivityReportObjective,
-            as: 'activityReportObjectives',
-            where: {
-              activityReportId: arId,
-            },
-            required: true,
-            include: [
-              {
-                attributes: ['originalFileName', 'key', 'status', 'fileSize'],
-                model: File,
-                as: 'files',
-              },
-              {
-                attributes: ['userProvidedUrl'],
-                model: ActivityReportObjectiveResource,
-                as: 'activityReportObjectiveResources',
-              },
-              {
-                attributes: ['name', 'fullName'],
-                model: Role,
-                as: 'roles',
-              },
-              {
-                attributes: ['name'],
-                model: Topic,
-                as: 'topics',
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  });
-
   // TODO - explore a way to move this query inline to the ActivityReport.findOne
-  const goalsAndObjectives = allGoalsAndObjectives.reduce((previousValue, currentValue) => {
-    const existingGoal = previousValue.find((g) => g.name === currentValue.name);
-
-    if (existingGoal) {
-      existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.goalNumber];
-      existingGoal.goalIds = [...existingGoal.goalIds, currentValue.id];
-      return previousValue;
-    }
-
-    const goal = {
-      ...currentValue.dataValues,
-      goalNumbers: [currentValue.goalNumber],
-      goalIds: [currentValue.id],
-      objectives: currentValue.objectives.map((objective) => {
-        const ttaProvided = objective.activityReportObjectives
-          && objective.activityReportObjectives[0]
-          ? objective.activityReportObjectives[0].ttaProvided : '';
-
-        return {
-          ...objective.dataValues,
-          ttaProvided,
-        };
-      }),
-    };
-
-    return [...previousValue, goal];
-  }, []);
+  const goalsAndObjectives = await getGoalsForReport(arId);
 
   const recipients = await ActivityRecipient.findAll({
     where: {
@@ -401,6 +328,17 @@ export async function activityReportAndRecipientsById(activityReportId) {
     };
   });
 
+  // TTAHUB-949: Determine how many other AR's are using these goals.
+  /*
+  const users = await sequelize.query("SELECT * FROM `users`", { type: QueryTypes.SELECT });
+  sequelize.literal(
+    `(SELECT arg.goalId AS goalId, COUNT(arg.id) AS reportsUsingGoal
+      FROM "ActivityReportGoals" arg
+      INNER JOIN "Goals" g ON arg."goalId" = g.id
+      WHERE arg."activityReportId" != ${arId} AND  AND g."createdVia" = 'activityReport'
+      GROUP BY g.id)`),
+      */
+
   const report = await ActivityReport.findOne({
     attributes: { exclude: ['imported', 'legacyId'] },
     where: {
@@ -408,12 +346,47 @@ export async function activityReportAndRecipientsById(activityReportId) {
     },
     include: [
       {
+        attributes: [
+          ['id', 'value'],
+          ['title', 'label'],
+          'id',
+          'title',
+          'status',
+          'goalId',
+        ],
         model: Objective,
         as: 'objectivesWithGoals',
-        include: [{
-          model: Goal,
-          as: 'goal',
-        }],
+        include: [
+          {
+            model: Goal,
+            as: 'goal',
+            attributes: [
+              ['id', 'value'],
+              ['name', 'label'],
+              'id',
+              'name',
+              'status',
+              'endDate',
+              'goalNumber',
+            ],
+          },
+          {
+            model: ObjectiveResource,
+            as: 'resources',
+            attributes: [
+              ['userProvidedUrl', 'value'],
+              ['id', 'key'],
+            ],
+          },
+          {
+            model: Topic,
+            as: 'topics',
+            attributes: [
+              ['id', 'value'],
+              ['name', 'label'],
+            ],
+          },
+        ],
       },
       {
         model: Objective,
@@ -455,7 +428,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
             [Op.eq]: 'SPECIALIST',
           },
         },
-        attributes: ['note', 'id'],
+        attributes: ['note', 'completeDate', 'id'],
         as: 'specialistNextSteps',
         required: false,
         separate: true,
@@ -467,7 +440,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
             [Op.eq]: 'RECIPIENT',
           },
         },
-        attributes: ['note', 'id'],
+        attributes: ['note', 'completeDate', 'id'],
         as: 'recipientNextSteps',
         required: false,
         separate: true,
@@ -604,9 +577,11 @@ export async function activityReports(
     },
   );
 
+  const reportIds = reports.rows.map(({ id }) => id);
+
   const recipients = await ActivityRecipient.findAll({
     where: {
-      activityReportId: reports.rows.map(({ id }) => id),
+      activityReportId: reportIds,
     },
     attributes: ['id', 'name', 'activityRecipientId', 'activityReportId'],
     // sorting these just so the order is testable
@@ -620,7 +595,31 @@ export async function activityReports(
     ],
   });
 
-  return { ...reports, recipients };
+  const topics = await Topic.findAll({
+    attributes: ['name', 'id'],
+    include: [
+      {
+        model: Objective,
+        attributes: ['id'],
+        as: 'objectives',
+        required: true,
+        include: {
+          attributes: ['activityReportId', 'objectiveId'],
+          model: ActivityReportObjective,
+          as: 'activityReportObjectives',
+          required: true,
+          where: {
+            activityReportId: reportIds,
+          },
+        },
+      },
+    ],
+    order: [
+      ['name', sortDir],
+    ],
+  });
+
+  return { ...reports, recipients, topics };
 }
 
 export async function activityReportsForCleanup(userId) {
@@ -885,7 +884,6 @@ export async function createOrUpdate(newActivityReport, report) {
   } else {
     savedReport = await create(updatedFields);
   }
-
   if (activityReportCollaborators) {
     const { id } = savedReport;
     const newCollaborators = activityReportCollaborators.map(

@@ -13,8 +13,10 @@ import './index.scss';
 import Profile from './pages/Profile';
 import TTAHistory from './pages/TTAHistory';
 import GoalsObjectives from './pages/GoalsObjectives';
-import CreateGoal from '../../components/CreateGoal';
+import GoalForm from '../../components/GoalForm';
 import PrintGoals from './pages/PrintGoals';
+import FilterContext from '../../FilterContext';
+import { GOALS_OBJECTIVES_FILTER_KEY } from './pages/constants';
 
 function PageWithHeading({
   children,
@@ -180,17 +182,19 @@ export default function RecipientRecord({ match }) {
               backLink={(
                 <Link
                   className="ttahub-recipient-record--tabs_back-to-search margin-top-2 margin-bottom-3 display-inline-block"
-                  to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives`}
+                  to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives${window.location.search}`}
                 >
                   Back to goals table
                 </Link>
               )}
             >
-              <PrintGoals
-                recipientId={recipientId}
-                regionId={regionId}
-                location={location}
-              />
+              <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY }}>
+                <PrintGoals
+                  recipientId={recipientId}
+                  regionId={regionId}
+                  location={location}
+                />
+              </FilterContext.Provider>
 
             </PageWithHeading>
           )}
@@ -215,18 +219,26 @@ export default function RecipientRecord({ match }) {
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/goals/:goalId"
-          render={({ match: goalMatch }) => (
-            <FeatureFlag flag="recipient_goals_objectives" renderNotFound>
-              <Helmet>
-                <title>
-                  {goalMatch.params.goalId === 'new'
-                    ? `Create a goal for ${recipientName}`
-                    : `Edit goal ${goalMatch.params.goalId} for ${recipientName}` }
-                </title>
-              </Helmet>
-              <CreateGoal match={goalMatch} regionId={regionId} recipient={recipientData} />
-            </FeatureFlag>
-          )}
+          render={({ match: goalMatch }) => {
+            const { params: { goalId } } = goalMatch;
+            return (
+              <FeatureFlag flag="recipient_goals_objectives" renderNotFound>
+                <Helmet>
+                  <title>
+                    {goalId === 'new'
+                      ? `Create a goal for ${recipientName}`
+                      : `Edit goal ${goalId} for ${recipientName}` }
+                  </title>
+                </Helmet>
+                <GoalForm
+                  id={goalId}
+                  regionId={regionId}
+                  recipient={recipientData}
+                  showRTRnavigation
+                />
+              </FeatureFlag>
+            );
+          }}
         />
         <Route
           render={() => (

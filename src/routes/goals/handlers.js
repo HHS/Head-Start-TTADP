@@ -1,7 +1,9 @@
 import {
   updateGoalStatusById,
+  createOrUpdateGoalsForActivityReport,
   createOrUpdateGoals,
   destroyGoal,
+  goalsByIdsAndActivityReport,
   goalByIdWithActivityReportsAndRegions,
   goalByIdAndRecipient,
 } from '../../services/goals';
@@ -15,6 +17,26 @@ const namespace = 'SERVICE:GOALS';
 const logContext = {
   namespace,
 };
+
+export async function createGoalsForReport(req, res) {
+  try {
+    const { goals, activityReportId, regionId } = req.body;
+
+    const user = await userById(req.session.userId);
+
+    const canCreate = new Goal(user, null, regionId).canCreate();
+
+    if (!canCreate) {
+      res.sendStatus(401);
+      return;
+    }
+
+    const newGoals = await createOrUpdateGoalsForActivityReport(goals, activityReportId);
+    res.json(newGoals);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
 
 export async function createGoals(req, res) {
   try {
@@ -123,7 +145,42 @@ export async function deleteGoal(req, res) {
   }
 }
 
-export async function retrieveGoal(req, res) {
+export async function retrieveGoalsByIds(req, res) {
+  try {
+    let { goalIds } = req.query;
+    const { reportId } = req.query;
+    goalIds = Array.isArray(goalIds) ? goalIds : [goalIds];
+    const user = await userById(req.session.userId);
+
+    let canView = true;
+    goalIds.forEach(async (id) => {
+      const goal = await goalByIdWithActivityReportsAndRegions(id);
+      const policy = new Goal(user, goal);
+      if (!policy.canView()) {
+        canView = false;
+      }
+    });
+
+    if (!canView) {
+      res.sendStatus(401);
+      return;
+    }
+
+    const gIds = goalIds.map((g) => parseInt(g, 10));
+    const retrievedGoal = await goalsByIdsAndActivityReport(gIds, reportId);
+
+    if (!retrievedGoal) {
+      res.sendStatus(404);
+      return;
+    }
+
+    res.json(retrievedGoal);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function retrieveGoalByIdAndRecipient(req, res) {
   try {
     const { goalId, recipientId } = req.params;
 
