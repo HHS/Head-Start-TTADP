@@ -12,3 +12,5 @@ export const TTAHISTORY_FILTER_CONFIG = [
   endDateFilter,
   specialistRoleFilter,
 ];
+
+export const GOALS_OBJECTIVES_FILTER_KEY = 'goals-objectives-filters';

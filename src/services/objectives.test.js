@@ -1,10 +1,18 @@
 import waitFor from 'wait-for-expect';
 import db, {
-  ActivityRecipient, ActivityReport, User, Objective, ActivityReportObjective, sequelize,
+  ActivityRecipient,
+  ActivityReport,
+  User,
+  Objective,
+  ActivityReportObjective,
+  sequelize,
+  Grant,
+  Goal,
+  Recipient,
 } from '../models';
 import { REPORT_STATUSES } from '../constants';
 
-import { saveObjectivesForReport } from './objectives';
+import { saveObjectivesForReport, getObjectiveById } from './objectives';
 
 const mockUser = {
   id: 8088,
@@ -21,10 +29,37 @@ const reportObject = {
   lastUpdatedById: mockUser.id,
 };
 
+const mockGrant = {
+  id: 43259435,
+  number: '99CH3499',
+  regionId: 2,
+  status: 'Active',
+  startDate: new Date('2022-07-19T15:13:00.000Z'),
+  endDate: new Date('2022-07-19T15:13:00.000Z'),
+  cdi: false,
+  grantSpecialistName: null,
+  grantSpecialistEmail: null,
+  stateCode: 'NY',
+  anualFundingMonth: 'October',
+};
+
+const mockRecipient = {
+  id: 654925,
+  name: 'Sample Obj File Recipient',
+  recipientType: 'Community Action Agency (CAA)',
+};
+
 describe('Objectives DB service', () => {
   let report;
   let objective;
+
   let secondObjective;
+
+  let objectiveInfo;
+  let grantInfo;
+  let recipientInfo;
+  let goalInfo;
+
   const objectives = [
     {
       id: 'uuid',
@@ -85,20 +120,36 @@ describe('Objectives DB service', () => {
         ids: [objective.id],
       }], report);
     });
+
+    recipientInfo = await Recipient.create({ ...mockRecipient });
+    grantInfo = await Grant.create({ ...mockGrant, recipientId: recipientInfo.id });
+    goalInfo = await Goal.create({ name: 'sample goal for obj info', grantId: grantInfo.id });
+    objectiveInfo = await Objective.create({ title: 'sample obj for info', goalId: goalInfo.id });
   });
 
   afterAll(async () => {
     const aros = await ActivityReportObjective.findAll({ where: { activityReportId: report.id } });
     const objectiveIds = aros.map((aro) => aro.objectiveId);
     await ActivityReportObjective.destroy({ where: { activityReportId: report.id } });
-    await Objective.destroy({ where: { id: objectiveIds } });
+    await Objective.destroy({ where: { id: [...objectiveIds, objective.id, secondObjective.id] } });
     await ActivityRecipient.destroy({ where: { activityReportId: report.id } });
     await ActivityReport.destroy({ where: { id: report.id } });
+
+    await Objective.destroy({ where: { id: objectiveInfo.id } });
+    await Goal.destroy({ where: { id: goalInfo.id } });
+    await Grant.destroy({ where: { id: grantInfo.id } });
+    await Recipient.destroy({ where: { id: recipientInfo.id } });
+
     await User.destroy({ where: { id: mockUser.id } });
     await db.sequelize.close();
   });
 
   describe('saveObjectivesForReport', () => {
+    it('gets objective by id', async () => {
+      const foundObj = await getObjectiveById(objectiveInfo.id);
+      expect(foundObj).not.toBeNull();
+      expect(foundObj.goal.grant.regionId).toBe(2);
+    });
     it('deletes old objectives', async () => {
       waitFor(async () => {
         const found = await Objective.findOne({

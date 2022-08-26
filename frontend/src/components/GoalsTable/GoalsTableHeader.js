@@ -38,10 +38,10 @@ export default function GoalsTableHeader({
   const { user } = useContext(UserContext);
   const hasButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
 
-  const showAddNewButton = hasActiveGrants && hasButtonPermissions && false;
+  const showAddNewButton = hasActiveGrants && hasButtonPermissions;
 
   const onPrint = () => {
-    history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives/print`, {
+    history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives/print${window.location.search}`, {
       selectedGoals,
     });
   };

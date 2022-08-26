@@ -3,7 +3,7 @@ import { INTERNAL_SERVER_ERROR, NOT_FOUND } from 'http-codes';
 import { userById } from '../../services/users';
 import SCOPES from '../../middleware/scopeConstants';
 import {
-  changeGoalStatus, createGoals, deleteGoal, retrieveGoal,
+  changeGoalStatus, createGoals, deleteGoal, retrieveGoalByIdAndRecipient,
 } from './handlers';
 import {
   updateGoalStatusById,
@@ -59,12 +59,12 @@ describe('retrieve goal', () => {
 
     goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
       objectives: [],
-      grants: [{
+      grant: {
         regionId: 2,
-      }],
+      },
     });
 
-    await retrieveGoal(req, mockResponse);
+    await retrieveGoalByIdAndRecipient(req, mockResponse);
 
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
   });
@@ -90,11 +90,11 @@ describe('retrieve goal', () => {
 
     goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
       objectives: [],
-      grants: [{ regionId: 2 }],
+      grant: { regionId: 2 },
     });
 
     goalByIdAndRecipient.mockResolvedValueOnce({});
-    await retrieveGoal(req, mockResponse);
+    await retrieveGoalByIdAndRecipient(req, mockResponse);
 
     expect(mockResponse.json).toHaveBeenCalledWith({});
   });
@@ -121,11 +121,11 @@ describe('retrieve goal', () => {
 
     goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
       objectives: [],
-      grants: [{ regionId: 2 }],
+      grant: { regionId: 2 },
     });
 
     goalByIdAndRecipient.mockResolvedValueOnce(null);
-    await retrieveGoal(req, mockResponse);
+    await retrieveGoalByIdAndRecipient(req, mockResponse);
 
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
   });
@@ -159,7 +159,7 @@ describe('retrieve goal', () => {
       throw new Error();
     });
 
-    await retrieveGoal(req, mockResponse);
+    await retrieveGoalByIdAndRecipient(req, mockResponse);
 
     expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
   });
