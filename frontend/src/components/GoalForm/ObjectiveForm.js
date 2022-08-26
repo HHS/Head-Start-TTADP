@@ -174,7 +174,7 @@ export default function ObjectiveForm({
 
       { title && (
         <ObjectiveFiles
-          files={files}
+          files={files.map((f) => ({ ...f, objectiveIds: objective.ids || null }))}
           onChangeFiles={onChangeFiles}
           objective={objective}
           isOnApprovedReport={isOnApprovedReport || false}
@@ -203,6 +203,10 @@ ObjectiveForm.propTypes = {
       PropTypes.string,
       PropTypes.number,
     ]),
+    ids: PropTypes.arrayOf(PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number,
+    ])),
     title: PropTypes.string,
     topics: PropTypes.arrayOf(PropTypes.shape({
       label: PropTypes.string,

@@ -59,7 +59,7 @@ export function checkFileIdParam(req, res, next) {
  * @param {*} next - next middleware
  */
 export function checkReportIdParam(req, res, next) {
-  if (req.params && req.params.reportId && canBeInt(req.params.reportId)) {
+  if (req.params && req.params.reportId && req.params.objectiveIds.every((o) => canBeInt(o))) {
     return next();
   }
 

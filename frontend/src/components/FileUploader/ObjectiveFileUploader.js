@@ -12,21 +12,18 @@ import { deleteObjectiveFile, deleteFile } from '../../fetchers/File';
 import FileTable from './FileTable';
 import Dropzone from './Dropzone';
 import './FileUploader.scss';
-import { DECIMAL_BASE } from '../../Constants';
 
 const ObjectiveFileUploader = ({
   onChange, files, objective, id, upload, index, inputName, onBlur, setError,
 }) => {
-  const objectiveId = objective.id;
-
   const onFileRemoved = async (removedFileIndex) => {
     const file = files[removedFileIndex];
     const copyOfFiles = [...files];
     copyOfFiles.splice(removedFileIndex, 1);
     onChange(copyOfFiles);
 
-    if (file.id && !Number.isNaN(parseInt(objectiveId, DECIMAL_BASE))) {
-      await deleteObjectiveFile(file.id, objectiveId);
+    if (file.id && file.objectiveIds) {
+      await deleteObjectiveFile(file.id, file.objectiveIds);
     } else if (file.id) {
       await deleteFile(file.id);
     }
