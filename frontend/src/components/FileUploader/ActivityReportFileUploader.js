@@ -52,7 +52,7 @@ const ActivityReportFileUploader = ({
 
     const newFiles = e.map((file) => upload(file, reportId, setErrorMessage));
     Promise.all(newFiles).then((values) => {
-      onChange(values.filter((file) => file));
+      onChange([...files, ...values.filter((file) => file)]);
     });
   };
 
