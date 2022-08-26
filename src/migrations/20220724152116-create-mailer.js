@@ -27,12 +27,12 @@ module.exports = {
         { transaction },
       );
       // Disable audit logging
-      await queryInterface.sequelize.query(
-        `
-          SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
-          `,
-        { transaction },
-      );
+      // await queryInterface.sequelize.query(
+      //   `
+      //     SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
+      //     `,
+      //   { transaction },
+      // );
       await queryInterface.createTable('MailerLogs', {
         id: {
           allowNull: false,
@@ -80,12 +80,12 @@ module.exports = {
         },
       });
       // Enable audit logging
-      await queryInterface.sequelize.query(
-        `
-          SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
-          `,
-        { transaction },
-      );
+      // await queryInterface.sequelize.query(
+      //   `
+      //     SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
+      //     `,
+      //   { transaction },
+      // );
     },
   ),
   down: async (queryInterface) => queryInterface.sequelize.transaction(
@@ -102,12 +102,12 @@ module.exports = {
         { transaction },
       );
       // Disable audit logging
-      await queryInterface.sequelize.query(
-        `
-          SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
-          `,
-        { transaction },
-      );
+      // await queryInterface.sequelize.query(
+      //   `
+      //     SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
+      //     `,
+      //   { transaction },
+      // );
       await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS public."ZALNoTruncateFMailerLogs"() CASCADE;');
       await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS public."ZALNoUpdateFMailerLogs"() CASCADE;');
       await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS public."ZALNoDeleteFMailerLogs"() CASCADE;');
@@ -118,12 +118,12 @@ module.exports = {
       );
       await queryInterface.sequelize.query('DROP TYPE public."enum_MailerLogs_action";', { transaction });
       // Enable audit logging
-      await queryInterface.sequelize.query(
-        `
-          SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
-          `,
-        { transaction },
-      );
+      // await queryInterface.sequelize.query(
+      //   `
+      //     SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
+      //     `,
+      //   { transaction },
+      // );
     },
   ),
 };
