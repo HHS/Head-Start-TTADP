@@ -499,6 +499,55 @@ const uploadObjectivesFile = async (req, res) => {
   }
 };
 
+const deleteObjectiveFileHandler = async (req, res) => {
+  const { fileId } = req.params;
+  const { objectiveIds } = req.body;
+
+  console.log({ objectiveIds, fileId });
+
+  const user = await userById(req.session.userId);
+
+  try {
+    let file = await getFileById(parseInt(fileId, DECIMAL_BASE));
+    let canUpdate = true;
+
+    await Promise.all(objectiveIds.map(async (objectiveId) => {
+      if (!canUpdate) {
+        return null;
+      }
+      const objective = await getObjectiveById(objectiveId);
+      const objectivePolicy = new ObjectivePolicy(objective, user);
+      if (!objectivePolicy.canUpdate()) {
+        console.log('cannot update');
+
+        canUpdate = false;
+        res.sendStatus(403);
+        return null;
+      }
+      const of = file.objectiveFiles.find(
+        (r) => r.objectiveId === parseInt(objectiveId, DECIMAL_BASE),
+      );
+      if (of) {
+        return deleteObjectiveFile(of.id);
+      }
+      return null;
+    }));
+
+    file = await getFileById(fileId);
+    if (file.reports.length
+      + file.reportObjectiveFiles.length
+      + file.objectiveFiles.length
+      + file.objectiveTemplateFiles.length === 0) {
+      await deleteFileFromS3(file.key);
+      await deleteFile(fileId);
+    }
+
+    res.status(204).send();
+  } catch (error) {
+    handleErrors(req, res, error, logContext);
+  }
+};
+
 export {
   deleteHandler,
   linkHandler,
@@ -506,4 +555,5 @@ export {
   onlyFileUploadHandler,
   deleteOnlyFile,
   uploadObjectivesFile,
+  deleteObjectiveFileHandler,
 };

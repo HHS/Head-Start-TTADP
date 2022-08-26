@@ -3,6 +3,7 @@ import {
   uploadHandler,
   linkHandler,
   deleteHandler,
+  deleteObjectiveFileHandler,
   onlyFileUploadHandler,
   deleteOnlyFile,
   uploadObjectivesFile,
@@ -28,6 +29,7 @@ router.post('/objectives', transactionWrapper(uploadObjectivesFile));
 router.delete('/:fileId?', checkFileIdParam, transactionWrapper(deleteOnlyFile));
 router.delete('/r/:reportId?/:fileId?', checkReportIdParam, checkFileIdParam, transactionWrapper(deleteHandler));
 router.delete('/ro/:reportObjectiveId?/:fileId?', checkReportObjectiveIdParam, checkFileIdParam, transactionWrapper(deleteHandler));
+router.delete('/:fileId/objectives', checkFileIdParam, transactionWrapper(deleteObjectiveFileHandler));
 router.delete('/o/:objectiveId?/:fileId?', checkObjectiveIdParam, checkFileIdParam, transactionWrapper(deleteHandler));
 router.delete('/ot/:objectiveTemplateId?/:fileId?', checkObjectiveTemplateIdParam, checkFileIdParam, transactionWrapper(deleteHandler));
 

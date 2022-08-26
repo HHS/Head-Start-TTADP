@@ -41,14 +41,13 @@ export const uploadObjectivesFile = async (data) => {
   return res.json();
 };
 
-export const deleteObjectiveFile = async (fileId, objectiveId) => {
+export const deleteObjectiveFile = async (fileId, objectiveIds) => {
   const url = join(
     fileUrl,
-    'o',
-    objectiveId.toString(),
     fileId.toString(),
+    'objectives',
   );
-  const res = await destroy(url);
+  const res = await destroy(url, { objectiveIds });
   return res;
 };
 

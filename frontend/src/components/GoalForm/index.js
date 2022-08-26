@@ -472,6 +472,7 @@ export default function GoalForm({
         ...response,
         objectives,
         setObjectives,
+        objectiveIds,
         index,
       };
     } catch (error) {
