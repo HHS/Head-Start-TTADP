@@ -44,7 +44,7 @@ module.exports = {
         }, { transaction });
 
         await queryInterface.addColumn('ActivityReportGoals', 'timeframe', {
-          type: Sequelize.STRING,
+          type: Sequelize.TEXT,
           allowNull: true,
         }, { transaction });
 
@@ -75,10 +75,10 @@ module.exports = {
           SET
             "name" = g."name",
             "status" = g."status",
+            "endDate" = g."endDate",
             "timeframe" = g."timeframe",
             "closeSuspendReason" = g."closeSuspendReason"::text::"enum_ActivityReportGoals_closeSuspendReason",
-            "closeSuspendContext" = g."closeSuspendContext",
-            "endDate" = g."endDate"
+            "closeSuspendContext" = g."closeSuspendContext"
           FROM "Goals" g
           WHERE arg."goalId" = g.id;`,
           { transaction },
