@@ -696,6 +696,18 @@ export async function createOrUpdateGoals(goals) {
               [Op.notIn]: objectiveTopics.length ? objectiveTopics.map(([ot]) => ot.id) : [],
             },
             objectiveId: objective.id,
+            // do we need to check to make sure that topics that are on an AR aren't removed?
+            // topicId: {
+            //   [Op.notIn]: sequelize.literal(`
+            //     (SELECT "Topics"."id" FROM "Topics"
+            //       INNER JOIN "ActivityReportObjectiveTopics"
+            //          ON "ActivityReportObjectiveTopics"."topicId" = "Topics"."id"
+            //       INNER JOIN "Objectives"
+            //          ON "ActivityReportObjectiveTopics"."objectiveId" = "Objectives"."id"
+            //       WHERE "Objectives"."id" = ${objective.id})
+            //     )
+            //   `),
+            // },
           },
         });
 
@@ -813,8 +825,9 @@ export async function goalsForGrants(grantIds) {
       'name',
       'status',
       'onApprovedAR',
+      'endDate',
     ],
-    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."onApprovedAR"'],
+    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"'],
     where: {
       '$grant.id$': ids,
       [Op.or]: [
@@ -1123,43 +1136,6 @@ async function createObjectivesForGoal(goal, objectives, report) {
     }
 
     await cacheObjectiveMetadata(savedObjective, report.id, objective.ttaProvided);
-    if (objective.topics) {
-      await Promise.all((objective.topics.map((ot) => ObjectiveTopic.findOrCreate({
-        where: {
-          objectiveId: savedObjective.id,
-          topicId: ot.value,
-        },
-      }))));
-    }
-
-    if (objective.resources) {
-      await Promise.all(
-        objective.resources.filter(({ value }) => value).map(
-          ({ value }) => ObjectiveResource.findOrCreate({
-            where: {
-              userProvidedUrl: value,
-              objectiveId: savedObjective.id,
-            },
-          }),
-        ),
-      );
-    }
-
-    if (objective.roles) {
-      const roles = await Role.findAll({
-        where: {
-          fullName: objective.roles,
-        },
-      });
-
-      await Promise.all(roles.map((r) => ObjectiveRole.findOrCreate({
-        where: {
-          roleId: r.id,
-          objectiveId: savedObjective.id,
-        },
-      })));
-    }
-
     return savedObjective;
   }));
 }

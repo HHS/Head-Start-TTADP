@@ -34,7 +34,7 @@ export default function GoalForm({
 
   // the date picker component, as always, presents special challenges, it needs a key updated
   // to re-render appropriately
-  const [datePickerKey, setDatePickerKey] = useState(uuid());
+  const [datePickerKey, setDatePickerKey] = useState(defaultEndDate || uuid());
 
   const {
     field: {
@@ -52,7 +52,7 @@ export default function GoalForm({
         ) || GOAL_DATE_ERROR,
       },
     },
-    defaultValue: defaultEndDate,
+    defaultValue: defaultEndDate || '',
   });
 
   const {
@@ -79,8 +79,12 @@ export default function GoalForm({
     onUpdateText(goal.name ? goal.name : defaultName);
 
     const newEndDate = goal.endDate ? goal.endDate : defaultEndDate;
+
+    if (!newEndDate) {
+      return;
+    }
+
     onUpdateDate(newEndDate);
-    setDatePickerKey(uuid());
   }, [
     defaultEndDate,
     defaultName,
@@ -90,6 +94,10 @@ export default function GoalForm({
     onUpdateText,
     setDatePickerKey,
   ]);
+
+  useEffect(() => {
+    setDatePickerKey(goalEndDate + uuid());
+  }, [goalEndDate]);
 
   const [objectives, setObjectives] = useState([]);
 
@@ -123,7 +131,7 @@ export default function GoalForm({
       <GoalDate
         error={errors.goalEndDate ? ERROR_FORMAT(errors.goalEndDate.message) : NO_ERROR}
         setEndDate={onUpdateDate}
-        endDate={goalEndDate}
+        endDate={goalEndDate || ''}
         validateEndDate={onBlurDate}
         datePickerKey={datePickerKey}
         inputName={goalEndDateInputName}

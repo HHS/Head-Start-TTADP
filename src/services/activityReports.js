@@ -6,8 +6,6 @@ import orderReportsBy from '../lib/orderReportsBy';
 import filtersToScopes from '../scopes';
 import { setReadRegions } from './accessValidation';
 import { syncApprovers } from './activityReportApprovers';
-// import { auditLogger } from '../logger';
-
 import {
   ActivityReport,
   ActivityReportApprover,
