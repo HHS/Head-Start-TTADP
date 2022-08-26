@@ -77,7 +77,12 @@ export function GoalStatusChart({ data, loading }) {
   // we only need to recompute this when the data changes, not when the
   // bars or display type are changed
   const accessibleRows = useMemo(
-    () => GOAL_STATUSES.map((status) => ({ data: [status, data[status]] })), [data],
+    () => {
+      if (!data) {
+        return [];
+      }
+      return GOAL_STATUSES.map((status) => ({ data: [status, data[status]] }));
+    }, [data],
   );
 
   const modalRef = useRef();
