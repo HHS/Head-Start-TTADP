@@ -1,10 +1,16 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-
+import fetchMock from 'fetch-mock';
 import UserInfo from '../UserInfo';
 
 describe('UserInfo', () => {
+  beforeEach(async () => {
+    fetchMock.get('/api/admin/roles', [{ fullName: 'Grantee Specialist', name: 'GS', id: 1 }, { fullName: 'COR', name: 'COR', id: 2 }]);
+  });
+
+  afterEach(() => fetchMock.restore());
+
   describe('with an empty user object', () => {
     beforeEach(() => {
       render(<UserInfo user={{}} onUserChange={() => {}} />);
@@ -26,8 +32,8 @@ describe('UserInfo', () => {
       expect(screen.getByLabelText('Region')).toHaveValue('0');
     });
 
-    test('has the default jobTitle', () => {
-      const rolesSelect = screen.getByText(/default/i);
+    test('has the default jobTitle', async () => {
+      const rolesSelect = await screen.findByLabelText('Role(s)');
       expect(rolesSelect).toBeDefined();
     });
 
@@ -43,7 +49,7 @@ describe('UserInfo', () => {
         hsesUsername: 'username',
         name: 'first last',
         homeRegionId: 1,
-        role: ['Grantee Specialist'],
+        roles: [{ fullName: 'Grantee Specialist', name: 'GS', id: 1 }],
         lastLogin: '2021-02-09T16:15:00Z',
         hsesAuthorities: ['Federal'],
       };

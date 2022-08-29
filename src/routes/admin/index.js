@@ -4,6 +4,7 @@ import getRequestErrors, { getRequestError, deleteRequestErrors } from './handle
 import userRouter from './user';
 import recipientRouter from './recipient';
 import grantRouter from './grant';
+import roleRouter from './role';
 import userAdminAccessMiddleware from '../../middleware/userAdminAccessMiddleware';
 import transactionWrapper from '../transactionWrapper';
 
@@ -16,5 +17,6 @@ router.delete('/requestErrors', transactionWrapper(deleteRequestErrors));
 router.use('/users', userRouter);
 router.use('/recipients', recipientRouter);
 router.use('/grants', grantRouter);
+router.use('/roles', roleRouter);
 
 export default router;
