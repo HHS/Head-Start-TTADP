@@ -40,7 +40,7 @@ const Draft = ({
 
   const completeUserRoles = () => {
     // If removed user role is selected we need to add it.
-    const completeRoleList = [...user.role];
+    const completeRoleList = user.roles.map((r) => r.fullName);
     if (creatorRole) {
       const indexOfRole = completeRoleList.indexOf(creatorRole);
       if (indexOfRole === -1) {
@@ -78,7 +78,7 @@ const Draft = ({
       <h2>Submit Report</h2>
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onSubmit)}>
         {
-          user && user.role && user.role.length > 1
+          user && user.roles && user.roles.length > 1
             ? (
               <Fieldset className="smart-hub--report-legend margin-top-4" legend="Creator Role">
                 <FormItem
@@ -145,8 +145,8 @@ const Draft = ({
         <Button
           outline
           type="button"
-          onClick={() => {
-            onSaveForm(false);
+          onClick={async () => {
+            await onSaveForm(false);
             updateShowSavedDraft(true);
           }}
         >

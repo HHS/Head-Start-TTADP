@@ -288,7 +288,16 @@ function Navigator({
                     { showSaveGoalsButton
                       ? <Button className="margin-right-1" type="button" onClick={onGoalFormNavigate}>Save goal</Button>
                       : <Button className="margin-right-1" type="button" onClick={onContinue}>Save and continue</Button> }
-                    <Button className="usa-button--outline" type="button" onClick={async () => { await onSaveForm(); updateShowSavedDraft(true); }}>Save draft</Button>
+                    <Button
+                      outline
+                      type="button"
+                      onClick={async () => {
+                        await onSaveForm();
+                        updateShowSavedDraft(true);
+                      }}
+                    >
+                      Save draft
+                    </Button>
                     {
                       page.position <= 1
                         ? null

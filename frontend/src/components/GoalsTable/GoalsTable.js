@@ -1,38 +1,37 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import {
   Table, Grid, Alert,
 } from '@trussworks/react-uswds';
-import { filtersToQueryString } from '../../utils';
 import GoalsTableHeader from './GoalsTableHeader';
 import Container from '../Container';
 import GoalRow from './GoalRow';
 import { GOALS_PER_PAGE } from '../../Constants';
 import './GoalTable.scss';
-import { getRecipientGoals } from '../../fetchers/recipient';
+
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
 import { updateGoalStatus } from '../../fetchers/goals';
-import useSessionSort from '../../hooks/useSessionSort';
 
 function GoalsTable({
   recipientId,
   regionId,
-  filters,
   hasActiveGrants,
-  showNewGoals,
+  goals,
+  error,
+  goalsCount,
+  handlePageChange,
+  requestSort,
+  loading,
+  sortConfig,
+  setGoals,
 }) {
-  // Goal Data.
-  const [goals, setGoals] = useState([]);
-
   // Close/Suspend Reason Modal.
   const [closeSuspendGoalIds, setCloseSuspendGoalIds] = useState([]);
   const [closeSuspendStatus, setCloseSuspendStatus] = useState('');
   const [closeSuspendOldStatus, setCloseSuspendOldStatus] = useState(null);
   const [resetModalValues, setResetModalValues] = useState(false);
   const closeSuspendModalRef = useRef();
-
-  const queryString = useRef(filtersToQueryString(filters));
 
   const showCloseSuspendGoalModal = (status, goalIds, oldGoalStatus) => {
     setCloseSuspendGoalIds(goalIds);
@@ -67,83 +66,6 @@ function GoalsTable({
       (g) => (updatedGoalIds.includes(g.id) ? { ...g, goalStatus: newGoalStatus } : g),
     );
     setGoals(newGoals);
-  };
-
-  // Page Behavior.
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const defaultSort = showNewGoals
-    ? {
-      sortBy: 'createdOn',
-      direction: 'desc',
-    }
-    : {
-      sortBy: 'goalStatus',
-      direction: 'asc',
-    };
-
-  // Grid and Paging.
-  const [sortConfig, setSortConfig] = useSessionSort({
-    ...defaultSort,
-    activePage: 1,
-    offset: 0,
-  }, `goalsTable/${recipientId}/${regionId}`);
-
-  const [goalsCount, setGoalsCount] = useState(0);
-
-  useEffect(() => {
-    async function fetchGoals(query) {
-      setLoading(true);
-      try {
-        const { count, goalRows } = await getRecipientGoals(
-          recipientId,
-          regionId,
-          sortConfig.sortBy,
-          sortConfig.direction,
-          sortConfig.offset,
-          GOALS_PER_PAGE,
-          query,
-        );
-        setGoals(goalRows);
-        setGoalsCount(count);
-        setError('');
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error(e);
-        setError('Unable to fetch goals');
-      }
-      setLoading(false);
-    }
-    const filterQuery = filtersToQueryString(filters);
-    if (filterQuery !== queryString.current) {
-      setSortConfig({ ...sortConfig, activePage: 1, offset: 0 });
-      queryString.current = filterQuery;
-      return;
-    }
-    fetchGoals(filterQuery);
-  }, [sortConfig, filters, recipientId, regionId, showNewGoals, setSortConfig]);
-
-  const handlePageChange = (pageNumber) => {
-    if (!loading) {
-      setSortConfig({
-        ...sortConfig, activePage: pageNumber, offset: (pageNumber - 1) * GOALS_PER_PAGE,
-      });
-    }
-  };
-
-  const requestSort = (sortBy) => {
-    let direction = 'asc';
-    if (
-      sortConfig
-      && sortConfig.sortBy === sortBy
-      && sortConfig.direction === 'asc'
-    ) {
-      direction = 'desc';
-    }
-    setSortConfig({
-      ...sortConfig, sortBy, direction, activePage: 1, offset: 0,
-    });
   };
 
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
@@ -187,8 +109,6 @@ function GoalsTable({
     );
   };
 
-  const displayGoals = goals && goals.length ? goals : [];
-
   return (
     <>
       {error && (
@@ -218,7 +138,7 @@ function GoalsTable({
           recipientId={recipientId}
           regionId={regionId}
           hasActiveGrants={hasActiveGrants}
-          selectedGoals={sortConfig}
+          sortConfig={sortConfig}
         />
         <div className="usa-table-container padding-x-3">
           <Table fullWidth scrollable>
@@ -236,12 +156,12 @@ function GoalsTable({
               </tr>
             </thead>
             <tbody>
-              {displayGoals.map((goal, index) => (
+              {goals.map((goal, index) => (
                 <GoalRow
-                  key={goal.id}
+                  key={`goal-row-${goal.id}`}
                   goal={goal}
                   openMenuUp={
-                    index >= displayGoals.length - 2 && index !== 0
+                    index >= goals.length - 2 && index !== 0
                   } // the last two should open "up"
                   recipientId={recipientId}
                   regionId={regionId}
@@ -253,23 +173,28 @@ function GoalsTable({
           </Table>
         </div>
       </Container>
-
     </>
   );
 }
 GoalsTable.propTypes = {
   recipientId: PropTypes.string.isRequired,
   regionId: PropTypes.string.isRequired,
-  filters: PropTypes.arrayOf(
-    PropTypes.shape({
-      condition: PropTypes.string,
-      id: PropTypes.string,
-      query: PropTypes.string,
-      topic: PropTypes.string,
-    }),
-  ).isRequired,
   hasActiveGrants: PropTypes.bool.isRequired,
-  showNewGoals: PropTypes.bool.isRequired,
+  goals: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number,
+  })).isRequired,
+  error: PropTypes.string.isRequired,
+  goalsCount: PropTypes.number.isRequired,
+  handlePageChange: PropTypes.func.isRequired,
+  requestSort: PropTypes.func.isRequired,
+  loading: PropTypes.bool.isRequired,
+  sortConfig: PropTypes.shape({
+    sortBy: PropTypes.string,
+    direction: PropTypes.string,
+    activePage: PropTypes.number,
+    offset: PropTypes.number,
+  }).isRequired,
+  setGoals: PropTypes.func.isRequired,
 };
 
 export default GoalsTable;

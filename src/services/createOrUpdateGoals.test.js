@@ -166,6 +166,7 @@ describe('createOrUpdateGoals', () => {
 
     const [, { goalIds }] = newGoals;
     expect(goalIds.length).toBe(1);
+
     expect(goalIds).toContain(goal.id);
 
     const [, updatedGoal] = newGoals;
