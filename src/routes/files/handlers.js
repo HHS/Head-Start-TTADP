@@ -503,8 +503,6 @@ const deleteObjectiveFileHandler = async (req, res) => {
   const { fileId } = req.params;
   const { objectiveIds } = req.body;
 
-  console.log({ objectiveIds, fileId });
-
   const user = await userById(req.session.userId);
 
   try {
