@@ -7,6 +7,8 @@ import db, {
   Grant,
   NextStep,
   Region,
+  Role,
+  UserRole,
 } from '../models';
 import filtersToScopes from '../scopes';
 import { REPORT_STATUSES } from '../constants';
@@ -100,6 +102,25 @@ describe('Topics and frequency graph widget', () => {
       mockUserTwo,
       mockUserThree,
     ]);
+
+    const grantsSpecialist = await Role.findOne({ where: { fullName: 'Grants Specialist' } });
+    const systemSpecialist = await Role.findOne({ where: { fullName: 'System Specialist' } });
+
+    await UserRole.create({
+      userId: mockUser.id,
+      roleId: grantsSpecialist.id,
+    });
+
+    await UserRole.create({
+      userId: mockUserTwo.id,
+      roleId: systemSpecialist.id,
+    });
+
+    await UserRole.create({
+      userId: mockUserThree.id,
+      roleId: grantsSpecialist.id,
+    });
+
     await Recipient.create({ name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' });
     await Region.create({ name: 'office 17', id: 17 });
     await Region.create({ name: 'office 18', id: 18 });
@@ -148,6 +169,7 @@ describe('Topics and frequency graph widget', () => {
     await NextStep.destroy({ where: { activityReportId: ids } });
     await ActivityRecipient.destroy({ where: { activityReportId: ids } });
     await ActivityReport.destroy({ where: { id: ids } });
+    await UserRole.destroy({ where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
     await User.destroy({ where: { id: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
     await Grant.destroy({
       where:

@@ -5,10 +5,10 @@ import {
 } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
+import { Router } from 'react-router';
+import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
 import UserContext from '../../../UserContext';
-import FilterContext from '../../../FilterContext';
 import AriaLiveContext from '../../../AriaLiveContext';
 import GoalsTable from '../GoalsTable';
 import { SCOPE_IDS } from '../../../Constants';
@@ -21,7 +21,6 @@ const oldWindowLocation = window.location;
 const mockAnnounce = jest.fn();
 const recipientId = '1000';
 const regionId = '1';
-const baseWithRegionOne = `/api/recipient/${recipientId}/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10`;
 
 const defaultUser = {
   name: 'test@test.com',
@@ -34,7 +33,7 @@ const defaultUser = {
   ],
 };
 
-const goals = [{
+const baseGoals = [{
   id: 4598,
   ids: [4598],
   goalStatus: 'In Progress',
@@ -192,24 +191,39 @@ const goalWithObjectives = [{
 },
 ];
 
-const renderTable = (user, hasActiveGrants = true) => {
+const handlePageChange = jest.fn();
+const requestSort = jest.fn();
+const setGoals = jest.fn();
+const history = createMemoryHistory();
+
+const renderTable = ({ goals, goalsCount }, user, hasActiveGrants = true) => {
   render(
-    <MemoryRouter>
+    <Router history={history}>
       <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
         <UserContext.Provider value={{ user }}>
-          <FilterContext.Provider value={{ filterKey: 'goalsTable' }}>
-            <GoalsTable
-              filters={[]}
-              recipientId={recipientId}
-              regionId={regionId}
-              onUpdateFilters={() => { }}
-              hasActiveGrants={hasActiveGrants}
-              showNewGoals={false}
-            />
-          </FilterContext.Provider>
+          <GoalsTable
+            recipientId={recipientId}
+            regionId={regionId}
+            onUpdateFilters={() => { }}
+            hasActiveGrants={hasActiveGrants}
+            showNewGoals={false}
+            goals={goals}
+            error=""
+            goalsCount={goalsCount}
+            handlePageChange={handlePageChange}
+            requestSort={requestSort}
+            loading={false}
+            sortConfig={{
+              sortBy: 'goalStatus',
+              direction: 'asc',
+              activePage: 1,
+              offset: 0,
+            }}
+            setGoals={setGoals}
+          />
         </UserContext.Provider>
       </AriaLiveContext.Provider>
-    </MemoryRouter>,
+    </Router>,
   );
 };
 
@@ -233,21 +247,13 @@ describe('Goals Table', () => {
   });
 
   describe('Table displays data', () => {
-    beforeEach(async () => {
-      fetchMock.reset();
-      fetchMock.get(
-        baseWithRegionOne,
-        { count: 6, goalRows: goals },
-      );
-    });
-
     afterEach(() => {
       window.location.assign.mockReset();
       fetchMock.restore();
     });
 
     it('Shows the correct data', async () => {
-      renderTable(defaultUser);
+      renderTable({ goals: baseGoals, goalsCount: 6 }, defaultUser);
       await screen.findByText('TTA goals and objectives');
       expect(await screen.findByText(/1-6 of 6/i)).toBeVisible();
 
@@ -288,21 +294,12 @@ describe('Goals Table', () => {
   });
 
   describe('Table displays objective data', () => {
-    beforeEach(async () => {
-      fetchMock.reset();
-      fetchMock.get(
-        baseWithRegionOne,
-        { count: 1, goalRows: goalWithObjectives },
-      );
-    });
-
     afterEach(() => {
       window.location.assign.mockReset();
-      fetchMock.restore();
     });
 
     it('Shows the correct objective data', async () => {
-      act(() => renderTable(defaultUser));
+      act(() => renderTable({ goals: goalWithObjectives, goalsCount: 1 }, defaultUser));
       await screen.findByText('TTA goals and objectives');
 
       // Objective 1.
@@ -328,7 +325,7 @@ describe('Goals Table', () => {
     });
 
     it('Expands and collapses objectives', async () => {
-      renderTable(defaultUser);
+      renderTable({ goals: goalWithObjectives, goalsCount: 1 }, defaultUser);
       await screen.findByText('TTA goals and objectives');
 
       expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).toBeInTheDocument();
@@ -344,7 +341,7 @@ describe('Goals Table', () => {
       expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).toBeInTheDocument();
     });
     it('hides the add new goal button if recipient has no active grants', async () => {
-      renderTable(defaultUser, false);
+      renderTable({ goals: goalWithObjectives, goalsCount: 1 }, defaultUser, false);
       await screen.findByText('TTA goals and objectives');
 
       const link = screen.queryByRole('link', { name: /Add new goal/i });
@@ -361,7 +358,7 @@ describe('Goals Table', () => {
         ],
       };
 
-      renderTable(user);
+      renderTable({ goals: goalWithObjectives, goalsCount: 1 }, user);
       await screen.findByText('TTA goals and objectives');
 
       const link = screen.queryByRole('link', { name: /Add new goal/i });
@@ -371,102 +368,37 @@ describe('Goals Table', () => {
 
   describe('Table sorting', () => {
     beforeEach(async () => {
-      fetchMock.reset();
-      fetchMock.get(
-        baseWithRegionOne,
-        { count: 6, goalRows: goals },
-      );
-      renderTable(defaultUser);
+      renderTable({ goals: baseGoals, goalsCount: 6 }, defaultUser);
       await screen.findByText('TTA goals and objectives');
     });
 
     afterEach(() => {
       window.location.assign.mockReset();
-      fetchMock.restore();
     });
 
     it('clicking Created On column header sorts', async () => {
-      // Asc.
-      const gaolsAsc = [...goals];
       const columnHeaderAsc = await screen.findByRole('button', { name: /created on\. activate to sort ascending/i });
-      const sortedGoalsAsc = gaolsAsc.sort((a, b) => ((a.createdOn > b.createdOn) ? 1 : -1));
-      fetchMock.get(
-        `/api/recipient/${recipientId}/region/1/goals?sortBy=createdOn&sortDir=asc&offset=0&limit=10`,
-        { count: 6, goalRows: sortedGoalsAsc },
-      );
-      expect(screen.getAllByRole('cell')[1]).toHaveTextContent('06/15/2021');
-
       fireEvent.click(columnHeaderAsc);
-      await screen.findByText('TTA goals and objectives');
-
-      expect(screen.getAllByRole('cell')[1]).toHaveTextContent('01/15/2021');
-
-      // Desc.
-      const columnHeaderDesc = await screen.findByRole('button', { name: /created on\. activate to sort descending/i });
-      const gaolsDesc = [...goals];
-      const sortedGoalsDesc = gaolsDesc.sort((a, b) => ((a.createdOn < b.createdOn) ? 1 : -1));
-      fetchMock.get(
-        `/api/recipient/${recipientId}/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=10`,
-        { count: 6, goalRows: sortedGoalsDesc },
-      );
-
-      fireEvent.click(columnHeaderDesc);
-      await screen.findByText('TTA goals and objectives');
-
-      const cells = await screen.findAllByRole('cell');
-      expect(cells[1]).toHaveTextContent('06/15/2021');
+      expect(requestSort).toHaveBeenCalled();
     });
 
     it('clicking Goal status column header sorts', async () => {
       // Desc.
       const columnHeaderDesc = await screen.findByRole('button', { name: /goal status\. activate to sort descending/i });
-      const goalsDesc = [...goals];
-      const sortedGoalsDesc = goalsDesc.sort((a, b) => ((a.goalStatus < b.goalStatus) ? 1 : -1));
-      fetchMock.get(
-        `/api/recipient/${recipientId}/region/1/goals?sortBy=goalStatus&sortDir=desc&offset=0&limit=10`,
-        { count: 6, goalRows: sortedGoalsDesc },
-      );
-      expect(screen.getAllByRole('cell')[0]).toHaveTextContent('In progress');
-
       fireEvent.click(columnHeaderDesc);
       await screen.findByText('TTA goals and objectives');
-
-      const cells = await screen.findAllByRole('cell');
-      expect(cells[0]).toHaveTextContent('Suspended');
-
-      // Desc (via button press).
-      const goalsAsc = [...goals];
-      const sortedGoalsAsc = goalsAsc.sort((a, b) => ((a.goalStatus > b.goalStatus) ? 1 : -1));
-      fetchMock.get(
-        `/api/recipient/${recipientId}/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10`,
-        { count: 6, goalRows: sortedGoalsAsc }, { overwriteRoutes: true },
-      );
-
-      const columnHeaderAsc = await screen.findByRole('button', { name: /goal status\. activate to sort ascending/i });
-
-      columnHeaderAsc.focus();
-      expect(columnHeaderAsc).toHaveFocus();
-      fireEvent.keyPress(columnHeaderAsc, { key: 'Enter', code: 13, charCode: 13 });
-      await screen.findByText('TTA goals and objectives');
-      const [cell] = await screen.findAllByRole('cell');
-      expect(cell).toHaveTextContent('Needs status');
+      expect(requestSort).toHaveBeenCalled();
     });
   });
 
   describe('Paging', () => {
     beforeEach(async () => {
-      fetchMock.reset();
-      fetchMock.get(
-        baseWithRegionOne,
-        { count: 6, goalRows: goals },
-      );
-      renderTable(defaultUser);
+      renderTable({ goals: baseGoals, goalsCount: 6 }, defaultUser);
       await screen.findByText('TTA goals and objectives');
     });
 
     afterEach(() => {
       window.location.assign.mockReset();
-      fetchMock.restore();
     });
 
     it('Pagination links are visible', async () => {
@@ -489,25 +421,17 @@ describe('Goals Table', () => {
       const pageOne = await screen.findByRole('link', {
         name: /go to page number 1/i,
       });
-      fetchMock.reset();
-      fetchMock.get(
-        baseWithRegionOne,
-        { count: 6, goalRows: [goals[0], goals[1], goals[2], goals[3], goals[4]] },
-      );
+
       fireEvent.click(pageOne);
-      const cells = await screen.findAllByRole('cell');
-      expect(cells.length).toBe(42);
+      expect(handlePageChange).toHaveBeenCalled();
     });
   });
 
   describe('Context Menu', () => {
     beforeEach(async () => {
       fetchMock.restore();
-      fetchMock.get(
-        baseWithRegionOne,
-        { count: 1, goalRows: [goals[0], goals[3]] },
-      );
-      renderTable(defaultUser);
+
+      renderTable({ goals: [baseGoals[0], baseGoals[3]], goalsCount: 1 }, defaultUser);
       await screen.findByText('TTA goals and objectives');
     });
 
@@ -542,12 +466,12 @@ describe('Goals Table', () => {
       // Submit reason why.
       const submitButton = await screen.findAllByText(/submit/i);
       fireEvent.click(submitButton[0]);
-
-      // Verify new status.
-      await waitFor(() => expect(screen.getAllByRole('cell')[0]).toHaveTextContent('Closed'));
+      await waitFor(() => expect(fetchMock.called()).toBeTruthy());
+      expect(setGoals).toHaveBeenCalled();
     });
 
     it('Sets goal status without reason', async () => {
+      history.push = jest.fn();
       fetchMock.reset();
       fetchMock.put('/api/goals/changeStatus', [{
         id: 65479,
@@ -571,7 +495,14 @@ describe('Goals Table', () => {
       userEvent.click(inProgress);
 
       // Verify goal status change.
-      expect(fetchMock.called()).toBe(true);
+      await waitFor(() => expect(fetchMock.called()).toBeTruthy());
+      expect(setGoals).toHaveBeenCalled();
+
+      // print goals
+      const printButton = await screen.findByRole('button', { name: /Preview and print/i });
+      userEvent.click(printButton);
+
+      expect(history.push).toHaveBeenCalled();
     });
   });
 });

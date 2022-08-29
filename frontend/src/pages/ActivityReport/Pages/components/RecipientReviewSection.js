@@ -27,7 +27,7 @@ const RecipientReviewSection = () => {
       {goals.map((goal) => {
         const objectives = goal.objectives || [];
         return (
-          <div key={goal.id}>
+          <div key={`review-${goal.id}`}>
             <div className="grid-row margin-bottom-3 desktop:margin-bottom-0 margin-top-2">
               <span>
                 <span className="text-bold">Goal:</span>
