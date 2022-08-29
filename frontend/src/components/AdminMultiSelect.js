@@ -48,7 +48,7 @@ function AdminMultiSelect({
       <Label htmlFor={id}>{label}</Label>
       <div className="margin-top-1">
         <Select
-          id={id}
+          inputId={id}
           isMulti
           options={options}
           onChange={onChange}

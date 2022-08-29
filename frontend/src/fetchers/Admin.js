@@ -35,3 +35,13 @@ export const assignCDIGrant = async (grantId, regionId, recipientId) => {
   const grant = await put(join('/', 'api', 'admin', 'grants', 'cdi', grantId.toString(DECIMAL_BASE)), body);
   return grant.json();
 };
+
+export const getRoles = async () => {
+  const roles = await get((join('/', 'api', 'admin', 'roles')));
+  return roles.json();
+};
+
+export const saveRoles = async (roles) => {
+  const updatedRoles = await put((join('/', 'api', 'admin', 'roles')), { roles });
+  return updatedRoles.json();
+};
