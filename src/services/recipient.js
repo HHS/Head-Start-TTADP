@@ -14,6 +14,7 @@ import orderRecipientsBy from '../lib/orderRecipientsBy';
 import { RECIPIENTS_PER_PAGE, GOALS_PER_PAGE, REPORT_STATUSES } from '../constants';
 import filtersToScopes from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
+import goalStatusGraph from '../widgets/goalStatusGraph';
 
 export async function allRecipients() {
   return Recipient.findAll({
@@ -392,10 +393,14 @@ export async function getGoalsByActivityRecipient(
     order: orderGoalsBy(sortBy, sortDir),
   });
 
+  const allGoalIds = [];
+
   const r = rows.reduce((previous, current) => {
     const existingGoal = previous.goalRows.find(
       (g) => g.goalStatus === current.status && g.goalText.trim() === current.name.trim(),
     );
+
+    allGoalIds.push(current.id);
 
     if (existingGoal) {
       existingGoal.ids = [...existingGoal.ids, current.id];
@@ -432,15 +437,23 @@ export async function getGoalsByActivityRecipient(
     goalRows: [],
   });
 
+  const statuses = await goalStatusGraph({
+    goal: {
+      id: allGoalIds,
+    },
+  });
+
   if (limitNum) {
     return {
       count: r.goalRows.length,
       goalRows: r.goalRows.slice(offSetNum, offSetNum + limitNum),
+      statuses,
     };
   }
 
   return {
     count: r.goalRows.length,
     goalRows: r.goalRows.slice(offSetNum),
+    statuses,
   };
 }
