@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import reactSelectEvent from 'react-select-event';
 import {
-  screen, fireEvent, waitFor, within,
+  screen, fireEvent, waitFor, within, act,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
@@ -295,14 +295,11 @@ describe('ActivityReport', () => {
       const data = formData();
       fetchMock.get('/api/activity-reports/1', { ...data, creatorRole: null });
       fetchMock.put('/api/activity-reports/1', {});
-      renderActivityReport(1);
-
+      act(() => renderActivityReport(1));
       const button = await screen.findByRole('button', { name: 'Save draft' });
-      userEvent.click(button);
-
+      act(() => userEvent.click(button));
       const lastOptions = fetchMock.lastOptions();
       const bodyObj = JSON.parse(lastOptions.body);
-      await waitFor(() => expect(fetchMock.called('/api/activity-reports/1')).toBeTruthy());
       expect(bodyObj.creatorRole).toEqual('Reporter');
     });
   });

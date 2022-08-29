@@ -17,13 +17,17 @@ export default function SpecialistRole({
   isOnReport,
   isLoading,
 }) {
-  // we want the *initial* selection stored in a safe place
-  // so that the form field doesn't suddenly go read-only
-  const initialSelection = useRef(selectedRoles.length);
+  const initialSelectedRolesLength = useRef(selectedRoles.length);
+
+  // if there is only one option, we just set the objectives to be
+  // that value without any UI
+  if (options.length === 1) {
+    return null;
+  }
 
   const readOnly = isOnApprovedReport || status === 'Suspended' || (status === 'Not Started' && isOnReport);
 
-  if (readOnly && initialSelection.current) {
+  if (readOnly && initialSelectedRolesLength.current) {
     return (
       <>
         <p className="usa-prose text-bold margin-bottom-1">
