@@ -516,8 +516,6 @@ const deleteObjectiveFileHandler = async (req, res) => {
       const objective = await getObjectiveById(objectiveId);
       const objectivePolicy = new ObjectivePolicy(objective, user);
       if (!objectivePolicy.canUpdate()) {
-        console.log('cannot update');
-
         canUpdate = false;
         res.sendStatus(403);
         return null;
