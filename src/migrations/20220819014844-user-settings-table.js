@@ -23,27 +23,6 @@ module.exports = {
     );
 
     await queryInterface.addIndex('UserSettings', ['userId', 'key'], { transaction });
-
-    await queryInterface.sequelize.query(
-      `
-        DO $$
-        DECLARE usr record;
-        BEGIN FOR usr IN
-            SELECT id FROM "Users" ORDER BY id ASC
-          LOOP
-            INSERT INTO "UserSettings" ("userId", "key", "value", "createdAt", "updatedAt")
-            VALUES (usr.id, 'emailWhenReportSubmittedForReview', 'never', current_timestamp, current_timestamp);
-            INSERT INTO "UserSettings" ("userId", "key", "value", "createdAt", "updatedAt")
-            VALUES (usr.id, 'emailWhenChangeRequested', 'never', current_timestamp, current_timestamp);
-            INSERT INTO "UserSettings" ("userId", "key", "value", "createdAt", "updatedAt")
-            VALUES (usr.id, 'emailWhenReportApproval', 'never', current_timestamp, current_timestamp);
-            INSERT INTO "UserSettings" ("userId", "key", "value", "createdAt", "updatedAt")
-            VALUES (usr.id, 'emailWhenAppointedCollaborator', 'never', current_timestamp, current_timestamp);
-          END LOOP;
-        END $$
-      `,
-      { transaction },
-    );
   }),
   down: (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => {
     await queryInterface.dropTable('UserSettings', { transaction });
