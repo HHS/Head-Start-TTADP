@@ -4,13 +4,13 @@
   defined. Note the nav is no longer stickied once we hit mobile widths (640px)
 */
 import React, {
-  useState, useEffect, useContext, useRef,
+  useState, useEffect, useContext,
 } from 'react';
 import PropTypes from 'prop-types';
 import { startCase } from 'lodash';
 import Sticky from 'react-stickynode';
 import {
-  Button, Tag, Alert, Modal, ModalHeading, ModalFooter, ModalToggleButton,
+  Button, Tag, Alert,
 } from '@trussworks/react-uswds';
 import { useMediaQuery } from 'react-responsive';
 import moment from 'moment';
@@ -48,32 +48,18 @@ function SideNav({
   lastSaveTime,
   errorMessage,
   savedToStorageTime,
-  isGoalFormClosed,
 }) {
-  const modalRef = useRef(null);
   const [fade, updateFade] = useState(true);
-  const [navigation, setNavigation] = useState(null);
 
   useEffect(() => {
     updateFade(true);
   }, [lastSaveTime, errorMessage]);
 
-  const onGoalsAndObjectivesPage = pages.find((p) => p.label === 'Goals and objectives' && p.current);
   const isMobile = useMediaQuery({ maxWidth: 1023 });
   const navItems = () => pages.map((page) => (
     <li key={page.label} className="smart-hub--navigator-item">
       <Button
-        onClick={(e) => {
-          // if we are on the goals and objectives page, and we have the goal form closed, we want
-          // to prompt before navigating away
-          if (onGoalsAndObjectivesPage && !isGoalFormClosed) {
-            setNavigation({ navigate: page.onNavigation, event: e });
-            modalRef.current.toggleModal(true);
-            return;
-          }
-
-          page.onNavigation(e);
-        }}
+        onClick={page.onNavigation}
         unstyled
         className={`smart-hub--navigator-link ${page.current ? 'smart-hub--navigator-link-active' : ''}`}
         role="button"
@@ -98,37 +84,6 @@ function SideNav({
 
   return (
     <>
-      <Modal
-        ref={modalRef}
-        forceAction
-        aria-labelledby="ok-to-move-on-heading"
-        aria-describedby="ok-to-move-on-description"
-        id="ok-to-move-on"
-      >
-        <ModalHeading id="ok-to-move-on-heading">
-          Leave this section?
-        </ModalHeading>
-        <div className="usa-prose">
-          <p id="ok-to-move-on-description">
-            Your unsaved changes will be lost.
-          </p>
-        </div>
-        <ModalFooter>
-          <Button onClick={() => {
-            navigation.navigate(navigation.event);
-          }}
-          >
-            Continue without saving
-          </Button>
-          <ModalToggleButton
-            modalRef={modalRef}
-            closer
-            unstyled
-          >
-            Stay here
-          </ModalToggleButton>
-        </ModalFooter>
-      </Modal>
       <Sticky className="smart-hub-sidenav" top={100} enabled={!isMobile}>
         <Container padding={0}>
           <a className="smart-hub--navigator-skip-link" href={`#${skipTo}`}>{skipToMessage}</a>
@@ -194,7 +149,6 @@ SideNav.propTypes = {
   errorMessage: PropTypes.string,
   lastSaveTime: PropTypes.instanceOf(moment),
   savedToStorageTime: PropTypes.string,
-  isGoalFormClosed: PropTypes.bool.isRequired,
 };
 
 SideNav.defaultProps = {
