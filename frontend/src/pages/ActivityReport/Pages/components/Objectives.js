@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { useFieldArray, useFormContext } from 'react-hook-form/dist/index.ie11';
 import Objective from './Objective';
@@ -12,7 +12,7 @@ export default function Objectives({
   roles,
   noObjectiveError,
 }) {
-  const { errors, getValues } = useFormContext();
+  const { errors, getValues, setValue } = useFormContext();
 
   const fieldArrayName = 'goalForEditing.objectives';
   const objectivesForGoal = getValues(fieldArrayName);
@@ -30,15 +30,56 @@ export default function Objectives({
     remove,
   } = useFieldArray({
     name: fieldArrayName,
+    keyName: 'key', // because 'id' is the default key switch it to use 'key'.
     defaultValues,
   });
 
-  const objectiveIds = fields ? fields.map(({ value }) => value) : [];
+  const [usedObjectiveIds, setUsedObjectiveIds] = useState(
+    fields ? fields.map(({ value }) => value) : [],
+  );
+
+  const onAddNew = () => {
+    const defaultRoles = roles.length === 1 ? roles : [];
+    append({ ...NEW_OBJECTIVE(), roles: defaultRoles });
+  };
+
+  const setUpdatedUsedObjectiveIds = () => {
+    // If fields have changed get updated list of used Objective ID's.
+    const allValues = getValues();
+    const fieldArrayGoals = allValues.goalForEditing || [];
+    const updatedIds = fieldArrayGoals.objectives
+      ? fieldArrayGoals.objectives.map(({ value }) => value)
+      : [];
+    setUsedObjectiveIds(updatedIds);
+  };
+
+  const onInitialObjSelect = (objective) => {
+    const defaultRoles = roles.length === 1 ? roles : objective.roles;
+    append({
+      ...objective, roles: defaultRoles,
+    });
+
+    // If fields have changed get updated list of used Objective ID's.
+    setUpdatedUsedObjectiveIds();
+  };
+
+  const onObjectiveChange = (objective, index) => {
+    // 'id','ids','value', and 'label' are not tracked on the form.
+    // We need to update these with the new Objective ID.
+    const ObjId = objective.id;
+    setValue(`${fieldArrayName}[${index}].id`, ObjId);
+    setValue(`${fieldArrayName}[${index}].value`, ObjId);
+    setValue(`${fieldArrayName}[${index}].label`, objective.label);
+    setValue(`${fieldArrayName}[${index}].ids`, objective.ids);
+
+    // If fields have changed get updated list of used Objective ID's.
+    setUpdatedUsedObjectiveIds();
+  };
 
   const options = [
     NEW_OBJECTIVE(),
     // filter out used objectives and return them in them in a format that react-select understands
-    ...objectives.filter((objective) => !objectiveIds.includes(objective.value)).map(
+    ...objectives.filter((objective) => !usedObjectiveIds.includes(objective.value)).map(
       (objective) => ({
         ...objective,
         label: objective.title,
@@ -47,16 +88,6 @@ export default function Objectives({
       }),
     ),
   ];
-
-  const onAddNew = () => {
-    const defaultRoles = roles.length === 1 ? roles : [];
-    append({ ...NEW_OBJECTIVE(), roles: defaultRoles });
-  };
-
-  const onSelect = (objective) => {
-    const defaultRoles = roles.length === 1 ? roles : objective.roles;
-    append({ ...objective, roles: defaultRoles });
-  };
 
   return (
     <>
@@ -69,7 +100,7 @@ export default function Objectives({
       {fields.length < 1
         ? (
           <ObjectiveSelect
-            onChange={onSelect}
+            onChange={onInitialObjSelect}
             options={options}
             selectedObjectives={[]}
             noObjectiveError={noObjectiveError}
@@ -85,7 +116,7 @@ export default function Objectives({
           return (
             <Objective
               index={index}
-              key={objective.value}
+              key={objective.key}
               objective={objective}
               topicOptions={topicOptions}
               options={options}
@@ -93,6 +124,7 @@ export default function Objectives({
               remove={remove}
               fieldArrayName={fieldArrayName}
               roles={roles}
+              onObjectiveChange={onObjectiveChange}
             />
           );
         })}
