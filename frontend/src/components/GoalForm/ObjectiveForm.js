@@ -37,6 +37,7 @@ export default function ObjectiveForm({
   const {
     title, topics, resources, status, roles, files,
   } = objective;
+
   const isOnReport = useMemo(() => (
     objective.activityReports && objective.activityReports.length > 0
   ), [objective.activityReports]);
@@ -174,7 +175,7 @@ export default function ObjectiveForm({
 
       { title && (
         <ObjectiveFiles
-          files={files.map((f) => ({ ...f, objectiveIds: objective.ids || null }))}
+          files={files ? files.map((f) => ({ ...f, objectiveIds: objective.ids })) : []}
           onChangeFiles={onChangeFiles}
           objective={objective}
           isOnApprovedReport={isOnApprovedReport || false}
@@ -185,7 +186,6 @@ export default function ObjectiveForm({
           index={index}
         />
       )}
-
     </div>
   );
 }

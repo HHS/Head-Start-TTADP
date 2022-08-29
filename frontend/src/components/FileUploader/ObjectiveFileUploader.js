@@ -58,15 +58,21 @@ const ObjectiveFileUploader = ({
       return fields;
     });
 
+    const allFilesIncludingTheNewOnes = [...files, ...values];
+
     // on the goals and objectives form, we have this extra step to update the objectives
     if (objectives && setObjectives) {
       const copyOfObjectives = objectives.map((o) => ({ ...o }));
-      copyOfObjectives[objectiveIndex].files = [...files, ...values];
+      copyOfObjectives[objectiveIndex].files = allFilesIncludingTheNewOnes;
+      copyOfObjectives[objectiveIndex].ids = allFilesIncludingTheNewOnes
+        .filter((f) => f.objectiveIds)
+        .map((f) => f.objectiveIds)
+        .flat();
       setObjectives(copyOfObjectives);
     } else {
       // else we just update the files array for local display
       // this method could conceivably lead to orphaned files
-      onChange([...files, ...values]);
+      onChange(allFilesIncludingTheNewOnes);
     }
   };
 
