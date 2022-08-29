@@ -16,7 +16,6 @@ describe('activityReportToCsvRecord', () => {
     name: 'Arthur',
     hsesUserId: '2099',
     hsesUsername: 'arthur.author',
-    role: ['Grantee Specialist'],
   };
 
   const mockCollaborators = [
@@ -26,7 +25,6 @@ describe('activityReportToCsvRecord', () => {
         name: 'Collaborator 1',
         hsesUserId: '2100',
         hsesUsername: 'collaborator.one',
-        role: ['Grantee Specialist', 'Health Specialist'],
       },
     },
     {
@@ -343,13 +341,14 @@ describe('activityReportToCsvRecord', () => {
           include: [{ model: User }],
         }],
     });
+
     const output = await activityReportToCsvRecord(report);
     const {
       creatorName, lastUpdatedBy, collaborators, programSpecialistName, approvers, recipientInfo,
     } = output;
-    expect(creatorName).toEqual('Arthur, GS');
+    expect(creatorName).toEqual('Arthur');
     expect(lastUpdatedBy).toEqual('Arthur');
-    expect(collaborators).toEqual('Collaborator 1, GS, HS\nCollaborator 2');
+    expect(collaborators).toEqual('Collaborator 1\nCollaborator 2');
     expect(programSpecialistName).toEqual('Program Specialist 1\nProgram Specialist 2\nProgram Specialist 4');
     expect(approvers).toEqual('Test Approver 1\nTest Approver 2\nTest Approver 3');
     expect(recipientInfo).toEqual('test1 - grant number 1 - 1\ntest2 - grant number 2 - 2\ntest3 - grant number 3 - 3\ntest4 - grant number 4 - 4');
