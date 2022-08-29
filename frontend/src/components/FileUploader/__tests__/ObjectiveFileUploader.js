@@ -1,6 +1,7 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
 import React from 'react';
+import fetchMock from 'fetch-mock';
 import {
   render, fireEvent, waitFor, act, screen,
 } from '@testing-library/react';
@@ -65,7 +66,7 @@ describe('ObjectiveFileUploader', () => {
     expect(mockOnChange).toHaveBeenCalled();
   });
 
-  it('files are properly displayed and can be removed', () => {
+  it('files are properly displayed and can be removed', async () => {
     const mockOnChange = jest.fn();
     render(<RenderFileUploader onChange={mockOnChange} files={[file('fileOne', 1, null), file('fileTwo', null), file('fileThree', 'abc')]} />);
     expect(screen.getByText('fileOne')).toBeVisible();
@@ -87,7 +88,10 @@ describe('ObjectiveFileUploader', () => {
     const fileThree = screen.getByText('fileThree');
     fireEvent.click(fileThree.parentNode.lastChild.firstChild);
     deleteButton = screen.getByText('Delete');
+    fetchMock.restore();
+    fetchMock.delete('/api/files/abc', { status: 204 });
     fireEvent.click(deleteButton);
-    expect(mockOnChange).toHaveBeenCalledTimes(2);
+    expect(fetchMock.called()).toBeTruthy();
+    await waitFor(() => expect(mockOnChange).toHaveBeenCalledTimes(2));
   });
 });
