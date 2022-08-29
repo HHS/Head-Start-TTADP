@@ -32,7 +32,7 @@ export default function GoalsTableHeader({
   recipientId,
   regionId,
   hasActiveGrants,
-  selectedGoals,
+  sortConfig,
 }) {
   const history = useHistory();
   const { user } = useContext(UserContext);
@@ -42,7 +42,7 @@ export default function GoalsTableHeader({
 
   const onPrint = () => {
     history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives/print${window.location.search}`, {
-      selectedGoals,
+      sortConfig,
     });
   };
 
@@ -117,7 +117,12 @@ GoalsTableHeader.propTypes = {
   regionId: PropTypes.string.isRequired,
   recipientId: PropTypes.string.isRequired,
   hasActiveGrants: PropTypes.bool.isRequired,
-  selectedGoals: PropTypes.arrayOf(PropTypes.shape({ id: PropTypes.number })).isRequired,
+  sortConfig: PropTypes.shape({
+    sortBy: PropTypes.string,
+    direction: PropTypes.string,
+    activePage: PropTypes.number,
+    offset: PropTypes.number,
+  }).isRequired,
 };
 
 GoalsTableHeader.defaultProps = {
