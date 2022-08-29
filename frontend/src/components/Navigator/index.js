@@ -230,7 +230,6 @@ function Navigator({
           lastSaveTime={lastSaveTime}
           errorMessage={errorMessage}
           savedToStorageTime={savedToStorageTime}
-          isGoalFormClosed={isGoalFormClosed}
         />
       </Grid>
       <Grid className="smart-hub-navigator-wrapper" col={12} desktop={{ col: 8 }}>
