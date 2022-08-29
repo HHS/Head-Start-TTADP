@@ -103,7 +103,7 @@ export default function Objective({
     },
   } = useController({
     name: `${fieldArrayName}[${index}].files`,
-    defaultValue: objective.files,
+    defaultValue: objective.files || [],
   });
 
   const defaultRoles = useMemo(() => (
