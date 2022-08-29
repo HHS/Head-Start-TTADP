@@ -42,6 +42,7 @@ export default function ObjectiveTta(
           <RichEditor
             ariaLabel="TTA provided for objective"
             defaultValue={ttaProvided}
+            value={ttaProvided}
             onChange={onChangeTTA}
             onBlur={validateTta}
           />
