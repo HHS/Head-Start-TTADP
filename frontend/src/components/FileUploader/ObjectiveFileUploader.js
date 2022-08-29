@@ -17,18 +17,22 @@ const ObjectiveFileUploader = ({
   onChange, files, objective, id, upload, index, inputName, onBlur, setError,
 }) => {
   const onFileRemoved = async (removedFileIndex) => {
-    const file = files[removedFileIndex];
+    try {
+      const file = files[removedFileIndex];
 
-    if (file.id && file.objectiveIds) {
-      await deleteObjectiveFile(file.id, file.objectiveIds);
-    } else if (file.id && objective.ids) {
-      await deleteObjectiveFile(file.id, objective.ids);
-    } else if (file.id) {
-      await deleteFile(file.id);
+      if (file.id && file.objectiveIds) {
+        await deleteObjectiveFile(file.id, file.objectiveIds);
+      } else if (file.id && objective.ids) {
+        await deleteObjectiveFile(file.id, objective.ids);
+      } else if (file.id) {
+        await deleteFile(file.id);
+      }
+    } catch (err) {
+      console.log(err);
     }
-
     const copyOfFiles = [...files];
     copyOfFiles.splice(removedFileIndex, 1);
+
     onChange(copyOfFiles);
   };
 
