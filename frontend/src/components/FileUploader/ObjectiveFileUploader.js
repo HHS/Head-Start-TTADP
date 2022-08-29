@@ -18,15 +18,18 @@ const ObjectiveFileUploader = ({
 }) => {
   const onFileRemoved = async (removedFileIndex) => {
     const file = files[removedFileIndex];
-    const copyOfFiles = [...files];
-    copyOfFiles.splice(removedFileIndex, 1);
-    onChange(copyOfFiles);
 
     if (file.id && file.objectiveIds) {
       await deleteObjectiveFile(file.id, file.objectiveIds);
+    } else if (file.id && objective.ids) {
+      await deleteObjectiveFile(file.id, objective.ids);
     } else if (file.id) {
       await deleteFile(file.id);
     }
+
+    const copyOfFiles = [...files];
+    copyOfFiles.splice(removedFileIndex, 1);
+    onChange(copyOfFiles);
   };
 
   const handleDrop = async (e) => {
@@ -112,6 +115,7 @@ ObjectiveFileUploader.propTypes = {
       PropTypes.string,
       PropTypes.number,
     ]),
+    ids: PropTypes.arrayOf(PropTypes.number),
     title: PropTypes.string,
     topics: PropTypes.arrayOf(PropTypes.shape({
       label: PropTypes.string,
