@@ -6,9 +6,7 @@ import addToScanQueue from '../../services/scanQueue';
 import {
   deleteFile,
   deleteActivityReportFile,
-  deleteActivityReportObjectiveFile,
   deleteObjectiveFile,
-  deleteObjectiveTemplateFile,
   getFileById,
   updateStatus,
   createActivityReportFileMetaData,
@@ -95,9 +93,7 @@ const deleteOnlyFile = async (req, res) => {
 const deleteHandler = async (req, res) => {
   const {
     reportId,
-    reportObjectiveId,
     objectiveId,
-    objectiveTemplateId,
     fileId,
   } = req.params;
 
@@ -115,22 +111,6 @@ const deleteHandler = async (req, res) => {
       if (rf) {
         await deleteActivityReportFile(rf.id);
       }
-    } else if (reportObjectiveId) {
-      const activityReportObjective = ActivityReportObjective.findOne(
-        { where: { id: reportObjectiveId } },
-      );
-      if (!await hasReportAuthorization(
-        user,
-        activityReportObjective.activityReportId,
-      )
-      ) {
-        res.sendStatus(403);
-        return;
-      }
-      const rof = file.reportObjectiveFiles.find((r) => r.reportObjectiveId === reportObjectiveId);
-      if (rof) {
-        await deleteActivityReportObjectiveFile(rof.id);
-      }
     } else if (objectiveId) {
       const objective = await getObjectiveById(objectiveId);
       const objectivePolicy = new ObjectivePolicy(objective, user);
@@ -144,14 +124,8 @@ const deleteHandler = async (req, res) => {
       if (of) {
         await deleteObjectiveFile(of.id);
       }
-    } else if (objectiveTemplateId) {
-      // TODO: Determine how to handle permissions for objective templates.
-      const otf = file.objectiveTemplateFiles
-        .find((r) => r.objectiveTempleteId === objectiveTemplateId);
-      if (otf) {
-        await deleteObjectiveTemplateFile(otf.id);
-      }
     }
+
     file = await getFileById(fileId);
     if (file.reports.length
       + file.reportObjectiveFiles.length

@@ -86,6 +86,7 @@ describe('File Upload', () => {
   let fileId;
   let goal;
   let objective;
+  let secondTestObjective;
   let grant;
   let recipient;
 
@@ -96,6 +97,7 @@ describe('File Upload', () => {
     grant = await Grant.create({ ...mockGrant, recipientId: recipient.id });
     goal = await Goal.create({ ...goalObject, grantId: grant.id });
     objective = await Objective.create(objectiveObject);
+    secondTestObjective = await Objective.create({ title: 'objective for lonely file test' });
 
     process.env.NODE_ENV = 'test';
     process.env.BYPASS_AUTH = 'true';
@@ -119,7 +121,7 @@ describe('File Upload', () => {
           model: ObjectiveFile,
           as: 'objectiveFiles',
           required: true,
-          where: { objectiveId: objective.dataValues.id },
+          where: { objectiveId: [objective.dataValues.id, secondTestObjective.dataValues.id] },
         },
       ],
     });
@@ -153,7 +155,15 @@ describe('File Upload', () => {
     await File.destroy({ where: { originalFileName: 'testfile.pdf' } });
 
     await ActivityReport.destroy({ where: { id: report.dataValues.id } });
-    await Objective.destroy({ where: { id: objective.dataValues.id } });
+    await Objective.destroy(
+      {
+        where: {
+          id: [
+            objective.dataValues.id, secondTestObjective.dataValues.id,
+          ],
+        },
+      },
+    );
     await Goal.destroy({ where: { id: goal.id } });
     await Grant.destroy({ where: { id: grant.id } });
     await Recipient.destroy({ where: { id: recipient.id } });
@@ -291,26 +301,84 @@ describe('File Upload', () => {
       expect(validate(uuid)).toBe(true);
     });
 
-    it('tests a lonely file upload', async () => {
-      UserPolicy.mockImplementation(() => ({
-        canWriteInAtLeastOneRegion: () => true,
-      }));
-      uploadFile.mockResolvedValue({ key: 'key' });
-      const response = await request(app)
-        .post('/api/files/upload')
-        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(200);
-      fileId = response.body.id;
-      expect(uploadFile).toHaveBeenCalled();
-      expect(mockAddToScanQueue).toHaveBeenCalled();
+    describe('lonely file', () => {
+      let lonelyFileId;
+      let lonelyFileId2;
 
-      await waitFor(async () => {
-        const lonelyFile = await File.findByPk(fileId);
+      beforeAll(async () => {
+        UserPolicy.mockImplementation(() => ({
+          canWriteInAtLeastOneRegion: () => true,
+        }));
+        uploadFile.mockResolvedValue({ key: 'key' });
+        const response = await request(app)
+          .post('/api/files/upload')
+          .attach('file', `${__dirname}/testfiles/testfile.pdf`)
+          .expect(200);
 
-        expect(lonelyFile).not.toBeNull();
-        expect(lonelyFile.dataValues.id).toBe(fileId);
-        expect(lonelyFile.dataValues.status).not.toBe(null);
-        expect(lonelyFile.dataValues.originalFileName).toBe('testfile.pdf');
+        lonelyFileId = response.body.id;
+
+        const secondResponse = await request(app)
+          .post('/api/files/upload')
+          .attach('file', `${__dirname}/testfiles/testfile.pdf`)
+          .expect(200);
+
+        lonelyFileId2 = secondResponse.body.id;
+      });
+
+      it('upload', async () => {
+        expect(uploadFile).toHaveBeenCalled();
+        expect(mockAddToScanQueue).toHaveBeenCalled();
+
+        await waitFor(async () => {
+          const lonelyFile = await File.findByPk(lonelyFileId);
+
+          expect(lonelyFile).not.toBeNull();
+          expect(lonelyFile.dataValues.id).toBe(lonelyFileId);
+          expect(lonelyFile.dataValues.status).not.toBe(null);
+          expect(lonelyFile.dataValues.originalFileName).toBe('testfile.pdf');
+        });
+      });
+
+      it('delete', async () => {
+        UserPolicy.mockImplementation(() => ({
+          canWriteInAtLeastOneRegion: () => true,
+        }));
+
+        await request(app)
+          .delete(`/api/files/${lonelyFileId}`)
+          .expect(204);
+
+        expect(deleteFileFromS3).toHaveBeenCalled();
+
+        await waitFor(async () => {
+          const lonelyFile = await File.findByPk(fileId);
+          expect(lonelyFile).toBeNull();
+        });
+      });
+
+      it('won\'t delete if associated with other data', async () => {
+        await ObjectiveFile.create({
+          fileId: lonelyFileId2,
+          objectiveId: secondTestObjective.dataValues.id,
+        });
+
+        UserPolicy.mockImplementation(() => ({
+          canWriteInAtLeastOneRegion: () => true,
+        }));
+
+        await request(app)
+          .delete(`/api/files/${lonelyFileId2}`)
+          .expect(204);
+
+        expect(deleteFileFromS3).not.toHaveBeenCalled();
+
+        await waitFor(async () => {
+          const lonelyFile2 = await File.findByPk(lonelyFileId2);
+          expect(lonelyFile2).not.toBeNull();
+          expect(lonelyFile2.dataValues.id).toBe(lonelyFileId2);
+          expect(lonelyFile2.dataValues.status).not.toBe(null);
+          expect(lonelyFile2.dataValues.originalFileName).toBe('testfile.pdf');
+        });
       });
     });
 
