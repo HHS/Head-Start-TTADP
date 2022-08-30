@@ -8,13 +8,9 @@ import {
 import { removeUnusedGoalsObjectivesFromReport } from './goals';
 
 export async function saveObjectivesForReport(objectives, report) {
-  const activityRecipientIds = report.activityRecipients.map(
-    (g) => g.activityRecipientId,
-  );
-
   const updatedObjectives = await Promise.all(objectives.map(async (objective) => {
     if (objective.isNew) {
-      return Promise.all(activityRecipientIds.map(async (recipient) => {
+      return Promise.all(objective.recipientIds.map(async (recipient) => {
         const [newObjective] = await Objective.findOrCreate({
           where: {
             status: objective.status,
@@ -35,10 +31,10 @@ export async function saveObjectivesForReport(objectives, report) {
         return newObjective;
       }));
     }
-    return Promise.all(activityRecipientIds.map(async (recipient) => {
+    return Promise.all(objective.recipientIds.map(async (recipient) => {
       const existingObjective = await Objective.findOne({
         where: {
-          id: objective.id,
+          id: objective.ids,
           otherEntityId: recipient,
         },
       });
