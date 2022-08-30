@@ -39,6 +39,7 @@ const GoalsObjectives = ({ reportId }) => {
 
     return r.activityRecipientId;
   }) : [];
+  const activityRecipientIds = recipients.map((r) => r.activityRecipientId);
 
   const [fetchError, setFetchError] = useState(false);
   const [availableGoals, updateAvailableGoals] = useState([]);
@@ -181,7 +182,12 @@ const GoalsObjectives = ({ reportId }) => {
       {/**
         * on non-recipient reports, only objectives are shown
       */}
-      {!isRecipientReport && (<OtherEntity roles={roles} />)}
+      {!isRecipientReport && (
+      <OtherEntity
+        roles={roles}
+        recipientIds={activityRecipientIds}
+      />
+      )}
 
       {(isRecipientReport && !showGoals) && (
       <Alert type="info" noIcon>
