@@ -19,7 +19,7 @@ const [
 
 const topicsFromApi = [
   'Behavioral / Mental Health / Trauma',
-  'Child Assessment, Development, Screening',
+  'Child Screening and Assessment',
   'CLASS: Classroom Organization',
   'CLASS: Emotional Support',
   'CLASS: Instructional Support',
