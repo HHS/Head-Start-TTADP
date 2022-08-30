@@ -28,9 +28,9 @@ describe('AccountManagement', () => {
   const vals = [
     'immediately',
     'never',
-    'monthlyDigest',
-    'weeklyDigest',
-    'dailyDigest',
+    'this month',
+    'this week',
+    'today',
   ];
 
   const unsub = keys.map((key) => ({ key, value: 'never' }));
