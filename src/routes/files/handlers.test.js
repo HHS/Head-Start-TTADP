@@ -305,7 +305,7 @@ describe('File Upload', () => {
       let lonelyFileId;
       let lonelyFileId2;
 
-      beforeAll(async () => {
+      it('upload and delete', async () => {
         UserPolicy.mockImplementation(() => ({
           canWriteInAtLeastOneRegion: () => true,
         }));
@@ -317,15 +317,6 @@ describe('File Upload', () => {
 
         lonelyFileId = response.body.id;
 
-        const secondResponse = await request(app)
-          .post('/api/files/upload')
-          .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-          .expect(200);
-
-        lonelyFileId2 = secondResponse.body.id;
-      });
-
-      it('upload', async () => {
         expect(uploadFile).toHaveBeenCalled();
         expect(mockAddToScanQueue).toHaveBeenCalled();
 
@@ -337,12 +328,6 @@ describe('File Upload', () => {
           expect(lonelyFile.dataValues.status).not.toBe(null);
           expect(lonelyFile.dataValues.originalFileName).toBe('testfile.pdf');
         });
-      });
-
-      it('delete', async () => {
-        UserPolicy.mockImplementation(() => ({
-          canWriteInAtLeastOneRegion: () => true,
-        }));
 
         await request(app)
           .delete(`/api/files/${lonelyFileId}`)
@@ -357,6 +342,16 @@ describe('File Upload', () => {
       });
 
       it('won\'t delete if associated with other data', async () => {
+        UserPolicy.mockImplementation(() => ({
+          canWriteInAtLeastOneRegion: () => true,
+        }));
+        uploadFile.mockResolvedValue({ key: 'key' });
+        const secondResponse = await request(app)
+          .post('/api/files/upload')
+          .attach('file', `${__dirname}/testfiles/testfile.pdf`)
+          .expect(200);
+
+        lonelyFileId2 = secondResponse.body.id;
         await ObjectiveFile.create({
           fileId: lonelyFileId2,
           objectiveId: secondTestObjective.dataValues.id,
