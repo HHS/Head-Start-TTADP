@@ -9,7 +9,7 @@ import { NEW_OBJECTIVE } from './constants';
 
 const OBJECTIVE_LABEL = 'objectivesWithoutGoals';
 
-export default function OtherEntity({ roles }) {
+export default function OtherEntity({ roles, recipientIds }) {
   const [topicOptions, setTopicOptions] = useState([]);
 
   const { errors } = useFormContext();
@@ -37,20 +37,20 @@ export default function OtherEntity({ roles }) {
     append,
   } = useFieldArray({
     name: OBJECTIVE_LABEL,
-    defaultValues: [{ ...NEW_OBJECTIVE(), roles: defaultRoles }],
+    defaultValues: [{ ...NEW_OBJECTIVE(), roles: defaultRoles, recipientIds }],
   });
 
   const onAddNew = () => {
-    append({ ...NEW_OBJECTIVE(), roles: defaultRoles });
+    append({ ...NEW_OBJECTIVE(), roles: defaultRoles, recipientIds });
   };
 
   const options = [{ ...NEW_OBJECTIVE() }];
 
   useEffect(() => {
     if (objectives.length === 0) {
-      append({ ...NEW_OBJECTIVE(), roles: defaultRoles });
+      append({ ...NEW_OBJECTIVE(), roles: defaultRoles, recipientIds });
     }
-  }, [append, defaultRoles, objectives.length]);
+  }, [append, defaultRoles, objectives.length, recipientIds]);
 
   return (
     <div>
@@ -88,4 +88,5 @@ export default function OtherEntity({ roles }) {
 
 OtherEntity.propTypes = {
   roles: PropTypes.arrayOf(PropTypes.string).isRequired,
+  recipientIds: PropTypes.arrayOf(PropTypes.number).isRequired,
 };
