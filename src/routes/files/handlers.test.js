@@ -352,14 +352,14 @@ describe('File Upload', () => {
           .expect(200);
 
         lonelyFileId2 = secondResponse.body.id;
-        await ObjectiveFile.create({
-          fileId: lonelyFileId2,
-          objectiveId: secondTestObjective.dataValues.id,
-        });
 
-        UserPolicy.mockImplementation(() => ({
-          canWriteInAtLeastOneRegion: () => true,
-        }));
+        await waitFor(async () => {
+          const lonelyFile2 = await File.findByPk(lonelyFileId2);
+          await ObjectiveFile.create({
+            fileId: lonelyFile2.id,
+            objectiveId: secondTestObjective.dataValues.id,
+          });
+        });
 
         await request(app)
           .delete(`/api/files/${lonelyFileId2}`)

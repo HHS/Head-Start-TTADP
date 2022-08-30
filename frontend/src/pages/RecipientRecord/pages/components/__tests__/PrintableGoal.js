@@ -21,4 +21,16 @@ describe('PrintableGoal', () => {
     renderPrintableGoal(goal);
     expect(await screen.findByText('Uncertain')).toBeInTheDocument();
   });
+
+  it('will display a goal with no status', async () => {
+    const goal = {
+      goalNumber: '2',
+      goalText: 'asdfasdf',
+      grantNumber: '3',
+      goalTopics: ['Topic'],
+      objectives: [],
+    };
+    renderPrintableGoal(goal);
+    expect(await screen.findByText(/Needs Status/i)).toBeInTheDocument();
+  });
 });
