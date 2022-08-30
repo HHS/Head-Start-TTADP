@@ -36,7 +36,7 @@ export default function PrintableObjective({ objective }) {
         <p className={FIRST_COLUMN_CLASS}>Objective status</p>
         <p className={SECOND_COLUMN_CLASS}>
           {icon}
-          {objective.status}
+          {key}
         </p>
       </div>
     </div>
