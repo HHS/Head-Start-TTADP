@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import {
   FormGroup, Label, Textarea,
 } from '@trussworks/react-uswds';
@@ -16,10 +15,6 @@ export default function ObjectiveTitle({
   inputName,
   isLoading,
 }) {
-  const {
-    register,
-  } = useFormContext();
-
   const readOnly = useMemo(() => (isOnApprovedReport || status === 'Complete' || status === 'Suspended' || (status === 'Not Started' && isOnReport) || (status === 'In Progress' && isOnReport)),
     [isOnApprovedReport, isOnReport, status]);
 
@@ -39,12 +34,11 @@ export default function ObjectiveTitle({
             key={inputName}
             id={inputName}
             name={inputName}
-            defaultValue={title}
+            value={title}
             onChange={onChangeTitle}
             onBlur={validateObjectiveTitle}
             required
             disabled={isLoading}
-            inputRef={register({ required: true })}
           />
         </>
       )}
