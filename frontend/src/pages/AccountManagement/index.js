@@ -26,9 +26,9 @@ const emailPreferenceErrorMessage = 'Please select a frequency preference';
 const frequencyMap = [
   { key: 'never', label: 'Do not notify me' },
   { key: 'immediately', label: 'Immediately' },
-  { key: 'dailyDigest', label: 'Daily digest' },
-  { key: 'weeklyDigest', label: 'Weekly digest' },
-  { key: 'monthlyDigest', label: 'Monthly digest' },
+  { key: 'today', label: 'Daily digest' },
+  { key: 'this week', label: 'Weekly digest' },
+  { key: 'this month', label: 'Monthly digest' },
 ];
 
 const emailTypesMap = [

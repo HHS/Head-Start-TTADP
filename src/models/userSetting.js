@@ -1,25 +1,19 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class UserSetting extends Model {
+  class UserSettings extends Model {
     static associate(models) {
-      UserSetting.belongsTo(models.User, { foreignKey: 'userId' });
+      UserSettings.hasMany(models.UserSettingOverrides, { foreignKey: 'userSettingId', as: 'userSettingOverrides' });
     }
   }
 
-  UserSetting.init(
+  UserSettings.init(
     {
-      userId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        references: { model: { tableName: 'users' }, key: 'id' },
-        onUpdate: 'CASCADE',
-      },
       key: { type: DataTypes.STRING, allowNull: false },
-      value: { type: DataTypes.STRING, allowNull: false },
+      default: { type: DataTypes.STRING, allowNull: false },
     },
-    { sequelize, modelName: 'UserSetting' },
+    { sequelize, modelName: 'UserSettings' },
   );
 
-  return UserSetting;
+  return UserSettings;
 };

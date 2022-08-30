@@ -173,9 +173,9 @@ export const USER_SETTINGS = {
     VALUES: {
       NEVER: 'never',
       IMMEDIATELY: 'immediately',
-      DAILY_DIGEST: 'dailyDigest',
-      WEEKLY_DIGEST: 'weeklyDigest',
-      MONTHLY_DIGEST: 'monthlyDigest',
+      DAILY_DIGEST: 'today',
+      WEEKLY_DIGEST: 'this week',
+      MONTHLY_DIGEST: 'this month',
     },
   },
 };
