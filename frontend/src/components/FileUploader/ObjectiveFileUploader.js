@@ -33,13 +33,13 @@ const ObjectiveFileUploader = ({
   };
 
   const handleDrop = async (e) => {
-    console.log(e);
+    console.log({ e });
 
     const newFiles = await Promise.all(
       e.map((file) => upload(file, objective, setError, index)),
     );
 
-    console.log(newFiles);
+    console.log({ newFiles });
 
     let objectives;
     let setObjectives;
