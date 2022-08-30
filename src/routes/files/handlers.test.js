@@ -336,7 +336,7 @@ describe('File Upload', () => {
         expect(deleteFileFromS3).toHaveBeenCalled();
 
         await waitFor(async () => {
-          const lonelyFile = await File.findByPk(fileId);
+          const lonelyFile = await File.findByPk(lonelyFileId);
           expect(lonelyFile).toBeNull();
         });
       });
