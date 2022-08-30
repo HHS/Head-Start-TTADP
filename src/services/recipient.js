@@ -166,7 +166,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
   };
 }
 
-function dedupeAndSortObjectivesAndReports(objectives) {
+export function dedupeAndSortObjectivesAndReports(objectives) {
   return objectives.reduce((previous, objective) => {
     // eslint-disable-next-line max-len
     const existingObjective = previous.find((o) => (o.title.trim() === objective.title.trim() && o.status === objective.status));
@@ -189,7 +189,7 @@ function dedupeAndSortObjectivesAndReports(objectives) {
 
     return [
       ...previous,
-      objective,
+      { ...objective, title: objective.title.trim() },
     ];
   }, []).sort((a, b) => ((
     a.endDate === b.endDate ? a.id < b.id
