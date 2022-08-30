@@ -5,13 +5,13 @@ import {
 } from '../../../../components/GoalForm/constants';
 
 export const UNFINISHED_OBJECTIVES = 'All objective fields must be completed';
-export const GOAL_MISSING_OBJECTIVE = 'Every goal requires at least one objective';
-export const GOALS_EMPTY = 'Every report must have at least one goal';
-export const OBJECTIVE_TITLE = 'Every objective requires a title';
-export const OBJECTIVE_ROLE = 'Every objective requires at least one role';
+export const GOAL_MISSING_OBJECTIVE = 'Select a TTA objective';
+export const GOALS_EMPTY = 'Select a recipent\'s goal';
+export const OBJECTIVE_TITLE = 'Enter an objective';
+export const OBJECTIVE_ROLE = 'Select a specialist role';
 export const OBJECTIVE_RESOURCES = 'Each resource should be a valid link';
-export const OBJECTIVE_TTA = 'Every objective should have TTA provided';
-export const OBJECTIVE_TOPICS = 'Each objective should have a topic selected';
+export const OBJECTIVE_TTA = 'Describe the TTA provided';
+export const OBJECTIVE_TOPICS = 'Select at least one topic';
 
 export const unfinishedObjectives = (objectives, setError = () => {}) => {
   const unfinished = objectives.some(
