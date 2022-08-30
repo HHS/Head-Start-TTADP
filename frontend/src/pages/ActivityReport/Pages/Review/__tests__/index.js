@@ -62,7 +62,6 @@ const RenderReview = ({
         isPendingApprover={isPendingApprover}
         pages={pages}
         reportCreator={reportCreator}
-        updateShowValidationErrors={jest.fn}
         lastSaveTime={moment()}
       />
     </FormProvider>

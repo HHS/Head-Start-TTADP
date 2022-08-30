@@ -3,11 +3,15 @@
   the nav items passed in as props. This component has lots of custom styles
   defined. Note the nav is no longer stickied once we hit mobile widths (640px)
 */
-import React, { useState, useEffect, useContext } from 'react';
+import React, {
+  useState, useEffect, useContext,
+} from 'react';
 import PropTypes from 'prop-types';
 import { startCase } from 'lodash';
 import Sticky from 'react-stickynode';
-import { Button, Tag, Alert } from '@trussworks/react-uswds';
+import {
+  Button, Tag, Alert,
+} from '@trussworks/react-uswds';
 import { useMediaQuery } from 'react-responsive';
 import moment from 'moment';
 import Container from '../../Container';
@@ -38,7 +42,12 @@ const tagClass = (state) => {
 };
 
 function SideNav({
-  pages, skipTo, skipToMessage, lastSaveTime, errorMessage, savedToStorageTime,
+  pages,
+  skipTo,
+  skipToMessage,
+  lastSaveTime,
+  errorMessage,
+  savedToStorageTime,
 }) {
   const [fade, updateFade] = useState(true);
 
@@ -74,52 +83,55 @@ function SideNav({
   const { connectionActive } = useContext(NetworkContext);
 
   return (
-    <Sticky className="smart-hub-sidenav" top={100} enabled={!isMobile}>
-      <Container padding={0}>
-        <a className="smart-hub--navigator-skip-link" href={`#${skipTo}`}>{skipToMessage}</a>
-        <ul className="smart-hub--navigator-list">
-          {navItems()}
-        </ul>
-      </Container>
-      {errorMessage
-        && (
-          <Alert type="error" onAnimationEnd={onAnimationEnd} slim noIcon className={`smart-hub--save-alert ${fade ? 'alert-fade' : ''}`}>
-            {errorMessage}
-          </Alert>
-        )}
-      {(lastSaveTime || savedToStorageTime) && !errorMessage
-        && (
-          <Alert
-            onAnimationEnd={onAnimationEnd}
-            aria-atomic
-            aria-live="polite"
-            type="success"
-            slim
-            noIcon
-            className={`smart-hub--save-alert padding-y-2 ${fade ? 'alert-fade' : ''}`}
-          >
-            Autosaved on:
-            <br />
-            <ul className="margin-y-0">
-              {(lastSaveTime && connectionActive)
-                ? (
+    <>
+      <Sticky className="smart-hub-sidenav" top={100} enabled={!isMobile}>
+        <Container padding={0}>
+          <a className="smart-hub--navigator-skip-link" href={`#${skipTo}`}>{skipToMessage}</a>
+          <ul className="smart-hub--navigator-list">
+            {navItems()}
+          </ul>
+        </Container>
+        {errorMessage
+          && (
+            <Alert type="error" onAnimationEnd={onAnimationEnd} slim noIcon className={`smart-hub--save-alert ${fade ? 'alert-fade' : ''}`}>
+              {errorMessage}
+            </Alert>
+          )}
+        {(lastSaveTime || savedToStorageTime) && !errorMessage
+          && (
+            <Alert
+              onAnimationEnd={onAnimationEnd}
+              aria-atomic
+              aria-live="polite"
+              type="success"
+              slim
+              noIcon
+              className={`smart-hub--save-alert padding-y-2 ${fade ? 'alert-fade' : ''}`}
+            >
+              Autosaved on:
+              <br />
+              <ul className="margin-y-0">
+                {(lastSaveTime && connectionActive)
+                  ? (
+                    <li>
+                      our network at
+                      {' '}
+                      {lastSaveTime.format(DATE_DISPLAY_SAVED_FORMAT)}
+                    </li>
+                  ) : null}
+                {savedToStorageTime && (
                   <li>
-                    our network at
+                    your computer at
                     {' '}
-                    {lastSaveTime.format(DATE_DISPLAY_SAVED_FORMAT)}
+                    {moment(savedToStorageTime).format(DATE_DISPLAY_SAVED_FORMAT)}
                   </li>
-                ) : null}
-              { savedToStorageTime && (
-              <li>
-                your computer at
-                {' '}
-                {moment(savedToStorageTime).format(DATE_DISPLAY_SAVED_FORMAT)}
-              </li>
-              )}
-            </ul>
-          </Alert>
-        )}
-    </Sticky>
+                )}
+              </ul>
+            </Alert>
+          )}
+      </Sticky>
+
+    </>
   );
 }
 

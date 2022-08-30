@@ -242,8 +242,6 @@ function ActivityReport({
   const [editable, updateEditable] = useLocalStorage(
     LOCAL_STORAGE_EDITABLE_KEY(activityReportId), (activityReportId === 'new'), currentPage !== 'review',
   );
-
-  const [showValidationErrors, updateShowValidationErrors] = useState(false);
   const [errorMessage, updateErrorMessage] = useState();
   // this attempts to track whether or not we're online
   // (or at least, if the backend is responding)
@@ -661,8 +659,6 @@ function ActivityReport({
           editable={editable}
           updatePage={updatePage}
           reportCreator={reportCreator}
-          showValidationErrors={showValidationErrors}
-          updateShowValidationErrors={updateShowValidationErrors}
           lastSaveTime={lastSaveTime}
           updateLastSaveTime={updateLastSaveTime}
           reportId={reportId.current}
