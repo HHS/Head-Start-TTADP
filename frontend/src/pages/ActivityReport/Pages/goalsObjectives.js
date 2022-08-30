@@ -8,6 +8,7 @@ import { Helmet } from 'react-helmet';
 import { Alert, Fieldset } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useFormContext, useController } from 'react-hook-form/dist/index.ie11';
+import { Link } from 'react-router-dom';
 import GoalPicker, { newGoal } from './components/GoalPicker';
 import { getGoals } from '../../../fetchers/activityReports';
 import { validateGoals } from './components/goalValidator';
@@ -30,8 +31,9 @@ const GoalsObjectives = ({ reportId }) => {
 
   const recipients = watch('activityRecipients');
   const activityRecipientType = watch('activityRecipientType');
-
+  const activityReportId = watch('id');
   const isRecipientReport = activityRecipientType === 'recipient';
+  const isOtherEntityReport = activityRecipientType === 'other-entity';
   const grantIds = isRecipientReport ? recipients.map((r) => {
     if (r.grant) {
       return r.grant.id;
@@ -179,6 +181,15 @@ const GoalsObjectives = ({ reportId }) => {
         <Req className="margin-right-1" />
         indicates required field
       </p>
+      {(!isOtherEntityReport && !isRecipientReport) && (
+        <Alert noIcon type="info">
+          To add goals and objectives, indicate who the activity was for in
+          {' '}
+          <Link to={`/activity-reports/${activityReportId}/activity-summary`}>Activity Summary</Link>
+          .
+        </Alert>
+      )}
+
       {/**
         * on non-recipient reports, only objectives are shown
       */}
