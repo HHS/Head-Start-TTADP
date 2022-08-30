@@ -18,12 +18,6 @@ const getUserSettings = async (req, res) => {
   } catch (error) {
     await handleErrors(req, res, error, { namespace });
   }
-  // try {
-  //   const users = await usersWithSetting(USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED, USER_SETTINGS.EMAIL.VALUES.NEVER);
-  //   res.json(users);
-  // } catch (error) {
-  //   await handleErrors(req, res, error, { namespace });
-  // }
 };
 
 const getUserEmailSettings = async (req, res) => {
