@@ -20,6 +20,7 @@ export default function ControlledDatePicker({
   setEndDate,
   isStartDate,
   onBlur,
+  inputId,
 }) {
   /**
    * we don't want to compute these fields multiple times if we don't have to,
@@ -74,6 +75,13 @@ export default function ControlledDatePicker({
   });
 
   const handleOnBlur = useCallback((e) => {
+    if (e.nativeEvent && e.nativeEvent.relatedTarget) {
+      // we don't want blur to trigger on the date picker itself, including the calendar icon
+      if (e.nativeEvent.relatedTarget.matches('.usa-date-picker__button')) {
+        return;
+      }
+    }
+
     onFieldBlur(e);
     onBlur(e);
   }, [onBlur, onFieldBlur]);
@@ -99,8 +107,8 @@ export default function ControlledDatePicker({
   return (
     <DatePicker
       defaultValue={formattedValue}
-      name={name}
-      id={name}
+      name={inputId}
+      id={inputId}
       onChange={datePickerOnChange}
       minDate={min.datePicker}
       maxDate={max.datePicker}
@@ -122,6 +130,7 @@ ControlledDatePicker.propTypes = {
   isStartDate: PropTypes.bool,
   setEndDate: PropTypes.func,
   onBlur: PropTypes.func,
+  inputId: PropTypes.string.isRequired,
 };
 
 ControlledDatePicker.defaultProps = {

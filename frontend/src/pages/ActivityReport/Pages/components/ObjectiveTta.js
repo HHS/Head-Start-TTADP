@@ -40,9 +40,9 @@ export default function ObjectiveTta(
         <div className="smart-hub--text-area__resize-vertical margin-top-1">
           <input type="hidden" name={inputName} value={ttaProvided} />
           <RichEditor
-            value={ttaProvided}
             ariaLabel="TTA provided for objective"
             defaultValue={ttaProvided}
+            value={ttaProvided}
             onChange={onChangeTTA}
             onBlur={validateTta}
           />

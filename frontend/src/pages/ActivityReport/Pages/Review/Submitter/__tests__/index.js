@@ -13,7 +13,7 @@ import { REPORT_STATUSES, SCOPE_IDS } from '../../../../../../Constants';
 import UserContext from '../../../../../../UserContext';
 
 const defaultUser = {
-  id: 1, name: 'Walter Burns', role: ['Reporter'], permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
+  id: 1, name: 'Walter Burns', roles: [{ fullName: 'Reporter' }], permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
 };
 
 const RenderSubmitter = ({
@@ -227,7 +227,7 @@ describe('Submitter review page', () => {
 
     it('creator role auto populates on needs_action', async () => {
       const mockSubmit = jest.fn();
-      renderReview(REPORT_STATUSES.NEEDS_ACTION, mockSubmit, true, () => { }, () => { }, [], { ...defaultUser, role: ['COR'] });
+      renderReview(REPORT_STATUSES.NEEDS_ACTION, mockSubmit, true, () => { }, () => { }, [], { ...defaultUser, roles: [{ fullName: 'COR' }] });
 
       // Resubmit.
       const reSubmit = await screen.findByRole('button', { name: /re-submit for approval/i });
@@ -237,7 +237,7 @@ describe('Submitter review page', () => {
 
     it('requires creator role on needs_action multiple roles', async () => {
       const mockSubmit = jest.fn();
-      renderReview(REPORT_STATUSES.NEEDS_ACTION, mockSubmit, true, () => { }, () => { }, [], { ...defaultUser, role: ['COR', 'Health Specialist', 'TTAC'] });
+      renderReview(REPORT_STATUSES.NEEDS_ACTION, mockSubmit, true, () => { }, () => { }, [], { ...defaultUser, roles: [{ fullName: 'COR' }, { fullName: 'Health Specialist' }, { fullName: 'TTAC' }] });
 
       // Shows creator role.
       expect(await screen.findByText(/creator role/i)).toBeVisible();
@@ -287,12 +287,12 @@ describe('Submitter review page', () => {
 
   describe('creator role when report is draft', () => {
     it('hides with single role', async () => {
-      renderReview(REPORT_STATUSES.DRAFT, () => { }, true, () => { }, () => { }, [], { ...defaultUser, role: ['Health Specialist'] });
+      renderReview(REPORT_STATUSES.DRAFT, () => { }, true, () => { }, () => { }, [], { ...defaultUser, roles: [{ fullName: 'Health Specialist' }] });
       expect(screen.queryByRole('combobox', { name: /creator role */i })).toBeNull();
     });
 
     it('displays with multiple roles', async () => {
-      renderReview(REPORT_STATUSES.DRAFT, () => { }, true, () => { }, () => { }, [], { ...defaultUser, role: ['COR', 'Health Specialist', 'TTAC'] });
+      renderReview(REPORT_STATUSES.DRAFT, () => { }, true, () => { }, () => { }, [], { ...defaultUser, roles: [{ fullName: 'COR' }, { fullName: 'Health Specialist' }, { fullName: 'TTAC' }] });
       const roleSelector = await screen.findByRole('combobox', { name: /creator role */i });
       expect(roleSelector.length).toBe(4);
       userEvent.selectOptions(roleSelector, 'COR');
@@ -301,7 +301,7 @@ describe('Submitter review page', () => {
     });
 
     it('adds now missing role', async () => {
-      renderReview(REPORT_STATUSES.DRAFT, () => { }, true, () => { }, () => { }, [], { ...defaultUser, role: ['Health Specialist', 'TTAC'] }, 'COR');
+      renderReview(REPORT_STATUSES.DRAFT, () => { }, true, () => { }, () => { }, [], { ...defaultUser, roles: [{ fullName: 'Health Specialist' }, { fullName: 'TTAC' }] }, 'COR');
       const roleSelector = await screen.findByRole('combobox', { name: /creator role */i });
       expect(roleSelector.length).toBe(4);
       expect(await screen.findByText(/cor/i)).toBeVisible();

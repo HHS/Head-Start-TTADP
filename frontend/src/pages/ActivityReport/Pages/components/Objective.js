@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import { useController } from 'react-hook-form/dist/index.ie11';
-import ObjectiveTitle from '../../../../components/GoalForm/ObjectiveTitle';
+import ObjectiveTitle from './ObjectiveTitle';
 import { REPORT_STATUSES } from '../../../../Constants';
 import SpecialistRole from '../../../../components/GoalForm/SpecialistRole';
 import ObjectiveTopics from '../../../../components/GoalForm/ObjectiveTopics';
@@ -30,8 +30,9 @@ export default function Objective({
   fieldArrayName,
   errors,
   roles,
+  onObjectiveChange,
 }) {
-  const [selectedObjectives, setSelectedObjectives] = useState(objective);
+  const [selectedObjective, setSelectedObjective] = useState(objective);
 
   /**
    * add controllers for all the controlled fields
@@ -153,7 +154,14 @@ export default function Objective({
   ), [objective.activityReports]);
 
   const onChangeObjective = (newObjective) => {
-    setSelectedObjectives(newObjective);
+    setSelectedObjective(newObjective);
+    onChangeResources(newObjective.resources);
+    onChangeTitle(newObjective.title);
+    onChangeTta(newObjective.ttaProvided || '');
+    onChangeStatus(newObjective.status);
+    onChangeRoles(newObjective.roles || []);
+    onChangeTopics(newObjective.topics);
+    onObjectiveChange(newObjective, index); // Call parent on objective change.
   };
 
   // we need to auto select an objective role if there is only one available
@@ -162,32 +170,6 @@ export default function Objective({
       onChangeRoles(defaultRoles);
     }
   }, [defaultRoles, objectiveRoles.length, onChangeRoles]);
-
-  useEffect(() => {
-    // firing these off as side effects updates all the fields
-    // and seems a little less janky visually than handling it all in
-    // "onChangeObjective". Note that react hook form v7 offers an "update"
-    // function w/ useFieldArray, so this can be removed and the above function
-    // simplified if we get around to moving to that
-    onChangeResources(selectedObjectives.resources);
-    onChangeRoles(selectedObjectives.roles || []);
-    onChangeTitle(selectedObjectives.title);
-    onChangeTta(selectedObjectives.ttaProvided || '');
-    onChangeStatus(selectedObjectives.status);
-    onChangeTopics(selectedObjectives.topics);
-  }, [
-    onChangeResources,
-    onChangeRoles,
-    onChangeStatus,
-    onChangeTitle,
-    onChangeTopics,
-    onChangeTta,
-    fieldArrayName,
-    index,
-    selectedObjectives,
-    // this last value is the only thing that should be changing, when a new objective is
-    // selected from the dropdown. the others, I would assume, are refs that won't be changing
-  ]);
 
   let savedTopics = [];
   let savedResources = [];
@@ -205,7 +187,7 @@ export default function Objective({
     <>
       <ObjectiveSelect
         onChange={onChangeObjective}
-        selectedObjectives={selectedObjectives}
+        selectedObjectives={selectedObjective}
         options={options}
         onRemove={onRemove}
       />
@@ -311,4 +293,5 @@ Objective.propTypes = {
   remove: PropTypes.func.isRequired,
   fieldArrayName: PropTypes.string.isRequired,
   roles: PropTypes.arrayOf(PropTypes.string).isRequired,
+  onObjectiveChange: PropTypes.func.isRequired,
 };

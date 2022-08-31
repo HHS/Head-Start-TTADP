@@ -1115,6 +1115,11 @@ async function createObjectivesForGoal(goal, objectives, report) {
     } else {
       const objectiveTitle = updatedObjective.title ? updatedObjective.title.trim() : '';
 
+      // Reuse an existing Objective:
+      // - It is on the same goal.
+      // - Has the same title.
+      // - And status is not completed.
+      // Note: Values like 'Topics' will be pulled in from the existing objective.
       const existingObjective = await Objective.findOne({
         where: {
           goalId: updatedObjective.goalId,
@@ -1158,6 +1163,11 @@ export async function saveGoalsForReport(goals, report) {
         ...fields
       } = goal;
 
+      // Reuse an existing Goal:
+      // - Has the same name.
+      // - Grant Id.
+      // - And status is not closed.
+      // Note: The existing goal should be used regardless if it was created new.
       newGoals = await Promise.all(goal.grantIds.map(async (grantId) => {
         const [newGoal] = await Goal.findOrCreate({
           where: {

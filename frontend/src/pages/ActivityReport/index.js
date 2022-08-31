@@ -242,8 +242,6 @@ function ActivityReport({
   const [editable, updateEditable] = useLocalStorage(
     LOCAL_STORAGE_EDITABLE_KEY(activityReportId), (activityReportId === 'new'), currentPage !== 'review',
   );
-
-  const [showValidationErrors, updateShowValidationErrors] = useState(false);
   const [errorMessage, updateErrorMessage] = useState();
   // this attempts to track whether or not we're online
   // (or at least, if the backend is responding)
@@ -316,7 +314,7 @@ function ActivityReport({
     }
   }, [activityReportId, formData]);
 
-  const userHasOneRole = user && user.role && user.role.length === 1;
+  const userHasOneRole = user && user.roles && user.roles.length === 1;
 
   useDeepCompareEffect(() => {
     const fetch = async () => {
@@ -332,12 +330,13 @@ function ActivityReport({
         } else {
           report = {
             ...defaultValues,
-            creatorRole: userHasOneRole ? user.role[0] : null,
+            creatorRole: userHasOneRole ? user.roles[0].fullName : null,
             pageState: defaultPageState,
             userId: user.id,
             regionId: region || getRegionWithReadWrite(user),
           };
         }
+
         const apiCalls = [
           getRecipients(report.regionId),
           getCollaborators(report.regionId),
@@ -530,6 +529,7 @@ function ActivityReport({
         if (endDateToSave === 'Invalid date' || endDateToSave === '' || !moment(endDateToSave, 'MM/DD/YYYY').isValid()) {
           endDateToSave = null;
         }
+
         const savedReport = await createReport(
           {
             ...fields,
@@ -557,11 +557,14 @@ function ActivityReport({
       } else {
         // if it isn't a new report, we compare it to the last response from the backend (formData)
         // and pass only the updated to save report
-        const creatorRole = !data.creatorRole && userHasOneRole ? user.role[0] : data.creatorRole;
+        const creatorRole = !data.creatorRole && userHasOneRole
+          ? user.roles[0].fullName
+          : data.creatorRole;
         const updatedFields = findWhatsChanged({ ...data, creatorRole }, formData);
         const updatedReport = await saveReport(
           reportId.current, { ...updatedFields, approverUserIds: approverIds }, {},
         );
+
         setConnectionActive(true);
         updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
       }
@@ -603,7 +606,7 @@ function ActivityReport({
     updateEditable(true);
   };
 
-  const reportCreator = { name: user.name, role: user.role };
+  const reportCreator = { name: user.name, roles: user.roles };
   const tagClass = formData.calculatedStatus === REPORT_STATUSES.APPROVED ? 'smart-hub--tag-approved' : '';
 
   const author = creatorNameWithRole ? (
@@ -656,8 +659,6 @@ function ActivityReport({
           editable={editable}
           updatePage={updatePage}
           reportCreator={reportCreator}
-          showValidationErrors={showValidationErrors}
-          updateShowValidationErrors={updateShowValidationErrors}
           lastSaveTime={lastSaveTime}
           updateLastSaveTime={updateLastSaveTime}
           reportId={reportId.current}

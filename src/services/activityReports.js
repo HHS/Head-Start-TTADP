@@ -107,43 +107,30 @@ async function saveReportCollaborators(activityReportId, collaborators) {
     );
   }
 
-  // Get updated collaborator roles.
   const updatedReportCollaborators = await ActivityReportCollaborator.findAll({
     where: { activityReportId },
     include: [
       {
         model: User,
         as: 'user',
-      },
-      {
-        model: CollaboratorRole,
-        as: 'collaboratorRoles',
+        include: [
+          {
+            model: Role,
+            as: 'roles',
+          },
+        ],
       },
     ],
   });
 
-  // Get collaborator roles to add.
-  const rolesToAdd = updatedReportCollaborators.filter(
-    (c) => !c.collaboratorRoles.length
-      && c.user.role.length,
-  );
-
-  // If we have collaborators missing roles.
-  if (rolesToAdd && rolesToAdd.length > 0) {
-    let updatedRoles = [];
-    rolesToAdd.forEach((collaborator) => {
-    // Set collaborator roles.
-      const { role } = collaborator.user;
-      // Concat list of collaborator role updates promises.
-      updatedRoles = updatedRoles.concat(role.map((r) => CollaboratorRole.findOrCreate(
-        { where: { activityReportCollaboratorId: collaborator.id, role: r } },
-      )));
-    });
-
-    // Resolve all role update promises.
-    if (updatedRoles && updatedRoles.length > 0) {
-      await Promise.all(updatedRoles);
-    }
+  if (updatedReportCollaborators && updatedReportCollaborators.length > 0) {
+    // eslint-disable-next-line max-len
+    await Promise.all(updatedReportCollaborators.map((collaborator) => Promise.all(collaborator.user.roles.map(async (role) => CollaboratorRole.findOrCreate({
+      where: {
+        activityReportCollaboratorId: collaborator.id,
+        roleId: role.id,
+      },
+    })))));
   }
 }
 
@@ -290,7 +277,13 @@ export function activityReportByLegacyId(legacyId) {
         include: [
           {
             model: User,
-            attributes: ['id', 'name', 'role', 'fullName'],
+            attributes: ['id', 'name', 'fullName'],
+            include: [
+              {
+                model: Role,
+                as: 'roles',
+              },
+            ],
           },
         ],
       },
@@ -393,6 +386,11 @@ export async function activityReportAndRecipientsById(activityReportId) {
       {
         model: User,
         as: 'author',
+        include: [
+          {
+            model: Role, as: 'roles', order: [['name', 'ASC']],
+          },
+        ],
       },
       {
         required: false,
@@ -402,10 +400,14 @@ export async function activityReportAndRecipientsById(activityReportId) {
           {
             model: User,
             as: 'user',
+            include: [
+              { model: Role, as: 'roles', order: [['name', 'ASC']] },
+            ],
           },
           {
-            model: CollaboratorRole,
+            model: Role,
             as: 'collaboratorRoles',
+            order: [['name', 'ASC']],
           },
         ],
       },
@@ -452,7 +454,13 @@ export async function activityReportAndRecipientsById(activityReportId) {
         include: [
           {
             model: User,
-            attributes: ['id', 'name', 'role', 'fullName'],
+            attributes: ['id', 'name', 'fullName'],
+            include: [
+              {
+                model: Role,
+                as: 'roles',
+              },
+            ],
           },
         ],
       },
@@ -533,8 +541,17 @@ export async function activityReports(
       include: [
         {
           model: User,
-          attributes: ['name', 'role', 'fullName', 'homeRegionId'],
+          attributes: ['name', 'fullName', 'homeRegionId'],
           as: 'author',
+          include: [
+            {
+              model: Role,
+              as: 'roles',
+            },
+          ],
+          order: [
+            [sequelize.col('author."name"'), 'ASC'],
+          ],
         },
         {
           required: false,
@@ -544,10 +561,19 @@ export async function activityReports(
             {
               model: User,
               as: 'user',
-              attributes: ['id', 'name', 'role', 'fullName'],
+              attributes: ['id', 'name', 'fullName'],
+              include: [
+                {
+                  model: Role,
+                  as: 'roles',
+                },
+              ],
+              order: [
+                [sequelize.col('user."name"'), 'ASC'],
+              ],
             },
             {
-              model: CollaboratorRole,
+              model: Role,
               as: 'collaboratorRoles',
             },
           ],
@@ -560,7 +586,13 @@ export async function activityReports(
           include: [
             {
               model: User,
-              attributes: ['id', 'name', 'role', 'fullName'],
+              attributes: ['id', 'name', 'fullName'],
+              include: [
+                {
+                  model: Role,
+                  as: 'roles',
+                },
+              ],
             },
           ],
         },
@@ -771,7 +803,13 @@ export async function activityReportAlerts(userId, {
       include: [
         {
           model: User,
-          attributes: ['name', 'role', 'fullName', 'homeRegionId'],
+          attributes: ['name', 'fullName', 'homeRegionId'],
+          include: [
+            {
+              model: Role,
+              as: 'roles',
+            },
+          ],
           as: 'author',
         },
         {
@@ -782,11 +820,17 @@ export async function activityReportAlerts(userId, {
             {
               model: User,
               as: 'user',
-              attributes: ['id', 'name', 'role', 'fullName'],
+              attributes: ['id', 'name', 'fullName'],
+              include: [
+                {
+                  model: Role,
+                  as: 'roles',
+                },
+              ],
               duplicating: true,
             },
             {
-              model: CollaboratorRole,
+              model: Role,
               as: 'collaboratorRoles',
             },
           ],
@@ -799,7 +843,13 @@ export async function activityReportAlerts(userId, {
           include: [
             {
               model: User,
-              attributes: ['id', 'name', 'role', 'fullName'],
+              attributes: ['id', 'name', 'fullName'],
+              include: [
+                {
+                  model: Role,
+                  as: 'roles',
+                },
+              ],
             },
           ],
         },
@@ -1071,7 +1121,13 @@ async function getDownloadableActivityReports(where, separate = true) {
       },
       {
         model: User,
-        attributes: ['name', 'role', 'fullName', 'homeRegionId'],
+        attributes: ['name', 'fullName', 'homeRegionId'],
+        include: [
+          {
+            model: Role,
+            as: 'roles',
+          },
+        ],
         as: 'author',
       },
       {
@@ -1081,10 +1137,16 @@ async function getDownloadableActivityReports(where, separate = true) {
         include: [{
           model: User,
           as: 'user',
-          attributes: ['id', 'name', 'role', 'fullName'],
+          attributes: ['id', 'name', 'fullName'],
+          include: [
+            {
+              model: Role,
+              as: 'roles',
+            },
+          ],
         },
         {
-          model: CollaboratorRole,
+          model: Role,
           as: 'collaboratorRoles',
         }],
       },

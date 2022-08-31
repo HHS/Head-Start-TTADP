@@ -12,7 +12,6 @@ jest.mock('../../lib/apiErrorHandler', () => jest.fn().mockReturnValue(() => Pro
 const mockUser = {
   id: 49,
   name: 'Joe Green',
-  role: null,
   phoneNumber: '555-555-554',
   hsesUserId: '49',
   hsesUsername: 'test49@test.com',
@@ -33,6 +32,7 @@ const mockUser = {
     },
   ],
   flags: [],
+  roles: [],
 };
 const mockSession = jest.fn();
 mockSession.userId = mockUser.id;
@@ -160,6 +160,7 @@ describe('User route handler', () => {
           scopeId: 1,
         },
       ],
+      roles: [],
     };
 
     mockRequest.body = testUpdateUser;

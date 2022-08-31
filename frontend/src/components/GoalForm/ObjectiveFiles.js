@@ -38,50 +38,41 @@ export default function ObjectiveFiles({
 
   return (
     <>
-      {
-      readOnly && hasFiles
-        ? (
-          <>
-            <p className="usa-prose margin-bottom-0 text-bold">Resources</p>
-            <p className="usa-prose margin-top-0">{files.map((f) => f.originalFileName).join(', ')}</p>
-          </>
-        )
-        : (
-          <Fieldset className="ttahub-objective-files margin-top-1">
-            <legend>
-              Do you plan to use any TTA resources that aren&apos;t available as a link?
-              {' '}
-              <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
-              <QuestionTooltip
-                text={(
-                  <div>
-                    Examples include:
-                    <ul className="usa-list">
-                      <li>Presentation slides from PD events</li>
-                      <li>PDF&apos;s you created from multiple tta resources</li>
-                      <li>Other OHS-provided resources</li>
-                    </ul>
-                  </div>
-)}
-              />
-            </legend>
-            <Radio
-              label="Yes"
-              id="add-objective-files-yes"
-              key="add-objective-files-yes"
-              name="lock-add-objective-files"
-              checked={useFiles}
-              onChange={() => setUseFiles(true)}
-            />
-            <Radio
-              label="No"
-              id="add-objective-files-no"
-              key="add-objective-files-no"
-              name="lock-add-objective-files"
-              checked={!useFiles}
-              onChange={() => setUseFiles(false)}
-            />
-            {
+      <Fieldset className="ttahub-objective-files margin-top-1">
+        <legend>
+          Do you plan to use any TTA resources that aren&apos;t available as a link?
+          {' '}
+          <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
+          <QuestionTooltip
+            text={(
+              <div>
+                Examples include:
+                <ul className="usa-list">
+                  <li>Presentation slides from PD events</li>
+                  <li>PDF&apos;s you created from multiple tta resources</li>
+                  <li>Other OHS-provided resources</li>
+                </ul>
+              </div>
+                )}
+          />
+        </legend>
+        <Radio
+          label="Yes"
+          id="add-objective-files-yes"
+          key="add-objective-files-yes"
+          name="lock-add-objective-files"
+          checked={useFiles}
+          onChange={() => setUseFiles(true)}
+        />
+        <Radio
+          label="No"
+          id="add-objective-files-no"
+          key="add-objective-files-no"
+          name="lock-add-objective-files"
+          checked={!useFiles}
+          onChange={() => setUseFiles(false)}
+        />
+        {
                 useFiles
                   ? (
                     <>
@@ -94,9 +85,7 @@ export default function ObjectiveFiles({
                   )
                   : null
         }
-          </Fieldset>
-        )
-      }
+      </Fieldset>
     </>
   );
 }
