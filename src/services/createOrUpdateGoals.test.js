@@ -4,7 +4,6 @@ import { createOrUpdateGoals } from './goals';
 import db, {
   Goal,
   Grant,
-  // GrantGoal,
   Recipient,
   Topic,
   Objective,
@@ -121,6 +120,7 @@ describe('createOrUpdateGoals', () => {
       {
         ...basicGoal,
         id: goal.id,
+        createdVia: 'activityReport',
         status: 'Not Started',
         objectives: [
           {
@@ -137,9 +137,11 @@ describe('createOrUpdateGoals', () => {
                 value: topic.id,
               },
             ],
+            roles: [],
           },
           {
             id: 'new-0',
+            isNew: true,
             status: 'Not Started',
             title: 'This is another objective',
             resources: [],
@@ -148,31 +150,41 @@ describe('createOrUpdateGoals', () => {
                 value: topic.id,
               },
             ],
+            roles: [],
           },
         ],
       },
       {
         ...basicGoal,
         grantId: grants[1].id,
+        isNew: true,
         objectives: [],
       },
     ]);
 
-    expect(newGoals.length).toBe(2);
+    expect(newGoals).toHaveLength(2);
 
-    const goalIds = newGoals.map((g) => g.id);
+    const [, { goalIds }] = newGoals;
+    expect(goalIds.length).toBe(1);
+
     expect(goalIds).toContain(goal.id);
 
-    const updatedGoal = newGoals.find((g) => g.id === goal.id);
+    const [, updatedGoal] = newGoals;
     expect(updatedGoal.status).toBe('Not Started');
-    expect(updatedGoal.getDataValue('goalName')).toBe('This is some serious goal text');
-    expect(updatedGoal.grant.id).toBe(grants[0].id);
-    expect(updatedGoal.grant.regionId).toBe(1);
-    expect(updatedGoal.grant.recipientId).toBe(recipient.id);
+    expect(updatedGoal.name).toBe('This is some serious goal text');
+    expect(updatedGoal.grantIds.length).toBe(1);
+    expect(updatedGoal.createdVia).toBe('activityReport');
+    expect(updatedGoal.grantIds).toContain(grants[0].id);
+
+    const grantRegions = updatedGoal.grants.map((g) => g.regionId);
+    const grantRecipients = updatedGoal.grants.map((g) => g.recipientId);
+
+    expect(grantRegions).toContain(1);
+    expect(grantRecipients).toContain(recipient.id);
 
     const objectivesOnUpdatedGoal = await Objective.findAll({
       where: {
-        goalId: updatedGoal.id,
+        goalId: goalIds,
       },
       raw: true,
     });
@@ -210,9 +222,10 @@ describe('createOrUpdateGoals', () => {
 
     const newGoal = newGoals.find((g) => g.id !== goal.id);
     expect(newGoal.status).toBe('Draft');
-    expect(newGoal.getDataValue('goalName')).toBe('This is some serious goal text');
+    expect(newGoal.name).toBe('This is some serious goal text');
     expect(newGoal.grant.id).toBe(grants[1].id);
     expect(newGoal.grant.regionId).toBe(1);
     expect(newGoal.grant.recipientId).toBe(recipient.id);
+    expect(newGoal.createdVia).toBe('rtr');
   });
 });

@@ -11,18 +11,18 @@ import PropTypes from 'prop-types';
 import { useDropzone } from 'react-dropzone';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { Button, Alert } from '@trussworks/react-uswds';
+import { Button, Alert, ErrorMessage } from '@trussworks/react-uswds';
 import { uploadFile, deleteFile } from '../fetchers/File';
 import Modal from './Modal';
 import colors from '../colors';
 import './FileUploader.scss';
 
-export const upload = async (file, reportId, setErrorMessage) => {
+export const upload = async (file, reportId, objectiveId, setErrorMessage) => {
   let res;
 
   try {
     const data = new FormData();
-    data.append('reportId', reportId);
+    data.append(reportId ? 'reportId' : 'objectiveId', reportId || objectiveId);
     data.append('file', file);
     res = await uploadFile(data);
   } catch (error) {
@@ -37,12 +37,18 @@ export const upload = async (file, reportId, setErrorMessage) => {
   };
 };
 
-export const handleDrop = async (e, reportId, id, onChange, setErrorMessage) => {
+export const handleDrop = async (e, reportId, objectiveId, id, onChange, setErrorMessage) => {
   if (reportId === 'new') {
     setErrorMessage('Cannot save attachments without a Recipient or Other entity selected');
     return;
   }
-  const newFiles = e.map((file) => upload(file, reportId, setErrorMessage));
+
+  // console.log('Verify Objective Id: ', objectiveId, Number.isNaN(objectiveId));
+  if (typeof objectiveId === 'string') {
+    setErrorMessage('A TTA Objective must be entered before adding attachments');
+    return;
+  }
+  const newFiles = e.map((file) => upload(file, reportId, objectiveId, setErrorMessage));
   Promise.all(newFiles).then((values) => {
     onChange(values);
   });
@@ -92,9 +98,11 @@ FileRejections.propTypes = {
 };
 
 function Dropzone(props) {
-  const { onChange, id, reportId } = props;
+  const {
+    onChange, id, reportId, objectiveId,
+  } = props;
   const [errorMessage, setErrorMessage] = useState();
-  const onDrop = (e) => handleDrop(e, reportId, id, onChange, setErrorMessage);
+  const onDrop = (e) => handleDrop(e, reportId, objectiveId, id, onChange, setErrorMessage);
   const maxSize = 30000000;
   const minSize = 1; // at least 1 byte
 
@@ -114,14 +122,15 @@ function Dropzone(props) {
     >
       <input {...getInputProps()} />
       <button type="button" className="usa-button usa-button--outline">
-        Upload Resources
+        Select and upload
       </button>
       {errorMessage
         && (
-          <Alert type="error" slim noIcon className="smart-hub--save-alert">
-            This is an error
-          </Alert>
+          <ErrorMessage className="margin-bottom-1">
+            {errorMessage}
+          </ErrorMessage>
         )}
+
       {fileRejections.length > 0
         && (
           <Alert className="files-table--upload-alert" type="error" slim noIcon>
@@ -134,8 +143,15 @@ function Dropzone(props) {
 
 Dropzone.propTypes = {
   onChange: PropTypes.func.isRequired,
-  reportId: PropTypes.node.isRequired,
+  reportId: PropTypes.node,
+  objectiveId: PropTypes.node,
   id: PropTypes.string.isRequired,
+};
+
+Dropzone.defaultProps = {
+  reportId: null,
+  objectiveId: null,
+
 };
 
 export const getStatus = (status) => {
@@ -289,7 +305,7 @@ FileTable.defaultProps = {
   files: [],
 };
 const FileUploader = ({
-  onChange, files, reportId, id,
+  onChange, files, reportId, objectiveId, id,
 }) => {
   const onFilesAdded = (newFiles) => {
     onChange([...files, ...newFiles]);
@@ -299,12 +315,12 @@ const FileUploader = ({
     const file = files[removedFileIndex];
     const remainingFiles = files.filter((f) => f.id !== file.id);
     onChange(remainingFiles);
-    await deleteFile(file.id, reportId);
+    await deleteFile(file.id, reportId, objectiveId);
   };
 
   return (
     <>
-      <Dropzone id={id} reportId={reportId} onChange={onFilesAdded} />
+      <Dropzone id={id} reportId={reportId} objectiveId={objectiveId} onChange={onFilesAdded} />
       <FileTable onFileRemoved={onFileRemoved} files={files} />
     </>
   );
@@ -314,12 +330,16 @@ FileUploader.propTypes = {
   onChange: PropTypes.func.isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   files: PropTypes.arrayOf(PropTypes.object),
-  reportId: PropTypes.node.isRequired,
+  reportId: PropTypes.node,
+  objectiveId: PropTypes.node,
   id: PropTypes.string.isRequired,
 };
 
 FileUploader.defaultProps = {
   files: [],
+  reportId: null,
+  objectiveId: null,
+
 };
 
 export default FileUploader;

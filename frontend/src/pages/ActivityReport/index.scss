@@ -4,18 +4,6 @@
   margin-top: 1.25rem;
 }
 
-.smart-hub--remove-resource {
-  margin-top: 8px !important;
-  margin-left: 4px;
-}
-
-.smart-hub--virtual-delivery-group {
-  border-left-color: $ttahub-blue;
-  border-left-style: solid;
-  border-left-width: 4px;
-  padding-left: 10px;
-}
-
 .smart-hub--report-legend .usa-legend {
   font-family: 'Source Sans Pro Web';
   font-size: 17px;
@@ -88,4 +76,10 @@
 
 .smart-hub--text-area__resize-vertical .rdw-editor-main {
   resize: vertical;
+}
+
+.usa-form-group--error .ttahub-multi-select [class$="-control"],
+.usa-form-group--error .usa-input:not([type="url"]),
+.usa-form-group--error .ttahub-resource-repeater :invalid {
+  border: 2px solid #b50909;
 }

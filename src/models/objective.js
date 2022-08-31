@@ -11,12 +11,14 @@ const { beforeValidate, afterUpdate } = require('./hooks/objective');
 module.exports = (sequelize, DataTypes) => {
   class Objective extends Model {
     static associate(models) {
-      Objective.hasMany(models.ActivityReportObjective, { foreignKey: 'objectiveId', as: 'activityReportObjectives' });
       Objective.belongsToMany(models.ActivityReport, {
         through: models.ActivityReportObjective,
         foreignKey: 'objectiveId',
         otherKey: 'activityReportId',
         as: 'activityReports',
+      }); 
+      Objective.hasMany(models.ActivityReportObjective, {
+        foreignKey: 'objectiveId', as: 'activityReportObjectives',
       });
       Objective.hasMany(models.Collaborator, {
         scope: {

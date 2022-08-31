@@ -150,6 +150,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: true,
     },
+    createdVia: {
+      type: DataTypes.ENUM(['imported', 'activityReport', 'rtr']),
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'Goal',

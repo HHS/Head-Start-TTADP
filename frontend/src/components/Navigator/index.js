@@ -4,9 +4,11 @@
   on the left hand side with each page of the form listed. Clicking on an item in the nav list will
   display that item in the content section. The navigator keeps track of the "state" of each page.
 */
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import {
+  FormProvider, useForm,
+} from 'react-hook-form/dist/index.ie11';
 import {
   Form,
   Button,
@@ -16,7 +18,6 @@ import {
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import useInterval from '@use-it/interval';
 import moment from 'moment';
-
 import Container from '../Container';
 
 import {
@@ -25,6 +26,9 @@ import {
 import SideNav from './components/SideNav';
 import NavigatorHeader from './components/NavigatorHeader';
 import DismissingComponentWrapper from '../DismissingComponentWrapper';
+import { validateGoals } from '../../pages/ActivityReport/Pages/components/goalValidator';
+import { saveGoalsForReport } from '../../fetchers/activityReports';
+import GoalFormContext from '../../GoalFormContext';
 
 function Navigator({
   editable,
@@ -45,31 +49,39 @@ function Navigator({
   reportCreator,
   lastSaveTime,
   updateLastSaveTime,
-  showValidationErrors,
-  updateShowValidationErrors,
   errorMessage,
   updateErrorMessage,
   savedToStorageTime,
 }) {
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
+
   const page = pages.find((p) => p.path === currentPage);
 
   const hookForm = useForm({
-    mode: 'onChange',
+    mode: 'onBlur', // putting it to onBlur as the onChange breaks the new goal form
     defaultValues: formData,
     shouldUnregister: false,
   });
-  const pageState = hookForm.watch('pageState');
 
   const {
     formState,
     getValues,
     reset,
-    trigger,
+    setValue,
+    setError,
+    watch,
   } = hookForm;
 
-  const { isDirty, errors, isValid } = formState;
-  const hasErrors = Object.keys(errors).length > 0;
+  const pageState = watch('pageState');
+  const selectedGoals = watch('goals');
+
+  const [isGoalFormClosed, toggleGoalForm] = useState(selectedGoals.length > 0);
+
+  const goalForEditing = watch('goalForEditing');
+  const activityRecipientType = watch('activityRecipientType');
+  const isGoalsObjectivesPage = page.path === 'goals-objectives';
+
+  const { isDirty, isValid } = formState;
 
   const newNavigatorState = () => {
     if (page.review) {
@@ -77,7 +89,7 @@ function Navigator({
     }
 
     const currentPageState = pageState[page.position];
-    const isComplete = page.isPageComplete ? page.isPageComplete(getValues()) : isValid;
+    const isComplete = page.isPageComplete ? page.isPageComplete(getValues(), formState) : isValid;
     const newPageState = { ...pageState };
 
     if (isComplete) {
@@ -108,6 +120,60 @@ function Navigator({
     }
   };
 
+  const onGoalFormNavigate = async () => {
+    // the goal form only allows for one goal to be open at a time
+    // but the objectives are stored in a subfield
+    // so we need to access the objectives and bundle them together in order to validate them
+    const fieldArrayName = 'goalForEditing.objectives';
+    const objectives = getValues(fieldArrayName);
+    const name = getValues('goalName');
+    const endDate = getValues('goalEndDate');
+
+    const goal = {
+      ...goalForEditing,
+      name,
+      endDate,
+      objectives,
+      regionId: formData.regionId,
+    };
+
+    // validate goals will check the form and set errors
+    // where appropriate
+    const areGoalsValid = validateGoals(
+      [goal],
+      setError,
+    );
+
+    if (areGoalsValid !== true) {
+      return;
+    }
+
+    let newGoals = selectedGoals;
+
+    // save goal to api, come back with new ids for goal and objectives
+    try {
+      newGoals = await saveGoalsForReport(
+        {
+          goals: [...selectedGoals, goal],
+          activityReportId: reportId,
+          regionId: formData.regionId,
+        },
+      );
+    } catch (error) {
+      updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
+    }
+
+    toggleGoalForm(true);
+    setValue('goals', newGoals);
+    setValue('goalForEditing', null);
+    setValue('goalName', '');
+    setValue('goalEndDate', '');
+
+    // the form value is updated but the react state is not
+    // so here we go (todo - why are there two sources of truth?)
+    updateFormData({ ...formData, goals: newGoals });
+  };
+
   const onUpdatePage = async (index) => {
     await onSaveForm();
     if (index !== page.position) {
@@ -130,14 +196,6 @@ function Navigator({
     reset(formData);
   }, [currentPage, reset, formData]);
 
-  useEffect(() => {
-    if (showValidationErrors) {
-      setTimeout(() => {
-        trigger();
-      });
-    }
-  }, [page.path, page.review, trigger, showValidationErrors]);
-
   const navigatorPages = pages.map((p) => {
     const current = p.position === page.position;
 
@@ -158,6 +216,10 @@ function Navigator({
     };
   });
 
+  // we show the save goals button if the form isn't closed, if we're on the goals and
+  // objectives page and if we aren't just showing objectives
+  const showSaveGoalsButton = isGoalsObjectivesPage && !isGoalFormClosed && activityRecipientType !== 'other-entity';
+
   return (
     <Grid row gap>
       <Grid className="smart-hub-sidenav-wrapper no-print" col={12} desktop={{ col: 4 }}>
@@ -171,9 +233,10 @@ function Navigator({
         />
       </Grid>
       <Grid className="smart-hub-navigator-wrapper" col={12} desktop={{ col: 8 }}>
-        <FormProvider {...hookForm}>
-          <div id="navigator-form">
-            {page.review
+        <GoalFormContext.Provider value={{ isGoalFormClosed, toggleGoalForm }}>
+          <FormProvider {...hookForm}>
+            <div id="navigator-form">
+              {page.review
             && page.render(
               formData,
               onFormSubmit,
@@ -185,10 +248,9 @@ function Navigator({
               onSaveForm,
               navigatorPages,
               reportCreator,
-              updateShowValidationErrors,
               lastSaveTime,
             )}
-            {!page.review
+              {!page.review
             && (
               <Container skipTopPadding>
                 <NavigatorHeader
@@ -197,20 +259,29 @@ function Navigator({
                   titleOverride={page.titleOverride}
                   formData={formData}
                 />
-                {hasErrors
-                && (
-                  <Alert type="error" slim>
-                    Please complete all required fields before submitting this report.
-                  </Alert>
-                )}
                 <Form
                   className="smart-hub--form-large"
                 >
                   {page.render(additionalData, formData, reportId)}
                   <div className="display-flex">
-                    <Button disabled={page.position <= 1} outline type="button" onClick={() => { onUpdatePage(page.position - 1); }}>Back</Button>
-                    <Button type="button" onClick={async () => { await onSaveForm(); updateShowSavedDraft(true); }}>Save draft</Button>
-                    <Button className="margin-left-auto margin-right-0" type="button" onClick={onContinue}>Save & Continue</Button>
+                    { showSaveGoalsButton
+                      ? <Button className="margin-right-1" type="button" onClick={onGoalFormNavigate}>Save goal</Button>
+                      : <Button className="margin-right-1" type="button" onClick={onContinue}>Save and continue</Button> }
+                    <Button
+                      outline
+                      type="button"
+                      onClick={async () => {
+                        await onSaveForm();
+                        updateShowSavedDraft(true);
+                      }}
+                    >
+                      Save draft
+                    </Button>
+                    {
+                      page.position <= 1
+                        ? null
+                        : <Button outline type="button" onClick={() => { onUpdatePage(page.position - 1); }}>Back</Button>
+                    }
                   </div>
                 </Form>
                 <DismissingComponentWrapper
@@ -228,8 +299,9 @@ function Navigator({
                 </DismissingComponentWrapper>
               </Container>
             )}
-          </div>
-        </FormProvider>
+            </div>
+          </FormProvider>
+        </GoalFormContext.Provider>
       </Grid>
     </Grid>
   );
@@ -241,6 +313,7 @@ Navigator.propTypes = {
   formData: PropTypes.shape({
     calculatedStatus: PropTypes.string,
     pageState: PropTypes.shape({}),
+    regionId: PropTypes.number.isRequired,
   }).isRequired,
   updateFormData: PropTypes.func.isRequired,
   errorMessage: PropTypes.string,
@@ -248,8 +321,6 @@ Navigator.propTypes = {
   lastSaveTime: PropTypes.instanceOf(moment),
   savedToStorageTime: PropTypes.string,
   updateLastSaveTime: PropTypes.func.isRequired,
-  showValidationErrors: PropTypes.bool.isRequired,
-  updateShowValidationErrors: PropTypes.func.isRequired,
   onFormSubmit: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   onReview: PropTypes.func.isRequired,
@@ -271,7 +342,10 @@ Navigator.propTypes = {
   reportId: PropTypes.node.isRequired,
   reportCreator: PropTypes.shape({
     name: PropTypes.string,
-    role: PropTypes.arrayOf(PropTypes.string),
+    role: PropTypes.oneOfType([
+      PropTypes.arrayOf(PropTypes.string),
+      PropTypes.string,
+    ]),
   }),
 };
 

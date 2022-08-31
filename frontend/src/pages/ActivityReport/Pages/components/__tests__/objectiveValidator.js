@@ -1,18 +1,24 @@
 import {
   validateObjectives,
-  OBJECTIVES_EMPTY,
 } from '../objectiveValidator';
+import { OBJECTIVES_EMPTY } from '../../../../../components/GoalForm/constants';
 
 import { UNFINISHED_OBJECTIVES } from '../goalValidator';
 
 const missingTitle = {
   title: '',
   ttaProvided: 'ttaProvided',
+  topics: ['Coaching'],
+  resources: ['Resource'],
+  roles: ['Central Office'],
 };
 
 const validObjective = {
   title: 'title',
   ttaProvided: 'ttaProvided',
+  topics: ['Coaching'],
+  resources: ['Resource'],
+  roles: ['Central Office'],
 };
 
 describe('validateObjectives', () => {

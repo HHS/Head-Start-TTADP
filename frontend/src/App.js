@@ -211,9 +211,9 @@ function App() {
             <SiteNav admin={admin} authenticated={authenticated} logout={logout} user={user} />
 
             {!authenticated && (authError === 403
-              ? <AppWrapper><RequestPermissions /></AppWrapper>
+              ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>
               : (
-                <AppWrapper>
+                <AppWrapper logout={logout}>
                   <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
                 </AppWrapper>
               )
