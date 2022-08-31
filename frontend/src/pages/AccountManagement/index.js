@@ -30,9 +30,9 @@ const emailPreferenceErrorMessage = 'Please select a frequency preference';
 const frequencyMap = [
   { key: 'never', label: 'Do not notify me' },
   { key: 'immediately', label: 'Immediately' },
-  { key: 'dailyDigest', label: 'Daily digest' },
-  { key: 'weeklyDigest', label: 'Weekly digest' },
-  { key: 'monthlyDigest', label: 'Monthly digest' },
+  { key: 'today', label: 'Daily digest' },
+  { key: 'this week', label: 'Weekly digest' },
+  { key: 'this month', label: 'Monthly digest' },
 ];
 
 const emailTypesMap = [
@@ -76,7 +76,6 @@ function CustomizeEmailPreferencesForm({ disabled }) {
           </Grid>
         </Grid>
 
-        {/* Changes requested to activity report */}
         {emailTypesMap.map(({ name, description, keyName }) => (
           <Grid row key={keyName}>
             <Grid tablet={{ col: 12 }} desktop={{ col: 8 }}>
@@ -196,16 +195,16 @@ function EmailPreferencesForm({ disabled }) {
         <p className="usa-error-message">{errors.emailPreference && errors.emailPreference.message}</p>
       </Fieldset>
       {saveError && (
-        <Alert type="error">
+        <Alert type="error" data-testid="email-prefs-save-fail-message">
           {saveError}
         </Alert>
       )}
       {saveSuccess && (
-        <Alert type="success">
+        <Alert type="success" data-testid="email-prefs-save-success-message">
           Your email preferences have been saved.
         </Alert>
       )}
-      <Button type="submit">Save Preferences</Button>
+      <Button data-testid="email-prefs-submit" type="submit">Save Preferences</Button>
       <Button type="reset" outline>
         Cancel
       </Button>

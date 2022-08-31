@@ -36,7 +36,7 @@ export const APPROVER_STATUSES = {
 // copied from /frontend/src/pages/ActivityReports/constants.js
 export const TOPICS = [
   'Behavioral / Mental Health / Trauma',
-  'Child Assessment, Development, Screening',
+  'Child Screening and Assessment',
   'CLASS: Classroom Organization',
   'CLASS: Emotional Support',
   'CLASS: Instructional Support',
@@ -68,7 +68,7 @@ export const TOPICS = [
   'Recordkeeping and Reporting',
   'Safety Practices',
   'Staff Wellness',
-  'Teaching Practices / Teacher-Child Interactions',
+  'Teaching / Caregiving Practices',
   'Technology and Information Systems',
   'Transition Practices',
   'Transportation',
@@ -173,9 +173,9 @@ export const USER_SETTINGS = {
     VALUES: {
       NEVER: 'never',
       IMMEDIATELY: 'immediately',
-      DAILY_DIGEST: 'dailyDigest',
-      WEEKLY_DIGEST: 'weeklyDigest',
-      MONTHLY_DIGEST: 'monthlyDigest',
+      DAILY_DIGEST: 'today',
+      WEEKLY_DIGEST: 'this week',
+      MONTHLY_DIGEST: 'this month',
     },
   },
 };
