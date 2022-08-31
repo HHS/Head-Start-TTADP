@@ -5,7 +5,7 @@ import {
   unsubscribeAll,
   userEmailSettingsById,
   userSettingsById,
-} from '../../services/userSetting';
+} from '../../services/userSettings';
 import { currentUserId } from '../../services/currentUser';
 
 const namespace = 'SERVICE:USER_SETTINGS';
