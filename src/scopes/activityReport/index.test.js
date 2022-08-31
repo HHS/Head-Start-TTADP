@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
 import filtersToScopes from '../index';
@@ -14,6 +13,8 @@ import db, {
   ActivityReportCollaborator,
   OtherEntity,
   Program,
+  Role,
+  UserRole,
 } from '../../models';
 import { REPORT_STATUSES, APPROVER_STATUSES } from '../../constants';
 import { createReport, destroyReport, createGrant } from '../../testUtils';
@@ -179,10 +180,6 @@ describe('filtersToScopes', () => {
       let otherEntityIncluded2;
       let otherEntityExcluded;
 
-      let activityRecipientIncluded1;
-      let activityRecipientIncluded2;
-      let activityRecipientExcluded;
-
       let possibleIds;
 
       beforeAll(async () => {
@@ -194,15 +191,15 @@ describe('filtersToScopes', () => {
         reportIncluded2 = await ActivityReport.create({ ...draftReport });
         reportExcluded = await ActivityReport.create({ ...draftReport });
 
-        activityRecipientIncluded1 = await ActivityRecipient.create({
+        await ActivityRecipient.create({
           activityReportId: reportIncluded1.id,
           otherEntityId: otherEntityIncluded1.id,
         });
-        activityRecipientIncluded2 = await ActivityRecipient.create({
+        await ActivityRecipient.create({
           activityReportId: reportIncluded2.id,
           otherEntityId: otherEntityIncluded2.id,
         });
-        activityRecipientExcluded = await ActivityRecipient.create({
+        await ActivityRecipient.create({
           activityReportId: reportExcluded.id,
           otherEntityId: otherEntityExcluded.id,
         });
@@ -264,10 +261,6 @@ describe('filtersToScopes', () => {
       let grantIncluded2;
       let grantExcluded;
 
-      let activityRecipientIncluded1;
-      let activityRecipientIncluded2;
-      let activityRecipientExcluded;
-
       let possibleIds;
 
       beforeAll(async () => {
@@ -289,17 +282,17 @@ describe('filtersToScopes', () => {
         reportIncluded2 = await ActivityReport.create({ ...draftReport });
         reportExcluded = await ActivityReport.create({ ...draftReport });
 
-        activityRecipientIncluded1 = await ActivityRecipient.create({
+        await ActivityRecipient.create({
           activityReportId: reportIncluded1.id,
           grantId: grantIncluded1.id,
         });
 
-        activityRecipientIncluded2 = await ActivityRecipient.create({
+        await ActivityRecipient.create({
           activityReportId: reportIncluded2.id,
           grantId: grantIncluded2.id,
         });
 
-        activityRecipientExcluded = await ActivityRecipient.create({
+        await ActivityRecipient.create({
           activityReportId: reportExcluded.id,
           grantId: grantExcluded.id,
         });
@@ -393,9 +386,6 @@ describe('filtersToScopes', () => {
       let grantIncluded;
       let grantExcluded;
 
-      let activityRecipientIncluded;
-      let activityRecipientExcluded;
-
       let possibleIds;
 
       beforeAll(async () => {
@@ -412,11 +402,11 @@ describe('filtersToScopes', () => {
         reportIncluded = await ActivityReport.create({ ...draftReport });
         reportExcluded = await ActivityReport.create({ ...draftReport });
 
-        activityRecipientIncluded = await ActivityRecipient.create({
+        await ActivityRecipient.create({
           activityReportId: reportIncluded.id,
           grantId: grantIncluded.id,
         });
-        activityRecipientExcluded = await ActivityRecipient.create({
+        await ActivityRecipient.create({
           activityReportId: reportExcluded.id,
           grantId: grantExcluded.id,
         });
@@ -838,15 +828,42 @@ describe('filtersToScopes', () => {
     const possibleIds = [777, 778, 779];
 
     beforeAll(async () => {
+      const granteeSpecialist = await Role.findOne({ where: { fullName: 'Grantee Specialist' } });
+      const systemSpecialist = await Role.findOne({ where: { fullName: 'System Specialist' } });
+      const grantsSpecialist = await Role.findOne({ where: { fullName: 'Grants Specialist' } });
+
       await User.create({
-        id: 777, name: 'u777', hsesUsername: 'u777', hsesUserId: '777', role: ['System Specialist', 'Grantee Specialist'],
+        id: 777, name: 'u777', hsesUsername: 'u777', hsesUserId: '777',
       });
+
+      await UserRole.create({
+        userId: 777,
+        roleId: granteeSpecialist.id,
+      });
+
+      await UserRole.create({
+        userId: 777,
+        roleId: systemSpecialist.id,
+      });
+
       await User.create({
         id: 778, name: 'u778', hsesUsername: 'u778', hsesUserId: '778', role: ['Grantee Specialist'],
       });
+
+      await UserRole.create({
+        userId: 778,
+        roleId: granteeSpecialist.id,
+      });
+
       await User.create({
         id: 779, name: 'u779', hsesUsername: 'u779', hsesUserId: '779', role: ['Grants Specialist'],
       });
+
+      await UserRole.create({
+        userId: 779,
+        roleId: grantsSpecialist.id,
+      });
+
       await ActivityReport.create({ ...approvedReport, id: 777, userId: 777 });
       await ActivityReport.create({ ...approvedReport, id: 778, userId: 779 });
       await ActivityReport.create({ ...approvedReport, id: 779, userId: 779 });
@@ -868,6 +885,13 @@ describe('filtersToScopes', () => {
           id: possibleIds,
         },
       });
+
+      await UserRole.destroy({
+        where: {
+          userId: possibleIds,
+        },
+      });
+
       await User.destroy({
         where: {
           id: possibleIds,
@@ -1091,10 +1115,6 @@ describe('filtersToScopes', () => {
     let grantIncluded2;
     let grantExcluded;
 
-    let activityRecipientIncluded1;
-    let activityRecipientIncluded2;
-    let activityRecipientExcluded;
-
     let possibleIds;
 
     beforeAll(async () => {
@@ -1116,15 +1136,15 @@ describe('filtersToScopes', () => {
       reportIncluded2 = await ActivityReport.create({ ...draftReport });
       reportExcluded = await ActivityReport.create({ ...draftReport });
 
-      activityRecipientIncluded1 = await ActivityRecipient.create({
+      await ActivityRecipient.create({
         activityReportId: reportIncluded1.id,
         grantId: grantIncluded1.id,
       });
-      activityRecipientIncluded2 = await ActivityRecipient.create({
+      await ActivityRecipient.create({
         activityReportId: reportIncluded2.id,
         grantId: grantIncluded2.id,
       });
-      activityRecipientExcluded = await ActivityRecipient.create({
+      await ActivityRecipient.create({
         activityReportId: reportExcluded.id,
         grantId: grantExcluded.id,
       });
@@ -1588,10 +1608,6 @@ describe('filtersToScopes', () => {
     let otherEntityIncluded2;
     let otherEntityExcluded;
 
-    let activityRecipientIncluded1;
-    let activityRecipientIncluded2;
-    let activityRecipientExcluded;
-
     let possibleIds;
 
     beforeAll(async () => {
@@ -1609,15 +1625,15 @@ describe('filtersToScopes', () => {
         { userId: mockUser.id, ...draftReport },
       );
 
-      activityRecipientIncluded1 = await ActivityRecipient.create({
+      await ActivityRecipient.create({
         activityReportId: reportIncluded1.id,
         otherEntityId: otherEntityIncluded1.id,
       });
-      activityRecipientExcluded = await ActivityRecipient.create({
+      await ActivityRecipient.create({
         activityReportId: reportExcluded.id,
         otherEntityId: otherEntityExcluded.id,
       });
-      activityRecipientIncluded2 = await ActivityRecipient.create({
+      await ActivityRecipient.create({
         activityReportId: reportIncluded2.id,
         otherEntityId: otherEntityIncluded2.id,
       });

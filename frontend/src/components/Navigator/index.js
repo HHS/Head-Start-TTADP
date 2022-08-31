@@ -4,7 +4,7 @@
   on the left hand side with each page of the form listed. Clicking on an item in the nav list will
   display that item in the content section. The navigator keeps track of the "state" of each page.
 */
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   FormProvider, useForm,
@@ -49,8 +49,6 @@ function Navigator({
   reportCreator,
   lastSaveTime,
   updateLastSaveTime,
-  showValidationErrors,
-  updateShowValidationErrors,
   errorMessage,
   updateErrorMessage,
   savedToStorageTime,
@@ -61,8 +59,6 @@ function Navigator({
 
   const hookForm = useForm({
     mode: 'onBlur', // putting it to onBlur as the onChange breaks the new goal form
-    // todo - investigate why this is breaking the new goal form
-    // mode: 'onChange', // 'onBlur' fails existing date picker validations.
     defaultValues: formData,
     shouldUnregister: false,
   });
@@ -71,7 +67,6 @@ function Navigator({
     formState,
     getValues,
     reset,
-    trigger,
     setValue,
     setError,
     watch,
@@ -86,8 +81,7 @@ function Navigator({
   const activityRecipientType = watch('activityRecipientType');
   const isGoalsObjectivesPage = page.path === 'goals-objectives';
 
-  const { isDirty, errors, isValid } = formState;
-  const hasErrors = Object.keys(errors).length > 0;
+  const { isDirty, isValid } = formState;
 
   const newNavigatorState = () => {
     if (page.review) {
@@ -202,14 +196,6 @@ function Navigator({
     reset(formData);
   }, [currentPage, reset, formData]);
 
-  useEffect(() => {
-    if (showValidationErrors) {
-      setTimeout(() => {
-        trigger();
-      });
-    }
-  }, [page.path, page.review, trigger, showValidationErrors]);
-
   const navigatorPages = pages.map((p) => {
     const current = p.position === page.position;
 
@@ -262,7 +248,6 @@ function Navigator({
               onSaveForm,
               navigatorPages,
               reportCreator,
-              updateShowValidationErrors,
               lastSaveTime,
             )}
               {!page.review
@@ -274,12 +259,6 @@ function Navigator({
                   titleOverride={page.titleOverride}
                   formData={formData}
                 />
-                {hasErrors
-                && (
-                  <Alert type="error" slim>
-                    Please complete all required fields before submitting this report.
-                  </Alert>
-                )}
                 <Form
                   className="smart-hub--form-large"
                 >
@@ -288,7 +267,16 @@ function Navigator({
                     { showSaveGoalsButton
                       ? <Button className="margin-right-1" type="button" onClick={onGoalFormNavigate}>Save goal</Button>
                       : <Button className="margin-right-1" type="button" onClick={onContinue}>Save and continue</Button> }
-                    <Button className="usa-button--outline" type="button" onClick={async () => { await onSaveForm(); updateShowSavedDraft(true); }}>Save draft</Button>
+                    <Button
+                      outline
+                      type="button"
+                      onClick={async () => {
+                        await onSaveForm();
+                        updateShowSavedDraft(true);
+                      }}
+                    >
+                      Save draft
+                    </Button>
                     {
                       page.position <= 1
                         ? null
@@ -333,8 +321,6 @@ Navigator.propTypes = {
   lastSaveTime: PropTypes.instanceOf(moment),
   savedToStorageTime: PropTypes.string,
   updateLastSaveTime: PropTypes.func.isRequired,
-  showValidationErrors: PropTypes.bool.isRequired,
-  updateShowValidationErrors: PropTypes.func.isRequired,
   onFormSubmit: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   onReview: PropTypes.func.isRequired,

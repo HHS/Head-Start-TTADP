@@ -14,6 +14,7 @@ import orderRecipientsBy from '../lib/orderRecipientsBy';
 import { RECIPIENTS_PER_PAGE, GOALS_PER_PAGE, REPORT_STATUSES } from '../constants';
 import filtersToScopes from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
+import goalStatusGraph from '../widgets/goalStatusGraph';
 
 export async function allRecipients() {
   return Recipient.findAll({
@@ -314,7 +315,7 @@ export async function getGoalsByActivityRecipient(
       'previousStatus',
       'onApprovedAR',
       // [sequelize.fn('ARRAY_AGG', sequelize.col('"grant"."number"')), 'grantNumbers'],
-      [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Not Started\' THEN 2 WHEN "Goal"."status" = \'In Progress\' THEN 3  WHEN "Goal"."status" = \'Closed\' THEN 4 WHEN "Goal"."status" = \'Suspended\' THEN 5 ELSE 6 END'), 'status_sort'],
+      [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Not Started\' THEN 2 WHEN "Goal"."status" = \'In Progress\' THEN 3  WHEN "Goal"."status" = \'Suspended\' THEN 4 WHEN "Goal"."status" = \'Closed\' THEN 5 ELSE 6 END'), 'status_sort'],
     ],
     where: {
       [Op.or]: [
@@ -392,10 +393,14 @@ export async function getGoalsByActivityRecipient(
     order: orderGoalsBy(sortBy, sortDir),
   });
 
+  const allGoalIds = [];
+
   const r = rows.reduce((previous, current) => {
     const existingGoal = previous.goalRows.find(
       (g) => g.goalStatus === current.status && g.goalText.trim() === current.name.trim(),
     );
+
+    allGoalIds.push(current.id);
 
     if (existingGoal) {
       existingGoal.ids = [...existingGoal.ids, current.id];
@@ -432,15 +437,23 @@ export async function getGoalsByActivityRecipient(
     goalRows: [],
   });
 
+  const statuses = await goalStatusGraph({
+    goal: {
+      id: allGoalIds,
+    },
+  });
+
   if (limitNum) {
     return {
       count: r.goalRows.length,
       goalRows: r.goalRows.slice(offSetNum, offSetNum + limitNum),
+      statuses,
     };
   }
 
   return {
     count: r.goalRows.length,
     goalRows: r.goalRows.slice(offSetNum),
+    statuses,
   };
 }
