@@ -1,6 +1,5 @@
-const {
-  Model,
-} = require('sequelize');
+const { Op, Model } = require('sequelize');
+const { COLLABORATOR_TYPES, ENTITY_TYPES } = require('../constants');
 const { beforeValidate, afterUpdate } = require('./hooks/objective');
 
 /**
@@ -18,6 +17,41 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'objectiveId',
         otherKey: 'activityReportId',
         as: 'activityReports',
+      });
+      Objective.hasMany(models.Collaborator, {
+        scope: {
+          entityType: ENTITY_TYPES.OBJECTIVE,
+          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.RATIFIER] },
+        },
+        foreignKey: 'entityId',
+        as: 'approvers',
+        hooks: true,
+      });
+      Objective.hasMany(models.Collaborator, {
+        scope: {
+          entityType: ENTITY_TYPES.OBJECTIVE,
+          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.EDITOR] },
+        },
+        foreignKey: 'entityId',
+        as: 'collaborators',
+        hooks: true,
+      });
+      Objective.hasMany(models.Collaborator, {
+        scope: {
+          entityType: ENTITY_TYPES.OBJECTIVE,
+          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.OWNER] },
+        },
+        foreignKey: 'entityId',
+        as: 'owners',
+        hooks: true,
+      });
+      Objective.hasMany(models.Approval, {
+        scope: {
+          entityType: ENTITY_TYPES.OBJECTIVE,
+        },
+        foreignKey: 'entityId',
+        as: 'approvals',
+        hooks: true,
       });
       Objective.belongsTo(models.OtherEntity, { foreignKey: 'otherEntityId', as: 'otherEntity' });
       Objective.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });

@@ -1,25 +1,46 @@
 const { Op } = require('sequelize');
 const {
   ENTITY_STATUSES,
-  ENTITY_TYPES,
   COLLABORATOR_TYPES,
   RATIFIER_STATUSES,
+  APPROVAL_RATIO,
 } = require('../../constants');
+
+const validateAndPopulateTier = (sequelize, instance) => {
+  if (instance.tier === undefined
+  || instance.tier === null) {
+    instance.set('tier', 1);
+  }
+};
 
 /**
  * Helper function called by model hooks.
  * Returns calculatedStatus string based on approvals
  * @param {*} approvals - array, status fields of all approvals for current model instance's
  */
-const calculateStatusFromApprovals = (statuses) => {
-  const ratified = (status) => status === RATIFIER_STATUSES.RATIFIED;
-  if (statuses.every(ratified)) {
-    return ENTITY_STATUSES.APPROVED;
-  }
+const calculateStatusFromApprovals = (statuses, ratioRequired) => {
+  const num = statuses.length.toFixed(2);
+  const numRatified = statuses
+    .filter((status) => status === RATIFIER_STATUSES.RATIFIED).length.toFixed(2);
+  const numNeedsAction = statuses
+    .filter((status) => status === RATIFIER_STATUSES.NEEDS_ACTION).length.toFixed(2);
 
-  const needsAction = (status) => status === RATIFIER_STATUSES.NEEDS_ACTION;
-  if (statuses.some(needsAction)) {
-    return ENTITY_STATUSES.NEEDS_ACTION;
+  if (numNeedsAction > 0.00) return ENTITY_STATUSES.NEEDS_ACTION;
+
+  switch (ratioRequired) {
+    case APPROVAL_RATIO.ALL:
+      if (num === numRatified) return ENTITY_STATUSES.APPROVED;
+      break;
+    case APPROVAL_RATIO.TWOTHIRDS:
+      if (numRatified / num >= 0.66) return ENTITY_STATUSES.APPROVED;
+      break;
+    case APPROVAL_RATIO.MAJORITY:
+      if (numRatified / num >= 0.50) return ENTITY_STATUSES.APPROVED;
+      break;
+    case APPROVAL_RATIO.ANY:
+      if (numRatified >= 0.00) return ENTITY_STATUSES.APPROVED;
+      break;
+    default:
   }
 
   return ENTITY_STATUSES.SUBMITTED;
@@ -28,131 +49,152 @@ const calculateStatusFromApprovals = (statuses) => {
 /**
  * Helper function called by model hooks.
  * Returns calculatedStatus string based on approverStatus and approvals
- * @param {*} approverStatus - string, status field of current model instance
+ * @param {*} ratifierStatus - string, status field of current model instance
  * @param {*} approvals - array, status fields of all approvals for current model instance's
+ * @param {*} ratioRequired - constant defining the ratio of approvals required to approve
  * activity report
  */
-const calculateStatus = (ratifierStatus, statuses) => {
+const calculateStatus = (ratifierStatus, statuses, ratioRequired) => {
   if (ratifierStatus === RATIFIER_STATUSES.NEEDS_ACTION) {
     return ENTITY_STATUSES.NEEDS_ACTION;
   }
-  return calculateStatusFromApprovals(statuses);
+  return calculateStatusFromApprovals(statuses, ratioRequired);
 };
 
-const getEntityByPk = async (sequelize, entityType, entityId) => {
-  switch (entityType) {
-    case ENTITY_TYPES.ACTIVITYREPORT:
-      return sequelize.models.ActivityReport.findByPk(entityId, {
-        attributes: ['submissionStatus', 'calculatedStatus', 'approvedAt'],
-      });
-    case ENTITY_TYPES.GOAL:
-      return sequelize.models.Goal.findByPk(entityId, {
-        attributes: ['submissionStatus', 'calculatedStatus', 'approvedAt'],
-      });
-    case ENTITY_TYPES.GOALTEMPLATE:
-      return sequelize.models.GoalTemplate.findByPk(entityId, {
-        attributes: ['submissionStatus', 'calculatedStatus', 'approvedAt'],
-      });
-    case ENTITY_TYPES.OBJECTIVE:
-      return sequelize.models.Objective.findByPk(entityId, {
-        attributes: ['submissionStatus', 'calculatedStatus', 'approvedAt'],
-      });
-    case ENTITY_TYPES.OBJECTIVETEMPLATE:
-      return sequelize.models.ObjectiveTemplate.findByPk(entityId, {
-        attributes: ['submissionStatus', 'calculatedStatus', 'approvedAt'],
-      });
-    default:
-      return null;
-  }
-};
+const getApprovalByEntityTier = async (
+  sequelize,
+  entityType,
+  entityId,
+  tier,
+  options,
+) => sequelize.models.Approval.findOne({
+  attributes: ['submissionStatus', 'calculatedStatus', 'approvedAt', 'ratioRequired'],
+  where: {
+    entityType,
+    entityId,
+    tier,
+  },
+  transaction: options.transaction,
+});
 
-const updateEntityCalculatedStatus = async (sequelize, entityType, entityId, updatedFields) => {
-  switch (entityType) {
-    case ENTITY_TYPES.ACTIVITYREPORT:
-      return sequelize.models.ActivityReport.update(updatedFields, {
-        where: { id: entityId },
-        individualHooks: true,
-      });
-    case ENTITY_TYPES.GOAL:
-      return sequelize.models.Goal.update(updatedFields, {
-        where: { id: entityId },
-        individualHooks: true,
-      });
-    case ENTITY_TYPES.GOALTEMPLATE:
-      return sequelize.models.GoalTemplate.update(updatedFields, {
-        where: { id: entityId },
-        individualHooks: true,
-      });
-    case ENTITY_TYPES.OBJECTIVE:
-      return sequelize.models.Objective.update(updatedFields, {
-        where: { id: entityId },
-        individualHooks: true,
-      });
-    case ENTITY_TYPES.OBJECTIVETEMPLATE:
-      return sequelize.models.ObjectiveTemplate.update(updatedFields, {
-        where: { id: entityId },
-        individualHooks: true,
-      });
-    default:
-      return null;
-  }
-};
+const getRatifierStatusesForTier = async (
+  sequelize,
+  entityType,
+  entityId,
+  tier,
+  options,
+) => sequelize.models.Collaborator.findAll({
+  attributes: ['status'],
+  raw: true,
+  where: {
+    entityType,
+    entityId,
+    tier,
+    collaboratorTypes: { [Op.contains]: [`${COLLABORATOR_TYPES.RATIFIER}`] },
+  },
+  transaction: options.transaction,
+});
 
-const propagateCalculatedStatus = async (sequelize, instance) => {
-  const entity = await getEntityByPk(sequelize, instance.entityType, instance.entityId);
+const updateApprovalCalculatedStatus = async (
+  sequelize,
+  entityType,
+  entityId,
+  tier,
+  updatedFields,
+  options,
+) => sequelize.models.Approval.update(updatedFields, {
+  where: {
+    entityType,
+    entityId,
+    tier,
+  },
+  individualHooks: true,
+  transaction: options.transaction,
+});
+
+const propagateCalculatedStatus = async (sequelize, instance, options) => {
+  const approval = await getApprovalByEntityTier(
+    sequelize,
+    instance.entityType,
+    instance.entityId,
+    instance.tier,
+    options,
+  );
   // We allow users to create approvers before submitting the entity.
   // Calculated status should only exist for submitted entities.
-  if (entity.submissionStatus === ENTITY_STATUSES.SUBMITTED) {
-    const foundRatifierStatuses = await sequelize.models.Collaborator.findAll({
-      attributes: ['status'],
-      raw: true,
-      where: {
-        entityType: instance.entityType,
-        entityId: instance.entityId,
-        collaboratorTypes: { [Op.contains]: [`${COLLABORATOR_TYPES.RATIFIER}`] },
-      },
-    });
-    const ratifierStatuses = foundRatifierStatuses.map((a) => a.status);
-    const newCalculatedStatus = calculateStatus(instance.status, ratifierStatuses);
-
-    let approvedAt = null;
-    if (entity.calculatedStatus !== newCalculatedStatus) {
-      if (newCalculatedStatus === ENTITY_STATUSES.APPROVED) {
-        approvedAt = entity.approvedAt === null
-          ? new Date()
-          : entity.approvedAt;
-      }
-    }
-
-    await updateEntityCalculatedStatus(
+  if (approval.submissionStatus === ENTITY_STATUSES.SUBMITTED) {
+    const foundRatifierStatuses = await getRatifierStatusesForTier(
       sequelize,
       instance.entityType,
       instance.entityId,
+      instance.tier,
+      options,
+    );
+    const ratifierStatuses = foundRatifierStatuses.map((a) => a.status);
+    const newCalculatedStatus = calculateStatus(
+      instance.status,
+      ratifierStatuses,
+      approval.ratioRequired,
+    );
+
+    let approvedAt = null;
+    if (approval.calculatedStatus !== newCalculatedStatus) {
+      if (newCalculatedStatus === ENTITY_STATUSES.APPROVED) {
+        approvedAt = approval.approvedAt === null
+          ? new Date()
+          : approval.approvedAt;
+      }
+    }
+
+    await updateApprovalCalculatedStatus(
+      sequelize,
+      instance.entityType,
+      instance.entityId,
+      instance.tier,
       {
         calculatedStatus: newCalculatedStatus,
         approvedAt,
       },
+      options,
     );
   }
 };
 
-const afterCreate = async (sequelize, instance) => {
-  await propagateCalculatedStatus(sequelize, instance);
+const deleteOnEmptyCollaboratorTypes = async (sequelize, instance, options) => {
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('collaboratorTypes')
+    && Array.isArray(instance.collaboratorTypes)
+    && instance.collaboratorTypes.length === 0) {
+    await sequelize.models.Collaborator.destroy({
+      where: { id: instance.id },
+      transaction: options.transaction,
+    });
+  }
 };
 
-const afterDestroy = async (sequelize, instance) => {
-  await propagateCalculatedStatus(sequelize, instance);
+const beforeValidate = async (sequelize, instance, options) => {
+  await validateAndPopulateTier(sequelize, instance, options);
 };
 
-const afterRestore = async (sequelize, instance) => {
-  await propagateCalculatedStatus(sequelize, instance);
+const afterCreate = async (sequelize, instance, options) => {
+  await propagateCalculatedStatus(sequelize, instance, options);
 };
 
-const afterUpdate = async (sequelize, instance) => {
-  await propagateCalculatedStatus(sequelize, instance);
+const afterDestroy = async (sequelize, instance, options) => {
+  await propagateCalculatedStatus(sequelize, instance, options);
 };
 
-const afterUpsert = async (sequelize, created) => {
+const afterRestore = async (sequelize, instance, options) => {
+  await propagateCalculatedStatus(sequelize, instance, options);
+};
+
+const afterUpdate = async (sequelize, instance, options) => {
+  await propagateCalculatedStatus(sequelize, instance, options);
+  await deleteOnEmptyCollaboratorTypes(sequelize, instance, options);
+};
+
+const afterUpsert = async (sequelize, created, options) => {
   // Created is an array. First item in created array is
   // a model instance, second item is boolean indicating
   // if record was newly created (false = updated existing object.)
@@ -164,15 +206,16 @@ const afterUpsert = async (sequelize, created) => {
     return;
   }
 
-  await propagateCalculatedStatus(sequelize, instance);
+  await propagateCalculatedStatus(sequelize, instance, options);
 };
 
 export {
   calculateStatusFromApprovals,
   calculateStatus,
-  getEntityByPk,
-  updateEntityCalculatedStatus,
+  getApprovalByEntityTier,
+  updateApprovalCalculatedStatus,
   propagateCalculatedStatus,
+  beforeValidate,
   afterCreate,
   afterDestroy,
   afterRestore,

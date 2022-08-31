@@ -1,4 +1,5 @@
-const { Model } = require('sequelize');
+const { Op, Model } = require('sequelize');
+const { COLLABORATOR_TYPES, ENTITY_TYPES } = require('../constants');
 
 module.exports = (sequelize, DataTypes) => {
   class ActivityReportObjective extends Model {
@@ -11,6 +12,41 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'activityReportObjectiveId',
         otherKey: 'fileId',
         as: 'files',
+      });
+      ActivityReportObjective.hasMany(models.Collaborator, {
+        scope: {
+          entityType: ENTITY_TYPES.REPORTOBJECTIVE,
+          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.RATIFIER] },
+        },
+        foreignKey: 'entityId',
+        as: 'approvers',
+        hooks: true,
+      });
+      ActivityReportObjective.hasMany(models.Collaborator, {
+        scope: {
+          entityType: ENTITY_TYPES.REPORTOBJECTIVE,
+          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.EDITOR] },
+        },
+        foreignKey: 'entityId',
+        as: 'collaborators',
+        hooks: true,
+      });
+      ActivityReportObjective.hasMany(models.Collaborator, {
+        scope: {
+          entityType: ENTITY_TYPES.REPORTOBJECTIVE,
+          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.OWNER] },
+        },
+        foreignKey: 'entityId',
+        as: 'owners',
+        hooks: true,
+      });
+      ActivityReportObjective.hasMany(models.Approval, {
+        scope: {
+          entityType: ENTITY_TYPES.REPORTOBJECTIVE,
+        },
+        foreignKey: 'entityId',
+        as: 'approvals',
+        hooks: true,
       });
     }
   }

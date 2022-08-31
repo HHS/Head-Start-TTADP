@@ -1,7 +1,12 @@
 const { Op, Model } = require('sequelize');
 const moment = require('moment');
 const { isEqual, uniqWith } = require('lodash');
-const { REPORT_STATUSES, USER_ROLES } = require('../constants');
+const {
+  REPORT_STATUSES,
+  USER_ROLES,
+  COLLABORATOR_TYPES,
+  ENTITY_TYPES,
+} = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 const { beforeCreate, beforeUpdate, afterUpdate } = require('./hooks/activityReport');
 
@@ -31,7 +36,41 @@ module.exports = (sequelize, DataTypes) => {
       });
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'specialistNextSteps' });
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'recipientNextSteps' });
-      ActivityReport.hasMany(models.ActivityReportApprover, { foreignKey: 'activityReportId', as: 'approvers', hooks: true });
+      ActivityReport.hasMany(models.Collaborator, {
+        scope: {
+          entityType: ENTITY_TYPES.REPORT,
+          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.RATIFIER] },
+        },
+        foreignKey: 'entityId',
+        as: 'approvers',
+        hooks: true,
+      });
+      ActivityReport.hasMany(models.Collaborator, {
+        scope: {
+          entityType: ENTITY_TYPES.REPORT,
+          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.EDITOR] },
+        },
+        foreignKey: 'entityId',
+        as: 'collaborators',
+        hooks: true,
+      });
+      ActivityReport.hasMany(models.Collaborator, {
+        scope: {
+          entityType: ENTITY_TYPES.REPORT,
+          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.OWNER] },
+        },
+        foreignKey: 'entityId',
+        as: 'owners',
+        hooks: true,
+      });
+      ActivityReport.hasMany(models.Approval, {
+        scope: {
+          entityType: ENTITY_TYPES.REPORT,
+        },
+        foreignKey: 'entityId',
+        as: 'approvals',
+        hooks: true,
+      });
       ActivityReport.hasMany(models.ActivityReportObjective, { foreignKey: 'activityReportId', as: 'activityReportObjectives' });
       ActivityReport.belongsToMany(models.Objective, {
         scope: {

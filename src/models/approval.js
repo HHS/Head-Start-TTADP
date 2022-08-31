@@ -5,65 +5,77 @@ const {
   afterRestore,
   afterUpdate,
   afterUpsert,
-} = require('./hooks/collaborator');
-const { ENTITY_TYPES, COLLABORATOR_TYPES, RATIFIER_STATUSES } = require('../constants');
+} = require('./hooks/approval');
+const { validateSubmissionStatus } = require('./validation/approval');
+const {
+  ENTITY_TYPES,
+  COLLABORATOR_TYPES,
+  APPROVAL_RATIO,
+  REPORT_STATUSES,
+} = require('../constants');
 
 module.exports = (sequelize, DataTypes) => {
-  class Collaborator extends Model {
+  class Approval extends Model {
     static associate(models) {
-      Collaborator.belongsTo(models.ActivityReport, {
+      Approval.belongsTo(models.ActivityReport, {
         scope: {
           entityType: ENTITY_TYPES.REPORT,
         },
         foreignKey: 'entityId',
         as: 'report',
       });
-      Collaborator.belongsTo(models.ActivityReportGoal, {
+      Approval.belongsTo(models.ActivityReportGoal, {
         scope: {
           entityType: ENTITY_TYPES.REPORTGOAL,
         },
         foreignKey: 'entityId',
         as: 'reportGoal',
       });
-      Collaborator.belongsTo(models.ActivityReportObjective, {
+      Approval.belongsTo(models.ActivityReportObjective, {
         scope: {
           entityType: ENTITY_TYPES.REPORTOBJECTIVE,
         },
         foreignKey: 'entityId',
         as: 'reportObjective',
       });
-      Collaborator.belongsTo(models.Goal, {
+      Approval.belongsTo(models.Goal, {
         scope: {
           entityType: ENTITY_TYPES.GOAL,
         },
         foreignKey: 'entityId',
         as: 'goal',
       });
-      Collaborator.belongsTo(models.GoalTemplate, {
+      Approval.belongsTo(models.GoalTemplate, {
         scope: {
           entityType: ENTITY_TYPES.GOALTEMPLATE,
         },
         foreignKey: 'entityId',
         as: 'goalTemplate',
       });
-      Collaborator.belongsTo(models.Objective, {
+      Approval.belongsTo(models.Objective, {
         scope: {
           entityType: ENTITY_TYPES.OBJECTIVE,
         },
         foreignKey: 'entityId',
         as: 'objective',
       });
-      Collaborator.belongsTo(models.ObjectiveTemplate, {
+      Approval.belongsTo(models.ObjectiveTemplate, {
         scope: {
           entityType: ENTITY_TYPES.OBJECTIVETEMPLATE,
         },
         foreignKey: 'entityId',
         as: 'objectiveTemplate',
       });
-      Collaborator.belongsTo(models.User, { foreignKey: 'userId' });
+      Approval.hasMany(models.Collaborator, {
+        scope: {
+          entityType: COLLABORATOR_TYPES.RATIFIER,
+        },
+        foreignKey: 'entityId',
+        as: 'reportApprovers',
+      });
     }
   }
-  Collaborator.init({
+  Approval.init({
     id: {
       allowNull: false,
       autoIncrement: true,
@@ -79,31 +91,39 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes.INTEGER,
     },
-    collaboratorTypes: {
-      allowNull: false,
-      default: null,
-      type: DataTypes.ARRAY(
-        DataTypes.ENUM(
-          Object.keys(COLLABORATOR_TYPES).map((k) => COLLABORATOR_TYPES[k]),
-        ),
-      ),
-    },
-    userId: {
-      allowNull: false,
-      type: DataTypes.INTEGER,
-    },
-    status: {
-      allowNull: true,
-      type: DataTypes.ENUM(Object.keys(RATIFIER_STATUSES).map((k) => RATIFIER_STATUSES[k])),
-    },
-    note: {
-      allowNull: true,
-      type: DataTypes.TEXT,
-    },
     tier: {
-      allowNull: false,
-      default: 1,
+      allowNull: true,
+      default: null,
       type: DataTypes.INTEGER,
+    },
+    ratioRequired: {
+      allowNull: false,
+      type: DataTypes
+        .ENUM(Object.keys(APPROVAL_RATIO).map((k) => APPROVAL_RATIO[k])),
+      default: APPROVAL_RATIO.ALL,
+    },
+    submissionStatus: {
+      allowNull: false,
+      type: DataTypes
+        .ENUM(Object.keys(REPORT_STATUSES).map((k) => REPORT_STATUSES[k])),
+      validate: validateSubmissionStatus(),
+    },
+    calculatedStatus: {
+      allowNull: true,
+      type: DataTypes
+        .ENUM(Object.keys(REPORT_STATUSES).map((k) => REPORT_STATUSES[k])),
+    },
+    firstSubmittedAt: {
+      allowNull: true,
+      type: DataTypes.DATE,
+    },
+    submittedAt: {
+      allowNull: true,
+      type: DataTypes.DATE,
+    },
+    approvedAt: {
+      allowNull: true,
+      type: DataTypes.DATE,
     },
     createdAt: {
       allowNull: false,
@@ -133,7 +153,7 @@ module.exports = (sequelize, DataTypes) => {
     }],
     sequelize,
     paranoid: true,
-    modelName: 'Collaborator',
+    modelName: 'Approval',
   });
-  return Collaborator;
+  return Approval;
 };

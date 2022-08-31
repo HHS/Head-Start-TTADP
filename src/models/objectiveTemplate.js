@@ -1,5 +1,5 @@
-const { Model } = require('sequelize');
-const { CREATION_METHOD } = require('../constants');
+const { Op, Model } = require('sequelize');
+const { COLLABORATOR_TYPES, ENTITY_TYPES, CREATION_METHOD } = require('../constants');
 const { beforeValidate, afterUpdate } = require('./hooks/objectiveTemplate');
 // const { auditLogger } = require('../logger');
 
@@ -12,6 +12,41 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       ObjectiveTemplate.hasMany(models.Objective, { foreignKey: 'objectiveTemplateId', as: 'objectives' });
+      ObjectiveTemplate.hasMany(models.Collaborator, {
+        scope: {
+          entityType: ENTITY_TYPES.OBJECTIVETEMPLATE,
+          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.RATIFIER] },
+        },
+        foreignKey: 'entityId',
+        as: 'approvers',
+        hooks: true,
+      });
+      ObjectiveTemplate.hasMany(models.Collaborator, {
+        scope: {
+          entityType: ENTITY_TYPES.OBJECTIVETEMPLATE,
+          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.EDITOR] },
+        },
+        foreignKey: 'entityId',
+        as: 'collaborators',
+        hooks: true,
+      });
+      ObjectiveTemplate.hasMany(models.Collaborator, {
+        scope: {
+          entityType: ENTITY_TYPES.OBJECTIVETEMPLATE,
+          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.OWNER] },
+        },
+        foreignKey: 'entityId',
+        as: 'owners',
+        hooks: true,
+      });
+      ObjectiveTemplate.hasMany(models.Approval, {
+        scope: {
+          entityType: ENTITY_TYPES.OBJECTIVETEMPLATE,
+        },
+        foreignKey: 'entityId',
+        as: 'approvals',
+        hooks: true,
+      });
       ObjectiveTemplate.hasMany(models.ObjectiveTemplateResource, { foreignKey: 'objectiveTemplateId', as: 'resources' });
       ObjectiveTemplate.belongsToMany(models.Topic, {
         through: models.ObjectiveTemplateTopic,

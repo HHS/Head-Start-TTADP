@@ -1,4 +1,6 @@
-import { ActivityReportApprover, User } from '../models';
+import { Op } from 'sequelize';
+import { ActivityReportApprover, User, Collaborators } from '../models';
+import { ENTITY_TYPES, COLLABORATOR_TYPES } from '../constants';
 
 /**
  * Update or create new Approver
@@ -41,9 +43,14 @@ export async function upsertApprover(values) {
  * @param {*} userIds - array of userIds for approver records, ActivityReportApprovers will be
  * deleted or created to match this list
  */
-export async function syncApprovers(activityReportId, userIds = []) {
-  const preexistingApprovers = await ActivityReportApprover.findAll({
-    where: { activityReportId },
+export async function syncApprovers(activityReportId, userIds = [], tier = 1) {
+  const preexistingApprovers = await Collaborators.findAll({
+    where: {
+      entityType: ENTITY_TYPES.REPORT,
+      entityId: activityReportId,
+      tier,
+      collaboratorTypes: { [Op.contains]: COLLABORATOR_TYPES.RATIFIER },
+    },
   });
 
   // Destroy any preexisting approvers now missing from userId request param
@@ -53,10 +60,11 @@ export async function syncApprovers(activityReportId, userIds = []) {
       if (!approver.note && !approver.status) {
         // Approver was assigned never reviewed, nothing for UI
         // to display, do a true delete
-        return ActivityReportApprover.destroy({
+        return Collaborators.update({
+          collaboratorTypes: approver.collaboratorTypes
+            .filter((type) => type !== COLLABORATOR_TYPES.RATIFIER),
+        }, {
           where: { id: approver.id },
-          individualHooks: true,
-          force: true,
         });
       }
       // Approver had reviewed the report, soft delete

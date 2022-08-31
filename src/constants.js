@@ -15,13 +15,20 @@ export const ENTITY_STATUSES = {
 };
 
 export const ENTITY_TYPES = {
-  ACTIVITYREPORT: 'ActivityReport',
+  REPORT: 'Report',
+  REPORTGOAL: 'ReportGoal',
+  REPORTOBJECTIVE: 'ReportObjective',
   GOAL: 'Goal',
   GOALTEMPLATE: 'GoalTemplate',
   OBJECTIVE: 'Objective',
   OBJECTIVETEMPLATE: 'ObjectiveTemplate',
 };
-
+export const APPROVAL_RATIO = {
+  ANY: 'Any',
+  MAJORITY: 'Majority',
+  TWOTHIRDS: 'TwoThirds',
+  ALL: 'All',
+};
 export const COLLABORATOR_TYPES = {
   EDITOR: 'Editor',
   OWNER: 'Owner',

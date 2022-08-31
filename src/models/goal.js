@@ -1,5 +1,5 @@
-const { Model } = require('sequelize');
-const { CLOSE_SUSPEND_REASONS } = require('../constants');
+const { Op, Model } = require('sequelize');
+const { COLLABORATOR_TYPES, ENTITY_TYPES, CLOSE_SUSPEND_REASONS } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 const { beforeValidate, afterUpdate } = require('./hooks/goal');
 
@@ -21,6 +21,41 @@ module.exports = (sequelize, DataTypes) => {
       Goal.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
       Goal.hasMany(models.Objective, { foreignKey: 'goalId', as: 'objectives' });
       Goal.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: +'goalTemplates' });
+      Goal.hasMany(models.Collaborator, {
+        scope: {
+          entityType: ENTITY_TYPES.GOAL,
+          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.RATIFIER] },
+        },
+        foreignKey: 'entityId',
+        as: 'approvers',
+        hooks: true,
+      });
+      Goal.hasMany(models.Collaborator, {
+        scope: {
+          entityType: ENTITY_TYPES.GOAL,
+          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.EDITOR] },
+        },
+        foreignKey: 'entityId',
+        as: 'collaborators',
+        hooks: true,
+      });
+      Goal.hasMany(models.Collaborator, {
+        scope: {
+          entityType: ENTITY_TYPES.GOAL,
+          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.OWNER] },
+        },
+        foreignKey: 'entityId',
+        as: 'owners',
+        hooks: true,
+      });
+      Goal.hasMany(models.Approval, {
+        scope: {
+          entityType: ENTITY_TYPES.GOAL,
+        },
+        foreignKey: 'entityId',
+        as: 'approvals',
+        hooks: true,
+      });
     }
   }
   Goal.init({
