@@ -12,7 +12,7 @@ module.exports = {
         // 'email', etc.
         class: { type: Sequelize.STRING, allowNull: false },
         key: { type: Sequelize.STRING, allowNull: false },
-        default: { type: Sequelize.STRING, allowNull: false },
+        default: { type: Sequelize.JSONB, allowNull: false },
         createdAt: { allowNull: false, type: Sequelize.DATE },
         updatedAt: { allowNull: false, type: Sequelize.DATE },
       },
@@ -28,7 +28,10 @@ module.exports = {
 
     await Promise.all(keys.map(async (key) => {
       await queryInterface.sequelize.query(
-        `INSERT INTO "UserSettings" ("class", "key", "default", "createdAt", "updatedAt") VALUES ('email', '${key}', 'never', current_timestamp, current_timestamp)`,
+        `
+        INSERT INTO "UserSettings" ("class", "key", "default", "createdAt", "updatedAt")
+        VALUES ('email', '${key}', '"never"', current_timestamp, current_timestamp)
+        `,
         { transaction },
       );
     }));
@@ -52,7 +55,7 @@ module.exports = {
           type: Sequelize.INTEGER,
           references: { model: { tableName: 'UserSettings' }, key: 'id' },
         },
-        value: { allowNull: false, type: Sequelize.STRING },
+        value: { allowNull: false, type: Sequelize.JSONB },
         createdAt: { allowNull: false, type: Sequelize.DATE },
         updatedAt: { allowNull: false, type: Sequelize.DATE },
       },

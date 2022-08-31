@@ -22,7 +22,7 @@ const baseSearch = (userId) => ({
 
 /**
  * Returns an object of all setting keys, their default values and their id.
- * @returns {Promise<{ [key]: { defaultValue: string, userSettingId: number, key: string }}}>}
+ * @returns {Promise<{ [key]: { defaultValue: any, userSettingId: number, key: string }}}>}
  */
 export const getDefaultSettings = async () => {
   const out = await UserSettings.findAll({});
@@ -38,7 +38,7 @@ export const getDefaultSettings = async () => {
 /**
  * Given an array of { key, value } pairs, saves these settings to the database.
  * @param {number} userId
- * @param {{key: string, value: string}[]} pairs
+ * @param {{key: string, value: any}[]} pairs
  */
 export const saveSettings = async (userId, pairs) => {
   const defaults = await getDefaultSettings();
@@ -63,7 +63,9 @@ export const saveSettings = async (userId, pairs) => {
   return Promise.all([
     UserSettingOverrides.destroy({ where: { userId, userSettingId: { [Op.in]: settingIds } } }),
     UserSettingOverrides.bulkCreate(save.map(({ userSettingId, value }) => ({
-      userId, userSettingId, value,
+      userId,
+      userSettingId,
+      value: sequelize.cast(JSON.stringify(value), 'jsonb'),
     }))),
   ]);
 };
@@ -79,7 +81,7 @@ export const userSettingsById = async (userId) => {
 /**
  * Returns an array of all users with the given setting key&value.
  * @param {string} key the key of the setting to search for
- * @param {*} value the value of the setting to search for
+ * @param {any} value the value of the setting to search for
  * @returns {Promise<User[]>}
  */
 export const usersWithSetting = async (key, value) => {
@@ -134,7 +136,7 @@ export const usersWithSetting = async (key, value) => {
     where: {
       // where the value matches the default value for this key.
       '$userSettingOverrides.setting.key$': { [Op.eq]: key },
-      '$userSettingOverrides.value$': { [Op.eq]: value },
+      '$userSettingOverrides.value$': { [Op.eq]: sequelize.cast(JSON.stringify(value), 'jsonb') },
     },
   });
 };
@@ -144,7 +146,7 @@ export const usersWithSetting = async (key, value) => {
 
 /**
  * @param {number} userId
- * @returns {Promise<void>}
+ * @returns {Promise<{ key: string, value: any}[]>}
  */
 export const userEmailSettingsById = async (userId) => UserSettings.findAll({
   ...baseSearch(userId),
@@ -153,7 +155,7 @@ export const userEmailSettingsById = async (userId) => UserSettings.findAll({
 
 /**
  * @param {number} userId
- * @returns {Promise<void>}
+ * @returns {Promise<unknown>}
  */
 export const unsubscribeAll = async (userId) => {
   const settings = Object.values(USER_SETTINGS.EMAIL.KEYS).map((key) => ({
@@ -166,7 +168,7 @@ export const unsubscribeAll = async (userId) => {
 
 /**
  * @param {number} userId
- * @returns {Promise<void>}
+ * @returns {Promise<unknown>}
  */
 export const subscribeAll = async (userId) => {
   const settings = Object.values(USER_SETTINGS.EMAIL.KEYS).map((key) => ({
