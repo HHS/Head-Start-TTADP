@@ -88,11 +88,11 @@ describe('UserSetting service', () => {
   });
 
   it('returns the user(s) whose settings match the provided key/value - defaults', async () => {
-    await unsubscribeAll(999);
-    await unsubscribeAll(1000);
+    await subscribeAll(999);
+    await subscribeAll(1000);
 
     const k = USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED;
-    const v = USER_SETTINGS.EMAIL.VALUES.NEVER;
+    const v = USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
 
     const users = await usersWithSetting(k, v);
 
