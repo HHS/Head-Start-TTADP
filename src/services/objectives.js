@@ -4,6 +4,10 @@ import {
   ActivityReportObjective,
   Goal,
   Grant,
+  Role,
+  Topic,
+  File,
+  ObjectiveResource,
 } from '../models';
 import { removeUnusedGoalsObjectivesFromReport } from './goals';
 
@@ -97,6 +101,41 @@ export async function getObjectiveById(objectiveId) {
             attributes: ['regionId'],
           },
         ],
+      },
+    ],
+  });
+}
+
+export async function getObjectivesByReportId(reportId) {
+  return Objective.findAll({
+    model: Objective,
+    include: [
+      {
+        model: ActivityReportObjective,
+        as: 'activityReportObjectives',
+        where: {
+          activityReportId: reportId,
+        },
+        required: true,
+      },
+      {
+        model: Role,
+        as: 'roles',
+      },
+      {
+        model: Topic,
+        as: 'topics',
+        // these need to be renamed to match the frontend form names
+        attributes: [['name', 'label'], ['id', 'value']],
+      },
+      {
+        model: ObjectiveResource,
+        as: 'resources',
+        attributes: [['userProvidedUrl', 'value']],
+      },
+      {
+        model: File,
+        as: 'files',
       },
     ],
   });
