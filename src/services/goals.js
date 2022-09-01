@@ -826,7 +826,7 @@ export async function goalsForGrants(grantIds) {
    */
   const ids = grants
     .reduce((previous, current) => [...previous, current.id, current.oldGrantId], [])
-    .filter((g) => g != null);
+    .filter((g) => g);
 
   /*
   * finally, return all matching goals
@@ -848,6 +848,13 @@ export async function goalsForGrants(grantIds) {
           sequelize.col('"Goal"."id"'),
         ),
       ), 'goalIds'],
+      [sequelize.fn(
+        'ARRAY_AGG',
+        sequelize.fn(
+          'DISTINCT',
+          sequelize.col('grant.oldGrantId'),
+        ),
+      ), 'oldGrantIds'],
       'name',
       'status',
       'onApprovedAR',
@@ -1184,7 +1191,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
 
     const deleteUnusedAssociations = false;
     const metadata = await saveObjectiveAssociations(
-      objective,
+      savedObjective,
       resources,
       topics,
       roleData,
@@ -1340,31 +1347,16 @@ export async function updateGoalStatusById(
 
 export async function getGoalsForReport(reportId) {
   const goals = await Goal.findAll({
-    /// TODO: If we need a count of other reports using this goal.
-    /* attributes: {
-      include: [[sequelize.literal(`
-                (
-                SELECT COUNT("ar"."id")
-                FROM "ActivityReports" "ar"
-                INNER JOIN "ActivityReportGoals" "arg" ON "arg"."activityReportId" = "ar"."id"
-                WHERE "arg"."goalId" = "Goal"."id" AND "arg"."activityReportId" != ${reportId}
-              )
-    `), 'onOtherAR']],
-    }, */
+    where: {
+      id: {
+        [Op.in]: sequelize.literal(`(SELECT "goalId" FROM "ActivityReportGoals" WHERE "activityReportId" = ${reportId})`),
+      },
+    },
     include: [
       {
         model: Grant,
         as: 'grant',
         required: true,
-      },
-      {
-        model: ActivityReport,
-        as: 'activityReports',
-        where: {
-          id: reportId,
-        },
-        required: true,
-        // get goals for a particular AR
       },
       {
         model: Objective,
@@ -1376,25 +1368,26 @@ export async function getGoalsForReport(reportId) {
             where: {
               activityReportId: reportId,
             },
-            required: true,
-            // we need this in case an objective was used on one report but not on another
-
             include: [
               {
                 model: ActivityReportObjectiveTopic,
                 as: 'activityReportObjectiveTopics',
+                required: false,
               },
               {
                 model: ActivityReportObjectiveFile,
                 as: 'activityReportObjectiveFiles',
+                required: false,
               },
               {
                 model: ActivityReportObjectiveResource,
                 as: 'activityReportObjectiveResources',
+                required: false,
               },
               {
                 model: ActivityReportObjectiveRole,
                 as: 'activityReportObjectiveRoles',
+                required: false,
               },
             ],
           },
