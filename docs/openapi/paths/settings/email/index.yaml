@@ -1,0 +1,14 @@
+get:
+  tags:
+    - settings
+    - email
+  summary: Retrieves email settings for a user
+  responses:
+    200:
+      description: The email settings of a user
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/settings'
+    400:
+      description: User for userId was not found or not provided
