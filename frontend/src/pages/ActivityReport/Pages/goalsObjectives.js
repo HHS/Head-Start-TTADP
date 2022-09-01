@@ -66,7 +66,17 @@ const GoalsObjectives = ({ reportId }) => {
       try {
         if (isRecipientReport && hasGrants) {
           const fetchedGoals = await getGoals(grantIds);
-          const formattedGoals = fetchedGoals.map((g) => ({ ...g, grantIds }));
+          const formattedGoals = fetchedGoals.map((g) => {
+            // if the goal is on an "old" grant, we should
+            // treat it like a new goal for now
+            let isNew = false;
+
+            if (grantIds.some((id) => g.grantIds.includes(id))) {
+              isNew = true;
+            }
+
+            return { ...g, isNew, grantIds };
+          });
           updateAvailableGoals(formattedGoals);
         }
 
