@@ -4,11 +4,19 @@ import db, {
   Grant,
   Recipient,
   Objective,
+  ActivityReportObjectiveResource,
+  ActivityReportObjectiveRole,
   ActivityReport,
   ActivityRecipient,
   ActivityReportGoal,
   ActivityReportObjective,
+  ActivityReportObjectiveTopic,
   User,
+  Topic,
+  ObjectiveTopic,
+  ObjectiveResource,
+  Role,
+  ObjectiveRole,
 } from '../../models';
 import { REPORT_STATUSES } from '../../constants';
 import { saveGoalsForReport } from '../goals';
@@ -32,7 +40,12 @@ describe('saveGoalsForReport (more tests)', () => {
   let recipients = [];
   let grants = [];
   let goal;
+  let existingGoal;
   let objective;
+  let existingObjective;
+  let topic;
+  let secondTopic;
+  let role;
 
   beforeAll(async () => {
     await User.create(mockUser);
@@ -127,17 +140,56 @@ describe('saveGoalsForReport (more tests)', () => {
       previousStatus: 'Not Started',
     });
 
+    // this represents a goal created on the RTR
+    existingGoal = await Goal.create({
+      name: 'This is a second existing goal',
+      status: 'Not Started',
+      grantId: grantOne.id,
+      previousStatus: null,
+    });
+
     await ActivityReportGoal.create({
       goalId: goal.id,
       activityReportId: reportWeArentWorryingAbout.id,
       status: goal.status,
     });
 
+    topic = await Topic.create({
+      name: 'Time travel and related activities',
+    });
+
+    secondTopic = await Topic.create({
+      name: 'Assorted fruits',
+    });
+
     objective = await Objective.create({
       goalId: goal.id,
       status: 'In Progress',
       title: 'This is an existing objective',
-      topics: [],
+    });
+
+    // this represents an objective created on the RTR
+    existingObjective = await Objective.create({
+      goalId: existingGoal.id,
+      status: 'Not Started',
+      title: 'This is a second existing objective',
+    });
+
+    await ObjectiveTopic.create({
+      objectiveId: existingObjective.id,
+      topicId: topic.id,
+    });
+
+    role = await Role.findOne();
+
+    await ObjectiveRole.create({
+      objectiveId: existingObjective.id,
+      roleId: role.id,
+    });
+
+    await ObjectiveResource.create({
+      objectiveId: existingObjective.id,
+      userProvidedUrl: 'http://www.finally-a-url.com',
     });
 
     await ActivityReportObjective.create({
@@ -165,9 +217,33 @@ describe('saveGoalsForReport (more tests)', () => {
       },
     });
 
+    await ObjectiveResource.destroy({
+      where: {
+        objectiveId: objectiveIds,
+      },
+    });
+
+    await ObjectiveTopic.destroy({
+      where: {
+        objectiveId: objectiveIds,
+      },
+    });
+
+    await ObjectiveRole.destroy({
+      where: {
+        objectiveId: objectiveIds,
+      },
+    });
+
     await Objective.destroy({
       where: {
         id: objectiveIds,
+      },
+    });
+
+    await Topic.destroy({
+      where: {
+        id: [topic.id, secondTopic.id],
       },
     });
 
@@ -250,6 +326,10 @@ describe('saveGoalsForReport (more tests)', () => {
       status: 'Not Started',
       id: '02f1ec1d-4163-4a9a-9b32-adddf336f990',
       isNew: true,
+      topics: [],
+      resources: [],
+      roles: [],
+      files: [],
     };
 
     const newGoals = [
@@ -386,6 +466,10 @@ describe('saveGoalsForReport (more tests)', () => {
       status: 'Not Started',
       id: '02f1ec1d-4163-4a9a-9b32-adddf336f990',
       isNew: true,
+      topics: [],
+      resources: [],
+      roles: [],
+      files: [],
     };
 
     const newGoals = [
@@ -464,17 +548,18 @@ describe('saveGoalsForReport (more tests)', () => {
 
     const [savedReport] = await activityReportAndRecipientsById(activityReportForNewGoal.id);
     const [beforeGoal] = beforeGoals;
-    const existingGoal = await Goal.findByPk(beforeGoal.goalId);
+    const alreadyExtantGoal = await Goal.findByPk(beforeGoal.goalId);
     const otherExistingGoal = await Goal.findByPk(goal.id);
 
     const newGoals = [
       {
-        goalIds: existingGoal.id,
-        id: existingGoal.id,
-        name: existingGoal.name,
+        goalIds: [alreadyExtantGoal.id],
+        id: alreadyExtantGoal.id,
+        name: alreadyExtantGoal.name,
         objectives: [],
         grantIds: [grantOne.id],
         status: 'Not Started',
+        isNew: false,
       },
       {
         goalIds: [otherExistingGoal.id],
@@ -505,7 +590,8 @@ describe('saveGoalsForReport (more tests)', () => {
     expect(afterGoals.length).toBe(2);
 
     const goalIds = afterGoals.map((ag) => ag.goalId);
-    expect(goalIds).toContain(existingGoal.id);
+
+    expect(goalIds).toContain(alreadyExtantGoal.id);
     expect(goalIds).toContain(otherExistingGoal.id);
 
     const updatedGoal = await Goal.findByPk(otherExistingGoal.id);
@@ -531,13 +617,13 @@ describe('saveGoalsForReport (more tests)', () => {
 
     const [savedReport] = await activityReportAndRecipientsById(activityReportForNewGoal.id);
     const [beforeGoal] = beforeGoals;
-    const existingGoal = await Goal.findByPk(beforeGoal.goalId);
+    const alreadyExtantGoal = await Goal.findByPk(beforeGoal.goalId);
 
     const newGoals = [
       {
-        goalIds: [existingGoal.id],
-        id: existingGoal.id,
-        name: existingGoal.name,
+        goalIds: [alreadyExtantGoal.id],
+        id: alreadyExtantGoal.id,
+        name: alreadyExtantGoal.name,
         objectives: [],
         grantIds: [grantOne.id],
         status: 'Not Started',
@@ -563,6 +649,169 @@ describe('saveGoalsForReport (more tests)', () => {
     expect(afterGoals.length).toBe(1);
 
     const goalIds = afterGoals.map((ag) => ag.goalId);
-    expect(goalIds).toContain(existingGoal.id);
+    expect(goalIds).toContain(alreadyExtantGoal.id);
+  });
+
+  it('adds a goal & objective from the RTR', async () => {
+    const beforeGoals = await ActivityReportGoal.findAll({
+      where: {
+        activityReportId: activityReportForNewGoal.id,
+      },
+    });
+
+    expect(beforeGoals.length).toBe(1);
+
+    const beforeObjectives = await ActivityReportObjective.findAll({
+      where: {
+        activityReportId: activityReportForNewGoal.id,
+      },
+    });
+
+    expect(beforeObjectives.length).toBe(0);
+
+    const [savedReport] = await activityReportAndRecipientsById(activityReportForNewGoal.id);
+    const [beforeGoal] = beforeGoals;
+    const alreadyExtantGoal = await Goal.findByPk(beforeGoal.goalId);
+
+    const rtrGoal = await Goal.findByPk(existingGoal.id);
+    const rtrObjective = await Objective.findByPk(existingObjective.id);
+
+    const newGoals = [
+      {
+        goalIds: [alreadyExtantGoal.id],
+        id: alreadyExtantGoal.id,
+        name: alreadyExtantGoal.name,
+        objectives: [],
+        grantIds: [grantOne.id],
+        status: 'Not Started',
+      },
+      {
+        goalIds: [rtrGoal.id],
+        id: rtrGoal.id,
+        name: rtrGoal.name,
+        objectives: [{
+          id: rtrObjective.id,
+          isNew: false,
+          ttaProvided: 'This is some TTA for this guy',
+          title: rtrObjective.title,
+          status: 'In Progress',
+          goalId: rtrGoal.id,
+          files: [],
+          topics: [
+            {
+              label: topic.name,
+              value: topic.id,
+            },
+            {
+              label: secondTopic.name,
+              value: secondTopic.id,
+            },
+          ],
+          roles: [
+            role.fullName,
+          ],
+          resources: [
+            {
+              key: 'gibberish-i-THINK-thats-obvious',
+              value: 'https://www.google.com', // a fine resource
+            },
+          ],
+        }],
+        grantIds: [grantOne.id],
+        status: 'In Progress',
+      },
+    ];
+
+    await saveGoalsForReport(newGoals, savedReport);
+
+    // check that both our goals are in the right place
+    const afterGoals = await ActivityReportGoal.findAll({
+      where: {
+        activityReportId: activityReportForNewGoal.id,
+      },
+    });
+
+    expect(afterGoals.length).toBe(2);
+
+    const goalIds = afterGoals.map((ag) => ag.goalId);
+    expect(goalIds).toContain(rtrGoal.id);
+    expect(goalIds).toContain(alreadyExtantGoal.id);
+
+    // now we dig into the objectives
+    const afterActivityReportObjectives = await ActivityReportObjective.findAll({
+      where: {
+        activityReportId: activityReportForNewGoal.id,
+      },
+    });
+
+    expect(afterActivityReportObjectives.length).toBe(1);
+    expect(afterActivityReportObjectives[0].objectiveId).toBe(rtrObjective.id);
+
+    const afterObjectiveTopics = await ObjectiveTopic.findAll({
+      where: {
+        objectiveId: rtrObjective.id,
+      },
+    });
+
+    // check that our topics are both associated with the objective
+    expect(afterObjectiveTopics.length).toBe(2);
+    const afterObjectiveTopicIds = afterObjectiveTopics.map((at) => at.topicId);
+    expect(afterObjectiveTopicIds).toContain(topic.id);
+    expect(afterObjectiveTopicIds).toContain(secondTopic.id);
+
+    // and that both are associated with the activity report
+    const afterActivityReportObjectiveTopics = await ActivityReportObjectiveTopic.findAll({
+      where: {
+        activityReportObjectiveId: afterActivityReportObjectives[0].id,
+      },
+    });
+
+    expect(afterActivityReportObjectiveTopics.length).toBe(2);
+    const afterActivityReportObjectiveTopicIds = afterActivityReportObjectiveTopics.map(
+      (at) => at.topicId,
+    );
+    expect(afterActivityReportObjectiveTopicIds).toContain(topic.id);
+    expect(afterActivityReportObjectiveTopicIds).toContain(secondTopic.id);
+
+    // check that our resources are saved properly to the objective
+    const afterObjectiveResources = await ObjectiveResource.findAll({
+      where: {
+        objectiveId: rtrObjective.id,
+      },
+    });
+
+    expect(afterObjectiveResources.length).toBe(2);
+    const userProvidedUrls = afterObjectiveResources.map((ar) => ar.userProvidedUrl);
+    expect(userProvidedUrls).toContain('https://www.google.com');
+    expect(userProvidedUrls).toContain('http://www.finally-a-url.com');
+
+    const afterActivityReportObjectiveResources = await ActivityReportObjectiveResource.findAll({
+      where: {
+        activityReportObjectiveId: afterActivityReportObjectives[0].id,
+      },
+    });
+
+    expect(afterActivityReportObjectiveResources.length).toBe(1);
+    expect(afterActivityReportObjectiveResources[0].userProvidedUrl).toBe('https://www.google.com');
+
+    // check that our roles are saved properly to the objective
+    const afterObjectiveRoles = await ObjectiveRole.findAll({
+      where: {
+        objectiveId: rtrObjective.id,
+      },
+    });
+
+    expect(afterObjectiveRoles.length).toBe(1);
+    expect(afterObjectiveRoles[0].roleId).toBe(role.id);
+
+    // check that our roles are saved properly to the activity report
+    const afterActivityReportObjectiveRoles = await ActivityReportObjectiveRole.findAll({
+      where: {
+        activityReportObjectiveId: afterActivityReportObjectives[0].id,
+      },
+    });
+
+    expect(afterActivityReportObjectiveRoles.length).toBe(1);
+    expect(afterActivityReportObjectiveRoles[0].roleId).toBe(role.id);
   });
 });

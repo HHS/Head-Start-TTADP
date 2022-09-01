@@ -4,6 +4,7 @@ import {
   Grant,
   Objective,
   ObjectiveResource,
+  ObjectiveRole,
   ObjectiveTopic,
   ActivityReportObjective,
   ActivityReportObjectiveTopic,
@@ -17,7 +18,6 @@ import {
   Topic,
   Program,
   File,
-  ObjectiveRole,
   Role,
 } from '../models';
 import { DECIMAL_BASE, REPORT_STATUSES } from '../constants';
@@ -218,7 +218,99 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
   ],
 });
 
-function reduceObjectives(newObjectives, currentObjectives = []) {
+export async function saveObjectiveAssociations(
+  objective,
+  resources,
+  topics,
+  roles,
+  deleteUnusedAssociations = false,
+) {
+  // topics
+  const objectiveTopics = await Promise.all(
+    (topics.map(async (ot) => ObjectiveTopic.findOrCreate({
+      where: {
+        objectiveId: objective.id,
+        topicId: ot.value,
+      },
+    }))),
+  );
+
+  // resources
+  const objectiveResources = await Promise.all(
+    resources.filter(({ value }) => value).map(
+      ({ value }) => ObjectiveResource.findOrCreate({
+        where: {
+          userProvidedUrl: value,
+          objectiveId: objective.id,
+        },
+      }),
+    ),
+  );
+
+  const objectiveRoles = await Promise.all((roles.map(async (role) => {
+    const [r] = await ObjectiveRole.findOrCreate({
+      where: {
+        roleId: role.id,
+        objectiveId: objective.id,
+      },
+    });
+    return r;
+  })));
+
+  if (deleteUnusedAssociations) {
+    // cleanup objective topics
+    await ObjectiveTopic.destroy({
+      where: {
+        id: {
+          [Op.notIn]: objectiveTopics.length ? objectiveTopics.map(([ot]) => ot.id) : [],
+        },
+        objectiveId: objective.id,
+        // do we need to check to make sure that topics that are on an AR aren't removed?
+        // topicId: {
+        //   [Op.notIn]: sequelize.literal(`
+        //     (SELECT "Topics"."id" FROM "Topics"
+        //       INNER JOIN "ActivityReportObjectiveTopics"
+        //          ON "ActivityReportObjectiveTopics"."topicId" = "Topics"."id"
+        //       INNER JOIN "Objectives"
+        //          ON "ActivityReportObjectiveTopics"."objectiveId" = "Objectives"."id"
+        //       WHERE "Objectives"."id" = ${objective.id})
+        //     )
+        //   `),
+        // },
+      },
+    });
+
+    // cleanup objective resources
+    await ObjectiveResource.destroy({
+      where: {
+        id: {
+          [Op.notIn]: objectiveResources.length
+            ? objectiveResources.map(([or]) => or.id) : [],
+        },
+        objectiveId: objective.id,
+      },
+    });
+
+    // cleanup objective roles
+    await ObjectiveRole.destroy({
+      where: {
+        id: {
+          [Op.notIn]: objectiveRoles.length
+            ? objectiveRoles.map((or) => or.id) : [],
+        },
+        objectiveId: objective.id,
+      },
+    });
+  }
+
+  return {
+    topics: objectiveTopics,
+    resources: objectiveResources,
+    roles: objectiveRoles,
+  };
+}
+
+export function reduceObjectives(newObjectives, currentObjectives = []) {
   return newObjectives.reduce((objectives, objective) => {
     const exists = objectives.find((o) => (
       o.title === objective.title && o.status === objective.status
@@ -679,61 +771,6 @@ export async function createOrUpdateGoals(goals) {
           status: objectiveStatus,
         }, { individualHooks: true });
 
-        // topics
-        const objectiveTopics = await Promise.all(
-          (topics.map(async (ot) => ObjectiveTopic.findOrCreate({
-            where: {
-              objectiveId: objective.id,
-              topicId: ot.value,
-            },
-          }))),
-        );
-
-        // cleanup objective topics
-        await ObjectiveTopic.destroy({
-          where: {
-            id: {
-              [Op.notIn]: objectiveTopics.length ? objectiveTopics.map(([ot]) => ot.id) : [],
-            },
-            objectiveId: objective.id,
-            // do we need to check to make sure that topics that are on an AR aren't removed?
-            // topicId: {
-            //   [Op.notIn]: sequelize.literal(`
-            //     (SELECT "Topics"."id" FROM "Topics"
-            //       INNER JOIN "ActivityReportObjectiveTopics"
-            //          ON "ActivityReportObjectiveTopics"."topicId" = "Topics"."id"
-            //       INNER JOIN "Objectives"
-            //          ON "ActivityReportObjectiveTopics"."objectiveId" = "Objectives"."id"
-            //       WHERE "Objectives"."id" = ${objective.id})
-            //     )
-            //   `),
-            // },
-          },
-        });
-
-        // resources
-        const objectiveResources = await Promise.all(
-          resources.filter(({ value }) => value).map(
-            ({ value }) => ObjectiveResource.findOrCreate({
-              where: {
-                userProvidedUrl: value,
-                objectiveId: objective.id,
-              },
-            }),
-          ),
-        );
-
-        // cleanup objective resources
-        await ObjectiveResource.destroy({
-          where: {
-            id: {
-              [Op.notIn]: objectiveResources.length
-                ? objectiveResources.map(([or]) => or.id) : [],
-            },
-            objectiveId: objective.id,
-          },
-        });
-
         // objective roles
         const roles = await Role.findAll({
           where: {
@@ -741,26 +778,15 @@ export async function createOrUpdateGoals(goals) {
           },
         });
 
-        const objectiveRoles = await Promise.all((roles.map(async (role) => {
-          const [r] = await ObjectiveRole.findOrCreate({
-            where: {
-              roleId: role.id,
-              objectiveId: objective.id,
-            },
-          });
-          return r;
-        })));
-
-        // cleanup objective roles
-        await ObjectiveRole.destroy({
-          where: {
-            id: {
-              [Op.notIn]: objectiveRoles.length
-                ? objectiveRoles.map((or) => or.id) : [],
-            },
-            objectiveId: objective.id,
-          },
-        });
+        // save all our objective join tables (ObjectiveResource, ObjectiveTopic, ObjectiveRole)
+        const deleteUnusedAssociations = true;
+        await saveObjectiveAssociations(
+          objective,
+          resources,
+          topics,
+          roles,
+          deleteUnusedAssociations,
+        );
 
         return {
           ...objective.dataValues,
@@ -1096,6 +1122,10 @@ async function createObjectivesForGoal(goal, objectives, report) {
       ActivityReportObjective: aro,
       title,
       status,
+      resources,
+      topics,
+      roles,
+      files,
       ...updatedFields
     } = objective;
 
@@ -1140,7 +1170,38 @@ async function createObjectivesForGoal(goal, objectives, report) {
       }
     }
 
-    await cacheObjectiveMetadata(savedObjective, report.id, objective.ttaProvided);
+    // this will save all our objective join table data
+    // however, in the case of the Activity Report, we can't really delete
+    // unused join table data, so we'll just create any missing links
+    // so that the metadata is saved properly
+
+    // we need to get the entire role object from the role name
+    const roleData = await Role.findAll({
+      where: {
+        fullName: roles,
+      },
+    });
+
+    const deleteUnusedAssociations = false;
+    const metadata = await saveObjectiveAssociations(
+      objective,
+      resources,
+      topics,
+      roleData,
+      deleteUnusedAssociations,
+    );
+
+    // this will link our objective to the activity report through
+    // activity report objective and then link all associated objective data
+    // to the activity report objective to capture this moment in time
+    await cacheObjectiveMetadata(
+      savedObjective,
+      report.id,
+      {
+        ...metadata,
+        ttaProvided: objective.ttaProvided,
+      },
+    );
     return savedObjective;
   }));
 }

@@ -77,27 +77,12 @@ export default function GoalForm({
   // the fields via the useController functions
   useEffect(() => {
     onUpdateText(goal.name ? goal.name : defaultName);
-
-    const newEndDate = goal.endDate ? goal.endDate : defaultEndDate;
-
-    if (!newEndDate) {
-      return;
-    }
-
-    onUpdateDate(newEndDate);
   }, [
-    defaultEndDate,
     defaultName,
-    goal.endDate,
     goal.name,
-    onUpdateDate,
     onUpdateText,
     setDatePickerKey,
   ]);
-
-  useEffect(() => {
-    setDatePickerKey(goalEndDate + uuid());
-  }, [goalEndDate]);
 
   const [objectives, setObjectives] = useState([]);
 
