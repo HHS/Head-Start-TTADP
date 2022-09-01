@@ -19,11 +19,8 @@ export default function HubIdentifier() {
           </IdentifierIdentity>
         </IdentifierMasthead>
         <IdentifierLinks navProps={{ 'aria-label': 'Important links' }}>
-          <Link href="/" className="text-primary-lighter">Vulnerability Disclosure Policy</Link>
+          <Link href="https://www.hhs.gov/vulnerability-disclosure-policy/index.html" _target="blank" className="text-primary-lighter">Vulnerability Disclosure Policy</Link>
         </IdentifierLinks>
-        {/* <IdentifierGov aria-label="U.S. government information and services">
-          ok
-        </IdentifierGov> */}
       </Identifier>
     </div>
   );
