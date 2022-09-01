@@ -57,7 +57,7 @@ export const otherEntityParticipants = [
 // - src/constants.js
 export const topics = [
   'Behavioral / Mental Health / Trauma',
-  'Child Assessment, Development, Screening',
+  'Child Screening and Assessment',
   'CLASS: Classroom Organization',
   'CLASS: Emotional Support',
   'CLASS: Instructional Support',
@@ -89,7 +89,7 @@ export const topics = [
   'Recordkeeping and Reporting',
   'Safety Practices',
   'Staff Wellness',
-  'Teaching Practices / Teacher-Child Interactions',
+  'Teaching / Caregiving Practices',
   'Technology and Information Systems',
   'Transition Practices',
   'Transportation',

@@ -68,7 +68,7 @@ describe('Topics & resources', () => {
       fireEvent.focus(topicSelect);
       fireEvent.keyDown(topicSelect, { key: 'ArrowDown', code: 40 });
       expect(await screen.findByText('Behavioral / Mental Health / Trauma')).toBeVisible();
-      expect(await screen.findByText('Child Assessment, Development, Screening')).toBeVisible();
+      expect(await screen.findByText('Child Screening and Assessment')).toBeVisible();
       expect(await screen.findByText('CLASS: Classroom Organization')).toBeVisible();
       expect(await screen.findByText('CLASS: Emotional Support')).toBeVisible();
       expect(await screen.findByText('CLASS: Instructional Support')).toBeVisible();
@@ -100,7 +100,7 @@ describe('Topics & resources', () => {
       expect(await screen.findByText('Recordkeeping and Reporting')).toBeVisible();
       expect(await screen.findByText('Safety Practices')).toBeVisible();
       expect(await screen.findByText('Staff Wellness')).toBeVisible();
-      expect(await screen.findByText('Teaching Practices / Teacher-Child Interactions')).toBeVisible();
+      expect(await screen.findByText('Teaching / Caregiving Practices')).toBeVisible();
       expect(await screen.findByText('Technology and Information Systems')).toBeVisible();
       expect(await screen.findByText('Transition Practices')).toBeVisible();
       expect(await screen.findByText('Transportation')).toBeVisible();
