@@ -134,7 +134,6 @@ export const usersWithSetting = async (key, value) => {
       },
     ],
     where: {
-      // where the value matches the default value for this key.
       '$userSettingOverrides.setting.key$': { [Op.eq]: key },
       '$userSettingOverrides.value$': { [Op.eq]: sequelize.cast(JSON.stringify(value), 'jsonb') },
     },
