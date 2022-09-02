@@ -220,9 +220,9 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
 
 export async function saveObjectiveAssociations(
   objective,
-  resources,
-  topics,
-  roles,
+  resources = [],
+  topics = [],
+  roles = [],
   deleteUnusedAssociations = false,
 ) {
   // topics

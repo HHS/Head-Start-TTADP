@@ -616,12 +616,8 @@ export async function activityReports(
     attributes: ['id', 'name', 'activityRecipientId', 'activityReportId'],
     // sorting these just so the order is testable
     order: [
-      [
-        sequelize.literal(`"grant.recipient.name" ${sortDir}`),
-      ],
-      [
-        sequelize.literal(`"otherEntity.name" ${sortDir}`),
-      ],
+      [sequelize.col('grant.recipient.name'), sortDir],
+      [sequelize.col('otherEntity.name'), sortDir],
     ],
   });
 
@@ -645,7 +641,7 @@ export async function activityReports(
       },
     ],
     order: [
-      ['name', sortDir],
+      [sequelize.col('name'), sortDir],
     ],
   });
 

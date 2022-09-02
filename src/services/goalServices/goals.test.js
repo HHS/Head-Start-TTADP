@@ -207,7 +207,13 @@ describe('Goals DB service', () => {
       const goalWithNewObjective = {
         ...existingGoal,
         objectives: [{
-          isNew: true, goalId: 1, title: 'title', ttaProvided: '', ActivityReportObjective: { }, status: '',
+          isNew: true,
+          goalId: 1,
+          title: 'title',
+          ttaProvided: '',
+          ActivityReportObjective: {},
+          status: '',
+          roles: [],
         }],
       };
       await saveGoalsForReport([goalWithNewObjective], { id: 1 });
