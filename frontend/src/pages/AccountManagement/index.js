@@ -226,8 +226,8 @@ function AccountManagement() {
 
   const deduceEmailPreference = (settings) => {
     if (!settings.length) return 'unsubscribe';
-    if (settings.map(({ value }) => value).every((value) => value === 'never')) return 'unsubscribe';
-    if (settings.map(({ value }) => value).every((value) => value === 'immediately')) return 'subscribe';
+    if (settings.every(({ value }) => value === 'never')) return 'unsubscribe';
+    if (settings.every(({ value }) => value === 'immediately')) return 'subscribe';
     return 'customized';
   };
 
