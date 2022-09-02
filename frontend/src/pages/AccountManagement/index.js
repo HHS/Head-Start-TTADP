@@ -115,20 +115,6 @@ function EmailPreferencesForm() {
 
   const emailPreference = watch('emailPreference');
 
-  useEffect(() => {
-    if (!saveError) return;
-    setTimeout(() => {
-      setSaveError(false);
-    }, 4000);
-  }, [saveError]);
-
-  useEffect(() => {
-    if (!saveSuccess) return;
-    setTimeout(() => {
-      setSaveSuccess(false);
-    }, 4000);
-  }, [saveSuccess]);
-
   // Selecting a new radio button should remove the success/error message.
   useEffect(() => {
     setSaveSuccess(false);
