@@ -233,7 +233,9 @@ describe('Goals DB service', () => {
       const existingGoal = {
         id: 1,
         name: 'name',
-        objectives: [{ title: 'title', id: 1, status: 'Closed' }],
+        objectives: [{
+          title: 'title', id: 1, status: 'Closed', roles: [],
+        }],
         update: jest.fn(),
         grantIds: [1],
         goalIds: [1],

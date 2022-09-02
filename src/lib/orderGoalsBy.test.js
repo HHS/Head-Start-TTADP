@@ -14,7 +14,7 @@ describe('orderGoalsBy', () => {
       ],
     ]);
 
-    const two = orderGoalsBy('createdOn', 'desc');
+    const two = orderGoalsBy('createdOn', 'DESC');
     expect(two).toStrictEqual([
       [
         sequelize.col('createdAt'),

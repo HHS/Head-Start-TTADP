@@ -18,7 +18,6 @@ const cacheFiles = async (activityReportObjectiveId, files = []) => Promise.all(
       activityReportObjectiveId,
       fileId: { [Op.notIn]: files.map(([file]) => file.fileId) },
     },
-    logging: true,
     individualHooks: true,
   }),
 ]);
