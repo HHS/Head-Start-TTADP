@@ -28,7 +28,6 @@ import { REPORT_STATUSES } from '../constants';
 describe('reportCache', () => {
   const mockUser = {
     name: 'Joe Green',
-    role: ['TTAC'],
     phoneNumber: '555-555-554',
     hsesUserId: '65535',
     hsesUsername: 'test49@test49.com',
@@ -280,7 +279,39 @@ describe('reportCache', () => {
       expect(aro.activityReportObjectiveTopics).toEqual([]);
     });
     it('add to cache', async () => {
-      await cacheObjectiveMetadata(objective, report.id, null);
+      const filesForThisObjective = await ObjectiveFile.findAll({
+        where: {
+          objectiveId: objective.id,
+        },
+      });
+
+      const resources = await ObjectiveResource.findAll({
+        where: {
+          objectiveId: objective.id,
+        },
+      });
+
+      const rolesForThisObjective = await ObjectiveRole.findAll({
+        where: {
+          objectiveId: objective.id,
+        },
+      });
+
+      const topics = await ObjectiveTopic.findAll({
+        where: {
+          objectiveId: objective.id,
+        },
+      });
+
+      const metadata = {
+        files: filesForThisObjective.map((f) => [f]),
+        resources: resources.map((r) => [r]),
+        roles: rolesForThisObjective,
+        topics: topics.map((t) => [t]),
+        ttaProvided: null,
+      };
+
+      await cacheObjectiveMetadata(objective, report.id, metadata);
       const aro = await ActivityReportObjective.findOne({
         where: { activityReportId: report.id },
         include: [{
@@ -309,6 +340,7 @@ describe('reportCache', () => {
       expect(aro.activityReportObjectiveTopics[0].topicId).toEqual(mockObjectiveTopics[0].topicId);
     });
     it('add and remove from cache', async () => {
+      // update added or removed files
       await ObjectiveFile.destroy({ where: { objectiveId: objective.id } });
       await ObjectiveResource.destroy({ where: { objectiveId: objective.id } });
       await ObjectiveRole.destroy({ where: { objectiveId: objective.id } });
@@ -331,7 +363,40 @@ describe('reportCache', () => {
       objectiveTopics.push(await ObjectiveTopic.findOrCreate({
         where: { objectiveId: objective.id, ...mockObjectiveTopics[1] },
       }));
-      await cacheObjectiveMetadata(objective, report.id, null);
+
+      const filesForThisObjective = await ObjectiveFile.findAll({
+        where: {
+          objectiveId: objective.id,
+        },
+      });
+
+      const resources = await ObjectiveResource.findAll({
+        where: {
+          objectiveId: objective.id,
+        },
+      });
+
+      const rolesForThisObjective = await ObjectiveRole.findAll({
+        where: {
+          objectiveId: objective.id,
+        },
+      });
+
+      const topics = await ObjectiveTopic.findAll({
+        where: {
+          objectiveId: objective.id,
+        },
+      });
+
+      const metadata = {
+        files: filesForThisObjective.map((f) => [f]),
+        resources: resources.map((r) => [r]),
+        roles: rolesForThisObjective,
+        topics: topics.map((t) => [t]),
+        ttaProvided: null,
+      };
+
+      await cacheObjectiveMetadata(objective, report.id, metadata);
       const aro = await ActivityReportObjective.findOne({
         where: { activityReportId: report.id },
         include: [{
@@ -364,7 +429,40 @@ describe('reportCache', () => {
       await ObjectiveResource.destroy({ where: { objectiveId: objective.id } });
       await ObjectiveRole.destroy({ where: { objectiveId: objective.id } });
       await ObjectiveTopic.destroy({ where: { objectiveId: objective.id } });
-      await cacheObjectiveMetadata(objective, report.id, null);
+
+      const filesForThisObjective = await ObjectiveFile.findAll({
+        where: {
+          objectiveId: objective.id,
+        },
+      });
+
+      const resources = await ObjectiveResource.findAll({
+        where: {
+          objectiveId: objective.id,
+        },
+      });
+
+      const rolesForThisObjective = await ObjectiveRole.findAll({
+        where: {
+          objectiveId: objective.id,
+        },
+      });
+
+      const topics = await ObjectiveTopic.findAll({
+        where: {
+          objectiveId: objective.id,
+        },
+      });
+
+      const metadata = {
+        files: filesForThisObjective.map((f) => [f]),
+        resources: resources.map((r) => [r]),
+        roles: rolesForThisObjective,
+        topics: topics.map((t) => [t]),
+        ttaProvided: null,
+      };
+
+      await cacheObjectiveMetadata(objective, report.id, metadata);
       const aro = await ActivityReportObjective.findOne({
         where: { activityReportId: report.id },
         include: [{
