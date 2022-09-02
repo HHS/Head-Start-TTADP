@@ -16,8 +16,9 @@ const cacheFiles = async (activityReportObjectiveId, files = []) => Promise.all(
   await ActivityReportObjectiveFile.destroy({
     where: {
       activityReportObjectiveId,
-      fileId: { [Op.notIn]: files.map((file) => file.fileId) },
+      fileId: { [Op.notIn]: files.map(([file]) => file.fileId) },
     },
+    logging: true,
     individualHooks: true,
   }),
 ]);
@@ -30,7 +31,7 @@ const cacheResources = async (activityReportObjectiveId, resources = []) => Prom
   await ActivityReportObjectiveResource.destroy({
     where: {
       activityReportObjectiveId,
-      userProvidedUrl: { [Op.notIn]: resources.map((resource) => resource.userProvidedUrl) },
+      userProvidedUrl: { [Op.notIn]: resources.map(([resource]) => resource.userProvidedUrl) },
     },
     individualHooks: true,
   }),
@@ -58,7 +59,7 @@ const cacheTopics = async (activityReportObjectiveId, topics = []) => Promise.al
   await ActivityReportObjectiveTopic.destroy({
     where: {
       activityReportObjectiveId,
-      topicId: { [Op.notIn]: topics.map((topic) => topic.topicId) },
+      topicId: { [Op.notIn]: topics.map(([topic]) => topic.topicId) },
     },
     individualHooks: true,
   }),
