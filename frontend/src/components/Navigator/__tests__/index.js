@@ -65,7 +65,12 @@ const defaultPages = [
   },
 ];
 
-const initialData = { pageState: { 1: NOT_STARTED, 2: NOT_STARTED }, regionId: 1, goals: [] };
+const initialData = {
+  pageState: { 1: NOT_STARTED, 2: NOT_STARTED },
+  regionId: 1,
+  goals: [],
+  objectivesWithoutGoals: [],
+};
 
 describe('Navigator', () => {
   // eslint-disable-next-line arrow-body-style
@@ -128,6 +133,7 @@ describe('Navigator', () => {
         },
         regionId: 1,
         goals: [],
+        objectivesWithoutGoals: [],
         second: null,
       },
     ));

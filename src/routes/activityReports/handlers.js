@@ -272,9 +272,7 @@ export async function getGoals(req, res) {
  * @param {*} res - response
  */
 export async function saveOtherEntityObjectivesForReport(req, res) {
-  const { activityReportId } = req.params;
-  const { objectivesWithoutGoals } = req.body;
-  const { region } = req.query;
+  const { objectivesWithoutGoals, activityReportId, region } = req.body;
   const user = await userById(req.session.userId);
   const authorization = new User(user);
 
