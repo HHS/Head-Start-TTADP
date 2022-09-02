@@ -10,9 +10,10 @@ import { NEW_OBJECTIVE } from './constants';
 const OBJECTIVE_LABEL = 'objectivesWithoutGoals';
 
 export default function OtherEntity({ roles, recipientIds }) {
+  const { errors, formState } = useFormContext();
+  const { dirtyFields } = formState;
+  const defaultRoles = useMemo(() => (roles.length === 1 ? roles : []), [roles]);
   const [topicOptions, setTopicOptions] = useState([]);
-
-  const { errors } = useFormContext();
 
   // for fetching topic options from API
   useEffect(() => {
@@ -29,14 +30,13 @@ export default function OtherEntity({ roles, recipientIds }) {
     fetchTopics();
   }, []);
 
-  const defaultRoles = useMemo(() => (roles.length === 1 ? roles : []), [roles]);
-
   const {
     fields: objectives,
     remove,
     append,
   } = useFieldArray({
     name: OBJECTIVE_LABEL,
+    keyName: 'key', // because 'id' is the default key switch it to use 'key'.
     defaultValues: [{ ...NEW_OBJECTIVE(), roles: defaultRoles, recipientIds }],
   });
 
@@ -47,10 +47,11 @@ export default function OtherEntity({ roles, recipientIds }) {
   const options = [{ ...NEW_OBJECTIVE() }];
 
   useEffect(() => {
-    if (objectives.length === 0) {
+    // Only add default value on initial load if there are no entries.
+    if (objectives.length === 0 && !dirtyFields[OBJECTIVE_LABEL]) {
       append({ ...NEW_OBJECTIVE(), roles: defaultRoles, recipientIds });
     }
-  }, [append, defaultRoles, objectives.length, recipientIds]);
+  }, [append, defaultRoles, objectives.length, recipientIds, dirtyFields]);
 
   return (
     <div>

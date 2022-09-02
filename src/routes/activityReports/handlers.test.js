@@ -848,9 +848,11 @@ describe('Activity Report handlers', () => {
       await saveOtherEntityObjectivesForReport(
         {
           ...mockRequest,
-          query: { region: 1 },
-          params: { activityReportId: 1 },
-          body: { objectivesWithoutGoals: [] },
+          body: {
+            objectivesWithoutGoals: [],
+            activityReportId: 1,
+            region: 1,
+          },
         },
         mockResponse,
       );
@@ -884,9 +886,11 @@ describe('Activity Report handlers', () => {
       await saveOtherEntityObjectivesForReport(
         {
           ...mockRequest,
-          query: { region: 1 },
-          params: { activityReportId: 1 },
-          body: { objectivesWithoutGoals: [] },
+          body: {
+            objectivesWithoutGoals: [],
+            activityReportId: 1,
+            region: 1,
+          },
         },
         mockResponse,
       );
