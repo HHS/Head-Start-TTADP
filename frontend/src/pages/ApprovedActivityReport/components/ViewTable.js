@@ -5,12 +5,20 @@ import { v4 as uuidv4 } from 'uuid';
 import { getEditorState } from '../../../utils';
 import './ViewTable.scss';
 
-function renderEditor(data) {
+function renderEditor(heading, data) {
   /**
    * sometimes, we may receive JSX
    */
   if (typeof data === 'object') {
     return data;
+  }
+
+  let wrapperId = '';
+
+  if (typeof heading === 'string') {
+    wrapperId = `${heading.toLowerCase().replace(' ', '-')}-${uuidv4()}`;
+  } else {
+    wrapperId = uuidv4();
   }
 
   /**
@@ -22,21 +30,22 @@ function renderEditor(data) {
       readOnly
       toolbarHidden
       defaultEditorState={defaultEditorState}
+      wrapperId={wrapperId}
     />
   );
 }
 
-function renderData(data) {
+function renderData(heading, data) {
   if (Array.isArray(data)) {
     const cleanData = data.filter((d) => d);
     return (
       <ul>
-        {cleanData.map((line) => <li key={uuidv4()} className="margin-bottom-1">{renderEditor(line)}</li>)}
+        {cleanData.map((line) => <li key={uuidv4()} className="margin-bottom-1">{renderEditor(heading, line)}</li>)}
       </ul>
     );
   }
 
-  return renderEditor(data);
+  return renderEditor(heading, data);
 }
 
 export default function ViewTable({
@@ -51,7 +60,7 @@ export default function ViewTable({
             <tr key={uuidv4()}>
               <th scope="row">{heading}</th>
               <td>
-                {data[index] ? renderData(data[index]) : ''}
+                {data[index] ? renderData(heading, data[index]) : ''}
               </td>
             </tr>
           ))}
