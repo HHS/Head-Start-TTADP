@@ -4,64 +4,17 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 import { useHistory } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faFlag,
-  faAngleUp,
-  faAngleDown,
-} from '@fortawesome/free-solid-svg-icons';
+import { faFlag } from '@fortawesome/free-solid-svg-icons';
 import StatusDropdown from './StatusDropdown';
 import ContextMenu from '../ContextMenu';
 import Tooltip from '../Tooltip';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
 import ObjectiveRow from './ObjectiveRow';
+import ObjectiveButton from './components/ObjectiveButton';
 import './GoalRow.scss';
+import './GoalCard.scss';
 import colors from '../../colors';
-
-function ObjectiveButton({
-  closeOrOpenObjectives,
-  objectiveCount,
-  objectivesExpanded,
-  goalNumber,
-  expandObjectivesRef,
-}) {
-  if (objectiveCount < 1) {
-    return (
-      <span className="text-no-underline text-ink text-middle tta-smarthub--goal-row-objectives tta-smarthub--goal-row-objectives-disabled">
-        <strong className="margin-left-1">{objectiveCount}</strong>
-        {' '}
-        Objectives
-      </span>
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      ref={expandObjectivesRef}
-      className="usa-button--unstyled text-no-underline text-ink text-middle tta-smarthub--goal-row-objectives tta-smarthub--goal-row-objectives-enabled"
-      onClick={() => closeOrOpenObjectives(false)}
-      aria-label={`${objectivesExpanded ? 'Collapse' : 'Expand'} objective's for goal ${goalNumber}`}
-    >
-      <strong className="margin-left-1">{objectiveCount}</strong>
-      {' '}
-      Objective
-      {objectiveCount > 1 ? 's' : ''}
-      <FontAwesomeIcon className="margin-left-1" size="1x" color={colors.textInk} icon={objectivesExpanded ? faAngleUp : faAngleDown} />
-    </button>
-  );
-}
-
-ObjectiveButton.propTypes = {
-  closeOrOpenObjectives: PropTypes.func.isRequired,
-  objectiveCount: PropTypes.number.isRequired,
-  objectivesExpanded: PropTypes.bool.isRequired,
-  goalNumber: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  expandObjectivesRef: PropTypes.oneOfType([
-    PropTypes.func,
-    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
-  ]).isRequired,
-};
 
 const Topics = ({ topics }) => {
   if (!topics.length) {
@@ -108,7 +61,7 @@ Topics.propTypes = {
   topics: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
-function GoalRow({
+function GoalCard({
   goal,
   openMenuUp,
   recipientId,
@@ -235,77 +188,86 @@ function GoalRow({
   };
 
   return (
-    <>
-      <tr className={`tta-smarthub--goal-row ${!objectivesExpanded ? 'tta-smarthub--goal-row-collapsed' : ''}`} key={`goal_row_${id}`}>
-        <td style={objectivesExpanded ? { borderLeft: `4px solid ${getStatusColor()}` } : { borderLeft: `1px solid ${colors.baseLightest}`, paddingLeft: '25px' }}>
-          <StatusDropdown
-            goalId={id}
-            status={goalStatus}
-            onUpdateGoalStatus={onUpdateGoalStatus}
-            previousStatus={previousStatus}
-            regionId={regionId}
-            up={openMenuUp}
-          />
-        </td>
-        <td>{moment(createdOn, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT)}</td>
-        <td className="text-wrap maxw-mobile">
-          {goalText}
-          {' '}
-          (
-          {goalNumbers}
+    <article className="ttahub-goal-card usa-card margin-x-3 margin-y-2 padding-7 radius-lg border smart-hub-border-base-lighter ">
+      <div className="display-flex flex-justify">
+        <StatusDropdown
+          goalId={id}
+          status={goalStatus}
+          onUpdateGoalStatus={onUpdateGoalStatus}
+          previousStatus={previousStatus}
+          regionId={regionId}
+          up={openMenuUp}
+        />
+
+        {showContextMenu
+          ? (
+            <ContextMenu
+              label={contextMenuLabel}
+              menuItems={menuItems}
+              up={openMenuUp}
+            />
           )
-          {determineFlagStatus()}
-        </td>
-        <td className="text-wrap maxw-mobile">
+          : null}
+      </div>
+      <div className="display-flex margin-top-2 flex-wrap">
+        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-text margin-right-3">
+          <h2 className="font-body-xs">
+            Goal
+            {' '}
+            {goalNumbers}
+          </h2>
+          <p className="text-wrap usa-prose">
+            {goalText}
+            {' '}
+            {determineFlagStatus()}
+          </p>
+        </div>
+        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-topics margin-right-3">
+          <p className="text-bold">Topics</p>
           <Topics topics={goalTopics} />
-        </td>
-        <td className="padding-right-0 text-right">
-          <ObjectiveButton
-            closeOrOpenObjectives={closeOrOpenObjectives}
-            objectiveCount={objectiveCount}
-            objectivesExpanded={objectivesExpanded}
-            goalNumber={goal.goalNumbers.join('')}
-            expandObjectivesRef={expandObjectivesRef}
+        </div>
+        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__created-on margin-right-3">
+          <p className="text-bold">Created on</p>
+          <p>{moment(createdOn, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT)}</p>
+        </div>
+        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__last-tta margin-right-3">
+          <p className="text-bold">Last TTA</p>
+        </div>
+        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__last-reviewed margin-right-3">
+          <p className="text-bold">Last reviewed</p>
+        </div>
+      </div>
+
+      <ObjectiveButton
+        closeOrOpenObjectives={closeOrOpenObjectives}
+        objectiveCount={objectiveCount}
+        objectivesExpanded={objectivesExpanded}
+        goalNumber={goal.goalNumbers.join('')}
+        expandObjectivesRef={expandObjectivesRef}
+      />
+
+      <p />
+      <div
+        className="padding-top-0"
+        style={containerStyle}
+        colSpan="6"
+      >
+        <ul aria-hidden className="usa-list usa-list--unstyled tta-smarthub--goal-row-obj-table-header padding-top-0 padding-x-2 padding-bottom-1 display-flex">
+          <li className="padding-x-105 padding-y-0 padding-left-0 flex-align-self-end">Objective</li>
+          <li className="padding-x-105 padding-y-0 flex-align-self-end">Activity reports</li>
+          <li className="padding-x-105 padding-y-0 flex-align-self-end">Grant numbers</li>
+          <li className="padding-x-105 padding-y-0 flex-align-self-end">End date</li>
+          <li className="padding-x-105 padding-y-0 flex-align-self-end">Reasons</li>
+          <li className="padding-x-105 padding-y-0 padding-right-0 flex-align-self-end">Objective status</li>
+        </ul>
+        {objectives.map((obj) => (
+          <ObjectiveRow
+            key={`objective_${obj.id}`}
+            objective={obj}
           />
-        </td>
-        <td>
-          {showContextMenu
-            ? (
-              <ContextMenu
-                label={contextMenuLabel}
-                menuItems={menuItems}
-                up={openMenuUp}
-              />
-            )
-            : null}
-        </td>
-      </tr>
-      <tr className="tta-smarthub--objective-rows">
-        <td
-          className="padding-top-0"
-          style={containerStyle}
-          colSpan="6"
-        >
-          <div className="tta-smarthub--goal-row-obj-table padding-bottom-1">
-            <ul aria-hidden className="usa-list usa-list--unstyled tta-smarthub--goal-row-obj-table-header padding-top-0 padding-x-2 padding-bottom-1 display-flex">
-              <li className="padding-x-105 padding-y-0 padding-left-0 flex-align-self-end">Objective</li>
-              <li className="padding-x-105 padding-y-0 flex-align-self-end">Activity reports</li>
-              <li className="padding-x-105 padding-y-0 flex-align-self-end">Grant numbers</li>
-              <li className="padding-x-105 padding-y-0 flex-align-self-end">End date</li>
-              <li className="padding-x-105 padding-y-0 flex-align-self-end">Reasons</li>
-              <li className="padding-x-105 padding-y-0 padding-right-0 flex-align-self-end">Objective status</li>
-            </ul>
-            {objectives.map((obj) => (
-              <ObjectiveRow
-                key={`objective_${obj.id}`}
-                objective={obj}
-              />
-            ))}
-          </div>
-        </td>
-      </tr>
-      <tr className="height-1" aria-hidden="true" />
-    </>
+        ))}
+      </div>
+    </article>
   );
 }
 
@@ -337,7 +299,7 @@ goalPropTypes.defaultProps = {
   goalStatus: null,
   objectives: [],
 };
-GoalRow.propTypes = {
+GoalCard.propTypes = {
   goal: goalPropTypes.isRequired,
   recipientId: PropTypes.string.isRequired,
   regionId: PropTypes.string.isRequired,
@@ -345,4 +307,4 @@ GoalRow.propTypes = {
   showCloseSuspendGoalModal: PropTypes.func.isRequired,
   performGoalStatusUpdate: PropTypes.func.isRequired,
 };
-export default GoalRow;
+export default GoalCard;
