@@ -49,7 +49,7 @@ describe('ReadOnlyObjective', () => {
   });
 
   it('hides the context menu', async () => {
-    render(jest.fn(), true);
+    RenderReadOnlyObjective(jest.fn(), true);
     expect(screen.queryAllByRole('button', { name: /actions for objectives/i }).length).toBe(0);
   });
 
