@@ -1,0 +1,32 @@
+@use '../../colors' as *;
+
+.ttahub-goal-card .smart-hub--context-menu {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.1);
+  width: 180px;
+}
+  
+.ttahub-goal-card .smart-hub--ellipsis {
+  max-width: none;
+}
+
+.ttahub-goal-card__goal-column__goal-text {
+  flex-basis: clamp(40%, 380px, 100%);
+}
+  
+.ttahub-goal-card__goal-column__goal-topics {
+   flex-basis: clamp(20%, 180px, 200px);
+}
+
+.ttahub-goal-card__goal-column__created-on {
+    flex-basis: clamp(80px, 10%, 80px);
+}
+
+.ttahub-goal-card__goal-column__last-tta {
+    flex-basis: clamp(80px, 10%, 80px);
+}
+
+.ttahub-goal-card__goal-column__last-reviewed {
+    flex-basis: clamp(90px, 10%, 90px);
+}
+
+  
