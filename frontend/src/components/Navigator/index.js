@@ -198,7 +198,7 @@ function Navigator({
     const objectives = getValues(fieldArrayName);
 
     // Validate objectives.
-    const areObjectivesValid = validateObjectives(objectives);
+    const areObjectivesValid = validateObjectives(objectives, setError);
     if (areObjectivesValid !== true) {
       return;
     }
