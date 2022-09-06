@@ -324,6 +324,21 @@ describe('Goals Table', () => {
       expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
     });
 
+    it('Shows goals without objective data', async () => {
+      act(() => renderTable({
+        goals: [
+          {
+            ...goalWithObjectives[0], objectives: [],
+          },
+        ],
+        goalsCount: 1,
+      }, defaultUser));
+      await screen.findByText('TTA goals and objectives');
+
+      expect(await screen.findByText(/1-1 of 1/i)).toBeVisible();
+      expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
+    });
+
     it('Expands and collapses objectives', async () => {
       renderTable({ goals: goalWithObjectives, goalsCount: 1 }, defaultUser);
       await screen.findByText('TTA goals and objectives');
