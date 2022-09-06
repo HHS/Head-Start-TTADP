@@ -10,6 +10,7 @@ export default function ReadOnlyOtherEntityObjectives({
   objectives,
 }) {
   let menuItems;
+  console.log('Hide Edit Value: ', hideEdit);
   if (!hideEdit) {
     menuItems = [
       {
