@@ -333,12 +333,87 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
   }, currentObjectives);
 }
 
+export function reduceObjectivesForActivityReport(newObjectives, currentObjectives = []) {
+  return newObjectives.reduce((objectives, objective) => {
+    const exists = objectives.find((o) => (
+      o.title === objective.title && o.status === objective.status
+    ));
+
+    if (exists) {
+      const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
+      exists.ids = [...exists.ids, id];
+      exists.roles = [...new Set([
+        ...exists.roles,
+        ...objective.activityReportObjectives[0].activityReportObjectiveRoles.map(
+          (r) => r.role.fullName,
+        )])];
+      exists.topics = [...new Set([
+        ...exists.topics,
+        ...objective.activityReportObjectives[0].activityReportObjectiveTopics.map(
+          (t) => t.topic.dataValues,
+        ),
+      ])];
+      exists.resources = [...new Set([
+        ...exists.resources,
+        ...objective.activityReportObjectives[0].activityReportObjectiveResources.map(
+          (r) => r.userProvidedUrl,
+        ),
+      ])];
+      exists.files = [...new Set([
+        ...exists.files,
+        ...objective.activityReportObjectives[0].activityReportObjectiveFiles.map(
+          (f) => f.file.dataValues,
+        ),
+      ])];
+
+      return objectives;
+    }
+
+    // since this method is used to rollup both objectives on and off activity reports
+    // we need to handle the case where there is TTA provided and TTA not provided
+    // NOTE: there will only be one activity report objective, it is queried by activity report id
+    const ttaProvided = objective.activityReportObjectives
+        && objective.activityReportObjectives[0]
+        && objective.activityReportObjectives[0].ttaProvided
+      ? objective.activityReportObjectives[0].ttaProvided : null;
+
+    const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
+
+    return [...objectives, {
+      ...objective.dataValues,
+      value: id,
+      ids: [id],
+      ttaProvided,
+      isNew: false,
+
+      // for the associated models, we need to return not the direct associations
+      // but those associated through an activity report since those reflect the state
+      // of the activity report not the state of the objective, which is what
+      // we are getting at with this method (getGoalsForReport)
+
+      roles: objective.activityReportObjectives[0].activityReportObjectiveRoles.map(
+        (r) => r.role.fullName,
+      ),
+      topics: objective.activityReportObjectives[0].activityReportObjectiveTopics.map(
+        (t) => t.topic.dataValues,
+      ),
+      resources: objective.activityReportObjectives[0].activityReportObjectiveResources.map(
+        (r) => r.userProvidedUrl,
+      ),
+      files: objective.activityReportObjectives[0].activityReportObjectiveFiles.map(
+        (f) => f.file.dataValues,
+      ),
+    }];
+  }, currentObjectives);
+}
+
 /**
  * Dedupes goals by name + status, as well as objectives by title + status
  * @param {Object[]} goals
  * @returns {Object[]} array of deduped goals
  */
-function reduceGoals(goals) {
+function reduceGoals(goals, forReport = false) {
+  const objectivesReducer = forReport ? reduceObjectivesForActivityReport : reduceObjectives;
   const r = goals.reduce((previousValue, currentValue) => {
     const existingGoal = previousValue.find((g) => (
       g.name === currentValue.name && g.status === currentValue.status
@@ -357,7 +432,10 @@ function reduceGoals(goals) {
         },
       ];
       existingGoal.grantIds = [...existingGoal.grantIds, currentValue.grant.id];
-      existingGoal.objectives = reduceObjectives(currentValue.objectives, existingGoal.objectives);
+      existingGoal.objectives = objectivesReducer(
+        currentValue.objectives,
+        existingGoal.objectives,
+      );
       return previousValue;
     }
 
@@ -374,7 +452,9 @@ function reduceGoals(goals) {
         },
       ],
       grantIds: [currentValue.grant.id],
-      objectives: reduceObjectives(currentValue.objectives),
+      objectives: objectivesReducer(
+        currentValue.objectives,
+      ),
       isNew: false,
     };
 
@@ -1358,14 +1438,27 @@ export async function getGoalsForReport(reportId) {
             },
             include: [
               {
+
                 model: ActivityReportObjectiveTopic,
                 as: 'activityReportObjectiveTopics',
                 required: false,
+                include: [
+                  {
+                    model: Topic,
+                    as: 'topic',
+                  },
+                ],
               },
               {
                 model: ActivityReportObjectiveFile,
                 as: 'activityReportObjectiveFiles',
                 required: false,
+                include: [
+                  {
+                    model: File,
+                    as: 'file',
+                  },
+                ],
               },
               {
                 model: ActivityReportObjectiveResource,
@@ -1376,6 +1469,12 @@ export async function getGoalsForReport(reportId) {
                 model: ActivityReportObjectiveRole,
                 as: 'activityReportObjectiveRoles',
                 required: false,
+                include: [
+                  {
+                    model: Role,
+                    as: 'role',
+                  },
+                ],
               },
             ],
           },
@@ -1404,7 +1503,8 @@ export async function getGoalsForReport(reportId) {
   });
 
   // dedupe the goals & objectives
-  return reduceGoals(goals);
+  const forReport = true;
+  return reduceGoals(goals, forReport);
 }
 
 export async function createOrUpdateGoalsForActivityReport(goals, reportId) {
