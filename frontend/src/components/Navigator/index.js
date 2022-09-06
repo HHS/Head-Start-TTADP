@@ -79,10 +79,12 @@ function Navigator({
 
   const [isGoalFormClosed, toggleGoalForm] = useState(selectedGoals.length > 0);
 
-  // Toggle objectives readonly only if all objectives are saved.
+  // Toggle objectives readonly only if all objectives are saved and pass validation.
+  const areInitialObjectivesValid = validateObjectives(selectedObjectivesWithoutGoals);
   const hasUnsavedObjectives = selectedObjectivesWithoutGoals.filter((u) => !u.id);
   const [isObjectivesFormClosed, toggleObjectiveForm] = useState(
     selectedObjectivesWithoutGoals.length > 0
+    && areInitialObjectivesValid === true
     && hasUnsavedObjectives.length === 0,
   );
 
