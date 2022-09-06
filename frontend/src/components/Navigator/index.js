@@ -78,8 +78,12 @@ function Navigator({
   const selectedObjectivesWithoutGoals = watch('objectivesWithoutGoals');
 
   const [isGoalFormClosed, toggleGoalForm] = useState(selectedGoals.length > 0);
+
+  // Toggle objectives readonly only if all objectives are saved.
+  const hasUnsavedObjectives = selectedObjectivesWithoutGoals.filter((u) => !u.id);
   const [isObjectivesFormClosed, toggleObjectiveForm] = useState(
-    selectedObjectivesWithoutGoals.length > 0,
+    selectedObjectivesWithoutGoals.length > 0
+    && hasUnsavedObjectives.length === 0,
   );
 
   const goalForEditing = watch('goalForEditing');
