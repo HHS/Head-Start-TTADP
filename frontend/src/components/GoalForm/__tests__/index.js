@@ -38,10 +38,17 @@ describe('create goal', () => {
       {
         id: 1,
         numberWithProgramTypes: 'Turtle 1',
+        status: 'Active',
       },
       {
         id: 2,
         numberWithProgramTypes: 'Turtle 2',
+        status: 'Active',
+      },
+      {
+        id: 2,
+        numberWithProgramTypes: 'Turtle 3',
+        status: 'Inactive',
       },
     ],
   };
@@ -56,7 +63,7 @@ describe('create goal', () => {
     createdAt: '2022-03-09T19:20:45.818Z',
     updatedAt: '2022-03-09T19:20:45.818Z',
     grants: [{
-      value: 1, label: 'Turtle 1', programs: [], id: 1,
+      value: 1, label: 'Turtle 1', programs: [], id: 1, status: 'Active',
     }],
     grantIds: [1],
     goalIds: [64175],
@@ -168,6 +175,7 @@ describe('create goal', () => {
         {
           id: 2,
           numberWithProgramTypes: 'Turtle 2',
+          status: 'Active',
         },
       ],
     };
@@ -232,6 +240,7 @@ describe('create goal', () => {
         {
           id: 2,
           numberWithProgramTypes: 'Turtle 2',
+          status: 'Active',
         },
       ],
     };
@@ -296,6 +305,7 @@ describe('create goal', () => {
         {
           id: 2,
           numberWithProgramTypes: 'Turtle 2',
+          status: 'Active',
         },
       ],
     };
@@ -348,6 +358,7 @@ describe('create goal', () => {
         {
           id: 2,
           numberWithProgramTypes: 'Turtle 2',
+          status: 'Active',
         },
       ],
     };
@@ -434,6 +445,7 @@ describe('create goal', () => {
         {
           id: 2,
           numberWithProgramTypes: 'Turtle 2',
+          status: 'Active',
         },
       ],
     };
@@ -485,6 +497,7 @@ describe('create goal', () => {
         {
           id: 2,
           numberWithProgramTypes: 'Turtle 2',
+          status: 'Active',
         },
       ],
     };
@@ -540,6 +553,7 @@ describe('create goal', () => {
         {
           id: 2,
           numberWithProgramTypes: 'Turtle 2',
+          status: 'Active',
         },
       ],
     };
@@ -618,6 +632,7 @@ describe('create goal', () => {
         programs: [{
           programType: 'EHS',
         }],
+        status: 'Active',
       },
       objectives: [
         {
@@ -654,6 +669,7 @@ describe('create goal', () => {
         programs: [{
           programType: 'EHS',
         }],
+        status: 'Active',
       },
       objectives: [
         {
@@ -690,6 +706,7 @@ describe('create goal', () => {
         programs: [{
           programType: 'EHS',
         }],
+        status: 'Active',
       },
       objectives: [
         {
@@ -736,6 +753,7 @@ describe('create goal', () => {
         programs: [{
           programType: 'EHS',
         }],
+        status: 'Active',
       },
       objectives: [
         {
