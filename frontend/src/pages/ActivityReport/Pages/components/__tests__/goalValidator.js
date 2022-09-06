@@ -11,6 +11,9 @@ import {
   OBJECTIVE_TTA,
   OBJECTIVE_RESOURCES,
 } from '../goalValidator';
+import {
+  GOAL_NAME_ERROR,
+} from '../../../../../components/GoalForm/constants';
 
 const missingTitle = {
   title: '',
@@ -133,6 +136,14 @@ describe('validateGoals', () => {
 
   describe('unfinishedGoals', () => {
     describe('returns invalid', () => {
+      it('if one goal has no name', () => {
+        const goals = [
+          { ...goalValid, name: null, endDate: new Date('09/06/2022') },
+        ];
+        const setError = jest.fn();
+        unfinishedGoals(goals, setError);
+        expect(setError).toHaveBeenCalledWith('goalName', { message: GOAL_NAME_ERROR });
+      });
       it('if one goal has no objectives', () => {
         const goals = [
           { ...goalValid },
