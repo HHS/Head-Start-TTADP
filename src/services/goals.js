@@ -265,18 +265,6 @@ export async function saveObjectiveAssociations(
           [Op.notIn]: objectiveTopics.length ? objectiveTopics.map(([ot]) => ot.id) : [],
         },
         objectiveId: objective.id,
-        // do we need to check to make sure that topics that are on an AR aren't removed?
-        // topicId: {
-        //   [Op.notIn]: sequelize.literal(`
-        //     (SELECT "Topics"."id" FROM "Topics"
-        //       INNER JOIN "ActivityReportObjectiveTopics"
-        //          ON "ActivityReportObjectiveTopics"."topicId" = "Topics"."id"
-        //       INNER JOIN "Objectives"
-        //          ON "ActivityReportObjectiveTopics"."objectiveId" = "Objectives"."id"
-        //       WHERE "Objectives"."id" = ${objective.id})
-        //     )
-        //   `),
-        // },
       },
     });
 
