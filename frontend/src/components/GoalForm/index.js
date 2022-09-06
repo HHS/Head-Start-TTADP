@@ -385,7 +385,6 @@ export default function GoalForm({
 
   const onSaveDraft = async () => {
     if (!isValidDraft()) {
-      console.log('invalid draft');
       return;
     }
 
