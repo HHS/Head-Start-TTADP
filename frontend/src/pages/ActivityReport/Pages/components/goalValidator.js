@@ -22,7 +22,7 @@ export const unfinishedObjectives = (objectives, setError = () => {}) => {
         incomplete = true;
       }
 
-      if (!objective.ttaProvided || objective.ttaProvided === '<p></p>') {
+      if (!objective.ttaProvided || objective.ttaProvided === '<p></p>' || objective.ttaProvided === '<p></p>\n') {
         setError(`goalForEditing.objectives[${index}].ttaProvided`, { message: OBJECTIVE_TTA });
         incomplete = true;
       }
