@@ -37,7 +37,7 @@ export const unfinishedObjectives = (objectives, setError = () => {}, fieldArray
         incomplete = true;
       }
 
-      if (!validateListOfResources(objective.resources)) {
+      if (!objective.resources || !validateListOfResources(objective.resources)) {
         setError(`${fieldArrayName}[${index}].resources`, { message: OBJECTIVE_RESOURCES });
         incomplete = true;
       }

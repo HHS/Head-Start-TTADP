@@ -63,6 +63,7 @@ describe('OtherEntity', () => {
   it('the button adds a new objective', async () => {
     render(<RenderOtherEntity objectivesWithoutGoals={[]} />);
     const button = await screen.findByRole('button', { name: /Add new objective/i });
+    userEvent.click(button);
     expect(screen.queryAllByText(/objective status/i).length).toBe(1);
     userEvent.click(button);
     await waitFor(() => expect(screen.queryAllByText(/objective status/i).length).toBe(2));
