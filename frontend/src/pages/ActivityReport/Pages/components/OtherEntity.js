@@ -10,8 +10,7 @@ import { NEW_OBJECTIVE } from './constants';
 const OBJECTIVE_LABEL = 'objectivesWithoutGoals';
 
 export default function OtherEntity({ roles, recipientIds }) {
-  const { errors, formState } = useFormContext();
-  const { dirtyFields } = formState;
+  const { errors } = useFormContext();
   const defaultRoles = useMemo(() => (roles.length === 1 ? roles : []), [roles]);
   const [topicOptions, setTopicOptions] = useState([]);
 
@@ -45,13 +44,6 @@ export default function OtherEntity({ roles, recipientIds }) {
   };
 
   const options = [{ ...NEW_OBJECTIVE() }];
-
-  useEffect(() => {
-    // Only add default value on initial load if there are no entries.
-    if (objectives.length === 0 && !dirtyFields[OBJECTIVE_LABEL]) {
-      append({ ...NEW_OBJECTIVE(), roles: defaultRoles, recipientIds });
-    }
-  }, [append, defaultRoles, objectives.length, recipientIds, dirtyFields]);
 
   return (
     <div>

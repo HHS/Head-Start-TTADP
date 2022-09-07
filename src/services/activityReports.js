@@ -382,6 +382,16 @@ export async function activityReportAndRecipientsById(activityReportId) {
       {
         model: Objective,
         as: 'objectivesWithoutGoals',
+        include: [
+          {
+            model: Role,
+            as: 'roles',
+          },
+          {
+            model: Topic,
+            as: 'topics',
+          },
+        ],
       },
       {
         model: User,
