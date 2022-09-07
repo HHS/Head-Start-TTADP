@@ -53,14 +53,19 @@ const RenderGoalsObjectives = ({
         }],
       }],
       objectivesWithoutGoals: [],
+      approvers: [],
       ...data,
     },
   });
+  const history = createMemoryHistory();
+
   return (
     <NetworkContext.Provider value={{ connectionActive, localStorageAvailable: true }}>
-      <FormProvider {...hookForm}>
-        {goalsObjectives.render()}
-      </FormProvider>
+      <Router history={history}>
+        <FormProvider {...hookForm}>
+          {goalsObjectives.render()}
+        </FormProvider>
+      </Router>
     </NetworkContext.Provider>
   );
 };
@@ -200,9 +205,18 @@ describe('goals objectives', () => {
     });
   });
 
-  describe('when activity recipient type is not "recipient"', () => {
+  describe('when activity recipient type is not "recipient" or "other-entity"', () => {
+    it('a warning is displayed', async () => {
+      renderGoals([1], null);
+      expect(await screen.findByText(
+        /To add goals and objectives, indicate who the activity was for in/i,
+      )).toBeVisible();
+    });
+  });
+
+  describe('when activity recipient type is other entity"', () => {
     it('the objectives section is displayed', async () => {
-      renderGoals([1], 'otherEntity');
+      renderGoals([1], 'other-entity');
       expect(await screen.findByText(
         'You\'re creating an activity report for an entity that\'s not a grant recipient, so you only need to create objectives. The goal section is removed.',
       )).toBeVisible();

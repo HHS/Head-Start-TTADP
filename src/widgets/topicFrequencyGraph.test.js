@@ -201,7 +201,7 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Child Assessment, Development, Screening',
+        topic: 'Child Screening and Assessment',
         count: 0,
       },
       {
@@ -329,7 +329,7 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Teaching Practices / Teacher-Child Interactions',
+        topic: 'Teaching / Caregiving Practices',
         count: 0,
       },
       {
@@ -358,7 +358,7 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Child Assessment, Development, Screening',
+        topic: 'Child Screening and Assessment',
         count: 0,
       },
       {
@@ -486,7 +486,7 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Teaching Practices / Teacher-Child Interactions',
+        topic: 'Teaching / Caregiving Practices',
         count: 0,
       },
       {
@@ -515,7 +515,7 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Child Assessment, Development, Screening',
+        topic: 'Child Screening and Assessment',
         count: 0,
       },
       {
@@ -643,7 +643,7 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Teaching Practices / Teacher-Child Interactions',
+        topic: 'Teaching / Caregiving Practices',
         count: 0,
       },
       {
@@ -672,7 +672,7 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Child Assessment, Development, Screening',
+        topic: 'Child Screening and Assessment',
         count: 0,
       },
       {
@@ -800,7 +800,7 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Teaching Practices / Teacher-Child Interactions',
+        topic: 'Teaching / Caregiving Practices',
         count: 0,
       },
       {

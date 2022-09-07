@@ -104,8 +104,6 @@ describe('Navigator', () => {
           updateErrorMessage={onUpdateError}
           onResetToDraft={() => {}}
           updateLastSaveTime={() => {}}
-          showValidationErrors={false}
-          updateShowValidationErrors={() => {}}
           isPendingApprover={false}
         />
 

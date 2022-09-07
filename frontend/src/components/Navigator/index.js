@@ -49,7 +49,6 @@ function Navigator({
   reportCreator,
   lastSaveTime,
   updateLastSaveTime,
-  updateShowValidationErrors,
   errorMessage,
   updateErrorMessage,
   savedToStorageTime,
@@ -60,8 +59,6 @@ function Navigator({
 
   const hookForm = useForm({
     mode: 'onBlur', // putting it to onBlur as the onChange breaks the new goal form
-    // todo - investigate why this is breaking the new goal form
-    // mode: 'onChange', // 'onBlur' fails existing date picker validations.
     defaultValues: formData,
     shouldUnregister: false,
   });
@@ -84,8 +81,7 @@ function Navigator({
   const activityRecipientType = watch('activityRecipientType');
   const isGoalsObjectivesPage = page.path === 'goals-objectives';
 
-  const { isDirty, errors, isValid } = formState;
-  const hasErrors = Object.keys(errors).length > 0;
+  const { isDirty, isValid } = formState;
 
   const newNavigatorState = () => {
     if (page.review) {
@@ -293,7 +289,6 @@ function Navigator({
               onSaveForm,
               navigatorPages,
               reportCreator,
-              updateShowValidationErrors,
               lastSaveTime,
             )}
               {!page.review
@@ -305,12 +300,6 @@ function Navigator({
                   titleOverride={page.titleOverride}
                   formData={formData}
                 />
-                {hasErrors
-                && (
-                  <Alert type="error" slim>
-                    Please complete all required fields before submitting this report.
-                  </Alert>
-                )}
                 <Form
                   className="smart-hub--form-large"
                 >
@@ -373,8 +362,6 @@ Navigator.propTypes = {
   lastSaveTime: PropTypes.instanceOf(moment),
   savedToStorageTime: PropTypes.string,
   updateLastSaveTime: PropTypes.func.isRequired,
-  showValidationErrors: PropTypes.bool.isRequired,
-  updateShowValidationErrors: PropTypes.func.isRequired,
   onFormSubmit: PropTypes.func.isRequired,
   onSave: PropTypes.func.isRequired,
   onReview: PropTypes.func.isRequired,
