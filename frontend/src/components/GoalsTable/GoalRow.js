@@ -99,33 +99,33 @@ function GoalCard({
 
   const [objectivesExpanded, setObjectivesExpanded] = useState(false);
 
-  const mapToDisplay = [
-    {
-      stored: 'In Progress',
-      display: 'In progress',
-      color: colors.ttahubMediumBlue,
-    },
-    {
-      stored: 'Completed',
-      display: 'Closed',
-      color: colors.successDarker,
-    },
-    {
-      stored: 'Draft',
-      display: 'Draft',
-      color: colors.baseDarkest,
-    },
-    {
-      stored: 'Not Started',
-      display: 'Not started',
-      color: colors.ttahubOrange,
-    },
-    {
-      stored: 'Ceased/Suspended',
-      display: 'Suspended',
-      color: colors.errorDark,
-    },
-  ];
+  // const mapToDisplay = [
+  //   {
+  //     stored: 'In Progress',
+  //     display: 'In progress',
+  //     color: colors.ttahubMediumBlue,
+  //   },
+  //   {
+  //     stored: 'Completed',
+  //     display: 'Closed',
+  //     color: colors.successDarker,
+  //   },
+  //   {
+  //     stored: 'Draft',
+  //     display: 'Draft',
+  //     color: colors.baseDarkest,
+  //   },
+  //   {
+  //     stored: 'Not Started',
+  //     display: 'Not started',
+  //     color: colors.ttahubOrange,
+  //   },
+  //   {
+  //     stored: 'Ceased/Suspended',
+  //     display: 'Suspended',
+  //     color: colors.errorDark,
+  //   },
+  // ];
 
   const determineFlagStatus = () => {
     const reasonsToWatch = reasons.find((t) => reasonsToMonitor.includes(t));
@@ -153,15 +153,15 @@ function GoalCard({
     setObjectivesExpanded(!objectivesExpanded);
   };
 
-  const getStatusColor = () => {
-    if (goalStatus) {
-      const goalStatusDisplay = mapToDisplay.find((m) => m.stored === goalStatus);
-      if (goalStatusDisplay) {
-        return goalStatusDisplay.color;
-      }
-    }
-    return colors.baseLighter;
-  };
+  // const getStatusColor = () => {
+  //   if (goalStatus) {
+  //     const goalStatusDisplay = mapToDisplay.find((m) => m.stored === goalStatus);
+  //     if (goalStatusDisplay) {
+  //       return goalStatusDisplay.color;
+  //     }
+  //   }
+  //   return colors.baseLighter;
+  // };
 
   const contextMenuLabel = `Actions for goal ${id}`;
   const showContextMenu = true;
@@ -174,18 +174,18 @@ function GoalCard({
     },
   ];
 
-  const containerStyle = objectivesExpanded ? {
-    borderLeft: `4px solid ${getStatusColor()}`,
-    borderBottom: `1px solid ${colors.baseLighter}`,
-    borderRight: `1px solid ${colors.baseLighter}`,
-    borderTop: 0,
-  } : {
-    borderTop: 0,
-    borderLeft: `1px solid ${colors.baseLighter}`,
-    borderBottom: `1px solid ${colors.baseLighter}`,
-    borderRight: `1px solid ${colors.baseLighter}`,
-    paddingLeft: '25px',
-  };
+  // const containerStyle = objectivesExpanded ? {
+  //   borderLeft: `4px solid ${getStatusColor()}`,
+  //   borderBottom: `1px solid ${colors.baseLighter}`,
+  //   borderRight: `1px solid ${colors.baseLighter}`,
+  //   borderTop: 0,
+  // } : {
+  //   borderTop: 0,
+  //   borderLeft: `1px solid ${colors.baseLighter}`,
+  //   borderBottom: `1px solid ${colors.baseLighter}`,
+  //   borderRight: `1px solid ${colors.baseLighter}`,
+  //   paddingLeft: '25px',
+  // };
 
   return (
     <article className="ttahub-goal-card usa-card margin-x-3 margin-y-2 padding-7 radius-lg border smart-hub-border-base-lighter ">
@@ -210,7 +210,7 @@ function GoalCard({
           : null}
       </div>
       <div className="display-flex margin-top-2 flex-wrap">
-        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-text margin-right-3">
+        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-text padding-right-3">
           <h2 className="font-body-xs">
             Goal
             {' '}
@@ -222,18 +222,18 @@ function GoalCard({
             {determineFlagStatus()}
           </p>
         </div>
-        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-topics margin-right-3">
+        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-topics padding-right-3">
           <p className="text-bold">Topics</p>
           <Topics topics={goalTopics} />
         </div>
-        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__created-on margin-right-3">
+        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__created-on padding-right-3">
           <p className="text-bold">Created on</p>
           <p>{moment(createdOn, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT)}</p>
         </div>
-        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__last-tta margin-right-3">
+        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__last-tta padding-right-3">
           <p className="text-bold">Last TTA</p>
         </div>
-        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__last-reviewed margin-right-3">
+        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__last-reviewed padding-right-3">
           <p className="text-bold">Last reviewed</p>
         </div>
       </div>
@@ -246,27 +246,13 @@ function GoalCard({
         expandObjectivesRef={expandObjectivesRef}
       />
 
-      <p />
-      <div
-        className="padding-top-0"
-        style={containerStyle}
-        colSpan="6"
-      >
-        <ul aria-hidden className="usa-list usa-list--unstyled tta-smarthub--goal-row-obj-table-header padding-top-0 padding-x-2 padding-bottom-1 display-flex">
-          <li className="padding-x-105 padding-y-0 padding-left-0 flex-align-self-end">Objective</li>
-          <li className="padding-x-105 padding-y-0 flex-align-self-end">Activity reports</li>
-          <li className="padding-x-105 padding-y-0 flex-align-self-end">Grant numbers</li>
-          <li className="padding-x-105 padding-y-0 flex-align-self-end">End date</li>
-          <li className="padding-x-105 padding-y-0 flex-align-self-end">Reasons</li>
-          <li className="padding-x-105 padding-y-0 padding-right-0 flex-align-self-end">Objective status</li>
-        </ul>
-        {objectives.map((obj) => (
-          <ObjectiveRow
-            key={`objective_${obj.id}`}
-            objective={obj}
-          />
-        ))}
-      </div>
+      {objectives.map((obj) => (
+        <ObjectiveRow
+          key={`objective_${obj.id}`}
+          objective={obj}
+        />
+      ))}
+
     </article>
   );
 }

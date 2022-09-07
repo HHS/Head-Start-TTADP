@@ -1,32 +1,50 @@
 @use '../../colors' as *;
 
+$min-width-date-column: 140px;
+$max-width-date-column: 50%;
+
 .ttahub-goal-card .smart-hub--context-menu {
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.1);
   width: 180px;
 }
   
-.ttahub-goal-card .smart-hub--ellipsis {
-  max-width: none;
-}
-
 .ttahub-goal-card__goal-column__goal-text {
-  flex-basis: clamp(40%, 380px, 100%);
+  flex-basis: clamp(400px, 100%, 100%);
 }
-  
+
 .ttahub-goal-card__goal-column__goal-topics {
-   flex-basis: clamp(20%, 180px, 200px);
+  flex-basis: clamp(400px, 100%, 100%);
 }
 
-.ttahub-goal-card__goal-column__created-on {
-    flex-basis: clamp(80px, 10%, 80px);
+.ttahub-goal-card__goal-column__created-on, 
+.ttahub-goal-card__goal-column__last-tta,
+.ttahub-goal-card__goal-column__last-reviewed  {
+  flex-basis: clamp(33%, 33%, 50%);
 }
 
-.ttahub-goal-card__goal-column__last-tta {
-    flex-basis: clamp(80px, 10%, 80px);
+@media(min-width: 1215px) {
+  .ttahub-goal-card__goal-column__goal-text {
+    flex-basis: clamp(400px, 60%, 100%);
+  }
+      
+  .ttahub-goal-card__goal-column__goal-topics {
+    flex-basis: clamp(200px, 40%, 100%);
+  }
 }
 
-.ttahub-goal-card__goal-column__last-reviewed {
-    flex-basis: clamp(90px, 10%, 90px);
-}
 
-  
+@media(min-width: 1475px) {
+  .ttahub-goal-card__goal-column__goal-text {
+    flex-basis: clamp(40%, 400px, 100%);
+  }
+
+  .ttahub-goal-card__goal-column__goal-topics {
+    flex-basis: clamp(20%, 180px, 200px);
+  }
+
+  .ttahub-goal-card__goal-column__created-on, 
+  .ttahub-goal-card__goal-column__last-tta,
+  .ttahub-goal-card__goal-column__last-reviewed  {
+    flex-basis: clamp($min-width-date-column, 10%, $max-width-date-column);
+  }
+}
