@@ -1,54 +1,59 @@
-@use '../../colors.scss' as *;
+// .ttahub-goal-card__objective-list-item :first-child{
+//   width: 110px;
+// }
 
-.tta-smarthub--goal-row-obj-table-rows,
-.tta-smarthub--objective-rows .usa-list:last-child{
-  background-color: $gray-two;
-}
 
-.goals-table .usa-table .tta-smarthub--objective-reasons-list {
-  list-style-type: none;
-  margin-top: 0;
-}
+// @use '../../colors.scss' as *;
 
-.tta-smarthub--objective-rows .tta-smarthub--objective-reasons-list li {
-  display: list-item;
-}
+// .tta-smarthub--goal-row-obj-table-rows,
+// .tta-smarthub--objective-rows .usa-list:last-child{
+//   background-color: $gray-two;
+// }
 
-.tta-smarthub--objective-rows .tta-smarthub--objective-reasons-list li,
-.tta-smarthub--goal-row-obj-table  .tta-smarthub--objective-reasons-list li:first-child {
-  padding: 0px;
-}
+// .goals-table .usa-table .tta-smarthub--objective-reasons-list {
+//   list-style-type: none;
+//   margin-top: 0;
+// }
 
-// objective
-.tta-smarthub--goal-row-obj-table li:first-child {
-  flex: 1 1 auto;
-}
+// .tta-smarthub--objective-rows .tta-smarthub--objective-reasons-list li {
+//   display: list-item;
+// }
 
-// activity reports
-.tta-smarthub--goal-row-obj-table li:nth-child(2) {
-  flex: 0 0 120px;
-}
+// .tta-smarthub--objective-rows .tta-smarthub--objective-reasons-list li,
+// .tta-smarthub--goal-row-obj-table  .tta-smarthub--objective-reasons-list li:first-child {
+//   padding: 0px;
+// }
 
-// grant numbers
-.tta-smarthub--goal-row-obj-table li:nth-child(3) { 
-  flex: 0 0 120px;
-}
+// // objective
+// .tta-smarthub--goal-row-obj-table li:first-child {
+//   flex: 1 1 auto;
+// }
 
-// end date
-.tta-smarthub--goal-row-obj-table li:nth-child(4) {
-  flex: 0 0 95px;
-}
+// // activity reports
+// .tta-smarthub--goal-row-obj-table li:nth-child(2) {
+//   flex: 0 0 120px;
+// }
 
-// reasons
-.tta-smarthub--goal-row-obj-table li:nth-child(5) {
-  flex: 0 0 250px;
-}
+// // grant numbers
+// .tta-smarthub--goal-row-obj-table li:nth-child(3) { 
+//   flex: 0 0 120px;
+// }
 
-// obj status
-.tta-smarthub--goal-row-obj-table li:nth-child(6) {
-  flex: 0 0 140px;
-}
+// // end date
+// .tta-smarthub--goal-row-obj-table li:nth-child(4) {
+//   flex: 0 0 95px;
+// }
 
-.usa-list.usa-list--unstyled.ttahub-objective-row-activity-report-list {
-  margin-top: 0;
-}
+// // reasons
+// .tta-smarthub--goal-row-obj-table li:nth-child(5) {
+//   flex: 0 0 250px;
+// }
+
+// // obj status
+// .tta-smarthub--goal-row-obj-table li:nth-child(6) {
+//   flex: 0 0 140px;
+// }
+
+// .usa-list.usa-list--unstyled.ttahub-objective-row-activity-report-list {
+//   margin-top: 0;
+// }
