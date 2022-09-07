@@ -15,6 +15,10 @@ import { retrieveUserDetails } from './services/currentUser';
 import cookieSession from './middleware/sessionMiddleware';
 import updateGrantsRecipients from './lib/updateGrantsRecipients';
 import { logger, auditLogger, requestLogger } from './logger';
+import {
+  approvedDigest, changesRequestedDigest, collaboratorDigest, submittedDigest,
+} from './lib/mailer';
+import { EMAIL_DIGEST_FREQ } from './constants';
 
 const app = express();
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
@@ -86,6 +90,13 @@ if (process.env.NODE_ENV === 'production') {
 // Set timing parameters.
 // Run at 4 am ET
 const schedule = '0 4 * * *';
+// const dailyEmailDigestSchedule = '*/10 * * * * *';
+// Run daily at 2 am
+const dailySched = '0 2 * * *';
+// Run at 2 am every Monday
+const weeklySched = '0 2 * * 1';
+// Run at 2 am on the first of the month
+const monthlySched = '0 2 1 * *';
 const timezone = 'America/New_York';
 
 const runJob = () => {
@@ -98,10 +109,60 @@ const runJob = () => {
   return false;
 };
 
+const runDailyEmailJob = () => {
+  try {
+    collaboratorDigest(EMAIL_DIGEST_FREQ.DAILY);
+    changesRequestedDigest(EMAIL_DIGEST_FREQ.DAILY);
+    submittedDigest(EMAIL_DIGEST_FREQ.DAILY);
+    approvedDigest(EMAIL_DIGEST_FREQ.DAILY);
+  } catch (error) {
+    auditLogger.error(`Error processing Daily Email Digest job: ${error}`);
+    logger.error(error.stack);
+  }
+  return false;
+};
+
+const runMonthlyEmailJob = () => {
+  try {
+    collaboratorDigest(EMAIL_DIGEST_FREQ.WEEKLY);
+    changesRequestedDigest(EMAIL_DIGEST_FREQ.WEEKLY);
+    submittedDigest(EMAIL_DIGEST_FREQ.WEEKLY);
+    approvedDigest(EMAIL_DIGEST_FREQ.WEEKLY);
+  } catch (error) {
+    auditLogger.error(`Error processing Weekly Email Digest job: ${error}`);
+    logger.error(error.stack);
+  }
+  return false;
+};
+
+const runWeeklyEmailJob = () => {
+  try {
+    collaboratorDigest(EMAIL_DIGEST_FREQ.MONTHLY);
+    changesRequestedDigest(EMAIL_DIGEST_FREQ.MONTHLY);
+    submittedDigest(EMAIL_DIGEST_FREQ.MONTHLY);
+    approvedDigest(EMAIL_DIGEST_FREQ.MONTHLY);
+  } catch (error) {
+    auditLogger.error(`Error processing Daily Email Digest job: ${error}`);
+    logger.error(error.stack);
+  }
+  return false;
+};
+
+// TODO: to be removed; leaving it here temporarily for any non-prod testing
+const dailyJob = new CronJob(dailySched, () => runDailyEmailJob(), null, true, timezone);
+dailyJob.start();
+
 // Run only on one instance
 if (process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') {
   const job = new CronJob(schedule, () => runJob(), null, true, timezone);
   job.start();
+  // TODO: Uncomment this when going into prod
+  // const dailyJob= new CronJob(dailySched, () => runDailyEmailJob(), null, true, timezone);
+  // dailyJob.start();
+  const weeklyJob = new CronJob(weeklySched, () => runWeeklyEmailJob(), null, true, timezone);
+  weeklyJob.start();
+  const monthlyJob = new CronJob(monthlySched, () => runMonthlyEmailJob(), null, true, timezone);
+  monthlyJob.start();
 }
 
 export default app;

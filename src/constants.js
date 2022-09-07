@@ -178,4 +178,19 @@ export const USER_SETTINGS = {
       MONTHLY_DIGEST: 'this month',
     },
   },
+export const EMAIL_ACTIONS = {
+  COLLABORATOR_ADDED: 'collaboratorAssigned',
+  NEEDS_ACTION: 'changesRequested',
+  SUBMITTED: 'approverAssigned',
+  APPROVED: 'reportApproved',
+  COLLABORATOR_DIGEST: 'collaboratorDigest',
+  NEEDS_ACTION_DIGEST: 'changesRequestedDigest',
+  SUBMITTED_DIGEST: 'approverAssignedDigest',
+  APPROVED_DIGEST: 'reportApprovedDigest',
+};
+
+export const EMAIL_DIGEST_FREQ = {
+  DAILY: 'today',
+  WEEKLY: 'this week',
+  MONTHLY: 'this month',
 };
