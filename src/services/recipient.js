@@ -236,6 +236,7 @@ function reduceObjectives(response, goal) {
             id: activityReport ? activityReport.id : null,
             legacyId: activityReport ? activityReport.legacyId : null,
             number: activityReport ? activityReport.displayId : null,
+            endDate: activityReport ? activityReport.endDate : null,
           },
         ],
         grantNumbers: [...existingObjective.grantNumbers, response.grant.number],
@@ -253,6 +254,7 @@ function reduceObjectives(response, goal) {
         id: activityReport ? activityReport.id : null,
         legacyId: activityReport ? activityReport.legacyId : null,
         number: activityReport ? activityReport.displayId : null,
+        endDate: activityReport ? activityReport.endDate : null,
       }],
     };
   });
