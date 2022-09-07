@@ -33,7 +33,6 @@ const [
 ] = OBJECTIVE_ERROR_MESSAGES;
 
 const formatGrantsFromApi = (grants) => grants
-  // .filter((grant) => grant.status === 'Active')
   .map((grant) => {
     const programTypes = grant.programs.map(({ programType }) => programType).join(', ');
     return {
@@ -54,10 +53,12 @@ export default function GoalForm({
 }) {
   const history = useHistory();
 
-  const possibleGrants = recipient.grants.map((g) => ({
-    value: g.id,
-    label: g.numberWithProgramTypes,
-  }));
+  const possibleGrants = recipient.grants
+    .filter((g) => g.status === 'Active')
+    .map((g) => ({
+      value: g.id,
+      label: g.numberWithProgramTypes,
+    }));
 
   const goalDefaults = useMemo(() => ({
     name: '',
