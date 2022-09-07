@@ -1,3 +1,22 @@
+/**
+ * this migration moves all the activity report to objective and activity report to goal
+ * metadata into the activity report objective and activity report goal models
+ *
+ * Because an objective can have additional or less topics (for example) on an activity report
+ * than it might when created on the RTR, we need to preserve that specific linkage between the
+ * topics and the activity report (through the objective) so that data manipulation on one activity
+ * report does not change an objective on another activity report
+ *
+ * This migration should account for and handle cleanly any disruption to existing data
+ * relationships
+ *
+ * Summary of changes
+ * 1) add goal metadata to activity report goals table
+ * 2) add objective metadata to activity report objectives table
+ * 3) add join tables between ActivityReportObjectives and ObjectiveResources, Files, Topics,
+ *    and Roles, and update accordingly using existing data
+ *
+ */
 module.exports = {
   up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
     async (transaction) => {
