@@ -38,6 +38,7 @@ describe('Controlled Date Picker', () => {
               setEndDate={setEndDate}
               maxDate={endDate}
               isStartDate
+              inputId="startDate"
             />
           </Grid>
         </Grid>
@@ -51,6 +52,7 @@ describe('Controlled Date Picker', () => {
               value={endDate}
               minDate={startDate}
               key="endDateKey"
+              inputId="endDate"
             />
           </Grid>
         </Grid>

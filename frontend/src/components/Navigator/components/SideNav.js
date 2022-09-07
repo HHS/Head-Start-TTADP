@@ -3,11 +3,15 @@
   the nav items passed in as props. This component has lots of custom styles
   defined. Note the nav is no longer stickied once we hit mobile widths (640px)
 */
-import React, { useState, useEffect, useContext } from 'react';
+import React, {
+  useState, useEffect, useContext,
+} from 'react';
 import PropTypes from 'prop-types';
 import { startCase } from 'lodash';
 import Sticky from 'react-stickynode';
-import { Button, Tag, Alert } from '@trussworks/react-uswds';
+import {
+  Button, Tag, Alert,
+} from '@trussworks/react-uswds';
 import { useMediaQuery } from 'react-responsive';
 import moment from 'moment';
 import Container from '../../Container';
@@ -38,7 +42,12 @@ const tagClass = (state) => {
 };
 
 function SideNav({
-  pages, skipTo, skipToMessage, lastSaveTime, errorMessage, savedToStorageTime,
+  pages,
+  skipTo,
+  skipToMessage,
+  lastSaveTime,
+  errorMessage,
+  savedToStorageTime,
 }) {
   const [fade, updateFade] = useState(true);
 
