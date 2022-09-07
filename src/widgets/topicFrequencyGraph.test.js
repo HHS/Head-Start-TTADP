@@ -1,7 +1,6 @@
 import db, {
   ActivityReport,
   ActivityRecipient,
-  ActivityReportCollaborator,
   User,
   Recipient,
   Grant,
@@ -11,7 +10,8 @@ import db, {
   UserRole,
 } from '../models';
 import filtersToScopes from '../scopes';
-import { REPORT_STATUSES } from '../constants';
+import { REPORT_STATUSES, ENTITY_TYPES } from '../constants';
+import { upsertEditor, removeEditor } from '../services/collaborators';
 import topicFrequencyGraph from './topicFrequencyGraph';
 
 const GRANT_ID = 4040;
@@ -139,27 +139,24 @@ describe('Topics and frequency graph widget', () => {
       regionOneReportWithDifferentTopics,
     ]);
 
-    await ActivityReportCollaborator.create({
-      id: 2000,
-      activityReportId: 17772,
+    await upsertEditor({
+      entityType: ENTITY_TYPES.REPORT,
+      entityId: 17772,
       userId: mockUserTwo.id,
     });
-
-    await ActivityReportCollaborator.create({
-      id: 2001,
-      activityReportId: 17772,
+    await upsertEditor({
+      entityType: ENTITY_TYPES.REPORT,
+      entityId: 17772,
       userId: mockUserThree.id,
     });
-
-    await ActivityReportCollaborator.create({
-      id: 2002,
-      activityReportId: 17773,
+    await upsertEditor({
+      entityType: ENTITY_TYPES.REPORT,
+      entityId: 17773,
       userId: mockUserTwo.id,
     });
-
-    await ActivityReportCollaborator.create({
-      id: 2003,
-      activityReportId: 17774,
+    await upsertEditor({
+      entityType: ENTITY_TYPES.REPORT,
+      entityId: 17774,
       userId: mockUserThree.id,
     });
   });
@@ -180,9 +177,6 @@ describe('Topics and frequency graph widget', () => {
       { id: [RECIPIENT_ID] },
     });
     await Region.destroy({ where: { id: [17, 18] } });
-    await ActivityReportCollaborator.destroy(
-      { where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] } },
-    );
     await db.sequelize.close();
   });
 

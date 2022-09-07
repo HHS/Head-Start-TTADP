@@ -4,6 +4,7 @@ const {
   COLLABORATOR_TYPES,
   RATIFIER_STATUSES,
   APPROVAL_RATIO,
+  REPORT_STATUSES,
 } = require('../../constants');
 
 const validateAndPopulateTier = (sequelize, instance) => {
@@ -173,12 +174,66 @@ const deleteOnEmptyCollaboratorTypes = async (sequelize, instance, options) => {
   }
 };
 
+const syncRolesForCollaborators = async (sequelize, instance, options) => {
+  const userRoles = await sequelize.models.UserRole.findAll({
+    where: { userId: instance.userId },
+    transaction: options.transaction,
+  });
+  const upserts = userRoles.map(async (userRole) => sequelize.models.CollaboratorRole.upsert({
+    collaboratorId: instance.id,
+    roleId: userRole.roleId,
+  }));
+  return Promise.all([
+    ...upserts,
+    await sequelize.models.CollaboratorRole.destroy({
+      where: {
+        collaboratorId: instance.id,
+        roleId: { [Op.notIn]: userRoles.map((userRole) => userRole.roleId) },
+      },
+    }),
+  ]);
+};
+
+const createApproval = async (sequelize, instance, options) => {
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('collaboratorTypes')
+    && Array.isArray(instance.collaboratorTypes)
+    && instance.collaboratorTypes.includes(COLLABORATOR_TYPES.RATIFIER)) {
+    await sequelize.models.Approval.findOrCreate(
+      {
+        where: {
+          entityType: instance.entityType,
+          entityId: instance.entityId,
+          tier: instance.tier,
+        },
+        defaults: {
+          ratioRequired: APPROVAL_RATIO.ALL,
+          submissionStatus: REPORT_STATUSES.DRAFT,
+        },
+      },
+      {
+        transaction: options.transaction,
+      },
+    );
+  }
+};
+
 const beforeValidate = async (sequelize, instance, options) => {
   await validateAndPopulateTier(sequelize, instance, options);
 };
 
+const beforeCreate = async (sequelize, instance, options) => {
+  await createApproval(sequelize, instance, options);
+};
+
+const beforeUpdate = async (sequelize, instance, options) => {
+  await createApproval(sequelize, instance, options);
+};
+
 const afterCreate = async (sequelize, instance, options) => {
   await propagateCalculatedStatus(sequelize, instance, options);
+  await syncRolesForCollaborators(sequelize, instance, options);
 };
 
 const afterDestroy = async (sequelize, instance, options) => {
@@ -187,11 +242,13 @@ const afterDestroy = async (sequelize, instance, options) => {
 
 const afterRestore = async (sequelize, instance, options) => {
   await propagateCalculatedStatus(sequelize, instance, options);
+  await syncRolesForCollaborators(sequelize, instance, options);
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateCalculatedStatus(sequelize, instance, options);
   await deleteOnEmptyCollaboratorTypes(sequelize, instance, options);
+  await syncRolesForCollaborators(sequelize, instance, options);
 };
 
 const afterUpsert = async (sequelize, created, options) => {
@@ -207,6 +264,8 @@ const afterUpsert = async (sequelize, created, options) => {
   }
 
   await propagateCalculatedStatus(sequelize, instance, options);
+  await deleteOnEmptyCollaboratorTypes(sequelize, instance, options);
+  await syncRolesForCollaborators(sequelize, instance, options);
 };
 
 export {
@@ -216,6 +275,8 @@ export {
   updateApprovalCalculatedStatus,
   propagateCalculatedStatus,
   beforeValidate,
+  beforeCreate,
+  beforeUpdate,
   afterCreate,
   afterDestroy,
   afterRestore,

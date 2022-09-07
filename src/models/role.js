@@ -33,9 +33,9 @@ module.exports = (sequelize, DataTypes) => {
         otherKey: 'userId',
         as: 'users',
       });
-      Role.belongsToMany(models.ActivityReportCollaborator, {
+      Role.belongsToMany(models.Collaborator, {
         through: models.CollaboratorRole,
-        otherKey: 'activityReportCollaboratorId',
+        otherKey: 'collaboratorId',
         foreignKey: 'roleId',
         as: 'collaboratorRoles',
       });

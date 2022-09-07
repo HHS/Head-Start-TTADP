@@ -1,16 +1,26 @@
 import _ from 'lodash';
 import { Op } from 'sequelize';
 import moment from 'moment';
-import { REPORT_STATUSES, DECIMAL_BASE, REPORTS_PER_PAGE } from '../constants';
+import {
+  REPORT_STATUSES,
+  DECIMAL_BASE,
+  REPORTS_PER_PAGE,
+  ENTITY_TYPES,
+  COLLABORATOR_TYPES,
+} from '../constants';
 import orderReportsBy from '../lib/orderReportsBy';
 import filtersToScopes from '../scopes';
 import { setReadRegions } from './accessValidation';
-import { syncApprovers } from './activityReportApprovers';
+import {
+  syncOwners,
+  syncOwnerInstantiators,
+  syncEditors,
+  syncRatifiers,
+} from './collaborators';
 
 import {
   ActivityReport,
-  ActivityReportApprover,
-  ActivityReportCollaborator,
+  Collaborator,
   ActivityReportFile,
   sequelize,
   ActivityRecipient,
@@ -26,7 +36,6 @@ import {
   ActivityReportObjective,
   ObjectiveResource,
   Topic,
-  CollaboratorRole,
   Role,
 } from '../models';
 import {
@@ -74,63 +83,28 @@ export async function batchQuery(query, limit) {
 
   return finalResult;
 }
+async function saveOwner(activityReportId, collaborators) {
+  return syncOwners(
+    ENTITY_TYPES.REPORT,
+    activityReportId,
+    collaborators,
+  );
+}
+
+async function saveOwnerInstantiators(activityReportId, collaborators) {
+  return syncOwnerInstantiators(
+    ENTITY_TYPES.REPORT,
+    activityReportId,
+    collaborators,
+  );
+}
 
 async function saveReportCollaborators(activityReportId, collaborators) {
-  const newCollaborators = collaborators.map((collaborator) => ({
+  return syncEditors(
+    ENTITY_TYPES.REPORT,
     activityReportId,
-    userId: collaborator,
-  }));
-
-  // Create and delete activity report collaborators.
-  if (newCollaborators.length > 0) {
-    await Promise.all(newCollaborators.map((where) => (
-      ActivityReportCollaborator.findOrCreate({ where })
-    )));
-    await ActivityReportCollaborator.destroy(
-      {
-        where: {
-          activityReportId,
-          userId: {
-            [Op.notIn]: collaborators,
-          },
-        },
-      },
-    );
-  } else {
-    await ActivityReportCollaborator.destroy(
-      {
-        where: {
-          activityReportId,
-        },
-      },
-    );
-  }
-
-  const updatedReportCollaborators = await ActivityReportCollaborator.findAll({
-    where: { activityReportId },
-    include: [
-      {
-        model: User,
-        as: 'user',
-        include: [
-          {
-            model: Role,
-            as: 'roles',
-          },
-        ],
-      },
-    ],
-  });
-
-  if (updatedReportCollaborators && updatedReportCollaborators.length > 0) {
-    // eslint-disable-next-line max-len
-    await Promise.all(updatedReportCollaborators.map((collaborator) => Promise.all(collaborator.user.roles.map(async (role) => CollaboratorRole.findOrCreate({
-      where: {
-        activityReportCollaboratorId: collaborator.id,
-        roleId: role.id,
-      },
-    })))));
-  }
+    collaborators,
+  );
 }
 
 async function saveReportRecipients(
@@ -268,7 +242,7 @@ export function activityReportByLegacyId(legacyId) {
         ],
       },
       {
-        model: ActivityReportApprover,
+        model: Collaborator,
         attributes: ['id', 'status', 'note'],
         as: 'approvers',
         required: false,
@@ -393,8 +367,8 @@ export async function activityReportAndRecipientsById(activityReportId) {
       },
       {
         required: false,
-        model: ActivityReportCollaborator,
-        as: 'activityReportCollaborators',
+        model: Collaborator,
+        as: 'collaborators',
         include: [
           {
             model: User,
@@ -445,7 +419,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
         separate: true,
       },
       {
-        model: ActivityReportApprover,
+        model: Collaborator,
         attributes: ['id', 'status', 'note'],
         as: 'approvers',
         required: false,
@@ -523,10 +497,26 @@ export async function activityReports(
         'creatorRole',
         'creatorName',
         sequelize.literal(
-          '(SELECT name as authorName FROM "Users" WHERE "Users"."id" = "ActivityReport"."userId")',
+          `(SELECT
+            name as collaboratorName
+          FROM "Users"
+          JOIN "Collaborators"
+          ON "Users"."id" = "Collaborators"."userId"
+          AND "Collaborators"."entityType" = '${ENTITY_TYPES.REPORT}'
+          AND "Collaborators"."entityId" = "ActivityReport"."id"
+          AND '${COLLABORATOR_TYPES.OWNER}' = ALL("Collaborators"."collaboratorRoles")
+          LIMIT 1)`,
         ),
         sequelize.literal(
-          '(SELECT name as collaboratorName FROM "Users" join "ActivityReportCollaborators" on "Users"."id" = "ActivityReportCollaborators"."userId" and  "ActivityReportCollaborators"."activityReportId" = "ActivityReport"."id" limit 1)',
+          `(SELECT
+            name as collaboratorName
+          FROM "Users"
+          JOIN "Collaborators"
+          ON "Users"."id" = "Collaborators"."userId"
+          AND "Collaborators"."entityType" = '${ENTITY_TYPES.REPORT}'
+          AND "Collaborators"."entityId" = "ActivityReport"."id"
+          AND '${COLLABORATOR_TYPES.EDITOR}' = ALL("Collaborators"."collaboratorRoles")
+          LIMIT 1)`,
         ),
         sequelize.literal(
           // eslint-disable-next-line quotes
@@ -554,8 +544,8 @@ export async function activityReports(
         },
         {
           required: false,
-          model: ActivityReportCollaborator,
-          as: 'activityReportCollaborators',
+          model: Collaborator,
+          as: 'collaborators',
           include: [
             {
               model: User,
@@ -578,7 +568,7 @@ export async function activityReports(
           ],
         },
         {
-          model: ActivityReportApprover,
+          model: Collaborator,
           attributes: ['id', 'status', 'note'],
           as: 'approvers',
           required: false,
@@ -676,7 +666,7 @@ export async function activityReportsForCleanup(userId) {
           {
             // if the user is an collaborator, and the report is not in draft,
             // it is eligible for cleanup
-            '$activityReportCollaborators->user.id$': userId,
+            '$collaborators->user.id$': userId,
             calculatedStatus: {
               [Op.ne]: REPORT_STATUSES.DRAFT,
             },
@@ -696,8 +686,8 @@ export async function activityReportsForCleanup(userId) {
         },
         {
           required: false,
-          model: ActivityReportCollaborator,
-          as: 'activityReportCollaborators',
+          model: Collaborator,
+          as: 'collaborators',
           include: [
             {
               model: User,
@@ -708,7 +698,7 @@ export async function activityReportsForCleanup(userId) {
           ],
         },
         {
-          model: ActivityReportApprover,
+          model: Collaborator,
           attributes: ['id'],
           as: 'approvers',
           required: false,
@@ -766,7 +756,7 @@ export async function activityReportAlerts(userId, {
                 ],
               },
               {
-                [Op.or]: [{ userId }, { '$activityReportCollaborators->user.id$': userId }],
+                [Op.or]: [{ userId }, { '$collaborators->user.id$': userId }],
               },
             ],
           },
@@ -784,10 +774,26 @@ export async function activityReportAlerts(userId, {
         'creatorRole',
         'creatorName',
         sequelize.literal(
-          '(SELECT name as authorName FROM "Users" WHERE "Users"."id" = "ActivityReport"."userId")',
+          `(SELECT
+            name as collaboratorName
+          FROM "Users"
+          JOIN "Collaborators"
+          ON "Users"."id" = "Collaborators"."userId"
+          AND "Collaborators"."entityType" = '${ENTITY_TYPES.REPORT}'
+          AND "Collaborators"."entityId" = "ActivityReport"."id"
+          AND '${COLLABORATOR_TYPES.OWNER}' = ALL("Collaborators"."collaboratorRoles")
+          LIMIT 1)`,
         ),
         sequelize.literal(
-          '(SELECT name as collaboratorName FROM "Users" join "ActivityReportCollaborators" on "Users"."id" = "ActivityReportCollaborators"."userId" and  "ActivityReportCollaborators"."activityReportId" = "ActivityReport"."id" limit 1)',
+          `(SELECT
+            name as collaboratorName
+          FROM "Users"
+          JOIN "Collaborators"
+          ON "Users"."id" = "Collaborators"."userId"
+          AND "Collaborators"."entityType" = '${ENTITY_TYPES.REPORT}'
+          AND "Collaborators"."entityId" = "ActivityReport"."id"
+          AND '${COLLABORATOR_TYPES.EDITOR}' = ALL("Collaborators"."collaboratorRoles")
+          LIMIT 1)`,
         ),
         sequelize.literal(
           `(SELECT "OtherEntities".name as otherEntityName from "OtherEntities" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" AND "ActivityRecipients"."otherEntityId" = "OtherEntities".id order by otherEntityName ${sortDir} limit 1)`,
@@ -796,8 +802,26 @@ export async function activityReportAlerts(userId, {
           `(SELECT "Recipients".name as recipientName FROM "Recipients" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" JOIN "Grants" ON "Grants"."id" = "ActivityRecipients"."grantId" AND "Recipients"."id" = "Grants"."recipientId" order by recipientName ${sortDir} limit 1)`,
         ),
 
+        // TODO: GH
         // eslint-disable-next-line quotes
-        [sequelize.literal(`(SELECT  CASE WHEN COUNT(1) = 0 THEN '0' ELSE  CONCAT(SUM(CASE WHEN COALESCE("ActivityReportApprovers".status,'needs_action') = 'approved' THEN 1 ELSE 0 END), ' of ', COUNT(1)) END FROM "ActivityReportApprovers" WHERE "ActivityReportApprovers"."activityReportId" = "ActivityReport"."id" AND "deletedAt" IS NULL limit 1)`), 'pendingApprovals'],
+        [sequelize.literal(`
+        (SELECT
+          CASE
+            WHEN COUNT(1) = 0
+              THEN '0'
+            ELSE  CONCAT(SUM(
+              CASE
+                WHEN COALESCE("Collaborator".status,'needs_action') = 'approved'
+                  THEN 1
+                ELSE 0
+              END), ' of ', COUNT(1))
+          END
+        FROM "Collaborator"
+        WHERE "Collaborator"."entityType" = '${ENTITY_TYPES.REPORT}'
+        AND "Collaborator"."entityId" = "ActivityReport"."id"
+        AND '${COLLABORATOR_TYPES.RATIFIER}' = ANY("Collaborator"."collaboratorTypes")
+        AND "Collaborator"."deletedAt" IS NULL
+        limit 1)`), 'pendingApprovals'],
       ],
       include: [
         {
@@ -813,8 +837,8 @@ export async function activityReportAlerts(userId, {
         },
         {
           required: false,
-          model: ActivityReportCollaborator,
-          as: 'activityReportCollaborators',
+          model: Collaborator,
+          as: 'collaborators',
           include: [
             {
               model: User,
@@ -835,7 +859,7 @@ export async function activityReportAlerts(userId, {
           ],
         },
         {
-          model: ActivityReportApprover,
+          model: Collaborator,
           attributes: ['id', 'status', 'note'],
           as: 'approvers',
           required: false,
@@ -902,7 +926,7 @@ export async function createOrUpdate(newActivityReport, report) {
     goals,
     objectivesWithGoals,
     objectivesWithoutGoals,
-    activityReportCollaborators,
+    collaborators,
     activityRecipients,
     files,
     author,
@@ -928,15 +952,19 @@ export async function createOrUpdate(newActivityReport, report) {
   const updatedFields = { ...allFields, ...resources };
   if (report) {
     savedReport = await update(updatedFields, report);
+    const { id: savedReportId } = savedReport;
+    await saveOwner(savedReportId, [author]);
   } else {
     savedReport = await create(updatedFields);
+    const { id: savedReportId } = savedReport;
+    await saveOwnerInstantiators(savedReportId, [author]);
   }
-  if (activityReportCollaborators) {
-    const { id } = savedReport;
-    const newCollaborators = activityReportCollaborators.map(
+  if (collaborators) {
+    const { id: savedReportId } = savedReport;
+    const newCollaborators = collaborators.map(
       (c) => c.user.id,
     );
-    await saveReportCollaborators(id, newCollaborators);
+    await saveReportCollaborators(savedReportId, newCollaborators);
   }
 
   if (activityRecipients) {
@@ -993,7 +1021,7 @@ export async function createOrUpdate(newActivityReport, report) {
 
   // Approvers are removed if approverUserIds is an empty array
   if (approverUserIds) {
-    await syncApprovers(savedReport.id, approverUserIds);
+    await syncRatifiers(ENTITY_TYPES.REPORT, savedReport.id, approverUserIds);
   }
 
   const [r, recips, gAndOs] = await activityReportAndRecipientsById(savedReport.id);
@@ -1101,8 +1129,8 @@ async function getDownloadableActivityReports(where, separate = true) {
         as: 'author',
       },
       {
-        model: ActivityReportCollaborator,
-        as: 'activityReportCollaborators',
+        model: Collaborator,
+        as: 'collaborators',
         separate,
         include: [{
           model: User,
@@ -1145,7 +1173,7 @@ async function getDownloadableActivityReports(where, separate = true) {
         required: false,
       },
       {
-        model: ActivityReportApprover,
+        model: Collaborator,
         attributes: ['userId'],
         as: 'approvers',
         required: false,
@@ -1208,7 +1236,7 @@ export async function getAllDownloadableActivityReportAlerts(userId, filters) {
             ],
           },
           {
-            [Op.or]: [{ userId }, { '$activityReportCollaborators.userId$': userId }],
+            [Op.or]: [{ userId }, { '$collaborators.userId$': userId }],
           },
         ],
       },

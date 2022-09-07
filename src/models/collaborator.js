@@ -1,11 +1,15 @@
 const { Model } = require('sequelize');
 const {
+  beforeValidate,
+  beforeCreate,
+  beforeUpdate,
   afterCreate,
   afterDestroy,
   afterRestore,
   afterUpdate,
   afterUpsert,
 } = require('./hooks/collaborator');
+const { generateFullName } = require('./helpers/generateFullName');
 const { ENTITY_TYPES, COLLABORATOR_TYPES, RATIFIER_STATUSES } = require('../constants');
 
 module.exports = (sequelize, DataTypes) => {
@@ -60,7 +64,8 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'entityId',
         as: 'objectiveTemplate',
       });
-      Collaborator.belongsTo(models.User, { foreignKey: 'userId' });
+      Collaborator.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+      Collaborator.hasMany(models.CollaboratorRole, { foreignKey: 'collaboratorId', as: 'roles' });
     }
   }
   Collaborator.init({
@@ -119,18 +124,27 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       type: DataTypes.DATE,
     },
+    nameWithRole: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return generateFullName(this.user.fullName, this.roles);
+      },
+    },
   }, {
     hooks: {
-      afterCreate: async (instance) => afterCreate(sequelize, instance),
-      afterDestroy: async (instance) => afterDestroy(sequelize, instance),
-      afterRestore: async (instance) => afterRestore(sequelize, instance),
-      afterUpdate: async (instance) => afterUpdate(sequelize, instance),
-      afterUpsert: async (instance) => afterUpsert(sequelize, instance),
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      beforeCreate: async (instance, options) => beforeCreate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+      afterRestore: async (instance, options) => afterRestore(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
+      afterUpsert: async (created, options) => afterUpsert(sequelize, created, options),
     },
-    indexes: [{
-      unique: true,
-      fields: ['activityReportId', 'userId'],
-    }],
+    // indexes: [{
+    //   unique: true,
+    //   fields: ['activityReportId', 'userId'],
+    // }],
     sequelize,
     paranoid: true,
     modelName: 'Collaborator',

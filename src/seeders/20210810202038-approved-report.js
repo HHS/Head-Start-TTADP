@@ -1,3 +1,40 @@
+const COLLABORATOR_TYPES = {
+  EDITOR: 'editor',
+  OWNER: 'owner',
+  INSTANTIATOR: 'instantiator',
+  RATIFIER: 'ratifier',
+};
+
+const ENTITY_TYPES = {
+  REPORT: 'report',
+  REPORTGOAL: 'report_goal',
+  REPORTOBJECTIVE: 'report_objective',
+  GOAL: 'goal',
+  GOALTEMPLATE: 'goal_template',
+  OBJECTIVE: 'objective',
+  OBJECTIVETEMPLATE: 'objectiveTemplate',
+};
+
+const ENTITY_STATUSES = {
+  DRAFT: 'draft',
+  DELETED: 'deleted',
+  SUBMITTED: 'submitted',
+  APPROVED: 'approved',
+  NEEDS_ACTION: 'needs_action',
+};
+
+const RATIFIER_STATUSES = {
+  NEEDS_ACTION: 'needs_action',
+  RATIFIED: 'ratified',
+};
+
+const APPROVAL_RATIO = {
+  ANY: 'any',
+  MAJORITY: 'majority',
+  TWOTHIRDS: 'two_thirds',
+  ALL: 'all',
+};
+
 const recipients = [
   {
     id: 9998,
@@ -42,37 +79,36 @@ const reports = [
 
 const approvals = [
   {
-    id: 1,
-    entityType: 'report',
+    entityType: ENTITY_TYPES.REPORT,
     entityId: 9999,
     tier: 0,
-    calculatedStatus: 'approved',
-    submissionStatus: 'submitted',
+    ratioRequired: APPROVAL_RATIO.ALL,
+    calculatedStatus: ENTITY_STATUSES.APPROVED,
+    submissionStatus: ENTITY_STATUSES.SUBMITTED,
   },
   {
-    id: 2,
-    entityType: 'report',
+    entityType: ENTITY_TYPES.REPORT,
     entityId: 9999,
     tier: 1,
-    calculatedStatus: 'approved',
-    submissionStatus: 'submitted',
+    ratioRequired: APPROVAL_RATIO.ALL,
+    calculatedStatus: ENTITY_STATUSES.APPROVED,
+    submissionStatus: ENTITY_STATUSES.SUBMITTED,
   },
 ];
 
-const collaborators = [{
-  id: 1,
-  entityType: 'report',
-  entityId: 9999,
-  userId: 1,
-  collaboratorTypes: ['Instantiator', 'Owner', 'Editor', 'Ratifier'],
-  tier: 1,
-  status: 'approved',
-}];
-
 module.exports = {
   up: async (queryInterface) => {
+    const collaborators = [{
+      entityType: ENTITY_TYPES.REPORT,
+      entityId: 9999,
+      userId: 1,
+      collaboratorTypes: queryInterface.sequelize.literal(`ARRAY['${COLLABORATOR_TYPES.INSTANTIATOR}', '${COLLABORATOR_TYPES.OWNER}', '${COLLABORATOR_TYPES.EDITOR}', '${COLLABORATOR_TYPES.RATIFIER}']::"enum_Collaborators_collaboratorTypes"[]`),
+      tier: 1,
+      status: RATIFIER_STATUSES.RATIFIED,
+    }];
+
     await queryInterface.bulkInsert('ActivityReports', reports);
-    await queryInterface.bulkUpdate('Approvals', approvals);
+    await queryInterface.bulkInsert('Approvals', approvals);
     await queryInterface.bulkInsert('ActivityRecipients', recipients);
     await queryInterface.bulkInsert('Collaborators', collaborators);
     await queryInterface.sequelize.query(`ALTER SEQUENCE "ActivityReports_id_seq" RESTART WITH ${reports[reports.length - 1].id + 1};`);

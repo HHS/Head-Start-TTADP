@@ -1,13 +1,16 @@
 import { Op } from 'sequelize';
 import { sequelize } from '../../models';
+import { ENTITY_TYPES, COLLABORATOR_TYPES } from '../../constants';
 
 function userQuery(escapedRoles) {
   return `
   SELECT
-    "ActivityReports"."id"
-  FROM "Users" "Users"  
-  INNER JOIN "ActivityReports" "ActivityReports"
-  ON "ActivityReports"."userId" = "Users"."id"
+    "Collaborators"."entityId"
+  FROM "Users" "Users"
+  INNER JOIN "Collaborators" "Collaborators"
+  ON "Collaborators"."userId" = "Users"."id"
+  AND '${COLLABORATOR_TYPES.OWNER}' = ANY ("Collaborators"."collaboratorTypes")
+  AND "Collaborators"."entityType" = '${ENTITY_TYPES.REPORT}'
   INNER JOIN "UserRoles" "UserRoles"
   ON "UserRoles"."userId" = "Users"."id"
   INNER JOIN "Roles" "Roles"
@@ -18,10 +21,12 @@ function userQuery(escapedRoles) {
 function collaboratorQuery(escapedRoles) {
   return `
   SELECT
-    "ActivityReportCollaborators"."activityReportId"
+    "Collaborators"."entityId"
   FROM "Users" "Users"
-  INNER JOIN "ActivityReportCollaborators" "ActivityReportCollaborators"
-  ON "ActivityReportCollaborators"."userId" = "Users"."id"
+  INNER JOIN "Collaborators" "Collaborators"
+  ON "Collaborators"."userId" = "Users"."id"
+  AND '${COLLABORATOR_TYPES.OWNER}' = ANY ("Collaborators"."collaboratorTypes")
+  AND "Collaborators"."entityType" = '${ENTITY_TYPES.REPORT}'
   INNER JOIN "UserRoles" "UserRoles"
   ON "UserRoles"."userId" = "Users"."id"
   INNER JOIN "Roles" "Roles"
@@ -52,6 +57,7 @@ function generateWhere(escapedSearchTerms, exclude) {
 
 function escapeRole(role) {
   // our values (which doesn't include all db roles, only the roles selectable on the front end)
+  // TODO: could this filtering be done using the "isSpecialist" column in the db?
   const acceptableRoles = [
     'Early Childhood Specialist',
     'Family Engagement Specialist',

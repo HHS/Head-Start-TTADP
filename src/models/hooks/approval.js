@@ -8,8 +8,8 @@ const { findOrCreateObjectiveTemplate } = require('./objective');
  * Helper function called by model hooks.
  * Updates current model instance's calculatedStatus field.
  * Background: calculatedStatus is updated to 'submitted', 'needs_review', and 'approved'
- * based on hooks on the ActivityReportApprovers. Before submission though,
- * we want calculatedStatus to function like submissionStatus so developers
+ * based on hooks on the collaborator with a collaborator type of RATIFIER. Before submission
+ * though, we want calculatedStatus to function like submissionStatus so developers
  * only have to check calculatedStatus to determine overall report status.
  * @param {*} report - current model instance
  */

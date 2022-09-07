@@ -2,20 +2,20 @@ module.exports = {
   up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
     async (transaction) => {
       const ENTITY_TYPES = {
-        REPORT: 'Report',
-        REPORTGOAL: 'ReportGoal',
-        REPORTOBJECTIVE: 'ReportObjective',
-        GOAL: 'Goal',
-        GOALTEMPLATE: 'GoalTemplate',
-        OBJECTIVE: 'Objective',
-        OBJECTIVETEMPLATE: 'ObjectiveTemplate',
+        REPORT: 'report',
+        REPORTGOAL: 'report_goal',
+        REPORTOBJECTIVE: 'report_objective',
+        GOAL: 'goal',
+        GOALTEMPLATE: 'goal_template',
+        OBJECTIVE: 'objective',
+        OBJECTIVETEMPLATE: 'objectiveTemplate',
       };
 
       const APPROVAL_RATIO = {
-        ANY: 'Any',
-        MAJORITY: 'Majority',
-        TWOTHIRDS: 'TwoThirds',
-        ALL: 'All',
+        ANY: 'any',
+        MAJORITY: 'majority',
+        TWOTHIRDS: 'two_thirds',
+        ALL: 'all',
       };
 
       const REPORT_STATUSES = {

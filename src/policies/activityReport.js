@@ -126,25 +126,33 @@ export default class ActivityReport {
   }
 
   isAuthor() {
-    return this.user.id === this.activityReport.userId;
+    if (!this.activityReport.owners
+      || this.activityReport.owners.length === 0) {
+      return false;
+    }
+
+    return this.activityReport.owners
+      .some((owner) => owner.user.id === this.user.id);
   }
 
   isCollaborator() {
-    if (!this.activityReport.activityReportCollaborators
-      || this.activityReport.activityReportCollaborators.length === 0) {
+    if (!this.activityReport.collaborators
+      || this.activityReport.collaborators.length === 0) {
       return false;
     }
 
-    return this.activityReport
-      .activityReportCollaborators.some((collab) => collab.user.id === this.user.id);
+    return this.activityReport.collaborators
+      .some((collab) => collab.user.id === this.user.id);
   }
 
   isApprovingManager() {
-    if (!this.activityReport.approvers) {
+    if (!this.activityReport.approvers
+      || this.activityReport.approvers.length === 0) {
       return false;
     }
-    const approverUserIds = this.activityReport.approvers.map((approval) => approval.User.id);
-    return approverUserIds.includes(this.user.id);
+
+    return this.activityReport.approvers
+      .some((approver) => approver.user.id === this.user.id);
   }
 
   reportHasEditableStatus() {

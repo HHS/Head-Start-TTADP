@@ -3,10 +3,9 @@ import {
   ActivityReport,
   User,
   ActivityRecipient,
-  ActivityReportApprover,
+  Collaborator,
   Grant,
   Recipient,
-  ActivityReportCollaborator,
 } from '../models';
 import { activityReportToCsvRecord, makeGoalsAndObjectivesObject, extractListOfGoalsAndObjectives } from './transform';
 
@@ -319,11 +318,12 @@ describe('activityReportToCsvRecord', () => {
 
   it('transforms related models into string values', async () => {
     const report = await ActivityReport.build(mockReport, {
-      include: [{ model: User, as: 'author' },
+      include: [
+        { model: User, as: 'author' },
         { model: User, as: 'lastUpdatedBy' },
         {
-          model: ActivityReportCollaborator,
-          as: 'activityReportCollaborators',
+          model: Collaborator,
+          as: 'collaborators',
           include: [{
             model: User,
             as: 'user',
@@ -336,7 +336,7 @@ describe('activityReportToCsvRecord', () => {
           include: [{ model: Grant, as: 'grant', include: [{ model: Recipient, as: 'recipient' }] }],
         },
         {
-          model: ActivityReportApprover,
+          model: Collaborator,
           as: 'approvers',
           include: [{ model: User }],
         }],

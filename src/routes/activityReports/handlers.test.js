@@ -32,17 +32,17 @@ import {
   getAllDownloadableActivityReportAlerts,
   activityReportsForCleanup,
 } from '../../services/activityReports';
-import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
+import { upsertRatifier, syncRatifiers } from '../../services/collaborators';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
 import { userById, usersWithPermissions } from '../../services/users';
 import ActivityReport from '../../policies/activityReport';
 import handleErrors from '../../lib/apiErrorHandler';
 import User from '../../policies/user';
 import db, {
-  ActivityReportApprover, ActivityReport as ActivityReportModel, Permission, User as UserModel,
+  Collaborator, ActivityReport as ActivityReportModel, Permission, User as UserModel,
 } from '../../models';
 import * as mailer from '../../lib/mailer';
-import { APPROVER_STATUSES, REPORT_STATUSES } from '../../constants';
+import { APPROVER_STATUSES, REPORT_STATUSES, ENTITY_TYPES } from '../../constants';
 import SCOPES from '../../middleware/scopeConstants';
 
 jest.mock('../../services/activityReports', () => ({
@@ -60,9 +60,9 @@ jest.mock('../../services/activityReports', () => ({
   activityReportsForCleanup: jest.fn(),
 }));
 
-jest.mock('../../services/activityReportApprovers', () => ({
-  upsertApprover: jest.fn(),
-  syncApprovers: jest.fn(),
+jest.mock('../../services/approvers', () => ({
+  upsertRatifier: jest.fn(),
+  syncRatifiers: jest.fn(),
 }));
 
 jest.mock('../../services/accessValidation');
@@ -265,7 +265,7 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementationOnce(() => ({
         canReview: () => true,
       }));
-      upsertApprover.mockResolvedValue(mockApproverRecord);
+      upsertRatifier.mockResolvedValue(mockApproverRecord);
       const approvalNotification = jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
 
       await reviewReport(approvedReportRequest, mockResponse);
@@ -293,7 +293,7 @@ describe('Activity Report handlers', () => {
         canReview: () => true,
       }));
 
-      upsertApprover.mockResolvedValue(mockApproverRecord);
+      upsertRatifier.mockResolvedValue(mockApproverRecord);
       const changesRequestedNotification = jest.spyOn(mailer, 'changesRequestedNotification').mockImplementation();
 
       await reviewReport(needsActionReportRequest, mockResponse);
@@ -351,7 +351,7 @@ describe('Activity Report handlers', () => {
         activityReportId: 1,
         userId: secondMockManager.id,
       }];
-      syncApprovers.mockResolvedValue(mockApprovers);
+      syncRatifiers.mockResolvedValue(mockApprovers);
       const assignedNotification = jest.spyOn(mailer, 'approverAssignedNotification').mockImplementation();
       const reportAfterSubmit = {
         submissionStatus: REPORT_STATUSES.SUBMITTED,
@@ -359,7 +359,7 @@ describe('Activity Report handlers', () => {
         approvers: mockApprovers,
       };
       jest.spyOn(ActivityReportModel, 'findByPk').mockResolvedValueOnce(reportAfterSubmit);
-      const approverUpdate = jest.spyOn(ActivityReportApprover, 'update').mockImplementation();
+      const approverUpdate = jest.spyOn(Collaborator, 'update').mockImplementation();
       await submitReport(request, mockResponse);
       const { displayId, ...r } = report;
       expect(createOrUpdate).toHaveBeenCalledWith(
@@ -375,7 +375,8 @@ describe('Activity Report handlers', () => {
           objectivesWithoutGoals: [],
         },
       );
-      expect(syncApprovers).toHaveBeenCalledWith(1, [mockManager.id, secondMockManager.id]);
+      expect(syncRatifiers)
+        .toHaveBeenCalledWith(1, [ENTITY_TYPES.REPORT, mockManager.id, secondMockManager.id]);
       expect(assignedNotification).toHaveBeenCalled();
       expect(approverUpdate).toHaveBeenCalledWith({ status: null }, {
         where: { status: APPROVER_STATUSES.NEEDS_ACTION, activityReportId: 1 },
@@ -743,7 +744,7 @@ describe('Activity Report handlers', () => {
           role: ['Grantee Specialist'],
           fullName: 'Arty, GS',
         },
-        activityReportCollaborators: [
+        collaborators: [
           {
             fullName: 'Jarty, SS, GS',
             user: {

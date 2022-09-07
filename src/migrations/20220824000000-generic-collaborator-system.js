@@ -2,19 +2,19 @@ module.exports = {
   up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
     async (transaction) => {
       const ENTITY_TYPES = {
-        REPORT: 'Report',
-        REPORTGOAL: 'ReportGoal',
-        REPORTOBJECTIVE: 'ReportObjective',
-        GOAL: 'Goal',
-        GOALTEMPLATE: 'GoalTemplate',
-        OBJECTIVE: 'Objective',
-        OBJECTIVETEMPLATE: 'ObjectiveTemplate',
+        REPORT: 'report',
+        REPORTGOAL: 'report_goal',
+        REPORTOBJECTIVE: 'report_objective',
+        GOAL: 'goal',
+        GOALTEMPLATE: 'goal_template',
+        OBJECTIVE: 'objective',
+        OBJECTIVETEMPLATE: 'objectiveTemplate',
       };
       const COLLABORATOR_TYPES = {
-        EDITOR: 'Editor',
-        OWNER: 'Owner',
-        INSTANTIATOR: 'Instantiator',
-        RATIFIER: 'Ratifier',
+        EDITOR: 'editor',
+        OWNER: 'owner',
+        INSTANTIATOR: 'instantiator',
+        RATIFIER: 'ratifier',
       };
 
       const RATIFIER_STATUSES = {
@@ -219,7 +219,7 @@ module.exports = {
               ON "Collaborators"
               ("entityId")
               WHERE "entityType" = '${entityType}'
-              AND 'Ratifier' = ANY ( "collaboratorTypes" );`,
+              AND '${COLLABORATOR_TYPES.RATIFIER}' = ANY ( "collaboratorTypes" );`,
               { transaction },
             ));
           }
@@ -490,17 +490,17 @@ module.exports = {
           },
           onUpdate: 'CASCADE',
         }, { transaction });
-        await queryInterface.addColumn('CollaboratorRoles', 'roleId', {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-          references: {
-            model: {
-              tableName: 'Roles',
-            },
-            key: 'id',
-          },
-          onUpdate: 'CASCADE',
-        }, { transaction });
+        // await queryInterface.addColumn('CollaboratorRoles', 'roleId', {
+        //   type: Sequelize.INTEGER,
+        //   allowNull: true,
+        //   references: {
+        //     model: {
+        //       tableName: 'Roles',
+        //     },
+        //     key: 'id',
+        //   },
+        //   onUpdate: 'CASCADE',
+        // }, { transaction });
 
         await queryInterface.sequelize.query(
           `UPDATE "CollaboratorRoles" cr
@@ -511,13 +511,16 @@ module.exports = {
           { transaction },
         );
 
-        await queryInterface.sequelize.query(
-          `UPDATE "CollaboratorRoles" cr
-         SET "roleId" = r.id
-         FROM "Roles" r
-         WHERE cr."role" = r."fullName";`,
-          { transaction },
-        );
+        // await queryInterface.sequelize.query(
+        //   `UPDATE "CollaboratorRoles" cr
+        //  SET "roleId" = r.id
+        //  FROM "Roles" r
+        //  WHERE cr."role" = r."fullName";`,
+        //   { transaction },
+        // );
+
+        await queryInterface.removeColumn('CollaboratorRoles', 'activityReportCollaboratorId', { transaction });
+        // await queryInterface.removeColumn('CollaboratorRoles', 'role', { transaction });
 
         await queryInterface.sequelize.query(
           `WITH
@@ -614,9 +617,6 @@ module.exports = {
          ORDER BY 3, 1, 2;`,
           { transaction },
         );
-
-        await queryInterface.removeColumn('CollaboratorRoles', 'activityReportCollaboratorId', { transaction });
-        await queryInterface.removeColumn('CollaboratorRoles', 'role', { transaction });
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
         throw (err);

@@ -1,10 +1,17 @@
+import { Op } from 'sequelize';
 import { submitReport, unlockReport } from './handlers';
-import { APPROVER_STATUSES, REPORT_STATUSES } from '../../constants';
+import {
+  APPROVER_STATUSES,
+  REPORT_STATUSES,
+  ENTITY_TYPES,
+  COLLABORATOR_TYPES,
+} from '../../constants';
 import * as mailer from '../../lib/mailer';
 import SCOPES from '../../middleware/scopeConstants';
 import db, {
-  ActivityReportApprover, ActivityReport, Permission, User,
+  ActivityReport, Permission, User,
 } from '../../models';
+import { upsertRatifier } from '../../services/collaborators';
 
 const draftObject = {
   activityRecipientType: 'recipient',
@@ -51,6 +58,8 @@ const mockResponse = {
   })),
 };
 
+const reports = [];
+
 beforeAll(async () => {
   await User.bulkCreate(
     [mockUser, mockManager, secondMockManager],
@@ -78,11 +87,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   const userIds = [mockUser.id, mockManager.id, secondMockManager.id];
-  await ActivityReportApprover.destroy({
-    where: { userId: [mockManager.id, secondMockManager.id] },
-    force: true,
-  });
-  await ActivityReport.destroy({ where: { userId: mockUser.id } });
+  await ActivityReport.destroy({ where: { id: reports.map((report) => report.id) } });
   await Permission.destroy({ where: { userId: userIds } });
   await User.destroy({ where: { id: userIds } });
   await db.sequelize.close();
@@ -95,6 +100,7 @@ afterEach(() => {
 describe('submitReport', () => {
   it('creates new approvers', async () => {
     const draftReport = await ActivityReport.create({ ...draftObject, userId: mockUser.id });
+    reports.push(draftReport);
     const request = {
       session: { userId: mockUser.id },
       params: { activityReportId: draftReport.id },
@@ -118,8 +124,13 @@ describe('submitReport', () => {
       submissionStatus: REPORT_STATUSES.SUBMITTED,
       userId: mockUser.id,
     });
-    await ActivityReportApprover.create({
-      activityReportId: submittedReport.id, userId: mockManager.id, status: APPROVER_STATUSES.NEEDS_ACTION, note: 'make changes x, y, z',
+    reports.push(submittedReport);
+    await upsertRatifier({
+      entityType: ENTITY_TYPES.REPORT,
+      entityId: submittedReport.id,
+      userId: mockManager.id,
+      status: APPROVER_STATUSES.NEEDS_ACTION,
+      note: 'make changes x, y, z',
     });
     const reviewedReport = await ActivityReport.findByPk(submittedReport.id);
     // check that testing condition is correct
@@ -146,12 +157,23 @@ describe('submitReport', () => {
       submissionStatus: REPORT_STATUSES.SUBMITTED,
       userId: mockUser.id,
     });
-    await ActivityReportApprover.create({
-      activityReportId: submittedReport.id, userId: mockManager.id, status: APPROVER_STATUSES.APPROVED, note: 'report looks good',
+    reports.push(submittedReport);
+    await upsertRatifier({
+      entityType: ENTITY_TYPES.REPORT,
+      entityId: submittedReport.id,
+      userId: mockManager.id,
+      collaboratorTypes: [COLLABORATOR_TYPES.RATIFIER],
+      status: APPROVER_STATUSES.APPROVED,
+      note: 'report looks good',
     });
 
-    await ActivityReportApprover.create({
-      activityReportId: submittedReport.id, userId: secondMockManager.id, status: APPROVER_STATUSES.APPROVED, note: 'agree report looks good',
+    await upsertRatifier({
+      entityType: ENTITY_TYPES.REPORT,
+      entityId: submittedReport.id,
+      userId: secondMockManager.id,
+      collaboratorTypes: [COLLABORATOR_TYPES.RATIFIER],
+      status: APPROVER_STATUSES.APPROVED,
+      note: 'agree report looks good',
     });
 
     const reviewedReport = await ActivityReport.findByPk(submittedReport.id);
@@ -178,9 +200,13 @@ describe('submitReport', () => {
     expect(needsActionReport.calculatedStatus).toBe(REPORT_STATUSES.NEEDS_ACTION);
 
     // Verify approving managers are set to NEEDS_ACTION.
-    const approvers = await ActivityReportApprover.findAll({
+    const approvers = await upsertRatifier({
       attributes: ['status'],
-      where: { activityReportId: needsActionReport.id },
+      where: {
+        entityType: ENTITY_TYPES.REPORT,
+        entityId: needsActionReport.id,
+        collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.RATIFIER] },
+      },
     });
 
     // Both approvers should now be NEEDS_ACTION status.

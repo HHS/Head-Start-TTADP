@@ -4,7 +4,7 @@ import SCOPES from '../../middleware/scopeConstants';
 import {
   ActivityReport as ActivityReportModel,
   Role,
-  ActivityReportApprover,
+  Collaborator,
   User as UserModel,
 } from '../../models';
 import ActivityReport from '../../policies/activityReport';
@@ -22,10 +22,20 @@ import {
   getAllDownloadableActivityReports,
   activityReportsForCleanup,
 } from '../../services/activityReports';
-import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
+import {
+  upsertRatifier,
+  syncRatifiers,
+  setRatifierStatus,
+  resetAllRatifierStatuses,
+} from '../../services/collaborators';
 import { goalsForGrants } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
-import { APPROVER_STATUSES, REPORT_STATUSES, DECIMAL_BASE } from '../../constants';
+import {
+  APPROVER_STATUSES,
+  REPORT_STATUSES,
+  DECIMAL_BASE,
+  ENTITY_TYPES,
+} from '../../constants';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
 
 import { logger } from '../../logger';
@@ -311,11 +321,12 @@ export async function reviewReport(req, res) {
       return;
     }
 
-    const savedApprover = await upsertApprover({
+    const savedApprover = await upsertRatifier({
+      entityType: ENTITY_TYPES.REPORT,
+      entityId: activityReportId,
+      userId,
       status,
       note,
-      activityReportId,
-      userId,
     });
 
     const [reviewedReport] = await activityReportAndRecipientsById(activityReportId);
@@ -406,10 +417,12 @@ export async function unlockReport(req, res) {
     }
 
     // Unlocking resets all Approving Managers to NEEDS_ACTION status.
-    await ActivityReportApprover.update({ status: APPROVER_STATUSES.NEEDS_ACTION }, {
-      where: { activityReportId },
-      individualHooks: true,
-    });
+    await setRatifierStatus(
+      ENTITY_TYPES.REPORT,
+      activityReportId,
+      req.session.userId,
+      APPROVER_STATUSES.NEEDS_ACTION,
+    );
 
     res.sendStatus(204);
   } catch (error) {
@@ -444,24 +457,30 @@ export async function submitReport(req, res) {
     }, report);
 
     // Create, restore or destroy this report's approvers
-    const currentApprovers = await syncApprovers(activityReportId, approverUserIds);
+    const currentApprovers = await syncRatifiers(
+      ENTITY_TYPES.REPORT,
+      activityReportId,
+      approverUserIds,
+    );
 
+    // TODO: This should come after setting the status to null.
     // This will send notification to everyone marked as an approver.
     // This may need to be adjusted in future to only send notification to
     // approvers who are not in approved status.
     approverAssignedNotification(savedReport, currentApprovers);
 
     // Resubmitting resets any needs_action status to null ("pending" status)
-    await ActivityReportApprover.update({ status: null }, {
-      where: { status: APPROVER_STATUSES.NEEDS_ACTION, activityReportId },
-      individualHooks: true,
-    });
+    await resetAllRatifierStatuses(
+      ENTITY_TYPES.REPORT,
+      activityReportId,
+      APPROVER_STATUSES.NEEDS_ACTION,
+    );
 
     const response = await ActivityReportModel.findByPk(activityReportId, {
       attributes: ['id', 'calculatedStatus'],
       include: [
         {
-          model: ActivityReportApprover,
+          model: Collaborator,
           attributes: ['id', 'status', 'note'],
           as: 'approvers',
           required: false,
@@ -621,10 +640,10 @@ export async function saveReport(req, res) {
       ...existingReport, activityRecipients, ...newReport,
     }, report);
 
-    if (savedReport.activityReportCollaborators) {
+    if (savedReport.collaborators) {
       // only include collaborators that aren't already in the report
-      const newCollaborators = savedReport.activityReportCollaborators.filter((c) => {
-        const oldCollaborators = report.activityReportCollaborators.map((x) => x.user.email);
+      const newCollaborators = savedReport.collaborators.filter((c) => {
+        const oldCollaborators = report.collaborators.map((x) => x.user.email);
         return !oldCollaborators.includes(c.user.email);
       });
 
@@ -662,8 +681,8 @@ export async function createReport(req, res) {
     }
     // updateCollaboratorRoles(newReport);
     const report = await createOrUpdate(newReport);
-    if (report.activityReportCollaborators) {
-      collaboratorAssignedNotification(report, report.activityReportCollaborators);
+    if (report.collaborators) {
+      collaboratorAssignedNotification(report, report.collaborators);
     }
     res.json(report);
   } catch (error) {

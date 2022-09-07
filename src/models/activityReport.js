@@ -2,30 +2,34 @@ const { Op, Model } = require('sequelize');
 const moment = require('moment');
 const { isEqual, uniqWith } = require('lodash');
 const {
-  REPORT_STATUSES,
-  USER_ROLES,
+  // REPORT_STATUSES,
+  // USER_ROLES,
   COLLABORATOR_TYPES,
   ENTITY_TYPES,
 } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
-const { beforeCreate, beforeUpdate, afterUpdate } = require('./hooks/activityReport');
+const {
+  beforeCreate,
+  beforeUpdate,
+  beforeDestroy,
+  afterUpdate,
+} = require('./hooks/activityReport');
 
-const generateCreatorNameWithRole = (ar) => {
-  const creatorName = ar.author ? ar.author.name : '';
-  let roles = '';
-  if (ar.creatorRole) {
-    roles = ar.creatorRole === 'TTAC' || ar.creatorRole === 'COR' ? `, ${ar.creatorRole}` : `, ${ar.creatorRole.split(' ').map((word) => word[0]).join('')}`;
-  }
-  return `${creatorName}${roles}`;
-};
+// const generateCreatorNameWithRole = (ar) => {
+//   const creatorName = ar.author ? ar.author.name : '';
+//   let roles = '';
+//   if (ar.creatorRole) {
+//     roles = ar.creatorRole === 'TTAC' || ar.creatorRole === 'COR' ? `, ${ar.creatorRole}` : `, ${ar.creatorRole.split(' ').map((word) => word[0]).join('')}`;
+//   }
+//   return `${creatorName}${roles}`;
+// };
 
 module.exports = (sequelize, DataTypes) => {
   class ActivityReport extends Model {
     static associate(models) {
-      ActivityReport.belongsTo(models.User, { foreignKey: 'userId', as: 'author' });
+      // ActivityReport.belongsTo(models.User, { foreignKey: 'userId', as: 'author' });
       ActivityReport.belongsTo(models.User, { foreignKey: 'lastUpdatedById', as: 'lastUpdatedBy' });
       ActivityReport.hasMany(models.ActivityRecipient, { foreignKey: 'activityReportId', as: 'activityRecipients' });
-      ActivityReport.hasMany(models.ActivityReportCollaborator, { foreignKey: 'activityReportId', as: 'activityReportCollaborators' });
       ActivityReport.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
       ActivityReport.hasMany(models.ActivityReportFile, { foreignKey: 'activityReportId', as: 'reportFiles' });
       ActivityReport.belongsToMany(models.File, {
@@ -71,6 +75,15 @@ module.exports = (sequelize, DataTypes) => {
         as: 'approvals',
         hooks: true,
       });
+      ActivityReport.hasOne(models.Approval, {
+        scope: {
+          entityType: ENTITY_TYPES.REPORT,
+          tier: 0,
+        },
+        foreignKey: 'entityId',
+        as: 'approval',
+        hooks: true,
+      });
       ActivityReport.hasMany(models.ActivityReportObjective, { foreignKey: 'activityReportId', as: 'activityReportObjectives' });
       ActivityReport.belongsToMany(models.Objective, {
         scope: {
@@ -97,11 +110,16 @@ module.exports = (sequelize, DataTypes) => {
         as: 'objectives',
       });
       ActivityReport.addScope('defaultScope', {
-        where: {
-          submissionStatus: {
-            [Op.ne]: 'deleted',
+        include: [{
+          model: models.Approval,
+          as: 'approval',
+          where: {
+            submissionStatus: {
+              [Op.ne]: 'deleted',
+            },
           },
-        },
+          required: true,
+        }],
       });
     }
   }
@@ -120,10 +138,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       unique: true,
     },
-    userId: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
+    // userId: {
+    //   type: DataTypes.INTEGER,
+    //   allowNull: true,
+    // },
     lastUpdatedById: {
       type: DataTypes.INTEGER,
       allowNull: true,
@@ -185,40 +203,40 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    submissionStatus: {
-      allowNull: false,
-      type: DataTypes.ENUM(Object.keys(REPORT_STATUSES).map((k) => REPORT_STATUSES[k])),
-      validate: {
-        checkRequiredForSubmission() {
-          const requiredForSubmission = [
-            this.numberOfParticipants,
-            this.deliveryMethod,
-            this.duration,
-            this.endDate,
-            this.startDate,
-            this.activityRecipientType,
-            this.requester,
-            this.targetPopulations,
-            this.reason,
-            this.participants,
-            this.topics,
-            this.ttaType,
-            this.creatorRole,
-          ];
-          const draftStatuses = [REPORT_STATUSES.DRAFT, REPORT_STATUSES.DELETED];
-          if (!draftStatuses.includes(this.submissionStatus)) {
-            // Require fields when report is not a draft
-            if (requiredForSubmission.includes(null)) {
-              throw new Error('Missing required field(s)');
-            }
-          }
-        },
-      },
-    },
-    calculatedStatus: {
-      allowNull: true,
-      type: DataTypes.ENUM(Object.keys(REPORT_STATUSES).map((k) => REPORT_STATUSES[k])),
-    },
+    // submissionStatus: {
+    //   allowNull: false,
+    //   type: DataTypes.ENUM(Object.keys(REPORT_STATUSES).map((k) => REPORT_STATUSES[k])),
+    //   validate: {
+    //     checkRequiredForSubmission() {
+    //       const requiredForSubmission = [
+    //         this.numberOfParticipants,
+    //         this.deliveryMethod,
+    //         this.duration,
+    //         this.endDate,
+    //         this.startDate,
+    //         this.activityRecipientType,
+    //         this.requester,
+    //         this.targetPopulations,
+    //         this.reason,
+    //         this.participants,
+    //         this.topics,
+    //         this.ttaType,
+    //         this.creatorRole,
+    //       ];
+    //       const draftStatuses = [REPORT_STATUSES.DRAFT, REPORT_STATUSES.DELETED];
+    //       if (!draftStatuses.includes(this.submissionStatus)) {
+    //         // Require fields when report is not a draft
+    //         if (requiredForSubmission.includes(null)) {
+    //           throw new Error('Missing required field(s)');
+    //         }
+    //       }
+    //     },
+    //   },
+    // },
+    // calculatedStatus: {
+    //   allowNull: true,
+    //   type: DataTypes.ENUM(Object.keys(REPORT_STATUSES).map((k) => REPORT_STATUSES[k])),
+    // },
     ttaType: {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
@@ -254,16 +272,16 @@ module.exports = (sequelize, DataTypes) => {
         return moment(this.updatedAt).format('MM/DD/YYYY');
       },
     },
-    creatorNameWithRole: {
-      type: DataTypes.VIRTUAL,
-      get() {
-        return generateCreatorNameWithRole(this);
-      },
-    },
-    approvedAt: {
-      allowNull: true,
-      type: DataTypes.DATE,
-    },
+    // creatorNameWithRole: {
+    //   type: DataTypes.VIRTUAL,
+    //   get() {
+    //     return generateCreatorNameWithRole(this);
+    //   },
+    // },
+    // approvedAt: {
+    //   allowNull: true,
+    //   type: DataTypes.DATE,
+    // },
     imported: {
       type: DataTypes.JSONB,
       comment: 'Storage for raw values from smartsheet CSV imports',
@@ -285,27 +303,28 @@ module.exports = (sequelize, DataTypes) => {
         });
       },
     },
-    creatorRole: {
-      allowNull: true,
-      type: DataTypes.ENUM(Object.keys(USER_ROLES).map((k) => USER_ROLES[k])),
-    },
-    creatorName: {
-      type: DataTypes.VIRTUAL,
-      get() {
-        // Any report in the alerts table should show the set creator role.
-        if (this.creatorRole || this.calculatedStatus !== REPORT_STATUSES.APPROVED) {
-          return this.creatorNameWithRole;
-        }
-        if (this.author) {
-          return this.author.fullName;
-        }
-        return null;
-      },
-    },
+    // creatorRole: {
+    //   allowNull: true,
+    //   type: DataTypes.ENUM(Object.keys(USER_ROLES).map((k) => USER_ROLES[k])),
+    // },
+    // creatorName: {
+    //   type: DataTypes.VIRTUAL,
+    //   get() {
+    //     // Any report in the alerts table should show the set creator role.
+    //     if (this.creatorRole || this.calculatedStatus !== REPORT_STATUSES.APPROVED) {
+    //       return this.creatorNameWithRole;
+    //     }
+    //     if (this.author) {
+    //       return this.author.fullName;
+    //     }
+    //     return null;
+    //   },
+    // },
   }, {
     hooks: {
-      beforeCreate: async (instance) => beforeCreate(instance),
-      beforeUpdate: async (instance) => beforeUpdate(instance),
+      beforeCreate: async (instance, options) => beforeCreate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
     sequelize,

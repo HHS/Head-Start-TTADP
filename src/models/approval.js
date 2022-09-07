@@ -106,7 +106,9 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes
         .ENUM(Object.keys(REPORT_STATUSES).map((k) => REPORT_STATUSES[k])),
-      validate: validateSubmissionStatus(),
+      validate: {
+        runValidators() { validateSubmissionStatus(this); },
+      },
     },
     calculatedStatus: {
       allowNull: true,
@@ -147,10 +149,10 @@ module.exports = (sequelize, DataTypes) => {
       afterUpdate: async (instance) => afterUpdate(sequelize, instance),
       afterUpsert: async (instance) => afterUpsert(sequelize, instance),
     },
-    indexes: [{
-      unique: true,
-      fields: ['activityReportId', 'userId'],
-    }],
+    // indexes: [{
+    //   unique: true,
+    //   fields: ['activityReportId', 'userId'],
+    // }],
     sequelize,
     paranoid: true,
     modelName: 'Approval',

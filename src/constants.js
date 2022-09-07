@@ -15,25 +15,25 @@ export const ENTITY_STATUSES = {
 };
 
 export const ENTITY_TYPES = {
-  REPORT: 'Report',
-  REPORTGOAL: 'ReportGoal',
-  REPORTOBJECTIVE: 'ReportObjective',
-  GOAL: 'Goal',
-  GOALTEMPLATE: 'GoalTemplate',
-  OBJECTIVE: 'Objective',
-  OBJECTIVETEMPLATE: 'ObjectiveTemplate',
+  REPORT: 'report',
+  REPORTGOAL: 'report_goal',
+  REPORTOBJECTIVE: 'report_objective',
+  GOAL: 'goal',
+  GOALTEMPLATE: 'goal_template',
+  OBJECTIVE: 'objective',
+  OBJECTIVETEMPLATE: 'objectiveTemplate',
 };
 export const APPROVAL_RATIO = {
-  ANY: 'Any',
-  MAJORITY: 'Majority',
-  TWOTHIRDS: 'TwoThirds',
-  ALL: 'All',
+  ANY: 'any',
+  MAJORITY: 'majority',
+  TWOTHIRDS: 'two_thirds',
+  ALL: 'all',
 };
 export const COLLABORATOR_TYPES = {
-  EDITOR: 'Editor',
-  OWNER: 'Owner',
-  INSTANTIATOR: 'Instantiator',
-  RATIFIER: 'Ratifier',
+  EDITOR: 'editor',
+  OWNER: 'owner',
+  INSTANTIATOR: 'instantiator',
+  RATIFIER: 'ratifier',
 };
 
 export const RATIFIER_STATUSES = {

@@ -1,68 +1,67 @@
 const { REPORT_STATUSES, ENTITY_TYPES } = require('../../constants');
 
-const requiredForSubmissionReport = () => [
-  this.report.numberOfParticipants,
-  this.report.deliveryMethod,
-  this.report.duration,
-  this.report.endDate,
-  this.report.startDate,
-  this.report.activityRecipientType,
-  this.report.requester,
-  this.report.targetPopulations,
-  this.report.reason,
-  this.report.participants,
-  this.report.topics,
-  this.report.ttaType,
-  this.report.creatorRole,
+const requiredForSubmissionReport = (report) => [
+  report.numberOfParticipants,
+  report.deliveryMethod,
+  report.duration,
+  report.endDate,
+  report.startDate,
+  report.activityRecipientType,
+  report.requester,
+  report.targetPopulations,
+  report.reason,
+  report.participants,
+  report.topics,
+  report.ttaType,
 ];
 
-const requiredForSubmissionReportGoal = () => [
-  this.reportGoal.name,
+const requiredForSubmissionReportGoal = (reportGoal) => [
+  reportGoal.name,
 ];
 
-const requiredForSubmissionReportObjective = () => [
-  this.reportObjective.title,
+const requiredForSubmissionReportObjective = (reportObjective) => [
+  reportObjective.title,
 ];
 
-const requiredForSubmissionGoal = () => [
-  this.goal.name,
+const requiredForSubmissionGoal = (goal) => [
+  goal.name,
 ];
 
-const requiredForSubmissionGoalTemplate = () => [
-  this.goalTemplate.name,
+const requiredForSubmissionGoalTemplate = (goalTemplate) => [
+  goalTemplate.name,
 ];
 
-const requiredForSubmissionObjective = () => [
-  this.objective.title,
+const requiredForSubmissionObjective = (objective) => [
+  objective.title,
 ];
 
-const requiredForSubmissionObjectiveTemplate = () => [
-  this.objectiveTemplate.title,
+const requiredForSubmissionObjectiveTemplate = (objectiveTemplate) => [
+  objectiveTemplate.title,
 ];
 
-const validateSubmissionStatus = () => {
+const validateSubmissionStatus = (approval) => {
   let requiredForSubmission;
-  switch (this.entityType) {
+  switch (approval.entityType) {
     case ENTITY_TYPES.REPORT:
-      requiredForSubmission = requiredForSubmissionReport();
+      requiredForSubmission = requiredForSubmissionReport(approval.report);
       break;
     case ENTITY_TYPES.REPORTGOAL:
-      requiredForSubmission = requiredForSubmissionReportGoal();
+      requiredForSubmission = requiredForSubmissionReportGoal(approval.reportGoal);
       break;
     case ENTITY_TYPES.REPORTOBJECTIVE:
-      requiredForSubmission = requiredForSubmissionReportObjective();
+      requiredForSubmission = requiredForSubmissionReportObjective(approval.reportObjective);
       break;
     case ENTITY_TYPES.GOAL:
-      requiredForSubmission = requiredForSubmissionGoal();
+      requiredForSubmission = requiredForSubmissionGoal(approval.goal);
       break;
     case ENTITY_TYPES.GOALTEMPLATE:
-      requiredForSubmission = requiredForSubmissionGoalTemplate();
+      requiredForSubmission = requiredForSubmissionGoalTemplate(approval.goalTemplate);
       break;
     case ENTITY_TYPES.OBJECTIVE:
-      requiredForSubmission = requiredForSubmissionObjective();
+      requiredForSubmission = requiredForSubmissionObjective(approval.objective);
       break;
     case ENTITY_TYPES.OBJECTIVETEMPLATE:
-      requiredForSubmission = requiredForSubmissionObjectiveTemplate();
+      requiredForSubmission = requiredForSubmissionObjectiveTemplate(approval.objectiveTemplate);
       break;
     default:
       requiredForSubmission = [];

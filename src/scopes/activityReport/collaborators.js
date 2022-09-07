@@ -1,11 +1,14 @@
 import { filterAssociation } from './utils';
-
+import { ENTITY_TYPES, COLLABORATOR_TYPES } from '../../constants';
+// TODO: fix
 const collaborators = `
 SELECT
-  "ActivityReportCollaborators"."activityReportId"
+  "Collaborators"."entityId"
 FROM "Users" "Users"
-INNER JOIN "ActivityReportCollaborators" "ActivityReportCollaborators"
-ON "ActivityReportCollaborators"."userId" = "Users"."id"
+INNER JOIN "Collaborators" "Collaborators"
+ON "Collaborators"."userId" = "Users"."id"
+AND '${COLLABORATOR_TYPES.EDITOR}' = ANY ("Collaborators"."collaboratorTypes")
+AND "Collaborators"."entityType" = '${ENTITY_TYPES.REPORT}'
 WHERE "Users"."name"`;
 
 export function withCollaborators(names) {

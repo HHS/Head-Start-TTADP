@@ -5,18 +5,26 @@ import { auditLogger } from '../../logger';
 
 import db, {
   ActivityReport,
-  ActivityReportApprover,
   ActivityRecipient,
+  Collaborator,
   User,
   Recipient,
   Grant,
-  ActivityReportCollaborator,
   OtherEntity,
   Program,
   Role,
   UserRole,
 } from '../../models';
-import { REPORT_STATUSES, APPROVER_STATUSES } from '../../constants';
+import {
+  REPORT_STATUSES,
+  APPROVER_STATUSES,
+  ENTITY_TYPES,
+} from '../../constants';
+import {
+  upsertRatifier,
+  upsertEditor,
+  syncOwnerInstantiators,
+} from '../../services/collaborators';
 import { createReport, destroyReport, createGrant } from '../../testUtils';
 
 const mockUser = {
@@ -37,7 +45,6 @@ const mockManager = {
 
 const draftReport = {
   submissionStatus: REPORT_STATUSES.DRAFT,
-  userId: mockUser.id,
   regionId: 1,
 };
 
@@ -65,7 +72,6 @@ const approvedReport = {
 // Included to test default scope
 const deletedReport = {
   submissionStatus: REPORT_STATUSES.DELETED,
-  userId: mockUser.id,
   regionId: 1,
 };
 
@@ -100,19 +106,28 @@ describe('filtersToScopes', () => {
     }, {
       silent: true,
     });
+    await syncOwnerInstantiators(ENTITY_TYPES.REPORT, globallyExcludedReport.id, [mockUser.id]);
   });
 
   afterAll(async () => {
     const userIds = [
-      mockUser.id, mockManager.id, includedUser1.id, includedUser2.id, excludedUser.id];
+      mockUser.id,
+      mockManager.id,
+      includedUser1.id,
+      includedUser2.id,
+      excludedUser.id];
     const reports = await ActivityReport.unscoped().findAll({
-      where: {
-        userId: userIds,
-      },
+      include: [{
+        model: Collaborator,
+        as: 'owners',
+        where: {
+          userId: { [Op.in]: userIds },
+        },
+        required: true,
+      }],
     });
-    const ids = reports.map((report) => report.id);
-    await ActivityReportApprover.destroy({ where: { activityReportId: ids }, force: true });
-    await ActivityReport.unscoped().destroy({ where: { id: ids } });
+    const reportIds = reports.map((report) => report.id);
+    await ActivityReport.unscoped().destroy({ where: { id: reportIds } });
     await User.destroy({
       where: {
         id: userIds,
@@ -129,10 +144,17 @@ describe('filtersToScopes', () => {
 
     beforeAll(async () => {
       reportIncluded = await ActivityReport.create({ ...draftReport, id: 12345 });
+      try {
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportIncluded.id, [mockUser.id]);
+      } catch (err) {
+        auditLogger.error(err);
+      }
       reportIncludedLegacy = await ActivityReport.create(
         { ...draftReport, legacyId: 'R01-AR-012345' },
       );
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportIncludedLegacy.id, [mockUser.id]);
       reportExcluded = await ActivityReport.create({ ...draftReport, id: 12346 });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportExcluded.id, [mockUser.id]);
       possibleIds = [
         reportIncluded.id,
         reportIncludedLegacy.id,
@@ -188,8 +210,11 @@ describe('filtersToScopes', () => {
         otherEntityExcluded = await OtherEntity.create({ id: 42, name: 'otherEntity' });
 
         reportIncluded1 = await ActivityReport.create({ ...draftReport });
+        await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportIncluded1.id, [mockUser.id]);
         reportIncluded2 = await ActivityReport.create({ ...draftReport });
+        await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportIncluded2.id, [mockUser.id]);
         reportExcluded = await ActivityReport.create({ ...draftReport });
+        await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportExcluded.id, [mockUser.id]);
 
         await ActivityRecipient.create({
           activityReportId: reportIncluded1.id,
@@ -279,8 +304,11 @@ describe('filtersToScopes', () => {
         });
 
         reportIncluded1 = await ActivityReport.create({ ...draftReport });
+        await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportIncluded1.id, [mockUser.id]);
         reportIncluded2 = await ActivityReport.create({ ...draftReport });
+        await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportIncluded2.id, [mockUser.id]);
         reportExcluded = await ActivityReport.create({ ...draftReport });
+        await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportExcluded.id, [mockUser.id]);
 
         await ActivityRecipient.create({
           activityReportId: reportIncluded1.id,
@@ -400,7 +428,9 @@ describe('filtersToScopes', () => {
         });
 
         reportIncluded = await ActivityReport.create({ ...draftReport });
+        await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportIncluded.id, [mockUser.id]);
         reportExcluded = await ActivityReport.create({ ...draftReport });
+        await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportExcluded.id, [mockUser.id]);
 
         await ActivityRecipient.create({
           activityReportId: reportIncluded.id,
@@ -455,9 +485,13 @@ describe('filtersToScopes', () => {
 
     beforeAll(async () => {
       firstReport = await ActivityReport.create({ ...draftReport, startDate: '2020-01-01' });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, firstReport.id, [mockUser.id]);
       secondReport = await ActivityReport.create({ ...draftReport, startDate: '2021-01-01' });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, secondReport.id, [mockUser.id]);
       thirdReport = await ActivityReport.create({ ...draftReport, startDate: '2022-01-01' });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, thirdReport.id, [mockUser.id]);
       fourthReport = await ActivityReport.create({ ...draftReport, startDate: '2023-01-01' });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, fourthReport.id, [mockUser.id]);
       possibleIds = [
         firstReport.id,
         secondReport.id,
@@ -527,9 +561,13 @@ describe('filtersToScopes', () => {
 
     beforeAll(async () => {
       firstReport = await ActivityReport.create({ ...draftReport, updatedAt: '2020-01-01' }, { silent: true });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, firstReport.id, [mockUser.id]);
       secondReport = await ActivityReport.create({ ...draftReport, updatedAt: '2021-01-01' }, { silent: true });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, secondReport.id, [mockUser.id]);
       thirdReport = await ActivityReport.create({ ...draftReport, updatedAt: '2022-01-01' }, { silent: true });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, thirdReport.id, [mockUser.id]);
       fourthReport = await ActivityReport.create({ ...draftReport, updatedAt: '2023-01-01' }, { silent: true });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, fourthReport.id, [mockUser.id]);
       possibleIds = [
         firstReport.id,
         secondReport.id,
@@ -598,9 +636,12 @@ describe('filtersToScopes', () => {
     let possibleIds;
 
     beforeAll(async () => {
-      includedReport1 = await ActivityReport.create({ ...draftReport, userId: includedUser1.id });
-      includedReport2 = await ActivityReport.create({ ...draftReport, userId: includedUser2.id });
-      excludedReport = await ActivityReport.create({ ...draftReport, userId: excludedUser.id });
+      includedReport1 = await ActivityReport.create(draftReport);
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, includedReport1.id, [includedUser1.id]);
+      includedReport2 = await ActivityReport.create(draftReport);
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, includedReport2.id, [includedUser2.id]);
+      excludedReport = await ActivityReport.create(draftReport);
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, excludedReport.id, [excludedUser.id]);
       possibleIds = [
         includedReport1.id,
         includedReport2.id,
@@ -660,11 +701,14 @@ describe('filtersToScopes', () => {
         ...draftReport,
         topics: ['test', 'test 2'],
       });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, includedReport1.id, [mockUser.id]);
       includedReport2 = await ActivityReport.create({
         ...draftReport,
         topics: ['a test', 'another topic'],
       });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, includedReport2.id, [mockUser.id]);
       excludedReport = await ActivityReport.create({ ...draftReport, topics: ['another topic'] });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, excludedReport.id, [mockUser.id]);
       possibleIds = [
         includedReport1.id,
         includedReport2.id,
@@ -708,23 +752,28 @@ describe('filtersToScopes', () => {
     let excludedReport;
     let possibleIds;
 
-    let includedActivityReportCollaborator1;
-    let includedActivityReportCollaborator2;
-    let excludedActivityReportCollaborator;
-
     beforeAll(async () => {
       includedReport1 = await ActivityReport.create(draftReport);
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, includedReport1.id, [mockUser.id]);
       includedReport2 = await ActivityReport.create(draftReport);
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, includedReport2.id, [mockUser.id]);
       excludedReport = await ActivityReport.create(draftReport);
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, excludedReport.id, [mockUser.id]);
 
-      includedActivityReportCollaborator1 = await ActivityReportCollaborator.create({
-        activityReportId: includedReport1.id, userId: includedUser1.id,
+      await upsertEditor({
+        entityType: ENTITY_TYPES.REPORT,
+        entityId: includedReport1.id,
+        userId: includedUser1.id,
       });
-      includedActivityReportCollaborator2 = await ActivityReportCollaborator.create({
-        activityReportId: includedReport2.id, userId: includedUser2.id,
+      await upsertEditor({
+        entityType: ENTITY_TYPES.REPORT,
+        entityId: includedReport2.id,
+        userId: includedUser2.id,
       });
-      excludedActivityReportCollaborator = await ActivityReportCollaborator.create({
-        activityReportId: excludedReport.id, userId: excludedUser.id,
+      await upsertEditor({
+        entityType: ENTITY_TYPES.REPORT,
+        entityId: excludedReport.id,
+        userId: excludedUser.id,
       });
       possibleIds = [
         includedReport1.id,
@@ -737,15 +786,6 @@ describe('filtersToScopes', () => {
     afterAll(async () => {
       await ActivityReport.destroy({
         where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
-      });
-      await ActivityReportCollaborator.destroy({
-        where: {
-          id: [
-            includedActivityReportCollaborator1.id,
-            includedActivityReportCollaborator2.id,
-            excludedActivityReportCollaborator.id,
-          ],
-        },
       });
     });
 
@@ -779,15 +819,27 @@ describe('filtersToScopes', () => {
 
     beforeAll(async () => {
       includedReportMultApprover = await ActivityReport.create(submittedReport);
-      await ActivityReportApprover.create({
+      await syncOwnerInstantiators(
+        ENTITY_TYPES.REPORT,
+        includedReportMultApprover.id,
+        [mockUser.id],
+      );
+      await upsertRatifier({
+        entityType: ENTITY_TYPES.REPORT,
+        entityId: includedReportMultApprover.id,
         ...approverApproved,
-        activityReportId: includedReportMultApprover.id,
       });
 
       excludedReportMultApprover = await ActivityReport.create(submittedReport);
-      await ActivityReportApprover.create({
+      await syncOwnerInstantiators(
+        ENTITY_TYPES.REPORT,
+        excludedReportMultApprover.id,
+        [mockUser.id],
+      );
+      await upsertRatifier({
+        entityType: ENTITY_TYPES.REPORT,
+        entityId: excludedReportMultApprover.id,
         ...approverRejected,
-        activityReportId: excludedReportMultApprover.id,
       });
       possibleIds = [
         includedReportMultApprover.id,
@@ -864,22 +916,20 @@ describe('filtersToScopes', () => {
         roleId: grantsSpecialist.id,
       });
 
-      await ActivityReport.create({ ...approvedReport, id: 777, userId: 777 });
-      await ActivityReport.create({ ...approvedReport, id: 778, userId: 779 });
-      await ActivityReport.create({ ...approvedReport, id: 779, userId: 779 });
-      await ActivityReportCollaborator.create({
-        id: 777,
-        activityReportId: 778,
+      await ActivityReport.create({ ...approvedReport, id: 777 });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, 777, [777]);
+      await ActivityReport.create({ ...approvedReport, id: 778 });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, 778, [779]);
+      await ActivityReport.create({ ...approvedReport, id: 779 });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, 779, [779]);
+      await upsertEditor({
+        entityType: ENTITY_TYPES.REPORT,
+        entityId: 778,
         userId: 778,
       });
     });
 
     afterAll(async () => {
-      await ActivityReportCollaborator.destroy({
-        where: {
-          id: possibleIds,
-        },
-      });
       await ActivityReport.destroy({
         where: {
           id: possibleIds,
@@ -962,18 +1012,22 @@ describe('filtersToScopes', () => {
 
     beforeAll(async () => {
       reportOne = await ActivityReport.create(submittedReport);
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportOne.id, [mockUser.id]);
       reportTwo = await ActivityReport.create({
         ...submittedReport,
         targetPopulations: ['Infants and Toddlers (ages birth to 3)'],
       });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportTwo.id, [mockUser.id]);
       reportThree = await ActivityReport.create({
         ...submittedReport,
         targetPopulations: ['Dual-Language Learners'],
       });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportThree.id, [mockUser.id]);
       reportFour = await ActivityReport.create({
         ...submittedReport,
         targetPopulations: [],
       });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportFour.id, [mockUser.id]);
 
       possibleIds = [
         reportOne.id,
@@ -1049,9 +1103,13 @@ describe('filtersToScopes', () => {
 
     beforeAll(async () => {
       reportOne = await ActivityReport.create({ ...approvedReport, reason: ['School Readiness Goals', 'Child Incidents'] });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportOne.id, [mockUser.id]);
       reportTwo = await ActivityReport.create({ ...approvedReport, reason: ['School Readiness Goals', 'Ongoing Quality Improvement'] });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportTwo.id, [mockUser.id]);
       reportThree = await ActivityReport.create({ ...approvedReport, reason: ['COVID-19 response'] });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportThree.id, [mockUser.id]);
       reportFour = await ActivityReport.create({ ...approvedReport, reason: [] });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportFour.id, [mockUser.id]);
 
       possibleIds = [
         reportOne.id,
@@ -1133,8 +1191,11 @@ describe('filtersToScopes', () => {
       });
 
       reportIncluded1 = await ActivityReport.create({ ...draftReport });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportIncluded1.id, [mockUser.id]);
       reportIncluded2 = await ActivityReport.create({ ...draftReport });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportIncluded2.id, [mockUser.id]);
       reportExcluded = await ActivityReport.create({ ...draftReport });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportExcluded.id, [mockUser.id]);
 
       await ActivityRecipient.create({
         activityReportId: reportIncluded1.id,
@@ -1347,6 +1408,7 @@ describe('filtersToScopes', () => {
     it('excludes deleted reports', async () => {
       const beginningARCount = await ActivityReport.count();
       const deleted = await ActivityReport.create(deletedReport);
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, deleted.id, [mockUser.id]);
       expect(deleted.id).toBeDefined();
       const endARCount = await ActivityReport.count();
       expect(endARCount).toEqual(beginningARCount);
@@ -1615,15 +1677,12 @@ describe('filtersToScopes', () => {
       otherEntityExcluded = await OtherEntity.create({ id: 25459, name: 'QRIS System' });
       otherEntityIncluded2 = await OtherEntity.create({ id: 25460, name: 'State CCR&R' });
 
-      reportIncluded1 = await ActivityReport.create(
-        { userId: mockUser.id, ...draftReport },
-      );
-      reportIncluded2 = await ActivityReport.create(
-        { userId: mockUser.id, ...draftReport },
-      );
-      reportExcluded = await ActivityReport.create(
-        { userId: mockUser.id, ...draftReport },
-      );
+      reportIncluded1 = await ActivityReport.create(draftReport);
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportIncluded1.id, [mockUser.id]);
+      reportIncluded2 = await ActivityReport.create(draftReport);
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportIncluded2.id, [mockUser.id]);
+      reportExcluded = await ActivityReport.create(draftReport);
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, reportExcluded.id, [mockUser.id]);
 
       await ActivityRecipient.create({
         activityReportId: reportIncluded1.id,

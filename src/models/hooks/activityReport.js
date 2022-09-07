@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { REPORT_STATUSES } = require('../../constants');
+const { REPORT_STATUSES, ENTITY_TYPES, APPROVAL_RATIO } = require('../../constants');
 const { auditLogger } = require('../../logger');
 const { findOrCreateGoalTemplate } = require('./goal');
 const { findOrCreateObjectiveTemplate } = require('./objective');
@@ -20,6 +20,59 @@ const copyStatus = (instance) => {
     instance.set('calculatedStatus', submissionStatus);
   }
 };
+
+const cleanUpAllCollaborators = async (
+  sequelize,
+  instance,
+  options,
+) => sequelize.models.Collaborator.destroy({
+  where: { entityType: ENTITY_TYPES.REPORT, entityId: instance.id },
+  transaction: options.transaction,
+});
+
+const cleanUpAllApprovals = async (
+  sequelize,
+  instance,
+  options,
+) => sequelize.models.Approval.destroy({
+  where: { entityType: ENTITY_TYPES.REPORT, entityId: instance.id },
+  transaction: options.transaction,
+});
+
+const cleanUpAllReportGoals = async (
+  sequelize,
+  instance,
+  options,
+) => sequelize.models.ActivityReportGoal.destroy({
+  where: { activityReportId: instance.id },
+  transaction: options.transaction,
+});
+
+const cleanUpAllReportObjectives = async (
+  sequelize,
+  instance,
+  options,
+) => sequelize.models.ActivityReportObjective.destroy({
+  where: { activityReportId: instance.id },
+  transaction: options.transaction,
+});
+
+const createApproval = async (
+  sequelize,
+  instance,
+  options,
+) => sequelize.models.Approval.create(
+  {
+    entityType: ENTITY_TYPES.REPORT,
+    entityId: instance.id,
+    tier: 0,
+    ratioRequired: APPROVAL_RATIO.ALL,
+    submissionStatus: REPORT_STATUSES.DRAFT,
+  },
+  {
+    transaction: options.transaction,
+  },
+);
 
 const propogateSubmissionStatus = async (sequelize, instance, options) => {
   const changed = instance.changed();
@@ -325,6 +378,18 @@ const beforeCreate = async (instance) => {
 const beforeUpdate = async (instance) => {
   copyStatus(instance);
 };
+
+const beforeDestroy = async (sequelize, instance, options) => {
+  await cleanUpAllCollaborators(sequelize, instance, options);
+  await cleanUpAllApprovals(sequelize, instance, options);
+  await cleanUpAllReportGoals(sequelize, instance, options);
+  await cleanUpAllReportObjectives(sequelize, instance, options);
+};
+
+const afterCreate = async (sequelize, instance, options) => {
+  await createApproval(sequelize, instance, options);
+};
+
 const afterUpdate = async (sequelize, instance, options) => {
   await propogateSubmissionStatus(sequelize, instance, options);
   await propagateApprovedStatus(sequelize, instance, options);
@@ -333,9 +398,16 @@ const afterUpdate = async (sequelize, instance, options) => {
 
 export {
   copyStatus,
+  cleanUpAllCollaborators,
+  cleanUpAllApprovals,
+  cleanUpAllReportGoals,
+  cleanUpAllReportObjectives,
+  createApproval,
   propagateApprovedStatus,
   automaticStatusChangeOnAprovalForGoals,
   beforeCreate,
   beforeUpdate,
+  beforeDestroy,
+  afterCreate,
   afterUpdate,
 };

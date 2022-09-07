@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import { sequelize } from '../../models';
-
+// TODO: fix
 export function withCalculatedStatus(statuses) {
   return sequelize.where(
     sequelize.cast(sequelize.col('"ActivityReport".calculatedStatus'), 'text'),

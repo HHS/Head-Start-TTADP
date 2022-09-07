@@ -1,8 +1,6 @@
 import faker from '@faker-js/faker';
 import db, {
   ActivityReport,
-  ActivityReportApprover,
-  ActivityReportCollaborator,
   User,
   Recipient,
   Grant,
@@ -10,7 +8,11 @@ import db, {
 import {
   activityReportsForCleanup,
 } from './activityReports';
-import { REPORT_STATUSES } from '../constants';
+import { REPORT_STATUSES, ENTITY_TYPES } from '../constants';
+import {
+  upsertRatifier,
+  upsertEditor,
+} from './collaborators';
 
 import { createReport, destroyReport } from '../testUtils';
 
@@ -94,6 +96,9 @@ describe('Activity report cleanup service', () => {
     await db.sequelize.close();
   });
 
+  let reportByMockAuthorWithMockCollaborator;
+  let reportByMockAuthorWithMockApprover;
+
   beforeAll(async () => {
     await Promise.all([
       User.bulkCreate([
@@ -123,32 +128,24 @@ describe('Activity report cleanup service', () => {
     // report that is too old
     await createReport({ ...submittedReport, createdAt: '2020-09-01T12:00:00Z' });
 
-    const reportByMockAuthorWithMockCollaborator = await createReport(submittedReport);
+    reportByMockAuthorWithMockCollaborator = await createReport(submittedReport);
 
-    await ActivityReportCollaborator.create({
-      activityReportId: reportByMockAuthorWithMockCollaborator.id,
+    await upsertEditor({
+      entityType: ENTITY_TYPES.REPORT,
+      entityId: reportByMockAuthorWithMockCollaborator.id,
       userId: mockCollaborator.id,
     });
 
-    const reportByMockAuthorWithMockApprover = await createReport(submittedReport);
+    reportByMockAuthorWithMockApprover = await createReport(submittedReport);
 
-    await ActivityReportApprover.create({
-      activityReportId: reportByMockAuthorWithMockApprover.id,
+    await upsertRatifier({
+      entityType: ENTITY_TYPES.REPORT,
+      entityId: reportByMockAuthorWithMockApprover.id,
       userId: mockApprover.id,
     });
   });
 
   afterAll(async () => {
-    await ActivityReportApprover.destroy({
-      where: {
-        userId: mockApprover.id,
-      },
-    });
-    await ActivityReportCollaborator.destroy({
-      where: {
-        userId: mockCollaborator.id,
-      },
-    });
     const reportsToDestroy = await ActivityReport.findAll({
       where: {
         userId: [mockAuthor.id, mockPhantomUser.id],
