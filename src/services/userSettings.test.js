@@ -71,7 +71,7 @@ describe('UserSetting service', () => {
     it('properly serializes', async () => {
       const setting = { key: USER_SETTINGS.EMAIL.KEYS.APPROVAL, value: { b: { c: 1 } } };
       await saveSettings(999, [setting]);
-      const found = await usersWithSetting(setting.key, setting.value);
+      const found = await usersWithSetting(setting.key, [setting.value]);
       expect(found.length).toEqual(1);
     });
   });
@@ -83,25 +83,25 @@ describe('UserSetting service', () => {
       const k = USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED;
       const v = USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
 
-      const users = await usersWithSetting(k, v);
+      const users = await usersWithSetting(k, [v]);
 
       expect(users.length).toBe(1);
       expect(users[0].dataValues.id).toBe(999);
     });
-  });
 
-  it('returns the user(s) whose settings match the provided key/value - defaults', async () => {
-    await subscribeAll(999);
-    await unsubscribeAll(1000);
+    it('returns the user(s) whose settings match the provided key/value - defaults', async () => {
+      await subscribeAll(999);
+      await unsubscribeAll(1000);
 
-    const k = USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED;
-    const v = USER_SETTINGS.EMAIL.VALUES.NEVER;
+      const k = USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED;
+      const v = USER_SETTINGS.EMAIL.VALUES.NEVER;
 
-    const users = await usersWithSetting(k, v);
+      const users = await usersWithSetting(k, [v]);
 
-    const ids = users.map(({ dataValues: { id } }) => id);
-    expect(ids.includes(999)).toBe(false);
-    expect(ids.includes(1000)).toBe(true);
+      const ids = users.map(({ dataValues: { id } }) => id);
+      expect(ids.includes(999)).toBe(false);
+      expect(ids.includes(1000)).toBe(true);
+    });
   });
 
   describe('userSettingsById', () => {
