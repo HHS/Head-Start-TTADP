@@ -1,0 +1,22 @@
+p Hello #{user.name},
+p Below are your report notifications for #{freq}.
+p Select the name of a report to view it in the Hub.
+case type
+    when 'collaboratorDigest'
+        p You were added as a collaborator on these activity reports:
+    when 'changesRequestedDigest'
+        p Changes were requested to these activity reports:
+    when 'approverAssignedDigest'
+        p These activity reports were submitted for your review:
+    when 'reportApprovedDigest'
+        p These activity reports were approved:
+    default
+        p
+ul
+  for report in reports
+    li 
+      a(href=reportPath + report.id)= report.displayId
+p That's it!
+p Best wishes,
+  br
+  | The TTA Hub team
