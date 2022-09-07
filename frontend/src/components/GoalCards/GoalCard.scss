@@ -1,19 +1,26 @@
 @use '../../colors' as *;
 
+$min-width-text-column: 428px;
+$min-width-topics-column: 200px;
 $min-width-date-column: 140px;
 $max-width-date-column: 50%;
 
-.ttahub-goal-card .smart-hub--context-menu {
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.1);
-  width: 180px;
+// reset font sizes
+.ttahub-goal-card,
+.ttahub-goal-card .smart-hub-tooltip .smart-hub--ellipsis {
+  font-size: 1.06rem;
 }
-  
+.ttahub-goal-card .smart-hub--menu-button .fa-ellipsis {
+  font-size: 1.5rem;
+}
+
 .ttahub-goal-card__goal-column__goal-text {
-  flex-basis: clamp(400px, 100%, 100%);
+  flex-basis: clamp($min-width-text-column, 100%, 100%);
 }
 
 .ttahub-goal-card__goal-column__goal-topics {
-  flex-basis: clamp(400px, 100%, 100%);
+  flex-basis: clamp($min-width-topics-column, 100%, 100%);
+  text-overflow: ellipsis;
 }
 
 .ttahub-goal-card__goal-column__created-on, 
@@ -24,7 +31,7 @@ $max-width-date-column: 50%;
 
 @media(min-width: 1215px) {
   .ttahub-goal-card__goal-column__goal-text {
-    flex-basis: clamp(400px, 60%, 100%);
+    flex-basis: clamp($min-width-text-column, 60%, 100%);
   }
       
   .ttahub-goal-card__goal-column__goal-topics {
@@ -35,11 +42,11 @@ $max-width-date-column: 50%;
 
 @media(min-width: 1475px) {
   .ttahub-goal-card__goal-column__goal-text {
-    flex-basis: clamp(40%, 400px, 100%);
+    flex-basis: clamp($min-width-text-column, 40%, 100%);
   }
 
   .ttahub-goal-card__goal-column__goal-topics {
-    flex-basis: clamp(20%, 180px, 200px);
+    flex-basis: clamp($min-width-topics-column, 20%, $min-width-topics-column);
   }
 
   .ttahub-goal-card__goal-column__created-on, 

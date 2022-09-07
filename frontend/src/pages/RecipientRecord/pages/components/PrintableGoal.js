@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import PrintableObjective from './PrintableObjective';
 import { ROW_CLASS, FIRST_COLUMN_CLASS, SECOND_COLUMN_CLASS } from './constants';
-import { STATUSES } from '../../../../components/GoalsTable/StatusDropdown';
+import { STATUSES } from '../../../../components/GoalCards/components/StatusDropdown';
 import List from './List';
 
 export default function PrintableGoal({ goal }) {

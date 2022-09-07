@@ -11,10 +11,11 @@ import {
   NoStatus,
   NotStarted,
 } from './icons';
-import './ObjectiveRow.scss';
+import './ObjectiveCard.scss';
 
-function ObjectiveRow({
+function ObjectiveCard({
   objective,
+  objectivesExpanded,
 }) {
   const {
     title,
@@ -98,14 +99,14 @@ function ObjectiveRow({
   })();
 
   return (
-    <ul className="ttahub-goal-card__objective-list-item usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg">
-      <li className="display-flex">
+    <ul className="ttahub-goal-card__objective-list usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg" hidden={!objectivesExpanded}>
+      <li className="display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 minw-15">Objective </span>
         <div>{title}</div>
       </li>
-      <li className="display-flex">
+      <li className="display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 minw-15">Activity reports </span>
-        <ul className="usa-list usa-list--unstyled ttahub-objective-row-activity-report-list">
+        <ul className="usa-list usa-list--unstyled">
           {activityReports.map((report) => {
             const viewOrEditLink = `/activity-reports/view/${report.id}`;
             const linkToAr = report.legacyId ? `/activity-reports/legacy/${report.legacyId}` : viewOrEditLink;
@@ -121,19 +122,19 @@ function ObjectiveRow({
           })}
         </ul>
       </li>
-      <li className="display-flex">
+      <li className="display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 minw-15">Grant number </span>
         {grantNumbers.join(', ')}
       </li>
-      <li className="display-flex">
+      <li className="display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 minw-15">End date </span>
         {endDate}
       </li>
-      <li className="display-flex">
+      <li className="display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 minw-15">Reasons</span>
         {reasons && displayReasonsList(reasons.sort())}
       </li>
-      <li className="display-flex">
+      <li className="display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 minw-15">Objective status </span>
         {getObjectiveStatusIcon}
         {displayObjStatus}
@@ -153,6 +154,7 @@ export const objectivePropTypes = PropTypes.shape({
     legacyId: PropTypes.string,
     number: PropTypes.string,
     id: PropTypes.number,
+    endDate: PropTypes.string,
   })),
 });
 
@@ -164,7 +166,8 @@ objectivePropTypes.defaultProps = {
   grantNumbers: [],
   activityReports: [],
 };
-ObjectiveRow.propTypes = {
+ObjectiveCard.propTypes = {
   objective: objectivePropTypes.isRequired,
+  objectivesExpanded: PropTypes.bool.isRequired,
 };
-export default ObjectiveRow;
+export default ObjectiveCard;

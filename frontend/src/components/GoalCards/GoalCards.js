@@ -2,11 +2,10 @@
 import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Grid, Alert } from '@trussworks/react-uswds';
-import GoalsTableHeader from './GoalsTableHeader';
+import GoalsCardsHeader from './GoalsCardsHeader';
 import Container from '../Container';
-import GoalCard from './GoalRow';
+import GoalCard from './GoalCard';
 import { GOALS_PER_PAGE } from '../../Constants';
-import './GoalTable.scss';
 
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
 import { updateGoalStatus } from '../../fetchers/goals';
@@ -19,7 +18,7 @@ function GoalCards({
   error,
   goalsCount,
   handlePageChange,
-  // requestSort,
+  requestSort,
   loading,
   sortConfig,
   setGoals,
@@ -66,48 +65,6 @@ function GoalCards({
     setGoals(newGoals);
   };
 
-  // const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
-  // const renderColumnHeader = (displayName, name, allowSort = true, align = 'left') => {
-  //   const sortClassName = getClassNamesFor(name);
-  //   let fullAriaSort;
-  //   switch (sortClassName) {
-  //     case 'asc':
-  //       fullAriaSort = 'ascending';
-  //       break;
-  //     case 'desc':
-  //       fullAriaSort = 'descending';
-  //       break;
-  //     default:
-  //       fullAriaSort = 'none';
-  //       break;
-  //   }
-
-  //   return (
-  //     <th scope="col" aria-sort={fullAriaSort} className={`text-${align}`}>
-  //       {
-  //         allowSort
-  //           ? (
-  //             <a
-  //               role="button"
-  //               tabIndex={0}
-  //               onClick={() => {
-  //                 requestSort(name);
-  //               }}
-  //               onKeyPress={() => requestSort(name)}
-  //               className={`sortable ${sortClassName}`}
-  //               aria-label={`${displayName}. Activate to sort
-  // ${sortClassName === 'asc' ? 'descending' : 'ascending'
-  //               }`}
-  //             >
-  //               {displayName}
-  //             </a>
-  //           )
-  //           : displayName
-  //       }
-  //     </th>
-  //   );
-  // };
-
   return (
     <>
       {error && (
@@ -127,7 +84,7 @@ function GoalCards({
           resetValues={resetModalValues}
           oldGoalStatus={closeSuspendOldStatus}
         />
-        <GoalsTableHeader
+        <GoalsCardsHeader
           title="TTA goals and objectives"
           count={goalsCount || 0}
           activePage={sortConfig.activePage}
@@ -138,6 +95,7 @@ function GoalCards({
           regionId={regionId}
           hasActiveGrants={hasActiveGrants}
           sortConfig={sortConfig}
+          requestSort={requestSort}
         />
         <div>
 
@@ -170,7 +128,7 @@ GoalCards.propTypes = {
   error: PropTypes.string.isRequired,
   goalsCount: PropTypes.number.isRequired,
   handlePageChange: PropTypes.func.isRequired,
-  // requestSort: PropTypes.func.isRequired,
+  requestSort: PropTypes.func.isRequired,
   loading: PropTypes.bool.isRequired,
   sortConfig: PropTypes.shape({
     sortBy: PropTypes.string,
