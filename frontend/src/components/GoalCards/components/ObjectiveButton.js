@@ -25,7 +25,7 @@ export default function ObjectiveButton({
       ref={expandObjectivesRef}
       className="usa-button--outline usa-button text-no-underline text-middle tta-smarthub--goal-row-objectives tta-smarthub--goal-row-objectives-enabled"
       onClick={() => closeOrOpenObjectives(false)}
-      aria-label={`${objectivesExpanded ? 'Collapse' : 'Expand'} objective's for goal ${goalNumber}`}
+      aria-label={`${objectivesExpanded ? 'Collapse' : 'Expand'} objectives for goal ${goalNumber}`}
     >
       View objective
       {objectiveCount > 1 ? 's' : ''}

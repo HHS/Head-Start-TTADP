@@ -1,69 +1,23 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import { useHistory } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFlag } from '@fortawesome/free-solid-svg-icons';
-import StatusDropdown from './StatusDropdown';
+import StatusDropdown from './components/StatusDropdown';
 import ContextMenu from '../ContextMenu';
 import Tooltip from '../Tooltip';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
-import ObjectiveRow from './ObjectiveRow';
+import ObjectiveCard from './ObjectiveCard';
 import ObjectiveButton from './components/ObjectiveButton';
-import './GoalRow.scss';
+import Topics from './components/Topics';
 import './GoalCard.scss';
 import colors from '../../colors';
 
-const Topics = ({ topics }) => {
-  if (!topics.length) {
-    return null;
-  }
-
-  const SUBSTRING_LENGTH = 24;
-
-  const truncated = topics.map((topic) => {
-    if (topic.length > SUBSTRING_LENGTH) {
-      return `${topic.substring(0, SUBSTRING_LENGTH)}...`;
-    }
-
-    return topic;
-  });
-
-  if (topics.length > 3) {
-    const howManyMore = topics.length - 3;
-    const tooltipLabel = `+ ${howManyMore} more`;
-
-    return (
-      <ul className="usa-list usa-list--unstyled">
-        {truncated.slice(0, 3).map((topic) => <li key={topic}>{topic}</li>)}
-        <li>
-          <Tooltip
-            screenReadDisplayText={false}
-            displayText={tooltipLabel}
-            buttonLabel={topics.slice(-howManyMore).join(' ')}
-            tooltipText={topics.slice(-howManyMore).map((topic) => <span key={topic} className="width-card display-block padding-bottom-1">{topic}</span>)}
-          />
-        </li>
-      </ul>
-    );
-  }
-
-  return (
-    <ul className="usa-list usa-list--unstyled">
-      {truncated.map((topic) => <li key={topic}>{topic}</li>)}
-    </ul>
-  );
-};
-
-Topics.propTypes = {
-  topics: PropTypes.arrayOf(PropTypes.string).isRequired,
-};
-
 function GoalCard({
   goal,
-  openMenuUp,
   recipientId,
   regionId,
   showCloseSuspendGoalModal,
@@ -82,6 +36,13 @@ function GoalCard({
     previousStatus,
   } = goal;
 
+  const endDates = useMemo(() => objectives.reduce((prev, curr) => [
+    ...prev,
+    ...curr.activityReports.map((ar) => ar.endDate),
+  ], []).sort((a, b) => moment(a, 'MM/DD/YYYY') - moment(b, 'MM/DD/YYYY')), [objectives]);
+
+  const lastTTA = endDates.pop();
+
   const history = useHistory();
 
   const goalNumbers = goal.goalNumbers.join(', ');
@@ -98,34 +59,6 @@ function GoalCard({
   const expandObjectivesRef = useRef();
 
   const [objectivesExpanded, setObjectivesExpanded] = useState(false);
-
-  // const mapToDisplay = [
-  //   {
-  //     stored: 'In Progress',
-  //     display: 'In progress',
-  //     color: colors.ttahubMediumBlue,
-  //   },
-  //   {
-  //     stored: 'Completed',
-  //     display: 'Closed',
-  //     color: colors.successDarker,
-  //   },
-  //   {
-  //     stored: 'Draft',
-  //     display: 'Draft',
-  //     color: colors.baseDarkest,
-  //   },
-  //   {
-  //     stored: 'Not Started',
-  //     display: 'Not started',
-  //     color: colors.ttahubOrange,
-  //   },
-  //   {
-  //     stored: 'Ceased/Suspended',
-  //     display: 'Suspended',
-  //     color: colors.errorDark,
-  //   },
-  // ];
 
   const determineFlagStatus = () => {
     const reasonsToWatch = reasons.find((t) => reasonsToMonitor.includes(t));
@@ -153,16 +86,6 @@ function GoalCard({
     setObjectivesExpanded(!objectivesExpanded);
   };
 
-  // const getStatusColor = () => {
-  //   if (goalStatus) {
-  //     const goalStatusDisplay = mapToDisplay.find((m) => m.stored === goalStatus);
-  //     if (goalStatusDisplay) {
-  //       return goalStatusDisplay.color;
-  //     }
-  //   }
-  //   return colors.baseLighter;
-  // };
-
   const contextMenuLabel = `Actions for goal ${id}`;
   const showContextMenu = true;
   const menuItems = [
@@ -174,21 +97,8 @@ function GoalCard({
     },
   ];
 
-  // const containerStyle = objectivesExpanded ? {
-  //   borderLeft: `4px solid ${getStatusColor()}`,
-  //   borderBottom: `1px solid ${colors.baseLighter}`,
-  //   borderRight: `1px solid ${colors.baseLighter}`,
-  //   borderTop: 0,
-  // } : {
-  //   borderTop: 0,
-  //   borderLeft: `1px solid ${colors.baseLighter}`,
-  //   borderBottom: `1px solid ${colors.baseLighter}`,
-  //   borderRight: `1px solid ${colors.baseLighter}`,
-  //   paddingLeft: '25px',
-  // };
-
   return (
-    <article className="ttahub-goal-card usa-card margin-x-3 margin-y-2 padding-7 radius-lg border smart-hub-border-base-lighter ">
+    <article className="ttahub-goal-card usa-card margin-x-3 margin-y-2 padding-3 radius-lg border smart-hub-border-base-lighter ">
       <div className="display-flex flex-justify">
         <StatusDropdown
           goalId={id}
@@ -196,7 +106,6 @@ function GoalCard({
           onUpdateGoalStatus={onUpdateGoalStatus}
           previousStatus={previousStatus}
           regionId={regionId}
-          up={openMenuUp}
         />
 
         {showContextMenu
@@ -204,37 +113,37 @@ function GoalCard({
             <ContextMenu
               label={contextMenuLabel}
               menuItems={menuItems}
-              up={openMenuUp}
             />
           )
           : null}
       </div>
-      <div className="display-flex margin-top-2 flex-wrap">
+      <div className="display-flex flex-wrap margin-y-2">
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-text padding-right-3">
-          <h2 className="font-body-xs">
+          <h3 className="usa-prose usa-prose margin-y-0">
             Goal
             {' '}
             {goalNumbers}
-          </h2>
-          <p className="text-wrap usa-prose">
+          </h3>
+          <p className="text-wrap usa-prose margin-y-0">
             {goalText}
             {' '}
             {determineFlagStatus()}
           </p>
         </div>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-topics padding-right-3">
-          <p className="text-bold">Topics</p>
+          <p className="usa-prose text-bold margin-y-0">Topics</p>
           <Topics topics={goalTopics} />
         </div>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__created-on padding-right-3">
-          <p className="text-bold">Created on</p>
-          <p>{moment(createdOn, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT)}</p>
+          <p className="usa-prose text-bold  margin-y-0">Created on</p>
+          <p className="usa-prose margin-y-0">{moment(createdOn, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT)}</p>
         </div>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__last-tta padding-right-3">
-          <p className="text-bold">Last TTA</p>
+          <p className="usa-prose text-bold margin-y-0">Last TTA</p>
+          <p className="usa-prose margin-y-0">{lastTTA}</p>
         </div>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__last-reviewed padding-right-3">
-          <p className="text-bold">Last reviewed</p>
+          <p className="usa-prose text-bold margin-y-0">Last reviewed</p>
         </div>
       </div>
 
@@ -247,9 +156,10 @@ function GoalCard({
       />
 
       {objectives.map((obj) => (
-        <ObjectiveRow
+        <ObjectiveCard
           key={`objective_${obj.id}`}
           objective={obj}
+          objectivesExpanded={objectivesExpanded}
         />
       ))}
 
@@ -289,7 +199,6 @@ GoalCard.propTypes = {
   goal: goalPropTypes.isRequired,
   recipientId: PropTypes.string.isRequired,
   regionId: PropTypes.string.isRequired,
-  openMenuUp: PropTypes.bool.isRequired,
   showCloseSuspendGoalModal: PropTypes.func.isRequired,
   performGoalStatusUpdate: PropTypes.func.isRequired,
 };

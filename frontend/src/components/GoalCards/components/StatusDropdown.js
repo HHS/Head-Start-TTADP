@@ -1,5 +1,9 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faAngleDown,
+} from '@fortawesome/free-solid-svg-icons';
 import {
   InProgress,
   Closed,
@@ -7,12 +11,12 @@ import {
   NotStarted,
   Draft,
   Ceased,
-} from './icons';
-import colors from '../../colors';
-import UserContext from '../../UserContext';
-import { canChangeGoalStatus } from '../../permissions';
-import { DECIMAL_BASE } from '../../Constants';
-import Menu from '../Menu';
+} from '../icons';
+import colors from '../../../colors';
+import UserContext from '../../../UserContext';
+import { canChangeGoalStatus } from '../../../permissions';
+import { DECIMAL_BASE } from '../../../Constants';
+import Menu from '../../Menu';
 import './StatusDropdown.css';
 
 export const STATUSES = {
@@ -65,7 +69,6 @@ export default function StatusDropdown({
   onUpdateGoalStatus,
   previousStatus,
   regionId,
-  up,
 }) {
   const { user } = useContext(UserContext);
   const key = status || 'Needs Status';
@@ -145,12 +148,13 @@ export default function StatusDropdown({
       label={`Change status for goal ${goalId}`}
       menuItems={options}
       left={false}
-      up={up}
+      up={false}
       className="ttahub-status-select"
       buttonText={(
         <>
           {icon}
           {display}
+          <FontAwesomeIcon className="margin-left-1" size="1x" color={colors.ttahubMediumBlue} icon={faAngleDown} />
         </>
       )}
     />
@@ -162,12 +166,10 @@ StatusDropdown.propTypes = {
   onUpdateGoalStatus: PropTypes.func.isRequired,
   status: PropTypes.string,
   previousStatus: PropTypes.string,
-  up: PropTypes.bool,
   regionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
 };
 
 StatusDropdown.defaultProps = {
   status: '',
   previousStatus: null,
-  up: false,
 };

@@ -8,7 +8,7 @@ import { expandFilters } from '../../../utils';
 import { getGoalsAndObjectivesFilterConfig, GOALS_OBJECTIVES_FILTER_KEY } from './constants';
 import UserContext from '../../../UserContext';
 import { getUserRegions } from '../../../permissions';
-import GoalDataController from '../../../components/GoalsTable/GoalDataController';
+import GoalDataController from '../../../components/GoalCards/GoalDataController';
 
 export default function GoalsObjectives({
   recipientId, regionId, recipient, location,
