@@ -32,14 +32,16 @@ const [
   objectiveTextError, objectiveTopicsError, objectiveResourcesError, objectiveStatusError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
-const formatGrantsFromApi = (grants) => grants.map((grant) => {
-  const programTypes = grant.programs.map(({ programType }) => programType).join(', ');
-  return {
-    value: grant.id,
-    label: `${grant.number} - ${programTypes}`,
-    id: grant.id,
-  };
-});
+const formatGrantsFromApi = (grants) => grants
+  // .filter((grant) => grant.status === 'Active')
+  .map((grant) => {
+    const programTypes = grant.programs.map(({ programType }) => programType).join(', ');
+    return {
+      value: grant.id,
+      label: `${grant.number} - ${programTypes}`,
+      id: grant.id,
+    };
+  });
 
 // this is the default error state for an objective (no errors, only empty fragments)
 const BLANK_OBJECTIVE_ERROR = [<></>, <></>, <></>];
