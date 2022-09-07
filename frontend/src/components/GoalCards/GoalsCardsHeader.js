@@ -77,7 +77,7 @@ export default function GoalCardsHeader({
       <div className="desktop:display-flex flex-justify ">
         <div className="desktop:display-flex flex-align-center">
           {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-          <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="requestSort">Sort by</label>
+          <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="sortBy">Sort by</label>
           <Dropdown onChange={setSortBy} value={sortConfig.sortBy} className="margin-top-0" id="sortBy" name="sortBy">
             <option value="goalStatus">Goal status</option>
             <option value="createdOn">Created on</option>
