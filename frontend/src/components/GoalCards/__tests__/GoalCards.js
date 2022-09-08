@@ -10,7 +10,7 @@ import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
-import GoalsTable from '../GoalsTable';
+import GoalCards from '../GoalCards';
 import { SCOPE_IDS } from '../../../Constants';
 import { mockWindowProperty } from '../../../testHelpers';
 
@@ -201,7 +201,7 @@ const renderTable = ({ goals, goalsCount }, user, hasActiveGrants = true) => {
     <Router history={history}>
       <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
         <UserContext.Provider value={{ user }}>
-          <GoalsTable
+          <GoalCards
             recipientId={recipientId}
             regionId={regionId}
             onUpdateFilters={() => { }}
@@ -257,39 +257,28 @@ describe('Goals Table', () => {
       await screen.findByText('TTA goals and objectives');
       expect(await screen.findByText(/1-6 of 6/i)).toBeVisible();
 
-      await screen.findByRole('cell', { name: '06/15/2021' });
-      await screen.findByRole('cell', { name: /this is goal text 1/i });
-      await screen.findByRole('cell', { name: '5 Objectives' });
+      await screen.findByText('06/15/2021');
+      await screen.findByText(/this is goal text 1/i);
 
       // Not started.
-      await screen.findByRole('cell', { name: '05/15/2021' });
-      await screen.findByRole('cell', { name: /this is goal text 2/i });
-
-      await screen.findByRole('cell', { name: /nutrition/i });
-      await screen.findByRole('cell', { name: '2 Objectives' });
+      await screen.findByText('05/15/2021');
+      await screen.findByText(/this is goal text 2/i);
 
       // Closed.
-      await screen.findByRole('cell', { name: '04/15/2021' });
-      await screen.findByRole('cell', { name: /this is goal text 3/i });
-      await screen.findByRole('cell', { name: /parent and family/i });
-      await screen.findByRole('cell', { name: '4 Objectives' });
+      await screen.findByText('04/15/2021');
+      await screen.findByText(/this is goal text 3/i);
 
       // Needs status.
-      await screen.findByRole('cell', { name: '03/15/2021' });
-      await screen.findByRole('cell', { name: /this is goal text 4/i });
-      await screen.findByRole('cell', { name: /partnerships and/i });
-      await screen.findByRole('cell', { name: '3 Objectives' });
+      await screen.findByText('03/15/2021');
+      await screen.findByText(/this is goal text 4/i);
 
       // Draft.
-      await screen.findByRole('cell', { name: '02/15/2021' });
-      await screen.findByRole('cell', { name: /this is goal text 5/i });
-      await screen.findByRole('cell', { name: '1 Objective' });
+      await screen.findByText('02/15/2021');
+      await screen.findByText(/this is goal text 5/i);
 
       // Ceased/Suspended.
-      await screen.findByRole('cell', { name: '01/15/2021' });
-      await screen.findByRole('cell', { name: /this is goal text 6/i });
-      await screen.findByRole('cell', { name: /recordkeeping and/i });
-      await screen.findByRole('cell', { name: '8 Objectives' });
+      await screen.findByText('01/15/2021');
+      await screen.findByText(/this is goal text 6/i);
     });
   });
 
@@ -301,6 +290,9 @@ describe('Goals Table', () => {
     it('Shows the correct objective data', async () => {
       act(() => renderTable({ goals: goalWithObjectives, goalsCount: 1 }, defaultUser));
       await screen.findByText('TTA goals and objectives');
+
+      const expandObjectives = await screen.findByRole('button', { name: /Expand objectives for goal/i });
+      fireEvent.click(expandObjectives);
 
       // Objective 1.
       await screen.findByText(/objective 1 title/i);
@@ -321,7 +313,8 @@ describe('Goals Table', () => {
       await screen.findByText(/covid-19 response/i);
 
       expect(await screen.findByText(/1-1 of 1/i)).toBeVisible();
-      expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
+      const inProgressStatuses = await screen.findAllByText(/in progress/i);
+      expect(inProgressStatuses.length).toBe(3);
     });
 
     it('Shows goals without objective data', async () => {
@@ -343,17 +336,17 @@ describe('Goals Table', () => {
       renderTable({ goals: goalWithObjectives, goalsCount: 1 }, defaultUser);
       await screen.findByText('TTA goals and objectives');
 
-      expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).toBeInTheDocument();
+      expect(document.querySelector('.ttahub-goal-card__objective-list[hidden]')).toBeInTheDocument();
 
       // Expand Objectives via click.
-      const expandObjectives = await screen.findByRole('button', { name: "Expand objective's for goal G-4598" });
+      const expandObjectives = await screen.findByRole('button', { name: 'Expand objectives for goal G-4598' });
       fireEvent.click(expandObjectives);
-      expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).not.toBeInTheDocument();
+      expect(document.querySelector('.ttahub-goal-card__objective-list[hidden]')).not.toBeInTheDocument();
 
       // Collapse Objectives via click.
-      const collapseButton = await screen.findByRole('button', { name: "Collapse objective's for goal G-4598" });
+      const collapseButton = await screen.findByRole('button', { name: 'Collapse objectives for goal G-4598' });
       fireEvent.click(collapseButton);
-      expect(document.querySelector('.tta-smarthub--goal-row-collapsed')).toBeInTheDocument();
+      expect(document.querySelector('.ttahub-goal-card__objective-list[hidden]')).toBeInTheDocument();
     });
     it('hides the add new goal button if recipient has no active grants', async () => {
       renderTable({ goals: goalWithObjectives, goalsCount: 1 }, defaultUser, false);
@@ -391,16 +384,15 @@ describe('Goals Table', () => {
       window.location.assign.mockReset();
     });
 
-    it('clicking Created On column header sorts', async () => {
-      const columnHeaderAsc = await screen.findByRole('button', { name: /created on\. activate to sort ascending/i });
-      fireEvent.click(columnHeaderAsc);
+    it('sorts by created on', async () => {
+      const sortCreated = await screen.findByRole('combobox');
+      userEvent.selectOptions(sortCreated, 'createdOn');
       expect(requestSort).toHaveBeenCalled();
     });
 
-    it('clicking Goal status column header sorts', async () => {
-      // Desc.
-      const columnHeaderDesc = await screen.findByRole('button', { name: /goal status\. activate to sort descending/i });
-      fireEvent.click(columnHeaderDesc);
+    it('sorts by goal status', async () => {
+      const sortCreated = await screen.findByRole('combobox');
+      userEvent.selectOptions(sortCreated, 'goalStatus');
       await screen.findByText('TTA goals and objectives');
       expect(requestSort).toHaveBeenCalled();
     });
