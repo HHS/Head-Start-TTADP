@@ -4,6 +4,7 @@ import {
   Grant,
   Objective,
   ObjectiveResource,
+  ObjectiveFile,
   ObjectiveRole,
   ObjectiveTopic,
   ActivityReportObjective,
@@ -223,14 +224,15 @@ export async function saveObjectiveAssociations(
   resources = [],
   topics = [],
   roles = [],
+  files = [],
   deleteUnusedAssociations = false,
 ) {
   // topics
   const objectiveTopics = await Promise.all(
-    (topics.map(async (ot) => ObjectiveTopic.findOrCreate({
+    (topics.map(async (topic) => ObjectiveTopic.findOrCreate({
       where: {
         objectiveId: objective.id,
-        topicId: ot.value,
+        topicId: topic.value,
       },
     }))),
   );
@@ -256,6 +258,17 @@ export async function saveObjectiveAssociations(
     });
     return r;
   })));
+
+  const objectiveFiles = await Promise.all(
+    files.map(
+      (file) => ObjectiveFile.findOrCreate({
+        where: {
+          fileId: file.id,
+          objectiveId: objective.id,
+        },
+      }),
+    ),
+  );
 
   if (deleteUnusedAssociations) {
     // cleanup objective topics
@@ -289,12 +302,24 @@ export async function saveObjectiveAssociations(
         objectiveId: objective.id,
       },
     });
+
+    // cleanup objective files
+    await ObjectiveFile.destroy({
+      where: {
+        id: {
+          [Op.notIn]: objectiveFiles.length
+            ? objectiveFiles.map((or) => or.id) : [],
+        },
+        objectiveId: objective.id,
+      },
+    });
   }
 
   return {
     topics: objectiveTopics,
     resources: objectiveResources,
     roles: objectiveRoles,
+    files: objectiveFiles,
   };
 }
 
@@ -803,6 +828,7 @@ export async function createOrUpdateGoals(goals) {
           topics,
           roles: roleNames,
           title,
+          files,
           status: objectiveStatus,
           id: objectiveId,
           isNew,
@@ -853,6 +879,7 @@ export async function createOrUpdateGoals(goals) {
           resources,
           topics,
           roles,
+          files,
           deleteUnusedAssociations,
         );
 
@@ -1263,6 +1290,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       resources,
       topics,
       roleData,
+      files,
       deleteUnusedAssociations,
     );
 
@@ -1446,6 +1474,7 @@ export async function getGoalsForReport(reportId) {
                   {
                     model: Topic,
                     as: 'topic',
+                    attributes: [['name', 'label'], ['id', 'value']],
                   },
                 ],
               },
