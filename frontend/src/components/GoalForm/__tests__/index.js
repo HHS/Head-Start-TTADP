@@ -661,6 +661,7 @@ describe('create goal', () => {
         {
           id: 2,
           numberWithProgramTypes: 'Turtle 2',
+          status: 'Active',
         },
       ],
     };
