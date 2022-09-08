@@ -84,7 +84,7 @@ export default function ResourceRepeater({
 
       <FormGroup error={error.props.children}>
         <div ref={resourcesWrapper}>
-          <Label htmlFor="resources" className={!fixedResources.length ? 'text-bold' : ''}>
+          <Label htmlFor="resources" className={fixedResources.length ? 'text-bold' : ''}>
             {!fixedResources.length ? 'Resource links' : 'Add resource link'}
             <QuestionTooltip
               text="Copy and paste addresses of web pages describing resources used for this objective. Usually this is an ECLKC page."
