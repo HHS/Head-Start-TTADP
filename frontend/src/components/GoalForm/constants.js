@@ -43,7 +43,7 @@ export const OBJECTIVE_FORM_FIELD_INDEXES = {
   ROLE: 4,
 };
 
-export const OBJECTIVE_DEFAULT_ERRORS = [<></>, <></>, <></>, <></>];
+export const OBJECTIVE_DEFAULT_ERRORS = [<></>, <></>, <></>, <></>, <></>];
 
 export const TTA_OBJECTIVE_ERROR = 'Enter the TTA objective';
 export const OBJECTIVE_TOPIC_ERROR = 'Select at least one topic';
@@ -62,9 +62,10 @@ export const OBJECTIVE_ERROR_MESSAGES = [
 export const validateListOfResources = (resources) => {
   if (resources.length > 1 || (resources.length === 1 && resources[0].value)) {
     const allValidResources = resources.reduce((a, c) => {
-      if (a) {
+      if (a && c.value) {
         return isValidUrl(c.value);
       }
+
       return a;
     }, true);
 

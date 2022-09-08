@@ -58,7 +58,7 @@ export function FreqGraph({ data, loading }) {
   }
 
   return (
-    <Container className="ttahub--frequency-graph" padding={3} loading={loading} loadingLabel={`${selectedGraph} frequency loading`}>
+    <Container className="ttahub--frequency-graph" paddingX={3} paddingY={3} loading={loading} loadingLabel={`${selectedGraph} frequency loading`}>
       <Grid row className="position-relative margin-bottom-2">
         <Grid className="flex-align-self-center desktop:display-flex flex-align-center" desktop={{ col: 'auto' }} mobileLg={{ col: 10 }}>
           <h2 className="display-inline desktop:margin-y-0 margin-left-1" aria-live="polite">
