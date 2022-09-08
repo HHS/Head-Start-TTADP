@@ -391,6 +391,14 @@ export async function activityReportAndRecipientsById(activityReportId) {
             model: Topic,
             as: 'topics',
           },
+          {
+            model: File,
+            as: 'files',
+          },
+          {
+            model: ObjectiveResource,
+            as: 'resources',
+          },
         ],
       },
       {
