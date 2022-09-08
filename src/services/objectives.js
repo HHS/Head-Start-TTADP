@@ -1,55 +1,67 @@
+import { Op } from 'sequelize';
 import {
   Objective,
+  ActivityReportObjective,
   Goal,
   Grant,
+  Role,
+  Topic,
+  File,
+  ObjectiveResource,
 } from '../models';
-import { removeUnusedGoalsObjectivesFromReport } from './goals';
+import { removeUnusedGoalsObjectivesFromReport, reduceObjectives, saveObjectiveAssociations } from './goals';
 import { cacheObjectiveMetadata } from './reportCache';
 
 export async function saveObjectivesForReport(objectives, report) {
-  const updatedObjectives = await Promise.all(objectives.map(async (objective) => {
-    if (objective.isNew) {
-      return Promise.all(objective.recipientIds.map(async (recipient) => {
-        const [newObjective] = await Objective.findOrCreate({
-          where: {
-            status: objective.status,
-            title: objective.title,
-            otherEntityId: recipient,
-          },
-        });
+  const updatedObjectives = await Promise.all(objectives.map(async (objective) => Promise
+    .all(objective.recipientIds.map(async (otherEntityId) => {
+      const {
+        roles, topics, files, resources,
+      } = objective;
 
-        await cacheObjectiveMetadata(newObjective, report.id, objective.ttaProvided);
-
-        return newObjective;
-      }));
-    }
-    return Promise.all(objective.recipientIds.map(async (recipient) => {
+      // Determine if this objective already exists.
       const existingObjective = await Objective.findOne({
         where: {
-          id: objective.ids,
-          otherEntityId: recipient,
+          title: objective.title,
+          otherEntityId,
+          status: { [Op.not]: 'Complete' },
         },
       });
 
+      // If it already exists update the status else create it.
+      let savedObjective;
       if (existingObjective) {
-        await cacheObjectiveMetadata(existingObjective, report.id, objective.ttaProvided);
-
-        return existingObjective;
+        await existingObjective.update({
+          status: objective.status,
+        }, { individualHooks: true });
+        savedObjective = existingObjective;
+      } else {
+        // To prevent validation error exclude id.
+        // In this case the user might have changed the title for objective.
+        const { id, ...ObjPros } = objective;
+        savedObjective = await Objective.create({
+          ...ObjPros,
+        });
       }
 
-      const [newObjective] = await Objective.findOrCreate({
-        where: {
-          status: objective.status,
-          title: objective.title,
-          otherEntityId: recipient,
-        },
+      const deleteUnusedAssociations = false;
+
+      const metadata = await saveObjectiveAssociations(
+        savedObjective,
+        resources,
+        topics,
+        roles,
+        files,
+        deleteUnusedAssociations,
+      );
+
+      await cacheObjectiveMetadata(savedObjective, report.id, {
+        ...metadata,
+        ttaProvided: objective.ttaProvided,
       });
 
-      await cacheObjectiveMetadata(newObjective, report.id, objective.ttaProvided);
-
-      return newObjective;
-    }));
-  }));
+      return savedObjective;
+    }))));
 
   const currentObjectives = updatedObjectives.flat();
   return removeUnusedGoalsObjectivesFromReport(report.id, currentObjectives);
@@ -75,4 +87,41 @@ export async function getObjectiveById(objectiveId) {
       },
     ],
   });
+}
+
+export async function getObjectivesByReportId(reportId) {
+  const objectives = await Objective.findAll({
+    model: Objective,
+    include: [
+      {
+        model: ActivityReportObjective,
+        as: 'activityReportObjectives',
+        where: {
+          activityReportId: reportId,
+        },
+        required: true,
+      },
+      {
+        model: Role,
+        as: 'roles',
+      },
+      {
+        model: Topic,
+        as: 'topics',
+        // these need to be renamed to match the frontend form names
+        attributes: [['name', 'label'], ['id', 'value']],
+      },
+      {
+        model: ObjectiveResource,
+        as: 'resources',
+        attributes: [['userProvidedUrl', 'value']],
+      },
+      {
+        model: File,
+        as: 'files',
+      },
+    ],
+  });
+
+  return reduceObjectives(objectives);
 }
