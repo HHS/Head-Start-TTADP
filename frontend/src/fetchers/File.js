@@ -5,6 +5,18 @@ import {
 
 const fileUrl = join('/', 'api', 'files');
 
+export const uploadOnlyFile = async (data) => {
+  const res = await fetch(join(fileUrl, 'upload'), {
+    method: 'POST',
+    credentials: 'same-origin',
+    body: data,
+  });
+  if (!res.ok) {
+    throw new Error(res.statusText);
+  }
+  return res.json();
+};
+
 export const uploadFile = async (data) => {
   const res = await fetch(fileUrl, {
     method: 'POST',
@@ -17,11 +29,42 @@ export const uploadFile = async (data) => {
   return res.json();
 };
 
-export const deleteFile = async (fileId, reportId, objectiveId) => {
+export const uploadObjectivesFile = async (data) => {
+  const res = await fetch(join(fileUrl, 'objectives'), {
+    method: 'POST',
+    credentials: 'same-origin',
+    body: data,
+  });
+  if (!res.ok) {
+    throw new Error(res.statusText);
+  }
+  return res.json();
+};
+
+export const deleteObjectiveFile = async (fileId, objectiveIds) => {
   const url = join(
     fileUrl,
-    reportId ? 'r' : 'o',
-    reportId ? reportId.toString() : objectiveId.toString(),
+    fileId.toString(),
+    'objectives',
+  );
+  const res = await destroy(url, { objectiveIds });
+  return res;
+};
+
+export const deleteFile = async (fileId) => {
+  const url = join(
+    fileUrl,
+    fileId.toString(),
+  );
+  const res = await destroy(url);
+  return res;
+};
+
+export const deleteReportFile = async (fileId, reportId) => {
+  const url = join(
+    fileUrl,
+    'r',
+    reportId.toString(),
     fileId.toString(),
   );
   const res = await destroy(url);
