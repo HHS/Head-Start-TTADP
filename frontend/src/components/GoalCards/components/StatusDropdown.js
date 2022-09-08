@@ -74,14 +74,15 @@ export default function StatusDropdown({
   const key = status || 'Needs Status';
   const { icon, display } = STATUSES[key];
 
-  const isReadOnly = (status === 'Draft' || status === 'Completed' || status === 'Closed') || !canChangeGoalStatus(user, parseInt(regionId, DECIMAL_BASE));
+  const isReadOnly = (
+    status === 'Draft' || status === 'Completed' || status === 'Closed') || !canChangeGoalStatus(user, parseInt(regionId, DECIMAL_BASE));
 
   if (isReadOnly) {
     return (
-      <>
+      <div>
         {icon}
         {display}
-      </>
+      </div>
     );
   }
 
