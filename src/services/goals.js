@@ -547,6 +547,10 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
             required: false,
           },
           {
+            model: File,
+            as: 'files',
+          },
+          {
             model: ActivityReportObjective,
             as: 'activityReportObjectives',
             attributes: [
@@ -660,6 +664,11 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
               ['id', 'value'],
               ['name', 'label'],
             ],
+            required: false,
+          },
+          {
+            model: File,
+            as: 'files',
             required: false,
           },
         ],
