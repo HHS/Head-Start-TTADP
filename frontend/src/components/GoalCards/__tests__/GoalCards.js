@@ -337,7 +337,7 @@ describe('Goals Table', () => {
       renderTable({ goals: goalWithObjectives, goalsCount: 1 }, defaultUser, false);
       await screen.findByText('TTA goals and objectives');
 
-      const link = screen.queryByRole('link', { name: /Add new goal/i });
+      const link = screen.queryByRole('link', { name: /Add new goals/i });
       expect(link).toBe(null);
     });
     it('hides the add new goal button if user doesn\'t have permissions', async () => {
@@ -354,7 +354,7 @@ describe('Goals Table', () => {
       renderTable({ goals: goalWithObjectives, goalsCount: 1 }, user);
       await screen.findByText('TTA goals and objectives');
 
-      const link = screen.queryByRole('link', { name: /Add new goal/i });
+      const link = screen.queryByRole('link', { name: /Add new goals/i });
       expect(link).toBe(null);
     });
   });

@@ -8,7 +8,6 @@ import {
   faMinusCircle,
   faTimesCircle,
 } from '@fortawesome/free-solid-svg-icons';
-
 import colors from '../../colors';
 
 const InProgress = () => <FontAwesomeIcon className="margin-right-1 flex-align-self-center" size="1x" color={colors.ttahubMediumBlue} icon={faClock} />;

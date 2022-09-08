@@ -18,6 +18,8 @@ import {
 import GoalFormLoadingContext from '../../GoalFormLoadingContext';
 import './Form.scss';
 
+export const BEFORE_OBJECTIVES_CREATE_GOAL = 'Enter a goal before adding an objective';
+export const BEFORE_OBJECTIVES_SELECT_RECIPIENTS = 'Select a grant number before adding an objective';
 export default function Form({
   possibleGrants,
   selectedGrants,
@@ -30,6 +32,7 @@ export default function Form({
   validateGoalName,
   validateEndDate,
   validateGrantNumbers,
+  validateGoalNameAndRecipients,
   objectives,
   setObjectives,
   setObjectiveError,
@@ -41,12 +44,21 @@ export default function Form({
   fetchError,
   goalNumber,
   clearEmptyObjectiveError,
+  onUploadFile,
 }) {
   const { isLoading } = useContext(GoalFormLoadingContext);
 
   const onUpdateText = (e) => setGoalName(e.target.value);
 
   const onAddNewObjectiveClick = () => {
+    // first we validate the goal text and the recipients
+    if (!validateGoalNameAndRecipients([
+      BEFORE_OBJECTIVES_CREATE_GOAL,
+      BEFORE_OBJECTIVES_SELECT_RECIPIENTS,
+    ])) {
+      return;
+    }
+
     // copy existing state, add a blank
     const obj = [...objectives.map((o) => ({ ...o })), OBJECTIVE_DEFAULTS(objectives.length)];
     setObjectiveError(obj.length - 1, OBJECTIVE_DEFAULT_ERRORS);
@@ -84,7 +96,7 @@ export default function Form({
     <div className="ttahub-create-goals-form">
       <Loader loading={isLoading} loadingLabel="Loading" text="Loading" />
       { fetchError ? <Alert type="error" role="alert">{ fetchError }</Alert> : null}
-      <div className="display-flex flex-align-center margin-y-2">
+      <div className="display-flex flex-align-center margin-top-2 margin-bottom-1">
         <h2 className="margin-0">{formTitle}</h2>
         { status.toLowerCase() === 'draft'
         && (
@@ -159,11 +171,12 @@ export default function Form({
           errors={objectiveErrors[i] || OBJECTIVE_DEFAULT_ERRORS}
           setObjective={(data) => setObjective(data, i)}
           topicOptions={topicOptions}
+          onUploadFile={onUploadFile}
           goalStatus={status}
         />
       ))}
 
-      <div className="margin-top-6">
+      <div className="margin-top-4">
         {errors[FORM_FIELD_INDEXES.OBJECTIVES_EMPTY]}
         <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />
       </div>
@@ -229,6 +242,8 @@ Form.propTypes = {
   fetchError: PropTypes.string.isRequired,
   goalNumber: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   clearEmptyObjectiveError: PropTypes.func.isRequired,
+  onUploadFile: PropTypes.func.isRequired,
+  validateGoalNameAndRecipients: PropTypes.func.isRequired,
 };
 
 Form.defaultProps = {

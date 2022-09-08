@@ -26,7 +26,9 @@ export default function GoalText({
         <>
           {error}
           <Textarea
-            onBlur={validateGoalName}
+            onBlur={() => {
+              validateGoalName();
+            }}
             id={inputName}
             name={inputName}
             value={goalName}
