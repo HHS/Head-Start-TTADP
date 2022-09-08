@@ -29,6 +29,26 @@ describe('ObjectiveFiles', () => {
     expect(screen.getByText(/testfile2\.txt/i)).toBeVisible();
   });
 
+  it('shows files in not read only mode', async () => {
+    render(<ObjectiveFiles
+      files={[
+        { originalFileName: 'TestFile1.txt' },
+        { originalFileName: 'TestFile2.txt' },
+      ]}
+      onChangeFiles={jest.fn()}
+      objective={{ id: 1 }}
+      isOnApprovedReport={false}
+      isOnReport={false}
+      status="Draft"
+      onUploadFile={jest.fn()}
+      index={0}
+      inputName="objectiveFiles"
+      onBlur={jest.fn()}
+    />);
+    expect(screen.getByText(/testfile1\.txt/i)).toBeVisible();
+    expect(screen.getByText(/testfile2\.txt/i)).toBeVisible();
+  });
+
   it('hides and shows file upload', async () => {
     render(<ObjectiveFiles
       files={[]}
