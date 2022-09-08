@@ -62,5 +62,11 @@
   $ref: './widgets/topicAndFrequencyGraph.yaml'
 '/search':
   $ref: './search/search.yaml'
-
-
+'/settings':
+  $ref: './settings/index.yaml'
+'/settings/email':
+  $ref: './settings/email/index.yaml'
+'/settings/email/unsubscribe':
+  $ref: './settings/email/unsubscribe.yaml'
+'/settings/email/subscribe':
+  $ref: './settings/email/subscribe.yaml'
