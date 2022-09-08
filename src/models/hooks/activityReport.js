@@ -357,7 +357,7 @@ const automaticGoalObjectiveStatusCachingOnAproval = async (sequelize, instance,
       transaction: options.transaction,
     });
 
-    // Update Goal status to 'In Progress'.
+    // Update Objective status to 'In Progress'.
     await Promise.all(objectives
       .map(async (objective) => sequelize.models.ActivityReportObjective.update(
         { status: objective.status },
