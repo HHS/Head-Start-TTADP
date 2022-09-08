@@ -39,4 +39,34 @@ describe('ReadOnlyObjective', () => {
     expect(await screen.findByText('file1.pdf')).toBeInTheDocument();
     expect(await screen.findByText('Objective 1')).toBeInTheDocument();
   });
+
+  it('displays path if name is not set', async () => {
+    const objective = {
+      title: 'Objective 1',
+      topics: [],
+      resources: [],
+      ttaProvided: 'This is TTA provided',
+      files: [
+        {
+          path: 'file1.pdf',
+          url: {
+            url: 'https://www.google.com',
+            error: null,
+          },
+        },
+        {
+          path: 'file2.pdf',
+          url: {
+            url: 'https://www.google.com',
+            error: true,
+          },
+        },
+      ],
+    };
+
+    renderReadOnlyObjective(objective);
+    expect(await screen.findByText('This is TTA provided')).toBeInTheDocument();
+    expect(await screen.findByText('file1.pdf')).toBeInTheDocument();
+    expect(await screen.findByText('file2.pdf')).toBeInTheDocument();
+  });
 });
