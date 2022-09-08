@@ -132,8 +132,10 @@ function EmailPreferencesForm() {
       if (pref === 'subscribe') await subscribe();
       else if (pref === 'unsubscribe') await unsubscribe();
       else if (pref === 'customized') await updateSettings(newSettings);
+      setSaveError(false);
       setSaveSuccess(true);
     } catch (error) {
+      setSaveSuccess(false);
       setSaveError(error.message ? error.message : error);
     }
   };
