@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import Pagination from 'react-js-pagination';
 import { Link, useHistory } from 'react-router-dom';
-import { Button } from '@trussworks/react-uswds';
+import { Button, Dropdown } from '@trussworks/react-uswds';
 import UserContext from '../../UserContext';
 import { canEditOrCreateGoals } from '../../permissions';
 import { DECIMAL_BASE } from '../../Constants';
@@ -21,7 +21,7 @@ export function renderTotal(offset, perPage, activePage, count) {
   return `${from}-${to} of ${count}`;
 }
 
-export default function GoalsTableHeader({
+export default function GoalCardsHeader({
   title,
   count,
   activePage,
@@ -33,6 +33,7 @@ export default function GoalsTableHeader({
   regionId,
   hasActiveGrants,
   sortConfig,
+  requestSort,
 }) {
   const history = useHistory();
   const { user } = useContext(UserContext);
@@ -46,8 +47,10 @@ export default function GoalsTableHeader({
     });
   };
 
+  const setSortBy = (e) => requestSort(e.target.value);
+
   return (
-    <div className="desktop:display-flex padding-x-3">
+    <div className="padding-x-3">
       <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2">
         <h2 className="font-body-lg margin-left-2 margin-right-1 margin-y-3">{title}</h2>
         { showAddNewButton ? (
@@ -71,12 +74,21 @@ export default function GoalsTableHeader({
           Preview and print
         </Button>
       </div>
-      {!hidePagination && (
-        <span className="smart-hub--table-nav">
+      <div className="desktop:display-flex flex-justify ">
+        <div className="desktop:display-flex flex-align-center">
+          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+          <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="sortBy">Sort by</label>
+          <Dropdown onChange={setSortBy} value={sortConfig.sortBy} className="margin-top-0" id="sortBy" name="sortBy">
+            <option value="goalStatus">Goal status</option>
+            <option value="createdOn">Created on</option>
+          </Dropdown>
+        </div>
+        {!hidePagination && (
+        <div className="smart-hub--table-nav">
           <span aria-label="Pagination for goals">
             <span
               className="smart-hub--total-count display-flex flex-align-center height-full margin-2 desktop:margin-0 padding-right-1"
-              aria-label={`Page ${activePage}, displaying rows ${renderTotal(
+              aria-label={`Page ${activePage}, displaying goals ${renderTotal(
                 offset,
                 perPage,
                 activePage,
@@ -100,13 +112,15 @@ export default function GoalsTableHeader({
               />
             </span>
           </span>
-        </span>
-      )}
+        </div>
+        )}
+
+      </div>
     </div>
   );
 }
 
-GoalsTableHeader.propTypes = {
+GoalCardsHeader.propTypes = {
   title: PropTypes.string.isRequired,
   hidePagination: PropTypes.bool,
   count: PropTypes.number,
@@ -117,6 +131,7 @@ GoalsTableHeader.propTypes = {
   regionId: PropTypes.string.isRequired,
   recipientId: PropTypes.string.isRequired,
   hasActiveGrants: PropTypes.bool.isRequired,
+  requestSort: PropTypes.func.isRequired,
   sortConfig: PropTypes.shape({
     sortBy: PropTypes.string,
     direction: PropTypes.string,
@@ -125,7 +140,7 @@ GoalsTableHeader.propTypes = {
   }).isRequired,
 };
 
-GoalsTableHeader.defaultProps = {
+GoalCardsHeader.defaultProps = {
   hidePagination: false,
   count: 0,
   activePage: 0,

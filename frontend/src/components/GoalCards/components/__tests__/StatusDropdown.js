@@ -3,8 +3,8 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import StatusDropdown from '../StatusDropdown';
-import UserContext from '../../../UserContext';
-import { SCOPE_IDS } from '../../../Constants';
+import UserContext from '../../../../UserContext';
+import { SCOPE_IDS } from '../../../../Constants';
 
 const user = {
   permissions: [

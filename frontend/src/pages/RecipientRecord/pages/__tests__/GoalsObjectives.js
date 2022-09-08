@@ -148,12 +148,6 @@ describe('Goals and Objectives', () => {
   it('renders the Goals and Objectives page appropriately', async () => {
     act(() => renderGoalsAndObjectives());
     expect(await screen.findByText('TTA goals and objectives')).toBeVisible();
-    expect(screen.getAllByRole('cell')[0].querySelector('.fa-clock')).toBeTruthy();
-    expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
-    expect(screen.getAllByRole('cell')[1]).toHaveTextContent('06/15/2021');
-    expect(screen.getAllByRole('cell')[2]).toHaveTextContent(/this is goal text 1/i);
-    expect(screen.getAllByRole('cell')[3]).toHaveTextContent(/Human ResourcesSafety PracticesProgram Planning and Ser/i);
-    expect(screen.getAllByRole('cell')[4]).toHaveTextContent('5 Objectives');
   });
 
   it('renders correctly when filter is changed', async () => {
@@ -165,7 +159,6 @@ describe('Goals and Objectives', () => {
     act(() => renderGoalsAndObjectives());
 
     expect(await screen.findByText(/1-2 of 2/i)).toBeVisible();
-    expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
 
     // Change Filter and Apply.
     userEvent.click(await screen.findByRole('button', { name: /open filters for this page/i }));
@@ -181,25 +174,17 @@ describe('Goals and Objectives', () => {
 
     // Expect 1 Row.
     expect(await screen.findByText(/1-1 of 1/i)).toBeVisible();
-    expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/not started/i);
+    const notStartedStatuses = await screen.findAllByText(/not started/i);
+    expect(notStartedStatuses.length).toBe(5);
   });
 
   it('renders correctly when filter is removed', async () => {
     act(() => renderGoalsAndObjectives());
-    expect(await screen.findByText(/1-1 of 1/i)).toBeVisible();
     const removeFilter = await screen.findByRole('button', { name: /this button removes the filter/i });
     userEvent.click(removeFilter);
 
-    await screen.findByRole('cell', { name: /in progress/i });
-    await screen.findByRole('cell', { name: '06/15/2021' });
-    await screen.findByRole('cell', { name: /this is goal text 1/i });
-    await screen.findByRole('cell', { name: /Human Resources/i });
-    await screen.findByRole('cell', { name: '5 Objectives' });
-
-    await screen.findByRole('cell', { name: /not started/i });
-    await screen.findByRole('cell', { name: '07/15/2021' });
-    await screen.findByRole('cell', { name: /this is goal text 2/i });
-    await screen.findByRole('cell', { name: '1 Objective' });
+    await screen.findByText(/this is goal text 1/i);
+    await screen.findByText(/this is goal text 2/i);
 
     expect(await screen.findByText(/1-2 of 2/i)).toBeVisible();
   });
@@ -234,21 +219,15 @@ describe('Goals and Objectives', () => {
     expect(fetchMock.called()).toBeTruthy();
   });
 
-  it('will sort by the column buttons', async () => {
+  it('will sort by the dropdown', async () => {
     act(() => renderGoalsAndObjectives());
 
     fetchMock.restore();
     fetchMock.get('/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=asc&offset=0&limit=10', { count: 1, goalRows: goals, statuses: defaultStatuses });
-    const sortCreatedAsc = await screen.findByRole('button', { name: /Created on. Activate to sort ascending/i });
-    userEvent.click(sortCreatedAsc);
+    const sortCreated = await screen.findByRole('combobox');
+    userEvent.selectOptions(sortCreated, 'createdOn');
 
     await waitFor(() => expect(fetchMock.called()).toBeTruthy());
-
-    const sortCreatedDesc = await screen.findByRole('button', { name: /Created on. Activate to sort descending/i });
-    fetchMock.restore();
-    fetchMock.get('/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=10', { count: 1, goalRows: goals, statuses: defaultStatuses });
-    userEvent.click(sortCreatedDesc);
-    expect(fetchMock.called()).toBeTruthy();
   });
 
   it('sorts by created on desc when new goals are created', async () => {
