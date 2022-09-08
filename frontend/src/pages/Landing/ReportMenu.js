@@ -76,7 +76,7 @@ function ReportMenu({
       </button>
       {open && (
         <div role="menu" tabIndex={-1} onBlur={onMenuBlur} onKeyDown={onMenuKeyDown} ref={menuRef} className={menuClassNames}>
-          <Container padding={2} className="margin-bottom-0">
+          <Container paddingX={2} paddingY={2} className="margin-bottom-0">
             {downloadError && (
               <Alert
                 noIcon

@@ -120,6 +120,42 @@ function Navigator({
     }
   };
 
+  const onSaveDraft = async () => {
+    await onSaveForm(); // save the form data to the server
+    updateShowSavedDraft(true); // show the saved draft message
+  };
+
+  const onSaveDraftGoal = async () => {
+    // the goal form only allows for one goal to be open at a time
+    // but the objectives are stored in a subfield
+    // so we need to access the objectives and bundle them together in order to validate them
+    const fieldArrayName = 'goalForEditing.objectives';
+    const objectives = getValues(fieldArrayName);
+    const name = getValues('goalName');
+    const endDate = getValues('goalEndDate');
+
+    const goal = {
+      ...goalForEditing,
+      name,
+      endDate,
+      objectives,
+      regionId: formData.regionId,
+    };
+
+    // save goal to api, come back with new ids for goal and objectives
+    try {
+      await saveGoalsForReport(
+        {
+          goals: [...selectedGoals, goal],
+          activityReportId: reportId,
+          regionId: formData.regionId,
+        },
+      );
+    } catch (error) {
+      updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
+    }
+  };
+
   const onGoalFormNavigate = async () => {
     // the goal form only allows for one goal to be open at a time
     // but the objectives are stored in a subfield
@@ -186,8 +222,13 @@ function Navigator({
     onUpdatePage(page.position + 1);
   };
 
-  useInterval(() => {
-    onSaveForm();
+  useInterval(async () => {
+    const ifSaveGoals = isGoalsObjectivesPage && !isGoalFormClosed;
+    if (ifSaveGoals) {
+      await onSaveDraftGoal();
+    } else {
+      await onSaveForm();
+    }
   }, autoSaveInterval);
 
   // A new form page is being shown so we need to reset `react-hook-form` so validations are
@@ -265,18 +306,18 @@ function Navigator({
                   {page.render(additionalData, formData, reportId)}
                   <div className="display-flex">
                     { showSaveGoalsButton
-                      ? <Button className="margin-right-1" type="button" onClick={onGoalFormNavigate}>Save goal</Button>
-                      : <Button className="margin-right-1" type="button" onClick={onContinue}>Save and continue</Button> }
-                    <Button
-                      outline
-                      type="button"
-                      onClick={async () => {
-                        await onSaveForm();
-                        updateShowSavedDraft(true);
-                      }}
-                    >
-                      Save draft
-                    </Button>
+                      ? (
+                        <>
+                          <Button className="margin-right-1" type="button" onClick={onGoalFormNavigate}>Save goal</Button>
+                          <Button className="usa-button--outline" type="button" onClick={onSaveDraftGoal}>Save draft</Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button className="margin-right-1" type="button" onClick={onContinue}>Save and continue</Button>
+                          <Button className="usa-button--outline" type="button" onClick={onSaveDraft}>Save draft</Button>
+                        </>
+                      )}
+
                     {
                       page.position <= 1
                         ? null

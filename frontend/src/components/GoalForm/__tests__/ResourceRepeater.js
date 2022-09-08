@@ -6,29 +6,25 @@ import {
 import ResourceRepeater from '../ResourceRepeater';
 
 describe('ResourceRepeater', () => {
-  const createdResources = [
-    { key: 1, value: 'resource 1', isOnApprovedReport: false },
-    { key: 2, value: 'resource 2', isOnApprovedReport: true },
-  ];
+  it('shows the read only view', async () => {
+    render(<ResourceRepeater
+      error={<></>}
+      resources={[
+        { key: 1, value: 'http://www.resources.com' },
+        { key: 1, value: 'http://www.resources2.com', isOnApprovedReport: true },
+      ]}
+      setResources={jest.fn()}
+      validateResources={jest.fn()}
+      status="In Progress"
+      isOnReport={false}
+      isLoading={false}
+    />);
 
-  const renderReadOnly = () => {
-    render((
-      <ResourceRepeater
-        resources={createdResources}
-        setResources={jest.fn()}
-        validateResources={jest.fn()}
-        error={<></>}
-        isOnReport={false}
-        isOnApprovedReport={false}
-        status="Not Started"
-        isLoading={false}
-      />
-    ));
-  };
-
-  it('can render with resources', async () => {
-    renderReadOnly();
-    expect(await screen.findByRole('textbox', { name: /resource 1/i })).toBeVisible();
-    expect(await screen.findByText(/resource 2/i)).toBeVisible();
+    expect(await screen.findByText('Resource links')).toBeVisible();
+    const resources1 = document.querySelector('input[value=\'http://www.resources.com\']');
+    expect(resources1).not.toBeNull();
+    const resources2 = await screen.findByText('http://www.resources2.com');
+    expect(resources2).toBeVisible();
+    expect(resources2.tagName).toBe('LI');
   });
 });

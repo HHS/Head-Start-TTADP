@@ -83,55 +83,52 @@ function SideNav({
   const { connectionActive } = useContext(NetworkContext);
 
   return (
-    <>
-      <Sticky className="smart-hub-sidenav" top={100} enabled={!isMobile}>
-        <Container padding={0}>
-          <a className="smart-hub--navigator-skip-link" href={`#${skipTo}`}>{skipToMessage}</a>
-          <ul className="smart-hub--navigator-list">
-            {navItems()}
-          </ul>
-        </Container>
-        {errorMessage
-          && (
-            <Alert type="error" onAnimationEnd={onAnimationEnd} slim noIcon className={`smart-hub--save-alert ${fade ? 'alert-fade' : ''}`}>
-              {errorMessage}
-            </Alert>
-          )}
-        {(lastSaveTime || savedToStorageTime) && !errorMessage
-          && (
-            <Alert
-              onAnimationEnd={onAnimationEnd}
-              aria-atomic
-              aria-live="polite"
-              type="success"
-              slim
-              noIcon
-              className={`smart-hub--save-alert padding-y-2 ${fade ? 'alert-fade' : ''}`}
-            >
-              Autosaved on:
-              <br />
-              <ul className="margin-y-0">
-                {(lastSaveTime && connectionActive)
-                  ? (
-                    <li>
-                      our network at
-                      {' '}
-                      {lastSaveTime.format(DATE_DISPLAY_SAVED_FORMAT)}
-                    </li>
-                  ) : null}
-                {savedToStorageTime && (
+    <Sticky className="smart-hub-sidenav" top={100} enabled={!isMobile}>
+      <Container paddingX={0} paddingY={0}>
+        <a className="smart-hub--navigator-skip-link" href={`#${skipTo}`}>{skipToMessage}</a>
+        <ul className="smart-hub--navigator-list">
+          {navItems()}
+        </ul>
+      </Container>
+      {errorMessage
+        && (
+          <Alert type="error" onAnimationEnd={onAnimationEnd} slim noIcon className={`smart-hub--save-alert ${fade ? 'alert-fade' : ''}`}>
+            {errorMessage}
+          </Alert>
+        )}
+      {(lastSaveTime || savedToStorageTime) && !errorMessage
+        && (
+          <Alert
+            onAnimationEnd={onAnimationEnd}
+            aria-atomic
+            aria-live="polite"
+            type="success"
+            slim
+            noIcon
+            className={`smart-hub--save-alert padding-y-2 ${fade ? 'alert-fade' : ''}`}
+          >
+            Autosaved on:
+            <br />
+            <ul className="margin-y-0">
+              {(lastSaveTime && connectionActive)
+                ? (
                   <li>
-                    your computer at
+                    our network at
                     {' '}
-                    {moment(savedToStorageTime).format(DATE_DISPLAY_SAVED_FORMAT)}
+                    {lastSaveTime.format(DATE_DISPLAY_SAVED_FORMAT)}
                   </li>
-                )}
-              </ul>
-            </Alert>
-          )}
-      </Sticky>
-
-    </>
+                ) : null}
+              { savedToStorageTime && (
+              <li>
+                your computer at
+                {' '}
+                {moment(savedToStorageTime).format(DATE_DISPLAY_SAVED_FORMAT)}
+              </li>
+              )}
+            </ul>
+          </Alert>
+        )}
+    </Sticky>
   );
 }
 
