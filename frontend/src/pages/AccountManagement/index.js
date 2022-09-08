@@ -142,8 +142,10 @@ function EmailPreferencesForm({ disabled }) {
       if (pref === 'subscribe') await subscribe();
       else if (pref === 'unsubscribe') await unsubscribe();
       else if (pref === 'customized') await updateSettings(newSettings);
+      setSaveError(false);
       setSaveSuccess(true);
     } catch (error) {
+      setSaveSuccess(false);
       setSaveError(error.message ? error.message : error);
     }
   };
@@ -156,6 +158,16 @@ function EmailPreferencesForm({ disabled }) {
       style={{ maxWidth: 'unset' }} // remove the 20rem default
     >
       <Fieldset>
+        {saveError && (
+          <Alert type="error" data-testid="email-prefs-save-fail-message" className="margin-bottom-5">
+            {saveError}
+          </Alert>
+        )}
+        {saveSuccess && (
+          <Alert type="success" data-testid="email-prefs-save-success-message" className="margin-bottom-5">
+            Your email preferences have been saved.
+          </Alert>
+        )}
         <Radio
           id="allImmediately"
           data-testid="radio-subscribe"
@@ -194,16 +206,6 @@ function EmailPreferencesForm({ disabled }) {
         />
         <p className="usa-error-message">{errors.emailPreference && errors.emailPreference.message}</p>
       </Fieldset>
-      {saveError && (
-        <Alert type="error" data-testid="email-prefs-save-fail-message">
-          {saveError}
-        </Alert>
-      )}
-      {saveSuccess && (
-        <Alert type="success" data-testid="email-prefs-save-success-message">
-          Your email preferences have been saved.
-        </Alert>
-      )}
       <Button data-testid="email-prefs-submit" type="submit">Save Preferences</Button>
       <Button type="reset" outline>
         Cancel
@@ -230,8 +232,8 @@ function AccountManagement({ updateUser }) {
 
   const deduceEmailPreference = (settings) => {
     if (!settings.length) return 'unsubscribe';
-    if (settings.map(({ value }) => value).every((value) => value === 'never')) return 'unsubscribe';
-    if (settings.map(({ value }) => value).every((value) => value === 'immediately')) return 'subscribe';
+    if (settings.every(({ value }) => value === 'never')) return 'unsubscribe';
+    if (settings.every(({ value }) => value === 'immediately')) return 'subscribe';
     return 'customized';
   };
 

@@ -81,63 +81,77 @@ export const userSettingsById = async (userId) => {
 /**
  * Returns an array of all users with the given setting key&value.
  * @param {string} key the key of the setting to search for
- * @param {any} value the value of the setting to search for
+ * @param {string[]} values the value of the setting to search for
  * @returns {Promise<User[]>}
  */
-export const usersWithSetting = async (key, value) => {
+export const usersWithSetting = async (key, values) => {
   const defaults = await getDefaultSettings();
+  const users = [];
 
-  if (defaults[key] && defaults[key].defaultValue === value) {
-    // this key, value pair is a default setting.
-    // then return all users NOT providing an override for this key.
-    return User.findAll({
-      include: [
-        {
-          attributes: [],
-          model: UserSettingOverrides,
-          as: 'userSettingOverrides',
-          include: [
-            {
-              attributes: [],
-              model: UserSettings,
-              as: 'setting',
-              where: { key },
-              required: true,
-            },
-          ],
-          required: false,
-        },
-      ],
-      where: { '$userSettingOverrides.id$': null },
-    });
+  if (!Array.isArray(values)) {
+    throw new Error(`usersWithSettings expected values array, got ${typeof values}`);
   }
 
-  // this is an override.
-  // return all users that are providing the override.
-  return User.findAll({
-    include: [
-      {
-        attributes: [],
-        model: UserSettingOverrides,
-        as: 'userSettingOverrides',
+  await Promise.all(values.map(async (v) => {
+    let out;
+    if (defaults[key] && defaults[key].defaultValue === v) {
+      // this key, value pair is a default setting.
+      // then return all users NOT providing an override for this key.
+      out = await User.findAll({
         include: [
           {
             attributes: [],
-            model: UserSettings,
-            as: 'setting',
-            where: { key },
-            required: true,
+            model: UserSettingOverrides,
+            as: 'userSettingOverrides',
+            include: [
+              {
+                attributes: [],
+                model: UserSettings,
+                as: 'setting',
+                where: { key },
+                required: true,
+              },
+            ],
+            required: false,
           },
         ],
-        required: false,
-        right: true,
-      },
-    ],
-    where: {
-      '$userSettingOverrides.setting.key$': { [Op.eq]: key },
-      '$userSettingOverrides.value$': { [Op.eq]: sequelize.cast(JSON.stringify(value), 'jsonb') },
-    },
-  });
+        where: { '$userSettingOverrides.id$': null },
+      });
+    } else {
+      // this is an override.
+      // return all users that are providing the override.
+      out = await User.findAll({
+        include: [
+          {
+            attributes: [],
+            model: UserSettingOverrides,
+            as: 'userSettingOverrides',
+            include: [
+              {
+                attributes: [],
+                model: UserSettings,
+                as: 'setting',
+                where: { key },
+                required: true,
+              },
+            ],
+            required: false,
+            right: true,
+          },
+        ],
+        where: {
+          '$userSettingOverrides.setting.key$': { [Op.eq]: key },
+          '$userSettingOverrides.value$': {
+            [Op.eq]: sequelize.cast(JSON.stringify(v), 'jsonb'),
+          },
+        },
+      });
+    }
+
+    users.push(...out);
+  }));
+
+  return users;
 };
 
 // -----------------------------------------------------------------------------
