@@ -122,7 +122,7 @@ export default function ResourceRepeater({
             ))}
           </div>
 
-          <div className="ttahub-resource-repeater--add-new margin-top-2 margin-bottom-4">
+          <div className="ttahub-resource-repeater--add-new margin-top-1 margin-bottom-3">
             <PlusButton text="Add new resource" onClick={addResource} />
           </div>
         </div>

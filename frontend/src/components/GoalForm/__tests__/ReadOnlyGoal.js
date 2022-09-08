@@ -6,41 +6,43 @@ import {
 import userEvent from '@testing-library/user-event';
 import ReadOnlyGoal from '../ReadOnlyGoal';
 
-const createdGoal = {
-  goalName: 'Sample goal',
-  grant: [],
-  objectives: [],
-  endDate: null,
-};
-
-// eslint-disable-next-line react/prop-types
-const RenderReadOnlyGoal = ({ hideEdit = false }) => (
-  <ReadOnlyGoal
-    onEdit={jest.fn()}
-    onRemove={jest.fn()}
-    hideEdit={hideEdit}
-    goal={createdGoal}
-    index={0}
-  />
-);
-
 describe('ReadOnlyGoal', () => {
+  const createdGoal = {
+    name: 'Sample goal',
+    grant: {},
+    objectives: [],
+    endDate: null,
+    id: 1,
+  };
+
+  const renderReadOnlyGoal = (hideEdit = false) => {
+    render((
+      <ReadOnlyGoal
+        onEdit={jest.fn()}
+        onRemove={jest.fn()}
+        hideEdit={hideEdit}
+        goal={createdGoal}
+        index={0}
+      />
+    ));
+  };
+
   it('can render with a goal', async () => {
-    render(<RenderReadOnlyGoal />);
+    renderReadOnlyGoal();
     expect(await screen.findByRole('heading', { name: /goal summary/i })).toBeVisible();
     expect(await screen.findByText('Sample goal')).toBeVisible();
+
+    const contextButton = await screen.findByRole('button');
+    userEvent.click(contextButton);
+    const menu = await screen.findByTestId('menu');
+    expect(menu.querySelectorAll('li').length).toBe(2);
   });
 
-  it('can hide edit', async () => {
-    render(<RenderReadOnlyGoal hideEdit />);
-    expect(await screen.findByRole('heading', { name: /goal summary/i })).toBeVisible();
-    expect(await screen.findByText('Sample goal')).toBeVisible();
-
-    const contextMenu = await screen.findByRole('button', { name: /actions for goal undefined/i });
-    userEvent.click(contextMenu);
-
-    expect(await screen.findByText(/remove/i)).toBeVisible();
-    const edit = screen.queryByText(/edit/i);
-    expect(edit).toBeNull();
+  it('shows the correct menu items when hide edit is passed', async () => {
+    renderReadOnlyGoal(true);
+    const contextButton = await screen.findByRole('button');
+    userEvent.click(contextButton);
+    const menu = await screen.findByTestId('menu');
+    expect(menu.querySelectorAll('li').length).toBe(1);
   });
 });
