@@ -22,6 +22,7 @@ import {
   getAllDownloadableActivityReports,
   activityReportsForCleanup,
 } from '../../services/activityReports';
+import { saveObjectivesForReport, getObjectivesByReportId } from '../../services/objectives';
 import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
 import { goalsForGrants } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
@@ -259,6 +260,31 @@ export async function getGoals(req, res) {
     const { grantIds } = req.query;
     const goals = await goalsForGrants(grantIds);
     res.json(goals);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+/**
+ * Save Objectives for non-entity Reports.
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function saveOtherEntityObjectivesForReport(req, res) {
+  const { objectivesWithoutGoals, activityReportId, region } = req.body;
+  const user = await userById(req.session.userId);
+  const authorization = new User(user);
+
+  if (!authorization.canWriteInRegion(parseInt(region, DECIMAL_BASE))) {
+    res.sendStatus(403);
+    return;
+  }
+  try {
+    const report = await ActivityReportModel.findByPk(activityReportId);
+    await saveObjectivesForReport(objectivesWithoutGoals, report);
+    const updatedObjectives = await getObjectivesByReportId(activityReportId);
+    res.json(updatedObjectives);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
