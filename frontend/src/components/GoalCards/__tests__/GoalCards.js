@@ -329,7 +329,8 @@ describe('Goals Table', () => {
       await screen.findByText('TTA goals and objectives');
 
       expect(await screen.findByText(/1-1 of 1/i)).toBeVisible();
-      expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
+      const status = await screen.findByRole('button', { name: /change status for goal 4458/i });
+      expect(status).toHaveTextContent(/in progress/i);
     });
 
     it('Expands and collapses objectives', async () => {
