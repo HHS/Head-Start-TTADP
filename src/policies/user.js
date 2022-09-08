@@ -39,6 +39,18 @@ export default class Users {
     return !_.isUndefined(permissions);
   }
 
+  canWriteInAtLeastOneRegion() {
+    const permissions = this.user.permissions.find(
+      (permission) => (
+        (
+          permission.scopeId === SCOPES.READ_WRITE_REPORTS
+          || permission.scopeId === SCOPES.APPROVE_REPORTS
+        )
+      ),
+    );
+    return !_.isUndefined(permissions);
+  }
+
   canWriteInRegion(region) {
     const permissions = this.user.permissions.find(
       (permission) => (

@@ -4,7 +4,9 @@ import Select from 'react-select';
 import {
   FormGroup, Label,
 } from '@trussworks/react-uswds';
-
+import {
+  SELECT_GRANTS_ERROR,
+} from './constants';
 import selectOptionsReset from '../selectOptionsReset';
 import Req from '../Req';
 
@@ -44,7 +46,7 @@ export default function GrantSelect({
             closeMenuOnSelect={false}
             value={selectedGrants}
             isMulti
-            onBlur={validateGrantNumbers}
+            onBlur={() => validateGrantNumbers(SELECT_GRANTS_ERROR)}
             isDisabled={isLoading}
           />
         </>

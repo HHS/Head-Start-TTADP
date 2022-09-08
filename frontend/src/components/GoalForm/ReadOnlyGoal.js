@@ -32,8 +32,8 @@ export default function ReadOnlyGoal({
   }
   return (
     <div key={`goal${goal.id}`}>
-      <div className="ttahub-goal-form-goal-summary padding-4 margin-y-4 position-relative">
-        <h2 className="margin-top-0">Recipient TTA goal</h2>
+      <div className="ttahub-goal-form-goal-summary padding-3 position-relative margin-bottom-4">
+        <h2 className="margin-top-0 margin-bottom-3">Recipient TTA goal</h2>
         <div className="position-absolute pin-top pin-right padding-4">
           <ContextMenu
             label={`Actions for Goal ${goal.id}`}
@@ -41,22 +41,24 @@ export default function ReadOnlyGoal({
             menuClassName="width-card"
           />
         </div>
-        <h3>Goal summary</h3>
+        <h3 className="margin-top-0 margin-bottom-2">Goal summary</h3>
         { goal.grants && goal.grants.length
           ? (
-            <>
-              <h4 className="margin-bottom-1">Recipient grant numbers</h4>
-              <p>{goal.grants.map((grant) => grant.label).join(', ')}</p>
-            </>
+            <div className="margin-bottom-2">
+              <h4 className="margin-0">Recipient grant numbers</h4>
+              <p className="usa-prose margin-0">{goal.grants.map((grant) => grant.label).join(', ')}</p>
+            </div>
           )
           : null }
-        <h4 className="margin-bottom-1">Goal</h4>
-        <p className="margin-top-0">{goal.goalName}</p>
+        <div className="margin-bottom-2">
+          <h4 className="margin-0">Goal</h4>
+          <p className="usa-prose margin-0">{goal.name}</p>
+        </div>
         {goal.endDate ? (
-          <>
-            <h4 className="margin-bottom-1">Anticipated close date</h4>
-            <p className="margin-top-0">{goal.endDate}</p>
-          </>
+          <div className="margin-bottom-4">
+            <h4 className="margin-0">Anticipated close date</h4>
+            <p className="usa-prose margin-0">{goal.endDate}</p>
+          </div>
         ) : null }
         { goal.objectives.map((objective) => (
           <ReadOnlyObjective key={`read-only-objective-${objective.id}`} objective={objective} />
@@ -100,7 +102,7 @@ ReadOnlyGoal.propTypes = {
         status: PropTypes.string,
       }),
     ),
-    goalName: PropTypes.string,
+    name: PropTypes.string,
     endDate: PropTypes.string,
   }).isRequired,
 };

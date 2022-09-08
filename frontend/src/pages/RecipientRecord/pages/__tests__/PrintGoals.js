@@ -113,7 +113,6 @@ describe('PrintGoals', () => {
 
   it('builds a URL to query based on filters provided by window.location.search', async () => {
     delete window.location;
-    // console.log(filters);
     window.location = {
       search: filtersToQueryString(filters),
       state: {

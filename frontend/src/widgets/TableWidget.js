@@ -15,7 +15,7 @@ export default function TableWidget(
   },
 ) {
   return (
-    <Container className="smarthub-table-widget shadow-2" padding={3} loading={loading} loadingLabel={loadingLabel}>
+    <Container className="smarthub-table-widget shadow-2" paddingX={3} paddingY={3} loading={loading} loadingLabel={loadingLabel}>
       {/* a scrollable element must be keyboard accessible */}
       {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
       <div className="usa-table-container--scrollable margin-top-0" tabIndex={0}>

@@ -20,7 +20,7 @@ export default function GoalForm({
   reportId,
 }) {
   // pull the errors out of the form context
-  const { errors } = useFormContext();
+  const { errors, watch } = useFormContext();
 
   /**
    * add controllers for all the controlled fields
@@ -35,6 +35,7 @@ export default function GoalForm({
   // the date picker component, as always, presents special challenges, it needs a key updated
   // to re-render appropriately
   const [datePickerKey, setDatePickerKey] = useState(uuid());
+  const activityRecipientType = watch('activityRecipientType');
 
   const {
     field: {
@@ -47,7 +48,7 @@ export default function GoalForm({
     name: 'goalEndDate',
     rules: {
       validate: {
-        isValidDate: (value) => (
+        isValidDate: (value) => activityRecipientType === 'other-entity' || (
           (value && moment(value, 'MM/DD/YYYY').isValid())
         ) || GOAL_DATE_ERROR,
       },
@@ -64,12 +65,12 @@ export default function GoalForm({
     },
   } = useController({
     name: 'goalName',
-    rules: {
+    rules: activityRecipientType === 'recipient' ? {
       required: {
         value: true,
         message: GOAL_NAME_ERROR,
       },
-    },
+    } : {},
     defaultValue: defaultName,
   });
 

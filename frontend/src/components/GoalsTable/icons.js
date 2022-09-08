@@ -4,10 +4,10 @@ import {
   faClock,
   faCheckCircle,
   faExclamationCircle,
-  faPencilAlt,
   faMinusCircle,
   faTimesCircle,
 } from '@fortawesome/free-solid-svg-icons';
+import { faPenCircle } from '@fortawesome/pro-solid-svg-icons';
 
 import './ObjectiveRow.scss';
 import colors from '../../colors';
@@ -16,7 +16,7 @@ const InProgress = () => <FontAwesomeIcon className="margin-right-1" size="1x" c
 const Closed = () => <FontAwesomeIcon className="margin-right-1" size="1x" color={colors.successDarker} icon={faCheckCircle} />;
 const NotStarted = () => <FontAwesomeIcon className="margin-right-1" size="1x" color={colors.ttahubOrange} icon={faMinusCircle} />;
 const NoStatus = () => <FontAwesomeIcon className="margin-right-1" size="1x" color={colors.baseLighter} icon={faExclamationCircle} />;
-const Draft = () => <FontAwesomeIcon className="margin-right-1" size="1x" color={colors.baseDarkest} icon={faPencilAlt} />;
+const Draft = () => <FontAwesomeIcon className="margin-right-1" size="1x" color={colors.baseDarkest} icon={faPenCircle} />;
 const Ceased = () => <FontAwesomeIcon className="margin-right-1" size="1x" color={colors.errorDark} icon={faTimesCircle} />;
 
 export {

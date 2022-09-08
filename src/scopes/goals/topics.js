@@ -32,7 +32,12 @@ const topicFilter = (options) => {
 export function withTopics(topics, options) {
   return {
     [Op.or]: [
-      filterAssociation(topicFilter(options), topics, false, 'ILIKE'),
+      filterAssociation(
+        topicFilter(options),
+        topics,
+        false,
+        'ILIKE',
+      ),
     ],
   };
 }
@@ -40,7 +45,12 @@ export function withTopics(topics, options) {
 export function withoutTopics(topics, options) {
   return {
     [Op.and]: [
-      filterAssociation(topicFilter(options), topics, true, 'ILIKE'),
+      filterAssociation(
+        topicFilter(options),
+        topics,
+        true,
+        'ILIKE',
+      ),
     ],
   };
 }

@@ -4,6 +4,8 @@ import db, {
   Grant,
   Recipient,
   Objective,
+  ObjectiveFile,
+  File,
   ActivityReport,
   ActivityRecipient,
   ActivityReportGoal,
@@ -33,6 +35,7 @@ describe('saveGoalsForReport (more tests)', () => {
   let grants = [];
   let goal;
   let objective;
+  let file;
 
   beforeAll(async () => {
     await User.create(mockUser);
@@ -136,7 +139,18 @@ describe('saveGoalsForReport (more tests)', () => {
       goalId: goal.id,
       status: 'In Progress',
       title: 'This is an existing objective',
-      topics: [],
+    });
+
+    file = await File.create({
+      originalFileName: 'test.pdf',
+      key: faker.datatype.uuid(),
+      status: 'APPROVED',
+      fileSize: 12345,
+    });
+
+    await ObjectiveFile.create({
+      objectiveId: objective.id,
+      fileId: file.id,
     });
 
     await ActivityReportObjective.create({
@@ -160,6 +174,18 @@ describe('saveGoalsForReport (more tests)', () => {
     await ActivityReportObjective.destroy({
       where: {
         activityReportId: reportIds,
+      },
+    });
+
+    await ObjectiveFile.destroy({
+      where: {
+        objectiveId: objectiveIds,
+      },
+    });
+
+    await File.destroy({
+      where: {
+        id: file.id,
       },
     });
 

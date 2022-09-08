@@ -13,14 +13,16 @@ import db, {
 } from '../../models';
 import app from '../../app';
 import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
-import * as queue from '../../services/scanQueue';
+import * as scanQueue from '../../services/scanQueue';
 import { REPORT_STATUSES, FILE_STATUSES } from '../../constants';
 import ActivityReportPolicy from '../../policies/activityReport';
 import ObjectivePolicy from '../../policies/objective';
+import UserPolicy from '../../policies/user';
 import * as Files from '../../services/files';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
 
 jest.mock('../../policies/activityReport');
+jest.mock('../../policies/user');
 jest.mock('../../policies/objective');
 jest.mock('../../services/accessValidation', () => ({
   validateUserAuthForAdmin: jest.fn().mockResolvedValue(false),
@@ -32,6 +34,7 @@ const request = require('supertest');
 const ORIGINAL_ENV = process.env;
 
 jest.mock('../../lib/s3');
+jest.mock('../../lib/queue');
 
 const mockUser = {
   id: 2046,
@@ -42,7 +45,8 @@ const mockUser = {
 
 const mockSession = jest.fn();
 mockSession.userId = mockUser.id;
-const mockAddToScanQueue = jest.spyOn(queue, 'default').mockImplementation(() => jest.fn());
+
+const mockAddToScanQueue = jest.spyOn(scanQueue, 'default').mockImplementation(() => jest.fn());
 
 const reportObject = {
   activityRecipientType: 'recipient',
@@ -82,8 +86,10 @@ describe('File Upload', () => {
   let fileId;
   let goal;
   let objective;
+  let secondTestObjective;
   let grant;
   let recipient;
+
   beforeAll(async () => {
     user = await User.create(mockUser);
     report = await ActivityReport.create(reportObject);
@@ -91,6 +97,7 @@ describe('File Upload', () => {
     grant = await Grant.create({ ...mockGrant, recipientId: recipient.id });
     goal = await Goal.create({ ...goalObject, grantId: grant.id });
     objective = await Objective.create(objectiveObject);
+    secondTestObjective = await Objective.create({ title: 'objective for lonely file test' });
 
     process.env.NODE_ENV = 'test';
     process.env.BYPASS_AUTH = 'true';
@@ -114,7 +121,7 @@ describe('File Upload', () => {
           model: ObjectiveFile,
           as: 'objectiveFiles',
           required: true,
-          where: { objectiveId: objective.dataValues.id },
+          where: { objectiveId: [objective.dataValues.id, secondTestObjective.dataValues.id] },
         },
       ],
     });
@@ -129,8 +136,34 @@ describe('File Upload', () => {
       File.destroy({ where: { id: objFile.id } });
     }));
 
+    // cleanup any leftovers, like from the lonely file test
+    const testFiles = await File.findAll({ where: { originalFileName: 'testfile.pdf' } });
+    await Promise.all(
+      [
+        ObjectiveFile.destroy({
+          where: {
+            fileId: testFiles.map((file) => file.id),
+          },
+        }),
+        ActivityReportFile.destroy({
+          where: {
+            fileId: testFiles.map((file) => file.id),
+          },
+        }),
+      ],
+    );
+    await File.destroy({ where: { originalFileName: 'testfile.pdf' } });
+
     await ActivityReport.destroy({ where: { id: report.dataValues.id } });
-    await Objective.destroy({ where: { id: objective.dataValues.id } });
+    await Objective.destroy(
+      {
+        where: {
+          id: [
+            objective.dataValues.id, secondTestObjective.dataValues.id,
+          ],
+        },
+      },
+    );
     await Goal.destroy({ where: { id: goal.id } });
     await Grant.destroy({ where: { id: grant.id } });
     await Recipient.destroy({ where: { id: recipient.id } });
@@ -267,6 +300,83 @@ describe('File Upload', () => {
       expect(of.objectiveId).toBe(objective.dataValues.id);
       expect(validate(uuid)).toBe(true);
     });
+
+    describe('lonely file', () => {
+      let lonelyFileId;
+      let lonelyFileId2;
+
+      it('upload and delete', async () => {
+        UserPolicy.mockImplementation(() => ({
+          canWriteInAtLeastOneRegion: () => true,
+        }));
+        uploadFile.mockResolvedValue({ key: 'key' });
+        const response = await request(app)
+          .post('/api/files/upload')
+          .attach('file', `${__dirname}/testfiles/testfile.pdf`)
+          .expect(200);
+
+        lonelyFileId = response.body.id;
+
+        expect(uploadFile).toHaveBeenCalled();
+        expect(mockAddToScanQueue).toHaveBeenCalled();
+
+        await waitFor(async () => {
+          const lonelyFile = await File.findByPk(lonelyFileId);
+
+          expect(lonelyFile).not.toBeNull();
+          expect(lonelyFile.dataValues.id).toBe(lonelyFileId);
+          expect(lonelyFile.dataValues.status).not.toBe(null);
+          expect(lonelyFile.dataValues.originalFileName).toBe('testfile.pdf');
+        });
+
+        await request(app)
+          .delete(`/api/files/${lonelyFileId}`)
+          .expect(204);
+
+        expect(deleteFileFromS3).toHaveBeenCalled();
+
+        await waitFor(async () => {
+          const lonelyFile = await File.findByPk(lonelyFileId);
+          expect(lonelyFile).toBeNull();
+        });
+      });
+
+      it('won\'t delete if associated with other data', async () => {
+        UserPolicy.mockImplementation(() => ({
+          canWriteInAtLeastOneRegion: () => true,
+        }));
+        uploadFile.mockResolvedValue({ key: 'key' });
+        const secondResponse = await request(app)
+          .post('/api/files/upload')
+          .attach('file', `${__dirname}/testfiles/testfile.pdf`)
+          .expect(200);
+
+        lonelyFileId2 = secondResponse.body.id;
+
+        await waitFor(async () => {
+          const lonelyFile2 = await File.findByPk(lonelyFileId2);
+          await ObjectiveFile.create({
+            fileId: lonelyFile2.id,
+            objectiveId: secondTestObjective.dataValues.id,
+          });
+        });
+
+        await request(app)
+          .delete(`/api/files/${lonelyFileId2}`)
+          .expect(204);
+
+        expect(deleteFileFromS3).not.toHaveBeenCalled();
+
+        await waitFor(async () => {
+          const lonelyFile2 = await File.findByPk(lonelyFileId2);
+          expect(lonelyFile2).not.toBeNull();
+          expect(lonelyFile2.dataValues.id).toBe(lonelyFileId2);
+          expect(lonelyFile2.dataValues.status).not.toBe(null);
+          expect(lonelyFile2.dataValues.originalFileName).toBe('testfile.pdf');
+        });
+      });
+    });
+
     it('allows an admin to upload a objective file', async () => {
       ObjectivePolicy.mockImplementation(() => ({
         canUpdate: () => false,
