@@ -20,7 +20,7 @@ export default function PrintableGoal({ goal }) {
         <p className={FIRST_COLUMN_CLASS}>Goal status</p>
         <p className={SECOND_COLUMN_CLASS}>
           {icon}
-          {goal.goalStatus}
+          {key}
         </p>
       </div>
       <div className={ROW_CLASS}>
