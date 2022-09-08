@@ -12,7 +12,7 @@ import db, {
 } from '../models';
 import { REPORT_STATUSES } from '../constants';
 
-import { saveObjectivesForReport, getObjectiveById } from './objectives';
+import { saveObjectivesForReport, getObjectiveById, getObjectivesByReportId } from './objectives';
 
 const mockUser = {
   id: 8088,
@@ -149,6 +149,11 @@ describe('Objectives DB service', () => {
       const foundObj = await getObjectiveById(objectiveInfo.id);
       expect(foundObj).not.toBeNull();
       expect(foundObj.goal.grant.regionId).toBe(2);
+    });
+    it('gets objectives by report id', async () => {
+      const reportObjectives = await getObjectivesByReportId(report.id);
+      expect(reportObjectives).not.toBeNull();
+      expect(reportObjectives.length).toBe(3);
     });
     it('deletes old objectives', async () => {
       waitFor(async () => {

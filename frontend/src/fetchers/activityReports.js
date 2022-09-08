@@ -108,6 +108,12 @@ export const saveGoalsForReport = async (data) => {
   return goals.json();
 };
 
+export const saveObjectivesForReport = async (data) => {
+  const url = join(activityReportUrl, 'objectives');
+  const objectives = await post(url, data);
+  return objectives.json();
+};
+
 export const getCollaborators = async (region) => {
   const url = join('/', 'api', 'users', 'collaborators', `?region=${region}`);
   const collaborators = await get(url);

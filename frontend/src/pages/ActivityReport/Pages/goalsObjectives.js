@@ -21,16 +21,24 @@ import ReadOnly from '../../../components/GoalForm/ReadOnly';
 import PlusButton from '../../../components/GoalForm/PlusButton';
 import OtherEntity from './components/OtherEntity';
 import GoalFormContext from '../../../GoalFormContext';
+import ReadOnlyOtherEntityObjectives from '../../../components/GoalForm/ReadOnlyOtherEntityObjectives';
 
 const GoalsObjectives = ({ reportId }) => {
   const {
     watch, setValue, getValues, setError,
   } = useFormContext();
 
-  const { isGoalFormClosed, toggleGoalForm } = useContext(GoalFormContext);
+  const {
+    isGoalFormClosed,
+    isObjectivesFormClosed,
+    toggleGoalForm,
+    toggleObjectiveForm,
+  } = useContext(GoalFormContext);
 
   const recipients = watch('activityRecipients');
   const activityRecipientType = watch('activityRecipientType');
+  const activityRecipients = watch('activityRecipients');
+  const objectivesWithoutGoals = watch('objectivesWithoutGoals');
   const activityReportId = watch('id');
   const isRecipientReport = activityRecipientType === 'recipient';
   const isOtherEntityReport = activityRecipientType === 'other-entity';
@@ -41,6 +49,7 @@ const GoalsObjectives = ({ reportId }) => {
 
     return r.activityRecipientId;
   }) : [];
+  const activityRecipientIds = recipients.map((r) => r.activityRecipientId);
 
   const [fetchError, setFetchError] = useState(false);
   const [availableGoals, updateAvailableGoals] = useState([]);
@@ -159,6 +168,19 @@ const GoalsObjectives = ({ reportId }) => {
     };
   });
 
+  const oeObjectiveEdit = (objectives) => {
+    // const objWithoutGoals = getValues('objectivesWithoutGoals');
+    const recipientIds = activityRecipients.map((ar) => ar.activityRecipientId);
+    // const objectivesForEdit = objectives.map((obj) => (
+    const objectivesForEdit = objectives.map((obj) => (
+      {
+        ...obj,
+        recipientIds, // We need the other-entity ids to save on BE.
+      }));
+    setValue('objectivesWithoutGoals', objectivesForEdit);
+    toggleObjectiveForm(false);
+  };
+
   // we need to figure out our options based on author/collaborator roles
   const collaborators = watch('activityReportCollaborators');
   const author = watch('author');
@@ -202,7 +224,27 @@ const GoalsObjectives = ({ reportId }) => {
       {/**
         * on non-recipient reports, only objectives are shown
       */}
-      {isOtherEntityReport && (<OtherEntity roles={roles} />)}
+      {!isRecipientReport && !isObjectivesFormClosed
+      && (
+      <OtherEntity
+        roles={roles}
+        recipientIds={activityRecipientIds}
+      />
+      )}
+      {/**
+        * on other-entity, read only objective view.
+      */}
+      {!isRecipientReport
+        && isObjectivesFormClosed
+        // && objectivesWithoutGoals
+        && objectivesWithoutGoals.length
+        ? (
+          <ReadOnlyOtherEntityObjectives
+            onEdit={oeObjectiveEdit}
+            objectives={objectivesWithoutGoals}
+          />
+        )
+        : null}
 
       {(isRecipientReport && !showGoals) && (
       <Alert type="info" noIcon>
