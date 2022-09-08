@@ -317,6 +317,22 @@ describe('Goals Table', () => {
       expect(inProgressStatuses.length).toBe(3);
     });
 
+    it('Shows goals without objective data', async () => {
+      act(() => renderTable({
+        goals: [
+          {
+            ...goalWithObjectives[0], objectives: [],
+          },
+        ],
+        goalsCount: 1,
+      }, defaultUser));
+      await screen.findByText('TTA goals and objectives');
+
+      expect(await screen.findByText(/1-1 of 1/i)).toBeVisible();
+      const status = await screen.findByRole('button', { name: /change status for goal 4458/i });
+      expect(status).toHaveTextContent(/in progress/i);
+    });
+
     it('Expands and collapses objectives', async () => {
       renderTable({ goals: goalWithObjectives, goalsCount: 1 }, defaultUser);
       await screen.findByText('TTA goals and objectives');

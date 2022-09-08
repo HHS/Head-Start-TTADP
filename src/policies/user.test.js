@@ -98,4 +98,22 @@ describe('User policies', () => {
       expect(policy.canSeeBehindFeatureFlag('grantee_record_page')).toBeTruthy();
     });
   });
+
+  describe('canWriteInRegion', () => {
+    const user = {
+      permissions: [{
+        regionId: 1,
+        scopeId: SCOPES.READ_WRITE_REPORTS,
+      }],
+    };
+    it('is true if the user has read/write permissions', () => {
+      const policy = new User(user);
+      expect(policy.canWriteInRegion(1)).toBeTruthy();
+    });
+
+    it('is false if the user does not have read/write permissions', () => {
+      const policy = new User(user);
+      expect(policy.canWriteInRegion(2)).toBeFalsy();
+    });
+  });
 });
