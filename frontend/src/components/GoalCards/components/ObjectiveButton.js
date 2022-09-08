@@ -13,7 +13,6 @@ export default function ObjectiveButton({
   objectiveCount,
   objectivesExpanded,
   goalNumber,
-  expandObjectivesRef,
 }) {
   if (objectiveCount < 1) {
     return null;
@@ -22,9 +21,8 @@ export default function ObjectiveButton({
   return (
     <button
       type="button"
-      ref={expandObjectivesRef}
       className="usa-button--outline usa-button text-no-underline text-middle tta-smarthub--goal-row-objectives tta-smarthub--goal-row-objectives-enabled"
-      onClick={() => closeOrOpenObjectives(false)}
+      onClick={() => closeOrOpenObjectives()}
       aria-label={`${objectivesExpanded ? 'Collapse' : 'Expand'} objectives for goal ${goalNumber}`}
     >
       View objective
@@ -44,8 +42,4 @@ ObjectiveButton.propTypes = {
   objectiveCount: PropTypes.number.isRequired,
   objectivesExpanded: PropTypes.bool.isRequired,
   goalNumber: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  expandObjectivesRef: PropTypes.oneOfType([
-    PropTypes.func,
-    PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
-  ]).isRequired,
 };
