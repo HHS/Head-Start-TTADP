@@ -3,7 +3,7 @@ import {
   Recipient, Grant, Program, sequelize,
 } from '../models';
 import {
-  allRecipients, recipientById, recipientsByName,
+  allRecipients, recipientById, recipientsByName, dedupeAndSortObjectivesAndReports,
 } from './recipient';
 import filtersToScopes from '../scopes';
 
@@ -538,6 +538,60 @@ describe('Recipient DB service', () => {
       expect(foundRecipients.rows.length).toBe(2);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(70);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(71);
+    });
+  });
+
+  describe('dedupeAndSortObjectivesAndReports', () => {
+    it('dedupes objectives and reports', async () => {
+      const preduped = [
+        {
+          title: 'A Title ',
+          status: 'Active',
+          endDate: 1,
+          activityReports: [{ id: 1 }],
+        },
+        {
+          title: 'A Title',
+          status: 'Active',
+          endDate: 2,
+          activityReports: [{ id: 2 }],
+        },
+        {
+          title: 'A Title',
+          status: 'Inactive',
+          endDate: 3,
+          activityReports: [{ id: 3 }],
+        },
+        {
+          title: 'Another title',
+          status: 'Active',
+          endDate: 4,
+          activityReports: [{ id: 1 }],
+        },
+      ];
+
+      const deduped = dedupeAndSortObjectivesAndReports(preduped);
+      expect(deduped.length).toBe(3);
+      expect(deduped).toStrictEqual([
+        {
+          title: 'Another title',
+          status: 'Active',
+          endDate: 4,
+          activityReports: [{ id: 1 }],
+        },
+        {
+          title: 'A Title',
+          status: 'Inactive',
+          endDate: 3,
+          activityReports: [{ id: 3 }],
+        },
+        {
+          title: 'A Title',
+          status: 'Active',
+          endDate: 1,
+          activityReports: [{ id: 1 }, { id: 2 }],
+        },
+      ]);
     });
   });
 });

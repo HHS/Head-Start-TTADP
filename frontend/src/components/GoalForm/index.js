@@ -10,6 +10,7 @@ import { Alert, Button } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import Container from '../Container';
 import { createOrUpdateGoals, deleteGoal, goalByIdAndRecipient } from '../../fetchers/goals';
+import { uploadObjectivesFile } from '../../fetchers/File';
 import { getTopics } from '../../fetchers/topics';
 import Form from './Form';
 import {
@@ -31,14 +32,15 @@ const [
   objectiveTextError, objectiveTopicsError, objectiveResourcesError, objectiveStatusError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
-const formatGrantsFromApi = (grants) => grants.map((grant) => {
-  const programTypes = grant.programs.map(({ programType }) => programType).join(', ');
-  return {
-    value: grant.id,
-    label: `${grant.number} - ${programTypes}`,
-    id: grant.id,
-  };
-});
+const formatGrantsFromApi = (grants) => grants
+  .map((grant) => {
+    const programTypes = grant.programs.map(({ programType }) => programType).join(', ');
+    return {
+      value: grant.id,
+      label: `${grant.number} - ${programTypes}`,
+      id: grant.id,
+    };
+  });
 
 // this is the default error state for an objective (no errors, only empty fragments)
 const BLANK_OBJECTIVE_ERROR = [<></>, <></>, <></>];
@@ -200,15 +202,45 @@ export default function GoalForm({
 
   // form field validation functions
 
+  /** @returns bool */
+  const validateGoalNameAndRecipients = (messages = [
+    GOAL_NAME_ERROR,
+    SELECT_GRANTS_ERROR,
+  ]) => {
+    let validName = true;
+    let validRecipients = true;
+
+    if (!goalName) {
+      validName = false;
+    }
+
+    if (!selectedGrants.length) {
+      validRecipients = false;
+    }
+
+    const newErrors = [...errors];
+    if (!validName) {
+      newErrors.splice(FORM_FIELD_INDEXES.NAME, 1, <span className="usa-error-message">{messages[0]}</span>);
+    }
+
+    if (!validRecipients) {
+      newErrors.splice(FORM_FIELD_INDEXES.GRANTS, 1, <span className="usa-error-message">{messages[1]}</span>);
+    }
+
+    setErrors(newErrors);
+
+    return validName && validRecipients;
+  };
+
   /**
    *
    * @returns bool
    */
-  const validateGoalName = () => {
+  const validateGoalName = (message = GOAL_NAME_ERROR) => {
     let error = <></>;
 
     if (!goalName) {
-      error = <span className="usa-error-message">{GOAL_NAME_ERROR}</span>;
+      error = <span className="usa-error-message">{message}</span>;
     }
 
     const newErrors = [...errors];
@@ -235,10 +267,10 @@ export default function GoalForm({
     return !error.props.children;
   };
 
-  const validateGrantNumbers = () => {
+  const validateGrantNumbers = (message = SELECT_GRANTS_ERROR) => {
     let error = <></>;
     if (!selectedGrants.length) {
-      error = <span className="usa-error-message">{SELECT_GRANTS_ERROR}</span>;
+      error = <span className="usa-error-message">{message}</span>;
     }
     const newErrors = [...errors];
     newErrors.splice(FORM_FIELD_INDEXES.GRANTS, 1, error);
@@ -381,6 +413,76 @@ export default function GoalForm({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const onUploadFile = async (file, objective, setFileUploadErrorMessage, index) => {
+    // The first thing we need to know is... does this objective need to be created?
+    setIsLoading(true);
+
+    let objectiveIds = objective.ids ? objective.ids : [];
+
+    if (objective.isNew) {
+      // if so, we save the objective to the database first
+      try {
+        // but to do that, we first need to save the goals
+        const newGoals = selectedGrants.map((g) => ({
+          grantId: g.value,
+          name: goalName,
+          status,
+          endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
+          regionId: parseInt(regionId, DECIMAL_BASE),
+          recipientId: recipient.id,
+          objectives,
+        }));
+
+        // so we save them, as before creating one for each grant
+        const savedGoals = await createOrUpdateGoals(newGoals);
+
+        // and then we pluck out the objectives from the newly saved goals
+        // (there will be only "one")
+        objectiveIds = savedGoals.reduce((p, c) => {
+          const newObjectives = c.objectives.reduce((prev, o) => {
+            if (objective.title === o.title) {
+              return [
+                ...prev,
+                o.id,
+                ...o.ids,
+              ];
+            }
+
+            return prev;
+          }, []);
+
+          return Array.from(new Set([...p, ...newObjectives]));
+        }, []);
+      } catch (err) {
+        setFileUploadErrorMessage('File could not be uploaded');
+      }
+    }
+
+    try {
+      // an objective that's been saved should have a set of IDS
+      // in the case that it has been rolled up to match a goal for multiple grants
+      const data = new FormData();
+      data.append('objectiveIds', JSON.stringify(objectiveIds));
+      data.append('file', file);
+      const response = await uploadObjectivesFile(data);
+      setFileUploadErrorMessage(null);
+
+      return {
+        ...response,
+        objectives,
+        setObjectives,
+        objectiveIds,
+        index,
+      };
+    } catch (error) {
+      setFileUploadErrorMessage(`${file.name} failed to upload`);
+    } finally {
+      setIsLoading(false);
+    }
+
+    return null;
   };
 
   const onSaveDraft = async () => {
@@ -565,7 +667,7 @@ export default function GoalForm({
           <span>Back to Goals & Objectives</span>
         </Link>
       ) : null }
-      <h1 className="page-heading margin-top-0 margin-bottom-1 margin-left-2">
+      <h1 className="page-heading margin-top-0 margin-bottom-0 margin-left-2">
         TTA Goals for
         {' '}
         {recipient.name}
@@ -574,7 +676,7 @@ export default function GoalForm({
         {regionId}
       </h1>
 
-      <Container className="margin-y-2 margin-left-2 width-tablet padding-top-1" skipTopPadding>
+      <Container className="margin-y-3 margin-left-2 width-tablet" paddingX={4} paddingY={5}>
         <GoalFormLoadingContext.Provider value={{ isLoading }}>
           { createdGoals.length ? (
             <>
@@ -611,6 +713,7 @@ export default function GoalForm({
               validateGoalName={validateGoalName}
               validateEndDate={validateEndDate}
               validateGrantNumbers={validateGrantNumbers}
+              validateGoalNameAndRecipients={validateGoalNameAndRecipients}
               objectives={objectives}
               setObjectives={setObjectives}
               setObjectiveError={setObjectiveError}
@@ -620,10 +723,14 @@ export default function GoalForm({
               isOnApprovedReport={isOnApprovedReport}
               status={status || 'Needs status'}
               goalNumber={goalNumber}
+              onUploadFile={onUploadFile}
             />
             )}
 
             <div className="margin-top-4">
+              { !showForm ? <Button type="submit">Submit goal</Button> : null }
+              { showForm ? <Button type="button" onClick={onSaveAndContinue}>Save and continue</Button> : null }
+              <Button type="button" outline onClick={onSaveDraft}>Save draft</Button>
               { showForm && !createdGoals.length ? (
                 <Link
                   to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
@@ -635,9 +742,7 @@ export default function GoalForm({
               { showForm && createdGoals.length ? (
                 <Button type="button" outline onClick={clearForm} data-testid="create-goal-form-cancel">Cancel</Button>
               ) : null }
-              <Button type="button" outline onClick={onSaveDraft}>Save draft</Button>
-              { showForm ? <Button type="button" onClick={onSaveAndContinue}>Save and continue</Button> : null }
-              { !showForm ? <Button type="submit">Submit goal</Button> : null }
+
               { alert.message ? <Alert role="alert" className="margin-y-2" type={alert.type}>{alert.message}</Alert> : null }
             </div>
           </form>

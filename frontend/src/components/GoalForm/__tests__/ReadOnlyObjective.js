@@ -5,29 +5,38 @@ import {
 } from '@testing-library/react';
 import ReadOnlyObjective from '../ReadOnlyObjective';
 
-const createdObjective = {
-  title: 'Sample Objective',
-  topics: [],
-  resources: [],
-  files: [{ originalFileName: 'test1.txt' },
-    { originalFileName: 'test2.txt' }],
-  roles: [],
-  ttaProvided: '<p>sample tta provided</p>',
-  status: '',
-};
-
-// eslint-disable-next-line react/prop-types
-const RenderReadOnlyObjective = () => (
-  <ReadOnlyObjective objective={createdObjective} />
-);
-
 describe('ReadOnlyObjective', () => {
-  it('can render with a objective', async () => {
-    render(<RenderReadOnlyObjective />);
-    expect(await screen.findByRole('heading', { name: /objective summary/i })).toBeVisible();
-    expect(await screen.findByText('Sample Objective')).toBeVisible();
-    expect(await screen.findByText('test1.txt')).toBeVisible();
-    expect(await screen.findByText('test2.txt')).toBeVisible();
-    expect(await screen.findByText('sample tta provided')).toBeVisible();
+  const renderReadOnlyObjective = (objective) => {
+    render(<ReadOnlyObjective objective={objective} />);
+  };
+
+  it('doesnt fail no matter what', async () => {
+    const objective = {
+      title: 'Objective 1',
+      topics: [],
+      resources: [],
+      ttaProvided: 'This is TTA provided',
+      files: [
+        {
+          originalFileName: 'file1.pdf',
+          url: {
+            url: 'https://www.google.com',
+            error: null,
+          },
+        },
+        {
+          originalFileName: 'file2.pdf',
+          url: {
+            url: 'https://www.google.com',
+            error: true,
+          },
+        },
+      ],
+    };
+
+    renderReadOnlyObjective(objective);
+    expect(await screen.findByText('This is TTA provided')).toBeInTheDocument();
+    expect(await screen.findByText('file1.pdf')).toBeInTheDocument();
+    expect(await screen.findByText('Objective 1')).toBeInTheDocument();
   });
 });
