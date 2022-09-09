@@ -5,8 +5,8 @@ import { createReport, destroyReport } from '../testUtils';
 
 const reportObject = {
   activityRecipientType: 'recipient',
-  submissionStatus: REPORT_STATUSES.SUBMITTED,
-  calculatedStatus: REPORT_STATUSES.APPROVED,
+  submissionStatus: REPORT_STATUSES.SUBMITTED, // TODO: Might need fix
+  calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
   ECLKCResourcesUsed: ['test'],
   approvingManagerId: 1,
   numberOfParticipants: 11,

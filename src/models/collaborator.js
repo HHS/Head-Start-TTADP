@@ -66,6 +66,17 @@ module.exports = (sequelize, DataTypes) => {
       });
       Collaborator.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
       Collaborator.hasMany(models.CollaboratorRole, { foreignKey: 'collaboratorId', as: 'roles' });
+      Collaborator.addScope('defaultScope', {
+        include: [{
+          model: models.User,
+          as: 'user',
+          required: true,
+        }, {
+          model: models.CollaboratorRole,
+          as: 'roles',
+          required: true,
+        }],
+      });
     }
   }
   Collaborator.init({
@@ -127,7 +138,7 @@ module.exports = (sequelize, DataTypes) => {
     nameWithRole: {
       type: DataTypes.VIRTUAL,
       get() {
-        return generateFullName(this.user.fullName, this.roles);
+        return generateFullName(this.user ? this.user.name : '', this.roles);
       },
     },
   }, {

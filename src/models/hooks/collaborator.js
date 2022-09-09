@@ -114,50 +114,52 @@ const updateApprovalCalculatedStatus = async (
 });
 
 const propagateCalculatedStatus = async (sequelize, instance, options) => {
-  const approval = await getApprovalByEntityTier(
-    sequelize,
-    instance.entityType,
-    instance.entityId,
-    instance.tier,
-    options,
-  );
-  // We allow users to create approvers before submitting the entity.
-  // Calculated status should only exist for submitted entities.
-  if (approval.submissionStatus === ENTITY_STATUSES.SUBMITTED) {
-    const foundRatifierStatuses = await getRatifierStatusesForTier(
+  if (instance.collaboratorTypes.includes(COLLABORATOR_TYPES.RATIFIER)) {
+    const approval = await getApprovalByEntityTier(
       sequelize,
       instance.entityType,
       instance.entityId,
       instance.tier,
       options,
     );
-    const ratifierStatuses = foundRatifierStatuses.map((a) => a.status);
-    const newCalculatedStatus = calculateStatus(
-      instance.status,
-      ratifierStatuses,
-      approval.ratioRequired,
-    );
+    // We allow users to create approvers before submitting the entity.
+    // Calculated status should only exist for submitted entities.
+    if (approval.submissionStatus === ENTITY_STATUSES.SUBMITTED) {
+      const foundRatifierStatuses = await getRatifierStatusesForTier(
+        sequelize,
+        instance.entityType,
+        instance.entityId,
+        instance.tier,
+        options,
+      );
+      const ratifierStatuses = foundRatifierStatuses.map((a) => a.status);
+      const newCalculatedStatus = calculateStatus(
+        instance.status,
+        ratifierStatuses,
+        approval.ratioRequired,
+      );
 
-    let approvedAt = null;
-    if (approval.calculatedStatus !== newCalculatedStatus) {
-      if (newCalculatedStatus === ENTITY_STATUSES.APPROVED) {
-        approvedAt = approval.approvedAt === null
-          ? new Date()
-          : approval.approvedAt;
+      let approvedAt = null;
+      if (approval.calculatedStatus !== newCalculatedStatus) {
+        if (newCalculatedStatus === ENTITY_STATUSES.APPROVED) {
+          approvedAt = approval.approvedAt === null
+            ? new Date()
+            : approval.approvedAt;
+        }
       }
-    }
 
-    await updateApprovalCalculatedStatus(
-      sequelize,
-      instance.entityType,
-      instance.entityId,
-      instance.tier,
-      {
-        calculatedStatus: newCalculatedStatus,
-        approvedAt,
-      },
-      options,
-    );
+      await updateApprovalCalculatedStatus(
+        sequelize,
+        instance.entityType,
+        instance.entityId,
+        instance.tier,
+        {
+          calculatedStatus: newCalculatedStatus,
+          approvedAt,
+        },
+        options,
+      );
+    }
   }
 };
 

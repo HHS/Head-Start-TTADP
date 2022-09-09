@@ -1,5 +1,5 @@
 import db, {
-  ActivityReport, ActivityRecipient, User, Recipient, Grant, NextStep,
+  ActivityReport, ActivityRecipient, User, Recipient, Grant, NextStep, Collaborator,
 } from '../models';
 import filtersToScopes from '../scopes';
 import reasonList from './reasonList';
@@ -20,9 +20,9 @@ const mockUser = {
 
 const reportObject = {
   activityRecipientType: 'recipient',
-  submissionStatus: REPORT_STATUSES.SUBMITTED,
-  calculatedStatus: REPORT_STATUSES.APPROVED,
-  userId: mockUser.id,
+  submissionStatus: REPORT_STATUSES.SUBMITTED, // TODO: Might need fix
+  calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
+  author: mockUser.id,
   lastUpdatedById: mockUser.id,
   ECLKCResourcesUsed: ['test'],
   activityRecipients: [
@@ -119,8 +119,8 @@ const regionOneDraftReport = {
   reason: ['Below Competitive Threshold (CLASS)', 'Below Quality Threshold (CLASS)'],
   startDate: '2021-02-01T12:00:00Z',
   endDate: '2021-02-28T12:00:00Z',
-  submissionStatus: REPORT_STATUSES.DRAFT,
-  calculatedStatus: REPORT_STATUSES.DRAFT,
+  submissionStatus: REPORT_STATUSES.DRAFT, // TODO: Might need fix
+  calculatedStatus: REPORT_STATUSES.DRAFT, // TODO: Might need fix
 };
 
 describe('Reason list widget', () => {
@@ -157,7 +157,13 @@ describe('Reason list widget', () => {
 
   afterAll(async () => {
     const reports = await ActivityReport
-      .findAll({ where: { userId: [mockUser.id] } });
+      .findAll({
+        include: [{
+          model: Collaborator,
+          as: 'owner',
+          where: { userId: [mockUser.id] },
+        }],
+      });
     const ids = reports.map((report) => report.id);
     await NextStep.destroy({ where: { activityReportId: ids } });
     await ActivityRecipient.destroy({ where: { activityReportId: ids } });

@@ -71,7 +71,7 @@ export const APPROVER_STATUSES = {
 // copied from /frontend/src/pages/ActivityReports/constants.js
 export const TOPICS = [
   'Behavioral / Mental Health / Trauma',
-  'Child Screening and Assessment',
+  'Child Assessment, Development, Screening',
   'CLASS: Classroom Organization',
   'CLASS: Emotional Support',
   'CLASS: Instructional Support',
@@ -103,7 +103,7 @@ export const TOPICS = [
   'Recordkeeping and Reporting',
   'Safety Practices',
   'Staff Wellness',
-  'Teaching / Caregiving Practices',
+  'Teaching Practices / Teacher-Child Interactions',
   'Technology and Information Systems',
   'Transition Practices',
   'Transportation',

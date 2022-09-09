@@ -379,12 +379,12 @@ const beforeUpdate = async (instance) => {
   copyStatus(instance);
 };
 
-const beforeDestroy = async (sequelize, instance, options) => {
-  await cleanUpAllCollaborators(sequelize, instance, options);
-  await cleanUpAllApprovals(sequelize, instance, options);
-  await cleanUpAllReportGoals(sequelize, instance, options);
-  await cleanUpAllReportObjectives(sequelize, instance, options);
-};
+const beforeDestroy = async (sequelize, instance, options) => Promise.all([
+  cleanUpAllCollaborators(sequelize, instance, options),
+  cleanUpAllApprovals(sequelize, instance, options),
+  cleanUpAllReportGoals(sequelize, instance, options),
+  cleanUpAllReportObjectives(sequelize, instance, options),
+]);
 
 const afterCreate = async (sequelize, instance, options) => {
   await createApproval(sequelize, instance, options);

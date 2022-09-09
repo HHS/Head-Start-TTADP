@@ -22,6 +22,7 @@ import {
   APPROVER_STATUSES,
   REPORT_STATUSES,
   ENTITY_TYPES,
+  RATIFIER_STATUSES,
 } from '../constants';
 import {
   upsertRatifier,
@@ -212,42 +213,42 @@ describe('Activity report service', () => {
       // Submitted.
       await ActivityReport.create({
         ...submittedReport,
-        userId: mockUserFour.id,
         lastUpdatedById: mockUserFour.id,
         submissionStatus: REPORT_STATUSES.SUBMITTED,
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
         activityRecipients: [{ activityRecipientId: ALERT_RECIPIENT_ID }],
       });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, isOnlyCollabReport.id, [mockUserFour.id]);
 
       // Needs Action.
       await ActivityReport.create({
         ...submittedReport,
-        userId: mockUserFour.id,
         lastUpdatedById: mockUserFour.id,
         submissionStatus: REPORT_STATUSES.SUBMITTED,
         calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
         activityRecipients: [{ activityRecipientId: ALERT_RECIPIENT_ID }],
       });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, isOnlyCollabReport.id, [mockUserFour.id]);
 
       // Approved (Should be missing).
       await ActivityReport.create({
         ...submittedReport,
-        userId: mockUserFour.id,
         lastUpdatedById: mockUserFour.id,
-        submissionStatus: REPORT_STATUSES.SUBMITTED,
-        calculatedStatus: REPORT_STATUSES.APPROVED,
+        submissionStatus: REPORT_STATUSES.SUBMITTED, // TODO: Might need fix
+        calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
         activityRecipients: [{ activityRecipientId: ALERT_RECIPIENT_ID }],
       });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, isOnlyCollabReport.id, [mockUserFour.id]);
 
       // Is Only Approver.
       const isOnlyApproverReport = await ActivityReport.create({
         ...submittedReport,
-        userId: mockUserFive.id,
         lastUpdatedById: mockUserFive.id,
-        submissionStatus: REPORT_STATUSES.SUBMITTED,
-        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        submissionStatus: REPORT_STATUSES.SUBMITTED, // TODO: Might need fix
+        calculatedStatus: REPORT_STATUSES.SUBMITTED, // TODO: Might need fix
         activityRecipients: [{ activityRecipientId: ALERT_RECIPIENT_ID }],
       });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, isOnlyCollabReport.id, [mockUserFive.id]);
 
       // Add Approver.
       await upsertRatifier({
@@ -259,12 +260,12 @@ describe('Activity report service', () => {
       // Is Only Collaborator
       const isOnlyCollabReport = await ActivityReport.create({
         ...submittedReport,
-        userId: mockUserFive.id,
         lastUpdatedById: mockUserFive.id,
-        submissionStatus: REPORT_STATUSES.SUBMITTED,
-        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        submissionStatus: REPORT_STATUSES.SUBMITTED, // TODO: Might need fix
+        calculatedStatus: REPORT_STATUSES.SUBMITTED, // TODO: Might need fix
         activityRecipients: [{ activityRecipientId: ALERT_RECIPIENT_ID }],
       });
+      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, isOnlyCollabReport.id, [mockUserFive.id]);
 
       // Add Collaborator
       await upsertEditor({
@@ -821,24 +822,24 @@ describe('Activity report service', () => {
 
         await ActivityReport.create({
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.APPROVED,
+          calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
           userId: mockUserTwo.id,
           topics: topicsOne,
         });
         await createOrUpdate({
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.APPROVED,
-          activityReportCollaborators: [{ user: { id: mockUser.id } }],
+          calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
+          collaborators: [{ user: { id: mockUser.id } }],
         });
         await ActivityReport.create({
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.APPROVED,
+          calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
           regionId: 2,
         });
         const report = await ActivityReport.create({
           ...submittedReport,
           activityRecipients: [{ grantId: firstGrant.id }],
-          calculatedStatus: REPORT_STATUSES.APPROVED,
+          calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
           topics: topicsTwo,
         });
         try {
@@ -852,7 +853,7 @@ describe('Activity report service', () => {
         }
         latestReport = await ActivityReport.create({
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.APPROVED,
+          calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
           updatedAt: '1900-01-01T12:00:00Z',
         });
         await ActivityReport.create({
@@ -955,26 +956,27 @@ describe('Activity report service', () => {
           imported: { foo: 'bar' },
           legacyId: 'R14-AR-123456',
           regionId: 14,
-          calculatedStatus: REPORT_STATUSES.APPROVED,
+          calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
         };
         const mockReport = {
           ...submittedReport,
           regionId: 14,
-          calculatedStatus: REPORT_STATUSES.APPROVED,
+          calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
         };
         // create two approved
         approvedReport = await ActivityReport.create(mockReport);
-        await ActivityReportApprover.create({
-          activityReportId: approvedReport.id,
+        await upsertRatifier({
+          entityType: ENTITY_TYPES.REPORT,
+          entityId: approvedReport.id,
           userId: mockUserTwo.id,
-          status: APPROVER_STATUSES.APPROVED,
+          status: RATIFIER_STATUSES.RATIFIED,
         });
         await ActivityReport.create(mockReport);
         // create one approved legacy
         legacyReport = await ActivityReport.create(mockLegacyReport);
         // create one submitted
         nonApprovedReport = await ActivityReport.create({
-          ...mockReport, calculatedStatus: REPORT_STATUSES.SUBMITTED,
+          ...mockReport, calculatedStatus: REPORT_STATUSES.SUBMITTED, // TODO: Might need fix
         });
       });
 
@@ -1019,7 +1021,7 @@ describe('Activity report service', () => {
         };
         const mockNeedsActionReport = {
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION, // TODO: Might need fix
           regionId: 14,
           userId: alertsMockUserTwo.id,
         };
@@ -1046,7 +1048,7 @@ describe('Activity report service', () => {
       it('returns report when passed a single report id', async () => {
         const mockReport = {
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.APPROVED,
+          calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
         };
         const report = await ActivityReport.create(mockReport);
         const rows = await getDownloadableActivityReportsByIds([1], { report: report.id });
@@ -1060,7 +1062,7 @@ describe('Activity report service', () => {
           ...reportObject,
           imported: { foo: 'bar' },
           legacyId: 'R14-AR-abc123',
-          calculatedStatus: REPORT_STATUSES.APPROVED,
+          calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
         };
         const legacyReport = await ActivityReport.create(mockLegacyReport);
 
@@ -1081,7 +1083,7 @@ describe('Activity report service', () => {
       it('ignores invalid report ids', async () => {
         const mockReport = {
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.APPROVED,
+          calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
         };
         const report = await ActivityReport.create(mockReport);
 

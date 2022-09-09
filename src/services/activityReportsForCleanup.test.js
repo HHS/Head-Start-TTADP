@@ -88,7 +88,7 @@ const submittedReport = {
 
 const approvedReport = {
   ...submittedReport,
-  calculatedStatus: REPORT_STATUSES.APPROVED,
+  calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
 };
 
 describe('Activity report cleanup service', () => {

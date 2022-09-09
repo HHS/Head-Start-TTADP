@@ -46,8 +46,8 @@ const mockUserThree = {
 
 const reportObject = {
   activityRecipientType: 'recipient',
-  submissionStatus: REPORT_STATUSES.SUBMITTED,
-  calculatedStatus: REPORT_STATUSES.APPROVED,
+  submissionStatus: REPORT_STATUSES.SUBMITTED, // TODO: Might need fix
+  calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
   userId: mockUser.id,
   lastUpdatedById: mockUser.id,
   ECLKCResourcesUsed: ['test'],

@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import moment from 'moment';
-import { ActivityReport } from '../models';
+import { ActivityReport, Approval } from '../models';
 import { REPORT_STATUSES } from '../constants';
 
 function addOrUpdateResponse(traceIndex, res, xValue, valueToAdd, month) {
@@ -101,9 +101,12 @@ export default async function totalHrsAndRecipientGraph(scopes, query) {
     ],
     where: {
       [Op.and]: [scopes.activityReport],
-      calculatedStatus: REPORT_STATUSES.APPROVED,
-
     },
+    include: [{
+      model: Approval,
+      as: 'approval',
+      where: { calculatedStatus: REPORT_STATUSES.APPROVED },
+    }],
     raw: true,
     includeIgnoreAttributes: false,
     order: [['startDate', 'ASC']],

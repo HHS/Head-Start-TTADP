@@ -10,6 +10,7 @@ import {
   Recipient,
   ActivityReport,
   ActivityReportGoal,
+  Approval,
   Topic,
   Program,
   File,
@@ -33,7 +34,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         (
           SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
           INNER JOIN "ActivityReportGoals" "arg" ON "arg"."activityReportId" = "ar"."id"
-          WHERE "arg"."goalId" = "Goal"."id"         
+          WHERE "arg"."goalId" = "Goal"."id"
         ) > 0
       `),
       'onAnyReport',
@@ -55,7 +56,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
             (
               SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
               INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-              WHERE "aro"."objectiveId" = "objectives"."id"         
+              WHERE "aro"."objectiveId" = "objectives"."id"
             ) > 0
           `),
           'onAnyReport',
@@ -76,8 +77,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                   SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
                   INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
-                  INNER JOIN "ObjectiveResources" "or" ON "or"."objectiveId" = "o"."id"      
-                  WHERE "o"."id" = "objectives"."id" 
+                  INNER JOIN "ObjectiveResources" "or" ON "or"."objectiveId" = "o"."id"
+                  WHERE "o"."id" = "objectives"."id"
                   AND "or"."id" = "objectives->resources"."id"
                 ) > 0
               `),
@@ -89,8 +90,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                   SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
                   INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
-                  INNER JOIN "ObjectiveResources" "or" ON "or"."objectiveId" = "o"."id"      
-                  WHERE "o"."id" = "objectives"."id" 
+                  INNER JOIN "ObjectiveResources" "or" ON "or"."objectiveId" = "o"."id"
+                  WHERE "o"."id" = "objectives"."id"
                   AND "or"."id" = "objectives->resources"."id"
                   AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
                 ) > 0
@@ -111,8 +112,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                   SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
                   INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
-                  INNER JOIN "ObjectiveTopics" "ot" ON "ot"."objectiveId" = "o"."id"      
-                  WHERE "o"."id" = "objectives"."id" 
+                  INNER JOIN "ObjectiveTopics" "ot" ON "ot"."objectiveId" = "o"."id"
+                  WHERE "o"."id" = "objectives"."id"
                   AND "ot"."topicId" = "objectives->topics"."id"
                 ) > 0
               `),
@@ -124,8 +125,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                   SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
                   INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
-                  INNER JOIN "ObjectiveTopics" "ot" ON "ot"."objectiveId" = "o"."id"      
-                  WHERE "o"."id" = "objectives"."id" 
+                  INNER JOIN "ObjectiveTopics" "ot" ON "ot"."objectiveId" = "o"."id"
+                  WHERE "o"."id" = "objectives"."id"
                   AND "ot"."topicId" = "objectives->topics"."id"
                   AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
                 ) > 0
@@ -149,8 +150,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                   SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
                   INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
-                  INNER JOIN "ObjectiveRoles" "or" ON "or"."objectiveId" = "o"."id"      
-                  WHERE "o"."id" = "objectives"."id" 
+                  INNER JOIN "ObjectiveRoles" "or" ON "or"."objectiveId" = "o"."id"
+                  WHERE "o"."id" = "objectives"."id"
                   AND "or"."roleId" = "objectives->roles"."id"
                 ) > 0
               `),
@@ -162,8 +163,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                   SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
                   INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
-                  INNER JOIN "ObjectiveRoles" "or" ON "or"."objectiveId" = "o"."id"      
-                  WHERE "o"."id" = "objectives"."id" 
+                  INNER JOIN "ObjectiveRoles" "or" ON "or"."objectiveId" = "o"."id"
+                  WHERE "o"."id" = "objectives"."id"
                   AND "or"."roleId" = "objectives->roles"."id"
                   AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
                 ) > 0
@@ -175,11 +176,12 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         {
           model: ActivityReport,
           as: 'activityReports',
-          where: {
-            calculatedStatus: {
-              [Op.not]: REPORT_STATUSES.DELETED,
-            },
-          },
+          include: [{
+            model: Approval,
+            as: 'approval',
+            where: { calculatedStatus: { [Op.not]: REPORT_STATUSES.DELETED } },
+            required: true,
+          }],
           required: false,
         },
       ],
@@ -383,11 +385,12 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
           {
             model: ActivityReport,
             as: 'activityReports',
-            where: {
-              calculatedStatus: {
-                [Op.not]: REPORT_STATUSES.DELETED,
-              },
-            },
+            include: [{
+              model: Approval,
+              as: 'approval',
+              where: { calculatedStatus: { [Op.not]: REPORT_STATUSES.DELETED } },
+              required: true,
+            }],
             required: false,
           },
         ],

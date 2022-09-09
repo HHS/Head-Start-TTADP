@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import {
   ActivityReport,
+  Approval,
 } from '../models';
 import { REPORT_STATUSES, TOPICS } from '../constants';
 
@@ -11,8 +12,12 @@ export default async function topicFrequencyGraph(scopes) {
     ],
     where: {
       [Op.and]: [scopes.activityReport],
-      calculatedStatus: REPORT_STATUSES.APPROVED,
     },
+    include: [{
+      model: Approval,
+      as: 'approval',
+      where: { calculatedStatus: REPORT_STATUSES.APPROVED },
+    }],
     nest: true,
     raw: true,
   });

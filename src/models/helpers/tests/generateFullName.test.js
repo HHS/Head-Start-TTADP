@@ -1,5 +1,5 @@
 /* eslint-disable import/no-named-default */
-import generateFullName from '../generateFullName';
+import { generateFullName } from '../generateFullName';
 
 describe('generateFullName', () => {
   it('generates FullName', async () => {

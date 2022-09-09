@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import { User, Collaborator } from '../models';
 import { COLLABORATOR_TYPES } from '../constants';
+import { auditLogger } from '../logger';
 
 export async function upsertCollaborator(values) {
   // Create collaborator, on unique constraint violation do update
@@ -14,11 +15,13 @@ export async function upsertCollaborator(values) {
   } = values;
 
   if (collaboratorTypes.length < 1) {
+    auditLogger.error(JSON.stringify({ local: 'az', values }));
     throw new Error('At least one collaborator type is required to create a collaborator.');
   }
 
   // Try to find a current collaborator
   let collaborator = await Collaborator.findOne({ where: { entityType, entityId, userId } });
+  auditLogger.error(JSON.stringify({ local: 'a', values, collaborator }));
 
   // Try to find a collaborator that has been deleted
   if (!collaborator) {
@@ -26,11 +29,13 @@ export async function upsertCollaborator(values) {
       where: { entityType, entityId, userId },
       paranoid: false,
     });
+    auditLogger.error(JSON.stringify({ local: 'b', values, collaborator }));
     if (collaborator) {
       collaborator = await Collaborator.restore({
         where: { entityType, entityId, userId },
         individualHooks: true,
       });
+      auditLogger.error(JSON.stringify({ local: 'c', values, collaborator }));
     }
   }
 
@@ -47,15 +52,14 @@ export async function upsertCollaborator(values) {
       ...newValues,
     });
   } else {
-    try {
+    // try {
       // If not collaborator was found create it
-      collaborator = await Collaborator.create({
-        ...values,
-      });
-    } catch (err) {
-      console.error(err);
-      throw new Error('At least one collaborator type is required to create a collaborator.');
-    }
+      collaborator = await Collaborator.create(values);
+    //   auditLogger.error(JSON.stringify({ local: 'd', values, collaborator }));
+    // } catch (err) {
+    //   auditLogger.error(JSON.stringify({ local: 'e', values, collaborator, err }));
+    //   throw new Error('At least one collaborator type is required to create a collaborator.');
+    // }
   }
 
   if (collaborator) {
@@ -98,7 +102,7 @@ export async function upsertRatifier(values) {
 export async function syncCollaborators(
   entityType,
   entityId,
-  collaboratorType,
+  collaboratorTypes = [],
   userIds = [],
   tier = 1,
 ) {
@@ -112,18 +116,21 @@ export async function syncCollaborators(
 
   // Remove any preexisting collaborators now missing from userId request param
   if (preexistingCollaborators && preexistingCollaborators.length > 0) {
-    const collaboratorsToRemove = preexistingCollaborators
-      .filter((a) => !userIds.includes(a.userId));
-    await Promise.all(collaboratorsToRemove.map(async (collaborator) => Collaborator
-      .update({
-        collaboratorTypes: collaborator.collaboratorTypes
-          .filter((type) => type !== collaboratorType),
-      }, {
-        where: {
-          id: collaborator.id,
-          collaboratorTypes: { [Op.contains]: collaboratorType },
-        },
-      })));
+    await Promise.all(collaboratorTypes.map(async (collaboratorType) => {
+      const collaboratorsToRemove = preexistingCollaborators
+        .filter((a) => !userIds.includes(a.userId))
+        .filter((a) => a.collaboratorTypes.includes(collaboratorType));
+      await Promise.all(collaboratorsToRemove.map(async (collaborator) => Collaborator
+        .update({
+          collaboratorTypes: collaborator.collaboratorTypes
+            .filter((type) => type !== collaboratorType),
+        }, {
+          where: {
+            id: collaborator.id,
+            collaboratorTypes: { [Op.contains]: collaboratorType },
+          },
+        })));
+    }));
   }
 
   // Create or restore collaborator
@@ -133,7 +140,7 @@ export async function syncCollaborators(
       entityType,
       entityId,
       userId,
-      collaboratorTypes: [collaboratorType],
+      collaboratorTypes,
       tier,
     })));
   }
@@ -143,7 +150,7 @@ export async function syncCollaborators(
       entityType,
       entityId,
       tier,
-      collaboratorTypes: { [Op.contains]: collaboratorType },
+      collaboratorTypes: { [Op.overlap]: collaboratorTypes },
     },
     include: [
       {
@@ -156,26 +163,29 @@ export async function syncCollaborators(
 }
 
 export async function syncOwnerInstantiators(entityType, entityId, userIds = [], tier = 1) {
-  return Promise.all([
-    syncCollaborators(entityType, entityId, COLLABORATOR_TYPES.OWNER, userIds, tier),
-    syncCollaborators(entityType, entityId, COLLABORATOR_TYPES.INSTANTIATOR, userIds, tier),
-  ]);
+  return syncCollaborators(
+    entityType,
+    entityId,
+    [COLLABORATOR_TYPES.OWNER, COLLABORATOR_TYPES.INSTANTIATOR],
+    userIds,
+    tier,
+  );
 }
 
 export async function syncOwners(entityType, entityId, userIds = [], tier = 1) {
-  return syncCollaborators(entityType, entityId, COLLABORATOR_TYPES.OWNER, userIds, tier);
+  return syncCollaborators(entityType, entityId, [COLLABORATOR_TYPES.OWNER], userIds, tier);
 }
 
 export async function syncInstantiators(entityType, entityId, userIds = [], tier = 1) {
-  return syncCollaborators(entityType, entityId, COLLABORATOR_TYPES.INSTANTIATOR, userIds, tier);
+  return syncCollaborators(entityType, entityId, [COLLABORATOR_TYPES.INSTANTIATOR], userIds, tier);
 }
 
 export async function syncEditors(entityType, entityId, userIds = [], tier = 1) {
-  return syncCollaborators(entityType, entityId, COLLABORATOR_TYPES.EDITOR, userIds, tier);
+  return syncCollaborators(entityType, entityId, [COLLABORATOR_TYPES.EDITOR], userIds, tier);
 }
 
 export async function syncRatifiers(entityType, entityId, userIds = [], tier = 1) {
-  return syncCollaborators(entityType, entityId, COLLABORATOR_TYPES.RATIFIER, userIds, tier);
+  return syncCollaborators(entityType, entityId, [COLLABORATOR_TYPES.RATIFIER], userIds, tier);
 }
 
 export async function getCollaborator(entityType, entityId, userIds) {

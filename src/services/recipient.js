@@ -9,6 +9,7 @@ import {
   ActivityReport,
   Objective,
   ActivityRecipient,
+  Approval,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
 import { RECIPIENTS_PER_PAGE, GOALS_PER_PAGE, REPORT_STATUSES } from '../constants';
@@ -364,10 +365,13 @@ export async function getGoalsByActivityRecipient(
             model: ActivityReport,
             as: 'activityReports',
             required: true,
-            where: {
-              calculatedStatus: REPORT_STATUSES.APPROVED,
-            },
             include: [
+              {
+                model: Approval,
+                as: 'approval',
+                where: { calculatedStatus: REPORT_STATUSES.APPROVED },
+                required: true,
+              },
               {
                 model: ActivityRecipient,
                 as: 'activityRecipients',

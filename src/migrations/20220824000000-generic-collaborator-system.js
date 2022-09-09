@@ -511,6 +511,14 @@ module.exports = {
           { transaction },
         );
 
+        await queryInterface.sequelize.query(
+          `--- CONSTRAINTS
+          ALTER TABLE "CollaboratorRoles"
+          ADD CONSTRAINT "CollaboratorRoles_collaborator_role"
+          UNIQUE ("collaboratorId", "roleId");`,
+          { transaction },
+        );
+
         // await queryInterface.sequelize.query(
         //   `UPDATE "CollaboratorRoles" cr
         //  SET "roleId" = r.id

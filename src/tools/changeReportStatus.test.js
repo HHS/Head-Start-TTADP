@@ -1,8 +1,9 @@
 import {
   sequelize,
   ActivityReport,
+  Approval,
 } from '../models';
-import { REPORT_STATUSES } from '../constants';
+import { REPORT_STATUSES, ENTITY_TYPES } from '../constants';
 import changeReportStatus from './changeReportStatus';
 
 jest.mock('../logger');
@@ -11,7 +12,7 @@ const reportObject = {
   activityRecipientType: 'recipient',
   regionId: 1,
   ECLKCResourcesUsed: ['test'],
-  submissionStatus: REPORT_STATUSES.APPROVED,
+  // submissionStatus: REPORT_STATUSES.APPROVED,
   numberOfParticipants: 1,
   deliveryMethod: 'method',
   duration: 0,
@@ -31,14 +32,29 @@ describe('changeStatus', () => {
   });
 
   it('changes activity report(s) status to deleted', async () => {
-    const report = await ActivityReport.create(reportObject);
+    let report = await ActivityReport.create(reportObject);
+    await Approval.update(
+      { submissionStatus: REPORT_STATUSES.APPROVED },
+      {
+        where: { entityType: ENTITY_TYPES.REPORT, entityId: report.id, tier: 0 },
+        individualHooks: true,
+      },
+    );
 
-    expect(report.submissionStatus).toBe(REPORT_STATUSES.APPROVED);
+    report = await ActivityReport.findOne({
+      where: { id: report.id },
+      include: [{ model: Approval, as: 'approval', attributes: ['submissionStatus'] }],
+    });
+
+    expect(report.approval.submissionStatus).toBe(REPORT_STATUSES.APPROVED);
     await changeReportStatus(report.id.toString(), 'deleted');
 
-    const deletedReport = await ActivityReport.unscoped().findOne({ where: { id: report.id } });
+    const deletedReport = await ActivityReport.unscoped().findOne({
+      where: { id: report.id },
+      include: [{ model: Approval, as: 'approval', attributes: ['submissionStatus'] }],
+    });
 
-    expect(deletedReport.submissionStatus).toBe(REPORT_STATUSES.DELETED);
+    expect(deletedReport.approval.submissionStatus).toBe(REPORT_STATUSES.DELETED);
 
     await ActivityReport.destroy({ where: { id: deletedReport.id } });
   });

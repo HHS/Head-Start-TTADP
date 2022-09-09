@@ -470,7 +470,7 @@ export async function activityReports(
   const { activityReport: scopes } = filtersToScopes(filters);
 
   const where = {
-    calculatedStatus: REPORT_STATUSES.APPROVED,
+    '$approval.calculatedStatus$': REPORT_STATUSES.APPROVED,
     [Op.and]: scopes,
   };
 
@@ -654,7 +654,7 @@ export async function activityReportsForCleanup(userId) {
           {
             [Op.and]: {
               userId,
-              calculatedStatus: {
+              '$approval.calculatedStatus$': {
                 [Op.ne]: REPORT_STATUSES.DRAFT,
               },
             },
@@ -667,7 +667,7 @@ export async function activityReportsForCleanup(userId) {
             // if the user is an collaborator, and the report is not in draft,
             // it is eligible for cleanup
             '$collaborators->user.id$': userId,
-            calculatedStatus: {
+            '$approval.calculatedStatus$': {
               [Op.ne]: REPORT_STATUSES.DRAFT,
             },
           },
@@ -741,8 +741,8 @@ export async function activityReportAlerts(userId, {
         [Op.or]: [
           {
             [Op.or]: [
-              { calculatedStatus: REPORT_STATUSES.SUBMITTED },
-              { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
+              { '$approval.calculatedStatus$': REPORT_STATUSES.SUBMITTED },
+              { '$approval.calculatedStatus$': REPORT_STATUSES.NEEDS_ACTION },
             ],
             '$approvers.userId$': userId,
           },
@@ -751,7 +751,7 @@ export async function activityReportAlerts(userId, {
               {
                 [Op.and]: [
                   {
-                    calculatedStatus: { [Op.ne]: REPORT_STATUSES.APPROVED },
+                    '$approval.calculatedStatus$': { [Op.ne]: REPORT_STATUSES.APPROVED },
                   },
                 ],
               },
@@ -1205,7 +1205,7 @@ export async function getAllDownloadableActivityReports(
     regionId: {
       [Op.in]: regions,
     },
-    calculatedStatus: REPORT_STATUSES.APPROVED,
+    '$approval.calculatedStatus$': REPORT_STATUSES.APPROVED,
     [Op.and]: scopes,
   };
 
@@ -1220,8 +1220,8 @@ export async function getAllDownloadableActivityReportAlerts(userId, filters) {
       { // User is approver, and report is submitted or needs_action
         [Op.and]: [{
           [Op.or]: [
-            { calculatedStatus: REPORT_STATUSES.SUBMITTED },
-            { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
+            { '$approval.calculatedStatus$': REPORT_STATUSES.SUBMITTED },
+            { '$approval.calculatedStatus$': REPORT_STATUSES.NEEDS_ACTION },
           ],
           '$approvers.userId$': userId,
         }],
@@ -1231,12 +1231,12 @@ export async function getAllDownloadableActivityReportAlerts(userId, filters) {
           {
             [Op.and]: [
               {
-                calculatedStatus: { [Op.ne]: REPORT_STATUSES.APPROVED },
+                '$approval.calculatedStatus$': { [Op.ne]: REPORT_STATUSES.APPROVED },
               },
             ],
           },
           {
-            [Op.or]: [{ userId }, { '$collaborators.userId$': userId }],
+            [Op.or]: [{ '$owners.userId$': userId }, { '$collaborators.userId$': userId }],
           },
         ],
       },
