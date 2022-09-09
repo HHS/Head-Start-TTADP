@@ -69,6 +69,10 @@ describe('Objectives DB service', () => {
       isNew: true,
       recipientIds: [1],
       ids: ['uuid'],
+      roles: [],
+      topics: [],
+      resources: [],
+      files: [],
     },
     {
       id: 'uuid2',
@@ -78,53 +82,62 @@ describe('Objectives DB service', () => {
       isNew: true,
       recipientIds: [1],
       ids: ['uuid2'],
+      roles: [],
+      topics: [],
+      resources: [],
+      files: [],
     },
   ];
 
   beforeAll(async () => {
-    await User.create(mockUser);
-    report = await ActivityReport.create(reportObject);
-    objective = await Objective.create({
-      title: 'title',
-      ttaProvided: 'tta provided',
-      status: 'Draft',
-      otherEntityId: 1,
-    });
+    try {
+      await User.create(mockUser);
+      report = await ActivityReport.create(reportObject);
+      objective = await Objective.create({
+        title: 'title',
+        ttaProvided: 'tta provided',
+        status: 'Draft',
+        otherEntityId: 1,
+      });
 
-    secondObjective = await Objective.create({
-      title: 'second title',
-      status: 'Draft',
-      otherEntityId: 1,
-    });
+      secondObjective = await Objective.create({
+        title: 'second title',
+        status: 'Draft',
+        otherEntityId: 1,
+      });
 
-    await ActivityReportObjective.create({
-      objectiveId: objective.id,
-      activityReportId: report.id,
-      ttaProvided: 'tta provided',
-      status: objective.status,
-    });
-
-    await ActivityReportObjective.create({
-      objectiveId: secondObjective.id,
-      activityReportId: report.id,
-      status: secondObjective.status,
-    });
-
-    await sequelize.transaction(async () => {
-      await saveObjectivesForReport([...objectives, {
-        id: objective.id,
-        title: objective.title,
+      await ActivityReportObjective.create({
+        objectiveId: objective.id,
+        activityReportId: report.id,
         ttaProvided: 'tta provided',
         status: objective.status,
-        recipientIds: [1],
-        ids: [objective.id],
-      }], report);
-    });
+      });
 
-    recipientInfo = await Recipient.create({ ...mockRecipient });
-    grantInfo = await Grant.create({ ...mockGrant, recipientId: recipientInfo.id });
-    goalInfo = await Goal.create({ name: 'sample goal for obj info', grantId: grantInfo.id });
-    objectiveInfo = await Objective.create({ title: 'sample obj for info', goalId: goalInfo.id });
+      await ActivityReportObjective.create({
+        objectiveId: secondObjective.id,
+        activityReportId: report.id,
+        status: secondObjective.status,
+      });
+
+      await sequelize.transaction(async () => {
+        await saveObjectivesForReport([...objectives, {
+          id: objective.id,
+          title: objective.title,
+          ttaProvided: 'tta provided',
+          status: objective.status,
+          recipientIds: [1],
+          ids: [objective.id],
+          roles: [],
+        }], report);
+      });
+
+      recipientInfo = await Recipient.create({ ...mockRecipient });
+      grantInfo = await Grant.create({ ...mockGrant, recipientId: recipientInfo.id });
+      goalInfo = await Goal.create({ name: 'sample goal for obj info', grantId: grantInfo.id });
+      objectiveInfo = await Objective.create({ title: 'sample obj for info', goalId: goalInfo.id });
+    } catch (error) {
+      console.log(error);
+    }
   });
 
   afterAll(async () => {
