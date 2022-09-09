@@ -1,5 +1,5 @@
 const propagateDestroyToMetadata = async (sequelize, instance, options) => Promise.all([
-  await sequelize.models.ActivityReportObjectiveFiles.destroy({
+  await sequelize.models.ActivityReportObjectiveFile.destroy({
     where: {
       activityReportObjectiveId: instance.id,
     },
