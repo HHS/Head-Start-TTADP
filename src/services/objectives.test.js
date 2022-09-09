@@ -90,54 +90,50 @@ describe('Objectives DB service', () => {
   ];
 
   beforeAll(async () => {
-    try {
-      await User.create(mockUser);
-      report = await ActivityReport.create(reportObject);
-      objective = await Objective.create({
-        title: 'title',
-        ttaProvided: 'tta provided',
-        status: 'Draft',
-        otherEntityId: 1,
-      });
+    await User.create(mockUser);
+    report = await ActivityReport.create(reportObject);
+    objective = await Objective.create({
+      title: 'title',
+      ttaProvided: 'tta provided',
+      status: 'Draft',
+      otherEntityId: 1,
+    });
 
-      secondObjective = await Objective.create({
-        title: 'second title',
-        status: 'Draft',
-        otherEntityId: 1,
-      });
+    secondObjective = await Objective.create({
+      title: 'second title',
+      status: 'Draft',
+      otherEntityId: 1,
+    });
 
-      await ActivityReportObjective.create({
-        objectiveId: objective.id,
-        activityReportId: report.id,
+    await ActivityReportObjective.create({
+      objectiveId: objective.id,
+      activityReportId: report.id,
+      ttaProvided: 'tta provided',
+      status: objective.status,
+    });
+
+    await ActivityReportObjective.create({
+      objectiveId: secondObjective.id,
+      activityReportId: report.id,
+      status: secondObjective.status,
+    });
+
+    await sequelize.transaction(async () => {
+      await saveObjectivesForReport([...objectives, {
+        id: objective.id,
+        title: objective.title,
         ttaProvided: 'tta provided',
         status: objective.status,
-      });
+        recipientIds: [1],
+        ids: [objective.id],
+        roles: [],
+      }], report);
+    });
 
-      await ActivityReportObjective.create({
-        objectiveId: secondObjective.id,
-        activityReportId: report.id,
-        status: secondObjective.status,
-      });
-
-      await sequelize.transaction(async () => {
-        await saveObjectivesForReport([...objectives, {
-          id: objective.id,
-          title: objective.title,
-          ttaProvided: 'tta provided',
-          status: objective.status,
-          recipientIds: [1],
-          ids: [objective.id],
-          roles: [],
-        }], report);
-      });
-
-      recipientInfo = await Recipient.create({ ...mockRecipient });
-      grantInfo = await Grant.create({ ...mockGrant, recipientId: recipientInfo.id });
-      goalInfo = await Goal.create({ name: 'sample goal for obj info', grantId: grantInfo.id });
-      objectiveInfo = await Objective.create({ title: 'sample obj for info', goalId: goalInfo.id });
-    } catch (error) {
-      console.log(error);
-    }
+    recipientInfo = await Recipient.create({ ...mockRecipient });
+    grantInfo = await Grant.create({ ...mockGrant, recipientId: recipientInfo.id });
+    goalInfo = await Goal.create({ name: 'sample goal for obj info', grantId: grantInfo.id });
+    objectiveInfo = await Objective.create({ title: 'sample obj for info', goalId: goalInfo.id });
   });
 
   afterAll(async () => {
