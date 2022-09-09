@@ -77,6 +77,7 @@ function Navigator({
   const selectedGoals = watch('goals');
   const selectedObjectivesWithoutGoals = watch('objectivesWithoutGoals');
 
+  const [isLoading, setIsLoading] = useState(false);
   const [isGoalFormClosed, toggleGoalForm] = useState(selectedGoals.length > 0);
 
   // Toggle objectives readonly only if all objectives are saved and pass validation.
@@ -144,6 +145,8 @@ function Navigator({
   };
 
   const onSaveDraftGoal = async () => {
+    // Prevent user from making changes to goal title during auto-save.
+    setIsLoading(true);
     // the goal form only allows for one goal to be open at a time
     // but the objectives are stored in a subfield
     // so we need to access the objectives and bundle them together in order to validate them
@@ -160,17 +163,24 @@ function Navigator({
       regionId: formData.regionId,
     };
 
+    let allGoals = [...selectedGoals, goal];
     // save goal to api, come back with new ids for goal and objectives
     try {
-      await saveGoalsForReport(
+      allGoals = await saveGoalsForReport(
         {
-          goals: [...selectedGoals, goal],
+          goals: allGoals,
           activityReportId: reportId,
           regionId: formData.regionId,
         },
       );
+
+      // Find the goal we are editing and put it back with updated values.
+      const goalBeingEdited = allGoals.find((g) => g.name === goal.name);
+      setValue('goalForEditing', goalBeingEdited);
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -336,6 +346,8 @@ function Navigator({
           isObjectivesFormClosed,
           toggleGoalForm,
           toggleObjectiveForm,
+          isLoading,
+          setIsLoading,
         }}
         >
           <FormProvider {...hookForm}>
