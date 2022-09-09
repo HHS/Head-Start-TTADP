@@ -5,7 +5,11 @@ import IdleModal from './IdleModal';
 export default function AppWrapper({
   padded, authenticated, children, logout,
 }) {
-  const content = authenticated ? (
+  if (!authenticated) {
+    return children;
+  }
+
+  const content = (
     <div role="main" id="main-content">
       {' '}
       <IdleModal
@@ -15,7 +19,7 @@ export default function AppWrapper({
       />
       {children}
     </div>
-  ) : children;
+  );
 
   if (padded) {
     return (
