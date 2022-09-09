@@ -184,6 +184,31 @@ function Navigator({
     }
   };
 
+  const onSaveDraftOetObjectives = async () => {
+    // Prevent user from making changes to objectives during auto-save.
+    setIsLoading(true);
+
+    const fieldArrayName = 'objectivesWithoutGoals';
+    const currentObjectives = getValues(fieldArrayName);
+
+    // Save objectives.
+    try {
+      const newObjectives = await saveObjectivesForReport(
+        {
+          objectivesWithoutGoals: currentObjectives,
+          activityReportId: reportId,
+          region: formData.regionId,
+        },
+      );
+      // Set updated objectives.
+      setValue('objectivesWithoutGoals', newObjectives);
+    } catch (error) {
+      updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const saveGoalsNavigate = async () => {
     // the goal form only allows for one goal to be open at a time
     // but the objectives are stored in a subfield
@@ -294,10 +319,17 @@ function Navigator({
   };
 
   useInterval(async () => {
-    const ifSaveGoals = isGoalsObjectivesPage && !isGoalFormClosed;
-    if (ifSaveGoals) {
+    // Determine if we should save draft on auto save.
+    const saveGoalsDraft = isGoalsObjectivesPage && !isGoalFormClosed;
+    const saveObjectivesDraft = isGoalsObjectivesPage && !isObjectivesFormClosed;
+    if (isOtherEntityReport && saveObjectivesDraft) {
+      // Save other-entity draft.
+      await onSaveDraftOetObjectives();
+    } else if (saveGoalsDraft) {
+      // Save recipient draft.
       await onSaveDraftGoal();
     } else {
+      // Save regular.
       await onSaveForm();
     }
   }, autoSaveInterval);
