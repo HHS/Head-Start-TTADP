@@ -22,7 +22,11 @@ import {
   Role,
 } from '../models';
 import { DECIMAL_BASE, REPORT_STATUSES } from '../constants';
-import { cacheObjectiveMetadata, cacheGoalMetadata } from './reportCache';
+import {
+  cacheObjectiveMetadata,
+  cacheGoalMetadata,
+  destroyActivityReportObjectiveMetadata,
+} from './reportCache';
 
 const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
   attributes: [
@@ -982,31 +986,6 @@ export async function goalsForGrants(grantIds) {
     ],
     order: ['name'],
   });
-}
-
-async function destroyActivityReportObjectiveMetadata(activityReportObjectiveIdsToRemove) {
-  return Promise.all([
-    ActivityReportObjectiveFile.destroy({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveIdsToRemove,
-      },
-    }),
-    ActivityReportObjectiveResource.destroy({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveIdsToRemove,
-      },
-    }),
-    ActivityReportObjectiveTopic.destroy({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveIdsToRemove,
-      },
-    }),
-    ActivityReportObjectiveRole.destroy({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveIdsToRemove,
-      },
-    }),
-  ]);
 }
 
 async function removeActivityReportObjectivesFromReport(reportId, objectiveIdsToRemove) {
