@@ -35,9 +35,6 @@ export default function EmailVerifier({ token, updateUser }) {
       })
       .catch(() => {
         setVerified(false);
-      })
-      .finally(() => {
-        replace('/account');
       });
   }, [token, updateUser, user, verified, replace]);
 
