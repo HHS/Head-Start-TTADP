@@ -34,7 +34,7 @@ export async function createGoalsForReport(req, res) {
     const newGoals = await createOrUpdateGoalsForActivityReport(goals, activityReportId);
     res.json(newGoals);
   } catch (error) {
-    await handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, `${logContext}:CREATE_GOALS_FOR_REPORT`);
   }
 }
 
@@ -61,7 +61,7 @@ export async function createGoals(req, res) {
 
     res.json(newGoals);
   } catch (error) {
-    await handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, `${logContext}:CREATE_GOALS`);
   }
 }
 
@@ -108,7 +108,7 @@ export async function changeGoalStatus(req, res) {
 
     res.json(updatedGoal);
   } catch (error) {
-    await handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, `${logContext}:CHANGE_GOAL_STATUS`);
   }
 }
 
@@ -141,7 +141,7 @@ export async function deleteGoal(req, res) {
 
     res.json(deletedGoal);
   } catch (error) {
-    await handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, `${logContext}:DELETE_GOAL`);
   }
 }
 
@@ -176,7 +176,7 @@ export async function retrieveGoalsByIds(req, res) {
 
     res.json(retrievedGoal);
   } catch (error) {
-    await handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, `${logContext}:RETRIEVE_GOALS_BY_IDS`);
   }
 }
 
@@ -206,6 +206,6 @@ export async function retrieveGoalByIdAndRecipient(req, res) {
 
     res.json(retrievedGoal);
   } catch (error) {
-    await handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, `${logContext}:RETRIEVE_GOAL_BY_ID_AND_RECIPIENT`);
   }
 }

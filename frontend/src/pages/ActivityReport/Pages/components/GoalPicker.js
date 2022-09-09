@@ -37,9 +37,10 @@ const GoalPicker = ({
   availableGoals, roles, grantIds, reportId,
 }) => {
   const {
-    control, setValue,
+    control, setValue, watch,
   } = useFormContext();
   const [topicOptions, setTopicOptions] = useState([]);
+  const activityRecipientType = watch('activityRecipientType');
 
   // this is commented out because it's used by the code below, which is pending a todo resolve
   // const { toggleGoalForm } = useContext(GoalFormContext);
@@ -58,7 +59,7 @@ const GoalPicker = ({
     name: 'goalForEditing',
     rules: {
       validate: {
-        validateGoal: (g) => validateGoals([g]) === true,
+        validateGoal: (g) => activityRecipientType === 'other-entity' || validateGoals([g]) === true,
       },
     },
     defaultValue: '',
@@ -158,7 +159,10 @@ GoalPicker.propTypes = {
     }),
   ).isRequired,
   roles: PropTypes.arrayOf(PropTypes.string).isRequired,
-  reportId: PropTypes.number.isRequired,
+  reportId: PropTypes.oneOfType([
+    PropTypes.number,
+    PropTypes.string,
+  ]).isRequired,
 };
 
 export default GoalPicker;

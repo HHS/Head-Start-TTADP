@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { ROW_CLASS, FIRST_COLUMN_CLASS, SECOND_COLUMN_CLASS } from './constants';
-import { STATUSES } from '../../../../components/GoalsTable/StatusDropdown';
+import { STATUSES } from '../../../../components/GoalCards/components/StatusDropdown';
 import List from './List';
 
 export default function PrintableObjective({ objective }) {
@@ -36,7 +36,7 @@ export default function PrintableObjective({ objective }) {
         <p className={FIRST_COLUMN_CLASS}>Objective status</p>
         <p className={SECOND_COLUMN_CLASS}>
           {icon}
-          {objective.status}
+          {key}
         </p>
       </div>
     </div>

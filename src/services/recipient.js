@@ -167,7 +167,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
   };
 }
 
-function dedupeAndSortObjectivesAndReports(objectives) {
+export function dedupeAndSortObjectivesAndReports(objectives) {
   return objectives.reduce((previous, objective) => {
     // eslint-disable-next-line max-len
     const existingObjective = previous.find((o) => (o.title.trim() === objective.title.trim() && o.status === objective.status));
@@ -190,7 +190,7 @@ function dedupeAndSortObjectivesAndReports(objectives) {
 
     return [
       ...previous,
-      objective,
+      { ...objective, title: objective.title.trim() },
     ];
   }, []).sort((a, b) => ((
     a.endDate === b.endDate ? a.id < b.id
@@ -237,6 +237,7 @@ function reduceObjectives(response, goal) {
             id: activityReport ? activityReport.id : null,
             legacyId: activityReport ? activityReport.legacyId : null,
             number: activityReport ? activityReport.displayId : null,
+            endDate: activityReport ? activityReport.endDate : null,
           },
         ],
         grantNumbers: [...existingObjective.grantNumbers, response.grant.number],
@@ -254,6 +255,7 @@ function reduceObjectives(response, goal) {
         id: activityReport ? activityReport.id : null,
         legacyId: activityReport ? activityReport.legacyId : null,
         number: activityReport ? activityReport.displayId : null,
+        endDate: activityReport ? activityReport.endDate : null,
       }],
     };
   });
@@ -315,13 +317,13 @@ export async function getGoalsByActivityRecipient(
       'goalNumber',
       'previousStatus',
       'onApprovedAR',
-      // [sequelize.fn('ARRAY_AGG', sequelize.col('"grant"."number"')), 'grantNumbers'],
-      [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Not Started\' THEN 2 WHEN "Goal"."status" = \'In Progress\' THEN 3  WHEN "Goal"."status" = \'Suspended\' THEN 4 WHEN "Goal"."status" = \'Closed\' THEN 5 ELSE 6 END'), 'status_sort'],
+      [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Draft\' THEN 2 WHEN "Goal"."status" = \'Not Started\' THEN 3 WHEN "Goal"."status" = \'In Progress\' THEN 4 WHEN "Goal"."status" = \'Closed\' THEN 5 WHEN "Goal"."status" = \'Suspended\' THEN 6 ELSE 7 END'), 'status_sort'],
     ],
     where: {
       [Op.or]: [
         { onApprovedAR: true },
         { isFromSmartsheetTtaPlan: true },
+        { createdVia: 'rtr' },
       ],
       [Op.and]: scopes,
     },

@@ -20,6 +20,8 @@ const [
   objectiveRoleError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
+const availableSpecialistRoles = ['Grantee Specialist', 'Health Specialist', 'Family Engagement Specialist', 'Early Childhood Specialist', 'Systems Specialist'];
+
 export default function ObjectiveForm({
   index,
   removeObjective,
@@ -28,12 +30,14 @@ export default function ObjectiveForm({
   setObjective,
   errors,
   topicOptions,
+  onUploadFile,
   goalStatus,
 }) {
   // the parent objective data from props
   const {
     title, topics, resources, status, roles, files,
   } = objective;
+
   const isOnReport = useMemo(() => (
     objective.activityReports && objective.activityReports.length > 0
   ), [objective.activityReports]);
@@ -55,8 +59,6 @@ export default function ObjectiveForm({
   };
   const onChangeRole = (newRole) => setObjective({ ...objective, roles: newRole });
   const onChangeStatus = (newStatus) => setObjective({ ...objective, status: newStatus });
-
-  const availableSpecialistRoles = ['Grantee Specialist', 'Health Specialist', 'Family Engagement Specialist', 'Early Childhood Specialist', 'Systems Specialist'];
 
   // validate different fields
   const validateObjectiveTitle = () => {
@@ -110,7 +112,7 @@ export default function ObjectiveForm({
   return (
     <div className="margin-top-5 ttahub-create-goals-objective-form">
       <div className="display-flex flex-justify maxw-mobile-lg">
-        <h3>Objective summary</h3>
+        <h3 className="margin-bottom-0">Objective summary</h3>
         { !isOnReport
           && (<Button type="button" unstyled onClick={() => removeObjective(index)} aria-label={`Remove objective ${index + 1}`}>Remove this objective</Button>)}
       </div>
@@ -171,16 +173,19 @@ export default function ObjectiveForm({
         isLoading={isLoading}
       />
 
-      <ObjectiveFiles
-        files={files}
-        onChangeFiles={onChangeFiles}
-        objectiveId={objective.id}
-        isOnApprovedReport={isOnApprovedReport || false}
-        isOnReport={isOnReport || false}
-        status={status}
-        isLoading={isLoading}
-      />
-
+      { title && (
+        <ObjectiveFiles
+          files={files ? files.map((f) => ({ ...f, objectiveIds: objective.ids })) : []}
+          onChangeFiles={onChangeFiles}
+          objective={objective}
+          isOnApprovedReport={isOnApprovedReport || false}
+          isOnReport={isOnReport || false}
+          status={status}
+          isLoading={isLoading}
+          onUploadFile={onUploadFile}
+          index={index}
+        />
+      )}
     </div>
   );
 }
@@ -193,10 +198,15 @@ ObjectiveForm.propTypes = {
   setObjectiveError: PropTypes.func.isRequired,
   setObjective: PropTypes.func.isRequired,
   objective: PropTypes.shape({
+    isNew: PropTypes.bool,
     id: PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.number,
     ]),
+    ids: PropTypes.arrayOf(PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.number,
+    ])),
     title: PropTypes.string,
     topics: PropTypes.arrayOf(PropTypes.shape({
       label: PropTypes.string,
@@ -224,6 +234,7 @@ ObjectiveForm.propTypes = {
     label: PropTypes.string,
     value: PropTypes.number,
   })).isRequired,
+  onUploadFile: PropTypes.func.isRequired,
 };
 
 ObjectiveForm.defaultProps = {

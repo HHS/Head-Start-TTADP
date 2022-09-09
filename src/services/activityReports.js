@@ -288,6 +288,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
 
     return {
       id: activityRecipientId,
+      activityRecipientId, // Create or Update Report Expect's this Field.
       name,
     };
   });
@@ -355,6 +356,24 @@ export async function activityReportAndRecipientsById(activityReportId) {
       {
         model: Objective,
         as: 'objectivesWithoutGoals',
+        include: [
+          {
+            model: Role,
+            as: 'roles',
+          },
+          {
+            model: Topic,
+            as: 'topics',
+          },
+          {
+            model: File,
+            as: 'files',
+          },
+          {
+            model: ObjectiveResource,
+            as: 'resources',
+          },
+        ],
       },
       {
         model: User,

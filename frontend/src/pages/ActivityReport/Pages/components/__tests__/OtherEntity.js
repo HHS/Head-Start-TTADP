@@ -8,7 +8,7 @@ import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import OtherEntity from '../OtherEntity';
 
 // eslint-disable-next-line react/prop-types
-const RenderOtherEntity = ({ objectivesWithoutGoals }) => {
+const RenderOtherEntity = ({ objectivesWithoutGoals, roles = ['Central Office'] }) => {
   const hookForm = useForm({
     mode: 'onChange',
     defaultValues: {
@@ -18,7 +18,7 @@ const RenderOtherEntity = ({ objectivesWithoutGoals }) => {
 
   return (
     <FormProvider {...hookForm}>
-      <OtherEntity roles={['Central Office']} />
+      <OtherEntity roles={roles} />
     </FormProvider>
   );
 };
@@ -54,9 +54,16 @@ describe('OtherEntity', () => {
     expect(title).toBeVisible();
   });
 
+  it('renders without roles', async () => {
+    render(<RenderOtherEntity objectivesWithoutGoals={objectives} roles={[]} />);
+    const title = await screen.findByText('title', { selector: 'textarea' });
+    expect(title).toBeVisible();
+  });
+
   it('the button adds a new objective', async () => {
     render(<RenderOtherEntity objectivesWithoutGoals={[]} />);
     const button = await screen.findByRole('button', { name: /Add new objective/i });
+    userEvent.click(button);
     expect(screen.queryAllByText(/objective status/i).length).toBe(1);
     userEvent.click(button);
     await waitFor(() => expect(screen.queryAllByText(/objective status/i).length).toBe(2));

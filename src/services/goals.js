@@ -16,6 +16,7 @@ import {
   File,
   ObjectiveRole,
   Role,
+  ObjectiveFile,
 } from '../models';
 import { DECIMAL_BASE, REPORT_STATUSES } from '../constants';
 
@@ -215,7 +216,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
   ],
 });
 
-function reduceObjectives(newObjectives, currentObjectives = []) {
+export function reduceObjectives(newObjectives, currentObjectives = []) {
   return newObjectives.reduce((objectives, objective) => {
     const exists = objectives.find((o) => (
       o.title === objective.title && o.status === objective.status
@@ -1153,6 +1154,21 @@ async function createObjectivesForGoal(goal, objectives, report) {
           }),
         ),
       );
+    }
+
+    if (objective.files) {
+      const files = await File.findAll({
+        where: {
+          id: objective.files.map(({ id: fileId }) => fileId),
+        },
+      });
+
+      await Promise.all(files.map((file) => ObjectiveFile.findOrCreate({
+        where: {
+          fileId: file.id,
+          objectiveId: savedObjective.id,
+        },
+      })));
     }
 
     if (objective.roles) {

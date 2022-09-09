@@ -1,19 +1,16 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
-import {
-  Table, Grid, Alert,
-} from '@trussworks/react-uswds';
-import GoalsTableHeader from './GoalsTableHeader';
+import { Grid, Alert } from '@trussworks/react-uswds';
+import GoalsCardsHeader from './GoalsCardsHeader';
 import Container from '../Container';
-import GoalRow from './GoalRow';
+import GoalCard from './GoalCard';
 import { GOALS_PER_PAGE } from '../../Constants';
-import './GoalTable.scss';
 
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
 import { updateGoalStatus } from '../../fetchers/goals';
 
-function GoalsTable({
+function GoalCards({
   recipientId,
   regionId,
   hasActiveGrants,
@@ -68,47 +65,6 @@ function GoalsTable({
     setGoals(newGoals);
   };
 
-  const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
-  const renderColumnHeader = (displayName, name, allowSort = true, align = 'left') => {
-    const sortClassName = getClassNamesFor(name);
-    let fullAriaSort;
-    switch (sortClassName) {
-      case 'asc':
-        fullAriaSort = 'ascending';
-        break;
-      case 'desc':
-        fullAriaSort = 'descending';
-        break;
-      default:
-        fullAriaSort = 'none';
-        break;
-    }
-
-    return (
-      <th scope="col" aria-sort={fullAriaSort} className={`text-${align}`}>
-        {
-          allowSort
-            ? (
-              <a
-                role="button"
-                tabIndex={0}
-                onClick={() => {
-                  requestSort(name);
-                }}
-                onKeyPress={() => requestSort(name)}
-                className={`sortable ${sortClassName}`}
-                aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'
-                }`}
-              >
-                {displayName}
-              </a>
-            )
-            : displayName
-        }
-      </th>
-    );
-  };
-
   return (
     <>
       {error && (
@@ -118,7 +74,7 @@ function GoalsTable({
         </Alert>
       </Grid>
       )}
-      <Container className="goals-table maxw-full overflow-x-hidden" padding={0} loading={loading} loadingLabel="Goals table loading">
+      <Container className="goals-table maxw-full overflow-x-hidden" paddingX={0} paddingY={0} loading={loading} loadingLabel="Goals table loading">
         <CloseSuspendReasonModal
           id="close-suspend-reason-modal"
           goalIds={closeSuspendGoalIds}
@@ -128,7 +84,7 @@ function GoalsTable({
           resetValues={resetModalValues}
           oldGoalStatus={closeSuspendOldStatus}
         />
-        <GoalsTableHeader
+        <GoalsCardsHeader
           title="TTA goals and objectives"
           count={goalsCount || 0}
           activePage={sortConfig.activePage}
@@ -139,44 +95,30 @@ function GoalsTable({
           regionId={regionId}
           hasActiveGrants={hasActiveGrants}
           sortConfig={sortConfig}
+          requestSort={requestSort}
         />
-        <div className="usa-table-container padding-x-3">
-          <Table fullWidth scrollable>
-            <caption className="usa-sr-only">
-              TTA goals and objective count with sorting and pagination
-            </caption>
-            <thead>
-              <tr>
-                {renderColumnHeader('Goal status', 'goalStatus')}
-                {renderColumnHeader('Created on', 'createdOn')}
-                {renderColumnHeader('Goal text (Goal ID)', 'goalText', false)}
-                {renderColumnHeader('Goal topics', 'goalTopics', false)}
-                {renderColumnHeader('Objectives', 'objectiveCount', false, 'right')}
-                <th scope="col" aria-label="context menu" />
-              </tr>
-            </thead>
-            <tbody>
-              {goals.map((goal, index) => (
-                <GoalRow
-                  key={`goal-row-${goal.id}`}
-                  goal={goal}
-                  openMenuUp={
+        <div>
+
+          {goals.map((goal, index) => (
+            <GoalCard
+              key={`goal-row-${goal.id}`}
+              goal={goal}
+              openMenuUp={
                     index >= goals.length - 2 && index !== 0
                   } // the last two should open "up"
-                  recipientId={recipientId}
-                  regionId={regionId}
-                  showCloseSuspendGoalModal={showCloseSuspendGoalModal}
-                  performGoalStatusUpdate={performGoalStatusUpdate}
-                />
-              ))}
-            </tbody>
-          </Table>
+              recipientId={recipientId}
+              regionId={regionId}
+              showCloseSuspendGoalModal={showCloseSuspendGoalModal}
+              performGoalStatusUpdate={performGoalStatusUpdate}
+            />
+          ))}
+
         </div>
       </Container>
     </>
   );
 }
-GoalsTable.propTypes = {
+GoalCards.propTypes = {
   recipientId: PropTypes.string.isRequired,
   regionId: PropTypes.string.isRequired,
   hasActiveGrants: PropTypes.bool.isRequired,
@@ -197,4 +139,4 @@ GoalsTable.propTypes = {
   setGoals: PropTypes.func.isRequired,
 };
 
-export default GoalsTable;
+export default GoalCards;

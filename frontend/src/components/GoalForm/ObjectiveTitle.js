@@ -19,7 +19,7 @@ export default function ObjectiveTitle({
     [isOnApprovedReport, isOnReport, status]);
 
   return (
-    <FormGroup className="margin-top-1" error={error.props.children}>
+    <FormGroup error={error.props.children}>
       <Label htmlFor={inputName} className={readOnly ? 'text-bold' : ''}>
         TTA objective
         {' '}

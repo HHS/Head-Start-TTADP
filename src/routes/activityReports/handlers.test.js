@@ -18,6 +18,7 @@ import {
   downloadAllAlerts,
   LEGACY_WARNING,
   getReportsForLocalStorageCleanup,
+  saveOtherEntityObjectivesForReport,
 } from './handlers';
 import {
   activityReportAndRecipientsById,
@@ -33,6 +34,7 @@ import {
   activityReportsForCleanup,
 } from '../../services/activityReports';
 import { upsertRatifier, syncRatifiers } from '../../services/collaborators';
+import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
 import { userById, usersWithPermissions } from '../../services/users';
 import ActivityReport from '../../policies/activityReport';
@@ -60,9 +62,14 @@ jest.mock('../../services/activityReports', () => ({
   activityReportsForCleanup: jest.fn(),
 }));
 
-jest.mock('../../services/approvers', () => ({
+jest.mock('../../services/collaborators', () => ({
   upsertRatifier: jest.fn(),
   syncRatifiers: jest.fn(),
+}));
+
+jest.mock('../../services/objectives', () => ({
+  saveObjectivesForReport: jest.fn(),
+  getObjectivesByReportId: jest.fn(),
 }));
 
 jest.mock('../../services/accessValidation');
@@ -829,6 +836,66 @@ describe('Activity Report handlers', () => {
 
       const [[value]] = mockResponse.send.mock.calls;
       expect(value).toEqual('\ufeff');
+    });
+  });
+
+  describe('saveOtherEntityObjectivesForReport', () => {
+    it('handles unauthorized', async () => {
+      User.mockImplementation(() => ({
+        canWriteInRegion: () => false,
+      }));
+      const response = [{ name: 'name', id: 1 }];
+      usersWithPermissions.mockResolvedValue(response);
+      await saveOtherEntityObjectivesForReport(
+        {
+          ...mockRequest,
+          body: {
+            objectivesWithoutGoals: [],
+            activityReportId: 1,
+            region: 1,
+          },
+        },
+        mockResponse,
+      );
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+
+    it('returns a list of updated objectives', async () => {
+      // Mock authorization.
+      User.mockImplementation(() => ({
+        canWriteInRegion: () => true,
+      }));
+      const permissionResponse = [{ name: 'name', id: 1 }];
+      usersWithPermissions.mockResolvedValue(permissionResponse);
+
+      // Mock found report.
+      const foundReport = {
+        id: 1,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      };
+      jest.spyOn(ActivityReportModel, 'findByPk').mockResolvedValueOnce(foundReport);
+
+      // Mock save objectives.
+      saveObjectivesForReport.mockResolvedValue({});
+
+      // Mock updated objectives.
+      const updatedObjectivesRes = [{ title: 'Saved Objective' }];
+      getObjectivesByReportId.mockResolvedValue(updatedObjectivesRes);
+
+      // Save Objectives.
+      await saveOtherEntityObjectivesForReport(
+        {
+          ...mockRequest,
+          body: {
+            objectivesWithoutGoals: [],
+            activityReportId: 1,
+            region: 1,
+          },
+        },
+        mockResponse,
+      );
+      expect(mockResponse.json).toHaveBeenCalledWith(updatedObjectivesRes);
     });
   });
 });

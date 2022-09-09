@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import PrintableObjective from './PrintableObjective';
 import { ROW_CLASS, FIRST_COLUMN_CLASS, SECOND_COLUMN_CLASS } from './constants';
-import { STATUSES } from '../../../../components/GoalsTable/StatusDropdown';
+import { STATUSES } from '../../../../components/GoalCards/components/StatusDropdown';
 import List from './List';
 
 export default function PrintableGoal({ goal }) {
@@ -20,7 +20,7 @@ export default function PrintableGoal({ goal }) {
         <p className={FIRST_COLUMN_CLASS}>Goal status</p>
         <p className={SECOND_COLUMN_CLASS}>
           {icon}
-          {goal.goalStatus}
+          {key}
         </p>
       </div>
       <div className={ROW_CLASS}>

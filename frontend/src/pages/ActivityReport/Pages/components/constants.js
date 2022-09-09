@@ -11,6 +11,7 @@ export const NEW_OBJECTIVE = () => ({
   title: '',
   ttaProvided: '<p></p>',
   activityReports: [],
+  files: [],
   resources: [],
   topics: [],
   roles: [],

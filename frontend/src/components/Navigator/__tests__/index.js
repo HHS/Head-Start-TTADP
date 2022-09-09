@@ -65,9 +65,16 @@ const defaultPages = [
   },
 ];
 
-const initialData = { pageState: { 1: NOT_STARTED, 2: NOT_STARTED }, regionId: 1, goals: [] };
+const initialData = {
+  pageState: { 1: NOT_STARTED, 2: NOT_STARTED },
+  regionId: 1,
+  goals: [],
+  objectivesWithoutGoals: [],
+};
 
 describe('Navigator', () => {
+  beforeAll(async () => jest.useFakeTimers());
+
   // eslint-disable-next-line arrow-body-style
   const renderNavigator = (
     currentPage = 'first',
@@ -128,6 +135,7 @@ describe('Navigator', () => {
         },
         regionId: 1,
         goals: [],
+        objectivesWithoutGoals: [],
         second: null,
       },
     ));
@@ -242,5 +250,36 @@ describe('Navigator', () => {
 
     expect(onSave).toHaveBeenCalled();
     expect(onUpdateError).toHaveBeenCalled();
+  });
+
+  it('runs the autosave not on the goals and objectives page', async () => {
+    const onSave = jest.fn();
+    renderNavigator('second', () => {}, onSave);
+    jest.advanceTimersByTime(1000 * 60 * 2);
+    expect(onSave).toHaveBeenCalled();
+  });
+
+  it('runs the autosave on the goals and objectives page', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <>
+          <h1>Goal test</h1>
+        </>
+      ),
+    }];
+    renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages);
+    fetchMock.restore();
+    expect(fetchMock.called()).toBe(false);
+    jest.advanceTimersByTime(1000 * 60 * 2);
+    fetchMock.post('/api/activity-reports/goals', []);
+    expect(fetchMock.called('/api/activity-reports/goals')).toBe(false);
   });
 });
