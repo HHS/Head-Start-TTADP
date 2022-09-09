@@ -13,32 +13,32 @@ export const OBJECTIVE_RESOURCES = 'Each resource should be a valid link';
 export const OBJECTIVE_TTA = 'Describe the TTA provided';
 export const OBJECTIVE_TOPICS = 'Select at least one topic';
 
-export const unfinishedObjectives = (objectives, setError = () => {}) => {
+export const unfinishedObjectives = (objectives, setError = () => {}, fieldArrayName = 'goalForEditing.objectives') => {
   const unfinished = objectives.some(
     (objective, index) => {
       let incomplete = false;
       if (!objective.title) {
-        setError(`goalForEditing.objectives[${index}].title`, { message: OBJECTIVE_TITLE });
+        setError(`${fieldArrayName}[${index}].title`, { message: OBJECTIVE_TITLE });
         incomplete = true;
       }
 
-      if (!objective.ttaProvided || objective.ttaProvided === '<p></p>') {
-        setError(`goalForEditing.objectives[${index}].ttaProvided`, { message: OBJECTIVE_TTA });
+      if (!objective.ttaProvided || objective.ttaProvided === '<p></p>' || objective.ttaProvided === '<p></p>\n') {
+        setError(`${fieldArrayName}[${index}].ttaProvided`, { message: OBJECTIVE_TTA });
         incomplete = true;
       }
 
       if (!objective.topics || !objective.topics.length) {
-        setError(`goalForEditing.objectives[${index}].topics`, { message: OBJECTIVE_TOPICS });
+        setError(`${fieldArrayName}[${index}].topics`, { message: OBJECTIVE_TOPICS });
         incomplete = true;
       }
 
       if (!objective.roles || !objective.roles.length) {
-        setError(`goalForEditing.objectives[${index}].roles`, { message: OBJECTIVE_ROLE });
+        setError(`${fieldArrayName}[${index}].roles`, { message: OBJECTIVE_ROLE });
         incomplete = true;
       }
 
-      if (!validateListOfResources(objective.resources)) {
-        setError(`goalForEditing.objectives[${index}].resources`, { message: OBJECTIVE_RESOURCES });
+      if (!objective.resources || !validateListOfResources(objective.resources)) {
+        setError(`${fieldArrayName}[${index}].resources`, { message: OBJECTIVE_RESOURCES });
         incomplete = true;
       }
 

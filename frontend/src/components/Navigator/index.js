@@ -27,8 +27,9 @@ import SideNav from './components/SideNav';
 import NavigatorHeader from './components/NavigatorHeader';
 import DismissingComponentWrapper from '../DismissingComponentWrapper';
 import { validateGoals } from '../../pages/ActivityReport/Pages/components/goalValidator';
-import { saveGoalsForReport } from '../../fetchers/activityReports';
+import { saveGoalsForReport, saveObjectivesForReport } from '../../fetchers/activityReports';
 import GoalFormContext from '../../GoalFormContext';
+import { validateObjectives } from '../../pages/ActivityReport/Pages/components/objectiveValidator';
 
 function Navigator({
   editable,
@@ -74,8 +75,18 @@ function Navigator({
 
   const pageState = watch('pageState');
   const selectedGoals = watch('goals');
+  const selectedObjectivesWithoutGoals = watch('objectivesWithoutGoals');
 
   const [isGoalFormClosed, toggleGoalForm] = useState(selectedGoals.length > 0);
+
+  // Toggle objectives readonly only if all objectives are saved and pass validation.
+  const areInitialObjectivesValid = validateObjectives(selectedObjectivesWithoutGoals);
+  const hasUnsavedObjectives = selectedObjectivesWithoutGoals.filter((u) => !u.id);
+  const [isObjectivesFormClosed, toggleObjectiveForm] = useState(
+    selectedObjectivesWithoutGoals.length > 0
+    && areInitialObjectivesValid === true
+    && hasUnsavedObjectives.length === 0,
+  );
 
   const goalForEditing = watch('goalForEditing');
   const activityRecipientType = watch('activityRecipientType');
@@ -120,6 +131,13 @@ function Navigator({
     }
   };
 
+  // we show the save goals button if the form isn't closed, if we're on the goals and
+  // objectives page and if we aren't just showing objectives
+  const showSaveGoalsAndObjButton = isGoalsObjectivesPage
+    && !isGoalFormClosed
+    && !isObjectivesFormClosed;
+  const isOtherEntityReport = activityRecipientType === 'other-entity';
+
   const onSaveDraft = async () => {
     await onSaveForm(); // save the form data to the server
     updateShowSavedDraft(true); // show the saved draft message
@@ -156,7 +174,7 @@ function Navigator({
     }
   };
 
-  const onGoalFormNavigate = async () => {
+  const saveGoalsNavigate = async () => {
     // the goal form only allows for one goal to be open at a time
     // but the objectives are stored in a subfield
     // so we need to access the objectives and bundle them together in order to validate them
@@ -210,6 +228,49 @@ function Navigator({
     updateFormData({ ...formData, goals: newGoals });
   };
 
+  const onObjectiveFormNavigate = async () => {
+    // Get other-entity objectives.
+    const fieldArrayName = 'objectivesWithoutGoals';
+    const objectives = getValues(fieldArrayName);
+
+    // Validate objectives.
+    const areObjectivesValid = validateObjectives(objectives, setError);
+    if (areObjectivesValid !== true) {
+      return;
+    }
+
+    // Save objectives.
+    let newObjectives;
+    try {
+      newObjectives = await saveObjectivesForReport(
+        {
+          objectivesWithoutGoals: objectives,
+          activityReportId: reportId,
+          region: formData.regionId,
+        },
+      );
+    } catch (error) {
+      updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
+    }
+
+    // Close objective entry and show readonly.
+    setValue('objectivesWithoutGoals', newObjectives);
+    toggleObjectiveForm(true);
+
+    // Update form data (formData has otherEntityIds).
+    updateFormData({ ...formData, objectivesWithoutGoals: newObjectives });
+  };
+
+  const onGoalFormNavigate = async () => {
+    if (isOtherEntityReport) {
+      // Save objectives for other-entity report.
+      await onObjectiveFormNavigate();
+    } else {
+      // Save goals for recipient report.
+      await saveGoalsNavigate();
+    }
+  };
+
   const onUpdatePage = async (index) => {
     await onSaveForm();
     if (index !== page.position) {
@@ -257,10 +318,6 @@ function Navigator({
     };
   });
 
-  // we show the save goals button if the form isn't closed, if we're on the goals and
-  // objectives page and if we aren't just showing objectives
-  const showSaveGoalsButton = isGoalsObjectivesPage && !isGoalFormClosed && activityRecipientType !== 'other-entity';
-
   return (
     <Grid row gap>
       <Grid className="smart-hub-sidenav-wrapper no-print" col={12} desktop={{ col: 4 }}>
@@ -274,7 +331,13 @@ function Navigator({
         />
       </Grid>
       <Grid className="smart-hub-navigator-wrapper" col={12} desktop={{ col: 8 }}>
-        <GoalFormContext.Provider value={{ isGoalFormClosed, toggleGoalForm }}>
+        <GoalFormContext.Provider value={{
+          isGoalFormClosed,
+          isObjectivesFormClosed,
+          toggleGoalForm,
+          toggleObjectiveForm,
+        }}
+        >
           <FormProvider {...hookForm}>
             <div id="navigator-form">
               {page.review
@@ -305,10 +368,10 @@ function Navigator({
                 >
                   {page.render(additionalData, formData, reportId)}
                   <div className="display-flex">
-                    { showSaveGoalsButton
+                    { showSaveGoalsAndObjButton
                       ? (
                         <>
-                          <Button className="margin-right-1" type="button" onClick={onGoalFormNavigate}>Save goal</Button>
+                          <Button className="margin-right-1" type="button" onClick={onGoalFormNavigate}>{`Save ${isOtherEntityReport ? 'objectives' : 'goal'}`}</Button>
                           <Button className="usa-button--outline" type="button" onClick={onSaveDraftGoal}>Save draft</Button>
                         </>
                       ) : (

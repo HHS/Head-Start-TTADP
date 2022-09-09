@@ -9,7 +9,7 @@ import React, {
 import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
 import { filtersToQueryString } from '../../utils';
-import GoalsTable from './GoalsTable';
+import GoalsTable from './GoalCards';
 import { GoalStatusChart } from '../../widgets/GoalStatusGraph';
 import { GOALS_PER_PAGE } from '../../Constants';
 import './GoalTable.scss';

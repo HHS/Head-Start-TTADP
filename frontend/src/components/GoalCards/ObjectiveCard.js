@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFlag } from '@fortawesome/free-solid-svg-icons';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
-import './ObjectiveRow.scss';
 import colors from '../../colors';
 import {
   InProgress,
@@ -12,9 +11,11 @@ import {
   NoStatus,
   NotStarted,
 } from './icons';
+import './ObjectiveCard.scss';
 
-function ObjectiveRow({
+function ObjectiveCard({
   objective,
+  objectivesExpanded,
 }) {
   const {
     title,
@@ -37,7 +38,7 @@ function ObjectiveRow({
   };
 
   const displayReasonsList = (sortedReasons) => (
-    <ul className="padding-left-0 margin-0 tta-smarthub--objective-reasons-list">
+    <ul className="usa-list usa-list--unstyled">
       {
         sortedReasons.map((r) => (
           <li key={`reason_${r}`}>
@@ -98,49 +99,47 @@ function ObjectiveRow({
   })();
 
   return (
-    <>
-      <ul className="usa-list usa-list--unstyled display-flex tta-smarthub--goal-row-obj-table-rows margin-bottom-1 padding-2">
-        <li className="padding-x-105 padding-y-0 padding-left-0">
-          <span className="sr-only">Objective </span>
-          {title}
-        </li>
-        <li className="padding-x-105 padding-y-0">
-          <span className="sr-only">Activity reports </span>
-          <ul className="usa-list usa-list--unstyled ttahub-objective-row-activity-report-list">
-            {activityReports.map((report) => {
-              const viewOrEditLink = `/activity-reports/view/${report.id}`;
-              const linkToAr = report.legacyId ? `/activity-reports/legacy/${report.legacyId}` : viewOrEditLink;
-              return (
-                <li key={report.id}>
-                  <Link
-                    to={linkToAr}
-                  >
-                    {report.number}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </li>
-        <li className="padding-x-105 padding-y-0">
-          <span className="sr-only">Grant number </span>
-          {grantNumbers.join(', ')}
-        </li>
-        <li className="padding-x-105 padding-y-0">
-          <span className="sr-only">End date </span>
-          {endDate}
-        </li>
-        <li className="padding-x-105 padding-y-0">
-          <span className="sr-only">Reasons </span>
-          {reasons && displayReasonsList(reasons.sort())}
-        </li>
-        <li className="padding-x-105 padding-y-0 padding-right-0">
-          <span className="sr-only">Objective status </span>
-          {getObjectiveStatusIcon}
-          {displayObjStatus}
-        </li>
-      </ul>
-    </>
+    <ul className="ttahub-goal-card__objective-list usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg" hidden={!objectivesExpanded}>
+      <li className="display-flex padding-bottom-05 flex-align-start">
+        <span className="margin-right-3 minw-15">Objective </span>
+        <div>{title}</div>
+      </li>
+      <li className="display-flex padding-bottom-05 flex-align-start">
+        <span className="margin-right-3 minw-15">Activity reports </span>
+        <ul className="usa-list usa-list--unstyled">
+          {activityReports.map((report) => {
+            const viewOrEditLink = `/activity-reports/view/${report.id}`;
+            const linkToAr = report.legacyId ? `/activity-reports/legacy/${report.legacyId}` : viewOrEditLink;
+            return (
+              <li key={report.id}>
+                <Link
+                  to={linkToAr}
+                >
+                  {report.number}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </li>
+      <li className="display-flex padding-bottom-05 flex-align-start">
+        <span className="margin-right-3 minw-15">Grant number </span>
+        {grantNumbers.join(', ')}
+      </li>
+      <li className="display-flex padding-bottom-05 flex-align-start">
+        <span className="margin-right-3 minw-15">End date </span>
+        {endDate}
+      </li>
+      <li className="display-flex padding-bottom-05 flex-align-start">
+        <span className="margin-right-3 minw-15">Reasons</span>
+        {reasons && displayReasonsList(reasons.sort())}
+      </li>
+      <li className="display-flex padding-bottom-05 flex-align-start">
+        <span className="margin-right-3 minw-15">Objective status </span>
+        {getObjectiveStatusIcon}
+        {displayObjStatus}
+      </li>
+    </ul>
   );
 }
 
@@ -155,6 +154,7 @@ export const objectivePropTypes = PropTypes.shape({
     legacyId: PropTypes.string,
     number: PropTypes.string,
     id: PropTypes.number,
+    endDate: PropTypes.string,
   })),
 });
 
@@ -166,7 +166,8 @@ objectivePropTypes.defaultProps = {
   grantNumbers: [],
   activityReports: [],
 };
-ObjectiveRow.propTypes = {
+ObjectiveCard.propTypes = {
   objective: objectivePropTypes.isRequired,
+  objectivesExpanded: PropTypes.bool.isRequired,
 };
-export default ObjectiveRow;
+export default ObjectiveCard;

@@ -51,8 +51,8 @@ function App() {
 
   useEffect(() => {
     async function cleanupReports() {
-      const reportsForCleanup = await getReportsForLocalStorageCleanup();
       try {
+        const reportsForCleanup = await getReportsForLocalStorageCleanup();
         reportsForCleanup.forEach(async (report) => {
           window.localStorage.removeItem(LOCAL_STORAGE_DATA_KEY(report.id));
           window.localStorage.removeItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY(report.id));
@@ -88,7 +88,7 @@ function App() {
     fetchData();
   }, []);
 
-  const logout = async (timeout = false) => {
+  const logout = async (timeout) => {
     await fetchLogout();
     updateUser();
     updateAuthError();
@@ -201,19 +201,24 @@ function App() {
       </Helmet>
       <BrowserRouter>
         {authenticated && (
-          <a className="usa-skipnav" href="#main-content">
-            Skip to main content
-          </a>
+          <>
+            <a className="usa-skipnav" href="#main-content">
+              Skip to main content
+            </a>
+
+            {/* Only show the sidebar when the user is authenticated */}
+            <UserContext.Provider value={{ user, authenticated, logout }}>
+              <SiteNav admin={admin} authenticated={authenticated} logout={logout} user={user} />
+            </UserContext.Provider>
+          </>
         )}
         <UserContext.Provider value={{ user, authenticated, logout }}>
           <Header />
           <AriaLiveContext.Provider value={{ announce }}>
-            <SiteNav admin={admin} authenticated={authenticated} logout={logout} user={user} />
-
             {!authenticated && (authError === 403
               ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>
               : (
-                <AppWrapper logout={logout}>
+                <AppWrapper padded={false} logout={logout}>
                   <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
                 </AppWrapper>
               )
