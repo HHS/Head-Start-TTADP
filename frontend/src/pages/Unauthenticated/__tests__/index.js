@@ -38,4 +38,14 @@ describe('Unauthenticated Page', () => {
       expect(screen.getByText('You have been logged out due to inactivity')).toBeVisible();
     });
   });
+
+  describe('hub identifier', () => {
+    beforeEach(() => {
+      render(<Unauthenticated />);
+    });
+
+    it('is visible', () => {
+      expect(screen.getByTestId('identifier')).toBeVisible();
+    });
+  });
 });

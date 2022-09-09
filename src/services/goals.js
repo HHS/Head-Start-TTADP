@@ -22,7 +22,11 @@ import {
   Role,
 } from '../models';
 import { DECIMAL_BASE, REPORT_STATUSES } from '../constants';
-import { cacheObjectiveMetadata, cacheGoalMetadata } from './reportCache';
+import {
+  cacheObjectiveMetadata,
+  cacheGoalMetadata,
+  destroyActivityReportObjectiveMetadata,
+} from './reportCache';
 
 const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
   attributes: [
@@ -994,20 +998,30 @@ export async function goalsForGrants(grantIds) {
 }
 
 async function removeActivityReportObjectivesFromReport(reportId, objectiveIdsToRemove) {
-  return ActivityReportObjective.destroy({
+  const activityReportObjectivesToDestroy = await ActivityReportObjective.findAll({
     where: {
       activityReportId: reportId,
       objectiveId: objectiveIdsToRemove,
     },
   });
+
+  const idsToDestroy = activityReportObjectivesToDestroy.map((arObjective) => arObjective.id);
+
+  await destroyActivityReportObjectiveMetadata(idsToDestroy);
+
+  return ActivityReportObjective.destroy({
+    where: {
+      id: idsToDestroy,
+    },
+  });
 }
 
-async function removeActivityReportGoalsFromReport(reportId, goalIdsToRemove) {
+async function removeActivityReportGoalsFromReport(reportId, currentGoalIds) {
   return ActivityReportGoal.destroy({
     where: {
       activityReportId: reportId,
       goalId: {
-        [Op.notIn]: goalIdsToRemove,
+        [Op.notIn]: currentGoalIds,
       },
     },
   });
@@ -1183,18 +1197,6 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
   const previousActivityReportObjectives = await ActivityReportObjective.findAll({
     where: {
       activityReportId: reportId,
-    },
-    include: {
-      model: Objective,
-      as: 'objective',
-      include: {
-        model: Goal,
-        as: 'goal',
-        include: {
-          model: Objective,
-          as: 'objectives',
-        },
-      },
     },
   });
 

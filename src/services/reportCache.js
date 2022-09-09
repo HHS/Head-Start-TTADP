@@ -115,6 +115,31 @@ const cacheGoalMetadata = async (goal, reportId) => {
   ]);
 };
 
+async function destroyActivityReportObjectiveMetadata(activityReportObjectiveIdsToRemove) {
+  return Promise.all([
+    ActivityReportObjectiveFile.destroy({
+      where: {
+        activityReportObjectiveId: activityReportObjectiveIdsToRemove,
+      },
+    }),
+    ActivityReportObjectiveResource.destroy({
+      where: {
+        activityReportObjectiveId: activityReportObjectiveIdsToRemove,
+      },
+    }),
+    ActivityReportObjectiveTopic.destroy({
+      where: {
+        activityReportObjectiveId: activityReportObjectiveIdsToRemove,
+      },
+    }),
+    ActivityReportObjectiveRole.destroy({
+      where: {
+        activityReportObjectiveId: activityReportObjectiveIdsToRemove,
+      },
+    }),
+  ]);
+}
+
 export {
   cacheFiles,
   cacheResources,
@@ -122,4 +147,5 @@ export {
   cacheTopics,
   cacheObjectiveMetadata,
   cacheGoalMetadata,
+  destroyActivityReportObjectiveMetadata,
 };
