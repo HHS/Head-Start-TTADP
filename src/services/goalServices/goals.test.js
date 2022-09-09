@@ -97,8 +97,7 @@ describe('Goals DB service', () => {
         await saveGoalsForReport([], { id: 1 });
         expect(ActivityReportObjective.destroy).toHaveBeenCalledWith({
           where: {
-            activityReportId: 1,
-            objectiveId: [],
+            id: [],
           },
         });
       });
