@@ -14,7 +14,6 @@ describe('token service', () => {
   });
 
   afterEach(async () => {
-    // delete this userId from validationstatus table
     await UserValidationStatus.destroy({ where: { userId: 1000 } });
     await User.destroy({ where: { id: 1000 } });
   });
@@ -28,7 +27,6 @@ describe('token service', () => {
       const token = await createAndStoreVerificationToken(1000, 'email');
       expect(token).toBeTruthy();
 
-      // expect to find this token and userId pair in the UserValidationStatus table.
       const pair = await UserValidationStatus.findOne({
         where: {
           userId: 1000,
@@ -48,7 +46,6 @@ describe('token service', () => {
       expect(payload.userId).toBe(1000);
       expect(payload.type).toBe('email');
 
-      // expect to find this token and userId pair in the UserValidationStatus table.
       const pair = await UserValidationStatus.findOne({
         where: {
           userId: 1000,
