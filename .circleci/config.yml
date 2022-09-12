@@ -403,7 +403,7 @@ jobs:
                 deploy_config_file: deployment_config/sandbox_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
                 session_secret: SANDBOX_SESSION_SECRET
-                jwt_secret: SANDBOX_JWT_SECRET
+                jwt_secret: JWT_SECRET
                 hses_data_file_url: HSES_DATA_FILE_URL
                 hses_data_username: HSES_DATA_USERNAME
                 hses_data_password: HSES_DATA_PASSWORD
@@ -445,7 +445,7 @@ jobs:
                 deploy_config_file: deployment_config/dev_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
                 session_secret: DEV_SESSION_SECRET
-                jwt_secret: DEV_JWT_SECRET
+                jwt_secret: JWT_SECRET
                 hses_data_file_url: HSES_DATA_FILE_URL
                 hses_data_username: HSES_DATA_USERNAME
                 hses_data_password: HSES_DATA_PASSWORD
@@ -487,7 +487,7 @@ jobs:
                 deploy_config_file: deployment_config/staging_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
                 session_secret: STAGING_SESSION_SECRET
-                jwt_secret: STAGING_JWT_SECRET
+                jwt_secret: JWT_SECRET
                 hses_data_file_url: HSES_DATA_FILE_URL
                 hses_data_username: HSES_DATA_USERNAME
                 hses_data_password: HSES_DATA_PASSWORD
@@ -527,7 +527,7 @@ jobs:
                 deploy_config_file: deployment_config/prod_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
                 session_secret: PROD_SESSION_SECRET
-                jwt_secret: PROD_JWT_SECRET
+                jwt_secret: JWT_SECRET
                 hses_data_file_url: PROD_HSES_DATA_FILE_URL
                 hses_data_username: PROD_HSES_DATA_USERNAME
                 hses_data_password: PROD_HSES_DATA_PASSWORD
