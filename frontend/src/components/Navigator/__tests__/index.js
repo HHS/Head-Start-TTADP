@@ -282,4 +282,34 @@ describe('Navigator', () => {
     fetchMock.post('/api/activity-reports/goals', []);
     expect(fetchMock.called('/api/activity-reports/goals')).toBe(false);
   });
+
+  it('runs the autosave on the other entity objectives page', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <>
+          <h1>OE Objectives test</h1>
+        </>
+      ),
+    }];
+
+    const oeData = {
+      ...initialData,
+      activityRecipientType: 'other-entity',
+    };
+
+    renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages, oeData);
+    fetchMock.restore();
+    expect(fetchMock.called()).toBe(false);
+    jest.advanceTimersByTime(1000 * 60 * 2);
+    fetchMock.post('api/activity-reports/objectives', []);
+    expect(fetchMock.called('api/activity-reports/objectives')).toBe(false);
+  });
 });
