@@ -93,6 +93,10 @@ commands:
         description: "Name of CircleCi project environment variable that
           holds session secret, a required application variable"
         type: env_var_name
+      jwt_secret:
+        description: "Name of CircleCi project environment variable that
+          holds the JWT secret, a required application variable"
+        type: env_var_name
       new_relic_license:
         description: "Name of CircleCI project environment variable that
           holds the New Relic License key, a required application variable"
@@ -136,6 +140,7 @@ commands:
               --var AUTH_CLIENT_SECRET=${<< parameters.auth_client_secret >>} \
               --var NEW_RELIC_LICENSE_KEY=${<< parameters.new_relic_license >>} \
               --var SESSION_SECRET=${<< parameters.session_secret >>} \
+              -- var JWT_SECRET=${<< parameters.jwt_secret >>} \
               --var HSES_DATA_FILE_URL=${<< parameters.hses_data_file_url >>} \
               --var HSES_DATA_USERNAME=${<< parameters.hses_data_username >>} \
               --var HSES_DATA_PASSWORD=${<< parameters.hses_data_password >>} \
