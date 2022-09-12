@@ -4,6 +4,7 @@ import { Label } from '@trussworks/react-uswds';
 import Select from 'react-select';
 import Req from '../Req';
 import selectOptionsReset from '../selectOptionsReset';
+import UnusedData from './UnusedData';
 
 export default function SpecialistRole({
   error,
@@ -16,6 +17,7 @@ export default function SpecialistRole({
   isOnApprovedReport,
   isOnReport,
   isLoading,
+  roleOptions,
 }) {
   const initialSelectedRolesLength = useRef(selectedRoles.length);
 
@@ -34,48 +36,75 @@ export default function SpecialistRole({
           Specialist roles
         </p>
         <ul className="usa-list usa-list--unstyled">
-          {selectedRoles.map((role) => (<li key={role}>{role}</li>))}
+          {selectedRoles.map((role) => (<li key={role.id}>{role.fullName}</li>))}
         </ul>
       </>
     );
   }
 
-  // format them in a way react select can understand
-  const roleOptions = options.map((role) => ({
-    label: role,
-    value: role,
-  }));
-
-  const selected = selectedRoles.map((role) => ({
-    label: role,
-    value: role,
-  }));
-
   const onSelect = (selection) => {
-    onChange(selection.map(({ value }) => value));
+    onChange(selection);
   };
 
-  // build our selector
+  const { editableRoles, fixedRoles } = selectedRoles.reduce((acc, role) => {
+    if (role.isOnApprovedReport) {
+      acc.fixedRoles.push(role);
+    } else {
+      acc.editableRoles.push(role);
+    }
+
+    return acc;
+  }, { editableRoles: [], fixedRoles: [] });
+
+  const savedRoleName = fixedRoles ? fixedRoles.map(({ fullName }) => fullName) : [];
+  const filteredOptions = roleOptions.filter((option) => !savedRoleName.includes(option.fullName));
+
   return (
-    <Label>
-      Specialist roles providing TTA
-      {' '}
-      <Req />
-      {error}
-      <Select
-        onChange={onSelect}
-        styles={selectOptionsReset}
-        className="usa-select"
-        name={inputName}
-        inputId={inputName}
-        options={roleOptions}
-        value={selected}
-        onBlur={validateSpecialistRole}
-        closeMenuOnSelect={false}
-        isMulti
-        isDisabled={isLoading}
-      />
-    </Label>
+    <>
+      { fixedRoles && fixedRoles.length
+        ? (
+          <>
+            <p className="usa-prose margin-bottom-0 text-bold">Specialist roles</p>
+            <ul className="usa-list usa-list--unstyled">
+              {fixedRoles.map((role) => (<li key={role.fullName}>{role.fullName}</li>))}
+              {isOnApprovedReport
+                ? editableRoles.map((role) => (
+                  <UnusedData key={role.fullName} value={role.fullName} />
+                ))
+                : null}
+            </ul>
+          </>
+        )
+        : null}
+      { !isOnApprovedReport ? (
+        <Label>
+          { fixedRoles.length ? <>Add more specialist roles</>
+            : (
+              <>
+                Specialist roles providing TTA
+                {' '}
+                <Req />
+              </>
+            )}
+          {error}
+          <Select
+            onChange={onSelect}
+            styles={selectOptionsReset}
+            className="usa-select"
+            name={inputName}
+            inputId={inputName}
+            options={filteredOptions}
+            value={editableRoles}
+            onBlur={validateSpecialistRole}
+            closeMenuOnSelect={false}
+            getOptionLabel={(option) => option.fullName}
+            getOptionValue={(option) => option.id}
+            isMulti
+            isDisabled={isLoading}
+          />
+        </Label>
+      ) : null }
+    </>
   );
 }
 
@@ -90,6 +119,10 @@ SpecialistRole.propTypes = {
   isOnApprovedReport: PropTypes.bool.isRequired,
   isOnReport: PropTypes.bool.isRequired,
   isLoading: PropTypes.bool,
+  roleOptions: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    value: PropTypes.string,
+  })).isRequired,
 };
 
 SpecialistRole.defaultProps = {
