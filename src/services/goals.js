@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import { uniqBy } from 'lodash';
 import {
   Goal,
   Grant,
@@ -371,29 +372,38 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
     if (exists) {
       const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
       exists.ids = [...exists.ids, id];
+
+      // for roles, we are just returning arrays of strings
+      // so we can just dedupe them declaratively
       exists.roles = [...new Set([
         ...exists.roles,
         ...objective.activityReportObjectives[0].activityReportObjectiveRoles.map(
           (r) => r.role.fullName,
         )])];
-      exists.topics = [...new Set([
+
+      // for resources, topics, and files,
+      // we need to do a more complicated lookup to get a unique set
+      // (I almost forgot we have lodash)
+      exists.resources = uniqBy([
+        ...exists.resources,
+        ...objective.activityReportObjectives[0].activityReportObjectiveResources.map(
+          (r) => r.dataValues,
+        ),
+      ], 'value');
+
+      exists.topics = uniqBy([
         ...exists.topics,
         ...objective.activityReportObjectives[0].activityReportObjectiveTopics.map(
           (t) => t.topic.dataValues,
         ),
-      ])];
-      exists.resources = [...new Set([
-        ...exists.resources,
-        ...objective.activityReportObjectives[0].activityReportObjectiveResources.map(
-          (r) => r.userProvidedUrl,
-        ),
-      ])];
-      exists.files = [...new Set([
+      ], 'id');
+
+      exists.files = uniqBy([
         ...exists.files,
         ...objective.activityReportObjectives[0].activityReportObjectiveFiles.map(
           (f) => f.file.dataValues,
         ),
-      ])];
+      ], 'key');
 
       return objectives;
     }
@@ -427,7 +437,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         (t) => t.topic.dataValues,
       ),
       resources: objective.activityReportObjectives[0].activityReportObjectiveResources.map(
-        (r) => r.userProvidedUrl,
+        (r) => r.dataValues,
       ),
       files: objective.activityReportObjectives[0].activityReportObjectiveFiles.map(
         (f) => f.file.dataValues,
@@ -1495,6 +1505,7 @@ export async function getGoalsForReport(reportId) {
                 model: ActivityReportObjectiveResource,
                 as: 'activityReportObjectiveResources',
                 required: false,
+                attributes: [['userProvidedUrl', 'value'], ['id', 'key']],
               },
               {
                 model: ActivityReportObjectiveRole,
