@@ -190,6 +190,32 @@ const propagateMetadataToTemplate = async (sequelize, instance, options) => {
   }
 };
 
+const updateParentGoalStatus = async (sequelize, instance) => {
+  const { goalId } = instance;
+  const goal = await sequelize.models.Goal.findByPk(goalId);
+
+  if (goal && goal.status !== 'Closed') {
+    const objectives = await sequelize.models.Objective.findAll({
+      where: { goalId },
+    });
+
+    const atLeastOneObjectiveIsNotStarted = objectives.some((objective) => objective.status === 'Not Started');
+    const atLeastOneObjectiveIsInProgress = objectives.some((objective) => objective.status === 'In Progress');
+
+    let newStatus;
+
+    if (atLeastOneObjectiveIsNotStarted) {
+      newStatus = 'Not Started';
+    }
+
+    if (atLeastOneObjectiveIsInProgress) {
+      newStatus = 'In Progress';
+    }
+
+    await goal.update({ status: newStatus });
+  }
+};
+
 const beforeValidate = async (sequelize, instance) => {
   // await autoPopulateObjectiveTemplateId(sequelize, instance, options);
   autoPopulateOnApprovedAR(sequelize, instance);
@@ -201,6 +227,7 @@ const afterUpdate = async (sequelize, instance, options) => {
   await propagateTitle(sequelize, instance, options);
   await propagateMetadataToTemplate(sequelize, instance, options);
   await linkObjectiveGoalTemplates(sequelize, instance, options);
+  await updateParentGoalStatus(sequelize, instance, options);
 };
 
 export {
