@@ -192,6 +192,12 @@ module.exports = {
           },
         }, { transaction });
 
+        await queryInterface.addConstraint('ActivityReportObjectiveResources', {
+          fields: ['activityReportObjectiveId', 'userProvidedUrl'],
+          type: 'unique',
+          transaction,
+        });
+
         await queryInterface.sequelize.query(
           `INSERT INTO "ActivityReportObjectiveResources"
           (
