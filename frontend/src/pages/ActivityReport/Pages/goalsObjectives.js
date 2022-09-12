@@ -5,6 +5,7 @@
 import React, { useState, useMemo, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
+import { uniqBy } from 'lodash';
 import { Alert, Fieldset } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useFormContext, useController } from 'react-hook-form/dist/index.ie11';
@@ -193,10 +194,7 @@ const GoalsObjectives = ({ reportId }) => {
 
     const collaboratorRoles = collabs.map((c) => (c.collaboratorRoles || [])).flat();
 
-    return [...authorRoles, ...collaboratorRoles].reduce((allRoles, role) => {
-      const roleExists = allRoles.find((r) => r.id === role.id);
-      return roleExists ? allRoles : [...allRoles, role];
-    });
+    return uniqBy([...authorRoles, ...collaboratorRoles], 'id');
   }, [author, collaborators]);
 
   return (

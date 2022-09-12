@@ -22,6 +22,7 @@ import {
   GOAL_NAME_ERROR,
   GOAL_DATE_ERROR,
   SELECT_GRANTS_ERROR,
+  OBJECTIVE_DEFAULT_ERRORS,
 } from './constants';
 import { DECIMAL_BASE, REPORT_STATUSES } from '../../Constants';
 import ReadOnly from './ReadOnly';
@@ -42,9 +43,6 @@ const formatGrantsFromApi = (grants) => grants
       id: grant.id,
     };
   });
-
-// this is the default error state for an objective (no errors, only empty fragments)
-const BLANK_OBJECTIVE_ERROR = [<></>, <></>, <></>];
 
 export default function GoalForm({
   recipient,
@@ -148,7 +146,7 @@ export default function GoalForm({
           newObjs.push(newObjective);
           // this is the format of an objective error
           // three JSX nodes representing each of three possible errors
-          objErrors.push([<></>, <></>, <></>, <></>]);
+          objErrors.push(OBJECTIVE_DEFAULT_ERRORS);
 
           return [newObjs, objErrors];
         }, [[], []]);
@@ -381,7 +379,7 @@ export default function GoalForm({
     // when we set a new set of objectives
     // an error object for each objective.
     const newErrors = [...errors];
-    const objectiveErrors = updatedObjectives.map(() => BLANK_OBJECTIVE_ERROR);
+    const objectiveErrors = updatedObjectives.map(() => OBJECTIVE_DEFAULT_ERRORS);
 
     newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES, 1, objectiveErrors);
     setErrors(newErrors);
@@ -398,7 +396,7 @@ export default function GoalForm({
     setIsLoading(true);
     try {
       // if the goal is a draft, submission should move it to "not started"
-      const statusToSave = status === 'Draft' ? 'Not Started' : status;
+      const statusToSave = status && status === 'Draft' ? 'Not Started' : status;
 
       const gs = createdGoals.reduce((acc, goal) => {
         const newGoals = goal.grants.map((grant) => ({

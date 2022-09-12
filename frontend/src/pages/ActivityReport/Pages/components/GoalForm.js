@@ -31,6 +31,7 @@ export default function GoalForm({
 
   const defaultEndDate = useMemo(() => (goal && goal.endDate ? goal.endDate : ''), [goal]);
   const defaultName = useMemo(() => (goal && goal.name ? goal.name : ''), [goal]);
+  const status = useMemo(() => (goal && goal.status ? goal.status : ''), [goal]);
 
   // the date picker component, as always, presents special challenges, it needs a key updated
   // to re-render appropriately
@@ -123,6 +124,7 @@ export default function GoalForm({
         onUpdateText={onUpdateText}
         inputName={goalTextInputName}
         isOnReport={goal.onApprovedAR || false}
+        goalStatus={status}
       />
 
       <GoalDate
@@ -132,12 +134,14 @@ export default function GoalForm({
         validateEndDate={onBlurDate}
         datePickerKey={datePickerKey}
         inputName={goalEndDateInputName}
+        goalStatus={status}
       />
 
       <Objectives
         objectives={objectives}
         topicOptions={topicOptions}
         roles={roles}
+        goalStatus={status}
         noObjectiveError={errors.goalForEditing && errors.goalForEditing.objectives
           ? ERROR_FORMAT(errors.goalForEditing.objectives.message) : NO_ERROR}
       />
@@ -164,6 +168,7 @@ GoalForm.propTypes = {
     endDate: PropTypes.string,
     isNew: PropTypes.bool,
     onApprovedAR: PropTypes.bool,
+    status: PropTypes.string,
   }).isRequired,
   topicOptions: PropTypes.arrayOf(PropTypes.shape({
     value: PropTypes.number,

@@ -86,7 +86,7 @@ export default function ReadOnlyObjective({ objective }) {
             <h4 className="margin-0">Specialist roles</h4>
             <ul className="usa-list usa-list--unstyled">
               { objective.roles.map((role) => (
-                <li key={role}>{role}</li>
+                <li key={role.fullName}>{role.fullName}</li>
               ))}
             </ul>
           </div>
@@ -109,7 +109,9 @@ export default function ReadOnlyObjective({ objective }) {
 
 ReadOnlyObjective.propTypes = {
   objective: PropTypes.shape({
-    roles: PropTypes.arrayOf(PropTypes.string),
+    roles: PropTypes.arrayOf(PropTypes.shape({
+      fullName: PropTypes.string,
+    })),
     ttaProvided: PropTypes.string,
     resources: PropTypes.arrayOf(PropTypes.string),
     topics: PropTypes.arrayOf(PropTypes.shape({

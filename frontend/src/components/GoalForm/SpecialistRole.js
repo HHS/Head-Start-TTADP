@@ -12,7 +12,6 @@ export default function SpecialistRole({
   selectedRoles,
   inputName,
   validateSpecialistRole,
-  options,
   status,
   isOnApprovedReport,
   isOnReport,
@@ -21,18 +20,12 @@ export default function SpecialistRole({
 }) {
   const initialSelectedRolesLength = useRef(selectedRoles.length);
 
-  // if there is only one option, we just set the objectives to be
-  // that value without any UI
-  if (options.length === 1) {
-    return null;
-  }
-
   const readOnly = isOnApprovedReport || status === 'Suspended' || (status === 'Not Started' && isOnReport);
 
   if (readOnly && initialSelectedRolesLength.current) {
     return (
       <>
-        <p className="usa-prose text-bold margin-bottom-1">
+        <p className="usa-prose text-bold margin-bottom-0">
           Specialist roles
         </p>
         <ul className="usa-list usa-list--unstyled">
@@ -114,7 +107,6 @@ SpecialistRole.propTypes = {
   selectedRoles: PropTypes.arrayOf(PropTypes.string),
   inputName: PropTypes.string,
   validateSpecialistRole: PropTypes.func.isRequired,
-  options: PropTypes.arrayOf(PropTypes.string).isRequired,
   status: PropTypes.string.isRequired,
   isOnApprovedReport: PropTypes.bool.isRequired,
   isOnReport: PropTypes.bool.isRequired,
