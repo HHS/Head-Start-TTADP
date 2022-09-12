@@ -212,7 +212,9 @@ const updateParentGoalStatus = async (sequelize, instance) => {
       newStatus = 'In Progress';
     }
 
-    await goal.update({ status: newStatus });
+    if (newStatus) {
+      await goal.update({ status: newStatus });
+    }
   }
 };
 
