@@ -1,3 +1,4 @@
+import {} from 'dotenv/config';
 import jwt from 'jsonwebtoken';
 import { UserValidationStatus } from '../models';
 
