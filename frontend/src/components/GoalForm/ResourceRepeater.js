@@ -31,7 +31,7 @@ export default function ResourceRepeater({
 
     return (
       <>
-        <p className="usa-prose text-bold margin-bottom-1">Resource links</p>
+        <p className="usa-prose text-bold margin-bottom-0">Resource links</p>
         <ul className="usa-list usa-list--unstyled">
           {resources.map((resource) => (
             <li key={resource.key}>{resource.value}</li>

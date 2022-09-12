@@ -239,7 +239,7 @@ export default function Objective({
         selectedRoles={objectiveRoles}
         inputName={objectiveRolesInputName}
         validateSpecialistRole={onBlurRoles}
-        options={roles}
+        roleOptions={roles}
       />
       <ObjectiveTopics
         error={errors.topics

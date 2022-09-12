@@ -28,14 +28,14 @@ const RecipientReviewSection = () => {
         const objectives = goal.objectives || [];
         return (
           <div key={`review-${goal.id}`}>
-            <div className="grid-row margin-bottom-3 desktop:margin-bottom-0 margin-top-2">
-              <span>
+            <div className="margin-bottom-3 desktop:margin-bottom-0 margin-top-2">
+              <div>
                 <span className="text-bold">Goal:</span>
                 {' '}
                 {goal.name}
                 {goal.goalNumber && ` (${goal.goalNumber})`}
-              </span>
-              <div className="padding-left-2 margin-top-2">
+              </div>
+              <div className="margin-top-2">
                 <>
                   {objectives.map((objective) => (
                     <div key={objective.id} className="desktop:flex-align-end display-flex flex-column flex-justify-center margin-top-1">

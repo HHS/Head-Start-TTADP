@@ -13,7 +13,19 @@ export default function GoalDate({
   datePickerKey,
   inputName,
   isLoading,
+  goalStatus,
 }) {
+  if (goalStatus === 'Closed') {
+    return (
+      <>
+        <p className="usa-prose text-bold margin-bottom-0">
+          Anticipated close date (mm/dd/yyyy)
+        </p>
+        <p className="usa-prose margin-0">{endDate}</p>
+      </>
+    );
+  }
+
   return (
     <FormGroup error={error.props.children}>
       <Label htmlFor={inputName}>
@@ -45,6 +57,7 @@ GoalDate.propTypes = {
   datePickerKey: PropTypes.string.isRequired,
   inputName: PropTypes.string,
   isLoading: PropTypes.bool,
+  goalStatus: PropTypes.string.isRequired,
 };
 
 GoalDate.defaultProps = {

@@ -174,10 +174,10 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         {
           model: Role,
           as: 'roles',
-          attributes: [
-            'fullName',
-            [
-              sequelize.literal(`
+          attributes: {
+            include: [
+              [
+                sequelize.literal(`
                 (
                   SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
@@ -187,10 +187,10 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                   AND "or"."roleId" = "objectives->roles"."id"
                 ) > 0
               `),
-              'onAnyReport',
-            ],
-            [
-              sequelize.literal(`
+                'onAnyReport',
+              ],
+              [
+                sequelize.literal(`
                 (
                   SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
@@ -201,9 +201,10 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                   AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
                 ) > 0
               `),
-              'isOnApprovedReport',
+                'isOnApprovedReport',
+              ],
             ],
-          ],
+          },
         },
         {
           model: ActivityReport,
@@ -362,25 +363,14 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
       return objectives;
     }
 
-    // since this method is used to rollup both objectives on and off activity reports
-    // we need to handle the case where there is TTA provided and TTA not provided
-    // NOTE: there will only be one activity report objective, it is queried by activity report id
-    const ttaProvided = objective.activityReportObjectives
-        && objective.activityReportObjectives[0]
-        && objective.activityReportObjectives[0].ttaProvided
-      ? objective.activityReportObjectives[0].ttaProvided : null;
-
-    const roles = objective.roles.map((role) => role.fullName);
-
     const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
 
     return [...objectives, {
       ...objective.dataValues,
       value: id,
       ids: [id],
-      ttaProvided,
+
       isNew: false,
-      roles,
     }];
   }, currentObjectives);
 }
@@ -395,23 +385,19 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
       exists.ids = [...exists.ids, id];
 
-      // for roles, we are just returning arrays of strings
-      // so we can just dedupe them declaratively
-      exists.roles = [...new Set([
-        ...exists.roles,
-        ...objective.activityReportObjectives[0].activityReportObjectiveRoles.map(
-          (r) => r.role.fullName,
-        )])];
-
-      // for resources, topics, and files,
-      // we need to do a more complicated lookup to get a unique set
-      // (I almost forgot we have lodash)
+      // we can dedupe these using lodash
       exists.resources = uniqBy([
         ...exists.resources,
         ...objective.activityReportObjectives[0].activityReportObjectiveResources.map(
           (r) => r.dataValues,
         ),
       ], 'value');
+
+      exists.roles = uniqBy([
+        ...exists.roles,
+        ...objective.activityReportObjectives[0].activityReportObjectiveRoles.map(
+          (r) => r.role.dataValues,
+        )], 'id');
 
       exists.topics = uniqBy([
         ...exists.topics,
@@ -453,7 +439,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       // we are getting at with this method (getGoalsForReport)
 
       roles: objective.activityReportObjectives[0].activityReportObjectiveRoles.map(
-        (r) => r.role.fullName,
+        (r) => r.role.dataValues,
       ),
       topics: objective.activityReportObjectives[0].activityReportObjectiveTopics.map(
         (t) => t.topic.dataValues,

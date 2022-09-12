@@ -147,6 +147,7 @@ export default function Form({
         validateGoalName={validateGoalName}
         onUpdateText={onUpdateText}
         isLoading={isLoading}
+        goalStatus={status}
       />
 
       <GoalDate
@@ -157,6 +158,7 @@ export default function Form({
         validateEndDate={validateEndDate}
         datePickerKey={datePickerKey}
         isLoading={isLoading}
+        goalStatus={status}
       />
 
       { objectives.map((objective, i) => (

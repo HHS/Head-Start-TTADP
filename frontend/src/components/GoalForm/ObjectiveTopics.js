@@ -31,7 +31,7 @@ export default function ObjectiveTopics({
 
     return (
       <>
-        <p className="usa-prose text-bold margin-bottom-1">
+        <p className="usa-prose text-bold margin-bottom-0">
           Topics
         </p>
         <ul className="usa-list usa-list--unstyled">
