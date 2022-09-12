@@ -39,6 +39,7 @@ export async function saveObjectivesForReport(objectives, report) {
       if (existingObjective) {
         await existingObjective.update({
           status: objective.status,
+          title: objective.title,
         }, { individualHooks: true });
         savedObjective = existingObjective;
       } else {
@@ -47,6 +48,7 @@ export async function saveObjectivesForReport(objectives, report) {
         const { id, ...ObjPros } = objective;
         savedObjective = await Objective.create({
           ...ObjPros,
+          otherEntityId,
         });
       }
 
