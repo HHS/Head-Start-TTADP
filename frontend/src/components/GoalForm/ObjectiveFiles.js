@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   Label, Radio, Fieldset, FormGroup, ErrorMessage,
@@ -23,6 +23,10 @@ export default function ObjectiveFiles({
   const hasFiles = files && files.length > 0;
   const [useFiles, setUseFiles] = useState(hasFiles);
   const [fileError, setFileError] = useState();
+
+  const hideFileToggle = useMemo(
+    () => (hasFiles && files.some((file) => file.onAnyReport)), [hasFiles, files],
+  );
 
   const readOnly = isOnApprovedReport || status === 'Complete' || (status === 'Not Started' && isOnReport);
 
@@ -55,37 +59,41 @@ export default function ObjectiveFiles({
         )
         : (
           <Fieldset className="ttahub-objective-files margin-top-1">
-            <legend>
-              Do you plan to use any TTA resources that aren&apos;t available as a link?
-              {' '}
-              <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
-              <QuestionTooltip
-                text={(
-                  <div>
-                    Examples include:
-                    <ul className="usa-list">
-                      <li>Presentation slides from PD events</li>
-                      <li>PDF&apos;s you created from multiple tta resources</li>
-                      <li>Other OHS-provided resources</li>
-                    </ul>
-                  </div>
+            { hideFileToggle ? null : (
+              <>
+                <legend>
+                  Do you plan to use any TTA resources that aren&apos;t available as a link?
+                  {' '}
+                  <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
+                  <QuestionTooltip
+                    text={(
+                      <div>
+                        Examples include:
+                        <ul className="usa-list">
+                          <li>Presentation slides from PD events</li>
+                          <li>PDF&apos;s you created from multiple tta resources</li>
+                          <li>Other OHS-provided resources</li>
+                        </ul>
+                      </div>
                 )}
-              />
-            </legend>
-            <Radio
-              label="Yes"
-              id={`add-objective-files-yes-${objectiveId}-${index}`}
-              name={`add-objective-files-${objectiveId}-${index}`}
-              checked={useFiles}
-              onChange={() => setUseFiles(true)}
-            />
-            <Radio
-              label="No"
-              id={`add-objective-files-no-${objectiveId}-${index}`}
-              name={`add-objective-files-${objectiveId}-${index}`}
-              checked={!useFiles}
-              onChange={() => setUseFiles(false)}
-            />
+                  />
+                </legend>
+                <Radio
+                  label="Yes"
+                  id={`add-objective-files-yes-${objectiveId}-${index}`}
+                  name={`add-objective-files-${objectiveId}-${index}`}
+                  checked={useFiles}
+                  onChange={() => setUseFiles(true)}
+                />
+                <Radio
+                  label="No"
+                  id={`add-objective-files-no-${objectiveId}-${index}`}
+                  name={`add-objective-files-${objectiveId}-${index}`}
+                  checked={!useFiles}
+                  onChange={() => setUseFiles(false)}
+                />
+              </>
+            ) }
             {
                 useFiles
                   ? (

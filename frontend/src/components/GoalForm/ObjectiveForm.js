@@ -20,8 +20,6 @@ const [
   objectiveRoleError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
-const availableSpecialistRoles = ['Grantee Specialist', 'Health Specialist', 'Family Engagement Specialist', 'Early Childhood Specialist', 'Systems Specialist'];
-
 export default function ObjectiveForm({
   index,
   removeObjective,
@@ -30,6 +28,7 @@ export default function ObjectiveForm({
   setObjective,
   errors,
   topicOptions,
+  roleOptions,
   onUploadFile,
   goalStatus,
 }) {
@@ -57,7 +56,7 @@ export default function ObjectiveForm({
   const onChangeFiles = (e) => {
     setObjective({ ...objective, files: e });
   };
-  const onChangeRole = (newRole) => setObjective({ ...objective, roles: newRole });
+  const onChangeRole = (newRoles) => setObjective({ ...objective, roles: newRoles });
   const onChangeStatus = (newStatus) => setObjective({ ...objective, status: newStatus });
 
   // validate different fields
@@ -133,11 +132,12 @@ export default function ObjectiveForm({
         onChange={onChangeRole}
         selectedRoles={roles || []}
         validateSpecialistRole={validateSpecialistRole}
-        options={availableSpecialistRoles}
+        options={roleOptions}
         isOnReport={isOnReport || false}
         isOnApprovedReport={isOnApprovedReport || false}
         status={status}
         isLoading={isLoading}
+        roleOptions={roleOptions}
       />
 
       <ObjectiveTopics
@@ -220,7 +220,7 @@ ObjectiveForm.propTypes = {
         url: PropTypes.string,
       }),
     })),
-    roles: PropTypes.arrayOf(PropTypes.string),
+    roles: PropTypes.arrayOf(PropTypes.shape({ label: PropTypes.string, value: PropTypes.string })),
     activityReports: PropTypes.arrayOf(PropTypes.shape({
       id: PropTypes.number,
     })),
@@ -230,6 +230,10 @@ ObjectiveForm.propTypes = {
     })),
     status: PropTypes.string,
   }),
+  roleOptions: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    value: PropTypes.string,
+  })).isRequired,
   topicOptions: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string,
     value: PropTypes.number,

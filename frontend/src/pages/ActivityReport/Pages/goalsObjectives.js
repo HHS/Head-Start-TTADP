@@ -185,22 +185,18 @@ const GoalsObjectives = ({ reportId }) => {
   const collaborators = watch('activityReportCollaborators');
   const author = watch('author');
 
-  // create an exclusive set of roles
-  // from the collaborators & author
+  // create an exclusive set of roles from the collaborators & author
   const roles = useMemo(() => {
     const collabs = collaborators || [];
     const auth = author || { roles: [] };
-    const authorRoles = auth.roles.map((r) => r.fullName);
+    const authorRoles = auth.roles;
 
-    const collaboratorRoles = collabs.map((c) => (
-      c.collaboratorRoles ? c.collaboratorRoles.map((r) => r.fullName) : []
-    )).flat();
+    const collaboratorRoles = collabs.map((c) => (c.collaboratorRoles || [])).flat();
 
-    return Array.from(
-      new Set(
-        [...collaboratorRoles, ...authorRoles],
-      ),
-    );
+    return [...authorRoles, ...collaboratorRoles].reduce((allRoles, role) => {
+      const roleExists = allRoles.find((r) => r.id === role.id);
+      return roleExists ? allRoles : [...allRoles, role];
+    });
   }, [author, collaborators]);
 
   return (

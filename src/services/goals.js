@@ -81,16 +81,9 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
             ['userProvidedUrl', 'value'],
             ['id', 'key'],
             [
-              sequelize.literal(`
-                (
-                  SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
-                  INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                  INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
-                  INNER JOIN "ObjectiveResources" "or" ON "or"."objectiveId" = "o"."id"      
-                  WHERE "o"."id" = "objectives"."id" 
-                  AND "or"."id" = "objectives->resources"."id"
-                ) > 0
-              `),
+              sequelize.literal(`(
+                SELECT COUNT(aror."id") FROM "ActivityReportObjectiveResources" "aror" WHERE "aror"."userProvidedUrl" = "objectives->resources"."userProvidedUrl"
+              ) > 0`),
               'onAnyReport',
             ],
             [
@@ -98,10 +91,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                 (
                   SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                  INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
-                  INNER JOIN "ObjectiveResources" "or" ON "or"."objectiveId" = "o"."id"      
-                  WHERE "o"."id" = "objectives"."id" 
-                  AND "or"."id" = "objectives->resources"."id"
+                  INNER JOIN "ActivityReportObjectiveResources" "o" ON "o"."activityReportObjectiveId" = "aro"."id"
+                  WHERE "o"."userProvidedUrl" = "objectives->resources"."userProvidedUrl"
                   AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
                 ) > 0
               `),
@@ -147,6 +138,37 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         {
           model: File,
           as: 'files',
+          attributes: {
+            include: [
+              [
+                sequelize.literal(`
+                  (
+                    SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
+                    INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
+                    INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
+                    INNER JOIN "ObjectiveFiles" "of" ON "of"."objectiveId" = "o"."id"      
+                    WHERE "o"."id" = "objectives"."id" 
+                    AND "of"."fileId" = "objectives->files"."id"
+                  ) > 0
+                `),
+                'onAnyReport',
+              ],
+              [
+                sequelize.literal(`
+                  (
+                    SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
+                    INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
+                    INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
+                    INNER JOIN "ObjectiveFiles" "of" ON "of"."objectiveId" = "o"."id"      
+                    WHERE "o"."id" = "objectives"."id" 
+                    AND "of"."fileId" = "objectives->files"."id"
+                    AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
+                  ) > 0
+                `),
+                'isOnApprovedReport',
+              ],
+            ],
+          },
         },
         {
           model: Role,
