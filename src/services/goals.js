@@ -861,7 +861,7 @@ export async function createOrUpdateGoals(goals) {
         const {
           resources,
           topics,
-          roles: roleNames,
+          roles,
           title,
           files,
           status: objectiveStatus,
@@ -899,13 +899,6 @@ export async function createOrUpdateGoals(goals) {
           title,
           status: objectiveStatus,
         }, { individualHooks: true });
-
-        // objective roles
-        const roles = await Role.findAll({
-          where: {
-            fullName: roleNames,
-          },
-        });
 
         // save all our objective join tables (ObjectiveResource, ObjectiveTopic, ObjectiveRole)
         const deleteUnusedAssociations = true;
@@ -1310,19 +1303,12 @@ async function createObjectivesForGoal(goal, objectives, report) {
     // unused join table data, so we'll just create any missing links
     // so that the metadata is saved properly
 
-    // we need to get the entire role object from the role name
-    const roleData = await Role.findAll({
-      where: {
-        fullName: roles,
-      },
-    });
-
     const deleteUnusedAssociations = false;
     const metadata = await saveObjectiveAssociations(
       savedObjective,
       resources,
       topics,
-      roleData,
+      roles,
       files,
       deleteUnusedAssociations,
     );
