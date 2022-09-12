@@ -23,10 +23,13 @@ const cacheFiles = async (activityReportObjectiveId, files = []) => Promise.all(
 ]);
 
 const cacheResources = async (activityReportObjectiveId, resources = []) => Promise.all([
-  await Promise.all(resources.map(async ([resource]) => ActivityReportObjectiveResource.upsert({
-    activityReportObjectiveId,
-    userProvidedUrl: resource.userProvidedUrl,
-  }, { returning: true }))),
+  // eslint-disable-next-line max-len
+  await Promise.all(resources.map(async ([resource]) => ActivityReportObjectiveResource.findOrCreate({
+    where: {
+      activityReportObjectiveId,
+      userProvidedUrl: resource.userProvidedUrl,
+    },
+  }))),
   await ActivityReportObjectiveResource.destroy({
     where: {
       activityReportObjectiveId,
