@@ -177,6 +177,7 @@ function Navigator({
       // Find the goal we are editing and put it back with updated values.
       const goalBeingEdited = allGoals.find((g) => g.name === goal.name);
       setValue('goalForEditing', goalBeingEdited);
+      updateLastSaveTime(moment());
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     } finally {
@@ -202,6 +203,7 @@ function Navigator({
       );
       // Set updated objectives.
       setValue('objectivesWithoutGoals', newObjectives);
+      updateLastSaveTime(moment());
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     } finally {
