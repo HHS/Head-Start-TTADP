@@ -1,14 +1,12 @@
 import { Alert } from '@trussworks/react-uswds';
 import React, { useContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { useHistory } from 'react-router';
 import { verifyEmailToken } from '../../fetchers/users';
 import UserContext from '../../UserContext';
 
 export default function EmailVerifier({ token, updateUser }) {
   const { user } = useContext(UserContext);
   const [verified, setVerified] = useState(null);
-  const { replace } = useHistory();
 
   useEffect(() => {
     if (verified) return;
@@ -36,7 +34,7 @@ export default function EmailVerifier({ token, updateUser }) {
       .catch(() => {
         setVerified(false);
       });
-  }, [token, updateUser, user, verified, replace]);
+  }, [token, updateUser, user, verified]);
 
   return (
     <>
