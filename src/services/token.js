@@ -10,7 +10,7 @@ import { UserValidationStatus } from '../models';
  * @param {number} userId - userId
  * @param {'email'|string} type - the type of verification,
  * stored in the payload to be verified later
- * @returns {string} - token
+ * @returns {Promise<string>} - token
  */
 
 export const createAndStoreVerificationToken = async (userId, type) => {
