@@ -334,7 +334,11 @@ function AccountManagement({ updateUser }) {
             <h2>Verify email address</h2>
             <p>
               Before you can receive TTA Hub emails, you must verify your email address.
-              <Button className="display-block margin-top-3" onClick={sendVerificationEmail}>
+              <Button
+                data-testid="send-verification-email-button"
+                className="display-block margin-top-3"
+                onClick={sendVerificationEmail}
+              >
                 {emailVerificationSent ? 'Resend verification email' : 'Send verification email'}
               </Button>
             </p>

@@ -74,7 +74,7 @@ describe('AccountManagement', () => {
         });
 
         it('shows verify button', async () => {
-          expect(screen.queryByText(/send verification email/i)).toBeInTheDocument();
+          expect(screen.queryByTestId('send-verification-email-button')).toBeInTheDocument();
         });
       });
     });
