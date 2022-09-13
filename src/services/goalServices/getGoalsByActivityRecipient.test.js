@@ -19,7 +19,6 @@ import {
 
 import { getGoalsByActivityRecipient } from '../recipient';
 import { REPORT_STATUSES } from '../../constants';
-import { auditLogger } from '../../logger';
 
 const NEEDLE = 'This objective title should not appear in recipient 3';
 
@@ -100,7 +99,7 @@ describe('Goals by Recipient Test', () => {
     regionId: 1,
     lastUpdatedById: mockGoalUser.id,
     ECLKCResourcesUsed: ['test'],
-    activityRecipients: [{ grantId: 300 }],
+    activityRecipients: [{ grantId: grant1.id }],
     submissionStatus: REPORT_STATUSES.APPROVED,
     calculatedStatus: REPORT_STATUSES.APPROVED,
     oldApprovingManagerId: 1,
@@ -123,7 +122,7 @@ describe('Goals by Recipient Test', () => {
     regionId: 1,
     lastUpdatedById: mockGoalUser.id,
     ECLKCResourcesUsed: ['test'],
-    activityRecipients: [{ grantId: 301 }],
+    activityRecipients: [{ grantId: grant2.id }],
     submissionStatus: REPORT_STATUSES.APPROVED,
     calculatedStatus: REPORT_STATUSES.APPROVED,
     oldApprovingManagerId: 1,
@@ -146,7 +145,7 @@ describe('Goals by Recipient Test', () => {
     regionId: 1,
     lastUpdatedById: mockGoalUser.id,
     ECLKCResourcesUsed: ['test'],
-    activityRecipients: [{ grantId: 302 }],
+    activityRecipients: [{ grantId: grant3.id }],
     submissionStatus: REPORT_STATUSES.APPROVED,
     calculatedStatus: REPORT_STATUSES.APPROVED,
     oldApprovingManagerId: 1,
@@ -394,7 +393,7 @@ describe('Goals by Recipient Test', () => {
           timeframe: '1 month',
           isFromSmartsheetTtaPlan: false,
           grantId: grant4.id,
-          createdAt: '2021-01-10T19:16:15.842Z',
+          createdAt: '2021-02-10T19:16:15.842Z',
           onApprovedAR: true,
         }),
 
@@ -405,7 +404,7 @@ describe('Goals by Recipient Test', () => {
           timeframe: '1 month',
           isFromSmartsheetTtaPlan: true,
           grantId: grant4.id,
-          createdAt: '2021-01-10T19:16:15.842Z',
+          createdAt: '2021-03-10T19:16:15.842Z',
           onApprovedAR: false,
         }),
       ],
@@ -754,10 +753,8 @@ describe('Goals by Recipient Test', () => {
 
       const countx = count;
       const goalRowsx = goalRows;
-      auditLogger.error(JSON.stringify(goalRowsx));
       expect(countx).toBe(3);
       expect(goalRowsx.length).toBe(3);
-      expect(goalRowsx[2].objectiveCount).toBe(0);
     });
 
     it('associates objectives with the proper recipients', async () => {
