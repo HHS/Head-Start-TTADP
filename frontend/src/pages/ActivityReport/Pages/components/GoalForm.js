@@ -1,4 +1,6 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, {
+  useEffect, useState, useMemo, useContext,
+} from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import { v4 as uuid } from 'uuid';
@@ -12,6 +14,8 @@ import {
   GOAL_NAME_ERROR,
 } from '../../../../components/GoalForm/constants';
 import { NO_ERROR, ERROR_FORMAT } from './constants';
+import Loader from '../../../../components/Loader';
+import GoalFormContext from '../../../../GoalFormContext';
 
 export default function GoalForm({
   goal,
@@ -21,6 +25,9 @@ export default function GoalForm({
 }) {
   // pull the errors out of the form context
   const { errors, watch } = useFormContext();
+
+  // Goal Form Context.
+  const { isLoading } = useContext(GoalFormContext);
 
   /**
    * add controllers for all the controlled fields
@@ -53,7 +60,7 @@ export default function GoalForm({
         ) || GOAL_DATE_ERROR,
       },
     },
-    defaultValue: defaultEndDate,
+    defaultValue: defaultEndDate || '',
   });
 
   const {
@@ -78,16 +85,9 @@ export default function GoalForm({
   // the fields via the useController functions
   useEffect(() => {
     onUpdateText(goal.name ? goal.name : defaultName);
-
-    const newEndDate = goal.endDate ? goal.endDate : defaultEndDate;
-    onUpdateDate(newEndDate);
-    setDatePickerKey(uuid());
   }, [
-    defaultEndDate,
     defaultName,
-    goal.endDate,
     goal.name,
-    onUpdateDate,
     onUpdateText,
     setDatePickerKey,
   ]);
@@ -103,15 +103,27 @@ export default function GoalForm({
       const data = await goalsByIdsAndActivityReport(goal.goalIds, reportId);
       setObjectives(data[0].objectives);
     }
-    if (!goal.isNew && goal.goalIds) {
+
+    const shouldIFetchData = (
+      goal.goalIds
+      && (
+        !goal.isNew || (
+          goal.isNew
+          && goal.oldGrantIds.filter((g) => g).length
+        )
+      )
+    );
+
+    if (shouldIFetchData) {
       fetchData();
     } else {
       setObjectives([]);
     }
-  }, [goal.goalIds, goal.isNew, reportId]);
+  }, [goal.goalIds, goal.isNew, goal.oldGrantIds, reportId]);
 
   return (
     <>
+      <Loader loading={isLoading} loadingLabel="Loading" text="Saving" />
       <GoalText
         error={errors.goalName ? ERROR_FORMAT(errors.goalName.message) : NO_ERROR}
         goalName={goalText}
@@ -119,15 +131,17 @@ export default function GoalForm({
         onUpdateText={onUpdateText}
         inputName={goalTextInputName}
         isOnReport={goal.onApprovedAR || false}
+        isLoading={isLoading}
       />
 
       <GoalDate
         error={errors.goalEndDate ? ERROR_FORMAT(errors.goalEndDate.message) : NO_ERROR}
         setEndDate={onUpdateDate}
-        endDate={goalEndDate}
+        endDate={goalEndDate || ''}
         validateEndDate={onBlurDate}
         datePickerKey={datePickerKey}
         inputName={goalEndDateInputName}
+        isLoading={isLoading}
       />
 
       <Objectives
@@ -143,15 +157,18 @@ export default function GoalForm({
 
 GoalForm.propTypes = {
   goal: PropTypes.shape({
-    id: PropTypes.arrayOf(PropTypes.shape({
-      value: PropTypes.number,
-      label: PropTypes.string,
-    })).isRequired,
+    id: PropTypes.oneOfType([
+      PropTypes.arrayOf(PropTypes.shape({
+        value: PropTypes.number,
+        label: PropTypes.string,
+      })), PropTypes.string,
+    ]).isRequired,
     goalIds: PropTypes.arrayOf(PropTypes.number).isRequired,
     value: PropTypes.oneOfType([
       PropTypes.number,
       PropTypes.string,
     ]),
+    oldGrantIds: PropTypes.arrayOf(PropTypes.number).isRequired,
     label: PropTypes.string,
     name: PropTypes.string,
     endDate: PropTypes.string,

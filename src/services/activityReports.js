@@ -18,7 +18,6 @@ import {
   syncEditors,
   syncRatifiers,
 } from './collaborators';
-
 import {
   ActivityReport,
   Collaborator,
@@ -34,7 +33,9 @@ import {
   NextStep,
   Objective,
   Program,
+  ActivityReportGoal,
   ActivityReportObjective,
+  ActivityReportObjectiveResource,
   ObjectiveResource,
   Topic,
   Role,
@@ -659,12 +660,8 @@ export async function activityReports(
     attributes: ['id', 'name', 'activityRecipientId', 'activityReportId'],
     // sorting these just so the order is testable
     order: [
-      [
-        sequelize.literal(`"grant.recipient.name" ${sortDir}`),
-      ],
-      [
-        sequelize.literal(`"otherEntity.name" ${sortDir}`),
-      ],
+      [sequelize.col('grant.recipient.name'), sortDir],
+      [sequelize.col('otherEntity.name'), sortDir],
     ],
   });
 
@@ -688,7 +685,7 @@ export async function activityReports(
       },
     ],
     order: [
-      ['name', sortDir],
+      [sequelize.col('name'), sortDir],
     ],
   });
 
@@ -1193,6 +1190,8 @@ async function getDownloadableActivityReports(where, separate = true) {
       {
         model: ActivityReportObjective,
         as: 'activityReportObjectives',
+        attributes: ['ttaProvided', 'status'],
+        order: [['objective', 'goal', 'id'], ['objective', 'id']],
         separate,
         include: [{
           model: Objective,
@@ -1200,11 +1199,38 @@ async function getDownloadableActivityReports(where, separate = true) {
           include: [{
             model: Goal,
             as: 'goal',
-          }],
+          },
+          ],
           attributes: ['id', 'title', 'status'],
+        },
+        {
+          model: ActivityReportObjectiveResource,
+          as: 'activityReportObjectiveResources',
+        },
+        {
+          model: Topic,
+          as: 'topics',
+        },
+        {
+          model: Role,
+          as: 'roles',
+        },
+        {
+          model: File,
+          as: 'files',
+        },
+        ],
+      },
+      {
+        model: ActivityReportGoal,
+        as: 'activityReportGoals',
+        separate,
+        include: [{
+          model: Goal,
+          as: 'goal',
         }],
-        attributes: ['ttaProvided'],
-        order: [['objective', 'goal', 'id'], ['objective', 'id']],
+        attributes: ['status'],
+        order: [['goal', 'id']],
       },
       {
         model: ActivityRecipient,

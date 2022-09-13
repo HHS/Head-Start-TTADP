@@ -61,7 +61,7 @@ const mockGrant = {
   grantSpecialistName: null,
   grantSpecialistEmail: null,
   stateCode: 'NY',
-  anualFundingMonth: 'October',
+  annualFundingMonth: 'October',
 };
 
 const sampleReport = {
@@ -145,6 +145,7 @@ describe('Activity Reports model', () => {
       await Promise.all(goals.map(async (goal) => ActivityReportGoal.create({
         activityReportId: report.id,
         goalId: goal.id,
+        status: goal.status,
       })));
       objectives[0] = await Objective.create({
         ...mockObjectives[0],
@@ -158,6 +159,7 @@ describe('Activity Reports model', () => {
       await Promise.all(objectives.map(async (objective) => ActivityReportObjective.create({
         activityReportId: report.id,
         objectiveId: objective.id,
+        status: objective.status,
       })));
     } catch (e) {
       auditLogger.error(JSON.stringify(e));

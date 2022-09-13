@@ -1,5 +1,6 @@
 const { Op, Model } = require('sequelize');
 const { COLLABORATOR_TYPES, ENTITY_TYPES } = require('../constants');
+const { formatDate } = require('../lib/modelHelpers');
 
 module.exports = (sequelize, DataTypes) => {
   class ActivityReportGoal extends Model {
@@ -57,6 +58,20 @@ module.exports = (sequelize, DataTypes) => {
     goalId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+    },
+    name: DataTypes.TEXT,
+    status: DataTypes.STRING,
+    timeframe: DataTypes.STRING,
+    closeSuspendReason: {
+      allowNull: true,
+      type: DataTypes.ENUM(Object.keys(CLOSE_SUSPEND_REASONS).map((k) => CLOSE_SUSPEND_REASONS[k])),
+    },
+    endDate: {
+      type: DataTypes.DATEONLY,
+      get: formatDate,
+    },
+    closeSuspendContext: {
+      type: DataTypes.TEXT,
     },
   }, {
     sequelize,

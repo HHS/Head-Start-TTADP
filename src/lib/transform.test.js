@@ -6,6 +6,11 @@ import {
   Collaborator,
   Grant,
   Recipient,
+  ActivityReportObjective,
+  ActivityReportObjectiveResource,
+  Topic,
+  Role,
+  File,
 } from '../models';
 import { activityReportToCsvRecord, makeGoalsAndObjectivesObject, extractListOfGoalsAndObjectives } from './transform';
 
@@ -182,6 +187,19 @@ describe('activityReportToCsvRecord', () => {
     },
   ];
 
+  const mockActivityReportObjective = [
+    {
+      id: 1,
+      objectiveId: 1,
+      activityReportId: 209914,
+      status: 'Not Started',
+      roles: [{ fullName: 'role 1' }, { fullName: 'role 2' }, { fullName: 'role 3' }],
+      topics: [{ name: 'topic 1' }, { name: 'topic 2' }, { name: 'topic 3' }],
+      activityReportObjectiveResources: [{ userProvidedUrl: 'https://test1.gov' }, { userProvidedUrl: 'https://test2.gov' }],
+      files: [{ originalFileName: 'file1.txt' }, { originalFileName: 'file2.pdf' }],
+    },
+  ];
+
   const mockReport = {
     id: 209914,
     regionId: 14,
@@ -201,6 +219,7 @@ describe('activityReportToCsvRecord', () => {
     approvedAt: new Date(),
     activityRecipients: mockActivityRecipients,
     approvers: mockApprovers,
+    activityReportObjectives: mockActivityReportObjective,
   };
 
   it('transforms arrays of strings into strings', async () => {
@@ -347,12 +366,44 @@ describe('activityReportToCsvRecord', () => {
           model: Collaborator,
           as: 'approvers',
           include: [{ model: User, as: 'user' }],
-        }],
+        },
+        {
+          model: ActivityReportObjective,
+          as: 'activityReportObjectives',
+          include: [
+            {
+              model: ActivityReportObjectiveResource,
+              as: 'activityReportObjectiveResources',
+            },
+            {
+              model: Topic,
+              as: 'topics',
+            },
+            {
+              model: Role,
+              as: 'roles',
+            },
+            {
+              model: File,
+              as: 'files',
+            },
+          ],
+        },
+      ],
     });
 
     const output = await activityReportToCsvRecord(report);
     const {
-      creatorName, lastUpdatedBy, collaborators, programSpecialistName, approvers, recipientInfo,
+      creatorName,
+      lastUpdatedBy,
+      collaborators,
+      programSpecialistName,
+      approvers,
+      recipientInfo,
+      'objective-1.1-specialistRole': roles,
+      'objective-1.1-topics': topics,
+      'objective-1.1-resourcesLinks': resources,
+      'objective-1.1-nonResourceLinks': files,
     } = output;
     expect(creatorName).toEqual('Arthur');
     expect(lastUpdatedBy).toEqual('Arthur');
@@ -360,40 +411,72 @@ describe('activityReportToCsvRecord', () => {
     expect(programSpecialistName).toEqual('Program Specialist 1\nProgram Specialist 2\nProgram Specialist 4');
     expect(approvers).toEqual('Test Approver 1\nTest Approver 2\nTest Approver 3');
     expect(recipientInfo).toEqual('test1 - grant number 1 - 1\ntest2 - grant number 2 - 2\ntest3 - grant number 3 - 3\ntest4 - grant number 4 - 4');
+    expect(roles).toEqual('role 1\nrole 2\nrole 3');
+    expect(topics).toEqual('topic 1\ntopic 2\ntopic 3');
+    expect(resources).toEqual('https://test1.gov\nhttps://test2.gov');
+    expect(files).toEqual('file1.txt\nfile2.pdf');
   });
 
   it('transforms goals and objectives into many values', () => {
     const objectives = mockObjectives.map((mo) => ({
       ...mo,
-      activityReportObjectives: [{
-        ttaProvided: mo.ttaProvided,
-      }],
+      roles: [{ fullName: 'Role 1' }],
+      topics: [{ name: 'Topic 1' }],
+      resources: [{ userProvidedUrl: 'https://test.gov' }],
+      files: [{ originalFileName: 'TestFile.docx' }],
     }));
 
     const output = makeGoalsAndObjectivesObject(objectives);
     expect(output).toEqual({
+      'goal-1-id': '2080',
       'goal-1': 'Goal 1',
       'goal-1-status': 'Not Started',
       'objective-1.1': 'Objective 1.1',
+      'objective-1.1-specialistRole': 'Role 1',
+      'objective-1.1-topics': 'Topic 1',
+      'objective-1.1-resourcesLinks': 'https://test.gov',
+      'objective-1.1-nonResourceLinks': 'TestFile.docx',
       'objective-1.1-ttaProvided': 'Training',
       'objective-1.1-status': 'Completed',
       'objective-1.2': 'Objective 1.2',
+      'objective-1.2-specialistRole': 'Role 1',
+      'objective-1.2-topics': 'Topic 1',
+      'objective-1.2-resourcesLinks': 'https://test.gov',
+      'objective-1.2-nonResourceLinks': 'TestFile.docx',
       'objective-1.2-ttaProvided': 'Training',
       'objective-1.2-status': 'Completed',
+      'goal-2-id': '2081',
       'goal-2': 'Goal 2',
       'goal-2-status': 'Not Started',
       'objective-2.1': 'Objective 2.1',
+      'objective-2.1-specialistRole': 'Role 1',
+      'objective-2.1-topics': 'Topic 1',
+      'objective-2.1-resourcesLinks': 'https://test.gov',
+      'objective-2.1-nonResourceLinks': 'TestFile.docx',
       'objective-2.1-ttaProvided': 'Training',
       'objective-2.1-status': 'Completed',
       'objective-2.2': 'Objective 2.2',
+      'objective-2.2-specialistRole': 'Role 1',
+      'objective-2.2-topics': 'Topic 1',
+      'objective-2.2-resourcesLinks': 'https://test.gov',
+      'objective-2.2-nonResourceLinks': 'TestFile.docx',
       'objective-2.2-ttaProvided': 'Training',
       'objective-2.2-status': 'Completed',
       'objective-2.3': 'Objective 2.3',
+      'objective-2.3-specialistRole': 'Role 1',
+      'objective-2.3-topics': 'Topic 1',
+      'objective-2.3-resourcesLinks': 'https://test.gov',
+      'objective-2.3-nonResourceLinks': 'TestFile.docx',
       'objective-2.3-ttaProvided': 'Training',
       'objective-2.3-status': 'Completed',
+      'goal-3-id': '2082',
       'goal-3': 'Goal 3',
       'goal-3-status': 'Not Started',
       'objective-3.1': 'Objective 3.1',
+      'objective-3.1-specialistRole': 'Role 1',
+      'objective-3.1-topics': 'Topic 1',
+      'objective-3.1-resourcesLinks': 'https://test.gov',
+      'objective-3.1-nonResourceLinks': 'TestFile.docx',
       'objective-3.1-ttaProvided': 'Training',
       'objective-3.1-status': 'Completed',
     });
@@ -402,12 +485,17 @@ describe('activityReportToCsvRecord', () => {
   it('return a list of all keys that are a goal or objective and in the proper order', () => {
     const csvData = [
       {
+        'goal-1-id': 123,
         'goal-1': 'butter',
         'objective-1': 'cream',
       },
       {
         'goal-1': 'butter',
         'objective-1': 'cream',
+        'objective-1-specialistRole': 'role1',
+        'objective-1-topics': 'topic1',
+        'objective-1-resourcesLinks': 'https"//test.gov',
+        'objective-1-nonResourceLinks': 'file1.txt',
         'goal-2': 'cream',
         'goal-2-status': 'butter',
         'objective-2.1': 'eggs',
@@ -423,7 +511,7 @@ describe('activityReportToCsvRecord', () => {
     const validated = extractListOfGoalsAndObjectives(csvData);
 
     expect(validated).toStrictEqual([
-      'goal-1', 'objective-1', 'goal-2', 'goal-2-status', 'objective-2.1', 'objective-2.1-ttaProvided', 'goal-3', 'objective-3.1-status',
+      'goal-1-id', 'goal-1', 'objective-1', 'objective-1-specialistRole', 'objective-1-topics', 'objective-1-resourcesLinks', 'objective-1-nonResourceLinks', 'goal-2', 'goal-2-status', 'objective-2.1', 'objective-2.1-ttaProvided', 'goal-3', 'objective-3.1-status',
     ]);
   });
 

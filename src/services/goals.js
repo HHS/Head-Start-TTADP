@@ -1,11 +1,18 @@
 import { Op } from 'sequelize';
+import { uniqBy } from 'lodash';
 import {
   Goal,
   Grant,
   Objective,
   ObjectiveResource,
+  ObjectiveFile,
+  ObjectiveRole,
   ObjectiveTopic,
   ActivityReportObjective,
+  ActivityReportObjectiveTopic,
+  ActivityReportObjectiveFile,
+  ActivityReportObjectiveResource,
+  ActivityReportObjectiveRole,
   sequelize,
   Recipient,
   ActivityReport,
@@ -14,11 +21,14 @@ import {
   Topic,
   Program,
   File,
-  ObjectiveRole,
   Role,
-  ObjectiveFile,
 } from '../models';
 import { DECIMAL_BASE, REPORT_STATUSES } from '../constants';
+import {
+  cacheObjectiveMetadata,
+  cacheGoalMetadata,
+  destroyActivityReportObjectiveMetadata,
+} from './reportCache';
 
 const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
   attributes: [
@@ -216,6 +226,110 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
   ],
 });
 
+export async function saveObjectiveAssociations(
+  objective,
+  resources = [],
+  topics = [],
+  roles = [],
+  files = [],
+  deleteUnusedAssociations = false,
+) {
+  // topics
+  const objectiveTopics = await Promise.all(
+    (topics.map(async (topic) => ObjectiveTopic.findOrCreate({
+      where: {
+        objectiveId: objective.id,
+        topicId: topic.value,
+      },
+    }))),
+  );
+
+  // resources
+  const objectiveResources = await Promise.all(
+    resources.filter(({ value }) => value).map(
+      ({ value }) => ObjectiveResource.findOrCreate({
+        where: {
+          userProvidedUrl: value,
+          objectiveId: objective.id,
+        },
+      }),
+    ),
+  );
+
+  const objectiveRoles = await Promise.all((roles.map(async (role) => {
+    const [r] = await ObjectiveRole.findOrCreate({
+      where: {
+        roleId: role.id,
+        objectiveId: objective.id,
+      },
+    });
+    return r;
+  })));
+
+  const objectiveFiles = await Promise.all(
+    files.map(
+      (file) => ObjectiveFile.findOrCreate({
+        where: {
+          fileId: file.id,
+          objectiveId: objective.id,
+        },
+      }),
+    ),
+  );
+
+  if (deleteUnusedAssociations) {
+    // cleanup objective topics
+    await ObjectiveTopic.destroy({
+      where: {
+        id: {
+          [Op.notIn]: objectiveTopics.length ? objectiveTopics.map(([ot]) => ot.id) : [],
+        },
+        objectiveId: objective.id,
+      },
+    });
+
+    // cleanup objective resources
+    await ObjectiveResource.destroy({
+      where: {
+        id: {
+          [Op.notIn]: objectiveResources.length
+            ? objectiveResources.map(([or]) => or.id) : [],
+        },
+        objectiveId: objective.id,
+      },
+    });
+
+    // cleanup objective roles
+    await ObjectiveRole.destroy({
+      where: {
+        id: {
+          [Op.notIn]: objectiveRoles.length
+            ? objectiveRoles.map((or) => or.id) : [],
+        },
+        objectiveId: objective.id,
+      },
+    });
+
+    // cleanup objective files
+    await ObjectiveFile.destroy({
+      where: {
+        id: {
+          [Op.notIn]: objectiveFiles.length
+            ? objectiveFiles.map((or) => or.id) : [],
+        },
+        objectiveId: objective.id,
+      },
+    });
+  }
+
+  return {
+    topics: objectiveTopics,
+    resources: objectiveResources,
+    roles: objectiveRoles,
+    files: objectiveFiles,
+  };
+}
+
 export function reduceObjectives(newObjectives, currentObjectives = []) {
   return newObjectives.reduce((objectives, objective) => {
     const exists = objectives.find((o) => (
@@ -225,6 +339,8 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
     if (exists) {
       const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
       exists.ids = [...exists.ids, id];
+      // Make sure we pass back a list of recipient ids for subsequent saves.
+      exists.recipientIds = [...exists.recipientIds, objective.getDataValue('otherEntityId')];
       return objectives;
     }
 
@@ -244,9 +360,94 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
       ...objective.dataValues,
       value: id,
       ids: [id],
+      // Make sure we pass back a list of recipient ids for subsequent saves.
+      recipientIds: [objective.getDataValue('otherEntityId')],
       ttaProvided,
       isNew: false,
       roles,
+    }];
+  }, currentObjectives);
+}
+
+export function reduceObjectivesForActivityReport(newObjectives, currentObjectives = []) {
+  return newObjectives.reduce((objectives, objective) => {
+    const exists = objectives.find((o) => (
+      o.title === objective.title && o.status === objective.status
+    ));
+
+    if (exists) {
+      const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
+      exists.ids = [...exists.ids, id];
+
+      // for roles, we are just returning arrays of strings
+      // so we can just dedupe them declaratively
+      exists.roles = [...new Set([
+        ...exists.roles,
+        ...objective.activityReportObjectives[0].activityReportObjectiveRoles.map(
+          (r) => r.role.fullName,
+        )])];
+
+      // for resources, topics, and files,
+      // we need to do a more complicated lookup to get a unique set
+      // (I almost forgot we have lodash)
+      exists.resources = uniqBy([
+        ...exists.resources,
+        ...objective.activityReportObjectives[0].activityReportObjectiveResources.map(
+          (r) => r.dataValues,
+        ),
+      ], 'value');
+
+      exists.topics = uniqBy([
+        ...exists.topics,
+        ...objective.activityReportObjectives[0].activityReportObjectiveTopics.map(
+          (t) => t.topic.dataValues,
+        ),
+      ], 'id');
+
+      exists.files = uniqBy([
+        ...exists.files,
+        ...objective.activityReportObjectives[0].activityReportObjectiveFiles.map(
+          (f) => f.file.dataValues,
+        ),
+      ], 'key');
+
+      return objectives;
+    }
+
+    // since this method is used to rollup both objectives on and off activity reports
+    // we need to handle the case where there is TTA provided and TTA not provided
+    // NOTE: there will only be one activity report objective, it is queried by activity report id
+    const ttaProvided = objective.activityReportObjectives
+        && objective.activityReportObjectives[0]
+        && objective.activityReportObjectives[0].ttaProvided
+      ? objective.activityReportObjectives[0].ttaProvided : null;
+
+    const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
+
+    return [...objectives, {
+      ...objective.dataValues,
+      value: id,
+      ids: [id],
+      ttaProvided,
+      isNew: false,
+
+      // for the associated models, we need to return not the direct associations
+      // but those associated through an activity report since those reflect the state
+      // of the activity report not the state of the objective, which is what
+      // we are getting at with this method (getGoalsForReport)
+
+      roles: objective.activityReportObjectives[0].activityReportObjectiveRoles.map(
+        (r) => r.role.fullName,
+      ),
+      topics: objective.activityReportObjectives[0].activityReportObjectiveTopics.map(
+        (t) => t.topic.dataValues,
+      ),
+      resources: objective.activityReportObjectives[0].activityReportObjectiveResources.map(
+        (r) => r.dataValues,
+      ),
+      files: objective.activityReportObjectives[0].activityReportObjectiveFiles.map(
+        (f) => f.file.dataValues,
+      ),
     }];
   }, currentObjectives);
 }
@@ -256,7 +457,8 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
  * @param {Object[]} goals
  * @returns {Object[]} array of deduped goals
  */
-function reduceGoals(goals) {
+function reduceGoals(goals, forReport = false) {
+  const objectivesReducer = forReport ? reduceObjectivesForActivityReport : reduceObjectives;
   const r = goals.reduce((previousValue, currentValue) => {
     const existingGoal = previousValue.find((g) => (
       g.name === currentValue.name && g.status === currentValue.status
@@ -275,7 +477,10 @@ function reduceGoals(goals) {
         },
       ];
       existingGoal.grantIds = [...existingGoal.grantIds, currentValue.grant.id];
-      existingGoal.objectives = reduceObjectives(currentValue.objectives, existingGoal.objectives);
+      existingGoal.objectives = objectivesReducer(
+        currentValue.objectives,
+        existingGoal.objectives,
+      );
       return previousValue;
     }
 
@@ -292,7 +497,9 @@ function reduceGoals(goals) {
         },
       ],
       grantIds: [currentValue.grant.id],
-      objectives: reduceObjectives(currentValue.objectives),
+      objectives: objectivesReducer(
+        currentValue.objectives,
+      ),
       isNew: false,
     };
 
@@ -642,6 +849,7 @@ export async function createOrUpdateGoals(goals) {
           topics,
           roles: roleNames,
           title,
+          files,
           status: objectiveStatus,
           id: objectiveId,
           isNew,
@@ -678,49 +886,6 @@ export async function createOrUpdateGoals(goals) {
           status: objectiveStatus,
         }, { individualHooks: true });
 
-        // topics
-        const objectiveTopics = await Promise.all(
-          (topics.map(async (ot) => ObjectiveTopic.findOrCreate({
-            where: {
-              objectiveId: objective.id,
-              topicId: ot.value,
-            },
-          }))),
-        );
-
-        // cleanup objective topics
-        await ObjectiveTopic.destroy({
-          where: {
-            id: {
-              [Op.notIn]: objectiveTopics.length ? objectiveTopics.map(([ot]) => ot.id) : [],
-            },
-            objectiveId: objective.id,
-          },
-        });
-
-        // resources
-        const objectiveResources = await Promise.all(
-          resources.filter(({ value }) => value).map(
-            ({ value }) => ObjectiveResource.findOrCreate({
-              where: {
-                userProvidedUrl: value,
-                objectiveId: objective.id,
-              },
-            }),
-          ),
-        );
-
-        // cleanup objective resources
-        await ObjectiveResource.destroy({
-          where: {
-            id: {
-              [Op.notIn]: objectiveResources.length
-                ? objectiveResources.map(([or]) => or.id) : [],
-            },
-            objectiveId: objective.id,
-          },
-        });
-
         // objective roles
         const roles = await Role.findAll({
           where: {
@@ -728,26 +893,16 @@ export async function createOrUpdateGoals(goals) {
           },
         });
 
-        const objectiveRoles = await Promise.all((roles.map(async (role) => {
-          const [r] = await ObjectiveRole.findOrCreate({
-            where: {
-              roleId: role.id,
-              objectiveId: objective.id,
-            },
-          });
-          return r;
-        })));
-
-        // cleanup objective roles
-        await ObjectiveRole.destroy({
-          where: {
-            id: {
-              [Op.notIn]: objectiveRoles.length
-                ? objectiveRoles.map((or) => or.id) : [],
-            },
-            objectiveId: objective.id,
-          },
-        });
+        // save all our objective join tables (ObjectiveResource, ObjectiveTopic, ObjectiveRole)
+        const deleteUnusedAssociations = true;
+        await saveObjectiveAssociations(
+          objective,
+          resources,
+          topics,
+          roles,
+          files,
+          deleteUnusedAssociations,
+        );
 
         return {
           ...objective.dataValues,
@@ -787,7 +942,7 @@ export async function goalsForGrants(grantIds) {
    */
   const ids = grants
     .reduce((previous, current) => [...previous, current.id, current.oldGrantId], [])
-    .filter((g) => g != null);
+    .filter((g) => g);
 
   /*
   * finally, return all matching goals
@@ -809,11 +964,19 @@ export async function goalsForGrants(grantIds) {
           sequelize.col('"Goal"."id"'),
         ),
       ), 'goalIds'],
+      [sequelize.fn(
+        'ARRAY_AGG',
+        sequelize.fn(
+          'DISTINCT',
+          sequelize.col('grant.oldGrantId'),
+        ),
+      ), 'oldGrantIds'],
       'name',
       'status',
       'onApprovedAR',
+      'endDate',
     ],
-    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."onApprovedAR"'],
+    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"'],
     where: {
       '$grant.id$': ids,
       [Op.or]: [
@@ -843,20 +1006,30 @@ export async function goalsForGrants(grantIds) {
 }
 
 async function removeActivityReportObjectivesFromReport(reportId, objectiveIdsToRemove) {
-  return ActivityReportObjective.destroy({
+  const activityReportObjectivesToDestroy = await ActivityReportObjective.findAll({
     where: {
       activityReportId: reportId,
       objectiveId: objectiveIdsToRemove,
     },
   });
+
+  const idsToDestroy = activityReportObjectivesToDestroy.map((arObjective) => arObjective.id);
+
+  await destroyActivityReportObjectiveMetadata(idsToDestroy);
+
+  return ActivityReportObjective.destroy({
+    where: {
+      id: idsToDestroy,
+    },
+  });
 }
 
-async function removeActivityReportGoalsFromReport(reportId, goalIdsToRemove) {
+async function removeActivityReportGoalsFromReport(reportId, currentGoalIds) {
   return ActivityReportGoal.destroy({
     where: {
       activityReportId: reportId,
       goalId: {
-        [Op.notIn]: goalIdsToRemove,
+        [Op.notIn]: currentGoalIds,
       },
     },
   });
@@ -1033,18 +1206,6 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
     where: {
       activityReportId: reportId,
     },
-    include: {
-      model: Objective,
-      as: 'objective',
-      include: {
-        model: Goal,
-        as: 'goal',
-        include: {
-          model: Objective,
-          as: 'objectives',
-        },
-      },
-    },
   });
 
   const currentObjectiveIds = currentObjectives.map((o) => o.id);
@@ -1082,6 +1243,10 @@ async function createObjectivesForGoal(goal, objectives, report) {
       ActivityReportObjective: aro,
       title,
       status,
+      resources,
+      topics,
+      roles,
+      files,
       ...updatedFields
     } = objective;
 
@@ -1126,66 +1291,39 @@ async function createObjectivesForGoal(goal, objectives, report) {
       }
     }
 
-    const [arObjective] = await ActivityReportObjective.findOrCreate({
+    // this will save all our objective join table data
+    // however, in the case of the Activity Report, we can't really delete
+    // unused join table data, so we'll just create any missing links
+    // so that the metadata is saved properly
+
+    // we need to get the entire role object from the role name
+    const roleData = await Role.findAll({
       where: {
-        objectiveId: savedObjective.id,
-        activityReportId: report.id,
+        fullName: roles,
       },
     });
 
-    await arObjective.update({ ttaProvided }, { individualHooks: true });
-    if (objective.topics) {
-      await Promise.all((objective.topics.map((ot) => ObjectiveTopic.findOrCreate({
-        where: {
-          objectiveId: savedObjective.id,
-          topicId: ot.value,
-        },
-      }))));
-    }
+    const deleteUnusedAssociations = false;
+    const metadata = await saveObjectiveAssociations(
+      savedObjective,
+      resources,
+      topics,
+      roleData,
+      files,
+      deleteUnusedAssociations,
+    );
 
-    if (objective.resources) {
-      await Promise.all(
-        objective.resources.filter(({ value }) => value).map(
-          ({ value }) => ObjectiveResource.findOrCreate({
-            where: {
-              userProvidedUrl: value,
-              objectiveId: savedObjective.id,
-            },
-          }),
-        ),
-      );
-    }
-
-    if (objective.files) {
-      const files = await File.findAll({
-        where: {
-          id: objective.files.map(({ id: fileId }) => fileId),
-        },
-      });
-
-      await Promise.all(files.map((file) => ObjectiveFile.findOrCreate({
-        where: {
-          fileId: file.id,
-          objectiveId: savedObjective.id,
-        },
-      })));
-    }
-
-    if (objective.roles) {
-      const roles = await Role.findAll({
-        where: {
-          fullName: objective.roles,
-        },
-      });
-
-      await Promise.all(roles.map((r) => ObjectiveRole.findOrCreate({
-        where: {
-          roleId: r.id,
-          objectiveId: savedObjective.id,
-        },
-      })));
-    }
-
+    // this will link our objective to the activity report through
+    // activity report objective and then link all associated objective data
+    // to the activity report objective to capture this moment in time
+    await cacheObjectiveMetadata(
+      savedObjective,
+      report.id,
+      {
+        ...metadata,
+        ttaProvided: objective.ttaProvided,
+      },
+    );
     return savedObjective;
   }));
 }
@@ -1223,12 +1361,7 @@ export async function saveGoalsForReport(goals, report) {
           defaults: { ...fields, status, createdVia: 'activityReport' },
         });
 
-        await ActivityReportGoal.findOrCreate({
-          where: {
-            goalId: newGoal.id,
-            activityReportId: report.id,
-          },
-        });
+        await cacheGoalMetadata(newGoal, report.id);
 
         const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
         currentObjectives = [...currentObjectives, ...newGoalObjectives];
@@ -1262,12 +1395,8 @@ export async function saveGoalsForReport(goals, report) {
         // eslint-disable-next-line max-len
         const existingGoalObjectives = await createObjectivesForGoal(existingGoal, objectives, report);
         currentObjectives = [...currentObjectives, ...existingGoalObjectives];
-        await ActivityReportGoal.findOrCreate({
-          where: {
-            goalId: existingGoal.id,
-            activityReportId: report.id,
-          },
-        });
+
+        await cacheGoalMetadata(existingGoal, report.id);
       }));
 
       newGoals = await Promise.all(grantIds.map(async (gId) => {
@@ -1289,12 +1418,7 @@ export async function saveGoalsForReport(goals, report) {
 
         await newGoal.update({ ...fields, status, createdVia: createdVia || 'activityReport' }, { individualHooks: true });
 
-        await ActivityReportGoal.findOrCreate({
-          where: {
-            goalId: newGoal.id,
-            activityReportId: report.id,
-          },
-        });
+        await cacheGoalMetadata(newGoal, report.id);
 
         const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
         currentObjectives = [...currentObjectives, ...newGoalObjectives];
@@ -1338,31 +1462,16 @@ export async function updateGoalStatusById(
 
 export async function getGoalsForReport(reportId) {
   const goals = await Goal.findAll({
-    /// TODO: If we need a count of other reports using this goal.
-    /* attributes: {
-      include: [[sequelize.literal(`
-                (
-                SELECT COUNT("ar"."id")
-                FROM "ActivityReports" "ar"
-                INNER JOIN "ActivityReportGoals" "arg" ON "arg"."activityReportId" = "ar"."id"
-                WHERE "arg"."goalId" = "Goal"."id" AND "arg"."activityReportId" != ${reportId}
-              )
-    `), 'onOtherAR']],
-    }, */
+    where: {
+      id: {
+        [Op.in]: sequelize.literal(`(SELECT "goalId" FROM "ActivityReportGoals" WHERE "activityReportId" = ${reportId})`),
+      },
+    },
     include: [
       {
         model: Grant,
         as: 'grant',
         required: true,
-      },
-      {
-        model: ActivityReport,
-        as: 'activityReports',
-        where: {
-          id: reportId,
-        },
-        required: true,
-        // get goals for a particular AR
       },
       {
         model: Objective,
@@ -1374,8 +1483,49 @@ export async function getGoalsForReport(reportId) {
             where: {
               activityReportId: reportId,
             },
-            required: true,
-            // we need this in case an objective was used on one report but not on another
+            include: [
+              {
+
+                model: ActivityReportObjectiveTopic,
+                as: 'activityReportObjectiveTopics',
+                required: false,
+                include: [
+                  {
+                    model: Topic,
+                    as: 'topic',
+                    attributes: [['name', 'label'], ['id', 'value']],
+                  },
+                ],
+              },
+              {
+                model: ActivityReportObjectiveFile,
+                as: 'activityReportObjectiveFiles',
+                required: false,
+                include: [
+                  {
+                    model: File,
+                    as: 'file',
+                  },
+                ],
+              },
+              {
+                model: ActivityReportObjectiveResource,
+                as: 'activityReportObjectiveResources',
+                required: false,
+                attributes: [['userProvidedUrl', 'value'], ['id', 'key']],
+              },
+              {
+                model: ActivityReportObjectiveRole,
+                as: 'activityReportObjectiveRoles',
+                required: false,
+                include: [
+                  {
+                    model: Role,
+                    as: 'role',
+                  },
+                ],
+              },
+            ],
           },
           {
             model: Role,
@@ -1402,7 +1552,8 @@ export async function getGoalsForReport(reportId) {
   });
 
   // dedupe the goals & objectives
-  return reduceGoals(goals);
+  const forReport = true;
+  return reduceGoals(goals, forReport);
 }
 
 export async function createOrUpdateGoalsForActivityReport(goals, reportId) {

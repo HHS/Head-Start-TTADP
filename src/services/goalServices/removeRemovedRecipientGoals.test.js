@@ -91,11 +91,13 @@ describe('removeRemovedRecipientsGoals', () => {
     await ActivityReportGoal.create({
       goalId: firstGoal.id,
       activityReportId: multiRecipientReport.id,
+      status: firstGoal.status,
     });
 
     await ActivityReportObjective.create({
       objectiveId: firstObjective.id,
       activityReportId: multiRecipientReport.id,
+      status: firstObjective.status,
     });
 
     secondGoal = await Goal.create({
@@ -114,11 +116,13 @@ describe('removeRemovedRecipientsGoals', () => {
     await ActivityReportGoal.create({
       goalId: secondGoal.id,
       activityReportId: multiRecipientReport.id,
+      status: secondGoal.status,
     });
 
     await ActivityReportObjective.create({
       objectiveId: secondObjective.id,
       activityReportId: multiRecipientReport.id,
+      status: secondObjective.status,
     });
 
     thirdGoal = await Goal.create({
@@ -131,6 +135,7 @@ describe('removeRemovedRecipientsGoals', () => {
     await ActivityReportGoal.create({
       goalId: thirdGoal.id,
       activityReportId: multiRecipientReport.id,
+      status: thirdGoal.status,
     });
 
     fourthGoal = await Goal.create({
@@ -144,6 +149,7 @@ describe('removeRemovedRecipientsGoals', () => {
     await ActivityReportGoal.create({
       goalId: fourthGoal.id,
       activityReportId: multiRecipientReport.id,
+      status: fourthGoal.status,
     });
 
     secondReport = await createOrUpdate({
@@ -159,6 +165,7 @@ describe('removeRemovedRecipientsGoals', () => {
     await ActivityReportGoal.create({
       goalId: fourthGoal.id,
       activityReportId: secondReport.id,
+      status: fourthGoal.status,
     });
 
     thirdObjective = await Objective.create({
@@ -170,6 +177,7 @@ describe('removeRemovedRecipientsGoals', () => {
     await ActivityReportObjective.create({
       activityReportId: secondReport.id,
       objectiveId: thirdObjective.id,
+      status: thirdObjective.status,
     });
   });
 

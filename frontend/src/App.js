@@ -51,8 +51,8 @@ function App() {
 
   useEffect(() => {
     async function cleanupReports() {
-      const reportsForCleanup = await getReportsForLocalStorageCleanup();
       try {
+        const reportsForCleanup = await getReportsForLocalStorageCleanup();
         reportsForCleanup.forEach(async (report) => {
           window.localStorage.removeItem(LOCAL_STORAGE_DATA_KEY(report.id));
           window.localStorage.removeItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY(report.id));
@@ -88,7 +88,7 @@ function App() {
     fetchData();
   }, []);
 
-  const logout = async (timeout = false) => {
+  const logout = async (timeout) => {
     await fetchLogout();
     updateUser();
     updateAuthError();
