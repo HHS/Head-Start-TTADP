@@ -79,6 +79,10 @@ describe('Objectives DB service', () => {
       isNew: true,
       recipientIds: [1],
       ids: ['uuid'],
+      roles: [],
+      topics: [],
+      resources: [],
+      files: [],
     },
     {
       id: 'uuid2',
@@ -88,6 +92,10 @@ describe('Objectives DB service', () => {
       isNew: true,
       recipientIds: [1],
       ids: ['uuid2'],
+      roles: [],
+      topics: [],
+      resources: [],
+      files: [],
     },
   ];
 
@@ -111,11 +119,13 @@ describe('Objectives DB service', () => {
       objectiveId: objective.id,
       activityReportId: report.id,
       ttaProvided: 'tta provided',
+      status: objective.status,
     });
 
     await ActivityReportObjective.create({
       objectiveId: secondObjective.id,
       activityReportId: report.id,
+      status: secondObjective.status,
     });
 
     await sequelize.transaction(async () => {
@@ -126,6 +136,7 @@ describe('Objectives DB service', () => {
         status: objective.status,
         recipientIds: [1],
         ids: [objective.id],
+        roles: [],
       }], report);
     });
     otherEntity = await OtherEntity.create({ ...mockOtherEntity, id: 685497 });
@@ -229,6 +240,7 @@ describe('Objectives DB service', () => {
           otherEntityId: 1,
           status: 'In Progress',
           title: 'i have a new title but same id',
+          roles: [],
         }], report);
       });
       const foundObj = await getObjectiveById(findObjectiveById.id);
@@ -245,6 +257,7 @@ describe('Objectives DB service', () => {
           otherEntityId: 1,
           status: 'Not Started',
           title: 'there are many titles but this one is mine',
+          roles: [],
         }], report);
       });
       const foundObj = await getObjectiveById(findObjectiveByTitle.id);

@@ -1,6 +1,5 @@
 const { Op, Model } = require('sequelize');
 const moment = require('moment');
-const { isEqual, uniqWith } = require('lodash');
 const { REPORT_STATUSES, USER_ROLES } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 const { beforeCreate, beforeUpdate, afterUpdate } = require('./hooks/activityReport');
@@ -32,6 +31,13 @@ module.exports = (sequelize, DataTypes) => {
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'specialistNextSteps' });
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'recipientNextSteps' });
       ActivityReport.hasMany(models.ActivityReportApprover, { foreignKey: 'activityReportId', as: 'approvers', hooks: true });
+      ActivityReport.hasMany(models.ActivityReportGoal, { foreignKey: 'activityReportId', as: 'activityReportGoals' });
+      ActivityReport.belongsToMany(models.Goal, {
+        through: models.ActivityReportGoal,
+        foreignKey: 'activityReportId',
+        otherKey: 'goalId',
+        as: 'goals',
+      });
       ActivityReport.hasMany(models.ActivityReportObjective, { foreignKey: 'activityReportId', as: 'activityReportObjectives' });
       ActivityReport.belongsToMany(models.Objective, {
         scope: {
@@ -186,28 +192,6 @@ module.exports = (sequelize, DataTypes) => {
     updatedAt: {
       allowNull: false,
       type: DataTypes.DATE,
-    },
-    goals: {
-      type: DataTypes.VIRTUAL,
-      get() {
-        const objectives = this.objectivesWithGoals || [];
-        const goalsArray = objectives.map((o) => o.goal);
-        const goals = uniqWith(goalsArray, isEqual);
-
-        return goals.map((goal) => {
-          const objs = objectives.filter((o) => o.goalId === goal.id);
-          const plainObjectives = objs.map((o) => {
-            const plain = o.get({ plain: true });
-            const { goal: _, ...plainObj } = plain;
-            return plainObj;
-          });
-          const ret = {
-            ...goal.get({ plain: true }),
-            objectives: plainObjectives,
-          };
-          return ret;
-        });
-      },
     },
     lastSaved: {
       type: DataTypes.VIRTUAL,
