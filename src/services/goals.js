@@ -1243,13 +1243,16 @@ async function createObjectivesForGoal(goal, objectives, report) {
       ...updatedFields
     } = objective;
 
+    // If the goal set on the objective does not match
+    // the goals passed we need to save the objectives.
+    const createNewObjectives = objective.goalId !== goal.id;
     const updatedObjective = {
-      ...updatedFields, title, status, goalId: goal.id,
+      ...updatedFields, title, status, isNew, goalId: goal.id,
     };
 
     let savedObjective;
 
-    if (!isNew && id) {
+    if (!isNew && id && !createNewObjectives) {
       savedObjective = await Objective.findByPk(id);
 
       await savedObjective.update({
@@ -1400,7 +1403,10 @@ export async function saveGoalsForReport(goals, report) {
 
         const [newGoal] = await Goal.findOrCreate({
           where: {
-            goalTemplateId,
+            [Op.and]: [
+              { goalTemplateId: { [Op.not]: null } }, // We need to exclude null matches.
+              { goalTemplateId: { [Op.eq]: goalTemplateId } },
+            ],
             grantId: gId,
             status: {
               [Op.not]: 'Closed',
