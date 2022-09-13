@@ -209,9 +209,16 @@ function App() {
       </Helmet>
       <BrowserRouter>
         {authenticated && (
-          <a className="usa-skipnav" href="#main-content">
-            Skip to main content
-          </a>
+          <>
+            <a className="usa-skipnav" href="#main-content">
+              Skip to main content
+            </a>
+
+            {/* Only show the sidebar when the user is authenticated */}
+            <UserContext.Provider value={{ user, authenticated, logout }}>
+              <SiteNav admin={admin} authenticated={authenticated} logout={logout} user={user} />
+            </UserContext.Provider>
+          </>
         )}
         <UserContext.Provider value={{ user, authenticated, logout }}>
           <Header />
@@ -221,7 +228,7 @@ function App() {
             {!authenticated && (authError === 403
               ? <AppWrapper><RequestPermissions /></AppWrapper>
               : (
-                <AppWrapper>
+                <AppWrapper padded={false}>
                   <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
                 </AppWrapper>
               )
