@@ -1247,7 +1247,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
     // the goals passed we need to save the objectives.
     const createNewObjectives = objective.goalId !== goal.id;
     const updatedObjective = {
-      ...updatedFields, title, status, isNew, goalId: goal.id,
+      ...updatedFields, title, status, goalId: goal.id,
     };
 
     let savedObjective;
