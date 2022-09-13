@@ -1,6 +1,6 @@
 const { Op, Model } = require('sequelize');
 const moment = require('moment');
-const { isEqual, uniqWith } = require('lodash');
+// const { isEqual, uniqWith } = require('lodash');
 const {
   // REPORT_STATUSES,
   // USER_ROLES,
@@ -19,7 +19,9 @@ const {
 //   const creatorName = ar.author ? ar.author.name : '';
 //   let roles = '';
 //   if (ar.creatorRole) {
-//     roles = ar.creatorRole === 'TTAC' || ar.creatorRole === 'COR' ? `, ${ar.creatorRole}` : `, ${ar.creatorRole.split(' ').map((word) => word[0]).join('')}`;
+//     roles = ar.creatorRole === 'TTAC' || ar.creatorRole === 'COR'
+//      ? `, ${ar.creatorRole}`
+//      : `, ${ar.creatorRole.split(' ').map((word) => word[0]).join('')}`;
 //   }
 //   return `${creatorName}${roles}`;
 // };

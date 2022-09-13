@@ -16,7 +16,7 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'objectiveId',
         otherKey: 'activityReportId',
         as: 'activityReports',
-      }); 
+      });
       Objective.hasMany(models.ActivityReportObjective, {
         foreignKey: 'objectiveId', as: 'activityReportObjectives',
       });

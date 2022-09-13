@@ -2,7 +2,7 @@ import { Op } from 'sequelize';
 import { ActivityReport, Approval } from '../models';
 import { REPORT_STATUSES, TARGET_POPULATIONS } from '../constants';
 import { countBySingleKey } from './helpers';
-import { auditLogger } from  '../logger';
+import { auditLogger } from '../logger';
 
 export default async function targetPopulationTable(scopes) {
   const res = await ActivityReport.findAll({

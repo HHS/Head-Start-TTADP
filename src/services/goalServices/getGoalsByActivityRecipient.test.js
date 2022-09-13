@@ -6,7 +6,6 @@ import {
   Recipient,
   Grant,
   ActivityRecipient,
-  Approval,
   // GrantGoal,
   // GoalTemplate,
   Goal,
@@ -18,9 +17,8 @@ import {
   // Topic,
 } from '../../models';
 import { createOrUpdate } from '../activityReports';
-import { syncOwnerInstantiators } from '../collaborators';
 import { getGoalsByActivityRecipient } from '../recipient';
-import { REPORT_STATUSES, ENTITY_TYPES } from '../../constants';
+import { REPORT_STATUSES } from '../../constants';
 import { auditLogger } from '../../logger';
 
 const NEEDLE = 'This objective title should not appear in recipient 3';

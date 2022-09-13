@@ -24,12 +24,7 @@ import {
   ENTITY_TYPES,
   RATIFIER_STATUSES,
 } from '../constants';
-import {
-  upsertRatifier,
-  removeRatifier,
-  upsertEditor,
-  syncOwnerInstantiators,
-} from './collaborators';
+import { removeRatifier } from './collaborators';
 import { createReport, destroyReport } from '../testUtils';
 import { auditLogger } from '../logger';
 

@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { ActivityReport, Approval } from '../models';
+import { ActivityReport } from '../models';
 import { REPORT_STATUSES, REASONS } from '../constants';
 import { countBySingleKey } from './helpers';
 
