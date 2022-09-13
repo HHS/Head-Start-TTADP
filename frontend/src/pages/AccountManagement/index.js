@@ -38,7 +38,7 @@ const emailTypesMap = [
     keyName: 'emailWhenReportSubmittedForReview',
   },
   {
-    name: 'Changes requested to activity report',
+    name: 'Activity report needs action',
     description: 'We\'ll email you when an activity report that you created or collaborated on needs action.',
     keyName: 'emailWhenChangeRequested',
   },
