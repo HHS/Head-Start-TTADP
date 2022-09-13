@@ -25,22 +25,6 @@ module.exports = {
     );
 
     await queryInterface.addIndex('UserValidationStatus', ['userId', 'type'], { transaction });
-
-    // Add default values for existing users.
-    await queryInterface.sequelize.query(
-      `
-        DO $$
-        DECLARE usr record;
-        BEGIN FOR usr IN
-            SELECT id FROM "Users" ORDER BY id ASC
-          LOOP
-            INSERT INTO "UserValidationStatus" ("userId", "type", "createdAt", "updatedAt")
-            VALUES (usr.id, 'email', current_timestamp, current_timestamp);
-          END LOOP;
-        END $$
-      `,
-      { transaction },
-    );
   }),
 
   down: (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => {
