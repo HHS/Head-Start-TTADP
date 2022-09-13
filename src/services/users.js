@@ -67,6 +67,7 @@ export async function usersWithPermissions(regions, scopes) {
  * @param {User} user
  */
 export async function userEmailIsVerified(user) {
+  if (!user || !user.validationStatus || !user.validationStatus.length) return false;
   return user.validationStatus.some((status) => status.type === 'email' && status.validatedAt);
 }
 
