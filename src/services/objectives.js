@@ -26,13 +26,33 @@ export async function saveObjectivesForReport(objectives, report) {
       });
 
       // Determine if this objective already exists.
-      const existingObjective = await Objective.findOne({
-        where: {
-          title: objective.title,
-          otherEntityId,
-          status: { [Op.not]: 'Complete' },
-        },
-      });
+      let existingObjective;
+
+      // 1. Find existing by id and entity and id.
+      if (objective.ids
+            && objective.ids.length) {
+        const validIdsToCheck = objective.ids.filter((id) => typeof id === 'number');
+        existingObjective = await Objective.findOne({
+          where: {
+            // We are checking all objective id's but only one should link to the entity.
+            id: validIdsToCheck,
+            otherEntityId,
+            status: { [Op.not]: 'Complete' },
+          },
+        });
+      }
+
+      // 2. Find by title and 'entity' id.
+      if (!existingObjective) {
+        // Determine if this objective already exists.
+        existingObjective = await Objective.findOne({
+          where: {
+            title: objective.title,
+            otherEntityId,
+            status: { [Op.not]: 'Complete' },
+          },
+        });
+      }
 
       // If it already exists update the status else create it.
       let savedObjective;
