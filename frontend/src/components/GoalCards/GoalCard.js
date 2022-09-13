@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import { useHistory } from 'react-router-dom';
@@ -56,8 +56,6 @@ function GoalCard({
     }
   };
 
-  const expandObjectivesRef = useRef();
-
   const [objectivesExpanded, setObjectivesExpanded] = useState(false);
 
   const determineFlagStatus = () => {
@@ -78,11 +76,7 @@ function GoalCard({
     return null;
   };
 
-  const closeOrOpenObjectives = (collapseFromObjectives) => {
-    if (collapseFromObjectives && expandObjectivesRef.current) {
-      expandObjectivesRef.current.focus();
-    }
-
+  const closeOrOpenObjectives = () => {
     setObjectivesExpanded(!objectivesExpanded);
   };
 
@@ -152,7 +146,6 @@ function GoalCard({
         objectiveCount={objectiveCount}
         objectivesExpanded={objectivesExpanded}
         goalNumber={goal.goalNumbers.join('')}
-        expandObjectivesRef={expandObjectivesRef}
       />
 
       {objectives.map((obj) => (

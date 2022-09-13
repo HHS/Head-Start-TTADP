@@ -1,4 +1,4 @@
-import orderGoalsBy from './orderGoalsBy';
+import orderGoalsBy, { STATUS_SORT } from './orderGoalsBy';
 import { sequelize } from '../models';
 
 describe('orderGoalsBy', () => {
@@ -6,21 +6,22 @@ describe('orderGoalsBy', () => {
     const one = orderGoalsBy('goalStatus', 'asc');
     expect(one).toStrictEqual([
       [
-        sequelize.literal('status_sort asc'),
+        sequelize.col(STATUS_SORT), 'asc',
       ],
       [
-        'createdAt',
+        sequelize.col('createdAt'),
         'DESC',
       ],
     ]);
 
-    const two = orderGoalsBy('createdOn', 'desc');
+    const two = orderGoalsBy('createdOn', 'DESC');
     expect(two).toStrictEqual([
       [
-        'createdAt', 'desc',
+        sequelize.col('createdAt'),
+        'DESC',
       ],
       [
-        sequelize.literal('status_sort ASC'),
+        sequelize.col(STATUS_SORT), 'ASC',
       ],
     ]);
 

@@ -74,15 +74,15 @@ export default function ObjectiveFiles({
             </legend>
             <Radio
               label="Yes"
-              id={`add-objective-files-yes-${objectiveId}`}
-              name={`add-objective-files-${objectiveId}`}
+              id={`add-objective-files-yes-${objectiveId}-${index}`}
+              name={`add-objective-files-${objectiveId}-${index}`}
               checked={useFiles}
               onChange={() => setUseFiles(true)}
             />
             <Radio
               label="No"
-              id={`add-objective-files-no-${objectiveId}`}
-              name={`add-objective-files-${objectiveId}`}
+              id={`add-objective-files-no-${objectiveId}-${index}`}
+              name={`add-objective-files-${objectiveId}-${index}`}
               checked={!useFiles}
               onChange={() => setUseFiles(false)}
             />
