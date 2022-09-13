@@ -19,6 +19,7 @@ import ActivityReportPolicy from '../../policies/activityReport';
 import ObjectivePolicy from '../../policies/objective';
 import UserPolicy from '../../policies/user';
 import * as Files from '../../services/files';
+import { createOrUpdate } from '../../services/activityReports';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
 
 jest.mock('../../policies/activityReport');
@@ -50,8 +51,8 @@ const mockAddToScanQueue = jest.spyOn(scanQueue, 'default').mockImplementation((
 
 const reportObject = {
   activityRecipientType: 'recipient',
-  submissionStatus: REPORT_STATUSES.DRAFT,
-  userId: mockUser.id,
+  approval: { submissionStatus: REPORT_STATUSES.DRAFT },
+  owner: { userId: mockUser.id },
   lastUpdatedById: mockUser.id,
   resourcesUsed: 'test',
   regionId: 1,
@@ -92,7 +93,7 @@ describe('File Upload', () => {
 
   beforeAll(async () => {
     user = await User.create(mockUser);
-    report = await ActivityReport.create(reportObject);
+    report = await createOrUpdate(reportObject);
     recipient = await Recipient.create({ ...mockRecipient });
     grant = await Grant.create({ ...mockGrant, recipientId: recipient.id });
     goal = await Goal.create({ ...goalObject, grantId: grant.id });

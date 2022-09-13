@@ -17,6 +17,7 @@ import processData, {
   truncateAuditTables, hideUsers, hideRecipientsGrants, bootstrapUsers,
 } from './processData';
 import { REPORT_STATUSES } from '../constants';
+import { createOrUpdate } from '../services/activityReports';
 
 jest.mock('../logger');
 
@@ -79,7 +80,7 @@ const mockFile = {
 // TODO: ttaProvided needs to move from Objective to ActivityReportObjective
 const reportObject = {
   activityRecipientType: 'recipient',
-  userId: mockUser.id,
+  owner: { userId: mockUser.id },
   regionId: 1,
   lastUpdatedById: mockUser.id,
   ECLKCResourcesUsed: ['test'],
@@ -217,7 +218,7 @@ describe('processData', () => {
   });
 
   it('transforms user emails, recipientName in the ActivityReports table (imported)', async () => {
-    const report = await ActivityReport.create(reportObject);
+    const report = await createOrUpdate(reportObject);
     mockActivityReportFile.activityReportId = report.id;
     await ActivityReportFile.destroy({ where: { id: mockActivityReportFile.id } });
     const file = await File.create(mockFile);

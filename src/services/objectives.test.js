@@ -11,7 +11,7 @@ import db, {
   Recipient,
 } from '../models';
 import { REPORT_STATUSES } from '../constants';
-
+import { createOrUpdate } from './activityReports';
 import { saveObjectivesForReport, getObjectiveById, getObjectivesByReportId } from './objectives';
 
 const mockUser = {
@@ -23,8 +23,11 @@ const mockUser = {
 };
 
 const reportObject = {
-  submissionStatus: REPORT_STATUSES.DRAFT,
-  userId: mockUser.id,
+  owner: { userId: mockUser.id },
+  approval: {
+    submissionStatus: REPORT_STATUSES.DRAFT,
+    calculatedStatus: REPORT_STATUSES.DRAFT,
+  },
   regionId: 1,
   lastUpdatedById: mockUser.id,
 };
@@ -83,7 +86,7 @@ describe('Objectives DB service', () => {
 
   beforeAll(async () => {
     await User.create(mockUser);
-    report = await ActivityReport.create(reportObject);
+    report = await createOrUpdate(reportObject);
     objective = await Objective.create({
       title: 'title',
       ttaProvided: 'tta provided',

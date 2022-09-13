@@ -12,6 +12,7 @@ import db, {
   ActivityReport, Permission, User,
 } from '../../models';
 import { upsertRatifier } from '../../services/collaborators';
+import { createOrUpdate } from '../../services/activityReports';
 
 const draftObject = {
   activityRecipientType: 'recipient',
@@ -99,7 +100,7 @@ afterEach(() => {
 
 describe('submitReport', () => {
   it('creates new approvers', async () => {
-    const draftReport = await ActivityReport.create({ ...draftObject, userId: mockUser.id });
+    const draftReport = await createOrUpdate({ ...draftObject, owner: { userId: mockUser.id } });
     reports.push(draftReport);
     const request = {
       session: { userId: mockUser.id },
@@ -119,19 +120,17 @@ describe('submitReport', () => {
     }));
   });
   it('resets NEEDS_ACTION approver statuses', async () => {
-    const submittedReport = await ActivityReport.create({
+    const submittedReport = await createOrUpdate({
       ...draftObject,
-      submissionStatus: REPORT_STATUSES.SUBMITTED,
-      userId: mockUser.id,
+      approval: { submissionStatus: REPORT_STATUSES.SUBMITTED },
+      owner: { userId: mockUser.id },
+      approvers: [{
+        userId: mockManager.id,
+        status: APPROVER_STATUSES.NEEDS_ACTION,
+        note: 'make changes x, y, z',
+      }],
     });
     reports.push(submittedReport);
-    await upsertRatifier({
-      entityType: ENTITY_TYPES.REPORT,
-      entityId: submittedReport.id,
-      userId: mockManager.id,
-      status: APPROVER_STATUSES.NEEDS_ACTION,
-      note: 'make changes x, y, z',
-    });
     const reviewedReport = await ActivityReport.findByPk(submittedReport.id);
     // check that testing condition is correct
     expect(reviewedReport.calculatedStatus).toEqual(REPORT_STATUSES.NEEDS_ACTION);
@@ -152,29 +151,21 @@ describe('submitReport', () => {
     }));
   });
   it('resets to NEEDS_ACTION on unlock', async () => {
-    const submittedReport = await ActivityReport.create({
+    const submittedReport = await createOrUpdate({
       ...draftObject,
-      submissionStatus: REPORT_STATUSES.SUBMITTED,
-      userId: mockUser.id,
+      approval: { submissionStatus: REPORT_STATUSES.SUBMITTED },
+      owner: { userId: mockUser.id },
+      approvers: [{
+        userId: mockManager.id,
+        status: APPROVER_STATUSES.APPROVED,
+        note: 'report looks good',
+      }, {
+        userId: secondMockManager.id,
+        status: APPROVER_STATUSES.APPROVED,
+        note: 'agree report looks good',
+      }],
     });
     reports.push(submittedReport);
-    await upsertRatifier({
-      entityType: ENTITY_TYPES.REPORT,
-      entityId: submittedReport.id,
-      userId: mockManager.id,
-      collaboratorTypes: [COLLABORATOR_TYPES.RATIFIER],
-      status: APPROVER_STATUSES.APPROVED,
-      note: 'report looks good',
-    });
-
-    await upsertRatifier({
-      entityType: ENTITY_TYPES.REPORT,
-      entityId: submittedReport.id,
-      userId: secondMockManager.id,
-      collaboratorTypes: [COLLABORATOR_TYPES.RATIFIER],
-      status: APPROVER_STATUSES.APPROVED,
-      note: 'agree report looks good',
-    });
 
     const reviewedReport = await ActivityReport.findByPk(submittedReport.id);
 

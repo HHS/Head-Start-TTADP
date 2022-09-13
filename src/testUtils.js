@@ -13,6 +13,7 @@ import {
   // GrantGoal,
 } from './models';
 import { auditLogger } from './logger';
+import { createOrUpdate } from './services/activityReports';
 
 import { GOAL_STATUS as GOAL_STATUS_CONST } from './widgets/goalStatusGraph';
 
@@ -29,8 +30,10 @@ function defaultGoal() {
 function defaultReport() {
   return {
     activityRecipientType: 'recipient',
-    submissionStatus: REPORT_STATUSES.SUBMITTED,
-    calculatedStatus: REPORT_STATUSES.APPROVED,
+    approval: {
+      submissionStatus: REPORT_STATUSES.SUBMITTED,
+      calculatedStatus: REPORT_STATUSES.APPROVED,
+    },
     ECLKCResourcesUsed: [faker.random.words(1)],
     numberOfParticipants: faker.datatype.number({ min: 1, max: 20 }),
     deliveryMethod: 'in-person',
@@ -132,11 +135,11 @@ export async function createReport(report) {
     foundUser = await createUser();
   }
 
-  const createdReport = await ActivityReport.create({
+  const createdReport = await createOrUpdate({
     ...defaultReport(),
     ...reportData,
     regionId: foundRegion.id,
-    userId: foundUser.id,
+    owner: { userId: foundUser.id },
   });
 
   try {

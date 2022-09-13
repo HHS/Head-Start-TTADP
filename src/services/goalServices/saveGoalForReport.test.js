@@ -14,7 +14,7 @@ import db, {
 } from '../../models';
 import { REPORT_STATUSES } from '../../constants';
 import { saveGoalsForReport } from '../goals';
-import { activityReportAndRecipientsById } from '../activityReports';
+import { activityReportAndRecipientsById, createOrUpdate } from '../activityReports';
 
 const mockUser = {
   id: 54253461,
@@ -75,26 +75,35 @@ describe('saveGoalsForReport (more tests)', () => {
     grants = [grantOne, grantTwo];
 
     // Activity report for adding a new goal
-    activityReportForNewGoal = await ActivityReport.create({
-      submissionStatus: REPORT_STATUSES.DRAFT,
+    activityReportForNewGoal = await createOrUpdate({
+      owner: { userId: mockUser.id },
+      approval: {
+        submissionStatus: REPORT_STATUSES.DRAFT,
+      },
       regionId: 1,
-      userId: mockUser.id,
       activityRecipientType: 'recipient',
+      activityRecipients: [{ grantId: grantOne.id }],
     });
 
     // Activity report for multiple recipients
-    multiRecipientReport = await ActivityReport.create({
-      submissionStatus: REPORT_STATUSES.DRAFT,
+    multiRecipientReport = await createOrUpdate({
+      owner: { userId: mockUser.id },
+      approval: {
+        submissionStatus: REPORT_STATUSES.DRAFT,
+      },
       regionId: 1,
-      userId: mockUser.id,
       activityRecipientType: 'recipient',
+      activityRecipients: [{ grantId: grantOne.id }, { grantId: grantTwo.id }],
     });
 
-    reportWeArentWorryingAbout = await ActivityReport.create({
-      submissionStatus: REPORT_STATUSES.DRAFT,
+    reportWeArentWorryingAbout = await createOrUpdate({
+      owner: { userId: mockUser.id },
+      approval: {
+        submissionStatus: REPORT_STATUSES.DRAFT,
+      },
       regionId: 1,
-      userId: mockUser.id,
       activityRecipientType: 'recipient',
+      activityRecipients: [{ grantId: grantOne.id }],
     });
 
     activityReports = [
@@ -102,26 +111,6 @@ describe('saveGoalsForReport (more tests)', () => {
       multiRecipientReport,
       reportWeArentWorryingAbout,
     ];
-
-    await ActivityRecipient.create({
-      activityReportId: activityReportForNewGoal.id,
-      grantId: grantOne.id,
-    });
-
-    await ActivityRecipient.create({
-      activityReportId: multiRecipientReport.id,
-      grantId: grantOne.id,
-    });
-
-    await ActivityRecipient.create({
-      activityReportId: multiRecipientReport.id,
-      grantId: grantTwo.id,
-    });
-
-    await ActivityRecipient.create({
-      activityReportId: reportWeArentWorryingAbout.id,
-      grantId: grantOne.id,
-    });
 
     goal = await Goal.create({
       name: 'This is an existing goal',

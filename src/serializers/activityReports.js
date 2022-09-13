@@ -8,13 +8,13 @@ ActivityReportsPresenter.prototype.attributes = function attributes(instance) {
   // eslint-disable-next-line prefer-rest-params
   const attrs = Presenter.prototype.attributes.apply(this, arguments);
   return {
-    author: {
-      id: attrs.author.id.toString(),
-      name: attrs.author.fullName,
+    owner: {
+      id: attrs.owner.user.id.toString(),
+      name: attrs.owner.user.fullName,
     },
     collaborators: attrs.collaborators.map((collab) => ({
-      id: collab.id.toString(),
-      name: collab.fullName,
+      id: collab.user.id.toString(),
+      name: collab.user.fullName,
     })),
     displayId: attrs.displayId,
     duration: parseFloat(attrs.duration),

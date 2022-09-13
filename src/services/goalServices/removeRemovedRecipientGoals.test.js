@@ -64,21 +64,15 @@ describe('removeRemovedRecipientsGoals', () => {
     grants = [grantOne, grantTwo];
 
     // Activity report for multiple recipients
-    multiRecipientReport = await ActivityReport.create({
-      submissionStatus: REPORT_STATUSES.DRAFT,
+    multiRecipientReport = await createOrUpdate({
+      owner: { userId: 1 },
+      approval: {
+        submissionStatus: REPORT_STATUSES.DRAFT,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      },
       regionId: 1,
-      userId: 1,
       activityRecipientType: 'recipient',
-    });
-
-    await ActivityRecipient.create({
-      activityReportId: multiRecipientReport.id,
-      grantId: grantOne.id,
-    });
-
-    await ActivityRecipient.create({
-      activityReportId: multiRecipientReport.id,
-      grantId: grantTwo.id,
+      activityRecipients: [{ grantId: grantOne.id }, { grantId: grantTwo.id }],
     });
 
     firstGoal = await Goal.create({
@@ -152,10 +146,13 @@ describe('removeRemovedRecipientsGoals', () => {
       activityReportId: multiRecipientReport.id,
     });
 
-    secondReport = await ActivityReport.create({
-      submissionStatus: REPORT_STATUSES.DRAFT,
+    secondReport = await createOrUpdate({
+      owner: { userId: 1 },
+      approval: {
+        submissionStatus: REPORT_STATUSES.DRAFT,
+        calculatedStatus: REPORT_STATUSES.DRAFT,
+      },
       regionId: 1,
-      userId: 1,
       activityRecipientType: 'recipient',
     });
 

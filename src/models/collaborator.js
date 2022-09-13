@@ -9,7 +9,7 @@ const {
   afterUpdate,
   afterUpsert,
 } = require('./hooks/collaborator');
-const { generateFullName } = require('./helpers/generateFullName');
+// const { generateFullName } = require('./helpers/generateFullName');
 const { ENTITY_TYPES, COLLABORATOR_TYPES, RATIFIER_STATUSES } = require('../constants');
 
 module.exports = (sequelize, DataTypes) => {
@@ -65,14 +65,19 @@ module.exports = (sequelize, DataTypes) => {
         as: 'objectiveTemplate',
       });
       Collaborator.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
-      Collaborator.hasMany(models.CollaboratorRole, { foreignKey: 'collaboratorId', as: 'roles' });
+      Collaborator.belongsToMany(models.Role, {
+        through: models.CollaboratorRole,
+        otherKey: 'roleId',
+        foreignKey: 'collaboratorId',
+        as: 'roles',
+      });
       Collaborator.addScope('defaultScope', {
         include: [{
           model: models.User,
           as: 'user',
           required: true,
         }, {
-          model: models.CollaboratorRole,
+          model: models.Role,
           as: 'roles',
           required: true,
         }],
@@ -135,12 +140,22 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       type: DataTypes.DATE,
     },
-    nameWithRole: {
-      type: DataTypes.VIRTUAL,
-      get() {
-        return generateFullName(this.user ? this.user.name : '', this.roles);
-      },
-    },
+    // nameWithRole: {
+    //   type: DataTypes.VIRTUAL,
+    //   get() {
+    //     let collaboratorRoles = this.collaboratorRoles
+    //       && this.collaboratorRoles.length
+    //       ? this.collaboratorRoles
+    //       : null;
+    //     collaboratorRoles = !collaboratorRoles
+    //       && this.user
+    //       && this.user.roles
+    //       && this.user.roles.length
+    //       ? this.user.roles
+    //       : [];
+    //     return generateFullName(this.user.name, collaboratorRoles);
+    //   },
+    // },
   }, {
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),

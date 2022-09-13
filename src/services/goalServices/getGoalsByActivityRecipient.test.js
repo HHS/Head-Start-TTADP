@@ -17,6 +17,7 @@ import {
   // ObjectiveTopic,
   // Topic,
 } from '../../models';
+import { createOrUpdate } from '../activityReports';
 import { syncOwnerInstantiators } from '../collaborators';
 import { getGoalsByActivityRecipient } from '../recipient';
 import { REPORT_STATUSES, ENTITY_TYPES } from '../../constants';
@@ -96,6 +97,11 @@ describe('Goals by Recipient Test', () => {
   };
 
   const goalReport1 = {
+    owner: { userId: mockGoalUser.id },
+    approval: {
+      submissionStatus: REPORT_STATUSES.APPROVED,
+      calculatedStatus: REPORT_STATUSES.APPROVED,
+    },
     activityRecipientType: 'recipient',
     regionId: 1,
     lastUpdatedById: mockGoalUser.id,
@@ -116,6 +122,11 @@ describe('Goals by Recipient Test', () => {
   };
 
   const goalReport2 = {
+    owner: { userId: mockGoalUser.id },
+    approval: {
+      submissionStatus: REPORT_STATUSES.APPROVED,
+      calculatedStatus: REPORT_STATUSES.APPROVED,
+    },
     activityRecipientType: 'recipient',
     regionId: 1,
     lastUpdatedById: mockGoalUser.id,
@@ -136,6 +147,11 @@ describe('Goals by Recipient Test', () => {
   };
 
   const goalReport3 = {
+    owner: { userId: mockGoalUser.id },
+    approval: {
+      submissionStatus: REPORT_STATUSES.APPROVED,
+      calculatedStatus: REPORT_STATUSES.APPROVED,
+    },
     activityRecipientType: 'recipient',
     regionId: 1,
     lastUpdatedById: mockGoalUser.id,
@@ -157,9 +173,19 @@ describe('Goals by Recipient Test', () => {
 
   const goalReport4 = {
     ...goalReport1,
+    owner: { userId: mockGoalUser.id },
+    approval: {
+      submissionStatus: REPORT_STATUSES.DRAFT,
+      calculatedStatus: REPORT_STATUSES.DRAFT,
+    },
   };
 
   const goalReport5 = {
+    owner: { userId: mockGoalUser.id },
+    approval: {
+      submissionStatus: REPORT_STATUSES.APPROVED,
+      calculatedStatus: REPORT_STATUSES.APPROVED,
+    },
     activityRecipientType: 'recipient',
     regionId: 1,
     lastUpdatedById: mockGoalUser.id,
@@ -180,6 +206,11 @@ describe('Goals by Recipient Test', () => {
   };
 
   const goalReport6 = {
+    owner: { userId: mockGoalUser.id },
+    approval: {
+      submissionStatus: REPORT_STATUSES.APPROVED,
+      calculatedStatus: REPORT_STATUSES.APPROVED,
+    },
     activityRecipientType: 'recipient',
     regionId: 1,
     lastUpdatedById: mockGoalUser.id,
@@ -222,42 +253,12 @@ describe('Goals by Recipient Test', () => {
     const savedGrant4 = await Grant.create(grant4);
 
     // Create Reports.
-    const savedGoalReport1 = await ActivityReport.create(goalReport1);
-    await syncOwnerInstantiators(ENTITY_TYPES.REPORT, savedGoalReport1.id, [mockGoalUser.id]);
-    await Approval.update(
-      { submissionStatus: REPORT_STATUSES.APPROVED, calculatedStatus: REPORT_STATUSES.APPROVED },
-      { where: { entityType: ENTITY_TYPES.REPORT, entityId: savedGoalReport1.id, tier: 0 } },
-    );
-    const savedGoalReport2 = await ActivityReport.create(goalReport2);
-    await syncOwnerInstantiators(ENTITY_TYPES.REPORT, savedGoalReport2.id, [mockGoalUser.id]);
-    await Approval.update(
-      { submissionStatus: REPORT_STATUSES.APPROVED, calculatedStatus: REPORT_STATUSES.APPROVED },
-      { where: { entityType: ENTITY_TYPES.REPORT, entityId: savedGoalReport2.id, tier: 0 } },
-    );
-    const savedGoalReport3 = await ActivityReport.create(goalReport3);
-    await syncOwnerInstantiators(ENTITY_TYPES.REPORT, savedGoalReport3.id, [mockGoalUser.id]);
-    await Approval.update(
-      { submissionStatus: REPORT_STATUSES.APPROVED, calculatedStatus: REPORT_STATUSES.APPROVED },
-      { where: { entityType: ENTITY_TYPES.REPORT, entityId: savedGoalReport3.id, tier: 0 } },
-    );
-    const savedGoalReport4 = await ActivityReport.create(goalReport4);
-    await syncOwnerInstantiators(ENTITY_TYPES.REPORT, savedGoalReport4.id, [mockGoalUser.id]);
-    await Approval.update(
-      { submissionStatus: REPORT_STATUSES.DRAFT, calculatedStatus: REPORT_STATUSES.DRAFT },
-      { where: { entityType: ENTITY_TYPES.REPORT, entityId: savedGoalReport4.id, tier: 0 } },
-    );
-    const savedGoalReport5 = await ActivityReport.create(goalReport5);
-    await syncOwnerInstantiators(ENTITY_TYPES.REPORT, savedGoalReport5.id, [mockGoalUser.id]);
-    await Approval.update(
-      { submissionStatus: REPORT_STATUSES.APPROVED, calculatedStatus: REPORT_STATUSES.APPROVED },
-      { where: { entityType: ENTITY_TYPES.REPORT, entityId: savedGoalReport5.id, tier: 0 } },
-    );
-    const savedGoalReport6 = await ActivityReport.create(goalReport6);
-    await syncOwnerInstantiators(ENTITY_TYPES.REPORT, savedGoalReport6.id, [mockGoalUser.id]);
-    await Approval.update(
-      { submissionStatus: REPORT_STATUSES.APPROVED, calculatedStatus: REPORT_STATUSES.APPROVED },
-      { where: { entityType: ENTITY_TYPES.REPORT, entityId: savedGoalReport6.id, tier: 0 } },
-    );
+    const savedGoalReport1 = await createOrUpdate(goalReport1);
+    const savedGoalReport2 = await createOrUpdate(goalReport2);
+    const savedGoalReport3 = await createOrUpdate(goalReport3);
+    const savedGoalReport4 = await createOrUpdate(goalReport4);
+    const savedGoalReport5 = await createOrUpdate(goalReport5);
+    const savedGoalReport6 = await createOrUpdate(goalReport6);
 
     // Create AR Recipients.
     await ActivityRecipient.create({

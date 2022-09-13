@@ -72,7 +72,10 @@ describe('goalById', () => {
       activityRecipients: [
         { grantId: grantForReport.id },
       ],
-      calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
+      approval: {
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+      },
     });
 
     await ActivityReportObjective.create({

@@ -58,13 +58,22 @@ module.exports = (sequelize, DataTypes) => {
         as: 'collaborators',
         hooks: true,
       });
-      ActivityReport.hasMany(models.Collaborator, {
+      ActivityReport.hasOne(models.Collaborator, {
         scope: {
           entityType: ENTITY_TYPES.REPORT,
           collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.OWNER] },
         },
         foreignKey: 'entityId',
-        as: 'owners',
+        as: 'owner',
+        hooks: true,
+      });
+      ActivityReport.hasOne(models.Collaborator, {
+        scope: {
+          entityType: ENTITY_TYPES.REPORT,
+          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.INSTANTIATOR] },
+        },
+        foreignKey: 'entityId',
+        as: 'instantiator',
         hooks: true,
       });
       ActivityReport.hasMany(models.Approval, {

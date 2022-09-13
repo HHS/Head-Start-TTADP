@@ -319,7 +319,15 @@ describe('activityReportToCsvRecord', () => {
   it('transforms related models into string values', async () => {
     const report = await ActivityReport.build(mockReport, {
       include: [
-        { model: User, as: 'author' },
+        {
+          model: Collaborator,
+          as: 'owner',
+          include: [{
+            model: User,
+            as: 'user',
+            attributes: ['id', 'name', 'role', 'fullName'],
+          }],
+        },
         { model: User, as: 'lastUpdatedBy' },
         {
           model: Collaborator,
@@ -338,7 +346,7 @@ describe('activityReportToCsvRecord', () => {
         {
           model: Collaborator,
           as: 'approvers',
-          include: [{ model: User }],
+          include: [{ model: User, as: 'user' }],
         }],
     });
 

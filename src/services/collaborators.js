@@ -53,8 +53,8 @@ export async function upsertCollaborator(values) {
     });
   } else {
     // try {
-      // If not collaborator was found create it
-      collaborator = await Collaborator.create(values);
+    // If not collaborator was found create it
+    collaborator = await Collaborator.create(values);
     //   auditLogger.error(JSON.stringify({ local: 'd', values, collaborator }));
     // } catch (err) {
     //   auditLogger.error(JSON.stringify({ local: 'e', values, collaborator, err }));
@@ -103,7 +103,7 @@ export async function syncCollaborators(
   entityType,
   entityId,
   collaboratorTypes = [],
-  userIds = [],
+  perUserData = [],
   tier = 1,
 ) {
   const preexistingCollaborators = await Collaborator.findAll({
@@ -113,6 +113,10 @@ export async function syncCollaborators(
       tier,
     },
   });
+
+  const userIds = perUserData && Array.isArray(perUserData)
+    ? perUserData.map((userData) => userData.userId)
+    : [];
 
   // Remove any preexisting collaborators now missing from userId request param
   if (preexistingCollaborators && preexistingCollaborators.length > 0) {
@@ -134,12 +138,13 @@ export async function syncCollaborators(
   }
 
   // Create or restore collaborator
-  if (userIds.length > 0) {
-    const uniqueUserIds = [...new Set(userIds)];
-    await Promise.all(uniqueUserIds.map(async (userId) => upsertCollaborator({
+  if (perUserData && perUserData.length > 0) {
+    const uniquePerUserData = perUserData
+      .filter((v, i, a) => a.findIndex((v2) => (v2.userId === v.userId)) === i);
+    await Promise.all(uniquePerUserData.map(async (userData) => upsertCollaborator({
+      ...userData,
       entityType,
       entityId,
-      userId,
       collaboratorTypes,
       tier,
     })));
@@ -155,6 +160,7 @@ export async function syncCollaborators(
     include: [
       {
         model: User,
+        as: 'user',
         attributes: ['id', 'name', 'email'],
         raw: true,
       },
@@ -162,30 +168,36 @@ export async function syncCollaborators(
   });
 }
 
-export async function syncOwnerInstantiators(entityType, entityId, userIds = [], tier = 1) {
+export async function syncOwnerInstantiators(entityType, entityId, perUserData = [], tier = 1) {
   return syncCollaborators(
     entityType,
     entityId,
     [COLLABORATOR_TYPES.OWNER, COLLABORATOR_TYPES.INSTANTIATOR],
-    userIds,
+    perUserData,
     tier,
   );
 }
 
-export async function syncOwners(entityType, entityId, userIds = [], tier = 1) {
-  return syncCollaborators(entityType, entityId, [COLLABORATOR_TYPES.OWNER], userIds, tier);
+export async function syncOwners(entityType, entityId, perUserData = [], tier = 1) {
+  return syncCollaborators(entityType, entityId, [COLLABORATOR_TYPES.OWNER], perUserData, tier);
 }
 
-export async function syncInstantiators(entityType, entityId, userIds = [], tier = 1) {
-  return syncCollaborators(entityType, entityId, [COLLABORATOR_TYPES.INSTANTIATOR], userIds, tier);
+export async function syncInstantiators(entityType, entityId, perUserData = [], tier = 1) {
+  return syncCollaborators(
+    entityType,
+    entityId,
+    [COLLABORATOR_TYPES.INSTANTIATOR],
+    perUserData,
+    tier,
+  );
 }
 
-export async function syncEditors(entityType, entityId, userIds = [], tier = 1) {
-  return syncCollaborators(entityType, entityId, [COLLABORATOR_TYPES.EDITOR], userIds, tier);
+export async function syncEditors(entityType, entityId, perUserData = [], tier = 1) {
+  return syncCollaborators(entityType, entityId, [COLLABORATOR_TYPES.EDITOR], perUserData, tier);
 }
 
-export async function syncRatifiers(entityType, entityId, userIds = [], tier = 1) {
-  return syncCollaborators(entityType, entityId, [COLLABORATOR_TYPES.RATIFIER], userIds, tier);
+export async function syncRatifiers(entityType, entityId, perUserData = [], tier = 1) {
+  return syncCollaborators(entityType, entityId, [COLLABORATOR_TYPES.RATIFIER], perUserData, tier);
 }
 
 export async function getCollaborator(entityType, entityId, userIds) {

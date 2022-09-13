@@ -10,8 +10,8 @@ import db, {
   UserRole,
 } from '../models';
 import filtersToScopes from '../scopes';
-import { REPORT_STATUSES, ENTITY_TYPES } from '../constants';
-import { upsertEditor, removeEditor } from '../services/collaborators';
+import { REPORT_STATUSES } from '../constants';
+import { createOrUpdate } from '../services/activityReports';
 import topicFrequencyGraph from './topicFrequencyGraph';
 
 const GRANT_ID = 4040;
@@ -46,13 +46,15 @@ const mockUserThree = {
 
 const reportObject = {
   activityRecipientType: 'recipient',
-  submissionStatus: REPORT_STATUSES.SUBMITTED, // TODO: Might need fix
-  calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
-  userId: mockUser.id,
+  approval: {
+    submissionStatus: REPORT_STATUSES.SUBMITTED,
+    calculatedStatus: REPORT_STATUSES.APPROVED,
+  },
+  owner: { userId: mockUser.id },
   lastUpdatedById: mockUser.id,
   ECLKCResourcesUsed: ['test'],
   activityRecipients: [
-    { activityRecipientId: RECIPIENT_ID, grantId: GRANT_ID },
+    { grantId: GRANT_ID },
   ],
   numberOfParticipants: 11,
   deliveryMethod: 'in-person',
@@ -71,6 +73,7 @@ const regionOneReport = {
   ...reportObject,
   regionId: 17,
   id: 17772,
+  collaborators: [{ userId: mockUserTwo.id }, { userId: mockUserThree.id }],
 };
 
 const regionOneReportDistinctDate = {
@@ -80,12 +83,14 @@ const regionOneReportDistinctDate = {
   regionId: 17,
   id: 17773,
   topics: ['Program Planning and Services', 'Recordkeeping and Reporting'],
+  collaborators: [{ userId: mockUserTwo.id }],
 };
 
 const regionTwoReport = {
   ...reportObject,
   regionId: 18,
   id: 17774,
+  collaborators: [{ userId: mockUserThree.id }],
 };
 
 const regionOneReportWithDifferentTopics = {
@@ -132,33 +137,12 @@ describe('Topics and frequency graph widget', () => {
       status: 'Active',
       startDate: new Date('2000/01/01'),
     });
-    await ActivityReport.bulkCreate([
+    await Promise.all([
       regionOneReport,
       regionOneReportDistinctDate,
       regionTwoReport,
       regionOneReportWithDifferentTopics,
-    ]);
-
-    await upsertEditor({
-      entityType: ENTITY_TYPES.REPORT,
-      entityId: 17772,
-      userId: mockUserTwo.id,
-    });
-    await upsertEditor({
-      entityType: ENTITY_TYPES.REPORT,
-      entityId: 17772,
-      userId: mockUserThree.id,
-    });
-    await upsertEditor({
-      entityType: ENTITY_TYPES.REPORT,
-      entityId: 17773,
-      userId: mockUserTwo.id,
-    });
-    await upsertEditor({
-      entityType: ENTITY_TYPES.REPORT,
-      entityId: 17774,
-      userId: mockUserThree.id,
-    });
+    ].map(async (report) => createOrUpdate(report)));
   });
 
   afterAll(async () => {

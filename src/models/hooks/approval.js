@@ -330,7 +330,6 @@ const propagateApprovedStatusAcrossTiers = async (sequelize, instance, options) 
   if (instance.tier !== 0
     && Array.isArray(changed)
     && changed.includes('calculatedStatus')) {
-    let newCalculatedStatus;
     const allApprovalTiers = await sequelize.models.Approval.findAll({
       attributes: ['tier', 'calculatedStatus'],
       where: {
@@ -353,7 +352,7 @@ const propagateApprovedStatusAcrossTiers = async (sequelize, instance, options) 
 
     const allCalculatedStatuses = allApprovalTiers.map((approval) => approval.calculatedStatus);
     if (allCalculatedStatuses.any((status) => status === REPORT_STATUSES.NEEDS_ACTION)
-      && mainApproval.calculatedStatus !== newCalculatedStatus) {
+      && mainApproval.calculatedStatus !== REPORT_STATUSES.NEEDS_ACTION) {
       await sequelize.models.Approval.update({
         calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
       }, {

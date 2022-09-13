@@ -7,7 +7,7 @@ import {
   setRatifierStatus,
   removeRatifier,
 } from './collaborators';
-import { activityReportAndRecipientsById } from './activityReports';
+import { activityReportAndRecipientsById, createOrUpdate } from './activityReports';
 import {
   APPROVER_STATUSES,
   REPORT_STATUSES,
@@ -44,9 +44,7 @@ const secondMockManager = {
 };
 
 const submittedReport = {
-  userId: mockUser.id,
   regionId: 1,
-  submissionStatus: REPORT_STATUSES.SUBMITTED,
   numberOfParticipants: 1,
   deliveryMethod: 'method',
   duration: 0,
@@ -59,11 +57,19 @@ const submittedReport = {
   participants: ['participants'],
   topics: ['topics'],
   ttaType: ['type'],
+  owner: { userId: mockUser.id },
+  approval: {
+    submissionStatus: REPORT_STATUSES.SUBMITTED,
+    calculatedStatus: REPORT_STATUSES.APPROVED,
+  },
 };
 
 const draftReport = {
   ...submittedReport,
-  submissionStatus: REPORT_STATUSES.DRAFT,
+  approval: {
+    submissionStatus: REPORT_STATUSES.SUBMITTED,
+    calculatedStatus: REPORT_STATUSES.APPROVED,
+  },
 };
 
 describe('approvers services', () => {
@@ -93,7 +99,7 @@ describe('approvers services', () => {
   describe('upsertApprover and Collaborator hooks', () => {
     describe('for submitted reports', () => {
       it('calculatedStatus is "needs action" if any approver "needs_action"', async () => {
-        const report1 = await ActivityReport.create(submittedReport);
+        const report1 = await createOrUpdate(submittedReport);
         // One approved
         await upsertRatifier({
           entityType: ENTITY_TYPES.REPORT,
@@ -129,7 +135,7 @@ describe('approvers services', () => {
         expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.NEEDS_ACTION);
       });
       it('calculatedStatus is "approved" if all approvers approve', async () => {
-        const report2 = await ActivityReport.create(submittedReport);
+        const report2 = await createOrUpdate(submittedReport);
         // One pending
         await upsertRatifier({
           entityType: ENTITY_TYPES.REPORT,
@@ -151,7 +157,7 @@ describe('approvers services', () => {
         expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
       });
       it('calculatedStatus is "submitted" if approver is pending', async () => {
-        const report3 = await ActivityReport.create(submittedReport);
+        const report3 = await createOrUpdate(submittedReport);
         // One approved
         await upsertRatifier({
           entityType: ENTITY_TYPES.REPORT,
@@ -171,7 +177,7 @@ describe('approvers services', () => {
         expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.SUBMITTED);
       });
       it('calculatedStatus does not use soft deleted approver, until it is restored', async () => {
-        const report4 = await ActivityReport.create(submittedReport);
+        const report4 = await createOrUpdate(submittedReport);
         const needsActionApproval = {
           entityType: ENTITY_TYPES.REPORT,
           entityId: report4.id,
@@ -201,7 +207,7 @@ describe('approvers services', () => {
     });
     describe('for draft reports', () => {
       it('adding approver does not update calculatedStatus to "submitted"', async () => {
-        const report = await ActivityReport.create(draftReport);
+        const report = await createOrUpdate(draftReport);
         // One pending
         await upsertRatifier({
           entityType: ENTITY_TYPES.REPORT,
@@ -217,23 +223,30 @@ describe('approvers services', () => {
 
   describe('syncRatifiers', () => {
     it('adds approvers who are in userIds param', async () => {
-      const report = await ActivityReport.create({ ...submittedReport, userId: mockUserTwo.id });
-      const result = await syncRatifiers(report.id, [mockManager.id, secondMockManager.id]);
+      const report = await createOrUpdate({
+        ...submittedReport,
+        owner: { userId: mockUserTwo.id },
+        approvers: [{ userId: mockManager.id }, { userId: secondMockManager.id }],
+      });
+      const result = await syncRatifiers(
+        ENTITY_TYPES.REPORT,
+        report.id,
+        [{ userId: mockManager.id }, { userId: secondMockManager.id }],
+      );
       expect(result.length).toBe(2);
     });
     it('destroys approvers who are not in userIds param, restores them if added later', async () => {
-      const report = await ActivityReport.create({ ...submittedReport, userId: mockUserTwo.id });
-      await upsertRatifier({
-        entityType: ENTITY_TYPES.REPORT,
-        entityId: report.id,
-        userId: mockManager.id,
-      });
-      await upsertRatifier({
-        entityType: ENTITY_TYPES.REPORT,
-        entityId: report.id,
-        userId: secondMockManager.id,
-        status: APPROVER_STATUSES.NEEDS_ACTION,
-        note: 'do x, y, x',
+      const report = await createOrUpdate({
+        ...submittedReport,
+        owner: { userId: mockUserTwo.id },
+        approvers: [
+          { userId: mockManager.id },
+          {
+            userId: secondMockManager.id,
+            status: APPROVER_STATUSES.NEEDS_ACTION,
+            note: 'do x, y, x',
+          },
+        ],
       });
       // remove mockManager
       const afterRemove = await syncRatifiers(ENTITY_TYPES.REPORT, report.id, []);
@@ -243,7 +256,7 @@ describe('approvers services', () => {
       const afterRestore = await syncRatifiers(
         ENTITY_TYPES.REPORT,
         report.id,
-        [mockManager.id, secondMockManager.id],
+        [{ userId: mockManager.id }, { userId: secondMockManager.id }],
       );
       // check restored
       expect(afterRestore.length).toBe(2);

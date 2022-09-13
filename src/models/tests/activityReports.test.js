@@ -1,6 +1,6 @@
 import db, { User, ActivityReport } from '..';
 import { REPORT_STATUSES } from '../../constants';
-import { activityReportAndRecipientsById } from '../../services/activityReports';
+import { activityReportAndRecipientsById, createOrUpdate } from '../../services/activityReports';
 
 describe('Activity Reports model', () => {
   afterAll(async () => {
@@ -48,11 +48,13 @@ describe('Activity Reports model', () => {
     ttaType: ['type'],
     regionId: 1,
     targetPopulations: [],
-    author: {
-      fullName: 'Kiwi, GS',
-      name: 'Kiwi',
-      role: 'Grants Specialist',
-      homeRegionId: 1,
+    owner: {
+      user: {
+        fullName: 'Kiwi, GS',
+        name: 'Kiwi',
+        homeRegionId: 1,
+      },
+      roles: ['Grants Specialist'],
     },
   };
 
@@ -78,12 +80,10 @@ describe('Activity Reports model', () => {
       user = await User.create(mockUser);
 
       await Promise.all(
-        reports.map((r) => ActivityReport.create({
+        reports.map((r) => createOrUpdate({
           ...sampleReport,
           id: r.id,
-          userId: user.id,
-          author: { name: 'abc 123' },
-          creatorRole: r.creatorRole,
+          owner: { user: { name: 'abc 123' }, roles: [{ fullName: r.creatorRole }] },
         })),
       );
     });

@@ -188,3 +188,8 @@ export const GOAL_STATUS = {
   SUSPENDED: 'Suspended',
   CLOSED: 'Closed',
 };
+
+export const RECIPIENT_TYPE = {
+  OTHER_ENTITY: 'other-entity',
+  RECIPIENT: 'recipient',
+};

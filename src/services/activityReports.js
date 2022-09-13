@@ -7,6 +7,7 @@ import {
   REPORTS_PER_PAGE,
   ENTITY_TYPES,
   COLLABORATOR_TYPES,
+  RECIPIENT_TYPE,
 } from '../constants';
 import orderReportsBy from '../lib/orderReportsBy';
 import filtersToScopes from '../scopes';
@@ -83,11 +84,11 @@ export async function batchQuery(query, limit) {
 
   return finalResult;
 }
-async function saveOwner(activityReportId, collaborators) {
+async function saveOwner(activityReportId, collaborator) {
   return syncOwners(
     ENTITY_TYPES.REPORT,
     activityReportId,
-    collaborators,
+    [collaborator],
   );
 }
 
@@ -107,6 +108,14 @@ async function saveReportCollaborators(activityReportId, collaborators) {
   );
 }
 
+async function saveApprovers(activityReportId, collaborators) {
+  return syncRatifiers(
+    ENTITY_TYPES.REPORT,
+    activityReportId,
+    collaborators,
+  );
+}
+
 async function saveReportRecipients(
   activityReportId,
   activityRecipientIds,
@@ -119,9 +128,9 @@ async function saveReportRecipients(
       otherEntityId: null,
     };
 
-    if (activityRecipientType === 'other-entity') {
+    if (activityRecipientType === RECIPIENT_TYPE.OTHER_ENTITY) {
       activityRecipient.otherEntityId = activityRecipientId;
-    } else if (activityRecipientType === 'recipient') {
+    } else if (activityRecipientType === RECIPIENT_TYPE.RECIPIENT) {
       activityRecipient.grantId = activityRecipientId;
     }
     return activityRecipient;
@@ -132,7 +141,7 @@ async function saveReportRecipients(
   };
 
   const empty = activityRecipientIds.length === 0;
-  if (!empty && activityRecipientType === 'other-entity') {
+  if (!empty && activityRecipientType === RECIPIENT_TYPE.OTHER_ENTITY) {
     where[Op.or] = {
       otherEntityId: {
         [Op.notIn]: activityRecipientIds,
@@ -141,7 +150,7 @@ async function saveReportRecipients(
         [Op.not]: null,
       },
     };
-  } else if (!empty && activityRecipientType === 'recipient') {
+  } else if (!empty && activityRecipientType === RECIPIENT_TYPE.RECIPIENT) {
     where[Op.or] = {
       grantId: {
         [Op.notIn]: activityRecipientIds,
@@ -213,8 +222,8 @@ async function update(newReport, report) {
   return updatedReport;
 }
 
-async function create(report) {
-  return ActivityReport.create(report);
+async function create(report, silent = false) {
+  return ActivityReport.create(report, { silent });
 }
 
 export function activityReportByLegacyId(legacyId) {
@@ -250,6 +259,7 @@ export function activityReportByLegacyId(legacyId) {
         include: [
           {
             model: User,
+            as: 'user',
             attributes: ['id', 'name', 'fullName'],
             include: [
               {
@@ -282,9 +292,12 @@ export async function activityReportAndRecipientsById(activityReportId) {
   });
 
   const activityRecipients = recipients.map((recipient) => {
-    const name = recipient.otherEntity ? recipient.otherEntity.name : recipient.grant.name;
+    const name = recipient.otherEntity
+      ? recipient.otherEntity.name
+      : recipient.grant.name;
     const activityRecipientId = recipient.otherEntity
-      ? recipient.otherEntity.dataValues.id : recipient.grant.dataValues.id;
+      ? recipient.otherEntity.dataValues.id
+      : recipient.grant.dataValues.id;
 
     return {
       id: activityRecipientId,
@@ -376,18 +389,26 @@ export async function activityReportAndRecipientsById(activityReportId) {
         ],
       },
       {
-        model: User,
-        as: 'author',
-        include: [
-          {
-            model: Role, as: 'roles', order: [['name', 'ASC']],
-          },
-        ],
+        model: Collaborator,
+        as: 'owner',
+        required: false,
+        include: [{
+          model: User,
+          as: 'user',
+          attributes: ['name', 'fullName', 'homeRegionId'],
+          include: [
+            {
+              model: Role,
+              as: 'roles',
+            },
+          ],
+        }],
       },
       {
-        required: false,
         model: Collaborator,
         as: 'collaborators',
+        required: false,
+        separate: true,
         include: [
           {
             model: User,
@@ -398,7 +419,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
           },
           {
             model: Role,
-            as: 'collaboratorRoles',
+            as: 'roles',
             order: [['name', 'ASC']],
           },
         ],
@@ -446,6 +467,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
         include: [
           {
             model: User,
+            as: 'user',
             attributes: ['id', 'name', 'fullName'],
             include: [
               {
@@ -548,17 +570,28 @@ export async function activityReports(
       ],
       include: [
         {
-          model: User,
-          attributes: ['name', 'fullName', 'homeRegionId'],
-          as: 'author',
+          model: Collaborator,
+          as: 'owner',
           include: [
+            {
+              model: User,
+              as: 'user',
+              attributes: ['name', 'fullName', 'homeRegionId'],
+              include: [
+                {
+                  model: Role,
+                  as: 'roles',
+                },
+              ],
+              order: [
+                [sequelize.col('user."name"'), 'ASC'],
+              ],
+            },
             {
               model: Role,
               as: 'roles',
+              order: [['name', 'ASC']],
             },
-          ],
-          order: [
-            [sequelize.col('author."name"'), 'ASC'],
           ],
         },
         {
@@ -582,7 +615,8 @@ export async function activityReports(
             },
             {
               model: Role,
-              as: 'collaboratorRoles',
+              as: 'roles',
+              order: [['name', 'ASC']],
             },
           ],
         },
@@ -594,6 +628,7 @@ export async function activityReports(
           include: [
             {
               model: User,
+              as: 'user',
               attributes: ['id', 'name', 'fullName'],
               include: [
                 {
@@ -672,7 +707,7 @@ export async function activityReportsForCleanup(userId) {
           // if the report is created by a user and not in draft status, it is eligible for cleanup
           {
             [Op.and]: {
-              userId,
+              '$owners.userId$': { [Op.contains]: userId },
               '$approval.calculatedStatus$': {
                 [Op.ne]: REPORT_STATUSES.DRAFT,
               },
@@ -680,12 +715,12 @@ export async function activityReportsForCleanup(userId) {
           },
           {
             // if the user is an approver on the report, it is eligible for cleanup
-            '$approvers.userId$': userId,
+            '$approvers.userId$': { [Op.contains]: userId },
           },
           {
             // if the user is an collaborator, and the report is not in draft,
             // it is eligible for cleanup
-            '$collaborators->user.id$': userId,
+            '$collaborators.userId$': { [Op.contains]: userId },
             '$approval.calculatedStatus$': {
               [Op.ne]: REPORT_STATUSES.DRAFT,
             },
@@ -699,9 +734,26 @@ export async function activityReportsForCleanup(userId) {
       ],
       include: [
         {
-          model: User,
-          attributes: ['id'],
-          as: 'author',
+          model: Collaborator,
+          as: 'owner',
+          include: [{
+            model: User,
+            as: 'user',
+            attributes: ['id'],
+          }],
+        },
+        {
+          required: false,
+          model: Collaborator,
+          as: 'owners',
+          include: [
+            {
+              model: User,
+              as: 'user',
+              attributes: ['id'],
+              duplicating: true,
+            },
+          ],
         },
         {
           required: false,
@@ -724,6 +776,7 @@ export async function activityReportsForCleanup(userId) {
           include: [
             {
               model: User,
+              as: 'user',
               attributes: ['id'],
             },
           ],
@@ -741,7 +794,7 @@ export async function activityReportsForCleanup(userId) {
  * Retrieves alerts based on the following logic:
  * One or both of these high level conditions are true -
  * manager - assigned to approve and report is 'submitted' or 'needs_action'.
- * specialist - author id or one of the collaborator's id matches and calculatedStatus is not
+ * specialist - owner id or one of the collaborator's id matches and calculatedStatus is not
  * 'approved'.
  * @param {*} userId
  */
@@ -794,31 +847,47 @@ export async function activityReportAlerts(userId, {
         'creatorName',
         sequelize.literal(
           `(SELECT
-            name as collaboratorName
+            name AS collaboratorName
           FROM "Users"
           JOIN "Collaborators"
           ON "Users"."id" = "Collaborators"."userId"
           AND "Collaborators"."entityType" = '${ENTITY_TYPES.REPORT}'
           AND "Collaborators"."entityId" = "ActivityReport"."id"
-          AND '${COLLABORATOR_TYPES.OWNER}' = ALL("Collaborators"."collaboratorRoles")
+          AND '${COLLABORATOR_TYPES.OWNER}' = ALL("Collaborators"."collaboratorTypes")
           LIMIT 1)`,
         ),
         sequelize.literal(
           `(SELECT
-            name as collaboratorName
+            name AS collaboratorName
           FROM "Users"
           JOIN "Collaborators"
           ON "Users"."id" = "Collaborators"."userId"
           AND "Collaborators"."entityType" = '${ENTITY_TYPES.REPORT}'
           AND "Collaborators"."entityId" = "ActivityReport"."id"
-          AND '${COLLABORATOR_TYPES.EDITOR}' = ALL("Collaborators"."collaboratorRoles")
+          AND '${COLLABORATOR_TYPES.EDITOR}' = ALL("Collaborators"."collaboratorTypes")
           LIMIT 1)`,
         ),
         sequelize.literal(
-          `(SELECT "OtherEntities".name as otherEntityName from "OtherEntities" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" AND "ActivityRecipients"."otherEntityId" = "OtherEntities".id order by otherEntityName ${sortDir} limit 1)`,
+          `(SELECT
+            "OtherEntities".name AS otherEntityName
+          FROM "OtherEntities"
+          INNER JOIN "ActivityRecipients"
+          ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId"
+          AND "ActivityRecipients"."otherEntityId" = "OtherEntities".id
+          ORDER BY otherEntityName ${sortDir}
+          LIMIT 1)`,
         ),
         sequelize.literal(
-          `(SELECT "Recipients".name as recipientName FROM "Recipients" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" JOIN "Grants" ON "Grants"."id" = "ActivityRecipients"."grantId" AND "Recipients"."id" = "Grants"."recipientId" order by recipientName ${sortDir} limit 1)`,
+          `(SELECT
+            "Recipients".name AS recipientName
+          FROM "Recipients"
+          INNER JOIN "ActivityRecipients"
+          ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId"
+          JOIN "Grants"
+          ON "Grants"."id" = "ActivityRecipients"."grantId"
+          AND "Recipients"."id" = "Grants"."recipientId"
+          ORDER BY recipientName ${sortDir}
+          LIMIT 1)`,
         ),
 
         // TODO: GH
@@ -844,15 +913,19 @@ export async function activityReportAlerts(userId, {
       ],
       include: [
         {
-          model: User,
-          attributes: ['name', 'fullName', 'homeRegionId'],
-          include: [
-            {
-              model: Role,
-              as: 'roles',
-            },
-          ],
-          as: 'author',
+          model: Collaborator,
+          as: 'owner',
+          include: [{
+            model: User,
+            as: 'user',
+            attributes: ['name', 'fullName', 'homeRegionId'],
+            include: [
+              {
+                model: Role,
+                as: 'roles',
+              },
+            ],
+          }],
         },
         {
           required: false,
@@ -873,7 +946,7 @@ export async function activityReportAlerts(userId, {
             },
             {
               model: Role,
-              as: 'collaboratorRoles',
+              as: 'roles',
             },
           ],
         },
@@ -885,6 +958,7 @@ export async function activityReportAlerts(userId, {
           include: [
             {
               model: User,
+              as: 'user',
               attributes: ['id', 'name', 'fullName'],
               include: [
                 {
@@ -948,13 +1022,14 @@ export async function createOrUpdate(newActivityReport, report) {
     collaborators,
     activityRecipients,
     files,
-    author,
+    owner,
     recipientNextSteps,
     specialistNextSteps,
     ECLKCResourcesUsed,
     nonECLKCResourcesUsed,
     attachments,
     recipientsWhoHaveGoalsThatShouldBeRemoved,
+    silent,
     ...allFields
   } = newActivityReport;
   const previousActivityRecipientType = report && report.activityRecipientType;
@@ -972,25 +1047,33 @@ export async function createOrUpdate(newActivityReport, report) {
   if (report) {
     savedReport = await update(updatedFields, report);
     const { id: savedReportId } = savedReport;
-    await saveOwner(savedReportId, [author]);
+    await saveOwner(savedReportId, owner);
   } else {
-    savedReport = await create(updatedFields);
+    if (silent) {
+      savedReport = await create(updatedFields, silent);
+    } else {
+      savedReport = await create(updatedFields);
+    }
     const { id: savedReportId } = savedReport;
-    await saveOwnerInstantiators(savedReportId, [author]);
+    await saveOwnerInstantiators(savedReportId, owner);
   }
   if (collaborators) {
     const { id: savedReportId } = savedReport;
-    const newCollaborators = collaborators.map(
-      (c) => c.user.id,
-    );
-    await saveReportCollaborators(savedReportId, newCollaborators);
+    await saveReportCollaborators(savedReportId, collaborators);
+  }
+  if (approvers) {
+    const { id: savedReportId } = savedReport;
+    await saveApprovers(savedReportId, approvers);
   }
 
   if (activityRecipients) {
     const { activityRecipientType: typeOfRecipient, id: savedReportId } = savedReport;
-    const activityRecipientIds = activityRecipients.map(
-      (g) => g.activityRecipientId,
-    );
+    const activityRecipientIds = activityRecipients.map((g) => {
+      if (g.activityRecipientId) return g.activityRecipientId;
+      return typeOfRecipient === RECIPIENT_TYPE.OTHER_ENTITY
+        ? g.otherEntityId
+        : g.grantId;
+    });
 
     await saveReportRecipients(savedReportId, activityRecipientIds, typeOfRecipient);
   }
@@ -1039,8 +1122,12 @@ export async function createOrUpdate(newActivityReport, report) {
   }
 
   // Approvers are removed if approverUserIds is an empty array
-  if (approverUserIds) {
-    await syncRatifiers(ENTITY_TYPES.REPORT, savedReport.id, approverUserIds);
+  if (approverUserIds) { // TODO: Remove this
+    await syncRatifiers(
+      ENTITY_TYPES.REPORT,
+      savedReport.id,
+      approverUserIds.map((id) => { const approver = { userId: id }; return approver; }),
+    );
   }
 
   const [r, recips, gAndOs] = await activityReportAndRecipientsById(savedReport.id);
@@ -1137,15 +1224,19 @@ async function getDownloadableActivityReports(where, separate = true) {
         required: false,
       },
       {
-        model: User,
-        attributes: ['name', 'fullName', 'homeRegionId'],
-        include: [
-          {
-            model: Role,
-            as: 'roles',
-          },
-        ],
-        as: 'author',
+        model: Collaborator,
+        as: 'owner',
+        include: [{
+          model: User,
+          as: 'user',
+          attributes: ['name', 'fullName', 'homeRegionId'],
+          include: [
+            {
+              model: Role,
+              as: 'roles',
+            },
+          ],
+        }],
       },
       {
         model: Collaborator,
@@ -1164,7 +1255,8 @@ async function getDownloadableActivityReports(where, separate = true) {
         },
         {
           model: Role,
-          as: 'collaboratorRoles',
+          as: 'roles',
+          order: [['name', 'ASC']],
         }],
       },
       {
@@ -1200,6 +1292,7 @@ async function getDownloadableActivityReports(where, separate = true) {
         include: [
           {
             model: User,
+            as: 'user',
             attributes: ['name'],
           },
         ],
@@ -1245,7 +1338,7 @@ export async function getAllDownloadableActivityReportAlerts(userId, filters) {
           '$approvers.userId$': userId,
         }],
       },
-      { // User is author or collaborator, and report is approved
+      { // User is owner or collaborator, and report is approved
         [Op.and]: [
           {
             [Op.and]: [

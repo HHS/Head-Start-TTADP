@@ -3,12 +3,17 @@ import {
   ActivityReport,
   Approval,
 } from '../models';
-import { REPORT_STATUSES, ENTITY_TYPES } from '../constants';
+import { REPORT_STATUSES } from '../constants';
 import changeReportStatus from './changeReportStatus';
+import { createOrUpdate } from '../services/activityReports';
 
 jest.mock('../logger');
 
 const reportObject = {
+  approval: {
+    submissionStatus: REPORT_STATUSES.SUBMITTED,
+    calculatedStatus: REPORT_STATUSES.APPROVED,
+  },
   activityRecipientType: 'recipient',
   regionId: 1,
   ECLKCResourcesUsed: ['test'],
@@ -32,14 +37,7 @@ describe('changeStatus', () => {
   });
 
   it('changes activity report(s) status to deleted', async () => {
-    let report = await ActivityReport.create(reportObject);
-    await Approval.update(
-      { submissionStatus: REPORT_STATUSES.APPROVED },
-      {
-        where: { entityType: ENTITY_TYPES.REPORT, entityId: report.id, tier: 0 },
-        individualHooks: true,
-      },
-    );
+    let report = await createOrUpdate(reportObject);
 
     report = await ActivityReport.findOne({
       where: { id: report.id },

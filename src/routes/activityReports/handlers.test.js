@@ -746,10 +746,12 @@ describe('Activity Report handlers', () => {
 
       const downloadableReport = {
         id: 616,
-        author: {
-          name: 'Arty',
-          role: ['Grantee Specialist'],
-          fullName: 'Arty, GS',
+        owner: {
+          user: {
+            name: 'Arty',
+            fullName: 'Arty, GS',
+          },
+          roles: ['Grantee Specialist'],
         },
         collaborators: [
           {
@@ -796,8 +798,10 @@ describe('Activity Report handlers', () => {
 
       const downloadableReport = {
         id: 616,
-        author: {
-          name: 'Arty',
+        owner: {
+          user: {
+            name: 'Arty',
+          },
         },
       };
 

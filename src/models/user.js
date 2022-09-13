@@ -1,6 +1,6 @@
 const { Model } = require('sequelize');
 const isEmail = require('validator/lib/isEmail');
-const generateFullName = require('./helpers/generateFullName');
+const { generateFullName } = require('./helpers/generateFullName');
 
 const featureFlags = [
   'recipient_goals_objectives',

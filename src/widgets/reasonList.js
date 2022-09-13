@@ -12,13 +12,9 @@ export default async function reasonList(scopes) {
     where: {
       [Op.and]: [
         scopes.activityReport,
+        { '$approval.calculatedStatus$': REPORT_STATUSES.APPROVED },
       ],
     },
-    include: [{
-      model: Approval,
-      as: 'approval',
-      where: { calculatedStatus: REPORT_STATUSES.APPROVED },
-    }],
     raw: true,
   });
 

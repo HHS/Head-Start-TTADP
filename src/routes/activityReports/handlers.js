@@ -486,7 +486,7 @@ export async function submitReport(req, res) {
     const currentApprovers = await syncRatifiers(
       ENTITY_TYPES.REPORT,
       activityReportId,
-      approverUserIds,
+      approverUserIds.map((id) => { const approver = { userId: id }; return approver; }),
     );
 
     // TODO: This should come after setting the status to null.
@@ -513,6 +513,7 @@ export async function submitReport(req, res) {
           include: [
             {
               model: UserModel,
+              as: 'user',
               attributes: ['id', 'name', 'fullName'],
               include: [
                 {

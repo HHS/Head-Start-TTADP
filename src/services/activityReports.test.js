@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+// import { Op } from 'sequelize';
 import db, {
   ActivityReport, Collaborator, ActivityRecipient, User,
   Recipient, OtherEntity, Grant, NextStep, Region, Permission, Role, UserRole,
@@ -26,7 +26,9 @@ import {
 } from '../constants';
 import {
   upsertRatifier,
+  removeRatifier,
   upsertEditor,
+  syncOwnerInstantiators,
 } from './collaborators';
 import { createReport, destroyReport } from '../testUtils';
 import { auditLogger } from '../logger';
@@ -94,9 +96,11 @@ const alertsMockUserTwo = {
 };
 
 const reportObject = {
+  owner: { userId: mockUser.id },
+  approval: {
+    submissionStatus: REPORT_STATUSES.DRAFT,
+  },
   activityRecipientType: 'recipient',
-  submissionStatus: REPORT_STATUSES.DRAFT,
-  userId: mockUser.id,
   regionId: 1,
   lastUpdatedById: mockUser.id,
   ECLKCResourcesUsed: ['test'],
@@ -105,8 +109,10 @@ const reportObject = {
 
 const submittedReport = {
   ...reportObject,
+  approval: {
+    submissionStatus: REPORT_STATUSES.SUBMITTED,
+  },
   activityRecipients: [{ grantId: 1 }],
-  submissionStatus: REPORT_STATUSES.SUBMITTED,
   numberOfParticipants: 1,
   deliveryMethod: 'method',
   duration: 0,
@@ -201,77 +207,77 @@ describe('Activity report service', () => {
       });
 
       // In Draft.
-      await ActivityReport.create({
+      await createOrUpdate({
         ...reportObject,
         lastUpdatedById: mockUserFour.id,
-        submissionStatus: REPORT_STATUSES.DRAFT,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-        userId: mockUserFour.id,
+        approval: {
+          submissionStatus: REPORT_STATUSES.DRAFT,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+        },
+        owner: { userId: mockUserFour.id },
         activityRecipients: [{ activityRecipientId: ALERT_RECIPIENT_ID }],
       });
 
       // Submitted.
-      await ActivityReport.create({
+      await createOrUpdate({
         ...submittedReport,
         lastUpdatedById: mockUserFour.id,
-        submissionStatus: REPORT_STATUSES.SUBMITTED,
-        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        owner: { userId: mockUserFour.id },
+        approval: {
+          submissionStatus: REPORT_STATUSES.SUBMITTED,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        },
         activityRecipients: [{ activityRecipientId: ALERT_RECIPIENT_ID }],
       });
-      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, isOnlyCollabReport.id, [mockUserFour.id]);
 
       // Needs Action.
-      await ActivityReport.create({
+      await createOrUpdate({
         ...submittedReport,
         lastUpdatedById: mockUserFour.id,
-        submissionStatus: REPORT_STATUSES.SUBMITTED,
-        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        owner: { userId: mockUserFour.id },
+        approval: {
+          submissionStatus: REPORT_STATUSES.SUBMITTED,
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        },
         activityRecipients: [{ activityRecipientId: ALERT_RECIPIENT_ID }],
       });
-      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, isOnlyCollabReport.id, [mockUserFour.id]);
 
       // Approved (Should be missing).
-      await ActivityReport.create({
+      await createOrUpdate({
         ...submittedReport,
         lastUpdatedById: mockUserFour.id,
-        submissionStatus: REPORT_STATUSES.SUBMITTED, // TODO: Might need fix
-        calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
+        owner: { userId: mockUserFour.id },
+        approval: {
+          submissionStatus: REPORT_STATUSES.SUBMITTED,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        },
         activityRecipients: [{ activityRecipientId: ALERT_RECIPIENT_ID }],
       });
-      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, isOnlyCollabReport.id, [mockUserFour.id]);
 
       // Is Only Approver.
-      const isOnlyApproverReport = await ActivityReport.create({
+      await createOrUpdate({
         ...submittedReport,
         lastUpdatedById: mockUserFive.id,
-        submissionStatus: REPORT_STATUSES.SUBMITTED, // TODO: Might need fix
-        calculatedStatus: REPORT_STATUSES.SUBMITTED, // TODO: Might need fix
+        owner: { userId: mockUserFive.id },
+        approvers: [{ userId: mockUserFour.id }],
+        approval: {
+          submissionStatus: REPORT_STATUSES.SUBMITTED,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        },
         activityRecipients: [{ activityRecipientId: ALERT_RECIPIENT_ID }],
-      });
-      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, isOnlyCollabReport.id, [mockUserFive.id]);
-
-      // Add Approver.
-      await upsertRatifier({
-        entityType: ENTITY_TYPES.REPORT,
-        entitiyId: isOnlyApproverReport.id,
-        userId: mockUserFour.id,
       });
 
       // Is Only Collaborator
-      const isOnlyCollabReport = await ActivityReport.create({
+      await createOrUpdate({
         ...submittedReport,
         lastUpdatedById: mockUserFive.id,
-        submissionStatus: REPORT_STATUSES.SUBMITTED, // TODO: Might need fix
-        calculatedStatus: REPORT_STATUSES.SUBMITTED, // TODO: Might need fix
+        owner: { userId: mockUserFive.id },
+        collaborators: [{ userId: mockUserFour.id }],
+        approval: {
+          submissionStatus: REPORT_STATUSES.SUBMITTED,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        },
         activityRecipients: [{ activityRecipientId: ALERT_RECIPIENT_ID }],
-      });
-      await syncOwnerInstantiators(ENTITY_TYPES.REPORT, isOnlyCollabReport.id, [mockUserFive.id]);
-
-      // Add Collaborator
-      await upsertEditor({
-        entityType: ENTITY_TYPES.REPORT,
-        entitiyId: isOnlyCollabReport.id,
-        userId: mockUserFour.id,
       });
 
       const { count, rows } = await activityReportAlerts(mockUserFour.id, {});
@@ -367,7 +373,7 @@ describe('Activity report service', () => {
 
     describe('createOrUpdate', () => {
       it('updates an already saved report', async () => {
-        const report = await ActivityReport.create({ ...reportObject, id: 3334 });
+        const report = await createOrUpdate({ ...reportObject, id: 3334 });
         await createOrUpdate({ ...report, ECLKCResourcesUsed: [{ value: 'updated' }] }, report);
         expect(report.activityRecipientType).toEqual('recipient');
         expect(report.calculatedStatus).toEqual('draft');
@@ -506,7 +512,7 @@ describe('Activity report service', () => {
       });
 
       it('updates collaborator roles on a already saved report', async () => {
-        const report = await ActivityReport.create({
+        const report = await createOrUpdate({
           ...reportObject,
           id: 3438,
           collaborators: [
@@ -639,7 +645,7 @@ describe('Activity report service', () => {
           specialistNextSteps: [{ note: 'i am groot', completeDate: '2022-06-01T12:00:00Z' }, { note: 'harry', completeDate: '2022-06-02T12:00:00Z' }],
           recipientNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
         };
-        const report = await ActivityReport.create(reportWithNotes);
+        const report = await createOrUpdate(reportWithNotes);
 
         // When the report is updated with new set of specialist notes
         const notes = { specialistNextSteps: [{ note: 'harry', completeDate: '2022-06-04T12:00:00Z' }, { note: 'spongebob', completeDate: '2022-06-06T12:00:00Z' }] };
@@ -660,7 +666,7 @@ describe('Activity report service', () => {
           specialistNextSteps: [{ note: 'i am groot' }, { note: 'harry' }],
           recipientNextSteps: [{ note: 'One Piece', completeDate: '2022-06-01T12:00:00Z' }, { note: 'Toy Story', completeDate: '2022-06-02T12:00:00Z' }],
         };
-        const report = await ActivityReport.create(reportWithNotes);
+        const report = await createOrUpdate(reportWithNotes);
 
         // When the report is updated with new set of recipient notes
         const notes = { recipientNextSteps: [{ note: 'One Piece', completeDate: '2022-06-04T12:00:00Z' }, { note: 'spongebob', completeDate: '2022-06-06T12:00:00Z' }] };
@@ -681,7 +687,7 @@ describe('Activity report service', () => {
           specialistNextSteps: [{ note: 'i am groot', completeDate: '2022-06-01T12:00:00Z' }, { note: 'harry', completeDate: '2022-06-02T12:00:00Z' }],
           recipientNextSteps: [{ note: 'One Piece', completeDate: '2022-06-03T12:00:00Z' }, { note: 'Toy Story', completeDate: '2022-06-04T12:00:00Z' }],
         };
-        const report = await ActivityReport.create(reportWithNotes);
+        const report = await createOrUpdate(reportWithNotes);
 
         // When the report is updated with empty notes
         const notes = {
@@ -750,7 +756,7 @@ describe('Activity report service', () => {
 
     describe('activityReportByLegacyId', () => {
       it('returns the report with the legacyId', async () => {
-        const report = await ActivityReport.create({ ...reportObject, legacyId: 'legacy' });
+        const report = await createOrUpdate({ ...reportObject, legacyId: 'legacy' });
         const found = await activityReportByLegacyId('legacy');
         expect(found.id).toBe(report.id);
       });
@@ -758,19 +764,21 @@ describe('Activity report service', () => {
 
     describe('activityReportAndRecipientsById', () => {
       it('retrieves an activity report', async () => {
-        const report = await ActivityReport.create(reportObject);
+        const report = await createOrUpdate(reportObject);
 
         const [foundReport] = await activityReportAndRecipientsById(report.id);
         expect(foundReport.id).toBe(report.id);
         expect(foundReport.ECLKCResourcesUsed).toEqual(['test']);
       });
       it('includes approver with full name', async () => {
-        const report = await ActivityReport.create({ ...submittedReport, regionId: 5 });
-        await ActivityReportApprover.create({
-          activityReportId: report.id,
-          userId: mockUserTwo.id,
-          status: APPROVER_STATUSES.APPROVED,
-          note: 'great job from user 2',
+        const report = await createOrUpdate({
+          ...submittedReport,
+          regionId: 5,
+          approvers: [{
+            userId: mockUserTwo.id,
+            status: APPROVER_STATUSES.APPROVED,
+            note: 'great job from user 2',
+          }],
         });
         const [foundReport] = await activityReportAndRecipientsById(report.id);
         expect(foundReport.approvers[0].User.get('fullName')).toEqual(`${mockUserTwo.name}, COR`);
@@ -779,26 +787,27 @@ describe('Activity report service', () => {
         // To include deleted approvers in future add paranoid: false
         // attribute to include object for ActivityReportApprover
         // https://sequelize.org/master/manual/paranoid.html#behavior-with-other-queries
-        const report = await ActivityReport.create(submittedReport);
-        // Create needs_action approver
-        const toDeleteApproval = await ActivityReportApprover.create({
-          activityReportId: report.id,
-          userId: mockUserTwo.id,
-          status: APPROVER_STATUSES.NEEDS_ACTION,
-          note: 'change x, y, z',
-        });
-        // Create approved approver
-        await ActivityReportApprover.create({
-          activityReportId: report.id,
-          userId: mockUserThree.id,
-          status: APPROVER_STATUSES.APPROVED,
-          note: 'great job',
+        const report = await createOrUpdate({
+          ...submittedReport,
+          approvers: [
+            {
+              userId: mockUserTwo.id,
+              status: APPROVER_STATUSES.NEEDS_ACTION,
+              note: 'change x, y, z',
+            },
+            {
+              userId: mockUserThree.id,
+              status: APPROVER_STATUSES.APPROVED,
+              note: 'great job',
+            },
+          ],
         });
         // Soft delete needs_action approver
-        await ActivityReportApprover.destroy({
-          where: { id: toDeleteApproval.id },
-          individualHooks: true,
-        });
+        await removeRatifier(
+          ENTITY_TYPES.REPORT,
+          report.id,
+          mockUserTwo.id,
+        );
         const [foundReport] = await activityReportAndRecipientsById(report.id);
         // Show both approvers
         expect(foundReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
@@ -820,26 +829,38 @@ describe('Activity report service', () => {
         const firstRecipient = await Recipient.create({ id: RECIPIENT_ID_SORTING, name: 'aaaa', uei: 'NNA5N2KHMGM2' });
         firstGrant = await Grant.create({ id: RECIPIENT_ID_SORTING, number: 'anumber', recipientId: firstRecipient.id });
 
-        await ActivityReport.create({
+        await createOrUpdate({
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
-          userId: mockUserTwo.id,
+          owner: { userId: mockUserTwo.id },
+          approval: {
+            submissionStatus: REPORT_STATUSES.SUBMITTED,
+            calculatedStatus: REPORT_STATUSES.APPROVED,
+          },
           topics: topicsOne,
         });
         await createOrUpdate({
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
+          approval: {
+            submissionStatus: REPORT_STATUSES.SUBMITTED,
+            calculatedStatus: REPORT_STATUSES.APPROVED,
+          },
           collaborators: [{ user: { id: mockUser.id } }],
         });
-        await ActivityReport.create({
+        await createOrUpdate({
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
+          approval: {
+            submissionStatus: REPORT_STATUSES.SUBMITTED,
+            calculatedStatus: REPORT_STATUSES.APPROVED,
+          },
           regionId: 2,
         });
-        const report = await ActivityReport.create({
+        const report = await createOrUpdate({
           ...submittedReport,
           activityRecipients: [{ grantId: firstGrant.id }],
-          calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
+          approval: {
+            submissionStatus: REPORT_STATUSES.SUBMITTED,
+            calculatedStatus: REPORT_STATUSES.APPROVED,
+          },
           topics: topicsTwo,
         });
         try {
@@ -851,14 +872,20 @@ describe('Activity report service', () => {
           auditLogger.error(JSON.stringify(error));
           throw error;
         }
-        latestReport = await ActivityReport.create({
+        latestReport = await createOrUpdate({
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
+          approval: {
+            submissionStatus: REPORT_STATUSES.SUBMITTED,
+            calculatedStatus: REPORT_STATUSES.APPROVED,
+          },
           updatedAt: '1900-01-01T12:00:00Z',
         });
-        await ActivityReport.create({
+        await createOrUpdate({
           ...submittedReport,
-          status: REPORT_STATUSES.APPROVED,
+          approval: {
+            submissionStatus: REPORT_STATUSES.SUBMITTED,
+            calculatedStatus: REPORT_STATUSES.APPROVED,
+          },
           startDate: '2020-08-31T12:00:00Z',
           endDate: '2020-08-31T12:00:00Z',
           topics: topicsTwo,
@@ -883,7 +910,7 @@ describe('Activity report service', () => {
       });
 
       it('retrieves reports sorted by collaborators', async () => {
-        await ActivityReport.create(reportObject);
+        await createOrUpdate(reportObject);
 
         const { rows } = await activityReports({
           sortBy: 'collaborators', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1'], 'reportId.nctn': idsToExclude,
@@ -893,7 +920,7 @@ describe('Activity report service', () => {
       });
 
       it('retrieves reports sorted by id', async () => {
-        await ActivityReport.create({ ...reportObject, regionId: 1 });
+        await createOrUpdate({ ...reportObject, regionId: 1 });
 
         const { rows } = await activityReports({
           sortBy: 'regionId', sortDir: 'desc', offset: 0, limit: 12, 'region.in': ['1', '2'], 'reportId.nctn': idsToExclude,
@@ -913,8 +940,8 @@ describe('Activity report service', () => {
       });
 
       it('retrieves reports sorted by sorted topics', async () => {
-        await ActivityReport.create(reportObject);
-        await ActivityReport.create(reportObject);
+        await createOrUpdate(reportObject);
+        await createOrUpdate(reportObject);
 
         const { rows } = await activityReports({
           sortBy: 'topics', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1', '2'], 'reportId.nctn': idsToExclude,
@@ -956,27 +983,37 @@ describe('Activity report service', () => {
           imported: { foo: 'bar' },
           legacyId: 'R14-AR-123456',
           regionId: 14,
-          calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
+          approval: {
+            submissionStatus: REPORT_STATUSES.SUBMITTED,
+            calculatedStatus: REPORT_STATUSES.APPROVED,
+          },
         };
         const mockReport = {
           ...submittedReport,
           regionId: 14,
-          calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
+          approval: {
+            submissionStatus: REPORT_STATUSES.SUBMITTED,
+            calculatedStatus: REPORT_STATUSES.APPROVED,
+          },
         };
         // create two approved
-        approvedReport = await ActivityReport.create(mockReport);
-        await upsertRatifier({
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: approvedReport.id,
-          userId: mockUserTwo.id,
-          status: RATIFIER_STATUSES.RATIFIED,
+        approvedReport = await createOrUpdate({
+          ...mockReport,
+          approvers: [{
+            userId: mockUserTwo.id,
+            status: RATIFIER_STATUSES.RATIFIED,
+          }],
         });
-        await ActivityReport.create(mockReport);
+        await createOrUpdate(mockReport);
         // create one approved legacy
-        legacyReport = await ActivityReport.create(mockLegacyReport);
+        legacyReport = await createOrUpdate(mockLegacyReport);
         // create one submitted
-        nonApprovedReport = await ActivityReport.create({
-          ...mockReport, calculatedStatus: REPORT_STATUSES.SUBMITTED, // TODO: Might need fix
+        nonApprovedReport = await createOrUpdate({
+          ...mockReport,
+          approval: {
+            submissionStatus: REPORT_STATUSES.SUBMITTED,
+            calculatedStatus: REPORT_STATUSES.APPROVED,
+          },
         });
       });
 
@@ -1021,12 +1058,15 @@ describe('Activity report service', () => {
         };
         const mockNeedsActionReport = {
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION, // TODO: Might need fix
+          approval: {
+            submissionStatus: REPORT_STATUSES.SUBMITTED,
+            calculatedStatus: REPORT_STATUSES.APPROVED,
+          },
           regionId: 14,
           userId: alertsMockUserTwo.id,
         };
-        await ActivityReport.create(mockSubmittedReport);
-        report = await ActivityReport.create(mockNeedsActionReport);
+        await createOrUpdate(mockSubmittedReport);
+        report = await createOrUpdate(mockNeedsActionReport);
       });
 
       // eslint-disable-next-line jest/no-disabled-tests
@@ -1048,9 +1088,12 @@ describe('Activity report service', () => {
       it('returns report when passed a single report id', async () => {
         const mockReport = {
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
+          approval: {
+            submissionStatus: REPORT_STATUSES.SUBMITTED,
+            calculatedStatus: REPORT_STATUSES.APPROVED,
+          },
         };
-        const report = await ActivityReport.create(mockReport);
+        const report = await createOrUpdate(mockReport);
         const rows = await getDownloadableActivityReportsByIds([1], { report: report.id });
 
         expect(rows.length).toEqual(1);
@@ -1062,14 +1105,17 @@ describe('Activity report service', () => {
           ...reportObject,
           imported: { foo: 'bar' },
           legacyId: 'R14-AR-abc123',
-          calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
+          approval: {
+            submissionStatus: REPORT_STATUSES.SUBMITTED,
+            calculatedStatus: REPORT_STATUSES.APPROVED,
+          },
         };
-        const legacyReport = await ActivityReport.create(mockLegacyReport);
+        const legacyReport = await createOrUpdate(mockLegacyReport);
 
         const mockReport = {
           ...submittedReport,
         };
-        const report = await ActivityReport.create(mockReport);
+        const report = await createOrUpdate(mockReport);
 
         const rows = await getDownloadableActivityReportsByIds(
           [1],
@@ -1083,9 +1129,12 @@ describe('Activity report service', () => {
       it('ignores invalid report ids', async () => {
         const mockReport = {
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
+          approval: {
+            submissionStatus: REPORT_STATUSES.SUBMITTED,
+            calculatedStatus: REPORT_STATUSES.APPROVED,
+          },
         };
-        const report = await ActivityReport.create(mockReport);
+        const report = await createOrUpdate(mockReport);
 
         const rows = await getDownloadableActivityReportsByIds(
           [1],
@@ -1098,7 +1147,7 @@ describe('Activity report service', () => {
     });
     describe('setStatus', () => {
       it('sets report to draft', async () => {
-        const report = await ActivityReport.create(submittedReport);
+        const report = await createOrUpdate(submittedReport);
         expect(report.submissionStatus).toEqual(REPORT_STATUSES.SUBMITTED);
         await setStatus(report, REPORT_STATUSES.DRAFT);
         // get report again so we're checking that the change is persisted to the database

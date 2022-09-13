@@ -5,6 +5,7 @@ import filtersToScopes from '../scopes';
 import reasonList from './reasonList';
 import { REPORT_STATUSES, REASONS } from '../constants';
 import { createOrUpdate } from '../services/activityReports';
+import { auditLogger } from '../logger';
 
 const RECIPIENT_ID = 462034;
 const GRANT_ID_ONE = 107863;
@@ -20,9 +21,11 @@ const mockUser = {
 
 const reportObject = {
   activityRecipientType: 'recipient',
-  submissionStatus: REPORT_STATUSES.SUBMITTED, // TODO: Might need fix
-  calculatedStatus: REPORT_STATUSES.APPROVED, // TODO: Might need fix
-  author: mockUser.id,
+  approval: {
+    submissionStatus: REPORT_STATUSES.SUBMITTED,
+    calculatedStatus: REPORT_STATUSES.APPROVED,
+  },
+  owner: { userId: mockUser.id },
   lastUpdatedById: mockUser.id,
   ECLKCResourcesUsed: ['test'],
   activityRecipients: [
@@ -119,8 +122,10 @@ const regionOneDraftReport = {
   reason: ['Below Competitive Threshold (CLASS)', 'Below Quality Threshold (CLASS)'],
   startDate: '2021-02-01T12:00:00Z',
   endDate: '2021-02-28T12:00:00Z',
-  submissionStatus: REPORT_STATUSES.DRAFT, // TODO: Might need fix
-  calculatedStatus: REPORT_STATUSES.DRAFT, // TODO: Might need fix
+  approval: {
+    submissionStatus: REPORT_STATUSES.SUBMITTED,
+    calculatedStatus: REPORT_STATUSES.APPROVED,
+  },
 };
 
 describe('Reason list widget', () => {
@@ -162,6 +167,7 @@ describe('Reason list widget', () => {
           model: Collaborator,
           as: 'owner',
           where: { userId: [mockUser.id] },
+          required: true,
         }],
       });
     const ids = reports.map((report) => report.id);
@@ -196,6 +202,7 @@ describe('Reason list widget', () => {
   it('retrieves reason list for longer date range for specified region', async () => {
     const scopes = filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2021/01/01-2021/03/31' });
     const res = await reasonList(scopes);
+    auditLogger.error(JSON.stringify(res));
     expect(res.length).toBe(17);
     expect(res[0].name).toBe('Below Competitive Threshold (CLASS)');
     expect(res[0].count).toBe(3);

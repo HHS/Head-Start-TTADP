@@ -65,8 +65,10 @@ const mockGrant = {
 };
 
 const sampleReport = {
-  submissionStatus: REPORT_STATUSES.DRAFT,
-  calculatedStatus: REPORT_STATUSES.DRAFT,
+  approval: {
+    submissionStatus: REPORT_STATUSES.DRAFT,
+    calculatedStatus: REPORT_STATUSES.DRAFT,
+  },
   oldApprovingManagerId: 1,
   numberOfParticipants: 1,
   deliveryMethod: 'method',
