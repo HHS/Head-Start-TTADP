@@ -314,16 +314,31 @@ function AccountManagement({ updateUser }) {
         <h1 className="margin-bottom-1">Email preferences</h1>
 
         {!emailValidated && !emailVerificationSent && (
-          <p>
-            Before you can receive TTA Hub emails, you must verify your email address.
-            <Button className="display-block margin-top-3" onClick={sendVerificationEmail}>Send verification email</Button>
-          </p>
+          <Alert type="warning">
+            Your email address isn&apos;t verified.
+            Select &apos;Send verification email&apos; below.
+          </Alert>
         )}
 
         {!emailValidated && emailVerificationSent && (
-          <div>
-            An email should be delivered to you shortly with a link to verify your email address.
-          </div>
+          <Alert type="info">
+            Verification email sent. Check your inbox.
+            <br />
+            If you don&apos;t receive an email within thirty minutes,
+            check your spam folder, then contact support@ttahub.com.
+          </Alert>
+        )}
+
+        {!emailValidated && (
+          <>
+            <h2>Verify email address</h2>
+            <p>
+              Before you can receive TTA Hub emails, you must verify your email address.
+              <Button className="display-block margin-top-3" onClick={sendVerificationEmail}>
+                {emailVerificationSent ? 'Resend verification email' : 'Send verification email'}
+              </Button>
+            </p>
+          </>
         )}
 
         {verificationEmailSendError && (
