@@ -14,7 +14,7 @@ import { UserValidationStatus } from '../models';
  */
 
 export const createAndStoreVerificationToken = async (userId, type) => {
-  const secret = process.env.JWT_SECRET;
+  const secret = `${process.env.JWT_SECRET}`;
   const payload = { userId, type };
   const options = { expiresIn: '7d' };
   const token = jwt.sign(payload, secret, options);
@@ -60,7 +60,7 @@ export const validateVerificationToken = async (userId, token, type) => {
     throw new Error('Token already validated');
   }
 
-  const secret = process.env.JWT_SECRET;
+  const secret = `${process.env.JWT_SECRET}`;
   const payload = jwt.verify(token, secret);
 
   if (payload.userId !== userId) {
