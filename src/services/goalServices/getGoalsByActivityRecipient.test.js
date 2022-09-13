@@ -675,12 +675,16 @@ describe('Goals by Recipient Test', () => {
   describe('Retrieves All Goals', () => {
     it('Uses default sorting', async () => {
       const { goalRows } = await getGoalsByActivityRecipient(recipient.id, 1, { sortDir: 'asc' });
-      expect(goalRows[0].goalText).toBe('Goal 1');
+      expect(goalRows[0].goalText).toBe('Goal 2');
+      // not goal 1 because the goal 2 had it's status updated to 'Not Started' when
+      // objectives were saved for it
     });
 
     it('honors offset', async () => {
       const { goalRows } = await getGoalsByActivityRecipient(recipient.id, 1, { offset: 1, sortDir: 'asc' });
-      expect(goalRows[0].goalText).toBe('Goal 2');
+      // see comment in previous text, the goal 2 was updated to 'Not Started' when
+      // objectives were saved, which flips their order in the query
+      expect(goalRows[0].goalText).toBe('Goal 1');
     });
 
     it('honors limit', async () => {
