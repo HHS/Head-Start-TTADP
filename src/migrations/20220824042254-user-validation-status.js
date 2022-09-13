@@ -45,5 +45,11 @@ module.exports = {
 
   down: (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => {
     await queryInterface.dropTable('UserValidationStatus', { transaction });
+
+    // Remove ZALUserValidationStatus and functions.
+    await queryInterface.dropTable('ZALUserValidationStatus', { transaction });
+    await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS "public"."ZALNoUpdateFUserValidationStatus" ()', { transaction });
+    await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS "public"."ZALNoTruncateFUserValidationStatus" ()', { transaction });
+    await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS "public"."ZALNoDeleteFUserValidationStatus" ()', { transaction });
   }),
 };
