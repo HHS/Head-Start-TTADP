@@ -201,7 +201,7 @@ const updateParentGoalStatus = async (sequelize, instance) => {
         {
           // assumption: we only want to auto update the goal status if it is
           // on an activity report, otherwise it should be updated by the
-          // RTR form logic...
+          // RTR form logic or the RTR page
           createdVia: 'activityReport',
         },
         {
