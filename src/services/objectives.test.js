@@ -240,6 +240,7 @@ describe('Objectives DB service', () => {
           otherEntityId: 1,
           status: 'In Progress',
           title: 'i have a new title but same id',
+          roles: [],
         }], report);
       });
       const foundObj = await getObjectiveById(findObjectiveById.id);
@@ -256,6 +257,7 @@ describe('Objectives DB service', () => {
           otherEntityId: 1,
           status: 'Not Started',
           title: 'there are many titles but this one is mine',
+          roles: [],
         }], report);
       });
       const foundObj = await getObjectiveById(findObjectiveByTitle.id);

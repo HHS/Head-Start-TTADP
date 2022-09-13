@@ -9,70 +9,87 @@ import {
   File,
   ObjectiveResource,
 } from '../models';
-
-import { removeUnusedGoalsObjectivesFromReport, reduceObjectives } from './goals';
+import { removeUnusedGoalsObjectivesFromReport, reduceObjectives, saveObjectiveAssociations } from './goals';
+import { cacheObjectiveMetadata } from './reportCache';
 
 export async function saveObjectivesForReport(objectives, report) {
-  const updatedObjectives = await Promise.all(
-    objectives.filter((o) => o.title).map(async (objective) => Promise
-      .all(objective.recipientIds.map(async (otherEntityId) => {
-        // Check for existing objective:
-        let existingObjective;
-        // 1. Find existing by id and entity and id.
-        if (objective.ids
+  const updatedObjectives = await Promise.all(objectives.map(async (objective) => Promise
+    .all(objective.recipientIds.map(async (otherEntityId) => {
+      const {
+        roles: roleNames, topics, files, resources,
+      } = objective;
+
+      const roles = await Role.findAll({
+        where: {
+          fullName: roleNames,
+        },
+      });
+
+      // Determine if this objective already exists.
+      let existingObjective;
+
+      // 1. Find existing by id and entity and id.
+      if (objective.ids
             && objective.ids.length) {
-          const validIdsToCheck = objective.ids.filter((id) => typeof id === 'number');
-          existingObjective = await Objective.findOne({
-            where: {
-            // We are checking all objective id's but only one should link to the entity.
-              id: validIdsToCheck,
-              otherEntityId,
-              status: { [Op.not]: 'Complete' },
-            },
-          });
-        }
-
-        // 2. Find by title and 'entity' id.
-        if (!existingObjective) {
-          // Determine if this objective already exists.
-          existingObjective = await Objective.findOne({
-            where: {
-              title: objective.title,
-              otherEntityId,
-              status: { [Op.not]: 'Complete' },
-            },
-          });
-        }
-
-        // If it already exists update the status else create it.
-        let savedObjective;
-        if (existingObjective) {
-          await existingObjective.update({
-            status: objective.status,
-            title: objective.title,
-          }, { individualHooks: true });
-          savedObjective = existingObjective;
-        } else {
-        // To prevent validation error exclude id.
-        // In this case the user might have changed the title for objective.
-          const { id, ...ObjPros } = objective;
-          savedObjective = await Objective.create({
-            ...ObjPros,
-            otherEntityId,
-          });
-        }
-        // Find or create and activity report objective.
-        const [aro] = await ActivityReportObjective.findOrCreate({
+        const validIdsToCheck = objective.ids.filter((id) => typeof id === 'number');
+        existingObjective = await Objective.findOne({
           where: {
-            objectiveId: savedObjective.id,
-            activityReportId: report.id,
+            // We are checking all objective id's but only one should link to the entity.
+            id: validIdsToCheck,
+            otherEntityId,
+            status: { [Op.not]: 'Complete' },
           },
         });
-        // Update activity report objective tta.
-        await aro.update({ ttaProvided: objective.ttaProvided }, { individualHooks: true });
-        return savedObjective;
-      }))),
-  );
+      }
+
+      // 2. Find by title and 'entity' id.
+      if (!existingObjective) {
+        // Determine if this objective already exists.
+        existingObjective = await Objective.findOne({
+          where: {
+            title: objective.title,
+            otherEntityId,
+            status: { [Op.not]: 'Complete' },
+          },
+        });
+      }
+
+      // If it already exists update the status else create it.
+      let savedObjective;
+      if (existingObjective) {
+        await existingObjective.update({
+          status: objective.status,
+          title: objective.title,
+        }, { individualHooks: true });
+        savedObjective = existingObjective;
+      } else {
+        // To prevent validation error exclude id.
+        // In this case the user might have changed the title for objective.
+        const { id, ...ObjPros } = objective;
+        savedObjective = await Objective.create({
+          ...ObjPros,
+          otherEntityId,
+        });
+      }
+
+      const deleteUnusedAssociations = false;
+
+      const metadata = await saveObjectiveAssociations(
+        savedObjective,
+        resources,
+        topics,
+        roles,
+        files,
+        deleteUnusedAssociations,
+      );
+
+      await cacheObjectiveMetadata(savedObjective, report.id, {
+        ...metadata,
+        ttaProvided: objective.ttaProvided,
+      });
+
+      return savedObjective;
+    }))));
 
   const currentObjectives = updatedObjectives.flat();
   return removeUnusedGoalsObjectivesFromReport(report.id, currentObjectives);
