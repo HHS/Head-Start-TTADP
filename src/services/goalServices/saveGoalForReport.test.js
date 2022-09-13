@@ -950,7 +950,6 @@ describe('saveGoalsForReport (more tests)', () => {
     await saveGoalsForReport([
       {
         ...newGoal,
-        grantId: addingRecipientGrantOne.id,
         grantIds: [addingRecipientGrantOne.id, addingRecipientGrantTwo.id],
       }], savedReport);
 
