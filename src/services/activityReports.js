@@ -362,6 +362,19 @@ export async function activityReportAndRecipientsById(activityReportId) {
       'name',
       'activityRecipientId',
     ],
+    include: [
+      {
+        model: Grant,
+        as: 'grant',
+        include: [
+          {
+            model: Program,
+            as: 'programs',
+            attributes: ['programType'],
+          },
+        ],
+      },
+    ],
   });
 
   const activityRecipients = recipients.map((recipient) => {
@@ -1007,6 +1020,19 @@ async function getDownloadableActivityReports(where, separate = true) {
         as: 'activityRecipients',
         required: false,
         separate,
+        include: [
+          {
+            model: Grant,
+            as: 'grant',
+            include: [
+              {
+                model: Program,
+                as: 'programs',
+                attributes: ['programType'],
+              },
+            ],
+          },
+        ],
       },
       {
         model: File,
