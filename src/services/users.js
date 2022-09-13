@@ -62,3 +62,20 @@ export async function usersWithPermissions(regions, scopes) {
     ],
   });
 }
+
+/**
+ * @param {User} user
+ */
+export async function userEmailIsVerified(user) {
+  return user.validationStatus.some((status) => status.type === 'email' && status.validatedAt);
+}
+
+/**
+ * @param {number} userId
+ */
+export async function userEmailIsVerifiedByUserId(userId) {
+  const user = await userById(userId);
+  return user
+    ? userEmailIsVerified(user)
+    : false;
+}
