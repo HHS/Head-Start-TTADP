@@ -229,7 +229,8 @@ const updateParentGoalStatus = async (sequelize, instance) => {
     // and so forth
     let newStatus;
 
-    if (atLeastOneObjectiveIsNotStarted) {
+    // we don't want any automatic regressions from "not started" to "in progress"
+    if (atLeastOneObjectiveIsNotStarted && goal.status !== 'In Progress') {
       newStatus = 'Not Started';
     }
 
