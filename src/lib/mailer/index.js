@@ -449,6 +449,9 @@ export const notifyDigest = (job, transport = defaultTransport) => {
     });
   }
   return Promise.resolve(null);
+};
+
+/**
  * @param {User} user
  * @param {string} token
  * @returns Promise<any>
