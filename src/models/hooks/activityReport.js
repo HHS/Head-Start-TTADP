@@ -21,6 +21,46 @@ const copyStatus = (instance) => {
   }
 };
 
+const propogateGoalStatusChanges = async (sequelize, instance) => {
+  const changed = instance.changed();
+  if (Array.isArray(changed) && changed.includes('calculatedStatus')) {
+    if (instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
+      && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
+      const goals = await sequelize.models.Goal.findAll({
+        where: {
+          status: ['Draft', 'Not Started'],
+        },
+        include: [
+          {
+            model: sequelize.models.ActivityReport,
+            as: 'activityReports',
+            required: true,
+          },
+        ],
+      });
+
+      await Promise.all(goals.map(async (goal) => {
+        const objectives = await sequelize.models.Objective.findAll({
+          where: { goalId: goal.id },
+        });
+
+        // is at least one objective in progress?
+        const atLeastOneObjectiveIsInProgress = objectives.some((objective) => objective.status === 'In Progress');
+
+        // determine what the status should be
+        const newStatus = atLeastOneObjectiveIsInProgress ? 'In Progress' : 'Not Started';
+
+        if (newStatus !== goal.status) {
+          await goal.update({
+            previousStatus: goal.status,
+            status: newStatus,
+          });
+        }
+      }));
+    }
+  }
+};
+
 const propogateSubmissionStatus = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
@@ -329,6 +369,7 @@ const afterUpdate = async (sequelize, instance, options) => {
   await propogateSubmissionStatus(sequelize, instance, options);
   await propagateApprovedStatus(sequelize, instance, options);
   await automaticStatusChangeOnAprovalForGoals(sequelize, instance, options);
+  await propogateGoalStatusChanges(sequelize, instance);
 };
 
 export {
@@ -338,4 +379,5 @@ export {
   beforeCreate,
   beforeUpdate,
   afterUpdate,
+  propogateGoalStatusChanges,
 };
