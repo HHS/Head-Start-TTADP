@@ -217,6 +217,7 @@
     "helmet": "^5.0.1",
     "html-to-text": "^8.1.0",
     "http-codes": "^1.0.0",
+    "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.20",
     "moment": "^2.29.4",
     "multiparty": "^4.2.2",

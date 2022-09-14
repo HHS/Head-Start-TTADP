@@ -1,0 +1,9 @@
+post:
+  tags:
+    - email-verification
+  summary: Given a token, verifies it and stores verification and timestamp in database.
+  responses:
+    200:
+      description: Verified.
+    400:
+      description: Token verification failed.
