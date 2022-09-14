@@ -1,11 +1,16 @@
 import { createTransport } from 'nodemailer';
 import Email from 'email-templates';
 import * as path from 'path';
-import { Op } from 'sequelize';
 import { auditLogger, logger } from '../../logger';
 import newQueue from '../queue';
-import { EMAIL_ACTIONS, EMAIL_DIGEST_FREQ, REPORT_STATUSES } from '../../constants';
-import models, { sequelize } from '../../models';
+import { EMAIL_ACTIONS, EMAIL_DIGEST_FREQ, USER_SETTINGS } from '../../constants';
+import { usersWithSetting } from '../../services/userSettings';
+import {
+  activityReportsWhereCollaboratorByDate,
+  activityReportsChangesRequestedByDate,
+  activityReportsSubmittedByDate,
+  activityReportsApprovedByDate
+} from '../../services/activityReports';
 
 export const notificationQueue = newQueue('notifications');
 export const notificationDigestQueue = newQueue('digestNotifications');
@@ -38,7 +43,7 @@ const emailTemplatePath = path.join(process.cwd(), 'email_templates');
  * @param {String} freq - frequency of the needs action digests (daily/weekly/monthly)
  *
  */
-const frequencyToInterval = (freq) => {
+export const frequencyToInterval = (freq) => {
   let date = null;
   switch (freq) {
     case EMAIL_DIGEST_FREQ.DAILY:
@@ -76,12 +81,6 @@ export const notifyChangesRequested = (job, transport = defaultTransport) => {
     const approverNote = approver.note;
     logger.debug(`MAILER: Notifying users that ${approverEmail} requested changes on report ${displayId}`);
 
-    // const template = path.resolve(emailTemplatePath, 'changes_requested_by_manager');
-    // const mailerLog = await models.MailerLogs.create({
-    //   emailTo: [author.email, ...collabArray], action: EMAIL_ACTIONS.NEEDS_ACTION,
-    //   title: template, activityReports: [id],
-    // });
-    // console.log(`mailer log: ${mailerLog}`);
     const collabArray = activityReportCollaborators.map((c) => c.user.email);
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
     const email = new Email({
@@ -297,53 +296,25 @@ export const changesRequestedNotification = (report, approver) => {
  *
  */
 export async function collaboratorDigest(freq) {
-  let users; let
-    data = null;
+  let data = null;
   const date = frequencyToInterval(freq);
 
-  // Find Users based on preferences
-  // TODO: remove hard coded values once merged with preferences
-  const result = await sequelize.transaction(async (t) => {
-    users = await models.User.findAll({
-      attributes: ['id', 'email', 'name'],
-      where: { id: 102 },
-    }, { transaction: t });
+  // Find users having collaborator digest preferences
+  const users = await usersWithSetting(USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED, [freq]);
 
-    const records = await users.map(async (user) => {
-      const reports = await models.ActivityReport.findAll({
-        attributes: ['id', 'displayId'],
-        where: {
-          calculatedStatus: REPORT_STATUSES.DRAFT,
-          id: {
-            [Op.in]: sequelize.literal(
-              `(SELECT (new_row_data->'activityReportId')::NUMERIC
-            FROM "ZALActivityReportCollaborators" 
-            where dml_timestamp > ${date} AND
-            (new_row_data->'userId')::NUMERIC = ${user.id})`,
-            ),
-          },
-        },
-        include: [
-          {
-            model: models.ActivityReportCollaborator,
-            as: 'activityReportCollaborators',
-            where: { userId: user.id },
-          },
-        ],
-      }, { transaction: t });
+  const records = users.map(async (user) => {
+    const reports = await activityReportsWhereCollaboratorByDate(user.id, date);
 
-      data = {
-        user,
-        reports,
-        type: EMAIL_ACTIONS.COLLABORATOR_DIGEST,
-        freq,
-      };
-      notificationDigestQueue.add(EMAIL_ACTIONS.COLLABORATOR_DIGEST, data);
-      return data;
-    });
-    return Promise.all(records);
+    data = {
+      user,
+      reports,
+      type: EMAIL_ACTIONS.COLLABORATOR_DIGEST,
+      freq,
+    };
+    notificationDigestQueue.add(EMAIL_ACTIONS.COLLABORATOR_DIGEST, data);
+    return data;
   });
-  return result;
+  return Promise.all(records);
 }
 
 /**
@@ -354,62 +325,24 @@ export async function collaboratorDigest(freq) {
  *
  */
 export async function changesRequestedDigest(freq) {
-  let users; let
-    data;
+  let data;
   const date = frequencyToInterval(freq);
   // Find Users with preference
-  // TODO: remove hard coded values once merged with preferences
-  const result = await sequelize.transaction(async (t) => {
-    users = await models.User.findAll({
-      where: { id: 18 },
-    }, { transaction: t });
+  const users = await usersWithSetting(USER_SETTINGS.EMAIL.KEYS.NEEDS_ACTION, [freq]);
+  const records = users.map(async (user) => {
+    const reports = await activityReportsChangesRequestedByDate(user.id, date);
 
-    const records = await users.map(async (user) => {
-      const reports = await models.ActivityReport.findAll({
-        attributes: ['id', 'displayId'],
-        where: {
-          [Op.and]: [
-            {
-              calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
-            },
-            {
-              [Op.or]: [{ userId: user.id }, { '$activityReportCollaborators.userId$': user.id }],
-            },
-            {
-              id: {
-                [Op.in]: sequelize.literal(
-                  `(SELECT data_id
-              FROM "ZALActivityReports" 
-              where dml_timestamp > ${date} AND
-              (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.NEEDS_ACTION}')`,
-                ),
-              },
-            },
-          ],
-        },
-        include: [
-          {
-            model: models.ActivityReportCollaborator,
-            as: 'activityReportCollaborators',
-            attributes: ['userId'],
-            required: false,
-          },
-        ],
-      }, { transaction: t });
+    data = {
+      user,
+      reports,
+      type: EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
+      freq,
+    };
 
-      data = {
-        user,
-        reports,
-        type: EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
-        freq,
-      };
-
-      notificationDigestQueue.add(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, data);
-      return data;
-    });
-    return Promise.all(records);
+    notificationDigestQueue.add(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, data);
+    return data;
   });
-  return result;
+  return Promise.all(records);
 }
 
 /**
@@ -420,52 +353,24 @@ export async function changesRequestedDigest(freq) {
  *
  */
 export async function submittedDigest(freq) {
-  let users; let
-    data = null;
+  let data = null;
   const date = frequencyToInterval(freq);
   // Find Users with preferences
-  // TODO: remove hard coded values once merged with preferences
-  const result = await sequelize.transaction(async (t) => {
-    users = await models.User.findAll({
-      where: { id: 18 },
-    }, { transaction: t });
+  const users = await usersWithSetting(USER_SETTINGS.EMAIL.KEYS.SUBMITTED_FOR_REVIEW, [freq]);
+  const records = users.map(async (user) => {
+    const reports = await activityReportsSubmittedByDate(user.id, date);
 
-    const records = await users.map(async (user) => {
-      const reports = await models.ActivityReport.findAll({
-        attributes: ['id', 'displayId'],
-        where: {
-          calculatedStatus: { [Op.not]: REPORT_STATUSES.APPROVED },
-          id: {
-            [Op.in]: sequelize.literal(
-              `(SELECT data_id
-          FROM "ZALActivityReports" 
-          where dml_timestamp > ${date} AND
-          (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.SUBMITTED}')`,
-            ),
-          },
-        },
-        include: [
-          {
-            model: models.ActivityReportApprover,
-            as: 'approvers',
-            where: { userId: user.id },
-          },
-        ],
-      }, { transaction: t });
+    data = {
+      user,
+      reports,
+      type: EMAIL_ACTIONS.SUBMITTED_DIGEST,
+      freq,
+    };
 
-      data = {
-        user,
-        reports,
-        type: EMAIL_ACTIONS.SUBMITTED_DIGEST,
-        freq,
-      };
-
-      notificationDigestQueue.add(EMAIL_ACTIONS.SUBMITTED_DIGEST, data);
-      return data;
-    });
-    return Promise.all(records);
+    notificationDigestQueue.add(EMAIL_ACTIONS.SUBMITTED_DIGEST, data);
+    return data;
   });
-  return result;
+  return Promise.all(records);
 }
 
 /**
@@ -476,62 +381,25 @@ export async function submittedDigest(freq) {
  *
  */
 export async function approvedDigest(freq) {
-  let users; let
-    data = null;
+  let data = null;
   const date = frequencyToInterval(freq);
   // Find Users with preferences
-  // TODO: remove hard coded values once merged with preferences
-  const result = await sequelize.transaction(async (t) => {
-    users = await models.User.findAll({
-      where: { id: 18 },
-    }, { transaction: t });
+  const users = await usersWithSetting(USER_SETTINGS.EMAIL.KEYS.APPROVED, [freq]);
 
-    const records = await users.map(async (user) => {
-      const reports = await models.ActivityReport.findAll({
-        attributes: ['id', 'displayId'],
-        where: {
-          [Op.and]: [
-            {
-              calculatedStatus: REPORT_STATUSES.APPROVED,
-            },
-            {
-              [Op.or]: [{ userId: user.id }, { '$activityReportCollaborators.userId$': user.id }],
-            },
-            {
-              id: {
-                [Op.in]: sequelize.literal(
-                  `(SELECT data_id
-              FROM "ZALActivityReports" 
-              where dml_timestamp > ${date} AND
-              (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.APPROVED}')`,
-                ),
-              },
-            },
-          ],
-        },
-        include: [
-          {
-            model: models.ActivityReportCollaborator,
-            as: 'activityReportCollaborators',
-            attributes: ['userId'],
-            required: false,
-          },
-        ],
-      }, { transaction: t });
+  const records = users.map(async (user) => {
+    const reports = await activityReportsApprovedByDate(user.id, date);
 
-      data = {
-        user,
-        reports,
-        type: EMAIL_ACTIONS.APPROVED_DIGEST,
-        freq,
-      };
+    data = {
+      user,
+      reports,
+      type: EMAIL_ACTIONS.APPROVED_DIGEST,
+      freq,
+    };
 
-      notificationDigestQueue.add(EMAIL_ACTIONS.APPROVED_DIGEST, data);
-      return data;
-    });
-    return Promise.all(records);
+    notificationDigestQueue.add(EMAIL_ACTIONS.APPROVED_DIGEST, data);
+    return data;
   });
-  return result;
+  return Promise.all(records);
 }
 
 /**

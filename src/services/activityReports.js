@@ -1152,3 +1152,161 @@ export async function getDownloadableActivityReportsByIds(readRegions, {
   const where = { regionId: regions, id: { [Op.in]: reportIds } };
   return getDownloadableActivityReports(where);
 }
+
+/**
+ * Fetches ActivityReports where a user is a collaborator based by date
+ *
+ * @param {integer} userId - user id
+ * @param {string} date - date interval string, e.g. NOW() - INTERVAL '1 DAY'
+ * @returns {Promise<ActivityReport[]>} - retrieved reports
+ */
+export async function activityReportsWhereCollaboratorByDate(userId, date) {
+  const reports = await ActivityReport.findAll({
+    attributes: ['id', 'displayId'],
+    where: {
+      calculatedStatus: {
+        [Op.ne]: REPORT_STATUSES.APPROVED,
+      },
+      id: {
+        [Op.in]: sequelize.literal(
+          `(SELECT (new_row_data->'activityReportId')::NUMERIC
+        FROM "ZALActivityReportCollaborators" 
+        where dml_timestamp > ${date} AND
+        (new_row_data->'userId')::NUMERIC = ${userId})`
+        ),
+      },
+    },
+    include: [
+      {
+        model: ActivityReportCollaborator,
+        as: 'activityReportCollaborators',
+        where: { userId },
+      },
+    ],
+  });
+  return reports;
+}
+
+/**
+ * Fetches ActivityReports where change was requested and a user is either
+ * a collaborator or an author
+ *
+ * @param {integer} userId - user id
+ * @param {string} date - date interval string, e.g. NOW() - INTERVAL '1 DAY'
+ * @returns {Promise<ActivityReport[]>} - retrieved reports
+ */
+ export async function activityReportsChangesRequestedByDate(userId, date) {
+  const reports = await ActivityReport.findAll({
+    attributes: ['id', 'displayId'],
+    where: {
+      [Op.and]: [
+        {
+          calculatedStatus: {
+            [Op.ne]: REPORT_STATUSES.APPROVED,
+          },
+        },
+        {
+          [Op.or]: [{ userId }, { '$activityReportCollaborators.userId$': userId }],
+        },
+        {
+          id: {
+            [Op.in]: sequelize.literal(
+              `(SELECT data_id
+          FROM "ZALActivityReports" 
+          where dml_timestamp > ${date} AND
+          (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.NEEDS_ACTION}')`
+            ),
+          },
+        },
+      ],
+    },
+    include: [
+      {
+        model: ActivityReportCollaborator,
+        as: 'activityReportCollaborators',
+        attributes: ['userId'],
+        required: false,
+      },
+    ],
+  });
+  return reports;
+}
+
+/**
+ * Fetches ActivityReports that were submitted for the manager's review
+ *
+ * @param {integer} userId - manager's id
+ * @param {string} date - date interval string, e.g. NOW() - INTERVAL '1 DAY'
+ * @returns {Promise<ActivityReport[]>} - retrieved reports
+ */
+export async function activityReportsSubmittedByDate(userId, date) {
+  const reports = await ActivityReport.findAll({
+    attributes: ['id', 'displayId'],
+    where: {
+      [Op.and]: [
+        { calculatedStatus: { [Op.ne]: REPORT_STATUSES.APPROVED } },
+        { calculatedStatus: { [Op.ne]: REPORT_STATUSES.DRAFT } },
+        {
+          id: {
+            [Op.in]: sequelize.literal(
+              `(SELECT data_id
+          FROM "ZALActivityReports" 
+          where dml_timestamp > ${date} AND
+          (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.SUBMITTED}')`,
+            ),
+          },
+        },
+      ],
+    },
+    include: [
+      {
+        model: ActivityReportApprover,
+        as: 'approvers',
+        where: { userId },
+      },
+    ],
+  });
+  return reports;
+}
+
+/**
+ * Fetches ActivityReports that were approved for authors and collaborators
+ *
+ * @param {integer} userId - user's id
+ * @param {string} date - date interval string, e.g. NOW() - INTERVAL '1 DAY'
+ * @returns {Promise<ActivityReport[]>} - retrieved reports
+ */
+export async function activityReportsApprovedByDate(userId, date) {
+  const reports = await ActivityReport.findAll({
+    attributes: ['id', 'displayId'],
+    where: {
+      [Op.and]: [
+        {
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        },
+        {
+          [Op.or]: [{ userId }, { '$activityReportCollaborators.userId$': userId }],
+        },
+        {
+          id: {
+            [Op.in]: sequelize.literal(
+              `(SELECT data_id
+          FROM "ZALActivityReports" 
+          where dml_timestamp > ${date} AND
+          (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.APPROVED}')`,
+            ),
+          },
+        },
+      ],
+    },
+    include: [
+      {
+        model: ActivityReportCollaborator,
+        as: 'activityReportCollaborators',
+        attributes: ['userId'],
+        required: false,
+      },
+    ],
+  });
+  return reports;
+}

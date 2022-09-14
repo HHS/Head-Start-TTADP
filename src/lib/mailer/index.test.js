@@ -3,11 +3,14 @@ import {
   notifyCollaboratorAssigned, notifyApproverAssigned, notifyChangesRequested, notifyReportApproved,
   notifyDigest,
   collaboratorDigest,
+  changesRequestedDigest,
   notificationDigestQueue as notificationDigestQueueMock,
 } from '.';
-import { EMAIL_ACTIONS, EMAIL_DIGEST_FREQ } from '../../constants';
+import { EMAIL_ACTIONS, EMAIL_DIGEST_FREQ, REPORT_STATUSES } from '../../constants';
 
-import db from '../../models';
+import db, {
+  ActivityReport, ActivityReportCollaborator, User,
+} from '../../models';
 
 const mockManager = {
   name: 'Mock Manager',
@@ -38,6 +41,24 @@ const mockNewCollaborator = {
   email: 'mockNewCollaborator@test.gov',
 };
 
+const mockUser = {
+  id: 2115665161,
+  homeRegionId: 1,
+  name: 'user2115665161',
+  hsesUsername: 'user2115665161',
+  hsesUserId: 'user2115665161',
+  role: ['Grants Specialist', 'Health Specialist'],
+};
+
+const digestMockCollab = {
+  id: 22161330,
+  homeRegionId: 1,
+  name: 'b',
+  hsesUserId: 'b',
+  hsesUsername: 'b',
+  role: [],
+};
+
 const mockReport = {
   id: 1,
   displayId: 'mockReport-1',
@@ -45,6 +66,38 @@ const mockReport = {
   activityReportCollaborators: [mockCollaborator1, mockCollaborator2],
   approvers: [mockApprover],
 };
+
+const reportObject = {
+  activityRecipientType: 'recipient',
+  submissionStatus: REPORT_STATUSES.DRAFT,
+  userId: mockUser.id,
+  regionId: 1,
+  lastUpdatedById: mockUser.id,
+};
+
+const submittedReport = {
+  ...reportObject,
+  activityRecipients: [{ grantId: 1 }],
+  submissionStatus: REPORT_STATUSES.SUBMITTED,
+  calculatedStatus: REPORT_STATUSES.SUBMITTED,
+  numberOfParticipants: 1,
+  deliveryMethod: 'method',
+  duration: 0,
+  endDate: '2020-09-01T12:00:00Z',
+  startDate: '2020-09-01T12:00:00Z',
+  requester: 'requester',
+  targetPopulations: ['pop'],
+  reason: ['reason'],
+  participants: ['participants'],
+  topics: ['topics'],
+  ttaType: ['type'],
+};
+
+jest.mock('../../services/userSettings', () => {
+  return {
+    usersWithSetting: jest.fn().mockReturnValue(Promise.resolve([{ id: digestMockCollab.id }])),
+  };
+});
 
 const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${mockReport.id}`;
 
@@ -531,17 +584,55 @@ describe('mailer tests', () => {
   });
 
   describe('enqueue', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
+      await User.create(digestMockCollab, { validate: false }, { individualHooks: false });
+      await User.create(mockUser, { validate: false }, { individualHooks: false });
+
       jest.spyOn(notificationDigestQueueMock, 'add').mockImplementation(async () => Promise.resolve());
     });
+    afterEach(async () => {
+      await ActivityReportCollaborator.destroy({ where: { userId: digestMockCollab.id } });
+      await ActivityReport.destroy({ where: { userId: mockUser.id } });
+      await User.destroy({ where: { id: digestMockCollab.id } });
+      await User.destroy({ where: { id: mockUser.id } });
 
-    afterEach(() => {
       notificationDigestQueueMock.add.mockRestore();
     });
-    it('on the notificationDigestQueue', async () => {
+    afterAll(async () => {
+      await db.sequelize.close();
+    });
+    it('"collaborator added" digest on the notificationDigestQueue', async () => {
+      const report = await ActivityReport.create(reportObject);
+
+      // Add Collaborator.
+      await ActivityReportCollaborator.create({
+        activityReportId: report.id,
+        userId: digestMockCollab.id,
+      });
       const result = await collaboratorDigest('today');
       expect(notificationDigestQueueMock.add).toHaveBeenCalled();
-      expect(result.freq).toBe('today');
+      expect(result).toBeDefined();
+      expect(result.length).toBe(1);
+      expect(result[0].freq).toBe('today');
+      expect(result[0].reports.length).toBe(1);
+      expect(result[0].reports[0].id).toBe(report.id);
+    });
+    
+    it('"changes requested" digest on the notificationDigestQueue', async () => {
+      const report = await ActivityReport.create({ ...submittedReport, calculatedStatus: REPORT_STATUSES.NEEDS_ACTION });
+
+      // Add Collaborator.
+      await ActivityReportCollaborator.create({
+        activityReportId: report.id,
+        userId: digestMockCollab.id,
+      });
+      const result = await changesRequestedDigest('today');
+      expect(notificationDigestQueueMock.add).toHaveBeenCalled();
+      expect(result).toBeDefined();
+      expect(result.length).toBe(1);
+      expect(result[0].freq).toBe('today');
+      expect(result[0].reports.length).toBe(1);
+      expect(result[0].reports[0].id).toBe(report.id);
     });
   });
 });
