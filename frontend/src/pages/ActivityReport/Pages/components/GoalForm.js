@@ -1,4 +1,6 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, {
+  useEffect, useState, useMemo, useContext,
+} from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import { v4 as uuid } from 'uuid';
@@ -12,15 +14,21 @@ import {
   GOAL_NAME_ERROR,
 } from '../../../../components/GoalForm/constants';
 import { NO_ERROR, ERROR_FORMAT } from './constants';
+import Loader from '../../../../components/Loader';
+import GoalFormContext from '../../../../GoalFormContext';
 
 export default function GoalForm({
   goal,
   topicOptions,
   roles,
   reportId,
+  onSaveDraft,
 }) {
   // pull the errors out of the form context
   const { errors, watch } = useFormContext();
+
+  // Goal Form Context.
+  const { isLoading } = useContext(GoalFormContext);
 
   /**
    * add controllers for all the controlled fields
@@ -117,6 +125,7 @@ export default function GoalForm({
 
   return (
     <>
+      <Loader loading={isLoading} loadingLabel="Loading" text="Saving" />
       <GoalText
         error={errors.goalName ? ERROR_FORMAT(errors.goalName.message) : NO_ERROR}
         goalName={goalText}
@@ -125,6 +134,7 @@ export default function GoalForm({
         inputName={goalTextInputName}
         isOnReport={goal.onApprovedAR || false}
         goalStatus={status}
+        isLoading={isLoading}
       />
 
       <GoalDate
@@ -135,6 +145,7 @@ export default function GoalForm({
         datePickerKey={datePickerKey}
         inputName={goalEndDateInputName}
         goalStatus={status}
+        isLoading={isLoading}
       />
 
       <Objectives
@@ -144,6 +155,7 @@ export default function GoalForm({
         goalStatus={status}
         noObjectiveError={errors.goalForEditing && errors.goalForEditing.objectives
           ? ERROR_FORMAT(errors.goalForEditing.objectives.message) : NO_ERROR}
+        onSaveDraft={onSaveDraft}
       />
     </>
   );
@@ -176,4 +188,5 @@ GoalForm.propTypes = {
   })).isRequired,
   roles: PropTypes.arrayOf(PropTypes.string).isRequired,
   reportId: PropTypes.number.isRequired,
+  onSaveDraft: PropTypes.func.isRequired,
 };

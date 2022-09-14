@@ -37,7 +37,7 @@ const components = {
 };
 
 const GoalPicker = ({
-  availableGoals, roles, grantIds, reportId,
+  availableGoals, roles, grantIds, reportId, onSaveDraft,
 }) => {
   const {
     control, setValue, watch,
@@ -144,6 +144,7 @@ const GoalPicker = ({
               roles={roles}
               goal={goalForEditing}
               reportId={reportId}
+              onSaveDraft={onSaveDraft}
             />
           </div>
         ) : null}
@@ -166,6 +167,7 @@ GoalPicker.propTypes = {
     PropTypes.number,
     PropTypes.string,
   ]).isRequired,
+  onSaveDraft: PropTypes.func.isRequired,
 };
 
 export default GoalPicker;

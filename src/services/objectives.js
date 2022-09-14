@@ -26,19 +26,40 @@ export async function saveObjectivesForReport(objectives, report) {
       });
 
       // Determine if this objective already exists.
-      const existingObjective = await Objective.findOne({
-        where: {
-          title: objective.title,
-          otherEntityId,
-          status: { [Op.not]: 'Complete' },
-        },
-      });
+      let existingObjective;
+
+      // 1. Find existing by id and entity and id.
+      if (objective.ids
+            && objective.ids.length) {
+        const validIdsToCheck = objective.ids.filter((id) => typeof id === 'number');
+        existingObjective = await Objective.findOne({
+          where: {
+            // We are checking all objective id's but only one should link to the entity.
+            id: validIdsToCheck,
+            otherEntityId,
+            status: { [Op.not]: 'Complete' },
+          },
+        });
+      }
+
+      // 2. Find by title and 'entity' id.
+      if (!existingObjective) {
+        // Determine if this objective already exists.
+        existingObjective = await Objective.findOne({
+          where: {
+            title: objective.title,
+            otherEntityId,
+            status: { [Op.not]: 'Complete' },
+          },
+        });
+      }
 
       // If it already exists update the status else create it.
       let savedObjective;
       if (existingObjective) {
         await existingObjective.update({
           status: objective.status,
+          title: objective.title,
         }, { individualHooks: true });
         savedObjective = existingObjective;
       } else {
@@ -47,6 +68,7 @@ export async function saveObjectivesForReport(objectives, report) {
         const { id, ...ObjPros } = objective;
         savedObjective = await Objective.create({
           ...ObjPros,
+          otherEntityId,
         });
       }
 
@@ -75,7 +97,13 @@ export async function saveObjectivesForReport(objectives, report) {
 
 export async function getObjectiveById(objectiveId) {
   return Objective.findOne({
-    attributes: ['id', 'title', 'status'],
+    attributes: [
+      'id',
+      'title',
+      'status',
+      'onApprovedAR',
+      'otherEntityId',
+    ],
     where: {
       id: objectiveId,
     },

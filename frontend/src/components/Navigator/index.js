@@ -77,6 +77,7 @@ function Navigator({
   const selectedGoals = watch('goals');
   const selectedObjectivesWithoutGoals = watch('objectivesWithoutGoals');
 
+  const [isLoading, setIsLoading] = useState(false);
   const [isGoalFormClosed, toggleGoalForm] = useState(selectedGoals.length > 0);
 
   // Toggle objectives readonly only if all objectives are saved and pass validation.
@@ -144,6 +145,8 @@ function Navigator({
   };
 
   const onSaveDraftGoal = async () => {
+    // Prevent user from making changes to goal title during auto-save.
+    setIsLoading(true);
     // the goal form only allows for one goal to be open at a time
     // but the objectives are stored in a subfield
     // so we need to access the objectives and bundle them together in order to validate them
@@ -160,17 +163,51 @@ function Navigator({
       regionId: formData.regionId,
     };
 
+    let allGoals = [...selectedGoals, goal];
     // save goal to api, come back with new ids for goal and objectives
     try {
-      await saveGoalsForReport(
+      allGoals = await saveGoalsForReport(
         {
-          goals: [...selectedGoals, goal],
+          goals: allGoals,
           activityReportId: reportId,
           regionId: formData.regionId,
         },
       );
+
+      // Find the goal we are editing and put it back with updated values.
+      const goalBeingEdited = allGoals.find((g) => g.name === goal.name);
+      setValue('goalForEditing', goalBeingEdited);
+      updateLastSaveTime(moment());
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onSaveDraftOetObjectives = async () => {
+    // Prevent user from making changes to objectives during auto-save.
+    setIsLoading(true);
+
+    const fieldArrayName = 'objectivesWithoutGoals';
+    const currentObjectives = getValues(fieldArrayName);
+
+    // Save objectives.
+    try {
+      const newObjectives = await saveObjectivesForReport(
+        {
+          objectivesWithoutGoals: currentObjectives,
+          activityReportId: reportId,
+          region: formData.regionId,
+        },
+      );
+      // Set updated objectives.
+      setValue('objectivesWithoutGoals', newObjectives);
+      updateLastSaveTime(moment());
+    } catch (error) {
+      updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -284,10 +321,17 @@ function Navigator({
   };
 
   useInterval(async () => {
-    const ifSaveGoals = isGoalsObjectivesPage && !isGoalFormClosed;
-    if (ifSaveGoals) {
+    // Determine if we should save draft on auto save.
+    const saveGoalsDraft = isGoalsObjectivesPage && !isGoalFormClosed;
+    const saveObjectivesDraft = isGoalsObjectivesPage && !isObjectivesFormClosed;
+    if (isOtherEntityReport && saveObjectivesDraft) {
+      // Save other-entity draft.
+      await onSaveDraftOetObjectives();
+    } else if (saveGoalsDraft) {
+      // Save recipient draft.
       await onSaveDraftGoal();
     } else {
+      // Save regular.
       await onSaveForm();
     }
   }, autoSaveInterval);
@@ -336,6 +380,8 @@ function Navigator({
           isObjectivesFormClosed,
           toggleGoalForm,
           toggleObjectiveForm,
+          isLoading,
+          setIsLoading,
         }}
         >
           <FormProvider {...hookForm}>
@@ -366,7 +412,13 @@ function Navigator({
                 <Form
                   className="smart-hub--form-large"
                 >
-                  {page.render(additionalData, formData, reportId)}
+                  {page.render(
+                    additionalData,
+                    formData,
+                    reportId,
+                    onSaveDraftGoal,
+                    onSaveDraftOetObjectives,
+                  )}
                   <div className="display-flex">
                     { showSaveGoalsAndObjButton
                       ? (

@@ -8,6 +8,14 @@ import {
 import ObjectiveFileUploader from '../ObjectiveFileUploader';
 
 describe('ObjectiveFileUploader', () => {
+  beforeEach(async () => {
+    fetchMock.post('/api/files/objectives', [{ objectiveIds: [] }]);
+  });
+
+  afterEach(async () => {
+    fetchMock.restore();
+  });
+
   const dispatchEvt = (node, type, data) => {
     const event = new Event(type, { bubbles: true });
     Object.assign(event, data);
