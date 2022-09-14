@@ -5,3 +5,8 @@
 .usa-error-message + .usa-select{
     border: 2px solid #b50909;
 }
+
+/* Prevent the title from wrapping. */
+.ttahub-objective-select-remove-objective-modal {
+  max-width: 38rem;
+}
