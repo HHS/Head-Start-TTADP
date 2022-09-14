@@ -125,7 +125,6 @@ const submittedReport = {
   ...reportObject,
   activityRecipients: [{ grantId: 1 }],
   submissionStatus: REPORT_STATUSES.SUBMITTED,
-  calculatedStatus: REPORT_STATUSES.SUBMITTED,
   numberOfParticipants: 1,
   deliveryMethod: 'method',
   duration: 0,
@@ -1117,9 +1116,6 @@ describe('Activity report service', () => {
   });
 
   describe('digests', () => {
-    afterAll(async () => {
-      await db.sequelize.close();
-    });
     describe('activityReportsWhereCollaboratorByDate', () => {
       beforeEach(async () => {
         await User.create(digestMockCollabOne, { validate: false }, { individualHooks: false });
@@ -1131,8 +1127,13 @@ describe('Activity report service', () => {
         await User.destroy({ where: { id: digestMockCollabOne.id } });
         await User.destroy({ where: { id: mockUser.id } });
       });
-      it('retrieves daily activity reports in DRAFT when added as a collaborator', async () => {
-        const report = await ActivityReport.create(reportObject);
+      it('retrieves activity reports in DRAFT when added as a collaborator', async () => {
+        const report = await ActivityReport.create({
+          ...reportObject,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+          lastUpdatedById: mockUser.id,
+          userId: mockUser.id,
+        });
         const empty = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
@@ -1152,7 +1153,10 @@ describe('Activity report service', () => {
         expect(monthlyDigestReport.id).toBe(report.id);
       });
       it('retrieves activity reports (SUBMITTED) when added as a collaborator', async () => {
-        const report = await ActivityReport.create(submittedReport);
+        const report = await ActivityReport.create({
+          ...submittedReport,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        });
         const empty = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
