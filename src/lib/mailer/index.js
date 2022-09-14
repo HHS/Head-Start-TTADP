@@ -449,6 +449,34 @@ export const notifyDigest = (job, transport = defaultTransport) => {
     });
   }
   return Promise.resolve(null);
+ * @param {User} user
+ * @param {string} token
+ * @returns Promise<any>
+ */
+export const sendEmailVerificationRequestWithToken = (user, token) => {
+  const email = new Email({
+    message: {
+      from: process.env.FROM_EMAIL_ADDRESS,
+    },
+    send,
+    transport: defaultTransport,
+    htmlToText: {
+      wordwrap: 120,
+    },
+  });
+
+  const uri = `${process.env.TTA_SMART_HUB_URI}/account/verify-email/${token}`;
+
+  return email.send({
+    template: path.resolve(emailTemplatePath, 'email_verification'),
+    message: {
+      to: [user.email],
+    },
+    locals: {
+      token,
+      uri,
+    },
+  });
 };
 
 export default defaultTransport;

@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import {
   Alert,
@@ -11,6 +12,7 @@ import {
   Radio,
 } from '@trussworks/react-uswds';
 import { useForm, FormProvider, useFormContext } from 'react-hook-form';
+import { useParams } from 'react-router';
 import Avatar from '../../components/Avatar';
 import './index.scss';
 import UserContext from '../../UserContext';
@@ -20,10 +22,13 @@ import {
   updateSettings,
   getEmailSettings,
 } from '../../fetchers/settings';
+import { requestVerificationEmail } from '../../fetchers/users';
+import EmailVerifier from './EmailVerifier';
 
 const emailPreferenceErrorMessage = 'Please select a frequency preference';
 
-const frequencyMap = [
+// these keys should match the keys in /src/constants.js:USER_SETTINGS.EMAIL.VALUES
+const frequencyValues = [
   { key: 'never', label: 'Do not notify me' },
   { key: 'immediately', label: 'Immediately' },
   { key: 'today', label: 'Daily digest' },
@@ -38,7 +43,7 @@ const emailTypesMap = [
     keyName: 'emailWhenReportSubmittedForReview',
   },
   {
-    name: 'Changes requested to activity report',
+    name: 'Activity report needs action',
     description: 'We\'ll email you when an activity report that you created or collaborated on needs action.',
     keyName: 'emailWhenChangeRequested',
   },
@@ -54,11 +59,13 @@ const emailTypesMap = [
   },
 ];
 
-function CustomizeEmailPreferencesForm() {
+function CustomizeEmailPreferencesForm({ disabled }) {
   const {
     register,
     formState: { errors },
   } = useFormContext();
+
+  if (disabled) return null;
 
   return (
     <div>
@@ -87,7 +94,7 @@ function CustomizeEmailPreferencesForm() {
                 data-testid={`${keyName}-dropdown`}
                 inputRef={register({ required: emailPreferenceErrorMessage })}
               >
-                {frequencyMap.map(({ key, label }) => (
+                {frequencyValues.map(({ key, label }) => (
                   <option key={key} value={key}>
                     {label}
                   </option>
@@ -102,7 +109,11 @@ function CustomizeEmailPreferencesForm() {
   );
 }
 
-function EmailPreferencesForm() {
+CustomizeEmailPreferencesForm.propTypes = {
+  disabled: PropTypes.bool.isRequired,
+};
+
+function EmailPreferencesForm({ disabled }) {
   const {
     register,
     handleSubmit,
@@ -163,6 +174,7 @@ function EmailPreferencesForm() {
           data-testid="radio-subscribe"
           name="emailPreference"
           value="subscribe"
+          disabled={disabled}
           label="Send me all TTA Hub related emails immediately"
           inputRef={register({ required: emailPreferenceErrorMessage })}
           className="margin-bottom-3"
@@ -172,6 +184,7 @@ function EmailPreferencesForm() {
           data-testid="radio-customized"
           name="emailPreference"
           value="customized"
+          disabled={disabled}
           label="Let me customize the emails I want"
           inputRef={register({ required: emailPreferenceErrorMessage })}
           className="margin-bottom-3"
@@ -180,13 +193,14 @@ function EmailPreferencesForm() {
           className="margin-bottom-3"
           style={{ display: emailPreference === 'customized' ? 'block' : 'none' }}
         >
-          <CustomizeEmailPreferencesForm />
+          <CustomizeEmailPreferencesForm disabled={disabled} />
         </div>
         <Radio
           id="unsubscribe"
           data-testid="radio-unsubscribe"
           name="emailPreference"
           value="unsubscribe"
+          disabled={disabled}
           label="Unsubscribe me from all TTA Hub emails"
           inputRef={register({ required: emailPreferenceErrorMessage })}
           className="margin-bottom-3"
@@ -201,8 +215,13 @@ function EmailPreferencesForm() {
   );
 }
 
-function AccountManagement() {
+EmailPreferencesForm.propTypes = {
+  disabled: PropTypes.bool.isRequired,
+};
+
+function AccountManagement({ updateUser }) {
   const { user } = useContext(UserContext);
+  const { token } = useParams();
 
   const {
     register,
@@ -230,6 +249,30 @@ function AccountManagement() {
       .catch(() => {});
   }, [setValue]);
 
+  const [emailValidated, setEmailValidated] = useState(null);
+  const [emailVerificationSent, setEmailVerificationSent] = useState(false);
+  const [verificationEmailSendError, setVerificationEmailSendError] = useState(false);
+
+  useEffect(() => {
+    const emailValidationStatus = user.validationStatus.find(({ type }) => type === 'email');
+    if (emailValidationStatus && emailValidationStatus.validatedAt) {
+      setEmailValidated(true);
+      return;
+    }
+
+    setEmailValidated(false);
+  }, [user.validationStatus]);
+
+  const sendVerificationEmail = () => {
+    requestVerificationEmail()
+      .then(() => {
+        setEmailVerificationSent(true);
+      })
+      .catch((error) => {
+        setVerificationEmailSendError(error.message ? error.message : error);
+      });
+  };
+
   const lastLoginFormatted = new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
     month: '2-digit',
@@ -245,6 +288,8 @@ function AccountManagement() {
       </Helmet>
 
       <h1 className="landing">Account Management</h1>
+
+      <EmailVerifier token={token} updateUser={updateUser} />
 
       {/* Profile box */}
       <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
@@ -268,17 +313,63 @@ function AccountManagement() {
       {/* Email preferences box */}
       <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
         <h1 className="margin-bottom-1">Email preferences</h1>
-        <FormProvider
-          register={register}
-          handleSubmit={handleSubmit}
-          watch={watch}
-          formState={formState}
-        >
-          <EmailPreferencesForm />
-        </FormProvider>
+
+        {!emailValidated && !emailVerificationSent && (
+          <Alert type="warning">
+            Your email address isn&apos;t verified.
+            Select &apos;Send verification email&apos; below.
+          </Alert>
+        )}
+
+        {!emailValidated && emailVerificationSent && (
+          <Alert type="info">
+            Verification email sent. Check your inbox.
+            <br />
+            If you don&apos;t receive an email within thirty minutes,
+            check your spam folder, then contact support@ttahub.com.
+          </Alert>
+        )}
+
+        {!emailValidated && (
+          <>
+            <h2>Verify email address</h2>
+            <p>
+              Before you can receive TTA Hub emails, you must verify your email address.
+              <Button
+                data-testid="send-verification-email-button"
+                className="display-block margin-top-3"
+                onClick={sendVerificationEmail}
+              >
+                {emailVerificationSent ? 'Resend verification email' : 'Send verification email'}
+              </Button>
+            </p>
+          </>
+        )}
+
+        {verificationEmailSendError && (
+          <Alert type="error">
+            {verificationEmailSendError}
+          </Alert>
+        )}
+
+        {emailValidated && (
+          <FormProvider
+            register={register}
+            handleSubmit={handleSubmit}
+            watch={watch}
+            formState={formState}
+          >
+            <EmailPreferencesForm disabled={!emailValidated} />
+          </FormProvider>
+        )}
+
       </div>
     </>
   );
 }
+
+AccountManagement.propTypes = {
+  updateUser: PropTypes.func.isRequired,
+};
 
 export default AccountManagement;
