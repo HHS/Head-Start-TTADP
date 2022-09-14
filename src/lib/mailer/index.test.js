@@ -93,11 +93,9 @@ const submittedReport = {
   ttaType: ['type'],
 };
 
-jest.mock('../../services/userSettings', () => {
-  return {
-    usersWithSetting: jest.fn().mockReturnValue(Promise.resolve([{ id: digestMockCollab.id }])),
-  };
-});
+jest.mock('../../services/userSettings', () => ({
+  usersWithSetting: jest.fn().mockReturnValue(Promise.resolve([{ id: digestMockCollab.id }])),
+}));
 
 const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${mockReport.id}`;
 
@@ -617,9 +615,12 @@ describe('mailer tests', () => {
       expect(result[0].reports.length).toBe(1);
       expect(result[0].reports[0].id).toBe(report.id);
     });
-    
+
     it('"changes requested" digest on the notificationDigestQueue', async () => {
-      const report = await ActivityReport.create({ ...submittedReport, calculatedStatus: REPORT_STATUSES.NEEDS_ACTION });
+      const report = await ActivityReport.create({
+        ...submittedReport,
+        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+      });
 
       // Add Collaborator.
       await ActivityReportCollaborator.create({

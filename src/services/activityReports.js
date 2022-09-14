@@ -1172,7 +1172,7 @@ export async function activityReportsWhereCollaboratorByDate(userId, date) {
           `(SELECT (new_row_data->'activityReportId')::NUMERIC
         FROM "ZALActivityReportCollaborators" 
         where dml_timestamp > ${date} AND
-        (new_row_data->'userId')::NUMERIC = ${userId})`
+        (new_row_data->'userId')::NUMERIC = ${userId})`,
         ),
       },
     },
@@ -1195,7 +1195,7 @@ export async function activityReportsWhereCollaboratorByDate(userId, date) {
  * @param {string} date - date interval string, e.g. NOW() - INTERVAL '1 DAY'
  * @returns {Promise<ActivityReport[]>} - retrieved reports
  */
- export async function activityReportsChangesRequestedByDate(userId, date) {
+export async function activityReportsChangesRequestedByDate(userId, date) {
   const reports = await ActivityReport.findAll({
     attributes: ['id', 'displayId'],
     where: {
@@ -1214,7 +1214,7 @@ export async function activityReportsWhereCollaboratorByDate(userId, date) {
               `(SELECT data_id
           FROM "ZALActivityReports" 
           where dml_timestamp > ${date} AND
-          (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.NEEDS_ACTION}')`
+          (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.NEEDS_ACTION}')`,
             ),
           },
         },
