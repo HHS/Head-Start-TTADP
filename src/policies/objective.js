@@ -18,9 +18,22 @@ export default class Objective {
   }
 
   canUpdate() {
+    const regionId = (() => {
+      // if the objective is submitted from an activity report,
+      // this will necessarily have something in it, since all objectives
+      // submitted that way are saved in advance (the reason we check this way is
+      // other entities do not have a clear relationship with a region in our data
+      // structure)
+      if (this.objective.activityReports && this.objective.activityReports.length) {
+        return this.objective.activityReports[0].regionId;
+      }
+
+      // otherwise, the RTR is only for recipients and thus the objective will have a goal & a grant
+      return this.objective.goal.grant.regionId;
+    })();
+
     if (!this.objective.onApprovedAR
-        && (this.canWriteInRegion(this.objective.goal.grant.regionId)
-            || this.objective.otherEntityId)) {
+        && (this.canWriteInRegion(regionId))) {
       return true;
     }
     return false;

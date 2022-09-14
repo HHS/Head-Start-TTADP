@@ -33,33 +33,21 @@ const ObjectiveFileUploader = ({
   };
 
   const handleDrop = async (e) => {
-    const newFiles = await Promise.all(
-      e.map((file) => upload(file, objective, setError, index)),
-    );
+    const newFiles = await upload(e, objective, setError, index);
 
-    let objectives;
-    let setObjectives;
-    let objectiveIndex;
+    // this is entirely a concession to the inability to accurately
+    // mock the upload function in the tests
+    const updatedInfo = newFiles || {};
 
-    const values = newFiles.map((file) => {
-      if (!objectives) {
-        objectives = file.objectives;
-      }
+    const {
+      setObjectives,
+      objectives,
+      index: objectiveIndex,
+      objectiveIds,
+      ...data
+    } = updatedInfo;
 
-      if (!setObjectives) {
-        setObjectives = file.setObjectives;
-      }
-
-      if (!objectiveIndex) {
-        objectiveIndex = file.index;
-      }
-
-      const {
-        objectives: a, setObjectives: b, index: c, ...fields
-      } = file;
-
-      return fields;
-    });
+    const values = Object.values(data);
 
     const allFilesIncludingTheNewOnes = [...files, ...values];
 
