@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
   Label, Radio, Fieldset, FormGroup, ErrorMessage,
@@ -20,11 +20,17 @@ export default function ObjectiveFiles({
   onBlur,
 }) {
   const objectiveId = objective.id;
-  const hasFiles = files && files.length > 0;
+  const hasFiles = useMemo(() => files && files.length > 0, [files]);
   const [useFiles, setUseFiles] = useState(hasFiles);
   const [fileError, setFileError] = useState();
 
   const readOnly = isOnApprovedReport || status === 'Complete' || (status === 'Not Started' && isOnReport);
+
+  useEffect(() => {
+    if (!useFiles && hasFiles) {
+      setUseFiles(true);
+    }
+  }, [useFiles, hasFiles]);
 
   if (readOnly) {
     if (!hasFiles) {
