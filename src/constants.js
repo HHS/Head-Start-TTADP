@@ -178,6 +178,8 @@ export const USER_SETTINGS = {
       MONTHLY_DIGEST: 'this month',
     },
   },
+};
+
 export const EMAIL_ACTIONS = {
   COLLABORATOR_ADDED: 'collaboratorAssigned',
   NEEDS_ACTION: 'changesRequested',

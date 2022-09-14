@@ -1169,7 +1169,10 @@ describe('Activity report service', () => {
         expect(monthlyDigestReport.id).toBe(report.id);
       });
       it('retrieves activity reports (NEEDS_ACTION) when added as a collaborator', async () => {
-        const report = await ActivityReport.create({ ...submittedReport, calculatedStatus: REPORT_STATUSES.NEEDS_ACTION });
+        const report = await ActivityReport.create({
+          ...submittedReport,
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        });
 
         const empty = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
@@ -1186,9 +1189,12 @@ describe('Activity report service', () => {
         const [monthlyDigestReport] = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 MONTH\'');
         expect(monthlyDigestReport.id).toBe(report.id);
       });
-      
+
       it('does not retrieve activity reports (APPROVED) when added as a collaborator', async () => {
-        const report = await ActivityReport.create({ ...submittedReport, calculatedStatus: REPORT_STATUSES.APPROVED });
+        const report = await ActivityReport.create({
+          ...submittedReport,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        });
         const empty = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
@@ -1218,7 +1224,10 @@ describe('Activity report service', () => {
         await User.destroy({ where: { id: mockUser.id } });
       });
       it('retrieves daily activity reports in DRAFT when changes requested', async () => {
-        const report = await ActivityReport.create({ ...submittedReport, calculatedStatus: REPORT_STATUSES.NEEDS_ACTION });
+        const report = await ActivityReport.create({
+          ...submittedReport,
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        });
         await report.update(
           { calculatedStatus: REPORT_STATUSES.DRAFT },
           { individualHooks: true },
@@ -1246,7 +1255,10 @@ describe('Activity report service', () => {
         expect(authorDigest.id).toBe(report.id);
       });
       it('retrieves activity reports (SUBMITTED) when changes requested', async () => {
-        const report = await ActivityReport.create({ ...submittedReport, calculatedStatus: REPORT_STATUSES.NEEDS_ACTION });
+        const report = await ActivityReport.create({
+          ...submittedReport,
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        });
         await report.update(
           { calculatedStatus: REPORT_STATUSES.SUBMITTED },
           { individualHooks: true },
@@ -1271,7 +1283,10 @@ describe('Activity report service', () => {
         expect(authorDigest.id).toBe(report.id);
       });
       it('retrieves activity reports (NEEDS_ACTION) when changes requested', async () => {
-        const report = await ActivityReport.create({ ...submittedReport, calculatedStatus: REPORT_STATUSES.NEEDS_ACTION });
+        const report = await ActivityReport.create({
+          ...submittedReport,
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        });
 
         const empty = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
@@ -1292,9 +1307,12 @@ describe('Activity report service', () => {
         expect(authorDigest).toBeDefined();
         expect(authorDigest.id).toBe(report.id);
       });
-      
+
       it('does not retrieve activity reports (APPROVED) when changes requested', async () => {
-        const report = await ActivityReport.create({ ...submittedReport, calculatedStatus: REPORT_STATUSES.NEEDS_ACTION });
+        const report = await ActivityReport.create({
+          ...submittedReport,
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        });
         await report.update(
           { calculatedStatus: REPORT_STATUSES.APPROVED },
           { individualHooks: true },
@@ -1325,7 +1343,11 @@ describe('Activity report service', () => {
         await User.create(mockUser, { validate: false }, { individualHooks: false });
       });
       afterEach(async () => {
-        await ActivityReportApprover.destroy({ where: { userId: digestMockApprover.id }, force: true, });
+        await ActivityReportApprover.destroy({
+          where:
+            { userId: digestMockApprover.id },
+          force: true,
+        });
         await ActivityReport.destroy({ where: { userId: mockUser.id } });
         await User.destroy({ where: { id: digestMockApprover.id } });
         await User.destroy({ where: { id: mockUser.id } });
@@ -1425,13 +1447,20 @@ describe('Activity report service', () => {
         await User.create(mockUser, { validate: false }, { individualHooks: false });
       });
       afterEach(async () => {
-        await ActivityReportCollaborator.destroy({ where: { userId: digestMockCollabOne.id }, force: true, });
+        await ActivityReportCollaborator.destroy({
+          where:
+            { userId: digestMockCollabOne.id },
+          force: true,
+        });
         await ActivityReport.destroy({ where: { userId: mockUser.id } });
         await User.destroy({ where: { id: digestMockCollabOne.id } });
         await User.destroy({ where: { id: mockUser.id } });
       });
       it('does not retrieve activity reports in DRAFT when approved', async () => {
-        const report = await ActivityReport.create({ ...submittedReport, calculatedStatus: REPORT_STATUSES.APPROVED });
+        const report = await ActivityReport.create({
+          ...submittedReport,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        });
 
         const empty = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
@@ -1458,7 +1487,10 @@ describe('Activity report service', () => {
         expect(authorDigest).toBeUndefined();
       });
       it('does not retrieve activity reports (SUBMITTED) when approved', async () => {
-        const report = await ActivityReport.create({ ...submittedReport, calculatedStatus: REPORT_STATUSES.APPROVED });
+        const report = await ActivityReport.create({
+          ...submittedReport,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        });
 
         const empty = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
@@ -1483,7 +1515,10 @@ describe('Activity report service', () => {
         expect(authorDigest).toBeUndefined();
       });
       it('does not retrieve activity reports (NEEDS_ACTION) when approved', async () => {
-        const report = await ActivityReport.create({ ...submittedReport, calculatedStatus: REPORT_STATUSES.APPROVED });
+        const report = await ActivityReport.create({
+          ...submittedReport,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        });
 
         const empty = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
@@ -1509,7 +1544,10 @@ describe('Activity report service', () => {
       });
 
       it('retrieves activity reports (APPROVED) when approved', async () => {
-        const report = await ActivityReport.create({ ...submittedReport, calculatedStatus: REPORT_STATUSES.APPROVED });
+        const report = await ActivityReport.create({
+          ...submittedReport,
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        });
 
         const empty = await activityReportsApprovedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);

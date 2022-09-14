@@ -9,7 +9,7 @@ import {
   activityReportsWhereCollaboratorByDate,
   activityReportsChangesRequestedByDate,
   activityReportsSubmittedByDate,
-  activityReportsApprovedByDate
+  activityReportsApprovedByDate,
 } from '../../services/activityReports';
 
 export const notificationQueue = newQueue('notifications');
