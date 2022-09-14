@@ -24,7 +24,11 @@ import OtherEntity from './components/OtherEntity';
 import GoalFormContext from '../../../GoalFormContext';
 import ReadOnlyOtherEntityObjectives from '../../../components/GoalForm/ReadOnlyOtherEntityObjectives';
 
-const GoalsObjectives = ({ reportId }) => {
+const GoalsObjectives = ({
+  reportId,
+  onSaveDraftGoal,
+  onSaveDraftOetObjectives,
+}) => {
   const {
     watch, setValue, getValues, setError,
   } = useFormContext();
@@ -223,6 +227,7 @@ const GoalsObjectives = ({ reportId }) => {
       <OtherEntity
         roles={roles}
         recipientIds={activityRecipientIds}
+        onSaveDraft={onSaveDraftOetObjectives}
       />
       )}
       {/**
@@ -271,6 +276,7 @@ const GoalsObjectives = ({ reportId }) => {
                 availableGoals={availableGoals}
                 roles={roles}
                 reportId={reportId}
+                onSaveDraft={onSaveDraftGoal}
               />
             </Fieldset>
           </>
@@ -294,6 +300,8 @@ const GoalsObjectives = ({ reportId }) => {
 
 GoalsObjectives.propTypes = {
   reportId: PropTypes.number.isRequired,
+  onSaveDraftOetObjectives: PropTypes.func.isRequired,
+  onSaveDraftGoal: PropTypes.func.isRequired,
 };
 
 const ReviewSection = () => {
@@ -339,10 +347,12 @@ export default {
     return activityRecipientType !== 'recipient' || validateGoals(formData.goals) === true;
   },
   reviewSection: () => <ReviewSection />,
-  render: (_additionalData, _formData, reportId) => (
+  render: (_additionalData, _formData, reportId, onSaveDraftGoal, onSaveDraftOetObjectives) => (
 
     <GoalsObjectives
       reportId={reportId}
+      onSaveDraftGoal={onSaveDraftGoal}
+      onSaveDraftOetObjectives={onSaveDraftOetObjectives}
     />
   ),
 };

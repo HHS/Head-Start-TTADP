@@ -430,7 +430,7 @@ export default function GoalForm({
     }
   };
 
-  const onUploadFile = async (file, objective, setFileUploadErrorMessage, index) => {
+  const onUploadFiles = async (files, objective, setFileUploadErrorMessage, index) => {
     // The first thing we need to know is... does this objective need to be created?
     setIsLoading(true);
 
@@ -480,7 +480,10 @@ export default function GoalForm({
       // in the case that it has been rolled up to match a goal for multiple grants
       const data = new FormData();
       data.append('objectiveIds', JSON.stringify(objectiveIds));
-      data.append('file', file);
+      files.forEach((file) => {
+        data.append('file', file);
+      });
+
       const response = await uploadObjectivesFile(data);
       setFileUploadErrorMessage(null);
 
@@ -492,7 +495,7 @@ export default function GoalForm({
         index,
       };
     } catch (error) {
-      setFileUploadErrorMessage(`${file.name} failed to upload`);
+      setFileUploadErrorMessage('File(s) could not be uploaded');
     } finally {
       setIsLoading(false);
     }
@@ -738,7 +741,7 @@ export default function GoalForm({
               isOnApprovedReport={isOnApprovedReport}
               status={status || 'Needs status'}
               goalNumber={goalNumber}
-              onUploadFile={onUploadFile}
+              onUploadFiles={onUploadFiles}
               roleOptions={roleOptions}
             />
             )}

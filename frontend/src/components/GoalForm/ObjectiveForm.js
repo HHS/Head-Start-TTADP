@@ -29,7 +29,7 @@ export default function ObjectiveForm({
   errors,
   topicOptions,
   roleOptions,
-  onUploadFile,
+  onUploadFiles,
   goalStatus,
 }) {
   // the parent objective data from props
@@ -182,7 +182,7 @@ export default function ObjectiveForm({
           isOnReport={isOnReport || false}
           status={status}
           isLoading={isLoading}
-          onUploadFile={onUploadFile}
+          onUploadFiles={onUploadFiles}
           index={index}
         />
       )}
@@ -238,7 +238,7 @@ ObjectiveForm.propTypes = {
     label: PropTypes.string,
     value: PropTypes.number,
   })).isRequired,
-  onUploadFile: PropTypes.func.isRequired,
+  onUploadFiles: PropTypes.func.isRequired,
 };
 
 ObjectiveForm.defaultProps = {

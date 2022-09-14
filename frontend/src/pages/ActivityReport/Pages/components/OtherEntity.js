@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, {
+  useState, useEffect, useMemo, useContext,
+} from 'react';
 import PropTypes from 'prop-types';
 import { useFormContext, useFieldArray } from 'react-hook-form/dist/index.ie11';
 import { Alert } from '@trussworks/react-uswds';
@@ -6,13 +8,17 @@ import Objective from './Objective';
 import { getTopics } from '../../../../fetchers/topics';
 import PlusButton from '../../../../components/GoalForm/PlusButton';
 import { NEW_OBJECTIVE } from './constants';
+import Loader from '../../../../components/Loader';
+import GoalFormContext from '../../../../GoalFormContext';
 
 const OBJECTIVE_LABEL = 'objectivesWithoutGoals';
 
-export default function OtherEntity({ roles, recipientIds }) {
+export default function OtherEntity({ roles, recipientIds, onSaveDraft }) {
   const { errors } = useFormContext();
   const defaultRoles = useMemo(() => (roles.length === 1 ? roles : []), [roles]);
   const [topicOptions, setTopicOptions] = useState([]);
+
+  const { isLoading } = useContext(GoalFormContext);
 
   // for fetching topic options from API
   useEffect(() => {
@@ -54,6 +60,7 @@ export default function OtherEntity({ roles, recipientIds }) {
         </p>
         <p className="usa-prose margin-bottom-0">Create at least one objective for this activity.</p>
       </Alert>
+      <Loader loading={isLoading} loadingLabel="Loading" text="Saving" />
       {objectives.map((objective, index) => {
         const objectiveErrors = errors[OBJECTIVE_LABEL]
           && errors[OBJECTIVE_LABEL][index]
@@ -71,6 +78,7 @@ export default function OtherEntity({ roles, recipientIds }) {
             remove={remove}
             fieldArrayName={OBJECTIVE_LABEL}
             roles={roles}
+            onSaveDraft={onSaveDraft}
           />
         );
       })}
@@ -82,4 +90,5 @@ export default function OtherEntity({ roles, recipientIds }) {
 OtherEntity.propTypes = {
   roles: PropTypes.arrayOf(PropTypes.string).isRequired,
   recipientIds: PropTypes.arrayOf(PropTypes.number).isRequired,
+  onSaveDraft: PropTypes.func.isRequired,
 };

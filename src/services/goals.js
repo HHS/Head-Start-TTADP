@@ -360,6 +360,8 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
     if (exists) {
       const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
       exists.ids = [...exists.ids, id];
+      // Make sure we pass back a list of recipient ids for subsequent saves.
+      exists.recipientIds = [...exists.recipientIds, objective.getDataValue('otherEntityId')];
       return objectives;
     }
 
@@ -369,7 +371,9 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
       ...objective.dataValues,
       value: id,
       ids: [id],
-
+      // Make sure we pass back a list of recipient ids for subsequent saves.
+      recipientIds: [objective.getDataValue('otherEntityId')],
+      // ttaProvided
       isNew: false,
     }];
   }, currentObjectives);
