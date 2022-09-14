@@ -14,7 +14,7 @@ export default function ObjectiveFiles({
   isOnApprovedReport,
   status,
   isOnReport,
-  onUploadFile,
+  onUploadFiles,
   index,
   inputName,
   onBlur,
@@ -103,7 +103,7 @@ export default function ObjectiveFiles({
                           files={files}
                           onChange={onChangeFiles}
                           objective={objective}
-                          upload={onUploadFile}
+                          upload={onUploadFiles}
                           id={`files-${objectiveId}`}
                           index={index}
                           onBlur={onBlur}
@@ -165,7 +165,7 @@ ObjectiveFiles.propTypes = {
   isOnApprovedReport: PropTypes.bool.isRequired,
   isOnReport: PropTypes.bool.isRequired,
   status: PropTypes.string.isRequired,
-  onUploadFile: PropTypes.func.isRequired,
+  onUploadFiles: PropTypes.func.isRequired,
   index: PropTypes.number.isRequired,
   inputName: PropTypes.string,
   onBlur: PropTypes.func,

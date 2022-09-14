@@ -7,13 +7,14 @@
 // rules https://github.com/react-dropzone/react-dropzone
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
 
 const FileRejections = ({
   fileRejections,
 }) => {
   const fileRejectionItems = fileRejections.map(({ file, errors }) => (
-    <span key={file.path}>
+    <span key={uuidv4()}>
       <strong>{file.path}</strong>
       {` (${(file.size / 1000000).toFixed(2)} MB)`}
       <span>
@@ -30,9 +31,7 @@ const FileRejections = ({
 
   return (
     <div>
-      {
-          fileRejectionItems
-        }
+      { fileRejectionItems }
     </div>
   );
 };

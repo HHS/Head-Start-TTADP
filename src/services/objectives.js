@@ -8,6 +8,7 @@ import {
   Topic,
   File,
   ObjectiveResource,
+  ActivityReport,
 } from '../models';
 import { removeUnusedGoalsObjectivesFromReport, reduceObjectives, saveObjectiveAssociations } from './goals';
 import { cacheObjectiveMetadata } from './reportCache';
@@ -97,11 +98,17 @@ export async function saveObjectivesForReport(objectives, report) {
 
 export async function getObjectiveById(objectiveId) {
   return Objective.findOne({
-    attributes: ['id', 'title', 'status'],
+    attributes: ['id', 'title', 'status', 'onApprovedAR'],
     where: {
       id: objectiveId,
     },
     include: [
+      {
+        model: ActivityReport,
+        as: 'activityReports',
+        attributes: ['regionId'],
+        required: false,
+      },
       {
         model: Goal,
         as: 'goal',

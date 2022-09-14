@@ -22,6 +22,7 @@ export default function GoalForm({
   topicOptions,
   roles,
   reportId,
+  onSaveDraft,
 }) {
   // pull the errors out of the form context
   const { errors, watch } = useFormContext();
@@ -150,6 +151,7 @@ export default function GoalForm({
         roles={roles}
         noObjectiveError={errors.goalForEditing && errors.goalForEditing.objectives
           ? ERROR_FORMAT(errors.goalForEditing.objectives.message) : NO_ERROR}
+        onSaveDraft={onSaveDraft}
       />
     </>
   );
@@ -181,4 +183,5 @@ GoalForm.propTypes = {
   })).isRequired,
   roles: PropTypes.arrayOf(PropTypes.string).isRequired,
   reportId: PropTypes.number.isRequired,
+  onSaveDraft: PropTypes.func.isRequired,
 };

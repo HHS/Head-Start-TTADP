@@ -412,7 +412,13 @@ function Navigator({
                 <Form
                   className="smart-hub--form-large"
                 >
-                  {page.render(additionalData, formData, reportId)}
+                  {page.render(
+                    additionalData,
+                    formData,
+                    reportId,
+                    onSaveDraftGoal,
+                    onSaveDraftOetObjectives,
+                  )}
                   <div className="display-flex">
                     { showSaveGoalsAndObjButton
                       ? (
