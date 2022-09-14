@@ -23,7 +23,8 @@ import {
 
 const emailPreferenceErrorMessage = 'Please select a frequency preference';
 
-const frequencyMap = [
+// these keys should match the keys in /src/constants.js:USER_SETTINGS.EMAIL.VALUES
+const frequencyValues = [
   { key: 'never', label: 'Do not notify me' },
   { key: 'immediately', label: 'Immediately' },
   { key: 'today', label: 'Daily digest' },
@@ -38,7 +39,7 @@ const emailTypesMap = [
     keyName: 'emailWhenReportSubmittedForReview',
   },
   {
-    name: 'Changes requested to activity report',
+    name: 'Activity report needs action',
     description: 'We\'ll email you when an activity report that you created or collaborated on needs action.',
     keyName: 'emailWhenChangeRequested',
   },
@@ -87,7 +88,7 @@ function CustomizeEmailPreferencesForm() {
                 data-testid={`${keyName}-dropdown`}
                 inputRef={register({ required: emailPreferenceErrorMessage })}
               >
-                {frequencyMap.map(({ key, label }) => (
+                {frequencyValues.map(({ key, label }) => (
                   <option key={key} value={key}>
                     {label}
                   </option>
