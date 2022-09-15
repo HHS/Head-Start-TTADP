@@ -31,7 +31,6 @@ describe('ObjectiveSelect', () => {
     render(<RenderObjectiveSelect
       options={[]}
       selectedObjectives={[]}
-      onRemove={() => {}}
     />);
     expect(screen.getByText('Remove this objective')).toBeInTheDocument();
   });
@@ -40,10 +39,21 @@ describe('ObjectiveSelect', () => {
     render(<RenderObjectiveSelect
       options={[]}
       selectedObjectives={[]}
-      onRemove={() => {}}
     />);
     expect(screen.getByTestId('modalOverlay').parentElement).toHaveClass('is-hidden');
     screen.getByText('Remove this objective').click();
     expect(screen.getByTestId('modalOverlay').parentElement).not.toHaveClass('is-hidden');
+  });
+
+  it('the "Remove" button in the modal calls the onRemove prop', async () => {
+    const onRemove = jest.fn();
+    render(<RenderObjectiveSelect
+      options={[]}
+      selectedObjectives={[]}
+      onRemove={onRemove}
+    />);
+    screen.getByText('Remove this objective').click();
+    screen.getByTestId('objective-confirm-remove-button').click();
+    expect(onRemove).toHaveBeenCalled();
   });
 });
