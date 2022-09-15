@@ -92,7 +92,6 @@ export default function ObjectiveSelect({
             </Button>
           </ButtonGroup>
         </ModalFooter>
-
       </Modal>
     </>
   );
