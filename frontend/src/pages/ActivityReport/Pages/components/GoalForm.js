@@ -60,7 +60,7 @@ export default function GoalForm({
         ) || GOAL_DATE_ERROR,
       },
     },
-    defaultValue: defaultEndDate,
+    defaultValue: defaultEndDate || '',
   });
 
   const {
@@ -85,16 +85,9 @@ export default function GoalForm({
   // the fields via the useController functions
   useEffect(() => {
     onUpdateText(goal.name ? goal.name : defaultName);
-
-    const newEndDate = goal.endDate ? goal.endDate : defaultEndDate;
-    onUpdateDate(newEndDate);
-    setDatePickerKey(uuid());
   }, [
-    defaultEndDate,
     defaultName,
-    goal.endDate,
     goal.name,
-    onUpdateDate,
     onUpdateText,
     setDatePickerKey,
   ]);
@@ -110,12 +103,23 @@ export default function GoalForm({
       const data = await goalsByIdsAndActivityReport(goal.goalIds, reportId);
       setObjectives(data[0].objectives);
     }
-    if (!goal.isNew && goal.goalIds) {
+
+    const shouldIFetchData = (
+      goal.goalIds
+      && (
+        !goal.isNew || (
+          goal.isNew
+          && goal.oldGrantIds.filter((g) => g).length
+        )
+      )
+    );
+
+    if (shouldIFetchData) {
       fetchData();
     } else {
       setObjectives([]);
     }
-  }, [goal.goalIds, goal.isNew, reportId]);
+  }, [goal.goalIds, goal.isNew, goal.oldGrantIds, reportId]);
 
   return (
     <>
@@ -133,7 +137,7 @@ export default function GoalForm({
       <GoalDate
         error={errors.goalEndDate ? ERROR_FORMAT(errors.goalEndDate.message) : NO_ERROR}
         setEndDate={onUpdateDate}
-        endDate={goalEndDate}
+        endDate={goalEndDate || ''}
         validateEndDate={onBlurDate}
         datePickerKey={datePickerKey}
         inputName={goalEndDateInputName}
@@ -153,15 +157,18 @@ export default function GoalForm({
 
 GoalForm.propTypes = {
   goal: PropTypes.shape({
-    id: PropTypes.arrayOf(PropTypes.shape({
-      value: PropTypes.number,
-      label: PropTypes.string,
-    })).isRequired,
+    id: PropTypes.oneOfType([
+      PropTypes.arrayOf(PropTypes.shape({
+        value: PropTypes.number,
+        label: PropTypes.string,
+      })), PropTypes.string,
+    ]).isRequired,
     goalIds: PropTypes.arrayOf(PropTypes.number).isRequired,
     value: PropTypes.oneOfType([
       PropTypes.number,
       PropTypes.string,
     ]),
+    oldGrantIds: PropTypes.arrayOf(PropTypes.number).isRequired,
     label: PropTypes.string,
     name: PropTypes.string,
     endDate: PropTypes.string,

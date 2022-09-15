@@ -549,60 +549,70 @@ describe('Goals by Recipient Test', () => {
           objectiveId: objectives[0].id,
           activityReportId: savedGoalReport1.id,
           ttaProvided: 'Objective for Goal 1',
+          status: objectives[0].status,
         }),
         // AR 1 Obj 2.
         ActivityReportObjective.create({
           objectiveId: objectives[1].id,
           activityReportId: savedGoalReport1.id,
           ttaProvided: 'Objective for Goal 2',
+          status: objectives[1].status,
         }),
         // AR 1 Obj 3.
         ActivityReportObjective.create({
           objectiveId: objectives[2].id,
           activityReportId: savedGoalReport1.id,
           ttaProvided: 'Objective for Goal 3',
+          status: objectives[2].status,
         }),
         // AR 1 Obj 4.
         ActivityReportObjective.create({
           objectiveId: objectives[3].id,
           activityReportId: savedGoalReport1.id,
           ttaProvided: 'Objective for Goal 3 b',
+          status: objectives[3].status,
         }),
         // AR 2 Obj 5.
         ActivityReportObjective.create({
           objectiveId: objectives[4].id,
           activityReportId: savedGoalReport2.id,
           ttaProvided: 'Objective for Goal 4',
+          status: objectives[4].status,
         }),
         // AR 3 Obj 6 (Exclude).
         ActivityReportObjective.create({
           objectiveId: objectives[5].id,
           activityReportId: savedGoalReport3.id,
           ttaProvided: 'Objective for Goal 5 Exclude',
+          status: objectives[5].status,
         }),
         // AR 4 Draft Obj 8 (Exclude).
         ActivityReportObjective.create({
           objectiveId: objectives[7].id,
           activityReportId: savedGoalReport4.id,
           ttaProvided: 'Objective for Goal 6 Draft report Exclude',
+          status: objectives[7].status,
         }),
 
         ActivityReportObjective.create({
           objectiveId: objectives[8].id,
           activityReportId: savedGoalReport5.id,
           ttaProvided: 'html tags',
+          status: objectives[8].status,
         }),
 
         ActivityReportObjective.create({
           objectiveId: objectives[9].id,
           activityReportId: savedGoalReport5.id,
           ttaProvided: 'html tags',
+          status: objectives[9].status,
         }),
 
         ActivityReportObjective.create({
           objectiveId: objectives[10].id,
           activityReportId: savedGoalReport6.id,
           ttaProvided: 'more html tags',
+          status: objectives[10].status,
         }),
       ],
     );

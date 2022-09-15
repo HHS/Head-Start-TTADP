@@ -26,6 +26,8 @@ export const newGoal = (grantIds) => ({
   endDate: '',
   onApprovedAR: false,
   grantIds,
+  goalIds: [],
+  oldGrantIds: [],
 });
 
 const components = {

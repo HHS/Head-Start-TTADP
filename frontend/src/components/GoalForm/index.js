@@ -53,7 +53,7 @@ export default function GoalForm({
 }) {
   const history = useHistory();
 
-  const possibleGrants = recipient.grants.map((g) => ({
+  const possibleGrants = recipient.grants.filter(((g) => g.status === 'Active')).map((g) => ({
     value: g.id,
     label: g.numberWithProgramTypes,
   }));
