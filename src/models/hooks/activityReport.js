@@ -327,6 +327,60 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
   }
 };
 
+const automaticGoalObjectiveStatusCachingOnApproval = async (sequelize, instance, options) => {
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('calculatedStatus')
+    && instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
+    && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
+    const goals = await sequelize.models.Goal.findAll({
+      include: [{
+        model: sequelize.models.ActivityReport,
+        as: 'activityReports',
+        required: true,
+        where: { id: instance.id },
+      }],
+      transaction: options.transaction,
+    });
+
+    // Update Goal status to 'In Progress'.
+    await Promise.all(goals
+      .map(async (goal) => sequelize.models.ActivityReportGoal.update(
+        { status: goal.status },
+        {
+          where: {
+            activityReportId: instance.id,
+          },
+          transaction: options.transaction,
+          individualHooks: true,
+        },
+      )));
+
+    const objectives = await sequelize.models.Objective.findAll({
+      include: [{
+        model: sequelize.models.ActivityReport,
+        as: 'activityReports',
+        required: true,
+        where: { id: instance.id },
+      }],
+      transaction: options.transaction,
+    });
+
+    // Update Objective status to 'In Progress'.
+    await Promise.all(objectives
+      .map(async (objective) => sequelize.models.ActivityReportObjective.update(
+        { status: objective.status },
+        {
+          where: {
+            activityReportId: instance.id,
+          },
+          transaction: options.transaction,
+          individualHooks: true,
+        },
+      )));
+  }
+};
+
 const beforeCreate = async (instance) => {
   copyStatus(instance);
 };
@@ -338,6 +392,7 @@ const afterUpdate = async (sequelize, instance, options) => {
   await propogateSubmissionStatus(sequelize, instance, options);
   await propagateApprovedStatus(sequelize, instance, options);
   await automaticStatusChangeOnApprovalForGoals(sequelize, instance, options);
+  await automaticGoalObjectiveStatusCachingOnApproval(sequelize, instance, options);
 };
 
 export {

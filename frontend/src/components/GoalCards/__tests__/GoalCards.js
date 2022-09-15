@@ -129,6 +129,7 @@ const goalWithObjectives = [{
       id: 1,
       number: 'ar-number-1',
       legacyId: null,
+      endDate: '06/14/2021',
     }],
   },
   {
@@ -143,6 +144,7 @@ const goalWithObjectives = [{
       id: 2,
       number: 'ar-number-2',
       legacyId: null,
+      endDate: '01/14/2020',
     }],
   },
   {
@@ -157,6 +159,7 @@ const goalWithObjectives = [{
       id: 3,
       number: 'ar-number-3',
       legacyId: null,
+      endDate: '02/14/2020',
     }],
   },
   {
@@ -171,6 +174,7 @@ const goalWithObjectives = [{
       id: 4,
       number: 'ar-number-4',
       legacyId: null,
+      endDate: '03/14/2020',
     }],
   },
   {
@@ -185,6 +189,7 @@ const goalWithObjectives = [{
       id: 5,
       number: 'ar-number-5',
       legacyId: null,
+      endDate: '04/14/2020',
     }],
   },
   ],
@@ -476,6 +481,16 @@ describe('Goals Table', () => {
       fireEvent.click(submitButton[0]);
       await waitFor(() => expect(fetchMock.called()).toBeTruthy());
       expect(setGoals).toHaveBeenCalled();
+    });
+
+    it('allows goals to be edited', async () => {
+      history.push = jest.fn();
+      const menuToggle = await screen.findByRole('button', { name: /Actions for goal 4598/i });
+      userEvent.click(menuToggle);
+
+      const editGoal = await screen.findByRole('button', { name: /Edit/i });
+      userEvent.click(editGoal);
+      expect(history.push).toHaveBeenCalled();
     });
 
     it('Sets goal status without reason', async () => {
