@@ -87,7 +87,7 @@ export default function ObjectiveSelect({
             >
               Cancel
             </ModalToggleButton>
-            <Button onClick={onRemove}>
+            <Button data-testid="objective-confirm-remove-button" onClick={onRemove}>
               Remove
             </Button>
           </ButtonGroup>
