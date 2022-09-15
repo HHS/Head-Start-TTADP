@@ -1,3 +1,5 @@
+import { Op } from 'sequelize';
+
 const findOrCreateObjectiveTemplate = async (
   sequelize,
   transaction,
@@ -124,10 +126,17 @@ const propogateStatusToParentGoal = async (sequelize, instance, options) => {
   if (goalId) {
     // we need to get the goal, but we'll only be moving it from "not started" to "in progress"
     // movement from draft is handled by the create goals form and the activity report hooks
+    // we do include the "on approved ar" thing here as well because it can't result in a goal
+    // moving backwards (all the below code can do is set a not started goal to in progress)
+    // but if we ever run into another race condition, this will serve as another layer of netting
+    // so that no apples fall through the cracks
     const goal = await sequelize.models.Goal.findOne({
       where: {
         id: goalId,
-        status: 'Not Started',
+        [Op.or]: [
+          { status: 'Not Started' },
+          { onApprovedAR: true },
+        ],
       },
       transaction: options.transaction,
     });
