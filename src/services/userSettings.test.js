@@ -6,6 +6,7 @@ import {
   subscribeAll,
   unsubscribeAll,
   userEmailSettingsById,
+  userSettingOverridesById,
   userSettingsById,
   usersWithSetting,
 } from './userSettings';
@@ -153,6 +154,31 @@ describe('UserSetting service', () => {
       Object.values(USER_SETTINGS.EMAIL.KEYS).forEach((key) => {
         expect(keys.has(key)).toBe(true);
       });
+    });
+  });
+
+  describe('userSettingOverridesById', () => {
+    it('returns the value when there\'s an override', async () => {
+      const setting = [
+        {
+          key: USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED,
+          value: USER_SETTINGS.EMAIL.VALUES.DAILY_DIGEST,
+        },
+      ];
+      await saveSettings(999, setting);
+      const found = await userSettingOverridesById(
+        999,
+        USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED,
+      );
+      expect(found).toEqual(setting[0]);
+    });
+
+    it('returns undefined when there\'s no override', async () => {
+      const found = await userSettingOverridesById(
+        999,
+        USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED,
+      );
+      expect(found).toBeUndefined();
     });
   });
 });
