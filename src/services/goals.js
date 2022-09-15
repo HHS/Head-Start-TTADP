@@ -1329,7 +1329,7 @@ export async function saveGoalsForReport(goals, report) {
   let currentObjectives = [];
   const currentGoals = await Promise.all((goals.map(async (goal) => {
     let newGoals = [];
-    const status = goal.status ? goal.status : 'Not Started';
+    const status = goal.status ? goal.status : 'Draft';
 
     // we have a param to determine if goals are new
     if (goal.isNew) {
