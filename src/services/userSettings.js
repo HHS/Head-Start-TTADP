@@ -154,10 +154,34 @@ export const usersWithSetting = async (key, values) => {
   return users;
 };
 
+/**
+ * userSettingOverridesById returns the key/value pair of the setting defined
+ * by @param settingKey for the user defined by @param userId only if the value
+ * is an override. If the value is the default value for that particular setting,
+ * it will return undefined.
+ *
+ * @param {number} userId
+ * @param {string} settingKey ("UserSettings"."key")
+ * @returns {Promise<{key: string, value: any} | undefined>}
+ */
+export const userSettingOverridesById = async (userId, settingKey) => {
+  const defaults = await getDefaultSettings();
+  const result = await UserSettings.findAll({
+    ...baseSearch(userId),
+    where: { key: settingKey },
+  });
+
+  return result.map(({ dataValues: { key, value } }) => ({ key, value }))
+    .filter(
+      ({ key, value }) => !(defaults[key] && defaults[key].defaultValue === value),
+    )[0];
+};
+
 // -----------------------------------------------------------------------------
 // Email-setting-specific helpers:
 
 /**
+ * Returns all settings of class 'email' for a given user.
  * @param {number} userId
  * @returns {Promise<{ key: string, value: any}[]>}
  */
