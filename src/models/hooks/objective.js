@@ -117,6 +117,45 @@ const linkObjectiveGoalTemplates = async (sequelize, instance, options) => {
   }
 };
 
+const propogateStatusToParentGoal = async (sequelize, instance, options) => {
+  const { goalId } = instance;
+
+  // some objectives will not have a goalId, they will be attached to an otherentity instead
+  if (goalId) {
+    // we need to get the goal, but we'll only be moving it from "not started" to "in progress"
+    // movement from draft is handled by the create goals form and the activity report hooks
+    const goal = await sequelize.models.Goal.findOne({
+      where: {
+        id: goalId,
+        status: 'Not Started',
+      },
+      transaction: options.transaction,
+    });
+
+    // because of that, there may not be a goal to update
+    if (goal) {
+      const objectives = await sequelize.models.Objective.findAll({
+        where: {
+          goalId,
+        },
+      });
+
+      // if there is, we then need to check to see if it needs to be moved to "in progress"
+      const atLeastOneInProgress = objectives.some((o) => o.status === 'In Progress');
+
+      // and if so, we update it (storing the previous status so we can revert if needed)
+      if (atLeastOneInProgress) {
+        await goal.update({
+          status: 'In Progress',
+          previousStatus: 'Not Started',
+        }, {
+          transaction: options.transaction,
+        });
+      }
+    }
+  }
+};
+
 const propagateTitle = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed) && changed.includes('title') && instance.goalTemplateId) {
@@ -201,6 +240,11 @@ const afterUpdate = async (sequelize, instance, options) => {
   await propagateTitle(sequelize, instance, options);
   await propagateMetadataToTemplate(sequelize, instance, options);
   await linkObjectiveGoalTemplates(sequelize, instance, options);
+  await propogateStatusToParentGoal(sequelize, instance, options);
+};
+
+const afterCreate = async (sequelize, instance, options) => {
+  await propogateStatusToParentGoal(sequelize, instance, options);
 };
 
 export {
@@ -212,4 +256,5 @@ export {
   propagateTitle,
   beforeValidate,
   afterUpdate,
+  afterCreate,
 };
