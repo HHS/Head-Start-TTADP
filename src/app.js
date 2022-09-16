@@ -93,7 +93,7 @@ const schedule = '0 4 * * *';
 // const dailyEmailDigestSchedule = '*/10 * * * * *';
 // Run daily at 2 am
 // const dailySched = '0 2 * * *';
-const dailySched = '*/10 * * * * *';
+const dailySched = '*/30 * * * *';
 // Run at 2 am every Monday
 const weeklySched = '0 2 * * 1';
 // Run at 2 am on the first of the month
