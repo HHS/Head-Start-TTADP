@@ -183,7 +183,7 @@ describe('Goals DB service', () => {
       expect(existingGoalUpdate).toHaveBeenCalledWith({
         goalIds: [1],
         name: 'name',
-        status: 'Not Started',
+        status: 'Draft',
       }, { individualHooks: true });
     });
 
