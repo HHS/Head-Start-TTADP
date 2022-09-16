@@ -70,6 +70,12 @@ export const saveSettings = async (userId, pairs) => {
   ]);
 };
 
+/**
+ * userSettingsById returns all settings for a given user.
+ *
+ * @param {number} userId
+ * @returns {Promise<{ key: string, value: unknown }[]>}
+ */
 export const userSettingsById = async (userId) => {
   const result = await UserSettings.findAll({
     ...baseSearch(userId),
