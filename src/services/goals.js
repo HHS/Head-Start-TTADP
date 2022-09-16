@@ -351,7 +351,6 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
       ? objective.activityReportObjectives[0].ttaProvided : null;
 
     const roles = objective.roles.map((role) => role.fullName);
-
     const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
 
     return [...objectives, {
@@ -578,6 +577,10 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
           {
             model: Role,
             as: 'roles',
+          },
+          {
+            model: File,
+            as: 'files',
           },
           {
             model: Topic,
