@@ -93,7 +93,7 @@ const schedule = '0 4 * * *';
 // const dailyEmailDigestSchedule = '*/10 * * * * *';
 // Run daily at 2 am
 // const dailySched = '0 2 * * *';
-const dailySched = '*/30 * * * *';
+const dailySched = '*/10 * * * * *';
 // Run at 2 am every Monday
 const weeklySched = '0 2 * * 1';
 // Run at 2 am on the first of the month
@@ -111,42 +111,48 @@ const runJob = () => {
 };
 
 const runDailyEmailJob = () => {
-  try {
-    collaboratorDigest(EMAIL_DIGEST_FREQ.DAILY);
-    changesRequestedDigest(EMAIL_DIGEST_FREQ.DAILY);
-    submittedDigest(EMAIL_DIGEST_FREQ.DAILY);
-    approvedDigest(EMAIL_DIGEST_FREQ.DAILY);
-  } catch (error) {
-    auditLogger.error(`Error processing Daily Email Digest job: ${error}`);
-    logger.error(`Daily Email Digest Error: ${error.stack}`);
-  }
-  return false;
+  (async () => {
+    try {
+      await collaboratorDigest(EMAIL_DIGEST_FREQ.DAILY);
+      await changesRequestedDigest(EMAIL_DIGEST_FREQ.DAILY);
+      await submittedDigest(EMAIL_DIGEST_FREQ.DAILY);
+      await approvedDigest(EMAIL_DIGEST_FREQ.DAILY);
+    } catch (error) {
+      auditLogger.error(`Error processing Daily Email Digest job: ${error}`);
+      logger.error(`Daily Email Digest Error: ${error.stack}`);
+    }
+  })();
+  return true;
 };
 
 const runMonthlyEmailJob = () => {
-  try {
-    collaboratorDigest(EMAIL_DIGEST_FREQ.WEEKLY);
-    changesRequestedDigest(EMAIL_DIGEST_FREQ.WEEKLY);
-    submittedDigest(EMAIL_DIGEST_FREQ.WEEKLY);
-    approvedDigest(EMAIL_DIGEST_FREQ.WEEKLY);
-  } catch (error) {
-    auditLogger.error(`Error processing Weekly Email Digest job: ${error}`);
-    logger.error(error.stack);
-  }
-  return false;
+  (async () => {
+    try {
+      await collaboratorDigest(EMAIL_DIGEST_FREQ.WEEKLY);
+      await changesRequestedDigest(EMAIL_DIGEST_FREQ.WEEKLY);
+      await submittedDigest(EMAIL_DIGEST_FREQ.WEEKLY);
+      await approvedDigest(EMAIL_DIGEST_FREQ.WEEKLY);
+    } catch (error) {
+      auditLogger.error(`Error processing Weekly Email Digest job: ${error}`);
+      logger.error(`Monthly Email Digest Error: ${error.stack}`);
+    }
+  })();
+  return true;
 };
 
 const runWeeklyEmailJob = () => {
-  try {
-    collaboratorDigest(EMAIL_DIGEST_FREQ.MONTHLY);
-    changesRequestedDigest(EMAIL_DIGEST_FREQ.MONTHLY);
-    submittedDigest(EMAIL_DIGEST_FREQ.MONTHLY);
-    approvedDigest(EMAIL_DIGEST_FREQ.MONTHLY);
-  } catch (error) {
-    auditLogger.error(`Error processing Daily Email Digest job: ${error}`);
-    logger.error(error.stack);
-  }
-  return false;
+  (async () => {
+    try {
+      await collaboratorDigest(EMAIL_DIGEST_FREQ.MONTHLY);
+      await changesRequestedDigest(EMAIL_DIGEST_FREQ.MONTHLY);
+      await submittedDigest(EMAIL_DIGEST_FREQ.MONTHLY);
+      await approvedDigest(EMAIL_DIGEST_FREQ.MONTHLY);
+    } catch (error) {
+      auditLogger.error(`Error processing Daily Email Digest job: ${error}`);
+      logger.error(`Weekly Email Digest Error: ${error.stack}`);
+    }
+  })();
+  return true;
 };
 
 // TODO: to be removed; leaving it here temporarily for any non-prod testing
