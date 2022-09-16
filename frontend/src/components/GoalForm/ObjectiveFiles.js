@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
   Label, Radio, Fieldset, FormGroup, ErrorMessage,
@@ -14,17 +14,23 @@ export default function ObjectiveFiles({
   isOnApprovedReport,
   status,
   isOnReport,
-  onUploadFile,
+  onUploadFiles,
   index,
   inputName,
   onBlur,
 }) {
   const objectiveId = objective.id;
-  const hasFiles = files && files.length > 0;
+  const hasFiles = useMemo(() => files && files.length > 0, [files]);
   const [useFiles, setUseFiles] = useState(hasFiles);
   const [fileError, setFileError] = useState();
 
   const readOnly = isOnApprovedReport || status === 'Complete' || (status === 'Not Started' && isOnReport);
+
+  useEffect(() => {
+    if (!useFiles && hasFiles) {
+      setUseFiles(true);
+    }
+  }, [useFiles, hasFiles]);
 
   if (readOnly) {
     if (!hasFiles) {
@@ -103,7 +109,7 @@ export default function ObjectiveFiles({
                           files={files}
                           onChange={onChangeFiles}
                           objective={objective}
-                          upload={onUploadFile}
+                          upload={onUploadFiles}
                           id={`files-${objectiveId}`}
                           index={index}
                           onBlur={onBlur}
@@ -165,7 +171,7 @@ ObjectiveFiles.propTypes = {
   isOnApprovedReport: PropTypes.bool.isRequired,
   isOnReport: PropTypes.bool.isRequired,
   status: PropTypes.string.isRequired,
-  onUploadFile: PropTypes.func.isRequired,
+  onUploadFiles: PropTypes.func.isRequired,
   index: PropTypes.number.isRequired,
   inputName: PropTypes.string,
   onBlur: PropTypes.func,

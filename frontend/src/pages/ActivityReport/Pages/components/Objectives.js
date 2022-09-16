@@ -11,6 +11,7 @@ export default function Objectives({
   topicOptions,
   roles,
   noObjectiveError,
+  onSaveDraft,
 }) {
   const { errors, getValues, setValue } = useFormContext();
 
@@ -125,6 +126,7 @@ export default function Objectives({
               fieldArrayName={fieldArrayName}
               roles={roles}
               onObjectiveChange={onObjectiveChange}
+              onSaveDraft={onSaveDraft}
             />
           );
         })}
@@ -143,4 +145,5 @@ Objectives.propTypes = {
   ).isRequired,
   roles: PropTypes.arrayOf(PropTypes.string).isRequired,
   noObjectiveError: PropTypes.node.isRequired,
+  onSaveDraft: PropTypes.func.isRequired,
 };
