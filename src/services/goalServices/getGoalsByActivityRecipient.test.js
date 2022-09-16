@@ -6,20 +6,13 @@ import {
   Recipient,
   Grant,
   ActivityRecipient,
-  // GrantGoal,
-  // GoalTemplate,
   Goal,
   ActivityReportObjective,
-  // ObjectiveTemplate,
   Objective,
-  /* TODO: Switch for New Goal Creation. */
-  // ObjectiveTopic,
-  // Topic,
 } from '../../models';
 
 import { getGoalsByActivityRecipient } from '../recipient';
 import { REPORT_STATUSES } from '../../constants';
-import { auditLogger } from '../../logger';
 
 const NEEDLE = 'This objective title should not appear in recipient 3';
 
@@ -100,7 +93,7 @@ describe('Goals by Recipient Test', () => {
     regionId: 1,
     lastUpdatedById: mockGoalUser.id,
     ECLKCResourcesUsed: ['test'],
-    activityRecipients: [{ grantId: 300 }],
+    activityRecipients: [{ grantId: grant1.id }],
     submissionStatus: REPORT_STATUSES.APPROVED,
     calculatedStatus: REPORT_STATUSES.APPROVED,
     oldApprovingManagerId: 1,
@@ -123,7 +116,7 @@ describe('Goals by Recipient Test', () => {
     regionId: 1,
     lastUpdatedById: mockGoalUser.id,
     ECLKCResourcesUsed: ['test'],
-    activityRecipients: [{ grantId: 301 }],
+    activityRecipients: [{ grantId: grant2.id }],
     submissionStatus: REPORT_STATUSES.APPROVED,
     calculatedStatus: REPORT_STATUSES.APPROVED,
     oldApprovingManagerId: 1,
@@ -146,7 +139,7 @@ describe('Goals by Recipient Test', () => {
     regionId: 1,
     lastUpdatedById: mockGoalUser.id,
     ECLKCResourcesUsed: ['test'],
-    activityRecipients: [{ grantId: 302 }],
+    activityRecipients: [{ grantId: grant3.id }],
     submissionStatus: REPORT_STATUSES.APPROVED,
     calculatedStatus: REPORT_STATUSES.APPROVED,
     oldApprovingManagerId: 1,
@@ -217,10 +210,6 @@ describe('Goals by Recipient Test', () => {
 
   let objectiveIds = [];
   let goalIds = [];
-
-  /* TODO: Switch for New Goal Creation. */
-  // let topicIds = [];
-  // let objectiveTopicIds = [];
 
   beforeAll(async () => {
     // Create User.
@@ -394,7 +383,7 @@ describe('Goals by Recipient Test', () => {
           timeframe: '1 month',
           isFromSmartsheetTtaPlan: false,
           grantId: grant4.id,
-          createdAt: '2021-01-10T19:16:15.842Z',
+          createdAt: '2021-02-10T19:16:15.842Z',
           onApprovedAR: true,
         }),
 
@@ -405,7 +394,7 @@ describe('Goals by Recipient Test', () => {
           timeframe: '1 month',
           isFromSmartsheetTtaPlan: true,
           grantId: grant4.id,
-          createdAt: '2021-01-10T19:16:15.842Z',
+          createdAt: '2021-03-10T19:16:15.842Z',
           onApprovedAR: false,
         }),
       ],
@@ -504,44 +493,6 @@ describe('Goals by Recipient Test', () => {
     // Get Objective Ids for Delete.
     objectiveIds = objectives.map((o) => o.id);
 
-    /* TODO: Switch for New Goal Creation. */
-    /*
-    // Create Objective Topics.
-    const topics = await Promise.all([
-      Topic.create({
-        name: 'objective topic 1',
-      }),
-      Topic.create({
-        name: 'objective topic 2',
-      }),
-      Topic.create({
-        name: 'objective topic 3',
-      }),
-    ]);
-
-    topicIds = topics.map((o) => o.id);
-
-    // Assign Objective Topics.
-    const objectiveTopics = await Promise.all(
-      [
-        await ObjectiveTopic.create({
-          topicId: topicIds[0],
-          objectiveId: objectiveIds[0],
-        }),
-        await ObjectiveTopic.create({
-          topicId: topicIds[1],
-          objectiveId: objectiveIds[2],
-        }),
-        await ObjectiveTopic.create({
-          topicId: topicIds[2],
-          objectiveId: objectiveIds[3],
-        }),
-      ],
-    );
-
-    objectiveTopicIds = objectiveTopics.map((o) => o.id);
-      */
-
     // AR Objectives.
     await Promise.all(
       [
@@ -638,22 +589,6 @@ describe('Goals by Recipient Test', () => {
       },
     });
 
-    /* TODO: Switch for New Goal Creation. */
-    /*
-    // Delete Objective Topics.
-    await ObjectiveTopic.destroy({
-      where: {
-        id: objectiveTopicIds,
-      },
-    });
-
-    // Delete Topics.
-    await Topic.destroy({
-      where: {
-        id: topicIds,
-      },
-    });
-    */
     // Delete Goals.
     await Goal.destroy({
       where: {
@@ -764,10 +699,8 @@ describe('Goals by Recipient Test', () => {
 
       const countx = count;
       const goalRowsx = goalRows;
-      auditLogger.error(JSON.stringify(goalRowsx));
       expect(countx).toBe(3);
       expect(goalRowsx.length).toBe(3);
-      expect(goalRowsx[2].objectiveCount).toBe(0);
     });
 
     it('associates objectives with the proper recipients', async () => {
