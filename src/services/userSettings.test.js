@@ -67,7 +67,10 @@ describe('UserSetting service', () => {
         ...settings.find((s) => s.key === setting.key),
       }));
 
-      expect(found).toEqual(expected);
+      const foundSorted = found.sort((a, b) => a.key.localeCompare(b.key));
+      const expectedSorted = expected.sort((a, b) => a.key.localeCompare(b.key));
+
+      expect(foundSorted).toEqual(expectedSorted);
     });
 
     it('properly serializes', async () => {
