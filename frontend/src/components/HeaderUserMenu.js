@@ -81,7 +81,7 @@ function HeaderUserMenu() {
       return {
         key,
         element: (
-          <Link key={key} className="usa-nav__link" href={to}>
+          <Link key={key} className="usa-nav__link" href={to} target="_blank" rel="noopener noreferrer">
             {label}
             <FontAwesomeIcon className="margin-left-2" color={colors.ttahubMediumBlue} icon={faUpRightFromSquare} />
           </Link>
