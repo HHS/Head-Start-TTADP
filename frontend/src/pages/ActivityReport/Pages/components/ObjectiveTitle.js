@@ -26,7 +26,7 @@ export default function ObjectiveTitle({
         { !readOnly ? <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span> : null }
       </Label>
       { readOnly && title ? (
-        <p className="margin-top-0 usa-prose">{title}</p>
+        <p className="margin-top-0 usa-prose" data-testid="readonly-objective-text">{title}</p>
       ) : (
         <>
           {error}
