@@ -5,7 +5,6 @@ import {
   ActivityReport as ActivityReportModel,
   ActivityReportApprover,
   User as UserModel,
-  UserSettingOverrides,
 } from '../../models';
 import ActivityReport from '../../policies/activityReport';
 import User from '../../policies/user';
@@ -25,7 +24,9 @@ import {
 import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
 import { goalsForGrants } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
-import { APPROVER_STATUSES, REPORT_STATUSES, DECIMAL_BASE, USER_SETTINGS } from '../../constants';
+import {
+  APPROVER_STATUSES, REPORT_STATUSES, DECIMAL_BASE, USER_SETTINGS,
+} from '../../constants';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
 
 import { logger } from '../../logger';
@@ -623,20 +624,18 @@ export async function saveReport(req, res) {
         return !oldCollaborators.includes(c.user.email);
       });
 
-      const settingsForAllCollabs = await Promise.all(newCollaborators.map((c) => UserSettingOverrides.findOne({
-        where: { userId: c.userId, userSettingId: 4 }
-      })));
-
-      // const settingsForAllCollabs = await Promise.all(newCollaborators.map((c) => {
-      //   userSettingOverridesById(c.userId, USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED)
-      // }));
+      const settingsForAllCollabs = await Promise.all(newCollaborators.map(
+        (c) => userSettingOverridesById(
+          c.userId,
+          USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED,
+        ),
+      ));
 
       const newCollaboratorsWithSettings = newCollaborators.filter((_value, index) => {
         if (settingsForAllCollabs[index] === null) {
           return false;
-        } else {
-          return settingsForAllCollabs[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
         }
+        return settingsForAllCollabs[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
       });
 
       collaboratorAssignedNotification(savedReport, newCollaboratorsWithSettings);
@@ -675,20 +674,19 @@ export async function createReport(req, res) {
     const report = await createOrUpdate(newReport);
     if (report.activityReportCollaborators) {
       const collabs = report.activityReportCollaborators;
-      const settingsForAllCollabs = await Promise.all(collabs.map((c) => UserSettingOverrides.findOne({
-        where: { userId: c.userId, userSettingId: 4 }
-      })));
 
-      // const settingsForAllCollabs = await Promise.all(newCollaborators.map((c) => {
-      //   userSettingOverridesById(c.userId, USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED)
-      // }));
+      const settingsForAllCollabs = await Promise.all(collabs.map(
+        (c) => userSettingOverridesById(
+          c.userId,
+          USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED,
+        ),
+      ));
 
       const collabsWithSettings = collabs.filter((_value, index) => {
         if (settingsForAllCollabs[index] === null) {
           return false;
-        } else {
-          return settingsForAllCollabs[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
         }
+        return settingsForAllCollabs[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
       });
       collaboratorAssignedNotification(report, collabsWithSettings);
     }
