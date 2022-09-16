@@ -317,7 +317,7 @@ export async function collaboratorDigest(freq) {
     return Promise.all(records);
   } catch (err) {
     logger.info(`MAILER: CollaboratorDigest with key ${USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED} freq ${freq} error ${err}`);
-    return null;
+    throw err;
   }
 }
 
@@ -331,22 +331,27 @@ export async function collaboratorDigest(freq) {
 export async function changesRequestedDigest(freq) {
   let data;
   const date = frequencyToInterval(freq);
-  // Find Users with preference
-  const users = await usersWithSetting(USER_SETTINGS.EMAIL.KEYS.NEEDS_ACTION, [freq]);
-  const records = users.map(async (user) => {
-    const reports = await activityReportsChangesRequestedByDate(user.id, date);
+  try {
+    // Find Users with preference
+    const users = await usersWithSetting(USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED, [freq]);
+    const records = users.map(async (user) => {
+      const reports = await activityReportsChangesRequestedByDate(user.id, date);
 
-    data = {
-      user,
-      reports,
-      type: EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
-      freq,
-    };
+      data = {
+        user,
+        reports,
+        type: EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
+        freq,
+      };
 
-    notificationDigestQueue.add(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, data);
-    return data;
-  });
-  return Promise.all(records);
+      notificationDigestQueue.add(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, data);
+      return data;
+    });
+    return Promise.all(records);
+  } catch (err) {
+    logger.info(`MAILER: ChangesRequestedDigest with key ${USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED} freq ${freq} error ${err}`);
+    throw err;
+  }
 }
 
 /**
@@ -359,6 +364,7 @@ export async function changesRequestedDigest(freq) {
 export async function submittedDigest(freq) {
   let data = null;
   const date = frequencyToInterval(freq);
+  try {
   // Find Users with preferences
   const users = await usersWithSetting(USER_SETTINGS.EMAIL.KEYS.SUBMITTED_FOR_REVIEW, [freq]);
   const records = users.map(async (user) => {
@@ -375,6 +381,10 @@ export async function submittedDigest(freq) {
     return data;
   });
   return Promise.all(records);
+} catch (err) {
+  logger.info(`MAILER: submittedDigest with key ${USER_SETTINGS.EMAIL.KEYS.SUBMITTED_FOR_REVIEW} freq ${freq} error ${err}`);
+  throw err;
+}
 }
 
 /**
@@ -387,23 +397,28 @@ export async function submittedDigest(freq) {
 export async function approvedDigest(freq) {
   let data = null;
   const date = frequencyToInterval(freq);
-  // Find Users with preferences
-  const users = await usersWithSetting(USER_SETTINGS.EMAIL.KEYS.APPROVED, [freq]);
+  try {
+    // Find Users with preferences
+    const users = await usersWithSetting(USER_SETTINGS.EMAIL.KEYS.APPROVAL, [freq]);
 
-  const records = users.map(async (user) => {
-    const reports = await activityReportsApprovedByDate(user.id, date);
+    const records = users.map(async (user) => {
+      const reports = await activityReportsApprovedByDate(user.id, date);
 
-    data = {
-      user,
-      reports,
-      type: EMAIL_ACTIONS.APPROVED_DIGEST,
-      freq,
-    };
+      data = {
+        user,
+        reports,
+        type: EMAIL_ACTIONS.APPROVED_DIGEST,
+        freq,
+      };
 
-    notificationDigestQueue.add(EMAIL_ACTIONS.APPROVED_DIGEST, data);
-    return data;
-  });
-  return Promise.all(records);
+      notificationDigestQueue.add(EMAIL_ACTIONS.APPROVED_DIGEST, data);
+      return data;
+    });
+    return Promise.all(records);
+  } catch (err) {
+    logger.info(`MAILER: ApprovedDigest with key ${USER_SETTINGS.EMAIL.KEYS.APPROVAL} freq ${freq} error ${err}`);
+    throw err;
+  }
 }
 
 /**
