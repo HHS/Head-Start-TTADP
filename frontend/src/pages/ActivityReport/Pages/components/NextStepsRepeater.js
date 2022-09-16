@@ -111,7 +111,6 @@ export default function NextStepsRepeater({
     }
   };
 
-
   return (
     <>
       <div className="ttahub-next-steps-repeater">
