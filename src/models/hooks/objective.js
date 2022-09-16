@@ -119,6 +119,52 @@ const linkObjectiveGoalTemplates = async (sequelize, instance, options) => {
   }
 };
 
+const propogateStatusToParentGoal = async (sequelize, instance, options) => {
+  const { goalId } = instance;
+
+  // some objectives will not have a goalId, they will be attached to an otherentity instead
+  if (goalId) {
+    // we need to get the goal, but we'll only be moving it from "not started" to "in progress"
+    // movement from draft is handled by the create goals form and the activity report hooks
+    // we do include the "on approved ar" thing here as well because it can't result in a goal
+    // moving backwards (all the below code can do is set a not started goal to in progress)
+    // but if we ever run into another race condition, this will serve as another layer of netting
+    // so that no apples fall through the cracks
+    const goal = await sequelize.models.Goal.findOne({
+      where: {
+        id: goalId,
+        [Op.or]: [
+          { status: 'Not Started' },
+          { onApprovedAR: true },
+        ],
+      },
+      transaction: options.transaction,
+    });
+
+    // because of that, there may not be a goal to update
+    if (goal) {
+      const objectives = await sequelize.models.Objective.findAll({
+        where: {
+          goalId,
+        },
+      });
+
+      // if there is, we then need to check to see if it needs to be moved to "in progress"
+      const atLeastOneInProgress = objectives.some((o) => o.status === 'In Progress');
+
+      // and if so, we update it (storing the previous status so we can revert if needed)
+      if (atLeastOneInProgress) {
+        await goal.update({
+          status: 'In Progress',
+          previousStatus: 'Not Started',
+        }, {
+          transaction: options.transaction,
+        });
+      }
+    }
+  }
+};
+
 const propagateTitle = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed) && changed.includes('title') && instance.goalTemplateId) {
@@ -192,65 +238,6 @@ const propagateMetadataToTemplate = async (sequelize, instance, options) => {
   }
 };
 
-const updateParentGoalStatus = async (sequelize, instance) => {
-  const { goalId } = instance;
-  const goal = await sequelize.models.Goal.findOne({
-    where: {
-      id: goalId,
-      [Op.or]: [
-        {
-          // assumption: we only want to auto update the goal status if it is
-          // on an activity report, otherwise it should be updated by the
-          // RTR form logic or the RTR page
-          createdVia: 'activityReport',
-        },
-        {
-          onApprovedAR: true,
-        },
-      ],
-    },
-  });
-
-  if (goal && goal.status !== 'Closed') {
-    // here we will determine whether or not the goal should be updated
-    const objectives = await sequelize.models.Objective.findAll({
-      where: { goalId },
-    });
-
-    // is at least one obective not started?
-    const atLeastOneObjectiveIsNotStarted = objectives.some((objective) => objective.status === 'Not Started');
-
-    // is at least one objective in progress?
-    const atLeastOneObjectiveIsInProgress = objectives.some((objective) => objective.status === 'In Progress');
-
-    // are all objectives closed?
-    const allObjectivesAreClosed = objectives.every((objective) => objective.status === 'Completed');
-
-    // and so forth
-    let newStatus;
-
-    // we don't want any automatic regressions from "not started" to "in progress"
-    if (atLeastOneObjectiveIsNotStarted && goal.status !== 'In Progress') {
-      newStatus = 'Not Started';
-    }
-
-    if (atLeastOneObjectiveIsInProgress) {
-      newStatus = 'In Progress';
-    }
-
-    if (allObjectivesAreClosed) {
-      newStatus = 'Closed';
-    }
-
-    if (newStatus) {
-      await goal.update({
-        previousStatus: goal.status,
-        status: newStatus,
-      });
-    }
-  }
-};
-
 const beforeValidate = async (sequelize, instance) => {
   // await autoPopulateObjectiveTemplateId(sequelize, instance, options);
   autoPopulateOnApprovedAR(sequelize, instance);
@@ -262,11 +249,11 @@ const afterUpdate = async (sequelize, instance, options) => {
   await propagateTitle(sequelize, instance, options);
   await propagateMetadataToTemplate(sequelize, instance, options);
   await linkObjectiveGoalTemplates(sequelize, instance, options);
-  await updateParentGoalStatus(sequelize, instance, options);
+  await propogateStatusToParentGoal(sequelize, instance, options);
 };
 
 const afterCreate = async (sequelize, instance, options) => {
-  await updateParentGoalStatus(sequelize, instance, options);
+  await propogateStatusToParentGoal(sequelize, instance, options);
 };
 
 export {
