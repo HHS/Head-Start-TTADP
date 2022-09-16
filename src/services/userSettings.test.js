@@ -107,6 +107,30 @@ describe('UserSetting service', () => {
       expect(ids.includes(999)).toBe(false);
       expect(ids.includes(1000)).toBe(true);
     });
+
+    it('provides validationStatus - overrides', async () => {
+      await subscribeAll(999);
+
+      const k = USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED;
+      const v = USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
+
+      const users = await usersWithSetting(k, [v]);
+
+      expect(users.length).toBe(1);
+      expect(users[0].dataValues.validationStatus).not.toBeNull();
+    });
+
+    it('provides validationStatus - defaults', async () => {
+      await subscribeAll(999);
+      await unsubscribeAll(1000);
+
+      const k = USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED;
+      const v = USER_SETTINGS.EMAIL.VALUES.NEVER;
+
+      const users = await usersWithSetting(k, [v]);
+
+      expect(users[0].dataValues.validationStatus).not.toBeNull();
+    });
   });
 
   describe('userSettingsById', () => {

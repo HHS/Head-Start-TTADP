@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
 import { USER_SETTINGS } from '../constants';
 import {
-  sequelize, User, UserSettings, UserSettingOverrides,
+  sequelize, User, UserSettings, UserSettingOverrides, UserValidationStatus,
 } from '../models';
 
 const baseSearch = (userId) => ({
@@ -106,6 +106,11 @@ export const usersWithSetting = async (key, values) => {
       out = await User.findAll({
         include: [
           {
+            model: UserValidationStatus,
+            as: 'validationStatus',
+            attributes: ['id', 'type', 'validatedAt'],
+          },
+          {
             attributes: [],
             model: UserSettingOverrides,
             as: 'userSettingOverrides',
@@ -128,6 +133,11 @@ export const usersWithSetting = async (key, values) => {
       // return all users that are providing the override.
       out = await User.findAll({
         include: [
+          {
+            model: UserValidationStatus,
+            as: 'validationStatus',
+            attributes: ['id', 'type', 'validatedAt'],
+          },
           {
             attributes: [],
             model: UserSettingOverrides,
