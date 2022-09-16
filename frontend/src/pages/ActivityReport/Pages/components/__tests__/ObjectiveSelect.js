@@ -53,7 +53,7 @@ describe('ObjectiveSelect', () => {
       onRemove={onRemove}
     />);
     screen.getByText('Remove this objective').click();
-    screen.getByTestId('objective-confirm-remove-button').click();
+    screen.getByText('Remove').click();
     expect(onRemove).toHaveBeenCalled();
   });
 });

@@ -1,21 +1,14 @@
 import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
-import {
-  Label,
-  ModalToggleButton,
-  Modal,
-  ModalHeading,
-  ModalFooter,
-  ButtonGroup,
-  Button,
-} from '@trussworks/react-uswds';
 import Select from 'react-select';
+import { Label, ModalToggleButton } from '@trussworks/react-uswds';
 import Req from '../../../../components/Req';
 import selectOptionsReset from '../../../../components/selectOptionsReset';
 import { OBJECTIVE_PROP } from './constants';
 import Option from './ObjectiveOption';
 import SingleValue from './ObjectiveValue';
 import './ObjectiveSelect.css';
+import Modal from '../../../../components/Modal';
 
 const components = {
   Option,
@@ -64,34 +57,14 @@ export default function ObjectiveSelect({
       </Label>
 
       <Modal
-        ref={modalRef}
-        aria-labelledby="modal-heading"
-        aria-describedby="modal-description"
-        data-testid="remove-objective-modal"
-        className="ttahub-objective-select-remove-objective-modal"
+        modalRef={modalRef}
+        title="Are you sure you want to remove this objective?"
+        modalId="remove-objective-modal"
+        onOk={onRemove}
+        okButtonText="Remove"
+        okButtonAriaLabel="This button will remove the objective from the activity report"
       >
-        <ModalHeading id="modal-heading">
-          Are you sure you want to remove this objective?
-        </ModalHeading>
-        <div className="usa-prose">
-          Any information you entered will be lost.
-        </div>
-        <ModalFooter>
-          <ButtonGroup>
-            <ModalToggleButton
-              data-focus="true"
-              modalRef={modalRef}
-              closer
-              unstyled
-              className="padding-105"
-            >
-              Cancel
-            </ModalToggleButton>
-            <Button data-testid="objective-confirm-remove-button" onClick={onRemove}>
-              Remove
-            </Button>
-          </ButtonGroup>
-        </ModalFooter>
+        <p>Any information you entered will be lost.</p>
       </Modal>
     </>
   );
