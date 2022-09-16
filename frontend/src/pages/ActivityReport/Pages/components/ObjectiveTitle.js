@@ -15,7 +15,7 @@ export default function ObjectiveTitle({
   inputName,
   isLoading,
 }) {
-  const readOnly = useMemo(() => (isOnApprovedReport || status === 'Complete' || status === 'Suspended' || (status === 'Not Started' && isOnReport) || (status === 'In Progress' && isOnReport)),
+  const readOnly = useMemo(() => (isOnApprovedReport || status === 'Completed' || status === 'Suspended' || (status === 'Not Started' && isOnReport) || (status === 'In Progress' && isOnReport)),
     [isOnApprovedReport, isOnReport, status]);
 
   return (
