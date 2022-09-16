@@ -1334,7 +1334,7 @@ export async function saveGoalsForReport(goals, report) {
   let currentObjectives = [];
   const currentGoals = await Promise.all((goals.map(async (goal) => {
     let newGoals = [];
-    const status = goal.status ? goal.status : 'Not Started';
+    const status = goal.status ? goal.status : 'Draft';
     const goalIds = goal.goalIds ? goal.goalIds : [];
 
     // Check if these goals exist.
