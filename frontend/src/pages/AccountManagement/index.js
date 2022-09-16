@@ -328,7 +328,7 @@ function AccountManagement({ updateUser }) {
             <br />
             If you don&apos;t receive an email within thirty minutes,
             check your spam folder, then&nbsp;
-            <Link href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a">
+            <Link href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a" target="_blank" rel="noopener noreferrer">
               request support
             </Link>
             .
