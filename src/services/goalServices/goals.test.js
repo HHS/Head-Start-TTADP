@@ -151,6 +151,7 @@ describe('Goals DB service', () => {
       expect(Goal.findOrCreate).toHaveBeenCalledWith({
         defaults: {
           createdVia: 'activityReport',
+          grantId: 1,
           name: 'name',
           status: 'Closed',
         },
@@ -180,6 +181,7 @@ describe('Goals DB service', () => {
 
       await saveGoalsForReport([existingGoal], { id: 1 });
       expect(existingGoalUpdate).toHaveBeenCalledWith({
+        goalIds: [1],
         name: 'name',
         status: 'Not Started',
       }, { individualHooks: true });
