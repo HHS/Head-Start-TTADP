@@ -298,23 +298,27 @@ export const changesRequestedNotification = (report, approver) => {
 export async function collaboratorDigest(freq) {
   let data = null;
   const date = frequencyToInterval(freq);
+  try {
+    // Find users having collaborator digest preferences
+    const users = await usersWithSetting(USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED, [freq]);
 
-  // Find users having collaborator digest preferences
-  const users = await usersWithSetting(USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED, [freq]);
+    const records = users.map(async (user) => {
+      const reports = await activityReportsWhereCollaboratorByDate(user.id, date);
 
-  const records = users.map(async (user) => {
-    const reports = await activityReportsWhereCollaboratorByDate(user.id, date);
-
-    data = {
-      user,
-      reports,
-      type: EMAIL_ACTIONS.COLLABORATOR_DIGEST,
-      freq,
-    };
-    notificationDigestQueue.add(EMAIL_ACTIONS.COLLABORATOR_DIGEST, data);
-    return data;
-  });
-  return Promise.all(records);
+      data = {
+        user,
+        reports,
+        type: EMAIL_ACTIONS.COLLABORATOR_DIGEST,
+        freq,
+      };
+      notificationDigestQueue.add(EMAIL_ACTIONS.COLLABORATOR_DIGEST, data);
+      return data;
+    });
+    return Promise.all(records);
+  } catch (err) {
+    logger.info(`MAILER: CollaboratorDigest with key ${USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED} freq ${freq} error ${err}`);
+    return null;
+  }
 }
 
 /**
