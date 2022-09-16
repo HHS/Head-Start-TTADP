@@ -9,6 +9,7 @@ import {
   Form,
   Grid,
   GridContainer,
+  Link,
   Radio,
 } from '@trussworks/react-uswds';
 import { useForm, FormProvider, useFormContext } from 'react-hook-form';
@@ -326,7 +327,11 @@ function AccountManagement({ updateUser }) {
             Verification email sent. Check your inbox.
             <br />
             If you don&apos;t receive an email within thirty minutes,
-            check your spam folder, then contact support@ttahub.com.
+            check your spam folder, then&nbsp;
+            <Link
+              href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a"
+            >request support</Link>
+            .
           </Alert>
         )}
 
