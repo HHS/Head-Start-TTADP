@@ -388,7 +388,7 @@ function ActivityReport({
           }
         }
 
-        //
+        // Update form data.
         if (shouldUpdateFromNetwork && activityReportId !== 'new') {
           updateFormData({ ...formData, ...report }, true);
         } else {
@@ -565,6 +565,14 @@ function ActivityReport({
           reportId.current, { ...updatedFields, approverUserIds: approverIds }, {},
         );
 
+        // Update goals from saved report.
+        const grantIds = updatedReport.activityRecipientType === 'recipient'
+          && updatedReport.activityRecipients
+          ? updatedReport.activityRecipients.map(({ id }) => id)
+          : [];
+        const goals = convertGoalsToFormData(updatedReport.goalsAndObjectives, grantIds);
+
+        updateFormData({ ...formData, goals });
         setConnectionActive(true);
         updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
       }
