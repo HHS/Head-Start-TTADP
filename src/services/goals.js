@@ -1254,11 +1254,13 @@ async function createObjectivesForGoal(goal, objectives, report) {
       ...updatedFields, title, status, goalId: goal.id,
     };
 
+    // Check if objective exists.
     let savedObjective;
-
     if (!isNew && id && !createNewObjectives) {
       savedObjective = await Objective.findByPk(id);
+    }
 
+    if (savedObjective) {
       await savedObjective.update({
         title,
         status,
@@ -1333,9 +1335,17 @@ export async function saveGoalsForReport(goals, report) {
   const currentGoals = await Promise.all((goals.map(async (goal) => {
     let newGoals = [];
     const status = goal.status ? goal.status : 'Not Started';
+    const goalIds = goal.goalIds ? goal.goalIds : [];
+
+    // Check if these goals exist.
+    const existingGoals = await Goal.findAll({
+      where: {
+        id: goalIds,
+      },
+    });
 
     // we have a param to determine if goals are new
-    if (goal.isNew) {
+    if (goal.isNew || !existingGoals.length) {
       const {
         isNew,
         objectives,
@@ -1358,7 +1368,12 @@ export async function saveGoalsForReport(goals, report) {
             grantId,
             status: { [Op.not]: 'Closed' },
           },
-          defaults: { ...fields, status, createdVia: 'activityReport' },
+          defaults: {
+            ...fields,
+            status,
+            grantId, // If we don't specify the grant it will be created with the old.
+            createdVia: 'activityReport',
+          },
         });
 
         await cacheGoalMetadata(newGoal, report.id);
@@ -1375,18 +1390,11 @@ export async function saveGoalsForReport(goals, report) {
         status: discardedStatus,
         grant,
         grantId,
-        goalIds,
         id, // this is unique and we can't trying to set this
         onApprovedAR, // we don't want to set this manually
         createdVia,
         ...fields
       } = goal;
-
-      const existingGoals = await Goal.findAll({
-        where: {
-          id: goalIds,
-        },
-      });
 
       const { goalTemplateId } = existingGoals[0];
 
