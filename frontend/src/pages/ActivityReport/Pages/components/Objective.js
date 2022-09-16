@@ -179,6 +179,7 @@ export default function Objective({
     onChangeStatus(newObjective.status);
     onChangeRoles(newObjective.roles || []);
     onChangeTopics(newObjective.topics);
+    onChangeFiles(newObjective.files || []);
     onObjectiveChange(newObjective, index); // Call parent on objective change.
   };
 
