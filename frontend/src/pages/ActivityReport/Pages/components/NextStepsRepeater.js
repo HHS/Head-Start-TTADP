@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import {
@@ -36,6 +36,8 @@ export default function NextStepsRepeater({
     keyName: 'key', // because 'id' is the default key switch it to use 'key'.
   });
 
+  const stepType = name === 'specialistNextSteps' ? 'specialist' : 'recipient';
+
   useEffect(() => {
     const allValues = getValues();
     const fieldArray = allValues[name] || [];
@@ -54,6 +56,16 @@ export default function NextStepsRepeater({
       append({ id: null, note: '', completeDate: null });
     }
   };
+
+  useLayoutEffect(() => {
+    if (fields.length) {
+      const el = document.getElementById(`step-${stepType}-${fields.length - 1}`);
+      // Not using el.scrollIntoView because it doesn't accept a vertical offset (for the header).
+      const rect = el.getBoundingClientRect();
+      const offsetTop = rect.top + window.pageYOffset - 80;
+      window.scrollTo({ top: offsetTop, behavior: 'smooth' });
+    }
+  }, [fields.length, stepType]);
 
   const onRemoveStep = (index) => {
     // Remove from Array.
@@ -99,13 +111,12 @@ export default function NextStepsRepeater({
     }
   };
 
-  const stepType = name === 'specialistNextSteps' ? 'specialist' : 'recipient';
 
   return (
     <>
       <div className="ttahub-next-steps-repeater">
         {fields.map((item, index) => (
-          <div key={item.key}>
+          <div key={item.key} id={`step-${stepType}-${index}`}>
             <FormGroup
               className="margin-top-2 margin-bottom-2"
               error={blurStepValidations[index] || (errors[name] && errors[name][index]
