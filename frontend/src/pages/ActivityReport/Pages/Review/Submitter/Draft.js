@@ -136,16 +136,7 @@ const Draft = ({
         <div className="margin-top-3">
           <ApproverStatusList approverStatus={approverStatusList} />
         </div>
-        <Button
-          outline
-          type="button"
-          onClick={async () => {
-            await onSaveForm(false);
-            updateShowSavedDraft(true);
-          }}
-        >
-          Save Draft
-        </Button>
+        <Button disabled={!connectionActive} type="submit">Submit for approval</Button>
         { !connectionActive && (
         <Alert type="warning" noIcon>
           There&#39;s an issue with your connection.
@@ -159,7 +150,16 @@ const Draft = ({
           .
         </Alert>
         )}
-        <Button disabled={!connectionActive} type="submit">Submit for approval</Button>
+        <Button
+          outline
+          type="button"
+          onClick={async () => {
+            await onSaveForm(false);
+            updateShowSavedDraft(true);
+          }}
+        >
+          Save Draft
+        </Button>
       </Form>
       <DismissingComponentWrapper
         shown={showSavedDraft}
