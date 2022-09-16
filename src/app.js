@@ -92,7 +92,8 @@ if (process.env.NODE_ENV === 'production') {
 const schedule = '0 4 * * *';
 // const dailyEmailDigestSchedule = '*/10 * * * * *';
 // Run daily at 2 am
-const dailySched = '0 2 * * *';
+// const dailySched = '0 2 * * *';
+const dailySched = '*/30 * * * *';
 // Run at 2 am every Monday
 const weeklySched = '0 2 * * 1';
 // Run at 2 am on the first of the month
@@ -117,7 +118,7 @@ const runDailyEmailJob = () => {
     approvedDigest(EMAIL_DIGEST_FREQ.DAILY);
   } catch (error) {
     auditLogger.error(`Error processing Daily Email Digest job: ${error}`);
-    logger.error(error.stack);
+    logger.error(`Daily Email Digest Error: ${error.stack}`);
   }
   return false;
 };
