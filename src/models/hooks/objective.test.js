@@ -90,17 +90,16 @@ describe('objective model hooks', () => {
   });
 
   it('updates when the goal matches the qualifications', async () => {
-    await Goal.update({ createdVia: 'activityReport' }, { where: { id: goal.id } });
-
     let testGoal = await Goal.findByPk(goal.id);
     expect(testGoal.status).toEqual('Draft');
-    expect(testGoal.createdVia).toEqual('activityReport');
     expect(testGoal.id).toEqual(goal.id);
+
+    await Goal.update({ status: 'Not Started' }, { where: { id: goal.id } });
 
     objective2 = await Objective.create({
       title: 'Objective 2',
       goalId: goal.id,
-      status: 'Draft',
+      status: 'Not Started',
     }, { individualHooks: true });
     objective3 = await Objective.create({
       title: 'Objective 3',
@@ -128,6 +127,6 @@ describe('objective model hooks', () => {
     });
 
     testGoal = await Goal.findByPk(goal.id);
-    expect(testGoal.status).toEqual('Closed');
+    expect(testGoal.status).toEqual('In Progress');
   });
 });
