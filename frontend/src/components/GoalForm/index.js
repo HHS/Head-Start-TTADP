@@ -387,7 +387,8 @@ export default function GoalForm({
         const newGoals = goal.grants.map((grant) => ({
           grantId: grant.id,
           name: goal.name,
-          status,
+          status: 'Not Started', // goals should be moved to not started when submitted, and
+          // then the status may be changed by a hook based on objective status
           endDate: goal.endDate && goal.endDate !== 'Invalid date' ? goal.endDate : null,
           regionId: parseInt(regionId, DECIMAL_BASE),
           recipientId: recipient.id,
