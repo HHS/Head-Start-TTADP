@@ -181,7 +181,7 @@ describe('Goals DB service', () => {
       await saveGoalsForReport([existingGoal], { id: 1 });
       expect(existingGoalUpdate).toHaveBeenCalledWith({
         name: 'name',
-        status: 'Not Started',
+        status: 'Draft',
       }, { individualHooks: true });
     });
 
