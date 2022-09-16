@@ -5,6 +5,7 @@ import {
   saveSettings,
   subscribeAll,
   unsubscribeAll,
+  userEmailSettingsById,
   userSettingsById,
   usersWithSetting,
 } from './userSettings';
@@ -130,6 +131,28 @@ describe('UserSetting service', () => {
       const vals = new Set(found.map((s) => s.value));
       expect(vals.size).toBe(1);
       expect(vals.has(USER_SETTINGS.EMAIL.VALUES.NEVER)).toBe(true);
+    });
+  });
+
+  describe('userEmailSettingsById', () => {
+    it('retrieves the correct settings', async () => {
+      const settings = [
+        {
+          key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+          value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+        },
+        {
+          key: USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED,
+          value: USER_SETTINGS.EMAIL.VALUES.DAILY_DIGEST,
+        },
+      ];
+      await saveSettings(999, settings);
+      const found = await userEmailSettingsById(999);
+      const keys = new Set(found.map(({ dataValues: { key } }) => key));
+      expect(keys.size).toBe(Object.keys(USER_SETTINGS.EMAIL.KEYS).length);
+      Object.values(USER_SETTINGS.EMAIL.KEYS).forEach((key) => {
+        expect(keys.has(key)).toBe(true);
+      });
     });
   });
 });
