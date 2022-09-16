@@ -1344,8 +1344,6 @@ export async function saveGoalsForReport(goals, report) {
       },
     });
 
-    console.log('\n\n\n---------------------- Existing Goal: ', existingGoals);
-    console.log('\n\n\n---------------------- Goal: ', goal.isNew, !existingGoals.length);
     // we have a param to determine if goals are new
     if (goal.isNew || !existingGoals.length) {
       const {
