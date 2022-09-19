@@ -112,9 +112,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                 (
                   SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                  INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
-                  INNER JOIN "ObjectiveTopics" "ot" ON "ot"."objectiveId" = "o"."id"      
-                  WHERE "o"."id" = "objectives"."id" 
+                  INNER JOIN "ActivityReportObjectiveTopics" "ot" ON "ot"."activityReportObjectiveId" = "aro"."id"                                        
+                  WHERE "aro"."objectiveId" = "objectives"."id" 
                   AND "ot"."topicId" = "objectives->topics"."id"
                 ) > 0
               `),
@@ -125,10 +124,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                 (
                   SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                  INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
-                  INNER JOIN "ObjectiveTopics" "ot" ON "ot"."objectiveId" = "o"."id"      
-                  WHERE "o"."id" = "objectives"."id" 
-                  AND "ot"."topicId" = "objectives->topics"."id"
+                  INNER JOIN "ActivityReportObjectiveTopics" "ot" ON "ot"."activityReportObjectiveId" = "aro"."id" 
+                  WHERE "aro"."objectiveId" = "objectives"."id"  AND "ot"."topicId" = "objectives->topics"."id"   
                   AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
                 ) > 0
               `),
@@ -146,10 +143,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                   (
                     SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                     INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                    INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
-                    INNER JOIN "ObjectiveFiles" "of" ON "of"."objectiveId" = "o"."id"      
-                    WHERE "o"."id" = "objectives"."id" 
-                    AND "of"."fileId" = "objectives->files"."id"
+                    INNER JOIN "ActivityReportObjectiveFiles" "of" ON "of"."activityReportObjectiveId" = "aro"."id"                                        
+                    WHERE "aro"."objectiveId" = "objectives"."id" AND "of"."fileId" = "objectives->files"."id"
                   ) > 0
                 `),
                 'onAnyReport',
@@ -159,10 +154,9 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                   (
                     SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                     INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                    INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
-                    INNER JOIN "ObjectiveFiles" "of" ON "of"."objectiveId" = "o"."id"      
-                    WHERE "o"."id" = "objectives"."id" 
-                    AND "of"."fileId" = "objectives->files"."id"
+                    INNER JOIN "ActivityReportObjectiveFiles" "of" ON "of"."activityReportObjectiveId" = "aro"."id"                                        
+                    WHERE "aro"."objectiveId" = "objectives"."id" 
+                    AND "of"."fileId" = "objectives->files"."id" 
                     AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
                   ) > 0
                 `),
@@ -181,9 +175,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                 (
                   SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                  INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
-                  INNER JOIN "ObjectiveRoles" "or" ON "or"."objectiveId" = "o"."id"      
-                  WHERE "o"."id" = "objectives"."id" 
+                  INNER JOIN "ActivityReportObjectiveRoles" "or" ON "or"."activityReportObjectiveId" = "aro"."id"                                        
+                  WHERE "aro"."objectiveId" = "objectives"."id" 
                   AND "or"."roleId" = "objectives->roles"."id"
                 ) > 0
               `),
@@ -194,9 +187,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                 (
                   SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                  INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
-                  INNER JOIN "ObjectiveRoles" "or" ON "or"."objectiveId" = "o"."id"      
-                  WHERE "o"."id" = "objectives"."id" 
+                  INNER JOIN "ActivityReportObjectiveRoles" "or" ON "or"."activityReportObjectiveId" = "aro"."id"                                        
+                  WHERE "aro"."objectiveId" = "objectives"."id" 
                   AND "or"."roleId" = "objectives->roles"."id"
                   AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
                 ) > 0
@@ -1511,7 +1503,10 @@ export async function getGoalsForReport(reportId) {
                   {
                     model: Topic,
                     as: 'topic',
-                    attributes: [['name', 'label'], ['id', 'value']],
+                    attributes: [
+                      ['name', 'label'],
+                      ['id', 'value'],
+                    ],
                   },
                 ],
               },
