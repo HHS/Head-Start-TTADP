@@ -702,6 +702,7 @@ export default function GoalForm({
                 createdGoals={createdGoals}
                 onRemove={onRemove}
                 onEdit={onEdit}
+                loading={isLoading}
               />
               <div className="margin-bottom-4">
                 {!showForm && id === 'new'
