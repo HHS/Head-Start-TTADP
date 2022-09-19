@@ -670,7 +670,7 @@ export async function activityReports(
 export async function activityReportsForCleanup(userId) {
   const threeMonthsAgo = moment().subtract(3, 'months').format('YYYY-MM-DD');
 
-  return ActivityReport.findAll(
+  return ActivityReport.unscoped().findAll(
     {
       where: {
         // we only cleanup reports from the last three months
