@@ -138,6 +138,7 @@ export default function ObjectiveForm({
         status={status}
         isLoading={isLoading}
         roleOptions={roleOptions}
+        goalStatus={goalStatus}
       />
 
       <ObjectiveTopics
@@ -147,6 +148,7 @@ export default function ObjectiveForm({
         topics={topics}
         onChangeTopics={onChangeTopics}
         status={status}
+        goalStatus={goalStatus}
         isOnReport={isOnReport || false}
         isOnApprovedReport={isOnApprovedReport || false}
         isLoading={isLoading}
@@ -160,32 +162,32 @@ export default function ObjectiveForm({
         isOnReport={isOnReport || false}
         isOnApprovedReport={isOnApprovedReport || false}
         status={status}
+        goalStatus={goalStatus}
         isLoading={isLoading}
       />
+      { title && (
+      <ObjectiveFiles
+        files={files ? files.map((f) => ({ ...f, objectiveIds: objective.ids })) : []}
+        onChangeFiles={onChangeFiles}
+        objective={objective}
+        isOnApprovedReport={isOnApprovedReport || false}
+        isOnReport={isOnReport || false}
+        status={status}
+        isLoading={isLoading}
+        onUploadFiles={onUploadFiles}
+        index={index}
+        goalStatus={goalStatus}
+      />
+      )}
 
       <ObjectiveStatus
         status={status}
-        isOnApprovedReport={isOnApprovedReport}
-        isOnReport={isOnReport || false}
         goalStatus={goalStatus}
         onChangeStatus={onChangeStatus}
         inputName={`objective-status-${index}`}
         isLoading={isLoading}
       />
 
-      { title && (
-        <ObjectiveFiles
-          files={files ? files.map((f) => ({ ...f, objectiveIds: objective.ids })) : []}
-          onChangeFiles={onChangeFiles}
-          objective={objective}
-          isOnApprovedReport={isOnApprovedReport || false}
-          isOnReport={isOnReport || false}
-          status={status}
-          isLoading={isLoading}
-          onUploadFiles={onUploadFiles}
-          index={index}
-        />
-      )}
     </div>
   );
 }

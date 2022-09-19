@@ -1,17 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
+import { v4 as uuid } from 'uuid';
 import {
   Label, Radio, Fieldset, FormGroup, ErrorMessage,
 } from '@trussworks/react-uswds';
 import QuestionTooltip from './QuestionTooltip';
-import './ObjectiveFiles.scss';
+import UnusedData from './UnusedData';
 import ObjectiveFileUploader from '../FileUploader/ObjectiveFileUploader';
+import './ObjectiveFiles.scss';
 
 export default function ObjectiveFiles({
   objective,
   files,
   onChangeFiles,
-  isOnApprovedReport,
+  goalStatus,
   status,
   isOnReport,
   onUploadFiles,
@@ -28,7 +30,7 @@ export default function ObjectiveFiles({
     () => (hasFiles && files.some((file) => file.onAnyReport)), [hasFiles, files],
   );
 
-  const readOnly = isOnApprovedReport || status === 'Complete' || (status === 'Not Started' && isOnReport);
+  const readOnly = useMemo(() => status === 'Suspended' || (status === 'Not Started' && isOnReport) || (status === 'Completed' && goalStatus === 'Closed'), [goalStatus, isOnReport, status]);
 
   useEffect(() => {
     if (!useFiles && hasFiles) {
@@ -43,11 +45,17 @@ export default function ObjectiveFiles({
 
     return (
       <>
-        <p className="usa-prose text-bold margin-bottom-1">
+        <p className="usa-prose text-bold margin-bottom-0">
           Resource files
         </p>
         <ul className="usa-list usa-list--unstyled">
-          {files.map((file) => (<li key={file.originalFileName}>{file.originalFileName}</li>))}
+          {files.map((file) => (
+            !(status === 'Completed' && goalStatus === 'Closed') || file.onAnyReport ? (
+              <li key={uuid()}>
+                {file.originalFileName}
+              </li>
+            ) : <UnusedData key={uuid()} value={file.originalFileName} />
+          ))}
         </ul>
       </>
     );
@@ -176,7 +184,7 @@ ObjectiveFiles.propTypes = {
     }),
   })),
   onChangeFiles: PropTypes.func.isRequired,
-  isOnApprovedReport: PropTypes.bool.isRequired,
+  goalStatus: PropTypes.string.isRequired,
   isOnReport: PropTypes.bool.isRequired,
   status: PropTypes.string.isRequired,
   onUploadFiles: PropTypes.func.isRequired,

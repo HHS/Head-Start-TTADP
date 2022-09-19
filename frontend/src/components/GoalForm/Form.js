@@ -180,11 +180,12 @@ export default function Form({
         />
       ))}
 
-      <div className="margin-top-4">
-        {errors[FORM_FIELD_INDEXES.OBJECTIVES_EMPTY]}
-        <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />
-      </div>
-
+      { status !== 'Closed' && (
+        <div className="margin-top-4">
+          {errors[FORM_FIELD_INDEXES.OBJECTIVES_EMPTY]}
+          <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />
+        </div>
+      )}
     </div>
   );
 }

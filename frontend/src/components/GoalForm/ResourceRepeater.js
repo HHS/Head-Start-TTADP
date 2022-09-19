@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import PlusButton from './PlusButton';
 import QuestionTooltip from './QuestionTooltip';
+import UnusedData from './UnusedData';
 import colors from '../../colors';
 import './ResourceRepeater.css';
 
@@ -19,10 +20,11 @@ export default function ResourceRepeater({
   status,
   isOnReport,
   isLoading,
+  goalStatus,
 }) {
   const resourcesWrapper = useRef();
 
-  const readOnly = status === 'Suspended' || (status === 'Not Started' && isOnReport);
+  const readOnly = status === 'Suspended' || (status === 'Not Started' && isOnReport) || (status === 'Completed' && goalStatus === 'Closed');
 
   if (readOnly) {
     if (!resources.length) {
@@ -34,7 +36,11 @@ export default function ResourceRepeater({
         <p className="usa-prose text-bold margin-bottom-0">Resource links</p>
         <ul className="usa-list usa-list--unstyled">
           {resources.map((resource) => (
-            <li key={resource.key}>{resource.value}</li>
+            !(status === 'Completed' && goalStatus === 'Closed') || resource.onAnyReport ? (
+              <li key={uuidv4()}>
+                {resource.value}
+              </li>
+            ) : <UnusedData key={uuidv4()} value={resource.value} />
           ))}
         </ul>
       </>
@@ -73,7 +79,7 @@ export default function ResourceRepeater({
     <>
       { fixedResources.length ? (
         <>
-          <p className="usa-prose text-bold margin-bottom-1">Resource links</p>
+          <p className="usa-prose text-bold margin-bottom-0">Resource links</p>
           <ul className="usa-list usa-list--unstyled">
             {fixedResources.map((resource) => (
               <li key={resource.key}>{resource.value}</li>
@@ -142,6 +148,7 @@ ResourceRepeater.propTypes = {
   status: PropTypes.string.isRequired,
   isOnReport: PropTypes.bool.isRequired,
   isLoading: PropTypes.bool,
+  goalStatus: PropTypes.string.isRequired,
 };
 
 ResourceRepeater.defaultProps = {
