@@ -159,7 +159,7 @@ export default function NextStepsRepeater({
               </div>
             </FormGroup>
             <FormGroup
-              className="margin-top-1 margin-bottom-3"
+              className="margin-top-1 margin-bottom-2"
               error={blurDateValidations[index] || (errors[name] && errors[name][index]
                 && errors[name][index].completeDate)}
             >
