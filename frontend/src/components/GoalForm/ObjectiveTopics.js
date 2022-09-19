@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { v4 as uuid } from 'uuid';
 import PropTypes from 'prop-types';
 import {
@@ -15,6 +15,7 @@ export default function ObjectiveTopics({
   topics,
   onChangeTopics,
   status,
+  goalStatus,
   inputName,
   isOnReport,
   isOnApprovedReport,
@@ -22,7 +23,7 @@ export default function ObjectiveTopics({
 }) {
   const initialSelection = useRef(topics.length);
 
-  const readOnly = status === 'Suspended' || (status === 'Not Started' && isOnReport);
+  const readOnly = useMemo(() => status === 'Suspended' || (status === 'Not Started' && isOnReport) || (status === 'Completed' && goalStatus === 'Closed'), [goalStatus, isOnReport, status]);
 
   if (readOnly && initialSelection.current) {
     if (!topics.length) {
@@ -35,7 +36,13 @@ export default function ObjectiveTopics({
           Topics
         </p>
         <ul className="usa-list usa-list--unstyled">
-          {topics.map((topic) => (<li key={uuid()}>{topic.label}</li>))}
+          {topics.map((topic) => (
+            !(status === 'Completed' && goalStatus === 'Closed') || topic.onAnyReport ? (
+              <li key={uuid()}>
+                {topic.label}
+              </li>
+            ) : <UnusedData key={uuid()} value={topic.label} />
+          ))}
         </ul>
       </>
     );
@@ -126,6 +133,7 @@ ObjectiveTopics.propTypes = {
   isOnReport: PropTypes.bool.isRequired,
   isOnApprovedReport: PropTypes.bool.isRequired,
   isLoading: PropTypes.bool,
+  goalStatus: PropTypes.string.isRequired,
 };
 
 ObjectiveTopics.defaultProps = {

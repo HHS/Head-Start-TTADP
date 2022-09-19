@@ -1,4 +1,5 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
+import { v4 as uuid } from 'uuid';
 import PropTypes from 'prop-types';
 import { Label } from '@trussworks/react-uswds';
 import Select from 'react-select';
@@ -17,10 +18,11 @@ export default function SpecialistRole({
   isOnReport,
   isLoading,
   roleOptions,
+  goalStatus,
 }) {
   const initialSelectedRolesLength = useRef(selectedRoles.length);
 
-  const readOnly = isOnApprovedReport || status === 'Suspended' || (status === 'Not Started' && isOnReport);
+  const readOnly = useMemo(() => status === 'Suspended' || (status === 'Not Started' && isOnReport) || (status === 'Completed' && goalStatus === 'Closed'), [goalStatus, isOnReport, status]);
 
   if (readOnly && initialSelectedRolesLength.current) {
     return (
@@ -29,7 +31,14 @@ export default function SpecialistRole({
           Specialist roles
         </p>
         <ul className="usa-list usa-list--unstyled">
-          {selectedRoles.map((role) => (<li key={role.id}>{role.fullName}</li>))}
+          {selectedRoles.map((role) => (
+            !(status === 'Completed' && goalStatus === 'Closed') || role.onAnyReport ? (
+              <li key={uuid()}>
+                {role.fullName}
+              </li>
+            ) : <UnusedData key={uuid()} value={role.fullName} />
+          ))}
+
         </ul>
       </>
     );
@@ -115,6 +124,7 @@ SpecialistRole.propTypes = {
     label: PropTypes.string,
     value: PropTypes.string,
   })).isRequired,
+  goalStatus: PropTypes.string.isRequired,
 };
 
 SpecialistRole.defaultProps = {

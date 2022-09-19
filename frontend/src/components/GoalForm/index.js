@@ -747,24 +747,26 @@ export default function GoalForm({
             />
             )}
 
-            <div className="margin-top-4">
-              { !showForm ? <Button type="submit">Submit goal</Button> : null }
-              { showForm ? <Button type="button" onClick={onSaveAndContinue}>Save and continue</Button> : null }
-              <Button type="button" outline onClick={onSaveDraft}>Save draft</Button>
-              { showForm && !createdGoals.length ? (
-                <Link
-                  to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
-                  className=" usa-button usa-button--outline"
-                >
-                  Cancel
-                </Link>
-              ) : null }
-              { showForm && createdGoals.length ? (
-                <Button type="button" outline onClick={clearForm} data-testid="create-goal-form-cancel">Cancel</Button>
-              ) : null }
+            { status !== 'Closed' && (
+              <div className="margin-top-4">
+                { !showForm ? <Button type="submit">Submit goal</Button> : null }
+                { showForm ? <Button type="button" onClick={onSaveAndContinue}>Save and continue</Button> : null }
+                <Button type="button" outline onClick={onSaveDraft}>Save draft</Button>
+                { showForm && !createdGoals.length ? (
+                  <Link
+                    to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
+                    className=" usa-button usa-button--outline"
+                  >
+                    Cancel
+                  </Link>
+                ) : null }
+                { showForm && createdGoals.length ? (
+                  <Button type="button" outline onClick={clearForm} data-testid="create-goal-form-cancel">Cancel</Button>
+                ) : null }
 
-              { alert.message ? <Alert role="alert" className="margin-y-2" type={alert.type}>{alert.message}</Alert> : null }
-            </div>
+                { alert.message ? <Alert role="alert" className="margin-y-2" type={alert.type}>{alert.message}</Alert> : null }
+              </div>
+            )}
           </form>
         </GoalFormLoadingContext.Provider>
       </Container>

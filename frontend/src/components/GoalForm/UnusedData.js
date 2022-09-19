@@ -5,9 +5,9 @@ import { faBan } from '@fortawesome/free-solid-svg-icons';
 import colors from '../../colors';
 import './UnusedData.scss';
 
-export default function UnusedData({ key, value }) {
+export default function UnusedData({ value }) {
   return (
-    <li key={key} className="ttahub-objective-list-item--unused-data">
+    <li className="ttahub-objective-list-item--unused-data">
       <FontAwesomeIcon icon={faBan} color={colors.baseDark} className="padding-right-1" />
       {value}
     </li>
@@ -15,6 +15,5 @@ export default function UnusedData({ key, value }) {
 }
 
 UnusedData.propTypes = {
-  key: PropTypes.string.isRequired,
   value: PropTypes.string.isRequired,
 };
