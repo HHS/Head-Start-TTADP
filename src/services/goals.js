@@ -592,6 +592,10 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
             as: 'roles',
           },
           {
+            model: File,
+            as: 'files',
+          },
+          {
             model: Topic,
             as: 'topics',
             attributes: [
