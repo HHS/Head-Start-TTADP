@@ -3,7 +3,7 @@
   multiple pages. Each "page" is defined in the `./Pages` directory.
 */
 import React, {
-  useState, useEffect, useRef, useContext,
+  useState, useEffect, useRef, useContext, useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -314,7 +314,7 @@ function ActivityReport({
     }
   }, [activityReportId, formData]);
 
-  const userHasOneRole = user && user.roles && user.roles.length === 1;
+  const userHasOneRole = useMemo(() => user && user.roles && user.roles.length === 1, [user]);
 
   useDeepCompareEffect(() => {
     const fetch = async () => {
@@ -571,8 +571,7 @@ function ActivityReport({
           ? updatedReport.activityRecipients.map(({ id }) => id)
           : [];
         const goals = convertGoalsToFormData(updatedReport.goalsAndObjectives, grantIds);
-
-        updateFormData({ ...formData, goals });
+        updateFormData({ ...formData, goals }, true);
         setConnectionActive(true);
         updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
       }
