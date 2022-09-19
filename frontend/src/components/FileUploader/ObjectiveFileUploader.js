@@ -14,14 +14,22 @@ import Dropzone from './Dropzone';
 import './FileUploader.scss';
 
 const ObjectiveFileUploader = ({
-  onChange, files, objective, id, upload, index, inputName, onBlur, setError,
+  onChange,
+  files,
+  objective,
+  id,
+  upload,
+  index,
+  inputName,
+  onBlur,
+  setError,
 }) => {
   const onFileRemoved = async (removedFileIndex) => {
     const file = files[removedFileIndex];
 
-    if (file.id && file.objectiveIds) {
+    if (file.id && file.objectiveIds && file.objectiveIds.length) {
       await deleteObjectiveFile(file.id, file.objectiveIds);
-    } else if (file.id && objective.ids) {
+    } else if (file.id && objective.ids && objective.ids.length) {
       await deleteObjectiveFile(file.id, objective.ids);
     } else if (file.id) {
       await deleteFile(file.id);
@@ -55,10 +63,7 @@ const ObjectiveFileUploader = ({
     if (objectives && setObjectives) {
       const copyOfObjectives = objectives.map((o) => ({ ...o }));
       copyOfObjectives[objectiveIndex].files = allFilesIncludingTheNewOnes;
-      copyOfObjectives[objectiveIndex].ids = allFilesIncludingTheNewOnes
-        .filter((f) => f.objectiveIds)
-        .map((f) => f.objectiveIds)
-        .flat();
+      copyOfObjectives[objectiveIndex].ids = objectiveIds;
       setObjectives(copyOfObjectives);
     } else {
       // else we just update the files array for local display
