@@ -194,7 +194,7 @@ export default function NextStepsRepeater({
         type="button"
         unstyled
         onClick={onAddNewStep}
-        className="ttahub-next-steps__add-step-button"
+        className="ttahub-next-steps__add-step-button margin-bottom-2"
         data-testid={
           `${name === 'specialistNextSteps'
             ? 'specialist' : 'recipient'}NextSteps-button`
