@@ -294,7 +294,6 @@ export function activityReportByLegacyId(legacyId) {
 export async function activityReportAndRecipientsById(activityReportId) {
   const arId = parseInt(activityReportId, DECIMAL_BASE);
 
-  // TODO - explore a way to move this query inline to the ActivityReport.findOne
   const goalsAndObjectives = await getGoalsForReport(arId);
 
   const recipients = await ActivityRecipient.findAll({
