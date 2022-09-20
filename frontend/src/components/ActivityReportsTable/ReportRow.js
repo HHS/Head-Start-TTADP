@@ -36,7 +36,6 @@ function ReportRow({
   const [trClassname, setTrClassname] = useState('tta-smarthub--report-row');
 
   const history = useHistory();
-  console.log('Activity Recip: ', activityRecipients);
   const recipients = activityRecipients && activityRecipients.map((ar) => (
     ar.name
   ));
