@@ -3,7 +3,6 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
-import { v4 as uuid } from 'uuid';
 import { useController, useFormContext } from 'react-hook-form/dist/index.ie11';
 import GoalText from '../../../../components/GoalForm/GoalText';
 import { goalsByIdsAndActivityReport } from '../../../../fetchers/goals';
@@ -23,6 +22,7 @@ export default function GoalForm({
   roles,
   reportId,
   onSaveDraft,
+  datePickerKey,
 }) {
   // pull the errors out of the form context
   const { errors, watch } = useFormContext();
@@ -40,9 +40,6 @@ export default function GoalForm({
   const defaultEndDate = useMemo(() => (goal && goal.endDate ? goal.endDate : ''), [goal]);
   const defaultName = useMemo(() => (goal && goal.name ? goal.name : ''), [goal]);
 
-  // the date picker component, as always, presents special challenges, it needs a key updated
-  // to re-render appropriately
-  const [datePickerKey, setDatePickerKey] = useState(uuid());
   const activityRecipientType = watch('activityRecipientType');
 
   const {
@@ -90,8 +87,11 @@ export default function GoalForm({
     defaultName,
     goal.name,
     onUpdateText,
-    setDatePickerKey,
   ]);
+
+  useEffect(() => {
+    onUpdateDate(goal.endDate ? goal.endDate : defaultEndDate);
+  }, [defaultEndDate, goal.endDate, onUpdateDate]);
 
   const [objectives, setObjectives] = useState([]);
 
@@ -140,7 +140,7 @@ export default function GoalForm({
         setEndDate={onUpdateDate}
         endDate={goalEndDate || ''}
         validateEndDate={onBlurDate}
-        datePickerKey={datePickerKey}
+        key={datePickerKey} // force a re-render when the a new goal is picked
         inputName={goalEndDateInputName}
         isLoading={isLoading}
       />
@@ -184,4 +184,5 @@ GoalForm.propTypes = {
   roles: PropTypes.arrayOf(PropTypes.string).isRequired,
   reportId: PropTypes.number.isRequired,
   onSaveDraft: PropTypes.func.isRequired,
+  datePickerKey: PropTypes.string.isRequired,
 };
