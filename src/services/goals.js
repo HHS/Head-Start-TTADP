@@ -1348,7 +1348,8 @@ export async function saveGoalsForReport(goals, report) {
       const {
         isNew,
         objectives,
-        id, grantIds,
+        id,
+        grantIds,
         status: discardedStatus,
         onApprovedAR,
         createdVia,

@@ -17,8 +17,9 @@ describe('specialistrole select', () => {
       selectedRoles={['lion tamer']}
       inputName="specialist-select"
       validateSpecialistRole={validateSpecialistRole}
-      options={[
-        'Tiger tester', 'lion tamer',
+      roleOptions={[
+        { id: 1, fullName: 'Tiger tester' },
+        { id: 2, fullName: 'lion tamer' },
       ]}
     />);
   };
