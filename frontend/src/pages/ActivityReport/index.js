@@ -572,7 +572,7 @@ function ActivityReport({
           : [];
         const goals = convertGoalsToFormData(updatedReport.goalsAndObjectives, grantIds);
 
-        updateFormData({ ...formData, goals });
+        updateFormData({ ...formData, goals }, true);
         setConnectionActive(true);
         updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
       }
