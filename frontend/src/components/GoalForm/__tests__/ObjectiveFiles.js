@@ -18,11 +18,12 @@ describe('ObjectiveFiles', () => {
       objective={{ id: 1 }}
       isOnApprovedReport
       isOnReport
-      status="Complete"
+      status="Completed"
       onUploadFile={jest.fn()}
       index={0}
       inputName="objectiveFiles"
       onBlur={jest.fn()}
+      goalStatus="Closed"
     />);
     expect(await screen.findByText('Resource files')).toBeVisible();
     expect(screen.getByText(/testfile1\.txt/i)).toBeVisible();
