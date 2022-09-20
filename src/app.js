@@ -93,9 +93,10 @@ const schedule = '0 4 * * *';
 // const dailyEmailDigestSchedule = '*/10 * * * * *';
 // Run daily at 2 am
 // const dailySched = '0 2 * * *';
-const dailySched = '*/30 * * * *';
+// const dailySched = '*/10 * * * * *';
+const tmpSched = '0 * * * *'; // every hour
 // Run at 2 am every Monday
-const weeklySched = '0 2 * * 1';
+// const weeklySched = '0 2 * * 1';
 // Run at 2 am on the first of the month
 const monthlySched = '0 2 1 * *';
 const timezone = 'America/New_York';
@@ -112,6 +113,7 @@ const runJob = () => {
 
 const runDailyEmailJob = () => {
   (async () => {
+    logger.info('Starting daily digests');
     try {
       await collaboratorDigest(EMAIL_DIGEST_FREQ.DAILY);
       await changesRequestedDigest(EMAIL_DIGEST_FREQ.DAILY);
@@ -125,8 +127,9 @@ const runDailyEmailJob = () => {
   return true;
 };
 
-const runMonthlyEmailJob = () => {
+const runWeeklyEmailJob = () => {
   (async () => {
+    logger.info('Starting weekly digests');
     try {
       await collaboratorDigest(EMAIL_DIGEST_FREQ.WEEKLY);
       await changesRequestedDigest(EMAIL_DIGEST_FREQ.WEEKLY);
@@ -134,39 +137,42 @@ const runMonthlyEmailJob = () => {
       await approvedDigest(EMAIL_DIGEST_FREQ.WEEKLY);
     } catch (error) {
       auditLogger.error(`Error processing Weekly Email Digest job: ${error}`);
-      logger.error(`Monthly Email Digest Error: ${error.stack}`);
-    }
-  })();
-  return true;
-};
-
-const runWeeklyEmailJob = () => {
-  (async () => {
-    try {
-      await collaboratorDigest(EMAIL_DIGEST_FREQ.MONTHLY);
-      await changesRequestedDigest(EMAIL_DIGEST_FREQ.MONTHLY);
-      await submittedDigest(EMAIL_DIGEST_FREQ.MONTHLY);
-      await approvedDigest(EMAIL_DIGEST_FREQ.MONTHLY);
-    } catch (error) {
-      auditLogger.error(`Error processing Daily Email Digest job: ${error}`);
       logger.error(`Weekly Email Digest Error: ${error.stack}`);
     }
   })();
   return true;
 };
 
+const runMonthlyEmailJob = () => {
+  (async () => {
+    logger.info('Starting montly digests');
+    try {
+      await collaboratorDigest(EMAIL_DIGEST_FREQ.MONTHLY);
+      await changesRequestedDigest(EMAIL_DIGEST_FREQ.MONTHLY);
+      await submittedDigest(EMAIL_DIGEST_FREQ.MONTHLY);
+      await approvedDigest(EMAIL_DIGEST_FREQ.MONTHLY);
+    } catch (error) {
+      auditLogger.error(`Error processing Monthly Email Digest job: ${error}`);
+      logger.error(`Monthly Email Digest Error: ${error.stack}`);
+    }
+  })();
+  return true;
+};
+
 // TODO: to be removed; leaving it here temporarily for any non-prod testing
-const dailyJob = new CronJob(dailySched, () => runDailyEmailJob(), null, true, timezone);
-dailyJob.start();
+// const dailyJob = new CronJob(dailySched, () => runDailyEmailJob(), null, true, timezone);
+// dailyJob.start();
+// const weeklyJob = new CronJob(dailySched, () => runWeeklyEmailJob(), null, true, timezone);
+// weeklyJob.start();
 
 // Run only on one instance
 if (process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') {
   const job = new CronJob(schedule, () => runJob(), null, true, timezone);
   job.start();
   // TODO: Uncomment this when going into prod
-  // const dailyJob= new CronJob(dailySched, () => runDailyEmailJob(), null, true, timezone);
-  // dailyJob.start();
-  const weeklyJob = new CronJob(weeklySched, () => runWeeklyEmailJob(), null, true, timezone);
+  const dailyJob = new CronJob(tmpSched, () => runDailyEmailJob(), null, true, timezone);
+  dailyJob.start();
+  const weeklyJob = new CronJob(tmpSched, () => runWeeklyEmailJob(), null, true, timezone);
   weeklyJob.start();
   const monthlyJob = new CronJob(monthlySched, () => runMonthlyEmailJob(), null, true, timezone);
   monthlyJob.start();

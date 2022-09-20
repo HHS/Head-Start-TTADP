@@ -1,8 +1,11 @@
 import { Op } from 'sequelize';
 import { USER_SETTINGS } from '../constants';
 import {
-  sequelize, User, UserSettings, UserSettingOverrides,
+  sequelize, User, UserSettings, UserSettingOverrides, Permission,
 } from '../models';
+import SCOPES from '../middleware/scopeConstants';
+
+const { SITE_ACCESS } = SCOPES;
 
 const baseSearch = (userId) => ({
   attributes: [
@@ -101,6 +104,12 @@ export const usersWithSetting = async (key, values) => {
         include: [
           {
             attributes: [],
+            model: Permission,
+            as: 'permissions',
+            required: true,
+          },
+          {
+            attributes: [],
             model: UserSettingOverrides,
             as: 'userSettingOverrides',
             include: [
@@ -116,12 +125,19 @@ export const usersWithSetting = async (key, values) => {
           },
         ],
         where: { '$userSettingOverrides.id$': null },
+        '$permissions.scopeId$': SITE_ACCESS,
       });
     } else {
       // this is an override.
       // return all users that are providing the override.
       out = await User.findAll({
         include: [
+          {
+            attributes: [],
+            model: Permission,
+            as: 'permissions',
+            required: true,
+          },
           {
             attributes: [],
             model: UserSettingOverrides,
@@ -144,6 +160,7 @@ export const usersWithSetting = async (key, values) => {
           '$userSettingOverrides.value$': {
             [Op.eq]: sequelize.cast(JSON.stringify(v), 'jsonb'),
           },
+          '$permissions.scopeId$': SITE_ACCESS,
         },
       });
     }
