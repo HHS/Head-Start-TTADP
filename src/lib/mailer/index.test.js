@@ -1,16 +1,27 @@
 import { createTransport } from 'nodemailer';
 import {
   notifyCollaboratorAssigned, notifyApproverAssigned, notifyChangesRequested, notifyReportApproved,
+  collaboratorAssignedNotification,
+  approverAssignedNotification,
+  reportApprovedNotification,
+  changesRequestedNotification,
   notifyDigest,
   collaboratorDigest,
   changesRequestedDigest,
+  submittedDigest,
+  approvedDigest,
+  notificationQueue as notificationQueueMock,
   notificationDigestQueue as notificationDigestQueueMock,
+  // notificationQueue,
 } from '.';
 import { EMAIL_ACTIONS, EMAIL_DIGEST_FREQ, REPORT_STATUSES } from '../../constants';
+import { auditLogger as logger } from '../../logger';
 
 import db, {
-  ActivityReport, ActivityReportCollaborator, User,
+  ActivityReport, ActivityReportCollaborator, User, ActivityReportApprover
 } from '../../models';
+import { usersWithPermissions } from '../../services/users';
+import { usersWithSetting } from '../../services/userSettings';
 
 const mockManager = {
   name: 'Mock Manager',
@@ -59,6 +70,15 @@ const digestMockCollab = {
   role: [],
 };
 
+const digestMockApprover = {
+  id: 32161330,
+  homeRegionId: 1,
+  name: 'bu',
+  hsesUserId: 'bu',
+  hsesUsername: 'bu',
+  role: [],
+};
+
 const mockReport = {
   id: 1,
   displayId: 'mockReport-1',
@@ -79,7 +99,7 @@ const submittedReport = {
   ...reportObject,
   activityRecipients: [{ grantId: 1 }],
   submissionStatus: REPORT_STATUSES.SUBMITTED,
-  calculatedStatus: REPORT_STATUSES.SUBMITTED,
+  // calculatedStatus: REPORT_STATUSES.SUBMITTED,
   numberOfParticipants: 1,
   deliveryMethod: 'method',
   duration: 0,
@@ -97,6 +117,14 @@ jest.mock('../../services/userSettings', () => ({
   usersWithSetting: jest.fn().mockReturnValue(Promise.resolve([{ id: digestMockCollab.id }])),
 }));
 
+// jest.mock('.', () => ({
+//   notificationQueue: {
+//     add: jest.fn(),
+//   }
+// }))
+
+jest.mock('../../logger');
+
 const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${mockReport.id}`;
 
 const jsonTransport = createTransport({ jsonTransport: true });
@@ -113,7 +141,11 @@ describe('mailer tests', () => {
     it('Tests that an email is sent', async () => {
       process.env.SEND_NOTIFICATIONS = true;
       const email = await notifyChangesRequested({
-        data: { report: mockReport, approver: mockApprover },
+        data: {
+          report: mockReport, approver: mockApprover,
+          authorWithSetting: mockReport.author,
+          collabsWithSettings: [mockCollaborator1, mockCollaborator2],
+        },
       }, jsonTransport);
       expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
       expect(email.envelope.to).toStrictEqual([
@@ -127,17 +159,34 @@ describe('mailer tests', () => {
       expect(message.text).toContain(mockApprover.note);
       expect(message.text).toContain(reportPath);
     });
+    it('Tests that an email is not sent if no recipients', async () => {
+      process.env.SEND_NOTIFICATIONS = true;
+      const email = await notifyChangesRequested({
+        data: {
+          report: mockReport, approver: mockApprover,
+          authorWithSetting: null,
+          collabsWithSettings: [],
+        },
+      }, jsonTransport);
+      expect(email).toBe(null);
+    });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
       process.env.SEND_NOTIFICATIONS = false;
       await expect(notifyChangesRequested({
         data: { report: mockReport },
-      }, jsonTransport)).resolves.toBeNull();
+      }, jsonTransport)).toBeNull();
     });
   });
   describe('Report Approved', () => {
     it('Tests that an email is sent', async () => {
       process.env.SEND_NOTIFICATIONS = true;
-      const email = await notifyReportApproved({ data: { report: mockReport } }, jsonTransport);
+      const email = await notifyReportApproved({
+        data: {
+          report: mockReport, approver: mockApprover,
+          authorWithSetting: mockReport.author,
+          collabsWithSettings: [mockCollaborator1, mockCollaborator2],
+        },
+      }, jsonTransport);
       expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
       expect(email.envelope.to).toStrictEqual([
         mockAuthor.email,
@@ -149,11 +198,22 @@ describe('mailer tests', () => {
       expect(message.text).toContain(`Activity Report ${mockReport.displayId} has been approved.`);
       expect(message.text).toContain(reportPath);
     });
+    it('Tests that an email is not sent if no recipients', async () => {
+      process.env.SEND_NOTIFICATIONS = true;
+      const email = await notifyReportApproved({
+        data: {
+          report: mockReport, approver: mockApprover,
+          authorWithSetting: null,
+          collabsWithSettings: [],
+        },
+      }, jsonTransport);
+      expect(email).toBe(null);
+    });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
       process.env.SEND_NOTIFICATIONS = false;
-      await expect(notifyChangesRequested({
+      await expect(notifyReportApproved({
         data: { report: mockReport },
-      }, jsonTransport)).resolves.toBeNull();
+      }, jsonTransport)).toBeNull();
     });
   });
   describe('Manager Approval Requested', () => {
@@ -293,6 +353,18 @@ describe('mailer tests', () => {
         'You haven\'t been added as a collaborator on any activity reports today.',
       );
       expect(message.text).not.toContain(reportPath);
+    });
+
+    it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
+      process.env.SEND_NOTIFICATIONS = false;
+      await expect(notifyDigest({
+        data: {
+          user: mockNewCollaborator,
+          reports: [],
+          type: EMAIL_ACTIONS.COLLABORATOR_DIGEST,
+          freq: EMAIL_DIGEST_FREQ.DAILY,
+        },
+      }, jsonTransport)).toBeNull();
     });
   });
 
@@ -579,26 +651,135 @@ describe('mailer tests', () => {
       );
       expect(message.text).not.toContain(reportPath);
     });
+    // it('tests that it logs on error', async () => {
+    //   jest.spyOn(notificationDigestQueueMock, 'add').mockImplementation(async () => Promise.reject());
+    //   process.env.SEND_NOTIFICATIONS = true;
+    //   const email = await notifyDigest({
+    //     data: {
+    //       user: mockNewCollaborator,
+    //       reports: [],
+    //       type: EMAIL_ACTIONS.APPROVED_DIGEST,
+    //       freq: EMAIL_DIGEST_FREQ.MONTHLY,
+    //     },
+    //   }, jsonTransport);
+    //   const message = JSON.parse(email.message);
+    //   expect(message.subject).toBe('TTA Hub digest: no new notifications');
+    //   expect(message.text).toContain(
+    //     `Hello ${mockNewCollaborator.name}`,
+    //   );
+    //   expect(message.text).toContain(
+    //     'No reports have been approved this month.',
+    //   );
+    //   expect(message.text).not.toContain(reportPath);
+    // });
   });
 
   describe('enqueue', () => {
     beforeEach(async () => {
       await User.create(digestMockCollab, { validate: false }, { individualHooks: false });
+      await User.create(digestMockApprover, { validate: false }, { individualHooks: false });
       await User.create(mockUser, { validate: false }, { individualHooks: false });
 
+      jest.spyOn(notificationQueueMock, 'add').mockImplementation(async () => Promise.resolve());
       jest.spyOn(notificationDigestQueueMock, 'add').mockImplementation(async () => Promise.resolve());
     });
     afterEach(async () => {
       await ActivityReportCollaborator.destroy({ where: { userId: digestMockCollab.id } });
+      await ActivityReportApprover.destroy({ where: { userId: digestMockApprover.id }, force: true });
       await ActivityReport.destroy({ where: { userId: mockUser.id } });
       await User.destroy({ where: { id: digestMockCollab.id } });
+      await User.destroy({ where: { id: digestMockApprover.id } });
       await User.destroy({ where: { id: mockUser.id } });
 
-      notificationDigestQueueMock.add.mockRestore();
+      // notificationDigestQueueMock.add.mockRestore();
     });
     afterAll(async () => {
       await db.sequelize.close();
     });
+
+    it('"collaborators added" on the notificationQueue', async () => {
+      const report = await ActivityReport.create(reportObject);
+
+     collaboratorAssignedNotification(report,
+        [mockCollaborator1, mockCollaborator2]);
+      expect(notificationQueueMock.add).toHaveBeenCalled();
+    });
+
+    it('"collaborators added" which logs on error', async () => {
+      jest.clearAllMocks();
+      const mock = jest.spyOn(notificationQueueMock, 'add');
+
+      mock.mockImplementationOnce(() => {
+        throw new Error('Christmas present!');
+      });
+      const report = await ActivityReport.create(reportObject);
+      
+      collaboratorAssignedNotification(report,
+        [mockCollaborator1, mockCollaborator2]);
+      expect(logger.error).toHaveBeenCalledWith(new Error('Christmas present!'));
+    });
+
+    it('"approver assigned" on the notificationQueue', async () => {
+      const report = await ActivityReport.create(reportObject);
+
+      const result = approverAssignedNotification(report,
+        [mockApprover]);
+      expect(notificationQueueMock.add).toHaveBeenCalled();
+    });
+
+    it('"approver assigned" which logs on error', async () => {
+      jest.clearAllMocks();
+      const mock = jest.spyOn(notificationQueueMock, 'add');
+
+      mock.mockImplementationOnce(() => {
+        throw new Error('Something is not right');
+      });
+      const report = await ActivityReport.create(reportObject);
+      
+      approverAssignedNotification(report, [mockApprover]);
+      expect(logger.error).toHaveBeenCalledWith(new Error('Something is not right'));
+    });
+
+    it('"report approved" on the notificationQueue', async () => {
+      const report = await ActivityReport.create(reportObject);
+
+      reportApprovedNotification(report, null, []);
+      expect(notificationQueueMock.add).toHaveBeenCalled();
+    });
+
+    it('"report approved" which logs on error', async () => {
+      jest.clearAllMocks();
+      const mock = jest.spyOn(notificationQueueMock, 'add');
+
+      mock.mockImplementationOnce(() => {
+        throw new Error('Something is not right');
+      });
+      const report = await ActivityReport.create(reportObject);
+      
+      reportApprovedNotification(report);
+      expect(logger.error).toHaveBeenCalledWith(new Error('Something is not right'));
+    });
+
+    it('"changes requested" on the notificationQueue', async () => {
+      const report = await ActivityReport.create(reportObject);
+
+      changesRequestedNotification(report, mockApprover, null, []);
+      expect(notificationQueueMock.add).toHaveBeenCalled();
+    });
+
+    it('"changes requested" which logs on error', async () => {
+      jest.clearAllMocks();
+      const mock = jest.spyOn(notificationQueueMock, 'add');
+
+      mock.mockImplementationOnce(() => {
+        throw new Error('Christmas present!');
+      });
+      const report = await ActivityReport.create(reportObject);
+      
+      changesRequestedNotification(report);
+      expect(logger.error).toHaveBeenCalledWith(new Error('Christmas present!'));
+    });
+
     it('"collaborator added" digest on the notificationDigestQueue', async () => {
       const report = await ActivityReport.create(reportObject);
 
@@ -614,6 +795,15 @@ describe('mailer tests', () => {
       expect(result[0].freq).toBe('today');
       expect(result[0].reports.length).toBe(1);
       expect(result[0].reports[0].id).toBe(report.id);
+    });
+
+    it('"collaborator added" digest which logs on error', async () => {
+      usersWithSetting.mockReturnValueOnce(Promise.reject(new Error('Unfortunately, it does not work')));
+      await expect(collaboratorDigest('this month')).rejects.toThrow();
+    });
+
+    it('"collaborator added" digest which logs on bad date', async () => {
+      await expect(collaboratorDigest('')).rejects.toThrow();
     });
 
     it('"changes requested" digest on the notificationDigestQueue', async () => {
@@ -634,6 +824,61 @@ describe('mailer tests', () => {
       expect(result[0].freq).toBe('today');
       expect(result[0].reports.length).toBe(1);
       expect(result[0].reports[0].id).toBe(report.id);
+    });
+
+    it('"changes requested" digest which logs on error', async () => {
+      usersWithSetting.mockReturnValueOnce(Promise.reject(new Error('Something is off')));
+      await expect(changesRequestedDigest('this month')).rejects.toThrow();
+    });
+
+    it('"changes requested" digest which logs on bad date', async () => {
+      await expect(changesRequestedDigest('')).rejects.toThrow();
+    });
+
+    it('"submitted" digest on the notificationDigestQueue', async () => {
+      const result = await submittedDigest('this week');
+      expect(notificationDigestQueueMock.add).toHaveBeenCalled();
+      expect(result).toBeDefined();
+      expect(result.length).toBe(1);
+      expect(result[0].freq).toBe('this week');
+    });
+
+    it('"submitted" digest which logs on error', async () => {
+      usersWithSetting.mockReturnValueOnce(Promise.reject(new Error('Christmas present!')));
+      await expect(submittedDigest('this month')).rejects.toThrow();
+    });
+
+    it('"submitted" digest which logs on bad date', async () => {
+      await expect(submittedDigest('')).rejects.toThrow();
+    });
+
+    it('"approved" digest on the notificationDigestQueue', async () => {
+      const report = await ActivityReport.create({
+        ...submittedReport,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+      });
+
+      // Add Collaborator.
+      await ActivityReportCollaborator.create({
+        activityReportId: report.id,
+        userId: digestMockCollab.id,
+      });
+      const result = await approvedDigest('this month');
+      expect(notificationDigestQueueMock.add).toHaveBeenCalled();
+      expect(result).toBeDefined();
+      expect(result.length).toBe(1);
+      expect(result[0].freq).toBe('this month');
+      expect(result[0].reports.length).toBe(1);
+      expect(result[0].reports[0].id).toBe(report.id);
+    });
+
+    it('"approved" digest which logs on error', async () => {
+      usersWithSetting.mockReturnValueOnce(Promise.reject(new Error('Issue here')));
+      await expect(approvedDigest('this month')).rejects.toThrow();
+    });
+
+    it('"approved" digest which logs on bad date', async () => {
+      await expect(approvedDigest('')).rejects.toThrow();
     });
   });
 });

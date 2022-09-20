@@ -84,11 +84,11 @@ export const notifyChangesRequested = (job, transport = defaultTransport) => {
 
     const collabArray = collabsWithSettings.map((c) => c.user.email);
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
-    if (collabArray && collabArray.length > 0) {
-      toEmails.push(collabArray);
-    }
     if (authorWithSetting) {
       toEmails.push(authorWithSetting.email);
+    }
+    if (collabArray && collabArray.length > 0) {
+      toEmails.push(collabArray);
     }
 
     if (toEmails.length === 0) {
@@ -138,11 +138,11 @@ export const notifyReportApproved = (job, transport = defaultTransport) => {
     logger.info(`MAILER: Notifying users that report ${displayId} was approved.`);
     const collaboratorEmailAddresses = collabsWithSettings.map((c) => c.user.email);
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
-    if (collaboratorEmailAddresses && collaboratorEmailAddresses.length > 0) {
-      toEmails.push(collaboratorEmailAddresses);
-    }
     if (authorWithSetting) {
       toEmails.push(authorWithSetting.email);
+    }
+    if (collaboratorEmailAddresses && collaboratorEmailAddresses.length > 0) {
+      toEmails.push(collaboratorEmailAddresses);
     }
 
     if (toEmails.length === 0) {
@@ -329,6 +329,9 @@ export async function collaboratorDigest(freq) {
   const date = frequencyToInterval(freq);
   logger.info(`MAILER: Starting CollaboratorDigest with freq ${freq}`);
   try {
+    if(!date) {
+      throw new Error('date is null');
+    }
     // Find users having collaborator digest preferences
     const users = await usersWithSetting(USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED, [freq]);
 
@@ -363,6 +366,9 @@ export async function changesRequestedDigest(freq) {
   const date = frequencyToInterval(freq);
   logger.info(`MAILER: Starting ChangesRequestedDigest with freq ${freq}`);
   try {
+    if(!date) {
+      throw new Error('date is null');
+    }
     // Find Users with preference
     const users = await usersWithSetting(USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED, [freq]);
     const records = users.map(async (user) => {
@@ -397,7 +403,10 @@ export async function submittedDigest(freq) {
   const date = frequencyToInterval(freq);
   logger.info(`MAILER: Starting SubmittedDigest with freq ${freq}`);
   try {
-  // Find Users with preferences
+    if(!date) {
+      throw new Error('date is null');
+    }
+    // Find Users with preferences
     const users = await usersWithSetting(USER_SETTINGS.EMAIL.KEYS.SUBMITTED_FOR_REVIEW, [freq]);
     const records = users.map(async (user) => {
       const reports = await activityReportsSubmittedByDate(user.id, date);
@@ -431,6 +440,9 @@ export async function approvedDigest(freq) {
   const date = frequencyToInterval(freq);
   logger.info(`MAILER: Starting ApprovedDigest with freq ${freq}`);
   try {
+    if(!date) {
+      throw new Error('date is null');
+    }
     // Find Users with preferences
     const users = await usersWithSetting(USER_SETTINGS.EMAIL.KEYS.APPROVAL, [freq]);
 
@@ -500,7 +512,7 @@ export const notifyDigest = (job, transport = defaultTransport) => {
       },
     });
   }
-  return Promise.resolve(null);
+  return null;
 };
 
 /**
