@@ -295,10 +295,9 @@ export async function populateRecipientInfo(activityRecipients, grantPrograms) {
       Hopefully this code is temporary until we figure
       out why joining programs to grants causes issues.
   */
-  activityRecipients.forEach((recipient) => {
+  return activityRecipients.map((recipient) => {
     if (recipient.grant && grantPrograms.length) {
       const programsToAssign = grantPrograms.filter((p) => p.grantId === recipient.grantId);
-
       // Programs.
       Object.defineProperty(
         recipient.grant,
@@ -325,7 +324,7 @@ export async function populateRecipientInfo(activityRecipients, grantPrograms) {
       );
 
       // Number with Program Types.
-      const numberWithProgramTypes = `${recipient.grant.number} ${programTypes.length > 0 ? `- ${programTypes.join(', ')}` : ''}`;
+      const numberWithProgramTypes = `${recipient.grant.number} ${programTypes.length > 0 ? ` - ${programTypes.join(', ')}` : ''}`;
 
       Object.defineProperty(
         recipient.grant,
@@ -356,11 +355,12 @@ export async function populateRecipientInfo(activityRecipients, grantPrograms) {
         recipient,
         'name',
         {
-          value: nameValue,
+          value: 'blah',
           enumerable: true,
         },
       );
     }
+    return { ...recipient };
   });
 }
 
@@ -454,9 +454,9 @@ export async function activityReportAndRecipientsById(activityReportId) {
   });
 
   // Populate Activity Recipient info.
-  populateRecipientInfo(recipients, grantPrograms);
+  const updatedRecipients = await populateRecipientInfo(recipients, grantPrograms);
 
-  const activityRecipients = recipients.map((recipient) => {
+  const activityRecipients = updatedRecipients.map((recipient) => {
     const name = recipient.otherEntity ? recipient.otherEntity.name : recipient.grant.name;
     const activityRecipientId = recipient.otherEntity
       ? recipient.otherEntity.dataValues.id : recipient.grant.dataValues.id;
@@ -674,7 +674,7 @@ export async function activityReports(
     where: {
       activityReportId: reports.rows.map(({ id }) => id),
     },
-    attributes: ['id', 'name', 'activityRecipientId', 'activityReportId'],
+    attributes: ['id', 'name', 'activityRecipientId', 'activityReportId', 'grantId'],
     // sorting these just so the order is testable
     order: [
       [
@@ -685,6 +685,17 @@ export async function activityReports(
       ],
     ],
   });
+
+  // Get all grant programs at once to reduce DB calls.
+  const grantIds = recipients.map((a) => a.grantId);
+  const grantPrograms = await Program.findAll({
+    where: {
+      grantId: grantIds,
+    },
+  });
+
+  // Populate Activity Recipient info.
+  await populateRecipientInfo(recipients, grantPrograms);
 
   return { ...reports, recipients };
 }
@@ -1189,8 +1200,8 @@ async function getDownloadableActivityReports(where, separate = true) {
         grantId: grantIds,
       },
     });
-    populateRecipientInfo(r.activityRecipients, grantPrograms);
-    return { ...r };
+    const updatedRecipients = await populateRecipientInfo(r.activityRecipients, grantPrograms);
+    return { ...r, activityRecipients: updatedRecipients };
   });
   return Promise.all(updatedReportPromises);
 }
