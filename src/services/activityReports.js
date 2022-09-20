@@ -355,7 +355,7 @@ export async function populateRecipientInfo(activityRecipients, grantPrograms) {
         recipient,
         'name',
         {
-          value: 'blah',
+          value: nameValue,
           enumerable: true,
         },
       );
