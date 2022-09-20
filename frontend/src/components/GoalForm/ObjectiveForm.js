@@ -222,7 +222,7 @@ ObjectiveForm.propTypes = {
         url: PropTypes.string,
       }),
     })),
-    roles: PropTypes.arrayOf(PropTypes.shape({ label: PropTypes.string, value: PropTypes.string })),
+    roles: PropTypes.arrayOf(PropTypes.shape({ fullName: PropTypes.string, id: PropTypes.number })),
     activityReports: PropTypes.arrayOf(PropTypes.shape({
       id: PropTypes.number,
     })),
@@ -233,8 +233,8 @@ ObjectiveForm.propTypes = {
     status: PropTypes.string,
   }),
   roleOptions: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    value: PropTypes.string,
+    fullName: PropTypes.string,
+    id: PropTypes.number,
   })).isRequired,
   topicOptions: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string,

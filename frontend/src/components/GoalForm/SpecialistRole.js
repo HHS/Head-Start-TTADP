@@ -113,7 +113,10 @@ export default function SpecialistRole({
 SpecialistRole.propTypes = {
   error: PropTypes.node.isRequired,
   onChange: PropTypes.func.isRequired,
-  selectedRoles: PropTypes.arrayOf(PropTypes.string),
+  selectedRoles: PropTypes.arrayOf(PropTypes.shape({
+    fullName: PropTypes.string,
+    id: PropTypes.number,
+  })),
   inputName: PropTypes.string,
   validateSpecialistRole: PropTypes.func.isRequired,
   status: PropTypes.string.isRequired,

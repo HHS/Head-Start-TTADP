@@ -6,27 +6,37 @@ import {
 import ObjectiveTopics from '../ObjectiveTopics';
 
 describe('ObjectiveTopics', () => {
-  const renderObjectiveTopics = (isOnApprovedReport = false) => render((
+  const defaultTopicSelection = [
+    {
+      value: 1,
+      label: 'Dancing but too fast',
+      isOnApprovedReport: true,
+      onAnyReport: true,
+    },
+    {
+      value: 2,
+      label: 'Dancing but too slow',
+      isOnApprovedReport: false,
+      onAnyReport: false,
+    },
+  ];
+
+  const renderObjectiveTopics = (
+    isOnApprovedReport = false,
+    topics = defaultTopicSelection,
+    objectiveStatus = 'In Progress',
+    goalStatus = 'In Progress',
+  ) => render((
     <ObjectiveTopics
       error={<></>}
       topicOptions={[]}
       validateObjectiveTopics={jest.fn()}
-      topics={[
-        {
-          value: 1,
-          label: 'Dancing but too fast',
-          isOnApprovedReport: true,
-        },
-        {
-          value: 2,
-          label: 'Dancing but too slow',
-          isOnApprovedReport: false,
-        },
-      ]}
+      topics={topics}
       onChangeTopics={jest.fn()}
-      status="In Progress"
+      status={objectiveStatus}
       isOnReport={false}
       isOnApprovedReport={isOnApprovedReport}
+      goalStatus={goalStatus}
     />
   ));
 
@@ -47,5 +57,12 @@ describe('ObjectiveTopics', () => {
 
     expect(await screen.findByText(/dancing but too slow/i)).toBeVisible();
     expect(await screen.findByText(/dancing but too fast/i)).toBeVisible();
+  });
+
+  it('in the read only view, it distinguises between used data and unused data', async () => {
+    renderObjectiveTopics(false, defaultTopicSelection, 'Completed', 'Closed');
+    expect(await screen.findByText(/dancing but too fast/i)).toBeVisible();
+    expect(await screen.findByText(/dancing but too slow/i)).toBeVisible();
+    expect(document.querySelectorAll('.ttahub-objective-list-item--unused-data').length).toBe(1);
   });
 });
