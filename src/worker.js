@@ -43,11 +43,11 @@ async function start() {
   });
   notificationQueue.on('completed', (job, result) => {
     if (result != null) {
-      logger.info(`Succesfully sent ${job.name} notification for ${job.data.report.displayId}`);
+      logger.info(`Successfully sent ${job.name} notification for ${job.data.report.displayId}`);
       logEmailNotification(job, true, result);
     } else {
-      logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId} because SEND_NOTIFICATIONS is not set`);
-      logEmailNotification(job, false, { SEND_NOTIFICATIONS: 'off' });
+      logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId} preferences are not set`);
+      logEmailNotification(job, false, { preferences: 'off' });
     }
   });
   // Digests
@@ -57,7 +57,7 @@ async function start() {
   });
   notificationDigestQueue.on('completed', (job, result) => {
     if (result != null) {
-      logger.info(`Succesfully sent ${job.name} notification for ${job.data.user.id}`);
+      logger.info(`Successfully sent ${job.name} notification for ${job.data.user.id}`);
       logDigestEmailNotification(job, true, result);
     } else {
       logger.info(`Did not send ${job.name} notification for ${job.data.user.id} because SEND_NOTIFICATIONS is not set`);

@@ -66,23 +66,34 @@ export const frequencyToInterval = (freq) => {
  * Sends group email to report author and collaborators about a single approver's requested changes
  */
 export const notifyChangesRequested = (job, transport = defaultTransport) => {
-  const { report, approver } = job.data;
+  const toEmails = [];
+  const {
+    report, approver, authorWithSetting, collabsWithSettings,
+  } = job.data;
   // Set these inside the function to allow easier testing
   const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
   if (SEND_NOTIFICATIONS === 'true') {
     const {
       id,
-      author,
       displayId,
-      activityReportCollaborators,
     } = report;
     const approverEmail = approver.User.email;
     const approverName = approver.User.name;
     const approverNote = approver.note;
     logger.debug(`MAILER: Notifying users that ${approverEmail} requested changes on report ${displayId}`);
 
-    const collabArray = activityReportCollaborators.map((c) => c.user.email);
+    const collabArray = collabsWithSettings.map((c) => c.user.email);
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
+    if (collabArray && collabArray.length > 0) {
+      toEmails.push(collabArray);
+    }
+    if (authorWithSetting) {
+      toEmails.push(authorWithSetting.email);
+    }
+
+    if (toEmails.length === 0) {
+      return null;
+    }
     const email = new Email({
       message: {
         from: FROM_EMAIL_ADDRESS,
@@ -96,7 +107,7 @@ export const notifyChangesRequested = (job, transport = defaultTransport) => {
     return email.send({
       template: path.resolve(emailTemplatePath, 'changes_requested_by_manager'),
       message: {
-        to: [author.email, ...collabArray],
+        to: toEmails,
       },
       locals: {
         managerName: approverName,
@@ -106,8 +117,8 @@ export const notifyChangesRequested = (job, transport = defaultTransport) => {
       },
     });
   }
-  // return a promise so that returns are consistent
-  return Promise.resolve(null);
+
+  return null;
 };
 
 /**
@@ -115,19 +126,28 @@ export const notifyChangesRequested = (job, transport = defaultTransport) => {
  * Sends group email to report author and collaborators about approved status
  */
 export const notifyReportApproved = (job, transport = defaultTransport) => {
-  const { report } = job.data;
+  const toEmails = [];
+  const { report, authorWithSetting, collabsWithSettings } = job.data;
   // Set these inside the function to allow easier testing
   const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
   if (SEND_NOTIFICATIONS === 'true') {
     const {
       id,
-      author,
       displayId,
-      activityReportCollaborators,
     } = report;
     logger.info(`MAILER: Notifying users that report ${displayId} was approved.`);
-    const collaboratorEmailAddresses = activityReportCollaborators.map((c) => c.user.email);
+    const collaboratorEmailAddresses = collabsWithSettings.map((c) => c.user.email);
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
+    if (collaboratorEmailAddresses && collaboratorEmailAddresses.length > 0) {
+      toEmails.push(collaboratorEmailAddresses);
+    }
+    if (authorWithSetting) {
+      toEmails.push(authorWithSetting.email);
+    }
+
+    if (toEmails.length === 0) {
+      return null;
+    }
     const email = new Email({
       message: {
         from: FROM_EMAIL_ADDRESS,
@@ -141,7 +161,7 @@ export const notifyReportApproved = (job, transport = defaultTransport) => {
     return email.send({
       template: path.resolve(emailTemplatePath, 'report_approved'),
       message: {
-        to: [author.email, ...collaboratorEmailAddresses],
+        to: toEmails,
       },
       locals: {
         reportPath,
@@ -149,7 +169,7 @@ export const notifyReportApproved = (job, transport = defaultTransport) => {
       },
     });
   }
-  return Promise.resolve(null);
+  return null;
 };
 
 /**
@@ -263,11 +283,13 @@ export const approverAssignedNotification = (report, newApprovers) => {
   });
 };
 
-export const reportApprovedNotification = (report) => {
+export const reportApprovedNotification = (report, authorWithSetting, collabsWithSettings) => {
   // Send group notification to author and collaborators
   try {
     const data = {
       report,
+      authorWithSetting,
+      collabsWithSettings,
     };
     notificationQueue.add(EMAIL_ACTIONS.APPROVED, data);
   } catch (err) {
@@ -275,12 +297,19 @@ export const reportApprovedNotification = (report) => {
   }
 };
 
-export const changesRequestedNotification = (report, approver) => {
+export const changesRequestedNotification = (
+  report,
+  approver,
+  authorWithSetting,
+  collabsWithSettings,
+) => {
   // Send group notification to author and collaborators
   try {
     const data = {
       report,
       approver,
+      authorWithSetting,
+      collabsWithSettings,
     };
     notificationQueue.add(EMAIL_ACTIONS.NEEDS_ACTION, data);
   } catch (err) {
