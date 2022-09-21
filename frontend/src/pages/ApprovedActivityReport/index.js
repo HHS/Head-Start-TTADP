@@ -37,8 +37,9 @@ function calculateGoalsAndObjectives(report) {
       const displayNumber = index + 1;
       headings.push(`Goal ${displayNumber}`);
       data.push(goal.name);
-      headings.push(`Goal ${displayNumber} Status`);
+      headings.push(`Goal ${displayNumber} status`);
       data.push(goal.status);
+      console.log(goal.objectives);
       goal.objectives.forEach((objective, idx) => {
         const objectiveDisplayNumber = idx + 1;
         headings.push(`Objective ${objectiveDisplayNumber}`);
