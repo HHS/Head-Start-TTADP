@@ -296,30 +296,33 @@ export async function getApprovers(req, res) {
  *
  * @param {*} report - activity report
  * @param {*} setting - a setting object with "key" and "value" keys
- * @returns {Array} - an array containing an author and collaborators that subscribe
+ * @returns {Promise<Array>} - an array containing an author and collaborators that subscribe
  */
 async function checkEmailSettings(report, setting) {
   const { author, activityReportCollaborators } = report;
 
-  const settingForAuthor = await userSettingOverridesById(author.id, setting);
+  const settingForAuthor = author ? (await userSettingOverridesById(author.id, setting))
+    : null;
 
   const authorWithSetting = (settingForAuthor
     && settingForAuthor.value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY)
     ? author : null;
 
-  const settingsForAllCollabs = await Promise.all(activityReportCollaborators.map(
-    (c) => userSettingOverridesById(
-      c.userId,
-      setting,
-    ),
-  ));
+  const settingsForAllCollabs = activityReportCollaborators
+    ? (await Promise.all(activityReportCollaborators.map(
+      (c) => userSettingOverridesById(
+        c.userId,
+        setting,
+      ),
+    ))) : [];
 
-  const collabsWithSettings = activityReportCollaborators.filter((_value, index) => {
-    if (!settingsForAllCollabs[index]) {
-      return false;
-    }
-    return settingsForAllCollabs[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
-  });
+  const collabsWithSettings = activityReportCollaborators
+    ? activityReportCollaborators.filter((_value, index) => {
+      if (!settingsForAllCollabs[index]) {
+        return false;
+      }
+      return settingsForAllCollabs[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
+    }) : [];
 
   return [authorWithSetting, collabsWithSettings];
 }
@@ -337,7 +340,6 @@ export async function reviewReport(req, res) {
 
     const user = await userById(userId);
     const [report] = await activityReportAndRecipientsById(activityReportId);
-
     const authorization = new ActivityReport(user, report);
 
     if (!authorization.canReview()) {
@@ -355,10 +357,12 @@ export async function reviewReport(req, res) {
     const [reviewedReport] = await activityReportAndRecipientsById(activityReportId);
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
+      console.log('approved');
       const [authorWithSetting, collabsWithSettings] = await checkEmailSettings(
         reviewedReport,
         USER_SETTINGS.EMAIL.KEYS.APPROVAL,
       );
+      console.log('past');
       reportApprovedNotification(reviewedReport, authorWithSetting, collabsWithSettings);
     }
 
