@@ -313,16 +313,14 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
     );
 
     await Promise.all((goals.map((goal) => {
-      // we then determine if at least one objective is in progress
-      const atLeastOneInProgress = goal.objectives.some((o) => o.status === 'In Progress');
-      // if not, then the status will be "Not Started"
-      const status = atLeastOneInProgress ? 'In Progress' : 'Not Started';
+      const status = 'In Progress';
+
       // if the goal should be in a different state, we will update it
       if (goal.status !== status) {
         goal.set('previousStatus', goal.status);
         goal.set('status', status);
       }
-      return goal.save({ transaction: options.transaction });
+      return goal.save({ transaction: options.transaction, individualHooks: true });
     })));
   }
 };
