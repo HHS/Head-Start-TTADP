@@ -50,23 +50,45 @@ export const saveSettings = async (userId, pairs) => {
     return acc;
   }, []);
 
-  const del = pairs.reduce((acc, { key, value }) => {
+  const updateable = await UserSettingOverrides.findAll({
+    where: {
+      userId,
+      userSettingId: { [Op.in]: save.map(({ userSettingId }) => userSettingId) },
+    },
+  });
+
+  const insertable = save.filter(({ key }) => !updateable.find(({ key: k }) => k === key));
+
+  const deletable = pairs.reduce((acc, { key, value }) => {
     if (defaults[key] && defaults[key].defaultValue === value) {
       return [...acc, { key, value, userSettingId: defaults[key].userSettingId }];
     }
     return acc;
   }, []);
 
-  const settingIds = del.map(({ userSettingId }) => userSettingId)
-    .concat(save.map(({ userSettingId }) => userSettingId));
-
   return Promise.all([
-    UserSettingOverrides.destroy({ where: { userId, userSettingId: { [Op.in]: settingIds } } }),
-    UserSettingOverrides.bulkCreate(save.map(({ userSettingId, value }) => ({
+    // Overrides that have been given values that match the default
+    // should be removed from the overrides table.
+    ...deletable.map(({ userSettingId }) => UserSettingOverrides.destroy({
+      where: { userId, userSettingId },
+    })),
+
+    // Overrides that have been given values that do not match the default
+    // should be updated in the overrides table.
+    ...updateable.map(({ userSettingId, key }) => UserSettingOverrides.update({
+      value: sequelize.cast(JSON.stringify(save.find(({ key: k }) => k === key).value), 'jsonb'),
+    }, {
+      where: { userId, userSettingId },
+    })),
+
+    // Overrides that have been given values that do not match the default
+    // and do not exist in the overrides table should be inserted into the
+    // overrides table.
+    ...insertable.map(({ value, userSettingId }) => UserSettingOverrides.create({
       userId,
       userSettingId,
       value: sequelize.cast(JSON.stringify(value), 'jsonb'),
-    }))),
+    })),
   ]);
 };
 
