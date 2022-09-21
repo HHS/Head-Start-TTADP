@@ -329,7 +329,7 @@ export async function collaboratorDigest(freq) {
   const date = frequencyToInterval(freq);
   logger.info(`MAILER: Starting CollaboratorDigest with freq ${freq}`);
   try {
-    if(!date) {
+    if (!date) {
       throw new Error('date is null');
     }
     // Find users having collaborator digest preferences
@@ -366,7 +366,7 @@ export async function changesRequestedDigest(freq) {
   const date = frequencyToInterval(freq);
   logger.info(`MAILER: Starting ChangesRequestedDigest with freq ${freq}`);
   try {
-    if(!date) {
+    if (!date) {
       throw new Error('date is null');
     }
     // Find Users with preference
@@ -403,7 +403,7 @@ export async function submittedDigest(freq) {
   const date = frequencyToInterval(freq);
   logger.info(`MAILER: Starting SubmittedDigest with freq ${freq}`);
   try {
-    if(!date) {
+    if (!date) {
       throw new Error('date is null');
     }
     // Find Users with preferences
@@ -440,7 +440,7 @@ export async function approvedDigest(freq) {
   const date = frequencyToInterval(freq);
   logger.info(`MAILER: Starting ApprovedDigest with freq ${freq}`);
   try {
-    if(!date) {
+    if (!date) {
       throw new Error('date is null');
     }
     // Find Users with preferences
