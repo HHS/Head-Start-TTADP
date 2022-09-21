@@ -1,7 +1,8 @@
 import { Op } from 'sequelize';
 import { USER_SETTINGS } from '../constants';
 import {
-  sequelize, User, UserSettings, UserSettingOverrides, Permission,
+  sequelize, User, UserSettings, UserSettingOverrides, UserValidationStatus,
+  Permission,
 } from '../models';
 import SCOPES from '../middleware/scopeConstants';
 
@@ -73,6 +74,12 @@ export const saveSettings = async (userId, pairs) => {
   ]);
 };
 
+/**
+ * userSettingsById returns all settings for a given user.
+ *
+ * @param {number} userId
+ * @returns {Promise<{ key: string, value: unknown }[]>}
+ */
 export const userSettingsById = async (userId) => {
   const result = await UserSettings.findAll({
     ...baseSearch(userId),
@@ -103,6 +110,11 @@ export const usersWithSetting = async (key, values) => {
       out = await User.findAll({
         include: [
           {
+            model: UserValidationStatus,
+            as: 'validationStatus',
+            attributes: ['id', 'type', 'validatedAt'],
+          },
+          {
             attributes: [],
             model: Permission,
             as: 'permissions',
@@ -132,6 +144,11 @@ export const usersWithSetting = async (key, values) => {
       // return all users that are providing the override.
       out = await User.findAll({
         include: [
+          {
+            model: UserValidationStatus,
+            as: 'validationStatus',
+            attributes: ['id', 'type', 'validatedAt'],
+          },
           {
             attributes: [],
             model: Permission,
