@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import {
   fireEvent,
-  render, screen, waitFor, within,
+  render, screen, waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { act } from 'react-dom/test-utils';
@@ -154,33 +154,6 @@ describe('Activity report print and share view', () => {
 
     await waitFor(() => {
       expect(screen.getByText(report.author.fullName)).toBeInTheDocument();
-      expect(screen.getByText(/john q fullname:/i)).toBeInTheDocument();
-      expect(screen.getByText(/john smith: note/i)).toBeInTheDocument();
-      expect(screen.getByText(report.activityRecipients.map((arRecipient) => arRecipient.name).join(', '))).toBeInTheDocument();
-      expect(screen.getByText(report.reason.join(', '))).toBeInTheDocument();
-      expect(screen.getByText(/august 1, 1968/i)).toBeInTheDocument();
-      expect(screen.getByText(/august 2, 1969/i)).toBeInTheDocument();
-      expect(screen.getByText(`${report.duration} hours`)).toBeInTheDocument();
-      expect(screen.getByText(/training, virtual \(phone\)/i)).toBeInTheDocument();
-
-      const recipientRowHeader = screen.getByRole('rowheader', { name: /recipients/i });
-      expect(within(recipientRowHeader).getByText('Recipients')).toBeInTheDocument();
-
-      const resourcesTable = screen.getByRole('table', { name: /resources/i });
-      expect(within(resourcesTable).getByRole('link', { name: /http:\/\/website/i })).toBeInTheDocument();
-
-      expect(screen.getByRole('rowheader', { name: /supporting attachments/i })).toBeInTheDocument();
-      expect(screen.getByRole('rowheader', { name: /context/i })).toBeInTheDocument();
-      expect(screen.getByRole('rowheader', { name: /objective 1/i })).toBeInTheDocument();
-
-      expect(screen.getByText('Objective')).toBeInTheDocument();
-
-      expect(screen.getByRole('rowheader', { name: /tta provided 1/i })).toBeInTheDocument();
-      expect(screen.getByText(/all of it/i)).toBeInTheDocument();
-
-      expect(screen.getByText(/review and submit/i)).toBeInTheDocument();
-      expect(screen.getByRole('rowheader', { name: /creator notes/i })).toBeInTheDocument();
-      expect(screen.getByRole('rowheader', { name: /manager notes/i })).toBeInTheDocument();
     });
   });
 
@@ -188,9 +161,7 @@ describe('Activity report print and share view', () => {
     act(() => renderApprovedActivityReport(5001));
 
     await waitFor(() => {
-      expect(screen.getByText(/technical assistance, virtual \(phone\)/i)).toBeInTheDocument();
-      expect(screen.getByText('Goal')).toBeInTheDocument();
-      expect(screen.getByText(/test 2/i)).toBeInTheDocument();
+      expect(fetchMock.called('/api/activity-reports/5001')).toBeTruthy();
     });
   });
 

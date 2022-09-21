@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
@@ -6,8 +7,6 @@ import { Redirect } from 'react-router-dom';
 import moment from 'moment-timezone';
 import { Helmet } from 'react-helmet';
 import Container from '../../components/Container';
-import './index.scss';
-import ViewTable from './components/ViewTable';
 import { getReport, unlockReport } from '../../fetchers/activityReports';
 import { allRegionsUserHasPermissionTo, canUnlockReports } from '../../permissions';
 import Modal from '../../components/Modal';
@@ -19,6 +18,8 @@ import {
   DATEPICKER_VALUE_FORMAT,
 } from '../../Constants';
 import PrintToPdf from '../../components/PrintToPDF';
+import ApprovedReportSection from './components/ApprovedReportSection';
+import './index.scss';
 
 /**
  *
@@ -162,7 +163,9 @@ export default function ApprovedActivityReport({ match, user }) {
     endDate: '',
     duration: '',
     recipients: '',
-    method: '',
+    ttaType: '',
+    deliveryMethod: '',
+    method: '', // todo - remove
     requester: '',
     topics: '',
     ECLKCResources: '',
@@ -237,6 +240,8 @@ export default function ApprovedActivityReport({ match, user }) {
         const endDate = moment(data.endDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
         const duration = `${data.duration} hours`;
         const method = formatMethod(data.ttaType, data.virtualDeliveryType);
+        const { ttaType } = data;
+        const { deliveryMethod } = data;
         const requester = formatRequester(data.requester);
 
         // second table
@@ -288,6 +293,8 @@ export default function ApprovedActivityReport({ match, user }) {
           specialistNextSteps,
           createdAt,
           approvedAt,
+          deliveryMethod,
+          ttaType,
         });
       } catch (err) {
         // eslint-disable-next-line no-console
@@ -374,6 +381,8 @@ export default function ApprovedActivityReport({ match, user }) {
     specialistNextSteps,
     createdAt,
     approvedAt,
+    deliveryMethod,
+    ttaType,
   } = report;
 
   const onUnlock = async () => {
@@ -494,103 +503,92 @@ export default function ApprovedActivityReport({ match, user }) {
             {approvedAt}
           </p>
         </div>
-        <ViewTable
-          caption="Activity summary"
-          headings={
-            [
-              recipientType,
-              'Reason',
-              'Target populations',
-              'Start date',
-              'End date',
-              'Topics',
-              'Duration',
-              'Number of participants',
-              'Attendees',
-              'Method of contact',
-              'Requested by',
-              'Context',
-            ]
-          }
-          className="activity-summary-table"
-          data={
-            [
-              recipients,
-              reasons,
-              targetPopulations,
-              startDate,
-              endDate,
-              topics,
-              duration,
-              participantCount,
-              attendees,
-              method,
-              requester,
-              context,
-            ]
-          }
 
-        />
-        <ViewTable
-          caption="Resources"
-          headings={
-            [
-              'OHS / ECLKC resources',
-              'Non-ECLKC resources',
-              'Supporting attachments',
-            ]
-          }
-          data={
-            [
-              ECLKCResources,
-              nonECLKCResourcesUsed,
-              attachments,
-            ]
-          }
-          allowBreakWithin={false}
-        />
-        <ViewTable
-          caption="TTA Provided"
-          headings={[
-            ...goalsAndObjectiveHeadings,
+        <ApprovedReportSection
+          title="Activity Summary"
+          sections={[
+            {
+              heading: 'Who was the activity for?',
+              data: {
+                'Recipient or other entity': recipientType,
+                'Recipient names': recipients,
+                'Target populations': targetPopulations,
+              },
+            },
+            // {
+            //   heading: 'Reason for activity',
+            //   data: {
+            //     'Who requested the activity': requester,
+            //     // eslint-disable-next-line quote-props
+            //     'Reasons': reasons,
+            //   },
+            // },
+            // {
+            //   heading: 'Activity date',
+            //   data: {
+            //     'Start date': startDate,
+            //     'End date': endDate,
+            //     Duration: duration,
+            //   },
+            // },
+            // {
+            //   heading: 'Context',
+            //   data: {
+            //     Context: context,
+            //   },
+            // },
+            // {
+            //   heading: 'Training or technical assistance',
+            //   data: {
+            //     'TTA provided': ttaType,
+            //     'TTA conducted': deliveryMethod,
+            //   },
+            // },
+            // {
+            //   heading: 'Participants',
+            //   data: {
+            //     Participants: attendees,
+            //     'Number of participants': participantCount,
+            //   },
+            // },
           ]}
-          data={
-            [
-              ...goalsAndObjectives,
-            ]
+        />
+
+        {/* <ApprovedReportSection
+          title="Goals and objectives"
+          sections={[]}
+        />
+
+        <ApprovedReportSection
+          title="Supporting attachments"
+          sections={
+            [{
+              heading: '',
+              data: {
+                Attachments: attachments,
+              },
+            }]
           }
         />
-        <ViewTable
-          caption="Next steps"
-          headings={
-            [
-              'Specialist next steps',
-              "Recipient's next steps",
-            ]
-          }
-          data={
-            [
-              specialistNextSteps,
-              recipientNextSteps,
-            ]
-          }
+
+        <ApprovedReportSection
+          title="Next steps"
+          sections={[]}
         />
-        <ViewTable
+
+        <ApprovedReportSection
           className="no-print"
-          caption="Review and Submit"
-          headings={
-            [
-              'Creator notes',
-              'Manager notes',
-            ]
-          }
-          data={
-            [
-              creatorNotes,
-              managerNotes,
-            ]
-          }
-        />
+          title="Review and submit"
+          sections={[
+            {
+              data: {
+                'Creator notes': creatorNotes,
+                'Manager notes': managerNotes,
+              },
+            },
+          ]}
+        /> */}
+
       </Container>
     </>
   );
