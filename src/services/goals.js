@@ -343,6 +343,7 @@ export async function saveObjectiveAssociations(
   };
 }
 
+// this is the reducer called when not getting objectives for a report, IE, the RTR table
 export function reduceObjectives(newObjectives, currentObjectives = []) {
   return newObjectives.reduce((objectives, objective) => {
     const exists = objectives.find((o) => (
@@ -365,7 +366,6 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
       ids: [id],
       // Make sure we pass back a list of recipient ids for subsequent saves.
       recipientIds: [objective.getDataValue('otherEntityId')],
-      // ttaProvided
       isNew: false,
     }];
   }, currentObjectives);
