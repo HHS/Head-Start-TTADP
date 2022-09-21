@@ -12,15 +12,13 @@ import {
   approvedDigest,
   notificationQueue as notificationQueueMock,
   notificationDigestQueue as notificationDigestQueueMock,
-  // notificationQueue,
 } from '.';
 import { EMAIL_ACTIONS, EMAIL_DIGEST_FREQ, REPORT_STATUSES } from '../../constants';
 import { auditLogger as logger } from '../../logger';
 
 import db, {
-  ActivityReport, ActivityReportCollaborator, User, ActivityReportApprover
+  ActivityReport, ActivityReportCollaborator, User, ActivityReportApprover,
 } from '../../models';
-import { usersWithPermissions } from '../../services/users';
 import { usersWithSetting } from '../../services/userSettings';
 
 const mockManager = {
@@ -117,12 +115,6 @@ jest.mock('../../services/userSettings', () => ({
   usersWithSetting: jest.fn().mockReturnValue(Promise.resolve([{ id: digestMockCollab.id }])),
 }));
 
-// jest.mock('.', () => ({
-//   notificationQueue: {
-//     add: jest.fn(),
-//   }
-// }))
-
 jest.mock('../../logger');
 
 const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${mockReport.id}`;
@@ -142,7 +134,8 @@ describe('mailer tests', () => {
       process.env.SEND_NOTIFICATIONS = true;
       const email = await notifyChangesRequested({
         data: {
-          report: mockReport, approver: mockApprover,
+          report: mockReport,
+          approver: mockApprover,
           authorWithSetting: mockReport.author,
           collabsWithSettings: [mockCollaborator1, mockCollaborator2],
         },
@@ -163,7 +156,8 @@ describe('mailer tests', () => {
       process.env.SEND_NOTIFICATIONS = true;
       const email = await notifyChangesRequested({
         data: {
-          report: mockReport, approver: mockApprover,
+          report: mockReport,
+          approver: mockApprover,
           authorWithSetting: null,
           collabsWithSettings: [],
         },
@@ -182,7 +176,8 @@ describe('mailer tests', () => {
       process.env.SEND_NOTIFICATIONS = true;
       const email = await notifyReportApproved({
         data: {
-          report: mockReport, approver: mockApprover,
+          report: mockReport,
+          approver: mockApprover,
           authorWithSetting: mockReport.author,
           collabsWithSettings: [mockCollaborator1, mockCollaborator2],
         },
@@ -202,7 +197,8 @@ describe('mailer tests', () => {
       process.env.SEND_NOTIFICATIONS = true;
       const email = await notifyReportApproved({
         data: {
-          report: mockReport, approver: mockApprover,
+          report: mockReport,
+          approver: mockApprover,
           authorWithSetting: null,
           collabsWithSettings: [],
         },
@@ -651,29 +647,7 @@ describe('mailer tests', () => {
       );
       expect(message.text).not.toContain(reportPath);
     });
-    // it('tests that it logs on error', async () => {
-    //   jest.spyOn(notificationDigestQueueMock, 'add').mockImplementation(async () => Promise.reject());
-    //   process.env.SEND_NOTIFICATIONS = true;
-    //   const email = await notifyDigest({
-    //     data: {
-    //       user: mockNewCollaborator,
-    //       reports: [],
-    //       type: EMAIL_ACTIONS.APPROVED_DIGEST,
-    //       freq: EMAIL_DIGEST_FREQ.MONTHLY,
-    //     },
-    //   }, jsonTransport);
-    //   const message = JSON.parse(email.message);
-    //   expect(message.subject).toBe('TTA Hub digest: no new notifications');
-    //   expect(message.text).toContain(
-    //     `Hello ${mockNewCollaborator.name}`,
-    //   );
-    //   expect(message.text).toContain(
-    //     'No reports have been approved this month.',
-    //   );
-    //   expect(message.text).not.toContain(reportPath);
-    // });
   });
-
   describe('enqueue', () => {
     beforeEach(async () => {
       await User.create(digestMockCollab, { validate: false }, { individualHooks: false });
@@ -685,13 +659,16 @@ describe('mailer tests', () => {
     });
     afterEach(async () => {
       await ActivityReportCollaborator.destroy({ where: { userId: digestMockCollab.id } });
-      await ActivityReportApprover.destroy({ where: { userId: digestMockApprover.id }, force: true });
+      await ActivityReportApprover.destroy({
+        where: {
+          userId: digestMockApprover.id,
+        },
+        force: true,
+      });
       await ActivityReport.destroy({ where: { userId: mockUser.id } });
       await User.destroy({ where: { id: digestMockCollab.id } });
       await User.destroy({ where: { id: digestMockApprover.id } });
       await User.destroy({ where: { id: mockUser.id } });
-
-      // notificationDigestQueueMock.add.mockRestore();
     });
     afterAll(async () => {
       await db.sequelize.close();
@@ -700,8 +677,10 @@ describe('mailer tests', () => {
     it('"collaborators added" on the notificationQueue', async () => {
       const report = await ActivityReport.create(reportObject);
 
-     collaboratorAssignedNotification(report,
-        [mockCollaborator1, mockCollaborator2]);
+      collaboratorAssignedNotification(
+        report,
+        [mockCollaborator1, mockCollaborator2],
+      );
       expect(notificationQueueMock.add).toHaveBeenCalled();
     });
 
@@ -713,17 +692,21 @@ describe('mailer tests', () => {
         throw new Error('Christmas present!');
       });
       const report = await ActivityReport.create(reportObject);
-      
-      collaboratorAssignedNotification(report,
-        [mockCollaborator1, mockCollaborator2]);
+
+      collaboratorAssignedNotification(
+        report,
+        [mockCollaborator1, mockCollaborator2],
+      );
       expect(logger.error).toHaveBeenCalledWith(new Error('Christmas present!'));
     });
 
     it('"approver assigned" on the notificationQueue', async () => {
       const report = await ActivityReport.create(reportObject);
 
-      const result = approverAssignedNotification(report,
-        [mockApprover]);
+      approverAssignedNotification(
+        report,
+        [mockApprover],
+      );
       expect(notificationQueueMock.add).toHaveBeenCalled();
     });
 
@@ -735,7 +718,7 @@ describe('mailer tests', () => {
         throw new Error('Something is not right');
       });
       const report = await ActivityReport.create(reportObject);
-      
+
       approverAssignedNotification(report, [mockApprover]);
       expect(logger.error).toHaveBeenCalledWith(new Error('Something is not right'));
     });
@@ -755,7 +738,7 @@ describe('mailer tests', () => {
         throw new Error('Something is not right');
       });
       const report = await ActivityReport.create(reportObject);
-      
+
       reportApprovedNotification(report);
       expect(logger.error).toHaveBeenCalledWith(new Error('Something is not right'));
     });
@@ -775,7 +758,7 @@ describe('mailer tests', () => {
         throw new Error('Christmas present!');
       });
       const report = await ActivityReport.create(reportObject);
-      
+
       changesRequestedNotification(report);
       expect(logger.error).toHaveBeenCalledWith(new Error('Christmas present!'));
     });
