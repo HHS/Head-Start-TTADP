@@ -426,7 +426,11 @@ export default function GoalForm({
     // The first thing we need to know is... does this objective need to be created?
     setIsLoading(true);
 
+    // there is some weirdness where an objective may or may not have the "ids" property
     let objectiveIds = objective.ids ? objective.ids : [];
+    if (!objectiveIds.length && objective.id) {
+      objectiveIds = [objective.id];
+    }
 
     if (objective.isNew) {
       // if so, we save the objective to the database first

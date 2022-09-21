@@ -234,6 +234,7 @@ const GoalsObjectives = ({
         roles={roles}
         recipientIds={activityRecipientIds}
         onSaveDraft={onSaveDraftOetObjectives}
+        reportId={reportId}
       />
       )}
       {/**

@@ -18,6 +18,7 @@ export default function ObjectiveFiles({
   index,
   inputName,
   onBlur,
+  reportId,
 }) {
   const objectiveId = objective.id;
   const hasFiles = useMemo(() => files && files.length > 0, [files]);
@@ -116,6 +117,7 @@ export default function ObjectiveFiles({
                           inputName={inputName}
                           error={fileError}
                           setError={setFileError}
+                          reportId={reportId}
                         />
                       </FormGroup>
                     </>
@@ -175,10 +177,12 @@ ObjectiveFiles.propTypes = {
   index: PropTypes.number.isRequired,
   inputName: PropTypes.string,
   onBlur: PropTypes.func,
+  reportId: PropTypes.number,
 };
 
 ObjectiveFiles.defaultProps = {
   files: [],
   inputName: '',
   onBlur: () => {},
+  reportId: 0,
 };

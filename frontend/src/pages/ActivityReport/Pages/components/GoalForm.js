@@ -15,6 +15,7 @@ import {
 import { NO_ERROR, ERROR_FORMAT } from './constants';
 import Loader from '../../../../components/Loader';
 import GoalFormContext from '../../../../GoalFormContext';
+import { DECIMAL_BASE } from '../../../../Constants';
 
 export default function GoalForm({
   goal,
@@ -152,6 +153,7 @@ export default function GoalForm({
         noObjectiveError={errors.goalForEditing && errors.goalForEditing.objectives
           ? ERROR_FORMAT(errors.goalForEditing.objectives.message) : NO_ERROR}
         onSaveDraft={onSaveDraft}
+        reportId={parseInt(reportId, DECIMAL_BASE)}
       />
     </>
   );
