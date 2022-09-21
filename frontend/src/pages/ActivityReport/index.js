@@ -565,14 +565,7 @@ function ActivityReport({
           reportId.current, { ...updatedFields, approverUserIds: approverIds }, {},
         );
 
-        // Update goals from saved report.
-        const grantIds = updatedReport.activityRecipientType === 'recipient'
-          && updatedReport.activityRecipients
-          ? updatedReport.activityRecipients.map(({ id }) => id)
-          : [];
-        const goals = convertGoalsToFormData(updatedReport.goalsAndObjectives, grantIds);
-
-        updateFormData({ ...formData, goals }, true);
+        updateFormData({ ...updatedReport, goals: updatedReport.goalsAndObjectives }, true);
         setConnectionActive(true);
         updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
       }

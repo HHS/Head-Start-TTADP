@@ -351,7 +351,7 @@ export default {
     if (activityRecipientType === 'other-entity') {
       return validateObjectives(formData.objectivesWithoutGoals) === true;
     }
-    return activityRecipientType !== 'recipient' || validateGoals(formData.goals) === true;
+    return activityRecipientType === 'recipient' && validateGoals(formData.goals) === true;
   },
   reviewSection: () => <ReviewSection />,
   render: (_additionalData, _formData, reportId, onSaveDraftGoal, onSaveDraftOetObjectives) => (
