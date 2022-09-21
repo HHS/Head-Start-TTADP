@@ -310,6 +310,7 @@ const arTransformers = [
   transformDate('approvedAt'),
   transformGrantModel('programSpecialistName'),
   transformGrantModel('recipientInfo'),
+  transformGrantModel('stateCode'),
 ];
 
 /**

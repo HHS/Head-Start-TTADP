@@ -191,6 +191,10 @@ async function sendActivityReportCSV(reports, res) {
           key: 'recipientInfo',
           header: 'Recipient name - Grant number - Recipient ID',
         },
+        {
+          key: 'stateCode',
+          header: 'State code',
+        },
       ],
     };
 
