@@ -1,52 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Editor } from 'react-draft-wysiwyg';
-import { v4 as uuidv4 } from 'uuid';
-import { getEditorState } from '../../../utils';
-
-function renderEditor(heading, data) {
-  /**
-   * sometimes, we may receive JSX
-   */
-  if (typeof data === 'object') {
-    return data;
-  }
-
-  let wrapperId = '';
-
-  if (typeof heading === 'string') {
-    wrapperId = `${heading.toLowerCase().replace(' ', '-')}-${uuidv4()}`;
-  } else {
-    wrapperId = uuidv4();
-  }
-
-  /**
-   * otherwise, we render the contents via react-draft
-   */
-  const defaultEditorState = getEditorState(data || '');
-
-  return (
-    <Editor
-      readOnly
-      toolbarHidden
-      defaultEditorState={defaultEditorState}
-      wrapperId={wrapperId}
-    />
-  );
-}
-
-function renderData(heading, data) {
-  if (Array.isArray(data)) {
-    const cleanData = data.filter((d) => d);
-    return (
-      <ul>
-        {cleanData.map((line) => <li key={uuidv4()} className="margin-bottom-1">{renderEditor(heading, line)}</li>)}
-      </ul>
-    );
-  }
-
-  return renderEditor(heading, data);
-}
+import { renderData } from '../helpers';
+import './ApprovedReportSection.scss';
 
 export default function ApprovedReportSection({
   title,
@@ -55,16 +10,16 @@ export default function ApprovedReportSection({
 }) {
   return (
     <div className={className}>
-      <h2>{title}</h2>
+      <h2 className="font-serif-xl margin-y-3">{title}</h2>
       {sections.map((section) => {
         const subheadings = Object.keys(section.data);
         return (
-          <div key={section.heading || subheadings[0]}>
-            { section.heading ? <h3>{section.heading}</h3> : null }
+          <div className={`ttahub-approved-report-section padding-x-2 padding-top-3 padding-bottom-2 margin-0 ${section.striped ? 'ttahub-approved-report-section__striped' : ''}`} key={section.heading || subheadings[0]}>
+            { section.heading ? <h3 className="ttahub-approved-report-section--heading font-sans-lg margin-0 margin-bottom-2">{section.heading}</h3> : null }
             {subheadings.map((subheading) => (
-              <div key={subheading}>
-                <p className="text-bold">{subheading}</p>
-                <p>{renderData(subheading, section.data[subheading])}</p>
+              <div className="ttahub-approved-report-section--heading--section-row tablet:display-flex" key={subheading}>
+                <p className="ttahub-approved-report-section--heading--section-row-title text-bold usa-prose margin-0 margin-bottom-1">{subheading}</p>
+                <p className="usa-prose margin-0 margin-bottom-1">{renderData(subheading, section.data[subheading])}</p>
               </div>
             ))}
           </div>
@@ -81,6 +36,7 @@ ApprovedReportSection.propTypes = {
     heading: PropTypes.string,
     // eslint-disable-next-line react/forbid-prop-types
     data: PropTypes.object.isRequired, // we are using an object here since we don't know the keys
+    striped: PropTypes.bool.isRequired,
   })).isRequired,
 };
 

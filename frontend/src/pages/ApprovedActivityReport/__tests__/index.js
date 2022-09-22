@@ -12,6 +12,7 @@ import ApprovedActivityReport from '../index';
 
 describe('Activity report print and share view', () => {
   const report = {
+    version: 1,
     regionId: 45,
     activityRecipients: [
       { name: 'Tim', grantId: 400 },
@@ -64,6 +65,15 @@ describe('Activity report print and share view', () => {
         ActivityReportObjective: {
           ttaProvided: 'All of it',
         },
+        topics: [{ label: 'being fancy' }],
+        resources: [{ value: 'http://www.website.com' }],
+        status: 'Test status',
+        files: [
+          {
+            url: { url: 'http://www.website.com' },
+            originalFileName: 'file.pdf',
+          },
+        ],
       },
     ],
     additionalNotes: '',
@@ -135,9 +145,7 @@ describe('Activity report print and share view', () => {
       }],
       requester: 'chud',
     });
-    fetchMock.get('/api/activity-reports/5002', {
-      regionId: 45,
-    });
+    fetchMock.get('/api/activity-reports/5002', 500);
 
     fetchMock.get('/api/activity-reports/5003', {
       ...report,
@@ -146,6 +154,35 @@ describe('Activity report print and share view', () => {
       activityRecipients: [
         { name: 'Anti-tim' },
       ],
+    });
+
+    fetchMock.get('/api/activity-reports/5004', {
+      ...report,
+      version: 2,
+    });
+
+    fetchMock.get('/api/activity-reports/5005', {
+      ...report,
+      goalsAndObjectives: [{
+        name: 'Goal',
+        objectives: [
+          {
+            title: 'Objective',
+            ActivityReportObjective: {
+              ttaProvided: 'All of it',
+            },
+            topics: [{ label: 'being fancy' }],
+            resources: [{ value: 'http://www.website.com' }],
+            status: 'Test status',
+            files: [
+              {
+                url: { url: 'http://www.website.com' },
+                originalFileName: 'file.pdf',
+              },
+            ],
+          },
+        ],
+      }],
     });
   });
 
@@ -232,12 +269,6 @@ describe('Activity report print and share view', () => {
     const unlockButton = await screen.findByRole('button', { name: /unlock report/i });
     act(() => userEvent.click(unlockButton));
 
-    // I had to add hidden true to the following test,
-    // which says to me this test is borked somehow, but
-    // I am able to see it, have the screen reader read it, tab around...
-    // I also don't see what in the HTML is hiding it?
-
-    // todo - investigate this
     const heading = await screen.findByRole('heading', { name: /unlock activity report/i, hidden: true });
     expect(heading).toBeInTheDocument();
   });
@@ -245,5 +276,19 @@ describe('Activity report print and share view', () => {
   it('hides unlock report button', async () => {
     act(() => renderApprovedActivityReport(5000));
     expect(screen.queryByText(/unlock report/i)).not.toBeInTheDocument();
+  });
+
+  it('renders a version 2 report', async () => {
+    act(() => renderApprovedActivityReport(5004));
+    await waitFor(() => {
+      expect(screen.getByText(report.author.fullName)).toBeInTheDocument();
+    });
+  });
+
+  it('renders a version 2 report with goals', async () => {
+    act(() => renderApprovedActivityReport(5005));
+    await waitFor(() => {
+      expect(screen.getByText(report.author.fullName)).toBeInTheDocument();
+    });
   });
 });
