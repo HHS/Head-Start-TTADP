@@ -1,4 +1,4 @@
-import { EMAIL_ACTIONS } from '../../constants';
+import { DIGEST_SUBJECT_FREQ, EMAIL_ACTIONS } from '../../constants';
 import db from '../../models';
 import logEmailNotification, { logDigestEmailNotification } from './logNotifications';
 import * as mailerLogM from '../../services/mailerLog';
@@ -53,6 +53,7 @@ describe('Email Notifications', () => {
         id: 2345,
         displayId: 'AR-08-2345',
       }],
+      subjectFreq: DIGEST_SUBJECT_FREQ.DAILY,
     },
   };
 
@@ -128,7 +129,7 @@ describe('Email Notifications', () => {
       expect(mailerLog).not.toBeNull();
       expect(mailerLog.emailTo.length).toEqual(1);
       expect(mailerLog.emailTo[0]).toEqual('mockUser@test.gov');
-      expect(mailerLog.subject).toEqual('TTA Hub digest: added as collaborator');
+      expect(mailerLog.subject).toEqual('TTA Hub daily digest: added as collaborator');
       expect(mailerLog.success).toEqual(false);
       expect(mailerLog.result).toEqual(result);
       expect(mailerLog.jobId).toEqual('3');
@@ -140,7 +141,7 @@ describe('Email Notifications', () => {
       expect(mailerLog).not.toBeNull();
       expect(mailerLog.emailTo.length).toEqual(1);
       expect(mailerLog.emailTo[0]).toEqual('mockUser@test.gov');
-      expect(mailerLog.subject).toEqual('TTA Hub digest: reports for review');
+      expect(mailerLog.subject).toEqual('TTA Hub daily digest: reports for review');
       expect(mailerLog.success).toEqual(false);
       expect(mailerLog.result).toEqual(result);
       expect(mailerLog.jobId).toEqual('3');
@@ -152,7 +153,7 @@ describe('Email Notifications', () => {
       expect(mailerLog).not.toBeNull();
       expect(mailerLog.emailTo.length).toEqual(1);
       expect(mailerLog.emailTo[0]).toEqual('mockUser@test.gov');
-      expect(mailerLog.subject).toEqual('TTA Hub digest: changes requested');
+      expect(mailerLog.subject).toEqual('TTA Hub daily digest: changes requested');
       expect(mailerLog.success).toEqual(false);
       expect(mailerLog.result).toEqual(result);
       expect(mailerLog.jobId).toEqual('3');
@@ -164,7 +165,7 @@ describe('Email Notifications', () => {
       expect(mailerLog).not.toBeNull();
       expect(mailerLog.emailTo.length).toBe(1);
       expect(mailerLog.emailTo[0]).toEqual('mockUser@test.gov');
-      expect(mailerLog.subject).toEqual('TTA Hub digest: approved reports');
+      expect(mailerLog.subject).toEqual('TTA Hub daily digest: approved reports');
       expect(mailerLog.success).toEqual(false);
       expect(mailerLog.result).toEqual(result);
     });

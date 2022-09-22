@@ -77,12 +77,12 @@ export default async function logEmailNotification(job, success, result) {
 export async function logDigestEmailNotification(job, success, result) {
   let subject;
   const { data } = job;
-  const { user, reports } = data;
+  const { user, reports, subjectFreq } = data;
   const template = path.resolve(emailTemplatePath, 'digest', 'subject.pug');
   const emailTo = user ? [user.email] : [''];
 
   try {
-    subject = compileFile(template)({ type: job.name });
+    subject = compileFile(template)({ type: job.name, subjectFreq });
     const mailerLogEntry = await createMailerLog({
       jobId: job.id,
       emailTo,
