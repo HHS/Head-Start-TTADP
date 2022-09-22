@@ -12,6 +12,7 @@ export default function Objectives({
   roles,
   noObjectiveError,
   onSaveDraft,
+  reportId,
 }) {
   const { errors, getValues, setValue } = useFormContext();
 
@@ -129,6 +130,7 @@ export default function Objectives({
               onSaveDraft={onSaveDraft}
               parentGoal={getValues('goalForEditing')}
               initialObjectiveStatus={objective.status}
+              reportId={reportId}
             />
           );
         })}
@@ -148,4 +150,5 @@ Objectives.propTypes = {
   roles: PropTypes.arrayOf(PropTypes.string).isRequired,
   noObjectiveError: PropTypes.node.isRequired,
   onSaveDraft: PropTypes.func.isRequired,
+  reportId: PropTypes.number.isRequired,
 };
