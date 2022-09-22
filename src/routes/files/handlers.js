@@ -15,7 +15,7 @@ import {
   createObjectiveTemplateFileMetaData,
   createObjectivesFileMetaData,
 } from '../../services/files';
-import { ActivityReportObjective } from '../../models';
+import { ActivityReportObjective, ActivityReportObjectiveFile } from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
 import ObjectivePolicy from '../../policies/objective';
 import { activityReportAndRecipientsById } from '../../services/activityReports';
@@ -456,6 +456,55 @@ const deleteObjectiveFileHandler = async (req, res) => {
   }
 };
 
+async function deleteActivityReportObjectiveFile(req, res) {
+  const { fileId, reportId } = req.params;
+  const { objectiveIds } = req.body;
+
+  try {
+    const user = await userById(req.session.userId);
+    const [report] = await activityReportAndRecipientsById(
+      parseInt(reportId, DECIMAL_BASE),
+    );
+    if (!report) {
+      res.sendStatus(404);
+      return;
+    }
+    const file = await getFileById(parseInt(fileId, DECIMAL_BASE));
+
+    if (!file) {
+      res.sendStatus(404);
+      return;
+    }
+
+    const reportPolicy = new ActivityReportPolicy(user, report);
+
+    if (!reportPolicy.canUpdate()) {
+      res.sendStatus(403);
+      return;
+    }
+
+    await ActivityReportObjectiveFile.destroy({
+      where: {
+        fileId: parseInt(fileId, DECIMAL_BASE),
+      },
+      include: [
+        {
+          model: ActivityReportObjective,
+          where: {
+            activityReportId: parseInt(reportId, DECIMAL_BASE),
+            objectiveIds,
+          },
+          required: true,
+        },
+      ],
+    });
+
+    res.status(204).send();
+  } catch (error) {
+    handleErrors(req, res, error, logContext);
+  }
+}
+
 export {
   deleteHandler,
   linkHandler,
@@ -463,4 +512,5 @@ export {
   deleteOnlyFile,
   uploadObjectivesFile,
   deleteObjectiveFileHandler,
+  deleteActivityReportObjectiveFile,
 };

@@ -8,7 +8,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { deleteObjectiveFile, deleteFile } from '../../fetchers/File';
+import { deleteObjectiveFile, deleteFile, removeActivityReportObjectiveFile } from '../../fetchers/File';
 import FileTable from './FileTable';
 import Dropzone from './Dropzone';
 import './FileUploader.scss';
@@ -23,21 +23,36 @@ const ObjectiveFileUploader = ({
   inputName,
   onBlur,
   setError,
+  reportId,
 }) => {
   const onFileRemoved = async (removedFileIndex) => {
     const file = files[removedFileIndex];
+    const fileHasObjectiveFile = file.ObjectiveFile && file.ObjectiveFile.objectiveId;
+    const objectiveHasBeenSaved = objective.ids && objective.ids.length && objective.ids.length > 0;
+    const uploaderIsOnReport = reportId > 0;
 
-    if (file.id && file.objectiveIds && file.objectiveIds.length) {
-      await deleteObjectiveFile(file.id, file.objectiveIds);
-    } else if (file.id && objective.ids && objective.ids.length) {
-      await deleteObjectiveFile(file.id, objective.ids);
-    } else if (file.id) {
-      await deleteFile(file.id);
+    try {
+      if (uploaderIsOnReport) {
+        // remove from activity report objective file only
+        await removeActivityReportObjectiveFile(reportId, file.id, objective.ids);
+      } else if (objectiveHasBeenSaved) {
+        // remove objective file and delete file
+        await deleteObjectiveFile(file.id, objective.ids);
+      } else if (fileHasObjectiveFile) {
+        // remove objective file and delete file
+        await deleteObjectiveFile(file.id, [file.ObjectiveFile.objectiveId]);
+      } else {
+      // remove the file entirely
+        await deleteFile(file.id);
+      }
+
+      // remove from the UI if the network request was successful
+      const copyOfFiles = [...files];
+      copyOfFiles.splice(removedFileIndex, 1);
+      onChange(copyOfFiles);
+    } catch (error) {
+      setError('There was an error deleting the file. Please try again.');
     }
-    const copyOfFiles = [...files];
-    copyOfFiles.splice(removedFileIndex, 1);
-
-    onChange(copyOfFiles);
   };
 
   const handleDrop = async (e) => {
@@ -140,10 +155,12 @@ ObjectiveFileUploader.propTypes = {
   inputName: PropTypes.string.isRequired,
   onBlur: PropTypes.func.isRequired,
   setError: PropTypes.func.isRequired,
+  reportId: PropTypes.number,
 };
 
 ObjectiveFileUploader.defaultProps = {
   files: [],
+  reportId: 0,
 };
 
 export default ObjectiveFileUploader;
