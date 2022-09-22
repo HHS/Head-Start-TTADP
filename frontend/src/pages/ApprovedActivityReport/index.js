@@ -22,6 +22,18 @@ import PrintToPdf from '../../components/PrintToPDF';
 import ApprovedReportSection from './components/ApprovedReportSection';
 import './index.scss';
 
+function formatNextSteps(nextSteps, heading) {
+  const data = nextSteps.reduce((acc, step, index) => ({
+    ...acc,
+    [`Step ${index + 1}`]: step.note,
+    'Anticipated completion': step.completeDate,
+  }), {});
+  return {
+    heading,
+    data,
+  };
+}
+
 /**
  *
  * @param {object} report an activity report object
@@ -177,8 +189,8 @@ export default function ApprovedActivityReport({ match, user }) {
     goalsAndObjectives: [],
     managerNotes: '',
     creatorNotes: '',
-    recipientNextSteps: [],
-    specialistNextSteps: [],
+    recipientNextSteps: { data: {} },
+    specialistNextSteps: { data: {} },
     createdAt: '',
     approvedAt: '',
   });
@@ -258,8 +270,9 @@ export default function ApprovedActivityReport({ match, user }) {
         const [goalsAndObjectiveHeadings, goalsAndObjectives] = calculateGoalsAndObjectives(data);
 
         // next steps table
-        const specialistNextSteps = data.specialistNextSteps.map((step) => step.note);
-        const recipientNextSteps = data.recipientNextSteps.map((step) => step.note);
+        const specialistNextSteps = formatNextSteps(data.specialistNextSteps, 'Specialist\'s next steps');
+        const recipientNextSteps = formatNextSteps(data.recipientNextSteps, 'Recipient\'s next steps');
+
         const approvedAt = data.approvedAt ? moment(data.approvedAt).format(DATE_DISPLAY_FORMAT) : '';
         const createdAt = moment(data.createdAt).format(DATE_DISPLAY_FORMAT);
 
@@ -577,11 +590,14 @@ export default function ApprovedActivityReport({ match, user }) {
         <ApprovedReportSection
           key={`next-steps${reportId}`}
           title="Next steps"
-          sections={[]}
+          sections={[
+            specialistNextSteps,
+            recipientNextSteps,
+          ]}
         />
 
         <ApprovedReportSection
-          key={`review-and-submit${reportId}`}
+          key={`review-and-submit-${reportId}`}
           className="no-print"
           title="Review and submit"
           sections={[
