@@ -8,7 +8,7 @@ import {
 } from '../../../Constants';
 import { reportDataPropTypes, formatSimpleArray, mapAttachments } from '../helpers';
 
-function formatNextSteps(nextSteps, heading) {
+function formatNextSteps(nextSteps, heading, striped) {
   const data = nextSteps.reduce((acc, step, index) => ({
     ...acc,
     [`Step ${index + 1}`]: step.note,
@@ -17,6 +17,7 @@ function formatNextSteps(nextSteps, heading) {
   return {
     heading,
     data,
+    striped,
   };
 }
 
@@ -24,18 +25,16 @@ function formatObjectiveLinks(resources) {
   if (Array.isArray(resources) && resources.length > 0) {
     return (
       <ul>
-        {
-            resources.map((resource) => (
-              <li key={resource.value}>
-                <a
-                  href={resource.value}
-                  rel="noreferrer"
-                >
-                  { resource.value }
-                </a>
-              </li>
-            ))
-          }
+        {resources.map((resource) => (
+          <li key={resource.value}>
+            <a
+              href={resource.value}
+              rel="noreferrer"
+            >
+              { resource.value }
+            </a>
+          </li>
+        ))}
       </ul>
     );
   }
@@ -50,18 +49,30 @@ function formatObjectiveLinks(resources) {
    */
 function calculateGoalsAndObjectives(report) {
   const sections = [];
+  let striped = false;
+
   if (report.activityRecipientType === 'recipient') {
     report.goalsAndObjectives.forEach((goal) => {
+      striped = !striped;
       const goalSection = {
         heading: 'Goal summary',
         data: {
-          'Recipient\'s goal': goal.name,
+          'Recipient\'s goal': (
+            <>
+              <span className="text-bold">{goal.goalNumbers.join(',')}</span>
+              :
+              {' '}
+              {goal.name}
+            </>
+          ),
         },
+        striped,
       };
 
       sections.push(goalSection);
 
       goal.objectives.forEach((objective) => {
+        striped = !striped;
         const objectiveSection = {
           heading: 'Objective summary',
           data: {
@@ -72,13 +83,29 @@ function calculateGoalsAndObjectives(report) {
             'TTA provided': objective.ttaProvided,
             'Objective status': objective.status,
           },
+          striped,
         };
 
         sections.push(objectiveSection);
       });
     });
   } else if (report.activityRecipientType === 'other-entity') {
-    report.objectivesWithoutGoals.forEach(() => {});
+    report.objectivesWithoutGoals.forEach((objective) => {
+      const objectiveSection = {
+        heading: 'Objective summary',
+        data: {
+          'TTA objective': objective.title,
+          Topics: formatSimpleArray(objective.topics.map(({ label }) => label)),
+          'Resource links': formatObjectiveLinks(objective.resources),
+          'Resource attachments': mapAttachments(objective.files),
+          'TTA provided': objective.ActivityReportObjective.ttaProvided,
+          'Objective status': objective.status,
+        },
+        striped,
+      };
+
+      sections.push(objectiveSection);
+    });
   }
 
   return sections;
@@ -97,7 +124,7 @@ function formatRequester(requester) {
 }
 export default function ApprovedReportV2({ data }) {
   const {
-    reportId, ttaType, deliveryMethod, creatorNotes,
+    reportId, ttaType, deliveryMethod, additionalNotes: creatorNotes,
   } = data;
 
   // first table
@@ -115,9 +142,7 @@ export default function ApprovedReportV2({ data }) {
   );
 
   // Approver Notes.
-  const managerNotes = data.approvers.map((a) => `
-          <h2>${a.User.fullName}:</h2>
-          ${a.note ? a.note : '<p>No manager notes</p>'}`).join('');
+  const managerNotes = data.approvers.map((a) => `${a.note ? a.note : '<p>No manager notes</p>'}`).join('');
 
   const attendees = formatSimpleArray(data.participants);
   const participantCount = data.numberOfParticipants.toString();
@@ -138,8 +163,8 @@ export default function ApprovedReportV2({ data }) {
   } = data;
 
   // next steps table
-  const specialistNextSteps = formatNextSteps(data.specialistNextSteps);
-  const recipientNextSteps = formatNextSteps(data.recipientNextSteps);
+  const specialistNextSteps = formatNextSteps(data.specialistNextSteps, 'Specialist\'s next steps', true);
+  const recipientNextSteps = formatNextSteps(data.recipientNextSteps, 'Recipient\'s next steps', false);
   const approvedAt = data.approvedAt ? moment(data.approvedAt).format(DATE_DISPLAY_FORMAT) : '';
   const createdAt = moment(data.createdAt).format(DATE_DISPLAY_FORMAT);
 
@@ -191,6 +216,7 @@ export default function ApprovedReportV2({ data }) {
               'Recipient names': arRecipients,
               'Target populations': targetPopulations,
             },
+            striped: true,
           },
           {
             heading: 'Reason for activity',
@@ -198,6 +224,7 @@ export default function ApprovedReportV2({ data }) {
               'Who requested the activity': requester,
               Reasons: reasons,
             },
+            striped: false,
           },
           {
             heading: 'Activity date',
@@ -206,12 +233,14 @@ export default function ApprovedReportV2({ data }) {
               'End date': endDate,
               Duration: duration,
             },
+            striped: true,
           },
           {
             heading: 'Context',
             data: {
               Context: context,
             },
+            striped: false,
           },
           {
             heading: 'Training or technical assistance',
@@ -219,6 +248,7 @@ export default function ApprovedReportV2({ data }) {
               'TTA provided': ttaType,
               'TTA conducted': deliveryMethod,
             },
+            striped: true,
           },
           {
             heading: 'Participants',
@@ -226,6 +256,7 @@ export default function ApprovedReportV2({ data }) {
               Participants: attendees,
               'Number of participants': participantCount,
             },
+            striped: false,
           },
         ]}
       />
@@ -245,6 +276,7 @@ export default function ApprovedReportV2({ data }) {
               data: {
                 Attachments: attachments,
               },
+              striped: true,
             }]
           }
       />
@@ -268,6 +300,7 @@ export default function ApprovedReportV2({ data }) {
               'Creator notes': creatorNotes,
               'Manager notes': managerNotes,
             },
+            striped: true,
           },
         ]}
       />

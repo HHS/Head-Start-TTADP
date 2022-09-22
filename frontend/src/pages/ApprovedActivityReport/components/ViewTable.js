@@ -1,52 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Editor } from 'react-draft-wysiwyg';
 import { v4 as uuidv4 } from 'uuid';
-import { getEditorState } from '../../../utils';
+import { renderData } from '../helpers';
 import './ViewTable.scss';
-
-function renderEditor(heading, data) {
-  /**
-   * sometimes, we may receive JSX
-   */
-  if (typeof data === 'object') {
-    return data;
-  }
-
-  let wrapperId = '';
-
-  if (typeof heading === 'string') {
-    wrapperId = `${heading.toLowerCase().replace(' ', '-')}-${uuidv4()}`;
-  } else {
-    wrapperId = uuidv4();
-  }
-
-  /**
-   * otherwise, we render the contents via react-draft
-   */
-  const defaultEditorState = getEditorState(data || '');
-  return (
-    <Editor
-      readOnly
-      toolbarHidden
-      defaultEditorState={defaultEditorState}
-      wrapperId={wrapperId}
-    />
-  );
-}
-
-function renderData(heading, data) {
-  if (Array.isArray(data)) {
-    const cleanData = data.filter((d) => d);
-    return (
-      <ul>
-        {cleanData.map((line) => <li key={uuidv4()} className="margin-bottom-1">{renderEditor(heading, line)}</li>)}
-      </ul>
-    );
-  }
-
-  return renderEditor(heading, data);
-}
 
 export default function ViewTable({
   caption, headings, data, className, allowBreakWithin,

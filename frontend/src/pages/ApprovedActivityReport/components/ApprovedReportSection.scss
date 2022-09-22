@@ -1,0 +1,34 @@
+@use '../../../colors.scss' as *;
+
+// these next two style blocks will only apply on desktop
+.ttahub-approved-report-section--heading--section-row > p {
+  flex-basis: max(300px, 75%)
+}
+
+.ttahub-approved-report-section--heading--section-row-title {
+  flex-basis: min(220px, 25%);
+}
+
+// a reset to squeeze those ul's in
+.ttahub-approved-report-section--heading--section-row > p > ul {
+  margin: 0;
+  list-style: none;
+  padding: 0;
+}
+
+@media screen {
+  .ttahub-approved-report-section__striped {
+    background-color: $gray-two;
+  }
+}
+
+// print styles
+
+@media print{
+  .ttahub-approved-report-section {
+    padding: 0;
+    margin-bottom: 2rem;
+  }
+}
+
+
