@@ -6,7 +6,7 @@ import {
   DATE_DISPLAY_FORMAT,
   DATEPICKER_VALUE_FORMAT,
 } from '../../../Constants';
-import { reportDataPropTypes, formatSimpleArray } from '../helpers';
+import { reportDataPropTypes, formatSimpleArray, mapAttachments } from '../helpers';
 
 function formatNextSteps(nextSteps, heading) {
   const data = nextSteps.reduce((acc, step, index) => ({
@@ -18,6 +18,29 @@ function formatNextSteps(nextSteps, heading) {
     heading,
     data,
   };
+}
+
+function formatObjectiveLinks(resources) {
+  if (Array.isArray(resources) && resources.length > 0) {
+    return (
+      <ul>
+        {
+            resources.map((resource) => (
+              <li key={resource.value}>
+                <a
+                  href={resource.value}
+                  rel="noreferrer"
+                >
+                  { resource.value }
+                </a>
+              </li>
+            ))
+          }
+      </ul>
+    );
+  }
+
+  return [];
 }
 
 /**
@@ -43,8 +66,11 @@ function calculateGoalsAndObjectives(report) {
           heading: 'Objective summary',
           data: {
             'TTA objective': objective.title,
-            // Topics: formatSimpleArray(objective.topics.map()),
-
+            Topics: formatSimpleArray(objective.topics.map(({ label }) => label)),
+            'Resource links': formatObjectiveLinks(objective.resources),
+            'Resource attachments': mapAttachments(objective.files),
+            'TTA provided': objective.ttaProvided,
+            'Objective status': objective.status,
           },
         };
 
@@ -69,36 +95,6 @@ function formatRequester(requester) {
 
   return '';
 }
-
-function mapAttachments(attachments) {
-  if (Array.isArray(attachments) && attachments.length > 0) {
-    return (
-      <ul>
-        {
-            attachments.map((attachment) => (
-              <li key={attachment.url.url}>
-                <a
-                  href={attachment.url.url}
-                  target={attachment.originalFileName.endsWith('.txt') ? '_blank' : '_self'}
-                  rel="noreferrer"
-                >
-                  {
-                    `${attachment.originalFileName}
-                     ${attachment.originalFileName.endsWith('.txt')
-                      ? ' (opens in new tab)'
-                      : ''}`
-                  }
-                </a>
-              </li>
-            ))
-          }
-      </ul>
-    );
-  }
-
-  return [];
-}
-
 export default function ApprovedReportV2({ data }) {
   const {
     reportId, ttaType, deliveryMethod, creatorNotes,

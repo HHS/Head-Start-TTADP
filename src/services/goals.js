@@ -404,7 +404,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       exists.files = uniqBy([
         ...exists.files,
         ...objective.activityReportObjectives[0].activityReportObjectiveFiles.map(
-          (f) => f.file.dataValues,
+          (f) => ({ ...f.file.dataValues, url: f.file.url }),
         ),
       ], 'key');
 
@@ -443,7 +443,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         (r) => r.dataValues,
       ),
       files: objective.activityReportObjectives[0].activityReportObjectiveFiles.map(
-        (f) => f.file.dataValues,
+        (f) => ({ ...f.file.dataValues, url: f.file.url }),
       ),
     }];
   }, currentObjectives);

@@ -6,7 +6,7 @@ import {
   DATE_DISPLAY_FORMAT,
   DATEPICKER_VALUE_FORMAT,
 } from '../../../Constants';
-import { reportDataPropTypes, formatSimpleArray } from '../helpers';
+import { reportDataPropTypes, formatSimpleArray, mapAttachments } from '../helpers';
 
 /**
  *
@@ -83,35 +83,6 @@ function formatMethod(method, delivery) {
   }
 
   return methodOfContact;
-}
-
-function mapAttachments(attachments) {
-  if (Array.isArray(attachments) && attachments.length > 0) {
-    return (
-      <ul>
-        {
-          attachments.map((attachment) => (
-            <li key={attachment.url.url}>
-              <a
-                href={attachment.url.url}
-                target={attachment.originalFileName.endsWith('.txt') ? '_blank' : '_self'}
-                rel="noreferrer"
-              >
-                {
-                  `${attachment.originalFileName}
-                   ${attachment.originalFileName.endsWith('.txt')
-                    ? ' (opens in new tab)'
-                    : ''}`
-                }
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-    );
-  }
-
-  return [];
 }
 
 function createResourceMarkup(resources) {

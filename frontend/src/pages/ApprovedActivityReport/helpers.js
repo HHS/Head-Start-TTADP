@@ -1,7 +1,37 @@
+import React from 'react';
 import PropTypes from 'prop-types';
 
 export function formatSimpleArray(arr) {
   return arr.sort().join(', ');
+}
+
+export function mapAttachments(attachments) {
+  if (Array.isArray(attachments) && attachments.length > 0) {
+    return (
+      <ul>
+        {
+            attachments.map((attachment) => (
+              <li key={attachment.url.url}>
+                <a
+                  href={attachment.url.url}
+                  target={attachment.originalFileName.endsWith('.txt') ? '_blank' : '_self'}
+                  rel="noreferrer"
+                >
+                  {
+                    `${attachment.originalFileName}
+                     ${attachment.originalFileName.endsWith('.txt')
+                      ? ' (opens in new tab)'
+                      : ''}`
+                  }
+                </a>
+              </li>
+            ))
+          }
+      </ul>
+    );
+  }
+
+  return [];
 }
 
 export const reportDataPropTypes = {
