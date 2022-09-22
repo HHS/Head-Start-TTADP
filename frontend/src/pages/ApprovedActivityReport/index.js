@@ -10,6 +10,7 @@ import Container from '../../components/Container';
 import { getReport, unlockReport } from '../../fetchers/activityReports';
 import { allRegionsUserHasPermissionTo, canUnlockReports } from '../../permissions';
 import Modal from '../../components/Modal';
+
 import {
   DATE_DISPLAY_FORMAT,
   LOCAL_STORAGE_DATA_KEY,
@@ -505,6 +506,7 @@ export default function ApprovedActivityReport({ match, user }) {
         </div>
 
         <ApprovedReportSection
+          key={`activity-summary-${reportId}`}
           title="Activity Summary"
           sections={[
             {
@@ -515,51 +517,52 @@ export default function ApprovedActivityReport({ match, user }) {
                 'Target populations': targetPopulations,
               },
             },
-            // {
-            //   heading: 'Reason for activity',
-            //   data: {
-            //     'Who requested the activity': requester,
-            //     // eslint-disable-next-line quote-props
-            //     'Reasons': reasons,
-            //   },
-            // },
-            // {
-            //   heading: 'Activity date',
-            //   data: {
-            //     'Start date': startDate,
-            //     'End date': endDate,
-            //     Duration: duration,
-            //   },
-            // },
-            // {
-            //   heading: 'Context',
-            //   data: {
-            //     Context: context,
-            //   },
-            // },
-            // {
-            //   heading: 'Training or technical assistance',
-            //   data: {
-            //     'TTA provided': ttaType,
-            //     'TTA conducted': deliveryMethod,
-            //   },
-            // },
-            // {
-            //   heading: 'Participants',
-            //   data: {
-            //     Participants: attendees,
-            //     'Number of participants': participantCount,
-            //   },
-            // },
+            {
+              heading: 'Reason for activity',
+              data: {
+                'Who requested the activity': requester,
+                Reasons: reasons,
+              },
+            },
+            {
+              heading: 'Activity date',
+              data: {
+                'Start date': startDate,
+                'End date': endDate,
+                Duration: duration,
+              },
+            },
+            {
+              heading: 'Context',
+              data: {
+                Context: context,
+              },
+            },
+            {
+              heading: 'Training or technical assistance',
+              data: {
+                'TTA provided': ttaType,
+                'TTA conducted': deliveryMethod,
+              },
+            },
+            {
+              heading: 'Participants',
+              data: {
+                Participants: attendees,
+                'Number of participants': participantCount,
+              },
+            },
           ]}
         />
 
-        {/* <ApprovedReportSection
+        <ApprovedReportSection
+          key={`goals-and-objectives-${reportId}`}
           title="Goals and objectives"
           sections={[]}
         />
 
         <ApprovedReportSection
+          key={`supporting-attachments${reportId}`}
           title="Supporting attachments"
           sections={
             [{
@@ -572,11 +575,13 @@ export default function ApprovedActivityReport({ match, user }) {
         />
 
         <ApprovedReportSection
+          key={`next-steps${reportId}`}
           title="Next steps"
           sections={[]}
         />
 
         <ApprovedReportSection
+          key={`review-and-submit${reportId}`}
           className="no-print"
           title="Review and submit"
           sections={[
@@ -587,7 +592,7 @@ export default function ApprovedActivityReport({ match, user }) {
               },
             },
           ]}
-        /> */}
+        />
 
       </Container>
     </>
