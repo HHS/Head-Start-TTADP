@@ -249,7 +249,6 @@ export default function Objective({
         isOnReport={isOnReport || false} // todo - fix this for being on AR
       />
       <SpecialistRole
-        isOnApprovedReport={isOnApprovedReport || false}
         isOnReport={isOnReport || false}
         status={objectiveStatus}
         error={errors.roles
@@ -291,7 +290,6 @@ export default function Objective({
         objective={objective}
         files={objectiveFiles}
         onChangeFiles={onChangeFiles}
-        isOnApprovedReport={isOnApprovedReport || false}
         status={objectiveStatus}
         isOnReport={isOnReport || false}
         onUploadFiles={onUploadFile}

@@ -24,7 +24,7 @@ import {
   SELECT_GRANTS_ERROR,
   OBJECTIVE_DEFAULT_ERRORS,
 } from './constants';
-import { DECIMAL_BASE, REPORT_STATUSES } from '../../Constants';
+import { DECIMAL_BASE } from '../../Constants';
 import ReadOnly from './ReadOnly';
 import PlusButton from './PlusButton';
 import colors from '../../colors';
@@ -67,6 +67,7 @@ export default function GoalForm({
     grants: possibleGrants.length === 1 ? [possibleGrants[0]] : [],
     objectives: [],
     id,
+    onApprovedAR: false,
   }), [possibleGrants, id]);
 
   const [showForm, setShowForm] = useState(true);
@@ -84,6 +85,7 @@ export default function GoalForm({
   const [goalName, setGoalName] = useState(goalDefaults.name);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
+  const [goalOnApprovedAR, setGoalOnApprovedReport] = useState(goalDefaults.onApprovedAR);
 
   // we need to set this key to get the component to re-render (uncontrolled input)
   const [datePickerKey, setDatePickerKey] = useState('DPK-00');
@@ -102,12 +104,6 @@ export default function GoalForm({
     (objective) => objective.activityReports && objective.activityReports.length > 0,
   ), [objectives]);
 
-  const isOnApprovedReport = useMemo(() => objectives.some(
-    (objective) => objective.activityReports && objective.activityReports.some((report) => (
-      report.status === REPORT_STATUSES.APPROVED
-    )),
-  ), [objectives]);
-
   // for fetching goal data from api if it exists
   useEffect(() => {
     async function fetchGoal() {
@@ -122,6 +118,7 @@ export default function GoalForm({
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
         setGoalNumber(goal.goalNumber);
         setSelectedGrants(formatGrantsFromApi([goal.grant]));
+        setGoalOnApprovedReport(goal.onApprovedAR);
 
         // this is a lot of work to avoid two loops through the goal.objectives
         // but I'm sure you'll agree its totally worth it
@@ -751,7 +748,7 @@ export default function GoalForm({
               clearEmptyObjectiveError={clearEmptyObjectiveError}
               topicOptions={topicOptions}
               isOnReport={isOnReport}
-              isOnApprovedReport={isOnApprovedReport}
+              isOnApprovedReport={goalOnApprovedAR}
               status={status || 'Needs status'}
               goalNumber={goalNumber}
               onUploadFiles={onUploadFiles}

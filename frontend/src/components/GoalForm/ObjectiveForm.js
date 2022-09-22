@@ -134,7 +134,6 @@ export default function ObjectiveForm({
         validateSpecialistRole={validateSpecialistRole}
         options={roleOptions}
         isOnReport={isOnReport || false}
-        isOnApprovedReport={isOnApprovedReport || false}
         status={status}
         isLoading={isLoading}
         roleOptions={roleOptions}
@@ -150,7 +149,6 @@ export default function ObjectiveForm({
         status={status}
         goalStatus={goalStatus}
         isOnReport={isOnReport || false}
-        isOnApprovedReport={isOnApprovedReport || false}
         isLoading={isLoading}
       />
 
@@ -160,7 +158,6 @@ export default function ObjectiveForm({
         validateResources={validateResources}
         error={errors[OBJECTIVE_FORM_FIELD_INDEXES.RESOURCES]}
         isOnReport={isOnReport || false}
-        isOnApprovedReport={isOnApprovedReport || false}
         status={status}
         goalStatus={goalStatus}
         isLoading={isLoading}
@@ -170,7 +167,6 @@ export default function ObjectiveForm({
         files={files ? files.map((f) => ({ ...f, objectiveIds: objective.ids })) : []}
         onChangeFiles={onChangeFiles}
         objective={objective}
-        isOnApprovedReport={isOnApprovedReport || false}
         isOnReport={isOnReport || false}
         status={status}
         isLoading={isLoading}

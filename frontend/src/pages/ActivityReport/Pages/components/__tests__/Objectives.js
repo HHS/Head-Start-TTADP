@@ -51,6 +51,7 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
         roles={['Central office']}
         goalId={goalId}
         noObjectiveError={<></>}
+        goalStatus="In Progress"
       />
       <button type="button">blur me</button>
     </FormProvider>

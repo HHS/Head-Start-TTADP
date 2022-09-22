@@ -24,7 +24,7 @@ export default function ResourceRepeater({
 }) {
   const resourcesWrapper = useRef();
 
-  const readOnly = status === 'Suspended' || (status === 'Not Started' && isOnReport) || (status === 'Completed' && goalStatus === 'Closed');
+  const readOnly = status === 'Suspended' || (goalStatus === 'Not Started' && isOnReport) || (status === 'Completed' && goalStatus === 'Closed');
 
   if (readOnly) {
     if (!resources.length) {
@@ -66,7 +66,7 @@ export default function ResourceRepeater({
   };
 
   const { editableResources, fixedResources } = resources.reduce((acc, resource) => {
-    if (resource.isOnApprovedReport) {
+    if (resource.onAnyReport) {
       acc.fixedResources.push(resource);
     } else {
       acc.editableResources.push(resource);
@@ -82,7 +82,7 @@ export default function ResourceRepeater({
           <p className="usa-prose text-bold margin-bottom-0">Resource links</p>
           <ul className="usa-list usa-list--unstyled">
             {fixedResources.map((resource) => (
-              <li key={resource.key}>{resource.value}</li>
+              <li key={resource.key}><a href={resource.value}>{resource.value}</a></li>
             ))}
           </ul>
         </>

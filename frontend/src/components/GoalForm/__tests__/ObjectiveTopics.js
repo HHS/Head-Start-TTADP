@@ -22,7 +22,7 @@ describe('ObjectiveTopics', () => {
   ];
 
   const renderObjectiveTopics = (
-    isOnApprovedReport = false,
+    isOnReport = false,
     topics = defaultTopicSelection,
     objectiveStatus = 'In Progress',
     goalStatus = 'In Progress',
@@ -34,8 +34,7 @@ describe('ObjectiveTopics', () => {
       topics={topics}
       onChangeTopics={jest.fn()}
       status={objectiveStatus}
-      isOnReport={false}
-      isOnApprovedReport={isOnApprovedReport}
+      isOnReport={isOnReport}
       goalStatus={goalStatus}
     />
   ));
@@ -50,13 +49,17 @@ describe('ObjectiveTopics', () => {
     expect(screen.getByText(/dancing but too slow/i)).toBeVisible();
   });
 
-  it('displays the correct data on approved report', async () => {
-    renderObjectiveTopics(true);
-    const label = await screen.findByText('Topics');
-    expect(label).toBeVisible();
+  it('shows the read only view when goal is not started and on a report', async () => {
+    renderObjectiveTopics(
+      true,
+      defaultTopicSelection,
+      'Not Started',
+      'Not Started',
+    );
 
     expect(await screen.findByText(/dancing but too slow/i)).toBeVisible();
     expect(await screen.findByText(/dancing but too fast/i)).toBeVisible();
+    expect(document.querySelector('input')).toBeNull();
   });
 
   it('in the read only view, it distinguises between used data and unused data', async () => {
