@@ -196,3 +196,9 @@ export const EMAIL_DIGEST_FREQ = {
   WEEKLY: 'this week',
   MONTHLY: 'this month',
 };
+
+export const DIGEST_SUBJECT_FREQ = {
+  DAILY: 'daily',
+  WEEKLY: 'weekly',
+  MONTHLY: 'monthly',
+};

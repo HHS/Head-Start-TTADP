@@ -2,7 +2,7 @@ import { EMAIL_ACTIONS } from '../constants';
 import db, {
   MailerLogs,
 } from '../models';
-import createMailerLog from './mailerLog';
+import { createMailerLog } from './mailerLog';
 
 describe('MailerLog DB service', () => {
   const jobId = '2';
