@@ -1,4 +1,5 @@
 import React from 'react';
+import moment from 'moment';
 import PropTypes from 'prop-types';
 import {
   DatePicker, FormGroup, Label,
@@ -10,7 +11,6 @@ export default function GoalDate({
   setEndDate,
   endDate,
   validateEndDate,
-  datePickerKey,
   inputName,
   isLoading,
   goalStatus,
@@ -39,9 +39,8 @@ export default function GoalDate({
         id={inputName}
         name={inputName}
         onChange={setEndDate}
-        defaultValue={endDate}
+        defaultValue={moment(endDate, 'MM/DD/YYYY').format('YYYY-MM-DD')}
         onBlur={validateEndDate}
-        key={datePickerKey}
         disabled={isLoading}
         required
       />
@@ -54,7 +53,6 @@ GoalDate.propTypes = {
   setEndDate: PropTypes.func.isRequired,
   endDate: PropTypes.string, // can come back from the API as null
   validateEndDate: PropTypes.func.isRequired,
-  datePickerKey: PropTypes.string.isRequired,
   inputName: PropTypes.string,
   isLoading: PropTypes.bool,
   goalStatus: PropTypes.string.isRequired,

@@ -70,3 +70,15 @@ export const deleteReportFile = async (fileId, reportId) => {
   const res = await destroy(url);
   return res;
 };
+
+export const removeActivityReportObjectiveFile = async (reportId, fileId, objectiveIds) => {
+  const url = join(
+    fileUrl,
+    'report',
+    reportId.toString(),
+    'file',
+    fileId.toString(),
+  );
+  const res = await destroy(url, { objectiveIds });
+  return res;
+};

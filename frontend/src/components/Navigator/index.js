@@ -262,7 +262,7 @@ function Navigator({
 
     // the form value is updated but the react state is not
     // so here we go (todo - why are there two sources of truth?)
-    updateFormData({ ...formData, goals: newGoals });
+    updateFormData({ ...formData, goals: newGoals }, true);
   };
 
   const onObjectiveFormNavigate = async () => {
@@ -295,7 +295,7 @@ function Navigator({
     toggleObjectiveForm(true);
 
     // Update form data (formData has otherEntityIds).
-    updateFormData({ ...formData, objectivesWithoutGoals: newObjectives });
+    updateFormData({ ...formData, objectivesWithoutGoals: newObjectives }, true);
   };
 
   const onGoalFormNavigate = async () => {
