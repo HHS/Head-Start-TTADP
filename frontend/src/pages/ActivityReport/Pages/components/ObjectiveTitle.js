@@ -15,8 +15,15 @@ export default function ObjectiveTitle({
   inputName,
   isLoading,
 }) {
-  const readOnly = useMemo(() => (isOnApprovedReport || status === 'Completed' || status === 'Suspended' || (status === 'Not Started' && isOnReport) || (status === 'In Progress' && isOnReport)),
-    [isOnApprovedReport, isOnReport, status]);
+  const readOnly = useMemo(() => {
+    if (isOnApprovedReport) {
+      if (status === 'Completed' || status === 'Suspended') {
+        return true;
+      }
+    }
+
+    return false;
+  }, [isOnApprovedReport, status]);
 
   return (
     <FormGroup className="margin-top-1" error={error.props.children}>
