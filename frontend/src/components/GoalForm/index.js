@@ -401,9 +401,8 @@ export default function GoalForm({
     setIsLoading(true);
     try {
       // if the goal is a draft, submission should move it to "not started"
-      const statusToSave = status && status === 'Draft' ? 'Not Started' : status;
-
       const gs = createdGoals.reduce((acc, goal) => {
+        const statusToSave = goal.status && goal.status === 'Draft' ? 'Not Started' : goal.status;
         const newGoals = goal.grants.map((grant) => ({
           grantId: grant.id,
           name: goal.name,
