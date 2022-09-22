@@ -7,23 +7,29 @@ import {
 export default function ObjectiveTitle({
   error,
   isOnApprovedReport,
-  isOnReport,
   title,
   onChangeTitle,
   validateObjectiveTitle,
-  status,
   inputName,
   isLoading,
+  parentGoal,
+  initialObjectiveStatus,
 }) {
   const readOnly = useMemo(() => {
     if (isOnApprovedReport) {
-      if (status === 'Completed' || status === 'Suspended') {
-        return true;
-      }
+      return true;
+    }
+
+    if (parentGoal && parentGoal.status === 'Closed') {
+      return true;
+    }
+
+    if (initialObjectiveStatus === 'Completed' || initialObjectiveStatus === 'Suspended') {
+      return true;
     }
 
     return false;
-  }, [isOnApprovedReport, status]);
+  }, [isOnApprovedReport, initialObjectiveStatus, parentGoal]);
 
   return (
     <FormGroup className="margin-top-1" error={error.props.children}>
@@ -56,13 +62,16 @@ export default function ObjectiveTitle({
 ObjectiveTitle.propTypes = {
   error: PropTypes.node.isRequired,
   isOnApprovedReport: PropTypes.bool.isRequired,
-  isOnReport: PropTypes.bool.isRequired,
   title: PropTypes.string.isRequired,
   validateObjectiveTitle: PropTypes.func.isRequired,
   onChangeTitle: PropTypes.func.isRequired,
-  status: PropTypes.string.isRequired,
   inputName: PropTypes.string,
   isLoading: PropTypes.bool,
+  parentGoal: PropTypes.shape({
+    id: PropTypes.number,
+    status: PropTypes.string,
+  }).isRequired,
+  initialObjectiveStatus: PropTypes.string.isRequired,
 };
 
 ObjectiveTitle.defaultProps = {
