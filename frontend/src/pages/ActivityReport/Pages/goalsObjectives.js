@@ -3,6 +3,7 @@
 // way they did in thier examples
 /* eslint-disable arrow-body-style */
 import React, { useState, useMemo, useContext } from 'react';
+import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { uniqBy } from 'lodash';
@@ -146,7 +147,7 @@ const GoalsObjectives = ({
     const objectives = getValues(`goals[${index}].objectives`) || [];
 
     setValue('goalForEditing.objectives', objectives);
-    setValue('goalEndDate', goal.endDate);
+    setValue('goalEndDate', moment(goal.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'));
     setValue('goalName', goal.name);
 
     toggleGoalForm(false);
