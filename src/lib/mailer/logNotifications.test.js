@@ -1,6 +1,12 @@
 import { EMAIL_ACTIONS } from '../../constants';
 import db from '../../models';
 import logEmailNotification, { logDigestEmailNotification } from './logNotifications';
+import * as mailerLogM from '../../services/mailerLog';
+import { logger } from '../../logger';
+
+jest.mock('../../logger');
+
+const createMailerLogMock = jest.spyOn(mailerLogM, 'createMailerLog');
 
 describe('Email Notifications', () => {
   const mockJob = {
@@ -101,6 +107,19 @@ describe('Email Notifications', () => {
       expect(mailerLog.success).toEqual(false);
       expect(mailerLog.result).toEqual(result);
     });
+    it('logs on error', async () => {
+      createMailerLogMock.mockRejectedValueOnce(new Error('Problem creating mailer log'));
+      mockJob.name = EMAIL_ACTIONS.APPROVED;
+      const mailerLog = await logEmailNotification(mockJob, success, result);
+      expect(logger.error).toHaveBeenCalled();
+      expect(mailerLog).toBeNull();
+    });
+    it('returns null on unknown job name', async () => {
+      mockJob.name = 'unknown';
+      const mailerLog = await logEmailNotification(mockJob, success, result);
+      expect(logger.error).toHaveBeenCalled();
+      expect(mailerLog).toBeNull();
+    });
   });
 
   describe('digest', () => {
@@ -148,6 +167,13 @@ describe('Email Notifications', () => {
       expect(mailerLog.subject).toEqual('TTA Hub digest: approved reports');
       expect(mailerLog.success).toEqual(false);
       expect(mailerLog.result).toEqual(result);
+    });
+    it('logs on error', async () => {
+      createMailerLogMock.mockRejectedValueOnce(new Error('Problem creating digest mailer log'));
+      mockJobDigest.name = EMAIL_ACTIONS.APPROVED_DIGEST;
+      const record = await logDigestEmailNotification(mockJobDigest, success, result);
+      expect(logger.error).toHaveBeenCalled();
+      expect(record).toBeNull();
     });
   });
 });

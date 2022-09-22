@@ -1,12 +1,12 @@
 case type
     when 'collaboratorDigest'
-        = `TTA Hub digest: added as collaborator`
+        = `TTA Hub ${subjectFreq} digest: added as collaborator`
     when 'changesRequestedDigest'
-        = `TTA Hub digest: changes requested`
+        = `TTA Hub ${subjectFreq} digest: changes requested`
     when 'approverAssignedDigest'
-        = `TTA Hub digest: reports for review`
+        = `TTA Hub ${subjectFreq} digest: reports for review`
     when 'reportApprovedDigest'
-        = `TTA Hub digest: approved reports`
+        = `TTA Hub ${subjectFreq} digest: approved reports`
     default
         = `TTA Hub digest: ${type}`
     

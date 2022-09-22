@@ -324,7 +324,7 @@ export const changesRequestedNotification = (
  * @param {String} freq - frequency of the collaborator digests (daily/weekly/monthly)
  *
  */
-export async function collaboratorDigest(freq) {
+export async function collaboratorDigest(freq, subjectFreq) {
   let data = null;
   const date = frequencyToInterval(freq);
   logger.info(`MAILER: Starting CollaboratorDigest with freq ${freq}`);
@@ -343,6 +343,7 @@ export async function collaboratorDigest(freq) {
         reports,
         type: EMAIL_ACTIONS.COLLABORATOR_DIGEST,
         freq,
+        subjectFreq,
       };
       notificationDigestQueue.add(EMAIL_ACTIONS.COLLABORATOR_DIGEST, data);
       return data;
@@ -361,7 +362,7 @@ export async function collaboratorDigest(freq) {
  * @param {String} freq - frequency of the needs action digests (daily/weekly/monthly)
  *
  */
-export async function changesRequestedDigest(freq) {
+export async function changesRequestedDigest(freq, subjectFreq) {
   let data;
   const date = frequencyToInterval(freq);
   logger.info(`MAILER: Starting ChangesRequestedDigest with freq ${freq}`);
@@ -379,6 +380,7 @@ export async function changesRequestedDigest(freq) {
         reports,
         type: EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
         freq,
+        subjectFreq,
       };
 
       notificationDigestQueue.add(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, data);
@@ -398,7 +400,7 @@ export async function changesRequestedDigest(freq) {
  * @param {String} freq - frequency of the submitted digests (daily/weekly/monthly)
  *
  */
-export async function submittedDigest(freq) {
+export async function submittedDigest(freq, subjectFreq) {
   let data = null;
   const date = frequencyToInterval(freq);
   logger.info(`MAILER: Starting SubmittedDigest with freq ${freq}`);
@@ -416,6 +418,7 @@ export async function submittedDigest(freq) {
         reports,
         type: EMAIL_ACTIONS.SUBMITTED_DIGEST,
         freq,
+        subjectFreq,
       };
 
       notificationDigestQueue.add(EMAIL_ACTIONS.SUBMITTED_DIGEST, data);
@@ -435,7 +438,7 @@ export async function submittedDigest(freq) {
  * @param {String} freq - frequency of the approved digests (daily/weekly/monthly)
  *
  */
-export async function approvedDigest(freq) {
+export async function approvedDigest(freq, subjectFreq) {
   let data = null;
   const date = frequencyToInterval(freq);
   logger.info(`MAILER: Starting ApprovedDigest with freq ${freq}`);
@@ -454,6 +457,7 @@ export async function approvedDigest(freq) {
         reports,
         type: EMAIL_ACTIONS.APPROVED_DIGEST,
         freq,
+        subjectFreq,
       };
 
       notificationDigestQueue.add(EMAIL_ACTIONS.APPROVED_DIGEST, data);
@@ -475,7 +479,7 @@ export async function approvedDigest(freq) {
  */
 export const notifyDigest = (job, transport = defaultTransport) => {
   const {
-    user, reports, type, freq,
+    user, reports, type, freq, subjectFreq,
   } = job.data;
 
   // Set these inside the function to allow easier testing
@@ -509,6 +513,7 @@ export const notifyDigest = (job, transport = defaultTransport) => {
         reportPath,
         type,
         freq,
+        subjectFreq,
       },
     });
   }

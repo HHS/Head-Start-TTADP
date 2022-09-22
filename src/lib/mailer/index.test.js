@@ -13,13 +13,18 @@ import {
   notificationQueue as notificationQueueMock,
   notificationDigestQueue as notificationDigestQueueMock,
 } from '.';
-import { EMAIL_ACTIONS, EMAIL_DIGEST_FREQ, REPORT_STATUSES } from '../../constants';
+import {
+  EMAIL_ACTIONS, EMAIL_DIGEST_FREQ, REPORT_STATUSES,
+  DIGEST_SUBJECT_FREQ,
+} from '../../constants';
 import { auditLogger as logger } from '../../logger';
 
 import db, {
   ActivityReport, ActivityReportCollaborator, User, ActivityReportApprover,
 } from '../../models';
 import { usersWithSetting } from '../../services/userSettings';
+
+const { DAILY, WEEKLY, MONTHLY } = DIGEST_SUBJECT_FREQ;
 
 const mockManager = {
   name: 'Mock Manager',
@@ -266,12 +271,13 @@ describe('mailer tests', () => {
           reports: [mockReport],
           type: EMAIL_ACTIONS.COLLABORATOR_DIGEST,
           freq: EMAIL_DIGEST_FREQ.DAILY,
+          subjectFreq: DAILY,
         },
       }, jsonTransport);
       expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
       expect(email.envelope.to).toStrictEqual([mockNewCollaborator.email]);
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe('TTA Hub digest: added as collaborator');
+      expect(message.subject).toBe(`TTA Hub ${DAILY} digest: added as collaborator`);
       expect(message.text).toContain(
         `Hello ${mockNewCollaborator.name}`,
       );
@@ -292,9 +298,11 @@ describe('mailer tests', () => {
           reports: [mockReport],
           type: EMAIL_ACTIONS.COLLABORATOR_DIGEST,
           freq: EMAIL_DIGEST_FREQ.WEEKLY,
+          subjectFreq: WEEKLY,
         },
       }, jsonTransport);
       const message = JSON.parse(email.message);
+      expect(message.subject).toBe(`TTA Hub ${WEEKLY} digest: added as collaborator`);
       expect(message.text).toContain(
         `Hello ${mockNewCollaborator.name}`,
       );
@@ -315,9 +323,11 @@ describe('mailer tests', () => {
           reports: [mockReport],
           type: EMAIL_ACTIONS.COLLABORATOR_DIGEST,
           freq: EMAIL_DIGEST_FREQ.MONTHLY,
+          subjectFreq: MONTHLY,
         },
       }, jsonTransport);
       const message = JSON.parse(email.message);
+      expect(message.subject).toBe(`TTA Hub ${MONTHLY} digest: added as collaborator`);
       expect(message.text).toContain(
         `Hello ${mockNewCollaborator.name}`,
       );
@@ -330,7 +340,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(`* ${mockReport.displayId}`);
       expect(message.text).toContain(reportPath);
     });
-    it('tests that an email is sent if there are no notifications', async () => {
+    it('tests that an email is sent if there are no new collaborator notifications', async () => {
       process.env.SEND_NOTIFICATIONS = true;
       const email = await notifyDigest({
         data: {
@@ -338,10 +348,11 @@ describe('mailer tests', () => {
           reports: [],
           type: EMAIL_ACTIONS.COLLABORATOR_DIGEST,
           freq: EMAIL_DIGEST_FREQ.DAILY,
+          subjectFreq: DAILY,
         },
       }, jsonTransport);
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe('TTA Hub digest: no new notifications');
+      expect(message.subject).toBe(`TTA Hub ${DAILY} digest: no new collaborator notifications`);
       expect(message.text).toContain(
         `Hello ${mockNewCollaborator.name}`,
       );
@@ -351,7 +362,7 @@ describe('mailer tests', () => {
       expect(message.text).not.toContain(reportPath);
     });
 
-    it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
+    it('tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
       process.env.SEND_NOTIFICATIONS = false;
       await expect(notifyDigest({
         data: {
@@ -373,12 +384,13 @@ describe('mailer tests', () => {
           reports: [mockReport],
           type: EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
           freq: EMAIL_DIGEST_FREQ.DAILY,
+          subjectFreq: DAILY,
         },
       }, jsonTransport);
       expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
       expect(email.envelope.to).toStrictEqual([mockNewCollaborator.email]);
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe('TTA Hub digest: changes requested');
+      expect(message.subject).toBe('TTA Hub daily digest: changes requested');
       expect(message.text).toContain(
         `Hello ${mockNewCollaborator.name}`,
       );
@@ -399,9 +411,11 @@ describe('mailer tests', () => {
           reports: [mockReport],
           type: EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
           freq: EMAIL_DIGEST_FREQ.WEEKLY,
+          subjectFreq: WEEKLY,
         },
       }, jsonTransport);
       const message = JSON.parse(email.message);
+      expect(message.subject).toBe('TTA Hub weekly digest: changes requested');
       expect(message.text).toContain(
         `Hello ${mockNewCollaborator.name}`,
       );
@@ -422,9 +436,11 @@ describe('mailer tests', () => {
           reports: [mockReport],
           type: EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
           freq: EMAIL_DIGEST_FREQ.MONTHLY,
+          subjectFreq: MONTHLY,
         },
       }, jsonTransport);
       const message = JSON.parse(email.message);
+      expect(message.subject).toBe('TTA Hub monthly digest: changes requested');
       expect(message.text).toContain(
         `Hello ${mockNewCollaborator.name}`,
       );
@@ -437,7 +453,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(`* ${mockReport.displayId}`);
       expect(message.text).toContain(reportPath);
     });
-    it('tests that an email is sent if there are no notifications', async () => {
+    it('tests that an email is sent if there are no changes requested notifications', async () => {
       process.env.SEND_NOTIFICATIONS = true;
       const email = await notifyDigest({
         data: {
@@ -445,10 +461,11 @@ describe('mailer tests', () => {
           reports: [],
           type: EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
           freq: EMAIL_DIGEST_FREQ.WEEKLY,
+          subjectFreq: WEEKLY,
         },
       }, jsonTransport);
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe('TTA Hub digest: no new notifications');
+      expect(message.subject).toBe('TTA Hub weekly digest: no new changes requested');
       expect(message.text).toContain(
         `Hello ${mockNewCollaborator.name}`,
       );
@@ -468,12 +485,13 @@ describe('mailer tests', () => {
           reports: [mockReport],
           type: EMAIL_ACTIONS.SUBMITTED_DIGEST,
           freq: EMAIL_DIGEST_FREQ.DAILY,
+          subjectFreq: DAILY,
         },
       }, jsonTransport);
       expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
       expect(email.envelope.to).toStrictEqual([mockNewCollaborator.email]);
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe('TTA Hub digest: reports for review');
+      expect(message.subject).toBe('TTA Hub daily digest: reports for review');
       expect(message.text).toContain(
         `Hello ${mockNewCollaborator.name}`,
       );
@@ -494,9 +512,11 @@ describe('mailer tests', () => {
           reports: [mockReport],
           type: EMAIL_ACTIONS.SUBMITTED_DIGEST,
           freq: EMAIL_DIGEST_FREQ.WEEKLY,
+          subjectFreq: WEEKLY,
         },
       }, jsonTransport);
       const message = JSON.parse(email.message);
+      expect(message.subject).toBe('TTA Hub weekly digest: reports for review');
       expect(message.text).toContain(
         `Hello ${mockNewCollaborator.name}`,
       );
@@ -517,9 +537,11 @@ describe('mailer tests', () => {
           reports: [mockReport],
           type: EMAIL_ACTIONS.SUBMITTED_DIGEST,
           freq: EMAIL_DIGEST_FREQ.MONTHLY,
+          subjectFreq: MONTHLY,
         },
       }, jsonTransport);
       const message = JSON.parse(email.message);
+      expect(message.subject).toBe('TTA Hub monthly digest: reports for review');
       expect(message.text).toContain(
         `Hello ${mockNewCollaborator.name}`,
       );
@@ -532,7 +554,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(`* ${mockReport.displayId}`);
       expect(message.text).toContain(reportPath);
     });
-    it('tests that an email is sent if there are no notifications', async () => {
+    it('tests that an email is sent if there are no submitted notifications', async () => {
       process.env.SEND_NOTIFICATIONS = true;
       const email = await notifyDigest({
         data: {
@@ -540,10 +562,11 @@ describe('mailer tests', () => {
           reports: [],
           type: EMAIL_ACTIONS.SUBMITTED_DIGEST,
           freq: EMAIL_DIGEST_FREQ.MONTHLY,
+          subjectFreq: MONTHLY,
         },
       }, jsonTransport);
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe('TTA Hub digest: no new notifications');
+      expect(message.subject).toBe('TTA Hub monthly digest: no new reports for review');
       expect(message.text).toContain(
         `Hello ${mockNewCollaborator.name}`,
       );
@@ -563,12 +586,13 @@ describe('mailer tests', () => {
           reports: [mockReport],
           type: EMAIL_ACTIONS.APPROVED_DIGEST,
           freq: EMAIL_DIGEST_FREQ.DAILY,
+          subjectFreq: DAILY,
         },
       }, jsonTransport);
       expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
       expect(email.envelope.to).toStrictEqual([mockNewCollaborator.email]);
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe('TTA Hub digest: approved reports');
+      expect(message.subject).toBe('TTA Hub daily digest: approved reports');
       expect(message.text).toContain(
         `Hello ${mockNewCollaborator.name}`,
       );
@@ -589,9 +613,11 @@ describe('mailer tests', () => {
           reports: [mockReport],
           type: EMAIL_ACTIONS.APPROVED_DIGEST,
           freq: EMAIL_DIGEST_FREQ.WEEKLY,
+          subjectFreq: WEEKLY,
         },
       }, jsonTransport);
       const message = JSON.parse(email.message);
+      expect(message.subject).toBe('TTA Hub weekly digest: approved reports');
       expect(message.text).toContain(
         `Hello ${mockNewCollaborator.name}`,
       );
@@ -612,9 +638,11 @@ describe('mailer tests', () => {
           reports: [mockReport],
           type: EMAIL_ACTIONS.APPROVED_DIGEST,
           freq: EMAIL_DIGEST_FREQ.MONTHLY,
+          subjectFreq: MONTHLY,
         },
       }, jsonTransport);
       const message = JSON.parse(email.message);
+      expect(message.subject).toBe('TTA Hub monthly digest: approved reports');
       expect(message.text).toContain(
         `Hello ${mockNewCollaborator.name}`,
       );
@@ -627,7 +655,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(`* ${mockReport.displayId}`);
       expect(message.text).toContain(reportPath);
     });
-    it('tests that an email is sent if there are no notifications', async () => {
+    it('tests that an email is sent if there are no approved reports notifications', async () => {
       process.env.SEND_NOTIFICATIONS = true;
       const email = await notifyDigest({
         data: {
@@ -635,10 +663,11 @@ describe('mailer tests', () => {
           reports: [],
           type: EMAIL_ACTIONS.APPROVED_DIGEST,
           freq: EMAIL_DIGEST_FREQ.MONTHLY,
+          subjectFreq: MONTHLY,
         },
       }, jsonTransport);
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe('TTA Hub digest: no new notifications');
+      expect(message.subject).toBe('TTA Hub monthly digest: no new approved reports');
       expect(message.text).toContain(
         `Hello ${mockNewCollaborator.name}`,
       );

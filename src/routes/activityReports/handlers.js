@@ -357,12 +357,10 @@ export async function reviewReport(req, res) {
     const [reviewedReport] = await activityReportAndRecipientsById(activityReportId);
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
-      console.log('approved');
       const [authorWithSetting, collabsWithSettings] = await checkEmailSettings(
         reviewedReport,
         USER_SETTINGS.EMAIL.KEYS.APPROVAL,
       );
-      console.log('past');
       reportApprovedNotification(reviewedReport, authorWithSetting, collabsWithSettings);
     }
 

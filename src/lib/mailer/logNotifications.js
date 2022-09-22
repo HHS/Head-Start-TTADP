@@ -2,7 +2,7 @@ import { compileFile } from 'pug';
 import * as path from 'path';
 import { logger } from '../../logger';
 import { EMAIL_ACTIONS } from '../../constants';
-import createMailerLog from '../../services/mailerLog';
+import { createMailerLog } from '../../services/mailerLog';
 
 const emailTemplatePath = path.join(process.cwd(), 'email_templates');
 

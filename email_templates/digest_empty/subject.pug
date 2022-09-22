@@ -1,1 +1,11 @@
-= `TTA Hub digest: no new notifications`
+case type
+    when 'collaboratorDigest'
+        = `TTA Hub ${subjectFreq} digest: no new collaborator notifications`
+    when 'changesRequestedDigest'
+        = `TTA Hub ${subjectFreq} digest: no new changes requested`
+    when 'approverAssignedDigest'
+        = `TTA Hub ${subjectFreq} digest: no new reports for review`
+    when 'reportApprovedDigest'
+        = `TTA Hub ${subjectFreq} digest: no new approved reports`
+    default
+        = `TTA Hub digest: ${type}`

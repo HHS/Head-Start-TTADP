@@ -1,7 +1,20 @@
 import models, { sequelize } from '../models';
 import { auditLogger } from '../logger';
 
-export default async function createMailerLog({
+/* eslint-disable import/prefer-default-export */
+/**
+ * Creates an email log entry
+ *
+ * @param {*} jobId - id of the job
+ * @param {Array} emailTo - an array of email addresses
+ * @param {string} action - action
+ * @param {string} subject - email subject
+ * @param {Array} activityReports - array of activityReports ids
+ * @param {boolean} success - success
+ * @param {*} result - result
+ *
+ */
+export async function createMailerLog({
   jobId,
   emailTo,
   action,

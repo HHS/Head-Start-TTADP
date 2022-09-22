@@ -18,7 +18,9 @@ import { logger, auditLogger, requestLogger } from './logger';
 import {
   approvedDigest, changesRequestedDigest, collaboratorDigest, submittedDigest,
 } from './lib/mailer';
-import { EMAIL_DIGEST_FREQ } from './constants';
+import {
+  DIGEST_SUBJECT_FREQ, EMAIL_DIGEST_FREQ,
+} from './constants';
 
 const app = express();
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
@@ -115,10 +117,10 @@ const runDailyEmailJob = () => {
   (async () => {
     logger.info('Starting daily digests');
     try {
-      await collaboratorDigest(EMAIL_DIGEST_FREQ.DAILY);
-      await changesRequestedDigest(EMAIL_DIGEST_FREQ.DAILY);
-      await submittedDigest(EMAIL_DIGEST_FREQ.DAILY);
-      await approvedDigest(EMAIL_DIGEST_FREQ.DAILY);
+      await collaboratorDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
+      await changesRequestedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
+      await submittedDigest(EMAIL_DIGEST_FREQ.DAILY.DIGEST_SUBJECT_FREQ.DAILY);
+      await approvedDigest(EMAIL_DIGEST_FREQ.DAILY.DIGEST_SUBJECT_FREQ.DAILY);
     } catch (error) {
       auditLogger.error(`Error processing Daily Email Digest job: ${error}`);
       logger.error(`Daily Email Digest Error: ${error.stack}`);
@@ -131,10 +133,10 @@ const runWeeklyEmailJob = () => {
   (async () => {
     logger.info('Starting weekly digests');
     try {
-      await collaboratorDigest(EMAIL_DIGEST_FREQ.WEEKLY);
-      await changesRequestedDigest(EMAIL_DIGEST_FREQ.WEEKLY);
-      await submittedDigest(EMAIL_DIGEST_FREQ.WEEKLY);
-      await approvedDigest(EMAIL_DIGEST_FREQ.WEEKLY);
+      await collaboratorDigest(EMAIL_DIGEST_FREQ.WEEKLY, DIGEST_SUBJECT_FREQ.WEEKLY);
+      await changesRequestedDigest(EMAIL_DIGEST_FREQ.WEEKLY, DIGEST_SUBJECT_FREQ.WEEKLY);
+      await submittedDigest(EMAIL_DIGEST_FREQ.WEEKLY, DIGEST_SUBJECT_FREQ.WEEKLY);
+      await approvedDigest(EMAIL_DIGEST_FREQ.WEEKLY, DIGEST_SUBJECT_FREQ.WEEKLY);
     } catch (error) {
       auditLogger.error(`Error processing Weekly Email Digest job: ${error}`);
       logger.error(`Weekly Email Digest Error: ${error.stack}`);
@@ -147,10 +149,10 @@ const runMonthlyEmailJob = () => {
   (async () => {
     logger.info('Starting montly digests');
     try {
-      await collaboratorDigest(EMAIL_DIGEST_FREQ.MONTHLY);
-      await changesRequestedDigest(EMAIL_DIGEST_FREQ.MONTHLY);
-      await submittedDigest(EMAIL_DIGEST_FREQ.MONTHLY);
-      await approvedDigest(EMAIL_DIGEST_FREQ.MONTHLY);
+      await collaboratorDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
+      await changesRequestedDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
+      await submittedDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
+      await approvedDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
     } catch (error) {
       auditLogger.error(`Error processing Monthly Email Digest job: ${error}`);
       logger.error(`Monthly Email Digest Error: ${error.stack}`);
