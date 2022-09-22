@@ -38,6 +38,7 @@ export default function Objective({
   onSaveDraft,
   parentGoal,
   initialObjectiveStatus,
+  reportId,
 }) {
   const [selectedObjective, setSelectedObjective] = useState(objective);
   const { getValues } = useFormContext();
@@ -299,6 +300,7 @@ export default function Objective({
         index={index}
         onBlur={onBlurFiles}
         inputName={objectiveFilesInputName}
+        reportId={reportId}
       />
       <ObjectiveTta
         ttaProvided={objectiveTta}
@@ -358,4 +360,5 @@ Objective.propTypes = {
     status: PropTypes.string,
   }).isRequired,
   initialObjectiveStatus: PropTypes.string.isRequired,
+  reportId: PropTypes.number.isRequired,
 };

@@ -565,14 +565,12 @@ function ActivityReport({
           reportId.current, { ...updatedFields, approverUserIds: approverIds }, {},
         );
 
-        // Update goals from saved report.
-        const grantIds = updatedReport.activityRecipientType === 'recipient'
-          && updatedReport.activityRecipients
-          ? updatedReport.activityRecipients.map(({ id }) => id)
-          : [];
-        const goals = convertGoalsToFormData(updatedReport.goalsAndObjectives, grantIds);
-
-        updateFormData({ ...formData, goals });
+        updateFormData({
+          ...updatedReport,
+          startDate: moment(updatedReport.startDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+          endDate: moment(updatedReport.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+          goals: updatedReport.goalsAndObjectives,
+        }, true);
         setConnectionActive(true);
         updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
       }
