@@ -43,6 +43,8 @@ const RenderObjectiveTitle = ({
         validateObjectiveTitle={jest.fn()}
         onChangeTitle={jest.fn()}
         status="Complete"
+        initialObjectiveStatus="In Progress"
+        parentGoal={{ status: 'Open' }}
         // eslint-disable-next-line react/jsx-props-no-spreading
         {...rest}
       />
@@ -52,15 +54,22 @@ const RenderObjectiveTitle = ({
 };
 const readonlyStateMap = [
   { isOnApprovedReport: true },
-  { status: 'Completed' },
+  { status: 'Complete', isOnApprovedReport: true },
   { status: 'Suspended' },
   { status: 'Not Started', isOnReport: true, isOnApprovedReport: true },
   { status: 'In Progress', isOnReport: true, isOnApprovedReport: true },
+  { initialObjectiveStatus: 'Completed', isOnApprovedReport: false },
+  { initialObjectiveStatus: 'Suspended', isOnApprovedReport: false },
+  { parentGoal: { status: 'Closed' }, isOnApprovedReport: false },
 ];
 
 const writableStateMap = [
   { status: 'Not Started', isOnReport: false, isOnApprovedReport: false },
   { status: 'In Progress', isOnReport: false, isOnApprovedReport: false },
+  { status: 'Complete', isOnApprovedReport: false },
+  { status: 'Suspended', isOnApprovedReport: false },
+  { initialObjectiveStatus: 'Not Started', isOnApprovedReport: false },
+  { parentGoal: { status: 'Open' }, isOnApprovedReport: false },
 ];
 
 describe('ObjectiveTitle', () => {
