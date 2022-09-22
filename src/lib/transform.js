@@ -146,6 +146,7 @@ function transformApproversModel(prop) {
 }
 
 function transformGrantModel(prop, sortBy = null) {
+  // If 'sortBy' is set we will no longer return a distinct list.
   function transformer(instance) {
     const obj = {};
     const values = instance.activityRecipients;
