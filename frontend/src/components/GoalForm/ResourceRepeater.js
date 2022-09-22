@@ -40,7 +40,7 @@ export default function ResourceRepeater({
               <li key={uuidv4()}>
                 <a href={resource.value}>{resource.value}</a>
               </li>
-            ) : <UnusedData key={uuidv4()} value={resource.value} />
+            ) : <UnusedData key={uuidv4()} value={resource.value} isLink />
           ))}
         </ul>
       </>
