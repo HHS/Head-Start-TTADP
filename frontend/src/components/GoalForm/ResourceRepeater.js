@@ -38,7 +38,7 @@ export default function ResourceRepeater({
           {resources.map((resource) => (
             !(status === 'Completed' && goalStatus === 'Closed') || resource.onAnyReport ? (
               <li key={uuidv4()}>
-                {resource.value}
+                <a href={resource.value}>{resource.value}</a>
               </li>
             ) : <UnusedData key={uuidv4()} value={resource.value} />
           ))}
