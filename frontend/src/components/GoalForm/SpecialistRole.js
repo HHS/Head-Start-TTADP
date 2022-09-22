@@ -14,15 +14,14 @@ export default function SpecialistRole({
   inputName,
   validateSpecialistRole,
   status,
-  isOnApprovedReport,
-  isOnReport,
   isLoading,
   roleOptions,
   goalStatus,
+  isOnReport,
 }) {
   const initialSelectedRolesLength = useRef(selectedRoles.length);
 
-  const readOnly = useMemo(() => status === 'Suspended' || (status === 'Not Started' && isOnReport) || (status === 'Completed' && goalStatus === 'Closed'), [goalStatus, isOnReport, status]);
+  const readOnly = useMemo(() => status === 'Suspended' || (goalStatus === 'Not Started' && isOnReport) || (status === 'Completed' && goalStatus === 'Closed'), [goalStatus, isOnReport, status]);
 
   if (readOnly && initialSelectedRolesLength.current) {
     return (
@@ -69,43 +68,36 @@ export default function SpecialistRole({
             <p className="usa-prose margin-bottom-0 text-bold">Specialist roles</p>
             <ul className="usa-list usa-list--unstyled">
               {fixedRoles.map((role) => (<li key={role.fullName}>{role.fullName}</li>))}
-              {isOnApprovedReport
-                ? editableRoles.map((role) => (
-                  <UnusedData key={role.fullName} value={role.fullName} />
-                ))
-                : null}
             </ul>
           </>
         )
         : null}
-      { !isOnApprovedReport ? (
-        <Label>
-          { fixedRoles.length ? <>Add more specialist roles</>
-            : (
-              <>
-                Specialist roles providing TTA
-                {' '}
-                <Req />
-              </>
-            )}
-          {error}
-          <Select
-            onChange={onSelect}
-            styles={selectOptionsReset}
-            className="usa-select"
-            name={inputName}
-            inputId={inputName}
-            options={filteredOptions}
-            value={editableRoles}
-            onBlur={validateSpecialistRole}
-            closeMenuOnSelect={false}
-            getOptionLabel={(option) => option.fullName}
-            getOptionValue={(option) => option.id}
-            isMulti
-            isDisabled={isLoading}
-          />
-        </Label>
-      ) : null }
+      <Label>
+        { fixedRoles.length ? <>Add more specialist roles</>
+          : (
+            <>
+              Specialist roles providing TTA
+              {' '}
+              <Req />
+            </>
+          )}
+        {error}
+        <Select
+          onChange={onSelect}
+          styles={selectOptionsReset}
+          className="usa-select"
+          name={inputName}
+          inputId={inputName}
+          options={filteredOptions}
+          value={editableRoles}
+          onBlur={validateSpecialistRole}
+          closeMenuOnSelect={false}
+          getOptionLabel={(option) => option.fullName}
+          getOptionValue={(option) => option.id}
+          isMulti
+          isDisabled={isLoading}
+        />
+      </Label>
     </>
   );
 }
@@ -120,14 +112,13 @@ SpecialistRole.propTypes = {
   inputName: PropTypes.string,
   validateSpecialistRole: PropTypes.func.isRequired,
   status: PropTypes.string.isRequired,
-  isOnApprovedReport: PropTypes.bool.isRequired,
-  isOnReport: PropTypes.bool.isRequired,
   isLoading: PropTypes.bool,
   roleOptions: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string,
     value: PropTypes.string,
   })).isRequired,
   goalStatus: PropTypes.string.isRequired,
+  isOnReport: PropTypes.bool.isRequired,
 };
 
 SpecialistRole.defaultProps = {

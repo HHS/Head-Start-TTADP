@@ -17,13 +17,12 @@ export default function ObjectiveTopics({
   status,
   goalStatus,
   inputName,
-  isOnReport,
-  isOnApprovedReport,
   isLoading,
+  isOnReport,
 }) {
   const initialSelection = useRef(topics.length);
 
-  const readOnly = useMemo(() => status === 'Suspended' || (status === 'Not Started' && isOnReport) || (status === 'Completed' && goalStatus === 'Closed'), [goalStatus, isOnReport, status]);
+  const readOnly = useMemo(() => status === 'Suspended' || (goalStatus === 'Not Started' && isOnReport) || (status === 'Completed' && goalStatus === 'Closed'), [goalStatus, isOnReport, status]);
 
   if (readOnly && initialSelection.current) {
     return (
@@ -65,49 +64,42 @@ export default function ObjectiveTopics({
             <p className="usa-prose margin-bottom-0 text-bold">Topics</p>
             <ul className="usa-list usa-list--unstyled">
               {fixedTopics.map((topic) => (<li key={topic.value}>{topic.label}</li>))}
-              {isOnApprovedReport
-                ? editableTopics.map((topic) => (
-                  <UnusedData key={topic.value} value={topic.label} />
-                ))
-                : null}
             </ul>
           </>
         )
         : null}
 
-      { !isOnApprovedReport ? (
-        <FormGroup error={error.props.children}>
-          <Label htmlFor={inputName}>
-            { topics && topics.length
-              ? <>Add more topics</>
-              : (
-                <>
-                  Topics
-                  {' '}
-                  <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
-                </>
-              )}
-          </Label>
-          {error}
-          <Select
-            objectiveTopicsInputName={inputName}
-            inputId={inputName}
-            name={inputName}
-            styles={selectOptionsReset}
-            components={{
-              DropdownIndicator: null,
-            }}
-            className="usa-select"
-            isMulti
-            options={filteredOptions}
-            onBlur={validateObjectiveTopics}
-            value={editableTopics}
-            onChange={onChangeTopics}
-            closeMenuOnSelect={false}
-            isDisabled={isLoading}
-          />
-        </FormGroup>
-      ) : null }
+      <FormGroup error={error.props.children}>
+        <Label htmlFor={inputName}>
+          { topics && topics.length
+            ? <>Add more topics</>
+            : (
+              <>
+                Topics
+                {' '}
+                <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
+              </>
+            )}
+        </Label>
+        {error}
+        <Select
+          objectiveTopicsInputName={inputName}
+          inputId={inputName}
+          name={inputName}
+          styles={selectOptionsReset}
+          components={{
+            DropdownIndicator: null,
+          }}
+          className="usa-select"
+          isMulti
+          options={filteredOptions}
+          onBlur={validateObjectiveTopics}
+          value={editableTopics}
+          onChange={onChangeTopics}
+          closeMenuOnSelect={false}
+          isDisabled={isLoading}
+        />
+      </FormGroup>
     </>
   );
 }
@@ -126,10 +118,9 @@ ObjectiveTopics.propTypes = {
   onChangeTopics: PropTypes.func.isRequired,
   status: PropTypes.string.isRequired,
   inputName: PropTypes.string,
-  isOnReport: PropTypes.bool.isRequired,
-  isOnApprovedReport: PropTypes.bool.isRequired,
   isLoading: PropTypes.bool,
   goalStatus: PropTypes.string.isRequired,
+  isOnReport: PropTypes.bool.isRequired,
 };
 
 ObjectiveTopics.defaultProps = {

@@ -8,7 +8,7 @@ import userEvent from '@testing-library/user-event';
 import ObjectiveFiles from '../ObjectiveFiles';
 
 describe('ObjectiveFiles', () => {
-  it('shows the read only view', async () => {
+  it('shows the read only view when objective and goal are closed', async () => {
     render(<ObjectiveFiles
       files={[
         { originalFileName: 'TestFile1.txt', id: 1 },
@@ -16,13 +16,33 @@ describe('ObjectiveFiles', () => {
       ]}
       onChangeFiles={jest.fn()}
       objective={{ id: 1 }}
-      isOnApprovedReport
       isOnReport
       status="Completed"
       index={0}
       inputName="objectiveFiles"
       onBlur={jest.fn()}
       goalStatus="Closed"
+      onUploadFiles={jest.fn()}
+    />);
+    expect(await screen.findByText('Resource files')).toBeVisible();
+    expect(screen.getByText(/testfile1\.txt/i)).toBeVisible();
+    expect(screen.getByText(/testfile2\.txt/i)).toBeVisible();
+  });
+
+  it('shows the read only view when goal is not started and on an AR', async () => {
+    render(<ObjectiveFiles
+      files={[
+        { originalFileName: 'TestFile1.txt', id: 1 },
+        { originalFileName: 'TestFile2.txt', id: 2 },
+      ]}
+      onChangeFiles={jest.fn()}
+      objective={{ id: 1 }}
+      isOnReport
+      status="Completed"
+      index={0}
+      inputName="objectiveFiles"
+      onBlur={jest.fn()}
+      goalStatus="Not Started"
       onUploadFiles={jest.fn()}
     />);
     expect(await screen.findByText('Resource files')).toBeVisible();
@@ -38,7 +58,6 @@ describe('ObjectiveFiles', () => {
       ]}
       onChangeFiles={jest.fn()}
       objective={{ id: 1 }}
-      isOnApprovedReport={false}
       isOnReport={false}
       status="Draft"
       index={0}
@@ -61,7 +80,6 @@ describe('ObjectiveFiles', () => {
       index={0}
       inputName="objectiveFiles"
       onBlur={jest.fn()}
-      isOnApprovedReport={false}
       status="Draft"
       goalStatus="In Progress"
     />);
@@ -91,7 +109,6 @@ describe('ObjectiveFiles', () => {
       index={0}
       inputName="objectiveFiles"
       onBlur={jest.fn()}
-      isOnApprovedReport={false}
       status="Draft"
       goalStatus="In Progress"
     />);

@@ -16,10 +16,8 @@ describe('specialistrole select', () => {
     goalStatus = 'In Progress',
   ) => {
     const validateSpecialistRole = jest.fn();
-
     render(<SpecialistRole
       error={<></>}
-      isOnApprovedReport={false}
       isOnReport
       onChange={onChange}
       selectedRoles={selectedRoles}
@@ -57,5 +55,17 @@ describe('specialistrole select', () => {
     expect(await screen.findByText(/specialist roles/i)).toBeVisible();
     expect(await screen.findByText(/lion tamer/i)).toBeVisible();
     expect(document.querySelectorAll('.ttahub-objective-list-item--unused-data').length).toBe(1);
+  });
+
+  it('shows read only data when goal is on report and not started', async () => {
+    const onChange = jest.fn();
+    renderSpecialistRole(
+      onChange,
+      [{ fullName: 'lion tamer', id: 1, onAnyReport: false }],
+      'Completed',
+      'Not Started',
+    );
+    expect(await screen.findByText(/specialist roles/i)).toBeVisible();
+    expect(await screen.findByText(/lion tamer/i)).toBeVisible();
   });
 });

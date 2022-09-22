@@ -88,11 +88,8 @@ export default function Form({
 
   const formTitle = goalNumber ? `Goal ${goalNumber}` : 'Recipient TTA goal';
 
-  const hasNotStartedObjectives = objectives.some((objective) => objective.status && objective.status.toLowerCase() === 'not started');
-  const hasInProgressObjectives = objectives.some((objective) => objective.status && objective.status.toLowerCase() === 'in progress');
-
-  const showApprovedReportAlert = isOnApprovedReport && hasInProgressObjectives;
-  const showNotStartedAlert = isOnReport && hasNotStartedObjectives && !showApprovedReportAlert;
+  const showApprovedReportAlert = isOnApprovedReport;
+  const showNotStartedAlert = isOnReport && !showApprovedReportAlert;
 
   return (
     <div className="ttahub-create-goals-form">
