@@ -6,6 +6,7 @@ import {
   deleteObjectiveFileHandler,
   deleteOnlyFile,
   uploadObjectivesFile,
+  deleteActivityReportObjectiveFile,
 } from './handlers';
 import {
   checkReportIdParam,
@@ -28,5 +29,6 @@ router.delete('/r/:reportId?/:fileId?', checkReportIdParam, checkFileIdParam, tr
 router.delete('/:fileId/objectives', checkFileIdParam, transactionWrapper(deleteObjectiveFileHandler));
 router.delete('/o/:objectiveId?/:fileId?', checkObjectiveIdParam, checkFileIdParam, transactionWrapper(deleteHandler));
 router.delete('/ot/:objectiveTemplateId?/:fileId?', checkObjectiveTemplateIdParam, checkFileIdParam, transactionWrapper(deleteHandler));
+router.delete('/report/:reportId?/file/:fileId?', checkReportIdParam, checkFileIdParam, transactionWrapper(deleteActivityReportObjectiveFile));
 
 export default router;

@@ -28,5 +28,6 @@ module.exports = {
     host: process.env.POSTGRES_HOST,
     port: (process.env.POSTGRES_PORT || 5432),
     dialect: 'postgres',
+    minifyAliases: true,
   },
 };

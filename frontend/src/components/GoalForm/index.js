@@ -21,6 +21,7 @@ import {
   GOAL_NAME_ERROR,
   GOAL_DATE_ERROR,
   SELECT_GRANTS_ERROR,
+  OBJECTIVE_DEFAULT_ERRORS,
 } from './constants';
 import { DECIMAL_BASE, REPORT_STATUSES } from '../../Constants';
 import ReadOnly from './ReadOnly';
@@ -29,7 +30,10 @@ import colors from '../../colors';
 import GoalFormLoadingContext from '../../GoalFormLoadingContext';
 
 const [
-  objectiveTextError, objectiveTopicsError, objectiveResourcesError, objectiveStatusError,
+  objectiveTextError,
+  objectiveTopicsError,
+  objectiveResourcesError,,
+  objectiveStatusError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
 const formatGrantsFromApi = (grants) => grants
@@ -41,9 +45,6 @@ const formatGrantsFromApi = (grants) => grants
       id: grant.id,
     };
   });
-
-// this is the default error state for an objective (no errors, only empty fragments)
-const BLANK_OBJECTIVE_ERROR = [<></>, <></>, <></>];
 
 export default function GoalForm({
   recipient,
@@ -147,7 +148,7 @@ export default function GoalForm({
           newObjs.push(newObjective);
           // this is the format of an objective error
           // three JSX nodes representing each of three possible errors
-          objErrors.push([<></>, <></>, <></>, <></>]);
+          objErrors.push(OBJECTIVE_DEFAULT_ERRORS);
 
           return [newObjs, objErrors];
         }, [[], []]);
@@ -299,6 +300,7 @@ export default function GoalForm({
           <></>,
           <></>,
           <></>,
+          <></>,
         ];
       }
 
@@ -307,6 +309,7 @@ export default function GoalForm({
         return [
           <></>,
           <span className="usa-error-message">{objectiveTopicsError}</span>,
+          <></>,
           <></>,
           <></>,
         ];
@@ -319,6 +322,7 @@ export default function GoalForm({
           <></>,
           <span className="usa-error-message">{objectiveResourcesError}</span>,
           <></>,
+          <></>,
         ];
       }
 
@@ -329,10 +333,12 @@ export default function GoalForm({
           <></>,
           <></>,
           <span className="usa-error-message">{objectiveStatusError}</span>,
+          <></>,
         ];
       }
 
       return [
+        <></>,
         <></>,
         <></>,
         <></>,
@@ -367,7 +373,7 @@ export default function GoalForm({
     // when we set a new set of objectives
     // an error object for each objective.
     const newErrors = [...errors];
-    const objectiveErrors = updatedObjectives.map(() => BLANK_OBJECTIVE_ERROR);
+    const objectiveErrors = updatedObjectives.map(() => OBJECTIVE_DEFAULT_ERRORS);
 
     newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES, 1, objectiveErrors);
     setErrors(newErrors);
@@ -420,7 +426,11 @@ export default function GoalForm({
     // The first thing we need to know is... does this objective need to be created?
     setIsLoading(true);
 
+    // there is some weirdness where an objective may or may not have the "ids" property
     let objectiveIds = objective.ids ? objective.ids : [];
+    if (!objectiveIds.length && objective.id) {
+      objectiveIds = [objective.id];
+    }
 
     if (objective.isNew) {
       // if so, we save the objective to the database first
