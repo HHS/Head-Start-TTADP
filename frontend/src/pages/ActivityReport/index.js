@@ -334,6 +334,7 @@ function ActivityReport({
             pageState: defaultPageState,
             userId: user.id,
             regionId: region || getRegionWithReadWrite(user),
+            version: 2,
           };
         }
 
@@ -539,6 +540,7 @@ function ActivityReport({
             endDate: endDateToSave,
             regionId: formData.regionId,
             approverUserIds: approverIds,
+            version: 2,
           },
         );
 
@@ -562,7 +564,7 @@ function ActivityReport({
           : data.creatorRole;
         const updatedFields = findWhatsChanged({ ...data, creatorRole }, formData);
         const updatedReport = await saveReport(
-          reportId.current, { ...updatedFields, approverUserIds: approverIds }, {},
+          reportId.current, { ...updatedFields, version: 2, approverUserIds: approverIds }, {},
         );
 
         updateFormData({
