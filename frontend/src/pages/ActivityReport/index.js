@@ -565,7 +565,12 @@ function ActivityReport({
           reportId.current, { ...updatedFields, approverUserIds: approverIds }, {},
         );
 
-        updateFormData({ ...updatedReport, goals: updatedReport.goalsAndObjectives }, true);
+        updateFormData({
+          ...updatedReport,
+          startDate: moment(updatedReport.startDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+          endDate: moment(updatedReport.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+          goals: updatedReport.goalsAndObjectives,
+        }, true);
         setConnectionActive(true);
         updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
       }
