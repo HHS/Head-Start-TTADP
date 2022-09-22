@@ -25,7 +25,7 @@ const SupportingAttachments = ({
       <Fieldset className="smart-hub--report-legend margin-top-4">
         <FormGroup error={fileError}>
           <div id="attachments" />
-          <Label className="margin-top-0" htmlFor="attachments">
+          <Label className="margin-top-0" htmlFor="files">
             Upload any relevant attachments, such as:
             <ul className="margin-top-0 padding-left-4">
               <li>meetings agendas</li>
@@ -40,7 +40,7 @@ const SupportingAttachments = ({
           <span className="usa-hint font-sans-3xs">images, .pdf, .docx, .xlsx, .pptx, .doc, .xls, .ppt, .zip, .txt, .csv (max size 30 MB)</span>
           { fileError && (<ErrorMessage>{fileError}</ErrorMessage>)}
           <Controller
-            name="attachments"
+            name="files"
             defaultValue={[]}
             control={control}
             render={({ onChange, value }) => (

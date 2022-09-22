@@ -26,7 +26,9 @@ describe('ObjectiveFileUploader', () => {
     await act(() => waitFor(() => rerender(ui)));
   };
 
-  const RenderFileUploader = ({ onChange, files, upload = jest.fn() }) => (
+  const RenderFileUploader = ({
+    onChange, files, upload = jest.fn(), reportId = 0,
+  }) => (
     <ObjectiveFileUploader
       onChange={onChange}
       files={files}
@@ -37,6 +39,7 @@ describe('ObjectiveFileUploader', () => {
       inputName="inputName"
       onBlur={jest.fn()}
       setError={jest.fn()}
+      reportId={reportId}
     />
   );
 
@@ -76,30 +79,56 @@ describe('ObjectiveFileUploader', () => {
 
   it('files are properly displayed and can be removed', async () => {
     const mockOnChange = jest.fn();
-    render(<RenderFileUploader onChange={mockOnChange} files={[file('fileOne', 1, null), file('fileTwo', null), file('fileThree', 'abc')]} />);
+    render(<RenderFileUploader onChange={mockOnChange} files={[file('fileOne', 1, null), { ...file('fileTwo', 2), ObjectiveFile: { objectiveId: 1 } }, file('fileThree', 'abc')]} />);
     expect(screen.getByText('fileOne')).toBeVisible();
     expect(screen.getByText('fileTwo')).toBeVisible();
     expect(screen.getByText('Pending')).toBeVisible();
+    fetchMock.delete('/api/files/2/objectives', { status: 204 });
     const fileTwo = screen.getByText('fileTwo');
     fireEvent.click(fileTwo.parentNode.lastChild.firstChild);
     let deleteButton = screen.getByText('Delete');
-    fireEvent.click(deleteButton);
-    expect(mockOnChange).toHaveBeenCalledWith([
+    act(() => {
+      fireEvent.click(deleteButton);
+    });
+    expect(fetchMock.called()).toBe(true);
+    await waitFor(() => expect(mockOnChange).toHaveBeenCalledWith([
       {
         id: 1, originalFileName: 'fileOne', fileSize: 2000, lastModified: 123456, status: null,
       },
       {
         id: 'abc', originalFileName: 'fileThree', fileSize: 2000, lastModified: 123456, status: 'Uploaded',
       },
-    ]);
-
+    ]));
     const fileThree = screen.getByText('fileThree');
     fireEvent.click(fileThree.parentNode.lastChild.firstChild);
     deleteButton = screen.getByText('Delete');
     fetchMock.restore();
     fetchMock.delete('/api/files/abc', { status: 204 });
-    fireEvent.click(deleteButton);
+    act(() => {
+      fireEvent.click(deleteButton);
+    });
     expect(fetchMock.called()).toBeTruthy();
     await waitFor(() => expect(mockOnChange).toHaveBeenCalledTimes(2));
+  });
+
+  it('files are properly removed when on a report', async () => {
+    const mockOnChange = jest.fn();
+    render(<RenderFileUploader reportId={1} onChange={mockOnChange} files={[file('fileOne', 1, null), { ...file('fileTwo', 2), ObjectiveFile: { objectiveId: 1 } }]} />);
+    expect(screen.getByText('fileOne')).toBeVisible();
+    expect(screen.getByText('fileTwo')).toBeVisible();
+    expect(screen.getByText('Pending')).toBeVisible();
+    fetchMock.delete('/api/files/report/1/file/2', { status: 204 });
+    const fileTwo = screen.getByText('fileTwo');
+    fireEvent.click(fileTwo.parentNode.lastChild.firstChild);
+    const deleteButton = screen.getByText('Delete');
+    act(() => {
+      fireEvent.click(deleteButton);
+    });
+    expect(fetchMock.called()).toBe(true);
+    await waitFor(() => expect(mockOnChange).toHaveBeenCalledWith([
+      {
+        id: 1, originalFileName: 'fileOne', fileSize: 2000, lastModified: 123456, status: null,
+      },
+    ]));
   });
 });
