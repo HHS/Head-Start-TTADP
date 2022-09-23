@@ -359,7 +359,7 @@ describe('activityReportToCsvRecord', () => {
     expect(programSpecialistName).toEqual('Program Specialist 1\nProgram Specialist 2\nProgram Specialist 4');
     expect(approvers).toEqual('Test Approver 1\nTest Approver 2\nTest Approver 3');
     expect(recipientInfo).toEqual('test1 - grant number 1 - 1\ntest2 - grant number 2 - 2\ntest3 - grant number 3 - 3\ntest4 - grant number 4 - 4');
-    expect(stateCode).toEqual('CT\nMA\nNY');
+    expect(stateCode).toEqual('NY\nCT\nMA\nNY');
   });
 
   it('transforms goals and objectives into many values', () => {
