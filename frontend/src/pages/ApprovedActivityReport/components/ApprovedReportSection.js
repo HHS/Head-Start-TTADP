@@ -15,7 +15,7 @@ export default function ApprovedReportSection({
         const subheadings = Object.keys(section.data);
         return (
           <div className={`ttahub-approved-report-section padding-x-2 padding-top-3 padding-bottom-2 margin-0 ${section.striped ? 'ttahub-approved-report-section__striped' : ''}`} key={section.heading || subheadings[0]}>
-            { section.heading ? <h3 className="ttahub-approved-report-section--heading font-sans-lg margin-0 margin-bottom-2">{section.heading}</h3> : null }
+            {section.heading ? <h3 className="ttahub-approved-report-section--heading font-sans-lg margin-0 margin-bottom-2">{section.heading}</h3> : null}
             {subheadings.map((subheading) => (
               <div className="ttahub-approved-report-section--heading--section-row tablet:display-flex" key={subheading}>
                 <p className="ttahub-approved-report-section--heading--section-row-title text-bold usa-prose margin-0 margin-bottom-1">{subheading}</p>

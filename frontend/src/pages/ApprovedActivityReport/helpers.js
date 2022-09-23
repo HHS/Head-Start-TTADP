@@ -81,6 +81,18 @@ export function mapAttachments(attachments) {
   return [];
 }
 
+export function formatRequester(requester) {
+  if (requester === 'recipient') {
+    return 'Recipient';
+  }
+
+  if (requester === 'regionalOffice') {
+    return 'Regional Office';
+  }
+
+  return '';
+}
+
 export const reportDataPropTypes = {
   data: PropTypes.shape({
     activityRecipientType: PropTypes.string,
@@ -109,7 +121,7 @@ export const reportDataPropTypes = {
     startDate: PropTypes.string,
     endDate: PropTypes.string,
     duration: PropTypes.string,
-    ttaType: PropTypes.string,
+    ttaType: PropTypes.arrayOf(PropTypes.string),
     virtualDeliveryType: PropTypes.string,
     deliveryMethod: PropTypes.string,
     requester: PropTypes.string,
@@ -120,12 +132,12 @@ export const reportDataPropTypes = {
       url: PropTypes.shape({ url: PropTypes.string }),
       originalFileName: PropTypes.string,
     })),
-    specialistNextSteps: PropTypes.arrayOf({
+    specialistNextSteps: PropTypes.arrayOf(PropTypes.shape({
       note: PropTypes.string,
-    }),
-    recipientNextSteps: PropTypes.arrayOf({
+    })),
+    recipientNextSteps: PropTypes.arrayOf(PropTypes.shape({
       note: PropTypes.string,
-    }),
+    })),
     context: PropTypes.string,
     displayId: PropTypes.string,
     additionalNotes: PropTypes.string,

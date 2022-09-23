@@ -6,7 +6,9 @@ import {
   DATE_DISPLAY_FORMAT,
   DATEPICKER_VALUE_FORMAT,
 } from '../../../Constants';
-import { reportDataPropTypes, formatSimpleArray, mapAttachments } from '../helpers';
+import {
+  reportDataPropTypes, formatSimpleArray, mapAttachments, formatRequester,
+} from '../helpers';
 
 function formatNextSteps(nextSteps, heading, striped) {
   const data = nextSteps.reduce((acc, step, index) => ({
@@ -40,6 +42,42 @@ function formatObjectiveLinks(resources) {
   }
 
   return [];
+}
+
+function formatDelivery(method, virtualDeliveryType) {
+  if (!method) {
+    return '';
+  }
+
+  if (method === 'in-person') {
+    return 'In person';
+  }
+
+  if (method === 'virtual') {
+    if (!virtualDeliveryType) {
+      return 'Virtual';
+    }
+
+    return `Virtual: ${virtualDeliveryType}`;
+  }
+
+  // baseline return
+  return '';
+}
+
+/**
+ *
+ * @param {String[]} ttaType
+ * @returns String[]
+ */
+
+function formatTtaType(ttaType) {
+  const dict = {
+    training: 'Training',
+    'technical-assistance': 'Technical assistance',
+  };
+
+  return ttaType.map((type) => dict[type]).join(', ');
 }
 
 /**
@@ -111,20 +149,9 @@ function calculateGoalsAndObjectives(report) {
   return sections;
 }
 
-function formatRequester(requester) {
-  if (requester === 'recipient') {
-    return 'Recipient';
-  }
-
-  if (requester === 'regionalOffice') {
-    return 'Regional Office';
-  }
-
-  return '';
-}
 export default function ApprovedReportV2({ data }) {
   const {
-    reportId, ttaType, deliveryMethod, additionalNotes: creatorNotes,
+    reportId, ttaType, deliveryMethod, additionalNotes: creatorNotes, virtualDeliveryType,
   } = data;
 
   // first table
@@ -245,8 +272,8 @@ export default function ApprovedReportV2({ data }) {
           {
             heading: 'Training or technical assistance',
             data: {
-              'TTA provided': ttaType,
-              'TTA conducted': deliveryMethod,
+              'TTA provided': formatTtaType(ttaType),
+              'TTA conducted': formatDelivery(deliveryMethod, virtualDeliveryType),
             },
             striped: true,
           },

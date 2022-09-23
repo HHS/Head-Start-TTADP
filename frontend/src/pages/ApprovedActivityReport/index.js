@@ -160,7 +160,6 @@ export default function ApprovedActivityReport({ match, user }) {
 
   const ReportComponent = () => {
     switch (version) {
-      // case 0, redirect to legacy report
       case 1:
         return <ApprovedReportV1 data={report} />;
       case 2:
