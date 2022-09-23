@@ -6,7 +6,9 @@ import {
   DATE_DISPLAY_FORMAT,
   DATEPICKER_VALUE_FORMAT,
 } from '../../../Constants';
-import { reportDataPropTypes, formatSimpleArray, mapAttachments } from '../helpers';
+import {
+  reportDataPropTypes, formatSimpleArray, mapAttachments, formatRequester,
+} from '../helpers';
 
 /**
  *
@@ -53,18 +55,6 @@ function calculateGoalsAndObjectives(report) {
   });
 
   return [headings, data];
-}
-
-function formatRequester(requester) {
-  if (requester === 'recipient') {
-    return 'Recipient';
-  }
-
-  if (requester === 'regionalOffice') {
-    return 'Regional Office';
-  }
-
-  return '';
 }
 
 function formatMethod(method, delivery) {

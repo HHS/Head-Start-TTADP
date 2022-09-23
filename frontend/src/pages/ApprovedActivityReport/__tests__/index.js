@@ -2,13 +2,16 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import {
   fireEvent,
-  render, screen, waitFor,
+  render,
+  screen,
+  waitFor,
+  act,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { act } from 'react-dom/test-utils';
 import fetchMock from 'fetch-mock';
 
 import ApprovedActivityReport from '../index';
+import { SCOPE_IDS } from '../../../Constants';
 
 describe('Activity report print and share view', () => {
   const report = {
@@ -85,17 +88,17 @@ describe('Activity report print and share view', () => {
       {
         regionId: 45,
         userId: 2,
-        scopeId: 1,
+        scopeId: SCOPE_IDS.SITE_ACCESS,
       },
       {
         regionId: 45,
         userId: 2,
-        scopeId: 2,
+        scopeId: SCOPE_IDS.ADMIN,
       },
       {
         regionId: 45,
         userId: 2,
-        scopeId: 3,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
       },
     ],
   };
@@ -114,8 +117,6 @@ describe('Activity report print and share view', () => {
   afterEach(() => fetchMock.restore());
 
   beforeAll(() => {
-    // navigator.clipboard = jest.fn();
-    // navigator.clipboard.writeText = jest.fn(() => Promise.resolve());
     window.print = jest.fn();
   });
 
@@ -183,6 +184,11 @@ describe('Activity report print and share view', () => {
           },
         ],
       }],
+    });
+
+    fetchMock.get('/api/activity-reports/5006', {
+      ...report,
+      version: null,
     });
   });
 
@@ -290,5 +296,31 @@ describe('Activity report print and share view', () => {
     await waitFor(() => {
       expect(screen.getByText(report.author.fullName)).toBeInTheDocument();
     });
+  });
+
+  it('handles a malformed url', async () => {
+    act(() => renderApprovedActivityReport('butter-lover'));
+    await waitFor(() => {
+      expect(screen.getByText(/sorry, something went wrong\./i)).toBeInTheDocument();
+    });
+  });
+
+  it('handles a missing version number', async () => {
+    act(() => renderApprovedActivityReport(5006));
+    await waitFor(() => {
+      expect(screen.getByText(report.author.fullName)).toBeInTheDocument();
+    });
+  });
+
+  it('handles unavailable local storage', async () => {
+    const oldLocalStorage = global.localStorage;
+    delete global.localStorage;
+
+    act(() => renderApprovedActivityReport(5005));
+    await waitFor(() => {
+      expect(screen.getByText(report.author.fullName)).toBeInTheDocument();
+    });
+
+    global.localStorage = oldLocalStorage;
   });
 });
