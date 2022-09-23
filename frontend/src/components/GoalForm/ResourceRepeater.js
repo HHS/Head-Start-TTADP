@@ -27,7 +27,7 @@ export default function ResourceRepeater({
   const readOnly = status === 'Suspended' || (goalStatus === 'Not Started' && isOnReport) || (status === 'Completed' && goalStatus === 'Closed');
 
   if (readOnly) {
-    const onlyResourcesWithValues = resources.filter((resource) => resource.valuel);
+    const onlyResourcesWithValues = resources.filter((resource) => resource.value);
     if (!onlyResourcesWithValues.length) {
       return null;
     }
