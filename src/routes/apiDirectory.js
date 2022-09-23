@@ -17,6 +17,7 @@ import handleErrors from '../lib/apiErrorHandler';
 import adminRouter from './admin';
 import goalsRouter from './goals';
 import topicsRouter from './topics';
+import rolesRouter from './roles';
 import transactionWrapper from './transactionWrapper';
 import search from './search';
 
@@ -52,6 +53,7 @@ router.use('/files', filesRouter);
 router.use('/recipient', recipientRouter);
 router.use('/goals', goalsRouter);
 router.use('/topic', topicsRouter);
+router.use('/role', rolesRouter);
 router.use('/search', search);
 
 const getUser = async (req, res) => {

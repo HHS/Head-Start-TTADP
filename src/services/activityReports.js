@@ -294,7 +294,6 @@ export function activityReportByLegacyId(legacyId) {
 export async function activityReportAndRecipientsById(activityReportId) {
   const arId = parseInt(activityReportId, DECIMAL_BASE);
 
-  // TODO - explore a way to move this query inline to the ActivityReport.findOne
   const goalsAndObjectives = await getGoalsForReport(arId);
 
   const recipients = await ActivityRecipient.findAll({
@@ -670,7 +669,7 @@ export async function activityReports(
 export async function activityReportsForCleanup(userId) {
   const threeMonthsAgo = moment().subtract(3, 'months').format('YYYY-MM-DD');
 
-  return ActivityReport.findAll(
+  return ActivityReport.unscoped().findAll(
     {
       where: {
         // we only cleanup reports from the last three months

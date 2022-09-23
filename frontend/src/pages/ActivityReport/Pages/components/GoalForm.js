@@ -40,6 +40,7 @@ export default function GoalForm({
 
   const defaultEndDate = useMemo(() => (goal && goal.endDate ? goal.endDate : ''), [goal]);
   const defaultName = useMemo(() => (goal && goal.name ? goal.name : ''), [goal]);
+  const status = useMemo(() => (goal && goal.status ? goal.status : ''), [goal]);
 
   const activityRecipientType = watch('activityRecipientType');
 
@@ -133,6 +134,7 @@ export default function GoalForm({
         onUpdateText={onUpdateText}
         inputName={goalTextInputName}
         isOnReport={goal.onApprovedAR || false}
+        goalStatus={status}
         isLoading={isLoading}
       />
 
@@ -143,6 +145,7 @@ export default function GoalForm({
         validateEndDate={onBlurDate}
         key={datePickerKey} // force a re-render when the a new goal is picked
         inputName={goalEndDateInputName}
+        goalStatus={status}
         isLoading={isLoading}
       />
 
@@ -150,6 +153,7 @@ export default function GoalForm({
         objectives={objectives}
         topicOptions={topicOptions}
         roles={roles}
+        goalStatus={status}
         noObjectiveError={errors.goalForEditing && errors.goalForEditing.objectives
           ? ERROR_FORMAT(errors.goalForEditing.objectives.message) : NO_ERROR}
         onSaveDraft={onSaveDraft}
@@ -178,6 +182,7 @@ GoalForm.propTypes = {
     endDate: PropTypes.string,
     isNew: PropTypes.bool,
     onApprovedAR: PropTypes.bool,
+    status: PropTypes.string,
   }).isRequired,
   topicOptions: PropTypes.arrayOf(PropTypes.shape({
     value: PropTypes.number,

@@ -1,17 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
+import { v4 as uuid } from 'uuid';
 import {
   Label, Radio, Fieldset, FormGroup, ErrorMessage,
 } from '@trussworks/react-uswds';
 import QuestionTooltip from './QuestionTooltip';
-import './ObjectiveFiles.scss';
+import UnusedData from './UnusedData';
 import ObjectiveFileUploader from '../FileUploader/ObjectiveFileUploader';
+import './ObjectiveFiles.scss';
 
 export default function ObjectiveFiles({
   objective,
   files,
   onChangeFiles,
-  isOnApprovedReport,
+  goalStatus,
   status,
   isOnReport,
   onUploadFiles,
@@ -25,7 +27,11 @@ export default function ObjectiveFiles({
   const [useFiles, setUseFiles] = useState(hasFiles);
   const [fileError, setFileError] = useState();
 
-  const readOnly = isOnApprovedReport || status === 'Complete' || (status === 'Not Started' && isOnReport);
+  const hideFileToggle = useMemo(
+    () => (hasFiles && files.some((file) => file.onAnyReport)), [hasFiles, files],
+  );
+
+  const readOnly = useMemo(() => status === 'Suspended' || (goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed', [goalStatus, isOnReport, status]);
 
   useEffect(() => {
     if (!useFiles && hasFiles) {
@@ -40,11 +46,17 @@ export default function ObjectiveFiles({
 
     return (
       <>
-        <p className="usa-prose text-bold margin-bottom-1">
+        <p className="usa-prose text-bold margin-bottom-0">
           Resource files
         </p>
         <ul className="usa-list usa-list--unstyled">
-          {files.map((file) => (<li key={file.originalFileName}>{file.originalFileName}</li>))}
+          {files.map((file) => (
+            !(status === 'Completed' && goalStatus === 'Closed') || file.onAnyReport ? (
+              <li key={uuid()}>
+                {file.originalFileName}
+              </li>
+            ) : <UnusedData key={uuid()} value={file.originalFileName} />
+          ))}
         </ul>
       </>
     );
@@ -62,37 +74,41 @@ export default function ObjectiveFiles({
         )
         : (
           <Fieldset className="ttahub-objective-files margin-top-1">
-            <legend>
-              Do you plan to use any TTA resources that aren&apos;t available as a link?
-              {' '}
-              <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
-              <QuestionTooltip
-                text={(
-                  <div>
-                    Examples include:
-                    <ul className="usa-list">
-                      <li>Presentation slides from PD events</li>
-                      <li>PDF&apos;s you created from multiple tta resources</li>
-                      <li>Other OHS-provided resources</li>
-                    </ul>
-                  </div>
+            { hideFileToggle ? null : (
+              <>
+                <legend>
+                  Do you plan to use any TTA resources that aren&apos;t available as a link?
+                  {' '}
+                  <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
+                  <QuestionTooltip
+                    text={(
+                      <div>
+                        Examples include:
+                        <ul className="usa-list">
+                          <li>Presentation slides from PD events</li>
+                          <li>PDF&apos;s you created from multiple tta resources</li>
+                          <li>Other OHS-provided resources</li>
+                        </ul>
+                      </div>
                 )}
-              />
-            </legend>
-            <Radio
-              label="Yes"
-              id={`add-objective-files-yes-${objectiveId}-${index}`}
-              name={`add-objective-files-${objectiveId}-${index}`}
-              checked={useFiles}
-              onChange={() => setUseFiles(true)}
-            />
-            <Radio
-              label="No"
-              id={`add-objective-files-no-${objectiveId}-${index}`}
-              name={`add-objective-files-${objectiveId}-${index}`}
-              checked={!useFiles}
-              onChange={() => setUseFiles(false)}
-            />
+                  />
+                </legend>
+                <Radio
+                  label="Yes"
+                  id={`add-objective-files-yes-${objectiveId}-${index}`}
+                  name={`add-objective-files-${objectiveId}-${index}`}
+                  checked={useFiles}
+                  onChange={() => setUseFiles(true)}
+                />
+                <Radio
+                  label="No"
+                  id={`add-objective-files-no-${objectiveId}-${index}`}
+                  name={`add-objective-files-${objectiveId}-${index}`}
+                  checked={!useFiles}
+                  onChange={() => setUseFiles(false)}
+                />
+              </>
+            ) }
             {
                 useFiles
                   ? (
@@ -151,7 +167,10 @@ ObjectiveFiles.propTypes = {
         url: PropTypes.string,
       }),
     })),
-    roles: PropTypes.arrayOf(PropTypes.string),
+    roles: PropTypes.arrayOf(PropTypes.shape({
+      fullName: PropTypes.string,
+      id: PropTypes.number,
+    })),
     activityReports: PropTypes.arrayOf(PropTypes.shape({
       id: PropTypes.number,
     })),
@@ -170,7 +189,7 @@ ObjectiveFiles.propTypes = {
     }),
   })),
   onChangeFiles: PropTypes.func.isRequired,
-  isOnApprovedReport: PropTypes.bool.isRequired,
+  goalStatus: PropTypes.string.isRequired,
   isOnReport: PropTypes.bool.isRequired,
   status: PropTypes.string.isRequired,
   onUploadFiles: PropTypes.func.isRequired,
