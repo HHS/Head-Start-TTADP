@@ -31,7 +31,7 @@ export default function ObjectiveFiles({
     () => (hasFiles && files.some((file) => file.onAnyReport)), [hasFiles, files],
   );
 
-  const readOnly = useMemo(() => status === 'Suspended' || (goalStatus === 'Not Started' && isOnReport) || (status === 'Completed' && goalStatus === 'Closed'), [goalStatus, isOnReport, status]);
+  const readOnly = useMemo(() => status === 'Suspended' || (goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed', [goalStatus, isOnReport, status]);
 
   useEffect(() => {
     if (!useFiles && hasFiles) {
