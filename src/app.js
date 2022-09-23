@@ -100,7 +100,7 @@ const tmpSched = '0 * * * *'; // every hour
 // Run at 4 pm every Friday
 // const weeklySched = '0 16 * * 5';
 // Run at 4 pm on the last of the month
-const monthlySched = '0 16 L * *';
+const monthlySched = '0 16 28 * *';
 const timezone = 'America/New_York';
 
 const runJob = () => {
