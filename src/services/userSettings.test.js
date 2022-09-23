@@ -69,6 +69,43 @@ describe('UserSetting service', () => {
       expect(found).toEqual(expected);
     });
 
+    it('properly updates an override', async () => {
+      const defaultSettings = await getDefaultSettings();
+      const defs = Object.keys(defaultSettings).map((key) => ({
+        key, value: defaultSettings[key].defaultValue,
+      }));
+      await saveSettings(999, settings);
+      const found = await userSettingsById(999);
+
+      const expected = defs.map((setting) => ({
+        ...setting,
+        ...settings.find((s) => s.key === setting.key),
+      }));
+
+      expect(found).toEqual(expected);
+
+      const newSettings = [
+        {
+          key: USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED,
+          value: USER_SETTINGS.EMAIL.VALUES.DAILY_DIGEST,
+        },
+        {
+          key: USER_SETTINGS.EMAIL.KEYS.SUBMITTED_FOR_REVIEW,
+          value: USER_SETTINGS.EMAIL.VALUES.WEEKLY_DIGEST,
+        },
+      ];
+
+      await saveSettings(999, newSettings);
+      const found2 = await userSettingsById(999);
+
+      const expected2 = defs.map((setting) => ({
+        ...setting,
+        ...newSettings.find((s) => s.key === setting.key),
+      }));
+
+      expect(found2).toEqual(expected2);
+    });
+
     it('properly serializes', async () => {
       const setting = { key: USER_SETTINGS.EMAIL.KEYS.APPROVAL, value: { b: { c: 1 } } };
       await saveSettings(999, [setting]);
