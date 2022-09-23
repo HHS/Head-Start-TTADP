@@ -36,6 +36,8 @@ export default function Objective({
   roles,
   onObjectiveChange,
   onSaveDraft,
+  parentGoal,
+  initialObjectiveStatus,
   reportId,
 }) {
   const [selectedObjective, setSelectedObjective] = useState(objective);
@@ -244,9 +246,9 @@ export default function Objective({
         title={objectiveTitle}
         onChangeTitle={onChangeTitle}
         validateObjectiveTitle={onBlurTitle}
-        status={objectiveStatus}
         inputName={objectiveTitleInputName}
-        isOnReport={isOnReport || false} // todo - fix this for being on AR
+        parentGoal={parentGoal}
+        initialObjectiveStatus={initialObjectiveStatus}
       />
       <SpecialistRole
         isOnApprovedReport={isOnApprovedReport || false}
@@ -353,5 +355,10 @@ Objective.propTypes = {
   roles: PropTypes.arrayOf(PropTypes.string).isRequired,
   onObjectiveChange: PropTypes.func.isRequired,
   onSaveDraft: PropTypes.func.isRequired,
+  parentGoal: PropTypes.shape({
+    id: PropTypes.number,
+    status: PropTypes.string,
+  }).isRequired,
+  initialObjectiveStatus: PropTypes.string.isRequired,
   reportId: PropTypes.number.isRequired,
 };
