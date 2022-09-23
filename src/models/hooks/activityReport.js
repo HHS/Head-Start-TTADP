@@ -21,6 +21,50 @@ const copyStatus = (instance) => {
   }
 };
 
+const moveDraftGoalsToNotStartedOnSubmission = async (sequelize, instance, options) => {
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('submissionStatus')
+    && instance.submissionStatus === REPORT_STATUSES.SUBMITTED) {
+    try {
+      const goals = await sequelize.models.Goal.findAll({
+        where: {
+          status: 'Draft',
+        },
+        include: [
+          {
+            attributes: [],
+            through: { attributes: [] },
+            model: sequelize.models.ActivityReport,
+            as: 'activityReports',
+            required: true,
+            where: {
+              id: instance.id,
+            },
+          },
+        ],
+        includeIgnoreAttributes: false,
+        transaction: options.transaction,
+      });
+
+      const goalIds = goals.map((goal) => goal.id);
+      await sequelize.models.Goal.update(
+        { status: 'Not Started' },
+        {
+          where: {
+            id: {
+              [Op.in]: goalIds,
+            },
+          },
+          transaction: options.transaction,
+        },
+      );
+    } catch (error) {
+      auditLogger.error(JSON.stringify({ error }));
+    }
+  }
+};
+
 const propogateSubmissionStatus = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
@@ -391,6 +435,7 @@ const afterUpdate = async (sequelize, instance, options) => {
   await propagateApprovedStatus(sequelize, instance, options);
   await automaticStatusChangeOnApprovalForGoals(sequelize, instance, options);
   await automaticGoalObjectiveStatusCachingOnApproval(sequelize, instance, options);
+  await moveDraftGoalsToNotStartedOnSubmission(sequelize, instance, options);
 };
 
 export {
@@ -400,4 +445,5 @@ export {
   beforeCreate,
   beforeUpdate,
   afterUpdate,
+  moveDraftGoalsToNotStartedOnSubmission,
 };

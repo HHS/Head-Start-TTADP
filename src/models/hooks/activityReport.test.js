@@ -171,7 +171,7 @@ describe('activity report model hooks', () => {
       expect(testGoal.status).toEqual('Draft');
     });
 
-    it('submitting the report should not set the goal status', async () => {
+    it('submitting the report should set the goal status to "Not Started"', async () => {
       const testReport = await ActivityReport.findByPk(report.id);
 
       await testReport.update({
@@ -180,7 +180,7 @@ describe('activity report model hooks', () => {
       });
 
       const testGoal = await Goal.findByPk(goal.id);
-      expect(testGoal.status).toEqual('Draft');
+      expect(testGoal.status).toEqual('Not Started');
     });
 
     it('approving the report should set the goal to "in progress"', async () => {
