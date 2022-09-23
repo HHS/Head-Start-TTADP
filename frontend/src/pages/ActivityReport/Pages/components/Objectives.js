@@ -128,6 +128,8 @@ export default function Objectives({
               roles={roles}
               onObjectiveChange={onObjectiveChange}
               onSaveDraft={onSaveDraft}
+              parentGoal={getValues('goalForEditing')}
+              initialObjectiveStatus={objective.status}
               reportId={reportId}
             />
           );

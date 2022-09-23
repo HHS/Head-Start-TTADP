@@ -7,16 +7,29 @@ import {
 export default function ObjectiveTitle({
   error,
   isOnApprovedReport,
-  isOnReport,
   title,
   onChangeTitle,
   validateObjectiveTitle,
-  status,
   inputName,
   isLoading,
+  parentGoal,
+  initialObjectiveStatus,
 }) {
-  const readOnly = useMemo(() => (isOnApprovedReport || status === 'Complete' || status === 'Suspended' || (status === 'Not Started' && isOnReport) || (status === 'In Progress' && isOnReport)),
-    [isOnApprovedReport, isOnReport, status]);
+  const readOnly = useMemo(() => {
+    if (isOnApprovedReport) {
+      return true;
+    }
+
+    if (parentGoal && parentGoal.status === 'Closed') {
+      return true;
+    }
+
+    if (initialObjectiveStatus === 'Completed' || initialObjectiveStatus === 'Suspended') {
+      return true;
+    }
+
+    return false;
+  }, [isOnApprovedReport, initialObjectiveStatus, parentGoal]);
 
   return (
     <FormGroup className="margin-top-1" error={error.props.children}>
@@ -26,7 +39,7 @@ export default function ObjectiveTitle({
         { !readOnly ? <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span> : null }
       </Label>
       { readOnly && title ? (
-        <p className="margin-top-0 usa-prose">{title}</p>
+        <p className="margin-top-0 usa-prose" data-testid="readonly-objective-text">{title}</p>
       ) : (
         <>
           {error}
@@ -49,13 +62,16 @@ export default function ObjectiveTitle({
 ObjectiveTitle.propTypes = {
   error: PropTypes.node.isRequired,
   isOnApprovedReport: PropTypes.bool.isRequired,
-  isOnReport: PropTypes.bool.isRequired,
   title: PropTypes.string.isRequired,
   validateObjectiveTitle: PropTypes.func.isRequired,
   onChangeTitle: PropTypes.func.isRequired,
-  status: PropTypes.string.isRequired,
   inputName: PropTypes.string,
   isLoading: PropTypes.bool,
+  parentGoal: PropTypes.shape({
+    id: PropTypes.number,
+    status: PropTypes.string,
+  }).isRequired,
+  initialObjectiveStatus: PropTypes.string.isRequired,
 };
 
 ObjectiveTitle.defaultProps = {
