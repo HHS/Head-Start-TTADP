@@ -88,8 +88,8 @@ export default function Form({
 
   const formTitle = goalNumber ? `Goal ${goalNumber}` : 'Recipient TTA goal';
 
-  const showApprovedReportAlert = isOnApprovedReport;
-  const showNotStartedAlert = isOnReport && !showApprovedReportAlert;
+  const showApprovedReportAlert = isOnApprovedReport && status !== 'Closed';
+  const showNotStartedAlert = isOnReport && !showApprovedReportAlert && status !== 'Closed';
 
   return (
     <div className="ttahub-create-goals-form">
@@ -120,7 +120,7 @@ export default function Form({
       {
         showApprovedReportAlert ? (
           <Alert type="info" noIcon>
-            <p className="usa-prose">Field entries that are used on an activity report can no longer be edited.</p>
+            <p className="usa-prose">Field entries that are used on an activity report can no longer be edited. </p>
           </Alert>
         )
           : null

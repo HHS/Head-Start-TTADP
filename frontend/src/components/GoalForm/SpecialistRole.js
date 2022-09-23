@@ -21,7 +21,7 @@ export default function SpecialistRole({
 }) {
   const initialSelectedRolesLength = useRef(selectedRoles.length);
 
-  const readOnly = useMemo(() => status === 'Suspended' || (goalStatus === 'Not Started' && isOnReport) || (status === 'Completed' && goalStatus === 'Closed'), [goalStatus, isOnReport, status]);
+  const readOnly = useMemo(() => status === 'Suspended' || (goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed', [goalStatus, isOnReport, status]);
 
   if (readOnly && initialSelectedRolesLength.current) {
     return (
