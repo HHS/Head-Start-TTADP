@@ -46,6 +46,7 @@ export default function Form({
   goalNumber,
   clearEmptyObjectiveError,
   onUploadFiles,
+  roleOptions,
 }) {
   const { isLoading } = useContext(GoalFormLoadingContext);
 
@@ -87,11 +88,8 @@ export default function Form({
 
   const formTitle = goalNumber ? `Goal ${goalNumber}` : 'Recipient TTA goal';
 
-  const hasNotStartedObjectives = objectives.some((objective) => objective.status && objective.status.toLowerCase() === 'not started');
-  const hasInProgressObjectives = objectives.some((objective) => objective.status && objective.status.toLowerCase() === 'in progress');
-
-  const showApprovedReportAlert = isOnApprovedReport && hasInProgressObjectives;
-  const showNotStartedAlert = isOnReport && hasNotStartedObjectives && !showApprovedReportAlert;
+  const showApprovedReportAlert = isOnApprovedReport && status !== 'Closed';
+  const showNotStartedAlert = isOnReport && !showApprovedReportAlert && status !== 'Closed';
 
   return (
     <div className="ttahub-create-goals-form">
@@ -122,7 +120,7 @@ export default function Form({
       {
         showApprovedReportAlert ? (
           <Alert type="info" noIcon>
-            <p className="usa-prose">Field entries that are used on an activity report can no longer be edited.</p>
+            <p className="usa-prose">Field entries that are used on an activity report can no longer be edited. </p>
           </Alert>
         )
           : null
@@ -147,6 +145,7 @@ export default function Form({
         validateGoalName={validateGoalName}
         onUpdateText={onUpdateText}
         isLoading={isLoading}
+        goalStatus={status}
       />
 
       <GoalDate
@@ -157,6 +156,7 @@ export default function Form({
         validateEndDate={validateEndDate}
         key={datePickerKey}
         isLoading={isLoading}
+        goalStatus={status}
       />
 
       { objectives.map((objective, i) => (
@@ -172,16 +172,18 @@ export default function Form({
           errors={objectiveErrors[i] || OBJECTIVE_DEFAULT_ERRORS}
           setObjective={(data) => setObjective(data, i)}
           topicOptions={topicOptions}
+          roleOptions={roleOptions}
           onUploadFiles={onUploadFiles}
           goalStatus={status}
         />
       ))}
 
-      <div className="margin-top-4">
-        {errors[FORM_FIELD_INDEXES.OBJECTIVES_EMPTY]}
-        <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />
-      </div>
-
+      { status !== 'Closed' && (
+        <div className="margin-top-4">
+          {errors[FORM_FIELD_INDEXES.OBJECTIVES_EMPTY]}
+          <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />
+        </div>
+      )}
     </div>
   );
 }
@@ -245,6 +247,10 @@ Form.propTypes = {
   clearEmptyObjectiveError: PropTypes.func.isRequired,
   onUploadFiles: PropTypes.func.isRequired,
   validateGoalNameAndRecipients: PropTypes.func.isRequired,
+  roleOptions: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    value: PropTypes.string,
+  })).isRequired,
 };
 
 Form.defaultProps = {

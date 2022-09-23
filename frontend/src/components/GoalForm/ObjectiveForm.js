@@ -20,8 +20,6 @@ const [
   objectiveRoleError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
-const availableSpecialistRoles = ['Grantee Specialist', 'Health Specialist', 'Family Engagement Specialist', 'Early Childhood Specialist', 'Systems Specialist'];
-
 export default function ObjectiveForm({
   index,
   removeObjective,
@@ -30,6 +28,7 @@ export default function ObjectiveForm({
   setObjective,
   errors,
   topicOptions,
+  roleOptions,
   onUploadFiles,
   goalStatus,
 }) {
@@ -57,7 +56,7 @@ export default function ObjectiveForm({
   const onChangeFiles = (e) => {
     setObjective({ ...objective, files: e });
   };
-  const onChangeRole = (newRole) => setObjective({ ...objective, roles: newRole });
+  const onChangeRole = (newRoles) => setObjective({ ...objective, roles: newRoles });
   const onChangeStatus = (newStatus) => setObjective({ ...objective, status: newStatus });
 
   // validate different fields
@@ -133,11 +132,12 @@ export default function ObjectiveForm({
         onChange={onChangeRole}
         selectedRoles={roles || []}
         validateSpecialistRole={validateSpecialistRole}
-        options={availableSpecialistRoles}
+        options={roleOptions}
         isOnReport={isOnReport || false}
-        isOnApprovedReport={isOnApprovedReport || false}
         status={status}
         isLoading={isLoading}
+        roleOptions={roleOptions}
+        goalStatus={goalStatus}
       />
 
       <ObjectiveTopics
@@ -147,8 +147,8 @@ export default function ObjectiveForm({
         topics={topics}
         onChangeTopics={onChangeTopics}
         status={status}
+        goalStatus={goalStatus}
         isOnReport={isOnReport || false}
-        isOnApprovedReport={isOnApprovedReport || false}
         isLoading={isLoading}
       />
 
@@ -158,34 +158,32 @@ export default function ObjectiveForm({
         validateResources={validateResources}
         error={errors[OBJECTIVE_FORM_FIELD_INDEXES.RESOURCES]}
         isOnReport={isOnReport || false}
-        isOnApprovedReport={isOnApprovedReport || false}
         status={status}
+        goalStatus={goalStatus}
         isLoading={isLoading}
       />
+      { title && (
+      <ObjectiveFiles
+        files={files ? files.map((f) => ({ ...f, objectiveIds: objective.ids })) : []}
+        onChangeFiles={onChangeFiles}
+        objective={objective}
+        isOnReport={isOnReport || false}
+        status={status}
+        isLoading={isLoading}
+        onUploadFiles={onUploadFiles}
+        index={index}
+        goalStatus={goalStatus}
+      />
+      )}
 
       <ObjectiveStatus
         status={status}
-        isOnApprovedReport={isOnApprovedReport}
-        isOnReport={isOnReport || false}
         goalStatus={goalStatus}
         onChangeStatus={onChangeStatus}
         inputName={`objective-status-${index}`}
         isLoading={isLoading}
       />
 
-      { title && (
-        <ObjectiveFiles
-          files={files ? files.map((f) => ({ ...f, objectiveIds: objective.ids })) : []}
-          onChangeFiles={onChangeFiles}
-          objective={objective}
-          isOnApprovedReport={isOnApprovedReport || false}
-          isOnReport={isOnReport || false}
-          status={status}
-          isLoading={isLoading}
-          onUploadFiles={onUploadFiles}
-          index={index}
-        />
-      )}
     </div>
   );
 }
@@ -220,7 +218,7 @@ ObjectiveForm.propTypes = {
         url: PropTypes.string,
       }),
     })),
-    roles: PropTypes.arrayOf(PropTypes.string),
+    roles: PropTypes.arrayOf(PropTypes.shape({ fullName: PropTypes.string, id: PropTypes.number })),
     activityReports: PropTypes.arrayOf(PropTypes.shape({
       id: PropTypes.number,
     })),
@@ -230,6 +228,10 @@ ObjectiveForm.propTypes = {
     })),
     status: PropTypes.string,
   }),
+  roleOptions: PropTypes.arrayOf(PropTypes.shape({
+    fullName: PropTypes.string,
+    id: PropTypes.number,
+  })).isRequired,
   topicOptions: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string,
     value: PropTypes.number,

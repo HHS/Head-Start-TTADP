@@ -810,7 +810,7 @@ describe('saveGoalsForReport (more tests)', () => {
             },
           ],
           roles: [
-            role.fullName,
+            { id: role.id },
           ],
           resources: [
             {

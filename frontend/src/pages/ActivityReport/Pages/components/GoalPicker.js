@@ -28,6 +28,7 @@ export const newGoal = (grantIds) => ({
   grantIds,
   goalIds: [],
   oldGrantIds: [],
+  status: 'Draft',
 });
 
 const components = {

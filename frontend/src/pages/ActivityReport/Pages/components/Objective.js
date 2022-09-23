@@ -251,7 +251,6 @@ export default function Objective({
         initialObjectiveStatus={initialObjectiveStatus}
       />
       <SpecialistRole
-        isOnApprovedReport={isOnApprovedReport || false}
         isOnReport={isOnReport || false}
         status={objectiveStatus}
         error={errors.roles
@@ -261,7 +260,7 @@ export default function Objective({
         selectedRoles={objectiveRoles}
         inputName={objectiveRolesInputName}
         validateSpecialistRole={onBlurRoles}
-        options={roles}
+        roleOptions={roles}
       />
       <ObjectiveTopics
         error={errors.topics
@@ -293,7 +292,6 @@ export default function Objective({
         objective={objective}
         files={objectiveFiles}
         onChangeFiles={onChangeFiles}
-        isOnApprovedReport={isOnApprovedReport || false}
         status={objectiveStatus}
         isOnReport={isOnReport || false}
         onUploadFiles={onUploadFile}

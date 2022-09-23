@@ -90,6 +90,7 @@ const ObjectiveFileUploader = ({
   const filesForTable = files.map((file) => {
     const status = 'PENDING';
     const fileId = file.id || file.lastModified;
+    const showDelete = !file.onAnyReport;
 
     return {
       ...file,
@@ -97,6 +98,7 @@ const ObjectiveFileUploader = ({
       fileSize: file.size || file.fileSize,
       status: file.status || status,
       id: fileId,
+      showDelete,
     };
   });
 
