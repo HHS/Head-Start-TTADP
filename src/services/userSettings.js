@@ -54,14 +54,21 @@ export const saveSettings = async (userId, pairs) => {
     return acc;
   }, []);
 
-  const updateable = await UserSettingOverrides.findAll({
+  let updateable = await UserSettingOverrides.findAll({
     where: {
       userId,
       userSettingId: { [Op.in]: save.map(({ userSettingId }) => userSettingId) },
     },
   });
 
-  const insertable = save.filter(({ key }) => !updateable.find(({ key: k }) => k === key));
+  updateable = updateable.map(({ dataValues: { id, userSettingId } }) => ({
+    id,
+    userSettingId,
+  }));
+
+  const insertable = save.filter(
+    ({ userSettingId }) => !updateable.find(({ userSettingId: id }) => id === userSettingId),
+  );
 
   const deletable = pairs.reduce((acc, { key, value }) => {
     if (defaults[key] && defaults[key].defaultValue === value) {
@@ -79,8 +86,8 @@ export const saveSettings = async (userId, pairs) => {
 
     // Overrides that have been given values that do not match the default
     // should be updated in the overrides table.
-    ...updateable.map(({ userSettingId, key }) => UserSettingOverrides.update({
-      value: sequelize.cast(JSON.stringify(save.find(({ key: k }) => k === key).value), 'jsonb'),
+    ...updateable.map(({ userSettingId }) => UserSettingOverrides.update({
+      value: sequelize.cast(JSON.stringify(save.find(({ userSettingId: id }) => id === userSettingId).value), 'jsonb'),
     }, {
       where: { userId, userSettingId },
     })),
