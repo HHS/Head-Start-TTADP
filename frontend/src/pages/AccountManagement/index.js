@@ -12,7 +12,6 @@ import {
 } from '@trussworks/react-uswds';
 import { useForm, FormProvider, useFormContext } from 'react-hook-form';
 import Avatar from '../../components/Avatar';
-import './index.scss';
 import UserContext from '../../UserContext';
 import {
   subscribe,
