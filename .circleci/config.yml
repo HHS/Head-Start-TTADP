@@ -94,8 +94,8 @@ commands:
           holds session secret, a required application variable"
         type: env_var_name
       jwt_secret:
-        description: "Name of CircleCi project environment variable that
-          holds the JWT secret, a required application variable"
+        description: "CircleCi project environment variable used by the backend
+          token service for the email verification flow."
         type: env_var_name
       new_relic_license:
         description: "Name of CircleCI project environment variable that
