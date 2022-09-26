@@ -19,7 +19,7 @@ executors:
           POSTGRES_DB: ttasmarthub
   machine-executor:
     machine:
-      image: ubuntu-2004:current
+      image: ubuntu-2204:current
 commands:
   create_combined_yarnlock:
     description: "Concatenate all yarn.json files into single file.
@@ -182,7 +182,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "TTAHUB-926/kw-remove-extra-data"
+    default: "test-owasp-image-update"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "kw-fix-uei"
