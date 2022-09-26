@@ -319,7 +319,7 @@ jobs:
           command: ./bin/prod-style-server
       - run:
           name: Pull OWASP ZAP docker image
-          command: docker pull owasp/zap2docker-weekly
+          command: docker pull owasp/zap2docker-stable
       - run:
           name: Make reports directory group writeable
           command: chmod g+w reports
