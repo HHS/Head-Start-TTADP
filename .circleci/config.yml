@@ -311,6 +311,7 @@ jobs:
           path: reports/
   dynamic_security_scan:
     executor: machine-executor
+    resource_class: large
     steps:
       - attach_workspace:
           at: .
