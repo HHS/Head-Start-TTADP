@@ -519,19 +519,30 @@ export default function GoalForm({
     setIsLoading(true);
 
     try {
-      const newGoals = selectedGrants.map((g) => ({
-        grantId: g.value,
-        name: goalName,
-        status,
-        endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
-        regionId: parseInt(regionId, DECIMAL_BASE),
-        recipientId: recipient.id,
-        objectives,
-      }));
+      let newGoals = [];
+
+      if (showForm) {
+        newGoals = selectedGrants.map((g) => ({
+          grantId: g.value,
+          name: goalName,
+          status,
+          endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
+          regionId: parseInt(regionId, DECIMAL_BASE),
+          recipientId: recipient.id,
+          objectives,
+        }));
+      }
+
+      const mappedCreatedGoals = createdGoals.map((goal) => goal.grantIds.map((grantId) => ({
+        grantId,
+        ...goal,
+      }))).flat();
+
       const goals = [
-        ...createdGoals,
+        ...mappedCreatedGoals,
         ...newGoals,
       ];
+
       const updatedGoals = await createOrUpdateGoals(goals);
 
       const updatedObjectives = updatedGoals && updatedGoals.length > 0
