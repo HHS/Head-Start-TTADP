@@ -8,7 +8,7 @@ function Avatar({ name }) {
   return (
     <div
       data-testid="avatar"
-      className="avatar display-flex flex-align-center flex-justify-center"
+      className="avatar display-flex flex-align-center flex-justify-center height-5 minh-5 width-5 minw-5 text-white padding-0 border-0 radius-pill"
     >
       {initial}
     </div>
