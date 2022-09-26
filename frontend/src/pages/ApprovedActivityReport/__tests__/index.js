@@ -159,6 +159,18 @@ describe('Activity report print and share view', () => {
 
     fetchMock.get('/api/activity-reports/5004', {
       ...report,
+      objectivesWithoutGoals: [
+        {
+          title: 'Objective',
+          ActivityReportObjective: {
+            ttaProvided: 'All of it',
+          },
+          topics: [{ label: 'being fancy' }],
+          resources: [{ value: 'http://www.website.com' }],
+          status: 'Test status',
+          files: [],
+        },
+      ],
       version: 2,
     });
 

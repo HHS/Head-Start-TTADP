@@ -80,6 +80,27 @@ function formatTtaType(ttaType) {
   return ttaType.map((type) => dict[type]).join(', ');
 }
 
+function addObjectiveSectionsToArray(objectives, sections, striped) {
+  let isStriped = striped;
+  objectives.forEach((objective) => {
+    isStriped = !isStriped;
+    const objectiveSection = {
+      heading: 'Objective summary',
+      data: {
+        'TTA objective': objective.title,
+        Topics: formatSimpleArray(objective.topics.map(({ label }) => label)),
+        'Resource links': formatObjectiveLinks(objective.resources),
+        'Resource attachments': objective.files.length ? mapAttachments(objective.files) : 'None provided',
+        'TTA provided': objective.ttaProvided,
+        'Objective status': objective.status,
+      },
+      isStriped,
+    };
+
+    sections.push(objectiveSection);
+  });
+}
+
 /**
    *
    * @param {object} report an activity report object
@@ -109,41 +130,10 @@ function calculateGoalsAndObjectives(report) {
 
       sections.push(goalSection);
 
-      goal.objectives.forEach((objective) => {
-        striped = !striped;
-        const objectiveSection = {
-          heading: 'Objective summary',
-          data: {
-            'TTA objective': objective.title,
-            Topics: formatSimpleArray(objective.topics.map(({ label }) => label)),
-            'Resource links': formatObjectiveLinks(objective.resources),
-            'Resource attachments': objective.files.length ? mapAttachments(objective.files) : 'None provided',
-            'TTA provided': objective.ttaProvided,
-            'Objective status': objective.status,
-          },
-          striped,
-        };
-
-        sections.push(objectiveSection);
-      });
+      addObjectiveSectionsToArray(goal.objectives, sections, striped);
     });
   } else if (report.activityRecipientType === 'other-entity') {
-    report.objectivesWithoutGoals.forEach((objective) => {
-      const objectiveSection = {
-        heading: 'Objective summary',
-        data: {
-          'TTA objective': objective.title,
-          Topics: formatSimpleArray(objective.topics.map(({ label }) => label)),
-          'Resource links': formatObjectiveLinks(objective.resources),
-          'Resource attachments': objective.files.length ? mapAttachments(objective.files) : 'None provided',
-          'TTA provided': objective.ActivityReportObjective.ttaProvided,
-          'Objective status': objective.status,
-        },
-        striped,
-      };
-
-      sections.push(objectiveSection);
-    });
+    addObjectiveSectionsToArray(report.objectivesWithoutGoals, sections, striped);
   }
 
   return sections;
@@ -195,7 +185,7 @@ export default function ApprovedReportV2({ data }) {
   const approvedAt = data.approvedAt ? moment(data.approvedAt).format(DATE_DISPLAY_FORMAT) : '';
   const createdAt = moment(data.createdAt).format(DATE_DISPLAY_FORMAT);
 
-  const creator = data.author.fullName || '';
+  const creator = data.author.fullName;
 
   return (
     <Container className="ttahub-activity-report-view margin-top-2">
