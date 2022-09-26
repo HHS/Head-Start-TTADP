@@ -26,16 +26,19 @@ const NEEDLE = 'This objective title should not appear in recipient 3';
 describe('Goals by Recipient Test', () => {
   const recipient = {
     id: 300,
+    uei: 'NNA5N2KHMGN2',
     name: 'Recipient with Goals',
   };
 
   const recipient2 = {
     id: 301,
+    uei: 'NNA5N2KHMGM2',
     name: 'Recipient 2 with Goals',
   };
 
   const recipient3 = {
     id: 302,
+    uei: 'NNA5N2KHMGA2',
     name: 'Recipient 3 with Goals',
   };
 
@@ -133,7 +136,7 @@ describe('Goals by Recipient Test', () => {
     targetPopulations: ['pop'],
     participants: ['participants'],
     reason: ['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option'],
-    topics: ['Child Assessment, Development, Screening', 'Communication'],
+    topics: ['Child Screening and Assessment', 'Communication'],
     ttaType: ['type'],
   };
 
@@ -156,7 +159,7 @@ describe('Goals by Recipient Test', () => {
     targetPopulations: ['pop'],
     participants: ['participants'],
     reason: ['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option'],
-    topics: ['Child Assessment, Development, Screening', 'Communication'],
+    topics: ['Child Screening and Assessment', 'Communication'],
     ttaType: ['type'],
   };
 
@@ -185,7 +188,7 @@ describe('Goals by Recipient Test', () => {
     targetPopulations: ['pop'],
     participants: ['participants'],
     reason: ['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option'],
-    topics: ['Child Assessment, Development, Screening', 'Communication'],
+    topics: ['Child Screening and Assessment', 'Communication'],
     ttaType: ['type'],
   };
 
@@ -208,7 +211,7 @@ describe('Goals by Recipient Test', () => {
     targetPopulations: ['pop'],
     participants: ['participants'],
     reason: ['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option'],
-    topics: ['Child Assessment, Development, Screening', 'Communication'],
+    topics: ['Child Screening and Assessment', 'Communication'],
     ttaType: ['type'],
   };
 
@@ -702,7 +705,7 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx[0].goalNumbers).toStrictEqual([`G-${goalRowsx[0].id}`]);
       expect(goalRowsx[0].objectiveCount).toBe(1);
       expect(goalRowsx[0].reasons).toEqual(['Monitoring | Area of Concern', 'New Director or Management', 'New Program Option']);
-      expect(goalRowsx[0].goalTopics).toEqual(['Child Assessment, Development, Screening', 'Communication']);
+      expect(goalRowsx[0].goalTopics).toEqual(['Child Screening and Assessment', 'Communication']);
       expect(goalRowsx[0].objectives.length).toBe(1);
 
       // Goal 3.

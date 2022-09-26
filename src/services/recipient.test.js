@@ -11,21 +11,25 @@ describe('Recipient DB service', () => {
   const recipients = [
     {
       id: 73,
+      uei: 'NNA5N2KHMGN2',
       name: 'recipient 1',
       recipientType: 'recipient type 1',
     },
     {
       id: 74,
+      uei: 'NNA5N2KHMKN2',
       name: 'recipient 2',
       recipientType: 'recipient type 2',
     },
     {
       id: 75,
+      uei: 'NNA5N2KHMJN2',
       name: 'recipient 3',
       recipientType: 'recipient type 3',
     },
     {
       id: 76,
+      uei: 'NNA5N2KHMGM2',
       name: 'recipient 4',
       recipientType: 'recipient type 4',
     },
@@ -291,38 +295,47 @@ describe('Recipient DB service', () => {
     const recipientsToSearch = [
       {
         id: 63,
+        uei: 'NNA5N2KHMGN2',
         name: 'Apple Juice',
       },
       {
         id: 64,
+        uei: 'NNA5N2KBAGN2',
         name: 'Orange',
       },
       {
         id: 65,
+        uei: 'NNA5N2KHMBA2',
         name: 'Banana',
       },
       {
         id: 66,
+        uei: 'NNA5N2KHMCA2',
         name: 'Apple Sauce',
       },
       {
         id: 67,
+        uei: 'NNA5N2KHMGN2',
         name: 'Apple Butter',
       },
       {
         id: 68,
+        uei: 'NNA5N2KHMGN2',
         name: 'Apple Crisp',
       },
       {
         id: 69,
+        uei: 'NNA5N2KHMDZ2',
         name: 'Pumpkin Pie',
       },
       {
         id: 70,
+        uei: 'NNA5N2KHMVF2',
         name: 'Pumpkin Bread',
       },
       {
         id: 71,
+        uei: 'NNA5N2KHMPO2',
         name: 'Pumpkin Coffee',
       },
     ];
