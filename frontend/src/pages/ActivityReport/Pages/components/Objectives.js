@@ -91,6 +91,13 @@ export default function Objectives({
     ),
   ];
 
+  const removeObjective = (index) => {
+    // Remove the objective.
+    remove(index);
+    // Update this list of available objectives.
+    setUpdatedUsedObjectiveIds();
+  };
+
   return (
     <>
       {/*
@@ -123,7 +130,7 @@ export default function Objectives({
               topicOptions={topicOptions}
               options={options}
               errors={objectiveErrors}
-              remove={remove}
+              remove={removeObjective}
               fieldArrayName={fieldArrayName}
               roles={roles}
               onObjectiveChange={onObjectiveChange}
