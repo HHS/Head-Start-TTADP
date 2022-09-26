@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
 import { USER_SETTINGS } from '../constants';
 import {
-  sequelize, User, UserSettings, UserSettingOverrides,
+  sequelize, User, UserSettings, UserSettingOverrides, UserValidationStatus,
 } from '../models';
 
 const baseSearch = (userId) => ({
@@ -99,6 +99,12 @@ export const saveSettings = async (userId, pairs) => {
   ]);
 };
 
+/**
+ * userSettingsById returns all settings for a given user.
+ *
+ * @param {number} userId
+ * @returns {Promise<{ key: string, value: unknown }[]>}
+ */
 export const userSettingsById = async (userId) => {
   const result = await UserSettings.findAll({
     ...baseSearch(userId),
@@ -129,6 +135,11 @@ export const usersWithSetting = async (key, values) => {
       out = await User.findAll({
         include: [
           {
+            model: UserValidationStatus,
+            as: 'validationStatus',
+            attributes: ['id', 'type', 'validatedAt'],
+          },
+          {
             attributes: [],
             model: UserSettingOverrides,
             as: 'userSettingOverrides',
@@ -151,6 +162,11 @@ export const usersWithSetting = async (key, values) => {
       // return all users that are providing the override.
       out = await User.findAll({
         include: [
+          {
+            model: UserValidationStatus,
+            as: 'validationStatus',
+            attributes: ['id', 'type', 'validatedAt'],
+          },
           {
             attributes: [],
             model: UserSettingOverrides,
@@ -183,10 +199,34 @@ export const usersWithSetting = async (key, values) => {
   return users;
 };
 
+/**
+ * userSettingOverridesById returns the key/value pair of the setting defined
+ * by @param settingKey for the user defined by @param userId only if the value
+ * is an override. If the value is the default value for that particular setting,
+ * it will return undefined.
+ *
+ * @param {number} userId
+ * @param {string} settingKey ("UserSettings"."key")
+ * @returns {Promise<{key: string, value: any} | undefined>}
+ */
+export const userSettingOverridesById = async (userId, settingKey) => {
+  const defaults = await getDefaultSettings();
+  const result = await UserSettings.findAll({
+    ...baseSearch(userId),
+    where: { key: settingKey },
+  });
+
+  return result.map(({ dataValues: { key, value } }) => ({ key, value }))
+    .filter(
+      ({ key, value }) => !(defaults[key] && defaults[key].defaultValue === value),
+    )[0];
+};
+
 // -----------------------------------------------------------------------------
 // Email-setting-specific helpers:
 
 /**
+ * Returns all settings of class 'email' for a given user.
  * @param {number} userId
  * @returns {Promise<{ key: string, value: any}[]>}
  */
