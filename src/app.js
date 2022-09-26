@@ -100,7 +100,7 @@ const tmpSched = '0 * * * *'; // every hour
 // Run at 4 pm every Friday
 // const weeklySched = '0 16 * * 5';
 // Run at 4 pm on the last of the month
-const monthlySched = '0 16 28 * *';
+const monthlySched = '0 16 30 * *';
 const timezone = 'America/New_York';
 
 const runJob = () => {
@@ -161,17 +161,10 @@ const runMonthlyEmailJob = () => {
   return true;
 };
 
-// TODO: to be removed; leaving it here temporarily for any non-prod testing
-// const dailyJob = new CronJob(dailySched, () => runDailyEmailJob(), null, true, timezone);
-// dailyJob.start();
-// const weeklyJob = new CronJob(dailySched, () => runWeeklyEmailJob(), null, true, timezone);
-// weeklyJob.start();
-
 // Run only on one instance
 if (process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') {
   const job = new CronJob(schedule, () => runJob(), null, true, timezone);
   job.start();
-  // TODO: Uncomment this when going into prod
   const dailyJob = new CronJob(tmpSched, () => runDailyEmailJob(), null, true, timezone);
   dailyJob.start();
   const weeklyJob = new CronJob(tmpSched, () => runWeeklyEmailJob(), null, true, timezone);
