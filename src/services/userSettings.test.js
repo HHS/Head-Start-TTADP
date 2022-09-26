@@ -6,6 +6,7 @@ import {
   subscribeAll,
   unsubscribeAll,
   userEmailSettingsById,
+  userSettingOverridesById,
   userSettingsById,
   usersWithSetting,
 } from './userSettings';
@@ -66,7 +67,10 @@ describe('UserSetting service', () => {
         ...settings.find((s) => s.key === setting.key),
       }));
 
-      expect(found).toEqual(expected);
+      const foundSorted = found.sort((a, b) => a.key.localeCompare(b.key));
+      const expectedSorted = expected.sort((a, b) => a.key.localeCompare(b.key));
+
+      expect(foundSorted).toEqual(expectedSorted);
     });
 
     it('properly updates an override', async () => {
@@ -172,6 +176,30 @@ describe('UserSetting service', () => {
       expect(ids.includes(999)).toBe(false);
       expect(ids.includes(1000)).toBe(true);
     });
+
+    it('provides validationStatus - overrides', async () => {
+      await subscribeAll(999);
+
+      const k = USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED;
+      const v = USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
+
+      const users = await usersWithSetting(k, [v]);
+
+      expect(users.length).toBe(1);
+      expect(users[0].dataValues.validationStatus).not.toBeNull();
+    });
+
+    it('provides validationStatus - defaults', async () => {
+      await subscribeAll(999);
+      await unsubscribeAll(1000);
+
+      const k = USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED;
+      const v = USER_SETTINGS.EMAIL.VALUES.NEVER;
+
+      const users = await usersWithSetting(k, [v]);
+
+      expect(users[0].dataValues.validationStatus).not.toBeNull();
+    });
   });
 
   describe('userSettingsById', () => {
@@ -222,6 +250,31 @@ describe('UserSetting service', () => {
       Object.values(USER_SETTINGS.EMAIL.KEYS).forEach((key) => {
         expect(keys.has(key)).toBe(true);
       });
+    });
+  });
+
+  describe('userSettingOverridesById', () => {
+    it('returns the value when there\'s an override', async () => {
+      const setting = [
+        {
+          key: USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED,
+          value: USER_SETTINGS.EMAIL.VALUES.DAILY_DIGEST,
+        },
+      ];
+      await saveSettings(999, setting);
+      const found = await userSettingOverridesById(
+        999,
+        USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED,
+      );
+      expect(found).toEqual(setting[0]);
+    });
+
+    it('returns undefined when there\'s no override', async () => {
+      const found = await userSettingOverridesById(
+        999,
+        USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED,
+      );
+      expect(found).toBeUndefined();
     });
   });
 });

@@ -175,7 +175,18 @@ function App() {
           exact
           path="/account"
           render={() => (
-            <AppWrapper authenticated logout={logout}><AccountManagement user={user} /></AppWrapper>
+            <AppWrapper authenticated logout={logout}>
+              <AccountManagement updateUser={updateUser} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/account/verify-email/:token"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <AccountManagement updateUser={updateUser} />
+            </AppWrapper>
           )}
         />
         {admin && (

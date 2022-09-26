@@ -3,7 +3,11 @@
 '/user':
   $ref: './user.yaml'
 '/users/collaborators':
-  $ref: './collaborators.yaml'
+  $ref: './users/collaborators.yaml'
+'/users/send-verification-email':
+  $ref: './users/send-verification-email.yaml'
+'/users/verify-email/{token}':
+  $ref: './users/verify-email.yaml'
 '/logout':
   $ref: './logout.yaml'
 '/login':
