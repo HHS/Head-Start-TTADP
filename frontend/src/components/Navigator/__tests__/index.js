@@ -170,7 +170,10 @@ describe('Navigator', () => {
     expect(send).toHaveBeenCalled();
 
     userEvent.click(await screen.findByRole('button', { name: 'first page Not Started' }));
-    await waitFor(() => expect(updateForm).toHaveBeenCalledWith({ ...initialData, second: null }));
+    await waitFor(() => expect(updateForm).toHaveBeenCalledWith(
+      { ...initialData, second: null },
+      true,
+    ));
     await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
 
     expect(clearStore).toHaveBeenCalled();
