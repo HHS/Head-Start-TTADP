@@ -19,7 +19,7 @@ executors:
           POSTGRES_DB: ttasmarthub
   machine-executor:
     machine:
-      image: debian:unstable-slim
+      image: ubuntu-2004:2022.04.1
 commands:
   create_combined_yarnlock:
     description: "Concatenate all yarn.json files into single file.
