@@ -15,7 +15,6 @@ import {
 import { useForm, FormProvider, useFormContext } from 'react-hook-form';
 import { useParams } from 'react-router';
 import Avatar from '../../components/Avatar';
-import './index.scss';
 import UserContext from '../../UserContext';
 import {
   subscribe,
