@@ -145,19 +145,30 @@ function transformApproversModel(prop) {
   return transformer;
 }
 
-function transformGrantModel(prop) {
+function transformGrantModel(prop, sortBy = null) {
+  // If 'sortBy' is set we will no longer return a distinct list.
   function transformer(instance) {
     const obj = {};
     const values = instance.activityRecipients;
     if (values) {
-      const distinctValues = [
-        ...new Set(
-          values.filter(
+      let grantValueList;
+      if (!sortBy) {
+        const distinctValues = [
+          ...new Set(
+            values.filter(
+              (recipient) => recipient.grant && recipient.grant[prop] !== null,
+            ).map((r) => r.grant[prop]).flat(),
+          ),
+        ];
+        grantValueList = distinctValues.sort().join('\n');
+      } else {
+        const grantValues = [
+          ...values.filter(
             (recipient) => recipient.grant && recipient.grant[prop] !== null,
-          ).map((r) => r.grant[prop]).flat(),
-        ),
-      ];
-      const grantValueList = distinctValues.sort().join('\n');
+          ).map((r) => ({ value: r.grant[prop], sortValue: r.grant[sortBy] })).flat(),
+        ];
+        grantValueList = grantValues.sort((a, b) => ((a.sortValue > b.sortValue) ? 1 : -1)).map((r) => r.value).join('\n');
+      }
       Object.defineProperty(obj, prop, {
         value: grantValueList,
         enumerable: true,
@@ -188,16 +199,23 @@ function sortObjectives(a, b) {
    * Create an object with goals and objectives. Used by transformGoalsAndObjectives
    * @param {Array<Objectives>} objectiveRecords
    */
-// TODO: ttaProvided needs to move from ActivityReportObjective to ActivityReportObjective
 function makeGoalsAndObjectivesObject(objectiveRecords) {
   objectiveRecords.sort(sortObjectives);
   let objectiveNum = 0;
   let goalNum = 0;
+  let objectiveId;
+  let lastObjectiveTitle = null;
 
   return objectiveRecords.reduce((accum, objective) => {
     const {
       goal, title, status, ttaProvided,
     } = objective;
+
+    if (lastObjectiveTitle === title) {
+      return accum;
+    }
+
+    lastObjectiveTitle = title;
     const goalName = goal ? goal.name : null;
     const newGoal = goalName && !Object.values(accum).includes(goalName);
 
@@ -207,10 +225,10 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
         value: goalName,
         enumerable: true,
       });
-      // Object.defineProperty(accum, `goal-${goalNum}-status`, {
-      //   value: goal.status,
-      //   enumerable: true,
-      // });
+      Object.defineProperty(accum, `goal-${goalNum}-status`, {
+        value: goal.status,
+        enumerable: true,
+      });
       objectiveNum = 1;
     }
 
@@ -229,7 +247,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       objectiveNum = 1;
     }
 
-    const objectiveId = `${goalNum}.${objectiveNum}`;
+    objectiveId = `${goalNum}.${objectiveNum}`;
 
     Object.defineProperty(accum, `objective-${objectiveId}`, {
       value: title,
@@ -303,6 +321,7 @@ const arTransformers = [
   transformDate('approvedAt'),
   transformGrantModel('programSpecialistName'),
   transformGrantModel('recipientInfo'),
+  transformGrantModel('stateCode', 'recipientInfo'),
 ];
 
 /**

@@ -31,7 +31,7 @@ const totalHoursResponse = [{
   name: 'Hours of Both', x: ['17', '18', '23', '2', '3'], y: [1.5, 1.5, 0, 0, 3.5], month: ['Nov', 'Nov', 'Nov', 'Dec', 'Dec'],
 }];
 const topicFrequencyGraphUrl = join('api', 'widgets', 'topicFrequencyGraph');
-const topicFrequencyResponse = [{ topic: 'Behavioral / Mental Health / Trauma', count: 0 }, { topic: 'Child Assessment, Development, Screening', count: 0 }];
+const topicFrequencyResponse = [{ topic: 'Behavioral / Mental Health / Trauma', count: 0 }, { topic: 'Child Screening and Assessment', count: 0 }];
 const activityReportsUrl = join('api', 'activity-reports');
 const activityReportsResponse = { count: 0, rows: [] };
 

@@ -62,6 +62,13 @@ describe('activityReportToCsvRecord', () => {
       grantId: 1,
       timeframe: 'None',
     },
+    {
+      name: 'Goal 3',
+      id: 2083,
+      status: 'Not Started',
+      grantId: 2,
+      timeframe: 'None',
+    },
   ];
 
   const mockObjectives = [
@@ -107,6 +114,13 @@ describe('activityReportToCsvRecord', () => {
       status: 'Completed',
       goal: mockGoals[2],
     },
+    {
+      id: 17,
+      title: 'Objective 3.1',
+      ttaProvided: 'Training',
+      status: 'Completed',
+      goal: mockGoals[2],
+    },
   ];
 
   const mockApprovers = [
@@ -145,28 +159,28 @@ describe('activityReportToCsvRecord', () => {
       id: 4,
       grantId: 4,
       grant: {
-        name: 'test4', programSpecialistName: 'Program Specialist 4', recipientId: 4, number: 'grant number 4', recipient: { id: 4, name: 'test4' },
+        name: 'test4', programSpecialistName: 'Program Specialist 4', recipientId: 4, number: 'grant number 4', stateCode: 'NY', recipient: { id: 4, name: 'test4' },
       },
     },
     {
       id: 1,
       grantId: 1,
       grant: {
-        name: 'test1', programSpecialistName: 'Program Specialist 1', recipientId: 1, number: 'grant number 1', recipient: { id: 1, name: 'test1' },
+        name: 'test1', programSpecialistName: 'Program Specialist 1', recipientId: 1, number: 'grant number 1', stateCode: 'NY', recipient: { id: 1, name: 'test1' },
       },
     },
     {
       id: 2,
       grantId: 2,
       grant: {
-        name: 'test2', programSpecialistName: 'Program Specialist 2', recipientId: 2, number: 'grant number 2', recipient: { id: 2, name: 'test2' },
+        name: 'test2', programSpecialistName: 'Program Specialist 2', recipientId: 2, number: 'grant number 2', stateCode: 'CT', recipient: { id: 2, name: 'test2' },
       },
     },
     {
       id: 3,
       grantId: 3,
       grant: {
-        name: 'test3', programSpecialistName: 'Program Specialist 1', recipientId: 3, number: 'grant number 3', recipient: { id: 3, name: 'test3' },
+        name: 'test3', programSpecialistName: 'Program Specialist 1', recipientId: 3, number: 'grant number 3', stateCode: 'MA', recipient: { id: 3, name: 'test3' },
       },
     },
   ];
@@ -331,7 +345,13 @@ describe('activityReportToCsvRecord', () => {
     });
     const output = await activityReportToCsvRecord(report);
     const {
-      creatorName, lastUpdatedBy, collaborators, programSpecialistName, approvers, recipientInfo,
+      creatorName,
+      lastUpdatedBy,
+      collaborators,
+      programSpecialistName,
+      approvers,
+      recipientInfo,
+      stateCode,
     } = output;
     expect(creatorName).toEqual('Arthur, GS');
     expect(lastUpdatedBy).toEqual('Arthur');
@@ -339,6 +359,7 @@ describe('activityReportToCsvRecord', () => {
     expect(programSpecialistName).toEqual('Program Specialist 1\nProgram Specialist 2\nProgram Specialist 4');
     expect(approvers).toEqual('Test Approver 1\nTest Approver 2\nTest Approver 3');
     expect(recipientInfo).toEqual('test1 - grant number 1 - 1\ntest2 - grant number 2 - 2\ntest3 - grant number 3 - 3\ntest4 - grant number 4 - 4');
+    expect(stateCode).toEqual('NY\nCT\nMA\nNY');
   });
 
   it('transforms goals and objectives into many values', () => {
@@ -352,6 +373,7 @@ describe('activityReportToCsvRecord', () => {
     const output = makeGoalsAndObjectivesObject(objectives);
     expect(output).toEqual({
       'goal-1': 'Goal 1',
+      'goal-1-status': 'Not Started',
       'objective-1.1': 'Objective 1.1',
       'objective-1.1-ttaProvided': 'Training',
       'objective-1.1-status': 'Completed',
@@ -359,6 +381,7 @@ describe('activityReportToCsvRecord', () => {
       'objective-1.2-ttaProvided': 'Training',
       'objective-1.2-status': 'Completed',
       'goal-2': 'Goal 2',
+      'goal-2-status': 'Not Started',
       'objective-2.1': 'Objective 2.1',
       'objective-2.1-ttaProvided': 'Training',
       'objective-2.1-status': 'Completed',
@@ -369,6 +392,7 @@ describe('activityReportToCsvRecord', () => {
       'objective-2.3-ttaProvided': 'Training',
       'objective-2.3-status': 'Completed',
       'goal-3': 'Goal 3',
+      'goal-3-status': 'Not Started',
       'objective-3.1': 'Objective 3.1',
       'objective-3.1-ttaProvided': 'Training',
       'objective-3.1-status': 'Completed',

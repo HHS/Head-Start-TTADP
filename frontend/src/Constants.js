@@ -80,7 +80,7 @@ export const REASONS = [
   'Complaint',
   'COVID-19 response',
   'Full Enrollment',
-  'New Grantee',
+  'New Recipient',
   'New Director or Management',
   'New Program Option',
   'New Staff / Turnover',
@@ -147,7 +147,7 @@ export const OTHER_ENTITY_TYPES = [
 // - src/constants.js
 export const TOPICS = [
   'Behavioral / Mental Health / Trauma',
-  'Child Assessment, Development, Screening',
+  'Child Screening and Assessment',
   'CLASS: Classroom Organization',
   'CLASS: Emotional Support',
   'CLASS: Instructional Support',
@@ -179,7 +179,7 @@ export const TOPICS = [
   'Recordkeeping and Reporting',
   'Safety Practices',
   'Staff Wellness',
-  'Teaching Practices / Teacher-Child Interactions',
+  'Teaching / Caregiving Practices',
   'Technology and Information Systems',
   'Transition Practices',
   'Transportation',

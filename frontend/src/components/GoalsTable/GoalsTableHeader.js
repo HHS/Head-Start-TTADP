@@ -41,7 +41,7 @@ export default function GoalsTableHeader({
   const showAddNewButton = hasActiveGrants && hasButtonPermissions && false;
 
   const onPrint = () => {
-    history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives/print`, {
+    history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives/print${window.location.search}`, {
       selectedGoals,
     });
   };

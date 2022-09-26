@@ -38,7 +38,7 @@ describe('createOrUpdateGoals', () => {
   ];
 
   beforeAll(async () => {
-    recipient = await Recipient.create({ name: 'recipient', id: faker.datatype.number() });
+    recipient = await Recipient.create({ name: 'recipient', id: faker.datatype.number(), uei: faker.datatype.string(12) });
     grants = await Promise.all(
       grants.map((g) => Grant.create({ ...g, recipientId: recipient.id })),
     );
