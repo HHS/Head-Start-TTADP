@@ -7,6 +7,7 @@ import React, {
 import PropTypes from 'prop-types';
 import './DropdownMenu.css';
 import triangleDown from '../images/triange_down.png';
+import useOnClickOutside from '../hooks/useOnOutsideClick';
 
 const ESCAPE_KEY_CODE = 27;
 
@@ -38,10 +39,19 @@ export default function DropdownMenu({
   cancelAriaLabel,
   forwardedRef,
   AlternateActionButton,
+  Trigger,
   onOpen,
+  showApplyButton,
+  direction,
 }) {
   const [menuIsOpen, setMenuIsOpen] = useState(false);
   const menuContents = useRef();
+  const triggerRef = useRef();
+
+  useOnClickOutside(
+    useCallback(() => setMenuIsOpen(false), []),
+    [menuContents, triggerRef],
+  );
 
   const onEscape = useCallback((event) => {
     if (event.keyCode === ESCAPE_KEY_CODE) {
@@ -110,46 +120,67 @@ export default function DropdownMenu({
 
   return (
     <div ref={forwardedRef} className={classNames}>
-      <button
-        onClick={onClick}
-        className={`${buttonClasses} smart-hub--dropdown-menu-toggle-btn display-flex margin-0 no-print`}
-        aria-label={buttonAriaLabel}
-        type="button"
-        disabled={disabled}
-        aria-pressed={menuIsOpen}
-        onBlur={onBlur}
-      >
-        <span>
-          {buttonText}
-        </span>
-        {!styleAsSelect && <img className="margin-left-1" src={triangleDown} alt="" aria-hidden="true" /> }
-      </button>
+      {Trigger ? (
+        <Trigger
+          onClick={onClick}
+          aria-label={buttonAriaLabel}
+          disabled={disabled}
+          aria-pressed={menuIsOpen}
+          onBlur={onBlur}
+          clickOutsideRef={triggerRef}
+        />
+      ) : (
+        <button
+          onClick={onClick}
+          className={`${buttonClasses} smart-hub--dropdown-menu-toggle-btn display-flex margin-0 no-print`}
+          aria-label={buttonAriaLabel}
+          type="button"
+          disabled={disabled}
+          aria-pressed={menuIsOpen}
+          onBlur={onBlur}
+          ref={triggerRef}
+        >
+          <span>
+            {buttonText}
+          </span>
+          {!styleAsSelect && <img className="margin-left-1" src={triangleDown} alt="" aria-hidden="true" /> }
+        </button>
+      )}
 
-      <div className="smart-hub--dropdown-menu--contents shadow-2 no-print" ref={menuContents} hidden={!menuIsOpen || disabled}>
+      <div
+        className="smart-hub--dropdown-menu--contents shadow-2 no-print"
+        ref={menuContents}
+        hidden={!menuIsOpen || disabled}
+        style={{ right: direction === 'left' ? '0' : 'auto' }}
+      >
         {children}
-        { showCancel
-          ? (
-            <div className="margin-top-1 desktop:display-flex flex-justify margin-y-2 margin-x-3 padding-x-3 desktop:padding-x-0">
-              <AlternateActionButton />
-              <div>
-                <button
-                  onClick={onCancelClick}
-                  type="button"
-                  className="usa-button usa-button--unstyled margin-right-2"
-                  aria-label={cancelAriaLabel}
-                >
-                  Cancel
-                </button>
-                <ApplyButton />
-              </div>
-            </div>
-          )
-          : (
-            <div className="margin-2 display-flex flex-justify">
-              <AlternateActionButton />
-              <ApplyButton />
-            </div>
-          ) }
+        {showApplyButton && (
+          <>
+            { showCancel
+              ? (
+                <div className="margin-top-1 desktop:display-flex flex-justify margin-y-2 margin-x-3 padding-x-3 desktop:padding-x-0">
+                  <AlternateActionButton />
+                  <div>
+                    <button
+                      onClick={onCancelClick}
+                      type="button"
+                      className="usa-button usa-button--unstyled margin-right-2"
+                      aria-label={cancelAriaLabel}
+                    >
+                      Cancel
+                    </button>
+                    <ApplyButton />
+                  </div>
+                </div>
+              )
+              : (
+                <div className="margin-2 display-flex flex-justify">
+                  <AlternateActionButton />
+                  <ApplyButton />
+                </div>
+              ) }
+          </>
+        )}
       </div>
     </div>
   );
@@ -177,12 +208,16 @@ DropdownMenu.propTypes = {
     PropTypes.func,
   ]),
   AlternateActionButton: PropTypes.func,
+  Trigger: PropTypes.func,
   onOpen: PropTypes.func,
+  showApplyButton: PropTypes.bool,
+  direction: PropTypes.oneOf(['left', 'right']),
 };
 
 function DefaultAlternateActionButton() {
   return <span />;
 }
+
 DropdownMenu.defaultProps = {
   className: 'margin-left-1',
   buttonAriaLabel: '',
@@ -196,5 +231,8 @@ DropdownMenu.defaultProps = {
   onCancel: () => {},
   forwardedRef: () => {},
   AlternateActionButton: DefaultAlternateActionButton,
+  Trigger: null,
   onOpen: () => {},
+  showApplyButton: true,
+  direction: 'right',
 };
