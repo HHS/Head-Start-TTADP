@@ -197,6 +197,10 @@ async function sendActivityReportCSV(reports, res) {
           key: 'files',
           header: 'Legacy Attachments',
         },
+        {
+          key: 'stateCode',
+          header: 'State code',
+        },
       ],
     };
 

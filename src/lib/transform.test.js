@@ -162,28 +162,28 @@ describe('activityReportToCsvRecord', () => {
       id: 4,
       grantId: 4,
       grant: {
-        name: 'test4', programSpecialistName: 'Program Specialist 4', recipientId: 4, number: 'grant number 4', recipient: { id: 4, name: 'test4' },
+        name: 'test4', programSpecialistName: 'Program Specialist 4', recipientId: 4, number: 'grant number 4', stateCode: 'NY', recipient: { id: 4, name: 'test4' },
       },
     },
     {
       id: 1,
       grantId: 1,
       grant: {
-        name: 'test1', programSpecialistName: 'Program Specialist 1', recipientId: 1, number: 'grant number 1', recipient: { id: 1, name: 'test1' },
+        name: 'test1', programSpecialistName: 'Program Specialist 1', recipientId: 1, number: 'grant number 1', stateCode: 'NY', recipient: { id: 1, name: 'test1' },
       },
     },
     {
       id: 2,
       grantId: 2,
       grant: {
-        name: 'test2', programSpecialistName: 'Program Specialist 2', recipientId: 2, number: 'grant number 2', recipient: { id: 2, name: 'test2' },
+        name: 'test2', programSpecialistName: 'Program Specialist 2', recipientId: 2, number: 'grant number 2', stateCode: 'CT', recipient: { id: 2, name: 'test2' },
       },
     },
     {
       id: 3,
       grantId: 3,
       grant: {
-        name: 'test3', programSpecialistName: 'Program Specialist 1', recipientId: 3, number: 'grant number 3', recipient: { id: 3, name: 'test3' },
+        name: 'test3', programSpecialistName: 'Program Specialist 1', recipientId: 3, number: 'grant number 3', stateCode: 'MA', recipient: { id: 3, name: 'test3' },
       },
     },
   ];
@@ -396,6 +396,7 @@ describe('activityReportToCsvRecord', () => {
       'objective-1.1-topics': topics,
       'objective-1.1-resourcesLinks': resources,
       'objective-1.1-nonResourceLinks': files,
+      stateCode,
     } = output;
     expect(creatorName).toEqual('Arthur');
     expect(lastUpdatedBy).toEqual('Arthur');
@@ -407,6 +408,7 @@ describe('activityReportToCsvRecord', () => {
     expect(topics).toEqual('topic 1\ntopic 2\ntopic 3');
     expect(resources).toEqual('https://test1.gov\nhttps://test2.gov');
     expect(files).toEqual('file1.txt\nfile2.pdf');
+    expect(stateCode).toEqual('NY\nCT\nMA\nNY');
   });
 
   it('transforms goals and objectives into many values', () => {
