@@ -1,14 +1,12 @@
+style
+  include ../email.css
 p Hello,
-|
-|
 p 
-  | #{managerName} has requested changed to report #{displayId}. 
+p #{managerName} requested changed to report #{displayId}. 
 if comments
-  p #{managerName} left the following comments:
-  blockquote !{comments}
-p Access this report in the TTA Hub:  
-a(href=reportPath) #{reportPath}
-p  
-  | Best Regards,
-  | Your TTA Hub Team
-
+  p #{managerName} provided the following comments:
+  blockquote !{comments} 
+a(href=reportPath) Make changes and resubmit this report in the TTA Hub.
+p Best wishes,
+  br
+  | The TTA Hub team

@@ -24,6 +24,6 @@ docker run \
   --rm \
   --user zap:$(id -g) \
   --network=$network \
-  -t owasp/zap2docker-weekly zap-baseline.py \
+  -t owasp/zap2docker-stable:2.11.1 zap-baseline.py \
   -t http://server:8080 \
   -c zap.conf -I -i -r owasp_report.html
