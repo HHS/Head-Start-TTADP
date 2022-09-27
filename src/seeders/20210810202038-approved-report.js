@@ -40,6 +40,7 @@ const reports = [
     virtualDeliveryType: 'video',
     legacyId: null,
     imported: null,
+    version: 1,
   },
 ];
 

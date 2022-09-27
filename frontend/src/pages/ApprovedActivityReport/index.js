@@ -5,140 +5,19 @@ import { Grid, ModalToggleButton } from '@trussworks/react-uswds';
 import { Redirect } from 'react-router-dom';
 import moment from 'moment-timezone';
 import { Helmet } from 'react-helmet';
-import Container from '../../components/Container';
-import './index.scss';
-import ViewTable from './components/ViewTable';
 import { getReport, unlockReport } from '../../fetchers/activityReports';
 import { allRegionsUserHasPermissionTo, canUnlockReports } from '../../permissions';
 import Modal from '../../components/Modal';
+import Container from '../../components/Container';
 import {
-  DATE_DISPLAY_FORMAT,
   LOCAL_STORAGE_DATA_KEY,
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
   LOCAL_STORAGE_EDITABLE_KEY,
-  DATEPICKER_VALUE_FORMAT,
 } from '../../Constants';
 import PrintToPdf from '../../components/PrintToPDF';
-
-/**
- *
- * @param {object} report an activity report object
- * @returns an array of two arrays, each of which contains strings
- */
-function calculateGoalsAndObjectives(report) {
-  const headings = [];
-  const data = [];
-
-  if (report.goalsAndObjectives.length > 0) {
-    // assume recipient
-    const { goalsAndObjectives } = report;
-
-    goalsAndObjectives.forEach((goal, index) => {
-      const displayNumber = index + 1;
-      headings.push(`Goal ${displayNumber}`);
-      data.push(goal.name);
-      headings.push(`Goal ${displayNumber} status`);
-      data.push(goal.status);
-      goal.objectives.forEach((objective, idx) => {
-        const objectiveDisplayNumber = idx + 1;
-        headings.push(`Objective ${objectiveDisplayNumber}`);
-        data.push(objective.title);
-        headings.push(`TTA Provided ${objectiveDisplayNumber}`);
-        data.push(objective.ttaProvided);
-        headings.push(`Objective ${objectiveDisplayNumber} status`);
-        data.push(objective.status);
-      });
-    });
-
-    return [headings, data];
-  }
-
-  // else, we assume other entity
-  const { objectivesWithoutGoals } = report;
-  objectivesWithoutGoals.forEach((objective, index) => {
-    const displayNumber = index + 1;
-    headings.push(`Objective ${displayNumber}`);
-    data.push(objective.title);
-
-    headings.push(`TTA Provided ${displayNumber}`);
-    data.push(objective.ActivityReportObjective.ttaProvided);
-  });
-
-  return [headings, data];
-}
-
-function formatRequester(requester) {
-  if (requester === 'recipient') {
-    return 'Recipient';
-  }
-
-  if (requester === 'regionalOffice') {
-    return 'Regional Office';
-  }
-
-  return '';
-}
-
-function formatMethod(method, delivery) {
-  let methodOfContact = '';
-
-  if (method.length > 1) {
-    methodOfContact = 'Training and Technical Assistance';
-  } else if (method[0].toLowerCase() === 'training') {
-    methodOfContact = 'Training';
-  } else if (method[0].toLowerCase().replace(' ', '-') === 'technical-assistance') {
-    methodOfContact = 'Technical Assistance';
-  }
-
-  if (delivery) {
-    methodOfContact = `${methodOfContact}, Virtual (${delivery})`;
-  }
-
-  return methodOfContact;
-}
-
-function mapAttachments(attachments) {
-  if (Array.isArray(attachments) && attachments.length > 0) {
-    return (
-      <ul>
-        {
-          attachments.map((attachment) => (
-            <li key={attachment.url.url}>
-              <a
-                href={attachment.url.url}
-                target={attachment.originalFileName.endsWith('.txt') ? '_blank' : '_self'}
-                rel="noreferrer"
-              >
-                {
-                  `${attachment.originalFileName}
-                   ${attachment.originalFileName.endsWith('.txt')
-                    ? ' (opens in new tab)'
-                    : ''}`
-                }
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-    );
-  }
-
-  return [];
-}
-
-function createResourceMarkup(resources) {
-  return resources.map((resource) => {
-    try {
-      return <a href={new URL(resource)}>{resource}</a>;
-    } catch (err) {
-      return resource;
-    }
-  });
-}
-
-function formatSimpleArray(arr) {
-  return arr.sort().join(', ');
-}
+import './index.scss';
+import ApprovedReportV1 from './components/ApprovedReportV1';
+import ApprovedReportV2 from './components/ApprovedReportV2';
 
 export default function ApprovedActivityReport({ match, user }) {
   const [notAuthorized, setNotAuthorized] = useState(false);
@@ -148,35 +27,37 @@ export default function ApprovedActivityReport({ match, user }) {
   const [justUnlocked, updatedJustUnlocked] = useState(false);
 
   const [report, setReport] = useState({
+    version: 'loading',
     reportId: 0,
     displayId: '',
     recipientType: 'Recipient',
-    creator: '',
-    collaborators: [],
-    approvingManagers: '',
-    attendees: '',
-    participantCount: '',
-    reasons: '',
-    targetPopulations: '',
-    startDate: '',
-    endDate: '',
-    duration: '',
-    recipients: '',
-    method: '',
-    requester: '',
-    topics: '',
-    ECLKCResources: '',
-    nonECLKCResourcesUsed: '',
-    attachments: [],
-    context: '',
-    goalsAndObjectiveHeadings: [],
-    goalsAndObjectives: [],
-    managerNotes: '',
-    creatorNotes: '',
-    recipientNextSteps: [],
-    specialistNextSteps: [],
+    activityRecipients: [],
+    targetPopulations: [],
+    approvers: [],
+    activityReportCollaborators: [],
+    participants: [],
+    numberOfParticipants: 0,
+    reason: [],
+    author: { fullName: '' },
     createdAt: '',
     approvedAt: '',
+    recipientNextSteps: [],
+    specialistNextSteps: [],
+    goalsAndObjectives: [],
+    objectivesWithoutGoals: [],
+    context: '',
+    additionalNotes: '',
+    files: [],
+    ECLKCResourcesUsed: [],
+    nonECLKCResourcesUsed: [],
+    topics: [],
+    requester: '',
+    virtualDeliveryType: '',
+    duration: 0,
+    endDate: '',
+    startDate: '',
+    creatorNotes: '',
+    ttaType: ['Training'],
   });
 
   const modalRef = useRef();
@@ -211,84 +92,8 @@ export default function ApprovedActivityReport({ match, user }) {
           return;
         }
 
-        // first table
-        const isRecipient = data.activityRecipientType === 'recipient';
-        let recipientType = isRecipient ? 'Recipient' : 'Other entity';
-        if (data.activityRecipients.length > 1) {
-          recipientType = isRecipient ? 'Recipients' : 'Other entities';
-        }
-
-        const arRecipients = data.activityRecipients.map((arRecipient) => arRecipient.name).sort().join(', ');
-        const targetPopulations = data.targetPopulations.map((population) => population).join(', '); // Approvers.
-        const approvingManagers = data.approvers.map((a) => a.User.fullName).join(', ');
-        const collaborators = data.activityReportCollaborators.map(
-          (a) => a.fullName,
-        );
-
-        // Approver Notes.
-        const managerNotes = data.approvers.map((a) => `
-        <h2>${a.User.fullName}:</h2>
-        ${a.note ? a.note : '<p>No manager notes</p>'}`).join('');
-
-        const attendees = formatSimpleArray(data.participants);
-        const participantCount = data.numberOfParticipants.toString();
-        const reasons = formatSimpleArray(data.reason);
-        const startDate = moment(data.startDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
-        const endDate = moment(data.endDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
-        const duration = `${data.duration} hours`;
-        const method = formatMethod(data.ttaType, data.virtualDeliveryType);
-        const requester = formatRequester(data.requester);
-
-        // second table
-        const topics = formatSimpleArray(data.topics || []);
-        const ECLKCResources = createResourceMarkup(data.ECLKCResourcesUsed);
-        const nonECLKCResourcesUsed = createResourceMarkup(data.nonECLKCResourcesUsed);
-        const attachments = mapAttachments(data.files);
-
-        // third table
-        const {
-          context, id, displayId, additionalNotes,
-        } = data;
-        const [goalsAndObjectiveHeadings, goalsAndObjectives] = calculateGoalsAndObjectives(data);
-
-        // next steps table
-        const specialistNextSteps = data.specialistNextSteps.map((step) => step.note);
-        const recipientNextSteps = data.recipientNextSteps.map((step) => step.note);
-        const approvedAt = data.approvedAt ? moment(data.approvedAt).format(DATE_DISPLAY_FORMAT) : '';
-        const createdAt = moment(data.createdAt).format(DATE_DISPLAY_FORMAT);
-
         // review and submit table
-        setReport({
-          reportId: id,
-          displayId,
-          recipientType,
-          creator: data.author.fullName,
-          collaborators,
-          approvingManagers,
-          attendees,
-          participantCount,
-          reasons,
-          targetPopulations,
-          startDate,
-          endDate,
-          duration,
-          recipients: arRecipients,
-          method,
-          requester,
-          topics,
-          ECLKCResources,
-          nonECLKCResourcesUsed,
-          attachments,
-          context,
-          goalsAndObjectiveHeadings,
-          goalsAndObjectives,
-          managerNotes,
-          creatorNotes: additionalNotes,
-          recipientNextSteps,
-          specialistNextSteps,
-          createdAt,
-          approvedAt,
-        });
+        setReport(data);
       } catch (err) {
         // eslint-disable-next-line no-console
         console.log(err);
@@ -347,34 +152,23 @@ export default function ApprovedActivityReport({ match, user }) {
   const {
     reportId,
     displayId,
-    recipientType,
-    creator,
-    collaborators,
-    approvingManagers,
-    attendees,
-    participantCount,
-    reasons,
-    targetPopulations,
+    author,
     startDate,
-    endDate,
-    duration,
-    recipients,
-    method,
-    requester,
-    topics,
-    ECLKCResources,
-    nonECLKCResourcesUsed,
-    attachments,
-    context,
-    goalsAndObjectiveHeadings,
-    goalsAndObjectives,
-    managerNotes,
-    creatorNotes,
-    recipientNextSteps,
-    specialistNextSteps,
-    createdAt,
-    approvedAt,
+    version,
   } = report;
+
+  const ReportComponent = () => {
+    switch (version) {
+      case 1:
+        return <ApprovedReportV1 data={report} />;
+      case 2:
+        return <ApprovedReportV2 data={report} />;
+      case 'loading':
+        return <Container className="ttahub-activity-report-view margin-top-2 minh-tablet">Loading...</Container>;
+      default:
+        return <ApprovedReportV1 data={report} />;
+    }
+  };
 
   const onUnlock = async () => {
     await unlockReport(reportId);
@@ -398,7 +192,7 @@ export default function ApprovedActivityReport({ match, user }) {
         <title>
           {displayId}
           {' '}
-          {creator}
+          {author.fullName}
           {' '}
           {startDate}
         </title>
@@ -461,137 +255,7 @@ export default function ApprovedActivityReport({ match, user }) {
           must be re-submitted for approval.
         </>
       </Modal>
-      <Container className="ttahub-activity-report-view margin-top-2">
-        <h1 className="landing">
-          TTA activity report
-          {' '}
-          {displayId}
-        </h1>
-        <div className="ttahub-activity-report-view-creator-data margin-bottom-4">
-          <p>
-            <strong>Creator:</strong>
-            {' '}
-            {creator}
-          </p>
-          <p className="no-print">
-            <strong>Date created:</strong>
-            {' '}
-            {createdAt}
-          </p>
-          <p>
-            <strong>Collaborators:</strong>
-            {' '}
-            {collaborators.map((collaborator) => collaborator).join(', ')}
-          </p>
-          <p>
-            <strong>Managers:</strong>
-            {' '}
-            {approvingManagers}
-          </p>
-          <p>
-            <strong>Date approved:</strong>
-            {' '}
-            {approvedAt}
-          </p>
-        </div>
-        <ViewTable
-          caption="Activity summary"
-          headings={
-            [
-              recipientType,
-              'Reason',
-              'Target populations',
-              'Start date',
-              'End date',
-              'Topics',
-              'Duration',
-              'Number of participants',
-              'Attendees',
-              'Method of contact',
-              'Requested by',
-              'Context',
-            ]
-          }
-          className="activity-summary-table"
-          data={
-            [
-              recipients,
-              reasons,
-              targetPopulations,
-              startDate,
-              endDate,
-              topics,
-              duration,
-              participantCount,
-              attendees,
-              method,
-              requester,
-              context,
-            ]
-          }
-
-        />
-        <ViewTable
-          caption="Resources"
-          headings={
-            [
-              'OHS / ECLKC resources',
-              'Non-ECLKC resources',
-              'Supporting attachments',
-            ]
-          }
-          data={
-            [
-              ECLKCResources,
-              nonECLKCResourcesUsed,
-              attachments,
-            ]
-          }
-          allowBreakWithin={false}
-        />
-        <ViewTable
-          caption="TTA Provided"
-          headings={[
-            ...goalsAndObjectiveHeadings,
-          ]}
-          data={
-            [
-              ...goalsAndObjectives,
-            ]
-          }
-        />
-        <ViewTable
-          caption="Next steps"
-          headings={
-            [
-              'Specialist next steps',
-              "Recipient's next steps",
-            ]
-          }
-          data={
-            [
-              specialistNextSteps,
-              recipientNextSteps,
-            ]
-          }
-        />
-        <ViewTable
-          className="no-print"
-          caption="Review and Submit"
-          headings={
-            [
-              'Creator notes',
-              'Manager notes',
-            ]
-          }
-          data={
-            [
-              creatorNotes,
-              managerNotes,
-            ]
-          }
-        />
-      </Container>
+      {ReportComponent()}
     </>
   );
 }

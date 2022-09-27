@@ -2,16 +2,20 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import {
   fireEvent,
-  render, screen, waitFor, within,
+  render,
+  screen,
+  waitFor,
+  act,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { act } from 'react-dom/test-utils';
 import fetchMock from 'fetch-mock';
 
 import ApprovedActivityReport from '../index';
+import { SCOPE_IDS } from '../../../Constants';
 
 describe('Activity report print and share view', () => {
   const report = {
+    version: 1,
     regionId: 45,
     activityRecipients: [
       { name: 'Tim', grantId: 400 },
@@ -64,6 +68,15 @@ describe('Activity report print and share view', () => {
         ActivityReportObjective: {
           ttaProvided: 'All of it',
         },
+        topics: [{ label: 'being fancy' }],
+        resources: [{ value: 'http://www.website.com' }],
+        status: 'Test status',
+        files: [
+          {
+            url: { url: 'http://www.website.com' },
+            originalFileName: 'file.pdf',
+          },
+        ],
       },
     ],
     additionalNotes: '',
@@ -75,17 +88,17 @@ describe('Activity report print and share view', () => {
       {
         regionId: 45,
         userId: 2,
-        scopeId: 1,
+        scopeId: SCOPE_IDS.SITE_ACCESS,
       },
       {
         regionId: 45,
         userId: 2,
-        scopeId: 2,
+        scopeId: SCOPE_IDS.ADMIN,
       },
       {
         regionId: 45,
         userId: 2,
-        scopeId: 3,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
       },
     ],
   };
@@ -104,8 +117,6 @@ describe('Activity report print and share view', () => {
   afterEach(() => fetchMock.restore());
 
   beforeAll(() => {
-    // navigator.clipboard = jest.fn();
-    // navigator.clipboard.writeText = jest.fn(() => Promise.resolve());
     window.print = jest.fn();
   });
 
@@ -135,9 +146,7 @@ describe('Activity report print and share view', () => {
       }],
       requester: 'chud',
     });
-    fetchMock.get('/api/activity-reports/5002', {
-      regionId: 45,
-    });
+    fetchMock.get('/api/activity-reports/5002', 500);
 
     fetchMock.get('/api/activity-reports/5003', {
       ...report,
@@ -147,6 +156,52 @@ describe('Activity report print and share view', () => {
         { name: 'Anti-tim' },
       ],
     });
+
+    fetchMock.get('/api/activity-reports/5004', {
+      ...report,
+      objectivesWithoutGoals: [
+        {
+          title: 'Objective',
+          ActivityReportObjective: {
+            ttaProvided: 'All of it',
+          },
+          topics: [{ label: 'being fancy' }],
+          resources: [{ value: 'http://www.website.com' }],
+          status: 'Test status',
+          files: [],
+        },
+      ],
+      version: 2,
+    });
+
+    fetchMock.get('/api/activity-reports/5005', {
+      ...report,
+      goalsAndObjectives: [{
+        name: 'Goal',
+        objectives: [
+          {
+            title: 'Objective',
+            ActivityReportObjective: {
+              ttaProvided: 'All of it',
+            },
+            topics: [{ label: 'being fancy' }],
+            resources: [{ value: 'http://www.website.com' }],
+            status: 'Test status',
+            files: [
+              {
+                url: { url: 'http://www.website.com' },
+                originalFileName: 'file.pdf',
+              },
+            ],
+          },
+        ],
+      }],
+    });
+
+    fetchMock.get('/api/activity-reports/5006', {
+      ...report,
+      version: null,
+    });
   });
 
   it('renders an activity report in clean view', async () => {
@@ -154,33 +209,6 @@ describe('Activity report print and share view', () => {
 
     await waitFor(() => {
       expect(screen.getByText(report.author.fullName)).toBeInTheDocument();
-      expect(screen.getByText(/john q fullname:/i)).toBeInTheDocument();
-      expect(screen.getByText(/john smith: note/i)).toBeInTheDocument();
-      expect(screen.getByText(report.activityRecipients.map((arRecipient) => arRecipient.name).join(', '))).toBeInTheDocument();
-      expect(screen.getByText(report.reason.join(', '))).toBeInTheDocument();
-      expect(screen.getByText(/august 1, 1968/i)).toBeInTheDocument();
-      expect(screen.getByText(/august 2, 1969/i)).toBeInTheDocument();
-      expect(screen.getByText(`${report.duration} hours`)).toBeInTheDocument();
-      expect(screen.getByText(/training, virtual \(phone\)/i)).toBeInTheDocument();
-
-      const recipientRowHeader = screen.getByRole('rowheader', { name: /recipients/i });
-      expect(within(recipientRowHeader).getByText('Recipients')).toBeInTheDocument();
-
-      const resourcesTable = screen.getByRole('table', { name: /resources/i });
-      expect(within(resourcesTable).getByRole('link', { name: /http:\/\/website/i })).toBeInTheDocument();
-
-      expect(screen.getByRole('rowheader', { name: /supporting attachments/i })).toBeInTheDocument();
-      expect(screen.getByRole('rowheader', { name: /context/i })).toBeInTheDocument();
-      expect(screen.getByRole('rowheader', { name: /objective 1/i })).toBeInTheDocument();
-
-      expect(screen.getByText('Objective')).toBeInTheDocument();
-
-      expect(screen.getByRole('rowheader', { name: /tta provided 1/i })).toBeInTheDocument();
-      expect(screen.getByText(/all of it/i)).toBeInTheDocument();
-
-      expect(screen.getByText(/review and submit/i)).toBeInTheDocument();
-      expect(screen.getByRole('rowheader', { name: /creator notes/i })).toBeInTheDocument();
-      expect(screen.getByRole('rowheader', { name: /manager notes/i })).toBeInTheDocument();
     });
   });
 
@@ -188,9 +216,7 @@ describe('Activity report print and share view', () => {
     act(() => renderApprovedActivityReport(5001));
 
     await waitFor(() => {
-      expect(screen.getByText(/technical assistance, virtual \(phone\)/i)).toBeInTheDocument();
-      expect(screen.getByText('Goal')).toBeInTheDocument();
-      expect(screen.getByText(/test 2/i)).toBeInTheDocument();
+      expect(fetchMock.called('/api/activity-reports/5001')).toBeTruthy();
     });
   });
 
@@ -261,12 +287,6 @@ describe('Activity report print and share view', () => {
     const unlockButton = await screen.findByRole('button', { name: /unlock report/i });
     act(() => userEvent.click(unlockButton));
 
-    // I had to add hidden true to the following test,
-    // which says to me this test is borked somehow, but
-    // I am able to see it, have the screen reader read it, tab around...
-    // I also don't see what in the HTML is hiding it?
-
-    // todo - investigate this
     const heading = await screen.findByRole('heading', { name: /unlock activity report/i, hidden: true });
     expect(heading).toBeInTheDocument();
   });
@@ -274,5 +294,45 @@ describe('Activity report print and share view', () => {
   it('hides unlock report button', async () => {
     act(() => renderApprovedActivityReport(5000));
     expect(screen.queryByText(/unlock report/i)).not.toBeInTheDocument();
+  });
+
+  it('renders a version 2 report', async () => {
+    act(() => renderApprovedActivityReport(5004));
+    await waitFor(() => {
+      expect(screen.getByText(report.author.fullName)).toBeInTheDocument();
+    });
+  });
+
+  it('renders a version 2 report with goals', async () => {
+    act(() => renderApprovedActivityReport(5005));
+    await waitFor(() => {
+      expect(screen.getByText(report.author.fullName)).toBeInTheDocument();
+    });
+  });
+
+  it('handles a malformed url', async () => {
+    act(() => renderApprovedActivityReport('butter-lover'));
+    await waitFor(() => {
+      expect(screen.getByText(/sorry, something went wrong\./i)).toBeInTheDocument();
+    });
+  });
+
+  it('handles a missing version number', async () => {
+    act(() => renderApprovedActivityReport(5006));
+    await waitFor(() => {
+      expect(screen.getByText(report.author.fullName)).toBeInTheDocument();
+    });
+  });
+
+  it('handles unavailable local storage', async () => {
+    const oldLocalStorage = global.localStorage;
+    delete global.localStorage;
+
+    act(() => renderApprovedActivityReport(5005));
+    await waitFor(() => {
+      expect(screen.getByText(report.author.fullName)).toBeInTheDocument();
+    });
+
+    global.localStorage = oldLocalStorage;
   });
 });

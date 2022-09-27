@@ -110,6 +110,9 @@ module.exports = (sequelize, DataTypes) => {
     deliveryMethod: {
       type: DataTypes.STRING,
     },
+    version: {
+      type: DataTypes.INTEGER,
+    },
     duration: {
       type: DataTypes.DECIMAL(3, 1),
     },
