@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import PlusButton from './PlusButton';
 import QuestionTooltip from './QuestionTooltip';
+import UnusedData from './UnusedData';
 import colors from '../../colors';
 import './ResourceRepeater.css';
 
@@ -19,22 +20,28 @@ export default function ResourceRepeater({
   status,
   isOnReport,
   isLoading,
+  goalStatus,
 }) {
   const resourcesWrapper = useRef();
 
-  const readOnly = status === 'Suspended' || (status === 'Not Started' && isOnReport);
+  const readOnly = status === 'Suspended' || (goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed';
 
   if (readOnly) {
-    if (!resources.length) {
+    const onlyResourcesWithValues = resources.filter((resource) => resource.value);
+    if (!onlyResourcesWithValues.length) {
       return null;
     }
 
     return (
       <>
-        <p className="usa-prose text-bold margin-bottom-1">Resource links</p>
+        <p className="usa-prose text-bold margin-bottom-0">Resource links</p>
         <ul className="usa-list usa-list--unstyled">
-          {resources.map((resource) => (
-            <li key={resource.key}>{resource.value}</li>
+          {onlyResourcesWithValues.map((resource) => (
+            !(status === 'Completed' && goalStatus === 'Closed') || resource.onAnyReport ? (
+              <li key={uuidv4()}>
+                <a href={resource.value}>{resource.value}</a>
+              </li>
+            ) : <UnusedData key={uuidv4()} value={resource.value} isLink />
           ))}
         </ul>
       </>
@@ -60,7 +67,7 @@ export default function ResourceRepeater({
   };
 
   const { editableResources, fixedResources } = resources.reduce((acc, resource) => {
-    if (resource.isOnApprovedReport) {
+    if (resource.onAnyReport) {
       acc.fixedResources.push(resource);
     } else {
       acc.editableResources.push(resource);
@@ -73,10 +80,10 @@ export default function ResourceRepeater({
     <>
       { fixedResources.length ? (
         <>
-          <p className="usa-prose text-bold margin-bottom-1">Resource links</p>
+          <p className="usa-prose text-bold margin-bottom-0">Resource links</p>
           <ul className="usa-list usa-list--unstyled">
             {fixedResources.map((resource) => (
-              <li key={resource.key}>{resource.value}</li>
+              <li key={resource.key}><a href={resource.value}>{resource.value}</a></li>
             ))}
           </ul>
         </>
@@ -84,7 +91,7 @@ export default function ResourceRepeater({
 
       <FormGroup error={error.props.children}>
         <div ref={resourcesWrapper}>
-          <Label htmlFor="resources" className={!fixedResources.length ? 'text-bold' : ''}>
+          <Label htmlFor="resources" className={fixedResources.length ? 'text-bold' : ''}>
             {!fixedResources.length ? 'Resource links' : 'Add resource link'}
             <QuestionTooltip
               text="Copy and paste addresses of web pages describing resources used for this objective. Usually this is an ECLKC page."
@@ -142,6 +149,7 @@ ResourceRepeater.propTypes = {
   status: PropTypes.string.isRequired,
   isOnReport: PropTypes.bool.isRequired,
   isLoading: PropTypes.bool,
+  goalStatus: PropTypes.string.isRequired,
 };
 
 ResourceRepeater.defaultProps = {

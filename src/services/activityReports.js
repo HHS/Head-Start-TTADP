@@ -123,14 +123,28 @@ async function saveReportCollaborators(activityReportId, collaborators) {
     ],
   });
 
-  if (updatedReportCollaborators && updatedReportCollaborators.length > 0) {
-    // eslint-disable-next-line max-len
-    await Promise.all(updatedReportCollaborators.map((collaborator) => Promise.all(collaborator.user.roles.map(async (role) => CollaboratorRole.findOrCreate({
-      where: {
-        activityReportCollaboratorId: collaborator.id,
-        roleId: role.id,
-      },
-    })))));
+  // Get collaborator roles to add.
+  const rolesToAdd = updatedReportCollaborators.filter(
+    (c) => !c.collaboratorRoles.length
+      && c.user.role.length,
+  );
+
+  // If we have collaborators missing roles.
+  if (rolesToAdd && rolesToAdd.length > 0) {
+    let updatedRoles = [];
+    rolesToAdd.forEach((collaborator) => {
+      // Set collaborator roles.
+      const { role } = collaborator.user;
+      // Concat list of collaborator role updates promises.
+      updatedRoles = updatedRoles.concat(role.map((r) => CollaboratorRole.findOrCreate(
+        { where: { activityReportCollaboratorId: collaborator.id, role: r } },
+      )));
+    });
+
+    // Resolve all role update promises.
+    if (updatedRoles && updatedRoles.length > 0) {
+      await Promise.all(updatedRoles);
+    }
   }
 }
 
@@ -291,10 +305,83 @@ export function activityReportByLegacyId(legacyId) {
   });
 }
 
+export async function populateRecipientInfo(activityRecipients, grantPrograms) {
+  /*
+      Hopefully this code is temporary until we figure
+      out why joining programs to grants causes issues.
+  */
+  return activityRecipients.map((recipient) => {
+    if (recipient.grant && grantPrograms.length) {
+      const programsToAssign = grantPrograms.filter((p) => p.grantId === recipient.grantId);
+      // Programs.
+      Object.defineProperty(
+        recipient.grant,
+        'programs',
+        {
+          value: programsToAssign,
+          enumerable: true,
+        },
+      );
+
+      // Program Types.
+      const programTypes = programsToAssign && programsToAssign.length > 0
+        ? [...new Set(
+          programsToAssign.filter((p) => (p.programType))
+            .map((p) => (p.programType)).sort(),
+        )] : [];
+      Object.defineProperty(
+        recipient.grant,
+        'programTypes',
+        {
+          value: programTypes,
+          enumerable: true,
+        },
+      );
+
+      // Number with Program Types.
+      const numberWithProgramTypes = `${recipient.grant.number} ${programTypes.length > 0 ? ` - ${programTypes.join(', ')}` : ''}`;
+
+      Object.defineProperty(
+        recipient.grant,
+        'numberWithProgramTypes',
+        {
+          value: numberWithProgramTypes,
+          enumerable: true,
+        },
+      );
+
+      // Name.
+      let nameValue;
+      if (recipient.grant.recipient) {
+        nameValue = `${recipient.grant.recipient.name} - ${recipient.grant.numberWithProgramTypes}`;
+      } else {
+        nameValue = `${recipient.grant.numberWithProgramTypes}`;
+      }
+      Object.defineProperty(
+        recipient.grant,
+        'name',
+        {
+          value: nameValue,
+          enumerable: true,
+        },
+      );
+
+      Object.defineProperty(
+        recipient,
+        'name',
+        {
+          value: nameValue,
+          enumerable: true,
+        },
+      );
+    }
+    return { ...recipient };
+  });
+}
+
 export async function activityReportAndRecipientsById(activityReportId) {
   const arId = parseInt(activityReportId, DECIMAL_BASE);
 
-  // TODO - explore a way to move this query inline to the ActivityReport.findOne
   const goalsAndObjectives = await getGoalsForReport(arId);
 
   const recipients = await ActivityRecipient.findAll({
@@ -305,10 +392,28 @@ export async function activityReportAndRecipientsById(activityReportId) {
       'id',
       'name',
       'activityRecipientId',
+      'grantId',
+    ],
+    include: [
+      {
+        model: Grant,
+        as: 'grant',
+      },
     ],
   });
 
-  const activityRecipients = recipients.map((recipient) => {
+  // Get all grant programs at once to reduce DB calls.
+  const grantIds = recipients.map((a) => a.grantId);
+  const grantPrograms = await Program.findAll({
+    where: {
+      grantId: grantIds,
+    },
+  });
+
+  // Populate Activity Recipient info.
+  const updatedRecipients = await populateRecipientInfo(recipients, grantPrograms);
+
+  const activityRecipients = updatedRecipients.map((recipient) => {
     const name = recipient.otherEntity ? recipient.otherEntity.name : recipient.grant.name;
     const activityRecipientId = recipient.otherEntity
       ? recipient.otherEntity.dataValues.id : recipient.grant.dataValues.id;
@@ -632,7 +737,7 @@ export async function activityReports(
     where: {
       activityReportId: reportIds,
     },
-    attributes: ['id', 'name', 'activityRecipientId', 'activityReportId'],
+    attributes: ['id', 'name', 'activityRecipientId', 'activityReportId', 'grantId'],
     // sorting these just so the order is testable
     order: [
       [sequelize.col('grant.recipient.name'), sortDir],
@@ -664,13 +769,24 @@ export async function activityReports(
     ],
   });
 
+  // Get all grant programs at once to reduce DB calls.
+  const grantIds = recipients.map((a) => a.grantId);
+  const grantPrograms = await Program.findAll({
+    where: {
+      grantId: grantIds,
+    },
+  });
+
+  // Populate Activity Recipient info.
+  await populateRecipientInfo(recipients, grantPrograms);
+
   return { ...reports, recipients, topics };
 }
 
 export async function activityReportsForCleanup(userId) {
   const threeMonthsAgo = moment().subtract(3, 'months').format('YYYY-MM-DD');
 
-  return ActivityReport.findAll(
+  return ActivityReport.unscoped().findAll(
     {
       where: {
         // we only cleanup reports from the last three months
@@ -1123,6 +1239,12 @@ async function getDownloadableActivityReports(where, separate = true) {
         as: 'activityRecipients',
         required: false,
         separate,
+        include: [
+          {
+            model: Grant,
+            as: 'grant',
+          },
+        ],
       },
       {
         model: File,
@@ -1207,7 +1329,22 @@ async function getDownloadableActivityReports(where, separate = true) {
     order: [['id', 'DESC']],
   };
 
-  return batchQuery(query, 2000);
+  // Get reports.
+  const reports = await batchQuery(query, 2000);
+
+  // Populate Activity Recipient info.
+  const updatedReportPromises = reports.map(async (r) => {
+    const grantIds = r.activityRecipients.map((a) => a.grantId);
+    // Get all grant programs at once to reduce DB calls.
+    const grantPrograms = await Program.findAll({
+      where: {
+        grantId: grantIds,
+      },
+    });
+    const updatedRecipients = await populateRecipientInfo(r.activityRecipients, grantPrograms);
+    return { ...r, activityRecipients: updatedRecipients };
+  });
+  return Promise.all(updatedReportPromises);
 }
 
 export async function getAllDownloadableActivityReports(

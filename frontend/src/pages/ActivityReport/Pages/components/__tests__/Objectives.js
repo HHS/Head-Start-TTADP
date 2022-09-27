@@ -51,6 +51,7 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
         roles={['Central office']}
         goalId={goalId}
         noObjectiveError={<></>}
+        goalStatus="In Progress"
       />
       <button type="button">blur me</button>
     </FormProvider>
@@ -106,6 +107,55 @@ describe('Objectives', () => {
     await selectEvent.select(select, ['Test objective 2']);
     await screen.findByLabelText(/test objective 2/i);
   });
+
+  it('removing an existing objective add it back to the list of available objectives', async () => {
+    const objectiveOptions = [{
+      value: 3,
+      label: 'Test objective 1',
+      title: 'Test objective 1',
+      ttaProvided: '<p>hello</p>',
+      activityReports: [],
+      resources: [],
+      topics: [],
+      roles: [],
+      status: 'In Progress',
+    },
+    {
+      value: 4,
+      label: 'Test objective 2',
+      title: 'Test objective 2',
+      ttaProvided: '<p>hello 2</p>',
+      activityReports: [],
+      resources: [],
+      topics: [],
+      roles: [],
+      status: 'Not Started',
+    }];
+    render(<RenderObjectives objectiveOptions={objectiveOptions} />);
+    let select = await screen.findByLabelText(/Select TTA objective/i);
+
+    // Initial objective select.
+    await selectEvent.select(select, ['Test objective 1']);
+    await waitFor(() => expect(screen.queryByText(/objective status/i)).not.toBeNull());
+
+    // Add second objective.
+    const addObjBtn = screen.getByRole('button', { name: /add new objective/i });
+    userEvent.click(addObjBtn);
+    select = screen.queryAllByLabelText(/Select TTA objective/i);
+    await selectEvent.select(select[1], ['Test objective 2']);
+
+    // Remove first objective.
+    const removeObjBtns = screen.queryAllByRole('button', { name: /remove this objective/i });
+    userEvent.click(removeObjBtns[0]);
+    const removeBtns = screen.queryAllByRole('button', { name: /this button will remove the objective from the activity report/i, hidden: true });
+    userEvent.click(removeBtns[0]);
+
+    // Attempt to select objective 1 now available.
+    select = await screen.findByLabelText(/Select TTA objective/i);
+    await selectEvent.select(select, ['Test objective 1']);
+    expect(await screen.findByText('In Progress')).toBeVisible();
+  });
+
   it('the button adds a new objective', async () => {
     const objectiveOptions = [{
       value: 3,

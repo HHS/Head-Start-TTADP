@@ -3,8 +3,10 @@
 // way they did in thier examples
 /* eslint-disable arrow-body-style */
 import React, { useState, useMemo, useContext } from 'react';
+import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
+import { uniqBy } from 'lodash';
 import { Alert, Fieldset } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useFormContext, useController } from 'react-hook-form/dist/index.ie11';
@@ -145,7 +147,7 @@ const GoalsObjectives = ({
     const objectives = getValues(`goals[${index}].objectives`) || [];
 
     setValue('goalForEditing.objectives', objectives);
-    setValue('goalEndDate', goal.endDate);
+    setValue('goalEndDate', moment(goal.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'));
     setValue('goalName', goal.name);
 
     toggleGoalForm(false);
@@ -189,22 +191,15 @@ const GoalsObjectives = ({
   const collaborators = watch('activityReportCollaborators');
   const author = watch('author');
 
-  // create an exclusive set of roles
-  // from the collaborators & author
+  // create an exclusive set of roles from the collaborators & author
   const roles = useMemo(() => {
     const collabs = collaborators || [];
     const auth = author || { roles: [] };
-    const authorRoles = auth.roles.map((r) => r.fullName);
+    const authorRoles = auth.roles;
 
-    const collaboratorRoles = collabs.map((c) => (
-      c.collaboratorRoles ? c.collaboratorRoles.map((r) => r.fullName) : []
-    )).flat();
+    const collaboratorRoles = collabs.map((c) => (c.collaboratorRoles || [])).flat();
 
-    return Array.from(
-      new Set(
-        [...collaboratorRoles, ...authorRoles],
-      ),
-    );
+    return uniqBy([...authorRoles, ...collaboratorRoles], 'id');
   }, [author, collaborators]);
 
   return (

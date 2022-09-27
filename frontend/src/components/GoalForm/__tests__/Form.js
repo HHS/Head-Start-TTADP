@@ -55,6 +55,7 @@ describe('Goal Form > Form component', () => {
       clearEmptyObjectiveError={jest.fn()}
       onUploadFile={jest.fn()}
       validateGoalNameAndRecipients={jest.fn()}
+      roleOptions={[{ id: 1, fullName: 'Role 1' }]}
     />);
   };
 

@@ -52,6 +52,10 @@ describe('ObjectiveForm', () => {
         setObjective={setObjective}
         errors={[<></>, <></>, <></>]}
         goalStatus={goalStatus}
+        onUploadFiles={jest.fn()}
+        roleOptions={[
+          { id: 1, fullName: 'Grantee Specialist' },
+        ]}
         topicOptions={[
           'Behavioral / Mental Health / Trauma',
           'Child Screening and Assessment',
@@ -122,7 +126,7 @@ describe('ObjectiveForm', () => {
     const statusSelect = await screen.findByLabelText('Objective status');
     userEvent.selectOptions(statusSelect, 'Completed');
 
-    expect(setObjective).toHaveBeenCalledWith({ ...defaultObjective, status: 'Completed' });
+    expect(setObjective).toHaveBeenCalledWith({ ...defaultObjective, status: 'Completed', roles: [] });
 
     const roleSelect = await screen.findByLabelText(/Specialist roles providing TTA/i);
     userEvent.click(roleSelect);
@@ -130,7 +134,7 @@ describe('ObjectiveForm', () => {
     expect(setObjectiveError).toHaveBeenCalledWith(index, [<></>, <></>, <></>, <span className="usa-error-message">{objectiveRoleError}</span>]);
 
     await selectEvent.select(roleSelect, 'Grantee Specialist');
-    expect(setObjective).toHaveBeenCalledWith({ ...defaultObjective, status: 'In Progress', roles: ['Grantee Specialist'] });
+    expect(setObjective).toHaveBeenCalledWith({ ...defaultObjective, status: 'In Progress', roles: [{ fullName: 'Grantee Specialist', id: 1 }] });
   });
 
   it('displays the correct label based on resources from api', async () => {
