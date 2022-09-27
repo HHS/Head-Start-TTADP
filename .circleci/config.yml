@@ -182,7 +182,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "test-owasp-image-update"
+    default: "main-ar-redesign"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "kw-fix-uei"
@@ -314,7 +314,7 @@ jobs:
           command: ./bin/prod-style-server
       - run:
           name: Pull OWASP ZAP docker image
-          command: docker pull owasp/zap2docker-weekly
+          command: docker pull owasp/zap2docker-stable:s2022-08-01
       - run:
           name: Make reports directory group writeable
           command: chmod g+w reports
