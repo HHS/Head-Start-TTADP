@@ -192,3 +192,51 @@ export const ALL_PARTICIPANTS = [
   ...RECIPIENT_PARTICIPANTS,
   ...OTHER_ENTITY_RECIPIENTS,
 ];
+/**
+ * Stored in `UserSettings` table, e.g.:
+ * userId: 111, key: 'reportSubmittedForReview', value: 'immediately',
+ */
+export const USER_SETTINGS = {
+  EMAIL: {
+    KEYS: {
+      // Email you when an activity report is submitted for your approval.
+      SUBMITTED_FOR_REVIEW: 'emailWhenReportSubmittedForReview',
+      // Email you when an activity report you created or are a collaborator on needs an action.
+      CHANGE_REQUESTED: 'emailWhenChangeRequested',
+      // Email you when an activity report you created or are a collaborator on is approved.
+      APPROVAL: 'emailWhenReportApproval',
+      // Email you when you are added as a collaborator to an activity report.
+      COLLABORATOR_ADDED: 'emailWhenAppointedCollaborator',
+    },
+    VALUES: {
+      NEVER: 'never',
+      IMMEDIATELY: 'immediately',
+      DAILY_DIGEST: 'today',
+      WEEKLY_DIGEST: 'this week',
+      MONTHLY_DIGEST: 'this month',
+    },
+  },
+};
+
+export const EMAIL_ACTIONS = {
+  COLLABORATOR_ADDED: 'collaboratorAssigned',
+  NEEDS_ACTION: 'changesRequested',
+  SUBMITTED: 'approverAssigned',
+  APPROVED: 'reportApproved',
+  COLLABORATOR_DIGEST: 'collaboratorDigest',
+  NEEDS_ACTION_DIGEST: 'changesRequestedDigest',
+  SUBMITTED_DIGEST: 'approverAssignedDigest',
+  APPROVED_DIGEST: 'reportApprovedDigest',
+};
+
+export const EMAIL_DIGEST_FREQ = {
+  DAILY: 'today',
+  WEEKLY: 'this week',
+  MONTHLY: 'this month',
+};
+
+export const DIGEST_SUBJECT_FREQ = {
+  DAILY: 'daily',
+  WEEKLY: 'weekly',
+  MONTHLY: 'monthly',
+};
