@@ -52,6 +52,11 @@ export default function FilterSelect({
         maxHeight: state.isFocused ? 'auto' : '40px',
       };
     },
+    option: (provided, { isDisabled }) => ({
+      ...provided,
+      fontWeight: isDisabled ? 'bold' : 'normal',
+      color: isDisabled ? '#000' : 'inherit',
+    }),
     indicatorsContainer: (provided) => ({
       ...provided,
       display: 'inline',
