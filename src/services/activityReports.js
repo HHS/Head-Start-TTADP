@@ -123,28 +123,14 @@ async function saveReportCollaborators(activityReportId, collaborators) {
     ],
   });
 
-  // Get collaborator roles to add.
-  const rolesToAdd = updatedReportCollaborators.filter(
-    (c) => !c.collaboratorRoles.length
-      && c.user.role.length,
-  );
-
-  // If we have collaborators missing roles.
-  if (rolesToAdd && rolesToAdd.length > 0) {
-    let updatedRoles = [];
-    rolesToAdd.forEach((collaborator) => {
-      // Set collaborator roles.
-      const { role } = collaborator.user;
-      // Concat list of collaborator role updates promises.
-      updatedRoles = updatedRoles.concat(role.map((r) => CollaboratorRole.findOrCreate(
-        { where: { activityReportCollaboratorId: collaborator.id, role: r } },
-      )));
-    });
-
-    // Resolve all role update promises.
-    if (updatedRoles && updatedRoles.length > 0) {
-      await Promise.all(updatedRoles);
-    }
+  if (updatedReportCollaborators && updatedReportCollaborators.length > 0) {
+    // eslint-disable-next-line max-len
+    await Promise.all(updatedReportCollaborators.map((collaborator) => Promise.all(collaborator.user.roles.map(async (role) => CollaboratorRole.findOrCreate({
+      where: {
+        activityReportCollaboratorId: collaborator.id,
+        roleId: role.id,
+      },
+    })))));
   }
 }
 
