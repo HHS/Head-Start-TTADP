@@ -5,10 +5,10 @@ import {
 
 function onlyValidParticipants(query) {
   if (!Array.isArray(query)) {
-    return [query].filter((reason) => ALL_PARTICIPANTS.includes(reason));
+    return [query].filter((participant) => ALL_PARTICIPANTS.includes(participant));
   }
 
-  return query.filter((reason) => ALL_PARTICIPANTS.includes(reason));
+  return query.filter((participant) => ALL_PARTICIPANTS.includes(participant));
 }
 
 export function withParticipants(query) {
