@@ -33,6 +33,7 @@ const mockUser = {
   ],
   flags: [],
   roles: [],
+  validationStatus: [],
 };
 const mockSession = jest.fn();
 mockSession.userId = mockUser.id;
