@@ -57,7 +57,10 @@ describe('Approved Activity Report V2 component', () => {
     targetPopulations: ['Mid size sedans'],
     activityRecipientType: 'recipient',
     specialistNextSteps: [],
-    recipientNextSteps: [],
+    recipientNextSteps: [{
+      note: 'Test me',
+      completeDate: '2021-01-01',
+    }],
     participants: ['Commander of Pants', 'Princess of Castles'],
     numberOfParticipants: 3,
     reason: ['Needed it'],
@@ -99,5 +102,61 @@ describe('Approved Activity Report V2 component', () => {
     />);
     expect(await screen.findByText(/http:\/\/www.website.com/i)).toBeInTheDocument();
     expect(await screen.findByText(/Objective 1/i)).toBeInTheDocument();
+  });
+
+  it('shows the none provided message', async () => {
+    const objectivesWithoutGoals = [{
+      title: 'Objective 1',
+      ActivityReportObjective: {
+        ttaProvided: 'All of it',
+      },
+      topics: [{ label: 'being fancy' }],
+      resources: [{ value: 'http://www.website.com' }],
+      status: 'Test status',
+      files: [],
+    }];
+
+    render(<ApprovedReportV2 data={{
+      ...report, goalsAndObjectives: [], objectivesWithoutGoals, activityRecipientType: 'other-entity',
+    }}
+    />);
+    expect(await screen.findByText(/None provided/i)).toBeInTheDocument();
+  });
+
+  it('handles empty resources', async () => {
+    const objectivesWithoutGoals = [{
+      title: 'Objective 1',
+      ActivityReportObjective: {
+        ttaProvided: 'All of it',
+      },
+      topics: [{ label: 'being fancy' }],
+      resources: [],
+      status: 'Test status',
+      files: [],
+    }];
+
+    render(<ApprovedReportV2 data={{
+      ...report, goalsAndObjectives: [], objectivesWithoutGoals, activityRecipientType: 'other-entity',
+    }}
+    />);
+    expect(await screen.findByText(/None provided/i)).toBeInTheDocument();
+  });
+
+  it('in person', async () => {
+    render(<ApprovedReportV2 data={{
+      ...report, deliveryMethod: 'in-person',
+    }}
+    />);
+
+    expect(await screen.findByText(/In person/i)).toBeInTheDocument();
+  });
+
+  it('virtual', async () => {
+    render(<ApprovedReportV2 data={{
+      ...report, deliveryMethod: 'virtual', virtualDeliveryType: 'Sandwich', approvedAt: '2021-01-01',
+    }}
+    />);
+
+    expect(await screen.findByText(/Virtual: Sandwich/i)).toBeInTheDocument();
   });
 });

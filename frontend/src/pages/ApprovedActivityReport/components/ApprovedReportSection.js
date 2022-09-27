@@ -40,7 +40,7 @@ ApprovedReportSection.propTypes = {
     heading: PropTypes.string,
     // eslint-disable-next-line react/forbid-prop-types
     data: PropTypes.object.isRequired, // we are using an object here since we don't know the keys
-    striped: PropTypes.bool.isRequired,
+    striped: PropTypes.bool,
   })).isRequired,
 };
 
