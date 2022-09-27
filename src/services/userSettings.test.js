@@ -1,5 +1,5 @@
 import { USER_SETTINGS } from '../constants';
-import db, { User, UserSettingOverrides } from '../models';
+import db, { User, UserSettingOverrides, Permission } from '../models';
 import {
   getDefaultSettings,
   saveSettings,
@@ -10,6 +10,8 @@ import {
   userSettingsById,
   usersWithSetting,
 } from './userSettings';
+
+import SCOPES from '../middleware/scopeConstants';
 
 describe('UserSetting service', () => {
   afterAll(async () => {
@@ -30,6 +32,11 @@ describe('UserSetting service', () => {
         createdAt: now,
         updatedAt: now,
       });
+      await Permission.create({
+        userId: id,
+        regionId: 14,
+        scopeId: SCOPES.SITE_ACCESS,
+      });
 
       await UserSettingOverrides.destroy({ where: { userId: [999, 1000] } });
     }));
@@ -39,6 +46,7 @@ describe('UserSetting service', () => {
 
   afterEach(async () => {
     await UserSettingOverrides.destroy({ where: { userId: [999, 1000] } });
+    await Permission.destroy({ where: { userId: [999, 1000] } });
     await User.destroy({ where: { id: [999, 1000] } });
   });
 
