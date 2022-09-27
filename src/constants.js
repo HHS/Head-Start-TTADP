@@ -154,6 +154,11 @@ export const GOAL_STATUS = {
   CLOSED: 'Closed',
 };
 
+/*
+  Please keep in sync with:
+  frontend > src > constants.js
+  frontend > src > pages > ActivityReport > constants.js
+*/
 export const RECIPIENT_PARTICIPANTS = [
   'CEO / CFO / Executive',
   'Center Director / Site Director',

@@ -254,6 +254,11 @@ export const GOAL_SUSPEND_REASONS = [
   'Regional Office request',
 ];
 
+/*
+  Please keep in sync with:
+  frontend > src > pages > ActivityReport > constants.js
+  src > constants.js
+*/
 export const RECIPIENT_PARTICIPANTS = [
   'CEO / CFO / Executive',
   'Center Director / Site Director',
