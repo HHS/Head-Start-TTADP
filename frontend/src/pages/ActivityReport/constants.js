@@ -24,6 +24,11 @@ export const reasons = [
   ...reasonsToMonitor,
 ];
 
+/*
+  Please keep in sync with:
+  frontend > src > constants.js
+  src > constants.js
+*/
 export const recipientParticipants = [
   'CEO / CFO / Executive',
   'Center Director / Site Director',
