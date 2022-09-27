@@ -36,6 +36,8 @@ export default function Objective({
   roles,
   onObjectiveChange,
   onSaveDraft,
+  parentGoal,
+  initialObjectiveStatus,
   reportId,
 }) {
   const [selectedObjective, setSelectedObjective] = useState(objective);
@@ -244,12 +246,11 @@ export default function Objective({
         title={objectiveTitle}
         onChangeTitle={onChangeTitle}
         validateObjectiveTitle={onBlurTitle}
-        status={objectiveStatus}
         inputName={objectiveTitleInputName}
-        isOnReport={isOnReport || false} // todo - fix this for being on AR
+        parentGoal={parentGoal}
+        initialObjectiveStatus={initialObjectiveStatus}
       />
       <SpecialistRole
-        isOnApprovedReport={isOnApprovedReport || false}
         isOnReport={isOnReport || false}
         status={objectiveStatus}
         error={errors.roles
@@ -259,7 +260,7 @@ export default function Objective({
         selectedRoles={objectiveRoles}
         inputName={objectiveRolesInputName}
         validateSpecialistRole={onBlurRoles}
-        options={roles}
+        roleOptions={roles}
       />
       <ObjectiveTopics
         error={errors.topics
@@ -291,7 +292,6 @@ export default function Objective({
         objective={objective}
         files={objectiveFiles}
         onChangeFiles={onChangeFiles}
-        isOnApprovedReport={isOnApprovedReport || false}
         status={objectiveStatus}
         isOnReport={isOnReport || false}
         onUploadFiles={onUploadFile}
@@ -353,5 +353,10 @@ Objective.propTypes = {
   roles: PropTypes.arrayOf(PropTypes.string).isRequired,
   onObjectiveChange: PropTypes.func.isRequired,
   onSaveDraft: PropTypes.func.isRequired,
+  parentGoal: PropTypes.shape({
+    id: PropTypes.number,
+    status: PropTypes.string,
+  }).isRequired,
+  initialObjectiveStatus: PropTypes.string.isRequired,
   reportId: PropTypes.number.isRequired,
 };

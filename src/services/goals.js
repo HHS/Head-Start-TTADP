@@ -82,16 +82,12 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
             ['userProvidedUrl', 'value'],
             ['id', 'key'],
             [
-              sequelize.literal(`
-                (
-                  SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
-                  INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                  INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
-                  INNER JOIN "ObjectiveResources" "or" ON "or"."objectiveId" = "o"."id"      
-                  WHERE "o"."id" = "objectives"."id" 
-                  AND "or"."id" = "objectives->resources"."id"
-                ) > 0
-              `),
+              sequelize.literal(`(
+                SELECT COUNT(aror."id") FROM "ActivityReportObjectiveResources" "aror" 
+                INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."id" = "aror"."activityReportObjectiveId"
+                WHERE "aror"."userProvidedUrl" = "objectives->resources"."userProvidedUrl"
+                AND "aro"."objectiveId" = "objectives"."id"
+              ) > 0`),
               'onAnyReport',
             ],
             [
@@ -99,10 +95,9 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                 (
                   SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                  INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
-                  INNER JOIN "ObjectiveResources" "or" ON "or"."objectiveId" = "o"."id"      
-                  WHERE "o"."id" = "objectives"."id" 
-                  AND "or"."id" = "objectives->resources"."id"
+                  INNER JOIN "ActivityReportObjectiveResources" "o" ON "o"."activityReportObjectiveId" = "aro"."id"
+                  WHERE "o"."userProvidedUrl" = "objectives->resources"."userProvidedUrl"
+                  AND "aro"."objectiveId" = "objectives"."id"
                   AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
                 ) > 0
               `),
@@ -121,9 +116,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                 (
                   SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                  INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
-                  INNER JOIN "ObjectiveTopics" "ot" ON "ot"."objectiveId" = "o"."id"      
-                  WHERE "o"."id" = "objectives"."id" 
+                  INNER JOIN "ActivityReportObjectiveTopics" "ot" ON "ot"."activityReportObjectiveId" = "aro"."id"                                        
+                  WHERE "aro"."objectiveId" = "objectives"."id" 
                   AND "ot"."topicId" = "objectives->topics"."id"
                 ) > 0
               `),
@@ -134,10 +128,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                 (
                   SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                  INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
-                  INNER JOIN "ObjectiveTopics" "ot" ON "ot"."objectiveId" = "o"."id"      
-                  WHERE "o"."id" = "objectives"."id" 
-                  AND "ot"."topicId" = "objectives->topics"."id"
+                  INNER JOIN "ActivityReportObjectiveTopics" "ot" ON "ot"."activityReportObjectiveId" = "aro"."id" 
+                  WHERE "aro"."objectiveId" = "objectives"."id"  AND "ot"."topicId" = "objectives->topics"."id"   
                   AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
                 ) > 0
               `),
@@ -148,40 +140,67 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         {
           model: File,
           as: 'files',
+          attributes: {
+            include: [
+              [
+                sequelize.literal(`
+                  (
+                    SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
+                    INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
+                    INNER JOIN "ActivityReportObjectiveFiles" "of" ON "of"."activityReportObjectiveId" = "aro"."id"                                        
+                    WHERE "aro"."objectiveId" = "objectives"."id" AND "of"."fileId" = "objectives->files"."id"
+                  ) > 0
+                `),
+                'onAnyReport',
+              ],
+              [
+                sequelize.literal(`
+                  (
+                    SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
+                    INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
+                    INNER JOIN "ActivityReportObjectiveFiles" "of" ON "of"."activityReportObjectiveId" = "aro"."id"                                        
+                    WHERE "aro"."objectiveId" = "objectives"."id" 
+                    AND "of"."fileId" = "objectives->files"."id" 
+                    AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
+                  ) > 0
+                `),
+                'isOnApprovedReport',
+              ],
+            ],
+          },
         },
         {
           model: Role,
           as: 'roles',
-          attributes: [
-            'fullName',
-            [
-              sequelize.literal(`
+          attributes: {
+            include: [
+              [
+                sequelize.literal(`
                 (
                   SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                  INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
-                  INNER JOIN "ObjectiveRoles" "or" ON "or"."objectiveId" = "o"."id"      
-                  WHERE "o"."id" = "objectives"."id" 
+                  INNER JOIN "ActivityReportObjectiveRoles" "or" ON "or"."activityReportObjectiveId" = "aro"."id"                                        
+                  WHERE "aro"."objectiveId" = "objectives"."id" 
                   AND "or"."roleId" = "objectives->roles"."id"
                 ) > 0
               `),
-              'onAnyReport',
-            ],
-            [
-              sequelize.literal(`
+                'onAnyReport',
+              ],
+              [
+                sequelize.literal(`
                 (
                   SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                  INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
-                  INNER JOIN "ObjectiveRoles" "or" ON "or"."objectiveId" = "o"."id"      
-                  WHERE "o"."id" = "objectives"."id" 
+                  INNER JOIN "ActivityReportObjectiveRoles" "or" ON "or"."activityReportObjectiveId" = "aro"."id"                                        
+                  WHERE "aro"."objectiveId" = "objectives"."id" 
                   AND "or"."roleId" = "objectives->roles"."id"
                   AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
                 ) > 0
               `),
-              'isOnApprovedReport',
+                'isOnApprovedReport',
+              ],
             ],
-          ],
+          },
         },
         {
           model: ActivityReport,
@@ -328,6 +347,7 @@ export async function saveObjectiveAssociations(
   };
 }
 
+// this is the reducer called when not getting objectives for a report, IE, the RTR table
 export function reduceObjectives(newObjectives, currentObjectives = []) {
   return newObjectives.reduce((objectives, objective) => {
     const exists = objectives.find((o) => (
@@ -342,15 +362,6 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
       return objectives;
     }
 
-    // since this method is used to rollup both objectives on and off activity reports
-    // we need to handle the case where there is TTA provided and TTA not provided
-    // NOTE: there will only be one activity report objective, it is queried by activity report id
-    const ttaProvided = objective.activityReportObjectives
-        && objective.activityReportObjectives[0]
-        && objective.activityReportObjectives[0].ttaProvided
-      ? objective.activityReportObjectives[0].ttaProvided : null;
-
-    const roles = objective.roles.map((role) => role.fullName);
     const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
 
     return [...objectives, {
@@ -359,9 +370,7 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
       ids: [id],
       // Make sure we pass back a list of recipient ids for subsequent saves.
       recipientIds: [objective.getDataValue('otherEntityId')],
-      ttaProvided,
       isNew: false,
-      roles,
     }];
   }, currentObjectives);
 }
@@ -376,23 +385,19 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
       exists.ids = [...exists.ids, id];
 
-      // for roles, we are just returning arrays of strings
-      // so we can just dedupe them declaratively
-      exists.roles = [...new Set([
-        ...exists.roles,
-        ...objective.activityReportObjectives[0].activityReportObjectiveRoles.map(
-          (r) => r.role.fullName,
-        )])];
-
-      // for resources, topics, and files,
-      // we need to do a more complicated lookup to get a unique set
-      // (I almost forgot we have lodash)
+      // we can dedupe these using lodash
       exists.resources = uniqBy([
         ...exists.resources,
         ...objective.activityReportObjectives[0].activityReportObjectiveResources.map(
           (r) => r.dataValues,
         ),
       ], 'value');
+
+      exists.roles = uniqBy([
+        ...exists.roles,
+        ...objective.activityReportObjectives[0].activityReportObjectiveRoles.map(
+          (r) => r.role.dataValues,
+        )], 'id');
 
       exists.topics = uniqBy([
         ...exists.topics,
@@ -434,7 +439,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       // we are getting at with this method (getGoalsForReport)
 
       roles: objective.activityReportObjectives[0].activityReportObjectiveRoles.map(
-        (r) => r.role.fullName,
+        (r) => r.role.dataValues,
       ),
       topics: objective.activityReportObjectives[0].activityReportObjectiveTopics.map(
         (t) => t.topic.dataValues,
@@ -564,6 +569,10 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
             required: false,
           },
           {
+            model: File,
+            as: 'files',
+          },
+          {
             model: ActivityReportObjective,
             as: 'activityReportObjectives',
             attributes: [
@@ -681,6 +690,11 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
               ['id', 'value'],
               ['name', 'label'],
             ],
+            required: false,
+          },
+          {
+            model: File,
+            as: 'files',
             required: false,
           },
         ],
@@ -847,7 +861,7 @@ export async function createOrUpdateGoals(goals) {
         const {
           resources,
           topics,
-          roles: roleNames,
+          roles,
           title,
           files,
           status: objectiveStatus,
@@ -885,13 +899,6 @@ export async function createOrUpdateGoals(goals) {
           title,
           status: objectiveStatus,
         }, { individualHooks: true });
-
-        // objective roles
-        const roles = await Role.findAll({
-          where: {
-            fullName: roleNames,
-          },
-        });
 
         // save all our objective join tables (ObjectiveResource, ObjectiveTopic, ObjectiveRole)
         const deleteUnusedAssociations = true;
@@ -1301,19 +1308,12 @@ async function createObjectivesForGoal(goal, objectives, report) {
     // unused join table data, so we'll just create any missing links
     // so that the metadata is saved properly
 
-    // we need to get the entire role object from the role name
-    const roleData = await Role.findAll({
-      where: {
-        fullName: roles,
-      },
-    });
-
     const deleteUnusedAssociations = false;
     const metadata = await saveObjectiveAssociations(
       savedObjective,
       resources,
       topics,
-      roleData,
+      roles,
       files,
       deleteUnusedAssociations,
     );
@@ -1352,7 +1352,8 @@ export async function saveGoalsForReport(goals, report) {
       const {
         isNew,
         objectives,
-        id, grantIds,
+        id,
+        grantIds,
         status: discardedStatus,
         onApprovedAR,
         createdVia,
@@ -1507,7 +1508,10 @@ export async function getGoalsForReport(reportId) {
                   {
                     model: Topic,
                     as: 'topic',
-                    attributes: [['name', 'label'], ['id', 'value']],
+                    attributes: [
+                      ['name', 'label'],
+                      ['id', 'value'],
+                    ],
                   },
                 ],
               },

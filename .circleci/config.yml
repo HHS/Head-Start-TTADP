@@ -19,7 +19,7 @@ executors:
           POSTGRES_DB: ttasmarthub
   machine-executor:
     machine:
-      image: ubuntu-2004:current
+      image: ubuntu-2204:current
 commands:
   create_combined_yarnlock:
     description: "Concatenate all yarn.json files into single file.
@@ -314,7 +314,7 @@ jobs:
           command: ./bin/prod-style-server
       - run:
           name: Pull OWASP ZAP docker image
-          command: docker pull owasp/zap2docker-weekly
+          command: docker pull owasp/zap2docker-stable:2.11.1
       - run:
           name: Make reports directory group writeable
           command: chmod g+w reports

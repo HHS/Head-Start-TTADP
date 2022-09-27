@@ -37,6 +37,17 @@ const topicsFromApi = [
   'Data and Evaluation',
 ].map((name, id) => ({ name, id }));
 
+const rolesFromApi = [
+  {
+    id: 1,
+    fullName: 'Specialist',
+  },
+  {
+    id: 2,
+    fullName: 'Central Office',
+  },
+];
+
 describe('create goal', () => {
   const defaultRecipient = {
     id: 1,
@@ -114,6 +125,7 @@ describe('create goal', () => {
   beforeEach(async () => {
     fetchMock.restore();
     fetchMock.get('/api/topic', topicsFromApi);
+    fetchMock.get('/api/role', rolesFromApi);
   });
 
   it('you cannot add objectives before filling in basic goal info', async () => {

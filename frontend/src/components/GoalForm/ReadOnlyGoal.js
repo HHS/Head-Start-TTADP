@@ -83,7 +83,9 @@ ReadOnlyGoal.propTypes = {
     ),
     objectives: PropTypes.arrayOf(
       PropTypes.shape({
-        roles: PropTypes.arrayOf(PropTypes.string),
+        roles: PropTypes.arrayOf(
+          PropTypes.shape({ fullName: PropTypes.string, id: PropTypes.number }),
+        ),
         ttaProvided: PropTypes.string,
         resources: PropTypes.arrayOf(PropTypes.string),
         topics: PropTypes.arrayOf(PropTypes.shape({
