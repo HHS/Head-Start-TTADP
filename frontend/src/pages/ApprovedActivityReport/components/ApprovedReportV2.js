@@ -45,23 +45,14 @@ function formatObjectiveLinks(resources) {
 }
 
 function formatDelivery(method, virtualDeliveryType) {
-  if (!method) {
-    return '';
-  }
-
   if (method === 'in-person') {
     return 'In person';
   }
 
-  if (method === 'virtual') {
-    if (!virtualDeliveryType) {
-      return 'Virtual';
-    }
-
+  if (method === 'virtual' && virtualDeliveryType) {
     return `Virtual: ${virtualDeliveryType}`;
   }
 
-  // baseline return
   return '';
 }
 
