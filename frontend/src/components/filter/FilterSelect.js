@@ -56,6 +56,7 @@ export default function FilterSelect({
       ...provided,
       fontWeight: isDisabled ? 'bold' : 'normal',
       color: isDisabled ? '#000' : 'inherit',
+      fontSize: isDisabled ? '14px' : 'inherit',
     }),
     indicatorsContainer: (provided) => ({
       ...provided,
