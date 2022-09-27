@@ -56,10 +56,6 @@ export const validateVerificationToken = async (userId, token, type) => {
     throw new Error('Invalid token pair');
   }
 
-  if (pair.validatedAt) {
-    throw new Error('Token already validated');
-  }
-
   const secret = `${process.env.JWT_SECRET}`;
   const payload = jwt.verify(token, secret);
 
@@ -69,6 +65,13 @@ export const validateVerificationToken = async (userId, token, type) => {
 
   if (payload.type !== type) {
     throw new Error('Invalid type');
+  }
+
+  // This token pair is already validated. This isn't an error, but
+  // we don't want to update the `validatedAt` property. Just return the
+  // payload. The UI will receive a 200 response and display a success message.
+  if (pair.validatedAt) {
+    return payload;
   }
 
   pair.set('validatedAt', new Date());
