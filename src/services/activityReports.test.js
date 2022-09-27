@@ -1,6 +1,6 @@
 import db, {
   ActivityReport, ActivityReportApprover, ActivityReportCollaborator, ActivityRecipient, User,
-  Recipient, OtherEntity, Grant, NextStep, Region, Permission,
+  Recipient, OtherEntity, Grant, NextStep, Region, Permission, Program,
 } from '../models';
 import {
   createOrUpdate,
@@ -29,6 +29,9 @@ import { auditLogger } from '../logger';
 const RECIPIENT_ID = 30;
 const RECIPIENT_ID_SORTING = 31;
 const ALERT_RECIPIENT_ID = 345;
+
+const RECIPIENT_WITH_PROGRAMS_ID = 425;
+const DOWNLOAD_RECIPIENT_WITH_PROGRAMS_ID = 426;
 
 const mockUser = {
   id: 1115665161,
@@ -346,8 +349,27 @@ describe('Activity report service', () => {
       await User.destroy({ where: { id: userIds } });
       await Permission.destroy({ where: { userId: userIds } });
       await OtherEntity.destroy({ where: { id: RECIPIENT_ID } });
-      await Grant.destroy({ where: { id: [RECIPIENT_ID, RECIPIENT_ID_SORTING] } });
-      await Recipient.destroy({ where: { id: [RECIPIENT_ID, RECIPIENT_ID_SORTING] } });
+      await Program.destroy({ where: { id: [585, 586, 587] } });
+      await Grant.destroy({
+        where: {
+          id: [
+            RECIPIENT_ID,
+            RECIPIENT_ID_SORTING,
+            RECIPIENT_WITH_PROGRAMS_ID,
+            DOWNLOAD_RECIPIENT_WITH_PROGRAMS_ID,
+          ],
+        },
+      });
+      await Recipient.destroy({
+        where: {
+          id: [
+            RECIPIENT_ID,
+            RECIPIENT_ID_SORTING,
+            RECIPIENT_WITH_PROGRAMS_ID,
+            DOWNLOAD_RECIPIENT_WITH_PROGRAMS_ID,
+          ],
+        },
+      });
       await Region.destroy({ where: { id: 19 } });
     });
 
@@ -737,6 +759,50 @@ describe('Activity report service', () => {
         const [foundReport] = await activityReportAndRecipientsById(report.id);
         expect(foundReport.approvers[0].User.get('fullName')).toEqual(`${mockUserTwo.name}, ${mockUserTwo.role[0]}`);
       });
+      it('includes recipient with programs', async () => {
+        const recipientWithProgram = await Recipient.create({ id: RECIPIENT_WITH_PROGRAMS_ID, name: 'recipient with program', uei: 'NNA5N2KHMGM2' });
+        const grantWithProgram = await Grant.create({ id: RECIPIENT_WITH_PROGRAMS_ID, number: 'recipgrantnumber695', recipientId: recipientWithProgram.id });
+
+        const report = await ActivityReport.create(
+          {
+            ...submittedReport,
+            regionId: 5,
+            activityRecipients: [{ grantId: grantWithProgram.id }],
+          },
+        );
+
+        await ActivityRecipient.create({
+          activityReportId: report.id,
+          grantId: grantWithProgram.id,
+        });
+
+        await Program.create({
+          id: 585,
+          grantId: grantWithProgram.id,
+          name: 'type2',
+          programType: 'EHS',
+          startYear: 'Aeons ago',
+          status: 'active',
+          startDate: 'today',
+          endDate: 'tomorrow',
+        });
+
+        await Program.create({
+          id: 586,
+          grantId: grantWithProgram.id,
+          name: 'type',
+          programType: 'HS',
+          startYear: 'The murky depths of time',
+          status: 'active',
+          startDate: 'today',
+          endDate: 'tomorrow',
+        });
+
+        const [foundReport, activityRecipients] = await activityReportAndRecipientsById(report.id);
+        expect(foundReport).not.toBeNull();
+        expect(activityRecipients.length).toBe(1);
+        expect(activityRecipients[0].name).toBe('recipient with program - recipgrantnumber695  - EHS, HS');
+      });
       it('excludes soft deleted approvers', async () => {
         // To include deleted approvers in future add paranoid: false
         // attribute to include object for ActivityReportApprover
@@ -925,14 +991,40 @@ describe('Activity report service', () => {
           regionId: 14,
           calculatedStatus: REPORT_STATUSES.APPROVED,
         };
+        // Recipient and Grant.
+        const downloadRecipient = await Recipient.create({ id: DOWNLOAD_RECIPIENT_WITH_PROGRAMS_ID, name: 'download recipient with program', uei: 'DNA5N2KHMGM2' });
+        const downloadGrant = await Grant.create({ id: DOWNLOAD_RECIPIENT_WITH_PROGRAMS_ID, number: 'downloadgrantnumber695', recipientId: downloadRecipient.id });
+
         // create two approved
-        approvedReport = await ActivityReport.create(mockReport);
+        approvedReport = await ActivityReport.create(
+          {
+            ...mockReport,
+            activityRecipients: [{ grantId: downloadGrant.id }],
+          },
+        );
         await ActivityReportApprover.create({
           activityReportId: approvedReport.id,
           userId: mockUserTwo.id,
           status: APPROVER_STATUSES.APPROVED,
         });
         await ActivityReport.create(mockReport);
+
+        await ActivityRecipient.create({
+          activityReportId: approvedReport.id,
+          grantId: downloadGrant.id,
+        });
+
+        await Program.create({
+          id: 587,
+          grantId: downloadGrant.id,
+          name: 'type3',
+          programType: 'DWN',
+          startYear: 'Aeons ago',
+          status: 'active',
+          startDate: 'today',
+          endDate: 'tomorrow',
+        });
+
         // create one approved legacy
         legacyReport = await ActivityReport.create(mockLegacyReport);
         // create one submitted
@@ -947,6 +1039,12 @@ describe('Activity report service', () => {
         expect(ids.length).toEqual(3);
         expect(ids).toContain(approvedReport.id);
         expect(ids).toContain(legacyReport.id);
+
+        const foundApprovedReports = rows.filter(
+          (r) => r.id === approvedReport.id,
+        );
+        expect(foundApprovedReports.length).toBe(1);
+        expect(foundApprovedReports[0].activityRecipients[0].name).toBe('download recipient with program - downloadgrantnumber695  - DWN');
       });
 
       it('will return legacy reports', async () => {
