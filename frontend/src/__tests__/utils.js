@@ -1,5 +1,7 @@
 import '@testing-library/jest-dom';
-import { queryStringToFilters, filtersToQueryString, formatDateRange } from '../utils';
+import {
+  queryStringToFilters, filtersToQueryString, formatDateRange, decodeQueryParam,
+} from '../utils';
 
 describe('queryStringToFilters', () => {
   it('correct parses the query string', () => {
@@ -9,6 +11,14 @@ describe('queryStringToFilters', () => {
     expect(filters.map((filter) => filter.topic)).toStrictEqual(['region', 'startDate']);
     expect(filters.map((filter) => filter.condition)).toStrictEqual(['is', 'is within']);
     expect(filters.map((filter) => filter.query)).toStrictEqual([['14'], '2021/11/13-2021/12/13']);
+  });
+});
+
+describe('decodeQueryParam', () => {
+  it('query contains a comma', () => {
+    const param = 'a,b,c';
+    const query = decodeQueryParam(param);
+    expect(query).toStrictEqual(['a', 'b', 'c']);
   });
 });
 
@@ -31,9 +41,33 @@ describe('filtersToQueryString', () => {
     const str = filtersToQueryString(filters);
     expect(str).toBe(`region.in[]=14&startDate.win=${encodeURIComponent('2021/11/13-2021/12/13')}`);
   });
+
+  it('there is a region param', () => {
+    const filters = [
+      {
+        id: '9ac8381c-2507-4b4a-a30c-6f1f87a00901',
+        topic: 'region',
+        condition: 'is',
+        query: '14',
+      },
+      {
+        id: '07bc65ed-a4ce-410f-b7be-f685bc8921ed',
+        topic: 'startDate',
+        condition: 'is within',
+        query: '2021/11/13-2021/12/13',
+      },
+    ];
+    const str = filtersToQueryString(filters, 11);
+    expect(str).toBe(`region.in[]=14&startDate.win=${encodeURIComponent('2021/11/13-2021/12/13')}&region.in[]=11`);
+  });
 });
 
 describe('formatDateRange', () => {
+  it('nothing in, nothing out', () => {
+    const str = formatDateRange();
+    expect(str).toBe('');
+  });
+
   it('returns a formatted date string', () => {
     const str = formatDateRange({
       lastThirtyDays: false,
