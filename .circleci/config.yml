@@ -93,6 +93,10 @@ commands:
         description: "Name of CircleCi project environment variable that
           holds session secret, a required application variable"
         type: env_var_name
+      jwt_secret:
+        description: "CircleCi project environment variable used by the backend
+          token service for the email verification flow."
+        type: env_var_name
       new_relic_license:
         description: "Name of CircleCI project environment variable that
           holds the New Relic License key, a required application variable"
@@ -136,6 +140,7 @@ commands:
               --var AUTH_CLIENT_SECRET=${<< parameters.auth_client_secret >>} \
               --var NEW_RELIC_LICENSE_KEY=${<< parameters.new_relic_license >>} \
               --var SESSION_SECRET=${<< parameters.session_secret >>} \
+              --var JWT_SECRET=${<< parameters.jwt_secret >>} \
               --var HSES_DATA_FILE_URL=${<< parameters.hses_data_file_url >>} \
               --var HSES_DATA_USERNAME=${<< parameters.hses_data_username >>} \
               --var HSES_DATA_PASSWORD=${<< parameters.hses_data_password >>} \
@@ -185,7 +190,7 @@ parameters:
     default: "main-ar-redesign"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "kw-fix-uei"
+    default: "kw-emails-logging-table"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -398,6 +403,7 @@ jobs:
                 deploy_config_file: deployment_config/sandbox_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
                 session_secret: SANDBOX_SESSION_SECRET
+                jwt_secret: SANDBOX_JWT_SECRET
                 hses_data_file_url: HSES_DATA_FILE_URL
                 hses_data_username: HSES_DATA_USERNAME
                 hses_data_password: HSES_DATA_PASSWORD
@@ -439,6 +445,7 @@ jobs:
                 deploy_config_file: deployment_config/dev_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
                 session_secret: DEV_SESSION_SECRET
+                jwt_secret: DEV_JWT_SECRET
                 hses_data_file_url: HSES_DATA_FILE_URL
                 hses_data_username: HSES_DATA_USERNAME
                 hses_data_password: HSES_DATA_PASSWORD
@@ -480,6 +487,7 @@ jobs:
                 deploy_config_file: deployment_config/staging_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
                 session_secret: STAGING_SESSION_SECRET
+                jwt_secret: STAGING_JWT_SECRET
                 hses_data_file_url: HSES_DATA_FILE_URL
                 hses_data_username: HSES_DATA_USERNAME
                 hses_data_password: HSES_DATA_PASSWORD
@@ -519,6 +527,7 @@ jobs:
                 deploy_config_file: deployment_config/prod_vars.yml
                 new_relic_license: NEW_RELIC_LICENSE_KEY
                 session_secret: PROD_SESSION_SECRET
+                jwt_secret: PROD_JWT_SECRET
                 hses_data_file_url: PROD_HSES_DATA_FILE_URL
                 hses_data_username: PROD_HSES_DATA_USERNAME
                 hses_data_password: PROD_HSES_DATA_PASSWORD
