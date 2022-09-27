@@ -3,7 +3,11 @@
 '/user':
   $ref: './user.yaml'
 '/users/collaborators':
-  $ref: './collaborators.yaml'
+  $ref: './users/collaborators.yaml'
+'/users/send-verification-email':
+  $ref: './users/send-verification-email.yaml'
+'/users/verify-email/{token}':
+  $ref: './users/verify-email.yaml'
 '/logout':
   $ref: './logout.yaml'
 '/login':
@@ -62,5 +66,11 @@
   $ref: './widgets/topicAndFrequencyGraph.yaml'
 '/search':
   $ref: './search/search.yaml'
-
-
+'/settings':
+  $ref: './settings/index.yaml'
+'/settings/email':
+  $ref: './settings/email/index.yaml'
+'/settings/email/unsubscribe':
+  $ref: './settings/email/unsubscribe.yaml'
+'/settings/email/subscribe':
+  $ref: './settings/email/subscribe.yaml'

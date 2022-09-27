@@ -37,6 +37,7 @@ import { getObjectivesByReportId, saveObjectivesForReport } from '../../services
 import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
 import { userById, usersWithPermissions } from '../../services/users';
+import { userSettingOverridesById } from '../../services/userSettings';
 import ActivityReport from '../../policies/activityReport';
 import handleErrors from '../../lib/apiErrorHandler';
 import User from '../../policies/user';
@@ -44,7 +45,7 @@ import db, {
   ActivityReportApprover, ActivityReport as ActivityReportModel, Permission, User as UserModel,
 } from '../../models';
 import * as mailer from '../../lib/mailer';
-import { APPROVER_STATUSES, REPORT_STATUSES } from '../../constants';
+import { APPROVER_STATUSES, REPORT_STATUSES, USER_SETTINGS } from '../../constants';
 import SCOPES from '../../middleware/scopeConstants';
 
 jest.mock('../../services/activityReports', () => ({
@@ -65,6 +66,7 @@ jest.mock('../../services/activityReports', () => ({
 jest.mock('../../services/objectives', () => ({
   saveObjectivesForReport: jest.fn(),
   getObjectivesByReportId: jest.fn(),
+  userSettingOverridesById: jest.fn(),
 }));
 
 jest.mock('../../services/activityReportApprovers', () => ({
@@ -266,6 +268,10 @@ describe('Activity Report handlers', () => {
       activityReportAndRecipientsById.mockResolvedValue([{
         calculatedStatus: REPORT_STATUSES.APPROVED,
         activityRecipientType: 'recipient',
+        author: {
+          id: 777,
+        },
+        activityReportCollaborators: [],
       }, [{
         activityRecipientId: 10,
       }]]);
@@ -275,7 +281,13 @@ describe('Activity Report handlers', () => {
       upsertApprover.mockResolvedValue(mockApproverRecord);
       const approvalNotification = jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
 
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
       await reviewReport(approvedReportRequest, mockResponse);
+
       expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);
       expect(approvalNotification).toHaveBeenCalled();
     });
@@ -290,6 +302,10 @@ describe('Activity Report handlers', () => {
       activityReportAndRecipientsById.mockResolvedValue([{
         calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
         activityRecipientType: 'recipient',
+        author: {
+          id: 777,
+        },
+        activityReportCollaborators: [],
       },
       [{
         activityRecipientId: 10,
@@ -302,6 +318,11 @@ describe('Activity Report handlers', () => {
 
       upsertApprover.mockResolvedValue(mockApproverRecord);
       const changesRequestedNotification = jest.spyOn(mailer, 'changesRequestedNotification').mockImplementation();
+
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.NEEDS_ACTION,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
 
       await reviewReport(needsActionReportRequest, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);

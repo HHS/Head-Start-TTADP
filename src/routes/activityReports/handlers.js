@@ -26,7 +26,9 @@ import { saveObjectivesForReport, getObjectivesByReportId } from '../../services
 import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
 import { goalsForGrants } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
-import { APPROVER_STATUSES, REPORT_STATUSES, DECIMAL_BASE } from '../../constants';
+import {
+  APPROVER_STATUSES, REPORT_STATUSES, DECIMAL_BASE, USER_SETTINGS,
+} from '../../constants';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
 
 import { logger } from '../../logger';
@@ -37,6 +39,7 @@ import {
   collaboratorAssignedNotification,
 } from '../../lib/mailer';
 import { activityReportToCsvRecord, extractListOfGoalsAndObjectives, deduplicateObjectivesWithoutGoals } from '../../lib/transform';
+import { userSettingOverridesById } from '../../services/userSettings';
 
 const { APPROVE_REPORTS } = SCOPES;
 
@@ -324,6 +327,41 @@ export async function getApprovers(req, res) {
 }
 
 /**
+ * Checks if author and collaborators are subscribed to the immediate notifications.
+ *
+ * @param {*} report - activity report
+ * @param {*} setting - a setting object with "key" and "value" keys
+ * @returns {Promise<Array>} - an array containing an author and collaborators that subscribe
+ */
+async function checkEmailSettings(report, setting) {
+  const { author, activityReportCollaborators } = report;
+
+  const settingForAuthor = author ? (await userSettingOverridesById(author.id, setting))
+    : null;
+
+  const authorWithSetting = (settingForAuthor
+    && settingForAuthor.value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY)
+    ? author : null;
+
+  const settingsForAllCollabs = activityReportCollaborators
+    ? (await Promise.all(activityReportCollaborators.map(
+      (c) => userSettingOverridesById(
+        c.userId,
+        setting,
+      ),
+    ))) : [];
+
+  const collabsWithSettings = activityReportCollaborators
+    ? activityReportCollaborators.filter((_value, index) => {
+      if (!settingsForAllCollabs[index]) {
+        return false;
+      }
+      return settingsForAllCollabs[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
+    }) : [];
+
+  return [authorWithSetting, collabsWithSettings];
+}
+/**
  * Review a report, setting Approver status to approved or needs action
  *
  * @param {*} req - request
@@ -337,7 +375,6 @@ export async function reviewReport(req, res) {
 
     const user = await userById(userId);
     const [report] = await activityReportAndRecipientsById(activityReportId);
-
     const authorization = new ActivityReport(user, report);
 
     if (!authorization.canReview()) {
@@ -355,11 +392,24 @@ export async function reviewReport(req, res) {
     const [reviewedReport] = await activityReportAndRecipientsById(activityReportId);
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
-      reportApprovedNotification(reviewedReport);
+      const [authorWithSetting, collabsWithSettings] = await checkEmailSettings(
+        reviewedReport,
+        USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+      );
+      reportApprovedNotification(reviewedReport, authorWithSetting, collabsWithSettings);
     }
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
-      changesRequestedNotification(reviewedReport, savedApprover);
+      const [authorWithSetting, collabsWithSettings] = await checkEmailSettings(
+        reviewedReport,
+        USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED,
+      );
+      changesRequestedNotification(
+        reviewedReport,
+        savedApprover,
+        authorWithSetting,
+        collabsWithSettings,
+      );
     }
 
     res.json(savedApprover);
@@ -480,10 +530,22 @@ export async function submitReport(req, res) {
     // Create, restore or destroy this report's approvers
     const currentApprovers = await syncApprovers(activityReportId, approverUserIds);
 
+    const settingsForAllCurrentApprovers = await Promise.all(currentApprovers.map(
+      (a) => userSettingOverridesById(
+        a.userId,
+        USER_SETTINGS.EMAIL.KEYS.SUBMITTED_FOR_REVIEW,
+      ),
+    ));
+    const currentApproversWithSettings = currentApprovers.filter((_value, index) => {
+      if (!settingsForAllCurrentApprovers[index]) {
+        return false;
+      }
+      return settingsForAllCurrentApprovers[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
+    });
     // This will send notification to everyone marked as an approver.
     // This may need to be adjusted in future to only send notification to
     // approvers who are not in approved status.
-    approverAssignedNotification(savedReport, currentApprovers);
+    approverAssignedNotification(savedReport, currentApproversWithSettings);
 
     // Resubmitting resets any needs_action status to null ("pending" status)
     await ActivityReportApprover.update({ status: null }, {
@@ -662,7 +724,21 @@ export async function saveReport(req, res) {
         return !oldCollaborators.includes(c.user.email);
       });
 
-      collaboratorAssignedNotification(savedReport, newCollaborators);
+      const settingsForAllCollabs = await Promise.all(newCollaborators.map(
+        (c) => userSettingOverridesById(
+          c.userId,
+          USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED,
+        ),
+      ));
+
+      const newCollaboratorsWithSettings = newCollaborators.filter((_value, index) => {
+        if (!settingsForAllCollabs[index]) {
+          return false;
+        }
+        return settingsForAllCollabs[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
+      });
+
+      collaboratorAssignedNotification(savedReport, newCollaboratorsWithSettings);
     }
 
     res.json(savedReport);
@@ -697,7 +773,22 @@ export async function createReport(req, res) {
     // updateCollaboratorRoles(newReport);
     const report = await createOrUpdate(newReport);
     if (report.activityReportCollaborators) {
-      collaboratorAssignedNotification(report, report.activityReportCollaborators);
+      const collabs = report.activityReportCollaborators;
+
+      const settingsForAllCollabs = await Promise.all(collabs.map(
+        (c) => userSettingOverridesById(
+          c.userId,
+          USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED,
+        ),
+      ));
+
+      const collabsWithSettings = collabs.filter((_value, index) => {
+        if (!settingsForAllCollabs[index]) {
+          return false;
+        }
+        return settingsForAllCollabs[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
+      });
+      collaboratorAssignedNotification(report, collabsWithSettings);
     }
     res.json(report);
   } catch (error) {
