@@ -22,7 +22,7 @@ export default function ObjectiveStatus({
   }, [goalStatus]);
 
   const options = useMemo(() => {
-    // if the objective is completed, it can only go back to in progress
+    // if the objective is complete, it can only go back to in progress
     if (initialStatus.current === 'Complete') {
       return (
         <>
