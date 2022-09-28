@@ -12,6 +12,7 @@ import Container from '../Container';
 import { createOrUpdateGoals, deleteGoal, goalByIdAndRecipient } from '../../fetchers/goals';
 import { uploadObjectivesFile } from '../../fetchers/File';
 import { getTopics } from '../../fetchers/topics';
+import { getRoles } from '../../fetchers/roles';
 import Form from './Form';
 import {
   FORM_FIELD_INDEXES,
@@ -21,15 +22,19 @@ import {
   GOAL_NAME_ERROR,
   GOAL_DATE_ERROR,
   SELECT_GRANTS_ERROR,
+  OBJECTIVE_DEFAULT_ERRORS,
 } from './constants';
-import { DECIMAL_BASE, REPORT_STATUSES } from '../../Constants';
+import { DECIMAL_BASE } from '../../Constants';
 import ReadOnly from './ReadOnly';
 import PlusButton from './PlusButton';
 import colors from '../../colors';
 import GoalFormLoadingContext from '../../GoalFormLoadingContext';
 
 const [
-  objectiveTextError, objectiveTopicsError, objectiveResourcesError, objectiveStatusError,
+  objectiveTextError,
+  objectiveTopicsError,
+  objectiveResourcesError,,
+  objectiveStatusError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
 const formatGrantsFromApi = (grants) => grants
@@ -41,9 +46,6 @@ const formatGrantsFromApi = (grants) => grants
       id: grant.id,
     };
   });
-
-// this is the default error state for an objective (no errors, only empty fragments)
-const BLANK_OBJECTIVE_ERROR = [<></>, <></>, <></>];
 
 export default function GoalForm({
   recipient,
@@ -65,6 +67,7 @@ export default function GoalForm({
     grants: possibleGrants.length === 1 ? [possibleGrants[0]] : [],
     objectives: [],
     id,
+    onApprovedAR: false,
   }), [possibleGrants, id]);
 
   const [showForm, setShowForm] = useState(true);
@@ -76,10 +79,13 @@ export default function GoalForm({
 
   // this is for the topic options returned from the API
   const [topicOptions, setTopicOptions] = useState([]);
+  // and the same for the roles
+  const [roleOptions, setRoleOptions] = useState([]);
 
   const [goalName, setGoalName] = useState(goalDefaults.name);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
+  const [goalOnApprovedAR, setGoalOnApprovedReport] = useState(goalDefaults.onApprovedAR);
 
   // we need to set this key to get the component to re-render (uncontrolled input)
   const [datePickerKey, setDatePickerKey] = useState('DPK-00');
@@ -98,12 +104,6 @@ export default function GoalForm({
     (objective) => objective.activityReports && objective.activityReports.length > 0,
   ), [objectives]);
 
-  const isOnApprovedReport = useMemo(() => objectives.some(
-    (objective) => objective.activityReports && objective.activityReports.some((report) => (
-      report.status === REPORT_STATUSES.APPROVED
-    )),
-  ), [objectives]);
-
   // for fetching goal data from api if it exists
   useEffect(() => {
     async function fetchGoal() {
@@ -118,6 +118,7 @@ export default function GoalForm({
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
         setGoalNumber(goal.goalNumber);
         setSelectedGrants(formatGrantsFromApi([goal.grant]));
+        setGoalOnApprovedReport(goal.onApprovedAR);
 
         // this is a lot of work to avoid two loops through the goal.objectives
         // but I'm sure you'll agree its totally worth it
@@ -142,12 +143,10 @@ export default function GoalForm({
             };
           }
 
-          newObjective.roles = objective.roles.map((r) => r.fullName);
-
           newObjs.push(newObjective);
           // this is the format of an objective error
           // three JSX nodes representing each of three possible errors
-          objErrors.push([<></>, <></>, <></>, <></>]);
+          objErrors.push(OBJECTIVE_DEFAULT_ERRORS);
 
           return [newObjs, objErrors];
         }, [[], []]);
@@ -190,6 +189,19 @@ export default function GoalForm({
       }
     }
     fetchTopics();
+  }, []);
+
+  // for fetching role options from API
+  useEffect(() => {
+    async function fetchRoles() {
+      try {
+        const roles = await getRoles();
+        setRoleOptions(roles);
+      } catch (err) {
+        setFetchError('There was an error loading roles');
+      }
+    }
+    fetchRoles();
   }, []);
 
   const setObjectiveError = (objectiveIndex, errorText) => {
@@ -299,6 +311,7 @@ export default function GoalForm({
           <></>,
           <></>,
           <></>,
+          <></>,
         ];
       }
 
@@ -307,6 +320,7 @@ export default function GoalForm({
         return [
           <></>,
           <span className="usa-error-message">{objectiveTopicsError}</span>,
+          <></>,
           <></>,
           <></>,
         ];
@@ -319,6 +333,7 @@ export default function GoalForm({
           <></>,
           <span className="usa-error-message">{objectiveResourcesError}</span>,
           <></>,
+          <></>,
         ];
       }
 
@@ -329,10 +344,12 @@ export default function GoalForm({
           <></>,
           <></>,
           <span className="usa-error-message">{objectiveStatusError}</span>,
+          <></>,
         ];
       }
 
       return [
+        <></>,
         <></>,
         <></>,
         <></>,
@@ -367,7 +384,7 @@ export default function GoalForm({
     // when we set a new set of objectives
     // an error object for each objective.
     const newErrors = [...errors];
-    const objectiveErrors = updatedObjectives.map(() => BLANK_OBJECTIVE_ERROR);
+    const objectiveErrors = updatedObjectives.map(() => OBJECTIVE_DEFAULT_ERRORS);
 
     newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES, 1, objectiveErrors);
     setErrors(newErrors);
@@ -383,11 +400,13 @@ export default function GoalForm({
     e.preventDefault();
     setIsLoading(true);
     try {
+      // if the goal is a draft, submission should move it to "not started"
       const gs = createdGoals.reduce((acc, goal) => {
+        const statusToSave = goal.status && goal.status === 'Draft' ? 'Not Started' : goal.status;
         const newGoals = goal.grants.map((grant) => ({
           grantId: grant.id,
           name: goal.name,
-          status,
+          status: statusToSave,
           endDate: goal.endDate && goal.endDate !== 'Invalid date' ? goal.endDate : null,
           regionId: parseInt(regionId, DECIMAL_BASE),
           recipientId: recipient.id,
@@ -415,11 +434,15 @@ export default function GoalForm({
     }
   };
 
-  const onUploadFile = async (file, objective, setFileUploadErrorMessage, index) => {
+  const onUploadFiles = async (files, objective, setFileUploadErrorMessage, index) => {
     // The first thing we need to know is... does this objective need to be created?
     setIsLoading(true);
 
+    // there is some weirdness where an objective may or may not have the "ids" property
     let objectiveIds = objective.ids ? objective.ids : [];
+    if (!objectiveIds.length && objective.id) {
+      objectiveIds = [objective.id];
+    }
 
     if (objective.isNew) {
       // if so, we save the objective to the database first
@@ -465,7 +488,10 @@ export default function GoalForm({
       // in the case that it has been rolled up to match a goal for multiple grants
       const data = new FormData();
       data.append('objectiveIds', JSON.stringify(objectiveIds));
-      data.append('file', file);
+      files.forEach((file) => {
+        data.append('file', file);
+      });
+
       const response = await uploadObjectivesFile(data);
       setFileUploadErrorMessage(null);
 
@@ -477,7 +503,7 @@ export default function GoalForm({
         index,
       };
     } catch (error) {
-      setFileUploadErrorMessage(`${file.name} failed to upload`);
+      setFileUploadErrorMessage('File(s) could not be uploaded');
     } finally {
       setIsLoading(false);
     }
@@ -493,19 +519,30 @@ export default function GoalForm({
     setIsLoading(true);
 
     try {
-      const newGoals = selectedGrants.map((g) => ({
-        grantId: g.value,
-        name: goalName,
-        status,
-        endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
-        regionId: parseInt(regionId, DECIMAL_BASE),
-        recipientId: recipient.id,
-        objectives,
-      }));
+      let newGoals = [];
+
+      if (showForm) {
+        newGoals = selectedGrants.map((g) => ({
+          grantId: g.value,
+          name: goalName,
+          status,
+          endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
+          regionId: parseInt(regionId, DECIMAL_BASE),
+          recipientId: recipient.id,
+          objectives,
+        }));
+      }
+
+      const mappedCreatedGoals = createdGoals.map((goal) => goal.grantIds.map((grantId) => ({
+        grantId,
+        ...goal,
+      }))).flat();
+
       const goals = [
-        ...createdGoals,
+        ...mappedCreatedGoals,
         ...newGoals,
       ];
+
       const updatedGoals = await createOrUpdateGoals(goals);
 
       const updatedObjectives = updatedGoals && updatedGoals.length > 0
@@ -684,6 +721,7 @@ export default function GoalForm({
                 createdGoals={createdGoals}
                 onRemove={onRemove}
                 onEdit={onEdit}
+                loading={isLoading}
               />
               <div className="margin-bottom-4">
                 {!showForm && id === 'new'
@@ -720,31 +758,34 @@ export default function GoalForm({
               clearEmptyObjectiveError={clearEmptyObjectiveError}
               topicOptions={topicOptions}
               isOnReport={isOnReport}
-              isOnApprovedReport={isOnApprovedReport}
+              isOnApprovedReport={goalOnApprovedAR}
               status={status || 'Needs status'}
               goalNumber={goalNumber}
-              onUploadFile={onUploadFile}
+              onUploadFiles={onUploadFiles}
+              roleOptions={roleOptions}
             />
             )}
 
-            <div className="margin-top-4">
-              { !showForm ? <Button type="submit">Submit goal</Button> : null }
-              { showForm ? <Button type="button" onClick={onSaveAndContinue}>Save and continue</Button> : null }
-              <Button type="button" outline onClick={onSaveDraft}>Save draft</Button>
-              { showForm && !createdGoals.length ? (
-                <Link
-                  to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
-                  className=" usa-button usa-button--outline"
-                >
-                  Cancel
-                </Link>
-              ) : null }
-              { showForm && createdGoals.length ? (
-                <Button type="button" outline onClick={clearForm} data-testid="create-goal-form-cancel">Cancel</Button>
-              ) : null }
+            { status !== 'Closed' && (
+              <div className="margin-top-4">
+                { !showForm ? <Button type="submit">Submit goal</Button> : null }
+                { showForm ? <Button type="button" onClick={onSaveAndContinue}>Save and continue</Button> : null }
+                <Button type="button" outline onClick={onSaveDraft}>Save draft</Button>
+                { showForm && !createdGoals.length ? (
+                  <Link
+                    to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
+                    className=" usa-button usa-button--outline"
+                  >
+                    Cancel
+                  </Link>
+                ) : null }
+                { showForm && createdGoals.length ? (
+                  <Button type="button" outline onClick={clearForm} data-testid="create-goal-form-cancel">Cancel</Button>
+                ) : null }
 
-              { alert.message ? <Alert role="alert" className="margin-y-2" type={alert.type}>{alert.message}</Alert> : null }
-            </div>
+                { alert.message ? <Alert role="alert" className="margin-y-2" type={alert.type}>{alert.message}</Alert> : null }
+              </div>
+            )}
           </form>
         </GoalFormLoadingContext.Provider>
       </Container>

@@ -78,6 +78,50 @@ const createApproval = async (
   },
 );
 
+const moveDraftGoalsToNotStartedOnSubmission = async (sequelize, instance, options) => {
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('submissionStatus')
+    && instance.submissionStatus === REPORT_STATUSES.SUBMITTED) {
+    try {
+      const goals = await sequelize.models.Goal.findAll({
+        where: {
+          status: 'Draft',
+        },
+        include: [
+          {
+            attributes: [],
+            through: { attributes: [] },
+            model: sequelize.models.ActivityReport,
+            as: 'activityReports',
+            required: true,
+            where: {
+              id: instance.id,
+            },
+          },
+        ],
+        includeIgnoreAttributes: false,
+        transaction: options.transaction,
+      });
+
+      const goalIds = goals.map((goal) => goal.id);
+      await sequelize.models.Goal.update(
+        { status: 'Not Started' },
+        {
+          where: {
+            id: {
+              [Op.in]: goalIds,
+            },
+          },
+          transaction: options.transaction,
+        },
+      );
+    } catch (error) {
+      auditLogger.error(JSON.stringify({ error }));
+    }
+  }
+};
+
 const propogateSubmissionStatus = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
@@ -343,12 +387,17 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
   }
 };
 
-const automaticStatusChangeOnAprovalForGoals = async (sequelize, instance, options) => {
+const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
     && changed.includes('calculatedStatus')
     && instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
     && instance.approval.calculatedStatus === REPORT_STATUSES.APPROVED) {
+    // when a report is approved, the status of all the goals on that report should be recalculated
+    // with the exceptions that 1) goals are not automatically closed
+    // and 2) goals that are "In Progress" are not moved backward
+    // so we start with finding all the goals that *could* be changed
+    // (goals in draft or not started)
     const goals = await sequelize.models.Goal.findAll(
       {
         where: {
@@ -358,9 +407,6 @@ const automaticStatusChangeOnAprovalForGoals = async (sequelize, instance, optio
           {
             model: sequelize.models.Objective,
             as: 'objectives',
-            where: {
-              status: ['In Progress', 'Completed'],
-            },
           },
           {
             model: sequelize.models.ActivityReport,
@@ -373,15 +419,20 @@ const automaticStatusChangeOnAprovalForGoals = async (sequelize, instance, optio
       },
     );
 
-    // Update Goal status to 'In Progress'.
-    await Promise.all(goals.map(async (goal) => {
-      goal.set('status', 'In Progress');
-      return goal.save();
-    }));
+    await Promise.all((goals.map((goal) => {
+      const status = 'In Progress';
+
+      // if the goal should be in a different state, we will update it
+      if (goal.status !== status) {
+        goal.set('previousStatus', goal.status);
+        goal.set('status', status);
+      }
+      return goal.save({ transaction: options.transaction, individualHooks: true });
+    })));
   }
 };
 
-const automaticGoalObjectiveStatusCachingOnAproval = async (sequelize, instance, options) => {
+const automaticGoalObjectiveStatusCachingOnApproval = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
     && changed.includes('calculatedStatus')
@@ -457,8 +508,9 @@ const afterCreate = async (sequelize, instance, options) => {
 const afterUpdate = async (sequelize, instance, options) => {
   await propogateSubmissionStatus(sequelize, instance, options);
   await propagateApprovedStatus(sequelize, instance, options);
-  await automaticStatusChangeOnAprovalForGoals(sequelize, instance, options);
-  await automaticGoalObjectiveStatusCachingOnAproval(sequelize, instance, options);
+  await automaticStatusChangeOnApprovalForGoals(sequelize, instance, options);
+  await automaticGoalObjectiveStatusCachingOnApproval(sequelize, instance, options);
+  await moveDraftGoalsToNotStartedOnSubmission(sequelize, instance, options);
 };
 
 export {
@@ -469,10 +521,11 @@ export {
   cleanUpAllReportObjectives,
   createApproval,
   propagateApprovedStatus,
-  automaticStatusChangeOnAprovalForGoals,
+  automaticStatusChangeOnApprovalForGoals,
   beforeCreate,
   beforeUpdate,
   beforeDestroy,
   afterCreate,
   afterUpdate,
+  moveDraftGoalsToNotStartedOnSubmission,
 };

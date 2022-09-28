@@ -28,6 +28,7 @@ export const newGoal = (grantIds) => ({
   grantIds,
   goalIds: [],
   oldGrantIds: [],
+  status: 'Draft',
 });
 
 const components = {
@@ -36,12 +37,15 @@ const components = {
 };
 
 const GoalPicker = ({
-  availableGoals, roles, grantIds, reportId,
+  availableGoals, roles, grantIds, reportId, onSaveDraft,
 }) => {
   const {
     control, setValue, watch,
   } = useFormContext();
   const [topicOptions, setTopicOptions] = useState([]);
+  // the date picker component, as always, presents special challenges, it needs a key updated
+  // to re-render appropriately
+  const [datePickerKey, setDatePickerKey] = useState('DPKEY-00');
   const activityRecipientType = watch('activityRecipientType');
 
   // this is commented out because it's used by the code below, which is pending a todo resolve
@@ -106,6 +110,13 @@ const GoalPicker = ({
   const onSelectGoal = (goal) => {
     setValue('goalForEditing.objectives', []);
     onChange(goal);
+
+    // update the goal date forcefully
+    // also update the date picker key to force a re-render
+    setValue('goalEndDate', goal.endDate || '');
+    if (goal.goalIds) {
+      setDatePickerKey(`DPKEY-${goal.goalIds.join('-')}`);
+    }
   };
 
   return (
@@ -143,6 +154,8 @@ const GoalPicker = ({
               roles={roles}
               goal={goalForEditing}
               reportId={reportId}
+              onSaveDraft={onSaveDraft}
+              datePickerKey={datePickerKey}
             />
           </div>
         ) : null}
@@ -165,6 +178,7 @@ GoalPicker.propTypes = {
     PropTypes.number,
     PropTypes.string,
   ]).isRequired,
+  onSaveDraft: PropTypes.func.isRequired,
 };
 
 export default GoalPicker;

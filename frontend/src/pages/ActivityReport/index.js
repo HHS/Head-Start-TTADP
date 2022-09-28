@@ -3,7 +3,7 @@
   multiple pages. Each "page" is defined in the `./Pages` directory.
 */
 import React, {
-  useState, useEffect, useRef, useContext,
+  useState, useEffect, useRef, useContext, useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -314,7 +314,7 @@ function ActivityReport({
     }
   }, [activityReportId, formData]);
 
-  const userHasOneRole = user && user.roles && user.roles.length === 1;
+  const userHasOneRole = useMemo(() => user && user.roles && user.roles.length === 1, [user]);
 
   useDeepCompareEffect(() => {
     const fetch = async () => {
@@ -334,6 +334,7 @@ function ActivityReport({
             pageState: defaultPageState,
             userId: user.id,
             regionId: region || getRegionWithReadWrite(user),
+            version: 2,
           };
         }
 
@@ -388,7 +389,7 @@ function ActivityReport({
           }
         }
 
-        //
+        // Update form data.
         if (shouldUpdateFromNetwork && activityReportId !== 'new') {
           updateFormData({ ...formData, ...report }, true);
         } else {
@@ -542,6 +543,7 @@ function ActivityReport({
             endDate: endDateToSave,
             regionId: formData.regionId,
             approvers,
+            version: 2,
           },
         );
 
@@ -565,9 +567,15 @@ function ActivityReport({
           : data.creatorRole;
         const updatedFields = findWhatsChanged({ ...data, creatorRole }, formData);
         const updatedReport = await saveReport(
-          reportId.current, { ...updatedFields, approvers }, {},
+          reportId.current, { ...updatedFields, version: 2, approvers }, {},
         );
 
+        updateFormData({
+          ...updatedReport,
+          startDate: moment(updatedReport.startDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+          endDate: moment(updatedReport.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+          goals: updatedReport.goalsAndObjectives,
+        }, true);
         setConnectionActive(true);
         updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
       }

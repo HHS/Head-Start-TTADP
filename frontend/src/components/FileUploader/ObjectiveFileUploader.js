@@ -8,58 +8,69 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { deleteObjectiveFile, deleteFile } from '../../fetchers/File';
+import { deleteObjectiveFile, deleteFile, removeActivityReportObjectiveFile } from '../../fetchers/File';
 import FileTable from './FileTable';
 import Dropzone from './Dropzone';
 import './FileUploader.scss';
 
 const ObjectiveFileUploader = ({
-  onChange, files, objective, id, upload, index, inputName, onBlur, setError,
+  onChange,
+  files,
+  objective,
+  id,
+  upload,
+  index,
+  inputName,
+  onBlur,
+  setError,
+  reportId,
 }) => {
   const onFileRemoved = async (removedFileIndex) => {
     const file = files[removedFileIndex];
+    const fileHasObjectiveFile = file.ObjectiveFile && file.ObjectiveFile.objectiveId;
+    const objectiveHasBeenSaved = objective.ids && objective.ids.length && objective.ids.length > 0;
+    const uploaderIsOnReport = reportId > 0;
 
-    if (file.id && file.objectiveIds) {
-      await deleteObjectiveFile(file.id, file.objectiveIds);
-    } else if (file.id && objective.ids) {
-      await deleteObjectiveFile(file.id, objective.ids);
-    } else if (file.id) {
-      await deleteFile(file.id);
+    try {
+      if (uploaderIsOnReport) {
+        // remove from activity report objective file only
+        await removeActivityReportObjectiveFile(reportId, file.id, objective.ids);
+      } else if (objectiveHasBeenSaved) {
+        // remove objective file and delete file
+        await deleteObjectiveFile(file.id, objective.ids);
+      } else if (fileHasObjectiveFile) {
+        // remove objective file and delete file
+        await deleteObjectiveFile(file.id, [file.ObjectiveFile.objectiveId]);
+      } else {
+      // remove the file entirely
+        await deleteFile(file.id);
+      }
+
+      // remove from the UI if the network request was successful
+      const copyOfFiles = [...files];
+      copyOfFiles.splice(removedFileIndex, 1);
+      onChange(copyOfFiles);
+    } catch (error) {
+      setError('There was an error deleting the file. Please try again.');
     }
-    const copyOfFiles = [...files];
-    copyOfFiles.splice(removedFileIndex, 1);
-
-    onChange(copyOfFiles);
   };
 
   const handleDrop = async (e) => {
-    const newFiles = await Promise.all(
-      e.map((file) => upload(file, objective, setError, index)),
-    );
+    const newFiles = await upload(e, objective, setError, index);
 
-    let objectives;
-    let setObjectives;
-    let objectiveIndex;
+    // this is entirely a concession to the inability to accurately
+    // mock the upload function in the tests
+    const updatedInfo = newFiles || {};
 
-    const values = newFiles.map((file) => {
-      if (!objectives) {
-        objectives = file.objectives;
-      }
+    const {
+      setObjectives,
+      objectives,
+      index: objectiveIndex,
+      objectiveIds,
+      ...data
+    } = updatedInfo;
 
-      if (!setObjectives) {
-        setObjectives = file.setObjectives;
-      }
-
-      if (!objectiveIndex) {
-        objectiveIndex = file.index;
-      }
-
-      const {
-        objectives: a, setObjectives: b, index: c, ...fields
-      } = file;
-
-      return fields;
-    });
+    const values = Object.values(data);
 
     const allFilesIncludingTheNewOnes = [...files, ...values];
 
@@ -67,10 +78,7 @@ const ObjectiveFileUploader = ({
     if (objectives && setObjectives) {
       const copyOfObjectives = objectives.map((o) => ({ ...o }));
       copyOfObjectives[objectiveIndex].files = allFilesIncludingTheNewOnes;
-      copyOfObjectives[objectiveIndex].ids = allFilesIncludingTheNewOnes
-        .filter((f) => f.objectiveIds)
-        .map((f) => f.objectiveIds)
-        .flat();
+      copyOfObjectives[objectiveIndex].ids = objectiveIds;
       setObjectives(copyOfObjectives);
     } else {
       // else we just update the files array for local display
@@ -82,6 +90,7 @@ const ObjectiveFileUploader = ({
   const filesForTable = files.map((file) => {
     const status = 'PENDING';
     const fileId = file.id || file.lastModified;
+    const showDelete = !file.onAnyReport;
 
     return {
       ...file,
@@ -89,6 +98,7 @@ const ObjectiveFileUploader = ({
       fileSize: file.size || file.fileSize,
       status: file.status || status,
       id: fileId,
+      showDelete,
     };
   });
 
@@ -145,10 +155,12 @@ ObjectiveFileUploader.propTypes = {
   inputName: PropTypes.string.isRequired,
   onBlur: PropTypes.func.isRequired,
   setError: PropTypes.func.isRequired,
+  reportId: PropTypes.number,
 };
 
 ObjectiveFileUploader.defaultProps = {
   files: [],
+  reportId: 0,
 };
 
 export default ObjectiveFileUploader;

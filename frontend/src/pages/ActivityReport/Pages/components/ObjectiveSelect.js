@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
-import { Button, Label } from '@trussworks/react-uswds';
 import Select from 'react-select';
+import { Label, ModalToggleButton } from '@trussworks/react-uswds';
 import Req from '../../../../components/Req';
 import selectOptionsReset from '../../../../components/selectOptionsReset';
 import { OBJECTIVE_PROP } from './constants';
 import Option from './ObjectiveOption';
 import SingleValue from './ObjectiveValue';
 import './ObjectiveSelect.css';
+import Modal from '../../../../components/Modal';
 
 const components = {
   Option,
@@ -21,12 +22,23 @@ export default function ObjectiveSelect({
   onRemove,
   noObjectiveError,
 }) {
+  const modalRef = useRef(null);
+
   return (
     <>
       <div className="display-flex flex-justify maxw-mobile-lg margin-top-5">
         <h3 className="margin-0">Objective summary</h3>
-        { onRemove
-          && (<Button type="button" className="ttahub-objective-select-remove-objective" unstyled onClick={onRemove}>Remove this objective</Button>)}
+        { onRemove && (
+          <ModalToggleButton
+            modalRef={modalRef}
+            type="button"
+            className="ttahub-objective-select-remove-objective"
+            unstyled
+            onClick={onRemove}
+          >
+            Remove this objective
+          </ModalToggleButton>
+        )}
       </div>
       <Label>
         Select TTA objective
@@ -43,6 +55,17 @@ export default function ObjectiveSelect({
           components={components}
         />
       </Label>
+
+      <Modal
+        modalRef={modalRef}
+        title="Are you sure you want to remove this objective?"
+        modalId="remove-objective-modal"
+        onOk={onRemove}
+        okButtonText="Remove"
+        okButtonAriaLabel="This button will remove the objective from the activity report"
+      >
+        <p>Any information you entered will be lost.</p>
+      </Modal>
     </>
   );
 }

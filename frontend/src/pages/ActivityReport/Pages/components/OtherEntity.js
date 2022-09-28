@@ -10,10 +10,13 @@ import PlusButton from '../../../../components/GoalForm/PlusButton';
 import { NEW_OBJECTIVE } from './constants';
 import Loader from '../../../../components/Loader';
 import GoalFormContext from '../../../../GoalFormContext';
+import { DECIMAL_BASE } from '../../../../Constants';
 
 const OBJECTIVE_LABEL = 'objectivesWithoutGoals';
 
-export default function OtherEntity({ roles, recipientIds }) {
+export default function OtherEntity({
+  roles, recipientIds, onSaveDraft, reportId,
+}) {
   const { errors } = useFormContext();
   const defaultRoles = useMemo(() => (roles.length === 1 ? roles : []), [roles]);
   const [topicOptions, setTopicOptions] = useState([]);
@@ -78,6 +81,8 @@ export default function OtherEntity({ roles, recipientIds }) {
             remove={remove}
             fieldArrayName={OBJECTIVE_LABEL}
             roles={roles}
+            onSaveDraft={onSaveDraft}
+            reportId={parseInt(reportId, DECIMAL_BASE)}
           />
         );
       })}
@@ -89,4 +94,6 @@ export default function OtherEntity({ roles, recipientIds }) {
 OtherEntity.propTypes = {
   roles: PropTypes.arrayOf(PropTypes.string).isRequired,
   recipientIds: PropTypes.arrayOf(PropTypes.number).isRequired,
+  onSaveDraft: PropTypes.func.isRequired,
+  reportId: PropTypes.string.isRequired,
 };

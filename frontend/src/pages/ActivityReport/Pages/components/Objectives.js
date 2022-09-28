@@ -11,6 +11,8 @@ export default function Objectives({
   topicOptions,
   roles,
   noObjectiveError,
+  onSaveDraft,
+  reportId,
 }) {
   const { errors, getValues, setValue } = useFormContext();
 
@@ -89,6 +91,13 @@ export default function Objectives({
     ),
   ];
 
+  const removeObjective = (index) => {
+    // Remove the objective.
+    remove(index);
+    // Update this list of available objectives.
+    setUpdatedUsedObjectiveIds();
+  };
+
   return (
     <>
       {/*
@@ -121,10 +130,14 @@ export default function Objectives({
               topicOptions={topicOptions}
               options={options}
               errors={objectiveErrors}
-              remove={remove}
+              remove={removeObjective}
               fieldArrayName={fieldArrayName}
               roles={roles}
               onObjectiveChange={onObjectiveChange}
+              onSaveDraft={onSaveDraft}
+              parentGoal={getValues('goalForEditing')}
+              initialObjectiveStatus={objective.status}
+              reportId={reportId}
             />
           );
         })}
@@ -143,4 +156,6 @@ Objectives.propTypes = {
   ).isRequired,
   roles: PropTypes.arrayOf(PropTypes.string).isRequired,
   noObjectiveError: PropTypes.node.isRequired,
+  onSaveDraft: PropTypes.func.isRequired,
+  reportId: PropTypes.number.isRequired,
 };

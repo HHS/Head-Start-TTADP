@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import {
@@ -22,7 +22,6 @@ export default function NextStepsRepeater({
   const [heights, setHeights] = useState([]);
   const [blurStepValidations, setBlurStepValidations] = useState([]);
   const [blurDateValidations, setBlurDateValidations] = useState([]);
-  const [showAddStepButton, setShowStepButton] = useState(false);
 
   const todaysDate = moment().format(DATE_DISPLAY_FORMAT);
 
@@ -36,24 +35,7 @@ export default function NextStepsRepeater({
     keyName: 'key', // because 'id' is the default key switch it to use 'key'.
   });
 
-  useEffect(() => {
-    const allValues = getValues();
-    const fieldArray = allValues[name] || [];
-    setShowStepButton(fieldArray.every((field) => field.note !== ''
-      && (field.completeDate && moment(field.completeDate, 'MM/DD/YYYY').isValid())));
-  }, [fields, getValues, name]);
-
   const canDelete = fields.length > 1;
-
-  const onAddNewStep = () => {
-    const allValues = getValues();
-    const fieldArray = allValues[name] || [];
-    const canAdd = fieldArray.every((field) => field.note !== ''
-      && (field.completeDate && moment(field.completeDate, 'MM/DD/YYYY').isValid()));
-    if (canAdd) {
-      append({ id: null, note: '', completeDate: null });
-    }
-  };
 
   const onRemoveStep = (index) => {
     // Remove from Array.
@@ -96,6 +78,17 @@ export default function NextStepsRepeater({
     if (e.target && e.target.scrollHeight && e.target.scrollHeight > DEFAULT_STEP_HEIGHT) {
       existingHeights[index] = `${e.target.scrollHeight}px`;
       setHeights(existingHeights);
+    }
+  };
+
+  const onAddNewStep = () => {
+    validateStepOnBlur();
+    const allValues = getValues();
+    const fieldArray = allValues[name] || [];
+    const canAdd = fieldArray.every((field) => field.note !== ''
+      && (field.completeDate && moment(field.completeDate, 'MM/DD/YYYY').isValid()));
+    if (canAdd) {
+      append({ id: null, note: '', completeDate: null });
     }
   };
 
@@ -159,7 +152,7 @@ export default function NextStepsRepeater({
               </div>
             </FormGroup>
             <FormGroup
-              className="margin-top-1 margin-bottom-3"
+              className="margin-top-1 margin-bottom-2"
               error={blurDateValidations[index] || (errors[name] && errors[name][index]
                 && errors[name][index].completeDate)}
             >
@@ -197,25 +190,19 @@ export default function NextStepsRepeater({
         ))}
       </div>
 
-      {
-        showAddStepButton
-          ? (
-            <Button
-              type="button"
-              unstyled
-              onClick={onAddNewStep}
-              className="ttahub-next-steps__add-step-button"
-              data-testid={
-                `${name === 'specialistNextSteps'
-                  ? 'specialist' : 'recipient'}NextSteps-button`
-              }
-            >
-              <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faPlusCircle} />
-              Add next step
-            </Button>
-          )
-          : null
+      <Button
+        type="button"
+        unstyled
+        onClick={onAddNewStep}
+        className="ttahub-next-steps__add-step-button margin-bottom-2"
+        data-testid={
+          `${name === 'specialistNextSteps'
+            ? 'specialist' : 'recipient'}NextSteps-button`
         }
+      >
+        <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faPlusCircle} />
+        Add next step
+      </Button>
     </>
   );
 }

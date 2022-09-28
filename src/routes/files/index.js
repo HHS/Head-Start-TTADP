@@ -4,9 +4,9 @@ import {
   linkHandler,
   deleteHandler,
   deleteObjectiveFileHandler,
-  onlyFileUploadHandler,
   deleteOnlyFile,
   uploadObjectivesFile,
+  deleteActivityReportObjectiveFile,
 } from './handlers';
 import {
   checkReportIdParam,
@@ -23,12 +23,12 @@ const router = express.Router();
  */
 router.post('/link/', transactionWrapper(linkHandler));
 router.post('/', transactionWrapper(uploadHandler));
-router.post('/upload', transactionWrapper(onlyFileUploadHandler));
 router.post('/objectives', transactionWrapper(uploadObjectivesFile));
 router.delete('/:fileId?', checkFileIdParam, transactionWrapper(deleteOnlyFile));
 router.delete('/r/:reportId?/:fileId?', checkReportIdParam, checkFileIdParam, transactionWrapper(deleteHandler));
 router.delete('/:fileId/objectives', checkFileIdParam, transactionWrapper(deleteObjectiveFileHandler));
 router.delete('/o/:objectiveId?/:fileId?', checkObjectiveIdParam, checkFileIdParam, transactionWrapper(deleteHandler));
 router.delete('/ot/:objectiveTemplateId?/:fileId?', checkObjectiveTemplateIdParam, checkFileIdParam, transactionWrapper(deleteHandler));
+router.delete('/report/:reportId?/file/:fileId?', checkReportIdParam, checkFileIdParam, transactionWrapper(deleteActivityReportObjectiveFile));
 
 export default router;

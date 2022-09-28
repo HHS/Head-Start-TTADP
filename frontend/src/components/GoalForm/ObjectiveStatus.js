@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { FormGroup, Label, Dropdown } from '@trussworks/react-uswds';
 
@@ -7,24 +7,51 @@ export default function ObjectiveStatus({
   goalStatus,
   onChangeStatus,
   inputName,
-  isOnReport,
   isLoading,
 }) {
-  // if the goal is a draft, any objectives added
-  // will have to be draft as well
+  // capture the initial status so updates to the status don't cause the dropdown to disappear
+  const initialStatus = useRef(status);
 
+  // if the goal is closed, the objective status should be read-only
+  const hideDropdown = useMemo(() => {
+    if (goalStatus === 'Closed') {
+      return true;
+    }
+
+    return false;
+  }, [goalStatus]);
+
+  const options = useMemo(() => {
+    // if the objective is completed, it can only go back to in progress
+    if (initialStatus.current === 'Completed') {
+      return (
+        <>
+          <option>In Progress</option>
+          <option>Completed</option>
+        </>
+      );
+    }
+
+    // otherwise all the options should be available
+    return (
+      <>
+        <option>Not Started</option>
+        <option>In Progress</option>
+        <option>Completed</option>
+      </>
+    );
+  }, []);
+
+  // if the goal is a draft, objective status sits in "in progress"
   if (goalStatus === 'Draft') {
     return null;
   }
 
-  // if the objective has been completed or is "in progress"
-  // we need a control to change status
-
-  const showDropdown = !(status.toLowerCase() === 'not started' && isOnReport);
+  // if the objective is "in progress" and the goal is not closed we need a control to change status
 
   const onChange = (e) => onChangeStatus(e.target.value);
 
-  if (showDropdown) {
+  if (!hideDropdown) {
     return (
       <FormGroup>
         <Label htmlFor={inputName}>
@@ -37,8 +64,7 @@ export default function ObjectiveStatus({
           id={inputName}
           disabled={isLoading}
         >
-          <option>In Progress</option>
-          <option>Completed</option>
+          {options}
         </Dropdown>
       </FormGroup>
     );
@@ -59,7 +85,6 @@ ObjectiveStatus.propTypes = {
   goalStatus: PropTypes.string.isRequired,
   inputName: PropTypes.string.isRequired,
   onChangeStatus: PropTypes.func.isRequired,
-  isOnReport: PropTypes.bool.isRequired,
   isLoading: PropTypes.bool,
 };
 

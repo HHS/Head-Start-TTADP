@@ -97,7 +97,13 @@ export async function saveObjectivesForReport(objectives, report) {
 
 export async function getObjectiveById(objectiveId) {
   return Objective.findOne({
-    attributes: ['id', 'title', 'status'],
+    attributes: [
+      'id',
+      'title',
+      'status',
+      'onApprovedAR',
+      'otherEntityId',
+    ],
     where: {
       id: objectiveId,
     },

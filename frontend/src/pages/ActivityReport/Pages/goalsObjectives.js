@@ -3,8 +3,10 @@
 // way they did in thier examples
 /* eslint-disable arrow-body-style */
 import React, { useState, useMemo, useContext } from 'react';
+import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
+import { uniqBy } from 'lodash';
 import { Alert, Fieldset } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useFormContext, useController } from 'react-hook-form/dist/index.ie11';
@@ -23,7 +25,11 @@ import OtherEntity from './components/OtherEntity';
 import GoalFormContext from '../../../GoalFormContext';
 import ReadOnlyOtherEntityObjectives from '../../../components/GoalForm/ReadOnlyOtherEntityObjectives';
 
-const GoalsObjectives = ({ reportId }) => {
+const GoalsObjectives = ({
+  reportId,
+  onSaveDraftGoal,
+  onSaveDraftOetObjectives,
+}) => {
   const {
     watch, setValue, getValues, setError,
   } = useFormContext();
@@ -141,7 +147,7 @@ const GoalsObjectives = ({ reportId }) => {
     const objectives = getValues(`goals[${index}].objectives`) || [];
 
     setValue('goalForEditing.objectives', objectives);
-    setValue('goalEndDate', goal.endDate);
+    setValue('goalEndDate', moment(goal.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'));
     setValue('goalName', goal.name);
 
     toggleGoalForm(false);
@@ -185,22 +191,15 @@ const GoalsObjectives = ({ reportId }) => {
   const collaborators = watch('activityReportCollaborators');
   const author = watch('author');
 
-  // create an exclusive set of roles
-  // from the collaborators & author
+  // create an exclusive set of roles from the collaborators & author
   const roles = useMemo(() => {
     const collabs = collaborators || [];
     const auth = author || { roles: [] };
-    const authorRoles = auth.roles.map((r) => r.fullName);
+    const authorRoles = auth.roles;
 
-    const collaboratorRoles = collabs.map((c) => (
-      c.collaboratorRoles ? c.collaboratorRoles.map((r) => r.fullName) : []
-    )).flat();
+    const collaboratorRoles = collabs.map((c) => (c.collaboratorRoles || [])).flat();
 
-    return Array.from(
-      new Set(
-        [...collaboratorRoles, ...authorRoles],
-      ),
-    );
+    return uniqBy([...authorRoles, ...collaboratorRoles], 'id');
   }, [author, collaborators]);
 
   return (
@@ -229,6 +228,8 @@ const GoalsObjectives = ({ reportId }) => {
       <OtherEntity
         roles={roles}
         recipientIds={activityRecipientIds}
+        onSaveDraft={onSaveDraftOetObjectives}
+        reportId={reportId}
       />
       )}
       {/**
@@ -277,6 +278,7 @@ const GoalsObjectives = ({ reportId }) => {
                 availableGoals={availableGoals}
                 roles={roles}
                 reportId={reportId}
+                onSaveDraft={onSaveDraftGoal}
               />
             </Fieldset>
           </>
@@ -300,6 +302,8 @@ const GoalsObjectives = ({ reportId }) => {
 
 GoalsObjectives.propTypes = {
   reportId: PropTypes.number.isRequired,
+  onSaveDraftOetObjectives: PropTypes.func.isRequired,
+  onSaveDraftGoal: PropTypes.func.isRequired,
 };
 
 const ReviewSection = () => {
@@ -342,13 +346,15 @@ export default {
     if (activityRecipientType === 'other-entity') {
       return validateObjectives(formData.objectivesWithoutGoals) === true;
     }
-    return activityRecipientType !== 'recipient' || validateGoals(formData.goals) === true;
+    return activityRecipientType === 'recipient' && validateGoals(formData.goals) === true;
   },
   reviewSection: () => <ReviewSection />,
-  render: (_additionalData, _formData, reportId) => (
+  render: (_additionalData, _formData, reportId, onSaveDraftGoal, onSaveDraftOetObjectives) => (
 
     <GoalsObjectives
       reportId={reportId}
+      onSaveDraftGoal={onSaveDraftGoal}
+      onSaveDraftOetObjectives={onSaveDraftOetObjectives}
     />
   ),
 };

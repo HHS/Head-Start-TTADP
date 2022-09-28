@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
-import { useController } from 'react-hook-form/dist/index.ie11';
+import {
+  useController, useFormContext,
+} from 'react-hook-form/dist/index.ie11';
 import ObjectiveTitle from './ObjectiveTitle';
 import { REPORT_STATUSES } from '../../../../Constants';
 import SpecialistRole from '../../../../components/GoalForm/SpecialistRole';
@@ -12,6 +14,7 @@ import ObjectiveTta from './ObjectiveTta';
 import ObjectiveStatus from './ObjectiveStatus';
 import ObjectiveSelect from './ObjectiveSelect';
 import { OBJECTIVE_PROP, NO_ERROR, ERROR_FORMAT } from './constants';
+import { uploadObjectivesFile } from '../../../../fetchers/File';
 import {
   OBJECTIVE_TITLE,
   OBJECTIVE_ROLE,
@@ -21,7 +24,6 @@ import {
 } from './goalValidator';
 import { validateListOfResources } from '../../../../components/GoalForm/constants';
 import './Objective.scss';
-import { uploadOnlyFile } from '../../../../fetchers/File';
 
 export default function Objective({
   objective,
@@ -33,8 +35,13 @@ export default function Objective({
   errors,
   roles,
   onObjectiveChange,
+  onSaveDraft,
+  parentGoal,
+  initialObjectiveStatus,
+  reportId,
 }) {
   const [selectedObjective, setSelectedObjective] = useState(objective);
+  const { getValues } = useFormContext();
 
   /**
    * add controllers for all the controlled fields
@@ -175,7 +182,33 @@ export default function Objective({
     onChangeStatus(newObjective.status);
     onChangeRoles(newObjective.roles || []);
     onChangeTopics(newObjective.topics);
+    onChangeFiles(newObjective.files || []);
     onObjectiveChange(newObjective, index); // Call parent on objective change.
+  };
+
+  const onUploadFile = async (files, _objective, setError) => {
+    // we save draft one of two ways, depending on whether it is a
+    // recipient report or not
+    await onSaveDraft();
+
+    // we also need to access the updated form data to
+    // get the correct objective ids to attach to our API post
+    const objectivesField = getValues(fieldArrayName);
+    const objectiveToAttach = objectivesField[index];
+
+    // handle file upload
+    try {
+      const data = new FormData();
+      data.append('objectiveIds', JSON.stringify(objectiveToAttach.ids));
+      files.forEach((file) => {
+        data.append('file', file);
+      });
+
+      return uploadObjectivesFile(data);
+    } catch (error) {
+      setError('There was an error uploading your file(s).');
+      return null;
+    }
   };
 
   // we need to auto select an objective role if there is only one available
@@ -197,17 +230,6 @@ export default function Objective({
 
   const onRemove = () => remove(index);
 
-  const onUploadFile = (file, _objective, setError) => {
-    try {
-      const data = new FormData();
-      data.append('file', file);
-      return uploadOnlyFile(data);
-    } catch (error) {
-      setError('File failed to upload');
-      return null;
-    }
-  };
-
   return (
     <>
       <ObjectiveSelect
@@ -224,12 +246,11 @@ export default function Objective({
         title={objectiveTitle}
         onChangeTitle={onChangeTitle}
         validateObjectiveTitle={onBlurTitle}
-        status={objectiveStatus}
         inputName={objectiveTitleInputName}
-        isOnReport={isOnReport || false} // todo - fix this for being on AR
+        parentGoal={parentGoal}
+        initialObjectiveStatus={initialObjectiveStatus}
       />
       <SpecialistRole
-        isOnApprovedReport={isOnApprovedReport || false}
         isOnReport={isOnReport || false}
         status={objectiveStatus}
         error={errors.roles
@@ -239,7 +260,7 @@ export default function Objective({
         selectedRoles={objectiveRoles}
         inputName={objectiveRolesInputName}
         validateSpecialistRole={onBlurRoles}
-        options={roles}
+        roleOptions={roles}
       />
       <ObjectiveTopics
         error={errors.topics
@@ -271,13 +292,13 @@ export default function Objective({
         objective={objective}
         files={objectiveFiles}
         onChangeFiles={onChangeFiles}
-        isOnApprovedReport={isOnApprovedReport || false}
         status={objectiveStatus}
         isOnReport={isOnReport || false}
-        onUploadFile={onUploadFile}
+        onUploadFiles={onUploadFile}
         index={index}
         onBlur={onBlurFiles}
         inputName={objectiveFilesInputName}
+        reportId={reportId}
       />
       <ObjectiveTta
         ttaProvided={objectiveTta}
@@ -331,4 +352,11 @@ Objective.propTypes = {
   fieldArrayName: PropTypes.string.isRequired,
   roles: PropTypes.arrayOf(PropTypes.string).isRequired,
   onObjectiveChange: PropTypes.func.isRequired,
+  onSaveDraft: PropTypes.func.isRequired,
+  parentGoal: PropTypes.shape({
+    id: PropTypes.number,
+    status: PropTypes.string,
+  }).isRequired,
+  initialObjectiveStatus: PropTypes.string.isRequired,
+  reportId: PropTypes.number.isRequired,
 };

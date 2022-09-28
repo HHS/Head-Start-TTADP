@@ -83,6 +83,7 @@ export async function createUser(req, res) {
         ],
       },
     );
+
     auditLogger.info(`User ${req.session.userId} created new User: ${user.id}`);
     res.json(user);
   } catch (error) {

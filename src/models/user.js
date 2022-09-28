@@ -25,6 +25,9 @@ module.exports = (sequelize, DataTypes) => {
         as: 'roles',
         hooks: true,
       });
+      User.hasMany(models.UserSettingOverrides, { foreignKey: 'userId', as: 'userSettingOverrides' });
+      User.hasMany(models.ActivityReport, { foreignKey: 'userId', as: 'reports', hooks: true });
+      User.hasMany(models.UserValidationStatus, { foreignKey: 'userId', as: 'validationStatus' });
     }
   }
   User.init({
