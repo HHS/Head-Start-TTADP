@@ -120,7 +120,7 @@ describe('objective model hooks', () => {
     testGoal = await Goal.findByPk(goal.id);
     expect(testGoal.status).toEqual('In Progress');
 
-    await Objective.update({ status: 'Completed' }, {
+    await Objective.update({ status: 'Complete' }, {
       where: { id: [objective3.id, objective2.id] },
       individualHooks: true,
 

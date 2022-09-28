@@ -70,7 +70,7 @@ const autoPopulateStatusChangeDates = (sequelize, instance) => {
         }
         instance.set('lastSuspendedAt', now);
         break;
-      case 'Completed':
+      case 'Complete':
         if (instance.firstCompleteAt === null
           || instance.firstCompleteAt === undefined) {
           instance.set('firstCompleteAt', now);
