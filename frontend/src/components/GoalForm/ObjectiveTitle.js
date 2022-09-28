@@ -17,7 +17,7 @@ export default function ObjectiveTitle({
 }) {
   const readOnly = useMemo(() => (
     isOnApprovedReport
-    || status === 'Completed'
+    || status === 'Complete'
     || status === 'Suspended'
     || (status === 'Not Started' && isOnReport)
     || (status === 'In Progress' && isOnReport)),

@@ -431,7 +431,7 @@ describe('Goals by Recipient Test', () => {
         await Objective.create({
           goalId: goalIds[2],
           title: 'objective 4',
-          status: 'Completed',
+          status: 'Complete',
           onApprovedAR: true,
         }),
         // objective 5 (AR2)
@@ -666,7 +666,7 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx[1].objectives[0].title).toBe('objective 4');
       expect(goalRowsx[1].objectives[0].endDate).toBe('09/01/2020');
       expect(goalRowsx[1].objectives[0].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRowsx[1].objectives[0].status).toEqual('Completed');
+      expect(goalRowsx[1].objectives[0].status).toEqual('Complete');
 
       expect(goalRowsx[1].objectives[1].title).toBe('objective 3');
       expect(goalRowsx[1].objectives[1].endDate).toBe('09/01/2020');
