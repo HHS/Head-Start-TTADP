@@ -5,7 +5,7 @@ const checkForUseOnApprovedReport = async (sequelize, instance, options) => {
     where: { id: instance.activityReportId },
     transaction: options.transaction,
   });
-  if (activityReport.calculatedStatus === 'Approved') {
+  if (activityReport.approval.calculatedStatus === 'Approved') {
     throw new Error('File cannot be removed from approved report.');
   }
 };

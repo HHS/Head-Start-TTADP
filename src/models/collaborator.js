@@ -1,7 +1,8 @@
-const { Model } = require('sequelize');
+const { Model, Op } = require('sequelize');
 const {
   beforeValidate,
   beforeCreate,
+  beforeDestroy,
   beforeUpdate,
   afterCreate,
   afterDestroy,
@@ -9,7 +10,7 @@ const {
   afterUpdate,
   afterUpsert,
 } = require('./hooks/collaborator');
-// const { generateFullName } = require('./helpers/generateFullName');
+const { generateFullName } = require('./helpers/generateFullName');
 const { ENTITY_TYPES, COLLABORATOR_TYPES, RATIFIER_STATUSES } = require('../constants');
 
 module.exports = (sequelize, DataTypes) => {
@@ -17,59 +18,67 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       Collaborator.belongsTo(models.ActivityReport, {
         scope: {
-          entityType: ENTITY_TYPES.REPORT,
+          '$Collaborators.entityType$': ENTITY_TYPES.REPORT,
         },
         foreignKey: 'entityId',
         as: 'report',
+        hooks: true,
       });
       Collaborator.belongsTo(models.ActivityReportGoal, {
         scope: {
-          entityType: ENTITY_TYPES.REPORTGOAL,
+          '$Collaborators.entityType$': ENTITY_TYPES.REPORTGOAL,
         },
         foreignKey: 'entityId',
         as: 'reportGoal',
+        hooks: true,
       });
       Collaborator.belongsTo(models.ActivityReportObjective, {
         scope: {
-          entityType: ENTITY_TYPES.REPORTOBJECTIVE,
+          '$Collaborators.entityType$': ENTITY_TYPES.REPORTOBJECTIVE,
         },
         foreignKey: 'entityId',
         as: 'reportObjective',
+        hooks: true,
       });
       Collaborator.belongsTo(models.Goal, {
         scope: {
-          entityType: ENTITY_TYPES.GOAL,
+          '$Collaborators.entityType$': ENTITY_TYPES.GOAL,
         },
         foreignKey: 'entityId',
         as: 'goal',
+        hooks: true,
       });
       Collaborator.belongsTo(models.GoalTemplate, {
         scope: {
-          entityType: ENTITY_TYPES.GOALTEMPLATE,
+          '$Collaborators.entityType$': ENTITY_TYPES.GOALTEMPLATE,
         },
         foreignKey: 'entityId',
         as: 'goalTemplate',
+        hooks: true,
       });
       Collaborator.belongsTo(models.Objective, {
         scope: {
-          entityType: ENTITY_TYPES.OBJECTIVE,
+          '$Collaborators.entityType$': ENTITY_TYPES.OBJECTIVE,
         },
         foreignKey: 'entityId',
         as: 'objective',
+        hooks: true,
       });
       Collaborator.belongsTo(models.ObjectiveTemplate, {
         scope: {
-          entityType: ENTITY_TYPES.OBJECTIVETEMPLATE,
+          '$Collaborators.entityType$': ENTITY_TYPES.OBJECTIVETEMPLATE,
         },
         foreignKey: 'entityId',
         as: 'objectiveTemplate',
+        hooks: true,
       });
-      Collaborator.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+      Collaborator.belongsTo(models.User, { foreignKey: 'userId', as: 'user', hooks: true });
       Collaborator.belongsToMany(models.Role, {
         through: models.CollaboratorRole,
         otherKey: 'roleId',
         foreignKey: 'collaboratorId',
         as: 'roles',
+        hooks: true,
       });
       Collaborator.addScope('defaultScope', {
         include: [{
@@ -82,6 +91,12 @@ module.exports = (sequelize, DataTypes) => {
           required: true,
         }],
       });
+      Collaborator.addScope('withEntityType', (entityType) => ({
+        where: { entityType },
+      }));
+      Collaborator.addScope('asCollaboratorTypes', (collaboratorType) => ({
+        where: { collaboratorTypes: { [Op.contains]: [collaboratorType] } },
+      }));
     }
   }
   Collaborator.init({
@@ -140,26 +155,23 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       type: DataTypes.DATE,
     },
-    // nameWithRole: {
-    //   type: DataTypes.VIRTUAL,
-    //   get() {
-    //     let collaboratorRoles = this.collaboratorRoles
-    //       && this.collaboratorRoles.length
-    //       ? this.collaboratorRoles
-    //       : null;
-    //     collaboratorRoles = !collaboratorRoles
-    //       && this.user
-    //       && this.user.roles
-    //       && this.user.roles.length
-    //       ? this.user.roles
-    //       : [];
-    //     return generateFullName(this.user.name, collaboratorRoles);
-    //   },
-    // },
+    nameWithRole: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        if (this.user) {
+          if (this.roles) {
+            return generateFullName(this.user.name, this.roles);
+          }
+          return this.user.fullName;
+        }
+        return null;
+      },
+    },
   }, {
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       beforeCreate: async (instance, options) => beforeCreate(sequelize, instance, options),
+      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
       beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),

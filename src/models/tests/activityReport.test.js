@@ -3,6 +3,7 @@ import db, {
   ActivityRecipient,
   ActivityReportGoal,
   ActivityReportObjective,
+  Approval,
   Goal,
   Objective,
   User,
@@ -10,11 +11,12 @@ import db, {
   OtherEntity,
   Grant,
 } from '..';
-import { REPORT_STATUSES } from '../../constants';
+import { REPORT_STATUSES, ENTITY_TYPES } from '../../constants';
 import { auditLogger } from '../../logger';
 import {
   copyStatus,
-} from '../hooks/activityReport';
+} from '../hooks/approval';
+import { createOrUpdate } from '../../services/activityReports';
 
 const mockUser = {
   name: 'Joe Green',
@@ -109,7 +111,6 @@ describe('Activity Reports model', () => {
   let otherEntity;
   let grant;
   let report;
-  let activityRecipients;
   const goals = [];
   const objectives = [];
   beforeAll(async () => {
@@ -124,15 +125,15 @@ describe('Activity Reports model', () => {
         programSpecialistEmail: user.email,
       });
       grant = await Grant.findOne({ where: { id: mockGrant.id } });
-      report = await ActivityReport.create({ ...sampleReport });
-      activityRecipients = await Promise.all([
-        await ActivityRecipient.create({ activityReportId: report.id, grantId: grant.id }),
-        await ActivityRecipient.create({
-          activityReportId: report.id,
-          otherEntityId: otherEntity.id,
-        }),
-        await ActivityRecipient.create({ activityReportId: report.id }, { validation: false }),
-      ]);
+      try {
+        report = await createOrUpdate({
+          ...sampleReport,
+          activityRecipients: [{ grantId: grant.id }, { otherEntityId: otherEntity.id }],
+        });
+      } catch (err) {
+        auditLogger.error(JSON.stringify({ name: 'Activity Reports model', err }));
+      }
+      await ActivityRecipient.create({ activityReportId: report.id }, { validation: false });
       goals[0] = await Goal.create({
         ...mockGoals[0],
         grantId: grant.id,
@@ -167,45 +168,66 @@ describe('Activity Reports model', () => {
     }
   });
   afterAll(async () => {
-    if (activityRecipients) {
-      await Promise.all(activityRecipients
-        .map(async (activityRecipient) => ActivityRecipient.destroy({
-          where: {
-            activityReportId: activityRecipient.activityReportId,
-            grantId: activityRecipient.grantId,
-            otherEntityId: activityRecipient.otherEntityId,
-          },
-        })));
-      await ActivityReportObjective.destroy({ where: { activityReportId: report.id } });
-      await ActivityReportGoal.destroy({ where: { activityReportId: report.id } });
-      await ActivityReport.destroy({ where: { id: report.id } });
-      await Objective.destroy({ where: { id: objectives.map((o) => o.id) } });
-      await Goal.destroy({ where: { grantId: grant.id } });
-      await Grant.destroy({ where: { id: grant.id } });
-      await OtherEntity.destroy({ where: { id: otherEntity.id } });
-      await Recipient.destroy({ where: { id: recipient.id } });
-      await User.destroy({ where: { id: user.id } });
-      await db.sequelize.close();
-    }
+    await ActivityRecipient.destroy({
+      where: { activityReportId: report.id },
+      individualHooks: true,
+    });
+    await ActivityReportObjective.destroy({
+      where: { activityReportId: report.id },
+      individualHooks: true,
+    });
+    await ActivityReportGoal.destroy({
+      where: { activityReportId: report.id },
+      individualHooks: true,
+    });
+    await ActivityReport.destroy({
+      where: { id: report.id },
+      individualHooks: true,
+    });
+    await Objective.destroy({
+      where: { id: objectives.map((o) => o.id) },
+      individualHooks: true,
+    });
+    await Goal.destroy({
+      where: { grantId: grant.id },
+      individualHooks: true,
+    });
+    await Grant.destroy({
+      where: { id: grant.id },
+      individualHooks: true,
+    });
+    await OtherEntity.destroy({
+      where: { id: otherEntity.id },
+      individualHooks: true,
+    });
+    await Recipient.destroy({
+      where: { id: recipient.id },
+      individualHooks: true,
+    });
+    await User.destroy({
+      where: { id: user.id },
+      individualHooks: true,
+    });
+    await db.sequelize.close();
   });
 
   it('copyStatus', async () => {
-    const instance = { submissionStatus: REPORT_STATUSES.DRAFT };
+    const instance = { approval: { submissionStatus: REPORT_STATUSES.DRAFT } };
     instance.set = (name, value) => { instance[name] = value; };
-    copyStatus(instance);
-    expect(instance.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
-    instance.submissionStatus = REPORT_STATUSES.DELETED;
-    copyStatus(instance);
-    expect(instance.calculatedStatus).toEqual(REPORT_STATUSES.DELETED);
-    instance.submissionStatus = REPORT_STATUSES.SUBMITTED;
-    copyStatus(instance);
-    expect(instance.calculatedStatus).not.toEqual(REPORT_STATUSES.SUBMITTED);
-    instance.submissionStatus = REPORT_STATUSES.APPROVED;
-    copyStatus(instance);
-    expect(instance.calculatedStatus).not.toEqual(REPORT_STATUSES.APPROVED);
-    instance.submissionStatus = REPORT_STATUSES.NEEDS_ACTION;
-    copyStatus(instance);
-    expect(instance.calculatedStatus).not.toEqual(REPORT_STATUSES.NEEDS_ACTION);
+    copyStatus(instance.approval);
+    expect(instance.approval.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
+    instance.approval.submissionStatus = REPORT_STATUSES.DELETED;
+    copyStatus(instance.approval);
+    expect(instance.approval.calculatedStatus).toEqual(REPORT_STATUSES.DELETED);
+    instance.approval.submissionStatus = REPORT_STATUSES.SUBMITTED;
+    copyStatus(instance.approval);
+    expect(instance.approval.calculatedStatus).not.toEqual(REPORT_STATUSES.SUBMITTED);
+    instance.approval.submissionStatus = REPORT_STATUSES.APPROVED;
+    copyStatus(instance.approval);
+    expect(instance.approval.calculatedStatus).not.toEqual(REPORT_STATUSES.APPROVED);
+    instance.approval.submissionStatus = REPORT_STATUSES.NEEDS_ACTION;
+    copyStatus(instance.approval);
+    expect(instance.approval.calculatedStatus).not.toEqual(REPORT_STATUSES.NEEDS_ACTION);
   });
   it('propagateApprovedStatus', async () => {
     const preReport = await ActivityReport.findOne(
@@ -227,8 +249,12 @@ describe('Activity Reports model', () => {
       where: { id: objectives.map((o) => o.id) },
     });
 
-    await preReport.update(
+    await Approval.update(
       { calculatedStatus: REPORT_STATUSES.APPROVED, submissionStatus: REPORT_STATUSES.SUBMITTED },
+      {
+        where: { entityType: ENTITY_TYPES.REPORT, entityId: preReport.id, tier: 0 },
+        individualHooks: true,
+      },
     );
     await ActivityReport.findOne(
       { where: { id: report.id }, individualHooks: true },
@@ -277,23 +303,22 @@ describe('Activity Reports model', () => {
   });
 
   it('activityRecipientId', async () => {
+    const activityRecipients = await ActivityRecipient.findAll({
+      where: { activityReportId: report.id },
+    });
+    expect(activityRecipients).not.toEqual(null);
     expect(activityRecipients[0].activityRecipientId).toEqual(grant.id);
     expect(activityRecipients[1].activityRecipientId).toEqual(otherEntity.id);
     expect(activityRecipients[2].activityRecipientId).toEqual(null);
   });
   it('name', async () => {
     try {
-      const arr = await Promise.all(activityRecipients
-        .map(async (activityRecipient) => ActivityRecipient.findOne({
-          where: {
-            activityReportId: activityRecipient.activityReportId,
-            grantId: activityRecipient.grantId,
-            otherEntityId: activityRecipient.otherEntityId,
-          },
-        })));
-      expect(arr[0].name).toEqual(grant.name);
-      expect(arr[1].name).toEqual(otherEntity.name);
-      expect(arr[2].name).toEqual(null);
+      const activityRecipients = await ActivityRecipient.findAll({
+        where: { activityReportId: report.id },
+      });
+      expect(activityRecipients[0].name).toEqual(grant.name);
+      expect(activityRecipients[1].name).toEqual(otherEntity.name);
+      expect(activityRecipients[2].name).toEqual(null);
     } catch (e) {
       auditLogger.error(JSON.stringify(e));
       throw e;

@@ -147,20 +147,26 @@ describe('Topics and frequency graph widget', () => {
 
   afterAll(async () => {
     const ids = [17772, 17773, 17774, 17775];
-    await NextStep.destroy({ where: { activityReportId: ids } });
-    await ActivityRecipient.destroy({ where: { activityReportId: ids } });
-    await ActivityReport.destroy({ where: { id: ids } });
-    await UserRole.destroy({ where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
-    await User.destroy({ where: { id: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
+    await NextStep.destroy({ where: { activityReportId: ids }, individualHooks: true });
+    await ActivityRecipient.destroy({ where: { activityReportId: ids }, individualHooks: true });
+    await ActivityReport.destroy({ where: { id: ids }, individualHooks: true });
+    await UserRole.destroy({
+      where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] },
+      individualHooks: true,
+    });
+    await User.destroy({
+      where: { id: [mockUser.id, mockUserTwo.id, mockUserThree.id] },
+      individualHooks: true,
+    });
     await Grant.destroy({
-      where:
-      { id: [GRANT_ID] },
+      where: { id: [GRANT_ID] },
+      individualHooks: true,
     });
     await Recipient.destroy({
-      where:
-      { id: [RECIPIENT_ID] },
+      where: { id: [RECIPIENT_ID] },
+      individualHooks: true,
     });
-    await Region.destroy({ where: { id: [17, 18] } });
+    await Region.destroy({ where: { id: [17, 18] }, individualHooks: true });
     await db.sequelize.close();
   });
 

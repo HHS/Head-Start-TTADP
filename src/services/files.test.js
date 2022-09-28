@@ -32,6 +32,7 @@ describe('files service', () => {
         where: {
           id: filesForCreateFileMetaData.map((file) => file.id),
         },
+        individualHooks: true,
       });
     });
 
@@ -86,18 +87,21 @@ describe('files service', () => {
             },
           ],
         },
+        individualHooks: true,
       });
 
       await Objective.destroy({
         where: {
           id: objective.id,
         },
+        individualHooks: true,
       });
 
       await File.destroy({
         where: {
           id: filesForObjectiveFileMetaData.map((file) => file.id),
         },
+        individualHooks: true,
       });
     });
 

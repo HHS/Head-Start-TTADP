@@ -11,8 +11,18 @@ const {
 module.exports = (sequelize, DataTypes) => {
   class UserRole extends Model {
     static associate(models) {
-      UserRole.belongsTo(models.User, { foreignKey: 'userId', onDelete: 'cascade', as: 'user' });
-      UserRole.belongsTo(models.Role, { foreignKey: 'roleId', onDelete: 'cascade', as: 'role' });
+      UserRole.belongsTo(models.User, {
+        foreignKey: 'userId',
+        onDelete: 'cascade',
+        as: 'user',
+        hooks: true,
+      });
+      UserRole.belongsTo(models.Role, {
+        foreignKey: 'roleId',
+        onDelete: 'cascade',
+        as: 'role',
+        hooks: true,
+      });
     }
   }
   UserRole.init({

@@ -63,36 +63,42 @@ describe.skip('destroyGoal handler', () => {
       where: {
         objectiveId: objective.id,
       },
+      individualHooks: true,
     });
 
     await Objective.destroy({
       where: {
         goalId: goal.id,
       },
+      individualHooks: true,
     });
 
     // await GrantGoal.destroy({
     //   where: {
     //     goalId: goal.id,
     //   },
+    //   individualHooks: true,
     // });
 
     await Goal.destroy({
       where: {
         id: [goal.id, goalTwo.id],
       },
+      individualHooks: true,
     });
 
     await Grant.destroy({
       where: {
         id: grant.id,
       },
+      individualHooks: true,
     });
 
     await Recipient.destroy({
       where: {
         id: recipient.id,
       },
+      individualHooks: true,
     });
 
     jest.clearAllMocks();

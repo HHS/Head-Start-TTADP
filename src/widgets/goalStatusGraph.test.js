@@ -74,14 +74,12 @@ describe('goalStatusGraph', () => {
     const promises = goals.map((goal) => destroyGoal(goal));
     await Promise.all(promises);
     await Grant.destroy({
-      where: {
-        id: grant.id,
-      },
+      where: { id: grant.id },
+      individualHooks: true,
     });
     await Recipient.destroy({
-      where: {
-        id: recipient.id,
-      },
+      where: { id: recipient.id },
+      individualHooks: true,
     });
     await db.sequelize.close();
   });

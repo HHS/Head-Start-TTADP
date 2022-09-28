@@ -16,9 +16,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'objectiveId',
         otherKey: 'activityReportId',
         as: 'activityReports',
+        hooks: true,
       });
       Objective.hasMany(models.ActivityReportObjective, {
-        foreignKey: 'objectiveId', as: 'activityReportObjectives',
+        foreignKey: 'objectiveId', as: 'activityReportObjectives', hooks: true,
       });
       Objective.hasMany(models.Collaborator, {
         scope: {
@@ -38,13 +39,22 @@ module.exports = (sequelize, DataTypes) => {
         as: 'collaborators',
         hooks: true,
       });
-      Objective.hasMany(models.Collaborator, {
+      Objective.hasOne(models.Collaborator, {
         scope: {
           entityType: ENTITY_TYPES.OBJECTIVE,
           collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.OWNER] },
         },
         foreignKey: 'entityId',
-        as: 'owners',
+        as: 'owner',
+        hooks: true,
+      });
+      Objective.hasOne(models.Collaborator, {
+        scope: {
+          entityType: ENTITY_TYPES.OBJECTIVE,
+          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.INSTANTIATOR] },
+        },
+        foreignKey: 'entityId',
+        as: 'instantiator',
         hooks: true,
       });
       Objective.hasMany(models.Approval, {
@@ -55,28 +65,36 @@ module.exports = (sequelize, DataTypes) => {
         as: 'approvals',
         hooks: true,
       });
-      Objective.belongsTo(models.OtherEntity, { foreignKey: 'otherEntityId', as: 'otherEntity' });
+      Objective.belongsTo(models.OtherEntity, { foreignKey: 'otherEntityId', as: 'otherEntity', hooks: true });
       Objective.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });
-      Objective.hasMany(models.ObjectiveResource, { foreignKey: 'objectiveId', as: 'resources' });
+      Objective.hasMany(models.ObjectiveResource, { foreignKey: 'objectiveId', as: 'resources', hooks: true });
       Objective.belongsToMany(models.Topic, {
         through: models.ObjectiveTopic,
         foreignKey: 'objectiveId',
         otherKey: 'topicId',
         as: 'topics',
+        hooks: true,
       });
       Objective.belongsToMany(models.Role, {
         through: models.ObjectiveRole,
         foreignKey: 'objectiveId',
         otherKey: 'roleId',
         as: 'roles',
+        hooks: true,
       });
-      Objective.belongsTo(models.ObjectiveTemplate, { foreignKey: 'objectiveTemplateId', as: 'objectiveTemplate', onDelete: 'cascade' });
-      Objective.hasMany(models.ObjectiveFile, { foreignKey: 'objectiveId', as: 'objectiveFiles' });
+      Objective.belongsTo(models.ObjectiveTemplate, {
+        foreignKey: 'objectiveTemplateId',
+        as: 'objectiveTemplate',
+        onDelete: 'cascade',
+        hooks: true,
+      });
+      Objective.hasMany(models.ObjectiveFile, { foreignKey: 'objectiveId', as: 'objectiveFiles', hooks: true });
       Objective.belongsToMany(models.File, {
         through: models.ObjectiveFile,
         foreignKey: 'objectiveId',
         otherKey: 'fileId',
         as: 'files',
+        hooks: true,
       });
     }
   }

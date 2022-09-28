@@ -11,13 +11,12 @@ jest.mock('../logger');
 
 const reportObject = {
   approval: {
-    submissionStatus: REPORT_STATUSES.SUBMITTED,
+    submissionStatus: REPORT_STATUSES.APPROVED,
     calculatedStatus: REPORT_STATUSES.APPROVED,
   },
   activityRecipientType: 'recipient',
   regionId: 1,
   ECLKCResourcesUsed: ['test'],
-  // submissionStatus: REPORT_STATUSES.APPROVED,
   numberOfParticipants: 1,
   deliveryMethod: 'method',
   duration: 0,
@@ -54,7 +53,7 @@ describe('changeStatus', () => {
 
     expect(deletedReport.approval.submissionStatus).toBe(REPORT_STATUSES.DELETED);
 
-    await ActivityReport.destroy({ where: { id: deletedReport.id } });
+    await ActivityReport.destroy({ where: { id: deletedReport.id }, individualHooks: true });
   });
 
   it('handles unknown ids', async () => {

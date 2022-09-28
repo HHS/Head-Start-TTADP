@@ -516,7 +516,10 @@ function ActivityReport({
   };
 
   const onSave = async (data) => {
-    const approverIds = data.approvers.map((a) => a.User.id);
+    const approvers = data.approvers.map((a) => {
+      const approver = { userId: a.User.id};
+      return approver
+    });
     try {
       if (reportId.current === 'new') {
         const { startDate, endDate, ...fields } = data;
@@ -538,7 +541,7 @@ function ActivityReport({
             startDate: startDateToSave,
             endDate: endDateToSave,
             regionId: formData.regionId,
-            approverUserIds: approverIds,
+            approvers,
           },
         );
 
@@ -562,7 +565,7 @@ function ActivityReport({
           : data.creatorRole;
         const updatedFields = findWhatsChanged({ ...data, creatorRole }, formData);
         const updatedReport = await saveReport(
-          reportId.current, { ...updatedFields, approverUserIds: approverIds }, {},
+          reportId.current, { ...updatedFields, approvers }, {},
         );
 
         setConnectionActive(true);
@@ -574,10 +577,13 @@ function ActivityReport({
   };
 
   const onFormSubmit = async (data) => {
-    const approverIds = data.approvers.map((a) => a.User.id);
+    const approvers = data.approvers.map((a) => {
+      const approver = { userId: a.User.id};
+      return approver
+    });
     const reportToSubmit = {
       additionalNotes: data.additionalNotes,
-      approverUserIds: approverIds,
+      approvers,
       creatorRole: data.creatorRole,
     };
     const response = await submitReport(reportId.current, reportToSubmit);

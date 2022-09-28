@@ -34,14 +34,20 @@ describe('authMiddleware', () => {
   };
 
   const setupUser = async (user) => {
-    await User.destroy({ where: { id: user.id } });
+    await User.destroy({
+      where: { id: user.id },
+      individualHooks: true,
+    });
     await User.create(user, {
       include: [{ model: Permission, as: 'permissions' }],
     });
   };
 
   const destroyUser = async (user) => (
-    User.destroy({ where: { id: user.id } })
+    User.destroy({
+      where: { id: user.id },
+      individualHooks: true,
+    })
   );
 
   it('should allow access if user data is present', async () => {

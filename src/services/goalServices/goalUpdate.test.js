@@ -30,6 +30,7 @@ describe.skip('Change Goal Status', () => {
       where: {
         id: goal.id,
       },
+      individualHooks: true,
     });
     await sequelize.close();
   });

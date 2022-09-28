@@ -22,7 +22,7 @@ const validateAndPopulateTier = (sequelize, instance) => {
 const calculateStatusFromApprovals = (statuses, ratioRequired) => {
   const num = statuses.length.toFixed(2);
   const numRatified = statuses
-    .filter((status) => status === RATIFIER_STATUSES.RATIFIED).length.toFixed(2);
+    .filter((status) => status === RATIFIER_STATUSES.APPROVED).length.toFixed(2);
   const numNeedsAction = statuses
     .filter((status) => status === RATIFIER_STATUSES.NEEDS_ACTION).length.toFixed(2);
 
@@ -171,6 +171,7 @@ const deleteOnEmptyCollaboratorTypes = async (sequelize, instance, options) => {
     && instance.collaboratorTypes.length === 0) {
     await sequelize.models.Collaborator.destroy({
       where: { id: instance.id },
+      individualHooks: true,
       transaction: options.transaction,
     });
   }
@@ -181,17 +182,17 @@ const syncRolesForCollaborators = async (sequelize, instance, options) => {
     where: { userId: instance.userId },
     transaction: options.transaction,
   });
-  const upserts = userRoles.map(async (userRole) => sequelize.models.CollaboratorRole.upsert({
-    collaboratorId: instance.id,
-    roleId: userRole.roleId,
-  }));
   return Promise.all([
-    ...upserts,
+    ...userRoles.map(async (userRole) => sequelize.models.CollaboratorRole.upsert({
+      collaboratorId: instance.id,
+      roleId: userRole.roleId,
+    })),
     await sequelize.models.CollaboratorRole.destroy({
       where: {
         collaboratorId: instance.id,
         roleId: { [Op.notIn]: userRoles.map((userRole) => userRole.roleId) },
       },
+      individualHooks: true,
     }),
   ]);
 };
@@ -213,13 +214,21 @@ const createApproval = async (sequelize, instance, options) => {
           ratioRequired: APPROVAL_RATIO.ALL,
           submissionStatus: REPORT_STATUSES.DRAFT,
         },
-      },
-      {
         transaction: options.transaction,
       },
     );
   }
 };
+
+const cleanUpAllCollaboratorRoles = async (
+  sequelize,
+  instance,
+  options,
+) => sequelize.models.CollaboratorRole.destroy({
+  where: { collaboratorId: instance.id },
+  individualHooks: true,
+  transaction: options.transaction,
+});
 
 const beforeValidate = async (sequelize, instance, options) => {
   await validateAndPopulateTier(sequelize, instance, options);
@@ -227,6 +236,10 @@ const beforeValidate = async (sequelize, instance, options) => {
 
 const beforeCreate = async (sequelize, instance, options) => {
   await createApproval(sequelize, instance, options);
+};
+
+const beforeDestroy = async (sequelize, instance, options) => {
+  await cleanUpAllCollaboratorRoles(sequelize, instance, options);
 };
 
 const beforeUpdate = async (sequelize, instance, options) => {
@@ -276,8 +289,10 @@ export {
   getApprovalByEntityTier,
   updateApprovalCalculatedStatus,
   propagateCalculatedStatus,
+  cleanUpAllCollaboratorRoles,
   beforeValidate,
   beforeCreate,
+  beforeDestroy,
   beforeUpdate,
   afterCreate,
   afterDestroy,

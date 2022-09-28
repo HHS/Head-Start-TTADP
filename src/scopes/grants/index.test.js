@@ -124,18 +124,21 @@ describe('grant filtersToScopes', () => {
       where: {
         id: possibleIds,
       },
+      individualHooks: true,
     });
 
     await Grant.destroy({
       where: {
         id: possibleIds,
       },
+      individualHooks: true,
     });
 
     await Recipient.destroy({
       where: {
         id: possibleIds,
       },
+      individualHooks: true,
     });
 
     await sequelize.close();

@@ -17,10 +17,10 @@ describe('Bootstrap the first Admin user', () => {
       });
     });
     afterEach(async () => {
-      await Permission.destroy({ where: { userId: user.id } });
+      await Permission.destroy({ where: { userId: user.id }, individualHooks: true });
     });
     afterAll(async () => {
-      await User.destroy({ where: { hsesUsername: ADMIN_USERNAME } });
+      await User.destroy({ where: { hsesUsername: ADMIN_USERNAME }, individualHooks: true });
     });
 
     it('should create an admin and site access permission for the user', async () => {

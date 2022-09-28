@@ -38,10 +38,10 @@ const mockLogContext = {
 
 describe('apiErrorHandler', () => {
   beforeEach(async () => {
-    await RequestErrors.destroy({ where: {} });
+    await RequestErrors.destroy({ where: {}, individualHooks: true });
   });
   afterAll(async () => {
-    await RequestErrors.destroy({ where: {} });
+    await RequestErrors.destroy({ where: {}, individualHooks: true });
     await db.sequelize.close();
   });
 

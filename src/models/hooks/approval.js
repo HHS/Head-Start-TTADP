@@ -128,7 +128,7 @@ const propagateApprovedStatusForGoalsAndObjectives = async (sequelize, instance,
         objectives = await sequelize.models.Objective.findAll({
           attributes: [
             'id',
-            [sequelize.literal('count(DISTINCT "activityReports"."calculatedStatus")'), 'cntApproved'],
+            [sequelize.literal('count(DISTINCT "activityReports->approval"."calculatedStatus")'), 'cntApproved'],
           ],
           include: [
             {
@@ -146,15 +146,18 @@ const propagateApprovedStatusForGoalsAndObjectives = async (sequelize, instance,
               model: sequelize.models.ActivityReport,
               as: 'activityReports',
               required: false,
-              where: {
-                id: { [Op.not]: instance.id },
-                calculatedStatus: REPORT_STATUSES.APPROVED,
-              },
+              include: [{
+                model: sequelize.models.Approval,
+                as: 'approval',
+                required: true,
+                where: { calculatedStatus: REPORT_STATUSES.APPROVED },
+              }],
+              where: { id: { [Op.not]: instance.id } },
             },
           ],
           includeIgnoreAttributes: false,
           group: sequelize.literal('"Objective"."id"'),
-          having: sequelize.literal('count(DISTINCT "activityReports"."calculatedStatus") = 0'),
+          having: sequelize.literal('count(DISTINCT "activityReports->approval"."calculatedStatus") = 0'),
         });
       } catch (e) {
         auditLogger.error(JSON.stringify({
@@ -181,7 +184,7 @@ const propagateApprovedStatusForGoalsAndObjectives = async (sequelize, instance,
         goals = await sequelize.models.Goal.findAll({
           attributes: [
             'id',
-            [sequelize.literal('count(DISTINCT "activityReports"."calculatedStatus")'), 'cntApproved'],
+            [sequelize.literal('count(DISTINCT "activityReports->approval"."calculatedStatus")'), 'cntApproved'],
           ],
           include: [
             {
@@ -207,15 +210,18 @@ const propagateApprovedStatusForGoalsAndObjectives = async (sequelize, instance,
               model: sequelize.models.ActivityReport,
               as: 'activityReports',
               required: false,
-              where: {
-                id: { [Op.not]: instance.id },
-                calculatedStatus: REPORT_STATUSES.APPROVED,
-              },
+              include: [{
+                model: sequelize.models.Approval,
+                as: 'approval',
+                required: true,
+                where: { calculatedStatus: REPORT_STATUSES.APPROVED },
+              }],
+              where: { id: { [Op.not]: instance.id } },
             },
           ],
           includeIgnoreAttributes: false,
           group: sequelize.literal('"Goal"."id"'),
-          having: sequelize.literal('count(DISTINCT "activityReports"."calculatedStatus") = 0'),
+          having: sequelize.literal('count(DISTINCT "activityReports->approval"."calculatedStatus") = 0'),
           transaction: options.transaction,
         });
       } catch (e) {
@@ -285,7 +291,7 @@ const propagateApprovedStatusForGoalsAndObjectives = async (sequelize, instance,
   }
 };
 
-const automaticStatusChangeOnAprovalForGoals = async (sequelize, instance, options) => {
+const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
     && changed.includes('calculatedStatus')
@@ -325,7 +331,7 @@ const automaticStatusChangeOnAprovalForGoals = async (sequelize, instance, optio
   }
 };
 
-const propagateApprovedStatusAcrossTiers = async (sequelize, instance, options) => {
+const propagateApprovedCalculatedStatusAcrossTiers = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (instance.tier !== 0
     && Array.isArray(changed)
@@ -397,6 +403,54 @@ const propagateApprovedStatusAcrossTiers = async (sequelize, instance, options) 
   }
 };
 
+const propagateSubmissionStatusAcrossTiers = async (sequelize, instance, options) => {
+  const changed = instance.changed();
+  if (instance.tier === 0
+    && Array.isArray(changed)
+    && changed.includes('submissionStatus')) {
+    switch (instance.submissionStatus) {
+      case REPORT_STATUSES.DRAFT:
+        await sequelize.models.Approval.update({ submissionStatus: REPORT_STATUSES.DRAFT }, {
+          where: {
+            entityType: instance.entityType,
+            entityId: instance.entityId,
+            tier: { [Op.not]: 0 },
+          },
+          transaction: options.transaction,
+          individualHooks: true,
+        });
+        break;
+      case REPORT_STATUSES.SUBMITTED:
+        await sequelize.models.Approval.update({ submissionStatus: REPORT_STATUSES.SUBMITTED }, {
+          where: {
+            entityType: instance.entityType,
+            entityId: instance.entityId,
+            tier: 1,
+          },
+          transaction: options.transaction,
+          individualHooks: true,
+        });
+        break;
+      case REPORT_STATUSES.NEEDS_ACTION:
+        break;
+      case REPORT_STATUSES.APPROVED:
+        break;
+      case REPORT_STATUSES.DELETED:
+        await sequelize.models.Approval.update({ submissionStatus: REPORT_STATUSES.DELETED }, {
+          where: {
+            entityType: instance.entityType,
+            entityId: instance.entityId,
+            tier: 1,
+          },
+          transaction: options.transaction,
+          individualHooks: true,
+        });
+        break;
+      default:
+    }
+  }
+};
+
 const beforeCreate = async (instance) => {
   copyStatus(instance);
 };
@@ -408,16 +462,17 @@ const beforeUpdate = async (instance) => {
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateSubmissionStatusToGoalsAndObjectives(sequelize, instance, options);
   await propagateApprovedStatusForGoalsAndObjectives(sequelize, instance, options);
-  await automaticStatusChangeOnAprovalForGoals(sequelize, instance, options);
-  await propagateApprovedStatusAcrossTiers(sequelize, instance, options);
+  await automaticStatusChangeOnApprovalForGoals(sequelize, instance, options);
+  await propagateApprovedCalculatedStatusAcrossTiers(sequelize, instance, options);
+  await propagateSubmissionStatusAcrossTiers(sequelize, instance, options);
 };
 
 export {
   copyStatus,
   propagateSubmissionStatusToGoalsAndObjectives,
   propagateApprovedStatusForGoalsAndObjectives,
-  automaticStatusChangeOnAprovalForGoals,
-  propagateApprovedStatusAcrossTiers,
+  automaticStatusChangeOnApprovalForGoals,
+  propagateApprovedCalculatedStatusAcrossTiers,
   beforeCreate,
   beforeUpdate,
   afterUpdate,

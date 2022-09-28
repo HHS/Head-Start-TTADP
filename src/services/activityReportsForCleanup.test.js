@@ -4,6 +4,7 @@ import db, {
   User,
   Recipient,
   Grant,
+  Collaborator,
 } from '../models';
 import {
   activityReportsForCleanup,
@@ -61,8 +62,10 @@ const mockPhantomUser = {
 
 const reportObject = {
   activityRecipientType: 'recipient',
-  submissionStatus: REPORT_STATUSES.DRAFT,
-  userId: mockAuthor.id,
+  approval: {
+    submissionStatus: REPORT_STATUSES.DRAFT,
+  },
+  owner: { userId: mockAuthor.id },
   regionId: 1,
   lastUpdatedById: mockAuthor.id,
   ECLKCResourcesUsed: ['test'],
@@ -72,7 +75,9 @@ const reportObject = {
 
 const submittedReport = {
   ...reportObject,
-  submissionStatus: REPORT_STATUSES.SUBMITTED,
+  approval: {
+    submissionStatus: REPORT_STATUSES.SUBMITTED,
+  },
   numberOfParticipants: 1,
   deliveryMethod: 'method',
   duration: 0,
@@ -150,17 +155,29 @@ describe('Activity report cleanup service', () => {
 
   afterAll(async () => {
     const reportsToDestroy = await ActivityReport.findAll({
-      where: {
-        userId: [mockAuthor.id, mockPhantomUser.id],
-      },
+      include: [{
+        model: Collaborator,
+        as: 'owner',
+        where: {
+          userId: [mockAuthor.id, mockPhantomUser.id],
+        },
+        required: true,
+      }],
     });
     await Promise.all(reportsToDestroy.map((r) => destroyReport(r)));
-    await Grant.destroy({ where: { id: RECIPIENT_ID } });
-    await Recipient.destroy({ where: { id: RECIPIENT_ID } });
+    await Grant.destroy({
+      where: { id: RECIPIENT_ID },
+      individualHooks: true,
+    });
+    await Recipient.destroy({
+      where: { id: RECIPIENT_ID },
+      individualHooks: true,
+    });
     await User.destroy({
       where: {
         id: [mockAuthor.id, mockApprover.id, mockCollaborator.id, mockPhantomUser.id],
       },
+      individualHooks: true,
     });
   });
 

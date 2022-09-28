@@ -19,7 +19,7 @@ module.exports = {
 
       const RATIFIER_STATUSES = {
         NEEDS_ACTION: 'needs_action',
-        RATIFIED: 'ratified',
+        APPROVED: 'approved',
       };
       try {
         const loggedUser = '0';
@@ -459,7 +459,7 @@ module.exports = {
               cc."userId",
               cc."collaboratorTypes"::"enum_Collaborators_collaboratorTypes"[],
               case
-                WHEN  cc."status" = 'approved' THEN 'ratified'::"enum_Collaborators_status"
+                WHEN  cc."status" = 'approved' THEN '${RATIFIER_STATUSES.APPROVED}'::"enum_Collaborators_status"
                 WHEN  cc."status" = 'needs_action' THEN 'needs_action'::"enum_Collaborators_status"
                 ELSE null
               END "status",

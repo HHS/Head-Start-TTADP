@@ -12,16 +12,17 @@ const { beforeValidate, afterUpdate } = require('./hooks/goal');
 module.exports = (sequelize, DataTypes) => {
   class Goal extends Model {
     static associate(models) {
-      Goal.hasMany(models.ActivityReportGoal, { foreignKey: 'goalId', as: 'activityReportGoals' });
+      Goal.hasMany(models.ActivityReportGoal, { foreignKey: 'goalId', as: 'activityReportGoals', hooks: true });
       Goal.belongsToMany(models.ActivityReport, {
         through: models.ActivityReportGoal,
         foreignKey: 'goalId',
         otherKey: 'activityReportId',
         as: 'activityReports',
+        hooks: true,
       });
-      Goal.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
-      Goal.hasMany(models.Objective, { foreignKey: 'goalId', as: 'objectives' });
-      Goal.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: +'goalTemplates' });
+      Goal.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant', hooks: true });
+      Goal.hasMany(models.Objective, { foreignKey: 'goalId', as: 'objectives', hooks: true });
+      Goal.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: +'goalTemplates', hooks: true });
       Goal.hasMany(models.Collaborator, {
         scope: {
           entityType: ENTITY_TYPES.GOAL,
@@ -40,13 +41,22 @@ module.exports = (sequelize, DataTypes) => {
         as: 'collaborators',
         hooks: true,
       });
-      Goal.hasMany(models.Collaborator, {
+      Goal.hasOne(models.Collaborator, {
         scope: {
           entityType: ENTITY_TYPES.GOAL,
           collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.OWNER] },
         },
         foreignKey: 'entityId',
-        as: 'owners',
+        as: 'owner',
+        hooks: true,
+      });
+      Goal.hasOne(models.Collaborator, {
+        scope: {
+          entityType: ENTITY_TYPES.GOAL,
+          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.INSTANTIATOR] },
+        },
+        foreignKey: 'entityId',
+        as: 'instantiator',
         hooks: true,
       });
       Goal.hasMany(models.Approval, {

@@ -72,12 +72,14 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
       where: {
         activityReportId: report.id,
       },
+      individualHooks: true,
     });
 
     await Objective.destroy({
       where: {
         goalId: goalOnActivityReport.id,
       },
+      individualHooks: true,
     });
 
     await destroyReport(report);
@@ -89,18 +91,21 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
           goalOnOneGrant.id,
         ],
       },
+      individualHooks: true,
     });
 
     await Grant.destroy({
       where: {
         id: [firstGrant.id],
       },
+      individualHooks: true,
     });
 
     await Recipient.destroy({
       where: {
         id: [recipientForFirstGrant.id],
       },
+      individualHooks: true,
     });
 
     await db.sequelize.close();

@@ -17,7 +17,12 @@ module.exports = (sequelize, DataTypes) => {
           allowNull: false,
         },
       });
-      Region.belongsToMany(models.Scope, { through: models.Permission, foreignKey: 'regionId', timestamps: false });
+      Region.belongsToMany(models.Scope, {
+        through: models.Permission,
+        foreignKey: 'regionId',
+        timestamps: false,
+        hooks: true,
+      });
     }
   }
   Region.init({

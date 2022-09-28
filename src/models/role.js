@@ -13,31 +13,35 @@ module.exports = (sequelize, DataTypes) => {
   class Role extends Model {
     static associate(models) {
       Role.belongsToMany(models.Topic, {
-        through: models.RoleTopic, foreignKey: 'roleId', as: 'topics', otherKey: 'topicId',
+        through: models.RoleTopic, foreignKey: 'roleId', as: 'topics', otherKey: 'topicId', hooks: true,
       });
       Role.belongsToMany(models.Objective, {
         through: models.ObjectiveRole,
         foreignKey: 'roleId',
         otherKey: 'objectiveId',
         as: 'objectives',
+        hooks: true,
       });
       Role.belongsToMany(models.ObjectiveTemplate, {
         through: models.ObjectiveTemplateRole,
         foreignKey: 'roleId',
         otherKey: 'objectiveTemplateId',
         as: 'objectiveTemplates',
+        hooks: true,
       });
       Role.belongsToMany(models.User, {
         through: models.UserRole,
         foreignKey: 'roleId',
         otherKey: 'userId',
         as: 'users',
+        hooks: true,
       });
       Role.belongsToMany(models.Collaborator, {
         through: models.CollaboratorRole,
         otherKey: 'collaboratorId',
         foreignKey: 'roleId',
         as: 'collaboratorRoles',
+        hooks: true,
       });
     }
   }

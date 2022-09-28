@@ -1,5 +1,8 @@
 const { Op } = require('sequelize');
 const {
+  Collaborator,
+  Objective,
+  Goal,
   ActivityReportGoal,
   ActivityReportObjective,
   ActivityReportObjectiveFile,
@@ -7,6 +10,8 @@ const {
   ActivityReportObjectiveRole,
   ActivityReportObjectiveTopic,
 } = require('../models');
+const { ENTITY_TYPES } = require('../constants');
+const { upsertCollaborator } = require('./collaborators');
 
 const cacheFiles = async (activityReportObjectiveId, files = []) => Promise.all([
   await Promise.all(files.map(async ([file]) => ActivityReportObjectiveFile.upsert({
@@ -67,9 +72,99 @@ const cacheTopics = async (activityReportObjectiveId, topics = []) => Promise.al
   }),
 ]);
 
+const cacheObjectiveCollaborators = async (activityReportObjectiveId) => {
+  const currentCollaborators = await Collaborator.findAll({
+    attributes: [
+      'collaboratorTypes',
+      'userId',
+      'status',
+      'note',
+      'tier',
+    ],
+    include: [{
+      attributes: [],
+      model: Objective,
+      as: 'objective',
+      include: [{
+        attributes: [],
+        model: ActivityReportObjective,
+        as: 'activityReportObjectives',
+        where: { id: activityReportObjectiveId },
+        required: true,
+      }],
+      required: true,
+    }],
+  });
+  return Promise.all([
+    ...currentCollaborators.map(async (collaborator) => upsertCollaborator({
+      entityType: ENTITY_TYPES.REPORTOBJECTIVE,
+      entityId: activityReportObjectiveId,
+      collaboratorTypes: collaborator.collaboratorTypes,
+      userId: collaborator.userId,
+      status: collaborator.status,
+      note: collaborator.note,
+      tier: collaborator.tier,
+    })),
+    await Collaborator.destroy({
+      where: {
+        entityType: ENTITY_TYPES.REPORTOBJECTIVE,
+        entityId: activityReportObjectiveId,
+        userId: { [Op.notIn]: currentCollaborators.map((collaborator) => collaborator.userId) },
+      },
+    }),
+  ]);
+};
+
+const cacheOGoalCollaborators = async (activityReportGoalId) => {
+  const currentCollaborators = await Collaborator.findAll({
+    attributes: [
+      'collaboratorTypes',
+      'userId',
+      'status',
+      'note',
+      'tier',
+    ],
+    include: [{
+      attributes: [],
+      model: Goal,
+      as: 'goal',
+      include: [{
+        attributes: [],
+        model: ActivityReportGoal,
+        as: 'activityReportGoals',
+        where: { id: activityReportGoalId },
+        required: true,
+      }],
+      required: true,
+    }],
+  });
+  return Promise.all([
+    ...currentCollaborators.map(async (collaborator) => upsertCollaborator({
+      entityType: ENTITY_TYPES.REPORTGOAL,
+      entityId: activityReportGoalId,
+      collaboratorTypes: collaborator.collaboratorTypes,
+      userId: collaborator.userId,
+      status: collaborator.status,
+      note: collaborator.note,
+      tier: collaborator.tier,
+    })),
+    await Collaborator.destroy({
+      where: {
+        entityType: ENTITY_TYPES.REPORTGOAL,
+        entityId: activityReportGoalId,
+        userId: { [Op.notIn]: currentCollaborators.map((collaborator) => collaborator.userId) },
+      },
+    }),
+  ]);
+};
+
 const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   const {
-    files, resources, roles, topics, ttaProvided,
+    files,
+    resources,
+    roles,
+    topics,
+    ttaProvided,
   } = metadata;
   const objectiveId = objective.id;
   const [aro] = await ActivityReportObjective.findOrCreate({
@@ -92,6 +187,7 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     await cacheResources(activityReportObjectiveId, resources),
     await cacheRoles(activityReportObjectiveId, roles),
     await cacheTopics(activityReportObjectiveId, topics),
+    await cacheObjectiveCollaborators(activityReportObjectiveId),
   ]);
 };
 
@@ -115,6 +211,7 @@ const cacheGoalMetadata = async (goal, reportId) => {
       where: { id: activityReportGoalId },
       individualHooks: true,
     }),
+    await cacheOGoalCollaborators(activityReportGoalId),
   ]);
 };
 
@@ -124,20 +221,30 @@ async function destroyActivityReportObjectiveMetadata(activityReportObjectiveIds
       where: {
         activityReportObjectiveId: activityReportObjectiveIdsToRemove,
       },
+      individualHooks: true,
     }),
     ActivityReportObjectiveResource.destroy({
       where: {
         activityReportObjectiveId: activityReportObjectiveIdsToRemove,
       },
+      individualHooks: true,
     }),
     ActivityReportObjectiveTopic.destroy({
       where: {
         activityReportObjectiveId: activityReportObjectiveIdsToRemove,
       },
+      individualHooks: true,
     }),
     ActivityReportObjectiveRole.destroy({
       where: {
         activityReportObjectiveId: activityReportObjectiveIdsToRemove,
+      },
+      individualHooks: true,
+    }),
+    Collaborator.destroy({
+      where: {
+        entityType: ENTITY_TYPES.REPORTOBJECTIVE,
+        entityId: activityReportObjectiveIdsToRemove,
       },
     }),
   ]);

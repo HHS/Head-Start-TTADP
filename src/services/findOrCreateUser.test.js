@@ -23,7 +23,10 @@ describe('findOrCreateUser', () => {
       homeRegionId: 3,
     };
     // Verify that the user with id 33 doesn't exist
-    await User.destroy({ where: { id: 33 } });
+    await User.destroy({
+      where: { id: 33 },
+      individualHooks: true,
+    });
     const noUser = await User.findOne({
       where: {
         id: user.id,
@@ -53,7 +56,10 @@ describe('findOrCreateUser', () => {
       homeRegionId: 3,
     };
     // Verify that the user with id 39 doesn't exist
-    await User.destroy({ where: { id: 39 } });
+    await User.destroy({
+      where: { id: 39 },
+      individualHooks: true,
+    });
     const noUser = await User.findOne({
       where: {
         id: user.id,
@@ -85,7 +91,10 @@ describe('findOrCreateUser', () => {
       homeRegionId: 3,
     };
     const originalLastLogin = moment().subtract(1, 'day');
-    await User.destroy({ where: { id: userId } });
+    await User.destroy({
+      where: { id: userId },
+      individualHooks: true,
+    });
     await User.create({ ...user, id: userId, lastLogin: originalLastLogin });
 
     const retrievedUser = await findOrCreateUser(user);
@@ -102,7 +111,10 @@ describe('findOrCreateUser', () => {
       homeRegionId: 3,
     };
     // Check that the above `user` doesn't exist in the DB yet.
-    await User.destroy({ where: { id: 34 } });
+    await User.destroy({
+      where: { id: 34 },
+      individualHooks: true,
+    });
     const existingUser = await User.findOne({
       where: {
         hsesUserId: user.hsesUserId,
@@ -136,7 +148,10 @@ describe('findOrCreateUser', () => {
       hsesUsername: oldEmail,
     };
     // Verify that user 35 is set up as we expect
-    await User.destroy({ where: { id: userId } });
+    await User.destroy({
+      where: { id: userId },
+      individualHooks: true,
+    });
     await User.create({ ...user, id: userId });
 
     const retrievedUser = await findOrCreateUser({
@@ -161,7 +176,10 @@ describe('findOrCreateUser', () => {
       hsesUsername: 'user33',
       homeRegionId: 3,
     };
-    await User.destroy({ where: { hsesUserId: '33' } });
+    await User.destroy({
+      where: { hsesUserId: '33' },
+      individualHooks: true,
+    });
     await expect(findOrCreateUser(user)).rejects.toThrow();
     expect(auditLogger.error).toHaveBeenCalledWith('SERVICE:FIND_OR_CREATE_USER - Error finding or creating user in database - SequelizeValidationError: Validation error: email is invalid');
   });

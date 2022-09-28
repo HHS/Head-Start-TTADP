@@ -24,6 +24,7 @@ import {
   cacheObjectiveMetadata,
 } from './reportCache';
 import { REPORT_STATUSES } from '../constants';
+import { createOrUpdate } from './activityReports';
 
 describe('reportCache', () => {
   const mockUser = {
@@ -80,8 +81,10 @@ describe('reportCache', () => {
   };
 
   const mockReport = {
-    submissionStatus: REPORT_STATUSES.DRAFT,
-    calculatedStatus: REPORT_STATUSES.DRAFT,
+    approval: {
+      submissionStatus: REPORT_STATUSES.DRAFT,
+      calculatedStatus: REPORT_STATUSES.DRAFT,
+    },
     numberOfParticipants: 1,
     deliveryMethod: 'method',
     duration: 0,
@@ -157,7 +160,7 @@ describe('reportCache', () => {
         programSpecialistEmail: user.email,
       },
     });
-    [report] = await ActivityReport.findOrCreate({ where: { ...mockReport } });
+    [report] = await createOrUpdate({ ...mockReport });
     [activityRecipient] = await ActivityRecipient.findOrCreate({
       where: {
         activityReportId: report.id,
@@ -191,37 +194,53 @@ describe('reportCache', () => {
   });
 
   afterAll(async () => {
-    await ObjectiveTopic.destroy({ where: { objectiveId: objective.id } });
-    await ObjectiveResource.destroy({ where: { objectiveId: objective.id } });
-    await ObjectiveRole.destroy({ where: { objectiveId: objective.id } });
-    await ObjectiveFile.destroy({ where: { objectiveId: objective.id } });
+    await ObjectiveTopic.destroy({ where: { objectiveId: objective.id }, individualHooks: true });
+    await ObjectiveResource.destroy({
+      where: { objectiveId: objective.id },
+      individualHooks: true,
+    });
+    await ObjectiveRole.destroy({ where: { objectiveId: objective.id }, individualHooks: true });
+    await ObjectiveFile.destroy({ where: { objectiveId: objective.id }, individualHooks: true });
     await Promise.all(files.map(async (file) => file.destroy()));
     await activityRecipient.destroy();
-    await ActivityReportGoal.destroy({ where: { goalId: goal.id } });
+    await ActivityReportGoal.destroy({ where: { goalId: goal.id }, individualHooks: true });
     const aroFiles = await ActivityReportObjectiveFile
       .findAll({ include: { model: ActivityReportObjective, as: 'activityReportObjective', where: { objectiveId: objective.id } } });
-    await ActivityReportObjectiveFile
-      .destroy({ where: { id: { [Op.in]: aroFiles.map((aroFile) => aroFile.id) } } });
+    await ActivityReportObjectiveFile.destroy({
+      where: { id: { [Op.in]: aroFiles.map((aroFile) => aroFile.id) } },
+      individualHooks: true,
+    });
     const aroResources = await ActivityReportObjectiveResource
       .findAll({ include: { model: ActivityReportObjective, as: 'activityReportObjective', where: { objectiveId: objective.id } } });
-    await ActivityReportObjectiveResource
-      .destroy({ where: { id: { [Op.in]: aroResources.map((aroResource) => aroResource.id) } } });
-    const aroRoles = await ActivityReportObjectiveRole
-      .findAll({ include: { model: ActivityReportObjective, as: 'activityReportObjective', where: { objectiveId: objective.id } } });
-    await ActivityReportObjectiveRole
-      .destroy({ where: { id: { [Op.in]: aroRoles.map((aroRole) => aroRole.id) } } });
+    await ActivityReportObjectiveResource.destroy({
+      where: { id: { [Op.in]: aroResources.map((aroResource) => aroResource.id) } },
+      individualHooks: true,
+    });
+    const aroRoles = await ActivityReportObjectiveRole.findAll({
+      include: { model: ActivityReportObjective, as: 'activityReportObjective', where: { objectiveId: objective.id } },
+      individualHooks: true,
+    });
+    await ActivityReportObjectiveRole.destroy({
+      where: { id: { [Op.in]: aroRoles.map((aroRole) => aroRole.id) } },
+      individualHooks: true,
+    });
     const aroTopics = await ActivityReportObjectiveTopic
       .findAll({ include: { model: ActivityReportObjective, as: 'activityReportObjective', where: { objectiveId: objective.id } } });
-    await ActivityReportObjectiveTopic
-      .destroy({ where: { id: { [Op.in]: aroTopics.map((aroTopic) => aroTopic.id) } } });
-    await ActivityReportObjective.destroy({ where: { objectiveId: objective.id } });
-    await ActivityReport.destroy({ where: { id: report.id } });
-    await Objective.destroy({ where: { id: objective.id } });
-    await Goal.destroy({ where: { id: goal.id } });
-    await Grant.destroy({ where: { id: grant.id } });
-    await Recipient.destroy({ where: { id: recipient.id } });
+    await ActivityReportObjectiveTopic.destroy({
+      where: { id: { [Op.in]: aroTopics.map((aroTopic) => aroTopic.id) } },
+      individualHooks: true,
+    });
+    await ActivityReportObjective.destroy({
+      where: { objectiveId: objective.id },
+      individualHooks: true,
+    });
+    await ActivityReport.destroy({ where: { id: report.id }, individualHooks: true });
+    await Objective.destroy({ where: { id: objective.id }, individualHooks: true });
+    await Goal.destroy({ where: { id: goal.id }, individualHooks: true });
+    await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
+    await Recipient.destroy({ where: { id: recipient.id }, individualHooks: true });
     await Promise.all(roles.map(async (role) => role.destroy()));
-    await User.destroy({ where: { id: user.id } });
+    await User.destroy({ where: { id: user.id }, individualHooks: true });
     await db.sequelize.close();
   });
 
@@ -341,10 +360,13 @@ describe('reportCache', () => {
     });
     it('add and remove from cache', async () => {
       // update added or removed files
-      await ObjectiveFile.destroy({ where: { objectiveId: objective.id } });
-      await ObjectiveResource.destroy({ where: { objectiveId: objective.id } });
-      await ObjectiveRole.destroy({ where: { objectiveId: objective.id } });
-      await ObjectiveTopic.destroy({ where: { objectiveId: objective.id } });
+      await ObjectiveFile.destroy({ where: { objectiveId: objective.id }, individualHooks: true });
+      await ObjectiveResource.destroy({
+        where: { objectiveId: objective.id },
+        individualHooks: true,
+      });
+      await ObjectiveRole.destroy({ where: { objectiveId: objective.id }, individualHooks: true });
+      await ObjectiveTopic.destroy({ where: { objectiveId: objective.id }, individualHooks: true });
       objectiveFiles.push(await ObjectiveFile.findOrCreate({
         where: {
           objectiveId: objective.id,
@@ -425,10 +447,13 @@ describe('reportCache', () => {
       expect(aro.activityReportObjectiveTopics[0].topicId).toEqual(mockObjectiveTopics[1].topicId);
     });
     it('remove from cache', async () => {
-      await ObjectiveFile.destroy({ where: { objectiveId: objective.id } });
-      await ObjectiveResource.destroy({ where: { objectiveId: objective.id } });
-      await ObjectiveRole.destroy({ where: { objectiveId: objective.id } });
-      await ObjectiveTopic.destroy({ where: { objectiveId: objective.id } });
+      await ObjectiveFile.destroy({ where: { objectiveId: objective.id }, individualHooks: true });
+      await ObjectiveResource.destroy({
+        where: { objectiveId: objective.id },
+        individualHooks: true,
+      });
+      await ObjectiveRole.destroy({ where: { objectiveId: objective.id }, individualHooks: true });
+      await ObjectiveTopic.destroy({ where: { objectiveId: objective.id }, individualHooks: true });
 
       const filesForThisObjective = await ObjectiveFile.findAll({
         where: {

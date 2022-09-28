@@ -12,10 +12,18 @@ module.exports = (sequelize, DataTypes) => {
   class Topic extends Model {
     static associate(models) {
       Topic.belongsToMany(models.Role, {
-        through: models.RoleTopic, foreignKey: 'topicId', as: 'roles',
+        through: models.RoleTopic,
+        foreignKey: 'topicId',
+        as: 'roles',
+        hooks: true,
       });
-      Topic.belongsToMany(models.Objective, { through: models.ObjectiveTopic, foreignKey: 'topicId', as: 'objectives' });
-      Topic.hasMany(models.ObjectiveTemplateTopic, { foreignKey: 'topicId', as: 'objectiveTemplateTopics' });
+      Topic.belongsToMany(models.Objective, {
+        through: models.ObjectiveTopic,
+        foreignKey: 'topicId',
+        as: 'objectives',
+        hooks: true,
+      });
+      Topic.hasMany(models.ObjectiveTemplateTopic, { foreignKey: 'topicId', as: 'objectiveTemplateTopics', hooks: true });
     }
   }
   Topic.init({

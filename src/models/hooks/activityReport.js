@@ -27,6 +27,7 @@ const cleanUpAllCollaborators = async (
   options,
 ) => sequelize.models.Collaborator.destroy({
   where: { entityType: ENTITY_TYPES.REPORT, entityId: instance.id },
+  individualHooks: true,
   transaction: options.transaction,
 });
 
@@ -36,6 +37,7 @@ const cleanUpAllApprovals = async (
   options,
 ) => sequelize.models.Approval.destroy({
   where: { entityType: ENTITY_TYPES.REPORT, entityId: instance.id },
+  individualHooks: true,
   transaction: options.transaction,
 });
 
@@ -45,6 +47,7 @@ const cleanUpAllReportGoals = async (
   options,
 ) => sequelize.models.ActivityReportGoal.destroy({
   where: { activityReportId: instance.id },
+  individualHooks: true,
   transaction: options.transaction,
 });
 
@@ -54,6 +57,7 @@ const cleanUpAllReportObjectives = async (
   options,
 ) => sequelize.models.ActivityReportObjective.destroy({
   where: { activityReportId: instance.id },
+  individualHooks: true,
   transaction: options.transaction,
 });
 
@@ -168,7 +172,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed) && changed.includes('calculatedStatus')) {
     if (instance.previous('calculatedStatus') === REPORT_STATUSES.APPROVED
-      && instance.calculatedStatus !== REPORT_STATUSES.APPROVED) {
+      && instance.approval.calculatedStatus !== REPORT_STATUSES.APPROVED) {
       // eslint-disable-next-line max-len
       // TODO: Run extensive check and update where required all used goals and objectives as not onApprovedAR
       let objectives;
@@ -176,7 +180,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
         objectives = await sequelize.models.Objective.findAll({
           attributes: [
             'id',
-            [sequelize.literal('count(DISTINCT "activityReports"."calculatedStatus")'), 'cntApproved'],
+            [sequelize.literal('count(DISTINCT "activityReports->approval"."calculatedStatus")'), 'cntApproved'],
           ],
           include: [
             {
@@ -194,15 +198,18 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
               model: sequelize.models.ActivityReport,
               as: 'activityReports',
               required: false,
-              where: {
-                id: { [Op.not]: instance.id },
-                calculatedStatus: REPORT_STATUSES.APPROVED,
-              },
+              include: [{
+                model: sequelize.models.Approval,
+                as: 'approval',
+                required: true,
+                where: { calculatedStatus: REPORT_STATUSES.APPROVED },
+              }],
+              where: { id: { [Op.not]: instance.id } },
             },
           ],
           includeIgnoreAttributes: false,
           group: sequelize.literal('"Objective"."id"'),
-          having: sequelize.literal('count(DISTINCT "activityReports"."calculatedStatus") = 0'),
+          having: sequelize.literal('count(DISTINCT "activityReports->approval"."calculatedStatus") = 0'),
         });
       } catch (e) {
         auditLogger.error(JSON.stringify({
@@ -229,7 +236,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
         goals = await sequelize.models.Goal.findAll({
           attributes: [
             'id',
-            [sequelize.literal('count(DISTINCT "activityReports"."calculatedStatus")'), 'cntApproved'],
+            [sequelize.literal('count(DISTINCT "activityReports->approval"."calculatedStatus")'), 'cntApproved'],
           ],
           include: [
             {
@@ -255,15 +262,18 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
               model: sequelize.models.ActivityReport,
               as: 'activityReports',
               required: false,
-              where: {
-                id: { [Op.not]: instance.id },
-                calculatedStatus: REPORT_STATUSES.APPROVED,
-              },
+              include: [{
+                model: sequelize.models.Approval,
+                as: 'approval',
+                required: true,
+                where: { calculatedStatus: REPORT_STATUSES.APPROVED },
+              }],
+              where: { id: { [Op.not]: instance.id } },
             },
           ],
           includeIgnoreAttributes: false,
           group: sequelize.literal('"Goal"."id"'),
-          having: sequelize.literal('count(DISTINCT "activityReports"."calculatedStatus") = 0'),
+          having: sequelize.literal('count(DISTINCT "activityReports->approval"."calculatedStatus") = 0'),
           transaction: options.transaction,
         });
       } catch (e) {
@@ -287,7 +297,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
         );
       }
     } else if (instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
-    && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
+    && instance.approval.calculatedStatus === REPORT_STATUSES.APPROVED) {
       const objectivesAndGoals = await sequelize.models.Objective.findAll(
         {
           attributes: [
@@ -338,7 +348,7 @@ const automaticStatusChangeOnAprovalForGoals = async (sequelize, instance, optio
   if (Array.isArray(changed)
     && changed.includes('calculatedStatus')
     && instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
-    && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
+    && instance.approval.calculatedStatus === REPORT_STATUSES.APPROVED) {
     const goals = await sequelize.models.Goal.findAll(
       {
         where: {
@@ -376,7 +386,7 @@ const automaticGoalObjectiveStatusCachingOnAproval = async (sequelize, instance,
   if (Array.isArray(changed)
     && changed.includes('calculatedStatus')
     && instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
-    && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
+    && instance.approval.calculatedStatus === REPORT_STATUSES.APPROVED) {
     const goals = await sequelize.models.Goal.findAll({
       include: [{
         model: sequelize.models.ActivityReport,

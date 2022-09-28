@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      ObjectiveTemplate.hasMany(models.Objective, { foreignKey: 'objectiveTemplateId', as: 'objectives' });
+      ObjectiveTemplate.hasMany(models.Objective, { foreignKey: 'objectiveTemplateId', as: 'objectives', hooks: true });
       ObjectiveTemplate.hasMany(models.Collaborator, {
         scope: {
           entityType: ENTITY_TYPES.OBJECTIVETEMPLATE,
@@ -30,13 +30,22 @@ module.exports = (sequelize, DataTypes) => {
         as: 'collaborators',
         hooks: true,
       });
-      ObjectiveTemplate.hasMany(models.Collaborator, {
+      ObjectiveTemplate.hasOne(models.Collaborator, {
         scope: {
           entityType: ENTITY_TYPES.OBJECTIVETEMPLATE,
           collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.OWNER] },
         },
         foreignKey: 'entityId',
-        as: 'owners',
+        as: 'owner',
+        hooks: true,
+      });
+      ObjectiveTemplate.hasOne(models.Collaborator, {
+        scope: {
+          entityType: ENTITY_TYPES.OBJECTIVETEMPLATE,
+          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.INSTANTIATOR] },
+        },
+        foreignKey: 'entityId',
+        as: 'instantiator',
         hooks: true,
       });
       ObjectiveTemplate.hasMany(models.Approval, {
@@ -47,25 +56,28 @@ module.exports = (sequelize, DataTypes) => {
         as: 'approvals',
         hooks: true,
       });
-      ObjectiveTemplate.hasMany(models.ObjectiveTemplateResource, { foreignKey: 'objectiveTemplateId', as: 'resources' });
+      ObjectiveTemplate.hasMany(models.ObjectiveTemplateResource, { foreignKey: 'objectiveTemplateId', as: 'resources', hooks: true });
       ObjectiveTemplate.belongsToMany(models.Topic, {
         through: models.ObjectiveTemplateTopic,
         foreignKey: 'objectiveTemplateId',
         otherKey: 'topicId',
         as: 'topics',
+        hooks: true,
       });
       ObjectiveTemplate.belongsToMany(models.Role, {
         through: models.ObjectiveTemplateRole,
         foreignKey: 'objectiveTemplateId',
         otherKey: 'roleId',
         as: 'roles',
+        hooks: true,
       });
-      ObjectiveTemplate.hasMany(models.GoalTemplateObjectiveTemplate, { foreignKey: 'objectiveTemplateId', as: 'goalTemplateObjectiveTemplates' });
+      ObjectiveTemplate.hasMany(models.GoalTemplateObjectiveTemplate, { foreignKey: 'objectiveTemplateId', as: 'goalTemplateObjectiveTemplates', hooks: true });
       ObjectiveTemplate.belongsToMany(models.GoalTemplate, {
         through: models.GoalTemplateObjectiveTemplate,
         foreignKey: 'objectiveTemplateId',
         otherKey: 'goalTemplateId',
         as: 'goalTemplates',
+        hooks: true,
       });
     }
   }

@@ -67,8 +67,8 @@ const submittedReport = {
 const draftReport = {
   ...submittedReport,
   approval: {
-    submissionStatus: REPORT_STATUSES.SUBMITTED,
-    calculatedStatus: REPORT_STATUSES.APPROVED,
+    submissionStatus: REPORT_STATUSES.DRAFT,
+    calculatedStatus: REPORT_STATUSES.DRAFT,
   },
 };
 
@@ -88,10 +88,17 @@ describe('approvers services', () => {
       removeRatifier(ENTITY_TYPES.REPORT, reportId, mockUser.id),
       removeRatifier(ENTITY_TYPES.REPORT, reportId, mockUserTwo.id),
     ])));
-    await ActivityRecipient.destroy({ where: { activityReportId: reportIds } });
-    await ActivityReport.destroy({ where: { id: reportIds } });
+    await ActivityRecipient.destroy({
+      where: { activityReportId: reportIds },
+      individualHooks: true,
+    });
+    await ActivityReport.destroy({
+      where: { id: reportIds },
+      individualHooks: true,
+    });
     await User.destroy({
       where: { id: [mockUser.id, mockUserTwo.id, mockManager.id, secondMockManager.id] },
+      individualHooks: true,
     });
     await db.sequelize.close();
   });
@@ -130,9 +137,9 @@ describe('approvers services', () => {
           expect(approver.User).toBeDefined();
         });
         const [updatedReport] = await activityReportAndRecipientsById(report1.id);
-        expect(updatedReport.approvedAt).toBeNull();
-        expect(updatedReport.submissionStatus).toEqual(REPORT_STATUSES.SUBMITTED);
-        expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.NEEDS_ACTION);
+        expect(updatedReport.approval.approvedAt).toBeNull();
+        expect(updatedReport.approval.submissionStatus).toEqual(REPORT_STATUSES.SUBMITTED);
+        expect(updatedReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.NEEDS_ACTION);
       });
       it('calculatedStatus is "approved" if all approvers approve', async () => {
         const report2 = await createOrUpdate(submittedReport);
@@ -152,9 +159,9 @@ describe('approvers services', () => {
         );
         expect(approver.status).toEqual(APPROVER_STATUSES.APPROVED);
         const [updatedReport] = await activityReportAndRecipientsById(report2.id);
-        expect(updatedReport.approvedAt).toBeTruthy();
-        expect(updatedReport.submissionStatus).toEqual(REPORT_STATUSES.SUBMITTED);
-        expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+        expect(updatedReport.approval.approvedAt).toBeTruthy();
+        expect(updatedReport.approval.submissionStatus).toEqual(REPORT_STATUSES.SUBMITTED);
+        expect(updatedReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
       });
       it('calculatedStatus is "submitted" if approver is pending', async () => {
         const report3 = await createOrUpdate(submittedReport);
@@ -173,8 +180,8 @@ describe('approvers services', () => {
         });
         expect(approver.status).toBeNull();
         const [updatedReport] = await activityReportAndRecipientsById(report3.id);
-        expect(updatedReport.submissionStatus).toEqual(REPORT_STATUSES.SUBMITTED);
-        expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.SUBMITTED);
+        expect(updatedReport.approval.submissionStatus).toEqual(REPORT_STATUSES.SUBMITTED);
+        expect(updatedReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.SUBMITTED);
       });
       it('calculatedStatus does not use soft deleted approver, until it is restored', async () => {
         const report4 = await createOrUpdate(submittedReport);
@@ -194,29 +201,26 @@ describe('approvers services', () => {
           userId: secondMockManager.id,
         });
         const [updatedReport] = await activityReportAndRecipientsById(report4.id);
-        expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.NEEDS_ACTION);
+        expect(updatedReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.NEEDS_ACTION);
         // Soft delete needs_action
         await removeRatifier(ENTITY_TYPES.REPORT, report4.id, mockManager.id);
         const [afterDeleteReport] = await activityReportAndRecipientsById(report4.id);
-        expect(afterDeleteReport.calculatedStatus).toEqual(REPORT_STATUSES.SUBMITTED);
+        expect(afterDeleteReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.SUBMITTED);
         // Upsert restores needs_action
         await upsertRatifier(needsActionApproval);
         const [afterRestoreReport] = await activityReportAndRecipientsById(report4.id);
-        expect(afterRestoreReport.calculatedStatus).toEqual(REPORT_STATUSES.NEEDS_ACTION);
+        expect(afterRestoreReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.NEEDS_ACTION);
       });
     });
     describe('for draft reports', () => {
       it('adding approver does not update calculatedStatus to "submitted"', async () => {
-        const report = await createOrUpdate(draftReport);
-        // One pending
-        await upsertRatifier({
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report.id,
-          userId: mockManager.id,
+        const report = await createOrUpdate({
+          ...draftReport,
+          approvers: [{ userId: mockManager.id }],
         });
         const [updatedReport] = await activityReportAndRecipientsById(report.id);
-        expect(updatedReport.submissionStatus).toEqual(REPORT_STATUSES.DRAFT);
-        expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
+        expect(updatedReport.approval.submissionStatus).toEqual(REPORT_STATUSES.DRAFT);
+        expect(updatedReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
       });
     });
   });

@@ -5,8 +5,8 @@ const { formatDate } = require('../lib/modelHelpers');
 module.exports = (sequelize, DataTypes) => {
   class ActivityReportGoal extends Model {
     static associate(models) {
-      ActivityReportGoal.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });
-      ActivityReportGoal.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });
+      ActivityReportGoal.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport', hooks: true });
+      ActivityReportGoal.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal', hooks: true });
       ActivityReportGoal.hasMany(models.Collaborator, {
         scope: {
           entityType: ENTITY_TYPES.REPORTGOAL,
@@ -25,13 +25,22 @@ module.exports = (sequelize, DataTypes) => {
         as: 'collaborators',
         hooks: true,
       });
-      ActivityReportGoal.hasMany(models.Collaborator, {
+      ActivityReportGoal.hasOne(models.Collaborator, {
         scope: {
           entityType: ENTITY_TYPES.REPORTGOAL,
           collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.OWNER] },
         },
         foreignKey: 'entityId',
-        as: 'owners',
+        as: 'owner',
+        hooks: true,
+      });
+      ActivityReportGoal.hasOne(models.Collaborator, {
+        scope: {
+          entityType: ENTITY_TYPES.REPORTGOAL,
+          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.INSTANTIATOR] },
+        },
+        foreignKey: 'entityId',
+        as: 'instantiator',
         hooks: true,
       });
       ActivityReportGoal.hasMany(models.Approval, {

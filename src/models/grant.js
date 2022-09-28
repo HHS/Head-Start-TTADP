@@ -11,11 +11,11 @@ const {
 module.exports = (sequelize, DataTypes) => {
   class Grant extends Model {
     static associate(models) {
-      Grant.belongsTo(models.Region, { foreignKey: 'regionId' });
-      Grant.belongsTo(models.Recipient, { foreignKey: 'recipientId', as: 'recipient' });
-      Grant.hasMany(models.Goal, { foreignKey: 'grantId', as: 'goals' });
-      Grant.hasMany(models.Program, { foreignKey: 'grantId', as: 'programs' });
-      Grant.hasMany(models.ActivityRecipient, { foreignKey: 'grantId', as: 'activityRecipients' });
+      Grant.belongsTo(models.Region, { foreignKey: 'regionId', hooks: true });
+      Grant.belongsTo(models.Recipient, { foreignKey: 'recipientId', as: 'recipient', hooks: true });
+      Grant.hasMany(models.Goal, { foreignKey: 'grantId', as: 'goals', hooks: true });
+      Grant.hasMany(models.Program, { foreignKey: 'grantId', as: 'programs', hooks: true });
+      Grant.hasMany(models.ActivityRecipient, { foreignKey: 'grantId', as: 'activityRecipients', hooks: true });
 
       Grant.addScope('defaultScope', {
         include: [

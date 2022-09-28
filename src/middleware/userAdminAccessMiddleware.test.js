@@ -36,7 +36,10 @@ describe('userAdminAccessMiddleware', () => {
     mockSession.userId = user.id;
   });
   afterAll(async () => {
-    await User.destroy({ where: { id: user.id } });
+    await User.destroy({
+      where: { id: user.id },
+      individualHooks: true,
+    });
     await db.sequelize.close();
   });
 

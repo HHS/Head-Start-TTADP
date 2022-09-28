@@ -9,9 +9,10 @@ module.exports = (sequelize, DataTypes) => {
           foreignKey: 'activityReportObjectiveId',
           as: 'activityReportObjective',
           onDelete: 'cascade',
+          hooks: true,
         },
       );
-      ActivityReportObjectiveFile.belongsTo(models.File, { foreignKey: 'fileId', as: 'file' });
+      ActivityReportObjectiveFile.belongsTo(models.File, { foreignKey: 'fileId', as: 'file', hooks: true });
     }
   }
   ActivityReportObjectiveFile.init({

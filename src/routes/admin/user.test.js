@@ -60,10 +60,22 @@ describe('User route handler', () => {
     jest.clearAllMocks();
   });
   afterAll(async () => {
-    await User.destroy({ where: { id: 49 } });
-    await User.destroy({ where: { id: 55 } });
-    await User.destroy({ where: { id: 52 } });
-    await User.destroy({ where: { id: 53 } });
+    await User.destroy({
+      where: { id: 49 },
+      individualHooks: true,
+    });
+    await User.destroy({
+      where: { id: 55 },
+      individualHooks: true,
+    });
+    await User.destroy({
+      where: { id: 52 },
+      individualHooks: true,
+    });
+    await User.destroy({
+      where: { id: 53 },
+      individualHooks: true,
+    });
     await db.sequelize.close();
   });
 
@@ -166,7 +178,10 @@ describe('User route handler', () => {
     mockRequest.body = testUpdateUser;
     mockRequest.params.userId = 53;
 
-    await User.destroy({ where: { id: 53 } });
+    await User.destroy({
+      where: { id: 53 },
+      individualHooks: true,
+    });
     const user = await User.create(
       testUpdateUser,
       {

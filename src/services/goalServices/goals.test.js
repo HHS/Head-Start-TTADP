@@ -96,6 +96,7 @@ describe('Goals DB service', () => {
         ActivityReportObjective.findAll.mockResolvedValue([]);
         await saveGoalsForReport([], { id: 1 });
         expect(ActivityReportObjective.destroy).toHaveBeenCalledWith({
+          individualHooks: true,
           where: {
             id: [],
           },

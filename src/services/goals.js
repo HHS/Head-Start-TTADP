@@ -99,12 +99,13 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
               sequelize.literal(`
                 (
                   SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
+                  INNER JOIN "Approvals" "a" ON "a"."entityType" = 'report' AND "a"."entityId" = "ar"."id" AND "a"."tier" = 0
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
                   INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
                   INNER JOIN "ObjectiveResources" "or" ON "or"."objectiveId" = "o"."id"
                   WHERE "o"."id" = "objectives"."id"
                   AND "or"."id" = "objectives->resources"."id"
-                  AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
+                  AND "a"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
                 ) > 0
               `),
               'isOnApprovedReport',
@@ -133,13 +134,15 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
             [
               sequelize.literal(`
                 (
-                  SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
+                  SELECT COUNT("ar"."id")
+                  FROM "ActivityReports" "ar"
+                  INNER JOIN "Approvals" "a" ON "a"."entityType" = 'report' AND "a"."entityId" = "ar"."id" AND "a"."tier" = 0
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
                   INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
                   INNER JOIN "ObjectiveTopics" "ot" ON "ot"."objectiveId" = "o"."id"
                   WHERE "o"."id" = "objectives"."id"
                   AND "ot"."topicId" = "objectives->topics"."id"
-                  AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
+                  AND "a"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
                 ) > 0
               `),
               'isOnApprovedReport',
@@ -158,7 +161,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
             [
               sequelize.literal(`
                 (
-                  SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
+                  SELECT COUNT("ar"."id")
+                  FROM "ActivityReports" "ar"
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
                   INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
                   INNER JOIN "ObjectiveRoles" "or" ON "or"."objectiveId" = "o"."id"
@@ -171,13 +175,15 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
             [
               sequelize.literal(`
                 (
-                  SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
+                  SELECT COUNT("ar"."id")
+                  FROM "ActivityReports" "ar"
+                  INNER JOIN "Approvals" "a" ON "a"."entityType" = 'report' AND "a"."entityId" = "ar"."id" AND "a"."tier" = 0
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
                   INNER JOIN "Objectives" "o" ON "o"."id" = "aro"."objectiveId"
                   INNER JOIN "ObjectiveRoles" "or" ON "or"."objectiveId" = "o"."id"
                   WHERE "o"."id" = "objectives"."id"
                   AND "or"."roleId" = "objectives->roles"."id"
-                  AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
+                  AND "a"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
                 ) > 0
               `),
               'isOnApprovedReport',
@@ -286,6 +292,7 @@ export async function saveObjectiveAssociations(
         },
         objectiveId: objective.id,
       },
+      individualHooks: true,
     });
 
     // cleanup objective resources
@@ -297,6 +304,7 @@ export async function saveObjectiveAssociations(
         },
         objectiveId: objective.id,
       },
+      individualHooks: true,
     });
 
     // cleanup objective roles
@@ -308,6 +316,7 @@ export async function saveObjectiveAssociations(
         },
         objectiveId: objective.id,
       },
+      individualHooks: true,
     });
 
     // cleanup objective files
@@ -319,6 +328,7 @@ export async function saveObjectiveAssociations(
         },
         objectiveId: objective.id,
       },
+      individualHooks: true,
     });
   }
 
@@ -745,18 +755,21 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
     where: {
       objectiveId: orphanedObjectiveIds,
     },
+    individualHooks: true,
   });
 
   await ObjectiveTopic.destroy({
     where: {
       objectiveId: orphanedObjectiveIds,
     },
+    individualHooks: true,
   });
 
   return Objective.destroy({
     where: {
       id: orphanedObjectiveIds,
     },
+    individualHooks: true,
   });
 }
 
@@ -1021,6 +1034,7 @@ async function removeActivityReportObjectivesFromReport(reportId, objectiveIdsTo
     where: {
       id: idsToDestroy,
     },
+    individualHooks: true,
   });
 }
 
@@ -1032,6 +1046,7 @@ async function removeActivityReportGoalsFromReport(reportId, currentGoalIds) {
         [Op.notIn]: currentGoalIds,
       },
     },
+    individualHooks: true,
   });
 }
 
@@ -1067,6 +1082,7 @@ export async function removeGoals(goalsToRemove) {
         },
       ],
     },
+    individualHooks: true,
   });
 }
 */
@@ -1152,6 +1168,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
       goalId: goalIds,
       activityReportId: reportId,
     },
+    individualHooks: true,
   });
 
   const objectives = await Objective.findAll({
@@ -1184,6 +1201,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
       objectiveId: objectiveIds,
       activityReportId: reportId,
     },
+    individualHooks: true,
   });
 
   await Objective.destroy({
@@ -1191,6 +1209,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
       id: objectivesToDelete,
       onApprovedAR: false,
     },
+    individualHooks: true,
   });
 
   return Goal.destroy({
@@ -1198,6 +1217,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
       id: goalsToDelete,
       onApprovedAR: false,
     },
+    individualHooks: true,
   });
 }
 
@@ -1605,6 +1625,7 @@ export async function destroyGoal(goalId) {
   //           ),
   //         },
   //       },
+  //       individualHooks: true,
   //       transaction,
   //     });
 
@@ -1616,6 +1637,7 @@ export async function destroyGoal(goalId) {
   //           ),
   //         },
   //       },
+  //       individualHooks: true,
   //       transaction,
   //     });
 
@@ -1623,6 +1645,7 @@ export async function destroyGoal(goalId) {
   //       where: {
   //         goalId,
   //       },
+  //       individualHooks: true,
   //       transaction,
   //     });
 
@@ -1630,6 +1653,7 @@ export async function destroyGoal(goalId) {
   //       where: {
   //         goalId,
   //       },
+  //       individualHooks: true,
   //       transaction,
   //     });
 
@@ -1637,6 +1661,7 @@ export async function destroyGoal(goalId) {
   //       where: {
   //         id: goalId,
   //       },
+  //       individualHooks: true,
   //       transaction,
   //     });
 

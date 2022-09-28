@@ -45,7 +45,7 @@ describe('RequestErrors DB service', () => {
       expect(retrievedRequestError.responseCode).toEqual(responseCode);
       expect(retrievedRequestError.createdAt).toBeDefined();
       expect(retrievedRequestError.updatedAt).toBeDefined();
-      await RequestErrors.destroy({ where: { id: requestErrorId } });
+      await RequestErrors.destroy({ where: { id: requestErrorId }, individualHooks: true });
     });
 
     it('throws on error', async () => {
@@ -66,7 +66,7 @@ describe('RequestErrors DB service', () => {
       const retrievedRequestErrors = await requestErrors();
       expect(retrievedRequestErrors).toBeDefined();
       expect(retrievedRequestErrors.count).toBe(1);
-      await RequestErrors.destroy({ where: { id: requestErrorId } });
+      await RequestErrors.destroy({ where: { id: requestErrorId }, individualHooks: true });
     });
   });
 
@@ -83,7 +83,7 @@ describe('RequestErrors DB service', () => {
       const retrievedRequestErrors = await requestErrorById(requestErrorId);
       expect(retrievedRequestErrors).toBeDefined();
       expect(retrievedRequestErrors.method).toBe('POST');
-      await RequestErrors.destroy({ where: { id: requestErrorId } });
+      await RequestErrors.destroy({ where: { id: requestErrorId }, individualHooks: true });
     });
   });
 
@@ -100,7 +100,7 @@ describe('RequestErrors DB service', () => {
       const retrievedRequestErrors = await requestErrorsByIds(requestErrorId);
       expect(retrievedRequestErrors).toBeDefined();
       expect(retrievedRequestErrors.length).toBe(1);
-      await RequestErrors.destroy({ where: { id: requestErrorId } });
+      await RequestErrors.destroy({ where: { id: requestErrorId }, individualHooks: true });
     });
   });
 

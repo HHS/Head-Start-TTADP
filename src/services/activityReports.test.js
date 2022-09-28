@@ -1,4 +1,4 @@
-// import { Op } from 'sequelize';
+import { Op } from 'sequelize';
 import db, {
   ActivityReport, Collaborator, ActivityRecipient, User,
   Recipient, OtherEntity, Grant, NextStep, Region, Permission, Role, UserRole,
@@ -171,20 +171,47 @@ describe('Activity report service', () => {
         include: [{
           model: Collaborator,
           as: 'owner',
-          where: { userId: userIds },
+          where: { userId: { [Op.in]: userIds } },
           required: true,
         }],
       });
       const reportIds = reports.map((report) => report.id);
-      await NextStep.destroy({ where: { activityReportId: reportIds } });
-      await ActivityRecipient.destroy({ where: { activityReportId: reportIds } });
-      await ActivityReport.destroy({ where: { id: reportIds } });
-      await User.destroy({ where: { id: userIds } });
-      await Permission.destroy({ where: { userId: userIds } });
-      await OtherEntity.destroy({ where: { id: ALERT_RECIPIENT_ID } });
-      await Grant.destroy({ where: { recipientId: [ALERT_RECIPIENT_ID] } });
-      await Recipient.destroy({ where: { id: [ALERT_RECIPIENT_ID] } });
-      await Region.destroy({ where: { id: 22 } });
+      await NextStep.destroy({
+        where: { activityReportId: { [Op.in]: reportIds } },
+        individualHooks: true,
+      });
+      await ActivityRecipient.destroy({
+        where: { activityReportId: { [Op.in]: reportIds } },
+        individualHooks: true,
+      });
+      await ActivityReport.destroy({
+        where: { id: { [Op.in]: reportIds } },
+        individualHooks: true,
+      });
+      await User.destroy({
+        where: { id: userIds },
+        individualHooks: true,
+      });
+      await Permission.destroy({
+        where: { userId: userIds },
+        individualHooks: true,
+      });
+      await OtherEntity.destroy({
+        where: { id: ALERT_RECIPIENT_ID },
+        individualHooks: true,
+      });
+      await Grant.destroy({
+        where: { recipientId: [ALERT_RECIPIENT_ID] },
+        individualHooks: true,
+      });
+      await Recipient.destroy({
+        where: { id: [ALERT_RECIPIENT_ID] },
+        individualHooks: true,
+      });
+      await Region.destroy({
+        where: { id: 22 },
+        individualHooks: true,
+      });
     });
 
     it('retrieves myalerts', async () => {
@@ -346,24 +373,50 @@ describe('Activity report service', () => {
         mockUserFour.id,
         mockUserFive.id];
       const reports = await ActivityReport.findAll({
-        include: [{
-          model: Collaborator,
-          as: 'owner',
-          where: { userId: userIds },
-          required: true,
-        }],
+        where: { '$owner.userId$': { [Op.in]: userIds } },
+        include: [{ model: Collaborator, as: 'owner' }],
       });
       const reportIds = reports.map((report) => report.id);
-      await NextStep.destroy({ where: { activityReportId: reportIds } });
-      await ActivityRecipient.destroy({ where: { activityReportId: reportIds } });
-      await ActivityReport.destroy({ where: { id: reportIds } });
-      await UserRole.destroy({ where: { userId: userIds } });
-      await User.destroy({ where: { id: userIds } });
-      await Permission.destroy({ where: { userId: userIds } });
-      await OtherEntity.destroy({ where: { id: RECIPIENT_ID } });
-      await Grant.destroy({ where: { id: [RECIPIENT_ID, RECIPIENT_ID_SORTING] } });
-      await Recipient.destroy({ where: { id: [RECIPIENT_ID, RECIPIENT_ID_SORTING] } });
-      await Region.destroy({ where: { id: 19 } });
+      await NextStep.destroy({
+        where: { activityReportId: reportIds },
+        individualHooks: true,
+      });
+      await ActivityRecipient.destroy({
+        where: { activityReportId: reportIds },
+        individualHooks: true,
+      });
+      await ActivityReport.destroy({
+        where: { id: reportIds },
+        individualHooks: true,
+      });
+      await UserRole.destroy({
+        where: { userId: userIds },
+        individualHooks: true,
+      });
+      await User.destroy({
+        where: { id: userIds },
+        individualHooks: true,
+      });
+      await Permission.destroy({
+        where: { userId: userIds },
+        individualHooks: true,
+      });
+      await OtherEntity.destroy({
+        where: { id: RECIPIENT_ID },
+        individualHooks: true,
+      });
+      await Grant.destroy({
+        where: { id: [RECIPIENT_ID, RECIPIENT_ID_SORTING] },
+        individualHooks: true,
+      });
+      await Recipient.destroy({
+        where: { id: [RECIPIENT_ID, RECIPIENT_ID_SORTING] },
+        individualHooks: true,
+      });
+      await Region.destroy({
+        where: { id: 19 },
+        individualHooks: true,
+      });
     });
 
     describe('createOrUpdate', () => {
@@ -371,7 +424,7 @@ describe('Activity report service', () => {
         const report = await createOrUpdate({ ...reportObject, id: 3334 });
         await createOrUpdate({ ...report, ECLKCResourcesUsed: [{ value: 'updated' }] }, report);
         expect(report.activityRecipientType).toEqual('recipient');
-        expect(report.calculatedStatus).toEqual('draft');
+        expect(report.approval.calculatedStatus).toEqual('draft');
         expect(report.ECLKCResourcesUsed).toEqual(['updated']);
         expect(report.id).toEqual(3334);
       });
@@ -403,7 +456,7 @@ describe('Activity report service', () => {
           requester: null,
           specialistNextSteps: [],
           startDate: null,
-          submissionStatus: REPORT_STATUSES.DRAFT,
+          approval: { submissionStatus: REPORT_STATUSES.DRAFT },
           targetPopulations: [],
           topics: [],
           pageState: {
@@ -412,14 +465,14 @@ describe('Activity report service', () => {
             3: 'Not Started',
             4: 'Not Started',
           },
-          userId: mockUser.id,
+          owner: { userId: mockUser.id },
           regionId: 1,
           ttaType: [],
           lastUpdatedById: 1,
         };
 
         const report = await createOrUpdate(emptyReport);
-        expect(report.submissionStatus).toEqual(REPORT_STATUSES.DRAFT);
+        expect(report.approval.submissionStatus).toEqual(REPORT_STATUSES.DRAFT);
       });
 
       it('creates a new report', async () => {
@@ -443,7 +496,7 @@ describe('Activity report service', () => {
         expect(endARCount.length - beginningARCount.length).toBe(1);
         expect(report.activityRecipients[0].id).toBe(RECIPIENT_ID);
         // Check afterCreate copySubmissionStatus hook
-        expect(report.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
+        expect(report.approval.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
       });
 
       it('creates a new report with other-entity recipient', async () => {
@@ -571,7 +624,7 @@ describe('Activity report service', () => {
         try {
           report = await createOrUpdate(reportObjectWithNotes);
         } catch (err) {
-          auditLogger.error(err);
+          auditLogger.error(JSON.stringify({ name: 'handles notes being created', err }));
           throw err;
         }
         // Then we see that it was saved correctly
@@ -597,7 +650,7 @@ describe('Activity report service', () => {
         try {
           report = await createOrUpdate(reportWithNotes);
         } catch (err) {
-          auditLogger.error(err);
+          auditLogger.error(JSON.stringify({ name: 'handles specialist notes being created', err }));
           throw err;
         }
 
@@ -622,7 +675,7 @@ describe('Activity report service', () => {
         try {
           report = await createOrUpdate(reportWithNotes);
         } catch (err) {
-          auditLogger.error(err);
+          auditLogger.error(JSON.stringify({ name: 'handles recipient notes being created', err }));
           throw err;
         }
 
@@ -731,12 +784,12 @@ describe('Activity report service', () => {
           .toEqual(expect.arrayContaining(specialistsIds));
       });
 
-      it('calls syncApprovers appropriately', async () => {
+      it('calls syncRatifiers appropriately', async () => {
         const reportWithApprovers = {
           ...reportObject,
-          approverUserIds: [mockUserTwo.id],
+          approvers: [{ userId: mockUserTwo.id }],
         };
-        // Calls syncApprovers when approverUserIds is present
+        // Calls syncRatifiers when approvers is present
         const newReport = await createOrUpdate(reportWithApprovers);
         expect(newReport.approvers[0].User.id).toEqual(mockUserTwo.id);
 
@@ -805,7 +858,7 @@ describe('Activity report service', () => {
         );
         const [foundReport] = await activityReportAndRecipientsById(report.id);
         // Show both approvers
-        expect(foundReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+        expect(foundReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
         expect(foundReport.approvers.length).toEqual(1);
         expect(foundReport.approvers[0]).toEqual(expect.objectContaining({
           note: 'great job',
@@ -849,7 +902,8 @@ describe('Activity report service', () => {
           },
           regionId: 2,
         });
-        const report = await createOrUpdate({
+        // const report =
+        await createOrUpdate({
           ...submittedReport,
           activityRecipients: [{ grantId: firstGrant.id }],
           approval: {
@@ -858,15 +912,15 @@ describe('Activity report service', () => {
           },
           topics: topicsTwo,
         });
-        try {
-          await ActivityRecipient.create({
-            activityReportId: report.id,
-            grantId: firstGrant.id,
-          });
-        } catch (error) {
-          auditLogger.error(JSON.stringify(error));
-          throw error;
-        }
+        // try {
+        //   await ActivityRecipient.create({
+        //     activityReportId: report.id,
+        //     grantId: firstGrant.id,
+        //   });
+        // } catch (error) {
+        //   auditLogger.error(JSON.stringify(error));
+        //   throw error;
+        // }
         latestReport = await createOrUpdate({
           ...submittedReport,
           approval: {
@@ -996,7 +1050,7 @@ describe('Activity report service', () => {
           ...mockReport,
           approvers: [{
             userId: mockUserTwo.id,
-            status: RATIFIER_STATUSES.RATIFIED,
+            status: RATIFIER_STATUSES.APPROVED,
           }],
         });
         await createOrUpdate(mockReport);
@@ -1143,12 +1197,12 @@ describe('Activity report service', () => {
     describe('setStatus', () => {
       it('sets report to draft', async () => {
         const report = await createOrUpdate(submittedReport);
-        expect(report.submissionStatus).toEqual(REPORT_STATUSES.SUBMITTED);
+        expect(report.approval.submissionStatus).toEqual(REPORT_STATUSES.SUBMITTED);
         await setStatus(report, REPORT_STATUSES.DRAFT);
         // get report again so we're checking that the change is persisted to the database
         const updatedReport = await ActivityReport.findOne({ where: { id: report.id } });
-        expect(updatedReport.submissionStatus).toEqual(REPORT_STATUSES.DRAFT);
-        expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
+        expect(updatedReport.approval.submissionStatus).toEqual(REPORT_STATUSES.DRAFT);
+        expect(updatedReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
       });
     });
   });

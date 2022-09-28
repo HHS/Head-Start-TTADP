@@ -128,13 +128,25 @@ describe('File Upload', () => {
     });
 
     await Promise.all(files.map(async (file) => {
-      ActivityReportFile.destroy({ where: { fileId: file.id } });
-      File.destroy({ where: { id: file.id } });
+      ActivityReportFile.destroy({
+        where: { fileId: file.id },
+        individualHooks: true,
+      });
+      File.destroy({
+        where: { id: file.id },
+        individualHooks: true,
+      });
     }));
 
     await Promise.all(objectiveFiles.map(async (objFile) => {
-      ObjectiveFile.destroy({ where: { fileId: objFile.id } });
-      File.destroy({ where: { id: objFile.id } });
+      ObjectiveFile.destroy({
+        where: { fileId: objFile.id },
+        individualHooks: true,
+      });
+      File.destroy({
+        where: { id: objFile.id },
+        individualHooks: true,
+      });
     }));
 
     // cleanup any leftovers, like from the lonely file test
@@ -145,30 +157,47 @@ describe('File Upload', () => {
           where: {
             fileId: testFiles.map((file) => file.id),
           },
+          individualHooks: true,
         }),
         ActivityReportFile.destroy({
           where: {
             fileId: testFiles.map((file) => file.id),
           },
+          individualHooks: true,
         }),
       ],
     );
-    await File.destroy({ where: { originalFileName: 'testfile.pdf' } });
+    await File.destroy({
+      where: { originalFileName: 'testfile.pdf' },
+      individualHooks: true,
+    });
 
-    await ActivityReport.destroy({ where: { id: report.dataValues.id } });
-    await Objective.destroy(
-      {
-        where: {
-          id: [
-            objective.dataValues.id, secondTestObjective.dataValues.id,
-          ],
-        },
+    await ActivityReport.destroy({
+      where: { id: report.dataValues.id },
+      individualHooks: true,
+    });
+    await Objective.destroy({
+      where: {
+        id: [objective.dataValues.id, secondTestObjective.dataValues.id],
       },
-    );
-    await Goal.destroy({ where: { id: goal.id } });
-    await Grant.destroy({ where: { id: grant.id } });
-    await Recipient.destroy({ where: { id: recipient.id } });
-    await User.destroy({ where: { id: user.id } });
+      individualHooks: true,
+    });
+    await Goal.destroy({
+      where: { id: goal.id },
+      individualHooks: true,
+    });
+    await Grant.destroy({
+      where: { id: grant.id },
+      individualHooks: true,
+    });
+    await Recipient.destroy({
+      where: { id: recipient.id },
+      individualHooks: true,
+    });
+    await User.destroy({
+      where: { id: user.id },
+      individualHooks: true,
+    });
     process.env = ORIGINAL_ENV; // restore original env
     await db.sequelize.close();
   });

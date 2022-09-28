@@ -27,9 +27,9 @@ describe('Import TTA plan goals', () => {
         roles = JSON.stringify(await Role.findAll({ raw: true }));
         goals = JSON.stringify(await Goal.findAll({ raw: true }));
         existingTopics = JSON.stringify(await Topic.findAll({ raw: true }));
-        await Role.destroy({ where: {}, force: true });
-        await Topic.destroy({ where: {}, force: true });
-        await Goal.destroy({ where: {} });
+        await Role.destroy({ where: {}, force: true, individualHooks: true });
+        await Topic.destroy({ where: {}, force: true, individualHooks: true });
+        await Goal.destroy({ where: {}, individualHooks: true });
         await importGoals(fileName, 14);
       } catch (error) {
         // eslint-disable-next-line no-console
@@ -38,9 +38,9 @@ describe('Import TTA plan goals', () => {
     });
 
     afterAll(async () => {
-      await Role.destroy({ where: {}, force: true });
-      await Topic.destroy({ where: {}, force: true });
-      await Goal.destroy({ where: {} });
+      await Role.destroy({ where: {}, force: true, individualHooks: true });
+      await Topic.destroy({ where: {}, force: true, individualHooks: true });
+      await Goal.destroy({ where: {}, individualHooks: true });
 
       await Topic.bulkCreate(JSON.parse(existingTopics));
       await Goal.bulkCreate(JSON.parse(goals));

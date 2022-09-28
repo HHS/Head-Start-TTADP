@@ -360,7 +360,6 @@ export async function getGoalsByActivityRecipient(
               'reason',
               'topics',
               'endDate',
-              'calculatedStatus',
               'legacyId',
               'regionId',
             ],

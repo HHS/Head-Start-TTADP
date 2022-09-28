@@ -10,6 +10,7 @@ import {
   Region,
   GoalTemplate,
   Goal,
+  Collaborator,
   // GrantGoal,
 } from './models';
 import { auditLogger } from './logger';
@@ -135,12 +136,18 @@ export async function createReport(report) {
     foundUser = await createUser();
   }
 
-  const createdReport = await createOrUpdate({
-    ...defaultReport(),
-    ...reportData,
-    regionId: foundRegion.id,
-    owner: { userId: foundUser.id },
-  });
+  let createdReport;
+  try {
+    createdReport = await createOrUpdate({
+      ...defaultReport(),
+      ...reportData,
+      regionId: foundRegion.id,
+      owner: { userId: foundUser.id },
+    });
+  } catch (err) {
+    auditLogger.error(JSON.stringify({ name: 'createReport-createOrUpdate', err }));
+    throw err;
+  }
 
   try {
     Promise.all(recipients.map((grantId) => ActivityRecipient.create({
@@ -172,9 +179,8 @@ export async function destroyReport(report) {
   });
 
   await ActivityRecipient.destroy({
-    where: {
-      activityReportId: dbReport.id,
-    },
+    where: { activityReportId: dbReport.id },
+    individualHooks: true,
   });
 
   await Promise.all(dbReport.activityRecipients.map(async (recipient) => {
@@ -184,54 +190,54 @@ export async function destroyReport(report) {
     const otherGoals = await Goal.findAll({ where: { grantId: grant.id } });
     if (otherRecipients.length === 0 && otherGoals.length === 0) {
       await Grant.destroy({
-        where: {
-          id: grant.id,
-        },
+        where: { id: grant.id },
+        individualHooks: true,
       });
     }
 
     const results = await Grant.findAll({ where: { recipientId: grant.recipientId } });
     if (results.length === 0) {
       await Recipient.destroy({
-        where: {
-          id: grant.recipientId,
-        },
+        where: { id: grant.recipientId },
+        individualHooks: true,
       });
     }
   }));
 
   await ActivityReport.destroy({
-    where: {
-      id: report.id,
-    },
+    where: { id: report.id },
+    individualHooks: true,
   });
 
-  let results = await ActivityReport.findAll({ where: { userId: dbReport.userId } });
+  let results = await ActivityReport.findAll({
+    include: [{
+      model: Collaborator,
+      as: 'owner',
+      where: { userId: dbReport.userId },
+      required: true,
+    }],
+  });
   if (results.length === 0) {
     await User.destroy({
-      where: {
-        id: dbReport.userId,
-      },
+      where: { id: dbReport.userId },
+      individualHooks: true,
     });
   }
 
   results = await ActivityReport.findAll({
-    where: {
-      regionId: report.regionId,
-    },
+    where: { regionId: report.regionId },
+    individualHooks: true,
   });
 
   const grantResults = await Grant.findAll({
-    where: {
-      regionId: report.regionId,
-    },
+    where: { regionId: report.regionId },
+    individualHooks: true,
   });
 
   if (results.length === 0 && grantResults.length === 0) {
     await Region.destroy({
-      where: {
-        id: report.regionId,
-      },
+      where: { id: report.regionId },
+      individualHooks: true,
     });
   }
 }
@@ -261,5 +267,6 @@ export async function destroyGoal(goal) {
     where: {
       id: goal.id,
     },
+    individualHooks: true,
   });
 }

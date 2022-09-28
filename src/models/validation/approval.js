@@ -1,4 +1,5 @@
 const { REPORT_STATUSES, ENTITY_TYPES } = require('../../constants');
+const { auditLogger } = require('../../logger');
 
 const requiredForSubmissionReport = (report) => [
   report.numberOfParticipants,
@@ -43,6 +44,7 @@ const validateSubmissionStatus = (approval) => {
   let requiredForSubmission;
   switch (approval.entityType) {
     case ENTITY_TYPES.REPORT:
+      auditLogger.error(JSON.stringify({ name: 'validateSubmissionStatus', report: approval.report }));
       requiredForSubmission = requiredForSubmissionReport(approval.report);
       break;
     case ENTITY_TYPES.REPORTGOAL:

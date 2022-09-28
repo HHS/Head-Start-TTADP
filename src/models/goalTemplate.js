@@ -11,17 +11,18 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      GoalTemplate.hasMany(models.Goal, { foreignKey: 'goalTemplateId', as: 'goals' });
-      GoalTemplate.belongsTo(models.Region, { foreignKey: 'regionId' });
+      GoalTemplate.hasMany(models.Goal, { foreignKey: 'goalTemplateId', as: 'goals', hooks: true });
+      GoalTemplate.belongsTo(models.Region, { foreignKey: 'regionId', hooks: true });
       GoalTemplate.hasMany(
         models.GoalTemplateObjectiveTemplate,
-        { foreignKey: 'goalTemplateId', as: 'goalTemplateObjectiveTemplates' },
+        { foreignKey: 'goalTemplateId', as: 'goalTemplateObjectiveTemplates', hooks: true },
       );
       GoalTemplate.belongsToMany(models.ObjectiveTemplate, {
         through: models.GoalTemplateObjectiveTemplate,
         foreignKey: 'goalTemplateId',
         otherKey: 'objectiveTemplateId',
         as: 'goalTemplates',
+        hooks: true,
       });
       GoalTemplate.hasMany(models.Collaborator, {
         scope: {
@@ -41,13 +42,22 @@ module.exports = (sequelize, DataTypes) => {
         as: 'collaborators',
         hooks: true,
       });
-      GoalTemplate.hasMany(models.Collaborator, {
+      GoalTemplate.hasOne(models.Collaborator, {
         scope: {
           entityType: ENTITY_TYPES.GOALTEMPLATE,
           collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.OWNER] },
         },
         foreignKey: 'entityId',
-        as: 'owners',
+        as: 'owner',
+        hooks: true,
+      });
+      GoalTemplate.hasOne(models.Collaborator, {
+        scope: {
+          entityType: ENTITY_TYPES.GOALTEMPLATE,
+          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.INSTANTIATOR] },
+        },
+        foreignKey: 'entityId',
+        as: 'instantiator',
         hooks: true,
       });
       GoalTemplate.hasMany(models.Approval, {

@@ -38,7 +38,7 @@ export const COLLABORATOR_TYPES = {
 
 export const RATIFIER_STATUSES = {
   NEEDS_ACTION: 'needs_action',
-  RATIFIED: 'ratified',
+  APPROVED: 'approved',
 };
 
 export const FILE_STATUSES = {

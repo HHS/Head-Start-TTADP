@@ -72,36 +72,42 @@ describe('createOrUpdateGoals', () => {
       where: {
         objectiveId: objective.id,
       },
+      individualHooks: true,
     });
 
     await ObjectiveTopic.destroy({
       where: {
         objectiveId: objective.id,
       },
+      individualHooks: true,
     });
 
     await Objective.destroy({
       where: {
         goalId: goal.id,
       },
+      individualHooks: true,
     });
 
     await Goal.destroy({
       where: {
         id: newGoals.map((g) => g.id),
       },
+      individualHooks: true,
     });
 
     await Grant.destroy({
       where: {
         id: grants.map((g) => g.id),
       },
+      individualHooks: true,
     });
 
     await Recipient.destroy({
       where: {
         id: recipient.id,
       },
+      individualHooks: true,
     });
 
     await db.sequelize.close();

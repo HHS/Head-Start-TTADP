@@ -49,5 +49,6 @@ export async function requestErrorsByIds({ filter = '{}' } = {}) {
 export async function delRequestErrors({ filter = '{}' } = {}) {
   return models.RequestErrors.destroy({
     where: JSON.parse(filter),
+    individualHooks: true,
   });
 }

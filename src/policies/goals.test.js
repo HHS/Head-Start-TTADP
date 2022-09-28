@@ -8,9 +8,10 @@ describe('Goals policies', () => {
       const goal = {
         objectives: [
           {
-            activityReports: [
-              { id: 1, calculatedStatus: REPORT_STATUSES.APPROVED },
-            ],
+            onApprovedAR: true,
+            // activityReports: [
+            //   { id: 1, calculatedStatus: REPORT_STATUSES.APPROVED },
+            // ],
           },
         ],
         grant: { regionId: 2 },

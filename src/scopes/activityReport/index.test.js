@@ -6,6 +6,7 @@ import { auditLogger } from '../../logger';
 import db, {
   ActivityReport,
   ActivityRecipient,
+  Approval,
   Collaborator,
   User,
   Recipient,
@@ -39,13 +40,13 @@ const mockManager = {
 };
 
 const draftReport = {
-  submissionStatus: REPORT_STATUSES.DRAFT,
+  approval: { submissionStatus: REPORT_STATUSES.DRAFT },
   regionId: 1,
 };
 
 const submittedReport = {
   ...draftReport,
-  submissionStatus: REPORT_STATUSES.SUBMITTED,
+  approval: { submissionStatus: REPORT_STATUSES.SUBMITTED },
   numberOfParticipants: 1,
   deliveryMethod: 'method',
   duration: 0,
@@ -61,12 +62,12 @@ const submittedReport = {
 
 const approvedReport = {
   ...submittedReport,
-  calculatedStatus: REPORT_STATUSES.APPROVED,
+  approval: { ...submittedReport.approval, calculatedStatus: REPORT_STATUSES.APPROVED },
 };
 
 // Included to test default scope
 const deletedReport = {
-  submissionStatus: REPORT_STATUSES.DELETED,
+  approval: { submissionStatus: REPORT_STATUSES.DELETED },
   regionId: 1,
 };
 
@@ -89,19 +90,35 @@ describe('filtersToScopes', () => {
   let excludedUser;
 
   beforeAll(async () => {
-    await User.create(mockUser);
-    await User.create(mockManager);
-    includedUser1 = await User.create({
-      name: 'person', hsesUserId: 'user111', hsesUsername: 'user111',
-    });
-    includedUser2 = await User.create({ name: 'another person', hsesUserId: 'user222', hsesUsername: 'user222' });
-    excludedUser = await User.create({ name: 'excluded', hsesUserId: 'user333', hsesUsername: 'user333' });
-    globallyExcludedReport = await createOrUpdate({
-      ...draftReport,
-      updatedAt: '2000-01-01',
-      owner: { userId: mockUser.id },
-      silent: true,
-    });
+    try {
+      auditLogger.error(JSON.stringify({ name: 'filtersToScopes-beforeAll-1' }));
+      await User.create(mockUser);
+      auditLogger.error(JSON.stringify({ name: 'filtersToScopes-beforeAll-2' }));
+      await User.create(mockManager);
+      auditLogger.error(JSON.stringify({ name: 'filtersToScopes-beforeAll-3' }));
+      includedUser1 = await User.create(
+        {
+          name: 'person', hsesUserId: 'user111', hsesUsername: 'user111',
+        },
+        { logging: (msg) => auditLogger.error(JSON.stringify({ name: 'includedUser1', msg })) },
+      );
+      auditLogger.error(JSON.stringify({ name: 'filtersToScopes-beforeAll-4' }));
+      includedUser2 = await User.create({ name: 'another person', hsesUserId: 'user222', hsesUsername: 'user222' },
+      { logging: (msg) => auditLogger.error(JSON.stringify({ name: 'includedUser2', msg })) });
+      auditLogger.error(JSON.stringify({ name: 'filtersToScopes-beforeAll-5' }));
+      excludedUser = await User.create({ name: 'excluded', hsesUserId: 'user333', hsesUsername: 'user333' },
+      { logging: (msg) => auditLogger.error(JSON.stringify({ name: 'excludedUser', msg })) });
+      auditLogger.error(JSON.stringify({ name: 'filtersToScopes-beforeAll-6' }));
+      globallyExcludedReport = await createOrUpdate({
+        ...draftReport,
+        updatedAt: '2000-01-01',
+        owner: { userId: mockUser.id },
+        silent: true,
+      });
+      auditLogger.error(JSON.stringify({ name: 'filtersToScopes-beforeAll-7' }));
+    } catch (err) {
+      auditLogger.error(JSON.stringify({ name: 'filtersToScopes-beforeAll', err }));
+    }
   });
 
   afterAll(async () => {
@@ -114,19 +131,21 @@ describe('filtersToScopes', () => {
     const reports = await ActivityReport.unscoped().findAll({
       include: [{
         model: Collaborator,
-        as: 'owners',
-        where: {
-          userId: { [Op.in]: userIds },
-        },
+        as: 'owner',
+        where: { userId: { [Op.in]: userIds } },
         required: true,
       }],
     });
     const reportIds = reports.map((report) => report.id);
-    await ActivityReport.unscoped().destroy({ where: { id: reportIds } });
+    await ActivityReport.unscoped().destroy({
+      where: { id: reportIds },
+      individualHooks: true,
+    });
     await User.destroy({
       where: {
         id: userIds,
       },
+      individualHooks: true,
     });
     await db.sequelize.close();
   });
@@ -138,32 +157,37 @@ describe('filtersToScopes', () => {
     let possibleIds;
 
     beforeAll(async () => {
-      reportIncluded = await createOrUpdate({
-        ...draftReport,
-        id: 12345,
-        owner: { userId: mockUser.id },
-      });
-      reportIncludedLegacy = await createOrUpdate({
-        ...draftReport,
-        legacyId: 'R01-AR-012345',
-        owner: { userId: mockUser.id },
-      });
-      reportExcluded = await createOrUpdate({
-        ...draftReport,
-        id: 12346,
-        owner: { userId: mockUser.id },
-      });
-      possibleIds = [
-        reportIncluded.id,
-        reportIncludedLegacy.id,
-        reportExcluded.id,
-        globallyExcludedReport.id,
-      ];
+      try {
+        reportIncluded = await createOrUpdate({
+          ...draftReport,
+          id: 12345,
+          owner: { userId: mockUser.id },
+        });
+        reportIncludedLegacy = await createOrUpdate({
+          ...draftReport,
+          legacyId: 'R01-AR-012345',
+          owner: { userId: mockUser.id },
+        });
+        reportExcluded = await createOrUpdate({
+          ...draftReport,
+          id: 12346,
+          owner: { userId: mockUser.id },
+        });
+        possibleIds = [
+          reportIncluded.id,
+          reportIncludedLegacy.id,
+          reportExcluded.id,
+          globallyExcludedReport.id,
+        ];
+      } catch (err) {
+        auditLogger.error(JSON.stringify({ name: 'reportId-beforeAll', err }));
+      }
     });
 
     afterAll(async () => {
       await ActivityReport.destroy({
         where: { id: [reportIncluded.id, reportIncludedLegacy.id, reportExcluded.id] },
+        individualHooks: true,
       });
     });
 
@@ -203,32 +227,36 @@ describe('filtersToScopes', () => {
       let possibleIds;
 
       beforeAll(async () => {
-        otherEntityIncluded1 = await OtherEntity.create({ id: 40, name: 'test' });
-        otherEntityIncluded2 = await OtherEntity.create({ id: 41, name: 'another test' });
-        otherEntityExcluded = await OtherEntity.create({ id: 42, name: 'otherEntity' });
+        try {
+          otherEntityIncluded1 = await OtherEntity.create({ id: 40, name: 'test' });
+          otherEntityIncluded2 = await OtherEntity.create({ id: 41, name: 'another test' });
+          otherEntityExcluded = await OtherEntity.create({ id: 42, name: 'otherEntity' });
 
-        reportIncluded1 = await createOrUpdate({
-          ...draftReport,
-          owner: { userId: mockUser.id },
-          activityRecipients: [{ otherEntityId: otherEntityIncluded1.id }],
-        });
-        reportIncluded2 = await createOrUpdate({
-          ...draftReport,
-          owner: { userId: mockUser.id },
-          activityRecipients: [{ otherEntityId: otherEntityIncluded2.id }],
-        });
-        reportExcluded = await createOrUpdate({
-          ...draftReport,
-          owner: { userId: mockUser.id },
-          activityRecipients: [{ otherEntityId: otherEntityExcluded.id }],
-        });
+          reportIncluded1 = await createOrUpdate({
+            ...draftReport,
+            owner: { userId: mockUser.id },
+            activityRecipients: [{ otherEntityId: otherEntityIncluded1.id }],
+          });
+          reportIncluded2 = await createOrUpdate({
+            ...draftReport,
+            owner: { userId: mockUser.id },
+            activityRecipients: [{ otherEntityId: otherEntityIncluded2.id }],
+          });
+          reportExcluded = await createOrUpdate({
+            ...draftReport,
+            owner: { userId: mockUser.id },
+            activityRecipients: [{ otherEntityId: otherEntityExcluded.id }],
+          });
 
-        possibleIds = [
-          reportIncluded1.id,
-          reportIncluded2.id,
-          reportExcluded.id,
-          globallyExcludedReport.id,
-        ];
+          possibleIds = [
+            reportIncluded1.id,
+            reportIncluded2.id,
+            reportExcluded.id,
+            globallyExcludedReport.id,
+          ];
+        } catch (err) {
+          auditLogger.error(JSON.stringify({ name: 'for otherEntities-beforeAll', err }));
+        }
       });
 
       afterAll(async () => {
@@ -236,12 +264,15 @@ describe('filtersToScopes', () => {
           where: {
             activityReportId: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id],
           },
+          individualHooks: true,
         });
         await ActivityReport.destroy({
           where: { id: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id] },
+          individualHooks: true,
         });
         await OtherEntity.destroy({
           where: { id: [otherEntityIncluded1.id, otherEntityIncluded2.id, otherEntityExcluded.id] },
+          individualHooks: true,
         });
       });
 
@@ -250,6 +281,7 @@ describe('filtersToScopes', () => {
         const scope = filtersToScopes(filters);
         const found = await ActivityReport.findAll({
           where: { [Op.and]: [scope.activityReport, { id: possibleIds }] },
+          logging: (msg) => auditLogger.error(JSON.stringify({ name: 'includes other-entities with a partial match', msg })),
         });
         expect(found.length).toBe(2);
         expect(found.map((f) => f.id))
@@ -284,42 +316,46 @@ describe('filtersToScopes', () => {
       let possibleIds;
 
       beforeAll(async () => {
-        recipientIncluded1 = await Recipient.create({ id: 50, name: '1234', uei: 'NNA5N2KHMGN2' });
-        recipientIncluded2 = await Recipient.create({ id: 51, name: 'testing 1234', uei: 'NNA5N2KHMBA2' });
-        recipientExcluded = await Recipient.create({ id: 52, name: '4321', uei: 'NNA5N2KHMBC2' });
+        try {
+          recipientIncluded1 = await Recipient.create({ id: 50, name: '1234', uei: 'NNA5N2KHMGN2' });
+          recipientIncluded2 = await Recipient.create({ id: 51, name: 'testing 1234', uei: 'NNA5N2KHMBA2' });
+          recipientExcluded = await Recipient.create({ id: 52, name: '4321', uei: 'NNA5N2KHMBC2' });
 
-        grantIncluded1 = await Grant.create({
-          id: recipientIncluded1.id, number: 1234, recipientId: recipientIncluded1.id,
-        });
-        grantIncluded2 = await Grant.create({
-          id: recipientIncluded2.id, number: 1235, recipientId: recipientIncluded2.id,
-        });
-        grantExcluded = await Grant.create({
-          id: recipientExcluded.id, number: 456, recipientId: recipientExcluded.id,
-        });
+          grantIncluded1 = await Grant.create({
+            id: recipientIncluded1.id, number: 1234, recipientId: recipientIncluded1.id,
+          });
+          grantIncluded2 = await Grant.create({
+            id: recipientIncluded2.id, number: 1235, recipientId: recipientIncluded2.id,
+          });
+          grantExcluded = await Grant.create({
+            id: recipientExcluded.id, number: 456, recipientId: recipientExcluded.id,
+          });
 
-        reportIncluded1 = await createOrUpdate({
-          ...draftReport,
-          owner: { userId: mockUser.id },
-          activityRecipients: [{ grantId: grantIncluded1.id }],
-        });
-        reportIncluded2 = await createOrUpdate({
-          ...draftReport,
-          owner: { userId: mockUser.id },
-          activityRecipients: [{ grantId: grantIncluded2.id }],
-        });
-        reportExcluded = await createOrUpdate({
-          ...draftReport,
-          owner: { userId: mockUser.id },
-          activityRecipients: [{ grantId: grantExcluded.id }],
-        });
+          reportIncluded1 = await createOrUpdate({
+            ...draftReport,
+            owner: { userId: mockUser.id },
+            activityRecipients: [{ grantId: grantIncluded1.id }],
+          });
+          reportIncluded2 = await createOrUpdate({
+            ...draftReport,
+            owner: { userId: mockUser.id },
+            activityRecipients: [{ grantId: grantIncluded2.id }],
+          });
+          reportExcluded = await createOrUpdate({
+            ...draftReport,
+            owner: { userId: mockUser.id },
+            activityRecipients: [{ grantId: grantExcluded.id }],
+          });
 
-        possibleIds = [
-          reportIncluded1.id,
-          reportIncluded2.id,
-          reportExcluded.id,
-          globallyExcludedReport.id,
-        ];
+          possibleIds = [
+            reportIncluded1.id,
+            reportIncluded2.id,
+            reportExcluded.id,
+            globallyExcludedReport.id,
+          ];
+        } catch (err) {
+          auditLogger.error(JSON.stringify({ name: 'for grants-beforeAll', err }));
+        }
       });
 
       afterAll(async () => {
@@ -327,15 +363,19 @@ describe('filtersToScopes', () => {
           where: {
             activityReportId: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id],
           },
+          individualHooks: true,
         });
         await ActivityReport.destroy({
           where: { id: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id] },
+          individualHooks: true,
         });
         await Grant.destroy({
           where: { id: [grantIncluded1.id, grantIncluded2.id, grantExcluded.id] },
+          individualHooks: true,
         });
         await Recipient.destroy({
           where: { id: [recipientIncluded1.id, recipientIncluded2.id, recipientExcluded.id] },
+          individualHooks: true,
         });
       });
 
@@ -406,31 +446,35 @@ describe('filtersToScopes', () => {
       let possibleIds;
 
       beforeAll(async () => {
-        recipientIncluded = await Recipient.create({ id: 54, name: '1234', uei: 'NNA5N2KHMGN2' });
-        recipientExcluded = await Recipient.create({ id: 56, name: '4321', uei: 'NNA5N2KHMBA2' });
+        try {
+          recipientIncluded = await Recipient.create({ id: 54, name: '1234', uei: 'NNA5N2KHMGN2' });
+          recipientExcluded = await Recipient.create({ id: 56, name: '4321', uei: 'NNA5N2KHMBA2' });
 
-        grantIncluded = await Grant.create({
-          id: recipientIncluded.id, number: 2234, recipientId: recipientIncluded.id,
-        });
-        grantExcluded = await Grant.create({
-          id: recipientExcluded.id, number: 2236, recipientId: recipientExcluded.id,
-        });
+          grantIncluded = await Grant.create({
+            id: recipientIncluded.id, number: 2234, recipientId: recipientIncluded.id,
+          });
+          grantExcluded = await Grant.create({
+            id: recipientExcluded.id, number: 2236, recipientId: recipientExcluded.id,
+          });
 
-        reportIncluded = await createOrUpdate({ ...draftReport, owner: { userId: mockUser.id } });
-        reportExcluded = await createOrUpdate({ ...draftReport, owner: { userId: mockUser.id } });
+          reportIncluded = await createOrUpdate({
+            ...draftReport,
+            owner: { userId: mockUser.id },
+            recipients: [{ grantId: grantIncluded.id }],
+          });
+          reportExcluded = await createOrUpdate({
+            ...draftReport,
+            owner: { userId: mockUser.id },
+            recipients: [{ grantId: grantExcluded.id }],
+          });
 
-        await ActivityRecipient.create({
-          activityReportId: reportIncluded.id,
-          grantId: grantIncluded.id,
-        });
-        await ActivityRecipient.create({
-          activityReportId: reportExcluded.id,
-          grantId: grantExcluded.id,
-        });
-        possibleIds = [
-          reportIncluded.id,
-          reportExcluded.id,
-        ];
+          possibleIds = [
+            reportIncluded.id,
+            reportExcluded.id,
+          ];
+        } catch (err) {
+          auditLogger.error(JSON.stringify({ name: 'recipientId-beforeAll', err }));
+        }
       });
 
       afterAll(async () => {
@@ -438,15 +482,19 @@ describe('filtersToScopes', () => {
           where: {
             activityReportId: [reportIncluded.id, reportExcluded.id],
           },
+          individualHooks: true,
         });
         await ActivityReport.destroy({
           where: { id: [reportIncluded.id, reportExcluded.id] },
+          individualHooks: true,
         });
         await Grant.destroy({
           where: { id: [grantIncluded.id, grantExcluded.id] },
+          individualHooks: true,
         });
         await Recipient.destroy({
           where: { id: [recipientIncluded.id, recipientExcluded.id] },
+          individualHooks: true,
         });
       });
 
@@ -471,22 +519,27 @@ describe('filtersToScopes', () => {
     let possibleIds;
 
     beforeAll(async () => {
-      firstReport = await createOrUpdate({ ...draftReport, startDate: '2020-01-01', owner: { userId: mockUser.id } });
-      secondReport = await createOrUpdate({ ...draftReport, startDate: '2021-01-01', owner: { userId: mockUser.id } });
-      thirdReport = await createOrUpdate({ ...draftReport, startDate: '2022-01-01', owner: { userId: mockUser.id } });
-      fourthReport = await createOrUpdate({ ...draftReport, startDate: '2023-01-01', owner: { userId: mockUser.id } });
-      possibleIds = [
-        firstReport.id,
-        secondReport.id,
-        thirdReport.id,
-        fourthReport.id,
-        globallyExcludedReport.id,
-      ];
+      try {
+        firstReport = await createOrUpdate({ ...draftReport, startDate: '2020-01-01', owner: { userId: mockUser.id } });
+        secondReport = await createOrUpdate({ ...draftReport, startDate: '2021-01-01', owner: { userId: mockUser.id } });
+        thirdReport = await createOrUpdate({ ...draftReport, startDate: '2022-01-01', owner: { userId: mockUser.id } });
+        fourthReport = await createOrUpdate({ ...draftReport, startDate: '2023-01-01', owner: { userId: mockUser.id } });
+        possibleIds = [
+          firstReport.id,
+          secondReport.id,
+          thirdReport.id,
+          fourthReport.id,
+          globallyExcludedReport.id,
+        ];
+      } catch (err) {
+        auditLogger.error(JSON.stringify({ name: 'startDate-beforeAll', err }));
+      }
     });
 
     afterAll(async () => {
       await ActivityReport.destroy({
         where: { id: [firstReport.id, secondReport.id, thirdReport.id, fourthReport.id] },
+        individualHooks: true,
       });
     });
 
@@ -543,42 +596,47 @@ describe('filtersToScopes', () => {
     let possibleIds;
 
     beforeAll(async () => {
-      firstReport = await createOrUpdate({
-        ...draftReport,
-        updatedAt: '2020-01-01',
-        silent: true,
-        owner: { userId: mockUser.id },
-      });
-      secondReport = await createOrUpdate({
-        ...draftReport,
-        updatedAt: '2021-01-01',
-        silent: true,
-        owner: { userId: mockUser.id },
-      });
-      thirdReport = await createOrUpdate({
-        ...draftReport,
-        updatedAt: '2022-01-01',
-        silent: true,
-        owner: { userId: mockUser.id },
-      });
-      fourthReport = await createOrUpdate({
-        ...draftReport,
-        updatedAt: '2023-01-01',
-        silent: true,
-        owner: { userId: mockUser.id },
-      });
-      possibleIds = [
-        firstReport.id,
-        secondReport.id,
-        thirdReport.id,
-        fourthReport.id,
-        globallyExcludedReport.id,
-      ];
+      try {
+        firstReport = await createOrUpdate({
+          ...draftReport,
+          updatedAt: '2020-01-01',
+          silent: true,
+          owner: { userId: mockUser.id },
+        });
+        secondReport = await createOrUpdate({
+          ...draftReport,
+          updatedAt: '2021-01-01',
+          silent: true,
+          owner: { userId: mockUser.id },
+        });
+        thirdReport = await createOrUpdate({
+          ...draftReport,
+          updatedAt: '2022-01-01',
+          silent: true,
+          owner: { userId: mockUser.id },
+        });
+        fourthReport = await createOrUpdate({
+          ...draftReport,
+          updatedAt: '2023-01-01',
+          silent: true,
+          owner: { userId: mockUser.id },
+        });
+        possibleIds = [
+          firstReport.id,
+          secondReport.id,
+          thirdReport.id,
+          fourthReport.id,
+          globallyExcludedReport.id,
+        ];
+      } catch (err) {
+        auditLogger.error(JSON.stringify({ name: 'lastSaved-beforeAll', err }));
+      }
     });
 
     afterAll(async () => {
       await ActivityReport.destroy({
         where: { id: [firstReport.id, secondReport.id, thirdReport.id, fourthReport.id] },
+        individualHooks: true,
       });
     });
 
@@ -633,40 +691,56 @@ describe('filtersToScopes', () => {
     let includedReport2;
     let excludedReport;
     let possibleIds;
+    const promises = [];
 
     beforeAll(async () => {
-      includedReport1 = await createOrUpdate({
-        ...draftReport,
-        owner: { userId: includedUser1.id },
-      });
-      includedReport2 = await createOrUpdate({
-        ...draftReport,
-        owner: { userId: includedUser2.id },
-      });
-      excludedReport = await createOrUpdate({
-        ...draftReport,
-        owner: { userId: excludedUser.id },
-      });
-      possibleIds = [
-        includedReport1.id,
-        includedReport2.id,
-        excludedReport.id,
-        globallyExcludedReport.id,
-      ];
+      try {
+        auditLogger.error('XXXXX');
+        includedReport1 = await createOrUpdate({
+          ...draftReport,
+          owner: { userId: includedUser1.id },
+        });
+        promises.push(includedReport1);
+        includedReport2 = await createOrUpdate({
+          ...draftReport,
+          owner: { userId: includedUser2.id },
+        });
+        promises.push(includedReport1);
+        excludedReport = await createOrUpdate({
+          ...draftReport,
+          owner: { userId: excludedUser.id },
+        });
+        promises.push(includedReport1);
+        auditLogger.error('YYYY');
+        possibleIds = [
+          includedReport1.id,
+          includedReport2.id,
+          excludedReport.id,
+          globallyExcludedReport.id,
+        ];
+      } catch (err) {
+        auditLogger.error(JSON.stringify({ name: 'creator-beforeAll', err }));
+        throw err;
+      }
     });
 
     afterAll(async () => {
       await ActivityReport.destroy({
         where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
+        individualHooks: true,
       });
     });
 
     it('includes authors with a partial match', async () => {
+      await Promise.all(promises);
       const filters = { 'creator.ctn': ['person'] };
       const { activityReport: scope } = filtersToScopes(filters);
+      auditLogger.error('ZZZZZZ');
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
+        logging: (msg) => auditLogger.error(JSON.stringify({ name: 'includes authors with a partial match', msg })),
       });
+      auditLogger.error('AAAAAAA');
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
@@ -728,6 +802,7 @@ describe('filtersToScopes', () => {
     afterAll(async () => {
       await ActivityReport.destroy({
         where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
+        individualHooks: true,
       });
     });
 
@@ -788,6 +863,7 @@ describe('filtersToScopes', () => {
     afterAll(async () => {
       await ActivityReport.destroy({
         where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
+        individualHooks: true,
       });
     });
 
@@ -843,6 +919,7 @@ describe('filtersToScopes', () => {
       const { activityReport: scope } = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
+        include: [{ model: Approval, as: 'approvel' }],
       });
       expect(found.length).toBe(1);
       expect(found.map((f) => f.id))
@@ -856,6 +933,7 @@ describe('filtersToScopes', () => {
       const { activityReport: scope } = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
+        include: [{ model: Approval, as: 'approvel' }],
       });
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
@@ -921,18 +999,21 @@ describe('filtersToScopes', () => {
         where: {
           id: possibleIds,
         },
+        individualHooks: true,
       });
 
       await UserRole.destroy({
         where: {
           userId: possibleIds,
         },
+        individualHooks: true,
       });
 
       await User.destroy({
         where: {
           id: possibleIds,
         },
+        individualHooks: true,
       });
     });
     it('finds reports based on author role', async () => {
@@ -1031,6 +1112,7 @@ describe('filtersToScopes', () => {
         where: {
           id: possibleIds,
         },
+        individualHooks: true,
       });
     });
 
@@ -1125,6 +1207,7 @@ describe('filtersToScopes', () => {
         where: {
           id: possibleIds,
         },
+        individualHooks: true,
       });
     });
 
@@ -1219,15 +1302,19 @@ describe('filtersToScopes', () => {
         where: {
           activityReportId: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id],
         },
+        individualHooks: true,
       });
       await ActivityReport.destroy({
         where: { id: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id] },
+        individualHooks: true,
       });
       await Grant.destroy({
         where: { id: [grantIncluded1.id, grantIncluded2.id, grantExcluded.id] },
+        individualHooks: true,
       });
       await Recipient.destroy({
         where: { id: [recipientIncluded1.id, recipientIncluded2.id, recipientExcluded.id] },
+        individualHooks: true,
       });
     });
 
@@ -1332,7 +1419,7 @@ describe('filtersToScopes', () => {
             name: faker.name.findName(),
             grantId: recipient.grantId,
             programType: 'EHS',
-          }).catch((err) => auditLogger.error(err));
+          }).catch((err) => auditLogger.error(JSON.stringify({ name: 'beforeAll 1', err })));
         }),
         ...reportTwoRecipients.map(async (recipient) => {
           await Program.create({
@@ -1341,7 +1428,7 @@ describe('filtersToScopes', () => {
             name: faker.name.findName(),
             grantId: recipient.grantId,
             programType: 'EHS',
-          }).catch((err) => auditLogger.error(err));
+          }).catch((err) => auditLogger.error(JSON.stringify({ name: 'beforeAll 2', err })));
         }),
         ...reportThreeRecipients.map(async (recipient) => {
           await Program.create({
@@ -1350,7 +1437,7 @@ describe('filtersToScopes', () => {
             name: faker.name.findName(),
             grantId: recipient.grantId,
             programType: 'HS',
-          }).catch((err) => auditLogger.error(err));
+          }).catch((err) => auditLogger.error(JSON.stringify({ name: 'beforeAll 3', err })));
         }),
       ]);
     });
@@ -1360,6 +1447,7 @@ describe('filtersToScopes', () => {
         where: {
           grantId: grantIds,
         },
+        individualHooks: true,
       });
 
       await destroyReport(reportOne);
@@ -1372,7 +1460,7 @@ describe('filtersToScopes', () => {
       const { activityReport: scope } = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
-      }).catch((err) => auditLogger.error(err));
+      }).catch((err) => auditLogger.error(JSON.stringify({ name: 'includes program type', err })));
       expect(found.length).toBe(3);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([reportOne.id, reportTwo.id, reportThree.id]));
@@ -1508,6 +1596,7 @@ describe('filtersToScopes', () => {
     afterAll(async () => {
       await ActivityReport.destroy({
         where: { id: [firstReport.id, secondReport.id, thirdReport.id, fourthReport.id] },
+        individualHooks: true,
       });
     });
 
@@ -1554,16 +1643,16 @@ describe('filtersToScopes', () => {
 
     beforeAll(async () => {
       firstReport = await createOrUpdate(
-        { ...draftReport, id: 95842, endDate: new Date(2020, 8, 1) },
+        { ...draftReport, id: 95942, endDate: new Date(2020, 8, 1) },
       );
       secondReport = await createOrUpdate(
-        { ...draftReport, id: 95843, endDate: new Date(2020, 8, 2) },
+        { ...draftReport, id: 95943, endDate: new Date(2020, 8, 2) },
       );
       thirdReport = await createOrUpdate(
-        { ...draftReport, id: 95844, endDate: new Date(2020, 8, 3) },
+        { ...draftReport, id: 95944, endDate: new Date(2020, 8, 3) },
       );
       fourthReport = await createOrUpdate(
-        { ...draftReport, id: 95845, endDate: new Date(2020, 8, 4) },
+        { ...draftReport, id: 95945, endDate: new Date(2020, 8, 4) },
       );
       possibleIds = [
         firstReport.id,
@@ -1577,6 +1666,7 @@ describe('filtersToScopes', () => {
     afterAll(async () => {
       await ActivityReport.destroy({
         where: { id: [firstReport.id, secondReport.id, thirdReport.id, fourthReport.id] },
+        individualHooks: true,
       });
     });
 
@@ -1635,6 +1725,7 @@ describe('filtersToScopes', () => {
     afterAll(async () => {
       await ActivityReport.destroy({
         where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
+        individualHooks: true,
       });
     });
 
@@ -1708,12 +1799,15 @@ describe('filtersToScopes', () => {
         where: {
           activityReportId: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id],
         },
+        individualHooks: true,
       });
       await ActivityReport.destroy({
         where: { id: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id] },
+        individualHooks: true,
       });
       await OtherEntity.destroy({
         where: { id: [otherEntityIncluded1.id, otherEntityIncluded2.id, otherEntityExcluded.id] },
+        individualHooks: true,
       });
     });
 

@@ -5,7 +5,7 @@ const {
 module.exports = (sequelize, DataTypes) => {
   class Program extends Model {
     static associate(models) {
-      Program.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
+      Program.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant', hooks: true });
     }
   }
   Program.init({

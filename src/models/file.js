@@ -9,34 +9,38 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      File.hasMany(models.ActivityReportFile, { foreignKey: 'fileId', as: 'reportFiles' });
-      File.hasMany(models.ActivityReportObjectiveFile, { foreignKey: 'fileId', as: 'reportObjectiveFiles' });
-      File.hasMany(models.ObjectiveFile, { foreignKey: 'fileId', as: 'objectiveFiles' });
-      File.hasMany(models.ObjectiveTemplateFile, { foreignKey: 'fileId', as: 'objectiveTemplateFiles' });
+      File.hasMany(models.ActivityReportFile, { foreignKey: 'fileId', as: 'reportFiles', hooks: true });
+      File.hasMany(models.ActivityReportObjectiveFile, { foreignKey: 'fileId', as: 'reportObjectiveFiles', hooks: true });
+      File.hasMany(models.ObjectiveFile, { foreignKey: 'fileId', as: 'objectiveFiles', hooks: true });
+      File.hasMany(models.ObjectiveTemplateFile, { foreignKey: 'fileId', as: 'objectiveTemplateFiles', hooks: true });
 
       File.belongsToMany(models.ActivityReport, {
         through: models.ActivityReportFile,
         foreignKey: 'fileId',
         otherKey: 'activityReportId',
         as: 'reports',
+        hooks: true,
       });
       File.belongsToMany(models.ActivityReportObjective, {
         through: models.ActivityReportObjectiveFile,
         foreignKey: 'fileId',
         otherKey: 'activityReportObjectiveId',
         as: 'reportObjectives',
+        hooks: true,
       });
       File.belongsToMany(models.Objective, {
         through: models.ObjectiveFile,
         foreignKey: 'fileId',
         otherKey: 'objectiveId',
         as: 'objectives',
+        hooks: true,
       });
       File.belongsToMany(models.ObjectiveTemplate, {
         through: models.ObjectiveTemplateFile,
         foreignKey: 'fileId',
         otherKey: 'objectiveTemplateId',
         as: 'objectiveTemplates',
+        hooks: true,
       });
     }
   }

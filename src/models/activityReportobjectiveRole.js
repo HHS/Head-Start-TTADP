@@ -14,8 +14,14 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'activityReportObjectiveId',
         onDelete: 'cascade',
         as: 'activityReportObjective',
+        hooks: true,
       });
-      ActivityReportObjectiveRole.belongsTo(models.Role, { foreignKey: 'roleId', onDelete: 'cascade', as: 'role' });
+      ActivityReportObjectiveRole.belongsTo(models.Role, {
+        foreignKey: 'roleId',
+        onDelete: 'cascade',
+        as: 'role',
+        hooks: true,
+      });
     }
   }
   ActivityReportObjectiveRole.init({

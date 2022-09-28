@@ -66,18 +66,48 @@ describe('Update HSES data', () => {
 
 describe('Update grants and recipients', () => {
   beforeAll(async () => {
-    await Program.destroy({ where: { id: [1, 2, 3, 4] } });
-    await ActivityRecipient.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Goal.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Program.destroy({
+      where: { id: [1, 2, 3, 4] },
+      individualHooks: true,
+    });
+    await ActivityRecipient.destroy({
+      where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } },
+      individualHooks: true,
+    });
+    await Goal.destroy({
+      where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } },
+      individualHooks: true,
+    });
+    await Grant.destroy({
+      where: { id: { [Op.gt]: SMALLEST_GRANT_ID } },
+      individualHooks: true,
+    });
+    await Recipient.destroy({
+      where: { id: { [Op.gt]: SMALLEST_GRANT_ID } },
+      individualHooks: true,
+    });
   });
   afterEach(async () => {
-    await Program.destroy({ where: { id: [1, 2, 3, 4] } });
-    await ActivityRecipient.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Goal.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Program.destroy({
+      where: { id: [1, 2, 3, 4] },
+      individualHooks: true,
+    });
+    await ActivityRecipient.destroy({
+      where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } },
+      individualHooks: true,
+    });
+    await Goal.destroy({
+      where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } },
+      individualHooks: true,
+    });
+    await Grant.destroy({
+      where: { id: { [Op.gt]: SMALLEST_GRANT_ID } },
+      individualHooks: true,
+    });
+    await Recipient.destroy({
+      where: { id: { [Op.gt]: SMALLEST_GRANT_ID } },
+      individualHooks: true,
+    });
   });
   afterAll(async () => {
     await db.sequelize.close();

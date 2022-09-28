@@ -69,19 +69,10 @@ export default class Goal {
   // this expects goal to have been found with associated data, specifically
   // goalByIdWithActivityReportsAndRegions in services/goals
   // you can see the structure expected in the conditions below
-  //
-  // TODO - it's been noted that this would be a great candidate for a virtual field
-  // note about above todo - is that possible?
   isOnApprovedActivityReports() {
     return this.goal.objectives
       && this.goal.objectives.length
-      && this.goal.objectives.some((objective) => (
-        objective.activityReports
-        && objective.activityReports.length
-        && objective.activityReports.some(
-          (report) => report.calculatedStatus === REPORT_STATUSES.APPROVED,
-        )
-      ));
+      && this.goal.objectives.some((objective) => objective.onApprovedAR);
   }
 
   isOnActivityReports() {

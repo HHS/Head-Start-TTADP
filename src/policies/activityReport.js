@@ -31,7 +31,7 @@ export default class ActivityReport {
       && this.reportHasEditableStatus();
 
     const canUpdateAsApprover = (this.canReview()
-      && this.activityReport.calculatedStatus === REPORT_STATUSES.SUBMITTED);
+      && this.activityReport.approval.calculatedStatus === REPORT_STATUSES.SUBMITTED);
 
     return canUpdateAsAuthorAndCollaborator
       || (canUpdateAsApprover && !this.hasBeenMarkedByApprover());
@@ -39,17 +39,17 @@ export default class ActivityReport {
 
   canReset() {
     return (this.isAuthor() || this.isCollaborator())
-      && this.activityReport.calculatedStatus === REPORT_STATUSES.SUBMITTED;
+      && this.activityReport.approval.calculatedStatus === REPORT_STATUSES.SUBMITTED;
   }
 
   canDelete() {
     return (this.isAdmin() || this.isAuthor())
-      && this.activityReport.calculatedStatus !== REPORT_STATUSES.APPROVED;
+      && this.activityReport.approval.calculatedStatus !== REPORT_STATUSES.APPROVED;
   }
 
   canUnlock() {
     return (this.isUnlockAdmin())
-      && this.activityReport.calculatedStatus === REPORT_STATUSES.APPROVED;
+      && this.activityReport.approval.calculatedStatus === REPORT_STATUSES.APPROVED;
   }
 
   canViewLegacy() {
@@ -63,7 +63,7 @@ export default class ActivityReport {
       return canReadUnapproved;
     }
 
-    if (this.activityReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
+    if (this.activityReport.approval.calculatedStatus === REPORT_STATUSES.APPROVED) {
       return this.canReadInRegion();
     }
 
@@ -104,7 +104,7 @@ export default class ActivityReport {
 
   hasBeenMarkedByApprover() {
     return (
-      this.activityReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION
+      this.activityReport.approval.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION
       || this.activityReport.approvers.some((approver) => (
         approver.status === REPORT_STATUSES.APPROVED
       ))
@@ -126,12 +126,12 @@ export default class ActivityReport {
   }
 
   isAuthor() {
-    if (!this.activityReport.owners
-      || this.activityReport.owners.length === 0) {
+    if (!this.activityReport.owner
+      || this.activityReport.owner.length === 0) {
       return false;
     }
 
-    return this.activityReport.owners
+    return this.activityReport.owner
       .some((owner) => owner.user.id === this.user.id);
   }
 
@@ -156,7 +156,7 @@ export default class ActivityReport {
   }
 
   reportHasEditableStatus() {
-    return this.activityReport.submissionStatus === REPORT_STATUSES.DRAFT
-      || this.activityReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
+    return this.activityReport.approval.submissionStatus === REPORT_STATUSES.DRAFT
+      || this.activityReport.approval.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
   }
 }

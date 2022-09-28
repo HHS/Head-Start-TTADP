@@ -4,6 +4,7 @@ import {
   ActivityReport,
   ActivityReportFile,
   ActivityRecipient,
+  Collaborator,
   User,
   Recipient,
   File,
@@ -88,7 +89,7 @@ const reportObject = {
     { activityRecipientId: RECIPIENT_ID_ONE },
     { activityRecipientId: RECIPIENT_ID_TWO },
   ],
-  submissionStatus: REPORT_STATUSES.APPROVED,
+  approval: { submissionStatus: REPORT_STATUSES.APPROVED },
   approvingManagerId: mockManager.id,
   numberOfParticipants: 1,
   deliveryMethod: 'method',
@@ -185,21 +186,29 @@ describe('processData', () => {
 
   afterAll(async () => {
     const reports = await ActivityReport.findAll({
-      where: {
-        userId: [
-          mockUser.id,
-          mockManager.id,
-          mockCollaboratorOne.id,
-          mockCollaboratorTwo.id,
-        ],
-      },
+      include: [{
+        required: true,
+        model: Collaborator,
+        as: 'owner',
+        where: {
+          userId: [
+            mockUser.id,
+            mockManager.id,
+            mockCollaboratorOne.id,
+            mockCollaboratorTwo.id,
+          ],
+        },
+      }],
     });
     const ids = reports.map((report) => report.id);
-    await NextStep.destroy({ where: { activityReportId: ids } });
-    await ActivityRecipient.destroy({ where: { activityReportId: ids } });
-    await ActivityReportFile.destroy({ where: { id: mockActivityReportFile.id } });
-    await File.destroy({ where: { id: mockFile.id } });
-    await ActivityReport.destroy({ where: { id: ids } });
+    await NextStep.destroy({ where: { activityReportId: ids }, individualHooks: true });
+    await ActivityRecipient.destroy({ where: { activityReportId: ids }, individualHooks: true });
+    await ActivityReportFile.destroy({
+      where: { id: mockActivityReportFile.id },
+      individualHooks: true,
+    });
+    await File.destroy({ where: { id: mockFile.id }, individualHooks: true });
+    await ActivityReport.destroy({ where: { id: ids }, individualHooks: true });
     await User.destroy({
       where: {
         id: [
@@ -209,18 +218,22 @@ describe('processData', () => {
           mockCollaboratorTwo.id,
         ],
       },
+      individualHooks: true,
     });
-    await Grant.destroy({ where: { id: GRANT_ID_ONE } });
-    await Grant.destroy({ where: { id: GRANT_ID_TWO } });
-    await Recipient.destroy({ where: { id: RECIPIENT_ID_ONE } });
-    await Recipient.destroy({ where: { id: RECIPIENT_ID_TWO } });
+    await Grant.destroy({ where: { id: GRANT_ID_ONE }, individualHooks: true });
+    await Grant.destroy({ where: { id: GRANT_ID_TWO }, individualHooks: true });
+    await Recipient.destroy({ where: { id: RECIPIENT_ID_ONE }, individualHooks: true });
+    await Recipient.destroy({ where: { id: RECIPIENT_ID_TWO }, individualHooks: true });
     await sequelize.close();
   });
 
   it('transforms user emails, recipientName in the ActivityReports table (imported)', async () => {
     const report = await createOrUpdate(reportObject);
     mockActivityReportFile.activityReportId = report.id;
-    await ActivityReportFile.destroy({ where: { id: mockActivityReportFile.id } });
+    await ActivityReportFile.destroy({
+      where: { id: mockActivityReportFile.id },
+      individualHooks: true,
+    });
     const file = await File.create(mockFile);
     await processData(report);
     const transformedReport = await ActivityReport.findOne({ where: { id: report.id } });

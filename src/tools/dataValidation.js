@@ -1,5 +1,6 @@
 import { QueryTypes } from 'sequelize';
 import { sequelize } from '../models';
+import { ENTITY_TYPES } from '../constants';
 import { auditLogger } from '../logger';
 
 const runSelectQuery = (query) => (
@@ -38,11 +39,29 @@ const dataValidation = async () => {
   });
   await Promise.allSettled(tableChecks);
 
-  query = 'SELECT "regionId", "status", count(*) FROM "Grants" GROUP BY "regionId", "status" ORDER BY "regionId", "status"';
+  query = `
+    SELECT
+      "regionId",
+      "status",
+      count(*)
+    FROM "Grants"
+    GROUP BY "regionId", "status"
+    ORDER BY "regionId", "status"`;
   results = await runSelectQuery(query);
   auditLogger.info(`Grants data counts: ${JSON.stringify(results, null, 2)}`);
 
-  query = 'SELECT "regionId", "submissionStatus", count(*) FROM "ActivityReports" GROUP BY "regionId", "submissionStatus" ORDER BY "regionId", "submissionStatus"';
+  query = `
+    SELECT
+      "regionId",
+      "submissionStatus",
+      count(*)
+    FROM "ActivityReports"
+    INNER JOIN "Approvals"
+    ON "Approvals"."entityType" = '${ENTITY_TYPES.REPORT}'
+    AND "Approvals"."entityId" = "ActivityReports".id
+    AND "Approvals".tier = 0
+    GROUP BY "regionId", "submissionStatus"
+    ORDER BY "regionId", "submissionStatus"`;
   results = await runSelectQuery(query);
   auditLogger.info(`ActivityReports data counts: ${JSON.stringify(results, null, 2)}`);
 };

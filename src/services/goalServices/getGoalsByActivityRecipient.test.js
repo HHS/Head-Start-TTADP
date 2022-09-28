@@ -6,6 +6,7 @@ import {
   Recipient,
   Grant,
   ActivityRecipient,
+  Collaborator,
   // GrantGoal,
   // GoalTemplate,
   Goal,
@@ -251,47 +252,29 @@ describe('Goals by Recipient Test', () => {
     const savedGrant4 = await Grant.create(grant4);
 
     // Create Reports.
-    const savedGoalReport1 = await createOrUpdate(goalReport1);
-    const savedGoalReport2 = await createOrUpdate(goalReport2);
-    const savedGoalReport3 = await createOrUpdate(goalReport3);
-    const savedGoalReport4 = await createOrUpdate(goalReport4);
-    const savedGoalReport5 = await createOrUpdate(goalReport5);
-    const savedGoalReport6 = await createOrUpdate(goalReport6);
-
-    // Create AR Recipients.
-    await ActivityRecipient.create({
-      activityReportId: savedGoalReport1.id,
-      grantId: savedGrant1.id,
+    const savedGoalReport1 = await createOrUpdate({
+      ...goalReport1,
+      recipients: [{ grantId: savedGrant1.id }],
     });
-
-    await ActivityRecipient.create({
-      activityReportId: savedGoalReport2.id,
-      grantId: savedGrant2.id,
+    const savedGoalReport2 = await createOrUpdate({
+      ...goalReport2,
+      recipients: [{ grantId: savedGrant2.id }],
     });
-
-    await ActivityRecipient.create({
-      activityReportId: savedGoalReport3.id,
-      grantId: savedGrant3.id,
+    const savedGoalReport3 = await createOrUpdate({
+      ...goalReport3,
+      recipients: [{ grantId: savedGrant3.id }],
     });
-
-    await ActivityRecipient.create({
-      activityReportId: savedGoalReport4.id,
-      grantId: savedGrant3.id,
+    const savedGoalReport4 = await createOrUpdate({
+      ...goalReport4,
+      recipients: [{ grantId: savedGrant3.id }],
     });
-
-    await ActivityRecipient.create({
-      activityReportId: savedGoalReport5.id,
-      grantId: savedGrant3.id,
+    const savedGoalReport5 = await createOrUpdate({
+      ...goalReport5,
+      recipients: [{ grantId: savedGrant3.id }, { grantId: savedGrant4.id }],
     });
-
-    await ActivityRecipient.create({
-      activityReportId: savedGoalReport5.id,
-      grantId: savedGrant4.id,
-    });
-
-    await ActivityRecipient.create({
-      activityReportId: savedGoalReport6.id,
-      grantId: savedGrant4.id,
+    const savedGoalReport6 = await createOrUpdate({
+      ...goalReport6,
+      recipients: [{ grantId: savedGrant4.id }],
     });
 
     // Create Goals.
@@ -634,7 +617,14 @@ describe('Goals by Recipient Test', () => {
 
   afterAll(async () => {
     // Get Report Ids.
-    const reportsToDelete = await ActivityReport.findAll({ where: { userId: mockGoalUser.id } });
+    const reportsToDelete = await ActivityReport.findAll({
+      include: [{
+        model: Collaborator,
+        as: 'owner',
+        where: { userId: mockGoalUser.id },
+        required: true,
+      }],
+    });
     const reportIdsToDelete = reportsToDelete.map((report) => report.id);
 
     // Delete AR Objectives.
@@ -642,6 +632,7 @@ describe('Goals by Recipient Test', () => {
       where: {
         activityReportId: reportIdsToDelete,
       },
+      individualHooks: true,
     });
 
     // Delete Objectives.
@@ -649,6 +640,7 @@ describe('Goals by Recipient Test', () => {
       where: {
         id: objectiveIds,
       },
+      individualHooks: true,
     });
 
     /* TODO: Switch for New Goal Creation. */
@@ -658,6 +650,7 @@ describe('Goals by Recipient Test', () => {
       where: {
         id: objectiveTopicIds,
       },
+      individualHooks: true,
     });
 
     // Delete Topics.
@@ -665,6 +658,7 @@ describe('Goals by Recipient Test', () => {
       where: {
         id: topicIds,
       },
+      individualHooks: true,
     });
     */
     // Delete Goals.
@@ -672,11 +666,15 @@ describe('Goals by Recipient Test', () => {
       where: {
         id: goalIds,
       },
+      individualHooks: true,
     });
 
     // Delete AR and AR Recipient.
-    await ActivityRecipient.destroy({ where: { activityReportId: reportIdsToDelete } });
-    await ActivityReport.destroy({ where: { id: reportIdsToDelete } });
+    await ActivityRecipient.destroy({
+      where: { activityReportId: reportIdsToDelete },
+      individualHooks: true,
+    });
+    await ActivityReport.destroy({ where: { id: reportIdsToDelete }, individualHooks: true });
 
     // Delete Recipient, Grant, User.
     await Grant.destroy({
@@ -688,9 +686,13 @@ describe('Goals by Recipient Test', () => {
           grant4.id,
         ],
       },
+      individualHooks: true,
     });
-    await Recipient.destroy({ where: { id: [recipient.id, recipient2.id, recipient3.id] } });
-    await User.destroy({ where: { id: mockGoalUser.id } });
+    await Recipient.destroy({
+      where: { id: [recipient.id, recipient2.id, recipient3.id] },
+      individualHooks: true,
+    });
+    await User.destroy({ where: { id: mockGoalUser.id }, individualHooks: true });
 
     // Close SQL Connection.
     await sequelize.close();

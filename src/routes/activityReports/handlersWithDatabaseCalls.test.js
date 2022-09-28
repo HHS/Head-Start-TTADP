@@ -18,7 +18,7 @@ const draftObject = {
   activityRecipientType: 'recipient',
   regionId: 1,
   activityRecipients: [{ grantId: 1 }],
-  submissionStatus: REPORT_STATUSES.DRAFT,
+  approval: { submissionStatus: REPORT_STATUSES.DRAFT },
   numberOfParticipants: 1,
   deliveryMethod: 'method',
   duration: 0,
@@ -88,9 +88,18 @@ beforeAll(async () => {
 
 afterAll(async () => {
   const userIds = [mockUser.id, mockManager.id, secondMockManager.id];
-  await ActivityReport.destroy({ where: { id: reports.map((report) => report.id) } });
-  await Permission.destroy({ where: { userId: userIds } });
-  await User.destroy({ where: { id: userIds } });
+  await ActivityReport.destroy({
+    where: { id: reports.map((report) => report.id) },
+    individualHooks: true,
+  });
+  await Permission.destroy({
+    where: { userId: userIds },
+    individualHooks: true,
+  });
+  await User.destroy({
+    where: { id: userIds },
+    individualHooks: true,
+  });
   await db.sequelize.close();
 });
 
@@ -105,7 +114,7 @@ describe('submitReport', () => {
     const request = {
       session: { userId: mockUser.id },
       params: { activityReportId: draftReport.id },
-      body: { approverUserIds: [mockManager.id, secondMockManager.id], additionalNotes: 'notes' },
+      body: { approvers: [{ userId: mockManager.id }, { userId: secondMockManager.id }], additionalNotes: 'notes' },
     };
     const assignedNotification = jest.spyOn(mailer, 'approverAssignedNotification').mockImplementation();
 
@@ -133,11 +142,11 @@ describe('submitReport', () => {
     reports.push(submittedReport);
     const reviewedReport = await ActivityReport.findByPk(submittedReport.id);
     // check that testing condition is correct
-    expect(reviewedReport.calculatedStatus).toEqual(REPORT_STATUSES.NEEDS_ACTION);
+    expect(reviewedReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.NEEDS_ACTION);
     const request = {
       session: { userId: mockUser.id },
       params: { activityReportId: submittedReport.id },
-      body: { approverUserIds: [mockManager.id], additionalNotes: 'I made those changes to x, y, z' },
+      body: { approvers: [{ userId: mockManager.id }], additionalNotes: 'I made those changes to x, y, z' },
     };
     const assignedNotification = jest.spyOn(mailer, 'approverAssignedNotification').mockImplementation();
 
@@ -170,7 +179,7 @@ describe('submitReport', () => {
     const reviewedReport = await ActivityReport.findByPk(submittedReport.id);
 
     // check that testing condition is correct
-    expect(reviewedReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+    expect(reviewedReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
 
     // Create request to unlock
     const request = {
@@ -188,7 +197,7 @@ describe('submitReport', () => {
 
     // Verify report is set to NEEDS_ACTION.
     const needsActionReport = await ActivityReport.findByPk(submittedReport.id);
-    expect(needsActionReport.calculatedStatus).toBe(REPORT_STATUSES.NEEDS_ACTION);
+    expect(needsActionReport.approval.calculatedStatus).toBe(REPORT_STATUSES.NEEDS_ACTION);
 
     // Verify approving managers are set to NEEDS_ACTION.
     const approvers = await upsertRatifier({

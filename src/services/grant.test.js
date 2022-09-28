@@ -78,13 +78,14 @@ describe('Grant DB service', () => {
   });
 
   afterAll(async () => {
-    await Grant.destroy({ where: { id: grants.map((g) => g.id) } });
+    await Grant.destroy({ where: { id: grants.map((g) => g.id) }, individualHooks: true });
     await Region.destroy({
       where: {
         id: [129129, 129130],
       },
+      individualHooks: true,
     });
-    await Recipient.destroy({ where: { id: 129130 } });
+    await Recipient.destroy({ where: { id: 129130 }, individualHooks: true });
     await db.sequelize.close();
   });
 

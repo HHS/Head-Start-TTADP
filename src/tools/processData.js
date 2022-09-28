@@ -457,6 +457,7 @@ const processData = async (mockReport) => sequelize.transaction(async () => {
   await RequestErrors.destroy({
     where: {},
     truncate: true,
+    individualHooks: true,
   });
   await Promise.all(promises);
   return truncateAuditTables();

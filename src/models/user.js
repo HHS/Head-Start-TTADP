@@ -9,16 +9,21 @@ const featureFlags = [
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
-      User.belongsTo(models.Region, { foreignKey: { name: 'homeRegionId', allowNull: true }, as: 'homeRegion' });
+      User.belongsTo(models.Region, { foreignKey: { name: 'homeRegionId', allowNull: true }, as: 'homeRegion', hooks: true });
       User.belongsToMany(models.Scope, {
-        through: models.Permission, foreignKey: 'userId', as: 'scopes', timestamps: false,
+        through: models.Permission,
+        foreignKey: 'userId',
+        as: 'scopes',
+        timestamps: false,
+        hooks: true,
       });
-      User.hasMany(models.Permission, { foreignKey: 'userId', as: 'permissions' });
+      User.hasMany(models.Permission, { foreignKey: 'userId', as: 'permissions', hooks: true });
       User.belongsToMany(models.Role, {
         through: models.UserRole,
         otherKey: 'roleId',
         foreignKey: 'userId',
         as: 'roles',
+        hooks: true,
       });
     }
   }

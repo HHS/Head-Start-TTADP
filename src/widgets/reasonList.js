@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { ActivityReport } from '../models';
+import { ActivityReport, Approval } from '../models';
 import { REPORT_STATUSES, REASONS } from '../constants';
 import { countBySingleKey } from './helpers';
 
@@ -15,6 +15,7 @@ export default async function reasonList(scopes) {
         { '$approval.calculatedStatus$': REPORT_STATUSES.APPROVED },
       ],
     },
+    include: [{ model: Approval, as: 'approval', required: true }],
     raw: true,
   });
 

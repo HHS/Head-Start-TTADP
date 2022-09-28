@@ -201,45 +201,38 @@ describe('saveGoalsForReport (more tests)', () => {
     const objectiveIds = arObjectives.map((aro) => aro.objectiveId);
 
     await ActivityReportObjective.destroy({
-      where: {
-        activityReportId: reportIds,
-      },
+      where: { activityReportId: reportIds },
+      individualHooks: true,
     });
 
     await ObjectiveResource.destroy({
-      where: {
-        objectiveId: objectiveIds,
-      },
+      where: { objectiveId: objectiveIds },
+      individualHooks: true,
     });
 
     await ObjectiveTopic.destroy({
-      where: {
-        objectiveId: objectiveIds,
-      },
+      where: { objectiveId: objectiveIds },
+      individualHooks: true,
     });
 
     await ObjectiveRole.destroy({
-      where: {
-        objectiveId: objectiveIds,
-      },
+      where: { objectiveId: objectiveIds },
+      individualHooks: true,
     });
 
     await Objective.destroy({
-      where: {
-        id: objectiveIds,
-      },
+      where: { id: objectiveIds },
+      individualHooks: true,
     });
 
     await Topic.destroy({
-      where: {
-        id: [topic.id, secondTopic.id],
-      },
+      where: { id: [topic.id, secondTopic.id] },
+      individualHooks: true,
     });
 
     await ActivityReportGoal.destroy({
-      where: {
-        activityReportId: reportIds,
-      },
+      where: { activityReportId: reportIds },
+      individualHooks: true,
     });
 
     const goalsToDestroy = await Goal.findAll({
@@ -251,38 +244,37 @@ describe('saveGoalsForReport (more tests)', () => {
     const goalIdsToDestroy = goalsToDestroy.map((g) => g.id);
 
     await Objective.destroy({
-      where: {
-        goalId: goalIdsToDestroy,
-      },
+      where: { goalId: goalIdsToDestroy },
+      individualHooks: true,
     });
 
     await Goal.destroy({
-      where: {
-        id: goalIdsToDestroy,
-      },
+      where: { id: goalIdsToDestroy },
+      individualHooks: true,
     });
 
     await ActivityRecipient.destroy({
-      where: {
-        activityReportId: reportIds,
-      },
+      where: { activityReportId: reportIds },
+      individualHooks: true,
     });
 
     await ActivityReport.destroy({
-      where: {
-        id: reportIds,
-      },
+      where: { id: reportIds },
+      individualHooks: true,
     });
 
     await Promise.all(
-      grants.map(async (g) => Grant.destroy({ where: { id: g.id } })),
+      grants.map(async (g) => Grant.destroy({ where: { id: g.id }, individualHooks: true })),
     );
 
     await Promise.all(
-      recipients.map(async (r) => Recipient.destroy({ where: { id: r.id } })),
+      recipients.map(async (r) => Recipient.destroy({
+        where: { id: r.id },
+        individualHooks: true,
+      })),
     );
 
-    await User.destroy({ where: { id: [mockUser.id] } });
+    await User.destroy({ where: { id: [mockUser.id] }, individualHooks: true });
 
     await db.sequelize.close();
   });

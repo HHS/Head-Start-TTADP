@@ -88,7 +88,7 @@ describe('Audit System', () => {
         try {
           await Test.sync({ force: true, alter: true, transaction: t });
         } catch (err) {
-          auditLogger.error(err);
+          auditLogger.error(JSON.stringify({ name: 'Audit Triggers Automatic added to New Tables 1', err }));
           throw (err);
         }
 
@@ -106,7 +106,7 @@ describe('Audit System', () => {
             },
           );
         } catch (err) {
-          auditLogger.error(err);
+          auditLogger.error(JSON.stringify({ name: 'Audit Triggers Automatic added to New Tables 2', err }));
           throw (err);
         }
 
@@ -147,7 +147,7 @@ describe('Audit System', () => {
             },
           );
         } catch (err) {
-          auditLogger.error(err);
+          auditLogger.error(JSON.stringify({ name: 'Audit Triggers Automatic added to New Tables 3', err }));
           throw (err);
         }
 
@@ -185,7 +185,7 @@ describe('Audit System', () => {
             },
           );
         } catch (err) {
-          auditLogger.error(err);
+          auditLogger.error(JSON.stringify({ name: 'Audit Triggers Automatic added to New Tables 4', err }));
           throw (err);
         }
 
@@ -220,7 +220,7 @@ describe('Audit System', () => {
             { transaction: t },
           );
         } catch (err) {
-          auditLogger.error(err);
+          auditLogger.error(JSON.stringify({ name: 'Audit Triggers Automatic added to New Tables 5', err }));
           throw (err);
         }
 
@@ -231,7 +231,7 @@ describe('Audit System', () => {
             transaction: t,
           });
         } catch (err) {
-          auditLogger.error(err);
+          auditLogger.error(JSON.stringify({ name: 'Audit Triggers Automatic added to New Tables 6', err }));
           throw (err);
         }
 
@@ -256,7 +256,7 @@ describe('Audit System', () => {
             },
           );
         } catch (err) {
-          auditLogger.error(err);
+          auditLogger.error(JSON.stringify({ name: 'Audit Triggers Automatic added to New Tables 7', err }));
           throw (err);
         }
 
@@ -267,7 +267,7 @@ describe('Audit System', () => {
             transaction: t,
           });
         } catch (err) {
-          auditLogger.error(err);
+          auditLogger.error(JSON.stringify({ name: 'Audit Triggers Automatic added to New Tables 8', err }));
           throw (err);
         }
 
@@ -282,11 +282,12 @@ describe('Audit System', () => {
           await Test.destroy(
             {
               where: { id: addTest.id },
+              individualHooks: true,
               transaction: t,
             },
           );
         } catch (err) {
-          auditLogger.error(err);
+          auditLogger.error(JSON.stringify({ name: 'Audit Triggers Automatic added to New Tables 9', err }));
           throw (err);
         }
 
@@ -304,7 +305,7 @@ describe('Audit System', () => {
             oldValue: updateTo.newValue,
           });
 
-        Test.drop().catch((err) => auditLogger.error(err));
+        Test.drop().catch((err) => auditLogger.error(JSON.stringify({ name: 'Audit Triggers Automatic added to New Tables 10', err })));
       });
     });
   });
@@ -384,6 +385,7 @@ describe('Audit System', () => {
       await User.destroy(
         {
           where: { id: addedUser.id },
+          individualHooks: true,
           transaction: t,
         },
       );

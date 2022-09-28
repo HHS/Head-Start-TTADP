@@ -30,7 +30,7 @@ describe('Users DB service', () => {
     });
 
     afterEach(async () => {
-      await User.destroy({ where: { id: [54, 55] } });
+      await User.destroy({ where: { id: [54, 55] }, individualHooks: true });
     });
 
     it('retrieves the correct user', async () => {
@@ -58,7 +58,7 @@ describe('Users DB service', () => {
     });
 
     afterEach(async () => {
-      await User.destroy({ where: { id: [50, 51] } });
+      await User.destroy({ where: { id: [50, 51] }, individualHooks: true });
     });
 
     it('retrieves the correct user', async () => {
@@ -112,7 +112,7 @@ describe('Users DB service', () => {
     });
 
     afterEach(async () => {
-      await User.destroy({ where: { id: [50, 51, 52, 53] } });
+      await User.destroy({ where: { id: [50, 51, 52, 53] }, individualHooks: true });
     });
 
     it("returns a list of users that have permissions on the user's regions", async () => {

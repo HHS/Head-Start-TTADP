@@ -156,7 +156,13 @@ describe('Reason list widget', () => {
     const reportSix = await ActivityReport.findOne({ where: { duration: 6, reason: ['Below Competitive Threshold (CLASS)', 'Below Quality Threshold (CLASS)'] } });
     await createOrUpdate(regionTwoReportA, reportSix);
 
-    const reportSeven = await ActivityReport.findOne({ where: { duration: 7, reason: ['Below Competitive Threshold (CLASS)', 'Below Quality Threshold (CLASS)'], submissionStatus: REPORT_STATUSES.DRAFT } });
+    const reportSeven = await ActivityReport.findOne({
+      where: {
+        duration: 7,
+        reason: ['Below Competitive Threshold (CLASS)', 'Below Quality Threshold (CLASS)'],
+        '$approval.submissionStatus$': REPORT_STATUSES.DRAFT,
+      },
+    });
     await createOrUpdate(regionOneDraftReport, reportSeven);
   });
 
@@ -171,12 +177,14 @@ describe('Reason list widget', () => {
         }],
       });
     const ids = reports.map((report) => report.id);
-    await NextStep.destroy({ where: { activityReportId: ids } });
-    await ActivityRecipient.destroy({ where: { activityReportId: ids } });
-    await ActivityReport.destroy({ where: { id: ids } });
-    await User.destroy({ where: { id: [mockUser.id] } });
-    await Grant.destroy({ where: { id: [GRANT_ID_ONE, GRANT_ID_TWO] } });
-    await Recipient.destroy({ where: { id: RECIPIENT_ID } });
+    await NextStep.destroy({ where: { activityReportId: ids }, individualHooks: true });
+    await ActivityRecipient.destroy({ where: { activityReportId: ids }, individualHooks: true });
+    try {
+      await ActivityReport.destroy({ where: { id: ids }, individualHooks: true });
+    } catch (err) { auditLogger.error(JSON.stringify({ name: 'afterAll', err })); throw new Error(err); }
+    await User.destroy({ where: { id: [mockUser.id] }, individualHooks: true });
+    await Grant.destroy({ where: { id: [GRANT_ID_ONE, GRANT_ID_TWO] }, individualHooks: true });
+    await Recipient.destroy({ where: { id: RECIPIENT_ID }, individualHooks: true });
     await db.sequelize.close();
   });
 

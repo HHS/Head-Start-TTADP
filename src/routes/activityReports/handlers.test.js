@@ -171,8 +171,12 @@ describe('Activity Report handlers', () => {
       where: {
         userId: [mockUser.id, mockManager.id, secondMockManager.id],
       },
+      individualHooks: true,
     });
-    await UserModel.destroy({ where: { id: [mockUser.id, mockManager.id, secondMockManager.id] } });
+    await UserModel.destroy({
+      where: { id: [mockUser.id, mockManager.id, secondMockManager.id] },
+      individualHooks: true,
+    });
     await db.sequelize.close();
   });
 
@@ -342,7 +346,7 @@ describe('Activity Report handlers', () => {
     const request = {
       ...mockRequest,
       params: { activityReportId: 1 },
-      body: { approverUserIds: [mockManager.id, secondMockManager.id], additionalNotes: 'notes' },
+      body: { approvers: [{ userId: mockManager.id }, { userId: secondMockManager.id }], additionalNotes: 'notes' },
     };
     it('calls correct functions and sends response', async () => {
       // Submit report for approval to firstMockManager
@@ -361,8 +365,10 @@ describe('Activity Report handlers', () => {
       syncRatifiers.mockResolvedValue(mockApprovers);
       const assignedNotification = jest.spyOn(mailer, 'approverAssignedNotification').mockImplementation();
       const reportAfterSubmit = {
-        submissionStatus: REPORT_STATUSES.SUBMITTED,
-        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        approval: {
+          submissionStatus: REPORT_STATUSES.SUBMITTED,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        },
         approvers: mockApprovers,
       };
       jest.spyOn(ActivityReportModel, 'findByPk').mockResolvedValueOnce(reportAfterSubmit);
@@ -371,7 +377,7 @@ describe('Activity Report handlers', () => {
       const { displayId, ...r } = report;
       expect(createOrUpdate).toHaveBeenCalledWith(
         {
-          additionalNotes: 'notes', submissionStatus: REPORT_STATUSES.SUBMITTED,
+          additionalNotes: 'notes', approval: { submissionStatus: REPORT_STATUSES.SUBMITTED },
         },
         {
           dataValues: {
@@ -875,8 +881,10 @@ describe('Activity Report handlers', () => {
       // Mock found report.
       const foundReport = {
         id: 1,
-        submissionStatus: REPORT_STATUSES.SUBMITTED,
-        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        approval: {
+          submissionStatus: REPORT_STATUSES.SUBMITTED,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        },
       };
       jest.spyOn(ActivityReportModel, 'findByPk').mockResolvedValueOnce(foundReport);
 

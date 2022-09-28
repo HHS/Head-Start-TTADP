@@ -11,12 +11,16 @@ export default async function topicFrequencyGraph(scopes) {
       'topics',
     ],
     where: {
-      [Op.and]: [scopes.activityReport],
+      [Op.and]: [
+        scopes.activityReport,
+        { '$approval.calculatedStatus$': REPORT_STATUSES.APPROVED },
+      ],
     },
     include: [{
+      attributes: ['calculatedStatus'],
       model: Approval,
       as: 'approval',
-      where: { calculatedStatus: REPORT_STATUSES.APPROVED },
+      required: true,
     }],
     nest: true,
     raw: true,

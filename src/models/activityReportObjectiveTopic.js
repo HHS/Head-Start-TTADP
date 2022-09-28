@@ -14,8 +14,14 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'activityReportObjectiveId',
         onDelete: 'cascade',
         as: 'activityReportObjective',
+        hooks: true,
       });
-      ActivityReportObjectiveTopic.belongsTo(models.Topic, { foreignKey: 'topicId', onDelete: 'cascade', as: 'topic' });
+      ActivityReportObjectiveTopic.belongsTo(models.Topic, {
+        foreignKey: 'topicId',
+        onDelete: 'cascade',
+        as: 'topic',
+        hooks: true,
+      });
     }
   }
   ActivityReportObjectiveTopic.init({

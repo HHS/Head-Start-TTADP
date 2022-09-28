@@ -33,16 +33,31 @@ describe('Goals', () => {
       grant = await Grant.create({ ...mockGrant, recipientId: recipient.id });
     });
     afterAll(async () => {
-      await Goal.destroy({ where: { grantId: grant.id } });
-      await GoalTemplate.destroy({ where: { templateName: mockGoal.name } });
-      await Grant.destroy({ where: { id: grant.id } });
-      await Recipient.destroy({ where: { id: recipient.id } });
+      await Goal.destroy({
+        where: { grantId: grant.id },
+        individualHooks: true,
+      });
+      await GoalTemplate.destroy({
+        where: { templateName: mockGoal.name },
+        individualHooks: true,
+      });
+      await Grant.destroy({
+        where: { id: grant.id },
+        individualHooks: true,
+      });
+      await Recipient.destroy({
+        where: { id: recipient.id },
+        individualHooks: true,
+      });
       await db.sequelize.close();
     });
     it('goalNumber', async () => {
       const goal = await Goal.create({ ...mockGoal, grantId: grant.id });
       expect(goal.goalNumber).toEqual(`G-${goal.id}`);
-      await Goal.destroy({ where: { id: goal.id } });
+      await Goal.destroy({
+        where: { id: goal.id },
+        individualHooks: true,
+      });
     });
   });
   it('autoPopulateOnApprovedAR', async () => {

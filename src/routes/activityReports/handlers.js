@@ -3,6 +3,7 @@ import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
 import {
   ActivityReport as ActivityReportModel,
+  Approval,
   Role,
   Collaborator,
   User as UserModel,
@@ -361,11 +362,11 @@ export async function reviewReport(req, res) {
 
     const [reviewedReport] = await activityReportAndRecipientsById(activityReportId);
 
-    if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
+    if (reviewedReport.approval.calculatedStatus === REPORT_STATUSES.APPROVED) {
       reportApprovedNotification(reviewedReport);
     }
 
-    if (reviewedReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
+    if (reviewedReport.approval.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
       changesRequestedNotification(reviewedReport, savedApprover);
     }
 
@@ -468,7 +469,7 @@ export async function unlockReport(req, res) {
 export async function submitReport(req, res) {
   try {
     const { activityReportId } = req.params;
-    const { approverUserIds, additionalNotes, creatorRole } = req.body;
+    const { approvers, additionalNotes, creatorRole } = req.body;
 
     const user = await userById(req.session.userId);
     const [report] = await activityReportAndRecipientsById(activityReportId);
@@ -483,15 +484,13 @@ export async function submitReport(req, res) {
     const savedReport = await createOrUpdate({
       additionalNotes,
       creatorRole,
-      submissionStatus: REPORT_STATUSES.SUBMITTED,
+      approval: {
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+      },
     }, report);
 
     // Create, restore or destroy this report's approvers
-    const currentApprovers = await syncRatifiers(
-      ENTITY_TYPES.REPORT,
-      activityReportId,
-      approverUserIds.map((id) => { const approver = { userId: id }; return approver; }),
-    );
+    const currentApprovers = await syncRatifiers(ENTITY_TYPES.REPORT, activityReportId, approvers);
 
     // TODO: This should come after setting the status to null.
     // This will send notification to everyone marked as an approver.
@@ -507,8 +506,12 @@ export async function submitReport(req, res) {
     );
 
     const response = await ActivityReportModel.findByPk(activityReportId, {
-      attributes: ['id', 'calculatedStatus'],
+      attributes: ['id', ['$approval.calculatedStatus$', 'calculatedStatus']],
       include: [
+        {
+          model: Approval,
+          as: 'approval',
+        },
         {
           model: Collaborator,
           attributes: ['id', 'status', 'note'],
@@ -701,8 +704,8 @@ export async function createReport(req, res) {
       return;
     }
     const userId = parseInt(req.session.userId, 10);
-    newReport.submissionStatus = REPORT_STATUSES.DRAFT;
-    newReport.userId = userId;
+    newReport.approval.submissionStatus = REPORT_STATUSES.DRAFT;
+    newReport.owner.userId = userId;
     newReport.lastUpdatedById = userId;
     const user = await userById(req.session.userId);
     const authorization = new ActivityReport(user, newReport);

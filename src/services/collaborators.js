@@ -1,5 +1,6 @@
-import { Op } from 'sequelize';
-import { User, Collaborator } from '../models';
+import { Op, sequelize } from 'sequelize';
+import { result } from 'lodash';
+import { User, Collaborator, Role } from '../models';
 import { COLLABORATOR_TYPES } from '../constants';
 import { auditLogger } from '../logger';
 
@@ -8,71 +9,153 @@ export async function upsertCollaborator(values) {
   const {
     entityType,
     entityId,
+    collaboratorTypes,
     userId,
     tier,
-    collaboratorTypes,
-    ...newValues
+    ...others
   } = values;
+  auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 0, values }));
 
-  if (collaboratorTypes.length < 1) {
-    auditLogger.error(JSON.stringify({ local: 'az', values }));
-    throw new Error('At least one collaborator type is required to create a collaborator.');
+  try {
+    if (collaboratorTypes.length < 1) {
+      throw new Error('At least one collaborator type is required to create a collaborator.');
+    }
+  } catch (err) {
+    auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 1, values, err }));
+    throw new Error(err);
   }
 
   // Try to find a current collaborator
-  let collaborator = await Collaborator.findOne({ where: { entityType, entityId, userId } });
-  auditLogger.error(JSON.stringify({ local: 'a', values, collaborator }));
-
-  // Try to find a collaborator that has been deleted
-  if (!collaborator) {
-    collaborator = await Collaborator.findOne({
-      where: { entityType, entityId, userId },
-      paranoid: false,
-    });
-    auditLogger.error(JSON.stringify({ local: 'b', values, collaborator }));
-    if (collaborator) {
-      collaborator = await Collaborator.restore({
+  let collaborator;
+  try {
+    collaborator = await Collaborator.findOne({ where: { entityType, entityId, userId } });
+    auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 'a', values, collaborator }));
+  } catch (err) {
+    auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 1.5, values, err}));
+    throw new Error(err);
+  }
+  // try {
+  //   collaborator = await Collaborator.findCreateFind({
+  //     where: { entityType, entityId, userId },
+  //     defaults: { collaboratorTypes, tier, ...others },
+  //     individualHooks: true,
+  //   });
+  //   // const newCollaboratorTypes = [...new Set([
+  //   //   ...collaboratorTypes,
+  //   //   ...collaborator.collaboratorTypes,
+  //   // ])];
+  //   // await collaborator.update({
+  //   //   collaboratorTypes: sequelize.literal(`ARRAY[${newCollaboratorTypes.map((type) => `'${type}'`).join(',')}]::"enum_Collaborators_collaboratorTypes"[]`),
+  //   //   tier,
+  //   //   ...others,
+  //   // });
+  // } catch (err) {
+  //   auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 2, values, err, collaborator }));
+  //   throw new Error(err);
+  // }
+  try {
+    // Try to find a collaborator that has been deleted
+    if (!collaborator) {
+      // collaborator = await Collaborator.findOrCreate({
+      //   where: { entityType, entityId, userId },
+      //   defaults: { collaboratorTypes, tier, ...others },
+      //   paranoid: false,
+      //   individualHooks: true,
+      // });
+      collaborator = await Collaborator.findOne({
         where: { entityType, entityId, userId },
+        paranoid: false,
         individualHooks: true,
       });
-      auditLogger.error(JSON.stringify({ local: 'c', values, collaborator }));
+      auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 'b', values, collaborator }));
+      if (collaborator) {
+        collaborator = await Collaborator.restore({
+          where: { entityType, entityId, userId },
+          paranoid: false,
+          individualHooks: true,
+        });
+        auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 'c', values, collaborator }));
+      }
     }
+  } catch (err) {
+    auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 2, values, err}));
+    throw new Error(err);
   }
-
-  // Update the found collaborator
-  if (collaborator) {
-    // de-duped collaboratorTypes array
-    const newCollaboratorTypes = [...new Set([
-      ...collaboratorTypes,
-      ...collaborator.collaboratorTypes,
-    ])];
-    await collaborator.update({
-      collaboratorTypes: newCollaboratorTypes,
-      tier,
-      ...newValues,
-    });
-  } else {
-    // try {
-    // If not collaborator was found create it
-    collaborator = await Collaborator.create(values);
-    //   auditLogger.error(JSON.stringify({ local: 'd', values, collaborator }));
-    // } catch (err) {
-    //   auditLogger.error(JSON.stringify({ local: 'e', values, collaborator, err }));
-    //   throw new Error('At least one collaborator type is required to create a collaborator.');
-    // }
-  }
-
-  if (collaborator) {
-    collaborator = await collaborator.get({ plain: true });
-    const user = await User.findOne({
-      attributes: ['email', 'name', 'fullName'],
-      where: { id: collaborator.userId },
-    });
-    if (user) {
-      collaborator.User = await user.get({ plain: true });
+  try {
+    // Update the found collaborator
+    if (collaborator) {
+      // de-duped collaboratorTypes array
+      let newCollaboratorTypes;
+      try {
+        const tmpArray = [
+          ...collaboratorTypes,
+          ...collaborator.collaboratorTypes,
+        ];
+        newCollaboratorTypes = [...new Set(tmpArray)];
+      } catch (err) {
+        auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 2.4, values, err, tmpArray, collaborator}));
+        throw new Error(err);
+      }
+      try {
+        await collaborator.update({
+          collaboratorTypes: sequelize.literal(`ARRAY[${newCollaboratorTypes.map((type) => `'${type}'`).join(',')}]::"enum_Collaborators_collaboratorTypes"[]`),
+          tier,
+          ...others,
+        }, { individualHooks: true });
+      } catch (err) {
+        auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 2.5, values, err}));
+        throw new Error(err);
+      }
+    } else {
+      // If not collaborator was found create it
+      try {
+        collaborator = await Collaborator.create(
+          {
+            entityType,
+            entityId,
+            userId,
+            tier,
+            collaboratorTypes,
+            ...others,
+          },
+          { logging: (msg) => auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', msg })) },
+        );
+      } catch (err) {
+        collaborator = await Collaborator.findOne({ where: { entityType, entityId, userId } });
+        auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 2.8, values, err, collaborator}));
+        throw new Error(err);
+      }
     }
+  } catch (err) {
+    auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 3, values, err}));
+    throw new Error(err);
   }
 
+  try {
+    if (collaborator) {
+      try {
+        collaborator = await Collaborator.findOne({
+          where: { entityType, entityId, userId },
+          include: [
+            {
+              model: User,
+              as: 'user',
+            },
+            {
+              model: Role,
+              as: 'roles',
+            },
+          ],
+        });
+      } catch (err) {
+        auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 3.5, values, err}));
+        throw new Error(err);
+      }
+    }
+  } catch (err) {
+    auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 4, values, err}));
+    throw new Error(err);
+  }
   return collaborator;
 }
 
@@ -106,66 +189,104 @@ export async function syncCollaborators(
   perUserData = [],
   tier = 1,
 ) {
-  const preexistingCollaborators = await Collaborator.findAll({
-    where: {
-      entityType,
-      entityId,
-      tier,
-    },
-  });
-
-  const userIds = perUserData && Array.isArray(perUserData)
-    ? perUserData.map((userData) => userData.userId)
-    : [];
-
-  // Remove any preexisting collaborators now missing from userId request param
-  if (preexistingCollaborators && preexistingCollaborators.length > 0) {
-    await Promise.all(collaboratorTypes.map(async (collaboratorType) => {
-      const collaboratorsToRemove = preexistingCollaborators
-        .filter((a) => !userIds.includes(a.userId))
-        .filter((a) => a.collaboratorTypes.includes(collaboratorType));
-      await Promise.all(collaboratorsToRemove.map(async (collaborator) => Collaborator
-        .update({
-          collaboratorTypes: collaborator.collaboratorTypes
-            .filter((type) => type !== collaboratorType),
-        }, {
-          where: {
-            id: collaborator.id,
-            collaboratorTypes: { [Op.contains]: collaboratorType },
-          },
-        })));
-    }));
-  }
-
-  // Create or restore collaborator
-  if (perUserData && perUserData.length > 0) {
-    const uniquePerUserData = perUserData
-      .filter((v, i, a) => a.findIndex((v2) => (v2.userId === v.userId)) === i);
-    await Promise.all(uniquePerUserData.map(async (userData) => upsertCollaborator({
-      ...userData,
-      entityType,
-      entityId,
-      collaboratorTypes,
-      tier,
-    })));
-  }
-
-  return Collaborator.findAll({
-    where: {
-      entityType,
-      entityId,
-      tier,
-      collaboratorTypes: { [Op.overlap]: collaboratorTypes },
-    },
-    include: [
-      {
-        model: User,
-        as: 'user',
-        attributes: ['id', 'name', 'email'],
-        raw: true,
+  let preexistingCollaborators;
+  try {
+    preexistingCollaborators = await Collaborator.findAll({
+      where: {
+        entityType,
+        entityId,
+        tier,
       },
-    ],
-  });
+    });
+  } catch (err) {
+    auditLogger.error(JSON.stringify({ name: 'syncCollaborators', index: 1, err }));
+    throw new Error(err);
+  }
+
+  let userIds;
+  try {
+    userIds = perUserData && Array.isArray(perUserData) && perUserData.length > 1
+      ? perUserData
+        .map((userData) => (userData ? userData.userId : null))
+        .filter((userId) => userId !== null)
+      : [];
+  } catch (err) {
+    auditLogger.error(JSON.stringify({ name: 'syncCollaborators', index: 2, err }));
+    throw new Error(err);
+  }
+
+  try {
+    // Remove any preexisting collaborators now missing from userId request param
+    if (preexistingCollaborators && preexistingCollaborators.length > 0) {
+      await Promise.all(collaboratorTypes.map(async (collaboratorType) => {
+        const collaboratorsToRemove = preexistingCollaborators
+          .filter((a) => !userIds.includes(a.userId))
+          .filter((a) => a.collaboratorTypes.includes(collaboratorType));
+        await Promise.all(collaboratorsToRemove.map(async (collaborator) => Collaborator
+          .update({
+            collaboratorTypes: collaborator.collaboratorTypes
+              .filter((type) => type !== collaboratorType),
+          }, {
+            where: {
+              id: collaborator.id,
+              collaboratorTypes: { [Op.contains]: collaboratorType },
+            },
+          })));
+      }));
+    }
+  } catch (err) {
+    auditLogger.error(JSON.stringify({ name: 'syncCollaborators', index: 3, err }));
+    throw new Error(err);
+  }
+
+  try {
+    // Create or restore collaborator
+    if (perUserData && perUserData.length > 0) {
+      let uniquePerUserData = perUserData && Array.isArray(perUserData) && perUserData.length > 0
+        ? perUserData
+          .filter((v, i, a) => a.findIndex((v2) => (v2.userId === v.userId)) === i)
+        : [];
+      uniquePerUserData = uniquePerUserData
+        .filter((userData) => userData.userId !== null && userData.userId !== undefined);
+
+      await Promise.all(uniquePerUserData.map(async (userData) => upsertCollaborator({
+        ...userData,
+        entityType,
+        entityId,
+        collaboratorTypes,
+        tier,
+      })));
+    }
+  } catch (err) {
+    auditLogger.error(JSON.stringify({ name: 'syncCollaborators', index: 4, err }));
+    throw new Error(err);
+  }
+
+  let collaborators;
+  try {
+    collaborators = await Collaborator.findAll({
+      where: {
+        entityType,
+        entityId,
+        tier,
+        collaboratorTypes: { [Op.overlap]: collaboratorTypes },
+      },
+      include: [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'name', 'email'],
+          raw: true,
+        },
+      ],
+      logging: (msg) => auditLogger.error(JSON.stringify({ name: 'syncCollaborators', msg })),
+    });
+  } catch (err) {
+    auditLogger.error(JSON.stringify({ name: 'syncCollaborators', collaborators, err }));
+    throw new Error(err);
+  }
+  auditLogger.error(JSON.stringify({ name: 'finish syncCollaborators', perUserData, collaborators }));
+  return collaborators;
 }
 
 export async function syncOwnerInstantiators(entityType, entityId, perUserData = [], tier = 1) {
@@ -178,7 +299,7 @@ export async function syncOwnerInstantiators(entityType, entityId, perUserData =
   );
 }
 
-export async function syncOwners(entityType, entityId, perUserData = [], tier = 1) {
+export async function syncOwner(entityType, entityId, perUserData = [], tier = 1) {
   return syncCollaborators(entityType, entityId, [COLLABORATOR_TYPES.OWNER], perUserData, tier);
 }
 
@@ -205,7 +326,7 @@ export async function getCollaborator(entityType, entityId, userIds) {
     where: {
       entityType,
       entityId,
-      userIds,
+      userId: { [Op.in]: userIds },
     },
   });
 }

@@ -10,8 +10,18 @@ const { afterCreate, afterDestroy } = require('./hooks/objectiveRole');
 module.exports = (sequelize, DataTypes) => {
   class ObjectiveRole extends Model {
     static associate(models) {
-      ObjectiveRole.belongsTo(models.Objective, { foreignKey: 'objectiveId', onDelete: 'cascade', as: 'objective' });
-      ObjectiveRole.belongsTo(models.Role, { foreignKey: 'roleId', onDelete: 'cascade', as: 'role' });
+      ObjectiveRole.belongsTo(models.Objective, {
+        foreignKey: 'objectiveId',
+        onDelete: 'cascade',
+        as: 'objective',
+        hooks: true,
+      });
+      ObjectiveRole.belongsTo(models.Role, {
+        foreignKey: 'roleId',
+        onDelete: 'cascade',
+        as: 'role',
+        hooks: true,
+      });
     }
   }
   ObjectiveRole.init({

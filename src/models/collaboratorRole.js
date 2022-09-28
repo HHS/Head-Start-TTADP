@@ -3,8 +3,8 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class CollaboratorRole extends Model {
     static associate(models) {
-      CollaboratorRole.belongsTo(models.Collaborator, { foreignKey: 'collaboratorId', as: 'collaborator' });
-      CollaboratorRole.belongsTo(models.Role, { foreignKey: 'roleId', as: 'role' });
+      CollaboratorRole.belongsTo(models.Collaborator, { foreignKey: 'collaboratorId', as: 'collaborator', hooks: true });
+      CollaboratorRole.belongsTo(models.Role, { foreignKey: 'roleId', as: 'role', hooks: true });
     }
   }
   CollaboratorRole.init({

@@ -208,7 +208,7 @@ export const collaboratorAssignedNotification = (report, newCollaborators) => {
       };
       notificationQueue.add('collaboratorAssigned', data);
     } catch (err) {
-      auditLogger.error(err);
+      auditLogger.error(JSON.stringify({ name: 'collaboratorAssignedNotification', err }));
     }
   });
 };
@@ -223,7 +223,7 @@ export const approverAssignedNotification = (report, newApprovers) => {
       };
       notificationQueue.add('approverAssigned', data);
     } catch (err) {
-      auditLogger.error(err);
+      auditLogger.error(JSON.stringify({ name: 'approverAssignedNotification', err }));
     }
   });
 };
@@ -236,7 +236,7 @@ export const reportApprovedNotification = (report) => {
     };
     notificationQueue.add('reportApproved', data);
   } catch (err) {
-    auditLogger.error(err);
+    auditLogger.error(JSON.stringify({ name: 'reportApprovedNotification', err }));
   }
 };
 
@@ -249,7 +249,7 @@ export const changesRequestedNotification = (report, approver) => {
     };
     notificationQueue.add('changesRequested', data);
   } catch (err) {
-    auditLogger.error(err);
+    auditLogger.error(JSON.stringify({ name: 'changesRequestedNotification', err }));
   }
 };
 

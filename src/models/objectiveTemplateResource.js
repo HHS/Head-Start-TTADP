@@ -9,7 +9,12 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      ObjectiveTemplateResource.belongsTo(models.ObjectiveTemplate, { foreignKey: 'objectiveTemplateId', onDelete: 'cascade', as: 'objectiveTemplateResource' });
+      ObjectiveTemplateResource.belongsTo(models.ObjectiveTemplate, {
+        foreignKey: 'objectiveTemplateId',
+        onDelete: 'cascade',
+        as: 'objectiveTemplateResource',
+        hooks: true,
+      });
     }
   }
   ObjectiveTemplateResource.init({

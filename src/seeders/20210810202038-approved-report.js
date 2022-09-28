@@ -25,7 +25,7 @@ const ENTITY_STATUSES = {
 
 const RATIFIER_STATUSES = {
   NEEDS_ACTION: 'needs_action',
-  RATIFIED: 'ratified',
+  APPROVED: 'approved',
 };
 
 const APPROVAL_RATIO = {
@@ -104,7 +104,7 @@ module.exports = {
       userId: 1,
       collaboratorTypes: queryInterface.sequelize.literal(`ARRAY['${COLLABORATOR_TYPES.INSTANTIATOR}', '${COLLABORATOR_TYPES.OWNER}', '${COLLABORATOR_TYPES.EDITOR}', '${COLLABORATOR_TYPES.RATIFIER}']::"enum_Collaborators_collaboratorTypes"[]`),
       tier: 1,
-      status: RATIFIER_STATUSES.RATIFIED,
+      status: RATIFIER_STATUSES.APPROVED,
     }];
 
     await queryInterface.bulkInsert('ActivityReports', reports);

@@ -109,11 +109,17 @@ export async function updateUser(req, res) {
         individualHooks: true,
       },
     );
-    await Permission.destroy({ where: { userId } });
+    await Permission.destroy({
+      where: { userId },
+      individualHooks: true,
+    });
     await Permission.bulkCreate(requestUser.permissions, { validate: true, individualHooks: true });
 
     // User roles are handled a bit more clumsily
-    await UserRole.destroy({ where: { userId } });
+    await UserRole.destroy({
+      where: { userId },
+      individualHooks: true,
+    });
     await Promise.all((requestUser.roles.map(async (role) => {
       const r = await Role.findOne({ where: { fullName: role.fullName } });
       if (r) {
@@ -144,7 +150,11 @@ export async function deleteUser(req, res) {
   auditLogger.info(`User ${req.session.userId} deleting User: ${userId}`);
   try {
     await sequelize.transaction(async (transaction) => {
-      const result = await User.destroy({ where: { id: userId }, transaction });
+      const result = await User.destroy({
+        where: { id: userId },
+        transaction,
+        individualHooks: true,
+      });
       res.json(result);
     });
   } catch (error) {

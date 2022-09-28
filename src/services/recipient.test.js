@@ -198,9 +198,12 @@ describe('Recipient DB service', () => {
   });
 
   afterAll(async () => {
-    await Program.destroy({ where: { id: [74, 75, 76, 77, 78, 79, 80, 81] } });
-    await Grant.destroy({ where: { id: [74, 75, 76, 77, 78, 79, 80, 81] } });
-    await Recipient.destroy({ where: { id: [73, 74, 75, 76] } });
+    await Program.destroy({
+      where: { id: [74, 75, 76, 77, 78, 79, 80, 81] },
+      individualHooks: true,
+    });
+    await Grant.destroy({ where: { id: [74, 75, 76, 77, 78, 79, 80, 81] }, individualHooks: true });
+    await Recipient.destroy({ where: { id: [73, 74, 75, 76] }, individualHooks: true });
     await sequelize.close();
   });
 
@@ -479,8 +482,14 @@ describe('Recipient DB service', () => {
     });
 
     afterAll(async () => {
-      await Grant.destroy({ where: { recipientId: recipientsToSearch.map((g) => g.id) } });
-      await Recipient.destroy({ where: { id: recipientsToSearch.map((g) => g.id) } });
+      await Grant.destroy({
+        where: { recipientId: recipientsToSearch.map((g) => g.id) },
+        individualHooks: true,
+      });
+      await Recipient.destroy({
+        where: { id: recipientsToSearch.map((g) => g.id) },
+        individualHooks: true,
+      });
     });
 
     it('finds based on recipient name', async () => {

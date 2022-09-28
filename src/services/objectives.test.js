@@ -164,7 +164,10 @@ describe('Objectives DB service', () => {
   afterAll(async () => {
     const aros = await ActivityReportObjective.findAll({ where: { activityReportId: report.id } });
     const objectiveIds = aros.map((aro) => aro.objectiveId);
-    await ActivityReportObjective.destroy({ where: { activityReportId: report.id } });
+    await ActivityReportObjective.destroy({
+      where: { activityReportId: report.id },
+      individualHooks: true,
+    });
     await Objective.destroy({
       where: {
         id:
@@ -174,16 +177,20 @@ describe('Objectives DB service', () => {
         findObjectiveById.id,
         findObjectiveByTitle.id],
       },
+      individualHooks: true,
     });
-    await ActivityRecipient.destroy({ where: { activityReportId: report.id } });
-    await ActivityReport.destroy({ where: { id: report.id } });
+    await ActivityRecipient.destroy({
+      where: { activityReportId: report.id },
+      individualHooks: true,
+    });
+    await ActivityReport.destroy({ where: { id: report.id }, individualHooks: true });
 
-    await Objective.destroy({ where: { id: objectiveInfo.id } });
-    await Goal.destroy({ where: { id: goalInfo.id } });
-    await Grant.destroy({ where: { id: grantInfo.id } });
-    await Recipient.destroy({ where: { id: recipientInfo.id } });
-    await OtherEntity.destroy({ where: { id: otherEntity.id } });
-    await User.destroy({ where: { id: mockUser.id } });
+    await Objective.destroy({ where: { id: objectiveInfo.id }, individualHooks: true });
+    await Goal.destroy({ where: { id: goalInfo.id }, individualHooks: true });
+    await Grant.destroy({ where: { id: grantInfo.id }, individualHooks: true });
+    await Recipient.destroy({ where: { id: recipientInfo.id }, individualHooks: true });
+    await OtherEntity.destroy({ where: { id: otherEntity.id }, individualHooks: true });
+    await User.destroy({ where: { id: mockUser.id }, individualHooks: true });
     await db.sequelize.close();
   });
 

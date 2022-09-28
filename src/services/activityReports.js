@@ -13,13 +13,14 @@ import orderReportsBy from '../lib/orderReportsBy';
 import filtersToScopes from '../scopes';
 import { setReadRegions } from './accessValidation';
 import {
-  syncOwners,
+  syncOwner,
   syncOwnerInstantiators,
   syncEditors,
   syncRatifiers,
 } from './collaborators';
 import {
   ActivityReport,
+  Approval,
   Collaborator,
   ActivityReportFile,
   sequelize,
@@ -48,6 +49,7 @@ import {
 } from './goals';
 
 import { saveObjectivesForReport } from './objectives';
+import { auditLogger } from '../logger';
 
 export async function batchQuery(query, limit) {
   let finished = false;
@@ -86,18 +88,18 @@ export async function batchQuery(query, limit) {
   return finalResult;
 }
 async function saveOwner(activityReportId, collaborator) {
-  return syncOwners(
+  return syncOwner(
     ENTITY_TYPES.REPORT,
     activityReportId,
     [collaborator],
   );
 }
 
-async function saveOwnerInstantiators(activityReportId, collaborators) {
+async function saveOwnerInstantiators(activityReportId, collaborator) {
   return syncOwnerInstantiators(
     ENTITY_TYPES.REPORT,
     activityReportId,
-    collaborators,
+    [collaborator],
   );
 }
 
@@ -115,6 +117,16 @@ async function saveApprovers(activityReportId, collaborators) {
     activityReportId,
     collaborators,
   );
+}
+
+async function saveApproval(activityReportId, approval) {
+  return Approval.update(approval, {
+    where: {
+      entityType: ENTITY_TYPES.REPORT,
+      entityId: activityReportId,
+      tier: 0,
+    },
+  });
 }
 
 async function saveReportRecipients(
@@ -186,7 +198,7 @@ async function saveReportRecipients(
     }),
   );
 
-  await ActivityRecipient.destroy({ where });
+  await ActivityRecipient.destroy({ where, individualHooks: true });
 }
 
 async function saveNotes(activityReportId, notes, isRecipientNotes) {
@@ -200,7 +212,7 @@ async function saveNotes(activityReportId, notes, isRecipientNotes) {
     },
   };
   // Remove any notes that are no longer relevant
-  await NextStep.destroy({ where });
+  await NextStep.destroy({ where, individualHooks: true });
 
   if (notes.length > 0) {
     // If a note has an id, and its content has changed, update to the newer content
@@ -224,7 +236,10 @@ async function update(newReport, report) {
 }
 
 async function create(report, silent = false) {
-  return ActivityReport.create(report, { silent });
+  return ActivityReport.create(report, {
+    silent,
+    logging: (msg) => auditLogger.error(JSON.stringify({ name: 'ActivityReport.create', msg })),
+  });
 }
 
 export function activityReportByLegacyId(legacyId) {
@@ -325,6 +340,10 @@ export async function activityReportAndRecipientsById(activityReportId) {
     },
     include: [
       {
+        model: Approval,
+        as: 'approval',
+      },
+      {
         attributes: [
           ['id', 'value'],
           ['title', 'label'],
@@ -378,6 +397,10 @@ export async function activityReportAndRecipientsById(activityReportId) {
           {
             model: Topic,
             as: 'topics',
+            attributes: [
+              ['id', 'value'],
+              ['name', 'label'],
+            ],
           },
           {
             model: File,
@@ -386,6 +409,10 @@ export async function activityReportAndRecipientsById(activityReportId) {
           {
             model: ObjectiveResource,
             as: 'resources',
+            attributes: [
+              ['userProvidedUrl', 'value'],
+              ['id', 'key'],
+            ],
           },
         ],
       },
@@ -393,17 +420,25 @@ export async function activityReportAndRecipientsById(activityReportId) {
         model: Collaborator,
         as: 'owner',
         required: false,
-        include: [{
-          model: User,
-          as: 'user',
-          attributes: ['name', 'fullName', 'homeRegionId'],
-          include: [
-            {
+        include: [
+          {
+            model: User,
+            as: 'user',
+            attributes: ['name', 'fullName', 'homeRegionId'],
+            include: [{
               model: Role,
               as: 'roles',
-            },
-          ],
-        }],
+              order: [['name', 'ASC']],
+              required: false,
+            }],
+          },
+          {
+            model: Role,
+            as: 'roles',
+            order: [['name', 'ASC']],
+            required: false,
+          },
+        ],
       },
       {
         model: Collaborator,
@@ -414,14 +449,19 @@ export async function activityReportAndRecipientsById(activityReportId) {
           {
             model: User,
             as: 'user',
-            include: [
-              { model: Role, as: 'roles', order: [['name', 'ASC']] },
-            ],
+            attributes: ['name', 'fullName', 'homeRegionId'],
+            include: [{
+              model: Role,
+              as: 'roles',
+              order: [['name', 'ASC']],
+              required: false,
+            }],
           },
           {
             model: Role,
             as: 'roles',
             order: [['name', 'ASC']],
+            required: false,
           },
         ],
       },
@@ -461,8 +501,8 @@ export async function activityReportAndRecipientsById(activityReportId) {
       },
       {
         model: Collaborator,
-        attributes: ['id', 'status', 'note'],
         as: 'approvers',
+        attributes: ['id', 'status', 'note'],
         required: false,
         separate: true,
         include: [
@@ -470,12 +510,18 @@ export async function activityReportAndRecipientsById(activityReportId) {
             model: User,
             as: 'user',
             attributes: ['id', 'name', 'fullName'],
-            include: [
-              {
-                model: Role,
-                as: 'roles',
-              },
-            ],
+            include: [{
+              model: Role,
+              as: 'roles',
+              order: [['name', 'ASC']],
+              required: false,
+            }],
+          },
+          {
+            model: Role,
+            as: 'roles',
+            order: [['name', 'ASC']],
+            required: false,
           },
         ],
       },
@@ -704,7 +750,7 @@ export async function activityReportsForCleanup(userId) {
           // if the report is created by a user and not in draft status, it is eligible for cleanup
           {
             [Op.and]: {
-              '$owners.userId$': { [Op.contains]: userId },
+              '$owner.userId$': { [Op.contains]: userId },
               '$approval.calculatedStatus$': {
                 [Op.ne]: REPORT_STATUSES.DRAFT,
               },
@@ -726,10 +772,14 @@ export async function activityReportsForCleanup(userId) {
       },
       attributes: [
         'id',
-        'calculatedStatus',
-        'userId',
+        ['$approval.calculatedStatus$', 'calculatedStatus'],
+        ['$owner.userId$', 'userId'],
       ],
       include: [
+        {
+          model: Approval,
+          as: 'approval',
+        },
         {
           model: Collaborator,
           as: 'owner',
@@ -742,7 +792,7 @@ export async function activityReportsForCleanup(userId) {
         {
           required: false,
           model: Collaborator,
-          as: 'owners',
+          as: 'owner',
           include: [
             {
               model: User,
@@ -825,7 +875,7 @@ export async function activityReportAlerts(userId, {
                 ],
               },
               {
-                [Op.or]: [{ userId }, { '$collaborators->user.id$': userId }],
+                [Op.or]: [{ '$owner->user.id$': userId }, { '$collaborators->user.id$': userId }],
               },
             ],
           },
@@ -836,12 +886,12 @@ export async function activityReportAlerts(userId, {
         'id',
         'displayId',
         'startDate',
-        'calculatedStatus',
+        [sequelize.col('approval.calculatedStatus'), 'calculatedStatus'],
         'regionId',
-        'userId',
+        [sequelize.col('owner.userId'), 'userId'],
         'createdAt',
-        'creatorRole',
-        'creatorName',
+        [sequelize.col('owner.roles.name'), 'creatorRole'],
+        [sequelize.col('owner.user.name'), 'creatorName'],
         sequelize.literal(
           `(SELECT
             name AS collaboratorName
@@ -896,19 +946,24 @@ export async function activityReportAlerts(userId, {
               THEN '0'
             ELSE  CONCAT(SUM(
               CASE
-                WHEN COALESCE("Collaborator".status,'needs_action') = 'approved'
+                WHEN COALESCE("Collaborators".status,'needs_action') = 'approved'
                   THEN 1
                 ELSE 0
               END), ' of ', COUNT(1))
           END
-        FROM "Collaborator"
-        WHERE "Collaborator"."entityType" = '${ENTITY_TYPES.REPORT}'
-        AND "Collaborator"."entityId" = "ActivityReport"."id"
-        AND '${COLLABORATOR_TYPES.RATIFIER}' = ANY("Collaborator"."collaboratorTypes")
-        AND "Collaborator"."deletedAt" IS NULL
+        FROM "Collaborators"
+        WHERE "Collaborators"."entityType" = '${ENTITY_TYPES.REPORT}'
+        AND "Collaborators"."entityId" = "ActivityReport"."id"
+        AND '${COLLABORATOR_TYPES.RATIFIER}' = ANY("Collaborators"."collaboratorTypes")
+        AND "Collaborators"."deletedAt" IS NULL
         limit 1)`), 'pendingApprovals'],
       ],
       include: [
+        {
+          model: Approval,
+          as: 'approval',
+          attributes: ['calculatedStatus'],
+        },
         {
           model: Collaborator,
           as: 'owner',
@@ -1010,9 +1065,11 @@ export function formatResources(resources) {
 
 export async function createOrUpdate(newActivityReport, report) {
   let savedReport;
+  auditLogger.error(JSON.stringify(newActivityReport));
   const {
     approvers,
-    approverUserIds,
+    approval,
+    // approverUserIds,
     goals,
     objectivesWithGoals,
     objectivesWithoutGoals,
@@ -1052,37 +1109,83 @@ export async function createOrUpdate(newActivityReport, report) {
       savedReport = await create(updatedFields);
     }
     const { id: savedReportId } = savedReport;
-    await saveOwnerInstantiators(savedReportId, owner);
+    try {
+      await saveOwnerInstantiators(savedReportId, owner);
+    } catch (err) {
+      auditLogger.error(JSON.stringify({ name: 'saveOwnerInstantiators', owner, err }));
+      throw new Error(err);
+    }
+  }
+  if (approval) {
+    const { id: savedReportId } = savedReport;
+    try {
+      await saveApproval(savedReportId, approval);
+    } catch (err) {
+      auditLogger.error(JSON.stringify({ name: 'saveApproval', approval, err }));
+      throw new Error(err);
+    }
   }
   if (collaborators) {
     const { id: savedReportId } = savedReport;
-    await saveReportCollaborators(savedReportId, collaborators);
+    try {
+      await saveReportCollaborators(savedReportId, collaborators);
+    } catch (err) {
+      auditLogger.error(JSON.stringify({ name: 'saveReportCollaborators', collaborators, err }));
+      throw new Error(err);
+    }
   }
   if (approvers) {
     const { id: savedReportId } = savedReport;
-    await saveApprovers(savedReportId, approvers);
+    try {
+      await saveApprovers(savedReportId, approvers);
+    } catch (err) {
+      auditLogger.error(JSON.stringify({ name: 'saveApprovers', approvers, err }));
+      throw new Error(err);
+    }
   }
 
   if (activityRecipients) {
-    const { activityRecipientType: typeOfRecipient, id: savedReportId } = savedReport;
-    const activityRecipientIds = activityRecipients.map((g) => {
-      if (g.activityRecipientId) return g.activityRecipientId;
-      return typeOfRecipient === RECIPIENT_TYPE.OTHER_ENTITY
-        ? g.otherEntityId
-        : g.grantId;
-    });
-
-    await saveReportRecipients(savedReportId, activityRecipientIds, typeOfRecipient);
+    try {
+      const { activityRecipientType: recipientType, id: savedReportId } = savedReport;
+      let typeOfRecipient = recipientType;
+      if (typeOfRecipient === null || typeOfRecipient === undefined) {
+        if (activityRecipients[0].hasOwnProperty('otherEntityId')) { // eslint-disable-line no-prototype-builtins
+          typeOfRecipient = RECIPIENT_TYPE.OTHER_ENTITY;
+        } else if (activityRecipients[0].hasOwnProperty('grantId')) { // eslint-disable-line no-prototype-builtins
+          typeOfRecipient = RECIPIENT_TYPE.RECIPIENT;
+        }
+      }
+      const activityRecipientIds = activityRecipients.map((g) => {
+        if (g.activityRecipientId) return g.activityRecipientId;
+        return typeOfRecipient === RECIPIENT_TYPE.OTHER_ENTITY
+          ? g.otherEntityId
+          : g.grantId;
+      });
+      await saveReportRecipients(savedReportId, activityRecipientIds, typeOfRecipient);
+    } catch (err) {
+      auditLogger.error(JSON.stringify({ name: 'saveReportRecipients', activityRecipients, err }));
+      throw new Error(err);
+    }
   }
 
   if (recipientNextSteps) {
-    const { id } = savedReport;
-    await saveNotes(id, recipientNextSteps, true);
+    try {
+      const { id } = savedReport;
+      await saveNotes(id, recipientNextSteps, true);
+    } catch (err) {
+      auditLogger.error(JSON.stringify({ name: 'saveNotes', recipientNextSteps, err }));
+      throw new Error(err);
+    }
   }
 
   if (specialistNextSteps) {
-    const { id } = savedReport;
-    await saveNotes(id, specialistNextSteps, false);
+    try {
+      const { id } = savedReport;
+      await saveNotes(id, specialistNextSteps, false);
+    } catch (err) {
+      auditLogger.error(JSON.stringify({ name: 'saveNotes', specialistNextSteps, err }));
+      throw new Error(err);
+    }
   }
 
   /**
@@ -1104,40 +1207,67 @@ export async function createOrUpdate(newActivityReport, report) {
   const activityRecipientType = recipientType();
 
   if (recipientsWhoHaveGoalsThatShouldBeRemoved) {
-    await removeRemovedRecipientsGoals(recipientsWhoHaveGoalsThatShouldBeRemoved, savedReport);
+    try {
+      await removeRemovedRecipientsGoals(recipientsWhoHaveGoalsThatShouldBeRemoved, savedReport);
+    } catch (err) {
+      auditLogger.error(JSON.stringify({ name: 'removeRemovedRecipientsGoals', recipientsWhoHaveGoalsThatShouldBeRemoved, err }));
+      throw new Error(err);
+    }
   }
 
   if (previousActivityRecipientType
     && previousActivityRecipientType !== report.activityRecipientType) {
-    await removeUnusedGoalsObjectivesFromReport(report.id, []);
+    try {
+      await removeUnusedGoalsObjectivesFromReport(report.id, []);
+    } catch (err) {
+      auditLogger.error(JSON.stringify({ name: 'removeUnusedGoalsObjectivesFromReport', reportId: report.id, err }));
+      throw new Error(err);
+    }
   }
 
   if (activityRecipientType === 'other-entity' && objectivesWithoutGoals) {
-    await saveObjectivesForReport(objectivesWithoutGoals, savedReport);
+    try {
+      await saveObjectivesForReport(objectivesWithoutGoals, savedReport);
+    } catch (err) {
+      auditLogger.error(JSON.stringify({ name: 'saveObjectivesForReport', objectivesWithoutGoals, err }));
+      throw new Error(err);
+    }
   } else if (activityRecipientType === 'recipient' && goals) {
-    await saveGoalsForReport(goals, savedReport, recipientsWhoHaveGoalsThatShouldBeRemoved);
+    try {
+      await saveGoalsForReport(goals, savedReport, recipientsWhoHaveGoalsThatShouldBeRemoved);
+    } catch (err) {
+      auditLogger.error(JSON.stringify({ name: 'saveGoalsForReport', savedReport, err }));
+      throw new Error(err);
+    }
   }
 
-  // Approvers are removed if approverUserIds is an empty array
-  if (approverUserIds) { // TODO: Remove this
-    await syncRatifiers(
-      ENTITY_TYPES.REPORT,
-      savedReport.id,
-      approverUserIds.map((id) => { const approver = { userId: id }; return approver; }),
-    );
+  // // Approvers are removed if approverUserIds is an empty array
+  // if (approverUserIds) { // TODO: Remove this
+  //   await syncRatifiers(
+  //     ENTITY_TYPES.REPORT,
+  //     savedReport.id,
+  //     approverUserIds.map((id) => { const approver = { userId: id }; return approver; }),
+  //   );
+  // }
+  try {
+    const [r, recips, gAndOs] = await activityReportAndRecipientsById(savedReport.id);
+    return {
+      ...r.dataValues,
+      displayId: r.displayId,
+      activityRecipients: recips,
+      goalsAndObjectives: gAndOs,
+    };
+  } catch (err) {
+    auditLogger.error(JSON.stringify(err));
+    throw new Error(err);
   }
-
-  const [r, recips, gAndOs] = await activityReportAndRecipientsById(savedReport.id);
-  return {
-    ...r.dataValues,
-    displayId: r.displayId,
-    activityRecipients: recips,
-    goalsAndObjectives: gAndOs,
-  };
 }
 
 export async function setStatus(report, status) {
-  await report.update({ submissionStatus: status });
+  await Approval.update({ submissionStatus: status }, {
+    where: { entityType: ENTITY_TYPES.REPORT, entityId: report.id, tier: 0 },
+    individualHooks: true,
+  });
   return activityReportAndRecipientsById(report.id);
 }
 
@@ -1252,38 +1382,35 @@ async function getDownloadableActivityReports(where, separate = true) {
       {
         model: Collaborator,
         as: 'owner',
-        include: [{
-          model: User,
-          as: 'user',
-          attributes: ['name', 'fullName', 'homeRegionId'],
-          include: [
-            {
-              model: Role,
-              as: 'roles',
-            },
-          ],
-        }],
+        include: [
+          {
+            model: User,
+            as: 'user',
+            attributes: ['id', 'name', 'fullName', 'homeRegionId'],
+          },
+          {
+            model: Role,
+            as: 'roles',
+            order: [['name', 'ASC']],
+          },
+        ],
       },
       {
         model: Collaborator,
         as: 'collaborators',
         separate,
-        include: [{
-          model: User,
-          as: 'user',
-          attributes: ['id', 'name', 'fullName'],
-          include: [
-            {
-              model: Role,
-              as: 'roles',
-            },
-          ],
-        },
-        {
-          model: Role,
-          as: 'roles',
-          order: [['name', 'ASC']],
-        }],
+        include: [
+          {
+            model: User,
+            as: 'user',
+            attributes: ['id', 'name', 'fullName', 'homeRegionId'],
+          },
+          {
+            model: Role,
+            as: 'roles',
+            order: [['name', 'ASC']],
+          },
+        ],
       },
       {
         model: NextStep,
@@ -1319,7 +1446,12 @@ async function getDownloadableActivityReports(where, separate = true) {
           {
             model: User,
             as: 'user',
-            attributes: ['name'],
+            attributes: ['id', 'name', 'fullName', 'homeRegionId'],
+          },
+          {
+            model: Role,
+            as: 'roles',
+            order: [['name', 'ASC']],
           },
         ],
       },
@@ -1374,7 +1506,7 @@ export async function getAllDownloadableActivityReportAlerts(userId, filters) {
             ],
           },
           {
-            [Op.or]: [{ '$owners.userId$': userId }, { '$collaborators.userId$': userId }],
+            [Op.or]: [{ '$owner.userId$': userId }, { '$collaborators.userId$': userId }],
           },
         ],
       },

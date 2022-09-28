@@ -4,7 +4,7 @@ const { formatDate } = require('../lib/modelHelpers');
 module.exports = (sequelize, DataTypes) => {
   class NextStep extends Model {
     static associate(models) {
-      NextStep.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId' });
+      NextStep.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', hooks: true });
     }
   }
   NextStep.init({

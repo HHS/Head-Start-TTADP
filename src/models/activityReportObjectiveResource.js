@@ -13,6 +13,7 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'activityReportObjectiveId',
         onDelete: 'cascade',
         as: 'activityReportObjective',
+        hooks: true,
       });
     }
   }

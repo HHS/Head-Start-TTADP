@@ -12,14 +12,10 @@ export default async function targetPopulationTable(scopes) {
     where: {
       [Op.and]: [
         scopes.activityReport,
+        { '$approval.calculatedStatus$': REPORT_STATUSES.APPROVED },
       ],
     },
-    include: [{
-      model: Approval,
-      as: 'approval',
-      where: { calculatedStatus: REPORT_STATUSES.APPROVED },
-      required: true,
-    }],
+    include: [{ model: Approval, as: 'approval', required: true }],
     raw: true,
   });
   auditLogger.error(JSON.stringify(res));

@@ -3,9 +3,9 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class ActivityRecipient extends Model {
     static associate(models) {
-      ActivityRecipient.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId' });
-      ActivityRecipient.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
-      ActivityRecipient.belongsTo(models.OtherEntity, { foreignKey: 'otherEntityId', as: 'otherEntity' });
+      ActivityRecipient.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', hooks: true });
+      ActivityRecipient.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant', hooks: true });
+      ActivityRecipient.belongsTo(models.OtherEntity, { foreignKey: 'otherEntityId', as: 'otherEntity', hooks: true });
 
       ActivityRecipient.addScope('defaultScope', {
         include: [

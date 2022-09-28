@@ -33,8 +33,10 @@ describe('Activity Reports model', () => {
   const reportIds = [60, 61, 62];
 
   const sampleReport = {
-    submissionStatus: REPORT_STATUSES.DRAFT,
-    calculatedStatus: REPORT_STATUSES.DRAFT,
+    approval: {
+      submissionStatus: REPORT_STATUSES.DRAFT,
+      calculatedStatus: REPORT_STATUSES.DRAFT,
+    },
     oldApprovingManagerId: 1,
     numberOfParticipants: 1,
     deliveryMethod: 'method',
@@ -89,8 +91,14 @@ describe('Activity Reports model', () => {
     });
 
     afterEach(async () => {
-      await ActivityReport.destroy({ where: { id: reportIds } });
-      await User.destroy({ where: { id: user.id } });
+      await ActivityReport.destroy({
+        where: { id: reportIds },
+        individualHooks: true,
+      });
+      await User.destroy({
+        where: { id: user.id },
+        individualHooks: true,
+      });
     });
 
     it('Properly generates creator with role', async () => {

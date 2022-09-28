@@ -1,12 +1,10 @@
 const { Model } = require('sequelize');
 const {
-  afterCreate,
-  afterDestroy,
-  afterRestore,
+  beforeCreate,
+  beforeUpdate,
   afterUpdate,
-  afterUpsert,
 } = require('./hooks/approval');
-const { validateSubmissionStatus } = require('./validation/approval');
+// const { validateSubmissionStatus } = require('./validation/approval');
 const {
   ENTITY_TYPES,
   COLLABORATOR_TYPES,
@@ -23,6 +21,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         foreignKey: 'entityId',
         as: 'report',
+        hooks: true,
       });
       Approval.belongsTo(models.ActivityReportGoal, {
         scope: {
@@ -30,6 +29,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         foreignKey: 'entityId',
         as: 'reportGoal',
+        hooks: true,
       });
       Approval.belongsTo(models.ActivityReportObjective, {
         scope: {
@@ -37,6 +37,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         foreignKey: 'entityId',
         as: 'reportObjective',
+        hooks: true,
       });
       Approval.belongsTo(models.Goal, {
         scope: {
@@ -44,6 +45,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         foreignKey: 'entityId',
         as: 'goal',
+        hooks: true,
       });
       Approval.belongsTo(models.GoalTemplate, {
         scope: {
@@ -51,6 +53,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         foreignKey: 'entityId',
         as: 'goalTemplate',
+        hooks: true,
       });
       Approval.belongsTo(models.Objective, {
         scope: {
@@ -58,6 +61,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         foreignKey: 'entityId',
         as: 'objective',
+        hooks: true,
       });
       Approval.belongsTo(models.ObjectiveTemplate, {
         scope: {
@@ -65,13 +69,17 @@ module.exports = (sequelize, DataTypes) => {
         },
         foreignKey: 'entityId',
         as: 'objectiveTemplate',
+        hooks: true,
       });
       Approval.hasMany(models.Collaborator, {
         scope: {
-          entityType: COLLABORATOR_TYPES.RATIFIER,
+          where: {
+            entityType: COLLABORATOR_TYPES.RATIFIER,
+          },
         },
         foreignKey: 'entityId',
         as: 'reportApprovers',
+        hooks: true,
       });
     }
   }
@@ -106,9 +114,9 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes
         .ENUM(Object.keys(REPORT_STATUSES).map((k) => REPORT_STATUSES[k])),
-      validate: {
-        runValidators() { validateSubmissionStatus(this); },
-      },
+      // validate: {
+      //   runValidators() { validateSubmissionStatus(this); },
+      // },
     },
     calculatedStatus: {
       allowNull: true,
@@ -143,11 +151,9 @@ module.exports = (sequelize, DataTypes) => {
     },
   }, {
     hooks: {
-      afterCreate: async (instance) => afterCreate(sequelize, instance),
-      afterDestroy: async (instance) => afterDestroy(sequelize, instance),
-      afterRestore: async (instance) => afterRestore(sequelize, instance),
-      afterUpdate: async (instance) => afterUpdate(sequelize, instance),
-      afterUpsert: async (instance) => afterUpsert(sequelize, instance),
+      beforeCreate: async (instance, options) => beforeCreate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
     // indexes: [{
     //   unique: true,

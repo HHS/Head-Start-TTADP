@@ -11,7 +11,7 @@ const {
 module.exports = (sequelize, DataTypes) => {
   class Recipient extends Model {
     static associate(models) {
-      Recipient.hasMany(models.Grant, { as: 'grants', foreignKey: 'recipientId' });
+      Recipient.hasMany(models.Grant, { as: 'grants', foreignKey: 'recipientId', hooks: true });
     }
   }
   Recipient.init({

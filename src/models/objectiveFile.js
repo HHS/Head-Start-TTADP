@@ -4,8 +4,8 @@ const { afterCreate, beforeDestroy, afterDestroy } = require('./hooks/objectiveF
 module.exports = (sequelize, DataTypes) => {
   class ObjectiveFile extends Model {
     static associate(models) {
-      ObjectiveFile.belongsTo(models.Objective, { foreignKey: 'objectiveId', as: 'objective' });
-      ObjectiveFile.belongsTo(models.File, { foreignKey: 'fileId', as: 'file' });
+      ObjectiveFile.belongsTo(models.Objective, { foreignKey: 'objectiveId', as: 'objective', hooks: true });
+      ObjectiveFile.belongsTo(models.File, { foreignKey: 'fileId', as: 'file', hooks: true });
     }
   }
   ObjectiveFile.init({

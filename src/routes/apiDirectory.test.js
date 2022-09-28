@@ -39,7 +39,10 @@ describe('apiDirectory tests', () => {
     process.env.CURRENT_USER_ID = 110110;
   });
   afterAll(async () => {
-    await User.destroy({ where: { id: mockUser.id } });
+    await User.destroy({
+      where: { id: mockUser.id },
+      individualHooks: true,
+    });
     await db.sequelize.close();
   });
 

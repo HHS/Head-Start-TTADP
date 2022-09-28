@@ -185,47 +185,44 @@ describe('removeRemovedRecipientsGoals', () => {
     const reportIds = [multiRecipientReport.id, secondReport.id];
 
     await ActivityReportObjective.destroy({
-      where: {
-        activityReportId: reportIds,
-      },
+      where: { activityReportId: reportIds },
+      individualHooks: true,
     });
 
     await Objective.destroy({
-      where: {
-        id: [firstObjective.id, secondObjective.id, thirdObjective.id],
-      },
+      where: { id: [firstObjective.id, secondObjective.id, thirdObjective.id] },
+      individualHooks: true,
     });
 
     await ActivityReportGoal.destroy({
-      where: {
-        activityReportId: reportIds,
-      },
+      where: { activityReportId: reportIds },
+      individualHooks: true,
     });
 
     await Goal.destroy({
-      where: {
-        grantId: [grantOne.id, grantTwo.id],
-      },
+      where: { grantId: [grantOne.id, grantTwo.id] },
+      individualHooks: true,
     });
 
     await ActivityRecipient.destroy({
-      where: {
-        activityReportId: reportIds,
-      },
+      where: { activityReportId: reportIds },
+      individualHooks: true,
     });
 
     await ActivityReport.destroy({
-      where: {
-        id: reportIds,
-      },
+      where: { id: reportIds },
+      individualHooks: true,
     });
 
     await Promise.all(
-      grants.map(async (g) => Grant.destroy({ where: { id: g.id } })),
+      grants.map(async (g) => Grant.destroy({ where: { id: g.id }, individualHooks: true })),
     );
 
     await Promise.all(
-      recipients.map(async (r) => Recipient.destroy({ where: { id: r.id } })),
+      recipients.map(async (r) => Recipient.destroy({
+        where: { id: r.id },
+        individualHooks: true,
+      })),
     );
 
     await db.sequelize.close();

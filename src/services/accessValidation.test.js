@@ -36,7 +36,10 @@ const mockUser = {
 };
 
 const setupUser = async (user) => {
-  await User.destroy({ where: { id: user.id } });
+  await User.destroy({
+    where: { id: user.id },
+    individualHooks: true,
+  });
   await User.create(user, {
     include: [{ model: Permission, as: 'permissions' }],
   });
@@ -52,14 +55,20 @@ describe('accessValidation', () => {
       await setupUser({ ...mockUser, homeRegionId: 14 });
       const isCentralOfficeUser = await isCentralOffice(mockUser.id);
       expect(isCentralOfficeUser).toBeTruthy();
-      await User.destroy({ where: { id: mockUser.id } });
+      await User.destroy({
+        where: { id: mockUser.id },
+        individualHooks: true,
+      });
     });
 
     it('is false for non CO users', async () => {
       await setupUser({ ...mockUser, homeRegionId: 1 });
       const isCentralOfficeUser = await isCentralOffice(mockUser.id);
       expect(isCentralOfficeUser).toBeFalsy();
-      await User.destroy({ where: { id: mockUser.id } });
+      await User.destroy({
+        where: { id: mockUser.id },
+        individualHooks: true,
+      });
     });
   });
 
@@ -103,7 +112,10 @@ describe('accessValidation', () => {
     });
 
     it('returns false if a user does not exist in database', async () => {
-      await User.destroy({ where: { id: mockUser.id } });
+      await User.destroy({
+        where: { id: mockUser.id },
+        individualHooks: true,
+      });
 
       const valid = await validateUserAuthForAdmin(mockUser.id);
       expect(valid).toBe(false);
@@ -143,7 +155,10 @@ describe('accessValidation', () => {
     });
 
     it('returns an empty array if a user does not exist in database', async () => {
-      await User.destroy({ where: { id: mockUser.id } });
+      await User.destroy({
+        where: { id: mockUser.id },
+        individualHooks: true,
+      });
 
       const regions = await getUserReadRegions(mockUser.id);
       expect(regions.length).toBe(0);
@@ -232,7 +247,10 @@ describe('accessValidation', () => {
     });
 
     it('returns an empty array if a user does not exist in database', async () => {
-      await User.destroy({ where: { id: mockUser.id } });
+      await User.destroy({
+        where: { id: mockUser.id },
+        individualHooks: true,
+      });
 
       const query = { 'region.in': [1, 13, 14] };
 
