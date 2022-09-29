@@ -253,3 +253,42 @@ export const GOAL_SUSPEND_REASONS = [
   'Recipient is not responding',
   'Regional Office request',
 ];
+
+/*
+  Please keep in sync with:
+  frontend > src > pages > ActivityReport > constants.js
+  src > constants.js
+*/
+export const RECIPIENT_PARTICIPANTS = [
+  'CEO / CFO / Executive',
+  'Center Director / Site Director',
+  'Coach',
+  'Direct Service: Other',
+  'Family Service Worker / Case Manager',
+  'Fiscal Manager/Team',
+  'Governing Body / Tribal Council / Policy Council',
+  'Home Visitor',
+  'Manager / Coordinator / Specialist',
+  'Parent / Guardian',
+  'Program Director (HS / EHS)',
+  'Program Support / Administrative Assistant',
+  'Teacher / Infant-Toddler Caregiver',
+  'Volunteer',
+];
+
+export const OTHER_ENTITY_PARTICIPANTS = [
+  'HSCO',
+  'Local/State Agency(ies)',
+  'OCC Regional Office',
+  'OHS Regional Office',
+  'Regional Head Start Association',
+  'Regional TTA Team / Specialists',
+  'State Early Learning System',
+  'State Head Start Association',
+  'Other',
+];
+
+export const ALL_PARTICIPANTS = [
+  ...RECIPIENT_PARTICIPANTS,
+  ...OTHER_ENTITY_PARTICIPANTS,
+];
