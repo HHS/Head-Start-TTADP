@@ -33,6 +33,7 @@ const SiteNav = ({
   location,
 }) => {
   const [showActivityReportSurveyButton, setShowActivityReportSurveyButton] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(true);
 
   useEffect(() => {
     if (location.pathname === '/activity-reports' && authenticated) {
@@ -40,7 +41,11 @@ const SiteNav = ({
     } else {
       setShowActivityReportSurveyButton(false);
     }
+
+    setShowSidebar(!(location.pathname === '/logout' && authenticated));
   }, [location.pathname, authenticated]);
+
+  if (!showSidebar) return null;
 
   return (
     <div>
