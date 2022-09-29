@@ -5,6 +5,7 @@ import db, {
   Recipient,
   Grant,
 } from '..';
+import { OBJECTIVE_STATUS } from '../../constants';
 
 describe('objective model hooks', () => {
   let recipient;
@@ -70,13 +71,13 @@ describe('objective model hooks', () => {
     objective1 = await Objective.create({
       title: 'Objective 1',
       goalId: goal.id,
-      status: 'Draft',
+      status: OBJECTIVE_STATUS.DRAFT,
     }, { individualHooks: true });
 
     let testGoal = await Goal.findByPk(goal.id);
     expect(testGoal.status).toEqual('Draft');
 
-    await Objective.update({ status: 'In Progress' }, {
+    await Objective.update({ status: OBJECTIVE_STATUS.IN_PROGRESS }, {
       where: {
         id: objective1.id,
       },
@@ -99,18 +100,18 @@ describe('objective model hooks', () => {
     objective2 = await Objective.create({
       title: 'Objective 2',
       goalId: goal.id,
-      status: 'Not Started',
+      status: OBJECTIVE_STATUS.NOT_STARTED,
     }, { individualHooks: true });
     objective3 = await Objective.create({
       title: 'Objective 3',
       goalId: goal.id,
-      status: 'Not Started',
+      status: OBJECTIVE_STATUS.NOT_STARTED,
     }, { individualHooks: true });
 
     testGoal = await Goal.findByPk(goal.id);
     expect(testGoal.status).toEqual('Not Started');
 
-    await Objective.update({ status: 'In Progress' }, {
+    await Objective.update({ status: OBJECTIVE_STATUS.IN_PROGRESS }, {
       where: {
         id: objective2.id,
       },
@@ -120,7 +121,7 @@ describe('objective model hooks', () => {
     testGoal = await Goal.findByPk(goal.id);
     expect(testGoal.status).toEqual('In Progress');
 
-    await Objective.update({ status: 'Complete' }, {
+    await Objective.update({ status: OBJECTIVE_STATUS.COMPLETE }, {
       where: { id: [objective3.id, objective2.id] },
       individualHooks: true,
 

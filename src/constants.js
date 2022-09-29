@@ -155,6 +155,7 @@ export const GOAL_STATUS = {
 };
 
 export const OBJECTIVE_STATUS = {
+  DRAFT: 'Draft',
   NOT_STARTED: 'Not Started',
   IN_PROGRESS: 'In Progress',
   SUSPENDED: 'Suspended',
