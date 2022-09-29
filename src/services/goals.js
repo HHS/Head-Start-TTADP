@@ -1241,6 +1241,12 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
 }
 
 async function createObjectivesForGoal(goal, objectives, report) {
+  /*
+     Note: Objective Status
+     We only want to set Objective status from here on initial Objective creation.
+     All subsequent Objective status updates should come from the AR Hook using end date.
+  */
+
   // we don't want to create objectives with blank titles
   return Promise.all(objectives.filter((o) => o.title).map(async (objective) => {
     const {
@@ -1271,10 +1277,12 @@ async function createObjectivesForGoal(goal, objectives, report) {
     }
 
     if (savedObjective) {
-      await savedObjective.update({
-        title,
-        status,
-      }, { individualHooks: true });
+      // We should only allow the title to change if we are not on a approved AR.
+      if (!savedObjective.onApprovedAR) {
+        await savedObjective.update({
+          title,
+        }, { individualHooks: true });
+      }
     } else {
       const objectiveTitle = updatedObjective.title ? updatedObjective.title.trim() : '';
 
@@ -1291,10 +1299,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
         },
       });
 
-      if (existingObjective) {
-        await existingObjective.update({ status }, { individualHooks: true });
-        savedObjective = existingObjective;
-      } else {
+      if (!existingObjective) {
         savedObjective = await Objective.create({
           ...updatedObjective,
           title: objectiveTitle,
