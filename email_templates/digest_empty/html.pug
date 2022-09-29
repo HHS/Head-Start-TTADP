@@ -1,0 +1,15 @@
+p Hello #{user.name},
+case type
+    when 'collaboratorDigest'
+        p You haven't been added as a collaborator on any activity reports #{freq}.
+    when 'changesRequestedDigest'  
+        p No changes were requested to any reports #{freq}.
+    when 'approverAssignedDigest'
+        p No reports were submitted for your review #{freq}.
+    when 'reportApprovedDigest'
+        p No reports have been approved #{freq}.
+    default
+        p
+p Best wishes,
+  br
+  | The TTA Hub team
