@@ -1,9 +1,8 @@
 import faker from '@faker-js/faker';
-import { APPROVER_STATUSES, REPORT_STATUSES } from '../../constants';
+import { APPROVER_STATUSES, REPORT_STATUSES, ENTITY_TYPES } from '../../constants';
 import db, {
   ActivityReport,
   ActivityReportGoal,
-  ActivityReportApprover,
   ActivityRecipient,
   ActivityReportObjective,
   Goal,
@@ -12,6 +11,8 @@ import db, {
   Grant,
   User,
 } from '..';
+import { createOrUpdate } from '../../services/activityReports';
+import { upsertRatifier } from '../../services/collaborators';
 
 describe('activity report model hooks', () => {
   describe('automatic goal status changes', () => {
@@ -60,11 +61,14 @@ describe('activity report model hooks', () => {
         createdVia: 'rtr',
       });
 
-      report = await ActivityReport.create({
-        userId: mockUser.id,
+      report = await createOrUpdate({
+        owner: { userId: mockUser.id },
         regionId: 1,
-        submissionStatus: REPORT_STATUSES.DRAFT,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
+        approval: {
+          submissionStatus: REPORT_STATUSES.DRAFT,
+          calculatedStatus: REPORT_STATUSES.DRAFT,
+        },
+        activityRecipients: [{ grantId: grant.id }],
         numberOfParticipants: 1,
         deliveryMethod: 'virtual',
         duration: 10,
@@ -84,21 +88,9 @@ describe('activity report model hooks', () => {
         activityReportId: report.id,
         goalId: goal.id,
       });
-
-      await ActivityRecipient.create({
-        activityReportId: report.id,
-        grantId: grant.id,
-      });
     });
 
     afterAll(async () => {
-      await ActivityReportApprover.destroy({
-        where: {
-          activityReportId: report.id,
-        },
-        force: true,
-      });
-
       await ActivityRecipient.destroy({
         where: {
           activityReportId: report.id,
@@ -187,10 +179,12 @@ describe('activity report model hooks', () => {
       let testReport = await ActivityReport.findByPk(report.id);
       expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.SUBMITTED);
 
-      await ActivityReportApprover.create({
-        activityReportId: report.id,
+      await upsertRatifier({
+        entityType: ENTITY_TYPES.REPORT,
+        entityId: report.id,
         userId: mockApprover.id,
         status: APPROVER_STATUSES.APPROVED,
+        tier: 0,
       });
 
       testReport = await ActivityReport.findByPk(report.id);

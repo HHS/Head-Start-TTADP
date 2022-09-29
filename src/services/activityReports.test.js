@@ -2,6 +2,7 @@ import { Op } from 'sequelize';
 import db, {
   ActivityReport,
   ActivityReportApprover,
+  Approval,
   Collaborator,
   ActivityRecipient,
   User,
@@ -40,7 +41,7 @@ import {
   ENTITY_TYPES,
   RATIFIER_STATUSES,
 } from '../constants';
-import { removeRatifier } from './collaborators';
+import { removeRatifier, upsertEditor, upsertRatifier } from './collaborators';
 import { createReport, destroyReport } from '../testUtils';
 import { auditLogger } from '../logger';
 
@@ -494,7 +495,7 @@ describe('Activity report service', () => {
           additionalNotes: null,
           approvingManagerId: null,
           attachments: [],
-          activityReportCollaborators: [],
+          collaborators: [],
           context: '',
           deliveryMethod: null,
           duration: null,
@@ -891,18 +892,13 @@ describe('Activity report service', () => {
         const recipientWithProgram = await Recipient.create({ id: RECIPIENT_WITH_PROGRAMS_ID, name: 'recipient with program', uei: 'NNA5N2KHMGM2' });
         const grantWithProgram = await Grant.create({ id: RECIPIENT_WITH_PROGRAMS_ID, number: 'recipgrantnumber695', recipientId: recipientWithProgram.id });
 
-        const report = await ActivityReport.create(
+        const report = await createOrUpdate(
           {
             ...submittedReport,
             regionId: 5,
             activityRecipients: [{ grantId: grantWithProgram.id }],
           },
         );
-
-        await ActivityRecipient.create({
-          activityReportId: report.id,
-          grantId: grantWithProgram.id,
-        });
 
         await Program.create({
           id: 585,
@@ -1065,7 +1061,7 @@ describe('Activity report service', () => {
           sortBy: 'collaborators', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1'], 'reportId.nctn': idsToExclude,
         });
         expect(rows.length).toBe(5);
-        expect(rows[0].activityReportCollaborators[0].user.name).toBe(mockUser.name);
+        expect(rows[0].collaborators[0].user.name).toBe(mockUser.name);
       });
 
       it('retrieves reports sorted by id', async () => {
@@ -1381,24 +1377,26 @@ describe('Activity report service', () => {
         await User.create(mockUser, { validate: false }, { individualHooks: false });
       });
       afterEach(async () => {
-        await ActivityReportCollaborator.destroy({ where: { userId: digestMockCollabOne.id } });
+        // await ActivityReportCollaborator.destroy({ where: { userId: digestMockCollabOne.id } });
         await ActivityReport.destroy({ where: { userId: mockUser.id } });
         await User.destroy({ where: { id: digestMockCollabOne.id } });
         await User.destroy({ where: { id: mockUser.id } });
       });
       it('retrieves activity reports in DRAFT when added as a collaborator', async () => {
-        const report = await ActivityReport.create({
+        const report = await createOrUpdate({
           ...reportObject,
-          calculatedStatus: REPORT_STATUSES.DRAFT,
+          approval: { calculatedStatus: REPORT_STATUSES.DRAFT },
           lastUpdatedById: mockUser.id,
-          userId: mockUser.id,
+          owner: { userId: mockUser.id },
         });
         const empty = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
-        await ActivityReportCollaborator.create({
-          activityReportId: report.id,
+        await upsertEditor({
+          entityType: ENTITY_TYPES.REPORT,
+          entityId: report.id,
           userId: digestMockCollabOne.id,
+          tier: 1,
         });
 
         const [dailyDigestReport] = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
@@ -1412,16 +1410,18 @@ describe('Activity report service', () => {
         expect(monthlyDigestReport.id).toBe(report.id);
       });
       it('retrieves activity reports (SUBMITTED) when added as a collaborator', async () => {
-        const report = await ActivityReport.create({
+        const report = await createOrUpdate({
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+          approval: { calculatedStatus: REPORT_STATUSES.SUBMITTED },
         });
         const empty = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
-        await ActivityReportCollaborator.create({
-          activityReportId: report.id,
+        await upsertEditor({
+          entityType: ENTITY_TYPES.REPORT,
+          entityId: report.id,
           userId: digestMockCollabOne.id,
+          tier: 1,
         });
 
         const [dailyDigestReport] = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
@@ -1432,17 +1432,19 @@ describe('Activity report service', () => {
         expect(monthlyDigestReport.id).toBe(report.id);
       });
       it('retrieves activity reports (NEEDS_ACTION) when added as a collaborator', async () => {
-        const report = await ActivityReport.create({
+        const report = await createOrUpdate({
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          approval: { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
         });
 
         const empty = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
-        await ActivityReportCollaborator.create({
-          activityReportId: report.id,
+        await upsertEditor({
+          entityType: ENTITY_TYPES.REPORT,
+          entityId: report.id,
           userId: digestMockCollabOne.id,
+          tier: 1,
         });
 
         const [dailyDigestReport] = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
@@ -1454,16 +1456,18 @@ describe('Activity report service', () => {
       });
 
       it('does not retrieve activity reports (APPROVED) when added as a collaborator', async () => {
-        const report = await ActivityReport.create({
+        const report = await createOrUpdate({
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.APPROVED,
+          approval: { calculatedStatus: REPORT_STATUSES.APPROVED },
         });
         const empty = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
-        await ActivityReportCollaborator.create({
-          activityReportId: report.id,
+        await upsertEditor({
+          entityType: ENTITY_TYPES.REPORT,
+          entityId: report.id,
           userId: digestMockCollabOne.id,
+          tier: 1,
         });
 
         const [dailyDigestReport] = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
@@ -1481,26 +1485,31 @@ describe('Activity report service', () => {
         await User.create(mockUser, { validate: false }, { individualHooks: false });
       });
       afterEach(async () => {
-        await ActivityReportCollaborator.destroy({ where: { userId: digestMockCollabOne.id } });
+        // await ActivityReportCollaborator.destroy({ where: { userId: digestMockCollabOne.id } });
         await ActivityReport.destroy({ where: { userId: mockUser.id } });
         await User.destroy({ where: { id: digestMockCollabOne.id } });
         await User.destroy({ where: { id: mockUser.id } });
       });
       it('retrieves daily activity reports in DRAFT when changes requested', async () => {
-        const report = await ActivityReport.create({
+        const report = await createOrUpdate({
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          approval: { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
         });
-        await report.update(
+        await Approval.update(
           { calculatedStatus: REPORT_STATUSES.DRAFT },
-          { individualHooks: true },
+          {
+            where: { entityType: ENTITY_TYPES.REPORT, entityId: report.id, tier: 0 },
+            individualHooks: true,
+          },
         );
         const empty = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
-        await ActivityReportCollaborator.create({
-          activityReportId: report.id,
+        await upsertEditor({
+          entityType: ENTITY_TYPES.REPORT,
+          entityId: report.id,
           userId: digestMockCollabOne.id,
+          tier: 1,
         });
 
         const [dailyDigestReport] = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
@@ -1518,20 +1527,25 @@ describe('Activity report service', () => {
         expect(authorDigest.id).toBe(report.id);
       });
       it('retrieves activity reports (SUBMITTED) when changes requested', async () => {
-        const report = await ActivityReport.create({
+        const report = await createOrUpdate({
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          approval: { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
         });
-        await report.update(
+        await Approval.update(
           { calculatedStatus: REPORT_STATUSES.SUBMITTED },
-          { individualHooks: true },
+          {
+            where: { entityType: ENTITY_TYPES.REPORT, entityId: report.id, tier: 0 },
+            individualHooks: true,
+          },
         );
         const empty = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
-        await ActivityReportCollaborator.create({
-          activityReportId: report.id,
+        await upsertEditor({
+          entityType: ENTITY_TYPES.REPORT,
+          entityId: report.id,
           userId: digestMockCollabOne.id,
+          tier: 1,
         });
 
         const [dailyDigestReport] = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
@@ -1546,17 +1560,19 @@ describe('Activity report service', () => {
         expect(authorDigest.id).toBe(report.id);
       });
       it('retrieves activity reports (NEEDS_ACTION) when changes requested', async () => {
-        const report = await ActivityReport.create({
+        const report = await createOrUpdate({
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          approval: { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
         });
 
         const empty = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
-        await ActivityReportCollaborator.create({
-          activityReportId: report.id,
+        await upsertEditor({
+          entityType: ENTITY_TYPES.REPORT,
+          entityId: report.id,
           userId: digestMockCollabOne.id,
+          tier: 1,
         });
 
         const [dailyDigestReport] = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
@@ -1572,20 +1588,25 @@ describe('Activity report service', () => {
       });
 
       it('does not retrieve activity reports (APPROVED) when changes requested', async () => {
-        const report = await ActivityReport.create({
+        const report = await createOrUpdate({
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          approval: { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
         });
-        await report.update(
+        await Approval.update(
           { calculatedStatus: REPORT_STATUSES.APPROVED },
-          { individualHooks: true },
+          {
+            where: { entityType: ENTITY_TYPES.REPORT, entityId: report.id, tier: 0 },
+            individualHooks: true,
+          },
         );
         const empty = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
-        await ActivityReportCollaborator.create({
-          activityReportId: report.id,
+        await upsertEditor({
+          entityType: ENTITY_TYPES.REPORT,
+          entityId: report.id,
           userId: digestMockCollabOne.id,
+          tier: 1,
         });
 
         const [dailyDigestReport] = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
@@ -1616,22 +1637,30 @@ describe('Activity report service', () => {
         await User.destroy({ where: { id: mockUser.id } });
       });
       it('does not retrieve activity reports in DRAFT when submitted', async () => {
-        const report = await ActivityReport.create(submittedReport);
+        const report = await createOrUpdate(submittedReport);
 
         const empty = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Approver.
-        await ActivityReportApprover.create({
-          activityReportId: report.id,
+        await upsertRatifier({
+          entityType: ENTITY_TYPES.REPORT,
+          entityId: report.id,
           userId: digestMockApprover.id,
+          tier: 1,
         });
         // Change to Draft
-        await report.update(
+        await Approval.update(
           { calculatedStatus: REPORT_STATUSES.DRAFT },
-          { individualHooks: true },
+          {
+            where: { entityType: ENTITY_TYPES.REPORT, entityId: report.id, tier: 0 },
+            individualHooks: true,
+          },
         );
-        const test = await ActivityReport.findOne({ where: { id: report.id } });
-        expect(test.calculatedStatus).toBe('draft');
+        const test = await ActivityReport.findOne({
+          where: { id: report.id },
+          include: [{ model: Approval, as: 'approval', attributes: ['calculatedStatus'] }],
+        });
+        expect(test.approval.calculatedStatus).toBe('draft');
         const [dailyDigestReport] = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(dailyDigestReport).toBeUndefined();
         const [weeklyDigestReport] = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 WEEK\'');
@@ -1640,14 +1669,16 @@ describe('Activity report service', () => {
         expect(monthlyDigestReport).toBeUndefined();
       });
       it('retrieves activity reports (SUBMITTED) when submitted', async () => {
-        const report = await ActivityReport.create(submittedReport);
+        const report = await createOrUpdate(submittedReport);
 
         const empty = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Approver.
-        await ActivityReportApprover.create({
-          activityReportId: report.id,
+        await upsertRatifier({
+          entityType: ENTITY_TYPES.REPORT,
+          entityId: report.id,
           userId: digestMockApprover.id,
+          tier: 1,
         });
 
         const [dailyDigestReport] = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
@@ -1658,19 +1689,24 @@ describe('Activity report service', () => {
         expect(monthlyDigestReport.id).toBe(report.id);
       });
       it('retrieves activity reports (NEEDS_ACTION) when submitted', async () => {
-        const report = await ActivityReport.create(submittedReport);
+        const report = await createOrUpdate(submittedReport);
 
         const empty = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Approver.
-        await ActivityReportApprover.create({
-          activityReportId: report.id,
+        await upsertRatifier({
+          entityType: ENTITY_TYPES.REPORT,
+          entityId: report.id,
           userId: digestMockApprover.id,
+          tier: 1,
         });
         // Change to needs action
-        await report.update(
+        await Approval.update(
           { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
-          { individualHooks: true },
+          {
+            where: { entityType: ENTITY_TYPES.REPORT, entityId: report.id, tier: 0 },
+            individualHooks: true,
+          },
         );
         const [dailyDigestReport] = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(dailyDigestReport.id).toBe(report.id);
@@ -1681,19 +1717,24 @@ describe('Activity report service', () => {
       });
 
       it('does not retrieve activity reports (APPROVED) when submitted', async () => {
-        const report = await ActivityReport.create(submittedReport);
+        const report = await createOrUpdate(submittedReport);
 
         const empty = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Approver.
-        await ActivityReportApprover.create({
-          activityReportId: report.id,
+        await upsertRatifier({
+          entityType: ENTITY_TYPES.REPORT,
+          entityId: report.id,
           userId: digestMockApprover.id,
+          tier: 1,
         });
         // Change to approved
-        await report.update(
+        await Approval.update(
           { calculatedStatus: REPORT_STATUSES.APPROVED },
-          { individualHooks: true },
+          {
+            where: { entityType: ENTITY_TYPES.REPORT, entityId: report.id, tier: 0 },
+            individualHooks: true,
+          },
         );
         const [dailyDigestReport] = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(dailyDigestReport).toBeUndefined();
@@ -1710,35 +1751,43 @@ describe('Activity report service', () => {
         await User.create(mockUser, { validate: false }, { individualHooks: false });
       });
       afterEach(async () => {
-        await ActivityReportCollaborator.destroy({
-          where:
-            { userId: digestMockCollabOne.id },
-          force: true,
-        });
+        // await ActivityReportCollaborator.destroy({
+        //   where:
+        //     { userId: digestMockCollabOne.id },
+        //   force: true,
+        // });
         await ActivityReport.destroy({ where: { userId: mockUser.id } });
         await User.destroy({ where: { id: digestMockCollabOne.id } });
         await User.destroy({ where: { id: mockUser.id } });
       });
       it('does not retrieve activity reports in DRAFT when approved', async () => {
-        const report = await ActivityReport.create({
+        const report = await createOrUpdate({
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.APPROVED,
+          approval: { calculatedStatus: REPORT_STATUSES.APPROVED },
         });
 
         const empty = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
-        await ActivityReportCollaborator.create({
-          activityReportId: report.id,
+        await upsertEditor({
+          entityType: ENTITY_TYPES.REPORT,
+          entityId: report.id,
           userId: digestMockCollabOne.id,
+          tier: 1,
         });
         // Change to Draft
-        await report.update(
+        await Approval.update(
           { calculatedStatus: REPORT_STATUSES.DRAFT },
-          { individualHooks: true },
+          {
+            where: { entityType: ENTITY_TYPES.REPORT, entityId: report.id, tier: 0 },
+            individualHooks: true,
+          },
         );
-        const test = await ActivityReport.findOne({ where: { id: report.id } });
-        expect(test.calculatedStatus).toBe('draft');
+        const test = await ActivityReport.findOne({
+          where: { id: report.id },
+          include: [{ model: Approval, as: 'approval', attributes: ['calculatedStatus'] }],
+        });
+        expect(test.approval.calculatedStatus).toBe('draft');
         const [dailyDigestReport] = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(dailyDigestReport).toBeUndefined();
         const [weeklyDigestReport] = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 WEEK\'');
@@ -1750,22 +1799,27 @@ describe('Activity report service', () => {
         expect(authorDigest).toBeUndefined();
       });
       it('does not retrieve activity reports (SUBMITTED) when approved', async () => {
-        const report = await ActivityReport.create({
+        const report = await createOrUpdate({
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.APPROVED,
+          approval: { calculatedStatus: REPORT_STATUSES.APPROVED },
         });
 
         const empty = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
-        await ActivityReportCollaborator.create({
-          activityReportId: report.id,
+        await upsertEditor({
+          entityType: ENTITY_TYPES.REPORT,
+          entityId: report.id,
           userId: digestMockCollabOne.id,
+          tier: 1,
         });
         // Change to Submitted
-        await report.update(
+        await Approval.update(
           { calculatedStatus: REPORT_STATUSES.SUBMITTED },
-          { individualHooks: true },
+          {
+            where: { entityType: ENTITY_TYPES.REPORT, entityId: report.id, tier: 0 },
+            individualHooks: true,
+          },
         );
         const [dailyDigestReport] = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(dailyDigestReport).toBeUndefined();
@@ -1778,22 +1832,27 @@ describe('Activity report service', () => {
         expect(authorDigest).toBeUndefined();
       });
       it('does not retrieve activity reports (NEEDS_ACTION) when approved', async () => {
-        const report = await ActivityReport.create({
+        const report = await createOrUpdate({
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.APPROVED,
+          approval: { calculatedStatus: REPORT_STATUSES.APPROVED },
         });
 
         const empty = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
-        await ActivityReportCollaborator.create({
-          activityReportId: report.id,
+        await upsertEditor({
+          entityType: ENTITY_TYPES.REPORT,
+          entityId: report.id,
           userId: digestMockCollabOne.id,
+          tier: 1,
         });
         // Change to Needs action
-        await report.update(
+        await Approval.update(
           { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
-          { individualHooks: true },
+          {
+            where: { entityType: ENTITY_TYPES.REPORT, entityId: report.id, tier: 0 },
+            individualHooks: true,
+          },
         );
         const [dailyDigestReport] = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(dailyDigestReport).toBeUndefined();
@@ -1807,17 +1866,19 @@ describe('Activity report service', () => {
       });
 
       it('retrieves activity reports (APPROVED) when approved', async () => {
-        const report = await ActivityReport.create({
+        const report = await createOrUpdate({
           ...submittedReport,
-          calculatedStatus: REPORT_STATUSES.APPROVED,
+          approval: { calculatedStatus: REPORT_STATUSES.APPROVED },
         });
 
         const empty = await activityReportsApprovedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
-        await ActivityReportCollaborator.create({
-          activityReportId: report.id,
+        await upsertEditor({
+          entityType: ENTITY_TYPES.REPORT,
+          entityId: report.id,
           userId: digestMockCollabOne.id,
+          tier: 1,
         });
 
         const [dailyDigestReport] = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');

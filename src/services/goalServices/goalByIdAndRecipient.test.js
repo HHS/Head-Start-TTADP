@@ -13,7 +13,7 @@ import db, {
   ObjectiveResource,
   ObjectiveRole,
   ObjectiveFile,
-  ActivityReport,
+  Approval,
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveRole,
@@ -23,7 +23,7 @@ import db, {
 import { createReport, destroyReport } from '../../testUtils';
 
 import { goalByIdAndRecipient, saveGoalsForReport } from '../goals';
-import { FILE_STATUSES, REPORT_STATUSES } from '../../constants';
+import { FILE_STATUSES, REPORT_STATUSES, ENTITY_TYPES } from '../../constants';
 
 describe('goalById', () => {
   let grantRecipient;
@@ -357,12 +357,14 @@ describe('goalById', () => {
   });
 
   it('lets us know when the associated data is on an approved activity report', async () => {
-    await ActivityReport.update({
+    await Approval.update({
       submittedStatus: 'approved',
       calculatedStatus: 'approved',
     }, {
       where: {
-        id: report.id,
+        entityType: ENTITY_TYPES.REPORT,
+        entityId: report.id,
+        tier: 0,
       },
     });
     const goal = await goalByIdAndRecipient(goalOnActivityReport.id, grantRecipient.id);

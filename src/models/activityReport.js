@@ -165,10 +165,6 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       unique: true,
     },
-    // userId: {
-    //   type: DataTypes.INTEGER,
-    //   allowNull: true,
-    // },
     lastUpdatedById: {
       type: DataTypes.INTEGER,
       allowNull: true,

@@ -45,7 +45,12 @@ import db, {
   Collaborator, ActivityReport as ActivityReportModel, Permission, User as UserModel,
 } from '../../models';
 import * as mailer from '../../lib/mailer';
-import { APPROVER_STATUSES, REPORT_STATUSES, USER_SETTINGS, ENTITY_TYPES } from '../../constants';
+import {
+  APPROVER_STATUSES,
+  REPORT_STATUSES,
+  USER_SETTINGS,
+  ENTITY_TYPES,
+} from '../../constants';
 import SCOPES from '../../middleware/scopeConstants';
 
 jest.mock('../../services/activityReports', () => ({

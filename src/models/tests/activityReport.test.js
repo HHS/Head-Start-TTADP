@@ -278,9 +278,16 @@ describe('Activity Reports model', () => {
     expect(goalsPost[0].onApprovedAR).not.toEqual(goalsPre[0].onApprovedAR);
     expect(objectivesPost[0].onApprovedAR).not.toEqual(objectivesPre[0].onApprovedAR);
 
-    await ActivityReport.update(
+    await Approval.update(
       { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
-      { where: { id: report.id }, individualHooks: true },
+      {
+        where: {
+          entityType: ENTITY_TYPES.REPORT,
+          entityId: report.id,
+          tier: 0,
+        },
+        individualHooks: true,
+      },
     );
 
     const goalsPost2 = await Goal.findAll({

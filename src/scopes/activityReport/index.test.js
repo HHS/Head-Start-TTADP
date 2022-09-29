@@ -103,11 +103,15 @@ describe('filtersToScopes', () => {
         { logging: (msg) => auditLogger.error(JSON.stringify({ name: 'includedUser1', msg })) },
       );
       auditLogger.error(JSON.stringify({ name: 'filtersToScopes-beforeAll-4' }));
-      includedUser2 = await User.create({ name: 'another person', hsesUserId: 'user222', hsesUsername: 'user222' },
-      { logging: (msg) => auditLogger.error(JSON.stringify({ name: 'includedUser2', msg })) });
+      includedUser2 = await User.create(
+        { name: 'another person', hsesUserId: 'user222', hsesUsername: 'user222' },
+        { logging: (msg) => auditLogger.error(JSON.stringify({ name: 'includedUser2', msg })) },
+      );
       auditLogger.error(JSON.stringify({ name: 'filtersToScopes-beforeAll-5' }));
-      excludedUser = await User.create({ name: 'excluded', hsesUserId: 'user333', hsesUsername: 'user333' },
-      { logging: (msg) => auditLogger.error(JSON.stringify({ name: 'excludedUser', msg })) });
+      excludedUser = await User.create(
+        { name: 'excluded', hsesUserId: 'user333', hsesUsername: 'user333' },
+        { logging: (msg) => auditLogger.error(JSON.stringify({ name: 'excludedUser', msg })) },
+      );
       auditLogger.error(JSON.stringify({ name: 'filtersToScopes-beforeAll-6' }));
       globallyExcludedReport = await createOrUpdate({
         ...draftReport,

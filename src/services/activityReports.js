@@ -236,10 +236,15 @@ async function update(newReport, report) {
 }
 
 async function create(report, silent = false) {
-  return ActivityReport.create(report, {
-    silent,
-    logging: (msg) => auditLogger.error(JSON.stringify({ name: 'ActivityReport.create', msg })),
-  });
+  try {
+    return ActivityReport.create(report, {
+      silent,
+      logging: (msg) => auditLogger.error(JSON.stringify({ name: 'ActivityReport.create', msg })),
+    });
+  } catch (err) {
+    auditLogger.error(JSON.stringify({ name: 'ActivityReport.create', err, report }));
+    throw new Error(err);
+  }
 }
 
 export function activityReportByLegacyId(legacyId) {
@@ -1663,26 +1668,31 @@ export async function getDownloadableActivityReportsByIds(readRegions, {
  * @param {string} date - date interval string, e.g. NOW() - INTERVAL '1 DAY'
  * @returns {Promise<ActivityReport[]>} - retrieved reports
  */
+// TODO: I don't think using the audit log is the correct method to do this.
 export async function activityReportsWhereCollaboratorByDate(userId, date) {
   const reports = await ActivityReport.findAll({
     attributes: ['id', 'displayId'],
     where: {
-      calculatedStatus: {
-        [Op.ne]: REPORT_STATUSES.APPROVED,
-      },
       id: {
         [Op.in]: sequelize.literal(
-          `(SELECT (new_row_data->'activityReportId')::NUMERIC
-        FROM "ZALActivityReportCollaborators" 
-        where dml_timestamp > ${date} AND
-        (new_row_data->'userId')::NUMERIC = ${userId})`,
+          `(SELECT (new_row_data->'entityId')::NUMERIC
+        FROM "ZALCollaborators"
+        where dml_timestamp > ${date}
+        AND (new_row_data->'userId')::NUMERIC = ${userId}
+        AND (new_row_data->>'entityType')::TEXT = '${ENTITY_TYPES.REPORT}'
+        AND (new_row_data->>'collaboratorTypes')::TEXT like '%${COLLABORATOR_TYPES.EDITOR}%')`,
         ),
       },
     },
     include: [
       {
-        model: ActivityReportCollaborator,
-        as: 'activityReportCollaborators',
+        model: Approval,
+        as: 'approval',
+        where: { calculatedStatus: { [Op.ne]: REPORT_STATUSES.APPROVED } },
+      },
+      {
+        model: Collaborator,
+        as: 'collaborators',
         where: { userId },
       },
     ],
@@ -1709,15 +1719,17 @@ export async function activityReportsChangesRequestedByDate(userId, date) {
           },
         },
         {
-          [Op.or]: [{ userId }, { '$activityReportCollaborators.userId$': userId }],
+          [Op.or]: [{ '$owner.userId$': userId }, { '$collaborators.userId$': userId }],
         },
         {
           id: {
             [Op.in]: sequelize.literal(
-              `(SELECT data_id
-          FROM "ZALActivityReports" 
-          where dml_timestamp > ${date} AND
-          (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.NEEDS_ACTION}')`,
+              `(SELECT (new_row_data->'entityId')::NUMERIC
+                FROM "ZALApprovals"
+                where dml_timestamp > ${date}
+                AND (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.NEEDS_ACTION}'
+                AND (new_row_data->'entityType')::TEXT = '${ENTITY_TYPES.REPORT}'
+                AND (new_row_data->'tier')::NUMERIC = 0)`,
             ),
           },
         },
@@ -1725,8 +1737,13 @@ export async function activityReportsChangesRequestedByDate(userId, date) {
     },
     include: [
       {
-        model: ActivityReportCollaborator,
-        as: 'activityReportCollaborators',
+        model: Collaborator,
+        as: 'owner',
+        attributes: ['userId'],
+      },
+      {
+        model: Collaborator,
+        as: 'collaborators',
         attributes: ['userId'],
         required: false,
       },
@@ -1746,26 +1763,30 @@ export async function activityReportsSubmittedByDate(userId, date) {
   const reports = await ActivityReport.findAll({
     attributes: ['id', 'displayId'],
     where: {
-      [Op.and]: [
-        { calculatedStatus: { [Op.ne]: REPORT_STATUSES.APPROVED } },
-        { calculatedStatus: { [Op.ne]: REPORT_STATUSES.DRAFT } },
-        {
-          id: {
-            [Op.in]: sequelize.literal(
-              `(SELECT data_id
-          FROM "ZALActivityReports" 
-          where dml_timestamp > ${date} AND
-          (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.SUBMITTED}')`,
-            ),
-          },
-        },
-      ],
+      id: {
+        [Op.in]: sequelize.literal(
+          `(SELECT (new_row_data->'entityId')::NUMERIC
+            FROM "ZALApprovals"
+            where dml_timestamp > ${date}
+            AND (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.SUBMITTED}'
+            AND (new_row_data->'entityType')::TEXT = '${ENTITY_TYPES.REPORT}'
+            AND (new_row_data->'tier')::NUMERIC = 0)`,
+        ),
+      },
     },
     include: [
       {
-        model: ActivityReportApprover,
+        model: Approval,
+        as: 'approval',
+        where: {
+          calculatedStatus: { [Op.notIn]: [REPORT_STATUSES.APPROVED, REPORT_STATUSES.DRAFT] },
+        },
+        required: true,
+      },
+      {
+        model: Collaborator,
         as: 'approvers',
-        where: { userId },
+        attributes: ['userId'],
       },
     ],
   });
@@ -1788,15 +1809,17 @@ export async function activityReportsApprovedByDate(userId, date) {
           calculatedStatus: REPORT_STATUSES.APPROVED,
         },
         {
-          [Op.or]: [{ userId }, { '$activityReportCollaborators.userId$': userId }],
+          [Op.or]: [{ '$owner.userId$': userId }, { '$collaborators.userId$': userId }],
         },
         {
           id: {
             [Op.in]: sequelize.literal(
-              `(SELECT data_id
-          FROM "ZALActivityReports" 
-          where dml_timestamp > ${date} AND
-          (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.APPROVED}')`,
+              `(SELECT (new_row_data->'entityId')::NUMERIC
+                FROM "ZALApprovals"
+                where dml_timestamp > ${date}
+                AND (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.APPROVED}'
+                AND (new_row_data->'entityType')::TEXT = '${ENTITY_TYPES.REPORT}'
+                AND (new_row_data->'tier')::NUMERIC = 0)`,
             ),
           },
         },
@@ -1804,8 +1827,13 @@ export async function activityReportsApprovedByDate(userId, date) {
     },
     include: [
       {
-        model: ActivityReportCollaborator,
-        as: 'activityReportCollaborators',
+        model: Collaborator,
+        as: 'owner',
+        attributes: ['userId'],
+      },
+      {
+        model: Collaborator,
+        as: 'collaborators',
         attributes: ['userId'],
         required: false,
       },

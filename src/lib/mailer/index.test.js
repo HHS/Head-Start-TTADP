@@ -23,6 +23,7 @@ import db, {
   ActivityReport, ActivityReportCollaborator, User, ActivityReportApprover,
 } from '../../models';
 import { usersWithSetting } from '../../services/userSettings';
+import { createOrUpdate } from '../../services/activityReports';
 
 const { DAILY, WEEKLY, MONTHLY } = DIGEST_SUBJECT_FREQ;
 
@@ -704,7 +705,7 @@ describe('mailer tests', () => {
     });
 
     it('"collaborators added" on the notificationQueue', async () => {
-      const report = await ActivityReport.create(reportObject);
+      const report = await createOrUpdate(reportObject);
 
       collaboratorAssignedNotification(
         report,
@@ -720,7 +721,7 @@ describe('mailer tests', () => {
       mock.mockImplementationOnce(() => {
         throw new Error('Christmas present!');
       });
-      const report = await ActivityReport.create(reportObject);
+      const report = await createOrUpdate(reportObject);
 
       collaboratorAssignedNotification(
         report,
@@ -730,7 +731,7 @@ describe('mailer tests', () => {
     });
 
     it('"approver assigned" on the notificationQueue', async () => {
-      const report = await ActivityReport.create(reportObject);
+      const report = await createOrUpdate(reportObject);
 
       approverAssignedNotification(
         report,
@@ -746,14 +747,14 @@ describe('mailer tests', () => {
       mock.mockImplementationOnce(() => {
         throw new Error('Something is not right');
       });
-      const report = await ActivityReport.create(reportObject);
+      const report = await createOrUpdate(reportObject);
 
       approverAssignedNotification(report, [mockApprover]);
       expect(logger.error).toHaveBeenCalledWith(new Error('Something is not right'));
     });
 
     it('"report approved" on the notificationQueue', async () => {
-      const report = await ActivityReport.create(reportObject);
+      const report = await createOrUpdate(reportObject);
 
       reportApprovedNotification(report, null, []);
       expect(notificationQueueMock.add).toHaveBeenCalled();
@@ -766,14 +767,14 @@ describe('mailer tests', () => {
       mock.mockImplementationOnce(() => {
         throw new Error('Something is not right');
       });
-      const report = await ActivityReport.create(reportObject);
+      const report = await createOrUpdate(reportObject);
 
       reportApprovedNotification(report);
       expect(logger.error).toHaveBeenCalledWith(new Error('Something is not right'));
     });
 
     it('"changes requested" on the notificationQueue', async () => {
-      const report = await ActivityReport.create(reportObject);
+      const report = await createOrUpdate(reportObject);
 
       changesRequestedNotification(report, mockApprover, null, []);
       expect(notificationQueueMock.add).toHaveBeenCalled();
@@ -786,19 +787,16 @@ describe('mailer tests', () => {
       mock.mockImplementationOnce(() => {
         throw new Error('Christmas present!');
       });
-      const report = await ActivityReport.create(reportObject);
+      const report = await createOrUpdate(reportObject);
 
       changesRequestedNotification(report);
       expect(logger.error).toHaveBeenCalledWith(new Error('Christmas present!'));
     });
 
     it('"collaborator added" digest on the notificationDigestQueue', async () => {
-      const report = await ActivityReport.create(reportObject);
-
-      // Add Collaborator.
-      await ActivityReportCollaborator.create({
-        activityReportId: report.id,
-        userId: digestMockCollab.id,
+      const report = await createOrUpdate({
+        ...reportObject,
+        collaborators: [{ userId: digestMockCollab.id }],
       });
       const result = await collaboratorDigest('today');
       expect(notificationDigestQueueMock.add).toHaveBeenCalled();
@@ -819,15 +817,12 @@ describe('mailer tests', () => {
     });
 
     it('"changes requested" digest on the notificationDigestQueue', async () => {
-      const report = await ActivityReport.create({
+      const report = await createOrUpdate({
         ...submittedReport,
-        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
-      });
-
-      // Add Collaborator.
-      await ActivityReportCollaborator.create({
-        activityReportId: report.id,
-        userId: digestMockCollab.id,
+        approval: {
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        },
+        collaborators: [{ userId: digestMockCollab.id }],
       });
       const result = await changesRequestedDigest('today');
       expect(notificationDigestQueueMock.add).toHaveBeenCalled();
@@ -865,15 +860,10 @@ describe('mailer tests', () => {
     });
 
     it('"approved" digest on the notificationDigestQueue', async () => {
-      const report = await ActivityReport.create({
+      const report = await createOrUpdate({
         ...submittedReport,
-        calculatedStatus: REPORT_STATUSES.APPROVED,
-      });
-
-      // Add Collaborator.
-      await ActivityReportCollaborator.create({
-        activityReportId: report.id,
-        userId: digestMockCollab.id,
+        approval: { calculatedStatus: REPORT_STATUSES.APPROVED },
+        collaborators: [{ userId: digestMockCollab.id }],
       });
       const result = await approvedDigest('this month');
       expect(notificationDigestQueueMock.add).toHaveBeenCalled();

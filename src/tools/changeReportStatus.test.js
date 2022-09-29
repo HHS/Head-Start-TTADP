@@ -44,7 +44,7 @@ describe('changeStatus', () => {
     });
 
     expect(report.approval.submissionStatus).toBe(REPORT_STATUSES.APPROVED);
-    await changeReportStatus(report.id.toString(), 'deleted');
+    await changeReportStatus(report.id.toString(), REPORT_STATUSES.DELETED);
 
     const deletedReport = await ActivityReport.unscoped().findOne({
       where: { id: report.id },
@@ -57,6 +57,6 @@ describe('changeStatus', () => {
   });
 
   it('handles unknown ids', async () => {
-    await expect(changeReportStatus('-1', 'deleted')).resolves.not.toThrowError();
+    await expect(changeReportStatus('-1', REPORT_STATUSES.DELETED)).resolves.not.toThrowError();
   });
 });
