@@ -125,7 +125,7 @@ async function saveReportCollaborators(activityReportId, collaborators) {
   if (rolesToAdd && rolesToAdd.length > 0) {
     let updatedRoles = [];
     rolesToAdd.forEach((collaborator) => {
-    // Set collaborator roles.
+      // Set collaborator roles.
       const { role } = collaborator.user;
       // Concat list of collaborator role updates promises.
       updatedRoles = updatedRoles.concat(role.map((r) => CollaboratorRole.findOrCreate(
@@ -290,6 +290,80 @@ export function activityReportByLegacyId(legacyId) {
   });
 }
 
+export async function populateRecipientInfo(activityRecipients, grantPrograms) {
+  /*
+      Hopefully this code is temporary until we figure
+      out why joining programs to grants causes issues.
+  */
+  return activityRecipients.map((recipient) => {
+    if (recipient.grant && grantPrograms.length) {
+      const programsToAssign = grantPrograms.filter((p) => p.grantId === recipient.grantId);
+      // Programs.
+      Object.defineProperty(
+        recipient.grant,
+        'programs',
+        {
+          value: programsToAssign,
+          enumerable: true,
+        },
+      );
+
+      // Program Types.
+      const programTypes = programsToAssign && programsToAssign.length > 0
+        ? [...new Set(
+          programsToAssign.filter((p) => (p.programType))
+            .map((p) => (p.programType)).sort(),
+        )] : [];
+      Object.defineProperty(
+        recipient.grant,
+        'programTypes',
+        {
+          value: programTypes,
+          enumerable: true,
+        },
+      );
+
+      // Number with Program Types.
+      const numberWithProgramTypes = `${recipient.grant.number} ${programTypes.length > 0 ? ` - ${programTypes.join(', ')}` : ''}`;
+
+      Object.defineProperty(
+        recipient.grant,
+        'numberWithProgramTypes',
+        {
+          value: numberWithProgramTypes,
+          enumerable: true,
+        },
+      );
+
+      // Name.
+      let nameValue;
+      if (recipient.grant.recipient) {
+        nameValue = `${recipient.grant.recipient.name} - ${recipient.grant.numberWithProgramTypes}`;
+      } else {
+        nameValue = `${recipient.grant.numberWithProgramTypes}`;
+      }
+      Object.defineProperty(
+        recipient.grant,
+        'name',
+        {
+          value: nameValue,
+          enumerable: true,
+        },
+      );
+
+      Object.defineProperty(
+        recipient,
+        'name',
+        {
+          value: nameValue,
+          enumerable: true,
+        },
+      );
+    }
+    return { ...recipient };
+  });
+}
+
 export async function activityReportAndRecipientsById(activityReportId) {
   const arId = parseInt(activityReportId, DECIMAL_BASE);
 
@@ -361,10 +435,28 @@ export async function activityReportAndRecipientsById(activityReportId) {
       'id',
       'name',
       'activityRecipientId',
+      'grantId',
+    ],
+    include: [
+      {
+        model: Grant,
+        as: 'grant',
+      },
     ],
   });
 
-  const activityRecipients = recipients.map((recipient) => {
+  // Get all grant programs at once to reduce DB calls.
+  const grantIds = recipients.map((a) => a.grantId);
+  const grantPrograms = await Program.findAll({
+    where: {
+      grantId: grantIds,
+    },
+  });
+
+  // Populate Activity Recipient info.
+  const updatedRecipients = await populateRecipientInfo(recipients, grantPrograms);
+
+  const activityRecipients = updatedRecipients.map((recipient) => {
     const name = recipient.otherEntity ? recipient.otherEntity.name : recipient.grant.name;
     const activityRecipientId = recipient.otherEntity
       ? recipient.otherEntity.dataValues.id : recipient.grant.dataValues.id;
@@ -582,7 +674,7 @@ export async function activityReports(
     where: {
       activityReportId: reports.rows.map(({ id }) => id),
     },
-    attributes: ['id', 'name', 'activityRecipientId', 'activityReportId'],
+    attributes: ['id', 'name', 'activityRecipientId', 'activityReportId', 'grantId'],
     // sorting these just so the order is testable
     order: [
       [
@@ -593,6 +685,17 @@ export async function activityReports(
       ],
     ],
   });
+
+  // Get all grant programs at once to reduce DB calls.
+  const grantIds = recipients.map((a) => a.grantId);
+  const grantPrograms = await Program.findAll({
+    where: {
+      grantId: grantIds,
+    },
+  });
+
+  // Populate Activity Recipient info.
+  await populateRecipientInfo(recipients, grantPrograms);
 
   return { ...reports, recipients };
 }
@@ -1007,6 +1110,12 @@ async function getDownloadableActivityReports(where, separate = true) {
         as: 'activityRecipients',
         required: false,
         separate,
+        include: [
+          {
+            model: Grant,
+            as: 'grant',
+          },
+        ],
       },
       {
         model: File,
@@ -1079,7 +1188,22 @@ async function getDownloadableActivityReports(where, separate = true) {
     order: [['id', 'DESC']],
   };
 
-  return batchQuery(query, 2000);
+  // Get reports.
+  const reports = await batchQuery(query, 2000);
+
+  // Populate Activity Recipient info.
+  const updatedReportPromises = reports.map(async (r) => {
+    const grantIds = r.activityRecipients.map((a) => a.grantId);
+    // Get all grant programs at once to reduce DB calls.
+    const grantPrograms = await Program.findAll({
+      where: {
+        grantId: grantIds,
+      },
+    });
+    const updatedRecipients = await populateRecipientInfo(r.activityRecipients, grantPrograms);
+    return { ...r, activityRecipients: updatedRecipients };
+  });
+  return Promise.all(updatedReportPromises);
 }
 
 export async function getAllDownloadableActivityReports(
@@ -1151,4 +1275,162 @@ export async function getDownloadableActivityReportsByIds(readRegions, {
   const reportIds = [...reportSet].filter((i) => /\d+/.test(i));
   const where = { regionId: regions, id: { [Op.in]: reportIds } };
   return getDownloadableActivityReports(where);
+}
+
+/**
+ * Fetches ActivityReports where a user is a collaborator based by date
+ *
+ * @param {integer} userId - user id
+ * @param {string} date - date interval string, e.g. NOW() - INTERVAL '1 DAY'
+ * @returns {Promise<ActivityReport[]>} - retrieved reports
+ */
+export async function activityReportsWhereCollaboratorByDate(userId, date) {
+  const reports = await ActivityReport.findAll({
+    attributes: ['id', 'displayId'],
+    where: {
+      calculatedStatus: {
+        [Op.ne]: REPORT_STATUSES.APPROVED,
+      },
+      id: {
+        [Op.in]: sequelize.literal(
+          `(SELECT (new_row_data->'activityReportId')::NUMERIC
+        FROM "ZALActivityReportCollaborators" 
+        where dml_timestamp > ${date} AND
+        (new_row_data->'userId')::NUMERIC = ${userId})`,
+        ),
+      },
+    },
+    include: [
+      {
+        model: ActivityReportCollaborator,
+        as: 'activityReportCollaborators',
+        where: { userId },
+      },
+    ],
+  });
+  return reports;
+}
+
+/**
+ * Fetches ActivityReports where change was requested and a user is either
+ * a collaborator or an author
+ *
+ * @param {integer} userId - user id
+ * @param {string} date - date interval string, e.g. NOW() - INTERVAL '1 DAY'
+ * @returns {Promise<ActivityReport[]>} - retrieved reports
+ */
+export async function activityReportsChangesRequestedByDate(userId, date) {
+  const reports = await ActivityReport.findAll({
+    attributes: ['id', 'displayId'],
+    where: {
+      [Op.and]: [
+        {
+          calculatedStatus: {
+            [Op.ne]: REPORT_STATUSES.APPROVED,
+          },
+        },
+        {
+          [Op.or]: [{ userId }, { '$activityReportCollaborators.userId$': userId }],
+        },
+        {
+          id: {
+            [Op.in]: sequelize.literal(
+              `(SELECT data_id
+          FROM "ZALActivityReports" 
+          where dml_timestamp > ${date} AND
+          (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.NEEDS_ACTION}')`,
+            ),
+          },
+        },
+      ],
+    },
+    include: [
+      {
+        model: ActivityReportCollaborator,
+        as: 'activityReportCollaborators',
+        attributes: ['userId'],
+        required: false,
+      },
+    ],
+  });
+  return reports;
+}
+
+/**
+ * Fetches ActivityReports that were submitted for the manager's review
+ *
+ * @param {integer} userId - manager's id
+ * @param {string} date - date interval string, e.g. NOW() - INTERVAL '1 DAY'
+ * @returns {Promise<ActivityReport[]>} - retrieved reports
+ */
+export async function activityReportsSubmittedByDate(userId, date) {
+  const reports = await ActivityReport.findAll({
+    attributes: ['id', 'displayId'],
+    where: {
+      [Op.and]: [
+        { calculatedStatus: { [Op.ne]: REPORT_STATUSES.APPROVED } },
+        { calculatedStatus: { [Op.ne]: REPORT_STATUSES.DRAFT } },
+        {
+          id: {
+            [Op.in]: sequelize.literal(
+              `(SELECT data_id
+          FROM "ZALActivityReports" 
+          where dml_timestamp > ${date} AND
+          (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.SUBMITTED}')`,
+            ),
+          },
+        },
+      ],
+    },
+    include: [
+      {
+        model: ActivityReportApprover,
+        as: 'approvers',
+        where: { userId },
+      },
+    ],
+  });
+  return reports;
+}
+
+/**
+ * Fetches ActivityReports that were approved for authors and collaborators
+ *
+ * @param {integer} userId - user's id
+ * @param {string} date - date interval string, e.g. NOW() - INTERVAL '1 DAY'
+ * @returns {Promise<ActivityReport[]>} - retrieved reports
+ */
+export async function activityReportsApprovedByDate(userId, date) {
+  const reports = await ActivityReport.findAll({
+    attributes: ['id', 'displayId'],
+    where: {
+      [Op.and]: [
+        {
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        },
+        {
+          [Op.or]: [{ userId }, { '$activityReportCollaborators.userId$': userId }],
+        },
+        {
+          id: {
+            [Op.in]: sequelize.literal(
+              `(SELECT data_id
+          FROM "ZALActivityReports" 
+          where dml_timestamp > ${date} AND
+          (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.APPROVED}')`,
+            ),
+          },
+        },
+      ],
+    },
+    include: [
+      {
+        model: ActivityReportCollaborator,
+        as: 'activityReportCollaborators',
+        attributes: ['userId'],
+        required: false,
+      },
+    ],
+  });
+  return reports;
 }
