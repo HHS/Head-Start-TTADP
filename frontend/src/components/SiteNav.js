@@ -42,7 +42,7 @@ const SiteNav = ({
       setShowActivityReportSurveyButton(false);
     }
 
-    setShowSidebar(!(location.pathname === '/logout' && authenticated));
+    setShowSidebar(!(location.pathname === '/logout'));
   }, [location.pathname, authenticated]);
 
   if (!showSidebar) return null;
