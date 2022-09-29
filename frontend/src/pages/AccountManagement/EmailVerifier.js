@@ -39,20 +39,20 @@ export default function EmailVerifier({ token, updateUser }) {
   return (
     <>
       {verified === true && (
-        <Alert type="success">
+        <Alert type="success" className="margin-bottom-3">
           Your email has been verified!
         </Alert>
       )}
 
       {verified === false && (
-        <Alert type="error">
+        <Alert type="error" className="margin-bottom-3">
           Your email could not be verified.
           Please return to account management to request a new verification email.
         </Alert>
       )}
 
       {token && verified === null && (
-        <Alert type="info">
+        <Alert type="info" className="margin-bottom-3">
           Please wait while your email is being verified...
         </Alert>
       )}

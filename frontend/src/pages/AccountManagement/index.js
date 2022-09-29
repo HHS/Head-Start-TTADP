@@ -113,7 +113,7 @@ CustomizeEmailPreferencesForm.propTypes = {
   disabled: PropTypes.bool.isRequired,
 };
 
-function EmailPreferencesForm({ disabled }) {
+function EmailPreferencesForm({ disabled, onSave }) {
   const {
     register,
     handleSubmit,
@@ -133,6 +133,7 @@ function EmailPreferencesForm({ disabled }) {
   }, [emailPreference]);
 
   const onSubmit = async (formData) => {
+    onSave();
     const newSettings = emailTypesMap.reduce((acc, { keyName }) => {
       acc.push({ key: keyName, value: formData[keyName] });
       return acc;
@@ -154,18 +155,25 @@ function EmailPreferencesForm({ disabled }) {
   return (
     <Form
       data-testid="email-preferences-form"
-      className="margin-top-5"
       onSubmit={handleSubmit(onSubmit)}
       style={{ maxWidth: 'unset' }} // remove the 20rem default
     >
       <Fieldset>
         {saveError && (
-          <Alert type="error" data-testid="email-prefs-save-fail-message" className="margin-bottom-5">
+          <Alert
+            type="error"
+            data-testid="email-prefs-save-fail-message"
+            className="margin-bottom-3"
+          >
             {saveError}
           </Alert>
         )}
         {saveSuccess && (
-          <Alert type="success" data-testid="email-prefs-save-success-message" className="margin-bottom-5">
+          <Alert
+            type="success"
+            data-testid="email-prefs-save-success-message"
+            className="margin-bottom-3"
+          >
             Your email preferences have been saved.
           </Alert>
         )}
@@ -217,6 +225,7 @@ function EmailPreferencesForm({ disabled }) {
 
 EmailPreferencesForm.propTypes = {
   disabled: PropTypes.bool.isRequired,
+  onSave: PropTypes.func.isRequired,
 };
 
 function AccountManagement({ updateUser }) {
@@ -252,6 +261,7 @@ function AccountManagement({ updateUser }) {
   const [emailValidated, setEmailValidated] = useState(null);
   const [emailVerificationSent, setEmailVerificationSent] = useState(false);
   const [verificationEmailSendError, setVerificationEmailSendError] = useState(false);
+  const [showVerifier, setShowVerifier] = useState(true);
 
   useEffect(() => {
     const emailValidationStatus = user.validationStatus.find(({ type }) => type === 'email');
@@ -289,8 +299,6 @@ function AccountManagement({ updateUser }) {
 
       <h1 className="landing">Account Management</h1>
 
-      <EmailVerifier token={token} updateUser={updateUser} />
-
       {/* Profile box */}
       <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
         <h1 className="margin-bottom-1">Profile</h1>
@@ -312,7 +320,11 @@ function AccountManagement({ updateUser }) {
 
       {/* Email preferences box */}
       <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
-        <h1 className="margin-bottom-1">Email preferences</h1>
+        <h1 className="margin-bottom-3">Email preferences</h1>
+
+        {showVerifier && (
+          <EmailVerifier token={token} updateUser={updateUser} />
+        )}
 
         {!emailValidated && !emailVerificationSent && (
           <Alert type="warning">
@@ -363,7 +375,10 @@ function AccountManagement({ updateUser }) {
             watch={watch}
             formState={formState}
           >
-            <EmailPreferencesForm disabled={!emailValidated} />
+            <EmailPreferencesForm
+              disabled={!emailValidated}
+              onSave={() => setShowVerifier(false)}
+            />
           </FormProvider>
         )}
 
