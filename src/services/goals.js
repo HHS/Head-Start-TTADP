@@ -546,7 +546,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
             },
             {
               status: {
-                [Op.notIn]: ['Complete', 'Draft'],
+                [Op.notIn]: [OBJECTIVE_STATUS.COMPLETE, OBJECTIVE_STATUS.DRAFT],
               },
             },
           ],
