@@ -155,7 +155,19 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
   }
 };
 
-const determineObjectiveStatus = async (objectiveIds, sequelize) => {
+const determineObjectiveStatus = async (activityReportId, sequelize) => {
+  // Get all AR Objective Id's.
+  const objectives = await sequelize.models.ActivityReportObjective.findAll(
+    {
+      attributes: [
+        'id',
+        'objectiveId',
+      ],
+      where: { activityReportId },
+    },
+  );
+  const objectiveIds = objectives.map((o) => o.objectiveId);
+
   // Get all the reports that use the objectives
   const allObjectiveReports = await sequelize.models.ActivityReport.findAll({
     where: {
@@ -177,26 +189,27 @@ const determineObjectiveStatus = async (objectiveIds, sequelize) => {
   });
 
   // Map with promises: objective find the most recent ar end date
-  await Promise.all(objectiveIds.map((o) => {
+  const updateObjectivePromises = objectiveIds.map((o) => {
     // Get reports that use this objective.
     const relevantARs = allObjectiveReports.filter(
       (a) => a.activityReportObjectives.find((aro) => aro.objectiveId === o),
     );
 
     // Get latest report by end date.
-    const latestAR = relevantARs.reduce((r, a) => (r.date > a.date ? r : a));
+    const latestAR = relevantARs.reduce((r, a) => (r.endDate > a.endDate ? r : a));
 
     // Get Objective to take status from.
     const aro = latestAR.activityReportObjectives.find(((a) => a.objectiveId === o));
 
     // Update Objective status.
-    return sequelize.models.update({
+    return sequelize.models.Objective.update({
       status: aro.status,
     }, {
       where: { id: o },
       individualHooks: true,
     });
-  }));
+  });
+  return Promise.all(updateObjectivePromises);
 };
 const propagateApprovedStatus = async (sequelize, instance, options) => {
   const changed = instance.changed();
@@ -258,6 +271,10 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
           },
         );
       }
+
+      /*  Determine Objective Statuses (Approved > Other) */
+      await determineObjectiveStatus(instance.id, sequelize);
+
       let goals;
       try {
         goals = await sequelize.models.Goal.findAll({
@@ -354,8 +371,8 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
         },
       );
 
-      /*  Determine Objective Statuses */
-      determineObjectiveStatus(objectiveIds, sequelize);
+      /*  Determine Objective Statuses (Other > Approved) */
+      await determineObjectiveStatus(instance.id, sequelize);
 
       await sequelize.models.Goal.update(
         { onApprovedAR: true },
