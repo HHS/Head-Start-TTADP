@@ -902,6 +902,7 @@ export async function createOrUpdateGoals(goals) {
 
         // save all our objective join tables (ObjectiveResource, ObjectiveTopic, ObjectiveRole)
         const deleteUnusedAssociations = true;
+        console.log('\n\n\n-------------------------- Here 3');
         await saveObjectiveAssociations(
           objective,
           resources,
@@ -1298,13 +1299,14 @@ async function createObjectivesForGoal(goal, objectives, report) {
           status: { [Op.not]: 'Completed' },
         },
       });
-
       if (!existingObjective) {
         savedObjective = await Objective.create({
           ...updatedObjective,
           title: objectiveTitle,
           status,
         });
+      } else {
+        savedObjective = existingObjective;
       }
     }
 
