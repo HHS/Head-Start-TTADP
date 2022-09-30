@@ -232,9 +232,9 @@ describe('Objective status update hook', () => {
     await User.destroy({ where: { id: user.id } });
     await db.sequelize.close();
   });
-  it('determinesCorrectObjectiveStatus', async () => {
+  it('correct objective status moving to approved and from approved', async () => {
     // Get report to approve.
-    const preReport = await ActivityReport.findOne(
+    let preReport = await ActivityReport.findOne(
       { where: { id: reportOne.id }, individualHooks: true },
     );
     // Approve report.
@@ -242,10 +242,26 @@ describe('Objective status update hook', () => {
       { calculatedStatus: REPORT_STATUSES.APPROVED, submissionStatus: REPORT_STATUSES.SUBMITTED },
     );
     // Assert correct status.
-    const objectivesUpdated = await Objective.findAll({
+    let objectivesUpdated = await Objective.findAll({
       where: { id: objective.id },
     });
     expect(objectivesUpdated.length).toBe(1);
     expect(objectivesUpdated[0].status).toBe('Completed');
+
+    preReport = await ActivityReport.findOne(
+      { where: { id: reportOne.id }, individualHooks: true },
+    );
+
+    // UnApprove report.
+    await preReport.update(
+      { calculatedStatus: REPORT_STATUSES.DRAFT, submissionStatus: REPORT_STATUSES.DRAFT },
+    );
+
+    // Assert correct status.
+    objectivesUpdated = await Objective.findAll({
+      where: { id: objective.id },
+    });
+    expect(objectivesUpdated.length).toBe(1);
+    expect(objectivesUpdated[0].status).toBe('In Progress');
   });
 });
