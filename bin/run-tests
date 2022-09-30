@@ -104,14 +104,16 @@ POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true node --expose-gc ./node_module
       targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets") 
 
       for target in ${targets[@]}; do        
+
+          path="src/$target"
           # jest command to 
           # - run tests in the target folder
           # - collect coverage from the target folder
           # - output coverage relative to the target folder
           # - some other useful flags
           command="node_modules/.bin/cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres \
-POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true node --expose-gc ./node_modules/.bin/jest $target --coverage --colors --reporters=jest-junit --reporters=default --runInBand\
- --silent --colors --logHeapUsage --coverageDirectory=$target/coverage --collectCoverageFrom=$target/**/*.js --forceExit"
+POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true node --expose-gc ./node_modules/.bin/jest $path --coverage --colors --reporters=jest-junit --reporters=default --runInBand\
+ --silent --colors --logHeapUsage --coverageDirectory=coverage/$target --collectCoverageFrom=$path/**/*.js --forceExit"
           # add the target to the coverage files
           coverage_files+=("$target/coverage/lcov.info")
           if [[ $docker == "true" ]]; then
