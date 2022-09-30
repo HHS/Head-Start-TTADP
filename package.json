@@ -134,13 +134,24 @@
       "<rootDir>node_modules/",
       "<rootDir>/build/",
       "<rootDir>/src/makecolors.js",
-      "<rootDir>/src/newrelic.js/",
+      "<rootDir>/src/newrelic.js",
       "<rootDir>/src/testUtils.js",
-      "<rootDir>/src/logger.js"
+      "<rootDir>/src/logger.js",
+      "<rootDir>/src/*/coverage/",
+      "<rootDir>/src/coverage/"
     ],
     "testTimeout": 30000,
     "coveragePathIgnorePatterns": [
-      "<rootDir>/src/middleware/newRelicMiddleware.js"
+      "<rootDir>/src/middleware/newRelicMiddleware.js",
+      "<rootDir>/frontend/",
+      "<rootDir>node_modules",
+      "<rootDir>/build/",
+      "<rootDir>/src/makecolors.js",
+      "<rootDir>/src/newrelic.js",
+      "<rootDir>/src/testUtils.js",
+      "<rootDir>/src/logger.js",
+      "<rootDir>/src/*/coverage/",
+      "<rootDir>/src/coverage/"
     ],
     "coverageThreshold": {
       "global": {
