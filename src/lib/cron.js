@@ -11,16 +11,12 @@ import { logger, auditLogger } from '../logger';
 // Set timing parameters.
 // Run at 4 am ET
 const schedule = '0 4 * * *';
-// const dailyEmailDigestSchedule = '*/10 * * * * *';
 // Run daily at 4 pm
-// const dailySched = '0 16 * * *';
-// const dailySched = '*/10 * * * * *';
-// const tmpSched = '0 * * * *'; // every hour
-const tmpSched = '*/10 * * * * *'; // every hour
+const dailySched = '0 16 * * *';
 // Run at 4 pm every Friday
-// const weeklySched = '0 16 * * 5';
+const weeklySched = '0 16 * * 5';
 // Run at 4 pm on the last of the month
-const monthlySched = '0 16 30 * *';
+const monthlySched = '0 16 28-31 * *';
 const timezone = 'America/New_York';
 
 const runJob = () => {
@@ -65,9 +61,20 @@ const runWeeklyEmailJob = () => {
   return true;
 };
 
+export const lastDayOfMonth = (date) => {
+  let tomorrow = new Date(date);
+
+  tomorrow.setDate(date.getDate() + 1);
+
+  return tomorrow.getDate() === 1;
+}
+
 const runMonthlyEmailJob = () => {
   (async () => {
     logger.info('Starting montly digests');
+    if (!lastDayOfMonth(new Date())) {
+      return false;
+    }
     try {
       await collaboratorDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
       await changesRequestedDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
