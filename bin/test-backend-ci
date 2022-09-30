@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# first get the tests in the root directory
+node_modules/.bin/cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres \
+POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true node --expose-gc ./node_modules/.bin/jest src/*.js --coverage --colors --reporters=jest-junit --reporters=default --runInBand\
+ --silent --colors --logHeapUsage --coverageDirectory=src/coverage --collectCoverageFrom=src/*.js --forceExit --testPathIgnorePatterns='/src/logger.js|src/makecolors.js|src/newrelic.js|testsUtils.js/i'
+
+# then list through the folders and run the tests
+targets=("src/lib" "src/middleware" "src/models" "src/policies" "src/routes" "src/scopes" "src/services" "src/tools" "src/widgets" "src/workers")
+
+for target in ${targets[@]}; do        
+    # jest command to 
+    # - run tests in the target folder
+    # - collect coverage from the target folder
+    # - output coverage relative to the target folder
+    # - some other useful flags
+    command="node_modules/.bin/cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres \
+POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true node --expose-gc ./node_modules/.bin/jest $target --coverage --colors --reporters=jest-junit --reporters=default --runInBand\
+ --silent --colors --logHeapUsage --coverageDirectory=$target/coverage --collectCoverageFrom=$target/**/*.js --forceExit --testPathIgnorePatterns=$target/coverage/lcov-report"
+    # add the target to the coverage files
+    $command
+done
+
