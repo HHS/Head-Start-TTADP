@@ -80,17 +80,23 @@ describe('Objective status update hook', () => {
   let recipientOne;
   let recipientTwo;
   let recipientThree;
+  let recipientFour;
 
   let grantOne;
   let grantTwo;
   let grantThree;
+  let grantFour;
 
   let reportOne;
   let reportTwo;
   let reportThree;
+  let reportOnlyUsingObjective;
 
   let goal;
+  let goalTwo;
   let objective;
+  let objectiveTwo;
+  let objectiveTwoB;
 
   beforeAll(async () => {
     try {
@@ -114,6 +120,12 @@ describe('Objective status update hook', () => {
         uei: 'NNA5N2KHMGM4',
         name: 'Mock Objective Status Recipient 3',
         recipientType: 'Mock Objective Status Recipient 3',
+      });
+      recipientFour = await Recipient.create({
+        id: 234258,
+        uei: 'NNA5N2KHMGM4',
+        name: 'Mock Objective Status Recipient 4',
+        recipientType: 'Mock Objective Status Recipient 4',
       });
       // Grants.
       await Grant.create({
@@ -145,6 +157,17 @@ describe('Objective status update hook', () => {
         programSpecialistEmail: user.email,
       });
       grantThree = await Grant.findOne({ where: { id: 476469 } });
+
+      await Grant.create({
+        ...mockGrant,
+        id: 476470,
+        number: '58947D84',
+        recipientId: recipientFour.id,
+        programSpecialistName: user.name,
+        programSpecialistEmail: user.email,
+      });
+      grantFour = await Grant.findOne({ where: { id: 476470 } });
+
       // Reports.
       reportOne = await ActivityReport.create({ ...sampleReport, endDate: '2022-09-30T12:00:00Z' });
       reportTwo = await ActivityReport.create({
@@ -154,6 +177,9 @@ describe('Objective status update hook', () => {
         endDate: '2022-09-29T12:00:00Z',
       });
       reportThree = await ActivityReport.create({ ...sampleReport });
+
+      reportOnlyUsingObjective = await ActivityReport.create({ ...sampleReport, endDate: '2022-09-30T12:00:00Z' });
+
       // Activity Recipients.
       await ActivityRecipient.create(
         { activityReportId: reportOne.id, grantId: grantOne.id },
@@ -164,11 +190,20 @@ describe('Objective status update hook', () => {
       await ActivityRecipient.create(
         { activityReportId: reportThree.id, grantId: grantThree.id },
       );
+      await ActivityRecipient.create(
+        { activityReportId: reportOnlyUsingObjective.id, grantId: grantFour.id },
+      );
       // Goals.
       goal = await Goal.create(
         {
           name: 'goal 1',
           grantId: grantOne.id,
+        },
+      );
+      goalTwo = await Goal.create(
+        {
+          name: 'goal 2',
+          grantId: grantTwo.id,
         },
       );
 
@@ -180,6 +215,21 @@ describe('Objective status update hook', () => {
           status: 'Not Started',
         },
       );
+      objectiveTwo = await Objective.create(
+        {
+          title: 'Objective Used on Reports Two',
+          goalId: goalTwo.id,
+          status: 'Not Started',
+        },
+      );
+      objectiveTwoB = await Objective.create(
+        {
+          title: 'Objective Used on Reports Two B',
+          goalId: goalTwo.id,
+          status: 'In Progress',
+        },
+      );
+
       // ARO's
       ActivityReportObjective.create({
         activityReportId: reportOne.id,
@@ -198,6 +248,18 @@ describe('Objective status update hook', () => {
         objectiveId: objective.id,
         status: 'Suspended',
       });
+
+      ActivityReportObjective.create({
+        activityReportId: reportOnlyUsingObjective.id,
+        objectiveId: objectiveTwo.id,
+        status: 'Completed',
+      });
+
+      ActivityReportObjective.create({
+        activityReportId: reportOnlyUsingObjective.id,
+        objectiveId: objectiveTwoB.id,
+        status: 'Completed',
+      });
     } catch (e) {
       auditLogger.error(JSON.stringify(e));
       throw e;
@@ -210,31 +272,53 @@ describe('Objective status update hook', () => {
           reportOne.id,
           reportTwo.id,
           reportThree.id,
+          reportOnlyUsingObjective.id,
         ],
       },
     });
     await ActivityReportObjective.destroy({
       where:
-      { activityReportId: [reportOne.id, reportTwo.id, reportThree.id] },
+      {
+        activityReportId: [
+          reportOne.id,
+          reportTwo.id,
+          reportThree.id,
+          reportOnlyUsingObjective.id],
+      },
     });
     await ActivityReportGoal.destroy({
       where:
-      { activityReportId: [reportOne.id, reportTwo.id, reportThree.id] },
+      {
+        activityReportId: [
+          reportOne.id,
+          reportTwo.id,
+          reportThree.id,
+          reportOnlyUsingObjective.id,
+        ],
+      },
     });
-    await ActivityReport.destroy({ where: { id: [reportOne.id, reportTwo.id, reportThree.id] } });
-    await Objective.destroy({ where: { id: objective.id } });
-    await Goal.destroy({ where: { id: goal.id } });
-    await Grant.destroy({ where: { id: [grantOne.id, grantTwo.id, grantThree.id] } });
+    await ActivityReport.destroy({
+      where: {
+        id: [
+          reportOne.id,
+          reportTwo.id,
+          reportThree.id,
+          reportOnlyUsingObjective.id],
+      },
+    });
+    await Objective.destroy({ where: { id: [objective.id, objectiveTwo.id, objectiveTwoB.id] } });
+    await Goal.destroy({ where: { id: [goal.id, goalTwo.id] } });
+    await Grant.destroy({ where: { id: [grantOne.id, grantTwo.id, grantThree.id, grantFour.id] } });
     await Recipient.destroy({
       where:
-      { id: [recipientOne.id, recipientTwo.id, recipientThree.id] },
+      { id: [recipientOne.id, recipientTwo.id, recipientThree.id, recipientFour.id] },
     });
     await User.destroy({ where: { id: user.id } });
     await db.sequelize.close();
   });
   it('correct objective status moving to approved and from approved', async () => {
     // Get report to approve.
-    let preReport = await ActivityReport.findOne(
+    const preReport = await ActivityReport.findOne(
       { where: { id: reportOne.id }, individualHooks: true },
     );
     // Approve report.
@@ -248,10 +332,6 @@ describe('Objective status update hook', () => {
     expect(objectivesUpdated.length).toBe(1);
     expect(objectivesUpdated[0].status).toBe('Completed');
 
-    preReport = await ActivityReport.findOne(
-      { where: { id: reportOne.id }, individualHooks: true },
-    );
-
     // UnApprove report.
     await preReport.update(
       { calculatedStatus: REPORT_STATUSES.DRAFT, submissionStatus: REPORT_STATUSES.DRAFT },
@@ -263,5 +343,36 @@ describe('Objective status update hook', () => {
     });
     expect(objectivesUpdated.length).toBe(1);
     expect(objectivesUpdated[0].status).toBe('In Progress');
+  });
+
+  it('correct objective status with only one report using the objective', async () => {
+    // Get report to approve.
+    const preReport = await ActivityReport.findOne(
+      { where: { id: reportOnlyUsingObjective.id }, individualHooks: true },
+    );
+    // Approve report.
+    await preReport.update(
+      { calculatedStatus: REPORT_STATUSES.APPROVED, submissionStatus: REPORT_STATUSES.SUBMITTED },
+    );
+    // Assert correct status.
+    let objectivesUpdated = await Objective.findAll({
+      where: { id: [objectiveTwo.id, objectiveTwoB.id] },
+    });
+    expect(objectivesUpdated.length).toBe(2);
+    expect(objectivesUpdated[0].status).toBe('Completed');
+    expect(objectivesUpdated[1].status).toBe('Completed');
+
+    // UnApprove report.
+    await preReport.update(
+      { calculatedStatus: REPORT_STATUSES.DRAFT, submissionStatus: REPORT_STATUSES.DRAFT },
+    );
+
+    // Assert correct status.
+    objectivesUpdated = await Objective.findAll({
+      where: { id: [objectiveTwo.id, objectiveTwoB.id] },
+    });
+    expect(objectivesUpdated.length).toBe(2);
+    expect(objectivesUpdated[0].status).toBe('Not Started');
+    expect(objectivesUpdated[1].status).toBe('Not Started');
   });
 });
