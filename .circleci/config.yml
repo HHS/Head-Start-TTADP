@@ -254,11 +254,13 @@ jobs:
           command: yarn db:seed:ci
       - run:
           name: Test backend
-          command: yarn test:ci
-      - store_test_results:
-          path: reports/
-      - store_artifacts:
-          path: coverage/
+          command:  |
+            chmod 744 ./bin/test-backend-ci
+            sh ./bin/test-backend-ci
+      # - store_test_results:
+      #     path: reports/
+      # - store_artifacts:
+      #     path: coverage/
 
   test_frontend:
     executor: docker-executor
