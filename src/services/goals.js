@@ -902,7 +902,6 @@ export async function createOrUpdateGoals(goals) {
 
         // save all our objective join tables (ObjectiveResource, ObjectiveTopic, ObjectiveRole)
         const deleteUnusedAssociations = true;
-        console.log('\n\n\n-------------------------- Here 3');
         await saveObjectiveAssociations(
           objective,
           resources,
