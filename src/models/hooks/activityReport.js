@@ -170,9 +170,6 @@ const determineObjectiveStatus = async (activityReportId, sequelize) => {
 
   // Get all the reports that use the objectives
   const allObjectiveReports = await sequelize.models.ActivityReport.findAll({
-    where: {
-      calculatedStatus: REPORT_STATUSES.APPROVED,
-    },
     include: [
       {
         model: sequelize.models.ActivityReportObjective,
@@ -188,27 +185,46 @@ const determineObjectiveStatus = async (activityReportId, sequelize) => {
     ],
   });
 
-  // Map with promises: objective find the most recent ar end date
-  const updateObjectivePromises = objectiveIds.map((o) => {
+  // Get Approved Reports that might set the status.
+  const approvedReports = allObjectiveReports.filter(
+    (a) => a.calculatedStatus === REPORT_STATUSES.APPROVED,
+  );
+
+  // Check if there aren't any approved reports to set the status.
+  let updateObjectivePromises;
+  if (!approvedReports.length) {
+    // Get Objective Id's to reset.
+    const currentReport = allObjectiveReports.find((r) => r.id === activityReportId);
+    const objectiveIdsToReset = currentReport.activityReportObjectives.map((a) => a.objectiveId);
+    updateObjectivePromises = [
+      sequelize.models.Objective.update({
+        status: 'Not Started',
+      }, {
+        where: { id: objectiveIdsToReset },
+        individualHooks: true,
+      })];
+  } else {
+    // Map with promises: objective find the most recent ar end date
+    updateObjectivePromises = objectiveIds.map((o) => {
     // Get reports that use this objective.
-    const relevantARs = allObjectiveReports.filter(
-      (a) => a.activityReportObjectives.find((aro) => aro.objectiveId === o),
-    );
+      const relevantARs = approvedReports.filter(
+        (a) => a.activityReportObjectives.find((aro) => aro.objectiveId === o),
+      );
+      // Get latest report by end date.
+      const latestAR = relevantARs.reduce((r, a) => (r.endDate > a.endDate ? r : a));
 
-    // Get latest report by end date.
-    const latestAR = relevantARs.reduce((r, a) => (r.endDate > a.endDate ? r : a));
+      // Get Objective to take status from.
+      const aro = latestAR.activityReportObjectives.find(((a) => a.objectiveId === o));
 
-    // Get Objective to take status from.
-    const aro = latestAR.activityReportObjectives.find(((a) => a.objectiveId === o));
-
-    // Update Objective status.
-    return sequelize.models.Objective.update({
-      status: aro.status,
-    }, {
-      where: { id: o },
-      individualHooks: true,
+      // Update Objective status.
+      return sequelize.models.Objective.update({
+        status: aro.status,
+      }, {
+        where: { id: o },
+        individualHooks: true,
+      });
     });
-  });
+  }
   return Promise.all(updateObjectivePromises);
 };
 const propagateApprovedStatus = async (sequelize, instance, options) => {
