@@ -62,18 +62,19 @@ const runWeeklyEmailJob = () => {
 };
 
 export const lastDayOfMonth = (date) => {
-  let tomorrow = new Date(date);
+  const tomorrow = new Date(date);
 
   tomorrow.setDate(date.getDate() + 1);
-
+  console.log(tomorrow);
+// console.log(tomorrow.setDate(date.getDate() + 1));
   return tomorrow.getDate() === 1;
-}
+};
 
 const runMonthlyEmailJob = () => {
   (async () => {
     logger.info('Starting montly digests');
     if (!lastDayOfMonth(new Date())) {
-      return false;
+      return;
     }
     try {
       await collaboratorDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
@@ -96,9 +97,9 @@ export default function runCronJobs() {
   if (process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') {
     const job = new CronJob(schedule, () => runJob(), null, true, timezone);
     job.start();
-    const dailyJob = new CronJob(tmpSched, () => runDailyEmailJob(), null, true, timezone);
+    const dailyJob = new CronJob(dailySched, () => runDailyEmailJob(), null, true, timezone);
     dailyJob.start();
-    const weeklyJob = new CronJob(tmpSched, () => runWeeklyEmailJob(), null, true, timezone);
+    const weeklyJob = new CronJob(weeklySched, () => runWeeklyEmailJob(), null, true, timezone);
     weeklyJob.start();
     const monthlyJob = new CronJob(monthlySched, () => runMonthlyEmailJob(), null, true, timezone);
     monthlyJob.start();
