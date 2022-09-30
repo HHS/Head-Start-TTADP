@@ -2,9 +2,28 @@
 
 main(){
     # first get the tests in the root directory
-    node_modules/.bin/cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres \
-    POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true node --expose-gc ./node_modules/.bin/jest src/*.js --coverage --colors --reporters=jest-junit --reporters=default --runInBand\
-    --silent --colors --logHeapUsage --coverageDirectory=src/coverage --collectCoverageFrom=src/*.js --forceExit
+    node_modules/.bin/cross-env \
+		JEST_JUNIT_OUTPUT_DIR=reports \
+		JEST_JUNIT_OUTPUT_NAME=unit.xml \
+		POSTGRES_USERNAME=postgres \
+		POSTGRES_DB=ttasmarthub \
+		CURRENT_USER_ID=5 \
+		CI=true \
+		node \
+		--expose-gc \
+		./node_modules/.bin/jest \
+		src/*.js \
+		--coverage \
+		--colors \
+		--reporters=jest-junit \
+		--reporters=default \
+		--runInBand \
+		--silent \
+		--colors \
+		--logHeapUsage \
+		--coverageDirectory=$(pwd)/coverage/0/ \
+		--collectCoverageFrom=src/*.js \
+		--forceExit
 
     # then list through the folders and run the tests
     targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets") 
@@ -16,13 +35,28 @@ main(){
         # - output coverage relative to the target folder
         # - some other useful flags
 
-        path="src/$target"
-        command="node_modules/.bin/cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres \
-    POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true node --expose-gc ./node_modules/.bin/jest $path --coverage --colors \
-    --reporters=jest-junit --reporters=default --runInBand \
-    --silent --colors --logHeapUsage --coverageDirectory=../coverage/$target --collectCoverageFrom=$path/**/*.js --forceExit"
-
-        $command
+        node_modules/.bin/cross-env \
+			JEST_JUNIT_OUTPUT_DIR=reports \
+			JEST_JUNIT_OUTPUT_NAME=unit.xml \
+			POSTGRES_USERNAME=postgres \
+			POSTGRES_DB=ttasmarthub \
+			CURRENT_USER_ID=5 \
+			CI=true \
+			node \
+			--expose-gc \
+			./node_modules/.bin/jest \
+			src/$target \
+			--coverage \
+			--colors \
+			--reporters=jest-junit \
+			--reporters=default \
+			--runInBand \
+			--silent \
+			--colors \
+			--logHeapUsage \
+			--coverageDirectory=$(pwd)/coverage/$target \
+			--collectCoverageFrom=src/$target/**/*.js \
+			--forceExit
     done
 }
 
