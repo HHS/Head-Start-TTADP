@@ -87,7 +87,7 @@ main() {
       # first get the tests in the root directory
       command="node_modules/.bin/cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres \
 POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true node --expose-gc ./node_modules/.bin/jest src/*.js --coverage --colors --reporters=jest-junit --reporters=default --runInBand\
- --silent --colors --logHeapUsage --coverageDirectory=src/coverage --collectCoverageFrom=src/*.js --forceExit --testPathIgnorePatterns='/src/logger.js|src/makecolors.js|src/newrelic.js|testsUtils.js/i'"
+ --silent --colors --logHeapUsage --coverageDirectory=src/coverage --collectCoverageFrom=src/*.js --forceExit"
 
       # start collecting our coverage files
       coverage_files=("src/coverage/lcov.info")
@@ -101,7 +101,7 @@ POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true node --expose-gc ./node_module
       check_exit "$?"
 
       # then list through the folders and run the tests
-      targets=("src/lib" "src/middleware" "src/models" "src/policies" "src/routes" "src/scopes" "src/services" "src/tools" "src/widgets" "src/workers")
+      targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets") 
 
       for target in ${targets[@]}; do        
           # jest command to 
@@ -111,7 +111,7 @@ POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true node --expose-gc ./node_module
           # - some other useful flags
           command="node_modules/.bin/cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres \
 POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true node --expose-gc ./node_modules/.bin/jest $target --coverage --colors --reporters=jest-junit --reporters=default --runInBand\
- --silent --colors --logHeapUsage --coverageDirectory=$target/coverage --collectCoverageFrom=$target/**/*.js --forceExit --testPathIgnorePatterns=$target/coverage/lcov-report"
+ --silent --colors --logHeapUsage --coverageDirectory=$target/coverage --collectCoverageFrom=$target/**/*.js --forceExit"
           # add the target to the coverage files
           coverage_files+=("$target/coverage/lcov.info")
           if [[ $docker == "true" ]]; then
