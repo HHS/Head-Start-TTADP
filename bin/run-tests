@@ -103,7 +103,7 @@ POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true node --expose-gc ./node_module
       # then list through the folders and run the tests
       targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets") 
 
-      for target in ${targets[@]}; do        
+      for target in "${targets[@]}"; do        
 
           path="src/$target"
           # jest command to 
@@ -126,7 +126,7 @@ POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true node --expose-gc ./node_module
       done
 
       # concatenate all the coverage files into one
-      for f in ${coverage_files[@]}; do
+      for f in "${coverage_files[@]}"; do
           cat $f >> lcov.info
       done     
     fi
