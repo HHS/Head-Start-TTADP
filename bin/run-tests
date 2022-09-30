@@ -80,19 +80,53 @@ main() {
     fi
 
     if [[ "$opt" == "backend" || -z "$opt" ]]; then
-        # Test backend
-        command="yarn test:ci --colors"
-        if [ $verbose == "false" ]; then
-          command="yarn test:ci --silent --colors"
-        fi
-        echo
-        log "Running backend tests"
-        if [[ $docker == "true" ]]; then
-          docker exec test-backend bash -c "$command"
-        else
-          $command
-        fi
-        check_exit "$?"
+      # Test backend
+      echo
+      log "Running backend tests"
+
+      # first get the tests in the root directory
+      command="node_modules/.bin/cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres \
+POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true node --expose-gc ./node_modules/.bin/jest src/*.js --coverage --colors --reporters=jest-junit --reporters=default --runInBand\
+ --silent --colors --logHeapUsage --coverageDirectory=src/coverage --collectCoverageFrom=src/*.js --forceExit --testPathIgnorePatterns='/src/logger.js|src/makecolors.js|src/newrelic.js|testsUtils.js/i'"
+
+      # start collecting our coverage files
+      coverage_files=("src/coverage/lcov.info")
+
+      if [[ $docker == "true" ]]; then
+        docker exec test-backend bash -c "$command"
+      else
+        $command
+      fi
+
+      check_exit "$?"
+
+      # then list through the folders and run the tests
+      targets=("src/lib" "src/middleware" "src/models" "src/policies" "src/routes" "src/scopes" "src/services" "src/tools" "src/widgets" "src/workers")
+
+      for target in ${targets[@]}; do        
+          # jest command to 
+          # - run tests in the target folder
+          # - collect coverage from the target folder
+          # - output coverage relative to the target folder
+          # - some other useful flags
+          command="node_modules/.bin/cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres \
+POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true node --expose-gc ./node_modules/.bin/jest $target --coverage --colors --reporters=jest-junit --reporters=default --runInBand\
+ --silent --colors --logHeapUsage --coverageDirectory=$target/coverage --collectCoverageFrom=$target/**/*.js --forceExit --testPathIgnorePatterns=$target/coverage/lcov-report"
+          # add the target to the coverage files
+          coverage_files+=("$target/coverage/lcov.info")
+          if [[ $docker == "true" ]]; then
+            docker exec test-backend bash -c "$command"
+          else
+            $command
+          fi
+
+          check_exit "$?"
+      done
+
+      # concatenate all the coverage files into one
+      for f in ${coverage_files[@]}; do
+          cat $f >> lcov.info
+      done     
     fi
 
     if [[ "$opt" == "frontend" || -z "$opt" ]]; then

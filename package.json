@@ -20,7 +20,7 @@
     "server:debug": "nodemon --inspect=0.0.0.0:9229 src/index.js --exec babel-node",
     "client": "yarn --cwd frontend start",
     "test": "jest src --runInBand", 
-    "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true node --expose-gc ./node_modules/.bin/jest src  --coverage  --reporters=jest-junit --reporters=default --runInBand --logHeapUsage",    
+    "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true node --expose-gc ./node_modules/.bin/jest src  --coverage  --reporters=jest-junit --reporters=default --runInBand",    
     "test:all": "yarn test:ci && yarn --cwd frontend test:ci",
     "lint": "eslint src",
     "lint:ci": "eslint -f eslint-formatter-multiple src",
@@ -130,7 +130,13 @@
   },
   "jest": {
     "testPathIgnorePatterns": [
-      "<rootDir>/frontend/"
+      "<rootDir>/frontend/",
+      "<rootDir>node_modules/",
+      "<rootDir>/build/",
+      "<rootDir>/src/makecolors.js",
+      "<rootDir>/src/newrelic.js/",
+      "<rootDir>/src/testUtils.js",
+      "<rootDir>/src/logger.js"
     ],
     "testTimeout": 30000,
     "coveragePathIgnorePatterns": [
