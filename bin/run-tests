@@ -84,13 +84,35 @@ main() {
       echo
       log "Running backend tests"
 
+      # remove existing coverage folder, since we are changing how things are structured
+      rm -f -rf coverage
+
       # first get the tests in the root directory
-      command="node_modules/.bin/cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres \
-POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true node --expose-gc ./node_modules/.bin/jest src/*.js --coverage --colors --reporters=jest-junit --reporters=default --runInBand\
- --silent --colors --logHeapUsage --coverageDirectory=src/coverage --collectCoverageFrom=src/*.js --forceExit"
+      node_modules/.bin/cross-env \
+      JEST_JUNIT_OUTPUT_DIR=reports \
+      JEST_JUNIT_OUTPUT_NAME=unit.xml \
+      POSTGRES_USERNAME=postgres \
+      POSTGRES_DB=ttasmarthub \
+      CURRENT_USER_ID=5 \
+      CI=true \
+      node \
+      --expose-gc \
+      ./node_modules/.bin/jest \
+      src/*.js \
+      --coverage \
+      --colors \
+      --reporters=jest-junit \
+      --reporters=default \
+      --runInBand \
+      --silent \
+      --colors \
+      --logHeapUsage \
+      --coverageDirectory="$(pwd)"/coverage/src/root \
+      --collectCoverageFrom=src/*.js \
+      --forceExit
 
       # start collecting our coverage files
-      coverage_files=("src/coverage/lcov.info")
+      coverage_files=("coverage/src/root/lcov.info")
 
       if [[ $docker == "true" ]]; then
         docker exec test-backend bash -c "$command"
@@ -103,32 +125,50 @@ POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true node --expose-gc ./node_module
       # then list through the folders and run the tests
       targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets") 
 
-      for target in "${targets[@]}"; do        
-
-          path="src/$target"
-          # jest command to 
-          # - run tests in the target folder
-          # - collect coverage from the target folder
-          # - output coverage relative to the target folder
-          # - some other useful flags
-          command="node_modules/.bin/cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres \
-POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true node --expose-gc ./node_modules/.bin/jest $path --coverage --colors --reporters=jest-junit --reporters=default --runInBand\
- --silent --colors --logHeapUsage --coverageDirectory=coverage/$target --collectCoverageFrom=$path/**/*.js --forceExit"
-          # add the target to the coverage files
-          coverage_files+=("$target/coverage/lcov.info")
+       for target in "${targets[@]}"; do        
+        # jest command to 
+        # - run tests in the target folder
+        # - collect coverage from the target folder
+        # - output coverage relative to the target folder
+        # - some other useful flags        
+        node_modules/.bin/cross-env \
+          JEST_JUNIT_OUTPUT_DIR=reports \
+          JEST_JUNIT_OUTPUT_NAME=unit.xml \
+          POSTGRES_USERNAME=postgres \
+          POSTGRES_DB=ttasmarthub \
+          CURRENT_USER_ID=5 \
+          CI=true \
+          node \
+          --expose-gc \
+          ./node_modules/.bin/jest \
+          src/"$target" \
+          --coverage \
+          --colors \
+          --reporters=jest-junit \
+          --reporters=default \
+          --runInBand \
+          --silent \
+          --colors \
+          --logHeapUsage \
+          --coverageDirectory="$(pwd)"/coverage/src/"$target" \
+          --collectCoverageFrom=src/"$target"/**/*.js \
+          --forceExit    
+          
+          coverage_files+=("coverage/src/$target/lcov.info")
           if [[ $docker == "true" ]]; then
             docker exec test-backend bash -c "$command"
           else
             $command
           fi
-
           check_exit "$?"
       done
 
       # concatenate all the coverage files into one
       for f in "${coverage_files[@]}"; do
-          cat $f >> lcov.info
+          cat "$f" >> lcov.info
       done     
+
+      # genhtml lcov.info --output-directory coverage
     fi
 
     if [[ "$opt" == "frontend" || -z "$opt" ]]; then

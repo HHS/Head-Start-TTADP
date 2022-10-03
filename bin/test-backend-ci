@@ -1,6 +1,9 @@
 #!/bin/bash
 
 main(){
+	# remove existing coverage folder, since we are changing how things are structured
+	rm -f -rf coverage
+
     # first get the tests in the root directory
     node_modules/.bin/cross-env \
 		JEST_JUNIT_OUTPUT_DIR=reports \
@@ -21,9 +24,12 @@ main(){
 		--silent \
 		--colors \
 		--logHeapUsage \
-		--coverageDirectory=$(pwd)/coverage/0/ \
+		--coverageDirectory="$(pwd)"/coverage/src \
 		--collectCoverageFrom=src/*.js \
 		--forceExit
+
+	# start collecting our coverage files
+    coverage_files=("coverage/src/root/lcov.info")
 
     # then list through the folders and run the tests
     targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets") 
@@ -45,7 +51,7 @@ main(){
 			node \
 			--expose-gc \
 			./node_modules/.bin/jest \
-			src/$target \
+			src/"$target" \
 			--coverage \
 			--colors \
 			--reporters=jest-junit \
@@ -54,9 +60,19 @@ main(){
 			--silent \
 			--colors \
 			--logHeapUsage \
-			--coverageDirectory=$(pwd)/coverage/$target \
-			--collectCoverageFrom=src/$target/**/*.js \
+			--coverageDirectory="$(pwd)"/coverage/src/"$target" \
+			--collectCoverageFrom=src/"$target"/**/*.js \
 			--forceExit
+
+	 	coverage_files+=("coverage/src/$target/lcov.info")
+
+        # concatenate all the coverage files into one
+        for f in "${coverage_files[@]}"; do
+          cat "$f" >> lcov.info
+        done     
+
+        # genhtml lcov.info --output-directory coverage
+
     done
 }
 
