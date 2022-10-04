@@ -23,7 +23,7 @@ import {
   File,
   Role,
 } from '../models';
-import { DECIMAL_BASE, REPORT_STATUSES } from '../constants';
+import { DECIMAL_BASE, REPORT_STATUSES, ENTITY_TYPES } from '../constants';
 import {
   cacheObjectiveMetadata,
   cacheGoalMetadata,

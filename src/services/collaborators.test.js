@@ -72,7 +72,7 @@ const draftReport = {
   },
 };
 
-describe('approvers services', () => {
+describe('collaborators services', () => {
   beforeAll(async () => {
     await User.bulkCreate([mockUser, mockUserTwo, mockManager, secondMockManager]);
   });

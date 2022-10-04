@@ -93,7 +93,7 @@ export async function upsertCollaborator(values) {
         ];
         newCollaboratorTypes = [...new Set(tmpArray)];
       } catch (err) {
-        auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 2.4, values, err, tmpArray, collaborator}));
+        auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 2.4, values, err, newCollaboratorTypes, collaborator}));
         throw new Error(err);
       }
       try {
@@ -242,12 +242,11 @@ export async function syncCollaborators(
   try {
     // Create or restore collaborator
     if (perUserData && perUserData.length > 0) {
-      let uniquePerUserData = perUserData && Array.isArray(perUserData) && perUserData.length > 0
+      const uniquePerUserData = perUserData && Array.isArray(perUserData) && perUserData.length > 0
         ? perUserData
           .filter((v, i, a) => a.findIndex((v2) => (v2.userId === v.userId)) === i)
+          .filter((userData) => userData.userId !== null && userData.userId !== undefined)
         : [];
-      uniquePerUserData = uniquePerUserData
-        .filter((userData) => userData.userId !== null && userData.userId !== undefined);
 
       await Promise.all(uniquePerUserData.map(async (userData) => upsertCollaborator({
         ...userData,
@@ -321,22 +320,23 @@ export async function syncRatifiers(entityType, entityId, perUserData = [], tier
   return syncCollaborators(entityType, entityId, [COLLABORATOR_TYPES.RATIFIER], perUserData, tier);
 }
 
-export async function getCollaborator(entityType, entityId, userIds) {
+export async function getCollaborator(entityType, entityId, userId) {
   return Collaborator.findOne({
     where: {
       entityType,
       entityId,
-      userId: { [Op.in]: userIds },
+      userId,
     },
   });
 }
 
-export async function setRatifierStatus(entityType, entityId, userIds, status) {
+export async function setRatifierStatus(entityType, entityId, userId, status) {
   const ratifier = await getCollaborator(
     entityType,
     entityId,
-    userIds,
+    userId,
   );
+  auditLogger.error(JSON.stringify({ name: 'setRatifierStatus', ratifier }));
   if (ratifier && ratifier.collaboratorType.includes(COLLABORATOR_TYPES.RATIFIER)) {
     await ratifier.update({ status }, { individualHooks: true });
     return ratifier;
@@ -344,11 +344,11 @@ export async function setRatifierStatus(entityType, entityId, userIds, status) {
   throw new Error('No ratifier found for passed values.');
 }
 
-export async function setRatifierNote(entityType, entityId, userIds, note) {
+export async function setRatifierNote(entityType, entityId, userId, note) {
   const ratifier = await getCollaborator(
     entityType,
     entityId,
-    userIds,
+    userId,
   );
   if (ratifier && ratifier.collaboratorType.includes(COLLABORATOR_TYPES.RATIFIER)) {
     await ratifier.update({ note }, { individualHooks: true });
@@ -388,8 +388,8 @@ export async function addCollaboratorType(entityType, entityId, userIds, collabo
   }, { individualHooks: true });
 }
 
-export async function removeCollaboratorType(entityType, entityId, userIds, collaboratorType) {
-  const collaborator = getCollaborator(entityType, entityId, userIds);
+export async function removeCollaboratorType(entityType, entityId, userId, collaboratorType) {
+  const collaborator = getCollaborator(entityType, entityId, userId);
   const newCollaboratorTypes = collaborator.collaboratorTypes
     .filter((type) => type !== collaboratorType);
   await collaborator.update({
@@ -413,11 +413,11 @@ export async function removeRatifier(entityType, entityId, userId) {
   return removeCollaboratorType(entityType, entityId, userId, COLLABORATOR_TYPES.RATIFIER);
 }
 
-export async function setEditorNote(entityType, entityId, userIds, note) {
+export async function setEditorNote(entityType, entityId, userId, note) {
   const editor = await getCollaborator(
     entityType,
     entityId,
-    userIds,
+    userId,
   );
   if (editor && editor.collaboratorType.includes(COLLABORATOR_TYPES.EDITOR)) {
     return editor.update({ note }, { individualHooks: true });

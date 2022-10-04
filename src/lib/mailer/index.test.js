@@ -20,7 +20,7 @@ import {
 import { auditLogger as logger } from '../../logger';
 
 import db, {
-  ActivityReport, ActivityReportCollaborator, User, ActivityReportApprover,
+  ActivityReport, Collaborator, User,
 } from '../../models';
 import { usersWithSetting } from '../../services/userSettings';
 import { createOrUpdate } from '../../services/activityReports';
@@ -688,17 +688,34 @@ describe('mailer tests', () => {
       jest.spyOn(notificationDigestQueueMock, 'add').mockImplementation(async () => Promise.resolve());
     });
     afterEach(async () => {
-      await ActivityReportCollaborator.destroy({ where: { userId: digestMockCollab.id } });
-      await ActivityReportApprover.destroy({
-        where: {
-          userId: digestMockApprover.id,
-        },
-        force: true,
+      // await ActivityReportCollaborator.destroy({ where: { userId: digestMockCollab.id } });
+      // await ActivityReportApprover.destroy({
+      //   where: {
+      //     userId: digestMockApprover.id,
+      //   },
+      //   force: true,
+      // });
+      await ActivityReport.destroy({
+        include: [{
+          model: Collaborator,
+          as: 'owner',
+          where: { userId: mockUser.id },
+          required: true,
+        }],
+        individualHooks: true,
       });
-      await ActivityReport.destroy({ where: { userId: mockUser.id } });
-      await User.destroy({ where: { id: digestMockCollab.id } });
-      await User.destroy({ where: { id: digestMockApprover.id } });
-      await User.destroy({ where: { id: mockUser.id } });
+      await User.destroy({
+        where: { id: digestMockCollab.id },
+        individualHooks: true,
+      });
+      await User.destroy({
+        where: { id: digestMockApprover.id },
+        individualHooks: true,
+      });
+      await User.destroy({
+        where: { id: mockUser.id },
+        individualHooks: true,
+      });
     });
     afterAll(async () => {
       await db.sequelize.close();

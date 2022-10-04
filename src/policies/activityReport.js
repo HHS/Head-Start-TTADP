@@ -126,13 +126,11 @@ export default class ActivityReport {
   }
 
   isAuthor() {
-    if (!this.activityReport.owner
-      || this.activityReport.owner.length === 0) {
+    if (!this.activityReport.owner) {
       return false;
     }
 
-    return this.activityReport.owner
-      .some((owner) => owner.user.id === this.user.id);
+    return this.activityReport.owner.user.id === this.user.id;
   }
 
   isCollaborator() {

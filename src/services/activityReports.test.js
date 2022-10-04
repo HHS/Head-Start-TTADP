@@ -396,9 +396,14 @@ describe('Activity report service', () => {
         roleId: cor.id,
       });
 
-      await Grant.create({
-        id: RECIPIENT_ID, number: 1, recipientId: RECIPIENT_ID, regionId: 19, status: 'Active',
-      });
+      try {
+        await Grant.create({
+          id: RECIPIENT_ID, number: 1, recipientId: RECIPIENT_ID, regionId: 19, status: 'Active',
+        });
+      } catch (err) {
+        auditLogger.error(JSON.stringify({ name: 'Activity Reports DB service', err }));
+        throw new Error(err);
+      }
     });
 
     afterAll(async () => {
@@ -1378,9 +1383,23 @@ describe('Activity report service', () => {
       });
       afterEach(async () => {
         // await ActivityReportCollaborator.destroy({ where: { userId: digestMockCollabOne.id } });
-        await ActivityReport.destroy({ where: { userId: mockUser.id } });
-        await User.destroy({ where: { id: digestMockCollabOne.id } });
-        await User.destroy({ where: { id: mockUser.id } });
+        await ActivityReport.destroy({
+          include: [{
+            model: Collaborator,
+            as: 'owner',
+            where: { userId: mockUser.id },
+            required: true,
+          }],
+          individualHooks: true,
+        });
+        await User.destroy({
+          where: { id: digestMockCollabOne.id },
+          individualHooks: true,
+        });
+        await User.destroy({
+          where: { id: mockUser.id },
+          individualHooks: true,
+        });
       });
       it('retrieves activity reports in DRAFT when added as a collaborator', async () => {
         const report = await createOrUpdate({
@@ -1486,9 +1505,23 @@ describe('Activity report service', () => {
       });
       afterEach(async () => {
         // await ActivityReportCollaborator.destroy({ where: { userId: digestMockCollabOne.id } });
-        await ActivityReport.destroy({ where: { userId: mockUser.id } });
-        await User.destroy({ where: { id: digestMockCollabOne.id } });
-        await User.destroy({ where: { id: mockUser.id } });
+        await ActivityReport.destroy({
+          include: [{
+            model: Collaborator,
+            as: 'owner',
+            where: { userId: mockUser.id },
+            required: true,
+          }],
+          individualHooks: true,
+        });
+        await User.destroy({
+          where: { id: digestMockCollabOne.id },
+          individualHooks: true,
+        });
+        await User.destroy({
+          where: { id: mockUser.id },
+          individualHooks: true,
+        });
       });
       it('retrieves daily activity reports in DRAFT when changes requested', async () => {
         const report = await createOrUpdate({
@@ -1627,14 +1660,28 @@ describe('Activity report service', () => {
         await User.create(mockUser, { validate: false }, { individualHooks: false });
       });
       afterEach(async () => {
-        await ActivityReportApprover.destroy({
-          where:
-            { userId: digestMockApprover.id },
-          force: true,
+        // await ActivityReportApprover.destroy({
+        //   where:
+        //     { userId: digestMockApprover.id },
+        //   force: true,
+        // });
+        await ActivityReport.destroy({
+          include: [{
+            model: Collaborator,
+            as: 'owner',
+            where: { userId: mockUser.id },
+            required: true,
+          }],
+          individualHooks: true,
         });
-        await ActivityReport.destroy({ where: { userId: mockUser.id } });
-        await User.destroy({ where: { id: digestMockApprover.id } });
-        await User.destroy({ where: { id: mockUser.id } });
+        await User.destroy({
+          where: { id: digestMockApprover.id },
+          individualHooks: true,
+        });
+        await User.destroy({
+          where: { id: mockUser.id },
+          individualHooks: true,
+        });
       });
       it('does not retrieve activity reports in DRAFT when submitted', async () => {
         const report = await createOrUpdate(submittedReport);
@@ -1756,9 +1803,23 @@ describe('Activity report service', () => {
         //     { userId: digestMockCollabOne.id },
         //   force: true,
         // });
-        await ActivityReport.destroy({ where: { userId: mockUser.id } });
-        await User.destroy({ where: { id: digestMockCollabOne.id } });
-        await User.destroy({ where: { id: mockUser.id } });
+        await ActivityReport.destroy({
+          include: [{
+            model: Collaborator,
+            as: 'owner',
+            where: { userId: mockUser.id },
+            required: true,
+          }],
+          individualHooks: true,
+        });
+        await User.destroy({
+          where: { id: digestMockCollabOne.id },
+          individualHooks: true,
+        });
+        await User.destroy({
+          where: { id: mockUser.id },
+          individualHooks: true,
+        });
       });
       it('does not retrieve activity reports in DRAFT when approved', async () => {
         const report = await createOrUpdate({

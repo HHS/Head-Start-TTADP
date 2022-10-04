@@ -86,8 +86,8 @@ const reportObject = {
   lastUpdatedById: mockUser.id,
   ECLKCResourcesUsed: ['test'],
   activityRecipients: [
-    { activityRecipientId: RECIPIENT_ID_ONE },
-    { activityRecipientId: RECIPIENT_ID_TWO },
+    { activityRecipientId: GRANT_ID_ONE },
+    { activityRecipientId: GRANT_ID_TWO },
   ],
   approval: { submissionStatus: REPORT_STATUSES.APPROVED },
   approvingManagerId: mockManager.id,

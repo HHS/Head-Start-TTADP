@@ -358,7 +358,9 @@ const processData = async (mockReport) => sequelize.transaction(async () => {
   const where = activityReportId ? { id: activityReportId } : {};
   const userIds = mockReport ? [3000, 3001, 3002, 3003] : null;
 
-  const recipientsGrants = mockReport ? mockReport.imported.granteeName : null;
+  const recipientsGrants = mockReport && mockReport.imported
+    ? mockReport.imported.granteeName
+    : null;
   const reports = await ActivityReport.unscoped().findAll({
     where,
   });

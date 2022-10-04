@@ -177,6 +177,8 @@ async function saveReportRecipients(
   await Promise.all(
     newRecipients.map(async (newRecipient) => {
       if (newRecipient.grantId) {
+        const gr = await Grant.findOne({ where: { id: newRecipient.grantId } });
+        auditLogger.error(JSON.stringify({ name: 'saveReportRecipients', newRecipient, gr }));
         return ActivityRecipient.findOrCreate({
           where: {
             activityReportId: newRecipient.activityReportId,
