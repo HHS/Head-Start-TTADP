@@ -424,6 +424,12 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         && objective.activityReportObjectives[0].ttaProvided
       ? objective.activityReportObjectives[0].ttaProvided : null;
 
+    // the same is true for statuses as is true for TTA provided
+    const status = objective.activityReportObjectives
+        && objective.activityReportObjectives[0]
+        && objective.activityReportObjectives[0].status
+      ? objective.activityReportObjectives[0].status : 'Not Started';
+
     const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
 
     return [...objectives, {
@@ -431,6 +437,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       value: id,
       ids: [id],
       ttaProvided,
+      status,
       isNew: false,
 
       // for the associated models, we need to return not the direct associations
@@ -1267,7 +1274,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
     // the goals passed we need to save the objectives.
     const createNewObjectives = objective.goalId !== goal.id;
     const updatedObjective = {
-      ...updatedFields, title, status, goalId: goal.id,
+      ...updatedFields, title, goalId: goal.id,
     };
 
     // Check if objective exists.
@@ -1332,6 +1339,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       report.id,
       {
         ...metadata,
+        status,
         ttaProvided: objective.ttaProvided,
       },
     );
