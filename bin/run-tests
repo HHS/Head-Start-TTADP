@@ -111,9 +111,6 @@ main() {
       --collectCoverageFrom=src/*.js \
       --forceExit
 
-      # start collecting our coverage files
-      coverage_files=("coverage/src/root/lcov.info")
-
       if [[ $docker == "true" ]]; then
         docker exec test-backend bash -c "$command"
       else
@@ -154,21 +151,13 @@ main() {
           --collectCoverageFrom=src/"$target"/**/*.js \
           --forceExit    
           
-          coverage_files+=("coverage/src/$target/lcov.info")
           if [[ $docker == "true" ]]; then
             docker exec test-backend bash -c "$command"
           else
             $command
           fi
           check_exit "$?"
-      done
-
-      # concatenate all the coverage files into one
-      for f in "${coverage_files[@]}"; do
-          cat "$f" >> lcov.info
-      done     
-
-      # genhtml lcov.info --output-directory coverage
+      done 
     fi
 
     if [[ "$opt" == "frontend" || -z "$opt" ]]; then
