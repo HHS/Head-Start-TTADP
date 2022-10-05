@@ -82,7 +82,7 @@
     "makecolors": "node ./src/makecolors.js",
     "restoreTopics": "node ./build/server/tools/restoreTopicsCLI.js",
     "restoreTopics:local": "./node_modules/.bin/babel-node ./src/tools/restoreTopicsCLI.js",
-    "coverage:backend": "sh ./bin/build-coverage-report.sh"
+    "coverage:backend": "./bin/build-coverage-report"
   },
   "repository": {
     "type": "git",

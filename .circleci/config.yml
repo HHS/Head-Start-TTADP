@@ -256,7 +256,7 @@ jobs:
           name: Test backend
           command:  |
             chmod 744 ./bin/test-backend-ci
-            sh ./bin/test-backend-ci
+            ./bin/test-backend-ci
       # - store_test_results:
       #     path: reports/
       # - store_artifacts:
