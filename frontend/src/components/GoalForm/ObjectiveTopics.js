@@ -32,7 +32,7 @@ export default function ObjectiveTopics({
         </p>
         <ul className="usa-list usa-list--unstyled">
           {topics.map((topic) => (
-            !(status === 'Completed' && goalStatus === 'Closed') || topic.onAnyReport ? (
+            !(status === 'Complete' && goalStatus === 'Closed') || topic.onAnyReport ? (
               <li key={uuid()}>
                 {topic.label}
               </li>
