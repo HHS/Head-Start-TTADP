@@ -241,6 +241,9 @@ jobs:
     steps:
       - attach_workspace:
           at: .
+      - run: 
+          name: Install lcov
+          command: apt-get lcov        
       - run:
           name: Audit vulnerability of backend node_modules
           command: |
