@@ -5,28 +5,28 @@ main(){
 	rm -f -rf coverage
 
     # first get the tests in the root directory
-    node_modules/.bin/cross-env \
-		JEST_JUNIT_OUTPUT_DIR=reports \
-		JEST_JUNIT_OUTPUT_NAME=unit.xml \
-		POSTGRES_USERNAME=postgres \
-		POSTGRES_DB=ttasmarthub \
-		CURRENT_USER_ID=5 \
-		CI=true \
-		node \
-		--expose-gc \
-		./node_modules/.bin/jest \
-		src/*.js \
-		--coverage \
-		--colors \
-		--reporters=jest-junit \
-		--reporters=default \
-		--runInBand \
-		--silent \
-		--colors \
-		--logHeapUsage \
-		--coverageDirectory="$(pwd)"/coverage/src \
-		--collectCoverageFrom=src/*.js \
-		--forceExit
+    # node_modules/.bin/cross-env \
+	# 	JEST_JUNIT_OUTPUT_DIR=reports \
+	# 	JEST_JUNIT_OUTPUT_NAME=unit.xml \
+	# 	POSTGRES_USERNAME=postgres \
+	# 	POSTGRES_DB=ttasmarthub \
+	# 	CURRENT_USER_ID=5 \
+	# 	CI=true \
+	# 	node \
+	# 	--expose-gc \
+	# 	./node_modules/.bin/jest \
+	# 	src/*.js \
+	# 	--coverage \
+	# 	--colors \
+	# 	--reporters=jest-junit \
+	# 	--reporters=default \
+	# 	--runInBand \
+	# 	--silent \
+	# 	--colors \
+	# 	--logHeapUsage \
+	# 	--coverageDirectory="$(pwd)"/coverage/src \
+	# 	--collectCoverageFrom=src/*.js \
+	# 	--forceExit
 
     # then list through the folders and run the tests
     targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets") 
