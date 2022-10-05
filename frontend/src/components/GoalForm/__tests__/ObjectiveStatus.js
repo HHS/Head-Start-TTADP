@@ -24,15 +24,15 @@ describe('ObjectiveStatus', () => {
     const options = screen.getAllByRole('option');
     expect(options).toHaveLength(3);
 
-    userEvent.selectOptions(dropdown, 'Completed');
-    expect(onChangeStatus).toHaveBeenCalledWith('Completed');
+    userEvent.selectOptions(dropdown, 'Complete');
+    expect(onChangeStatus).toHaveBeenCalledWith('Complete');
   });
 
   it('shows the correct options for completed', async () => {
     const onChangeStatus = jest.fn();
 
     render(<ObjectiveStatus
-      status="Completed"
+      status="Complete"
       goalStatus="In Progress"
       onChangeStatus={onChangeStatus}
       inputName="objective-status"
@@ -50,7 +50,7 @@ describe('ObjectiveStatus', () => {
     const onChangeStatus = jest.fn();
 
     render(<ObjectiveStatus
-      status="Completed"
+      status="Complete"
       goalStatus="Closed"
       onChangeStatus={onChangeStatus}
       inputName="objective-status"

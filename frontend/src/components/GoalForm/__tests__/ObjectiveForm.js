@@ -124,9 +124,9 @@ describe('ObjectiveForm', () => {
     );
 
     const statusSelect = await screen.findByLabelText('Objective status');
-    userEvent.selectOptions(statusSelect, 'Completed');
+    userEvent.selectOptions(statusSelect, 'Complete');
 
-    expect(setObjective).toHaveBeenCalledWith({ ...defaultObjective, status: 'Completed', roles: [] });
+    expect(setObjective).toHaveBeenCalledWith({ ...defaultObjective, status: 'Complete', roles: [] });
 
     const roleSelect = await screen.findByLabelText(/Specialist roles providing TTA/i);
     userEvent.click(roleSelect);

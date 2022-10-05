@@ -24,7 +24,7 @@ export default function ObjectiveTitle({
       return true;
     }
 
-    if (initialObjectiveStatus === 'Completed' || initialObjectiveStatus === 'Suspended') {
+    if (initialObjectiveStatus === 'Complete' || initialObjectiveStatus === 'Suspended') {
       return true;
     }
 

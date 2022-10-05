@@ -31,7 +31,7 @@ export default function SpecialistRole({
         </p>
         <ul className="usa-list usa-list--unstyled">
           {selectedRoles.map((role) => (
-            !(status === 'Completed' && goalStatus === 'Closed') || role.onAnyReport ? (
+            !(status === 'Complete' && goalStatus === 'Closed') || role.onAnyReport ? (
               <li key={uuid()}>
                 {role.fullName}
               </li>

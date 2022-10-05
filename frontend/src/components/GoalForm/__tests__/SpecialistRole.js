@@ -49,7 +49,7 @@ describe('specialistrole select', () => {
     renderSpecialistRole(
       onChange,
       [{ fullName: 'lion tamer', id: 1, onAnyReport: false }],
-      'Completed',
+      'Complete',
       'Closed',
     );
     expect(await screen.findByText(/specialist roles/i)).toBeVisible();
@@ -62,7 +62,7 @@ describe('specialistrole select', () => {
     renderSpecialistRole(
       onChange,
       [{ fullName: 'lion tamer', id: 1, onAnyReport: false }],
-      'Completed',
+      'Complete',
       'Not Started',
     );
     expect(await screen.findByText(/specialist roles/i)).toBeVisible();
