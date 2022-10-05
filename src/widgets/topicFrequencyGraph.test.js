@@ -107,12 +107,14 @@ describe('Topics and frequency graph widget', () => {
       where: {
         fullName: 'Grants Specialist',
         name: 'GS',
+        isSpecialist: true,
       },
     });
     const [systemSpecialist] = await Role.findOrCreate({
       where: {
         fullName: 'System Specialist',
         name: 'SS',
+        isSpecialist: true,
       },
     });
 
