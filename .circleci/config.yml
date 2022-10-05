@@ -257,10 +257,20 @@ jobs:
           command:  |
             chmod 744 ./bin/test-backend-ci
             ./bin/test-backend-ci
-      # - store_test_results:
-      #     path: reports/
-      # - store_artifacts:
-      #     path: coverage/
+      - run:
+          name: Generate coverage report
+          command: |
+            chmod 744 ./bin/build-coverage-report
+            ./bin/build-coverage-report
+      - run:
+          name: Compress coverage artifacts
+          command: tar -cvzf backend-coverage-artifacts.tar coverage/
+      - store_artifacts:
+          path: coverage/
+      - store_artifacts:
+          path: backend-coverage-artifacts.tar
+      - store_artifacts:
+          path: reports/
 
   test_frontend:
     executor: docker-executor
