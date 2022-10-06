@@ -21,7 +21,7 @@ main(){
 		--silent \
 		--colors \
 		--logHeapUsage \
-		--coverageDirectory="$(pwd)"/coverage/src \
+		--coverageDirectory="$(pwd)"/coverage/src/root \
 		--collectCoverageFrom=src/*.js \
 		--forceExit
 
