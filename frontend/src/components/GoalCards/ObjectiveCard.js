@@ -94,6 +94,9 @@ function ObjectiveCard({
     return <NoStatus />;
   })();
 
+  console.log(endDate);
+  console.log(activityReports);
+
   return (
     <ul className="ttahub-goal-card__objective-list usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg" hidden={!objectivesExpanded}>
       <li className="display-flex padding-bottom-05 flex-align-start">
@@ -128,7 +131,7 @@ function ObjectiveCard({
       </li>
       <li className="display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 minw-15">Reasons</span>
-        {reasons && displayReasonsList(reasons.sort())}
+        {reasons && displayReasonsList(reasons)}
       </li>
       <li className="display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 minw-15">Objective status </span>
