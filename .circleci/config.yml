@@ -264,9 +264,8 @@ jobs:
           path: coverage/
       - store_artifacts:
           path: backend-coverage-artifacts.tar
-      - store_artifacts:
+      - store_test_results:
           path: reports/
-
   test_frontend:
     executor: docker-executor
     steps:
