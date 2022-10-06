@@ -440,14 +440,6 @@ export async function removeGoals(goalsToRemove) {
   });
 }
 
-async function removeObjectives(currentObjectiveIds) {
-  return Objective.destroy({
-    where: {
-      id: currentObjectiveIds,
-    },
-  });
-}
-
 export async function removeRemovedRecipientsGoals(removedRecipientIds, report) {
   if (!removedRecipientIds) {
     return null;
@@ -569,7 +561,22 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
   }).map((g) => g.id);
 
   await removeActivityReportObjectivesFromReport(reportId, objectiveIdsToRemove);
-  await removeObjectives(objectiveIdsToRemove);
+
+  try {
+    await Objective.destroy({
+      where: {
+        [Op.and]: [
+          { id: objectiveIdsToRemove },
+          sequelize.literal(`(SELECT COUNT(*) FROM "ActivityReportObjectives" WHERE "ActivityReportObjectives"."objectiveId" = "Objectives"."id"
+            AND "ActivityReportObjectives"."activityReportId" != ${reportId}) = 0
+          `),
+        ],
+      },
+    });
+  } catch (err) {
+    throw new Error('there was an error removing the aro', err);
+  }
+
   return removeGoals(goalIdsToRemove);
 }
 
@@ -594,10 +601,19 @@ async function createObjectivesForGoal(goal, objectives, report) {
 
     if (!isNew) {
       savedObjective = await Objective.findByPk(id);
-      await savedObjective.update({
-        title,
-        status,
-      }, { individualHooks: true });
+      const objectiveTitle = updatedObjective.title ? updatedObjective.title.trim() : '';
+      if (savedObjective.title !== objectiveTitle) {
+        savedObjective = await Objective.create({
+          ...updatedObjective,
+          title: objectiveTitle,
+          status,
+        });
+      } else {
+        await savedObjective.update({
+          title,
+          status,
+        }, { individualHooks: true });
+      }
     } else {
       const objectiveTitle = updatedObjective.title ? updatedObjective.title.trim() : '';
 
