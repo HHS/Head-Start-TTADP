@@ -85,7 +85,7 @@ main() {
       log "Running backend tests"
 
       # remove existing coverage folder, since we are changing how things are structured
-      rm -f -rf coverage
+      rm -rf coverage
 
       # first get the tests in the root directory
       node_modules/.bin/cross-env \
