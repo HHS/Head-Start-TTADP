@@ -241,9 +241,6 @@ jobs:
     steps:
       - attach_workspace:
           at: .
-      - run: 
-          name: Install lcov
-          command: apt-get install lcov
       - run:
           name: Audit vulnerability of backend node_modules
           command: |
@@ -260,11 +257,6 @@ jobs:
           command:  |
             chmod 744 ./bin/test-backend-ci
             ./bin/test-backend-ci
-      - run:
-          name: Generate coverage report
-          command: |
-            chmod 744 ./bin/build-coverage-report
-            ./bin/build-coverage-report
       - run:
           name: Compress coverage artifacts
           command: tar -cvzf backend-coverage-artifacts.tar coverage/
