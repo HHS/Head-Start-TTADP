@@ -48,7 +48,7 @@ describe('PrintGoals', () => {
           grantNumber: '123',
           endDate: '01/01/02',
           reasons: ['Empathy', 'Generosity', 'Friendship'],
-          status: 'Completed',
+          status: 'Complete',
         },
       ],
     },
