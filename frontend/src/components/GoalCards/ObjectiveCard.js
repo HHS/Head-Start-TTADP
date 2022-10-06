@@ -94,9 +94,6 @@ function ObjectiveCard({
     return <NoStatus />;
   })();
 
-  console.log(endDate);
-  console.log(activityReports);
-
   return (
     <ul className="ttahub-goal-card__objective-list usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg" hidden={!objectivesExpanded}>
       <li className="display-flex padding-bottom-05 flex-align-start">
@@ -110,11 +107,11 @@ function ObjectiveCard({
             const viewOrEditLink = `/activity-reports/view/${report.id}`;
             const linkToAr = report.legacyId ? `/activity-reports/legacy/${report.legacyId}` : viewOrEditLink;
             return (
-              <li key={report.id}>
+              <li key={`AR-${report.id}`}>
                 <Link
                   to={linkToAr}
                 >
-                  {report.number}
+                  {report.displayId}
                 </Link>
               </li>
             );

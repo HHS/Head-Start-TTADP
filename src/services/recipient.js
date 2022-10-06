@@ -173,8 +173,6 @@ function reduceObjectives(response, goal) {
     topics,
     reasons,
   } = response.objectives.reduce((acc, objective) => {
-    console.log('objective reports', objective.activityReports);
-
     const { t, r, endDate } = objective.activityReports.reduce((a, report) => ({
       t: [...a.t, ...report.topics],
       r: [...a.r, ...report.reason],
@@ -327,6 +325,7 @@ export async function getGoalsByActivityRecipient(
               'calculatedStatus',
               'legacyId',
               'regionId',
+              'displayId',
             ],
             model: ActivityReport,
             as: 'activityReports',
