@@ -12,7 +12,7 @@ executors:
       - image: cimg/node:16.17.0-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
-      - image: cimg/postgres:12.4-ram
+      - image: circleci/postgres:12.4-ram
         environment:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: secretpass
