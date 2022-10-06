@@ -4,7 +4,7 @@ main(){
     # first get the tests in the root directory
     node_modules/.bin/cross-env \
 		JEST_JUNIT_OUTPUT_DIR=reports \
-		JEST_JUNIT_OUTPUT_NAME=unit.xml \
+		JEST_JUNIT_OUTPUT_NAME=root.xml \
 		POSTGRES_USERNAME=postgres \
 		POSTGRES_DB=ttasmarthub \
 		CURRENT_USER_ID=5 \
@@ -37,7 +37,7 @@ main(){
 
         node_modules/.bin/cross-env \
 			JEST_JUNIT_OUTPUT_DIR=reports \
-			JEST_JUNIT_OUTPUT_NAME=unit.xml \
+			JEST_JUNIT_OUTPUT_NAME="$target".xml \
 			POSTGRES_USERNAME=postgres \
 			POSTGRES_DB=ttasmarthub \
 			CURRENT_USER_ID=5 \
