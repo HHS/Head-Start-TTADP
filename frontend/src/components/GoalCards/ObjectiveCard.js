@@ -60,10 +60,6 @@ function ObjectiveCard({
       display: 'Complete',
     },
     {
-      stored: 'Completed',
-      display: 'Completed',
-    },
-    {
       stored: 'Not Started',
       display: 'Not started',
     },
@@ -89,7 +85,7 @@ function ObjectiveCard({
   const getObjectiveStatusIcon = (() => {
     if (displayObjStatus === 'In progress') {
       return <InProgress />;
-    } if (displayObjStatus === 'Complete' || displayObjStatus === 'Completed') {
+    } if (displayObjStatus === 'Complete') {
       return <Closed />;
     }
     if (displayObjStatus === 'Not started') {

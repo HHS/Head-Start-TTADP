@@ -13,7 +13,7 @@ import {
 } from '../../models';
 import { createOrUpdate } from '../activityReports';
 import { getGoalsByActivityRecipient } from '../recipient';
-import { REPORT_STATUSES } from '../../constants';
+import { REPORT_STATUSES, OBJECTIVE_STATUS } from '../../constants';
 
 const NEEDLE = 'This objective title should not appear in recipient 3';
 
@@ -406,56 +406,56 @@ describe('Goals by Recipient Test', () => {
         await Objective.create({
           goalId: goalIds[0],
           title: 'objective 1',
-          status: 'Not Started',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
           onApprovedAR: true,
         }),
         // objective 2 (AR1)
         await Objective.create({
           goalId: goalIds[1],
           title: 'objective 2',
-          status: 'Not Started',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
           onApprovedAR: true,
         }),
         // objective 3 (AR1)
         await Objective.create({
           goalId: goalIds[2],
           title: 'objective 3',
-          status: 'In Progress',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
           onApprovedAR: true,
         }),
         // objective 4 (AR1)
         await Objective.create({
           goalId: goalIds[2],
           title: 'objective 4',
-          status: 'Completed',
+          status: OBJECTIVE_STATUS.COMPLETE,
           onApprovedAR: true,
         }),
         // objective 5 (AR2)
         await Objective.create({
           goalId: goalIds[3],
           title: 'objective 5',
-          status: 'Not Started',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
           onApprovedAR: true,
         }),
         // objective 6 (AR3)
         await Objective.create({
           goalId: goalIds[4],
           title: 'objective 6',
-          status: 'Not Started',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
           onApprovedAR: true,
         }),
         // objective 7
         await Objective.create({
           goalId: goalIds[6],
           title: 'objective 7',
-          status: 'Not Started',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
           onApprovedAR: true,
         }),
         // objective 8
         await Objective.create({
           goalId: goalIds[7],
           title: 'objective 8',
-          status: 'Not Started',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
           onApprovedAR: false,
         }),
 
@@ -463,7 +463,7 @@ describe('Goals by Recipient Test', () => {
         await Objective.create({
           goalId: goalIds[8],
           title: 'This objective title should appear in recipient 3',
-          status: 'Not Started',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
           onApprovedAR: true,
         }),
 
@@ -471,7 +471,7 @@ describe('Goals by Recipient Test', () => {
         await Objective.create({
           goalId: goalIds[9],
           title: 'This objective title should appear in recipient 3',
-          status: 'Not Started',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
           onApprovedAR: true,
         }),
 
@@ -479,7 +479,7 @@ describe('Goals by Recipient Test', () => {
         await Objective.create({
           goalId: goalIds[10],
           title: NEEDLE,
-          status: 'Not Started',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
           onApprovedAR: true,
         }),
 
@@ -679,7 +679,7 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx[1].objectives[0].title).toBe('objective 4');
       expect(goalRowsx[1].objectives[0].endDate).toBe('09/01/2020');
       expect(goalRowsx[1].objectives[0].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRowsx[1].objectives[0].status).toEqual('Completed');
+      expect(goalRowsx[1].objectives[0].status).toEqual(OBJECTIVE_STATUS.COMPLETE);
 
       expect(goalRowsx[1].objectives[1].title).toBe('objective 3');
       expect(goalRowsx[1].objectives[1].endDate).toBe('09/01/2020');

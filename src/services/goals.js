@@ -23,7 +23,7 @@ import {
   File,
   Role,
 } from '../models';
-import { DECIMAL_BASE, REPORT_STATUSES, ENTITY_TYPES } from '../constants';
+import { DECIMAL_BASE, REPORT_STATUSES, OBJECTIVE_STATUS, ENTITY_TYPES } from '../constants';
 import {
   cacheObjectiveMetadata,
   cacheGoalMetadata,
@@ -597,7 +597,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
             },
             {
               status: {
-                [Op.notIn]: ['Complete', 'Draft', 'Completed'],
+                [Op.notIn]: [OBJECTIVE_STATUS.COMPLETE, OBJECTIVE_STATUS.DRAFT],
               },
             },
           ],
@@ -607,6 +607,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
           ['title', 'label'],
           'title',
           'status',
+          'goalId',
         ],
         required: false,
         include: [
@@ -1349,7 +1350,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
         where: {
           goalId: updatedObjective.goalId,
           title: objectiveTitle,
-          status: { [Op.not]: 'Completed' },
+          status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
         },
       });
 

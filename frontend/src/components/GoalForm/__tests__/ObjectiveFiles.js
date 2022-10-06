@@ -17,7 +17,7 @@ describe('ObjectiveFiles', () => {
       onChangeFiles={jest.fn()}
       objective={{ id: 1 }}
       isOnReport
-      status="Completed"
+      status="Complete"
       index={0}
       inputName="objectiveFiles"
       onBlur={jest.fn()}
@@ -38,7 +38,7 @@ describe('ObjectiveFiles', () => {
       onChangeFiles={jest.fn()}
       objective={{ id: 1 }}
       isOnReport
-      status="Completed"
+      status="Complete"
       index={0}
       inputName="objectiveFiles"
       onBlur={jest.fn()}

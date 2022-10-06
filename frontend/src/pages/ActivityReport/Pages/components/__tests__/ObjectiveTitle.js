@@ -58,7 +58,7 @@ const readonlyStateMap = [
   { status: 'Suspended' },
   { status: 'Not Started', isOnReport: true, isOnApprovedReport: true },
   { status: 'In Progress', isOnReport: true, isOnApprovedReport: true },
-  { initialObjectiveStatus: 'Completed', isOnApprovedReport: false },
+  { initialObjectiveStatus: 'Complete', isOnApprovedReport: false },
   { initialObjectiveStatus: 'Suspended', isOnApprovedReport: false },
   { parentGoal: { status: 'Closed' }, isOnApprovedReport: false },
 ];
