@@ -243,7 +243,8 @@ jobs:
           at: .
       - run: 
           name: Install lcov
-          command: apt-get lcov        
+          command: apt-get install lcov
+``
       - run:
           name: Audit vulnerability of backend node_modules
           command: |
