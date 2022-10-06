@@ -428,7 +428,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
     const status = objective.activityReportObjectives
         && objective.activityReportObjectives[0]
         && objective.activityReportObjectives[0].status
-      ? objective.activityReportObjectives[0].status : 'Not Started';
+      ? objective.activityReportObjectives[0].status : objective.status;
 
     const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
 
