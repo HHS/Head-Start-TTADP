@@ -595,24 +595,32 @@ async function createObjectivesForGoal(goal, objectives, report) {
 
     let savedObjective;
 
+    // the frontend attempts to flag an objective as new
     if (!isNew) {
       savedObjective = await Objective.findByPk(id);
       const objectiveTitle = updatedObjective.title ? updatedObjective.title.trim() : '';
-      if (!savedObjective || savedObjective.title !== objectiveTitle) {
+      // if we don't find an objective -
+      // or we are attempting to change an objective title on an approved AR
+      // we need to create a new objective
+      if (!savedObjective
+        || (savedObjective.title !== objectiveTitle && savedObjective.onApprovedAR)) {
         savedObjective = await Objective.create({
           ...updatedObjective,
           title: objectiveTitle,
           status,
         });
       } else {
+        // if the objective exists and is not an approved AR, we can update it
         await savedObjective.update({
           title,
           status,
         }, { individualHooks: true });
       }
+    // the frontend tells us to create a new objective
     } else {
       const objectiveTitle = updatedObjective.title ? updatedObjective.title.trim() : '';
 
+      // but of course, we must not trust it
       const existingObjective = await Objective.findOne({
         where: {
           goalId: updatedObjective.goalId,
