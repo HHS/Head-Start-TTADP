@@ -241,7 +241,7 @@ async function create(report, silent = false) {
   try {
     return ActivityReport.create(report, {
       silent,
-      logging: (msg) => auditLogger.error(JSON.stringify({ name: 'ActivityReport.create', msg })),
+      // logging: (msg) => auditLogger.error(JSON.stringify({ name: 'ActivityReport.create', msg })),
     });
   } catch (err) {
     auditLogger.error(JSON.stringify({ name: 'ActivityReport.create', err, report }));

@@ -14,7 +14,6 @@ export async function upsertCollaborator(values) {
     tier,
     ...others
   } = values;
-  auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 0, values }));
 
   try {
     if (collaboratorTypes.length < 1) {
@@ -29,52 +28,23 @@ export async function upsertCollaborator(values) {
   let collaborator;
   try {
     collaborator = await Collaborator.findOne({ where: { entityType, entityId, userId } });
-    auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 'a', values, collaborator }));
   } catch (err) {
     auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 1.5, values, err}));
     throw new Error(err);
   }
-  // try {
-  //   collaborator = await Collaborator.findCreateFind({
-  //     where: { entityType, entityId, userId },
-  //     defaults: { collaboratorTypes, tier, ...others },
-  //     individualHooks: true,
-  //   });
-  //   // const newCollaboratorTypes = [...new Set([
-  //   //   ...collaboratorTypes,
-  //   //   ...collaborator.collaboratorTypes,
-  //   // ])];
-  //   // await collaborator.update({
-  //   //   collaboratorTypes: sequelize.literal(`ARRAY[${newCollaboratorTypes.map((type) => `'${type}'`).join(',')}]::"enum_Collaborators_collaboratorTypes"[]`),
-  //   //   tier,
-  //   //   ...others,
-  //   // });
-  // } catch (err) {
-  //   auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 2, values, err, collaborator }));
-  //   throw new Error(err);
-  // }
   try {
     // Try to find a collaborator that has been deleted
     if (!collaborator) {
-      // collaborator = await Collaborator.findOrCreate({
-      //   where: { entityType, entityId, userId },
-      //   defaults: { collaboratorTypes, tier, ...others },
-      //   paranoid: false,
-      //   individualHooks: true,
-      // });
       collaborator = await Collaborator.findOne({
         where: { entityType, entityId, userId },
         paranoid: false,
-        individualHooks: true,
       });
-      auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 'b', values, collaborator }));
       if (collaborator) {
         collaborator = await Collaborator.restore({
           where: { entityType, entityId, userId },
           paranoid: false,
           individualHooks: true,
         });
-        auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 'c', values, collaborator }));
       }
     }
   } catch (err) {
@@ -98,10 +68,13 @@ export async function upsertCollaborator(values) {
       }
       try {
         await collaborator.update({
-          collaboratorTypes: sequelize.literal(`ARRAY[${newCollaboratorTypes.map((type) => `'${type}'`).join(',')}]::"enum_Collaborators_collaboratorTypes"[]`),
+          collaboratorTypes: newCollaboratorTypes,
           tier,
           ...others,
-        }, { individualHooks: true });
+        }, {
+          individualHooks: true,
+          // logging: (msg) => auditLogger.error(JSON.stringify({ name: 'upsertCollaborator - update', msg })),
+        });
       } catch (err) {
         auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 2.5, values, err}));
         throw new Error(err);
@@ -118,7 +91,6 @@ export async function upsertCollaborator(values) {
             collaboratorTypes,
             ...others,
           },
-          { logging: (msg) => auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', msg })) },
         );
       } catch (err) {
         collaborator = await Collaborator.findOne({ where: { entityType, entityId, userId } });
@@ -278,7 +250,7 @@ export async function syncCollaborators(
           raw: true,
         },
       ],
-      logging: (msg) => auditLogger.error(JSON.stringify({ name: 'syncCollaborators', msg })),
+      // logging: (msg) => auditLogger.error(JSON.stringify({ name: 'syncCollaborators', msg })),
     });
   } catch (err) {
     auditLogger.error(JSON.stringify({ name: 'syncCollaborators', collaborators, err }));
@@ -327,6 +299,10 @@ export async function getCollaborator(entityType, entityId, userId) {
       entityId,
       userId,
     },
+    include: [
+      { model: User, as: 'user' },
+      { model: Role, as: 'roles' },
+    ]
   });
 }
 
@@ -337,9 +313,13 @@ export async function setRatifierStatus(entityType, entityId, userId, status) {
     userId,
   );
   auditLogger.error(JSON.stringify({ name: 'setRatifierStatus', ratifier }));
-  if (ratifier && ratifier.collaboratorType.includes(COLLABORATOR_TYPES.RATIFIER)) {
+  if (ratifier && ratifier.collaboratorTypes.includes(COLLABORATOR_TYPES.RATIFIER)) {
     await ratifier.update({ status }, { individualHooks: true });
-    return ratifier;
+    return getCollaborator(
+      entityType,
+      entityId,
+      userId,
+    );
   }
   throw new Error('No ratifier found for passed values.');
 }
@@ -350,9 +330,13 @@ export async function setRatifierNote(entityType, entityId, userId, note) {
     entityId,
     userId,
   );
-  if (ratifier && ratifier.collaboratorType.includes(COLLABORATOR_TYPES.RATIFIER)) {
+  if (ratifier && ratifier.collaboratorTypes.includes(COLLABORATOR_TYPES.RATIFIER)) {
     await ratifier.update({ note }, { individualHooks: true });
-    return ratifier;
+    return getCollaborator(
+      entityType,
+      entityId,
+      userId,
+    );
   }
   throw new Error('No ratifier found for passed values.');
 }

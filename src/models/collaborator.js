@@ -73,6 +73,13 @@ module.exports = (sequelize, DataTypes) => {
         hooks: true,
       });
       Collaborator.belongsTo(models.User, { foreignKey: 'userId', as: 'user', hooks: true });
+      // Collaborator.belongsToMany(models.Role, {
+      //   through: models.CollaboratorRole,
+      //   otherKey: 'roleId',
+      //   foreignKey: 'collaboratorId',
+      //   as: 'roles',
+      //   hooks: true,
+      // });
       Collaborator.belongsToMany(models.Role, {
         through: models.CollaboratorRole,
         otherKey: 'roleId',
@@ -184,7 +191,7 @@ module.exports = (sequelize, DataTypes) => {
     //   fields: ['activityReportId', 'userId'],
     // }],
     sequelize,
-    paranoid: true,
+    // paranoid: true,
     modelName: 'Collaborator',
   });
   return Collaborator;

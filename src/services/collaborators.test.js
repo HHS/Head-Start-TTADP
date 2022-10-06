@@ -1,5 +1,5 @@
 import db, {
-  ActivityRecipient, ActivityReport, User, sequelize,
+  ActivityRecipient, ActivityReport, User, sequelize, UserRole,
 } from '../models';
 import {
   upsertRatifier,
@@ -14,6 +14,7 @@ import {
   ENTITY_TYPES,
   COLLABORATOR_TYPES,
 } from '../constants';
+import { auditLogger } from '../logger';
 
 const mockUser = {
   id: 11184161,
@@ -75,6 +76,12 @@ const draftReport = {
 describe('collaborators services', () => {
   beforeAll(async () => {
     await User.bulkCreate([mockUser, mockUserTwo, mockManager, secondMockManager]);
+    await UserRole.bulkCreate([
+      { userId: mockUser.id, roleId: 5 },
+      { userId: mockUserTwo.id, roleId: 5 },
+      { userId: mockManager.id, roleId: 13 },
+      { userId: secondMockManager.id, roleId: 13 },
+    ]);
   });
 
   afterAll(async () => {
@@ -114,8 +121,15 @@ describe('collaborators services', () => {
           userId: mockManager.id,
           collaboratorTypes: [COLLABORATOR_TYPES.RATIFIER],
           tier: 1,
-          status: APPROVER_STATUSES.APPROVED,
         });
+
+        await setRatifierStatus(
+          ENTITY_TYPES.REPORT,
+          report1.id,
+          mockManager.id,
+          APPROVER_STATUSES.APPROVED,
+        );
+
         // One pending
         await upsertRatifier({
           entityType: ENTITY_TYPES.REPORT,
@@ -134,7 +148,7 @@ describe('collaborators services', () => {
             APPROVER_STATUSES.NEEDS_ACTION,
           );
           expect(approver.status).toEqual(APPROVER_STATUSES.NEEDS_ACTION);
-          expect(approver.User).toBeDefined();
+          expect(approver.user).toBeDefined();
         });
         const [updatedReport] = await activityReportAndRecipientsById(report1.id);
         expect(updatedReport.approval.approvedAt).toBeNull();
@@ -159,6 +173,7 @@ describe('collaborators services', () => {
         );
         expect(approver.status).toEqual(APPROVER_STATUSES.APPROVED);
         const [updatedReport] = await activityReportAndRecipientsById(report2.id);
+        auditLogger.error(JSON.stringify({ name: 'calculatedStatus is "approved" if all approvers approve', updatedReport }));
         expect(updatedReport.approval.approvedAt).toBeTruthy();
         expect(updatedReport.approval.submissionStatus).toEqual(REPORT_STATUSES.SUBMITTED);
         expect(updatedReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);

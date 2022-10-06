@@ -490,26 +490,25 @@ module.exports = {
           },
           onUpdate: 'CASCADE',
         }, { transaction });
-        // await queryInterface.addColumn('CollaboratorRoles', 'roleId', {
-        //   type: Sequelize.INTEGER,
-        //   allowNull: true,
-        //   references: {
-        //     model: {
-        //       tableName: 'Roles',
-        //     },
-        //     key: 'id',
-        //   },
-        //   onUpdate: 'CASCADE',
-        // }, { transaction });
 
+        // Update for collaborators
         await queryInterface.sequelize.query(
           `UPDATE "CollaboratorRoles" cr
          SET "collaboratorId" = c.id
          FROM "Collaborators" c
-         WHERE c."entityType" = '${ENTITY_TYPES.REPORT}'
-         AND c."entityId" = cr."activityReportCollaboratorId";`,
+         JOIN "ActivityReportCollaborators" arc
+         ON c."entityType" = '${ENTITY_TYPES.REPORT}'
+         AND  c."entityId" = arc."activityReportId"
+         AND c."userId" = arc."userId"
+         WHERE arc.id = cr."activityReportCollaboratorId";`,
           { transaction },
         );
+
+        await queryInterface.changeColumn('CollaboratorRoles', 'collaboratorId', {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+        }, { transaction });
+        await queryInterface.removeColumn('CollaboratorRoles', 'activityReportCollaboratorId', { transaction });
 
         await queryInterface.sequelize.query(
           `--- CONSTRAINTS
@@ -519,16 +518,46 @@ module.exports = {
           { transaction },
         );
 
-        // await queryInterface.sequelize.query(
-        //   `UPDATE "CollaboratorRoles" cr
-        //  SET "roleId" = r.id
-        //  FROM "Roles" r
-        //  WHERE cr."role" = r."fullName";`,
-        //   { transaction },
-        // );
+        // Update for owners
+        await queryInterface.sequelize.query(
+          `INSERT INTO "CollaboratorRoles" ("collaboratorId", "roleId", "createdAt", "updatedAt")
+          SELECT
+            c.id "collaboratorId",
+            r.id "roleId",
+            ar."createdAt",
+            ar."updatedAt"
+         FROM "Collaborators" c
+         JOIN "ActivityReports" ar
+         ON c."entityType" = '${ENTITY_TYPES.REPORT}'
+         AND c."entityId" = ar.id
+         AND c."userId" = ar."userId"
+         AND '${COLLABORATOR_TYPES.OWNER}' = ALL("c"."collaboratorTypes")
+         JOIN "Roles" r
+         ON r."fullName"::"enum_ActivityReports_creatorRole" = ar."creatorRole"
+         LEFT OUTER JOIN "CollaboratorRoles" cr
+         ON c.id = cr."collaboratorId"
+         WHERE cr.id is null;`,
+          { transaction },
+        );
 
-        await queryInterface.removeColumn('CollaboratorRoles', 'activityReportCollaboratorId', { transaction });
-        // await queryInterface.removeColumn('CollaboratorRoles', 'role', { transaction });
+        // Update for approvers
+        await queryInterface.sequelize.query(
+          `INSERT INTO "CollaboratorRoles" ("collaboratorId", "roleId", "createdAt", "updatedAt")
+          SELECT
+            c.id "collaboratorId",
+            ur."roleId" "roleId",
+            ur."createdAt",
+            ur."updatedAt"
+         FROM "Collaborators" c
+         JOIN "UserRoles" ur
+         ON c."userId" = ur."userId"
+         LEFT OUTER JOIN "CollaboratorRoles" cr
+         ON c.id = cr."collaboratorId"
+         WHERE c."entityType" = '${ENTITY_TYPES.REPORT}'
+         AND '${COLLABORATOR_TYPES.RATIFIER}' = ALL("c"."collaboratorTypes")
+         AND cr.id is null;`,
+          { transaction },
+        );
 
         await queryInterface.sequelize.query(
           `WITH

@@ -6,6 +6,7 @@ const {
   APPROVAL_RATIO,
   REPORT_STATUSES,
 } = require('../../constants');
+const { auditLogger } = require('../../logger');
 
 const validateAndPopulateTier = (sequelize, instance) => {
   if (instance.tier === undefined
@@ -114,6 +115,7 @@ const updateApprovalCalculatedStatus = async (
 });
 
 const propagateCalculatedStatus = async (sequelize, instance, options) => {
+  auditLogger.debug(JSON.stringify({ name: 'propagateCalculatedStatus', instance }));
   if (instance.collaboratorTypes.includes(COLLABORATOR_TYPES.RATIFIER)) {
     const approval = await getApprovalByEntityTier(
       sequelize,
@@ -122,6 +124,7 @@ const propagateCalculatedStatus = async (sequelize, instance, options) => {
       instance.tier,
       options,
     );
+    auditLogger.debug(JSON.stringify({ name: 'getApprovalByEntityTier', approval }));
     // We allow users to create approvers before submitting the entity.
     // Calculated status should only exist for submitted entities.
     if (approval.submissionStatus === ENTITY_STATUSES.SUBMITTED) {
@@ -132,12 +135,14 @@ const propagateCalculatedStatus = async (sequelize, instance, options) => {
         instance.tier,
         options,
       );
+      auditLogger.debug(JSON.stringify({ name: 'getRatifierStatusesForTier', foundRatifierStatuses }));
       const ratifierStatuses = foundRatifierStatuses.map((a) => a.status);
       const newCalculatedStatus = calculateStatus(
         instance.status,
         ratifierStatuses,
         approval.ratioRequired,
       );
+      auditLogger.debug(JSON.stringify({ name: 'calculateStatus', newCalculatedStatus }));
 
       let approvedAt = null;
       if (approval.calculatedStatus !== newCalculatedStatus) {
@@ -186,13 +191,18 @@ const syncRolesForCollaborators = async (sequelize, instance, options) => {
     ...userRoles.map(async (userRole) => sequelize.models.CollaboratorRole.upsert({
       collaboratorId: instance.id,
       roleId: userRole.roleId,
+    }, {
+      // logging: (msg) => auditLogger.error(JSON.stringify({ name: 'syncRolesForCollaborators - upsert', msg })),
+      transaction: options.transaction,
     })),
     await sequelize.models.CollaboratorRole.destroy({
       where: {
         collaboratorId: instance.id,
         roleId: { [Op.notIn]: userRoles.map((userRole) => userRole.roleId) },
       },
+      // logging: (msg) => auditLogger.error(JSON.stringify({ name: 'syncRolesForCollaborators - destroy', msg })),
       individualHooks: true,
+      transaction: options.transaction,
     }),
   ]);
 };
@@ -261,6 +271,7 @@ const afterRestore = async (sequelize, instance, options) => {
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
+  auditLogger.debug(JSON.stringify({ name: 'afterUpdate' }));
   await propagateCalculatedStatus(sequelize, instance, options);
   await deleteOnEmptyCollaboratorTypes(sequelize, instance, options);
   await syncRolesForCollaborators(sequelize, instance, options);

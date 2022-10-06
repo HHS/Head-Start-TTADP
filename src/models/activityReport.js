@@ -276,12 +276,16 @@ module.exports = (sequelize, DataTypes) => {
         return moment(this.updatedAt).format('MM/DD/YYYY');
       },
     },
-    // creatorNameWithRole: {
-    //   type: DataTypes.VIRTUAL,
-    //   get() {
-    //     return this.owner.nameWithRole;
-    //   },
-    // },
+    creatorNameWithRole: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        const owner = this.owner.get();
+        if (owner) {
+          return owner.nameWithRole;
+        }
+        return null;
+      },
+    },
     approvedAt: {
       allowNull: true,
       type: DataTypes.DATE,
@@ -310,8 +314,9 @@ module.exports = (sequelize, DataTypes) => {
     creatorRole: {
       type: DataTypes.VIRTUAL,
       get() {
-        if (this.owner) {
-          return this.owner.roles;
+        const owner = this.owner.get();
+        if (owner) {
+          return owner.roles;
         }
         return null;
       },
@@ -319,8 +324,9 @@ module.exports = (sequelize, DataTypes) => {
     isApproved: {
       type: DataTypes.VIRTUAL,
       get() {
-        if (this.approval) {
-          return this.approval.calculatedStatus !== REPORT_STATUSES.APPROVED;
+        const approval = this.approval.get();
+        if (approval) {
+          return approval.isApproved;
         }
         return null;
       },
@@ -329,11 +335,14 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.VIRTUAL,
       get() {
         // Any report in the alerts table should show the set creator role.
-        if (this.creatorRole || this.isApproved) {
+        const approval = this.approval.get();
+        if (this.creatorRole || approval.isApproved) {
           return this.creatorNameWithRole;
         }
-        if (this.owner && this.owner.user) {
-          return this.owner.user.fullName;
+        const owner = this.owner.get();
+        if (owner && this.owner.user) {
+          const user = owner.user.get();
+          return user.fullName;
         }
         return null;
       },

@@ -149,6 +149,12 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       type: DataTypes.DATE,
     },
+    isApproved: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return this.calculatedStatus === REPORT_STATUSES.APPROVED;
+      },
+    },
   }, {
     hooks: {
       beforeCreate: async (instance, options) => beforeCreate(sequelize, instance, options),
