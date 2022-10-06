@@ -154,6 +154,14 @@ export const GOAL_STATUS = {
   CLOSED: 'Closed',
 };
 
+export const OBJECTIVE_STATUS = {
+  DRAFT: 'Draft',
+  NOT_STARTED: 'Not Started',
+  IN_PROGRESS: 'In Progress',
+  SUSPENDED: 'Suspended',
+  COMPLETE: 'Complete',
+};
+
 /*
   Please keep in sync with:
   frontend > src > constants.js
@@ -192,6 +200,7 @@ export const ALL_PARTICIPANTS = [
   ...RECIPIENT_PARTICIPANTS,
   ...OTHER_ENTITY_RECIPIENTS,
 ];
+
 /**
  * Stored in `UserSettings` table, e.g.:
  * userId: 111, key: 'reportSubmittedForReview', value: 'immediately',

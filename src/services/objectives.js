@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import { OBJECTIVE_STATUS } from '../constants';
 import {
   Objective,
   ActivityReportObjective,
@@ -37,7 +38,7 @@ export async function saveObjectivesForReport(objectives, report) {
             // We are checking all objective id's but only one should link to the entity.
             id: validIdsToCheck,
             otherEntityId,
-            status: { [Op.not]: 'Complete' },
+            status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
           },
         });
       }
@@ -49,7 +50,7 @@ export async function saveObjectivesForReport(objectives, report) {
           where: {
             title: objective.title,
             otherEntityId,
-            status: { [Op.not]: 'Complete' },
+            status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
           },
         });
       }
