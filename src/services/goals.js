@@ -562,20 +562,16 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
 
   await removeActivityReportObjectivesFromReport(reportId, objectiveIdsToRemove);
 
-  try {
-    await Objective.destroy({
-      where: {
-        [Op.and]: [
-          { id: objectiveIdsToRemove },
-          sequelize.literal(`(SELECT COUNT(*) FROM "ActivityReportObjectives" WHERE "ActivityReportObjectives"."objectiveId" = "Objectives"."id"
-            AND "ActivityReportObjectives"."activityReportId" != ${reportId}) = 0
-          `),
-        ],
-      },
-    });
-  } catch (err) {
-    throw new Error('there was an error removing the aro', err);
-  }
+  await Objective.destroy({
+    where: {
+      [Op.and]: [
+        { id: objectiveIdsToRemove },
+        sequelize.literal(`(SELECT COUNT(*) FROM "ActivityReportObjectives" WHERE "ActivityReportObjectives"."objectiveId" = "Objectives"."id"
+          AND "ActivityReportObjectives"."activityReportId" != ${reportId}) = 0
+        `),
+      ],
+    },
+  });
 
   return removeGoals(goalIdsToRemove);
 }
@@ -602,7 +598,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
     if (!isNew) {
       savedObjective = await Objective.findByPk(id);
       const objectiveTitle = updatedObjective.title ? updatedObjective.title.trim() : '';
-      if (savedObjective.title !== objectiveTitle) {
+      if (!savedObjective && savedObjective.title !== objectiveTitle) {
         savedObjective = await Objective.create({
           ...updatedObjective,
           title: objectiveTitle,
