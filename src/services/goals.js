@@ -598,7 +598,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
     if (!isNew) {
       savedObjective = await Objective.findByPk(id);
       const objectiveTitle = updatedObjective.title ? updatedObjective.title.trim() : '';
-      if (!savedObjective && savedObjective.title !== objectiveTitle) {
+      if (!savedObjective || savedObjective.title !== objectiveTitle) {
         savedObjective = await Objective.create({
           ...updatedObjective,
           title: objectiveTitle,
