@@ -22,8 +22,8 @@ executors:
       image: ubuntu-2204:current
 commands:
   create_combined_yarnlock:
-    description: "Concatenate all yarn.json files into single file.
-      File is used as checksum source for part of caching key."
+    description: "Concatenate all yarn.json files into single file. File is used as
+      checksum source for part of caching key."
     parameters:
       filename:
         type: string
@@ -59,47 +59,47 @@ commands:
               }
             }"
   cf_deploy:
-    description: "Login to cloud foundry space with service account credentials
-      and push application using deployment configuration file."
+    description: "Login to cloud foundry space with service account credentials and
+      push application using deployment configuration file."
     parameters:
       app_name:
         description: "Name of Cloud Foundry cloud.gov application; must match
           application name specified in manifest"
         type: string
       auth_client_id:
-        description: "Name of CircleCi project environment variable that
-          holds authentication client id, a required application variable"
+        description: "Name of CircleCi project environment variable that holds
+          authentication client id, a required application variable"
         type: env_var_name
       auth_client_secret:
-        description: "Name of CircleCi project environment variable that
-          holds authentication client secret, a required application variable"
+        description: "Name of CircleCi project environment variable that holds
+          authentication client secret, a required application variable"
         type: env_var_name
       cloudgov_username:
-        description: "Name of CircleCi project environment variable that
-          holds deployer username for cloudgov space"
+        description: "Name of CircleCi project environment variable that holds deployer
+          username for cloudgov space"
         type: env_var_name
       cloudgov_password:
-        description: "Name of CircleCi project environment variable that
-          holds deployer password for cloudgov space"
+        description: "Name of CircleCi project environment variable that holds deployer
+          password for cloudgov space"
         type: env_var_name
       cloudgov_space:
-        description: "Name of CircleCi project environment variable that
-          holds name of cloudgov space to target for application deployment"
+        description: "Name of CircleCi project environment variable that holds name of
+          cloudgov space to target for application deployment"
         type: env_var_name
       deploy_config_file:
         description: "Path to deployment configuration file"
         type: string
       session_secret:
-        description: "Name of CircleCi project environment variable that
-          holds session secret, a required application variable"
+        description: "Name of CircleCi project environment variable that holds session
+          secret, a required application variable"
         type: env_var_name
       jwt_secret:
-        description: "CircleCi project environment variable used by the backend
-          token service for the email verification flow."
+        description: "CircleCi project environment variable used by the backend token
+          service for the email verification flow."
         type: env_var_name
       new_relic_license:
-        description: "Name of CircleCI project environment variable that
-          holds the New Relic License key, a required application variable"
+        description: "Name of CircleCI project environment variable that holds the New
+          Relic License key, a required application variable"
         type: env_var_name
       hses_data_file_url:
         description: "Url to download HSES grants and recipient data from"
@@ -189,7 +189,7 @@ parameters:
     description: "Name of github branch that will deploy to dev"
     default: "main-ar-redesign"
     type: string
-  sandbox_git_branch:  # change to feature branch to test deployment
+  sandbox_git_branch: # change to feature branch to test deployment
     default: "kw-monthly-cron"
     type: string
   prod_new_relic_app_id:
@@ -202,7 +202,7 @@ parameters:
     default: "867221900"
     type: string
   sandbox_new_relic_app_id:
-    default: "867346799"  
+    default: "867346799"
     type: string
 jobs:
   build_and_lint:
@@ -228,9 +228,9 @@ jobs:
       - run:
           name: Lint frontend
           command: yarn --cwd frontend lint:ci
-      - store_artifacts:  # store backend lint reports
+      - store_artifacts: # store backend lint reports
           path: reports
-      - store_artifacts:  # store frontend lint reports
+      - store_artifacts: # store frontend lint reports
           path: frontend/reports
       - persist_to_workspace:
           root: .
@@ -259,6 +259,8 @@ jobs:
           path: reports/
       - store_artifacts:
           path: coverage/
+    # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
+    resource_class: large
 
   test_frontend:
     executor: docker-executor
@@ -368,22 +370,38 @@ jobs:
       - when:
           condition:
             and:
-              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.prod_git_url >>]
-              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.prod_git_branch >>]
+              - equal:
+                  [
+                    << pipeline.project.git_url >>,
+                    << pipeline.parameters.prod_git_url >>
+                  ]
+              - equal:
+                  [
+                    << pipeline.git.branch >>,
+                    << pipeline.parameters.prod_git_branch >>
+                  ]
           steps:
-          - run:
-              name: Create production robot
-              command: ./bin/robot-factory
+            - run:
+                name: Create production robot
+                command: ./bin/robot-factory
       - run:
           name: Install Cloud Foundry
           command: |
             curl -v -L -o cf-cli_amd64.deb 'https://packages.cloudfoundry.org/stable?release=debian64&version=v7&source=github'
             sudo dpkg -i cf-cli_amd64.deb
-      - when:  # sandbox: for short-term feature development, see README.md
+      - when: # sandbox: for short-term feature development, see README.md
           condition:
             and:
-              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.sandbox_git_url >>]
-              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.sandbox_git_branch >>]
+              - equal:
+                  [
+                    << pipeline.project.git_url >>,
+                    << pipeline.parameters.sandbox_git_url >>
+                  ]
+              - equal:
+                  [
+                    << pipeline.git.branch >>,
+                    << pipeline.parameters.sandbox_git_branch >>
+                  ]
           steps:
             - run:
                 name: Build frontend assets
@@ -421,11 +439,19 @@ jobs:
                 env_name: sandbox
                 new_relic_app_id: << pipeline.parameters.sandbox_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
-      - when:  # dev
+      - when: # dev
           condition:
             and:
-              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.dev_git_url >>]
-              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.dev_git_branch >>]
+              - equal:
+                  [
+                    << pipeline.project.git_url >>,
+                    << pipeline.parameters.dev_git_url >>
+                  ]
+              - equal:
+                  [
+                    << pipeline.git.branch >>,
+                    << pipeline.parameters.dev_git_branch >>
+                  ]
           steps:
             - run:
                 name: Build frontend assets
@@ -463,11 +489,19 @@ jobs:
                 env_name: dev
                 new_relic_app_id: << pipeline.parameters.dev_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
-      - when:  # staging
+      - when: # staging
           condition:
             and:
-              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.staging_git_url >>]
-              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.staging_git_branch >>]
+              - equal:
+                  [
+                    << pipeline.project.git_url >>,
+                    << pipeline.parameters.staging_git_url >>
+                  ]
+              - equal:
+                  [
+                    << pipeline.git.branch >>,
+                    << pipeline.parameters.staging_git_branch >>
+                  ]
           steps:
             - run:
                 name: Build frontend assets
@@ -503,11 +537,19 @@ jobs:
                 env_name: staging
                 new_relic_app_id: << pipeline.parameters.staging_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
-      - when:  # prod
+      - when: # prod
           condition:
             and:
-              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.prod_git_url >>]
-              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.prod_git_branch >>]
+              - equal:
+                  [
+                    << pipeline.project.git_url >>,
+                    << pipeline.parameters.prod_git_url >>
+                  ]
+              - equal:
+                  [
+                    << pipeline.git.branch >>,
+                    << pipeline.parameters.prod_git_branch >>
+                  ]
           steps:
             - run:
                 name: Build frontend assets
