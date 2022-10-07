@@ -566,9 +566,7 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
     where: {
       [Op.and]: [
         { id: objectiveIdsToRemove },
-        sequelize.literal(`(SELECT COUNT(*) FROM "ActivityReportObjectives" WHERE "ActivityReportObjectives"."objectiveId" = "Objectives"."id"
-          AND "ActivityReportObjectives"."activityReportId" != ${reportId}) = 0
-        `),
+        sequelize.literal(`(SELECT COUNT(*) FROM "ActivityReportObjectives" WHERE "ActivityReportObjectives"."objectiveId" = "Objectives"."id" AND "ActivityReportObjectives"."activityReportId" != ${reportId}) = 0`),
       ],
     },
   });
