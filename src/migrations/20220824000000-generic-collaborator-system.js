@@ -648,9 +648,10 @@ module.exports = {
          SELECT
           cra."collaboratorId",
           cra."roleId",
-          cra."createdAt",
-          cra."updatedAt"
+          min(cra."createdAt") "createdAt",
+          max(cra."updatedAt") "updatedAt"
          FROM "CollaboratorRoles_ALL" cra
+         GROUP BY 1, 2
          ORDER BY 3, 1, 2;`,
           { transaction },
         );
