@@ -520,7 +520,7 @@ describe('activityReportToCsvRecord', () => {
   });
 
   it('does not provide values for builders that are not strings or functions', async () => {
-    const report = await ActivityReport.build(mockReport, { include: [{ model: User, as: 'author' }, { model: User, as: 'lastUpdatedBy' }] });
+    const report = await ActivityReport.build(mockReport, { include: [{ model: User, as: 'owner' }, { model: User, as: 'lastUpdatedBy' }] });
     const output = await activityReportToCsvRecord(report, [1, true, 'regionId']);
     expect(output).toMatchObject({ regionId: 14 });
   });

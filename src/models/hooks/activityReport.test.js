@@ -5,6 +5,7 @@ import db, {
   ActivityReportGoal,
   ActivityRecipient,
   ActivityReportObjective,
+  Approval,
   Goal,
   Objective,
   Recipient,
@@ -164,11 +165,17 @@ describe('activity report model hooks', () => {
     });
 
     it('submitting the report should set the goal status to "Not Started"', async () => {
-      const testReport = await ActivityReport.findByPk(report.id);
+      const testReport = await ActivityReport.findByPk(report.id, { include: [{ model: Approval, as: 'approval' }] });
 
-      await testReport.update({
+      await Approval.update({
         submissionStatus: REPORT_STATUSES.SUBMITTED,
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      }, {
+        where: {
+          entityType: ENTITY_TYPES.REPORT,
+          entityId: testReport.id,
+          tier: 0,
+        },
       });
 
       const testGoal = await Goal.findByPk(goal.id);
@@ -176,8 +183,8 @@ describe('activity report model hooks', () => {
     });
 
     it('approving the report should set the goal to "in progress"', async () => {
-      let testReport = await ActivityReport.findByPk(report.id);
-      expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.SUBMITTED);
+      let testReport = await ActivityReport.findByPk(report.id, { include: [{ model: Approval, as: 'approval' }] });
+      expect(testReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.SUBMITTED);
 
       await upsertRatifier({
         entityType: ENTITY_TYPES.REPORT,
@@ -187,8 +194,8 @@ describe('activity report model hooks', () => {
         tier: 0,
       });
 
-      testReport = await ActivityReport.findByPk(report.id);
-      expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+      testReport = await ActivityReport.findByPk(report.id, { include: [{ model: Approval, as: 'approval' }] });
+      expect(testReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
 
       const testGoal = await Goal.findByPk(goal.id);
       expect(testGoal.status).toEqual('In Progress');

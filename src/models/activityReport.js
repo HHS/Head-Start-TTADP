@@ -279,9 +279,8 @@ module.exports = (sequelize, DataTypes) => {
     creatorNameWithRole: {
       type: DataTypes.VIRTUAL,
       get() {
-        const owner = this.owner.get();
-        if (owner) {
-          return owner.nameWithRole;
+        if (this.owner) {
+          return this.owner.get().nameWithRole;
         }
         return null;
       },
@@ -314,9 +313,8 @@ module.exports = (sequelize, DataTypes) => {
     creatorRole: {
       type: DataTypes.VIRTUAL,
       get() {
-        const owner = this.owner.get();
-        if (owner) {
-          return owner.roles;
+        if (this.owner) {
+          return this.owner.get().roles;
         }
         return null;
       },
@@ -324,9 +322,8 @@ module.exports = (sequelize, DataTypes) => {
     isApproved: {
       type: DataTypes.VIRTUAL,
       get() {
-        const approval = this.approval.get();
-        if (approval) {
-          return approval.isApproved;
+        if (this.approval) {
+          return this.approval.get().isApproved;
         }
         return null;
       },
@@ -335,14 +332,16 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.VIRTUAL,
       get() {
         // Any report in the alerts table should show the set creator role.
-        const approval = this.approval.get();
-        if (this.creatorRole || approval.isApproved) {
+        if (this.creatorRole || this.isApproved) {
           return this.creatorNameWithRole;
         }
-        const owner = this.owner.get();
-        if (owner && this.owner.user) {
-          const user = owner.user.get();
-          return user.fullName;
+        if (this.owner) {
+          const owner = this.owner.get();
+          if (owner.user) {
+            const user = owner.user.get();
+            return user.fullName;
+          }
+          return null;
         }
         return null;
       },

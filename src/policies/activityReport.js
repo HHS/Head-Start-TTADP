@@ -30,6 +30,11 @@ export default class ActivityReport {
       && this.canWriteInRegion()
       && this.reportHasEditableStatus();
 
+    if (!this.activityReport
+      || !this.activityReport.approval) {
+      return false;
+    }
+
     const canUpdateAsApprover = (this.canReview()
       && this.activityReport.approval.calculatedStatus === REPORT_STATUSES.SUBMITTED);
 
@@ -38,16 +43,31 @@ export default class ActivityReport {
   }
 
   canReset() {
+    if (!this.activityReport
+      || !this.activityReport.approval) {
+      return false;
+    }
+
     return (this.isAuthor() || this.isCollaborator())
       && this.activityReport.approval.calculatedStatus === REPORT_STATUSES.SUBMITTED;
   }
 
   canDelete() {
+    if (!this.activityReport
+      || !this.activityReport.approval) {
+      return false;
+    }
+
     return (this.isAdmin() || this.isAuthor())
       && this.activityReport.approval.calculatedStatus !== REPORT_STATUSES.APPROVED;
   }
 
   canUnlock() {
+    if (!this.activityReport
+      || !this.activityReport.approval) {
+      return false;
+    }
+
     return (this.isUnlockAdmin())
       && this.activityReport.approval.calculatedStatus === REPORT_STATUSES.APPROVED;
   }
@@ -61,6 +81,11 @@ export default class ActivityReport {
 
     if (canReadUnapproved) {
       return canReadUnapproved;
+    }
+
+    if (!this.activityReport
+      || !this.activityReport.approval) {
+      return false;
     }
 
     if (this.activityReport.approval.calculatedStatus === REPORT_STATUSES.APPROVED) {
@@ -103,6 +128,11 @@ export default class ActivityReport {
   }
 
   hasBeenMarkedByApprover() {
+    if (!this.activityReport
+      || !this.activityReport.approval) {
+      return false;
+    }
+
     return (
       this.activityReport.approval.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION
       || this.activityReport.approvers.some((approver) => (
@@ -126,11 +156,12 @@ export default class ActivityReport {
   }
 
   isAuthor() {
-    if (!this.activityReport.owner) {
+    if (!this.activityReport
+      || !this.activityReport.owner) {
       return false;
     }
 
-    return this.activityReport.owner.user.id === this.user.id;
+    return this.activityReport.owner.userId === this.user.id;
   }
 
   isCollaborator() {
@@ -140,7 +171,7 @@ export default class ActivityReport {
     }
 
     return this.activityReport.collaborators
-      .some((collab) => collab.user.id === this.user.id);
+      .some((collab) => collab.userId === this.user.id);
   }
 
   isApprovingManager() {
@@ -150,7 +181,7 @@ export default class ActivityReport {
     }
 
     return this.activityReport.approvers
-      .some((approver) => approver.user.id === this.user.id);
+      .some((approver) => approver.userId === this.user.id);
   }
 
   reportHasEditableStatus() {

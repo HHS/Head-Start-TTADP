@@ -302,7 +302,7 @@ export async function getCollaborator(entityType, entityId, userId) {
     include: [
       { model: User, as: 'user' },
       { model: Role, as: 'roles' },
-    ]
+    ],
   });
 }
 
