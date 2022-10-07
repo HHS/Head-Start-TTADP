@@ -17,6 +17,7 @@ describe('saveGoalsForReport (more tests)', () => {
   let activityReportForNewGoal;
   let multiRecipientReport;
   let reportWeArentWorryingAbout;
+  let reportForReusedObjectiveText;
   let grantOne;
   let grantTwo;
   let activityReports = [];
@@ -24,6 +25,7 @@ describe('saveGoalsForReport (more tests)', () => {
   let grants = [];
   let goal;
   let objective;
+  let objective2;
 
   beforeAll(async () => {
     const recipientOne = await Recipient.create(
@@ -77,6 +79,14 @@ describe('saveGoalsForReport (more tests)', () => {
       activityRecipientType: 'recipient',
     });
 
+    // report for reused objective text
+    reportForReusedObjectiveText = await ActivityReport.create({
+      submissionStatus: REPORT_STATUSES.DRAFT,
+      regionId: 1,
+      userId: 1,
+      activityRecipientType: 'recipient',
+    });
+
     reportWeArentWorryingAbout = await ActivityReport.create({
       submissionStatus: REPORT_STATUSES.DRAFT,
       regionId: 1,
@@ -88,10 +98,16 @@ describe('saveGoalsForReport (more tests)', () => {
       activityReportForNewGoal,
       multiRecipientReport,
       reportWeArentWorryingAbout,
+      reportForReusedObjectiveText,
     ];
 
     await ActivityRecipient.create({
       activityReportId: activityReportForNewGoal.id,
+      grantId: grantOne.id,
+    });
+
+    await ActivityRecipient.create({
+      activityReportId: reportForReusedObjectiveText.id,
       grantId: grantOne.id,
     });
 
@@ -122,10 +138,22 @@ describe('saveGoalsForReport (more tests)', () => {
       activityReportId: reportWeArentWorryingAbout.id,
     });
 
+    await ActivityReportGoal.create({
+      goalId: goal.id,
+      activityReportId: reportForReusedObjectiveText.id,
+    });
+
     objective = await Objective.create({
       goalId: goal.id,
       status: 'In Progress',
       title: 'This is an existing objective',
+    });
+
+    objective2 = await Objective.create({
+      goalId: goal.id,
+      status: 'In Progress',
+      title: 'This is an existing objective 2',
+      onApprovedAR: true,
     });
 
     await ActivityReportObjective.create({
@@ -327,6 +355,139 @@ describe('saveGoalsForReport (more tests)', () => {
     });
 
     expect(afterObjectives.length).toBe(0);
+  });
+
+  it('you can safely reuse objective text', async () => {
+    const beforeGoals = await ActivityReportGoal.findAll({
+      where: {
+        activityReportId: reportForReusedObjectiveText.id,
+      },
+    });
+
+    expect(beforeGoals.length).toBe(1);
+
+    const beforeObjectives = await ActivityReportObjective.findAll({
+      where: {
+        activityReportId: reportForReusedObjectiveText.id,
+      },
+    });
+
+    expect(beforeObjectives.length).toBe(0);
+
+    const [savedReport] = await activityReportAndRecipientsById(reportForReusedObjectiveText.id);
+
+    const [beforeGoal] = beforeGoals;
+    const existingGoal = await Goal.findByPk(beforeGoal.goalId);
+
+    const objectiveWithReusedText = {
+      title: objective2.title,
+      isNew: true,
+      status: 'In Progress',
+      id: '02f1123ec1d-4163-4a9a-9b32-ad123ddf336f990',
+      ttaProvided: '<p>Test objective TTA</p>\n',
+      goalId: existingGoal.id,
+    };
+
+    let newGoals = [
+      {
+        isNew: false,
+        name: existingGoal.name,
+        objectives: [objectiveWithReusedText],
+        grantIds: [grantOne.id],
+        status: 'Not Started',
+        goalIds: [existingGoal.id],
+      },
+    ];
+
+    await saveGoalsForReport(newGoals, savedReport);
+
+    let afterGoals = await ActivityReportGoal.findAll({
+      where: {
+        activityReportId: reportForReusedObjectiveText.id,
+      },
+    });
+
+    expect(afterGoals.length).toBe(1);
+
+    let [goalId] = afterGoals.map((ag) => ag.goalId);
+
+    expect(goalId).toBe(beforeGoal.goalId);
+
+    let savedGoal = await Goal.findByPk(goalId);
+
+    expect(savedGoal.name).toBe(existingGoal.name);
+    expect(savedGoal.grantId).toBe(grantOne.id);
+
+    let afterObjectives = await ActivityReportObjective.findAll({
+      where: {
+        activityReportId: reportForReusedObjectiveText.id,
+      },
+    });
+
+    // an objective was added
+    expect(afterObjectives.length).toBe(1);
+
+    // it matches an existing objective
+    let [afterObjective] = afterObjectives;
+
+    expect(afterObjective.objectiveId).toBe(objective2.id);
+
+    const editingObjectiveWithReusedText = {
+      title: `as far as i know, ${objective2.title}`,
+      isNew: false,
+      status: 'In Progress',
+      id: objective2.id,
+      ttaProvided: '<p>Test objective TTA updated</p>\n',
+      goalId: existingGoal.id,
+    };
+
+    newGoals = [
+      {
+        isNew: false,
+        name: existingGoal.name,
+        objectives: [editingObjectiveWithReusedText],
+        grantIds: [grantOne.id],
+        status: 'Not Started',
+        goalIds: [existingGoal.id],
+      },
+    ];
+
+    await saveGoalsForReport(newGoals, savedReport);
+
+    afterGoals = await ActivityReportGoal.findAll({
+      where: {
+        activityReportId: reportForReusedObjectiveText.id,
+      },
+    });
+
+    expect(afterGoals.length).toBe(1);
+
+    [goalId] = afterGoals.map((ag) => ag.goalId);
+
+    expect(goalId).toBe(beforeGoal.goalId);
+
+    savedGoal = await Goal.findByPk(goalId);
+
+    expect(savedGoal.name).toBe(existingGoal.name);
+    expect(savedGoal.grantId).toBe(grantOne.id);
+
+    afterObjectives = await ActivityReportObjective.findAll({
+      where: {
+        activityReportId: reportForReusedObjectiveText.id,
+      },
+    });
+
+    // an objective was added
+    expect(afterObjectives.length).toBe(1);
+
+    // it matches an existing objective
+    [afterObjective] = afterObjectives;
+    expect(afterObjective.objectiveId).not.toBe(objective2.id);
+
+    expect(afterObjective.ttaProvided).toBe(editingObjectiveWithReusedText.ttaProvided);
+
+    const savedObjective = await Objective.findByPk(afterObjective.objectiveId);
+    expect(savedObjective.title).toBe(editingObjectiveWithReusedText.title);
   });
 
   it('adds multi recipient goals', async () => {
