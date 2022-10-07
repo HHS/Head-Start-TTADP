@@ -103,6 +103,10 @@ describe('collaborators services', () => {
       where: { id: reportIds },
       individualHooks: true,
     });
+    await UserRole.destroy({
+      where: { userId: [mockUser.id, mockUserTwo.id, mockManager.id, secondMockManager.id] },
+      individualHooks: true,
+    });
     await User.destroy({
       where: { id: [mockUser.id, mockUserTwo.id, mockManager.id, secondMockManager.id] },
       individualHooks: true,
