@@ -607,6 +607,12 @@ async function createObjectivesForGoal(goal, objectives, report) {
           title: objectiveTitle,
           status,
         });
+      // if its on an approved AR, and the title is the same, we shouldn't
+      // attempt to update it, only the status
+      } else if (savedObjective.onApprovedAR) {
+        await savedObjective.update({
+          status,
+        }, { individualHooks: true });
       } else {
         // if the objective exists and is not an approved AR, we can update it
         await savedObjective.update({
