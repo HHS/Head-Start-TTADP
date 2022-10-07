@@ -66,7 +66,11 @@ describe('Goals DB service', () => {
         expect(Objective.destroy).toHaveBeenCalledWith(
           {
             where: {
-              id: [1],
+              [Op.and]: [
+                { id: [1] },
+                // eslint-disable-next-line quotes
+                sequelize.literal(`(SELECT COUNT(*) FROM "ActivityReportObjectives" WHERE "ActivityReportObjectives"."objectiveId" = "Objectives"."id" AND "ActivityReportObjectives"."activityReportId" != 1) = 0`),
+              ],
             },
           },
         );
