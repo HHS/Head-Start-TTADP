@@ -40,14 +40,6 @@ main(){
 
 	check_exit "$?"
 
-	# we need to bomb out if there was an error
-	if [[ $exit_code -ne 0 ]]; then
-		echo
-		log "Errors occurred during script execution"
-	fi
-
-	exit "$exit_code"
-
     # then list through the folders and run the tests
     targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets") 
 
@@ -81,16 +73,15 @@ main(){
 			--collectCoverageFrom=src/"$target"/**/*.js \
 			--forceExit
 
-			check_exit "$?"
-
-
-		    if [[ $exit_code -ne 0 ]]; then
-             	echo
-            	log "Errors occurred during script execution"
-   			fi
-
-    		exit "$exit_code"
+			check_exit "$?"	    
     done
+
+	if [[ $exit_code -ne 0 ]]; then
+        echo
+        log "Errors occurred during script execution"
+   	fi
+
+    exit "$exit_code"
 }
 
 main
