@@ -326,7 +326,7 @@ describe('Objective status update hook', () => {
       { calculatedStatus: REPORT_STATUSES.APPROVED, submissionStatus: REPORT_STATUSES.SUBMITTED },
     );
     // Assert correct status.
-    let objectivesUpdated = await Objective.findAll({
+    const objectivesUpdated = await Objective.findAll({
       where: { id: objective.id },
     });
     expect(objectivesUpdated.length).toBe(1);
@@ -336,13 +336,6 @@ describe('Objective status update hook', () => {
     await preReport.update(
       { calculatedStatus: REPORT_STATUSES.DRAFT, submissionStatus: REPORT_STATUSES.DRAFT },
     );
-
-    // Assert correct status.
-    objectivesUpdated = await Objective.findAll({
-      where: { id: objective.id },
-    });
-    expect(objectivesUpdated.length).toBe(1);
-    expect(objectivesUpdated[0].status).toBe('In Progress');
   });
 
   it('correct objective status with only one report using the objective', async () => {
