@@ -22,12 +22,12 @@ export default function ObjectiveStatus({
   }, [goalStatus]);
 
   const options = useMemo(() => {
-    // if the objective is completed, it can only go back to in progress
-    if (initialStatus.current === 'Completed') {
+    // if the objective is complete, it can only go back to in progress
+    if (initialStatus.current === 'Complete') {
       return (
         <>
           <option>In Progress</option>
-          <option>Completed</option>
+          <option>Complete</option>
         </>
       );
     }
@@ -37,7 +37,7 @@ export default function ObjectiveStatus({
       <>
         <option>Not Started</option>
         <option>In Progress</option>
-        <option>Completed</option>
+        <option>Complete</option>
       </>
     );
   }, []);

@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import { OBJECTIVE_STATUS } from '../../constants';
 
 const findOrCreateObjectiveTemplate = async (
   sequelize,
@@ -47,30 +48,30 @@ const autoPopulateStatusChangeDates = (sequelize, instance) => {
   if (Array.isArray(changed) && changed.includes('status')) {
     const now = new Date();
     switch (instance.status) {
-      case 'Draft':
+      case OBJECTIVE_STATUS.DRAFT:
         break;
-      case 'Not Started':
+      case OBJECTIVE_STATUS.NOT_STARTED:
         if (instance.firstNotStartedAt === null
           || instance.firstNotStartedAt === undefined) {
           instance.set('firstNotStartedAt', now);
         }
         instance.set('lastNotStartedAt', now);
         break;
-      case 'In Progress':
+      case OBJECTIVE_STATUS.IN_PROGRESS:
         if (instance.firstInProgressAt === null
           || instance.firstInProgressAt === undefined) {
           instance.set('firstInProgressAt', now);
         }
         instance.set('lastInProgressAt', now);
         break;
-      case 'Suspended':
+      case OBJECTIVE_STATUS.SUSPENDED:
         if (instance.firstSuspendedAt === null
           || instance.firstSuspendedAt === undefined) {
           instance.set('firstSuspendedAt', now);
         }
         instance.set('lastSuspendedAt', now);
         break;
-      case 'Completed':
+      case OBJECTIVE_STATUS.COMPLETE:
         if (instance.firstCompleteAt === null
           || instance.firstCompleteAt === undefined) {
           instance.set('firstCompleteAt', now);
@@ -150,7 +151,9 @@ const propogateStatusToParentGoal = async (sequelize, instance, options) => {
       });
 
       // if there is, we then need to check to see if it needs to be moved to "in progress"
-      const atLeastOneInProgress = objectives.some((o) => o.status === 'In Progress');
+      const atLeastOneInProgress = objectives.some(
+        (o) => o.status === OBJECTIVE_STATUS.IN_PROGRESS,
+      );
 
       // and if so, we update it (storing the previous status so we can revert if needed)
       if (atLeastOneInProgress) {

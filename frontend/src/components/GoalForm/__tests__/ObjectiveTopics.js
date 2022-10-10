@@ -63,7 +63,7 @@ describe('ObjectiveTopics', () => {
   });
 
   it('in the read only view, it distinguises between used data and unused data', async () => {
-    renderObjectiveTopics(false, defaultTopicSelection, 'Completed', 'Closed');
+    renderObjectiveTopics(false, defaultTopicSelection, 'Complete', 'Closed');
     expect(await screen.findByText(/dancing but too fast/i)).toBeVisible();
     expect(await screen.findByText(/dancing but too slow/i)).toBeVisible();
     expect(document.querySelectorAll('.ttahub-objective-list-item--unused-data').length).toBe(1);
