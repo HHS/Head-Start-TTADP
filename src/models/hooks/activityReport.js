@@ -170,16 +170,19 @@ const determineObjectiveStatus = async (activityReportId, sequelize) => {
 
   // Get all the reports that use the objectives
   const allObjectiveReports = await sequelize.models.ActivityReport.findAll({
+    attributes: ['id', 'calculatedStatus', 'endDate'],
     include: [
       {
         model: sequelize.models.ActivityReportObjective,
         as: 'activityReportObjectives',
+        attributes: ['id', 'objectiveId', 'status'],
         where: {
           objectiveId: objectiveIds,
         },
         include: [{
           model: sequelize.models.Objective,
           as: 'objective',
+          attributes: ['id', 'status'],
         }],
       },
     ],
