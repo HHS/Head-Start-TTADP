@@ -16,7 +16,9 @@ import {
 } from '../activityReports';
 import { REPORTS_PER_PAGE } from '../../Constants';
 
-const response = { rows: [], count: 0, recipients: [] };
+const response = {
+  rows: [], count: 0, recipients: [], topics: [],
+};
 const alerts = { alertsCount: 0, alerts: [], recipients: [] };
 
 describe('activityReports fetcher', () => {
