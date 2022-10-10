@@ -103,8 +103,22 @@ describe('Topics and frequency graph widget', () => {
       mockUserThree,
     ]);
 
-    const grantsSpecialist = await Role.findOne({ where: { fullName: 'Grants Specialist' } });
-    const systemSpecialist = await Role.findOne({ where: { fullName: 'System Specialist' } });
+    const [grantsSpecialist] = await Role.findOrCreate({
+      where: {
+        fullName: 'Grants Specialist',
+        name: 'GS',
+        isSpecialist: true,
+        id: 5,
+      },
+    });
+    const [systemSpecialist] = await Role.findOrCreate({
+      where: {
+        fullName: 'System Specialist',
+        name: 'SS',
+        isSpecialist: true,
+        id: 16,
+      },
+    });
 
     await UserRole.create({
       userId: mockUser.id,

@@ -190,7 +190,7 @@ parameters:
     default: "main-ar-redesign"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "kw-update-node"
+    default: "kw-monthly-cron"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -254,12 +254,18 @@ jobs:
           command: yarn db:seed:ci
       - run:
           name: Test backend
-          command: yarn test:ci
-      - store_test_results:
-          path: reports/
+          command:  |
+            chmod 744 ./bin/test-backend-ci
+            ./bin/test-backend-ci
+      - run:
+          name: Compress coverage artifacts
+          command: tar -cvzf backend-coverage-artifacts.tar coverage/
       - store_artifacts:
           path: coverage/
-
+      - store_artifacts:
+          path: backend-coverage-artifacts.tar
+      - store_test_results:
+          path: reports/
   test_frontend:
     executor: docker-executor
     steps:
