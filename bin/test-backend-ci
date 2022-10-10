@@ -1,0 +1,63 @@
+#!/bin/bash
+
+main(){
+    # first get the tests in the root directory
+    node_modules/.bin/cross-env \
+		JEST_JUNIT_OUTPUT_DIR=reports \
+		JEST_JUNIT_OUTPUT_NAME=root.xml \
+		POSTGRES_USERNAME=postgres \
+		POSTGRES_DB=ttasmarthub \
+		CURRENT_USER_ID=5 \
+		CI=true \
+		node \
+		--expose-gc \
+		./node_modules/.bin/jest \
+		src/*.js \
+		--coverage \
+		--colors \
+		--reporters=jest-junit \
+		--reporters=default \
+		--runInBand \
+		--silent \
+		--colors \
+		--logHeapUsage \
+		--coverageDirectory="$(pwd)"/coverage/src/root \
+		--collectCoverageFrom=src/*.js \
+		--forceExit
+
+    # then list through the folders and run the tests
+    targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets") 
+
+    for target in "${targets[@]}"; do        
+        # jest command to 
+        # - run tests in the target folder
+        # - collect coverage from the target folder
+        # - output coverage relative to the target folder
+        # - some other useful flags
+
+        node_modules/.bin/cross-env \
+			JEST_JUNIT_OUTPUT_DIR=reports \
+			JEST_JUNIT_OUTPUT_NAME="$target".xml \
+			POSTGRES_USERNAME=postgres \
+			POSTGRES_DB=ttasmarthub \
+			CURRENT_USER_ID=5 \
+			CI=true \
+			node \
+			--expose-gc \
+			./node_modules/.bin/jest \
+			src/"$target" \
+			--coverage \
+			--colors \
+			--reporters=jest-junit \
+			--reporters=default \
+			--runInBand \
+			--silent \
+			--colors \
+			--logHeapUsage \
+			--coverageDirectory="$(pwd)"/coverage/src/"$target" \
+			--collectCoverageFrom=src/"$target"/**/*.js \
+			--forceExit
+    done
+}
+
+main

@@ -66,6 +66,9 @@ jest.mock('../../services/activityReports', () => ({
 jest.mock('../../services/objectives', () => ({
   saveObjectivesForReport: jest.fn(),
   getObjectivesByReportId: jest.fn(),
+}));
+
+jest.mock('../../services/userSettings', () => ({
   userSettingOverridesById: jest.fn(),
 }));
 
