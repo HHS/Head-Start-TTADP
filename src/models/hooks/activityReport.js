@@ -177,11 +177,9 @@ const determineObjectiveStatus = async (activityReportId, sequelize) => {
         where: {
           objectiveId: objectiveIds,
         },
-        required: true,
         include: [{
           model: sequelize.models.Objective,
           as: 'objective',
-          required: true,
         }],
       },
     ],
@@ -212,7 +210,6 @@ const determineObjectiveStatus = async (activityReportId, sequelize) => {
       const relevantARs = approvedReports.filter(
         (a) => a.activityReportObjectives.find((aro) => aro.objectiveId === o),
       );
-
       // Get latest report by end date.
       const latestAR = relevantARs.reduce((r, a) => (r.endDate > a.endDate ? r : a));
 
@@ -473,6 +470,29 @@ const automaticGoalObjectiveStatusCachingOnApproval = async (sequelize, instance
     await Promise.all(goals
       .map(async (goal) => sequelize.models.ActivityReportGoal.update(
         { status: goal.status },
+        {
+          where: {
+            activityReportId: instance.id,
+          },
+          transaction: options.transaction,
+          individualHooks: true,
+        },
+      )));
+
+    const objectives = await sequelize.models.Objective.findAll({
+      include: [{
+        model: sequelize.models.ActivityReport,
+        as: 'activityReports',
+        required: true,
+        where: { id: instance.id },
+      }],
+      transaction: options.transaction,
+    });
+
+    // Update Objective status to 'In Progress'.
+    await Promise.all(objectives
+      .map(async (objective) => sequelize.models.ActivityReportObjective.update(
+        { status: objective.status },
         {
           where: {
             activityReportId: instance.id,
