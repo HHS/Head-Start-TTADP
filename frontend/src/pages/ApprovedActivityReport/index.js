@@ -150,7 +150,7 @@ export default function ApprovedActivityReport({ match, user }) {
     );
   }
   const {
-    reportId,
+    id: reportId,
     displayId,
     author,
     startDate,
