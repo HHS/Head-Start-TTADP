@@ -69,7 +69,7 @@ const cacheTopics = async (activityReportObjectiveId, topics = []) => Promise.al
 
 const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   const {
-    files, resources, roles, topics, ttaProvided,
+    files, resources, roles, topics, ttaProvided, status,
   } = metadata;
   const objectiveId = objective.id;
   const [aro] = await ActivityReportObjective.findOrCreate({
@@ -82,7 +82,7 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   return Promise.all([
     await ActivityReportObjective.update({
       title: objective.title,
-      status: objective.status,
+      status,
       ttaProvided,
     }, {
       where: { id: activityReportObjectiveId },
