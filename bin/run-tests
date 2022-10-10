@@ -84,6 +84,10 @@ main() {
       echo
       log "Running backend tests"
 
+      whoami
+      id "$(whoami)"
+      stat coverage
+
       # first get the tests in the root directory
       command="node_modules/.bin/cross-env \
       JEST_JUNIT_OUTPUT_DIR=reports \
