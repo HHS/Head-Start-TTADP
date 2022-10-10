@@ -25,7 +25,7 @@ function collaboratorQuery(escapedRoles) {
   FROM "Users" "Users"
   INNER JOIN "Collaborators" "Collaborators"
   ON "Collaborators"."userId" = "Users"."id"
-  AND '${COLLABORATOR_TYPES.OWNER}' = ANY ("Collaborators"."collaboratorTypes")
+  AND '${COLLABORATOR_TYPES.EDITOR}' = ANY ("Collaborators"."collaboratorTypes")
   AND "Collaborators"."entityType" = '${ENTITY_TYPES.REPORT}'
   INNER JOIN "UserRoles" "UserRoles"
   ON "UserRoles"."userId" = "Users"."id"
