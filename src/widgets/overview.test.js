@@ -136,12 +136,37 @@ describe('Dashboard overview widget', () => {
       )]);
 
     if (results.length) {
-      regionOneReportOne = await createReport({ ...regionOneReport, duration: 1 });
-      regionOneReportTwo = await createReport({ ...regionOneReport, duration: 2, deliveryMethod: 'In-person' });
-      regionOneReportThree = await createReport({ ...regionOneReport, duration: 4 });
-      regionOneReportFour = await createReport({ ...regionOneReport, duration: 5 });
-      regionTwoReport = await createReport({ ...regionTwoReport, duration: 1.5 });
-      reportWithNewDate = await createReport({ ...reportWithNewDate, duration: 6 });
+      regionOneReportOne = await createReport({
+        ...regionOneReport,
+        duration: 1,
+        userId: mockUser.id,
+      });
+      regionOneReportTwo = await createReport({
+        ...regionOneReport,
+        duration: 2,
+        deliveryMethod: 'In-person',
+        userId: mockUser.id,
+      });
+      regionOneReportThree = await createReport({
+        ...regionOneReport,
+        duration: 4,
+        userId: mockUser.id,
+      });
+      regionOneReportFour = await createReport({
+        ...regionOneReport,
+        duration: 5,
+        userId: mockUser.id,
+      });
+      regionTwoReport = await createReport({
+        ...regionTwoReport,
+        duration: 1.5,
+        userId: mockUser.id,
+      });
+      reportWithNewDate = await createReport({
+        ...reportWithNewDate,
+        duration: 6,
+        userId: mockUser.id,
+      });
     }
   });
 

@@ -1,11 +1,11 @@
 import db, {
-  ActivityReport, ActivityRecipient, User, Recipient, Grant, NextStep, Collaborator,
+  ActivityReport, User, Recipient, Grant, Collaborator, UserRole,
 } from '../models';
 import filtersToScopes from '../scopes';
 import reasonList from './reasonList';
 import { REPORT_STATUSES, REASONS } from '../constants';
 import { createOrUpdate } from '../services/activityReports';
-import { auditLogger } from '../logger';
+import { destroyReport } from '../testUtils';
 
 const RECIPIENT_ID = 462034;
 const GRANT_ID_ONE = 107863;
@@ -131,6 +131,7 @@ const regionOneDraftReport = {
 describe('Reason list widget', () => {
   beforeAll(async () => {
     await User.create(mockUser);
+    await UserRole.create({ userId: mockUser.id, roleId: 1 });
     await Recipient.create({ name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' });
     await Grant.bulkCreate([{
       id: GRANT_ID_ONE, number: GRANT_ID_ONE, recipientId: RECIPIENT_ID, regionId: 3, status: 'Active',
@@ -167,22 +168,23 @@ describe('Reason list widget', () => {
   });
 
   afterAll(async () => {
-    const reports = await ActivityReport
-      .findAll({
-        include: [{
+    const reports = await ActivityReport.findAll({
+      include: [
+        {
           model: Collaborator,
           as: 'owner',
-          where: { userId: [mockUser.id] },
+          where: { userId: mockUser.id },
           required: true,
-        }],
-      });
-    const ids = reports.map((report) => report.id);
-    await NextStep.destroy({ where: { activityReportId: ids }, individualHooks: true });
-    await ActivityRecipient.destroy({ where: { activityReportId: ids }, individualHooks: true });
-    try {
-      await ActivityReport.destroy({ where: { id: ids }, individualHooks: true });
-    } catch (err) { auditLogger.error(JSON.stringify({ name: 'afterAll', err })); throw new Error(err); }
-    await User.destroy({ where: { id: [mockUser.id] }, individualHooks: true });
+        },
+      ],
+    });
+
+    // eslint-disable-next-line
+    for await (const report of reports) {
+      await destroyReport(report);
+    }
+
+    /* await User.destroy({ where: { id: [mockUser.id] }, individualHooks: true }); */
     await Grant.destroy({ where: { id: [GRANT_ID_ONE, GRANT_ID_TWO] }, individualHooks: true });
     await Recipient.destroy({ where: { id: RECIPIENT_ID }, individualHooks: true });
     await db.sequelize.close();
@@ -198,9 +200,9 @@ describe('Reason list widget', () => {
 
     expect(res.length).toBe(17);
     expect(res[0].name).toBe('Below Competitive Threshold (CLASS)');
-    expect(res[0].count).toBe(3);
+    expect(res[0].count).toBe(4);
     expect(res[1].name).toBe('Below Quality Threshold (CLASS)');
-    expect(res[1].count).toBe(2);
+    expect(res[1].count).toBe(3);
     expect(res[2].name).toBe('Change in Scope');
     expect(res[2].count).toBe(1);
     expect(res[3].name).toBe('Child Incidents');
@@ -210,12 +212,12 @@ describe('Reason list widget', () => {
   it('retrieves reason list for longer date range for specified region', async () => {
     const scopes = filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2021/01/01-2021/03/31' });
     const res = await reasonList(scopes);
-    auditLogger.error(JSON.stringify(res));
+
     expect(res.length).toBe(17);
     expect(res[0].name).toBe('Below Competitive Threshold (CLASS)');
-    expect(res[0].count).toBe(3);
+    expect(res[0].count).toBe(4);
     expect(res[1].name).toBe('Below Quality Threshold (CLASS)');
-    expect(res[1].count).toBe(3);
+    expect(res[1].count).toBe(4);
     expect(res[2].name).toBe('Change in Scope');
     expect(res[2].count).toBe(2);
   });
@@ -223,6 +225,7 @@ describe('Reason list widget', () => {
   it('retrieves reason list for later date range for specified region', async () => {
     const scopes = filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2021/03/01-2021/04/30' });
     const res = await reasonList(scopes);
+
     expect(res.length).toBe(17);
     expect(res[0].name).toBe('Below Quality Threshold (CLASS)');
     expect(res[0].count).toBe(2);
@@ -238,14 +241,15 @@ describe('Reason list widget', () => {
 
     expect(res.length).toBe(17);
     expect(res[0].name).toBe('Below Quality Threshold (CLASS)');
-    expect(res[0].count).toBe(4);
+    expect(res[0].count).toBe(5);
     expect(res[1].name).toBe('Below Competitive Threshold (CLASS)');
-    expect(res[1].count).toBe(2);
+    expect(res[1].count).toBe(3);
     expect(res[3].name).toBe('Child Incidents');
     expect(res[3].count).toBe(2);
     expect(res[2].name).toBe('Change in Scope');
     expect(res[2].count).toBe(2);
   });
+
   it('does not retrieve reason list outside of date range for specified region', async () => {
     let scopes = filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2020/01/01-2020/12/31' });
     let res = await reasonList(scopes);
