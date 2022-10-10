@@ -195,27 +195,14 @@ const determineObjectiveStatus = async (activityReportId, sequelize) => {
     (a) => a.calculatedStatus === REPORT_STATUSES.APPROVED,
   );
 
-  // Check if there aren't any approved reports to set the status.
-  let updateObjectivePromises;
-  if (!approvedReports.length) {
-    // Get Objective Id's to reset.
-    const currentReport = allObjectiveReports.find((r) => r.id === activityReportId);
-    const objectiveIdsToReset = currentReport.activityReportObjectives.map((a) => a.objectiveId);
-    updateObjectivePromises = [
-      sequelize.models.Objective.update({
-        status: 'Not Started',
-      }, {
-        where: { id: objectiveIdsToReset },
-        individualHooks: true,
-      })];
-  } else {
-    // Map with promises: objective find the most recent ar end date
-    updateObjectivePromises = objectiveIds.map((o) => {
-    // Get reports that use this objective.
+  // Only change the status if we have an approved report using the objective.
+  if (approvedReports.length) {
+    Promise.all(objectiveIds.map((o) => {
+      // Get reports that use this objective.
       const relevantARs = approvedReports.filter(
         (a) => a.activityReportObjectives.find((aro) => aro.objectiveId === o),
       );
-      // Get latest report by end date.
+        // Get latest report by end date.
       const latestAR = relevantARs.reduce((r, a) => (r.endDate > a.endDate ? r : a));
 
       // Get Objective to take status from.
@@ -228,9 +215,8 @@ const determineObjectiveStatus = async (activityReportId, sequelize) => {
         where: { id: o },
         individualHooks: true,
       });
-    });
+    }));
   }
-  return Promise.all(updateObjectivePromises);
 };
 const propagateApprovedStatus = async (sequelize, instance, options) => {
   const changed = instance.changed();

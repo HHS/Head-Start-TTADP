@@ -368,11 +368,12 @@ describe('Objective status update hook', () => {
     );
 
     // Assert correct status.
+    // For now don't roll objective status back.
     objectivesUpdated = await Objective.findAll({
       where: { id: [objectiveTwo.id, objectiveTwoB.id] },
     });
     expect(objectivesUpdated.length).toBe(2);
-    expect(objectivesUpdated[0].status).toBe('Not Started');
-    expect(objectivesUpdated[1].status).toBe('Not Started');
+    expect(objectivesUpdated[0].status).toBe('Complete');
+    expect(objectivesUpdated[1].status).toBe('Complete');
   });
 });
