@@ -18,7 +18,7 @@ export default async function changeReportStatus(ids, status) {
       auditLogger.info(`Changing status of report: ${id} to ${status}`);
       await report.update(
         {
-          submissionStatus: status,
+          calculatedStatus: status,
         },
         { individualHooks: true },
       );
