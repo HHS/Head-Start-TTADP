@@ -189,14 +189,12 @@ describe('Audit System', () => {
           throw (err);
         }
 
-        expect(routines)
-          .toEqual([
-            { name: 'ZALFTests' },
-            { name: 'ZALNoDeleteFTests' },
-            { name: 'ZALNoTruncateFTests' },
-            { name: 'ZALNoUpdateFTests' },
-            { name: 'ZALTruncateFTests' },
-          ]);
+        const routineNames = routines.map((routine) => routine.name);
+        expect(routineNames).toContain('ZALFTests');
+        expect(routineNames).toContain('ZALNoDeleteFTests');
+        expect(routineNames).toContain('ZALNoTruncateFTests');
+        expect(routineNames).toContain('ZALNoUpdateFTests');
+        expect(routineNames).toContain('ZALTruncateFTests');
 
         const hooks = [
           'beforeBulkCreate',

@@ -575,7 +575,7 @@ describe('goal filtersToScopes', () => {
       });
 
       expect(found.length).toBe(6);
-      expect(found[0].name).toContain('Goal 1');
+      expect(found.map((f) => f.name)).toContain('Goal 1');
     });
 
     it('filters out by region', async () => {

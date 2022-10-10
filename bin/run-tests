@@ -80,19 +80,84 @@ main() {
     fi
 
     if [[ "$opt" == "backend" || -z "$opt" ]]; then
-        # Test backend
-        command="yarn test:ci --colors"
-        if [ $verbose == "false" ]; then
-          command="yarn test:ci --silent --colors"
-        fi
-        echo
-        log "Running backend tests"
-        if [[ $docker == "true" ]]; then
-          docker exec test-backend bash -c "$command"
-        else
-          $command
-        fi
-        check_exit "$?"
+      # Test backend
+      echo
+      log "Running backend tests"
+
+      # remove existing coverage folder, since we are changing how things are structured
+      rm -rf coverage
+
+      # first get the tests in the root directory
+      node_modules/.bin/cross-env \
+      JEST_JUNIT_OUTPUT_DIR=reports \
+      JEST_JUNIT_OUTPUT_NAME=unit.xml \
+      POSTGRES_USERNAME=postgres \
+      POSTGRES_DB=ttasmarthub \
+      CURRENT_USER_ID=5 \
+      CI=true \
+      node \
+      --expose-gc \
+      ./node_modules/.bin/jest \
+      src/*.js \
+      --coverage \
+      --colors \
+      --reporters=jest-junit \
+      --reporters=default \
+      --runInBand \
+      --silent \
+      --colors \
+      --logHeapUsage \
+      --coverageDirectory="$(pwd)"/coverage/src/root \
+      --collectCoverageFrom=src/*.js \
+      --forceExit
+
+      if [[ $docker == "true" ]]; then
+        docker exec test-backend bash -c "$command"
+      else
+        $command
+      fi
+
+      check_exit "$?"
+
+      # then list through the folders and run the tests
+      targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets") 
+
+       for target in "${targets[@]}"; do        
+        # jest command to 
+        # - run tests in the target folder
+        # - collect coverage from the target folder
+        # - output coverage relative to the target folder
+        # - some other useful flags        
+        node_modules/.bin/cross-env \
+          JEST_JUNIT_OUTPUT_DIR=reports \
+          JEST_JUNIT_OUTPUT_NAME=unit.xml \
+          POSTGRES_USERNAME=postgres \
+          POSTGRES_DB=ttasmarthub \
+          CURRENT_USER_ID=5 \
+          CI=true \
+          node \
+          --expose-gc \
+          ./node_modules/.bin/jest \
+          src/"$target" \
+          --coverage \
+          --colors \
+          --reporters=jest-junit \
+          --reporters=default \
+          --runInBand \
+          --silent \
+          --colors \
+          --logHeapUsage \
+          --coverageDirectory="$(pwd)"/coverage/src/"$target" \
+          --collectCoverageFrom=src/"$target"/**/*.js \
+          --forceExit    
+          
+          if [[ $docker == "true" ]]; then
+            docker exec test-backend bash -c "$command"
+          else
+            $command
+          fi
+          check_exit "$?"
+      done 
     fi
 
     if [[ "$opt" == "frontend" || -z "$opt" ]]; then

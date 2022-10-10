@@ -424,6 +424,12 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         && objective.activityReportObjectives[0].ttaProvided
       ? objective.activityReportObjectives[0].ttaProvided : null;
 
+    // the same is true for statuses as is true for TTA provided
+    const status = objective.activityReportObjectives
+        && objective.activityReportObjectives[0]
+        && objective.activityReportObjectives[0].status
+      ? objective.activityReportObjectives[0].status : objective.status;
+
     const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
 
     return [...objectives, {
@@ -431,6 +437,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       value: id,
       ids: [id],
       ttaProvided,
+      status,
       isNew: false,
 
       // for the associated models, we need to return not the direct associations
@@ -1242,6 +1249,12 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
 }
 
 async function createObjectivesForGoal(goal, objectives, report) {
+  /*
+     Note: Objective Status
+     We only want to set Objective status from here on initial Objective creation.
+     All subsequent Objective status updates should come from the AR Hook using end date.
+  */
+
   // we don't want to create objectives with blank titles
   return Promise.all(objectives.filter((o) => o.title).map(async (objective) => {
     const {
@@ -1262,7 +1275,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
     // the goals passed we need to save the objectives.
     const createNewObjectives = objective.goalId !== goal.id;
     const updatedObjective = {
-      ...updatedFields, title, status, goalId: goal.id,
+      ...updatedFields, title, goalId: goal.id,
     };
 
     // Check if objective exists.
@@ -1272,10 +1285,12 @@ async function createObjectivesForGoal(goal, objectives, report) {
     }
 
     if (savedObjective) {
-      await savedObjective.update({
-        title,
-        status,
-      }, { individualHooks: true });
+      // We should only allow the title to change if we are not on a approved AR.
+      if (!savedObjective.onApprovedAR) {
+        await savedObjective.update({
+          title,
+        }, { individualHooks: true });
+      }
     } else {
       const objectiveTitle = updatedObjective.title ? updatedObjective.title.trim() : '';
 
@@ -1291,16 +1306,14 @@ async function createObjectivesForGoal(goal, objectives, report) {
           status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
         },
       });
-
-      if (existingObjective) {
-        await existingObjective.update({ status }, { individualHooks: true });
-        savedObjective = existingObjective;
-      } else {
+      if (!existingObjective) {
         savedObjective = await Objective.create({
           ...updatedObjective,
           title: objectiveTitle,
           status,
         });
+      } else {
+        savedObjective = existingObjective;
       }
     }
 
@@ -1327,6 +1340,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       report.id,
       {
         ...metadata,
+        status,
         ttaProvided: objective.ttaProvided,
       },
     );
