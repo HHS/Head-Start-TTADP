@@ -673,7 +673,7 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx[1].objectives[1].title).toBe('objective 3');
       expect(goalRowsx[1].objectives[1].endDate).toBe('09/01/2020');
       expect(goalRowsx[1].objectives[1].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRowsx[1].objectives[1].status).toEqual('In Progress');
+      expect(goalRowsx[1].objectives[1].status).toEqual(OBJECTIVE_STATUS.NOT_STARTED);
 
       // Goal 2.
       expect(moment(goalRowsx[2].createdOn).format('YYYY-MM-DD')).toBe('2021-02-15');
