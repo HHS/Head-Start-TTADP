@@ -1,4 +1,5 @@
 import moment from 'moment';
+import faker from '@faker-js/faker';
 import {
   sequelize,
   User,
@@ -79,12 +80,13 @@ describe('Goals by Recipient Test', () => {
     grantSpecialistName: 'Glen',
   };
 
+  const userKey = faker.datatype.number({ min: 7500 });
   const mockGoalUser = {
-    id: 42352636,
+    id: userKey,
     homeRegionId: 1,
-    name: 'user42352636',
-    hsesUsername: 'user42352636',
-    hsesUserId: 'user42352636',
+    name: `user${userKey}`,
+    hsesUsername: `user${userKey}`,
+    hsesUserId: `user${userKey}`,
   };
 
   const goalReport1 = {

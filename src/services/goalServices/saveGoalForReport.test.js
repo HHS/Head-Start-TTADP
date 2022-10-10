@@ -693,12 +693,12 @@ describe('saveGoalsForReport (more tests)', () => {
 
     // it matches an existing objective
     [afterObjective] = afterObjectives;
-    expect(afterObjective.objectiveId).not.toBe(objective2.id);
+    expect(afterObjective.objectiveId).toBe(objective2.id);
 
     expect(afterObjective.ttaProvided).toBe(editingObjectiveWithReusedText.ttaProvided);
 
     const savedObjective = await Objective.findByPk(afterObjective.objectiveId);
-    expect(savedObjective.title).toBe(editingObjectiveWithReusedText.title);
+    expect(savedObjective.title).toBe(objectiveWithReusedText.title);
   });
 
   it('adds multi recipient goals', async () => {
