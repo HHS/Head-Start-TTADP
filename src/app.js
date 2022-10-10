@@ -6,21 +6,16 @@ import path from 'path';
 import join from 'url-join';
 import { omit } from 'lodash';
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
-import { CronJob } from 'cron';
+
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 
 import { hsesAuth } from './middleware/authMiddleware';
 import { retrieveUserDetails } from './services/currentUser';
 import cookieSession from './middleware/sessionMiddleware';
-import updateGrantsRecipients from './lib/updateGrantsRecipients';
+
 import { logger, auditLogger, requestLogger } from './logger';
-import {
-  approvedDigest, changesRequestedDigest, collaboratorDigest, submittedDigest,
-} from './lib/mailer';
-import {
-  DIGEST_SUBJECT_FREQ, EMAIL_DIGEST_FREQ,
-} from './constants';
+import runCronJobs from './lib/cron';
 
 const app = express();
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
@@ -89,85 +84,6 @@ if (process.env.NODE_ENV === 'production') {
   app.use('*', serveIndex);
 }
 
-// Set timing parameters.
-// Run at 4 am ET
-const schedule = '0 4 * * *';
-// Run daily at 4 pm
-const dailySched = '0 16 * * *';
-// Run at 4 pm every Friday
-const weeklySched = '0 16 * * 5';
-// Run at 4 pm on the last of the month
-const monthlySched = '0 16 30 * *';
-const timezone = 'America/New_York';
-
-const runJob = () => {
-  try {
-    return updateGrantsRecipients();
-  } catch (error) {
-    auditLogger.error(`Error processing HSES file: ${error}`);
-    logger.error(error.stack);
-  }
-  return false;
-};
-
-const runDailyEmailJob = () => {
-  (async () => {
-    logger.info('Starting daily digests');
-    try {
-      await collaboratorDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
-      await changesRequestedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
-      await submittedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
-      await approvedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
-    } catch (error) {
-      auditLogger.error(`Error processing Daily Email Digest job: ${error}`);
-      logger.error(`Daily Email Digest Error: ${error.stack}`);
-    }
-  })();
-  return true;
-};
-
-const runWeeklyEmailJob = () => {
-  (async () => {
-    logger.info('Starting weekly digests');
-    try {
-      await collaboratorDigest(EMAIL_DIGEST_FREQ.WEEKLY, DIGEST_SUBJECT_FREQ.WEEKLY);
-      await changesRequestedDigest(EMAIL_DIGEST_FREQ.WEEKLY, DIGEST_SUBJECT_FREQ.WEEKLY);
-      await submittedDigest(EMAIL_DIGEST_FREQ.WEEKLY, DIGEST_SUBJECT_FREQ.WEEKLY);
-      await approvedDigest(EMAIL_DIGEST_FREQ.WEEKLY, DIGEST_SUBJECT_FREQ.WEEKLY);
-    } catch (error) {
-      auditLogger.error(`Error processing Weekly Email Digest job: ${error}`);
-      logger.error(`Weekly Email Digest Error: ${error.stack}`);
-    }
-  })();
-  return true;
-};
-
-const runMonthlyEmailJob = () => {
-  (async () => {
-    logger.info('Starting montly digests');
-    try {
-      await collaboratorDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
-      await changesRequestedDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
-      await submittedDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
-      await approvedDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
-    } catch (error) {
-      auditLogger.error(`Error processing Monthly Email Digest job: ${error}`);
-      logger.error(`Monthly Email Digest Error: ${error.stack}`);
-    }
-  })();
-  return true;
-};
-
-// Run only on one instance
-if (process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') {
-  const job = new CronJob(schedule, () => runJob(), null, true, timezone);
-  job.start();
-  const dailyJob = new CronJob(dailySched, () => runDailyEmailJob(), null, true, timezone);
-  dailyJob.start();
-  const weeklyJob = new CronJob(weeklySched, () => runWeeklyEmailJob(), null, true, timezone);
-  weeklyJob.start();
-  const monthlyJob = new CronJob(monthlySched, () => runMonthlyEmailJob(), null, true, timezone);
-  monthlyJob.start();
-}
+runCronJobs();
 
 export default app;
