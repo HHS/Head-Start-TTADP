@@ -6,6 +6,7 @@ const activityReports = [
     displayId: 'R14-AR-1',
     regionId: 14,
     topics: ['Behavioral / Mental Health', 'CLASS: Instructional Support'],
+    sortedTopics: ['Behavioral / Mental Health', 'CLASS: Instructional Support'],
     calculatedStatus: 'draft',
     pendingApprovals: '1 of 3',
     approvers: [{ User: { fullName: 'Approver Manager 1' } }, { User: { fullName: 'Approver Manager 2' } }, { User: { fullName: 'Approver Manager 3' } }],
@@ -82,6 +83,7 @@ const activityReports = [
     displayId: 'R14-AR-2',
     regionId: 14,
     topics: [],
+    sortedTopics: [],
     pendingApprovals: '2 of 2',
     approvers: [{ User: { fullName: 'Approver Manager 4' } }, { User: { fullName: 'Approver Manager 5' } }],
     calculatedStatus: 'needs_action',
@@ -134,6 +136,7 @@ export const activityReportsSorted = [
     displayId: 'R14-AR-2',
     regionId: 14,
     topics: [],
+    sortedTopics: [],
     calculatedStatus: 'needs_action',
     creatorName: 'Kiwi, GS',
     activityRecipients: [
@@ -182,6 +185,7 @@ export const activityReportsSorted = [
     displayId: 'R14-AR-1',
     regionId: 14,
     topics: ['Behavioral / Mental Health', 'CLASS: Instructional Support'],
+    sortedTopics: ['Behavioral / Mental Health', 'CLASS: Instructional Support'],
     calculatedStatus: 'draft',
     creatorName: 'Kiwi, TTAC',
     activityRecipients: [
@@ -263,6 +267,7 @@ export const generateXFakeReports = (count) => {
         displayId: 'R14-AR-1',
         regionId: 14,
         topics: ['Behavioral / Mental Health', 'CLASS: Instructional Support'],
+        sortedTopics: ['Behavioral / Mental Health', 'CLASS: Instructional Support'],
         calculatedStatus: 'draft',
         activityRecipients: [
           {

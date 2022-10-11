@@ -107,11 +107,11 @@ function ObjectiveCard({
             const viewOrEditLink = `/activity-reports/view/${report.id}`;
             const linkToAr = report.legacyId ? `/activity-reports/legacy/${report.legacyId}` : viewOrEditLink;
             return (
-              <li key={report.id}>
+              <li key={`AR-${report.id}`}>
                 <Link
                   to={linkToAr}
                 >
-                  {report.number}
+                  {report.displayId}
                 </Link>
               </li>
             );
@@ -128,7 +128,7 @@ function ObjectiveCard({
       </li>
       <li className="display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 minw-15">Reasons</span>
-        {reasons && displayReasonsList(reasons.sort())}
+        {reasons && displayReasonsList(reasons)}
       </li>
       <li className="display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 minw-15">Objective status </span>

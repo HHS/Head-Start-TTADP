@@ -15,8 +15,11 @@ export const convertToResponse = (
     [isAlerts ? 'alerts' : 'rows']: [...previous[isAlerts ? 'alerts' : 'rows'], report],
     recipients: [...previous.recipients, ...recipients],
     [isAlerts ? 'alertsCount' : 'count']: count,
+    topics: [],
   };
-}, { [isAlerts ? 'alertsCount' : 'count']: count, [isAlerts ? 'alerts' : 'rows']: [], recipients: [] });
+}, {
+  [isAlerts ? 'alertsCount' : 'count']: count, [isAlerts ? 'alerts' : 'rows']: [], recipients: [], topics: [],
+});
 
 export const withText = (text) => (content, node) => {
   const hasText = (n) => n.textContent === text;
