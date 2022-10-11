@@ -12,6 +12,7 @@ const reportObject = {
   regionId: 1,
   ECLKCResourcesUsed: ['test'],
   submissionStatus: REPORT_STATUSES.APPROVED,
+  calculatedStatus: REPORT_STATUSES.APPROVED,
   numberOfParticipants: 1,
   deliveryMethod: 'method',
   duration: 0,
@@ -33,7 +34,7 @@ describe('changeStatus', () => {
   it('changes activity report(s) status to deleted', async () => {
     const report = await ActivityReport.create(reportObject);
 
-    expect(report.submissionStatus).toBe(REPORT_STATUSES.APPROVED);
+    expect(report.calculatedStatus).toBe(REPORT_STATUSES.APPROVED);
     await changeReportStatus(report.id.toString(), 'deleted');
 
     const deletedReport = await ActivityReport.unscoped().findOne({ where: { id: report.id } });
