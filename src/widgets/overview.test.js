@@ -3,6 +3,8 @@ import db, {
   Recipient,
   Grant,
   Region,
+  Role,
+  UserRole,
 } from '../models';
 import filtersToScopes from '../scopes';
 import overview from './overview';
@@ -85,6 +87,11 @@ let regionOneReportFour;
 describe('Dashboard overview widget', () => {
   beforeAll(async () => {
     let results = await User.create(mockUser);
+    const role = await Role.create({ id: 1000, name: 'a', isSpecialist: true });
+    await UserRole.create({
+      userId: results.id,
+      roleId: role.id,
+    });
     results = await Recipient.create({ name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' });
     results = await Recipient.create({ name: 'recipient 2', id: RECIPIENT_TWO_ID, uei: 'NNA5N2KHMGM2' });
     results = await Region.create({ name: 'office 1717', id: REGION_ONE_ID });
@@ -188,6 +195,7 @@ describe('Dashboard overview widget', () => {
     });
     await Region.destroy({ where: { id: [REGION_ONE_ID, REGION_TWO_ID] }, individualHooks: true });
     await User.destroy({ where: { id: mockUser.id }, individualHooks: true });
+    await Role.destroy({ where: { id: 1000 }, individualHooks: true });
     await db.sequelize.close();
   });
 

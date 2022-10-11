@@ -167,22 +167,7 @@ export async function createReport(report) {
 
 export async function destroyReport(r) {
   const id = typeof r === 'number' ? r : r.id;
-
-  const report = await ActivityReport.findOne({
-    where: { id },
-    include: [
-      {
-        model: Collaborator,
-        as: 'owner',
-        required: true,
-      },
-      {
-        model: ActivityRecipient,
-        as: 'activityRecipients',
-        required: true,
-      },
-    ],
-  });
+  const report = await ActivityReport.findOne({ where: { id } });
 
   // Get all ActivityRecipients
   const activityRecipients = await ActivityRecipient.findAll({
@@ -191,22 +176,22 @@ export async function destroyReport(r) {
 
   // Get all Grants
   const grants = await Grant.findAll({
-    where: { id: { [Op.in]: activityRecipients.map((ar) => ar.dataValues.grantId), } },
+    where: { id: { [Op.in]: activityRecipients.map((ar) => ar.dataValues.grantId) } },
   });
 
   // Get all Recipients
   const recipients = await Recipient.findAll({
-    where: { id: { [Op.in]: grants.map((g) => g.dataValues.recipientId), } },
+    where: { id: { [Op.in]: grants.map((g) => g.dataValues.recipientId) } },
   });
 
   // Get all Goals
   const goals = await Goal.findAll({
-    where: { grantId: { [Op.in]: grants.map((g) => g.dataValues.id), } },
+    where: { grantId: { [Op.in]: grants.map((g) => g.dataValues.id) } },
   });
 
   // Get all Objectives
   const objectives = await Objective.findAll({
-    where: { goalId: { [Op.in]: goals.map((g) => g.dataValues.id), } },
+    where: { goalId: { [Op.in]: goals.map((g) => g.dataValues.id) } },
   });
 
   // Get all Collaborators so that we can get all Users.
@@ -216,17 +201,17 @@ export async function destroyReport(r) {
 
   // Get all Users
   const users = await User.findAll({
-    where: { id: { [Op.in]: collaborators.map((c) => c.dataValues.userId), } },
+    where: { id: { [Op.in]: collaborators.map((c) => c.dataValues.userId) } },
   });
 
   // Get all UserRoles so we can find Roles to destroy.
   const userRoles = await UserRole.findAll({
-    where: { userId: { [Op.in]: users.map((u) => u.dataValues.id), } },
+    where: { userId: { [Op.in]: users.map((u) => u.dataValues.id) } },
   });
 
   // Get all Roles
   const roles = await Role.findAll({
-    where: { id: { [Op.in]: userRoles.map((ur) => ur.dataValues.roleId), } },
+    where: { id: { [Op.in]: userRoles.map((ur) => ur.dataValues.roleId) } },
   });
 
   // Destroy the ActivityReport.
@@ -248,7 +233,7 @@ export async function destroyReport(r) {
   // - UserRoles
   // - Roles
   // - Users
-  await Promise.all([
+  await Promise.allSettled([
     ...grants.map((model) => model.destroy()),
     ...recipients.map((model) => model.destroy()),
     ...objectives.map((model) => model.destroy()),
