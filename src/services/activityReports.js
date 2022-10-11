@@ -1173,7 +1173,7 @@ export function formatResources(resources) {
 
 export async function createOrUpdate(newActivityReport, report) {
   let savedReport;
-  auditLogger.error(JSON.stringify(newActivityReport));
+  auditLogger.info(JSON.stringify(newActivityReport));
   const {
     approvers,
     approval,
@@ -1716,7 +1716,7 @@ export async function activityReportsChangesRequestedByDate(userId, date) {
     where: {
       [Op.and]: [
         {
-          calculatedStatus: {
+          '$approval.calculatedStatus$': {
             [Op.ne]: REPORT_STATUSES.APPROVED,
           },
         },
@@ -1738,6 +1738,10 @@ export async function activityReportsChangesRequestedByDate(userId, date) {
       ],
     },
     include: [
+      {
+        model: Approval,
+        as: 'approval',
+      },
       {
         model: Collaborator,
         as: 'owner',
@@ -1808,7 +1812,7 @@ export async function activityReportsApprovedByDate(userId, date) {
     where: {
       [Op.and]: [
         {
-          calculatedStatus: REPORT_STATUSES.APPROVED,
+          '$approval.calculatedStatus$': REPORT_STATUSES.APPROVED,
         },
         {
           [Op.or]: [{ '$owner.userId$': userId }, { '$collaborators.userId$': userId }],
@@ -1828,6 +1832,10 @@ export async function activityReportsApprovedByDate(userId, date) {
       ],
     },
     include: [
+      {
+        model: Approval,
+        as: 'approval',
+      },
       {
         model: Collaborator,
         as: 'owner',
