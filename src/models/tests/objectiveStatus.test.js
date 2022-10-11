@@ -234,7 +234,7 @@ describe('Objective status update hook', () => {
       ActivityReportObjective.create({
         activityReportId: reportOne.id,
         objectiveId: objective.id,
-        status: 'Completed',
+        status: 'Complete',
       });
 
       ActivityReportObjective.create({
@@ -252,13 +252,13 @@ describe('Objective status update hook', () => {
       ActivityReportObjective.create({
         activityReportId: reportOnlyUsingObjective.id,
         objectiveId: objectiveTwo.id,
-        status: 'Completed',
+        status: 'Complete',
       });
 
       ActivityReportObjective.create({
         activityReportId: reportOnlyUsingObjective.id,
         objectiveId: objectiveTwoB.id,
-        status: 'Completed',
+        status: 'Complete',
       });
     } catch (e) {
       auditLogger.error(JSON.stringify(e));
@@ -326,23 +326,16 @@ describe('Objective status update hook', () => {
       { calculatedStatus: REPORT_STATUSES.APPROVED, submissionStatus: REPORT_STATUSES.SUBMITTED },
     );
     // Assert correct status.
-    let objectivesUpdated = await Objective.findAll({
+    const objectivesUpdated = await Objective.findAll({
       where: { id: objective.id },
     });
     expect(objectivesUpdated.length).toBe(1);
-    expect(objectivesUpdated[0].status).toBe('Completed');
+    expect(objectivesUpdated[0].status).toBe('Complete');
 
     // UnApprove report.
     await preReport.update(
       { calculatedStatus: REPORT_STATUSES.DRAFT, submissionStatus: REPORT_STATUSES.DRAFT },
     );
-
-    // Assert correct status.
-    objectivesUpdated = await Objective.findAll({
-      where: { id: objective.id },
-    });
-    expect(objectivesUpdated.length).toBe(1);
-    expect(objectivesUpdated[0].status).toBe('In Progress');
   });
 
   it('correct objective status with only one report using the objective', async () => {
@@ -359,8 +352,8 @@ describe('Objective status update hook', () => {
       where: { id: [objectiveTwo.id, objectiveTwoB.id] },
     });
     expect(objectivesUpdated.length).toBe(2);
-    expect(objectivesUpdated[0].status).toBe('Completed');
-    expect(objectivesUpdated[1].status).toBe('Completed');
+    expect(objectivesUpdated[0].status).toBe('Complete');
+    expect(objectivesUpdated[1].status).toBe('Complete');
 
     // UnApprove report.
     await preReport.update(
@@ -368,11 +361,12 @@ describe('Objective status update hook', () => {
     );
 
     // Assert correct status.
+    // For now don't roll objective status back.
     objectivesUpdated = await Objective.findAll({
       where: { id: [objectiveTwo.id, objectiveTwoB.id] },
     });
     expect(objectivesUpdated.length).toBe(2);
-    expect(objectivesUpdated[0].status).toBe('Not Started');
-    expect(objectivesUpdated[1].status).toBe('Not Started');
+    expect(objectivesUpdated[0].status).toBe('Complete');
+    expect(objectivesUpdated[1].status).toBe('Complete');
   });
 });
