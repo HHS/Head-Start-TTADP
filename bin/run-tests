@@ -104,7 +104,7 @@ main() {
       --silent \
       --colors \
       --logHeapUsage \
-      --coverageDirectory=$(pwd)/coverage/src/root \
+      --coverageDirectory=\$(pwd)/coverage/src/root \
       --collectCoverageFrom=src/*.js \
       --forceExit"
 
@@ -145,7 +145,7 @@ main() {
           --silent \
           --colors \
           --logHeapUsage \
-          --coverageDirectory=$(pwd)/coverage/src/$target \
+          --coverageDirectory=\$(pwd)/coverage/src/$target \
           --collectCoverageFrom=src/$target/**/*.js \
           --forceExit"    
           
