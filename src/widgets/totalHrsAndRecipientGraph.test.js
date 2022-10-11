@@ -1,11 +1,21 @@
 import { Op } from 'sequelize';
 import db, {
-  ActivityReport, ActivityRecipient, User, Recipient, Grant, NextStep, Region, Collaborator,
-} from '../models';
+  ActivityReport,
+  ActivityRecipient,
+  User,
+  Recipient,
+  Grant,
+  NextStep,
+  Region,
+  Collaborator,
+  Role,
+  UserRole,
+} from "../models";
 import filtersToScopes from '../scopes';
 import totalHrsAndRecipientGraph from './totalHrsAndRecipientGraph';
 import { REPORT_STATUSES } from '../constants';
 import { createOrUpdate } from '../services/activityReports';
+import { destroyReport } from '../testUtils';
 
 const RECIPIENT_ID = 975107;
 const GRANT_ID_ONE = 10639719;
@@ -79,7 +89,9 @@ const legacyReport = {
 
 describe('Total Hrs and Recipient Graph widget', () => {
   beforeAll(async () => {
-    await User.create(mockUser);
+    const user = await User.create(mockUser);
+    const role = await Role.create({ id: 1000, name: 'a', isSpecialist: true });
+    await UserRole.create({ userId: user.id, roleId: role.id });
     await Region.bulkCreate([
       { name: 'office 177', id: 177 },
       { name: 'office 133', id: 133 },
@@ -115,14 +127,13 @@ describe('Total Hrs and Recipient Graph widget', () => {
           required: true,
         }],
       });
-    const ids = reports.map((report) => report.id);
-    await NextStep.destroy({ where: { activityReportId: ids }, individualHooks: true });
-    await ActivityRecipient.destroy({ where: { activityReportId: ids }, individualHooks: true });
-    await ActivityReport.destroy({ where: { id: ids }, individualHooks: true });
+
+    await Promise.all(reports.map((report) => destroyReport(report.id)));
     await User.destroy({
       where: { id: [mockUser.id, mockUserTwo.id, mockUserThree.id] },
       individualHooks: true,
     });
+    await Role.destroy({ where: { id: 1000 }, individualHooks: true });
     await Grant.destroy({ where: { id: [GRANT_ID_ONE, GRANT_ID_TWO] }, individualHooks: true });
     await Recipient.destroy({ where: { id: [RECIPIENT_ID] }, individualHooks: true });
     await Region.destroy({ where: { id: [133, 177, 188] }, individualHooks: true });
