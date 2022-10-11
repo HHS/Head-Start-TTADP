@@ -1,17 +1,18 @@
 import faker from '@faker-js/faker';
 import { Op } from 'sequelize';
-import { ENTITY_TYPES, REPORT_STATUSES } from './constants';
+import { REPORT_STATUSES } from './constants';
 import {
   ActivityReport,
   ActivityRecipient,
-  Approval,
   User,
   UserRole,
+  Role,
   Recipient,
   Grant,
   Region,
   GoalTemplate,
   Goal,
+  Objective,
   Collaborator,
   // GrantGoal,
 } from './models';
@@ -164,130 +165,98 @@ export async function createReport(report) {
   return createdReport;
 }
 
-export async function destroyReport(report) {
-  try {
-    await ActivityRecipient.destroy({
-      where: { activityReportId: report.id },
-      individualHooks: true,
-    });
-  } catch (e) {
-    console.log('caught error destroying activityrecipient where activityReportId = ', e);
-  }
+export async function destroyReport(r) {
+  const id = typeof r === 'number' ? r : r.id;
 
-  const reports = await ActivityReport.findAll({
-    where: { lastUpdatedById: report.owner.dataValues.userId },
+  const report = await ActivityReport.findOne({
+    where: { id },
     include: [
+      {
+        model: Collaborator,
+        as: 'owner',
+        required: true,
+      },
       {
         model: ActivityRecipient,
         as: 'activityRecipients',
         required: true,
       },
     ],
-    individualHooks: true,
   });
 
-  reports.forEach(async (r) => {
-    await ActivityRecipient.destroy({
-      where: { activityReportId: r.dataValues.id },
-    });
-    await Promise.all(r.activityRecipients.map(async (recipient) => {
-      const grant = await Grant.findByPk(recipient.grantId);
-
-      const otherRecipients = await ActivityRecipient.findAll({ where: { grantId: grant.id } });
-      const otherGoals = await Goal.findAll({ where: { grantId: grant.id } });
-      if (otherRecipients.length === 0 && otherGoals.length === 0) {
-        await Grant.destroy({
-          where: { id: grant.id },
-          individualHooks: true,
-        });
-      }
-
-      const results = await Grant.findAll({ where: { recipientId: grant.recipientId } });
-      if (results.length === 0) {
-        await Recipient.destroy({
-          where: { id: grant.recipientId },
-          individualHooks: true,
-        });
-      }
-    }));
+  // Get all ActivityRecipients
+  const activityRecipients = await ActivityRecipient.findAll({
+    where: { activityReportId: report.id },
   });
 
-  try {
-    await ActivityReport.destroy({
-      where: {
-        [Op.or]: [
-          { id: report.id },
-          { lastUpdatedById: report.owner.dataValues.userId },
-        ],
-      },
-      individualHooks: true,
-    });
-  } catch (e) {
-    console.log('failed to destroy activityreport', e);
-  }
+  // Get all Grants
+  const grants = await Grant.findAll({
+    where: { id: { [Op.in]: activityRecipients.map((ar) => ar.dataValues.grantId), } },
+  });
 
-  try {
-    await Approval.destroy({
-      where: { entityId: report.id, entityType: ENTITY_TYPES.REPORT },
-      force: true,
-      individualHooks: true,
-    });
-  } catch (e) {
-    console.log('failed to destroy approval', e);
-  }
+  // Get all Recipients
+  const recipients = await Recipient.findAll({
+    where: { id: { [Op.in]: grants.map((g) => g.dataValues.recipientId), } },
+  });
 
-  let results;
+  // Get all Goals
+  const goals = await Goal.findAll({
+    where: { grantId: { [Op.in]: grants.map((g) => g.dataValues.id), } },
+  });
 
-  try {
-    results = await ActivityReport.findAll({
-      include: [{
-        model: Collaborator,
-        as: 'owner',
-        where: { userId: report.owner.dataValues.userId },
-        required: true,
-      }],
-    });
+  // Get all Objectives
+  const objectives = await Objective.findAll({
+    where: { goalId: { [Op.in]: goals.map((g) => g.dataValues.id), } },
+  });
 
-    if (results.length === 0) {
-      await Collaborator.destroy({
-        where: { userId: report.owner.dataValues.userId },
-        individualHooks: true,
-      });
+  // Get all Collaborators so that we can get all Users.
+  const collaborators = await Collaborator.findAll({
+    where: { entityId: id },
+  });
 
-      await UserRole.destroy({
-        where: { userId: report.owner.dataValues.userId },
-        individualHooks: true,
-      });
+  // Get all Users
+  const users = await User.findAll({
+    where: { id: { [Op.in]: collaborators.map((c) => c.dataValues.userId), } },
+  });
 
-      await User.destroy({
-        where: { id: report.owner.dataValues.userId },
-        individualHooks: true,
-      });
-    }
-  } catch (e) {
-    console.log('failed to destroy user, userrole, collaborator', e);
-  }
+  // Get all UserRoles so we can find Roles to destroy.
+  const userRoles = await UserRole.findAll({
+    where: { userId: { [Op.in]: users.map((u) => u.dataValues.id), } },
+  });
 
-  try {
-    results = await ActivityReport.findAll({
-      where: { regionId: report.regionId },
-      individualHooks: true,
-    });
-  } catch (e) {
-    console.log('failed to find activityReports', e);
-  }
+  // Get all Roles
+  const roles = await Role.findAll({
+    where: { id: { [Op.in]: userRoles.map((ur) => ur.dataValues.roleId), } },
+  });
 
-  /* const grantResults = await Grant.findAll({ */
-  /*   where: { regionId: report.regionId }, */
-  /*   individualHooks: true, */
-  /* }); */
-  /**/
-  /* if (results.length === 0 && grantResults.length === 0) { */
-  /*   await Region.destroy({ */
-  /*     where: { id: report.regionId }, */
-  /*     individualHooks: true, */
-  /*   }); */
-  /* } */
+  // Destroy the ActivityReport.
+  await report.destroy();
+
+  // ActivityReport hooks should have removed:
+  // - Collaborators
+  // - CollaboratorRoles
+  // - Approvals
+  // - ActivityReportGoals
+  // - ActivityReportObjectives
+  // - ActivityRecipients
+
+  // Remaining to manually destroy:
+  // - Recipients
+  // - Grants
+  // - Goals
+  // - Objectives
+  // - UserRoles
+  // - Roles
+  // - Users
+  await Promise.all([
+    ...grants.map((model) => model.destroy()),
+    ...recipients.map((model) => model.destroy()),
+    ...objectives.map((model) => model.destroy()),
+    ...goals.map((model) => model.destroy()),
+    ...userRoles.map((model) => model.destroy()),
+    ...roles.map((model) => model.destroy()),
+    ...users.map((model) => model.destroy()),
+  ]);
 }
 
 export async function createGoal(goal) {
