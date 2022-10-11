@@ -243,6 +243,13 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
         value: goal.status,
         enumerable: true,
       });
+
+      // Created From.
+      Object.defineProperty(accum, `goal-${goalNum}-created-from`, {
+        value: goal.createdVia,
+        enumerable: true,
+      });
+
       objectiveNum = 1;
     } else if (goalIds[goalName] && !goalIds[goalName].includes(goalId)) {
       // Update existing ids.
