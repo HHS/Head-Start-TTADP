@@ -155,7 +155,7 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
   }
 };
 
-const determineObjectiveStatus = async (activityReportId, sequelize, isResetToDraft) => {
+const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked) => {
   // Get all AR Objective Id's.
   const objectives = await sequelize.models.ActivityReportObjective.findAll(
     {
@@ -216,7 +216,7 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isResetToDr
         individualHooks: true,
       });
     }));
-  } else if (isResetToDraft) {
+  } else if (isUnlocked) {
     // If there are no Approved reports set Objective status back to 'Not Started'.
     const currentReport = allObjectiveReports.find((r) => r.id === activityReportId);
     const objectiveIdsToReset = currentReport && currentReport.activityReportObjectives
