@@ -1,7 +1,9 @@
+import { Op } from 'sequelize';
 import db, {
   ActivityReport,
   ActivityRecipient,
   User,
+  Collaborator,
   Recipient,
   Grant,
   NextStep,
@@ -13,6 +15,7 @@ import filtersToScopes from '../scopes';
 import { REPORT_STATUSES } from '../constants';
 import { createOrUpdate } from '../services/activityReports';
 import topicFrequencyGraph from './topicFrequencyGraph';
+import { destroyReport } from '../testUtils';
 
 const GRANT_ID = 4040;
 const RECIPIENT_ID = 5050;
@@ -161,25 +164,7 @@ describe('Topics and frequency graph widget', () => {
 
   afterAll(async () => {
     const ids = [17772, 17773, 17774, 17775];
-    await NextStep.destroy({ where: { activityReportId: ids }, individualHooks: true });
-    await ActivityRecipient.destroy({ where: { activityReportId: ids }, individualHooks: true });
-    await ActivityReport.destroy({ where: { id: ids }, individualHooks: true });
-    await UserRole.destroy({
-      where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] },
-      individualHooks: true,
-    });
-    await User.destroy({
-      where: { id: [mockUser.id, mockUserTwo.id, mockUserThree.id] },
-      individualHooks: true,
-    });
-    await Grant.destroy({
-      where: { id: [GRANT_ID] },
-      individualHooks: true,
-    });
-    await Recipient.destroy({
-      where: { id: [RECIPIENT_ID] },
-      individualHooks: true,
-    });
+    await Promise.all(ids.map(async (id) => destroyReport(id)));
     await Region.destroy({ where: { id: [17, 18] }, individualHooks: true });
     await db.sequelize.close();
   });
