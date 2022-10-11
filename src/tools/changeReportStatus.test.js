@@ -38,7 +38,7 @@ describe('changeStatus', () => {
 
     const deletedReport = await ActivityReport.unscoped().findOne({ where: { id: report.id } });
 
-    expect(deletedReport.submissionStatus).toBe(REPORT_STATUSES.DELETED);
+    expect(deletedReport.calculatedStatus).toBe(REPORT_STATUSES.DELETED);
 
     await ActivityReport.destroy({ where: { id: deletedReport.id } });
   });
