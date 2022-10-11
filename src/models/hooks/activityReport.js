@@ -219,7 +219,9 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isResetToDr
   } else if (isResetToDraft) {
     // If there are no Approved reports set Objective status back to 'Not Started'.
     const currentReport = allObjectiveReports.find((r) => r.id === activityReportId);
-    const objectiveIdsToReset = currentReport.activityReportObjectives.map((a) => a.objectiveId);
+    const objectiveIdsToReset = currentReport && currentReport.activityReportObjectives
+      ? currentReport.activityReportObjectives.map((a) => a.objectiveId)
+      : [];
     await sequelize.models.Objective.update({
       status: OBJECTIVE_STATUS.NOT_STARTED,
     }, {
