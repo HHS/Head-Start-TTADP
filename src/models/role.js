@@ -1,6 +1,7 @@
 const {
   Model,
 } = require('sequelize');
+const beforeDestroy = require('./hooks/role');
 
 /**
  * Roles table. Stores user roles, e.g. 'HS' ('Health Specialist')
@@ -73,6 +74,9 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
     },
   }, {
+    hooks: {
+      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
+    },
     sequelize,
     modelName: 'Role',
   });
