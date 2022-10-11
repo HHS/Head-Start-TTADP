@@ -88,10 +88,7 @@ describe('Dashboard overview widget', () => {
   beforeAll(async () => {
     let results = await User.create(mockUser);
     const role = await Role.create({ id: 1000, name: 'a', isSpecialist: true });
-    await UserRole.create({
-      userId: results.id,
-      roleId: role.id,
-    });
+    await UserRole.create({ userId: results.id, roleId: role.id });
     results = await Recipient.create({ name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' });
     results = await Recipient.create({ name: 'recipient 2', id: RECIPIENT_TWO_ID, uei: 'NNA5N2KHMGM2' });
     results = await Region.create({ name: 'office 1717', id: REGION_ONE_ID });
