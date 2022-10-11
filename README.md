@@ -92,6 +92,10 @@ You may run into some issues running the docker commands on Windows:
  * If you run into `Permission Denied` errors see [this issue](https://github.com/docker/for-win/issues/3385#issuecomment-501931980)
  * You can try to speed up execution time on windows with solutions posted to [this issue](https://github.com/docker/for-win/issues/1936)
 
+### Coverage reports
+
+On the frontend, the lcov and HTML files are generated as normal, however on the backend, the folders are tested separately. The command `yarn coverage:backend` will concatenate the lcov files and also generate an HTML file. However, this provess requires `lcov` to be installed on a user's computer. On Apple, you can use Homebrew - `brew install lcov`. On a Windows machine, your path may vary, but two options include WSL and [this chocolatey package](https://community.chocolatey.org/packages/lcov).
+
 ## Yarn Commands
 
 | Docker Command | Description| Host Command | Local only Command |
@@ -118,6 +122,7 @@ You may run into some issues running the docker commands on Windows:
 | | Run `yarn lint:ci` for both the frontend and backend | `yarn lint:all`| |
 | | Host the open api 3 spec using [redoc](https://github.com/Redocly/redoc) at `localhost:5003` | `yarn docs:serve` | |
 | | Run cucumber tests | `yarn cucumber` | |
+| | Collect backend coverage report | `yarn coverage:backend` ||
 
 ## Infrastructure
 

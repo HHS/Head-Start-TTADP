@@ -244,7 +244,7 @@ describe('Goals DB service', () => {
       };
 
       await saveGoalsForReport([existingGoal], { id: 1 });
-      expect(existingObjectiveUpdate).toHaveBeenCalledWith({ title: 'title', status: 'Closed' }, { individualHooks: true });
+      expect(existingObjectiveUpdate).toHaveBeenCalledWith({ title: 'title' }, { individualHooks: true });
     });
   });
 });

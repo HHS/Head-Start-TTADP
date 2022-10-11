@@ -157,6 +157,7 @@ describe('activity report model hooks', () => {
 
       await ActivityReportObjective.create({
         activityReportId: report.id,
+        status: 'Complete',
         objectiveId: objective.id,
       });
 
