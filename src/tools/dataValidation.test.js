@@ -1,12 +1,60 @@
+import { Op } from 'sequelize';
+import faker from '@faker-js/faker';
 import dataValidation, { countAndLastUpdated, runSelectQuery } from './dataValidation';
-import { sequelize } from '../models';
+import {
+  Grant,
+  Recipient,
+  sequelize,
+} from '../models';
 import { auditLogger } from '../logger';
 import { DECIMAL_BASE } from '../constants';
 
 jest.mock('../logger');
 
 describe('dataValidation', () => {
+  beforeAll(async () => {
+    const recipientOne = await Recipient.create({
+      id: 1,
+      name: 'recipient1',
+      uei: 'uei1',
+    });
+    const recipientTwo = await Recipient.create({
+      id: 2,
+      name: 'recipient2',
+      uei: 'uei2',
+    });
+    const recipientThree = await Recipient.create({
+      id: 3,
+      name: 'recipient3',
+      uei: 'uei3',
+    });
+
+    await Grant.create({
+      id: 1,
+      number: faker.datatype.number({ min: 90000 }),
+      regionId: 1,
+      status: 'Active',
+      recipientId: recipientOne.id,
+    });
+    await Grant.create({
+      id: 2,
+      number: faker.datatype.number({ min: 90000 }),
+      regionId: 1,
+      status: 'Inactive',
+      recipientId: recipientTwo.id,
+    });
+    await Grant.create({
+      id: 3,
+      number: faker.datatype.number({ min: 90000 }),
+      regionId: 1,
+      status: 'Inactive',
+      recipientId: recipientThree.id,
+    });
+  });
+
   afterAll(async () => {
+    await Grant.destroy({ where: { id: { [Op.in]: [1, 2, 3] } } });
+    await Recipient.destroy({ where: { id: { [Op.in]: [1, 2, 3] } } });
     await sequelize.close();
   });
 
@@ -18,7 +66,7 @@ describe('dataValidation', () => {
           "status",
           count(*)
         FROM "Grants"
-        WHERE "recipientId" in (9, 10, 11)
+        WHERE "recipientId" in (1, 2, 3)
         GROUP BY "regionId", "status"
         ORDER BY "regionId", "status"`;
       const [
@@ -28,10 +76,10 @@ describe('dataValidation', () => {
 
       expect(firstRowRegion).toBe(1);
       expect(firstRowStatus).toBe('Active');
-      expect(firstRowCount).toBe('2');
+      expect(firstRowCount).toBe('1');
       expect(secondRowRegion).toBe(1);
       expect(secondRowStatus).toBe('Inactive');
-      expect(secondRowCount).toBe('1');
+      expect(secondRowCount).toBe('2');
     });
   });
 
