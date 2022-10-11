@@ -210,7 +210,7 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isResetToDr
 
       // Update Objective status.
       return sequelize.models.Objective.update({
-        status: aro.status,
+        status: aro.status || 'Not Started',
       }, {
         where: { id: o },
         individualHooks: true,
