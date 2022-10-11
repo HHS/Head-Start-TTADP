@@ -1,6 +1,7 @@
 const { Model } = require('sequelize');
 const isEmail = require('validator/lib/isEmail');
 const { generateFullName } = require('./helpers/generateFullName');
+const beforeDestroy = require('./hooks/user');
 
 const featureFlags = [
   'recipient_goals_objectives',
@@ -81,6 +82,9 @@ module.exports = (sequelize, DataTypes) => {
     },
     lastLogin: DataTypes.DATE,
   }, {
+    hooks: {
+      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
+    },
     sequelize,
     modelName: 'User',
   });

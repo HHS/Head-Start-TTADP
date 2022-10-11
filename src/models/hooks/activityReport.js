@@ -61,6 +61,16 @@ const cleanUpAllReportObjectives = async (
   transaction: options.transaction,
 });
 
+const cleanUpAllReportRecipients = async (
+  sequelize,
+  instance,
+  options,
+) => sequelize.models.ActivityReportRecipient.destroy({
+  where: { activityReportId: instance.id },
+  individualHooks: true,
+  transaction: options.transaction,
+});
+
 const createApproval = async (
   sequelize,
   instance,
@@ -548,6 +558,7 @@ const beforeDestroy = async (sequelize, instance, options) => Promise.all([
   cleanUpAllApprovals(sequelize, instance, options),
   cleanUpAllReportGoals(sequelize, instance, options),
   cleanUpAllReportObjectives(sequelize, instance, options),
+  cleanUpAllReportRecipients(sequelize, instance, options),
 ]);
 
 const afterCreate = async (sequelize, instance, options) => {

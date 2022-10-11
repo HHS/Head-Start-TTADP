@@ -166,7 +166,7 @@ module.exports = (sequelize, DataTypes) => {
     //   fields: ['activityReportId', 'userId'],
     // }],
     sequelize,
-    paranoid: true,
+    paranoid: false,
     modelName: 'Approval',
   });
   return Approval;
