@@ -65,7 +65,7 @@ const cleanUpAllReportRecipients = async (
   sequelize,
   instance,
   options,
-) => sequelize.models.ActivityReportRecipient.destroy({
+) => sequelize.models.ActivityRecipient.destroy({
   where: { activityReportId: instance.id },
   individualHooks: true,
   transaction: options.transaction,
