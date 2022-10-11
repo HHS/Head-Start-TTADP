@@ -221,7 +221,7 @@ describe('Goals DB service', () => {
       expect(Objective.create).toHaveBeenCalledWith({
         goalId: 1,
         title: 'title',
-        status: '',
+        status: 'Not Started',
       });
     });
 
