@@ -424,10 +424,9 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         && objective.activityReportObjectives[0].ttaProvided
       ? objective.activityReportObjectives[0].ttaProvided : null;
 
-    // the same is true for statuses as is true for TTA provided
     const status = objective.activityReportObjectives
-        && objective.activityReportObjectives[0]
-        && objective.activityReportObjectives[0].status
+      && objective.activityReportObjectives[0]
+      && objective.activityReportObjectives[0].status
       ? objective.activityReportObjectives[0].status : objective.status;
 
     const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');

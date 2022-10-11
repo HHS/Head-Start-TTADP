@@ -84,11 +84,8 @@ main() {
       echo
       log "Running backend tests"
 
-      # remove existing coverage folder, since we are changing how things are structured
-      rm -rf coverage
-
       # first get the tests in the root directory
-      node_modules/.bin/cross-env \
+      command="node_modules/.bin/cross-env \
       JEST_JUNIT_OUTPUT_DIR=reports \
       JEST_JUNIT_OUTPUT_NAME=unit.xml \
       POSTGRES_USERNAME=postgres \
@@ -107,9 +104,9 @@ main() {
       --silent \
       --colors \
       --logHeapUsage \
-      --coverageDirectory="$(pwd)"/coverage/src/root \
+      --coverageDirectory=$(pwd)/coverage/src/root \
       --collectCoverageFrom=src/*.js \
-      --forceExit
+      --forceExit"
 
       if [[ $docker == "true" ]]; then
         docker exec test-backend bash -c "$command"
@@ -123,12 +120,13 @@ main() {
       targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets") 
 
        for target in "${targets[@]}"; do        
+
         # jest command to 
         # - run tests in the target folder
         # - collect coverage from the target folder
         # - output coverage relative to the target folder
         # - some other useful flags        
-        node_modules/.bin/cross-env \
+        command="node_modules/.bin/cross-env \
           JEST_JUNIT_OUTPUT_DIR=reports \
           JEST_JUNIT_OUTPUT_NAME=unit.xml \
           POSTGRES_USERNAME=postgres \
@@ -138,7 +136,7 @@ main() {
           node \
           --expose-gc \
           ./node_modules/.bin/jest \
-          src/"$target" \
+          src/$target \
           --coverage \
           --colors \
           --reporters=jest-junit \
@@ -147,9 +145,9 @@ main() {
           --silent \
           --colors \
           --logHeapUsage \
-          --coverageDirectory="$(pwd)"/coverage/src/"$target" \
-          --collectCoverageFrom=src/"$target"/**/*.js \
-          --forceExit    
+          --coverageDirectory=$(pwd)/coverage/src/$target \
+          --collectCoverageFrom=src/$target/**/*.js \
+          --forceExit"    
           
           if [[ $docker == "true" ]]; then
             docker exec test-backend bash -c "$command"

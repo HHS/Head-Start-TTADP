@@ -1,4 +1,17 @@
 #!/bin/bash
+declare lr=">>>>>>>>"
+declare -i exit_code=0
+
+check_exit() {
+    if [[ "$1" -ne 0 ]]; then
+        echo "$lr last docker-compose command failed"
+        ((exit_code++))
+    fi
+}
+
+log() {
+    echo "$lr $*"
+}
 
 main(){
     # first get the tests in the root directory
@@ -24,6 +37,8 @@ main(){
 		--coverageDirectory="$(pwd)"/coverage/src/root \
 		--collectCoverageFrom=src/*.js \
 		--forceExit
+
+	check_exit "$?"
 
     # then list through the folders and run the tests
     targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets") 
@@ -57,7 +72,16 @@ main(){
 			--coverageDirectory="$(pwd)"/coverage/src/"$target" \
 			--collectCoverageFrom=src/"$target"/**/*.js \
 			--forceExit
+
+			check_exit "$?"	    
     done
+
+	if [[ $exit_code -ne 0 ]]; then
+        echo
+        log "Errors occurred during script execution"
+   	fi
+
+    exit "$exit_code"
 }
 
 main
