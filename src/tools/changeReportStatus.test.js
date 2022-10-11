@@ -2,12 +2,24 @@ import {
   sequelize,
   ActivityReport,
   Approval,
+  Collaborator,
+  User,
+  UserRole,
 } from '../models';
 import { REPORT_STATUSES } from '../constants';
 import changeReportStatus from './changeReportStatus';
 import { createOrUpdate } from '../services/activityReports';
+import { destroyReport } from '../testUtils';
 
 jest.mock('../logger');
+
+const mockUser = {
+  id: 5426861,
+  homeRegionId: 1,
+  name: 'user5426861',
+  hsesUsername: 'user5426861',
+  hsesUserId: '5426861',
+};
 
 const reportObject = {
   approval: {
@@ -28,9 +40,17 @@ const reportObject = {
   participants: ['participants'],
   topics: ['topics'],
   ttaType: ['type'],
+  owner: {
+    userId: mockUser.id,
+  },
 };
 
 describe('changeStatus', () => {
+  beforeAll(async () => {
+    await User.create(mockUser);
+    await UserRole.create({ userId: mockUser.id, roleId: 1 });
+  });
+
   afterAll(async () => {
     await sequelize.close();
   });
@@ -40,7 +60,19 @@ describe('changeStatus', () => {
 
     report = await ActivityReport.findOne({
       where: { id: report.id },
-      include: [{ model: Approval, as: 'approval', attributes: ['submissionStatus'] }],
+      include: [
+        {
+          model: Approval,
+          as: 'approval',
+          attributes: ['submissionStatus'],
+        },
+        {
+          model: Collaborator,
+          as: 'owner',
+          where: { userId: mockUser.id },
+          required: true,
+        },
+      ],
     });
 
     expect(report.approval.submissionStatus).toBe(REPORT_STATUSES.APPROVED);
@@ -53,7 +85,7 @@ describe('changeStatus', () => {
 
     expect(deletedReport.approval.submissionStatus).toBe(REPORT_STATUSES.DELETED);
 
-    await ActivityReport.destroy({ where: { id: deletedReport.id }, individualHooks: true });
+    await destroyReport(report);
   });
 
   it('handles unknown ids', async () => {
