@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { REPORT_STATUSES } = require('../../constants');
+const { REPORT_STATUSES, OBJECTIVE_STATUS } = require('../../constants');
 const { auditLogger } = require('../../logger');
 const { findOrCreateGoalTemplate } = require('./goal');
 const { findOrCreateObjectiveTemplate } = require('./objective');
@@ -155,7 +155,7 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
   }
 };
 
-const determineObjectiveStatus = async (activityReportId, sequelize) => {
+const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked) => {
   // Get all AR Objective Id's.
   const objectives = await sequelize.models.ActivityReportObjective.findAll(
     {
@@ -216,6 +216,18 @@ const determineObjectiveStatus = async (activityReportId, sequelize) => {
         individualHooks: true,
       });
     }));
+  } else if (isUnlocked) {
+    // If there are no Approved reports set Objective status back to 'Not Started'.
+    const currentReport = allObjectiveReports.find((r) => r.id === activityReportId);
+    const objectiveIdsToReset = currentReport && currentReport.activityReportObjectives
+      ? currentReport.activityReportObjectives.map((a) => a.objectiveId)
+      : [];
+    await sequelize.models.Objective.update({
+      status: OBJECTIVE_STATUS.NOT_STARTED,
+    }, {
+      where: { id: objectiveIdsToReset },
+      individualHooks: true,
+    });
   }
 };
 const propagateApprovedStatus = async (sequelize, instance, options) => {
@@ -280,7 +292,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
       }
 
       /*  Determine Objective Statuses (Approved > Other) */
-      await determineObjectiveStatus(instance.id, sequelize);
+      await determineObjectiveStatus(instance.id, sequelize, true);
 
       let goals;
       try {
@@ -379,7 +391,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
       );
 
       /*  Determine Objective Statuses (Other > Approved) */
-      await determineObjectiveStatus(instance.id, sequelize);
+      await determineObjectiveStatus(instance.id, sequelize, false);
 
       await sequelize.models.Goal.update(
         { onApprovedAR: true },
