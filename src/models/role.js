@@ -1,7 +1,7 @@
 const {
   Model,
 } = require('sequelize');
-const beforeDestroy = require('./hooks/role');
+const { beforeDestroy } = require('./hooks/role');
 
 /**
  * Roles table. Stores user roles, e.g. 'HS' ('Health Specialist')

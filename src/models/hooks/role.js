@@ -14,4 +14,7 @@ const beforeDestroy = async (
   options,
 ) => Promise.all([cleanUpAllUserRoles(sequelize, instance, options)]);
 
-export default beforeDestroy;
+export {
+  // eslint-disable-next-line import/prefer-default-export
+  beforeDestroy,
+};
