@@ -111,6 +111,7 @@ const cacheGoalMetadata = async (goal, reportId) => {
       closeSuspendReason: goal.closeSuspendReason,
       closeSuspendContext: goal.closeSuspendContext,
       endDate: goal.endDate,
+      isRttapa: goal.isRttapa,
     }, {
       where: { id: activityReportGoalId },
       individualHooks: true,

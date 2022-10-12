@@ -16,7 +16,7 @@ export default function GoalText({
 }) {
   return (
     <FormGroup error={error.props.children}>
-      <Label htmlFor={inputName} className={isOnReport ? 'text-bold' : ''}>
+      <Label htmlFor={inputName} className={isOnReport || goalStatus === 'Closed' ? 'text-bold' : ''}>
         Recipient&apos;s goal
         {' '}
         {!isOnReport ? <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span> : null }
