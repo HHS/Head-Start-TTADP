@@ -50,6 +50,7 @@ describe('activityReportToCsvRecord', () => {
       status: 'Not Started',
       grantId: 1,
       timeframe: 'None',
+      createdVia: 'activityReport',
     },
     {
       name: 'Goal 2',
@@ -57,6 +58,7 @@ describe('activityReportToCsvRecord', () => {
       status: 'Not Started',
       grantId: 1,
       timeframe: 'None',
+      createdVia: 'rtr',
     },
     {
       name: 'Goal 3',
@@ -64,6 +66,7 @@ describe('activityReportToCsvRecord', () => {
       status: 'Not Started',
       grantId: 1,
       timeframe: 'None',
+      createdVia: 'imported',
     },
     {
       name: 'Goal 3',
@@ -71,6 +74,7 @@ describe('activityReportToCsvRecord', () => {
       status: 'Not Started',
       grantId: 2,
       timeframe: 'None',
+      createdVia: 'activityReport',
     },
   ];
 
@@ -425,6 +429,7 @@ describe('activityReportToCsvRecord', () => {
       'goal-1-id': '2080',
       'goal-1': 'Goal 1',
       'goal-1-status': 'Not Started',
+      'goal-1-created-from': 'activityReport',
       'objective-1.1': 'Objective 1.1',
       'objective-1.1-specialistRole': 'Role 1',
       'objective-1.1-topics': 'Topic 1',
@@ -442,6 +447,7 @@ describe('activityReportToCsvRecord', () => {
       'goal-2-id': '2081',
       'goal-2': 'Goal 2',
       'goal-2-status': 'Not Started',
+      'goal-2-created-from': 'rtr',
       'objective-2.1': 'Objective 2.1',
       'objective-2.1-specialistRole': 'Role 1',
       'objective-2.1-topics': 'Topic 1',
@@ -466,6 +472,7 @@ describe('activityReportToCsvRecord', () => {
       'goal-3-id': '2082',
       'goal-3': 'Goal 3',
       'goal-3-status': 'Not Started',
+      'goal-3-created-from': 'imported',
       'objective-3.1': 'Objective 3.1',
       'objective-3.1-specialistRole': 'Role 1',
       'objective-3.1-topics': 'Topic 1',
