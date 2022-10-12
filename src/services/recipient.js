@@ -10,6 +10,7 @@ import {
   ActivityReport,
   Objective,
   ActivityRecipient,
+  Topic,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
 import { RECIPIENTS_PER_PAGE, GOALS_PER_PAGE, REPORT_STATUSES } from '../constants';
@@ -183,14 +184,15 @@ function reduceObjectives(response, goal) {
       o.title.trim() === objective.getDataValue('title').trim() && o.status === objective.status
     ));
 
+    const ots = objective.topics.map((ot) => ot.name);
+
     if (existing) {
       existing.activityReports = uniqBy([...existing.activityReports, ...objective.activityReports], 'id');
       existing.reasons = Array.from(
         new Set([...existing.reasons, ...r]),
       );
-
       existing.reasons.sort();
-      return acc;
+      return { ...acc, topics: [...acc.topics, ...ots] };
     }
 
     return {
@@ -203,7 +205,7 @@ function reduceObjectives(response, goal) {
         ),
       }],
       reasons: [...acc.reasons, ...r].sort(),
-      topics: [...acc.topics, ...t],
+      topics: [...acc.topics, ...t, ...ots],
     };
   }, {
     objectives: [],
@@ -215,6 +217,8 @@ function reduceObjectives(response, goal) {
   current.goalTopics = Array.from(
     new Set([...goal.goalTopics, ...topics]),
   );
+
+  current.goalTopics.sort();
 
   current.reasons = Array.from(
     new Set([...goal.reasons, ...reasons]),
@@ -316,6 +320,10 @@ export async function getGoalsByActivityRecipient(
           onApprovedAR: true,
         },
         include: [
+          {
+            model: Topic,
+            as: 'topics',
+          },
           {
             attributes: [
               'id',
