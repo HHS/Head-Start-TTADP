@@ -39,6 +39,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     [sequelize.col('grant.recipient.id'), 'recipientId'],
     'goalNumber',
     'createdVia',
+    'isRttapa',
     [
       sequelize.literal(`
         (
@@ -815,15 +816,27 @@ export async function createOrUpdateGoals(goals) {
       objectives,
       status,
       createdVia,
+      isRttapa,
       ...fields
     } = goalData;
 
     // there can only be one on the goal form (multiple grants maybe, but one recipient)
     recipient = recipientId;
 
+    let isRttapaValue = null;
+
+    if (isRttapa === 'yes') {
+      isRttapaValue = true;
+    }
+
+    if (isRttapa === 'no') {
+      isRttapaValue = false;
+    }
+
     const options = {
       ...fields,
       isFromSmartsheetTtaPlan: false,
+      isRttapa: isRttapaValue,
     };
 
     // In order to reuse goals with matching text we need to do the findOrCreate as the

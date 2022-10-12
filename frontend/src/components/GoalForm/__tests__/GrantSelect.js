@@ -19,6 +19,7 @@ describe('GrantSelect', () => {
           inputName="grantSelect"
           isLoading={false}
           isOnReport={false}
+          goalStatus="Not Started"
           possibleGrants={[
             {
               value: 1,

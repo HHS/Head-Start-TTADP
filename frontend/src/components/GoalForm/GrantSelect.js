@@ -20,10 +20,11 @@ export default function GrantSelect({
   inputName,
   label,
   isLoading,
+  goalStatus,
 }) {
   return (
     <FormGroup error={error.props.children}>
-      <Label htmlFor={inputName} className={isOnReport ? 'text-bold' : ''}>
+      <Label htmlFor={inputName} className={isOnReport || goalStatus === 'Closed' ? 'text-bold' : ''}>
         {label}
         {' '}
         {!isOnReport ? <Req /> : null }
@@ -71,6 +72,7 @@ GrantSelect.propTypes = {
   inputName: PropTypes.string,
   label: PropTypes.string,
   isLoading: PropTypes.bool,
+  goalStatus: PropTypes.string.isRequired,
 };
 
 GrantSelect.defaultProps = {

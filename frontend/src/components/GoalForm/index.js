@@ -23,6 +23,7 @@ import {
   GOAL_DATE_ERROR,
   SELECT_GRANTS_ERROR,
   OBJECTIVE_DEFAULT_ERRORS,
+  GOAL_RTTAPA_ERROR,
 } from './constants';
 import { DECIMAL_BASE } from '../../Constants';
 import ReadOnly from './ReadOnly';
@@ -36,6 +37,18 @@ const [
   objectiveResourcesError,,
   objectiveStatusError,
 ] = OBJECTIVE_ERROR_MESSAGES;
+
+export const parseRttapaFromApi = (rttapa) => {
+  if (rttapa === true) {
+    return 'yes';
+  }
+
+  if (rttapa === false) {
+    return 'no';
+  }
+
+  return '';
+};
 
 const formatGrantsFromApi = (grants) => grants
   .map((grant) => {
@@ -68,6 +81,7 @@ export default function GoalForm({
     objectives: [],
     id,
     onApprovedAR: false,
+    isRttapa: '',
   }), [possibleGrants, id]);
 
   const [showForm, setShowForm] = useState(true);
@@ -85,6 +99,7 @@ export default function GoalForm({
   const [goalName, setGoalName] = useState(goalDefaults.name);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
+  const [isRttapa, setIsRttapa] = useState(goalDefaults.isRttapa);
   const [goalOnApprovedAR, setGoalOnApprovedReport] = useState(goalDefaults.onApprovedAR);
 
   // we need to set this key to get the component to re-render (uncontrolled input)
@@ -117,6 +132,7 @@ export default function GoalForm({
         setEndDate(goal.endDate ? moment(goal.endDate, 'MM/DD/YYYY').format('YYYY-MM-DD') : '');
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
         setGoalNumber(goal.goalNumber);
+        setIsRttapa(parseRttapaFromApi(goal.isRttapa));
         setSelectedGrants(formatGrantsFromApi([goal.grant]));
         setGoalOnApprovedReport(goal.onApprovedAR);
 
@@ -291,6 +307,17 @@ export default function GoalForm({
     return !error.props.children;
   };
 
+  const validateIsRttapa = () => {
+    let error = <></>;
+    if (isRttapa !== 'yes' && isRttapa !== 'no') {
+      error = <span className="usa-error-message">{GOAL_RTTAPA_ERROR}</span>;
+    }
+    const newErrors = [...errors];
+    newErrors.splice(FORM_FIELD_INDEXES.IS_RTTAPA, 1, error);
+    setErrors(newErrors);
+    return !error.props.children;
+  };
+
   /**
    *
    * @returns bool
@@ -377,6 +404,7 @@ export default function GoalForm({
     && validateGoalName()
     && validateEndDate()
     && validateObjectives()
+    && validateIsRttapa()
   );
   const isValidDraft = () => validateGrantNumbers() || validateGoalName() || validateEndDate();
 
@@ -408,6 +436,7 @@ export default function GoalForm({
           name: goal.name,
           status: statusToSave,
           endDate: goal.endDate && goal.endDate !== 'Invalid date' ? goal.endDate : null,
+          isRttapa: goal.isRttapa,
           regionId: parseInt(regionId, DECIMAL_BASE),
           recipientId: recipient.id,
           objectives: goal.objectives,
@@ -452,6 +481,7 @@ export default function GoalForm({
           grantId: g.value,
           name: goalName,
           status,
+          isRttapa,
           endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
           regionId: parseInt(regionId, DECIMAL_BASE),
           recipientId: recipient.id,
@@ -526,6 +556,7 @@ export default function GoalForm({
           grantId: g.value,
           name: goalName,
           status,
+          isRttapa,
           endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
           regionId: parseInt(regionId, DECIMAL_BASE),
           recipientId: recipient.id,
@@ -571,6 +602,7 @@ export default function GoalForm({
     setGoalName(goalDefaults.name);
     setEndDate(goalDefaults.endDate);
     setStatus(goalDefaults.status);
+    setIsRttapa(goalDefaults.isRttapa);
     setSelectedGrants(goalDefaults.grants);
     setShowForm(false);
     setObjectives([]);
@@ -589,6 +621,7 @@ export default function GoalForm({
         name: goalName,
         status,
         endDate,
+        isRttapa,
         regionId: parseInt(regionId, DECIMAL_BASE),
         recipientId: recipient.id,
         objectives,
@@ -614,6 +647,7 @@ export default function GoalForm({
 
       setCreatedGoals(newCreatedGoals.map((goal) => ({
         ...goal,
+        isRttapa: parseRttapaFromApi(goal.isRttapa),
         grants: formatGrantsFromApi(goal.grants),
         objectives: goal.objectives.map((objective) => ({
           ...objective,
@@ -650,6 +684,7 @@ export default function GoalForm({
     setStatus(goal.status);
     setGoalNumber(goal.number);
     setSelectedGrants(goal.grants);
+    setIsRttapa(goal.isRttapa ? 'yes' : 'no');
 
     // we need to update the date key so it re-renders all the
     // date pickers, as they are uncontrolled inputs
@@ -747,6 +782,9 @@ export default function GoalForm({
               endDate={endDate}
               setEndDate={setEndDate}
               datePickerKey={datePickerKey}
+              isRttapa={isRttapa}
+              setIsRttapa={setIsRttapa}
+              validateIsRttapa={validateIsRttapa}
               errors={errors}
               validateGoalName={validateGoalName}
               validateEndDate={validateEndDate}

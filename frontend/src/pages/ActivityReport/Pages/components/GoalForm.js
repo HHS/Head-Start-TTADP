@@ -175,6 +175,7 @@ export default function GoalForm({
         onChange={onUpdateRttapa}
         onBlur={onBlurRttapa}
         inputName={goalIsRttapaInputName}
+        goalStatus={status}
       />
 
       <GoalDate

@@ -11,10 +11,24 @@ export default function GoalRttapa({
   onBlur,
   error,
   isLoading,
+  goalStatus,
 }) {
+  if (goalStatus === 'Closed') {
+    return (
+      <div className={className}>
+        <p className="usa-prose margin-y-0 text-bold">
+          Recipient TTA Plan Agreement (RTTAPA) goal
+        </p>
+        <p className="usa-prose margin-y-0">
+          {isRttapa ? 'Yes' : 'No'}
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <FormGroup className={className} error={error.props.children}>
-      <Fieldset onBlur={onBlur}>
+    <FormGroup className={`ttahub-goal-is-rttapa ${className}`} error={error.props.children}>
+      <Fieldset onBlur={() => onBlur()}>
         <legend>
           Is this a Recipient TTA Plan Agreement (RTTAPA) goal?
           <Req />
@@ -29,12 +43,13 @@ export default function GoalRttapa({
 
 GoalRttapa.propTypes = {
   inputName: PropTypes.string,
-  isRttapa: PropTypes.bool.isRequired,
+  isRttapa: PropTypes.string.isRequired,
   onChange: PropTypes.func.isRequired,
   onBlur: PropTypes.func.isRequired,
   error: PropTypes.node.isRequired,
   className: PropTypes.string,
   isLoading: PropTypes.bool,
+  goalStatus: PropTypes.string.isRequired,
 };
 
 GoalRttapa.defaultProps = {
