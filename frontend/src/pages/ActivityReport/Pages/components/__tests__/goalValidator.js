@@ -42,7 +42,7 @@ const validObjective = {
 const goalUnfinishedObjective = {
   name: 'Test goal',
   endDate: '2021-01-01',
-  isRttapa: 'no',
+  isRttapa: false,
   objectives: [
     { ...validObjective },
     { ...missingTTAProvided },
@@ -52,14 +52,14 @@ const goalUnfinishedObjective = {
 const goalNoObjectives = {
   name: 'Test goal',
   endDate: '2021-01-01',
-  isRttapa: 'no',
+  isRttapa: false,
   objectives: [],
 };
 
 const goalValid = {
   name: 'Test goal',
   endDate: '2021-01-01',
-  isRttapa: 'no',
+  isRttapa: false,
   objectives: [
     { ...validObjective },
     { ...validObjective },
