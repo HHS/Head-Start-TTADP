@@ -219,12 +219,14 @@ function Navigator({
     const objectives = getValues(fieldArrayName);
     const name = getValues('goalName');
     const endDate = getValues('goalEndDate');
+    const isRttapa = getValues('goalIsRttapa');
 
     const goal = {
       ...goalForEditing,
       name,
       endDate,
       objectives,
+      isRttapa,
       regionId: formData.regionId,
     };
 
@@ -259,6 +261,7 @@ function Navigator({
     setValue('goalForEditing', null);
     setValue('goalName', '');
     setValue('goalEndDate', '');
+    setValue('goalIsRttapa', '');
 
     // the form value is updated but the react state is not
     // so here we go (todo - why are there two sources of truth?)

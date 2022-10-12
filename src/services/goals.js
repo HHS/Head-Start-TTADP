@@ -989,8 +989,9 @@ export async function goalsForGrants(grantIds) {
       'status',
       'onApprovedAR',
       'endDate',
+      'isRttapa',
     ],
-    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"'],
+    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"', '"Goal"."isRttapa"'],
     where: {
       '$grant.id$': ids,
       [Op.or]: [
