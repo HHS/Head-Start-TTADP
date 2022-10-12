@@ -302,7 +302,8 @@ describe('Goals Table', () => {
       // Objective 1.
       await screen.findByText(/objective 1 title/i);
       await screen.findByRole('link', { name: /ar-number-1/i });
-      await screen.findByText('06/14/2021');
+      const lastTTa = screen.queryAllByText('06/14/2021');
+      expect(lastTTa.length).toBe(2);
       await screen.findByText(/monitoring | deficiency/i);
 
       // Objective 2.
