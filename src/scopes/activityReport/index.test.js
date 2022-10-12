@@ -1256,10 +1256,10 @@ describe('filtersToScopes', () => {
     let reportFour;
 
     beforeAll(async () => {
-      reportOne = await ActivityReport.create({ ...approvedReport, participants: ['Fiscal Manager/Team', 'Coach'] });
-      reportTwo = await ActivityReport.create({ ...approvedReport, participants: ['HSCO', 'Regional TTA Team / Specialists'] });
-      reportThree = await ActivityReport.create({ ...approvedReport, participants: ['Coach'] });
-      reportFour = await ActivityReport.create({ ...approvedReport, participants: [] });
+      reportOne = await createOrUpdate({ ...approvedReport, participants: ['Fiscal Manager/Team', 'Coach'] });
+      reportTwo = await createOrUpdate({ ...approvedReport, participants: ['HSCO', 'Regional TTA Team / Specialists'] });
+      reportThree = await createOrUpdate({ ...approvedReport, participants: ['Coach'] });
+      reportFour = await createOrUpdate({ ...approvedReport, participants: [] });
 
       possibleIds = [
         reportOne.id,

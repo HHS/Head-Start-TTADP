@@ -1675,22 +1675,30 @@ export async function activityReportsWhereCollaboratorByDate(userId, date) {
   const reports = await ActivityReport.findAll({
     attributes: ['id', 'displayId'],
     where: {
-      id: {
-        [Op.in]: sequelize.literal(
-          `(SELECT (new_row_data->'entityId')::NUMERIC
-        FROM "ZALCollaborators"
-        where dml_timestamp > ${date}
-        AND (new_row_data->'userId')::NUMERIC = ${userId}
-        AND (new_row_data->>'entityType')::TEXT = '${ENTITY_TYPES.REPORT}'
-        AND (new_row_data->>'collaboratorTypes')::TEXT like '%${COLLABORATOR_TYPES.EDITOR}%')`,
-        ),
-      },
+      [Op.and]: [
+        {
+          '$approval.calculatedStatus$': {
+            [Op.ne]: REPORT_STATUSES.APPROVED,
+          },
+        },
+        {
+          id: {
+            [Op.in]: sequelize.literal(
+              `(SELECT (new_row_data->'entityId')::NUMERIC
+            FROM "ZALCollaborators"
+            where dml_timestamp > ${date}
+            AND (new_row_data->'userId')::NUMERIC = ${userId}
+            AND (new_row_data->>'entityType')::TEXT = '${ENTITY_TYPES.REPORT}'
+            AND (new_row_data->>'collaboratorTypes')::TEXT like '%${COLLABORATOR_TYPES.EDITOR}%')`,
+            ),
+          },
+        },
+      ],
     },
     include: [
       {
         model: Approval,
         as: 'approval',
-        where: { calculatedStatus: { [Op.ne]: REPORT_STATUSES.APPROVED } },
       },
       {
         model: Collaborator,

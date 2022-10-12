@@ -9,6 +9,7 @@ import db, {
   Recipient,
   Grant,
 } from '..';
+import { createOrUpdate } from '../../services/activityReports';
 import { REPORT_STATUSES } from '../../constants';
 import { auditLogger } from '../../logger';
 
@@ -48,8 +49,10 @@ const mockGrant = {
 };
 
 const sampleReport = {
-  submissionStatus: REPORT_STATUSES.DRAFT,
-  calculatedStatus: REPORT_STATUSES.DRAFT,
+  approval: {
+    submissionStatus: REPORT_STATUSES.DRAFT,
+    calculatedStatus: REPORT_STATUSES.DRAFT,
+  },
   oldApprovingManagerId: 1,
   numberOfParticipants: 1,
   deliveryMethod: 'method',
@@ -169,30 +172,29 @@ describe('Objective status update hook', () => {
       grantFour = await Grant.findOne({ where: { id: 476470 } });
 
       // Reports.
-      reportOne = await ActivityReport.create({ ...sampleReport, endDate: '2022-09-30T12:00:00Z' });
-      reportTwo = await ActivityReport.create({
+      reportOne = await createOrUpdate({
+        ...sampleReport,
+        endDate: '2022-09-30T12:00:00Z',
+        recipients: [{ grantId: grantOne.id }],
+      });
+      reportTwo = await createOrUpdate({
         ...sampleReport,
         submissionStatus: REPORT_STATUSES.SUBMITTED,
         calculatedStatus: REPORT_STATUSES.APPROVED,
         endDate: '2022-09-29T12:00:00Z',
+        recipients: [{ grantId: grantTwo.id }],
       });
-      reportThree = await ActivityReport.create({ ...sampleReport });
+      reportThree = await createOrUpdate({
+        ...sampleReport,
+        recipients: [{ grantId: grantThree.id }],
+      });
 
-      reportOnlyUsingObjective = await ActivityReport.create({ ...sampleReport, endDate: '2022-09-30T12:00:00Z' });
+      reportOnlyUsingObjective = await createOrUpdate({
+        ...sampleReport,
+        endDate: '2022-09-30T12:00:00Z',
+        recipients: [{ grantId: grantFour.id }],
+      });
 
-      // Activity Recipients.
-      await ActivityRecipient.create(
-        { activityReportId: reportOne.id, grantId: grantOne.id },
-      );
-      await ActivityRecipient.create(
-        { activityReportId: reportTwo.id, grantId: grantTwo.id },
-      );
-      await ActivityRecipient.create(
-        { activityReportId: reportThree.id, grantId: grantThree.id },
-      );
-      await ActivityRecipient.create(
-        { activityReportId: reportOnlyUsingObjective.id, grantId: grantFour.id },
-      );
       // Goals.
       goal = await Goal.create(
         {
