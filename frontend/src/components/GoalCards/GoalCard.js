@@ -36,13 +36,7 @@ function GoalCard({
     previousStatus,
   } = goal;
 
-  const endDates = useMemo(() => objectives.reduce((prev, curr) => [
-    ...prev,
-    ...curr.activityReports.map((ar) => ar.endDate),
-  ], []).sort((a, b) => moment(a, 'MM/DD/YYYY') - moment(b, 'MM/DD/YYYY')), [objectives]);
-
-  const lastTTA = endDates.pop();
-
+  const lastTTA = useMemo(() => objectives.reduce((prev, curr) => (prev > curr.endDate ? prev : curr.endDate), ''), [objectives]);
   const history = useHistory();
 
   const goalNumbers = goal.goalNumbers.join(', ');
