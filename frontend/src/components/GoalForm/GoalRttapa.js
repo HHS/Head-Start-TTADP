@@ -12,8 +12,9 @@ export default function GoalRttapa({
   error,
   isLoading,
   goalStatus,
+  isOnApprovedReport,
 }) {
-  if (goalStatus === 'Closed') {
+  if (goalStatus === 'Closed' || isOnApprovedReport) {
     return (
       <div className={className}>
         <p className="usa-prose margin-y-0 text-bold">
@@ -50,6 +51,7 @@ GoalRttapa.propTypes = {
   className: PropTypes.string,
   isLoading: PropTypes.bool,
   goalStatus: PropTypes.string.isRequired,
+  isOnApprovedReport: PropTypes.bool.isRequired,
 };
 
 GoalRttapa.defaultProps = {

@@ -176,6 +176,7 @@ export default function GoalForm({
         onBlur={onBlurRttapa}
         inputName={goalIsRttapaInputName}
         goalStatus={status}
+        isOnApprovedReport={goal.onApprovedAR || false}
       />
 
       <GoalDate

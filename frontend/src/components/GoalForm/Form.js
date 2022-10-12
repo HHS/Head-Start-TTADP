@@ -160,6 +160,7 @@ export default function Form({
         onChange={setIsRttapa}
         isLoading={isLoading}
         goalStatus={status}
+        isOnApprovedReport={isOnApprovedReport || false}
       />
 
       <GoalDate
