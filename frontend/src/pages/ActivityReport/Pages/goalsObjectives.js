@@ -127,12 +127,14 @@ const GoalsObjectives = ({
       const goalForEditingObjectives = getValues('goalForEditing.objectives') ? [...getValues('goalForEditing.objectives')] : [];
       const name = getValues('goalName');
       const endDate = getValues('goalEndDate');
+      const isRttapa = getValues('goalIsRttapa');
 
       const areGoalsValid = validateGoals(
         [{
           ...currentlyEditing,
           name,
           endDate,
+          isRttapa,
           objectives: goalForEditingObjectives,
         }],
         setError,
@@ -149,6 +151,9 @@ const GoalsObjectives = ({
     setValue('goalForEditing.objectives', objectives);
     setValue('goalEndDate', moment(goal.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'));
     setValue('goalName', goal.name);
+
+    const rttapaValue = goal.isRttapa ? 'yes' : 'no';
+    setValue('goalIsRttapa', rttapaValue);
 
     toggleGoalForm(false);
 

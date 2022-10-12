@@ -54,6 +54,10 @@ export default function ReadOnlyGoal({
           <h4 className="margin-0">Goal</h4>
           <p className="usa-prose margin-0">{goal.name}</p>
         </div>
+        <div className="margin-bottom-2">
+          <h4 className="margin-0">Recipient TTA Plan Agreement (RTTAPA) goal</h4>
+          <p className="usa-prose margin-0">{goal.isRttapa ? 'Yes' : 'No'}</p>
+        </div>
         {goal.endDate ? (
           <div className="margin-bottom-4">
             <h4 className="margin-0">Anticipated close date</h4>
@@ -106,6 +110,7 @@ ReadOnlyGoal.propTypes = {
     ),
     name: PropTypes.string,
     endDate: PropTypes.string,
+    isRttapa: PropTypes.bool,
   }).isRequired,
 };
 

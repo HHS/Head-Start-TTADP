@@ -11,11 +11,13 @@ import GoalDate from '../../../../components/GoalForm/GoalDate';
 import {
   GOAL_DATE_ERROR,
   GOAL_NAME_ERROR,
+  GOAL_RTTAPA_ERROR,
 } from '../../../../components/GoalForm/constants';
 import { NO_ERROR, ERROR_FORMAT } from './constants';
 import Loader from '../../../../components/Loader';
 import GoalFormContext from '../../../../GoalFormContext';
 import { DECIMAL_BASE } from '../../../../Constants';
+import GoalRttapa from '../../../../components/GoalForm/GoalRttapa';
 
 export default function GoalForm({
   goal,
@@ -81,6 +83,24 @@ export default function GoalForm({
     defaultValue: defaultName,
   });
 
+  const {
+    field: {
+      onChange: onUpdateRttapa,
+      onBlur: onBlurRttapa,
+      value: isRttapa,
+      name: goalIsRttapaInputName,
+    },
+  } = useController({
+    name: 'goalIsRttapa',
+    rules: {
+      required: {
+        value: true,
+        message: GOAL_RTTAPA_ERROR,
+      },
+    },
+    defaultValue: '',
+  });
+
   // when the goal is updated in the selection, we want to update
   // the fields via the useController functions
   useEffect(() => {
@@ -90,6 +110,17 @@ export default function GoalForm({
     goal.name,
     onUpdateText,
   ]);
+
+  useEffect(() => {
+    let val = '';
+    if (goal.isRttapa === true) {
+      val = 'yes';
+    }
+    if (goal.isRttapa === false) {
+      val = 'no';
+    }
+    onUpdateRttapa(val);
+  }, [goal.isRttapa, onUpdateRttapa]);
 
   useEffect(() => {
     onUpdateDate(goal.endDate ? goal.endDate : defaultEndDate);
@@ -138,6 +169,14 @@ export default function GoalForm({
         isLoading={isLoading}
       />
 
+      <GoalRttapa
+        error={errors.goalIsRttapa ? ERROR_FORMAT(errors.goalIsRttapa.message) : NO_ERROR}
+        isRttapa={isRttapa}
+        onChange={onUpdateRttapa}
+        onBlur={onBlurRttapa}
+        inputName={goalIsRttapaInputName}
+      />
+
       <GoalDate
         error={errors.goalEndDate ? ERROR_FORMAT(errors.goalEndDate.message) : NO_ERROR}
         setEndDate={onUpdateDate}
@@ -176,6 +215,7 @@ GoalForm.propTypes = {
       PropTypes.number,
       PropTypes.string,
     ]),
+    isRttapa: PropTypes.bool,
     oldGrantIds: PropTypes.arrayOf(PropTypes.number).isRequired,
     label: PropTypes.string,
     name: PropTypes.string,

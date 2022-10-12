@@ -272,6 +272,9 @@ describe('goals objectives', () => {
 
       it('is true if goals are valid', () => {
         const goals = [{
+          name: 'Is goal',
+          endDate: '2021-01-01',
+          isRttapa: 'no',
           objectives: [{
             id: 1,
             title: 'title',
