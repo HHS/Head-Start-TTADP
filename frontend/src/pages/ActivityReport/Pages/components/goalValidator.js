@@ -64,7 +64,7 @@ export const unfinishedGoals = (goals, setError = () => {}) => {
       return GOAL_DATE_ERROR;
     }
 
-    if (!goal.isRttapa) {
+    if (goal.isRttapa !== true && goal.isRttapa !== false) {
       setError('goalIsRttapa', { message: GOAL_RTTAPA_ERROR });
       return GOAL_RTTAPA_ERROR;
     }
