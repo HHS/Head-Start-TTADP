@@ -20,10 +20,8 @@ module.exports = {
       { transaction },
     );
 
-    // we can do this as the RTR is brand new
     await queryInterface.sequelize.query(`
-      UPDATE "Goals" SET "isRttapa" = true WHERE "isFromSmartsheetTtaPlan" IS true;
-      UPDATE "Goals" SET "isRttapa" = false WHERE "isFromSmartsheetTtaPlan" IS NULL OR "isFromSmartsheetTtaPlan" = false;
+      UPDATE "Goals" SET "isRttapa" = true WHERE "isFromSmartsheetTtaPlan" IS true;      
     `, { transaction });
   }),
   down: async (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => {
