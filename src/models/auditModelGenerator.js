@@ -47,7 +47,7 @@ const addAuditTransactionSettings = async (sequelize, instance, options, type) =
       `SELECT
         '${type}' "Type",
         ${statements.join(',')}
-      `.replace(/[\r\n]+/gm, ''),
+      `.replace(/[\r\n]+/gm, ' '),
     );
   }
 };
