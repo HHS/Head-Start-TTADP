@@ -128,7 +128,6 @@ const GoalsObjectives = ({
       const name = getValues('goalName');
       const endDate = getValues('goalEndDate');
       const isRttapa = getValues('goalIsRttapa');
-
       const areGoalsValid = validateGoals(
         [{
           ...currentlyEditing,
@@ -152,7 +151,7 @@ const GoalsObjectives = ({
     setValue('goalEndDate', moment(goal.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'));
     setValue('goalName', goal.name);
 
-    const rttapaValue = goal.isRttapa ? 'yes' : 'no';
+    const rttapaValue = goal.isRttapa;
     setValue('goalIsRttapa', rttapaValue);
 
     toggleGoalForm(false);
