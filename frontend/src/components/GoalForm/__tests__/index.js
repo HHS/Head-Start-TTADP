@@ -14,7 +14,7 @@ import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import userEvent from '@testing-library/user-event';
-import CreateGoal, { parseRttapaFromApi } from '../index';
+import CreateGoal from '../index';
 import { OBJECTIVE_ERROR_MESSAGES } from '../constants';
 import { REPORT_STATUSES } from '../../../Constants';
 import { BEFORE_OBJECTIVES_CREATE_GOAL, BEFORE_OBJECTIVES_SELECT_RECIPIENTS } from '../Form';
@@ -47,18 +47,6 @@ const rolesFromApi = [
     fullName: 'Central Office',
   },
 ];
-
-describe('parseRttapaFromApi', () => {
-  it('returns an empty string if the rttapa is not set', () => {
-    expect(parseRttapaFromApi()).toBe('');
-  });
-  it('returns yes if the rttapa is true', () => {
-    expect(parseRttapaFromApi(true)).toBe('yes');
-  });
-  it('returns no if the rttapa is false', () => {
-    expect(parseRttapaFromApi(false)).toBe('no');
-  });
-});
 
 describe('create goal', () => {
   const defaultRecipient = {

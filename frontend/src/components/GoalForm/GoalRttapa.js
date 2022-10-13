@@ -34,8 +34,8 @@ export default function GoalRttapa({
           <Req />
         </legend>
         {error}
-        <Radio disabled={isLoading} name={inputName} id={`${inputName}-yes`} label="Yes" checked={isRttapa === 'yes'} onChange={() => onChange('yes')} />
-        <Radio disabled={isLoading} name={inputName} id={`${inputName}-no`} label="No" checked={isRttapa === 'no'} onChange={() => onChange('no')} />
+        <Radio disabled={isLoading} name={inputName} id={`${inputName}-yes`} label="Yes" checked={isRttapa === 'Yes'} onChange={() => onChange('Yes')} />
+        <Radio disabled={isLoading} name={inputName} id={`${inputName}-no`} label="No" checked={isRttapa === 'No'} onChange={() => onChange('No')} />
       </Fieldset>
     </FormGroup>
   );

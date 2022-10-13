@@ -38,18 +38,6 @@ const [
   objectiveStatusError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
-export const parseRttapaFromApi = (rttapa) => {
-  if (rttapa === true) {
-    return 'yes';
-  }
-
-  if (rttapa === false) {
-    return 'no';
-  }
-
-  return '';
-};
-
 const formatGrantsFromApi = (grants) => grants
   .map((grant) => {
     const programTypes = grant.programs.map(({ programType }) => programType).join(', ');
@@ -132,7 +120,7 @@ export default function GoalForm({
         setEndDate(goal.endDate ? moment(goal.endDate, 'MM/DD/YYYY').format('YYYY-MM-DD') : '');
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
         setGoalNumber(goal.goalNumber);
-        setIsRttapa(parseRttapaFromApi(goal.isRttapa));
+        setIsRttapa(goal.isRttapa);
         setSelectedGrants(formatGrantsFromApi([goal.grant]));
         setGoalOnApprovedReport(goal.onApprovedAR);
 
@@ -309,7 +297,7 @@ export default function GoalForm({
 
   const validateIsRttapa = () => {
     let error = <></>;
-    if (isRttapa !== 'yes' && isRttapa !== 'no') {
+    if (isRttapa !== 'Yes' && isRttapa !== 'No') {
       error = <span className="usa-error-message">{GOAL_RTTAPA_ERROR}</span>;
     }
     const newErrors = [...errors];
@@ -647,7 +635,6 @@ export default function GoalForm({
 
       setCreatedGoals(newCreatedGoals.map((goal) => ({
         ...goal,
-        isRttapa: parseRttapaFromApi(goal.isRttapa),
         grants: formatGrantsFromApi(goal.grants),
         objectives: goal.objectives.map((objective) => ({
           ...objective,

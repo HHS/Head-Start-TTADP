@@ -274,7 +274,7 @@ describe('goals objectives', () => {
         const goals = [{
           name: 'Is goal',
           endDate: '2021-01-01',
-          isRttapa: 'no',
+          isRttapa: 'No',
           objectives: [{
             id: 1,
             title: 'title',
