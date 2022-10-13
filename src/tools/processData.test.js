@@ -9,6 +9,8 @@ import {
   Recipient,
   File,
   Grant,
+  Role,
+  UserRole,
   NextStep,
   Permission,
   RequestErrors,
@@ -19,6 +21,7 @@ import processData, {
 } from './processData';
 import { REPORT_STATUSES } from '../constants';
 import { createOrUpdate } from '../services/activityReports';
+import { destroyReport } from '../testUtils';
 
 jest.mock('../logger');
 
@@ -159,10 +162,19 @@ const reportObject = {
 
 describe('processData', () => {
   beforeAll(async () => {
-    await User.findOrCreate({ where: mockUser });
-    await User.findOrCreate({ where: mockManager });
-    await User.findOrCreate({ where: mockCollaboratorOne });
-    await User.findOrCreate({ where: mockCollaboratorTwo });
+    const role = await Role.create({ id: 1000, name: 'a', isSpecialist: true });
+
+    await Promise.all([
+      ...[
+        mockUser,
+        mockManager,
+        mockCollaboratorOne,
+        mockCollaboratorTwo,
+      ].map(async (mock) => {
+        const user = await User.create(mock);
+        const userRole = await UserRole.create({ userId: user.id, roleId: role.id });
+      }),
+    ]);
 
     await Recipient.findOrCreate({ where: { name: 'Agency One, Inc.', id: RECIPIENT_ID_ONE, uei: 'NNA5N2KHMGM2' } });
     await Recipient.findOrCreate({ where: { name: 'Agency Two', id: RECIPIENT_ID_TWO, uei: 'NNA5N2KHMGA2' } });
@@ -200,26 +212,17 @@ describe('processData', () => {
         },
       }],
     });
-    const ids = reports.map((report) => report.id);
-    await NextStep.destroy({ where: { activityReportId: ids }, individualHooks: true });
-    await ActivityRecipient.destroy({ where: { activityReportId: ids }, individualHooks: true });
-    await ActivityReportFile.destroy({
-      where: { id: mockActivityReportFile.id },
-      individualHooks: true,
-    });
-    await File.destroy({ where: { id: mockFile.id }, individualHooks: true });
-    await ActivityReport.destroy({ where: { id: ids }, individualHooks: true });
+
+    await Promise.all(reports.map((report) => destroyReport(report.id)));
     await User.destroy({
       where: {
-        id: [
-          mockUser.id,
-          mockManager.id,
-          mockCollaboratorOne.id,
-          mockCollaboratorTwo.id,
-        ],
+        id: [mockUser.id, mockManager.id, mockCollaboratorOne.id, mockCollaboratorTwo.id],
       },
       individualHooks: true,
     });
+
+    const ids = reports.map((report) => report.id);
+    await File.destroy({ where: { id: mockFile.id }, individualHooks: true });
     await Grant.destroy({ where: { id: GRANT_ID_ONE }, individualHooks: true });
     await Grant.destroy({ where: { id: GRANT_ID_TWO }, individualHooks: true });
     await Recipient.destroy({ where: { id: RECIPIENT_ID_ONE }, individualHooks: true });
