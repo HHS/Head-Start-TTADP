@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { uniqBy } from 'lodash';
+import { uniq, uniqBy } from 'lodash';
 import moment from 'moment';
 import {
   Grant,
@@ -381,7 +381,7 @@ export async function getGoalsByActivityRecipient(
       existingGoal.goalNumbers = [...existingGoal.goalNumbers, current.goalNumber];
       existingGoal.objectives = reduceObjectives(current, existingGoal);
       existingGoal.objectiveCount = existingGoal.objectives.length;
-
+      existingGoal.grantNumbers = uniq([...existingGoal.grantNumbers, current.grant.number]);
       return {
         goalRows: previous.goalRows,
       };
@@ -399,6 +399,7 @@ export async function getGoalsByActivityRecipient(
       reasons: [],
       previousStatus: calculatePreviousStatus(current),
       objectives: [],
+      grantNumbers: [current.grant.number],
     };
 
     goalToAdd.objectives = reduceObjectives(current, goalToAdd);

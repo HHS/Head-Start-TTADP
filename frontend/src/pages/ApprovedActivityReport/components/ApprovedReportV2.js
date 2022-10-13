@@ -11,16 +11,14 @@ import {
 } from '../helpers';
 
 function formatNextSteps(nextSteps, heading, striped) {
-  const data = nextSteps.reduce((acc, step, index) => ({
-    ...acc,
-    [`Step ${index + 1}`]: step.note,
-    'Anticipated completion': step.completeDate,
-  }), {});
-  return {
-    heading,
-    data,
+  return nextSteps.map((step, index) => ({
+    heading: index === 0 ? heading : '',
+    data: {
+      [`Step ${index + 1}`]: step.note,
+      'Anticipated completion': step.completeDate,
+    },
     striped,
-  };
+  }));
 }
 
 function formatObjectiveLinks(resources) {
@@ -215,7 +213,7 @@ export default function ApprovedReportV2({ data }) {
 
       <ApprovedReportSection
         key={`activity-summary-${reportId}`}
-        title="Activity Summary"
+        title="Activity summary"
         sections={[
           {
             heading: 'Who was the activity for?',
@@ -293,8 +291,8 @@ export default function ApprovedReportV2({ data }) {
         key={`next-steps${reportId}`}
         title="Next steps"
         sections={[
-          specialistNextSteps,
-          recipientNextSteps,
+          ...specialistNextSteps,
+          ...recipientNextSteps,
         ]}
       />
 

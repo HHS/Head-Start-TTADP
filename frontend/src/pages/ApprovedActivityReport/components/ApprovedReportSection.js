@@ -10,7 +10,7 @@ export default function ApprovedReportSection({
   className,
 }) {
   return (
-    <div className={className}>
+    <div className={`ttahub-approved-report-section-container ${className}`}>
       <h2 className="font-serif-xl margin-y-3">{title}</h2>
       {sections.map((section) => {
         const subheadings = Object.keys(section.data);
