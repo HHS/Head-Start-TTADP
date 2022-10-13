@@ -5,6 +5,7 @@ import {
   Collaborator,
   User,
   UserRole,
+  Role,
 } from '../models';
 import { REPORT_STATUSES } from '../constants';
 import changeReportStatus from './changeReportStatus';
@@ -46,16 +47,15 @@ const reportObject = {
 };
 
 describe('changeStatus', () => {
-  beforeAll(async () => {
-    await User.create(mockUser);
-    await UserRole.create({ userId: mockUser.id, roleId: 1 });
-  });
-
   afterAll(async () => {
     await sequelize.close();
   });
 
   it('changes activity report(s) status to deleted', async () => {
+    const role = await Role.create({ id: 1000, name: 'a', isSpecialist: true });
+    await User.create(mockUser);
+    await UserRole.create({ userId: mockUser.id, roleId: role.id });
+
     let report = await createOrUpdate(reportObject);
 
     report = await ActivityReport.findOne({
