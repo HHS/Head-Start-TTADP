@@ -1362,8 +1362,6 @@ async function createObjectivesForGoal(goal, objectives, report) {
 }
 
 function parseRttapaStringFromFrontend(isRttapa) {
-  console.log({ isRttapa });
-
   if (isRttapa === 'yes') {
     return true;
   }
