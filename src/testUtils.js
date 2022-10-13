@@ -4,6 +4,8 @@ import { REPORT_STATUSES } from './constants';
 import {
   ActivityReport,
   ActivityRecipient,
+  ActivityReportFile,
+  File,
   User,
   UserRole,
   Role,
@@ -214,6 +216,16 @@ export async function destroyReport(r) {
     where: { id: { [Op.in]: userRoles.map((ur) => ur.dataValues.roleId) } },
   });
 
+  // Get all ActivityReportFiles
+  const activityReportFiles = await ActivityReportFile.findAll({
+    where: { activityReportId: id },
+  });
+
+  // Get all Files
+  const files = await File.findAll({
+    where: { id: { [Op.in]: activityReportFiles.map((arf) => arf.dataValues.fileId) } },
+  });
+
   // Destroy the ActivityReport.
   await report.destroy();
 
@@ -233,15 +245,21 @@ export async function destroyReport(r) {
   // - UserRoles
   // - Roles
   // - Users
-  await Promise.allSettled([
-    ...grants.map((model) => model.destroy()),
-    ...recipients.map((model) => model.destroy()),
-    ...objectives.map((model) => model.destroy()),
-    ...goals.map((model) => model.destroy()),
-    ...userRoles.map((model) => model.destroy()),
-    ...roles.map((model) => model.destroy()),
-    ...users.map((model) => model.destroy()),
-  ]);
+  try {
+    await Promise.allSettled([
+      ...activityReportFiles.map((model) => model.destroy()),
+      ...files.map((model) => model.destroy()),
+      ...grants.map((model) => model.destroy()),
+      ...recipients.map((model) => model.destroy()),
+      ...objectives.map((model) => model.destroy()),
+      ...goals.map((model) => model.destroy()),
+      ...userRoles.map((model) => model.destroy()),
+      ...roles.map((model) => model.destroy()),
+      ...users.map((model) => model.destroy()),
+    ]);
+  } catch (e) {
+    console.log('error destroying', e);
+  }
 }
 
 export async function createGoal(goal) {
