@@ -28,7 +28,8 @@ describe('PrintGoals', () => {
       goalText: 'This is goal text 1.',
       goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
       objectiveCount: 5,
-      goalNumber: 'G-4598',
+      goalNumbers: ['G-4598'],
+      grantNumbers: ['Rattaché au programme'], // copilot came up with this, I hope its not profane
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
       objectives: [],
     },
@@ -39,7 +40,8 @@ describe('PrintGoals', () => {
       goalText: 'This is goal text 2.',
       goalTopics: ['Human Resources', 'Safety Practices'],
       objectiveCount: 5,
-      goalNumber: 'G-4598',
+      goalNumbers: ['G-4598'],
+      grantNumbers: ['Rattaché au programme'],
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
       objectives: [
         {
@@ -49,6 +51,18 @@ describe('PrintGoals', () => {
           endDate: '01/01/02',
           reasons: ['Empathy', 'Generosity', 'Friendship'],
           status: 'Complete',
+          activityReports: [
+            {
+              id: 1,
+              displayId: '1234',
+              legacyId: null,
+            },
+            {
+              id: 2,
+              displayId: '1234',
+              legacyId: 'r-1234',
+            },
+          ],
         },
       ],
     },
