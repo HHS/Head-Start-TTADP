@@ -94,6 +94,10 @@ export default function NextStepsRepeater({
 
   const stepType = name === 'specialistNextSteps' ? 'specialist' : 'recipient';
 
+  const dateLabel = (index) => (stepType === 'recipient'
+    ? `When does the recipient anticipate completing step ${index + 1}?`
+    : `When do you anticipate completing step ${index + 1}?`);
+
   return (
     <>
       <div className="ttahub-next-steps-repeater">
@@ -159,7 +163,7 @@ export default function NextStepsRepeater({
               <Label
                 htmlFor={`${stepType}-next-step-date-${index + 1}`}
               >
-                {`When do you anticipate completing step ${index + 1}?`}
+                {dateLabel(index)}
                 <span className="smart-hub--form-required font-family-sans font-ui-xs text-secondary-dark">
                   {' '}
                   *
