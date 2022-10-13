@@ -78,7 +78,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     isRttapa: {
       type: DataTypes.BOOLEAN,
-      default: false,
+      allowNull: true,
     },
     firstNotStartedAt: {
       type: DataTypes.DATE,
