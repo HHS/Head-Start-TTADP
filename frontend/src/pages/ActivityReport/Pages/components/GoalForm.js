@@ -112,14 +112,7 @@ export default function GoalForm({
   ]);
 
   useEffect(() => {
-    let val = '';
-    if (goal.isRttapa === true) {
-      val = 'yes';
-    }
-    if (goal.isRttapa === false) {
-      val = 'no';
-    }
-    onUpdateRttapa(val);
+    onUpdateRttapa(goal.isRttapa ? goal.isRttapa : '');
   }, [goal.isRttapa, onUpdateRttapa]);
 
   useEffect(() => {
