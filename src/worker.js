@@ -10,9 +10,13 @@ import {
   notifyApproverAssigned,
   notifyChangesRequested,
   notifyReportApproved,
-  notificationQueue,
   notifyCollaboratorAssigned,
+  notificationQueue,
+  notifyDigest,
+  notificationDigestQueue,
 } from './lib/mailer';
+import { EMAIL_ACTIONS } from './constants';
+import logEmailNotification, { logDigestEmailNotification } from './lib/mailer/logNotifications';
 
 // Number of workers to spawn
 const workers = process.env.WORKER_CONCURRENCY || 2;
@@ -20,7 +24,7 @@ const workers = process.env.WORKER_CONCURRENCY || 2;
 const maxJobsPerWorker = process.env.MAX_JOBS_PER_WORKER || 5;
 
 // Pull jobs off the redis queue and process them.
-function start() {
+async function start() {
   // File Scanning
   scanQueue.on('failed', (job, error) => auditLogger.error(`job ${job.data.key} failed with error ${error}`));
   scanQueue.on('completed', (job, result) => {
@@ -33,20 +37,43 @@ function start() {
   scanQueue.process(maxJobsPerWorker, (job) => processFile(job.data.key));
 
   // Notifications
-  notificationQueue.on('failed', (job, error) => auditLogger
-    .error(`job ${job.name} failed for report ${job.data.report.displayId} with error ${error}`));
+  notificationQueue.on('failed', (job, error) => {
+    auditLogger.error(`job ${job.name} failed for report ${job.data.report.displayId} with error ${error}`);
+    logEmailNotification(job, false, error);
+  });
   notificationQueue.on('completed', (job, result) => {
     if (result != null) {
-      logger.info(`Succesfully sent ${job.name} notification for ${job.data.report.displayId}`);
+      logger.info(`Successfully sent ${job.name} notification for ${job.data.report.displayId}`);
+      logEmailNotification(job, true, result);
     } else {
-      logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId} because SEND_NOTIFICATIONS is not set`);
+      logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId} preferences are not set`);
+      logEmailNotification(job, false, { preferences: 'off' });
+    }
+  });
+  // Digests
+  notificationDigestQueue.on('failed', (job, error) => {
+    auditLogger.error(`job ${job.name} failed for user ${job.data.user.id} with error ${error}`);
+    logDigestEmailNotification(job, false, error);
+  });
+  notificationDigestQueue.on('completed', (job, result) => {
+    if (result != null) {
+      logger.info(`Successfully sent ${job.name} notification for ${job.data.user.id}`);
+      logDigestEmailNotification(job, true, result);
+    } else {
+      logger.info(`Did not send ${job.name} notification for ${job.data.user.id} because SEND_NOTIFICATIONS is not set`);
+      logDigestEmailNotification(job, false, { SEND_NOTIFICATIONS: 'off' });
     }
   });
 
-  notificationQueue.process('changesRequested', notifyChangesRequested);
-  notificationQueue.process('approverAssigned', notifyApproverAssigned);
-  notificationQueue.process('reportApproved', notifyReportApproved);
-  notificationQueue.process('collaboratorAssigned', notifyCollaboratorAssigned);
+  notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION, notifyChangesRequested);
+  notificationQueue.process(EMAIL_ACTIONS.SUBMITTED, notifyApproverAssigned);
+  notificationQueue.process(EMAIL_ACTIONS.APPROVED, notifyReportApproved);
+  notificationQueue.process(EMAIL_ACTIONS.COLLABORATOR_ADDED, notifyCollaboratorAssigned);
+
+  notificationDigestQueue.process(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, notifyDigest);
+  notificationDigestQueue.process(EMAIL_ACTIONS.SUBMITTED_DIGEST, notifyDigest);
+  notificationDigestQueue.process(EMAIL_ACTIONS.APPROVED_DIGEST, notifyDigest);
+  notificationDigestQueue.process(EMAIL_ACTIONS.COLLABORATOR_DIGEST, notifyDigest);
 }
 
 // spawn workers and start them

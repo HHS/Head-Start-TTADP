@@ -31,6 +31,7 @@ import RecipientRecord from './pages/RecipientRecord';
 import RecipientSearch from './pages/RecipientSearch';
 import AppWrapper from './components/AppWrapper';
 import SocketProvider, { socketPath } from './components/SocketProvider';
+import AccountManagement from './pages/AccountManagement';
 
 import { getReportsForLocalStorageCleanup } from './fetchers/activityReports';
 import { storageAvailable } from './hooks/helpers';
@@ -174,6 +175,24 @@ function App() {
           path="/regional-dashboard"
           render={() => (
             <AppWrapper authenticated logout={logout}><RegionalDashboard user={user} /></AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/account"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <AccountManagement updateUser={updateUser} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/account/verify-email/:token"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <AccountManagement updateUser={updateUser} />
+            </AppWrapper>
           )}
         />
         {admin && (

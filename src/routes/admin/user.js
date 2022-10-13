@@ -66,6 +66,7 @@ export async function createUser(req, res) {
         include: [{ model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] }],
       },
     );
+
     auditLogger.info(`User ${req.session.userId} created new User: ${user.id}`);
     res.json(user);
   } catch (error) {
@@ -114,6 +115,7 @@ export async function deleteUser(req, res) {
   try {
     await sequelize.transaction(async (transaction) => {
       const result = await User.destroy({ where: { id: userId }, transaction });
+
       res.json(result);
     });
   } catch (error) {
