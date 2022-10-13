@@ -440,14 +440,6 @@ export async function removeGoals(goalsToRemove) {
   });
 }
 
-async function removeObjectives(currentObjectiveIds) {
-  return Objective.destroy({
-    where: {
-      id: currentObjectiveIds,
-    },
-  });
-}
-
 export async function removeRemovedRecipientsGoals(removedRecipientIds, report) {
   if (!removedRecipientIds) {
     return null;
@@ -569,7 +561,16 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
   }).map((g) => g.id);
 
   await removeActivityReportObjectivesFromReport(reportId, objectiveIdsToRemove);
-  await removeObjectives(objectiveIdsToRemove);
+
+  await Objective.destroy({
+    where: {
+      [Op.and]: [
+        { id: objectiveIdsToRemove },
+        sequelize.literal(`(SELECT COUNT(*) FROM "ActivityReportObjectives" WHERE "ActivityReportObjectives"."objectiveId" = "Objectives"."id" AND "ActivityReportObjectives"."activityReportId" != ${reportId}) = 0`),
+      ],
+    },
+  });
+
   return removeGoals(goalIdsToRemove);
 }
 
@@ -592,15 +593,38 @@ async function createObjectivesForGoal(goal, objectives, report) {
 
     let savedObjective;
 
+    // the frontend attempts to flag an objective as new
     if (!isNew) {
       savedObjective = await Objective.findByPk(id);
-      await savedObjective.update({
-        title,
-        status,
-      }, { individualHooks: true });
+      const objectiveTitle = updatedObjective.title ? updatedObjective.title.trim() : '';
+      // if we don't find an objective -
+      // or we are attempting to change an objective title on an approved AR
+      // we need to create a new objective
+      if (!savedObjective
+        || (savedObjective.title !== objectiveTitle && savedObjective.onApprovedAR)) {
+        savedObjective = await Objective.create({
+          ...updatedObjective,
+          title: objectiveTitle,
+          status,
+        });
+      // if its on an approved AR, and the title is the same, we shouldn't
+      // attempt to update it, only the status
+      } else if (savedObjective.onApprovedAR) {
+        await savedObjective.update({
+          status,
+        }, { individualHooks: true });
+      } else {
+        // if the objective exists and is not an approved AR, we can update it
+        await savedObjective.update({
+          title,
+          status,
+        }, { individualHooks: true });
+      }
+    // the frontend tells us to create a new objective
     } else {
       const objectiveTitle = updatedObjective.title ? updatedObjective.title.trim() : '';
 
+      // but of course, we must not trust it
       const existingObjective = await Objective.findOne({
         where: {
           goalId: updatedObjective.goalId,
