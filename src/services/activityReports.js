@@ -371,7 +371,7 @@ export async function populateRecipientInfo(activityRecipients, grantPrograms) {
   });
 }
 
-export async function activityReportAndRecipientsById(activityReportId) {
+export async function activityReportAndRecipientsById(activityReportId, isImported = false) {
   const arId = parseInt(activityReportId, DECIMAL_BASE);
 
   const goalsAndObjectives = await getGoalsForReport(arId);
@@ -431,7 +431,12 @@ export async function activityReportAndRecipientsById(activityReportId) {
       */
 
   const report = await ActivityReport.findOne({
-    attributes: { exclude: ['imported', 'legacyId'] },
+    attributes: {
+      exclude: [
+        !isImported && 'imported',
+        'legacyId',
+      ].filter(Boolean),
+    },
     where: {
       id: arId,
     },
@@ -1192,6 +1197,7 @@ export async function createOrUpdate(newActivityReport, report) {
     attachments,
     recipientsWhoHaveGoalsThatShouldBeRemoved,
     silent,
+    imported,
     ...allFields
   } = newActivityReport;
   const previousActivityRecipientType = report && report.activityRecipientType;
@@ -1205,7 +1211,7 @@ export async function createOrUpdate(newActivityReport, report) {
     resources.nonECLKCResourcesUsed = formatResources(nonECLKCResourcesUsed);
   }
 
-  const updatedFields = { ...allFields, ...resources };
+  const updatedFields = { ...allFields, ...resources, imported };
   if (report) {
     savedReport = await update(updatedFields, report);
     const { id: savedReportId } = savedReport;
@@ -1358,7 +1364,7 @@ export async function createOrUpdate(newActivityReport, report) {
   //   );
   // }
   try {
-    const [r, recips, gAndOs] = await activityReportAndRecipientsById(savedReport.id);
+    const [r, recips, gAndOs] = await activityReportAndRecipientsById(savedReport.id, !!imported);
     return {
       ...r.dataValues,
       displayId: r.displayId,
