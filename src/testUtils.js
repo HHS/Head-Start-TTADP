@@ -168,8 +168,28 @@ export async function createReport(report) {
 }
 
 export async function destroyReport(r) {
-  const id = typeof r === 'number' ? r : r.id;
-  const report = await ActivityReport.findOne({ where: { id } });
+  let id;
+
+  if (typeof r === 'number') {
+    id = r;
+  } else if (typeof r === 'object') {
+    if (r.dataValues) {
+      id = r.dataValues.id;
+    } else if (r.id) {
+      id = r.id;
+    } else {
+      throw new Error(`destroyReport: expected report to be number or ActivityReport object, got ${r}`);
+    }
+  } else {
+    throw new Error(`destroyReport: expected report to be number or ActivityReport object, got ${r}`);
+  }
+
+  const report = await ActivityReport.unscoped().findOne({
+    where: { id },
+    individualHooks: true,
+  });
+
+  if (!report) return;
 
   // Get all ActivityRecipients
   const activityRecipients = await ActivityRecipient.findAll({
@@ -254,8 +274,8 @@ export async function destroyReport(r) {
       ...objectives.map((model) => model.destroy()),
       ...goals.map((model) => model.destroy()),
       ...userRoles.map((model) => model.destroy()),
-      ...roles.map((model) => model.destroy()),
       ...users.map((model) => model.destroy()),
+      ...roles.map((model) => model.destroy()),
     ]);
   } catch (e) {
     console.log('error destroying', e);
