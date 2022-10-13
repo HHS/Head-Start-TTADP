@@ -39,6 +39,6 @@ describe('GoalRttapa', () => {
     renderGoalRttapa('In Progress', false, onChange);
     const radio = screen.getByLabelText('No');
     userEvent.click(radio);
-    await waitFor(() => expect(onChange).toHaveBeenCalledWith('no'));
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith('No'));
   });
 });

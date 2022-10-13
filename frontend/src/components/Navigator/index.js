@@ -29,7 +29,6 @@ import DismissingComponentWrapper from '../DismissingComponentWrapper';
 import { validateGoals } from '../../pages/ActivityReport/Pages/components/goalValidator';
 import { saveGoalsForReport, saveObjectivesForReport } from '../../fetchers/activityReports';
 import GoalFormContext from '../../GoalFormContext';
-import { parseRttapaFromApi } from '../GoalForm';
 import { validateObjectives } from '../../pages/ActivityReport/Pages/components/objectiveValidator';
 
 function Navigator({
@@ -177,11 +176,6 @@ function Navigator({
         },
       );
 
-      allGoals = allGoals.map((g) => ({
-        ...g,
-        isRttapa: parseRttapaFromApi(g.isRttapa),
-      }));
-
       // Find the goal we are editing and put it back with updated values.
       const goalBeingEdited = allGoals.find((g) => g.name === goal.name);
       setValue('goalForEditing', goalBeingEdited);
@@ -260,11 +254,6 @@ function Navigator({
           regionId: formData.regionId,
         },
       );
-
-      newGoals = newGoals.map((g) => ({
-        ...g,
-        isRttapa: parseRttapaFromApi(g.isRttapa),
-      }));
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     }

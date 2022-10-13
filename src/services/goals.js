@@ -825,11 +825,11 @@ export async function createOrUpdateGoals(goals) {
 
     let isRttapaValue = null;
 
-    if (isRttapa === 'yes') {
+    if (isRttapa === 'Yes') {
       isRttapaValue = true;
     }
 
-    if (isRttapa === 'no') {
+    if (isRttapa === 'No') {
       isRttapaValue = false;
     }
 
@@ -1361,25 +1361,12 @@ async function createObjectivesForGoal(goal, objectives, report) {
   }));
 }
 
-function parseRttapaStringFromFrontend(isRttapa) {
-  if (isRttapa === 'yes') {
-    return true;
-  }
-
-  if (isRttapa === 'no') {
-    return false;
-  }
-
-  return null;
-}
-
 export async function saveGoalsForReport(goals, report) {
   let currentObjectives = [];
   const currentGoals = await Promise.all((goals.map(async (goal) => {
     let newGoals = [];
     const status = goal.status ? goal.status : 'Draft';
     const goalIds = goal.goalIds ? goal.goalIds : [];
-    const isRttapa = parseRttapaStringFromFrontend(goal.isRttapa);
     // Check if these goals exist.
     const existingGoals = await Goal.findAll({
       where: {
@@ -1397,7 +1384,6 @@ export async function saveGoalsForReport(goals, report) {
         status: discardedStatus,
         onApprovedAR,
         createdVia,
-        isRttapa: discardRttapa,
         ...fields
       } = goal;
 
@@ -1421,7 +1407,7 @@ export async function saveGoalsForReport(goals, report) {
           },
         });
 
-        await newGoal.update({ isRttapa }, { individualHooks: true });
+        await newGoal.update({ isRttapa: fields.isRttapa }, { individualHooks: true });
         await cacheGoalMetadata(newGoal, report.id);
 
         const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
@@ -1439,7 +1425,7 @@ export async function saveGoalsForReport(goals, report) {
         id, // this is unique and we can't trying to set this
         onApprovedAR, // we don't want to set this manually
         createdVia,
-        isRttapa: discardRttapa,
+        isRttapa,
         ...fields
       } = goal;
 

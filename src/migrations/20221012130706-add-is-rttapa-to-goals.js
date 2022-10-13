@@ -16,12 +16,12 @@ module.exports = {
     await queryInterface.addColumn(
       'Goals',
       'isRttapa',
-      { type: Sequelize.DataTypes.BOOLEAN, allowNull: true },
+      { type: Sequelize.DataTypes.ENUM(['Yes', 'No']), allowNull: true },
       { transaction },
     );
 
     await queryInterface.sequelize.query(`
-      UPDATE "Goals" SET "isRttapa" = true WHERE "isFromSmartsheetTtaPlan" IS true;      
+      UPDATE "Goals" SET "isRttapa" = 'Yes' WHERE "isFromSmartsheetTtaPlan" IS true;      
     `, { transaction });
   }),
   down: async (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => {

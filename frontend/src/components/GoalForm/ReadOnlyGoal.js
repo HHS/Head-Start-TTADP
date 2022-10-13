@@ -57,7 +57,7 @@ export default function ReadOnlyGoal({
         </div>
         <div className="margin-bottom-2">
           <h4 className="margin-0">Recipient TTA Plan Agreement (RTTAPA) goal</h4>
-          <p className="usa-prose margin-0">{goal.isRttapa ? goal.isRttapa[0].toUpperCase() + goal.isRttapa.substring(1) : ''}</p>
+          <p className="usa-prose margin-0">{goal.isRttapa}</p>
         </div>
         {goal.endDate ? (
           <div className="margin-bottom-4">
