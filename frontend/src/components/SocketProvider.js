@@ -44,8 +44,10 @@ export default function SocketProvider({ children, path }) {
     // Listen for messages
     s.addEventListener('message', (event) => {
       if (s.readyState === s.OPEN) {
-        const data = JSON.parse(event.data);
-        setStore(data);
+        if (event.explicitOriginalTarget.url.includes(path)) {
+          const data = JSON.parse(event.data);
+          setStore(data);
+        }
       }
     });
 
