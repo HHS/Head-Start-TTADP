@@ -28,24 +28,10 @@ const NavLink = (props) => (
 );
 
 const SiteNav = ({
-  admin,
   authenticated,
-  logout,
   user,
   location,
 }) => {
-  const navItems = [
-    <button type="button" onClick={() => logout(false)} className={`usa-button--unstyled usa-button--unstyled_logout width-full ${navLinkClasses}`}>
-      Logout
-    </button>,
-  ];
-
-  const adminNavItem = [
-    <NavLink to="/admin/">
-      Admin
-    </NavLink>,
-  ];
-
   const [showActivityReportSurveyButton, setShowActivityReportSurveyButton] = useState(false);
 
   useEffect(() => {
@@ -55,8 +41,6 @@ const SiteNav = ({
       setShowActivityReportSurveyButton(false);
     }
   }, [location.pathname, authenticated]);
-
-  const items = admin ? navItems.concat(adminNavItem) : navItems;
 
   return (
     <div>
@@ -114,11 +98,6 @@ const SiteNav = ({
                   </li>
                 </ul>
               </div>
-              <div className="width-full padding-bottom-5 smart-hub-sitenav-separator--before opacity-70">
-                <ul className="add-list-reset padding-top-5 text-base-lightest">
-                  {items.map((item, i) => (<li key={`smart-hub-nav__item-${i}`}>{item}</li>))}
-                </ul>
-              </div>
             </nav>
           </div>
         )}
@@ -129,17 +108,13 @@ const SiteNav = ({
 SiteNav.displayName = 'SiteNav';
 
 SiteNav.propTypes = {
-  admin: PropTypes.bool,
   authenticated: PropTypes.bool,
-  logout: PropTypes.func,
   user: PropTypes.shape({ name: PropTypes.string, email: PropTypes.string }),
   location: PropTypes.shape({ pathname: PropTypes.string }).isRequired,
 };
 
 SiteNav.defaultProps = {
-  admin: false,
   authenticated: false,
-  logout: () => { },
   user: {
     name: '',
     email: '',

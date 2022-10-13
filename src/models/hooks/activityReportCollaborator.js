@@ -1,7 +1,7 @@
 function generateFullName(user, collaboratorRoles) {
   const roles = collaboratorRoles ? collaboratorRoles.map((r) => r.role).sort() : [];
   if (!roles.length || roles.length === 0) {
-    return user.fullName;
+    return user ? user.fullName : '';
   }
   const combinedRoles = roles.reduce((result, val) => {
     if (val) {

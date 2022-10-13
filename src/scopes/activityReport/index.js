@@ -20,6 +20,7 @@ import withStateCode from './stateCode';
 import { beforeCreateDate, afterCreateDate, withinCreateDate } from './createDate';
 import { beforeEndDate, afterEndDate, withinEndDate } from './endDate';
 import { withOtherEntities, withoutOtherEntities } from './otherEntities';
+import { withoutParticipants, withParticipants } from './participants';
 
 export const topicToQuery = {
   reportId: {
@@ -83,6 +84,10 @@ export const topicToQuery = {
   reason: {
     in: (query) => withReason(query),
     nin: (query) => withoutReason(query),
+  },
+  participants: {
+    in: (query) => withParticipants(query),
+    nin: (query) => withoutParticipants(query),
   },
   grantNumber: {
     ctn: (query) => withGrantNumber(query),
