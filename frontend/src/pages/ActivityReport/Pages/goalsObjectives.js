@@ -301,7 +301,7 @@ const GoalsObjectives = ({
 };
 
 GoalsObjectives.propTypes = {
-  reportId: PropTypes.number.isRequired,
+  reportId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   onSaveDraftOetObjectives: PropTypes.func.isRequired,
   onSaveDraftGoal: PropTypes.func.isRequired,
 };
