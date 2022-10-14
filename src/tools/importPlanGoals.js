@@ -1,14 +1,13 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-loop-func */
 import parse from 'csv-parse/lib/sync';
+import { GOAL_STATUS } from '../constants';
 import { downloadFile } from '../lib/s3';
 import {
-  Role,
-  Topic,
-  RoleTopic,
   Goal,
   Grant,
 } from '../models';
+import { logger } from '../logger';
 
 async function parseCsv(fileKey) {
   let recipients = {};
@@ -54,8 +53,6 @@ export default async function importGoals(fileKey, region) {
   const recipients = await parseCsv(fileKey);
   const regionId = region;
   try {
-    const cleanRoleTopics = [];
-
     for await (const el of recipients) {
       let currentGrants = [];
       const currentGoals = [];
@@ -84,39 +81,7 @@ export default async function importGoals(fileKey, region) {
           } else if (currentGoalName !== '') {
             // column will be either "topics", "timeframe" or "status"
             column = goalColumn[2].toLowerCase();
-            if (column === 'topics') {
-              const allTopics = el[key].split('\n');
-              for await (const topicPipeRoles of allTopics) {
-                const topic = topicPipeRoles.split('|')[0];
-                const roles = topicPipeRoles.split('|')[1];
-                const trimmedTopic = topic.trim();
-                if (trimmedTopic !== '') {
-                  const [dbTopic] = await Topic.findOrCreate({ where: { name: trimmedTopic } });
-                  const topicId = dbTopic.id;
-                  if (roles) {
-                    const rolesArr = roles.split(',');
-                    for await (const role of rolesArr) {
-                      const trimmedRole = role.trim();
-                      let roleId;
-                      if (trimmedRole === 'GS') { // Special case for 'GS' since it's non-unique
-                        const [dbRole] = await Role.findOrCreate({ where: { name: trimmedRole, fullName: 'Grantee Specialist' }, defaults: { isSpecialist: false } });
-                        roleId = dbRole.id;
-                      } else {
-                        const [dbRole] = await Role.findOrCreate({
-                          where: { name: trimmedRole }, defaults: { isSpecialist: false },
-                        });
-                        roleId = dbRole.id;
-                      }
-                      // associate topic with roles
-                      if (!cleanRoleTopics.some((e) => e.roleId === roleId
-                                                      && e.topicId === topicId)) {
-                        cleanRoleTopics.push({ roleId, topicId });
-                      }
-                    }
-                  }
-                }
-              }
-            } else {
+            if (column !== 'topics') { // ignore topics
               // it's either "timeframe" or "status"
               // both "timeframe" and "status" column names will be reused as goal's object keys
               currentGoals[currentGoalNum] = {
@@ -135,26 +100,50 @@ export default async function importGoals(fileKey, region) {
             const dbGrant = await Grant.findOne({ where: { ...fullGrant }, attributes: ['id', 'recipientId'] });
             if (!dbGrant) {
               // eslint-disable-next-line no-console
-              console.log(`Couldn't find grant: ${fullGrant.number}. Exiting...`);
+              logger.error(`Couldn't find grant: ${fullGrant.number}. Exiting...`);
               throw new Error('error');
             }
             const grantId = dbGrant.id;
-            await Goal.findOrCreate({
-              where: { grantId, name: goal.name, isFromSmartsheetTtaPlan: true },
-              defaults: goal,
+            const dbGoal = await Goal.findOne({
+              where: { grantId, name: goal.name },
             });
+
+            if (dbGoal) {
+              // update timeframe
+              await Goal.update(
+                {
+                  timeframe: goal.timeframe,
+                },
+                {
+                  where: { id: dbGoal.id },
+                  individualHooks: true,
+                },
+              );
+
+              const dbGoalStatusIdx = Object.values(GOAL_STATUS).indexOf(dbGoal.status);
+              const goalStatusIdx = Object.values(GOAL_STATUS).indexOf(goal.status);
+
+              if (dbGoalStatusIdx < goalStatusIdx) {
+                logger.info(`Updating goal ${dbGoal.id}: Changing status from ${dbGoal.status} to ${goal.status}`);
+                await Goal.update(
+                  {
+                    status: goal.status,
+                  },
+                  {
+                    where: { id: dbGoal.id },
+                    individualHooks: true,
+                  },
+                );
+              } else {
+                logger.info(`Skipping goal status update for ${dbGoal.id}: goal status ${dbGoal.status} is newer or equal to ${goal.status}`);
+              }
+            } else {
+              await Goal.create({ grantId, ...goal, isFromSmartsheetTtaPlan: true });
+            }
           }
         }
       }
     }
-
-    // The associations data has been prepared. Insert it into the database
-    await RoleTopic.bulkCreate(
-      cleanRoleTopics,
-      {
-        ignoreDuplicates: true,
-      },
-    );
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error(err);

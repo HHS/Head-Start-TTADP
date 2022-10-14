@@ -2,8 +2,11 @@ import { readFileSync } from 'fs';
 import importGoals from './importPlanGoals';
 import { downloadFile } from '../lib/s3';
 import db, {
-  Role, Topic, RoleTopic, Goal, Grant,
+  Goal, Grant,
 } from '../models';
+import { logger } from '../logger';
+
+jest.mock('../logger');
 
 jest.mock('../lib/s3');
 
@@ -20,52 +23,12 @@ describe('Import TTA plan goals', () => {
       try {
         const fileName = 'GranteeTTAPlanTest.csv';
         downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
-        await Role.destroy({ where: {} });
-        await Topic.destroy({ where: {}, force: true });
-        await Goal.destroy({ where: {} });
+        // await Goal.destroy({ where: {} });
         await importGoals(fileName, 14);
       } catch (error) {
         // eslint-disable-next-line no-console
         console.log(`Unable to setup Import Plan Goals test ${error}`);
       }
-    });
-
-    it('should import Topics table', async () => {
-      const topics = await Topic.findAll();
-      expect(topics).toBeDefined();
-      expect(topics.length).toBe(14);
-
-      // test eager loading
-      const topic = await Topic.findOne({
-        where: { name: 'Behavioral / Mental Health' },
-        include: [
-          {
-            model: Role,
-            as: 'roles',
-            attributes: ['name'],
-          },
-        ],
-      });
-      expect(topic.name).toEqual('Behavioral / Mental Health');
-      expect(topic.roles.length).toBe(2);
-      expect(topic.roles).toContainEqual(
-        expect.objectContaining({ name: 'HS' }),
-      );
-
-      expect(topic.roles).toContainEqual(
-        expect.objectContaining({ name: 'FES' }),
-      );
-
-      // test lazy loading
-      const topicRoles = await topic.getRoles();
-      expect(topicRoles.length).toBe(2);
-      expect(topicRoles).toContainEqual(
-        expect.objectContaining({ name: 'HS' }),
-      );
-
-      expect(topicRoles).toContainEqual(
-        expect.objectContaining({ name: 'FES' }),
-      );
     });
 
     it('should import Goals table', async () => {
@@ -97,10 +60,81 @@ describe('Import TTA plan goals', () => {
       );
     });
 
-    it('should import RoleTopics table', async () => {
-      const roleTopics = await RoleTopic.findAll();
-      expect(roleTopics).toBeDefined();
-      expect(roleTopics.length).toBe(20);
+    it('should update status if it is newer', async () => {
+      const fileName = 'GranteeTTAPlanTest.csv';
+      downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+
+      const goalInProgress = await Goal.findOne({
+        where: { status: 'In Progress' },
+      });
+      await goalInProgress.update({
+        status: 'Not Started',
+      });
+      const goalNotStarted = await Goal.findOne({
+        where: { id: goalInProgress.id },
+      });
+      expect(goalNotStarted.status).toBe('Not Started');
+
+      await importGoals(fileName, 14);
+
+      const updatedGoal = await Goal.findOne({
+        where: { id: goalInProgress.id },
+      });
+      expect(updatedGoal.status).toBe('In Progress');
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringContaining(`Updating goal ${goalInProgress.id}: Changing status from Not Started to In Progress`),
+      );
+    });
+
+    it('should not update status if it is older', async () => {
+      const fileName = 'GranteeTTAPlanTest.csv';
+      downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+      // Find a goal that was imported as 'Not Started', change to 'Suspended' and update
+      const goalNotStarted = await Goal.findOne({
+        where: { status: 'Not Started' },
+      });
+      await goalNotStarted.update({
+        status: 'Suspended',
+      });
+      const goalSuspended = await Goal.findOne({
+        where: { id: goalNotStarted.id },
+      });
+      expect(goalSuspended.status).toBe('Suspended');
+
+      await importGoals(fileName, 14);
+
+      const updatedGoal = await Goal.findOne({
+        where: { id: goalNotStarted.id },
+      });
+      expect(updatedGoal.status).toBe('Suspended');
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringContaining(`Skipping goal status update for ${goalNotStarted.id}: goal status Suspended is newer or equal to Not Started`),
+      );
+    });
+
+    it('should update timeframe', async () => {
+      const fileName = 'GranteeTTAPlanTest.csv';
+      downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+      // Find a goal that was imported, change the timeframe and update by running the import script
+      const goalWithTimeframe = await Goal.findOne({
+        where: { timeframe: '6 months' },
+      });
+      expect(goalWithTimeframe.timeframe).toBe('6 months');
+
+      await goalWithTimeframe.update({
+        timeframe: '12 months',
+      });
+      const modifiedGoal = await Goal.findOne({
+        where: { id: goalWithTimeframe.id },
+      });
+      expect(modifiedGoal.timeframe).toBe('12 months');
+
+      await importGoals(fileName, 14);
+
+      const updatedGoal = await Goal.findOne({
+        where: { id: goalWithTimeframe.id },
+      });
+      expect(updatedGoal.timeframe).toBe('6 months');
     });
 
     it('is idempotent', async () => {
@@ -147,6 +181,15 @@ describe('Import TTA plan goals', () => {
 
       expect(goal.grant.number).toBe('09HP044444');
       expect(goal.grant.regionId).toBe(9);
+    });
+
+    it('should populate template id', async () => {
+      const importedGoal = await Goal.findOne({
+        where: { isFromSmartsheetTtaPlan: true },
+      });
+
+      expect(importedGoal.goalTemplateId).toBeDefined();
+      expect(importedGoal.goalTemplateId).not.toBeNull();
     });
   });
 });
