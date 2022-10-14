@@ -125,7 +125,7 @@ describe('create goal', () => {
   beforeEach(async () => {
     fetchMock.restore();
     fetchMock.get('/api/topic', topicsFromApi);
-    fetchMock.get('/api/role', rolesFromApi);
+    fetchMock.get('/api/role/specialists', rolesFromApi);
   });
 
   it('you cannot add objectives before filling in basic goal info', async () => {
@@ -299,7 +299,7 @@ describe('create goal', () => {
 
     const draft = await screen.findByRole('button', { name: /save draft/i });
     userEvent.click(draft);
-
+    screen.debug(undefined, 100000);
     let alert = await screen.findByRole('alert');
     expect(alert.textContent).toBe('There was an error saving your goal');
 
