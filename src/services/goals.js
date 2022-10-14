@@ -1254,6 +1254,10 @@ async function createObjectivesForGoal(goal, objectives, report) {
      All subsequent Objective status updates should come from the AR Hook using end date.
   */
 
+  if (!objectives) {
+    return [];
+  }
+
   // we don't want to create objectives with blank titles
   return Promise.all(objectives.filter((o) => o.title).map(async (objective) => {
     const {
@@ -1353,6 +1357,7 @@ export async function saveGoalsForReport(goals, report) {
     let newGoals = [];
     const status = goal.status ? goal.status : 'Draft';
     const goalIds = goal.goalIds ? goal.goalIds : [];
+    const endDate = goal.endDate && goal.endDate.toLowerCase() !== 'invalid date' ? goal.endDate : null;
 
     // Check if these goals exist.
     const existingGoals = await Goal.findAll({
@@ -1371,6 +1376,7 @@ export async function saveGoalsForReport(goals, report) {
         status: discardedStatus,
         onApprovedAR,
         createdVia,
+        endDate: discardedEndDate,
         ...fields
       } = goal;
 
@@ -1394,6 +1400,10 @@ export async function saveGoalsForReport(goals, report) {
           },
         });
 
+        if (!newGoal.onApprovedAR && endDate && endDate !== 'Invalid date') {
+          await newGoal.update({ endDate }, { individualHooks: true });
+        }
+
         await cacheGoalMetadata(newGoal, report.id);
 
         const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
@@ -1410,6 +1420,7 @@ export async function saveGoalsForReport(goals, report) {
         grantId,
         id, // this is unique and we can't trying to set this
         onApprovedAR, // we don't want to set this manually
+        endDate: discardedEndDate, // get this outta here
         createdVia,
         ...fields
       } = goal;
@@ -1417,7 +1428,7 @@ export async function saveGoalsForReport(goals, report) {
       const { goalTemplateId } = existingGoals[0];
 
       await Promise.all(existingGoals.map(async (existingGoal) => {
-        await existingGoal.update({ status, ...fields }, { individualHooks: true });
+        await existingGoal.update({ status, endDate, ...fields }, { individualHooks: true });
         // eslint-disable-next-line max-len
         const existingGoalObjectives = await createObjectivesForGoal(existingGoal, objectives, report);
         currentObjectives = [...currentObjectives, ...existingGoalObjectives];
@@ -1445,7 +1456,9 @@ export async function saveGoalsForReport(goals, report) {
           defaults: { ...fields, status },
         });
 
-        await newGoal.update({ ...fields, status, createdVia: createdVia || 'activityReport' }, { individualHooks: true });
+        await newGoal.update({
+          ...fields, status, endDate, createdVia: createdVia || 'activityReport',
+        }, { individualHooks: true });
 
         await cacheGoalMetadata(newGoal, report.id);
 
