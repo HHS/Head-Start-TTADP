@@ -260,7 +260,7 @@ export default function Objective({
         inputName={objectiveRolesInputName}
         validateSpecialistRole={onBlurRoles}
         roleOptions={roleOptions}
-        goalStatus={parentGoal.status}
+        goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
       />
       <ObjectiveTopics
         error={errors.topics
@@ -275,7 +275,7 @@ export default function Objective({
         onChangeTopics={onChangeTopics}
         inputName={objectiveTopicsInputName}
         status={objectiveStatus}
-        goalStatus={parentGoal.status}
+        goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
       />
       <ResourceRepeater
         resources={isOnApprovedReport ? [] : resourcesForRepeater}
@@ -288,7 +288,7 @@ export default function Objective({
         savedResources={savedResources}
         status={objectiveStatus}
         inputName={objectiveResourcesInputName}
-        goalStatus={parentGoal.status}
+        goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
       />
       <ObjectiveFiles
         objective={objective}
@@ -301,7 +301,7 @@ export default function Objective({
         onBlur={onBlurFiles}
         inputName={objectiveFilesInputName}
         reportId={reportId}
-        goalStatus={parentGoal.status}
+        goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
       />
       <ObjectiveTta
         ttaProvided={objectiveTta}
