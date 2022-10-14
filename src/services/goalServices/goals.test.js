@@ -181,6 +181,7 @@ describe('Goals DB service', () => {
 
       await saveGoalsForReport([existingGoal], { id: 1 });
       expect(existingGoalUpdate).toHaveBeenCalledWith({
+        endDate: null,
         goalIds: [1],
         name: 'name',
         status: 'Draft',
