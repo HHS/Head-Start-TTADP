@@ -16,24 +16,22 @@ describe('roles service', () => {
     beforeAll(async () => {
       [nonSpecialistRole1] = await Role.findOrCreate({
         where: {
-          fullName: 'Non Specialist Role Test 1',
-          name: 'Non Specialist Role Test 1',
+          fullName: 'NSRT 1 name',
+          name: 'NSRT 1',
           isSpecialist: false,
-          id: 122,
         },
       });
       [nonSpecialistRole2] = await Role.findOrCreate({
         where: {
-          fullName: 'Non Specialist Role Test 2',
-          name: 'Non Specialist Role Test 2',
+          fullName: 'NSRT 2 name',
+          name: 'NSRT 2',
           isSpecialist: false,
-          id: 123,
         },
       });
       [specialistRole1] = await Role.findOrCreate({
         where: {
-          fullName: 'Specialist Role Test 1',
-          name: 'Specialist Role Test 1',
+          fullName: 'SRT 1 Name',
+          name: 'SRT 1',
           isSpecialist: true,
         },
       });
@@ -54,13 +52,13 @@ describe('roles service', () => {
 
     it('Retrives all roles', async () => {
       const allRoles = await getAllRoles();
-      const filteredRoles = allRoles.filter((r) => r.name.includes('Specialist Role Test'));
+      const filteredRoles = allRoles.filter((r) => r.name.includes('SRT'));
       expect(filteredRoles.length).toBe(3);
     });
 
     it('retrieves only specialist roles', async () => {
       const allRoles = await getAllRoles(true);
-      const filteredRoles = allRoles.filter((r) => r.name.includes('Specialist Role Test'));
+      const filteredRoles = allRoles.filter((r) => r.name.includes('SRT'));
       expect(filteredRoles.length).toBe(1);
     });
   });
