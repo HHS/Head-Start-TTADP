@@ -96,15 +96,23 @@ export default function GoalForm({
   }, [defaultEndDate, goal.endDate, onUpdateDate]);
 
   const [objectives, setObjectives] = useState([]);
-
+  const [loadingObjectives, setLoadingObjectives] = useState(false);
+  const [loadingLabel, setLoadingLabel] = useState('Saving');
   /*
    * this use effect fetches
    * associated goal data
    */
   useEffect(() => {
     async function fetchData() {
-      const data = await goalsByIdsAndActivityReport(goal.goalIds, reportId);
-      setObjectives(data[0].objectives);
+      try {
+        setLoadingObjectives(true);
+        setLoadingLabel('Loading');
+        const data = await goalsByIdsAndActivityReport(goal.goalIds, reportId);
+        setObjectives(data[0].objectives);
+      } finally {
+        setLoadingObjectives(false);
+        setLoadingLabel('Saving');
+      }
     }
 
     const shouldIFetchData = (
@@ -126,7 +134,7 @@ export default function GoalForm({
 
   return (
     <>
-      <Loader loading={isLoading} loadingLabel="Loading" text="Saving" />
+      <Loader loading={isLoading || loadingObjectives} loadingLabel="Loading" text={loadingLabel} />
       <GoalText
         error={errors.goalName ? ERROR_FORMAT(errors.goalName.message) : NO_ERROR}
         goalName={goalText}
@@ -135,7 +143,7 @@ export default function GoalForm({
         inputName={goalTextInputName}
         isOnReport={goal.onApprovedAR || false}
         goalStatus={status}
-        isLoading={isLoading}
+        isLoading={isLoading || loadingObjectives}
       />
 
       <GoalDate
@@ -146,7 +154,7 @@ export default function GoalForm({
         key={datePickerKey} // force a re-render when the a new goal is picked
         inputName={goalEndDateInputName}
         goalStatus={status}
-        isLoading={isLoading}
+        isLoading={isLoading || loadingObjectives}
       />
 
       <Objectives
