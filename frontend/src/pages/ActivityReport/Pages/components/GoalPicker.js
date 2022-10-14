@@ -173,7 +173,10 @@ GoalPicker.propTypes = {
       value: PropTypes.number,
     }),
   ).isRequired,
-  roles: PropTypes.arrayOf(PropTypes.string).isRequired,
+  roles: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number,
+    fullName: PropTypes.string,
+  })).isRequired,
   reportId: PropTypes.oneOfType([
     PropTypes.number,
     PropTypes.string,

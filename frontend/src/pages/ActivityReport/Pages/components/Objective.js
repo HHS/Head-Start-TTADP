@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
+import { uniqBy } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import {
   useController, useFormContext,
@@ -33,7 +34,7 @@ export default function Objective({
   remove,
   fieldArrayName,
   errors,
-  roles,
+  roleOptions,
   onObjectiveChange,
   onSaveDraft,
   parentGoal,
@@ -114,9 +115,7 @@ export default function Objective({
     defaultValue: objective.files || [],
   });
 
-  const defaultRoles = useMemo(() => (
-    roles.length === 1 ? roles : objective.roles
-  ), [objective.roles, roles]);
+  const defaultRoles = uniqBy([...roleOptions, ...objective.roles], 'id').length === 1 ? roleOptions : objective.roles;
 
   const {
     field: {
@@ -260,7 +259,8 @@ export default function Objective({
         selectedRoles={objectiveRoles}
         inputName={objectiveRolesInputName}
         validateSpecialistRole={onBlurRoles}
-        roleOptions={roles}
+        roleOptions={roleOptions}
+        goalStatus={parentGoal.status}
       />
       <ObjectiveTopics
         error={errors.topics
@@ -275,6 +275,7 @@ export default function Objective({
         onChangeTopics={onChangeTopics}
         inputName={objectiveTopicsInputName}
         status={objectiveStatus}
+        goalStatus={parentGoal.status}
       />
       <ResourceRepeater
         resources={isOnApprovedReport ? [] : resourcesForRepeater}
@@ -287,6 +288,7 @@ export default function Objective({
         savedResources={savedResources}
         status={objectiveStatus}
         inputName={objectiveResourcesInputName}
+        goalStatus={parentGoal.status}
       />
       <ObjectiveFiles
         objective={objective}
@@ -299,6 +301,7 @@ export default function Objective({
         onBlur={onBlurFiles}
         inputName={objectiveFilesInputName}
         reportId={reportId}
+        goalStatus={parentGoal.status}
       />
       <ObjectiveTta
         ttaProvided={objectiveTta}
@@ -350,7 +353,10 @@ Objective.propTypes = {
   ).isRequired,
   remove: PropTypes.func.isRequired,
   fieldArrayName: PropTypes.string.isRequired,
-  roles: PropTypes.arrayOf(PropTypes.string).isRequired,
+  roleOptions: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number,
+    fullName: PropTypes.string,
+  })).isRequired,
   onObjectiveChange: PropTypes.func.isRequired,
   onSaveDraft: PropTypes.func.isRequired,
   parentGoal: PropTypes.shape({
