@@ -17,6 +17,7 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
     goalForEditing = {
       id: goalId,
       objectives: [],
+      status: 'Not Started',
     };
   }
 
@@ -30,6 +31,10 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
       goalForEditing,
     },
   });
+
+  const { setValue } = hookForm;
+
+  setValue('goalForEditing', goalForEditing);
 
   const topicOptions = [
     {
@@ -48,10 +53,12 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
       <Objectives
         objectives={objectiveOptions}
         topicOptions={topicOptions}
-        roles={['Central office']}
+        roles={[{ fullName: 'Central office', id: 1 }]}
         goalId={goalId}
         noObjectiveError={<></>}
         goalStatus="In Progress"
+        reportId={12}
+        onSaveDraft={jest.fn()}
       />
       <button type="button">blur me</button>
     </FormProvider>

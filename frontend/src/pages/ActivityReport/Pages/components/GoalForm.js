@@ -173,12 +173,12 @@ export default function GoalForm({
 
 GoalForm.propTypes = {
   goal: PropTypes.shape({
-    goalIds: PropTypes.arrayOf(PropTypes.number).isRequired,
+    goalIds: PropTypes.arrayOf(PropTypes.number),
     value: PropTypes.oneOfType([
       PropTypes.number,
       PropTypes.string,
     ]),
-    oldGrantIds: PropTypes.arrayOf(PropTypes.number).isRequired,
+    oldGrantIds: PropTypes.arrayOf(PropTypes.number),
     label: PropTypes.string,
     name: PropTypes.string,
     endDate: PropTypes.string,
