@@ -12,7 +12,7 @@ import Container from '../Container';
 import { createOrUpdateGoals, deleteGoal, goalByIdAndRecipient } from '../../fetchers/goals';
 import { uploadObjectivesFile } from '../../fetchers/File';
 import { getTopics } from '../../fetchers/topics';
-import { getRoles } from '../../fetchers/roles';
+import { getSpecialistRoles } from '../../fetchers/roles';
 import Form from './Form';
 import {
   FORM_FIELD_INDEXES,
@@ -195,7 +195,7 @@ export default function GoalForm({
   useEffect(() => {
     async function fetchRoles() {
       try {
-        const roles = await getRoles(true);
+        const roles = await getSpecialistRoles();
         setRoleOptions(roles);
       } catch (err) {
         setFetchError('There was an error loading roles');
