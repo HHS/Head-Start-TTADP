@@ -15,13 +15,25 @@ describe('roles service', () => {
   describe('retrieveRoles', () => {
     beforeAll(async () => {
       [nonSpecialistRole1] = await Role.findOrCreate({
-        where: { name: 'Non Specialist Role Test 1' }, defaults: { isSpecialist: false },
+        where: {
+          fullName: 'Non Specialist Role Test 1',
+          name: 'Non Specialist Role Test 1',
+          isSpecialist: false,
+        },
       });
       [nonSpecialistRole2] = await Role.findOrCreate({
-        where: { name: 'Non Specialist Role Test 2' }, defaults: { isSpecialist: false },
+        where: {
+          fullName: 'Non Specialist Role Test 2',
+          name: 'Non Specialist Role Test 2',
+          isSpecialist: false,
+        },
       });
       [specialistRole1] = await Role.findOrCreate({
-        where: { name: 'Specialist Role Test 1' }, defaults: { isSpecialist: true },
+        where: {
+          fullName: 'Specialist Role Test 1',
+          name: 'Specialist Role Test 1',
+          isSpecialist: true,
+        },
       });
     });
 
