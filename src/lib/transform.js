@@ -1,4 +1,5 @@
 import moment from 'moment';
+import md5 from 'md5';
 import { convert } from 'html-to-text';
 import { DATE_FORMAT } from '../constants';
 
@@ -204,18 +205,19 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
   let objectiveNum = 0;
   let goalNum = 0;
   let objectiveId;
-  let lastObjectiveTitle = null;
+  const processedObjectivesTitles = [];
 
   return objectiveRecords.reduce((accum, objective) => {
     const {
       goal, title, status, ttaProvided,
     } = objective;
 
-    if (lastObjectiveTitle === title) {
+    const titleMd5 = md5(title);
+    if (processedObjectivesTitles.contains(titleMd5)) {
       return accum;
     }
 
-    lastObjectiveTitle = title;
+    processedObjectivesTitles.push(titleMd5);
     const goalName = goal ? goal.name : null;
     const newGoal = goalName && !Object.values(accum).includes(goalName);
 
