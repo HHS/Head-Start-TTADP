@@ -12,12 +12,12 @@ import findOrCreateUser from './findOrCreateUser';
  * req.session.userId if that is set, or res.locals.userId otherwise
  */
 export function currentUserId(req, res) {
-  if (req.session && req.session.userId) {
-    return req.session.userId;
-  }
-  if (res.locals && res.locals.userId) {
-    return res.locals.userId;
-  }
+  // if (req.session && req.session.userId) {
+  //   return req.session.userId;
+  // }
+  // if (res.locals && res.locals.userId) {
+  //   return res.locals.userId;
+  // }
   // bypass authorization, used for cucumber UAT and axe accessibility testing
   if (process.env.NODE_ENV !== 'production' && process.env.BYPASS_AUTH === 'true') {
     const userId = process.env.CURRENT_USER_ID;
