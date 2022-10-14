@@ -19,6 +19,7 @@ describe('roles service', () => {
           fullName: 'Non Specialist Role Test 1',
           name: 'Non Specialist Role Test 1',
           isSpecialist: false,
+          id: 122,
         },
       });
       [nonSpecialistRole2] = await Role.findOrCreate({
@@ -26,6 +27,7 @@ describe('roles service', () => {
           fullName: 'Non Specialist Role Test 2',
           name: 'Non Specialist Role Test 2',
           isSpecialist: false,
+          id: 123,
         },
       });
       [specialistRole1] = await Role.findOrCreate({
