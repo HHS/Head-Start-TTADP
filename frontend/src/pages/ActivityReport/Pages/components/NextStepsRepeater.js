@@ -18,6 +18,7 @@ const DEFAULT_STEP_HEIGHT = 80;
 export default function NextStepsRepeater({
   name,
   ariaName,
+  recipientType,
 }) {
   const [heights, setHeights] = useState([]);
   const [blurStepValidations, setBlurStepValidations] = useState([]);
@@ -93,6 +94,11 @@ export default function NextStepsRepeater({
   };
 
   const stepType = name === 'specialistNextSteps' ? 'specialist' : 'recipient';
+  const recipientLabel = recipientType === 'recipient' ? 'recipient' : 'other entity';
+
+  const dateLabel = (index) => (stepType === 'recipient'
+    ? `When does the ${recipientLabel} anticipate completing step ${index + 1}?`
+    : `When do you anticipate completing step ${index + 1}?`);
 
   return (
     <>
@@ -159,7 +165,7 @@ export default function NextStepsRepeater({
               <Label
                 htmlFor={`${stepType}-next-step-date-${index + 1}`}
               >
-                {`When do you anticipate completing step ${index + 1}?`}
+                {dateLabel(index)}
                 <span className="smart-hub--form-required font-family-sans font-ui-xs text-secondary-dark">
                   {' '}
                   *
@@ -210,4 +216,9 @@ export default function NextStepsRepeater({
 NextStepsRepeater.propTypes = {
   name: PropTypes.string.isRequired,
   ariaName: PropTypes.string.isRequired,
+  recipientType: PropTypes.string,
+};
+
+NextStepsRepeater.defaultProps = {
+  recipientType: '',
 };
