@@ -213,7 +213,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
     } = objective;
 
     const titleMd5 = md5(title);
-    if (processedObjectivesTitles.contains(titleMd5)) {
+    if (processedObjectivesTitles.includes(titleMd5)) {
       return accum;
     }
 
