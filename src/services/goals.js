@@ -568,6 +568,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
         include: [
           {
             model: ObjectiveResource,
+            separate: true,
             as: 'resources',
             attributes: [
               ['userProvidedUrl', 'value'],
@@ -581,6 +582,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
           },
           {
             model: ActivityReportObjective,
+            separate: true,
             as: 'activityReportObjectives',
             attributes: [
               'ttaProvided',
