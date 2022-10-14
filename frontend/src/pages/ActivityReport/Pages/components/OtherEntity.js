@@ -80,7 +80,7 @@ export default function OtherEntity({
             errors={objectiveErrors}
             remove={remove}
             fieldArrayName={OBJECTIVE_LABEL}
-            roles={roles}
+            roleOptions={roles}
             onSaveDraft={onSaveDraft}
             reportId={parseInt(reportId, DECIMAL_BASE)}
           />
