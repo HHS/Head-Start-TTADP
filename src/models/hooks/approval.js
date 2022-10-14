@@ -21,6 +21,52 @@ const copyStatus = (instance) => {
   }
 };
 
+const moveDraftGoalsToNotStartedOnSubmission = async (sequelize, instance, options) => {
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('submissionStatus')
+    && instance.submissionStatus === REPORT_STATUSES.SUBMITTED
+    && instance.entityType === ENTITY_TYPES.REPORT
+    && instance.tier === 0) {
+    try {
+      const goals = await sequelize.models.Goal.findAll({
+        where: {
+          status: 'Draft',
+        },
+        include: [
+          {
+            attributes: [],
+            through: { attributes: [] },
+            model: sequelize.models.ActivityReport,
+            as: 'activityReports',
+            required: true,
+            where: {
+              id: instance.entityId,
+            },
+          },
+        ],
+        includeIgnoreAttributes: false,
+        transaction: options.transaction,
+      });
+
+      const goalIds = goals.map((goal) => goal.id);
+      await sequelize.models.Goal.update(
+        { status: 'Not Started' },
+        {
+          where: {
+            id: {
+              [Op.in]: goalIds,
+            },
+          },
+          transaction: options.transaction,
+        },
+      );
+    } catch (error) {
+      auditLogger.error(JSON.stringify({ error }));
+    }
+  }
+};
+
 const propagateSubmissionStatusToGoalsAndObjectives = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
@@ -433,11 +479,19 @@ const propagateSubmissionStatusAcrossTiers = async (sequelize, instance, options
           limit: 1,
           transaction: options.transaction,
         });
-        await sequelize.models.Approval.update({ submissionStatus: REPORT_STATUSES.SUBMITTED }, {
-          where: { id: lowestTier.id },
-          transaction: options.transaction,
-          individualHooks: true,
-        });
+        if (lowestTier) {
+          await sequelize.models.Approval.update({ submissionStatus: REPORT_STATUSES.SUBMITTED }, {
+            where: { id: lowestTier.id },
+            transaction: options.transaction,
+            individualHooks: true,
+          });
+        } else {
+          await sequelize.models.Approval.update({ calculatedStatus: REPORT_STATUSES.APPROVED }, {
+            where: { id: instance.id },
+            transaction: options.transaction,
+            individualHooks: true,
+          });
+        }
         break;
       }
       case REPORT_STATUSES.NEEDS_ACTION:
@@ -445,11 +499,13 @@ const propagateSubmissionStatusAcrossTiers = async (sequelize, instance, options
       case REPORT_STATUSES.APPROVED:
         break;
       case REPORT_STATUSES.DELETED:
-        await sequelize.models.Approval.update({ submissionStatus: REPORT_STATUSES.DELETED }, {
+        await sequelize.models.Approval.update({
+          submissionStatus: REPORT_STATUSES.DELETED,
+          calculatedStatus: REPORT_STATUSES.DELETED,
+        }, {
           where: {
             entityType: instance.entityType,
             entityId: instance.entityId,
-            tier: 1,
           },
           transaction: options.transaction,
           individualHooks: true,
@@ -470,7 +526,6 @@ const beforeUpdate = async (instance) => {
 
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateSubmissionStatusToGoalsAndObjectives(sequelize, instance, options);
-  await propagateApprovedStatus(sequelize, instance, options); // TODO
   await propagateApprovedStatusForGoalsAndObjectives(sequelize, instance, options);
   await automaticStatusChangeOnApprovalForGoals(sequelize, instance, options);
   await propagateApprovedCalculatedStatusAcrossTiers(sequelize, instance, options);
@@ -484,7 +539,6 @@ export {
   propagateApprovedStatusForGoalsAndObjectives,
   automaticStatusChangeOnApprovalForGoals,
   propagateApprovedCalculatedStatusAcrossTiers,
-  propagateApprovedStatus,
   moveDraftGoalsToNotStartedOnSubmission,
   beforeCreate,
   beforeUpdate,
