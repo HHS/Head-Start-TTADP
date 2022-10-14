@@ -247,7 +247,7 @@ export async function destroyReport(r) {
   });
 
   // Destroy the ActivityReport.
-  await report.destroy();
+  await report.destroy({ individualHooks: true });
 
   // ActivityReport hooks should have removed:
   // - Collaborators
@@ -267,15 +267,15 @@ export async function destroyReport(r) {
   // - Users
   try {
     await Promise.allSettled([
-      ...activityReportFiles.map((model) => model.destroy()),
-      ...files.map((model) => model.destroy()),
-      ...grants.map((model) => model.destroy()),
-      ...recipients.map((model) => model.destroy()),
-      ...objectives.map((model) => model.destroy()),
-      ...goals.map((model) => model.destroy()),
-      ...userRoles.map((model) => model.destroy()),
-      ...users.map((model) => model.destroy()),
-      ...roles.map((model) => model.destroy()),
+      ...activityReportFiles.map((model) => model.destroy({ individualHooks: true })),
+      ...files.map((model) => model.destroy({ individualHooks: true })),
+      ...grants.map((model) => model.destroy({ individualHooks: true })),
+      ...recipients.map((model) => model.destroy({ individualHooks: true })),
+      ...objectives.map((model) => model.destroy({ individualHooks: true })),
+      ...goals.map((model) => model.destroy({ individualHooks: true })),
+      ...userRoles.map((model) => model.destroy({ individualHooks: true })),
+      ...users.map((model) => model.destroy({ individualHooks: true })),
+      ...roles.map((model) => model.destroy({ individualHooks: true })),
     ]);
   } catch (e) {
     console.log('error destroying', e);

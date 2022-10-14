@@ -111,6 +111,7 @@ const cacheObjectiveCollaborators = async (activityReportObjectiveId) => {
         entityId: activityReportObjectiveId,
         userId: { [Op.notIn]: currentCollaborators.map((collaborator) => collaborator.userId) },
       },
+      individualHooks: true,
     }),
   ]);
 };
@@ -154,6 +155,7 @@ const cacheOGoalCollaborators = async (activityReportGoalId) => {
         entityId: activityReportGoalId,
         userId: { [Op.notIn]: currentCollaborators.map((collaborator) => collaborator.userId) },
       },
+      individualHooks: true,
     }),
   ]);
 };
@@ -247,6 +249,7 @@ async function destroyActivityReportObjectiveMetadata(activityReportObjectiveIds
         entityType: ENTITY_TYPES.REPORTOBJECTIVE,
         entityId: activityReportObjectiveIdsToRemove,
       },
+      individualHooks: true,
     }),
   ]);
 }

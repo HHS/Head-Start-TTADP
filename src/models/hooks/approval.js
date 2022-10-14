@@ -359,7 +359,7 @@ const propagateApprovedCalculatedStatusAcrossTiers = async (sequelize, instance,
     const allCalculatedStatuses = allApprovalTiers.map((approval) => approval.calculatedStatus);
     if (allCalculatedStatuses.any((status) => status === REPORT_STATUSES.NEEDS_ACTION)
       && mainApproval.calculatedStatus !== REPORT_STATUSES.NEEDS_ACTION) {
-      await sequelize.models.Approval.update({
+      return sequelize.models.Approval.update({
         calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
       }, {
         where: {
@@ -369,27 +369,11 @@ const propagateApprovedCalculatedStatusAcrossTiers = async (sequelize, instance,
         },
         transaction: options.transaction,
       });
-      return;
-    }
-
-    const tiers = allApprovalTiers.map((approval) => approval.tier);
-    if (instance.tier !== Math.max(...tiers)) {
-      await sequelize.models.Approval.update({
-        submissionStatus: REPORT_STATUSES.SUBMITTED,
-      }, {
-        where: {
-          entityType: instance.entityType,
-          entityId: instance.entityId,
-          tier: (instance.tier + 1),
-        },
-        transaction: options.transaction,
-      });
-      return;
     }
 
     if (allCalculatedStatuses.every((status) => status === REPORT_STATUSES.APPROVED)
       && mainApproval.calculatedStatus !== REPORT_STATUSES.APPROVED) {
-      await sequelize.models.Approval.update({
+      return sequelize.models.Approval.update({
         calculatedStatus: REPORT_STATUSES.APPROVED,
       }, {
         where: {
@@ -400,7 +384,25 @@ const propagateApprovedCalculatedStatusAcrossTiers = async (sequelize, instance,
         transaction: options.transaction,
       });
     }
+
+    if (instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
+      const tiers = allApprovalTiers.map((approval) => approval.tier);
+      if (instance.tier !== Math.max(...tiers)) {
+        return sequelize.models.Approval.update({
+          submissionStatus: REPORT_STATUSES.SUBMITTED,
+        }, {
+          where: {
+            entityType: instance.entityType,
+            entityId: instance.entityId,
+            tier: Math.min(...tiers.filter((tier) => tier > instance.tier)),
+          },
+          transaction: options.transaction,
+        });
+      }
+    }
   }
+
+  return Promise.resolve();
 };
 
 const propagateSubmissionStatusAcrossTiers = async (sequelize, instance, options) => {
@@ -420,17 +422,24 @@ const propagateSubmissionStatusAcrossTiers = async (sequelize, instance, options
           individualHooks: true,
         });
         break;
-      case REPORT_STATUSES.SUBMITTED:
-        await sequelize.models.Approval.update({ submissionStatus: REPORT_STATUSES.SUBMITTED }, {
+      case REPORT_STATUSES.SUBMITTED: {
+        const [lowestTier] = await sequelize.models.Approval.findAll({
           where: {
             entityType: instance.entityType,
             entityId: instance.entityId,
-            tier: 1,
+            tier: { [Op.not]: 1 },
           },
+          order: [['tier', 'DESC']],
+          limit: 1,
+          transaction: options.transaction,
+        });
+        await sequelize.models.Approval.update({ submissionStatus: REPORT_STATUSES.SUBMITTED }, {
+          where: { id: lowestTier.id },
           transaction: options.transaction,
           individualHooks: true,
         });
         break;
+      }
       case REPORT_STATUSES.NEEDS_ACTION:
         break;
       case REPORT_STATUSES.APPROVED:
@@ -461,10 +470,12 @@ const beforeUpdate = async (instance) => {
 
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateSubmissionStatusToGoalsAndObjectives(sequelize, instance, options);
+  await propagateApprovedStatus(sequelize, instance, options); // TODO
   await propagateApprovedStatusForGoalsAndObjectives(sequelize, instance, options);
   await automaticStatusChangeOnApprovalForGoals(sequelize, instance, options);
   await propagateApprovedCalculatedStatusAcrossTiers(sequelize, instance, options);
   await propagateSubmissionStatusAcrossTiers(sequelize, instance, options);
+  await moveDraftGoalsToNotStartedOnSubmission(sequelize, instance, options); // TODO
 };
 
 export {
@@ -473,6 +484,8 @@ export {
   propagateApprovedStatusForGoalsAndObjectives,
   automaticStatusChangeOnApprovalForGoals,
   propagateApprovedCalculatedStatusAcrossTiers,
+  propagateApprovedStatus,
+  moveDraftGoalsToNotStartedOnSubmission,
   beforeCreate,
   beforeUpdate,
   afterUpdate,

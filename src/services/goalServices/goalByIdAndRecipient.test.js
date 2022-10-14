@@ -173,30 +173,35 @@ describe('goalById', () => {
       where: {
         activityReportObjectiveId: aroIds,
       },
+      individualHooks: true,
     });
 
     await ActivityReportObjectiveResource.destroy({
       where: {
         activityReportObjectiveId: aroIds,
       },
+      individualHooks: true,
     });
 
     await ActivityReportObjectiveRole.destroy({
       where: {
         activityReportObjectiveId: aroIds,
       },
+      individualHooks: true,
     });
 
     await ActivityReportObjectiveFile.destroy({
       where: {
         activityReportObjectiveId: aroIds,
       },
+      individualHooks: true,
     });
 
     await ActivityReportObjective.destroy({
       where: {
         id: aroIds,
       },
+      individualHooks: true,
     });
 
     await ObjectiveTopic.destroy({
@@ -216,6 +221,7 @@ describe('goalById', () => {
       where: {
         id: [file.id, file2.id],
       },
+      individualHooks: true,
     });
 
     await ObjectiveResource.destroy({
@@ -236,6 +242,7 @@ describe('goalById', () => {
       where: {
         activityReportId: report.id,
       },
+      individualHooks: true,
     });
 
     await destroyReport(report);

@@ -38,16 +38,16 @@ describe('UserSetting service', () => {
         scopeId: SCOPES.SITE_ACCESS,
       });
 
-      await UserSettingOverrides.destroy({ where: { userId: [999, 1000] } });
+      await UserSettingOverrides.destroy({ where: { userId: [999, 1000] }, individualHooks: true });
     }));
 
     await create();
   });
 
   afterEach(async () => {
-    await UserSettingOverrides.destroy({ where: { userId: [999, 1000] } });
-    await Permission.destroy({ where: { userId: [999, 1000] } });
-    await User.destroy({ where: { id: [999, 1000] } });
+    await UserSettingOverrides.destroy({ where: { userId: [999, 1000] }, individualHooks: true });
+    await Permission.destroy({ where: { userId: [999, 1000] }, individualHooks: true });
+    await User.destroy({ where: { id: [999, 1000] }, individualHooks: true });
   });
 
   describe('saveSettings', () => {

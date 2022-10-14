@@ -45,24 +45,28 @@ describe('objective model hooks', () => {
       where: {
         id: [objective1.id, objective2.id, objective3.id],
       },
+      individualHooks: true,
     });
 
     await Goal.destroy({
       where: {
         id: goal.id,
       },
+      individualHooks: true,
     });
 
     await Grant.destroy({
       where: {
         id: grant.id,
       },
+      individualHooks: true,
     });
 
     await Recipient.destroy({
       where: {
         id: recipient.id,
       },
+      individualHooks: true,
     });
     await db.sequelize.close();
   });
@@ -87,7 +91,7 @@ describe('objective model hooks', () => {
     testGoal = await Goal.findByPk(goal.id);
     expect(testGoal.status).toEqual('Draft');
 
-    await Objective.destroy({ where: { id: objective1.id } });
+    await Objective.destroy({ where: { id: objective1.id }, individualHooks: true });
   });
 
   it('updates when the goal matches the qualifications', async () => {

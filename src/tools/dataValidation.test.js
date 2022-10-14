@@ -53,8 +53,8 @@ describe('dataValidation', () => {
   });
 
   afterAll(async () => {
-    await Grant.destroy({ where: { id: { [Op.in]: [1, 2, 3] } } });
-    await Recipient.destroy({ where: { id: { [Op.in]: [1, 2, 3] } } });
+    await Grant.destroy({ where: { id: { [Op.in]: [1, 2, 3] } }, individualHooks: true });
+    await Recipient.destroy({ where: { id: { [Op.in]: [1, 2, 3] } }, individualHooks: true });
     await sequelize.close();
   });
 

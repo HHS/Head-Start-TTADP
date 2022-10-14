@@ -314,7 +314,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.VIRTUAL,
       get() {
         if (this.owner) {
-          return this.owner.get().roles;
+          const owner = this.owner.get();
+          if (owner.roles) {
+            return owner.roles.map((role) => role.fullName);
+          }
+          return null;
         }
         return null;
       },

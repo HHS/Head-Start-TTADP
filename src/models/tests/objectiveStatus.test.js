@@ -277,6 +277,7 @@ describe('Objective status update hook', () => {
           reportOnlyUsingObjective.id,
         ],
       },
+      individualHooks: true,
     });
     await ActivityReportObjective.destroy({
       where:
@@ -287,10 +288,10 @@ describe('Objective status update hook', () => {
           reportThree.id,
           reportOnlyUsingObjective.id],
       },
+      individualHooks: true,
     });
     await ActivityReportGoal.destroy({
-      where:
-      {
+      where: {
         activityReportId: [
           reportOne.id,
           reportTwo.id,
@@ -298,6 +299,7 @@ describe('Objective status update hook', () => {
           reportOnlyUsingObjective.id,
         ],
       },
+      individualHooks: true,
     });
     await ActivityReport.destroy({
       where: {
@@ -307,15 +309,23 @@ describe('Objective status update hook', () => {
           reportThree.id,
           reportOnlyUsingObjective.id],
       },
+      individualHooks: true,
     });
-    await Objective.destroy({ where: { id: [objective.id, objectiveTwo.id, objectiveTwoB.id] } });
-    await Goal.destroy({ where: { id: [goal.id, goalTwo.id] } });
-    await Grant.destroy({ where: { id: [grantOne.id, grantTwo.id, grantThree.id, grantFour.id] } });
+    await Objective.destroy({
+      where: { id: [objective.id, objectiveTwo.id, objectiveTwoB.id] },
+      individualHooks: true,
+    });
+    await Goal.destroy({ where: { id: [goal.id, goalTwo.id] }, individualHooks: true });
+    await Grant.destroy({
+      where: { id: [grantOne.id, grantTwo.id, grantThree.id, grantFour.id] },
+      individualHooks: true,
+    });
     await Recipient.destroy({
       where:
       { id: [recipientOne.id, recipientTwo.id, recipientThree.id, recipientFour.id] },
+      individualHooks: true,
     });
-    await User.destroy({ where: { id: user.id } });
+    await User.destroy({ where: { id: user.id }, individualHooks: true });
     await db.sequelize.close();
   });
   it('correct objective status moving to approved and from approved', async () => {

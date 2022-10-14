@@ -54,7 +54,7 @@ describe('userAdminAccessMiddleware', () => {
 
     expect(mockResponse.sendStatus).not.toHaveBeenCalled();
     expect(mockNext).toHaveBeenCalled();
-    await admin.destroy();
+    await admin.destroy({ individualHooks: true });
   });
 
   it('should return 403 if an user does not have an admin permission', async () => {

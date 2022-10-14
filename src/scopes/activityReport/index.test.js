@@ -1274,6 +1274,7 @@ describe('filtersToScopes', () => {
         where: {
           id: possibleIds,
         },
+        individualHooks: true,
       });
     });
 

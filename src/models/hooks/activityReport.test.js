@@ -96,54 +96,63 @@ describe('activity report model hooks', () => {
         where: {
           activityReportId: report.id,
         },
+        individualHooks: true,
       });
 
       await ActivityReportGoal.destroy({
         where: {
           activityReportId: report.id,
         },
+        individualHooks: true,
       });
 
       await ActivityReportObjective.destroy({
         where: {
           activityReportId: report.id,
         },
+        individualHooks: true,
       });
 
       await Objective.destroy({
         where: {
           id: objective.id,
         },
+        individualHooks: true,
       });
 
       await ActivityReport.destroy({
         where: {
           id: report.id,
         },
+        individualHooks: true,
       });
 
       await Goal.destroy({
         where: {
           id: goal.id,
         },
+        individualHooks: true,
       });
 
       await Grant.destroy({
         where: {
           id: grant.id,
         },
+        individualHooks: true,
       });
 
       await Recipient.destroy({
         where: {
           id: recipient.id,
         },
+        individualHooks: true,
       });
 
       await User.destroy({
         where: {
           id: [mockUser.id, mockApprover.id],
         },
+        individualHooks: true,
       });
       await db.sequelize.close();
     });

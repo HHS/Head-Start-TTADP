@@ -62,19 +62,7 @@ describe('User route handler', () => {
   });
   afterAll(async () => {
     await User.destroy({
-      where: { id: 49 },
-      individualHooks: true,
-    });
-    await User.destroy({
-      where: { id: 55 },
-      individualHooks: true,
-    });
-    await User.destroy({
-      where: { id: 52 },
-      individualHooks: true,
-    });
-    await User.destroy({
-      where: { id: 53 },
+      where: { id: [49, 55, 52, 53] },
       individualHooks: true,
     });
     await db.sequelize.close();

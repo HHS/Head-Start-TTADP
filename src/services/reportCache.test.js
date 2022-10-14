@@ -201,8 +201,8 @@ describe('reportCache', () => {
     });
     await ObjectiveRole.destroy({ where: { objectiveId: objective.id }, individualHooks: true });
     await ObjectiveFile.destroy({ where: { objectiveId: objective.id }, individualHooks: true });
-    await Promise.all(files.map(async (file) => file.destroy()));
-    await activityRecipient.destroy();
+    await Promise.all(files.map(async (file) => file.destroy({ individualHooks: true })));
+    await activityRecipient.destroy({ individualHooks: true });
     await ActivityReportGoal.destroy({ where: { goalId: goal.id }, individualHooks: true });
     const aroFiles = await ActivityReportObjectiveFile
       .findAll({ include: { model: ActivityReportObjective, as: 'activityReportObjective', where: { objectiveId: objective.id } } });
@@ -239,7 +239,7 @@ describe('reportCache', () => {
     await Goal.destroy({ where: { id: goal.id }, individualHooks: true });
     await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
     await Recipient.destroy({ where: { id: recipient.id }, individualHooks: true });
-    await Promise.all(roles.map(async (role) => role.destroy()));
+    await Promise.all(roles.map(async (role) => role.destroy({ individualHooks: true })));
     await User.destroy({ where: { id: user.id }, individualHooks: true });
     await db.sequelize.close();
   });

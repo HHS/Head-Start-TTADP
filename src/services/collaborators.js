@@ -188,6 +188,28 @@ export async function syncCollaborators(
   }
 
   try {
+    // Create or restore collaborator
+    if (perUserData && perUserData.length > 0) {
+      const uniquePerUserData = perUserData && Array.isArray(perUserData) && perUserData.length > 0
+        ? perUserData
+          .filter((v, i, a) => a.findIndex((v2) => (v2.userId === v.userId)) === i)
+          .filter((userData) => userData.userId !== null && userData.userId !== undefined)
+        : [];
+
+      await Promise.all(uniquePerUserData.map(async (userData) => upsertCollaborator({
+        ...userData,
+        entityType,
+        entityId,
+        collaboratorTypes,
+        tier,
+      })));
+    }
+  } catch (err) {
+    auditLogger.error(JSON.stringify({ name: 'syncCollaborators', index: 4, err }));
+    throw new Error(err);
+  }
+
+  try {
     // Remove any preexisting collaborators now missing from userId request param
     if (preexistingCollaborators && preexistingCollaborators.length > 0) {
       await Promise.all(collaboratorTypes.map(async (collaboratorType) => {
@@ -211,28 +233,6 @@ export async function syncCollaborators(
     throw new Error(err);
   }
 
-  try {
-    // Create or restore collaborator
-    if (perUserData && perUserData.length > 0) {
-      const uniquePerUserData = perUserData && Array.isArray(perUserData) && perUserData.length > 0
-        ? perUserData
-          .filter((v, i, a) => a.findIndex((v2) => (v2.userId === v.userId)) === i)
-          .filter((userData) => userData.userId !== null && userData.userId !== undefined)
-        : [];
-
-      await Promise.all(uniquePerUserData.map(async (userData) => upsertCollaborator({
-        ...userData,
-        entityType,
-        entityId,
-        collaboratorTypes,
-        tier,
-      })));
-    }
-  } catch (err) {
-    auditLogger.error(JSON.stringify({ name: 'syncCollaborators', index: 4, err }));
-    throw new Error(err);
-  }
-
   let collaborators;
   try {
     collaborators = await Collaborator.findAll({
@@ -249,6 +249,11 @@ export async function syncCollaborators(
           attributes: ['id', 'name', 'email'],
           raw: true,
         },
+        {
+          model: Role,
+          as: 'roles',
+          required: false,
+        },
       ],
       // logging: (msg) => auditLogger.error(JSON.stringify({ name: 'syncCollaborators', msg })),
     });
@@ -256,7 +261,7 @@ export async function syncCollaborators(
     auditLogger.error(JSON.stringify({ name: 'syncCollaborators', collaborators, err }));
     throw new Error(err);
   }
-  auditLogger.error(JSON.stringify({ name: 'finish syncCollaborators', perUserData, collaborators }));
+  auditLogger.info(JSON.stringify({ name: 'finish syncCollaborators', perUserData, collaborators }));
   return collaborators;
 }
 

@@ -199,8 +199,10 @@ async function saveReportRecipients(
       return null;
     }),
   );
-
+  const before = await ActivityRecipient.findAll({ where: { activityReportId } });
   await ActivityRecipient.destroy({ where, individualHooks: true });
+  const after = await ActivityRecipient.findAll({ where: { activityReportId } });
+  auditLogger.info(JSON.stringify({ name: 'saveReportRecipients', before, after }));
 }
 
 async function saveNotes(activityReportId, notes, isRecipientNotes) {
@@ -1275,6 +1277,7 @@ export async function createOrUpdate(newActivityReport, report) {
           ? g.otherEntityId
           : g.grantId;
       });
+      auditLogger.info(JSON.stringify({ name: 'saveReportRecipients', activityRecipients, activityRecipientIds, typeOfRecipient }));
       await saveReportRecipients(savedReportId, activityRecipientIds, typeOfRecipient);
     } catch (err) {
       auditLogger.error(JSON.stringify({ name: 'saveReportRecipients', activityRecipients, err }));

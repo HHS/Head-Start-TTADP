@@ -82,6 +82,7 @@ export const saveSettings = async (userId, pairs) => {
     // should be removed from the overrides table.
     ...deletable.map(({ userSettingId }) => UserSettingOverrides.destroy({
       where: { userId, userSettingId },
+      individualHooks: true,
     })),
 
     // Overrides that have been given values that do not match the default

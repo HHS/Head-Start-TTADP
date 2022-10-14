@@ -73,13 +73,6 @@ describe.skip('destroyGoal handler', () => {
       individualHooks: true,
     });
 
-    // await GrantGoal.destroy({
-    //   where: {
-    //     goalId: goal.id,
-    //   },
-    //   individualHooks: true,
-    // });
-
     await Goal.destroy({
       where: {
         id: [goal.id, goalTwo.id],

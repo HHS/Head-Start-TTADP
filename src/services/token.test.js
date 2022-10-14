@@ -15,8 +15,8 @@ describe('token service', () => {
   });
 
   afterEach(async () => {
-    await UserValidationStatus.destroy({ where: { userId: 1000 } });
-    await User.destroy({ where: { id: 1000 } });
+    await UserValidationStatus.destroy({ where: { userId: 1000 }, individualHooks: true });
+    await User.destroy({ where: { id: 1000 }, individualHooks: true });
   });
 
   afterAll(async () => {

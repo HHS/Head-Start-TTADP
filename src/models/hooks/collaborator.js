@@ -168,6 +168,31 @@ const propagateCalculatedStatus = async (sequelize, instance, options) => {
   }
 };
 
+const deleteUnusedApprovals = async (sequelize, instance, options) => {
+  const collaborators = await sequelize.models.Collaborators.findAll({
+    where: {
+      entityType: instance.entityType,
+      entityId: instance.entityId,
+      tier: instance.tier,
+      collaboratorTypes: { [Op.contains]: COLLABORATOR_TYPES.RATIFIER },
+    },
+    transaction: options.transaction,
+  });
+
+  if (collaborators.length === 0) {
+    return sequelize.models.Approvals.destroy({
+      where: {
+        entityType: instance.entityType,
+        entityId: instance.entityId,
+        tier: instance.tier,
+      },
+      individualHooks: true,
+      transaction: options.transaction,
+    });
+  }
+  return Promise.resolve();
+};
+
 const deleteOnEmptyCollaboratorTypes = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
@@ -263,6 +288,7 @@ const afterCreate = async (sequelize, instance, options) => {
 
 const afterDestroy = async (sequelize, instance, options) => {
   await propagateCalculatedStatus(sequelize, instance, options);
+  await deleteUnusedApprovals(sequelize, instance, options);
 };
 
 const afterRestore = async (sequelize, instance, options) => {

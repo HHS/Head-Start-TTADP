@@ -452,7 +452,7 @@ describe('Activity report service', () => {
         where: { id: RECIPIENT_ID },
         individualHooks: true,
       });
-      await Program.destroy({ where: { id: [585, 586, 587] } });
+      await Program.destroy({ where: { id: [585, 586, 587] }, individualHooks: true });
       await Grant.destroy({
         where: {
           id: [

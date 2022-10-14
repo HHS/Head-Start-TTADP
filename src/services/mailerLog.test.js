@@ -44,7 +44,7 @@ describe('MailerLog DB service', () => {
       expect(retrievedMailerLog.result).toEqual(result);
       expect(retrievedMailerLog.createdAt).toBeDefined();
       expect(retrievedMailerLog.updatedAt).toBeDefined();
-      await MailerLogs.destroy({ where: { id: mailerLog.id } });
+      await MailerLogs.destroy({ where: { id: mailerLog.id }, individualHooks: true });
     });
 
     it('returns null on error', async () => {
