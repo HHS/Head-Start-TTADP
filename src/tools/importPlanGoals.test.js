@@ -182,14 +182,5 @@ describe('Import TTA plan goals', () => {
       expect(goal.grant.number).toBe('09HP044444');
       expect(goal.grant.regionId).toBe(9);
     });
-
-    // it('should populate template id', async () => {
-    //   const importedGoal = await Goal.findOne({
-    //     where: { isFromSmartsheetTtaPlan: true },
-    //   });
-
-    //   expect(importedGoal.goalTemplateId).toBeDefined();
-    //   expect(importedGoal.goalTemplateId).not.toBeNull();
-    // });
   });
 });
