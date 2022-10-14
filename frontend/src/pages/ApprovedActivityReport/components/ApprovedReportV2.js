@@ -11,16 +11,14 @@ import {
 } from '../helpers';
 
 function formatNextSteps(nextSteps, heading, striped) {
-  const data = nextSteps.reduce((acc, step, index) => ({
-    ...acc,
-    [`Step ${index + 1}`]: step.note,
-    'Anticipated completion': step.completeDate,
-  }), {});
-  return {
-    heading,
-    data,
+  return nextSteps.map((step, index) => ({
+    heading: index === 0 ? heading : '',
+    data: {
+      [`Step ${index + 1}`]: step.note,
+      'Anticipated completion': step.completeDate,
+    },
     striped,
-  };
+  }));
 }
 
 function formatObjectiveLinks(resources) {
@@ -172,7 +170,8 @@ export default function ApprovedReportV2({ data }) {
 
   // next steps table
   const specialistNextSteps = formatNextSteps(data.specialistNextSteps, 'Specialist\'s next steps', true);
-  const recipientNextSteps = formatNextSteps(data.recipientNextSteps, 'Recipient\'s next steps', false);
+  const nextStepsLabel = recipientType === 'Recipient' ? 'Recipient\'s next steps' : 'Other entities next steps';
+  const recipientNextSteps = formatNextSteps(data.recipientNextSteps, nextStepsLabel, false);
   const approvedAt = data.approvedAt ? moment(data.approvedAt).format(DATE_DISPLAY_FORMAT) : '';
   const createdAt = moment(data.createdAt).format(DATE_DISPLAY_FORMAT);
 
@@ -215,7 +214,7 @@ export default function ApprovedReportV2({ data }) {
 
       <ApprovedReportSection
         key={`activity-summary-${reportId}`}
-        title="Activity Summary"
+        title="Activity summary"
         sections={[
           {
             heading: 'Who was the activity for?',
@@ -293,8 +292,8 @@ export default function ApprovedReportV2({ data }) {
         key={`next-steps${reportId}`}
         title="Next steps"
         sections={[
-          specialistNextSteps,
-          recipientNextSteps,
+          ...specialistNextSteps,
+          ...recipientNextSteps,
         ]}
       />
 

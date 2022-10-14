@@ -126,7 +126,8 @@ describe('next steps', () => {
     userEvent.click(newEntryButtons[1]);
 
     // When the user presses cancel to change their mind
-    const cancelBtn = await screen.findByRole('button', { name: /remove recipient next steps 3/i });
+
+    const cancelBtn = await screen.findByRole('button', { name: /remove recipient's next steps 3/i });
     userEvent.click(cancelBtn);
 
     // Then we see there is no more input box

@@ -19,6 +19,7 @@ describe('PrintableObjective', () => {
       grantNumber: '3',
       endDate: '2020-01-01',
       reasons: [],
+      activityReports: [],
     };
     renderPrintableObjective(objective);
     expect(await screen.findByText('Uncertain')).toBeInTheDocument();
@@ -31,6 +32,7 @@ describe('PrintableObjective', () => {
       grantNumber: '3',
       endDate: '2020-01-01',
       reasons: [],
+      activityReports: [],
     };
     renderPrintableObjective(objective);
     expect(await screen.findByText(/Needs Status/i)).toBeInTheDocument();
