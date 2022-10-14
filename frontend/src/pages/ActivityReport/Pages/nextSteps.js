@@ -48,7 +48,8 @@ const NextSteps = ({ activityRecipientType }) => {
         <NextStepsRepeater
           id="recipient-next-steps-repeater-id"
           name="recipientNextSteps"
-          ariaName="Recipient Next Steps"
+          ariaName={`${labelDisplayName} next steps`}
+          recipientType={activityRecipientType}
         />
       </Fieldset>
     </>
