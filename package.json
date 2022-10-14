@@ -219,6 +219,7 @@
     "http-codes": "^1.0.0",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.20",
+    "md5": "^2.3.0",
     "moment": "^2.29.4",
     "multiparty": "^4.2.2",
     "mz": "^2.7.0",
