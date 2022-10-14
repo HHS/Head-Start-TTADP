@@ -195,7 +195,7 @@ export default function GoalForm({
   useEffect(() => {
     async function fetchRoles() {
       try {
-        const roles = await getRoles();
+        const roles = await getRoles(true);
         setRoleOptions(roles);
       } catch (err) {
         setFetchError('There was an error loading roles');
