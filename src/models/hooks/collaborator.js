@@ -169,7 +169,7 @@ const propagateCalculatedStatus = async (sequelize, instance, options) => {
 };
 
 const deleteUnusedApprovals = async (sequelize, instance, options) => {
-  const collaborators = await sequelize.models.Collaborators.findAll({
+  const collaborators = await sequelize.models.Collaborator.findAll({
     where: {
       entityType: instance.entityType,
       entityId: instance.entityId,
@@ -180,7 +180,7 @@ const deleteUnusedApprovals = async (sequelize, instance, options) => {
   });
 
   if (collaborators.length === 0) {
-    return sequelize.models.Approvals.destroy({
+    return sequelize.models.Approval.destroy({
       where: {
         entityType: instance.entityType,
         entityId: instance.entityId,
