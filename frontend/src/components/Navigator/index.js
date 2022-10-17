@@ -92,6 +92,16 @@ function Navigator({
   const goalForEditing = watch('goalForEditing');
   const activityRecipientType = watch('activityRecipientType');
   const isGoalsObjectivesPage = page.path === 'goals-objectives';
+  const recipients = watch('activityRecipients');
+  const isRecipientReport = activityRecipientType === 'recipient';
+
+  const grantIds = isRecipientReport ? recipients.map((r) => {
+    if (r.grant) {
+      return r.grant.id;
+    }
+
+    return r.activityRecipientId;
+  }) : [];
 
   const { isDirty, isValid } = formState;
 
@@ -159,26 +169,31 @@ function Navigator({
     const goal = {
       ...goalForEditing,
       name,
-      endDate,
+      endDate: endDate && endDate.toLowerCase() !== 'invalid date' ? endDate : '',
       objectives,
       isRttapa,
       regionId: formData.regionId,
+      grantIds,
     };
 
     let allGoals = [...selectedGoals, goal];
     // save goal to api, come back with new ids for goal and objectives
     try {
-      allGoals = await saveGoalsForReport(
-        {
-          goals: allGoals,
-          activityReportId: reportId,
-          regionId: formData.regionId,
-        },
-      );
+      // we only need save goal if we have a goal name
+      if (name) {
+        allGoals = await saveGoalsForReport(
+          {
+            goals: allGoals,
+            activityReportId: reportId,
+            regionId: formData.regionId,
+          },
+        );
 
-      // Find the goal we are editing and put it back with updated values.
-      const goalBeingEdited = allGoals.find((g) => g.name === goal.name);
-      setValue('goalForEditing', goalBeingEdited);
+        // Find the goal we are editing and put it back with updated values.
+        const goalBeingEdited = allGoals.find((g) => g.name === goal.name);
+        setValue('goalForEditing', goalBeingEdited);
+      }
+      updateErrorMessage('');
       updateLastSaveTime(moment());
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
@@ -206,6 +221,7 @@ function Navigator({
       // Set updated objectives.
       setValue('objectivesWithoutGoals', newObjectives);
       updateLastSaveTime(moment());
+      updateErrorMessage('');
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     } finally {
@@ -254,6 +270,7 @@ function Navigator({
           regionId: formData.regionId,
         },
       );
+      updateErrorMessage('');
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     }
@@ -291,6 +308,7 @@ function Navigator({
           region: formData.regionId,
         },
       );
+      updateErrorMessage('');
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     }

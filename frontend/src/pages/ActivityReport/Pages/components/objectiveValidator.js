@@ -3,7 +3,7 @@ import { unfinishedObjectives } from './goalValidator';
 
 import { OBJECTIVES_EMPTY } from '../../../../components/GoalForm/constants';
 
-export const validateObjectives = (objectives, setError = () => {}) => {
+export const validateObjectives = (objectives = [], setError = () => {}) => {
   if (objectives.length < 1) {
     return OBJECTIVES_EMPTY;
   }
