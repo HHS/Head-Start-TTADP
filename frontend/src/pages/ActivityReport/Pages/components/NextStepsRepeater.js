@@ -83,11 +83,14 @@ export default function NextStepsRepeater({
   };
 
   const onAddNewStep = () => {
-    validateStepOnBlur();
     const allValues = getValues();
     const fieldArray = allValues[name] || [];
-    const canAdd = fieldArray.every((field) => field.note !== ''
-      && (field.completeDate && moment(field.completeDate, 'MM/DD/YYYY').isValid()));
+    const canAdd = fieldArray.every((field, index) => {
+      validateStepOnBlur(field.note, index);
+      validateDateOnBlur(field.date, index);
+      return field.note !== ''
+      && (field.completeDate && moment(field.completeDate, 'MM/DD/YYYY').isValid());
+    });
     if (canAdd) {
       append({ id: null, note: '', completeDate: null });
     }
