@@ -252,7 +252,7 @@ export default function Objective({
       />
       <SpecialistRole
         isOnReport={isOnReport || false}
-        status={objectiveStatus}
+        status={objective.status || 'Not Started'}
         error={errors.roles
           ? ERROR_FORMAT(errors.roles.message)
           : NO_ERROR}
@@ -285,14 +285,14 @@ export default function Objective({
           : NO_ERROR}
         validateResources={onBlurResources}
         savedResources={savedResources}
-        status={objectiveStatus}
+        status={objective.status || 'Not Started'}
         inputName={objectiveResourcesInputName}
       />
       <ObjectiveFiles
         objective={objective}
         files={objectiveFiles}
         onChangeFiles={onChangeFiles}
-        status={objectiveStatus}
+        status={objective.status || 'Not Started'}
         isOnReport={isOnReport || false}
         onUploadFiles={onUploadFile}
         index={index}
