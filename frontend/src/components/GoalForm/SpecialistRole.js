@@ -118,7 +118,10 @@ SpecialistRole.propTypes = {
     value: PropTypes.string,
   })).isRequired,
   goalStatus: PropTypes.string.isRequired,
-  isOnReport: PropTypes.bool.isRequired,
+  isOnReport: PropTypes.oneOfType([
+    PropTypes.bool,
+    PropTypes.number,
+  ]).isRequired,
 };
 
 SpecialistRole.defaultProps = {
