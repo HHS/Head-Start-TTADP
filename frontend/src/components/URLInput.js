@@ -8,6 +8,7 @@ export default function URLInput({
   return (
     <TextInput
       id={id}
+      name={id}
       onBlur={onBlur}
       type="url"
       placeholder="https://"
