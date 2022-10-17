@@ -8,7 +8,7 @@ import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import OtherEntity from '../OtherEntity';
 
 // eslint-disable-next-line react/prop-types
-const RenderOtherEntity = ({ objectivesWithoutGoals, roles = ['Central Office'] }) => {
+const RenderOtherEntity = ({ objectivesWithoutGoals, roles = [{ id: 1, fullName: 'Central Office' }] }) => {
   const hookForm = useForm({
     mode: 'onChange',
     defaultValues: {
@@ -18,7 +18,7 @@ const RenderOtherEntity = ({ objectivesWithoutGoals, roles = ['Central Office'] 
 
   return (
     <FormProvider {...hookForm}>
-      <OtherEntity roles={roles} />
+      <OtherEntity roles={roles} recipientIds={[]} onSaveDraft={jest.fn()} reportId="123" />
     </FormProvider>
   );
 };
@@ -48,7 +48,7 @@ describe('OtherEntity', () => {
     fetchMock.get('/api/topic', []);
   });
   it('renders created objectives', async () => {
-    render(<RenderOtherEntity objectivesWithoutGoals={objectives} />);
+    render(<RenderOtherEntity objectivesWithoutGoals={objectives} roles={[]} />);
 
     const title = await screen.findByText('title', { selector: 'textarea' });
     expect(title).toBeVisible();
@@ -61,7 +61,7 @@ describe('OtherEntity', () => {
   });
 
   it('the button adds a new objective', async () => {
-    render(<RenderOtherEntity objectivesWithoutGoals={[]} />);
+    render(<RenderOtherEntity objectivesWithoutGoals={[]} roles={[]} />);
     const button = await screen.findByRole('button', { name: /Add new objective/i });
     userEvent.click(button);
     expect(screen.queryAllByText(/objective status/i).length).toBe(1);

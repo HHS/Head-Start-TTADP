@@ -55,8 +55,13 @@ const RenderObjective = ({
         goalIndex={0}
         objectiveIndex={0}
         status="In progress"
-        roles={['Central office']}
+        roleOptions={[{ fullName: 'Central office', id: 1234 }]}
         errors={{}}
+        onObjectiveChange={jest.fn()}
+        onSaveDraft={jest.fn()}
+        parentGoal={{ status: 'In Progress' }}
+        initialObjectiveStatus="Not Started"
+        reportId={98123}
       />
     </FormProvider>
   );

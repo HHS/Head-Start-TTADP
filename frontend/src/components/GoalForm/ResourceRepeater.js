@@ -147,7 +147,10 @@ ResourceRepeater.propTypes = {
   error: PropTypes.node.isRequired,
   validateResources: PropTypes.func.isRequired,
   status: PropTypes.string.isRequired,
-  isOnReport: PropTypes.bool.isRequired,
+  isOnReport: PropTypes.oneOfType([
+    PropTypes.bool,
+    PropTypes.number,
+  ]).isRequired,
   isLoading: PropTypes.bool,
   goalStatus: PropTypes.string.isRequired,
 };

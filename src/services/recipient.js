@@ -316,9 +316,6 @@ export async function getGoalsByActivityRecipient(
         model: Objective,
         as: 'objectives',
         required: false,
-        where: {
-          onApprovedAR: true,
-        },
         include: [
           {
             model: Topic,
@@ -337,7 +334,7 @@ export async function getGoalsByActivityRecipient(
             ],
             model: ActivityReport,
             as: 'activityReports',
-            required: true,
+            required: false,
             where: {
               calculatedStatus: REPORT_STATUSES.APPROVED,
             },

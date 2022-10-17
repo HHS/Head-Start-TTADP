@@ -173,18 +173,12 @@ export default function GoalForm({
 
 GoalForm.propTypes = {
   goal: PropTypes.shape({
-    id: PropTypes.oneOfType([
-      PropTypes.arrayOf(PropTypes.shape({
-        value: PropTypes.number,
-        label: PropTypes.string,
-      })), PropTypes.string,
-    ]).isRequired,
-    goalIds: PropTypes.arrayOf(PropTypes.number).isRequired,
+    goalIds: PropTypes.arrayOf(PropTypes.number),
     value: PropTypes.oneOfType([
       PropTypes.number,
       PropTypes.string,
     ]),
-    oldGrantIds: PropTypes.arrayOf(PropTypes.number).isRequired,
+    oldGrantIds: PropTypes.arrayOf(PropTypes.number),
     label: PropTypes.string,
     name: PropTypes.string,
     endDate: PropTypes.string,
@@ -196,8 +190,11 @@ GoalForm.propTypes = {
     value: PropTypes.number,
     label: PropTypes.string,
   })).isRequired,
-  roles: PropTypes.arrayOf(PropTypes.string).isRequired,
-  reportId: PropTypes.number.isRequired,
+  roles: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number,
+    fullName: PropTypes.string,
+  })).isRequired,
+  reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   onSaveDraft: PropTypes.func.isRequired,
   datePickerKey: PropTypes.string.isRequired,
 };
