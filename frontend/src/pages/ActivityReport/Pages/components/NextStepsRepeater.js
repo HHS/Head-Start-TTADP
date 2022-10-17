@@ -100,10 +100,6 @@ export default function NextStepsRepeater({
     ? `When does the ${recipientLabel} anticipate completing step ${index + 1}?`
     : `When do you anticipate completing step ${index + 1}?`);
 
-  const dateLabel = (index) => (stepType === 'recipient'
-    ? `When does the recipient anticipate completing step ${index + 1}?`
-    : `When do you anticipate completing step ${index + 1}?`);
-
   return (
     <>
       <div className="ttahub-next-steps-repeater">
