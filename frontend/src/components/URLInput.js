@@ -15,7 +15,7 @@ export default function URLInput({
       onChange={onChange}
       value={value}
       disabled={disabled}
-      pattern="^(?:https?:\/\/)(?:[\w]+\.)(?:\.?[\w]{2,})"
+      pattern=".*\.*.\..*"
     />
   );
 }
