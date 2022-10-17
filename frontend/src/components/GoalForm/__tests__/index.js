@@ -299,7 +299,6 @@ describe('create goal', () => {
 
     const draft = await screen.findByRole('button', { name: /save draft/i });
     userEvent.click(draft);
-    screen.debug(undefined, 100000);
     let alert = await screen.findByRole('alert');
     expect(alert.textContent).toBe('There was an error saving your goal');
 
