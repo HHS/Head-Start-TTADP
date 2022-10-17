@@ -111,7 +111,7 @@ ReadOnlyGoal.propTypes = {
     ),
     name: PropTypes.string,
     endDate: PropTypes.string,
-    isRttapa: PropTypes.bool,
+    isRttapa: PropTypes.string,
   }).isRequired,
 };
 
