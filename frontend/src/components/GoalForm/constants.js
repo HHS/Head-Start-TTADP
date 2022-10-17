@@ -1,10 +1,14 @@
 import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
+// regex to match a valid url
+// (starts with http or https, has at least one dot, and does not end with a dot or a space)
+const VALID_URL_REGEX = /^https?:\/\/.*\.[^ |^.]/;
+
 export const isValidUrl = (attempted) => {
   try {
     const u = new URL(attempted);
-    return u !== '';
+    return (u !== '' && VALID_URL_REGEX.test(u));
   } catch (e) {
     return false;
   }
