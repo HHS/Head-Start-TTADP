@@ -5,8 +5,8 @@ import { Label, Dropdown } from '@trussworks/react-uswds';
 const statuses = [
   'Not Started',
   'In Progress',
-  'Complete',
   'Suspended',
+  'Complete',
 ];
 
 export default function ObjectiveStatus({
