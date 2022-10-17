@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { uniqBy } from 'lodash';
+import { uniq, uniqBy } from 'lodash';
 import moment from 'moment';
 import {
   Grant,
@@ -10,6 +10,7 @@ import {
   ActivityReport,
   Objective,
   ActivityRecipient,
+  Topic,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
 import { RECIPIENTS_PER_PAGE, GOALS_PER_PAGE, REPORT_STATUSES } from '../constants';
@@ -183,14 +184,15 @@ function reduceObjectives(response, goal) {
       o.title.trim() === objective.getDataValue('title').trim() && o.status === objective.status
     ));
 
+    const ots = objective.topics.map((ot) => ot.name);
+
     if (existing) {
       existing.activityReports = uniqBy([...existing.activityReports, ...objective.activityReports], 'id');
       existing.reasons = Array.from(
         new Set([...existing.reasons, ...r]),
       );
-
       existing.reasons.sort();
-      return acc;
+      return { ...acc, topics: [...acc.topics, ...ots] };
     }
 
     return {
@@ -203,7 +205,7 @@ function reduceObjectives(response, goal) {
         ),
       }],
       reasons: [...acc.reasons, ...r].sort(),
-      topics: [...acc.topics, ...t],
+      topics: [...acc.topics, ...t, ...ots],
     };
   }, {
     objectives: [],
@@ -215,6 +217,8 @@ function reduceObjectives(response, goal) {
   current.goalTopics = Array.from(
     new Set([...goal.goalTopics, ...topics]),
   );
+
+  current.goalTopics.sort();
 
   current.reasons = Array.from(
     new Set([...goal.reasons, ...reasons]),
@@ -317,6 +321,10 @@ export async function getGoalsByActivityRecipient(
         },
         include: [
           {
+            model: Topic,
+            as: 'topics',
+          },
+          {
             attributes: [
               'id',
               'reason',
@@ -373,7 +381,7 @@ export async function getGoalsByActivityRecipient(
       existingGoal.goalNumbers = [...existingGoal.goalNumbers, current.goalNumber];
       existingGoal.objectives = reduceObjectives(current, existingGoal);
       existingGoal.objectiveCount = existingGoal.objectives.length;
-
+      existingGoal.grantNumbers = uniq([...existingGoal.grantNumbers, current.grant.number]);
       return {
         goalRows: previous.goalRows,
       };
@@ -391,6 +399,7 @@ export async function getGoalsByActivityRecipient(
       reasons: [],
       previousStatus: calculatePreviousStatus(current),
       objectives: [],
+      grantNumbers: [current.grant.number],
     };
 
     goalToAdd.objectives = reduceObjectives(current, goalToAdd);

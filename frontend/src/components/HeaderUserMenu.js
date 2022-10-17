@@ -142,6 +142,7 @@ function HeaderUserMenu() {
       buttonText={user.name}
       showApplyButton={false}
       direction="left"
+      className="no-print"
     >
       <div className="user-menu-dropdown" data-testid="user-menu-dropdown">
         <h4 className="margin-0 display-flex flex-align-center padding-2 border-bottom border-gray-10">
