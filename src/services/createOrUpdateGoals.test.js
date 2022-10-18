@@ -166,12 +166,20 @@ describe('createOrUpdateGoals', () => {
     expect(ids.length).toBe(2);
     expect(ids).toContain(goal.id);
 
+    const statuses = newGoals.map((g) => g.status);
+    expect(statuses.length).toBe(2);
+    expect(statuses).toContain('Not Started');
+    expect(statuses).toContain('Draft');
+
     const [, updatedGoal] = newGoals;
-    expect(updatedGoal.status).toBe('Not Started');
     expect(updatedGoal.name).toBe('This is some serious goal text');
     expect(updatedGoal.grantIds.length).toBe(1);
     expect(updatedGoal.createdVia).toBe('activityReport');
-    expect(updatedGoal.grantIds).toContain(grants[0].id);
+
+    const grantIds = newGoals.map((g) => g.grantIds).flat();
+    expect(grantIds.length).toBe(2);
+    expect(grantIds).toContain(grants[0].id);
+    expect(grantIds).toContain(grants[1].id);
 
     const grantRegions = updatedGoal.grants.map((g) => g.regionId);
     const grantRecipients = updatedGoal.grants.map((g) => g.recipientId);
