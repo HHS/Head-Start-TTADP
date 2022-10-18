@@ -7,7 +7,6 @@ import Objective from '../Objective';
 const defaultObjective = {
   id: 1,
   resources: [],
-  roles: [],
   topics: [],
   title: 'This is an objective title',
   ttaProvided: '<p><ul><li>What</li></ul></p>',

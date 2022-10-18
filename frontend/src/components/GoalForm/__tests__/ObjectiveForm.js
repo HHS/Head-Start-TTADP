@@ -30,7 +30,6 @@ describe('ObjectiveForm', () => {
     ],
     id: 123,
     status: 'Not started',
-    roles: [],
   };
 
   const index = 1;
@@ -122,7 +121,7 @@ describe('ObjectiveForm', () => {
 
     const statusSelect = await screen.findByLabelText('Objective status');
     userEvent.selectOptions(statusSelect, 'Complete');
-    expect(setObjective).toHaveBeenCalledWith({ ...defaultObjective, status: 'Complete', roles: [] });
+    expect(setObjective).toHaveBeenCalledWith({ ...defaultObjective, status: 'Complete' });
     userEvent.click(statusSelect);
   });
 
