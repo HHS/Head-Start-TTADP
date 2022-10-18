@@ -53,9 +53,6 @@ describe('ObjectiveForm', () => {
         errors={[<></>, <></>, <></>]}
         goalStatus={goalStatus}
         onUploadFiles={jest.fn()}
-        roleOptions={[
-          { id: 1, fullName: 'Grantee Specialist' },
-        ]}
         topicOptions={[
           'Behavioral / Mental Health / Trauma',
           'Child Screening and Assessment',
