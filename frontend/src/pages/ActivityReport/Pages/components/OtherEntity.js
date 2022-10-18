@@ -1,5 +1,5 @@
 import React, {
-  useState, useEffect, useMemo, useContext,
+  useState, useEffect, useContext,
 } from 'react';
 import PropTypes from 'prop-types';
 import { useFormContext, useFieldArray } from 'react-hook-form/dist/index.ie11';
@@ -15,10 +15,9 @@ import { DECIMAL_BASE } from '../../../../Constants';
 const OBJECTIVE_LABEL = 'objectivesWithoutGoals';
 
 export default function OtherEntity({
-  roles, recipientIds, onSaveDraft, reportId,
+  recipientIds, onSaveDraft, reportId,
 }) {
   const { errors } = useFormContext();
-  const defaultRoles = useMemo(() => (roles.length === 1 ? roles : []), [roles]);
   const [topicOptions, setTopicOptions] = useState([]);
 
   const { isLoading } = useContext(GoalFormContext);
@@ -45,11 +44,11 @@ export default function OtherEntity({
   } = useFieldArray({
     name: OBJECTIVE_LABEL,
     keyName: 'key', // because 'id' is the default key switch it to use 'key'.
-    defaultValues: [{ ...NEW_OBJECTIVE(), roles: defaultRoles, recipientIds }],
+    defaultValues: [{ ...NEW_OBJECTIVE(), recipientIds }],
   });
 
   const onAddNew = () => {
-    append({ ...NEW_OBJECTIVE(), roles: defaultRoles, recipientIds });
+    append({ ...NEW_OBJECTIVE(), recipientIds });
   };
 
   const options = [{ ...NEW_OBJECTIVE() }];
@@ -80,7 +79,6 @@ export default function OtherEntity({
             errors={objectiveErrors}
             remove={remove}
             fieldArrayName={OBJECTIVE_LABEL}
-            roleOptions={roles}
             onSaveDraft={onSaveDraft}
             reportId={parseInt(reportId, DECIMAL_BASE)}
           />
@@ -92,7 +90,6 @@ export default function OtherEntity({
 }
 
 OtherEntity.propTypes = {
-  roles: PropTypes.arrayOf(PropTypes.string).isRequired,
   recipientIds: PropTypes.arrayOf(PropTypes.number).isRequired,
   onSaveDraft: PropTypes.func.isRequired,
   reportId: PropTypes.string.isRequired,
