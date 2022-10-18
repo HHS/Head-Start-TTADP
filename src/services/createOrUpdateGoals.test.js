@@ -162,10 +162,9 @@ describe('createOrUpdateGoals', () => {
 
     expect(newGoals).toHaveLength(2);
 
-    const [, { goalIds }] = newGoals;
-    expect(goalIds.length).toBe(1);
-
-    expect(goalIds).toContain(goal.id);
+    const ids = newGoals.map((g) => g.goalIds).flat();
+    expect(ids.length).toBe(2);
+    expect(ids).toContain(goal.id);
 
     const [, updatedGoal] = newGoals;
     expect(updatedGoal.status).toBe('Not Started');
@@ -182,7 +181,7 @@ describe('createOrUpdateGoals', () => {
 
     const objectivesOnUpdatedGoal = await Objective.findAll({
       where: {
-        goalId: goalIds,
+        goalId: ids,
       },
       raw: true,
     });
