@@ -18,7 +18,6 @@ import {
   Topic,
   Program,
   File,
-  Role,
 } from '../models';
 import { DECIMAL_BASE, REPORT_STATUSES, OBJECTIVE_STATUS } from '../constants';
 import {
@@ -524,10 +523,6 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
             where: {
               activityReportId,
             },
-          },
-          {
-            model: Role,
-            as: 'roles',
           },
           {
             model: File,
@@ -1491,10 +1486,6 @@ export async function getGoalsForReport(reportId) {
                 attributes: [['userProvidedUrl', 'value'], ['id', 'key']],
               },
             ],
-          },
-          {
-            model: Role,
-            as: 'roles',
           },
           {
             model: Topic,
