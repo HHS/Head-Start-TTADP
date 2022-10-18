@@ -114,6 +114,7 @@ describe('Objectives', () => {
 
   it('removing an existing objective add it back to the list of available objectives', async () => {
     const objectiveOptions = [{
+
       value: 3,
       label: 'Test objective 1',
       title: 'Test objective 1',

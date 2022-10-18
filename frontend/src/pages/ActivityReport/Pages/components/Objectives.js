@@ -9,7 +9,6 @@ import ObjectiveSelect from './ObjectiveSelect';
 export default function Objectives({
   objectives,
   topicOptions,
-  roles,
   noObjectiveError,
   onSaveDraft,
   reportId,
@@ -41,8 +40,7 @@ export default function Objectives({
   );
 
   const onAddNew = () => {
-    const defaultRoles = roles.length === 1 ? roles : [];
-    append({ ...NEW_OBJECTIVE(), roles: defaultRoles });
+    append({ ...NEW_OBJECTIVE() });
   };
 
   const setUpdatedUsedObjectiveIds = () => {
@@ -150,10 +148,6 @@ Objectives.propTypes = {
   objectives: PropTypes.arrayOf(
     OBJECTIVE_PROP,
   ).isRequired,
-  roles: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number,
-    fullName: PropTypes.string,
-  })).isRequired,
   noObjectiveError: PropTypes.node.isRequired,
   onSaveDraft: PropTypes.func.isRequired,
   reportId: PropTypes.number.isRequired,
