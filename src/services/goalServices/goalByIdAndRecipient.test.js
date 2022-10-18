@@ -237,10 +237,6 @@ describe('goalById', () => {
     expect(obj.resources.map((r) => `${r.dataValues.onAnyReport}`).sort()).toEqual(['false', 'false']);
     expect(obj.resources.map((r) => `${r.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
 
-    expect(obj.roles.length).toBe(2);
-    expect(obj.roles.map((r) => `${r.dataValues.onAnyReport}`).sort()).toEqual(['false', 'false']);
-    expect(obj.roles.map((r) => `${r.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
-
     expect(obj.files.length).toBe(2);
     expect(obj.files.map((f) => `${f.dataValues.onAnyReport}`).sort()).toEqual(['false', 'false']);
     expect(obj.files.map((r) => `${r.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
@@ -297,10 +293,6 @@ describe('goalById', () => {
     expect(obj.resources.length).toBe(2);
     expect(obj.resources.map((r) => `${r.dataValues.onAnyReport}`).sort()).toEqual(['false', 'true']);
     expect(obj.resources.map((r) => `${r.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
-
-    expect(obj.roles.length).toBe(2);
-    expect(obj.roles.map((r) => `${r.dataValues.onAnyReport}`).sort()).toEqual(['false', 'true']);
-    expect(obj.roles.map((r) => `${r.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
 
     expect(obj.files.length).toBe(2);
     expect(obj.files.map((f) => `${f.dataValues.onAnyReport}`).sort()).toEqual(['false', 'true']);

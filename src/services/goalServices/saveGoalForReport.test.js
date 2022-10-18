@@ -43,7 +43,6 @@ describe('saveGoalsForReport (more tests)', () => {
   let existingObjective;
   let topic;
   let secondTopic;
-  let role;
 
   // Adding a recipient.
   let addingRecipientReport;
@@ -435,7 +434,6 @@ describe('saveGoalsForReport (more tests)', () => {
       isNew: true,
       topics: [],
       resources: [],
-      roles: [],
       files: [],
     };
 
@@ -708,7 +706,6 @@ describe('saveGoalsForReport (more tests)', () => {
       isNew: true,
       topics: [],
       resources: [],
-      roles: [],
       files: [],
     };
 
@@ -947,9 +944,7 @@ describe('saveGoalsForReport (more tests)', () => {
               value: secondTopic.id,
             },
           ],
-          roles: [
-            { id: role.id },
-          ],
+
           resources: [
             {
               key: 'gibberish-i-THINK-thats-obvious',

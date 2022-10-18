@@ -5,7 +5,6 @@ import {
   ActivityReportObjective,
   Goal,
   Grant,
-  Role,
   Topic,
   File,
   ObjectiveResource,
@@ -129,10 +128,6 @@ export async function getObjectivesByReportId(reportId) {
           activityReportId: reportId,
         },
         required: true,
-      },
-      {
-        model: Role,
-        as: 'roles',
       },
       {
         model: Topic,
