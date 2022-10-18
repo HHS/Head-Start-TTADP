@@ -1195,7 +1195,6 @@ async function createObjectivesForGoal(goal, objectives, report) {
       status,
       resources,
       topics,
-      roles,
       files,
       ...updatedFields
     } = objective;
@@ -1256,7 +1255,6 @@ async function createObjectivesForGoal(goal, objectives, report) {
       savedObjective,
       resources,
       topics,
-      roles,
       files,
       deleteUnusedAssociations,
     );
@@ -1348,6 +1346,7 @@ export async function saveGoalsForReport(goals, report) {
         onApprovedAR, // we don't want to set this manually
         endDate: discardedEndDate, // get this outta here
         createdVia,
+        goalIds: discardedeGoalIds,
         ...fields
       } = goal;
 
