@@ -988,12 +988,13 @@ export async function goalsForGrants(grantIds) {
         ),
       ), 'oldGrantIds'],
       [sequelize.fn(
-        'ARRAY_AGG',
+        'MAX',
         sequelize.fn(
           'DISTINCT',
           sequelize.col('"Goal"."createdAt"'),
         ),
-      ), 'createdAts'],
+      ), 'created'],
+
       'name',
       'status',
       'onApprovedAR',
@@ -1024,7 +1025,7 @@ export async function goalsForGrants(grantIds) {
         attributes: [],
       },
     ],
-    order: ['createdAt'],
+    order: [['created', 'desc']],
   });
 }
 
