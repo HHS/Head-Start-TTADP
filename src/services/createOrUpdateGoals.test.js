@@ -171,6 +171,11 @@ describe('createOrUpdateGoals', () => {
     expect(statuses).toContain('Not Started');
     expect(statuses).toContain('Draft');
 
+    const createdVias = newGoals.map((g) => g.createdVia);
+    expect(createdVias.length).toBe(2);
+    expect(createdVias).toContain('activityReport');
+    expect(createdVias).toContain('rtr');
+
     const [, updatedGoal] = newGoals;
     expect(updatedGoal.name).toBe('This is some serious goal text');
     expect(updatedGoal.grantIds.length).toBe(1);
@@ -230,7 +235,5 @@ describe('createOrUpdateGoals', () => {
     expect(newGoal.name).toBe('This is some serious goal text');
     expect(newGoal.grant.id).toBe(grants[1].id);
     expect(newGoal.grant.regionId).toBe(1);
-    expect(newGoal.grant.recipientId).toBe(recipient.id);
-    expect(newGoal.createdVia).toBe('rtr');
   });
 });
