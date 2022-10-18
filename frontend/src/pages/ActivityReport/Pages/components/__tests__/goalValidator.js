@@ -19,7 +19,6 @@ const missingTitle = {
   ttaProvided: 'ttaProvided',
   topics: ['Hello'],
   resources: [],
-  roles: ['Chief Inspector'],
 };
 
 const missingTTAProvided = {
@@ -27,7 +26,6 @@ const missingTTAProvided = {
   ttaProvided: '<p></p>',
   topics: ['Hello'],
   resources: [],
-  roles: ['Chief Inspector'],
 };
 
 const validObjective = {
@@ -35,7 +33,6 @@ const validObjective = {
   ttaProvided: 'ttaProvided',
   topics: ['Hello'],
   resources: [],
-  roles: ['Chief Inspector'],
 };
 
 const goalUnfinishedObjective = {

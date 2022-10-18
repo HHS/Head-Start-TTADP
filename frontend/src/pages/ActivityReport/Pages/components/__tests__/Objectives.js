@@ -53,7 +53,6 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
       <Objectives
         objectives={objectiveOptions}
         topicOptions={topicOptions}
-        roles={[{ fullName: 'Central office', id: 1 }]}
         goalId={goalId}
         noObjectiveError={<></>}
         goalStatus="In Progress"
@@ -84,7 +83,6 @@ describe('Objectives', () => {
       activityReports: [],
       resources: [],
       topics: [],
-      roles: [],
       status: 'Not Started',
     },
     {
@@ -95,7 +93,6 @@ describe('Objectives', () => {
       activityReports: [],
       resources: [],
       topics: [],
-      roles: [],
       status: 'Not Started',
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
@@ -124,7 +121,6 @@ describe('Objectives', () => {
       activityReports: [],
       resources: [],
       topics: [],
-      roles: [],
       status: 'In Progress',
     },
     {
@@ -135,7 +131,6 @@ describe('Objectives', () => {
       activityReports: [],
       resources: [],
       topics: [],
-      roles: [],
       status: 'Not Started',
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
@@ -172,7 +167,6 @@ describe('Objectives', () => {
       activityReports: [],
       resources: [],
       topics: [],
-      roles: ['CENTRAL OFFICE'],
       status: 'Not Started',
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
@@ -193,7 +187,6 @@ describe('Objectives', () => {
       }],
       resources: [],
       topics: [],
-      roles: ['CENTRAL OFFICE'],
       status: 'Not Started',
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
@@ -213,7 +206,6 @@ describe('Objectives', () => {
       activityReports: [],
       resources: [],
       topics: [],
-      roles: ['CENTRAL OFFICE'],
       status: 'Not Started',
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} goalId="new" />);

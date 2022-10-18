@@ -190,7 +190,6 @@ ObjectiveForm.propTypes = {
         url: PropTypes.string,
       }),
     })),
-    roles: PropTypes.arrayOf(PropTypes.shape({ fullName: PropTypes.string, id: PropTypes.number })),
     activityReports: PropTypes.arrayOf(PropTypes.shape({
       id: PropTypes.number,
     })),
