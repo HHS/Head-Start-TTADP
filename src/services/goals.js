@@ -335,12 +335,6 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         ),
       ], 'value');
 
-      exists.roles = uniqBy([
-        ...exists.roles,
-        ...objective.activityReportObjectives[0].activityReportObjectiveRoles.map(
-          (r) => r.role.dataValues,
-        )], 'id');
-
       exists.topics = uniqBy([
         ...exists.topics,
         ...objective.activityReportObjectives[0].activityReportObjectiveTopics.map(
@@ -386,9 +380,6 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       // of the activity report not the state of the objective, which is what
       // we are getting at with this method (getGoalsForReport)
 
-      roles: objective.activityReportObjectives[0].activityReportObjectiveRoles.map(
-        (r) => r.role.dataValues,
-      ),
       topics: objective.activityReportObjectives[0].activityReportObjectiveTopics.map(
         (t) => t.topic.dataValues,
       ),
@@ -850,7 +841,7 @@ export async function createOrUpdateGoals(goals) {
           status: objectiveStatus,
         }, { individualHooks: true });
 
-        // save all our objective join tables (ObjectiveResource, ObjectiveTopic, ObjectiveRole)
+        // save all our objective join tables (ObjectiveResource, ObjectiveTopic, ObjectiveFile)
         const deleteUnusedAssociations = true;
         await saveObjectiveAssociations(
           objective,
