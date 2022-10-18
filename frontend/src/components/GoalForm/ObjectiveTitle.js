@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import {
-  FormGroup, Label, Textarea,
+  FormGroup, Label,
 } from '@trussworks/react-uswds';
+import AutomaticResizingTextarea from '../AutomaticResizingTextarea';
 
 export default function ObjectiveTitle({
   error,
@@ -35,14 +36,12 @@ export default function ObjectiveTitle({
       ) : (
         <>
           {error}
-          <Textarea
-            id={inputName}
-            name={inputName}
-            value={title}
-            onChange={onChangeTitle}
+          <AutomaticResizingTextarea
+            onUpdateText={onChangeTitle}
             onBlur={validateObjectiveTitle}
-            required
+            inputName={inputName}
             disabled={isLoading}
+            value={title}
           />
         </>
       )}
