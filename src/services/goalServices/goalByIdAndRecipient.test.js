@@ -8,15 +8,12 @@ import db, {
   ActivityReportGoal,
   Objective,
   Topic,
-  Role,
   ObjectiveTopic,
   ObjectiveResource,
-  ObjectiveRole,
   ObjectiveFile,
   ActivityReport,
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
-  ActivityReportObjectiveRole,
   ActivityReportObjectiveTopic,
   File,
 } from '../../models';
@@ -33,8 +30,6 @@ describe('goalById', () => {
   let objective;
   let file;
   let file2;
-  let role;
-  let role2;
   let topic;
   let topic2;
 
@@ -97,25 +92,6 @@ describe('goalById', () => {
       userProvidedUrl: 'http://www.google1.com',
     });
 
-    role = await Role.findOne();
-    role2 = await Role.findOne({
-      where: {
-        id: {
-          [Op.notIn]: [role.id],
-        },
-      },
-    });
-
-    await ObjectiveRole.create({
-      objectiveId: objective.id,
-      roleId: role.id,
-    });
-
-    await ObjectiveRole.create({
-      objectiveId: objective.id,
-      roleId: role2.id,
-    });
-
     file = await File.create({
       originalFileName: 'gibbery-pibbery.txt',
       key: 'gibbery-pibbery.key',
@@ -166,12 +142,6 @@ describe('goalById', () => {
     });
 
     await ActivityReportObjectiveResource.destroy({
-      where: {
-        activityReportObjectiveId: aroIds,
-      },
-    });
-
-    await ActivityReportObjectiveRole.destroy({
       where: {
         activityReportObjectiveId: aroIds,
       },
@@ -299,9 +269,6 @@ describe('goalById', () => {
             ],
             topics: [
               { value: topic.id },
-            ],
-            roles: [
-              { id: role.id },
             ],
             files: [
               { id: file.id },

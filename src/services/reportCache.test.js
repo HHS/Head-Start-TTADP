@@ -255,7 +255,6 @@ describe('reportCache', () => {
       expect(aro).toBeDefined();
       expect(aro.activityReportObjectiveFiles).toEqual([]);
       expect(aro.activityReportObjectiveResources).toEqual([]);
-      expect(aro.activityReportObjectiveRoles).toEqual([]);
       expect(aro.activityReportObjectiveTopics).toEqual([]);
     });
     it('add to cache', async () => {
@@ -371,8 +370,6 @@ describe('reportCache', () => {
       expect(aro.activityReportObjectiveResources.length).toEqual(1);
       expect(aro.activityReportObjectiveResources[0].userProvidedUrl)
         .toEqual(mockObjectiveResources[1].userProvidedUrl);
-      expect(aro.activityReportObjectiveRoles.length).toEqual(1);
-      expect(aro.activityReportObjectiveRoles[0].roleId).toEqual(roles[1].id);
       expect(aro.activityReportObjectiveTopics.length).toEqual(1);
       expect(aro.activityReportObjectiveTopics[0].topicId).toEqual(mockObjectiveTopics[1].topicId);
     });
@@ -423,7 +420,6 @@ describe('reportCache', () => {
       expect(aro).toBeDefined();
       expect(aro.activityReportObjectiveFiles).toEqual([]);
       expect(aro.activityReportObjectiveResources).toEqual([]);
-      expect(aro.activityReportObjectiveRoles).toEqual([]);
       expect(aro.activityReportObjectiveTopics).toEqual([]);
     });
   });

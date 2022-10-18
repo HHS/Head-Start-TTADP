@@ -5,7 +5,6 @@ import db, {
   Recipient,
   Objective,
   ActivityReportObjectiveResource,
-  ActivityReportObjectiveRole,
   ActivityReport,
   ActivityRecipient,
   ActivityReportGoal,
@@ -15,8 +14,6 @@ import db, {
   Topic,
   ObjectiveTopic,
   ObjectiveResource,
-  Role,
-  ObjectiveRole,
 } from '../../models';
 import { REPORT_STATUSES } from '../../constants';
 import { saveGoalsForReport } from '../goals';
@@ -274,13 +271,6 @@ describe('saveGoalsForReport (more tests)', () => {
       topicId: topic.id,
     });
 
-    role = await Role.findOne();
-
-    await ObjectiveRole.create({
-      objectiveId: existingObjective.id,
-      roleId: role.id,
-    });
-
     await ObjectiveResource.create({
       objectiveId: existingObjective.id,
       userProvidedUrl: 'http://www.finally-a-url.com',
@@ -304,13 +294,6 @@ describe('saveGoalsForReport (more tests)', () => {
     await ObjectiveTopic.create({
       objectiveId: addingRecipientObjective.id,
       topicId: topic.id,
-    });
-
-    role = await Role.findOne();
-
-    await ObjectiveRole.create({
-      objectiveId: addingRecipientObjective.id,
-      roleId: role.id,
     });
 
     await ObjectiveResource.create({
@@ -350,12 +333,6 @@ describe('saveGoalsForReport (more tests)', () => {
     });
 
     await ObjectiveTopic.destroy({
-      where: {
-        objectiveId: objectiveIds,
-      },
-    });
-
-    await ObjectiveRole.destroy({
       where: {
         objectiveId: objectiveIds,
       },
@@ -1056,26 +1033,6 @@ describe('saveGoalsForReport (more tests)', () => {
 
     expect(afterActivityReportObjectiveResources.length).toBe(1);
     expect(afterActivityReportObjectiveResources[0].userProvidedUrl).toBe('https://www.google.com');
-
-    // check that our roles are saved properly to the objective
-    const afterObjectiveRoles = await ObjectiveRole.findAll({
-      where: {
-        objectiveId: rtrObjective.id,
-      },
-    });
-
-    expect(afterObjectiveRoles.length).toBe(1);
-    expect(afterObjectiveRoles[0].roleId).toBe(role.id);
-
-    // check that our roles are saved properly to the activity report
-    const afterActivityReportObjectiveRoles = await ActivityReportObjectiveRole.findAll({
-      where: {
-        activityReportObjectiveId: afterActivityReportObjectives[0].id,
-      },
-    });
-
-    expect(afterActivityReportObjectiveRoles.length).toBe(1);
-    expect(afterActivityReportObjectiveRoles[0].roleId).toBe(role.id);
   });
 
   it('adds a new recipient', async () => {
