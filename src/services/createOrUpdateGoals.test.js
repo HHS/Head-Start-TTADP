@@ -179,7 +179,6 @@ describe('createOrUpdateGoals', () => {
     const [, updatedGoal] = newGoals;
     expect(updatedGoal.name).toBe('This is some serious goal text');
     expect(updatedGoal.grantIds.length).toBe(1);
-    expect(updatedGoal.createdVia).toBe('activityReport');
 
     const grantIds = newGoals.map((g) => g.grantIds).flat();
     expect(grantIds.length).toBe(2);
