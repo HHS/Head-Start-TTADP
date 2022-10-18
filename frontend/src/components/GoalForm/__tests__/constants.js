@@ -9,12 +9,12 @@ describe('validateListOfResources', () => {
     expect(validateListOfResources([{ value: 'file://test.com' }])).toBe(false);
     expect(validateListOfResources([{ value: 'http://test' }])).toBe(false);
     expect(validateListOfResources([{ value: 'https://test' }])).toBe(false);
-
-    const resources = [
+    // eslint-disable-next-line no-useless-escape
+    expect(validateListOfResources([{ value: 'http:\lkj http:/test.v' }])).toBe(false);
+    expect(validateListOfResources([
       { value: 'https://www.google.com' },
       { value: 'not a valid url' },
       { value: 'https://www.google.com' },
-    ];
-    expect(validateListOfResources(resources)).toBe(false);
+    ])).toBe(false);
   });
 });
