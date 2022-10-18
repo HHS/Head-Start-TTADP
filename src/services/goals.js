@@ -1315,7 +1315,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
         savedObjective = await Objective.create({
           ...updatedObjective,
           title: objectiveTitle,
-          status: OBJECTIVE_STATUS.NOT_STARTED, // Only the hook should set status.
+          status,
         });
       } else {
         savedObjective = existingObjective;
