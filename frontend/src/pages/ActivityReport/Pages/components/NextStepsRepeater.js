@@ -87,7 +87,7 @@ export default function NextStepsRepeater({
     const fieldArray = allValues[name] || [];
     const canAdd = fieldArray.every((field, index) => {
       validateStepOnBlur(field.note, index);
-      validateDateOnBlur(field.date, index);
+      validateDateOnBlur(field.completeDate, index);
       return field.note !== ''
       && (field.completeDate && moment(field.completeDate, 'MM/DD/YYYY').isValid());
     });
