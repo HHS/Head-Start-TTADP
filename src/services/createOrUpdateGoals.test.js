@@ -137,7 +137,6 @@ describe('createOrUpdateGoals', () => {
                 value: topic.id,
               },
             ],
-            roles: [],
           },
           {
             id: 'new-0',
@@ -150,7 +149,6 @@ describe('createOrUpdateGoals', () => {
                 value: topic.id,
               },
             ],
-            roles: [],
           },
         ],
       },

@@ -210,7 +210,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
   return objectiveRecords.reduce((prevAccum, objective) => {
     const accum = { ...prevAccum };
     const {
-      goal, title, status, ttaProvided, roles, topics, files, resources,
+      goal, title, status, ttaProvided, topics, files, resources,
     } = objective;
     const goalId = goal ? goal.id : null;
     if (lastObjectiveTitle === title) {
@@ -279,13 +279,6 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       enumerable: true,
     });
 
-    // Activity Report Objective: Specialist Roles.
-    const objSpecialistRoles = roles.map((r) => r.fullName);
-    Object.defineProperty(accum, `objective-${objectiveId}-specialistRole`, {
-      value: objSpecialistRoles.join('\n'),
-      enumerable: true,
-    });
-
     // Activity Report Objective: Topics.
     const objTopics = topics.map((t) => t.name);
     Object.defineProperty(accum, `objective-${objectiveId}-topics`, {
@@ -333,7 +326,6 @@ function transformGoalsAndObjectives(report) {
       {
         ...aro.objective,
         ttaProvided: aro.ttaProvided,
-        roles: aro.roles,
         topics: aro.topics,
         files: aro.files,
         resources: aro.activityReportObjectiveResources,
