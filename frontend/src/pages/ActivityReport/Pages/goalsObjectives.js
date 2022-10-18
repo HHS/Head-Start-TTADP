@@ -2,11 +2,10 @@
 // disabling prop spreading to use the "register" function from react hook form the same
 // way they did in thier examples
 /* eslint-disable arrow-body-style */
-import React, { useState, useMemo, useContext } from 'react';
+import React, { useState, useContext } from 'react';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { uniqBy } from 'lodash';
 import { Alert, Fieldset } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useFormContext, useController } from 'react-hook-form/dist/index.ie11';
@@ -187,21 +186,6 @@ const GoalsObjectives = ({
     toggleObjectiveForm(false);
   };
 
-  // we need to figure out our options based on author/collaborator roles
-  const collaborators = watch('activityReportCollaborators');
-  const author = watch('author');
-
-  // create an exclusive set of roles from the collaborators & author
-  const roles = useMemo(() => {
-    const collabs = collaborators || [];
-    const auth = author || { roles: [] };
-    const authorRoles = auth.roles;
-
-    const collaboratorRoles = collabs.map((c) => (c.collaboratorRoles || [])).flat();
-
-    return uniqBy([...authorRoles, ...collaboratorRoles], 'id');
-  }, [author, collaborators]);
-
   return (
     <>
       <Helmet>
@@ -226,7 +210,6 @@ const GoalsObjectives = ({
       {!isRecipientReport && !isObjectivesFormClosed
       && (
       <OtherEntity
-        roles={roles}
         recipientIds={activityRecipientIds}
         onSaveDraft={onSaveDraftOetObjectives}
         reportId={reportId}
@@ -276,7 +259,6 @@ const GoalsObjectives = ({
               <GoalPicker
                 grantIds={grantIds}
                 availableGoals={availableGoals}
-                roles={roles}
                 reportId={reportId}
                 onSaveDraft={onSaveDraftGoal}
               />
