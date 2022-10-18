@@ -12,7 +12,7 @@ import {
 } from '../constants';
 
 const [
-  objectiveTextError, objectiveTopicsError, , objectiveRoleError,
+  objectiveTextError, objectiveTopicsError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
 describe('ObjectiveForm', () => {
@@ -125,16 +125,8 @@ describe('ObjectiveForm', () => {
 
     const statusSelect = await screen.findByLabelText('Objective status');
     userEvent.selectOptions(statusSelect, 'Complete');
-
     expect(setObjective).toHaveBeenCalledWith({ ...defaultObjective, status: 'Complete', roles: [] });
-
-    const roleSelect = await screen.findByLabelText(/Specialist roles providing TTA/i);
-    userEvent.click(roleSelect);
     userEvent.click(statusSelect);
-    expect(setObjectiveError).toHaveBeenCalledWith(index, [<></>, <></>, <></>, <span className="usa-error-message">{objectiveRoleError}</span>]);
-
-    await selectEvent.select(roleSelect, 'Grantee Specialist');
-    expect(setObjective).toHaveBeenCalledWith({ ...defaultObjective, status: 'In Progress', roles: [{ fullName: 'Grantee Specialist', id: 1 }] });
   });
 
   it('displays the correct label based on resources from api', async () => {

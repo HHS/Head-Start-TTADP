@@ -32,11 +32,6 @@ export const unfinishedObjectives = (objectives, setError = () => {}, fieldArray
         incomplete = true;
       }
 
-      if (!objective.roles || !objective.roles.length) {
-        setError(`${fieldArrayName}[${index}].roles`, { message: OBJECTIVE_ROLE });
-        incomplete = true;
-      }
-
       if (!objective.resources || !validateListOfResources(objective.resources)) {
         setError(`${fieldArrayName}[${index}].resources`, { message: OBJECTIVE_RESOURCES });
         incomplete = true;

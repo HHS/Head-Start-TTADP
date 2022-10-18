@@ -9,7 +9,6 @@ import {
   OBJECTIVE_FORM_FIELD_INDEXES, validateListOfResources, OBJECTIVE_ERROR_MESSAGES,
 } from './constants';
 import { REPORT_STATUSES } from '../../Constants';
-import SpecialistRole from './SpecialistRole';
 import ObjectiveStatus from './ObjectiveStatus';
 import GoalFormLoadingContext from '../../GoalFormLoadingContext';
 
@@ -17,7 +16,6 @@ const [
   objectiveTitleError,
   objectiveTopicsError,
   objectiveResourcesError,
-  objectiveRoleError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
 export default function ObjectiveForm({
@@ -28,13 +26,12 @@ export default function ObjectiveForm({
   setObjective,
   errors,
   topicOptions,
-  roleOptions,
   onUploadFiles,
   goalStatus,
 }) {
   // the parent objective data from props
   const {
-    title, topics, resources, status, roles, files,
+    title, topics, resources, status, files,
   } = objective;
 
   const isOnReport = useMemo(() => (
@@ -56,7 +53,6 @@ export default function ObjectiveForm({
   const onChangeFiles = (e) => {
     setObjective({ ...objective, files: e });
   };
-  const onChangeRole = (newRoles) => setObjective({ ...objective, roles: newRoles });
   const onChangeStatus = (newStatus) => setObjective({ ...objective, status: newStatus });
 
   // validate different fields
@@ -80,17 +76,6 @@ export default function ObjectiveForm({
     } else {
       const newErrors = [...errors];
       newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.TOPICS, 1, <></>);
-      setObjectiveError(index, newErrors);
-    }
-  };
-  const validateSpecialistRole = () => {
-    if (!roles.length) {
-      const newErrors = [...errors];
-      newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.ROLE, 1, <span className="usa-error-message">{objectiveRoleError}</span>);
-      setObjectiveError(index, newErrors);
-    } else {
-      const newErrors = [...errors];
-      newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.ROLE, 1, <></>);
       setObjectiveError(index, newErrors);
     }
   };
@@ -125,19 +110,6 @@ export default function ObjectiveForm({
         validateObjectiveTitle={validateObjectiveTitle}
         status={status}
         isLoading={isLoading}
-      />
-
-      <SpecialistRole
-        error={errors[OBJECTIVE_FORM_FIELD_INDEXES.ROLE]}
-        onChange={onChangeRole}
-        selectedRoles={roles || []}
-        validateSpecialistRole={validateSpecialistRole}
-        options={roleOptions}
-        isOnReport={isOnReport || false}
-        status={status}
-        isLoading={isLoading}
-        roleOptions={roleOptions}
-        goalStatus={goalStatus}
       />
 
       <ObjectiveTopics
@@ -228,10 +200,6 @@ ObjectiveForm.propTypes = {
     })),
     status: PropTypes.string,
   }),
-  roleOptions: PropTypes.arrayOf(PropTypes.shape({
-    fullName: PropTypes.string,
-    id: PropTypes.number,
-  })).isRequired,
   topicOptions: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string,
     value: PropTypes.number,
