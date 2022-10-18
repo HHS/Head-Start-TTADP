@@ -39,8 +39,8 @@ export default function SocketAlert({ store }) {
     <Sticky className="ttahub-socket-alert margin-bottom-2" top={71} enabled={!isMobile}>
       <Alert type="warning">
         <span>
-          <p className="usa-prose margin-top-0">{message}</p>
-          <p className="usa-prose margin-bottom-0">Check with them before working on this page.</p>
+          <span className="usa-prose margin-top-0">{message}</span>
+          <span className="usa-prose margin-bottom-0">Check with them before working on this page.</span>
         </span>
       </Alert>
     </Sticky>
