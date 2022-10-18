@@ -61,6 +61,7 @@ const grants = [
 
 describe('Grant DB service', () => {
   beforeAll(async () => {
+    await Recipient.create({ name: 'recipient', id: 1, uei: 'NNA5N2KHMGN1' });
     await Recipient.create({ name: 'recipient', id: 129129, uei: 'NNA5N2KHMGN2' });
     await Region.create(
       {
@@ -85,7 +86,8 @@ describe('Grant DB service', () => {
       },
       individualHooks: true,
     });
-    await Recipient.destroy({ where: { id: 129130 }, individualHooks: true });
+    await Recipient.destroy({ where: { id: 1 }, individualHooks: true });
+    await Recipient.destroy({ where: { id: 129129 }, individualHooks: true });
     await db.sequelize.close();
   });
 
@@ -117,7 +119,7 @@ describe('Grant DB service', () => {
     it('can return unassigned grants', async () => {
       const foundRecipients = await cdiGrants('true');
       const foundIds = foundRecipients.map((g) => g.id);
-      expect(foundIds.length).toBe(5);
+      expect(foundIds).toEqual([90, 91]);
     });
   });
 
