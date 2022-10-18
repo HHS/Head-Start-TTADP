@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { uniqBy } from 'lodash';
 import PropTypes from 'prop-types';
 import { useFieldArray, useFormContext } from 'react-hook-form/dist/index.ie11';
 import Objective from './Objective';
@@ -20,8 +19,6 @@ export default function Objectives({
   const fieldArrayName = 'goalForEditing.objectives';
   const objectivesForGoal = getValues(fieldArrayName);
   const defaultValues = objectivesForGoal || [];
-
-  const [roleOptions, setRoleOptions] = useState(roles);
 
   /**
    * we can use the useFieldArray hook from react hook form to
@@ -59,19 +56,10 @@ export default function Objectives({
   };
 
   const onInitialObjSelect = (objective) => {
-    const defaultRoles = uniqBy([
-      ...roles,
-      ...objective.roles,
-    ], 'id');
-
-    append({
-      ...objective, roles: defaultRoles,
-    });
+    append(objective);
 
     // If fields have changed get updated list of used Objective ID's.
     setUpdatedUsedObjectiveIds();
-
-    setRoleOptions(defaultRoles);
   };
 
   const onObjectiveChange = (objective, index) => {
@@ -141,7 +129,6 @@ export default function Objectives({
               errors={objectiveErrors}
               remove={removeObjective}
               fieldArrayName={fieldArrayName}
-              roleOptions={roleOptions}
               onObjectiveChange={onObjectiveChange}
               onSaveDraft={onSaveDraft}
               parentGoal={getValues('goalForEditing')}

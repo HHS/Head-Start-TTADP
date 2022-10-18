@@ -55,7 +55,6 @@ const RenderObjective = ({
         goalIndex={0}
         objectiveIndex={0}
         status="In progress"
-        roleOptions={[{ fullName: 'Central office', id: 1234 }]}
         errors={{}}
         onObjectiveChange={jest.fn()}
         onSaveDraft={jest.fn()}
