@@ -5,6 +5,7 @@ import {
   goalsByIdsAndActivityReport,
   goalByIdWithActivityReportsAndRegions,
   goalByIdAndRecipient,
+  destroyGoal,
 } from '../../services/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
@@ -108,6 +109,38 @@ export async function changeGoalStatus(req, res) {
     res.json(updatedGoal);
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:CHANGE_GOAL_STATUS`);
+  }
+}
+export async function deleteGoal(req, res) {
+  try {
+    const { goalId } = req.params;
+
+    const user = await userById(req.session.userId);
+    const goal = await goalByIdWithActivityReportsAndRegions(goalId);
+
+    const policy = new Goal(user, goal);
+
+    const canDelete = policy.canDelete();
+
+    if (!canDelete) {
+      res.sendStatus(401);
+      return;
+    }
+
+    const deletedGoal = await destroyGoal(parseInt(goalId, 10));
+
+    // destroy goal returns a promise with the number of deleted goals
+    // it should be 1 or 0
+    // if 0, the goal wasn't deleted, presumably because it wasn't found
+
+    if (!deletedGoal) {
+      res.sendStatus(404);
+      return;
+    }
+
+    res.json(deletedGoal);
+  } catch (error) {
+    await handleErrors(req, res, error, `${logContext}:DELETE_GOAL`);
   }
 }
 

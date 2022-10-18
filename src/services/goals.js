@@ -1517,3 +1517,96 @@ export async function createOrUpdateGoalsForActivityReport(goals, reportId) {
   await saveGoalsForReport(goals, report);
   return getGoalsForReport(activityReportId);
 }
+
+export async function destroyGoal(goalId) {
+  return goalId;
+  // return sequelize.transaction(async (transaction) => {
+  //   try {
+  //     const reportsWithGoal = await ActivityReport.findAll({
+  //       attributes: ['id'],
+  //       include: [
+  //         {
+  //           attributes: ['id'],
+  //           model: Objective,
+  //           required: true,
+  //           as: 'objectivesWithGoals',
+  //           include: [
+  //             {
+  //               attributes: ['id'],
+  //               model: Goal,
+  //               required: true,
+  //               where: {
+  //                 id: goalId,
+  //               },
+  //               as: 'goal',
+  //             },
+  //           ],
+  //         },
+  //       ],
+  //       transaction,
+  //       raw: true,
+  //     });
+
+  //     const isOnReport = reportsWithGoal.length;
+  //     if (isOnReport) {
+  //       throw new Error('Goal is on an activity report and can\'t be deleted');
+  //     }
+
+  //     const objectiveTopicsDestroyed = await ObjectiveTopic.destroy({
+  //       where: {
+  //         objectiveId: {
+  //           [Op.in]: sequelize.literal(
+  //             `(SELECT "id" FROM "Objectives" WHERE "goalId" = ${sequelize.escape(goalId)})`,
+  //           ),
+  //         },
+  //       },
+  //       transaction,
+  //     });
+
+  //     const objectiveResourcesDestroyed = await ObjectiveResource.destroy({
+  //       where: {
+  //         objectiveId: {
+  //           [Op.in]: sequelize.literal(
+  //             `(SELECT "id" FROM "Objectives" WHERE "goalId" = ${sequelize.escape(goalId)})`,
+  //           ),
+  //         },
+  //       },
+  //       transaction,
+  //     });
+
+  //     const objectivesDestroyed = await Objective.destroy({
+  //       where: {
+  //         goalId,
+  //       },
+  //       transaction,
+  //     });
+
+  //     const grantGoalsDestroyed = await GrantGoal.destroy({
+  //       where: {
+  //         goalId,
+  //       },
+  //       transaction,
+  //     });
+
+  //     const goalsDestroyed = await Goal.destroy({
+  //       where: {
+  //         id: goalId,
+  //       },
+  //       transaction,
+  //     });
+
+  //     return {
+  //       goalsDestroyed,
+  //       grantGoalsDestroyed,
+  //       objectiveResourcesDestroyed,
+  //       objectiveTopicsDestroyed,
+  //       objectivesDestroyed,
+  //     };
+  //   } catch (error) {
+  //     auditLogger.error(
+  //  `${logContext.namespace} - Sequelize error - unable to delete from db - ${error}`
+  //  );
+  //     return 0;
+  //   }
+  // });
+}

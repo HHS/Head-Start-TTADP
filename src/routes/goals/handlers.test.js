@@ -3,12 +3,12 @@ import { INTERNAL_SERVER_ERROR, NOT_FOUND } from 'http-codes';
 import { userById } from '../../services/users';
 import SCOPES from '../../middleware/scopeConstants';
 import {
-  changeGoalStatus, createGoals, retrieveGoalByIdAndRecipient,
+  changeGoalStatus, createGoals, retrieveGoalByIdAndRecipient, deleteGoal,
 } from './handlers';
 import {
   updateGoalStatusById,
   createOrUpdateGoals,
-
+  destroyGoal,
   goalByIdWithActivityReportsAndRegions,
   goalByIdAndRecipient,
 } from '../../services/goals';
@@ -22,6 +22,7 @@ jest.mock('../../services/goals', () => ({
   createOrUpdateGoals: jest.fn(),
   goalByIdWithActivityReportsAndRegions: jest.fn(),
   goalByIdAndRecipient: jest.fn(),
+  destroyGoal: jest.fn(),
 }));
 
 jest.mock('../../services/users', () => ({
@@ -363,6 +364,105 @@ describe('changeGoalStatus', () => {
     const req = {
     };
     await changeGoalStatus(req, mockResponse);
+    expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+  });
+});
+
+describe('deleteGoal', () => {
+  afterAll(async () => {
+    jest.clearAllMocks();
+    jest.resetModules();
+  });
+
+  it('checks permissions', async () => {
+    const req = {
+      params: {
+        goalId: 1,
+      },
+      session: {
+        userId: 1,
+      },
+    };
+
+    userById.mockResolvedValueOnce({
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: SCOPES.READ_REPORTS,
+        },
+      ],
+    });
+
+    goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
+      objectives: [],
+      grant: { regionId: 2 },
+    });
+
+    await deleteGoal(req, mockResponse);
+
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
+  });
+
+  it('handles success', async () => {
+    const req = {
+      params: {
+        goalId: 1,
+      },
+      session: {
+        userId: 1,
+      },
+    };
+
+    goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
+      objectives: [],
+      grant: { regionId: 2 },
+    });
+
+    userById.mockResolvedValueOnce({
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+        },
+      ],
+    });
+
+    destroyGoal.mockResolvedValueOnce(1);
+    await deleteGoal(req, mockResponse);
+
+    expect(mockResponse.json).toHaveBeenCalledWith(1);
+  });
+
+  it('handles failures', async () => {
+    const req = {
+      params: {
+        goalId: 1,
+      },
+      session: {
+        userId: 1,
+      },
+    };
+
+    goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
+      objectives: [],
+      grants: [{ regionId: 2 }],
+    });
+
+    userById.mockResolvedValueOnce({
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+        },
+      ],
+    });
+
+    destroyGoal.mockImplementationOnce(() => {
+      throw new Error();
+    });
+
+    await deleteGoal(req, mockResponse);
+
     expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
   });
 });
