@@ -5,6 +5,18 @@ module.exports = {
       async (transaction) => {
         await queryInterface.dropTable('ActivityReportObjectiveRoles', { transaction });
         await queryInterface.dropTable('ObjectiveRoles', { transaction });
+
+        // Remove ZALActivityReportObjectiveRoles and functions.
+        await queryInterface.dropTable('ZALActivityReportObjectiveRoles', { transaction });
+        await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS "public"."ZALNoUpdateFActivityReportObjectiveRoles" ()', { transaction });
+        await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS "public"."ZALNoTruncateFActivityReportObjectiveRoles" ()', { transaction });
+        await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS "public"."ZALNoDeleteFActivityReportObjectiveRoles" ()', { transaction });
+
+        // Remove ZALObjectiveRoles and functions.
+        await queryInterface.dropTable('ObjectiveRoles', { transaction });
+        await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS "public"."ZALNoUpdateFObjectiveRoles" ()', { transaction });
+        await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS "public"."ZALNoTruncateFObjectiveRoles" ()', { transaction });
+        await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS "public"."ZALNoDeleteFObjectiveRoles" ()', { transaction });
       },
     );
   },
