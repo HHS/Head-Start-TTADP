@@ -41,7 +41,13 @@ export default function Objective({
   initialObjectiveStatus,
   reportId,
 }) {
-  const [selectedObjective, setSelectedObjective] = useState(objective);
+  const initialObjective = (() => ({
+    ...objective,
+    id: objective.id,
+    value: objective.id,
+    label: objective.label || objective.title,
+  }))();
+  const [selectedObjective, setSelectedObjective] = useState(initialObjective);
   const { getValues } = useFormContext();
 
   /**
@@ -229,12 +235,16 @@ export default function Objective({
 
   const onRemove = () => remove(index);
 
+  const objectiveOptions = uniqBy(
+    [...options, selectedObjective], 'id',
+  );
+
   return (
     <>
       <ObjectiveSelect
         onChange={onChangeObjective}
         selectedObjectives={selectedObjective}
-        options={options}
+        options={objectiveOptions}
         onRemove={onRemove}
       />
       <ObjectiveTitle
