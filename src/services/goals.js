@@ -377,8 +377,13 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
 
 export function reduceObjectivesForActivityReport(newObjectives, currentObjectives = []) {
   return newObjectives.reduce((objectives, objective) => {
+    const objectiveStatus = objective.activityReportObjectives
+      && objective.activityReportObjectives[0]
+      && objective.activityReportObjectives[0].status
+      ? objective.activityReportObjectives[0].status : objective.status;
+
     const exists = objectives.find((o) => (
-      o.title === objective.title && o.status === objective.status
+      o.title === objective.title && o.status === objectiveStatus
     ));
 
     if (exists) {
@@ -1315,7 +1320,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
         savedObjective = await Objective.create({
           ...updatedObjective,
           title: objectiveTitle,
-          status: status || OBJECTIVE_STATUS.NOT_STARTED,
+          status: OBJECTIVE_STATUS.NOT_STARTED,
         });
       } else {
         savedObjective = existingObjective;
