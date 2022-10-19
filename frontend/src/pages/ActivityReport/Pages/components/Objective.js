@@ -43,8 +43,8 @@ export default function Objective({
 }) {
   const initialObjective = (() => ({
     ...objective,
-    id: objective.id,
-    value: objective.id,
+    id: objective.id || objective.value,
+    value: objective.id || objective.value,
     label: objective.label || objective.title,
   }))();
   const [selectedObjective, setSelectedObjective] = useState(initialObjective);
@@ -235,16 +235,12 @@ export default function Objective({
 
   const onRemove = () => remove(index);
 
-  const objectiveOptions = uniqBy(
-    [...options, selectedObjective], 'id',
-  );
-
   return (
     <>
       <ObjectiveSelect
         onChange={onChangeObjective}
         selectedObjectives={selectedObjective}
-        options={objectiveOptions}
+        options={options}
         onRemove={onRemove}
       />
       <ObjectiveTitle
