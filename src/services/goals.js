@@ -377,11 +377,14 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
 
 export function reduceObjectivesForActivityReport(newObjectives, currentObjectives = []) {
   return newObjectives.reduce((objectives, objective) => {
+    // check the activity report objective status
     const objectiveStatus = objective.activityReportObjectives
       && objective.activityReportObjectives[0]
       && objective.activityReportObjectives[0].status
       ? objective.activityReportObjectives[0].status : objective.status;
 
+    // objectives represent the accumulator in the find below
+    // objective is the objective as it is returned from the API
     const exists = objectives.find((o) => (
       o.title === objective.title && o.status === objectiveStatus
     ));
@@ -429,11 +432,6 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         && objective.activityReportObjectives[0].ttaProvided
       ? objective.activityReportObjectives[0].ttaProvided : null;
 
-    const status = objective.activityReportObjectives
-      && objective.activityReportObjectives[0]
-      && objective.activityReportObjectives[0].status
-      ? objective.activityReportObjectives[0].status : objective.status;
-
     const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
 
     return [...objectives, {
@@ -441,7 +439,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       value: id,
       ids: [id],
       ttaProvided,
-      status,
+      status: objectiveStatus, // the status from above, derived from the activity report objective
       isNew: false,
 
       // for the associated models, we need to return not the direct associations
@@ -1320,7 +1318,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
         savedObjective = await Objective.create({
           ...updatedObjective,
           title: objectiveTitle,
-          status: OBJECTIVE_STATUS.NOT_STARTED,
+          status: OBJECTIVE_STATUS.NOT_STARTED, // Only the hook should set status.
         });
       } else {
         savedObjective = existingObjective;
