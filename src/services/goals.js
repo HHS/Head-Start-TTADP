@@ -412,7 +412,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         ...objective.activityReportObjectives[0].activityReportObjectiveTopics.map(
           (t) => t.topic.dataValues,
         ),
-      ], 'id');
+      ], 'value');
 
       exists.files = uniqBy([
         ...exists.files,
