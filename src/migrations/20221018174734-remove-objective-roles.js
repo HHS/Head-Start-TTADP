@@ -13,7 +13,7 @@ module.exports = {
         await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS "public"."ZALNoDeleteFActivityReportObjectiveRoles" ()', { transaction });
 
         // Remove ZALObjectiveRoles and functions.
-        await queryInterface.dropTable('ObjectiveRoles', { transaction });
+        await queryInterface.dropTable('ZALObjectiveRoles', { transaction });
         await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS "public"."ZALNoUpdateFObjectiveRoles" ()', { transaction });
         await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS "public"."ZALNoTruncateFObjectiveRoles" ()', { transaction });
         await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS "public"."ZALNoDeleteFObjectiveRoles" ()', { transaction });
