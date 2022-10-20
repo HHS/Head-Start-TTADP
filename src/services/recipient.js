@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { uniq } from 'lodash';
+import { uniq, uniqBy } from 'lodash';
 import moment from 'moment';
 import {
   Grant,
@@ -168,35 +168,63 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
   };
 }
 
-function formatObjectivesForRtr(currentGoal, goalToAdd) {
-  let topics = [];
-  let reasons = [];
-  const objectives = currentGoal.objectives.map((objective) => {
+function reduceObjectives(response, goal) {
+  const {
+    objectives,
+    topics,
+    reasons,
+  } = response.objectives.reduce((acc, objective) => {
     const { t, r, endDate } = objective.activityReports.reduce((a, report) => ({
       t: [...a.t, ...report.topics],
       r: [...a.r, ...report.reason],
       endDate: report.endDate > a.endDate ? report.endDate : a.endDate,
     }), { t: [], r: [], endDate: '' });
 
+    const existing = acc.objectives.find((o) => (
+      o.title.trim() === objective.getDataValue('title').trim() && o.status === objective.status
+    ));
+
     const ots = objective.topics.map((ot) => ot.name);
 
-    reasons = [...reasons, ...r];
-    topics = [...topics, ...t, ...ots];
+    if (existing) {
+      existing.activityReports = uniqBy([...existing.activityReports, ...objective.activityReports], 'id');
+      existing.reasons = Array.from(
+        new Set([...existing.reasons, ...r]),
+      );
+      existing.reasons.sort();
+      return { ...acc, topics: [...acc.topics, ...ots] };
+    }
 
     return {
-      ...objective.dataValues,
-      endDate,
-      grantNumbers: [currentGoal.grant.number],
-      reasons: uniq(r),
+      objectives: [...acc.objectives, {
+        ...objective.dataValues,
+        endDate,
+        grantNumbers: [response.grant.number],
+        reasons: Array.from(
+          new Set(r),
+        ),
+      }],
+      reasons: [...acc.reasons, ...r].sort(),
+      topics: [...acc.topics, ...t, ...ots],
     };
+  }, {
+    objectives: [],
+    topics: [],
+    reasons: [],
   });
 
-  const goal = goalToAdd;
-  goal.goalTopics = uniq(topics);
-  goal.goalTopics.sort();
+  const current = goal;
+  current.goalTopics = Array.from(
+    new Set([...goal.goalTopics, ...topics]),
+  );
 
-  goal.reasons = uniq(reasons);
-  goal.reasons.sort();
+  current.goalTopics.sort();
+
+  current.reasons = Array.from(
+    new Set([...goal.reasons, ...reasons]),
+  );
+
+  current.reasons.sort();
 
   return objectives.sort((a, b) => ((
     a.endDate === b.endDate ? a.id < b.id
@@ -338,31 +366,47 @@ export async function getGoalsByActivityRecipient(
 
   const allGoalIds = [];
 
-  const r = rows.map((goal) => {
-    // store id for graph
-    allGoalIds.push(goal.id);
+  const r = rows.reduce((previous, current) => {
+    const existingGoal = previous.goalRows.find(
+      (g) => g.goalStatus === current.status && g.goalText.trim() === current.name.trim(),
+    );
 
-    // format goal for response
+    allGoalIds.push(current.id);
+
+    if (existingGoal) {
+      existingGoal.ids = [...existingGoal.ids, current.id];
+      existingGoal.goalNumbers = [...existingGoal.goalNumbers, current.goalNumber];
+      existingGoal.objectives = reduceObjectives(current, existingGoal);
+      existingGoal.objectiveCount = existingGoal.objectives.length;
+      existingGoal.grantNumbers = uniq([...existingGoal.grantNumbers, current.grant.number]);
+      return {
+        goalRows: previous.goalRows,
+      };
+    }
+
     const goalToAdd = {
-      id: goal.id,
-      ids: [goal.id],
-      goalStatus: goal.status,
-      createdOn: goal.createdAt,
-      goalText: goal.name.trim(),
-      goalNumbers: [goal.goalNumber],
+      id: current.id,
+      ids: [current.id],
+      goalStatus: current.status,
+      createdOn: current.createdAt,
+      goalText: current.name.trim(),
+      goalNumbers: [current.goalNumber],
       objectiveCount: 0,
       goalTopics: [],
       reasons: [],
-      previousStatus: calculatePreviousStatus(goal),
+      previousStatus: calculatePreviousStatus(current),
       objectives: [],
-      grantNumbers: [goal.grant.number],
+      grantNumbers: [current.grant.number],
     };
 
-    // format objectives for response
-    goalToAdd.objectives = formatObjectivesForRtr(goal, goalToAdd);
+    goalToAdd.objectives = reduceObjectives(current, goalToAdd);
     goalToAdd.objectiveCount = goalToAdd.objectives.length;
 
-    return goalToAdd;
+    return {
+      goalRows: [...previous.goalRows, goalToAdd],
+    };
+  }, {
+    goalRows: [],
   });
 
   const statuses = await goalStatusGraph({
@@ -373,15 +417,15 @@ export async function getGoalsByActivityRecipient(
 
   if (limitNum) {
     return {
-      count: r.length,
-      goalRows: r.slice(offSetNum, offSetNum + limitNum),
+      count: r.goalRows.length,
+      goalRows: r.goalRows.slice(offSetNum, offSetNum + limitNum),
       statuses,
     };
   }
 
   return {
-    count: r.length,
-    goalRows: r.slice(offSetNum),
+    count: r.goalRows.length,
+    goalRows: r.goalRows.slice(offSetNum),
     statuses,
   };
 }
