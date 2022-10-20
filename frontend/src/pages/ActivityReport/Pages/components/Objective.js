@@ -41,10 +41,12 @@ export default function Objective({
   initialObjectiveStatus,
   reportId,
 }) {
+  // the below is a concession to the fact that the objective may
+  // exist pre-migration to the new UI, and might not have complete data
   const initialObjective = (() => ({
     ...objective,
     id: objective.id || objective.value,
-    value: objective.id || objective.value,
+    value: objective.value || objective.id,
     label: objective.label || objective.title,
   }))();
   const [selectedObjective, setSelectedObjective] = useState(initialObjective);
