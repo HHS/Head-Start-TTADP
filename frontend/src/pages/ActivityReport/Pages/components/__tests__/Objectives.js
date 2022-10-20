@@ -86,8 +86,10 @@ describe('Objectives', () => {
       topics: [],
       roles: [],
       status: 'Not Started',
+      id: 3,
     },
     {
+      id: 4,
       value: 4,
       label: 'Test objective 2',
       title: 'Test objective 2',
@@ -126,8 +128,10 @@ describe('Objectives', () => {
       topics: [],
       roles: [],
       status: 'In Progress',
+      id: 3,
     },
     {
+      id: 4,
       value: 4,
       label: 'Test objective 2',
       title: 'Test objective 2',
