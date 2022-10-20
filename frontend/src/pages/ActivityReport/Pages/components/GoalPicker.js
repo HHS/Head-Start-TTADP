@@ -7,6 +7,8 @@ import { useFormContext, useWatch, useController } from 'react-hook-form/dist/in
 import Select from 'react-select';
 import { getTopics } from '../../../../fetchers/topics';
 import Req from '../../../../components/Req';
+import Option from './GoalOption';
+import SingleValue from './GoalValue';
 import selectOptionsReset from '../../../../components/selectOptionsReset';
 import { validateGoals } from './goalValidator';
 import './GoalPicker.css';
@@ -28,6 +30,11 @@ export const newGoal = (grantIds) => ({
   oldGrantIds: [],
   status: 'Draft',
 });
+
+const components = {
+  Option,
+  SingleValue,
+};
 
 const GoalPicker = ({
   availableGoals, roles, grantIds, reportId, onSaveDraft,
@@ -122,6 +129,7 @@ const GoalPicker = ({
           <Select
             name="goalForEditing"
             control={control}
+            components={components}
             onChange={onSelectGoal}
             rules={{
               validate: validateGoals,
