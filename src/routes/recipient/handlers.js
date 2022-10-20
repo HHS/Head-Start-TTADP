@@ -1,6 +1,7 @@
 import {
   getGoalsByActivityRecipient, recipientById, recipientsByName,
 } from '../../services/recipient';
+import { goalsByIdAndRecipient } from '../../services/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import filtersToScopes from '../../scopes';
 import { getUserReadRegions } from '../../services/accessValidation';
@@ -10,6 +11,23 @@ const namespace = 'SERVICE:RECIPIENT';
 const logContext = {
   namespace,
 };
+
+export async function getGoalsByIdandRecipient(req, res) {
+  try {
+    const { recipientId } = req.params;
+    const { goalIds } = req.query;
+
+    const goals = await goalsByIdAndRecipient(goalIds, recipientId);
+
+    if (!goals.length) {
+      res.sendStatus(404);
+    }
+
+    res.json(goals);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
 
 export async function getRecipient(req, res) {
   try {
