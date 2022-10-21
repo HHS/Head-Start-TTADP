@@ -162,7 +162,6 @@ export default function GoalForm({
 
         setObjectives(newObjectives);
       } catch (err) {
-        console.log(err);
         setFetchError('There was an error loading your goal');
       } finally {
         setIsLoading(false);
