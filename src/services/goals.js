@@ -914,6 +914,14 @@ export async function goalsForGrants(grantIds) {
           sequelize.col('grant.oldGrantId'),
         ),
       ), 'oldGrantIds'],
+      [sequelize.fn(
+        'MAX',
+        sequelize.fn(
+          'DISTINCT',
+          sequelize.col('"Goal"."createdAt"'),
+        ),
+      ), 'created'],
+
       'name',
       'status',
       'onApprovedAR',
@@ -944,7 +952,7 @@ export async function goalsForGrants(grantIds) {
         attributes: [],
       },
     ],
-    order: ['name'],
+    order: [['created', 'desc']],
   });
 }
 
