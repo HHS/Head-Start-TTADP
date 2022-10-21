@@ -403,6 +403,7 @@ export default function GoalForm({
           regionId: parseInt(regionId, DECIMAL_BASE),
           recipientId: recipient.id,
           objectives: goal.objectives,
+          ids,
         }));
 
         return [...acc, ...newGoals];
