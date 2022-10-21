@@ -753,6 +753,7 @@ export async function createOrUpdateGoals(goals) {
       regionId,
       objectives,
       createdVia,
+      status,
       ...fields
     } = goalData;
 
@@ -764,9 +765,9 @@ export async function createOrUpdateGoals(goals) {
       isFromSmartsheetTtaPlan: false,
     };
 
-    // In order to reuse goals with matching text we need to do the findOrCreate as the
-    // upsert would not preform the extra checks and logic now required.
-    let [newGoal] = await Goal.findOne({
+    // we first need to see if the goal exists given what ids we have
+    // for new goals, the id will be an empty array
+    let newGoal = await Goal.findOne({
       where: {
         grantId,
         status: { [Op.not]: 'Closed' },
@@ -774,12 +775,19 @@ export async function createOrUpdateGoals(goals) {
       },
     });
 
+    // In order to reuse goals with matching text we need to do the findOrCreate as the
+    // upsert would not preform the extra checks and logic now required.
     if (!newGoal) {
       [newGoal] = await Goal.findOrCreate({
         where: {
           grantId,
-          status: { [Op.not]: 'Closed' },
+          status: {
+            [Op.not]: 'Closed',
+          },
           name: options.name,
+        },
+        defaults: {
+          status: 'Draft', // if we are creating a goal for the first time, it should be set to 'Draft'
         },
       });
     }
@@ -787,7 +795,7 @@ export async function createOrUpdateGoals(goals) {
     // we can't update this stuff if the goal is on an approved AR
     if (newGoal && !newGoal.onApprovedAR) {
       await newGoal.update(
-        { ...options, createdVia: createdVia || 'rtr' },
+        { ...options, status, createdVia: createdVia || 'rtr' },
         { individualHooks: true },
       );
     // except for the end date, which is always editable

@@ -1,5 +1,7 @@
 import React, {
-  useEffect, useState, useMemo,
+  useEffect,
+  useState,
+  useMemo,
 } from 'react';
 import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
@@ -29,6 +31,7 @@ import ReadOnly from './ReadOnly';
 import PlusButton from './PlusButton';
 import colors from '../../colors';
 import GoalFormLoadingContext from '../../GoalFormLoadingContext';
+import useUrlParamState from '../../hooks/useUrlParamState';
 
 const [
   objectiveTextError,
@@ -100,10 +103,9 @@ export default function GoalForm({
     (objective) => objective.activityReports && objective.activityReports.length > 0,
   ), [objectives]);
 
-  const ids = useMemo(() => {
-    const params = new URLSearchParams(document.location.search);
-    return params.get('id[]').split(',').map((id) => parseInt(id, DECIMAL_BASE));
-  }, []);
+  // we can access the params as the third arg returned by useUrlParamState
+  // (if we need it)
+  const [ids, setIds] = useUrlParamState('id[]');
 
   // for fetching goal data from api if it exists
   useEffect(() => {
@@ -160,6 +162,7 @@ export default function GoalForm({
 
         setObjectives(newObjectives);
       } catch (err) {
+        console.log(err);
         setFetchError('There was an error loading your goal');
       } finally {
         setIsLoading(false);
@@ -547,6 +550,9 @@ export default function GoalForm({
         message: `Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`,
         type: 'success',
       });
+
+      const newIds = updatedGoals.flatMap((g) => g.goalIds);
+      setIds(newIds);
     } catch (error) {
       setAlert({
         message: 'There was an error saving your goal',
@@ -618,6 +624,9 @@ export default function GoalForm({
         message: `Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`,
         type: 'success',
       });
+
+      const newIds = newCreatedGoals.flatMap((g) => g.goalIds);
+      setIds(newIds);
     } catch (error) {
       setAlert({
         message: 'There was an error saving your goal',
