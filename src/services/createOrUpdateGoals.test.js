@@ -120,6 +120,7 @@ describe('createOrUpdateGoals', () => {
       {
         ...basicGoal,
         id: goal.id,
+        ids: [goal.id],
         createdVia: 'activityReport',
         status: 'Not Started',
         objectives: [
@@ -157,6 +158,7 @@ describe('createOrUpdateGoals', () => {
         grantId: grants[1].id,
         isNew: true,
         objectives: [],
+        ids: [goal.id],
       },
     ]);
 
