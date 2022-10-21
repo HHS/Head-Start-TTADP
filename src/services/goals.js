@@ -855,14 +855,18 @@ export async function createOrUpdateGoals(goals) {
               goalId: newGoal.id,
             },
           });
+        }
 
-          if (!objective) {
-            objective = await Objective.create({
-              status: objectiveStatus,
+        if (!objective) {
+          [objective] = await Objective.findOrCreate({
+            where: {
+              status: {
+                [Op.not]: OBJECTIVE_STATUS.COMPLETE,
+              },
               title,
               goalId: newGoal.id,
-            });
-          }
+            },
+          });
         }
 
         await objective.update({
