@@ -182,54 +182,58 @@ function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
   // we need to reduce out the objectives, topics, and reasons
   // 1) we need to return the objectives
   // 2) we need to attach the topics and reasons to the goal
+
   const {
     objectives,
     topics,
     reasons,
-  } = [...currentModel.objectives, ...goal.objectives].reduce((acc, objective) => {
+  } = [
+    ...currentModel.objectives,
+    ...(goal.objectives || [])]
+    .reduce((acc, objective) => {
     // this secondary reduction is to extract what we need from the activity reports
     // ( topic, reason, latest endDate)
-    const { t, r, endDate } = objective.activityReports.reduce((a, report) => ({
-      t: [...a.t, ...report.topics],
-      r: [...a.r, ...report.reason],
-      endDate: report.endDate > a.endDate ? report.endDate : a.endDate,
-    }), { t: [], r: [], endDate: '' });
+      const { t, r, endDate } = objective.activityReports.reduce((a, report) => ({
+        t: [...a.t, ...report.topics],
+        r: [...a.r, ...report.reason],
+        endDate: report.endDate > a.endDate ? report.endDate : a.endDate,
+      }), { t: [], r: [], endDate: '' });
 
-    // previous added objectives have a regularly accessible attribute, the others
-    // for some reason need to be accessed by the getDataValue method
-    const objectiveTitle = objective.title || objective.getDataValue('title');
-    const objectiveStatus = objective.status || objective.getDataValue('status');
+      // previous added objectives have a regularly accessible attribute, the others
+      // for some reason need to be accessed by the getDataValue method
+      const objectiveTitle = objective.title || objective.getDataValue('title');
+      const objectiveStatus = objective.status || objective.getDataValue('status');
 
-    const existing = acc.objectives.find((o) => (
-      o.title.trim() === objectiveTitle.trim() && o.status === objectiveStatus
-    ));
+      const existing = acc.objectives.find((o) => (
+        o.title.trim() === objectiveTitle.trim() && o.status === objectiveStatus
+      ));
 
-    // get our objective topics
-    const objectiveTopics = objective.topics.map((ot) => ot.name);
+      // get our objective topics
+      const objectiveTopics = objective.topics.map((ot) => ot.name);
 
-    if (existing) {
-      existing.activityReports = uniqBy([...existing.activityReports, ...objective.activityReports], 'displayId');
-      existing.reasons = uniq([...existing.reasons, ...r]);
-      existing.reasons.sort();
-      existing.grantNumbers = grantNumbers;
-      return { ...acc, topics: [...acc.topics, ...objectiveTopics] };
-    }
+      if (existing) {
+        existing.activityReports = uniqBy([...existing.activityReports, ...objective.activityReports], 'displayId');
+        existing.reasons = uniq([...existing.reasons, ...r]);
+        existing.reasons.sort();
+        existing.grantNumbers = grantNumbers;
+        return { ...acc, topics: [...acc.topics, ...objectiveTopics] };
+      }
 
-    return {
-      objectives: [...acc.objectives, {
-        ...objective.dataValues,
-        endDate,
-        grantNumbers: [currentModel.grant.number],
-        reasons: uniq(r),
-      }],
-      reasons: [...acc.reasons, ...r].sort(),
-      topics: [...acc.topics, ...t, ...objectiveTopics],
-    };
-  }, {
-    objectives: [],
-    topics: [],
-    reasons: [],
-  });
+      return {
+        objectives: [...acc.objectives, {
+          ...objective.dataValues,
+          endDate,
+          grantNumbers: [currentModel.grant.number],
+          reasons: uniq(r),
+        }],
+        reasons: [...acc.reasons, ...r].sort(),
+        topics: [...acc.topics, ...t, ...objectiveTopics],
+      };
+    }, {
+      objectives: [],
+      topics: [],
+      reasons: [],
+    });
 
   const current = goal;
   current.goalTopics = uniq([...goal.goalTopics, ...topics]);
