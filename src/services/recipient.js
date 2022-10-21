@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { uniq, uniqBy } from 'lodash';
+import { uniq } from 'lodash';
 import moment from 'moment';
 import {
   Grant,
@@ -168,12 +168,17 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
   };
 }
 
-function reduceObjectives(response, goal) {
+function reduceObjectivesForRecipientRecord(response, goal) {
+  // we need to reduce out the objectives, topics, and reasons
+  // 1) we need to return the objectives
+  // 2) we need to attach the topics and reasons to the goal
   const {
     objectives,
     topics,
     reasons,
   } = response.objectives.reduce((acc, objective) => {
+    // this secondary reduction is to extract what we need from the activity reports
+    // ( topic, reason, latest endDate)
     const { t, r, endDate } = objective.activityReports.reduce((a, report) => ({
       t: [...a.t, ...report.topics],
       r: [...a.r, ...report.reason],
@@ -187,7 +192,7 @@ function reduceObjectives(response, goal) {
     const ots = objective.topics.map((ot) => ot.name);
 
     if (existing) {
-      existing.activityReports = uniqBy([...existing.activityReports, ...objective.activityReports], 'id');
+      existing.activityReports = [...existing.activityReports, ...objective.activityReports];
       existing.reasons = Array.from(
         new Set([...existing.reasons, ...r]),
       );
@@ -376,7 +381,7 @@ export async function getGoalsByActivityRecipient(
     if (existingGoal) {
       existingGoal.ids = [...existingGoal.ids, current.id];
       existingGoal.goalNumbers = [...existingGoal.goalNumbers, current.goalNumber];
-      existingGoal.objectives = reduceObjectives(current, existingGoal);
+      existingGoal.objectives = reduceObjectivesForRecipientRecord(current, existingGoal);
       existingGoal.objectiveCount = existingGoal.objectives.length;
       existingGoal.grantNumbers = uniq([...existingGoal.grantNumbers, current.grant.number]);
       return {
@@ -399,7 +404,7 @@ export async function getGoalsByActivityRecipient(
       grantNumbers: [current.grant.number],
     };
 
-    goalToAdd.objectives = reduceObjectives(current, goalToAdd);
+    goalToAdd.objectives = reduceObjectivesForRecipientRecord(current, goalToAdd);
     goalToAdd.objectiveCount = goalToAdd.objectives.length;
 
     return {

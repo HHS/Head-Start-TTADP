@@ -349,6 +349,7 @@ export async function saveObjectiveAssociations(
 
 // this is the reducer called when not getting objectives for a report, IE, the RTR table
 export function reduceObjectives(newObjectives, currentObjectives = []) {
+  // objectives = accumulator
   return newObjectives.reduce((objectives, objective) => {
     const exists = objectives.find((o) => (
       o.title === objective.title && o.status === objective.status
@@ -359,6 +360,10 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
       exists.ids = [...exists.ids, id];
       // Make sure we pass back a list of recipient ids for subsequent saves.
       exists.recipientIds = [...exists.recipientIds, objective.getDataValue('otherEntityId')];
+      exists.activityReports = [
+        ...exists.activityReports,
+        objective.activityReports.map((ar) => ar.dataValues),
+      ];
       return objectives;
     }
 
@@ -366,6 +371,7 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
 
     return [...objectives, {
       ...objective.dataValues,
+      activityReports: objective.activityReports.map((ar) => ar.dataValues),
       value: id,
       ids: [id],
       // Make sure we pass back a list of recipient ids for subsequent saves.
