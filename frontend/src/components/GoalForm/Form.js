@@ -46,7 +46,6 @@ export default function Form({
   goalNumbers,
   clearEmptyObjectiveError,
   onUploadFiles,
-  roleOptions,
 }) {
   const { isLoading } = useContext(GoalFormLoadingContext);
 
@@ -172,7 +171,6 @@ export default function Form({
           errors={objectiveErrors[i] || OBJECTIVE_DEFAULT_ERRORS}
           setObjective={(data) => setObjective(data, i)}
           topicOptions={topicOptions}
-          roleOptions={roleOptions}
           onUploadFiles={onUploadFiles}
           goalStatus={status}
         />
@@ -247,10 +245,6 @@ Form.propTypes = {
   clearEmptyObjectiveError: PropTypes.func.isRequired,
   onUploadFiles: PropTypes.func.isRequired,
   validateGoalNameAndRecipients: PropTypes.func.isRequired,
-  roleOptions: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    value: PropTypes.string,
-  })).isRequired,
 };
 
 Form.defaultProps = {

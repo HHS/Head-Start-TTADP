@@ -3,7 +3,7 @@ import { INTERNAL_SERVER_ERROR, NOT_FOUND } from 'http-codes';
 import { userById } from '../../services/users';
 import SCOPES from '../../middleware/scopeConstants';
 import {
-  changeGoalStatus, createGoals, deleteGoal, retrieveGoalByIdAndRecipient,
+  changeGoalStatus, createGoals, retrieveGoalByIdAndRecipient, deleteGoal,
 } from './handlers';
 import {
   updateGoalStatusById,
@@ -20,9 +20,9 @@ jest.mock('../../services/users', () => ({
 jest.mock('../../services/goals', () => ({
   updateGoalStatusById: jest.fn(),
   createOrUpdateGoals: jest.fn(),
-  destroyGoal: jest.fn(),
   goalByIdWithActivityReportsAndRegions: jest.fn(),
   goalByIdAndRecipient: jest.fn(),
+  destroyGoal: jest.fn(),
 }));
 
 jest.mock('../../services/users', () => ({

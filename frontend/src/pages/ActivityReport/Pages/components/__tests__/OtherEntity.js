@@ -8,7 +8,7 @@ import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import OtherEntity from '../OtherEntity';
 
 // eslint-disable-next-line react/prop-types
-const RenderOtherEntity = ({ objectivesWithoutGoals, roles = [{ id: 1, fullName: 'Central Office' }] }) => {
+const RenderOtherEntity = ({ objectivesWithoutGoals }) => {
   const hookForm = useForm({
     mode: 'onChange',
     defaultValues: {
@@ -18,7 +18,7 @@ const RenderOtherEntity = ({ objectivesWithoutGoals, roles = [{ id: 1, fullName:
 
   return (
     <FormProvider {...hookForm}>
-      <OtherEntity roles={roles} recipientIds={[]} onSaveDraft={jest.fn()} reportId="123" />
+      <OtherEntity recipientIds={[]} onSaveDraft={jest.fn()} reportId="123" />
     </FormProvider>
   );
 };
@@ -30,7 +30,6 @@ const objectives = [
     status: 'In Progress',
     topics: [],
     resources: [],
-    roles: [],
   },
   {
     title: 'title two',
@@ -38,7 +37,6 @@ const objectives = [
     status: 'In Progress',
     topics: [],
     resources: [],
-    roles: [],
   },
 ];
 
@@ -48,20 +46,20 @@ describe('OtherEntity', () => {
     fetchMock.get('/api/topic', []);
   });
   it('renders created objectives', async () => {
-    render(<RenderOtherEntity objectivesWithoutGoals={objectives} roles={[]} />);
+    render(<RenderOtherEntity objectivesWithoutGoals={objectives} />);
 
     const title = await screen.findByText('title', { selector: 'textarea' });
     expect(title).toBeVisible();
   });
 
   it('renders without roles', async () => {
-    render(<RenderOtherEntity objectivesWithoutGoals={objectives} roles={[]} />);
+    render(<RenderOtherEntity objectivesWithoutGoals={objectives} />);
     const title = await screen.findByText('title', { selector: 'textarea' });
     expect(title).toBeVisible();
   });
 
   it('the button adds a new objective', async () => {
-    render(<RenderOtherEntity objectivesWithoutGoals={[]} roles={[]} />);
+    render(<RenderOtherEntity objectivesWithoutGoals={[]} />);
     const button = await screen.findByRole('button', { name: /Add new objective/i });
     userEvent.click(button);
     expect(screen.queryAllByText(/objective status/i).length).toBe(1);

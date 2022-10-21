@@ -53,7 +53,6 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
       <Objectives
         objectives={objectiveOptions}
         topicOptions={topicOptions}
-        roles={[{ fullName: 'Central office', id: 1 }]}
         goalId={goalId}
         noObjectiveError={<></>}
         goalStatus="In Progress"
@@ -84,7 +83,6 @@ describe('Objectives', () => {
       activityReports: [],
       resources: [],
       topics: [],
-      roles: [],
       status: 'Not Started',
       id: 3,
     },
@@ -97,7 +95,6 @@ describe('Objectives', () => {
       activityReports: [],
       resources: [],
       topics: [],
-      roles: [],
       status: 'Not Started',
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
@@ -119,6 +116,7 @@ describe('Objectives', () => {
 
   it('removing an existing objective add it back to the list of available objectives', async () => {
     const objectiveOptions = [{
+
       value: 3,
       label: 'Test objective 1',
       title: 'Test objective 1',
@@ -126,7 +124,6 @@ describe('Objectives', () => {
       activityReports: [],
       resources: [],
       topics: [],
-      roles: [],
       status: 'In Progress',
       id: 3,
     },
@@ -139,7 +136,6 @@ describe('Objectives', () => {
       activityReports: [],
       resources: [],
       topics: [],
-      roles: [],
       status: 'Not Started',
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
@@ -176,7 +172,6 @@ describe('Objectives', () => {
       activityReports: [],
       resources: [],
       topics: [],
-      roles: ['CENTRAL OFFICE'],
       status: 'Not Started',
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
@@ -197,7 +192,6 @@ describe('Objectives', () => {
       }],
       resources: [],
       topics: [],
-      roles: ['CENTRAL OFFICE'],
       status: 'Not Started',
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
@@ -217,7 +211,6 @@ describe('Objectives', () => {
       activityReports: [],
       resources: [],
       topics: [],
-      roles: ['CENTRAL OFFICE'],
       status: 'Not Started',
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} goalId="new" />);
