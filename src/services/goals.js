@@ -291,6 +291,7 @@ export async function saveObjectiveAssociations(
 // this is the reducer called when not getting objectives for a report, IE, the RTR table
 export function reduceObjectives(newObjectives, currentObjectives = []) {
   // objectives = accumulator
+  // we pass in the existing objectives as the accumulator
   return newObjectives.reduce((objectives, objective) => {
     const exists = objectives.find((o) => (
       o.title === objective.title && o.status === objective.status
@@ -303,7 +304,7 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
       exists.recipientIds = [...exists.recipientIds, objective.getDataValue('otherEntityId')];
       exists.activityReports = [
         ...exists.activityReports,
-        objective.activityReports.map((ar) => ar.dataValues),
+        ...objective.activityReports,
       ];
       return objectives;
     }
@@ -312,7 +313,6 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
 
     return [...objectives, {
       ...objective.dataValues,
-      activityReports: objective.activityReports.map((ar) => ar.dataValues),
       value: id,
       ids: [id],
       // Make sure we pass back a list of recipient ids for subsequent saves.
@@ -408,8 +408,8 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
  */
 function reduceGoals(goals, forReport = false) {
   const objectivesReducer = forReport ? reduceObjectivesForActivityReport : reduceObjectives;
-  const r = goals.reduce((previousValue, currentValue) => {
-    const existingGoal = previousValue.find((g) => (
+  const r = goals.reduce((previousValues, currentValue) => {
+    const existingGoal = previousValues.find((g) => (
       g.name === currentValue.name && g.status === currentValue.status
     ));
 
@@ -430,7 +430,7 @@ function reduceGoals(goals, forReport = false) {
         currentValue.objectives,
         existingGoal.objectives,
       );
-      return previousValue;
+      return previousValues;
     }
 
     const goal = {
@@ -452,7 +452,7 @@ function reduceGoals(goals, forReport = false) {
       isNew: false,
     };
 
-    return [...previousValue, goal];
+    return [...previousValues, goal];
   }, []);
 
   return r;
@@ -654,9 +654,7 @@ export async function goalByIdAndRecipient(id, recipientId) {
 }
 
 export async function goalsByIdAndRecipient(ids, recipientId) {
-  const goals = await Goal.findAll(OPTIONS_FOR_GOAL_FORM_QUERY(ids, recipientId));
-  // dedupe the goals & objectives with shared names + titles
-  return reduceGoals(goals);
+  return reduceGoals(await Goal.findAll(OPTIONS_FOR_GOAL_FORM_QUERY(ids, recipientId)));
 }
 
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
