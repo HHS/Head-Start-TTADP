@@ -2,10 +2,10 @@ import {
   updateGoalStatusById,
   createOrUpdateGoalsForActivityReport,
   createOrUpdateGoals,
-  destroyGoal,
   goalsByIdsAndActivityReport,
   goalByIdWithActivityReportsAndRegions,
   goalByIdAndRecipient,
+  destroyGoal,
 } from '../../services/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
@@ -111,7 +111,6 @@ export async function changeGoalStatus(req, res) {
     await handleErrors(req, res, error, `${logContext}:CHANGE_GOAL_STATUS`);
   }
 }
-
 export async function deleteGoal(req, res) {
   try {
     const { goalId } = req.params;

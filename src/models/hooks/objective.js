@@ -215,18 +215,6 @@ const propagateMetadataToTemplate = async (sequelize, instance, options) => {
         },
       })));
 
-    const rolls = await sequelize.models.ObjectiveRole.findAll({
-      where: { objectiveId: instance.id },
-      transaction: options.transaction,
-    });
-    await Promise.all(rolls.map(async (roll) => sequelize.models.ObjectiveTemplateRole
-      .findOrCreate({
-        where: {
-          objectiveTemplateId: instance.objectiveTemplateId,
-          rollId: roll.rollId,
-        },
-      })));
-
     const topics = await sequelize.models.ObjectiveTopics.findAll({
       where: { objectiveId: instance.id },
       transaction: options.transaction,

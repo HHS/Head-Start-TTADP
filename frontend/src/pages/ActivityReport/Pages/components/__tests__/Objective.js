@@ -7,7 +7,6 @@ import Objective from '../Objective';
 const defaultObjective = {
   id: 1,
   resources: [],
-  roles: [],
   topics: [],
   title: 'This is an objective title',
   ttaProvided: '<p><ul><li>What</li></ul></p>',
@@ -55,7 +54,6 @@ const RenderObjective = ({
         goalIndex={0}
         objectiveIndex={0}
         status="In progress"
-        roleOptions={[{ fullName: 'Central office', id: 1234 }]}
         errors={{}}
         onObjectiveChange={jest.fn()}
         onSaveDraft={jest.fn()}

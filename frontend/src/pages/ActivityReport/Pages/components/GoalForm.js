@@ -20,7 +20,6 @@ import { DECIMAL_BASE } from '../../../../Constants';
 export default function GoalForm({
   goal,
   topicOptions,
-  roles,
   reportId,
   onSaveDraft,
   datePickerKey,
@@ -160,7 +159,6 @@ export default function GoalForm({
       <Objectives
         objectives={objectives}
         topicOptions={topicOptions}
-        roles={roles}
         goalStatus={status}
         noObjectiveError={errors.goalForEditing && errors.goalForEditing.objectives
           ? ERROR_FORMAT(errors.goalForEditing.objectives.message) : NO_ERROR}
@@ -189,10 +187,6 @@ GoalForm.propTypes = {
   topicOptions: PropTypes.arrayOf(PropTypes.shape({
     value: PropTypes.number,
     label: PropTypes.string,
-  })).isRequired,
-  roles: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number,
-    fullName: PropTypes.string,
   })).isRequired,
   reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   onSaveDraft: PropTypes.func.isRequired,
