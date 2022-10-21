@@ -17,12 +17,7 @@ const Option = (props) => {
     isFocused,
     innerRef,
     innerProps,
-    data,
   } = props;
-
-  const { goalIds } = data;
-
-  const label = goalIds ? goalIds.map((id) => `G-${id}`).join(', ') : '';
 
   return (
     <div
@@ -39,13 +34,6 @@ const Option = (props) => {
       {...innerProps}
     >
       <div>
-        { label ? (
-          <strong>
-            {label}
-            :
-            {' '}
-          </strong>
-        ) : null }
         { children }
       </div>
     </div>
