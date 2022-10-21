@@ -819,12 +819,11 @@ export async function createOrUpdateGoals(goals) {
   // eslint-disable-next-line max-len
   const goalIds = await Promise.all(goals.map(async (goalData) => {
     const {
-      id,
+      ids,
       grantId,
       recipientId,
       regionId,
       objectives,
-      status,
       createdVia,
       ...fields
     } = goalData;
@@ -839,19 +838,37 @@ export async function createOrUpdateGoals(goals) {
 
     // In order to reuse goals with matching text we need to do the findOrCreate as the
     // upsert would not preform the extra checks and logic now required.
-    const [newGoal] = await Goal.findOrCreate({
+    let [newGoal] = await Goal.findOne({
       where: {
         grantId,
-        name: options.name,
         status: { [Op.not]: 'Closed' },
+        id: ids,
       },
-      defaults: { status },
     });
 
-    await newGoal.update(
-      { ...options, status, createdVia: createdVia || 'rtr' },
-      { individualHooks: true },
-    );
+    if (!newGoal) {
+      [newGoal] = await Goal.findOrCreate({
+        where: {
+          grantId,
+          status: { [Op.not]: 'Closed' },
+          name: options.name,
+        },
+      });
+    }
+
+    // we can't update this stuff if the goal is on an approved AR
+    if (newGoal && !newGoal.onApprovedAR) {
+      await newGoal.update(
+        { ...options, createdVia: createdVia || 'rtr' },
+        { individualHooks: true },
+      );
+    // except for the end date, which is always editable
+    } else if (newGoal) {
+      await newGoal.update(
+        { endDate: options.endDate },
+        { individualHooks: true },
+      );
+    }
 
     // before we create objectives, we have to unpack them to make the creation a little cleaner
     // if an objective was new, then it will not have an id but "isNew" will be true

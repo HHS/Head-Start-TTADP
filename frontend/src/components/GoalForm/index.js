@@ -104,14 +104,16 @@ export default function GoalForm({
     (objective) => objective.activityReports && objective.activityReports.length > 0,
   ), [objectives]);
 
+  const ids = useMemo(() => {
+    const params = new URLSearchParams(document.location.search);
+    return params.get('id[]').split(',').map((id) => parseInt(id, DECIMAL_BASE));
+  }, []);
+
   // for fetching goal data from api if it exists
   useEffect(() => {
     async function fetchGoal() {
       setFetchAttempted(true); // as to only fetch once
       try {
-        const params = new URLSearchParams(document.location.search);
-        const ids = params.get('id[]').split(',').map((id) => parseInt(id, DECIMAL_BASE));
-
         const [goal] = await goalsByIdAndRecipient(
           ids, recipient.id.toString(),
         );
@@ -176,7 +178,7 @@ export default function GoalForm({
     if (!fetchAttempted && !isNew && isLoading) {
       fetchGoal();
     }
-  }, [errors, fetchAttempted, recipient.id, isNew, isLoading]);
+  }, [errors, fetchAttempted, recipient.id, isNew, isLoading, ids]);
 
   // for fetching topic options from API
   useEffect(() => {
@@ -535,6 +537,7 @@ export default function GoalForm({
           regionId: parseInt(regionId, DECIMAL_BASE),
           recipientId: recipient.id,
           objectives,
+          ids,
         }));
       }
 
@@ -597,6 +600,7 @@ export default function GoalForm({
         regionId: parseInt(regionId, DECIMAL_BASE),
         recipientId: recipient.id,
         objectives,
+        ids,
       }));
 
       const goals = [
