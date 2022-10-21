@@ -4,7 +4,6 @@ const {
   ActivityReportObjective,
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
-  ActivityReportObjectiveRole,
   ActivityReportObjectiveTopic,
 } = require('../models');
 
@@ -39,20 +38,6 @@ const cacheResources = async (activityReportObjectiveId, resources = []) => Prom
   }),
 ]);
 
-const cacheRoles = async (activityReportObjectiveId, roles = []) => Promise.all([
-  await Promise.all(roles.map(async (role) => ActivityReportObjectiveRole.upsert({
-    activityReportObjectiveId,
-    roleId: role.roleId,
-  }, { returning: true }))),
-  await ActivityReportObjectiveRole.destroy({
-    where: {
-      activityReportObjectiveId,
-      roleId: { [Op.notIn]: roles.map((role) => role.roleId) },
-    },
-    individualHooks: true,
-  }),
-]);
-
 const cacheTopics = async (activityReportObjectiveId, topics = []) => Promise.all([
   await Promise.all(topics.map(async ([topic]) => ActivityReportObjectiveTopic.upsert({
     activityReportObjectiveId,
@@ -69,7 +54,7 @@ const cacheTopics = async (activityReportObjectiveId, topics = []) => Promise.al
 
 const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   const {
-    files, resources, roles, topics, ttaProvided, status,
+    files, resources, topics, ttaProvided, status,
   } = metadata;
   const objectiveId = objective.id;
   const [aro] = await ActivityReportObjective.findOrCreate({
@@ -90,7 +75,6 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     }),
     await cacheFiles(activityReportObjectiveId, files),
     await cacheResources(activityReportObjectiveId, resources),
-    await cacheRoles(activityReportObjectiveId, roles),
     await cacheTopics(activityReportObjectiveId, topics),
   ]);
 };
@@ -135,18 +119,13 @@ async function destroyActivityReportObjectiveMetadata(activityReportObjectiveIds
         activityReportObjectiveId: activityReportObjectiveIdsToRemove,
       },
     }),
-    ActivityReportObjectiveRole.destroy({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveIdsToRemove,
-      },
-    }),
+
   ]);
 }
 
 export {
   cacheFiles,
   cacheResources,
-  cacheRoles,
   cacheTopics,
   cacheObjectiveMetadata,
   cacheGoalMetadata,

@@ -6,7 +6,6 @@ import {
   UNFINISHED_OBJECTIVES,
   GOAL_MISSING_OBJECTIVE,
   OBJECTIVE_TOPICS,
-  OBJECTIVE_ROLE,
   OBJECTIVE_TITLE,
   OBJECTIVE_TTA,
   OBJECTIVE_RESOURCES,
@@ -20,7 +19,6 @@ const missingTitle = {
   ttaProvided: 'ttaProvided',
   topics: ['Hello'],
   resources: [],
-  roles: ['Chief Inspector'],
 };
 
 const missingTTAProvided = {
@@ -28,7 +26,6 @@ const missingTTAProvided = {
   ttaProvided: '<p></p>',
   topics: ['Hello'],
   resources: [],
-  roles: ['Chief Inspector'],
 };
 
 const validObjective = {
@@ -36,7 +33,6 @@ const validObjective = {
   ttaProvided: 'ttaProvided',
   topics: ['Hello'],
   resources: [],
-  roles: ['Chief Inspector'],
 };
 
 const goalUnfinishedObjective = {
@@ -94,18 +90,6 @@ describe('validateGoals', () => {
         const result = unfinishedObjectives(objectives, setError);
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
         expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].topics`, { message: OBJECTIVE_TOPICS });
-      });
-
-      it('if one objective has no "roles"', () => {
-        const objectives = [
-          { ...validObjective },
-          { ...validObjective, roles: [] },
-        ];
-
-        const setError = jest.fn();
-        const result = unfinishedObjectives(objectives, setError);
-        expect(result).toEqual(UNFINISHED_OBJECTIVES);
-        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].roles`, { message: OBJECTIVE_ROLE });
       });
 
       it('if one objective has invalid "resources"', () => {

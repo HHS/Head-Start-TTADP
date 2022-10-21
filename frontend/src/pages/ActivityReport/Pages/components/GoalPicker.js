@@ -37,7 +37,7 @@ const components = {
 };
 
 const GoalPicker = ({
-  availableGoals, roles, grantIds, reportId, onSaveDraft,
+  availableGoals, grantIds, reportId, onSaveDraft,
 }) => {
   const {
     control, setValue, watch,
@@ -151,7 +151,6 @@ const GoalPicker = ({
           <div>
             <GoalForm
               topicOptions={topicOptions}
-              roles={roles}
               goal={goalForEditing}
               reportId={reportId}
               onSaveDraft={onSaveDraft}
@@ -173,10 +172,6 @@ GoalPicker.propTypes = {
       value: PropTypes.number,
     }),
   ).isRequired,
-  roles: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number,
-    fullName: PropTypes.string,
-  })).isRequired,
   reportId: PropTypes.oneOfType([
     PropTypes.number,
     PropTypes.string,

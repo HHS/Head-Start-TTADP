@@ -6,13 +6,11 @@ import {
   Objective,
   ObjectiveResource,
   ObjectiveFile,
-  ObjectiveRole,
   ObjectiveTopic,
   ActivityReportObjective,
   ActivityReportObjectiveTopic,
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
-  ActivityReportObjectiveRole,
   sequelize,
   Recipient,
   ActivityReport,
@@ -20,7 +18,6 @@ import {
   Topic,
   Program,
   File,
-  Role,
 } from '../models';
 import { DECIMAL_BASE, REPORT_STATUSES, OBJECTIVE_STATUS } from '../constants';
 import {
@@ -170,39 +167,6 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
           },
         },
         {
-          model: Role,
-          as: 'roles',
-          attributes: {
-            include: [
-              [
-                sequelize.literal(`
-                (
-                  SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
-                  INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                  INNER JOIN "ActivityReportObjectiveRoles" "or" ON "or"."activityReportObjectiveId" = "aro"."id"                                        
-                  WHERE "aro"."objectiveId" = "objectives"."id" 
-                  AND "or"."roleId" = "objectives->roles"."id"
-                ) > 0
-              `),
-                'onAnyReport',
-              ],
-              [
-                sequelize.literal(`
-                (
-                  SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
-                  INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                  INNER JOIN "ActivityReportObjectiveRoles" "or" ON "or"."activityReportObjectiveId" = "aro"."id"                                        
-                  WHERE "aro"."objectiveId" = "objectives"."id" 
-                  AND "or"."roleId" = "objectives->roles"."id"
-                  AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
-                ) > 0
-              `),
-                'isOnApprovedReport',
-              ],
-            ],
-          },
-        },
-        {
           model: ActivityReport,
           as: 'activityReports',
           where: {
@@ -247,7 +211,6 @@ export async function saveObjectiveAssociations(
   objective,
   resources = [],
   topics = [],
-  roles = [],
   files = [],
   deleteUnusedAssociations = false,
 ) {
@@ -272,16 +235,6 @@ export async function saveObjectiveAssociations(
       }),
     ),
   );
-
-  const objectiveRoles = await Promise.all((roles.map(async (role) => {
-    const [r] = await ObjectiveRole.findOrCreate({
-      where: {
-        roleId: role.id,
-        objectiveId: objective.id,
-      },
-    });
-    return r;
-  })));
 
   const objectiveFiles = await Promise.all(
     files.map(
@@ -316,17 +269,6 @@ export async function saveObjectiveAssociations(
       },
     });
 
-    // cleanup objective roles
-    await ObjectiveRole.destroy({
-      where: {
-        id: {
-          [Op.notIn]: objectiveRoles.length
-            ? objectiveRoles.map((or) => or.id) : [],
-        },
-        objectiveId: objective.id,
-      },
-    });
-
     // cleanup objective files
     await ObjectiveFile.destroy({
       where: {
@@ -342,7 +284,6 @@ export async function saveObjectiveAssociations(
   return {
     topics: objectiveTopics,
     resources: objectiveResources,
-    roles: objectiveRoles,
     files: objectiveFiles,
   };
 }
@@ -401,12 +342,6 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         ),
       ], 'value');
 
-      exists.roles = uniqBy([
-        ...exists.roles,
-        ...objective.activityReportObjectives[0].activityReportObjectiveRoles.map(
-          (r) => r.role.dataValues,
-        )], 'id');
-
       exists.topics = uniqBy([
         ...exists.topics,
         ...objective.activityReportObjectives[0].activityReportObjectiveTopics.map(
@@ -447,9 +382,6 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       // of the activity report not the state of the objective, which is what
       // we are getting at with this method (getGoalsForReport)
 
-      roles: objective.activityReportObjectives[0].activityReportObjectiveRoles.map(
-        (r) => r.role.dataValues,
-      ),
       topics: objective.activityReportObjectives[0].activityReportObjectiveTopics.map(
         (t) => t.topic.dataValues,
       ),
@@ -594,10 +526,6 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
             where: {
               activityReportId,
             },
-          },
-          {
-            model: Role,
-            as: 'roles',
           },
           {
             model: File,
@@ -873,7 +801,6 @@ export async function createOrUpdateGoals(goals) {
         const {
           resources,
           topics,
-          roles,
           title,
           files,
           status: objectiveStatus,
@@ -912,13 +839,12 @@ export async function createOrUpdateGoals(goals) {
           status: objectiveStatus,
         }, { individualHooks: true });
 
-        // save all our objective join tables (ObjectiveResource, ObjectiveTopic, ObjectiveRole)
+        // save all our objective join tables (ObjectiveResource, ObjectiveTopic, ObjectiveFile)
         const deleteUnusedAssociations = true;
         await saveObjectiveAssociations(
           objective,
           resources,
           topics,
-          roles,
           files,
           deleteUnusedAssociations,
         );
@@ -926,8 +852,6 @@ export async function createOrUpdateGoals(goals) {
         return {
           ...objective.dataValues,
           topics,
-          resources,
-          roles,
         };
       }),
     );
@@ -1282,7 +1206,6 @@ async function createObjectivesForGoal(goal, objectives, report) {
       status,
       resources,
       topics,
-      roles,
       files,
       ...updatedFields
     } = objective;
@@ -1343,7 +1266,6 @@ async function createObjectivesForGoal(goal, objectives, report) {
       savedObjective,
       resources,
       topics,
-      roles,
       files,
       deleteUnusedAssociations,
     );
@@ -1435,6 +1357,7 @@ export async function saveGoalsForReport(goals, report) {
         onApprovedAR, // we don't want to set this manually
         endDate: discardedEndDate, // get this outta here
         createdVia,
+        goalIds: discardedeGoalIds,
         ...fields
       } = goal;
 
@@ -1572,22 +1495,7 @@ export async function getGoalsForReport(reportId) {
                 required: false,
                 attributes: [['userProvidedUrl', 'value'], ['id', 'key']],
               },
-              {
-                model: ActivityReportObjectiveRole,
-                as: 'activityReportObjectiveRoles',
-                required: false,
-                include: [
-                  {
-                    model: Role,
-                    as: 'role',
-                  },
-                ],
-              },
             ],
-          },
-          {
-            model: Role,
-            as: 'roles',
           },
           {
             model: Topic,

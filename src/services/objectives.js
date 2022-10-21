@@ -5,7 +5,6 @@ import {
   ActivityReportObjective,
   Goal,
   Grant,
-  Role,
   Topic,
   File,
   ObjectiveResource,
@@ -16,9 +15,7 @@ import { cacheObjectiveMetadata } from './reportCache';
 export async function saveObjectivesForReport(objectives, report) {
   const updatedObjectives = await Promise.all(objectives.map(async (objective) => Promise
     .all(objective.recipientIds.map(async (otherEntityId) => {
-      const {
-        roles, topics, files, resources,
-      } = objective;
+      const { topics, files, resources } = objective;
 
       // Determine if this objective already exists.
       let existingObjective;
@@ -73,7 +70,6 @@ export async function saveObjectivesForReport(objectives, report) {
         savedObjective,
         resources,
         topics,
-        roles,
         files,
         deleteUnusedAssociations,
       );
@@ -129,10 +125,6 @@ export async function getObjectivesByReportId(reportId) {
           activityReportId: reportId,
         },
         required: true,
-      },
-      {
-        model: Role,
-        as: 'roles',
       },
       {
         model: Topic,

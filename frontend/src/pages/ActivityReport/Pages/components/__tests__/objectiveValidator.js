@@ -10,7 +10,6 @@ const missingTitle = {
   ttaProvided: 'ttaProvided',
   topics: ['Coaching'],
   resources: ['Resource'],
-  roles: ['Central Office'],
 };
 
 const validObjective = {
@@ -18,7 +17,6 @@ const validObjective = {
   ttaProvided: 'ttaProvided',
   topics: ['Coaching'],
   resources: ['Resource'],
-  roles: ['Central Office'],
 };
 
 describe('validateObjectives', () => {
