@@ -303,7 +303,7 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
       // Make sure we pass back a list of recipient ids for subsequent saves.
       exists.recipientIds = [...exists.recipientIds, objective.getDataValue('otherEntityId')];
       exists.activityReports = [
-        ...exists.activityReports,
+        ...(exists.activityReports || []),
         ...objective.activityReports,
       ];
       return objectives;
