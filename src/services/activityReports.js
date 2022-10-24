@@ -96,6 +96,10 @@ async function saveOwner(activityReportId, collaborator) {
 }
 
 async function saveOwnerInstantiators(activityReportId, collaborator) {
+  if (!collaborator) {
+    throw new Error('No collaborator provided. If creating a report, make sure to provide an `owner`.');
+  }
+
   return syncOwnerInstantiators(
     ENTITY_TYPES.REPORT,
     activityReportId,
