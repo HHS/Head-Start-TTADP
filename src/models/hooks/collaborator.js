@@ -174,7 +174,7 @@ const deleteUnusedApprovals = async (sequelize, instance, options) => {
       entityType: instance.entityType,
       entityId: instance.entityId,
       tier: instance.tier,
-      collaboratorTypes: { [Op.contains]: COLLABORATOR_TYPES.RATIFIER },
+      collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.RATIFIER] },
     },
     transaction: options.transaction,
   });
