@@ -18,7 +18,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       Collaborator.belongsTo(models.ActivityReport, {
         scope: {
-          '$Collaborators.entityType$': ENTITY_TYPES.REPORT,
+          '$Collaborator.entityType$': ENTITY_TYPES.REPORT,
         },
         foreignKey: 'entityId',
         as: 'report',
@@ -26,7 +26,7 @@ module.exports = (sequelize, DataTypes) => {
       });
       Collaborator.belongsTo(models.ActivityReportGoal, {
         scope: {
-          '$Collaborators.entityType$': ENTITY_TYPES.REPORTGOAL,
+          '$Collaborator.entityType$': ENTITY_TYPES.REPORTGOAL,
         },
         foreignKey: 'entityId',
         as: 'reportGoal',
@@ -34,7 +34,7 @@ module.exports = (sequelize, DataTypes) => {
       });
       Collaborator.belongsTo(models.ActivityReportObjective, {
         scope: {
-          '$Collaborators.entityType$': ENTITY_TYPES.REPORTOBJECTIVE,
+          '$Collaborator.entityType$': ENTITY_TYPES.REPORTOBJECTIVE,
         },
         foreignKey: 'entityId',
         as: 'reportObjective',
@@ -42,7 +42,7 @@ module.exports = (sequelize, DataTypes) => {
       });
       Collaborator.belongsTo(models.Goal, {
         scope: {
-          '$Collaborators.entityType$': ENTITY_TYPES.GOAL,
+          '$Collaborator.entityType$': ENTITY_TYPES.GOAL,
         },
         foreignKey: 'entityId',
         as: 'goal',
@@ -50,7 +50,7 @@ module.exports = (sequelize, DataTypes) => {
       });
       Collaborator.belongsTo(models.GoalTemplate, {
         scope: {
-          '$Collaborators.entityType$': ENTITY_TYPES.GOALTEMPLATE,
+          '$Collaborator.entityType$': ENTITY_TYPES.GOALTEMPLATE,
         },
         foreignKey: 'entityId',
         as: 'goalTemplate',
@@ -58,7 +58,7 @@ module.exports = (sequelize, DataTypes) => {
       });
       Collaborator.belongsTo(models.Objective, {
         scope: {
-          '$Collaborators.entityType$': ENTITY_TYPES.OBJECTIVE,
+          '$Collaborator.entityType$': ENTITY_TYPES.OBJECTIVE,
         },
         foreignKey: 'entityId',
         as: 'objective',
@@ -66,7 +66,7 @@ module.exports = (sequelize, DataTypes) => {
       });
       Collaborator.belongsTo(models.ObjectiveTemplate, {
         scope: {
-          '$Collaborators.entityType$': ENTITY_TYPES.OBJECTIVETEMPLATE,
+          '$Collaborator.entityType$': ENTITY_TYPES.OBJECTIVETEMPLATE,
         },
         foreignKey: 'entityId',
         as: 'objectiveTemplate',
