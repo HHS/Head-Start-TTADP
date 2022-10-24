@@ -106,8 +106,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
           model: Topic,
           as: 'topics',
           attributes: [
-            ['id', 'value'],
-            ['name', 'label'],
+            'id',
+            'name',
             [
               sequelize.literal(`
                 (
@@ -214,15 +214,36 @@ export async function saveObjectiveAssociations(
   files = [],
   deleteUnusedAssociations = false,
 ) {
+  console.log({
+    objective,
+    resources,
+    topics,
+    files,
+    deleteUnusedAssociations,
+    message: 'saveObjectiveAssociations',
+  });
+
   // topics
   const objectiveTopics = await Promise.all(
     (topics.map(async (topic) => ObjectiveTopic.findOrCreate({
       where: {
         objectiveId: objective.id,
-        topicId: topic.value,
+        topicId: topic.id,
       },
     }))),
   );
+
+  if (deleteUnusedAssociations) {
+    // cleanup objective topics
+    await ObjectiveTopic.destroy({
+      where: {
+        id: {
+          [Op.notIn]: objectiveTopics.length ? objectiveTopics.map(([ot]) => ot.id) : [],
+        },
+        objectiveId: objective.id,
+      },
+    });
+  }
 
   // resources
   const objectiveResources = await Promise.all(
@@ -236,6 +257,19 @@ export async function saveObjectiveAssociations(
     ),
   );
 
+  if (deleteUnusedAssociations) {
+    // cleanup objective resources
+    await ObjectiveResource.destroy({
+      where: {
+        id: {
+          [Op.notIn]: objectiveResources.length
+            ? objectiveResources.map(([or]) => or.id) : [],
+        },
+        objectiveId: objective.id,
+      },
+    });
+  }
+
   const objectiveFiles = await Promise.all(
     files.map(
       (file) => ObjectiveFile.findOrCreate({
@@ -248,27 +282,6 @@ export async function saveObjectiveAssociations(
   );
 
   if (deleteUnusedAssociations) {
-    // cleanup objective topics
-    await ObjectiveTopic.destroy({
-      where: {
-        id: {
-          [Op.notIn]: objectiveTopics.length ? objectiveTopics.map(([ot]) => ot.id) : [],
-        },
-        objectiveId: objective.id,
-      },
-    });
-
-    // cleanup objective resources
-    await ObjectiveResource.destroy({
-      where: {
-        id: {
-          [Op.notIn]: objectiveResources.length
-            ? objectiveResources.map(([or]) => or.id) : [],
-        },
-        objectiveId: objective.id,
-      },
-    });
-
     // cleanup objective files
     await ObjectiveFile.destroy({
       where: {
@@ -304,7 +317,7 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
       exists.recipientIds = [...exists.recipientIds, objective.getDataValue('otherEntityId')];
       exists.activityReports = [
         ...(exists.activityReports || []),
-        ...objective.activityReports,
+        ...(objective.activityReports || []),
       ];
       return objectives;
     }
@@ -353,7 +366,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         ...objective.activityReportObjectives[0].activityReportObjectiveTopics.map(
           (t) => t.topic.dataValues,
         ),
-      ], 'value');
+      ], 'id');
 
       exists.files = uniqBy([
         ...exists.files,
@@ -540,10 +553,6 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
           {
             model: Topic,
             as: 'topics',
-            attributes: [
-              ['id', 'value'],
-              ['name', 'label'],
-            ],
             required: false,
           },
           {
@@ -804,36 +813,15 @@ export async function createOrUpdateGoals(goals) {
       );
     }
 
-    // before we create objectives, we have to unpack them to make the creation a little cleaner
-    // if an objective was new, then it will not have an id but "isNew" will be true
-    // since the goals are packed up, the objectives are too and this may create a situation where
-    // an objective belonging to one goal will be looped over as part of creating another goal
-    // so we first unpack and then, if the objective already exists, it is safe to update all the
-    // data except the goal ID, which we update only if "isNew" is true
-    // we will have to be careful and watch for edge cases where isNew is a misrepresentation value
-
-    const objectivesToCreateOrUpdate = objectives.reduce((arr, o) => {
-      if (o.isNew) {
-        // eslint-disable-next-line no-param-reassign
-        return [...arr, o];
-      }
-
-      if (o.ids && o.ids.length) {
-        return [...arr, ...o.ids.map((objectiveId) => ({ ...o, id: objectiveId }))];
-      }
-
-      return [...arr, o];
-    }, []);
-
     const newObjectives = await Promise.all(
-      objectivesToCreateOrUpdate.map(async (o) => {
+      objectives.map(async (o) => {
         const {
           resources,
           topics,
           title,
           files,
           status: objectiveStatus,
-          id: objectiveId,
+          id: objectiveIds,
           isNew,
         } = o;
 
@@ -844,13 +832,24 @@ export async function createOrUpdateGoals(goals) {
             where: {
               goalId: newGoal.id,
               title,
+              status: {
+                [Op.not]: OBJECTIVE_STATUS.COMPLETE,
+              },
+            },
+            defaults: {
+              status: objectiveStatus,
+              title,
+              goalId: newGoal.id,
             },
           });
-        } else if (objectiveId) {
+        } else if (objectiveIds) {
           objective = await Objective.findOne({
             where: {
-              id: objectiveId,
+              id: objectiveIds,
               goalId: newGoal.id,
+              status: {
+                [Op.not]: OBJECTIVE_STATUS.COMPLETE,
+              },
             },
           });
         }
@@ -861,6 +860,11 @@ export async function createOrUpdateGoals(goals) {
               status: {
                 [Op.not]: OBJECTIVE_STATUS.COMPLETE,
               },
+              title,
+              goalId: newGoal.id,
+            },
+            defaults: {
+              status: objectiveStatus,
               title,
               goalId: newGoal.id,
             },
@@ -885,6 +889,8 @@ export async function createOrUpdateGoals(goals) {
         return {
           ...objective.dataValues,
           topics,
+          resources,
+          files,
         };
       }),
     );
@@ -1504,10 +1510,6 @@ export async function getGoalsForReport(reportId) {
                   {
                     model: Topic,
                     as: 'topic',
-                    attributes: [
-                      ['name', 'label'],
-                      ['id', 'value'],
-                    ],
                   },
                 ],
               },
@@ -1533,8 +1535,6 @@ export async function getGoalsForReport(reportId) {
           {
             model: Topic,
             as: 'topics',
-            // these need to be renamed to match the frontend form names
-            attributes: [['name', 'label'], ['id', 'value']],
           },
           {
             model: ObjectiveResource,
