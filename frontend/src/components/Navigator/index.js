@@ -206,12 +206,15 @@ function Navigator({
 
     const fieldArrayName = 'objectivesWithoutGoals';
     const currentObjectives = getValues(fieldArrayName);
+    const otherEntityIds = recipients.map(({ id }) => id);
 
     // Save objectives.
     try {
       const newObjectives = await saveObjectivesForReport(
         {
-          objectivesWithoutGoals: currentObjectives,
+          objectivesWithoutGoals: currentObjectives.map((objective) => (
+            { ...objective, recipientIds: otherEntityIds }
+          )),
           activityReportId: reportId,
           region: formData.regionId,
         },
@@ -293,12 +296,16 @@ function Navigator({
       return;
     }
 
+    const otherEntityIds = recipients.map(({ id }) => id);
+
     // Save objectives.
     let newObjectives;
     try {
       newObjectives = await saveObjectivesForReport(
         {
-          objectivesWithoutGoals: objectives,
+          objectivesWithoutGoals: objectives.map((objective) => (
+            { ...objective, recipientIds: otherEntityIds }
+          )),
           activityReportId: reportId,
           region: formData.regionId,
         },
@@ -442,7 +449,7 @@ function Navigator({
                       ? (
                         <>
                           <Button className="margin-right-1" type="button" onClick={onGoalFormNavigate}>{`Save ${isOtherEntityReport ? 'objectives' : 'goal'}`}</Button>
-                          <Button className="usa-button--outline" type="button" onClick={onSaveDraftGoal}>Save draft</Button>
+                          <Button className="usa-button--outline" type="button" onClick={isOtherEntityReport ? onSaveDraftOetObjectives : onSaveDraftGoal}>Save draft</Button>
                         </>
                       ) : (
                         <>
