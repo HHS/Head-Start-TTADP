@@ -2,6 +2,7 @@ import { Op } from 'sequelize';
 import db, {
   User,
   Recipient,
+  UserRole,
   Grant,
   Goal,
   File,
@@ -11,7 +12,6 @@ import db, {
   ObjectiveResource,
   ObjectiveTopic,
   ObjectiveRole,
-  ActivityReport,
   ActivityRecipient,
   ActivityReportGoal,
   ActivityReportObjective,
@@ -25,6 +25,7 @@ import {
 } from './reportCache';
 import { REPORT_STATUSES } from '../constants';
 import { createOrUpdate } from './activityReports';
+import { destroyReport } from '../testUtils';
 
 describe('reportCache', () => {
   const mockUser = {
@@ -151,6 +152,12 @@ describe('reportCache', () => {
     roles.push((await Role.findOrCreate({ where: { ...mockRoles[1] } }))[0]);
     roles.push((await Role.findOrCreate({ where: { ...mockRoles[2] } }))[0]);
     roles.push((await Role.findOrCreate({ where: { ...mockRoles[3] } }))[0]);
+
+    await UserRole.create({ userId: user.id, roleId: roles[0].id });
+    await UserRole.create({ userId: user.id, roleId: roles[1].id });
+    await UserRole.create({ userId: user.id, roleId: roles[2].id });
+    await UserRole.create({ userId: user.id, roleId: roles[3].id });
+
     [recipient] = await Recipient.findOrCreate({ where: { ...mockRecipient } });
     [grant] = await Grant.findOrCreate({
       where: {
@@ -244,7 +251,7 @@ describe('reportCache', () => {
       where: { objectiveId: objective.id },
       individualHooks: true,
     });
-    await ActivityReport.destroy({ where: { id: report.id }, individualHooks: true });
+    await destroyReport(report.id);
     await Objective.destroy({ where: { id: objective.id }, individualHooks: true });
     await Goal.destroy({ where: { id: goal.id }, individualHooks: true });
     await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
