@@ -241,8 +241,8 @@ describe('Recipient DB service', () => {
       expect(recipient3.grants[0].grantSpecialistName).toBe('Tom Jones');
       expect(recipient3.grants[0].startDate).toBeTruthy();
       expect(recipient3.grants[0].endDate).toBeTruthy();
-      expect(recipient3.grants[0].programs.map((program) => program.name)).toStrictEqual(['type2', 'type']);
-      expect(recipient3.grants[0].programs.map((program) => program.programType)).toStrictEqual(['EHS', 'HS']);
+      expect(recipient3.grants[0].programs.map((program) => program.name)).toStrictEqual(['type', 'type2']);
+      expect(recipient3.grants[0].programs.map((program) => program.programType)).toStrictEqual(['HS', 'EHS']);
     });
     it('returns recipient and grants without a region specified', async () => {
       const recipient2 = await recipientById(74, {});
