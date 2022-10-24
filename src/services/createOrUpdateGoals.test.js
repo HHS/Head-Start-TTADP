@@ -135,7 +135,7 @@ describe('createOrUpdateGoals', () => {
             ],
             topics: [
               {
-                value: topic.id,
+                id: topic.id,
               },
             ],
           },
@@ -147,7 +147,7 @@ describe('createOrUpdateGoals', () => {
             resources: [],
             topics: [
               {
-                value: topic.id,
+                id: topic.id,
               },
             ],
           },

@@ -936,12 +936,12 @@ describe('saveGoalsForReport (more tests)', () => {
           files: [],
           topics: [
             {
-              label: topic.name,
-              value: topic.id,
+              name: topic.name,
+              id: topic.id,
             },
             {
-              label: secondTopic.name,
-              value: secondTopic.id,
+              name: secondTopic.name,
+              id: secondTopic.id,
             },
           ],
 

@@ -214,15 +214,6 @@ export async function saveObjectiveAssociations(
   files = [],
   deleteUnusedAssociations = false,
 ) {
-  console.log({
-    objective,
-    resources,
-    topics,
-    files,
-    deleteUnusedAssociations,
-    message: 'saveObjectiveAssociations',
-  });
-
   // topics
   const objectiveTopics = await Promise.all(
     (topics.map(async (topic) => ObjectiveTopic.findOrCreate({
