@@ -8,14 +8,14 @@ import ObjectiveTopics from '../ObjectiveTopics';
 describe('ObjectiveTopics', () => {
   const defaultTopicSelection = [
     {
-      value: 1,
-      label: 'Dancing but too fast',
+      id: 1,
+      name: 'Dancing but too fast',
       isOnApprovedReport: true,
       onAnyReport: true,
     },
     {
-      value: 2,
-      label: 'Dancing but too slow',
+      id: 2,
+      name: 'Dancing but too slow',
       isOnApprovedReport: false,
       onAnyReport: false,
     },
