@@ -1,5 +1,5 @@
 module.exports = {
-  up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
+  up: async (queryInterface) => queryInterface.sequelize.transaction(
     async (transaction) => {
       try {
         const loggedUser = '0';
