@@ -14,9 +14,10 @@ export default function Topics({ topics }) {
 
   return (
     <>
-      <p className="usa-prose margin-y-0">{topics[0]}</p>
+      <p className="usa-prose margin-y-0 ttahub-goal-card__goal-topics-csv">{topics.join(', ')}</p>
+      <p className="usa-prose margin-y-0 ttahub-goal-card__goal-topics-tool-tip">{topics[0]}</p>
       <Tooltip
-        className="usa-prose"
+        className="usa-prose ttahub-goal-card__goal-topics-tool-tip"
         screenReadDisplayText={false}
         displayText="View all topics"
         buttonLabel={topics.join(' ')}
