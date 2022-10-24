@@ -188,12 +188,12 @@ function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
     topics,
     reasons,
   } = [
-    ...currentModel.objectives,
+    ...(currentModel.objectives || []),
     ...(goal.objectives || [])]
     .reduce((acc, objective) => {
     // this secondary reduction is to extract what we need from the activity reports
     // ( topic, reason, latest endDate)
-      const { t, r, endDate } = objective.activityReports.reduce((a, report) => ({
+      const { t, r, endDate } = (objective.activityReports || []).reduce((a, report) => ({
         t: [...a.t, ...report.topics],
         r: [...a.r, ...report.reason],
         endDate: report.endDate > a.endDate ? report.endDate : a.endDate,
@@ -201,15 +201,15 @@ function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
 
       // previous added objectives have a regularly accessible attribute, the others
       // for some reason need to be accessed by the getDataValue method
-      const objectiveTitle = objective.title || objective.getDataValue('title');
-      const objectiveStatus = objective.status || objective.getDataValue('status');
+      const objectiveTitle = objective.getDataValue ? objective.getDataValue('title') : objective.title;
+      const objectiveStatus = objective.getDataValue ? objective.getDataValue('status') : objective.status;
 
       const existing = acc.objectives.find((o) => (
-        o.title.trim() === objectiveTitle.trim() && o.status === objectiveStatus
+        o.title === objectiveTitle.trim() && o.status === objectiveStatus
       ));
 
       // get our objective topics
-      const objectiveTopics = objective.topics.map((ot) => ot.name);
+      const objectiveTopics = (objective.topics || []).map((ot) => ot.name);
 
       if (existing) {
         existing.activityReports = uniqBy([...existing.activityReports, ...objective.activityReports], 'displayId');
@@ -222,6 +222,7 @@ function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
       return {
         objectives: [...acc.objectives, {
           ...objective.dataValues,
+          title: objective.title.trim(),
           endDate,
           grantNumbers: [currentModel.grant.number],
           reasons: uniq(r),
