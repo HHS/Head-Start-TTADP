@@ -1,10 +1,11 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
+import { Checkbox, Button, Dropdown } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import Pagination from 'react-js-pagination';
 import { Link, useHistory } from 'react-router-dom';
-import { Button, Dropdown } from '@trussworks/react-uswds';
+
 import UserContext from '../../UserContext';
 import { canEditOrCreateGoals } from '../../permissions';
 import { DECIMAL_BASE } from '../../Constants';
@@ -116,7 +117,15 @@ export default function GoalCardsHeader({
         )}
 
       </div>
+      <hr className="border-1px border-base-lighter  bg-base-lighter margin-y-3" />
+      <div className="margin-left-3">
+        <Checkbox
+          label="Select all"
+          id="unassigned"
+        />
+      </div>
     </div>
+
   );
 }
 
