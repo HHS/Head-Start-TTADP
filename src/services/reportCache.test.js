@@ -160,7 +160,12 @@ describe('reportCache', () => {
         programSpecialistEmail: user.email,
       },
     });
-    [report] = await createOrUpdate({ ...mockReport });
+    report = await createOrUpdate({
+      ...mockReport,
+      owner: {
+        userId: user.id,
+      },
+    });
     [activityRecipient] = await ActivityRecipient.findOrCreate({
       where: {
         activityReportId: report.id,
