@@ -172,7 +172,12 @@ describe('reportCache', () => {
     await Promise.all(mockFiles.map(
       async (mockFile) => File.findOrCreate({ where: { ...mockFile } }),
     ));
-    files = await File.findAll({ where: { id: mockFiles.map((mockFile) => mockFile.id) } });
+    files = await File.findAll({
+      where: {
+        id: mockFiles.map((mockFile) => mockFile.id),
+      },
+      order: [['id', 'ASC']],
+    });
     objectiveFiles.push(await ObjectiveFile.findOrCreate({
       where: {
         objectiveId: objective.id,
