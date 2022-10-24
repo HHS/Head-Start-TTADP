@@ -357,6 +357,7 @@ module.exports = (sequelize, DataTypes) => {
       beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
+      beforeBulkDestroy: async (options) => ({ ...options, individualHooks: true }),
     },
     sequelize,
     modelName: 'ActivityReport',
