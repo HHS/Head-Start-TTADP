@@ -182,13 +182,8 @@ export default function GoalForm({
   useEffect(() => {
     async function fetchTopics() {
       try {
-        const topicsFromApi = await getTopics();
-
-        const topicsAsOptions = topicsFromApi.map((topic) => ({
-          label: topic.name,
-          value: topic.id,
-        }));
-        setTopicOptions(topicsAsOptions);
+        const topics = await getTopics();
+        setTopicOptions(topics);
       } catch (err) {
         setFetchError('There was an error loading topics');
       }
