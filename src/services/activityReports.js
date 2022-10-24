@@ -869,7 +869,7 @@ export async function activityReportsForCleanup(userId) {
           // if the report is created by a user and not in draft status, it is eligible for cleanup
           {
             [Op.and]: {
-              '$owner.userId$': { [Op.contains]: [userId] },
+              '$owner.userId$': { [Op.eq]: userId },
               '$approval.calculatedStatus$': {
                 [Op.ne]: REPORT_STATUSES.DRAFT,
               },
@@ -877,12 +877,12 @@ export async function activityReportsForCleanup(userId) {
           },
           {
             // if the user is an approver on the report, it is eligible for cleanup
-            '$approvers.userId$': { [Op.contains]: [userId] },
+            '$approvers.userId$': { [Op.eq]: userId },
           },
           {
             // if the user is an collaborator, and the report is not in draft,
             // it is eligible for cleanup
-            '$collaborators.userId$': { [Op.contains]: [userId] },
+            '$collaborators.userId$': { [Op.eq]: userId },
             '$approval.calculatedStatus$': {
               [Op.ne]: REPORT_STATUSES.DRAFT,
             },
