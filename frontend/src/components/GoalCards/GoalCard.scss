@@ -24,7 +24,7 @@ $max-width-date-column: 50%;
 }
 
 .ttahub-goal-card__goal-topics-tool-tip {
-  display :none;
+  display: none;
 }
 
 .ttahub-goal-card__goal-topics-csv {
@@ -34,14 +34,6 @@ $max-width-date-column: 50%;
 @media(min-width: 627px) {
   .ttahub-goal-card__goal-column:not(:nth-child(n+3):nth-child(-n+5)) {
     margin-bottom: 16px;
-  }
-
-  .ttahub-goal-card__goal-topics-csv {
-    display: block;
-  }
-
-  .ttahub-goal-card__goal-topics-tool-tip {
-    display: none;
   }
 }
 
@@ -60,14 +52,6 @@ $max-width-date-column: 50%;
 
   .ttahub-goal-card__goal-column:not(:nth-child(n+3):nth-child(-n+5)) {
     margin-bottom: 16px;
-  }
-
-  .ttahub-goal-card__goal-topics-tool-tip {
-    display: none;
-  }
-
-  .ttahub-goal-card__goal-topics-csv {
-    display: block;
   }
 
   .ttahub-goal-card__goal-column__goal-text {
