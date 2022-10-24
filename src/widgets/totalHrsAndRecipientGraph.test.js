@@ -1,16 +1,14 @@
 import { Op } from 'sequelize';
 import db, {
   ActivityReport,
-  ActivityRecipient,
   User,
   Recipient,
   Grant,
-  NextStep,
   Region,
   Collaborator,
   Role,
   UserRole,
-} from "../models";
+} from '../models';
 import filtersToScopes from '../scopes';
 import totalHrsAndRecipientGraph from './totalHrsAndRecipientGraph';
 import { REPORT_STATUSES } from '../constants';
