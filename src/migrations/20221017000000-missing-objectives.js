@@ -270,7 +270,7 @@ module.exports = {
                   "firstCompletedAt",
                   "lastCompletedAt"
                 )
-                SELECT
+                SELECT DISTINCT
                   mg.name,
                   mg.status,
                   mg.timeframe,
