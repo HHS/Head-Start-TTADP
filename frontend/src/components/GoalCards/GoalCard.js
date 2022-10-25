@@ -23,6 +23,8 @@ function GoalCard({
   regionId,
   showCloseSuspendGoalModal,
   performGoalStatusUpdate,
+  handleGoalCheckboxSelect,
+  isChecked,
 }) {
   const {
     id, // for keys and such, from the api
@@ -92,8 +94,13 @@ function GoalCard({
       <div className="display-flex flex-justify">
         <div className="display-flex flex-align-start flex-row">
           <Checkbox
+            id={`goal-select-${id}`}
+            label=""
+            value={id}
+            checked={isChecked}
+            onChange={handleGoalCheckboxSelect}
+            aria-label={`Select goal ${goalText}`}
             className="margin-right-1"
-            id="unassigned"
           />
           <StatusDropdown
             goalId={id}
@@ -196,5 +203,7 @@ GoalCard.propTypes = {
   regionId: PropTypes.string.isRequired,
   showCloseSuspendGoalModal: PropTypes.func.isRequired,
   performGoalStatusUpdate: PropTypes.func.isRequired,
+  handleGoalCheckboxSelect: PropTypes.func.isRequired,
+  isChecked: PropTypes.bool.isRequired,
 };
 export default GoalCard;
