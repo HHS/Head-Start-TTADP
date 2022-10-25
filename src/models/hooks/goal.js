@@ -41,7 +41,7 @@ const autoPopulateOnApprovedAR = (sequelize, instance, options) => {
   if (instance.onApprovedAR === undefined
     || instance.onApprovedAR === null) {
     instance.set('onApprovedAR', false);
-    if (!options.fields.contains('onApprovedAR')) {
+    if (!options.fields.includes('onApprovedAR')) {
       options.fields.push('onApprovedAR');
     }
   }
@@ -74,12 +74,12 @@ const autoPopulateStatusChangeDates = (sequelize, instance, options) => {
         if (instance.firstNotStartedAt === null
           || instance.firstNotStartedAt === undefined) {
           instance.set('firstNotStartedAt', now);
-          if (!options.fields.contains('firstNotStartedAt')) {
+          if (!options.fields.includes('firstNotStartedAt')) {
             options.fields.push('firstNotStartedAt');
           }
         }
         instance.set('lastNotStartedAt', now);
-        if (!options.fields.contains('lastNotStartedAt')) {
+        if (!options.fields.includes('lastNotStartedAt')) {
           options.fields.push('lastNotStartedAt');
         }
         break;
@@ -87,12 +87,12 @@ const autoPopulateStatusChangeDates = (sequelize, instance, options) => {
         if (instance.firstInProgressAt === null
           || instance.firstInProgressAt === undefined) {
           instance.set('firstInProgressAt', now);
-          if (!options.fields.contains('firstInProgressAt')) {
+          if (!options.fields.includes('firstInProgressAt')) {
             options.fields.push('firstInProgressAt');
           }
         }
         instance.set('lastInProgressAt', now);
-        if (!options.fields.contains('lastInProgressAt')) {
+        if (!options.fields.includes('lastInProgressAt')) {
           options.fields.push('lastInProgressAt');
         }
         break;
@@ -100,12 +100,12 @@ const autoPopulateStatusChangeDates = (sequelize, instance, options) => {
         if (instance.firstSuspendedAt === null
           || instance.firstSuspendedAt === undefined) {
           instance.set('firstSuspendedAt', now);
-          if (!options.fields.contains('firstSuspendedAt')) {
+          if (!options.fields.includes('firstSuspendedAt')) {
             options.fields.push('firstSuspendedAt');
           }
         }
         instance.set('lastSuspendedAt', now);
-        if (!options.fields.contains('lastSuspendedAt')) {
+        if (!options.fields.includes('lastSuspendedAt')) {
           options.fields.push('lastSuspendedAt');
         }
         break;
@@ -113,12 +113,12 @@ const autoPopulateStatusChangeDates = (sequelize, instance, options) => {
         if (instance.firstClosedAt === null
           || instance.firstClosedAt === undefined) {
           instance.set('firstClosedAt', now);
-          if (!options.fields.contains('firstClosedAt')) {
+          if (!options.fields.includes('firstClosedAt')) {
             options.fields.push('firstClosedAt');
           }
         }
         instance.set('lastClosedAt', now);
-        if (!options.fields.contains('lastClosedAt')) {
+        if (!options.fields.includes('lastClosedAt')) {
           options.fields.push('lastClosedAt');
         }
         break;
