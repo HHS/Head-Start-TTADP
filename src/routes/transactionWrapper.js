@@ -9,12 +9,13 @@ const logContext = {
 
 export default function transactionWrapper(originalFunction) {
   return async function wrapper(req, res, next) {
-    return sequelize.transaction(async (t) => {
+    return sequelize.transaction(async () => {
       let result;
       try {
         result = await originalFunction(req, res, next);
       } catch (err) {
         await handleErrors(req, res, err, logContext);
+        throw err;
       }
       return result;
     });
