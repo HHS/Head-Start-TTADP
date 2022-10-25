@@ -28,21 +28,22 @@ const calculateStatusFromApprovals = (statuses, ratioRequired) => {
     .filter((status) => status === RATIFIER_STATUSES.NEEDS_ACTION).length.toFixed(2);
 
   if (numNeedsAction > 0.00) return ENTITY_STATUSES.NEEDS_ACTION;
-
-  switch (ratioRequired) {
-    case APPROVAL_RATIO.ALL:
-      if (num === numRatified) return ENTITY_STATUSES.APPROVED;
-      break;
-    case APPROVAL_RATIO.TWOTHIRDS:
-      if (numRatified / num >= 0.66) return ENTITY_STATUSES.APPROVED;
-      break;
-    case APPROVAL_RATIO.MAJORITY:
-      if (numRatified / num >= 0.50) return ENTITY_STATUSES.APPROVED;
-      break;
-    case APPROVAL_RATIO.ANY:
-      if (numRatified >= 0.00) return ENTITY_STATUSES.APPROVED;
-      break;
-    default:
+  if (num > 0) {
+    switch (ratioRequired) {
+      case APPROVAL_RATIO.ALL:
+        if (num === numRatified) return ENTITY_STATUSES.APPROVED;
+        break;
+      case APPROVAL_RATIO.TWOTHIRDS:
+        if (numRatified / num >= 0.66) return ENTITY_STATUSES.APPROVED;
+        break;
+      case APPROVAL_RATIO.MAJORITY:
+        if (numRatified / num >= 0.50) return ENTITY_STATUSES.APPROVED;
+        break;
+      case APPROVAL_RATIO.ANY:
+        if (numRatified >= 0.00) return ENTITY_STATUSES.APPROVED;
+        break;
+      default:
+    }
   }
 
   return ENTITY_STATUSES.SUBMITTED;
@@ -217,7 +218,6 @@ const syncRolesForCollaborators = async (sequelize, instance, options) => {
       collaboratorId: instance.id,
       roleId: userRole.roleId,
     }, {
-      // logging: (msg) => auditLogger.error(JSON.stringify({ name: 'syncRolesForCollaborators - upsert', msg })),
       transaction: options.transaction,
     })),
     await sequelize.models.CollaboratorRole.destroy({
@@ -225,7 +225,6 @@ const syncRolesForCollaborators = async (sequelize, instance, options) => {
         collaboratorId: instance.id,
         roleId: { [Op.notIn]: userRoles.map((userRole) => userRole.roleId) },
       },
-      // logging: (msg) => auditLogger.error(JSON.stringify({ name: 'syncRolesForCollaborators - destroy', msg })),
       individualHooks: true,
       transaction: options.transaction,
     }),
