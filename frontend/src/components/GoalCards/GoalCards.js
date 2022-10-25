@@ -75,11 +75,6 @@ function GoalCards({
     goalsArr.reduce((obj, g) => ({ ...obj, [g.id]: checked }), {})
   );
 
-  // When reports are updated, make sure all checkboxes are unchecked
-  useEffect(() => {
-    setSelectedGoalCheckBoxes(makeGoalCheckboxes(goals, false));
-  }, [goals]);
-
   useEffect(() => {
     const checkValues = Object.values(selectedGoalCheckBoxes);
     if (checkValues.every((v) => v === true)) {
