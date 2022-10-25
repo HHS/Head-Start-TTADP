@@ -2,12 +2,13 @@ import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import {
-  FormGroup, Label, TextInput, Button,
+  FormGroup, Label, Button,
 } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import PlusButton from './PlusButton';
 import QuestionTooltip from './QuestionTooltip';
+import URLInput from '../URLInput';
 import UnusedData from './UnusedData';
 import colors from '../../colors';
 import './ResourceRepeater.css';
@@ -106,11 +107,9 @@ export default function ResourceRepeater({
                   {' '}
                   { i + 1 }
                 </Label>
-                <TextInput
+                <URLInput
                   id={`resource-${i + 1}`}
                   onBlur={validateResources}
-                  type="url"
-                  placeholder="https://"
                   onChange={({ target: { value } }) => updateResource(value, i)}
                   value={r.value}
                   disabled={isLoading}
@@ -147,7 +146,10 @@ ResourceRepeater.propTypes = {
   error: PropTypes.node.isRequired,
   validateResources: PropTypes.func.isRequired,
   status: PropTypes.string.isRequired,
-  isOnReport: PropTypes.bool.isRequired,
+  isOnReport: PropTypes.oneOfType([
+    PropTypes.bool,
+    PropTypes.number,
+  ]).isRequired,
   isLoading: PropTypes.bool,
   goalStatus: PropTypes.string.isRequired,
 };

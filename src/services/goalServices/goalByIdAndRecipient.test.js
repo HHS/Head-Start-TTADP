@@ -8,15 +8,12 @@ import db, {
   ActivityReportGoal,
   Objective,
   Topic,
-  Role,
   ObjectiveTopic,
   ObjectiveResource,
-  ObjectiveRole,
   ObjectiveFile,
   Approval,
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
-  ActivityReportObjectiveRole,
   ActivityReportObjectiveTopic,
   File,
 } from '../../models';
@@ -33,8 +30,6 @@ describe('goalById', () => {
   let objective;
   let file;
   let file2;
-  let role;
-  let role2;
   let topic;
   let topic2;
 
@@ -95,25 +90,6 @@ describe('goalById', () => {
     await ObjectiveResource.create({
       objectiveId: objective.id,
       userProvidedUrl: 'http://www.google1.com',
-    });
-
-    role = await Role.findOne();
-    role2 = await Role.findOne({
-      where: {
-        id: {
-          [Op.notIn]: [role.id],
-        },
-      },
-    });
-
-    await ObjectiveRole.create({
-      objectiveId: objective.id,
-      roleId: role.id,
-    });
-
-    await ObjectiveRole.create({
-      objectiveId: objective.id,
-      roleId: role2.id,
     });
 
     file = await File.create({
@@ -182,14 +158,7 @@ describe('goalById', () => {
       },
       individualHooks: true,
     });
-
-    await ActivityReportObjectiveRole.destroy({
-      where: {
-        activityReportObjectiveId: aroIds,
-      },
-      individualHooks: true,
-    });
-
+    
     await ActivityReportObjectiveFile.destroy({
       where: {
         activityReportObjectiveId: aroIds,
@@ -290,10 +259,6 @@ describe('goalById', () => {
     expect(obj.resources.map((r) => `${r.dataValues.onAnyReport}`).sort()).toEqual(['false', 'false']);
     expect(obj.resources.map((r) => `${r.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
 
-    expect(obj.roles.length).toBe(2);
-    expect(obj.roles.map((r) => `${r.dataValues.onAnyReport}`).sort()).toEqual(['false', 'false']);
-    expect(obj.roles.map((r) => `${r.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
-
     expect(obj.files.length).toBe(2);
     expect(obj.files.map((f) => `${f.dataValues.onAnyReport}`).sort()).toEqual(['false', 'false']);
     expect(obj.files.map((r) => `${r.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
@@ -323,9 +288,6 @@ describe('goalById', () => {
             topics: [
               { value: topic.id },
             ],
-            roles: [
-              { id: role.id },
-            ],
             files: [
               { id: file.id },
             ],
@@ -353,10 +315,6 @@ describe('goalById', () => {
     expect(obj.resources.length).toBe(2);
     expect(obj.resources.map((r) => `${r.dataValues.onAnyReport}`).sort()).toEqual(['false', 'true']);
     expect(obj.resources.map((r) => `${r.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
-
-    expect(obj.roles.length).toBe(2);
-    expect(obj.roles.map((r) => `${r.dataValues.onAnyReport}`).sort()).toEqual(['false', 'true']);
-    expect(obj.roles.map((r) => `${r.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
 
     expect(obj.files.length).toBe(2);
     expect(obj.files.map((f) => `${f.dataValues.onAnyReport}`).sort()).toEqual(['false', 'true']);
@@ -391,10 +349,6 @@ describe('goalById', () => {
     expect(obj.resources.length).toBe(2);
     expect(obj.resources.map((r) => `${r.dataValues.onAnyReport}`).sort()).toEqual(['false', 'true']);
     expect(obj.resources.map((r) => `${r.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'true']);
-
-    expect(obj.roles.length).toBe(2);
-    expect(obj.roles.map((r) => `${r.dataValues.onAnyReport}`).sort()).toEqual(['false', 'true']);
-    expect(obj.roles.map((r) => `${r.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'true']);
 
     expect(obj.files.length).toBe(2);
     expect(obj.files.map((f) => `${f.dataValues.onAnyReport}`).sort()).toEqual(['false', 'true']);

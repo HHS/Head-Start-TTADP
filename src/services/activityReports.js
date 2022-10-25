@@ -499,10 +499,6 @@ export async function activityReportAndRecipientsById(activityReportId, isImport
         as: 'objectivesWithoutGoals',
         include: [
           {
-            model: Role,
-            as: 'roles',
-          },
-          {
             model: Topic,
             as: 'topics',
             attributes: [
@@ -1461,10 +1457,6 @@ async function getDownloadableActivityReports(where, separate = true) {
         {
           model: Topic,
           as: 'topics',
-        },
-        {
-          model: Role,
-          as: 'roles',
         },
         {
           model: File,

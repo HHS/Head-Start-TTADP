@@ -18,6 +18,7 @@ const DEFAULT_STEP_HEIGHT = 80;
 export default function NextStepsRepeater({
   name,
   ariaName,
+  recipientType,
 }) {
   const [heights, setHeights] = useState([]);
   const [blurStepValidations, setBlurStepValidations] = useState([]);
@@ -82,17 +83,25 @@ export default function NextStepsRepeater({
   };
 
   const onAddNewStep = () => {
-    validateStepOnBlur();
     const allValues = getValues();
     const fieldArray = allValues[name] || [];
-    const canAdd = fieldArray.every((field) => field.note !== ''
-      && (field.completeDate && moment(field.completeDate, 'MM/DD/YYYY').isValid()));
+    const canAdd = fieldArray.every((field, index) => {
+      validateStepOnBlur(field.note, index);
+      validateDateOnBlur(field.completeDate, index);
+      return field.note !== ''
+      && (field.completeDate && moment(field.completeDate, 'MM/DD/YYYY').isValid());
+    });
     if (canAdd) {
       append({ id: null, note: '', completeDate: null });
     }
   };
 
   const stepType = name === 'specialistNextSteps' ? 'specialist' : 'recipient';
+  const recipientLabel = recipientType === 'recipient' ? 'recipient' : 'other entity';
+
+  const dateLabel = (index) => (stepType === 'recipient'
+    ? `When does the ${recipientLabel} anticipate completing step ${index + 1}?`
+    : `When do you anticipate completing step ${index + 1}?`);
 
   return (
     <>
@@ -159,7 +168,7 @@ export default function NextStepsRepeater({
               <Label
                 htmlFor={`${stepType}-next-step-date-${index + 1}`}
               >
-                {`When do you anticipate completing step ${index + 1}?`}
+                {dateLabel(index)}
                 <span className="smart-hub--form-required font-family-sans font-ui-xs text-secondary-dark">
                   {' '}
                   *
@@ -210,4 +219,9 @@ export default function NextStepsRepeater({
 NextStepsRepeater.propTypes = {
   name: PropTypes.string.isRequired,
   ariaName: PropTypes.string.isRequired,
+  recipientType: PropTypes.string,
+};
+
+NextStepsRepeater.defaultProps = {
+  recipientType: '',
 };

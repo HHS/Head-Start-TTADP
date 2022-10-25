@@ -37,17 +37,6 @@ const topicsFromApi = [
   'Data and Evaluation',
 ].map((name, id) => ({ name, id }));
 
-const rolesFromApi = [
-  {
-    id: 1,
-    fullName: 'Specialist',
-  },
-  {
-    id: 2,
-    fullName: 'Central Office',
-  },
-];
-
 describe('create goal', () => {
   const defaultRecipient = {
     id: 1,
@@ -89,7 +78,6 @@ describe('create goal', () => {
     objectives: [{
       ids: [1],
       activityReports: [],
-      roles: ['Student'],
       title: 'test',
       files: [],
       topics: [
@@ -125,7 +113,6 @@ describe('create goal', () => {
   beforeEach(async () => {
     fetchMock.restore();
     fetchMock.get('/api/topic', topicsFromApi);
-    fetchMock.get('/api/role', rolesFromApi);
   });
 
   it('you cannot add objectives before filling in basic goal info', async () => {
@@ -299,7 +286,6 @@ describe('create goal', () => {
 
     const draft = await screen.findByRole('button', { name: /save draft/i });
     userEvent.click(draft);
-
     let alert = await screen.findByRole('alert');
     expect(alert.textContent).toBe('There was an error saving your goal');
 
@@ -752,7 +738,6 @@ describe('create goal', () => {
       objectives: [
         {
           id: 1238474,
-          roles: [],
           title: 'This is an objective',
           status: 'Not Started',
           resources: [],
@@ -788,7 +773,6 @@ describe('create goal', () => {
       },
       objectives: [
         {
-          roles: [],
           id: 1238474,
           title: 'This is an objective',
           status: 'Not Started',
@@ -830,7 +814,6 @@ describe('create goal', () => {
           status: 'Not Started',
           resources: [],
           topics: [topicsFromApi[0]],
-          roles: [],
           activityReports: [
             {
               status: REPORT_STATUSES.SUBMITTED,
@@ -878,7 +861,6 @@ describe('create goal', () => {
           resources: [],
           topics: [topicsFromApi[0]],
           activityReports: [],
-          roles: [],
         },
       ],
     });

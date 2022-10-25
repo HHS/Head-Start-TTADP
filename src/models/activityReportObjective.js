@@ -5,12 +5,11 @@ const { beforeDestroy } = require('./hooks/activityReportObjective');
 module.exports = (sequelize, DataTypes) => {
   class ActivityReportObjective extends Model {
     static associate(models) {
-      ActivityReportObjective.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport', hooks: true });
-      ActivityReportObjective.belongsTo(models.Objective, { foreignKey: 'objectiveId', as: 'objective', hooks: true });
-      ActivityReportObjective.hasMany(models.ActivityReportObjectiveFile, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveFiles', hooks: true });
-      ActivityReportObjective.hasMany(models.ActivityReportObjectiveRole, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveRoles', hooks: true });
-      ActivityReportObjective.hasMany(models.ActivityReportObjectiveTopic, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveTopics', hooks: true });
-      ActivityReportObjective.hasMany(models.ActivityReportObjectiveResource, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveResources', hooks: true });
+      ActivityReportObjective.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });
+      ActivityReportObjective.belongsTo(models.Objective, { foreignKey: 'objectiveId', as: 'objective' });
+      ActivityReportObjective.hasMany(models.ActivityReportObjectiveFile, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveFiles' });
+      ActivityReportObjective.hasMany(models.ActivityReportObjectiveTopic, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveTopics' });
+      ActivityReportObjective.hasMany(models.ActivityReportObjectiveResource, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveResources' });
       ActivityReportObjective.belongsToMany(models.File, {
         through: models.ActivityReportObjectiveFile,
         foreignKey: 'activityReportObjectiveId',
@@ -67,13 +66,6 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'activityReportObjectiveId',
         otherKey: 'topicId',
         as: 'topics',
-        hooks: true,
-      });
-      ActivityReportObjective.belongsToMany(models.Role, {
-        through: models.ActivityReportObjectiveRole,
-        foreignKey: 'activityReportObjectiveId',
-        otherKey: 'roleId',
-        as: 'roles',
         hooks: true,
       });
     }

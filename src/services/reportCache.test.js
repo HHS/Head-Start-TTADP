@@ -11,13 +11,12 @@ import db, {
   ObjectiveFile,
   ObjectiveResource,
   ObjectiveTopic,
-  ObjectiveRole,
+  ActivityReport,
   ActivityRecipient,
   ActivityReportGoal,
   ActivityReportObjective,
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
-  ActivityReportObjectiveRole,
   ActivityReportObjectiveTopic,
 } from '../models';
 import {
@@ -142,7 +141,6 @@ describe('reportCache', () => {
   let objective;
   let files = [];
   const objectiveFiles = [];
-  const objectiveRoles = [];
   const objectiveResources = [];
   const objectiveTopics = [];
 
@@ -199,12 +197,6 @@ describe('reportCache', () => {
     objectiveResources.push(await ObjectiveResource.findOrCreate({
       where: { objectiveId: objective.id, ...mockObjectiveResources[0] },
     }));
-    objectiveRoles.push(await ObjectiveRole.findOrCreate({
-      where: {
-        objectiveId: objective.id,
-        roleId: roles[0].id,
-      },
-    }));
     objectiveTopics.push(await ObjectiveTopic.findOrCreate({
       where: { objectiveId: objective.id, ...mockObjectiveTopics[0] },
     }));
@@ -216,7 +208,6 @@ describe('reportCache', () => {
       where: { objectiveId: objective.id },
       individualHooks: true,
     });
-    await ObjectiveRole.destroy({ where: { objectiveId: objective.id }, individualHooks: true });
     await ObjectiveFile.destroy({ where: { objectiveId: objective.id }, individualHooks: true });
     await Promise.all(files.map(async (file) => file.destroy({ individualHooks: true })));
     await activityRecipient.destroy({ individualHooks: true });
@@ -231,14 +222,6 @@ describe('reportCache', () => {
       .findAll({ include: { model: ActivityReportObjective, as: 'activityReportObjective', where: { objectiveId: objective.id } } });
     await ActivityReportObjectiveResource.destroy({
       where: { id: { [Op.in]: aroResources.map((aroResource) => aroResource.id) } },
-      individualHooks: true,
-    });
-    const aroRoles = await ActivityReportObjectiveRole.findAll({
-      include: { model: ActivityReportObjective, as: 'activityReportObjective', where: { objectiveId: objective.id } },
-      individualHooks: true,
-    });
-    await ActivityReportObjectiveRole.destroy({
-      where: { id: { [Op.in]: aroRoles.map((aroRole) => aroRole.id) } },
       individualHooks: true,
     });
     const aroTopics = await ActivityReportObjectiveTopic
@@ -273,9 +256,6 @@ describe('reportCache', () => {
           model: ActivityReportObjectiveResource,
           as: 'activityReportObjectiveResources',
         }, {
-          model: ActivityReportObjectiveRole,
-          as: 'activityReportObjectiveRoles',
-        }, {
           model: ActivityReportObjectiveTopic,
           as: 'activityReportObjectiveTopics',
         }],
@@ -300,9 +280,6 @@ describe('reportCache', () => {
           model: ActivityReportObjectiveResource,
           as: 'activityReportObjectiveResources',
         }, {
-          model: ActivityReportObjectiveRole,
-          as: 'activityReportObjectiveRoles',
-        }, {
           model: ActivityReportObjectiveTopic,
           as: 'activityReportObjectiveTopics',
         }],
@@ -311,7 +288,6 @@ describe('reportCache', () => {
       expect(aro).toBeDefined();
       expect(aro.activityReportObjectiveFiles).toEqual([]);
       expect(aro.activityReportObjectiveResources).toEqual([]);
-      expect(aro.activityReportObjectiveRoles).toEqual([]);
       expect(aro.activityReportObjectiveTopics).toEqual([]);
     });
     it('add to cache', async () => {
@@ -327,12 +303,6 @@ describe('reportCache', () => {
         },
       });
 
-      const rolesForThisObjective = await ObjectiveRole.findAll({
-        where: {
-          objectiveId: objective.id,
-        },
-      });
-
       const topics = await ObjectiveTopic.findAll({
         where: {
           objectiveId: objective.id,
@@ -342,7 +312,6 @@ describe('reportCache', () => {
       const metadata = {
         files: filesForThisObjective.map((f) => [f]),
         resources: resources.map((r) => [r]),
-        roles: rolesForThisObjective,
         topics: topics.map((t) => [t]),
         ttaProvided: null,
       };
@@ -357,9 +326,6 @@ describe('reportCache', () => {
           model: ActivityReportObjectiveResource,
           as: 'activityReportObjectiveResources',
         }, {
-          model: ActivityReportObjectiveRole,
-          as: 'activityReportObjectiveRoles',
-        }, {
           model: ActivityReportObjectiveTopic,
           as: 'activityReportObjectiveTopics',
         }],
@@ -370,8 +336,7 @@ describe('reportCache', () => {
       expect(aro.activityReportObjectiveResources.length).toEqual(1);
       expect(aro.activityReportObjectiveResources[0].userProvidedUrl)
         .toEqual(mockObjectiveResources[0].userProvidedUrl);
-      expect(aro.activityReportObjectiveRoles.length).toEqual(1);
-      expect(aro.activityReportObjectiveRoles[0].roleId).toEqual(roles[0].id);
+
       expect(aro.activityReportObjectiveTopics.length).toEqual(1);
       expect(aro.activityReportObjectiveTopics[0].topicId).toEqual(mockObjectiveTopics[0].topicId);
     });
@@ -382,7 +347,6 @@ describe('reportCache', () => {
         where: { objectiveId: objective.id },
         individualHooks: true,
       });
-      await ObjectiveRole.destroy({ where: { objectiveId: objective.id }, individualHooks: true });
       await ObjectiveTopic.destroy({ where: { objectiveId: objective.id }, individualHooks: true });
       objectiveFiles.push(await ObjectiveFile.findOrCreate({
         where: {
@@ -392,12 +356,6 @@ describe('reportCache', () => {
       }));
       objectiveResources.push(await ObjectiveResource.findOrCreate({
         where: { objectiveId: objective.id, ...mockObjectiveResources[1] },
-      }));
-      objectiveRoles.push(await ObjectiveRole.findOrCreate({
-        where: {
-          objectiveId: objective.id,
-          roleId: roles[1].id,
-        },
       }));
       objectiveTopics.push(await ObjectiveTopic.findOrCreate({
         where: { objectiveId: objective.id, ...mockObjectiveTopics[1] },
@@ -415,12 +373,6 @@ describe('reportCache', () => {
         },
       });
 
-      const rolesForThisObjective = await ObjectiveRole.findAll({
-        where: {
-          objectiveId: objective.id,
-        },
-      });
-
       const topics = await ObjectiveTopic.findAll({
         where: {
           objectiveId: objective.id,
@@ -430,7 +382,6 @@ describe('reportCache', () => {
       const metadata = {
         files: filesForThisObjective.map((f) => [f]),
         resources: resources.map((r) => [r]),
-        roles: rolesForThisObjective,
         topics: topics.map((t) => [t]),
         ttaProvided: null,
       };
@@ -445,9 +396,6 @@ describe('reportCache', () => {
           model: ActivityReportObjectiveResource,
           as: 'activityReportObjectiveResources',
         }, {
-          model: ActivityReportObjectiveRole,
-          as: 'activityReportObjectiveRoles',
-        }, {
           model: ActivityReportObjectiveTopic,
           as: 'activityReportObjectiveTopics',
         }],
@@ -458,8 +406,6 @@ describe('reportCache', () => {
       expect(aro.activityReportObjectiveResources.length).toEqual(1);
       expect(aro.activityReportObjectiveResources[0].userProvidedUrl)
         .toEqual(mockObjectiveResources[1].userProvidedUrl);
-      expect(aro.activityReportObjectiveRoles.length).toEqual(1);
-      expect(aro.activityReportObjectiveRoles[0].roleId).toEqual(roles[1].id);
       expect(aro.activityReportObjectiveTopics.length).toEqual(1);
       expect(aro.activityReportObjectiveTopics[0].topicId).toEqual(mockObjectiveTopics[1].topicId);
     });
@@ -469,7 +415,6 @@ describe('reportCache', () => {
         where: { objectiveId: objective.id },
         individualHooks: true,
       });
-      await ObjectiveRole.destroy({ where: { objectiveId: objective.id }, individualHooks: true });
       await ObjectiveTopic.destroy({ where: { objectiveId: objective.id }, individualHooks: true });
 
       const filesForThisObjective = await ObjectiveFile.findAll({
@@ -484,12 +429,6 @@ describe('reportCache', () => {
         },
       });
 
-      const rolesForThisObjective = await ObjectiveRole.findAll({
-        where: {
-          objectiveId: objective.id,
-        },
-      });
-
       const topics = await ObjectiveTopic.findAll({
         where: {
           objectiveId: objective.id,
@@ -499,7 +438,6 @@ describe('reportCache', () => {
       const metadata = {
         files: filesForThisObjective.map((f) => [f]),
         resources: resources.map((r) => [r]),
-        roles: rolesForThisObjective,
         topics: topics.map((t) => [t]),
         ttaProvided: null,
       };
@@ -514,9 +452,6 @@ describe('reportCache', () => {
           model: ActivityReportObjectiveResource,
           as: 'activityReportObjectiveResources',
         }, {
-          model: ActivityReportObjectiveRole,
-          as: 'activityReportObjectiveRoles',
-        }, {
           model: ActivityReportObjectiveTopic,
           as: 'activityReportObjectiveTopics',
         }],
@@ -524,7 +459,6 @@ describe('reportCache', () => {
       expect(aro).toBeDefined();
       expect(aro.activityReportObjectiveFiles).toEqual([]);
       expect(aro.activityReportObjectiveResources).toEqual([]);
-      expect(aro.activityReportObjectiveRoles).toEqual([]);
       expect(aro.activityReportObjectiveTopics).toEqual([]);
     });
   });

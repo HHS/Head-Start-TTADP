@@ -7,7 +7,6 @@ const {
   ActivityReportObjective,
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
-  ActivityReportObjectiveRole,
   ActivityReportObjectiveTopic,
 } = require('../models');
 const { ENTITY_TYPES } = require('../constants');
@@ -39,20 +38,6 @@ const cacheResources = async (activityReportObjectiveId, resources = []) => Prom
     where: {
       activityReportObjectiveId,
       userProvidedUrl: { [Op.notIn]: resources.map(([resource]) => resource.userProvidedUrl) },
-    },
-    individualHooks: true,
-  }),
-]);
-
-const cacheRoles = async (activityReportObjectiveId, roles = []) => Promise.all([
-  await Promise.all(roles.map(async (role) => ActivityReportObjectiveRole.upsert({
-    activityReportObjectiveId,
-    roleId: role.roleId,
-  }, { returning: true }))),
-  await ActivityReportObjectiveRole.destroy({
-    where: {
-      activityReportObjectiveId,
-      roleId: { [Op.notIn]: roles.map((role) => role.roleId) },
     },
     individualHooks: true,
   }),
@@ -164,7 +149,6 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   const {
     files,
     resources,
-    roles,
     topics,
     ttaProvided,
     status,
@@ -188,7 +172,6 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     }),
     await cacheFiles(activityReportObjectiveId, files),
     await cacheResources(activityReportObjectiveId, resources),
-    await cacheRoles(activityReportObjectiveId, roles),
     await cacheTopics(activityReportObjectiveId, topics),
     await cacheObjectiveCollaborators(activityReportObjectiveId),
   ]);
@@ -238,12 +221,6 @@ async function destroyActivityReportObjectiveMetadata(activityReportObjectiveIds
       },
       individualHooks: true,
     }),
-    ActivityReportObjectiveRole.destroy({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveIdsToRemove,
-      },
-      individualHooks: true,
-    }),
     Collaborator.destroy({
       where: {
         entityType: ENTITY_TYPES.REPORTOBJECTIVE,
@@ -257,7 +234,6 @@ async function destroyActivityReportObjectiveMetadata(activityReportObjectiveIds
 export {
   cacheFiles,
   cacheResources,
-  cacheRoles,
   cacheTopics,
   cacheObjectiveMetadata,
   cacheGoalMetadata,

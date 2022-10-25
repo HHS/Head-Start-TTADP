@@ -299,6 +299,7 @@ module.exports = (sequelize, DataTypes) => {
         if (!this.topics) {
           return [];
         }
+
         return this.topics.sort((a, b) => {
           if (a < b) {
             return -1;

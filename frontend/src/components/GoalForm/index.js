@@ -12,7 +12,6 @@ import Container from '../Container';
 import { createOrUpdateGoals, deleteGoal, goalByIdAndRecipient } from '../../fetchers/goals';
 import { uploadObjectivesFile } from '../../fetchers/File';
 import { getTopics } from '../../fetchers/topics';
-import { getRoles } from '../../fetchers/roles';
 import Form from './Form';
 import {
   FORM_FIELD_INDEXES,
@@ -79,9 +78,6 @@ export default function GoalForm({
 
   // this is for the topic options returned from the API
   const [topicOptions, setTopicOptions] = useState([]);
-  // and the same for the roles
-  const [roleOptions, setRoleOptions] = useState([]);
-
   const [goalName, setGoalName] = useState(goalDefaults.name);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
@@ -189,19 +185,6 @@ export default function GoalForm({
       }
     }
     fetchTopics();
-  }, []);
-
-  // for fetching role options from API
-  useEffect(() => {
-    async function fetchRoles() {
-      try {
-        const roles = await getRoles();
-        setRoleOptions(roles);
-      } catch (err) {
-        setFetchError('There was an error loading roles');
-      }
-    }
-    fetchRoles();
   }, []);
 
   const setObjectiveError = (objectiveIndex, errorText) => {
@@ -762,7 +745,6 @@ export default function GoalForm({
               status={status || 'Needs status'}
               goalNumber={goalNumber}
               onUploadFiles={onUploadFiles}
-              roleOptions={roleOptions}
             />
             )}
 

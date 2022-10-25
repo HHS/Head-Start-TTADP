@@ -182,7 +182,7 @@ describe('Goals DB service', () => {
 
       await saveGoalsForReport([existingGoal], { id: 1 });
       expect(existingGoalUpdate).toHaveBeenCalledWith({
-        goalIds: [1],
+        endDate: null,
         name: 'name',
         status: 'Draft',
       }, { individualHooks: true });
@@ -215,14 +215,13 @@ describe('Goals DB service', () => {
           ttaProvided: '',
           ActivityReportObjective: {},
           status: '',
-          roles: [],
         }],
       };
       await saveGoalsForReport([goalWithNewObjective], { id: 1 });
       expect(Objective.create).toHaveBeenCalledWith({
         goalId: 1,
         title: 'title',
-        status: '',
+        status: 'Not Started',
       });
     });
 
@@ -236,7 +235,7 @@ describe('Goals DB service', () => {
         id: 1,
         name: 'name',
         objectives: [{
-          title: 'title', id: 1, status: 'Closed', roles: [], goalId: 1,
+          title: 'title', id: 1, status: 'Closed', goalId: 1,
         }],
         update: jest.fn(),
         grantIds: [1],

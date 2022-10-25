@@ -17,6 +17,7 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
     goalForEditing = {
       id: goalId,
       objectives: [],
+      status: 'Not Started',
     };
   }
 
@@ -30,6 +31,10 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
       goalForEditing,
     },
   });
+
+  const { setValue } = hookForm;
+
+  setValue('goalForEditing', goalForEditing);
 
   const topicOptions = [
     {
@@ -48,10 +53,11 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
       <Objectives
         objectives={objectiveOptions}
         topicOptions={topicOptions}
-        roles={['Central office']}
         goalId={goalId}
         noObjectiveError={<></>}
         goalStatus="In Progress"
+        reportId={12}
+        onSaveDraft={jest.fn()}
       />
       <button type="button">blur me</button>
     </FormProvider>
@@ -77,10 +83,11 @@ describe('Objectives', () => {
       activityReports: [],
       resources: [],
       topics: [],
-      roles: [],
       status: 'Not Started',
+      id: 3,
     },
     {
+      id: 4,
       value: 4,
       label: 'Test objective 2',
       title: 'Test objective 2',
@@ -88,7 +95,6 @@ describe('Objectives', () => {
       activityReports: [],
       resources: [],
       topics: [],
-      roles: [],
       status: 'Not Started',
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
@@ -110,6 +116,7 @@ describe('Objectives', () => {
 
   it('removing an existing objective add it back to the list of available objectives', async () => {
     const objectiveOptions = [{
+
       value: 3,
       label: 'Test objective 1',
       title: 'Test objective 1',
@@ -117,10 +124,11 @@ describe('Objectives', () => {
       activityReports: [],
       resources: [],
       topics: [],
-      roles: [],
       status: 'In Progress',
+      id: 3,
     },
     {
+      id: 4,
       value: 4,
       label: 'Test objective 2',
       title: 'Test objective 2',
@@ -128,7 +136,6 @@ describe('Objectives', () => {
       activityReports: [],
       resources: [],
       topics: [],
-      roles: [],
       status: 'Not Started',
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
@@ -165,7 +172,6 @@ describe('Objectives', () => {
       activityReports: [],
       resources: [],
       topics: [],
-      roles: ['CENTRAL OFFICE'],
       status: 'Not Started',
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
@@ -186,7 +192,6 @@ describe('Objectives', () => {
       }],
       resources: [],
       topics: [],
-      roles: ['CENTRAL OFFICE'],
       status: 'Not Started',
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
@@ -206,7 +211,6 @@ describe('Objectives', () => {
       activityReports: [],
       resources: [],
       topics: [],
-      roles: ['CENTRAL OFFICE'],
       status: 'Not Started',
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} goalId="new" />);

@@ -120,7 +120,10 @@ ObjectiveTopics.propTypes = {
   inputName: PropTypes.string,
   isLoading: PropTypes.bool,
   goalStatus: PropTypes.string.isRequired,
-  isOnReport: PropTypes.bool.isRequired,
+  isOnReport: PropTypes.oneOfType([
+    PropTypes.bool,
+    PropTypes.number,
+  ]).isRequired,
 };
 
 ObjectiveTopics.defaultProps = {
