@@ -420,6 +420,7 @@ export async function getGoalsByActivityRecipient(
       count: r.goalRows.length,
       goalRows: r.goalRows.slice(offSetNum, offSetNum + limitNum),
       statuses,
+      allGoalIds,
     };
   }
 
@@ -427,5 +428,6 @@ export async function getGoalsByActivityRecipient(
     count: r.goalRows.length,
     goalRows: r.goalRows.slice(offSetNum),
     statuses,
+    allGoalIds,
   };
 }

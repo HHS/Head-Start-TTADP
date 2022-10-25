@@ -22,10 +22,12 @@ function GoalCards({
   loading,
   sortConfig,
   setGoals,
+  allGoalIds,
 }) {
   // Goal select check boxes.
   const [selectedGoalCheckBoxes, setSelectedGoalCheckBoxes] = useState({});
   const [allGoalsChecked, setAllGoalsChecked] = useState(false);
+  const [printAllGoals, setPrintAllGoals] = useState(false);
 
   // Close/Suspend Reason Modal.
   const [closeSuspendGoalIds, setCloseSuspendGoalIds] = useState([]);
@@ -82,10 +84,15 @@ function GoalCards({
     const checkValues = Object.values(selectedGoalCheckBoxes);
     if (checkValues.every((v) => v === true)) {
       setAllGoalsChecked(true);
-    } else if (allGoalsChecked === true) {
-      setAllGoalsChecked(false);
+    } else {
+      if (allGoalsChecked === true) {
+        setAllGoalsChecked(false);
+      }
+      if (printAllGoals === true) {
+        setPrintAllGoals(false);
+      }
     }
-  }, [selectedGoalCheckBoxes, allGoalsChecked]);
+  }, [selectedGoalCheckBoxes, allGoalsChecked, printAllGoals]);
 
   const selectAllGoalCheckboxSelect = (event) => {
     const { target: { checked = null } = {} } = event;
@@ -96,6 +103,7 @@ function GoalCards({
     } else {
       setSelectedGoalCheckBoxes(makeGoalCheckboxes(goals, false));
       setAllGoalsChecked(false);
+      setPrintAllGoals(false);
     }
   };
 
@@ -106,6 +114,12 @@ function GoalCards({
     } else {
       setSelectedGoalCheckBoxes({ ...selectedGoalCheckBoxes, [value]: false });
     }
+  };
+
+  const checkAllGoals = () => {
+    const allIdCheckBoxes = allGoalIds.reduce((obj, g) => ({ ...obj, [g]: true }), {});
+    setSelectedGoalCheckBoxes(allIdCheckBoxes);
+    setPrintAllGoals(true);
   };
 
   const numberOfSelectedGoals = Object.values(selectedGoalCheckBoxes).filter((g) => g).length;
@@ -144,6 +158,7 @@ function GoalCards({
           numberOfSelectedGoals={numberOfSelectedGoals}
           allGoalsChecked={allGoalsChecked}
           selectAllGoalCheckboxSelect={selectAllGoalCheckboxSelect}
+          selectAllGoals={checkAllGoals}
         />
         <div>
 
@@ -187,6 +202,7 @@ GoalCards.propTypes = {
     offset: PropTypes.number,
   }).isRequired,
   setGoals: PropTypes.func.isRequired,
+  allGoalIds: PropTypes.arrayOf(PropTypes.number).isRequired,
 };
 
 export default GoalCards;

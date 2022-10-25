@@ -1,6 +1,8 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
-import { Checkbox, Button, Dropdown } from '@trussworks/react-uswds';
+import {
+  Checkbox, Button, Dropdown, Alert,
+} from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import Pagination from 'react-js-pagination';
@@ -38,6 +40,7 @@ export default function GoalCardsHeader({
   numberOfSelectedGoals,
   allGoalsChecked,
   selectAllGoalCheckboxSelect,
+  selectAllGoals,
 }) {
   const history = useHistory();
   const { user } = useContext(UserContext);
@@ -151,6 +154,24 @@ export default function GoalCardsHeader({
               </span>
             )}
       </div>
+      <div>
+        {
+              allGoalsChecked && (numberOfSelectedGoals !== count)
+                ? (
+                  <Alert className="margin-top-3" type="info" slim>
+                    {`All ${numberOfSelectedGoals} goals on this page are selected.`}
+                    <button
+                      type="button"
+                      className="usa-button usa-button--unstyled margin-left-1"
+                      onClick={selectAllGoals}
+                    >
+                      {`Select all ${count} goals`}
+                    </button>
+                  </Alert>
+                )
+                : null
+            }
+      </div>
     </div>
 
   );
@@ -177,6 +198,7 @@ GoalCardsHeader.propTypes = {
   selectAllGoalCheckboxSelect: PropTypes.func,
   allGoalsChecked: PropTypes.bool,
   numberOfSelectedGoals: PropTypes.number,
+  selectAllGoals: PropTypes.func,
 };
 
 GoalCardsHeader.defaultProps = {
@@ -188,5 +210,6 @@ GoalCardsHeader.defaultProps = {
   perPage: 10,
   handlePageChange: () => { },
   selectAllGoalCheckboxSelect: () => { },
+  selectAllGoals: () => { },
   numberOfSelectedGoals: 0,
 };
