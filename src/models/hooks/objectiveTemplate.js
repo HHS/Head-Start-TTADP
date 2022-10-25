@@ -8,7 +8,7 @@ const autoPopulateHash = (sequelize, instance, options) => {
     && instance.templateTitle !== null
     && instance.templateTitle !== undefined) {
     instance.set('hash', sequelize.fn('md5', sequelize.fn('TRIM', instance.templateTitle)));
-    if (!options.fields.contains('hash')) {
+    if (!options.fields.includes('hash')) {
       options.fields.push('hash');
     }
   }
@@ -21,7 +21,7 @@ const autoPopulateTemplateTitleModifiedAt = (sequelize, instance, options) => {
     && instance.templateTitle !== null
     && instance.templateTitle !== undefined) {
     instance.set('templateTitleModifiedAt', new Date());
-    if (!options.fields.contains('templateTitleModifiedAt')) {
+    if (!options.fields.includes('templateTitleModifiedAt')) {
       options.fields.push('templateTitleModifiedAt');
     }
   }
@@ -34,7 +34,7 @@ const autoPopulateCreationMethod = (sequelize, instance, options) => {
         || instance.creationMethod === null
         || instance.creationMethod === undefined)) {
     instance.set('creationMethod', AUTOMATIC_CREATION);
-    if (!options.fields.contains('creationMethod')) {
+    if (!options.fields.includes('creationMethod')) {
       options.fields.push('creationMethod');
     }
   }
