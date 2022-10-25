@@ -49,21 +49,24 @@ describe('Goals', () => {
     let instance = {
     };
     instance.set = (name, value) => { instance[name] = value; };
-    autoPopulateOnApprovedAR(null, instance);
+    let options = { fields: [] };
+    autoPopulateOnApprovedAR(null, instance, options);
     expect(instance.onApprovedAR).toEqual(false);
 
     instance = {
       onApprovedAR: false,
     };
     instance.set = (name, value) => { instance[name] = value; };
-    autoPopulateOnApprovedAR(null, instance);
+    options = { fields: [] };
+    autoPopulateOnApprovedAR(null, instance, options);
     expect(instance.onApprovedAR).toEqual(false);
 
     instance = {
       onApprovedAR: true,
     };
     instance.set = (name, value) => { instance[name] = value; };
-    autoPopulateOnApprovedAR(null, instance);
+    options = { fields: [] };
+    autoPopulateOnApprovedAR(null, instance, options);
     expect(instance.onApprovedAR).toEqual(true);
   });
   it('preventNamChangeWhenOnApprovedAR', async () => {
@@ -112,7 +115,8 @@ describe('Goals', () => {
       changed: () => [],
     };
     instance.set = (name, value) => { instance[name] = value; };
-    autoPopulateStatusChangeDates(null, instance);
+    let options = { fields: [] };
+    autoPopulateStatusChangeDates(null, instance, options);
     expect(instance.firstNotStartedAt).toEqual(undefined);
     expect(instance.firstInProgressAt).toEqual(undefined);
     expect(instance.firstSuspendedAt).toEqual(undefined);
@@ -126,7 +130,8 @@ describe('Goals', () => {
       changed: () => ['status'],
     };
     instance.set = (name, value) => { instance[name] = value; };
-    autoPopulateStatusChangeDates(null, instance);
+    options = { fields: [] };
+    autoPopulateStatusChangeDates(null, instance, options);
     expect(instance.firstNotStartedAt).toEqual(undefined);
     expect(instance.firstInProgressAt).toEqual(undefined);
     expect(instance.firstSuspendedAt).toEqual(undefined);
@@ -141,7 +146,8 @@ describe('Goals', () => {
       changed: () => ['status'],
     };
     instance.set = (name, value) => { instance[name] = value; };
-    autoPopulateStatusChangeDates(null, instance);
+    options = { fields: [] };
+    autoPopulateStatusChangeDates(null, instance, options);
     expect(instance.firstNotStartedAt).toEqual(undefined);
     expect(instance.firstInProgressAt).toEqual(undefined);
     expect(instance.firstSuspendedAt).toEqual(undefined);
@@ -156,7 +162,8 @@ describe('Goals', () => {
       changed: () => ['status'],
     };
     instance.set = (name, value) => { instance[name] = value; };
-    autoPopulateStatusChangeDates(null, instance);
+    options = { fields: [] };
+    autoPopulateStatusChangeDates(null, instance, options);
     expect(instance.firstNotStartedAt).toEqual(undefined);
     expect(instance.firstInProgressAt).toEqual(undefined);
     expect(instance.firstSuspendedAt).toEqual(undefined);
@@ -171,7 +178,8 @@ describe('Goals', () => {
       changed: () => ['status'],
     };
     instance.set = (name, value) => { instance[name] = value; };
-    autoPopulateStatusChangeDates(null, instance);
+    options = { fields: [] };
+    autoPopulateStatusChangeDates(null, instance, options);
     expect(instance.firstNotStartedAt).toEqual(undefined);
     expect(instance.firstInProgressAt).toEqual(undefined);
     expect(instance.firstSuspendedAt).toEqual(undefined);
@@ -186,8 +194,9 @@ describe('Goals', () => {
       changed: () => ['status'],
     };
     instance.set = (name, value) => { instance[name] = value; };
+    options = { fields: [] };
     const ts = (new Date()).getTime();
-    autoPopulateStatusChangeDates(null, instance);
+    autoPopulateStatusChangeDates(null, instance, options);
     expect((Date.parse(instance.firstNotStartedAt)))
       .toBeLessThan(ts);
     expect(instance.firstInProgressAt).toEqual(undefined);
@@ -201,15 +210,16 @@ describe('Goals', () => {
     expect(instance.lastNotStartedAt).toEqual(instance.firstNotStartedAt);
 
     await sleep(1000);
-
-    autoPopulateStatusChangeDates(null, instance);
+    options = { fields: [] };
+    autoPopulateStatusChangeDates(null, instance, options);
     expect((Date.parse(instance.firstNotStartedAt)))
       .toBeLessThan((Date.parse(instance.lastNotStartedAt)));
 
     await sleep(1000);
 
     instance.status = GOAL_STATUS.IN_PROGRESS;
-    autoPopulateStatusChangeDates(null, instance);
+    options = { fields: [] };
+    autoPopulateStatusChangeDates(null, instance, options);
     expect((Date.parse(instance.firstInProgressAt)))
       .toBeGreaterThan((Date.parse(instance.lastNotStartedAt)));
     expect((Date.parse(instance.lastInProgressAt)))
@@ -217,15 +227,16 @@ describe('Goals', () => {
     expect(instance.lastInProgressAt).toEqual(instance.firstInProgressAt);
 
     await sleep(1000);
-
-    autoPopulateStatusChangeDates(null, instance);
+    options = { fields: [] };
+    autoPopulateStatusChangeDates(null, instance, options);
     expect((Date.parse(instance.lastInProgressAt)))
       .toBeGreaterThan((Date.parse(instance.firstInProgressAt)));
 
     await sleep(1000);
 
     instance.status = GOAL_STATUS.SUSPENDED;
-    autoPopulateStatusChangeDates(null, instance);
+    options = { fields: [] };
+    autoPopulateStatusChangeDates(null, instance, options);
     expect((Date.parse(instance.firstSuspendedAt)))
       .toBeGreaterThan((Date.parse(instance.lastInProgressAt)));
     expect((Date.parse(instance.lastSuspendedAt)))
@@ -233,15 +244,16 @@ describe('Goals', () => {
     expect(instance.lastSuspendedAt).toEqual(instance.firstSuspendedAt);
 
     await sleep(1000);
-
-    autoPopulateStatusChangeDates(null, instance);
+    options = { fields: [] };
+    autoPopulateStatusChangeDates(null, instance, options);
     expect((Date.parse(instance.lastSuspendedAt)))
       .toBeGreaterThan((Date.parse(instance.firstSuspendedAt)));
 
     await sleep(1000);
 
     instance.status = GOAL_STATUS.CLOSED;
-    autoPopulateStatusChangeDates(null, instance);
+    options = { fields: [] };
+    autoPopulateStatusChangeDates(null, instance, options);
     expect((Date.parse(instance.firstClosedAt)))
       .toBeGreaterThan((Date.parse(instance.lastSuspendedAt)));
     expect((Date.parse(instance.lastClosedAt)))
@@ -249,8 +261,8 @@ describe('Goals', () => {
     expect(instance.lastClosedAt).toEqual(instance.firstClosedAt);
 
     await sleep(1000);
-
-    autoPopulateStatusChangeDates(null, instance);
+    options = { fields: [] };
+    autoPopulateStatusChangeDates(null, instance, options);
     expect((Date.parse(instance.lastClosedAt)))
       .toBeGreaterThan((Date.parse(instance.firstClosedAt)));
   });
