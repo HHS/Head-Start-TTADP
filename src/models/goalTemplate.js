@@ -60,7 +60,7 @@ module.exports = (sequelize, DataTypes) => {
     sequelize,
     modelName: 'GoalTemplate',
     hooks: {
-      beforeValidate: async (instance) => beforeValidate(sequelize, instance),
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });
