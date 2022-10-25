@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Grid, Alert } from '@trussworks/react-uswds';
 import GoalsCardsHeader from './GoalsCardsHeader';
@@ -23,6 +23,10 @@ function GoalCards({
   sortConfig,
   setGoals,
 }) {
+  // Goal select check boxes.
+  const [selectedGoalCheckBoxes, setSelectedGoalCheckBoxes] = useState({});
+  const [allGoalsChecked, setAllGoalsChecked] = useState(false);
+
   // Close/Suspend Reason Modal.
   const [closeSuspendGoalIds, setCloseSuspendGoalIds] = useState([]);
   const [closeSuspendStatus, setCloseSuspendStatus] = useState('');
@@ -65,6 +69,47 @@ function GoalCards({
     setGoals(newGoals);
   };
 
+  const makeGoalCheckboxes = (goalsArr, checked) => (
+    goalsArr.reduce((obj, g) => ({ ...obj, [g.id]: checked }), {})
+  );
+
+  // When reports are updated, make sure all checkboxes are unchecked
+  useEffect(() => {
+    setSelectedGoalCheckBoxes(makeGoalCheckboxes(goals, false));
+  }, [goals]);
+
+  useEffect(() => {
+    const checkValues = Object.values(selectedGoalCheckBoxes);
+    if (checkValues.every((v) => v === true)) {
+      setAllGoalsChecked(true);
+    } else if (allGoalsChecked === true) {
+      setAllGoalsChecked(false);
+    }
+  }, [selectedGoalCheckBoxes, allGoalsChecked]);
+
+  const selectAllGoalCheckboxSelect = (event) => {
+    const { target: { checked = null } = {} } = event;
+
+    if (checked === true) {
+      setSelectedGoalCheckBoxes(makeGoalCheckboxes(goals, true));
+      setAllGoalsChecked(true);
+    } else {
+      setSelectedGoalCheckBoxes(makeGoalCheckboxes(goals, false));
+      setAllGoalsChecked(false);
+    }
+  };
+
+  const handleGoalCheckboxSelect = (event) => {
+    const { target: { checked = null, value = null } = {} } = event;
+    if (checked === true) {
+      setSelectedGoalCheckBoxes({ ...selectedGoalCheckBoxes, [value]: true });
+    } else {
+      setSelectedGoalCheckBoxes({ ...selectedGoalCheckBoxes, [value]: false });
+    }
+  };
+
+  const numberOfSelectedGoals = Object.values(selectedGoalCheckBoxes).filter((g) => g).length;
+
   return (
     <>
       {error && (
@@ -96,6 +141,9 @@ function GoalCards({
           hasActiveGrants={hasActiveGrants}
           sortConfig={sortConfig}
           requestSort={requestSort}
+          numberOfSelectedGoals={numberOfSelectedGoals}
+          allGoalsChecked={allGoalsChecked}
+          selectAllGoalCheckboxSelect={selectAllGoalCheckboxSelect}
         />
         <div>
 
@@ -110,6 +158,8 @@ function GoalCards({
               regionId={regionId}
               showCloseSuspendGoalModal={showCloseSuspendGoalModal}
               performGoalStatusUpdate={performGoalStatusUpdate}
+              handleGoalCheckboxSelect={handleGoalCheckboxSelect}
+              isChecked={selectedGoalCheckBoxes[goal.id] || false}
             />
           ))}
 
