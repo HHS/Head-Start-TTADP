@@ -95,7 +95,7 @@ export default function runCronJobs() {
   // Run only on one instance
   if (process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') {
     // disable updates for non-production environments
-    if (!process.env.TTA_SMARTHUB_URI.endsWith('app.cloud.gov')) {
+    if (process.env.TTA_SMART_HUB_URI && !process.env.TTA_SMART_HUB_URI.endsWith('app.cloud.gov')) {
       const job = new CronJob(schedule, () => runJob(), null, true, timezone);
       job.start();
     }
