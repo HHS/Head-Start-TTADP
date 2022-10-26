@@ -1,12 +1,7 @@
-import { Op } from 'sequelize';
 import db, {
-  ActivityReport,
-  ActivityRecipient,
   User,
-  Collaborator,
   Recipient,
   Grant,
-  NextStep,
   Region,
   Role,
   UserRole,

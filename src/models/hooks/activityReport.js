@@ -1,5 +1,10 @@
 const { Op } = require('sequelize');
-const { REPORT_STATUSES, OBJECTIVE_STATUS, ENTITY_TYPES, APPROVAL_RATIO } = require('../../constants');
+const {
+  REPORT_STATUSES,
+  OBJECTIVE_STATUS,
+  ENTITY_TYPES,
+  APPROVAL_RATIO,
+} = require('../../constants');
 const { auditLogger } = require('../../logger');
 const { findOrCreateGoalTemplate } = require('./goal');
 const { findOrCreateObjectiveTemplate } = require('./objective');

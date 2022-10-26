@@ -1,7 +1,6 @@
 import { Op } from 'sequelize';
 import db, {
   ActivityReport,
-  ActivityReportApprover,
   Approval,
   Collaborator,
   ActivityRecipient,

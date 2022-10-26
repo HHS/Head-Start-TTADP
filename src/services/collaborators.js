@@ -1,5 +1,4 @@
-import { Op, sequelize } from 'sequelize';
-import { result } from 'lodash';
+import { Op } from 'sequelize';
 import { User, Collaborator, Role } from '../models';
 import { COLLABORATOR_TYPES } from '../constants';
 import { auditLogger } from '../logger';
@@ -20,7 +19,14 @@ export async function upsertCollaborator(values) {
       throw new Error('At least one collaborator type is required to create a collaborator.');
     }
   } catch (err) {
-    auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 1, values, err }));
+    auditLogger.error(
+      JSON.stringify({
+        name: 'upsertCollaborator',
+        index: 1,
+        values,
+        err,
+      }),
+    );
     throw new Error(err);
   }
 
@@ -29,7 +35,12 @@ export async function upsertCollaborator(values) {
   try {
     collaborator = await Collaborator.findOne({ where: { entityType, entityId, userId } });
   } catch (err) {
-    auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 1.5, values, err}));
+    auditLogger.error(JSON.stringify({
+      name: 'upsertCollaborator',
+      index: 1.5,
+      values,
+      err,
+    }));
     throw new Error(err);
   }
   try {
@@ -48,7 +59,12 @@ export async function upsertCollaborator(values) {
       }
     }
   } catch (err) {
-    auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 2, values, err}));
+    auditLogger.error(JSON.stringify({
+      name: 'upsertCollaborator',
+      index: 2,
+      values,
+      err,
+    }));
     throw new Error(err);
   }
   try {
@@ -63,7 +79,16 @@ export async function upsertCollaborator(values) {
         ];
         newCollaboratorTypes = [...new Set(tmpArray)];
       } catch (err) {
-        auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 2.4, values, err, newCollaboratorTypes, collaborator}));
+        auditLogger.error(
+          JSON.stringify({
+            name: 'upsertCollaborator',
+            index: 2.4,
+            values,
+            err,
+            newCollaboratorTypes,
+            collaborator,
+          }),
+        );
         throw new Error(err);
       }
       try {
@@ -73,10 +98,16 @@ export async function upsertCollaborator(values) {
           ...others,
         }, {
           individualHooks: true,
-          // logging: (msg) => auditLogger.error(JSON.stringify({ name: 'upsertCollaborator - update', msg })),
         });
       } catch (err) {
-        auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 2.5, values, err}));
+        auditLogger.error(
+          JSON.stringify({
+            name: 'upsertCollaborator',
+            index: 2.5,
+            values,
+            err,
+          }),
+        );
         throw new Error(err);
       }
     } else {
@@ -94,19 +125,34 @@ export async function upsertCollaborator(values) {
         );
       } catch (err) {
         collaborator = await Collaborator.findOne({ where: { entityType, entityId, userId } });
-        auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 2.8, values, err, collaborator}));
+        auditLogger.error(
+          JSON.stringify({
+            name: 'upsertCollaborator',
+            index: 2.8,
+            values,
+            err,
+            collaborator,
+          }),
+        );
         throw new Error(err);
       }
     }
   } catch (err) {
-    auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 3, values, err}));
+    auditLogger.error(
+      JSON.stringify({
+        name: 'upsertCollaborator',
+        index: 3,
+        values,
+        err,
+      }),
+    );
     throw new Error(err);
   }
 
   try {
     if (collaborator) {
       try {
-        collaborator = await Collaborator.findOne({
+        return await Collaborator.findOne({
           where: { entityType, entityId, userId },
           include: [
             {
@@ -120,12 +166,26 @@ export async function upsertCollaborator(values) {
           ],
         });
       } catch (err) {
-        auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 3.5, values, err}));
+        auditLogger.error(
+          JSON.stringify({
+            name: 'upsertCollaborator',
+            index: 3.5,
+            values,
+            err,
+          }),
+        );
         throw new Error(err);
       }
     }
   } catch (err) {
-    auditLogger.error(JSON.stringify({ name: 'upsertCollaborator', index: 4, values, err}));
+    auditLogger.error(
+      JSON.stringify({
+        name: 'upsertCollaborator',
+        index: 4,
+        values,
+        err,
+      }),
+    );
     throw new Error(err);
   }
   return collaborator;

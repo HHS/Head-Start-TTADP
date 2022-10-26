@@ -247,7 +247,6 @@ async function create(report, silent = false) {
   try {
     return ActivityReport.create(report, {
       silent,
-      // logging: (msg) => auditLogger.error(JSON.stringify({ name: 'ActivityReport.create', msg })),
     });
   } catch (err) {
     auditLogger.error(JSON.stringify({ name: 'ActivityReport.create', err, report }));
@@ -1277,7 +1276,14 @@ export async function createOrUpdate(newActivityReport, report) {
           ? g.otherEntityId
           : g.grantId;
       });
-      auditLogger.info(JSON.stringify({ name: 'saveReportRecipients', activityRecipients, activityRecipientIds, typeOfRecipient }));
+      auditLogger.info(
+        JSON.stringify({
+          name: 'saveReportRecipients',
+          activityRecipients,
+          activityRecipientIds,
+          typeOfRecipient,
+        }),
+      );
       await saveReportRecipients(savedReportId, activityRecipientIds, typeOfRecipient);
     } catch (err) {
       auditLogger.error(JSON.stringify({ name: 'saveReportRecipients', activityRecipients, err }));

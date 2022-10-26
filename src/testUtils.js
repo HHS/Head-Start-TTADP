@@ -278,7 +278,7 @@ export async function destroyReport(r) {
       ...roles.map((model) => model.destroy({ individualHooks: true })),
     ]);
   } catch (e) {
-    console.log('error destroying', e);
+    // console.log('error destroying', e);
   }
 }
 

@@ -20,7 +20,12 @@ import {
   Program,
   File,
 } from '../models';
-import { DECIMAL_BASE, REPORT_STATUSES, OBJECTIVE_STATUS, ENTITY_TYPES } from '../constants';
+import {
+  DECIMAL_BASE,
+  REPORT_STATUSES,
+  OBJECTIVE_STATUS,
+  ENTITY_TYPES,
+} from '../constants';
 import {
   cacheObjectiveMetadata,
   cacheGoalMetadata,

@@ -3,7 +3,6 @@ import {
   sequelize,
   ActivityReport,
   ActivityReportFile,
-  ActivityRecipient,
   Collaborator,
   User,
   Recipient,
@@ -11,7 +10,6 @@ import {
   Grant,
   Role,
   UserRole,
-  NextStep,
   Permission,
   RequestErrors,
   ZALGoal,
@@ -172,7 +170,7 @@ describe('processData', () => {
         mockCollaboratorTwo,
       ].map(async (mock) => {
         const user = await User.create(mock);
-        const userRole = await UserRole.create({ userId: user.id, roleId: role.id });
+        await UserRole.create({ userId: user.id, roleId: role.id });
       }),
     ]);
 
@@ -221,7 +219,7 @@ describe('processData', () => {
       individualHooks: true,
     });
 
-    const ids = reports.map((report) => report.id);
+    // const ids = reports.map((report) => report.id);
     await File.destroy({ where: { id: mockFile.id }, individualHooks: true });
     await Grant.destroy({ where: { id: GRANT_ID_ONE }, individualHooks: true });
     await Grant.destroy({ where: { id: GRANT_ID_TWO }, individualHooks: true });

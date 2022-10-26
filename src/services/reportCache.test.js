@@ -11,7 +11,6 @@ import db, {
   ObjectiveFile,
   ObjectiveResource,
   ObjectiveTopic,
-  ActivityReport,
   ActivityRecipient,
   ActivityReportGoal,
   ActivityReportObjective,

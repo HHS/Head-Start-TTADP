@@ -142,7 +142,6 @@ describe('saveGoalsForReport (more tests)', () => {
       activityRecipients: [{ grantId: grantOne.id }, { grantId: grantTwo.id }],
     });
 
-
     reportWeArentWorryingAbout = await createOrUpdate({
       owner: { userId: mockUser.id },
       approval: {
