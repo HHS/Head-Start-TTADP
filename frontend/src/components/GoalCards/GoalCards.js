@@ -77,7 +77,7 @@ function GoalCards({
 
   useEffect(() => {
     const checkValues = Object.values(selectedGoalCheckBoxes);
-    if (checkValues.every((v) => v === true)) {
+    if (checkValues.length && checkValues.every((v) => v === true)) {
       setAllGoalsChecked(true);
     } else {
       if (allGoalsChecked === true) {
@@ -154,6 +154,7 @@ function GoalCards({
           allGoalsChecked={allGoalsChecked}
           selectAllGoalCheckboxSelect={selectAllGoalCheckboxSelect}
           selectAllGoals={checkAllGoals}
+          selectedGoalIds={Object.keys(selectedGoalCheckBoxes).map((g) => g)}
         />
         <div>
 
