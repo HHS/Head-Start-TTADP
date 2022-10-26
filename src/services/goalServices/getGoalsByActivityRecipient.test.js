@@ -8,7 +8,6 @@ import {
   ActivityReport,
   Recipient,
   Grant,
-  ActivityRecipient,
   Collaborator,
   Goal,
   ActivityReportObjective,
