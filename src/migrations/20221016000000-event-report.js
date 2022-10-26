@@ -99,6 +99,19 @@ module.exports = {
           FROM "ActivityReports";`,
           { transaction },
         );
+
+        const maxindex = await queryInterface.sequelize.query(
+          `SELECT
+            MAX(id)
+          FROM "EventReports";`,
+          { transaction },
+        );
+
+        await queryInterface.sequelize.query(
+          `ALTER SEQUENCE "EventReports_id_seq"
+          RESTART WITH ${maxindex + 1};`,
+        );
+
         await queryInterface.addColumn(
           'ActivityReports',
           'eventReportId',
@@ -135,16 +148,128 @@ module.exports = {
       }
 
       const remappings = [
-        { from: 'ActivityRecipients', to: 'ReportRecipients' },
-        { from: 'ActivityReportFiles', to: 'ReportFiles' },
-        { from: 'ActivityReportGoals', to: 'ReportGoals' },
-        { from: 'ActivityReportObjectiveFiles', to: 'ReportObjectiveFiles' },
-        { from: 'ActivityReportObjectives', to: 'ReportObjectives' },
+        {
+          from: 'ActivityRecipients',
+          to: 'ReportRecipients',
+          sequences: [
+            { from: 'ActivityParticipants_id_seq', to: 'ReportRecipients_id_seq' },
+          ],
+          constraints: [
+            { from: 'ActivityParticipants_pkey', to: 'ReportRecipients_pkey' },
+            { from: 'ActivityParticipants_activityReportId_fkey', to: 'ReportRecipients_activityReportId_fkey' },
+            { from: 'ActivityParticipants_grantId_fkey', to: 'ReportRecipients_grantId_fkey' },
+            { from: 'ActivityRecipients_otherEntityId', to: 'ReportRecipients_otherEntityId' },
+          ],
+          indexes: [],
+          columns: [],
+        },
+        {
+          from: 'ActivityReportFiles',
+          to: 'ReportFiles',
+          sequences: [
+            { from: 'ActivityReportFiles_id_seq', to: 'ReportFiles_id_seq' },
+          ],
+          constraints: [
+            { from: 'ActivityReportFiles_pkey', to: 'ReportFiles_pkey' },
+            { from: 'ActivityReportFiles_activityReportId_fkey', to: 'ReportFiles_activityReportId_fkey' },
+            { from: 'ActivityReportFiles_fileId_fkey', to: 'ReportFiles_fileId_fkey' },
+          ],
+          indexes: [],
+          columns: [],
+        },
+        {
+          from: 'ActivityReportGoals',
+          to: 'ReportGoals',
+          sequences: [
+            { from: 'ActivityReportGoals_id_seq', to: 'ReportGoals_id_seq' },
+          ],
+          constraints: [
+            { from: 'ActivityReportGoals_pkey', to: 'ReportGoals_pkey' },
+            { from: 'ActivityReportGoals_activityReportId_fkey', to: 'ReportGoals_activityReportId_fkey' },
+            { from: 'ActivityReportGoals_goalId_fkey', to: 'ReportGoals_goalId_fkey' },
+          ],
+          indexes: [],
+          columns: [],
+        },
+        {
+          from: 'ActivityReportObjectives',
+          to: 'ReportObjectives',
+          sequences: [
+            { from: 'ActivityReportObjectives_id_seq', to: 'ReportObjectives_id_seq' },
+          ],
+          constraints: [
+            { from: 'ActivityReportObjectives_pkey', to: 'ReportObjectives_pkey' },
+            { from: 'ActivityReportObjectives_activityReportId_fkey', to: 'ReportObjectives_activityReportId_fkey' },
+            { from: 'ActivityReportObjectives_objectiveId_fkey', to: 'ReportObjectives_objectiveId_fkey' },
+          ],
+          indexes: [],
+          columns: [],
+        },
+        {
+          from: 'ActivityReportObjectiveFiles',
+          to: 'ReportObjectiveFiles',
+          sequences: [
+            { from: 'ActivityReportObjectiveFiles_id_seq', to: 'ReportObjectiveFiles_id_seq' },
+          ],
+          constraints: [
+            { from: 'ActivityReportObjectiveFiles_pkey', to: 'ReportObjectiveFiles_pkey' },
+            { from: 'ActivityReportObjectiveFiles_activityReportObjectiveId_fkey', to: 'ReportObjectiveFiles_reportObjectiveId_fkey' },
+            { from: 'ActivityReportObjectiveFiles_fileId_fkey', to: 'ReportObjectiveFiles_fileId_fkey' },
+          ],
+          indexes: [],
+          columns: [
+            { from: 'activityReportObjectiveId', to: 'reportObjectiveId' },
+          ],
+        },
+        {
+          from: 'ActivityReportObjectiveResources',
+          to: 'ReportObjectiveResources',
+          sequences: [
+            { from: 'ActivityReportObjectiveResources_id_seq', to: 'ReportObjectiveResources_id_seq' },
+          ],
+          constraints: [
+            { from: 'ActivityReportObjectiveResources_pkey', to: 'ReportObjectiveResources_pkey' },
+            { from: 'ActivityReportObjectiveResources_activityReportObjectiveId_fkey', to: 'ReportObjectiveResources_reportObjectiveId_fkey' },
+          ],
+          indexes: [],
+          columns: [
+            { from: 'activityReportObjectiveId', to: 'reportObjectiveId' },
+          ],
+        },
+        {
+          from: 'ActivityReportObjectiveTopics',
+          to: 'ReportObjectiveTopics',
+          sequences: [
+            { from: 'ActivityReportObjectiveTopics_id_seq', to: 'ReportObjectiveTopics_id_seq' },
+          ],
+          constraints: [
+            { from: 'ActivityReportObjectiveTopics_pkey', to: 'ReportObjectiveTopics_pkey' },
+            { from: 'ActivityReportObjectiveTopics_activityReportObjectiveId_fkey', to: 'ReportObjectiveTopics_reportObjectiveId_fkey' },
+            { from: 'ActivityReportObjectiveTopics_topicId_fkey', to: 'ReportObjectiveTopics_topicId_fkey' },
+          ],
+          indexes: [],
+          columns: [
+            { from: 'activityReportObjectiveId', to: 'reportObjectiveId' },
+          ],
+        },
       ];
 
       try {
         await Promise.all(remappings.map(async (remapping) => {
           const promises = [];
+
+          // Rename Table
+          promises.push(await queryInterface.sequelize.query(
+            `ALTER TABLE IF EXISTS "${remapping.from}"
+             RENAME TO "${remapping.to}"`,
+            {
+              type: queryInterface.QueryTypes.RAW,
+              raw: true,
+              transaction,
+            },
+          ));
+
+          // Add eventReportId column
           promises.push(await queryInterface.addColumn(
             remapping.from,
             'eventReportId',
@@ -156,27 +281,59 @@ module.exports = {
             { transaction },
           ));
 
+          // Populate eventReportId column
           promises.push(await queryInterface.sequelize.query(
             `UPDATE "${remapping.from}"
             SET "eventReportId" = "activityReportId";`,
             { transaction },
           ));
 
+          // Rename Sequences
+          remapping.sequences.map(async (sequence) => {
+            promises.push(await queryInterface.sequelize.query(
+              `ALTER SEQUENCE IF EXISTS "${sequence.from}"
+               RENAME TO "${sequence.to}";`,
+              {
+                type: queryInterface.QueryTypes.RAW,
+                raw: true,
+                transaction,
+              },
+            ));
+          });
+
+          // Rename Constraints
+          remapping.constraints.map(async (constraint) => {
+            promises.push(await queryInterface.sequelize.query(
+              `ALTER TABLE IF EXISTS"${remapping.to}"
+               RENAME CONSTRAINT "${constraint.from}" TO "${constraint.to}";`,
+              {
+                type: queryInterface.QueryTypes.RAW,
+                raw: true,
+                transaction,
+              },
+            ));
+          });
+
+          // Rename Indexes
+          remapping.indexes.map(async (index) => {
+            promises.push(await queryInterface.sequelize.query(
+              `ALTER INDEX IF EXISTS "${index.from}"
+               RENAME TO "${index.to}";`,
+              {
+                type: queryInterface.QueryTypes.RAW,
+                raw: true,
+                transaction,
+              },
+            ));
+          });
+
+          // Remove activityReportId Column
           await queryInterface.removeColumn(
             remapping.from,
             'activityReportId',
             { transaction },
           );
 
-          promises.push(await queryInterface.sequelize.query(
-            `ALTER TABLE '${remapping.from}'
-             RENAME TO '${remapping.to}'`,
-            {
-              type: queryInterface.QueryTypes.RAW,
-              raw: true,
-              transaction,
-            },
-          ));
           return Promise.all(promises);
         }));
       } catch (err) {
@@ -185,7 +342,6 @@ module.exports = {
       }
 
       try {
-
         await queryInterface.sequelize.query(
           `CREATE FUNCTION "fkcfCollaboratorsEntity"()
           RETURNS trigger
