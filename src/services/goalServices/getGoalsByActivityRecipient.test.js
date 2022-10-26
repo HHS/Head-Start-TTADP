@@ -3,6 +3,8 @@ import faker from '@faker-js/faker';
 import {
   sequelize,
   User,
+  Role,
+  UserRole,
   ActivityReport,
   Recipient,
   Grant,
@@ -234,6 +236,12 @@ describe('Goals by Recipient Test', () => {
   beforeAll(async () => {
     // Create User.
     await User.create(mockGoalUser);
+
+    // Create a Role.
+    await Role.create({ id: 1000, name: 'a', isSpecialist: true });
+
+    // Create a UserRole.
+    await UserRole.create({ userId: mockGoalUser.id, roleId: 1000 });
 
     // Create Recipient.
     await Recipient.create(recipient);
@@ -629,12 +637,7 @@ describe('Goals by Recipient Test', () => {
       individualHooks: true,
     });
 
-    // Delete AR and AR Recipient.
-    await ActivityRecipient.destroy({
-      where: { activityReportId: reportIdsToDelete },
-      individualHooks: true,
-    });
-    await ActivityReport.destroy({ where: { id: reportIdsToDelete }, individualHooks: true });
+    await Promise.allSettled(reportIdsToDelete.map((id) => destroyReport(id)));
 
     // Delete Recipient, Grant, User.
     await Grant.destroy({
