@@ -386,6 +386,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
         as: 'grant',
       },
     ],
+    order: ['name'],
   });
 
   // Get all grant programs at once to reduce DB calls.
