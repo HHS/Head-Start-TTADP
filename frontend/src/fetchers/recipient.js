@@ -43,6 +43,6 @@ export const getRecipientGoals = async (recipientId, regionId, sortBy = 'updated
 
   const goalsParam = goalIds.map((goalId) => `goalIds=${goalId}`);
   const recipientGoalsUrl = join(recipientUrl, recipientId, 'region', regionId, 'goals');
-  const goals = await get(`${recipientGoalsUrl}?sortBy=${sortBy}&sortDir=${sortDir}&offset=${offset}&limit=${limit}&${goalsParam.join('&')}${filters ? `&${filters}` : ''}`);
+  const goals = await get(`${recipientGoalsUrl}?sortBy=${sortBy}&sortDir=${sortDir}&offset=${offset}&limit=${limit}${goalsParam && goalsParam.length ? `&${goalsParam.join('&')}` : ''}${filters ? `&${filters}` : ''}`);
   return goals.json();
 };
