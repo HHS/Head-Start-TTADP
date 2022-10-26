@@ -21,6 +21,7 @@ export default function ObjectiveFiles({
   inputName,
   onBlur,
   reportId,
+  label,
 }) {
   const objectiveId = objective.id;
   const hasFiles = useMemo(() => files && files.length > 0, [files]);
@@ -77,7 +78,7 @@ export default function ObjectiveFiles({
             { hideFileToggle ? null : (
               <>
                 <legend>
-                  Do you plan to use any TTA resources that aren&apos;t available as a link?
+                  {label}
                   {' '}
                   <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
                   <QuestionTooltip
@@ -148,6 +149,7 @@ export default function ObjectiveFiles({
 }
 
 ObjectiveFiles.propTypes = {
+  label: PropTypes.string,
   objective: PropTypes.shape({
     isNew: PropTypes.bool,
     id: PropTypes.oneOfType([
@@ -200,4 +202,5 @@ ObjectiveFiles.defaultProps = {
   inputName: '',
   onBlur: () => {},
   reportId: 0,
+  label: "Do you plan to use any TTA resources that aren't available as a link?",
 };
