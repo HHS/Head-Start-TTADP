@@ -219,7 +219,6 @@ describe('Navigator', () => {
         title: 'objective',
         topics: ['test'],
         ttaProvided: 'tta provided',
-        roles: ['test'],
         resources: [],
       }],
     };

@@ -223,7 +223,7 @@ export async function syncCollaborators(
           }, {
             where: {
               id: collaborator.id,
-              collaboratorTypes: { [Op.contains]: collaboratorType },
+              collaboratorTypes: { [Op.contains]: [collaboratorType] },
             },
           })));
       }));
@@ -351,7 +351,7 @@ export async function getCollaboratorsByType(entityType, entityId, collaboratorT
     where: {
       entityType,
       entityId,
-      collaboratorTypes: { [Op.contains]: collaboratorType },
+      collaboratorTypes: { [Op.contains]: [collaboratorType] },
     },
   });
 }

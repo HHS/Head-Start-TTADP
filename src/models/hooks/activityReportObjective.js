@@ -13,13 +13,6 @@ const propagateDestroyToMetadata = async (sequelize, instance, options) => Promi
     individualHooks: true,
     transaction: options.transaction,
   }),
-  await sequelize.models.ActivityReportObjectiveRole.destroy({
-    where: {
-      activityReportObjectiveId: instance.id,
-    },
-    individualHooks: true,
-    transaction: options.transaction,
-  }),
   await sequelize.models.ActivityReportObjectiveTopic.destroy({
     where: {
       activityReportObjectiveId: instance.id,

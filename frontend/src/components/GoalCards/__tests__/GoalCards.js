@@ -127,7 +127,7 @@ const goalWithObjectives = [{
     grantNumbers: ['1'],
     activityReports: [{
       id: 1,
-      number: 'ar-number-1',
+      displayId: 'ar-number-1',
       legacyId: null,
       endDate: '06/14/2021',
     }],
@@ -142,7 +142,7 @@ const goalWithObjectives = [{
     grantNumbers: ['1'],
     activityReports: [{
       id: 2,
-      number: 'ar-number-2',
+      displayId: 'ar-number-2',
       legacyId: null,
       endDate: '01/14/2020',
     }],
@@ -157,7 +157,7 @@ const goalWithObjectives = [{
     grantNumbers: ['1'],
     activityReports: [{
       id: 3,
-      number: 'ar-number-3',
+      displayId: 'ar-number-3',
       legacyId: null,
       endDate: '02/14/2020',
     }],
@@ -172,7 +172,7 @@ const goalWithObjectives = [{
     grantNumbers: ['200342cat'],
     activityReports: [{
       id: 4,
-      number: 'ar-number-4',
+      displayId: 'ar-number-4',
       legacyId: null,
       endDate: '03/14/2020',
     }],
@@ -187,7 +187,7 @@ const goalWithObjectives = [{
     grantNumbers: ['1'],
     activityReports: [{
       id: 5,
-      number: 'ar-number-5',
+      displayId: 'ar-number-5',
       legacyId: null,
       endDate: '04/14/2020',
     }],
@@ -302,7 +302,8 @@ describe('Goals Table', () => {
       // Objective 1.
       await screen.findByText(/objective 1 title/i);
       await screen.findByRole('link', { name: /ar-number-1/i });
-      await screen.findByText('06/14/2021');
+      const lastTTa = screen.queryAllByText('06/14/2021');
+      expect(lastTTa.length).toBe(2);
       await screen.findByText(/monitoring | deficiency/i);
 
       // Objective 2.

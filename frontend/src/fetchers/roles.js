@@ -6,3 +6,8 @@ export const getRoles = async () => {
   const roles = await get((join('/', 'api', 'role')));
   return roles.json();
 };
+
+export const getSpecialistRoles = async () => {
+  const roles = await get((join('/', 'api', 'role', 'specialists')));
+  return roles.json();
+};

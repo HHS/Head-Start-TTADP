@@ -3,7 +3,7 @@ import {
   Recipient, Grant, Program, sequelize,
 } from '../models';
 import {
-  allRecipients, recipientById, recipientsByName, dedupeAndSortObjectivesAndReports,
+  allRecipients, recipientById, recipientsByName,
 } from './recipient';
 import filtersToScopes from '../scopes';
 
@@ -241,8 +241,8 @@ describe('Recipient DB service', () => {
       expect(recipient3.grants[0].grantSpecialistName).toBe('Tom Jones');
       expect(recipient3.grants[0].startDate).toBeTruthy();
       expect(recipient3.grants[0].endDate).toBeTruthy();
-      expect(recipient3.grants[0].programs.map((program) => program.name)).toStrictEqual(['type2', 'type']);
-      expect(recipient3.grants[0].programs.map((program) => program.programType)).toStrictEqual(['EHS', 'HS']);
+      expect(recipient3.grants[0].programs.map((program) => program.name)).toStrictEqual(['type', 'type2']);
+      expect(recipient3.grants[0].programs.map((program) => program.programType)).toStrictEqual(['HS', 'EHS']);
     });
     it('returns recipient and grants without a region specified', async () => {
       const recipient2 = await recipientById(74, {});
@@ -547,60 +547,6 @@ describe('Recipient DB service', () => {
       expect(foundRecipients.rows.length).toBe(2);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(70);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(71);
-    });
-  });
-
-  describe('dedupeAndSortObjectivesAndReports', () => {
-    it('dedupes objectives and reports', async () => {
-      const preduped = [
-        {
-          title: 'A Title ',
-          status: 'Active',
-          endDate: 1,
-          activityReports: [{ id: 1 }],
-        },
-        {
-          title: 'A Title',
-          status: 'Active',
-          endDate: 2,
-          activityReports: [{ id: 2 }],
-        },
-        {
-          title: 'A Title',
-          status: 'Inactive',
-          endDate: 3,
-          activityReports: [{ id: 3 }],
-        },
-        {
-          title: 'Another title',
-          status: 'Active',
-          endDate: 4,
-          activityReports: [{ id: 1 }],
-        },
-      ];
-
-      const deduped = dedupeAndSortObjectivesAndReports(preduped);
-      expect(deduped.length).toBe(3);
-      expect(deduped).toStrictEqual([
-        {
-          title: 'Another title',
-          status: 'Active',
-          endDate: 4,
-          activityReports: [{ id: 1 }],
-        },
-        {
-          title: 'A Title',
-          status: 'Inactive',
-          endDate: 3,
-          activityReports: [{ id: 3 }],
-        },
-        {
-          title: 'A Title',
-          status: 'Active',
-          endDate: 1,
-          activityReports: [{ id: 1 }, { id: 2 }],
-        },
-      ]);
     });
   });
 });

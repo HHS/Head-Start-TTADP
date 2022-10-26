@@ -75,13 +75,6 @@ module.exports = (sequelize, DataTypes) => {
         as: 'topics',
         hooks: true,
       });
-      Objective.belongsToMany(models.Role, {
-        through: models.ObjectiveRole,
-        foreignKey: 'objectiveId',
-        otherKey: 'roleId',
-        as: 'roles',
-        hooks: true,
-      });
       Objective.belongsTo(models.ObjectiveTemplate, {
         foreignKey: 'objectiveTemplateId',
         as: 'objectiveTemplate',

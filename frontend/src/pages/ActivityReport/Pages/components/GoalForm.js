@@ -20,7 +20,6 @@ import { DECIMAL_BASE } from '../../../../Constants';
 export default function GoalForm({
   goal,
   topicOptions,
-  roles,
   reportId,
   onSaveDraft,
   datePickerKey,
@@ -96,15 +95,23 @@ export default function GoalForm({
   }, [defaultEndDate, goal.endDate, onUpdateDate]);
 
   const [objectives, setObjectives] = useState([]);
-
+  const [loadingObjectives, setLoadingObjectives] = useState(false);
+  const [loadingLabel, setLoadingLabel] = useState('Saving');
   /*
    * this use effect fetches
    * associated goal data
    */
   useEffect(() => {
     async function fetchData() {
-      const data = await goalsByIdsAndActivityReport(goal.goalIds, reportId);
-      setObjectives(data[0].objectives);
+      try {
+        setLoadingObjectives(true);
+        setLoadingLabel('Loading');
+        const data = await goalsByIdsAndActivityReport(goal.goalIds, reportId);
+        setObjectives(data[0].objectives);
+      } finally {
+        setLoadingObjectives(false);
+        setLoadingLabel('Saving');
+      }
     }
 
     const shouldIFetchData = (
@@ -126,7 +133,7 @@ export default function GoalForm({
 
   return (
     <>
-      <Loader loading={isLoading} loadingLabel="Loading" text="Saving" />
+      <Loader loading={isLoading || loadingObjectives} loadingLabel="Loading" text={loadingLabel} />
       <GoalText
         error={errors.goalName ? ERROR_FORMAT(errors.goalName.message) : NO_ERROR}
         goalName={goalText}
@@ -135,7 +142,7 @@ export default function GoalForm({
         inputName={goalTextInputName}
         isOnReport={goal.onApprovedAR || false}
         goalStatus={status}
-        isLoading={isLoading}
+        isLoading={isLoading || loadingObjectives}
       />
 
       <GoalDate
@@ -146,13 +153,12 @@ export default function GoalForm({
         key={datePickerKey} // force a re-render when the a new goal is picked
         inputName={goalEndDateInputName}
         goalStatus={status}
-        isLoading={isLoading}
+        isLoading={isLoading || loadingObjectives}
       />
 
       <Objectives
         objectives={objectives}
         topicOptions={topicOptions}
-        roles={roles}
         goalStatus={status}
         noObjectiveError={errors.goalForEditing && errors.goalForEditing.objectives
           ? ERROR_FORMAT(errors.goalForEditing.objectives.message) : NO_ERROR}
@@ -165,18 +171,12 @@ export default function GoalForm({
 
 GoalForm.propTypes = {
   goal: PropTypes.shape({
-    id: PropTypes.oneOfType([
-      PropTypes.arrayOf(PropTypes.shape({
-        value: PropTypes.number,
-        label: PropTypes.string,
-      })), PropTypes.string,
-    ]).isRequired,
-    goalIds: PropTypes.arrayOf(PropTypes.number).isRequired,
+    goalIds: PropTypes.arrayOf(PropTypes.number),
     value: PropTypes.oneOfType([
       PropTypes.number,
       PropTypes.string,
     ]),
-    oldGrantIds: PropTypes.arrayOf(PropTypes.number).isRequired,
+    oldGrantIds: PropTypes.arrayOf(PropTypes.number),
     label: PropTypes.string,
     name: PropTypes.string,
     endDate: PropTypes.string,
@@ -188,8 +188,7 @@ GoalForm.propTypes = {
     value: PropTypes.number,
     label: PropTypes.string,
   })).isRequired,
-  roles: PropTypes.arrayOf(PropTypes.string).isRequired,
-  reportId: PropTypes.number.isRequired,
+  reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   onSaveDraft: PropTypes.func.isRequired,
   datePickerKey: PropTypes.string.isRequired,
 };

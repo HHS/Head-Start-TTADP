@@ -96,6 +96,10 @@ async function saveOwner(activityReportId, collaborator) {
 }
 
 async function saveOwnerInstantiators(activityReportId, collaborator) {
+  if (!collaborator) {
+    throw new Error('No collaborator provided. If creating a report, make sure to provide an `owner`.');
+  }
+
   return syncOwnerInstantiators(
     ENTITY_TYPES.REPORT,
     activityReportId,
@@ -495,10 +499,6 @@ export async function activityReportAndRecipientsById(activityReportId, isImport
         as: 'objectivesWithoutGoals',
         include: [
           {
-            model: Role,
-            as: 'roles',
-          },
-          {
             model: Topic,
             as: 'topics',
             attributes: [
@@ -865,7 +865,7 @@ export async function activityReportsForCleanup(userId) {
           // if the report is created by a user and not in draft status, it is eligible for cleanup
           {
             [Op.and]: {
-              '$owner.userId$': { [Op.contains]: userId },
+              '$owner.userId$': { [Op.eq]: userId },
               '$approval.calculatedStatus$': {
                 [Op.ne]: REPORT_STATUSES.DRAFT,
               },
@@ -873,12 +873,12 @@ export async function activityReportsForCleanup(userId) {
           },
           {
             // if the user is an approver on the report, it is eligible for cleanup
-            '$approvers.userId$': { [Op.contains]: userId },
+            '$approvers.userId$': { [Op.eq]: userId },
           },
           {
             // if the user is an collaborator, and the report is not in draft,
             // it is eligible for cleanup
-            '$collaborators.userId$': { [Op.contains]: userId },
+            '$collaborators.userId$': { [Op.eq]: userId },
             '$approval.calculatedStatus$': {
               [Op.ne]: REPORT_STATUSES.DRAFT,
             },
@@ -1457,10 +1457,6 @@ async function getDownloadableActivityReports(where, separate = true) {
         {
           model: Topic,
           as: 'topics',
-        },
-        {
-          model: Role,
-          as: 'roles',
         },
         {
           model: File,

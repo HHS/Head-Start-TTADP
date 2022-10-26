@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import { uniq, uniqBy } from 'lodash';
 import moment from 'moment';
 import {
   Grant,
@@ -10,6 +11,7 @@ import {
   Objective,
   ActivityRecipient,
   Approval,
+  Topic,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
 import { RECIPIENTS_PER_PAGE, GOALS_PER_PAGE, REPORT_STATUSES } from '../constants';
@@ -81,7 +83,11 @@ export async function recipientById(recipientId, grantScopes) {
       },
     ],
     order: [
-      [{ model: Grant, as: 'grants' }, 'status', 'ASC'], [{ model: Grant, as: 'grants' }, 'endDate', 'DESC'], [{ model: Grant, as: 'grants' }, 'number', 'ASC'],
+      [{ model: Grant, as: 'grants' }, 'status', 'ASC'],
+      [{ model: Grant, as: 'grants' }, 'endDate', 'DESC'],
+      [{ model: Grant, as: 'grants' }, 'number', 'ASC'],
+      [{ model: Grant, as: 'grants' }, { model: Program, as: 'programs' }, 'name', 'ASC'],
+      [{ model: Grant, as: 'grants' }, { model: Program, as: 'programs' }, 'programType', 'ASC'],
     ],
   });
 }
@@ -167,102 +173,67 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
   };
 }
 
-export function dedupeAndSortObjectivesAndReports(objectives) {
-  return objectives.reduce((previous, objective) => {
-    // eslint-disable-next-line max-len
-    const existingObjective = previous.find((o) => (o.title.trim() === objective.title.trim() && o.status === objective.status));
-
-    if (existingObjective) {
-      // if the objective exists, we also have to make sure all
-      // the reports are combined into one list
-
-      // eslint-disable-next-line max-len
-      existingObjective.activityReports = objective.activityReports.reduce((existingReports, currentReport) => {
-        const existingReport = existingReports.find((report) => report.id === currentReport.id);
-        if (existingReport) {
-          return existingReports;
-        }
-
-        return [...existingReports, currentReport];
-      }, existingObjective.activityReports);
-      return previous;
-    }
-
-    return [
-      ...previous,
-      { ...objective, title: objective.title.trim() },
-    ];
-  }, []).sort((a, b) => ((
-    a.endDate === b.endDate ? a.id < b.id
-      : a.endDate < b.endDate) ? 1 : -1)); // we also have to sort the objectives
-}
-
 function reduceObjectives(response, goal) {
-  const current = goal;
+  const {
+    objectives,
+    topics,
+    reasons,
+  } = response.objectives.reduce((acc, objective) => {
+    const { t, r, endDate } = objective.activityReports.reduce((a, report) => ({
+      t: [...a.t, ...report.topics],
+      r: [...a.r, ...report.reason],
+      endDate: report.endDate > a.endDate ? report.endDate : a.endDate,
+    }), { t: [], r: [], endDate: '' });
 
-  const objectives = response.objectives.map((objective) => {
-    // Activity Report.
-    let activityReport;
-    if (objective.activityReports && objective.activityReports.length > 0) {
-      // eslint-disable-next-line prefer-destructuring
-      activityReport = objective.activityReports[0];
-      /* TODO: Switch for New Goal Creation (Remove). */
-      current.goalTopics = Array.from(
-        new Set([...goal.goalTopics, ...activityReport.topics]),
+    const existing = acc.objectives.find((o) => (
+      o.title.trim() === objective.getDataValue('title').trim() && o.status === objective.status
+    ));
+
+    const ots = objective.topics.map((ot) => ot.name);
+
+    if (existing) {
+      existing.activityReports = uniqBy([...existing.activityReports, ...objective.activityReports], 'id');
+      existing.reasons = Array.from(
+        new Set([...existing.reasons, ...r]),
       );
-
-      current.reasons = Array.from(
-        new Set([...goal.reasons, ...activityReport.reason]),
-      );
-    }
-
-    // eslint-disable-next-line max-len
-    const existingObjective = goal.objectives.find((o) => (o.title.trim() === objective.title.trim() && o.status === objective.status));
-
-    if (existingObjective) {
-      // eslint-disable-next-line max-len
-      const existingReport = existingObjective.activityReports.find((ar) => ar.id === activityReport.id);
-      if (existingReport) {
-        return {
-          ...existingObjective,
-          grantNumbers: [...existingObjective.grantNumbers, response.grant.number],
-        };
-      }
-
-      return {
-        ...existingObjective,
-        activityReports: [
-          ...existingObjective.activityReports,
-          {
-            id: activityReport ? activityReport.id : null,
-            legacyId: activityReport ? activityReport.legacyId : null,
-            number: activityReport ? activityReport.displayId : null,
-            endDate: activityReport ? activityReport.endDate : null,
-          },
-        ],
-        grantNumbers: [...existingObjective.grantNumbers, response.grant.number],
-      };
+      existing.reasons.sort();
+      return { ...acc, topics: [...acc.topics, ...ots] };
     }
 
     return {
-      id: objective.id,
-      title: objective.title.trim(),
-      endDate: activityReport ? activityReport.endDate : null,
-      reasons: activityReport ? activityReport.reason : null,
-      status: objective.status,
-      grantNumbers: [response.grant.number],
-      activityReports: [{
-        id: activityReport ? activityReport.id : null,
-        legacyId: activityReport ? activityReport.legacyId : null,
-        number: activityReport ? activityReport.displayId : null,
-        endDate: activityReport ? activityReport.endDate : null,
+      objectives: [...acc.objectives, {
+        ...objective.dataValues,
+        endDate,
+        grantNumbers: [response.grant.number],
+        reasons: Array.from(
+          new Set(r),
+        ),
       }],
+      reasons: [...acc.reasons, ...r].sort(),
+      topics: [...acc.topics, ...t, ...ots],
     };
+  }, {
+    objectives: [],
+    topics: [],
+    reasons: [],
   });
 
-  // this is to dedupe (our first pass dedupes objectives from rolled up goals,
-  // this dedupes objectives from the same goal)
-  return dedupeAndSortObjectivesAndReports(objectives);
+  const current = goal;
+  current.goalTopics = Array.from(
+    new Set([...goal.goalTopics, ...topics]),
+  );
+
+  current.goalTopics.sort();
+
+  current.reasons = Array.from(
+    new Set([...goal.reasons, ...reasons]),
+  );
+
+  current.reasons.sort();
+
+  return objectives.sort((a, b) => ((
+    a.endDate === b.endDate ? a.id < b.id
+      : a.endDate < b.endDate) ? 1 : -1));
 }
 
 function calculatePreviousStatus(goal) {
@@ -350,10 +321,11 @@ export async function getGoalsByActivityRecipient(
         model: Objective,
         as: 'objectives',
         required: false,
-        where: {
-          onApprovedAR: true,
-        },
         include: [
+          {
+            model: Topic,
+            as: 'topics',
+          },
           {
             attributes: [
               'id',
@@ -362,10 +334,11 @@ export async function getGoalsByActivityRecipient(
               'endDate',
               'legacyId',
               'regionId',
+              'displayId',
             ],
             model: ActivityReport,
             as: 'activityReports',
-            required: true,
+            required: false,
             include: [
               {
                 model: Approval,
@@ -412,7 +385,7 @@ export async function getGoalsByActivityRecipient(
       existingGoal.goalNumbers = [...existingGoal.goalNumbers, current.goalNumber];
       existingGoal.objectives = reduceObjectives(current, existingGoal);
       existingGoal.objectiveCount = existingGoal.objectives.length;
-
+      existingGoal.grantNumbers = uniq([...existingGoal.grantNumbers, current.grant.number]);
       return {
         goalRows: previous.goalRows,
       };
@@ -430,6 +403,7 @@ export async function getGoalsByActivityRecipient(
       reasons: [],
       previousStatus: calculatePreviousStatus(current),
       objectives: [],
+      grantNumbers: [current.grant.number],
     };
 
     goalToAdd.objectives = reduceObjectives(current, goalToAdd);

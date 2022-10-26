@@ -62,10 +62,12 @@ describe('Landing Page', () => {
   });
   beforeEach(async () => {
     fetchMock.get(base, response);
+
     fetchMock.get(baseAlerts, {
       alertsCount: 0,
       alerts: [],
       recipients: [],
+      topics: [],
     });
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
     const user = {
@@ -77,7 +79,6 @@ describe('Landing Page', () => {
         },
       ],
     };
-
     renderLanding(user);
     await screen.findByText('Activity reports');
   });
@@ -538,9 +539,12 @@ describe('handleApplyAlertFilters', () => {
       count: 0,
       rows: [],
       recipients: [],
+      topics: [],
     });
     fetchMock.get(`${defaultOverviewUrl}&${inTest}`, overviewRegionOne);
-    fetchMock.get(`${baseAlerts}&${inTest}`, { alertsCount: 0, alerts: [], recipients: [] });
+    fetchMock.get(`${baseAlerts}&${inTest}`, {
+      alertsCount: 0, alerts: [], recipients: [], topics: [],
+    });
   });
 
   afterEach(() => fetchMock.restore());

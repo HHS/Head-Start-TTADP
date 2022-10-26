@@ -11,6 +11,8 @@ import {
   Goal,
   ActivityReportObjective,
   Objective,
+  ObjectiveTopic,
+  Topic,
 } from '../../models';
 import { createOrUpdate } from '../activityReports';
 import { getGoalsByActivityRecipient } from '../recipient';
@@ -69,6 +71,8 @@ describe('Goals by Recipient Test', () => {
     endDate: new Date(2020, 10, 2),
     grantSpecialistName: 'Glen',
   };
+
+  let topic;
 
   const grant4 = {
     id: 304,
@@ -488,6 +492,15 @@ describe('Goals by Recipient Test', () => {
       ],
     );
 
+    const objective1 = objectives[0];
+    topic = await Topic.create({
+      name: 'Arcane Mastery',
+    });
+    await ObjectiveTopic.create({
+      objectiveId: objective1.id,
+      topicId: topic.id,
+    });
+
     // Get Objective Ids for Delete.
     objectiveIds = objectives.map((o) => o.id);
 
@@ -588,6 +601,18 @@ describe('Goals by Recipient Test', () => {
       individualHooks: true,
     });
 
+    await ObjectiveTopic.destroy({
+      where: {
+        objectiveId: objectiveIds,
+      },
+    });
+
+    await Topic.destroy({
+      where: {
+        id: topic.id,
+      },
+    });
+
     // Delete Objectives.
     await Objective.destroy({
       where: {
@@ -675,6 +700,8 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx[1].objectiveCount).toBe(2);
       expect(goalRowsx[1].reasons).toEqual(['COVID-19 response', 'Complaint']);
       expect(goalRowsx[1].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
+      expect(goalRowsx[1].grantNumbers.length).toBe(1);
+      expect(goalRowsx[1].grantNumbers[0]).toBe('12345');
 
       // Goal 3 Objectives.
       expect(goalRowsx[1].objectives.length).toBe(2);
@@ -703,7 +730,7 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx[3].goalNumbers).toStrictEqual([`G-${goalRowsx[3].id}`]);
       expect(goalRowsx[3].objectiveCount).toBe(1);
       expect(goalRowsx[3].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRowsx[3].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
+      expect(goalRowsx[3].goalTopics).toEqual(['Arcane Mastery', 'Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
       expect(goalRowsx[3].objectives.length).toBe(1);
     });
 
