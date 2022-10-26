@@ -663,8 +663,15 @@ module.exports = {
       try {
         await queryInterface.removeColumn('ActivityReports', 'creatorRole', { transaction });
         await queryInterface.removeColumn('ActivityReports', 'userId', { transaction });
-        await queryInterface.dropTable('ActivityReportApprovers', { transaction });
-        await queryInterface.dropTable('ActivityReportCollaborators', { transaction });
+        await Promise.all(['ActivityReportApprovers', 'ActivityReportCollaborators'].map(async (table) => {
+          await queryInterface.sequelize.query(
+            ` SELECT "ZAFRemoveAuditingOnTable"('${table}');`,
+            { raw: true, transaction },
+          );
+          // Drop old audit log table
+          await queryInterface.dropTable(`ZAL${table}`, { transaction });
+          await queryInterface.dropTable(table, { transaction });
+        }));
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
         throw (err);
