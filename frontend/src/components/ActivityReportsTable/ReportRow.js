@@ -119,7 +119,7 @@ function ReportRow({
         </Link>
       </th>
       <td>
-        <TooltipWithCollection collection={recipients} collectionTitle={`recipients for ${displayId}`} />
+        <TooltipWithCollection collection={recipients} collectionTitle={`recipients for ${displayId}`} position={openMenuUp ? 'top' : 'bottom'} />
       </td>
       <td>{startDate}</td>
       <td>
