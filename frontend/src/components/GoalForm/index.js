@@ -607,8 +607,6 @@ export default function GoalForm({
         ...newGoals,
       ];
 
-      console.log(goals);
-
       const newCreatedGoals = await createOrUpdateGoals(goals);
 
       setCreatedGoals(newCreatedGoals.map((goal) => ({
