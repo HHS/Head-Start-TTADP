@@ -7,6 +7,7 @@ import Container from '../components/Container';
 import AccessibleWidgetData from './AccessibleWidgetData';
 import './TopicFrequencyGraph.css';
 import ButtonSelect from '../components/ButtonSelect';
+import MediaCaptureButton from '../components/MediaCaptureButton';
 import colors from '../colors';
 
 export const SORT_ORDER = {
@@ -66,6 +67,8 @@ export function TopicFrequencyGraphWidget({
 
   // the dom el for drawing the chart
   const bars = useRef();
+
+  const widget = useRef();
 
   useEffect(() => {
     if (!bars || !data || !Array.isArray(data)) {
@@ -172,13 +175,14 @@ export function TopicFrequencyGraphWidget({
   }
 
   return (
-    <Container className="ttahub--topic-frequency-graph overflow-x-scroll" padding={3} loading={loading} loadingLabel="Topic frequency loading">
-      <Grid row className="position-relative margin-bottom-2">
+    <Container className="ttahub--topic-frequency-graph overflow-x-scroll" ref={widget} padding={3} loading={loading} loadingLabel="Topic frequency loading">
+      <Grid row className="position-relative margin-bottom-2 bg-white">
         <Grid className="flex-align-self-center" desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}>
           <h2 className="ttahub--dashboard-widget-heading margin-0">Number of Activity Reports by Topic</h2>
         </Grid>
-        <Grid col="auto" gap={1} className="ttahub--topic-frequency-graph-control-row desktop:display-flex desktop:padding-x-2">
+        <Grid col="auto" gap={1} className="ttahub--topic-frequency-graph-control-row desktop:display-flex bg-white desktop:padding-x-2">
           <ButtonSelect
+            data-html2canvas-ignore
             styleAsSelect
             labelId="tfGraphOrder"
             labelText="Change topic graph order"
@@ -204,6 +208,7 @@ export function TopicFrequencyGraphWidget({
           />
         </Grid>
         <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
+          { !showAccessibleData && <MediaCaptureButton className="margin-x-2" reference={widget} /> }
           <button
             type="button"
             className="usa-button--unstyled margin-top-2"
