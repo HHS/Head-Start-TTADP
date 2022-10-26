@@ -19,6 +19,7 @@ import {
 import { createOrUpdate } from '../activityReports';
 import { getGoalsByActivityRecipient } from '../recipient';
 import { REPORT_STATUSES, OBJECTIVE_STATUS } from '../../constants';
+import { destroyReport } from '../../testUtils';
 
 const NEEDLE = 'This objective title should not appear in recipient 3';
 
