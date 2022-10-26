@@ -41,16 +41,16 @@ export default function GoalCardsHeader({
   allGoalsChecked,
   selectAllGoalCheckboxSelect,
   selectAllGoals,
+  selectedGoalIds,
 }) {
   const history = useHistory();
   const { user } = useContext(UserContext);
   const hasButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
 
   const showAddNewButton = hasActiveGrants && hasButtonPermissions;
-
   const onPrint = () => {
     history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives/print${window.location.search}`, {
-      sortConfig,
+      sortConfig, selectedGoalIds,
     });
   };
 
@@ -199,6 +199,7 @@ GoalCardsHeader.propTypes = {
   allGoalsChecked: PropTypes.bool,
   numberOfSelectedGoals: PropTypes.number,
   selectAllGoals: PropTypes.func,
+  selectedGoalIds: PropTypes.arrayOf(PropTypes.number).isRequired,
 };
 
 GoalCardsHeader.defaultProps = {
