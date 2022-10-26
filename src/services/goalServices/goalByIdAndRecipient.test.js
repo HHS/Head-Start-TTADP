@@ -264,7 +264,7 @@ describe('goalById', () => {
               { value: 'http://www.google.com' },
             ],
             topics: [
-              { value: topic.id },
+              { id: topic.id },
             ],
             files: [
               { id: file.id },
