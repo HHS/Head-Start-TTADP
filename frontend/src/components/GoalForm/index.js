@@ -711,6 +711,7 @@ export default function GoalForm({
         {recipient.name}
         {' '}
         - Region
+        {' '}
         {regionId}
       </h1>
 

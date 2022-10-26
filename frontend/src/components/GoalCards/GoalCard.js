@@ -78,7 +78,7 @@ function GoalCard({
   const showContextMenu = true;
   const menuItems = [
     {
-      label: 'Edit',
+      label: goalStatus === 'Closed' ? 'View' : 'Edit',
       onClick: () => {
         history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${ids.join(',')}`);
       },

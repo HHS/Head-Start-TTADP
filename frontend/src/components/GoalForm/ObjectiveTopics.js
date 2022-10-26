@@ -24,6 +24,10 @@ export default function ObjectiveTopics({
 
   const readOnly = useMemo(() => status === 'Suspended' || (goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed', [goalStatus, isOnReport, status]);
 
+  if (goalStatus === 'Closed' && !initialSelection.current) {
+    return null;
+  }
+
   if (readOnly && initialSelection.current) {
     return (
       <>

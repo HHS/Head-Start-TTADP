@@ -16,14 +16,18 @@ export default function GoalDate({
   goalStatus,
 }) {
   if (goalStatus === 'Closed') {
-    return (
-      <>
-        <p className="usa-prose text-bold margin-bottom-0">
-          Anticipated close date (mm/dd/yyyy)
-        </p>
-        <p className="usa-prose margin-0">{endDate}</p>
-      </>
-    );
+    if (endDate && endDate !== 'Invalid date') {
+      return (
+        <>
+          <p className="usa-prose text-bold margin-bottom-0">
+            Anticipated close date (mm/dd/yyyy)
+          </p>
+          <p className="usa-prose margin-0">{endDate}</p>
+        </>
+      );
+    }
+
+    return null;
   }
 
   return (
