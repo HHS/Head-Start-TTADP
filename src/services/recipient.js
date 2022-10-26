@@ -226,6 +226,7 @@ function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
           endDate,
           grantNumbers: [currentModel.grant.number],
           reasons: uniq(r),
+          activityReports: objective.activityReports || [],
         }],
         reasons: [...acc.reasons, ...r].sort(),
         topics: [...acc.topics, ...t, ...objectiveTopics],
