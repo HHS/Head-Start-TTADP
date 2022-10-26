@@ -158,7 +158,7 @@ describe('goalById', () => {
       },
       individualHooks: true,
     });
-    
+
     await ActivityReportObjectiveFile.destroy({
       where: {
         activityReportObjectiveId: aroIds,
@@ -249,7 +249,7 @@ describe('goalById', () => {
 
     const [obj] = goal.objectives;
 
-    expect(obj.activityReports.length).toBe(0);
+    expect(obj.activityReports.length).toBe(1);
 
     expect(obj.topics.length).toBe(2);
     expect(obj.topics.map((t) => `${t.dataValues.onAnyReport}`).sort()).toEqual(['false', 'false']);
