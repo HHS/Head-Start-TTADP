@@ -5,6 +5,7 @@ module.exports = {
         ACTIVITY: 'activity',
         RTTAPA: 'rttapa',
       };
+
       const ENTITY_TYPES = {
         REPORT: 'report',
         REPORTGOAL: 'report_goal',
@@ -13,6 +14,13 @@ module.exports = {
         GOALTEMPLATE: 'goal_template',
         OBJECTIVE: 'objective',
         OBJECTIVETEMPLATE: 'objectiveTemplate',
+      };
+
+      const COLLABORATOR_TYPES = {
+        EDITOR: 'editor',
+        OWNER: 'owner',
+        INSTANTIATOR: 'instantiator',
+        RATIFIER: 'ratifier',
       };
 
       try {
@@ -258,6 +266,16 @@ module.exports = {
         await Promise.all(remappings.map(async (remapping) => {
           const promises = [];
 
+          // Remove auditing to table
+          promises.push(await queryInterface.sequelize.query(
+            ` SELECT "ZAFRemoveAuditingOnTable"('${remapping.from}');`,
+            {
+              type: queryInterface.QueryTypes.RAW,
+              raw: true,
+              transaction,
+            },
+          ));
+
           // Rename Table
           promises.push(await queryInterface.sequelize.query(
             `ALTER TABLE IF EXISTS "${remapping.from}"
@@ -334,6 +352,46 @@ module.exports = {
             { transaction },
           );
 
+          // Add auditing to table
+          promises.push(await queryInterface.sequelize.query(
+            ` SELECT "ZAFAddAuditingOnTable"('${remapping.to}');`,
+            {
+              type: queryInterface.QueryTypes.RAW,
+              raw: true,
+              transaction,
+            },
+          ));
+
+          // Add auditing to table
+          promises.push(await queryInterface.sequelize.query(
+            `INSERT INTO "ZAL${remapping.to}"
+            SELECT *
+            FROM "ZAL${remapping.from}";`,
+            {
+              type: queryInterface.QueryTypes.RAW,
+              raw: true,
+              transaction,
+            },
+          ));
+
+          const maxindex = await queryInterface.sequelize.query(
+            `SELECT
+              MAX(id)
+            FROM "ZAL${remapping.to}";`,
+            { transaction },
+          );
+
+          promises.push(await queryInterface.sequelize.query(
+            `ALTER SEQUENCE "ZAL${remapping.to}_id_seq"
+            RESTART WITH ${maxindex + 1};`,
+          ));
+
+          // Drop old audit log table
+          await queryInterface.dropTable(
+            `ZAL${remapping.from}`,
+            { transaction },
+          );
+
           return Promise.all(promises);
         }));
       } catch (err) {
@@ -343,7 +401,7 @@ module.exports = {
 
       try {
         await queryInterface.sequelize.query(
-          `CREATE FUNCTION "fkcfCollaboratorsEntity"()
+          `CREATE OR REPLACE FUNCTION "fkcfCollaboratorsEntity"()
           RETURNS trigger
           LANGUAGE plpgsql AS
         $body$
@@ -403,6 +461,68 @@ module.exports = {
         $body$;`,
           { transaction },
         );
+
+        const entitySets = [
+          { entityType: ENTITY_TYPES.REPORT, entityTable: 'EventReports', needsRatifier: true },
+          { entityType: ENTITY_TYPES.REPORTGOAL, entityTable: 'ReportGoals' },
+          { entityType: ENTITY_TYPES.REPORTOBJECTIVE, entityTable: 'ReportObjectives' },
+        ];
+
+        await Promise.all(entitySets.map(async (entitySet) => {
+          const { entityType, entityTable, needsRatifier } = entitySet;
+          const promises = [];
+          promises.push(await queryInterface.sequelize.query(
+            `--- ENTITY INDEX in lieu of unsupported multi-table-multi-column foreign key constraint
+            CREATE INDEX IF NOT EXISTS "Collaborators_${entityTable}_Index"
+            ON "Collaborators"
+            ("entityId")
+            WHERE "entityType" = '${entityType}';`,
+            { transaction },
+          ));
+          if (needsRatifier) {
+            promises.push(await queryInterface.sequelize.query(
+              `--- RATIFIER INDEX for each of the sudo-linked foreign tables
+              CREATE INDEX IF NOT EXISTS "Collaborators_${entityTable}_Ratifiers_Index"
+              ON "Collaborators"
+              ("entityId")
+              WHERE "entityType" = '${entityType}'
+              AND '${COLLABORATOR_TYPES.RATIFIER}' = ANY ( "collaboratorTypes" );`,
+              { transaction },
+            ));
+          }
+          promises.push(await queryInterface.sequelize.query(
+            `DO $$
+            ------------------------------------------------------------------------------------
+            BEGIN
+            ------------------------------------------------------------------------------------
+            --- Triggers to emulate the behavior of foreign key constraint
+            ------------------------------------------------------------------------------------
+            CREATE OR REPLACE FUNCTION "fkcf${entityTable}Collaborators"()
+              RETURNS trigger
+              LANGUAGE plpgsql AS
+            $body$
+            BEGIN
+              IF (EXISTS(
+                  SELECT id
+                  FROM "Collaborators"
+                  WHERE "entityId" = NEW."id"
+                  AND "entityType" = '${entityType}')) THEN
+                RAISE EXCEPTION 'Can not delete from "${entityTable}" with id = %, still in use in "Collaborators"', NEW.entityId;
+              END IF;
+              RETURN NEW;
+            END
+            $body$;
+            ------------------------------------------------------------------------------------
+            CREATE TRIGGER "fkct${entityTable}Collaborators"
+              AFTER DELETE
+              ON "${entityTable}"
+              FOR EACH ROW EXECUTE FUNCTION  "fkcf${entityTable}Collaborators"();
+            ------------------------------------------------------------------------------------
+            END$$;`,
+            { transaction },
+          ));
+          return Promise.all([...promises]);
+        }));
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
         throw (err);
