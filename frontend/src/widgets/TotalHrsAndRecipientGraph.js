@@ -4,7 +4,7 @@ import Plotly from 'plotly.js-basic-dist';
 import { Grid } from '@trussworks/react-uswds';
 import withWidgetData from './withWidgetData';
 import AccessibleWidgetData from './AccessibleWidgetData';
-
+import MediaCaptureButton from '../components/MediaCaptureButton';
 import Container from '../components/Container';
 import colors from '../colors';
 import './TotalHrsAndRecipientGraph.scss';
@@ -17,6 +17,9 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
 
   // the dom el for drawing the chart
   const lines = useRef();
+
+  // the dom el for the widget
+  const widget = useRef();
 
   const [showAccessibleData, setShowAccessibleData] = useState(false);
   const [columnHeadings, setColumnHeadings] = useState([]);
@@ -199,10 +202,11 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
 
   return (
     <Container className="ttahub-total-hours-container shadow-2" padding={3} loading={loading} loadingLabel="Total hours loading">
-      <div className="ttahub--total-hrs-recipient-graph">
+      <div className="ttahub--total-hrs-recipient-graph" ref={widget}>
         <Grid row className="position-relative margin-bottom-2">
           <Grid desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}><h2 className="ttahub--dashboard-widget-heading margin-0">Total TTA Hours</h2></Grid>
           <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
+            <MediaCaptureButton className="margin-x-2" reference={widget} />
             <button
               type="button"
               className="usa-button--unstyled"
