@@ -108,15 +108,19 @@ module.exports = {
           { transaction },
         );
 
-        const maxindex = await queryInterface.sequelize.query(
+        const [[{ maxindex }]] = await queryInterface.sequelize.query(
           `SELECT
-            MAX(id)
+            COALESCE(MAX(id),0) "maxindex"
           FROM "EventReports";`,
-          { transaction },
+          {
+            // type: queryInterface.QueryTypes.RAW,
+            raw: true,
+            transaction,
+          },
         );
-
+        console.log(JSON.stringify({ maxindex }));
         await queryInterface.sequelize.query(
-          `ALTER SEQUENCE "EventReports_id_seq"
+          `ALTER SEQUENCE IF EXISTS "EventReports_id_seq"
           RESTART WITH ${maxindex + 1};`,
         );
 
@@ -170,6 +174,7 @@ module.exports = {
           ],
           indexes: [],
           columns: [],
+          hasActivityReportId: true,
         },
         {
           from: 'ActivityReportFiles',
@@ -184,6 +189,7 @@ module.exports = {
           ],
           indexes: [],
           columns: [],
+          hasActivityReportId: true,
         },
         {
           from: 'ActivityReportGoals',
@@ -198,6 +204,7 @@ module.exports = {
           ],
           indexes: [],
           columns: [],
+          hasActivityReportId: true,
         },
         {
           from: 'ActivityReportObjectives',
@@ -212,6 +219,7 @@ module.exports = {
           ],
           indexes: [],
           columns: [],
+          hasActivityReportId: true,
         },
         {
           from: 'ActivityReportObjectiveFiles',
@@ -228,6 +236,7 @@ module.exports = {
           columns: [
             { from: 'activityReportObjectiveId', to: 'reportObjectiveId' },
           ],
+          hasActivityReportId: false,
         },
         {
           from: 'ActivityReportObjectiveResources',
@@ -243,6 +252,7 @@ module.exports = {
           columns: [
             { from: 'activityReportObjectiveId', to: 'reportObjectiveId' },
           ],
+          hasActivityReportId: false,
         },
         {
           from: 'ActivityReportObjectiveTopics',
@@ -259,6 +269,7 @@ module.exports = {
           columns: [
             { from: 'activityReportObjectiveId', to: 'reportObjectiveId' },
           ],
+          hasActivityReportId: false,
         },
       ];
 
@@ -270,7 +281,6 @@ module.exports = {
           promises.push(await queryInterface.sequelize.query(
             ` SELECT "ZAFRemoveAuditingOnTable"('${remapping.from}');`,
             {
-              type: queryInterface.QueryTypes.RAW,
               raw: true,
               transaction,
             },
@@ -281,30 +291,31 @@ module.exports = {
             `ALTER TABLE IF EXISTS "${remapping.from}"
              RENAME TO "${remapping.to}"`,
             {
-              type: queryInterface.QueryTypes.RAW,
               raw: true,
               transaction,
             },
           ));
 
-          // Add eventReportId column
-          promises.push(await queryInterface.addColumn(
-            remapping.from,
-            'eventReportId',
-            {
-              type: Sequelize.INTEGER,
-              allowNull: true,
-              references: { model: { tableName: 'EventReports' }, key: 'id' },
-            },
-            { transaction },
-          ));
+          if (remapping.hasActivityReportId) {
+            // Add eventReportId column
+            promises.push(await queryInterface.addColumn(
+              remapping.to,
+              'eventReportId',
+              {
+                type: Sequelize.INTEGER,
+                allowNull: true,
+                references: { model: { tableName: 'EventReports' }, key: 'id' },
+              },
+              { transaction },
+            ));
 
-          // Populate eventReportId column
-          promises.push(await queryInterface.sequelize.query(
-            `UPDATE "${remapping.from}"
-            SET "eventReportId" = "activityReportId";`,
-            { transaction },
-          ));
+            // Populate eventReportId column
+            promises.push(await queryInterface.sequelize.query(
+              `UPDATE "${remapping.to}"
+              SET "eventReportId" = "activityReportId";`,
+              { transaction },
+            ));
+          }
 
           // Rename Sequences
           remapping.sequences.map(async (sequence) => {
@@ -312,7 +323,6 @@ module.exports = {
               `ALTER SEQUENCE IF EXISTS "${sequence.from}"
                RENAME TO "${sequence.to}";`,
               {
-                type: queryInterface.QueryTypes.RAW,
                 raw: true,
                 transaction,
               },
@@ -325,7 +335,6 @@ module.exports = {
               `ALTER TABLE IF EXISTS"${remapping.to}"
                RENAME CONSTRAINT "${constraint.from}" TO "${constraint.to}";`,
               {
-                type: queryInterface.QueryTypes.RAW,
                 raw: true,
                 transaction,
               },
@@ -338,25 +347,25 @@ module.exports = {
               `ALTER INDEX IF EXISTS "${index.from}"
                RENAME TO "${index.to}";`,
               {
-                type: queryInterface.QueryTypes.RAW,
                 raw: true,
                 transaction,
               },
             ));
           });
 
-          // Remove activityReportId Column
-          await queryInterface.removeColumn(
-            remapping.from,
-            'activityReportId',
-            { transaction },
-          );
+          if (remapping.hasActivityReportId) {
+            // Remove activityReportId Column
+            await queryInterface.removeColumn(
+              remapping.to,
+              'activityReportId',
+              { transaction },
+            );
+          }
 
           // Add auditing to table
           promises.push(await queryInterface.sequelize.query(
             ` SELECT "ZAFAddAuditingOnTable"('${remapping.to}');`,
             {
-              type: queryInterface.QueryTypes.RAW,
               raw: true,
               transaction,
             },
@@ -368,21 +377,23 @@ module.exports = {
             SELECT *
             FROM "ZAL${remapping.from}";`,
             {
-              type: queryInterface.QueryTypes.RAW,
               raw: true,
               transaction,
             },
           ));
 
-          const maxindex = await queryInterface.sequelize.query(
+          const [[{ maxindex }]] = await queryInterface.sequelize.query(
             `SELECT
-              MAX(id)
+              COALESCE(MAX(id),0) "maxindex"
             FROM "ZAL${remapping.to}";`,
-            { transaction },
+            {
+              raw: true,
+              transaction,
+            },
           );
 
           promises.push(await queryInterface.sequelize.query(
-            `ALTER SEQUENCE "ZAL${remapping.to}_id_seq"
+            `ALTER SEQUENCE IF EXISTS "ZAL${remapping.to}_id_seq"
             RESTART WITH ${maxindex + 1};`,
           ));
 
