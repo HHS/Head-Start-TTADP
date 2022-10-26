@@ -480,6 +480,21 @@ describe('Goals Table', () => {
       fireEvent.click(closeSelected);
       expect(screen.queryByText(/7 selected/i)).toBeNull();
     });
+
+    it('Can select and deselect individual goals', async () => {
+      const checkBoxes = screen.queryAllByTestId('selectGoalTestId');
+      expect(checkBoxes.length).toBe(6);
+
+      fireEvent.click(checkBoxes[0]);
+      fireEvent.click(checkBoxes[1]);
+
+      expect(await screen.findByText(/2 selected/i)).toBeVisible();
+
+      fireEvent.click(checkBoxes[0]);
+      fireEvent.click(checkBoxes[1]);
+
+      expect(screen.queryByText(/2 selected/i)).toBeNull();
+    });
   });
 
   describe('Context Menu', () => {
