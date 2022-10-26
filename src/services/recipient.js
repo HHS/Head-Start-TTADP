@@ -274,8 +274,6 @@ export async function getGoalsByActivityRecipient(
   const limitNum = parseInt(limit, 10);
   const offSetNum = parseInt(offset, 10);
 
-  console.log('\n\n\n--------------- Passed: ', goalIds);
-
   // Goal where.
   let goalWhere = {
     [Op.or]: [
