@@ -201,12 +201,12 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
   }
 
   return (
-    <Container className="ttahub-total-hours-container shadow-2" padding={3} loading={loading} loadingLabel="Total hours loading">
-      <div className="ttahub--total-hrs-recipient-graph" ref={widget}>
+    <Container ref={widget} className="ttahub-total-hours-container shadow-2" padding={3} loading={loading} loadingLabel="Total hours loading">
+      <div className="ttahub--total-hrs-recipient-graph">
         <Grid row className="position-relative margin-bottom-2">
           <Grid desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}><h2 className="ttahub--dashboard-widget-heading margin-0">Total TTA Hours</h2></Grid>
           <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
-            <MediaCaptureButton className="margin-x-2" reference={widget} />
+            { !showAccessibleData && <MediaCaptureButton className="margin-x-2" reference={widget} /> }
             <button
               type="button"
               className="usa-button--unstyled"
