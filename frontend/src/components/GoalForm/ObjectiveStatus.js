@@ -8,18 +8,19 @@ export default function ObjectiveStatus({
   onChangeStatus,
   inputName,
   isLoading,
+  userCanEdit,
 }) {
   // capture the initial status so updates to the status don't cause the dropdown to disappear
   const initialStatus = useRef(status);
 
   // if the goal is closed, the objective status should be read-only
   const hideDropdown = useMemo(() => {
-    if (goalStatus === 'Closed') {
+    if (goalStatus === 'Closed' || !userCanEdit) {
       return true;
     }
 
     return false;
-  }, [goalStatus]);
+  }, [goalStatus, userCanEdit]);
 
   const options = useMemo(() => {
     // if the objective is complete, it can only go back to in progress
@@ -86,6 +87,7 @@ ObjectiveStatus.propTypes = {
   inputName: PropTypes.string.isRequired,
   onChangeStatus: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,
+  userCanEdit: PropTypes.bool.isRequired,
 };
 
 ObjectiveStatus.defaultProps = {

@@ -19,10 +19,11 @@ export default function ObjectiveTopics({
   inputName,
   isLoading,
   isOnReport,
+  userCanEdit,
 }) {
   const initialSelection = useRef(topics.length);
 
-  const readOnly = useMemo(() => status === 'Suspended' || (goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed', [goalStatus, isOnReport, status]);
+  const readOnly = useMemo(() => status === 'Suspended' || (goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed' || !userCanEdit, [goalStatus, isOnReport, status, userCanEdit]);
 
   if (goalStatus === 'Closed' && !initialSelection.current) {
     return null;
@@ -130,6 +131,7 @@ ObjectiveTopics.propTypes = {
     PropTypes.bool,
     PropTypes.number,
   ]).isRequired,
+  userCanEdit: PropTypes.bool.isRequired,
 };
 
 ObjectiveTopics.defaultProps = {
