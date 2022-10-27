@@ -21,8 +21,8 @@ describe('ObjectiveForm', () => {
     files: [],
     topics: [
       {
-        value: 0,
-        label: 'Behavioral / Mental Health / Trauma',
+        id: 1,
+        name: 'Behavioral / Mental Health / Trauma',
       },
     ],
     resources: [
@@ -64,7 +64,7 @@ describe('ObjectiveForm', () => {
           'Culture & Language',
           'Curriculum (Instructional or Parenting)',
           'Data and Evaluation',
-        ].map((label, value) => ({ label, value }))}
+        ].map((name, id) => ({ id, name }))}
       />
     ));
   };

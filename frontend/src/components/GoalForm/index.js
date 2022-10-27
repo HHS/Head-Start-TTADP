@@ -1,5 +1,7 @@
 import React, {
-  useEffect, useState, useMemo,
+  useEffect,
+  useState,
+  useMemo,
 } from 'react';
 import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
@@ -9,7 +11,8 @@ import { Link, useHistory } from 'react-router-dom';
 import { Alert, Button } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import Container from '../Container';
-import { createOrUpdateGoals, deleteGoal, goalByIdAndRecipient } from '../../fetchers/goals';
+import { createOrUpdateGoals, deleteGoal } from '../../fetchers/goals';
+import { goalsByIdAndRecipient } from '../../fetchers/recipient';
 import { uploadObjectivesFile } from '../../fetchers/File';
 import { getTopics } from '../../fetchers/topics';
 import Form from './Form';
@@ -28,6 +31,7 @@ import ReadOnly from './ReadOnly';
 import PlusButton from './PlusButton';
 import colors from '../../colors';
 import GoalFormLoadingContext from '../../GoalFormLoadingContext';
+import useUrlParamState from '../../hooks/useUrlParamState';
 
 const [
   objectiveTextError,
@@ -49,11 +53,10 @@ const formatGrantsFromApi = (grants) => grants
 export default function GoalForm({
   recipient,
   regionId,
-  id,
   showRTRnavigation,
+  isNew,
 }) {
   const history = useHistory();
-
   const possibleGrants = recipient.grants.filter(((g) => g.status === 'Active')).map((g) => ({
     value: g.id,
     label: g.numberWithProgramTypes,
@@ -65,9 +68,9 @@ export default function GoalForm({
     status: 'Draft',
     grants: possibleGrants.length === 1 ? [possibleGrants[0]] : [],
     objectives: [],
-    id,
+    id: 'new',
     onApprovedAR: false,
-  }), [possibleGrants, id]);
+  }), [possibleGrants]);
 
   const [showForm, setShowForm] = useState(true);
   const [fetchError, setFetchError] = useState('');
@@ -90,7 +93,7 @@ export default function GoalForm({
   const [objectives, setObjectives] = useState(goalDefaults.objectives);
 
   const [alert, setAlert] = useState({ message: '', type: 'success' });
-  const [goalNumber, setGoalNumber] = useState('');
+  const [goalNumbers, setGoalNumbers] = useState('');
 
   const [errors, setErrors] = useState(FORM_FIELD_DEFAULT_ERRORS);
 
@@ -100,20 +103,26 @@ export default function GoalForm({
     (objective) => objective.activityReports && objective.activityReports.length > 0,
   ), [objectives]);
 
+  // we can access the params as the third arg returned by useUrlParamState
+  // (if we need it)
+  const [ids, setIds] = useUrlParamState('id[]');
+
   // for fetching goal data from api if it exists
   useEffect(() => {
     async function fetchGoal() {
       setFetchAttempted(true); // as to only fetch once
       try {
-        const goal = await goalByIdAndRecipient(id, recipient.id.toString());
+        const [goal] = await goalsByIdAndRecipient(
+          ids, recipient.id.toString(),
+        );
 
         // for these, the API sends us back things in a format we expect
         setGoalName(goal.name);
         setStatus(goal.status);
-        setEndDate(goal.endDate ? moment(goal.endDate, 'MM/DD/YYYY').format('YYYY-MM-DD') : '');
+        setEndDate(goal.endDate);
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
-        setGoalNumber(goal.goalNumber);
-        setSelectedGrants(formatGrantsFromApi([goal.grant]));
+        setGoalNumbers(goal.goalNumbers);
+        setSelectedGrants(formatGrantsFromApi(goal.grants));
         setGoalOnApprovedReport(goal.onApprovedAR);
 
         // this is a lot of work to avoid two loops through the goal.objectives
@@ -159,27 +168,22 @@ export default function GoalForm({
       }
     }
 
-    if (!fetchAttempted && id !== 'new' && !isLoading) {
+    if (!fetchAttempted && !isNew && !isLoading) {
       setIsLoading(true);
     }
 
     // only fetch once, on load, and only if the id isn't 'new'
-    if (!fetchAttempted && id !== 'new' && isLoading) {
+    if (!fetchAttempted && !isNew && isLoading) {
       fetchGoal();
     }
-  }, [errors, fetchAttempted, recipient.id, id, isLoading]);
+  }, [errors, fetchAttempted, recipient.id, isNew, isLoading, ids]);
 
   // for fetching topic options from API
   useEffect(() => {
     async function fetchTopics() {
       try {
-        const topicsFromApi = await getTopics();
-
-        const topicsAsOptions = topicsFromApi.map((topic) => ({
-          label: topic.name,
-          value: topic.id,
-        }));
-        setTopicOptions(topicsAsOptions);
+        const topics = await getTopics();
+        setTopicOptions(topics);
       } catch (err) {
         setFetchError('There was an error loading topics');
       }
@@ -394,6 +398,7 @@ export default function GoalForm({
           regionId: parseInt(regionId, DECIMAL_BASE),
           recipientId: recipient.id,
           objectives: goal.objectives,
+          ids,
         }));
 
         return [...acc, ...newGoals];
@@ -513,6 +518,7 @@ export default function GoalForm({
           regionId: parseInt(regionId, DECIMAL_BASE),
           recipientId: recipient.id,
           objectives,
+          ids,
         }));
       }
 
@@ -539,6 +545,9 @@ export default function GoalForm({
         message: `Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`,
         type: 'success',
       });
+
+      const newIds = updatedGoals.flatMap((g) => g.goalIds);
+      setIds(newIds);
     } catch (error) {
       setAlert({
         message: 'There was an error saving your goal',
@@ -575,6 +584,7 @@ export default function GoalForm({
         regionId: parseInt(regionId, DECIMAL_BASE),
         recipientId: recipient.id,
         objectives,
+        ids,
       }));
 
       const goals = [
@@ -609,6 +619,9 @@ export default function GoalForm({
         message: `Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`,
         type: 'success',
       });
+
+      const newIds = newCreatedGoals.flatMap((g) => g.goalIds);
+      setIds(newIds);
     } catch (error) {
       setAlert({
         message: 'There was an error saving your goal',
@@ -631,7 +644,7 @@ export default function GoalForm({
     setGoalName(goal.name);
     setEndDate(goal.endDate);
     setStatus(goal.status);
-    setGoalNumber(goal.number);
+    setGoalNumbers(goal.goalNumbers);
     setSelectedGrants(goal.grants);
 
     // we need to update the date key so it re-renders all the
@@ -707,7 +720,7 @@ export default function GoalForm({
                 loading={isLoading}
               />
               <div className="margin-bottom-4">
-                {!showForm && id === 'new'
+                {!showForm && isNew
                   ? (
                     <PlusButton onClick={() => setShowForm(true)} text="Add another goal" />
                   ) : null }
@@ -743,7 +756,7 @@ export default function GoalForm({
               isOnReport={isOnReport}
               isOnApprovedReport={goalOnApprovedAR}
               status={status || 'Needs status'}
-              goalNumber={goalNumber}
+              goalNumbers={goalNumbers}
               onUploadFiles={onUploadFiles}
             />
             )}
@@ -776,7 +789,6 @@ export default function GoalForm({
 }
 
 GoalForm.propTypes = {
-  id: PropTypes.oneOfType([PropTypes.number.isRequired, PropTypes.string.isRequired]).isRequired,
   recipient: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
@@ -789,8 +801,10 @@ GoalForm.propTypes = {
   }).isRequired,
   regionId: PropTypes.string.isRequired,
   showRTRnavigation: PropTypes.bool,
+  isNew: PropTypes.bool,
 };
 
 GoalForm.defaultProps = {
   showRTRnavigation: false,
+  isNew: false,
 };

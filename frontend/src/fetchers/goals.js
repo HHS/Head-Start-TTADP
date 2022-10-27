@@ -12,12 +12,6 @@ export async function goalsByIdsAndActivityReport(goalIds, reportId) {
   return response.json();
 }
 
-export async function goalByIdAndRecipient(goalId, recipientId) {
-  const url = join(goalsUrl, goalId, 'recipient', recipientId);
-  const response = await get(url);
-  return response.json();
-}
-
 export async function createOrUpdateGoals(goals) {
   const data = {
     goals,

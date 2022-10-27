@@ -43,7 +43,7 @@ export default function Form({
   status,
   datePickerKey,
   fetchError,
-  goalNumber,
+  goalNumbers,
   clearEmptyObjectiveError,
   onUploadFiles,
 }) {
@@ -85,7 +85,7 @@ export default function Form({
 
   const objectiveErrors = errors[FORM_FIELD_INDEXES.OBJECTIVES];
 
-  const formTitle = goalNumber ? `Goal ${goalNumber}` : 'Recipient TTA goal';
+  const formTitle = goalNumbers && goalNumbers.length ? `Goal ${goalNumbers.join(', ')}` : 'Recipient TTA goal';
 
   const showApprovedReportAlert = isOnApprovedReport && status !== 'Closed';
   const showNotStartedAlert = isOnReport && !showApprovedReportAlert && status !== 'Closed';
@@ -241,7 +241,7 @@ Form.propTypes = {
   status: PropTypes.string.isRequired,
   datePickerKey: PropTypes.string.isRequired,
   fetchError: PropTypes.string.isRequired,
-  goalNumber: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  goalNumbers: PropTypes.arrayOf(PropTypes.string).isRequired,
   clearEmptyObjectiveError: PropTypes.func.isRequired,
   onUploadFiles: PropTypes.func.isRequired,
   validateGoalNameAndRecipients: PropTypes.func.isRequired,
