@@ -1,13 +1,16 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
+import {
+  Checkbox, Button, Dropdown, Alert,
+} from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import Pagination from 'react-js-pagination';
 import { Link, useHistory } from 'react-router-dom';
-import { Button, Dropdown } from '@trussworks/react-uswds';
 import UserContext from '../../UserContext';
 import { canEditOrCreateGoals } from '../../permissions';
 import { DECIMAL_BASE } from '../../Constants';
+import colors from '../../colors';
 
 export function renderTotal(offset, perPage, activePage, count) {
   const from = offset >= count ? 0 : offset + 1;
@@ -34,16 +37,20 @@ export default function GoalCardsHeader({
   hasActiveGrants,
   sortConfig,
   requestSort,
+  numberOfSelectedGoals,
+  allGoalsChecked,
+  selectAllGoalCheckboxSelect,
+  selectAllGoals,
+  selectedGoalIds,
 }) {
   const history = useHistory();
   const { user } = useContext(UserContext);
   const hasButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
 
   const showAddNewButton = hasActiveGrants && hasButtonPermissions;
-
   const onPrint = () => {
     history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives/print${window.location.search}`, {
-      sortConfig,
+      sortConfig, selectedGoalIds,
     });
   };
 
@@ -74,7 +81,7 @@ export default function GoalCardsHeader({
           className="display-flex flex-align-center usa-button usa-button--unstyled margin-x-3 margin-y-3"
           onClick={onPrint}
         >
-          Preview and print
+          Preview and print selected
         </Button>
       </div>
       <div className="desktop:display-flex flex-justify ">
@@ -121,7 +128,57 @@ export default function GoalCardsHeader({
         )}
 
       </div>
+      <hr className="border-1px border-base-lighter  bg-base-lighter margin-y-3" />
+      <div className="margin-left-3 display-flex flex-row flex-align-center">
+        <Checkbox
+          label="Select all"
+          id="select-all-goal-checkboxes"
+          aria-label="deselect all goals"
+          defaultChecked={allGoalsChecked}
+          onClick={selectAllGoalCheckboxSelect}
+        />
+        {numberOfSelectedGoals > 0
+            && (
+              <span className="filter-pill-container smart-hub-border-blue-primary border-2px margin-left-2 margin-right-1 radius-pill padding-right-1 padding-left-2 padding-y-05">
+                <span>
+                  {numberOfSelectedGoals}
+                  {' '}
+                  selected
+                  {' '}
+                </span>
+                <Button
+                  className="smart-hub--select-tag__button"
+                  unstyled
+                  aria-label="deselect all goals"
+                  onClick={() => {
+                    selectAllGoalCheckboxSelect({ target: { checked: false } });
+                  }}
+                >
+                  <FontAwesomeIcon className="margin-left-1 margin-top-2px filter-pills-cursor" color={colors.ttahubMediumBlue} icon={faTimesCircle} />
+                </Button>
+              </span>
+            )}
+      </div>
+      <div>
+        {
+              allGoalsChecked && (numberOfSelectedGoals !== count)
+                ? (
+                  <Alert className="margin-top-3" type="info" slim>
+                    {`All ${numberOfSelectedGoals} goals on this page are selected.`}
+                    <button
+                      type="button"
+                      className="usa-button usa-button--unstyled margin-left-1"
+                      onClick={selectAllGoals}
+                    >
+                      {`Select all ${count} goals`}
+                    </button>
+                  </Alert>
+                )
+                : null
+            }
+      </div>
     </div>
+
   );
 }
 
@@ -143,13 +200,22 @@ GoalCardsHeader.propTypes = {
     activePage: PropTypes.number,
     offset: PropTypes.number,
   }).isRequired,
+  selectAllGoalCheckboxSelect: PropTypes.func,
+  allGoalsChecked: PropTypes.bool,
+  numberOfSelectedGoals: PropTypes.number,
+  selectAllGoals: PropTypes.func,
+  selectedGoalIds: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
 GoalCardsHeader.defaultProps = {
   hidePagination: false,
+  allGoalsChecked: false,
   count: 0,
   activePage: 0,
   offset: 0,
   perPage: 10,
   handlePageChange: () => { },
+  selectAllGoalCheckboxSelect: () => { },
+  selectAllGoals: () => { },
+  numberOfSelectedGoals: 0,
 };

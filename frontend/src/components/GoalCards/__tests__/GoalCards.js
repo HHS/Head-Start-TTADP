@@ -201,7 +201,7 @@ const requestSort = jest.fn();
 const setGoals = jest.fn();
 const history = createMemoryHistory();
 
-const renderTable = ({ goals, goalsCount }, user, hasActiveGrants = true) => {
+const renderTable = ({ goals, goalsCount, allGoalIds = null }, user, hasActiveGrants = true) => {
   render(
     <Router history={history}>
       <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
@@ -225,6 +225,7 @@ const renderTable = ({ goals, goalsCount }, user, hasActiveGrants = true) => {
               offset: 0,
             }}
             setGoals={setGoals}
+            allGoalIds={allGoalIds || goals.map((g) => g.id)}
           />
         </UserContext.Provider>
       </AriaLiveContext.Provider>
@@ -438,6 +439,61 @@ describe('Goals Table', () => {
 
       fireEvent.click(pageOne);
       expect(handlePageChange).toHaveBeenCalled();
+    });
+  });
+
+  describe('Checkboxes', () => {
+    beforeEach(async () => {
+      const allGoalIds = baseGoals.map((g) => g.id);
+      allGoalIds.push(23);
+      renderTable({ goals: baseGoals, goalsCount: 7, allGoalIds }, defaultUser);
+      await screen.findByText('TTA goals and objectives');
+    });
+
+    afterEach(() => {
+      window.location.assign.mockReset();
+    });
+
+    it('Select page and all works', async () => {
+      const selectAll = await screen.findByRole('checkbox', { name: /deselect all goals/i });
+      fireEvent.click(selectAll);
+
+      expect(await screen.findByText(/6 selected/i)).toBeVisible();
+      expect(await screen.findByText(/all 6 goals on this page are selected\./i)).toBeVisible();
+      const selectAllPages = await screen.findByRole('button', { name: /select all 7 goals/i });
+      fireEvent.click(selectAllPages);
+
+      expect(await screen.findByText(/7 selected/i)).toBeVisible();
+
+      fireEvent.click(selectAll);
+      expect(screen.queryByText(/7 selected/i)).toBeNull();
+    });
+
+    it('Deselect via pill', async () => {
+      const selectAll = await screen.findByRole('checkbox', { name: /deselect all goals/i });
+      fireEvent.click(selectAll);
+
+      expect(await screen.findByText(/6 selected/i)).toBeVisible();
+      expect(await screen.findByText(/all 6 goals on this page are selected\./i)).toBeVisible();
+
+      const closeSelected = await screen.findByRole('button', { name: /deselect all goals/i });
+      fireEvent.click(closeSelected);
+      expect(screen.queryByText(/7 selected/i)).toBeNull();
+    });
+
+    it('Can select and deselect individual goals', async () => {
+      const checkBoxes = screen.queryAllByTestId('selectGoalTestId');
+      expect(checkBoxes.length).toBe(6);
+
+      fireEvent.click(checkBoxes[0]);
+      fireEvent.click(checkBoxes[1]);
+
+      expect(await screen.findByText(/2 selected/i)).toBeVisible();
+
+      fireEvent.click(checkBoxes[0]);
+      fireEvent.click(checkBoxes[1]);
+
+      expect(screen.queryByText(/2 selected/i)).toBeNull();
     });
   });
 
