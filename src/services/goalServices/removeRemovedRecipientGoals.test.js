@@ -28,6 +28,15 @@ describe('removeRemovedRecipientsGoals', () => {
   let thirdObjective;
 
   beforeAll(async () => {
+    await User.create({
+      id: 1,
+      homeRegionId: 1,
+      name: 'user1',
+      hsesUsername: 'user1',
+      hsesUserId: 'user1',
+    });
+    await Role.create({ id: 1000, name: 'a', isSpecialist: true });
+    await UserRole.create({ userId: 1, roleId: 1000 });
     const recipientOne = await Recipient.create(
       {
         id: faker.datatype.number({ min: 90000 }),
@@ -209,10 +218,7 @@ describe('removeRemovedRecipientsGoals', () => {
       individualHooks: true,
     });
 
-    await ActivityReport.destroy({
-      where: { id: reportIds },
-      individualHooks: true,
-    });
+    await Promise.allSettled(reportIds.map((id) => destroyReport(id)));
 
     await Promise.all(
       grants.map(async (g) => Grant.destroy({ where: { id: g.id }, individualHooks: true })),
