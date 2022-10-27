@@ -49,24 +49,6 @@ export default function ResourceRepeater({
     );
   }
 
-  const addResource = () => {
-    const newResources = [...resources, { key: uuidv4(), value: '' }];
-    setResources(newResources);
-  };
-
-  const removeResource = (i) => {
-    const newResources = [...resources];
-    newResources.splice(i, 1);
-    setResources(newResources);
-  };
-
-  const updateResource = (value, i) => {
-    const newResources = [...resources];
-    const toUpdate = { ...newResources[i], value };
-    newResources.splice(i, 1, toUpdate);
-    setResources(newResources);
-  };
-
   const { editableResources, fixedResources } = resources.reduce((acc, resource) => {
     if (resource.onAnyReport) {
       acc.fixedResources.push(resource);
@@ -76,6 +58,24 @@ export default function ResourceRepeater({
 
     return acc;
   }, { editableResources: [], fixedResources: [] });
+
+  const addResource = () => {
+    const newResources = [...editableResources, { key: uuidv4(), value: '' }];
+    setResources(newResources);
+  };
+
+  const removeResource = (i) => {
+    const newResources = [...editableResources];
+    newResources.splice(i, 1);
+    setResources(newResources);
+  };
+
+  const updateResource = (value, i) => {
+    const newResources = [...editableResources];
+    const toUpdate = { ...newResources[i], value };
+    newResources.splice(i, 1, toUpdate);
+    setResources(newResources);
+  };
 
   return (
     <>

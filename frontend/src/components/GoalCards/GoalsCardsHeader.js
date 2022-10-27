@@ -54,7 +54,10 @@ export default function GoalCardsHeader({
     });
   };
 
-  const setSortBy = (e) => requestSort(e.target.value);
+  const setSortBy = (e) => {
+    const [sortBy, direction] = e.target.value.split('-');
+    requestSort(sortBy, direction);
+  };
 
   return (
     <div className="padding-x-3">
@@ -85,9 +88,11 @@ export default function GoalCardsHeader({
         <div className="desktop:display-flex flex-align-center">
           {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
           <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="sortBy">Sort by</label>
-          <Dropdown onChange={setSortBy} value={sortConfig.sortBy} className="margin-top-0" id="sortBy" name="sortBy">
-            <option value="goalStatus">Goal status</option>
-            <option value="createdOn">Created on</option>
+          <Dropdown onChange={setSortBy} value={`${sortConfig.sortBy}-${sortConfig.direction}`} className="margin-top-0" id="sortBy" name="sortBy">
+            <option value="createdOn-desc">creation date (newest to oldest) </option>
+            <option value="createdOn-asc">creation date (oldest to newest) </option>
+            <option value="goalStatus-asc">goal status (drafts first)</option>
+            <option value="goalStatus-desc">goal status (completed first) </option>
           </Dropdown>
         </div>
         {!hidePagination && (

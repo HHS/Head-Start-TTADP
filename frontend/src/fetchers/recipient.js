@@ -30,6 +30,17 @@ export const searchRecipients = async (query, filters, params = { sortBy: 'name'
   return recipients.json();
 };
 
+export const goalsByIdAndRecipient = async (goalIds, recipientId) => {
+  const id = parseInt(recipientId, DECIMAL_BASE);
+  if (Number.isNaN(id)) {
+    throw new Error('Recipient ID must be a number');
+  }
+
+  const recipientGoalsUrl = join(recipientUrl, recipientId, 'goals');
+  const goals = await get(`${recipientGoalsUrl}?goalIds=${goalIds.join('&goalIds=')}`);
+  return goals.json();
+};
+
 export const getRecipientGoals = async (recipientId, regionId, sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = GOALS_PER_PAGE, filters, goalIds = []) => {
   const id = parseInt(recipientId, DECIMAL_BASE);
   if (Number.isNaN(id)) {

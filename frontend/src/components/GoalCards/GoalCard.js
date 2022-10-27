@@ -83,7 +83,7 @@ function GoalCard({
     {
       label: 'Edit',
       onClick: () => {
-        history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals/${id}`);
+        history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${ids.join(',')}`);
       },
     },
   ];

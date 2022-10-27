@@ -70,6 +70,8 @@ const initialData = {
   regionId: 1,
   goals: [],
   objectivesWithoutGoals: [],
+  activityRecipients: [],
+  activityRecipientType: 'recipient',
 };
 
 describe('Navigator', () => {
@@ -137,6 +139,8 @@ describe('Navigator', () => {
         goals: [],
         objectivesWithoutGoals: [],
         second: null,
+        activityRecipientType: 'recipient',
+        activityRecipients: [],
       },
     ));
   });
@@ -209,6 +213,7 @@ describe('Navigator', () => {
     const formData = {
       ...initialData,
       activityRecipientType: 'grant',
+      activityRecipients: [],
       goalForEditing: {
         isNew: true,
       },
