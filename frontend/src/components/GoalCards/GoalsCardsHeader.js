@@ -204,7 +204,7 @@ GoalCardsHeader.propTypes = {
   allGoalsChecked: PropTypes.bool,
   numberOfSelectedGoals: PropTypes.number,
   selectAllGoals: PropTypes.func,
-  selectedGoalIds: PropTypes.arrayOf(PropTypes.number).isRequired,
+  selectedGoalIds: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
 GoalCardsHeader.defaultProps = {
