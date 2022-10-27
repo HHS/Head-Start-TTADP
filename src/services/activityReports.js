@@ -1216,7 +1216,9 @@ export async function createOrUpdate(newActivityReport, report) {
   if (report) {
     savedReport = await update(updatedFields, report);
     const { id: savedReportId } = savedReport;
-    await saveOwner(savedReportId, owner);
+    if (owner) {
+      await saveOwner(savedReportId, owner);
+    }
   } else {
     if (silent) {
       savedReport = await create(updatedFields, silent);
@@ -1224,6 +1226,9 @@ export async function createOrUpdate(newActivityReport, report) {
       savedReport = await create(updatedFields);
     }
     const { id: savedReportId } = savedReport;
+
+    if (!owner) throw new Error('Expected an owner for new report creation.');
+
     try {
       await saveOwnerInstantiators(savedReportId, owner);
     } catch (err) {
