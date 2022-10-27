@@ -282,7 +282,7 @@ module.exports = {
                   mg."endDate",
                   mg."previousStatus"[1] "previousStatus",
                   mg."goalTemplateId",
-                  unnest(ir."onlyRecipientGrantId") "grantId",
+                  orgi."grantId",
                   mg."onApprovedAR",
                   mg."firstNotStartedAt",
                   mg."lastNotStartedAt",
@@ -295,11 +295,12 @@ module.exports = {
                   mg."firstCompletedAt",
                   mg."lastCompletedAt"
                 FROM "temp_incomplete_reports" ir
+                CROSS JOIN unnest(ir."onlyRecipientGrantId") orgi("grantId")
                 JOIN "temp_missing_goals" mg
                 ON ir."activityReportId" = mg."activityReportId"
                 AND mg."goalHash" = ANY(ir."distinctGoals")
                 LEFT JOIN "Goals" g
-                ON g."grantId" = ANY(ir."onlyRecipientGrantId")
+                ON g."grantId" = orgi."grantId"
                 AND md5(g.name) = mg."goalHash"
                 WHERE g.id IS NULL
                 RETURNING
@@ -321,7 +322,7 @@ module.exports = {
                 "createdAt",
                 "updatedAt"
               )
-              SELECT
+              SELECT DISTINCT
                 ir."activityReportId",
                 g.id "goalId",
                 MIN(arg2."createdAt") "createdAt",
@@ -335,11 +336,11 @@ module.exports = {
               LEFT JOIN "ActivityReportGoals" arg
               ON ir."activityReportId" = arg."activityReportId"
               AND g.id = arg."goalId"
-              LEFT JOIN "ActivityReportGoals" arg2
+              JOIN "ActivityReportGoals" arg2
               ON ir."activityReportId" = arg2."activityReportId"
-              LEFT JOIN "Goals" g2
+              JOIN "Goals" g2
               ON arg2."goalId" = g2.id
-              AND g."grantId" = ANY(ir."goalGrantIds")
+              AND g2."grantId" = ANY(ir."intersectionGrantId")
               AND md5(g.name) = md5(g2.name)
               WHERE arg.id IS NULL
               GROUP BY
@@ -388,7 +389,7 @@ module.exports = {
               SELECT
                 ir."activityReportId",
                 md5(o.title) "objectiveHash",
-                ARRAY_AGG(md5(g.name) ORDER BY o."goalId")  "goalHashs",
+                ARRAY_AGG(DISTINCT md5(g.name))  "goalHashs",
                 MIN(o.id) "objectiveId",
                 o.title,
                 o.status,
@@ -419,7 +420,6 @@ module.exports = {
                 ir."activityReportId",
                 o.title,
                 o.status;
-
 
                 -----------------------------------------------------------------------------------------------------
                 -- 4. Create missing objectives for the grants+goals identified
@@ -464,10 +464,11 @@ module.exports = {
               mo."firstSuspendedAt",
               mo."lastSuspendedAt"
             FROM "temp_incomplete_reports" ir
+            CROSS JOIN unnest(ir."onlyRecipientGrantId") orgi("grantId")
             JOIN "temp_missing_objectives" mo
             ON ir."activityReportId" = mo."activityReportId"
             JOIN "Goals" g
-            ON g."grantId" = ANY(ir."onlyRecipientGrantId")
+            ON g."grantId" = orgi."grantId"
             AND md5(g.name) = ANY(mo."goalHashs")
             LEFT JOIN "Objectives" o
             ON g.id = o."goalId"
@@ -511,14 +512,14 @@ module.exports = {
               LEFT JOIN "ActivityReportObjectives" aro
               ON ir."activityReportId" = aro."activityReportId"
               AND o.id = aro."objectiveId"
-              LEFT JOIN "ActivityReportObjectives" aro2
+              JOIN "ActivityReportObjectives" aro2
               ON ir."activityReportId" = aro2."activityReportId"
-              LEFT JOIN "Objectives" o2
+              JOIN "Objectives" o2
               ON aro2."objectiveId" = o2.id
               AND md5(o.title) = md5(o2.title)
-              LEFT JOIN "Goals" g2
+              JOIN "Goals" g2
               ON o2."goalId" = g2.id
-              AND g2."grantId" = ANY(ir."goalGrantIds")
+              AND g2."grantId" = ANY(ir."intersectionGrantId")
               AND md5(g.name) = md5(g2.name)
               WHERE aro.id IS NULL
               GROUP BY
@@ -558,7 +559,7 @@ module.exports = {
               LEFT JOIN "ObjectiveFiles" f
               ON o.id = f."objectiveId"
               LEFT JOIN "Goals" g2
-              ON g2."grantId" = ANY(ir."goalGrantIds")
+              ON g2."grantId" = ANY(ir."intersectionGrantId")
               AND md5(g.name) = md5(g2.name)
               LEFT JOIN "Objectives" o2
               ON g2.id = o2."goalId"
@@ -566,7 +567,7 @@ module.exports = {
               LEFT JOIN "ObjectiveFiles" f2
               ON o2.id = f2."objectiveId"
               WHERE f.id IS NULL
-          AND f2."fileId" IS NOT NULL
+        AND f2."fileId" IS NOT NULL
               GROUP BY
                 o.id,
                 f2."fileId"
@@ -603,7 +604,7 @@ module.exports = {
               LEFT JOIN "ObjectiveResources" r
               ON o.id = r."objectiveId"
               LEFT JOIN "Goals" g2
-              ON g2."grantId" = ANY(ir."goalGrantIds")
+              ON g2."grantId" = ANY(ir."intersectionGrantId")
               AND md5(g.name) = md5(g2.name)
               LEFT JOIN "Objectives" o2
               ON g2.id = o2."goalId"
@@ -648,7 +649,7 @@ module.exports = {
               LEFT JOIN "ObjectiveRoles" r
               ON o.id = r."objectiveId"
               LEFT JOIN "Goals" g2
-              ON g2."grantId" = ANY(ir."goalGrantIds")
+              ON g2."grantId" = ANY(ir."intersectionGrantId")
               AND md5(g.name) = md5(g2.name)
               LEFT JOIN "Objectives" o2
               ON g2.id = o2."goalId"
@@ -693,7 +694,7 @@ module.exports = {
               LEFT JOIN "ObjectiveTopics" t
               ON o.id = t."objectiveId"
               LEFT JOIN "Goals" g2
-              ON g2."grantId" = ANY(ir."goalGrantIds")
+              ON g2."grantId" = ANY(ir."intersectionGrantId")
               AND md5(g.name) = md5(g2.name)
               LEFT JOIN "Objectives" o2
               ON g2.id = o2."goalId"
