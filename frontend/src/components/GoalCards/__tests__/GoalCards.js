@@ -393,13 +393,13 @@ describe('Goals Table', () => {
 
     it('sorts by created on', async () => {
       const sortCreated = await screen.findByRole('combobox');
-      userEvent.selectOptions(sortCreated, 'createdOn');
+      userEvent.selectOptions(sortCreated, 'createdOn-desc');
       expect(requestSort).toHaveBeenCalled();
     });
 
     it('sorts by goal status', async () => {
       const sortCreated = await screen.findByRole('combobox');
-      userEvent.selectOptions(sortCreated, 'goalStatus');
+      userEvent.selectOptions(sortCreated, 'goalStatus-asc');
       await screen.findByText('TTA goals and objectives');
       expect(requestSort).toHaveBeenCalled();
     });
