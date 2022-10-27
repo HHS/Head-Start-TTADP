@@ -77,7 +77,9 @@ function GoalCards({
 
   useEffect(() => {
     const checkValues = Object.values(selectedGoalCheckBoxes);
-    if (checkValues.length && checkValues.every((v) => v === true)) {
+    if (checkValues.length
+      && (checkValues.length === goals.length || checkValues.length === goalsCount)
+      && checkValues.every((v) => v === true)) {
       setAllGoalsChecked(true);
     } else {
       if (allGoalsChecked === true) {
@@ -87,7 +89,7 @@ function GoalCards({
         setPrintAllGoals(false);
       }
     }
-  }, [selectedGoalCheckBoxes, allGoalsChecked, printAllGoals]);
+  }, [selectedGoalCheckBoxes, allGoalsChecked, printAllGoals, goalsCount, goals.length]);
 
   const selectAllGoalCheckboxSelect = (event) => {
     const { target: { checked = null } = {} } = event;
@@ -118,6 +120,10 @@ function GoalCards({
   };
 
   const numberOfSelectedGoals = Object.values(selectedGoalCheckBoxes).filter((g) => g).length;
+
+  const selectedCheckBoxes = Object.keys(selectedGoalCheckBoxes).filter(
+    (g) => selectedGoalCheckBoxes[g],
+  );
 
   return (
     <>
@@ -154,7 +160,7 @@ function GoalCards({
           allGoalsChecked={allGoalsChecked}
           selectAllGoalCheckboxSelect={selectAllGoalCheckboxSelect}
           selectAllGoals={checkAllGoals}
-          selectedGoalIds={Object.keys(selectedGoalCheckBoxes).map((g) => g)}
+          selectedGoalIds={selectedCheckBoxes}
         />
         <div>
 
@@ -198,7 +204,10 @@ GoalCards.propTypes = {
     offset: PropTypes.number,
   }).isRequired,
   setGoals: PropTypes.func.isRequired,
-  allGoalIds: PropTypes.arrayOf(PropTypes.number).isRequired,
+  allGoalIds: PropTypes.arrayOf(PropTypes.number),
 };
 
+GoalCards.defaultProps = {
+  allGoalIds: [],
+};
 export default GoalCards;
