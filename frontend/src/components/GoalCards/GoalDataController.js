@@ -130,6 +130,7 @@ function GoalDataController({
           goals={displayGoals}
           error={error}
           goalsCount={data.count}
+          allGoalIds={data.allGoalIds}
           handlePageChange={handlePageChange}
           requestSort={requestSort}
           sortConfig={sortConfig}
