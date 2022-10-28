@@ -142,12 +142,6 @@ describe.skip('destroyGoal handler', () => {
       },
     });
 
-    // foundGrantGoal = await GrantGoal.findAll({
-    //   where: {
-    //     goalId: goal.id,
-    //   },
-    // });
-
     foundObjective = await Objective.findAll({
       where: {
         goalId: goal.id,
