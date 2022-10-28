@@ -770,7 +770,7 @@ export default function GoalForm({
             { (isNew || status === 'Draft') && status !== 'Closed' && (
               <div className="margin-top-4">
                 { !showForm ? <Button type="submit">Submit goal</Button> : null }
-                { showForm ? <Button type="button" onClick={onSaveAndContinue}>Save and continue</Button> : null }
+                { showForm ? <Button type="button" onClick={() => onSaveAndContinue(false)}>Save and continue</Button> : null }
                 <Button type="button" outline onClick={onSaveDraft}>Save draft</Button>
                 { showForm && !createdGoals.length ? (
                   <Link
