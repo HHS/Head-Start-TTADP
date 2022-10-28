@@ -36,7 +36,7 @@ export default function ReadOnlyObjective({ objective }) {
         ? (
           <div className="margin-bottom-2">
             <h4 className="margin-0">Topics</h4>
-            <p className="usa-prose margin-0">{objective.topics.map((topic) => topic.label).join(', ')}</p>
+            <p className="usa-prose margin-0">{objective.topics.map((topic) => topic.name).join(', ')}</p>
           </div>
         ) : null }
 
@@ -99,7 +99,7 @@ ReadOnlyObjective.propTypes = {
     ttaProvided: PropTypes.string,
     resources: PropTypes.arrayOf(PropTypes.string),
     topics: PropTypes.arrayOf(PropTypes.shape({
-      label: PropTypes.string,
+      name: PropTypes.string,
     })),
     files: PropTypes.arrayOf(PropTypes.shape({
       originalFileName: PropTypes.string,
