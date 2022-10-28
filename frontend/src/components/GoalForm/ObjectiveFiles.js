@@ -84,6 +84,7 @@ export default function ObjectiveFiles({
                     text={(
                       <div>
                         Examples include:
+                        {' '}
                         <ul className="usa-list">
                           <li>Presentation slides from PD events</li>
                           <li>PDF&apos;s you created from multiple tta resources</li>
