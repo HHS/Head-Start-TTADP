@@ -116,18 +116,15 @@ export async function deleteGoal(req, res) {
     const { goalIds } = req.query;
     const ids = goalIds.map((id) => parseInt(id, DECIMAL_BASE));
 
-    let canDelete = true;
     const user = await userById(req.session.userId);
 
-    ids.forEach(async (goalId) => {
-      if (canDelete) {
-        const goal = await goalByIdWithActivityReportsAndRegions(goalId);
-        const policy = new Goal(user, goal);
-        canDelete = policy.canDelete();
-      }
-    });
+    const permissions = await Promise.all(ids.map(async (goalId) => {
+      const goal = await goalByIdWithActivityReportsAndRegions(goalId);
+      const policy = new Goal(user, goal);
+      return policy.canDelete();
+    }));
 
-    if (!canDelete) {
+    if (!permissions.every((permission) => permission)) {
       res.sendStatus(401);
       return;
     }

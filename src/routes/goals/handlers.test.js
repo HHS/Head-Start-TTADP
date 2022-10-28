@@ -376,8 +376,8 @@ describe('deleteGoal', () => {
 
   it('checks permissions', async () => {
     const req = {
-      params: {
-        goalId: 1,
+      query: {
+        goalIds: [1],
       },
       session: {
         userId: 1,
@@ -405,8 +405,8 @@ describe('deleteGoal', () => {
 
   it('handles success', async () => {
     const req = {
-      params: {
-        goalId: 1,
+      query: {
+        goalIds: [1],
       },
       session: {
         userId: 1,
@@ -435,8 +435,8 @@ describe('deleteGoal', () => {
 
   it('handles failures', async () => {
     const req = {
-      params: {
-        goalId: 1,
+      query: {
+        goalIds: [1],
       },
       session: {
         userId: 1,
