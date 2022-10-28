@@ -218,27 +218,36 @@ export default function RecipientRecord({ match }) {
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/goals/:goalId"
-          render={({ match: goalMatch }) => {
-            const { params: { goalId } } = goalMatch;
-            return (
-              <FeatureFlag flag="recipient_goals_objectives" renderNotFound>
-                <Helmet>
-                  <title>
-                    {goalId === 'new'
-                      ? `Create a goal for ${recipientName}`
-                      : `Edit goal ${goalId} for ${recipientName}` }
-                  </title>
-                </Helmet>
-                <GoalForm
-                  id={goalId}
-                  regionId={regionId}
-                  recipient={recipientData}
-                  showRTRnavigation
-                />
-              </FeatureFlag>
-            );
-          }}
+          path="/recipient-tta-records/:recipientId/region/:regionId/goals/new"
+          render={() => (
+            <FeatureFlag flag="recipient_goals_objectives" renderNotFound>
+              <Helmet>
+                <title>
+                  Create a goal for
+                  {' '}
+                  {recipientName}
+                </title>
+              </Helmet>
+              <GoalForm
+                regionId={regionId}
+                recipient={recipientData}
+                showRTRnavigation
+                isNew
+              />
+            </FeatureFlag>
+          )}
+        />
+        <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/goals"
+          render={() => (
+            <FeatureFlag flag="recipient_goals_objectives" renderNotFound>
+              <GoalForm
+                regionId={regionId}
+                recipient={recipientData}
+                showRTRnavigation
+              />
+            </FeatureFlag>
+          )}
         />
         <Route
           render={() => (

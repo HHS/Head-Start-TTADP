@@ -1,24 +1,22 @@
 import { Op } from 'sequelize';
+import { uniqBy } from 'lodash';
 import { OBJECTIVE_STATUS } from '../constants';
 import {
   Objective,
   ActivityReportObjective,
   Goal,
   Grant,
-  Role,
   Topic,
   File,
   ObjectiveResource,
 } from '../models';
-import { removeUnusedGoalsObjectivesFromReport, reduceObjectives, saveObjectiveAssociations } from './goals';
+import { removeUnusedGoalsObjectivesFromReport, saveObjectiveAssociations } from './goals';
 import { cacheObjectiveMetadata } from './reportCache';
 
 export async function saveObjectivesForReport(objectives, report) {
   const updatedObjectives = await Promise.all(objectives.map(async (objective) => Promise
     .all(objective.recipientIds.map(async (otherEntityId) => {
-      const {
-        roles, topics, files, resources,
-      } = objective;
+      const { topics, files, resources } = objective;
 
       // Determine if this objective already exists.
       let existingObjective;
@@ -73,7 +71,6 @@ export async function saveObjectivesForReport(objectives, report) {
         savedObjective,
         resources,
         topics,
-        roles,
         files,
         deleteUnusedAssociations,
       );
@@ -118,6 +115,64 @@ export async function getObjectiveById(objectiveId) {
   });
 }
 
+function reduceOtherEntityObjectives(newObjectives) {
+  return newObjectives.reduce((objectives, objective) => {
+    // check the activity report objective status
+    const objectiveStatus = objective.activityReportObjectives
+      && objective.activityReportObjectives[0]
+      && objective.activityReportObjectives[0].status
+      ? objective.activityReportObjectives[0].status : objective.status;
+
+    // objectives represent the accumulator in the find below
+    // objective is the objective as it is returned from the API
+    const exists = objectives.find((o) => (
+      o.title === objective.title && o.status === objectiveStatus
+    ));
+
+    if (exists) {
+      const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
+      exists.ids = [...exists.ids, id];
+
+      // we can dedupe these using lodash
+      exists.resources = uniqBy([
+        ...exists.resources,
+        ...objective.resources,
+      ], 'value');
+
+      exists.topics = uniqBy([
+        ...exists.topics,
+        ...objective.topics,
+      ], 'id');
+
+      exists.files = uniqBy([
+        ...exists.files,
+        ...objective.files,
+      ], 'key');
+
+      return objectives;
+    }
+
+    // since this method is used to rollup both objectives on and off activity reports
+    // we need to handle the case where there is TTA provided and TTA not provided
+    // NOTE: there will only be one activity report objective, it is queried by activity report id
+    const ttaProvided = objective.activityReportObjectives
+        && objective.activityReportObjectives[0]
+        && objective.activityReportObjectives[0].ttaProvided
+      ? objective.activityReportObjectives[0].ttaProvided : null;
+
+    const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
+
+    return [...objectives, {
+      ...objective.dataValues,
+      value: id,
+      ids: [id],
+      ttaProvided,
+      status: objectiveStatus, // the status from above, derived from the activity report objective
+      isNew: false,
+    }];
+  }, []);
+}
+
 export async function getObjectivesByReportId(reportId) {
   const objectives = await Objective.findAll({
     model: Objective,
@@ -131,18 +186,13 @@ export async function getObjectivesByReportId(reportId) {
         required: true,
       },
       {
-        model: Role,
-        as: 'roles',
-      },
-      {
         model: Topic,
         as: 'topics',
-        // these need to be renamed to match the frontend form names
-        attributes: [['name', 'label'], ['id', 'value']],
       },
       {
         model: ObjectiveResource,
         as: 'resources',
+        // these need to be renamed to match the frontend form names
         attributes: [['userProvidedUrl', 'value']],
       },
       {
@@ -152,5 +202,5 @@ export async function getObjectivesByReportId(reportId) {
     ],
   });
 
-  return reduceObjectives(objectives);
+  return reduceOtherEntityObjectives(objectives);
 }

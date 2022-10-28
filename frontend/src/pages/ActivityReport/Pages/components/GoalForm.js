@@ -22,7 +22,6 @@ import GoalRttapa from '../../../../components/GoalForm/GoalRttapa';
 export default function GoalForm({
   goal,
   topicOptions,
-  roles,
   reportId,
   onSaveDraft,
   datePickerKey,
@@ -194,7 +193,6 @@ export default function GoalForm({
       <Objectives
         objectives={objectives}
         topicOptions={topicOptions}
-        roles={roles}
         goalStatus={status}
         noObjectiveError={errors.goalForEditing && errors.goalForEditing.objectives
           ? ERROR_FORMAT(errors.goalForEditing.objectives.message) : NO_ERROR}
@@ -207,19 +205,13 @@ export default function GoalForm({
 
 GoalForm.propTypes = {
   goal: PropTypes.shape({
-    id: PropTypes.oneOfType([
-      PropTypes.arrayOf(PropTypes.shape({
-        value: PropTypes.number,
-        label: PropTypes.string,
-      })), PropTypes.string,
-    ]).isRequired,
-    goalIds: PropTypes.arrayOf(PropTypes.number).isRequired,
+    goalIds: PropTypes.arrayOf(PropTypes.number),
     value: PropTypes.oneOfType([
       PropTypes.number,
       PropTypes.string,
     ]),
     isRttapa: PropTypes.bool,
-    oldGrantIds: PropTypes.arrayOf(PropTypes.number).isRequired,
+    oldGrantIds: PropTypes.arrayOf(PropTypes.number),
     label: PropTypes.string,
     name: PropTypes.string,
     endDate: PropTypes.string,
@@ -231,8 +223,7 @@ GoalForm.propTypes = {
     value: PropTypes.number,
     label: PropTypes.string,
   })).isRequired,
-  roles: PropTypes.arrayOf(PropTypes.string).isRequired,
-  reportId: PropTypes.number.isRequired,
+  reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   onSaveDraft: PropTypes.func.isRequired,
   datePickerKey: PropTypes.string.isRequired,
 };

@@ -34,9 +34,9 @@ export default function ObjectiveTopics({
           {topics.map((topic) => (
             !(status === 'Complete' && goalStatus === 'Closed') || topic.onAnyReport ? (
               <li key={uuid()}>
-                {topic.label}
+                {topic.name}
               </li>
-            ) : <UnusedData key={uuid()} value={topic.label} />
+            ) : <UnusedData key={uuid()} value={topic.name} />
           ))}
         </ul>
       </>
@@ -54,7 +54,7 @@ export default function ObjectiveTopics({
   }, { editableTopics: [], fixedTopics: [] });
 
   const savedTopicIds = fixedTopics ? fixedTopics.map(({ value }) => value) : [];
-  const filteredOptions = topicOptions.filter((option) => !savedTopicIds.includes(option.value));
+  const filteredOptions = topicOptions.filter((option) => !savedTopicIds.includes(option.id));
 
   return (
     <>
@@ -63,7 +63,7 @@ export default function ObjectiveTopics({
           <>
             <p className="usa-prose margin-bottom-0 text-bold">Topics</p>
             <ul className="usa-list usa-list--unstyled">
-              {fixedTopics.map((topic) => (<li key={topic.value}>{topic.label}</li>))}
+              {fixedTopics.map((topic) => (<li key={topic.id}>{topic.name}</li>))}
             </ul>
           </>
         )
@@ -98,6 +98,8 @@ export default function ObjectiveTopics({
           onChange={onChangeTopics}
           closeMenuOnSelect={false}
           isDisabled={isLoading}
+          getOptionLabel={(option) => option.name}
+          getOptionValue={(option) => option.id}
         />
       </FormGroup>
     </>
@@ -120,7 +122,10 @@ ObjectiveTopics.propTypes = {
   inputName: PropTypes.string,
   isLoading: PropTypes.bool,
   goalStatus: PropTypes.string.isRequired,
-  isOnReport: PropTypes.bool.isRequired,
+  isOnReport: PropTypes.oneOfType([
+    PropTypes.bool,
+    PropTypes.number,
+  ]).isRequired,
 };
 
 ObjectiveTopics.defaultProps = {

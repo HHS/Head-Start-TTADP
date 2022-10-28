@@ -94,8 +94,11 @@ const runMonthlyEmailJob = () => {
 export default function runCronJobs() {
   // Run only on one instance
   if (process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') {
-    const job = new CronJob(schedule, () => runJob(), null, true, timezone);
-    job.start();
+    // disable updates for non-production environments
+    if (process.env.TTA_SMART_HUB_URI && !process.env.TTA_SMART_HUB_URI.endsWith('app.cloud.gov')) {
+      const job = new CronJob(schedule, () => runJob(), null, true, timezone);
+      job.start();
+    }
     const dailyJob = new CronJob(dailySched, () => runDailyEmailJob(), null, true, timezone);
     dailyJob.start();
     const weeklyJob = new CronJob(weeklySched, () => runWeeklyEmailJob(), null, true, timezone);

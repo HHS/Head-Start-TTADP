@@ -36,7 +36,7 @@ export default function ReadOnlyObjective({ objective }) {
         ? (
           <div className="margin-bottom-2">
             <h4 className="margin-0">Topics</h4>
-            <p className="usa-prose margin-0">{objective.topics.map((topic) => topic.label).join(', ')}</p>
+            <p className="usa-prose margin-0">{objective.topics.map((topic) => topic.name).join(', ')}</p>
           </div>
         ) : null }
 
@@ -80,19 +80,6 @@ export default function ReadOnlyObjective({ objective }) {
         )
         : null }
 
-      {objective.roles && objective.roles.length
-        ? (
-          <div className="margin-bottom-2">
-            <h4 className="margin-0">Specialist roles</h4>
-            <ul className="usa-list usa-list--unstyled">
-              { objective.roles.map((role) => (
-                <li key={role.fullName}>{role.fullName}</li>
-              ))}
-            </ul>
-          </div>
-        )
-        : null }
-
       {objective.ttaProvided ? <TTAProvided tta={objective.ttaProvided} /> : null}
 
       {objective.status
@@ -109,13 +96,10 @@ export default function ReadOnlyObjective({ objective }) {
 
 ReadOnlyObjective.propTypes = {
   objective: PropTypes.shape({
-    roles: PropTypes.arrayOf(PropTypes.shape({
-      fullName: PropTypes.string,
-    })),
     ttaProvided: PropTypes.string,
     resources: PropTypes.arrayOf(PropTypes.string),
     topics: PropTypes.arrayOf(PropTypes.shape({
-      label: PropTypes.string,
+      name: PropTypes.string,
     })),
     files: PropTypes.arrayOf(PropTypes.shape({
       originalFileName: PropTypes.string,

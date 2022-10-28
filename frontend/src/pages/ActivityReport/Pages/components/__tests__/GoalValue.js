@@ -31,14 +31,6 @@ describe('GoalValue', () => {
     return render(<GoalValue {...props} />);
   };
 
-  it('displays a bold option when appropriate', async () => {
-    const data = {
-      goalIds: [1, 2, 3],
-    };
-    renderGoalValue(data);
-    expect(document.querySelector('strong')).toBeTruthy();
-  });
-
   it('with no number, is not bold', async () => {
     const data = {};
     renderGoalValue(data);
