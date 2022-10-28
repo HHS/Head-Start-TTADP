@@ -113,25 +113,26 @@ export async function changeGoalStatus(req, res) {
 }
 export async function deleteGoal(req, res) {
   try {
-    const { goalId } = req.params;
+    const { goalIds } = req.query;
+    const ids = goalIds.map((id) => parseInt(id, DECIMAL_BASE));
 
+    let canDelete = true;
     const user = await userById(req.session.userId);
-    const goal = await goalByIdWithActivityReportsAndRegions(goalId);
 
-    const policy = new Goal(user, goal);
-
-    const canDelete = policy.canDelete();
+    ids.forEach(async (goalId) => {
+      if (canDelete) {
+        const goal = await goalByIdWithActivityReportsAndRegions(goalId);
+        const policy = new Goal(user, goal);
+        canDelete = policy.canDelete();
+      }
+    });
 
     if (!canDelete) {
       res.sendStatus(401);
       return;
     }
 
-    const deletedGoal = await destroyGoal(parseInt(goalId, 10));
-
-    // destroy goal returns a promise with the number of deleted goals
-    // it should be 1 or 0
-    // if 0, the goal wasn't deleted, presumably because it wasn't found
+    const deletedGoal = await destroyGoal(goalIds);
 
     if (!deletedGoal) {
       res.sendStatus(404);
