@@ -167,10 +167,6 @@ ObjectiveFiles.propTypes = {
         url: PropTypes.string,
       }),
     })),
-    roles: PropTypes.arrayOf(PropTypes.shape({
-      fullName: PropTypes.string,
-      id: PropTypes.number,
-    })),
     activityReports: PropTypes.arrayOf(PropTypes.shape({
       id: PropTypes.number,
     })),
@@ -190,7 +186,7 @@ ObjectiveFiles.propTypes = {
   })),
   onChangeFiles: PropTypes.func.isRequired,
   goalStatus: PropTypes.string.isRequired,
-  isOnReport: PropTypes.bool.isRequired,
+  isOnReport: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]).isRequired,
   status: PropTypes.string.isRequired,
   onUploadFiles: PropTypes.func.isRequired,
   index: PropTypes.number.isRequired,

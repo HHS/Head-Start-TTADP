@@ -1,8 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  FormGroup, Label, Textarea,
+  FormGroup, Label,
 } from '@trussworks/react-uswds';
+import AutomaticResizingTextarea from '../AutomaticResizingTextarea';
 
 export default function GoalText({
   error,
@@ -26,16 +27,14 @@ export default function GoalText({
       ) : (
         <>
           {error}
-          <Textarea
+          <AutomaticResizingTextarea
+            onUpdateText={onUpdateText}
             onBlur={() => {
               validateGoalName();
             }}
-            id={inputName}
-            name={inputName}
-            value={goalName}
-            onChange={onUpdateText}
-            required
+            inputName={inputName}
             disabled={isLoading}
+            value={goalName}
           />
         </>
       )}

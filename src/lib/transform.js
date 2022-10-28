@@ -1,4 +1,5 @@
 import moment from 'moment';
+import md5 from 'md5';
 import { convert } from 'html-to-text';
 import { DATE_FORMAT } from '../constants';
 
@@ -205,19 +206,20 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
   let goalNum = 0;
   const goalIds = {};
   let objectiveId;
-  let lastObjectiveTitle = null;
+  const processedObjectivesTitles = [];
 
   return objectiveRecords.reduce((prevAccum, objective) => {
     const accum = { ...prevAccum };
     const {
-      goal, title, status, ttaProvided, roles, topics, files, resources,
+      goal, title, status, ttaProvided, topics, files, resources,
     } = objective;
     const goalId = goal ? goal.id : null;
-    if (lastObjectiveTitle === title) {
+    const titleMd5 = md5(title);
+    if (processedObjectivesTitles.includes(titleMd5)) {
       return accum;
     }
 
-    lastObjectiveTitle = title;
+    processedObjectivesTitles.push(titleMd5);
     const goalName = goal ? goal.name : null;
     const newGoal = goalName && !Object.values(accum).includes(goalName);
 
@@ -279,13 +281,6 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       enumerable: true,
     });
 
-    // Activity Report Objective: Specialist Roles.
-    const objSpecialistRoles = roles.map((r) => r.fullName);
-    Object.defineProperty(accum, `objective-${objectiveId}-specialistRole`, {
-      value: objSpecialistRoles.join('\n'),
-      enumerable: true,
-    });
-
     // Activity Report Objective: Topics.
     const objTopics = topics.map((t) => t.name);
     Object.defineProperty(accum, `objective-${objectiveId}-topics`, {
@@ -333,7 +328,6 @@ function transformGoalsAndObjectives(report) {
       {
         ...aro.objective,
         ttaProvided: aro.ttaProvided,
-        roles: aro.roles,
         topics: aro.topics,
         files: aro.files,
         resources: aro.activityReportObjectiveResources,

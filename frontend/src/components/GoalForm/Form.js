@@ -47,10 +47,9 @@ export default function Form({
   status,
   datePickerKey,
   fetchError,
-  goalNumber,
+  goalNumbers,
   clearEmptyObjectiveError,
   onUploadFiles,
-  roleOptions,
 }) {
   const { isLoading } = useContext(GoalFormLoadingContext);
 
@@ -90,7 +89,7 @@ export default function Form({
 
   const objectiveErrors = errors[FORM_FIELD_INDEXES.OBJECTIVES];
 
-  const formTitle = goalNumber ? `Goal ${goalNumber}` : 'Recipient TTA goal';
+  const formTitle = goalNumbers && goalNumbers.length ? `Goal ${goalNumbers.join(', ')}` : 'Recipient TTA goal';
 
   const showApprovedReportAlert = isOnApprovedReport && status !== 'Closed';
   const showNotStartedAlert = isOnReport && !showApprovedReportAlert && status !== 'Closed';
@@ -187,7 +186,6 @@ export default function Form({
           errors={objectiveErrors[i] || OBJECTIVE_DEFAULT_ERRORS}
           setObjective={(data) => setObjective(data, i)}
           topicOptions={topicOptions}
-          roleOptions={roleOptions}
           onUploadFiles={onUploadFiles}
           goalStatus={status}
         />
@@ -261,14 +259,10 @@ Form.propTypes = {
   status: PropTypes.string.isRequired,
   datePickerKey: PropTypes.string.isRequired,
   fetchError: PropTypes.string.isRequired,
-  goalNumber: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  goalNumbers: PropTypes.arrayOf(PropTypes.string).isRequired,
   clearEmptyObjectiveError: PropTypes.func.isRequired,
   onUploadFiles: PropTypes.func.isRequired,
   validateGoalNameAndRecipients: PropTypes.func.isRequired,
-  roleOptions: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    value: PropTypes.string,
-  })).isRequired,
 };
 
 Form.defaultProps = {

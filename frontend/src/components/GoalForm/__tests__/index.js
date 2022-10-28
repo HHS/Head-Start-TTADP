@@ -37,17 +37,6 @@ const topicsFromApi = [
   'Data and Evaluation',
 ].map((name, id) => ({ name, id }));
 
-const rolesFromApi = [
-  {
-    id: 1,
-    fullName: 'Specialist',
-  },
-  {
-    id: 2,
-    fullName: 'Central Office',
-  },
-];
-
 describe('create goal', () => {
   const defaultRecipient = {
     id: 1,
@@ -90,7 +79,6 @@ describe('create goal', () => {
     objectives: [{
       ids: [1],
       activityReports: [],
-      roles: ['Student'],
       title: 'test',
       files: [],
       topics: [
@@ -115,9 +103,9 @@ describe('create goal', () => {
     render((
       <Router history={history}>
         <CreateGoal
-          id={goalId}
           recipient={recipient}
           regionId="1"
+          isNew={goalId === 'new'}
         />
       </Router>
     ));
@@ -126,7 +114,6 @@ describe('create goal', () => {
   beforeEach(async () => {
     fetchMock.restore();
     fetchMock.get('/api/topic', topicsFromApi);
-    fetchMock.get('/api/role', rolesFromApi);
   });
 
   it('you cannot add objectives before filling in basic goal info', async () => {
@@ -318,7 +305,6 @@ describe('create goal', () => {
 
     const draft = await screen.findByRole('button', { name: /save draft/i });
     userEvent.click(draft);
-
     let alert = await screen.findByRole('alert');
     expect(alert.textContent).toBe('There was an error saving your goal');
 
@@ -782,29 +768,29 @@ describe('create goal', () => {
   });
 
   it('fetches and prepopulates goal data given an appropriate ID', async () => {
-    fetchMock.get('/api/goals/12389/recipient/1', {
+    fetchMock.get('/api/recipient/1/goals?goalIds=', [{
       name: 'This is a goal name',
       status: 'Not Started',
-      endDate: '10/08/2021',
-      grant: {
+      endDate: '2021-10-08',
+      goalNumbers: ['G-12389'],
+      grants: [{
         id: 1,
         number: '1',
         programs: [{
           programType: 'EHS',
         }],
         status: 'Active',
-      },
+      }],
       objectives: [
         {
           id: 1238474,
-          roles: [],
           title: 'This is an objective',
           status: 'Not Started',
           resources: [],
           topics: [topicsFromApi[0]],
         },
       ],
-    });
+    }]);
 
     renderForm(defaultRecipient, '12389');
 
@@ -819,21 +805,21 @@ describe('create goal', () => {
   });
 
   it('draft goals don\'t show status dropdowns', async () => {
-    fetchMock.get('/api/goals/12389/recipient/1', {
+    fetchMock.get('/api/recipient/1/goals?goalIds=', [{
       name: 'This is a goal name',
       status: 'Draft',
-      endDate: '10/08/2021',
-      grant: {
+      endDate: '2021-10-08',
+      goalNumbers: ['G-12389'],
+      grants: [{
         id: 1,
         number: '1',
         programs: [{
           programType: 'EHS',
         }],
         status: 'Active',
-      },
+      }],
       objectives: [
         {
-          roles: [],
           id: 1238474,
           title: 'This is an objective',
           status: 'Not Started',
@@ -841,7 +827,7 @@ describe('create goal', () => {
           topics: [topicsFromApi[0]],
         },
       ],
-    });
+    }]);
 
     renderForm(defaultRecipient, '12389');
 
@@ -856,18 +842,19 @@ describe('create goal', () => {
   });
 
   it('not started goals on AR', async () => {
-    fetchMock.get('/api/goals/12389/recipient/1', {
+    fetchMock.get('/api/recipient/1/goals?goalIds=', [{
       name: 'This is a goal name',
       status: 'Not Started',
-      endDate: '10/08/2021',
-      grant: {
+      endDate: '2021-10-08',
+      goalNumbers: ['G-12389'],
+      grants: [{
         id: 1,
         number: '1',
         programs: [{
           programType: 'EHS',
         }],
         status: 'Active',
-      },
+      }],
       objectives: [
         {
           id: 1238474,
@@ -875,7 +862,6 @@ describe('create goal', () => {
           status: 'Not Started',
           resources: [],
           topics: [topicsFromApi[0]],
-          roles: [],
           activityReports: [
             {
               status: REPORT_STATUSES.SUBMITTED,
@@ -883,7 +869,7 @@ describe('create goal', () => {
           ],
         },
       ],
-    });
+    }]);
 
     renderForm(defaultRecipient, '12389');
 
@@ -903,18 +889,19 @@ describe('create goal', () => {
   });
 
   it('the correct fields are read only when the goal is in progress', async () => {
-    fetchMock.get('/api/goals/12389/recipient/1', {
+    fetchMock.get('/api/recipient/1/goals?goalIds=', [{
       name: 'This is a goal name',
       status: 'In Progress',
-      endDate: '10/08/2021',
-      grant: {
+      endDate: '2021-10-08',
+      goalNumbers: ['G-12389'],
+      grants: [{
         id: 1,
         number: '1',
         programs: [{
           programType: 'EHS',
         }],
         status: 'Active',
-      },
+      }],
       objectives: [
         {
           id: 1238474,
@@ -923,10 +910,9 @@ describe('create goal', () => {
           resources: [],
           topics: [topicsFromApi[0]],
           activityReports: [],
-          roles: [],
         },
       ],
-    });
+    }]);
 
     renderForm(defaultRecipient, '12389');
 

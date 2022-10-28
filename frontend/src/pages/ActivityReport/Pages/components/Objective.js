@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -6,7 +6,6 @@ import {
 } from 'react-hook-form/dist/index.ie11';
 import ObjectiveTitle from './ObjectiveTitle';
 import { REPORT_STATUSES } from '../../../../Constants';
-import SpecialistRole from '../../../../components/GoalForm/SpecialistRole';
 import ObjectiveTopics from '../../../../components/GoalForm/ObjectiveTopics';
 import ResourceRepeater from '../../../../components/GoalForm/ResourceRepeater';
 import ObjectiveFiles from '../../../../components/GoalForm/ObjectiveFiles';
@@ -17,7 +16,6 @@ import { OBJECTIVE_PROP, NO_ERROR, ERROR_FORMAT } from './constants';
 import { uploadObjectivesFile } from '../../../../fetchers/File';
 import {
   OBJECTIVE_TITLE,
-  OBJECTIVE_ROLE,
   OBJECTIVE_RESOURCES,
   OBJECTIVE_TTA,
   OBJECTIVE_TOPICS,
@@ -33,14 +31,21 @@ export default function Objective({
   remove,
   fieldArrayName,
   errors,
-  roles,
   onObjectiveChange,
   onSaveDraft,
   parentGoal,
   initialObjectiveStatus,
   reportId,
 }) {
-  const [selectedObjective, setSelectedObjective] = useState(objective);
+  // the below is a concession to the fact that the objective may
+  // exist pre-migration to the new UI, and might not have complete data
+  const initialObjective = (() => ({
+    ...objective,
+    id: objective.id || objective.value,
+    value: objective.value || objective.id,
+    label: objective.label || objective.title,
+  }))();
+  const [selectedObjective, setSelectedObjective] = useState(initialObjective);
   const { getValues } = useFormContext();
 
   /**
@@ -114,27 +119,6 @@ export default function Objective({
     defaultValue: objective.files || [],
   });
 
-  const defaultRoles = useMemo(() => (
-    roles.length === 1 ? roles : objective.roles
-  ), [objective.roles, roles]);
-
-  const {
-    field: {
-      onChange: onChangeRoles,
-      onBlur: onBlurRoles,
-      value: objectiveRoles,
-      name: objectiveRolesInputName,
-    },
-  } = useController({
-    name: `${fieldArrayName}[${index}].roles`,
-    rules: {
-      validate: {
-        notEmpty: (value) => (value && value.length) || OBJECTIVE_ROLE,
-      },
-    },
-    defaultValue: defaultRoles,
-  });
-
   const {
     field: {
       onChange: onChangeTta,
@@ -180,7 +164,6 @@ export default function Objective({
     onChangeTitle(newObjective.title);
     onChangeTta(newObjective.ttaProvided || '');
     onChangeStatus(newObjective.status);
-    onChangeRoles(newObjective.roles || []);
     onChangeTopics(newObjective.topics);
     onChangeFiles(newObjective.files || []);
     onObjectiveChange(newObjective, index); // Call parent on objective change.
@@ -210,13 +193,6 @@ export default function Objective({
       return null;
     }
   };
-
-  // we need to auto select an objective role if there is only one available
-  useEffect(() => {
-    if (defaultRoles.length === 1 && !objectiveRoles.length) {
-      onChangeRoles(defaultRoles);
-    }
-  }, [defaultRoles, objectiveRoles.length, onChangeRoles]);
 
   let savedTopics = [];
   let savedResources = [];
@@ -250,18 +226,6 @@ export default function Objective({
         parentGoal={parentGoal}
         initialObjectiveStatus={initialObjectiveStatus}
       />
-      <SpecialistRole
-        isOnReport={isOnReport || false}
-        status={objectiveStatus}
-        error={errors.roles
-          ? ERROR_FORMAT(errors.roles.message)
-          : NO_ERROR}
-        onChange={onChangeRoles}
-        selectedRoles={objectiveRoles}
-        inputName={objectiveRolesInputName}
-        validateSpecialistRole={onBlurRoles}
-        roleOptions={roles}
-      />
       <ObjectiveTopics
         error={errors.topics
           ? ERROR_FORMAT(errors.topics.message)
@@ -275,6 +239,7 @@ export default function Objective({
         onChangeTopics={onChangeTopics}
         inputName={objectiveTopicsInputName}
         status={objectiveStatus}
+        goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
       />
       <ResourceRepeater
         resources={isOnApprovedReport ? [] : resourcesForRepeater}
@@ -285,20 +250,22 @@ export default function Objective({
           : NO_ERROR}
         validateResources={onBlurResources}
         savedResources={savedResources}
-        status={objectiveStatus}
+        status={objective.status || 'Not Started'}
         inputName={objectiveResourcesInputName}
+        goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
       />
       <ObjectiveFiles
         objective={objective}
         files={objectiveFiles}
         onChangeFiles={onChangeFiles}
-        status={objectiveStatus}
+        status={objective.status || 'Not Started'}
         isOnReport={isOnReport || false}
         onUploadFiles={onUploadFile}
         index={index}
         onBlur={onBlurFiles}
         inputName={objectiveFilesInputName}
         reportId={reportId}
+        goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
       />
       <ObjectiveTta
         ttaProvided={objectiveTta}
@@ -350,7 +317,6 @@ Objective.propTypes = {
   ).isRequired,
   remove: PropTypes.func.isRequired,
   fieldArrayName: PropTypes.string.isRequired,
-  roles: PropTypes.arrayOf(PropTypes.string).isRequired,
   onObjectiveChange: PropTypes.func.isRequired,
   onSaveDraft: PropTypes.func.isRequired,
   parentGoal: PropTypes.shape({

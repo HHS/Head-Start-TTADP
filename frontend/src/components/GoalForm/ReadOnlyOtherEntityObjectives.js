@@ -49,9 +49,6 @@ ReadOnlyOtherEntityObjectives.propTypes = {
   hideEdit: PropTypes.bool,
   objectives: PropTypes.arrayOf(
     PropTypes.shape({
-      roles: PropTypes.arrayOf(
-        PropTypes.shape({ fullName: PropTypes.string, id: PropTypes.number }),
-      ),
       ttaProvided: PropTypes.string,
       resources: PropTypes.arrayOf(PropTypes.string),
       topics: PropTypes.arrayOf(PropTypes.shape({

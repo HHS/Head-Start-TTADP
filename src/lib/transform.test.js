@@ -10,7 +10,7 @@ import {
   ActivityReportObjective,
   ActivityReportObjectiveResource,
   Topic,
-  Role,
+  Objective,
   File,
 } from '../models';
 import { activityReportToCsvRecord, makeGoalsAndObjectivesObject, extractListOfGoalsAndObjectives } from './transform';
@@ -198,10 +198,10 @@ describe('activityReportToCsvRecord', () => {
       objectiveId: 1,
       activityReportId: 209914,
       status: OBJECTIVE_STATUS.NOT_STARTED,
-      roles: [{ fullName: 'role 1' }, { fullName: 'role 2' }, { fullName: 'role 3' }],
       topics: [{ name: 'topic 1' }, { name: 'topic 2' }, { name: 'topic 3' }],
       activityReportObjectiveResources: [{ userProvidedUrl: 'https://test1.gov' }, { userProvidedUrl: 'https://test2.gov' }],
       files: [{ originalFileName: 'file1.txt' }, { originalFileName: 'file2.pdf' }],
+      objective: mockObjectives[0],
     },
   ];
 
@@ -368,16 +368,16 @@ describe('activityReportToCsvRecord', () => {
           as: 'activityReportObjectives',
           include: [
             {
+              model: Objective,
+              as: 'objective',
+            },
+            {
               model: ActivityReportObjectiveResource,
               as: 'activityReportObjectiveResources',
             },
             {
               model: Topic,
               as: 'topics',
-            },
-            {
-              model: Role,
-              as: 'roles',
             },
             {
               model: File,
@@ -388,7 +388,7 @@ describe('activityReportToCsvRecord', () => {
       ],
     });
 
-    const output = await activityReportToCsvRecord(report);
+    const output = await activityReportToCsvRecord(report.toJSON());
     const {
       creatorName,
       lastUpdatedBy,
@@ -396,7 +396,6 @@ describe('activityReportToCsvRecord', () => {
       programSpecialistName,
       approvers,
       recipientInfo,
-      'objective-1.1-specialistRole': roles,
       'objective-1.1-topics': topics,
       'objective-1.1-resourcesLinks': resources,
       'objective-1.1-nonResourceLinks': files,
@@ -408,7 +407,6 @@ describe('activityReportToCsvRecord', () => {
     expect(programSpecialistName).toEqual('Program Specialist 1\nProgram Specialist 2\nProgram Specialist 4');
     expect(approvers).toEqual('Test Approver 1\nTest Approver 2\nTest Approver 3');
     expect(recipientInfo).toEqual('test1 - grant number 1 - 1\ntest2 - grant number 2 - 2\ntest3 - grant number 3 - 3\ntest4 - grant number 4 - 4');
-    expect(roles).toEqual('role 1\nrole 2\nrole 3');
     expect(topics).toEqual('topic 1\ntopic 2\ntopic 3');
     expect(resources).toEqual('https://test1.gov\nhttps://test2.gov');
     expect(files).toEqual('file1.txt\nfile2.pdf');
@@ -418,7 +416,6 @@ describe('activityReportToCsvRecord', () => {
   it('transforms goals and objectives into many values', () => {
     const objectives = mockObjectives.map((mo) => ({
       ...mo,
-      roles: [{ fullName: 'Role 1' }],
       topics: [{ name: 'Topic 1' }],
       resources: [{ userProvidedUrl: 'https://test.gov' }],
       files: [{ originalFileName: 'TestFile.docx' }],
@@ -431,14 +428,12 @@ describe('activityReportToCsvRecord', () => {
       'goal-1-status': 'Not Started',
       'goal-1-created-from': 'activityReport',
       'objective-1.1': 'Objective 1.1',
-      'objective-1.1-specialistRole': 'Role 1',
       'objective-1.1-topics': 'Topic 1',
       'objective-1.1-resourcesLinks': 'https://test.gov',
       'objective-1.1-nonResourceLinks': 'TestFile.docx',
       'objective-1.1-ttaProvided': 'Training',
       'objective-1.1-status': 'Complete',
       'objective-1.2': 'Objective 1.2',
-      'objective-1.2-specialistRole': 'Role 1',
       'objective-1.2-topics': 'Topic 1',
       'objective-1.2-resourcesLinks': 'https://test.gov',
       'objective-1.2-nonResourceLinks': 'TestFile.docx',
@@ -449,21 +444,18 @@ describe('activityReportToCsvRecord', () => {
       'goal-2-status': 'Not Started',
       'goal-2-created-from': 'rtr',
       'objective-2.1': 'Objective 2.1',
-      'objective-2.1-specialistRole': 'Role 1',
       'objective-2.1-topics': 'Topic 1',
       'objective-2.1-resourcesLinks': 'https://test.gov',
       'objective-2.1-nonResourceLinks': 'TestFile.docx',
       'objective-2.1-ttaProvided': 'Training',
       'objective-2.1-status': 'Complete',
       'objective-2.2': 'Objective 2.2',
-      'objective-2.2-specialistRole': 'Role 1',
       'objective-2.2-topics': 'Topic 1',
       'objective-2.2-resourcesLinks': 'https://test.gov',
       'objective-2.2-nonResourceLinks': 'TestFile.docx',
       'objective-2.2-ttaProvided': 'Training',
       'objective-2.2-status': 'Complete',
       'objective-2.3': 'Objective 2.3',
-      'objective-2.3-specialistRole': 'Role 1',
       'objective-2.3-topics': 'Topic 1',
       'objective-2.3-resourcesLinks': 'https://test.gov',
       'objective-2.3-nonResourceLinks': 'TestFile.docx',
@@ -474,7 +466,6 @@ describe('activityReportToCsvRecord', () => {
       'goal-3-status': 'Not Started',
       'goal-3-created-from': 'imported',
       'objective-3.1': 'Objective 3.1',
-      'objective-3.1-specialistRole': 'Role 1',
       'objective-3.1-topics': 'Topic 1',
       'objective-3.1-resourcesLinks': 'https://test.gov',
       'objective-3.1-nonResourceLinks': 'TestFile.docx',
@@ -493,7 +484,6 @@ describe('activityReportToCsvRecord', () => {
       {
         'goal-1': 'butter',
         'objective-1': 'cream',
-        'objective-1-specialistRole': 'role1',
         'objective-1-topics': 'topic1',
         'objective-1-resourcesLinks': 'https"//test.gov',
         'objective-1-nonResourceLinks': 'file1.txt',
@@ -512,7 +502,7 @@ describe('activityReportToCsvRecord', () => {
     const validated = extractListOfGoalsAndObjectives(csvData);
 
     expect(validated).toStrictEqual([
-      'goal-1-id', 'goal-1', 'objective-1', 'objective-1-specialistRole', 'objective-1-topics', 'objective-1-resourcesLinks', 'objective-1-nonResourceLinks', 'goal-2', 'goal-2-status', 'objective-2.1', 'objective-2.1-ttaProvided', 'goal-3', 'objective-3.1-status',
+      'goal-1-id', 'goal-1', 'objective-1', 'objective-1-topics', 'objective-1-resourcesLinks', 'objective-1-nonResourceLinks', 'goal-2', 'goal-2-status', 'objective-2.1', 'objective-2.1-ttaProvided', 'goal-3', 'objective-3.1-status',
     ]);
   });
 

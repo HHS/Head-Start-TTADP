@@ -7,7 +7,6 @@ import Objective from '../Objective';
 const defaultObjective = {
   id: 1,
   resources: [],
-  roles: [],
   topics: [],
   title: 'This is an objective title',
   ttaProvided: '<p><ul><li>What</li></ul></p>',
@@ -55,8 +54,12 @@ const RenderObjective = ({
         goalIndex={0}
         objectiveIndex={0}
         status="In progress"
-        roles={['Central office']}
         errors={{}}
+        onObjectiveChange={jest.fn()}
+        onSaveDraft={jest.fn()}
+        parentGoal={{ status: 'In Progress' }}
+        initialObjectiveStatus="Not Started"
+        reportId={98123}
       />
     </FormProvider>
   );

@@ -38,7 +38,7 @@ const components = {
 };
 
 const GoalPicker = ({
-  availableGoals, roles, grantIds, reportId, onSaveDraft,
+  availableGoals, grantIds, reportId, onSaveDraft,
 }) => {
   const {
     control, setValue, watch,
@@ -75,13 +75,8 @@ const GoalPicker = ({
   // for fetching topic options from API
   useEffect(() => {
     async function fetchTopics() {
-      const topicsFromApi = await getTopics();
-
-      const topicsAsOptions = topicsFromApi.map((topic) => ({
-        label: topic.name,
-        value: topic.id,
-      }));
-      setTopicOptions(topicsAsOptions);
+      const topics = await getTopics();
+      setTopicOptions(topics);
     }
 
     fetchTopics();
@@ -152,7 +147,6 @@ const GoalPicker = ({
           <div>
             <GoalForm
               topicOptions={topicOptions}
-              roles={roles}
               goal={goalForEditing}
               reportId={reportId}
               onSaveDraft={onSaveDraft}
@@ -174,7 +168,6 @@ GoalPicker.propTypes = {
       value: PropTypes.number,
     }),
   ).isRequired,
-  roles: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
   reportId: PropTypes.oneOfType([
     PropTypes.number,
     PropTypes.string,
