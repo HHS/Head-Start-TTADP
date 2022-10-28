@@ -150,11 +150,22 @@ function Navigator({
   const isOtherEntityReport = activityRecipientType === 'other-entity';
 
   const onSaveDraft = async () => {
-    await onSaveForm(); // save the form data to the server
-    updateShowSavedDraft(true); // show the saved draft message
+    if (isLoading) {
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await onSaveForm(); // save the form data to the server
+      updateShowSavedDraft(true); // show the saved draft message
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const onSaveDraftGoal = async () => {
+    if (isLoading) {
+      return;
+    }
     // Prevent user from making changes to goal title during auto-save.
     setIsLoading(true);
     // the goal form only allows for one goal to be open at a time
@@ -324,12 +335,20 @@ function Navigator({
   };
 
   const onGoalFormNavigate = async () => {
-    if (isOtherEntityReport) {
+    if (isLoading) {
+      return;
+    }
+    setIsLoading(true);
+    try {
+      if (isOtherEntityReport) {
       // Save objectives for other-entity report.
-      await onObjectiveFormNavigate();
-    } else {
+        await onObjectiveFormNavigate();
+      } else {
       // Save goals for recipient report.
-      await saveGoalsNavigate();
+        await saveGoalsNavigate();
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
