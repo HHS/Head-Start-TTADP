@@ -864,7 +864,7 @@ module.exports = {
         WITH
           "deleted" AS (
             DELETE FROM "ActivityReportGoals" arg
-	          USING "temp_args_to_be_deleted" argd
+            USING "temp_args_to_be_deleted" argd
             WHERE arg.id = argd.id
             RETURNING
               arg.id "argId"
