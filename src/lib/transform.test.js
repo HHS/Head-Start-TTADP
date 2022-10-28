@@ -386,10 +386,9 @@ describe('activityReportToCsvRecord', () => {
           ],
         },
       ],
-      raw: true,
     });
 
-    const output = await activityReportToCsvRecord(report);
+    const output = await activityReportToCsvRecord(report.toJSON());
     const {
       creatorName,
       lastUpdatedBy,
