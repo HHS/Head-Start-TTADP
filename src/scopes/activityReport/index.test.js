@@ -463,13 +463,11 @@ describe('filtersToScopes', () => {
 
           reportIncluded = await createOrUpdate({
             ...draftReport,
-            owner: { userId: mockUser.id },
-            recipients: [{ grantId: grantIncluded.id }],
+            activityRecipients: [{ grantId: grantIncluded.id }],
           });
           reportExcluded = await createOrUpdate({
             ...draftReport,
-            owner: { userId: mockUser.id },
-            recipients: [{ grantId: grantExcluded.id }],
+            activityRecipients: [{ grantId: grantExcluded.id }],
           });
 
           possibleIds = [
