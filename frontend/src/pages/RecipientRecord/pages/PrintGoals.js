@@ -23,6 +23,9 @@ export default function PrintGoals({ location, recipientId, regionId }) {
         offset: 0,
       };
 
+    const goalIds = location.state && location.state.selectedGoalIds
+      ? location.state.selectedGoalIds
+      : [];
     async function fetchGoals(query) {
       setLoading(true);
       try {
@@ -34,6 +37,7 @@ export default function PrintGoals({ location, recipientId, regionId }) {
           OFFSET,
           false,
           query,
+          goalIds,
         );
         setGoals(goalRows);
         setError('');
