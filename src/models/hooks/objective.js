@@ -189,6 +189,7 @@ const propogateStatusToParentGoal = async (sequelize, instance, options) => {
           previousStatus: 'Not Started',
         }, {
           transaction: options.transaction,
+          individualHooks: true,
         });
       }
     }
@@ -263,6 +264,11 @@ const beforeValidate = async (sequelize, instance, options) => {
   autoPopulateStatusChangeDates(sequelize, instance, options);
 };
 
+const beforeUpdate = async (sequelize, instance, options) => {
+  preventTitleChangeWhenOnApprovedAR(sequelize, instance, options);
+  autoPopulateStatusChangeDates(sequelize, instance, options);
+};
+
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateTitle(sequelize, instance, options);
   await propagateMetadataToTemplate(sequelize, instance, options);
@@ -282,6 +288,7 @@ export {
   linkObjectiveGoalTemplates,
   propagateTitle,
   beforeValidate,
+  beforeUpdate,
   afterUpdate,
   afterCreate,
 };

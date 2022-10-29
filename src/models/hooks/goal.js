@@ -97,16 +97,16 @@ const autoPopulateStatusChangeDates = (sequelize, instance, options) => {
         }
         break;
       case GOAL_STATUS.SUSPENDED:
-        if (instance.firstSuspendedAt === null
-          || instance.firstSuspendedAt === undefined) {
-          instance.set('firstSuspendedAt', now);
-          if (!options.fields.includes('firstSuspendedAt')) {
-            options.fields.push('firstSuspendedAt');
+        if (instance.firstCeasedSuspendedAt === null
+          || instance.firstCeasedSuspendedAt === undefined) {
+          instance.set('firstCeasedSuspendedAt', now);
+          if (!options.fields.includes('firstCeasedSuspendedAt')) {
+            options.fields.push('firstCeasedSuspendedAt');
           }
         }
-        instance.set('lastSuspendedAt', now);
-        if (!options.fields.includes('lastSuspendedAt')) {
-          options.fields.push('lastSuspendedAt');
+        instance.set('lastCeasedSuspendedAt', now);
+        if (!options.fields.includes('lastCeasedSuspendedAt')) {
+          options.fields.push('lastCeasedSuspendedAt');
         }
         break;
       case GOAL_STATUS.CLOSED:
@@ -146,8 +146,16 @@ const propagateName = async (sequelize, instance, options) => {
 };
 
 const beforeValidate = async (sequelize, instance, options) => {
+  if (!Array.isArray(options.fields)) {
+    options.fields = []; //eslint-disable-line
+  }
   // await autoPopulateGoalTemplateId(sequelize, instance, options);
   autoPopulateOnApprovedAR(sequelize, instance, options);
+  preventNamChangeWhenOnApprovedAR(sequelize, instance, options);
+  autoPopulateStatusChangeDates(sequelize, instance, options);
+};
+
+const beforeUpdate = async (sequelize, instance, options) => {
   preventNamChangeWhenOnApprovedAR(sequelize, instance, options);
   autoPopulateStatusChangeDates(sequelize, instance, options);
 };
@@ -164,5 +172,6 @@ export {
   autoPopulateStatusChangeDates,
   propagateName,
   beforeValidate,
+  beforeUpdate,
   afterUpdate,
 };
