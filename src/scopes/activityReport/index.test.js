@@ -696,14 +696,17 @@ describe('filtersToScopes', () => {
         auditLogger.error('XXXXX');
         includedReport1 = await createOrUpdate({
           ...draftReport,
+          owner: { userId: includedUser1.id },
         });
         promises.push(includedReport1);
         includedReport2 = await createOrUpdate({
           ...draftReport,
+          owner: { userId: includedUser2.id },
         });
         promises.push(includedReport1);
         excludedReport = await createOrUpdate({
           ...draftReport,
+          owner: { userId: excludedUser.id },
         });
         promises.push(includedReport1);
         auditLogger.error('YYYY');
