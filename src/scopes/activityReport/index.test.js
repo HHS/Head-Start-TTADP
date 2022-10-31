@@ -782,7 +782,7 @@ describe('filtersToScopes', () => {
         ...draftReport,
         topics: ['a test', 'another topic'],
       });
-      excludedReport = createOrUpdate({
+      excludedReport = await createOrUpdate({
         ...draftReport,
         topics: ['another topic'],
       });
