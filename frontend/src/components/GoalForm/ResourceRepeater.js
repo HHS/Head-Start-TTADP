@@ -38,7 +38,7 @@ export default function ResourceRepeater({
         <p className="usa-prose text-bold margin-bottom-0">Resource links</p>
         <ul className="usa-list usa-list--unstyled">
           {onlyResourcesWithValues.map((resource) => (
-            !(status === 'Complete' && goalStatus === 'Closed') || resource.onAnyReport ? (
+            !(status === 'Complete' || goalStatus === 'Closed') || resource.onAnyReport ? (
               <li key={uuidv4()}>
                 <a href={resource.value}>{resource.value}</a>
               </li>

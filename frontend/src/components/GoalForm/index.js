@@ -256,7 +256,7 @@ export default function GoalForm({
   const validateEndDate = () => {
     let error = <></>;
 
-    if (!endDate || !moment(endDate, 'MM/DD/YYYY').isValid()) {
+    if (endDate && !moment(endDate, 'MM/DD/YYYY').isValid()) {
       error = <span className="usa-error-message">{GOAL_DATE_ERROR}</span>;
     }
 
@@ -365,7 +365,7 @@ export default function GoalForm({
     && validateEndDate()
     && validateObjectives()
   );
-  const isValidDraft = () => validateGrantNumbers() || validateGoalName() || validateEndDate();
+  const isValidDraft = () => validateGrantNumbers() && validateGoalName();
 
   const updateObjectives = (updatedObjectives) => {
     // when we set a new set of objectives
