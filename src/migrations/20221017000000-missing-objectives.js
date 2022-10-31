@@ -33,7 +33,7 @@ module.exports = {
           -- 1. Create ActivityReportGoals for each of the goals linked via ActivityReportObjectives
           -----------------------------------------------------------------------------------------------------
           WITH
-            "GoalsThroughObjecitves" AS (
+            "GoalsThroughObjectives" AS (
               SELECT DISTINCT
                 aro."activityReportId",
                 o."goalId",
@@ -58,7 +58,7 @@ module.exports = {
             ),
             "MissingDirectGoals" AS (
               SELECT *
-              FROM "GoalsThroughObjecitves"
+              FROM "GoalsThroughObjectives"
               EXCEPT
               SELECT *
               FROM "GoalsDirect"
