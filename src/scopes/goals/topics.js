@@ -3,8 +3,8 @@ import { filterAssociation } from './utils';
 import { sequelize } from '../../models';
 
 /* TODO: Switch for New Goal Creation. */
-/*
-const topicFilter = `
+
+const objectiveTopicFilter = `
 SELECT
   DISTINCT "Goal"."id"
 FROM "Objectives" "Objectives"
@@ -15,9 +15,8 @@ ON "ObjectiveTopics"."topicId" = "Topics"."id"
 INNER JOIN "Goals" "Goal"
 ON "Objectives"."goalId" = "Goal"."id"
 WHERE "Topics"."name"`;
-*/
 
-const topicFilter = (options) => {
+const reportTopicFilter = (options) => {
   const useRecipient = options && options.recipientId;
   return `
           SELECT DISTINCT g.id
@@ -33,7 +32,13 @@ export function withTopics(topics, options) {
   return {
     [Op.or]: [
       filterAssociation(
-        topicFilter(options),
+        reportTopicFilter(options),
+        topics,
+        false,
+        'ILIKE',
+      ),
+      filterAssociation(
+        objectiveTopicFilter,
         topics,
         false,
         'ILIKE',
@@ -46,7 +51,13 @@ export function withoutTopics(topics, options) {
   return {
     [Op.and]: [
       filterAssociation(
-        topicFilter(options),
+        reportTopicFilter(options),
+        topics,
+        true,
+        'ILIKE',
+      ),
+      filterAssociation(
+        objectiveTopicFilter,
         topics,
         true,
         'ILIKE',
