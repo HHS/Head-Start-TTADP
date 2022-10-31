@@ -68,6 +68,11 @@ const beforeValidate = (sequelize, instance, options) => {
   autoPopulateCreationMethod(sequelize, instance, options);
 };
 
+const beforeUpdate = async (sequelize, instance, options) => {
+  autoPopulateHash(sequelize, instance, options);
+  autoPopulateTemplateTitleModifiedAt(sequelize, instance, options);
+};
+
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateTemplateTitle(sequelize, instance, options);
 };
@@ -77,5 +82,6 @@ export {
   autoPopulateCreationMethod,
   propagateTemplateTitle,
   beforeValidate,
+  beforeUpdate,
   afterUpdate,
 };
