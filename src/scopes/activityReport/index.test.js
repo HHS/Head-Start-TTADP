@@ -152,6 +152,13 @@ describe('filtersToScopes', () => {
     });
     const reportIds = reports.map((report) => report.id);
     await Promise.allSettled(reportIds.map((id) => destroyReport(id)));
+
+    await Promise.allSettled([
+      User.destroy({ where: { id: { [Op.in]: userIds } } }),
+      Role.destroy({ where: { id: 1000 } }),
+      UserRole.destroy({ where: { userId: { [Op.in]: userIds } } }),
+    ]);
+
     await db.sequelize.close();
   });
 
@@ -187,10 +194,11 @@ describe('filtersToScopes', () => {
     });
 
     afterAll(async () => {
-      await ActivityReport.destroy({
-        where: { id: [reportIncluded.id, reportIncludedLegacy.id, reportExcluded.id] },
-        individualHooks: true,
-      });
+      await Promise.allSettled([
+        destroyReport(reportIncluded.id),
+        destroyReport(reportIncludedLegacy.id),
+        destroyReport(reportExcluded.id),
+      ]);
     });
 
     it('included has conditions for legacy and non-legacy reports', async () => {
