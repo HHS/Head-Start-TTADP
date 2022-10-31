@@ -42,6 +42,9 @@ const mockManager = {
 const draftReport = {
   approval: { submissionStatus: REPORT_STATUSES.DRAFT },
   regionId: 1,
+  owner: {
+    userId: mockUser.id,
+  },
 };
 
 const submittedReport = {
@@ -112,11 +115,18 @@ describe('filtersToScopes', () => {
         { name: 'excluded', hsesUserId: 'user333', hsesUsername: 'user333' },
         { logging: (msg) => auditLogger.error(JSON.stringify({ name: 'excludedUser', msg })) },
       );
+
+      await Role.create({ id: 1000, name: 'a', isSpecialist: true });
+      await UserRole.create({ userId: includedUser1.id, roleId: 1000 });
+      await UserRole.create({ userId: includedUser2.id, roleId: 1000 });
+      await UserRole.create({ userId: excludedUser.id, roleId: 1000 });
+      await UserRole.create({ userId: mockManager.id, roleId: 1000 });
+      await UserRole.create({ userId: mockUser.id, roleId: 1000 });
+
       auditLogger.error(JSON.stringify({ name: 'filtersToScopes-beforeAll-6' }));
       globallyExcludedReport = await createOrUpdate({
         ...draftReport,
         updatedAt: '2000-01-01',
-        owner: { userId: mockUser.id },
         silent: true,
       });
       auditLogger.error(JSON.stringify({ name: 'filtersToScopes-beforeAll-7' }));
@@ -141,16 +151,7 @@ describe('filtersToScopes', () => {
       }],
     });
     const reportIds = reports.map((report) => report.id);
-    await ActivityReport.unscoped().destroy({
-      where: { id: reportIds },
-      individualHooks: true,
-    });
-    await User.destroy({
-      where: {
-        id: userIds,
-      },
-      individualHooks: true,
-    });
+    await Promise.allSettled(reportIds.map((id) => destroyReport(id)));
     await db.sequelize.close();
   });
 
@@ -165,17 +166,14 @@ describe('filtersToScopes', () => {
         reportIncluded = await createOrUpdate({
           ...draftReport,
           id: 12345,
-          owner: { userId: mockUser.id },
         });
         reportIncludedLegacy = await createOrUpdate({
           ...draftReport,
           legacyId: 'R01-AR-012345',
-          owner: { userId: mockUser.id },
         });
         reportExcluded = await createOrUpdate({
           ...draftReport,
           id: 12346,
-          owner: { userId: mockUser.id },
         });
         possibleIds = [
           reportIncluded.id,
@@ -238,17 +236,14 @@ describe('filtersToScopes', () => {
 
           reportIncluded1 = await createOrUpdate({
             ...draftReport,
-            owner: { userId: mockUser.id },
             activityRecipients: [{ otherEntityId: otherEntityIncluded1.id }],
           });
           reportIncluded2 = await createOrUpdate({
             ...draftReport,
-            owner: { userId: mockUser.id },
             activityRecipients: [{ otherEntityId: otherEntityIncluded2.id }],
           });
           reportExcluded = await createOrUpdate({
             ...draftReport,
-            owner: { userId: mockUser.id },
             activityRecipients: [{ otherEntityId: otherEntityExcluded.id }],
           });
 
@@ -337,17 +332,14 @@ describe('filtersToScopes', () => {
 
           reportIncluded1 = await createOrUpdate({
             ...draftReport,
-            owner: { userId: mockUser.id },
             activityRecipients: [{ grantId: grantIncluded1.id }],
           });
           reportIncluded2 = await createOrUpdate({
             ...draftReport,
-            owner: { userId: mockUser.id },
             activityRecipients: [{ grantId: grantIncluded2.id }],
           });
           reportExcluded = await createOrUpdate({
             ...draftReport,
-            owner: { userId: mockUser.id },
             activityRecipients: [{ grantId: grantExcluded.id }],
           });
 
@@ -522,10 +514,10 @@ describe('filtersToScopes', () => {
 
     beforeAll(async () => {
       try {
-        firstReport = await createOrUpdate({ ...draftReport, startDate: '2020-01-01', owner: { userId: mockUser.id } });
-        secondReport = await createOrUpdate({ ...draftReport, startDate: '2021-01-01', owner: { userId: mockUser.id } });
-        thirdReport = await createOrUpdate({ ...draftReport, startDate: '2022-01-01', owner: { userId: mockUser.id } });
-        fourthReport = await createOrUpdate({ ...draftReport, startDate: '2023-01-01', owner: { userId: mockUser.id } });
+        firstReport = await createOrUpdate({ ...draftReport, startDate: '2020-01-01' });
+        secondReport = await createOrUpdate({ ...draftReport, startDate: '2021-01-01' });
+        thirdReport = await createOrUpdate({ ...draftReport, startDate: '2022-01-01' });
+        fourthReport = await createOrUpdate({ ...draftReport, startDate: '2023-01-01' });
         possibleIds = [
           firstReport.id,
           secondReport.id,
@@ -603,25 +595,21 @@ describe('filtersToScopes', () => {
           ...draftReport,
           updatedAt: '2020-01-01',
           silent: true,
-          owner: { userId: mockUser.id },
         });
         secondReport = await createOrUpdate({
           ...draftReport,
           updatedAt: '2021-01-01',
           silent: true,
-          owner: { userId: mockUser.id },
         });
         thirdReport = await createOrUpdate({
           ...draftReport,
           updatedAt: '2022-01-01',
           silent: true,
-          owner: { userId: mockUser.id },
         });
         fourthReport = await createOrUpdate({
           ...draftReport,
           updatedAt: '2023-01-01',
           silent: true,
-          owner: { userId: mockUser.id },
         });
         possibleIds = [
           firstReport.id,
@@ -700,17 +688,14 @@ describe('filtersToScopes', () => {
         auditLogger.error('XXXXX');
         includedReport1 = await createOrUpdate({
           ...draftReport,
-          owner: { userId: includedUser1.id },
         });
         promises.push(includedReport1);
         includedReport2 = await createOrUpdate({
           ...draftReport,
-          owner: { userId: includedUser2.id },
         });
         promises.push(includedReport1);
         excludedReport = await createOrUpdate({
           ...draftReport,
-          owner: { userId: excludedUser.id },
         });
         promises.push(includedReport1);
         auditLogger.error('YYYY');
@@ -781,17 +766,14 @@ describe('filtersToScopes', () => {
       includedReport1 = await createOrUpdate({
         ...draftReport,
         topics: ['test', 'test 2'],
-        owner: { userId: mockUser.id },
       });
       includedReport2 = await createOrUpdate({
         ...draftReport,
         topics: ['a test', 'another topic'],
-        owner: { userId: mockUser.id },
       });
       excludedReport = createOrUpdate({
         ...draftReport,
         topics: ['another topic'],
-        owner: { userId: mockUser.id },
       });
       possibleIds = [
         includedReport1.id,
@@ -840,17 +822,14 @@ describe('filtersToScopes', () => {
     beforeAll(async () => {
       includedReport1 = await createOrUpdate({
         ...draftReport,
-        owner: { userId: mockUser.id },
         collaborators: [{ userId: includedUser1.id }],
       });
       includedReport2 = await createOrUpdate({
         ...draftReport,
-        owner: { userId: mockUser.id },
         collaborators: [{ userId: includedUser2.id }],
       });
       excludedReport = await createOrUpdate({
         ...draftReport,
-        owner: { userId: mockUser.id },
         collaborators: [{ userId: excludedUser.id }],
       });
 
@@ -900,13 +879,11 @@ describe('filtersToScopes', () => {
     beforeAll(async () => {
       includedReportMultApprover = await createOrUpdate({
         ...submittedReport,
-        owner: { userId: mockUser.id },
         approvers: [approverApproved],
       });
 
       excludedReportMultApprover = await createOrUpdate({
         ...submittedReport,
-        owner: { userId: mockUser.id },
         approvers: [approverRejected],
       });
       possibleIds = [
@@ -950,9 +927,30 @@ describe('filtersToScopes', () => {
     const possibleIds = [777, 778, 779];
 
     beforeAll(async () => {
-      const granteeSpecialist = await Role.findOne({ where: { fullName: 'Grantee Specialist' } });
-      const systemSpecialist = await Role.findOne({ where: { fullName: 'System Specialist' } });
-      const grantsSpecialist = await Role.findOne({ where: { fullName: 'Grants Specialist' } });
+      const [{ dataValues: granteeSpecialist }] = await Role.findOrCreate({
+        where: {
+          id: 99,
+          fullName: 'Grantee Specialist',
+          name: 'Grantee Specialist',
+          isSpecialist: true,
+        },
+      });
+      const [{ dataValues: systemSpecialist }] = await Role.findOrCreate({
+        where: {
+          id: 100,
+          fullName: 'System Specialist',
+          name: 'System Specialist',
+          isSpecialist: true,
+        },
+      });
+      const [{ dataValues: grantsSpecialist }] = await Role.findOrCreate({
+        where: {
+          id: 101,
+          fullName: 'Grants Specialist',
+          name: 'Grants Specialist',
+          isSpecialist: true,
+        },
+      });
 
       await User.create({
         id: 777, name: 'u777', hsesUsername: 'u777', hsesUserId: '777',
@@ -1010,6 +1008,8 @@ describe('filtersToScopes', () => {
         },
         individualHooks: true,
       });
+
+      await Role.destroy({ where: { id: [99, 100, 101] } });
 
       await User.destroy({
         where: {
@@ -1083,22 +1083,18 @@ describe('filtersToScopes', () => {
     beforeAll(async () => {
       reportOne = await createOrUpdate({
         ...submittedReport,
-        owner: { userId: mockUser.id },
       });
       reportTwo = await createOrUpdate({
         ...submittedReport,
         targetPopulations: ['Infants and Toddlers (ages birth to 3)'],
-        owner: { userId: mockUser.id },
       });
       reportThree = await createOrUpdate({
         ...submittedReport,
         targetPopulations: ['Dual-Language Learners'],
-        owner: { userId: mockUser.id },
       });
       reportFour = await createOrUpdate({
         ...submittedReport,
         targetPopulations: [],
-        owner: { userId: mockUser.id },
       });
 
       possibleIds = [
@@ -1178,22 +1174,18 @@ describe('filtersToScopes', () => {
       reportOne = await createOrUpdate({
         ...approvedReport,
         reason: ['School Readiness Goals', 'Child Incidents'],
-        owner: { userId: mockUser.id },
       });
       reportTwo = await createOrUpdate({
         ...approvedReport,
         reason: ['School Readiness Goals', 'Ongoing Quality Improvement'],
-        owner: { userId: mockUser.id },
       });
       reportThree = await createOrUpdate({
         ...approvedReport,
         reason: ['COVID-19 response'],
-        owner: { userId: mockUser.id },
       });
       reportFour = await createOrUpdate({
         ...approvedReport,
         reason: [],
-        owner: { userId: mockUser.id },
       });
 
       possibleIds = [
@@ -1247,7 +1239,7 @@ describe('filtersToScopes', () => {
   });
 
   describe('participants', () => {
-    let possibleIds;
+    const possibleIds = [];
     let reportOne;
     let reportTwo;
     let reportThree;
@@ -1259,12 +1251,10 @@ describe('filtersToScopes', () => {
       reportThree = await createOrUpdate({ ...approvedReport, participants: ['Coach'] });
       reportFour = await createOrUpdate({ ...approvedReport, participants: [] });
 
-      possibleIds = [
-        reportOne.id,
-        reportTwo.id,
-        reportThree.id,
-        reportFour.id,
-      ];
+      possibleIds.push(reportOne.id);
+      possibleIds.push(reportTwo.id);
+      possibleIds.push(reportThree.id);
+      possibleIds.push(reportFour.id);
     });
 
     afterAll(async () => {
@@ -1345,17 +1335,14 @@ describe('filtersToScopes', () => {
 
       reportIncluded1 = await createOrUpdate({
         ...draftReport,
-        owner: { userId: mockUser.id },
         activityRecipients: [{ grantId: grantIncluded1.id }],
       });
       reportIncluded2 = await createOrUpdate({
         ...draftReport,
-        owner: { userId: mockUser.id },
         activityRecipients: [{ grantId: grantIncluded2.id }],
       });
       reportExcluded = await createOrUpdate({
         ...draftReport,
-        owner: { userId: mockUser.id },
         activityRecipients: [{ grantId: grantExcluded.id }],
       });
       possibleIds = [
@@ -1663,10 +1650,10 @@ describe('filtersToScopes', () => {
     });
 
     afterAll(async () => {
-      await ActivityReport.destroy({
-        where: { id: [firstReport.id, secondReport.id, thirdReport.id, fourthReport.id] },
-        individualHooks: true,
-      });
+      await destroyReport(firstReport);
+      await destroyReport(secondReport);
+      await destroyReport(thirdReport);
+      await destroyReport(fourthReport);
     });
 
     it('before returns reports with create dates before the given date', async () => {
@@ -1839,19 +1826,16 @@ describe('filtersToScopes', () => {
 
       reportIncluded1 = await createOrUpdate({
         ...draftReport,
-        owner: { userId: mockUser.id },
         activityRecipients: [{ otherEntityId: otherEntityIncluded1.id }],
       });
 
       reportIncluded2 = await createOrUpdate({
         ...draftReport,
-        owner: { userId: mockUser.id },
         activityRecipients: [{ otherEntityId: otherEntityIncluded2.id }],
       });
 
       reportExcluded = await createOrUpdate({
         ...draftReport,
-        owner: { userId: mockUser.id },
         activityRecipients: [{ otherEntityId: otherEntityExcluded.id }],
       });
 
