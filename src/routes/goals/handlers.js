@@ -114,7 +114,7 @@ export async function changeGoalStatus(req, res) {
 export async function deleteGoal(req, res) {
   try {
     const { goalIds } = req.query;
-    const ids = goalIds.map((id) => parseInt(id, DECIMAL_BASE));
+    const ids = [goalIds].flat().map((id) => parseInt(id, DECIMAL_BASE));
 
     const user = await userById(req.session.userId);
 
