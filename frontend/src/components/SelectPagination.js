@@ -41,6 +41,7 @@ export const SelectPagination = ({
         name="perPage"
         data-testid="perPage"
         onChange={perPageChange}
+        aria-label={`Select ${title.toLowerCase()} per page`}
       >
         <option value="10">10</option>
         <option value="25">25</option>
