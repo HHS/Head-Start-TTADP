@@ -376,7 +376,11 @@ export async function populateRecipientInfo(activityRecipients, grantPrograms) {
   });
 }
 
-export async function activityReportAndRecipientsById(activityReportId, isImported = false) {
+export async function activityReportAndRecipientsById(
+  activityReportId,
+  isImported = false,
+  allowDeletedStatus = false,
+) {
   const arId = parseInt(activityReportId, DECIMAL_BASE);
 
   const goalsAndObjectives = await getGoalsForReport(arId);
@@ -436,6 +440,8 @@ export async function activityReportAndRecipientsById(activityReportId, isImport
       */
 
   const report = await ActivityReport.findOne({
+  const finder = allowDeletedStatus ? ActivityReport.unscoped() : ActivityReport;
+  const report = await finder.findOne({
     attributes: {
       exclude: [
         !isImported && 'imported',
@@ -632,6 +638,8 @@ export async function activityReportAndRecipientsById(activityReportId, isImport
     order: [
       [{ model: Objective, as: 'objectivesWithGoals' }, 'id', 'ASC'],
     ],
+  }, {
+    raw: true,
   });
 
   return [report, activityRecipients, goalsAndObjectives];
@@ -1380,11 +1388,13 @@ export async function createOrUpdate(newActivityReport, report) {
   try {
     const [r, recips, gAndOs] = await activityReportAndRecipientsById(savedReport.id, !!imported);
     return {
+    const [r, recips, gAndOs] = await activityReportAndRecipientsById(savedReport.id, !!imported, true);
+    return r ? {
       ...r.dataValues,
       displayId: r.displayId,
       activityRecipients: recips,
       goalsAndObjectives: gAndOs,
-    };
+    } : null;
   } catch (err) {
     auditLogger.error(JSON.stringify(err));
     throw new Error(err);

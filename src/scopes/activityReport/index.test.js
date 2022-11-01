@@ -909,7 +909,7 @@ describe('filtersToScopes', () => {
       const { activityReport: scope } = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
-        include: [{ model: Approval, as: 'approvel' }],
+        include: [{ model: Approval, as: 'approval' }],
       });
       expect(found.length).toBe(1);
       expect(found.map((f) => f.id))
@@ -923,7 +923,7 @@ describe('filtersToScopes', () => {
       const { activityReport: scope } = filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
-        include: [{ model: Approval, as: 'approvel' }],
+        include: [{ model: Approval, as: 'approval' }],
       });
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
