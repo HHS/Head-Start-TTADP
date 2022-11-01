@@ -462,9 +462,7 @@ const automaticIsRttapaChangeOnApprovalForGoals = async (sequelize, instance, op
     const goals = await sequelize.models.Goal.findAll(
       {
         where: {
-          isRttapa: {
-            [Op.not]: 'Yes',
-          },
+          isRttapa: { [Op.or]: [null, 'No'] },
         },
         include: [
           {

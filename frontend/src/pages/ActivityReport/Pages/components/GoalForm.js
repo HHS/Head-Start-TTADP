@@ -110,12 +110,12 @@ export default function GoalForm({
     onUpdateText,
   ]);
 
-  const initialRttapa = useRef(goal.isRttapa);
+  const initialRttapa = useRef(goal.initialRttapa);
 
   useEffect(() => {
     onUpdateRttapa(goal.isRttapa ? goal.isRttapa : '');
-    // initialRttapa.current = goal.isRttapa;
-  }, [goal.isRttapa, onUpdateRttapa]);
+    initialRttapa.current = goal.initialRttapa;
+  }, [goal.initialRttapa, goal.isRttapa, onUpdateRttapa]);
 
   useEffect(() => {
     onUpdateDate(goal.endDate ? goal.endDate : defaultEndDate);
@@ -214,7 +214,8 @@ GoalForm.propTypes = {
       PropTypes.number,
       PropTypes.string,
     ]),
-    isRttapa: PropTypes.bool,
+    isRttapa: PropTypes.string,
+    initialRttapa: PropTypes.string,
     oldGrantIds: PropTypes.arrayOf(PropTypes.number),
     label: PropTypes.string,
     name: PropTypes.string,

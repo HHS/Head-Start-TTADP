@@ -413,12 +413,14 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
  */
 function reduceGoals(goals, forReport = false) {
   const objectivesReducer = forReport ? reduceObjectivesForActivityReport : reduceObjectives;
+
+  const where = (g, currentValue) => (forReport ? g.name === currentValue.name
+    && g.status === currentValue.status
+    && g.isRttapa === currentValue.activityReportGoals[0].isRttapa : g.name === currentValue.name
+    && g.status === currentValue.status);
+
   const r = goals.reduce((previousValues, currentValue) => {
-    const existingGoal = previousValues.find((g) => (
-      g.name === currentValue.name
-      && g.status === currentValue.status
-      && g.isRttapa === currentValue.activityReportGoals[0].isRttapa
-    ));
+    const existingGoal = previousValues.find((g) => where(g, currentValue));
 
     if (existingGoal) {
       existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.goalNumber];
@@ -456,9 +458,13 @@ function reduceGoals(goals, forReport = false) {
       objectives: objectivesReducer(
         currentValue.objectives,
       ),
-      isRttapa: currentValue.activityReportGoals[0].isRttapa,
       isNew: false,
     };
+
+    if (forReport) {
+      goal.isRttapa = currentValue.activityReportGoals[0].isRttapa;
+      goal.initialRttapa = currentValue.isRttapa;
+    }
 
     return [...previousValues, goal];
   }, []);
