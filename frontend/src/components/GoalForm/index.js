@@ -291,7 +291,7 @@ export default function GoalForm({
     let isValid = true;
 
     const newObjectiveErrors = objectives.map((objective) => {
-      if (objective.status === 'Complete') {
+      if (objective.status === 'Complete' || (objective.activityReports && objective.activityReports.length)) {
         return [
           <></>,
           <></>,
