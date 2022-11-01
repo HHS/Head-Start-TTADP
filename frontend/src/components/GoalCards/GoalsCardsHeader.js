@@ -5,24 +5,12 @@ import {
 } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import Pagination from 'react-js-pagination';
 import { Link, useHistory } from 'react-router-dom';
 import UserContext from '../../UserContext';
 import { canEditOrCreateGoals } from '../../permissions';
 import { DECIMAL_BASE } from '../../Constants';
 import colors from '../../colors';
-
-export function renderTotal(offset, perPage, activePage, count) {
-  const from = offset >= count ? 0 : offset + 1;
-  const offsetTo = perPage * activePage;
-  let to;
-  if (offsetTo > count) {
-    to = count;
-  } else {
-    to = offsetTo;
-  }
-  return `${from}-${to} of ${count}`;
-}
+import { SelectPagination } from '../SelectPagination';
 
 export default function GoalCardsHeader({
   title,
@@ -97,33 +85,14 @@ export default function GoalCardsHeader({
         </div>
         {!hidePagination && (
         <div className="smart-hub--table-nav">
-          <span aria-label="Pagination for goals">
-            <span
-              className="smart-hub--total-count display-flex flex-align-center height-full margin-2 desktop:margin-0 padding-right-1"
-              aria-label={`Page ${activePage}, displaying goals ${renderTotal(
-                offset,
-                perPage,
-                activePage,
-                count,
-              )}`}
-            >
-              <span>{renderTotal(offset, perPage, activePage, count)}</span>
-              <Pagination
-                innerClass="pagination desktop:margin-x-0 margin-top-0 margin-x-2"
-                hideFirstLastPages
-                prevPageText="<Prev"
-                nextPageText="Next>"
-                activePage={activePage}
-                itemsCountPerPage={perPage}
-                totalItemsCount={count}
-                pageRangeDisplayed={4}
-                onChange={handlePageChange}
-                linkClassPrev="smart-hub--link-prev"
-                linkClassNext="smart-hub--link-next"
-                tabIndex={0}
-              />
-            </span>
-          </span>
+          <SelectPagination
+            title="Goals"
+            offset={offset}
+            perPage={perPage}
+            activePage={activePage}
+            count={count}
+            handlePageChange={handlePageChange}
+          />
         </div>
         )}
 
@@ -135,7 +104,7 @@ export default function GoalCardsHeader({
           id="select-all-goal-checkboxes"
           aria-label="deselect all goals"
           checked={allGoalsChecked}
-          onClick={selectAllGoalCheckboxSelect}
+          onChange={selectAllGoalCheckboxSelect}
         />
         {numberOfSelectedGoals > 0
             && (
