@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { FormGroup, Fieldset, Radio } from '@trussworks/react-uswds';
 import Req from '../Req';
@@ -12,8 +12,11 @@ export default function GoalRttapa({
   error,
   isLoading,
   goalStatus,
+  initial,
 }) {
-  if (goalStatus === 'Closed') {
+  const readOnly = useMemo(() => goalStatus === 'Closed' || initial === 'Yes', [goalStatus, initial]);
+
+  if (readOnly) {
     return (
       <div className={className}>
         <p className="usa-prose margin-y-0 text-bold">
@@ -44,6 +47,7 @@ export default function GoalRttapa({
 GoalRttapa.propTypes = {
   inputName: PropTypes.string,
   isRttapa: PropTypes.string.isRequired,
+  initial: PropTypes.string.isRequired,
   onChange: PropTypes.func.isRequired,
   onBlur: PropTypes.func.isRequired,
   error: PropTypes.node.isRequired,

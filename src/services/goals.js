@@ -415,7 +415,9 @@ function reduceGoals(goals, forReport = false) {
   const objectivesReducer = forReport ? reduceObjectivesForActivityReport : reduceObjectives;
   const r = goals.reduce((previousValues, currentValue) => {
     const existingGoal = previousValues.find((g) => (
-      g.name === currentValue.name && g.status === currentValue.status
+      g.name === currentValue.name
+      && g.status === currentValue.status
+      && g.isRttapa === currentValue.activityReportGoals[0].isRttapa
     ));
 
     if (existingGoal) {
@@ -454,6 +456,7 @@ function reduceGoals(goals, forReport = false) {
       objectives: objectivesReducer(
         currentValue.objectives,
       ),
+      isRttapa: currentValue.activityReportGoals[0].isRttapa,
       isNew: false,
     };
 
@@ -814,7 +817,7 @@ export async function createOrUpdateGoals(goals) {
     // except for the end date, which is always editable
     } else if (newGoal) {
       await newGoal.update(
-        { endDate: endDate || null },
+        { endDate: endDate || null, isRttapa: isRttapaValue },
         { individualHooks: true },
       );
     }
@@ -1387,13 +1390,11 @@ export async function saveGoalsForReport(goals, report) {
           },
         });
 
-        await newGoal.update({ isRttapa: fields.isRttapa }, { individualHooks: true });
-
         if (!newGoal.onApprovedAR && endDate && endDate !== 'Invalid date') {
           await newGoal.update({ endDate }, { individualHooks: true });
         }
 
-        await cacheGoalMetadata(newGoal, report.id);
+        await cacheGoalMetadata(newGoal, report.id, newGoal.isRttapa);
 
         const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
         currentObjectives = [...currentObjectives, ...newGoalObjectives];
@@ -1411,8 +1412,8 @@ export async function saveGoalsForReport(goals, report) {
         onApprovedAR, // we don't want to set this manually
         endDate: discardedEndDate, // get this outta here
         createdVia,
+        goalIds: discardedGoalIds,
         isRttapa,
-        goalIds: discardedeGoalIds,
         ...fields
       } = goal;
 
@@ -1420,7 +1421,7 @@ export async function saveGoalsForReport(goals, report) {
 
       await Promise.all(existingGoals.map(async (existingGoal) => {
         await existingGoal.update({
-          status, endDate, isRttapa, ...fields,
+          status, endDate, ...fields,
         }, { individualHooks: true });
 
         const existingGoalObjectives = await createObjectivesForGoal(
@@ -1430,7 +1431,7 @@ export async function saveGoalsForReport(goals, report) {
         );
         currentObjectives = [...currentObjectives, ...existingGoalObjectives];
 
-        await cacheGoalMetadata(existingGoal, report.id);
+        await cacheGoalMetadata(existingGoal, report.id, isRttapa);
       }));
 
       newGoals = await Promise.all(grantIds.map(async (gId) => {
@@ -1450,14 +1451,14 @@ export async function saveGoalsForReport(goals, report) {
               [Op.not]: 'Closed',
             },
           },
-          defaults: { ...fields, isRttapa, status },
+          defaults: { ...fields, status },
         });
 
         await newGoal.update({
-          ...fields, status, isRttapa, endDate, createdVia: createdVia || 'activityReport',
+          ...fields, status, endDate, createdVia: createdVia || 'activityReport',
         }, { individualHooks: true });
 
-        await cacheGoalMetadata(newGoal, report.id);
+        await cacheGoalMetadata(newGoal, report.id, isRttapa);
 
         const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
         currentObjectives = [...currentObjectives, ...newGoalObjectives];
@@ -1501,12 +1502,15 @@ export async function updateGoalStatusById(
 
 export async function getGoalsForReport(reportId) {
   const goals = await Goal.findAll({
-    where: {
-      id: {
-        [Op.in]: sequelize.literal(`(SELECT "goalId" FROM "ActivityReportGoals" WHERE "activityReportId" = ${reportId})`),
-      },
-    },
     include: [
+      {
+        model: ActivityReportGoal,
+        as: 'activityReportGoals',
+        where: {
+          activityReportId: reportId,
+        },
+        required: true,
+      },
       {
         model: Grant,
         as: 'grant',

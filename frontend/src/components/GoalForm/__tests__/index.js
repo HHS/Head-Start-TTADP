@@ -66,7 +66,7 @@ describe('create goal', () => {
     endDate: '08/15/2023',
     isFromSmartsheetTtaPlan: false,
     timeframe: null,
-    isRttapa: false,
+    isRttapa: 'No',
     createdAt: '2022-03-09T19:20:45.818Z',
     updatedAt: '2022-03-09T19:20:45.818Z',
     grants: [{
@@ -766,14 +766,15 @@ describe('create goal', () => {
       status: 'Not Started',
       endDate: '2021-10-08',
       goalNumbers: ['G-12389'],
-      grants: [{
+      isRttapa: '',
+      grant: {
         id: 1,
         number: '1',
         programs: [{
           programType: 'EHS',
         }],
         status: 'Active',
-      }],
+      },
       objectives: [
         {
           id: 1238474,
@@ -803,14 +804,15 @@ describe('create goal', () => {
       status: 'Draft',
       endDate: '2021-10-08',
       goalNumbers: ['G-12389'],
-      grants: [{
+      isRttapa: 'Yes',
+      grant: {
         id: 1,
         number: '1',
         programs: [{
           programType: 'EHS',
         }],
         status: 'Active',
-      }],
+      },
       objectives: [
         {
           id: 1238474,
@@ -840,14 +842,15 @@ describe('create goal', () => {
       status: 'Not Started',
       endDate: '2021-10-08',
       goalNumbers: ['G-12389'],
-      grants: [{
+      isRttapa: 'No',
+      grant: {
         id: 1,
         number: '1',
         programs: [{
           programType: 'EHS',
         }],
         status: 'Active',
-      }],
+      },
       objectives: [
         {
           id: 1238474,
@@ -887,14 +890,15 @@ describe('create goal', () => {
       status: 'In Progress',
       endDate: '2021-10-08',
       goalNumbers: ['G-12389'],
-      grants: [{
+      isRttapa: 'Yes',
+      grant: {
         id: 1,
         number: '1',
         programs: [{
           programType: 'EHS',
         }],
         status: 'Active',
-      }],
+      },
       objectives: [
         {
           id: 1238474,
