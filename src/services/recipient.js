@@ -320,6 +320,7 @@ export async function getGoalsByActivityRecipient(
       'goalNumber',
       'previousStatus',
       'onApprovedAR',
+      'isRttapa',
       [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Draft\' THEN 2 WHEN "Goal"."status" = \'Not Started\' THEN 3 WHEN "Goal"."status" = \'In Progress\' THEN 4 WHEN "Goal"."status" = \'Closed\' THEN 5 WHEN "Goal"."status" = \'Suspended\' THEN 6 ELSE 7 END'), 'status_sort'],
     ],
     where: goalWhere,
@@ -398,7 +399,9 @@ export async function getGoalsByActivityRecipient(
 
   const r = rows.reduce((previous, current) => {
     const existingGoal = previous.goalRows.find(
-      (g) => g.goalStatus === current.status && g.goalText.trim() === current.name.trim(),
+      (g) => g.goalStatus === current.status
+        && g.goalText.trim() === current.name.trim()
+        && g.isRttapa === current.isRttapa,
     );
 
     allGoalIds.push(current.id);
@@ -431,6 +434,7 @@ export async function getGoalsByActivityRecipient(
       previousStatus: calculatePreviousStatus(current),
       objectives: [],
       grantNumbers: [current.grant.number],
+      isRttapa: current.isRttapa,
     };
 
     goalToAdd.objectives = reduceObjectivesForRecipientRecord(
