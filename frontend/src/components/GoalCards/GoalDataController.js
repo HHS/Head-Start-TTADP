@@ -11,7 +11,7 @@ import { Grid } from '@trussworks/react-uswds';
 import { filtersToQueryString } from '../../utils';
 import GoalsTable from './GoalCards';
 import { GoalStatusChart } from '../../widgets/GoalStatusGraph';
-import { GOALS_PER_PAGE } from '../../Constants';
+import { GOALS_PER_PAGE, DECIMAL_BASE } from '../../Constants';
 import './GoalTable.scss';
 import { getRecipientGoals } from '../../fetchers/recipient';
 
@@ -47,6 +47,7 @@ function GoalDataController({
   // Page Behavior.
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [goalsPerPage, setGoalsPerPage] = useState(GOALS_PER_PAGE);
 
   const defaultSort = showNewGoals
     ? {
@@ -75,7 +76,7 @@ function GoalDataController({
           sortConfig.sortBy,
           sortConfig.direction,
           sortConfig.offset,
-          GOALS_PER_PAGE,
+          goalsPerPage,
           query,
         );
         setData(response);
@@ -93,11 +94,11 @@ function GoalDataController({
       return;
     }
     fetchGoals(filterQuery);
-  }, [sortConfig, filters, recipientId, regionId, showNewGoals, setSortConfig]);
+  }, [sortConfig, filters, recipientId, regionId, showNewGoals, setSortConfig, goalsPerPage]);
 
   const handlePageChange = (pageNumber) => {
     setSortConfig({
-      ...sortConfig, activePage: pageNumber, offset: (pageNumber - 1) * GOALS_PER_PAGE,
+      ...sortConfig, activePage: pageNumber, offset: (pageNumber - 1) * goalsPerPage,
     });
   };
 
@@ -105,6 +106,16 @@ function GoalDataController({
     setSortConfig({
       ...sortConfig, sortBy, direction, activePage: 1, offset: 0,
     });
+  };
+
+  const perPageChange = (e) => {
+    const perPageValue = parseInt(e.target.value, DECIMAL_BASE);
+    setSortConfig({
+      ...sortConfig,
+      activePage: 1,
+      offset: 0,
+    });
+    setGoalsPerPage(perPageValue);
   };
 
   const displayGoals = useMemo(() => (
@@ -136,6 +147,8 @@ function GoalDataController({
           sortConfig={sortConfig}
           setGoals={setGoals}
           loading={loading}
+          perPage={goalsPerPage}
+          perPageChange={perPageChange}
         />
       </FilterContext.Provider>
     </div>

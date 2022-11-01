@@ -30,6 +30,7 @@ export default function GoalCardsHeader({
   selectAllGoalCheckboxSelect,
   selectAllGoals,
   selectedGoalIds,
+  perPageChange,
 }) {
   const history = useHistory();
   const { user } = useContext(UserContext);
@@ -76,7 +77,14 @@ export default function GoalCardsHeader({
         <div className="desktop:display-flex flex-align-center">
           {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
           <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="sortBy">Sort by</label>
-          <Dropdown onChange={setSortBy} value={`${sortConfig.sortBy}-${sortConfig.direction}`} className="margin-top-0" id="sortBy" name="sortBy">
+          <Dropdown
+            onChange={setSortBy}
+            value={`${sortConfig.sortBy}-${sortConfig.direction}`}
+            className="margin-top-0"
+            id="sortBy"
+            name="sortBy"
+            data-testid="sortGoalsBy"
+          >
             <option value="createdOn-desc">creation date (newest to oldest) </option>
             <option value="createdOn-asc">creation date (oldest to newest) </option>
             <option value="goalStatus-asc">goal status (drafts first)</option>
@@ -92,6 +100,7 @@ export default function GoalCardsHeader({
             activePage={activePage}
             count={count}
             handlePageChange={handlePageChange}
+            perPageChange={perPageChange}
           />
         </div>
         )}
@@ -174,6 +183,7 @@ GoalCardsHeader.propTypes = {
   numberOfSelectedGoals: PropTypes.number,
   selectAllGoals: PropTypes.func,
   selectedGoalIds: PropTypes.arrayOf(PropTypes.string).isRequired,
+  perPageChange: PropTypes.func.isRequired,
 };
 
 GoalCardsHeader.defaultProps = {

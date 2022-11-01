@@ -1,8 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Pagination from 'react-js-pagination';
+import { Dropdown } from '@trussworks/react-uswds';
 
-export function renderTotal(offset, perPage, activePage, count) {
+export function renderTotal(title, offset, perPage, activePage, count) {
   const from = offset >= count ? 0 : offset + 1;
   const offsetTo = perPage * activePage;
   let to;
@@ -11,28 +12,42 @@ export function renderTotal(offset, perPage, activePage, count) {
   } else {
     to = offsetTo;
   }
-  return `${from}-${to} of ${count}`;
+  return `Showing ${from}-${to} of ${count} ${title.toLowerCase()}`;
 }
 
 export const SelectPagination = ({
   title,
   offset,
-  perPage,
   activePage,
   count,
   handlePageChange,
+  perPage,
+  perPageChange,
 }) => (
   <span aria-label={`Pagination for ${title}`}>
     <span
       className="smart-hub--total-count display-flex flex-align-center height-full margin-2 desktop:margin-0 padding-right-1"
       aria-label={`Page ${activePage}, displaying ${title} ${renderTotal(
+        title,
         offset,
         perPage,
         activePage,
         count,
       )}`}
     >
-      <span>{renderTotal(offset, perPage, activePage, count)}</span>
+      <Dropdown
+        className="margin-top-0 margin-right-1 width-auto"
+        id="perPage"
+        name="perPage"
+        data-testid="perPage"
+        onChange={perPageChange}
+      >
+        <option value="10">10</option>
+        <option value="25">25</option>
+        <option value="50">50</option>
+        <option value={count}>all</option>
+      </Dropdown>
+      <span>{renderTotal(title, offset, perPage, activePage, count)}</span>
       <Pagination
         innerClass="pagination desktop:margin-x-0 margin-top-0 margin-x-2"
         hideFirstLastPages
@@ -55,11 +70,12 @@ export default SelectPagination;
 
 SelectPagination.propTypes = {
   offset: PropTypes.number,
-  perPage: PropTypes.number,
   activePage: PropTypes.number,
   count: PropTypes.number,
   handlePageChange: PropTypes.func.isRequired,
   title: PropTypes.string.isRequired,
+  perPage: PropTypes.number,
+  perPageChange: PropTypes.func.isRequired,
 };
 
 SelectPagination.defaultProps = {

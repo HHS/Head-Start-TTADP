@@ -22,6 +22,7 @@ describe('SelectPagination', () => {
     expect(await screen.findByLabelText(/pagination for testing/i)).toBeVisible();
     expect(await screen.findByRole('link', { name: /go to previous page/i })).toBeVisible();
     expect(await screen.findByRole('link', { name: /go to next page/i })).toBeVisible();
+    expect(await screen.findByText(/showing 1-10 of 20 testing/i)).toBeVisible();
   });
 
   it('handles page change', async () => {
