@@ -695,9 +695,17 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
         [Op.notIn]: currentObjectives.map((objective) => objective.id),
       },
     },
+    include: [
+      {
+        model: ActivityReport,
+        as: 'activityReports',
+      },
+    ],
   });
 
-  const orphanedObjectiveIds = orphanedObjectives.map((objective) => objective.id);
+  const orphanedObjectiveIds = orphanedObjectives
+    .filter((objective) => objective.activityReports.length === 0)
+    .map((objective) => objective.id);
 
   await ObjectiveResource.destroy({
     where: {
@@ -818,7 +826,25 @@ export async function createOrUpdateGoals(goals) {
 
         let objective;
 
-        if (isNew) {
+        // if the objective is complete on both the front and back end
+        // we need to handle things a little differently
+        if (objectiveStatus === OBJECTIVE_STATUS.COMPLETE && objectiveIds) {
+          objective = await Objective.findOne({
+            where: {
+              id: objectiveIds,
+              status: OBJECTIVE_STATUS.COMPLETE,
+            },
+          });
+
+          return {
+            ...objective.dataValues,
+            topics,
+            resources,
+            files,
+          };
+        }
+
+        if (isNew && !objective) {
           [objective] = await Objective.findOrCreate({
             where: {
               goalId: newGoal.id,
@@ -834,13 +860,12 @@ export async function createOrUpdateGoals(goals) {
             },
           });
         } else if (objectiveIds) {
+          // this needs to find "complete" objectives as well
+          // since we could be moving the status back from the RTR
           objective = await Objective.findOne({
             where: {
               id: objectiveIds,
               goalId: newGoal.id,
-              status: {
-                [Op.not]: OBJECTIVE_STATUS.COMPLETE,
-              },
             },
           });
         }
