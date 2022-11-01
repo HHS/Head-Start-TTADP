@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { SelectPagination } from '../SelectPagination';
 
 describe('SelectPagination', () => {
-  const renderSelectPagination = (handlePageChange = () => {}) => {
+  const renderSelectPagination = (handlePageChange = () => {}, perPageChange = () => {}) => {
     render(<SelectPagination
       title="Testing"
       offset={0}
@@ -13,6 +13,7 @@ describe('SelectPagination', () => {
       activePage={1}
       count={20}
       handlePageChange={handlePageChange}
+      perPageChange={perPageChange}
     />);
   };
 
@@ -36,5 +37,13 @@ describe('SelectPagination', () => {
     const firstPageBtn = await screen.findByRole('link', { name: /go to page number 1/i });
     userEvent.click(firstPageBtn);
     await waitFor(() => expect(nextPage).toHaveBeenCalled());
+  });
+
+  it('handles per page change', async () => {
+    const perPage = jest.fn();
+    renderSelectPagination(() => {}, perPage);
+    const perPageDropDown = await screen.findByTestId('perPage');
+    userEvent.selectOptions(perPageDropDown, '25');
+    await waitFor(() => expect(perPage).toHaveBeenCalled());
   });
 });
