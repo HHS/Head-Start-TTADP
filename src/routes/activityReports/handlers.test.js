@@ -346,7 +346,9 @@ describe('Activity Report handlers', () => {
     });
     it('handles unauthorizedRequests', async () => {
       activityReportAndRecipientsById.mockResolvedValue([{
-        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        approval: {
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        },
         activityRecipientType: 'recipient',
       }, [
         {
