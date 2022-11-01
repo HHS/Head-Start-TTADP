@@ -81,13 +81,8 @@ function GoalCards({
       && (checkValues.length === goals.length || checkValues.length === goalsCount)
       && checkValues.every((v) => v === true)) {
       setAllGoalsChecked(true);
-    } else {
-      if (allGoalsChecked === true) {
-        setAllGoalsChecked(false);
-      }
-      if (printAllGoals === true) {
-        setPrintAllGoals(false);
-      }
+    } else if (printAllGoals === true) {
+      setPrintAllGoals(false);
     }
   }, [selectedGoalCheckBoxes, allGoalsChecked, printAllGoals, goalsCount, goals.length]);
 
