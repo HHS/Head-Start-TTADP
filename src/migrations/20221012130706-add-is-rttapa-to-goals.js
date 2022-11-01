@@ -23,10 +23,27 @@ module.exports = {
     await queryInterface.sequelize.query(`
       UPDATE "Goals" SET "isRttapa" = 'Yes' WHERE "isFromSmartsheetTtaPlan" IS true;      
     `, { transaction });
+
+    await queryInterface.addColumn(
+      'ActivityReportGoals',
+      'isRttapa',
+      { type: Sequelize.DataTypes.ENUM(['Yes', 'No']), allowNull: true },
+      { transaction },
+    );
+
+    await queryInterface.sequelize.query(`
+      UPDATE "ActivityReportGoals" SET "isRttapa" = 'Yes' WHERE "goalId" IN (SELECT "id" FROM "Goals" WHERE "Goals"."isFromSmartsheetTtaPlan" IS true);      
+    `, { transaction });
   }),
   down: async (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => {
     await queryInterface.removeColumn(
       'Goals',
+      'isRttapa',
+      { transaction },
+    );
+
+    await queryInterface.removeColumn(
+      'ActivityReportGoals',
       'isRttapa',
       { transaction },
     );

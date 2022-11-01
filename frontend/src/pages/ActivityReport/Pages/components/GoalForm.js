@@ -1,5 +1,5 @@
 import React, {
-  useEffect, useState, useMemo, useContext,
+  useEffect, useState, useMemo, useContext, useRef,
 } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
@@ -110,8 +110,11 @@ export default function GoalForm({
     onUpdateText,
   ]);
 
+  const initialRttapa = useRef(goal.isRttapa);
+
   useEffect(() => {
     onUpdateRttapa(goal.isRttapa ? goal.isRttapa : '');
+    // initialRttapa.current = goal.isRttapa;
   }, [goal.isRttapa, onUpdateRttapa]);
 
   useEffect(() => {
@@ -177,6 +180,7 @@ export default function GoalForm({
         inputName={goalIsRttapaInputName}
         goalStatus={status}
         isOnApprovedReport={goal.onApprovedAR || false}
+        initial={initialRttapa.current}
       />
 
       <GoalDate

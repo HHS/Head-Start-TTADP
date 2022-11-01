@@ -31,6 +31,7 @@ export default function Form({
   endDate,
   setEndDate,
   isRttapa,
+  initialRttapa,
   setIsRttapa,
   errors,
   validateGoalName,
@@ -150,6 +151,7 @@ export default function Form({
         isLoading={isLoading}
         goalStatus={status}
         isOnApprovedReport={isOnApprovedReport || false}
+        initial={initialRttapa}
       />
 
       <GoalDate
@@ -253,6 +255,7 @@ Form.propTypes = {
   clearEmptyObjectiveError: PropTypes.func.isRequired,
   onUploadFiles: PropTypes.func.isRequired,
   validateGoalNameAndRecipients: PropTypes.func.isRequired,
+  initialRttapa: PropTypes.string.isRequired,
 };
 
 Form.defaultProps = {
