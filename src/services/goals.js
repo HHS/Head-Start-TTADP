@@ -699,12 +699,13 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
       {
         model: ActivityReport,
         as: 'activityReports',
+        required: false,
       },
     ],
   });
 
   const orphanedObjectiveIds = orphanedObjectives
-    .filter((objective) => objective.activityReports.length === 0)
+    .filter((objective) => !objective.activityReports || !objective.activityReports.length)
     .map((objective) => objective.id);
 
   await ObjectiveResource.destroy({
