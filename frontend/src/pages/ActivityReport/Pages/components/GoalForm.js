@@ -57,7 +57,7 @@ export default function GoalForm({
     rules: {
       validate: {
         isValidDate: (value) => activityRecipientType === 'other-entity' || (
-          (value && moment(value, 'MM/DD/YYYY').isValid())
+          (value && moment(value, 'MM/DD/YYYY').isValid()) || value === ''
         ) || GOAL_DATE_ERROR,
       },
     },

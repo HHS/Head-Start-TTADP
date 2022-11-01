@@ -1,7 +1,6 @@
 import {
   validateListOfResources,
   GOAL_NAME_ERROR,
-  GOAL_DATE_ERROR,
   GOAL_RTTAPA_ERROR,
 } from '../../../../components/GoalForm/constants';
 
@@ -52,11 +51,6 @@ export const unfinishedGoals = (goals, setError = () => {}) => {
     if (!goal.name) {
       setError('goalName', { message: GOAL_NAME_ERROR });
       return GOAL_NAME_ERROR;
-    }
-
-    if (!goal.endDate) {
-      setError('goalEndDate', { message: GOAL_DATE_ERROR });
-      return GOAL_DATE_ERROR;
     }
 
     if (goal.isRttapa !== 'Yes' && goal.isRttapa !== 'No') {

@@ -151,7 +151,7 @@ describe('create goal', () => {
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
+    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
     const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
@@ -165,9 +165,7 @@ describe('create goal', () => {
     await screen.findByText('Select at least one recipient grant number');
 
     const combo = await screen.findByLabelText(/Recipient grant numbers/i);
-    await selectEvent.select(combo, ['Turtle 1']);
-
-    const cancel = await screen.findByRole('link', { name: 'Cancel' });
+    await selectEvent.select(combo, ['Turtle 2']);
 
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
     userEvent.click(newObjective);
@@ -178,7 +176,7 @@ describe('create goal', () => {
     const topics = await screen.findByLabelText(/topics \*/i);
     await selectEvent.select(topics, ['CLASS: Instructional Support']);
 
-    const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
+    const resourceOne = document.querySelector('#resource-1');
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
 
     userEvent.click(save);
@@ -191,8 +189,6 @@ describe('create goal', () => {
     fetchMock.post('/api/goals', postResponse);
 
     await screen.findByText(`Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`);
-
-    expect(cancel).not.toBeVisible();
 
     const submit = await screen.findByRole('button', { name: /submit goal/i });
     userEvent.click(submit);
@@ -220,7 +216,7 @@ describe('create goal', () => {
     // saving drafts works
     const saveDraft = await screen.findByRole('button', { name: /save draft/i });
     userEvent.click(saveDraft);
-    expect(fetchMock.called()).toBe(true);
+    expect(fetchMock.called()).toBe(false);
 
     // reset fetch mock state
     fetchMock.restore();
@@ -236,10 +232,7 @@ describe('create goal', () => {
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    userEvent.click(save);
-    await screen.findByText('Enter a valid date');
-
-    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
+    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, 'apple season');
 
     userEvent.click(save);
@@ -293,7 +286,7 @@ describe('create goal', () => {
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
+    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
     const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
@@ -360,7 +353,7 @@ describe('create goal', () => {
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
+    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
     const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
@@ -419,7 +412,7 @@ describe('create goal', () => {
     let goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    let ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
+    let ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
     let fieldset = document.querySelector('.ttahub-goal-is-rttapa');
@@ -460,7 +453,7 @@ describe('create goal', () => {
     goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is more goal text');
 
-    ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
+    ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
     fieldset = document.querySelector('.ttahub-goal-is-rttapa');
@@ -512,7 +505,7 @@ describe('create goal', () => {
     let goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
+    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
     const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
@@ -572,7 +565,7 @@ describe('create goal', () => {
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
+    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
     const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
@@ -631,7 +624,7 @@ describe('create goal', () => {
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
+    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
     const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
@@ -716,7 +709,7 @@ describe('create goal', () => {
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
+    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });

@@ -753,6 +753,7 @@ export async function createOrUpdateGoals(goals) {
       objectives,
       createdVia,
       isRttapa,
+      endDate,
       status,
       ...fields
     } = goalData;
@@ -802,13 +803,18 @@ export async function createOrUpdateGoals(goals) {
     // we can't update this stuff if the goal is on an approved AR
     if (newGoal && !newGoal.onApprovedAR) {
       await newGoal.update(
-        { ...options, status, createdVia: createdVia || 'rtr' },
+        {
+          ...options,
+          status,
+          createdVia: createdVia || 'rtr',
+          endDate: endDate || null,
+        },
         { individualHooks: true },
       );
     // except for the end date, which is always editable
     } else if (newGoal) {
       await newGoal.update(
-        { endDate: options.endDate },
+        { endDate: endDate || null },
         { individualHooks: true },
       );
     }
