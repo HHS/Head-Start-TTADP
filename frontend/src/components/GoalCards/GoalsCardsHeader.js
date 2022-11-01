@@ -134,7 +134,7 @@ export default function GoalCardsHeader({
           label="Select all"
           id="select-all-goal-checkboxes"
           aria-label="deselect all goals"
-          defaultChecked={allGoalsChecked}
+          checked={allGoalsChecked}
           onClick={selectAllGoalCheckboxSelect}
         />
         {numberOfSelectedGoals > 0
