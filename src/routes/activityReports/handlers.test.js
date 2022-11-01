@@ -278,9 +278,11 @@ describe('Activity Report handlers', () => {
         note: approvedReportRequest.body.note,
       };
       activityReportAndRecipientsById.mockResolvedValue([{
-        calculatedStatus: REPORT_STATUSES.APPROVED,
+        approval: {
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        },
         activityRecipientType: 'recipient',
-        author: {
+        owner: {
           id: 777,
         },
         activityReportCollaborators: [],
@@ -312,9 +314,11 @@ describe('Activity Report handlers', () => {
         note: needsActionReportRequest.body.note,
       };
       activityReportAndRecipientsById.mockResolvedValue([{
-        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        approval: {
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        },
         activityRecipientType: 'recipient',
-        author: {
+        owner: {
           id: 777,
         },
         activityReportCollaborators: [],
