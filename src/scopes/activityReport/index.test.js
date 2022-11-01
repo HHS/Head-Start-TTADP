@@ -900,8 +900,12 @@ describe('filtersToScopes', () => {
       possibleIds = [
         includedReportMultApprover.id,
         excludedReportMultApprover.id,
-        globallyExcludedReport.id,
+        /* globallyExcludedReport.id, */
       ];
+    });
+
+    afterAll(async () => {
+      await Promise.allSettled(possibleIds.map((id) => destroyReport(id)));
     });
 
     it('includes statuses with a partial match', async () => {
