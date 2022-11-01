@@ -291,6 +291,16 @@ export default function GoalForm({
     let isValid = true;
 
     const newObjectiveErrors = objectives.map((objective) => {
+      if (objective.status === 'Complete') {
+        return [
+          <></>,
+          <></>,
+          <></>,
+          <></>,
+          <></>,
+        ];
+      }
+
       if (!objective.title) {
         isValid = false;
         return [
