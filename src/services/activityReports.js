@@ -439,7 +439,6 @@ export async function activityReportAndRecipientsById(
       GROUP BY g.id)`),
       */
 
-  const report = await ActivityReport.findOne({
   const finder = allowDeletedStatus ? ActivityReport.unscoped() : ActivityReport;
   const report = await finder.findOne({
     attributes: {
@@ -1386,8 +1385,6 @@ export async function createOrUpdate(newActivityReport, report) {
   //   );
   // }
   try {
-    const [r, recips, gAndOs] = await activityReportAndRecipientsById(savedReport.id, !!imported);
-    return {
     const [r, recips, gAndOs] = await activityReportAndRecipientsById(savedReport.id, !!imported, true);
     return r ? {
       ...r.dataValues,
