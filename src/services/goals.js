@@ -992,7 +992,13 @@ export async function goalsForGrants(grantIds) {
         attributes: [],
       },
     ],
-    order: [['created', 'desc']],
+    order: [[sequelize.fn(
+      'MAX',
+      sequelize.fn(
+        'DISTINCT',
+        sequelize.col('"Goal"."createdAt"'),
+      ),
+    ), 'desc']],
   });
 }
 
