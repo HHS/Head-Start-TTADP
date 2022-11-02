@@ -50,12 +50,22 @@
     animation-duration: 500ms;
     animation-fill-mode: forwards;
     animation-iteration-count: 1;
-    bottom: 1.5rem;
     display: inline-block;
     left: -25%;
     line-height: 1; 
     position: absolute;
     white-space: normal;
+
+    &.usa-tooltip__body--top {  
+        bottom: 1.5rem;
+        top: auto;
+    }
+
+    &.usa-tooltip__body--bottom {
+        top: 100%;
+        bottom: auto;
+    }
+
 }
 
 @keyframes fadein {

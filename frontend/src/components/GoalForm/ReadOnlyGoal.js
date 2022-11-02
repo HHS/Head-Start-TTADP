@@ -18,7 +18,7 @@ export default function ReadOnlyGoal({
     },
     {
       label: 'Remove',
-      onClick: () => onRemove(goal.id),
+      onClick: () => onRemove(goal),
     },
   ];
 
@@ -26,7 +26,7 @@ export default function ReadOnlyGoal({
     menuItems = [
       {
         label: 'Remove',
-        onClick: () => onRemove(goal.id),
+        onClick: () => onRemove(goal),
       },
     ];
   }
@@ -89,7 +89,10 @@ ReadOnlyGoal.propTypes = {
     objectives: PropTypes.arrayOf(
       PropTypes.shape({
         ttaProvided: PropTypes.string,
-        resources: PropTypes.arrayOf(PropTypes.string),
+        resources: PropTypes.arrayOf(PropTypes.shape({
+          key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+          value: PropTypes.string,
+        })),
         topics: PropTypes.arrayOf(PropTypes.shape({
           label: PropTypes.string,
         })),

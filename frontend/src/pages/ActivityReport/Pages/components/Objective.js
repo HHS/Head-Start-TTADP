@@ -240,6 +240,7 @@ export default function Objective({
         inputName={objectiveTopicsInputName}
         status={objectiveStatus}
         goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
+        userCanEdit
       />
       <ResourceRepeater
         resources={isOnApprovedReport ? [] : resourcesForRepeater}
@@ -253,6 +254,7 @@ export default function Objective({
         status={objective.status || 'Not Started'}
         inputName={objectiveResourcesInputName}
         goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
+        userCanEdit
       />
       <ObjectiveFiles
         objective={objective}
@@ -266,6 +268,8 @@ export default function Objective({
         inputName={objectiveFilesInputName}
         reportId={reportId}
         goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
+        label="Did you use any TTA resources that aren't available as link?"
+        userCanEdit
       />
       <ObjectiveTta
         ttaProvided={objectiveTta}
@@ -283,6 +287,7 @@ export default function Objective({
         inputName={objectiveStatusInputName}
         status={objectiveStatus}
         onChangeStatus={onChangeStatus}
+        userCanEdit
       />
     </>
   );

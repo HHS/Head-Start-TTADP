@@ -25,6 +25,13 @@ import {
   cacheGoalMetadata,
   destroyActivityReportObjectiveMetadata,
 } from './reportCache';
+import { auditLogger } from '../logger';
+
+const namespace = 'SERVICE:GOALS';
+
+const logContext = {
+  namespace,
+};
 
 const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
   attributes: [
@@ -705,9 +712,18 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
         [Op.notIn]: currentObjectives.map((objective) => objective.id),
       },
     },
+    include: [
+      {
+        model: ActivityReport,
+        as: 'activityReports',
+        required: false,
+      },
+    ],
   });
 
-  const orphanedObjectiveIds = orphanedObjectives.map((objective) => objective.id);
+  const orphanedObjectiveIds = orphanedObjectives
+    .filter((objective) => !objective.activityReports || !objective.activityReports.length)
+    .map((objective) => objective.id);
 
   await ObjectiveResource.destroy({
     where: {
@@ -788,7 +804,7 @@ export async function createOrUpdateGoals(goals) {
       where: {
         grantId,
         status: { [Op.not]: 'Closed' },
-        id: ids,
+        id: ids || [],
       },
     });
 
@@ -842,7 +858,25 @@ export async function createOrUpdateGoals(goals) {
 
         let objective;
 
-        if (isNew) {
+        // if the objective is complete on both the front and back end
+        // we need to handle things a little differently
+        if (objectiveStatus === OBJECTIVE_STATUS.COMPLETE && objectiveIds) {
+          objective = await Objective.findOne({
+            where: {
+              id: objectiveIds,
+              status: OBJECTIVE_STATUS.COMPLETE,
+            },
+          });
+
+          return {
+            ...objective.dataValues,
+            topics,
+            resources,
+            files,
+          };
+        }
+
+        if (isNew && !objective) {
           [objective] = await Objective.findOrCreate({
             where: {
               goalId: newGoal.id,
@@ -858,13 +892,12 @@ export async function createOrUpdateGoals(goals) {
             },
           });
         } else if (objectiveIds) {
+          // this needs to find "complete" objectives as well
+          // since we could be moving the status back from the RTR
           objective = await Objective.findOne({
             where: {
               id: objectiveIds,
               goalId: newGoal.id,
-              status: {
-                [Op.not]: OBJECTIVE_STATUS.COMPLETE,
-              },
             },
           });
         }
@@ -1594,95 +1627,70 @@ export async function createOrUpdateGoalsForActivityReport(goals, reportId) {
   return getGoalsForReport(activityReportId);
 }
 
-export async function destroyGoal(goalId) {
-  return goalId;
-  // return sequelize.transaction(async (transaction) => {
-  //   try {
-  //     const reportsWithGoal = await ActivityReport.findAll({
-  //       attributes: ['id'],
-  //       include: [
-  //         {
-  //           attributes: ['id'],
-  //           model: Objective,
-  //           required: true,
-  //           as: 'objectivesWithGoals',
-  //           include: [
-  //             {
-  //               attributes: ['id'],
-  //               model: Goal,
-  //               required: true,
-  //               where: {
-  //                 id: goalId,
-  //               },
-  //               as: 'goal',
-  //             },
-  //           ],
-  //         },
-  //       ],
-  //       transaction,
-  //       raw: true,
-  //     });
+export async function destroyGoal(goalIds) {
+  try {
+    const reportsWithGoal = await ActivityReport.findAll({
+      attributes: ['id'],
+      include: [
+        {
+          attributes: ['id'],
+          model: Goal,
+          required: true,
+          where: {
+            id: goalIds,
+          },
+          as: 'goals',
+        },
+      ],
+    });
 
-  //     const isOnReport = reportsWithGoal.length;
-  //     if (isOnReport) {
-  //       throw new Error('Goal is on an activity report and can\'t be deleted');
-  //     }
+    const isOnReport = reportsWithGoal.length;
+    if (isOnReport) {
+      throw new Error('Goal is on an activity report and can\'t be deleted');
+    }
 
-  //     const objectiveTopicsDestroyed = await ObjectiveTopic.destroy({
-  //       where: {
-  //         objectiveId: {
-  //           [Op.in]: sequelize.literal(
-  //             `(SELECT "id" FROM "Objectives" WHERE "goalId" = ${sequelize.escape(goalId)})`,
-  //           ),
-  //         },
-  //       },
-  //       transaction,
-  //     });
+    const objectives = await Objective.findAll({
+      where: {
+        goalId: goalIds,
+      },
+    });
 
-  //     const objectiveResourcesDestroyed = await ObjectiveResource.destroy({
-  //       where: {
-  //         objectiveId: {
-  //           [Op.in]: sequelize.literal(
-  //             `(SELECT "id" FROM "Objectives" WHERE "goalId" = ${sequelize.escape(goalId)})`,
-  //           ),
-  //         },
-  //       },
-  //       transaction,
-  //     });
+    const objectiveIds = objectives.map((o) => o.id);
 
-  //     const objectivesDestroyed = await Objective.destroy({
-  //       where: {
-  //         goalId,
-  //       },
-  //       transaction,
-  //     });
+    const objectiveTopicsDestroyed = await ObjectiveTopic.destroy({
+      where: {
+        objectiveId: objectiveIds,
+      },
+    });
 
-  //     const grantGoalsDestroyed = await GrantGoal.destroy({
-  //       where: {
-  //         goalId,
-  //       },
-  //       transaction,
-  //     });
+    const objectiveResourcesDestroyed = await ObjectiveResource.destroy({
+      where: {
+        objectiveId: objectiveIds,
+      },
+    });
 
-  //     const goalsDestroyed = await Goal.destroy({
-  //       where: {
-  //         id: goalId,
-  //       },
-  //       transaction,
-  //     });
+    const objectivesDestroyed = await Objective.destroy({
+      where: {
+        id: objectiveIds,
+      },
+    });
 
-  //     return {
-  //       goalsDestroyed,
-  //       grantGoalsDestroyed,
-  //       objectiveResourcesDestroyed,
-  //       objectiveTopicsDestroyed,
-  //       objectivesDestroyed,
-  //     };
-  //   } catch (error) {
-  //     auditLogger.error(
-  //  `${logContext.namespace} - Sequelize error - unable to delete from db - ${error}`
-  //  );
-  //     return 0;
-  //   }
-  // });
+    const goalsDestroyed = await Goal.destroy({
+      where: {
+        id: goalIds,
+      },
+    });
+
+    return {
+      goalsDestroyed,
+      objectiveResourcesDestroyed,
+      objectiveTopicsDestroyed,
+      objectivesDestroyed,
+    };
+  } catch (error) {
+    auditLogger.error(
+      `${logContext.namespace} - Sequelize error - unable to delete from db - ${error}`,
+    );
+    return 0;
+  }
 }
