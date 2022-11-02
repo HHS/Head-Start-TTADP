@@ -477,9 +477,10 @@ const automaticIsRttapaChangeOnApprovalForGoals = async (sequelize, instance, op
     );
 
     await Promise.all((goals.map((goal) => {
-      if (goal.activityReportGoals[0].isRttapa === 'Yes') {
-        goal.set('isRttapa', 'Yes');
+      if (['Yes', 'No'].includes(goal.activityReportGoals[0].isRttapa)) {
+        goal.set('isRttapa', goal.activityReportGoals[0].isRttapa);
       }
+
       return goal.save({ transaction: options.transaction, individualHooks: true });
     })));
   }
