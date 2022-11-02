@@ -7,7 +7,6 @@ import { Switch, Route } from 'react-router';
 import { DECIMAL_BASE } from '../../Constants';
 import { getRecipient } from '../../fetchers/recipient';
 import RecipientTabs from './components/RecipientTabs';
-import FeatureFlag from '../../components/FeatureFlag';
 import { HTTPError } from '../../fetchers';
 import './index.scss';
 import Profile from './pages/Profile';
@@ -220,7 +219,7 @@ export default function RecipientRecord({ match }) {
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/goals/new"
           render={() => (
-            <FeatureFlag flag="recipient_goals_objectives" renderNotFound>
+            <>
               <Helmet>
                 <title>
                   Create a goal for
@@ -234,19 +233,17 @@ export default function RecipientRecord({ match }) {
                 showRTRnavigation
                 isNew
               />
-            </FeatureFlag>
+            </>
           )}
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/goals"
           render={() => (
-            <FeatureFlag flag="recipient_goals_objectives" renderNotFound>
-              <GoalForm
-                regionId={regionId}
-                recipient={recipientData}
-                showRTRnavigation
-              />
-            </FeatureFlag>
+            <GoalForm
+              regionId={regionId}
+              recipient={recipientData}
+              showRTRnavigation
+            />
           )}
         />
         <Route

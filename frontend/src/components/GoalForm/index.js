@@ -272,7 +272,7 @@ export default function GoalForm({
   const validateEndDate = () => {
     let error = <></>;
 
-    if (!endDate || !moment(endDate, 'MM/DD/YYYY').isValid()) {
+    if (endDate && !moment(endDate, 'MM/DD/YYYY').isValid()) {
       error = <span className="usa-error-message">{GOAL_DATE_ERROR}</span>;
     }
 
@@ -307,6 +307,16 @@ export default function GoalForm({
     let isValid = true;
 
     const newObjectiveErrors = objectives.map((objective) => {
+      if (objective.status === 'Complete' || (objective.activityReports && objective.activityReports.length)) {
+        return [
+          <></>,
+          <></>,
+          <></>,
+          <></>,
+          <></>,
+        ];
+      }
+
       if (!objective.title) {
         isValid = false;
         return [
@@ -381,7 +391,7 @@ export default function GoalForm({
     && validateEndDate()
     && validateObjectives()
   );
-  const isValidDraft = () => validateGrantNumbers() || validateGoalName() || validateEndDate();
+  const isValidDraft = () => validateGrantNumbers() && validateGoalName();
 
   const updateObjectives = (updatedObjectives) => {
     // when we set a new set of objectives
@@ -795,7 +805,7 @@ export default function GoalForm({
             { canEdit && (isNew || status === 'Draft') && status !== 'Closed' && (
               <div className="margin-top-4">
                 { !showForm ? <Button type="submit">Submit goal</Button> : null }
-                { showForm ? <Button type="button" onClick={onSaveAndContinue}>Save and continue</Button> : null }
+                { showForm ? <Button type="button" onClick={() => onSaveAndContinue(false)}>Save and continue</Button> : null }
                 <Button type="button" outline onClick={onSaveDraft}>Save draft</Button>
                 { showForm && !createdGoals.length ? (
                   <Link

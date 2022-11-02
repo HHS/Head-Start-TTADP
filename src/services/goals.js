@@ -695,9 +695,18 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
         [Op.notIn]: currentObjectives.map((objective) => objective.id),
       },
     },
+    include: [
+      {
+        model: ActivityReport,
+        as: 'activityReports',
+        required: false,
+      },
+    ],
   });
 
-  const orphanedObjectiveIds = orphanedObjectives.map((objective) => objective.id);
+  const orphanedObjectiveIds = orphanedObjectives
+    .filter((objective) => !objective.activityReports || !objective.activityReports.length)
+    .map((objective) => objective.id);
 
   await ObjectiveResource.destroy({
     where: {
@@ -751,6 +760,7 @@ export async function createOrUpdateGoals(goals) {
       regionId,
       objectives,
       createdVia,
+      endDate,
       status,
       ...fields
     } = goalData;
@@ -793,13 +803,18 @@ export async function createOrUpdateGoals(goals) {
     // we can't update this stuff if the goal is on an approved AR
     if (newGoal && !newGoal.onApprovedAR) {
       await newGoal.update(
-        { ...options, status, createdVia: createdVia || 'rtr' },
+        {
+          ...options,
+          status,
+          createdVia: createdVia || 'rtr',
+          endDate: endDate || null,
+        },
         { individualHooks: true },
       );
     // except for the end date, which is always editable
     } else if (newGoal) {
       await newGoal.update(
-        { endDate: options.endDate },
+        { endDate: endDate || null },
         { individualHooks: true },
       );
     }
@@ -818,7 +833,25 @@ export async function createOrUpdateGoals(goals) {
 
         let objective;
 
-        if (isNew) {
+        // if the objective is complete on both the front and back end
+        // we need to handle things a little differently
+        if (objectiveStatus === OBJECTIVE_STATUS.COMPLETE && objectiveIds) {
+          objective = await Objective.findOne({
+            where: {
+              id: objectiveIds,
+              status: OBJECTIVE_STATUS.COMPLETE,
+            },
+          });
+
+          return {
+            ...objective.dataValues,
+            topics,
+            resources,
+            files,
+          };
+        }
+
+        if (isNew && !objective) {
           [objective] = await Objective.findOrCreate({
             where: {
               goalId: newGoal.id,
@@ -834,13 +867,12 @@ export async function createOrUpdateGoals(goals) {
             },
           });
         } else if (objectiveIds) {
+          // this needs to find "complete" objectives as well
+          // since we could be moving the status back from the RTR
           objective = await Objective.findOne({
             where: {
               id: objectiveIds,
               goalId: newGoal.id,
-              status: {
-                [Op.not]: OBJECTIVE_STATUS.COMPLETE,
-              },
             },
           });
         }
@@ -982,7 +1014,13 @@ export async function goalsForGrants(grantIds) {
         attributes: [],
       },
     ],
-    order: [['created', 'desc']],
+    order: [[sequelize.fn(
+      'MAX',
+      sequelize.fn(
+        'DISTINCT',
+        sequelize.col('"Goal"."createdAt"'),
+      ),
+    ), 'desc']],
   });
 }
 
