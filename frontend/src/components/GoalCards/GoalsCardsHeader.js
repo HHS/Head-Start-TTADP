@@ -10,7 +10,7 @@ import UserContext from '../../UserContext';
 import { canEditOrCreateGoals } from '../../permissions';
 import { DECIMAL_BASE } from '../../Constants';
 import colors from '../../colors';
-import { SelectPagination } from '../SelectPagination';
+import SelectPagination from '../SelectPagination';
 
 export default function GoalCardsHeader({
   title,

@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { screen, render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { SelectPagination } from '../SelectPagination';
+import SelectPagination from '../SelectPagination';
 
 describe('SelectPagination', () => {
   const renderSelectPagination = (handlePageChange = () => {}, perPageChange = () => {}) => {
