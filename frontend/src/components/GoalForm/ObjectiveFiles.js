@@ -22,6 +22,7 @@ export default function ObjectiveFiles({
   onBlur,
   reportId,
   label,
+  userCanEdit,
 }) {
   const objectiveId = objective.id;
   const hasFiles = useMemo(() => files && files.length > 0, [files]);
@@ -32,7 +33,7 @@ export default function ObjectiveFiles({
     () => (hasFiles && files.some((file) => file.onAnyReport)), [hasFiles, files],
   );
 
-  const readOnly = useMemo(() => status === 'Suspended' || status === 'Complete' || (goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed', [goalStatus, isOnReport, status]);
+  const readOnly = useMemo(() => !userCanEdit || status === 'Suspended' || status === 'Complete' || (goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed', [goalStatus, isOnReport, status, userCanEdit]);
 
   useEffect(() => {
     if (!useFiles && hasFiles) {
@@ -196,6 +197,7 @@ ObjectiveFiles.propTypes = {
   inputName: PropTypes.string,
   onBlur: PropTypes.func,
   reportId: PropTypes.number,
+  userCanEdit: PropTypes.bool.isRequired,
 };
 
 ObjectiveFiles.defaultProps = {
