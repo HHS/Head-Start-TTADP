@@ -1522,6 +1522,14 @@ export async function getGoalsForReport(reportId) {
     },
     include: [
       {
+        attributes: ['activityReportId', 'createdAt'],
+        model: ActivityReportGoal,
+        as: 'activityReportGoals',
+        where: {
+          activityReportId: reportId,
+        },
+      },
+      {
         model: Grant,
         as: 'grant',
         required: true,
@@ -1583,6 +1591,9 @@ export async function getGoalsForReport(reportId) {
           },
         ],
       },
+    ],
+    order: [
+      [[sequelize.col('activityReportGoals.createdAt'), 'asc']],
     ],
   });
 
