@@ -77,7 +77,7 @@ function addObjectiveSectionsToArray(objectives, sections, striped) {
       heading: 'Objective summary',
       data: {
         'TTA objective': objective.title,
-        Topics: formatSimpleArray(objective.topics.map(({ label }) => label)),
+        Topics: formatSimpleArray(objective.topics.map(({ name }) => name)),
         'Resource links': formatObjectiveLinks(objective.resources),
         'Resource attachments': objective.files.length ? mapAttachments(objective.files) : 'None provided',
         'TTA provided': objective.ttaProvided,

@@ -1406,6 +1406,7 @@ export async function saveGoalsForReport(goals, report) {
         onApprovedAR,
         createdVia,
         endDate: discardedEndDate,
+        isRttapa,
         ...fields
       } = goal;
 
@@ -1433,7 +1434,7 @@ export async function saveGoalsForReport(goals, report) {
           await newGoal.update({ endDate }, { individualHooks: true });
         }
 
-        await cacheGoalMetadata(newGoal, report.id, newGoal.isRttapa);
+        await cacheGoalMetadata(newGoal, report.id, isRttapa || null);
 
         const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
         currentObjectives = [...currentObjectives, ...newGoalObjectives];
