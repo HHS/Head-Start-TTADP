@@ -1,7 +1,6 @@
 import {
   validateListOfResources,
   GOAL_NAME_ERROR,
-  GOAL_DATE_ERROR,
 } from '../../../../components/GoalForm/constants';
 
 export const UNFINISHED_OBJECTIVES = 'All objective fields must be completed';
@@ -50,10 +49,6 @@ export const unfinishedGoals = (goals, setError = () => {}) => {
 
     if (!goal.name) {
       setError('goalName', { message: GOAL_NAME_ERROR });
-    }
-
-    if (!goal.endDate) {
-      setError('goalEndDate', { message: GOAL_DATE_ERROR });
     }
 
     // Every goal must have an objective or the `goals` field has unfinished goals

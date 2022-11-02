@@ -32,7 +32,7 @@ export default function ObjectiveFiles({
     () => (hasFiles && files.some((file) => file.onAnyReport)), [hasFiles, files],
   );
 
-  const readOnly = useMemo(() => status === 'Suspended' || (goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed', [goalStatus, isOnReport, status]);
+  const readOnly = useMemo(() => status === 'Suspended' || status === 'Complete' || (goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed', [goalStatus, isOnReport, status]);
 
   useEffect(() => {
     if (!useFiles && hasFiles) {
@@ -85,6 +85,7 @@ export default function ObjectiveFiles({
                     text={(
                       <div>
                         Examples include:
+                        {' '}
                         <ul className="usa-list">
                           <li>Presentation slides from PD events</li>
                           <li>PDF&apos;s you created from multiple tta resources</li>

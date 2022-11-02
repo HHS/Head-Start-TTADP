@@ -25,7 +25,7 @@ export default function ResourceRepeater({
 }) {
   const resourcesWrapper = useRef();
 
-  const readOnly = status === 'Suspended' || (goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed';
+  const readOnly = status === 'Suspended' || status === 'Complete' || (goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed';
 
   if (readOnly) {
     const onlyResourcesWithValues = resources.filter((resource) => resource.value);
@@ -38,7 +38,7 @@ export default function ResourceRepeater({
         <p className="usa-prose text-bold margin-bottom-0">Resource links</p>
         <ul className="usa-list usa-list--unstyled">
           {onlyResourcesWithValues.map((resource) => (
-            !(status === 'Complete' && goalStatus === 'Closed') || resource.onAnyReport ? (
+            !(status === 'Complete' || goalStatus === 'Closed') || resource.onAnyReport ? (
               <li key={uuidv4()}>
                 <a href={resource.value}>{resource.value}</a>
               </li>
