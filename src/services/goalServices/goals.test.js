@@ -147,7 +147,7 @@ describe('Goals DB service', () => {
 
       await saveGoalsForReport([
         {
-          isNew: true, grantIds: [1], name: 'name', isRttapa: 'No', status: 'Closed', objectives: [],
+          isNew: true, grantIds: [1], name: 'name', status: 'Closed', objectives: [],
         },
       ], { id: 1 });
       expect(Goal.findOrCreate).toHaveBeenCalledWith({
