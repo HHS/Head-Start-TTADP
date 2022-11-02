@@ -143,6 +143,7 @@ export default function GoalForm({
         isOnReport={goal.onApprovedAR || false}
         goalStatus={status}
         isLoading={isLoading || loadingObjectives}
+        userCanEdit
       />
 
       <GoalDate
@@ -154,6 +155,7 @@ export default function GoalForm({
         inputName={goalEndDateInputName}
         goalStatus={status}
         isLoading={isLoading || loadingObjectives}
+        userCanEdit
       />
 
       <Objectives

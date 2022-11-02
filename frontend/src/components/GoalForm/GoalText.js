@@ -14,6 +14,7 @@ export default function GoalText({
   inputName,
   isLoading,
   goalStatus,
+  userCanEdit,
 }) {
   return (
     <FormGroup error={error.props.children}>
@@ -22,7 +23,7 @@ export default function GoalText({
         {' '}
         {!isOnReport ? <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span> : null }
       </Label>
-      { isOnReport || goalStatus === 'Closed' ? (
+      { isOnReport || goalStatus === 'Closed' || !userCanEdit ? (
         <p className="usa-prose margin-top-0">{goalName}</p>
       ) : (
         <>
@@ -51,6 +52,7 @@ GoalText.propTypes = {
   inputName: PropTypes.string,
   isLoading: PropTypes.bool,
   goalStatus: PropTypes.string.isRequired,
+  userCanEdit: PropTypes.bool.isRequired,
 };
 
 GoalText.defaultProps = {

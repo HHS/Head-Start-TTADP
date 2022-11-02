@@ -15,8 +15,9 @@ import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import userEvent from '@testing-library/user-event';
 import CreateGoal from '../index';
+import UserContext from '../../../UserContext';
 import { OBJECTIVE_ERROR_MESSAGES } from '../constants';
-import { REPORT_STATUSES } from '../../../Constants';
+import { REPORT_STATUSES, SCOPE_IDS } from '../../../Constants';
 import { BEFORE_OBJECTIVES_CREATE_GOAL, BEFORE_OBJECTIVES_SELECT_RECIPIENTS } from '../Form';
 
 const [
@@ -101,11 +102,18 @@ describe('create goal', () => {
     const history = createMemoryHistory();
     render((
       <Router history={history}>
-        <CreateGoal
-          recipient={recipient}
-          regionId="1"
-          isNew={goalId === 'new'}
-        />
+        <UserContext.Provider value={{
+          user: {
+            permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
+          },
+        }}
+        >
+          <CreateGoal
+            recipient={recipient}
+            regionId="1"
+            isNew={goalId === 'new'}
+          />
+        </UserContext.Provider>
       </Router>
     ));
   }
