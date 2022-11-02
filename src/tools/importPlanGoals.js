@@ -32,6 +32,33 @@ const parseGrantNumbers = (value) => {
 };
 
 /**
+ * Updates status of the existing goal based on whether the incoming
+ * status is considered to be a step forward
+ *
+ * @param {Object} goal - goal being imported
+ * @param {Object} dbgoal - existing goal
+ */
+export async function updateStatus(goal, dbgoal) {
+  const dbGoalStatusIdx = Object.values(GOAL_STATUS).indexOf(dbgoal.status);
+  const goalStatusIdx = Object.values(GOAL_STATUS).indexOf(goal.status);
+
+  if (dbGoalStatusIdx < goalStatusIdx) {
+    logger.info(`Updating goal ${dbgoal.id}: Changing status from ${dbgoal.status} to ${goal.status}`);
+    await Goal.update(
+      {
+        status: goal.status,
+      },
+      {
+        where: { id: dbgoal.id },
+        individualHooks: true,
+      },
+    );
+  } else {
+    logger.info(`Skipping goal status update for ${dbgoal.id}: goal status ${dbgoal.status} is newer or equal to ${goal.status}`);
+  }
+}
+
+/**
  * Processes data from .csv inserting the data during the processing as well as
  * creating data arrays for associations and then inserting them to the database
  *
@@ -58,10 +85,13 @@ export default async function importGoals(fileKey, region) {
       const currentGoals = [];
       let currentGoalName = '';
       let currentGoalNum = 0;
+      let currentLastEditedDate;
 
       for await (const key of Object.keys(el)) {
         if (key && (key.trim().startsWith('Grantee (distinct') || key.trim().startsWith('Grantee Name'))) {
           currentGrants = parseGrantNumbers(el[key]);
+        } else if (key && key.startsWith('Last Edited (Date)')) {
+          currentLastEditedDate = el[key].trim();
         } else if (key && key.startsWith('Goal')) {
           const goalColumn = key.split(' ');
           let column;
@@ -104,41 +134,37 @@ export default async function importGoals(fileKey, region) {
               throw new Error('error');
             }
             const grantId = dbGrant.id;
-            const dbGoal = await Goal.findOne({
+            const dbGoals = await Goal.findAll({
               where: { grantId, name: goal.name },
             });
 
-            if (dbGoal) {
+            if (dbGoals.length > 1) {
+              logger.info(`Found multiples of goal id: ${dbGoals[0].id}`);
+              logger.info(`Incoming status: ${goal.status}`);
+              logger.info(`Incoming last edited date: ${currentLastEditedDate}`);
+              logger.info(`Incoming timeframe: ${goal.timeframe}`);
+              for await (const dbgoal of dbGoals) {
+                // Unable to determine a reliable update; Skipping
+                logger.info(`Skipping updates for goal: ${dbgoal.id}`);
+                logger.info(`db goal status: ${dbgoal.status}, createdAt: ${dbgoal.createdAt}`);
+              }
+            } else if (dbGoals.length === 1) {
+              const dbGoal = dbGoals[0];
               // update timeframe
-              await Goal.update(
+              await dbGoal.update(
                 {
                   timeframe: goal.timeframe,
                 },
                 {
-                  where: { id: dbGoal.id },
+                  // where: { id: dbgoal.id },
                   individualHooks: true,
                 },
               );
-
-              const dbGoalStatusIdx = Object.values(GOAL_STATUS).indexOf(dbGoal.status);
-              const goalStatusIdx = Object.values(GOAL_STATUS).indexOf(goal.status);
-
-              if (dbGoalStatusIdx < goalStatusIdx) {
-                logger.info(`Updating goal ${dbGoal.id}: Changing status from ${dbGoal.status} to ${goal.status}`);
-                await Goal.update(
-                  {
-                    status: goal.status,
-                  },
-                  {
-                    where: { id: dbGoal.id },
-                    individualHooks: true,
-                  },
-                );
-              } else {
-                logger.info(`Skipping goal status update for ${dbGoal.id}: goal status ${dbGoal.status} is newer or equal to ${goal.status}`);
-              }
+              // determine if status needs to be updated
+              await updateStatus(goal, dbGoal);
             } else {
-              await Goal.create({ grantId, ...goal, isFromSmartsheetTtaPlan: true });
+              const newGoal = await Goal.create({ grantId, ...goal, isFromSmartsheetTtaPlan: true });
+              logger.info(`Creating goal: ${newGoal.id} with status: ${newGoal.status}`);
             }
           }
         }
