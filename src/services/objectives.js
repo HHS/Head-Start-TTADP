@@ -103,6 +103,7 @@ export async function getObjectiveById(objectiveId) {
       {
         model: Goal,
         as: 'goal',
+        required: false,
         include: [
           {
             model: Grant,
