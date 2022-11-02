@@ -14,16 +14,21 @@ export default function GoalDate({
   inputName,
   isLoading,
   goalStatus,
+  userCanEdit,
 }) {
-  if (goalStatus === 'Closed') {
-    return (
-      <>
-        <p className="usa-prose text-bold margin-bottom-0">
-          Anticipated close date (mm/dd/yyyy)
-        </p>
-        <p className="usa-prose margin-0">{endDate}</p>
-      </>
-    );
+  if (goalStatus === 'Closed' || !userCanEdit) {
+    if (endDate && endDate !== 'Invalid date') {
+      return (
+        <>
+          <p className="usa-prose text-bold margin-bottom-0">
+            Anticipated close date (mm/dd/yyyy)
+          </p>
+          <p className="usa-prose margin-0">{endDate}</p>
+        </>
+      );
+    }
+
+    return null;
   }
 
   return (
@@ -55,6 +60,7 @@ GoalDate.propTypes = {
   inputName: PropTypes.string,
   isLoading: PropTypes.bool,
   goalStatus: PropTypes.string.isRequired,
+  userCanEdit: PropTypes.bool.isRequired,
 };
 
 GoalDate.defaultProps = {

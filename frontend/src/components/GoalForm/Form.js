@@ -51,6 +51,7 @@ export default function Form({
   goalNumbers,
   clearEmptyObjectiveError,
   onUploadFiles,
+  userCanEdit,
 }) {
   const { isLoading } = useContext(GoalFormLoadingContext);
 
@@ -131,6 +132,7 @@ export default function Form({
         error={errors[FORM_FIELD_INDEXES.GRANTS]}
         isLoading={isLoading}
         goalStatus={status}
+        userCanEdit={userCanEdit}
       />
 
       <GoalText
@@ -141,6 +143,7 @@ export default function Form({
         onUpdateText={onUpdateText}
         isLoading={isLoading}
         goalStatus={status}
+        userCanEdit={userCanEdit}
       />
 
       <GoalRttapa
@@ -163,6 +166,7 @@ export default function Form({
         key={datePickerKey}
         isLoading={isLoading}
         goalStatus={status}
+        userCanEdit={userCanEdit}
       />
 
       { objectives.map((objective, i) => (
@@ -180,10 +184,11 @@ export default function Form({
           topicOptions={topicOptions}
           onUploadFiles={onUploadFiles}
           goalStatus={status}
+          userCanEdit={userCanEdit}
         />
       ))}
 
-      { status !== 'Closed' && (
+      { (status !== 'Closed' || userCanEdit) && (
         <div className="margin-top-4">
           {errors[FORM_FIELD_INDEXES.OBJECTIVES_EMPTY]}
           <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />
@@ -256,8 +261,10 @@ Form.propTypes = {
   onUploadFiles: PropTypes.func.isRequired,
   validateGoalNameAndRecipients: PropTypes.func.isRequired,
   initialRttapa: PropTypes.string.isRequired,
+  userCanEdit: PropTypes.bool,
 };
 
 Form.defaultProps = {
   endDate: null,
+  userCanEdit: false,
 };

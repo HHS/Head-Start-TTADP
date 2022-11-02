@@ -21,6 +21,8 @@ export default function ObjectiveFiles({
   inputName,
   onBlur,
   reportId,
+  label,
+  userCanEdit,
 }) {
   const objectiveId = objective.id;
   const hasFiles = useMemo(() => files && files.length > 0, [files]);
@@ -31,7 +33,7 @@ export default function ObjectiveFiles({
     () => (hasFiles && files.some((file) => file.onAnyReport)), [hasFiles, files],
   );
 
-  const readOnly = useMemo(() => status === 'Suspended' || (goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed', [goalStatus, isOnReport, status]);
+  const readOnly = useMemo(() => !userCanEdit || status === 'Suspended' || status === 'Complete' || (goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed', [goalStatus, isOnReport, status, userCanEdit]);
 
   useEffect(() => {
     if (!useFiles && hasFiles) {
@@ -77,7 +79,7 @@ export default function ObjectiveFiles({
             { hideFileToggle ? null : (
               <>
                 <legend>
-                  Do you plan to use any TTA resources that aren&apos;t available as a link?
+                  {label}
                   {' '}
                   <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
                   <QuestionTooltip
@@ -149,6 +151,7 @@ export default function ObjectiveFiles({
 }
 
 ObjectiveFiles.propTypes = {
+  label: PropTypes.string,
   objective: PropTypes.shape({
     isNew: PropTypes.bool,
     id: PropTypes.oneOfType([
@@ -194,6 +197,7 @@ ObjectiveFiles.propTypes = {
   inputName: PropTypes.string,
   onBlur: PropTypes.func,
   reportId: PropTypes.number,
+  userCanEdit: PropTypes.bool.isRequired,
 };
 
 ObjectiveFiles.defaultProps = {
@@ -201,4 +205,5 @@ ObjectiveFiles.defaultProps = {
   inputName: '',
   onBlur: () => {},
   reportId: 0,
+  label: "Do you plan to use any TTA resources that aren't available as a link?",
 };

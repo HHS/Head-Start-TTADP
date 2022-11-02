@@ -15,8 +15,9 @@ import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import userEvent from '@testing-library/user-event';
 import CreateGoal from '../index';
+import UserContext from '../../../UserContext';
 import { OBJECTIVE_ERROR_MESSAGES } from '../constants';
-import { REPORT_STATUSES } from '../../../Constants';
+import { REPORT_STATUSES, SCOPE_IDS } from '../../../Constants';
 import { BEFORE_OBJECTIVES_CREATE_GOAL, BEFORE_OBJECTIVES_SELECT_RECIPIENTS } from '../Form';
 
 const [
@@ -102,11 +103,18 @@ describe('create goal', () => {
     const history = createMemoryHistory();
     render((
       <Router history={history}>
-        <CreateGoal
-          recipient={recipient}
-          regionId="1"
-          isNew={goalId === 'new'}
-        />
+        <UserContext.Provider value={{
+          user: {
+            permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
+          },
+        }}
+        >
+          <CreateGoal
+            recipient={recipient}
+            regionId="1"
+            isNew={goalId === 'new'}
+          />
+        </UserContext.Provider>
       </Router>
     ));
   }
@@ -381,7 +389,7 @@ describe('create goal', () => {
     userEvent.click(goalActions);
 
     fetchMock.restore();
-    fetchMock.delete('/api/goals/64175', JSON.stringify(1));
+    fetchMock.delete('/api/goals?goalIds=64175', JSON.stringify(1));
     expect(fetchMock.called()).toBe(false);
 
     const deleteButton = within(await screen.findByTestId('menu')).getByRole('button', { name: /remove/i });
@@ -475,7 +483,7 @@ describe('create goal', () => {
     save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
 
-    fetchMock.delete('/api/goals/64175', JSON.stringify(1));
+    fetchMock.delete('/api/goals?goalIds=64175', JSON.stringify(1));
 
     const goalActions = await screen.findByRole('button', { name: /actions for goal/i });
     userEvent.click(goalActions);

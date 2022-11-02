@@ -21,6 +21,7 @@ export default function GrantSelect({
   label,
   isLoading,
   goalStatus,
+  userCanEdit,
 }) {
   return (
     <FormGroup error={error.props.children}>
@@ -29,7 +30,7 @@ export default function GrantSelect({
         {' '}
         {!isOnReport ? <Req /> : null }
       </Label>
-      {possibleGrants.length === 1 || isOnReport ? (
+      {possibleGrants.length === 1 || isOnReport || !userCanEdit ? (
         <p className="margin-top-0 usa-prose">{selectedGrants.map((grant) => grant.label).join(', ')}</p>
       ) : (
         <>
@@ -73,6 +74,7 @@ GrantSelect.propTypes = {
   label: PropTypes.string,
   isLoading: PropTypes.bool,
   goalStatus: PropTypes.string.isRequired,
+  userCanEdit: PropTypes.bool.isRequired,
 };
 
 GrantSelect.defaultProps = {
