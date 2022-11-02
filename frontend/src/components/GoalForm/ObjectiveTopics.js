@@ -23,9 +23,9 @@ export default function ObjectiveTopics({
 }) {
   const initialSelection = useRef(topics.length);
 
-  const readOnly = useMemo(() => status === 'Suspended' || (goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed' || !userCanEdit, [goalStatus, isOnReport, status, userCanEdit]);
+  const readOnly = useMemo(() => status === 'Suspended' || status === 'Complete' || (goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed' || !userCanEdit, [goalStatus, isOnReport, status, userCanEdit]);
 
-  if (goalStatus === 'Closed' && !initialSelection.current) {
+  if (readOnly && !initialSelection.current) {
     return null;
   }
 

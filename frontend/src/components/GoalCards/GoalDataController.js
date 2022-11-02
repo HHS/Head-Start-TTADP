@@ -101,15 +101,7 @@ function GoalDataController({
     });
   };
 
-  const requestSort = (sortBy) => {
-    let direction = 'asc';
-    if (
-      sortConfig
-      && sortConfig.sortBy === sortBy
-      && sortConfig.direction === 'asc'
-    ) {
-      direction = 'desc';
-    }
+  const requestSort = (sortBy, direction) => {
     setSortConfig({
       ...sortConfig, sortBy, direction, activePage: 1, offset: 0,
     });
@@ -138,6 +130,7 @@ function GoalDataController({
           goals={displayGoals}
           error={error}
           goalsCount={data.count}
+          allGoalIds={data.allGoalIds}
           handlePageChange={handlePageChange}
           requestSort={requestSort}
           sortConfig={sortConfig}

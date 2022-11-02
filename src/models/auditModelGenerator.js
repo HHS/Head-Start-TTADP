@@ -45,9 +45,9 @@ const addAuditTransactionSettings = async (sequelize, instance, options, type) =
   if (loggedUser !== '' || transactionId !== '' || auditDescriptor !== '') {
     await sequelize.queryInterface.sequelize.query(
       `SELECT
-        -- Type: ${type}
+        '${type}' "Type",
         ${statements.join(',')}
-      `,
+      `.replace(/[\r\n]+/gm, ' '),
     );
   }
 };

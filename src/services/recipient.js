@@ -281,6 +281,7 @@ export async function getGoalsByActivityRecipient(
     sortDir = 'desc',
     offset = 0,
     limit = GOALS_PER_PAGE,
+    goalIds = [],
     ...filters
   },
 ) {
@@ -290,6 +291,24 @@ export async function getGoalsByActivityRecipient(
   // Paging.
   const limitNum = parseInt(limit, 10);
   const offSetNum = parseInt(offset, 10);
+
+  // Goal where.
+  let goalWhere = {
+    [Op.or]: [
+      { onApprovedAR: true },
+      { isFromSmartsheetTtaPlan: true },
+      { createdVia: 'rtr' },
+    ],
+    [Op.and]: scopes,
+  };
+
+  // If we have specified goals only retrieve those else all for recipient.
+  if (goalIds && goalIds.length) {
+    goalWhere = {
+      id: goalIds,
+      ...goalWhere,
+    };
+  }
 
   // Get Goals.
   const rows = await Goal.findAll({
@@ -303,14 +322,7 @@ export async function getGoalsByActivityRecipient(
       'onApprovedAR',
       [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Draft\' THEN 2 WHEN "Goal"."status" = \'Not Started\' THEN 3 WHEN "Goal"."status" = \'In Progress\' THEN 4 WHEN "Goal"."status" = \'Closed\' THEN 5 WHEN "Goal"."status" = \'Suspended\' THEN 6 ELSE 7 END'), 'status_sort'],
     ],
-    where: {
-      [Op.or]: [
-        { onApprovedAR: true },
-        { isFromSmartsheetTtaPlan: true },
-        { createdVia: 'rtr' },
-      ],
-      [Op.and]: scopes,
-    },
+    where: goalWhere,
     include: [
       {
         model: Grant,
@@ -446,6 +458,7 @@ export async function getGoalsByActivityRecipient(
       count: r.goalRows.length,
       goalRows: r.goalRows.slice(offSetNum, offSetNum + limitNum),
       statuses,
+      allGoalIds,
     };
   }
 
@@ -453,5 +466,6 @@ export async function getGoalsByActivityRecipient(
     count: r.goalRows.length,
     goalRows: r.goalRows.slice(offSetNum),
     statuses,
+    allGoalIds,
   };
 }
