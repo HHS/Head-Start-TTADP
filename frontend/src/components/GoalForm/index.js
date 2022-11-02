@@ -2,6 +2,7 @@ import React, {
   useEffect,
   useState,
   useMemo,
+  useContext,
 } from 'react';
 import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
@@ -26,12 +27,13 @@ import {
   SELECT_GRANTS_ERROR,
   OBJECTIVE_DEFAULT_ERRORS,
 } from './constants';
-import { DECIMAL_BASE } from '../../Constants';
+import { DECIMAL_BASE, SCOPE_IDS } from '../../Constants';
 import ReadOnly from './ReadOnly';
 import PlusButton from './PlusButton';
 import colors from '../../colors';
 import GoalFormLoadingContext from '../../GoalFormLoadingContext';
 import useUrlParamState from '../../hooks/useUrlParamState';
+import UserContext from '../../UserContext';
 
 const [
   objectiveTextError,
@@ -98,6 +100,20 @@ export default function GoalForm({
   const [errors, setErrors] = useState(FORM_FIELD_DEFAULT_ERRORS);
 
   const [isLoading, setIsLoading] = useState(false);
+
+  const { user } = useContext(UserContext);
+
+  const canView = useMemo(() => user.permissions.filter(
+    (permission) => permission.regionId === parseInt(regionId, DECIMAL_BASE),
+  ).length > 0, [regionId, user.permissions]);
+
+  const canEdit = useMemo(() => user.permissions.filter(
+    (permission) => permission.regionId === parseInt(regionId, DECIMAL_BASE)
+      && (
+        permission.scopeId === SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS
+        || permission.scopeId === SCOPE_IDS.APPROVE_ACTIVITY_REPORTS
+      ),
+  ).length > 0, [regionId, user.permissions]);
 
   const isOnReport = useMemo(() => objectives.some(
     (objective) => objective.activityReports && objective.activityReports.length > 0,
@@ -238,7 +254,7 @@ export default function GoalForm({
   const validateGoalName = (message = GOAL_NAME_ERROR) => {
     let error = <></>;
 
-    if (!goalName) {
+    if (!goalName || !goalName.trim()) {
       error = <span className="usa-error-message">{message}</span>;
     }
 
@@ -256,7 +272,7 @@ export default function GoalForm({
   const validateEndDate = () => {
     let error = <></>;
 
-    if (!endDate || !moment(endDate, 'MM/DD/YYYY').isValid()) {
+    if (endDate && !moment(endDate, 'MM/DD/YYYY').isValid()) {
       error = <span className="usa-error-message">{GOAL_DATE_ERROR}</span>;
     }
 
@@ -291,6 +307,16 @@ export default function GoalForm({
     let isValid = true;
 
     const newObjectiveErrors = objectives.map((objective) => {
+      if (objective.status === 'Complete' || (objective.activityReports && objective.activityReports.length)) {
+        return [
+          <></>,
+          <></>,
+          <></>,
+          <></>,
+          <></>,
+        ];
+      }
+
       if (!objective.title) {
         isValid = false;
         return [
@@ -365,7 +391,7 @@ export default function GoalForm({
     && validateEndDate()
     && validateObjectives()
   );
-  const isValidDraft = () => validateGrantNumbers() || validateGoalName() || validateEndDate();
+  const isValidDraft = () => validateGrantNumbers() && validateGoalName();
 
   const updateObjectives = (updatedObjectives) => {
     // when we set a new set of objectives
@@ -376,6 +402,12 @@ export default function GoalForm({
     newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES, 1, objectiveErrors);
     setErrors(newErrors);
     setObjectives(updatedObjectives);
+  };
+
+  const redirectToGoalsPage = (goals) => {
+    history.push(`/recipient-tta-records/${recipient.id}/region/${parseInt(regionId, DECIMAL_BASE)}/goals-objectives`, {
+      ids: goals.map((g) => g.id),
+    });
   };
 
   /**
@@ -409,9 +441,7 @@ export default function GoalForm({
       // on success, redirect back to RTR Goals & Objectives page
       // once integrated into the AR, this will probably have to be turned into a prop function
       // that gets called on success
-      history.push(`/recipient-tta-records/${recipient.id}/region/${parseInt(regionId, DECIMAL_BASE)}/goals-objectives`, {
-        ids: goals.map((g) => g.id),
-      });
+      redirectToGoalsPage(goals);
     } catch (err) {
       setAlert({
         message: 'There was an error saving your goal',
@@ -569,7 +599,7 @@ export default function GoalForm({
     setDatePickerKey('DPK-00');
   };
 
-  const onSaveAndContinue = async () => {
+  const onSaveAndContinue = async (redirect = false) => {
     if (!isValidNotStarted()) {
       return;
     }
@@ -613,15 +643,16 @@ export default function GoalForm({
         })),
       })));
 
+      if (redirect) {
+        redirectToGoalsPage(newCreatedGoals);
+      }
+
       clearForm();
 
       setAlert({
         message: `Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`,
         type: 'success',
       });
-
-      const newIds = newCreatedGoals.flatMap((g) => g.goalIds);
-      setIds(newIds);
     } catch (error) {
       setAlert({
         message: 'There was an error saving your goal',
@@ -665,10 +696,10 @@ export default function GoalForm({
   const onRemove = async (g) => {
     setIsLoading(true);
     try {
-      const success = await deleteGoal(g, regionId);
+      const success = await deleteGoal(g.goalIds, regionId);
 
       if (success) {
-        const newGoals = createdGoals.filter((goal) => goal.id !== g);
+        const newGoals = createdGoals.filter((goal) => goal.id !== g.id);
         setCreatedGoals(newGoals);
         if (!newGoals.length) {
           setShowForm(true);
@@ -689,6 +720,14 @@ export default function GoalForm({
     }
   };
 
+  if (!canView) {
+    return (
+      <Alert role="alert" className="margin-y-2" type="error">
+        You don&apos;t have permission to view this page
+      </Alert>
+    );
+  }
+
   return (
     <>
       { showRTRnavigation ? (
@@ -706,6 +745,7 @@ export default function GoalForm({
         {recipient.name}
         {' '}
         - Region
+        {' '}
         {regionId}
       </h1>
 
@@ -758,13 +798,14 @@ export default function GoalForm({
               status={status || 'Needs status'}
               goalNumbers={goalNumbers}
               onUploadFiles={onUploadFiles}
+              userCanEdit={canEdit}
             />
             )}
 
-            { status !== 'Closed' && (
+            { canEdit && (isNew || status === 'Draft') && status !== 'Closed' && (
               <div className="margin-top-4">
                 { !showForm ? <Button type="submit">Submit goal</Button> : null }
-                { showForm ? <Button type="button" onClick={onSaveAndContinue}>Save and continue</Button> : null }
+                { showForm ? <Button type="button" onClick={() => onSaveAndContinue(false)}>Save and continue</Button> : null }
                 <Button type="button" outline onClick={onSaveDraft}>Save draft</Button>
                 { showForm && !createdGoals.length ? (
                   <Link
@@ -777,10 +818,30 @@ export default function GoalForm({
                 { showForm && createdGoals.length ? (
                   <Button type="button" outline onClick={clearForm} data-testid="create-goal-form-cancel">Cancel</Button>
                 ) : null }
-
-                { alert.message ? <Alert role="alert" className="margin-y-2" type={alert.type}>{alert.message}</Alert> : null }
               </div>
             )}
+
+            { canEdit && (!isNew && status !== 'Draft') && status !== 'Closed' && (
+            <div className="margin-top-4">
+              <Button
+                type="submit"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  await onSaveAndContinue(true);
+                }}
+              >
+                Save
+              </Button>
+              <Link
+                className="usa-button usa-button--outline"
+                to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
+              >
+                Cancel
+              </Link>
+            </div>
+            ) }
+
+            { alert.message ? <Alert role="alert" className="margin-y-2" type={alert.type}>{alert.message}</Alert> : null }
           </form>
         </GoalFormLoadingContext.Provider>
       </Container>

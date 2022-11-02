@@ -65,6 +65,7 @@ describe('ObjectiveForm', () => {
           'Curriculum (Instructional or Parenting)',
           'Data and Evaluation',
         ].map((name, id) => ({ id, name }))}
+        userCanEdit
       />
     ));
   };
@@ -106,7 +107,7 @@ describe('ObjectiveForm', () => {
     expect(setObjectiveError).toHaveBeenCalledWith(index, [<span className="usa-error-message">{objectiveTextError}</span>, <></>, <></>]);
   });
 
-  it('you can change role and status', async () => {
+  it('you can change status', async () => {
     const removeObjective = jest.fn();
     const setObjectiveError = jest.fn();
     const setObjective = jest.fn();

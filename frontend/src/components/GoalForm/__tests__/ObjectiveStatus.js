@@ -16,6 +16,7 @@ describe('ObjectiveStatus', () => {
       onChangeStatus={onChangeStatus}
       inputName="objective-status"
       isOnReport={false}
+      userCanEdit
     />);
 
     const dropdown = await screen.findByLabelText('Objective status');
@@ -37,6 +38,7 @@ describe('ObjectiveStatus', () => {
       onChangeStatus={onChangeStatus}
       inputName="objective-status"
       isOnReport={false}
+      userCanEdit
     />);
 
     const dropdown = await screen.findByLabelText('Objective status');
@@ -55,6 +57,25 @@ describe('ObjectiveStatus', () => {
       onChangeStatus={onChangeStatus}
       inputName="objective-status"
       isOnReport={false}
+      userCanEdit
+    />);
+
+    const label = await screen.findByText('Objective status');
+
+    expect(label).toBeVisible();
+    expect(label.tagName).toEqual('P');
+
+    expect(document.querySelector('select')).toBe(null);
+  });
+
+  it('shows the read only view when the user cannot edit', async () => {
+    render(<ObjectiveStatus
+      status="In Progress"
+      goalStatus="In Progress"
+      onChangeStatus={jest.fn()}
+      inputName="objective-status"
+      isOnReport={false}
+      userCanEdit={false}
     />);
 
     const label = await screen.findByText('Objective status');
