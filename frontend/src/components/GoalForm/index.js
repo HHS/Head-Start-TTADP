@@ -291,6 +291,16 @@ export default function GoalForm({
     let isValid = true;
 
     const newObjectiveErrors = objectives.map((objective) => {
+      if (objective.status === 'Complete' || (objective.activityReports && objective.activityReports.length)) {
+        return [
+          <></>,
+          <></>,
+          <></>,
+          <></>,
+          <></>,
+        ];
+      }
+
       if (!objective.title) {
         isValid = false;
         return [
@@ -378,6 +388,12 @@ export default function GoalForm({
     setObjectives(updatedObjectives);
   };
 
+  const redirectToGoalsPage = (goals) => {
+    history.push(`/recipient-tta-records/${recipient.id}/region/${parseInt(regionId, DECIMAL_BASE)}/goals-objectives`, {
+      ids: goals.map((g) => g.id),
+    });
+  };
+
   /**
    * button click handlers
    */
@@ -409,9 +425,7 @@ export default function GoalForm({
       // on success, redirect back to RTR Goals & Objectives page
       // once integrated into the AR, this will probably have to be turned into a prop function
       // that gets called on success
-      history.push(`/recipient-tta-records/${recipient.id}/region/${parseInt(regionId, DECIMAL_BASE)}/goals-objectives`, {
-        ids: goals.map((g) => g.id),
-      });
+      redirectToGoalsPage(goals);
     } catch (err) {
       setAlert({
         message: 'There was an error saving your goal',
@@ -569,7 +583,7 @@ export default function GoalForm({
     setDatePickerKey('DPK-00');
   };
 
-  const onSaveAndContinue = async () => {
+  const onSaveAndContinue = async (redirect = false) => {
     if (!isValidNotStarted()) {
       return;
     }
@@ -613,15 +627,16 @@ export default function GoalForm({
         })),
       })));
 
+      if (redirect) {
+        redirectToGoalsPage(newCreatedGoals);
+      }
+
       clearForm();
 
       setAlert({
         message: `Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`,
         type: 'success',
       });
-
-      const newIds = newCreatedGoals.flatMap((g) => g.goalIds);
-      setIds(newIds);
     } catch (error) {
       setAlert({
         message: 'There was an error saving your goal',
@@ -706,6 +721,7 @@ export default function GoalForm({
         {recipient.name}
         {' '}
         - Region
+        {' '}
         {regionId}
       </h1>
 
@@ -761,10 +777,10 @@ export default function GoalForm({
             />
             )}
 
-            { status !== 'Closed' && (
+            { (isNew || status === 'Draft') && status !== 'Closed' && (
               <div className="margin-top-4">
                 { !showForm ? <Button type="submit">Submit goal</Button> : null }
-                { showForm ? <Button type="button" onClick={onSaveAndContinue}>Save and continue</Button> : null }
+                { showForm ? <Button type="button" onClick={() => onSaveAndContinue(false)}>Save and continue</Button> : null }
                 <Button type="button" outline onClick={onSaveDraft}>Save draft</Button>
                 { showForm && !createdGoals.length ? (
                   <Link
@@ -777,10 +793,30 @@ export default function GoalForm({
                 { showForm && createdGoals.length ? (
                   <Button type="button" outline onClick={clearForm} data-testid="create-goal-form-cancel">Cancel</Button>
                 ) : null }
-
-                { alert.message ? <Alert role="alert" className="margin-y-2" type={alert.type}>{alert.message}</Alert> : null }
               </div>
             )}
+
+            { (!isNew && status !== 'Draft') && status !== 'Closed' && (
+            <div className="margin-top-4">
+              <Button
+                type="submit"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  await onSaveAndContinue(true);
+                }}
+              >
+                Save
+              </Button>
+              <Link
+                className="usa-button usa-button--outline"
+                to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
+              >
+                Cancel
+              </Link>
+            </div>
+            ) }
+
+            { alert.message ? <Alert role="alert" className="margin-y-2" type={alert.type}>{alert.message}</Alert> : null }
           </form>
         </GoalFormLoadingContext.Provider>
       </Container>
