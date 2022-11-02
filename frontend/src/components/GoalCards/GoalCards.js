@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Grid, Alert } from '@trussworks/react-uswds';
 import GoalsCardsHeader from './GoalsCardsHeader';
@@ -22,7 +22,13 @@ function GoalCards({
   loading,
   sortConfig,
   setGoals,
+  allGoalIds,
 }) {
+  // Goal select check boxes.
+  const [selectedGoalCheckBoxes, setSelectedGoalCheckBoxes] = useState({});
+  const [allGoalsChecked, setAllGoalsChecked] = useState(false);
+  const [printAllGoals, setPrintAllGoals] = useState(false);
+
   // Close/Suspend Reason Modal.
   const [closeSuspendGoalIds, setCloseSuspendGoalIds] = useState([]);
   const [closeSuspendStatus, setCloseSuspendStatus] = useState('');
@@ -65,6 +71,60 @@ function GoalCards({
     setGoals(newGoals);
   };
 
+  const makeGoalCheckboxes = (goalsArr, checked) => (
+    goalsArr.reduce((obj, g) => ({ ...obj, [g.id]: checked }), {})
+  );
+
+  useEffect(() => {
+    const checkValues = Object.values(selectedGoalCheckBoxes);
+    if (checkValues.length
+      && (checkValues.length === goals.length || checkValues.length === goalsCount)
+      && checkValues.every((v) => v === true)) {
+      setAllGoalsChecked(true);
+    } else {
+      if (allGoalsChecked === true) {
+        setAllGoalsChecked(false);
+      }
+      if (printAllGoals === true) {
+        setPrintAllGoals(false);
+      }
+    }
+  }, [selectedGoalCheckBoxes, allGoalsChecked, printAllGoals, goalsCount, goals.length]);
+
+  const selectAllGoalCheckboxSelect = (event) => {
+    const { target: { checked = null } = {} } = event;
+
+    if (checked === true) {
+      setSelectedGoalCheckBoxes(makeGoalCheckboxes(goals, true));
+      setAllGoalsChecked(true);
+    } else {
+      setSelectedGoalCheckBoxes(makeGoalCheckboxes(goals, false));
+      setAllGoalsChecked(false);
+      setPrintAllGoals(false);
+    }
+  };
+
+  const handleGoalCheckboxSelect = (event) => {
+    const { target: { checked = null, value = null } = {} } = event;
+    if (checked === true) {
+      setSelectedGoalCheckBoxes({ ...selectedGoalCheckBoxes, [value]: true });
+    } else {
+      setSelectedGoalCheckBoxes({ ...selectedGoalCheckBoxes, [value]: false });
+    }
+  };
+
+  const checkAllGoals = () => {
+    const allIdCheckBoxes = allGoalIds.reduce((obj, g) => ({ ...obj, [g]: true }), {});
+    setSelectedGoalCheckBoxes(allIdCheckBoxes);
+    setPrintAllGoals(true);
+  };
+
+  const numberOfSelectedGoals = Object.values(selectedGoalCheckBoxes).filter((g) => g).length;
+
+  const selectedCheckBoxes = Object.keys(selectedGoalCheckBoxes).filter(
+    (g) => selectedGoalCheckBoxes[g],
+  );
+
   return (
     <>
       {error && (
@@ -96,6 +156,11 @@ function GoalCards({
           hasActiveGrants={hasActiveGrants}
           sortConfig={sortConfig}
           requestSort={requestSort}
+          numberOfSelectedGoals={numberOfSelectedGoals}
+          allGoalsChecked={allGoalsChecked}
+          selectAllGoalCheckboxSelect={selectAllGoalCheckboxSelect}
+          selectAllGoals={checkAllGoals}
+          selectedGoalIds={selectedCheckBoxes}
         />
         <div>
 
@@ -110,6 +175,8 @@ function GoalCards({
               regionId={regionId}
               showCloseSuspendGoalModal={showCloseSuspendGoalModal}
               performGoalStatusUpdate={performGoalStatusUpdate}
+              handleGoalCheckboxSelect={handleGoalCheckboxSelect}
+              isChecked={selectedGoalCheckBoxes[goal.id] || false}
             />
           ))}
 
@@ -137,6 +204,10 @@ GoalCards.propTypes = {
     offset: PropTypes.number,
   }).isRequired,
   setGoals: PropTypes.func.isRequired,
+  allGoalIds: PropTypes.arrayOf(PropTypes.number),
 };
 
+GoalCards.defaultProps = {
+  allGoalIds: [],
+};
 export default GoalCards;
