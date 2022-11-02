@@ -31,6 +31,7 @@ export default function GoalCardsHeader({
   selectAllGoals,
   selectedGoalIds,
   perPageChange,
+  pageGoalIds,
 }) {
   const history = useHistory();
   const { user } = useContext(UserContext);
@@ -39,7 +40,7 @@ export default function GoalCardsHeader({
   const showAddNewButton = hasActiveGrants && hasButtonPermissions;
   const onPrint = () => {
     history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives/print${window.location.search}`, {
-      sortConfig, selectedGoalIds,
+      sortConfig, selectedGoalIds: !selectedGoalIds.length ? pageGoalIds : selectedGoalIds,
     });
   };
 
@@ -70,7 +71,7 @@ export default function GoalCardsHeader({
           className="display-flex flex-align-center usa-button usa-button--unstyled margin-x-3 margin-y-3"
           onClick={onPrint}
         >
-          Preview and print selected
+          {`Preview and print ${selectedGoalIds.length > 0 ? 'selected' : ''}`}
         </Button>
       </div>
       <div className="desktop:display-flex flex-justify ">
@@ -184,6 +185,7 @@ GoalCardsHeader.propTypes = {
   selectAllGoals: PropTypes.func,
   selectedGoalIds: PropTypes.arrayOf(PropTypes.string).isRequired,
   perPageChange: PropTypes.func.isRequired,
+  pageGoalIds: PropTypes.number.isRequired,
 };
 
 GoalCardsHeader.defaultProps = {

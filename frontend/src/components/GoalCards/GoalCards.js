@@ -157,6 +157,7 @@ function GoalCards({
           selectAllGoals={checkAllGoals}
           selectedGoalIds={selectedCheckBoxes}
           perPageChange={perPageChange}
+          pageGoalIds={goals.map((g) => g.id)}
         />
         <div>
 
