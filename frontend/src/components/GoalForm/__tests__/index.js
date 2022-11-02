@@ -366,7 +366,7 @@ describe('create goal', () => {
     userEvent.click(goalActions);
 
     fetchMock.restore();
-    fetchMock.delete('/api/goals/64175', JSON.stringify(1));
+    fetchMock.delete('/api/goals?goalIds=64175', JSON.stringify(1));
     expect(fetchMock.called()).toBe(false);
 
     const deleteButton = within(await screen.findByTestId('menu')).getByRole('button', { name: /remove/i });
@@ -452,7 +452,7 @@ describe('create goal', () => {
     save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
 
-    fetchMock.delete('/api/goals/64175', JSON.stringify(1));
+    fetchMock.delete('/api/goals?goalIds=64175', JSON.stringify(1));
 
     const goalActions = await screen.findByRole('button', { name: /actions for goal/i });
     userEvent.click(goalActions);
