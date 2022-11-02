@@ -65,6 +65,7 @@ describe('ObjectiveForm', () => {
           'Curriculum (Instructional or Parenting)',
           'Data and Evaluation',
         ].map((name, id) => ({ id, name }))}
+        userCanEdit
       />
     ));
   };

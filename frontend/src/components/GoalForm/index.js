@@ -2,6 +2,7 @@ import React, {
   useEffect,
   useState,
   useMemo,
+  useContext,
 } from 'react';
 import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
@@ -26,12 +27,13 @@ import {
   SELECT_GRANTS_ERROR,
   OBJECTIVE_DEFAULT_ERRORS,
 } from './constants';
-import { DECIMAL_BASE } from '../../Constants';
+import { DECIMAL_BASE, SCOPE_IDS } from '../../Constants';
 import ReadOnly from './ReadOnly';
 import PlusButton from './PlusButton';
 import colors from '../../colors';
 import GoalFormLoadingContext from '../../GoalFormLoadingContext';
 import useUrlParamState from '../../hooks/useUrlParamState';
+import UserContext from '../../UserContext';
 
 const [
   objectiveTextError,
@@ -98,6 +100,20 @@ export default function GoalForm({
   const [errors, setErrors] = useState(FORM_FIELD_DEFAULT_ERRORS);
 
   const [isLoading, setIsLoading] = useState(false);
+
+  const { user } = useContext(UserContext);
+
+  const canView = useMemo(() => user.permissions.filter(
+    (permission) => permission.regionId === parseInt(regionId, DECIMAL_BASE),
+  ).length > 0, [regionId, user.permissions]);
+
+  const canEdit = useMemo(() => user.permissions.filter(
+    (permission) => permission.regionId === parseInt(regionId, DECIMAL_BASE)
+      && (
+        permission.scopeId === SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS
+        || permission.scopeId === SCOPE_IDS.APPROVE_ACTIVITY_REPORTS
+      ),
+  ).length > 0, [regionId, user.permissions]);
 
   const isOnReport = useMemo(() => objectives.some(
     (objective) => objective.activityReports && objective.activityReports.length > 0,
@@ -704,6 +720,14 @@ export default function GoalForm({
     }
   };
 
+  if (!canView) {
+    return (
+      <Alert role="alert" className="margin-y-2" type="error">
+        You don&apos;t have permission to view this page
+      </Alert>
+    );
+  }
+
   return (
     <>
       { showRTRnavigation ? (
@@ -774,10 +798,11 @@ export default function GoalForm({
               status={status || 'Needs status'}
               goalNumbers={goalNumbers}
               onUploadFiles={onUploadFiles}
+              userCanEdit={canEdit}
             />
             )}
 
-            { (isNew || status === 'Draft') && status !== 'Closed' && (
+            { canEdit && (isNew || status === 'Draft') && status !== 'Closed' && (
               <div className="margin-top-4">
                 { !showForm ? <Button type="submit">Submit goal</Button> : null }
                 { showForm ? <Button type="button" onClick={() => onSaveAndContinue(false)}>Save and continue</Button> : null }
@@ -796,7 +821,7 @@ export default function GoalForm({
               </div>
             )}
 
-            { (!isNew && status !== 'Draft') && status !== 'Closed' && (
+            { canEdit && (!isNew && status !== 'Draft') && status !== 'Closed' && (
             <div className="margin-top-4">
               <Button
                 type="submit"
