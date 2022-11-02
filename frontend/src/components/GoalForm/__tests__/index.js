@@ -15,8 +15,9 @@ import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import userEvent from '@testing-library/user-event';
 import CreateGoal from '../index';
+import UserContext from '../../../UserContext';
 import { OBJECTIVE_ERROR_MESSAGES } from '../constants';
-import { REPORT_STATUSES } from '../../../Constants';
+import { REPORT_STATUSES, SCOPE_IDS } from '../../../Constants';
 import { BEFORE_OBJECTIVES_CREATE_GOAL, BEFORE_OBJECTIVES_SELECT_RECIPIENTS } from '../Form';
 
 const [
@@ -101,11 +102,18 @@ describe('create goal', () => {
     const history = createMemoryHistory();
     render((
       <Router history={history}>
-        <CreateGoal
-          id={goalId}
-          recipient={recipient}
-          regionId="1"
-        />
+        <UserContext.Provider value={{
+          user: {
+            permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
+          },
+        }}
+        >
+          <CreateGoal
+            recipient={recipient}
+            regionId="1"
+            isNew={goalId === 'new'}
+          />
+        </UserContext.Provider>
       </Router>
     ));
   }
@@ -150,7 +158,7 @@ describe('create goal', () => {
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
+    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
     const save = await screen.findByRole('button', { name: /save and continue/i });
@@ -160,9 +168,7 @@ describe('create goal', () => {
     await screen.findByText('Select at least one recipient grant number');
 
     const combo = await screen.findByLabelText(/Recipient grant numbers/i);
-    await selectEvent.select(combo, ['Turtle 1']);
-
-    const cancel = await screen.findByRole('link', { name: 'Cancel' });
+    await selectEvent.select(combo, ['Turtle 2']);
 
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
     userEvent.click(newObjective);
@@ -173,7 +179,7 @@ describe('create goal', () => {
     const topics = await screen.findByLabelText(/topics \*/i);
     await selectEvent.select(topics, ['CLASS: Instructional Support']);
 
-    const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
+    const resourceOne = document.querySelector('#resource-1');
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
 
     userEvent.click(save);
@@ -186,8 +192,6 @@ describe('create goal', () => {
     fetchMock.post('/api/goals', postResponse);
 
     await screen.findByText(`Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`);
-
-    expect(cancel).not.toBeVisible();
 
     const submit = await screen.findByRole('button', { name: /submit goal/i });
     userEvent.click(submit);
@@ -215,7 +219,7 @@ describe('create goal', () => {
     // saving drafts works
     const saveDraft = await screen.findByRole('button', { name: /save draft/i });
     userEvent.click(saveDraft);
-    expect(fetchMock.called()).toBe(true);
+    expect(fetchMock.called()).toBe(false);
 
     // reset fetch mock state
     fetchMock.restore();
@@ -231,10 +235,7 @@ describe('create goal', () => {
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    userEvent.click(save);
-    await screen.findByText('Enter a valid date');
-
-    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
+    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, 'apple season');
 
     userEvent.click(save);
@@ -278,7 +279,7 @@ describe('create goal', () => {
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
+    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
     const save = await screen.findByRole('button', { name: /save and continue/i });
@@ -341,7 +342,7 @@ describe('create goal', () => {
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
+    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
@@ -365,7 +366,7 @@ describe('create goal', () => {
     userEvent.click(goalActions);
 
     fetchMock.restore();
-    fetchMock.delete('/api/goals/64175', JSON.stringify(1));
+    fetchMock.delete('/api/goals?goalIds=64175', JSON.stringify(1));
     expect(fetchMock.called()).toBe(false);
 
     const deleteButton = within(await screen.findByTestId('menu')).getByRole('button', { name: /remove/i });
@@ -396,7 +397,7 @@ describe('create goal', () => {
     let goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    let ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
+    let ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
     let newObjective = await screen.findByRole('button', { name: 'Add new objective' });
@@ -433,7 +434,7 @@ describe('create goal', () => {
     goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is more goal text');
 
-    ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
+    ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
     newObjective = await screen.findByRole('button', { name: 'Add new objective' });
@@ -451,7 +452,7 @@ describe('create goal', () => {
     save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
 
-    fetchMock.delete('/api/goals/64175', JSON.stringify(1));
+    fetchMock.delete('/api/goals?goalIds=64175', JSON.stringify(1));
 
     const goalActions = await screen.findByRole('button', { name: /actions for goal/i });
     userEvent.click(goalActions);
@@ -481,7 +482,7 @@ describe('create goal', () => {
     let goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
+    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
@@ -537,7 +538,7 @@ describe('create goal', () => {
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
+    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
     const cancel = await screen.findByRole('link', { name: 'Cancel' });
@@ -592,7 +593,7 @@ describe('create goal', () => {
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
+    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
     let newObjective = await screen.findByRole('button', { name: 'Add new objective' });
@@ -673,7 +674,7 @@ describe('create goal', () => {
     const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
     userEvent.type(goalText, 'This is goal text');
 
-    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\) \*/i });
+    const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
@@ -723,18 +724,19 @@ describe('create goal', () => {
   });
 
   it('fetches and prepopulates goal data given an appropriate ID', async () => {
-    fetchMock.get('/api/goals/12389/recipient/1', {
+    fetchMock.get('/api/recipient/1/goals?goalIds=', [{
       name: 'This is a goal name',
       status: 'Not Started',
-      endDate: '10/08/2021',
-      grant: {
+      endDate: '2021-10-08',
+      goalNumbers: ['G-12389'],
+      grants: [{
         id: 1,
         number: '1',
         programs: [{
           programType: 'EHS',
         }],
         status: 'Active',
-      },
+      }],
       objectives: [
         {
           id: 1238474,
@@ -744,7 +746,7 @@ describe('create goal', () => {
           topics: [topicsFromApi[0]],
         },
       ],
-    });
+    }]);
 
     renderForm(defaultRecipient, '12389');
 
@@ -759,18 +761,19 @@ describe('create goal', () => {
   });
 
   it('draft goals don\'t show status dropdowns', async () => {
-    fetchMock.get('/api/goals/12389/recipient/1', {
+    fetchMock.get('/api/recipient/1/goals?goalIds=', [{
       name: 'This is a goal name',
       status: 'Draft',
-      endDate: '10/08/2021',
-      grant: {
+      endDate: '2021-10-08',
+      goalNumbers: ['G-12389'],
+      grants: [{
         id: 1,
         number: '1',
         programs: [{
           programType: 'EHS',
         }],
         status: 'Active',
-      },
+      }],
       objectives: [
         {
           id: 1238474,
@@ -780,7 +783,7 @@ describe('create goal', () => {
           topics: [topicsFromApi[0]],
         },
       ],
-    });
+    }]);
 
     renderForm(defaultRecipient, '12389');
 
@@ -795,18 +798,19 @@ describe('create goal', () => {
   });
 
   it('not started goals on AR', async () => {
-    fetchMock.get('/api/goals/12389/recipient/1', {
+    fetchMock.get('/api/recipient/1/goals?goalIds=', [{
       name: 'This is a goal name',
       status: 'Not Started',
-      endDate: '10/08/2021',
-      grant: {
+      endDate: '2021-10-08',
+      goalNumbers: ['G-12389'],
+      grants: [{
         id: 1,
         number: '1',
         programs: [{
           programType: 'EHS',
         }],
         status: 'Active',
-      },
+      }],
       objectives: [
         {
           id: 1238474,
@@ -821,7 +825,7 @@ describe('create goal', () => {
           ],
         },
       ],
-    });
+    }]);
 
     renderForm(defaultRecipient, '12389');
 
@@ -841,18 +845,19 @@ describe('create goal', () => {
   });
 
   it('the correct fields are read only when the goal is in progress', async () => {
-    fetchMock.get('/api/goals/12389/recipient/1', {
+    fetchMock.get('/api/recipient/1/goals?goalIds=', [{
       name: 'This is a goal name',
       status: 'In Progress',
-      endDate: '10/08/2021',
-      grant: {
+      endDate: '2021-10-08',
+      goalNumbers: ['G-12389'],
+      grants: [{
         id: 1,
         number: '1',
         programs: [{
           programType: 'EHS',
         }],
         status: 'Active',
-      },
+      }],
       objectives: [
         {
           id: 1238474,
@@ -863,7 +868,7 @@ describe('create goal', () => {
           activityReports: [],
         },
       ],
-    });
+    }]);
 
     renderForm(defaultRecipient, '12389');
 

@@ -63,18 +63,6 @@ describe('Goal Form > Form component', () => {
     expect(document.querySelector('.ttahub-create-goals-form')).not.toBeNull();
   });
 
-  it('shows an error where some objectives are in progress', async () => {
-    const objectives = [{
-      title: 'This is an objective',
-      status: 'In Progress',
-      topics: [],
-      resources: [],
-    }];
-    renderGoalForm({ ...DEFAULT_GOAL, isOnApprovedReport: true }, objectives);
-
-    expect(await screen.findByText(/Field entries that are used on an activity report can no longer be edited/i)).toBeVisible();
-  });
-
   it('shows an error when the fetch has failed', async () => {
     const objectives = [];
     renderGoalForm(DEFAULT_GOAL, objectives, 'There was a fetch error');

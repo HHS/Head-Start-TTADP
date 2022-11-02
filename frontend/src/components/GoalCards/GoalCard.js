@@ -1,6 +1,7 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
+import { Checkbox } from '@trussworks/react-uswds';
 import moment from 'moment';
 import { useHistory } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -22,6 +23,8 @@ function GoalCard({
   regionId,
   showCloseSuspendGoalModal,
   performGoalStatusUpdate,
+  handleGoalCheckboxSelect,
+  isChecked,
 }) {
   const {
     id, // for keys and such, from the api
@@ -75,37 +78,44 @@ function GoalCard({
   };
 
   const contextMenuLabel = `Actions for goal ${id}`;
-  const showContextMenu = true;
   const menuItems = [
     {
-      label: 'Edit',
+      label: goalStatus === 'Closed' ? 'View' : 'Edit',
       onClick: () => {
-        history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals/${id}`);
+        history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${ids.join(',')}`);
       },
     },
   ];
 
   return (
     <article className="ttahub-goal-card usa-card margin-x-3 margin-y-2 padding-3 radius-lg border smart-hub-border-base-lighter ">
-      <div className="display-flex flex-justify">
-        <StatusDropdown
-          goalId={id}
-          status={goalStatus}
-          onUpdateGoalStatus={onUpdateGoalStatus}
-          previousStatus={previousStatus}
-          regionId={regionId}
-        />
 
-        {showContextMenu
-          ? (
-            <ContextMenu
-              label={contextMenuLabel}
-              menuItems={menuItems}
-            />
-          )
-          : null}
+      <div className="display-flex flex-justify">
+        <div className="display-flex flex-align-start flex-row">
+          <Checkbox
+            id={`goal-select-${id}`}
+            label=""
+            value={id}
+            checked={isChecked}
+            onChange={handleGoalCheckboxSelect}
+            aria-label={`Select goal ${goalText}`}
+            className="margin-right-1"
+            data-testid="selectGoalTestId"
+          />
+          <StatusDropdown
+            goalId={id}
+            status={goalStatus}
+            onUpdateGoalStatus={onUpdateGoalStatus}
+            previousStatus={previousStatus}
+            regionId={regionId}
+          />
+        </div>
+        <ContextMenu
+          label={contextMenuLabel}
+          menuItems={menuItems}
+        />
       </div>
-      <div className="display-flex flex-wrap margin-y-2">
+      <div className="display-flex flex-wrap margin-y-2 margin-left-5">
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-text padding-right-3">
           <h3 className="usa-prose usa-prose margin-y-0">
             Goal
@@ -135,13 +145,14 @@ function GoalCard({
         </div>
       </div>
 
-      <ObjectiveButton
-        closeOrOpenObjectives={closeOrOpenObjectives}
-        objectiveCount={objectiveCount}
-        objectivesExpanded={objectivesExpanded}
-        goalNumber={goal.goalNumbers.join('')}
-      />
-
+      <div className="margin-left-5">
+        <ObjectiveButton
+          closeOrOpenObjectives={closeOrOpenObjectives}
+          objectiveCount={objectiveCount}
+          objectivesExpanded={objectivesExpanded}
+          goalNumber={goal.goalNumbers.join('')}
+        />
+      </div>
       {objectives.map((obj) => (
         <ObjectiveCard
           key={`objective_${obj.id}`}
@@ -188,5 +199,7 @@ GoalCard.propTypes = {
   regionId: PropTypes.string.isRequired,
   showCloseSuspendGoalModal: PropTypes.func.isRequired,
   performGoalStatusUpdate: PropTypes.func.isRequired,
+  handleGoalCheckboxSelect: PropTypes.func.isRequired,
+  isChecked: PropTypes.bool.isRequired,
 };
 export default GoalCard;

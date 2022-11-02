@@ -741,11 +741,25 @@ describe('Goals by Recipient Test', () => {
       const { count, goalRows } = await getGoalsByActivityRecipient(recipient3.id, 1, {
         sortBy: 'createdOn', sortDir: 'desc', offset: 0, limit: 20,
       });
-
       const countx = count;
       const goalRowsx = goalRows;
       expect(countx).toBe(3);
       expect(goalRowsx.length).toBe(3);
+    });
+
+    it('Retrieves Specified Goals for Recipient', async () => {
+      const { count, goalRows } = await getGoalsByActivityRecipient(recipient3.id, 1, {
+        sortBy: 'createdOn',
+        sortDir: 'desc',
+        offset: 0,
+        limit: 20,
+        // Only goal 9 and 11 are for reciient 3.
+        goalIds: [goalIds[0], goalIds[9], goalIds[11]],
+      });
+      const countx = count;
+      const goalRowsx = goalRows.filter((g) => g.id === goalIds[9] || g.id === goalIds[11]);
+      expect(countx).toBe(2);
+      expect(goalRowsx.length).toBe(2);
     });
 
     it('associates objectives with the proper recipients', async () => {

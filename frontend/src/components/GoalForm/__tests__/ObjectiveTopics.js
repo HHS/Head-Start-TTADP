@@ -8,14 +8,14 @@ import ObjectiveTopics from '../ObjectiveTopics';
 describe('ObjectiveTopics', () => {
   const defaultTopicSelection = [
     {
-      value: 1,
-      label: 'Dancing but too fast',
+      id: 1,
+      name: 'Dancing but too fast',
       isOnApprovedReport: true,
       onAnyReport: true,
     },
     {
-      value: 2,
-      label: 'Dancing but too slow',
+      id: 2,
+      name: 'Dancing but too slow',
       isOnApprovedReport: false,
       onAnyReport: false,
     },
@@ -26,6 +26,7 @@ describe('ObjectiveTopics', () => {
     topics = defaultTopicSelection,
     objectiveStatus = 'In Progress',
     goalStatus = 'In Progress',
+    userCanEdit = true,
   ) => render((
     <ObjectiveTopics
       error={<></>}
@@ -36,6 +37,7 @@ describe('ObjectiveTopics', () => {
       status={objectiveStatus}
       isOnReport={isOnReport}
       goalStatus={goalStatus}
+      userCanEdit={userCanEdit}
     />
   ));
 
@@ -55,6 +57,20 @@ describe('ObjectiveTopics', () => {
       defaultTopicSelection,
       'Not Started',
       'Not Started',
+    );
+
+    expect(await screen.findByText(/dancing but too slow/i)).toBeVisible();
+    expect(await screen.findByText(/dancing but too fast/i)).toBeVisible();
+    expect(document.querySelector('input')).toBeNull();
+  });
+
+  it('shows the read only view when a user can\'t edit', async () => {
+    renderObjectiveTopics(
+      false,
+      defaultTopicSelection,
+      'Not Started',
+      'Not Started',
+      false,
     );
 
     expect(await screen.findByText(/dancing but too slow/i)).toBeVisible();

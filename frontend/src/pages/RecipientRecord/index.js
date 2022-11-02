@@ -7,7 +7,6 @@ import { Switch, Route } from 'react-router';
 import { DECIMAL_BASE } from '../../Constants';
 import { getRecipient } from '../../fetchers/recipient';
 import RecipientTabs from './components/RecipientTabs';
-import FeatureFlag from '../../components/FeatureFlag';
 import { HTTPError } from '../../fetchers';
 import './index.scss';
 import Profile from './pages/Profile';
@@ -218,27 +217,34 @@ export default function RecipientRecord({ match }) {
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/goals/:goalId"
-          render={({ match: goalMatch }) => {
-            const { params: { goalId } } = goalMatch;
-            return (
-              <FeatureFlag flag="recipient_goals_objectives" renderNotFound>
-                <Helmet>
-                  <title>
-                    {goalId === 'new'
-                      ? `Create a goal for ${recipientName}`
-                      : `Edit goal ${goalId} for ${recipientName}` }
-                  </title>
-                </Helmet>
-                <GoalForm
-                  id={goalId}
-                  regionId={regionId}
-                  recipient={recipientData}
-                  showRTRnavigation
-                />
-              </FeatureFlag>
-            );
-          }}
+          path="/recipient-tta-records/:recipientId/region/:regionId/goals/new"
+          render={() => (
+            <>
+              <Helmet>
+                <title>
+                  Create a goal for
+                  {' '}
+                  {recipientName}
+                </title>
+              </Helmet>
+              <GoalForm
+                regionId={regionId}
+                recipient={recipientData}
+                showRTRnavigation
+                isNew
+              />
+            </>
+          )}
+        />
+        <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/goals"
+          render={() => (
+            <GoalForm
+              regionId={regionId}
+              recipient={recipientData}
+              showRTRnavigation
+            />
+          )}
         />
         <Route
           render={() => (

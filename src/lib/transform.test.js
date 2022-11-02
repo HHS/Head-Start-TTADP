@@ -9,6 +9,7 @@ import {
   ActivityReportObjective,
   ActivityReportObjectiveResource,
   Topic,
+  Objective,
   File,
 } from '../models';
 import { activityReportToCsvRecord, makeGoalsAndObjectivesObject, extractListOfGoalsAndObjectives } from './transform';
@@ -199,6 +200,7 @@ describe('activityReportToCsvRecord', () => {
       topics: [{ name: 'topic 1' }, { name: 'topic 2' }, { name: 'topic 3' }],
       activityReportObjectiveResources: [{ userProvidedUrl: 'https://test1.gov' }, { userProvidedUrl: 'https://test2.gov' }],
       files: [{ originalFileName: 'file1.txt' }, { originalFileName: 'file2.pdf' }],
+      objective: mockObjectives[0],
     },
   ];
 
@@ -376,6 +378,10 @@ describe('activityReportToCsvRecord', () => {
           as: 'activityReportObjectives',
           include: [
             {
+              model: Objective,
+              as: 'objective',
+            },
+            {
               model: ActivityReportObjectiveResource,
               as: 'activityReportObjectiveResources',
             },
@@ -392,7 +398,7 @@ describe('activityReportToCsvRecord', () => {
       ],
     });
 
-    const output = await activityReportToCsvRecord(report);
+    const output = await activityReportToCsvRecord(report.toJSON());
     const {
       creatorName,
       lastUpdatedBy,

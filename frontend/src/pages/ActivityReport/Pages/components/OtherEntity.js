@@ -25,13 +25,8 @@ export default function OtherEntity({
   // for fetching topic options from API
   useEffect(() => {
     async function fetchTopics() {
-      const topicsFromApi = await getTopics();
-
-      const topicsAsOptions = topicsFromApi.map((topic) => ({
-        label: topic.name,
-        value: topic.id,
-      }));
-      setTopicOptions(topicsAsOptions);
+      const topics = await getTopics();
+      setTopicOptions(topics);
     }
 
     fetchTopics();

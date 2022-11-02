@@ -12,12 +12,6 @@ export async function goalsByIdsAndActivityReport(goalIds, reportId) {
   return response.json();
 }
 
-export async function goalByIdAndRecipient(goalId, recipientId) {
-  const url = join(goalsUrl, goalId, 'recipient', recipientId);
-  const response = await get(url);
-  return response.json();
-}
-
 export async function createOrUpdateGoals(goals) {
   const data = {
     goals,
@@ -48,8 +42,8 @@ export async function updateGoalStatus(
   return updatedGoal.json();
 }
 
-export async function deleteGoal(id, regionId) {
-  const url = join(goalsUrl, id.toString());
+export async function deleteGoal(goalIds, regionId) {
+  const url = join(goalsUrl, `?${goalIds.map((id) => `goalIds=${id}`).join('&')}`);
   const deleted = await destroy(url, { regionId });
   return deleted.json();
 }
