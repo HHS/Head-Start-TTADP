@@ -266,6 +266,7 @@ export default function Objective({
         inputName={objectiveFilesInputName}
         reportId={reportId}
         goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
+        label="Did you use any TTA resources that aren't available as link?"
       />
       <ObjectiveTta
         ttaProvided={objectiveTta}
