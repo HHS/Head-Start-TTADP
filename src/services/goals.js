@@ -779,7 +779,7 @@ export async function createOrUpdateGoals(goals) {
       where: {
         grantId,
         status: { [Op.not]: 'Closed' },
-        id: ids,
+        id: ids || [],
       },
     });
 
