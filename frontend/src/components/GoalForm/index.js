@@ -238,7 +238,7 @@ export default function GoalForm({
   const validateGoalName = (message = GOAL_NAME_ERROR) => {
     let error = <></>;
 
-    if (!goalName) {
+    if (!goalName || !goalName.trim()) {
       error = <span className="usa-error-message">{message}</span>;
     }
 
