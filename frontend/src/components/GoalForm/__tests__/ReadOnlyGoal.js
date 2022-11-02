@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen,
+  render, screen, within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ReadOnlyGoal from '../ReadOnlyGoal';
@@ -15,11 +15,11 @@ describe('ReadOnlyGoal', () => {
     id: 1,
   };
 
-  const renderReadOnlyGoal = (hideEdit = false) => {
+  const renderReadOnlyGoal = (hideEdit = false, onRemove = jest.fn()) => {
     render((
       <ReadOnlyGoal
         onEdit={jest.fn()}
-        onRemove={jest.fn()}
+        onRemove={onRemove}
         hideEdit={hideEdit}
         goal={createdGoal}
         index={0}
@@ -44,5 +44,20 @@ describe('ReadOnlyGoal', () => {
     userEvent.click(contextButton);
     const menu = await screen.findByTestId('menu');
     expect(menu.querySelectorAll('li').length).toBe(1);
+  });
+
+  it('calls on remove', async () => {
+    const onRemove = jest.fn();
+    renderReadOnlyGoal(false, onRemove);
+
+    const contextButton = await screen.findByRole('button');
+    userEvent.click(contextButton);
+    const menu = await screen.findByTestId('menu');
+    const removeButton = within(menu).getByText('Remove');
+    userEvent.click(removeButton);
+
+    expect(onRemove).toHaveBeenCalledWith({
+      endDate: null, grant: {}, id: 1, name: 'Sample goal', objectives: [],
+    });
   });
 });
