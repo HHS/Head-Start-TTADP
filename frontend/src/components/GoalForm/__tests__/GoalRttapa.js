@@ -24,14 +24,21 @@ describe('GoalRttapa', () => {
     renderGoalRttapa('Closed');
     expect(await screen.findByText('Recipient TTA Plan Agreement (RTTAPA) goal')).toBeVisible();
     expect(screen.getByText('Yes')).toBeVisible();
-    expect(document.querySelector('radio')).toBeNull();
+    expect(document.querySelector('input[type="radio"]')).toBeNull();
+  });
+
+  it('can update RTTAPA if the goal is still a draft', async () => {
+    renderGoalRttapa('Draft', jest.fn(), 'Yes');
+    expect(await screen.findByText('Is this a Recipient TTA Plan Agreement (RTTAPA) goal?')).toBeVisible();
+    expect(screen.getByText('Yes')).toBeVisible();
+    expect(document.querySelector('input[type="radio"]')).toBeTruthy();
   });
 
   it('shows the read only when it is initially "yes"', async () => {
     renderGoalRttapa('In Progress', jest.fn(), 'Yes');
     expect(await screen.findByText('Recipient TTA Plan Agreement (RTTAPA) goal')).toBeVisible();
     expect(screen.getByText('Yes')).toBeVisible();
-    expect(document.querySelector('radio')).toBeNull();
+    expect(document.querySelector('input[type="radio"]')).toBeNull();
   });
 
   it('calls on change', async () => {

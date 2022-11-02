@@ -14,7 +14,7 @@ export default function GoalRttapa({
   goalStatus,
   initial,
 }) {
-  const readOnly = useMemo(() => goalStatus === 'Closed' || initial === 'Yes', [goalStatus, initial]);
+  const readOnly = useMemo(() => goalStatus === 'Closed' || (goalStatus !== 'Draft' && initial === 'Yes'), [goalStatus, initial]);
 
   if (readOnly) {
     return (
