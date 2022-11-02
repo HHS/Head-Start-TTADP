@@ -78,7 +78,6 @@ function GoalCard({
   };
 
   const contextMenuLabel = `Actions for goal ${id}`;
-  const showContextMenu = true;
   const menuItems = [
     {
       label: goalStatus === 'Closed' ? 'View' : 'Edit',
@@ -111,14 +110,10 @@ function GoalCard({
             regionId={regionId}
           />
         </div>
-        {showContextMenu
-          ? (
-            <ContextMenu
-              label={contextMenuLabel}
-              menuItems={menuItems}
-            />
-          )
-          : null}
+        <ContextMenu
+          label={contextMenuLabel}
+          menuItems={menuItems}
+        />
       </div>
       <div className="display-flex flex-wrap margin-y-2 margin-left-5">
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-text padding-right-3">
