@@ -254,7 +254,7 @@ export default function GoalForm({
   const validateGoalName = (message = GOAL_NAME_ERROR) => {
     let error = <></>;
 
-    if (!goalName) {
+    if (!goalName || !goalName.trim()) {
       error = <span className="usa-error-message">{message}</span>;
     }
 
@@ -696,10 +696,10 @@ export default function GoalForm({
   const onRemove = async (g) => {
     setIsLoading(true);
     try {
-      const success = await deleteGoal(g, regionId);
+      const success = await deleteGoal(g.goalIds, regionId);
 
       if (success) {
-        const newGoals = createdGoals.filter((goal) => goal.id !== g);
+        const newGoals = createdGoals.filter((goal) => goal.id !== g.id);
         setCreatedGoals(newGoals);
         if (!newGoals.length) {
           setShowForm(true);
