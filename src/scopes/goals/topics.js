@@ -2,8 +2,6 @@ import { Op } from 'sequelize';
 import { filterAssociation } from './utils';
 import { sequelize } from '../../models';
 
-/* TODO: Switch for New Goal Creation. */
-
 const objectiveTopicFilter = `
 SELECT
   DISTINCT "Goal"."id"
