@@ -371,6 +371,20 @@ export async function getCollaborator(entityType, entityId, userId) {
   });
 }
 
+export async function getCollaborators(entityType, entityId, collaboratorTypes = []) {
+  return Collaborator.findAll({
+    where: {
+      entityType,
+      entityId,
+      collaboratorTypes: { [Op.overlap]: collaboratorTypes },
+    },
+    include: [
+      { model: User, as: 'user' },
+      { model: Role, as: 'roles' },
+    ],
+  });
+}
+
 export async function setRatifierStatus(entityType, entityId, userId, status) {
   const ratifier = await getCollaborator(
     entityType,

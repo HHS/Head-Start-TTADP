@@ -33,7 +33,7 @@ import {
   getAllDownloadableActivityReportAlerts,
   activityReportsForCleanup,
 } from '../../services/activityReports';
-import { upsertRatifier, syncRatifiers } from '../../services/collaborators';
+import { upsertRatifier } from '../../services/collaborators';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
 import { userById, usersWithPermissions } from '../../services/users';
@@ -70,7 +70,8 @@ jest.mock('../../services/activityReports', () => ({
 
 jest.mock('../../services/collaborators', () => ({
   upsertRatifier: jest.fn(),
-  syncRatifiers: jest.fn(),
+  getCollaborators: jest.fn(() => []),
+  resetAllRatifierStatuses: jest.fn(),
 }));
 
 jest.mock('../../services/objectives', () => ({
@@ -397,7 +398,6 @@ describe('Activity Report handlers', () => {
         activityReportId: 1,
         userId: secondMockManager.id,
       }];
-      syncRatifiers.mockResolvedValue(mockApprovers);
       const assignedNotification = jest.spyOn(mailer, 'approverAssignedNotification').mockImplementation();
       const reportAfterSubmit = {
         approval: {
@@ -407,29 +407,22 @@ describe('Activity Report handlers', () => {
         approvers: mockApprovers,
       };
       jest.spyOn(ActivityReportModel, 'findByPk').mockResolvedValueOnce(reportAfterSubmit);
-      const approverUpdate = jest.spyOn(Collaborator, 'update').mockImplementation();
+      createOrUpdate.mockResolvedValue(reportAfterSubmit);
       await submitReport(request, mockResponse);
       const { displayId, ...r } = report;
       expect(createOrUpdate).toHaveBeenCalledWith(
         {
-          additionalNotes: 'notes', approval: { submissionStatus: REPORT_STATUSES.SUBMITTED },
+          additionalNotes: 'notes',
+          approval: { submissionStatus: REPORT_STATUSES.SUBMITTED },
+          approvers: request.body.approvers,
         },
         {
-          dataValues: {
-            ...r,
-            displayId,
-          },
+          dataValues: { ...r, displayId },
           displayId,
           objectivesWithoutGoals: [],
         },
       );
-      expect(syncRatifiers)
-        .toHaveBeenCalledWith(1, [ENTITY_TYPES.REPORT, mockManager.id, secondMockManager.id]);
       expect(assignedNotification).toHaveBeenCalled();
-      expect(approverUpdate).toHaveBeenCalledWith({ status: null }, {
-        where: { status: APPROVER_STATUSES.NEEDS_ACTION, activityReportId: 1 },
-        individualHooks: true,
-      });
       expect(mockResponse.json).toHaveBeenCalledWith(reportAfterSubmit);
     });
     it('handles unauthorizedRequests', async () => {

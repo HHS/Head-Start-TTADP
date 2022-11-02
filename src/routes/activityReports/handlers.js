@@ -25,9 +25,9 @@ import {
 } from '../../services/activityReports';
 import {
   upsertRatifier,
-  syncRatifiers,
   setRatifierStatus,
   resetAllRatifierStatuses,
+  getCollaborators,
 } from '../../services/collaborators';
 import { saveObjectivesForReport, getObjectivesByReportId } from '../../services/objectives';
 import { goalsForGrants } from '../../services/goals';
@@ -38,6 +38,7 @@ import {
   DECIMAL_BASE,
   USER_SETTINGS,
   ENTITY_TYPES,
+  COLLABORATOR_TYPES,
 } from '../../constants';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
 
@@ -540,10 +541,16 @@ export async function submitReport(req, res) {
       approval: {
         submissionStatus: REPORT_STATUSES.SUBMITTED,
       },
+      approvers,
     }, report);
 
-    // Create, restore or destroy this report's approvers
-    const currentApprovers = await syncRatifiers(ENTITY_TYPES.REPORT, activityReportId, approvers);
+
+    // Get current approvers for this report for email notification purposes.
+    const currentApprovers = await getCollaborators(
+      ENTITY_TYPES.REPORT,
+      activityReportId,
+      [COLLABORATOR_TYPES.RATIFIER],
+    );
 
     const settingsForAllCurrentApprovers = await Promise.all(currentApprovers.map(
       (a) => userSettingOverridesById(
