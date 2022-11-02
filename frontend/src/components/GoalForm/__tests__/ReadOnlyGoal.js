@@ -55,6 +55,9 @@ describe('ReadOnlyGoal', () => {
     const menu = await screen.findByTestId('menu');
     const removeButton = within(menu).getByText('Remove');
     userEvent.click(removeButton);
-    expect(onRemove).toHaveBeenCalledWith(1);
+
+    expect(onRemove).toHaveBeenCalledWith({
+      endDate: null, grant: {}, id: 1, name: 'Sample goal', objectives: [],
+    });
   });
 });
