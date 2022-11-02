@@ -28,6 +28,7 @@ export default function ObjectiveForm({
   topicOptions,
   onUploadFiles,
   goalStatus,
+  userCanEdit,
 }) {
   // the parent objective data from props
   const {
@@ -110,6 +111,7 @@ export default function ObjectiveForm({
         validateObjectiveTitle={validateObjectiveTitle}
         status={status}
         isLoading={isLoading}
+        userCanEdit={userCanEdit}
       />
 
       <ObjectiveTopics
@@ -122,6 +124,7 @@ export default function ObjectiveForm({
         goalStatus={goalStatus}
         isOnReport={isOnReport || false}
         isLoading={isLoading}
+        userCanEdit={userCanEdit}
       />
 
       <ResourceRepeater
@@ -133,6 +136,7 @@ export default function ObjectiveForm({
         status={status}
         goalStatus={goalStatus}
         isLoading={isLoading}
+        userCanEdit={userCanEdit}
       />
       { title && (
       <ObjectiveFiles
@@ -145,6 +149,7 @@ export default function ObjectiveForm({
         onUploadFiles={onUploadFiles}
         index={index}
         goalStatus={goalStatus}
+        userCanEdit={userCanEdit}
       />
       )}
 
@@ -154,6 +159,7 @@ export default function ObjectiveForm({
         onChangeStatus={onChangeStatus}
         inputName={`objective-status-${index}`}
         isLoading={isLoading}
+        userCanEdit={userCanEdit}
       />
 
     </div>
@@ -204,6 +210,7 @@ ObjectiveForm.propTypes = {
     value: PropTypes.number,
   })).isRequired,
   onUploadFiles: PropTypes.func.isRequired,
+  userCanEdit: PropTypes.bool.isRequired,
 };
 
 ObjectiveForm.defaultProps = {

@@ -23,6 +23,7 @@ describe('ObjectiveFiles', () => {
       onBlur={jest.fn()}
       goalStatus="Closed"
       onUploadFiles={jest.fn()}
+      userCanEdit
     />);
     expect(await screen.findByText('Resource files')).toBeVisible();
     expect(screen.getByText(/testfile1\.txt/i)).toBeVisible();
@@ -44,6 +45,28 @@ describe('ObjectiveFiles', () => {
       onBlur={jest.fn()}
       goalStatus="Not Started"
       onUploadFiles={jest.fn()}
+      userCanEdit
+    />);
+    expect(await screen.findByText('Resource files')).toBeVisible();
+    expect(screen.getByText(/testfile1\.txt/i)).toBeVisible();
+    expect(screen.getByText(/testfile2\.txt/i)).toBeVisible();
+  });
+
+  it('shows the read only when a user can\'t edit', async () => {
+    render(<ObjectiveFiles
+      files={[
+        { originalFileName: 'TestFile1.txt', id: 1 },
+        { originalFileName: 'TestFile2.txt', id: 2 },
+      ]}
+      onChangeFiles={jest.fn()}
+      objective={{ id: 1 }}
+      status="In Progress"
+      index={0}
+      inputName="objectiveFiles"
+      onBlur={jest.fn()}
+      goalStatus="Not Started"
+      onUploadFiles={jest.fn()}
+      userCanEdit={false}
     />);
     expect(await screen.findByText('Resource files')).toBeVisible();
     expect(screen.getByText(/testfile1\.txt/i)).toBeVisible();
@@ -65,6 +88,7 @@ describe('ObjectiveFiles', () => {
       onBlur={jest.fn()}
       onUploadFiles={jest.fn()}
       goalStatus="In Progress"
+      userCanEdit
     />);
     expect(screen.getByText(/testfile1\.txt/i)).toBeVisible();
     expect(screen.getByText(/testfile2\.txt/i)).toBeVisible();
@@ -82,6 +106,7 @@ describe('ObjectiveFiles', () => {
       onBlur={jest.fn()}
       status="Draft"
       goalStatus="In Progress"
+      userCanEdit
     />);
     let radio = screen.getByRole('radio', { name: /yes/i });
     userEvent.click(radio);
@@ -111,6 +136,7 @@ describe('ObjectiveFiles', () => {
       onBlur={jest.fn()}
       status="Draft"
       goalStatus="In Progress"
+      userCanEdit
     />);
     expect(screen.queryByRole('radio', { name: /yes/i })).not.toBeInTheDocument();
   });
