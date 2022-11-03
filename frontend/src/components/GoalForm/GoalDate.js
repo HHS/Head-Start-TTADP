@@ -14,8 +14,9 @@ export default function GoalDate({
   inputName,
   isLoading,
   goalStatus,
+  userCanEdit,
 }) {
-  if (goalStatus === 'Closed') {
+  if (goalStatus === 'Closed' || !userCanEdit) {
     if (endDate && endDate !== 'Invalid date') {
       return (
         <>
@@ -35,7 +36,6 @@ export default function GoalDate({
       <Label htmlFor={inputName}>
         Anticipated close date (mm/dd/yyyy)
         {' '}
-        <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
         <QuestionTooltip text="When do you expect to end TTA work and mark this goal as closed?" />
       </Label>
       {error}
@@ -60,6 +60,7 @@ GoalDate.propTypes = {
   inputName: PropTypes.string,
   isLoading: PropTypes.bool,
   goalStatus: PropTypes.string.isRequired,
+  userCanEdit: PropTypes.bool.isRequired,
 };
 
 GoalDate.defaultProps = {
