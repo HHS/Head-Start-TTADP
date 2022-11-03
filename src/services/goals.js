@@ -798,6 +798,7 @@ export async function createOrUpdateGoals(goals) {
         },
         defaults: {
           status: 'Draft', // if we are creating a goal for the first time, it should be set to 'Draft'
+          isFromSmartsheetTtaPlan: false,
         },
       });
     }
