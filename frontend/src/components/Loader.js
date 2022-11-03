@@ -8,7 +8,7 @@ function Loader({ loading, loadingLabel, text }) {
   return (
     <>
       {loading && (
-        <div role="status" aria-live="polite" className="overlay" aria-label={loadingLabel}>
+        <div role="status" aria-live="polite" className="overlay top" style={{ position: 'fixed' }} aria-label={loadingLabel}>
           <div className="overlay-spinner">
             <Spinner />
             { text }
