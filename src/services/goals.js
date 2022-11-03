@@ -769,16 +769,11 @@ export async function createOrUpdateGoals(goals) {
       createdVia,
       endDate,
       status,
-      ...fields
+      ...options
     } = goalData;
 
     // there can only be one on the goal form (multiple grants maybe, but one recipient)
     recipient = recipientId;
-
-    const options = {
-      ...fields,
-      isFromSmartsheetTtaPlan: false,
-    };
 
     // we first need to see if the goal exists given what ids we have
     // for new goals, the id will be an empty array
