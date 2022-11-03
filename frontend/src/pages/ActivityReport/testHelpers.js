@@ -52,7 +52,7 @@ export const formData = () => ({
   owner: {
     userId: 1,
     user: { name: 'test', nameWithRole: 'test', roles: { fullName: 'Reporter' } },
-    roles: [ { fullName: 'Reporter' }],
+    roles: [{ fullName: 'Reporter' }],
   },
   goals: [],
   goalsAndObjectives: [],
