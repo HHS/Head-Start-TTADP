@@ -544,7 +544,6 @@ export async function submitReport(req, res) {
       approvers,
     }, report);
 
-
     // Get current approvers for this report for email notification purposes.
     const currentApprovers = await getCollaborators(
       ENTITY_TYPES.REPORT,

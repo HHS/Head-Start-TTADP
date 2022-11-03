@@ -4,13 +4,16 @@ import db, {
   Grant,
   Recipient,
   Objective,
-  ActivityReport,
   ActivityRecipient,
   ActivityReportGoal,
   ActivityReportObjective,
+  User,
+  Role,
+  UserRole,
 } from '../../models';
 import { REPORT_STATUSES } from '../../constants';
 import { activityReportAndRecipientsById, createOrUpdate } from '../activityReports';
+import { destroyReport } from '../../testUtils';
 
 describe('removeRemovedRecipientsGoals', () => {
   let multiRecipientReport;

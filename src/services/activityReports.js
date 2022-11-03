@@ -1385,7 +1385,11 @@ export async function createOrUpdate(newActivityReport, report) {
   //   );
   // }
   try {
-    const [r, recips, gAndOs] = await activityReportAndRecipientsById(savedReport.id, !!imported, true);
+    const [r, recips, gAndOs] = await activityReportAndRecipientsById(
+      savedReport.id,
+      !!imported,
+      true,
+    );
     return r ? {
       ...r.dataValues,
       displayId: r.displayId,
