@@ -1,5 +1,11 @@
+import httpContext from 'express-http-context';
 import { Op } from 'sequelize';
-import { OBJECTIVE_STATUS } from '../../constants';
+import {
+  OBJECTIVE_STATUS,
+  ENTITY_TYPES,
+  COLLABORATOR_TYPES,
+} from '../../constants';
+import { upsertCollaborator } from '../../services/collaborators';
 
 const findOrCreateObjectiveTemplate = async (
   sequelize,
@@ -229,6 +235,19 @@ const propagateMetadataToTemplate = async (sequelize, instance, options) => {
   }
 };
 
+const autoPopulateCollaborators = async (sequelize, instance, options, collaboratorTypes) => {
+  const loggedUser = httpContext.get('loggedUser') ? Number(httpContext.get('loggedUser')) : undefined;
+  if (loggedUser && typeof loggedUser === 'number') {
+    await upsertCollaborator({
+      entytyType: ENTITY_TYPES.OBJECTIVE,
+      entityId: instance.id,
+      collaboratorTypes,
+      userId: loggedUser,
+      tier: 1,
+    });
+  }
+};
+
 const beforeValidate = async (sequelize, instance) => {
   // await autoPopulateObjectiveTemplateId(sequelize, instance, options);
   autoPopulateOnApprovedAR(sequelize, instance);
@@ -241,10 +260,22 @@ const afterUpdate = async (sequelize, instance, options) => {
   await propagateMetadataToTemplate(sequelize, instance, options);
   await linkObjectiveGoalTemplates(sequelize, instance, options);
   await propogateStatusToParentGoal(sequelize, instance, options);
+  await autoPopulateCollaborators(
+    sequelize,
+    instance,
+    options,
+    [COLLABORATOR_TYPES.EDITOR],
+  );
 };
 
 const afterCreate = async (sequelize, instance, options) => {
   await propogateStatusToParentGoal(sequelize, instance, options);
+  await autoPopulateCollaborators(
+    sequelize,
+    instance,
+    options,
+    [COLLABORATOR_TYPES.OWNER, COLLABORATOR_TYPES.INSTANTIATOR],
+  );
 };
 
 export {

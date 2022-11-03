@@ -1,7 +1,7 @@
 const { Op, Model } = require('sequelize');
 const { COLLABORATOR_TYPES, ENTITY_TYPES, CLOSE_SUSPEND_REASONS } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
-const { beforeValidate, afterUpdate } = require('./hooks/goal');
+const { beforeValidate, afterCreate, afterUpdate } = require('./hooks/goal');
 
 /**
  * Goals table. Stores goals for tta.
@@ -170,6 +170,7 @@ module.exports = (sequelize, DataTypes) => {
     modelName: 'Goal',
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });
