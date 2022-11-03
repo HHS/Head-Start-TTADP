@@ -55,7 +55,7 @@ export default function GoalForm({
     rules: {
       validate: {
         isValidDate: (value) => activityRecipientType === 'other-entity' || (
-          (value && moment(value, 'MM/DD/YYYY').isValid())
+          (value && moment(value, 'MM/DD/YYYY').isValid()) || value === ''
         ) || GOAL_DATE_ERROR,
       },
     },
@@ -143,6 +143,7 @@ export default function GoalForm({
         isOnReport={goal.onApprovedAR || false}
         goalStatus={status}
         isLoading={isLoading || loadingObjectives}
+        userCanEdit
       />
 
       <GoalDate
@@ -154,6 +155,7 @@ export default function GoalForm({
         inputName={goalEndDateInputName}
         goalStatus={status}
         isLoading={isLoading || loadingObjectives}
+        userCanEdit
       />
 
       <Objectives

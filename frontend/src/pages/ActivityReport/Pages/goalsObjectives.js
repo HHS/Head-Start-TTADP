@@ -109,9 +109,10 @@ const GoalsObjectives = ({
     setValue('goalForEditing', newGoal(grantIds));
   };
 
-  const onRemove = (goalId) => {
-    const copyOfSelectedGoals = selectedGoals.map((goal) => ({ ...goal }));
-    const index = copyOfSelectedGoals.findIndex((goal) => goal.id === goalId);
+  const onRemove = (goal) => {
+    const goalId = goal.id;
+    const copyOfSelectedGoals = selectedGoals.map((g) => ({ ...g }));
+    const index = copyOfSelectedGoals.findIndex((g) => g.id === goalId);
 
     if (index !== -1) {
       copyOfSelectedGoals.splice(index, 1);

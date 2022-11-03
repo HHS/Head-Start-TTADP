@@ -15,14 +15,16 @@ export default function ObjectiveTitle({
   status,
   inputName,
   isLoading,
+  userCanEdit,
 }) {
   const readOnly = useMemo(() => (
     isOnApprovedReport
     || status === 'Complete'
     || status === 'Suspended'
     || (status === 'Not Started' && isOnReport)
-    || (status === 'In Progress' && isOnReport)),
-  [isOnApprovedReport, isOnReport, status]);
+    || (status === 'In Progress' && isOnReport)
+    || !userCanEdit),
+  [isOnApprovedReport, isOnReport, status, userCanEdit]);
 
   return (
     <FormGroup error={error.props.children}>
@@ -59,6 +61,7 @@ ObjectiveTitle.propTypes = {
   status: PropTypes.string.isRequired,
   inputName: PropTypes.string,
   isLoading: PropTypes.bool,
+  userCanEdit: PropTypes.bool.isRequired,
 };
 
 ObjectiveTitle.defaultProps = {
