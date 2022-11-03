@@ -68,6 +68,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    isRttapa: {
+      type: DataTypes.ENUM(['Yes', 'No']),
+      allowNull: true,
+    },
     name: DataTypes.TEXT,
     status: DataTypes.STRING,
     timeframe: DataTypes.STRING,

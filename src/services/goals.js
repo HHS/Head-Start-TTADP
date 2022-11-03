@@ -49,6 +49,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     [sequelize.col('grant.recipient.id'), 'recipientId'],
     'goalNumber',
     'createdVia',
+    'isRttapa',
     [
       sequelize.literal(`
         (
@@ -462,10 +463,14 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
  */
 function reduceGoals(goals, forReport = false) {
   const objectivesReducer = forReport ? reduceObjectivesForActivityReport : reduceObjectives;
+
+  const where = (g, currentValue) => (forReport ? g.name === currentValue.name
+    && g.status === currentValue.status
+    && g.isRttapa === currentValue.activityReportGoals[0].isRttapa : g.name === currentValue.name
+    && g.status === currentValue.status);
+
   const r = goals.reduce((previousValues, currentValue) => {
-    const existingGoal = previousValues.find((g) => (
-      g.name === currentValue.name && g.status === currentValue.status
-    ));
+    const existingGoal = previousValues.find((g) => where(g, currentValue));
 
     if (existingGoal) {
       existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.goalNumber];
@@ -505,6 +510,11 @@ function reduceGoals(goals, forReport = false) {
       ),
       isNew: false,
     };
+
+    if (forReport) {
+      goal.isRttapa = currentValue.activityReportGoals[0].isRttapa;
+      goal.initialRttapa = currentValue.isRttapa;
+    }
 
     return [...previousValues, goal];
   }, []);
@@ -814,18 +824,20 @@ export async function createOrUpdateGoals(goals) {
       regionId,
       objectives,
       createdVia,
+      isRttapa,
       endDate,
       status,
-      ...fields
+      ...options
     } = goalData;
 
     // there can only be one on the goal form (multiple grants maybe, but one recipient)
     recipient = recipientId;
 
-    const options = {
-      ...fields,
-      isFromSmartsheetTtaPlan: false,
-    };
+    let isRttapaValue = null;
+
+    if (isRttapa === 'Yes' || isRttapa === 'No') {
+      isRttapaValue = isRttapa;
+    }
 
     // we first need to see if the goal exists given what ids we have
     // for new goals, the id will be an empty array
@@ -850,6 +862,7 @@ export async function createOrUpdateGoals(goals) {
         },
         defaults: {
           status: 'Draft', // if we are creating a goal for the first time, it should be set to 'Draft'
+          isFromSmartsheetTtaPlan: false,
         },
       });
     }
@@ -859,8 +872,12 @@ export async function createOrUpdateGoals(goals) {
       await newGoal.update(
         {
           ...options,
+          isRttapa: isRttapaValue,
           status,
-          createdVia: createdVia || 'rtr',
+          // if the createdVia column is populated, keep what's there
+          // otherwise, if the goal is imported, we say so
+          // otherwise, we've got ourselves an rtr goal, baby
+          createdVia: createdVia || (newGoal.isFromSmartsheetTtaPlan ? 'imported' : 'rtr'),
           endDate: endDate || null,
         },
         { individualHooks: true },
@@ -868,7 +885,7 @@ export async function createOrUpdateGoals(goals) {
     // except for the end date, which is always editable
     } else if (newGoal) {
       await newGoal.update(
-        { endDate: endDate || null },
+        { endDate: endDate || null, isRttapa: isRttapaValue },
         { individualHooks: true },
       );
     }
@@ -1042,24 +1059,17 @@ export async function goalsForGrants(grantIds) {
       'status',
       'onApprovedAR',
       'endDate',
+      'isRttapa',
     ],
-    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"'],
+    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"', '"Goal"."isRttapa"'],
     where: {
       '$grant.id$': ids,
-      [Op.or]: [
-        {
-          status: 'Not Started',
-        },
-        {
-          status: 'In Progress',
-        },
-        {
-          status: null,
-        },
-        {
-          status: 'Draft',
-        },
-      ],
+      status: {
+        [Op.or]: [
+          { [Op.notIn]: ['Closed', 'Suspended'] },
+          { [Op.is]: null },
+        ],
+      },
     },
     include: [
       {
@@ -1441,6 +1451,7 @@ export async function saveGoalsForReport(goals, report) {
         onApprovedAR,
         createdVia,
         endDate: discardedEndDate,
+        isRttapa,
         ...fields
       } = goal;
 
@@ -1468,7 +1479,7 @@ export async function saveGoalsForReport(goals, report) {
           await newGoal.update({ endDate }, { individualHooks: true });
         }
 
-        await cacheGoalMetadata(newGoal, report.id);
+        await cacheGoalMetadata(newGoal, report.id, isRttapa || null);
 
         const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
         currentObjectives = [...currentObjectives, ...newGoalObjectives];
@@ -1486,19 +1497,26 @@ export async function saveGoalsForReport(goals, report) {
         onApprovedAR, // we don't want to set this manually
         endDate: discardedEndDate, // get this outta here
         createdVia,
-        goalIds: discardedeGoalIds,
+        goalIds: discardedGoalIds,
+        isRttapa,
         ...fields
       } = goal;
 
       const { goalTemplateId } = existingGoals[0];
 
       await Promise.all(existingGoals.map(async (existingGoal) => {
-        await existingGoal.update({ status, endDate, ...fields }, { individualHooks: true });
-        // eslint-disable-next-line max-len
-        const existingGoalObjectives = await createObjectivesForGoal(existingGoal, objectives, report);
+        await existingGoal.update({
+          status, endDate, ...fields,
+        }, { individualHooks: true });
+
+        const existingGoalObjectives = await createObjectivesForGoal(
+          existingGoal,
+          objectives,
+          report,
+        );
         currentObjectives = [...currentObjectives, ...existingGoalObjectives];
 
-        await cacheGoalMetadata(existingGoal, report.id);
+        await cacheGoalMetadata(existingGoal, report.id, isRttapa);
       }));
 
       newGoals = await Promise.all(grantIds.map(async (gId) => {
@@ -1525,7 +1543,7 @@ export async function saveGoalsForReport(goals, report) {
           ...fields, status, endDate, createdVia: createdVia || 'activityReport',
         }, { individualHooks: true });
 
-        await cacheGoalMetadata(newGoal, report.id);
+        await cacheGoalMetadata(newGoal, report.id, isRttapa);
 
         const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
         currentObjectives = [...currentObjectives, ...newGoalObjectives];
@@ -1569,16 +1587,15 @@ export async function updateGoalStatusById(
 
 export async function getGoalsForReport(reportId) {
   const goals = await Goal.findAll({
-    where: {
-      id: {
-        [Op.in]: sequelize.literal(`
-        (SELECT
-          "goalId"
-        FROM "ActivityReportGoals"
-        WHERE "activityReportId" = ${reportId})`),
-      },
-    },
     include: [
+      {
+        model: ActivityReportGoal,
+        as: 'activityReportGoals',
+        where: {
+          activityReportId: reportId,
+        },
+        required: true,
+      },
       {
         model: Grant,
         as: 'grant',
@@ -1641,6 +1658,9 @@ export async function getGoalsForReport(reportId) {
           },
         ],
       },
+    ],
+    order: [
+      [[sequelize.col('activityReportGoals.createdAt'), 'asc']],
     ],
   });
 

@@ -10,6 +10,7 @@ import PlusButton from './PlusButton';
 import GrantSelect from './GrantSelect';
 import GoalText from './GoalText';
 import GoalDate from './GoalDate';
+import GoalRttapa from './GoalRttapa';
 import Loader from '../Loader';
 import {
   OBJECTIVE_DEFAULTS,
@@ -29,10 +30,14 @@ export default function Form({
   setGoalName,
   endDate,
   setEndDate,
+  isRttapa,
+  initialRttapa,
+  setIsRttapa,
   errors,
   validateGoalName,
   validateEndDate,
   validateGrantNumbers,
+  validateIsRttapa,
   validateGoalNameAndRecipients,
   objectives,
   setObjectives,
@@ -126,6 +131,7 @@ export default function Form({
         validateGrantNumbers={validateGrantNumbers}
         error={errors[FORM_FIELD_INDEXES.GRANTS]}
         isLoading={isLoading}
+        goalStatus={status}
         userCanEdit={userCanEdit}
       />
 
@@ -138,6 +144,17 @@ export default function Form({
         isLoading={isLoading}
         goalStatus={status}
         userCanEdit={userCanEdit}
+      />
+
+      <GoalRttapa
+        error={errors[FORM_FIELD_INDEXES.IS_RTTAPA]}
+        isRttapa={isRttapa}
+        onBlur={validateIsRttapa}
+        onChange={setIsRttapa}
+        isLoading={isLoading}
+        goalStatus={status}
+        isOnApprovedReport={isOnApprovedReport || false}
+        initial={initialRttapa}
       />
 
       <GoalDate
@@ -188,6 +205,9 @@ Form.propTypes = {
   validateGoalName: PropTypes.func.isRequired,
   validateEndDate: PropTypes.func.isRequired,
   validateGrantNumbers: PropTypes.func.isRequired,
+  validateIsRttapa: PropTypes.func.isRequired,
+  isRttapa: PropTypes.string.isRequired,
+  setIsRttapa: PropTypes.func.isRequired,
   setObjectiveError: PropTypes.func.isRequired,
   possibleGrants: PropTypes.arrayOf(
     PropTypes.shape({
@@ -240,6 +260,7 @@ Form.propTypes = {
   clearEmptyObjectiveError: PropTypes.func.isRequired,
   onUploadFiles: PropTypes.func.isRequired,
   validateGoalNameAndRecipients: PropTypes.func.isRequired,
+  initialRttapa: PropTypes.string.isRequired,
   userCanEdit: PropTypes.bool,
 };
 
