@@ -518,8 +518,8 @@ function ActivityReport({
 
   const onSave = async (data) => {
     const approvers = data.approvers.map((a) => {
-      const approver = { userId: a.User.id};
-      return approver
+      const approver = { userId: a.User.id };
+      return approver;
     });
     try {
       if (reportId.current === 'new') {
@@ -586,8 +586,8 @@ function ActivityReport({
 
   const onFormSubmit = async (data) => {
     const approvers = data.approvers.map((a) => {
-      const approver = { userId: a.User.id};
-      return approver
+      const approver = { userId: a.User.id };
+      return approver;
     });
     const reportToSubmit = {
       additionalNotes: data.additionalNotes,
