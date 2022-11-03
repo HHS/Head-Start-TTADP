@@ -65,9 +65,9 @@ export default function RecipientSummary({ summary, regionId }) {
             {summary.recipientId}
           </p>
         </div>
-        <RecipientInformationSection heading="Recipient Type" property="recipientType" grants={[{ recipientType: summary.recipientType }]} />
-        <RecipientInformationSection heading="Program Specialist" property="programSpecialistName" grants={summary.grants} distinct />
-        <RecipientInformationSection heading="Grant Specialist" property="grantSpecialistName" grants={summary.grants} distinct />
+        <RecipientInformationSection heading="Recipient type" property="recipientType" grants={[{ recipientType: summary.recipientType }]} />
+        <RecipientInformationSection heading="Program specialist" property="programSpecialistName" grants={summary.grants} distinct />
+        <RecipientInformationSection heading="Grant specialist" property="grantSpecialistName" grants={summary.grants} distinct />
       </div>
 
     </Container>

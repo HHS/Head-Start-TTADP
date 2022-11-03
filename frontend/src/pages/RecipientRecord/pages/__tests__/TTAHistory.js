@@ -71,7 +71,7 @@ describe('Recipient Record - TTA History', () => {
 
   it('renders the activity reports table', async () => {
     renderTTAHistory();
-    const reports = await screen.findByText('Activity Reports');
+    const reports = await screen.findByText(/approved activity reports/i, { selector: 'h2' });
     expect(reports).toBeInTheDocument();
   });
 
