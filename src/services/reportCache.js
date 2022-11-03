@@ -79,7 +79,7 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   ]);
 };
 
-const cacheGoalMetadata = async (goal, reportId) => {
+const cacheGoalMetadata = async (goal, reportId, isRttapa) => {
   const [arg] = await ActivityReportGoal.findOrCreate({
     where: {
       goalId: goal.id,
@@ -95,6 +95,7 @@ const cacheGoalMetadata = async (goal, reportId) => {
       closeSuspendReason: goal.closeSuspendReason,
       closeSuspendContext: goal.closeSuspendContext,
       endDate: goal.endDate,
+      isRttapa: isRttapa || null,
     }, {
       where: { id: activityReportGoalId },
       individualHooks: true,
