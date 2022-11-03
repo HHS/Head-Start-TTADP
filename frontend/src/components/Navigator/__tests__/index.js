@@ -167,7 +167,7 @@ describe('Navigator', () => {
     userEvent.click(await screen.findByRole('button', { name: 'first page Not Started' }));
     await waitFor(() => expect(
       updateForm,
-    ).toHaveBeenCalledWith({ ...initialData, second: null }, true));
+    ).toHaveBeenCalledWith({ ...initialData, second: null }));
     await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
   });
 
