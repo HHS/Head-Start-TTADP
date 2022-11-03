@@ -999,7 +999,10 @@ export async function goalsForGrants(grantIds) {
     where: {
       '$grant.id$': ids,
       status: {
-        [Op.notIn]: ['Closed', 'Suspended'],
+        [Op.or]: [
+          { [Op.notIn]: ['Closed', 'Suspended'] },
+          { [Op.is]: null },
+        ],
       },
     },
     include: [
