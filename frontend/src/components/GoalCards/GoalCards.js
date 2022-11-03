@@ -5,8 +5,6 @@ import { Grid, Alert } from '@trussworks/react-uswds';
 import GoalsCardsHeader from './GoalsCardsHeader';
 import Container from '../Container';
 import GoalCard from './GoalCard';
-import { GOALS_PER_PAGE } from '../../Constants';
-
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
 import { updateGoalStatus } from '../../fetchers/goals';
 
@@ -23,6 +21,8 @@ function GoalCards({
   sortConfig,
   setGoals,
   allGoalIds,
+  perPage,
+  perPageChange,
 }) {
   // Goal select check boxes.
   const [selectedGoalCheckBoxes, setSelectedGoalCheckBoxes] = useState({});
@@ -81,13 +81,8 @@ function GoalCards({
       && (checkValues.length === goals.length || checkValues.length === goalsCount)
       && checkValues.every((v) => v === true)) {
       setAllGoalsChecked(true);
-    } else {
-      if (allGoalsChecked === true) {
-        setAllGoalsChecked(false);
-      }
-      if (printAllGoals === true) {
-        setPrintAllGoals(false);
-      }
+    } else if (printAllGoals === true) {
+      setPrintAllGoals(false);
     }
   }, [selectedGoalCheckBoxes, allGoalsChecked, printAllGoals, goalsCount, goals.length]);
 
@@ -149,7 +144,7 @@ function GoalCards({
           count={goalsCount || 0}
           activePage={sortConfig.activePage}
           offset={sortConfig.offset}
-          perPage={GOALS_PER_PAGE}
+          perPage={perPage}
           handlePageChange={handlePageChange}
           recipientId={recipientId}
           regionId={regionId}
@@ -161,6 +156,8 @@ function GoalCards({
           selectAllGoalCheckboxSelect={selectAllGoalCheckboxSelect}
           selectAllGoals={checkAllGoals}
           selectedGoalIds={selectedCheckBoxes}
+          perPageChange={perPageChange}
+          pageGoalIds={goals.map((g) => g.id)}
         />
         <div>
 
@@ -205,9 +202,12 @@ GoalCards.propTypes = {
   }).isRequired,
   setGoals: PropTypes.func.isRequired,
   allGoalIds: PropTypes.arrayOf(PropTypes.number),
+  perPage: PropTypes.number,
+  perPageChange: PropTypes.func.isRequired,
 };
 
 GoalCards.defaultProps = {
   allGoalIds: [],
+  perPage: 10,
 };
 export default GoalCards;

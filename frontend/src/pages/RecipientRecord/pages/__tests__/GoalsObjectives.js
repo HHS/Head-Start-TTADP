@@ -224,7 +224,7 @@ describe('Goals and Objectives', () => {
 
     fetchMock.restore();
     fetchMock.get('/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=asc&offset=0&limit=10', { count: 1, goalRows: goals, statuses: defaultStatuses });
-    const sortCreated = await screen.findByRole('combobox');
+    const sortCreated = await screen.findByTestId('sortGoalsBy');
     userEvent.selectOptions(sortCreated, 'createdOn-asc');
 
     await waitFor(() => expect(fetchMock.called()).toBeTruthy());
@@ -255,5 +255,59 @@ describe('Goals and Objectives', () => {
     act(() => renderGoalsAndObjectives([1]));
 
     expect(await screen.findByText(/Unable to fetch goals/i)).toBeVisible();
+  });
+
+  it('adjusts items per page', async () => {
+    fetchMock.restore();
+
+    const goalToUse = {
+      id: 0,
+      goalStatus: 'Not Started',
+      createdOn: '2021-06-15',
+      goalText: '',
+      goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
+      objectiveCount: 5,
+      goalNumbers: ['G-4598'],
+      reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
+      objectives: [],
+    };
+    const goalCount = 60;
+    const goalsToDisplay = [];
+    // eslint-disable-next-line no-plusplus
+    for (let i = 1; i <= goalCount; i++) {
+      const goalText = `This is goal text ${i}.`;
+      goalsToDisplay.push({ ...goalToUse, id: i, goalText });
+    }
+    const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
+    fetchMock.get(noFilterUrl,
+      {
+        count: goalCount,
+        goalRows: goalsToDisplay.slice(0, 10),
+        statuses: defaultStatuses,
+      });
+
+    // Render.
+    act(() => renderGoalsAndObjectives());
+
+    // Assert initial.
+    expect(await screen.findByText(/1-10 of 60/i)).toBeVisible();
+    let goalsPerPage = screen.queryAllByTestId('goalCard');
+    expect(goalsPerPage.length).toBe(10);
+
+    // Change per page.
+    const noFilterUrlMore = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=25';
+    fetchMock.get(noFilterUrlMore,
+      {
+        count: goalCount,
+        goalRows: goalsToDisplay.slice(0, 25),
+        statuses: defaultStatuses,
+      });
+    const perPageDropDown = await screen.findByRole('combobox', { name: /select goals per page/i });
+    userEvent.selectOptions(perPageDropDown, '25');
+
+    // Assert per page change.
+    expect(await screen.findByText(/1-25 of 60/i)).toBeVisible();
+    goalsPerPage = screen.queryAllByTestId('goalCard');
+    expect(goalsPerPage.length).toBe(25);
   });
 });

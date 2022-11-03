@@ -89,8 +89,10 @@ function GoalCard({
   ];
 
   return (
-    <article className="ttahub-goal-card usa-card margin-x-3 margin-y-2 padding-3 radius-lg border smart-hub-border-base-lighter ">
-
+    <article
+      className="ttahub-goal-card usa-card margin-x-3 margin-y-2 padding-3 radius-lg border smart-hub-border-base-lighter"
+      data-testid="goalCard"
+    >
       <div className="display-flex flex-justify">
         <div className="display-flex flex-align-start flex-row">
           <Checkbox
