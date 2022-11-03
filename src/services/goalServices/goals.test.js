@@ -27,6 +27,7 @@ describe('Goals DB service', () => {
     beforeEach(() => {
       ActivityReportGoal.findAll = jest.fn().mockResolvedValue([]);
       ActivityReportGoal.destroy = jest.fn();
+      ActivityReportGoal.update = jest.fn();
       ActivityReportGoal.findOrCreate = jest.fn()
         .mockResolvedValue([{
           id: 1, goalId: 1, activityReportId: 1, update: jest.fn(),
@@ -143,6 +144,7 @@ describe('Goals DB service', () => {
           goalId: 1,
         },
       ]);
+
       await saveGoalsForReport([
         {
           isNew: true, grantIds: [1], name: 'name', status: 'Closed', objectives: [],

@@ -29,6 +29,7 @@ export const newGoal = (grantIds) => ({
   goalIds: [],
   oldGrantIds: [],
   status: 'Draft',
+  isRttapa: '',
 });
 
 const components = {
