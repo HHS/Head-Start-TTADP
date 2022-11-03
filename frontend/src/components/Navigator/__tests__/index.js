@@ -96,7 +96,11 @@ describe('Navigator', () => {
         localStorageAvailable: true,
       }}
       >
-        <AppLoadingContext.Provider value={{ setIsLoading: jest.fn(), setLoadingText: jest.fn() }}>
+        <AppLoadingContext.Provider value={{
+          setIsAppLoading: jest.fn(),
+          setAppLoadingText: jest.fn(),
+        }}
+        >
           <Navigator
             editable
             reportId={1}

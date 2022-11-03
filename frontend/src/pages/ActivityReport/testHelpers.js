@@ -62,7 +62,11 @@ export const formData = () => ({
 export const renderActivityReport = (id, location = 'activity-summary', showLastUpdatedTime = null, userId = 1) => {
   render(
     <Router history={history}>
-      <AppLoadingContext.Provider value={{ setIsLoading: jest.fn(), setLoadingText: jest.fn() }}>
+      <AppLoadingContext.Provider value={{
+        setIsAppLoading: jest.fn(),
+        setAppLoadingText: jest.fn(),
+      }}
+      >
         <UserContext.Provider value={{ user: { ...user, id: userId } }}>
           <ActivityReport
             match={{ params: { currentPage: location, activityReportId: id }, path: '', url: '' }}

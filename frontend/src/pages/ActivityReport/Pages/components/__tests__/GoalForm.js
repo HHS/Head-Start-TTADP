@@ -32,7 +32,11 @@ describe('GoalForm', () => {
     });
 
     return (
-      <AppLoadingContext.Provider value={{ setIsLoading: jest.fn(), setLoadingText: jest.fn() }}>
+      <AppLoadingContext.Provider value={{
+        setIsAppLoading: jest.fn(),
+        setAppLoadingText: jest.fn(),
+      }}
+      >
         <FormProvider {...hookForm}>
           <GoalForm
             goal={goal}
