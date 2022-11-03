@@ -131,7 +131,7 @@ function Navigator({
     const { status, ...values } = getValues();
     const data = { ...formData, ...values, pageState: newNavigatorState() };
 
-    updateFormData(data, true);
+    updateFormData(data);
     try {
       // Always clear the previous error message before a save.
       updateErrorMessage();
@@ -177,6 +177,7 @@ function Navigator({
     };
 
     let allGoals = [...selectedGoals, goal];
+
     // save goal to api, come back with new ids for goal and objectives
     try {
       // we only need save goal if we have a goal name
@@ -193,6 +194,12 @@ function Navigator({
         const goalBeingEdited = allGoals.find((g) => g.name === goal.name);
         setValue('goalForEditing', goalBeingEdited);
       }
+
+      // update form data
+      const { status, ...values } = getValues();
+      const data = { ...formData, ...values, pageState: newNavigatorState() };
+      updateFormData(data);
+
       updateErrorMessage('');
       updateLastSaveTime(moment());
     } catch (error) {
@@ -287,7 +294,7 @@ function Navigator({
 
     // the form value is updated but the react state is not
     // so here we go (todo - why are there two sources of truth?)
-    updateFormData({ ...formData, goals: newGoals }, true);
+    updateFormData({ ...formData, goals: newGoals });
   };
 
   const onObjectiveFormNavigate = async () => {
@@ -325,7 +332,7 @@ function Navigator({
     toggleObjectiveForm(true);
 
     // Update form data (formData has otherEntityIds).
-    updateFormData({ ...formData, objectivesWithoutGoals: newObjectives }, true);
+    updateFormData({ ...formData, objectivesWithoutGoals: newObjectives });
   };
 
   const onGoalFormNavigate = async () => {
@@ -337,20 +344,7 @@ function Navigator({
       await saveGoalsNavigate();
     }
   };
-
-  const onUpdatePage = async (index) => {
-    await onSaveForm();
-    if (index !== page.position) {
-      updatePage(index);
-      updateShowSavedDraft(false);
-    }
-  };
-
-  const onContinue = () => {
-    onUpdatePage(page.position + 1);
-  };
-
-  useInterval(async () => {
+  const draftSaver = async () => {
     // Determine if we should save draft on auto save.
     const saveGoalsDraft = isGoalsObjectivesPage && !isGoalFormClosed;
     const saveObjectivesDraft = isGoalsObjectivesPage && !isObjectivesFormClosed;
@@ -364,6 +358,22 @@ function Navigator({
       // Save regular.
       await onSaveForm();
     }
+  };
+
+  const onUpdatePage = async (index) => {
+    await draftSaver();
+    if (index !== page.position) {
+      updatePage(index);
+      updateShowSavedDraft(false);
+    }
+  };
+
+  const onContinue = () => {
+    onUpdatePage(page.position + 1);
+  };
+
+  useInterval(async () => {
+    await draftSaver();
   }, autoSaveInterval);
 
   // A new form page is being shown so we need to reset `react-hook-form` so validations are

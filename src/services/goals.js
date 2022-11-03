@@ -780,7 +780,7 @@ export async function createOrUpdateGoals(goals) {
       isRttapa,
       endDate,
       status,
-      ...fields
+      ...options
     } = goalData;
 
     // there can only be one on the goal form (multiple grants maybe, but one recipient)
@@ -791,12 +791,6 @@ export async function createOrUpdateGoals(goals) {
     if (isRttapa === 'Yes' || isRttapa === 'No') {
       isRttapaValue = isRttapa;
     }
-
-    const options = {
-      ...fields,
-      isFromSmartsheetTtaPlan: false,
-      isRttapa: isRttapaValue,
-    };
 
     // we first need to see if the goal exists given what ids we have
     // for new goals, the id will be an empty array
@@ -821,6 +815,7 @@ export async function createOrUpdateGoals(goals) {
         },
         defaults: {
           status: 'Draft', // if we are creating a goal for the first time, it should be set to 'Draft'
+          isFromSmartsheetTtaPlan: false,
         },
       });
     }
@@ -830,8 +825,12 @@ export async function createOrUpdateGoals(goals) {
       await newGoal.update(
         {
           ...options,
+          isRttapa: isRttapaValue,
           status,
-          createdVia: createdVia || 'rtr',
+          // if the createdVia column is populated, keep what's there
+          // otherwise, if the goal is imported, we say so
+          // otherwise, we've got ourselves an rtr goal, baby
+          createdVia: createdVia || (newGoal.isFromSmartsheetTtaPlan ? 'imported' : 'rtr'),
           endDate: endDate || null,
         },
         { individualHooks: true },
@@ -1018,20 +1017,12 @@ export async function goalsForGrants(grantIds) {
     group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"', '"Goal"."isRttapa"'],
     where: {
       '$grant.id$': ids,
-      [Op.or]: [
-        {
-          status: 'Not Started',
-        },
-        {
-          status: 'In Progress',
-        },
-        {
-          status: null,
-        },
-        {
-          status: 'Draft',
-        },
-      ],
+      status: {
+        [Op.or]: [
+          { [Op.notIn]: ['Closed', 'Suspended'] },
+          { [Op.is]: null },
+        ],
+      },
     },
     include: [
       {
