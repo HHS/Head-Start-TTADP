@@ -30,6 +30,7 @@ export default function ReadOnlyGoal({
       },
     ];
   }
+
   return (
     <div key={`goal${goal.id}`}>
       <div className="ttahub-goal-form-goal-summary padding-3 position-relative margin-bottom-4">
@@ -53,6 +54,10 @@ export default function ReadOnlyGoal({
         <div className="margin-bottom-2">
           <h4 className="margin-0">Goal</h4>
           <p className="usa-prose margin-0">{goal.name}</p>
+        </div>
+        <div className="margin-bottom-2">
+          <h4 className="margin-0">Recipient TTA Plan Agreement (RTTAPA) goal</h4>
+          <p className="usa-prose margin-0">{goal.isRttapa}</p>
         </div>
         {goal.endDate ? (
           <div className="margin-bottom-4">
@@ -106,6 +111,7 @@ ReadOnlyGoal.propTypes = {
     ),
     name: PropTypes.string,
     endDate: PropTypes.string,
+    isRttapa: PropTypes.string,
   }).isRequired,
 };
 

@@ -453,6 +453,39 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
   }
 };
 
+const automaticIsRttapaChangeOnApprovalForGoals = async (sequelize, instance, options) => {
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('calculatedStatus')
+    && instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
+    && instance.calculatedStatus === REPORT_STATUSES.APPROVED) {
+    const goals = await sequelize.models.Goal.findAll(
+      {
+        where: {
+          isRttapa: { [Op.or]: [null, 'No'] },
+        },
+        include: [
+          {
+            model: sequelize.models.ActivityReportGoal,
+            as: 'activityReportGoals',
+            required: true,
+            where: { activityReportId: instance.id },
+          },
+        ],
+        transaction: options.transaction,
+      },
+    );
+
+    await Promise.all((goals.map((goal) => {
+      if (['Yes', 'No'].includes(goal.activityReportGoals[0].isRttapa)) {
+        goal.set('isRttapa', goal.activityReportGoals[0].isRttapa);
+      }
+
+      return goal.save({ transaction: options.transaction, individualHooks: true });
+    })));
+  }
+};
+
 const automaticGoalObjectiveStatusCachingOnApproval = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
@@ -497,6 +530,7 @@ const afterUpdate = async (sequelize, instance, options) => {
   await automaticStatusChangeOnApprovalForGoals(sequelize, instance, options);
   await automaticGoalObjectiveStatusCachingOnApproval(sequelize, instance, options);
   await moveDraftGoalsToNotStartedOnSubmission(sequelize, instance, options);
+  await automaticIsRttapaChangeOnApprovalForGoals(sequelize, instance, options);
 };
 
 export {
