@@ -809,7 +809,10 @@ export async function createOrUpdateGoals(goals) {
         {
           ...options,
           status,
-          createdVia: createdVia || 'rtr',
+          // if the createdVia column is populated, keep what's there
+          // otherwise, if the goal is imported, we say so
+          // otherwise, we've got ourselves an rtr goal, baby
+          createdVia: createdVia || (newGoal.isFromSmartsheetTtaPlan ? 'imported' : 'rtr'),
           endDate: endDate || null,
         },
         { individualHooks: true },
@@ -995,20 +998,9 @@ export async function goalsForGrants(grantIds) {
     group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"'],
     where: {
       '$grant.id$': ids,
-      [Op.or]: [
-        {
-          status: 'Not Started',
-        },
-        {
-          status: 'In Progress',
-        },
-        {
-          status: null,
-        },
-        {
-          status: 'Draft',
-        },
-      ],
+      status: {
+        [Op.notIn]: ['Closed', 'Suspended'],
+      },
     },
     include: [
       {
