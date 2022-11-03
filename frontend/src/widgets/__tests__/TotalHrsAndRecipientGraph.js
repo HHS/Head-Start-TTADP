@@ -103,7 +103,7 @@ describe('Total Hrs And Recipient Graph Widget', () => {
     const data = undefined;
     renderTotalHrsAndRecipientGraph({ data });
 
-    expect(await screen.findByText('Total TTA Hours')).toBeInTheDocument();
+    expect(await screen.findByText(/Total TTA Hours/i)).toBeInTheDocument();
   });
 
   it('handles loading', async () => {
