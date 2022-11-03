@@ -156,7 +156,6 @@ describe('Goals DB service', () => {
           grantId: 1,
           name: 'name',
           status: 'Closed',
-          isRttapa: 'No',
         },
         where: {
           grantId: 1,
