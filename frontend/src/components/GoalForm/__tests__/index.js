@@ -67,6 +67,7 @@ describe('create goal', () => {
     endDate: '08/15/2023',
     isFromSmartsheetTtaPlan: false,
     timeframe: null,
+    isRttapa: 'No',
     createdAt: '2022-03-09T19:20:45.818Z',
     updatedAt: '2022-03-09T19:20:45.818Z',
     grants: [{
@@ -161,6 +162,10 @@ describe('create goal', () => {
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
+    const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
+    const radio = within(fieldset).getByLabelText('Yes');
+    userEvent.click(radio);
+
     const save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
 
@@ -248,6 +253,16 @@ describe('create goal', () => {
 
     userEvent.click(save);
 
+    await screen.findByText('Select yes or no');
+
+    const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
+    const radio = within(fieldset).getByLabelText('Yes');
+    userEvent.click(radio);
+
+    expect(fetchMock.called()).toBe(false);
+
+    userEvent.click(save);
+
     expect(fetchMock.called()).toBeTruthy();
 
     // restore our fetch mock
@@ -281,6 +296,10 @@ describe('create goal', () => {
 
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
+
+    const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
+    const radio = within(fieldset).getByLabelText('Yes');
+    userEvent.click(radio);
 
     const save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
@@ -345,6 +364,10 @@ describe('create goal', () => {
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
+    const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
+    const radio = within(fieldset).getByLabelText('Yes');
+    userEvent.click(radio);
+
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
     userEvent.click(newObjective);
 
@@ -400,6 +423,10 @@ describe('create goal', () => {
     let ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
+    let fieldset = document.querySelector('.ttahub-goal-is-rttapa');
+    let radio = within(fieldset).getByLabelText('Yes');
+    userEvent.click(radio);
+
     let newObjective = await screen.findByRole('button', { name: 'Add new objective' });
     userEvent.click(newObjective);
 
@@ -436,6 +463,10 @@ describe('create goal', () => {
 
     ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
+
+    fieldset = document.querySelector('.ttahub-goal-is-rttapa');
+    radio = within(fieldset).getByLabelText('Yes');
+    userEvent.click(radio);
 
     newObjective = await screen.findByRole('button', { name: 'Add new objective' });
     userEvent.click(newObjective);
@@ -484,6 +515,10 @@ describe('create goal', () => {
 
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
+
+    const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
+    const radio = within(fieldset).getByLabelText('Yes');
+    userEvent.click(radio);
 
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
     userEvent.click(newObjective);
@@ -541,6 +576,10 @@ describe('create goal', () => {
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
+    const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
+    const radio = within(fieldset).getByLabelText('Yes');
+    userEvent.click(radio);
+
     const cancel = await screen.findByRole('link', { name: 'Cancel' });
 
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
@@ -595,6 +634,10 @@ describe('create goal', () => {
 
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
+
+    const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
+    const radio = within(fieldset).getByLabelText('Yes');
+    userEvent.click(radio);
 
     let newObjective = await screen.findByRole('button', { name: 'Add new objective' });
     userEvent.click(newObjective);
@@ -685,8 +728,10 @@ describe('create goal', () => {
     const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
     userEvent.type(objectiveText, 'This is objective text');
 
-    const yes = await screen.findByRole('radio', { name: 'Yes' });
-    const no = await screen.findByRole('radio', { name: 'No' });
+    const fieldset = document.querySelector('.ttahub-objective-files');
+
+    const yes = await within(fieldset).findByRole('radio', { name: 'Yes' });
+    const no = await within(fieldset).findByRole('radio', { name: 'No' });
 
     expect(no.checked).toBe(true);
     act(() => userEvent.click(yes));
@@ -729,14 +774,15 @@ describe('create goal', () => {
       status: 'Not Started',
       endDate: '2021-10-08',
       goalNumbers: ['G-12389'],
-      grants: [{
+      isRttapa: '',
+      grant: {
         id: 1,
         number: '1',
         programs: [{
           programType: 'EHS',
         }],
         status: 'Active',
-      }],
+      },
       objectives: [
         {
           id: 1238474,
@@ -766,14 +812,15 @@ describe('create goal', () => {
       status: 'Draft',
       endDate: '2021-10-08',
       goalNumbers: ['G-12389'],
-      grants: [{
+      isRttapa: 'Yes',
+      grant: {
         id: 1,
         number: '1',
         programs: [{
           programType: 'EHS',
         }],
         status: 'Active',
-      }],
+      },
       objectives: [
         {
           id: 1238474,
@@ -803,14 +850,15 @@ describe('create goal', () => {
       status: 'Not Started',
       endDate: '2021-10-08',
       goalNumbers: ['G-12389'],
-      grants: [{
+      isRttapa: 'No',
+      grant: {
         id: 1,
         number: '1',
         programs: [{
           programType: 'EHS',
         }],
         status: 'Active',
-      }],
+      },
       objectives: [
         {
           id: 1238474,
@@ -850,14 +898,15 @@ describe('create goal', () => {
       status: 'In Progress',
       endDate: '2021-10-08',
       goalNumbers: ['G-12389'],
-      grants: [{
+      isRttapa: 'Yes',
+      grant: {
         id: 1,
         number: '1',
         programs: [{
           programType: 'EHS',
         }],
         status: 'Active',
-      }],
+      },
       objectives: [
         {
           id: 1238474,
