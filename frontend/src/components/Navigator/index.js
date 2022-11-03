@@ -131,7 +131,7 @@ function Navigator({
     const { status, ...values } = getValues();
     const data = { ...formData, ...values, pageState: newNavigatorState() };
 
-    updateFormData(data, true);
+    updateFormData(data);
     try {
       // Always clear the previous error message before a save.
       updateErrorMessage();
@@ -175,6 +175,7 @@ function Navigator({
     };
 
     let allGoals = [...selectedGoals, goal];
+
     // save goal to api, come back with new ids for goal and objectives
     try {
       // we only need save goal if we have a goal name
@@ -195,7 +196,7 @@ function Navigator({
       // update form data
       const { status, ...values } = getValues();
       const data = { ...formData, ...values, pageState: newNavigatorState() };
-      updateFormData(data, true);
+      updateFormData(data);
 
       updateErrorMessage('');
       updateLastSaveTime(moment());
@@ -288,7 +289,7 @@ function Navigator({
 
     // the form value is updated but the react state is not
     // so here we go (todo - why are there two sources of truth?)
-    updateFormData({ ...formData, goals: newGoals }, true);
+    updateFormData({ ...formData, goals: newGoals });
   };
 
   const onObjectiveFormNavigate = async () => {
@@ -326,7 +327,7 @@ function Navigator({
     toggleObjectiveForm(true);
 
     // Update form data (formData has otherEntityIds).
-    updateFormData({ ...formData, objectivesWithoutGoals: newObjectives }, true);
+    updateFormData({ ...formData, objectivesWithoutGoals: newObjectives });
   };
 
   const onGoalFormNavigate = async () => {

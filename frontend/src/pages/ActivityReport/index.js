@@ -391,7 +391,7 @@ function ActivityReport({
 
         // Update form data.
         if (shouldUpdateFromNetwork && activityReportId !== 'new') {
-          updateFormData({ ...formData, ...report }, true);
+          updateFormData({ ...formData, goalForEditing: null, ...report }, true);
         } else {
           updateFormData({ ...report, ...formData }, true);
         }
