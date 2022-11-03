@@ -9,6 +9,7 @@ import moment from 'moment';
 import ActivityReport from './index';
 import { SCOPE_IDS, REPORT_STATUSES } from '../../Constants';
 import UserContext from '../../UserContext';
+import AppLoadingContext from '../../AppLoadingContext';
 
 export const history = createMemoryHistory();
 
@@ -61,15 +62,17 @@ export const formData = () => ({
 export const renderActivityReport = (id, location = 'activity-summary', showLastUpdatedTime = null, userId = 1) => {
   render(
     <Router history={history}>
-      <UserContext.Provider value={{ user: { ...user, id: userId } }}>
-        <ActivityReport
-          match={{ params: { currentPage: location, activityReportId: id }, path: '', url: '' }}
-          location={{
-            state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
-          }}
-          region={1}
-        />
-      </UserContext.Provider>
+      <AppLoadingContext.Provider value={{ setIsLoading: jest.fn(), setLoadingText: jest.fn() }}>
+        <UserContext.Provider value={{ user: { ...user, id: userId } }}>
+          <ActivityReport
+            match={{ params: { currentPage: location, activityReportId: id }, path: '', url: '' }}
+            location={{
+              state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
+            }}
+            region={1}
+          />
+        </UserContext.Provider>
+      </AppLoadingContext.Provider>
     </Router>,
   );
 };

@@ -4,7 +4,7 @@
   on the left hand side with each page of the form listed. Clicking on an item in the nav list will
   display that item in the content section. The navigator keeps track of the "state" of each page.
 */
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import {
   FormProvider, useForm,
@@ -30,6 +30,7 @@ import { validateGoals } from '../../pages/ActivityReport/Pages/components/goalV
 import { saveGoalsForReport, saveObjectivesForReport } from '../../fetchers/activityReports';
 import GoalFormContext from '../../GoalFormContext';
 import { validateObjectives } from '../../pages/ActivityReport/Pages/components/objectiveValidator';
+import AppLoadingContext from '../../AppLoadingContext';
 
 function Navigator({
   editable,
@@ -77,7 +78,9 @@ function Navigator({
   const selectedGoals = watch('goals');
   const selectedObjectivesWithoutGoals = watch('objectivesWithoutGoals');
 
-  const [isLoading, setIsLoading] = useState(false);
+  // App Loading Context.
+  const { isLoading, setLoadingText, setIsLoading } = useContext(AppLoadingContext);
+  const [isAutoSave, setIsAutoSave] = useState(false);
   const [isGoalFormClosed, toggleGoalForm] = useState(selectedGoals.length > 0);
 
   // Toggle objectives readonly only if all objectives are saved and pass validation.
@@ -88,6 +91,13 @@ function Navigator({
     && areInitialObjectivesValid === true
     && hasUnsavedObjectives.length === 0,
   );
+
+  const setSavingLoadScreen = () => {
+    if (!isAutoSave && !isLoading) {
+      setLoadingText('Saving');
+      setIsLoading(true);
+    }
+  };
 
   const goalForEditing = watch('goalForEditing');
   const activityRecipientType = watch('activityRecipientType');
@@ -125,6 +135,7 @@ function Navigator({
   };
 
   const onSaveForm = async () => {
+    setSavingLoadScreen();
     if (!editable) {
       return;
     }
@@ -139,6 +150,8 @@ function Navigator({
       updateLastSaveTime(moment());
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -150,13 +163,19 @@ function Navigator({
   const isOtherEntityReport = activityRecipientType === 'other-entity';
 
   const onSaveDraft = async () => {
-    await onSaveForm(); // save the form data to the server
-    updateShowSavedDraft(true); // show the saved draft message
+    try {
+      setSavingLoadScreen();
+      await onSaveForm(); // save the form data to the server
+      updateShowSavedDraft(true); // show the saved draft message
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const onSaveDraftGoal = async () => {
     // Prevent user from making changes to goal title during auto-save.
-    setIsLoading(true);
+    setSavingLoadScreen();
+
     // the goal form only allows for one goal to be open at a time
     // but the objectives are stored in a subfield
     // so we need to access the objectives and bundle them together in order to validate them
@@ -211,7 +230,7 @@ function Navigator({
 
   const onSaveDraftOetObjectives = async () => {
     // Prevent user from making changes to objectives during auto-save.
-    setIsLoading(true);
+    setSavingLoadScreen();
 
     const fieldArrayName = 'objectivesWithoutGoals';
     const currentObjectives = getValues(fieldArrayName);
@@ -336,12 +355,17 @@ function Navigator({
   };
 
   const onGoalFormNavigate = async () => {
-    if (isOtherEntityReport) {
-      // Save objectives for other-entity report.
-      await onObjectiveFormNavigate();
-    } else {
-      // Save goals for recipient report.
-      await saveGoalsNavigate();
+    setSavingLoadScreen();
+    try {
+      if (isOtherEntityReport) {
+        // Save objectives for other-entity report.
+        await onObjectiveFormNavigate();
+      } else {
+        // Save goals for recipient report.
+        await saveGoalsNavigate();
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
   const draftSaver = async () => {
@@ -369,11 +393,21 @@ function Navigator({
   };
 
   const onContinue = () => {
-    onUpdatePage(page.position + 1);
+    try {
+      setSavingLoadScreen();
+      onUpdatePage(page.position + 1);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useInterval(async () => {
-    await draftSaver();
+    try {
+      setIsAutoSave(true);
+      await draftSaver();
+    } finally {
+      setIsAutoSave(false);
+    }
   }, autoSaveInterval);
 
   // A new form page is being shown so we need to reset `react-hook-form` so validations are
@@ -427,74 +461,74 @@ function Navigator({
           <FormProvider {...hookForm}>
             <div id="navigator-form">
               {page.review
-            && page.render(
-              formData,
-              onFormSubmit,
-              additionalData,
-              onReview,
-              isApprover,
-              isPendingApprover,
-              onResetToDraft,
-              onSaveForm,
-              navigatorPages,
-              reportCreator,
-              lastSaveTime,
-            )}
+                && page.render(
+                  formData,
+                  onFormSubmit,
+                  additionalData,
+                  onReview,
+                  isApprover,
+                  isPendingApprover,
+                  onResetToDraft,
+                  onSaveForm,
+                  navigatorPages,
+                  reportCreator,
+                  lastSaveTime,
+                )}
               {!page.review
-            && (
-              <Container skipTopPadding>
-                <NavigatorHeader
-                  key={page.label}
-                  label={page.label}
-                  titleOverride={page.titleOverride}
-                  formData={formData}
-                />
-                <Form
-                  className="smart-hub--form-large"
-                >
-                  {page.render(
-                    additionalData,
-                    formData,
-                    reportId,
-                    onSaveDraftGoal,
-                    onSaveDraftOetObjectives,
-                  )}
-                  <div className="display-flex">
-                    { showSaveGoalsAndObjButton
-                      ? (
-                        <>
-                          <Button className="margin-right-1" type="button" onClick={onGoalFormNavigate}>{`Save ${isOtherEntityReport ? 'objectives' : 'goal'}`}</Button>
-                          <Button className="usa-button--outline" type="button" onClick={isOtherEntityReport ? onSaveDraftOetObjectives : onSaveDraftGoal}>Save draft</Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button className="margin-right-1" type="button" onClick={onContinue}>Save and continue</Button>
-                          <Button className="usa-button--outline" type="button" onClick={onSaveDraft}>Save draft</Button>
-                        </>
+                && (
+                  <Container skipTopPadding>
+                    <NavigatorHeader
+                      key={page.label}
+                      label={page.label}
+                      titleOverride={page.titleOverride}
+                      formData={formData}
+                    />
+                    <Form
+                      className="smart-hub--form-large"
+                    >
+                      {page.render(
+                        additionalData,
+                        formData,
+                        reportId,
+                        onSaveDraftGoal,
+                        onSaveDraftOetObjectives,
                       )}
+                      <div className="display-flex">
+                        {showSaveGoalsAndObjButton
+                          ? (
+                            <>
+                              <Button className="margin-right-1" type="button" disabled={isLoading} onClick={onGoalFormNavigate}>{`Save ${isOtherEntityReport ? 'objectives' : 'goal'}`}</Button>
+                              <Button className="usa-button--outline" type="button" disabled={isLoading} onClick={isOtherEntityReport ? onSaveDraftOetObjectives : onSaveDraftGoal}>Save draft</Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button className="margin-right-1" type="button" disabled={isLoading} onClick={onContinue}>Save and continue</Button>
+                              <Button className="usa-button--outline" type="button" disabled={isLoading} onClick={onSaveDraft}>Save draft</Button>
+                            </>
+                          )}
 
-                    {
-                      page.position <= 1
-                        ? null
-                        : <Button outline type="button" onClick={() => { onUpdatePage(page.position - 1); }}>Back</Button>
-                    }
-                  </div>
-                </Form>
-                <DismissingComponentWrapper
-                  shown={showSavedDraft}
-                  updateShown={updateShowSavedDraft}
-                  hideFromScreenReader={false}
-                >
-                  {lastSaveTime && (
-                  <Alert className="margin-top-3 maxw-mobile-lg" noIcon slim type="success" aria-live="off">
-                    Draft saved on
-                    {' '}
-                    {lastSaveTime.format('MM/DD/YYYY [at] h:mm a z')}
-                  </Alert>
-                  )}
-                </DismissingComponentWrapper>
-              </Container>
-            )}
+                        {
+                          page.position <= 1
+                            ? null
+                            : <Button outline type="button" disabled={isLoading} onClick={() => { onUpdatePage(page.position - 1); }}>Back</Button>
+                        }
+                      </div>
+                    </Form>
+                    <DismissingComponentWrapper
+                      shown={showSavedDraft}
+                      updateShown={updateShowSavedDraft}
+                      hideFromScreenReader={false}
+                    >
+                      {lastSaveTime && (
+                        <Alert className="margin-top-3 maxw-mobile-lg" noIcon slim type="success" aria-live="off">
+                          Draft saved on
+                          {' '}
+                          {lastSaveTime.format('MM/DD/YYYY [at] h:mm a z')}
+                        </Alert>
+                      )}
+                    </DismissingComponentWrapper>
+                  </Container>
+                )}
             </div>
           </FormProvider>
         </GoalFormContext.Provider>
