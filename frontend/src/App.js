@@ -44,14 +44,15 @@ import Loader from './components/Loader';
 
 function App() {
   const [user, updateUser] = useState();
+  const [landingLoading, setLandingLoading] = useState(true);
   const [authError, updateAuthError] = useState();
   const [loggedOut, updateLoggedOut] = useState(false);
   const authenticated = useMemo(() => user !== undefined, [user]);
   const localStorageAvailable = useMemo(() => storageAvailable('localStorage'), []);
   const [timedOut, updateTimedOut] = useState(false);
   const [announcements, updateAnnouncements] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadingText, setLoadingText] = useState('Loading');
+  const [isAppLoading, setIsAppLoading] = useState(false);
+  const [appLoadingText, setAppLoadingText] = useState('Loading');
 
   useEffect(() => {
     async function cleanupReports() {
@@ -75,7 +76,6 @@ function App() {
   }, [localStorageAvailable, authenticated]);
 
   useEffect(() => {
-    setIsLoading(true);
     const fetchData = async () => {
       try {
         const u = await fetchUser();
@@ -87,11 +87,19 @@ function App() {
           updateAuthError(e.status);
         }
       } finally {
-        setIsLoading(false);
+        setLandingLoading(false);
       }
     };
     fetchData();
   }, []);
+
+  if (landingLoading) {
+    return (
+      <div>
+        Loading...
+      </div>
+    );
+  }
 
   const logout = async (timeout) => {
     await fetchLogout();
@@ -214,8 +222,8 @@ function App() {
       <Helmet titleTemplate="%s - TTA Hub" defaultTitle="TTA Hub">
         <meta charSet="utf-8" />
       </Helmet>
-      <Loader loading={isLoading} loadingLabel={`App ${loadingText}`} text={loadingText} />
-      <AppLoadingContext.Provider value={{ isLoading, setIsLoading, setLoadingText }}>
+      <Loader loading={isAppLoading} loadingLabel={`App ${appLoadingText}`} text={appLoadingText} isFixed />
+      <AppLoadingContext.Provider value={{ isAppLoading, setIsAppLoading, setAppLoadingText }}>
         <BrowserRouter>
           {authenticated && (
           <>

@@ -79,7 +79,7 @@ function Navigator({
   const selectedObjectivesWithoutGoals = watch('objectivesWithoutGoals');
 
   // App Loading Context.
-  const { isLoading, setLoadingText, setIsLoading } = useContext(AppLoadingContext);
+  const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const [isAutoSave, setIsAutoSave] = useState(false);
   const [isGoalFormClosed, toggleGoalForm] = useState(selectedGoals.length > 0);
 
@@ -93,9 +93,9 @@ function Navigator({
   );
 
   const setSavingLoadScreen = () => {
-    if (!isAutoSave && !isLoading) {
-      setLoadingText('Saving');
-      setIsLoading(true);
+    if (!isAutoSave && !isAppLoading) {
+      setAppLoadingText('Saving');
+      setIsAppLoading(true);
     }
   };
 
@@ -151,7 +151,7 @@ function Navigator({
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     } finally {
-      setIsLoading(false);
+      setIsAppLoading(false);
     }
   };
 
@@ -168,7 +168,7 @@ function Navigator({
       await onSaveForm(); // save the form data to the server
       updateShowSavedDraft(true); // show the saved draft message
     } finally {
-      setIsLoading(false);
+      setIsAppLoading(false);
     }
   };
 
@@ -224,7 +224,7 @@ function Navigator({
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     } finally {
-      setIsLoading(false);
+      setIsAppLoading(false);
     }
   };
 
@@ -254,7 +254,7 @@ function Navigator({
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     } finally {
-      setIsLoading(false);
+      setIsAppLoading(false);
     }
   };
 
@@ -365,7 +365,7 @@ function Navigator({
         await saveGoalsNavigate();
       }
     } finally {
-      setIsLoading(false);
+      setIsAppLoading(false);
     }
   };
   const draftSaver = async () => {
@@ -397,7 +397,7 @@ function Navigator({
       setSavingLoadScreen();
       onUpdatePage(page.position + 1);
     } finally {
-      setIsLoading(false);
+      setIsAppLoading(false);
     }
   };
 
@@ -454,8 +454,8 @@ function Navigator({
           isObjectivesFormClosed,
           toggleGoalForm,
           toggleObjectiveForm,
-          isLoading,
-          setIsLoading,
+          isAppLoading,
+          setIsAppLoading,
         }}
         >
           <FormProvider {...hookForm}>
@@ -497,20 +497,20 @@ function Navigator({
                         {showSaveGoalsAndObjButton
                           ? (
                             <>
-                              <Button className="margin-right-1" type="button" disabled={isLoading} onClick={onGoalFormNavigate}>{`Save ${isOtherEntityReport ? 'objectives' : 'goal'}`}</Button>
-                              <Button className="usa-button--outline" type="button" disabled={isLoading} onClick={isOtherEntityReport ? onSaveDraftOetObjectives : onSaveDraftGoal}>Save draft</Button>
+                              <Button className="margin-right-1" type="button" disabled={isAppLoading} onClick={onGoalFormNavigate}>{`Save ${isOtherEntityReport ? 'objectives' : 'goal'}`}</Button>
+                              <Button className="usa-button--outline" type="button" disabled={isAppLoading} onClick={isOtherEntityReport ? onSaveDraftOetObjectives : onSaveDraftGoal}>Save draft</Button>
                             </>
                           ) : (
                             <>
-                              <Button className="margin-right-1" type="button" disabled={isLoading} onClick={onContinue}>Save and continue</Button>
-                              <Button className="usa-button--outline" type="button" disabled={isLoading} onClick={onSaveDraft}>Save draft</Button>
+                              <Button className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
+                              <Button className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
                             </>
                           )}
 
                         {
                           page.position <= 1
                             ? null
-                            : <Button outline type="button" disabled={isLoading} onClick={() => { onUpdatePage(page.position - 1); }}>Back</Button>
+                            : <Button outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(page.position - 1); }}>Back</Button>
                         }
                       </div>
                     </Form>
