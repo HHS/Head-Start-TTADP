@@ -533,7 +533,7 @@ module.exports = {
          AND c."userId" = ar."userId"
          AND '${COLLABORATOR_TYPES.OWNER}' = ALL("c"."collaboratorTypes")
          JOIN "Roles" r
-         ON r."fullName"::"enum_ActivityReports_creatorRole" = ar."creatorRole"
+         ON r."fullName" = ar."creatorRole"::text
          LEFT OUTER JOIN "CollaboratorRoles" cr
          ON c.id = cr."collaboratorId"
          WHERE cr.id is null;`,
