@@ -29,26 +29,38 @@ const pgSetConfigIfNull = (settingName, value, alias) => `
     true
   ) as "${alias}"`;
 
+const auditedTransactions = Set();
+
 const addAuditTransactionSettings = async (sequelize, instance, options, type) => {
   const loggedUser = httpContext.get('loggedUser') ? httpContext.get('loggedUser') : '';
   const transactionId = httpContext.get('transactionId') ? httpContext.get('transactionId') : '';
   const sessionSig = httpContext.get('sessionSig') ? httpContext.get('sessionSig') : '';
   const auditDescriptor = httpContext.get('auditDescriptor') ? httpContext.get('auditDescriptor') : '';
 
-  const statements = [
-    pgSetConfigIfNull('audit.loggedUser', loggedUser, 'loggedUser'),
-    pgSetConfigIfNull('audit.transactionId', transactionId, 'transactionId'),
-    pgSetConfigIfNull('audit.sessionSig', sessionSig, 'sessionSig'),
-    pgSetConfigIfNull('audit.auditDescriptor', auditDescriptor, 'auditDescriptor'),
-  ];
+  if (!auditedTransactions.has(transactionId)) {
+    auditedTransactions.add(transactionId);
+    const statements = [
+      pgSetConfigIfNull('audit.loggedUser', loggedUser, 'loggedUser'),
+      pgSetConfigIfNull('audit.transactionId', transactionId, 'transactionId'),
+      pgSetConfigIfNull('audit.sessionSig', sessionSig, 'sessionSig'),
+      pgSetConfigIfNull('audit.auditDescriptor', auditDescriptor, 'auditDescriptor'),
+    ];
 
-  if (loggedUser !== '' || transactionId !== '' || auditDescriptor !== '') {
-    await sequelize.queryInterface.sequelize.query(
-      `SELECT
-        '${type}' "Type",
-        ${statements.join(',')}
-      `.replace(/[\r\n]+/gm, ' '),
-    );
+    if (loggedUser !== '' || transactionId !== '' || auditDescriptor !== '') {
+      await sequelize.queryInterface.sequelize.query(
+        `SELECT
+          '${type}' "Type",
+          ${statements.join(',')}
+        `.replace(/[\r\n]+/gm, ' '),
+      );
+    }
+  }
+};
+
+const removeFromAuditedTransactions = async () => {
+  const transactionId = httpContext.get('transactionId') ? httpContext.get('transactionId') : '';
+  if (auditedTransactions.has(transactionId)) {
+    auditedTransactions.delete(transactionId);
   }
 };
 
@@ -145,6 +157,27 @@ const attachHooksForAuditing = (sequelize) => {
   sequelize.addHook(
     'beforeUpsert',
     (created, options) => addAuditTransactionSettings(sequelize, created, options, 'beforeUpsert'),
+  );
+
+  sequelize.addHook(
+    'afterCreate',
+    () => removeFromAuditedTransactions(),
+  );
+  sequelize.addHook(
+    'afterDestroy',
+    () => removeFromAuditedTransactions(),
+  );
+  sequelize.addHook(
+    'afterUpdate',
+    () => removeFromAuditedTransactions(),
+  );
+  sequelize.addHook(
+    'afterSave',
+    () => removeFromAuditedTransactions(),
+  );
+  sequelize.addHook(
+    'afterUpsert',
+    () => removeFromAuditedTransactions(),
   );
 };
 
