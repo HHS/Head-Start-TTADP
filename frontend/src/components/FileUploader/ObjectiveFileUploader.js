@@ -30,7 +30,6 @@ const ObjectiveFileUploader = ({
     const fileHasObjectiveFile = file.ObjectiveFile && file.ObjectiveFile.objectiveId;
     const objectiveHasBeenSaved = objective.ids && objective.ids.length && objective.ids.length > 0;
     const uploaderIsOnReport = reportId > 0 && objectiveHasBeenSaved;
-    console.log('\n\n\n\n----------------------------Objective:', objective);
     try {
       if (uploaderIsOnReport) {
         // remove from activity report objective file only
