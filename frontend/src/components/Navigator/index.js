@@ -80,7 +80,6 @@ function Navigator({
 
   // App Loading Context.
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
-  const [isAutoSave, setIsAutoSave] = useState(false);
   const [isGoalFormClosed, toggleGoalForm] = useState(selectedGoals.length > 0);
 
   // Toggle objectives readonly only if all objectives are saved and pass validation.
@@ -92,7 +91,7 @@ function Navigator({
     && hasUnsavedObjectives.length === 0,
   );
 
-  const setSavingLoadScreen = () => {
+  const setSavingLoadScreen = (isAutoSave = false) => {
     if (!isAutoSave && !isAppLoading) {
       setAppLoadingText('Saving');
       setIsAppLoading(true);
@@ -134,8 +133,8 @@ function Navigator({
     return newPageState;
   };
 
-  const onSaveForm = async () => {
-    setSavingLoadScreen();
+  const onSaveForm = async (isAutoSave = false) => {
+    setSavingLoadScreen(isAutoSave);
     if (!editable) {
       return;
     }
@@ -172,9 +171,9 @@ function Navigator({
     }
   };
 
-  const onSaveDraftGoal = async () => {
+  const onSaveDraftGoal = async (isAutoSave = false) => {
     // Prevent user from making changes to goal title during auto-save.
-    setSavingLoadScreen();
+    setSavingLoadScreen(isAutoSave);
 
     // the goal form only allows for one goal to be open at a time
     // but the objectives are stored in a subfield
@@ -228,9 +227,9 @@ function Navigator({
     }
   };
 
-  const onSaveDraftOetObjectives = async () => {
+  const onSaveDraftOetObjectives = async (isAutoSave = false) => {
     // Prevent user from making changes to objectives during auto-save.
-    setSavingLoadScreen();
+    setSavingLoadScreen(isAutoSave);
 
     const fieldArrayName = 'objectivesWithoutGoals';
     const currentObjectives = getValues(fieldArrayName);
@@ -368,19 +367,19 @@ function Navigator({
       setIsAppLoading(false);
     }
   };
-  const draftSaver = async () => {
+  const draftSaver = async (isAutoSave = false) => {
     // Determine if we should save draft on auto save.
     const saveGoalsDraft = isGoalsObjectivesPage && !isGoalFormClosed;
     const saveObjectivesDraft = isGoalsObjectivesPage && !isObjectivesFormClosed;
     if (isOtherEntityReport && saveObjectivesDraft) {
       // Save other-entity draft.
-      await onSaveDraftOetObjectives();
+      await onSaveDraftOetObjectives(isAutoSave);
     } else if (saveGoalsDraft) {
       // Save recipient draft.
-      await onSaveDraftGoal();
+      await onSaveDraftGoal(isAutoSave);
     } else {
       // Save regular.
-      await onSaveForm();
+      await onSaveForm(isAutoSave);
     }
   };
 
@@ -393,21 +392,12 @@ function Navigator({
   };
 
   const onContinue = () => {
-    try {
-      setSavingLoadScreen();
-      onUpdatePage(page.position + 1);
-    } finally {
-      setIsAppLoading(false);
-    }
+    setSavingLoadScreen();
+    onUpdatePage(page.position + 1);
   };
 
   useInterval(async () => {
-    try {
-      setIsAutoSave(true);
-      await draftSaver();
-    } finally {
-      setIsAutoSave(false);
-    }
+    await draftSaver(true);
   }, autoSaveInterval);
 
   // A new form page is being shown so we need to reset `react-hook-form` so validations are
