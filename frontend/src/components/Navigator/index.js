@@ -488,7 +488,7 @@ function Navigator({
                           ? (
                             <>
                               <Button className="margin-right-1" type="button" disabled={isAppLoading} onClick={onGoalFormNavigate}>{`Save ${isOtherEntityReport ? 'objectives' : 'goal'}`}</Button>
-                              <Button className="usa-button--outline" type="button" disabled={isAppLoading} onClick={isOtherEntityReport ? onSaveDraftOetObjectives : onSaveDraftGoal}>Save draft</Button>
+                              <Button className="usa-button--outline" type="button" disabled={isAppLoading} onClick={isOtherEntityReport ? () => onSaveDraftOetObjectives(false) : () => onSaveDraftGoal(false)}>Save draft</Button>
                             </>
                           ) : (
                             <>
