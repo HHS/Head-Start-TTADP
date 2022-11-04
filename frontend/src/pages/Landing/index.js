@@ -22,7 +22,9 @@ import NewReport from './NewReport';
 import './index.scss';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite, allRegionsUserHasPermissionTo } from '../../permissions';
-import { ALERTS_PER_PAGE } from '../../Constants';
+import {
+  ALERTS_PER_PAGE,
+} from '../../Constants';
 import { filtersToQueryString, expandFilters } from '../../utils';
 import Overview from '../../widgets/Overview';
 import './TouchPoints.css';
@@ -47,6 +49,14 @@ export function renderTotal(offset, perPage, activePage, reportsCount) {
     to = offsetTo;
   }
   return `${from}-${to} of ${reportsCount}`;
+}
+
+export function getAppliedRegion(filters) {
+  const regionFilters = filters.filter((f) => f.topic === 'region').map((r) => r.query);
+  if (regionFilters && regionFilters.length > 0) {
+    return regionFilters[0];
+  }
+  return null;
 }
 
 function Landing() {
@@ -91,15 +101,7 @@ function Landing() {
   const [downloadAlertsError, setDownloadAlertsError] = useState(false);
   const downloadAllAlertsButtonRef = useRef();
 
-  function getAppliedRegion() {
-    const regionFilters = filters.filter((f) => f.topic === 'region').map((r) => r.query);
-    if (regionFilters && regionFilters.length > 0) {
-      return regionFilters[0];
-    }
-    return null;
-  }
-
-  const appliedRegionNumber = getAppliedRegion();
+  const appliedRegionNumber = getAppliedRegion(filters);
 
   const ariaLiveContext = useContext(AriaLiveContext);
 

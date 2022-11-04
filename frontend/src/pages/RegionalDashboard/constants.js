@@ -13,12 +13,14 @@ import {
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,
+  participantsFilter,
 } from '../../components/filter/activityReportFilters';
 
 export const DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
   grantNumberFilter,
+  participantsFilter,
   programSpecialistFilter,
   programTypeFilter,
   reasonsFilter,

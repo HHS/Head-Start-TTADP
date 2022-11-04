@@ -15,7 +15,7 @@ export const history = createMemoryHistory();
 const user = {
   id: 1,
   name: 'Walter Burns',
-  role: ['Reporter'],
+  roles: [{ fullName: 'Reporter' }],
   permissions: [
     { regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS },
   ],
@@ -46,7 +46,7 @@ export const formData = () => ({
   resourcesUsed: 'eclkcurl',
   startDate: moment().format('MM/DD/YYYY'),
   targetPopulations: ['target 1'],
-  author: { name: 'test' },
+  author: { name: 'test', roles: { fullName: 'Reporter' } },
   topics: 'first',
   userId: 1,
   goals: [],

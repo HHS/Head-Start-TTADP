@@ -11,7 +11,7 @@ import userEvent from '@testing-library/user-event';
 import { v4 as uuidv4 } from 'uuid';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
-import Landing from '../index';
+import Landing, { getAppliedRegion } from '../index';
 import activityReports, { activityReportsSorted, generateXFakeReports, overviewRegionOne } from '../mocks';
 import { getAllAlertsDownloadURL } from '../../../fetchers/helpers';
 import { filtersToQueryString } from '../../../utils';
@@ -33,7 +33,6 @@ const dateFilterWithRegionOne = filtersToQueryString(filtersWithRegionOne);
 
 const base = '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=1';
 const baseAlerts = '/api/activity-reports/alerts?sortBy=startDate&sortDir=desc&offset=0&limit=10&region.in[]=1';
-
 const defaultOverviewUrl = '/api/widgets/overview?region.in[]=1';
 const inTest = 'reportId.ctn[]=test';
 
@@ -63,13 +62,14 @@ describe('Landing Page', () => {
   });
   beforeEach(async () => {
     fetchMock.get(base, response);
+
     fetchMock.get(baseAlerts, {
       alertsCount: 0,
       alerts: [],
       recipients: [],
+      topics: [],
     });
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
-
     const user = {
       name: 'test@test.com',
       permissions: [
@@ -79,7 +79,6 @@ describe('Landing Page', () => {
         },
       ],
     };
-
     renderLanding(user);
     await screen.findByText('Activity reports');
   });
@@ -255,7 +254,6 @@ describe('Landing page table menus & selections', () => {
           { count: 10, rows: [], recipients: [] },
         );
         fetchMock.get(defaultOverviewUrl, overviewRegionOne);
-
         window.location = {
           assign: jest.fn(),
         };
@@ -481,7 +479,6 @@ describe('handleApplyFilters', () => {
     mockFetchWithRegionOne();
     fetchMock.get(base, convertToResponse(activityReports));
     fetchMock.get(baseAlerts, { alertsCount: 0, alerts: [], recipients: [] });
-
     fetchMock.get(`${defaultOverviewUrl}&${inTest}`, overviewRegionOne);
     fetchMock.get(`${baseAlerts}&${inTest}`, { alertsCount: 0, alerts: [], recipients: [] });
   });
@@ -535,7 +532,6 @@ describe('handleApplyAlertFilters', () => {
     delete window.location;
     window.location = new URL('https://www.test.gov');
     fetchMock.get(baseAlerts, convertToResponse(generateXFakeReports(10), true));
-
     fetchMock.get(base,
       convertToResponse(generateXFakeReports(1), true));
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
@@ -543,9 +539,12 @@ describe('handleApplyAlertFilters', () => {
       count: 0,
       rows: [],
       recipients: [],
+      topics: [],
     });
     fetchMock.get(`${defaultOverviewUrl}&${inTest}`, overviewRegionOne);
-    fetchMock.get(`${baseAlerts}&${inTest}`, { alertsCount: 0, alerts: [], recipients: [] });
+    fetchMock.get(`${baseAlerts}&${inTest}`, {
+      alertsCount: 0, alerts: [], recipients: [], topics: [],
+    });
   });
 
   afterEach(() => fetchMock.restore());
@@ -590,5 +589,12 @@ describe('handleApplyAlertFilters', () => {
     expect(mockAnnounce).toHaveBeenCalled();
     // wait for everything to finish loading
     await waitFor(() => expect(screen.queryByText(/Loading data/i)).toBeNull());
+  });
+});
+
+describe('getAppliedRegion', () => {
+  it('returns null where appropriate', () => {
+    const appliedRegion = getAppliedRegion([]);
+    expect(appliedRegion).toBeNull();
   });
 });

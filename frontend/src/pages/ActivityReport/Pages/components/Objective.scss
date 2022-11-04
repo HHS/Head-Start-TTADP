@@ -1,22 +1,5 @@
-@use '../../../../colors.scss';
+@use '../../../../mixins.scss';
 
-.smart-hub--objective {
-  background-color: #f8f8f8;
-  max-width: 470px;
-  padding: 22px;
-}
-
-.smart-hub--objective-title {
-  overflow-wrap: break-word;
-}
-
-.smart-hub--objective-tag {
-  text-transform: none;
-  background-color: #e2eff7;
-  color: colors.$text-ink;
-  font-weight: bold;
-}
-
-.usa-form .smart-hub--button__no-margin {
-  margin-top: 0;
+.usa-error-message + .usa-textarea {
+  @include mixins.error;
 }

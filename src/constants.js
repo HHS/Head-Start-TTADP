@@ -36,7 +36,7 @@ export const APPROVER_STATUSES = {
 // copied from /frontend/src/pages/ActivityReports/constants.js
 export const TOPICS = [
   'Behavioral / Mental Health / Trauma',
-  'Child Assessment, Development, Screening',
+  'Child Screening and Assessment',
   'CLASS: Classroom Organization',
   'CLASS: Emotional Support',
   'CLASS: Instructional Support',
@@ -68,7 +68,7 @@ export const TOPICS = [
   'Recordkeeping and Reporting',
   'Safety Practices',
   'Staff Wellness',
-  'Teaching Practices / Teacher-Child Interactions',
+  'Teaching / Caregiving Practices',
   'Technology and Information Systems',
   'Transition Practices',
   'Transportation',
@@ -152,4 +152,100 @@ export const GOAL_STATUS = {
   IN_PROGRESS: 'In Progress',
   SUSPENDED: 'Suspended',
   CLOSED: 'Closed',
+};
+
+export const OBJECTIVE_STATUS = {
+  DRAFT: 'Draft',
+  NOT_STARTED: 'Not Started',
+  IN_PROGRESS: 'In Progress',
+  SUSPENDED: 'Suspended',
+  COMPLETE: 'Complete',
+};
+
+/*
+  Please keep in sync with:
+  frontend > src > constants.js
+  frontend > src > pages > ActivityReport > constants.js
+*/
+export const RECIPIENT_PARTICIPANTS = [
+  'CEO / CFO / Executive',
+  'Center Director / Site Director',
+  'Coach',
+  'Direct Service: Other',
+  'Family Service Worker / Case Manager',
+  'Fiscal Manager/Team',
+  'Governing Body / Tribal Council / Policy Council',
+  'Home Visitor',
+  'Manager / Coordinator / Specialist',
+  'Parent / Guardian',
+  'Program Director (HS / EHS)',
+  'Program Support / Administrative Assistant',
+  'Teacher / Infant-Toddler Caregiver',
+  'Volunteer',
+];
+
+export const OTHER_ENTITY_RECIPIENTS = [
+  'HSCO',
+  'Local/State Agency(ies)',
+  'OCC Regional Office',
+  'OHS Regional Office',
+  'Regional Head Start Association',
+  'Regional TTA Team / Specialists',
+  'State Early Learning System',
+  'State Head Start Association',
+  'Other',
+];
+
+export const ALL_PARTICIPANTS = [
+  ...RECIPIENT_PARTICIPANTS,
+  ...OTHER_ENTITY_RECIPIENTS,
+];
+
+/**
+ * Stored in `UserSettings` table, e.g.:
+ * userId: 111, key: 'reportSubmittedForReview', value: 'immediately',
+ */
+export const USER_SETTINGS = {
+  EMAIL: {
+    KEYS: {
+      // Email you when an activity report is submitted for your approval.
+      SUBMITTED_FOR_REVIEW: 'emailWhenReportSubmittedForReview',
+      // Email you when an activity report you created or are a collaborator on needs an action.
+      CHANGE_REQUESTED: 'emailWhenChangeRequested',
+      // Email you when an activity report you created or are a collaborator on is approved.
+      APPROVAL: 'emailWhenReportApproval',
+      // Email you when you are added as a collaborator to an activity report.
+      COLLABORATOR_ADDED: 'emailWhenAppointedCollaborator',
+    },
+    VALUES: {
+      NEVER: 'never',
+      IMMEDIATELY: 'immediately',
+      DAILY_DIGEST: 'today',
+      WEEKLY_DIGEST: 'this week',
+      MONTHLY_DIGEST: 'this month',
+    },
+  },
+};
+
+export const EMAIL_ACTIONS = {
+  COLLABORATOR_ADDED: 'collaboratorAssigned',
+  NEEDS_ACTION: 'changesRequested',
+  SUBMITTED: 'approverAssigned',
+  APPROVED: 'reportApproved',
+  COLLABORATOR_DIGEST: 'collaboratorDigest',
+  NEEDS_ACTION_DIGEST: 'changesRequestedDigest',
+  SUBMITTED_DIGEST: 'approverAssignedDigest',
+  APPROVED_DIGEST: 'reportApprovedDigest',
+};
+
+export const EMAIL_DIGEST_FREQ = {
+  DAILY: 'today',
+  WEEKLY: 'this week',
+  MONTHLY: 'this month',
+};
+
+export const DIGEST_SUBJECT_FREQ = {
+  DAILY: 'daily',
+  WEEKLY: 'weekly',
+  MONTHLY: 'monthly',
 };

@@ -1,4 +1,5 @@
 import moment from 'moment';
+import md5 from 'md5';
 import { convert } from 'html-to-text';
 import { DATE_FORMAT } from '../constants';
 
@@ -145,19 +146,30 @@ function transformApproversModel(prop) {
   return transformer;
 }
 
-function transformGrantModel(prop) {
+function transformGrantModel(prop, sortBy = null) {
+  // If 'sortBy' is set we will no longer return a distinct list.
   function transformer(instance) {
     const obj = {};
     const values = instance.activityRecipients;
     if (values) {
-      const distinctValues = [
-        ...new Set(
-          values.filter(
+      let grantValueList;
+      if (!sortBy) {
+        const distinctValues = [
+          ...new Set(
+            values.filter(
+              (recipient) => recipient.grant && recipient.grant[prop] !== null,
+            ).map((r) => r.grant[prop]).flat(),
+          ),
+        ];
+        grantValueList = distinctValues.sort().join('\n');
+      } else {
+        const grantValues = [
+          ...values.filter(
             (recipient) => recipient.grant && recipient.grant[prop] !== null,
-          ).map((r) => r.grant[prop]).flat(),
-        ),
-      ];
-      const grantValueList = distinctValues.sort().join('\n');
+          ).map((r) => ({ value: r.grant[prop], sortValue: r.grant[sortBy] })).flat(),
+        ];
+        grantValueList = grantValues.sort((a, b) => ((a.sortValue > b.sortValue) ? 1 : -1)).map((r) => r.value).join('\n');
+      }
       Object.defineProperty(obj, prop, {
         value: grantValueList,
         enumerable: true,
@@ -192,24 +204,39 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
   objectiveRecords.sort(sortObjectives);
   let objectiveNum = 0;
   let goalNum = 0;
+  const goalIds = {};
   let objectiveId;
-  let lastObjectiveTitle = null;
+  const processedObjectivesTitles = [];
 
-  return objectiveRecords.reduce((accum, objective) => {
+  return objectiveRecords.reduce((prevAccum, objective) => {
+    const accum = { ...prevAccum };
     const {
-      goal, title, status, ttaProvided,
+      goal, title, status, ttaProvided, topics, files, resources,
     } = objective;
-
-    if (lastObjectiveTitle === title) {
+    const goalId = goal ? goal.id : null;
+    const titleMd5 = md5(title);
+    if (processedObjectivesTitles.includes(titleMd5)) {
       return accum;
     }
 
-    lastObjectiveTitle = title;
+    processedObjectivesTitles.push(titleMd5);
     const goalName = goal ? goal.name : null;
     const newGoal = goalName && !Object.values(accum).includes(goalName);
 
     if (newGoal) {
       goalNum += 1;
+
+      // Goal Id.
+      Object.defineProperty(accum, `goal-${goalNum}-id`, {
+        value: `${goalId}`,
+        writable: true,
+        enumerable: true,
+      });
+
+      // Add goal id to list.
+      goalIds[goalName] = [goalId];
+
+      // Goal Name.
       Object.defineProperty(accum, `goal-${goalNum}`, {
         value: goalName,
         enumerable: true,
@@ -218,7 +245,18 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
         value: goal.status,
         enumerable: true,
       });
+
+      // Created From.
+      Object.defineProperty(accum, `goal-${goalNum}-created-from`, {
+        value: goal.createdVia,
+        enumerable: true,
+      });
+
       objectiveNum = 1;
+    } else if (goalIds[goalName] && !goalIds[goalName].includes(goalId)) {
+      // Update existing ids.
+      goalIds[goalName].push(goalId);
+      accum[`goal-${goalNum}-id`] = goalIds[goalName].join('\n');
     }
 
     // goal number should be at least 1
@@ -240,6 +278,27 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
 
     Object.defineProperty(accum, `objective-${objectiveId}`, {
       value: title,
+      enumerable: true,
+    });
+
+    // Activity Report Objective: Topics.
+    const objTopics = topics.map((t) => t.name);
+    Object.defineProperty(accum, `objective-${objectiveId}-topics`, {
+      value: objTopics.join('\n'),
+      enumerable: true,
+    });
+
+    // Activity Report Objective: Resources Links.
+    const objResources = resources.map((r) => r.userProvidedUrl);
+    Object.defineProperty(accum, `objective-${objectiveId}-resourcesLinks`, {
+      value: objResources.join('\n'),
+      enumerable: true,
+    });
+
+    // Activity Report Objective: Non-Resource Links (Files).
+    const objFiles = files.map((f) => f.originalFileName);
+    Object.defineProperty(accum, `objective-${objectiveId}-nonResourceLinks`, {
+      value: objFiles.join('\n'),
       enumerable: true,
     });
     Object.defineProperty(accum, `objective-${objectiveId}-status`, {
@@ -266,7 +325,13 @@ function transformGoalsAndObjectives(report) {
   const { activityReportObjectives } = report;
   if (activityReportObjectives) {
     const objectiveRecords = activityReportObjectives.map((aro) => (
-      { ...aro.objective, ttaProvided: aro.ttaProvided }
+      {
+        ...aro.objective,
+        ttaProvided: aro.ttaProvided,
+        topics: aro.topics,
+        files: aro.files,
+        resources: aro.activityReportObjectiveResources,
+      }
     ));
     if (objectiveRecords) {
       obj = makeGoalsAndObjectivesObject(objectiveRecords);
@@ -310,6 +375,7 @@ const arTransformers = [
   transformDate('approvedAt'),
   transformGrantModel('programSpecialistName'),
   transformGrantModel('recipientInfo'),
+  transformGrantModel('stateCode', 'recipientInfo'),
 ];
 
 /**

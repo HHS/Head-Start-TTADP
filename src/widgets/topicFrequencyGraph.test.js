@@ -7,6 +7,8 @@ import db, {
   Grant,
   NextStep,
   Region,
+  Role,
+  UserRole,
 } from '../models';
 import filtersToScopes from '../scopes';
 import { REPORT_STATUSES } from '../constants';
@@ -100,6 +102,39 @@ describe('Topics and frequency graph widget', () => {
       mockUserTwo,
       mockUserThree,
     ]);
+
+    const [grantsSpecialist] = await Role.findOrCreate({
+      where: {
+        fullName: 'Grants Specialist',
+        name: 'GS',
+        isSpecialist: true,
+        id: 5,
+      },
+    });
+    const [systemSpecialist] = await Role.findOrCreate({
+      where: {
+        fullName: 'System Specialist',
+        name: 'SS',
+        isSpecialist: true,
+        id: 16,
+      },
+    });
+
+    await UserRole.create({
+      userId: mockUser.id,
+      roleId: grantsSpecialist.id,
+    });
+
+    await UserRole.create({
+      userId: mockUserTwo.id,
+      roleId: systemSpecialist.id,
+    });
+
+    await UserRole.create({
+      userId: mockUserThree.id,
+      roleId: grantsSpecialist.id,
+    });
+
     await Recipient.create({ name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' });
     await Region.create({ name: 'office 17', id: 17 });
     await Region.create({ name: 'office 18', id: 18 });
@@ -148,6 +183,7 @@ describe('Topics and frequency graph widget', () => {
     await NextStep.destroy({ where: { activityReportId: ids } });
     await ActivityRecipient.destroy({ where: { activityReportId: ids } });
     await ActivityReport.destroy({ where: { id: ids } });
+    await UserRole.destroy({ where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
     await User.destroy({ where: { id: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
     await Grant.destroy({
       where:
@@ -179,7 +215,7 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Child Assessment, Development, Screening',
+        topic: 'Child Screening and Assessment',
         count: 0,
       },
       {
@@ -307,7 +343,7 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Teaching Practices / Teacher-Child Interactions',
+        topic: 'Teaching / Caregiving Practices',
         count: 0,
       },
       {
@@ -336,7 +372,7 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Child Assessment, Development, Screening',
+        topic: 'Child Screening and Assessment',
         count: 0,
       },
       {
@@ -464,7 +500,7 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Teaching Practices / Teacher-Child Interactions',
+        topic: 'Teaching / Caregiving Practices',
         count: 0,
       },
       {
@@ -493,7 +529,7 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Child Assessment, Development, Screening',
+        topic: 'Child Screening and Assessment',
         count: 0,
       },
       {
@@ -621,7 +657,7 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Teaching Practices / Teacher-Child Interactions',
+        topic: 'Teaching / Caregiving Practices',
         count: 0,
       },
       {
@@ -650,7 +686,7 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Child Assessment, Development, Screening',
+        topic: 'Child Screening and Assessment',
         count: 0,
       },
       {
@@ -778,7 +814,7 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Teaching Practices / Teacher-Child Interactions',
+        topic: 'Teaching / Caregiving Practices',
         count: 0,
       },
       {

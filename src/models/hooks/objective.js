@@ -1,3 +1,6 @@
+import { Op } from 'sequelize';
+import { OBJECTIVE_STATUS } from '../../constants';
+
 const findOrCreateObjectiveTemplate = async (
   sequelize,
   transaction,
@@ -45,30 +48,30 @@ const autoPopulateStatusChangeDates = (sequelize, instance) => {
   if (Array.isArray(changed) && changed.includes('status')) {
     const now = new Date();
     switch (instance.status) {
-      case 'Draft':
+      case OBJECTIVE_STATUS.DRAFT:
         break;
-      case 'Not Started':
+      case OBJECTIVE_STATUS.NOT_STARTED:
         if (instance.firstNotStartedAt === null
           || instance.firstNotStartedAt === undefined) {
           instance.set('firstNotStartedAt', now);
         }
         instance.set('lastNotStartedAt', now);
         break;
-      case 'In Progress':
+      case OBJECTIVE_STATUS.IN_PROGRESS:
         if (instance.firstInProgressAt === null
           || instance.firstInProgressAt === undefined) {
           instance.set('firstInProgressAt', now);
         }
         instance.set('lastInProgressAt', now);
         break;
-      case 'Suspended':
+      case OBJECTIVE_STATUS.SUSPENDED:
         if (instance.firstSuspendedAt === null
           || instance.firstSuspendedAt === undefined) {
           instance.set('firstSuspendedAt', now);
         }
         instance.set('lastSuspendedAt', now);
         break;
-      case 'Completed':
+      case OBJECTIVE_STATUS.COMPLETE:
         if (instance.firstCompleteAt === null
           || instance.firstCompleteAt === undefined) {
           instance.set('firstCompleteAt', now);
@@ -117,16 +120,66 @@ const linkObjectiveGoalTemplates = async (sequelize, instance, options) => {
   }
 };
 
+const propogateStatusToParentGoal = async (sequelize, instance, options) => {
+  const { goalId } = instance;
+
+  // some objectives will not have a goalId, they will be attached to an otherentity instead
+  if (goalId) {
+    // we need to get the goal, but we'll only be moving it from "not started" to "in progress"
+    // movement from draft is handled by the create goals form and the activity report hooks
+    // we do include the "on approved ar" thing here as well because it can't result in a goal
+    // moving backwards (all the below code can do is set a not started goal to in progress)
+    // but if we ever run into another race condition, this will serve as another layer of netting
+    // so that no apples fall through the cracks
+    const goal = await sequelize.models.Goal.findOne({
+      where: {
+        id: goalId,
+        [Op.or]: [
+          { status: 'Not Started' },
+          { onApprovedAR: true },
+        ],
+      },
+      transaction: options.transaction,
+    });
+
+    // because of that, there may not be a goal to update
+    if (goal) {
+      const objectives = await sequelize.models.Objective.findAll({
+        where: {
+          goalId,
+        },
+      });
+
+      // if there is, we then need to check to see if it needs to be moved to "in progress"
+      const atLeastOneInProgress = objectives.some(
+        (o) => o.status === OBJECTIVE_STATUS.IN_PROGRESS,
+      );
+
+      // and if so, we update it (storing the previous status so we can revert if needed)
+      if (atLeastOneInProgress) {
+        await goal.update({
+          status: 'In Progress',
+          previousStatus: 'Not Started',
+        }, {
+          transaction: options.transaction,
+        });
+      }
+    }
+  }
+};
+
 const propagateTitle = async (sequelize, instance, options) => {
   const changed = instance.changed();
-  if (Array.isArray(changed) && changed.includes('title')) {
+  if (Array.isArray(changed) && changed.includes('title') && instance.goalTemplateId) {
     await sequelize.models.ObjectiveTemplate.update(
       {
         hash: sequelize.fn('md5', sequelize.fn('NULLIF', sequelize.fn('TRIM', instance.title), '')),
         templateTitle: instance.title,
       },
       {
-        where: { id: instance.goalTemplateId },
+        where: {
+          id: instance.goalTemplateId,
+        },
         transaction: options.transaction,
         individualHooks: true,
       },
@@ -162,18 +215,6 @@ const propagateMetadataToTemplate = async (sequelize, instance, options) => {
         },
       })));
 
-    const rolls = await sequelize.models.ObjectiveRole.findAll({
-      where: { objectiveId: instance.id },
-      transaction: options.transaction,
-    });
-    await Promise.all(rolls.map(async (roll) => sequelize.models.ObjectiveTemplateRole
-      .findOrCreate({
-        where: {
-          objectiveTemplateId: instance.objectiveTemplateId,
-          rollId: roll.rollId,
-        },
-      })));
-
     const topics = await sequelize.models.ObjectiveTopics.findAll({
       where: { objectiveId: instance.id },
       transaction: options.transaction,
@@ -199,6 +240,11 @@ const afterUpdate = async (sequelize, instance, options) => {
   await propagateTitle(sequelize, instance, options);
   await propagateMetadataToTemplate(sequelize, instance, options);
   await linkObjectiveGoalTemplates(sequelize, instance, options);
+  await propogateStatusToParentGoal(sequelize, instance, options);
+};
+
+const afterCreate = async (sequelize, instance, options) => {
+  await propogateStatusToParentGoal(sequelize, instance, options);
 };
 
 export {
@@ -210,4 +256,5 @@ export {
   propagateTitle,
   beforeValidate,
   afterUpdate,
+  afterCreate,
 };

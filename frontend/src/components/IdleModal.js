@@ -73,7 +73,7 @@ function IdleModal({ modalTimeout, logoutTimeout, logoutUser }) {
   return (
     <Modal
       modalRef={modalRef}
-      onOk={() => {}}
+      onOk={false}
       modalId="IdleReportModal"
       title="Are you still there?"
       showOkButton={false}

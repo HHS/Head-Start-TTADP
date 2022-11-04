@@ -1,11 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Link, Alert,
+  Alert,
+  Link,
 } from '@trussworks/react-uswds';
 
 import logo1x from '../../images/eclkc-blocks-logo-78.png';
 import logo2x from '../../images/eclkc-blocks-logo-156.png';
+
+import HubIdentifier from '../../components/HubIdentifier';
 
 function Unauthenticated({ loggedOut, timedOut }) {
   let msg = 'You have successfully logged out of the TTA Hub';
@@ -19,9 +22,8 @@ function Unauthenticated({ loggedOut, timedOut }) {
   }
 
   return (
-    <>
-      <div className="smart-hub-dimmer position-fixed top-0 right-0 bottom-0 left-0 z-auto bg-ink opacity-50" />
-      <div role="dialog" aria-labelledby="welcome-message" aria-describedby="login-description" className="position-relative smart-hub-maxw-placard margin-x-auto margin-top-7 z-top bg-white border-top-2 smart-hub-border-blue-primary">
+    <div className="display-flex flex-column height-viewport">
+      <div role="dialog" aria-labelledby="welcome-message" aria-describedby="login-description" className="position-relative margin-x-auto margin-top-7 z-top flex-1">
         <div className="maxw-mobile margin-x-auto padding-y-7">
           <img src={logo1x} srcSet={`${logo2x} 2x`} width="78" height="78" alt="ECLKC Blocks Logo" className="smart-hub-logo display-block margin-x-auto" />
           <h1 id="welcome-message" className="font-serif-xl text-center margin-4">
@@ -42,7 +44,8 @@ function Unauthenticated({ loggedOut, timedOut }) {
           </div>
         </div>
       </div>
-    </>
+      <HubIdentifier />
+    </div>
   );
 }
 

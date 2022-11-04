@@ -18,6 +18,7 @@ import FilterProgramType from './FilterProgramType';
 import FilterSpecialistSelect from './FilterSpecialistSelect';
 import FilterStateSelect from './FilterStateSelect';
 import FilterOtherEntitiesSelect from './FilterOtherEntitiesSelect';
+import FilterParticipantsSelect from './FilterParticipantsSelect';
 
 const EMPTY_MULTI_SELECT = {
   is: [],
@@ -170,6 +171,21 @@ export const reasonsFilter = {
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterReasonSelect
       inputId={`reason-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const participantsFilter = {
+  id: 'participants',
+  display: 'Participants',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterParticipantsSelect
+      inputId={`participants-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />

@@ -25,9 +25,19 @@ describe('Goals DB service', () => {
 
   describe('saveGoalsForReport', () => {
     beforeEach(() => {
+      ActivityReportGoal.findAll = jest.fn().mockResolvedValue([]);
+      ActivityReportGoal.destroy = jest.fn();
+      ActivityReportGoal.update = jest.fn();
+      ActivityReportGoal.findOrCreate = jest.fn()
+        .mockResolvedValue([{
+          id: 1, goalId: 1, activityReportId: 1, update: jest.fn(),
+        }, false]);
+      ActivityReportGoal.create = jest.fn();
+
       ActivityReportObjective.findAll = jest.fn().mockResolvedValue([]);
       ActivityReportObjective.destroy = jest.fn();
-      ActivityReportObjective.findOrCreate = jest.fn().mockResolvedValue([{ update: jest.fn() }]);
+      ActivityReportObjective.findOrCreate = jest.fn()
+        .mockResolvedValue([{ id: 1, objectiveId: 1, update: jest.fn() }]);
       ActivityReportObjective.create = jest.fn();
 
       Goal.findAll = jest.fn().mockResolvedValue([{
@@ -42,34 +52,45 @@ describe('Goals DB service', () => {
       Goal.update = jest.fn().mockResolvedValue([1, [{ id: 1 }]]);
       Goal.create = jest.fn().mockResolvedValue({ id: 1 });
 
+      ActivityReportGoal.findAll = jest.fn().mockResolvedValue([]);
       ActivityReportGoal.findOrCreate = jest.fn().mockResolvedValue();
 
       Objective.destroy = jest.fn();
       Objective.create = jest.fn().mockResolvedValue({ id: 1 });
       Objective.findOrCreate = jest.fn().mockResolvedValue([{ id: 1 }]);
       Objective.update = jest.fn().mockResolvedValue({ id: 1 });
-      Objective.findByPk = jest.fn().mockResolvedValue({ update: existingObjectiveUpdate });
+      Objective.findByPk = jest.fn().mockResolvedValue({ id: 1, update: existingObjectiveUpdate });
     });
 
     describe('with removed goals', () => {
-      it('deletes the objective', async () => {
-        ActivityReportObjective.findAll.mockResolvedValue([
+      it('does not delete the objective', async () => {
+        // Find this objective to delete.
+        ActivityReportObjective.findAll.mockResolvedValueOnce([
           {
             objectiveId: 1,
             objective: {
               goalId: 1,
             },
           },
-        ]);
-        await saveGoalsForReport([], { id: 1 });
-
-        expect(Objective.destroy).toHaveBeenCalledWith(
           {
-            where: {
-              id: [1],
+            objectiveId: 2,
+            objective: {
+              goalId: 1,
             },
           },
-        );
+        ]);
+
+        // Prevent the delete of objective 2.
+        ActivityReportObjective.findAll.mockResolvedValueOnce([
+          {
+            objectiveId: 2,
+            objective: {
+              goalId: 1,
+            },
+          },
+        ]);
+        await saveGoalsForReport([], { id: 1 });
+        expect(Objective.destroy).not.toHaveBeenCalled();
       });
 
       it('deletes the ActivityReportObjective', async () => {
@@ -77,13 +98,12 @@ describe('Goals DB service', () => {
         await saveGoalsForReport([], { id: 1 });
         expect(ActivityReportObjective.destroy).toHaveBeenCalledWith({
           where: {
-            activityReportId: 1,
-            objectiveId: [],
+            id: [],
           },
         });
       });
 
-      it('deletes goals not attached to a grant', async () => {
+      it('does not delete goals not being used by ActivityReportGoals', async () => {
         ActivityReportObjective.findAll.mockResolvedValue([
           {
             objectiveId: 1,
@@ -107,22 +127,24 @@ describe('Goals DB service', () => {
           },
         ]);
 
-        Goal.findAll.mockResolvedValue([
+        ActivityReportGoal.findAll.mockResolvedValue([
           {
-            id: 1,
+            goalId: 1,
           },
         ]);
 
         await saveGoalsForReport([], { id: 1 });
-        expect(Goal.destroy).toHaveBeenCalledWith({
-          where: {
-            id: [2],
-          },
-        });
+        expect(Goal.destroy).not.toHaveBeenCalled();
       });
     });
 
     it('creates new goals', async () => {
+      ActivityReportGoal.findOrCreate.mockResolvedValue([
+        {
+          goalId: 1,
+        },
+      ]);
+
       await saveGoalsForReport([
         {
           isNew: true, grantIds: [1], name: 'name', status: 'Closed', objectives: [],
@@ -130,6 +152,8 @@ describe('Goals DB service', () => {
       ], { id: 1 });
       expect(Goal.findOrCreate).toHaveBeenCalledWith({
         defaults: {
+          createdVia: 'activityReport',
+          grantId: 1,
           name: 'name',
           status: 'Closed',
         },
@@ -144,6 +168,11 @@ describe('Goals DB service', () => {
     });
 
     it('can use existing goals', async () => {
+      ActivityReportGoal.findOrCreate.mockResolvedValue([
+        {
+          goalId: 1,
+        },
+      ]);
       const existingGoal = {
         id: 1,
         name: 'name',
@@ -154,14 +183,21 @@ describe('Goals DB service', () => {
 
       await saveGoalsForReport([existingGoal], { id: 1 });
       expect(existingGoalUpdate).toHaveBeenCalledWith({
+        endDate: null,
         name: 'name',
-        status: 'Not Started',
+        status: 'Draft',
       }, { individualHooks: true });
     });
 
     test.todo('can update an existing goal');
 
     it('can create new objectives', async () => {
+      ActivityReportGoal.findOrCreate.mockResolvedValue([
+        {
+          id: 1,
+          goalId: 1,
+        },
+      ]);
       const existingGoal = {
         id: 1,
         name: 'name',
@@ -174,29 +210,41 @@ describe('Goals DB service', () => {
       const goalWithNewObjective = {
         ...existingGoal,
         objectives: [{
-          isNew: true, goalId: 1, title: 'title', ttaProvided: '', ActivityReportObjective: {}, status: '',
+          isNew: true,
+          goalId: 1,
+          title: 'title',
+          ttaProvided: '',
+          ActivityReportObjective: {},
+          status: '',
         }],
       };
       await saveGoalsForReport([goalWithNewObjective], { id: 1 });
       expect(Objective.create).toHaveBeenCalledWith({
         goalId: 1,
         title: 'title',
-        status: '',
+        status: 'Not Started',
       });
     });
 
     it('can update existing objectives', async () => {
+      ActivityReportGoal.findOrCreate.mockResolvedValue([
+        {
+          goalId: 1,
+        },
+      ]);
       const existingGoal = {
         id: 1,
         name: 'name',
-        objectives: [{ title: 'title', id: 1, status: 'Closed' }],
+        objectives: [{
+          title: 'title', id: 1, status: 'Closed', goalId: 1,
+        }],
         update: jest.fn(),
         grantIds: [1],
         goalIds: [1],
       };
 
       await saveGoalsForReport([existingGoal], { id: 1 });
-      expect(existingObjectiveUpdate).toHaveBeenCalledWith({ title: 'title', status: 'Closed' }, { individualHooks: true });
+      expect(existingObjectiveUpdate).toHaveBeenCalledWith({ title: 'title' }, { individualHooks: true });
     });
   });
 });

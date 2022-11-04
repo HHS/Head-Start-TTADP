@@ -1,10 +1,19 @@
 import waitFor from 'wait-for-expect';
 import db, {
-  ActivityRecipient, ActivityReport, User, Objective, ActivityReportObjective, sequelize,
+  ActivityRecipient,
+  ActivityReport,
+  User,
+  Objective,
+  ActivityReportObjective,
+  sequelize,
+  Grant,
+  Goal,
+  Recipient,
+  OtherEntity,
 } from '../models';
 import { REPORT_STATUSES } from '../constants';
 
-import { saveObjectivesForReport } from './objectives';
+import { saveObjectivesForReport, getObjectiveById, getObjectivesByReportId } from './objectives';
 
 const mockUser = {
   id: 8088,
@@ -21,10 +30,46 @@ const reportObject = {
   lastUpdatedById: mockUser.id,
 };
 
+const mockGrant = {
+  id: 43259435,
+  number: '99CH3499',
+  regionId: 2,
+  status: 'Active',
+  startDate: new Date('2022-07-19T15:13:00.000Z'),
+  endDate: new Date('2022-07-19T15:13:00.000Z'),
+  cdi: false,
+  grantSpecialistName: null,
+  grantSpecialistEmail: null,
+  stateCode: 'NY',
+  anualFundingMonth: 'October',
+};
+
+const mockRecipient = {
+  id: 654925,
+  name: 'Sample Obj File Recipient',
+  recipientType: 'Community Action Agency (CAA)',
+};
+
+const mockOtherEntity = {
+  name: 'Mock Other Entity for OE Objectives',
+};
+
 describe('Objectives DB service', () => {
   let report;
   let objective;
+
   let secondObjective;
+
+  let objectiveInfo;
+  let grantInfo;
+  let recipientInfo;
+  let goalInfo;
+
+  let otherEntity;
+
+  let findObjectiveById;
+  let findObjectiveByTitle;
+
   const objectives = [
     {
       id: 'uuid',
@@ -34,6 +79,9 @@ describe('Objectives DB service', () => {
       isNew: true,
       recipientIds: [1],
       ids: ['uuid'],
+      topics: [],
+      resources: [],
+      files: [],
     },
     {
       id: 'uuid2',
@@ -43,6 +91,9 @@ describe('Objectives DB service', () => {
       isNew: true,
       recipientIds: [1],
       ids: ['uuid2'],
+      topics: [],
+      resources: [],
+      files: [],
     },
   ];
 
@@ -66,11 +117,13 @@ describe('Objectives DB service', () => {
       objectiveId: objective.id,
       activityReportId: report.id,
       ttaProvided: 'tta provided',
+      status: objective.status,
     });
 
     await ActivityReportObjective.create({
       objectiveId: secondObjective.id,
       activityReportId: report.id,
+      status: secondObjective.status,
     });
 
     await sequelize.transaction(async () => {
@@ -83,20 +136,62 @@ describe('Objectives DB service', () => {
         ids: [objective.id],
       }], report);
     });
+    otherEntity = await OtherEntity.create({ ...mockOtherEntity, id: 685497 });
+    recipientInfo = await Recipient.create({ ...mockRecipient });
+    grantInfo = await Grant.create({ ...mockGrant, recipientId: recipientInfo.id });
+    goalInfo = await Goal.create({ name: 'sample goal for obj info', grantId: grantInfo.id });
+    objectiveInfo = await Objective.create({ title: 'sample obj for info', goalId: goalInfo.id });
+    findObjectiveById = await Objective.create({
+      id: 598742,
+      title: 'i already exist with an id',
+      status: 'In Progress',
+      otherEntityId: 1,
+    });
+    findObjectiveByTitle = await Objective.create({
+      id: 594743,
+      title: 'there are many titles but this one is mine',
+      status: 'In Progress',
+      otherEntityId: 1,
+    });
   });
 
   afterAll(async () => {
     const aros = await ActivityReportObjective.findAll({ where: { activityReportId: report.id } });
     const objectiveIds = aros.map((aro) => aro.objectiveId);
     await ActivityReportObjective.destroy({ where: { activityReportId: report.id } });
-    await Objective.destroy({ where: { id: objectiveIds } });
+    await Objective.destroy({
+      where: {
+        id:
+      [...objectiveIds,
+        objective.id,
+        secondObjective.id,
+        findObjectiveById.id,
+        findObjectiveByTitle.id],
+      },
+    });
     await ActivityRecipient.destroy({ where: { activityReportId: report.id } });
     await ActivityReport.destroy({ where: { id: report.id } });
+
+    await Objective.destroy({ where: { id: objectiveInfo.id } });
+    await Goal.destroy({ where: { id: goalInfo.id } });
+    await Grant.destroy({ where: { id: grantInfo.id } });
+    await Recipient.destroy({ where: { id: recipientInfo.id } });
+    await OtherEntity.destroy({ where: { id: otherEntity.id } });
     await User.destroy({ where: { id: mockUser.id } });
     await db.sequelize.close();
   });
 
   describe('saveObjectivesForReport', () => {
+    it('gets objective by id', async () => {
+      const foundObj = await getObjectiveById(objectiveInfo.id);
+      expect(foundObj).not.toBeNull();
+      expect(foundObj.goal.grant.regionId).toBe(2);
+    });
+    it('gets objectives by report id', async () => {
+      const reportObjectives = await getObjectivesByReportId(report.id);
+      expect(reportObjectives).not.toBeNull();
+      expect(reportObjectives.length).toBe(3);
+    });
     it('deletes old objectives', async () => {
       waitFor(async () => {
         const found = await Objective.findOne({
@@ -130,6 +225,39 @@ describe('Objectives DB service', () => {
       expect(objs.length).toBe(3);
       expect(objs.map((o) => o.title).sort())
         .toEqual([objective, ...objectives].map((o) => o.title).sort());
+    });
+    it('finds existing objective by id', async () => {
+      expect(findObjectiveById).not.toBeNull();
+
+      await sequelize.transaction(async () => {
+        await saveObjectivesForReport([{
+          ...findObjectiveById,
+          ids: [findObjectiveById.id],
+          recipientIds: [1],
+          otherEntityId: 1,
+          status: 'In Progress',
+          title: 'i have a new title but same id',
+        }], report);
+      });
+      const foundObj = await getObjectiveById(findObjectiveById.id);
+      expect(foundObj.title).toBe('i have a new title but same id');
+    });
+
+    it('finds existing objective by title and entity', async () => {
+      expect(findObjectiveByTitle).not.toBeNull();
+
+      await sequelize.transaction(async () => {
+        await saveObjectivesForReport([{
+          ...findObjectiveByTitle,
+          recipientIds: [1],
+          otherEntityId: 1,
+          status: 'Not Started',
+          title: 'there are many titles but this one is mine',
+        }], report);
+      });
+      const foundObj = await getObjectiveById(findObjectiveByTitle.id);
+      expect(foundObj.title).toBe('there are many titles but this one is mine');
+      expect(foundObj.status).toBe('Not Started');
     });
   });
 });

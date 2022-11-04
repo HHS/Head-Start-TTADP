@@ -1,0 +1,7 @@
+@use '../colors.scss' as *;
+
+.avatar {
+  font-size: 1.5rem;
+  font-weight: 500;
+  background-color: $ttahub-medium-blue;
+}

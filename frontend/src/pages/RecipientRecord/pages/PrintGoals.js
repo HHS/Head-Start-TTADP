@@ -14,11 +14,19 @@ export default function PrintGoals({ location, recipientId, regionId }) {
   const [, setError] = useState('');
 
   useEffect(() => {
-    const sortConfig = location.state && location.state.selectedGoals
-      ? location.state.selectedGoals
-      : [];
+    const sortConfig = location.state && location.state.sortConfig
+      ? location.state.sortConfig
+      : {
+        sortBy: 'goalStatus',
+        direction: 'asc',
+        activePage: 1,
+        offset: 0,
+      };
 
-    async function fetchGoals() {
+    const goalIds = location.state && location.state.selectedGoalIds
+      ? location.state.selectedGoalIds
+      : [];
+    async function fetchGoals(query) {
       setLoading(true);
       try {
         const { goalRows } = await getRecipientGoals(
@@ -28,7 +36,8 @@ export default function PrintGoals({ location, recipientId, regionId }) {
           sortConfig.direction,
           OFFSET,
           false,
-          '',
+          query,
+          goalIds,
         );
         setGoals(goalRows);
         setError('');
@@ -40,8 +49,9 @@ export default function PrintGoals({ location, recipientId, regionId }) {
       setLoading(false);
     }
 
-    fetchGoals();
-  }, [location.state, recipientId, regionId]);
+    const filterQuery = window.location.search.replace(/^\?/, '');
+    fetchGoals(filterQuery);
+  }, [location.state, location.search, recipientId, regionId]);
 
   if (loading) {
     return 'Loading...';
@@ -59,7 +69,7 @@ export default function PrintGoals({ location, recipientId, regionId }) {
     <div className="margin-top-2 margin-left-2 ttahub-print-goals">
       <PrintToPdf />
       <div className="bg-white radius-md shadow-2 margin-right-2">
-        {goals.map((goal) => <PrintableGoal key={goal.id} goal={goal} />)}
+        {goals.map((goal) => <PrintableGoal key={`printable-goal-${goal.id}`} goal={goal} />)}
       </div>
     </div>
   );

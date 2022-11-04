@@ -3,7 +3,7 @@ import axios from 'axios';
 import fs from 'mz/fs';
 import updateGrantsRecipients, { processFiles } from './updateGrantsRecipients';
 import db, {
-  sequelize, Recipient, Grant, Program, ZALGrant, ActivityRecipient,
+  sequelize, Recipient, Goal, Grant, Program, ZALGrant, ActivityRecipient,
 } from '../models';
 
 jest.mock('axios');
@@ -68,12 +68,14 @@ describe('Update grants and recipients', () => {
   beforeAll(async () => {
     await Program.destroy({ where: { id: [1, 2, 3, 4] } });
     await ActivityRecipient.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Goal.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterEach(async () => {
     await Program.destroy({ where: { id: [1, 2, 3, 4] } });
     await ActivityRecipient.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Goal.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
