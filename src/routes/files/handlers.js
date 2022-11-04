@@ -375,7 +375,7 @@ const uploadObjectivesFile = async (req, res) => {
       const data = await createObjectivesFileMetaData(
         originalFilename,
         fileName,
-        objectiveIds,
+        objectiveIds.filter((i) => i !== 0), // Exclude unsaved objectives.
         size,
       );
       try {
