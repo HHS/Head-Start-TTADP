@@ -397,7 +397,10 @@ function Navigator({
   };
 
   useInterval(async () => {
-    await draftSaver(true);
+    // Don't auto save if we are already saving.;
+    if (!isAppLoading) {
+      await draftSaver(true);
+    }
   }, autoSaveInterval);
 
   // A new form page is being shown so we need to reset `react-hook-form` so validations are
@@ -571,7 +574,7 @@ Navigator.propTypes = {
 
 Navigator.defaultProps = {
   additionalData: {},
-  autoSaveInterval: 1000 * 60 * 2,
+  autoSaveInterval: 1000 * 5,
   lastSaveTime: null,
   savedToStorageTime: null,
   errorMessage: '',
