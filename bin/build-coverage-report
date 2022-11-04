@@ -1,0 +1,27 @@
+#!/bin/bash
+
+main(){
+    # start collecting our coverage files
+    coverage_files=("coverage/src/root/lcov.info")
+
+    # then list through the folders and run the tests
+    targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets") 
+    
+    for target in "${targets[@]}"; do 
+        coverage_files+=("coverage/src/$target/lcov.info")
+    done
+
+    # concatenate all the coverage files into one
+    for f in "${coverage_files[@]}"; do
+        cat "$f" >> lcov.info
+    done    
+
+    # generate the html report
+    if lcov -v; then
+        genhtml lcov.info --output-directory coverage
+    else
+        echo "lcov not found. Please install lcov to generate coverage report"
+    fi
+}
+
+main

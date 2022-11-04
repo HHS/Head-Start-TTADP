@@ -6,9 +6,13 @@ import {
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
+import { act } from 'react-dom/test-utils';
 import PrintGoals from '../PrintGoals';
 import UserContext from '../../../../UserContext';
 import { SCOPE_IDS } from '../../../../Constants';
+import { filtersToQueryString } from '../../../../utils';
+import FilterContext from '../../../../FilterContext';
+import { GOALS_OBJECTIVES_FILTER_KEY } from '../constants';
 
 const memoryHistory = createMemoryHistory();
 
@@ -24,7 +28,8 @@ describe('PrintGoals', () => {
       goalText: 'This is goal text 1.',
       goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
       objectiveCount: 5,
-      goalNumber: 'G-4598',
+      goalNumbers: ['G-4598'],
+      grantNumbers: ['Rattaché au programme'], // copilot came up with this, I hope its not profane
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
       objectives: [],
     },
@@ -35,7 +40,8 @@ describe('PrintGoals', () => {
       goalText: 'This is goal text 2.',
       goalTopics: ['Human Resources', 'Safety Practices'],
       objectiveCount: 5,
-      goalNumber: 'G-4598',
+      goalNumbers: ['G-4598'],
+      grantNumbers: ['Rattaché au programme'],
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
       objectives: [
         {
@@ -44,7 +50,19 @@ describe('PrintGoals', () => {
           grantNumber: '123',
           endDate: '01/01/02',
           reasons: ['Empathy', 'Generosity', 'Friendship'],
-          status: 'Completed',
+          status: 'Complete',
+          activityReports: [
+            {
+              id: 1,
+              displayId: '1234',
+              legacyId: null,
+            },
+            {
+              id: 2,
+              displayId: '1234',
+              legacyId: 'r-1234',
+            },
+          ],
         },
       ],
     },
@@ -68,19 +86,26 @@ describe('PrintGoals', () => {
 
     render(
       <Router history={memoryHistory}>
-        <UserContext.Provider value={{ user }}>
-          <PrintGoals
-            location={location}
-            recipientId={RECIPIENT_ID}
-            regionId={REGION_ID}
-          />
-        </UserContext.Provider>
+        <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY }}>
+          <UserContext.Provider value={{ user }}>
+            <PrintGoals
+              location={location}
+              recipientId={RECIPIENT_ID}
+              regionId={REGION_ID}
+            />
+          </UserContext.Provider>
+        </FilterContext.Provider>
       </Router>,
     );
   };
 
+  const filters = [{ topic: 'status', condition: 'is', query: ['Closed'] }];
+  const baseMock = `/api/recipient/${RECIPIENT_ID}/region/${REGION_ID}/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=false`;
+  const filteredMockURL = `${baseMock}&${filtersToQueryString(filters)}`;
+
   beforeAll(async () => {
-    fetchMock.get(`/api/recipient/${RECIPIENT_ID}/region/${REGION_ID}/goals?sortBy=updatedAt&sortDir=desc&offset=0&limit=false`, { count: 5, goalRows: goals });
+    fetchMock.get(baseMock, { count: 5, goalRows: goals });
+    fetchMock.get(filteredMockURL, { count: 0, goalRows: [] });
   });
 
   it('renders goals from API', async () => {
@@ -98,5 +123,26 @@ describe('PrintGoals', () => {
     expect(await screen.findByText('Empathy')).toBeVisible();
     expect(await screen.findByText('Generosity')).toBeVisible();
     expect(await screen.findByText('Friendship')).toBeVisible();
+  });
+
+  it('builds a URL to query based on filters provided by window.location.search', async () => {
+    delete window.location;
+    window.location = {
+      search: filtersToQueryString(filters),
+      state: {
+        sortConfig: {
+          sortBy: 'goalStatus',
+          direction: 'asc',
+          activePage: 1,
+          offset: 0,
+        },
+      },
+    };
+
+    act(renderPrintGoals);
+
+    // Expect that the mocked URL, which includes the filtered query was called.
+    // This asserts that PrintGoals is respecting filters included in window.location.search.
+    expect(fetchMock.called(filteredMockURL)).toBe(true);
   });
 });

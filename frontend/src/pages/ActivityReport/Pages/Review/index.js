@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -21,14 +21,9 @@ const ReviewSubmit = ({
   onResetToDraft,
   onSaveForm,
   pages,
-  updateShowValidationErrors,
   lastSaveTime,
 }) => {
   const { additionalNotes, calculatedStatus } = formData;
-
-  useEffect(() => {
-    updateShowValidationErrors(true);
-  }, [updateShowValidationErrors]);
 
   const [reviewed, updateReviewed] = useState(false);
   const [error, updateError] = useState();
@@ -93,7 +88,6 @@ const ReviewSubmit = ({
             lastSaveTime={lastSaveTime}
           >
             <>
-
               <Accordion bordered={false} items={items} />
             </>
           </Submitter>
@@ -119,7 +113,6 @@ const ReviewSubmit = ({
 };
 
 ReviewSubmit.propTypes = {
-  updateShowValidationErrors: PropTypes.func.isRequired,
   onSaveForm: PropTypes.func.isRequired,
   availableApprovers: PropTypes.arrayOf(
     PropTypes.shape({

@@ -4,6 +4,7 @@ junit.xml
 reports
 yarn-error.log
 docs/circleci/test_report.md
+lcov.info
 
 # Ignore /doc => /docs symbolic link created for adr-tools
 /doc

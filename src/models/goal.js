@@ -12,6 +12,7 @@ const { beforeValidate, afterUpdate } = require('./hooks/goal');
 module.exports = (sequelize, DataTypes) => {
   class Goal extends Model {
     static associate(models) {
+      Goal.hasMany(models.ActivityReportGoal, { foreignKey: 'goalId', as: 'activityReportGoals' });
       Goal.belongsToMany(models.ActivityReport, {
         through: models.ActivityReportGoal,
         foreignKey: 'goalId',
@@ -75,6 +76,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       default: false,
     },
+    isRttapa: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+    },
     firstNotStartedAt: {
       type: DataTypes.DATE,
       allowNull: true,
@@ -113,6 +118,10 @@ module.exports = (sequelize, DataTypes) => {
     },
     lastCompletedAt: {
       type: DataTypes.DATE,
+      allowNull: true,
+    },
+    createdVia: {
+      type: DataTypes.ENUM(['imported', 'activityReport', 'rtr']),
       allowNull: true,
     },
   }, {

@@ -1,21 +1,24 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import {
+  render, screen, act,
+} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import join from 'url-join';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
-import selectEvent from 'react-select-event';
 import goalsObjectives from '../goalsObjectives';
 import NetworkContext from '../../../../NetworkContext';
+import GoalFormContext from '../../../../GoalFormContext';
 
 const goalUrl = join('api', 'activity-reports', 'goals');
 
 const RenderGoalsObjectives = ({
-  grantIds, activityRecipientType,
+  grantIds, activityRecipientType, connectionActive = true,
 }) => {
   const activityRecipients = grantIds.map((activityRecipientId) => ({
     activityRecipientId, id: activityRecipientId,
@@ -24,11 +27,24 @@ const RenderGoalsObjectives = ({
   const hookForm = useForm({
     mode: 'onChange',
     defaultValues: {
+      author: {
+        roles: [
+          {
+            fullName: 'central office',
+          },
+        ],
+      },
+      collaborators: [],
       goals: [{
         id: 1,
         name: 'This is a test goal',
         isNew: true,
         goalIds: [1],
+        grants: [
+          {
+            value: 1, label: 'Turtle 1', programs: [], id: 1,
+          },
+        ],
         objectives: [{
           id: 1,
           title: 'title',
@@ -37,32 +53,43 @@ const RenderGoalsObjectives = ({
         }],
       }],
       objectivesWithoutGoals: [],
+      approvers: [],
       ...data,
     },
   });
+  const history = createMemoryHistory();
+
   return (
-    <NetworkContext.Provider value={{ connectionActive: true, localStorageAvailable: true }}>
-      <FormProvider {...hookForm}>
-        {goalsObjectives.render()}
-      </FormProvider>
+    <NetworkContext.Provider value={{ connectionActive, localStorageAvailable: true }}>
+      <Router history={history}>
+        <FormProvider {...hookForm}>
+          {goalsObjectives.render()}
+        </FormProvider>
+      </Router>
     </NetworkContext.Provider>
   );
 };
 
-const renderGoals = (grantIds, activityRecipientType, goals = [], fetchError) => {
+const renderGoals = (
+  grantIds,
+  activityRecipientType,
+  goals = [],
+  isGoalFormClosed = false,
+  throwFetchError = false,
+  toggleGoalForm = jest.fn(),
+) => {
   const query = grantIds.map((id) => `grantIds=${id}`).join('&');
-  const url = join(goalUrl, `?${query}`);
-  if (!fetchError) {
-    fetchMock.get(url, goals);
-  } else {
-    fetchMock.get(url, 500);
-  }
+  const fetchResponse = throwFetchError ? 500 : goals;
 
+  fetchMock.get(join(goalUrl, `?${query}`), fetchResponse);
   render(
-    <RenderGoalsObjectives
-      grantIds={grantIds}
-      activityRecipientType={activityRecipientType}
-    />,
+    <GoalFormContext.Provider value={{ isGoalFormClosed, toggleGoalForm }}>
+      <RenderGoalsObjectives
+        grantIds={grantIds}
+        activityRecipientType={activityRecipientType}
+        connectionActive={!throwFetchError}
+      />
+    </GoalFormContext.Provider>,
   );
 };
 
@@ -82,40 +109,124 @@ const RenderReview = ({ goals, activityRecipientType = 'recipient', objectivesWi
 };
 
 describe('goals objectives', () => {
+  beforeEach(async () => {
+    fetchMock.get('/api/topic', []);
+  });
   afterEach(() => fetchMock.restore());
+
+  describe('fetch errors', () => {
+    it('shows error messages', async () => {
+      const goals = [];
+      const isGoalFormClosed = false;
+      const throwFetchError = true;
+
+      renderGoals([1], 'recipient', goals, isGoalFormClosed, throwFetchError);
+      expect(await screen.findByText('Connection error. Cannot load options.')).toBeVisible();
+    });
+  });
+
   describe('when activity recipient type is "recipient"', () => {
     it('the display goals section is displayed', async () => {
       renderGoals([1], 'recipient');
-      await screen.findByText('Context');
-      expect(await screen.findByText('Goals and objectives')).toBeVisible();
+      expect(await screen.findByText('Goal summary', { selector: '.margin-bottom-0.margin-top-4' })).toBeVisible();
     });
 
-    it('the display goals section does not show if no grants are selected', async () => {
+    it('the display goals shows a warning if no grants are selected', async () => {
       renderGoals([], 'recipient');
-      await screen.findByText('Context');
       expect(screen.queryByText('Goals and objectives')).toBeNull();
+      expect(await screen.findByText(/To create goals, first select a recipient/i)).toBeVisible();
+    });
+
+    it('you can click the little add new button', async () => {
+      const sampleGoals = [{
+        name: 'Test',
+        id: 1234567,
+        objectives: [],
+      }];
+
+      const throwFetchError = false;
+      const toggleGoalForm = jest.fn();
+      const isGoalFormClosed = true;
+      renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed, throwFetchError, toggleGoalForm);
+      const button = await screen.findByRole('button', { name: /add new goal/i });
+      const summaries = await screen.findAllByText('Goal summary');
+      expect(summaries.length).toBe(1);
+      act(() => userEvent.click(button));
+      expect(toggleGoalForm).toHaveBeenCalledWith(false);
+    });
+
+    it('you can edit a goal', async () => {
+      const sampleGoals = [{
+        name: 'Test',
+        id: 1234567,
+        objectives: [],
+      }];
+      const isGoalFormClosed = true;
+      const throwFetchError = false;
+      const toggleGoalForm = jest.fn();
+
+      renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed, throwFetchError, toggleGoalForm);
+      const actions = await screen.findByRole('button', { name: /actions for goal 1/i });
+      userEvent.click(actions);
+      const [button] = await screen.findAllByRole('button', { name: 'Edit' });
+      act(() => userEvent.click(button));
+      expect(toggleGoalForm).toHaveBeenCalledWith(false);
+    });
+
+    it('you can remove a goal', async () => {
+      const sampleGoals = [{
+        name: 'Test',
+        id: 1234567,
+        objectives: [],
+      }];
+      const isGoalFormClosed = true;
+      renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed);
+      const goalSummary = await screen.findByText('Goal summary');
+      expect(goalSummary).toBeVisible();
+      const actions = await screen.findByRole('button', { name: /actions for goal 1/i });
+      userEvent.click(actions);
+      const [button] = await screen.findAllByRole('button', { name: 'Remove' });
+      userEvent.click(button);
+      expect(goalSummary).not.toBeVisible();
+      const addNewGoal = await screen.findByRole('button', { name: /add new goal/i });
+      expect(addNewGoal).toBeVisible();
     });
   });
 
   describe('handles fetch error', () => {
     it('handles it like I SAID', async () => {
-      renderGoals([1], 'recipient', [], true);
+      const goals = [];
+      const recipientType = 'recipient';
+      const grants = [1];
+      const isGoalFormClosed = false;
+      const throwFetchError = true;
+      renderGoals(grants, recipientType, goals, isGoalFormClosed, throwFetchError);
       expect(await screen.findByText('Connection error. Cannot load options.')).toBeVisible();
     });
   });
 
-  describe('when activity recipient type is not "recipient"', () => {
+  describe('when activity recipient type is not "recipient" or "other-entity"', () => {
+    it('a warning is displayed', async () => {
+      renderGoals([1], null);
+      expect(await screen.findByText(
+        /To add goals and objectives, indicate who the activity was for in/i,
+      )).toBeVisible();
+    });
+  });
+
+  describe('when activity recipient type is other entity"', () => {
     it('the objectives section is displayed', async () => {
-      renderGoals([1], 'otherEntity');
-      await screen.findByText('Context');
-      expect(await screen.findByText('Objectives for other entity TTA')).toBeVisible();
+      renderGoals([1], 'other-entity');
+      expect(await screen.findByText(
+        'You\'re creating an activity report for an entity that\'s not a grant recipient, so you only need to create objectives. The goal section is removed.',
+      )).toBeVisible();
     });
   });
 
   describe('title override', () => {
     it('returns objective if activityRecipientType is other-entity', async () => {
       const res = goalsObjectives.titleOverride({ activityRecipientType: 'other-entity' });
-      expect(res).toEqual('Objectives');
+      expect(res).toEqual('Objectives and topics');
     });
 
     it('returns goals if activityRecipientType is recipient', async () => {
@@ -143,6 +254,9 @@ describe('goals objectives', () => {
             title: 'title',
             ttaProvided: 'tta',
             status: 'In Progress',
+            topics: ['Hello'],
+            resources: [],
+            roles: ['Chief Inspector'],
           },
         ];
         const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives });
@@ -158,36 +272,22 @@ describe('goals objectives', () => {
 
       it('is true if goals are valid', () => {
         const goals = [{
+          name: 'Is goal',
+          endDate: '2021-01-01',
+          isRttapa: 'No',
           objectives: [{
             id: 1,
             title: 'title',
             ttaProvided: 'tta',
             status: 'In Progress',
+            topics: ['Hello'],
+            resources: [],
+            roles: ['Chief Inspector'],
           }],
         }];
         const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'recipient', goals });
         expect(complete).toBeTruthy();
       });
-    });
-
-    it('fetched goals are autoselected', async () => {
-      const goals = [{
-        name: 'This is a test goal',
-        goalIds: [1],
-        objectives: [{
-          id: 1,
-          title: 'title',
-          ttaProvided: 'tta',
-          status: 'In Progress',
-        }],
-      }];
-
-      renderGoals([3], 'recipient', goals);
-
-      const select = document.querySelector('#goals input');
-      selectEvent.openMenu(select);
-
-      expect(screen.getByText(/This is a test goal/i, { selector: 'span' })).toBeInTheDocument();
     });
 
     it('does not fetch if there are no grants', async () => {
@@ -219,10 +319,22 @@ describe('goals objectives', () => {
         activityRecipientType="other-entity"
         objectivesWithoutGoals={[
           {
-            id: 1, title: 'title one', ttaProvided: 'ttaProvided one', status: 'Not Started',
+            id: 1,
+            title: 'title one',
+            ttaProvided: 'ttaProvided one',
+            status: 'Not Started',
+            topics: ['Hello'],
+            resources: [],
+            roles: ['Chief Inspector'],
           },
           {
-            id: 2, title: 'title two', ttaProvided: 'ttaProvided two', status: 'Not Started',
+            id: 2,
+            title: 'title two',
+            ttaProvided: 'ttaProvided two',
+            status: 'Not Started',
+            topics: ['Hello'],
+            resources: [],
+            roles: ['Chief Inspector'],
           },
         ]}
       />);
@@ -235,7 +347,13 @@ describe('goals objectives', () => {
         id: 1,
         name: 'goal',
         objectives: [{
-          id: 1, title: 'title', ttaProvided: 'ttaProvided', status: 'Not Started',
+          id: 1,
+          title: 'title',
+          ttaProvided: 'ttaProvided',
+          status: 'Not Started',
+          topics: ['Hello'],
+          resources: [],
+          roles: ['Chief Inspector'],
         }],
       }]}
       />);
@@ -250,12 +368,18 @@ describe('goals objectives', () => {
           title: 'title',
           ttaProvided: 'tta',
           status: 'In Progress',
+          topics: ['Hello'],
+          resources: [],
+          roles: ['Chief Inspector'],
         },
         {
           id: 2,
           title: 'title',
           ttaProvided: 'tta',
           status: 'In Progress',
+          topics: ['Hello'],
+          resources: [],
+          roles: ['Chief Inspector'],
         },
       ];
       const formData = { activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives };

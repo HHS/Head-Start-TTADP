@@ -128,6 +128,25 @@ const updateStatus = async (fileId, fileStatus) => {
   }
 };
 
+const createFileMetaData = async (originalFileName, s3FileName, fileSize) => {
+  const newFile = {
+    originalFileName,
+    key: s3FileName,
+    status: UPLOADING,
+    fileSize,
+  };
+  const [file] = await File.findOrCreate({
+    where: {
+      originalFileName: newFile.originalFileName,
+      key: newFile.key,
+      fileSize: newFile.fileSize,
+    },
+    defaults: newFile,
+  });
+
+  return file.dataValues;
+};
+
 const createActivityReportFileMetaData = async (
   originalFileName,
   s3FileName,
@@ -178,6 +197,32 @@ const createActivityReportObjectiveFileMetaData = async (
   return file.dataValues;
 };
 
+const createObjectivesFileMetaData = async (
+  originalFileName,
+  s3FileName,
+  objectiveIds,
+  fileSize,
+) => {
+  const newFile = {
+    originalFileName,
+    key: s3FileName,
+    status: UPLOADING,
+    fileSize,
+  };
+  const [file] = await File.findOrCreate({
+    where: {
+      originalFileName: newFile.originalFileName,
+      key: newFile.key,
+      fileSize: newFile.fileSize,
+    },
+    defaults: newFile,
+  });
+  await Promise.all(objectiveIds.map(
+    (objectiveId) => ObjectiveFile.create({ objectiveId, fileId: file.id }),
+  ));
+  return file.dataValues;
+};
+
 const createObjectiveFileMetaData = async (
   originalFileName,
   s3FileName,
@@ -193,7 +238,7 @@ const createObjectiveFileMetaData = async (
   const [file] = await File.findOrCreate({
     where: {
       originalFileName: newFile.originalFileName,
-      key: newFile.s3FileName,
+      key: newFile.key,
       fileSize: newFile.fileSize,
     },
     defaults: newFile,
@@ -238,8 +283,10 @@ export {
   getObjectiveFilesById,
   getObjectiveTemplateFilesById,
   updateStatus,
+  createFileMetaData,
   createActivityReportFileMetaData,
   createActivityReportObjectiveFileMetaData,
-  createObjectiveFileMetaData,
+  createObjectiveFileMetaData, // for one objective
+  createObjectivesFileMetaData, // for more than one objective
   createObjectiveTemplateFileMetaData,
 };

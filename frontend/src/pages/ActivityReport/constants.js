@@ -24,6 +24,11 @@ export const reasons = [
   ...reasonsToMonitor,
 ];
 
+/*
+  Please keep in sync with:
+  frontend > src > constants.js
+  src > constants.js
+*/
 export const recipientParticipants = [
   'CEO / CFO / Executive',
   'Center Director / Site Director',
@@ -57,7 +62,7 @@ export const otherEntityParticipants = [
 // - src/constants.js
 export const topics = [
   'Behavioral / Mental Health / Trauma',
-  'Child Assessment, Development, Screening',
+  'Child Screening and Assessment',
   'CLASS: Classroom Organization',
   'CLASS: Emotional Support',
   'CLASS: Instructional Support',
@@ -89,7 +94,7 @@ export const topics = [
   'Recordkeeping and Reporting',
   'Safety Practices',
   'Staff Wellness',
-  'Teaching Practices / Teacher-Child Interactions',
+  'Teaching / Caregiving Practices',
   'Technology and Information Systems',
   'Transition Practices',
   'Transportation',

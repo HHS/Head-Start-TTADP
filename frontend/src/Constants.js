@@ -80,7 +80,7 @@ export const REASONS = [
   'Complaint',
   'COVID-19 response',
   'Full Enrollment',
-  'New Grantee',
+  'New Recipient',
   'New Director or Management',
   'New Program Option',
   'New Staff / Turnover',
@@ -147,7 +147,7 @@ export const OTHER_ENTITY_TYPES = [
 // - src/constants.js
 export const TOPICS = [
   'Behavioral / Mental Health / Trauma',
-  'Child Assessment, Development, Screening',
+  'Child Screening and Assessment',
   'CLASS: Classroom Organization',
   'CLASS: Emotional Support',
   'CLASS: Instructional Support',
@@ -179,7 +179,7 @@ export const TOPICS = [
   'Recordkeeping and Reporting',
   'Safety Practices',
   'Staff Wellness',
-  'Teaching Practices / Teacher-Child Interactions',
+  'Teaching / Caregiving Practices',
   'Technology and Information Systems',
   'Transition Practices',
   'Transportation',
@@ -236,7 +236,7 @@ export const DATE_DISPLAY_FORMAT = 'MM/DD/YYYY';
 export const DATEPICKER_VALUE_FORMAT = 'YYYY-MM-DD';
 export const EARLIEST_INC_FILTER_DATE = moment('2020-08-31');
 
-const LOCAL_STORAGE_CACHE_NUMBER = '0.1';
+const LOCAL_STORAGE_CACHE_NUMBER = '0.2';
 export const LOCAL_STORAGE_DATA_KEY = (id) => `ar-form-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const LOCAL_STORAGE_ADDITIONAL_DATA_KEY = (id) => `ar-additional-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const LOCAL_STORAGE_EDITABLE_KEY = (id) => `ar-can-edit-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
@@ -252,4 +252,43 @@ export const GOAL_SUSPEND_REASONS = [
   'Recipient request',
   'Recipient is not responding',
   'Regional Office request',
+];
+
+/*
+  Please keep in sync with:
+  frontend > src > pages > ActivityReport > constants.js
+  src > constants.js
+*/
+export const RECIPIENT_PARTICIPANTS = [
+  'CEO / CFO / Executive',
+  'Center Director / Site Director',
+  'Coach',
+  'Direct Service: Other',
+  'Family Service Worker / Case Manager',
+  'Fiscal Manager/Team',
+  'Governing Body / Tribal Council / Policy Council',
+  'Home Visitor',
+  'Manager / Coordinator / Specialist',
+  'Parent / Guardian',
+  'Program Director (HS / EHS)',
+  'Program Support / Administrative Assistant',
+  'Teacher / Infant-Toddler Caregiver',
+  'Volunteer',
+];
+
+export const OTHER_ENTITY_PARTICIPANTS = [
+  'HSCO',
+  'Local/State Agency(ies)',
+  'OCC Regional Office',
+  'OHS Regional Office',
+  'Regional Head Start Association',
+  'Regional TTA Team / Specialists',
+  'State Early Learning System',
+  'State Head Start Association',
+  'Other',
+];
+
+export const ALL_PARTICIPANTS = [
+  ...RECIPIENT_PARTICIPANTS,
+  ...OTHER_ENTITY_PARTICIPANTS,
 ];

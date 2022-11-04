@@ -3,6 +3,7 @@ import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
 import {
   ActivityReport as ActivityReportModel,
+  Role,
   ActivityReportApprover,
   User as UserModel,
 } from '../../models';
@@ -19,11 +20,15 @@ import {
   getDownloadableActivityReportsByIds,
   getAllDownloadableActivityReportAlerts,
   getAllDownloadableActivityReports,
+  activityReportsForCleanup,
 } from '../../services/activityReports';
+import { saveObjectivesForReport, getObjectivesByReportId } from '../../services/objectives';
 import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
 import { goalsForGrants } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
-import { APPROVER_STATUSES, REPORT_STATUSES, DECIMAL_BASE } from '../../constants';
+import {
+  APPROVER_STATUSES, REPORT_STATUSES, DECIMAL_BASE, USER_SETTINGS,
+} from '../../constants';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
 
 import { logger } from '../../logger';
@@ -34,6 +39,7 @@ import {
   collaboratorAssignedNotification,
 } from '../../lib/mailer';
 import { activityReportToCsvRecord, extractListOfGoalsAndObjectives, deduplicateObjectivesWithoutGoals } from '../../lib/transform';
+import { userSettingOverridesById } from '../../services/userSettings';
 
 const { APPROVE_REPORTS } = SCOPES;
 
@@ -141,18 +147,6 @@ async function sendActivityReportCSV(reports, res) {
           header: 'Number of participants',
         },
         {
-          key: 'topics',
-          header: 'Topics covered',
-        },
-        {
-          key: 'ECLKCResourcesUsed',
-          header: 'ECLKC resources',
-        },
-        {
-          key: 'nonECLKCResourcesUsed',
-          header: 'Non-ECLKC resources',
-        },
-        {
           key: 'files',
           header: 'Attachments',
         },
@@ -189,6 +183,26 @@ async function sendActivityReportCSV(reports, res) {
         {
           key: 'recipientInfo',
           header: 'Recipient name - Grant number - Recipient ID',
+        },
+        {
+          key: 'topics',
+          header: 'Legacy Topics covered',
+        },
+        {
+          key: 'ECLKCResourcesUsed',
+          header: 'Legacy ECLKC resources',
+        },
+        {
+          key: 'nonECLKCResourcesUsed',
+          header: 'Legacy Non-ECLKC resources',
+        },
+        {
+          key: 'files',
+          header: 'Legacy Attachments',
+        },
+        {
+          key: 'stateCode',
+          header: 'State code',
         },
       ],
     };
@@ -263,6 +277,31 @@ export async function getGoals(req, res) {
 }
 
 /**
+ * Save Objectives for non-entity Reports.
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function saveOtherEntityObjectivesForReport(req, res) {
+  const { objectivesWithoutGoals, activityReportId, region } = req.body;
+  const user = await userById(req.session.userId);
+  const authorization = new User(user);
+
+  if (!authorization.canWriteInRegion(parseInt(region, DECIMAL_BASE))) {
+    res.sendStatus(403);
+    return;
+  }
+  try {
+    const report = await ActivityReportModel.findByPk(activityReportId);
+    await saveObjectivesForReport(objectivesWithoutGoals, report);
+    const updatedObjectives = await getObjectivesByReportId(activityReportId);
+    res.json(updatedObjectives);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+/**
  * Gets all users that have approve permissions for the current user's
  * regions.
  *
@@ -288,6 +327,41 @@ export async function getApprovers(req, res) {
 }
 
 /**
+ * Checks if author and collaborators are subscribed to the immediate notifications.
+ *
+ * @param {*} report - activity report
+ * @param {*} setting - a setting object with "key" and "value" keys
+ * @returns {Promise<Array>} - an array containing an author and collaborators that subscribe
+ */
+async function checkEmailSettings(report, setting) {
+  const { author, activityReportCollaborators } = report;
+
+  const settingForAuthor = author ? (await userSettingOverridesById(author.id, setting))
+    : null;
+
+  const authorWithSetting = (settingForAuthor
+    && settingForAuthor.value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY)
+    ? author : null;
+
+  const settingsForAllCollabs = activityReportCollaborators
+    ? (await Promise.all(activityReportCollaborators.map(
+      (c) => userSettingOverridesById(
+        c.userId,
+        setting,
+      ),
+    ))) : [];
+
+  const collabsWithSettings = activityReportCollaborators
+    ? activityReportCollaborators.filter((_value, index) => {
+      if (!settingsForAllCollabs[index]) {
+        return false;
+      }
+      return settingsForAllCollabs[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
+    }) : [];
+
+  return [authorWithSetting, collabsWithSettings];
+}
+/**
  * Review a report, setting Approver status to approved or needs action
  *
  * @param {*} req - request
@@ -301,7 +375,6 @@ export async function reviewReport(req, res) {
 
     const user = await userById(userId);
     const [report] = await activityReportAndRecipientsById(activityReportId);
-
     const authorization = new ActivityReport(user, report);
 
     if (!authorization.canReview()) {
@@ -319,11 +392,24 @@ export async function reviewReport(req, res) {
     const [reviewedReport] = await activityReportAndRecipientsById(activityReportId);
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
-      reportApprovedNotification(reviewedReport);
+      const [authorWithSetting, collabsWithSettings] = await checkEmailSettings(
+        reviewedReport,
+        USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+      );
+      reportApprovedNotification(reviewedReport, authorWithSetting, collabsWithSettings);
     }
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
-      changesRequestedNotification(reviewedReport, savedApprover);
+      const [authorWithSetting, collabsWithSettings] = await checkEmailSettings(
+        reviewedReport,
+        USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED,
+      );
+      changesRequestedNotification(
+        reviewedReport,
+        savedApprover,
+        authorWithSetting,
+        collabsWithSettings,
+      );
     }
 
     res.json(savedApprover);
@@ -444,10 +530,22 @@ export async function submitReport(req, res) {
     // Create, restore or destroy this report's approvers
     const currentApprovers = await syncApprovers(activityReportId, approverUserIds);
 
+    const settingsForAllCurrentApprovers = await Promise.all(currentApprovers.map(
+      (a) => userSettingOverridesById(
+        a.userId,
+        USER_SETTINGS.EMAIL.KEYS.SUBMITTED_FOR_REVIEW,
+      ),
+    ));
+    const currentApproversWithSettings = currentApprovers.filter((_value, index) => {
+      if (!settingsForAllCurrentApprovers[index]) {
+        return false;
+      }
+      return settingsForAllCurrentApprovers[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
+    });
     // This will send notification to everyone marked as an approver.
     // This may need to be adjusted in future to only send notification to
     // approvers who are not in approved status.
-    approverAssignedNotification(savedReport, currentApprovers);
+    approverAssignedNotification(savedReport, currentApproversWithSettings);
 
     // Resubmitting resets any needs_action status to null ("pending" status)
     await ActivityReportApprover.update({ status: null }, {
@@ -466,7 +564,13 @@ export async function submitReport(req, res) {
           include: [
             {
               model: UserModel,
-              attributes: ['id', 'name', 'role', 'fullName'],
+              attributes: ['id', 'name', 'fullName'],
+              include: [
+                {
+                  model: Role,
+                  as: 'roles',
+                },
+              ],
             },
           ],
         },
@@ -557,6 +661,23 @@ export async function getReportAlerts(req, res) {
 }
 
 /**
+ * Retrieve activity report alerts
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function getReportsForLocalStorageCleanup(req, res) {
+  const { userId } = req.session;
+  const reportsToCleanup = await activityReportsForCleanup(userId);
+
+  if (!reportsToCleanup) {
+    res.sendStatus(404);
+  } else {
+    res.json(reportsToCleanup);
+  }
+}
+
+/**
  * save an activity report
  *
  * @param {*} req - request
@@ -603,7 +724,21 @@ export async function saveReport(req, res) {
         return !oldCollaborators.includes(c.user.email);
       });
 
-      collaboratorAssignedNotification(savedReport, newCollaborators);
+      const settingsForAllCollabs = await Promise.all(newCollaborators.map(
+        (c) => userSettingOverridesById(
+          c.userId,
+          USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED,
+        ),
+      ));
+
+      const newCollaboratorsWithSettings = newCollaborators.filter((_value, index) => {
+        if (!settingsForAllCollabs[index]) {
+          return false;
+        }
+        return settingsForAllCollabs[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
+      });
+
+      collaboratorAssignedNotification(savedReport, newCollaboratorsWithSettings);
     }
 
     res.json(savedReport);
@@ -638,7 +773,22 @@ export async function createReport(req, res) {
     // updateCollaboratorRoles(newReport);
     const report = await createOrUpdate(newReport);
     if (report.activityReportCollaborators) {
-      collaboratorAssignedNotification(report, report.activityReportCollaborators);
+      const collabs = report.activityReportCollaborators;
+
+      const settingsForAllCollabs = await Promise.all(collabs.map(
+        (c) => userSettingOverridesById(
+          c.userId,
+          USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED,
+        ),
+      ));
+
+      const collabsWithSettings = collabs.filter((_value, index) => {
+        if (!settingsForAllCollabs[index]) {
+          return false;
+        }
+        return settingsForAllCollabs[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
+      });
+      collaboratorAssignedNotification(report, collabsWithSettings);
     }
     res.json(report);
   } catch (error) {

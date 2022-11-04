@@ -57,6 +57,7 @@ function MultiSelect({
   singleRowInput,
   canCreate,
   onCreateOption,
+  placeholderText,
   components: componentReplacements,
 }) {
   const inputId = `select-${uuidv4()}`;
@@ -78,6 +79,10 @@ function MultiSelect({
         outline,
       };
     },
+    placeholder: (provided) => ({
+      ...provided,
+      color: '#1b1b1b',
+    }),
     groupHeading: (provided) => ({
       ...provided,
       fontWeight: 'bold',
@@ -162,7 +167,7 @@ function MultiSelect({
         const values = value ? getValues(value) : value;
         return (
           <Selector
-            className="margin-top-1"
+            className="ttahub-multi-select margin-top-1"
             id={name}
             value={values}
             onChange={(event) => {
@@ -184,7 +189,7 @@ function MultiSelect({
             closeMenuOnSelect={multiSelectOptions.closeMenuOnSelect || false}
             controlShouldRenderValue={multiSelectOptions.controlShouldRenderValue}
             hideSelectedOptions={multiSelectOptions.hideSelectedOptions}
-            placeholder=""
+            placeholder={placeholderText || ''}
             onCreateOption={onCreateOption}
             isMulti
           />
@@ -201,6 +206,7 @@ function MultiSelect({
         ...rules,
       }}
       name={name}
+      defaultValue={[]}
     />
   );
 }
@@ -243,6 +249,7 @@ MultiSelect.propTypes = {
   disabled: PropTypes.bool,
   rules: PropTypes.shape({}),
   required: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
+  placeholderText: PropTypes.string,
 };
 
 MultiSelect.defaultProps = {
@@ -258,6 +265,7 @@ MultiSelect.defaultProps = {
   rules: {},
   onItemSelected: null,
   onCreateOption: null,
+  placeholderText: null,
 };
 
 export default MultiSelect;
