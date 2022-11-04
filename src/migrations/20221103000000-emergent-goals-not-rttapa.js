@@ -25,7 +25,7 @@ module.exports = {
         // remove old column from users table
         await queryInterface.sequelize.query(
           `UPDATE "Goals" g
-          SET "isRttapa" = 'No'
+          SET "isRttapa" = 'No'::"enum_Goals_isRttapa"
           WHERE COALESCE(g."isFromSmartsheetTtaPlan",false) = false;`,
           { transaction },
         );
@@ -66,7 +66,7 @@ module.exports = {
         await queryInterface.sequelize.query(
           `UPDATE "Goals" g
           SET "isRttapa" = null
-          WHERE "isRttapa" = false
+          WHERE "isRttapa" = 'No'::"enum_Goals_isRttapa"
           AND COALESCE(g."isFromSmartsheetTtaPlan",false) = false;`,
           { transaction },
         );
