@@ -26,7 +26,7 @@ module.exports = {
         await queryInterface.sequelize.query(
           `UPDATE "Goals" g
           SET "isRttapa" = false
-          WHERE COALEASE(g."isFromSmartsheetTtaPlan",false) = false;`,
+          WHERE COALESCE(g."isFromSmartsheetTtaPlan",false) = false;`,
           { transaction },
         );
 
