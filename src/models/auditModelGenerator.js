@@ -29,7 +29,7 @@ const pgSetConfigIfNull = (settingName, value, alias) => `
     true
   ) as "${alias}"`;
 
-const auditedTransactions = Set();
+const auditedTransactions = new Set();
 
 const addAuditTransactionSettings = async (sequelize, instance, options, type) => {
   const loggedUser = httpContext.get('loggedUser') ? httpContext.get('loggedUser') : '';
