@@ -574,7 +574,7 @@ Navigator.propTypes = {
 
 Navigator.defaultProps = {
   additionalData: {},
-  autoSaveInterval: 1000 * 5,
+  autoSaveInterval: 1000 * 60 * 2,
   lastSaveTime: null,
   savedToStorageTime: null,
   errorMessage: '',
