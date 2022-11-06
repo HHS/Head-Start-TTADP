@@ -229,33 +229,6 @@ module.exports = {
             WHERE otr."objectiveTemplateId" = tdot."duplicateObjectiveTemplateId";
             ------------------------------------------------------------------------------------
             WITH
-              "ObjectiveTemplateRolesToUpdate" AS (
-                SELECT
-                  otr.id "objectiveTemplateRoleId",
-                  tdot."objectiveTemplateId",
-                  tdot."duplicateObjectiveTemplateId",
-                  otr."roleId",
-                  otr."createdAt",
-                  otr."updatedAt"
-                FROM "ObjectiveTemplateRoles" otr
-                JOIN "TempDuplicateObjectiveTemplates" tdot
-                ON otr."objectiveTemplateId" = tdot."duplicateObjectiveTemplateId"
-                LEFT JOIN "ObjectiveTemplateRoles" otr2
-                ON tdot."objectiveTemplateId" = otr2."objectiveTemplateId"
-                AND otr."roleId" = otr2."roleId"
-                WHERE otr2.id IS NULL
-              )
-            UPDATE "ObjectiveTemplateRoles" otr
-            SET
-              "objectiveTemplateId" = otru."objectiveTemplateId"
-            FROM "ObjectiveTemplateRolesToUpdate" otru
-            WHERE otr.id = otru."objectiveTemplateRoleId";
-            ------------------------------------------------------------------------------------
-            DELETE FROM "ObjectiveTemplateRoles" otr
-            USING "TempDuplicateObjectiveTemplates" tdot
-            WHERE otr."objectiveTemplateId" = tdot."duplicateObjectiveTemplateId";
-            ------------------------------------------------------------------------------------
-            WITH
               "ObjectiveTemplateTopicsToUpdate" AS (
                 SELECT
                   ott.id "objectiveTemplateTopicId",

@@ -21,6 +21,17 @@ const findOrCreateObjectiveTemplate = async (
     },
     transaction,
   });
+  await sequelize.models.ObjectiveTemplate.Update(
+    { lastUsed: createdAt },
+    {
+      where: {
+        id: objectiveTemplate[0].id,
+        lastUsed: { [Op.lt]: createdAt },
+      },
+      transaction,
+      individualHooks: true,
+    },
+  );
   return { id: objectiveTemplate[0].id, title };
 };
 
