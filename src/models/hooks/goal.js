@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import { GOAL_STATUS } from '../../constants';
 
 const findOrCreateGoalTemplate = async (sequelize, transaction, regionId, name, createdAt) => {
@@ -14,28 +15,19 @@ const findOrCreateGoalTemplate = async (sequelize, transaction, regionId, name, 
     },
     transaction,
   });
+  await sequelize.models.GoalTemplate.Update(
+    { lastUsed: createdAt },
+    {
+      where: {
+        id: goalTemplate[0].id,
+        lastUsed: { [Op.lt]: createdAt },
+      },
+      transaction,
+      individualHooks: true,
+    },
+  );
   return { id: goalTemplate[0].id, name };
 };
-
-// const autoPopulateGoalTemplateId = async (sequelize, instance, options) => {
-//   if (instance.goalTemplateId === undefined
-//   || instance.goalTemplateId === null) {
-//     const grant = await sequelize.models.Grant.findOne({
-//       attributes: ['regionId'],
-//       where: { id: instance.grantId },
-//       transaction: options.transaction,
-//       include: false,
-//     });
-//     const templateId = await findOrCreateGoalTemplate(
-//       sequelize,
-//       options,
-//       grant.regionId,
-//       instance.name,
-//       instance.createdAt,
-//     );
-//     instance.set('goalTemplateId', templateId);
-//   }
-// };
 
 const autoPopulateOnApprovedAR = (sequelize, instance) => {
   if (instance.onApprovedAR === undefined

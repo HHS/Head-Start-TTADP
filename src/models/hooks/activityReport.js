@@ -105,7 +105,7 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
         return { ...goal, goalTemplateId };
       });
       await Promise.all(goals.map(async (goal) => sequelize.models.Goal.update(
-        { goalTemplateId: goals.goalTemplateId },
+        { goalTemplateId: goal.goalTemplateId },
         {
           where: { id: goal.id },
           transaction: options.transaction,
@@ -152,7 +152,7 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
         return { ...objective, objectiveTemplateId };
       });
       await Promise.all(objectives.map(async (objective) => sequelize.models.Objective.update(
-        { objectiveTemplateId: objectives.objectiveTemplateId },
+        { objectiveTemplateId: objective.objectiveTemplateId },
         {
           where: { id: objective.id },
           transaction: options.transaction,
