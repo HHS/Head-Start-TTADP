@@ -33,16 +33,21 @@ const ObjectiveFileUploader = ({
 
     try {
       if (uploaderIsOnReport) {
+        console.log('Delete 1');
+        console.log('Delete Info: ', reportId, file.id, objective.ids);
         // remove from activity report objective file only
         await removeActivityReportObjectiveFile(reportId, file.id, objective.ids);
       } else if (objectiveHasBeenSaved) {
+        console.log('Delete 2');
         // remove objective file and delete file
         await deleteObjectiveFile(file.id, objective.ids);
       } else if (fileHasObjectiveFile) {
+        console.log('Delete 3');
         // remove objective file and delete file
         await deleteObjectiveFile(file.id, [file.ObjectiveFile.objectiveId]);
       } else {
-      // remove the file entirely
+        console.log('Delete 4');
+        // remove the file entirely
         await deleteFile(file.id);
       }
 
