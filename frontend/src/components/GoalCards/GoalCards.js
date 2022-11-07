@@ -66,7 +66,11 @@ function GoalCards({
     const updatedGoalIds = updatedGoal.map(({ id }) => id);
 
     const newGoals = goals.map(
-      (g) => (updatedGoalIds.includes(g.id) ? { ...g, goalStatus: newGoalStatus } : g),
+      (g) => (updatedGoalIds.includes(g.id) ? {
+        ...g,
+        goalStatus: newGoalStatus,
+        previousStatus: oldGoalStatus,
+      } : g),
     );
     setGoals(newGoals);
   };
