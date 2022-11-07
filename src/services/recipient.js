@@ -395,20 +395,24 @@ export async function getGoalsByActivityRecipient(
     order: orderGoalsBy(sortBy, sortDir),
   });
 
-  // status sorting order provided by TTAHUB-1106
-  const ascOrder = ['draft', 'not started', 'in progress', 'suspended', 'closed'];
-  const descOrder = Array.from(ascOrder).reverse();
+  let sorted = rows;
 
-  const sorted = rows.sort((a, b) => {
-    const aStatus = a.status.toLowerCase();
-    const bStatus = b.status.toLowerCase();
-    // if we found some weird status that for some reason isn't in ascOrder, sort it last
-    if (!ascOrder.includes(aStatus) || !ascOrder.includes(bStatus)) return 1;
+  if (sortBy === 'goalStatus') {
+    // status sorting order provided by TTAHUB-1106
+    const ascOrder = ['draft', 'not started', 'in progress', 'suspended', 'closed'];
+    const descOrder = Array.from(ascOrder).reverse();
 
-    return sortDir.toLowerCase() === 'asc'
-      ? ascOrder.indexOf(aStatus) - ascOrder.indexOf(bStatus)
-      : descOrder.indexOf(aStatus) - descOrder.indexOf(bStatus);
-  });
+    sorted = rows.sort((a, b) => {
+      const aStatus = a.status.toLowerCase();
+      const bStatus = b.status.toLowerCase();
+      // if we found some weird status that for some reason isn't in ascOrder, sort it last
+      if (!ascOrder.includes(aStatus) || !ascOrder.includes(bStatus)) return 1;
+
+      return sortDir.toLowerCase() === 'asc'
+        ? ascOrder.indexOf(aStatus) - ascOrder.indexOf(bStatus)
+        : descOrder.indexOf(aStatus) - descOrder.indexOf(bStatus);
+    });
+  }
 
   const allGoalIds = [];
 
