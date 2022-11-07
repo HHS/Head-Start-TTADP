@@ -398,8 +398,8 @@ export async function getGoalsByActivityRecipient(
   let sorted = rows;
 
   if (sortBy === 'goalStatus') {
-    // status sorting order provided by TTAHUB-1106
-    const ascOrder = ['draft', 'not started', 'in progress', 'suspended', 'closed'];
+    // order determined by the statuses in the GOAL_STATUS constant
+    const ascOrder = Object.values(GOAL_STATUS).map((s) => s.toLowerCase());
     const descOrder = Array.from(ascOrder).reverse();
 
     sorted = rows.sort((a, b) => {
