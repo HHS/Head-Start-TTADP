@@ -69,7 +69,7 @@ function GoalCards({
       (g) => (updatedGoalIds.includes(g.id) ? {
         ...g,
         goalStatus: newGoalStatus,
-        previousStatus: oldGoalStatus,
+        previousStatus: oldGoalStatus || 'Not Started',
       } : g),
     );
     setGoals(newGoals);
