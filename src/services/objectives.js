@@ -9,6 +9,7 @@ import {
   Topic,
   File,
   ObjectiveResource,
+  ActivityReport,
 } from '../models';
 import { removeUnusedGoalsObjectivesFromReport, saveObjectiveAssociations } from './goals';
 import { cacheObjectiveMetadata } from './reportCache';
@@ -185,6 +186,17 @@ export async function getObjectivesByReportId(reportId) {
           activityReportId: reportId,
         },
         required: true,
+        include: [
+          {
+            model: ActivityReport,
+            as: 'activityReport',
+            required: true,
+            attributes: ['id', 'activityRecipientType'],
+            where: {
+              activityRecipientType: 'other-entity',
+            },
+          },
+        ],
       },
       {
         model: Topic,
