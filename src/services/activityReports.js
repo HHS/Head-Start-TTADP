@@ -225,7 +225,7 @@ async function saveNotes(activityReportId, notes, isRecipientNotes) {
     const newNotes = notes.map((note) => ({
       id: note.id ? parseInt(note.id, DECIMAL_BASE) : undefined,
       note: note.note,
-      completeDate: !note.completeDate ? undefined : note.completeDate,
+      completeDate: !note.completeDate ? null : note.completeDate,
       activityReportId,
       noteType,
     }));
