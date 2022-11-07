@@ -89,7 +89,7 @@ export default function GoalCardsHeader({
             <option value="createdOn-desc">creation date (newest to oldest) </option>
             <option value="createdOn-asc">creation date (oldest to newest) </option>
             <option value="goalStatus-asc">goal status (drafts first)</option>
-            <option value="goalStatus-desc">goal status (completed first) </option>
+            <option value="goalStatus-desc">goal status (closed first) </option>
           </Dropdown>
         </div>
         {!hidePagination && (
