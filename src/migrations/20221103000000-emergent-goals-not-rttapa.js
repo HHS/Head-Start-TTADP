@@ -22,11 +22,22 @@ module.exports = {
           { transaction },
         );
 
-        // remove old column from users table
+        // update isRttapa status on Goals table
         await queryInterface.sequelize.query(
           `UPDATE "Goals" g
           SET "isRttapa" = 'No'::"enum_Goals_isRttapa"
           WHERE COALESCE(g."isFromSmartsheetTtaPlan",false) = false;`,
+          { transaction },
+        );
+
+        // update isRttapa status on ActivityReportGoals table
+        await queryInterface.sequelize.query(
+          `UPDATE "ActivityReportGoals" arg
+          SET "isRttapa" = g."isRttapa"::"enum_ActivityReportGoals_isRttapa"
+          FROM "Goals" g
+          WHERE arg."goalId" = g.id
+          AND arg."isRttapa" IS NULL
+          AND g."isRttapa" IS NOT NULL;`,
           { transaction },
         );
 
