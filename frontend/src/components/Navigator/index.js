@@ -215,8 +215,7 @@ function Navigator({
 
     const fieldArrayName = 'objectivesWithoutGoals';
     const currentObjectives = getValues(fieldArrayName);
-    const otherEntityIds = recipients.map(({ id }) => id);
-
+    const otherEntityIds = recipients.map((otherEntity) => otherEntity.activityRecipientId);
     // Save objectives.
     try {
       const newObjectives = await saveObjectivesForReport(
@@ -308,8 +307,7 @@ function Navigator({
       return;
     }
 
-    const otherEntityIds = recipients.map(({ id }) => id);
-
+    const otherEntityIds = recipients.map((otherEntity) => otherEntity.activityRecipientId);
     // Save objectives.
     let newObjectives;
     try {
