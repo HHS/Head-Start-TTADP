@@ -109,7 +109,7 @@ function GoalCard({
             goalId={id}
             status={goalStatus}
             onUpdateGoalStatus={onUpdateGoalStatus}
-            previousStatus={previousStatus}
+            previousStatus={previousStatus || 'Not Started'} // Open the escape hatch!
             regionId={regionId}
           />
         </div>
