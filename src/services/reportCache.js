@@ -67,7 +67,7 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   return Promise.all([
     await ActivityReportObjective.update({
       title: objective.title,
-      status,
+      status: status || objective.status,
       ttaProvided,
     }, {
       where: { id: activityReportObjectiveId },

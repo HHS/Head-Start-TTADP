@@ -72,6 +72,7 @@ function formatTtaType(ttaType) {
 function addObjectiveSectionsToArray(objectives, sections, striped) {
   let isStriped = striped;
   objectives.forEach((objective) => {
+    console.log('Objective Test: ', objective);
     isStriped = !isStriped;
     const objectiveSection = {
       heading: 'Objective summary',
