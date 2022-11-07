@@ -33,7 +33,7 @@ module.exports = {
         // update isRttapa status on ActivityReportGoals table
         await queryInterface.sequelize.query(
           `UPDATE "ActivityReportGoals" arg
-          SET "isRttapa" = g."isRttapa"::"enum_ActivityReportGoals_isRttapa"
+          SET "isRttapa" = (g."isRttapa"::TEXT)::"enum_ActivityReportGoals_isRttapa"
           FROM "Goals" g
           WHERE arg."goalId" = g.id
           AND arg."isRttapa" IS NULL
