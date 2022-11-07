@@ -13,7 +13,12 @@ import {
   Topic,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
-import { RECIPIENTS_PER_PAGE, GOALS_PER_PAGE, REPORT_STATUSES } from '../constants';
+import {
+  RECIPIENTS_PER_PAGE,
+  GOALS_PER_PAGE,
+  REPORT_STATUSES,
+  GOAL_STATUS,
+} from '../constants';
 import filtersToScopes from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
 import goalStatusGraph from '../widgets/goalStatusGraph';
