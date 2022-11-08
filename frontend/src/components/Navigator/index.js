@@ -367,7 +367,10 @@ function Navigator({
       setIsAppLoading(false);
     }
   };
+
   const draftSaver = async (isAutoSave = false) => {
+    if (!isDirty) return;
+
     // Determine if we should save draft on auto save.
     const saveGoalsDraft = isGoalsObjectivesPage && !isGoalFormClosed;
     const saveObjectivesDraft = isGoalsObjectivesPage && !isObjectivesFormClosed;
