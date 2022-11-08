@@ -77,7 +77,7 @@ module.exports = (sequelize, DataTypes) => {
       default: false,
     },
     isRttapa: {
-      type: DataTypes.BOOLEAN,
+      type: DataTypes.ENUM(['Yes', 'No']),
       allowNull: true,
     },
     firstNotStartedAt: {
