@@ -4,6 +4,8 @@ import {
 import { goalsByIdAndRecipient } from '../../services/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import filtersToScopes from '../../scopes';
+import Recipient from '../../policies/recipient';
+import { userById } from '../../services/users';
 import { getUserReadRegions } from '../../services/accessValidation';
 
 const namespace = 'SERVICE:RECIPIENT';
@@ -35,6 +37,20 @@ export async function getRecipient(req, res) {
 
     const { grant: scopes } = filtersToScopes(req.query);
     const recipient = await recipientById(recipientId, scopes);
+    const { regionId } = recipient.grants[0];
+
+    const user = await userById(req.session.userId);
+
+    let canView = true;
+    const policy = new Recipient(user, recipient, regionId);
+    if (!policy.canView()) {
+      canView = false;
+    }
+
+    if (!canView) {
+      res.sendStatus(401);
+      return;
+    }
 
     if (!recipient) {
       res.sendStatus(404);
