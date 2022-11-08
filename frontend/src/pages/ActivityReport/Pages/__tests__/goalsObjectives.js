@@ -323,22 +323,29 @@ describe('goals objectives', () => {
             title: 'title one',
             ttaProvided: 'ttaProvided one',
             status: 'Not Started',
-            topics: ['Hello'],
-            resources: [],
+            topics: [{ name: 'Topic 1' }, { name: 'Topic 2' }, { name: 'Topic 3' }],
+            resources: [{ userProvidedUrl: 'http://test1.gov' }, { userProvidedUrl: 'http://test2.gov' }, { userProvidedUrl: 'http://test3.gov' }],
             roles: ['Chief Inspector'],
+            files: [{ originalFileName: 'test1.txt', url: { url: 'test1.txt' } }],
           },
           {
             id: 2,
             title: 'title two',
             ttaProvided: 'ttaProvided two',
             status: 'Not Started',
-            topics: ['Hello'],
+            topics: [],
             resources: [],
             roles: ['Chief Inspector'],
+            files: [],
           },
         ]}
       />);
       const objective = await screen.findByText('title one');
+      expect(await screen.findByText(/topic 1, topic 2, topic 3/i)).toBeVisible();
+      expect(await screen.findByRole('link', { name: /test1\.txt \(opens in new tab\)/i })).toBeVisible();
+      expect(await screen.findByRole('link', { name: /http:\/\/test1\.gov/i })).toBeVisible();
+      expect(await screen.findByRole('link', { name: /http:\/\/test2\.gov/i })).toBeVisible();
+      expect(await screen.findByRole('link', { name: /http:\/\/test3\.gov/i })).toBeVisible();
       expect(objective).toBeVisible();
     });
 
@@ -351,14 +358,20 @@ describe('goals objectives', () => {
           title: 'title',
           ttaProvided: 'ttaProvided',
           status: 'Not Started',
-          topics: ['Hello'],
-          resources: [],
+          topics: [{ name: 'Topic 1' }, { name: 'Topic 2' }, { name: 'Topic 3' }],
+          resources: [{ value: 'http://test1.gov' }, { value: 'http://test2.gov' }, { value: 'http://test3.gov' }],
           roles: ['Chief Inspector'],
+          files: [{ originalFileName: 'test1.txt', url: { url: 'test1.txt' } }],
         }],
       }]}
       />);
       const objective = await screen.findByText('title');
       expect(objective).toBeVisible();
+      expect(await screen.findByText(/topic 1, topic 2, topic 3/i)).toBeVisible();
+      expect(await screen.findByRole('link', { name: /test1\.txt \(opens in new tab\)/i })).toBeVisible();
+      expect(await screen.findByRole('link', { name: /http:\/\/test1\.gov/i })).toBeVisible();
+      expect(await screen.findByRole('link', { name: /http:\/\/test2\.gov/i })).toBeVisible();
+      expect(await screen.findByRole('link', { name: /http:\/\/test3\.gov/i })).toBeVisible();
     });
 
     it('isPageComplete is true', async () => {
