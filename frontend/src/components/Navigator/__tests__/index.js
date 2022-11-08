@@ -276,6 +276,13 @@ describe('Navigator', () => {
     expect(onSave).toHaveBeenCalled();
   });
 
+  it('does not run the autosave when the form is clean', async () => {
+    const onSave = jest.fn();
+    renderNavigator('second', () => {}, onSave);
+    jest.advanceTimersByTime(1000 * 60 * 2);
+    expect(onSave).toHaveBeenCalledTimes(0);
+  });
+
   it('runs the autosave on the goals and objectives page', async () => {
     const onSubmit = jest.fn();
     const onSave = jest.fn();
