@@ -15,7 +15,7 @@ const findOrCreateGoalTemplate = async (sequelize, transaction, regionId, name, 
     },
     transaction,
   });
-  await sequelize.models.GoalTemplate.Update(
+  await sequelize.models.GoalTemplate.update(
     { lastUsed: createdAt },
     {
       where: {
