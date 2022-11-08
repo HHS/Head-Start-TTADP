@@ -598,7 +598,7 @@ export async function getActivityRecipients(req, res) {
 export async function getReport(req, res) {
   const { activityReportId } = req.params;
   const [
-    report, activityRecipients, goalsAndObjectives,
+    report, activityRecipients, goalsAndObjectives, objectivesWithoutGoals,
   ] = await activityReportAndRecipientsById(activityReportId);
   if (!report) {
     res.sendStatus(404);
@@ -611,11 +611,8 @@ export async function getReport(req, res) {
     res.sendStatus(403);
     return;
   }
-
-  const { objectivesWithoutGoals, ...data } = report.dataValues;
-
   res.json({
-    ...data,
+    ...report.dataValues,
     displayId: report.displayId,
     activityRecipients,
     goalsAndObjectives,

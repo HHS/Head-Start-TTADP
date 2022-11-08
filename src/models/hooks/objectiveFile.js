@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import { AUTOMATIC_CREATION } from '../../constants';
 import { propagateDestroyToFile } from './genericFile';
 
@@ -5,7 +6,14 @@ import { propagateDestroyToFile } from './genericFile';
 // updatedAt value.
 const propagateCreateToTemplate = async (sequelize, instance, options) => {
   const objective = await sequelize.models.Objective.findOne({
-    where: { id: instance.objectiveId },
+    attributes: [
+      'id',
+      'objectiveTemplateId',
+    ],
+    where: {
+      id: instance.objectiveId,
+      objectiveTemplateId: { [Op.not]: null },
+    },
     include: [
       {
         model: sequelize.models.ObjectiveTemplate,
@@ -55,7 +63,14 @@ const checkForUseOnApprovedReport = async (sequelize, instance, options) => {
 
 const propagateDestroyToTemplate = async (sequelize, instance, options) => {
   const objective = await sequelize.models.Objective.findOne({
-    where: { id: instance.objectiveId },
+    attributes: [
+      'id',
+      'objectiveTemplateId',
+    ],
+    where: {
+      id: instance.objectiveId,
+      objectiveTemplateId: { [Op.not]: null },
+    },
     include: [
       {
         model: sequelize.models.ObjectiveTemplate,
