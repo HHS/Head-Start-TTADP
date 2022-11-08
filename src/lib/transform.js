@@ -20,9 +20,9 @@ export function deduplicateObjectivesWithoutGoals(objectives) {
       }
 
       return [...os, {
-        ...objective.dataValues,
+        ...objective,
         ids: [objective.id],
-        ttaProvided: objective.ActivityReportObjective.ttaProvided,
+        ttaProvided: objective.ttaProvided,
       }];
     },
     [],
