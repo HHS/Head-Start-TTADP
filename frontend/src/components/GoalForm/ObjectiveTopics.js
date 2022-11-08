@@ -76,15 +76,11 @@ export default function ObjectiveTopics({
 
       <FormGroup error={error.props.children}>
         <Label htmlFor={inputName}>
-          { topics && topics.length
-            ? <>Add more topics</>
-            : (
-              <>
-                Topics
-                {' '}
-                <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
-              </>
-            )}
+          <>
+            Topics
+            {' '}
+            <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
+          </>
         </Label>
         {error}
         <Select
