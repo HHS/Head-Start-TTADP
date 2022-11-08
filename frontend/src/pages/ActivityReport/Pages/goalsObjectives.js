@@ -196,10 +196,7 @@ const GoalsObjectives = ({
       <Helmet>
         <title>Goals and objectives</title>
       </Helmet>
-      <p className="usa-prose">
-        <Req className="margin-right-1" />
-        indicates required field
-      </p>
+
       {(!isOtherEntityReport && !isRecipientReport) && (
         <Alert noIcon type="info">
           To add goals and objectives, indicate who the activity was for in
