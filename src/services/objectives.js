@@ -9,7 +9,6 @@ import {
   Topic,
   File,
   ObjectiveResource,
-  ActivityReport,
 } from '../models';
 import { removeUnusedGoalsObjectivesFromReport, saveObjectiveAssociations } from './goals';
 import { cacheObjectiveMetadata } from './reportCache';
