@@ -52,7 +52,7 @@ export default function ReadOnlyGoal({
           )
           : null }
         <div className="margin-bottom-2">
-          <h4 className="margin-0">Goal</h4>
+          <h4 className="margin-0">Recipient&apos;s goal</h4>
           <p className="usa-prose margin-0">{goal.name}</p>
         </div>
         <div className="margin-bottom-2">

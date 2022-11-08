@@ -28,7 +28,7 @@ export default function ReadOnlyObjective({ objective }) {
     <div className="ttahub-goal-form-objective-summary">
       <h3 className="margin-top-0 margin-bottom-2">Objective summary</h3>
       <div className="margin-bottom-2">
-        <h4 className="margin-0">Objective</h4>
+        <h4 className="margin-0">TTA objective</h4>
         <p className="usa-prose margin-0">{objective.title}</p>
       </div>
 
@@ -56,7 +56,7 @@ export default function ReadOnlyObjective({ objective }) {
       {objective.files && objective.files.length
         ? (
           <div className="margin-bottom-2">
-            <h4 className="margin-0">Resources</h4>
+            <h4 className="margin-0">Resource attachments</h4>
             <ul className="usa-list usa-list--unstyled">
               { objective.files.map((f) => {
                 const fileName = f.originalFileName || f.path;
@@ -85,7 +85,7 @@ export default function ReadOnlyObjective({ objective }) {
       {objective.status
         ? (
           <div className="margin-bottom-2">
-            <h4 className="margin-0">Status</h4>
+            <h4 className="margin-0">Objective status</h4>
             <p className="usa-prose margin-0">{objective.status}</p>
           </div>
         )
