@@ -135,7 +135,8 @@ function Navigator({
 
   const onSaveForm = async (isAutoSave = false) => {
     setSavingLoadScreen(isAutoSave);
-    if (!editable) {
+    if (!editable || !isDirty) {
+      setIsAppLoading(false);
       return;
     }
     const { status, ...values } = getValues();
