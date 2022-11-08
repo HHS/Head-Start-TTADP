@@ -1,4 +1,3 @@
-import { Op } from 'sequelize';
 import { GOAL_STATUS } from '../../constants';
 
 const findOrCreateGoalTemplate = async (sequelize, transaction, regionId, name, createdAt) => {
@@ -15,17 +14,6 @@ const findOrCreateGoalTemplate = async (sequelize, transaction, regionId, name, 
     },
     transaction,
   });
-  await sequelize.models.GoalTemplate.update(
-    { lastUsed: createdAt },
-    {
-      where: {
-        id: goalTemplate[0].id,
-        lastUsed: { [Op.lt]: createdAt },
-      },
-      transaction,
-      individualHooks: true,
-    },
-  );
   return { id: goalTemplate[0].id, name };
 };
 

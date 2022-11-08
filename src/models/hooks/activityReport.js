@@ -90,7 +90,7 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
         transaction: options.transaction,
       });
       const distinctGoals = [...new Map(goals.map((goal) => [goal.name, goal])).values()];
-      const distinctTemplateIds = await Promise.all(distinctGoals
+      const distinctTemplates = await Promise.all(distinctGoals
         .map(async (goal) => findOrCreateGoalTemplate(
           sequelize,
           options.transaction,
@@ -100,8 +100,7 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
           goal.updatedAt,
         )));
       goals = goals.map((goal) => {
-        const goalTemplateId = distinctTemplateIds[distinctTemplateIds
-          .map((dtId) => dtId.name).indexOf(goal.name)];
+        const goalTemplateId = distinctTemplates.filter((dt) => dt.name === goal.name).id;
         return { ...goal, goalTemplateId };
       });
       await Promise.all(goals.map(async (goal) => sequelize.models.Goal.update(
@@ -137,7 +136,7 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
       });
       const distinctObjectives = [...new Map(objectives
         .map((objective) => [objective.title, objective])).values()];
-      const distinctTemplateIds = await Promise.all(distinctObjectives
+      const distinctTemplates = await Promise.all(distinctObjectives
         .map(async (objective) => findOrCreateObjectiveTemplate(
           sequelize,
           options.transaction,
@@ -147,8 +146,8 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
           objective.updatedAt,
         )));
       objectives = objectives.map((objective) => {
-        const objectiveTemplateId = distinctTemplateIds[distinctTemplateIds
-          .map((dtId) => dtId.title).indexOf(objective.title)];
+        const objectiveTemplateId = distinctTemplates
+          .filter((dt) => dt.title === objective.title).id;
         return { ...objective, objectiveTemplateId };
       });
       await Promise.all(objectives.map(async (objective) => sequelize.models.Objective.update(
