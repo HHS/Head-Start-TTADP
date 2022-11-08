@@ -42,7 +42,7 @@ const ObjectiveFileUploader = ({
         // remove objective file and delete file
         await deleteObjectiveFile(file.id, [file.ObjectiveFile.objectiveId]);
       } else {
-      // remove the file entirely
+        // remove the file entirely
         await deleteFile(file.id);
       }
 
