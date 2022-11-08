@@ -110,7 +110,7 @@ describe('ObjectiveFiles', () => {
     />);
     let radio = screen.getByRole('radio', { name: /yes/i });
     userEvent.click(radio);
-    const attachResources = await screen.findByText('Attach any available non-link resources');
+    const attachResources = await screen.findByText('Attach any non-link resources');
     expect(attachResources).toBeVisible();
     const uploadBtn = screen.getByRole('button', { name: /select and upload/i });
     expect(uploadBtn).toBeVisible();
