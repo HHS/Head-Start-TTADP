@@ -21,24 +21,26 @@ function formatNextSteps(nextSteps, heading, striped) {
   }));
 }
 
-function formatObjectiveLinks(resources) {
+function formatObjectiveLinks(resources, isOtherEntity = false) {
   if (Array.isArray(resources) && resources.length > 0) {
     return (
       <ul>
-        {resources.map((resource) => (
-          <li key={resource.value}>
-            <a
-              href={resource.value}
-              rel="noreferrer"
-            >
-              { resource.value }
-            </a>
-          </li>
-        ))}
+        {resources.map((resource) => {
+          const resourceValue = isOtherEntity ? resource.userProvidedUrl : resource.value;
+          return (
+            <li key={resourceValue}>
+              <a
+                href={resourceValue}
+                rel="noreferrer"
+              >
+                { resourceValue }
+              </a>
+            </li>
+          );
+        })}
       </ul>
     );
   }
-
   return [];
 }
 
@@ -69,17 +71,16 @@ function formatTtaType(ttaType) {
   return ttaType.map((type) => dict[type]).join(', ');
 }
 
-function addObjectiveSectionsToArray(objectives, sections, striped) {
+function addObjectiveSectionsToArray(objectives, sections, striped, isOtherEntity = false) {
   let isStriped = striped;
   objectives.forEach((objective) => {
-    console.log('Objective Test: ', objective);
     isStriped = !isStriped;
     const objectiveSection = {
       heading: 'Objective summary',
       data: {
         'TTA objective': objective.title,
         Topics: formatSimpleArray(objective.topics.map(({ name }) => name)),
-        'Resource links': formatObjectiveLinks(objective.resources),
+        'Resource links': formatObjectiveLinks(objective.resources, isOtherEntity),
         'Resource attachments': objective.files.length ? mapAttachments(objective.files) : 'None provided',
         'TTA provided': objective.ttaProvided,
         'Objective status': objective.status,
@@ -123,7 +124,7 @@ function calculateGoalsAndObjectives(report) {
       addObjectiveSectionsToArray(goal.objectives, sections, striped);
     });
   } else if (report.activityRecipientType === 'other-entity') {
-    addObjectiveSectionsToArray(report.objectivesWithoutGoals, sections, striped);
+    addObjectiveSectionsToArray(report.objectivesWithoutGoals, sections, striped, true);
   }
 
   return sections;
