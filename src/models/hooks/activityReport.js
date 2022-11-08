@@ -89,7 +89,9 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
         includeIgnoreAttributes: false,
         transaction: options.transaction,
       });
+      // Generate a distinct list of goal names.
       const distinctGoals = [...new Map(goals.map((goal) => [goal.name, goal])).values()];
+      // Find or create templates for each of the distinct names.
       const distinctTemplates = await Promise.all(distinctGoals
         .map(async (goal) => findOrCreateGoalTemplate(
           sequelize,
@@ -99,10 +101,12 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
           goal.createdAt,
           goal.updatedAt,
         )));
+      // Add the corresponding template id to each of the goals.
       goals = goals.map((goal) => {
         const goalTemplateId = distinctTemplates.filter((dt) => dt.name === goal.name).id;
         return { ...goal, goalTemplateId };
       });
+      // Update all the goals with their template id.
       await Promise.all(goals.map(async (goal) => sequelize.models.Goal.update(
         { goalTemplateId: goal.goalTemplateId },
         {
@@ -134,8 +138,10 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
         includeIgnoreAttributes: false,
         transaction: options.transaction,
       });
+      // Generate a distinct list of objective titles.
       const distinctObjectives = [...new Map(objectives
         .map((objective) => [objective.title, objective])).values()];
+      // Find or create templates for each of the distinct titles.
       const distinctTemplates = await Promise.all(distinctObjectives
         .map(async (objective) => findOrCreateObjectiveTemplate(
           sequelize,
@@ -145,11 +151,13 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
           objective.createdAt,
           objective.updatedAt,
         )));
+      // Add the corresponding template id to each of the objectives.
       objectives = objectives.map((objective) => {
         const objectiveTemplateId = distinctTemplates
           .filter((dt) => dt.title === objective.title).id;
         return { ...objective, objectiveTemplateId };
       });
+      // Update all the objectives with their template id.
       await Promise.all(objectives.map(async (objective) => sequelize.models.Objective.update(
         { objectiveTemplateId: objective.objectiveTemplateId },
         {
