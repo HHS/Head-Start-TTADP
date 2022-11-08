@@ -267,6 +267,11 @@ describe('Navigator', () => {
   it('runs the autosave not on the goals and objectives page', async () => {
     const onSave = jest.fn();
     renderNavigator('second', () => {}, onSave);
+
+    // mark the form as dirty
+    const input = screen.getByTestId('second');
+    userEvent.click(input);
+
     jest.advanceTimersByTime(1000 * 60 * 2);
     expect(onSave).toHaveBeenCalled();
   });
