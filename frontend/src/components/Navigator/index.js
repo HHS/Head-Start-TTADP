@@ -399,8 +399,7 @@ function Navigator({
 
   useInterval(async () => {
     // Don't auto save if we are already saving.;
-    if (!isAppLoading) {
-      if (!isDirty) return;
+    if (!isAppLoading && isDirty) {
       await draftSaver(true);
     }
   }, autoSaveInterval);
