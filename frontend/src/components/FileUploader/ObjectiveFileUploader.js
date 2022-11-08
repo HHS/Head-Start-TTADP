@@ -35,7 +35,7 @@ const ObjectiveFileUploader = ({
       if (uploaderIsOnReport) {
         // remove from activity report objective file only
         await removeActivityReportObjectiveFile(reportId, file.id, objective.ids);
-      } else if (objectiveHasBeenSaved) {;
+      } else if (objectiveHasBeenSaved) {
         // remove objective file and delete file
         await deleteObjectiveFile(file.id, objective.ids);
       } else if (fileHasObjectiveFile) {
