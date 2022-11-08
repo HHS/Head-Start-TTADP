@@ -86,8 +86,6 @@ export default function ApprovedActivityReport({ match, user }) {
     async function fetchReport() {
       try {
         const data = await getReport(match.params.activityReportId);
-        console.log('Fetched: ', data);
-
         if (!allowedRegions.includes(data.regionId)) {
           setNotAuthorized(true);
           return;
