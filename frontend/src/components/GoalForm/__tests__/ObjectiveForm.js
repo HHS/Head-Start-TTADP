@@ -138,7 +138,7 @@ describe('ObjectiveForm', () => {
       setObjective,
     );
 
-    const label = await screen.findByText('Resource links');
+    const label = await screen.findByText('Links to TTA resource used');
     expect(label).toBeVisible();
   });
 });
