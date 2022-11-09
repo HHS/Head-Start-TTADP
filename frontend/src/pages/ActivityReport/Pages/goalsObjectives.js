@@ -212,7 +212,7 @@ const GoalsObjectives = ({
       {/**
         * on non-recipient reports, only objectives are shown
       */}
-      {!isRecipientReport && !isObjectivesFormClosed
+      {!isRecipientReport && isOtherEntityReport && !isObjectivesFormClosed
       && (
       <OtherEntity
         recipientIds={activityRecipientIds}

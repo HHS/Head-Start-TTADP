@@ -255,6 +255,10 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
+        topic: 'Disabilities Services',
+        count: 0,
+      },
+      {
         topic: 'ERSEA',
         count: 0,
       },
@@ -303,6 +307,10 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
+        topic: 'Ongoing Monitoring Management System',
+        count: 0,
+      },
+      {
         topic: 'Oral Health',
         count: 0,
       },
@@ -348,6 +356,10 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Technology and Information Systems',
+        count: 0,
+      },
+      {
+        topic: 'Training and Professional Development',
         count: 0,
       },
       {
@@ -412,6 +424,10 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
+        topic: 'Disabilities Services',
+        count: 0,
+      },
+      {
         topic: 'ERSEA',
         count: 0,
       },
@@ -460,6 +476,10 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
+        topic: 'Ongoing Monitoring Management System',
+        count: 0,
+      },
+      {
         topic: 'Oral Health',
         count: 0,
       },
@@ -505,6 +525,10 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Technology and Information Systems',
+        count: 0,
+      },
+      {
+        topic: 'Training and Professional Development',
         count: 0,
       },
       {
@@ -569,6 +593,10 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
+        topic: 'Disabilities Services',
+        count: 0,
+      },
+      {
         topic: 'ERSEA',
         count: 0,
       },
@@ -617,6 +645,10 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
+        topic: 'Ongoing Monitoring Management System',
+        count: 0,
+      },
+      {
         topic: 'Oral Health',
         count: 0,
       },
@@ -662,6 +694,10 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Technology and Information Systems',
+        count: 0,
+      },
+      {
+        topic: 'Training and Professional Development',
         count: 0,
       },
       {
@@ -726,6 +762,10 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
+        topic: 'Disabilities Services',
+        count: 0,
+      },
+      {
         topic: 'ERSEA',
         count: 0,
       },
@@ -774,6 +814,10 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
+        topic: 'Ongoing Monitoring Management System',
+        count: 0,
+      },
+      {
         topic: 'Oral Health',
         count: 0,
       },
@@ -819,6 +863,10 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Technology and Information Systems',
+        count: 0,
+      },
+      {
+        topic: 'Training and Professional Development',
         count: 0,
       },
       {
