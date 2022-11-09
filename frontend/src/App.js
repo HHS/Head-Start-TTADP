@@ -31,6 +31,7 @@ import RecipientRecord from './pages/RecipientRecord';
 import RecipientSearch from './pages/RecipientSearch';
 import AppWrapper from './components/AppWrapper';
 import AccountManagement from './pages/AccountManagement';
+import Logout from './pages/Logout';
 
 import { getReportsForLocalStorageCleanup } from './fetchers/activityReports';
 import { storageAvailable } from './hooks/helpers';
@@ -192,6 +193,11 @@ function App() {
               <AccountManagement updateUser={updateUser} />
             </AppWrapper>
           )}
+        />
+        <Route
+          exact
+          path="/logout"
+          render={() => <Logout />}
         />
         {admin && (
         <Route
