@@ -22,7 +22,7 @@ describe('ResourceRepeater', () => {
       userCanEdit
     />);
 
-    expect(await screen.findByText('Links to TTA resource used')).toBeVisible();
+    expect(await screen.findByText('Link to TTA resource used')).toBeVisible();
     const resources1 = document.querySelector('input[value=\'http://www.resources.com\']');
     expect(resources1).not.toBeNull();
     const resources2 = await screen.findByText('http://www.resources2.com');
@@ -69,7 +69,7 @@ describe('ResourceRepeater', () => {
       userCanEdit={false}
     />);
 
-    expect(await screen.findByText('Links to TTA resource used')).toBeVisible();
+    expect(await screen.findByText('Link to TTA resource used')).toBeVisible();
     const resources1 = document.querySelector('input[value=\'http://www.resources.com\']');
     expect(resources1).toBeNull();
     const resources2 = await screen.findByText('http://www.resources2.com');

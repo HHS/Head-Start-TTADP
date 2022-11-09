@@ -82,7 +82,7 @@ export default function ResourceRepeater({
     <>
       { fixedResources.length ? (
         <>
-          <p className="usa-prose text-bold margin-bottom-0">Links to TTA resource used</p>
+          <p className="usa-prose text-bold margin-bottom-0">Link to TTA resource used</p>
           <ul className="usa-list usa-list--unstyled">
             {fixedResources.map((resource) => (
               <li key={resource.key}><a href={resource.value}>{resource.value}</a></li>
@@ -95,7 +95,7 @@ export default function ResourceRepeater({
         <FormGroup error={error.props.children}>
           <div ref={resourcesWrapper}>
             <Label htmlFor="resources" className={fixedResources.length ? 'text-bold' : ''}>
-              {!fixedResources.length ? 'Links to TTA resource used' : 'Add resource link'}
+              {!fixedResources.length ? 'Link to TTA resource used' : 'Add resource link'}
               <QuestionTooltip
                 text="Copy and paste addresses of web pages describing resources used for this objective. Usually this is an ECLKC page."
               />
