@@ -20,7 +20,9 @@ export default class Objective {
   canUpdate() {
     if (!this.objective.onApprovedAR
         && (this.objective.otherEntityId
-          || this.canWriteInRegion(this.objective.goal.grant.regionId))) {
+          || (this.objective.goal
+              && this.objective.goal.grant
+              && this.canWriteInRegion(this.objective.goal.grant.regionId)))) {
       return true;
     }
     return false;
