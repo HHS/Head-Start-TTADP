@@ -15,7 +15,7 @@ describe('Approved Activity Report V2 component', () => {
         ttaProvided: 'All of it',
       },
       topics: [{ label: 'being fancy' }],
-      resources: [{ value: 'http://www.website.com' }],
+      resources: [{ value: 'http://www.website.com', userProvidedUrl: 'http://www.OtherEntity.com' }],
       status: 'Test status',
       files: [
         {
@@ -100,7 +100,7 @@ describe('Approved Activity Report V2 component', () => {
       ...report, goalsAndObjectives: [], objectivesWithoutGoals: mockObjectives, activityRecipientType: 'other-entity',
     }}
     />);
-    expect(await screen.findByText(/http:\/\/www.website.com/i)).toBeInTheDocument();
+    expect(await screen.findByText(/http:\/\/www.otherentity.com/i)).toBeInTheDocument();
     expect(await screen.findByText(/Objective 1/i)).toBeInTheDocument();
   });
 

@@ -36,8 +36,7 @@ import {
   removeRemovedRecipientsGoals,
   getGoalsForReport,
 } from './goals';
-
-import { saveObjectivesForReport } from './objectives';
+import { getObjectivesByReportId, saveObjectivesForReport } from './objectives';
 
 export async function batchQuery(query, limit) {
   let finished = false;
@@ -225,7 +224,7 @@ async function saveNotes(activityReportId, notes, isRecipientNotes) {
     const newNotes = notes.map((note) => ({
       id: note.id ? parseInt(note.id, DECIMAL_BASE) : undefined,
       note: note.note,
-      completeDate: note.completeDate,
+      completeDate: !note.completeDate ? null : note.completeDate,
       activityReportId,
       noteType,
     }));
@@ -369,6 +368,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
   const arId = parseInt(activityReportId, DECIMAL_BASE);
 
   const goalsAndObjectives = await getGoalsForReport(arId);
+  const objectivesWithoutGoals = await getObjectivesByReportId(arId);
 
   const recipients = await ActivityRecipient.findAll({
     where: {
@@ -472,24 +472,6 @@ export async function activityReportAndRecipientsById(activityReportId) {
         ],
       },
       {
-        model: Objective,
-        as: 'objectivesWithoutGoals',
-        include: [
-          {
-            model: Topic,
-            as: 'topics',
-          },
-          {
-            model: File,
-            as: 'files',
-          },
-          {
-            model: ObjectiveResource,
-            as: 'resources',
-          },
-        ],
-      },
-      {
         model: User,
         as: 'author',
         include: [
@@ -576,7 +558,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
     ],
   });
 
-  return [report, activityRecipients, goalsAndObjectives];
+  return [report, activityRecipients, goalsAndObjectives, objectivesWithoutGoals];
 }
 
 /**
@@ -1110,12 +1092,14 @@ export async function createOrUpdate(newActivityReport, report) {
     await syncApprovers(savedReport.id, approverUserIds);
   }
 
-  const [r, recips, gAndOs] = await activityReportAndRecipientsById(savedReport.id);
+  const [r, recips, gAndOs, oWoG] = await activityReportAndRecipientsById(savedReport.id);
+
   return {
     ...r.dataValues,
     displayId: r.displayId,
     activityRecipients: recips,
     goalsAndObjectives: gAndOs,
+    objectivesWithoutGoals: oWoG,
   };
 }
 

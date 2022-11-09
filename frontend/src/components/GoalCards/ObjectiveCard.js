@@ -10,6 +10,7 @@ import {
   Closed,
   NoStatus,
   NotStarted,
+  Ceased,
 } from './icons';
 import './ObjectiveCard.scss';
 
@@ -67,6 +68,10 @@ function ObjectiveCard({
       stored: 'Needs Status',
       display: 'Needs status',
     },
+    {
+      stored: 'Suspended',
+      display: 'Suspended',
+    },
   ];
 
   const getGoalDisplayStatusText = () => {
@@ -90,6 +95,9 @@ function ObjectiveCard({
     }
     if (displayObjStatus === 'Not started') {
       return <NotStarted />;
+    }
+    if (displayObjStatus === 'Suspended') {
+      return <Ceased />;
     }
     return <NoStatus />;
   })();

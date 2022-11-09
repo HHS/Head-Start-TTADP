@@ -5,24 +5,12 @@ import {
 } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import Pagination from 'react-js-pagination';
 import { Link, useHistory } from 'react-router-dom';
 import UserContext from '../../UserContext';
 import { canEditOrCreateGoals } from '../../permissions';
 import { DECIMAL_BASE } from '../../Constants';
 import colors from '../../colors';
-
-export function renderTotal(offset, perPage, activePage, count) {
-  const from = offset >= count ? 0 : offset + 1;
-  const offsetTo = perPage * activePage;
-  let to;
-  if (offsetTo > count) {
-    to = count;
-  } else {
-    to = offsetTo;
-  }
-  return `${from}-${to} of ${count}`;
-}
+import SelectPagination from '../SelectPagination';
 
 export default function GoalCardsHeader({
   title,
@@ -42,6 +30,8 @@ export default function GoalCardsHeader({
   selectAllGoalCheckboxSelect,
   selectAllGoals,
   selectedGoalIds,
+  perPageChange,
+  pageGoalIds,
 }) {
   const history = useHistory();
   const { user } = useContext(UserContext);
@@ -50,7 +40,7 @@ export default function GoalCardsHeader({
   const showAddNewButton = hasActiveGrants && hasButtonPermissions;
   const onPrint = () => {
     history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives/print${window.location.search}`, {
-      sortConfig, selectedGoalIds,
+      sortConfig, selectedGoalIds: !selectedGoalIds.length ? pageGoalIds : selectedGoalIds,
     });
   };
 
@@ -81,49 +71,38 @@ export default function GoalCardsHeader({
           className="display-flex flex-align-center usa-button usa-button--unstyled margin-x-3 margin-y-3"
           onClick={onPrint}
         >
-          Preview and print selected
+          {`Preview and print ${selectedGoalIds.length > 0 ? 'selected' : ''}`}
         </Button>
       </div>
       <div className="desktop:display-flex flex-justify ">
         <div className="desktop:display-flex flex-align-center">
           {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
           <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="sortBy">Sort by</label>
-          <Dropdown onChange={setSortBy} value={`${sortConfig.sortBy}-${sortConfig.direction}`} className="margin-top-0" id="sortBy" name="sortBy">
+          <Dropdown
+            onChange={setSortBy}
+            value={`${sortConfig.sortBy}-${sortConfig.direction}`}
+            className="margin-top-0"
+            id="sortBy"
+            name="sortBy"
+            data-testid="sortGoalsBy"
+          >
             <option value="createdOn-desc">creation date (newest to oldest) </option>
             <option value="createdOn-asc">creation date (oldest to newest) </option>
             <option value="goalStatus-asc">goal status (drafts first)</option>
-            <option value="goalStatus-desc">goal status (completed first) </option>
+            <option value="goalStatus-desc">goal status (closed first) </option>
           </Dropdown>
         </div>
         {!hidePagination && (
         <div className="smart-hub--table-nav">
-          <span aria-label="Pagination for goals">
-            <span
-              className="smart-hub--total-count display-flex flex-align-center height-full margin-2 desktop:margin-0 padding-right-1"
-              aria-label={`Page ${activePage}, displaying goals ${renderTotal(
-                offset,
-                perPage,
-                activePage,
-                count,
-              )}`}
-            >
-              <span>{renderTotal(offset, perPage, activePage, count)}</span>
-              <Pagination
-                innerClass="pagination desktop:margin-x-0 margin-top-0 margin-x-2"
-                hideFirstLastPages
-                prevPageText="<Prev"
-                nextPageText="Next>"
-                activePage={activePage}
-                itemsCountPerPage={perPage}
-                totalItemsCount={count}
-                pageRangeDisplayed={4}
-                onChange={handlePageChange}
-                linkClassPrev="smart-hub--link-prev"
-                linkClassNext="smart-hub--link-next"
-                tabIndex={0}
-              />
-            </span>
-          </span>
+          <SelectPagination
+            title="Goals"
+            offset={offset}
+            perPage={perPage}
+            activePage={activePage}
+            count={count}
+            handlePageChange={handlePageChange}
+            perPageChange={perPageChange}
+          />
         </div>
         )}
 
@@ -134,8 +113,8 @@ export default function GoalCardsHeader({
           label="Select all"
           id="select-all-goal-checkboxes"
           aria-label="deselect all goals"
-          defaultChecked={allGoalsChecked}
-          onClick={selectAllGoalCheckboxSelect}
+          checked={allGoalsChecked}
+          onChange={selectAllGoalCheckboxSelect}
         />
         {numberOfSelectedGoals > 0
             && (
@@ -205,6 +184,8 @@ GoalCardsHeader.propTypes = {
   numberOfSelectedGoals: PropTypes.number,
   selectAllGoals: PropTypes.func,
   selectedGoalIds: PropTypes.arrayOf(PropTypes.string).isRequired,
+  perPageChange: PropTypes.func.isRequired,
+  pageGoalIds: PropTypes.number.isRequired,
 };
 
 GoalCardsHeader.defaultProps = {

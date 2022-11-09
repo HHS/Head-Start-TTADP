@@ -24,11 +24,14 @@ const findOrCreateObjectiveTemplate = async (
   return objectiveTemplate[0].id;
 };
 
-const autoPopulateOnApprovedAR = (sequelize, instance) => {
+const autoPopulateOnApprovedAR = (sequelize, instance, options) => {
   // eslint-disable-next-line no-prototype-builtins
   if (instance.onApprovedAR === undefined
     || instance.onApprovedAR === null) {
     instance.set('onApprovedAR', false);
+    if (!options.fields.includes('onApprovedAR')) {
+      options.fields.push('onApprovedAR');
+    }
   }
 };
 
@@ -43,7 +46,7 @@ const preventTitleChangeWhenOnApprovedAR = (sequelize, instance) => {
   }
 };
 
-const autoPopulateStatusChangeDates = (sequelize, instance) => {
+const autoPopulateStatusChangeDates = (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed) && changed.includes('status')) {
     const now = new Date();
@@ -54,29 +57,53 @@ const autoPopulateStatusChangeDates = (sequelize, instance) => {
         if (instance.firstNotStartedAt === null
           || instance.firstNotStartedAt === undefined) {
           instance.set('firstNotStartedAt', now);
+          if (!options.fields.includes('firstNotStartedAt')) {
+            options.fields.push('firstNotStartedAt');
+          }
         }
         instance.set('lastNotStartedAt', now);
+        if (!options.fields.includes('lastNotStartedAt')) {
+          options.fields.push('lastNotStartedAt');
+        }
         break;
       case OBJECTIVE_STATUS.IN_PROGRESS:
         if (instance.firstInProgressAt === null
           || instance.firstInProgressAt === undefined) {
           instance.set('firstInProgressAt', now);
+          if (!options.fields.includes('firstInProgressAt')) {
+            options.fields.push('firstInProgressAt');
+          }
         }
         instance.set('lastInProgressAt', now);
+        if (!options.fields.includes('lastInProgressAt')) {
+          options.fields.push('lastInProgressAt');
+        }
         break;
       case OBJECTIVE_STATUS.SUSPENDED:
         if (instance.firstSuspendedAt === null
           || instance.firstSuspendedAt === undefined) {
           instance.set('firstSuspendedAt', now);
+          if (!options.fields.includes('firstSuspendedAt')) {
+            options.fields.push('firstSuspendedAt');
+          }
         }
         instance.set('lastSuspendedAt', now);
+        if (!options.fields.includes('lastSuspendedAt')) {
+          options.fields.push('lastSuspendedAt');
+        }
         break;
       case OBJECTIVE_STATUS.COMPLETE:
         if (instance.firstCompleteAt === null
           || instance.firstCompleteAt === undefined) {
           instance.set('firstCompleteAt', now);
+          if (!options.fields.includes('firstCompleteAt')) {
+            options.fields.push('firstCompleteAt');
+          }
         }
         instance.set('lastCompleteAt', now);
+        if (!options.fields.includes('lastCompleteAt')) {
+          options.fields.push('lastCompleteAt');
+        }
         break;
       default:
         throw new Error(`Objective status changed to invalid value of "${instance.status}".`);
@@ -162,6 +189,7 @@ const propogateStatusToParentGoal = async (sequelize, instance, options) => {
           previousStatus: 'Not Started',
         }, {
           transaction: options.transaction,
+          individualHooks: true,
         });
       }
     }
@@ -229,11 +257,16 @@ const propagateMetadataToTemplate = async (sequelize, instance, options) => {
   }
 };
 
-const beforeValidate = async (sequelize, instance) => {
+const beforeValidate = async (sequelize, instance, options) => {
   // await autoPopulateObjectiveTemplateId(sequelize, instance, options);
-  autoPopulateOnApprovedAR(sequelize, instance);
-  preventTitleChangeWhenOnApprovedAR(sequelize, instance);
-  autoPopulateStatusChangeDates(sequelize, instance);
+  autoPopulateOnApprovedAR(sequelize, instance, options);
+  preventTitleChangeWhenOnApprovedAR(sequelize, instance, options);
+  autoPopulateStatusChangeDates(sequelize, instance, options);
+};
+
+const beforeUpdate = async (sequelize, instance, options) => {
+  preventTitleChangeWhenOnApprovedAR(sequelize, instance, options);
+  autoPopulateStatusChangeDates(sequelize, instance, options);
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
@@ -255,6 +288,7 @@ export {
   linkObjectiveGoalTemplates,
   propagateTitle,
   beforeValidate,
+  beforeUpdate,
   afterUpdate,
   afterCreate,
 };

@@ -177,6 +177,10 @@ function reduceOtherEntityObjectives(newObjectives) {
 export async function getObjectivesByReportId(reportId) {
   const objectives = await Objective.findAll({
     model: Objective,
+    where: {
+      goalId: { [Op.is]: null },
+      otherEntityId: { [Op.not]: null },
+    },
     include: [
       {
         model: ActivityReportObjective,
