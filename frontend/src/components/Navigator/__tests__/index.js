@@ -9,6 +9,7 @@ import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import Navigator from '../index';
 import { NOT_STARTED, COMPLETE } from '../constants';
 import NetworkContext from '../../../NetworkContext';
+import AppLoadingContext from '../../../AppLoadingContext';
 
 // eslint-disable-next-line react/prop-types
 const Input = ({ name, required }) => {
@@ -89,31 +90,37 @@ describe('Navigator', () => {
     onUpdateError = jest.fn(),
   ) => {
     render(
+
       <NetworkContext.Provider value={{
         connectionActive: true,
         localStorageAvailable: true,
       }}
       >
-        <Navigator
-          editable
-          reportId={1}
-          submitted={false}
-          formData={formData}
-          updateFormData={updateForm}
-          onReview={() => {}}
-          isApprover={false}
-          defaultValues={{ first: '', second: '' }}
-          pages={pages}
-          currentPage={currentPage}
-          onFormSubmit={onSubmit}
-          updatePage={updatePage}
-          onSave={onSave}
-          updateErrorMessage={onUpdateError}
-          onResetToDraft={() => {}}
-          updateLastSaveTime={() => {}}
-          isPendingApprover={false}
-        />
-
+        <AppLoadingContext.Provider value={{
+          setIsAppLoading: jest.fn(),
+          setAppLoadingText: jest.fn(),
+        }}
+        >
+          <Navigator
+            editable
+            reportId={1}
+            submitted={false}
+            formData={formData}
+            updateFormData={updateForm}
+            onReview={() => {}}
+            isApprover={false}
+            defaultValues={{ first: '', second: '' }}
+            pages={pages}
+            currentPage={currentPage}
+            onFormSubmit={onSubmit}
+            updatePage={updatePage}
+            onSave={onSave}
+            updateErrorMessage={onUpdateError}
+            onResetToDraft={() => {}}
+            updateLastSaveTime={() => {}}
+            isPendingApprover={false}
+          />
+        </AppLoadingContext.Provider>
       </NetworkContext.Provider>,
     );
   };

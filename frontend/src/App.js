@@ -39,16 +39,20 @@ import {
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
   LOCAL_STORAGE_EDITABLE_KEY,
 } from './Constants';
+import AppLoadingContext from './AppLoadingContext';
+import Loader from './components/Loader';
 
 function App() {
   const [user, updateUser] = useState();
+  const [landingLoading, setLandingLoading] = useState(true);
   const [authError, updateAuthError] = useState();
-  const [loading, updateLoading] = useState(true);
   const [loggedOut, updateLoggedOut] = useState(false);
   const authenticated = useMemo(() => user !== undefined, [user]);
   const localStorageAvailable = useMemo(() => storageAvailable('localStorage'), []);
   const [timedOut, updateTimedOut] = useState(false);
   const [announcements, updateAnnouncements] = useState([]);
+  const [isAppLoading, setIsAppLoading] = useState(false);
+  const [appLoadingText, setAppLoadingText] = useState('Loading');
 
   useEffect(() => {
     async function cleanupReports() {
@@ -83,11 +87,19 @@ function App() {
           updateAuthError(e.status);
         }
       } finally {
-        updateLoading(false);
+        setLandingLoading(false);
       }
     };
     fetchData();
   }, []);
+
+  if (landingLoading) {
+    return (
+      <div>
+        Loading...
+      </div>
+    );
+  }
 
   const logout = async (timeout) => {
     await fetchLogout();
@@ -100,14 +112,6 @@ function App() {
   const announce = (message) => {
     updateAnnouncements([...announcements, message]);
   };
-
-  if (loading) {
-    return (
-      <div>
-        Loading...
-      </div>
-    );
-  }
 
   const admin = isAdmin(user);
 
@@ -218,8 +222,10 @@ function App() {
       <Helmet titleTemplate="%s - TTA Hub" defaultTitle="TTA Hub">
         <meta charSet="utf-8" />
       </Helmet>
-      <BrowserRouter>
-        {authenticated && (
+      <Loader loading={isAppLoading} loadingLabel={`App ${appLoadingText}`} text={appLoadingText} isFixed />
+      <AppLoadingContext.Provider value={{ isAppLoading, setIsAppLoading, setAppLoadingText }}>
+        <BrowserRouter>
+          {authenticated && (
           <>
             <a className="usa-skipnav" href="#main-content">
               Skip to main content
@@ -230,24 +236,25 @@ function App() {
               <SiteNav admin={admin} authenticated={authenticated} logout={logout} user={user} />
             </UserContext.Provider>
           </>
-        )}
-        <UserContext.Provider value={{ user, authenticated, logout }}>
-          <Header />
-          <AriaLiveContext.Provider value={{ announce }}>
-            {!authenticated && (authError === 403
-              ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>
-              : (
-                <AppWrapper padded={false} logout={logout}>
-                  <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
-                </AppWrapper>
-              )
-            )}
-            {authenticated && renderAuthenticatedRoutes()}
+          )}
+          <UserContext.Provider value={{ user, authenticated, logout }}>
+            <Header />
+            <AriaLiveContext.Provider value={{ announce }}>
+              {!authenticated && (authError === 403
+                ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>
+                : (
+                  <AppWrapper padded={false} logout={logout}>
+                    <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
+                  </AppWrapper>
+                )
+              )}
+              {authenticated && renderAuthenticatedRoutes()}
 
-          </AriaLiveContext.Provider>
-        </UserContext.Provider>
-      </BrowserRouter>
-      <AriaLiveRegion messages={announcements} />
+            </AriaLiveContext.Provider>
+          </UserContext.Provider>
+        </BrowserRouter>
+        <AriaLiveRegion messages={announcements} />
+      </AppLoadingContext.Provider>
     </>
   );
 }
