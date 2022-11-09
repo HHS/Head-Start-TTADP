@@ -38,4 +38,3 @@ describe('recipient fetcher', () => {
     );
   });
 });
-
