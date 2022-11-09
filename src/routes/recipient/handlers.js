@@ -34,26 +34,17 @@ export async function getGoalsByIdandRecipient(req, res) {
 export async function getRecipient(req, res) {
   try {
     const { recipientId } = req.params;
-
     const { grant: scopes } = filtersToScopes(req.query);
     const recipient = await recipientById(recipientId, scopes);
-    const { regionId } = recipient.grants[0];
-
-    const user = await userById(req.session.userId);
-
-    let canView = true;
-    const policy = new Recipient(user, recipient, regionId);
-    if (!policy.canView()) {
-      canView = false;
-    }
-
-    if (!canView) {
-      res.sendStatus(401);
+    if (!recipient) {
+      res.sendStatus(404);
       return;
     }
 
-    if (!recipient) {
-      res.sendStatus(404);
+    const user = await userById(req.session.userId);
+    const policy = new Recipient(user, recipient);
+    if (!policy.canView()) {
+      res.sendStatus(401);
       return;
     }
 
