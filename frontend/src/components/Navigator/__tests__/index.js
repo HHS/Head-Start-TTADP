@@ -7,7 +7,7 @@ import {
 import fetchMock from 'fetch-mock';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import Navigator from '../index';
-import { NOT_STARTED, COMPLETE } from '../constants';
+import { NOT_STARTED, COMPLETE, IN_PROGRESS } from '../constants';
 import NetworkContext from '../../../NetworkContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 
@@ -136,16 +136,20 @@ describe('Navigator', () => {
   it('onContinue calls onSave with correct page position', async () => {
     const onSave = jest.fn();
     renderNavigator('second', () => {}, onSave);
+
+    // mark the form as dirty so that onSave is called
+    userEvent.click(screen.getByTestId('second'));
+
     userEvent.click(screen.getByRole('button', { name: 'Save and continue' }));
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(
       {
         pageState: {
-          ...initialData.pageState, 2: COMPLETE,
+          ...initialData.pageState, 2: IN_PROGRESS,
         },
         regionId: 1,
         goals: [],
         objectivesWithoutGoals: [],
-        second: null,
+        second: 'on',
         activityRecipientType: 'recipient',
         activityRecipients: [],
       },
@@ -171,10 +175,19 @@ describe('Navigator', () => {
     const updatePage = jest.fn();
     const updateForm = jest.fn();
     renderNavigator('second', () => {}, () => {}, updatePage, updateForm);
+
+    // mark the form as dirty so that onSave is called
+    userEvent.click(screen.getByTestId('second'));
+
     userEvent.click(await screen.findByRole('button', { name: 'first page Not Started' }));
+
     await waitFor(() => expect(
       updateForm,
-    ).toHaveBeenCalledWith({ ...initialData, second: null }));
+    ).toHaveBeenCalledWith({
+      ...initialData,
+      pageState: { ...initialData.pageState, 2: IN_PROGRESS },
+      second: 'on',
+    }));
     await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
   });
 
@@ -258,6 +271,10 @@ describe('Navigator', () => {
     const onUpdateError = jest.fn();
 
     renderNavigator('second', onSubmit, onSave, updatePage, updateForm, defaultPages, initialData, onUpdateError);
+
+    // mark the form as dirty so that onSave is called
+    userEvent.click(screen.getByTestId('second'));
+
     userEvent.click(await screen.findByRole('button', { name: 'first page Not Started' }));
 
     expect(onSave).toHaveBeenCalled();
