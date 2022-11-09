@@ -39,7 +39,7 @@ const todaysDate = moment().format('MM/DD/yyyy');
 
 export async function recipientById(recipientId, grantScopes) {
   return Recipient.findOne({
-    attributes: ['id', 'name', 'recipientType'],
+    attributes: ['id', 'name', 'recipientType', 'uei'],
     where: {
       id: recipientId,
     },
