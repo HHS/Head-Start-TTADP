@@ -116,6 +116,7 @@ const getObjectiveTemplateFilesById = async (objectiveTemplateId) => ObjectiveTe
 });
 
 const updateStatus = async (fileId, fileStatus) => {
+  /* TODO: If an error occurs make sure it bubbles up. */
   let file;
   try {
     file = await File.update({ status: fileStatus }, {

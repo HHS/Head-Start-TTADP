@@ -1605,6 +1605,9 @@ export async function getGoalsForReport(reportId) {
         ],
       },
     ],
+    order: [
+      [[sequelize.col('activityReportGoals.createdAt'), 'asc']],
+    ],
   });
 
   // dedupe the goals & objectives

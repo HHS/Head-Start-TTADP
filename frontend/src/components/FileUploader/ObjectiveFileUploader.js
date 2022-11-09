@@ -29,8 +29,7 @@ const ObjectiveFileUploader = ({
     const file = files[removedFileIndex];
     const fileHasObjectiveFile = file.ObjectiveFile && file.ObjectiveFile.objectiveId;
     const objectiveHasBeenSaved = objective.ids && objective.ids.length && objective.ids.length > 0;
-    const uploaderIsOnReport = reportId > 0;
-
+    const uploaderIsOnReport = reportId > 0 && objectiveHasBeenSaved;
     try {
       if (uploaderIsOnReport) {
         // remove from activity report objective file only
@@ -42,7 +41,7 @@ const ObjectiveFileUploader = ({
         // remove objective file and delete file
         await deleteObjectiveFile(file.id, [file.ObjectiveFile.objectiveId]);
       } else {
-      // remove the file entirely
+        // remove the file entirely
         await deleteFile(file.id);
       }
 
