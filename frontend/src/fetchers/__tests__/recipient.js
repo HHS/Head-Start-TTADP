@@ -1,6 +1,6 @@
 import join from 'url-join';
 import fetchMock from 'fetch-mock';
-import { getRecipient } from '../recipient';
+import { getRecipient, goalsByIdAndRecipient } from '../recipient';
 
 const recipientUrl = join('/', 'api', 'recipient');
 
@@ -18,5 +18,11 @@ describe('recipient fetcher', () => {
     await expect(async () => {
       await getRecipient('tim');
     }).rejects.toEqual(Error('Recipient ID must be a number'));
+  });
+
+  it('goalsByIdAndRecipient throws when given NaN', async () => {
+    await expect(goalsByIdAndRecipient([1, 2, 3], 'asdf')).rejects.toThrow(
+      'Recipient ID must be a number',
+    );
   });
 });
