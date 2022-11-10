@@ -224,12 +224,27 @@ export async function saveObjectiveAssociations(
 ) {
   // topics
   const objectiveTopics = await Promise.all(
-    (topics.map(async (topic) => ObjectiveTopic.findOrCreate({
-      where: {
-        objectiveId: objective.id,
-        topicId: topic.id,
-      },
-    }))),
+    (topics.map(async (topic) => {
+      let otopic = await ObjectiveTopic.findOne({
+        where: {
+          objectiveId: objective.id,
+          topicId: topic.id,
+        },
+      });
+      if (!otopic) {
+        otopic = await ObjectiveTopic.create({
+          objectiveId: objective.id,
+          topicId: topic.id,
+        });
+      }
+      return otopic;
+    })),
+    // ObjectiveTopic.findOrCreate({
+    //   where: {
+    //     objectiveId: objective.id,
+    //     topicId: topic.id,
+    //   },
+    // }))),
   );
 
   if (deleteUnusedAssociations) {
@@ -247,12 +262,27 @@ export async function saveObjectiveAssociations(
   // resources
   const objectiveResources = await Promise.all(
     resources.filter(({ value }) => value).map(
-      ({ value }) => ObjectiveResource.findOrCreate({
-        where: {
-          userProvidedUrl: value,
-          objectiveId: objective.id,
-        },
-      }),
+      async ({ value }) => {
+        let oresource = await ObjectiveResource.findOne({
+          where: {
+            userProvidedUrl: value,
+            objectiveId: objective.id,
+          },
+        });
+        if (!oresource) {
+          oresource = await ObjectiveResource.create({
+            userProvidedUrl: value,
+            objectiveId: objective.id,
+          });
+        }
+        return oresource;
+      },
+      // ObjectiveResource.findOrCreate({
+      //   where: {
+      //     userProvidedUrl: value,
+      //     objectiveId: objective.id,
+      //   },
+      // }),
     ),
   );
 
@@ -829,7 +859,8 @@ export async function createOrUpdateGoals(goals) {
       //     name: options.name,
       //   },
       //   defaults: {
-      //     status: 'Draft', // if we are creating a goal for the first time, it should be set to 'Draft'
+      //     status: 'Draft',
+      // if we are creating a goal for the first time, it should be set to 'Draft'
       //     isFromSmartsheetTtaPlan: false,
       //   },
       // });

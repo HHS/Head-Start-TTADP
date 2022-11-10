@@ -31,13 +31,10 @@ const cacheResources = async (activityReportObjectiveId, resources = []) => Prom
       },
     });
     if (!aror) {
-      aror = await ActivityReportObjectiveResource.create(
-        {
-          activityReportObjectiveId,
-          userProvidedUrl: resource.userProvidedUrl,
-        },
-        { individualHooks: true },
-      );
+      aror = await ActivityReportObjectiveResource.create({
+        activityReportObjectiveId,
+        userProvidedUrl: resource.userProvidedUrl,
+      });
     }
     return aror;
   })),
