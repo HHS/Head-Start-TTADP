@@ -598,7 +598,7 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementation(() => ({
         canReset: () => true,
       }));
-      const setStatusResolvedValue = [{ dataValues: { ...result } }, [], []];
+      const setStatusResolvedValue = [{ dataValues: { ...result } }, [], [], []];
       setStatus.mockResolvedValue(setStatusResolvedValue);
       await resetToDraft(request, mockResponse);
       const jsonResponse = {
