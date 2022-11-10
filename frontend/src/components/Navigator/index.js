@@ -136,6 +136,7 @@ function Navigator({
   const onSaveForm = async (isAutoSave = false) => {
     setSavingLoadScreen(isAutoSave);
     if (!editable) {
+      setIsAppLoading(false);
       return;
     }
     const { status, ...values } = getValues();
@@ -367,6 +368,7 @@ function Navigator({
       setIsAppLoading(false);
     }
   };
+
   const draftSaver = async (isAutoSave = false) => {
     // Determine if we should save draft on auto save.
     const saveGoalsDraft = isGoalsObjectivesPage && !isGoalFormClosed;
@@ -398,7 +400,7 @@ function Navigator({
 
   useInterval(async () => {
     // Don't auto save if we are already saving.;
-    if (!isAppLoading) {
+    if (!isAppLoading && isDirty) {
       await draftSaver(true);
     }
   }, autoSaveInterval);
