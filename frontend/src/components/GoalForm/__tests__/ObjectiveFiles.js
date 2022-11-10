@@ -140,4 +140,21 @@ describe('ObjectiveFiles', () => {
     />);
     expect(screen.queryByRole('radio', { name: /yes/i })).not.toBeInTheDocument();
   });
+
+  it('shows message if objective is not saved', async () => {
+    render(<ObjectiveFiles
+      files={[]}
+      onChangeFiles={jest.fn()}
+      objective={{ id: undefined }}
+      isOnReport
+      onUploadFiles={jest.fn()}
+      index={0}
+      inputName="objectiveFiles"
+      onBlur={jest.fn()}
+      status="Draft"
+      goalStatus="In Progress"
+      userCanEdit
+    />);
+    expect(await screen.findByText('Save draft before uploading resources.')).toBeVisible();
+  });
 });
