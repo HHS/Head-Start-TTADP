@@ -29,7 +29,7 @@ export default function GoalForm({
   const { errors, watch } = useFormContext();
 
   // App Loading Context.
-  const { isAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
+  const { isAppLoading, setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
 
   /**
    * add controllers for all the controlled fields
@@ -121,7 +121,6 @@ export default function GoalForm({
   }, [defaultEndDate, goal.endDate, onUpdateDate]);
 
   const [objectives, setObjectives] = useState([]);
-  const [loadingObjectives, setLoadingObjectives] = useState(false);
   /*
    * this use effect fetches
    * associated goal data
@@ -129,12 +128,12 @@ export default function GoalForm({
   useEffect(() => {
     async function fetchData() {
       try {
-        setLoadingObjectives(true);
+        setIsAppLoading(true);
         setAppLoadingText('Loading');
         const data = await goalsByIdsAndActivityReport(goal.goalIds, reportId);
         setObjectives(data[0].objectives);
       } finally {
-        setLoadingObjectives(false);
+        setIsAppLoading(false);
       }
     }
 
@@ -166,7 +165,7 @@ export default function GoalForm({
         inputName={goalTextInputName}
         isOnReport={goal.onApprovedAR || false}
         goalStatus={status}
-        isLoading={isAppLoading || loadingObjectives}
+        isLoading={isAppLoading}
         userCanEdit
       />
 
@@ -189,7 +188,7 @@ export default function GoalForm({
         key={datePickerKey} // force a re-render when the a new goal is picked
         inputName={goalEndDateInputName}
         goalStatus={status}
-        isLoading={isAppLoading || loadingObjectives}
+        isLoading={isAppLoading}
         userCanEdit
       />
 
