@@ -23,12 +23,30 @@ const cacheFiles = async (activityReportObjectiveId, files = []) => Promise.all(
 
 const cacheResources = async (activityReportObjectiveId, resources = []) => Promise.all([
   // eslint-disable-next-line max-len
-  await Promise.all(resources.map(async ([resource]) => ActivityReportObjectiveResource.findOrCreate({
-    where: {
-      activityReportObjectiveId,
-      userProvidedUrl: resource.userProvidedUrl,
-    },
-  }))),
+  await Promise.all(resources.map(async ([resource]) => {
+    let aror = await ActivityReportObjectiveResource.findOne({
+      where: {
+        activityReportObjectiveId,
+        userProvidedUrl: resource.userProvidedUrl,
+      },
+    });
+    if (!aror) {
+      aror = await ActivityReportObjectiveResource.create(
+        {
+          activityReportObjectiveId,
+          userProvidedUrl: resource.userProvidedUrl,
+        },
+        { individualHooks: true },
+      );
+    }
+    return aror;
+  })),
+  // ActivityReportObjectiveResource.findOrCreate({
+  //   where: {
+  //     activityReportObjectiveId,
+  //     userProvidedUrl: resource.userProvidedUrl,
+  //   },
+  // }))),
   await ActivityReportObjectiveResource.destroy({
     where: {
       activityReportObjectiveId,
@@ -57,12 +75,24 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     files, resources, topics, ttaProvided, status,
   } = metadata;
   const objectiveId = objective.id;
-  const [aro] = await ActivityReportObjective.findOrCreate({
+  // const [aro] = await ActivityReportObjective.findOrCreate({
+  //   where: {
+  //     objectiveId,
+  //     activityReportId: reportId,
+  //   },
+  // });
+  let aro = await ActivityReportObjective.findOne({
     where: {
       objectiveId,
       activityReportId: reportId,
     },
   });
+  if (!aro) {
+    aro = await ActivityReportObjective.create({
+      objectiveId,
+      activityReportId: reportId,
+    });
+  }
   const activityReportObjectiveId = aro.id;
   return Promise.all([
     await ActivityReportObjective.update({
@@ -80,12 +110,24 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
 };
 
 const cacheGoalMetadata = async (goal, reportId, isRttapa) => {
-  const [arg] = await ActivityReportGoal.findOrCreate({
+  // const [arg] = await ActivityReportGoal.findOrCreate({
+  //   where: {
+  //     goalId: goal.id,
+  //     activityReportId: reportId,
+  //   },
+  // });
+  let arg = await ActivityReportGoal.findOne({
     where: {
       goalId: goal.id,
       activityReportId: reportId,
     },
   });
+  if (!arg) {
+    arg = await ActivityReportGoal.create({
+      goalId: goal.id,
+      activityReportId: reportId,
+    });
+  }
   const activityReportGoalId = arg.id;
   return Promise.all([
     await ActivityReportGoal.update({
