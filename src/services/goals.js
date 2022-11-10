@@ -49,7 +49,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         (
           SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
           INNER JOIN "ActivityReportGoals" "arg" ON "arg"."activityReportId" = "ar"."id"
-          WHERE "arg"."goalId" = "Goal"."id"         
+          WHERE "arg"."goalId" = "Goal"."id"
         ) > 0
       `),
       'onAnyReport',
@@ -71,7 +71,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
             (
               SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
               INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-              WHERE "aro"."objectiveId" = "objectives"."id"         
+              WHERE "aro"."objectiveId" = "objectives"."id"
             ) > 0
           `),
           'onAnyReport',
@@ -88,7 +88,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
             ['id', 'key'],
             [
               sequelize.literal(`(
-                SELECT COUNT(aror."id") FROM "ActivityReportObjectiveResources" "aror" 
+                SELECT COUNT(aror."id") FROM "ActivityReportObjectiveResources" "aror"
                 INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."id" = "aror"."activityReportObjectiveId"
                 WHERE "aror"."userProvidedUrl" = "objectives->resources"."userProvidedUrl"
                 AND "aro"."objectiveId" = "objectives"."id"
@@ -121,8 +121,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                 (
                   SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                  INNER JOIN "ActivityReportObjectiveTopics" "ot" ON "ot"."activityReportObjectiveId" = "aro"."id"                                        
-                  WHERE "aro"."objectiveId" = "objectives"."id" 
+                  INNER JOIN "ActivityReportObjectiveTopics" "ot" ON "ot"."activityReportObjectiveId" = "aro"."id"
+                  WHERE "aro"."objectiveId" = "objectives"."id"
                   AND "ot"."topicId" = "objectives->topics"."id"
                 ) > 0
               `),
@@ -133,8 +133,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                 (
                   SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                  INNER JOIN "ActivityReportObjectiveTopics" "ot" ON "ot"."activityReportObjectiveId" = "aro"."id" 
-                  WHERE "aro"."objectiveId" = "objectives"."id"  AND "ot"."topicId" = "objectives->topics"."id"   
+                  INNER JOIN "ActivityReportObjectiveTopics" "ot" ON "ot"."activityReportObjectiveId" = "aro"."id"
+                  WHERE "aro"."objectiveId" = "objectives"."id"  AND "ot"."topicId" = "objectives->topics"."id"
                   AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
                 ) > 0
               `),
@@ -152,7 +152,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                   (
                     SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                     INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                    INNER JOIN "ActivityReportObjectiveFiles" "of" ON "of"."activityReportObjectiveId" = "aro"."id"                                        
+                    INNER JOIN "ActivityReportObjectiveFiles" "of" ON "of"."activityReportObjectiveId" = "aro"."id"
                     WHERE "aro"."objectiveId" = "objectives"."id" AND "of"."fileId" = "objectives->files"."id"
                   ) > 0
                 `),
@@ -163,9 +163,9 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                   (
                     SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                     INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                    INNER JOIN "ActivityReportObjectiveFiles" "of" ON "of"."activityReportObjectiveId" = "aro"."id"                                        
-                    WHERE "aro"."objectiveId" = "objectives"."id" 
-                    AND "of"."fileId" = "objectives->files"."id" 
+                    INNER JOIN "ActivityReportObjectiveFiles" "of" ON "of"."activityReportObjectiveId" = "aro"."id"
+                    WHERE "aro"."objectiveId" = "objectives"."id"
+                    AND "of"."fileId" = "objectives->files"."id"
                     AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
                   ) > 0
                 `),
@@ -271,12 +271,27 @@ export async function saveObjectiveAssociations(
 
   const objectiveFiles = await Promise.all(
     files.map(
-      (file) => ObjectiveFile.findOrCreate({
-        where: {
-          fileId: file.id,
-          objectiveId: objective.id,
-        },
-      }),
+      async (file) => {
+        let ofile = await ObjectiveFile.findOne({
+          where: {
+            fileId: file.id,
+            objectiveId: objective.id,
+          },
+        });
+        if (!ofile) {
+          ofile = await ObjectiveFile.create({
+            fileId: file.id,
+            objectiveId: objective.id,
+          });
+        }
+        return ofile;
+      },
+      // ObjectiveFile.findOrCreate({
+      //   where: {
+      //     fileId: file.id,
+      //     objectiveId: objective.id,
+      //   },
+      // }),
     ),
   );
 
@@ -805,7 +820,20 @@ export async function createOrUpdateGoals(goals) {
     // In order to reuse goals with matching text we need to do the findOrCreate as the
     // upsert would not preform the extra checks and logic now required.
     if (!newGoal) {
-      [newGoal] = await Goal.findOrCreate({
+      // [newGoal] = await Goal.findOrCreate({
+      //   where: {
+      //     grantId,
+      //     status: {
+      //       [Op.not]: 'Closed',
+      //     },
+      //     name: options.name,
+      //   },
+      //   defaults: {
+      //     status: 'Draft', // if we are creating a goal for the first time, it should be set to 'Draft'
+      //     isFromSmartsheetTtaPlan: false,
+      //   },
+      // });
+      newGoal = await Goal.findOne({
         where: {
           grantId,
           status: {
@@ -813,11 +841,15 @@ export async function createOrUpdateGoals(goals) {
           },
           name: options.name,
         },
-        defaults: {
+      });
+      if (!newGoal) {
+        newGoal = await Goal.create({
+          grantId,
+          name: options.name,
           status: 'Draft', // if we are creating a goal for the first time, it should be set to 'Draft'
           isFromSmartsheetTtaPlan: false,
-        },
-      });
+        });
+      }
     }
 
     // we can't update this stuff if the goal is on an approved AR
@@ -876,20 +908,34 @@ export async function createOrUpdateGoals(goals) {
         }
 
         if (isNew && !objective) {
-          [objective] = await Objective.findOrCreate({
+          // [objective] = await Objective.findOrCreate({
+          //   where: {
+          //     goalId: newGoal.id,
+          //     title,
+          //     status: {
+          //       [Op.not]: OBJECTIVE_STATUS.COMPLETE,
+          //     },
+          //   },
+          //   defaults: {
+          //     status: objectiveStatus,
+          //     title,
+          //     goalId: newGoal.id,
+          //   },
+          // });
+          objective = await Objective.findOne({
             where: {
-              goalId: newGoal.id,
-              title,
-              status: {
-                [Op.not]: OBJECTIVE_STATUS.COMPLETE,
-              },
-            },
-            defaults: {
-              status: objectiveStatus,
+              status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
               title,
               goalId: newGoal.id,
             },
           });
+          if (!objective) {
+            objective = await Objective.create({
+              status: objectiveStatus,
+              title,
+              goalId: newGoal.id,
+            });
+          }
         } else if (objectiveIds) {
           // this needs to find "complete" objectives as well
           // since we could be moving the status back from the RTR
@@ -902,20 +948,34 @@ export async function createOrUpdateGoals(goals) {
         }
 
         if (!objective) {
-          [objective] = await Objective.findOrCreate({
+          // [objective] = await Objective.findOrCreate({
+          //   where: {
+          //     status: {
+          //       [Op.not]: OBJECTIVE_STATUS.COMPLETE,
+          //     },
+          //     title,
+          //     goalId: newGoal.id,
+          //   },
+          //   defaults: {
+          //     status: objectiveStatus,
+          //     title,
+          //     goalId: newGoal.id,
+          //   },
+          // });
+          objective = await Objective.findOne({
             where: {
-              status: {
-                [Op.not]: OBJECTIVE_STATUS.COMPLETE,
-              },
-              title,
-              goalId: newGoal.id,
-            },
-            defaults: {
-              status: objectiveStatus,
+              status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
               title,
               goalId: newGoal.id,
             },
           });
+          if (!objective) {
+            objective = await Objective.create({
+              status: objectiveStatus,
+              title,
+              goalId: newGoal.id,
+            });
+          }
         }
 
         await objective.update({
@@ -1407,19 +1467,35 @@ export async function saveGoalsForReport(goals, report) {
       // - And status is not closed.
       // Note: The existing goal should be used regardless if it was created new.
       newGoals = await Promise.all(goal.grantIds.map(async (grantId) => {
-        const [newGoal] = await Goal.findOrCreate({
+        // const [newGoal] = await Goal.findOrCreate({
+        //   where: {
+        //     name: fields.name,
+        //     grantId,
+        //     status: { [Op.not]: 'Closed' },
+        //   },
+        //   defaults: {
+        //     ...fields,
+        //     status,
+        //     grantId, // If we don't specify the grant it will be created with the old.
+        //     createdVia: 'activityReport',
+        //   },
+        // });
+        let newGoal = await Goal.findOne({
           where: {
             name: fields.name,
             grantId,
             status: { [Op.not]: 'Closed' },
           },
-          defaults: {
+        });
+        if (!newGoal) {
+          newGoal = await Goal.create({
+            grantId, // If we don't specify the grant it will be created with the old.
             ...fields,
             status,
-            grantId, // If we don't specify the grant it will be created with the old.
+            onApprovedAR,
             createdVia: 'activityReport',
-          },
-        });
+          });
+        }
 
         if (!newGoal.onApprovedAR && endDate && endDate !== 'Invalid date') {
           await newGoal.update({ endDate }, { individualHooks: true });
@@ -1471,19 +1547,38 @@ export async function saveGoalsForReport(goals, report) {
           return existingGoal;
         }
 
-        const [newGoal] = await Goal.findOrCreate({
+        // const [newGoal] = await Goal.findOrCreate({
+        //   where: {
+        //     [Op.and]: [
+        //       { goalTemplateId: { [Op.not]: null } }, // We need to exclude null matches.
+        //       { goalTemplateId: { [Op.eq]: goalTemplateId } },
+        //     ],
+        //     grantId: gId,
+        //     status: {
+        //       [Op.not]: 'Closed',
+        //     },
+        //   },
+        //   defaults: { ...fields, status },
+        // });
+        let newGoal = await Goal.findOne({
           where: {
             [Op.and]: [
               { goalTemplateId: { [Op.not]: null } }, // We need to exclude null matches.
               { goalTemplateId: { [Op.eq]: goalTemplateId } },
             ],
+            name: fields.name,
             grantId: gId,
-            status: {
-              [Op.not]: 'Closed',
-            },
+            status: { [Op.not]: 'Closed' },
           },
-          defaults: { ...fields, status },
         });
+        if (!newGoal) {
+          newGoal = await Goal.create({
+            goalTemplateId,
+            grantId: gId,
+            ...fields,
+            status,
+          });
+        }
 
         await newGoal.update({
           ...fields, status, endDate, createdVia: createdVia || 'activityReport',
