@@ -408,6 +408,9 @@ export async function getGoalsByActivityRecipient(
     const descOrder = Array.from(ascOrder).reverse();
 
     sorted = rows.sort((a, b) => {
+      // if for some reason status is falsy, we sort last
+      if (!a.status || !b.status) return 1;
+
       const aStatus = a.status.toLowerCase();
       const bStatus = b.status.toLowerCase();
       // if we found some weird status that for some reason isn't in ascOrder, sort it last
