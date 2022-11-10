@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuid } from 'uuid';
 import {
-  Label, Radio, Fieldset, FormGroup, ErrorMessage,
+  Label, Radio, Fieldset, FormGroup, ErrorMessage, Alert,
 } from '@trussworks/react-uswds';
 import QuestionTooltip from './QuestionTooltip';
 import UnusedData from './UnusedData';
@@ -23,6 +23,7 @@ export default function ObjectiveFiles({
   reportId,
   label,
   userCanEdit,
+  forceObjectiveSave,
 }) {
   const objectiveId = objective.id;
   const hasFiles = useMemo(() => files && files.length > 0, [files]);
@@ -64,6 +65,8 @@ export default function ObjectiveFiles({
     );
   }
 
+  const showSaveDraftInfo = forceObjectiveSave && !objectiveId;
+
   return (
     <>
       {
@@ -96,20 +99,31 @@ export default function ObjectiveFiles({
                 )}
                   />
                 </legend>
-                <Radio
-                  label="Yes"
-                  id={`add-objective-files-yes-${objectiveId}-${index}`}
-                  name={`add-objective-files-${objectiveId}-${index}`}
-                  checked={useFiles}
-                  onChange={() => setUseFiles(true)}
-                />
-                <Radio
-                  label="No"
-                  id={`add-objective-files-no-${objectiveId}-${index}`}
-                  name={`add-objective-files-${objectiveId}-${index}`}
-                  checked={!useFiles}
-                  onChange={() => setUseFiles(false)}
-                />
+                { showSaveDraftInfo
+                  ? (
+                    <Alert type="info" headingLevel="h4" slim>
+                      Save draft before uploading resources.
+                    </Alert>
+                  )
+                  : (
+                    <>
+                      <Radio
+                        label="Yes"
+                        id={`add-objective-files-yes-${objectiveId}-${index}`}
+                        name={`add-objective-files-${objectiveId}-${index}`}
+                        checked={useFiles}
+                        onChange={() => setUseFiles(true)}
+                      />
+                      <Radio
+                        label="No"
+                        id={`add-objective-files-no-${objectiveId}-${index}`}
+                        name={`add-objective-files-${objectiveId}-${index}`}
+                        checked={!useFiles}
+                        onChange={() => setUseFiles(false)}
+                      />
+                    </>
+                  )}
+
               </>
             ) }
             {
@@ -198,6 +212,7 @@ ObjectiveFiles.propTypes = {
   onBlur: PropTypes.func,
   reportId: PropTypes.number,
   userCanEdit: PropTypes.bool.isRequired,
+  forceObjectiveSave: PropTypes.bool,
 };
 
 ObjectiveFiles.defaultProps = {
@@ -205,5 +220,6 @@ ObjectiveFiles.defaultProps = {
   inputName: '',
   onBlur: () => {},
   reportId: 0,
+  forceObjectiveSave: true,
   label: "Do you plan to use any TTA resources that aren't available as a link?",
 };
