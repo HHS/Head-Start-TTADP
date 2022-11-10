@@ -81,6 +81,7 @@ export const TOPICS = [
   'Culture & Language',
   'Curriculum (Instructional or Parenting)',
   'Data and Evaluation',
+  'Disabilities Services',
   'ERSEA',
   'Environmental Health and Safety / EPRR',
   'Equity',
@@ -93,6 +94,7 @@ export const TOPICS = [
   'Leadership / Governance',
   'Learning Environments',
   'Nutrition',
+  'Ongoing Monitoring Management System',
   'Oral Health',
   'Parent and Family Engagement',
   'Partnerships and Community Engagement',
@@ -105,6 +107,7 @@ export const TOPICS = [
   'Staff Wellness',
   'Teaching / Caregiving Practices',
   'Technology and Information Systems',
+  'Training and Professional Development',
   'Transition Practices',
   'Transportation',
 ];

@@ -14,10 +14,9 @@ import {
   GOAL_RTTAPA_ERROR,
 } from '../../../../components/GoalForm/constants';
 import { NO_ERROR, ERROR_FORMAT } from './constants';
-import Loader from '../../../../components/Loader';
-import GoalFormContext from '../../../../GoalFormContext';
 import { DECIMAL_BASE } from '../../../../Constants';
 import GoalRttapa from '../../../../components/GoalForm/GoalRttapa';
+import AppLoadingContext from '../../../../AppLoadingContext';
 
 export default function GoalForm({
   goal,
@@ -29,8 +28,8 @@ export default function GoalForm({
   // pull the errors out of the form context
   const { errors, watch } = useFormContext();
 
-  // Goal Form Context.
-  const { isLoading } = useContext(GoalFormContext);
+  // App Loading Context.
+  const { isAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
 
   /**
    * add controllers for all the controlled fields
@@ -123,7 +122,6 @@ export default function GoalForm({
 
   const [objectives, setObjectives] = useState([]);
   const [loadingObjectives, setLoadingObjectives] = useState(false);
-  const [loadingLabel, setLoadingLabel] = useState('Saving');
   /*
    * this use effect fetches
    * associated goal data
@@ -132,12 +130,11 @@ export default function GoalForm({
     async function fetchData() {
       try {
         setLoadingObjectives(true);
-        setLoadingLabel('Loading');
+        setAppLoadingText('Loading');
         const data = await goalsByIdsAndActivityReport(goal.goalIds, reportId);
         setObjectives(data[0].objectives);
       } finally {
         setLoadingObjectives(false);
-        setLoadingLabel('Saving');
       }
     }
 
@@ -156,11 +153,11 @@ export default function GoalForm({
     } else {
       setObjectives([]);
     }
-  }, [goal.goalIds, goal.isNew, goal.oldGrantIds, reportId]);
+  }, [goal.goalIds, goal.isNew, goal.oldGrantIds, reportId, setAppLoadingText]);
 
   return (
     <>
-      <Loader loading={isLoading || loadingObjectives} loadingLabel="Loading" text={loadingLabel} />
+
       <GoalText
         error={errors.goalName ? ERROR_FORMAT(errors.goalName.message) : NO_ERROR}
         goalName={goalText}
@@ -169,7 +166,7 @@ export default function GoalForm({
         inputName={goalTextInputName}
         isOnReport={goal.onApprovedAR || false}
         goalStatus={status}
-        isLoading={isLoading || loadingObjectives}
+        isLoading={isAppLoading || loadingObjectives}
         userCanEdit
       />
 
@@ -192,7 +189,7 @@ export default function GoalForm({
         key={datePickerKey} // force a re-render when the a new goal is picked
         inputName={goalEndDateInputName}
         goalStatus={status}
-        isLoading={isLoading || loadingObjectives}
+        isLoading={isAppLoading || loadingObjectives}
         userCanEdit
       />
 

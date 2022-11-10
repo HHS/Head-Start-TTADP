@@ -1,6 +1,6 @@
 const { Op, Model } = require('sequelize');
 const { COLLABORATOR_TYPES, ENTITY_TYPES, CREATION_METHOD } = require('../constants');
-const { beforeValidate, afterUpdate } = require('./hooks/objectiveTemplate');
+const { beforeValidate, beforeUpdate, afterUpdate } = require('./hooks/objectiveTemplate');
 // const { auditLogger } = require('../logger');
 
 module.exports = (sequelize, DataTypes) => {
@@ -110,6 +110,7 @@ module.exports = (sequelize, DataTypes) => {
     modelName: 'ObjectiveTemplate',
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });

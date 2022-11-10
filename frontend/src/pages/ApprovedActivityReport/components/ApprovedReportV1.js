@@ -163,11 +163,15 @@ export default function ApprovedReportV1({ data }) {
             {' '}
             {approvingManagers}
           </p>
-          <p>
-            <strong>Date approved:</strong>
-            {' '}
-            {approvedAt}
-          </p>
+          { approvedAt !== ''
+            ? (
+              <p>
+                <strong>Date approved:</strong>
+                {' '}
+                {approvedAt}
+              </p>
+            )
+            : null }
         </div>
         <ViewTable
           caption="Activity summary"

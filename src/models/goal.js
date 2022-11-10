@@ -1,7 +1,7 @@
 const { Op, Model } = require('sequelize');
 const { COLLABORATOR_TYPES, ENTITY_TYPES, CLOSE_SUSPEND_REASONS } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
-const { beforeValidate, afterCreate, afterUpdate } = require('./hooks/goal');
+const { beforeValidate, afterCreate, beforeUpdate, afterUpdate } = require('./hooks/goal');
 
 /**
  * Goals table. Stores goals for tta.
@@ -122,7 +122,7 @@ module.exports = (sequelize, DataTypes) => {
       default: false,
     },
     isRttapa: {
-      type: DataTypes.BOOLEAN,
+      type: DataTypes.ENUM(['Yes', 'No']),
       allowNull: true,
     },
     firstNotStartedAt: {
@@ -175,6 +175,7 @@ module.exports = (sequelize, DataTypes) => {
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });

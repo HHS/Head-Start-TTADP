@@ -27,12 +27,12 @@ describe('ObjectiveFileUploader', () => {
   };
 
   const RenderFileUploader = ({
-    onChange, files, upload = jest.fn(), reportId = 0,
+    onChange, files, upload = jest.fn(), reportId = 0, objIds = [],
   }) => (
     <ObjectiveFileUploader
       onChange={onChange}
       files={files}
-      objective={{ id: 1 }}
+      objective={{ id: 1, ids: objIds }}
       id="id"
       upload={upload}
       index={0}
@@ -113,10 +113,11 @@ describe('ObjectiveFileUploader', () => {
 
   it('files are properly removed when on a report', async () => {
     const mockOnChange = jest.fn();
-    render(<RenderFileUploader reportId={1} onChange={mockOnChange} files={[file('fileOne', 1, null), { ...file('fileTwo', 2), ObjectiveFile: { objectiveId: 1 } }]} />);
+    render(<RenderFileUploader reportId={1} objIds={[1]} onChange={mockOnChange} files={[file('fileOne', 1, null), { ...file('fileTwo', 2), ObjectiveFile: { objectiveId: 1 } }]} />);
     expect(screen.getByText('fileOne')).toBeVisible();
     expect(screen.getByText('fileTwo')).toBeVisible();
     expect(screen.getByText('Pending')).toBeVisible();
+
     fetchMock.delete('/api/files/report/1/file/2', { status: 204 });
     const fileTwo = screen.getByText('fileTwo');
     fireEvent.click(fileTwo.parentNode.lastChild.firstChild);

@@ -99,7 +99,13 @@ describe('objective model hooks', () => {
     expect(testGoal.status).toEqual('Draft');
     expect(testGoal.id).toEqual(goal.id);
 
-    await Goal.update({ status: 'Not Started' }, { where: { id: goal.id } });
+    await Goal.update(
+      { status: 'Not Started' },
+      {
+        where: { id: goal.id },
+        individualHooks: true,
+      },
+    );
 
     objective2 = await Objective.create({
       title: 'Objective 2',

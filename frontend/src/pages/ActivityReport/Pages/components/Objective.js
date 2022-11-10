@@ -182,7 +182,7 @@ export default function Objective({
     // handle file upload
     try {
       const data = new FormData();
-      data.append('objectiveIds', JSON.stringify(objectiveToAttach.ids));
+      data.append('objectiveIds', JSON.stringify(!objectiveToAttach.ids ? [0] : objectiveToAttach.ids));
       files.forEach((file) => {
         data.append('file', file);
       });

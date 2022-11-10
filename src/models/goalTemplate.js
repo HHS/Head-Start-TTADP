@@ -1,6 +1,6 @@
 const { Op, Model } = require('sequelize');
 const { COLLABORATOR_TYPES, ENTITY_TYPES, CREATION_METHOD } = require('../constants');
-const { beforeValidate, afterUpdate } = require('./hooks/goalTemplate');
+const { beforeValidate, beforeUpdate, afterUpdate } = require('./hooks/goalTemplate');
 // const { auditLogger } = require('../logger');
 
 module.exports = (sequelize, DataTypes) => {
@@ -105,7 +105,8 @@ module.exports = (sequelize, DataTypes) => {
     sequelize,
     modelName: 'GoalTemplate',
     hooks: {
-      beforeValidate: async (instance) => beforeValidate(sequelize, instance),
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });

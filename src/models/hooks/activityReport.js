@@ -129,6 +129,7 @@ const moveDraftGoalsToNotStartedOnSubmission = async (sequelize, instance, optio
             },
           },
           transaction: options.transaction,
+          individualHooks: true,
         },
       );
     } catch (error) {
@@ -174,6 +175,7 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
         {
           where: { id: goal.id },
           transaction: options.transaction,
+          individualHooks: true,
         },
       )));
     } catch (e) {

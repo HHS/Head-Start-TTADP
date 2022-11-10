@@ -47,9 +47,8 @@ import {
   removeRemovedRecipientsGoals,
   getGoalsForReport,
 } from './goals';
-
-import { saveObjectivesForReport } from './objectives';
 import { auditLogger } from '../logger';
+import { getObjectivesByReportId, saveObjectivesForReport } from './objectives';
 
 export async function batchQuery(query, limit) {
   let finished = false;
@@ -228,7 +227,7 @@ async function saveNotes(activityReportId, notes, isRecipientNotes) {
     const newNotes = notes.map((note) => ({
       id: note.id ? parseInt(note.id, DECIMAL_BASE) : undefined,
       note: note.note,
-      completeDate: note.completeDate,
+      completeDate: !note.completeDate ? null : note.completeDate,
       activityReportId,
       noteType,
     }));
@@ -384,6 +383,7 @@ export async function activityReportAndRecipientsById(
   const arId = parseInt(activityReportId, DECIMAL_BASE);
 
   const goalsAndObjectives = await getGoalsForReport(arId);
+  const objectivesWithoutGoals = await getObjectivesByReportId(arId);
 
   const recipients = await ActivityRecipient.findAll({
     where: {
@@ -641,7 +641,7 @@ export async function activityReportAndRecipientsById(
     raw: true,
   });
 
-  return [report, activityRecipients, goalsAndObjectives];
+  return [report, activityRecipients, goalsAndObjectives, objectivesWithoutGoals];
 }
 
 /**
@@ -1385,7 +1385,7 @@ export async function createOrUpdate(newActivityReport, report) {
   //   );
   // }
   try {
-    const [r, recips, gAndOs] = await activityReportAndRecipientsById(
+    const [r, recips, gAndOs, oWoG] = await activityReportAndRecipientsById(
       savedReport.id,
       !!imported,
       true,
@@ -1395,6 +1395,7 @@ export async function createOrUpdate(newActivityReport, report) {
       displayId: r.displayId,
       activityRecipients: recips,
       goalsAndObjectives: gAndOs,
+      objectivesWithoutGoals: oWoG,
     } : null;
   } catch (err) {
     auditLogger.error(JSON.stringify(err));

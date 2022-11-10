@@ -29,6 +29,7 @@ const reportObject = {
     submissionStatus: REPORT_STATUSES.DRAFT,
     calculatedStatus: REPORT_STATUSES.DRAFT,
   },
+  activityRecipientType: 'other-entity',
   regionId: 1,
   lastUpdatedById: mockUser.id,
 };
