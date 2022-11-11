@@ -49,7 +49,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         (
           SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
           INNER JOIN "ActivityReportGoals" "arg" ON "arg"."activityReportId" = "ar"."id"
-          WHERE "arg"."goalId" = "Goal"."id"         
+          WHERE "arg"."goalId" = "Goal"."id"
         ) > 0
       `),
       'onAnyReport',
@@ -71,7 +71,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
             (
               SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
               INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-              WHERE "aro"."objectiveId" = "objectives"."id"         
+              WHERE "aro"."objectiveId" = "objectives"."id"
             ) > 0
           `),
           'onAnyReport',
@@ -88,7 +88,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
             ['id', 'key'],
             [
               sequelize.literal(`(
-                SELECT COUNT(aror."id") FROM "ActivityReportObjectiveResources" "aror" 
+                SELECT COUNT(aror."id") FROM "ActivityReportObjectiveResources" "aror"
                 INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."id" = "aror"."activityReportObjectiveId"
                 WHERE "aror"."userProvidedUrl" = "objectives->resources"."userProvidedUrl"
                 AND "aro"."objectiveId" = "objectives"."id"
@@ -121,8 +121,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                 (
                   SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                  INNER JOIN "ActivityReportObjectiveTopics" "ot" ON "ot"."activityReportObjectiveId" = "aro"."id"                                        
-                  WHERE "aro"."objectiveId" = "objectives"."id" 
+                  INNER JOIN "ActivityReportObjectiveTopics" "ot" ON "ot"."activityReportObjectiveId" = "aro"."id"
+                  WHERE "aro"."objectiveId" = "objectives"."id"
                   AND "ot"."topicId" = "objectives->topics"."id"
                 ) > 0
               `),
@@ -133,8 +133,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                 (
                   SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                   INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                  INNER JOIN "ActivityReportObjectiveTopics" "ot" ON "ot"."activityReportObjectiveId" = "aro"."id" 
-                  WHERE "aro"."objectiveId" = "objectives"."id"  AND "ot"."topicId" = "objectives->topics"."id"   
+                  INNER JOIN "ActivityReportObjectiveTopics" "ot" ON "ot"."activityReportObjectiveId" = "aro"."id"
+                  WHERE "aro"."objectiveId" = "objectives"."id"  AND "ot"."topicId" = "objectives->topics"."id"
                   AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
                 ) > 0
               `),
@@ -152,7 +152,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                   (
                     SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                     INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                    INNER JOIN "ActivityReportObjectiveFiles" "of" ON "of"."activityReportObjectiveId" = "aro"."id"                                        
+                    INNER JOIN "ActivityReportObjectiveFiles" "of" ON "of"."activityReportObjectiveId" = "aro"."id"
                     WHERE "aro"."objectiveId" = "objectives"."id" AND "of"."fileId" = "objectives->files"."id"
                   ) > 0
                 `),
@@ -163,9 +163,9 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
                   (
                     SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
                     INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                    INNER JOIN "ActivityReportObjectiveFiles" "of" ON "of"."activityReportObjectiveId" = "aro"."id"                                        
-                    WHERE "aro"."objectiveId" = "objectives"."id" 
-                    AND "of"."fileId" = "objectives->files"."id" 
+                    INNER JOIN "ActivityReportObjectiveFiles" "of" ON "of"."activityReportObjectiveId" = "aro"."id"
+                    WHERE "aro"."objectiveId" = "objectives"."id"
+                    AND "of"."fileId" = "objectives->files"."id"
                     AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
                   ) > 0
                 `),
@@ -222,6 +222,13 @@ export async function saveObjectiveAssociations(
   files = [],
   deleteUnusedAssociations = false,
 ) {
+  // We need to know if the objectiveTemplateId is populated to know if we
+  // can disable the hooks on the ObjectiveTopic
+  const o = await Objective.findOne({
+    attributes: ['objectiveTemplateId'],
+    where: { id: objective.id },
+  });
+
   // topics
   const objectiveTopics = await Promise.all(
     (topics.map(async (topic) => ObjectiveTopic.findOrCreate({
@@ -229,6 +236,7 @@ export async function saveObjectiveAssociations(
         objectiveId: objective.id,
         topicId: topic.id,
       },
+      hooks: !!o.objectiveTemplateId,
     }))),
   );
 
@@ -725,23 +733,33 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
     .filter((objective) => !objective.activityReports || !objective.activityReports.length)
     .map((objective) => objective.id);
 
-  await ObjectiveResource.destroy({
-    where: {
-      objectiveId: orphanedObjectiveIds,
-    },
-  });
+  if (Array.isArray(orphanedObjectiveIds) && orphanedObjectiveIds.length > 0) {
+    await Promise.all([
+      ObjectiveFile.destroy({
+        where: {
+          objectiveId: orphanedObjectiveIds,
+        },
+      }),
+      ObjectiveResource.destroy({
+        where: {
+          objectiveId: orphanedObjectiveIds,
+        },
+      }),
+      ObjectiveTopic.destroy({
+        where: {
+          objectiveId: orphanedObjectiveIds,
+        },
+      }),
+    ]);
+  }
 
-  await ObjectiveTopic.destroy({
-    where: {
-      objectiveId: orphanedObjectiveIds,
-    },
-  });
-
-  return Objective.destroy({
-    where: {
-      id: orphanedObjectiveIds,
-    },
-  });
+  return (Array.isArray(orphanedObjectiveIds) && orphanedObjectiveIds.length > 0)
+    ? Objective.destroy({
+      where: {
+        id: orphanedObjectiveIds,
+      },
+    })
+    : Promise.resolve();
 }
 
 /**
@@ -1161,7 +1179,11 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
     attributes: [
       'id',
       [
-        sequelize.literal(`((select count(*) from "ActivityReportGoals" where "ActivityReportGoals"."goalId" = "Goal"."id" and "ActivityReportGoals"."activityReportId" not in (${reportId}))::int > 0)`),
+        sequelize.literal(`
+        ((select count(*)
+        from "ActivityReportGoals"
+        where "ActivityReportGoals"."goalId" = "Goal"."id"
+        and "ActivityReportGoals"."activityReportId" not in (${reportId}))::int > 0)`),
         'onOtherAr',
       ],
     ],
@@ -1183,12 +1205,14 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
   const goalIds = goals.map((goal) => goal.id);
   const goalsToDelete = goals.filter((goal) => !goal.get('onOtherAr')).map((goal) => goal.id);
 
-  await ActivityReportGoal.destroy({
-    where: {
-      goalId: goalIds,
-      activityReportId: reportId,
-    },
-  });
+  if (Array.isArray(goalIds) && goalIds.length > 0) {
+    await ActivityReportGoal.destroy({
+      where: {
+        goalId: goalIds,
+        activityReportId: reportId,
+      },
+    });
+  }
 
   const objectives = await Objective.findAll({
     attributes: [
@@ -1215,19 +1239,23 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
     (objective) => !objective.get('onOtherAr'),
   ).map((objective) => objective.id);
 
-  await ActivityReportObjective.destroy({
-    where: {
-      objectiveId: objectiveIds,
-      activityReportId: reportId,
-    },
-  });
+  if (Array.isArray(objectiveIds) && objectiveIds.length > 0) {
+    await ActivityReportObjective.destroy({
+      where: {
+        objectiveId: objectiveIds,
+        activityReportId: reportId,
+      },
+    });
+  }
 
-  await Objective.destroy({
-    where: {
-      id: objectivesToDelete,
-      onApprovedAR: false,
-    },
-  });
+  if (Array.isArray(objectivesToDelete) && objectivesToDelete.length > 0) {
+    await Objective.destroy({
+      where: {
+        id: objectivesToDelete,
+        onApprovedAR: false,
+      },
+    });
+  }
 
   return Goal.destroy({
     where: {
@@ -1624,57 +1652,69 @@ export async function createOrUpdateGoalsForActivityReport(goals, reportId) {
 
 export async function destroyGoal(goalIds) {
   try {
-    const reportsWithGoal = await ActivityReport.findAll({
-      attributes: ['id'],
-      include: [
-        {
-          attributes: ['id'],
-          model: Goal,
-          required: true,
-          where: {
-            id: goalIds,
+    const reportsWithGoal = (Array.isArray(goalIds) && goalIds.length)
+      ? await ActivityReport.findAll({
+        attributes: ['id'],
+        include: [
+          {
+            attributes: ['id'],
+            model: Goal,
+            required: true,
+            where: {
+              id: goalIds,
+            },
+            as: 'goals',
           },
-          as: 'goals',
-        },
-      ],
-    });
+        ],
+      })
+      : [];
 
     const isOnReport = reportsWithGoal.length;
     if (isOnReport) {
       throw new Error('Goal is on an activity report and can\'t be deleted');
     }
 
-    const objectives = await Objective.findAll({
-      where: {
-        goalId: goalIds,
-      },
-    });
+    const objectives = (Array.isArray(goalIds) && goalIds.length)
+      ? await Objective.findAll({
+        where: {
+          goalId: goalIds,
+        },
+      })
+      : [];
 
     const objectiveIds = objectives.map((o) => o.id);
 
-    const objectiveTopicsDestroyed = await ObjectiveTopic.destroy({
-      where: {
-        objectiveId: objectiveIds,
-      },
-    });
+    const objectiveTopicsDestroyed = (Array.isArray(objectiveIds) && objectiveIds.length)
+      ? await ObjectiveTopic.destroy({
+        where: {
+          objectiveId: objectiveIds,
+        },
+      })
+      : await Promise.resolve();
 
-    const objectiveResourcesDestroyed = await ObjectiveResource.destroy({
-      where: {
-        objectiveId: objectiveIds,
-      },
-    });
+    const objectiveResourcesDestroyed = (Array.isArray(objectiveIds) && objectiveIds.length)
+      ? await ObjectiveResource.destroy({
+        where: {
+          objectiveId: objectiveIds,
+        },
+      })
+      : await Promise.resolve();
 
-    const objectivesDestroyed = await Objective.destroy({
-      where: {
-        id: objectiveIds,
-      },
-    });
+    const objectivesDestroyed = (Array.isArray(objectiveIds) && objectiveIds.length)
+      ? await Objective.destroy({
+        where: {
+          id: objectiveIds,
+        },
+      })
+      : await Promise.resolve();
 
-    const goalsDestroyed = await Goal.destroy({
-      where: {
-        id: goalIds,
-      },
-    });
+    const goalsDestroyed = (Array.isArray(goalIds) && goalIds.length)
+      ? await Goal.destroy({
+        where: {
+          id: goalIds,
+        },
+      })
+      : await Promise.resolve();
 
     return {
       goalsDestroyed,

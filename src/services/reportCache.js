@@ -8,11 +8,11 @@ const {
 } = require('../models');
 
 const cacheFiles = async (activityReportObjectiveId, files = []) => Promise.all([
-  await Promise.all(files.map(async ([file]) => ActivityReportObjectiveFile.upsert({
+  ...files.map(async ([file]) => ActivityReportObjectiveFile.upsert({
     activityReportObjectiveId,
     fileId: file.fileId,
-  }, { returning: true }))),
-  await ActivityReportObjectiveFile.destroy({
+  }, { returning: true })),
+  ActivityReportObjectiveFile.destroy({
     where: {
       activityReportObjectiveId,
       fileId: { [Op.notIn]: files.map(([file]) => file.fileId) },
@@ -22,14 +22,13 @@ const cacheFiles = async (activityReportObjectiveId, files = []) => Promise.all(
 ]);
 
 const cacheResources = async (activityReportObjectiveId, resources = []) => Promise.all([
-  // eslint-disable-next-line max-len
-  await Promise.all(resources.map(async ([resource]) => ActivityReportObjectiveResource.findOrCreate({
+  ...resources.map(async ([resource]) => ActivityReportObjectiveResource.findOrCreate({
     where: {
       activityReportObjectiveId,
       userProvidedUrl: resource.userProvidedUrl,
     },
-  }))),
-  await ActivityReportObjectiveResource.destroy({
+  })),
+  ActivityReportObjectiveResource.destroy({
     where: {
       activityReportObjectiveId,
       userProvidedUrl: { [Op.notIn]: resources.map(([resource]) => resource.userProvidedUrl) },
@@ -39,11 +38,11 @@ const cacheResources = async (activityReportObjectiveId, resources = []) => Prom
 ]);
 
 const cacheTopics = async (activityReportObjectiveId, topics = []) => Promise.all([
-  await Promise.all(topics.map(async ([topic]) => ActivityReportObjectiveTopic.upsert({
+  ...topics.map(async ([topic]) => ActivityReportObjectiveTopic.upsert({
     activityReportObjectiveId,
     topicId: topic.topicId,
-  }, { returning: true }))),
-  await ActivityReportObjectiveTopic.destroy({
+  }, { returning: true })),
+  ActivityReportObjectiveTopic.destroy({
     where: {
       activityReportObjectiveId,
       topicId: { [Op.notIn]: topics.map(([topic]) => topic.topicId) },
@@ -65,7 +64,7 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   });
   const activityReportObjectiveId = aro.id;
   return Promise.all([
-    await ActivityReportObjective.update({
+    ActivityReportObjective.update({
       title: objective.title,
       status: status || objective.status,
       ttaProvided,
@@ -73,9 +72,9 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
       where: { id: activityReportObjectiveId },
       individualHooks: true,
     }),
-    await cacheFiles(activityReportObjectiveId, files),
-    await cacheResources(activityReportObjectiveId, resources),
-    await cacheTopics(activityReportObjectiveId, topics),
+    cacheFiles(activityReportObjectiveId, files),
+    cacheResources(activityReportObjectiveId, resources),
+    cacheTopics(activityReportObjectiveId, topics),
   ]);
 };
 
@@ -104,6 +103,8 @@ const cacheGoalMetadata = async (goal, reportId, isRttapa) => {
 };
 
 async function destroyActivityReportObjectiveMetadata(activityReportObjectiveIdsToRemove) {
+  if (!Array.isArray(activityReportObjectiveIdsToRemove)
+    || activityReportObjectiveIdsToRemove.length === 0) return Promise.resolve();
   return Promise.all([
     ActivityReportObjectiveFile.destroy({
       where: {
@@ -120,7 +121,6 @@ async function destroyActivityReportObjectiveMetadata(activityReportObjectiveIds
         activityReportObjectiveId: activityReportObjectiveIdsToRemove,
       },
     }),
-
   ]);
 }
 
