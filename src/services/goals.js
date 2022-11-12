@@ -1063,12 +1063,15 @@ export async function goalsForGrants(grantIds) {
 }
 
 async function removeActivityReportObjectivesFromReport(reportId, objectiveIdsToRemove) {
-  const activityReportObjectivesToDestroy = await ActivityReportObjective.findAll({
-    where: {
-      activityReportId: reportId,
-      objectiveId: objectiveIdsToRemove,
-    },
-  });
+  const activityReportObjectivesToDestroy = Array.isArray(objectiveIdsToRemove)
+  && objectiveIdsToRemove > 0
+    ? await ActivityReportObjective.findAll({
+      where: {
+        activityReportId: reportId,
+        objectiveId: objectiveIdsToRemove,
+      },
+    })
+    : [];
 
   const idsToDestroy = activityReportObjectivesToDestroy.map((arObjective) => arObjective.id);
 
@@ -1174,7 +1177,8 @@ async function removeObjectives(currentObjectiveIds) {
 */
 
 export async function removeRemovedRecipientsGoals(removedRecipientIds, report) {
-  if (!removedRecipientIds) {
+  if (!removedRecipientIds
+    || !(Array.isArray(removedRecipientIds) && removedRecipientIds.length > 0)) {
     return null;
   }
 
@@ -1413,11 +1417,13 @@ export async function saveGoalsForReport(goals, report) {
     const endDate = goal.endDate && goal.endDate.toLowerCase() !== 'invalid date' ? goal.endDate : null;
 
     // Check if these goals exist.
-    const existingGoals = await Goal.findAll({
-      where: {
-        id: goalIds,
-      },
-    });
+    const existingGoals = Array.isArray(goalIds) && goalIds.length > 0
+      ? await Goal.findAll({
+        where: {
+          id: goalIds,
+        },
+      })
+      : [];
 
     // we have a param to determine if goals are new
     if (goal.isNew || !existingGoals.length) {
