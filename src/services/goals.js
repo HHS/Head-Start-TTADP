@@ -227,6 +227,7 @@ export async function saveObjectiveAssociations(
   const o = await Objective.findOne({
     attributes: ['objectiveTemplateId'],
     where: { id: objective.id },
+    raw: true,
   });
 
   // topics
@@ -260,6 +261,7 @@ export async function saveObjectiveAssociations(
           userProvidedUrl: value,
           objectiveId: objective.id,
         },
+        hooks: !!o.objectiveTemplateId,
       }),
     ),
   );
@@ -284,6 +286,7 @@ export async function saveObjectiveAssociations(
           fileId: file.id,
           objectiveId: objective.id,
         },
+        hooks: !!o.objectiveTemplateId,
       }),
     ),
   );
@@ -1677,7 +1680,7 @@ export async function destroyGoal(goalIds) {
     const objectives = (Array.isArray(goalIds) && goalIds.length)
       ? await Objective.findAll({
         where: {
-          goalId: goalIds,
+          goalId: { [Op.in]: goalIds },
         },
       })
       : [];
@@ -1687,7 +1690,7 @@ export async function destroyGoal(goalIds) {
     const objectiveTopicsDestroyed = (Array.isArray(objectiveIds) && objectiveIds.length)
       ? await ObjectiveTopic.destroy({
         where: {
-          objectiveId: objectiveIds,
+          objectiveId: { [Op.in]: objectiveIds },
         },
       })
       : await Promise.resolve();
@@ -1695,7 +1698,7 @@ export async function destroyGoal(goalIds) {
     const objectiveResourcesDestroyed = (Array.isArray(objectiveIds) && objectiveIds.length)
       ? await ObjectiveResource.destroy({
         where: {
-          objectiveId: objectiveIds,
+          objectiveId: { [Op.in]: objectiveIds },
         },
       })
       : await Promise.resolve();
@@ -1703,7 +1706,7 @@ export async function destroyGoal(goalIds) {
     const objectivesDestroyed = (Array.isArray(objectiveIds) && objectiveIds.length)
       ? await Objective.destroy({
         where: {
-          id: objectiveIds,
+          id: { [Op.in]: objectiveIds },
         },
       })
       : await Promise.resolve();
@@ -1711,7 +1714,7 @@ export async function destroyGoal(goalIds) {
     const goalsDestroyed = (Array.isArray(goalIds) && goalIds.length)
       ? await Goal.destroy({
         where: {
-          id: goalIds,
+          id: { [Op.in]: goalIds },
         },
       })
       : await Promise.resolve();
