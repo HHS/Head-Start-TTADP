@@ -154,25 +154,26 @@ const cacheGoalMetadata = async (goal, reportId, isRttapa) => {
 };
 
 async function destroyActivityReportObjectiveMetadata(activityReportObjectiveIdsToRemove) {
-  if (!Array.isArray(activityReportObjectiveIdsToRemove)
-    || activityReportObjectiveIdsToRemove.length === 0) return Promise.resolve();
-  return Promise.all([
-    ActivityReportObjectiveFile.destroy({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveIdsToRemove,
-      },
-    }),
-    ActivityReportObjectiveResource.destroy({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveIdsToRemove,
-      },
-    }),
-    ActivityReportObjectiveTopic.destroy({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveIdsToRemove,
-      },
-    }),
-  ]);
+  return Array.isArray(activityReportObjectiveIdsToRemove)
+  && activityReportObjectiveIdsToRemove.length > 0
+    ? Promise.all([
+      ActivityReportObjectiveFile.destroy({
+        where: {
+          activityReportObjectiveId: activityReportObjectiveIdsToRemove,
+        },
+      }),
+      ActivityReportObjectiveResource.destroy({
+        where: {
+          activityReportObjectiveId: activityReportObjectiveIdsToRemove,
+        },
+      }),
+      ActivityReportObjectiveTopic.destroy({
+        where: {
+          activityReportObjectiveId: activityReportObjectiveIdsToRemove,
+        },
+      }),
+    ])
+    : Promise.resolve();
 }
 
 export {
