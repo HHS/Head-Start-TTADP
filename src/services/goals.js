@@ -1074,11 +1074,13 @@ async function removeActivityReportObjectivesFromReport(reportId, objectiveIdsTo
 
   await destroyActivityReportObjectiveMetadata(idsToDestroy);
 
-  return ActivityReportObjective.destroy({
-    where: {
-      id: idsToDestroy,
-    },
-  });
+  return Array.isArray(idsToDestroy) && idsToDestroy.length > 0
+    ? ActivityReportObjective.destroy({
+      where: {
+        id: idsToDestroy,
+      },
+    })
+    : Promise.resolve();
 }
 
 async function removeActivityReportGoalsFromReport(reportId, currentGoalIds) {
