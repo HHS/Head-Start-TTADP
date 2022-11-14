@@ -141,6 +141,7 @@ const report = {
 
 const activityRecipients = undefined;
 const goalsAndObjectives = undefined;
+const objectivesWithoutGoals = undefined;
 
 const byIdResponse = [
   {
@@ -156,7 +157,7 @@ const expected = {
   ...report,
   activityRecipients,
   goalsAndObjectives,
-  objectivesWithoutGoals: [],
+  objectivesWithoutGoals,
 };
 
 describe('Activity Report handlers', () => {
