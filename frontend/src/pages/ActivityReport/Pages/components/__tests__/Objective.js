@@ -83,7 +83,6 @@ const RenderObjective = ({
         objectiveAriaLabel="1 on goal 1"
         goalIndex={0}
         objectiveIndex={0}
-        status="In progress"
         errors={{}}
         onObjectiveChange={jest.fn()}
         onSaveDraft={jest.fn()}
@@ -96,19 +95,18 @@ const RenderObjective = ({
 };
 
 describe('Objective', () => {
-  beforeEach(async () => {
-    fetchMock.post('/api/files/objectives', [{ objectiveIds: [] }]);
-  });
-
-  afterEach(async () => {
-    fetchMock.restore();
-  });
   it('renders an objective', async () => {
     render(<RenderObjective />);
     expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
   });
 
+  it('renders an objective that doesn\'t have a status', async () => {
+    render(<RenderObjective objective={{ ...defaultObjective, status: '' }} />);
+    expect(await screen.findByLabelText(/objective status/i)).toBeVisible();
+  });
+
   it('uploads a file', async () => {
+    fetchMock.post('/api/files/objectives', [{ objectiveIds: [] }]);
     const { rerender } = render(<RenderObjective />);
     const files = screen.getByText(/Did you use any TTA resources that aren't available as link?/i);
     const fieldset = files.parentElement;
@@ -120,5 +118,23 @@ describe('Objective', () => {
     dispatchEvt(dropzone, 'drop', data);
     await flushPromises(rerender, <RenderObjective />);
     expect(fetchMock.called()).toBe(true);
+    fetchMock.restore();
+  });
+
+  it('handles a file upload error', async () => {
+    fetchMock.post('/api/files/objectives', 500);
+    const { rerender } = render(<RenderObjective />);
+    const files = screen.getByText(/Did you use any TTA resources that aren't available as link?/i);
+    const fieldset = files.parentElement;
+    const yes = await within(fieldset).findByText('Yes');
+    userEvent.click(yes);
+    const data = mockData([file('testFile', 1)]);
+    const dropzone = document.querySelector('.ttahub-objective-files-dropzone div');
+    expect(fetchMock.called()).toBe(false);
+    dispatchEvt(dropzone, 'drop', data);
+    await flushPromises(rerender, <RenderObjective />);
+    expect(fetchMock.called()).toBe(true);
+    await screen.findByText(/error uploading your file/i);
+    fetchMock.restore();
   });
 });
