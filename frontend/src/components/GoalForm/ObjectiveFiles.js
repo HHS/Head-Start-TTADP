@@ -24,6 +24,7 @@ export default function ObjectiveFiles({
   label,
   userCanEdit,
   forceObjectiveSave,
+  selectedObjectiveId,
 }) {
   const objectiveId = objective.id;
   const hasFiles = useMemo(() => files && files.length > 0, [files]);
@@ -65,7 +66,8 @@ export default function ObjectiveFiles({
     );
   }
 
-  const showSaveDraftInfo = forceObjectiveSave && !objectiveId;
+  const showSaveDraftInfo = forceObjectiveSave
+    && (!selectedObjectiveId || !(typeof selectedObjectiveId === 'number'));
 
   return (
     <>
@@ -117,7 +119,7 @@ export default function ObjectiveFiles({
           </>
         ) }
         {
-                useFiles
+                useFiles && !showSaveDraftInfo
                   ? (
                     <>
                       <FormGroup className="ttahub-objective-files-dropzone margin-top-2 margin-bottom-0" error={fileError}>
@@ -201,6 +203,7 @@ ObjectiveFiles.propTypes = {
   reportId: PropTypes.number,
   userCanEdit: PropTypes.bool.isRequired,
   forceObjectiveSave: PropTypes.bool,
+  selectedObjectiveId: PropTypes.number,
 };
 
 ObjectiveFiles.defaultProps = {
@@ -209,5 +212,6 @@ ObjectiveFiles.defaultProps = {
   onBlur: () => {},
   reportId: 0,
   forceObjectiveSave: true,
+  selectedObjectiveId: undefined,
   label: "Do you plan to use any TTA resources that aren't available as a link?",
 };

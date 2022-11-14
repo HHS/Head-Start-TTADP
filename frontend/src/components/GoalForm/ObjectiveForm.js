@@ -150,6 +150,7 @@ export default function ObjectiveForm({
         index={index}
         goalStatus={goalStatus}
         userCanEdit={userCanEdit}
+        selectedObjectiveId={objective.id}
       />
       )}
 
