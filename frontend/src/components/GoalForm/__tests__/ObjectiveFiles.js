@@ -24,6 +24,7 @@ describe('ObjectiveFiles', () => {
       goalStatus="Closed"
       onUploadFiles={jest.fn()}
       userCanEdit
+      selectedObjectiveId={1}
     />);
     expect(await screen.findByText('Resource files')).toBeVisible();
     expect(screen.getByText(/testfile1\.txt/i)).toBeVisible();
@@ -46,6 +47,7 @@ describe('ObjectiveFiles', () => {
       goalStatus="Not Started"
       onUploadFiles={jest.fn()}
       userCanEdit
+      selectedObjectiveId={1}
     />);
     expect(await screen.findByText('Resource files')).toBeVisible();
     expect(screen.getByText(/testfile1\.txt/i)).toBeVisible();
@@ -67,6 +69,7 @@ describe('ObjectiveFiles', () => {
       goalStatus="Not Started"
       onUploadFiles={jest.fn()}
       userCanEdit={false}
+      selectedObjectiveId={1}
     />);
     expect(await screen.findByText('Resource files')).toBeVisible();
     expect(screen.getByText(/testfile1\.txt/i)).toBeVisible();
@@ -89,6 +92,7 @@ describe('ObjectiveFiles', () => {
       onUploadFiles={jest.fn()}
       goalStatus="In Progress"
       userCanEdit
+      selectedObjectiveId={1}
     />);
     expect(screen.getByText(/testfile1\.txt/i)).toBeVisible();
     expect(screen.getByText(/testfile2\.txt/i)).toBeVisible();
@@ -107,6 +111,7 @@ describe('ObjectiveFiles', () => {
       status="Draft"
       goalStatus="In Progress"
       userCanEdit
+      selectedObjectiveId={1}
     />);
     let radio = screen.getByRole('radio', { name: /yes/i });
     userEvent.click(radio);
@@ -137,6 +142,7 @@ describe('ObjectiveFiles', () => {
       status="Draft"
       goalStatus="In Progress"
       userCanEdit
+      selectedObjectiveId={1}
     />);
     expect(screen.queryByRole('radio', { name: /yes/i })).not.toBeInTheDocument();
   });
@@ -154,6 +160,7 @@ describe('ObjectiveFiles', () => {
       status="Draft"
       goalStatus="In Progress"
       userCanEdit
+      selectedObjectiveId="new-0"
     />);
     expect(await screen.findByText('Add a TTA objective and save as draft to upload resources.')).toBeVisible();
   });
