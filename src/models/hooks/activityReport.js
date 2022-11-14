@@ -90,9 +90,9 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
         transaction: options.transaction,
       });
       // Generate a distinct list of goal names.
-      const distinctGoals = [...new Map(goals.map((goal) => [goal.name, goal])).values()];
+      const distinctlyNamedGoals = [...new Map(goals.map((goal) => [goal.name, goal])).values()];
       // Find or create templates for each of the distinct names.
-      const distinctTemplates = await Promise.all(distinctGoals
+      const distinctTemplates = await Promise.all(distinctlyNamedGoals
         .map(async (goal) => findOrCreateGoalTemplate(
           sequelize,
           options.transaction,
@@ -139,10 +139,10 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
         transaction: options.transaction,
       });
       // Generate a distinct list of objective titles.
-      const distinctObjectives = [...new Map(objectives
+      const distinctlyTitledObjectives = [...new Map(objectives
         .map((objective) => [objective.title, objective])).values()];
       // Find or create templates for each of the distinct titles.
-      const distinctTemplates = await Promise.all(distinctObjectives
+      const distinctTemplates = await Promise.all(distinctlyTitledObjectives
         .map(async (objective) => findOrCreateObjectiveTemplate(
           sequelize,
           options.transaction,
