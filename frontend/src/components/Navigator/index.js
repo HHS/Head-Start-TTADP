@@ -400,14 +400,16 @@ function Navigator({
   };
 
   useInterval(async () => {
-    // Don't auto save if we are already saving.
+    // Don't auto save if we are already saving, or if the form hasn't been touched
     try {
-      if (!isAppLoading && isDirty) {
+      if (!isAppLoading && isDirty && !weAreAutoSaving) {
+        // this is used to disable the save buttons
+        // (we don't use the overlay on auto save)
         setWeAreAutoSaving(true);
         await draftSaver(true);
       }
     } finally {
-      setWeAreAutoSaving(false);
+      setWeAreAutoSaving(false); // enable the save buttons
     }
   }, autoSaveInterval);
 
