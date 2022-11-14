@@ -33,7 +33,7 @@ const propagateCreateToTemplate = async (sequelize, instance, options) => {
         fileId: instance.fileId,
       },
       defaults: {
-        objectiveTemplateId: instance.objective.objectiveTemplateId,
+        objectiveTemplateId: objective.objectiveTemplateId,
         fileId: instance.fileId,
       },
       transaction: options.transaction,
