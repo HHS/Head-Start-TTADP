@@ -31,7 +31,7 @@ describe('getRecipient', () => {
 
   const mockResponse = {
     attachment: jest.fn(),
-    json: jest.fn((x) => console.log(x)),
+    json: jest.fn(),
     send: jest.fn(),
     sendStatus: jest.fn(),
     status: jest.fn(() => ({
