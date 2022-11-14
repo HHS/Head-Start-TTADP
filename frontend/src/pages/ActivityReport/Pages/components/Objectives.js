@@ -10,7 +10,6 @@ export default function Objectives({
   objectives,
   topicOptions,
   noObjectiveError,
-  onSaveDraft,
   reportId,
 }) {
   const { errors, getValues, setValue } = useFormContext();
@@ -128,7 +127,6 @@ export default function Objectives({
               remove={removeObjective}
               fieldArrayName={fieldArrayName}
               onObjectiveChange={onObjectiveChange}
-              onSaveDraft={onSaveDraft}
               parentGoal={getValues('goalForEditing')}
               initialObjectiveStatus={objective.status}
               reportId={reportId}
@@ -149,6 +147,5 @@ Objectives.propTypes = {
     OBJECTIVE_PROP,
   ).isRequired,
   noObjectiveError: PropTypes.node.isRequired,
-  onSaveDraft: PropTypes.func.isRequired,
   reportId: PropTypes.number.isRequired,
 };

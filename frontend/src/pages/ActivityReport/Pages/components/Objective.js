@@ -32,7 +32,6 @@ export default function Objective({
   fieldArrayName,
   errors,
   onObjectiveChange,
-  onSaveDraft,
   parentGoal,
   initialObjectiveStatus,
   reportId,
@@ -170,11 +169,7 @@ export default function Objective({
   };
 
   const onUploadFile = async (files, _objective, setError) => {
-    // we save draft one of two ways, depending on whether it is a
-    // recipient report or not
-    await onSaveDraft();
-
-    // we also need to access the updated form data to
+    // we need to access the updated form data to
     // get the correct objective ids to attach to our API post
     const objectivesField = getValues(fieldArrayName);
     const objectiveToAttach = objectivesField.find((o) => o.id === objective.id);
@@ -323,7 +318,6 @@ Objective.propTypes = {
   remove: PropTypes.func.isRequired,
   fieldArrayName: PropTypes.string.isRequired,
   onObjectiveChange: PropTypes.func.isRequired,
-  onSaveDraft: PropTypes.func.isRequired,
   parentGoal: PropTypes.shape({
     id: PropTypes.number,
     status: PropTypes.string,

@@ -26,7 +26,6 @@ import ReadOnlyOtherEntityObjectives from '../../../components/GoalForm/ReadOnly
 
 const GoalsObjectives = ({
   reportId,
-  onSaveDraftGoal,
   onSaveDraftOetObjectives,
 }) => {
   const {
@@ -265,7 +264,6 @@ const GoalsObjectives = ({
                 grantIds={grantIds}
                 availableGoals={availableGoals}
                 reportId={reportId}
-                onSaveDraft={onSaveDraftGoal}
               />
             </Fieldset>
           </>
@@ -290,7 +288,6 @@ const GoalsObjectives = ({
 GoalsObjectives.propTypes = {
   reportId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   onSaveDraftOetObjectives: PropTypes.func.isRequired,
-  onSaveDraftGoal: PropTypes.func.isRequired,
 };
 
 const ReviewSection = () => {
@@ -336,11 +333,9 @@ export default {
     return activityRecipientType === 'recipient' && validateGoals(formData.goals) === true;
   },
   reviewSection: () => <ReviewSection />,
-  render: (_additionalData, _formData, reportId, onSaveDraftGoal, onSaveDraftOetObjectives) => (
-
+  render: (_additionalData, _formData, reportId, _onSaveDraftGoal, onSaveDraftOetObjectives) => (
     <GoalsObjectives
       reportId={reportId}
-      onSaveDraftGoal={onSaveDraftGoal}
       onSaveDraftOetObjectives={onSaveDraftOetObjectives}
     />
   ),
