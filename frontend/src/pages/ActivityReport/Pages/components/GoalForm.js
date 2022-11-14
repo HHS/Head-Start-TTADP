@@ -152,7 +152,7 @@ export default function GoalForm({
     } else {
       setObjectives([]);
     }
-  }, [goal.goalIds, goal.isNew, goal.oldGrantIds, reportId, setAppLoadingText]);
+  }, [goal.goalIds, goal.isNew, goal.oldGrantIds, reportId, setAppLoadingText, setIsAppLoading]);
 
   return (
     <>
