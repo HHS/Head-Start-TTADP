@@ -102,7 +102,7 @@ export default function ObjectiveFiles({
                 { showSaveDraftInfo
                   ? (
                     <Alert type="info" headingLevel="h4" slim>
-                      Save draft before uploading resources.
+                      Add a TTA objective and save as draft to upload resources.
                     </Alert>
                   )
                   : (

@@ -155,6 +155,6 @@ describe('ObjectiveFiles', () => {
       goalStatus="In Progress"
       userCanEdit
     />);
-    expect(await screen.findByText('Save draft before uploading resources.')).toBeVisible();
+    expect(await screen.findByText('Add a TTA objective and save as draft to upload resources.')).toBeVisible();
   });
 });
