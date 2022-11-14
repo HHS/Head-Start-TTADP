@@ -22,7 +22,6 @@ export default function GoalForm({
   goal,
   topicOptions,
   reportId,
-  onSaveDraft,
   datePickerKey,
 }) {
   // pull the errors out of the form context
@@ -198,7 +197,6 @@ export default function GoalForm({
         goalStatus={status}
         noObjectiveError={errors.goalForEditing && errors.goalForEditing.objectives
           ? ERROR_FORMAT(errors.goalForEditing.objectives.message) : NO_ERROR}
-        onSaveDraft={onSaveDraft}
         reportId={parseInt(reportId, DECIMAL_BASE)}
       />
     </>
@@ -227,6 +225,5 @@ GoalForm.propTypes = {
     label: PropTypes.string,
   })).isRequired,
   reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  onSaveDraft: PropTypes.func.isRequired,
   datePickerKey: PropTypes.string.isRequired,
 };
