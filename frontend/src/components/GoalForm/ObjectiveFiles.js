@@ -69,64 +69,54 @@ export default function ObjectiveFiles({
 
   return (
     <>
-      {
-      readOnly && hasFiles
-        ? (
+      <Fieldset className="ttahub-objective-files margin-top-1">
+        { hideFileToggle ? null : (
           <>
-            <p className="usa-prose margin-bottom-0 text-bold">Resources</p>
-            <p className="usa-prose margin-top-0">{files.map((f) => f.originalFileName).join(', ')}</p>
-          </>
-        )
-        : (
-          <Fieldset className="ttahub-objective-files margin-top-1">
-            { hideFileToggle ? null : (
-              <>
-                <legend>
-                  {label}
-                  {' '}
-                  <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
-                  <QuestionTooltip
-                    text={(
-                      <div>
-                        Examples include:
-                        {' '}
-                        <ul className="usa-list">
-                          <li>Presentation slides from PD events</li>
-                          <li>PDF&apos;s you created from multiple tta resources</li>
-                          <li>Other OHS-provided resources</li>
-                        </ul>
-                      </div>
+            <legend>
+              {label}
+              {' '}
+              <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
+              <QuestionTooltip
+                text={(
+                  <div>
+                    Examples include:
+                    {' '}
+                    <ul className="usa-list">
+                      <li>Presentation slides from PD events</li>
+                      <li>PDF&apos;s you created from multiple tta resources</li>
+                      <li>Other OHS-provided resources</li>
+                    </ul>
+                  </div>
                 )}
+              />
+            </legend>
+            { showSaveDraftInfo
+              ? (
+                <Alert type="info" headingLevel="h4" slim>
+                  Add a TTA objective and save as draft to upload resources.
+                </Alert>
+              )
+              : (
+                <>
+                  <Radio
+                    label="Yes"
+                    id={`add-objective-files-yes-${objectiveId}-${index}`}
+                    name={`add-objective-files-${objectiveId}-${index}`}
+                    checked={useFiles}
+                    onChange={() => setUseFiles(true)}
                   />
-                </legend>
-                { showSaveDraftInfo
-                  ? (
-                    <Alert type="info" headingLevel="h4" slim>
-                      Add a TTA objective and save as draft to upload resources.
-                    </Alert>
-                  )
-                  : (
-                    <>
-                      <Radio
-                        label="Yes"
-                        id={`add-objective-files-yes-${objectiveId}-${index}`}
-                        name={`add-objective-files-${objectiveId}-${index}`}
-                        checked={useFiles}
-                        onChange={() => setUseFiles(true)}
-                      />
-                      <Radio
-                        label="No"
-                        id={`add-objective-files-no-${objectiveId}-${index}`}
-                        name={`add-objective-files-${objectiveId}-${index}`}
-                        checked={!useFiles}
-                        onChange={() => setUseFiles(false)}
-                      />
-                    </>
-                  )}
-
-              </>
-            ) }
-            {
+                  <Radio
+                    label="No"
+                    id={`add-objective-files-no-${objectiveId}-${index}`}
+                    name={`add-objective-files-${objectiveId}-${index}`}
+                    checked={!useFiles}
+                    onChange={() => setUseFiles(false)}
+                  />
+                </>
+              )}
+          </>
+        ) }
+        {
                 useFiles
                   ? (
                     <>
@@ -157,9 +147,7 @@ export default function ObjectiveFiles({
                   )
                   : null
         }
-          </Fieldset>
-        )
-}
+      </Fieldset>
     </>
   );
 }
