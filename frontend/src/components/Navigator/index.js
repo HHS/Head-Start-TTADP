@@ -81,6 +81,7 @@ function Navigator({
   // App Loading Context.
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const [isGoalFormClosed, toggleGoalForm] = useState(selectedGoals.length > 0);
+  const [weAreAutoSaving, setWeAreAutoSaving] = useState(false);
 
   // Toggle objectives readonly only if all objectives are saved and pass validation.
   const areInitialObjectivesValid = validateObjectives(selectedObjectivesWithoutGoals);
@@ -399,9 +400,14 @@ function Navigator({
   };
 
   useInterval(async () => {
-    // Don't auto save if we are already saving.;
-    if (!isAppLoading && isDirty) {
-      await draftSaver(true);
+    // Don't auto save if we are already saving.
+    try {
+      if (!isAppLoading && isDirty) {
+        setWeAreAutoSaving(true);
+        await draftSaver(true);
+      }
+    } finally {
+      setWeAreAutoSaving(false);
     }
   }, autoSaveInterval);
 
@@ -492,8 +498,8 @@ function Navigator({
                         {showSaveGoalsAndObjButton
                           ? (
                             <>
-                              <Button className="margin-right-1" type="button" disabled={isAppLoading} onClick={onGoalFormNavigate}>{`Save ${isOtherEntityReport ? 'objectives' : 'goal'}`}</Button>
-                              <Button className="usa-button--outline" type="button" disabled={isAppLoading} onClick={isOtherEntityReport ? () => onSaveDraftOetObjectives(false) : () => onSaveDraftGoal(false)}>Save draft</Button>
+                              <Button className="margin-right-1" type="button" disabled={isAppLoading || weAreAutoSaving} onClick={onGoalFormNavigate}>{`Save ${isOtherEntityReport ? 'objectives' : 'goal'}`}</Button>
+                              <Button className="usa-button--outline" type="button" disabled={isAppLoading || weAreAutoSaving} onClick={isOtherEntityReport ? () => onSaveDraftOetObjectives(false) : () => onSaveDraftGoal(false)}>Save draft</Button>
                             </>
                           ) : (
                             <>
