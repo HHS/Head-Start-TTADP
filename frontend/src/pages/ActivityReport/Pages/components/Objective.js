@@ -182,7 +182,8 @@ export default function Objective({
         data.append('file', file);
       });
 
-      return uploadObjectivesFile(data);
+      const response = await uploadObjectivesFile(data);
+      return response;
     } catch (error) {
       setError('There was an error uploading your file(s).');
       return null;
