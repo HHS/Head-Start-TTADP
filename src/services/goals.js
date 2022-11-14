@@ -1066,6 +1066,7 @@ async function removeActivityReportObjectivesFromReport(reportId, objectiveIdsTo
   const activityReportObjectivesToDestroy = Array.isArray(objectiveIdsToRemove)
   && objectiveIdsToRemove > 0
     ? await ActivityReportObjective.findAll({
+      attributes: ['id'],
       where: {
         activityReportId: reportId,
         objectiveId: objectiveIdsToRemove,
@@ -1226,7 +1227,14 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
   const objectives = await Objective.findAll({
     attributes: [
       'id',
-      [sequelize.literal(`((select count(*) from "ActivityReportObjectives" where "ActivityReportObjectives"."objectiveId" = "Objective"."id" and "ActivityReportObjectives"."activityReportId" not in (${reportId}))::int > 0)`), 'onOtherAr'],
+      [
+        sequelize.literal(`
+        ((select count(*)
+        from "ActivityReportObjectives"
+        where "ActivityReportObjectives"."objectiveId" = "Objective"."id"
+        and "ActivityReportObjectives"."activityReportId" not in (${reportId}))::int > 0)`),
+        'onOtherAr',
+      ],
     ],
     where: {
       goalId: goalIds,
@@ -1418,7 +1426,7 @@ export async function saveGoalsForReport(goals, report) {
 
     // Check if these goals exist.
     const existingGoals = Array.isArray(goalIds) && goalIds.length > 0
-      ? await Goal.findAll({
+      ? await Goal.findAll({ // All fields are needed.
         where: {
           id: goalIds,
         },
@@ -1687,6 +1695,7 @@ export async function destroyGoal(goalIds) {
 
     const objectives = (Array.isArray(goalIds) && goalIds.length)
       ? await Objective.findAll({
+        attributes: ['id'],
         where: {
           goalId: { [Op.in]: goalIds },
         },
