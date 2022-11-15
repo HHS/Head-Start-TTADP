@@ -217,7 +217,7 @@ describe('isPageComplete for Next steps', () => {
 
   it('returns false if no next steps are provided', async () => {
     const result = isPageComplete({
-      specialistNextSteps: [], participantNextSteps: [],
+      specialistNextSteps: [], recipientNextSteps: [],
     }, { isValid: false });
     expect(result).toBe(false);
   });
@@ -228,7 +228,7 @@ describe('isPageComplete for Next steps', () => {
         note: '',
         completeDate: '09/17/2017',
       }],
-      participantNextSteps: [
+      recipientNextSteps: [
         {
           note: 'A step sir',
           completeDate: '09/17/2017',
@@ -244,7 +244,7 @@ describe('isPageComplete for Next steps', () => {
         note: 'a step',
         completeDate: '09/17/2017',
       }],
-      participantNextSteps: [
+      recipientNextSteps: [
         {
           note: 'A step sir',
           completeDate: 'a step a step a step',
