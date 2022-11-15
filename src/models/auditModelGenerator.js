@@ -62,9 +62,11 @@ const addAuditTransactionSettings = async (sequelize, instance, options, type, d
 };
 
 const removeFromAuditedTransactions = (options) => {
-  const transactionId = httpContext.get('transactionId') ? httpContext.get('transactionId') : '';
+  const transactionId = httpContext.get('transactionId');
   const { type: optionsType } = options || { type: '' };
-  auditedTransactions.delete(transactionId + optionsType);
+  if (transactionId) {
+    auditedTransactions.delete(transactionId + optionsType);
+  }
 };
 
 const generateAuditModel = (sequelize, model) => {
