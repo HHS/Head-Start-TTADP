@@ -226,7 +226,7 @@ describe('Goals DB service', () => {
       Goal.findOne.mockResolvedValue({
         id: mockGoalId,
         update: jest.fn(),
-        });
+      });
       ActivityReportObjective.create.mockResolvedValue({
         id: mockActivityReportObjectiveId,
         objectiveId: mockObjectiveId,
