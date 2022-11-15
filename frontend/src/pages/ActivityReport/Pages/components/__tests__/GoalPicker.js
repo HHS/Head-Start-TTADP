@@ -8,6 +8,7 @@ import React from 'react';
 import fetchMock from 'fetch-mock';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import selectEvent from 'react-select-event';
+import AppLoadingContext from '../../../../../AppLoadingContext';
 
 import GoalPicker, { newGoal } from '../GoalPicker';
 
@@ -33,13 +34,21 @@ const GP = ({ availableGoals, selectedGoals }) => {
   });
 
   return (
-    <FormProvider {...hookForm}>
-      <GoalPicker
-        availableGoals={availableGoals}
-        roles={['central office']}
-        grantIds={[]}
-      />
-    </FormProvider>
+    <AppLoadingContext.Provider value={{
+      setIsAppLoading: jest.fn(),
+      setAppLoadingText: jest.fn(),
+      isAppLoading: false,
+    }}
+    >
+      <FormProvider {...hookForm}>
+        <GoalPicker
+          availableGoals={availableGoals}
+          roles={['central office']}
+          grantIds={[]}
+          reportId={1}
+        />
+      </FormProvider>
+    </AppLoadingContext.Provider>
   );
 };
 
@@ -58,6 +67,7 @@ const renderGoalPicker = (
 describe('GoalPicker', () => {
   beforeAll(async () => {
     fetchMock.get('/api/topic', []);
+    fetchMock.get('/api/goals?reportId=1&goalIds=1', [{ objectives: [] }]);
   });
 
   it('you can select a goal', async () => {
