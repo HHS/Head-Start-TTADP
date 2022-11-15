@@ -934,13 +934,7 @@ describe('saveGoalsForReport (more tests)', () => {
             status: 'Not Started',
             goalId: rtrGoal.id,
             files: [],
-            topics: [
-              {
-                name: topic.name,
-                id: topic.id,
-              },
-
-            ],
+            topics: [],
             resources: [],
           },
           {
@@ -998,6 +992,8 @@ describe('saveGoalsForReport (more tests)', () => {
 
     expect(afterActivityReportObjectives.length).toBe(2);
     expect(afterActivityReportObjectives.map((o) => o.objectiveId)).toContain(rtrObjective.id);
+    // eslint-disable-next-line max-len
+    const existingObjectiveARO = afterActivityReportObjectives.find((o) => o.objectiveId === rtrObjective.id);
 
     const afterObjectiveTopics = await ObjectiveTopic.findAll({
       where: {
@@ -1014,7 +1010,7 @@ describe('saveGoalsForReport (more tests)', () => {
     // and that both are associated with the activity report
     const afterActivityReportObjectiveTopics = await ActivityReportObjectiveTopic.findAll({
       where: {
-        activityReportObjectiveId: afterActivityReportObjectives[0].id,
+        activityReportObjectiveId: existingObjectiveARO.id,
       },
     });
 
@@ -1039,7 +1035,7 @@ describe('saveGoalsForReport (more tests)', () => {
 
     const afterActivityReportObjectiveResources = await ActivityReportObjectiveResource.findAll({
       where: {
-        activityReportObjectiveId: afterActivityReportObjectives[0].id,
+        activityReportObjectiveId: existingObjectiveARO.id,
       },
     });
 
