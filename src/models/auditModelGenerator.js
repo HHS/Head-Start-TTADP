@@ -26,7 +26,7 @@ const tryJsonParse = (data) => {
 const pgSetConfigIfNull = (settingName, value, alias) => `
   set_config(
     '${settingName}',
-    COALESCE(current_setting('${settingName}', true), '${value}'),
+    COALESCE(NULLIF(current_setting('${settingName}', true),''), '${value}'),
     true
   ) as "${alias}"`;
 
@@ -53,7 +53,7 @@ const addAuditTransactionSettings = async (sequelize, instance, options, type, d
       return sequelize.queryInterface.sequelize.query(
         `SELECT
           '${type}' "Type",
-          ${statements.join(',')}
+          ${statements.join(',')};
         `.replace(/[\r\n]+/gm, ' '),
       );
     }
