@@ -128,7 +128,7 @@ const mockUser = {
   homeRegionId: 1,
   email: 'mockManager1844@test.gov',
 };
-
+const objectivesWithoutGoals = undefined;
 const report = {
   id: 1,
   resourcesUsed: 'resources',
@@ -136,7 +136,7 @@ const report = {
   approvingManager: mockManager,
   displayId: 'mockreport-1',
   regionId: 1,
-  objectivesWithoutGoals: [],
+  objectivesWithoutGoals,
 };
 
 const activityRecipients = undefined;
@@ -156,7 +156,7 @@ const expected = {
   ...report,
   activityRecipients,
   goalsAndObjectives,
-  objectivesWithoutGoals: [],
+  objectivesWithoutGoals,
 };
 
 describe('Activity Report handlers', () => {
@@ -598,7 +598,7 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementation(() => ({
         canReset: () => true,
       }));
-      const setStatusResolvedValue = [{ dataValues: { ...result } }, [], []];
+      const setStatusResolvedValue = [{ dataValues: { ...result } }, [], [], []];
       setStatus.mockResolvedValue(setStatusResolvedValue);
       await resetToDraft(request, mockResponse);
       const jsonResponse = {
