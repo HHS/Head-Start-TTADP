@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import '@trussworks/react-uswds/lib/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 
@@ -30,15 +30,51 @@ import ApprovedActivityReport from './pages/ApprovedActivityReport';
 import RecipientRecord from './pages/RecipientRecord';
 import RecipientSearch from './pages/RecipientSearch';
 import AppWrapper from './components/AppWrapper';
+import AccountManagement from './pages/AccountManagement';
+import Logout from './pages/Logout';
+
+import { getReportsForLocalStorageCleanup } from './fetchers/activityReports';
+import { storageAvailable } from './hooks/helpers';
+import {
+  LOCAL_STORAGE_DATA_KEY,
+  LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
+  LOCAL_STORAGE_EDITABLE_KEY,
+} from './Constants';
+import AppLoadingContext from './AppLoadingContext';
+import Loader from './components/Loader';
 
 function App() {
   const [user, updateUser] = useState();
+  const [landingLoading, setLandingLoading] = useState(true);
   const [authError, updateAuthError] = useState();
-  const [loading, updateLoading] = useState(true);
   const [loggedOut, updateLoggedOut] = useState(false);
-  const authenticated = user !== undefined;
+  const authenticated = useMemo(() => user !== undefined, [user]);
+  const localStorageAvailable = useMemo(() => storageAvailable('localStorage'), []);
   const [timedOut, updateTimedOut] = useState(false);
   const [announcements, updateAnnouncements] = useState([]);
+  const [isAppLoading, setIsAppLoading] = useState(false);
+  const [appLoadingText, setAppLoadingText] = useState('Loading');
+
+  useEffect(() => {
+    async function cleanupReports() {
+      try {
+        const reportsForCleanup = await getReportsForLocalStorageCleanup();
+        reportsForCleanup.forEach(async (report) => {
+          window.localStorage.removeItem(LOCAL_STORAGE_DATA_KEY(report.id));
+          window.localStorage.removeItem(LOCAL_STORAGE_ADDITIONAL_DATA_KEY(report.id));
+          window.localStorage.removeItem(LOCAL_STORAGE_EDITABLE_KEY(report.id));
+        });
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.log('Error cleaning up reports', err);
+      }
+    }
+
+    if (localStorageAvailable && authenticated) {
+      cleanupReports();
+    }
+    // local storage available won't change, so this is fine.
+  }, [localStorageAvailable, authenticated]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -52,13 +88,21 @@ function App() {
           updateAuthError(e.status);
         }
       } finally {
-        updateLoading(false);
+        setLandingLoading(false);
       }
     };
     fetchData();
   }, []);
 
-  const logout = async (timeout = false) => {
+  if (landingLoading) {
+    return (
+      <div>
+        Loading...
+      </div>
+    );
+  }
+
+  const logout = async (timeout) => {
     await fetchLogout();
     updateUser();
     updateAuthError();
@@ -69,14 +113,6 @@ function App() {
   const announce = (message) => {
     updateAnnouncements([...announcements, message]);
   };
-
-  if (loading) {
-    return (
-      <div>
-        Loading...
-      </div>
-    );
-  }
 
   const admin = isAdmin(user);
 
@@ -140,6 +176,29 @@ function App() {
             <AppWrapper authenticated logout={logout}><RegionalDashboard user={user} /></AppWrapper>
           )}
         />
+        <Route
+          exact
+          path="/account"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <AccountManagement updateUser={updateUser} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/account/verify-email/:token"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <AccountManagement updateUser={updateUser} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/logout"
+          render={() => <Logout />}
+        />
         {admin && (
         <Route
           path="/admin"
@@ -169,31 +228,39 @@ function App() {
       <Helmet titleTemplate="%s - TTA Hub" defaultTitle="TTA Hub">
         <meta charSet="utf-8" />
       </Helmet>
-      <BrowserRouter>
-        {authenticated && (
-          <a className="usa-skipnav" href="#main-content">
-            Skip to main content
-          </a>
-        )}
-        <UserContext.Provider value={{ user, authenticated, logout }}>
-          <Header />
-          <AriaLiveContext.Provider value={{ announce }}>
-            <SiteNav admin={admin} authenticated={authenticated} logout={logout} user={user} />
+      <Loader loading={isAppLoading} loadingLabel={`App ${appLoadingText}`} text={appLoadingText} isFixed />
+      <AppLoadingContext.Provider value={{ isAppLoading, setIsAppLoading, setAppLoadingText }}>
+        <BrowserRouter>
+          {authenticated && (
+          <>
+            <a className="usa-skipnav" href="#main-content">
+              Skip to main content
+            </a>
 
-            {!authenticated && (authError === 403
-              ? <AppWrapper><RequestPermissions /></AppWrapper>
-              : (
-                <AppWrapper>
-                  <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
-                </AppWrapper>
-              )
-            )}
-            {authenticated && renderAuthenticatedRoutes()}
+            {/* Only show the sidebar when the user is authenticated */}
+            <UserContext.Provider value={{ user, authenticated, logout }}>
+              <SiteNav admin={admin} authenticated={authenticated} logout={logout} user={user} />
+            </UserContext.Provider>
+          </>
+          )}
+          <UserContext.Provider value={{ user, authenticated, logout }}>
+            <Header />
+            <AriaLiveContext.Provider value={{ announce }}>
+              {!authenticated && (authError === 403
+                ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>
+                : (
+                  <AppWrapper padded={false} logout={logout}>
+                    <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
+                  </AppWrapper>
+                )
+              )}
+              {authenticated && renderAuthenticatedRoutes()}
 
-          </AriaLiveContext.Provider>
-        </UserContext.Provider>
-      </BrowserRouter>
-      <AriaLiveRegion messages={announcements} />
+            </AriaLiveContext.Provider>
+          </UserContext.Provider>
+        </BrowserRouter>
+        <AriaLiveRegion messages={announcements} />
+      </AppLoadingContext.Provider>
     </>
   );
 }

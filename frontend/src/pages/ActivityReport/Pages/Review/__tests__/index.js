@@ -62,7 +62,6 @@ const RenderReview = ({
         isPendingApprover={isPendingApprover}
         pages={pages}
         reportCreator={reportCreator}
-        updateShowValidationErrors={jest.fn}
         lastSaveTime={moment()}
       />
     </FormProvider>
@@ -121,7 +120,7 @@ const renderReview = (
   return history;
 };
 
-const selectLabel = 'Approving manager (Required)';
+const selectLabel = 'Approving manager *';
 
 describe('ReviewSubmit', () => {
   describe('when the user is the approving manager', () => {

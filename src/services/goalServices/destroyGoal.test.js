@@ -1,4 +1,3 @@
-/* eslint-disable jest/no-disabled-tests */
 import faker from '@faker-js/faker';
 import { destroyGoal } from '../goals';
 import db, {
@@ -11,7 +10,7 @@ import db, {
 } from '../../models';
 import { auditLogger } from '../../logger';
 
-describe.skip('destroyGoal handler', () => {
+describe('destroyGoal handler', () => {
   const oldFindAll = ActivityReport.findAll;
 
   let goal;
@@ -27,29 +26,24 @@ describe.skip('destroyGoal handler', () => {
   };
 
   beforeAll(async () => {
-    recipient = await Recipient.create({ name: `recipient${faker.datatype.number()}`, id: faker.datatype.number({ min: 67000, max: 68000 }) });
+    recipient = await Recipient.create({ name: `recipient${faker.datatype.number()}`, id: faker.datatype.number({ min: 67000, max: 68000 }), uei: faker.datatype.string(12) });
     grant = await Grant.create({ ...grant, recipientId: recipient.id });
     goal = await Goal.create({
       name: 'This is some serious goal text',
       status: 'Draft',
+      grantId: grant.id,
     });
 
     goalTwo = await Goal.create({
       name: 'This is another goal',
       status: 'Not Started',
+      grantId: grant.id,
     });
-
-    // await GrantGoal.create({
-    //   recipientId: recipient.id,
-    //   grantId: grant.id,
-    //   goalId: goal.id,
-    // });
 
     objective = await Objective.create({
       goalId: goal.id,
       status: 'Not Started',
       title: 'Make everything ok',
-      // ttaProvided: 'No',
     });
 
     await ObjectiveResource.create({
@@ -70,12 +64,6 @@ describe.skip('destroyGoal handler', () => {
         goalId: goal.id,
       },
     });
-
-    // await GrantGoal.destroy({
-    //   where: {
-    //     goalId: goal.id,
-    //   },
-    // });
 
     await Goal.destroy({
       where: {
@@ -107,12 +95,6 @@ describe.skip('destroyGoal handler', () => {
       },
     });
 
-    // let foundGrantGoal = await GrantGoal.findAll({
-    //   where: {
-    //     goalId: goal.id,
-    //   },
-    // });
-
     let foundObjective = await Objective.findAll({
       where: {
         goalId: goal.id,
@@ -142,12 +124,6 @@ describe.skip('destroyGoal handler', () => {
       },
     });
 
-    // foundGrantGoal = await GrantGoal.findAll({
-    //   where: {
-    //     goalId: goal.id,
-    //   },
-    // });
-
     foundObjective = await Objective.findAll({
       where: {
         goalId: goal.id,
@@ -162,7 +138,6 @@ describe.skip('destroyGoal handler', () => {
     });
 
     expect(foundGoal.length).toBe(0);
-    // expect(foundGrantGoal.length).toBe(0);
     expect(foundObjective.length).toBe(0);
     expect(foundObjectiveResource.length).toBe(0);
   });

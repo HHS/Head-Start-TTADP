@@ -23,7 +23,7 @@
     "http-proxy-middleware": "^2.0.1",
     "lodash": "^4.17.20",
     "moment": "^2.29.4",
-    "moment-timezone": "^0.5.33",
+    "moment-timezone": "^0.5.35",
     "plotly.js": "^2.5.1",
     "plotly.js-basic-dist": "^2.2.1",
     "prop-types": "^15.7.2",
@@ -54,7 +54,7 @@
     "uuid": "^8.3.2"
   },
   "engines": {
-    "node": "16.15.1"
+    "node": "16.18.0"
   },
   "scripts": {
     "start": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts start",
@@ -80,7 +80,8 @@
     "nanoid": "^3.2.0",
     "node-fetch": "^2.6.7",
     "nth-check": "^2.0.1",
-    "tar": "^4.4.18"
+    "tar": "^4.4.18",
+    "d3-color": "^3.1.0"
   },
   "eslintConfig": {
     "root": true,
@@ -179,7 +180,8 @@
       "<rootDir>/src/pages/RegionalDashboard/formatDateRange.js",
       "<rootDir>/src/pages/RegionalDashboard/constants.js",
       "<rootDir>/src/pages/makecolors.js",
-      "<rootDir>/src/NetworkContext.js"      
+      "<rootDir>/src/NetworkContext.js",
+      "<rootDir>/src/hooks/helpers.js"
     ],
     "coverageThreshold": {
       "global": {

@@ -4,7 +4,6 @@ import { createOrUpdateGoals } from './goals';
 import db, {
   Goal,
   Grant,
-  // GrantGoal,
   Recipient,
   Topic,
   Objective,
@@ -38,7 +37,7 @@ describe('createOrUpdateGoals', () => {
   ];
 
   beforeAll(async () => {
-    recipient = await Recipient.create({ name: 'recipient', id: faker.datatype.number() });
+    recipient = await Recipient.create({ name: 'recipient', id: faker.datatype.number(), uei: faker.datatype.string(12) });
     grants = await Promise.all(
       grants.map((g) => Grant.create({ ...g, recipientId: recipient.id })),
     );
@@ -121,6 +120,8 @@ describe('createOrUpdateGoals', () => {
       {
         ...basicGoal,
         id: goal.id,
+        ids: [goal.id],
+        createdVia: 'activityReport',
         status: 'Not Started',
         objectives: [
           {
@@ -134,18 +135,19 @@ describe('createOrUpdateGoals', () => {
             ],
             topics: [
               {
-                value: topic.id,
+                id: topic.id,
               },
             ],
           },
           {
             id: 'new-0',
+            isNew: true,
             status: 'Not Started',
             title: 'This is another objective',
             resources: [],
             topics: [
               {
-                value: topic.id,
+                id: topic.id,
               },
             ],
           },
@@ -154,25 +156,46 @@ describe('createOrUpdateGoals', () => {
       {
         ...basicGoal,
         grantId: grants[1].id,
+        isNew: true,
         objectives: [],
+        ids: [goal.id],
       },
     ]);
 
-    expect(newGoals.length).toBe(2);
+    expect(newGoals).toHaveLength(2);
 
-    const goalIds = newGoals.map((g) => g.id);
-    expect(goalIds).toContain(goal.id);
+    const ids = newGoals.map((g) => g.goalIds).flat();
+    expect(ids.length).toBe(2);
+    expect(ids).toContain(goal.id);
 
-    const updatedGoal = newGoals.find((g) => g.id === goal.id);
-    expect(updatedGoal.status).toBe('Not Started');
-    expect(updatedGoal.getDataValue('goalName')).toBe('This is some serious goal text');
-    expect(updatedGoal.grant.id).toBe(grants[0].id);
-    expect(updatedGoal.grant.regionId).toBe(1);
-    expect(updatedGoal.grant.recipientId).toBe(recipient.id);
+    const statuses = newGoals.map((g) => g.status);
+    expect(statuses.length).toBe(2);
+    expect(statuses).toContain('Not Started');
+    expect(statuses).toContain('Draft');
+
+    const createdVias = newGoals.map((g) => g.createdVia);
+    expect(createdVias.length).toBe(2);
+    expect(createdVias).toContain('activityReport');
+    expect(createdVias).toContain('rtr');
+
+    const [, updatedGoal] = newGoals;
+    expect(updatedGoal.name).toBe('This is some serious goal text');
+    expect(updatedGoal.grantIds.length).toBe(1);
+
+    const grantIds = newGoals.map((g) => g.grantIds).flat();
+    expect(grantIds.length).toBe(2);
+    expect(grantIds).toContain(grants[0].id);
+    expect(grantIds).toContain(grants[1].id);
+
+    const grantRegions = updatedGoal.grants.map((g) => g.regionId);
+    const grantRecipients = updatedGoal.grants.map((g) => g.recipientId);
+
+    expect(grantRegions).toContain(1);
+    expect(grantRecipients).toContain(recipient.id);
 
     const objectivesOnUpdatedGoal = await Objective.findAll({
       where: {
-        goalId: updatedGoal.id,
+        goalId: ids,
       },
       raw: true,
     });
@@ -210,9 +233,8 @@ describe('createOrUpdateGoals', () => {
 
     const newGoal = newGoals.find((g) => g.id !== goal.id);
     expect(newGoal.status).toBe('Draft');
-    expect(newGoal.getDataValue('goalName')).toBe('This is some serious goal text');
+    expect(newGoal.name).toBe('This is some serious goal text');
     expect(newGoal.grant.id).toBe(grants[1].id);
     expect(newGoal.grant.regionId).toBe(1);
-    expect(newGoal.grant.recipientId).toBe(recipient.id);
   });
 });

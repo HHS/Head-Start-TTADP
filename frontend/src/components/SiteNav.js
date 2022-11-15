@@ -28,25 +28,12 @@ const NavLink = (props) => (
 );
 
 const SiteNav = ({
-  admin,
   authenticated,
-  logout,
   user,
   location,
 }) => {
-  const navItems = [
-    <button type="button" onClick={() => logout(false)} className={`usa-button--unstyled usa-button--unstyled_logout width-full ${navLinkClasses}`}>
-      Logout
-    </button>,
-  ];
-
-  const adminNavItem = [
-    <NavLink to="/admin/">
-      Admin
-    </NavLink>,
-  ];
-
   const [showActivityReportSurveyButton, setShowActivityReportSurveyButton] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(true);
 
   useEffect(() => {
     if (location.pathname === '/activity-reports' && authenticated) {
@@ -54,9 +41,11 @@ const SiteNav = ({
     } else {
       setShowActivityReportSurveyButton(false);
     }
+
+    setShowSidebar(!(location.pathname === '/logout'));
   }, [location.pathname, authenticated]);
 
-  const items = admin ? navItems.concat(adminNavItem) : navItems;
+  if (!showSidebar) return null;
 
   return (
     <div>
@@ -79,7 +68,7 @@ const SiteNav = ({
                 <p className="font-sans-3xs margin-bottom-2 desktop:margin-bottom-5">{user.email}</p>
               </div>
             </div>
-            <nav className="display-flex flex-column flex-justify flex-1">
+            <nav className="display-flex flex-column flex-justify flex-1" aria-label="main navigation">
               <div className="width-full margin-bottom-2 margin-top-2 desktop:margin-top-6">
                 <ul className="add-list-reset">
                   <li>
@@ -114,11 +103,6 @@ const SiteNav = ({
                   </li>
                 </ul>
               </div>
-              <div className="width-full padding-bottom-5 smart-hub-sitenav-separator--before opacity-70">
-                <ul className="add-list-reset padding-top-5 text-base-lightest">
-                  {items.map((item, i) => (<li key={`smart-hub-nav__item-${i}`}>{item}</li>))}
-                </ul>
-              </div>
             </nav>
           </div>
         )}
@@ -129,17 +113,13 @@ const SiteNav = ({
 SiteNav.displayName = 'SiteNav';
 
 SiteNav.propTypes = {
-  admin: PropTypes.bool,
   authenticated: PropTypes.bool,
-  logout: PropTypes.func,
   user: PropTypes.shape({ name: PropTypes.string, email: PropTypes.string }),
   location: PropTypes.shape({ pathname: PropTypes.string }).isRequired,
 };
 
 SiteNav.defaultProps = {
-  admin: false,
   authenticated: false,
-  logout: () => { },
   user: {
     name: '',
     email: '',

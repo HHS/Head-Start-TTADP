@@ -4,7 +4,7 @@
   "description": "Office of Head Start Training & Technical Assistance Data Platform\r =============================================",
   "main": "index.js",
   "engines": {
-    "node": "16.15.1"
+    "node": "16.18.0"
   },
   "scripts": {
     "axe:ci": "axe --exit --show-errors --load-delay 1000 `cat axe-urls` --dir ./reports/",
@@ -12,15 +12,15 @@
     "deps:local": "yarn install && yarn --cwd frontend install",
     "deps": "yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
     "start:local": "concurrently \"yarn server\" \"yarn client\" \"yarn worker\"",
-    "start:ci": "cross-env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub TTA_SMART_HUB_URI=http://localhost:3000 concurrently \"yarn start:web\" \"yarn client\"",
+    "start:ci": "cross-env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub TTA_SMART_HUB_URI=http://localhost:3000 concurrently \"yarn start:web\" \"yarn client\" \"yarn start:worker\"",
     "start:web": "node ./build/server/index.js",
     "start:worker": "node ./build/server/worker.js",
     "server": "nodemon src/index.js --exec babel-node",
     "worker": "nodemon src/worker.js --exec babel-node",
     "server:debug": "nodemon --inspect=0.0.0.0:9229 src/index.js --exec babel-node",
     "client": "yarn --cwd frontend start",
-    "test": "jest src --runInBand",
-    "test:ci": "cross-env JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub CURRENT_USER_ID=5 CI=true jest src --coverage --reporters=default --reporters=jest-junit --runInBand",
+    "test": "jest src --runInBand", 
+    "test:ci": "./bin/test-backend-ci",    
     "test:all": "yarn test:ci && yarn --cwd frontend test:ci",
     "lint": "eslint src",
     "lint:ci": "eslint -f eslint-formatter-multiple src",
@@ -81,7 +81,9 @@
     "changeReportStatus:local": "./node_modules/.bin/babel-node ./src/tools/changeReportStatusCLI.js",
     "makecolors": "node ./src/makecolors.js",
     "restoreTopics": "node ./build/server/tools/restoreTopicsCLI.js",
-    "restoreTopics:local": "./node_modules/.bin/babel-node ./src/tools/restoreTopicsCLI.js"
+    "restoreTopics:local": "./node_modules/.bin/babel-node ./src/tools/restoreTopicsCLI.js",
+    "coverage:backend": "./bin/build-coverage-report",
+    "docker:coverage:backend": "docker compose run --rm backend chmod 744 ./bin/build-coverage-report && ./bin/build-coverage-report"
   },
   "repository": {
     "type": "git",
@@ -101,7 +103,8 @@
     "node-fetch": "^2.6.7",
     "protobufjs": "^6.11.3",
     "got": "^11.8.5",
-    "undici":"^5.7.0"
+    "undici": "^5.8.0",
+    "selenium-webdriver": "4.3.0"
   },
   "eslintConfig": {
     "extends": [
@@ -130,18 +133,35 @@
   },
   "jest": {
     "testPathIgnorePatterns": [
-      "<rootDir>/frontend/"
+      "<rootDir>/frontend/",
+      "<rootDir>node_modules/",
+      "<rootDir>/build/",
+      "<rootDir>/src/makecolors.js",
+      "<rootDir>/src/newrelic.js",
+      "<rootDir>/src/testUtils.js",
+      "<rootDir>/src/logger.js",
+      "<rootDir>/src/*/coverage/",
+      "<rootDir>/src/coverage/"
     ],
     "testTimeout": 30000,
     "coveragePathIgnorePatterns": [
-      "<rootDir>/src/middleware/newRelicMiddleware.js"
+      "<rootDir>/src/middleware/newRelicMiddleware.js",
+      "<rootDir>/frontend/",
+      "<rootDir>node_modules",
+      "<rootDir>/build/",
+      "<rootDir>/src/makecolors.js",
+      "<rootDir>/src/newrelic.js",
+      "<rootDir>/src/testUtils.js",
+      "<rootDir>/src/logger.js",
+      "<rootDir>/src/*/coverage/",
+      "<rootDir>/src/coverage/"
     ],
     "coverageThreshold": {
       "global": {
-        "statements": 85,
-        "functions": 70,
-        "branches": 70,
-        "lines": 85
+        "statements": 39,
+        "functions": 12,
+        "branches": 25,
+        "lines": 40
       }
     }
   },
@@ -184,7 +204,7 @@
     "puppeteer": "^13.1.1",
     "puppeteer-select": "^1.0.3",
     "redoc-cli": "^0.13.16",
-    "selenium-webdriver": "4.0.0",
+    "selenium-webdriver": "4.3.0",
     "supertest": "^6.2.4"
   },
   "dependencies": {
@@ -217,13 +237,16 @@
     "helmet": "^5.1.0",
     "html-to-text": "^8.1.0",
     "http-codes": "^1.0.0",
+    "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.20",
+    "md5": "^2.3.0",
     "moment": "^2.29.4",
     "multiparty": "^4.2.2",
     "mz": "^2.7.0",
     "newrelic": "^8.15.0",
     "nodemailer": "^6.7.7",
     "pg": "^8.3.3",
+    "pug": "^3.0.2",
     "sequelize": "^6.21.2",
     "sequelize-cli": "^6.2.0",
     "throng": "^5.0.0",

@@ -1,113 +1,140 @@
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import {
+  render, screen, within, act, fireEvent, waitFor,
+} from '@testing-library/react';
 import React from 'react';
+import fetchMock from 'fetch-mock';
+import userEvent from '@testing-library/user-event';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import Objective from '../Objective';
 
+const defaultObjective = {
+  id: 1,
+  resources: [],
+  topics: [],
+  title: 'This is an objective title',
+  ttaProvided: '<p><ul><li>What</li></ul></p>',
+  status: 'Not started',
+  ids: [1],
+};
+
+const mockData = (files) => ({
+  dataTransfer: {
+    files,
+    items: files.map((file) => ({
+      kind: 'file',
+      type: file.type,
+      getAsFile: () => file,
+    })),
+    types: ['Files'],
+  },
+});
+
+const file = (name, id, status = 'Uploaded') => ({
+  originalFileName: name, id, fileSize: 2000, status, lastModified: 123456,
+});
+
+const dispatchEvt = (node, type, data) => {
+  const event = new Event(type, { bubbles: true });
+  Object.assign(event, data);
+  fireEvent(node, event);
+};
+
+const flushPromises = async (rerender, ui) => {
+  await act(() => waitFor(() => rerender(ui)));
+};
+
 const RenderObjective = ({
   // eslint-disable-next-line react/prop-types
-  defaultObjective, onRemove = () => {},
+  objective = defaultObjective, onRemove = () => {},
 }) => {
   const hookForm = useForm({
-    defaultValues: { objective: defaultObjective },
+    mode: 'onBlur',
+    defaultValues: {
+      objectives: [objective],
+      collaborators: [],
+      author: {
+        role: 'Central office',
+      },
+    },
   });
 
   hookForm.register('goals');
-  hookForm.register('objective');
-  const objective = hookForm.watch('objective');
+  hookForm.register('objectives');
 
   const onUpdate = (obj) => {
-    hookForm.setValue('objective', obj);
+    hookForm.setValue('objectives', [obj]);
   };
 
   return (
     // eslint-disable-next-line react/jsx-props-no-spreading
     <FormProvider {...hookForm}>
       <Objective
-        objective={objective}
+        objective={defaultObjective}
+        topicOptions={[]}
+        options={[]}
+        index={1}
+        remove={onRemove}
+        fieldArrayName="objectives"
+        goalId={1}
         onRemove={onRemove}
         onUpdate={onUpdate}
         parentLabel="goals"
         objectiveAriaLabel="1 on goal 1"
         goalIndex={0}
         objectiveIndex={0}
+        errors={{}}
+        onObjectiveChange={jest.fn()}
+        onSaveDraft={jest.fn()}
+        parentGoal={{ status: 'In Progress' }}
+        initialObjectiveStatus="Not Started"
+        reportId={98123}
       />
     </FormProvider>
   );
 };
 
 describe('Objective', () => {
-  it('opens in edit mode if "ttaProvided" is blank', async () => {
-    render(<RenderObjective defaultObjective={{ ttaProvided: '<p></p>', title: 'title', status: 'status' }} />);
-    const title = await screen.findByLabelText('Objective (Required)');
-    expect(title).toBeVisible();
+  it('renders an objective', async () => {
+    render(<RenderObjective />);
+    expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
   });
 
-  it('opens in edit mode if "title" is blank', async () => {
-    render(<RenderObjective defaultObjective={{ ttaProvided: 'tta', title: '', status: 'status' }} />);
-    const title = await screen.findByLabelText('Objective (Required)');
-    expect(title).toBeVisible();
+  it('renders an objective that doesn\'t have a status', async () => {
+    render(<RenderObjective objective={{ ...defaultObjective, status: '' }} />);
+    expect(await screen.findByLabelText(/objective status/i)).toBeVisible();
   });
 
-  describe('in edit mode', () => {
-    it('focuses the title field', async () => {
-      render(<RenderObjective defaultObjective={{ ttaProvided: 'tta', title: '', status: 'status' }} />);
-      const title = await screen.findByLabelText('Objective (Required)');
-      expect(document.activeElement).toEqual(title);
-    });
-
-    it('saves without explicitly clicking the save button', async () => {
-      const objective = {
-        title: '', ttaProvided: 'test', status: 'Not Started',
-      };
-      render(<RenderObjective defaultObjective={objective} />);
-      const title = await screen.findByLabelText('Objective (Required)');
-      userEvent.type(title, 'this is a test');
-      const titleWithText = await screen.findByDisplayValue('this is a test');
-      expect(titleWithText).toBeVisible();
-    });
+  it('uploads a file', async () => {
+    fetchMock.post('/api/files/objectives', [{ objectiveIds: [] }]);
+    const { rerender } = render(<RenderObjective />);
+    const files = screen.getByText(/Did you use any TTA resources that aren't available as link?/i);
+    const fieldset = files.parentElement;
+    const yes = await within(fieldset).findByText('Yes');
+    userEvent.click(yes);
+    const data = mockData([file('testFile', 1)]);
+    const dropzone = document.querySelector('.ttahub-objective-files-dropzone div');
+    expect(fetchMock.called()).toBe(false);
+    dispatchEvt(dropzone, 'drop', data);
+    await flushPromises(rerender, <RenderObjective />);
+    expect(fetchMock.called()).toBe(true);
+    fetchMock.restore();
   });
 
-  describe('in display mode', () => {
-    it('displays the objective', async () => {
-      const objective = {
-        title: 'title', ttaProvided: 'test', status: 'Not Started',
-      };
-      render(<RenderObjective defaultObjective={objective} />);
-      const title = await screen.findByText('title');
-      const status = await screen.findByText('Not Started');
-
-      expect(title).toBeVisible();
-      expect(status).toBeVisible();
-    });
-
-    it('can be removed via the context menu', async () => {
-      const onRemove = jest.fn();
-      const objective = {
-        title: 'title', ttaProvided: 'test', status: 'Not Started',
-      };
-      render(<RenderObjective defaultObjective={objective} onRemove={onRemove} />);
-      const menu = await screen.findByRole('button', { name: 'Edit or delete objective 1 on goal 1' });
-      userEvent.click(menu);
-
-      const deleteButton = await screen.findByText('Delete');
-      userEvent.click(deleteButton);
-      expect(onRemove).toHaveBeenCalled();
-    });
-
-    it('can be switched to edit mode via the context menu', async () => {
-      const objective = {
-        title: 'title', ttaProvided: 'test', status: 'Not Started',
-      };
-      render(<RenderObjective defaultObjective={objective} />);
-      const menu = await screen.findByRole('button', { name: 'Edit or delete objective 1 on goal 1' });
-      userEvent.click(menu);
-
-      const edit = await screen.findByText('Edit');
-      userEvent.click(edit);
-      const title = await screen.findByLabelText('Objective (Required)');
-      expect(title).toBeVisible();
-    });
+  it('handles a file upload error', async () => {
+    fetchMock.post('/api/files/objectives', 500);
+    const { rerender } = render(<RenderObjective />);
+    const files = screen.getByText(/Did you use any TTA resources that aren't available as link?/i);
+    const fieldset = files.parentElement;
+    const yes = await within(fieldset).findByText('Yes');
+    userEvent.click(yes);
+    const data = mockData([file('testFile', 1)]);
+    const dropzone = document.querySelector('.ttahub-objective-files-dropzone div');
+    expect(fetchMock.called()).toBe(false);
+    dispatchEvt(dropzone, 'drop', data);
+    await flushPromises(rerender, <RenderObjective />);
+    expect(fetchMock.called()).toBe(true);
+    await screen.findByText(/error uploading your file/i);
+    fetchMock.restore();
   });
 });

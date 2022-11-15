@@ -17,6 +17,8 @@ import {
   downloadAllReports,
   downloadAllAlerts,
   LEGACY_WARNING,
+  getReportsForLocalStorageCleanup,
+  saveOtherEntityObjectivesForReport,
 } from './handlers';
 import {
   activityReportAndRecipientsById,
@@ -29,11 +31,13 @@ import {
   getDownloadableActivityReportsByIds,
   getAllDownloadableActivityReports,
   getAllDownloadableActivityReportAlerts,
+  activityReportsForCleanup,
 } from '../../services/activityReports';
+import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
 import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
-import { copyGoalsToGrants } from '../../services/goals';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
 import { userById, usersWithPermissions } from '../../services/users';
+import { userSettingOverridesById } from '../../services/userSettings';
 import ActivityReport from '../../policies/activityReport';
 import handleErrors from '../../lib/apiErrorHandler';
 import User from '../../policies/user';
@@ -41,7 +45,7 @@ import db, {
   ActivityReportApprover, ActivityReport as ActivityReportModel, Permission, User as UserModel,
 } from '../../models';
 import * as mailer from '../../lib/mailer';
-import { APPROVER_STATUSES, REPORT_STATUSES } from '../../constants';
+import { APPROVER_STATUSES, REPORT_STATUSES, USER_SETTINGS } from '../../constants';
 import SCOPES from '../../middleware/scopeConstants';
 
 jest.mock('../../services/activityReports', () => ({
@@ -56,6 +60,16 @@ jest.mock('../../services/activityReports', () => ({
   getAllDownloadableActivityReportAlerts: jest.fn(),
   getAllDownloadableActivityReports: jest.fn(),
   getDownloadableActivityReportsByIds: jest.fn(),
+  activityReportsForCleanup: jest.fn(),
+}));
+
+jest.mock('../../services/objectives', () => ({
+  saveObjectivesForReport: jest.fn(),
+  getObjectivesByReportId: jest.fn(),
+}));
+
+jest.mock('../../services/userSettings', () => ({
+  userSettingOverridesById: jest.fn(),
 }));
 
 jest.mock('../../services/activityReportApprovers', () => ({
@@ -114,7 +128,7 @@ const mockUser = {
   homeRegionId: 1,
   email: 'mockManager1844@test.gov',
 };
-
+const objectivesWithoutGoals = undefined;
 const report = {
   id: 1,
   resourcesUsed: 'resources',
@@ -122,7 +136,7 @@ const report = {
   approvingManager: mockManager,
   displayId: 'mockreport-1',
   regionId: 1,
-  objectivesWithoutGoals: [],
+  objectivesWithoutGoals,
 };
 
 const activityRecipients = undefined;
@@ -142,7 +156,7 @@ const expected = {
   ...report,
   activityRecipients,
   goalsAndObjectives,
-  objectivesWithoutGoals: [],
+  objectivesWithoutGoals,
 };
 
 describe('Activity Report handlers', () => {
@@ -257,6 +271,10 @@ describe('Activity Report handlers', () => {
       activityReportAndRecipientsById.mockResolvedValue([{
         calculatedStatus: REPORT_STATUSES.APPROVED,
         activityRecipientType: 'recipient',
+        author: {
+          id: 777,
+        },
+        activityReportCollaborators: [],
       }, [{
         activityRecipientId: 10,
       }]]);
@@ -266,7 +284,13 @@ describe('Activity Report handlers', () => {
       upsertApprover.mockResolvedValue(mockApproverRecord);
       const approvalNotification = jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
 
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
       await reviewReport(approvedReportRequest, mockResponse);
+
       expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);
       expect(approvalNotification).toHaveBeenCalled();
     });
@@ -281,6 +305,10 @@ describe('Activity Report handlers', () => {
       activityReportAndRecipientsById.mockResolvedValue([{
         calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
         activityRecipientType: 'recipient',
+        author: {
+          id: 777,
+        },
+        activityReportCollaborators: [],
       },
       [{
         activityRecipientId: 10,
@@ -294,10 +322,14 @@ describe('Activity Report handlers', () => {
       upsertApprover.mockResolvedValue(mockApproverRecord);
       const changesRequestedNotification = jest.spyOn(mailer, 'changesRequestedNotification').mockImplementation();
 
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.NEEDS_ACTION,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
       await reviewReport(needsActionReportRequest, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);
       expect(changesRequestedNotification).toHaveBeenCalled();
-      expect(copyGoalsToGrants).not.toHaveBeenCalled();
     });
     it('handles unauthorizedRequests', async () => {
       activityReportAndRecipientsById.mockResolvedValue([{
@@ -312,6 +344,21 @@ describe('Activity Report handlers', () => {
       }));
       await reviewReport(needsActionReportRequest, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+  });
+
+  describe('getReportsForLocalStorageCleanup', () => {
+    it('returns reports for cleanup', async () => {
+      const reportsToCleanup = [{ id: 1 }];
+      activityReportsForCleanup.mockImplementationOnce(() => reportsToCleanup);
+      await getReportsForLocalStorageCleanup(mockRequest, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith(reportsToCleanup);
+    });
+
+    it('handles none found', async () => {
+      activityReportsForCleanup.mockImplementationOnce(() => null);
+      await getReportsForLocalStorageCleanup(mockRequest, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
     });
   });
 
@@ -551,7 +598,7 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementation(() => ({
         canReset: () => true,
       }));
-      const setStatusResolvedValue = [{ dataValues: { ...result } }, [], []];
+      const setStatusResolvedValue = [{ dataValues: { ...result } }, [], [], []];
       setStatus.mockResolvedValue(setStatusResolvedValue);
       await resetToDraft(request, mockResponse);
       const jsonResponse = {
@@ -812,6 +859,66 @@ describe('Activity Report handlers', () => {
 
       const [[value]] = mockResponse.send.mock.calls;
       expect(value).toEqual('\ufeff');
+    });
+  });
+
+  describe('saveOtherEntityObjectivesForReport', () => {
+    it('handles unauthorized', async () => {
+      User.mockImplementation(() => ({
+        canWriteInRegion: () => false,
+      }));
+      const response = [{ name: 'name', id: 1 }];
+      usersWithPermissions.mockResolvedValue(response);
+      await saveOtherEntityObjectivesForReport(
+        {
+          ...mockRequest,
+          body: {
+            objectivesWithoutGoals: [],
+            activityReportId: 1,
+            region: 1,
+          },
+        },
+        mockResponse,
+      );
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+
+    it('returns a list of updated objectives', async () => {
+      // Mock authorization.
+      User.mockImplementation(() => ({
+        canWriteInRegion: () => true,
+      }));
+      const permissionResponse = [{ name: 'name', id: 1 }];
+      usersWithPermissions.mockResolvedValue(permissionResponse);
+
+      // Mock found report.
+      const foundReport = {
+        id: 1,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      };
+      jest.spyOn(ActivityReportModel, 'findByPk').mockResolvedValueOnce(foundReport);
+
+      // Mock save objectives.
+      saveObjectivesForReport.mockResolvedValue({});
+
+      // Mock updated objectives.
+      const updatedObjectivesRes = [{ title: 'Saved Objective' }];
+      getObjectivesByReportId.mockResolvedValue(updatedObjectivesRes);
+
+      // Save Objectives.
+      await saveOtherEntityObjectivesForReport(
+        {
+          ...mockRequest,
+          body: {
+            objectivesWithoutGoals: [],
+            activityReportId: 1,
+            region: 1,
+          },
+        },
+        mockResponse,
+      );
+      expect(mockResponse.json).toHaveBeenCalledWith(updatedObjectivesRes);
     });
   });
 });

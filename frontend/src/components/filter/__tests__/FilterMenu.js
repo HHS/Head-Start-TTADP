@@ -17,6 +17,7 @@ import {
   targetPopulationsFilter,
   topicsFilter,
   otherEntitiesFilter,
+  participantsFilter,
 } from '../activityReportFilters';
 import {
   createDateFilter,
@@ -332,6 +333,7 @@ describe('Filter Menu', () => {
   it('renders activity report filters', async () => {
     const config = [
       grantNumberFilter,
+      participantsFilter,
       programSpecialistFilter,
       programTypeFilter,
       reasonsFilter,
@@ -371,6 +373,10 @@ describe('Filter Menu', () => {
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
+    userEvent.selectOptions(topics, 'Participants');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
     userEvent.selectOptions(topics, 'Recipient name');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'contains');
@@ -396,6 +402,10 @@ describe('Filter Menu', () => {
     userEvent.selectOptions(conditions, 'is');
 
     userEvent.selectOptions(topics, 'Reasons');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Participants');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 

@@ -47,9 +47,15 @@ const Modal = ({
       <ModalFooter>
         <ButtonGroup>
           {
-            showOkButton
+            showOkButton && onOk
               ? (
-                <Button className={okButtonCss || 'usa-button usa-button--secondary usa-button'} data-focus={hideCancelButton} type="button" aria-label={okButtonAriaLabel} onClick={onOk}>
+                <Button
+                  className={okButtonCss || 'usa-button usa-button--secondary usa-button'}
+                  data-focus={hideCancelButton}
+                  type="button"
+                  aria-label={okButtonAriaLabel}
+                  onClick={onOk}
+                >
                   {okButtonText}
                 </Button>
               )
@@ -81,7 +87,7 @@ Modal.propTypes = {
     PropTypes.shape(),
   ]).isRequired,
   modalId: PropTypes.string.isRequired,
-  onOk: PropTypes.func,
+  onOk: PropTypes.oneOfType([PropTypes.func, PropTypes.bool]).isRequired,
   title: PropTypes.string.isRequired,
   okButtonText: PropTypes.string,
   okButtonAriaLabel: PropTypes.string,
@@ -99,7 +105,6 @@ Modal.propTypes = {
 };
 
 Modal.defaultProps = {
-  onOk: () => { },
   okButtonAriaLabel: null,
   okButtonText: '',
   showCloseX: false,

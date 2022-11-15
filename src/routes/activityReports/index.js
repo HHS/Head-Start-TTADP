@@ -18,7 +18,10 @@ import {
   softDeleteReport,
   downloadAllReports,
   downloadAllAlerts,
+  getReportsForLocalStorageCleanup,
+  saveOtherEntityObjectivesForReport,
 } from './handlers';
+import { createGoalsForReport } from '../goals/handlers';
 import { checkActivityReportIdParam } from '../../middleware/checkIdParamMiddleware';
 import { nameTransactionByBase, nameTransactionByPath } from '../../middleware/newRelicMiddleware';
 import userAdminAccessMiddleware from '../../middleware/userAdminAccessMiddleware';
@@ -34,7 +37,10 @@ router.post('/', transactionWrapper(createReport));
 router.get('/approvers', transactionWrapper(getApprovers));
 router.get('/activity-recipients', transactionWrapper(getActivityRecipients));
 router.get('/goals', transactionWrapper(getGoals));
+router.post('/goals', transactionWrapper(createGoalsForReport));
+router.post('/objectives', transactionWrapper(saveOtherEntityObjectivesForReport));
 router.get('/alerts', nameTransactionByPath, transactionWrapper(getReportAlerts));
+router.get('/storage-cleanup', nameTransactionByPath, transactionWrapper(getReportsForLocalStorageCleanup));
 router.get('/alerts/download-all', transactionWrapper(downloadAllAlerts));
 router.get('/legacy/:legacyReportId', transactionWrapper(getLegacyReport));
 router.get('/download', transactionWrapper(downloadReports));

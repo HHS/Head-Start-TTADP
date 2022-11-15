@@ -34,6 +34,7 @@ const mockUser = {
 
 const mockRecipient = {
   id: 65535,
+  uei: 'NNA5N2KHMGM2',
   name: 'Tooth Brushing Academy',
   recipientType: 'Community Action Agency (CAA)',
 };
@@ -53,7 +54,7 @@ const mockGrant = {
   grantSpecialistName: null,
   grantSpecialistEmail: null,
   stateCode: 'NY',
-  anualFundingMonth: 'October',
+  annualFundingMonth: 'October',
 };
 
 const sampleReport = {

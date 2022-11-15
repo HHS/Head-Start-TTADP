@@ -20,7 +20,9 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
 
   beforeAll(async () => {
     recipientForFirstGrant = await Recipient.create({
-      id: faker.datatype.number({ min: 64000 }), name: faker.random.alphaNumeric(6),
+      id: faker.datatype.number({ min: 64000 }),
+      name: faker.random.alphaNumeric(6),
+      uei: faker.datatype.string(12),
     });
     firstGrant = await Grant.create({
       number: recipientForFirstGrant.id,
@@ -28,6 +30,7 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
       programSpecialistName: faker.name.firstName(),
       regionId: 1,
       id: faker.datatype.number({ min: 64000 }),
+      uei: faker.datatype.string(12),
     });
     goalOnActivityReport = await Goal.create({
       name: 'Goal on activity report',
@@ -53,6 +56,7 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
       activityReportId: report.id,
       objectiveId: objective.id,
       ttaProvided: 'asdfadf',
+      status: objective.status,
     });
     goalOnOneGrant = await Goal.create({
       name: 'Goal on one grant',
