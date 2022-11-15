@@ -7,77 +7,100 @@ const {
   ActivityReportObjectiveTopic,
 } = require('../models');
 
-const cacheFiles = async (activityReportObjectiveId, files = []) => Promise.all([
-  await Promise.all(files.map(async ([file]) => ActivityReportObjectiveFile.upsert({
-    activityReportObjectiveId,
-    fileId: file.fileId,
-  }, { returning: true }))),
-  await ActivityReportObjectiveFile.destroy({
-    where: {
-      activityReportObjectiveId,
-      fileId: { [Op.notIn]: files.map(([file]) => file.fileId) },
-    },
-    individualHooks: true,
-  }),
-]);
+const cacheFiles = async (activityReportObjectiveId, files = []) => {
+  const fileIds = files.map((file) => file.objectiveFile.dataValues.fileId);
+  const filesSet = new Set(fileIds);
+  const originalAROFiles = await ActivityReportObjectiveFile.findAll({
+    where: { activityReportObjectiveId },
+    raw: true,
+  });
+  const originalFileIds = originalAROFiles.map((originalAROFile) => originalAROFile.fileId);
+  const removedFileIds = originalFileIds.filter((fileId) => !filesSet.has(fileId));
+  const currentFileIds = new Set(originalFileIds.filter((fileId) => filesSet.has(fileId)));
+  const newFilesIds = fileIds.filter((topic) => !currentFileIds.has(topic));
 
-const cacheResources = async (activityReportObjectiveId, resources = []) => Promise.all([
-  // eslint-disable-next-line max-len
-  await Promise.all(resources.map(async ([resource]) => {
-    let aror = await ActivityReportObjectiveResource.findOne({
-      where: {
-        activityReportObjectiveId,
-        userProvidedUrl: resource.userProvidedUrl,
-      },
-    });
-    if (!aror) {
-      aror = await ActivityReportObjectiveResource.create({
-        activityReportObjectiveId,
-        userProvidedUrl: resource.userProvidedUrl,
-      });
-    }
-    return aror;
-  })),
-  // ActivityReportObjectiveResource.findOrCreate({
-  //   where: {
-  //     activityReportObjectiveId,
-  //     userProvidedUrl: resource.userProvidedUrl,
-  //   },
-  // }))),
-  await ActivityReportObjectiveResource.destroy({
-    where: {
+  return Promise.all([
+    ...newFilesIds.map(async (fileId) => ActivityReportObjectiveFile.create({
       activityReportObjectiveId,
-      userProvidedUrl: { [Op.notIn]: resources.map(([resource]) => resource.userProvidedUrl) },
-    },
-    individualHooks: true,
-  }),
-]);
+      fileId,
+    })),
+    removedFileIds.length > 0
+      ? ActivityReportObjectiveFile.destroy({
+        where: {
+          activityReportObjectiveId,
+          fileId: { [Op.in]: removedFileIds },
+        },
+        individualHooks: true,
+      })
+      : Promise.resolve(),
+  ]);
+};
 
-const cacheTopics = async (activityReportObjectiveId, topics = []) => Promise.all([
-  await Promise.all(topics.map(async ([topic]) => ActivityReportObjectiveTopic.upsert({
-    activityReportObjectiveId,
-    topicId: topic.topicId,
-  }, { returning: true }))),
-  await ActivityReportObjectiveTopic.destroy({
-    where: {
+const cacheResources = async (activityReportObjectiveId, resources = []) => {
+  const resourceUrls = resources
+    .map((resource) => resource.ObjectiveResource.dataValues.userProvidedUrl);
+  const resourcesSet = new Set(resourceUrls);
+  const originalAROResources = await ActivityReportObjectiveResource.findAll({
+    where: { activityReportObjectiveId },
+    raw: true,
+  });
+  const originalUrls = originalAROResources.map((resource) => resource.userProvidedUrl);
+  const removedUrls = originalUrls.filter((url) => !resourcesSet.has(url));
+  const currentUrls = new Set(originalUrls.filter((url) => resourcesSet.has(url)));
+  const newUrls = resourceUrls.filter((url) => !currentUrls.has(url));
+
+  return Promise.all([
+    ...newUrls.map(async (url) => ActivityReportObjectiveResource.create({
       activityReportObjectiveId,
-      topicId: { [Op.notIn]: topics.map(([topic]) => topic.topicId) },
-    },
-    individualHooks: true,
-  }),
-]);
+      userProvidedUrl: url,
+    })),
+    removedUrls.length > 0
+      ? ActivityReportObjectiveResource.destroy({
+        where: {
+          activityReportObjectiveId,
+          userProvidedUrl: { [Op.in]: removedUrls },
+        },
+        individualHooks: true,
+      })
+      : Promise.resolve(),
+  ]);
+};
+
+const cacheTopics = async (activityReportObjectiveId, topics = []) => {
+  const topicIds = topics.map((topic) => topic[0].dataValues.topicId);
+  const topicsSet = new Set(topicIds);
+  const originalAROTopics = await ActivityReportObjectiveTopic.findAll({
+    where: { activityReportObjectiveId },
+    raw: true,
+  });
+  const originalTopicIds = originalAROTopics.map((originalAROTopic) => originalAROTopic.topicId)
+    || [];
+  const removedTopicIds = originalTopicIds.filter((topicId) => !topicsSet.has(topicId));
+  const currentTopicIds = new Set(originalTopicIds.filter((topicId) => topicsSet.has(topicId)));
+  const newTopicsIds = topicIds.filter((topicId) => !currentTopicIds.has(topicId));
+
+  return Promise.all([
+    ...newTopicsIds.map(async (topicId) => ActivityReportObjectiveTopic.create({
+      activityReportObjectiveId,
+      topicId,
+    })),
+    removedTopicIds.length > 0
+      ? ActivityReportObjectiveTopic.destroy({
+        where: {
+          activityReportObjectiveId,
+          topicId: { [Op.in]: removedTopicIds },
+        },
+        individualHooks: true,
+      })
+      : Promise.resolve(),
+  ]);
+};
 
 const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   const {
     files, resources, topics, ttaProvided, status,
   } = metadata;
   const objectiveId = objective.id;
-  // const [aro] = await ActivityReportObjective.findOrCreate({
-  //   where: {
-  //     objectiveId,
-  //     activityReportId: reportId,
-  //   },
-  // });
   let aro = await ActivityReportObjective.findOne({
     where: {
       objectiveId,
@@ -92,7 +115,7 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   }
   const activityReportObjectiveId = aro.id;
   return Promise.all([
-    await ActivityReportObjective.update({
+    ActivityReportObjective.update({
       title: objective.title,
       status: status || objective.status,
       ttaProvided,
@@ -100,19 +123,13 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
       where: { id: activityReportObjectiveId },
       individualHooks: true,
     }),
-    await cacheFiles(activityReportObjectiveId, files),
-    await cacheResources(activityReportObjectiveId, resources),
-    await cacheTopics(activityReportObjectiveId, topics),
+    cacheFiles(activityReportObjectiveId, files),
+    cacheResources(activityReportObjectiveId, resources),
+    cacheTopics(activityReportObjectiveId, topics),
   ]);
 };
 
 const cacheGoalMetadata = async (goal, reportId, isRttapa) => {
-  // const [arg] = await ActivityReportGoal.findOrCreate({
-  //   where: {
-  //     goalId: goal.id,
-  //     activityReportId: reportId,
-  //   },
-  // });
   let arg = await ActivityReportGoal.findOne({
     where: {
       goalId: goal.id,
@@ -143,24 +160,26 @@ const cacheGoalMetadata = async (goal, reportId, isRttapa) => {
 };
 
 async function destroyActivityReportObjectiveMetadata(activityReportObjectiveIdsToRemove) {
-  return Promise.all([
-    ActivityReportObjectiveFile.destroy({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveIdsToRemove,
-      },
-    }),
-    ActivityReportObjectiveResource.destroy({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveIdsToRemove,
-      },
-    }),
-    ActivityReportObjectiveTopic.destroy({
-      where: {
-        activityReportObjectiveId: activityReportObjectiveIdsToRemove,
-      },
-    }),
-
-  ]);
+  return Array.isArray(activityReportObjectiveIdsToRemove)
+  && activityReportObjectiveIdsToRemove.length > 0
+    ? Promise.all([
+      ActivityReportObjectiveFile.destroy({
+        where: {
+          activityReportObjectiveId: activityReportObjectiveIdsToRemove,
+        },
+      }),
+      ActivityReportObjectiveResource.destroy({
+        where: {
+          activityReportObjectiveId: activityReportObjectiveIdsToRemove,
+        },
+      }),
+      ActivityReportObjectiveTopic.destroy({
+        where: {
+          activityReportObjectiveId: activityReportObjectiveIdsToRemove,
+        },
+      }),
+    ])
+    : Promise.resolve();
 }
 
 export {
