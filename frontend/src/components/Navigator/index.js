@@ -81,6 +81,7 @@ function Navigator({
   // App Loading Context.
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const [isGoalFormClosed, toggleGoalForm] = useState(selectedGoals.length > 0);
+  const [weAreAutoSaving, setWeAreAutoSaving] = useState(false);
 
   // Toggle objectives readonly only if all objectives are saved and pass validation.
   const areInitialObjectivesValid = validateObjectives(selectedObjectivesWithoutGoals);
@@ -399,9 +400,16 @@ function Navigator({
   };
 
   useInterval(async () => {
-    // Don't auto save if we are already saving.;
-    if (!isAppLoading && isDirty) {
-      await draftSaver(true);
+    // Don't auto save if we are already saving, or if the form hasn't been touched
+    try {
+      if (!isAppLoading && isDirty && !weAreAutoSaving) {
+        // this is used to disable the save buttons
+        // (we don't use the overlay on auto save)
+        setWeAreAutoSaving(true);
+        await draftSaver(true);
+      }
+    } finally {
+      setWeAreAutoSaving(false); // enable the save buttons
     }
   }, autoSaveInterval);
 
@@ -492,8 +500,8 @@ function Navigator({
                         {showSaveGoalsAndObjButton
                           ? (
                             <>
-                              <Button className="margin-right-1" type="button" disabled={isAppLoading} onClick={onGoalFormNavigate}>{`Save ${isOtherEntityReport ? 'objectives' : 'goal'}`}</Button>
-                              <Button className="usa-button--outline" type="button" disabled={isAppLoading} onClick={isOtherEntityReport ? () => onSaveDraftOetObjectives(false) : () => onSaveDraftGoal(false)}>Save draft</Button>
+                              <Button className="margin-right-1" type="button" disabled={isAppLoading || weAreAutoSaving} onClick={onGoalFormNavigate}>{`Save ${isOtherEntityReport ? 'objectives' : 'goal'}`}</Button>
+                              <Button className="usa-button--outline" type="button" disabled={isAppLoading || weAreAutoSaving} onClick={isOtherEntityReport ? () => onSaveDraftOetObjectives(false) : () => onSaveDraftGoal(false)}>Save draft</Button>
                             </>
                           ) : (
                             <>
