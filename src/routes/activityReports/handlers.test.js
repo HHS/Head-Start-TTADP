@@ -128,7 +128,7 @@ const mockUser = {
   homeRegionId: 1,
   email: 'mockManager1844@test.gov',
 };
-
+const objectivesWithoutGoals = undefined;
 const report = {
   id: 1,
   resourcesUsed: 'resources',
@@ -136,12 +136,11 @@ const report = {
   approvingManager: mockManager,
   displayId: 'mockreport-1',
   regionId: 1,
-  objectivesWithoutGoals: [],
+  objectivesWithoutGoals,
 };
 
 const activityRecipients = undefined;
 const goalsAndObjectives = undefined;
-const objectivesWithoutGoals = undefined;
 
 const byIdResponse = [
   {

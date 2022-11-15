@@ -31,6 +31,7 @@ describe('getRecipient', () => {
 
   const mockResponse = {
     attachment: jest.fn(),
+    // eslint-disable-next-line no-console
     json: jest.fn((x) => console.log(x)),
     send: jest.fn(),
     sendStatus: jest.fn(),
