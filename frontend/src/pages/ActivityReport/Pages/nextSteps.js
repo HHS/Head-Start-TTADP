@@ -12,16 +12,16 @@ export const isPageComplete = (formData, formState) => {
     return true;
   }
 
-  const { specialistNextSteps, participantNextSteps } = formData;
-  if (!specialistNextSteps || !participantNextSteps) {
+  const { specialistNextSteps, recipientNextSteps } = formData;
+  if (!specialistNextSteps || !recipientNextSteps) {
     return false;
   }
 
-  if (!specialistNextSteps.length || !participantNextSteps.length) {
+  if (!specialistNextSteps.length || !recipientNextSteps.length) {
     return false;
   }
 
-  if (![...specialistNextSteps, ...participantNextSteps].every((step) => step.note && moment(step.completeDate, 'MM/DD/YYYY').isValid())) {
+  if (![...specialistNextSteps, ...recipientNextSteps].every((step) => step.note && moment(step.completeDate, 'MM/DD/YYYY').isValid())) {
     return false;
   }
 

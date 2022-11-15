@@ -728,6 +728,9 @@ describe('create goal', () => {
     const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
     userEvent.type(objectiveText, 'This is objective text');
 
+    const saveDraft = await screen.findByRole('button', { name: /save draft/i });
+    await waitFor(() => userEvent.click(saveDraft));
+
     const fieldset = document.querySelector('.ttahub-objective-files');
 
     const yes = await within(fieldset).findByRole('radio', { name: 'Yes' });
