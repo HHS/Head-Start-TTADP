@@ -222,6 +222,14 @@ export async function saveObjectiveAssociations(
   files = [],
   deleteUnusedAssociations = false,
 ) {
+  // We need to know if the objectiveTemplateId is populated to know if we
+  // can disable the hooks on the ObjectiveTopic
+  const o = await Objective.findOne({
+    attributes: ['objectiveTemplateId'],
+    where: { id: objective.id },
+    raw: true,
+  });
+
   // topics
   const objectiveTopics = await Promise.all(
     (topics.map(async (topic) => {
@@ -239,12 +247,6 @@ export async function saveObjectiveAssociations(
       }
       return otopic;
     })),
-    // ObjectiveTopic.findOrCreate({
-    //   where: {
-    //     objectiveId: objective.id,
-    //     topicId: topic.id,
-    //   },
-    // }))),
   );
 
   if (deleteUnusedAssociations) {
@@ -277,12 +279,6 @@ export async function saveObjectiveAssociations(
         }
         return oresource;
       },
-      // ObjectiveResource.findOrCreate({
-      //   where: {
-      //     userProvidedUrl: value,
-      //     objectiveId: objective.id,
-      //   },
-      // }),
     ),
   );
 
@@ -316,12 +312,6 @@ export async function saveObjectiveAssociations(
         }
         return ofile;
       },
-      // ObjectiveFile.findOrCreate({
-      //   where: {
-      //     fileId: file.id,
-      //     objectiveId: objective.id,
-      //   },
-      // }),
     ),
   );
 
@@ -770,23 +760,33 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
     .filter((objective) => !objective.activityReports || !objective.activityReports.length)
     .map((objective) => objective.id);
 
-  await ObjectiveResource.destroy({
-    where: {
-      objectiveId: orphanedObjectiveIds,
-    },
-  });
+  if (Array.isArray(orphanedObjectiveIds) && orphanedObjectiveIds.length > 0) {
+    await Promise.all([
+      ObjectiveFile.destroy({
+        where: {
+          objectiveId: orphanedObjectiveIds,
+        },
+      }),
+      ObjectiveResource.destroy({
+        where: {
+          objectiveId: orphanedObjectiveIds,
+        },
+      }),
+      ObjectiveTopic.destroy({
+        where: {
+          objectiveId: orphanedObjectiveIds,
+        },
+      }),
+    ]);
+  }
 
-  await ObjectiveTopic.destroy({
-    where: {
-      objectiveId: orphanedObjectiveIds,
-    },
-  });
-
-  return Objective.destroy({
-    where: {
-      id: orphanedObjectiveIds,
-    },
-  });
+  return (Array.isArray(orphanedObjectiveIds) && orphanedObjectiveIds.length > 0)
+    ? Objective.destroy({
+      where: {
+        id: orphanedObjectiveIds,
+      },
+    })
+    : Promise.resolve();
 }
 
 /**
@@ -1133,22 +1133,28 @@ export async function goalsForGrants(grantIds) {
 }
 
 async function removeActivityReportObjectivesFromReport(reportId, objectiveIdsToRemove) {
-  const activityReportObjectivesToDestroy = await ActivityReportObjective.findAll({
-    where: {
-      activityReportId: reportId,
-      objectiveId: objectiveIdsToRemove,
-    },
-  });
+  const activityReportObjectivesToDestroy = Array.isArray(objectiveIdsToRemove)
+  && objectiveIdsToRemove > 0
+    ? await ActivityReportObjective.findAll({
+      attributes: ['id'],
+      where: {
+        activityReportId: reportId,
+        objectiveId: objectiveIdsToRemove,
+      },
+    })
+    : [];
 
   const idsToDestroy = activityReportObjectivesToDestroy.map((arObjective) => arObjective.id);
 
   await destroyActivityReportObjectiveMetadata(idsToDestroy);
 
-  return ActivityReportObjective.destroy({
-    where: {
-      id: idsToDestroy,
-    },
-  });
+  return Array.isArray(idsToDestroy) && idsToDestroy.length > 0
+    ? ActivityReportObjective.destroy({
+      where: {
+        id: idsToDestroy,
+      },
+    })
+    : Promise.resolve();
 }
 
 async function removeActivityReportGoalsFromReport(reportId, currentGoalIds) {
@@ -1242,7 +1248,8 @@ async function removeObjectives(currentObjectiveIds) {
 */
 
 export async function removeRemovedRecipientsGoals(removedRecipientIds, report) {
-  if (!removedRecipientIds) {
+  if (!removedRecipientIds
+    || !(Array.isArray(removedRecipientIds) && removedRecipientIds.length > 0)) {
     return null;
   }
 
@@ -1252,7 +1259,11 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
     attributes: [
       'id',
       [
-        sequelize.literal(`((select count(*) from "ActivityReportGoals" where "ActivityReportGoals"."goalId" = "Goal"."id" and "ActivityReportGoals"."activityReportId" not in (${reportId}))::int > 0)`),
+        sequelize.literal(`
+        ((select count(*)
+        from "ActivityReportGoals"
+        where "ActivityReportGoals"."goalId" = "Goal"."id"
+        and "ActivityReportGoals"."activityReportId" not in (${reportId}))::int > 0)`),
         'onOtherAr',
       ],
     ],
@@ -1274,17 +1285,26 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
   const goalIds = goals.map((goal) => goal.id);
   const goalsToDelete = goals.filter((goal) => !goal.get('onOtherAr')).map((goal) => goal.id);
 
-  await ActivityReportGoal.destroy({
-    where: {
-      goalId: goalIds,
-      activityReportId: reportId,
-    },
-  });
+  if (Array.isArray(goalIds) && goalIds.length > 0) {
+    await ActivityReportGoal.destroy({
+      where: {
+        goalId: goalIds,
+        activityReportId: reportId,
+      },
+    });
+  }
 
   const objectives = await Objective.findAll({
     attributes: [
       'id',
-      [sequelize.literal(`((select count(*) from "ActivityReportObjectives" where "ActivityReportObjectives"."objectiveId" = "Objective"."id" and "ActivityReportObjectives"."activityReportId" not in (${reportId}))::int > 0)`), 'onOtherAr'],
+      [
+        sequelize.literal(`
+        ((select count(*)
+        from "ActivityReportObjectives"
+        where "ActivityReportObjectives"."objectiveId" = "Objective"."id"
+        and "ActivityReportObjectives"."activityReportId" not in (${reportId}))::int > 0)`),
+        'onOtherAr',
+      ],
     ],
     where: {
       goalId: goalIds,
@@ -1306,19 +1326,23 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
     (objective) => !objective.get('onOtherAr'),
   ).map((objective) => objective.id);
 
-  await ActivityReportObjective.destroy({
-    where: {
-      objectiveId: objectiveIds,
-      activityReportId: reportId,
-    },
-  });
+  if (Array.isArray(objectiveIds) && objectiveIds.length > 0) {
+    await ActivityReportObjective.destroy({
+      where: {
+        objectiveId: objectiveIds,
+        activityReportId: reportId,
+      },
+    });
+  }
 
-  await Objective.destroy({
-    where: {
-      id: objectivesToDelete,
-      onApprovedAR: false,
-    },
-  });
+  if (Array.isArray(objectivesToDelete) && objectivesToDelete.length > 0) {
+    await Objective.destroy({
+      where: {
+        id: objectivesToDelete,
+        onApprovedAR: false,
+      },
+    });
+  }
 
   return Goal.destroy({
     where: {
@@ -1471,11 +1495,13 @@ export async function saveGoalsForReport(goals, report) {
     const endDate = goal.endDate && goal.endDate.toLowerCase() !== 'invalid date' ? goal.endDate : null;
 
     // Check if these goals exist.
-    const existingGoals = await Goal.findAll({
-      where: {
-        id: goalIds,
-      },
-    });
+    const existingGoals = Array.isArray(goalIds) && goalIds.length > 0
+      ? await Goal.findAll({ // All fields are needed.
+        where: {
+          id: goalIds,
+        },
+      })
+      : [];
 
     // we have a param to determine if goals are new
     if (goal.isNew || !existingGoals.length) {
@@ -1750,57 +1776,70 @@ export async function createOrUpdateGoalsForActivityReport(goals, reportId) {
 
 export async function destroyGoal(goalIds) {
   try {
-    const reportsWithGoal = await ActivityReport.findAll({
-      attributes: ['id'],
-      include: [
-        {
-          attributes: ['id'],
-          model: Goal,
-          required: true,
-          where: {
-            id: goalIds,
+    const reportsWithGoal = (Array.isArray(goalIds) && goalIds.length)
+      ? await ActivityReport.findAll({
+        attributes: ['id'],
+        include: [
+          {
+            attributes: ['id'],
+            model: Goal,
+            required: true,
+            where: {
+              id: goalIds,
+            },
+            as: 'goals',
           },
-          as: 'goals',
-        },
-      ],
-    });
+        ],
+      })
+      : [];
 
     const isOnReport = reportsWithGoal.length;
     if (isOnReport) {
       throw new Error('Goal is on an activity report and can\'t be deleted');
     }
 
-    const objectives = await Objective.findAll({
-      where: {
-        goalId: goalIds,
-      },
-    });
+    const objectives = (Array.isArray(goalIds) && goalIds.length)
+      ? await Objective.findAll({
+        attributes: ['id'],
+        where: {
+          goalId: { [Op.in]: goalIds },
+        },
+      })
+      : [];
 
     const objectiveIds = objectives.map((o) => o.id);
 
-    const objectiveTopicsDestroyed = await ObjectiveTopic.destroy({
-      where: {
-        objectiveId: objectiveIds,
-      },
-    });
+    const objectiveTopicsDestroyed = (Array.isArray(objectiveIds) && objectiveIds.length)
+      ? await ObjectiveTopic.destroy({
+        where: {
+          objectiveId: { [Op.in]: objectiveIds },
+        },
+      })
+      : await Promise.resolve();
 
-    const objectiveResourcesDestroyed = await ObjectiveResource.destroy({
-      where: {
-        objectiveId: objectiveIds,
-      },
-    });
+    const objectiveResourcesDestroyed = (Array.isArray(objectiveIds) && objectiveIds.length)
+      ? await ObjectiveResource.destroy({
+        where: {
+          objectiveId: { [Op.in]: objectiveIds },
+        },
+      })
+      : await Promise.resolve();
 
-    const objectivesDestroyed = await Objective.destroy({
-      where: {
-        id: objectiveIds,
-      },
-    });
+    const objectivesDestroyed = (Array.isArray(objectiveIds) && objectiveIds.length)
+      ? await Objective.destroy({
+        where: {
+          id: { [Op.in]: objectiveIds },
+        },
+      })
+      : await Promise.resolve();
 
-    const goalsDestroyed = await Goal.destroy({
-      where: {
-        id: goalIds,
-      },
-    });
+    const goalsDestroyed = (Array.isArray(goalIds) && goalIds.length)
+      ? await Goal.destroy({
+        where: {
+          id: { [Op.in]: goalIds },
+        },
+      })
+      : await Promise.resolve();
 
     return {
       goalsDestroyed,
