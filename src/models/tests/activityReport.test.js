@@ -50,8 +50,21 @@ const mockOtherEntity = {
   name: 'Regional TTA/Other Specialists',
 };
 
-const mockGrant = {
+const mockGrant = [{
   id: 65535,
+  number: '99CH9998',
+  regionId: 2,
+  status: 'Active',
+  startDate: new Date('2021-02-09T15:13:00.000Z'),
+  endDate: new Date('2021-02-09T15:13:00.000Z'),
+  cdi: false,
+  grantSpecialistName: null,
+  grantSpecialistEmail: null,
+  stateCode: 'NY',
+  annualFundingMonth: 'October',
+},
+{
+  id: 65536,
   number: '99CH9999',
   regionId: 2,
   status: 'Active',
@@ -62,7 +75,7 @@ const mockGrant = {
   grantSpecialistEmail: null,
   stateCode: 'NY',
   annualFundingMonth: 'October',
-};
+}];
 
 const sampleReport = {
   submissionStatus: REPORT_STATUSES.DRAFT,
@@ -105,7 +118,7 @@ describe('Activity Reports model', () => {
   let user;
   let recipient;
   let otherEntity;
-  let grant;
+  const grants = [];
   let report;
   let activityRecipients;
   const goals = [];
@@ -116,15 +129,23 @@ describe('Activity Reports model', () => {
       recipient = await Recipient.create({ ...mockRecipient });
       otherEntity = await OtherEntity.create({ ...mockOtherEntity });
       await Grant.create({
-        ...mockGrant,
+        ...mockGrant[0],
         recipientId: recipient.id,
         programSpecialistName: user.name,
         programSpecialistEmail: user.email,
       });
-      grant = await Grant.findOne({ where: { id: mockGrant.id } });
+      await Grant.create({
+        ...mockGrant[1],
+        recipientId: recipient.id,
+        programSpecialistName: user.name,
+        programSpecialistEmail: user.email,
+      });
+      grants[0] = await Grant.findOne({ where: { id: mockGrant[0].id } });
+      grants[1] = await Grant.findOne({ where: { id: mockGrant[1].id } });
       report = await ActivityReport.create({ ...sampleReport });
       activityRecipients = await Promise.all([
-        await ActivityRecipient.create({ activityReportId: report.id, grantId: grant.id }),
+        await ActivityRecipient.create({ activityReportId: report.id, grantId: grants[0].id }),
+        await ActivityRecipient.create({ activityReportId: report.id, grantId: grants[1].id }),
         await ActivityRecipient.create({
           activityReportId: report.id,
           otherEntityId: otherEntity.id,
@@ -133,11 +154,15 @@ describe('Activity Reports model', () => {
       ]);
       goals[0] = await Goal.create({
         ...mockGoals[0],
-        grantId: grant.id,
+        grantId: grants[0].id,
       });
       goals[1] = await Goal.create({
         ...mockGoals[1],
-        grantId: grant.id,
+        grantId: grants[0].id,
+      });
+      goals[2] = await Goal.create({
+        ...mockGoals[0],
+        grantId: grants[1].id,
       });
       await Promise.all(goals);
       await Promise.all(goals.map(async (goal) => ActivityReportGoal.create({
@@ -152,6 +177,10 @@ describe('Activity Reports model', () => {
       objectives[1] = await Objective.create({
         ...mockObjectives[1],
         goalId: goals[1].id,
+      });
+      objectives[2] = await Objective.create({
+        ...mockObjectives[0],
+        goalId: goals[2].id,
       });
       await Promise.all(objectives);
       await Promise.all(objectives.map(async (objective) => ActivityReportObjective.create({
@@ -178,8 +207,8 @@ describe('Activity Reports model', () => {
       await ActivityReportGoal.destroy({ where: { activityReportId: report.id } });
       await ActivityReport.destroy({ where: { id: report.id } });
       await Objective.destroy({ where: { id: objectives.map((o) => o.id) } });
-      await Goal.destroy({ where: { grantId: grant.id } });
-      await Grant.destroy({ where: { id: grant.id } });
+      await Goal.destroy({ where: { id: goals.map((g) => g.id) } });
+      await Grant.destroy({ where: { id: grants.map((g) => g.id) } });
       await OtherEntity.destroy({ where: { id: otherEntity.id } });
       await Recipient.destroy({ where: { id: recipient.id } });
       await User.destroy({ where: { id: user.id } });
@@ -250,6 +279,11 @@ describe('Activity Reports model', () => {
     expect(goalsPost[0].onApprovedAR).not.toEqual(goalsPre[0].onApprovedAR);
     expect(objectivesPost[0].onApprovedAR).not.toEqual(objectivesPre[0].onApprovedAR);
 
+    expect(goalsPost[0].goalTemplateId).not.toEqual(null);
+    expect(goalsPost[0].goalTemplateId).toEqual(goalsPost[2].goalTemplateId);
+    expect(objectivesPost[0].objectiveTemplateId).not.toEqual(null);
+    expect(objectivesPost[0].objectiveTemplateId).toEqual(objectivesPost[2].objectiveTemplateId);
+
     await ActivityReport.update(
       { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
       { where: { id: report.id }, individualHooks: true },
@@ -275,9 +309,10 @@ describe('Activity Reports model', () => {
   });
 
   it('activityRecipientId', async () => {
-    expect(activityRecipients[0].activityRecipientId).toEqual(grant.id);
-    expect(activityRecipients[1].activityRecipientId).toEqual(otherEntity.id);
-    expect(activityRecipients[2].activityRecipientId).toEqual(null);
+    expect(activityRecipients[0].activityRecipientId).toEqual(grants[0].id);
+    expect(activityRecipients[1].activityRecipientId).toEqual(grants[1].id);
+    expect(activityRecipients[2].activityRecipientId).toEqual(otherEntity.id);
+    expect(activityRecipients[3].activityRecipientId).toEqual(null);
   });
   it('name', async () => {
     try {
@@ -289,9 +324,10 @@ describe('Activity Reports model', () => {
             otherEntityId: activityRecipient.otherEntityId,
           },
         })));
-      expect(arr[0].name).toEqual(grant.name);
-      expect(arr[1].name).toEqual(otherEntity.name);
-      expect(arr[2].name).toEqual(null);
+      expect(arr[0].name).toEqual(grants[0].name);
+      expect(arr[1].name).toEqual(grants[1].name);
+      expect(arr[2].name).toEqual(otherEntity.name);
+      expect(arr[3].name).toEqual(null);
     } catch (e) {
       auditLogger.error(JSON.stringify(e));
       throw e;
