@@ -928,8 +928,7 @@ describe('saveGoalsForReport (more tests)', () => {
         name: rtrGoal.name,
         objectives: [
           {
-            id: rtrObjective.id,
-            isNew: false,
+            isNew: true,
             ttaProvided: 'This is some TTA for this guy',
             title: '',
             status: 'Not Started',
