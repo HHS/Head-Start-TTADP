@@ -14,23 +14,21 @@ import {
   GOAL_RTTAPA_ERROR,
 } from '../../../../components/GoalForm/constants';
 import { NO_ERROR, ERROR_FORMAT } from './constants';
-import Loader from '../../../../components/Loader';
-import GoalFormContext from '../../../../GoalFormContext';
 import { DECIMAL_BASE } from '../../../../Constants';
 import GoalRttapa from '../../../../components/GoalForm/GoalRttapa';
+import AppLoadingContext from '../../../../AppLoadingContext';
 
 export default function GoalForm({
   goal,
   topicOptions,
   reportId,
-  onSaveDraft,
   datePickerKey,
 }) {
   // pull the errors out of the form context
   const { errors, watch } = useFormContext();
 
-  // Goal Form Context.
-  const { isLoading } = useContext(GoalFormContext);
+  // App Loading Context.
+  const { isAppLoading, setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
 
   /**
    * add controllers for all the controlled fields
@@ -122,8 +120,6 @@ export default function GoalForm({
   }, [defaultEndDate, goal.endDate, onUpdateDate]);
 
   const [objectives, setObjectives] = useState([]);
-  const [loadingObjectives, setLoadingObjectives] = useState(false);
-  const [loadingLabel, setLoadingLabel] = useState('Saving');
   /*
    * this use effect fetches
    * associated goal data
@@ -131,13 +127,12 @@ export default function GoalForm({
   useEffect(() => {
     async function fetchData() {
       try {
-        setLoadingObjectives(true);
-        setLoadingLabel('Loading');
+        setIsAppLoading(true);
+        setAppLoadingText('Loading');
         const data = await goalsByIdsAndActivityReport(goal.goalIds, reportId);
         setObjectives(data[0].objectives);
       } finally {
-        setLoadingObjectives(false);
-        setLoadingLabel('Saving');
+        setIsAppLoading(false);
       }
     }
 
@@ -156,11 +151,11 @@ export default function GoalForm({
     } else {
       setObjectives([]);
     }
-  }, [goal.goalIds, goal.isNew, goal.oldGrantIds, reportId]);
+  }, [goal.goalIds, goal.isNew, goal.oldGrantIds, reportId, setAppLoadingText, setIsAppLoading]);
 
   return (
     <>
-      <Loader loading={isLoading || loadingObjectives} loadingLabel="Loading" text={loadingLabel} />
+
       <GoalText
         error={errors.goalName ? ERROR_FORMAT(errors.goalName.message) : NO_ERROR}
         goalName={goalText}
@@ -169,7 +164,7 @@ export default function GoalForm({
         inputName={goalTextInputName}
         isOnReport={goal.onApprovedAR || false}
         goalStatus={status}
-        isLoading={isLoading || loadingObjectives}
+        isLoading={isAppLoading}
         userCanEdit
       />
 
@@ -192,7 +187,7 @@ export default function GoalForm({
         key={datePickerKey} // force a re-render when the a new goal is picked
         inputName={goalEndDateInputName}
         goalStatus={status}
-        isLoading={isLoading || loadingObjectives}
+        isLoading={isAppLoading}
         userCanEdit
       />
 
@@ -202,7 +197,6 @@ export default function GoalForm({
         goalStatus={status}
         noObjectiveError={errors.goalForEditing && errors.goalForEditing.objectives
           ? ERROR_FORMAT(errors.goalForEditing.objectives.message) : NO_ERROR}
-        onSaveDraft={onSaveDraft}
         reportId={parseInt(reportId, DECIMAL_BASE)}
       />
     </>
@@ -231,6 +225,5 @@ GoalForm.propTypes = {
     label: PropTypes.string,
   })).isRequired,
   reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  onSaveDraft: PropTypes.func.isRequired,
   datePickerKey: PropTypes.string.isRequired,
 };

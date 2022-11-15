@@ -1,5 +1,5 @@
 import React, {
-  useState, useEffect, useContext,
+  useState, useEffect,
 } from 'react';
 import PropTypes from 'prop-types';
 import { useFormContext, useFieldArray } from 'react-hook-form/dist/index.ie11';
@@ -8,8 +8,6 @@ import Objective from './Objective';
 import { getTopics } from '../../../../fetchers/topics';
 import PlusButton from '../../../../components/GoalForm/PlusButton';
 import { NEW_OBJECTIVE } from './constants';
-import Loader from '../../../../components/Loader';
-import GoalFormContext from '../../../../GoalFormContext';
 import { DECIMAL_BASE } from '../../../../Constants';
 
 const OBJECTIVE_LABEL = 'objectivesWithoutGoals';
@@ -19,8 +17,6 @@ export default function OtherEntity({
 }) {
   const { errors } = useFormContext();
   const [topicOptions, setTopicOptions] = useState([]);
-
-  const { isLoading } = useContext(GoalFormContext);
 
   // for fetching topic options from API
   useEffect(() => {
@@ -57,7 +53,6 @@ export default function OtherEntity({
         </p>
         <p className="usa-prose margin-bottom-0">Create at least one objective for this activity.</p>
       </Alert>
-      <Loader loading={isLoading} loadingLabel="Loading" text="Saving" />
       {objectives.map((objective, index) => {
         const objectiveErrors = errors[OBJECTIVE_LABEL]
           && errors[OBJECTIVE_LABEL][index]

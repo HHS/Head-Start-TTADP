@@ -10,6 +10,7 @@ import fetchMock from 'fetch-mock';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import { newGoal } from '../GoalPicker';
 import GoalForm from '../GoalForm';
+import AppLoadingContext from '../../../../../AppLoadingContext';
 
 describe('GoalForm', () => {
   const Form = ({ id }) => {
@@ -31,14 +32,20 @@ describe('GoalForm', () => {
     });
 
     return (
-      <FormProvider {...hookForm}>
-        <GoalForm
-          goal={goal}
-          roles={[]}
-          topicOptions={[{ label: 'Coaching', value: 1 }]}
-          reportId={1}
-        />
-      </FormProvider>
+      <AppLoadingContext.Provider value={{
+        setIsAppLoading: jest.fn(),
+        setAppLoadingText: jest.fn(),
+      }}
+      >
+        <FormProvider {...hookForm}>
+          <GoalForm
+            goal={goal}
+            roles={[]}
+            topicOptions={[{ label: 'Coaching', value: 1 }]}
+            reportId={1}
+          />
+        </FormProvider>
+      </AppLoadingContext.Provider>
     );
   };
 

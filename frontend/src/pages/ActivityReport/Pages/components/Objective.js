@@ -32,7 +32,6 @@ export default function Objective({
   fieldArrayName,
   errors,
   onObjectiveChange,
-  onSaveDraft,
   parentGoal,
   initialObjectiveStatus,
   reportId,
@@ -170,24 +169,21 @@ export default function Objective({
   };
 
   const onUploadFile = async (files, _objective, setError) => {
-    // we save draft one of two ways, depending on whether it is a
-    // recipient report or not
-    await onSaveDraft();
-
-    // we also need to access the updated form data to
+    // we need to access the updated form data to
     // get the correct objective ids to attach to our API post
     const objectivesField = getValues(fieldArrayName);
-    const objectiveToAttach = objectivesField[index];
+    const objectiveToAttach = objectivesField.find((o) => o.id === selectedObjective.id);
 
     // handle file upload
     try {
       const data = new FormData();
-      data.append('objectiveIds', JSON.stringify(objectiveToAttach.ids));
+      data.append('objectiveIds', JSON.stringify(!objectiveToAttach.ids ? [0] : objectiveToAttach.ids));
       files.forEach((file) => {
         data.append('file', file);
       });
 
-      return uploadObjectivesFile(data);
+      const response = await uploadObjectivesFile(data);
+      return response;
     } catch (error) {
       setError('There was an error uploading your file(s).');
       return null;
@@ -269,6 +265,7 @@ export default function Objective({
         reportId={reportId}
         goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
         label="Did you use any TTA resources that aren't available as link?"
+        selectedObjectiveId={selectedObjective.id}
         userCanEdit
       />
       <ObjectiveTta
@@ -323,7 +320,6 @@ Objective.propTypes = {
   remove: PropTypes.func.isRequired,
   fieldArrayName: PropTypes.string.isRequired,
   onObjectiveChange: PropTypes.func.isRequired,
-  onSaveDraft: PropTypes.func.isRequired,
   parentGoal: PropTypes.shape({
     id: PropTypes.number,
     status: PropTypes.string,

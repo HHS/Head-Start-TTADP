@@ -13,7 +13,12 @@ import {
   Topic,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
-import { RECIPIENTS_PER_PAGE, GOALS_PER_PAGE, REPORT_STATUSES } from '../constants';
+import {
+  RECIPIENTS_PER_PAGE,
+  GOALS_PER_PAGE,
+  REPORT_STATUSES,
+  GOAL_STATUS,
+} from '../constants';
 import filtersToScopes from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
 import goalStatusGraph from '../widgets/goalStatusGraph';
@@ -34,7 +39,7 @@ const todaysDate = moment().format('MM/DD/yyyy');
 
 export async function recipientById(recipientId, grantScopes) {
   return Recipient.findOne({
-    attributes: ['id', 'name', 'recipientType'],
+    attributes: ['id', 'name', 'recipientType', 'uei'],
     where: {
       id: recipientId,
     },
@@ -395,9 +400,31 @@ export async function getGoalsByActivityRecipient(
     order: orderGoalsBy(sortBy, sortDir),
   });
 
+  let sorted = rows;
+
+  if (sortBy === 'goalStatus') {
+    // order determined by the statuses in the GOAL_STATUS constant
+    const ascOrder = Object.values(GOAL_STATUS).map((s) => s.toLowerCase());
+    const descOrder = Array.from(ascOrder).reverse();
+
+    sorted = rows.sort((a, b) => {
+      // if for some reason status is falsy, we sort last
+      if (!a.status || !b.status) return 1;
+
+      const aStatus = a.status.toLowerCase();
+      const bStatus = b.status.toLowerCase();
+      // if we found some weird status that for some reason isn't in ascOrder, sort it last
+      if (!ascOrder.includes(aStatus) || !ascOrder.includes(bStatus)) return 1;
+
+      return sortDir.toLowerCase() === 'asc'
+        ? ascOrder.indexOf(aStatus) - ascOrder.indexOf(bStatus)
+        : descOrder.indexOf(aStatus) - descOrder.indexOf(bStatus);
+    });
+  }
+
   const allGoalIds = [];
 
-  const r = rows.reduce((previous, current) => {
+  const r = sorted.reduce((previous, current) => {
     const existingGoal = previous.goalRows.find(
       (g) => g.goalStatus === current.status
         && g.goalText.trim() === current.name.trim()

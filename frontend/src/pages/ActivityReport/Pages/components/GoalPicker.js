@@ -38,7 +38,7 @@ const components = {
 };
 
 const GoalPicker = ({
-  availableGoals, grantIds, reportId, onSaveDraft,
+  availableGoals, grantIds, reportId,
 }) => {
   const {
     control, setValue, watch,
@@ -66,7 +66,7 @@ const GoalPicker = ({
     name: 'goalForEditing',
     rules: {
       validate: {
-        validateGoal: (g) => activityRecipientType === 'other-entity' || validateGoals([g]) === true,
+        validateGoal: (g) => activityRecipientType === 'other-entity' || validateGoals(g ? [g] : []) === true,
       },
     },
     defaultValue: '',
@@ -149,7 +149,6 @@ const GoalPicker = ({
               topicOptions={topicOptions}
               goal={goalForEditing}
               reportId={reportId}
-              onSaveDraft={onSaveDraft}
               datePickerKey={datePickerKey}
             />
           </div>
@@ -172,7 +171,6 @@ GoalPicker.propTypes = {
     PropTypes.number,
     PropTypes.string,
   ]).isRequired,
-  onSaveDraft: PropTypes.func.isRequired,
 };
 
 export default GoalPicker;

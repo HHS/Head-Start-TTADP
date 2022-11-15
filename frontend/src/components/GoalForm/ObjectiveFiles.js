@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuid } from 'uuid';
 import {
-  Label, Radio, Fieldset, FormGroup, ErrorMessage,
+  Label, Radio, Fieldset, FormGroup, ErrorMessage, Alert,
 } from '@trussworks/react-uswds';
 import QuestionTooltip from './QuestionTooltip';
 import UnusedData from './UnusedData';
@@ -23,6 +23,8 @@ export default function ObjectiveFiles({
   reportId,
   label,
   userCanEdit,
+  forceObjectiveSave,
+  selectedObjectiveId,
 }) {
   const objectiveId = objective.id;
   const hasFiles = useMemo(() => files && files.length > 0, [files]);
@@ -64,56 +66,60 @@ export default function ObjectiveFiles({
     );
   }
 
+  const showSaveDraftInfo = forceObjectiveSave
+    && (!selectedObjectiveId || !(typeof selectedObjectiveId === 'number'));
+
   return (
     <>
-      {
-      readOnly && hasFiles
-        ? (
+      <Fieldset className="ttahub-objective-files margin-top-1">
+        { hideFileToggle ? null : (
           <>
-            <p className="usa-prose margin-bottom-0 text-bold">Resources</p>
-            <p className="usa-prose margin-top-0">{files.map((f) => f.originalFileName).join(', ')}</p>
-          </>
-        )
-        : (
-          <Fieldset className="ttahub-objective-files margin-top-1">
-            { hideFileToggle ? null : (
-              <>
-                <legend>
-                  {label}
-                  {' '}
-                  <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
-                  <QuestionTooltip
-                    text={(
-                      <div>
-                        Examples include:
-                        {' '}
-                        <ul className="usa-list">
-                          <li>Presentation slides from PD events</li>
-                          <li>PDF&apos;s you created from multiple tta resources</li>
-                          <li>Other OHS-provided resources</li>
-                        </ul>
-                      </div>
+            <legend>
+              {label}
+              {' '}
+              <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
+              <QuestionTooltip
+                text={(
+                  <div>
+                    Examples include:
+                    {' '}
+                    <ul className="usa-list">
+                      <li>Presentation slides from PD events</li>
+                      <li>PDF&apos;s you created from multiple tta resources</li>
+                      <li>Other OHS-provided resources</li>
+                    </ul>
+                  </div>
                 )}
+              />
+            </legend>
+            { showSaveDraftInfo
+              ? (
+                <Alert type="info" headingLevel="h4" slim>
+                  Add a TTA objective and save as draft to upload resources.
+                </Alert>
+              )
+              : (
+                <>
+                  <Radio
+                    label="Yes"
+                    id={`add-objective-files-yes-${objectiveId}-${index}`}
+                    name={`add-objective-files-${objectiveId}-${index}`}
+                    checked={useFiles}
+                    onChange={() => setUseFiles(true)}
                   />
-                </legend>
-                <Radio
-                  label="Yes"
-                  id={`add-objective-files-yes-${objectiveId}-${index}`}
-                  name={`add-objective-files-${objectiveId}-${index}`}
-                  checked={useFiles}
-                  onChange={() => setUseFiles(true)}
-                />
-                <Radio
-                  label="No"
-                  id={`add-objective-files-no-${objectiveId}-${index}`}
-                  name={`add-objective-files-${objectiveId}-${index}`}
-                  checked={!useFiles}
-                  onChange={() => setUseFiles(false)}
-                />
-              </>
-            ) }
-            {
-                useFiles
+                  <Radio
+                    label="No"
+                    id={`add-objective-files-no-${objectiveId}-${index}`}
+                    name={`add-objective-files-${objectiveId}-${index}`}
+                    checked={!useFiles}
+                    onChange={() => setUseFiles(false)}
+                  />
+                </>
+              )}
+          </>
+        ) }
+        {
+                useFiles && !showSaveDraftInfo
                   ? (
                     <>
                       <FormGroup className="ttahub-objective-files-dropzone margin-top-2 margin-bottom-0" error={fileError}>
@@ -143,9 +149,7 @@ export default function ObjectiveFiles({
                   )
                   : null
         }
-          </Fieldset>
-        )
-}
+      </Fieldset>
     </>
   );
 }
@@ -198,6 +202,8 @@ ObjectiveFiles.propTypes = {
   onBlur: PropTypes.func,
   reportId: PropTypes.number,
   userCanEdit: PropTypes.bool.isRequired,
+  forceObjectiveSave: PropTypes.bool,
+  selectedObjectiveId: PropTypes.number,
 };
 
 ObjectiveFiles.defaultProps = {
@@ -205,5 +211,7 @@ ObjectiveFiles.defaultProps = {
   inputName: '',
   onBlur: () => {},
   reportId: 0,
+  forceObjectiveSave: true,
+  selectedObjectiveId: undefined,
   label: "Do you plan to use any TTA resources that aren't available as a link?",
 };

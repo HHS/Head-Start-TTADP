@@ -336,7 +336,7 @@ const uploadObjectivesFile = async (req, res) => {
   const user = await userById(req.session.userId);
 
   objectiveIds = JSON.parse(objectiveIds);
-  const metadata = [];
+  const scanQueue = [];
 
   if (!objectiveIds || !objectiveIds.length) {
     return res.status(400).send({ error: 'objective ids are required' });
@@ -375,38 +375,38 @@ const uploadObjectivesFile = async (req, res) => {
       const data = await createObjectivesFileMetaData(
         originalFilename,
         fileName,
-        objectiveIds,
+        objectiveIds.filter((i) => i !== 0), // Exclude unsaved objectives.
         size,
       );
       try {
         const uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
         const url = getPresignedURL(uploadedFile.key);
-        await updateStatus(metadata.id, UPLOADED);
-        metadata.push({ ...data, url });
+        await updateStatus(data.id, UPLOADED);
+        scanQueue.push({ ...data, url });
 
         return data;
       } catch (err) {
         if (data) {
-          await updateStatus(metadata.id, UPLOAD_FAILED);
+          await updateStatus(data.id, UPLOAD_FAILED);
         }
         return handleErrors(req, res, err, logContext);
       }
     }));
-    res.status(200).send(metadata);
+    res.status(200).send(scanQueue);
   } catch (err) {
     return handleErrors(req, res, err, logContext);
   }
 
-  return Promise.all(metadata.map(async (m) => {
+  return Promise.all(scanQueue.map(async (queueItem) => {
     try {
-      if (!m.key || !m.id) {
+      if (!queueItem.key || !queueItem.id) {
         throw new Error('Missing key or id for file status update');
       }
-      await addToScanQueue({ key: m.key });
-      return updateStatus(multiparty.id, QUEUED);
+      await addToScanQueue({ key: queueItem.key });
+      return updateStatus(queueItem.id, QUEUED);
     } catch (err) {
-      auditLogger.error(`${logContext} Failed to queue ${m.originalFileName}. Error: ${err}`);
-      return updateStatus(m.id, QUEUEING_FAILED);
+      auditLogger.error(`${logContext} Failed to queue ${queueItem.originalFileName}. Error: ${err}`);
+      return updateStatus(queueItem.id, QUEUEING_FAILED);
     }
   }));
 };
