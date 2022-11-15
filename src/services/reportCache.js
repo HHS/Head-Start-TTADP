@@ -113,7 +113,7 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
       activityReportId: reportId,
     });
   }
-  const activityReportObjectiveId = aro.id;
+  const { id: activityReportObjectiveId } = aro;
   return Promise.all([
     ActivityReportObjective.update({
       title: objective.title,
