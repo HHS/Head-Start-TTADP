@@ -3,20 +3,39 @@ module.exports = {
   async up(queryInterface) {
     await queryInterface.sequelize.transaction(
       async (transaction) => {
-        await queryInterface.dropTable('ActivityReportObjectiveRoles', { transaction });
-        await queryInterface.dropTable('ObjectiveRoles', { transaction });
-
-        // Remove ZALActivityReportObjectiveRoles and functions.
-        await queryInterface.dropTable('ZALActivityReportObjectiveRoles', { transaction });
-        await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS "public"."ZALNoUpdateFActivityReportObjectiveRoles" ()', { transaction });
-        await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS "public"."ZALNoTruncateFActivityReportObjectiveRoles" ()', { transaction });
-        await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS "public"."ZALNoDeleteFActivityReportObjectiveRoles" ()', { transaction });
-
-        // Remove ZALObjectiveRoles and functions.
-        await queryInterface.dropTable('ZALObjectiveRoles', { transaction });
-        await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS "public"."ZALNoUpdateFObjectiveRoles" ()', { transaction });
-        await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS "public"."ZALNoTruncateFObjectiveRoles" ()', { transaction });
-        await queryInterface.sequelize.query('DROP FUNCTION IF EXISTS "public"."ZALNoDeleteFObjectiveRoles" ()', { transaction });
+        const loggedUser = '0';
+        // const transactionId = '';
+        const sessionSig = __filename;
+        const auditDescriptor = 'RUN MIGRATIONS';
+        await queryInterface.sequelize.query(
+          `SELECT
+            set_config('audit.loggedUser', '${loggedUser}', TRUE) as "loggedUser",
+            set_config('audit.transactionId', NULL, TRUE) as "transactionId",
+            set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
+            set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
+          { transaction },
+        );
+        await queryInterface.sequelize.query(
+          `
+          SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
+          `,
+          { transaction },
+        );
+        await Promise.all(['ActivityReportObjectiveRoles', 'ObjectiveRoles'].map(async (table) => {
+          await queryInterface.sequelize.query(
+            ` SELECT "ZAFRemoveAuditingOnTable"('${table}');`,
+            { raw: true, transaction },
+          );
+          // Drop old audit log table
+          await queryInterface.dropTable(`ZAL${table}`, { transaction });
+          await queryInterface.dropTable(table, { transaction });
+        }));
+        await queryInterface.sequelize.query(
+          `
+          SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
+          `,
+          { transaction },
+        );
       },
     );
   },
