@@ -21,7 +21,7 @@ const findOrCreateObjectiveTemplate = async (
     },
     transaction,
   });
-  return objectiveTemplate[0].id;
+  return { id: objectiveTemplate[0].id, title };
 };
 
 const autoPopulateOnApprovedAR = (sequelize, instance, options) => {
