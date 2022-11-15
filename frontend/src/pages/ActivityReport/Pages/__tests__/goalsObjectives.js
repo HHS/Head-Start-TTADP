@@ -17,6 +17,8 @@ import GoalFormContext from '../../../../GoalFormContext';
 
 const goalUrl = join('api', 'activity-reports', 'goals');
 
+const spy = jest.fn();
+
 const RenderGoalsObjectives = ({
   grantIds, activityRecipientType, connectionActive = true,
 }) => {
@@ -58,6 +60,8 @@ const RenderGoalsObjectives = ({
     },
   });
   const history = createMemoryHistory();
+
+  hookForm.setValue = spy;
 
   return (
     <NetworkContext.Provider value={{ connectionActive, localStorageAvailable: true }}>
@@ -174,6 +178,7 @@ describe('goals objectives', () => {
     });
 
     it('you can remove a goal', async () => {
+      jest.restoreAllMocks();
       const sampleGoals = [{
         name: 'Test',
         id: 1234567,
@@ -182,7 +187,6 @@ describe('goals objectives', () => {
       const isGoalFormClosed = true;
       const throwFetchError = false;
       const toggleGoalForm = jest.fn();
-
       renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed, throwFetchError, toggleGoalForm);
       const goalSummary = await screen.findByText('Goal summary');
       expect(goalSummary).toBeVisible();
@@ -193,6 +197,10 @@ describe('goals objectives', () => {
       expect(goalSummary).not.toBeVisible();
       const addNewGoal = await screen.findByRole('button', { name: /add new goal/i });
       expect(addNewGoal).toBeVisible();
+      const keys = ['goalForEditing', 'goalName', 'goalEndDate', 'goalIsRttapa'];
+      keys.forEach((key) => {
+        expect(spy).toHaveBeenCalledWith(key, '');
+      });
       expect(toggleGoalForm).toHaveBeenCalledWith(false);
     });
   });
