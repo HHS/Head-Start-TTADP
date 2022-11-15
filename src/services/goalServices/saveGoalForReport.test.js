@@ -926,32 +926,50 @@ describe('saveGoalsForReport (more tests)', () => {
         goalIds: [rtrGoal.id],
         id: rtrGoal.id,
         name: rtrGoal.name,
-        objectives: [{
-          id: rtrObjective.id,
-          isNew: false,
-          ttaProvided: 'This is some TTA for this guy',
-          title: rtrObjective.title,
-          status: 'In Progress',
-          goalId: rtrGoal.id,
-          files: [],
-          topics: [
-            {
-              name: topic.name,
-              id: topic.id,
-            },
-            {
-              name: secondTopic.name,
-              id: secondTopic.id,
-            },
-          ],
+        objectives: [
+          {
+            id: rtrObjective.id,
+            isNew: false,
+            ttaProvided: 'This is some TTA for this guy',
+            title: '',
+            status: 'Not Started',
+            goalId: rtrGoal.id,
+            files: [],
+            topics: [
+              {
+                name: topic.name,
+                id: topic.id,
+              },
 
-          resources: [
-            {
-              key: 'gibberish-i-THINK-thats-obvious',
-              value: 'https://www.google.com', // a fine resource
-            },
-          ],
-        }],
+            ],
+            resources: [],
+          },
+          {
+            id: rtrObjective.id,
+            isNew: false,
+            ttaProvided: 'This is some TTA for this guy',
+            title: rtrObjective.title,
+            status: 'In Progress',
+            goalId: rtrGoal.id,
+            files: [],
+            topics: [
+              {
+                name: topic.name,
+                id: topic.id,
+              },
+              {
+                name: secondTopic.name,
+                id: secondTopic.id,
+              },
+            ],
+
+            resources: [
+              {
+                key: 'gibberish-i-THINK-thats-obvious',
+                value: 'https://www.google.com', // a fine resource
+              },
+            ],
+          }],
         grantIds: [grantOne.id],
         status: 'In Progress',
       },
@@ -979,8 +997,8 @@ describe('saveGoalsForReport (more tests)', () => {
       },
     });
 
-    expect(afterActivityReportObjectives.length).toBe(1);
-    expect(afterActivityReportObjectives[0].objectiveId).toBe(rtrObjective.id);
+    expect(afterActivityReportObjectives.length).toBe(2);
+    expect(afterActivityReportObjectives.map((o) => o.objectiveId)).toContain(rtrObjective.id);
 
     const afterObjectiveTopics = await ObjectiveTopic.findAll({
       where: {
