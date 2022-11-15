@@ -116,8 +116,13 @@ const GoalsObjectives = ({
     if (index !== -1) {
       copyOfSelectedGoals.splice(index, 1);
     }
-
     onUpdateGoals(copyOfSelectedGoals);
+
+    // if we have no goals, open the form up via the
+    // hander provided by the context
+    if (copyOfSelectedGoals.length === 0) {
+      toggleGoalForm(false);
+    }
   };
 
   const onEdit = (goal, index) => {
@@ -255,6 +260,7 @@ const GoalsObjectives = ({
       {/**
         * conditionally show the goal picker
       */}
+
       {showGoals && !isGoalFormClosed
         ? (
           <>

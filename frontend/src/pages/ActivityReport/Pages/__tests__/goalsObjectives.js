@@ -180,16 +180,20 @@ describe('goals objectives', () => {
         objectives: [],
       }];
       const isGoalFormClosed = true;
-      renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed);
+      const throwFetchError = false;
+      const toggleGoalForm = jest.fn();
+
+      renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed, throwFetchError, toggleGoalForm);
       const goalSummary = await screen.findByText('Goal summary');
       expect(goalSummary).toBeVisible();
       const actions = await screen.findByRole('button', { name: /actions for goal 1/i });
       userEvent.click(actions);
       const [button] = await screen.findAllByRole('button', { name: 'Remove' });
-      userEvent.click(button);
+      act(() => userEvent.click(button));
       expect(goalSummary).not.toBeVisible();
       const addNewGoal = await screen.findByRole('button', { name: /add new goal/i });
       expect(addNewGoal).toBeVisible();
+      expect(toggleGoalForm).toHaveBeenCalledWith(false);
     });
   });
 
