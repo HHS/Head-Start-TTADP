@@ -432,7 +432,7 @@ export async function resetToDraft(req, res) {
     }
 
     const [
-      savedReport, activityRecipients, goalsAndObjectives,
+      savedReport, activityRecipients, goalsAndObjectives, objectivesWithoutGoals,
     ] = await setStatus(report, REPORT_STATUSES.DRAFT);
 
     res.json({
@@ -440,6 +440,7 @@ export async function resetToDraft(req, res) {
       displayId: report.displayId,
       activityRecipients,
       goalsAndObjectives,
+      objectivesWithoutGoals,
     });
   } catch (error) {
     await handleErrors(req, res, error, logContext);
