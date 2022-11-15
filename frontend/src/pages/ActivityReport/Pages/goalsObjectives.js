@@ -161,12 +161,13 @@ const GoalsObjectives = ({
 
     toggleGoalForm(false);
 
-    // remove the goal from the "selected goals"
-    const copyOfSelectedGoals = selectedGoals.map((g) => ({ ...g }));
-    copyOfSelectedGoals.splice(index, 1);
+    let copyOfSelectedGoals = selectedGoals.map((g) => ({ ...g }));
     if (currentlyEditing) {
       copyOfSelectedGoals.push(currentlyEditing);
     }
+
+    // remove the goal from the "selected goals"
+    copyOfSelectedGoals = copyOfSelectedGoals.filter((g) => g.id !== goal.id);
 
     onUpdateGoals(copyOfSelectedGoals);
   };
