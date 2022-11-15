@@ -172,7 +172,7 @@ export default function Objective({
     // we need to access the updated form data to
     // get the correct objective ids to attach to our API post
     const objectivesField = getValues(fieldArrayName);
-    const objectiveToAttach = objectivesField.find((o) => o.id === objective.id);
+    const objectiveToAttach = objectivesField.find((o) => o.id === selectedObjective.id);
 
     // handle file upload
     try {
