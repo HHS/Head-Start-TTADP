@@ -81,7 +81,7 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
             through: { attributes: [] },
             model: sequelize.models.ActivityReport,
             as: 'activityReports',
-            required: false,
+            required: true,
             where: {
               id: instance.id,
             },
@@ -89,6 +89,7 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
         ],
         includeIgnoreAttributes: false,
         transaction: options.transaction,
+        raw: true,
       });
       // Generate a distinct list of goal names.
       const distinctlyNamedGoals = [...new Map(goals.map((goal) => [goal.name, goal])).values()];
@@ -131,7 +132,7 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
             through: { attributes: [] },
             model: sequelize.models.ActivityReport,
             as: 'activityReports',
-            required: false,
+            required: true,
             where: {
               id: instance.id,
             },
@@ -139,6 +140,7 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
         ],
         includeIgnoreAttributes: false,
         transaction: options.transaction,
+        raw: true,
       });
       // Generate a distinct list of objective titles.
       const distinctlyTitledObjectives = [...new Map(objectives
