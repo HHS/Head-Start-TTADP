@@ -243,7 +243,7 @@ export async function saveObjectiveAssociations(
         otopic = await ObjectiveTopic.create({
           objectiveId: objective.id,
           topicId: topic.id,
-        });
+        }, { hooks: !!o.objectiveTemplateId });
       }
       return otopic;
     })),
@@ -275,7 +275,7 @@ export async function saveObjectiveAssociations(
           oresource = await ObjectiveResource.create({
             userProvidedUrl: value,
             objectiveId: objective.id,
-          });
+          }, { hooks: !!o.objectiveTemplateId });
         }
         return oresource;
       },
@@ -308,7 +308,7 @@ export async function saveObjectiveAssociations(
           ofile = await ObjectiveFile.create({
             fileId: file.id,
             objectiveId: objective.id,
-          });
+          }, { hooks: !!o.objectiveTemplateId });
         }
         return ofile;
       },
@@ -1617,7 +1617,7 @@ export async function saveGoalsForReport(goals, report) {
         //   },
         //   defaults: { ...fields, status },
         // });
-        let newGoal = await Goal.findOne({
+        let newGoal = await Goal.findOne({ // All columns are needed for caching metadata.
           where: {
             [Op.and]: [
               { goalTemplateId: { [Op.not]: null } }, // We need to exclude null matches.
