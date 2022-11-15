@@ -2,6 +2,7 @@ import React, {
   useEffect, useState, useMemo, useContext, useRef,
 } from 'react';
 import PropTypes from 'prop-types';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
 import { useController, useFormContext } from 'react-hook-form/dist/index.ie11';
 import GoalText from '../../../../components/GoalForm/GoalText';
@@ -124,7 +125,7 @@ export default function GoalForm({
    * this use effect fetches
    * associated goal data
    */
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     async function fetchData() {
       try {
         setIsAppLoading(true);
@@ -136,22 +137,12 @@ export default function GoalForm({
       }
     }
 
-    const shouldIFetchData = (
-      goal.goalIds
-      && (
-        !goal.isNew || (
-          goal.isNew
-          && goal.oldGrantIds.filter((g) => g).length
-        )
-      )
-    );
-
-    if (shouldIFetchData) {
+    if (goal.goalIds.length) {
       fetchData();
     } else {
       setObjectives([]);
     }
-  }, [goal.goalIds, goal.isNew, goal.oldGrantIds, reportId, setAppLoadingText, setIsAppLoading]);
+  }, [goal.goalIds, reportId, setAppLoadingText, setIsAppLoading]);
 
   return (
     <>

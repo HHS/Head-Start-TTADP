@@ -81,7 +81,7 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
             through: { attributes: [] },
             model: sequelize.models.ActivityReport,
             as: 'activityReports',
-            required: false,
+            required: true,
             where: {
               id: instance.id,
             },
@@ -89,17 +89,28 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
         ],
         includeIgnoreAttributes: false,
         transaction: options.transaction,
+        raw: true,
       });
-      const templateIds = await Promise.all(goals.map(async (goal) => findOrCreateGoalTemplate(
-        sequelize,
-        options.transaction,
-        instance.regionId,
-        goal.name,
-        goal.createdAt,
-        goal.updatedAt,
-      )));
-      await Promise.all(goals.map(async (goal, i) => sequelize.models.Goal.update(
-        { goalTemplateId: templateIds[i] },
+      // Generate a distinct list of goal names.
+      const distinctlyNamedGoals = [...new Map(goals.map((goal) => [goal.name, goal])).values()];
+      // Find or create templates for each of the distinct names.
+      const distinctTemplates = await Promise.all(distinctlyNamedGoals
+        .map(async (goal) => findOrCreateGoalTemplate(
+          sequelize,
+          options.transaction,
+          instance.regionId,
+          goal.name,
+          goal.createdAt,
+          goal.updatedAt,
+        )));
+      // Add the corresponding template id to each of the goals.
+      goals = goals.map((goal) => {
+        const goalTemplateId = distinctTemplates.filter((dt) => dt.name === goal.name).id;
+        return { ...goal, goalTemplateId };
+      });
+      // Update all the goals with their template id.
+      await Promise.all(goals.map(async (goal) => sequelize.models.Goal.update(
+        { goalTemplateId: goal.goalTemplateId },
         {
           where: { id: goal.id },
           transaction: options.transaction,
@@ -121,7 +132,7 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
             through: { attributes: [] },
             model: sequelize.models.ActivityReport,
             as: 'activityReports',
-            required: false,
+            required: true,
             where: {
               id: instance.id,
             },
@@ -129,22 +140,30 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
         ],
         includeIgnoreAttributes: false,
         transaction: options.transaction,
+        raw: true,
       });
-      const templateIds = await Promise.all(objectives.map(async (
-        objective,
-      ) => findOrCreateObjectiveTemplate(
-        sequelize,
-        options.transaction,
-        instance.regionId,
-        objective.title,
-        objective.createdAt,
-        objective.updatedAt,
-      )));
-      await Promise.all(objectives.map(async (
-        objective,
-        i,
-      ) => sequelize.models.Objective.update(
-        { objectiveTemplateId: templateIds[i] },
+      // Generate a distinct list of objective titles.
+      const distinctlyTitledObjectives = [...new Map(objectives
+        .map((objective) => [objective.title, objective])).values()];
+      // Find or create templates for each of the distinct titles.
+      const distinctTemplates = await Promise.all(distinctlyTitledObjectives
+        .map(async (objective) => findOrCreateObjectiveTemplate(
+          sequelize,
+          options.transaction,
+          instance.regionId,
+          objective.title,
+          objective.createdAt,
+          objective.updatedAt,
+        )));
+      // Add the corresponding template id to each of the objectives.
+      objectives = objectives.map((objective) => {
+        const objectiveTemplateId = distinctTemplates
+          .filter((dt) => dt.title === objective.title).id;
+        return { ...objective, objectiveTemplateId };
+      });
+      // Update all the objectives with their template id.
+      await Promise.all(objectives.map(async (objective) => sequelize.models.Objective.update(
+        { objectiveTemplateId: objective.objectiveTemplateId },
         {
           where: { id: objective.id },
           transaction: options.transaction,
