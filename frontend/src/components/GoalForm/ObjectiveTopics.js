@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { v4 as uuid } from 'uuid';
 import PropTypes from 'prop-types';
 import {
@@ -21,15 +21,11 @@ export default function ObjectiveTopics({
   isOnReport,
   userCanEdit,
 }) {
-  const initialSelection = useRef(topics.length);
-
   const readOnly = useMemo(() => status === 'Suspended' || status === 'Complete' || (goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed' || !userCanEdit, [goalStatus, isOnReport, status, userCanEdit]);
-
-  if (readOnly && !initialSelection.current) {
+  if (readOnly && !topics.length) {
     return null;
   }
-
-  if (readOnly && initialSelection.current) {
+  if (readOnly && topics.length) {
     return (
       <>
         <p className="usa-prose text-bold margin-bottom-0">

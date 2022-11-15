@@ -26,7 +26,6 @@ import ReadOnlyOtherEntityObjectives from '../../../components/GoalForm/ReadOnly
 
 const GoalsObjectives = ({
   reportId,
-  onSaveDraftGoal,
   onSaveDraftOetObjectives,
 }) => {
   const {
@@ -117,8 +116,13 @@ const GoalsObjectives = ({
     if (index !== -1) {
       copyOfSelectedGoals.splice(index, 1);
     }
-
     onUpdateGoals(copyOfSelectedGoals);
+
+    // if we have no goals, open the form up via the
+    // hander provided by the context
+    if (copyOfSelectedGoals.length === 0) {
+      toggleGoalForm(false);
+    }
   };
 
   const onEdit = (goal, index) => {
@@ -156,12 +160,13 @@ const GoalsObjectives = ({
 
     toggleGoalForm(false);
 
-    // remove the goal from the "selected goals"
-    const copyOfSelectedGoals = selectedGoals.map((g) => ({ ...g }));
-    copyOfSelectedGoals.splice(index, 1);
+    let copyOfSelectedGoals = selectedGoals.map((g) => ({ ...g }));
     if (currentlyEditing) {
       copyOfSelectedGoals.push(currentlyEditing);
     }
+
+    // remove the goal from the "selected goals"
+    copyOfSelectedGoals = copyOfSelectedGoals.filter((g) => g.id !== goal.id);
 
     onUpdateGoals(copyOfSelectedGoals);
   };
@@ -212,7 +217,7 @@ const GoalsObjectives = ({
       {/**
         * on non-recipient reports, only objectives are shown
       */}
-      {!isRecipientReport && !isObjectivesFormClosed
+      {!isRecipientReport && isOtherEntityReport && !isObjectivesFormClosed
       && (
       <OtherEntity
         recipientIds={activityRecipientIds}
@@ -255,6 +260,7 @@ const GoalsObjectives = ({
       {/**
         * conditionally show the goal picker
       */}
+
       {showGoals && !isGoalFormClosed
         ? (
           <>
@@ -265,7 +271,6 @@ const GoalsObjectives = ({
                 grantIds={grantIds}
                 availableGoals={availableGoals}
                 reportId={reportId}
-                onSaveDraft={onSaveDraftGoal}
               />
             </Fieldset>
           </>
@@ -290,7 +295,6 @@ const GoalsObjectives = ({
 GoalsObjectives.propTypes = {
   reportId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   onSaveDraftOetObjectives: PropTypes.func.isRequired,
-  onSaveDraftGoal: PropTypes.func.isRequired,
 };
 
 const ReviewSection = () => {
@@ -336,11 +340,9 @@ export default {
     return activityRecipientType === 'recipient' && validateGoals(formData.goals) === true;
   },
   reviewSection: () => <ReviewSection />,
-  render: (_additionalData, _formData, reportId, onSaveDraftGoal, onSaveDraftOetObjectives) => (
-
+  render: (_additionalData, _formData, reportId, _onSaveDraftGoal, onSaveDraftOetObjectives) => (
     <GoalsObjectives
       reportId={reportId}
-      onSaveDraftGoal={onSaveDraftGoal}
       onSaveDraftOetObjectives={onSaveDraftOetObjectives}
     />
   ),

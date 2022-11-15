@@ -7,8 +7,9 @@ import {
 import fetchMock from 'fetch-mock';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import Navigator from '../index';
-import { NOT_STARTED, COMPLETE } from '../constants';
+import { NOT_STARTED, IN_PROGRESS } from '../constants';
 import NetworkContext from '../../../NetworkContext';
+import AppLoadingContext from '../../../AppLoadingContext';
 
 // eslint-disable-next-line react/prop-types
 const Input = ({ name, required }) => {
@@ -20,6 +21,18 @@ const Input = ({ name, required }) => {
       name={name}
       ref={register({ required })}
     />
+  );
+};
+
+const GoalTest = () => {
+  const { register } = useFormContext();
+  return (
+    <>
+      <h1>Goal test</h1>
+      {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+      <label htmlFor="goalName">Name</label>
+      <input type="text" id="goalName" name="goalName" ref={register()} />
+    </>
   );
 };
 
@@ -89,31 +102,38 @@ describe('Navigator', () => {
     onUpdateError = jest.fn(),
   ) => {
     render(
+
       <NetworkContext.Provider value={{
         connectionActive: true,
         localStorageAvailable: true,
       }}
       >
-        <Navigator
-          editable
-          reportId={1}
-          submitted={false}
-          formData={formData}
-          updateFormData={updateForm}
-          onReview={() => {}}
-          isApprover={false}
-          defaultValues={{ first: '', second: '' }}
-          pages={pages}
-          currentPage={currentPage}
-          onFormSubmit={onSubmit}
-          updatePage={updatePage}
-          onSave={onSave}
-          updateErrorMessage={onUpdateError}
-          onResetToDraft={() => {}}
-          updateLastSaveTime={() => {}}
-          isPendingApprover={false}
-        />
-
+        <AppLoadingContext.Provider value={{
+          setIsAppLoading: jest.fn(),
+          setAppLoadingText: jest.fn(),
+          isAppLoading: false,
+        }}
+        >
+          <Navigator
+            editable
+            reportId={1}
+            submitted={false}
+            formData={formData}
+            updateFormData={updateForm}
+            onReview={() => {}}
+            isApprover={false}
+            defaultValues={{ first: '', second: '' }}
+            pages={pages}
+            currentPage={currentPage}
+            onFormSubmit={onSubmit}
+            updatePage={updatePage}
+            onSave={onSave}
+            updateErrorMessage={onUpdateError}
+            onResetToDraft={() => {}}
+            updateLastSaveTime={() => {}}
+            isPendingApprover={false}
+          />
+        </AppLoadingContext.Provider>
       </NetworkContext.Provider>,
     );
   };
@@ -129,16 +149,20 @@ describe('Navigator', () => {
   it('onContinue calls onSave with correct page position', async () => {
     const onSave = jest.fn();
     renderNavigator('second', () => {}, onSave);
+
+    // mark the form as dirty so that onSave is called
+    userEvent.click(screen.getByTestId('second'));
+
     userEvent.click(screen.getByRole('button', { name: 'Save and continue' }));
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(
       {
         pageState: {
-          ...initialData.pageState, 2: COMPLETE,
+          ...initialData.pageState, 2: IN_PROGRESS,
         },
         regionId: 1,
         goals: [],
         objectivesWithoutGoals: [],
-        second: null,
+        second: 'on',
         activityRecipientType: 'recipient',
         activityRecipients: [],
       },
@@ -164,10 +188,19 @@ describe('Navigator', () => {
     const updatePage = jest.fn();
     const updateForm = jest.fn();
     renderNavigator('second', () => {}, () => {}, updatePage, updateForm);
+
+    // mark the form as dirty so that onSave is called
+    userEvent.click(screen.getByTestId('second'));
+
     userEvent.click(await screen.findByRole('button', { name: 'first page Not Started' }));
+
     await waitFor(() => expect(
       updateForm,
-    ).toHaveBeenCalledWith({ ...initialData, second: null }));
+    ).toHaveBeenCalledWith({
+      ...initialData,
+      pageState: { ...initialData.pageState, 2: IN_PROGRESS },
+      second: 'on',
+    }));
     await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
   });
 
@@ -251,6 +284,10 @@ describe('Navigator', () => {
     const onUpdateError = jest.fn();
 
     renderNavigator('second', onSubmit, onSave, updatePage, updateForm, defaultPages, initialData, onUpdateError);
+
+    // mark the form as dirty so that onSave is called
+    userEvent.click(screen.getByTestId('second'));
+
     userEvent.click(await screen.findByRole('button', { name: 'first page Not Started' }));
 
     expect(onSave).toHaveBeenCalled();
@@ -260,11 +297,49 @@ describe('Navigator', () => {
   it('runs the autosave not on the goals and objectives page', async () => {
     const onSave = jest.fn();
     renderNavigator('second', () => {}, onSave);
+
+    // mark the form as dirty
+    const input = screen.getByTestId('second');
+    userEvent.click(input);
+
     jest.advanceTimersByTime(1000 * 60 * 2);
     expect(onSave).toHaveBeenCalled();
   });
 
+  it('does not run the autosave when the form is clean', async () => {
+    const onSave = jest.fn();
+    renderNavigator('second', () => {}, onSave);
+    jest.advanceTimersByTime(1000 * 60 * 2);
+    expect(onSave).toHaveBeenCalledTimes(0);
+  });
+
   it('runs the autosave on the goals and objectives page', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <GoalTest />
+      ),
+    }];
+    renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages);
+    fetchMock.restore();
+    expect(fetchMock.called()).toBe(false);
+    act(() => {
+      fetchMock.post('/api/activity-reports/goals', []);
+      userEvent.type(screen.getByLabelText('Name'), 'test');
+      jest.advanceTimersByTime(1000 * 60 * 2);
+    });
+    await waitFor(() => expect(fetchMock.called('/api/activity-reports/goals')).toBe(true));
+  });
+
+  it('disables the save button', async () => {
     const onSubmit = jest.fn();
     const onSave = jest.fn();
     const updatePage = jest.fn();
@@ -275,17 +350,18 @@ describe('Navigator', () => {
       label: 'first page',
       review: false,
       render: () => (
-        <>
-          <h1>Goal test</h1>
-        </>
+        <GoalTest />
       ),
     }];
     renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages);
     fetchMock.restore();
     expect(fetchMock.called()).toBe(false);
-    jest.advanceTimersByTime(1000 * 60 * 2);
-    fetchMock.post('/api/activity-reports/goals', []);
-    expect(fetchMock.called('/api/activity-reports/goals')).toBe(false);
+    await act(async () => {
+      userEvent.type(screen.getByLabelText('Name'), 'test');
+      jest.advanceTimersByTime(1000 * 60 * 2);
+    });
+    const saveButton = await screen.findByRole('button', { name: /Save goal/i });
+    await waitFor(() => expect(saveButton).toBeDisabled());
   });
 
   it('runs the autosave on the other entity objectives page', async () => {

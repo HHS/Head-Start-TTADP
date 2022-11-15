@@ -25,6 +25,7 @@ const mockUser = {
 
 const reportObject = {
   submissionStatus: REPORT_STATUSES.DRAFT,
+  activityRecipientType: 'other-entity',
   userId: mockUser.id,
   regionId: 1,
   lastUpdatedById: mockUser.id,

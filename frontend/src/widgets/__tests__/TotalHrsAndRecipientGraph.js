@@ -108,7 +108,7 @@ describe('Total Hrs And Recipient Graph Widget', () => {
 
   it('handles loading', async () => {
     renderTotalHrsAndRecipientGraph({ loading: true });
-    expect(await screen.findByText('Loading Data')).toBeInTheDocument();
+    expect(await screen.findByText('Loading')).toBeInTheDocument();
   });
 
   it('handles checkbox clicks', async () => {
