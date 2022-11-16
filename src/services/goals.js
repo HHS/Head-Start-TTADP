@@ -1284,8 +1284,8 @@ async function createObjectivesForGoal(goal, objectives, report) {
   return Promise.all(objectives.filter((o) => o.title
     || o.ttaProvided
     || o.topics.length
-    || o.resources
-    || o.files).map(async (objective) => {
+    || o.resources.length
+    || o.files.length).map(async (objective) => {
     const {
       id,
       isNew,
