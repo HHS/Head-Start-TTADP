@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+// import { Op } from 'sequelize';
 import {
   saveGoalsForReport, goalsForGrants,
 } from '../goals';
@@ -10,6 +10,14 @@ import {
   ActivityReportObjective,
   ActivityReportGoal,
 } from '../../models';
+
+const mockObjectiveId = 10000001;
+const mockGoalId = 10000002;
+const mockGoalTemplateId = 10000003;
+const mockGrantId = 10000004;
+const mockActivityReportGoalId = 10000005;
+const mockActivityReportObjectiveId = 10000006;
+const mockActivityReportId = 10000007;
 
 describe('Goals DB service', () => {
   afterEach(() => {
@@ -26,40 +34,70 @@ describe('Goals DB service', () => {
   describe('saveGoalsForReport', () => {
     beforeEach(() => {
       ActivityReportGoal.findAll = jest.fn().mockResolvedValue([]);
+      ActivityReportGoal.findOne = jest.fn().mockResolvedValue({
+        id: mockActivityReportGoalId,
+        goalId: mockGoalId,
+        activityReportId: mockActivityReportId,
+        update: jest.fn(),
+      });
       ActivityReportGoal.destroy = jest.fn();
       ActivityReportGoal.update = jest.fn();
       ActivityReportGoal.findOrCreate = jest.fn()
         .mockResolvedValue([{
-          id: 1, goalId: 1, activityReportId: 1, update: jest.fn(),
+          id: mockActivityReportGoalId,
+          goalId: mockGoalId,
+          activityReportId: mockActivityReportId,
+          update: jest.fn(),
         }, false]);
       ActivityReportGoal.create = jest.fn();
 
       ActivityReportObjective.findAll = jest.fn().mockResolvedValue([]);
+      ActivityReportObjective.findOne = jest.fn();
       ActivityReportObjective.destroy = jest.fn();
-      ActivityReportObjective.findOrCreate = jest.fn()
-        .mockResolvedValue([{ id: 1, objectiveId: 1, update: jest.fn() }]);
-      ActivityReportObjective.create = jest.fn();
+      ActivityReportObjective.findOrCreate = jest.fn().mockResolvedValue([{
+        id: mockActivityReportObjectiveId,
+        objectiveId: mockObjectiveId,
+        update: jest.fn(),
+      }]);
+      ActivityReportObjective.create = jest.fn().mockResolvedValue({
+        id: mockActivityReportObjectiveId,
+        objectiveId: mockObjectiveId,
+        activityReportId: mockActivityReportId,
+        update: jest.fn(),
+      });
 
       Goal.findAll = jest.fn().mockResolvedValue([{
-        goalTemplateId: 1, update: existingGoalUpdate, id: 1,
+        goalTemplateId: mockGoalTemplateId,
+        update: existingGoalUpdate,
+        id: mockGoalId,
       }]);
-      Goal.findOne = jest.fn().mockResolvedValue();
+      Goal.findOne = jest.fn();
       Goal.findByPk = jest.fn().mockResolvedValue({
-        update: existingGoalUpdate, grantId: 1, id: 1, goalTemplateId: 1,
+        update: existingGoalUpdate,
+        grantId: mockGrantId,
+        id: mockGoalId,
+        goalTemplateId: mockGoalTemplateId,
       });
-      Goal.findOrCreate = jest.fn().mockResolvedValue([{ id: 1, update: jest.fn() }, false]);
+      Goal.findOrCreate = jest.fn().mockResolvedValue([{
+        id: mockGoalId,
+        update: jest.fn(),
+      }, false]);
       Goal.destroy = jest.fn();
-      Goal.update = jest.fn().mockResolvedValue([1, [{ id: 1 }]]);
-      Goal.create = jest.fn().mockResolvedValue({ id: 1 });
+      Goal.update = jest.fn().mockResolvedValue([1, [{ id: mockGoalId }]]);
+      Goal.create = jest.fn().mockResolvedValue({ id: mockGoalId, update: jest.fn() });
 
       ActivityReportGoal.findAll = jest.fn().mockResolvedValue([]);
       ActivityReportGoal.findOrCreate = jest.fn().mockResolvedValue();
 
       Objective.destroy = jest.fn();
-      Objective.create = jest.fn().mockResolvedValue({ id: 1 });
-      Objective.findOrCreate = jest.fn().mockResolvedValue([{ id: 1 }]);
-      Objective.update = jest.fn().mockResolvedValue({ id: 1 });
-      Objective.findByPk = jest.fn().mockResolvedValue({ id: 1, update: existingObjectiveUpdate });
+      Objective.findOne = jest.fn();
+      Objective.create = jest.fn().mockResolvedValue({ id: mockObjectiveId });
+      Objective.findOrCreate = jest.fn().mockResolvedValue([{ id: mockObjectiveId }]);
+      Objective.update = jest.fn().mockResolvedValue({ id: mockObjectiveId });
+      Objective.findByPk = jest.fn().mockResolvedValue({
+        id: mockObjectiveId,
+        update: existingObjectiveUpdate,
+      });
     });
 
     describe('with removed goals', () => {
@@ -67,15 +105,15 @@ describe('Goals DB service', () => {
         // Find this objective to delete.
         ActivityReportObjective.findAll.mockResolvedValueOnce([
           {
-            objectiveId: 1,
+            objectiveId: mockObjectiveId,
             objective: {
-              goalId: 1,
+              goalId: mockGoalId,
             },
           },
           {
-            objectiveId: 2,
+            objectiveId: mockObjectiveId + 1,
             objective: {
-              goalId: 1,
+              goalId: mockGoalId,
             },
           },
         ]);
@@ -83,45 +121,42 @@ describe('Goals DB service', () => {
         // Prevent the delete of objective 2.
         ActivityReportObjective.findAll.mockResolvedValueOnce([
           {
-            objectiveId: 2,
+            objectiveId: mockObjectiveId + 1,
             objective: {
-              goalId: 1,
+              goalId: mockGoalId,
             },
           },
         ]);
-        await saveGoalsForReport([], { id: 1 });
+        await saveGoalsForReport([], { id: mockActivityReportId });
         expect(Objective.destroy).not.toHaveBeenCalled();
       });
 
       it('deletes the ActivityReportObjective', async () => {
         ActivityReportObjective.findAll.mockResolvedValue([]);
-        await saveGoalsForReport([], { id: 1 });
-        expect(ActivityReportObjective.destroy).toHaveBeenCalledWith({
-          where: {
-            id: [],
-          },
-        });
+        await saveGoalsForReport([], { id: mockActivityReportId });
+        // with an empty result set no db call will be made
+        expect(ActivityReportObjective.destroy).not.toHaveBeenCalled();
       });
 
       it('does not delete goals not being used by ActivityReportGoals', async () => {
         ActivityReportObjective.findAll.mockResolvedValue([
           {
-            objectiveId: 1,
+            objectiveId: mockObjectiveId,
             objective: {
-              goalId: 1,
+              goalId: mockGoalId,
               goal: {
-                id: 1,
-                objectives: [{ id: 1 }],
+                id: mockGoalId,
+                objectives: [{ id: mockObjectiveId }],
               },
             },
           },
           {
-            objectiveId: 2,
+            objectiveId: mockObjectiveId + 1,
             objective: {
-              goalId: 2,
+              goalId: mockGoalId + 1,
               goal: {
-                id: 2,
-                objectives: [{ id: 2 }],
+                id: mockGoalId + 1,
+                objectives: [{ id: mockObjectiveId + 1 }],
               },
             },
           },
@@ -129,59 +164,49 @@ describe('Goals DB service', () => {
 
         ActivityReportGoal.findAll.mockResolvedValue([
           {
-            goalId: 1,
+            goalId: mockGoalId,
           },
         ]);
 
-        await saveGoalsForReport([], { id: 1 });
+        await saveGoalsForReport([], { id: mockActivityReportId });
         expect(Goal.destroy).not.toHaveBeenCalled();
       });
     });
 
     it('creates new goals', async () => {
-      ActivityReportGoal.findOrCreate.mockResolvedValue([
+      ActivityReportGoal.create.mockResolvedValue([
         {
-          goalId: 1,
+          goalId: mockGoalId,
         },
       ]);
 
       await saveGoalsForReport([
         {
-          isNew: true, grantIds: [1], name: 'name', status: 'Closed', objectives: [],
+          isNew: true, grantIds: [mockGrantId], name: 'name', status: 'Closed', objectives: [],
         },
-      ], { id: 1 });
-      expect(Goal.findOrCreate).toHaveBeenCalledWith({
-        defaults: {
-          createdVia: 'activityReport',
-          grantId: 1,
-          name: 'name',
-          status: 'Closed',
-        },
-        where: {
-          grantId: 1,
-          name: 'name',
-          status: {
-            [Op.not]: 'Closed',
-          },
-        },
+      ], { id: mockActivityReportId });
+      expect(Goal.create).toHaveBeenCalledWith({
+        createdVia: 'activityReport',
+        grantId: mockGrantId,
+        name: 'name',
+        status: 'Closed',
       });
     });
 
     it('can use existing goals', async () => {
-      ActivityReportGoal.findOrCreate.mockResolvedValue([
-        {
-          goalId: 1,
-        },
-      ]);
+      ActivityReportGoal.findOne.mockResolvedValue({
+        goalId: mockGoalId,
+      });
       const existingGoal = {
-        id: 1,
+        id: mockGoalId,
         name: 'name',
         objectives: [],
-        grantIds: [1, 2],
-        goalIds: [1],
+        grantIds: [mockGrantId, mockGrantId + 1],
+        goalIds: [mockGoalId],
       };
 
-      await saveGoalsForReport([existingGoal], { id: 1 });
+      Goal.findOne.mockResolvedValue({ id: mockGoalId, update: jest.fn() });
+      await saveGoalsForReport([existingGoal], { id: mockActivityReportId });
       expect(existingGoalUpdate).toHaveBeenCalledWith({
         endDate: null,
         name: 'name',
@@ -192,58 +217,69 @@ describe('Goals DB service', () => {
     test.todo('can update an existing goal');
 
     it('can create new objectives', async () => {
-      ActivityReportGoal.findOrCreate.mockResolvedValue([
+      ActivityReportGoal.findOne.mockResolvedValue([
         {
-          id: 1,
-          goalId: 1,
+          id: mockActivityReportGoalId,
+          goalId: mockGoalId,
         },
       ]);
+      Goal.findOne.mockResolvedValue({
+        id: mockGoalId,
+        update: jest.fn(),
+      });
+      ActivityReportObjective.create.mockResolvedValue({
+        id: mockActivityReportObjectiveId,
+        objectiveId: mockObjectiveId,
+        activityReportId: mockActivityReportId,
+        update: jest.fn(),
+      });
       const existingGoal = {
-        id: 1,
+        id: mockGoalId,
         name: 'name',
         objectives: [],
         update: jest.fn(),
-        grantIds: [1],
-        goalIds: [1],
+        grantIds: [mockGrantId],
+        goalIds: [mockGoalId],
       };
 
       const goalWithNewObjective = {
         ...existingGoal,
         objectives: [{
           isNew: true,
-          goalId: 1,
+          goalId: mockGoalId,
           title: 'title',
           ttaProvided: '',
           ActivityReportObjective: {},
           status: '',
         }],
       };
-      await saveGoalsForReport([goalWithNewObjective], { id: 1 });
+      await saveGoalsForReport([goalWithNewObjective], { id: mockActivityReportId });
       expect(Objective.create).toHaveBeenCalledWith({
-        goalId: 1,
+        goalId: mockGoalId,
         title: 'title',
         status: 'Not Started',
       });
     });
 
     it('can update existing objectives', async () => {
-      ActivityReportGoal.findOrCreate.mockResolvedValue([
+      ActivityReportGoal.findOne.mockResolvedValue([
         {
-          goalId: 1,
+          goalId: mockGoalId,
         },
       ]);
       const existingGoal = {
         id: 1,
         name: 'name',
         objectives: [{
-          title: 'title', id: 1, status: 'Closed', goalId: 1,
+          title: 'title', id: mockObjectiveId, status: 'Closed', goalId: mockGoalId,
         }],
         update: jest.fn(),
-        grantIds: [1],
-        goalIds: [1],
+        grantIds: [mockGrantId],
+        goalIds: [mockGoalId],
       };
 
-      await saveGoalsForReport([existingGoal], { id: 1 });
+      Objective.findOne.mockResolvedValue({ id: mockObjectiveId });
+      await saveGoalsForReport([existingGoal], { id: mockActivityReportId });
       expect(existingObjectiveUpdate).toHaveBeenCalledWith({ title: 'title' }, { individualHooks: true });
     });
   });
