@@ -17,7 +17,6 @@ import RecipientReviewSection from './components/RecipientReviewSection';
 import OtherEntityReviewSection from './components/OtherEntityReviewSection';
 import { validateObjectives } from './components/objectiveValidator';
 import ConnectionError from './components/ConnectionError';
-import Req from '../../../components/Req';
 import ReadOnly from '../../../components/GoalForm/ReadOnly';
 import PlusButton from '../../../components/GoalForm/PlusButton';
 import OtherEntity from './components/OtherEntity';
@@ -201,10 +200,7 @@ const GoalsObjectives = ({
       <Helmet>
         <title>Goals and objectives</title>
       </Helmet>
-      <p className="usa-prose">
-        <Req className="margin-right-1" />
-        indicates required field
-      </p>
+
       {(!isOtherEntityReport && !isRecipientReport) && (
         <Alert noIcon type="info">
           To add goals and objectives, indicate who the activity was for in

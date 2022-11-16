@@ -740,7 +740,7 @@ describe('create goal', () => {
     act(() => userEvent.click(yes));
     expect(yes.checked).toBe(true);
 
-    await screen.findByText('Attach any available non-link resources');
+    await screen.findByText('Attach any non-link resources');
 
     const dispatchEvt = (node, type, data) => {
       const event = new Event(type, { bubbles: true });
