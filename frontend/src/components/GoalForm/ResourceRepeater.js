@@ -18,15 +18,16 @@ export default function ResourceRepeater({
   setResources,
   error,
   validateResources,
-  status,
   isOnReport,
   isLoading,
   goalStatus,
   userCanEdit,
+  editingFromActivityReport,
 }) {
   const resourcesWrapper = useRef();
 
-  const readOnly = status === 'Suspended' || status === 'Complete' || (goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed';
+  const readOnly = !editingFromActivityReport
+  && ((goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed' || !userCanEdit);
 
   if (readOnly) {
     const onlyResourcesWithValues = resources.filter((resource) => resource.value);
@@ -39,7 +40,7 @@ export default function ResourceRepeater({
         <p className="usa-prose text-bold margin-bottom-0">Resource links</p>
         <ul className="usa-list usa-list--unstyled">
           {onlyResourcesWithValues.map((resource) => (
-            !(status === 'Complete' || goalStatus === 'Closed') || resource.onAnyReport ? (
+            resource.onAnyReport ? (
               <li key={uuidv4()}>
                 <a href={resource.value}>{resource.value}</a>
               </li>
@@ -148,7 +149,6 @@ ResourceRepeater.propTypes = {
   setResources: PropTypes.func.isRequired,
   error: PropTypes.node.isRequired,
   validateResources: PropTypes.func.isRequired,
-  status: PropTypes.string.isRequired,
   isOnReport: PropTypes.oneOfType([
     PropTypes.bool,
     PropTypes.number,
@@ -156,8 +156,10 @@ ResourceRepeater.propTypes = {
   isLoading: PropTypes.bool,
   goalStatus: PropTypes.string.isRequired,
   userCanEdit: PropTypes.bool.isRequired,
+  editingFromActivityReport: PropTypes.bool,
 };
 
 ResourceRepeater.defaultProps = {
   isLoading: false,
+  editingFromActivityReport: false,
 };

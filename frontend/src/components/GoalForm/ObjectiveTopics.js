@@ -14,14 +14,17 @@ export default function ObjectiveTopics({
   validateObjectiveTopics,
   topics,
   onChangeTopics,
-  status,
   goalStatus,
   inputName,
   isLoading,
   isOnReport,
   userCanEdit,
+  editingFromActivityReport,
 }) {
-  const readOnly = useMemo(() => status === 'Suspended' || status === 'Complete' || (goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed' || !userCanEdit, [goalStatus, isOnReport, status, userCanEdit]);
+  const readOnly = useMemo(() => !editingFromActivityReport
+  && ((goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed' || !userCanEdit),
+  [goalStatus, isOnReport, userCanEdit, editingFromActivityReport]);
+
   if (readOnly && !topics.length) {
     return null;
   }
@@ -33,7 +36,7 @@ export default function ObjectiveTopics({
         </p>
         <ul className="usa-list usa-list--unstyled">
           {topics.map((topic) => (
-            !(status === 'Complete' && goalStatus === 'Closed') || topic.onAnyReport ? (
+            topic.onAnyReport ? (
               <li key={uuid()}>
                 {topic.name}
               </li>
@@ -45,7 +48,7 @@ export default function ObjectiveTopics({
   }
 
   const { editableTopics, fixedTopics } = topics.reduce((acc, topic) => {
-    if (topic.isOnApprovedReport) {
+    if (!userCanEdit || topic.onAnyReport) {
       acc.fixedTopics.push(topic);
     } else {
       acc.editableTopics.push(topic);
@@ -119,7 +122,6 @@ ObjectiveTopics.propTypes = {
     value: PropTypes.number,
   })).isRequired,
   onChangeTopics: PropTypes.func.isRequired,
-  status: PropTypes.string.isRequired,
   inputName: PropTypes.string,
   isLoading: PropTypes.bool,
   goalStatus: PropTypes.string.isRequired,
@@ -128,9 +130,11 @@ ObjectiveTopics.propTypes = {
     PropTypes.number,
   ]).isRequired,
   userCanEdit: PropTypes.bool.isRequired,
+  editingFromActivityReport: PropTypes.bool,
 };
 
 ObjectiveTopics.defaultProps = {
   inputName: 'topics',
   isLoading: false,
+  editingFromActivityReport: false,
 };
