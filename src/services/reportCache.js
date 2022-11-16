@@ -8,7 +8,7 @@ const {
 } = require('../models');
 
 const cacheFiles = async (activityReportObjectiveId, files = []) => {
-  const fileIds = files.map((file) => file.objectiveFile.dataValues.fileId);
+  const fileIds = files.map((file) => file.fileId);
   const filesSet = new Set(fileIds);
   const originalAROFiles = await ActivityReportObjectiveFile.findAll({
     where: { activityReportObjectiveId },
@@ -37,8 +37,7 @@ const cacheFiles = async (activityReportObjectiveId, files = []) => {
 };
 
 const cacheResources = async (activityReportObjectiveId, resources = []) => {
-  const resourceUrls = resources
-    .map((resource) => resource.ObjectiveResource.dataValues.userProvidedUrl);
+  const resourceUrls = resources.map((resource) => resource.userProvidedUrl);
   const resourcesSet = new Set(resourceUrls);
   const originalAROResources = await ActivityReportObjectiveResource.findAll({
     where: { activityReportObjectiveId },
@@ -67,7 +66,7 @@ const cacheResources = async (activityReportObjectiveId, resources = []) => {
 };
 
 const cacheTopics = async (activityReportObjectiveId, topics = []) => {
-  const topicIds = topics.map((topic) => topic[0].dataValues.topicId);
+  const topicIds = topics.map((topic) => topic.topicId);
   const topicsSet = new Set(topicIds);
   const originalAROTopics = await ActivityReportObjectiveTopic.findAll({
     where: { activityReportObjectiveId },
