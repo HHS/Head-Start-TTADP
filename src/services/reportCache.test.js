@@ -17,6 +17,7 @@ import db, {
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
+  CollaboratorRole,
 } from '../models';
 import {
   cacheObjectiveMetadata,
@@ -44,15 +45,15 @@ describe('reportCache', () => {
   ];
 
   const mockRecipient = {
-    id: 65535,
+    id: 6553500,
     uei: 'NNA5N2KHMGM2',
     name: 'Tooth Brushing Academy',
     recipientType: 'Community Action Agency (CAA)',
   };
 
   const mockGrant = {
-    id: 65535,
-    number: '99CH9999',
+    id: 6553500,
+    number: '99RC9999',
     regionId: 2,
     status: 'Active',
     startDate: new Date('2021-02-09T15:13:00.000Z'),
@@ -66,13 +67,13 @@ describe('reportCache', () => {
 
   const mockGoal = {
     name: 'Goal 1',
-    id: 2085,
+    id: 20850000,
     status: 'Not Started',
     timeframe: 'None',
   };
 
   const mockObjective = {
-    id: 20220813,
+    id: 2022081300,
     title: null,
     status: 'Not Started',
   };
@@ -91,19 +92,19 @@ describe('reportCache', () => {
   };
 
   const mockFiles = [{
-    id: 140001,
+    id: 140000001,
     originalFileName: 'test01.pdf',
     key: '508bdc9e-8dec-4d64-b83d-59a72a4f2353.pdf',
     status: 'APPROVED',
     fileSize: 54417,
   }, {
-    id: 140002,
+    id: 140000002,
     originalFileName: 'test02.pdf',
     key: '508bdc9e-8dec-4d64-b83d-59a72a4f2354.pdf',
     status: 'APPROVED',
     fileSize: 54417,
   }, {
-    id: 140003,
+    id: 140000003,
     originalFileName: 'test03.pdf',
     key: '508bdc9e-8dec-4d64-b83d-59a72a4f2355.pdf',
     status: 'APPROVED',
@@ -111,11 +112,11 @@ describe('reportCache', () => {
   }];
 
   const mockObjectiveTopics = [{
-    topicId: 1,
+    topicId: 60,
   }, {
-    topicId: 2,
+    topicId: 61,
   }, {
-    topicId: 3,
+    topicId: 62,
   }];
 
   const mockObjectiveResources = [{
@@ -206,6 +207,9 @@ describe('reportCache', () => {
     await Goal.destroy({ where: { id: goal.id } });
     await Grant.destroy({ where: { id: grant.id } });
     await Recipient.destroy({ where: { id: recipient.id } });
+    await Promise.all(roles.map(async (role) => CollaboratorRole.destroy({
+      where: { roleId: role.id },
+    })));
     await Promise.all(roles.map(async (role) => role.destroy()));
     await User.destroy({ where: { id: user.id } });
     await db.sequelize.close();
@@ -277,12 +281,11 @@ describe('reportCache', () => {
       });
 
       const metadata = {
-        files: filesForThisObjective.map((f) => [f]),
-        resources: resources.map((r) => [r]),
-        topics: topics.map((t) => [t]),
+        files: filesForThisObjective,
+        resources,
+        topics,
         ttaProvided: null,
       };
-
       await cacheObjectiveMetadata(objective, report.id, metadata);
       const aro = await ActivityReportObjective.findOne({
         where: { activityReportId: report.id },
@@ -344,9 +347,9 @@ describe('reportCache', () => {
       });
 
       const metadata = {
-        files: filesForThisObjective.map((f) => [f]),
-        resources: resources.map((r) => [r]),
-        topics: topics.map((t) => [t]),
+        files: filesForThisObjective,
+        resources,
+        topics,
         ttaProvided: null,
       };
 
