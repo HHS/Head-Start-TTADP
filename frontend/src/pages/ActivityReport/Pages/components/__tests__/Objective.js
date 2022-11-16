@@ -2,6 +2,7 @@ import '@testing-library/jest-dom';
 import {
   render, screen, within, act, fireEvent, waitFor,
 } from '@testing-library/react';
+import selectEvent from 'react-select-event';
 import React from 'react';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
@@ -45,6 +46,8 @@ const flushPromises = async (rerender, ui) => {
   await act(() => waitFor(() => rerender(ui)));
 };
 
+let getValues;
+
 const RenderObjective = ({
   // eslint-disable-next-line react/prop-types
   objective = defaultObjective, onRemove = () => {},
@@ -63,6 +66,8 @@ const RenderObjective = ({
   hookForm.register('goals');
   hookForm.register('objectives');
 
+  getValues = hookForm.getValues;
+
   const onUpdate = (obj) => {
     hookForm.setValue('objectives', [obj]);
   };
@@ -80,7 +85,16 @@ const RenderObjective = ({
         <Objective
           objective={defaultObjective}
           topicOptions={[]}
-          options={[]}
+          options={[
+            {
+              label: 'Create a new objective',
+              value: 'Create a new objective',
+              topics: [],
+              resources: [],
+              files: [],
+              status: 'Not Started',
+              title: '',
+            }]}
           index={1}
           remove={onRemove}
           fieldArrayName="objectives"
@@ -145,5 +159,17 @@ describe('Objective', () => {
     expect(fetchMock.called()).toBe(true);
     await screen.findByText(/error uploading your file/i);
     fetchMock.restore();
+  });
+
+  it('does not clear TTA provided between objective changes', async () => {
+    render(<RenderObjective />);
+    await screen.findByText('What');
+    await act(async () => selectEvent.select(screen.getByLabelText(/Select TTA objective/i), ['Create a new objective']));
+    expect(await screen.findByText('What')).toBeVisible();
+
+    const values = getValues();
+    const { objectives } = values;
+    const ttas = objectives.map((o) => o.ttaProvided);
+    expect(ttas).toEqual(['<p><ul><li>What</li></ul></p>', '<p><ul><li>What</li></ul></p>']);
   });
 });

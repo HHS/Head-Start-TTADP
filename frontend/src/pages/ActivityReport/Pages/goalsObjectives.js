@@ -17,7 +17,6 @@ import RecipientReviewSection from './components/RecipientReviewSection';
 import OtherEntityReviewSection from './components/OtherEntityReviewSection';
 import { validateObjectives } from './components/objectiveValidator';
 import ConnectionError from './components/ConnectionError';
-import Req from '../../../components/Req';
 import ReadOnly from '../../../components/GoalForm/ReadOnly';
 import PlusButton from '../../../components/GoalForm/PlusButton';
 import OtherEntity from './components/OtherEntity';
@@ -116,11 +115,16 @@ const GoalsObjectives = ({
     if (index !== -1) {
       copyOfSelectedGoals.splice(index, 1);
     }
+
     onUpdateGoals(copyOfSelectedGoals);
 
     // if we have no goals, open the form up via the
     // hander provided by the context
     if (copyOfSelectedGoals.length === 0) {
+      setValue('goalForEditing', '');
+      setValue('goalName', '');
+      setValue('goalEndDate', '');
+      setValue('goalIsRttapa', '');
       toggleGoalForm(false);
     }
   };
@@ -201,10 +205,7 @@ const GoalsObjectives = ({
       <Helmet>
         <title>Goals and objectives</title>
       </Helmet>
-      <p className="usa-prose">
-        <Req className="margin-right-1" />
-        indicates required field
-      </p>
+
       {(!isOtherEntityReport && !isRecipientReport) && (
         <Alert noIcon type="info">
           To add goals and objectives, indicate who the activity was for in

@@ -311,10 +311,19 @@ function Navigator({
     setValue('goalName', '');
     setValue('goalEndDate', '');
     setValue('goalIsRttapa', '');
+    setValue('goalForEditing.objectives', []);
 
     // the form value is updated but the react state is not
     // so here we go (todo - why are there two sources of truth?)
-    updateFormData({ ...formData, goals: newGoals });
+    updateFormData({
+      ...formData,
+      goals: newGoals,
+      goalForEditing: null,
+      goalName: '',
+      goalEndDate: '',
+      goalIsRttapa: '',
+      'goalForEditing.objectives': [],
+    });
   };
 
   const onObjectiveFormNavigate = async () => {
