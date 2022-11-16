@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -21,6 +21,7 @@ import {
   OBJECTIVE_TOPICS,
 } from './goalValidator';
 import { validateListOfResources } from '../../../../components/GoalForm/constants';
+import AppLoadingContext from '../../../../AppLoadingContext';
 import './Objective.scss';
 
 export default function Objective({
@@ -46,6 +47,7 @@ export default function Objective({
   }))();
   const [selectedObjective, setSelectedObjective] = useState(initialObjective);
   const { getValues } = useFormContext();
+  const { setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
 
   /**
    * add controllers for all the controlled fields
@@ -176,6 +178,8 @@ export default function Objective({
 
     // handle file upload
     try {
+      setIsAppLoading(true);
+      setAppLoadingText('Uploading');
       const data = new FormData();
       data.append('objectiveIds', JSON.stringify(!objectiveToAttach.ids ? [0] : objectiveToAttach.ids));
       files.forEach((file) => {
@@ -187,6 +191,8 @@ export default function Objective({
     } catch (error) {
       setError('There was an error uploading your file(s).');
       return null;
+    } finally {
+      setIsAppLoading(false);
     }
   };
 
