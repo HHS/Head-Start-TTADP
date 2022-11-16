@@ -1281,7 +1281,11 @@ async function createObjectivesForGoal(goal, objectives, report) {
   }
 
   // we don't want to create objectives with blank titles
-  return Promise.all(objectives.filter((o) => o.title).map(async (objective) => {
+  return Promise.all(objectives.filter((o) => o.title
+    || o.ttaProvided
+    || o.topics.length
+    || o.resources.length
+    || o.files.length).map(async (objective) => {
     const {
       id,
       isNew,
