@@ -251,10 +251,11 @@ export async function saveObjectiveAssociations(
 
   if (deleteUnusedAssociations) {
     // cleanup objective topics
+    console.log('!!!!!!!!!!', JSON.stringify({ objectiveTopics }));
     await ObjectiveTopic.destroy({
       where: {
         id: {
-          [Op.notIn]: objectiveTopics.length ? objectiveTopics.map(([ot]) => ot.id) : [],
+          [Op.notIn]: objectiveTopics.length ? objectiveTopics.map((ot) => ot.id) : [],
         },
         objectiveId: objective.id,
       },
@@ -288,7 +289,7 @@ export async function saveObjectiveAssociations(
       where: {
         id: {
           [Op.notIn]: objectiveResources.length
-            ? objectiveResources.map(([or]) => or.id) : [],
+            ? objectiveResources.map((or) => or.id) : [],
         },
         objectiveId: objective.id,
       },
