@@ -161,7 +161,13 @@ export default function Objective({
     setSelectedObjective(newObjective);
     onChangeResources(newObjective.resources);
     onChangeTitle(newObjective.title);
-    onChangeTta(newObjective.ttaProvided || '');
+
+    // we only want to set the tta provided if it already exists, otherwise
+    // we don't want to clear the value in the field
+    if (newObjective.ttaProvided && newObjective.ttaProvided !== '<p></p>') {
+      onChangeTta(newObjective.ttaProvided);
+    }
+
     onChangeStatus(newObjective.status);
     onChangeTopics(newObjective.topics);
     onChangeFiles(newObjective.files || []);
