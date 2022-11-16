@@ -251,7 +251,6 @@ export async function saveObjectiveAssociations(
 
   if (deleteUnusedAssociations) {
     // cleanup objective topics
-    console.log('!!!!!!!!!!', JSON.stringify({ objectiveTopics }));
     await ObjectiveTopic.destroy({
       where: {
         id: {
