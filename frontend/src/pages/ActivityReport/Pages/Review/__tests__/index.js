@@ -15,6 +15,7 @@ import NetworkContext from '../../../../../NetworkContext';
 
 import ReviewSubmit from '../index';
 import { REPORT_STATUSES } from '../../../../../Constants';
+import AppLoadingContext from '../../../../../AppLoadingContext';
 
 const availableApprovers = [
   { id: 1, name: 'approver 1' },
@@ -100,20 +101,23 @@ const renderReview = (
   render(
     <Router history={history}>
       <UserContext.Provider value={{ user }}>
-        <NetworkContext.Provider value={{ connectionActive: true, localStorageAvailable: true }}>
-          <RenderReview
-            allComplete={allComplete}
-            onSubmit={onSubmit}
-            onResetToDraft={onResetToDraft}
-            formData={{
-              ...formData, calculatedStatus, submissionStatus: calculatedStatus, author: { name: 'user' }, approvers, id: 1, displayId: '1',
-            }}
-            isApprover={isApprover}
-            isPendingApprover={isPendingApprover}
-            onReview={onReview}
-            pages={pages}
-          />
-        </NetworkContext.Provider>
+        {/* eslint-disable-next-line max-len */}
+        <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}>
+          <NetworkContext.Provider value={{ connectionActive: true, localStorageAvailable: true }}>
+            <RenderReview
+              allComplete={allComplete}
+              onSubmit={onSubmit}
+              onResetToDraft={onResetToDraft}
+              formData={{
+                ...formData, calculatedStatus, submissionStatus: calculatedStatus, author: { name: 'user' }, approvers, id: 1, displayId: '1',
+              }}
+              isApprover={isApprover}
+              isPendingApprover={isPendingApprover}
+              onReview={onReview}
+              pages={pages}
+            />
+          </NetworkContext.Provider>
+        </AppLoadingContext.Provider>
       </UserContext.Provider>
     </Router>,
   );

@@ -7,6 +7,7 @@ import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import Objective from '../Objective';
+import AppLoadingContext from '../../../../../AppLoadingContext';
 
 const defaultObjective = {
   id: 1,
@@ -69,27 +70,35 @@ const RenderObjective = ({
   return (
     // eslint-disable-next-line react/jsx-props-no-spreading
     <FormProvider {...hookForm}>
-      <Objective
-        objective={defaultObjective}
-        topicOptions={[]}
-        options={[]}
-        index={1}
-        remove={onRemove}
-        fieldArrayName="objectives"
-        goalId={1}
-        onRemove={onRemove}
-        onUpdate={onUpdate}
-        parentLabel="goals"
-        objectiveAriaLabel="1 on goal 1"
-        goalIndex={0}
-        objectiveIndex={0}
-        errors={{}}
-        onObjectiveChange={jest.fn()}
-        onSaveDraft={jest.fn()}
-        parentGoal={{ status: 'In Progress' }}
-        initialObjectiveStatus="Not Started"
-        reportId={98123}
-      />
+      <AppLoadingContext.Provider value={
+        {
+          setAppLoadingText: jest.fn(),
+          setIsAppLoading: jest.fn(),
+        }
+      }
+      >
+        <Objective
+          objective={defaultObjective}
+          topicOptions={[]}
+          options={[]}
+          index={1}
+          remove={onRemove}
+          fieldArrayName="objectives"
+          goalId={1}
+          onRemove={onRemove}
+          onUpdate={onUpdate}
+          parentLabel="goals"
+          objectiveAriaLabel="1 on goal 1"
+          goalIndex={0}
+          objectiveIndex={0}
+          errors={{}}
+          onObjectiveChange={jest.fn()}
+          onSaveDraft={jest.fn()}
+          parentGoal={{ status: 'In Progress' }}
+          initialObjectiveStatus="Not Started"
+          reportId={98123}
+        />
+      </AppLoadingContext.Provider>
     </FormProvider>
   );
 };
