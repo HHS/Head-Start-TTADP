@@ -1777,6 +1777,11 @@ export async function createOrUpdateGoalsForActivityReport(goals, reportId) {
 
 export async function destroyGoal(goalIds) {
   try {
+    if (typeof goalIds === 'number') {
+      goalIds = [goalIds]; // eslint-disable-line no-param-reassign
+    } else if (!(Array.isArray(goalIds) && goalIds.map((i) => typeof i).every((i) => i === 'number'))) {
+      throw new Error('goalIds is not a number or and array of numbers');
+    }
     const reportsWithGoal = (Array.isArray(goalIds) && goalIds.length)
       ? await ActivityReport.findAll({
         attributes: ['id'],
