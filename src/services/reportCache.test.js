@@ -18,6 +18,7 @@ import db, {
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
   CollaboratorRole,
+  Topic,
 } from '../models';
 import {
   cacheObjectiveMetadata,
@@ -111,13 +112,7 @@ describe('reportCache', () => {
     fileSize: 54417,
   }];
 
-  const mockObjectiveTopics = [{
-    topicId: 60,
-  }, {
-    topicId: 61,
-  }, {
-    topicId: 62,
-  }];
+  let mockObjectiveTopics;
 
   const mockObjectiveResources = [{
     userProvidedUrl: 'https://ttahub.ohs.acf.hhs.gov/',
@@ -139,6 +134,7 @@ describe('reportCache', () => {
   const objectiveFiles = [];
   const objectiveResources = [];
   const objectiveTopics = [];
+  const topics = [];
 
   beforeAll(async () => {
     [user] = await User.findOrCreate({ where: { ...mockUser } });
@@ -177,6 +173,10 @@ describe('reportCache', () => {
     objectiveResources.push(await ObjectiveResource.findOrCreate({
       where: { objectiveId: objective.id, ...mockObjectiveResources[0] },
     }));
+    topics.push((await Topic.findOrCreate({ where: { name: 'Coaching' } })));
+    topics.push((await Topic.findOrCreate({ where: { name: 'Communication' } })));
+    topics.push((await Topic.findOrCreate({ where: { name: 'Community and Self-Assessment' } })));
+    mockObjectiveTopics = topics.map((topic) => ({ topicId: topic[0].id }));
     objectiveTopics.push(await ObjectiveTopic.findOrCreate({
       where: { objectiveId: objective.id, ...mockObjectiveTopics[0] },
     }));
@@ -274,7 +274,7 @@ describe('reportCache', () => {
         },
       });
 
-      const topics = await ObjectiveTopic.findAll({
+      const topicsForThisObjective = await ObjectiveTopic.findAll({
         where: {
           objectiveId: objective.id,
         },
@@ -283,7 +283,7 @@ describe('reportCache', () => {
       const metadata = {
         files: filesForThisObjective,
         resources,
-        topics,
+        topics: topicsForThisObjective,
         ttaProvided: null,
       };
       await cacheObjectiveMetadata(objective, report.id, metadata);
@@ -340,7 +340,7 @@ describe('reportCache', () => {
         },
       });
 
-      const topics = await ObjectiveTopic.findAll({
+      const topicsForThisObjective = await ObjectiveTopic.findAll({
         where: {
           objectiveId: objective.id,
         },
@@ -349,7 +349,7 @@ describe('reportCache', () => {
       const metadata = {
         files: filesForThisObjective,
         resources,
-        topics,
+        topics: topicsForThisObjective,
         ttaProvided: null,
       };
 
@@ -393,16 +393,16 @@ describe('reportCache', () => {
         },
       });
 
-      const topics = await ObjectiveTopic.findAll({
+      const topicsForThisObjective = await ObjectiveTopic.findAll({
         where: {
           objectiveId: objective.id,
         },
       });
 
       const metadata = {
-        files: filesForThisObjective.map((f) => [f]),
-        resources: resources.map((r) => [r]),
-        topics: topics.map((t) => [t]),
+        files: filesForThisObjective,
+        resources,
+        topics: topicsForThisObjective,
         ttaProvided: null,
       };
 
