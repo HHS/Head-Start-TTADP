@@ -26,6 +26,8 @@ export const getStatus = (status) => {
       return 'Rejected';
     case 'PENDING':
       return 'Pending';
+    case 'SCANNING_FAILED':
+      return 'Uploaded';
     default:
       break;
   }
