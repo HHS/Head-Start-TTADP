@@ -80,15 +80,23 @@ describe('createOrUpdateGoals', () => {
       },
     });
 
+    const goals = await Goal.findAll({
+      where: {
+        grantId: grants.map((g) => g.id),
+      },
+    });
+
+    const goalIds = goals.map((g) => g.id);
+
     await Objective.destroy({
       where: {
-        goalId: goal.id,
+        goalId: goalIds,
       },
     });
 
     await Goal.destroy({
       where: {
-        id: newGoals.map((g) => g.id),
+        id: goalIds,
       },
     });
 
@@ -236,5 +244,77 @@ describe('createOrUpdateGoals', () => {
     expect(newGoal.name).toBe('This is some serious goal text');
     expect(newGoal.grant.id).toBe(grants[1].id);
     expect(newGoal.grant.regionId).toBe(1);
+  });
+
+  it('you can change an objectives status', async () => {
+    const basicGoal = {
+      recipientId: recipient.id,
+      regionId: 1,
+      name: 'This is some serious goal text for an objective that will have its status updated',
+      status: 'Draft',
+    };
+
+    const updatedGoals = await createOrUpdateGoals([
+      {
+        ...basicGoal,
+        isNew: true,
+        grantId: grants[1].id,
+        objectives: [
+          {
+            id: 'new-0',
+            status: 'Not Started',
+            title: 'This is an objective',
+            resources: [
+              {
+                value: 'https://www.test.gov',
+              },
+            ],
+            topics: [
+              {
+                id: topic.id,
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    expect(updatedGoals).toHaveLength(1);
+    const [updatedGoal] = updatedGoals;
+    expect(updatedGoal.objectives).toHaveLength(1);
+    const [updatedObjective] = updatedGoal.objectives;
+    expect(updatedObjective.status).toBe('Not Started');
+
+    const updatedGoals2 = await createOrUpdateGoals([
+      {
+        ...updatedGoal.dataValues,
+        recipientId: recipient.id,
+        grantId: grants[1].id,
+        ids: [updatedGoal.id],
+        objectives: [
+          {
+            title: updatedObjective.title,
+            id: [updatedObjective.id],
+            status: 'Complete',
+            resources: [
+              {
+                value: 'https://www.test.gov',
+              },
+            ],
+            topics: [
+              {
+                id: topic.id,
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    expect(updatedGoals2).toHaveLength(1);
+    const [updatedGoal2] = updatedGoals2;
+    expect(updatedGoal2.objectives).toHaveLength(1);
+    const [updatedObjective2] = updatedGoal2.objectives;
+    expect(updatedObjective2.status).toBe('Complete');
   });
 });
