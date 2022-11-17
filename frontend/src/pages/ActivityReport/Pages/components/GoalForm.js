@@ -26,7 +26,7 @@ export default function GoalForm({
   datePickerKey,
 }) {
   // pull the errors out of the form context
-  const { errors, watch } = useFormContext();
+  const { errors, watch, setValue } = useFormContext();
 
   // App Loading Context.
   const { isAppLoading, setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
@@ -131,7 +131,7 @@ export default function GoalForm({
         setIsAppLoading(true);
         setAppLoadingText('Loading');
         const data = await goalsByIdsAndActivityReport(goal.goalIds, reportId);
-        setObjectives(data[0].objectives);
+        setValue('goalForEditing.objectives', data[0].objectives);
       } finally {
         setIsAppLoading(false);
       }
