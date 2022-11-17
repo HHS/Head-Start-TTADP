@@ -36,7 +36,7 @@ export default function ObjectiveTopics({
         </p>
         <ul className="usa-list usa-list--unstyled">
           {topics.map((topic) => (
-            topic.onAnyReport ? (
+            topic.onAnyReport || goalStatus === 'Not Started' ? (
               <li key={uuid()}>
                 {topic.name}
               </li>
