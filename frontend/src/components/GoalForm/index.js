@@ -587,11 +587,6 @@ export default function GoalForm({
 
       const updatedGoals = await createOrUpdateGoals(goals);
 
-      const newCreatedGoals = updatedGoals.filter((goal) => {
-        const existingGoal = createdGoals.find((g) => g.id === goal.id);
-        return existingGoal;
-      });
-
       // this will only be ever be an array with a length of 1
       // as only one goal can be edited at a time, and even multi grant goals
       // are deduplicated on the backend
@@ -599,8 +594,6 @@ export default function GoalForm({
         const existingGoal = createdGoals.find((g) => g.id === goal.id);
         return !existingGoal;
       });
-
-      setCreatedGoals(newCreatedGoals);
 
       const updatedObjectives = goalForEditing
         && goalForEditing.objectives ? goalForEditing.objectives : [];
