@@ -587,8 +587,9 @@ export default function GoalForm({
 
       const updatedGoals = await createOrUpdateGoals(goals);
 
-      // this find owill only ever 1 goal
+      // this find will only ever 1 goal
       // representing the goal being edited
+      // we search the new goals and get the one that wasn't in the existing created goals
       // (only one goal can be edited at a time, and even multi grant goals
       // are deduplicated on the backend)
       const existingIds = createdGoals.map((g) => g.id);
