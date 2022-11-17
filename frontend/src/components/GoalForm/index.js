@@ -587,7 +587,7 @@ export default function GoalForm({
 
       const updatedGoals = await createOrUpdateGoals(goals);
 
-      // this will only be ever be an array with a length of 1
+      // goalForEditing will only be ever be an array with a length of 1
       // as only one goal can be edited at a time, and even multi grant goals
       // are deduplicated on the backend
       const [goalForEditing] = updatedGoals.filter((goal) => {
