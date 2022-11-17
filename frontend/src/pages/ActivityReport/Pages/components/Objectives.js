@@ -38,7 +38,9 @@ export default function Objectives({
     fields ? fields.map(({ value }) => value) : [],
   );
 
-  const onAddNew = () => {};
+  const onAddNew = () => {
+    append({ ...NEW_OBJECTIVE() });
+  };
 
   const setUpdatedUsedObjectiveIds = () => {
     // If fields have changed get updated list of used Objective ID's.
