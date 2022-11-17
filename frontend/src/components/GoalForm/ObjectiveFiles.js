@@ -56,7 +56,7 @@ export default function ObjectiveFiles({
         </p>
         <ul className="usa-list usa-list--unstyled">
           {files.map((file) => (
-            file.onAnyReport ? (
+            file.onAnyReport || goalStatus === 'Not Started' ? (
               <li key={uuid()}>
                 {file.originalFileName}
               </li>
