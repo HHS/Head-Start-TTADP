@@ -95,7 +95,7 @@ const cacheTopics = async (activityReportObjectiveId, topics = []) => {
   ]);
 };
 
-const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
+const cacheObjectiveMetadata = async (objective, reportId, metadata, index) => {
   const {
     files, resources, topics, ttaProvided, status,
   } = metadata;
@@ -118,6 +118,7 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
       title: objective.title,
       status: status || objective.status,
       ttaProvided,
+      arOrder: index + 1,
     }, {
       where: { id: activityReportObjectiveId },
       individualHooks: true,

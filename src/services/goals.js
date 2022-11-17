@@ -339,7 +339,7 @@ export async function saveObjectiveAssociations(
 export function reduceObjectives(newObjectives, currentObjectives = []) {
   // objectives = accumulator
   // we pass in the existing objectives as the accumulator
-  return newObjectives.reduce((objectives, objective) => {
+  const objectivesToSort = newObjectives.reduce((objectives, objective) => {
     const exists = objectives.find((o) => (
       o.title === objective.title && o.status === objective.status
     ));
@@ -358,6 +358,11 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
 
     const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
 
+    const arOrder = objective.activityReportObjectives
+      && objective.activityReportObjectives[0]
+      && objective.activityReportObjectives[0].arOrder
+      ? objective.activityReportObjectives[0].arOrder : null;
+
     return [...objectives, {
       ...objective.dataValues,
       value: id,
@@ -365,12 +370,21 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
       // Make sure we pass back a list of recipient ids for subsequent saves.
       recipientIds: [objective.getDataValue('otherEntityId')],
       isNew: false,
+      arOrder,
     }];
   }, currentObjectives);
+
+  const sortedObjectives = objectivesToSort.sort((o1, o2) => {
+    if (o1.arOrder < o2.arOrder) {
+      return -1;
+    }
+    return 1;
+  });
+  return sortedObjectives;
 }
 
 export function reduceObjectivesForActivityReport(newObjectives, currentObjectives = []) {
-  return newObjectives.reduce((objectives, objective) => {
+  const objectivesToSort = newObjectives.reduce((objectives, objective) => {
     // check the activity report objective status
     const objectiveStatus = objective.activityReportObjectives
       && objective.activityReportObjectives[0]
@@ -420,6 +434,11 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         && objective.activityReportObjectives[0].ttaProvided
       ? objective.activityReportObjectives[0].ttaProvided : null;
 
+    const arOrder = objective.activityReportObjectives
+      && objective.activityReportObjectives[0]
+      && objective.activityReportObjectives[0].arOrder
+      ? objective.activityReportObjectives[0].arOrder : null;
+
     const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
 
     return [...objectives, {
@@ -429,6 +448,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       ttaProvided,
       status: objectiveStatus, // the status from above, derived from the activity report objective
       isNew: false,
+      arOrder,
 
       // for the associated models, we need to return not the direct associations
       // but those associated through an activity report since those reflect the state
@@ -446,6 +466,14 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       ),
     }];
   }, currentObjectives);
+
+  const sortedObjectives = objectivesToSort.sort((o1, o2) => {
+    if (o1.arOrder < o2.arOrder) {
+      return -1;
+    }
+    return 1;
+  });
+  return sortedObjectives;
 }
 
 /**
@@ -1400,7 +1428,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
     || o.ttaProvided
     || o.topics.length
     || o.resources.length
-    || o.files.length).map(async (objective) => {
+    || o.files.length).map(async (objective, index) => {
     const {
       id,
       isNew,
@@ -1485,6 +1513,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
         status,
         ttaProvided: objective.ttaProvided,
       },
+      index,
     );
     return savedObjective;
   }));
