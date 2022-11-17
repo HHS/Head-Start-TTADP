@@ -14,7 +14,6 @@ export default function ObjectiveFiles({
   files,
   onChangeFiles,
   goalStatus,
-  status,
   isOnReport,
   onUploadFiles,
   index,
@@ -25,17 +24,19 @@ export default function ObjectiveFiles({
   userCanEdit,
   forceObjectiveSave,
   selectedObjectiveId,
+  editingFromActivityReport,
 }) {
   const objectiveId = objective.id;
   const hasFiles = useMemo(() => files && files.length > 0, [files]);
   const [useFiles, setUseFiles] = useState(hasFiles);
   const [fileError, setFileError] = useState();
-
   const hideFileToggle = useMemo(
     () => (hasFiles && files.some((file) => file.onAnyReport)), [hasFiles, files],
   );
 
-  const readOnly = useMemo(() => !userCanEdit || status === 'Suspended' || status === 'Complete' || (goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed', [goalStatus, isOnReport, status, userCanEdit]);
+  const readOnly = useMemo(() => !editingFromActivityReport
+  && ((goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed' || !userCanEdit),
+  [goalStatus, isOnReport, userCanEdit, editingFromActivityReport]);
 
   useEffect(() => {
     if (!useFiles && hasFiles) {
@@ -55,7 +56,7 @@ export default function ObjectiveFiles({
         </p>
         <ul className="usa-list usa-list--unstyled">
           {files.map((file) => (
-            !(status === 'Complete' && goalStatus === 'Closed') || file.onAnyReport ? (
+            file.onAnyReport || goalStatus === 'Not Started' ? (
               <li key={uuid()}>
                 {file.originalFileName}
               </li>
@@ -195,7 +196,6 @@ ObjectiveFiles.propTypes = {
   onChangeFiles: PropTypes.func.isRequired,
   goalStatus: PropTypes.string.isRequired,
   isOnReport: PropTypes.oneOfType([PropTypes.bool, PropTypes.number]).isRequired,
-  status: PropTypes.string.isRequired,
   onUploadFiles: PropTypes.func.isRequired,
   index: PropTypes.number.isRequired,
   inputName: PropTypes.string,
@@ -204,6 +204,7 @@ ObjectiveFiles.propTypes = {
   userCanEdit: PropTypes.bool.isRequired,
   forceObjectiveSave: PropTypes.bool,
   selectedObjectiveId: PropTypes.number,
+  editingFromActivityReport: PropTypes.bool,
 };
 
 ObjectiveFiles.defaultProps = {
@@ -214,4 +215,5 @@ ObjectiveFiles.defaultProps = {
   forceObjectiveSave: true,
   selectedObjectiveId: undefined,
   label: "Do you plan to use any TTA resources that aren't available as a link?",
+  editingFromActivityReport: false,
 };
