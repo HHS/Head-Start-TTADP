@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -8,6 +8,7 @@ import PrintSummary from '../PrintSummary';
 import { REPORT_STATUSES } from '../../../../Constants';
 import './index.scss';
 import { Accordion } from '../../../../components/Accordion';
+import AppLoadingContext from '../../../../AppLoadingContext';
 
 const ReviewSubmit = ({
   onSubmit,
@@ -24,7 +25,7 @@ const ReviewSubmit = ({
   lastSaveTime,
 }) => {
   const { additionalNotes, calculatedStatus } = formData;
-
+  const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const [reviewed, updateReviewed] = useState(false);
   const [error, updateError] = useState();
 
@@ -39,7 +40,8 @@ const ReviewSubmit = ({
 
   const onFormReview = async (data) => {
     // we need to validate as we do on submit
-
+    setIsAppLoading(true);
+    setAppLoadingText('Submitting');
     try {
       await onReview(data);
       updateReviewed(true);
@@ -47,6 +49,8 @@ const ReviewSubmit = ({
     } catch (e) {
       updateReviewed(false);
       updateError('Unable to review report');
+    } finally {
+      setIsAppLoading(false);
     }
   };
 
