@@ -667,6 +667,7 @@ export default function GoalForm({
             regionId: parseInt(regionId, DECIMAL_BASE),
             recipientId: recipient.id,
             objectives: goal.objectives,
+            isRttapa: goal.isRttapa,
           }));
           return [...acc, ...g];
         }, []),
@@ -724,7 +725,6 @@ export default function GoalForm({
     // date pickers, as they are uncontrolled inputs
     // PS - endDate can be null
     setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
-
     setObjectives(goal.objectives);
 
     setShowForm(true);
