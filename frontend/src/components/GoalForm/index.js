@@ -587,10 +587,19 @@ export default function GoalForm({
 
       const updatedGoals = await createOrUpdateGoals(goals);
 
-      const updatedObjectives = updatedGoals && updatedGoals.length > 0
-        && updatedGoals[0] && updatedGoals[0].objectives && updatedGoals[0].objectives.length > 0
-        ? [...updatedGoals[0].objectives]
-        : [];
+      // this find will only ever 1 goal
+      // representing the goal being edited
+      // we search the new goals and get the one that wasn't in the existing created goals
+      // (only one goal can be edited at a time, and even multi grant goals
+      // are deduplicated on the backend)
+      const existingIds = createdGoals.map((g) => g.id);
+      const goalForEditing = updatedGoals.find((goal) => {
+        const { id } = goal;
+        return !existingIds.includes(id);
+      });
+
+      const updatedObjectives = goalForEditing
+        && goalForEditing.objectives ? goalForEditing.objectives : [];
 
       updateObjectives(updatedObjectives);
 
@@ -599,8 +608,13 @@ export default function GoalForm({
         type: 'success',
       });
 
-      const newIds = updatedGoals.flatMap((g) => g.goalIds);
-      setIds(newIds);
+      // if we are not creating a new goal, we want to update the goal ids
+      // for the case of adding a grant to an existing goal. If we are creating a new goal,
+      // we don't keep track of the ids, so we don't need to update them
+      if (!isNew) {
+        const newIds = updatedGoals.flatMap((g) => g.goalIds);
+        setIds(newIds);
+      }
     } catch (error) {
       setAlert({
         message: 'There was an error saving your goal',
@@ -653,6 +667,7 @@ export default function GoalForm({
             regionId: parseInt(regionId, DECIMAL_BASE),
             recipientId: recipient.id,
             objectives: goal.objectives,
+            isRttapa: goal.isRttapa,
           }));
           return [...acc, ...g];
         }, []),
@@ -710,7 +725,6 @@ export default function GoalForm({
     // date pickers, as they are uncontrolled inputs
     // PS - endDate can be null
     setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
-
     setObjectives(goal.objectives);
 
     setShowForm(true);
