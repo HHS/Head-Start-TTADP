@@ -14,7 +14,7 @@ import { removeUnusedGoalsObjectivesFromReport, saveObjectiveAssociations } from
 import { cacheObjectiveMetadata } from './reportCache';
 
 export async function saveObjectivesForReport(objectives, report) {
-  const updatedObjectives = await Promise.all(objectives.map(async (objective) => Promise
+  const updatedObjectives = await Promise.all(objectives.map(async (objective, index) => Promise
     .all(objective.recipientIds.map(async (otherEntityId) => {
       const { topics, files, resources } = objective;
 
@@ -78,7 +78,7 @@ export async function saveObjectivesForReport(objectives, report) {
       await cacheObjectiveMetadata(savedObjective, report.id, {
         ...metadata,
         ttaProvided: objective.ttaProvided,
-      });
+      }, index);
 
       return savedObjective;
     }))));
