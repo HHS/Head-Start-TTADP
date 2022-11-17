@@ -49,16 +49,43 @@ export const getReport = async (reportId) => {
   return report.json();
 };
 
+function combineTopics(report, expandedTopics) {
+  const reportTopics = expandedTopics.filter((topic) => report.id === topic.activityReportId)
+    .map((t) => t.name);
+
+  const exclusiveTopics = new Set([...report.sortedTopics, ...reportTopics]);
+  const topicsArr = [...exclusiveTopics];
+  topicsArr.sort();
+
+  return topicsArr;
+}
+
 export const getReports = async (sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE, filters) => {
   const reports = await get(`${activityReportUrl}?sortBy=${sortBy}&sortDir=${sortDir}&offset=${offset}&limit=${limit}${filters ? `&${filters}` : ''}`);
   const json = await reports.json();
-  const { count, rows: rawRows, recipients } = json;
+  const {
+    count, rows: rawRows, recipients, topics,
+  } = json;
+
+  const expandedTopics = topics.reduce((acc, topic) => {
+    const { name, objectives } = topic;
+    const aros = objectives.map((objective) => objective.activityReportObjectives).flat();
+
+    return [
+      ...acc,
+      ...aros.map((aro) => ({
+        activityReportId: aro.activityReportId,
+        name,
+      })),
+    ];
+  }, []);
 
   const rows = rawRows.map((row) => ({
     ...row,
     activityRecipients: recipients.filter(
       (recipient) => recipient.activityReportId === row.id,
     ),
+    sortedTopics: combineTopics(row, expandedTopics),
   }));
 
   return {
@@ -100,6 +127,18 @@ export const getGoals = async (grantIds) => {
   const url = join(activityReportUrl, 'goals', `?${params.join('&')}`);
   const goals = await get(url);
   return goals.json();
+};
+
+export const saveGoalsForReport = async (data) => {
+  const url = join(activityReportUrl, 'goals');
+  const goals = await post(url, data);
+  return goals.json();
+};
+
+export const saveObjectivesForReport = async (data) => {
+  const url = join(activityReportUrl, 'objectives');
+  const objectives = await post(url, data);
+  return objectives.json();
 };
 
 export const getCollaborators = async (region) => {

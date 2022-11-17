@@ -30,7 +30,7 @@ function Select({
       color: colors.smartHubTextInk,
       lineHeight: '22px',
     }),
-    control: (provided, state) => ({
+    control: (provided) => ({
       ...provided,
       borderColor: '#565c65',
       backgroundColor: 'white',
@@ -38,8 +38,6 @@ function Select({
       '&:hover': {
         borderColor: '#565c65',
       },
-      // Match uswds disabled style
-      opacity: state.isDisabled ? '0.7' : '1',
     }),
     indicatorsContainer: (provided) => ({
       ...provided,
