@@ -7,15 +7,14 @@ import {
   Form, Fieldset, Button, Alert, Dropdown,
 } from '@trussworks/react-uswds';
 import UserContext from '../../../../../UserContext';
-
 import IncompletePages from '../IncompletePages';
 import FormItem from '../../../../../components/FormItem';
 import HookFormRichEditor from '../../../../../components/HookFormRichEditor';
-import MultiSelect from '../../../../../components/MultiSelect';
 import ApproverStatusList from '../../components/ApproverStatusList';
 import DismissingComponentWrapper from '../../../../../components/DismissingComponentWrapper';
 import NetworkContext from '../../../../../NetworkContext';
 import ConnectionError from '../../components/ConnectionError';
+import ApproverSelect from './components/ApproverSelect';
 
 const Draft = ({
   availableApprovers,
@@ -29,7 +28,7 @@ const Draft = ({
   creatorRole,
 }) => {
   const {
-    watch, handleSubmit, control, register,
+    watch, handleSubmit, register,
   } = useFormContext();
   const hasIncompletePages = incompletePages.length > 0;
   const [justSubmitted, updatedJustSubmitted] = useState(false);
@@ -40,7 +39,7 @@ const Draft = ({
 
   const completeUserRoles = () => {
     // If removed user role is selected we need to add it.
-    const completeRoleList = [...user.role];
+    const completeRoleList = user.roles.map((r) => r.fullName);
     if (creatorRole) {
       const indexOfRole = completeRoleList.indexOf(creatorRole);
       if (indexOfRole === -1) {
@@ -78,7 +77,7 @@ const Draft = ({
       <h2>Submit Report</h2>
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onSubmit)}>
         {
-          user && user.role && user.role.length > 1
+          user && user.roles && user.roles.length > 1
             ? (
               <Fieldset className="smart-hub--report-legend margin-top-4" legend="Creator Role">
                 <FormItem
@@ -89,7 +88,7 @@ const Draft = ({
                   <Dropdown
                     id="creatorRole"
                     name="creatorRole"
-                    inputRef={register({ required: 'A creator role must be assigned to the report before submitting' })}
+                    inputRef={register({ required: 'Select one' })}
                   >
                     <option name="default" value="" disabled hidden>- Select -</option>
                     {completeUserRoles().map((role) => (
@@ -125,16 +124,11 @@ const Draft = ({
             label="Approving manager"
             name="approvers"
           >
-            <MultiSelect
-              id="approvingManagerId"
+            <ApproverSelect
               name="approvers"
-              control={control}
               valueProperty="User.id"
               labelProperty="User.fullName"
-              simple={false}
-              required="At least one manager must be assigned to the report before submitting"
               options={availableApprovers.map((a) => ({ value: a.id, label: a.name }))}
-              inputRef={register({ required: true })}
             />
           </FormItem>
         </Fieldset>
@@ -142,16 +136,7 @@ const Draft = ({
         <div className="margin-top-3">
           <ApproverStatusList approverStatus={approverStatusList} />
         </div>
-        <Button
-          outline
-          type="button"
-          onClick={() => {
-            onSaveForm(false);
-            updateShowSavedDraft(true);
-          }}
-        >
-          Save Draft
-        </Button>
+        <Button disabled={!connectionActive} type="submit">Submit for approval</Button>
         { !connectionActive && (
         <Alert type="warning" noIcon>
           There&#39;s an issue with your connection.
@@ -165,7 +150,16 @@ const Draft = ({
           .
         </Alert>
         )}
-        <Button disabled={!connectionActive} type="submit">Submit for approval</Button>
+        <Button
+          outline
+          type="button"
+          onClick={async () => {
+            await onSaveForm(false);
+            updateShowSavedDraft(true);
+          }}
+        >
+          Save Draft
+        </Button>
       </Form>
       <DismissingComponentWrapper
         shown={showSavedDraft}

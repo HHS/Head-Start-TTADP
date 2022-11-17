@@ -3,8 +3,9 @@ import React from 'react';
 import {
   render, screen, within, fireEvent,
 } from '@testing-library/react';
+import selectEvent from 'react-select-event';
 import userEvent from '@testing-library/user-event';
-
+import fetchMock from 'fetch-mock';
 import UserSection from '../UserSection';
 import { SCOPE_IDS } from '../../../Constants';
 
@@ -22,7 +23,7 @@ describe('UserSection', () => {
       id: 1,
       email: 'email',
       name: 'first last',
-      role: ['Grantee Specialist'],
+      roles: [{ fullName: 'Grantee Specialist', name: 'GS', id: 1 }],
       homeRegionId: 1,
       permissions: [
         {
@@ -41,8 +42,11 @@ describe('UserSection', () => {
       flags: ['moon_man'],
     };
 
+    fetchMock.get('/api/admin/roles', [{ fullName: 'Grantee Specialist', name: 'GS', id: 1 }, { fullName: 'COR', name: 'COR', id: 2 }]);
     render(<UserSection user={user} onSave={onSave} features={[{ value: 'half_goat', label: 'Half goat' }]} />);
   });
+
+  afterEach(() => fetchMock.restore());
 
   it('properly controls user info', () => {
     const inputBox = screen.getByLabelText('Full Name');
@@ -97,15 +101,9 @@ describe('UserSection', () => {
     expect(within(userInfo).getByLabelText('Region')).toHaveValue('1');
   });
 
-  it('the roles support multi selection', () => {
-    const rolesInputGS = screen.getByText('Grantee Specialist');
-
-    fireEvent.focus(rolesInputGS);
-    fireEvent.keyDown(rolesInputGS, { key: 'ArrowDown', code: 40 });
-    fireEvent.click(screen.getByText('COR'));
-    // Find the next option selected in the multiselect input
-    const rolesInputCOR = rolesInputGS.parentElement.nextElementSibling.firstChild;
-    expect(within(rolesInputCOR).getByText('COR')).toBeDefined();
+  it('the roles support multi selection', async () => {
+    await selectEvent.select(screen.getByLabelText('Role(s)'), ['COR']);
+    expect(await screen.findByText('COR')).toBeVisible();
   });
 
   it('there is a placeholder in the roles input', () => {
