@@ -10,7 +10,7 @@ import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import selectEvent from 'react-select-event';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 
-import GoalPicker, { newGoal } from '../GoalPicker';
+import GoalPicker from '../GoalPicker';
 
 const defaultSelectedGoals = [
   {
@@ -72,7 +72,6 @@ describe('GoalPicker', () => {
 
   it('you can select a goal', async () => {
     const availableGoals = [{
-      ...newGoal([]),
       label: 'Goal 1',
       value: 1,
       goalIds: [1],
@@ -91,7 +90,6 @@ describe('GoalPicker', () => {
 
   it('you can select a goal with no selected goals', async () => {
     const availableGoals = [{
-      ...newGoal([]),
       label: 'Goal 1',
       value: 1,
       goalIds: [1],

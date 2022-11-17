@@ -8,14 +8,12 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import fetchMock from 'fetch-mock';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
-import { newGoal } from '../GoalPicker';
 import GoalForm from '../GoalForm';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 
 describe('GoalForm', () => {
   const Form = ({ id }) => {
     const goal = {
-      ...newGoal([]),
       id,
       isNew: id === 'new',
       goalIds: [123],
