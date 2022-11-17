@@ -200,6 +200,10 @@ describe('createOrUpdateGoals', () => {
       raw: true,
     });
 
+    objectivesOnUpdatedGoal.forEach((o, i) => {
+      expect(o.rtrOrder).toBe(i + 1);
+    });
+
     expect(objectivesOnUpdatedGoal.length).toBe(2);
     const titles = objectivesOnUpdatedGoal.map((obj) => obj.title);
     expect(titles).toContain('This is another objective');

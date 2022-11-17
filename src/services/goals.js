@@ -79,6 +79,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
       ],
       model: Objective,
       as: 'objectives',
+      order: [['rtrOrder', 'ASC']],
       include: [
         {
           model: ObjectiveResource,
@@ -907,7 +908,7 @@ export async function createOrUpdateGoals(goals) {
     }
 
     const newObjectives = await Promise.all(
-      objectives.map(async (o) => {
+      objectives.map(async (o, index) => {
         const {
           resources,
           topics,
@@ -1012,6 +1013,7 @@ export async function createOrUpdateGoals(goals) {
         await objective.update({
           title,
           status: objectiveStatus,
+          rtrOrder: index + 1,
         }, { individualHooks: true });
 
         // save all our objective join tables (ObjectiveResource, ObjectiveTopic, ObjectiveFile)
