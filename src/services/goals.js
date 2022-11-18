@@ -79,7 +79,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
               'onAnyReport',
             ],
             [
-              'onAR',
+              'onApprovedAR',
               'isOnApprovedReport',
             ],
           ],
@@ -93,7 +93,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
               'onAnyReport',
             ],
             [
-              'onAR',
+              'onApprovedAR',
               'isOnApprovedReport',
             ],
           ],
@@ -117,7 +117,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
               'onAnyReport',
             ],
             [
-              'onAR',
+              'onApprovedAR',
               'isOnApprovedReport',
             ],
           ],
