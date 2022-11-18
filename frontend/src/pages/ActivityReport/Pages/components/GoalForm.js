@@ -132,17 +132,6 @@ export default function GoalForm({
         setIsAppLoading(true);
         setAppLoadingText('Loading');
         const data = await goalsByIdsAndActivityReport(goal.goalIds, reportId);
-
-        // The `objectives` state is provided to the `Objectives` component,
-        // but only is used to render the `options` which are passed
-        // to the `Select` component.
-        //
-        // The objective which is ultimately provided to the `Objective` component
-        // is actually pulled from react-hook-form by making
-        // a call to `useFieldArray('goalForEditing.objectives')`.
-        //
-        // For this reason, both the `objectives` state and the `objectives` field
-        // array are updated.
         setValue('goalForEditing.objectives', data[0].objectives);
       } finally {
         setIsAppLoading(false);
