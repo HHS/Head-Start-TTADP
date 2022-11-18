@@ -24,6 +24,17 @@ const findOrCreateObjectiveTemplate = async (
   return { id: objectiveTemplate[0].id, title };
 };
 
+const autoPopulateOnAR = (sequelize, instance, options) => {
+  // eslint-disable-next-line no-prototype-builtins
+  if (instance.onAR === undefined
+    || instance.onAR === null) {
+    instance.set('onAR', false);
+    if (!options.fields.includes('onAR')) {
+      options.fields.push('onAR');
+    }
+  }
+};
+
 const autoPopulateOnApprovedAR = (sequelize, instance, options) => {
   // eslint-disable-next-line no-prototype-builtins
   if (instance.onApprovedAR === undefined
@@ -258,7 +269,11 @@ const propagateMetadataToTemplate = async (sequelize, instance, options) => {
 };
 
 const beforeValidate = async (sequelize, instance, options) => {
+  if (!Array.isArray(options.fields)) {
+    options.fields = []; //eslint-disable-line
+  }
   // await autoPopulateObjectiveTemplateId(sequelize, instance, options);
+  autoPopulateOnAR(sequelize, instance, options);
   autoPopulateOnApprovedAR(sequelize, instance, options);
   preventTitleChangeWhenOnApprovedAR(sequelize, instance, options);
   autoPopulateStatusChangeDates(sequelize, instance, options);

@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-// const { afterCreate, afterDestroy } = require('./hooks/objectiveTopic');
+const { afterDestroy } = require('./hooks/objectiveTopic');
 
 /**
    * ObjectiveTopic table. Junction table
@@ -36,10 +36,9 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'ActivityReportObjectiveTopic',
-    // hooks: {
-    //   afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
-    //   afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
-    // },
+    hooks: {
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+    },
   });
   return ActivityReportObjectiveTopic;
 };

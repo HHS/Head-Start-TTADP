@@ -15,7 +15,7 @@ const mockUser = {
   homeRegionId: 1,
   name: 'user5426861',
   hsesUsername: 'user5426861',
-  hsesUserId: '5426861',
+  hsesUserId: '54268610',
 };
 
 const reportObject = {
@@ -125,34 +125,36 @@ const regionOneDraftReport = {
 
 describe('Reason list widget', () => {
   beforeAll(async () => {
-    await User.create(mockUser);
-    await Recipient.create({ name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' });
-    await Grant.bulkCreate([{
-      id: GRANT_ID_ONE, number: GRANT_ID_ONE, recipientId: RECIPIENT_ID, regionId: 3, status: 'Active',
-    }, {
-      id: GRANT_ID_TWO, number: GRANT_ID_TWO, recipientId: RECIPIENT_ID, regionId: 3, status: 'Active',
-    }], { validate: true, individualHooks: true });
+    try {
+      await User.findOrCreate({ where: { ...mockUser } });
+      await Recipient.findOrCreate({ where: { name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' } });
+      await Grant.bulkCreate([{
+        id: GRANT_ID_ONE, number: GRANT_ID_ONE, recipientId: RECIPIENT_ID, regionId: 3, status: 'Active',
+      }, {
+        id: GRANT_ID_TWO, number: GRANT_ID_TWO, recipientId: RECIPIENT_ID, regionId: 3, status: 'Active',
+      }], { validate: true, individualHooks: true });
 
-    const reportOne = await ActivityReport.findOne({ where: { duration: 1, reason: ['Below Competitive Threshold (CLASS)'] } });
-    await createOrUpdate(regionOneReportA, reportOne);
+      const reportOne = await ActivityReport.findOne({ where: { duration: 1, reason: ['Below Competitive Threshold (CLASS)'] } });
+      await createOrUpdate(regionOneReportA, reportOne);
 
-    const reportTwo = await ActivityReport.findOne({ where: { duration: 2, reason: ['Below Competitive Threshold (CLASS)', 'Below Quality Threshold (CLASS)'] } });
-    await createOrUpdate(regionOneReportB, reportTwo);
+      const reportTwo = await ActivityReport.findOne({ where: { duration: 2, reason: ['Below Competitive Threshold (CLASS)', 'Below Quality Threshold (CLASS)'] } });
+      await createOrUpdate(regionOneReportB, reportTwo);
 
-    const reportThree = await ActivityReport.findOne({ where: { duration: 3, reason: ['Below Competitive Threshold (CLASS)', 'Below Quality Threshold (CLASS)', 'Change in Scope'] } });
-    await createOrUpdate(regionOneReportC, reportThree);
+      const reportThree = await ActivityReport.findOne({ where: { duration: 3, reason: ['Below Competitive Threshold (CLASS)', 'Below Quality Threshold (CLASS)', 'Change in Scope'] } });
+      await createOrUpdate(regionOneReportC, reportThree);
 
-    const reportFour = await ActivityReport.findOne({ where: { duration: 4, reason: ['Below Quality Threshold (CLASS)', 'Change in Scope', 'Child Incidents'] } });
-    await createOrUpdate(regionOneReportD, reportFour);
+      const reportFour = await ActivityReport.findOne({ where: { duration: 4, reason: ['Below Quality Threshold (CLASS)', 'Change in Scope', 'Child Incidents'] } });
+      await createOrUpdate(regionOneReportD, reportFour);
 
-    const reportFive = await ActivityReport.findOne({ where: { duration: 5, reason: ['Below Quality Threshold (CLASS)'] } });
-    await createOrUpdate(regionOneReportE, reportFive);
+      const reportFive = await ActivityReport.findOne({ where: { duration: 5, reason: ['Below Quality Threshold (CLASS)'] } });
+      await createOrUpdate(regionOneReportE, reportFive);
 
-    const reportSix = await ActivityReport.findOne({ where: { duration: 6, reason: ['Below Competitive Threshold (CLASS)', 'Below Quality Threshold (CLASS)'] } });
-    await createOrUpdate(regionTwoReportA, reportSix);
+      const reportSix = await ActivityReport.findOne({ where: { duration: 6, reason: ['Below Competitive Threshold (CLASS)', 'Below Quality Threshold (CLASS)'] } });
+      await createOrUpdate(regionTwoReportA, reportSix);
 
-    const reportSeven = await ActivityReport.findOne({ where: { duration: 7, reason: ['Below Competitive Threshold (CLASS)', 'Below Quality Threshold (CLASS)'], submissionStatus: REPORT_STATUSES.DRAFT } });
-    await createOrUpdate(regionOneDraftReport, reportSeven);
+      const reportSeven = await ActivityReport.findOne({ where: { duration: 7, reason: ['Below Competitive Threshold (CLASS)', 'Below Quality Threshold (CLASS)'], submissionStatus: REPORT_STATUSES.DRAFT } });
+      await createOrUpdate(regionOneDraftReport, reportSeven);
+    } catch (e) { console.log(e); }
   });
 
   afterAll(async () => {
@@ -175,6 +177,8 @@ describe('Reason list widget', () => {
   it('retrieves reason list within small date range for specified region', async () => {
     const scopes = filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2021/01/01-2021/02/28' });
     const res = await reasonList(scopes);
+
+    console.log(JSON.stringify(res));
 
     expect(res.length).toBe(17);
     expect(res[0].name).toBe('Below Competitive Threshold (CLASS)');

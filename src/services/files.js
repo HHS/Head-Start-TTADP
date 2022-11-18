@@ -17,7 +17,7 @@ const deleteFile = async (id) => File.destroy({
 const deleteActivityReportFile = async (id) => ActivityReportFile.destroy({
   where: { id },
 });
-const deleteActivityReportObjectiveFile = async (id) => ActivityReportObjectiveFile.destroy({
+const deleteActivityReportObjectiveFile = async (id) => ActivityReportObjectiveFile.destroy({ // TODO GH - need to pass hookMetadata
   where: { id },
 });
 const deleteObjectiveFile = async (id) => ObjectiveFile.destroy({

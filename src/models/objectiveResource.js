@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { afterCreate, afterDestroy } = require('./hooks/objectiveResource');
+const { beforeValidate, afterCreate, afterDestroy } = require('./hooks/objectiveResource');
 
 module.exports = (sequelize, DataTypes) => {
   class ObjectiveResource extends Model {
@@ -27,10 +27,19 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    onAR: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
+    onApprovedAR: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
   }, {
     sequelize,
     modelName: 'ObjectiveResource',
     hooks: {
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
     },
