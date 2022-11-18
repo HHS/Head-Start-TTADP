@@ -1,5 +1,4 @@
 const recalculateOnAR = async (sequelize, instance, options) => {
-  console.log('AAAAAAAAAAAAAAAAAAAAAA');
   await sequelize.query(`
     WITH
       "GoalOnReport" AS (
@@ -18,7 +17,6 @@ const recalculateOnAR = async (sequelize, instance, options) => {
     FROM "GoalOnReport" gr
     WHERE g.id = gr.id;
   `, { transaction: options.transaction });
-  console.log('BBBBBBBBBBBBBBBBBBBBBBBBBBB');
 };
 
 const afterDestroy = async (sequelize, instance, options) => {
