@@ -72,6 +72,10 @@ module.exports = (sequelize, DataTypes) => {
     previousStatus: {
       type: DataTypes.STRING,
     },
+    onAR: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
     onApprovedAR: {
       type: DataTypes.BOOLEAN,
       default: false,

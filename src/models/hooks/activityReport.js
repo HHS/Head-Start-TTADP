@@ -299,17 +299,52 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
       }
 
       if (objectives && objectives.length > 0) {
-        await sequelize.models.Objective.update(
-          { onApprovedAR: false },
-          {
-            where: {
-              id: { [Op.in]: objectives.map((o) => o.id) },
-              onApprovedAR: true,
+        await Promise.all([
+          sequelize.models.Objective.update(
+            { onApprovedAR: false },
+            {
+              where: {
+                id: { [Op.in]: objectives.map((o) => o.id) },
+                onApprovedAR: true,
+              },
+              transaction: options.transaction,
+              individualHooks: true,
             },
-            transaction: options.transaction,
-            individualHooks: true,
-          },
-        );
+          ),
+          sequelize.models.ObjectiveFile.update(
+            { onApprovedAR: false },
+            {
+              where: {
+                objectiveId: { [Op.in]: objectives.map((o) => o.id) },
+                onApprovedAR: true,
+              },
+              transaction: options.transaction,
+              individualHooks: true,
+            },
+          ),
+          sequelize.models.ObjectiveResource.update(
+            { onApprovedAR: false },
+            {
+              where: {
+                objectiveId: { [Op.in]: objectives.map((o) => o.id) },
+                onApprovedAR: true,
+              },
+              transaction: options.transaction,
+              individualHooks: true,
+            },
+          ),
+          sequelize.models.ObjectiveTopic.update(
+            { onApprovedAR: false },
+            {
+              where: {
+                objectiveId: { [Op.in]: objectives.map((o) => o.id) },
+                onApprovedAR: true,
+              },
+              transaction: options.transaction,
+              individualHooks: true,
+            },
+          ),
+        ]);
       }
 
       /*  Determine Objective Statuses (Approved > Other) */
@@ -399,18 +434,78 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
         },
       );
       const objectiveIds = objectivesAndGoals.map((o) => o.id);
-      await sequelize.models.Objective.update(
-        { onApprovedAR: true },
-        {
-          where: {
-            id: objectiveIds,
-            onApprovedAR: false,
-          },
-          transaction: options.transaction,
-          individualHooks: true,
-        },
-      );
-
+      if (Array.isArray(objectiveIds) && objectiveIds.length > 0) {
+        await Promise.all([
+          sequelize.models.Objective.update(
+            { onApprovedAR: true },
+            {
+              where: {
+                id: objectiveIds,
+                onApprovedAR: false,
+              },
+              transaction: options.transaction,
+              individualHooks: true,
+            },
+          ),
+          sequelize.query(`
+          WITH
+            "FilesOnReport" AS (
+              SELECT
+                aro."objectiveId",
+                arof."fileId"
+              FROM "ActivityReportObjectives" aro
+              JOIN "ActivityReportObjectiveFiles" arof
+              ON aro.id = arof."activityReportObjectiveId"
+              WHERE aro."activityReportId" = ${instance.id}
+              AND aro."objectiveId" IN (${objectiveIds.join(',')})
+            )
+            UPDATE "ObjectiveFiles" f
+            SET "onApprovedAR" = true
+            FROM "FilesOnReport" fr
+            WHERE f."onApprovedAR" = false
+            AND f."objectiveId" = fr."objectiveId"
+            AND f."fileId" = fr."fileId";
+          `, { transaction: options.transaction }),
+          sequelize.query(`
+          WITH
+            "ResourcesOnReport" AS (
+              SELECT
+                aro."objectiveId",
+                aror."userProvidedUrl"
+              FROM "ActivityReportObjectives" aro
+              JOIN "ActivityReportObjectiveResources" aror
+              ON aro.id = aror."activityReportObjectiveId"
+              WHERE aro."activityReportId" = ${instance.id}
+              AND aro."objectiveId" IN (${objectiveIds.join(',')})
+            )
+            UPDATE "ObjectiveResources" r
+            SET "onApprovedAR" = true
+            FROM "ResourcesOnReport" rr
+            WHERE r."onApprovedAR" = false
+            AND r."objectiveId" = rr."objectiveId"
+            AND r."userProvidedUrl" = rr."userProvidedUrl";
+          `, { transaction: options.transaction }),
+          sequelize.query(`
+          WITH
+            "TopicsOnReport" AS (
+              SELECT
+                aro."objectiveId",
+                arot."topicId"
+              FROM "ActivityReportObjectives" aro
+              JOIN "ActivityReportObjectiveTopics" arot
+              ON aro.id = arot."activityReportObjectiveId"
+              WHERE aro."activityReportId" = ${instance.id}
+              AND aro."objectiveId" IN (${objectiveIds.join(',')})
+            )
+            UPDATE "ObjectiveTopics" t
+            SET "onApprovedAR" = true
+            FROM "TopicsOnReport" tr
+            WHERE t."onApprovedAR" = false
+            AND t."objectiveId" = tr."objectiveId"
+            AND t."topicId" = tr."topicId";
+          `, { transaction: options.transaction }),
+        ]);
+      }
       /*  Determine Objective Statuses (Other > Approved) */
       await determineObjectiveStatus(instance.id, sequelize, false);
 

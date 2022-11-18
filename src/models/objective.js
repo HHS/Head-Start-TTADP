@@ -29,6 +29,7 @@ module.exports = (sequelize, DataTypes) => {
       Objective.belongsTo(models.OtherEntity, { foreignKey: 'otherEntityId', as: 'otherEntity' });
       Objective.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });
       Objective.hasMany(models.ObjectiveResource, { foreignKey: 'objectiveId', as: 'resources' });
+      Objective.hasMany(models.ObjectiveTopic, { foreignKey: 'objectiveId', as: 'objectiveTopics' });
       Objective.belongsToMany(models.Topic, {
         through: models.ObjectiveTopic,
         foreignKey: 'objectiveId',
@@ -67,8 +68,13 @@ module.exports = (sequelize, DataTypes) => {
       },
       onUpdate: 'CASCADE',
     },
+    onAR: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
     onApprovedAR: {
       type: DataTypes.BOOLEAN,
+      default: false,
     },
     firstNotStartedAt: {
       type: DataTypes.DATE,
