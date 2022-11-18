@@ -1,5 +1,5 @@
 import React, {
-  useEffect, useState, useMemo, useContext, useRef,
+  useEffect, useMemo, useContext, useRef,
 } from 'react';
 import PropTypes from 'prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -120,7 +120,8 @@ export default function GoalForm({
     onUpdateDate(goal.endDate ? goal.endDate : defaultEndDate);
   }, [defaultEndDate, goal.endDate, onUpdateDate]);
 
-  const [objectives, setObjectives] = useState([]);
+  const objectives = watch('goalForEditing.objectives');
+
   /*
    * this use effect fetches
    * associated goal data
@@ -142,7 +143,6 @@ export default function GoalForm({
         //
         // For this reason, both the `objectives` state and the `objectives` field
         // array are updated.
-        setObjectives(data[0].objectives);
         setValue('goalForEditing.objectives', data[0].objectives);
       } finally {
         setIsAppLoading(false);
@@ -152,7 +152,6 @@ export default function GoalForm({
     if (goal.goalIds.length) {
       fetchData();
     } else {
-      setObjectives([]);
       setValue('goalForEditing.objectives', []);
     }
   }, [goal.goalIds, reportId, setAppLoadingText, setIsAppLoading]);
