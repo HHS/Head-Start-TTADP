@@ -86,7 +86,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         },
         {
           model: ObjectiveTopic,
-          as: 'ObjectiveTopics',
+          as: 'objectiveTopics',
           attributes: [
             [
               'onAR',
@@ -100,7 +100,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
           include: [
             {
               model: Topic,
-              as: 'topics',
+              as: 'topic',
               attributes: [
                 'id',
                 'name',
@@ -109,20 +109,24 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
           ],
         },
         {
-          model: File,
-          as: 'files',
-          attributes: {
-            include: [
-              [
-                'onAR',
-                'onAnyReport',
-              ],
-              [
-                'onAR',
-                'isOnApprovedReport',
-              ],
+          model: ObjectiveFile,
+          as: 'objectiveFiles',
+          attributes: [
+            [
+              'onAR',
+              'onAnyReport',
             ],
-          },
+            [
+              'onAR',
+              'isOnApprovedReport',
+            ],
+          ],
+          include: [
+            {
+              model: File,
+              as: 'file',
+            },
+          ],
         },
         {
           model: ActivityReport,
