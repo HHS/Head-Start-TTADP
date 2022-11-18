@@ -13,8 +13,6 @@ const recalculateOnAR = async (sequelize, instance, options) => {
     throw new Error('hookMetadata.objectiveId or hookMetadata.objectiveIds is required for hook to function');
   }
 
-  console.log(JSON.stringify({ name: 'ActivityReportObjectiveFiles', instance }));
-
   await sequelize.query(`
     WITH
       "FileOnReport" AS (
