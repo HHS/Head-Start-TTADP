@@ -51,7 +51,7 @@ const FileTable = ({ onFileRemoved, files }) => {
         index={index}
       />
       <table className="files-table">
-        <thead className="files-table--thead" bgcolor="#F8F8F8">
+        <thead className="files-table--thead">
           <tr>
             <th width="50%">
               Name
