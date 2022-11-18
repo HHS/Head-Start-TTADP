@@ -96,15 +96,20 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
               'onApprovedAR',
               'isOnApprovedReport',
             ],
+            [
+              'topic.id',
+              'key',
+            ],
+            [
+              'topic.name',
+              'name',
+            ],
           ],
           include: [
             {
               model: Topic,
               as: 'topic',
-              attributes: [
-                'id',
-                'name',
-              ],
+              attributes: [],
             },
           ],
         },
@@ -120,11 +125,32 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
               'onApprovedAR',
               'isOnApprovedReport',
             ],
+            [
+              'file.originalFileName',
+              'originalFileName',
+            ],
+            [
+              'file.key',
+              'key',
+            ],
+            [
+              'file.status',
+              'status',
+            ],
+            [
+              'file.fileSize',
+              'fileSize',
+            ],
+            [
+              'file.url',
+              'url',
+            ],
           ],
           include: [
             {
               model: File,
               as: 'file',
+              attributes: [],
             },
           ],
         },
