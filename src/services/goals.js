@@ -663,7 +663,7 @@ export async function goalByIdAndRecipient(id, recipientId) {
           ...objectiveTopics.topic,
           topic: undefined,
         }))
-        : null,
+        : [],
       objectiveTopics: undefined,
       files: (Array.isArray(objective.objectiveFiles))
         ? objective.objectiveFiles.map((objectiveFiles) => ({
@@ -671,10 +671,10 @@ export async function goalByIdAndRecipient(id, recipientId) {
           ...objectiveFiles.file,
           file: undefined,
         }))
-        : null,
+        : [],
       objectiveFiles: undefined,
     }))
-    : null;
+    : [];
   return goal;
 }
 
@@ -692,7 +692,7 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
               ...objectiveTopics.topic,
               topic: undefined,
             }))
-            : null,
+            : [],
           objectiveTopics: undefined,
           files: (Array.isArray(objective.objectiveFiles))
             ? objective.objectiveFiles.map((objectiveFiles) => ({
@@ -700,12 +700,12 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
               ...objectiveFiles.file,
               file: undefined,
             }))
-            : null,
+            : [],
           objectiveFiles: undefined,
         }))
-        : null,
+        : [],
     }))
-    : null;
+    : [];
   return reduceGoals(goals);
 }
 
