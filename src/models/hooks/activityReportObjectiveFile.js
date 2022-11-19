@@ -30,7 +30,7 @@ const recalculateOnAR = async (sequelize, instance, options) => {
       JOIN "ActivityReportObjectiveFiles" arof
       ON aro.id = arof."activityReportObjectiveId"
       AND f."fileId" = arof."fileId"
-      WHERE f."objectiveId" IN (${options.hookMetadata.objectiveIds.join(',')})
+      WHERE f."objectiveId" IN (${objectiveIds.join(',')})
       AND f."fileId" = ${instance.fileId}
       AND aro.id != ${instance.activityReportObjectiveId}
       GROUP BY f."id"`;
