@@ -8,10 +8,11 @@ const recalculateOnAR = async (sequelize, instance, options) => {
     objectiveCondition = ` =  ${options.hookMetadata.objectiveId}`;
   } else if (options.hookMetadata.objectiveIds !== undefined
     && options.hookMetadata.objectiveIds !== null) {
-    objectiveCondition = ` IN  (${options.hookMetadata.objectiveId.join(',')})`;
+    objectiveCondition = ` IN  (${options.hookMetadata.objectiveIds.join(',')})`;
   } else {
     throw new Error('hookMetadata.objectiveId or hookMetadata.objectiveIds is required for hook to function');
   }
+  try {
   await sequelize.query(`
     WITH
       "TopicOnReport" AS (
@@ -35,6 +36,7 @@ const recalculateOnAR = async (sequelize, instance, options) => {
     FROM "TopicOnReport" tr
     WHERE t.id = tr.id;
   `, { transaction: options.transaction });
+} catch (e) { console.error(JSON.stringify({ name: 'topic', e })); }
 };
 
 const afterDestroy = async (sequelize, instance, options) => {
