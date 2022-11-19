@@ -654,44 +654,58 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
 
 export async function goalByIdAndRecipient(id, recipientId) {
   const goal = await Goal.findOne(OPTIONS_FOR_GOAL_FORM_QUERY(id, recipientId));
-  goal.objectives = goal.objective.map((objective) => ({
-    ...objective,
-    topics: objective.objectiveTopics.map((objectiveTopics) => ({
-      ...objectiveTopics,
-      ...objectiveTopics.topic,
-      topic: undefined,
-    })),
-    objectiveTopics: undefined,
-    files: objective.objectiveFiles.map((objectiveFiles) => ({
-      ...objectiveFiles,
-      ...objectiveFiles.file,
-      file: undefined,
-    })),
-    objectiveFiles: undefined,
-  }));
+  goal.objectives = (Array.isArray(goal.objective))
+    ? goal.objective.map((objective) => ({
+      ...objective,
+      topics: (Array.isArray(objective.objectiveTopics))
+        ? objective.objectiveTopics.map((objectiveTopics) => ({
+          ...objectiveTopics,
+          ...objectiveTopics.topic,
+          topic: undefined,
+        }))
+        : null,
+      objectiveTopics: undefined,
+      files: (Array.isArray(objective.objectiveFiles))
+        ? objective.objectiveFiles.map((objectiveFiles) => ({
+          ...objectiveFiles,
+          ...objectiveFiles.file,
+          file: undefined,
+        }))
+        : null,
+      objectiveFiles: undefined,
+    }))
+    : null;
   return goal;
 }
 
 export async function goalsByIdAndRecipient(ids, recipientId) {
   let goals = await Goal.findAll(OPTIONS_FOR_GOAL_FORM_QUERY(ids, recipientId));
-  goals = goals.map((goal) => ({
-    ...goal,
-    objectives: goal.objective.map((objective) => ({
-      ...objective,
-      topics: objective.objectiveTopics.map((objectiveTopics) => ({
-        ...objectiveTopics,
-        ...objectiveTopics.topic,
-        topic: undefined,
-      })),
-      objectiveTopics: undefined,
-      files: objective.objectiveFiles.map((objectiveFiles) => ({
-        ...objectiveFiles,
-        ...objectiveFiles.file,
-        file: undefined,
-      })),
-      objectiveFiles: undefined,
-    })),
-  }));
+  goals = (Array.isArray(goals))
+    ? goals.map((goal) => ({
+      ...goal,
+      objectives: (Array.isArray(goal.objective))
+        ? goal.objective.map((objective) => ({
+          ...objective,
+          topics: (Array.isArray(objective.objectiveTopics))
+            ? objective.objectiveTopics.map((objectiveTopics) => ({
+              ...objectiveTopics,
+              ...objectiveTopics.topic,
+              topic: undefined,
+            }))
+            : null,
+          objectiveTopics: undefined,
+          files: (Array.isArray(objective.objectiveFiles))
+            ? objective.objectiveFiles.map((objectiveFiles) => ({
+              ...objectiveFiles,
+              ...objectiveFiles.file,
+              file: undefined,
+            }))
+            : null,
+          objectiveFiles: undefined,
+        }))
+        : null,
+    }))
+    : null;
   return reduceGoals(goals);
 }
 
