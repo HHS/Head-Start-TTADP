@@ -653,11 +653,46 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
 }
 
 export async function goalByIdAndRecipient(id, recipientId) {
-  return Goal.findOne(OPTIONS_FOR_GOAL_FORM_QUERY(id, recipientId));
+  const goal = await Goal.findOne(OPTIONS_FOR_GOAL_FORM_QUERY(id, recipientId));
+  goal.objectives = goal.objective.map((objective) => ({
+    ...objective,
+    topics: objective.objectiveTopics.map((objectiveTopics) => ({
+      ...objectiveTopics,
+      ...objectiveTopics.topic,
+      topic: undefined,
+    })),
+    objectiveTopics: undefined,
+    files: objective.objectiveFiles.map((objectiveFiles) => ({
+      ...objectiveFiles,
+      ...objectiveFiles.file,
+      file: undefined,
+    })),
+    objectiveFiles: undefined,
+  }));
+  return goal;
 }
 
 export async function goalsByIdAndRecipient(ids, recipientId) {
-  return reduceGoals(await Goal.findAll(OPTIONS_FOR_GOAL_FORM_QUERY(ids, recipientId)));
+  let goals = await Goal.findAll(OPTIONS_FOR_GOAL_FORM_QUERY(ids, recipientId));
+  goals = goals.map((goal) => ({
+    ...goal,
+    objectives: goal.objective.map((objective) => ({
+      ...objective,
+      topics: objective.objectiveTopics.map((objectiveTopics) => ({
+        ...objectiveTopics,
+        ...objectiveTopics.topic,
+        topic: undefined,
+      })),
+      objectiveTopics: undefined,
+      files: objective.objectiveFiles.map((objectiveFiles) => ({
+        ...objectiveFiles,
+        ...objectiveFiles.file,
+        file: undefined,
+      })),
+      objectiveFiles: undefined,
+    })),
+  }));
+  return reduceGoals(goals);
 }
 
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
