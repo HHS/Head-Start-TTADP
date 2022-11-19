@@ -1,42 +1,66 @@
 const recalculateOnAR = async (sequelize, instance, options) => {
-  let objectiveCondition;
-  if (options.hookMetadata === undefined
-    || options.hookMetadata === null) {
-    throw new Error('hookMetadata is required for hook to function');
-  } else if (options.hookMetadata.objectiveId !== undefined
-    && options.hookMetadata.objectiveId !== null) {
-    objectiveCondition = ` =  ${options.hookMetadata.objectiveId}`;
-  } else if (options.hookMetadata.objectiveIds !== undefined
-    && options.hookMetadata.objectiveIds !== null) {
-    objectiveCondition = ` IN  (${options.hookMetadata.objectiveIds.join(',')})`;
-  } else {
-    throw new Error('hookMetadata.objectiveId or hookMetadata.objectiveIds is required for hook to function');
+  let objectiveIds;
+  // check to see if objectiveId or objectiveIds is validly defined
+  // when defined a more efficient search can be used
+  if (options.hookMetadata !== undefined
+    && options.hookMetadata !== null) {
+    if (options.hookMetadata.objectiveId !== undefined
+    && options.hookMetadata.objectiveId !== null
+    && typeof options.hookMetadata.objectiveId === 'number') {
+      objectiveIds = [options.hookMetadata.objectiveId];
+    } else if (options.hookMetadata.objectiveIds !== undefined
+    && options.hookMetadata.objectiveIds !== null
+    && Array.isArray(options.hookMetadata.objectiveIds)
+    && options.hookMetadata.objectiveIds.map((i) => typeof i).every((i) => i === 'number')) {
+      objectiveIds = options.hookMetadata.objectiveIds;
+    }
   }
-  try {
+
+  let topicOnReport;
+  if (objectiveIds !== undefined
+    && Array.isArray(objectiveIds)
+    && objectiveIds.map((i) => typeof i).every((i) => i === 'number')) {
+    topicOnReport = `
+      SELECT
+        t."id",
+        COUNT(arot.id) > 0 "onAR"
+      FROM "ObjectiveTopics" t
+      LEFT JOIN "ActivityReportObjectives" aro
+      ON t."objectiveId" = aro."objectiveId"
+      JOIN "ActivityReportObjectiveTopics" arot
+      ON aro.id = arot."activityReportObjectiveId"
+      AND t."topicId" = arot."topicId"
+      WHERE t."objectiveId" IN (${options.hookMetadata.objectiveIds.join(',')})
+      AND t."topicId" = ${instance.topicId}
+      AND aro.id != ${instance.activityReportObjectiveId}
+      GROUP BY t."id"`;
+  } else {
+    topicOnReport = `
+     SELECT
+        t."id",
+        COUNT(arot.id) > 0 "onAR"
+      FROM "ObjectiveTopics" t
+      JOIN "ActivityReportObjectives" arox
+      ON t."objectiveId" = arox."objectiveId"
+      LEFT JOIN "ActivityReportObjectives" aro
+      ON t."objectiveId" = aro."objectiveId"
+      JOIN "ActivityReportObjectiveTopics" arot
+      ON aro.id = arot."activityReportObjectiveId"
+      AND t."topicId" = arot."topicId"
+      WHERE arox.id = ${instance.activityReportObjectiveId}
+      AND t."topicId" = ${instance.topicId}
+      AND aro.id != ${instance.activityReportObjectiveId}
+      GROUP BY t."id"`;
+  }
+
   await sequelize.query(`
     WITH
-      "TopicOnReport" AS (
-        SELECT
-          t."id",
-          COUNT(arot.id) > 0 "onAR"
-        FROM "ObjectiveTopics" t
-        LEFT JOIN "ActivityReportObjectives" aro
-        ON t."objectiveId" = aro."objectiveId"
-        JOIN "ActivityReportObjectiveTopics" arot
-        ON aro.id = arot."activityReportObjectiveId"
-        WHERE t."objectiveId" ${objectiveCondition}
-        AND t."topicId" = ${instance.topicId}
-        AND aro."objectiveId" ${objectiveCondition}
-        AND arot."topicId" = ${instance.topicId}
-        AND aro.id != ${instance.activityReportObjectiveId}
-        GROUP BY t."id"
-      )
+      "TopicOnReport" AS (${topicOnReport})
     UPDATE "ObjectiveTopics" t
     SET "onAR" = tr."onAR"
     FROM "TopicOnReport" tr
     WHERE t.id = tr.id;
   `, { transaction: options.transaction });
-} catch (e) { console.error(JSON.stringify({ name: 'topic', e })); }
 };
 
 const afterDestroy = async (sequelize, instance, options) => {
