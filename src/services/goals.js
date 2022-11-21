@@ -549,11 +549,6 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
                 [Op.ne]: '',
               },
             },
-            {
-              status: {
-                [Op.notIn]: [OBJECTIVE_STATUS.COMPLETE, OBJECTIVE_STATUS.DRAFT],
-              },
-            },
           ],
         },
         attributes: [
@@ -581,7 +576,6 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
           },
           {
             model: ActivityReportObjective,
-            separate: true,
             as: 'activityReportObjectives',
             attributes: [
               'ttaProvided',
@@ -838,34 +832,19 @@ export async function createOrUpdateGoals(goals) {
     if (isRttapa === 'Yes' || isRttapa === 'No') {
       isRttapaValue = isRttapa;
     }
-
+    let newGoal;
     // we first need to see if the goal exists given what ids we have
-    // for new goals, the id will be an empty array
-    let newGoal = await Goal.findOne({
-      where: {
-        grantId,
-        status: { [Op.not]: 'Closed' },
-        id: ids || [],
-      },
-    });
+    if (ids && ids.length) {
+      newGoal = await Goal.findOne({
+        where: {
+          grantId,
+          status: { [Op.not]: 'Closed' },
+          id: ids,
+        },
+      });
+    }
 
-    // In order to reuse goals with matching text we need to do the findOrCreate as the
-    // upsert would not preform the extra checks and logic now required.
     if (!newGoal) {
-      // [newGoal] = await Goal.findOrCreate({
-      //   where: {
-      //     grantId,
-      //     status: {
-      //       [Op.not]: 'Closed',
-      //     },
-      //     name: options.name,
-      //   },
-      //   defaults: {
-      //     status: 'Draft',
-      // if we are creating a goal for the first time, it should be set to 'Draft'
-      //     isFromSmartsheetTtaPlan: false,
-      //   },
-      // });
       newGoal = await Goal.findOne({
         where: {
           grantId,
@@ -916,15 +895,18 @@ export async function createOrUpdateGoals(goals) {
           title,
           files,
           status: objectiveStatus,
-          id: objectiveIds,
-          isNew,
+          id: objectiveIdsMayContainStrings,
         } = o;
+
+        const objectiveIds = [objectiveIdsMayContainStrings]
+          .flat()
+          .filter((id) => parseInt(id, DECIMAL_BASE));
 
         let objective;
 
         // if the objective is complete on both the front and back end
         // we need to handle things a little differently
-        if (objectiveStatus === OBJECTIVE_STATUS.COMPLETE && objectiveIds) {
+        if (objectiveStatus === OBJECTIVE_STATUS.COMPLETE && objectiveIds && objectiveIds.length) {
           objective = await Objective.findOne({
             where: {
               id: objectiveIds,
@@ -932,44 +914,17 @@ export async function createOrUpdateGoals(goals) {
             },
           });
 
-          return {
-            ...objective.dataValues,
-            topics,
-            resources,
-            files,
-          };
+          if (objective) {
+            return {
+              ...objective.dataValues,
+              topics,
+              resources,
+              files,
+            };
+          }
         }
 
-        if (isNew && !objective) {
-          // [objective] = await Objective.findOrCreate({
-          //   where: {
-          //     goalId: newGoal.id,
-          //     title,
-          //     status: {
-          //       [Op.not]: OBJECTIVE_STATUS.COMPLETE,
-          //     },
-          //   },
-          //   defaults: {
-          //     status: objectiveStatus,
-          //     title,
-          //     goalId: newGoal.id,
-          //   },
-          // });
-          objective = await Objective.findOne({
-            where: {
-              status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
-              title,
-              goalId: newGoal.id,
-            },
-          });
-          if (!objective) {
-            objective = await Objective.create({
-              status: objectiveStatus,
-              title,
-              goalId: newGoal.id,
-            });
-          }
-        } else if (objectiveIds) {
+        if (objectiveIds && objectiveIds.length) {
           // this needs to find "complete" objectives as well
           // since we could be moving the status back from the RTR
           objective = await Objective.findOne({
@@ -981,20 +936,6 @@ export async function createOrUpdateGoals(goals) {
         }
 
         if (!objective) {
-          // [objective] = await Objective.findOrCreate({
-          //   where: {
-          //     status: {
-          //       [Op.not]: OBJECTIVE_STATUS.COMPLETE,
-          //     },
-          //     title,
-          //     goalId: newGoal.id,
-          //   },
-          //   defaults: {
-          //     status: objectiveStatus,
-          //     title,
-          //     goalId: newGoal.id,
-          //   },
-          // });
           objective = await Objective.findOne({
             where: {
               status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
@@ -1044,7 +985,6 @@ export async function createOrUpdateGoals(goals) {
 
   // we have to do this outside of the transaction otherwise
   // we get the old values
-
   return goalsByIdAndRecipient(goalIds, recipient);
 }
 
