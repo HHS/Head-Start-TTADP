@@ -578,7 +578,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
             attributes: [
               'ttaProvided',
             ],
-            required: true,
+            required: false,
             where: {
               activityReportId,
             },
