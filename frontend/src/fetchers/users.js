@@ -6,9 +6,7 @@ export const getStateCodes = async () => {
   return res.json();
 };
 
-export const requestVerificationEmail = async () => {
-  await post(join('/', 'api', 'users', 'send-verification-email'));
-};
+export const requestVerificationEmail = async () => post(join('/', 'api', 'users', 'send-verification-email'));
 
 export const verifyEmailToken = async (token) => {
   await post(join('/', 'api', 'users', 'verify-email', token));

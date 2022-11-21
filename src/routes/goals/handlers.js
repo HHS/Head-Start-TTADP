@@ -1,9 +1,11 @@
 import {
   updateGoalStatusById,
+  createOrUpdateGoalsForActivityReport,
   createOrUpdateGoals,
-  destroyGoal,
+  goalsByIdsAndActivityReport,
   goalByIdWithActivityReportsAndRegions,
   goalByIdAndRecipient,
+  destroyGoal,
 } from '../../services/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
@@ -15,6 +17,26 @@ const namespace = 'SERVICE:GOALS';
 const logContext = {
   namespace,
 };
+
+export async function createGoalsForReport(req, res) {
+  try {
+    const { goals, activityReportId, regionId } = req.body;
+
+    const user = await userById(req.session.userId);
+
+    const canCreate = new Goal(user, null, regionId).canCreate();
+
+    if (!canCreate) {
+      res.sendStatus(401);
+      return;
+    }
+
+    const newGoals = await createOrUpdateGoalsForActivityReport(goals, activityReportId);
+    res.json(newGoals);
+  } catch (error) {
+    await handleErrors(req, res, error, `${logContext}:CREATE_GOALS_FOR_REPORT`);
+  }
+}
 
 export async function createGoals(req, res) {
   try {
@@ -39,7 +61,7 @@ export async function createGoals(req, res) {
 
     res.json(newGoals);
   } catch (error) {
-    await handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, `${logContext}:CREATE_GOALS`);
   }
 }
 
@@ -86,31 +108,28 @@ export async function changeGoalStatus(req, res) {
 
     res.json(updatedGoal);
   } catch (error) {
-    await handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, `${logContext}:CHANGE_GOAL_STATUS`);
   }
 }
-
 export async function deleteGoal(req, res) {
   try {
-    const { goalId } = req.params;
+    const { goalIds } = req.query;
+    const ids = [goalIds].flatMap((id) => parseInt(id, DECIMAL_BASE));
 
     const user = await userById(req.session.userId);
-    const goal = await goalByIdWithActivityReportsAndRegions(goalId);
 
-    const policy = new Goal(user, goal);
+    const permissions = await Promise.all(ids.map(async (goalId) => {
+      const goal = await goalByIdWithActivityReportsAndRegions(goalId);
+      const policy = new Goal(user, goal);
+      return policy.canDelete();
+    }));
 
-    const canDelete = policy.canDelete();
-
-    if (!canDelete) {
+    if (!permissions.every((permission) => permission)) {
       res.sendStatus(401);
       return;
     }
 
-    const deletedGoal = await destroyGoal(parseInt(goalId, 10));
-
-    // destroy goal returns a promise with the number of deleted goals
-    // it should be 1 or 0
-    // if 0, the goal wasn't deleted, presumably because it wasn't found
+    const deletedGoal = await destroyGoal(ids);
 
     if (!deletedGoal) {
       res.sendStatus(404);
@@ -119,11 +138,46 @@ export async function deleteGoal(req, res) {
 
     res.json(deletedGoal);
   } catch (error) {
-    await handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, `${logContext}:DELETE_GOAL`);
   }
 }
 
-export async function retrieveGoal(req, res) {
+export async function retrieveGoalsByIds(req, res) {
+  try {
+    let { goalIds } = req.query;
+    const { reportId } = req.query;
+    goalIds = Array.isArray(goalIds) ? goalIds : [goalIds];
+    const user = await userById(req.session.userId);
+
+    let canView = true;
+    goalIds.forEach(async (id) => {
+      const goal = await goalByIdWithActivityReportsAndRegions(id);
+      const policy = new Goal(user, goal);
+      if (!policy.canView()) {
+        canView = false;
+      }
+    });
+
+    if (!canView) {
+      res.sendStatus(401);
+      return;
+    }
+
+    const gIds = goalIds.map((g) => parseInt(g, 10));
+    const retrievedGoal = await goalsByIdsAndActivityReport(gIds, reportId);
+
+    if (!retrievedGoal) {
+      res.sendStatus(404);
+      return;
+    }
+
+    res.json(retrievedGoal);
+  } catch (error) {
+    await handleErrors(req, res, error, `${logContext}:RETRIEVE_GOALS_BY_IDS`);
+  }
+}
+
+export async function retrieveGoalByIdAndRecipient(req, res) {
   try {
     const { goalId, recipientId } = req.params;
 
@@ -149,6 +203,6 @@ export async function retrieveGoal(req, res) {
 
     res.json(retrievedGoal);
   } catch (error) {
-    await handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, `${logContext}:RETRIEVE_GOAL_BY_ID_AND_RECIPIENT`);
   }
 }

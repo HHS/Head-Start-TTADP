@@ -14,33 +14,16 @@ const findOrCreateGoalTemplate = async (sequelize, transaction, regionId, name, 
     },
     transaction,
   });
-  return goalTemplate[0].id;
+  return { id: goalTemplate[0].id, name };
 };
 
-// const autoPopulateGoalTemplateId = async (sequelize, instance, options) => {
-//   if (instance.goalTemplateId === undefined
-//   || instance.goalTemplateId === null) {
-//     const grant = await sequelize.models.Grant.findOne({
-//       attributes: ['regionId'],
-//       where: { id: instance.grantId },
-//       transaction: options.transaction,
-//       include: false,
-//     });
-//     const templateId = await findOrCreateGoalTemplate(
-//       sequelize,
-//       options,
-//       grant.regionId,
-//       instance.name,
-//       instance.createdAt,
-//     );
-//     instance.set('goalTemplateId', templateId);
-//   }
-// };
-
-const autoPopulateOnApprovedAR = (sequelize, instance) => {
+const autoPopulateOnApprovedAR = (sequelize, instance, options) => {
   if (instance.onApprovedAR === undefined
     || instance.onApprovedAR === null) {
     instance.set('onApprovedAR', false);
+    if (!options.fields.includes('onApprovedAR')) {
+      options.fields.push('onApprovedAR');
+    }
   }
 };
 
@@ -55,7 +38,7 @@ const preventNamChangeWhenOnApprovedAR = (sequelize, instance) => {
   }
 };
 
-const autoPopulateStatusChangeDates = (sequelize, instance) => {
+const autoPopulateStatusChangeDates = (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
     && changed.includes('status')) {
@@ -71,29 +54,53 @@ const autoPopulateStatusChangeDates = (sequelize, instance) => {
         if (instance.firstNotStartedAt === null
           || instance.firstNotStartedAt === undefined) {
           instance.set('firstNotStartedAt', now);
+          if (!options.fields.includes('firstNotStartedAt')) {
+            options.fields.push('firstNotStartedAt');
+          }
         }
         instance.set('lastNotStartedAt', now);
+        if (!options.fields.includes('lastNotStartedAt')) {
+          options.fields.push('lastNotStartedAt');
+        }
         break;
       case GOAL_STATUS.IN_PROGRESS:
         if (instance.firstInProgressAt === null
           || instance.firstInProgressAt === undefined) {
           instance.set('firstInProgressAt', now);
+          if (!options.fields.includes('firstInProgressAt')) {
+            options.fields.push('firstInProgressAt');
+          }
         }
         instance.set('lastInProgressAt', now);
+        if (!options.fields.includes('lastInProgressAt')) {
+          options.fields.push('lastInProgressAt');
+        }
         break;
       case GOAL_STATUS.SUSPENDED:
-        if (instance.firstSuspendedAt === null
-          || instance.firstSuspendedAt === undefined) {
-          instance.set('firstSuspendedAt', now);
+        if (instance.firstCeasedSuspendedAt === null
+          || instance.firstCeasedSuspendedAt === undefined) {
+          instance.set('firstCeasedSuspendedAt', now);
+          if (!options.fields.includes('firstCeasedSuspendedAt')) {
+            options.fields.push('firstCeasedSuspendedAt');
+          }
         }
-        instance.set('lastSuspendedAt', now);
+        instance.set('lastCeasedSuspendedAt', now);
+        if (!options.fields.includes('lastCeasedSuspendedAt')) {
+          options.fields.push('lastCeasedSuspendedAt');
+        }
         break;
       case GOAL_STATUS.CLOSED:
         if (instance.firstClosedAt === null
           || instance.firstClosedAt === undefined) {
           instance.set('firstClosedAt', now);
+          if (!options.fields.includes('firstClosedAt')) {
+            options.fields.push('firstClosedAt');
+          }
         }
         instance.set('lastClosedAt', now);
+        if (!options.fields.includes('lastClosedAt')) {
+          options.fields.push('lastClosedAt');
+        }
         break;
       default:
         throw new Error(`Goal status changed to invalid value of "${status}".`);
@@ -118,11 +125,19 @@ const propagateName = async (sequelize, instance, options) => {
   }
 };
 
-const beforeValidate = async (sequelize, instance) => {
+const beforeValidate = async (sequelize, instance, options) => {
+  if (!Array.isArray(options.fields)) {
+    options.fields = []; //eslint-disable-line
+  }
   // await autoPopulateGoalTemplateId(sequelize, instance, options);
-  autoPopulateOnApprovedAR(sequelize, instance);
-  preventNamChangeWhenOnApprovedAR(sequelize, instance);
-  autoPopulateStatusChangeDates(sequelize, instance);
+  autoPopulateOnApprovedAR(sequelize, instance, options);
+  preventNamChangeWhenOnApprovedAR(sequelize, instance, options);
+  autoPopulateStatusChangeDates(sequelize, instance, options);
+};
+
+const beforeUpdate = async (sequelize, instance, options) => {
+  preventNamChangeWhenOnApprovedAR(sequelize, instance, options);
+  autoPopulateStatusChangeDates(sequelize, instance, options);
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
@@ -137,5 +152,6 @@ export {
   autoPopulateStatusChangeDates,
   propagateName,
   beforeValidate,
+  beforeUpdate,
   afterUpdate,
 };

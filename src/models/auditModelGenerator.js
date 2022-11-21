@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 // Load in our dependencies
 import { Model, DataTypes } from 'sequelize'; // eslint-disable-line import/no-import-module-exports
 import httpContext from 'express-http-context'; // eslint-disable-line import/no-import-module-exports
@@ -25,30 +26,46 @@ const tryJsonParse = (data) => {
 const pgSetConfigIfNull = (settingName, value, alias) => `
   set_config(
     '${settingName}',
-    COALESCE(current_setting('${settingName}', true), '${value}'),
+    COALESCE(NULLIF(current_setting('${settingName}', true),''), '${value}'),
     true
   ) as "${alias}"`;
 
-const addAuditTransactionSettings = async (sequelize, instance, options, type) => {
+const auditedTransactions = new Set();
+
+const addAuditTransactionSettings = async (sequelize, instance, options, type, descriptor = undefined) => {
   const loggedUser = httpContext.get('loggedUser') ? httpContext.get('loggedUser') : '';
   const transactionId = httpContext.get('transactionId') ? httpContext.get('transactionId') : '';
   const sessionSig = httpContext.get('sessionSig') ? httpContext.get('sessionSig') : '';
-  const auditDescriptor = httpContext.get('auditDescriptor') ? httpContext.get('auditDescriptor') : '';
+  // eslint-disable-next-line no-unneeded-ternary
+  const auditDescriptor = descriptor ? descriptor : (httpContext.get('auditDescriptor') || '');
+  const { type: optionsType } = options || { type: '' };
 
-  const statements = [
-    pgSetConfigIfNull('audit.loggedUser', loggedUser, 'loggedUser'),
-    pgSetConfigIfNull('audit.transactionId', transactionId, 'transactionId'),
-    pgSetConfigIfNull('audit.sessionSig', sessionSig, 'sessionSig'),
-    pgSetConfigIfNull('audit.auditDescriptor', auditDescriptor, 'auditDescriptor'),
-  ];
+  if (!auditedTransactions.has(transactionId) && !auditedTransactions.has(transactionId + optionsType)) {
+    auditedTransactions.add(transactionId + optionsType);
+    const statements = [
+      pgSetConfigIfNull('audit.loggedUser', loggedUser, 'loggedUser'),
+      pgSetConfigIfNull('audit.transactionId', transactionId, 'transactionId'),
+      pgSetConfigIfNull('audit.sessionSig', sessionSig, 'sessionSig'),
+      pgSetConfigIfNull('audit.auditDescriptor', auditDescriptor, 'auditDescriptor'),
+    ];
 
-  if (loggedUser !== '' || transactionId !== '' || auditDescriptor !== '') {
-    await sequelize.queryInterface.sequelize.query(
-      `SELECT
-        '${type}' "Type",
-        ${statements.join(',')}
-      `.replace(/[\r\n]+/gm, ' '),
-    );
+    if (loggedUser !== '' || transactionId !== '' || auditDescriptor !== '') {
+      return sequelize.queryInterface.sequelize.query(
+        `SELECT
+          '${type}' "Type",
+          ${statements.join(',')};
+        `.replace(/[\r\n]+/gm, ' '),
+      );
+    }
+  }
+  return Promise.resolve();
+};
+
+const removeFromAuditedTransactions = (options) => {
+  const transactionId = httpContext.get('transactionId');
+  const { type: optionsType } = options || { type: '' };
+  if (transactionId) {
+    auditedTransactions.delete(transactionId + optionsType);
   }
 };
 
@@ -109,43 +126,70 @@ const generateAuditModel = (sequelize, model) => {
   return auditModel;
 };
 
+// eslint-disable-next-line
 const attachHooksForAuditing = (sequelize) => {
   sequelize.addHook(
     'beforeBulkCreate',
-    (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'beforeBulkCreate'),
+    async (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'beforeBulkCreate'),
   );
   sequelize.addHook(
     'beforeBulkDestroy',
-    (options) => addAuditTransactionSettings(sequelize, null, options, 'beforeBulkDestroy'),
+    async (options) => addAuditTransactionSettings(sequelize, null, options, 'beforeBulkDestroy'),
   );
   sequelize.addHook(
     'beforeBulkUpdate',
-    (options) => addAuditTransactionSettings(sequelize, null, options, 'beforeBulkUpdate'),
+    async (options) => addAuditTransactionSettings(sequelize, null, options, 'beforeBulkUpdate'),
   );
   sequelize.addHook(
     'afterValidate',
-    (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'afterValidate'),
+    async (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'afterValidate'),
   );
   sequelize.addHook(
     'beforeCreate',
-    (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'beforeCreate'),
+    async (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'beforeCreate'),
   );
   sequelize.addHook(
     'beforeDestroy',
-    (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'beforeDestroy'),
+    async (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'beforeDestroy'),
   );
   sequelize.addHook(
     'beforeUpdate',
-    (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'beforeUpdate'),
+    async (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'beforeUpdate'),
   );
   sequelize.addHook(
     'beforeSave',
-    (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'beforeSave'),
+    async (instance, options) => addAuditTransactionSettings(sequelize, instance, options, 'beforeSave'),
   );
   sequelize.addHook(
     'beforeUpsert',
-    (created, options) => addAuditTransactionSettings(sequelize, created, options, 'beforeUpsert'),
+    async (created, options) => addAuditTransactionSettings(sequelize, created, options, 'beforeUpsert'),
+  );
+
+  sequelize.addHook(
+    'afterCreate',
+    (instance, options) => removeFromAuditedTransactions(options),
+  );
+  sequelize.addHook(
+    'afterDestroy',
+    (instance, options) => removeFromAuditedTransactions(options),
+  );
+  sequelize.addHook(
+    'afterUpdate',
+    (instance, options) => removeFromAuditedTransactions(options),
+  );
+  sequelize.addHook(
+    'afterSave',
+    (instance, options) => removeFromAuditedTransactions(options),
+  );
+  sequelize.addHook(
+    'afterUpsert',
+    (instance, options) => removeFromAuditedTransactions(options),
   );
 };
 
-module.exports = { generateAuditModel, attachHooksForAuditing };
+module.exports = {
+  generateAuditModel,
+  attachHooksForAuditing,
+  addAuditTransactionSettings,
+  removeFromAuditedTransactions,
+};

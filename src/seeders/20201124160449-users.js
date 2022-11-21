@@ -1,6 +1,5 @@
 /* eslint-disable quotes */
 const moment = require('moment');
-const sequelize = require('sequelize');
 
 const SITE_ACCESS = 1;
 const ADMIN = 2;
@@ -12,6 +11,11 @@ const staticUserPermissions = [
   {
     userId: 1,
     scopeId: SITE_ACCESS,
+    regionId: 14,
+  },
+  {
+    userId: 1,
+    scopeId: READ_REPORTS,
     regionId: 14,
   },
   {
@@ -97,7 +101,6 @@ const staticUsers = [
     email: 'hermionegranger@hogwarts.com',
     hsesUserId: '1',
     hsesUsername: 'hermionegranger@hogwarts.com',
-    role: sequelize.literal(`ARRAY['System Specialist']::"enum_Users_role"[]`),
     name: 'Hermione Granger',
     phoneNumber: '555-555-5550',
     homeRegionId: 1,
@@ -108,7 +111,6 @@ const staticUsers = [
     email: 'dumbledore@hogwarts.com',
     hsesUserId: '2',
     hsesUsername: 'dumbledore@hogwarts.com',
-    role: sequelize.literal('ARRAY[]::"enum_Users_role"[]'),
     name: undefined,
     phoneNumber: undefined,
     homeRegionId: undefined,
@@ -119,7 +121,6 @@ const staticUsers = [
     hsesUserId: '3',
     email: 'harrypotter@hogwarts.com',
     hsesUsername: 'harrypotter@hogwarts.com',
-    role: sequelize.literal(`ARRAY['Grants Specialist']::"enum_Users_role"[]`),
     name: 'Harry Potter',
     phoneNumber: '555-555-5551',
     homeRegionId: 2,
@@ -130,7 +131,6 @@ const staticUsers = [
     hsesUserId: '4',
     email: 'ronweasley@hogwarts.com',
     hsesUsername: 'ronweasley@hogwarts.com',
-    role: sequelize.literal(`ARRAY['Grants Specialist']::"enum_Users_role"[]`),
     name: 'Ron Weasley',
     phoneNumber: '555-555-5552',
     homeRegionId: 3,
@@ -141,7 +141,6 @@ const staticUsers = [
     hsesUserId: '5',
     email: 'cucumber@hogwarts.com',
     hsesUsername: 'cucumber@hogwarts.com',
-    role: sequelize.literal(`ARRAY['Grants Specialist']::"enum_Users_role"[]`),
     name: 'Cucumber User',
     phoneNumber: '555-555-5553',
     homeRegionId: 3,
@@ -153,7 +152,6 @@ const generatedUsers = hsesUsernames.map((u, i) => ({
   hsesUserId: `${i + 10}`,
   email: `${u}@test.com`,
   hsesUsername: u,
-  role: sequelize.literal(`ARRAY['Grants Specialist']::"enum_Users_role"[]`),
   name: u.split('.')[2],
   phoneNumber: '555-555-5553',
   homeRegionId: 1,
@@ -166,6 +164,187 @@ module.exports = {
     await queryInterface.sequelize.query('ALTER SEQUENCE "Users_id_seq" RESTART WITH 10;');
     const generatedUserIds = await queryInterface.bulkInsert('Users', generatedUsers, { returning: ['id'] });
     await queryInterface.sequelize.query('ALTER SEQUENCE "Users_id_seq" RESTART WITH 100;');
+
+    await queryInterface.bulkDelete('Roles', null, {});
+    await queryInterface.bulkInsert('Roles', [
+      {
+        id: 11,
+        name: 'ECS',
+        fullName: 'Early Childhood Specialist',
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+        isSpecialist: true,
+      },
+      {
+        id: 12,
+        name: 'FES',
+        fullName: 'Family Engagement Specialist',
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+        isSpecialist: true,
+      },
+      {
+        id: 14,
+        name: 'GS',
+        fullName: 'Grantee Specialist',
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+        isSpecialist: true,
+      },
+      {
+        id: 15,
+        name: 'HS',
+        fullName: 'Health Specialist',
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+        isSpecialist: true,
+      },
+      {
+        id: 16,
+        name: 'SS',
+        fullName: 'System Specialist',
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+        isSpecialist: true,
+      },
+      {
+        id: 9,
+        name: 'AA',
+        fullName: 'Admin. Assistant',
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+        isSpecialist: false,
+      },
+      {
+        id: 10,
+        name: 'ECM',
+        fullName: 'Early Childhood Manager',
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+        isSpecialist: false,
+      },
+      {
+        id: 13,
+        name: 'GSM',
+        fullName: 'Grantee Specialist Manager',
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+        isSpecialist: false,
+      },
+      {
+        id: 4,
+        name: 'PS',
+        fullName: 'Program Specialist',
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+        isSpecialist: true,
+      },
+      {
+        id: 1,
+        name: 'RPM',
+        fullName: 'Region Program Manager',
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+        isSpecialist: false,
+      },
+      {
+        id: 3,
+        name: 'SPS',
+        fullName: 'Supervisory Program Specialist',
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+        isSpecialist: true,
+      },
+      {
+        id: 8,
+        name: 'TTAC',
+        fullName: 'TTAC',
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+        isSpecialist: false,
+      },
+      {
+        id: 5,
+        name: 'GS',
+        fullName: 'Grants Specialist',
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+        isSpecialist: true,
+      },
+      {
+        id: 7,
+        name: 'OFS',
+        fullName: 'Other Federal Staff',
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+        isSpecialist: false,
+      },
+      {
+        id: 2,
+        name: 'COR',
+        fullName: 'COR',
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+        isSpecialist: false,
+      },
+      {
+        id: 6,
+        name: 'CO',
+        fullName: 'Central Office',
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+        isSpecialist: false,
+      },
+      {
+        id: 17,
+        name: 'NC',
+        fullName: 'National Center',
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+        isSpecialist: false,
+      },
+      {
+        id: 18,
+        name: 'CSC',
+        fullName: 'Customer Service Contact',
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+        isSpecialist: false,
+      },
+    ]);
+
+    await queryInterface.bulkInsert('UserRoles', [
+      {
+        userId: 1,
+        roleId: 16,
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+      },
+      {
+        userId: 3,
+        roleId: 5,
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+      },
+      {
+        userId: 4,
+        roleId: 5,
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+      },
+      {
+        userId: 5,
+        roleId: 5,
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+      },
+      ...generatedUserIds.map(({ id: userId }) => ({
+        userId,
+        roleId: 5,
+        createdAt: moment().toISOString(),
+        updatedAt: moment().toISOString(),
+      })),
+    ]);
 
     const generatedUserPermissions = generatedUserIds.map(({ id }) => [
       {
