@@ -190,7 +190,7 @@ parameters:
     default: "main-ar-redesign"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "kw-disable-non-prod-updates"
+    default: "TTAHUB-1221/all-objectives-selected"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -228,10 +228,10 @@ jobs:
       - run:
           name: Lint frontend
           command: yarn --cwd frontend lint:ci
-      # - store_artifacts:  # store backend lint reports
-      #     path: reports
-      # - store_artifacts:  # store frontend lint reports
-      #     path: frontend/reports
+      - store_artifacts:  # store backend lint reports
+          path: reports
+      - store_artifacts:  # store frontend lint reports
+          path: frontend/reports
       - persist_to_workspace:
           root: .
           paths:
@@ -257,15 +257,15 @@ jobs:
           command:  |
             chmod 744 ./bin/test-backend-ci
             ./bin/test-backend-ci
-      # - run:
-      #     name: Compress coverage artifacts
-      #     command: tar -cvzf backend-coverage-artifacts.tar coverage/
-      # - store_artifacts:
-      #     path: coverage/
-      # - store_artifacts:
-      #     path: backend-coverage-artifacts.tar
-      # - store_test_results:
-      #     path: reports/
+      - run:
+          name: Compress coverage artifacts
+          command: tar -cvzf backend-coverage-artifacts.tar coverage/
+      - store_artifacts:
+          path: coverage/
+      - store_artifacts:
+          path: backend-coverage-artifacts.tar
+      - store_test_results:
+          path: reports/
   test_frontend:
     executor: docker-executor
     steps:
@@ -285,10 +285,10 @@ jobs:
       - run:
           name: Test frontend
           command: yarn --cwd frontend run test:ci --maxWorkers=50%
-      # - store_test_results:
-      #     path: frontend/reports/
-      # - store_artifacts:
-      #     path: frontend/coverage/
+      - store_test_results:
+          path: frontend/reports/
+      - store_artifacts:
+          path: frontend/coverage/
   cucumber_test:
     executor: docker-postgres-executor
     steps:
@@ -313,8 +313,8 @@ jobs:
           name: Run cucumber
           command: |
             yarn cucumber:ci
-      # - store_artifacts:
-      #     path: reports/
+      - store_artifacts:
+          path: reports/
   dynamic_security_scan:
     executor: machine-executor
     steps:
@@ -332,8 +332,8 @@ jobs:
       - run:
           name: Run OWASP ZAP
           command: ./bin/run-owasp-scan
-      # - store_artifacts:
-      #     path: reports/owasp_report.html
+      - store_artifacts:
+          path: reports/owasp_report.html
   accessibility_scan:
     executor: docker-postgres-executor
     steps:
@@ -361,8 +361,8 @@ jobs:
           command: |
             sleep 10
             yarn axe:ci
-      # - store_artifacts:
-      #     path: reports/
+      - store_artifacts:
+          path: reports/
   deploy:
     executor: docker-executor
     steps:
