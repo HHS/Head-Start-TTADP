@@ -1,20 +1,9 @@
+const { getSingularOrPluralData } = require('../helpers/hookMetadata');
+
 const recalculateOnAR = async (sequelize, instance, options) => {
-  let objectiveIds;
   // check to see if objectiveId or objectiveIds is validly defined
   // when defined a more efficient search can be used
-  if (options.hookMetadata !== undefined
-    && options.hookMetadata !== null) {
-    if (options.hookMetadata.objectiveId !== undefined
-    && options.hookMetadata.objectiveId !== null
-    && typeof options.hookMetadata.objectiveId === 'number') {
-      objectiveIds = [options.hookMetadata.objectiveId];
-    } else if (options.hookMetadata.objectiveIds !== undefined
-    && options.hookMetadata.objectiveIds !== null
-    && Array.isArray(options.hookMetadata.objectiveIds)
-    && options.hookMetadata.objectiveIds.map((i) => typeof i).every((i) => i === 'number')) {
-      objectiveIds = options.hookMetadata.objectiveIds;
-    }
-  }
+  const objectiveIds = getSingularOrPluralData(options, 'objectiveId', 'objectiveIds');
 
   let resourceOnReport;
   if (objectiveIds !== undefined
