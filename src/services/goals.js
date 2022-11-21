@@ -579,12 +579,11 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
           },
           {
             model: ActivityReportObjective,
-            separate: true,
             as: 'activityReportObjectives',
             attributes: [
               'ttaProvided',
             ],
-            required: false,
+            required: true,
             where: {
               activityReportId,
             },
