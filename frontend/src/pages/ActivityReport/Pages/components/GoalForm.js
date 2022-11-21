@@ -1,5 +1,5 @@
 import React, {
-  useEffect, useState, useMemo, useContext, useRef,
+  useEffect, useMemo, useContext, useRef, useState,
 } from 'react';
 import PropTypes from 'prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -26,7 +26,7 @@ export default function GoalForm({
   datePickerKey,
 }) {
   // pull the errors out of the form context
-  const { errors, watch } = useFormContext();
+  const { errors, watch, setValue } = useFormContext();
 
   // App Loading Context.
   const { isAppLoading, setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
@@ -121,6 +121,7 @@ export default function GoalForm({
   }, [defaultEndDate, goal.endDate, onUpdateDate]);
 
   const [objectives, setObjectives] = useState([]);
+
   /*
    * this use effect fetches
    * associated goal data
@@ -131,6 +132,7 @@ export default function GoalForm({
         setIsAppLoading(true);
         setAppLoadingText('Loading');
         const data = await goalsByIdsAndActivityReport(goal.goalIds, reportId);
+        setValue('goalForEditing.objectives', data[0].objectives);
         setObjectives(data[0].objectives);
       } finally {
         setIsAppLoading(false);
@@ -140,6 +142,7 @@ export default function GoalForm({
     if (goal.goalIds.length) {
       fetchData();
     } else {
+      setValue('goalForEditing.objectives', []);
       setObjectives([]);
     }
   }, [goal.goalIds, reportId, setAppLoadingText, setIsAppLoading]);
