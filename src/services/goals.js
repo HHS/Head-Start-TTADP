@@ -547,11 +547,6 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
                 [Op.ne]: '',
               },
             },
-            {
-              status: {
-                [Op.notIn]: [OBJECTIVE_STATUS.COMPLETE, OBJECTIVE_STATUS.DRAFT],
-              },
-            },
           ],
         },
         attributes: [
@@ -579,7 +574,6 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
           },
           {
             model: ActivityReportObjective,
-            separate: true,
             as: 'activityReportObjectives',
             attributes: [
               'ttaProvided',
