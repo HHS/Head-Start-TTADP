@@ -12,15 +12,15 @@ import VanillaModal from '../components/VanillaModal';
 const GOAL_STATUSES = [
   'Not started',
   'In progress',
-  'Closed',
   'Suspended',
+  'Closed',
 ];
 
 const STATUS_COLORS = [
   colors.ttahubOrange,
   colors.ttahubMediumBlue,
-  colors.success,
   colors.error,
+  colors.success,
 ];
 
 function Bar({
@@ -77,7 +77,12 @@ export function GoalStatusChart({ data, loading }) {
   // we only need to recompute this when the data changes, not when the
   // bars or display type are changed
   const accessibleRows = useMemo(
-    () => GOAL_STATUSES.map((status) => ({ data: [status, data[status]] })), [data],
+    () => {
+      if (!data) {
+        return [];
+      }
+      return GOAL_STATUSES.map((status) => ({ data: [status, data[status]] }));
+    }, [data],
   );
 
   const modalRef = useRef();
@@ -104,8 +109,12 @@ export function GoalStatusChart({ data, loading }) {
     updateShowAccessibleData((current) => !current);
   }
 
+  if (!data) {
+    return null;
+  }
+
   return (
-    <Container className="ttahub--goal-status-graph" padding={3} loading={loading} loadingLabel="goal statuses by number loading">
+    <Container className="ttahub--goal-status-graph" paddingX={3} paddingY={3} loading={loading} loadingLabel="goal statuses by number loading">
       <Grid row className="position-relative margin-bottom-1">
         <Grid className="flex-align-self-center desktop:display-flex flex-align-center" desktop={{ col: 'auto' }} mobileLg={{ col: 10 }}>
           <h2 className="margin-0">

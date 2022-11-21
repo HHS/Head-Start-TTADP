@@ -6,10 +6,10 @@ executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: cimg/node:16.17.0-browsers
+      - image: cimg/node:16.18.1-browsers
   docker-postgres-executor:
     docker:
-      - image: cimg/node:16.17.0-browsers
+      - image: cimg/node:16.18.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -228,10 +228,10 @@ jobs:
       - run:
           name: Lint frontend
           command: yarn --cwd frontend lint:ci
-      - store_artifacts:  # store backend lint reports
-          path: reports
-      - store_artifacts:  # store frontend lint reports
-          path: frontend/reports
+      # - store_artifacts:  # store backend lint reports
+      #     path: reports
+      # - store_artifacts:  # store frontend lint reports
+      #     path: frontend/reports
       - persist_to_workspace:
           root: .
           paths:
@@ -254,12 +254,18 @@ jobs:
           command: yarn db:seed:ci
       - run:
           name: Test backend
-          command: yarn test:ci
-      - store_test_results:
-          path: reports/
-      - store_artifacts:
-          path: coverage/
-
+          command:  |
+            chmod 744 ./bin/test-backend-ci
+            ./bin/test-backend-ci
+      # - run:
+      #     name: Compress coverage artifacts
+      #     command: tar -cvzf backend-coverage-artifacts.tar coverage/
+      # - store_artifacts:
+      #     path: coverage/
+      # - store_artifacts:
+      #     path: backend-coverage-artifacts.tar
+      # - store_test_results:
+      #     path: reports/
   test_frontend:
     executor: docker-executor
     steps:
@@ -279,10 +285,10 @@ jobs:
       - run:
           name: Test frontend
           command: yarn --cwd frontend run test:ci --maxWorkers=50%
-      - store_test_results:
-          path: frontend/reports/
-      - store_artifacts:
-          path: frontend/coverage/
+      # - store_test_results:
+      #     path: frontend/reports/
+      # - store_artifacts:
+      #     path: frontend/coverage/
   cucumber_test:
     executor: docker-postgres-executor
     steps:
@@ -307,8 +313,8 @@ jobs:
           name: Run cucumber
           command: |
             yarn cucumber:ci
-      - store_artifacts:
-          path: reports/
+      # - store_artifacts:
+      #     path: reports/
   dynamic_security_scan:
     executor: machine-executor
     steps:
@@ -326,8 +332,8 @@ jobs:
       - run:
           name: Run OWASP ZAP
           command: ./bin/run-owasp-scan
-      - store_artifacts:
-          path: reports/owasp_report.html
+      # - store_artifacts:
+      #     path: reports/owasp_report.html
   accessibility_scan:
     executor: docker-postgres-executor
     steps:
@@ -355,8 +361,8 @@ jobs:
           command: |
             sleep 10
             yarn axe:ci
-      - store_artifacts:
-          path: reports/
+      # - store_artifacts:
+      #     path: reports/
   deploy:
     executor: docker-executor
     steps:

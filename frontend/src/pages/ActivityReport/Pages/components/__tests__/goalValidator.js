@@ -5,24 +5,40 @@ import {
   GOALS_EMPTY,
   UNFINISHED_OBJECTIVES,
   GOAL_MISSING_OBJECTIVE,
+  OBJECTIVE_TOPICS,
+  OBJECTIVE_TITLE,
+  OBJECTIVE_TTA,
+  OBJECTIVE_RESOURCES,
 } from '../goalValidator';
+import {
+  GOAL_NAME_ERROR, GOAL_RTTAPA_ERROR,
+} from '../../../../../components/GoalForm/constants';
 
 const missingTitle = {
   title: '',
   ttaProvided: 'ttaProvided',
+  topics: ['Hello'],
+  resources: [],
 };
 
 const missingTTAProvided = {
   title: 'title',
   ttaProvided: '<p></p>',
+  topics: ['Hello'],
+  resources: [],
 };
 
 const validObjective = {
   title: 'title',
   ttaProvided: 'ttaProvided',
+  topics: ['Hello'],
+  resources: [],
 };
 
 const goalUnfinishedObjective = {
+  name: 'Test goal',
+  endDate: '2021-01-01',
+  isRttapa: 'No',
   objectives: [
     { ...validObjective },
     { ...missingTTAProvided },
@@ -30,10 +46,26 @@ const goalUnfinishedObjective = {
 };
 
 const goalNoObjectives = {
+  name: 'Test goal',
+  endDate: '2021-01-01',
+  isRttapa: 'No',
   objectives: [],
 };
 
 const goalValid = {
+  name: 'Test goal',
+  endDate: '2021-01-01',
+  isRttapa: 'No',
+  objectives: [
+    { ...validObjective },
+    { ...validObjective },
+  ],
+};
+
+const goalNoIsRttapa = {
+  name: 'Test goal',
+  endDate: '2021-01-01',
+  isRttapa: '',
   objectives: [
     { ...validObjective },
     { ...validObjective },
@@ -49,8 +81,10 @@ describe('validateGoals', () => {
           { ...validObjective },
         ];
 
-        const result = unfinishedObjectives(objectives);
+        const setError = jest.fn();
+        const result = unfinishedObjectives(objectives, setError);
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${0}].title`, { message: OBJECTIVE_TITLE });
       });
 
       it('if one objective has "ttaProvided" undefined', () => {
@@ -59,8 +93,34 @@ describe('validateGoals', () => {
           { ...validObjective },
         ];
 
-        const result = unfinishedObjectives(objectives);
+        const setError = jest.fn();
+        const result = unfinishedObjectives(objectives, setError);
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${0}].ttaProvided`, { message: OBJECTIVE_TTA });
+      });
+
+      it('if one objective has no "topics"', () => {
+        const objectives = [
+          { ...validObjective },
+          { ...validObjective, topics: [] },
+        ];
+
+        const setError = jest.fn();
+        const result = unfinishedObjectives(objectives, setError);
+        expect(result).toEqual(UNFINISHED_OBJECTIVES);
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].topics`, { message: OBJECTIVE_TOPICS });
+      });
+
+      it('if one objective has invalid "resources"', () => {
+        const objectives = [
+          { ...validObjective },
+          { ...validObjective, resources: [{ value: '234runwf78n' }] },
+        ];
+
+        const setError = jest.fn();
+        const result = unfinishedObjectives(objectives, setError);
+        expect(result).toEqual(UNFINISHED_OBJECTIVES);
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].resources`, { message: OBJECTIVE_RESOURCES });
       });
     });
 
@@ -79,6 +139,22 @@ describe('validateGoals', () => {
 
   describe('unfinishedGoals', () => {
     describe('returns invalid', () => {
+      it('if one goal has no name', () => {
+        const goals = [
+          { ...goalValid, name: null, endDate: new Date('09/06/2022') },
+        ];
+        const setError = jest.fn();
+        unfinishedGoals(goals, setError);
+        expect(setError).toHaveBeenCalledWith('goalName', { message: GOAL_NAME_ERROR });
+      });
+
+      it('if goal has no isRttapa set', () => {
+        const goals = [goalNoIsRttapa];
+        const setError = jest.fn();
+        unfinishedGoals(goals, setError);
+        expect(setError).toHaveBeenCalledWith('goalIsRttapa', { message: GOAL_RTTAPA_ERROR });
+      });
+
       it('if one goal has no objectives', () => {
         const goals = [
           { ...goalValid },

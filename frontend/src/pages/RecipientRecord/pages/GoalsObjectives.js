@@ -1,17 +1,14 @@
 import React, { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
-import { Grid } from '@trussworks/react-uswds';
 import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import useSessionFiltersAndReflectInUrl from '../../../hooks/useSessionFiltersAndReflectInUrl';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import { expandFilters } from '../../../utils';
 import { getGoalsAndObjectivesFilterConfig, GOALS_OBJECTIVES_FILTER_KEY } from './constants';
-import GoalStatusGraph from '../../../widgets/GoalStatusGraph';
-import GoalsTable from '../../../components/GoalsTable/GoalsTable';
 import UserContext from '../../../UserContext';
 import { getUserRegions } from '../../../permissions';
-import FilterContext from '../../../FilterContext';
+import GoalDataController from '../../../components/GoalCards/GoalDataController';
 
 export default function GoalsObjectives({
   recipientId, regionId, recipient, location,
@@ -36,19 +33,7 @@ export default function GoalsObjectives({
     }
   };
 
-  const filtersToApply = [
-    ...expandFilters(filters),
-    {
-      topic: 'region',
-      condition: 'is',
-      query: regionId,
-    },
-    {
-      topic: 'recipientId',
-      condition: 'contains',
-      query: recipientId,
-    },
-  ];
+  const filtersToApply = expandFilters(filters);
 
   let hasActiveGrants = false;
   if (recipient.grants.find((g) => g.status === 'Active')) {
@@ -73,20 +58,13 @@ export default function GoalsObjectives({
             allUserRegions={regions}
           />
         </div>
-        <Grid row>
-          <Grid desktop={{ col: 6 }} mobileLg={{ col: 12 }}>
-            <GoalStatusGraph filters={filtersToApply} />
-          </Grid>
-        </Grid>
-        <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY }}>
-          <GoalsTable
-            recipientId={recipientId}
-            regionId={regionId}
-            filters={expandFilters(filters)}
-            hasActiveGrants={hasActiveGrants}
-            showNewGoals={showNewGoals || false}
-          />
-        </FilterContext.Provider>
+        <GoalDataController
+          filters={filtersToApply}
+          recipientId={recipientId}
+          regionId={regionId}
+          hasActiveGrants={hasActiveGrants}
+          showNewGoals={showNewGoals || false}
+        />
       </div>
     </>
   );
