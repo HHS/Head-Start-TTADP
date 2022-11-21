@@ -66,6 +66,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         'id',
         'status',
         'onApprovedAR',
+        'rtrOrder',
         [
           sequelize.literal(`
             (
