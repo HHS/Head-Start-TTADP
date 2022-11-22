@@ -48,6 +48,7 @@ const preventTitleChangeWhenOnApprovedAR = (sequelize, instance) => {
 
 const autoPopulateStatusChangeDates = (sequelize, instance, options) => {
   const changed = instance.changed();
+  console.log('\n\n\n----------Instance: ', instance);
   if (Array.isArray(changed) && changed.includes('status')) {
     const now = new Date();
     switch (instance.status) {
