@@ -286,7 +286,7 @@ describe('reportCache', () => {
         topics: topicsForThisObjective,
         ttaProvided: null,
       };
-      await cacheObjectiveMetadata(objective, report.id, metadata, 0);
+      await cacheObjectiveMetadata(objective, report.id, metadata, 1);
       const aro = await ActivityReportObjective.findOne({
         where: { activityReportId: report.id },
         include: [{
@@ -308,6 +308,7 @@ describe('reportCache', () => {
         .toEqual(mockObjectiveResources[0].userProvidedUrl);
 
       expect(aro.activityReportObjectiveTopics.length).toEqual(1);
+      expect(aro.arOrder).toEqual(2);
       expect(aro.activityReportObjectiveTopics[0].topicId).toEqual(mockObjectiveTopics[0].topicId);
     });
     it('add and remove from cache', async () => {
