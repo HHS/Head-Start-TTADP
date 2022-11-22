@@ -17,6 +17,21 @@ executors:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: secretpass
           POSTGRES_DB: ttasmarthub
+  docker-pg-mailcatcher-executor:
+    docker:
+      - image: cimg/node:16.18.1-browsers
+        environment:
+          DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
+          MAILER_URL: smtp://localhost:1025
+      - image: circleci/postgres:12.4-ram
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: secretpass
+          POSTGRES_DB: ttasmarthub
+      - image: schickling/mailcatcher
+        environment:
+          MAILCATCHER_PORT: 1025
+          MAILCATCHER_WEB_PORT: 1080
   machine-executor:
     machine:
       image: ubuntu-2204:current
@@ -290,12 +305,7 @@ jobs:
       - store_artifacts:
           path: frontend/coverage/
   test_e2e:
-    executor: docker-postgres-executor
-    # docker:
-    #   - image: cimg/base:2022.06
-    #     auth:
-    #       username: $DOCKERHUB_USERNAME
-    #       password: $DOCKERHUB_PASSWORD
+    executor: docker-pg-mailcatcher-executor
     steps:
       - attach_workspace:
           at: .
@@ -305,13 +315,6 @@ jobs:
             yarn build
             BYPASS_AUTH=true CURRENT_USER_ID=5 yarn start:ci
           background: true
-      - setup_remote_docker:
-          version: 20.10.18
-          docker_layer_caching: true
-      - run:
-          name: Start mailcatcher
-          command: |
-            docker run -d -p 1080:1080 schickling/mailcatcher
       - run:
           name: Run migrations ci
           command: yarn db:migrate:ci
@@ -329,9 +332,6 @@ jobs:
           command: yarn e2e:ci
       - store_artifacts:
           path: playwright-report/
-      - run:
-          name: Stop mailcatcher
-          command: docker stop $(docker ps -a -q --filter ancestor=schickling/mailcatcher --format="{{.ID}}")
   cucumber_test:
     executor: docker-postgres-executor
     steps:
