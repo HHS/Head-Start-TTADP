@@ -1,3 +1,5 @@
+import { devices } from "@playwright/test";
+
 export default {
   testDir: './tests',
   expect: {
@@ -15,30 +17,44 @@ export default {
     {
       name: 'Desktop',
       use: {
-        browserName: 'chromium',
+        ...devices['Desktop Firefox'],
         baseURL: process.env.TTA_SMART_HUB_URI || 'http://localhost:3000',
-        viewport: { width: 1280, height: 720 },
-        ignoreHTTPSErrors: true,
-        headless: true,
-        acceptDownloads: true,
         screenshot: 'only-on-failure',
         video: 'retain-on-failure',
         trace: 'retain-on-failure',
       },
+      // use: {
+      //   browserName: 'chromium',
+      //   baseURL: process.env.TTA_SMART_HUB_URI || 'http://localhost:3000',
+      //   viewport: { width: 1280, height: 720 },
+      //   ignoreHTTPSErrors: true,
+      //   headless: true,
+      //   acceptDownloads: true,
+      //   screenshot: 'only-on-failure',
+      //   video: 'retain-on-failure',
+      //   trace: 'retain-on-failure',
+      // },
     },
     {
       name: 'Mobile',
       use: {
-        browserName: 'chromium',
+        ...devices['iPhone 13 Pro'],
         baseURL: process.env.TTA_SMART_HUB_URI || 'http://localhost:3000',
-        viewport: { width: 375, height: 812 },
-        ignoreHTTPSErrors: true,
-        headless: true,
-        acceptDownloads: true,
         screenshot: 'only-on-failure',
         video: 'retain-on-failure',
         trace: 'retain-on-failure',
       },
+      // use: {
+      //   browserName: 'chromium',
+      //   baseURL: process.env.TTA_SMART_HUB_URI || 'http://localhost:3000',
+      //   viewport: { width: 375, height: 812 },
+      //   ignoreHTTPSErrors: true,
+      //   headless: true,
+      //   acceptDownloads: true,
+      //   screenshot: 'only-on-failure',
+      //   video: 'retain-on-failure',
+      //   trace: 'retain-on-failure',
+      // },
     },
   ],
 };
