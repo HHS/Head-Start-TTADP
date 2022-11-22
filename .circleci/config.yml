@@ -300,14 +300,14 @@ jobs:
     steps:
       - attach_workspace:
           at: .
-      - setup_remote_docker:
-          version: 20.10.14
       - run:
           name: Start server
           command: |
             yarn build
             BYPASS_AUTH=true CURRENT_USER_ID=5 yarn start:ci
           background: true
+      - setup_remote_docker:
+          version: 20.10.14
       - run:
           name: Start mailcatcher
           command: |
