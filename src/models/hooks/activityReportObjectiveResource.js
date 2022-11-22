@@ -15,7 +15,7 @@ const recalculateOnAR = async (sequelize, instance, options) => {
         COUNT(aror.id) > 0 "onAR"
       FROM "ObjectiveResources" r
       LEFT JOIN "ActivityReportObjectives" aro
-      ON f."objectiveId" = aro."objectiveId"
+      ON r."objectiveId" = aro."objectiveId"
       JOIN "ActivityReportObjectiveResources" aror
       ON aro.id = aror."activityReportObjectiveId"
       AND r."userProvidedUrl" = aror."userProvidedUrl"
