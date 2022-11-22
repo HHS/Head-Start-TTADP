@@ -5,6 +5,9 @@ test.describe('Account Management', () => {
     await page.goto('/');
     await page.getByTestId('header-avatar').click();
     await page.getByRole('link', { name: 'Account Management' }).click();
+
+    await page.waitForTimeout(2_000);
+
     await page.getByTestId('send-verification-email-button').click();
 
     await page.waitForTimeout(5_000);
