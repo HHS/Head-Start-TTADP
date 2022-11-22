@@ -15,9 +15,11 @@ export default {
 
   projects: [
     {
-      name: 'Desktop Firefox',
+      name: 'Desktop Chrome',
       use: {
-        ...devices['Desktop Firefox'],
+        // see https://playwright.dev/docs/api/class-testoptions
+        ...devices['Desktop Chrome'],
+        channel: 'chrome',
         baseURL: process.env.TTA_SMART_HUB_URI || 'http://localhost:3000',
         screenshot: 'only-on-failure',
         video: 'retain-on-failure',
@@ -27,6 +29,20 @@ export default {
         acceptDownloads: true,
       },
     },
+    // {
+    //   name: 'Desktop Firefox',
+    //   use: {
+    //     // see https://playwright.dev/docs/api/class-testoptions
+    //     ...devices['Desktop Firefox'],
+    //     baseURL: process.env.TTA_SMART_HUB_URI || 'http://localhost:3000',
+    //     screenshot: 'only-on-failure',
+    //     video: 'retain-on-failure',
+    //     trace: 'retain-on-failure',
+    //     headless: true,
+    //     ignoreHTTPSErrors: true,
+    //     acceptDownloads: true,
+    //   },
+    // },
     // {
     //   name: 'Desktop Safari',
     //   use: {
