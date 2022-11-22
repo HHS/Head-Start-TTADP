@@ -15,17 +15,17 @@ module.exports = (sequelize, DataTypes) => {
       Role.belongsToMany(models.Topic, {
         through: models.RoleTopic, foreignKey: 'roleId', as: 'topics', otherKey: 'topicId',
       });
-      Role.belongsToMany(models.Objective, {
-        through: models.ObjectiveRole,
+      Role.belongsToMany(models.User, {
+        through: models.UserRole,
         foreignKey: 'roleId',
-        otherKey: 'objectiveId',
-        as: 'objectives',
+        otherKey: 'userId',
+        as: 'users',
       });
-      Role.belongsToMany(models.ObjectiveTemplate, {
-        through: models.ObjectiveTemplateRole,
+      Role.belongsToMany(models.ActivityReportCollaborator, {
+        through: models.CollaboratorRole,
+        otherKey: 'activityReportCollaboratorId',
         foreignKey: 'roleId',
-        otherKey: 'objectiveTemplateId',
-        as: 'objectiveTemplates',
+        as: 'collaboratorRoles',
       });
     }
   }
