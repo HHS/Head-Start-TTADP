@@ -31,7 +31,7 @@ function UserSection({ user, onSave, features }) {
     if (Array.isArray(e)) {
       updateUser({
         ...formUser,
-        role: e.map((obj) => obj.value),
+        roles: e.map((obj) => ({ fullName: obj.value })),
       });
       return;
     }

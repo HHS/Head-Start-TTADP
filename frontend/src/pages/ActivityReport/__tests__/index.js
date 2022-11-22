@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import reactSelectEvent from 'react-select-event';
 import {
-  screen, fireEvent, waitFor, within,
+  screen, fireEvent, waitFor, within, act,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
@@ -154,7 +154,7 @@ describe('ActivityReport', () => {
 
       // we're just checking to see if the "local backup" message is shown, the
       // updatedAt from network won't be shown
-      const alert = screen.queryByTestId('alert');
+      const alert = await screen.findByTestId('alert');
 
       const reggies = [
         new RegExp('your computer at', 'i'),
@@ -198,9 +198,9 @@ describe('ActivityReport', () => {
     it('navigates to the correct page', async () => {
       fetchMock.post('/api/activity-reports', { id: 1 });
       renderActivityReport('new');
-      const button = await screen.findByRole('button', { name: 'Topics and resources Not Started' });
+      const button = await screen.findByRole('button', { name: /supporting attachments not started/i });
       userEvent.click(button);
-      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/topics-resources'));
+      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/supporting-attachments'));
     });
   });
 
@@ -211,7 +211,9 @@ describe('ActivityReport', () => {
       const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
       const recipient = within(information).getByLabelText('Recipient');
       fireEvent.click(recipient);
-      const recipientSelectbox = await screen.findByRole('textbox', { name: 'Recipient name(s) (Required)' });
+
+      const recipientName = await screen.findByText(/recipient names/i);
+      const recipientSelectbox = await within(recipientName).findByText(/- select -/i);
       await reactSelectEvent.select(recipientSelectbox, ['Recipient Name']);
 
       const button = await screen.findByRole('button', { name: 'Save draft' });
@@ -273,11 +275,18 @@ describe('ActivityReport', () => {
       expect(await screen.findByText(/creator:/i)).toBeVisible();
     });
 
+    it('displays the context', async () => {
+      fetchMock.get('/api/activity-reports/1', formData());
+      renderActivityReport(1);
+      const contextGroup = await screen.findByRole('group', { name: /context/i });
+      expect(contextGroup).toBeVisible();
+    });
+
     it('calls "report update"', async () => {
       fetchMock.get('/api/activity-reports/1', formData());
       fetchMock.put('/api/activity-reports/1', {});
       renderActivityReport(1);
-      const button = await screen.findByRole('button', { name: 'Topics and resources In Progress' });
+      const button = await screen.findByRole('button', { name: /supporting attachments in progress/i });
       userEvent.click(button);
       await waitFor(() => expect(fetchMock.called('/api/activity-reports/1')).toBeTruthy());
     });
@@ -286,14 +295,11 @@ describe('ActivityReport', () => {
       const data = formData();
       fetchMock.get('/api/activity-reports/1', { ...data, creatorRole: null });
       fetchMock.put('/api/activity-reports/1', {});
-      renderActivityReport(1);
-
+      act(() => renderActivityReport(1));
       const button = await screen.findByRole('button', { name: 'Save draft' });
-      userEvent.click(button);
-
+      act(() => userEvent.click(button));
       const lastOptions = fetchMock.lastOptions();
       const bodyObj = JSON.parse(lastOptions.body);
-      await waitFor(() => expect(fetchMock.called('/api/activity-reports/1')).toBeTruthy());
       expect(bodyObj.creatorRole).toEqual('Reporter');
     });
   });
@@ -305,11 +311,12 @@ describe('ActivityReport', () => {
         const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
         const recipient = within(information).getByLabelText('Recipient');
         fireEvent.click(recipient);
-        const recipientSelectbox = await screen.findByRole('textbox', { name: 'Recipient name(s) (Required)' });
-        reactSelectEvent.openMenu(recipientSelectbox);
 
-        const recipientNames = await screen.findByText(/recipient name\(s\)/i);
-        expect(within(recipientNames).queryAllByText(/recipient name/i).length).toBe(2);
+        const recipientField = await screen.findByText(/recipient names/i);
+        const recipientSelectbox = await within(recipientField).findByText(/- select -/i);
+
+        reactSelectEvent.openMenu(recipientSelectbox);
+        expect(within(recipientField).queryAllByText(/recipient name/i).length).toBe(2);
       });
 
       it('Other entity', async () => {
@@ -317,7 +324,10 @@ describe('ActivityReport', () => {
         const information = await screen.findByRole('group', { name: 'Who was the activity for?' });
         const otherEntity = within(information).getByLabelText('Other entity');
         fireEvent.click(otherEntity);
-        const recipientSelectbox = await screen.findByRole('textbox', { name: 'Other entities (Required)' });
+
+        const otherEntities = await screen.findByText(/other entities/i);
+        const recipientSelectbox = await within(otherEntities).findByText(/- select -/i);
+
         reactSelectEvent.openMenu(recipientSelectbox);
         expect(await screen.findByText(withText('otherEntity'))).toBeVisible();
       });
@@ -330,11 +340,13 @@ describe('ActivityReport', () => {
       const recipient = within(information).getByLabelText('Recipient');
       fireEvent.click(recipient);
 
-      let recipientSelectbox = await screen.findByRole('textbox', { name: 'Recipient name(s) (Required)' });
+      const recipientName = await screen.findByText(/recipient names/i);
+      let recipientSelectbox = await within(recipientName).findByText(/- select -/i);
+
       reactSelectEvent.openMenu(recipientSelectbox);
       await reactSelectEvent.select(recipientSelectbox, ['Recipient Name']);
 
-      const recipientNames = await screen.findByText(/recipient name\(s\)/i);
+      const recipientNames = await screen.findByText(/recipient names/i);
       expect(await within(recipientNames).queryAllByText(/recipient name/i).length).toBe(2);
 
       information = await screen.findByRole('group', { name: 'Who was the activity for?' });
@@ -342,7 +354,7 @@ describe('ActivityReport', () => {
       fireEvent.click(otherEntity);
       fireEvent.click(recipient);
 
-      recipientSelectbox = await screen.findByLabelText(/recipient name\(s\)/i);
+      recipientSelectbox = await screen.findByLabelText(/recipient names/i);
       expect(within(recipientSelectbox).queryByText('Recipient Name')).toBeNull();
     });
 

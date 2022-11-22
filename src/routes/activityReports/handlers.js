@@ -3,6 +3,7 @@ import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
 import {
   ActivityReport as ActivityReportModel,
+  Role,
   ActivityReportApprover,
   User as UserModel,
 } from '../../models';
@@ -21,6 +22,7 @@ import {
   getAllDownloadableActivityReports,
   activityReportsForCleanup,
 } from '../../services/activityReports';
+import { saveObjectivesForReport, getObjectivesByReportId } from '../../services/objectives';
 import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
 import { goalsForGrants } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
@@ -36,7 +38,7 @@ import {
   reportApprovedNotification,
   collaboratorAssignedNotification,
 } from '../../lib/mailer';
-import { activityReportToCsvRecord, extractListOfGoalsAndObjectives, deduplicateObjectivesWithoutGoals } from '../../lib/transform';
+import { activityReportToCsvRecord, extractListOfGoalsAndObjectives } from '../../lib/transform';
 import { userSettingOverridesById } from '../../services/userSettings';
 
 const { APPROVE_REPORTS } = SCOPES;
@@ -145,18 +147,6 @@ async function sendActivityReportCSV(reports, res) {
           header: 'Number of participants',
         },
         {
-          key: 'topics',
-          header: 'Topics covered',
-        },
-        {
-          key: 'ECLKCResourcesUsed',
-          header: 'ECLKC resources',
-        },
-        {
-          key: 'nonECLKCResourcesUsed',
-          header: 'Non-ECLKC resources',
-        },
-        {
           key: 'files',
           header: 'Attachments',
         },
@@ -193,6 +183,22 @@ async function sendActivityReportCSV(reports, res) {
         {
           key: 'recipientInfo',
           header: 'Recipient name - Grant number - Recipient ID',
+        },
+        {
+          key: 'topics',
+          header: 'Legacy Topics covered',
+        },
+        {
+          key: 'ECLKCResourcesUsed',
+          header: 'Legacy ECLKC resources',
+        },
+        {
+          key: 'nonECLKCResourcesUsed',
+          header: 'Legacy Non-ECLKC resources',
+        },
+        {
+          key: 'files',
+          header: 'Legacy Attachments',
         },
         {
           key: 'stateCode',
@@ -265,6 +271,31 @@ export async function getGoals(req, res) {
     const { grantIds } = req.query;
     const goals = await goalsForGrants(grantIds);
     res.json(goals);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+/**
+ * Save Objectives for non-entity Reports.
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function saveOtherEntityObjectivesForReport(req, res) {
+  const { objectivesWithoutGoals, activityReportId, region } = req.body;
+  const user = await userById(req.session.userId);
+  const authorization = new User(user);
+
+  if (!authorization.canWriteInRegion(parseInt(region, DECIMAL_BASE))) {
+    res.sendStatus(403);
+    return;
+  }
+  try {
+    const report = await ActivityReportModel.findByPk(activityReportId);
+    await saveObjectivesForReport(objectivesWithoutGoals, report);
+    const updatedObjectives = await getObjectivesByReportId(activityReportId);
+    res.json(updatedObjectives);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
@@ -401,7 +432,7 @@ export async function resetToDraft(req, res) {
     }
 
     const [
-      savedReport, activityRecipients, goalsAndObjectives,
+      savedReport, activityRecipients, goalsAndObjectives, objectivesWithoutGoals,
     ] = await setStatus(report, REPORT_STATUSES.DRAFT);
 
     res.json({
@@ -409,6 +440,7 @@ export async function resetToDraft(req, res) {
       displayId: report.displayId,
       activityRecipients,
       goalsAndObjectives,
+      objectivesWithoutGoals,
     });
   } catch (error) {
     await handleErrors(req, res, error, logContext);
@@ -533,7 +565,13 @@ export async function submitReport(req, res) {
           include: [
             {
               model: UserModel,
-              attributes: ['id', 'name', 'role', 'fullName'],
+              attributes: ['id', 'name', 'fullName'],
+              include: [
+                {
+                  model: Role,
+                  as: 'roles',
+                },
+              ],
             },
           ],
         },
@@ -561,7 +599,7 @@ export async function getActivityRecipients(req, res) {
 export async function getReport(req, res) {
   const { activityReportId } = req.params;
   const [
-    report, activityRecipients, goalsAndObjectives,
+    report, activityRecipients, goalsAndObjectives, objectivesWithoutGoals,
   ] = await activityReportAndRecipientsById(activityReportId);
   if (!report) {
     res.sendStatus(404);
@@ -574,15 +612,12 @@ export async function getReport(req, res) {
     res.sendStatus(403);
     return;
   }
-
-  const { objectivesWithoutGoals, ...data } = report.dataValues;
-
   res.json({
-    ...data,
+    ...report.dataValues,
     displayId: report.displayId,
     activityRecipients,
     goalsAndObjectives,
-    objectivesWithoutGoals: deduplicateObjectivesWithoutGoals(objectivesWithoutGoals),
+    objectivesWithoutGoals,
   });
 }
 

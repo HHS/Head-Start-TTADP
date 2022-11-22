@@ -6,10 +6,10 @@ executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: cimg/node:16.17.0-browsers
+      - image: cimg/node:16.18.1-browsers
   docker-postgres-executor:
     docker:
-      - image: cimg/node:16.17.0-browsers
+      - image: cimg/node:16.18.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -190,7 +190,7 @@ parameters:
     default: "main-ar-redesign"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "kw-disable-non-prod-updates"
+    default: "TTAHUB-1221/all-objectives-selected"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -254,12 +254,18 @@ jobs:
           command: yarn db:seed:ci
       - run:
           name: Test backend
-          command: yarn test:ci
-      - store_test_results:
-          path: reports/
+          command:  |
+            chmod 744 ./bin/test-backend-ci
+            ./bin/test-backend-ci
+      - run:
+          name: Compress coverage artifacts
+          command: tar -cvzf backend-coverage-artifacts.tar coverage/
       - store_artifacts:
           path: coverage/
-
+      - store_artifacts:
+          path: backend-coverage-artifacts.tar
+      - store_test_results:
+          path: reports/
   test_frontend:
     executor: docker-executor
     steps:

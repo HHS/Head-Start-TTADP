@@ -116,10 +116,12 @@ describe('goal filtersToScopes', () => {
         ActivityReportGoal.create({
           activityReportId: reportWithReasons.id,
           goalId: goals[0].id,
+          status: goals[0].status,
         }),
         ActivityReportGoal.create({
           activityReportId: reportWithTopics.id,
           goalId: goals[1].id,
+          status: goals[1].status,
         }),
       ],
     );
@@ -185,24 +187,28 @@ describe('goal filtersToScopes', () => {
           objectiveId: objectives[0].id,
           activityReportId: reportWithReasons.id,
           ttaProvided: 'asdfadf',
+          status: objectives[0].status,
         }),
         // goal for topics
         await ActivityReportObjective.create({
           objectiveId: objectives[1].id,
           activityReportId: reportWithTopics.id,
           ttaProvided: 'asdfadf',
+          status: objectives[1].status,
         }),
         // goal for status
         await ActivityReportObjective.create({
           objectiveId: objectives[2].id,
           activityReportId: emptyReport.id,
           ttaProvided: 'asdfadf',
+          status: objectives[2].status,
         }),
         // goal for startDate
         await ActivityReportObjective.create({
           objectiveId: objectives[3].id,
           activityReportId: emptyReport.id,
           ttaProvided: 'asdfadf',
+          status: objectives[3].status,
         }),
       ],
     );
@@ -569,7 +575,7 @@ describe('goal filtersToScopes', () => {
       });
 
       expect(found.length).toBe(6);
-      expect(found[0].name).toContain('Goal 1');
+      expect(found.map((f) => f.name)).toContain('Goal 1');
     });
 
     it('filters out by region', async () => {
