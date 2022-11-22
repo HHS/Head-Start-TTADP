@@ -129,7 +129,7 @@ export async function deleteGoal(req, res) {
       return;
     }
 
-    const deletedGoal = await destroyGoal(goalIds);
+    const deletedGoal = await destroyGoal(ids);
 
     if (!deletedGoal) {
       res.sendStatus(404);

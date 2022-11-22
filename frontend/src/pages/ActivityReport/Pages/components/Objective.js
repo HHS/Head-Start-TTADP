@@ -75,14 +75,6 @@ export default function Objective({
   });
 
   const {
-    field: { onChange: onChangeId },
-  } = useController({
-    name: `${fieldArrayName}[${index}].id`,
-    rules: {},
-    defaultValue: objective.id || objective.value || null,
-  });
-
-  const {
     field: {
       onChange: onChangeTopics,
       onBlur: onBlurTopics,
@@ -182,7 +174,6 @@ export default function Objective({
     onChangeTopics(newObjective.topics);
     onChangeFiles(newObjective.files || []);
     onObjectiveChange(newObjective, index); // Call parent on objective change.
-    onChangeId(newObjective.id || newObjective.value);
   };
 
   const onUploadFile = async (files, _objective, setError) => {
