@@ -56,6 +56,7 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
       activityReportId: report.id,
       objectiveId: objective.id,
       ttaProvided: 'asdfadf',
+      status: objective.status,
     });
     goalOnOneGrant = await Goal.create({
       name: 'Goal on one grant',

@@ -3,6 +3,8 @@ import { Op } from 'sequelize';
 import {
   User,
   Permission,
+  Role,
+  sequelize,
   UserValidationStatus,
 } from '../models';
 
@@ -15,7 +17,6 @@ export const userAttributes = [
   'email',
   'phoneNumber',
   'homeRegionId',
-  'role',
   'lastLogin',
   'flags',
 ];
@@ -30,10 +31,12 @@ export async function userById(userId) {
     },
     include: [
       { model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] },
+      { model: Role, as: 'roles' },
       { model: UserValidationStatus, as: 'validationStatus', attributes: ['userId', 'type', 'validatedAt'] },
     ],
     order: [
       [{ model: Permission, as: 'permissions' }, 'regionId', 'ASC'],
+      [sequelize.fn('CONCAT', sequelize.col('User."name"'), sequelize.col('User."email"')), 'ASC'],
     ],
   });
 }
@@ -50,7 +53,6 @@ export async function userByEmail(email) {
 export async function usersWithPermissions(regions, scopes) {
   return User.findAll({
     attributes: ['id', 'name'],
-    raw: true,
     where: {
       [Op.and]: [
         { '$permissions.scopeId$': scopes },
@@ -59,6 +61,7 @@ export async function usersWithPermissions(regions, scopes) {
     },
     include: [
       { model: Permission, as: 'permissions', attributes: [] },
+      { model: Role, as: 'roles' },
     ],
   });
 }

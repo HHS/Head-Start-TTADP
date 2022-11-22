@@ -116,6 +116,7 @@ const getObjectiveTemplateFilesById = async (objectiveTemplateId) => ObjectiveTe
 });
 
 const updateStatus = async (fileId, fileStatus) => {
+  /* TODO: If an error occurs make sure it bubbles up. */
   let file;
   try {
     file = await File.update({ status: fileStatus }, {
@@ -126,6 +127,25 @@ const updateStatus = async (fileId, fileStatus) => {
   } catch (error) {
     return error;
   }
+};
+
+const createFileMetaData = async (originalFileName, s3FileName, fileSize) => {
+  const newFile = {
+    originalFileName,
+    key: s3FileName,
+    status: UPLOADING,
+    fileSize,
+  };
+  const [file] = await File.findOrCreate({
+    where: {
+      originalFileName: newFile.originalFileName,
+      key: newFile.key,
+      fileSize: newFile.fileSize,
+    },
+    defaults: newFile,
+  });
+
+  return file.dataValues;
 };
 
 const createActivityReportFileMetaData = async (
@@ -178,6 +198,32 @@ const createActivityReportObjectiveFileMetaData = async (
   return file.dataValues;
 };
 
+const createObjectivesFileMetaData = async (
+  originalFileName,
+  s3FileName,
+  objectiveIds,
+  fileSize,
+) => {
+  const newFile = {
+    originalFileName,
+    key: s3FileName,
+    status: UPLOADING,
+    fileSize,
+  };
+  const [file] = await File.findOrCreate({
+    where: {
+      originalFileName: newFile.originalFileName,
+      key: newFile.key,
+      fileSize: newFile.fileSize,
+    },
+    defaults: newFile,
+  });
+  await Promise.all(objectiveIds.map(
+    (objectiveId) => ObjectiveFile.create({ objectiveId, fileId: file.id }),
+  ));
+  return file.dataValues;
+};
+
 const createObjectiveFileMetaData = async (
   originalFileName,
   s3FileName,
@@ -193,7 +239,7 @@ const createObjectiveFileMetaData = async (
   const [file] = await File.findOrCreate({
     where: {
       originalFileName: newFile.originalFileName,
-      key: newFile.s3FileName,
+      key: newFile.key,
       fileSize: newFile.fileSize,
     },
     defaults: newFile,
@@ -238,8 +284,10 @@ export {
   getObjectiveFilesById,
   getObjectiveTemplateFilesById,
   updateStatus,
+  createFileMetaData,
   createActivityReportFileMetaData,
   createActivityReportObjectiveFileMetaData,
-  createObjectiveFileMetaData,
+  createObjectiveFileMetaData, // for one objective
+  createObjectivesFileMetaData, // for more than one objective
   createObjectiveTemplateFileMetaData,
 };

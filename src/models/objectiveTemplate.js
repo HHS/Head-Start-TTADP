@@ -1,6 +1,6 @@
 const { Model } = require('sequelize');
 const { CREATION_METHOD } = require('../constants');
-const { beforeValidate, afterUpdate } = require('./hooks/objectiveTemplate');
+const { beforeValidate, beforeUpdate, afterUpdate } = require('./hooks/objectiveTemplate');
 // const { auditLogger } = require('../logger');
 
 module.exports = (sequelize, DataTypes) => {
@@ -18,12 +18,6 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'objectiveTemplateId',
         otherKey: 'topicId',
         as: 'topics',
-      });
-      ObjectiveTemplate.belongsToMany(models.Role, {
-        through: models.ObjectiveTemplateRole,
-        foreignKey: 'objectiveTemplateId',
-        otherKey: 'roleId',
-        as: 'roles',
       });
       ObjectiveTemplate.hasMany(models.GoalTemplateObjectiveTemplate, { foreignKey: 'objectiveTemplateId', as: 'goalTemplateObjectiveTemplates' });
       ObjectiveTemplate.belongsToMany(models.GoalTemplate, {
@@ -70,6 +64,7 @@ module.exports = (sequelize, DataTypes) => {
     modelName: 'ObjectiveTemplate',
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });

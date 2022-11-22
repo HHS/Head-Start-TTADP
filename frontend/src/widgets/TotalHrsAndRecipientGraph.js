@@ -198,7 +198,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
   }
 
   return (
-    <Container className="ttahub-total-hours-container shadow-2" padding={3} loading={loading} loadingLabel="Total hours loading">
+    <Container className="ttahub-total-hours-container shadow-2" paddingX={3} paddingY={3} loading={loading} loadingLabel="Total hours loading">
       <div className="ttahub--total-hrs-recipient-graph">
         <Grid row className="position-relative margin-bottom-2">
           <Grid desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}><h2 className="ttahub--dashboard-widget-heading margin-0">Total TTA hours</h2></Grid>

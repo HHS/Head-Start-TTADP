@@ -39,6 +39,6 @@ describe('Dashboard Overview Widget', () => {
   it('renders loading when loading', async () => {
     renderDashboardOverview({ loading: true });
 
-    expect(await screen.findByText('Loading Data')).toBeInTheDocument();
+    expect(await screen.findByText('Loading')).toBeInTheDocument();
   });
 });

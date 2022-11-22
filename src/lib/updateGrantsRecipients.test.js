@@ -3,7 +3,7 @@ import axios from 'axios';
 import fs from 'mz/fs';
 import updateGrantsRecipients, { processFiles } from './updateGrantsRecipients';
 import db, {
-  sequelize, Recipient, Grant, Program, ZALGrant, ActivityRecipient,
+  sequelize, Recipient, Goal, Grant, Program, ZALGrant, ActivityRecipient,
 } from '../models';
 
 jest.mock('axios');
@@ -68,12 +68,14 @@ describe('Update grants and recipients', () => {
   beforeAll(async () => {
     await Program.destroy({ where: { id: [1, 2, 3, 4] } });
     await ActivityRecipient.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Goal.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterEach(async () => {
     await Program.destroy({ where: { id: [1, 2, 3, 4] } });
     await ActivityRecipient.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Goal.destroy({ where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Grant.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
     await Recipient.destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
@@ -237,7 +239,7 @@ describe('Update grants and recipients', () => {
 
   it('sets metadata in audit tables', async () => {
     await processFiles('hex');
-    const grantAuditEntry = await ZALGrant.findOne({ where: { data_id: 11630 } });
+    const grantAuditEntry = await ZALGrant.findOne({ where: { data_id: 11630, dml_type: { [Op.not]: 'DELETE' } } });
     const {
       // eslint-disable-next-line camelcase
       descriptor_id, dml_by, dml_txid, session_sig,

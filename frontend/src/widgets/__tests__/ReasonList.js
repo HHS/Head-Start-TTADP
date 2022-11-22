@@ -3,21 +3,17 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import ReasonList from '../ReasonList';
 
-const renderReasonList = ({ data, dateRange, errorOverride = null }) => {
+const renderReasonList = (data) => {
   render(<ReasonList
     data={data}
-    allRegions={[]}
-    dateRange={dateRange}
-    errorOverride={errorOverride}
-    skipLoading
+    loading={false}
   />);
 };
 
 describe('Reason List Widget', () => {
   it('renders correctly without data', async () => {
     const data = [];
-    const dateRange = '2021/07/01-2021/04/01';
-    renderReasonList({ data, dateRange });
+    renderReasonList(data);
 
     expect(screen.getByText(/reasons in activity reports/i)).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /reason/i })).toBeInTheDocument();
@@ -29,7 +25,7 @@ describe('Reason List Widget', () => {
       { name: 'reason one', count: 4 },
       { name: 'reason two', count: 2 },
     ];
-    renderReasonList({ data });
+    renderReasonList(data);
 
     expect(screen.getByText(/reasons in activity reports/i)).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /reason/i })).toBeInTheDocument();
@@ -53,7 +49,7 @@ describe('Reason List Widget', () => {
       { name: 'reason 9', count: 2 },
       { name: 'reason 10 is a very very very long reason and should not cut off the text', count: '999,999' },
     ];
-    renderReasonList({ data });
+    renderReasonList(data);
 
     expect(screen.getByText(/reasons in activity reports/i)).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /reason/i })).toBeInTheDocument();
