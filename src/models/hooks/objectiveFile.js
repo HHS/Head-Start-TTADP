@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import { AUTOMATIC_CREATION } from '../../constants';
 import { propagateDestroyToFile } from './genericFile';
 
@@ -5,7 +6,14 @@ import { propagateDestroyToFile } from './genericFile';
 // updatedAt value.
 const propagateCreateToTemplate = async (sequelize, instance, options) => {
   const objective = await sequelize.models.Objective.findOne({
-    where: { id: instance.objectiveId },
+    attributes: [
+      'id',
+      'objectiveTemplateId',
+    ],
+    where: {
+      id: instance.objectiveId,
+      objectiveTemplateId: { [Op.not]: null },
+    },
     include: [
       {
         model: sequelize.models.ObjectiveTemplate,
@@ -19,17 +27,25 @@ const propagateCreateToTemplate = async (sequelize, instance, options) => {
   if (objective
     && objective.objectiveTemplateId !== null
     && objective.objectiveTemplate.creationMethod === AUTOMATIC_CREATION) {
-    const [otf] = await sequelize.models.ObjectiveTemplateFile.findOrCreate({
+    let otf = await sequelize.models.ObjectiveTemplateFile.findOne({
       where: {
         objectiveTemplateId: objective.objectiveTemplateId,
         fileId: instance.fileId,
       },
-      defaults: {
-        objectiveTemplateId: instance.objective.objectiveTemplateId,
-        fileId: instance.fileId,
-      },
       transaction: options.transaction,
     });
+
+    if (!otf) {
+      otf = await sequelize.models.ObjectiveTemplateFile.create(
+        {
+
+          objectiveTemplateId: objective.objectiveTemplateId,
+          fileId: instance.fileId,
+        },
+        { transaction: options.transaction },
+      );
+    }
+
     await sequelize.models.ObjectiveTemplateFile.update(
       {
         updatedAt: new Date(),
@@ -55,7 +71,14 @@ const checkForUseOnApprovedReport = async (sequelize, instance, options) => {
 
 const propagateDestroyToTemplate = async (sequelize, instance, options) => {
   const objective = await sequelize.models.Objective.findOne({
-    where: { id: instance.objectiveId },
+    attributes: [
+      'id',
+      'objectiveTemplateId',
+    ],
+    where: {
+      id: instance.objectiveId,
+      objectiveTemplateId: { [Op.not]: null },
+    },
     include: [
       {
         model: sequelize.models.ObjectiveTemplate,

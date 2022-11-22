@@ -38,12 +38,12 @@ describe('localStorageCleanup', () => {
 
       const calls = [
         '__storage_test__',
-        'ar-form-data-2-0.1',
-        'ar-additional-data-2-0.1',
-        'ar-can-edit-2-0.1',
-        'ar-form-data-3-0.1',
-        'ar-additional-data-3-0.1',
-        'ar-can-edit-3-0.1',
+        'ar-form-data-2-0.2',
+        'ar-additional-data-2-0.2',
+        'ar-can-edit-2-0.2',
+        'ar-form-data-3-0.2',
+        'ar-additional-data-3-0.2',
+        'ar-can-edit-3-0.2',
       ];
 
       calls.forEach((call) => {
@@ -81,6 +81,29 @@ describe('localStorageCleanup', () => {
     it('the API & local storage will not be called', async () => {
       await waitFor(() => expect(fetchMock.called(cleanupUrl)).toBe(false));
       expect(removeItem).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('handles an error', () => {
+    mockWindowProperty('localStorage', {
+      removeItem,
+      setItem: jest.fn(),
+      getItem: jest.fn(),
+    });
+
+    beforeEach(async () => {
+      const user = { name: 'name' };
+      fetchMock.get(userUrl, { ...user });
+      fetchMock.get(logoutUrl, 200);
+      fetchMock.get(cleanupUrl, 500);
+      render(<App />);
+    });
+
+    it('handles a thrown error', async () => {
+      await screen.findByText('Activity Reports');
+      await waitFor(() => expect(fetchMock.called(cleanupUrl)).toBe(true));
+      expect(removeItem).toHaveBeenCalledTimes(1);
+      expect(removeItem).toHaveBeenCalledWith('__storage_test__');
     });
   });
 });

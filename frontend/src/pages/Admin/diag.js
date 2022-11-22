@@ -10,7 +10,7 @@ import './diag.css';
 function Diag() {
   return (
     <>
-      <Container padding={0} className="smart-hub--overflow-auto">
+      <Container paddingX={0} paddingY={0} className="smart-hub--overflow-auto">
         <Admin dataProvider={dp}>
           <Resource name="requestErrors" list={RequestErrors} edit={RequestErrorShow} />
         </Admin>

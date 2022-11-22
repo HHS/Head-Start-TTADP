@@ -9,19 +9,21 @@ const Container = forwardRef((props, ref) => {
   const {
     children,
     className,
-    padding,
     skipTopPadding,
     skipBottomPadding,
     loading,
     loadingLabel,
+    paddingX,
+    paddingY,
   } = props;
 
   const skipTop = skipTopPadding ? 'padding-top-0' : '';
   const skipBottom = skipBottomPadding ? 'padding-bottom-0' : '';
+
   return (
     <div className={`${classes} ${className} position-relative`} ref={ref}>
       <Loader loading={loading} loadingLabel={loadingLabel} />
-      <div className={`padding-${padding} ${skipTop} ${skipBottom}`}>
+      <div className={`padding-x-${paddingX} padding-y-${paddingY} ${skipTop} ${skipBottom}`}>
         {children}
       </div>
     </div>
@@ -31,7 +33,8 @@ const Container = forwardRef((props, ref) => {
 Container.propTypes = {
   children: PropTypes.node.isRequired,
   className: PropTypes.string,
-  padding: PropTypes.number,
+  paddingX: PropTypes.number,
+  paddingY: PropTypes.number,
   skipTopPadding: PropTypes.bool,
   skipBottomPadding: PropTypes.bool,
   loading: PropTypes.bool,
@@ -40,7 +43,8 @@ Container.propTypes = {
 
 Container.defaultProps = {
   className: '',
-  padding: 5,
+  paddingX: 5,
+  paddingY: 5,
   skipTopPadding: false,
   skipBottomPadding: false,
   loading: false,

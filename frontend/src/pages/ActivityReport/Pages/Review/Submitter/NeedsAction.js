@@ -19,8 +19,8 @@ const NeedsAction = ({
 }) => {
   const hasIncompletePages = incompletePages.length > 0;
   const { user } = useContext(UserContext);
-  const userHasOneRole = user && user.role && user.role.length === 1;
-  const [submitCR, setSubmitCR] = useState(!creatorRole && userHasOneRole ? user.role[0] : creatorRole || '');
+  const userHasOneRole = user && user.roles && user.roles.length === 1;
+  const [submitCR, setSubmitCR] = useState(!creatorRole && userHasOneRole ? user.roles[0] : creatorRole || '');
   const [showCreatorRoleError, setShowCreatorRoleError] = useState(false);
 
   const submit = async () => {
@@ -62,7 +62,7 @@ const NeedsAction = ({
                       onChange={creatorRoleChange}
                     >
                       <option name="default" value="" disabled hidden>- Select -</option>
-                      {user.role.map((role) => (
+                      {user.roles.map(({ fullName: role }) => (
                         <option key={role} value={role}>{role}</option>
                       ))}
                     </Dropdown>
