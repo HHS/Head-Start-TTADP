@@ -1500,6 +1500,8 @@ export async function saveGoalsForReport(goals, report) {
         currentObjectives = [...currentObjectives, ...newGoalObjectives];
 
         if (isActive) {
+          // if the goal is flagged as "Active" from the frontend, we want to record that
+          // to update the report later
           activelyEditedGoals.push(newGoal.id);
         }
 
@@ -1574,6 +1576,8 @@ export async function saveGoalsForReport(goals, report) {
         currentObjectives = [...currentObjectives, ...newGoalObjectives];
 
         if (isActive) {
+          // if the goal is flagged as "Active" from the frontend, we want to record that
+          // to update the report later
           activelyEditedGoals.push(newGoal.id);
         }
         return newGoal;
@@ -1583,10 +1587,14 @@ export async function saveGoalsForReport(goals, report) {
     return newGoals;
   })));
 
-  await ActivityReport.update(
-    { activelyEditedGoals: [activelyEditedGoals] },
-    { where: { id: report.id } },
-  );
+  // if we have a report id with goals open, we should update the appropriate column to reflect that
+  if (report && report.id) {
+    await ActivityReport.update(
+      // only send ids into the array if they are integers
+      { activelyEditedGoals: activelyEditedGoals.filter((id) => parseInt(id, DECIMAL_BASE)) },
+      { where: { id: report.id } },
+    );
+  }
 
   const currentGoalIds = currentGoals.flat().map((g) => g.id);
   await removeActivityReportGoalsFromReport(report.id, currentGoalIds);
