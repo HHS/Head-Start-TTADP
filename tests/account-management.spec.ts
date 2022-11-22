@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Account Management', () => {
   test('test', async ({ page }) => {
-    await page.goto('http://localhost:3000/');
+    await page.goto('/');
     await page.getByTestId('header-avatar').click();
     await page.getByRole('link', { name: 'Account Management' }).click();
     await page.getByTestId('send-verification-email-button').click();
@@ -19,4 +19,4 @@ test.describe('Account Management', () => {
 
     expect(await page2.getByText('Your email has been verified!')).toBeTruthy();
   });
-})
+});
