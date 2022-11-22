@@ -235,17 +235,17 @@ describe('goalById', () => {
 
     expect(obj.activityReports.length).toBe(0);
 
-    expect(obj.objectiveTopics.length).toBe(2);
-    expect(obj.objectiveTopics.map((t) => `${t.dataValues.onAnyReport}`).sort()).toEqual(['false', 'false']);
-    expect(obj.objectiveTopics.map((t) => `${t.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
+    expect(obj.topics.length).toBe(2);
+    expect(obj.topics.map((t) => `${t.onAnyReport}`).sort()).toEqual(['false', 'false']);
+    expect(obj.topics.map((t) => `${t.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
 
     expect(obj.resources.length).toBe(2);
-    expect(obj.resources.map((r) => `${r.dataValues.onAnyReport}`).sort()).toEqual(['false', 'false']);
-    expect(obj.resources.map((r) => `${r.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
+    expect(obj.resources.map((r) => `${r.onAnyReport}`).sort()).toEqual(['false', 'false']);
+    expect(obj.resources.map((r) => `${r.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
 
-    expect(obj.objectiveFiles.length).toBe(2);
-    expect(obj.objectiveFiles.map((f) => `${f.dataValues.onAnyReport}`).sort()).toEqual(['false', 'false']);
-    expect(obj.objectiveFiles.map((r) => `${r.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
+    expect(obj.files.length).toBe(2);
+    expect(obj.files.map((f) => `${f.onAnyReport}`).sort()).toEqual(['false', 'false']);
+    expect(obj.files.map((r) => `${r.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
   });
 
   it('lets us know when the associated data is on an activity report', async () => {
@@ -292,17 +292,17 @@ describe('goalById', () => {
     expect(obj.activityReports.length).toBe(1);
     expect(obj.activityReports[0].id).toBe(report.id);
 
-    expect(obj.objectiveTopics.length).toBe(2);
-    expect(obj.objectiveTopics.map((t) => `${t.dataValues.onAnyReport}`).sort()).toEqual(['false', 'true']);
-    expect(obj.objectiveTopics.map((t) => `${t.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
+    expect(obj.topics.length).toBe(2);
+    expect(obj.topics.map((t) => `${t.onAnyReport}`).sort()).toEqual(['false', 'true']);
+    expect(obj.topics.map((t) => `${t.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
 
     expect(obj.resources.length).toBe(2);
-    expect(obj.resources.map((r) => `${r.dataValues.onAnyReport}`).sort()).toEqual(['false', 'true']);
-    expect(obj.resources.map((r) => `${r.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
+    expect(obj.resources.map((r) => `${r.onAnyReport}`).sort()).toEqual(['false', 'true']);
+    expect(obj.resources.map((r) => `${r.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
 
-    expect(obj.objectiveFiles.length).toBe(2);
-    expect(obj.objectiveFiles.map((f) => `${f.dataValues.onAnyReport}`).sort()).toEqual(['false', 'true']);
-    expect(obj.objectiveFiles.map((r) => `${r.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
+    expect(obj.files.length).toBe(2);
+    expect(obj.files.map((f) => `${f.onAnyReport}`).sort()).toEqual(['false', 'true']);
+    expect(obj.files.map((r) => `${r.isOnApprovedReport}`).sort()).toEqual(['false', 'false']);
   });
 
   it('lets us know when the associated data is on an approved activity report', async () => {
@@ -325,16 +325,16 @@ describe('goalById', () => {
     expect(obj.activityReports.length).toBe(1);
     expect(obj.activityReports[0].id).toBe(report.id);
 
-    expect(obj.objectiveTopics.length).toBe(2);
-    expect(obj.objectiveTopics.map((t) => `${t.dataValues.onAnyReport}`).sort()).toEqual(['false', 'true']);
-    expect(obj.objectiveTopics.map((t) => `${t.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'true']);
+    expect(obj.topics.length).toBe(2);
+    expect(obj.topics.map((t) => `${t.onAnyReport}`).sort()).toEqual(['false', 'true']);
+    expect(obj.topics.map((t) => `${t.isOnApprovedReport}`).sort()).toEqual(['false', 'true']);
 
     expect(obj.resources.length).toBe(2);
-    expect(obj.resources.map((r) => `${r.dataValues.onAnyReport}`).sort()).toEqual(['false', 'true']);
-    expect(obj.resources.map((r) => `${r.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'true']);
+    expect(obj.resources.map((r) => `${r.onAnyReport}`).sort()).toEqual(['false', 'true']);
+    expect(obj.resources.map((r) => `${r.isOnApprovedReport}`).sort()).toEqual(['false', 'true']);
 
-    expect(obj.objectiveFiles.length).toBe(2);
-    expect(obj.objectiveFiles.map((f) => `${f.dataValues.onAnyReport}`).sort()).toEqual(['false', 'true']);
-    expect(obj.objectiveFiles.map((r) => `${r.dataValues.isOnApprovedReport}`).sort()).toEqual(['false', 'true']);
+    expect(obj.files.length).toBe(2);
+    expect(obj.files.map((f) => `${f.onAnyReport}`).sort()).toEqual(['false', 'true']);
+    expect(obj.files.map((r) => `${r.isOnApprovedReport}`).sort()).toEqual(['false', 'true']);
   });
 });
