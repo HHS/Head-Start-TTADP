@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Account Management', () => {
-  test('test', async ({ page }) => {
+  test('can verify email address', async ({ page }) => {
     await page.goto('/');
     await page.getByTestId('header-avatar').click();
     await page.getByRole('link', { name: 'Account Management' }).click();
