@@ -654,58 +654,54 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
 
 export async function goalByIdAndRecipient(id, recipientId) {
   const goal = await Goal.findOne(OPTIONS_FOR_GOAL_FORM_QUERY(id, recipientId));
-  goal.objectives = (Array.isArray(goal.objective))
-    ? goal.objective.map((objective) => ({
-      ...objective,
-      topics: (Array.isArray(objective.objectiveTopics))
-        ? objective.objectiveTopics.map((objectiveTopics) => ({
-          ...objectiveTopics,
-          ...objectiveTopics.topic,
-          topic: undefined,
+  goal.objectives = goal.objectives
+    .map((objective) => ({
+      ...objective.dataValues,
+      topics: objective.objectiveTopics
+        .map((objectiveTopic) => ({
+          ...objectiveTopic.dataValues,
+          ...objectiveTopic.topic.dataValues,
         }))
-        : [],
-      objectiveTopics: undefined,
-      files: (Array.isArray(objective.objectiveFiles))
-        ? objective.objectiveFiles.map((objectiveFiles) => ({
-          ...objectiveFiles,
-          ...objectiveFiles.file,
-          file: undefined,
+        .map((o) => ({ ...o, topic: undefined })),
+      files: objective.objectiveFiles
+        .map((objectiveFile) => ({
+          ...objectiveFile.dataValues,
+          ...objectiveFile.file.dataValues,
         }))
-        : [],
-      objectiveFiles: undefined,
+        .map((f) => ({ ...f, file: undefined })),
+      resources: objective.resources.map((resource) => ({ ...resource.dataValues })),
     }))
-    : [];
+    .map((objective) => ({ ...objective, objectiveTopics: undefined, objectiveFiles: undefined }));
   return goal;
 }
 
 export async function goalsByIdAndRecipient(ids, recipientId) {
   let goals = await Goal.findAll(OPTIONS_FOR_GOAL_FORM_QUERY(ids, recipientId));
-  goals = (Array.isArray(goals))
-    ? goals.map((goal) => ({
-      ...goal,
-      objectives: (Array.isArray(goal.objective))
-        ? goal.objective.map((objective) => ({
-          ...objective,
-          topics: (Array.isArray(objective.objectiveTopics))
-            ? objective.objectiveTopics.map((objectiveTopics) => ({
-              ...objectiveTopics,
-              ...objectiveTopics.topic,
-              topic: undefined,
-            }))
-            : [],
-          objectiveTopics: undefined,
-          files: (Array.isArray(objective.objectiveFiles))
-            ? objective.objectiveFiles.map((objectiveFiles) => ({
-              ...objectiveFiles,
-              ...objectiveFiles.file,
-              file: undefined,
-            }))
-            : [],
-          objectiveFiles: undefined,
-        }))
-        : [],
-    }))
-    : [];
+  goals = goals.map((goal) => ({
+    ...goal,
+    objectives: goal.objectives
+      .map((objective) => ({
+        ...objective,
+        topics: objective.objectiveTopics
+          .map((objectiveTopic) => ({
+            ...objectiveTopic.dataValues,
+            ...objectiveTopic.topic.dataValues,
+          }))
+          .map((o) => ({ ...o, topic: undefined })),
+        files: objective.objectiveFiles
+          .map((objectiveFile) => ({
+            ...objectiveFile.dataValues,
+            ...objectiveFile.file.dataValues,
+          }))
+          .map((f) => ({ ...f, file: undefined })),
+        resources: objective.resources.map((resource) => ({ ...resource.dataValues })),
+      }))
+      .map((objective) => ({
+        ...objective,
+        objectiveTopics: undefined,
+        objectiveFiles: undefined,
+      })),
+  }));
   return reduceGoals(goals);
 }
 
