@@ -7,6 +7,7 @@ test.describe('Account Management', () => {
     await page.getByRole('link', { name: 'Account Management' }).click();
 
     await page.getByTestId('send-verification-email-button').click();
+    await page.keyboard.press('Enter');
     await page.getByText('Verification email sent');
 
     const page1 = await page.context().newPage();
