@@ -22,7 +22,6 @@ executors:
       - image: cimg/node:16.18.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
-          MAILER_URL: smtp://localhost:1025
       - image: circleci/postgres:12.4-ram
         environment:
           POSTGRES_USER: postgres
