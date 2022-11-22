@@ -1102,7 +1102,7 @@ export async function goalsForGrants(grantIds) {
 
 async function removeActivityReportObjectivesFromReport(reportId, objectiveIdsToRemove) {
   const activityReportObjectivesToDestroy = Array.isArray(objectiveIdsToRemove)
-  && objectiveIdsToRemove > 0
+  && objectiveIdsToRemove.length > 0
     ? await ActivityReportObjective.findAll({
       attributes: ['id'],
       where: {
