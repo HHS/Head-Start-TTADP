@@ -113,6 +113,10 @@ module.exports = (sequelize, DataTypes) => {
     version: {
       type: DataTypes.INTEGER,
     },
+    activelyEditedGoals: {
+      type: DataTypes.ARRAY(DataTypes.INTEGER),
+      allowNull: true,
+    },
     duration: {
       type: DataTypes.DECIMAL(3, 1),
     },

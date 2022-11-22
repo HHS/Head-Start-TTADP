@@ -188,6 +188,7 @@ function Navigator({
 
     const goal = {
       ...goalForEditing,
+      isActive: true,
       name,
       endDate: endDate && endDate.toLowerCase() !== 'invalid date' ? endDate : '',
       objectives,
@@ -222,6 +223,7 @@ function Navigator({
 
       updateErrorMessage('');
       updateLastSaveTime(moment());
+      updateShowSavedDraft(true); // show the saved draft message
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     } finally {
@@ -251,6 +253,7 @@ function Navigator({
       // Set updated objectives.
       setValue('objectivesWithoutGoals', newObjectives);
       updateLastSaveTime(moment());
+      updateShowSavedDraft(true); // show the saved draft message
       updateErrorMessage('');
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
@@ -271,6 +274,7 @@ function Navigator({
 
     const goal = {
       ...goalForEditing,
+      isActive: false,
       name,
       endDate,
       objectives,
