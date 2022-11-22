@@ -1,21 +1,28 @@
-function getSingularOrPluralData(options, singular, plural) {
+const hasHookMetadata = (options) => (options.hookMetadata !== undefined
+  && options.hookMetadata !== null);
+
+const hasHookMetadataKey = (options, key) => (options.hookMetadata[key] !== undefined
+  && options.hookMetadata[key] !== null);
+
+const getSingularOrPluralData = (options, singular, plural) => {
   let data;
   // check to see if singular or plural numbers are validly defined
   // when defined a more efficient search can be used
-  if (options.hookMetadata !== undefined
-    && options.hookMetadata !== null) {
-    if (options.hookMetadata[singular] !== undefined
-    && options.hookMetadata[singular] !== null
+  if (hasHookMetadata(options)) {
+    if (hasHookMetadataKey(options, singular)
     && typeof options.hookMetadata[singular] === 'number') {
       data = [options.hookMetadata[singular]];
-    } else if (options.hookMetadata[plural] !== undefined
-    && options.hookMetadata[plural] !== null
+    } else if (hasHookMetadataKey(options, plural)
     && Array.isArray(options.hookMetadata[plural])
     && options.hookMetadata[plural].map((i) => typeof i).every((i) => i === 'number')) {
       data = options.hookMetadata[plural];
     }
   }
   return data;
-}
+};
 
-module.exports = getSingularOrPluralData;
+export {
+  hasHookMetadata,
+  hasHookMetadataKey,
+  getSingularOrPluralData,
+};
