@@ -301,6 +301,10 @@ jobs:
             BYPASS_AUTH=true CURRENT_USER_ID=5 yarn start:ci
           background: true
       - run:
+          name: Start mailcatcher
+          command: |
+            docker run -d -p 1080:1080 schickling/mailcatcher
+      - run:
           name: Run migrations ci
           command: yarn db:migrate:ci
       - run:
@@ -317,6 +321,9 @@ jobs:
           command: yarn e2e:ci
       - store_artifacts:
           path: playwright-report/
+      - run:
+          name: Stop mailcatcher
+          command: docker stop $(docker ps -a -q --filter ancestor=schickling/mailcatcher --format="{{.ID}}")
   cucumber_test:
     executor: docker-postgres-executor
     steps:
