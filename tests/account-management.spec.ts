@@ -6,11 +6,8 @@ test.describe('Account Management', () => {
     await page.getByTestId('header-avatar').click();
     await page.getByRole('link', { name: 'Account Management' }).click();
 
-    await page.waitForTimeout(2_000);
-
     await page.getByTestId('send-verification-email-button').click();
-
-    await page.waitForTimeout(5_000);
+    await page.getByText('Verification email sent');
 
     const page1 = await page.context().newPage();
     await page1.goto('http://localhost:1080/');
