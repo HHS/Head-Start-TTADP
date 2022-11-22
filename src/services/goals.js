@@ -1432,11 +1432,16 @@ async function createObjectivesForGoal(goal, objectives, report) {
 
 export async function saveGoalsForReport(goals, report) {
   let currentObjectives = [];
+
+  // actively edited goals represents the goals that are currently being edited on the frontend
+  const activelyEditedGoals = [];
+
   const currentGoals = await Promise.all((goals.map(async (goal) => {
     let newGoals = [];
     const status = goal.status ? goal.status : 'Draft';
     const goalIds = goal.goalIds ? goal.goalIds : [];
     const endDate = goal.endDate && goal.endDate.toLowerCase() !== 'invalid date' ? goal.endDate : null;
+    const isActive = goal.isActive ? goal.isActive : false;
 
     // Check if these goals exist.
     const existingGoals = Array.isArray(goalIds) && goalIds.length > 0
@@ -1468,19 +1473,6 @@ export async function saveGoalsForReport(goals, report) {
       // - And status is not closed.
       // Note: The existing goal should be used regardless if it was created new.
       newGoals = await Promise.all(goal.grantIds.map(async (grantId) => {
-        // const [newGoal] = await Goal.findOrCreate({
-        //   where: {
-        //     name: fields.name,
-        //     grantId,
-        //     status: { [Op.not]: 'Closed' },
-        //   },
-        //   defaults: {
-        //     ...fields,
-        //     status,
-        //     grantId, // If we don't specify the grant it will be created with the old.
-        //     createdVia: 'activityReport',
-        //   },
-        // });
         let newGoal = await Goal.findOne({
           where: {
             name: fields.name,
@@ -1506,6 +1498,10 @@ export async function saveGoalsForReport(goals, report) {
 
         const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
         currentObjectives = [...currentObjectives, ...newGoalObjectives];
+
+        if (isActive) {
+          activelyEditedGoals.push(newGoal.id);
+        }
 
         return newGoal;
       }));
@@ -1548,19 +1544,6 @@ export async function saveGoalsForReport(goals, report) {
           return existingGoal;
         }
 
-        // const [newGoal] = await Goal.findOrCreate({
-        //   where: {
-        //     [Op.and]: [
-        //       { goalTemplateId: { [Op.not]: null } }, // We need to exclude null matches.
-        //       { goalTemplateId: { [Op.eq]: goalTemplateId } },
-        //     ],
-        //     grantId: gId,
-        //     status: {
-        //       [Op.not]: 'Closed',
-        //     },
-        //   },
-        //   defaults: { ...fields, status },
-        // });
         let newGoal = await Goal.findOne({ // All columns are needed for caching metadata.
           where: {
             [Op.and]: [
@@ -1590,12 +1573,20 @@ export async function saveGoalsForReport(goals, report) {
         const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
         currentObjectives = [...currentObjectives, ...newGoalObjectives];
 
+        if (isActive) {
+          activelyEditedGoals.push(newGoal.id);
+        }
         return newGoal;
       }));
     }
 
     return newGoals;
   })));
+
+  await ActivityReport.update(
+    { activelyEditedGoals: [activelyEditedGoals] },
+    { where: { id: report.id } },
+  );
 
   const currentGoalIds = currentGoals.flat().map((g) => g.id);
   await removeActivityReportGoalsFromReport(report.id, currentGoalIds);

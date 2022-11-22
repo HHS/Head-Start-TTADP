@@ -188,9 +188,7 @@ const GoalsObjectives = ({
   });
 
   const oeObjectiveEdit = (objectives) => {
-    // const objWithoutGoals = getValues('objectivesWithoutGoals');
     const recipientIds = activityRecipients.map((ar) => ar.activityRecipientId);
-    // const objectivesForEdit = objectives.map((obj) => (
     const objectivesForEdit = objectives.map((obj) => (
       {
         ...obj,
