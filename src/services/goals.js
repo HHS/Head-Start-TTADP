@@ -296,10 +296,10 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
     ));
 
     if (exists) {
-      const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
+      const { id } = objective;
       exists.ids = [...exists.ids, id];
       // Make sure we pass back a list of recipient ids for subsequent saves.
-      exists.recipientIds = [...exists.recipientIds, objective.getDataValue('otherEntityId')];
+      exists.recipientIds = [...exists.recipientIds, objective.otherEntityId];
       exists.activityReports = [
         ...(exists.activityReports || []),
         ...(objective.activityReports || []),
@@ -307,14 +307,14 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
       return objectives;
     }
 
-    const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
+    const { id } = objective;
 
     return [...objectives, {
-      ...objective.dataValues,
+      ...objective,
       value: id,
       ids: [id],
       // Make sure we pass back a list of recipient ids for subsequent saves.
-      recipientIds: [objective.getDataValue('otherEntityId')],
+      recipientIds: [objective.otherEntityId],
       isNew: false,
     }];
   }, currentObjectives);
@@ -335,28 +335,28 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
     ));
 
     if (exists) {
-      const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
+      const { id } = objective;
       exists.ids = [...exists.ids, id];
 
       // we can dedupe these using lodash
       exists.resources = uniqBy([
         ...exists.resources,
         ...objective.activityReportObjectives[0].activityReportObjectiveResources.map(
-          (r) => r.dataValues,
+          (r) => r,
         ),
       ], 'value');
 
       exists.topics = uniqBy([
         ...exists.topics,
         ...objective.activityReportObjectives[0].activityReportObjectiveTopics.map(
-          (t) => t.topic.dataValues,
+          (t) => t.topic,
         ),
       ], 'id');
 
       exists.files = uniqBy([
         ...exists.files,
         ...objective.activityReportObjectives[0].activityReportObjectiveFiles.map(
-          (f) => ({ ...f.file.dataValues, url: f.file.url }),
+          (f) => ({ ...f.file, url: f.file.url }),
         ),
       ], 'key');
 
@@ -371,7 +371,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         && objective.activityReportObjectives[0].ttaProvided
       ? objective.activityReportObjectives[0].ttaProvided : null;
 
-    const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
+    const { id } = objective;
 
     return [...objectives, {
       ...objective.dataValues,
@@ -438,13 +438,13 @@ function reduceGoals(goals, forReport = false) {
     const goal = {
       ...currentValue.dataValues,
       goalNumbers: [currentValue.goalNumber],
-      goalIds: [currentValue.id],
+      goalIds: [currentValue.dataValues.id],
       grants: [
         {
           ...currentValue.grant.dataValues,
           recipient: currentValue.grant.recipient.dataValues,
           name: currentValue.grant.name,
-          goalId: currentValue.id,
+          goalId: currentValue.dataValues.id,
         },
       ],
       grantIds: [currentValue.grant.id],
@@ -675,7 +675,7 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
     ...goal,
     objectives: goal.objectives
       .map((objective) => ({
-        ...objective,
+        ...objective.dataValues,
         topics: objective.objectiveTopics
           .map((objectiveTopic) => ({
             ...objectiveTopic.dataValues,
@@ -696,6 +696,7 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
         objectiveFiles: undefined,
       })),
   }));
+  //console.log(JSON.stringify({ objectives7: goals[0].objectives }));
   return reduceGoals(goals);
 }
 
