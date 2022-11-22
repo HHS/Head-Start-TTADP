@@ -696,7 +696,6 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
         objectiveFiles: undefined,
       })),
   }));
-  //console.log(JSON.stringify({ objectives7: goals[0].objectives }));
   return reduceGoals(goals);
 }
 
