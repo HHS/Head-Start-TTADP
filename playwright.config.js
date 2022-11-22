@@ -16,7 +16,7 @@ export default {
       name: 'Desktop',
       use: {
         browserName: 'chromium',
-        baseURL: 'http://localhost:3000',
+        baseURL: process.env.TTA_SMART_HUB_URI || 'http://localhost:3000',
         viewport: { width: 1280, height: 720 },
         ignoreHTTPSErrors: true,
         headless: true,
@@ -30,7 +30,7 @@ export default {
       name: 'Mobile',
       use: {
         browserName: 'chromium',
-        baseURL: 'http://localhost:3000',
+        baseURL: process.env.TTA_SMART_HUB_URI || 'http://localhost:3000',
         viewport: { width: 375, height: 812 },
         ignoreHTTPSErrors: true,
         headless: true,
