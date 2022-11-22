@@ -537,7 +537,7 @@ export const sendEmailVerificationRequestWithToken = (user, token) => {
     },
   });
 
-  auditLogger.info(`Sending email verification request to ${user.email}, value of send: ${send}`);
+  auditLogger.info(`Sending email verification request to ${user.email}, value of send: ${send}, from: ${process.env.FROM_EMAIL_ADDRESS}, transport: ${JSON.stringify(defaultTransport)}`);
 
   const uri = `${process.env.TTA_SMART_HUB_URI}/account/verify-email/${token}`;
 
