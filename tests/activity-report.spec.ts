@@ -95,7 +95,7 @@ test.describe("Activity Report", () => {
     // submit for approval
     await page.getByRole('button', { name: 'Submit for approval' }).click();
 
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(5000);
 
     await page.getByRole('link', { name: `R08-AR-${arNumber}` }).first().click();
 
