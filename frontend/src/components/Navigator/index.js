@@ -188,7 +188,7 @@ function Navigator({
 
     const goal = {
       ...goalForEditing,
-      isActive: true,
+      isActivelyBeingEditing: true,
       name,
       endDate: endDate && endDate.toLowerCase() !== 'invalid date' ? endDate : '',
       objectives,
@@ -197,7 +197,7 @@ function Navigator({
       grantIds,
     };
 
-    let allGoals = [...selectedGoals, goal];
+    let allGoals = [...selectedGoals.map((g) => ({ ...g, isActivelyBeingEditing: false })), goal];
 
     // save goal to api, come back with new ids for goal and objectives
     try {
@@ -274,7 +274,7 @@ function Navigator({
 
     const goal = {
       ...goalForEditing,
-      isActive: false,
+      isActivelyBeingEditing: false,
       name,
       endDate,
       objectives,
@@ -299,7 +299,7 @@ function Navigator({
     try {
       newGoals = await saveGoalsForReport(
         {
-          goals: [...selectedGoals, goal],
+          goals: [...selectedGoals.map((g) => ({ ...g, isActivelyBeingEditing: false })), goal],
           activityReportId: reportId,
           regionId: formData.regionId,
         },
