@@ -24,7 +24,7 @@ export default {
       use: {
         // see https://playwright.dev/docs/api/class-testoptions
         ...devices['Desktop Chrome'],
-        channel: 'chrome',
+        // channel: 'chrome',
         baseURL: process.env.TTA_SMART_HUB_URI || 'http://localhost:3000',
         screenshot: 'only-on-failure',
         video: 'retain-on-failure',
