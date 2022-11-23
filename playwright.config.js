@@ -10,6 +10,10 @@ export default {
   /** reporter to use. see https://playwright.dev/docs/test-reporters */
   reporter: 'html',
 
+  timeout: 60000,
+
+  globalTimeout: 60 * 1000 * 10,
+
   /** runs before all tests. */
   globalSetup: './tests/init/globalSetup.ts',
 
