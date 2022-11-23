@@ -334,7 +334,7 @@ describe('reportCache', () => {
         },
       });
 
-      const resources = await ObjectiveResource.findAll({
+      const resourcesForThisObjective = await ObjectiveResource.findAll({
         where: {
           objectiveId: objective.id,
         },
@@ -348,7 +348,7 @@ describe('reportCache', () => {
 
       const metadata = {
         files: filesForThisObjective,
-        resources,
+        resources: resourcesForThisObjective,
         topics: topicsForThisObjective,
         ttaProvided: null,
       };
@@ -377,35 +377,12 @@ describe('reportCache', () => {
       expect(aro.activityReportObjectiveTopics[0].topicId).toEqual(mockObjectiveTopics[1].topicId);
     });
     it('remove from cache', async () => {
-      await ObjectiveFile.destroy({ where: { objectiveId: objective.id } });
-      await ObjectiveResource.destroy({ where: { objectiveId: objective.id } });
-      await ObjectiveTopic.destroy({ where: { objectiveId: objective.id } });
-
-      const filesForThisObjective = await ObjectiveFile.findAll({
-        where: {
-          objectiveId: objective.id,
-        },
-      });
-
-      const resources = await ObjectiveResource.findAll({
-        where: {
-          objectiveId: objective.id,
-        },
-      });
-
-      const topicsForThisObjective = await ObjectiveTopic.findAll({
-        where: {
-          objectiveId: objective.id,
-        },
-      });
-
       const metadata = {
-        files: filesForThisObjective,
-        resources,
-        topics: topicsForThisObjective,
+        files: [],
+        resources: [],
+        topics: [],
         ttaProvided: null,
       };
-
       await cacheObjectiveMetadata(objective, report.id, metadata);
       const aro = await ActivityReportObjective.findOne({
         where: { activityReportId: report.id },
