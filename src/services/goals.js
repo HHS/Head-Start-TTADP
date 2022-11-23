@@ -1441,7 +1441,8 @@ export async function saveGoalsForReport(goals, report) {
     const status = goal.status ? goal.status : 'Draft';
     const goalIds = goal.goalIds ? goal.goalIds : [];
     const endDate = goal.endDate && goal.endDate.toLowerCase() !== 'invalid date' ? goal.endDate : null;
-    const isActive = goal.isActive ? goal.isActive : false;
+    const isActivelyBeingEditing = goal.isActivelyBeingEditing
+      ? goal.isActivelyBeingEditing : false;
 
     // Check if these goals exist.
     const existingGoals = Array.isArray(goalIds) && goalIds.length > 0
@@ -1499,7 +1500,7 @@ export async function saveGoalsForReport(goals, report) {
         const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
         currentObjectives = [...currentObjectives, ...newGoalObjectives];
 
-        if (isActive) {
+        if (isActivelyBeingEditing) {
           // if the goal is flagged as "Active" from the frontend, we want to record that
           // to update the report later
           activelyEditedGoals.push(newGoal.id);
@@ -1575,7 +1576,7 @@ export async function saveGoalsForReport(goals, report) {
         const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
         currentObjectives = [...currentObjectives, ...newGoalObjectives];
 
-        if (isActive) {
+        if (isActivelyBeingEditing) {
           // if the goal is flagged as "Active" from the frontend, we want to record that
           // to update the report later
           activelyEditedGoals.push(newGoal.id);
