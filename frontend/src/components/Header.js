@@ -6,7 +6,7 @@ import logo2x from '../images/eclkc-blocks-logo-86x111.png';
 
 function Header() {
   return (
-    <header className="smart-hub-header height-9 pin-top pin-x position-fixed z-top bg-white border-bottom border-base-lighter">
+    <header className="smart-hub-header height-9 pin-top pin-x position-fixed bg-white border-bottom border-base-lighter" style={{ zIndex: '99998' }}>
       <div className="display-flex flex-row flex-align-start height-full flex-justify">
         <div className="display-flex">
           <div className="flex-column flex-align-self-center margin-left-2">

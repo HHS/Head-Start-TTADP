@@ -5,7 +5,6 @@ import {
   render, screen,
 } from '@testing-library/react';
 import moment from 'moment';
-
 import SideNav from '../SideNav';
 import {
   NOT_STARTED, IN_PROGRESS, COMPLETE,
@@ -24,7 +23,7 @@ describe('SideNav', () => {
   const renderNav = (
     state,
     onNavigation = () => {},
-    current = false,
+    current = 'test',
     errorMessage = null,
     saveData = saveDataDefaults,
   ) => {
@@ -32,13 +31,19 @@ describe('SideNav', () => {
       {
         label: 'test',
         state,
-        current,
+        current: current === 'test',
         onNavigation,
       },
       {
         label: 'second',
         state: '',
-        current,
+        current: current === 'second',
+        onNavigation,
+      },
+      {
+        label: 'Goals and objectives',
+        current: current === 'Goals and objectives',
+        state: '',
         onNavigation,
       },
     ];
@@ -178,7 +183,7 @@ describe('SideNav', () => {
   });
 
   it('the currently selected page has the current class', () => {
-    renderNav(REPORT_STATUSES.SUBMITTED, () => {}, true);
+    renderNav(REPORT_STATUSES.SUBMITTED, () => {}, 'test');
     const submitted = screen.getByRole('button', { name: 'test Submitted' });
     expect(submitted).toHaveClass('smart-hub--navigator-link-active');
   });

@@ -15,7 +15,6 @@ export default function transactionWrapper(originalFunction) {
         result = await originalFunction(req, res, next);
       } catch (err) {
         await handleErrors(req, res, err, logContext);
-        throw err;
       }
       return result;
     });

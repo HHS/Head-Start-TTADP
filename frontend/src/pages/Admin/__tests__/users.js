@@ -13,6 +13,9 @@ import Users, { setFeatureFromURL } from '../users';
 import { SCOPE_IDS } from '../../../Constants';
 
 describe('User Page', () => {
+  beforeEach(async () => {
+    fetchMock.get('/api/admin/roles', [{ fullName: 'Grantee Specialist', name: 'GS', id: 1 }, { fullName: 'COR', name: 'COR', id: 2 }]);
+  });
   const usersUrl = join('/api', 'admin', 'users');
   const featuresUrl = join('/api', 'admin', 'users', 'features');
   const userPatchUrl = join(usersUrl, '3');
@@ -35,7 +38,7 @@ describe('User Page', () => {
         email: 'gs@hogwarts.com',
         name: undefined,
         homeRegionId: 1,
-        role: ['Grantee Specialist'],
+        roles: [{ fullName: 'Grantee Specialist', name: 'GS', id: 1 }],
         lastLogin: moment().subtract(65, 'days').toISOString(),
         permissions: [{
           userId: 2,
@@ -49,7 +52,7 @@ describe('User Page', () => {
         email: 'potter@hogwarts.com',
         name: 'Harry Potter',
         homeRegionId: 1,
-        role: ['Grantee Specialist'],
+        roles: [{ fullName: 'Grantee Specialist', name: 'GS', id: 1 }],
         lastLogin: moment().toISOString(),
         permissions: [{
           userId: 3,
@@ -63,7 +66,7 @@ describe('User Page', () => {
         email: 'granger@hogwarts.com',
         name: 'Hermione Granger',
         homeRegionId: 1,
-        role: ['Early Childhood Specialist'],
+        roles: [{ fullName: 'Early Childhood Specialist', name: 'ECS', id: 2 }],
         lastLogin: moment().subtract(190, 'days').toISOString(),
         permissions: [{
           userId: 4,

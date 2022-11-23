@@ -33,7 +33,7 @@ UserMenuNav.propTypes = {
 };
 
 function HeaderUserMenu() {
-  const { user, logout } = useContext(UserContext);
+  const { user } = useContext(UserContext);
   const userIsAdmin = isAdmin(user);
 
   const menuItems = useMemo(() => [
@@ -62,7 +62,6 @@ function HeaderUserMenu() {
       key: 7,
       label: 'Log out',
       to: '/logout',
-      fn: () => logout(false),
     },
   ].map(({
     key,
@@ -89,7 +88,7 @@ function HeaderUserMenu() {
       };
     }
     return { key, element: <NavLink key={key} to={to} fn={fn}>{label}</NavLink> };
-  }).filter(Boolean), [userIsAdmin, logout]);
+  }).filter(Boolean), [userIsAdmin]);
 
   /** If we don't have a user context, don't show the user menu. */
   if (!user) {
@@ -142,6 +141,7 @@ function HeaderUserMenu() {
       buttonText={user.name}
       showApplyButton={false}
       direction="left"
+      className="no-print"
     >
       <div className="user-menu-dropdown" data-testid="user-menu-dropdown">
         <h4 className="margin-0 display-flex flex-align-center padding-2 border-bottom border-gray-10">

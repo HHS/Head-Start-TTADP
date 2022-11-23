@@ -45,7 +45,7 @@ const AccordionItemProp = {
   expanded: PropTypes.bool,
   id: PropTypes.string.isRequired,
   className: PropTypes.string,
-  handleToggle: PropTypes.func,
+  handleToggle: PropTypes.func.isRequired,
   headingSize: PropTypes.number,
 };
 
@@ -54,7 +54,6 @@ AccordionItem.propTypes = AccordionItemProp;
 AccordionItem.defaultProps = {
   headingSize: 2,
   className: '',
-  handleToggle: () => { },
   expanded: false,
 };
 
