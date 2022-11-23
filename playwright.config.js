@@ -1,5 +1,6 @@
 import { devices } from "@playwright/test";
 
+// see https://playwright.dev/docs/api/class-testconfig
 export default {
   testDir: './tests',
   expect: {
