@@ -19,7 +19,6 @@ export default function ControlledDatePicker({
   maxDate,
   setEndDate,
   isStartDate,
-  onBlur,
   inputId,
 }) {
   /**
@@ -83,8 +82,7 @@ export default function ControlledDatePicker({
     }
 
     onFieldBlur(e);
-    onBlur(e);
-  }, [onBlur, onFieldBlur]);
+  }, [onFieldBlur]);
 
   const datePickerOnChange = (d) => {
     if (isStartDate) {
@@ -129,7 +127,6 @@ ControlledDatePicker.propTypes = {
   }).isRequired,
   isStartDate: PropTypes.bool,
   setEndDate: PropTypes.func,
-  onBlur: PropTypes.func,
   inputId: PropTypes.string.isRequired,
 };
 
@@ -139,5 +136,4 @@ ControlledDatePicker.defaultProps = {
   isStartDate: false,
   setEndDate: () => {},
   value: '',
-  onBlur: () => {},
 };
