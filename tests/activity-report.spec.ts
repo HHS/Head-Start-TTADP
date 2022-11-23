@@ -97,7 +97,11 @@ test.describe("Activity Report", () => {
 
     await page.waitForTimeout(5000);
 
-    await page.getByRole('link', { name: `R08-AR-${arNumber}` }).first().click();
+    // extract the region number from the URL, when the URL looks like this: 'http://localhost:3000/activity-reports?region.in[]=8'
+    const url2 = await page.url();
+    const regionNumber = url2.split('=').find((part) => /^\d+$/.test(part));
+
+    await page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).first().click();
 
     expect(await page.getByTestId('accordionButton_activity-summary')).toHaveText('Activity summary');
 
