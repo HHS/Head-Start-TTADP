@@ -325,10 +325,10 @@ jobs:
           command: ./bin/ping-server
       - run:
           name: Install playwright drivers
-          command: npx playwright install
-      - run:
-          name: Install playwright dependencies
-          command: sudo npx playwright install-deps
+          command: |
+            npx playwright install
+            sudo npx playwright install-deps
+            npx playwright install chrome
       - run:
           name: Run playwright tests
           command: yarn e2e:ci
