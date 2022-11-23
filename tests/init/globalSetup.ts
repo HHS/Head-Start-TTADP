@@ -1,8 +1,10 @@
 // @ts-ignore
-// import { UserValidationStatus } from '../../src/models';
+import { UserValidationStatus } from '../../src/models';
 
 async function globalSetup() {
-  // await UserValidationStatus.destroy({ where: {} });
+  if (!process.env.CI) {
+    await UserValidationStatus.destroy({ where: {} });
+  }
 }
 
 export default globalSetup;
