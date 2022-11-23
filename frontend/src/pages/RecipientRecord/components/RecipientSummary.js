@@ -48,7 +48,7 @@ export default function RecipientSummary({ summary, regionId }) {
   }
 
   return (
-    <Container padding={0} className="ttahub--recipient-summary">
+    <Container paddingX={0} paddingY={0} className="ttahub--recipient-summary">
       <h2 className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0">Recipient Summary</h2>
       <div className="padding-x-3 padding-bottom-3">
         <div className="margin-bottom-2">
@@ -62,7 +62,7 @@ export default function RecipientSummary({ summary, regionId }) {
         <div className="margin-bottom-2">
           <p className="margin-y-1"><strong>Recipient ID</strong></p>
           <p className="margin-y-1">
-            {summary.recipientId}
+            {summary.uei}
           </p>
         </div>
         <RecipientInformationSection heading="Recipient Type" property="recipientType" grants={[{ recipientType: summary.recipientType }]} />
@@ -78,6 +78,7 @@ RecipientSummary.propTypes = {
   regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   summary: PropTypes.shape({
     recipientId: PropTypes.string,
+    uei: PropTypes.string,
     recipientType: PropTypes.string,
     grants: PropTypes.arrayOf(
       PropTypes.shape({
@@ -93,6 +94,7 @@ RecipientSummary.propTypes = {
 RecipientSummary.defaultProps = {
   summary: {
     recipientId: '',
+    uei: '',
     recipientType: '',
     grants: [],
   },

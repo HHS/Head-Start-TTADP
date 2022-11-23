@@ -6,6 +6,7 @@ import User from './users';
 import Cdi from './cdi';
 import Diag from './diag';
 import Flags from './Flags';
+import RoleManagement from './RoleManagement';
 
 function Admin() {
   return (
@@ -41,6 +42,10 @@ function Admin() {
         <Route
           path="/admin/flags/"
           render={({ match }) => <Flags match={match} />}
+        />
+        <Route
+          path="/admin/roles/"
+          render={({ match }) => <RoleManagement match={match} />}
         />
       </Switch>
     </>

@@ -5,8 +5,9 @@ import {
 
 const goalsUrl = join('/', 'api', 'goals');
 
-export async function goalById(goalId, recipientId) {
-  const url = join(goalsUrl, goalId, 'recipient', recipientId);
+export async function goalsByIdsAndActivityReport(goalIds, reportId) {
+  const params = goalIds.map((goalId) => `goalIds=${goalId}`);
+  const url = join(goalsUrl, `?reportId=${reportId}&${params.join('&')}`);
   const response = await get(url);
   return response.json();
 }
@@ -41,8 +42,8 @@ export async function updateGoalStatus(
   return updatedGoal.json();
 }
 
-export async function deleteGoal(id, regionId) {
-  const url = join(goalsUrl, id.toString());
+export async function deleteGoal(goalIds, regionId) {
+  const url = join(goalsUrl, `?${goalIds.map((id) => `goalIds=${id}`).join('&')}`);
   const deleted = await destroy(url, { regionId });
   return deleted.json();
 }
