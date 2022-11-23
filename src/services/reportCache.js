@@ -177,18 +177,21 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   const {
     files, resources, topics, ttaProvided, status,
   } = metadata;
-  const objectiveId = objective.id;
+  const objectiveId = objective.dataValues
+    ? objective.dataValues.id
+    : objective.id;
   let aro = await ActivityReportObjective.findOne({
     where: {
       objectiveId,
       activityReportId: reportId,
     },
+    raw: true,
   });
   if (!aro) {
     aro = await ActivityReportObjective.create({
       objectiveId,
       activityReportId: reportId,
-    });
+    }, { raw: true });
   }
   const { id: activityReportObjectiveId } = aro;
   return Promise.all([
@@ -200,7 +203,10 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
       where: { id: activityReportObjectiveId },
       individualHooks: true,
     }),
-    Objective.update({ onAR: true }, { where: { id: objectiveId }, individualHooks: true }),
+    Objective.update({ onAR: true }, {
+      where: { id: objectiveId },
+      individualHooks: true,
+    }),
     cacheFiles(objectiveId, activityReportObjectiveId, files),
     cacheResources(objectiveId, activityReportObjectiveId, resources),
     cacheTopics(objectiveId, activityReportObjectiveId, topics),
