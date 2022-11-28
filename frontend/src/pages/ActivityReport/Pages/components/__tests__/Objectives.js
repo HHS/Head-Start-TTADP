@@ -175,9 +175,9 @@ describe('Objectives', () => {
       status: 'Not Started',
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
-    const button = await screen.findByRole('button', { name: /Add new objective/i });
     expect(screen.queryByText(/objective status/i)).toBeNull();
-    userEvent.click(button);
+    const select = await screen.findByLabelText(/Select TTA objective/i);
+    await selectEvent.select(select, ['Test objective']);
     await waitFor(() => expect(screen.queryByText(/objective status/i)).not.toBeNull());
   });
 
@@ -214,9 +214,10 @@ describe('Objectives', () => {
       status: 'Not Started',
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} goalId="new" />);
-    const button = await screen.findByRole('button', { name: /Add new objective/i });
+
     expect(screen.queryByText(/objective status/i)).toBeNull();
-    userEvent.click(button);
+    const select = await screen.findByLabelText(/Select TTA objective/i);
+    await selectEvent.select(select, ['Test objective']);
     await waitFor(() => expect(screen.queryByText(/objective status/i)).not.toBeNull());
   });
 });
