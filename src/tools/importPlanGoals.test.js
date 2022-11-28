@@ -19,10 +19,6 @@ describe('Import TTA plan goals', () => {
   });
 
   describe('for a single region', () => {
-    let roles;
-    let goals;
-    let existingTopics;
-
     beforeAll(async () => {
       try {
         const fileName = 'GranteeTTAPlanTest.csv';
@@ -139,6 +135,99 @@ describe('Import TTA plan goals', () => {
         where: { id: goalWithTimeframe.id },
       });
       expect(updatedGoal.timeframe).toBe('6 months');
+    });
+
+    it('should set createdVia when creating a new goal', async () => {
+      const fileName = 'GranteeTTAPlanTest.csv';
+      downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+
+      const aGoal = await Goal.findOne({ where: { createdVia: 'imported' } });
+
+      await aGoal.update({
+        createdVia: null,
+      });
+
+      const goalWithoutCreatedVia = await Goal.findOne({
+        where: { createdVia: null },
+      });
+      expect(goalWithoutCreatedVia.createdVia).toBeNull();
+      // Delete a goal and re-import
+      await Goal.destroy({
+        where: {
+          name: goalWithoutCreatedVia.name,
+        },
+      });
+
+      await importGoals(fileName, 14);
+
+      const importedGoal = await Goal.findOne({
+        where: { name: goalWithoutCreatedVia.name },
+      });
+      expect(importedGoal.createdVia).toBe('imported');
+    });
+
+    it('should not set createdVia when updating an existing goal', async () => {
+      const fileName = 'GranteeTTAPlanTest.csv';
+      downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+
+      const aGoal = await Goal.findOne({ where: { createdVia: 'imported' } });
+
+      await aGoal.update({
+        createdVia: 'rtr',
+      });
+
+      const goalWithRTRCreatedVia = await Goal.findOne({
+        where: { createdVia: 'rtr' },
+      });
+      expect(goalWithRTRCreatedVia.createdVia).toBe('rtr');
+
+      await importGoals(fileName, 14);
+
+      const importedGoal = await Goal.findOne({
+        where: { name: goalWithRTRCreatedVia.name },
+      });
+      expect(importedGoal.createdVia).toBe('rtr');
+    });
+
+    it('should set isRttapa when creating a new goal', async () => {
+      const fileName = 'GranteeTTAPlanTest.csv';
+      downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+
+      const aGoal = await Goal.findOne({ where: { isRttapa: 'Yes' } });
+
+      // Delete aGoal and re-import
+      await Goal.destroy({
+        where: {
+          name: aGoal.name,
+        },
+      });
+
+      await importGoals(fileName, 14);
+
+      const importedGoal = await Goal.findOne({
+        where: { name: aGoal.name },
+      });
+      expect(importedGoal.isRttapa).toBe('Yes');
+    });
+
+    it('should set isRttapa when updating goal', async () => {
+      const fileName = 'GranteeTTAPlanTest.csv';
+      downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+
+      const aGoal = await Goal.findOne({ where: { isRttapa: 'Yes' } });
+
+      await aGoal.update({
+        isRttapa: 'No',
+      });
+
+      const goalNotRttapa = await Goal.findOne({ where: { isRttapa: 'No' } });
+
+      await importGoals(fileName, 14);
+
+      const importedGoal = await Goal.findOne({
+        where: { name: goalNotRttapa.name },
+      });
+      expect(importedGoal.isRttapa).toBe('Yes');
     });
 
     it('is idempotent', async () => {
