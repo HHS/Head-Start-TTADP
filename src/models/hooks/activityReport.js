@@ -190,8 +190,11 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
   const objectiveIds = objectives.map((o) => o.objectiveId);
 
   // Get all the reports that use the objectives
-  const allObjectiveReports = await sequelize.models.ActivityReport.findAll({
+  const approvedReports = await sequelize.models.ActivityReport.findAll({
     attributes: ['id', 'calculatedStatus', 'endDate'],
+    where: {
+      calculatedStatus: REPORT_STATUSES.APPROVED,
+    },
     include: [
       {
         model: sequelize.models.ActivityReportObjective,
@@ -210,11 +213,6 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
       },
     ],
   });
-
-  // Get Approved Reports that might set the status.
-  const approvedReports = allObjectiveReports.filter(
-    (a) => a.calculatedStatus === REPORT_STATUSES.APPROVED,
-  );
 
   // Only change the status if we have an approved report using the objective.
   if (approvedReports.length) {
@@ -255,18 +253,26 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
       });
     }));
   } else if (isUnlocked) {
-    // If there are no Approved reports set Objective status back to 'Not Started'.
-    const currentReport = allObjectiveReports.find((r) => r.id === activityReportId);
-    const objectiveIdsToReset = currentReport && currentReport.activityReportObjectives
-      ? currentReport.activityReportObjectives.map((a) => a.objectiveId)
-      : [];
+    const objectivesToReset = await sequelize.models.Objective.findAll({
+      include: [
+        {
+          model: sequelize.models.ActivityReport,
+          as: 'activityReports',
+          attributes: ['id'],
+          where: {
+            id: activityReportId,
+          },
+          required: true,
+        },
+      ],
+    });
 
     // we don't need to run this query with an empty array I don't think
-    if (objectiveIdsToReset.length) {
+    if (objectivesToReset.length) {
       await sequelize.models.Objective.update({
         status: OBJECTIVE_STATUS.NOT_STARTED,
       }, {
-        where: { id: objectiveIdsToReset },
+        where: { id: objectivesToReset.map((o) => o.id) },
         individualHooks: true,
       });
     }

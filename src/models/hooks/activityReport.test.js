@@ -12,6 +12,10 @@ import db, {
   Grant,
   User,
 } from '..';
+import { unlockReport } from '../../routes/activityReports/handlers';
+import ActivityReportPolicy from '../../policies/activityReport';
+
+jest.mock('../../policies/activityReport');
 
 describe('activity report model hooks', () => {
   describe('automatic goal status changes', () => {
@@ -159,7 +163,7 @@ describe('activity report model hooks', () => {
       objective = await Objective.create({
         title: 'Objective 1',
         goalId: goal.id,
-        status: 'In Progress',
+        status: 'Not Started',
       });
 
       await ActivityReportObjective.create({
@@ -184,7 +188,10 @@ describe('activity report model hooks', () => {
       expect(testGoal.status).toEqual('Not Started');
     });
 
-    it('approving the report should set the goal to "in progress"', async () => {
+    it('approving the report should set the goal and objectives to "in progress"', async () => {
+      let testObjective = await Objective.findByPk(objective.id);
+      expect(testObjective.status).toEqual('Not Started');
+
       let testReport = await ActivityReport.findByPk(report.id);
       expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.SUBMITTED);
 
@@ -199,6 +206,41 @@ describe('activity report model hooks', () => {
 
       const testGoal = await Goal.findByPk(goal.id);
       expect(testGoal.status).toEqual('In Progress');
+
+      testObjective = await Objective.findByPk(objective.id);
+      expect(testObjective.status).toEqual('Complete');
+    });
+
+    it('unlocking report adjusts objective status', async () => {
+      const mockResponse = {
+        attachment: jest.fn(),
+        json: jest.fn(),
+        send: jest.fn(),
+        sendStatus: jest.fn(),
+        status: jest.fn(() => ({
+          end: jest.fn(),
+        })),
+      };
+
+      const mockRequest = {
+        session: {
+          userId: mockUser.id,
+        },
+        params: {
+          activityReportId: report.id,
+        },
+      };
+
+      ActivityReportPolicy.mockImplementationOnce(() => ({
+        canUnlock: () => true,
+      }));
+
+      await unlockReport(mockRequest, mockResponse);
+
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(204);
+
+      const testObjective = await Objective.findByPk(objective.id);
+      expect(testObjective.status).toEqual('Not Started');
     });
   });
 });
