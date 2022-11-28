@@ -97,7 +97,7 @@ export default class Goal {
   }
 
   canView() {
-    const regions = this.goal.grants.map((grant) => grant.regionId);
-    return regions.some((region) => this.canReadInRegion(region));
+    const region = this.goal.grant.regionId;
+    return this.canReadInRegion(region);
   }
 }

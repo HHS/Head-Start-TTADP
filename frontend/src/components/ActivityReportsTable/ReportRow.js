@@ -23,7 +23,7 @@ function ReportRow({
     displayId,
     activityRecipients,
     startDate,
-    topics,
+    sortedTopics: topics,
     lastSaved,
     calculatedStatus,
     approvedAt,
@@ -119,7 +119,7 @@ function ReportRow({
         </Link>
       </th>
       <td>
-        <TooltipWithCollection collection={recipients} collectionTitle={`recipients for ${displayId}`} />
+        <TooltipWithCollection collection={recipients} collectionTitle={`recipients for ${displayId}`} position={openMenuUp ? 'top' : 'bottom'} />
       </td>
       <td>{startDate}</td>
       <td>
@@ -161,7 +161,7 @@ export const reportPropTypes = PropTypes.shape({
   approvedAt: PropTypes.string,
   createdAt: PropTypes.string,
   startDate: PropTypes.string.isRequired,
-  topics: PropTypes.arrayOf(PropTypes.string).isRequired,
+  sortedTopics: PropTypes.arrayOf(PropTypes.string).isRequired,
   activityReportCollaborators: PropTypes.arrayOf(
     PropTypes.shape({
       user: PropTypes.shape({

@@ -19,16 +19,75 @@ describe('Import TTA plan goals', () => {
   });
 
   describe('for a single region', () => {
+    let roles;
+    let goals;
+    let existingTopics;
+
     beforeAll(async () => {
       try {
         const fileName = 'GranteeTTAPlanTest.csv';
         downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+        roles = JSON.stringify(await Role.findAll({ raw: true }));
+        goals = JSON.stringify(await Goal.findAll({ raw: true }));
+        existingTopics = JSON.stringify(await Topic.findAll({ raw: true }));
+        await Role.destroy({ where: {}, force: true });
+        await Topic.destroy({ where: {}, force: true });
         await Goal.destroy({ where: {} });
         await importGoals(fileName, 14);
       } catch (error) {
         // eslint-disable-next-line no-console
         console.log(`Unable to setup Import Plan Goals test ${error}`);
       }
+    });
+
+    afterAll(async () => {
+      await Role.destroy({ where: {}, force: true });
+      await Topic.destroy({ where: {}, force: true });
+      await Goal.destroy({ where: {} });
+
+      await Topic.bulkCreate(JSON.parse(existingTopics));
+      await Goal.bulkCreate(JSON.parse(goals));
+      await Role.bulkCreate(JSON.parse(roles));
+
+      await db.sequelize.close();
+    });
+
+    it('should import Topics table', async () => {
+      const topics = await Topic.findAll();
+      expect(topics).toBeDefined();
+      expect(topics.length).toBe(14);
+
+      // test eager loading
+      const topic = await Topic.findOne({
+        where: { name: 'Behavioral / Mental Health' },
+        include: [
+          {
+            model: Role,
+            as: 'roles',
+            attributes: ['name'],
+          },
+        ],
+      });
+      expect(topic.name).toEqual('Behavioral / Mental Health');
+      expect(topic.roles.length).toBe(2);
+      expect(topic.roles).toContainEqual(
+        expect.objectContaining({ name: 'HS' }),
+      );
+
+      expect(topic.roles).toContainEqual(
+        expect.objectContaining({ name: 'FES' }),
+      );
+
+      // test lazy loading
+      const topicRoles = await topic.getRoles();
+      expect(topicRoles.length).toBe(2);
+      expect(topicRoles).toContainEqual(
+        expect.objectContaining({ name: 'HS' }),
+      );
+
+      expect(topicRoles).toContainEqual(
+        expect.objectContaining({ name: 'FES' }),
+      );
     });
 
     it('should import Goals table', async () => {

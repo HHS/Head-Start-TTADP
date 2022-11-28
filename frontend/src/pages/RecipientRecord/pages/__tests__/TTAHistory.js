@@ -37,11 +37,11 @@ describe('Recipient Record - TTA History', () => {
     }],
   };
 
-  const renderTTAHistory = () => {
+  const renderTTAHistory = ({ name = 'Jim Recipient' } = {}) => {
     render(
       <UserContext.Provider value={{ user }}>
         <Router history={memoryHistory}>
-          <TTAHistory recipientName="Jim Recipient" recipientId="401" regionId="1" />
+          <TTAHistory recipientName={name} recipientId="401" regionId="1" />
         </Router>
 
       </UserContext.Provider>,
@@ -73,6 +73,12 @@ describe('Recipient Record - TTA History', () => {
     renderTTAHistory();
     const reports = await screen.findByText('Activity Reports');
     expect(reports).toBeInTheDocument();
+  });
+
+  it('renders null when recipientName is missing', async () => {
+    renderTTAHistory({ name: null });
+    const reports = screen.queryByText('Activity Reports');
+    expect(reports).toBeNull();
   });
 
   it('combines filters appropriately', async () => {
