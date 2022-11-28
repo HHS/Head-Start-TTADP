@@ -106,7 +106,9 @@ const deleteHandler = async (req, res) => {
         res.sendStatus(403);
         return;
       }
-      const rf = file.reportFiles.find((r) => r.reportId === reportId);
+      const rf = file.reportFiles.find(
+        (r) => r.activityReportId === parseInt(reportId, DECIMAL_BASE),
+      );
       if (rf) {
         await deleteActivityReportFile(rf.id);
       }
