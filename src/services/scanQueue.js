@@ -9,15 +9,14 @@ const addToScanQueue = (fileKey) => {
     delay,
   };
 
-  const jobOptions = {
-    removeOnComplete: true,
-    removeOnFail: true,
-  };
-
   return scanQueue.add(
     fileKey,
-    { attempts: retries, backoff: backOffOpts },
-    jobOptions,
+    {
+      attempts: retries,
+      backoff: backOffOpts,
+      removeOnComplete: true,
+      removeOnFail: true,
+    },
   );
 };
 
