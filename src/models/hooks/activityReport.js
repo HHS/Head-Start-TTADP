@@ -223,11 +223,28 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
       const relevantARs = approvedReports.filter(
         (a) => a.activityReportObjectives.find((aro) => aro.objectiveId === o),
       );
-        // Get latest report by end date.
-      const latestAR = relevantARs.reduce((r, a) => (r.endDate > a.endDate ? r : a));
+
+      if (!relevantARs && !relevantARs.length) {
+        return Promise.resolve();
+      }
+
+      // Get latest report by end date.
+      const latestAR = relevantARs.reduce((r, a) => {
+        if (r && r.endDate) {
+          return r.endDate > a.endDate ? r : a;
+        }
+        return a;
+      }, {
+        endDate: null,
+        activityReportObjectives: [],
+      });
 
       // Get Objective to take status from.
       const aro = latestAR.activityReportObjectives.find(((a) => a.objectiveId === o));
+
+      if (!aro) {
+        return Promise.resolve();
+      }
 
       // Update Objective status.
       return sequelize.models.Objective.update({
@@ -243,12 +260,16 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
     const objectiveIdsToReset = currentReport && currentReport.activityReportObjectives
       ? currentReport.activityReportObjectives.map((a) => a.objectiveId)
       : [];
-    await sequelize.models.Objective.update({
-      status: OBJECTIVE_STATUS.NOT_STARTED,
-    }, {
-      where: { id: objectiveIdsToReset },
-      individualHooks: true,
-    });
+
+    // we don't need to run this query with an empty array I don't think
+    if (objectiveIdsToReset.length) {
+      await sequelize.models.Objective.update({
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+      }, {
+        where: { id: objectiveIdsToReset },
+        individualHooks: true,
+      });
+    }
   }
 };
 const propagateApprovedStatus = async (sequelize, instance, options) => {
