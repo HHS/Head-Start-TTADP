@@ -7,13 +7,12 @@ import { Switch, Route } from 'react-router';
 import { DECIMAL_BASE } from '../../Constants';
 import { getRecipient } from '../../fetchers/recipient';
 import RecipientTabs from './components/RecipientTabs';
-import FeatureFlag from '../../components/FeatureFlag';
 import { HTTPError } from '../../fetchers';
 import './index.scss';
 import Profile from './pages/Profile';
 import TTAHistory from './pages/TTAHistory';
 import GoalsObjectives from './pages/GoalsObjectives';
-import CreateGoal from '../../components/CreateGoal';
+import GoalForm from '../../components/GoalForm';
 import PrintGoals from './pages/PrintGoals';
 import FilterContext from '../../FilterContext';
 import { GOALS_OBJECTIVES_FILTER_KEY } from './pages/constants';
@@ -218,18 +217,33 @@ export default function RecipientRecord({ match }) {
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/goals/:goalId"
-          render={({ match: goalMatch }) => (
-            <FeatureFlag flag="recipient_goals_objectives" renderNotFound>
+          path="/recipient-tta-records/:recipientId/region/:regionId/goals/new"
+          render={() => (
+            <>
               <Helmet>
                 <title>
-                  {goalMatch.params.goalId === 'new'
-                    ? `Create a goal for ${recipientName}`
-                    : `Edit goal ${goalMatch.params.goalId} for ${recipientName}` }
+                  Create a goal for
+                  {' '}
+                  {recipientName}
                 </title>
               </Helmet>
-              <CreateGoal match={goalMatch} regionId={regionId} recipient={recipientData} />
-            </FeatureFlag>
+              <GoalForm
+                regionId={regionId}
+                recipient={recipientData}
+                showRTRnavigation
+                isNew
+              />
+            </>
+          )}
+        />
+        <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/goals"
+          render={() => (
+            <GoalForm
+              regionId={regionId}
+              recipient={recipientData}
+              showRTRnavigation
+            />
           )}
         />
         <Route

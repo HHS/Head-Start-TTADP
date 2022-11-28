@@ -85,7 +85,9 @@ module.exports = (sequelize, DataTypes) => {
     recipientInfo: {
       type: DataTypes.VIRTUAL,
       get() {
-        return `${this.recipient.name} - ${this.number} - ${this.recipient.id}`;
+        return this.recipient
+          ? `${this.recipient.name} - ${this.number} - ${this.recipientId}`
+          : `${this.number} - ${this.recipientId}`;
       },
     },
   }, {

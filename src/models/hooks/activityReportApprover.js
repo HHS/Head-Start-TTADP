@@ -8,12 +8,12 @@ const { APPROVER_STATUSES, REPORT_STATUSES } = require('../../constants');
  */
 const calculateReportStatusFromApprovals = (approvals) => {
   const approved = (status) => status === APPROVER_STATUSES.APPROVED;
-  if (approvals.every(approved)) {
+  if (approvals.length && approvals.every(approved)) {
     return REPORT_STATUSES.APPROVED;
   }
 
   const needsAction = (status) => status === APPROVER_STATUSES.NEEDS_ACTION;
-  if (approvals.some(needsAction)) {
+  if (approvals.length && approvals.some(needsAction)) {
     return REPORT_STATUSES.NEEDS_ACTION;
   }
 

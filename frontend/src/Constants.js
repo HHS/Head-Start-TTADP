@@ -157,6 +157,7 @@ export const TOPICS = [
   'Culture & Language',
   'Curriculum (Instructional or Parenting)',
   'Data and Evaluation',
+  'Disabilities Services',
   'ERSEA',
   'Environmental Health and Safety / EPRR',
   'Equity',
@@ -169,6 +170,7 @@ export const TOPICS = [
   'Leadership / Governance',
   'Learning Environments',
   'Nutrition',
+  'Ongoing Monitoring Management System',
   'Oral Health',
   'Parent and Family Engagement',
   'Partnerships and Community Engagement',
@@ -181,6 +183,7 @@ export const TOPICS = [
   'Staff Wellness',
   'Teaching / Caregiving Practices',
   'Technology and Information Systems',
+  'Training and Professional Development',
   'Transition Practices',
   'Transportation',
 ];
@@ -236,7 +239,7 @@ export const DATE_DISPLAY_FORMAT = 'MM/DD/YYYY';
 export const DATEPICKER_VALUE_FORMAT = 'YYYY-MM-DD';
 export const EARLIEST_INC_FILTER_DATE = moment('2020-08-31');
 
-const LOCAL_STORAGE_CACHE_NUMBER = '0.1';
+const LOCAL_STORAGE_CACHE_NUMBER = '0.2';
 export const LOCAL_STORAGE_DATA_KEY = (id) => `ar-form-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const LOCAL_STORAGE_ADDITIONAL_DATA_KEY = (id) => `ar-additional-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const LOCAL_STORAGE_EDITABLE_KEY = (id) => `ar-can-edit-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
