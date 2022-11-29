@@ -4,6 +4,7 @@ const generateFullName = require('./helpers/generateFullName');
 
 const featureFlags = [
   'recipient_goals_objectives',
+  'resources_dashboard',
 ];
 
 module.exports = (sequelize, DataTypes) => {
