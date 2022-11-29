@@ -3,10 +3,12 @@ import '@trussworks/react-uswds/lib/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
+
 import { Helmet } from 'react-helmet';
 
 import { fetchUser, fetchLogout } from './fetchers/Auth';
 import { HTTPError } from './fetchers';
+import FeatureFlag from './components/FeatureFlag';
 
 import UserContext from './UserContext';
 import SiteNav from './components/SiteNav';
@@ -28,6 +30,7 @@ import AriaLiveContext from './AriaLiveContext';
 import AriaLiveRegion from './components/AriaLiveRegion';
 import ApprovedActivityReport from './pages/ApprovedActivityReport';
 import RecipientRecord from './pages/RecipientRecord';
+import ResourcesDashboard from './pages/ResourcesDashboard';
 import RecipientSearch from './pages/RecipientSearch';
 import AppWrapper from './components/AppWrapper';
 import AccountManagement from './pages/AccountManagement';
@@ -166,6 +169,17 @@ function App() {
           render={({ match, location }) => (
             <AppWrapper authenticated logout={logout} padded={false}>
               <RecipientRecord location={location} match={match} user={user} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/resources-dashboard"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="resources_dashboard" renderNotFound>
+                <ResourcesDashboard user={user} />
+              </FeatureFlag>
             </AppWrapper>
           )}
         />
