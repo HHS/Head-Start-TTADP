@@ -285,8 +285,9 @@ describe('reportCache', () => {
         resources,
         topics: topicsForThisObjective,
         ttaProvided: null,
+        order: 1,
       };
-      await cacheObjectiveMetadata(objective, report.id, metadata, 1);
+      await cacheObjectiveMetadata(objective, report.id, metadata);
       const aro = await ActivityReportObjective.findOne({
         where: { activityReportId: report.id },
         include: [{
@@ -352,9 +353,10 @@ describe('reportCache', () => {
         resources,
         topics: topicsForThisObjective,
         ttaProvided: null,
+        order: 0,
       };
 
-      await cacheObjectiveMetadata(objective, report.id, metadata, 0);
+      await cacheObjectiveMetadata(objective, report.id, metadata);
       const aro = await ActivityReportObjective.findOne({
         where: { activityReportId: report.id },
         include: [{
@@ -405,9 +407,10 @@ describe('reportCache', () => {
         resources,
         topics: topicsForThisObjective,
         ttaProvided: null,
+        order: 0,
       };
 
-      await cacheObjectiveMetadata(objective, report.id, metadata, 0);
+      await cacheObjectiveMetadata(objective, report.id, metadata);
       const aro = await ActivityReportObjective.findOne({
         where: { activityReportId: report.id },
         include: [{

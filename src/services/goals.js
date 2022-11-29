@@ -374,13 +374,14 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
     }];
   }, currentObjectives);
 
-  const sortedObjectives = objectivesToSort.sort((o1, o2) => {
+  // Sort by AR Order in place.
+  objectivesToSort.sort((o1, o2) => {
     if (o1.arOrder < o2.arOrder) {
       return -1;
     }
     return 1;
   });
-  return sortedObjectives;
+  return objectivesToSort;
 }
 
 export function reduceObjectivesForActivityReport(newObjectives, currentObjectives = []) {
@@ -467,13 +468,14 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
     }];
   }, currentObjectives);
 
-  const sortedObjectives = objectivesToSort.sort((o1, o2) => {
+  // Sort by AR Order in place.
+  objectivesToSort.sort((o1, o2) => {
     if (o1.arOrder < o2.arOrder) {
       return -1;
     }
     return 1;
   });
-  return sortedObjectives;
+  return objectivesToSort;
 }
 
 /**
@@ -1452,8 +1454,8 @@ async function createObjectivesForGoal(goal, objectives, report) {
         ...metadata,
         status,
         ttaProvided: objective.ttaProvided,
+        order: index,
       },
-      index,
     );
     return savedObjective;
   }));

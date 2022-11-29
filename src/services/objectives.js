@@ -78,7 +78,8 @@ export async function saveObjectivesForReport(objectives, report) {
       await cacheObjectiveMetadata(savedObjective, report.id, {
         ...metadata,
         ttaProvided: objective.ttaProvided,
-      }, index);
+        order: index,
+      });
 
       return savedObjective;
     }))));
@@ -179,14 +180,15 @@ function reduceOtherEntityObjectives(newObjectives) {
     }];
   }, []);
 
-  const sortedObjectives = objectivesToSort.sort((o1, o2) => {
+  // Sort by AR Order in place.
+  objectivesToSort.sort((o1, o2) => {
     if (o1.arOrder < o2.arOrder) {
       return -1;
     }
     return 1;
   });
 
-  return sortedObjectives;
+  return objectivesToSort;
 }
 
 export async function getObjectivesByReportId(reportId) {
