@@ -16,6 +16,31 @@ import UserContext from '../../../UserContext';
 
 const history = createMemoryHistory();
 
+const resourceOverviewUrl = join('api', 'widgets', 'resourcesDashboardOverview');
+const resourcesOverview = {
+  numEclkc: '50',
+  totalNumEclkc: '100',
+  numEclkcPercentage: '50%',
+  numNonEclkc: '40',
+  totalNumNonEclkc: '200',
+  numNonEclkcPercentage: '20%',
+  numNoResources: '30',
+  totalNumNoResources: '300',
+  numNoResourcesPercentage: '10%',
+};
+
+const resourcesOverviewRegionOne = {
+  numEclkc: '2',
+  totalNumEclkc: '10',
+  numEclkcPercentage: '20%',
+  numNonEclkc: '3',
+  totalNumNonEclkc: '10',
+  numNonEclkcPercentage: '30%',
+  numNoResources: '4',
+  totalNumNoResources: '10',
+  numNoResourcesPercentage: '40%',
+};
+
 const resourceListUrl = join('api', 'widgets', 'resourceList');
 const resourceListResponse = [
   { name: 'Resource URL 1', count: 759 },
@@ -51,9 +76,11 @@ describe('Resources Dashboard page', () => {
   it('renders correctly', async () => {
     // Page Load.
     fetchMock.get(`${resourceListUrl}?${allRegions}&${lastThirtyDaysParams}`, resourceListResponse);
+    fetchMock.get(`${resourceOverviewUrl}?${allRegions}&${lastThirtyDaysParams}`, resourcesOverview);
 
     // Region 1.
     fetchMock.get(`${resourceListUrl}?${regionInParams}`, resourceListResponseRegionOne);
+    fetchMock.get(`${resourceOverviewUrl}?${regionInParams}`, resourcesOverviewRegionOne);
 
     const user = {
       homeRegionId: 14,
@@ -77,6 +104,14 @@ describe('Resources Dashboard page', () => {
     expect(await screen.findByRole('cell', { name: /220/i })).toBeVisible();
     expect(await screen.findByRole('cell', { name: /resource url 3/i })).toBeVisible();
     expect(await screen.findByRole('cell', { name: /135/i })).toBeVisible();
+
+    // Overview (initial).
+    expect(screen.getByText(/50%/i)).toBeInTheDocument();
+    expect(screen.getByText(/50 eclkc resources of 100/i)).toBeInTheDocument();
+    expect(screen.getByText(/20%/i)).toBeInTheDocument();
+    expect(screen.getByText(/40 non-eclkc resources of 200/i)).toBeInTheDocument();
+    expect(screen.getByText(/10%/i)).toBeInTheDocument();
+    expect(screen.getByText(/30 no resources of 300/i)).toBeInTheDocument();
 
     // Remove existing filter.
     const remove = await screen.findByRole('button', { name: /This button removes the filter/i });
@@ -107,5 +142,13 @@ describe('Resources Dashboard page', () => {
     expect(await screen.findByRole('heading', { name: /resources in activity reports/i })).toBeVisible();
     expect(await screen.findByRole('cell', { name: /resource url 4/i })).toBeVisible();
     expect(await screen.findByRole('cell', { name: /500/i })).toBeVisible();
+
+    // Overview (region filter).
+    expect(screen.getByText(/20%/i)).toBeInTheDocument();
+    expect(screen.getByText(/2 eclkc resources of 10/i)).toBeInTheDocument();
+    expect(screen.getByText(/30%/i)).toBeInTheDocument();
+    expect(screen.getByText(/3 non-eclkc resources of 10/i)).toBeInTheDocument();
+    expect(screen.getByText(/40%/i)).toBeInTheDocument();
+    expect(screen.getByText(/4 no resources of 10/i)).toBeInTheDocument();
   });
 });

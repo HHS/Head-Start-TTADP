@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Grid, GridContainer } from '@trussworks/react-uswds';
 import FilterPanel from '../../components/filter/FilterPanel';
 import ResourceList from '../../widgets/ResourceList';
+import ResourcesDashboardOverview from '../../widgets/ResourcesDashboardOverview';
 import { getUserRegions } from '../../permissions';
 import './index.scss';
 import { formatDateRange, expandFilters } from '../../utils';
@@ -123,6 +124,15 @@ export default function ResourcesDashboard() {
           />
         </Grid>
         <GridContainer className="margin-0 padding-0">
+          <ResourcesDashboardOverview
+            filters={filtersToApply}
+            fields={[
+              'ECLKC resources',
+              'Non ECLKC resources',
+              'No resources',
+            ]}
+            showTooltips
+          />
           <Grid>
             <ResourceList
               filters={filtersToApply}
