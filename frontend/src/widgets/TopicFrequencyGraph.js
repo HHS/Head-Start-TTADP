@@ -185,7 +185,7 @@ export function TopicFrequencyGraphWidget({
             ariaName="Change topic graph order menu"
             initialValue={{
               value: SORT_ORDER.DESC,
-              label: 'High to Low',
+              label: 'High to low',
             }}
             applied={order}
             onApply={onApplySort}
@@ -193,7 +193,7 @@ export function TopicFrequencyGraphWidget({
               [
                 {
                   value: SORT_ORDER.DESC,
-                  label: 'High to Low',
+                  label: 'High to low',
                 },
                 {
                   value: SORT_ORDER.ALPHA,

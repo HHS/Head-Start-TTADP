@@ -23,10 +23,10 @@ export function TargetPopulationTable({ data, loading }) {
   return (
     <TableWidget
       data={data}
-      headings={['Target Population', '# of Activities']}
+      headings={['Target population', 'Number of activities']}
       loading={loading}
       loadingLabel="Target populations in activity reports loading"
-      title="Target Populations in Activity Reports"
+      title="Target populations in activity reports"
       renderData={renderTargetPopulationTable}
       showDateTime={false}
     />

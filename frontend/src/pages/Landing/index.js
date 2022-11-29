@@ -190,10 +190,10 @@ function Landing() {
 
   const regionLabel = () => {
     if (defaultRegion === 14) {
-      return 'All regions';
+      return 'all regions';
     }
     if (defaultRegion > 0) {
-      return `Region ${defaultRegion.toString()}`;
+      return `region ${defaultRegion.toString()}`;
     }
     return '';
   };
