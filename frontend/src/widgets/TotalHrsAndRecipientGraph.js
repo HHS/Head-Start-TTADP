@@ -289,6 +289,7 @@ export function LegendControl({
         name={id}
         checked={selected}
         onChange={handleChange}
+        data-html2canvas-ignore
       />
       <label
         className="usa-checkbox__label padding-right-3"
