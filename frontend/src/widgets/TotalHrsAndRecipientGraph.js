@@ -212,6 +212,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
               className="usa-button--unstyled"
               aria-label={showAccessibleData ? 'display total training and technical assistance hours as graph' : 'display total training and technical assistance hours as table'}
               onClick={toggleType}
+              data-html2canvas-ignore
             >
               {showAccessibleData ? 'Display graph' : 'Display table'}
             </button>

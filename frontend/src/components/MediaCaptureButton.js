@@ -5,12 +5,11 @@ import { Button } from '@trussworks/react-uswds';
 
 export default function ElementCaptureButton({ reference, className }) {
   const capture = async () => {
-    // get the entire height and width of the element
-    // in case some of it is off screen
-    const width = reference.current.scrollWidth;
-    const height = reference.current.scrollHeight;
-
     try {
+      // get the entire height and width of the element
+      // in case some of it is off screen
+      const width = reference.current.scrollWidth;
+      const height = reference.current.scrollHeight;
       // capture the element, setting the width and height
       // we just calculated, and setting the background to white
       // and then converting it to a data url
@@ -38,7 +37,14 @@ export default function ElementCaptureButton({ reference, className }) {
   };
 
   return (
-    <Button unstyled onClick={capture} className={className}>Save image</Button>
+    <Button
+      unstyled
+      onClick={capture}
+      data-html2canvas-ignore
+      className={className}
+    >
+      Save image
+    </Button>
   );
 }
 
