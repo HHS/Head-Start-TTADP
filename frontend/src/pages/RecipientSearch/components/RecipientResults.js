@@ -85,8 +85,8 @@ export default function RecipientResults(
         <thead>
           <tr>
             {renderColumnHeader('Region', 'regionId')}
-            {renderColumnHeader('Recipient Name', 'name')}
-            {renderColumnHeader('Program Specialist', 'programSpecialist')}
+            {renderColumnHeader('Recipient name', 'name')}
+            {renderColumnHeader('Program specialist', 'programSpecialist')}
           </tr>
         </thead>
         <tbody>
