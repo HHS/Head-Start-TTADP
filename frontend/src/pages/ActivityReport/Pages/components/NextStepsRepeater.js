@@ -11,7 +11,6 @@ import { faPlusCircle } from '@fortawesome/pro-regular-svg-icons';
 import colors from '../../../../colors';
 import './NextStepsRepeater.scss';
 import ControlledDatePicker from '../../../../components/ControlledDatePicker';
-import { DATE_DISPLAY_FORMAT } from '../../../../Constants';
 
 const DEFAULT_STEP_HEIGHT = 80;
 
@@ -21,13 +20,13 @@ export default function NextStepsRepeater({
   recipientType,
 }) {
   const [heights, setHeights] = useState([]);
-  const [blurStepValidations, setBlurStepValidations] = useState([]);
-  const [blurDateValidations, setBlurDateValidations] = useState([]);
-
-  const todaysDate = moment().format(DATE_DISPLAY_FORMAT);
 
   const {
-    register, control, getValues, errors,
+    register,
+    control,
+    getValues,
+    errors,
+    setError,
   } = useFormContext();
 
   const { fields, append, remove } = useFieldArray({
@@ -42,35 +41,10 @@ export default function NextStepsRepeater({
     // Remove from Array.
     remove(index);
 
-    // Remove Step Validation State.
-    const updatedStepBlurValidations = blurStepValidations ? [...blurStepValidations] : [];
-    updatedStepBlurValidations.splice(index, 1);
-    setBlurStepValidations(updatedStepBlurValidations);
-
-    // Remove Date Validation.
-    const updatedDateBlurValidations = blurDateValidations ? [...blurDateValidations] : [];
-    updatedDateBlurValidations.splice(index, 1);
-    setBlurDateValidations(updatedDateBlurValidations);
-
     // Remove Height.
     const updatedHeights = [...heights];
     updatedHeights.splice(index, 1);
     setHeights(updatedHeights);
-  };
-
-  const validateStepOnBlur = (note, i) => {
-    // Set Step Blur Validation State.
-    const existingValidations = blurStepValidations ? [...blurStepValidations] : [];
-    existingValidations[i] = !note;
-    setBlurStepValidations(existingValidations);
-  };
-
-  const validateDateOnBlur = (date, i) => {
-    // Set Date Blur Validation State.
-    const existingDateValidations = blurDateValidations ? [...blurDateValidations] : [];
-    const momentDate = moment(date, 'MM/DD/YYYY');
-    existingDateValidations[i] = !date || !momentDate.isValid();
-    setBlurDateValidations(existingDateValidations);
   };
 
   const onStepTextChanged = (e, index) => {
@@ -86,10 +60,27 @@ export default function NextStepsRepeater({
     const allValues = getValues();
     const fieldArray = allValues[name] || [];
     const canAdd = fieldArray.every((field, index) => {
-      validateStepOnBlur(field.note, index);
-      validateDateOnBlur(field.completeDate, index);
-      return field.note !== ''
-      && (field.completeDate && moment(field.completeDate, 'MM/DD/YYYY').isValid());
+      if (!field.note) {
+        setError(`${name}[${index}].note`, { message: 'Please enter a next step' });
+      }
+
+      if (!(field.completeDate && moment(field.completeDate, 'MM/DD/YYYY').isValid())) {
+        setError(`${name}[${index}].completeDate`, { message: 'Please enter a valid date' });
+      }
+
+      const isValid = (() => {
+        if (errors[name] && errors[name][index] && errors[name][index].note) {
+          return false;
+        }
+
+        if (errors[name] && errors[name][index] && errors[name][index].completeDate) {
+          return false;
+        }
+
+        return true;
+      })();
+
+      return isValid;
     });
     if (canAdd) {
       append({ id: null, note: '', completeDate: null });
@@ -110,7 +101,7 @@ export default function NextStepsRepeater({
           <div key={item.key}>
             <FormGroup
               className="margin-top-2 margin-bottom-2"
-              error={blurStepValidations[index] || (errors[name] && errors[name][index]
+              error={(errors[name] && errors[name][index]
                 && errors[name][index].note)}
             >
               <Label
@@ -122,13 +113,12 @@ export default function NextStepsRepeater({
                   *
                 </span>
               </Label>
-              {blurStepValidations[index] || (errors[name]
+              {(errors[name]
                 && errors[name][index] && errors[name][index].note)
                 ? <ErrorMessage>Enter a next step</ErrorMessage>
                 : null}
               <div
-                className={`display-flex ${blurStepValidations[index]
-                  || (errors[name] && errors[name][index]
+                className={`display-flex ${(errors[name] && errors[name][index]
                     && errors[name][index].note) ? 'blank-next-step' : ''}`}
               >
                 <Textarea
@@ -137,7 +127,6 @@ export default function NextStepsRepeater({
                   name={`${name}[${index}].note`}
                   defaultValue={item.note}
                   inputRef={register({ required: 'Enter a next step' })}
-                  onBlur={({ target: { value } }) => validateStepOnBlur(value, index)}
                   data-testid={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}NextSteps-input`}
                   style={{ height: !heights[index] ? `${DEFAULT_STEP_HEIGHT}px` : heights[index] }}
                   onChange={(e) => onStepTextChanged(e, index)}
@@ -162,7 +151,7 @@ export default function NextStepsRepeater({
             </FormGroup>
             <FormGroup
               className="margin-top-1 margin-bottom-2"
-              error={blurDateValidations[index] || (errors[name] && errors[name][index]
+              error={(errors[name] && errors[name][index]
                 && errors[name][index].completeDate)}
             >
               <Label
@@ -174,23 +163,19 @@ export default function NextStepsRepeater({
                   *
                 </span>
               </Label>
-              {blurDateValidations[index]
-                || (errors[name] && errors[name][index]
+              {(errors[name] && errors[name][index]
                   && errors[name][index].completeDate)
                 ? <ErrorMessage>Enter a valid date</ErrorMessage>
                 : null}
               <div
-                className={`${blurDateValidations[index]
-                  || (errors[name] && errors[name][index]
-                    && errors[name][index].completeDate) ? 'blank-next-step-date' : ''}`}
+                className={(errors[name] && errors[name][index]
+                    && errors[name][index].completeDate) ? 'blank-next-step-date' : ''}
               >
                 <ControlledDatePicker
                   inputId={`${stepType}-next-step-date-${index + 1}`}
                   control={control}
                   name={`${name}[${index}].completeDate`}
                   value={item.completeDate}
-                  onBlur={({ target: { value } }) => validateDateOnBlur(value, index)}
-                  minDate={todaysDate}
                   dataTestId={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}StepCompleteDate-input`}
                 />
               </div>
