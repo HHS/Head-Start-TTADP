@@ -190,11 +190,8 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
   const objectiveIds = objectives.map((o) => o.objectiveId);
 
   // Get all the reports that use the objectives
-  const approvedReports = await sequelize.models.ActivityReport.findAll({
+  const allReports = await sequelize.models.ActivityReport.findAll({
     attributes: ['id', 'calculatedStatus', 'endDate'],
-    where: {
-      calculatedStatus: REPORT_STATUSES.APPROVED,
-    },
     include: [
       {
         model: sequelize.models.ActivityReportObjective,
@@ -213,6 +210,10 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
       },
     ],
   });
+
+  const approvedReports = allReports.filter((report) => (
+    report.calculatedStatus === REPORT_STATUSES.APPROVED
+  ));
 
   // Only change the status if we have an approved report using the objective.
   if (approvedReports.length) {
@@ -253,26 +254,17 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
       });
     }));
   } else if (isUnlocked) {
-    const objectivesToReset = await sequelize.models.Objective.findAll({
-      include: [
-        {
-          model: sequelize.models.ActivityReport,
-          as: 'activityReports',
-          attributes: ['id'],
-          where: {
-            id: activityReportId,
-          },
-          required: true,
-        },
-      ],
-    });
+    const report = allReports.find((r) => r.id === activityReportId);
+    const objectivesToReset = report && report.activityReportObjectives
+      ? report.activityReportObjectives.map((a) => a.objectiveId)
+      : [];
 
     // we don't need to run this query with an empty array I don't think
     if (objectivesToReset.length) {
       await sequelize.models.Objective.update({
         status: OBJECTIVE_STATUS.NOT_STARTED,
       }, {
-        where: { id: objectivesToReset.map((o) => o.id) },
+        where: { id: objectivesToReset },
         individualHooks: true,
       });
     }
