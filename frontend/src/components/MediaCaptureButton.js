@@ -6,17 +6,11 @@ import { Button } from '@trussworks/react-uswds';
 export default function ElementCaptureButton({ reference, className }) {
   const capture = async () => {
     try {
-      // get the entire height and width of the element
-      // in case some of it is off screen
-      const width = reference.current.scrollWidth;
-      const height = reference.current.scrollHeight;
       // capture the element, setting the width and height
       // we just calculated, and setting the background to white
       // and then converting it to a data url
       // and triggering a download
       const canvas = await html2canvas(reference.current, {
-        width,
-        height,
         onclone: (document, element) => {
           // set the first child to be white (we can always make this configurable later)
           element.firstChild.classList.add('bg-white');
