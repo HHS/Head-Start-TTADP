@@ -155,13 +155,14 @@ describe('Import TTA plan goals', () => {
       await Goal.destroy({
         where: {
           name: goalWithoutCreatedVia.name,
+          grantId: goalWithoutCreatedVia.grantId,
         },
       });
 
       await importGoals(fileName, 14);
 
       const importedGoal = await Goal.findOne({
-        where: { name: goalWithoutCreatedVia.name },
+        where: { name: goalWithoutCreatedVia.name, grantId: goalWithoutCreatedVia.grantId },
       });
       expect(importedGoal.createdVia).toBe('imported');
     });
@@ -177,14 +178,14 @@ describe('Import TTA plan goals', () => {
       });
 
       const goalWithRTRCreatedVia = await Goal.findOne({
-        where: { createdVia: 'rtr' },
+        where: { name: aGoal.name, grantId: aGoal.grantId },
       });
       expect(goalWithRTRCreatedVia.createdVia).toBe('rtr');
 
       await importGoals(fileName, 14);
 
       const importedGoal = await Goal.findOne({
-        where: { name: goalWithRTRCreatedVia.name },
+        where: { name: goalWithRTRCreatedVia.name, grantId: goalWithRTRCreatedVia.grantId },
       });
       expect(importedGoal.createdVia).toBe('rtr');
     });
@@ -199,13 +200,14 @@ describe('Import TTA plan goals', () => {
       await Goal.destroy({
         where: {
           name: aGoal.name,
+          grantId: aGoal.grantId,
         },
       });
 
       await importGoals(fileName, 14);
 
       const importedGoal = await Goal.findOne({
-        where: { name: aGoal.name },
+        where: { name: aGoal.name, grantId: aGoal.grantId },
       });
       expect(importedGoal.isRttapa).toBe('Yes');
     });
@@ -225,7 +227,7 @@ describe('Import TTA plan goals', () => {
       await importGoals(fileName, 14);
 
       const importedGoal = await Goal.findOne({
-        where: { name: goalNotRttapa.name },
+        where: { name: goalNotRttapa.name, grantId: goalNotRttapa.grantId },
       });
       expect(importedGoal.isRttapa).toBe('Yes');
     });
