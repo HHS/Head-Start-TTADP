@@ -142,8 +142,8 @@ test.describe("Activity Report", () => {
     expect(await page.getByText('g2')).toBeTruthy();
     expect(await page.getByText('g2o1')).toBeTruthy();
 
-    expect(await page.getByText('SuccessThis report was successfully submitted for approval')).toBeTruthy();
-    expect(await page.getByRole('button', { name: 'Reset to Draft' })).toBeTruthy();
+    // expect(await page.getByText('SuccessThis report was successfully submitted for approval')).toBeTruthy();
+    // expect(await page.getByRole('button', { name: 'Reset to Draft' })).toBeTruthy();
     expect(await page.getByText(`${fullName} has requested approval for this activity report`)).toBeTruthy();
 
     // add manager notes
