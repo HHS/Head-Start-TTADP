@@ -19,7 +19,7 @@ test.describe("Activity Report", () => {
     await page.getByRole('button', { name: '+ New Activity Report' }).click();
 
     const heading = await page.getByRole('heading', { name: /activity report for region \d/i });
-    const regionNumber = await heading.textContent().then((text) => text.match(/\d/)[0]);
+    const regionNumber = await heading.textContent().then((text) => text!.match(/\d/)![0]);
 
     await page.getByRole('group', { name: 'Was this activity for a recipient or other entity? *' }).locator('label').filter({ hasText: 'Recipient' }).click();
     await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
