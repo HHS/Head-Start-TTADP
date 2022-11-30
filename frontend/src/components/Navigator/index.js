@@ -31,6 +31,7 @@ import { saveGoalsForReport, saveObjectivesForReport } from '../../fetchers/acti
 import GoalFormContext from '../../GoalFormContext';
 import { validateObjectives } from '../../pages/ActivityReport/Pages/components/objectiveValidator';
 import AppLoadingContext from '../../AppLoadingContext';
+import { convertGoalsToFormData } from '../../pages/ActivityReport/formDataHelpers';
 
 function Navigator({
   editable,
@@ -143,7 +144,9 @@ function Navigator({
     const { status, ...values } = getValues();
     const data = { ...formData, ...values, pageState: newNavigatorState() };
 
-    updateFormData(data);
+    // we update the form data in the onSave handler- not seeing why we need to do it twice
+    // leaving this in there as a comment until I can verify that it's not needed
+    // updateFormData(data);
     try {
       // Always clear the previous error message before a save.
       updateErrorMessage();
@@ -210,16 +213,26 @@ function Navigator({
             regionId: formData.regionId,
           },
         );
-
-        // Find the goal we are editing and put it back with updated values.
-        const goalBeingEdited = allGoals.find((g) => g.name === goal.name);
-        setValue('goalForEditing', goalBeingEdited);
       }
+
+      const {
+        goals, goalForEditing: newGoalForEditing,
+      } = convertGoalsToFormData(allGoals, grantIds);
 
       // update form data
       const { status, ...values } = getValues();
-      const data = { ...formData, ...values, pageState: newNavigatorState() };
-      updateFormData(data);
+      const data = {
+        ...formData,
+        ...values,
+        goals,
+        goalForEditing: newGoalForEditing,
+        pageState: newNavigatorState(),
+      };
+
+      setValue('goals', goals);
+      setValue('goalForEditing', newGoalForEditing);
+
+      updateFormData(data, true);
 
       updateErrorMessage('');
       updateLastSaveTime(moment());
@@ -252,7 +265,7 @@ function Navigator({
       );
       // Set updated objectives.
       setValue('objectivesWithoutGoals', newObjectives);
-      updateLastSaveTime(moment());
+      updateLastSaveTime(moment()); // update the last saved time
       updateShowSavedDraft(true); // show the saved draft message
       updateErrorMessage('');
     } catch (error) {
