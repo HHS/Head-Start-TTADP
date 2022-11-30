@@ -12,3 +12,8 @@
     height: 3em;
     width: 3em;
 }
+
+
+.smart-hub--resources-dashboard-overview-field .smart-hub--ellipsis {
+    max-width: 200px;
+}

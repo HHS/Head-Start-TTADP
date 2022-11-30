@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faLink, faLinkSlash,
+  faLink, faExternalLink, faLinkSlash,
 } from '@fortawesome/free-solid-svg-icons';
 import withWidgetData from './withWidgetData';
 import './ResourcesDashboardOverview.css';
@@ -71,8 +71,8 @@ const DASHBOARD_FIELDS = {
         icon={faLink}
         showTooltip={showTooltip}
         label={`${data.numEclkc} ${data.numEclkc === 1 ? 'ECLKC Resource' : 'ECLKC Resources'} of ${data.totalNumEclkc}`}
-        iconColor={colors.ttahubMagenta}
-        backgroundColor={colors.ttahubMagentaLight}
+        iconColor={colors.success}
+        backgroundColor={colors.successLighter}
         tooltipText="ECLKC resources"
         data={data.numEclkcPercentage}
       />
@@ -82,11 +82,11 @@ const DASHBOARD_FIELDS = {
     render: (data, showTooltip) => (
       <Field
         key="non-eclkc-resources"
-        icon={faLink}
+        icon={faExternalLink}
         showTooltip={showTooltip}
         label={`${data.numNonEclkc} ${data.numNonEclkc === 1 ? 'Non-ECLKC Resource' : 'Non-ECLKC Resources'} of ${data.totalNumNonEclkc}`}
-        iconColor={colors.ttahubMagenta}
-        backgroundColor={colors.ttahubMagentaLight}
+        iconColor={colors.ttahubMediumBlue}
+        backgroundColor={colors.ttahubBlueLight}
         tooltipText="Non-ECLKC resources"
         data={data.numNonEclkcPercentage}
       />
@@ -99,9 +99,9 @@ const DASHBOARD_FIELDS = {
         icon={faLinkSlash}
         showTooltip={showTooltip}
         label={`${data.numNoResources} ${data.numNoResources === 1 ? 'No Resource' : 'No Resources'} of ${data.totalNumNoResources}`}
-        iconColor={colors.ttahubMagenta}
-        backgroundColor={colors.ttahubMagentaLight}
-        tooltipText="No ECLKC resources"
+        iconColor={colors.ttahubOrange}
+        backgroundColor={colors.ttahubOrangeLight}
+        tooltipText="No resources"
         data={data.numNoResourcesPercentage}
       />
     ),

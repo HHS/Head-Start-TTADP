@@ -23,7 +23,7 @@ function ResourceList({ data, loading }) {
   return (
     <TableWidget
       data={data}
-      headings={['Resource', 'Number of activities']}
+      headings={['Resource', 'Number of resources']}
       loading={loading}
       loadingLabel="Resource list loading"
       title="Resources in Activity Reports"
