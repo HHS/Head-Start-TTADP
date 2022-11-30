@@ -20,6 +20,7 @@ services:
       #
       # The below instructs the container to skip downloading chromium and use the host's binary instead.
       # If you're not on an M1 mac, you can comment this out or just leave it, the undefined exports will have no effect.
+      # I installed chromium with brew: `brew install chromium --no-quarantine`
       #
       # In ~/.zshrc (in my case) add:
       # export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
