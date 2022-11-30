@@ -175,10 +175,43 @@ describe('Objectives', () => {
       status: 'Not Started',
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
-    const button = await screen.findByRole('button', { name: /Add new objective/i });
     expect(screen.queryByText(/objective status/i)).toBeNull();
-    userEvent.click(button);
+    const select = await screen.findByLabelText(/Select TTA objective/i);
+    await selectEvent.select(select, ['Test objective']);
     await waitFor(() => expect(screen.queryByText(/objective status/i)).not.toBeNull());
+  });
+
+  it('hides and shows add objective button', async () => {
+    const objectiveOptions = [{
+      value: 3,
+      label: 'Test objective',
+      title: 'Test objective',
+      ttaProvided: '<p>hello</p>',
+      activityReports: [],
+      resources: [],
+      topics: [],
+      status: 'Not Started',
+    }];
+    render(<RenderObjectives objectiveOptions={objectiveOptions} />);
+    expect(screen.queryByText(/objective status/i)).toBeNull();
+
+    // We shouldn't show add objective button.
+    expect(screen.queryByRole('button', { name: /Add new objective/i })).toBeNull();
+
+    // Add an objective.
+    const select = await screen.findByLabelText(/Select TTA objective/i);
+    await selectEvent.select(select, ['Test objective']);
+    await waitFor(() => expect(screen.queryByText(/objective status/i)).not.toBeNull());
+
+    // We should show add objective button.
+    expect(screen.queryByRole('button', { name: /Add new objective/i })).not.toBeNull();
+
+    // Remove objective.
+    const removeObjButton = await screen.findByRole('button', { name: /remove this objective/i });
+    userEvent.click(removeObjButton);
+
+    // We shouldn't show add objective button after we remove the objective.
+    expect(screen.queryByRole('button', { name: /Add new objective/i })).toBeNull();
   });
 
   it('is on approved reports hides options', async () => {
@@ -214,9 +247,10 @@ describe('Objectives', () => {
       status: 'Not Started',
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} goalId="new" />);
-    const button = await screen.findByRole('button', { name: /Add new objective/i });
+
     expect(screen.queryByText(/objective status/i)).toBeNull();
-    userEvent.click(button);
+    const select = await screen.findByLabelText(/Select TTA objective/i);
+    await selectEvent.select(select, ['Test objective']);
     await waitFor(() => expect(screen.queryByText(/objective status/i)).not.toBeNull());
   });
 });
