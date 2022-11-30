@@ -66,13 +66,14 @@ export const unflattenResourcesUsed = (array) => {
 // this function takes goals returned from the API and parses them appropriately,
 // setting the editable goal (or at least doing its best guess)
 export const convertGoalsToFormData = (
-  goals, grantIds, activelyEditedGoals,
+  goals, grantIds,
 ) => goals.reduce((accumulatedData, goal) => {
   // we are relying on the backend to have properly captured the goalForEditing
-  // if there is some breakdown happening, we fall back to just using the first matching goal
+  // if there is some breakdown happening, and we have two set,
+  // we will just fall back to just using the first matching goal
   if (
     // if any of the goals ids are included in the activelyEditedGoals id array
-    goal.goalIds.some((id) => activelyEditedGoals && activelyEditedGoals.includes(id))
+    goal.activityReportGoals.some((arGoal) => arGoal.isActivelyEdited)
         && !accumulatedData.goalForEditing
   ) {
     // we set it as the goal for editing
@@ -109,7 +110,7 @@ export const convertReportToFormData = (fetchedReport) => {
   }));
 
   const { goals, goalForEditing } = convertGoalsToFormData(
-    fetchedReport.goalsAndObjectives, grantIds, fetchedReport.activelyEditedGoals,
+    fetchedReport.goalsAndObjectives, grantIds,
   );
   const objectivesWithoutGoals = convertObjectivesWithoutGoalsToFormData(
     fetchedReport.objectivesWithoutGoals, otherEntities,
