@@ -1,21 +1,37 @@
 import { test, expect } from '@playwright/test';
 
+async function blur(page) {
+  await page.getByText('Office of Head Start TTA Hub').click();
+}
+
+async function getFullName(page) {
+  await page.goto('/');
+  const welcomeText = await page.getByRole('heading', { name: /welcome to the tta hub/i });
+  const text = await welcomeText.textContent();
+  return text.replace(/welcome to the tta hub /i, '');
+}
+
 test.describe("Activity Report", () => {
   test('can create an AR with multiple goals, submit for review, and review', async ({ page }) => {
-    await page.goto('/');
+    const fullName = await getFullName(page);
+
     await page.getByRole('link', { name: 'Activity Reports' }).click();
     await page.getByRole('button', { name: '+ New Activity Report' }).click();
+
+    const heading = await page.getByRole('heading', { name: /activity report for region \d/i });
+    const regionNumber = await heading.textContent().then((text) => text.match(/\d/)[0]);
+
     await page.getByRole('group', { name: 'Was this activity for a recipient or other entity? *' }).locator('label').filter({ hasText: 'Recipient' }).click();
     await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
     await page.locator('#react-select-3-option-0-0').click();
-    await page.getByText('Office of Head Start TTA Hub').click();
+    await blur(page);
     await page.locator('#targetPopulations div').filter({ hasText: '- Select -' }).nth(1).click();
     await page.locator('#react-select-7-option-0').click();
-    await page.getByText('Office of Head Start TTA Hub').click();
+    await blur(page);
     await page.getByRole('group', { name: 'Who requested this activity? Use "Regional Office" for TTA not requested by recipient. *' }).locator('label').filter({ hasText: 'Recipient' }).click();
     await page.getByRole('group', { name: 'Reason for activity' }).getByTestId('label').locator('div').filter({ hasText: '- Select -' }).nth(2).click();
     await page.locator('#react-select-9-option-0').click();
-    await page.getByText('Office of Head Start TTA Hub').click();
+    await blur(page);
     await page.getByLabel('Start date *mm/dd/yyyy').click();
     await page.getByLabel('Start date *mm/dd/yyyy').fill('12/01/2020');
     await page.getByLabel('End date *mm/dd/yyyy').click();
@@ -27,7 +43,7 @@ test.describe("Activity Report", () => {
     await page.getByText('Video').click();
     await page.locator('#participants div').filter({ hasText: '- Select -' }).nth(1).click();
     await page.locator('#react-select-11-option-0').click();
-    await page.getByText('Office of Head Start TTA Hub').click();
+    await blur(page);
     await page.getByLabel('Number of participants involved *').click();
     await page.getByLabel('Number of participants involved *').fill('5');
     await page.getByRole('button', { name: 'Save and continue' }).click();
@@ -45,7 +61,7 @@ test.describe("Activity Report", () => {
     await page.getByLabel('TTA objective *').fill('g1o1');
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
     await page.locator('#react-select-21-option-0').click();
-    await page.getByText('Office of Head Start TTA Hub').click();
+    await blur(page);
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
     await page.keyboard.type('hello');
     await page.getByRole('button', { name: 'Save goal' }).click();
@@ -65,7 +81,7 @@ test.describe("Activity Report", () => {
     await page.getByLabel('TTA objective *').fill('g2o1');
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
     await page.keyboard.press('Enter');
-    await page.getByText('Office of Head Start TTA Hub').click(); 
+    await blur(page);
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
     await page.keyboard.type('hello');
     await page.getByRole('button', { name: 'Save goal' }).click();
@@ -88,21 +104,34 @@ test.describe("Activity Report", () => {
 
     // move to review and submit
     await page.getByRole('button', { name: 'Save and continue' }).click();
-    await page.locator('.css-g1d714-ValueContainer').click();
+
+    // add creator notes
+    await page.getByRole('textbox', { name: 'Additional notes' }).locator('div').nth(2).click();
+    await page.keyboard.type('these are my creator notes');
+
+    const approverDropdown = await page.locator('.css-g1d714-ValueContainer');
+    await approverDropdown.click();
+
+    // type our name into the dropdown to filter to just us
+    await page.keyboard.type(fullName);
+
+    // press Enter to select ourself
     await page.keyboard.press('Enter');
-    await page.getByText('Office of Head Start TTA Hub').click();
-    
+
+    await blur(page);
+
     // submit for approval
     await page.getByRole('button', { name: 'Submit for approval' }).click();
 
     await page.waitForTimeout(5000);
 
     // extract the region number from the URL, when the URL looks like this: 'http://localhost:3000/activity-reports?region.in[]=8'
-    const url2 = await page.url();
-    const regionNumber = url2.split('=').find((part) => /^\d+$/.test(part));
+    // const url2 = await page.url();
+    // const regionNumber = url2.split('=').find((part) => /^\d+$/.test(part));
 
     await page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).first().click();
 
+    // begin review assertions
     expect(await page.getByTestId('accordionButton_activity-summary')).toHaveText('Activity summary');
 
     // expect the page to have text 'g1' and 'g1o1'
@@ -114,8 +143,25 @@ test.describe("Activity Report", () => {
     expect(await page.getByText('g2o1')).toBeTruthy();
 
     expect(await page.getByText('SuccessThis report was successfully submitted for approval')).toBeTruthy();
-
     expect(await page.getByRole('button', { name: 'Reset to Draft' })).toBeTruthy();
+    expect(await page.getByText(`${fullName} has requested approval for this activity report`)).toBeTruthy();
 
+    // add manager notes
+    await page.getByRole('textbox', { name: 'Manager notes' }).locator('div').nth(2).click();
+    await page.keyboard.type('these are my manager notes');
+
+    // set status to approved
+    await page.getByTestId('dropdown').selectOption('approved');
+
+    // submit approval
+    await page.getByTestId('form').getByTestId('button').click();
+
+    // this is in the 'approved activity reports' table
+    await page.getByRole('rowheader', { name: `R0${regionNumber}-AR-${arNumber}` }).getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).click();
+
+
+    await page.getByRole('heading', { name: `TTA activity report R0${regionNumber}-AR-${arNumber}` });
+    expect(await page.locator('div').filter({ hasText: 'Date approved:' }).first().isVisible()).toBe(true);
+    expect(await page.locator('div').filter({ hasText: 'these are my manager notes' }).first().isVisible()).toBe(true);
   });
-})
+});
