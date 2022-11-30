@@ -129,19 +129,14 @@ test.describe("Activity Report", () => {
     await page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).first().click();
 
     // begin review assertions
+    expect(await page.getByText(`${fullName} has requested approval for this activity report`)).toBeTruthy();
     expect(await page.getByTestId('accordionButton_activity-summary')).toHaveText('Activity summary');
-
-    // expect the page to have text 'g1' and 'g1o1'
     expect(await page.getByText('g1')).toBeTruthy();
     expect(await page.getByText('g1o1')).toBeTruthy();
-
-    // expect the page to have text 'g2' and 'g2o1'
     expect(await page.getByText('g2')).toBeTruthy();
     expect(await page.getByText('g2o1')).toBeTruthy();
-
-    // expect(await page.getByText('SuccessThis report was successfully submitted for approval')).toBeTruthy();
-    // expect(await page.getByRole('button', { name: 'Reset to Draft' })).toBeTruthy();
-    expect(await page.getByText(`${fullName} has requested approval for this activity report`)).toBeTruthy();
+    expect(await page.getByText(/these are my creator notes/i)).toBeTruthy();
+    // end review assertions
 
     // add manager notes
     await page.getByRole('textbox', { name: 'Manager notes' }).locator('div').nth(2).click();
