@@ -97,7 +97,7 @@ const cacheTopics = async (activityReportObjectiveId, topics = []) => {
 
 const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   const {
-    files, resources, topics, ttaProvided, status,
+    files, resources, topics, ttaProvided, status, order,
   } = metadata;
   const objectiveId = objective.id;
   let aro = await ActivityReportObjective.findOne({
@@ -118,6 +118,7 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
       title: objective.title,
       status: status || objective.status,
       ttaProvided,
+      arOrder: order + 1,
     }, {
       where: { id: activityReportObjectiveId },
       individualHooks: true,
