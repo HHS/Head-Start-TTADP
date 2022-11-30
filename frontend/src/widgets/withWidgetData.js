@@ -22,8 +22,7 @@ const withWidgetData = (Widget, widgetId) => {
         try {
           updateLoading(true);
           const query = filtersToQueryString(filters);
-          console.log('Widget Id: ', widgetId);
-          /*let fetchedData;
+          /* let fetchedData;
           if (widgetId === 'resourcesDashboardOverview') {
             console.log('Path 1: ', widgetId);
             fetchedData = {
@@ -49,7 +48,7 @@ const withWidgetData = (Widget, widgetId) => {
             ];
           } else {
             fetchedData = await fetchWidget(widgetId, query);
-          }*/
+          } */
           const fetchedData = await fetchWidget(widgetId, query);
           updateData(fetchedData);
           updateError('');
