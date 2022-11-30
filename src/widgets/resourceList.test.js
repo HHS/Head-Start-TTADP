@@ -11,7 +11,7 @@ import db, {
   ActivityReportObjectiveResource,
 } from '../models';
 import filtersToScopes from '../scopes';
-import resourcesList from './resourcesList';
+import resourceList from './resourceList';
 import { REPORT_STATUSES } from '../constants';
 
 const RECIPIENT_ID = 462044;
@@ -247,7 +247,7 @@ describe('Resources list widget', () => {
 
   it('retrieves resources list within date range for specified region', async () => {
     const scopes = filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2021/01/01-2021/01/31' });
-    const res = await resourcesList(scopes);
+    const res = await resourceList(scopes);
     expect(res.length).toBe(3);
 
     expect(res[0].name).toBe('https://eclkc.test1.gov');
@@ -260,7 +260,7 @@ describe('Resources list widget', () => {
 
   it('retrieves reason list short date range for specified region', async () => {
     const scopes = filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2021/01/01-2021/01/20' });
-    const res = await resourcesList(scopes);
+    const res = await resourceList(scopes);
     expect(res.length).toBe(2);
     expect(res[0].name).toBe('https://eclkc.test1.gov');
     expect(res[0].count).toBe(2);

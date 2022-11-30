@@ -2,7 +2,7 @@ import { Op } from 'sequelize';
 import { ActivityReport, ActivityReportObjective, ActivityReportObjectiveResource } from '../models';
 import { REPORT_STATUSES } from '../constants';
 
-export default async function resourcesList(scopes) {
+export default async function resourceList(scopes) {
   // Query Database for all Resources within the scope.
   const res = await ActivityReport.findAll({
     attributes: [
