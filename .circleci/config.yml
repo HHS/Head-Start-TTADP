@@ -17,20 +17,6 @@ executors:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: secretpass
           POSTGRES_DB: ttasmarthub
-  # docker-pg-mailcatcher-executor:
-  #   docker:
-  #     - image: cimg/node:16.18.1-browsers
-  #       environment:
-  #         DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
-  #     - image: circleci/postgres:12.4-ram
-  #       environment:
-  #         POSTGRES_USER: postgres
-  #         POSTGRES_PASSWORD: secretpass
-  #         POSTGRES_DB: ttasmarthub
-  #     - image: schickling/mailcatcher
-  #       environment:
-  #         MAILCATCHER_PORT: 1025
-  #         MAILCATCHER_WEB_PORT: 1080
   machine-executor:
     machine:
       image: ubuntu-2204:current
