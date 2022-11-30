@@ -122,6 +122,13 @@ export default async function importGoals(fileKey, region) {
           }
         }
       }
+      // Convert 'Ceased/Suspended' status to 'Suspended'
+      currentGoals = currentGoals.map((goal) => {
+        if ( goal.status === 'Ceased/Suspended') {
+          goal.status = 'Suspended';
+        };
+        return goal;
+      });
 
       for await (const goal of currentGoals) {
         if (goal) { // ignore the dummy element at index 0
@@ -171,7 +178,7 @@ export default async function importGoals(fileKey, region) {
                 createdVia: 'imported',
                 isRttapa: 'Yes',
               });
-              logger.info(`Creating goal: ${newGoal.id} with status: ${newGoal.status}`);
+              logger.info(`Created goal: ${newGoal.id} with status: ${newGoal.status}`);
             }
           }
         }
