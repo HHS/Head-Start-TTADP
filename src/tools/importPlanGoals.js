@@ -154,6 +154,7 @@ export default async function importGoals(fileKey, region) {
               await dbGoal.update(
                 {
                   timeframe: goal.timeframe,
+                  isRttapa: 'Yes',
                 },
                 {
                   // where: { id: dbgoal.id },
@@ -163,7 +164,13 @@ export default async function importGoals(fileKey, region) {
               // determine if status needs to be updated
               await updateStatus(goal, dbGoal);
             } else {
-              const newGoal = await Goal.create({ grantId, ...goal, isFromSmartsheetTtaPlan: true });
+              const newGoal = await Goal.create({
+                grantId,
+                ...goal,
+                isFromSmartsheetTtaPlan: true,
+                createdVia: 'imported',
+                isRttapa: 'Yes',
+              });
               logger.info(`Creating goal: ${newGoal.id} with status: ${newGoal.status}`);
             }
           }
