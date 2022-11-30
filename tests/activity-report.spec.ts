@@ -125,10 +125,7 @@ test.describe("Activity Report", () => {
 
     await page.waitForTimeout(5000);
 
-    // extract the region number from the URL, when the URL looks like this: 'http://localhost:3000/activity-reports?region.in[]=8'
-    // const url2 = await page.url();
-    // const regionNumber = url2.split('=').find((part) => /^\d+$/.test(part));
-
+    // find the recently created AR in the table and navigate to it
     await page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).first().click();
 
     // begin review assertions
