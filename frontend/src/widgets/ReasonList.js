@@ -23,7 +23,7 @@ function ReasonList({ data, loading }) {
   return (
     <TableWidget
       data={data}
-      headings={['Reason', '# of Activities']}
+      headings={['Reason', 'Number of activities']}
       loading={loading}
       loadingLabel="Reason list loading"
       title="Reasons in Activity Reports"

@@ -123,7 +123,7 @@ export default function RegionalDashboard() {
         <h1 className="landing">
           {userHasOnlyOneRegion ? `Region ${defaultRegion}` : 'Regional'}
           {' '}
-          TTA Activity Dashboard
+          TTA activity dashboard
         </h1>
         <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center margin-y-2">
           <FilterPanel
