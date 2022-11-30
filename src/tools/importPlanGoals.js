@@ -82,7 +82,7 @@ export default async function importGoals(fileKey, region) {
   try {
     for await (const el of recipients) {
       let currentGrants = [];
-      const currentGoals = [];
+      let currentGoals = [];
       let currentGoalName = '';
       let currentGoalNum = 0;
       let currentLastEditedDate;
@@ -123,10 +123,18 @@ export default async function importGoals(fileKey, region) {
         }
       }
       // Convert 'Ceased/Suspended' status to 'Suspended'
+      // 'Completed' to 'Closed'
       currentGoals = currentGoals.map((goal) => {
-        if ( goal.status === 'Ceased/Suspended') {
-          goal.status = 'Suspended';
-        };
+        if (goal.status === 'Ceased/Suspended') {
+          const modifiedGoal = { ...goal };
+          modifiedGoal.status = 'Suspended';
+          return modifiedGoal;
+        }
+        if (goal.status === 'Completed') {
+          const modifiedGoal = { ...goal };
+          modifiedGoal.status = 'Closed';
+          return modifiedGoal;
+        }
         return goal;
       });
 
