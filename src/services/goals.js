@@ -1532,7 +1532,7 @@ export async function saveGoalsForReport(goals, report) {
         );
         currentObjectives = [...currentObjectives, ...existingGoalObjectives];
 
-        await cacheGoalMetadata(existingGoal, report.id, isRttapa);
+        await cacheGoalMetadata(existingGoal, report.id, isRttapa, isActivelyBeingEditing);
       }));
 
       newGoals = await Promise.all(grantIds.map(async (gId) => {
