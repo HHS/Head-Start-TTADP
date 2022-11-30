@@ -161,7 +161,7 @@ test.describe("Activity Report", () => {
 
 
     await page.getByRole('heading', { name: `TTA activity report R0${regionNumber}-AR-${arNumber}` });
-    expect(await page.locator('div').filter({ hasText: 'Date approved:' }).first().isVisible()).toBe(true);
-    expect(await page.locator('div').filter({ hasText: 'these are my manager notes' }).first().isVisible()).toBe(true);
+    expect(await page.getByText(/date approved/i)).toBeTruthy();
+    expect(await page.getByText(/these are my manager notes/i)).toBeTruthy();
   });
 });
