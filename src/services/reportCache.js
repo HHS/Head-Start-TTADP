@@ -128,22 +128,19 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   ]);
 };
 
-const cacheGoalMetadata = async (goal, reportId, isRttapa) => {
-  let arg = await ActivityReportGoal.findOne({
+const cacheGoalMetadata = async (goal, reportId, isRttapa, isActivelyBeingEditing) => {
+  // first we check to see if the activity report -> goal link already exists
+  const arg = await ActivityReportGoal.findOne({
     where: {
       goalId: goal.id,
       activityReportId: reportId,
     },
   });
-  if (!arg) {
-    arg = await ActivityReportGoal.create({
-      goalId: goal.id,
-      activityReportId: reportId,
-    });
-  }
-  const activityReportGoalId = arg.id;
-  return Promise.all([
-    await ActivityReportGoal.update({
+
+  // if it does, then we update it with the new values
+  if (arg) {
+    const activityReportGoalId = arg.id;
+    return ActivityReportGoal.update({
       name: goal.name,
       status: goal.status,
       timeframe: goal.timeframe,
@@ -151,11 +148,28 @@ const cacheGoalMetadata = async (goal, reportId, isRttapa) => {
       closeSuspendContext: goal.closeSuspendContext,
       endDate: goal.endDate,
       isRttapa: isRttapa || null,
+      isActivelyEdited: isActivelyBeingEditing || false,
     }, {
       where: { id: activityReportGoalId },
       individualHooks: true,
-    }),
-  ]);
+    });
+  }
+
+  // otherwise, we create a new one
+  return ActivityReportGoal.create({
+    goalId: goal.id,
+    activityReportId: reportId,
+    name: goal.name,
+    status: goal.status,
+    timeframe: goal.timeframe,
+    closeSuspendReason: goal.closeSuspendReason,
+    closeSuspendContext: goal.closeSuspendContext,
+    endDate: goal.endDate,
+    isRttapa: isRttapa || null,
+    isActivelyEdited: isActivelyBeingEditing || false,
+  }, {
+    individualHooks: true,
+  });
 };
 
 async function destroyActivityReportObjectiveMetadata(activityReportObjectiveIdsToRemove) {

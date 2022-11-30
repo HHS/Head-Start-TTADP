@@ -14,16 +14,16 @@ module.exports = {
     );
 
     await queryInterface.addColumn(
-      'ActivityReports',
-      'activelyEditedGoals',
-      { type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.INTEGER), allowNull: true },
+      'ActivityReportGoals',
+      'isActivelyEdited',
+      { type: Sequelize.DataTypes.BOOLEAN, allowNull: true },
       { transaction },
     );
   }),
   down: async (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => {
     await queryInterface.removeColumn(
-      'ActivityReports',
-      'activelyEditedGoals',
+      'ActivityReportGoals',
+      'isActivelyEdited',
       { transaction },
     );
   }),
