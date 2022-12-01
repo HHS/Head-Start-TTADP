@@ -21,3 +21,17 @@ Webkit 16.4 (playwright build v1735) downloaded to /Users/jonpyers/Library/Cache
 Install the playwright VScode extension. This gives you a new `Testing` tab in the VScode sidebar where you can run tests and see the results.
 
 https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright
+
+# Creating tests
+
+## Test generator
+
+See the [official docs](https://playwright.dev/docs/codegen) for the test generator.
+
+In a nutshell, when you have installed the extension mentioned above and navigate to the new `Testing` tab, you should see a `Record new` button near the bottom. Clicking on this button will:
+
+- Create a new test file in the `tests` directory
+- Open a new browser window
+- Start recording your interactions with the browser
+
+When you're done, just close the browser and the recorder will stop recording. In some cases you will probably need to do some cleanup of the generated test file, but it's a great way to get started.
