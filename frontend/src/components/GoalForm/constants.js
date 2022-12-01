@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 // regex to match a valid url, it must start with http:// or https://, have at least one dot, and not end with a dot or a space
 const VALID_URL_REGEX = /^https?:\/\/.*\.[^ |^.]/;
 
-export const isValidUrl = (attempted) => {
+export const isValidResourceUrl = (attempted) => {
   try {
     const u = new URL(attempted);
     return (u !== '' && VALID_URL_REGEX.test(u));
@@ -12,6 +12,11 @@ export const isValidUrl = (attempted) => {
     return false;
   }
 };
+
+export const objectivesWithValidResourcesOnly = (objectives) => objectives.map((objective) => ({
+  ...objective,
+  resources: objective.resources.filter((resource) => isValidResourceUrl(resource.value)),
+}));
 
 export const GOAL_NAME_ERROR = 'Enter the recipient\'s goal';
 export const GOAL_DATE_ERROR = 'Enter a valid date';
@@ -64,7 +69,7 @@ export const validateListOfResources = (resources) => {
   if (resources.length > 1 || (resources.length === 1 && resources[0].value)) {
     const allValidResources = resources.reduce((a, c) => {
       if (a && c.value) {
-        return isValidUrl(c.value);
+        return isValidResourceUrl(c.value);
       }
 
       return a;

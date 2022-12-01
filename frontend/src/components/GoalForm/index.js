@@ -28,6 +28,7 @@ import {
   SELECT_GRANTS_ERROR,
   OBJECTIVE_DEFAULT_ERRORS,
   GOAL_RTTAPA_ERROR,
+  objectivesWithValidResourcesOnly,
 } from './constants';
 import { DECIMAL_BASE, SCOPE_IDS } from '../../Constants';
 import ReadOnly from './ReadOnly';
@@ -570,7 +571,7 @@ export default function GoalForm({
           endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
           regionId: parseInt(regionId, DECIMAL_BASE),
           recipientId: recipient.id,
-          objectives,
+          objectives: objectivesWithValidResourcesOnly(objectives),
           ids,
         }));
       }
@@ -666,7 +667,7 @@ export default function GoalForm({
             endDate: goal.endDate && goal.endDate !== 'Invalid date' ? goal.endDate : null,
             regionId: parseInt(regionId, DECIMAL_BASE),
             recipientId: recipient.id,
-            objectives: goal.objectives,
+            objectives: objectivesWithValidResourcesOnly(goal.objectives),
             isRttapa: goal.isRttapa,
           }));
           return [...acc, ...g];

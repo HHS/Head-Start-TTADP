@@ -26,6 +26,7 @@ import {
   destroyActivityReportObjectiveMetadata,
 } from './reportCache';
 import { auditLogger } from '../logger';
+import { isValidResourceUrl } from '../lib/urlUtils';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -263,7 +264,7 @@ export async function saveObjectiveAssociations(
 
   // resources
   const objectiveResources = await Promise.all(
-    resources.filter(({ value }) => value).map(
+    resources.filter(({ value }) => value && isValidResourceUrl(value)).map(
       async ({ value }) => {
         let oresource = await ObjectiveResource.findOne({
           where: {
