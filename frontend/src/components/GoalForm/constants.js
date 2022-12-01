@@ -13,10 +13,16 @@ export const isValidResourceUrl = (attempted) => {
   }
 };
 
-export const objectivesWithValidResourcesOnly = (objectives) => objectives.map((objective) => ({
-  ...objective,
-  resources: objective.resources.filter((resource) => isValidResourceUrl(resource.value)),
-}));
+export const objectivesWithValidResourcesOnly = (objectives) => {
+  if (!objectives) {
+    return [];
+  }
+
+  return objectives.map((objective) => ({
+    ...objective,
+    resources: objective.resources.filter((resource) => isValidResourceUrl(resource.value)),
+  }));
+};
 
 export const GOAL_NAME_ERROR = 'Enter the recipient\'s goal';
 export const GOAL_DATE_ERROR = 'Enter a valid date';
