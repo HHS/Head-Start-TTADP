@@ -272,8 +272,6 @@ function Navigator({
     const endDate = getValues('goalEndDate');
     const isRttapa = getValues('goalIsRttapa');
 
-    console.log({ objectives });
-
     const goal = {
       ...goalForEditing,
       name,
