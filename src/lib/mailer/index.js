@@ -172,6 +172,22 @@ export const notifyReportApproved = (job, transport = defaultTransport) => {
   return null;
 };
 
+export const notifyGranteeReportApproved = (job, transport = defaultTransport) => {
+  const toEmails = [];
+  const { report, programSpecialists } = job.data;
+  // Set these inside the function to allow easier testing
+  const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
+
+  if (SEND_NOTIFICATIONS === 'true') {
+    const { id, displayId } = report;
+
+    logger.info(`MAILER: Notifying program specialists that report ${displayId} was approved because they have grants associated with it.`);
+    const programSpecialistsEmailAddresses = programSpecialists.map((c) => c.email);
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
+  }
+
+  return null;
+};
 /**
  * Process function for approverAssigned jobs added to notification queue
  * Sends email to user about new ability to approve a report
@@ -292,6 +308,23 @@ export const reportApprovedNotification = (report, authorWithSetting, collabsWit
       collabsWithSettings,
     };
     notificationQueue.add(EMAIL_ACTIONS.APPROVED, data);
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
+
+/**
+ * @param {ActivityReport} report
+ * @param {User[]} programSpecialists
+ */
+export const programSpecialistGranteeReportApprovedNotification = (report, programSpecialists) => {
+  // Send group notification to program specialists
+  try {
+    const data = {
+      report,
+      programSpecialists,
+    };
+    notificationQueue.add(EMAIL_ACTIONS.GRANTEE_REPORT_APPROVED, data);
   } catch (err) {
     auditLogger.error(err);
   }
