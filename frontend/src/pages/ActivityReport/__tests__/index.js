@@ -197,7 +197,7 @@ describe('ActivityReport', () => {
       let alerts = screen.queryByTestId('alert');
       expect(alerts).toBeNull();
       const button = await screen.findByRole('button', { name: 'Save draft' });
-      userEvent.click(button);
+      act(() => userEvent.click(button));
       await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
       alerts = await screen.findAllByTestId('alert');
       expect(alerts.length).toBe(2);

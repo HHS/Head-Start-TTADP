@@ -81,7 +81,7 @@ function Navigator({
 
   // App Loading Context.
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
-  const [isGoalFormClosed, toggleGoalForm] = useState(selectedGoals.length > 0);
+  const [isGoalFormClosed, toggleGoalForm] = useState(selectedGoals && selectedGoals.length > 0);
   const [weAreAutoSaving, setWeAreAutoSaving] = useState(false);
 
   // Toggle objectives readonly only if all objectives are saved and pass validation.
