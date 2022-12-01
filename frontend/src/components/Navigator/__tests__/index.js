@@ -1,3 +1,5 @@
+/* eslint-disable react/prop-types */
+/* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
@@ -5,7 +7,7 @@ import {
   render, screen, waitFor, within, act,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import { useFormContext } from 'react-hook-form/dist/index.ie11';
+import { FormProvider, useForm, useFormContext } from 'react-hook-form/dist/index.ie11';
 import Navigator from '../index';
 import { NOT_STARTED, IN_PROGRESS } from '../constants';
 import NetworkContext from '../../../NetworkContext';
@@ -88,7 +90,67 @@ const initialData = {
 };
 
 describe('Navigator', () => {
-  beforeAll(async () => jest.useFakeTimers());
+  beforeAll(async () => {
+    jest.useFakeTimers();
+    fetchMock.post('/api/activity-reports/goals', 200);
+  });
+
+  const TestNavigator = ({
+    currentPage,
+    onSubmit,
+    onSave,
+    updatePage,
+    updateForm,
+    pages,
+    formData,
+    onUpdateError,
+  }) => {
+    const hookForm = useForm({
+      mode: 'onChange',
+      defaultValues: {
+        goals: [],
+        objectivesWithoutGoals: [],
+      },
+    });
+
+    return (
+      <FormProvider {...hookForm}>
+        <NetworkContext.Provider value={{
+          connectionActive: true,
+          localStorageAvailable: true,
+        }}
+        >
+          <AppLoadingContext.Provider value={{
+            setIsAppLoading: jest.fn(),
+            setAppLoadingText: jest.fn(),
+            isAppLoading: false,
+          }}
+          >
+            {' '}
+            <Navigator
+              editable
+              reportId={1}
+              submitted={false}
+              formData={formData}
+              updateFormData={updateForm}
+              onReview={() => {}}
+              isApprover={false}
+              defaultValues={{ first: '', second: '' }}
+              pages={pages}
+              currentPage={currentPage}
+              onFormSubmit={onSubmit}
+              updatePage={updatePage}
+              onSave={onSave}
+              updateErrorMessage={onUpdateError}
+              onResetToDraft={() => {}}
+              updateLastSaveTime={() => {}}
+              isPendingApprover={false}
+            />
+          </AppLoadingContext.Provider>
+        </NetworkContext.Provider>
+      </FormProvider>
+    );
+  };
 
   // eslint-disable-next-line arrow-body-style
   const renderNavigator = (
@@ -102,39 +164,16 @@ describe('Navigator', () => {
     onUpdateError = jest.fn(),
   ) => {
     render(
-
-      <NetworkContext.Provider value={{
-        connectionActive: true,
-        localStorageAvailable: true,
-      }}
-      >
-        <AppLoadingContext.Provider value={{
-          setIsAppLoading: jest.fn(),
-          setAppLoadingText: jest.fn(),
-          isAppLoading: false,
-        }}
-        >
-          <Navigator
-            editable
-            reportId={1}
-            submitted={false}
-            formData={formData}
-            updateFormData={updateForm}
-            onReview={() => {}}
-            isApprover={false}
-            defaultValues={{ first: '', second: '' }}
-            pages={pages}
-            currentPage={currentPage}
-            onFormSubmit={onSubmit}
-            updatePage={updatePage}
-            onSave={onSave}
-            updateErrorMessage={onUpdateError}
-            onResetToDraft={() => {}}
-            updateLastSaveTime={() => {}}
-            isPendingApprover={false}
-          />
-        </AppLoadingContext.Provider>
-      </NetworkContext.Provider>,
+      <TestNavigator
+        currentPage={currentPage}
+        onSubmit={onSubmit}
+        onSave={onSave}
+        updatePage={updatePage}
+        updateForm={updateForm}
+        pages={pages}
+        formData={formData}
+        onUpdateError={onUpdateError}
+      />,
     );
   };
 
@@ -187,7 +226,8 @@ describe('Navigator', () => {
   it('calls onSave on navigation', async () => {
     const updatePage = jest.fn();
     const updateForm = jest.fn();
-    renderNavigator('second', () => {}, () => {}, updatePage, updateForm);
+    const onSave = jest.fn();
+    renderNavigator('second', jest.fn(), onSave, updatePage, updateForm);
 
     // mark the form as dirty so that onSave is called
     userEvent.click(screen.getByTestId('second'));
@@ -195,7 +235,7 @@ describe('Navigator', () => {
     userEvent.click(await screen.findByRole('button', { name: 'first page Not Started' }));
 
     await waitFor(() => expect(
-      updateForm,
+      onSave,
     ).toHaveBeenCalledWith({
       ...initialData,
       pageState: { ...initialData.pageState, 2: IN_PROGRESS },
