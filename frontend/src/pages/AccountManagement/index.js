@@ -57,6 +57,11 @@ const emailTypesMap = [
     description: 'We\'ll email you when you are added as a collaborator to an activity report.',
     keyName: 'emailWhenAppointedCollaborator',
   },
+  {
+    name: 'Program Specialists: An activity report approved',
+    description: 'We\'ll email you when an activity report that you are a Program Specialist for is approved.',
+    keyName: 'emailWhenGranteeReportApprovedProgramSpecialist',
+  },
 ];
 
 function CustomizeEmailPreferencesForm({ disabled }) {
