@@ -188,7 +188,7 @@ export default function Form({
         />
       ))}
 
-      { (status !== 'Closed' || userCanEdit) && (
+      { (status !== 'Closed' && userCanEdit) && (
         <div className="margin-top-4">
           {errors[FORM_FIELD_INDEXES.OBJECTIVES_EMPTY]}
           <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />

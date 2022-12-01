@@ -26,6 +26,7 @@ const GP = ({ availableGoals, selectedGoals }) => {
     mode: 'onChange',
     defaultValues: {
       goals: selectedGoals,
+      goalForEditing: { objectives: [], goalIds: [] },
       author: {
         role: 'central office',
       },

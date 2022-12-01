@@ -75,14 +75,6 @@ export default function Objective({
   });
 
   const {
-    field: { onChange: onChangeId },
-  } = useController({
-    name: `${fieldArrayName}[${index}].id`,
-    rules: {},
-    defaultValue: objective.id || objective.value || null,
-  });
-
-  const {
     field: {
       onChange: onChangeTopics,
       onBlur: onBlurTopics,
@@ -182,7 +174,6 @@ export default function Objective({
     onChangeTopics(newObjective.topics);
     onChangeFiles(newObjective.files || []);
     onObjectiveChange(newObjective, index); // Call parent on objective change.
-    onChangeId(newObjective.id || newObjective.value);
   };
 
   const onUploadFile = async (files, _objective, setError) => {
@@ -255,9 +246,9 @@ export default function Objective({
         isOnApprovedReport={isOnApprovedReport || false}
         onChangeTopics={onChangeTopics}
         inputName={objectiveTopicsInputName}
-        status={objectiveStatus}
         goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
         userCanEdit
+        editingFromActivityReport
       />
       <ResourceRepeater
         resources={isOnApprovedReport ? [] : resourcesForRepeater}
@@ -268,16 +259,15 @@ export default function Objective({
           : NO_ERROR}
         validateResources={onBlurResources}
         savedResources={savedResources}
-        status={objective.status || 'Not Started'}
         inputName={objectiveResourcesInputName}
         goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
         userCanEdit
+        editingFromActivityReport
       />
       <ObjectiveFiles
         objective={objective}
         files={objectiveFiles}
         onChangeFiles={onChangeFiles}
-        status={objective.status || 'Not Started'}
         isOnReport={isOnReport || false}
         onUploadFiles={onUploadFile}
         index={index}
@@ -288,6 +278,7 @@ export default function Objective({
         label="Did you use any TTA resources that aren't available as link?"
         selectedObjectiveId={selectedObjective.id}
         userCanEdit
+        editingFromActivityReport
       />
       <ObjectiveTta
         ttaProvided={objectiveTta}

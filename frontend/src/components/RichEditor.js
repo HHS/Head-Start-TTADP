@@ -10,7 +10,7 @@
  * threshold as well.
 */
 
-import React, { useState, useRef } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { Editor } from 'react-draft-wysiwyg';
 import draftToHtml from 'draftjs-to-html';
@@ -31,34 +31,18 @@ const BASE_EDITOR_HEIGHT = '10rem';
 const RichEditor = ({
   ariaLabel, value, onChange, onBlur,
 }) => {
-  const [height, setHeight] = useState(BASE_EDITOR_HEIGHT);
-
-  const editorRef = useRef();
-
   let defaultEditorState;
   if (value) {
     defaultEditorState = getEditorState(value);
   }
 
   const onInternalChange = (currentContentState) => {
-    // an improvement would be converting to rems to match the initial height but
-    // it might not matter since we're deriving the scroll height directly from the client here
-    setHeight(editorRef.current && editorRef.current.scrollHeight ? `${editorRef.current.scrollHeight}px` : BASE_EDITOR_HEIGHT);
-
     const html = draftToHtml(currentContentState);
     onChange(html);
   };
 
   return (
     <Editor
-      // I wish I could link to a reason/some documentation why I had to do this
-      // but honestly I just reverse engineered the errors I was getting in the console
-      // until it worked (not setting a value to ref said something to the effect of
-      // 'editorRef is not a function' and we went from there)
-      editorRef={(ref) => {
-        editorRef.current = ref;
-        return ref;
-      }}
       onBlur={onBlur}
       spellCheck
       defaultEditorState={defaultEditorState}
@@ -66,7 +50,7 @@ const RichEditor = ({
       ariaLabel={ariaLabel}
       handlePastedText={() => false}
       tabIndex="0"
-      editorStyle={{ border: '1px solid #565c65', height }}
+      editorStyle={{ border: '1px solid #565c65', minHeight: BASE_EDITOR_HEIGHT }}
       toolbar={{
         options: ['inline', 'blockType', 'list'],
         inline: {

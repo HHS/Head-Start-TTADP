@@ -14,7 +14,7 @@ import { removeUnusedGoalsObjectivesFromReport, saveObjectiveAssociations } from
 import { cacheObjectiveMetadata } from './reportCache';
 
 export async function saveObjectivesForReport(objectives, report) {
-  const updatedObjectives = await Promise.all(objectives.map(async (objective) => Promise
+  const updatedObjectives = await Promise.all(objectives.map(async (objective, index) => Promise
     .all(objective.recipientIds.map(async (otherEntityId) => {
       const { topics, files, resources } = objective;
 
@@ -23,7 +23,7 @@ export async function saveObjectivesForReport(objectives, report) {
 
       // 1. Find existing by id and entity and id.
       if (objective.ids
-            && objective.ids.length) {
+        && objective.ids.length) {
         const validIdsToCheck = objective.ids.filter((id) => typeof id === 'number');
         existingObjective = await Objective.findOne({
           where: {
@@ -78,6 +78,7 @@ export async function saveObjectivesForReport(objectives, report) {
       await cacheObjectiveMetadata(savedObjective, report.id, {
         ...metadata,
         ttaProvided: objective.ttaProvided,
+        order: index,
       });
 
       return savedObjective;
@@ -117,7 +118,7 @@ export async function getObjectiveById(objectiveId) {
 }
 
 function reduceOtherEntityObjectives(newObjectives) {
-  return newObjectives.reduce((objectives, objective) => {
+  const objectivesToSort = newObjectives.reduce((objectives, objective) => {
     // check the activity report objective status
     const objectiveStatus = objective.activityReportObjectives
       && objective.activityReportObjectives[0]
@@ -157,9 +158,14 @@ function reduceOtherEntityObjectives(newObjectives) {
     // we need to handle the case where there is TTA provided and TTA not provided
     // NOTE: there will only be one activity report objective, it is queried by activity report id
     const ttaProvided = objective.activityReportObjectives
-        && objective.activityReportObjectives[0]
-        && objective.activityReportObjectives[0].ttaProvided
+      && objective.activityReportObjectives[0]
+      && objective.activityReportObjectives[0].ttaProvided
       ? objective.activityReportObjectives[0].ttaProvided : null;
+
+    const arOrder = objective.activityReportObjectives
+      && objective.activityReportObjectives[0]
+      && objective.activityReportObjectives[0].arOrder
+      ? objective.activityReportObjectives[0].arOrder : null;
 
     const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
 
@@ -170,8 +176,19 @@ function reduceOtherEntityObjectives(newObjectives) {
       ttaProvided,
       status: objectiveStatus, // the status from above, derived from the activity report objective
       isNew: false,
+      arOrder,
     }];
   }, []);
+
+  // Sort by AR Order in place.
+  objectivesToSort.sort((o1, o2) => {
+    if (o1.arOrder < o2.arOrder) {
+      return -1;
+    }
+    return 1;
+  });
+
+  return objectivesToSort;
 }
 
 export async function getObjectivesByReportId(reportId) {

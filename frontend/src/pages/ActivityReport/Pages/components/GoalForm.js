@@ -1,5 +1,5 @@
 import React, {
-  useEffect, useState, useMemo, useContext, useRef,
+  useEffect, useMemo, useContext, useRef, useState,
 } from 'react';
 import PropTypes from 'prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -121,6 +121,7 @@ export default function GoalForm({
   }, [defaultEndDate, goal.endDate, onUpdateDate]);
 
   const [objectives, setObjectives] = useState([]);
+
   /*
    * this use effect fetches
    * associated goal data
