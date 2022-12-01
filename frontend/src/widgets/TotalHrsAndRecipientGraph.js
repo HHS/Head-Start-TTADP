@@ -8,6 +8,7 @@ import AccessibleWidgetData from './AccessibleWidgetData';
 import Container from '../components/Container';
 import colors from '../colors';
 import './TotalHrsAndRecipientGraph.scss';
+import { DECIMAL_BASE } from '../Constants';
 
 export function TotalHrsAndRecipientGraph({ data, loading }) {
   // the state for which lines to show
@@ -101,6 +102,8 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         },
       }];
 
+    const ticklabelstep = parseInt(data[0].x.length / 12, DECIMAL_BASE);
+
     // Specify Chart Layout.
     const layout = {
       height: 320,
@@ -126,6 +129,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         automargin: false,
         tickangle: 0,
         showgrid: false,
+        ticklabelstep,
         b: 0,
         t: 0,
         autotypenumbers: 'strict',
@@ -233,9 +237,6 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
 }
 
 TotalHrsAndRecipientGraph.propTypes = {
-  dateTime: PropTypes.shape({
-    timestamp: PropTypes.string, label: PropTypes.string,
-  }),
   data: PropTypes.oneOfType([
     PropTypes.arrayOf(
       PropTypes.shape({
@@ -249,7 +250,6 @@ TotalHrsAndRecipientGraph.propTypes = {
 };
 
 TotalHrsAndRecipientGraph.defaultProps = {
-  dateTime: { timestamp: '', label: '' },
   data: [
     {
       name: 'Hours of Training', x: [], y: [], month: '',
