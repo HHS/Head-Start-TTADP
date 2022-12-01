@@ -31,6 +31,7 @@ import { saveGoalsForReport, saveObjectivesForReport } from '../../fetchers/acti
 import GoalFormContext from '../../GoalFormContext';
 import { validateObjectives } from '../../pages/ActivityReport/Pages/components/objectiveValidator';
 import AppLoadingContext from '../../AppLoadingContext';
+import { objectivesWithValidResourcesOnly } from '../GoalForm/constants';
 
 function Navigator({
   editable,
@@ -190,7 +191,7 @@ function Navigator({
       ...goalForEditing,
       name,
       endDate: endDate && endDate.toLowerCase() !== 'invalid date' ? endDate : '',
-      objectives,
+      objectives: objectivesWithValidResourcesOnly(objectives),
       isRttapa,
       regionId: formData.regionId,
       grantIds,
@@ -241,9 +242,11 @@ function Navigator({
     try {
       const newObjectives = await saveObjectivesForReport(
         {
-          objectivesWithoutGoals: currentObjectives.map((objective) => (
-            { ...objective, recipientIds: otherEntityIds }
-          )),
+          objectivesWithoutGoals: objectivesWithValidResourcesOnly(
+            currentObjectives.map((objective) => (
+              { ...objective, recipientIds: otherEntityIds }
+            )),
+          ),
           activityReportId: reportId,
           region: formData.regionId,
         },
@@ -273,7 +276,7 @@ function Navigator({
       ...goalForEditing,
       name,
       endDate,
-      objectives,
+      objectives: objectivesWithValidResourcesOnly(objectives),
       isRttapa,
       regionId: formData.regionId,
     };
@@ -344,9 +347,9 @@ function Navigator({
     try {
       newObjectives = await saveObjectivesForReport(
         {
-          objectivesWithoutGoals: objectives.map((objective) => (
+          objectivesWithoutGoals: objectivesWithValidResourcesOnly(objectives.map((objective) => (
             { ...objective, recipientIds: otherEntityIds }
-          )),
+          ))),
           activityReportId: reportId,
           region: formData.regionId,
         },

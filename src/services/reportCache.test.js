@@ -350,7 +350,7 @@ describe('reportCache', () => {
 
       const metadata = {
         files: filesForThisObjective,
-        resources,
+        resources: [...resources, { userProvidedUrl: '1302 Subpart A—Eligibility, Recruitment, Selection, Enrollment, and Attendance | ECLKC (hhs.gov)' }],
         topics: topicsForThisObjective,
         ttaProvided: null,
         order: 0,
