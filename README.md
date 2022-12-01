@@ -35,7 +35,7 @@ those services are already running on your machine.
 #### Docker
 
 1. Make sure Docker is installed. To check run `docker ps`.
-2. Make sure you have Node 16.18.0 installed.
+2. Make sure you have Node 16.18.1 installed.
 4. Copy `.env.example` to `.env`.
 6. Change the `FONTAWESOME_NPM_AUTH_TOKEN`, `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the team Keybase account. If you don't have access to Keybase, please ask in the acf-head-start-eng slack channel for access.
 7. Optionally, set `CURRENT_USER` to your current user's uid:gid. This will cause files created by docker compose to be owned by your user instead of root.
@@ -441,6 +441,38 @@ You should also update it where it is specified this README file.
 
 You would then need to rebuild the relevant browser images (docker will likely need to pull new ones) and run ```yarn docker:deps``` to rebuild your dependencies.
 If you are using NVM, you can set intall a new node version with ```nvm install VERSION``` and set it to be the default version of node via ```nvm alias default VERSION```.
+
+## Removing, creating and binding a service from the command line
+In the past, we've needed to destroy and recreate particular services (for example, redis). This can be done through the Cloud.gov UI, through the Terraform architecture, and through the cloud foundry command line interface. The following are instructions for using the cloud foundry CLI (```cf```) for this.
+
+- Login and target the environment you wish to make changes to. (```cf login --sso```).
+- You can use ```cf services``` to list your services
+- Remember that you can use ```cf help COMMAND``` to get the documentation for a particular command
+
+To delete and recreate a service (this should not be done lightly, as it is a destructive action)
+
+1  Unbind a service:
+```cf us APP_NAME SERVICE```
+ex:
+```cf us tta-smarthub-staging ttahub-redis-staging```
+
+2  Delete a service:
+```cf ds SERVICE```
+ex:
+```cf ds ttahub-redis-staging```
+
+3  Create a service:
+```cf cs SERVICE_TYPE SERVICE_LABEL SERVICE```
+ex:
+```cf cs aws-elasticache-redis redis-dev ttahub-redis-staging```
+
+4  Bind a service:
+```cf bs APP_NAME SERVICE```
+ex:
+```cf bs ttahub-smarthub-staging ttahub-redis-staging```
+
+Finally, trigger a redeploy through the Circle CI UI. By triggering a deploy rather than restaging, we are allowing cloud.gov
+
 
 <!-- Links -->
 

@@ -339,7 +339,7 @@ export async function saveObjectiveAssociations(
 export function reduceObjectives(newObjectives, currentObjectives = []) {
   // objectives = accumulator
   // we pass in the existing objectives as the accumulator
-  return newObjectives.reduce((objectives, objective) => {
+  const objectivesToSort = newObjectives.reduce((objectives, objective) => {
     const exists = objectives.find((o) => (
       o.title === objective.title && o.status === objective.status
     ));
@@ -358,6 +358,11 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
 
     const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
 
+    const arOrder = objective.activityReportObjectives
+      && objective.activityReportObjectives[0]
+      && objective.activityReportObjectives[0].arOrder
+      ? objective.activityReportObjectives[0].arOrder : null;
+
     return [...objectives, {
       ...objective.dataValues,
       value: id,
@@ -365,12 +370,22 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
       // Make sure we pass back a list of recipient ids for subsequent saves.
       recipientIds: [objective.getDataValue('otherEntityId')],
       isNew: false,
+      arOrder,
     }];
   }, currentObjectives);
+
+  // Sort by AR Order in place.
+  objectivesToSort.sort((o1, o2) => {
+    if (o1.arOrder < o2.arOrder) {
+      return -1;
+    }
+    return 1;
+  });
+  return objectivesToSort;
 }
 
 export function reduceObjectivesForActivityReport(newObjectives, currentObjectives = []) {
-  return newObjectives.reduce((objectives, objective) => {
+  const objectivesToSort = newObjectives.reduce((objectives, objective) => {
     // check the activity report objective status
     const objectiveStatus = objective.activityReportObjectives
       && objective.activityReportObjectives[0]
@@ -420,6 +435,11 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         && objective.activityReportObjectives[0].ttaProvided
       ? objective.activityReportObjectives[0].ttaProvided : null;
 
+    const arOrder = objective.activityReportObjectives
+      && objective.activityReportObjectives[0]
+      && objective.activityReportObjectives[0].arOrder
+      ? objective.activityReportObjectives[0].arOrder : null;
+
     const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
 
     return [...objectives, {
@@ -429,6 +449,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       ttaProvided,
       status: objectiveStatus, // the status from above, derived from the activity report objective
       isNew: false,
+      arOrder,
 
       // for the associated models, we need to return not the direct associations
       // but those associated through an activity report since those reflect the state
@@ -446,6 +467,15 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       ),
     }];
   }, currentObjectives);
+
+  // Sort by AR Order in place.
+  objectivesToSort.sort((o1, o2) => {
+    if (o1.arOrder < o2.arOrder) {
+      return -1;
+    }
+    return 1;
+  });
+  return objectivesToSort;
 }
 
 /**
@@ -547,11 +577,6 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
                 [Op.ne]: '',
               },
             },
-            {
-              status: {
-                [Op.notIn]: [OBJECTIVE_STATUS.COMPLETE, OBJECTIVE_STATUS.DRAFT],
-              },
-            },
           ],
         },
         attributes: [
@@ -579,7 +604,6 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
           },
           {
             model: ActivityReportObjective,
-            separate: true,
             as: 'activityReportObjectives',
             attributes: [
               'ttaProvided',
@@ -836,34 +860,19 @@ export async function createOrUpdateGoals(goals) {
     if (isRttapa === 'Yes' || isRttapa === 'No') {
       isRttapaValue = isRttapa;
     }
-
+    let newGoal;
     // we first need to see if the goal exists given what ids we have
-    // for new goals, the id will be an empty array
-    let newGoal = await Goal.findOne({
-      where: {
-        grantId,
-        status: { [Op.not]: 'Closed' },
-        id: ids || [],
-      },
-    });
+    if (ids && ids.length) {
+      newGoal = await Goal.findOne({
+        where: {
+          grantId,
+          status: { [Op.not]: 'Closed' },
+          id: ids,
+        },
+      });
+    }
 
-    // In order to reuse goals with matching text we need to do the findOrCreate as the
-    // upsert would not preform the extra checks and logic now required.
     if (!newGoal) {
-      // [newGoal] = await Goal.findOrCreate({
-      //   where: {
-      //     grantId,
-      //     status: {
-      //       [Op.not]: 'Closed',
-      //     },
-      //     name: options.name,
-      //   },
-      //   defaults: {
-      //     status: 'Draft',
-      // if we are creating a goal for the first time, it should be set to 'Draft'
-      //     isFromSmartsheetTtaPlan: false,
-      //   },
-      // });
       newGoal = await Goal.findOne({
         where: {
           grantId,
@@ -914,15 +923,18 @@ export async function createOrUpdateGoals(goals) {
           title,
           files,
           status: objectiveStatus,
-          id: objectiveIds,
-          isNew,
+          id: objectiveIdsMayContainStrings,
         } = o;
+
+        const objectiveIds = [objectiveIdsMayContainStrings]
+          .flat()
+          .filter((id) => parseInt(id, DECIMAL_BASE));
 
         let objective;
 
         // if the objective is complete on both the front and back end
         // we need to handle things a little differently
-        if (objectiveStatus === OBJECTIVE_STATUS.COMPLETE && objectiveIds) {
+        if (objectiveStatus === OBJECTIVE_STATUS.COMPLETE && objectiveIds && objectiveIds.length) {
           objective = await Objective.findOne({
             where: {
               id: objectiveIds,
@@ -930,44 +942,17 @@ export async function createOrUpdateGoals(goals) {
             },
           });
 
-          return {
-            ...objective.dataValues,
-            topics,
-            resources,
-            files,
-          };
+          if (objective) {
+            return {
+              ...objective.dataValues,
+              topics,
+              resources,
+              files,
+            };
+          }
         }
 
-        if (isNew && !objective) {
-          // [objective] = await Objective.findOrCreate({
-          //   where: {
-          //     goalId: newGoal.id,
-          //     title,
-          //     status: {
-          //       [Op.not]: OBJECTIVE_STATUS.COMPLETE,
-          //     },
-          //   },
-          //   defaults: {
-          //     status: objectiveStatus,
-          //     title,
-          //     goalId: newGoal.id,
-          //   },
-          // });
-          objective = await Objective.findOne({
-            where: {
-              status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
-              title,
-              goalId: newGoal.id,
-            },
-          });
-          if (!objective) {
-            objective = await Objective.create({
-              status: objectiveStatus,
-              title,
-              goalId: newGoal.id,
-            });
-          }
-        } else if (objectiveIds) {
+        if (objectiveIds && objectiveIds.length) {
           // this needs to find "complete" objectives as well
           // since we could be moving the status back from the RTR
           objective = await Objective.findOne({
@@ -979,20 +964,6 @@ export async function createOrUpdateGoals(goals) {
         }
 
         if (!objective) {
-          // [objective] = await Objective.findOrCreate({
-          //   where: {
-          //     status: {
-          //       [Op.not]: OBJECTIVE_STATUS.COMPLETE,
-          //     },
-          //     title,
-          //     goalId: newGoal.id,
-          //   },
-          //   defaults: {
-          //     status: objectiveStatus,
-          //     title,
-          //     goalId: newGoal.id,
-          //   },
-          // });
           objective = await Objective.findOne({
             where: {
               status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
@@ -1041,7 +1012,6 @@ export async function createOrUpdateGoals(goals) {
 
   // we have to do this outside of the transaction otherwise
   // we get the old values
-
   return goalsByIdAndRecipient(goalIds, recipient);
 }
 
@@ -1134,7 +1104,7 @@ export async function goalsForGrants(grantIds) {
 
 async function removeActivityReportObjectivesFromReport(reportId, objectiveIdsToRemove) {
   const activityReportObjectivesToDestroy = Array.isArray(objectiveIdsToRemove)
-  && objectiveIdsToRemove > 0
+  && objectiveIdsToRemove.length > 0
     ? await ActivityReportObjective.findAll({
       attributes: ['id'],
       where: {
@@ -1400,7 +1370,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
     || o.ttaProvided
     || o.topics.length
     || o.resources.length
-    || o.files.length).map(async (objective) => {
+    || o.files.length).map(async (objective, index) => {
     const {
       id,
       isNew,
@@ -1484,6 +1454,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
         ...metadata,
         status,
         ttaProvided: objective.ttaProvided,
+        order: index,
       },
     );
     return savedObjective;

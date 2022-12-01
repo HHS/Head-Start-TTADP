@@ -480,6 +480,8 @@ describe('create goal', () => {
     resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
 
+    await userEvent.click((await screen.findByRole('button', { name: /save draft/i })));
+
     save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
 

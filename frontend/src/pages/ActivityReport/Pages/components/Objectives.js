@@ -92,6 +92,7 @@ export default function Objectives({
     setUpdatedUsedObjectiveIds();
   };
 
+  const firstObjective = fields.length < 1;
   return (
     <>
       {/*
@@ -100,7 +101,7 @@ export default function Objectives({
         each objective
       */}
 
-      {fields.length < 1
+      {firstObjective
         ? (
           <ObjectiveSelect
             onChange={onInitialObjSelect}
@@ -133,7 +134,7 @@ export default function Objectives({
             />
           );
         })}
-      <PlusButton text="Add new objective" onClick={onAddNew} />
+      {firstObjective ? null : <PlusButton text="Add new objective" onClick={onAddNew} /> }
     </>
   );
 }

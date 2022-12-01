@@ -120,7 +120,6 @@ export default function ObjectiveForm({
         validateObjectiveTopics={validateObjectiveTopics}
         topics={topics}
         onChangeTopics={onChangeTopics}
-        status={status}
         goalStatus={goalStatus}
         isOnReport={isOnReport || false}
         isLoading={isLoading}
@@ -133,7 +132,6 @@ export default function ObjectiveForm({
         validateResources={validateResources}
         error={errors[OBJECTIVE_FORM_FIELD_INDEXES.RESOURCES]}
         isOnReport={isOnReport || false}
-        status={status}
         goalStatus={goalStatus}
         isLoading={isLoading}
         userCanEdit={userCanEdit}
@@ -144,7 +142,6 @@ export default function ObjectiveForm({
         onChangeFiles={onChangeFiles}
         objective={objective}
         isOnReport={isOnReport || false}
-        status={status}
         isLoading={isLoading}
         onUploadFiles={onUploadFiles}
         index={index}
