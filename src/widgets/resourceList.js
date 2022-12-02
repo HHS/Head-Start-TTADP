@@ -22,7 +22,7 @@ export default async function resourceList(scopes) {
           {
             model: ActivityReportObjectiveResource,
             as: 'activityReportObjectiveResources',
-            required: false,
+            required: true,
           },
         ],
       },
