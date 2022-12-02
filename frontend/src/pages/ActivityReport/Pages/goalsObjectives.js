@@ -10,7 +10,7 @@ import { Alert, Fieldset } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useFormContext, useController } from 'react-hook-form/dist/index.ie11';
 import { Link } from 'react-router-dom';
-import GoalPicker, { newGoal } from './components/GoalPicker';
+import GoalPicker from './components/GoalPicker';
 import { getGoals } from '../../../fetchers/activityReports';
 import { validateGoals } from './components/goalValidator';
 import RecipientReviewSection from './components/RecipientReviewSection';
@@ -103,7 +103,11 @@ const GoalsObjectives = ({
 
   const addNewGoal = () => {
     toggleGoalForm(false);
-    setValue('goalForEditing', newGoal(grantIds));
+    // An empty value here means that the Select dropdown will show its placeholder.
+    setValue('goalForEditing', null);
+
+    // newGoal(grantIds) is still passed to the dropdown as part of the `options` prop,
+    // so 'create a new goal' will still be an option.
   };
 
   const onRemove = (goal) => {

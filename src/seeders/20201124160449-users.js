@@ -78,6 +78,11 @@ const staticUserPermissions = [
     regionId: 1,
     scopeId: READ_WRITE_REPORTS,
   },
+  {
+    userId: 5,
+    regionId: 1,
+    scopeId: APPROVE_REPORTS,
+  },
 ];
 
 const hsesUsernames = [
