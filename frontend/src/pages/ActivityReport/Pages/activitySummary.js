@@ -491,11 +491,11 @@ const sections = [
     anchor: 'activity-for',
     items: [
       { label: 'Recipient or other entity', name: 'activityRecipientType', sort: true },
-      { label: 'Activity Participants', name: 'activityRecipients', path: 'name' },
+      { label: 'Activity participants', name: 'activityRecipients', path: 'name' },
       {
-        label: 'Collaborating specialist(s)', name: 'activityReportCollaborators', path: 'user.fullName', sort: true,
+        label: 'Collaborating specialists', name: 'activityReportCollaborators', path: 'user.fullName', sort: true,
       },
-      { label: 'Target Populations addressed', name: 'targetPopulations', sort: true },
+      { label: 'Target populations addressed', name: 'targetPopulations', sort: true },
     ],
   },
   {
