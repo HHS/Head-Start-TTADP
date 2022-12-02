@@ -7,7 +7,7 @@ import {
   render, screen, waitFor, within, act,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import { FormProvider, useForm, useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import Navigator from '../index';
 import { NOT_STARTED, IN_PROGRESS } from '../constants';
 import NetworkContext from '../../../NetworkContext';
@@ -104,53 +104,40 @@ describe('Navigator', () => {
     pages,
     formData,
     onUpdateError,
-  }) => {
-    const hookForm = useForm({
-      mode: 'onChange',
-      defaultValues: {
-        goals: [],
-        objectivesWithoutGoals: [],
-      },
-    });
-
-    return (
-      <FormProvider {...hookForm}>
-        <NetworkContext.Provider value={{
-          connectionActive: true,
-          localStorageAvailable: true,
-        }}
-        >
-          <AppLoadingContext.Provider value={{
-            setIsAppLoading: jest.fn(),
-            setAppLoadingText: jest.fn(),
-            isAppLoading: false,
-          }}
-          >
-            {' '}
-            <Navigator
-              editable
-              reportId={1}
-              submitted={false}
-              formData={formData}
-              updateFormData={updateForm}
-              onReview={() => {}}
-              isApprover={false}
-              defaultValues={{ first: '', second: '' }}
-              pages={pages}
-              currentPage={currentPage}
-              onFormSubmit={onSubmit}
-              updatePage={updatePage}
-              onSave={onSave}
-              updateErrorMessage={onUpdateError}
-              onResetToDraft={() => {}}
-              updateLastSaveTime={() => {}}
-              isPendingApprover={false}
-            />
-          </AppLoadingContext.Provider>
-        </NetworkContext.Provider>
-      </FormProvider>
-    );
-  };
+  }) => (
+    <NetworkContext.Provider value={{
+      connectionActive: true,
+      localStorageAvailable: true,
+    }}
+    >
+      <AppLoadingContext.Provider value={{
+        setIsAppLoading: jest.fn(),
+        setAppLoadingText: jest.fn(),
+        isAppLoading: false,
+      }}
+      >
+        <Navigator
+          editable
+          reportId={1}
+          submitted={false}
+          formData={formData}
+          updateFormData={updateForm}
+          onReview={() => {}}
+          isApprover={false}
+          defaultValues={{ first: '', second: '' }}
+          pages={pages}
+          currentPage={currentPage}
+          onFormSubmit={onSubmit}
+          updatePage={updatePage}
+          onSave={onSave}
+          updateErrorMessage={onUpdateError}
+          onResetToDraft={() => {}}
+          updateLastSaveTime={() => {}}
+          isPendingApprover={false}
+        />
+      </AppLoadingContext.Provider>
+    </NetworkContext.Provider>
+  );
 
   // eslint-disable-next-line arrow-body-style
   const renderNavigator = (
