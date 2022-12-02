@@ -1,5 +1,4 @@
 .ttahub--topic-frequency-graph {
-    padding-bottom: 3em; /* to make sure the entire dropdown is visible */
     width: 100%;
 }
 
@@ -37,6 +36,7 @@
     content: 'Topics';
     display: block;
     padding-left: 10em;
+    padding-bottom: 2em;
 }
 
 .grid-gap-1 {
