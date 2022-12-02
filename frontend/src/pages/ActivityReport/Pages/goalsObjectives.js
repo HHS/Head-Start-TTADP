@@ -38,21 +38,20 @@ const GoalsObjectives = ({
     toggleObjectiveForm,
   } = useContext(GoalFormContext);
 
-  const recipients = watch('activityRecipients');
   const activityRecipientType = watch('activityRecipientType');
   const activityRecipients = watch('activityRecipients');
   const objectivesWithoutGoals = watch('objectivesWithoutGoals');
   const activityReportId = watch('id');
   const isRecipientReport = activityRecipientType === 'recipient';
   const isOtherEntityReport = activityRecipientType === 'other-entity';
-  const grantIds = isRecipientReport ? recipients.map((r) => {
+  const grantIds = isRecipientReport ? activityRecipients.map((r) => {
     if (r.grant) {
       return r.grant.id;
     }
 
     return r.activityRecipientId;
   }) : [];
-  const activityRecipientIds = recipients.map((r) => r.activityRecipientId);
+  const activityRecipientIds = activityRecipients.map((r) => r.activityRecipientId);
 
   const [fetchError, setFetchError] = useState(false);
   const [availableGoals, updateAvailableGoals] = useState([]);
