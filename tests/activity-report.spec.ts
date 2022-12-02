@@ -72,6 +72,9 @@ test.describe("Activity Report", () => {
 
     // create the second goal
     await page.getByRole('button', { name: 'Add new goal' }).click();
+    await page.locator('.css-g1d714-ValueContainer').click();
+    await page.keyboard.type('Create new goal');
+    await page.keyboard.press('Enter');
     await page.getByTestId('textarea').click();
     await page.getByTestId('textarea').fill('g2');
     await page.getByRole('group', { name: 'Is this a Recipient TTA Plan Agreement (RTTAPA) goal?*' }).getByText('Yes').click();
