@@ -78,7 +78,7 @@ export const convertGoalsToFormData = (
   ) {
     // we set it as the goal for editing
     // eslint-disable-next-line no-param-reassign
-    accumulatedData.goalForEditing = { ...goal, grantIds };
+    accumulatedData.goalForEditing = { ...goal, grantIds, objectives: goal.objectives };
   } else {
     // otherwise we add it to the list of goals, formatting it with the correct
     // grant ids
