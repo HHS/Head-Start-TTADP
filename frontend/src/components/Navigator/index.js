@@ -183,8 +183,8 @@ function Navigator({
     // the goal form only allows for one goal to be open at a time
     // but the objectives are stored in a subfield
     // so we need to access the objectives and bundle them together in order to validate them
-    const fieldArrayName = 'goalForEditing.objectives';
-    const objectives = getValues(fieldArrayName);
+    const objectivesFieldArrayName = 'goalForEditing.objectives';
+    const objectives = getValues(objectivesFieldArrayName);
     const name = getValues('goalName');
     const endDate = getValues('goalEndDate');
     const isRttapa = getValues('goalIsRttapa');
@@ -226,12 +226,14 @@ function Navigator({
         ...values,
         goals,
         goalForEditing: newGoalForEditing,
+        [objectivesFieldArrayName]: newGoalForEditing.objectives,
         pageState: newNavigatorState(),
       };
 
-      setValue('goals', goals);
       setValue('goalForEditing', newGoalForEditing);
+      setValue('goals', goals);
 
+      // setValue(objectivesFieldArrayName, newGoalForEditing.objectives);
       updateFormData(data, true);
 
       updateErrorMessage('');
