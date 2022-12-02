@@ -133,7 +133,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         t: 0,
         autotypenumbers: 'strict',
         title: {
-          text: 'Date Range',
+          text: 'Date range',
           standoff: 40,
           font: {
             family: 'Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif',
@@ -153,7 +153,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         },
         title: {
           standoff: 20,
-          text: 'Number of Hours',
+          text: 'Number of hours',
           font: {
             family: 'Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif',
             size: 18,
@@ -204,7 +204,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
     <Container ref={widget} className="ttahub-total-hours-container shadow-2" paddingX={3} paddingY={3} loading={loading} loadingLabel="Total hours loading">
       <div className="ttahub--total-hrs-recipient-graph">
         <Grid row className="position-relative margin-bottom-2">
-          <Grid desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}><h2 className="ttahub--dashboard-widget-heading margin-0">Total TTA Hours</h2></Grid>
+          <Grid desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}><h2 className="ttahub--dashboard-widget-heading margin-0">Total TTA hours</h2></Grid>
           <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
             { !showAccessibleData && <MediaCaptureButton className="margin-x-2" reference={widget} /> }
             <button
@@ -220,7 +220,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         </Grid>
 
         { showAccessibleData
-          ? <AccessibleWidgetData caption="Total TTA Hours by Date and Type" columnHeadings={columnHeadings} rows={tableRows} />
+          ? <AccessibleWidgetData caption="Total TTA hours by date and type" columnHeadings={columnHeadings} rows={tableRows} />
           : (
             <div aria-hidden="true">
               <fieldset className="grid-row ttahub--total-hrs-recipient-graph-legend text-align-center margin-bottom-3 border-0 padding-0">
