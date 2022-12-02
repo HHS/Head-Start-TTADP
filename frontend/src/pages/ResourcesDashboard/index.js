@@ -1,100 +1,31 @@
-import React, { useMemo, useContext } from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { v4 as uuidv4 } from 'uuid';
 import { Grid, GridContainer } from '@trussworks/react-uswds';
 import FilterPanel from '../../components/filter/FilterPanel';
 import ResourceList from '../../widgets/ResourceList';
 import ResourcesDashboardOverview from '../../widgets/ResourcesDashboardOverview';
-import { getUserRegions } from '../../permissions';
+
 import './index.scss';
-import { formatDateRange, expandFilters } from '../../utils';
-import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
+import { expandFilters } from '../../utils';
+
 import UserContext from '../../UserContext';
 import { RESOURCES_DASHBOARD_FILTER_CONFIG } from './constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
-import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
-
-const defaultDate = formatDateRange({
-  lastThirtyDays: true,
-  forDateTime: true,
-});
+import { showFilterWithMyRegions } from '../regionHelpers';
+import useDefaultFilters from '../filtersHelper';
 
 const FILTER_KEY = 'regional-resources-dashboard-filters';
 export default function ResourcesDashboard() {
   const { user } = useContext(UserContext);
-
-  const hasCentralOffice = useMemo(() => (
-    user && user.homeRegionId && user.homeRegionId === 14
-  ), [user]);
-  const regions = useMemo(() => getUserRegions(user), [user]);
-  const defaultRegion = useMemo(() => regions[0].toString(), [regions]);
-
-  const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
-
-  const getFiltersWithAllRegions = () => {
-    const filtersWithAllRegions = [...allRegionsFilters];
-    filtersWithAllRegions.push({
-      id: uuidv4(),
-      topic: 'startDate',
-      condition: 'is within',
-      query: defaultDate,
-    });
-    return filtersWithAllRegions;
-  };
-
-  const centralOfficeWithAllRegionFilters = getFiltersWithAllRegions();
-
-  const defaultFilters = useMemo(() => {
-    if (hasCentralOffice) {
-      return centralOfficeWithAllRegionFilters;
-    }
-
-    return [
-      {
-        id: uuidv4(),
-        topic: 'region',
-        condition: 'is',
-        query: defaultRegion,
-      },
-      {
-        id: uuidv4(),
-        topic: 'startDate',
-        condition: 'is within',
-        query: defaultDate,
-      },
-    ];
-  }, [defaultRegion, hasCentralOffice, centralOfficeWithAllRegionFilters]);
-
-  const [filters, setFilters] = useSessionFiltersAndReflectInUrl(FILTER_KEY, defaultFilters);
-
-  // Apply filters.
-  const onApplyFilters = (newFilters, addBackDefaultRegions) => {
-    if (addBackDefaultRegions) {
-      // We always want the regions to appear in the URL.
-      setFilters([
-        ...allRegionsFilters,
-        ...newFilters,
-      ]);
-    } else {
-      setFilters(newFilters);
-    }
-  };
-
-  // Remove Filters.
-  const onRemoveFilter = (id, addBackDefaultRegions) => {
-    const newFilters = [...filters];
-    const index = newFilters.findIndex((item) => item.id === id);
-    if (index !== -1) {
-      newFilters.splice(index, 1);
-      if (addBackDefaultRegions) {
-        // We always want the regions to appear in the URL.
-        setFilters([...allRegionsFilters, ...newFilters]);
-      } else {
-        setFilters(newFilters);
-      }
-    }
-  };
+  const {
+    allRegionsFilters,
+    regions,
+    onApplyFilters,
+    onRemoveFilter,
+    filters,
+    setFilters,
+  } = useDefaultFilters(user, FILTER_KEY);
 
   const filtersToApply = expandFilters(filters);
 
