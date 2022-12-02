@@ -44,7 +44,7 @@ export default function ElementCaptureButton({ reference, className }) {
 
 ElementCaptureButton.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
-  reference: PropTypes.object.isRequired,
+  reference: PropTypes.shape({ current: PropTypes.instanceOf(Element) }).isRequired,
   className: PropTypes.string,
 };
 
