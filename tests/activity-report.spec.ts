@@ -50,7 +50,7 @@ test.describe("Activity Report", () => {
 
     // create the first goal
     await page.getByTestId('label').locator('div').filter({ hasText: '- Select -' }).nth(2).click();
-    await page.locator('#react-select-15-option-0').getByText('Create new goal').click();
+    await page.locator('#react-select-13-option-0').getByText('Create new goal').click();
     await page.getByTestId('textarea').click();
     await page.getByTestId('textarea').fill('g1');
     await page.getByText('Yes').click();
@@ -60,14 +60,26 @@ test.describe("Activity Report", () => {
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('g1o1');
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-21-option-0').click();
+    await page.locator('#react-select-19-option-0').click();
     await blur(page);
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
     await page.keyboard.type('hello');
+
+    await page.getByRole('button', { name: 'Save draft' }).click();
+    // navigate away
+    await page.getByRole('button', { name: 'Supporting attachments' }).click();
+
+    // navigate back
+    await page.getByRole('button', { name: 'Goals and objectives' }).click();
+
+    // confirm tta provided is still there (form is still open)
+    await page.getByRole('textbox', { name: 'TTA provided for objective' }).click();
+
+    // save goal and go on to create second goal
     await page.getByRole('button', { name: 'Save goal' }).click();
 
     // extract the AR number from the URL:
-    const url = await page.url();
+    const url = page.url();
     const arNumber = url.split('/').find((part) => /^\d+$/.test(part));
 
     // create the second goal
@@ -79,14 +91,14 @@ test.describe("Activity Report", () => {
     await page.getByTestId('textarea').fill('g2');
     await page.getByRole('group', { name: 'Is this a Recipient TTA Plan Agreement (RTTAPA) goal?*' }).getByText('Yes').click();
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-25-option-0').click();
+    await page.locator('#react-select-41-option-0').click();
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('g2o1');
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
     await page.keyboard.press('Enter');
     await blur(page);
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
-    await page.keyboard.type('hello');
+    await page.keyboard.type('hello');    
     await page.getByRole('button', { name: 'Save goal' }).click();
 
     // move to next steps
@@ -132,13 +144,13 @@ test.describe("Activity Report", () => {
     await page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).first().click();
 
     // begin review assertions
-    expect(await page.getByText(`${fullName} has requested approval for this activity report`)).toBeTruthy();
-    expect(await page.getByTestId('accordionButton_activity-summary')).toHaveText('Activity summary');
-    expect(await page.getByText('g1')).toBeTruthy();
-    expect(await page.getByText('g1o1')).toBeTruthy();
-    expect(await page.getByText('g2')).toBeTruthy();
-    expect(await page.getByText('g2o1')).toBeTruthy();
-    expect(await page.getByText(/these are my creator notes/i)).toBeTruthy();
+    expect(page.getByText(`${fullName} has requested approval for this activity report`)).toBeTruthy();
+    expect(page.getByTestId('accordionButton_activity-summary')).toHaveText('Activity summary');
+    expect(page.getByText('g1')).toBeTruthy();
+    expect(page.getByText('g1o1')).toBeTruthy();
+    expect(page.getByText('g2')).toBeTruthy();
+    expect(page.getByText('g2o1')).toBeTruthy();
+    expect(page.getByText(/these are my creator notes/i)).toBeTruthy();
     // end review assertions
 
     // add manager notes
