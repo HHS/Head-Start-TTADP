@@ -252,3 +252,7 @@ export const DIGEST_SUBJECT_FREQ = {
   WEEKLY: 'weekly',
   MONTHLY: 'monthly',
 };
+
+export const RESOURCE_DOMAIN = {
+  ECLKC: 'eclkc.ohs.acf.hhs.gov',
+};

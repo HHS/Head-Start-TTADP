@@ -6,12 +6,15 @@ import TableWidget from './TableWidget';
 const renderResourceList = (data) => {
   if (data && Array.isArray(data) && data.length > 0) {
     return data.map((resource) => (
-      <tr key={`resource_list_row_${resource.name}`}>
+      <tr key={`resource_list_row_${resource.url}`}>
         <td>
-          {resource.name}
+          {resource.url}
         </td>
         <td>
-          {resource.count}
+          {resource.reportCount}
+        </td>
+        <td>
+          {resource.recipientCount}
         </td>
       </tr>
     ));
@@ -23,7 +26,7 @@ function ResourceList({ data, loading }) {
   return (
     <TableWidget
       data={data}
-      headings={['Resource', 'Number of activities']}
+      headings={['Resource', 'Number of activities', 'Number of recipients']}
       loading={loading}
       loadingLabel="Resource list loading"
       title="Resources in Activity Reports"

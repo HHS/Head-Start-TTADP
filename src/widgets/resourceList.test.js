@@ -11,11 +11,15 @@ import db, {
   ActivityReportObjectiveResource,
 } from '../models';
 import filtersToScopes from '../scopes';
-import resourceList from './resourceList';
-import { REPORT_STATUSES } from '../constants';
+import { resourceList, resourceDomainList, resourcesDashboardOverview } from './resourceList';
+import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../constants';
 
-const RECIPIENT_ID = 462044;
+const RECIPIENT_ID = 46204400;
 const GRANT_ID_ONE = 107843;
+const REGION_ID = 14;
+const NONECLKC_DOMAIN = 'non.test1.gov';
+const ECLKC_RESOURCE_URL = `https://${RESOURCE_DOMAIN.ECLKC}/test`;
+const NONECLKC_RESOURCE_URL = `https://${NONECLKC_DOMAIN}/a/b/c`;
 
 const mockUser = {
   id: 5426871,
@@ -23,6 +27,31 @@ const mockUser = {
   name: 'user5426862',
   hsesUsername: 'user5426862',
   hsesUserId: '5426862',
+};
+
+const mockRecipient = {
+  name: 'recipient',
+  id: RECIPIENT_ID,
+  uei: 'NNA5N2KHMGN2XX',
+};
+
+const mockGrant = {
+  id: GRANT_ID_ONE,
+  number: `${GRANT_ID_ONE}`,
+  recipientId: RECIPIENT_ID,
+  regionId: REGION_ID,
+  status: 'Active',
+};
+
+const mockGoal = {
+  name: 'Goal 1',
+  status: 'Draft',
+  endDate: null,
+  isFromSmartsheetTtaPlan: false,
+  onApprovedAR: false,
+  onAR: false,
+  grantId: GRANT_ID_ONE,
+  createdVia: 'rtr',
 };
 
 const reportObject = {
@@ -51,7 +80,7 @@ const reportObject = {
 
 const regionOneReportA = {
   ...reportObject,
-  regionId: 8,
+  regionId: REGION_ID,
   duration: 1,
   startDate: '2021-01-01T12:00:00Z',
   endDate: '2021-01-31T12:00:00Z',
@@ -59,7 +88,7 @@ const regionOneReportA = {
 
 const regionOneReportB = {
   ...reportObject,
-  regionId: 8,
+  regionId: REGION_ID,
   duration: 2,
   startDate: '2021-01-15T12:00:00Z',
   endDate: '2021-02-15T12:00:00Z',
@@ -67,7 +96,7 @@ const regionOneReportB = {
 
 const regionOneReportC = {
   ...reportObject,
-  regionId: 8,
+  regionId: REGION_ID,
   duration: 3,
   startDate: '2021-01-20T12:00:00Z',
   endDate: '2021-02-28T12:00:00Z',
@@ -75,7 +104,7 @@ const regionOneReportC = {
 
 const regionOneReportD = {
   ...reportObject,
-  regionId: 8,
+  regionId: REGION_ID,
   duration: 3,
   startDate: '2021-01-22T12:00:00Z',
   endDate: '2021-01-31T12:00:00Z',
@@ -83,7 +112,7 @@ const regionOneReportD = {
 
 const regionOneDraftReport = {
   ...reportObject,
-  regionId: 8,
+  regionId: REGION_ID,
   duration: 7,
   startDate: '2021-01-01T12:00:00Z',
   endDate: '2021-01-31T12:00:00Z',
@@ -100,24 +129,9 @@ let activityReportObjectiveThree;
 describe('Resources list widget', () => {
   beforeAll(async () => {
     await User.create(mockUser);
-    await Recipient.create({ name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' });
-    await Grant.create(
-      {
-        id: GRANT_ID_ONE, number: GRANT_ID_ONE, recipientId: RECIPIENT_ID, regionId: 3, status: 'Active',
-      },
-      { validate: true, individualHooks: true },
-    );
-
-    goal = await Goal.create({
-      name: 'Goal 1',
-      status: 'Draft',
-      endDate: null,
-      isFromSmartsheetTtaPlan: false,
-      onApprovedAR: false,
-      grantId: GRANT_ID_ONE,
-      createdVia: 'rtr',
-    });
-
+    await Recipient.create({ ...mockRecipient });
+    await Grant.create({ ...mockGrant }, { validate: true, individualHooks: true });
+    goal = await Goal.create({ ...mockGoal }, { validate: true, individualHooks: true });
     objective = await Objective.create({
       title: 'Objective 1',
       goalId: goal.id,
@@ -126,6 +140,7 @@ describe('Resources list widget', () => {
 
     // Report 1 (Mixed Resources).
     const reportOne = await ActivityReport.create({ ...regionOneReportA });
+    await ActivityRecipient.create({ activityReportId: reportOne.id, grantId: mockGrant.id });
 
     activityReportObjectiveOne = await ActivityReportObjective.create({
       activityReportId: reportOne.id,
@@ -136,17 +151,18 @@ describe('Resources list widget', () => {
     // Report 1 ECLKC Resource 1.
     await ActivityReportObjectiveResource.create({
       activityReportObjectiveId: activityReportObjectiveOne.id,
-      userProvidedUrl: 'https://eclkc.test1.gov',
+      userProvidedUrl: ECLKC_RESOURCE_URL,
     });
 
     // Report 1 Non-ECLKC Resource 1.
     await ActivityReportObjectiveResource.create({
       activityReportObjectiveId: activityReportObjectiveOne.id,
-      userProvidedUrl: 'https://non.test1.gov',
+      userProvidedUrl: NONECLKC_RESOURCE_URL,
     });
 
     // Report 2 (Only ECLKC).
     const reportTwo = await ActivityReport.create({ ...regionOneReportB });
+    await ActivityRecipient.create({ activityReportId: reportTwo.id, grantId: mockGrant.id });
 
     activityReportObjectiveTwo = await ActivityReportObjective.create({
       activityReportId: reportTwo.id,
@@ -157,11 +173,12 @@ describe('Resources list widget', () => {
     // Report 2 ECLKC Resource 1.
     await ActivityReportObjectiveResource.create({
       activityReportObjectiveId: activityReportObjectiveTwo.id,
-      userProvidedUrl: 'https://eclkc.test1.gov',
+      userProvidedUrl: ECLKC_RESOURCE_URL,
     });
 
     // Report 3 (Only Non-ECLKC).
     const reportThree = await ActivityReport.create({ ...regionOneReportC });
+    await ActivityRecipient.create({ activityReportId: reportThree.id, grantId: mockGrant.id });
 
     activityReportObjectiveThree = await ActivityReportObjective.create({
       activityReportId: reportThree.id,
@@ -172,23 +189,25 @@ describe('Resources list widget', () => {
     // Report 3 Non-ECLKC Resource 1.
     await ActivityReportObjectiveResource.create({
       activityReportObjectiveId: activityReportObjectiveThree.id,
-      userProvidedUrl: 'https://non.test1.gov',
+      userProvidedUrl: NONECLKC_RESOURCE_URL,
     });
 
     // Report 4 (No Resources).
-    const activityReportFour = await ActivityReport.create({ ...regionOneReportD });
+    const reportFour = await ActivityReport.create({ ...regionOneReportD });
+    await ActivityRecipient.create({ activityReportId: reportFour.id, grantId: mockGrant.id });
 
     await ActivityReportObjective.create({
-      activityReportId: activityReportFour.id,
+      activityReportId: reportFour.id,
       status: 'Complete',
       objectiveId: objective.id,
     });
 
     // Draft Report (Excluded).
-    const activityReportDraft = await ActivityReport.create({ ...regionOneDraftReport });
+    const reportDraft = await ActivityReport.create({ ...regionOneDraftReport });
+    await ActivityRecipient.create({ activityReportId: reportDraft.id, grantId: mockGrant.id });
 
     const activityReportObjectiveDraft = await ActivityReportObjective.create({
-      activityReportId: activityReportDraft.id,
+      activityReportId: reportDraft.id,
       status: 'Complete',
       objectiveId: objective.id,
     });
@@ -196,13 +215,13 @@ describe('Resources list widget', () => {
     // Report Draft ECLKC Resource 1.
     await ActivityReportObjectiveResource.create({
       activityReportObjectiveId: activityReportObjectiveDraft.id,
-      userProvidedUrl: 'https://test1.eclkc.gov',
+      userProvidedUrl: ECLKC_RESOURCE_URL,
     });
 
     // Report Draft Non-ECLKC Resource 1.
     await ActivityReportObjectiveResource.create({
       activityReportObjectiveId: activityReportObjectiveDraft.id,
-      userProvidedUrl: 'https://non.test1.gov',
+      userProvidedUrl: NONECLKC_RESOURCE_URL,
     });
   });
 
@@ -220,23 +239,11 @@ describe('Resources list widget', () => {
     });
 
     await ActivityReportObjective.destroy({ where: { objectiveId: objective.id } });
-
     await ActivityReport.destroy({ where: { id: ids } });
-
-    await Objective.destroy({
-      where: {
-        id: objective.id,
-      },
-    });
-
-    await Goal.destroy({
-      where: {
-        id: goal.id,
-      },
-    });
-
-    await User.destroy({ where: { id: [mockUser.id] } });
+    await Objective.destroy({ where: { id: objective.id } });
+    await Goal.destroy({ where: { id: goal.id } });
     await Grant.destroy({ where: { id: GRANT_ID_ONE } });
+    await User.destroy({ where: { id: [mockUser.id] } });
     await Recipient.destroy({ where: { id: RECIPIENT_ID } });
     await db.sequelize.close();
   });
@@ -246,25 +253,75 @@ describe('Resources list widget', () => {
   });
 
   it('retrieves resources list within date range for specified region', async () => {
-    const scopes = filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2021/01/01-2021/01/31' });
+    const scopes = filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
     const res = await resourceList(scopes);
     expect(res.length).toBe(3);
 
-    expect(res[0].name).toBe('https://eclkc.test1.gov');
+    expect(res[0].url).toBe(ECLKC_RESOURCE_URL);
     expect(res[0].count).toBe(2);
-    expect(res[1].name).toBe('https://non.test1.gov');
+    expect(res[0].reportCount).toBe(2);
+    expect(res[0].recipientCount).toBe(1);
+
+    expect(res[1].url).toBe(NONECLKC_RESOURCE_URL);
     expect(res[1].count).toBe(2);
-    expect(res[2].name).toBe('none');
+    expect(res[1].reportCount).toBe(2);
+    expect(res[1].recipientCount).toBe(1);
+
+    expect(res[2].url).toBe('none');
     expect(res[2].count).toBe(1);
+    expect(res[2].reportCount).toBe(1);
+    expect(res[2].recipientCount).toBe(0);
   });
 
-  it('retrieves reason list short date range for specified region', async () => {
-    const scopes = filtersToScopes({ 'region.in': ['8'], 'startDate.win': '2021/01/01-2021/01/20' });
+  it('retrieves resources list short date range for specified region', async () => {
+    const scopes = filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/20' });
     const res = await resourceList(scopes);
     expect(res.length).toBe(2);
-    expect(res[0].name).toBe('https://eclkc.test1.gov');
+
+    expect(res[0].url).toBe(ECLKC_RESOURCE_URL);
     expect(res[0].count).toBe(2);
-    expect(res[1].name).toBe('https://non.test1.gov');
+    expect(res[0].reportCount).toBe(2);
+    expect(res[0].recipientCount).toBe(1);
+
+    expect(res[1].url).toBe(NONECLKC_RESOURCE_URL);
     expect(res[1].count).toBe(2);
+    expect(res[1].reportCount).toBe(2);
+    expect(res[1].recipientCount).toBe(1);
+  });
+
+  it('retrieves resources domain list within date range for specified region', async () => {
+    const scopes = filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+    const domains = await resourceDomainList(scopes);
+    expect(domains.length).toBe(2);
+
+    expect(domains[0].domain).toBe(RESOURCE_DOMAIN.ECLKC);
+    expect(domains[0].count).toBe(2);
+    expect(domains[0].reportCount).toBe(2);
+    expect(domains[0].recipientCount).toBe(1);
+
+    expect(domains[1].domain).toBe(NONECLKC_DOMAIN);
+    expect(domains[1].count).toBe(2);
+    expect(domains[1].reportCount).toBe(2);
+    expect(domains[1].recipientCount).toBe(1);
+  });
+
+  it('retrieves resources dashboard overview within date range for specified region', async () => {
+    const scopes = filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+    const data = await resourcesDashboardOverview(scopes);
+    console.log(data);
+    expect(data).toStrictEqual({
+      numEclkc: '1',
+      totalNumEclkc: '1',
+      numEclkcPercentage: '1.00%',
+      numNonEclkc: '1',
+      totalNumNonEclkc: '1',
+      numNonEclkcPercentage: '1.00%',
+      numResources: '1',
+      totalNumResources: '1',
+      numResourcesPercentage: '1.00%',
+      numNoResources: '0',
+      totalNumNoResources: '1',
+      numNoResourcesPercentage: '0%',
+    });
   });
 });
