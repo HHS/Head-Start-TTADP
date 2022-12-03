@@ -308,7 +308,6 @@ describe('Resources list widget', () => {
   it('retrieves resources dashboard overview within date range for specified region', async () => {
     const scopes = filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
     const data = await resourcesDashboardOverview(scopes);
-    console.log(data);
     expect(data).toStrictEqual({
       numEclkc: '1',
       totalNumEclkc: '1',
