@@ -27,6 +27,14 @@ const mockUser = {
   hsesUserId: 'user13706689',
 };
 
+const mockUserTwo = {
+  id: 137065478,
+  homeRegionId: 1,
+  name: 'user137065478',
+  hsesUsername: 'user137065478',
+  hsesUserId: 'user137065478',
+};
+
 const mockManager = {
   id: 50565590,
   homeRegionId: 1,
@@ -89,6 +97,7 @@ describe('filtersToScopes', () => {
 
   beforeAll(async () => {
     await User.create(mockUser);
+    await User.create(mockUserTwo);
     await User.create(mockManager);
     includedUser1 = await User.create({
       name: 'person', hsesUserId: 'user111', hsesUsername: 'user111',
@@ -104,7 +113,12 @@ describe('filtersToScopes', () => {
 
   afterAll(async () => {
     const userIds = [
-      mockUser.id, mockManager.id, includedUser1.id, includedUser2.id, excludedUser.id];
+      mockUser.id,
+      mockUserTwo.id,
+      mockManager.id,
+      includedUser1.id,
+      includedUser2.id,
+      excludedUser.id];
     const reports = await ActivityReport.unscoped().findAll({
       where: {
         userId: userIds,
@@ -1406,6 +1420,150 @@ describe('filtersToScopes', () => {
       expect(found.length).toBe(1);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([globallyExcludedReport.id]));
+    });
+  });
+
+  describe('userReportRoles', () => {
+    let possibleIds;
+    let reportOne;
+    let reportTwo;
+    let reportThree;
+    let grantIds;
+
+    beforeAll(async () => {
+      reportOne = await createReport({
+        activityRecipients: [
+          {
+            grantId: faker.datatype.number(),
+          },
+        ],
+        userId: mockUser.id,
+      });
+      reportTwo = await createReport({
+        activityRecipients: [
+          {
+            grantId: faker.datatype.number(),
+          },
+        ],
+        userId: mockUserTwo.id,
+      });
+      reportThree = await createReport({
+        activityRecipients: [
+          {
+            grantId: faker.datatype.number(),
+          },
+        ],
+      });
+
+      possibleIds = [
+        reportOne.id,
+        reportTwo.id,
+        reportThree.id,
+        globallyExcludedReport.id,
+      ];
+
+      const dummyProgram = {
+        startYear: '2020',
+        startDate: '2020-09-01',
+        endDate: '2020-09-02',
+        status: 'Active',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const reportOneRecipients = await ActivityRecipient.findAll({
+        where: {
+          activityReportId: reportOne.id,
+        },
+      });
+
+      const reportTwoRecipients = await ActivityRecipient.findAll({
+        where: {
+          activityReportId: reportTwo.id,
+        },
+      });
+
+      const reportThreeRecipients = await ActivityRecipient.findAll({
+        where: {
+          activityReportId: reportThree.id,
+        },
+      });
+
+      grantIds = [
+        ...reportOneRecipients.map((r) => r.grantId),
+        ...reportTwoRecipients.map((r) => r.grantId),
+        ...reportThreeRecipients.map((r) => r.grantId),
+      ];
+
+      await Promise.all([
+        ...reportOneRecipients.map(async (recipient) => {
+          await Program.create({
+            ...dummyProgram,
+            id: faker.datatype.number(),
+            name: faker.name.findName(),
+            grantId: recipient.grantId,
+            programType: 'EHS',
+          }).catch((err) => auditLogger.error(err));
+        }),
+        ...reportTwoRecipients.map(async (recipient) => {
+          await Program.create({
+            ...dummyProgram,
+            id: faker.datatype.number(),
+            name: faker.name.findName(),
+            grantId: recipient.grantId,
+            programType: 'EHS',
+          }).catch((err) => auditLogger.error(err));
+        }),
+        ...reportThreeRecipients.map(async (recipient) => {
+          await Program.create({
+            ...dummyProgram,
+            id: faker.datatype.number(),
+            name: faker.name.findName(),
+            grantId: recipient.grantId,
+            programType: 'HS',
+          }).catch((err) => auditLogger.error(err));
+        }),
+      ]);
+    });
+
+    afterAll(async () => {
+      await Program.destroy({
+        where: {
+          grantId: grantIds,
+        },
+      });
+
+      await destroyReport(reportOne);
+      await destroyReport(reportTwo);
+      await destroyReport(reportThree);
+    });
+
+    it('includes creator user report role', async () => {
+      const filters = { 'userReportRoles.in': ['Creator'] };
+      const { activityReport: scope } = filtersToScopes(
+        filters,
+        { activityReport: { userId: mockUserTwo.id } },
+      );
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      }).catch((err) => auditLogger.error(err));
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([reportTwo.id]));
+    });
+
+    it('excludes creator user report role', async () => {
+      const filters = { 'userReportRoles.nin': ['Creator'] };
+      const { activityReport: scope } = filtersToScopes(
+        filters,
+        { activityReport: { userId: mockUserTwo.id } },
+      );
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      }).catch((err) => auditLogger.error(err));
+      expect(found.length).toBe(3);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([reportOne.id, reportThree.id, globallyExcludedReport.id]));
     });
   });
 
