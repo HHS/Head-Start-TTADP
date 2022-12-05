@@ -6,7 +6,7 @@ const VALID_URL_REGEX = /^https?:\/\/.*\.[^ |^.]/;
 
 export const isValidResourceUrl = (attempted) => {
   try {
-    if (attempted.search(/http/) > 1 || attempted.length > 255) {
+    if ((attempted.match(/http/gi) || []).length > 1 || attempted.length > 255) {
       return false;
     }
     const u = new URL(attempted);
