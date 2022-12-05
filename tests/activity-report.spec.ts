@@ -132,8 +132,8 @@ test.describe("Activity Report", () => {
     await page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).first().click();
 
     // begin review assertions
-    expect(await page.getByText(`${fullName} has requested approval for this activity report`)).toBeTruthy();
-    expect(await page.getByTestId('accordionButton_activity-summary')).toHaveText('Activity summary');
+    await expect(page.getByText(`${fullName} has requested approval for this activity report`)).toBeVisible();
+    await expect(page.getByTestId('accordionButton_activity-summary')).toHaveText('Activity summary');
     
     await expect(page.getByTestId('accordionItem_activity-summary').getByText('Recipient', {exact: true})).toBeVisible();
     await expect(page.getByTestId('accordionItem_activity-summary').getByText('Regional Office', {exact: true})).toBeVisible();
@@ -142,11 +142,11 @@ test.describe("Activity Report", () => {
     await expect(page.getByText('Collaborating specialists', {exact: true})).toBeVisible();
     await expect(page.getByText('Target populations addressed', {exact: true})).toBeVisible();
 
-    expect(await page.getByText('g1')).toBeTruthy();
-    expect(await page.getByText('g1o1')).toBeTruthy();
-    expect(await page.getByText('g2')).toBeTruthy();
-    expect(await page.getByText('g2o1')).toBeTruthy();
-    expect(await page.getByText(/these are my creator notes/i)).toBeTruthy();
+    await expect(page.getByText('Goal: g1')).toBeVisible();
+    await expect(page.getByText('Objective: g1o1')).toBeVisible();
+    await expect(page.getByText('Goal: g2')).toBeVisible();
+    await expect(page.getByText('Objective: g2o1')).toBeVisible();
+    await expect(page.getByText(/these are my creator notes/i)).toBeVisible();
     // end review assertions
 
     // add manager notes
@@ -164,7 +164,7 @@ test.describe("Activity Report", () => {
 
 
     await page.getByRole('heading', { name: `TTA activity report R0${regionNumber}-AR-${arNumber}` });
-    expect(await page.getByText(/date approved/i)).toBeTruthy();
-    expect(await page.getByText(/these are my manager notes/i)).toBeTruthy();
+    await expect(page.getByText(/date approved/i)).toBeVisible();
+    await expect(page.getByText(/these are my manager notes/i)).toBeVisible();
   });
 });
