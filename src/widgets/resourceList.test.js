@@ -267,7 +267,7 @@ describe('Resources list widget', () => {
     expect(res[1].reportCount).toBe(2);
     expect(res[1].recipientCount).toBe(1);
 
-    expect(res[2].url).toBe('none');
+    expect(res[2].name).toBe('none');
     expect(res[2].count).toBe(1);
     expect(res[2].reportCount).toBe(1);
     expect(res[2].recipientCount).toBe(0);

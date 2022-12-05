@@ -5,10 +5,11 @@ import TableWidget from './TableWidget';
 
 const renderResourceList = (data) => {
   if (data && Array.isArray(data) && data.length > 0) {
+    const limitTDWith = { 'word-wrap': 'break-word', 'max-width': '500px' };
     return data.map((resource) => (
       <tr key={`resource_list_row_${resource.url}`}>
-        <td>
-          {resource.url}
+        <td style={limitTDWith}>
+          <a href={resource.url}>{resource.name}</a>
         </td>
         <td>
           {resource.reportCount}
