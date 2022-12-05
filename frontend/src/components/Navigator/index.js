@@ -276,7 +276,7 @@ function Navigator({
       ...goalForEditing,
       name,
       endDate,
-      objectives: objectivesWithValidResourcesOnly(objectives),
+      objectives,
       isRttapa,
       regionId: formData.regionId,
     };
@@ -298,7 +298,13 @@ function Navigator({
     try {
       newGoals = await saveGoalsForReport(
         {
-          goals: [...selectedGoals, goal],
+          goals: [
+            ...selectedGoals,
+            {
+              ...goal,
+              objectives: objectivesWithValidResourcesOnly(goal.objectives),
+            },
+          ],
           activityReportId: reportId,
           regionId: formData.regionId,
         },
