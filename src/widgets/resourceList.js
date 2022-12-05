@@ -393,16 +393,16 @@ export async function resourcesDashboardOverview(scopes) {
   data.report = {};
   data.report.num = reports.length;
   data.report.numResources = data.reportIntermediate.reportsWithResources.size;
-  data.report.percentResources = (data.report.numResources / data.report.num);
+  data.report.percentResources = (data.report.numResources / data.report.num) * 100.0;
 
   data.report.numNoResources = data.report.num - data.report.numResources;
-  data.report.percentNoResources = (data.report.numNoResources / data.report.num);
+  data.report.percentNoResources = (data.report.numNoResources / data.report.num) * 100.0;
 
   data.report.numEclkc = data.reportIntermediate.allRecipientIdsWithEclkcResources.size;
-  data.report.percentEclkc = (data.report.numEclkc / data.report.num);
+  data.report.percentEclkc = (data.report.numEclkc / data.report.num) * 100.0;
 
   data.report.numNonEclkc = data.reportIntermediate.allRecipientIdsWithNonEclkcResources.size;
-  data.report.percentNonEclkc = (data.report.numNonEclkc / data.report.num);
+  data.report.percentNonEclkc = (data.report.numNonEclkc / data.report.num) * 100.0;
 
   // recipient based intermediate data
   data.recipientIntermediate = {};
@@ -468,7 +468,35 @@ export async function resourcesDashboardOverview(scopes) {
   data.resourceIntermediate = undefined;
 
   return {
-    ...data,
+    report: {
+      num: formatNumber(data.report.num),
+      numResources: formatNumber(data.report.numResources),
+      percentResources: `${formatNumber(data.report.percentResources, 2)}%`,
+      numNoResources: formatNumber(data.report.numNoResources),
+      percentNoResources: `${formatNumber(data.report.percentNoResources, 2)}%`,
+      numEclkc: formatNumber(data.report.numEclkc),
+      percentEclkc: `${formatNumber(data.report.percentEclkc, 2)}%`,
+      numNonEclkc: formatNumber(data.report.numNonEclkc),
+      percentNonEclkc: `${formatNumber(data.report.percentNonEclkc, 2)}%`,
+    },
+    recipient: {
+      num: formatNumber(data.recipient.num),
+      numResources: formatNumber(data.recipient.numResources),
+      percentResources: `${formatNumber(data.recipient.percentResources, 2)}%`,
+      numNoResources: formatNumber(data.recipient.numNoResources),
+      percentNoResources: `${formatNumber(data.recipient.percentNoResources, 2)}%`,
+      numEclkc: formatNumber(data.recipient.numEclkc),
+      percentEclkc: `${formatNumber(data.recipient.percentEclkc, 2)}%`,
+      numNonEclkc: formatNumber(data.recipient.numNonEclkc),
+      percentNonEclkc: `${formatNumber(data.recipient.percentNonEclkc, 2)}%`,
+    },
+    resource: {
+      num: formatNumber(data.resource.num),
+      numEclkc: formatNumber(data.resource.numEclkc),
+      percentEclkc: `${formatNumber(data.resource.percentEclkc, 2)}%`,
+      numNonEclkc: formatNumber(data.resource.numNonEclkc),
+      percentNonEclkc: `${formatNumber(data.resource.percentNonEclkc, 2)}%`,
+    },
     numEclkc: formatNumber(data.recipient.numEclkc),
     totalNumEclkc: formatNumber(data.recipient.numResources),
     numEclkcPercentage: `${formatNumber(data.recipient.percentEclkc, 2)}%`,
