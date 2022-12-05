@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet';
 import { Grid, GridContainer } from '@trussworks/react-uswds';
 import FilterPanel from '../../components/filter/FilterPanel';
 import ResourceList from '../../widgets/ResourceList';
+import ResourceDomainList from '../../widgets/ResourceDomainList';
 import ResourcesDashboardOverview from '../../widgets/ResourcesDashboardOverview';
 
 import './index.scss';
@@ -58,6 +59,16 @@ export default function ResourcesDashboard() {
           <ResourcesDashboardOverview
             filters={filtersToApply}
             fields={[
+              // 'Recipient With Resources',
+              // 'Recipient With ECLKC Resources',
+              // 'Recipient With Non ECLKC Resources',
+              // 'Recipient With No Resources',
+              // 'Reports With Resources',
+              // 'Reports With ECLKC Resources',
+              // 'Reports With Non ECLKC Resources',
+              // 'Reports With No Resources',
+              // 'Resources From ECLKC',
+              // 'Resources From Non ECLKC',
               'ECLKC resources',
               'Non ECLKC resources',
               'No resources',
@@ -66,6 +77,11 @@ export default function ResourcesDashboard() {
           />
           <Grid>
             <ResourceList
+              filters={filtersToApply}
+            />
+          </Grid>
+          <Grid>
+            <ResourceDomainList
               filters={filtersToApply}
             />
           </Grid>

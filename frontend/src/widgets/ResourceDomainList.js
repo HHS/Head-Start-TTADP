@@ -3,13 +3,15 @@ import PropTypes from 'prop-types';
 import withWidgetData from './withWidgetData';
 import TableWidget from './TableWidget';
 
-const renderResourceList = (data) => {
+const renderResourceDomainList = (data) => {
   if (data && Array.isArray(data) && data.length > 0) {
-    const limitTDWith = { 'word-wrap': 'break-word', 'max-width': '500px' };
     return data.map((resource) => (
-      <tr key={`resource_list_row_${resource.url}`}>
-        <td style={limitTDWith}>
-          <a href={resource.url}>{resource.name}</a>
+      <tr key={`resource_domain_list_row_${resource.domain}`}>
+        <td>
+          {resource.domain}
+        </td>
+        <td>
+          {resource.urlCount}
         </td>
         <td>
           {resource.reportCount}
@@ -23,20 +25,20 @@ const renderResourceList = (data) => {
   return null;
 };
 
-function ResourceList({ data, loading }) {
+function ResourceDomainList({ data, loading }) {
   return (
     <TableWidget
       data={data}
-      headings={['Resource', 'Number of activities', 'Number of recipients']}
+      headings={['Domain', 'Number of resources', 'Number of activities', 'Number of recipients']}
       loading={loading}
-      loadingLabel="Resource list loading"
-      title="Resources in Activity Reports"
-      renderData={renderResourceList}
+      loadingLabel="Resource domain list loading"
+      title="Resource Domains in Activity Reports"
+      renderData={renderResourceDomainList}
     />
   );
 }
 
-ResourceList.propTypes = {
+ResourceDomainList.propTypes = {
   data: PropTypes.oneOfType([
     PropTypes.arrayOf(
       PropTypes.shape({
@@ -48,8 +50,8 @@ ResourceList.propTypes = {
   loading: PropTypes.bool.isRequired,
 };
 
-ResourceList.defaultProps = {
+ResourceDomainList.defaultProps = {
   data: [],
 };
 
-export default withWidgetData(ResourceList, 'resourceList');
+export default withWidgetData(ResourceDomainList, 'resourceDomainList');

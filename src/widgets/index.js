@@ -6,7 +6,7 @@ import topicFrequencyGraph from './topicFrequencyGraph';
 import targetPopulationTable from './targetPopulationTable';
 import frequencyGraph from './frequencyGraph';
 import goalStatusGraph from './goalStatusGraph';
-import { resourceList, resourcesDashboardOverview } from './resourceList';
+import { resourceList, resourceDomainList, resourcesDashboardOverview } from './resourceList';
 
 /*
   All widgets need to be added to this object
@@ -21,5 +21,6 @@ export default {
   frequencyGraph,
   goalStatusGraph,
   resourceList,
+  resourceDomainList,
   resourcesDashboardOverview,
 };
