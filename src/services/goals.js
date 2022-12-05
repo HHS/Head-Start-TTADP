@@ -1148,6 +1148,19 @@ export async function setActivityReportGoalAsActivelyEdited(goalIdsAsString, rep
     // because of the way express works, goalIdsAsString is a string or an array of strings
     // so we flatmap it here to handle both cases
     const goalIds = [goalIdsAsString].flatMap((id) => parseInt(id, DECIMAL_BASE));
+
+    // set all other goals back to actively edited: false
+    await ActivityReportGoal.update({
+      isActivelyEdited: false,
+    }, {
+      where: {
+        activityReportId: reportId,
+        goalId: {
+          [Op.notIn]: goalIds,
+        },
+      },
+    });
+
     return ActivityReportGoal.update({
       isActivelyEdited: true,
     }, {
