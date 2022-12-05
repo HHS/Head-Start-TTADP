@@ -59,19 +59,28 @@ export default function ResourcesDashboard() {
           <ResourcesDashboardOverview
             filters={filtersToApply}
             fields={[
-              // 'Recipient With Resources',
-              // 'Recipient With ECLKC Resources',
-              // 'Recipient With Non ECLKC Resources',
-              // 'Recipient With No Resources',
-              // 'Reports With Resources',
-              // 'Reports With ECLKC Resources',
-              // 'Reports With Non ECLKC Resources',
-              // 'Reports With No Resources',
-              // 'Resources From ECLKC',
-              // 'Resources From Non ECLKC',
-              'ECLKC resources',
-              'Non ECLKC resources',
-              'No resources',
+              'Recipient With Resources',
+              'Recipient With ECLKC Resources',
+              'Recipient With Non ECLKC Resources',
+              'Recipient With No Resources',
+            ]}
+            showTooltips
+          />
+          <ResourcesDashboardOverview
+            filters={filtersToApply}
+            fields={[
+              'Reports With Resources',
+              'Reports With ECLKC Resources',
+              'Reports With Non ECLKC Resources',
+              'Reports With No Resources',
+            ]}
+            showTooltips
+          />
+          <ResourcesDashboardOverview
+            filters={filtersToApply}
+            fields={[
+              'Resources From ECLKC',
+              'Resources From Non ECLKC',
             ]}
             showTooltips
           />

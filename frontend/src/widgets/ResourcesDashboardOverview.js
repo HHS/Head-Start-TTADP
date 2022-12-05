@@ -62,187 +62,144 @@ Field.defaultProps = {
   tooltipText: '',
   showTooltip: false,
 };
-
 const DASHBOARD_FIELDS = {
-  // 'Recipient With Resources': {
-  //   render: (data, showTooltip) => (
-  //     <Field
-  //       key="recipient-resources"
-  //       icon={faLink}
-  //       showTooltip={showTooltip}
-  //       label={`${data.recipient.numResources} ${data.recipient.numResources === 1 ? 'recipient with resources' : 'recipients with resources'} of ${data.recipient.num}`}
-  //       iconColor={colors.success}
-  //       backgroundColor={colors.successLighter}
-  //       tooltipText={data.recipient.numResources === 1 ? 'recipient with resources' : 'recipients with resources'}
-  //       data={data.recipient.percentResources}
-  //     />
-  //   ),
-  // },
-  // 'Recipient With ECLKC Resources': {
-  //   render: (data, showTooltip) => (
-  //     <Field
-  //       key="recipient-eclkc"
-  //       icon={faLink}
-  //       showTooltip={showTooltip}
-  //       label={`${data.recipient.numEclkc} ${data.recipient.numEclkc === 1 ? 'recipient with ECLKC resources' : 'recipients with ECLKC resources'} of ${data.recipient.num}`}
-  //       iconColor={colors.success}
-  //       backgroundColor={colors.successLighter}
-  //       tooltipText={data.recipient.numEclkc === 1 ? 'recipient with ECLKC resources' : 'recipients with ECLKC resources'}
-  //       data={data.recipient.percentEclkc}
-  //     />
-  //   ),
-  // },
-  // 'Recipient With Non ECLKC Resources': {
-  //   render: (data, showTooltip) => (
-  //     <Field
-  //       key="recipient-noneclkc"
-  //       icon={faExternalLink}
-  //       showTooltip={showTooltip}
-  //       label={`${data.recipient.numNonEclkc} ${data.recipient.numNonEclkc === 1 ? 'recipient with non-ECLKC resources' : 'recipients with non-ECLKC resources'} of ${data.recipient.num}`}
-  //       iconColor={colors.ttahubMediumBlue}
-  //       backgroundColor={colors.ttahubBlueLight}
-  //       tooltipText={data.recipient.numNonEclkc === 1 ? 'recipient with non-ECLKC resources' : 'recipients with non-ECLKC resources'}
-  //       data={data.recipient.percentNonEclkc}
-  //     />
-  //   ),
-  // },
-  // 'Recipient With No Resources': {
-  //   render: (data, showTooltip) => (
-  //     <Field
-  //       key="recipient-noresources"
-  //       icon={faLinkSlash}
-  //       showTooltip={showTooltip}
-  //       label={`${data.recipient.numNoResources} ${data.recipient.numNoResources === 1 ? 'recipient with no resources' : 'recipients with no resources'} of ${data.recipient.num}`}
-  //       iconColor={colors.ttahubOrange}
-  //       backgroundColor={colors.ttahubOrangeLight}
-  //       tooltipText={data.recipient.numNoResources === 1 ? 'recipient with no resources' : 'recipients with no resources'}
-  //       data={data.recipient.percentNoResources}
-  //     />
-  //   ),
-  // },
-  // 'Reports With Resources': {
-  //   render: (data, showTooltip) => (
-  //     <Field
-  //       key="reports-resources"
-  //       icon={faLink}
-  //       showTooltip={showTooltip}
-  //       label={`${data.reports.numResources} ${data.reports.numResources === 1 ? 'report with resources' : 'reports with resources'} of ${data.reports.num}`}
-  //       iconColor={colors.success}
-  //       backgroundColor={colors.successLighter}
-  //       tooltipText={data.reports.numResources === 1 ? 'report with resources' : 'reports with resources'}
-  //       data={data.reports.percentResources}
-  //     />
-  //   ),
-  // },
-  // 'Reports With ECLKC Resources': {
-  //   render: (data, showTooltip) => (
-  //     <Field
-  //       key="reports-eclkc"
-  //       icon={faLink}
-  //       showTooltip={showTooltip}
-  //       label={`${data.reports.numEclkc} ${data.reports.numEclkc === 1 ? 'report with ECLKC resources' : 'reports with ECLKC resources'} of ${data.reports.num}`}
-  //       iconColor={colors.success}
-  //       backgroundColor={colors.successLighter}
-  //       tooltipText={data.reports.numEclkc === 1 ? 'report with ECLKC resources' : 'reports with ECLKC resources'}
-  //       data={data.reports.percentEclkc}
-  //     />
-  //   ),
-  // },
-  // 'Reports With Non ECLKC Resources': {
-  //   render: (data, showTooltip) => (
-  //     <Field
-  //       key="reports-noneclkc"
-  //       icon={faExternalLink}
-  //       showTooltip={showTooltip}
-  //       label={`${data.reports.numNonEclkc} ${data.reports.numNonEclkc === 1 ? 'report with non-ECLKC resources' : 'reports with non-ECLKC resources'} of ${data.reports.num}`}
-  //       iconColor={colors.ttahubMediumBlue}
-  //       backgroundColor={colors.ttahubBlueLight}
-  //       tooltipText={data.reports.numNonEclkc === 1 ? 'report with non-ECLKC resources' : 'reports with non-ECLKC resources'}
-  //       data={data.reports.percentNonEclkc}
-  //     />
-  //   ),
-  // },
-  // 'Reports With No Resources': {
-  //   render: (data, showTooltip) => (
-  //     <Field
-  //       key="reports-noresources"
-  //       icon={faLinkSlash}
-  //       showTooltip={showTooltip}
-  //       label={`${data.reports.numNoResources} ${data.reports.numNoResources === 1 ? 'report with no resources' : 'reports with no resources'} of ${data.reports.num}`}
-  //       iconColor={colors.ttahubOrange}
-  //       backgroundColor={colors.ttahubOrangeLight}
-  //       tooltipText={data.reports.numNoResources === 1 ? 'report with no resources' : 'reports with no resources'}
-  //       data={data.reports.percentNoResources}
-  //     />
-  //   ),
-  // },
-  // 'Resources From ECLKC': {
-  //   render: (data, showTooltip) => (
-  //     <Field
-  //       key="resources-eclkc"
-  //       icon={faLink}
-  //       showTooltip={showTooltip}
-  //       label={`${data.resource.numEclkc} ${data.resource.numEclkc === 1 ? 'ECLKC Resource' : 'ECLKC Resources'} of ${data.resource.num}`}
-  //       iconColor={colors.success}
-  //       backgroundColor={colors.successLighter}
-  //       tooltipText={data.resource.numEclkc === 1 ? 'ECLKC Resource' : 'ECLKC Resources'}
-  //       data={data.resource.percentEclkc}
-  //     />
-  //   ),
-  // },
-  // 'Resources From Non ECLKC': {
-  //   render: (data, showTooltip) => (
-  //     <Field
-  //       key="resources-noneclkc"
-  //       icon={faExternalLink}
-  //       showTooltip={showTooltip}
-  //       label={`${data.resource.numNonEclkc} ${data.resource.numNonEclkc === 1 ? 'Non-ECLKC Resource' : 'Non-ECLKC Resources'} of ${data.resource.num}`}
-  //       iconColor={colors.ttahubMediumBlue}
-  //       backgroundColor={colors.ttahubBlueLight}
-  //       tooltipText={data.resource.numNonEclkc === 1 ? 'Non-ECLKC Resource' : 'Non-ECLKC Resources'}
-  //       data={data.resource.percentNonEclkc}
-  //     />
-  //   ),
-  // },
-  'ECLKC resources': {
+  'Recipient With Resources': {
     render: (data, showTooltip) => (
       <Field
-        key="eclkc-resources"
+        key="recipient-resources"
         icon={faLink}
         showTooltip={showTooltip}
-        label={`${data.numEclkc} ${data.numEclkc === 1 ? 'ECLKC Resource' : 'ECLKC Resources'} of ${data.totalNumEclkc}`}
+        label={`${data.recipient.numResources} ${data.recipient.numResources === 1 ? 'recipient with resources' : 'recipients with resources'} of ${data.recipient.num}`}
         iconColor={colors.success}
         backgroundColor={colors.successLighter}
-        tooltipText="ECLKC resources"
-        data={data.numEclkcPercentage}
+        tooltipText={data.recipient.numResources === 1 ? 'recipient with resources' : 'recipients with resources'}
+        data={data.recipient.percentResources}
       />
     ),
   },
-  'Non ECLKC resources': {
+  'Recipient With ECLKC Resources': {
     render: (data, showTooltip) => (
       <Field
-        key="non-eclkc-resources"
+        key="recipient-eclkc"
+        icon={faLink}
+        showTooltip={showTooltip}
+        label={`${data.recipient.numEclkc} ${data.recipient.numEclkc === 1 ? 'recipient with ECLKC resources' : 'recipients with ECLKC resources'} of ${data.recipient.num}`}
+        iconColor={colors.success}
+        backgroundColor={colors.successLighter}
+        tooltipText={data.recipient.numEclkc === 1 ? 'recipient with ECLKC resources' : 'recipients with ECLKC resources'}
+        data={data.recipient.percentEclkc}
+      />
+    ),
+  },
+  'Recipient With Non ECLKC Resources': {
+    render: (data, showTooltip) => (
+      <Field
+        key="recipient-noneclkc"
         icon={faExternalLink}
         showTooltip={showTooltip}
-        label={`${data.numNonEclkc} ${data.numNonEclkc === 1 ? 'Non-ECLKC Resource' : 'Non-ECLKC Resources'} of ${data.totalNumNonEclkc}`}
+        label={`${data.recipient.numNonEclkc} ${data.recipient.numNonEclkc === 1 ? 'recipient with non-ECLKC resources' : 'recipients with non-ECLKC resources'} of ${data.recipient.num}`}
         iconColor={colors.ttahubMediumBlue}
         backgroundColor={colors.ttahubBlueLight}
-        tooltipText="Non-ECLKC resources"
-        data={data.numNonEclkcPercentage}
+        tooltipText={data.recipient.numNonEclkc === 1 ? 'recipient with non-ECLKC resources' : 'recipients with non-ECLKC resources'}
+        data={data.recipient.percentNonEclkc}
       />
     ),
   },
-  'No resources': {
+  'Recipient With No Resources': {
     render: (data, showTooltip) => (
       <Field
-        key="no-resources"
+        key="recipient-noresources"
         icon={faLinkSlash}
         showTooltip={showTooltip}
-        label={`${data.numNoResources} ${data.numNoResources === 1 ? 'No Resource' : 'No Resources'} of ${data.totalNumNoResources}`}
+        label={`${data.recipient.numNoResources} ${data.recipient.numNoResources === 1 ? 'recipient with no resources' : 'recipients with no resources'} of ${data.recipient.num}`}
         iconColor={colors.ttahubOrange}
         backgroundColor={colors.ttahubOrangeLight}
-        tooltipText="No resources"
-        data={data.numNoResourcesPercentage}
+        tooltipText={data.recipient.numNoResources === 1 ? 'recipient with no resources' : 'recipients with no resources'}
+        data={data.recipient.percentNoResources}
+      />
+    ),
+  },
+  'Reports With Resources': {
+    render: (data, showTooltip) => (
+      <Field
+        key="reports-resources"
+        icon={faLink}
+        showTooltip={showTooltip}
+        label={`${data.report.numResources} ${data.report.numResources === 1 ? 'report with resources' : 'reports with resources'} of ${data.report.num}`}
+        iconColor={colors.success}
+        backgroundColor={colors.successLighter}
+        tooltipText={data.report.numResources === 1 ? 'report with resources' : 'reports with resources'}
+        data={data.report.percentResources}
+      />
+    ),
+  },
+  'Reports With ECLKC Resources': {
+    render: (data, showTooltip) => (
+      <Field
+        key="reports-eclkc"
+        icon={faLink}
+        showTooltip={showTooltip}
+        label={`${data.report.numEclkc} ${data.report.numEclkc === 1 ? 'report with ECLKC resources' : 'reports with ECLKC resources'} of ${data.report.num}`}
+        iconColor={colors.success}
+        backgroundColor={colors.successLighter}
+        tooltipText={data.report.numEclkc === 1 ? 'report with ECLKC resources' : 'reports with ECLKC resources'}
+        data={data.report.percentEclkc}
+      />
+    ),
+  },
+  'Reports With Non ECLKC Resources': {
+    render: (data, showTooltip) => (
+      <Field
+        key="reports-noneclkc"
+        icon={faExternalLink}
+        showTooltip={showTooltip}
+        label={`${data.report.numNonEclkc} ${data.report.numNonEclkc === 1 ? 'report with non-ECLKC resources' : 'reports with non-ECLKC resources'} of ${data.report.num}`}
+        iconColor={colors.ttahubMediumBlue}
+        backgroundColor={colors.ttahubBlueLight}
+        tooltipText={data.report.numNonEclkc === 1 ? 'report with non-ECLKC resources' : 'reports with non-ECLKC resources'}
+        data={data.report.percentNonEclkc}
+      />
+    ),
+  },
+  'Reports With No Resources': {
+    render: (data, showTooltip) => (
+      <Field
+        key="reports-noresources"
+        icon={faLinkSlash}
+        showTooltip={showTooltip}
+        label={`${data.report.numNoResources} ${data.report.numNoResources === 1 ? 'report with no resources' : 'reports with no resources'} of ${data.report.num}`}
+        iconColor={colors.ttahubOrange}
+        backgroundColor={colors.ttahubOrangeLight}
+        tooltipText={data.report.numNoResources === 1 ? 'report with no resources' : 'reports with no resources'}
+        data={data.report.percentNoResources}
+      />
+    ),
+  },
+  'Resources From ECLKC': {
+    render: (data, showTooltip) => (
+      <Field
+        key="resources-eclkc"
+        icon={faLink}
+        showTooltip={showTooltip}
+        label={`${data.resource.numEclkc} ${data.resource.numEclkc === 1 ? 'ECLKC Resource' : 'ECLKC Resources'} of ${data.resource.num}`}
+        iconColor={colors.success}
+        backgroundColor={colors.successLighter}
+        tooltipText={data.resource.numEclkc === 1 ? 'ECLKC Resource' : 'ECLKC Resources'}
+        data={data.resource.percentEclkc}
+      />
+    ),
+  },
+  'Resources From Non ECLKC': {
+    render: (data, showTooltip) => (
+      <Field
+        key="resources-noneclkc"
+        icon={faExternalLink}
+        showTooltip={showTooltip}
+        label={`${data.resource.numNonEclkc} ${data.resource.numNonEclkc === 1 ? 'Non-ECLKC Resource' : 'Non-ECLKC Resources'} of ${data.resource.num}`}
+        iconColor={colors.ttahubMediumBlue}
+        backgroundColor={colors.ttahubBlueLight}
+        tooltipText={data.resource.numNonEclkc === 1 ? 'Non-ECLKC Resource' : 'Non-ECLKC Resources'}
+        data={data.resource.percentNonEclkc}
       />
     ),
   },
@@ -287,23 +244,49 @@ ResourcesDashboardOverviewWidget.defaultProps = {
     numNoResources: '0',
     totalNumNoResources: '0',
     numNoResourcesPercentage: '0%',
+    report: {
+      num: '0',
+      numResources: '0',
+      percentResources: '0%',
+      numNoResources: '0',
+      percentNoResources: '0%',
+      numEclkc: '0',
+      percentEclkc: '0%',
+      numNonEclkc: '0',
+      percentNonEclkc: '0%',
+    },
+    recipient: {
+      num: '0',
+      numResources: '0',
+      percentResources: '0%',
+      numNoResources: '0',
+      percentNoResources: '0%',
+      numEclkc: '0',
+      percentEclkc: '0%',
+      numNonEclkc: '0',
+      percentNonEclkc: '0%',
+    },
+    resource: {
+      num: '0',
+      numEclkc: '0',
+      percentEclkc: '0%',
+      numNonEclkc: '0',
+      percentNonEclkc: '0%',
+    },
   },
   loading: false,
   showTooltips: false,
   fields: [
-    // 'Recipient With Resources',
-    // 'Recipient With ECLKC Resources',
-    // 'Recipient With Non ECLKC Resources',
-    // 'Recipient With No Resources',
-    // 'Reports With Resources',
-    // 'Reports With ECLKC Resources',
-    // 'Reports With Non ECLKC Resources',
-    // 'Reports With No Resources',
-    // 'Resources From ECLKC',
-    // 'Resources From Non ECLKC',
-    'ECLKC resources',
-    'Non ECLKC resources',
-    'No resources',
+    'Recipient With Resources',
+    'Recipient With ECLKC Resources',
+    'Recipient With Non ECLKC Resources',
+    'Recipient With No Resources',
+    'Reports With Resources',
+    'Reports With ECLKC Resources',
+    'Reports With Non ECLKC Resources',
+    'Reports With No Resources',
+    'Resources From ECLKC',
+    'Resources From Non ECLKC',
   ],
 
 };
