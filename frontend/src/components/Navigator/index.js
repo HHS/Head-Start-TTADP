@@ -77,11 +77,15 @@ function Navigator({
 
   const pageState = watch('pageState');
   const selectedGoals = watch('goals');
+  const goalForEditing = watch('goalForEditing');
   const selectedObjectivesWithoutGoals = watch('objectivesWithoutGoals');
 
   // App Loading Context.
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
-  const [isGoalFormClosed, toggleGoalForm] = useState(selectedGoals && selectedGoals.length > 0);
+  // if we have a goal in the form, we want to say "goal form is not closed"
+  const [isGoalFormClosed, toggleGoalForm] = useState(
+    !(goalForEditing) && selectedGoals && selectedGoals.length > 0,
+  );
   const [weAreAutoSaving, setWeAreAutoSaving] = useState(false);
 
   // Toggle objectives readonly only if all objectives are saved and pass validation.
@@ -100,7 +104,6 @@ function Navigator({
     }
   };
 
-  const goalForEditing = watch('goalForEditing');
   const activityRecipientType = watch('activityRecipientType');
   const isGoalsObjectivesPage = page.path === 'goals-objectives';
   const recipients = watch('activityRecipients');

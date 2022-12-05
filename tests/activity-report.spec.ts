@@ -101,6 +101,20 @@ test.describe("Activity Report", () => {
     await page.keyboard.type('hello');    
     await page.getByRole('button', { name: 'Save goal' }).click();
 
+    // edit the first goal
+    await page.getByRole('button', { name: 'Actions for Goal 5'}).click();
+    await page.getByRole('button', { name: 'Edit'}).click();
+
+    // navigate away from the activity report page
+    await page.getByRole('link', { name: 'Activity Reports' }).click();
+
+    // navigate back to the activity report page & the goals and objectives section
+    await page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).first().click();
+    await page.getByRole('button', { name: 'Goals and objectives' }).click();
+
+    // save the first goal   
+    await page.getByRole('button', { name: 'Save goal' }).click();
+
     // move to next steps
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
