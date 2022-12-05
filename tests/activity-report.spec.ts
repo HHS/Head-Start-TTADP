@@ -1,3 +1,4 @@
+import { NodePath } from '@babel/core';
 import { test, expect } from '@playwright/test';
 
 async function blur(page) {
@@ -6,9 +7,9 @@ async function blur(page) {
 
 async function getFullName(page) {
   await page.goto('/');
-  const welcomeText = await page.getByRole('heading', { name: /welcome to the tta hub/i });
+  const welcomeText = await page.getByRole('heading', { name: /welcome to the tta hub,/i });
   const text = await welcomeText.textContent();
-  return text.replace(/welcome to the tta hub /i, '');
+  return text.replace(/welcome to the tta hub, /i, '');
 }
 
 test.describe("Activity Report", () => {
@@ -28,7 +29,7 @@ test.describe("Activity Report", () => {
     await page.locator('#targetPopulations div').filter({ hasText: '- Select -' }).nth(1).click();
     await page.locator('#react-select-7-option-0').click();
     await blur(page);
-    await page.getByRole('group', { name: 'Who requested this activity? Use "Regional Office" for TTA not requested by recipient. *' }).locator('label').filter({ hasText: 'Recipient' }).click();
+    await page.getByRole('group', { name: 'Who requested this activity? Use "Regional Office" for TTA not requested by recipient. *' }).locator('label').filter({ hasText: 'Regional Office' }).click();
     await page.getByRole('group', { name: 'Reason for activity' }).getByTestId('label').locator('div').filter({ hasText: '- Select -' }).nth(2).click();
     await page.locator('#react-select-9-option-0').click();
     await blur(page);
@@ -117,7 +118,6 @@ test.describe("Activity Report", () => {
 
     // type our name into the dropdown to filter to just us
     await page.keyboard.type(fullName);
-
     // press Enter to select ourself
     await page.keyboard.press('Enter');
 
@@ -134,6 +134,14 @@ test.describe("Activity Report", () => {
     // begin review assertions
     expect(await page.getByText(`${fullName} has requested approval for this activity report`)).toBeTruthy();
     expect(await page.getByTestId('accordionButton_activity-summary')).toHaveText('Activity summary');
+    
+    await expect(page.getByTestId('accordionItem_activity-summary').getByText('Recipient', {exact: true})).toBeVisible();
+    await expect(page.getByTestId('accordionItem_activity-summary').getByText('Regional Office', {exact: true})).toBeVisible();
+    await expect(page.getByText('Recipient or other entity', {exact: true})).toBeVisible();
+    await expect(page.getByText('Activity participants', {exact: true})).toBeVisible();
+    await expect(page.getByText('Collaborating specialists', {exact: true})).toBeVisible();
+    await expect(page.getByText('Target populations addressed', {exact: true})).toBeVisible();
+
     expect(await page.getByText('g1')).toBeTruthy();
     expect(await page.getByText('g1o1')).toBeTruthy();
     expect(await page.getByText('g2')).toBeTruthy();
