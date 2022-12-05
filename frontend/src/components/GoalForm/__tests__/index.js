@@ -21,7 +21,7 @@ import { REPORT_STATUSES, SCOPE_IDS } from '../../../Constants';
 import { BEFORE_OBJECTIVES_CREATE_GOAL, BEFORE_OBJECTIVES_SELECT_RECIPIENTS } from '../Form';
 
 const [
-  objectiveTitleError, objectiveTopicsError, objectiveResourcesError,
+  objectiveTitleError, objectiveTopicsError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
 const topicsFromApi = [
@@ -656,7 +656,7 @@ describe('create goal', () => {
     const save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
 
-    await screen.findByText(objectiveResourcesError);
+    await screen.findByText('Enter one resource per field. Valid resource links must:');
 
     userEvent.clear(resourceOne);
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
@@ -675,7 +675,7 @@ describe('create goal', () => {
 
     userEvent.click(save);
 
-    await screen.findByText(objectiveResourcesError);
+    await screen.findByText(/Enter one resource per field. Valid resource links must:/i);
 
     addNewResource = await screen.findByRole('button', { name: 'Add new resource' });
     userEvent.click(addNewResource);

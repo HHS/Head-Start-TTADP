@@ -12,6 +12,7 @@ import URLInput from '../URLInput';
 import UnusedData from './UnusedData';
 import colors from '../../colors';
 import './ResourceRepeater.css';
+import { OBJECTIVE_LINK_ERROR } from './constants';
 
 export default function ResourceRepeater({
   resources,
@@ -101,7 +102,10 @@ export default function ResourceRepeater({
                 text="Copy and paste addresses of web pages describing resources used for this objective. Usually this is an ECLKC page."
               />
             </Label>
-            {error}
+            <span className="usa-hint">
+              Enter one resource per field. To enter multiple resources, select “Add new resource”
+            </span>
+            {error.props.children ? OBJECTIVE_LINK_ERROR : null}
             <div className="ttahub-resource-repeater">
               { editableResources.map((r, i) => (
                 <div key={r.key} className="display-flex" id="resources">
