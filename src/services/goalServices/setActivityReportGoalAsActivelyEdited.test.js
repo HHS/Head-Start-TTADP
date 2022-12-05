@@ -14,6 +14,7 @@ import { REPORT_STATUSES } from '../../constants';
 
 describe('setActivityReportGoalAsActivelyEdited', () => {
   let goal;
+  let goal2;
   let report;
   let user;
 
@@ -40,6 +41,16 @@ describe('setActivityReportGoalAsActivelyEdited', () => {
       grantId: 1,
     });
 
+    // Create Goal.
+    goal2 = await Goal.create({
+      name: 'goal that was edited',
+      status: 'Not Started',
+      timeframe: '12 months',
+      isFromSmartsheetTtaPlan: false,
+      createdAt: new Date('2021-01-02'),
+      grantId: 1,
+    });
+
     // create report
     report = await ActivityReport.create({
       activityRecipientType: 'recipient',
@@ -57,6 +68,12 @@ describe('setActivityReportGoalAsActivelyEdited', () => {
       goalId: goal.id,
       isActivelyEdited: false,
     });
+
+    await ActivityReportGoal.create({
+      activityReportId: report.id,
+      goalId: goal2.id,
+      isActivelyEdited: true,
+    });
   });
   afterAll(async () => {
     await ActivityReportGoal.destroy({
@@ -67,7 +84,7 @@ describe('setActivityReportGoalAsActivelyEdited', () => {
 
     await Goal.destroy({
       where: {
-        id: goal.id,
+        id: [goal.id, goal2.id],
       },
     });
 
@@ -81,8 +98,15 @@ describe('setActivityReportGoalAsActivelyEdited', () => {
   });
   it('sets goal as edited via the ARG table', async () => {
     await setActivityReportGoalAsActivelyEdited(`${goal.id}`, report.id);
-    const [goalForReport] = await getGoalsForReport(report.id);
-    const [arg] = goalForReport.activityReportGoals;
-    expect(arg.isActivelyEdited).toBe(true);
+    const goalsForReport = await getGoalsForReport(report.id);
+    expect(goalsForReport).toHaveLength(2);
+
+    const goalNotEdited = goalsForReport.find((g) => g.id === goal2.id);
+    const [goalNotEditedArGoal] = goalNotEdited.activityReportGoals;
+    expect(goalNotEditedArGoal.isActivelyEdited).toBe(false);
+
+    const goalBeingEdited = goalsForReport.find((g) => g.id === goal2.id);
+    const [goalBeingEditedArGoal] = goalBeingEdited.activityReportGoals;
+    expect(goalBeingEditedArGoal.isActivelyEdited).toBe(false);
   });
 });
