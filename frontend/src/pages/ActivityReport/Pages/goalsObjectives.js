@@ -11,7 +11,7 @@ import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useFormContext, useController } from 'react-hook-form/dist/index.ie11';
 import { Link } from 'react-router-dom';
 import GoalPicker from './components/GoalPicker';
-import { getGoals } from '../../../fetchers/activityReports';
+import { getGoals, setGoalAsActivelyEdited } from '../../../fetchers/activityReports';
 import { validateGoals } from './components/goalValidator';
 import RecipientReviewSection from './components/RecipientReviewSection';
 import OtherEntityReviewSection from './components/OtherEntityReviewSection';
@@ -132,7 +132,14 @@ const GoalsObjectives = ({
     }
   };
 
-  const onEdit = (goal, index) => {
+  const onEdit = async (goal, index) => {
+    try {
+      await setGoalAsActivelyEdited(activityReportId, goal.goalIds);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('failed to set goal as actively edited with this error:', err);
+    }
+
     const currentlyEditing = getValues('goalForEditing') ? { ...getValues('goalForEditing') } : null;
     if (currentlyEditing) {
       const goalForEditingObjectives = getValues('goalForEditing.objectives') ? [...getValues('goalForEditing.objectives')] : [];

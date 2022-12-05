@@ -849,3 +849,18 @@ export async function downloadAllAlerts(req, res) {
     await handleErrors(req, res, error, logContext);
   }
 }
+
+export async function setGoalAsActivelyEdited(req, res) {
+  const { activityReportId } = req.params;
+  const { goalIds } = req.query;
+  const user = await userById(req.session.userId);
+  const [report] = await activityReportAndRecipientsById(activityReportId);
+  const authorization = new ActivityReport(user, report);
+
+  if (!authorization.canUpdate()) {
+    res.sendStatus(403);
+    return;
+  }
+
+  res.json({ goalIds });
+}
