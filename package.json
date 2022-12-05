@@ -182,7 +182,7 @@
       "./tests/",
       "./playwright-report/",
       "./test-results/",
-      "./playwright-config.js"
+      "./playwright.config.js"
     ]
   },
   "devDependencies": {
