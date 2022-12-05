@@ -393,7 +393,7 @@ describe('createOrUpdateGoalsForActivityReport', () => {
     // Updated Goal.
     expect(createdGoals[0].id).not.toBeNull();
     expect(createdGoals[0].name).toBe('Test create goal for activity reports');
-    expect(createdGoals[0].grantIds).toStrictEqual(grants.map((g) => g.id));
+    expect(createdGoals[0].grantIds.sort()).toStrictEqual(grants.map((g) => g.id).sort());
     expect(createdGoals[0].objectives.length).toBe(2);
 
     expect(createdGoals[0].objectives[0].id).not.toBeNull();

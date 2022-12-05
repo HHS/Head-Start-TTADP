@@ -19,7 +19,7 @@ function Container({
   const skipBottom = skipBottomPadding ? 'padding-bottom-0' : '';
 
   return (
-    <div className={`${classes} ${className} position-relative butter`}>
+    <div className={`${classes} ${className} position-relative`}>
       <Loader loading={loading} loadingLabel={loadingLabel} />
       <div className={`padding-x-${paddingX} padding-y-${paddingY} ${skipTop} ${skipBottom}`}>
         {children}

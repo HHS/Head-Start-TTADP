@@ -67,6 +67,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         'id',
         'status',
         'onApprovedAR',
+        'rtrOrder',
         [
           sequelize.literal(`
             (
@@ -80,6 +81,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
       ],
       model: Objective,
       as: 'objectives',
+      order: [['rtrOrder', 'ASC']],
       include: [
         {
           model: ObjectiveResource,
@@ -342,7 +344,7 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
   // we pass in the existing objectives as the accumulator
   const objectivesToSort = newObjectives.reduce((objectives, objective) => {
     const exists = objectives.find((o) => (
-      o.title === objective.title && o.status === objective.status
+      o.title === objective.title.trim() && o.status === objective.status
     ));
 
     if (exists) {
@@ -366,6 +368,7 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
 
     return [...objectives, {
       ...objective.dataValues,
+      title: objective.title.trim(),
       value: id,
       ids: [id],
       // Make sure we pass back a list of recipient ids for subsequent saves.
@@ -396,7 +399,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
     // objectives represent the accumulator in the find below
     // objective is the objective as it is returned from the API
     const exists = objectives.find((o) => (
-      o.title === objective.title && o.status === objectiveStatus
+      o.title === objective.title.trim() && o.status === objectiveStatus
     ));
 
     if (exists) {
@@ -445,6 +448,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
 
     return [...objectives, {
       ...objective.dataValues,
+      title: objective.title.trim(),
       value: id,
       ids: [id],
       ttaProvided,
@@ -917,7 +921,7 @@ export async function createOrUpdateGoals(goals) {
     }
 
     const newObjectives = await Promise.all(
-      objectives.map(async (o) => {
+      objectives.map(async (o, index) => {
         const {
           resources,
           topics,
@@ -984,6 +988,7 @@ export async function createOrUpdateGoals(goals) {
         await objective.update({
           title,
           status: objectiveStatus,
+          rtrOrder: index + 1,
         }, { individualHooks: true });
 
         // save all our objective join tables (ObjectiveResource, ObjectiveTopic, ObjectiveFile)
