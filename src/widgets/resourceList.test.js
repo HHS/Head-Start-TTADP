@@ -309,18 +309,35 @@ describe('Resources list widget', () => {
     const scopes = filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
     const data = await resourcesDashboardOverview(scopes);
     expect(data).toStrictEqual({
-      numEclkc: '1',
-      totalNumEclkc: '1',
-      numEclkcPercentage: '1.00%',
-      numNonEclkc: '1',
-      totalNumNonEclkc: '1',
-      numNonEclkcPercentage: '1.00%',
-      numResources: '1',
-      totalNumResources: '1',
-      numResourcesPercentage: '1.00%',
-      numNoResources: '0',
-      totalNumNoResources: '1',
-      numNoResourcesPercentage: '0%',
+      recipient: {
+        num: '1',
+        numEclkc: '1',
+        numNoResources: '0',
+        numNonEclkc: '1',
+        numResources: '1',
+        percentEclkc: '100.00%',
+        percentNoResources: '0%',
+        percentNonEclkc: '100.00%',
+        percentResources: '100.00%',
+      },
+      report: {
+        num: '4',
+        numEclkc: '2',
+        numNoResources: '1',
+        numNonEclkc: '2',
+        numResources: '3',
+        percentEclkc: '50.00%',
+        percentNoResources: '25.00%',
+        percentNonEclkc: '50.00%',
+        percentResources: '75.00%',
+      },
+      resource: {
+        num: '2',
+        numEclkc: '1',
+        numNonEclkc: '1',
+        percentEclkc: '50.00%',
+        percentNonEclkc: '50.00%',
+      },
     });
   });
 });

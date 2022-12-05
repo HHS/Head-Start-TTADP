@@ -463,10 +463,6 @@ export async function resourcesDashboardOverview(scopes) {
   data.resource.numNonEclkc = data.resourceIntermediate.allNonEclkcResources.size;
   data.resource.percentNonEclkc = (data.resource.numNonEclkc / data.resource.num) * 100.0;
 
-  data.recipientIntermediate = undefined;
-  data.reportIntermediate = undefined;
-  data.resourceIntermediate = undefined;
-
   return {
     report: {
       num: formatNumber(data.report.num),
@@ -497,17 +493,5 @@ export async function resourcesDashboardOverview(scopes) {
       numNonEclkc: formatNumber(data.resource.numNonEclkc),
       percentNonEclkc: `${formatNumber(data.resource.percentNonEclkc, 2)}%`,
     },
-    numEclkc: formatNumber(data.recipient.numEclkc),
-    totalNumEclkc: formatNumber(data.recipient.numResources),
-    numEclkcPercentage: `${formatNumber(data.recipient.percentEclkc, 2)}%`,
-    numNonEclkc: formatNumber(data.recipient.numNonEclkc),
-    totalNumNonEclkc: formatNumber(data.recipient.numResources),
-    numNonEclkcPercentage: `${formatNumber(data.recipient.percentNonEclkc, 2)}%`,
-    numResources: formatNumber(data.recipient.numResources),
-    totalNumResources: formatNumber(data.recipient.numResources),
-    numResourcesPercentage: `${formatNumber(data.recipient.percentResources, 2)}%`,
-    numNoResources: formatNumber(data.recipient.numNoResources),
-    totalNumNoResources: formatNumber(data.recipient.numResources),
-    numNoResourcesPercentage: `${formatNumber(data.recipient.percentNoResources, 2)}%`,
   };
 }
