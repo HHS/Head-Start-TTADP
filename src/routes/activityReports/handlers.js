@@ -851,17 +851,21 @@ export async function downloadAllAlerts(req, res) {
 }
 
 export async function setGoalAsActivelyEdited(req, res) {
-  const { activityReportId } = req.params;
-  const { goalIds } = req.query;
-  const user = await userById(req.session.userId);
-  const [report] = await activityReportAndRecipientsById(activityReportId);
-  const authorization = new ActivityReport(user, report);
+  try {
+    const { activityReportId } = req.params;
+    const { goalIds } = req.query;
+    const user = await userById(req.session.userId);
+    const [report] = await activityReportAndRecipientsById(activityReportId);
+    const authorization = new ActivityReport(user, report);
 
-  if (!authorization.canUpdate()) {
-    res.sendStatus(403);
-    return;
+    if (!authorization.canUpdate()) {
+      res.sendStatus(403);
+      return;
+    }
+
+    const goals = await setActivityReportGoalAsActivelyEdited(goalIds, activityReportId);
+    res.json(goals);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
   }
-
-  const goals = await setActivityReportGoalAsActivelyEdited(goalIds, activityReportId);
-  res.json(goals);
 }
