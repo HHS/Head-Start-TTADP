@@ -1143,6 +1143,29 @@ async function removeActivityReportGoalsFromReport(reportId, currentGoalIds) {
   });
 }
 
+export async function setActivityReportGoalAsActivelyEdited(goalIdsAsString, reportId) {
+  try {
+    // because of the way express works, goalIdsAsString is a string or an array of strings
+    // so we flatmap it here to handle both cases
+    const goalIds = [goalIdsAsString].flatMap((id) => parseInt(id, DECIMAL_BASE));
+    return ActivityReportGoal.update({
+      isActivelyEdited: true,
+    }, {
+      where: {
+        activityReportId: reportId,
+        goalId: goalIds,
+      },
+      returning: true,
+    });
+  } catch (error) {
+    auditLogger.error(
+      ` SERVICE:GOALS:setActivityReportGoalsAsActivielyEdited\nunable to update ActivityReportGoals table \n${error}`,
+    );
+
+    return [];
+  }
+}
+
 /// TTAHUB-949: Uncomment to remove Goals not associated
 ///  with any ActivityReportGoals or createVia 'ActivityReport'.
 /*

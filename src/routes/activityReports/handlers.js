@@ -24,7 +24,7 @@ import {
 } from '../../services/activityReports';
 import { saveObjectivesForReport, getObjectivesByReportId } from '../../services/objectives';
 import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
-import { goalsForGrants } from '../../services/goals';
+import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
 import {
   APPROVER_STATUSES, REPORT_STATUSES, DECIMAL_BASE, USER_SETTINGS,
@@ -862,5 +862,6 @@ export async function setGoalAsActivelyEdited(req, res) {
     return;
   }
 
-  res.json({ goalIds });
+  const goals = await setActivityReportGoalAsActivelyEdited(goalIds, activityReportId);
+  res.json(goals);
 }
