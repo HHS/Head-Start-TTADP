@@ -1,4 +1,6 @@
-import { specialistRoleFilter, endDateFilter, startDateFilter, myReportsFilter } from '../../../components/filter/activityReportFilters';
+import {
+  specialistRoleFilter, endDateFilter, startDateFilter, myReportsFilter,
+} from '../../../components/filter/activityReportFilters';
 import {
   statusFilter, createDateFilter, topicsFilter, reasonsFilter, grantNumberFilter,
 } from '../../../components/filter/goalFilters';
