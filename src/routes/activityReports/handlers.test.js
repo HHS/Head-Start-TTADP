@@ -275,6 +275,7 @@ describe('Activity Report handlers', () => {
           id: 777,
         },
         activityReportCollaborators: [],
+        id: 999999,
       }, [{
         activityRecipientId: 10,
       }]]);
@@ -309,6 +310,7 @@ describe('Activity Report handlers', () => {
           id: 777,
         },
         activityReportCollaborators: [],
+        id: 999999,
       },
       [{
         activityRecipientId: 10,
