@@ -179,6 +179,7 @@ export const notifyGranteeReportApproved = (job, transport = defaultTransport) =
 
   const recipientNames = recipients.map((r) => r.name);
 
+  const recipientNamesDisplay = recipientNames.join(', ');
   if (SEND_NOTIFICATIONS === 'true') {
     const { id, displayId } = report;
 
@@ -194,7 +195,7 @@ export const notifyGranteeReportApproved = (job, transport = defaultTransport) =
     return email.send({
       template: path.resolve(emailTemplatePath, 'grantee_report_approved'),
       message: { to: addresses },
-      locals: { reportPath, displayId, recipientNames },
+      locals: { reportPath, displayId, recipientNamesDisplay },
     });
   }
 
