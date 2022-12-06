@@ -2,6 +2,7 @@ import { validateListOfResources } from '../constants';
 
 describe('validateListOfResources', () => {
   it('returns false if there is an invalid resource', () => {
+    expect(validateListOfResources([{ value: 'http://www.test-domain.com/long-domain/long/long/domain/long-domain/long/long/domain/long-domain/long/long/domain/long-domain/long/long/domain/long-domain/long/long/domain/long-domain/long/long/domain/long-domain/long/long/domain/long-domain/long/long/domain' }])).toBe(true);
     expect(validateListOfResources([{ value: 'https://test.com' }])).toBe(true);
     expect(validateListOfResources([{ value: 'http://test.com' }])).toBe(true);
     expect(validateListOfResources([{ value: 'https://www.test.com' }])).toBe(true);
