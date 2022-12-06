@@ -593,7 +593,7 @@ export default function GoalForm({
   const onSaveDraft = async () => {
     if (!isValidDraft()) {
       // attempt to focus on the first invalid field
-      const invalid = document.querySelector('.usa-form :invalid:not(fieldset), .usa-form-group--error textarea, usa-form-group--error input, .usa-error-message + .ttahub-resource-repeater input');
+      const invalid = document.querySelector('.usa-form :invalid:not(fieldset), .usa-form-group--error textarea, .usa-form-group--error input, .usa-error-message + .ttahub-resource-repeater input');
       if (invalid) {
         invalid.focus();
       }
@@ -685,7 +685,7 @@ export default function GoalForm({
   const onSaveAndContinue = async (redirect = false) => {
     if (!isValidNotStarted()) {
       // attempt to focus on the first invalid field
-      const invalid = document.querySelector('.usa-form :invalid:not(fieldset), .usa-form-group--error textarea, usa-form-group--error input, .usa-error-message + .ttahub-resource-repeater input');
+      const invalid = document.querySelector('.usa-form :invalid:not(fieldset), .usa-form-group--error textarea, .usa-form-group--error input, .usa-error-message + .ttahub-resource-repeater input');
       if (invalid) {
         invalid.focus();
       }

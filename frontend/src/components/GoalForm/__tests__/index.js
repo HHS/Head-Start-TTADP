@@ -665,6 +665,14 @@ describe('create goal', () => {
     userEvent.click(addNewResource);
 
     const resourceTwo = await screen.findByRole('textbox', { name: 'Resource 2' });
+    userEvent.type(resourceTwo, 'https://search.marginalia.nu/https://search.marginalia.nu/https://search.marginalia.nu/');
+
+    const saveDraft = await screen.findByRole('button', { name: /save draft/i });
+    userEvent.click(saveDraft);
+
+    await screen.findByText('Enter one resource per field. Valid resource links must start with http:// or https://');
+
+    userEvent.clear(resourceTwo);
     userEvent.type(resourceTwo, 'https://search.marginalia.nu/');
 
     addNewResource = await screen.findByRole('button', { name: 'Add new resource' });
