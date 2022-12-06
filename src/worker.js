@@ -76,6 +76,7 @@ async function start() {
   notificationDigestQueue.process(EMAIL_ACTIONS.SUBMITTED_DIGEST, notifyDigest);
   notificationDigestQueue.process(EMAIL_ACTIONS.APPROVED_DIGEST, notifyDigest);
   notificationDigestQueue.process(EMAIL_ACTIONS.COLLABORATOR_DIGEST, notifyDigest);
+  notificationDigestQueue.process(EMAIL_ACTIONS.GRANTEE_REPORT_APPROVED_DIGEST, notifyDigest);
 }
 
 // spawn workers and start them
