@@ -22,33 +22,6 @@ const withWidgetData = (Widget, widgetId) => {
         try {
           updateLoading(true);
           const query = filtersToQueryString(filters);
-          /* let fetchedData;
-          if (widgetId === 'resourcesDashboardOverview') {
-            console.log('Path 1: ', widgetId);
-            fetchedData = {
-              numEclkc: '50',
-              totalNumEclkc: '100',
-              numEclkcPercentage: '50%',
-              numNonEclkc: '40',
-              totalNumNonEclkc: '200',
-              numNonEclkcPercentage: '20%',
-              numNoResources: '30',
-              totalNumNoResources: '300',
-              numNoResourcesPercentage: '10%',
-            };
-          } else if (widgetId === 'resourceList') {
-            console.log('Path 2: ', widgetId);
-            fetchedData = [
-              { name: 'https://test1.gov', count: 20 },
-              { name: 'https://test2.gov', count: 15 },
-              { name: 'https://test3.gov', count: 10 },
-              { name: 'https://test4.gov', count: 9 },
-              { name: 'https://test5.gov', count: 8 },
-              { name: 'https://test6.gov', count: 7 },
-            ];
-          } else {
-            fetchedData = await fetchWidget(widgetId, query);
-          } */
           const fetchedData = await fetchWidget(widgetId, query);
           updateData(fetchedData);
           updateError('');
