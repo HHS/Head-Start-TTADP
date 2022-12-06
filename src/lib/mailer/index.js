@@ -187,6 +187,7 @@ export const notifyGranteeReportApproved = (job, transport = defaultTransport) =
 
     logger.info(`MAILER: Notifying program specialists that report ${displayId} was approved because they have grants associated with it.`);
     const addresses = programSpecialists.map((c) => c.email);
+    if (addresses.length === 0) return null;
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
     const email = new Email({
       message: { from: FROM_EMAIL_ADDRESS },

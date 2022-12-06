@@ -248,6 +248,17 @@ describe('mailer tests', () => {
       expect(message.text).toContain('An Activity Report associated with one of your recipients has been approved.');
       expect(message.text).toContain(reportPath);
     });
+    it('Tests that an email is not sent if no program specialists/recipients', async () => {
+      process.env.SEND_NOTIFICATIONS = true;
+      const email = await notifyGranteeReportApproved({
+        data: {
+          report: mockReport,
+          programSpecialists: [],
+          recipients: [mockRecipient],
+        },
+      }, jsonTransport);
+      expect(email).toBe(null);
+    });
   });
   describe('Manager Approval Requested', () => {
     it('Tests that an email is sent', async () => {
