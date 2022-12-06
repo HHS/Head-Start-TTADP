@@ -21,7 +21,7 @@ import { beforeCreateDate, afterCreateDate, withinCreateDate } from './createDat
 import { beforeEndDate, afterEndDate, withinEndDate } from './endDate';
 import { withOtherEntities, withoutOtherEntities } from './otherEntities';
 import { withoutParticipants, withParticipants } from './participants';
-import { withUserReportRoles, withoutUserReportRoles } from './userReportRoles';
+import { withMyReports, withoutMyReports } from './myReports';
 
 export const topicToQuery = {
   reportId: {
@@ -74,9 +74,9 @@ export const topicToQuery = {
     in: (query) => withProgramTypes(query),
     nin: (query) => withoutProgramTypes(query),
   },
-  userReportRoles: {
-    in: (query, options) => withUserReportRoles(query, options),
-    nin: (query, options) => withoutUserReportRoles(query, options),
+  myReports: {
+    in: (query, options, userId) => withMyReports(query, options, userId),
+    nin: (query, options, userId) => withoutMyReports(query, options, userId),
   },
   region: {
     in: (query) => withRegion(query),
@@ -117,6 +117,6 @@ export const topicToQuery = {
   },
 };
 
-export function activityReportsFiltersToScopes(filters, options) {
-  return createFiltersToScopes(filters, topicToQuery, options);
+export function activityReportsFiltersToScopes(filters, options, userId) {
+  return createFiltersToScopes(filters, topicToQuery, options, userId);
 }
