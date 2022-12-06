@@ -6,11 +6,12 @@ const VALID_URL_REGEX = /^https?:\/\/.*\.[^ |^.]/;
 
 export const isValidResourceUrl = (attempted) => {
   try {
-    if ((attempted.match(/http/gi) || []).length > 1 || attempted.length > 255) {
+    const httpOccurences = (attempted.match(/http/gi) || []).length;
+    if (httpOccurences !== 1 || attempted.length > 255 || !VALID_URL_REGEX.test(attempted)) {
       return false;
     }
     const u = new URL(attempted);
-    return (u !== '' && VALID_URL_REGEX.test(u));
+    return (u !== '');
   } catch (e) {
     return false;
   }
