@@ -12,6 +12,7 @@ import {
   approvedDigest,
   notificationQueue as notificationQueueMock,
   notificationDigestQueue as notificationDigestQueueMock,
+  notifyGranteeReportApproved,
 } from '.';
 import {
   EMAIL_ACTIONS, EMAIL_DIGEST_FREQ, REPORT_STATUSES,
@@ -88,6 +89,18 @@ const mockReport = {
   author: mockAuthor,
   activityReportCollaborators: [mockCollaborator1, mockCollaborator2],
   approvers: [mockApprover],
+};
+
+const mockProgramSpecialist = {
+  id: 999,
+  homeRegionId: 1,
+  name: 'Mock Program Specialist',
+  email: 'james@bond.com',
+};
+
+const mockRecipient = {
+  id: 999,
+  name: 'ABC Recipient',
 };
 
 const reportObject = {
@@ -215,6 +228,25 @@ describe('mailer tests', () => {
       await expect(notifyReportApproved({
         data: { report: mockReport },
       }, jsonTransport)).toBeNull();
+    });
+  });
+  describe('Program Specialists: Grantee Report Approved', () => {
+    it('Tests that an email is sent', async () => {
+      process.env.SEND_NOTIFICATIONS = true;
+      const email = await notifyGranteeReportApproved({
+        data: {
+          report: mockReport,
+          programSpecialists: [mockProgramSpecialist],
+          recipients: [mockRecipient],
+        },
+      }, jsonTransport);
+      expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
+      expect(email.envelope.to).toStrictEqual([mockProgramSpecialist.email]);
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(`${mockRecipient.name}: Activity Report approved in TTA Hub`);
+      expect(message.text).toContain(`${mockReport.displayId}`);
+      expect(message.text).toContain('An Activity Report associated with one of your recipients has been approved.');
+      expect(message.text).toContain(reportPath);
     });
   });
   describe('Manager Approval Requested', () => {
