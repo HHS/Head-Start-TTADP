@@ -328,7 +328,7 @@ export const reportApprovedNotification = (report, authorWithSetting, collabsWit
 /**
  * @param {ActivityReport} report
  * @param {User[]} programSpecialists
-*  @param {Recipient[]} recipients
+*  @param {Array<{ id: number, name: string }>} recipients
  */
 export const programSpecialistGranteeReportApprovedNotification = (
   report,
