@@ -9,11 +9,19 @@ module.exports = {
       `,
       { transaction },
     );
+
+    await queryInterface.sequelize.query(
+      `
+        ALTER TYPE "enum_MailerLogs_action" ADD VALUE 'granteeReportApproved';
+        ALTER TYPE "enum_MailerLogs_action" ADD VALUE 'granteeReportApprovedDigest';
+      `,
+    );
   }),
   down: (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => {
     // remove the above row
     await queryInterface.sequelize.query(
       `
+        DELETE FROM "UserSettingOverrides" WHERE "userSettingId" = 5;
         DELETE FROM "UserSettings" WHERE "class" = 'email' AND "key" = 'emailWhenGranteeReportApprovedProgramSpecialist'
       `,
       { transaction },
