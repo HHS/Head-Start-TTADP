@@ -10,11 +10,13 @@ case type
         p These activity reports were submitted for your review:
     when 'reportApprovedDigest'
         p These activity reports were approved:
+    when 'granteeReportApprovedDigest'
+        p Activity Reports associated with your recipients were approved:
     default
         p
 ul
   for report in reports
-    li 
+    li
       a(href=reportPath + report.id)= report.displayId
 p That's it!
 p Best wishes,

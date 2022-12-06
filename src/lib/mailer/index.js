@@ -173,17 +173,29 @@ export const notifyReportApproved = (job, transport = defaultTransport) => {
 };
 
 export const notifyGranteeReportApproved = (job, transport = defaultTransport) => {
-  const toEmails = [];
-  const { report, programSpecialists } = job.data;
+  const { report, programSpecialists, recipients } = job.data;
   // Set these inside the function to allow easier testing
   const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
+
+  const recipientNames = recipients.map((r) => r.name);
 
   if (SEND_NOTIFICATIONS === 'true') {
     const { id, displayId } = report;
 
     logger.info(`MAILER: Notifying program specialists that report ${displayId} was approved because they have grants associated with it.`);
-    const programSpecialistsEmailAddresses = programSpecialists.map((c) => c.email);
+    const addresses = programSpecialists.map((c) => c.email);
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
+    const email = new Email({
+      message: { from: FROM_EMAIL_ADDRESS },
+      send,
+      transport,
+      htmlToText: { wordWrap: 120 },
+    });
+    return email.send({
+      template: path.resolve(emailTemplatePath, 'grantee_report_approved'),
+      message: { to: addresses },
+      locals: { reportPath, displayId, recipientNames },
+    });
   }
 
   return null;
@@ -316,13 +328,19 @@ export const reportApprovedNotification = (report, authorWithSetting, collabsWit
 /**
  * @param {ActivityReport} report
  * @param {User[]} programSpecialists
+*  @param {Recipient[]} recipients
  */
-export const programSpecialistGranteeReportApprovedNotification = (report, programSpecialists) => {
+export const programSpecialistGranteeReportApprovedNotification = (
+  report,
+  programSpecialists,
+  recipients,
+) => {
   // Send group notification to program specialists
   try {
     const data = {
       report,
       programSpecialists,
+      recipients,
     };
     notificationQueue.add(EMAIL_ACTIONS.GRANTEE_REPORT_APPROVED, data);
   } catch (err) {

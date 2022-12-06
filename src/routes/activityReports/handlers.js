@@ -7,6 +7,8 @@ import {
   Role,
   ActivityReportApprover,
   User as UserModel,
+  Grant,
+  Recipient,
   sequelize,
 } from '../../models';
 import ActivityReport from '../../policies/activityReport';
@@ -436,11 +438,28 @@ export async function reviewReport(req, res) {
       );
       reportApprovedNotification(reviewedReport, authorWithSetting, collabsWithSettings);
 
+      // Notify program specialists of this approval if they
+      // have a grant recipient associated with this report.
       const [, , programSpecialists] = await checkEmailSettings(
         reviewedReport,
         USER_SETTINGS.EMAIL.KEYS.GRANTEE_APPROVAL,
       );
-      programSpecialistGranteeReportApprovedNotification(report, programSpecialists);
+
+      // Find the grant associated with this report,
+      // and find the recipient associated with that grant.
+      const grantIds = reviewedReport.activityRecipients.map((recipient) => recipient.grantId);
+      const grants = await Grant.findAll({
+        where: { id: grantIds },
+      });
+
+      // map grants to recipientIds
+      const recipientIds = grants.map((grant) => grant.recipientId);
+
+      const recipients = await Recipient.findAll({
+        where: { id: recipientIds },
+      });
+
+      programSpecialistGranteeReportApprovedNotification(report, programSpecialists, recipients);
     }
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
