@@ -450,6 +450,7 @@ export async function reviewReport(req, res) {
       const grantIds = reviewedReport.activityRecipients.map((recipient) => recipient.grantId);
       const grants = await Grant.findAll({
         where: { id: grantIds },
+        raw: true,
       });
 
       // map grants to recipientIds
@@ -457,6 +458,7 @@ export async function reviewReport(req, res) {
 
       const recipients = await Recipient.findAll({
         where: { id: recipientIds },
+        raw: true,
       });
 
       programSpecialistGranteeReportApprovedNotification(report, programSpecialists, recipients);
