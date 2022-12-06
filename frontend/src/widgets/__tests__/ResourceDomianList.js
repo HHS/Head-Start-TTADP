@@ -119,7 +119,7 @@ describe('Resource Domain List Widget', () => {
     ];
     renderResourceDomainList(data);
 
-    expect(screen.getByText(/resources in activity reports/i)).toBeInTheDocument();
+    expect(screen.getByText(/resource domains in activity reports/i)).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /domain/i })).toBeInTheDocument(3);
     expect(screen.getByRole('columnheader', { name: /number of resources/i })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /number of activities/i })).toBeInTheDocument();
