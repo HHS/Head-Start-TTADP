@@ -1423,7 +1423,7 @@ describe('filtersToScopes', () => {
     });
   });
 
-  describe('userReportRoles', () => {
+  describe('myReports', () => {
     let possibleIds;
     let reportOne;
     let reportTwo;
@@ -1552,11 +1552,11 @@ describe('filtersToScopes', () => {
       await destroyReport(reportThree);
     });
 
-    it('includes creator user report role', async () => {
-      const filters = { 'userReportRoles.in': ['Creator'] };
+    it('includes creator my reports', async () => {
+      const filters = { 'myReports.in': ['Creator'] };
       const { activityReport: scope } = filtersToScopes(
         filters,
-        { activityReport: { userId: mockUserTwo.id } },
+        { userId: mockUserTwo.id },
       );
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -1566,11 +1566,11 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([reportTwo.id]));
     });
 
-    it('excludes creator user report role', async () => {
-      const filters = { 'userReportRoles.nin': ['Creator'] };
+    it('excludes creator my reports', async () => {
+      const filters = { 'myReports.nin': ['Creator'] };
       const { activityReport: scope } = filtersToScopes(
         filters,
-        { activityReport: { userId: mockUserTwo.id } },
+        { userId: mockUserTwo.id },
       );
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -1580,11 +1580,11 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([reportOne.id, reportThree.id, globallyExcludedReport.id]));
     });
 
-    it('includes collaborator user report role', async () => {
-      const filters = { 'userReportRoles.in': ['Collaborator'] };
+    it('includes collaborator my reports', async () => {
+      const filters = { 'myReports.in': ['Collaborator'] };
       const { activityReport: scope } = filtersToScopes(
         filters,
-        { activityReport: { userId: mockUserTwo.id } },
+        { userId: mockUserTwo.id },
       );
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -1594,11 +1594,11 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([reportOne.id]));
     });
 
-    it('excludes collaborator user report role', async () => {
-      const filters = { 'userReportRoles.nin': ['Collaborator'] };
+    it('excludes collaborator my reports', async () => {
+      const filters = { 'myReports.nin': ['Collaborator'] };
       const { activityReport: scope } = filtersToScopes(
         filters,
-        { activityReport: { userId: mockUserTwo.id } },
+        { userId: mockUserTwo.id },
       );
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -1608,11 +1608,11 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([reportTwo.id, reportThree.id, globallyExcludedReport.id]));
     });
 
-    it('includes approver user report role', async () => {
-      const filters = { 'userReportRoles.in': ['Approver'] };
+    it('includes approver my reports', async () => {
+      const filters = { 'myReports.in': ['Approver'] };
       const { activityReport: scope } = filtersToScopes(
         filters,
-        { activityReport: { userId: mockUserTwo.id } },
+        { userId: mockUserTwo.id },
       );
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -1622,11 +1622,11 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([reportThree.id]));
     });
 
-    it('excludes approver user report role', async () => {
-      const filters = { 'userReportRoles.nin': ['Approver'] };
+    it('excludes approver my reports', async () => {
+      const filters = { 'myReports.nin': ['Approver'] };
       const { activityReport: scope } = filtersToScopes(
         filters,
-        { activityReport: { userId: mockUserTwo.id } },
+        { userId: mockUserTwo.id },
       );
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -1636,11 +1636,11 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([reportOne.id, reportTwo.id, globallyExcludedReport.id]));
     });
 
-    it('includes all user report role', async () => {
-      const filters = { 'userReportRoles.in': ['Creator', 'Collaborator', 'Approver'] };
+    it('includes all my reports', async () => {
+      const filters = { 'myReports.in': ['Creator', 'Collaborator', 'Approver'] };
       const { activityReport: scope } = filtersToScopes(
         filters,
-        { activityReport: { userId: mockUserTwo.id } },
+        { userId: mockUserTwo.id },
       );
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -1650,11 +1650,11 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([reportOne.id, reportTwo.id, reportThree.id]));
     });
 
-    it('excludes all user report role', async () => {
-      const filters = { 'userReportRoles.nin': ['Creator', 'Collaborator', 'Approver'] };
+    it('excludes all my reports', async () => {
+      const filters = { 'myReports.nin': ['Creator', 'Collaborator', 'Approver'] };
       const { activityReport: scope } = filtersToScopes(
         filters,
-        { activityReport: { userId: mockUserTwo.id } },
+        { userId: mockUserTwo.id },
       );
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },

@@ -42,10 +42,9 @@ export async function getWidget(req, res) {
       query,
       {
         grant: { subset: true },
-        activityReport: { userId: req.session.userId },
+        userId: req.session.userId,
       },
     );
-
     // filter out any disallowed keys
     const queryWithFilteredKeys = onlyAllowedKeys(query);
 
