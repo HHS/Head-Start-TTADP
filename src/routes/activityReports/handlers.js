@@ -429,7 +429,10 @@ export async function reviewReport(req, res) {
       userId,
     });
 
-    const [reviewedReport] = await activityReportAndRecipientsById(activityReportId);
+    const [
+      reviewedReport,
+      activityRecipients,
+    ] = await activityReportAndRecipientsById(activityReportId);
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
       const [authorWithSetting, collabsWithSettings] = await checkEmailSettings(
@@ -445,23 +448,11 @@ export async function reviewReport(req, res) {
         USER_SETTINGS.EMAIL.KEYS.GRANTEE_APPROVAL,
       );
 
-      // Find the grant associated with this report,
-      // and find the recipient associated with that grant.
-      const grantIds = reviewedReport.activityRecipients.map((recipient) => recipient.grantId);
-      const grants = await Grant.findAll({
-        where: { id: grantIds },
-        raw: true,
-      });
-
-      // map grants to recipientIds
-      const recipientIds = grants.map((grant) => grant.recipientId);
-
-      const recipients = await Recipient.findAll({
-        where: { id: recipientIds },
-        raw: true,
-      });
-
-      programSpecialistGranteeReportApprovedNotification(report, programSpecialists, recipients);
+      programSpecialistGranteeReportApprovedNotification(
+        report,
+        programSpecialists,
+        activityRecipients,
+      );
     }
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
