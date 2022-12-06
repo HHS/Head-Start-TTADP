@@ -463,16 +463,16 @@ export async function resourcesDashboardOverview(scopes) {
   // resource based intermediate data
   data.resourceIntermediate = {};
   data.resourceIntermediate
-    .allResources = new Set([...domainData.map((dd) => [...dd.urls])].flat());
+    .allResources = new Set([...domainData.map((dd) => [...dd.resources])].flat());
   data.resourceIntermediate.allEclkcResources = new Set([
     ...domainData
       .filter((d) => d.domain === RESOURCE_DOMAIN.ECLKC)
-      .map((dd) => [...dd.urls]),
+      .map((dd) => [...dd.resources]),
   ].flat());
   data.resourceIntermediate.allNonEclkcResources = new Set([
     ...domainData
       .filter((d) => d.domain !== RESOURCE_DOMAIN.ECLKC)
-      .map((dd) => [...dd.urls]),
+      .map((dd) => [...dd.resources]),
   ].flat());
 
   // resource based stats
