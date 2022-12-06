@@ -259,6 +259,16 @@ describe('mailer tests', () => {
       }, jsonTransport);
       expect(email).toBe(null);
     });
+    it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
+      process.env.SEND_NOTIFICATIONS = false;
+      await expect(notifyGranteeReportApproved({
+        data: {
+          report: mockReport,
+          programSpecialists: [mockProgramSpecialist],
+          recipients: [mockRecipient],
+        },
+      }, jsonTransport)).toBeNull();
+    });
   });
   describe('Manager Approval Requested', () => {
     it('Tests that an email is sent', async () => {
