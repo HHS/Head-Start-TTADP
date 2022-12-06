@@ -1,4 +1,3 @@
-import { NodePath } from '@babel/core';
 import { test, expect } from '@playwright/test';
 
 async function blur(page) {
