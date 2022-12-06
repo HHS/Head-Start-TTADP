@@ -551,6 +551,7 @@ export async function granteeApprovedDigest(freq, subjectFreq) {
       WHERE a.id in (${reportIds.join(',')})
     `, { type: QueryTypes.SELECT });
 
+    // Filter to only those who have opted into this notification setting and freq.
     specialists = await Promise.all(specialists.map(async (ps) => {
       const setting = await userSettingOverridesById(
         ps.id,
