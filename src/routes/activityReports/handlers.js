@@ -7,8 +7,6 @@ import {
   Role,
   ActivityReportApprover,
   User as UserModel,
-  Grant,
-  Recipient,
   sequelize,
 } from '../../models';
 import ActivityReport from '../../policies/activityReport';
