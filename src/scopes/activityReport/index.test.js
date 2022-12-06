@@ -1439,6 +1439,11 @@ describe('filtersToScopes', () => {
         ],
         userId: mockUser.id,
       });
+
+      await ActivityReportCollaborator.create({
+        activityReportId: reportOne.id, userId: mockUserTwo.id,
+      });
+
       reportTwo = await createReport({
         activityRecipients: [
           {
@@ -1453,6 +1458,11 @@ describe('filtersToScopes', () => {
             grantId: faker.datatype.number(),
           },
         ],
+      });
+
+      await ActivityReportApprover.create({
+        userId: mockUserTwo.id,
+        activityReportId: reportThree.id,
       });
 
       possibleIds = [
@@ -1533,6 +1543,10 @@ describe('filtersToScopes', () => {
         },
       });
 
+      await ActivityReportCollaborator.destroy({ where: { userId: mockUserTwo.id } });
+      await ActivityReportApprover.destroy({
+        where: { activityReportId: reportThree.id }, force: true,
+      });
       await destroyReport(reportOne);
       await destroyReport(reportTwo);
       await destroyReport(reportThree);
@@ -1564,6 +1578,90 @@ describe('filtersToScopes', () => {
       expect(found.length).toBe(3);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([reportOne.id, reportThree.id, globallyExcludedReport.id]));
+    });
+
+    it('includes collaborator user report role', async () => {
+      const filters = { 'userReportRoles.in': ['Collaborator'] };
+      const { activityReport: scope } = filtersToScopes(
+        filters,
+        { activityReport: { userId: mockUserTwo.id } },
+      );
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      }).catch((err) => auditLogger.error(err));
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([reportOne.id]));
+    });
+
+    it('excludes collaborator user report role', async () => {
+      const filters = { 'userReportRoles.nin': ['Collaborator'] };
+      const { activityReport: scope } = filtersToScopes(
+        filters,
+        { activityReport: { userId: mockUserTwo.id } },
+      );
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      }).catch((err) => auditLogger.error(err));
+      expect(found.length).toBe(3);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([reportTwo.id, reportThree.id, globallyExcludedReport.id]));
+    });
+
+    it('includes approver user report role', async () => {
+      const filters = { 'userReportRoles.in': ['Approver'] };
+      const { activityReport: scope } = filtersToScopes(
+        filters,
+        { activityReport: { userId: mockUserTwo.id } },
+      );
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      }).catch((err) => auditLogger.error(err));
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([reportThree.id]));
+    });
+
+    it('excludes approver user report role', async () => {
+      const filters = { 'userReportRoles.nin': ['Approver'] };
+      const { activityReport: scope } = filtersToScopes(
+        filters,
+        { activityReport: { userId: mockUserTwo.id } },
+      );
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      }).catch((err) => auditLogger.error(err));
+      expect(found.length).toBe(3);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([reportOne.id, reportTwo.id, globallyExcludedReport.id]));
+    });
+
+    it('includes all user report role', async () => {
+      const filters = { 'userReportRoles.in': ['Creator', 'Collaborator', 'Approver'] };
+      const { activityReport: scope } = filtersToScopes(
+        filters,
+        { activityReport: { userId: mockUserTwo.id } },
+      );
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      }).catch((err) => auditLogger.error(err));
+      expect(found.length).toBe(3);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([reportOne.id, reportTwo.id, reportThree.id]));
+    });
+
+    it('excludes all user report role', async () => {
+      const filters = { 'userReportRoles.nin': ['Creator', 'Collaborator', 'Approver'] };
+      const { activityReport: scope } = filtersToScopes(
+        filters,
+        { activityReport: { userId: mockUserTwo.id } },
+      );
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      }).catch((err) => auditLogger.error(err));
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([globallyExcludedReport.id]));
     });
   });
 
