@@ -5,11 +5,12 @@ const VALID_URL_REGEX = /^https?:\/\/.*\.[^ |^.]/;
 // regex and function copied from frontend (they should match)
 export const isValidResourceUrl = (url) => {
   try {
-    if ((url.match(/http/gi) || []).length > 1 || url.length > 255) {
+    const httpOccurences = (url.match(/http/gi) || []).length;
+    if (httpOccurences !== 1 || url.length > 255 || !VALID_URL_REGEX.test(url)) {
       return false;
     }
     const u = new URL(url);
-    return (u !== '' && VALID_URL_REGEX.test(u));
+    return (u !== '');
   } catch (e) {
     return false;
   }

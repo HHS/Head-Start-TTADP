@@ -67,13 +67,7 @@ export const TTA_OBJECTIVE_ERROR = 'Enter the TTA objective';
 export const OBJECTIVE_TOPIC_ERROR = 'Select at least one topic';
 export const OBJECTIVE_LINK_ERROR = (
   <span className="usa-error-message">
-    <span className="usa-prose">Enter one resource per field. Valid resource links must:</span>
-    <ul className="usa-list margin-top-0">
-      <li>start with http:// or https://</li>
-      <li>contain at least one period</li>
-      <li>be 255 characters or less</li>
-      <li>not end with a period or a space</li>
-    </ul>
+    Enter one resource per field. Valid resource links must start with http:// or https://
   </span>
 );
 export const OBJECTIVE_STATUS_ERROR = 'Select a status';

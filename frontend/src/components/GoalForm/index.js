@@ -396,6 +396,40 @@ export default function GoalForm({
     return isValid;
   };
 
+  const validateResourcesOnly = () => {
+    if (!objectives.length) {
+      return true;
+    }
+
+    const newErrors = [...errors];
+    let isValid = true;
+
+    const newObjectiveErrors = objectives.map((objective) => {
+      if (!validateListOfResources(objective.resources)) {
+        isValid = false;
+        return [
+          <></>,
+          <></>,
+          <span className="usa-error-message">{objectiveResourcesError}</span>,
+          <></>,
+          <></>,
+        ];
+      }
+      return [
+        <></>,
+        <></>,
+        <></>,
+        <></>,
+        <></>,
+      ];
+    });
+
+    newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES, 1, newObjectiveErrors);
+    setErrors(newErrors);
+
+    return isValid;
+  };
+
   const clearEmptyObjectiveError = () => {
     const error = <></>;
     const newErrors = [...errors];
@@ -412,7 +446,11 @@ export default function GoalForm({
     && validateObjectives()
     && validateIsRttapa()
   );
-  const isValidDraft = () => validateGrantNumbers() && validateGoalName();
+  const isValidDraft = () => (
+    validateGrantNumbers()
+    && validateGoalName()
+    && validateResourcesOnly()
+  );
 
   const updateObjectives = (updatedObjectives) => {
     // when we set a new set of objectives
@@ -554,6 +592,11 @@ export default function GoalForm({
 
   const onSaveDraft = async () => {
     if (!isValidDraft()) {
+      // attempt to focus on the first invalid field
+      const invalid = document.querySelector('.usa-form :invalid:not(fieldset), .usa-form-group--error textarea, usa-form-group--error input, .usa-error-message + .ttahub-resource-repeater input');
+      if (invalid) {
+        invalid.focus();
+      }
       return;
     }
 
@@ -641,6 +684,11 @@ export default function GoalForm({
 
   const onSaveAndContinue = async (redirect = false) => {
     if (!isValidNotStarted()) {
+      // attempt to focus on the first invalid field
+      const invalid = document.querySelector('.usa-form :invalid:not(fieldset), .usa-form-group--error textarea, usa-form-group--error input, .usa-error-message + .ttahub-resource-repeater input');
+      if (invalid) {
+        invalid.focus();
+      }
       return;
     }
 

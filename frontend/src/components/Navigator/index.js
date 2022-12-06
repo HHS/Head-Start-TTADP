@@ -31,7 +31,7 @@ import { saveGoalsForReport, saveObjectivesForReport } from '../../fetchers/acti
 import GoalFormContext from '../../GoalFormContext';
 import { validateObjectives } from '../../pages/ActivityReport/Pages/components/objectiveValidator';
 import AppLoadingContext from '../../AppLoadingContext';
-import { objectivesWithValidResourcesOnly } from '../GoalForm/constants';
+import { objectivesWithValidResourcesOnly, validateListOfResources } from '../GoalForm/constants';
 
 function Navigator({
   editable,
@@ -175,9 +175,6 @@ function Navigator({
   };
 
   const onSaveDraftGoal = async (isAutoSave = false) => {
-    // Prevent user from making changes to goal title during auto-save.
-    setSavingLoadScreen(isAutoSave);
-
     // the goal form only allows for one goal to be open at a time
     // but the objectives are stored in a subfield
     // so we need to access the objectives and bundle them together in order to validate them
@@ -186,6 +183,19 @@ function Navigator({
     const name = getValues('goalName');
     const endDate = getValues('goalEndDate');
     const isRttapa = getValues('goalIsRttapa');
+
+    if (!isAutoSave && !validateListOfResources(objectives.map((o) => o.resources).flat())) {
+      // make an attempt to focus on the first invalid resource
+      // having a sticky header complicates this enough to make me not want to do this perfectly
+      // right out of the gate
+      const invalid = document.querySelector('.usa-error-message + .ttahub-resource-repeater input');
+      if (invalid) {
+        invalid.focus();
+      }
+      return;
+    }
+    // Prevent user from making changes to goal title during auto-save.
+    setSavingLoadScreen(isAutoSave);
 
     const goal = {
       ...goalForEditing,
@@ -212,7 +222,21 @@ function Navigator({
         );
 
         // Find the goal we are editing and put it back with updated values.
-        const goalBeingEdited = allGoals.find((g) => g.name === goal.name);
+        let goalBeingEdited = allGoals.find((g) => g.name === goal.name);
+
+        // if we are autosaving, we want to preserve the resources that were added in the UI
+        // whether or not they are valid (although nothing is saved to the database)
+        // this is a convenience so that a work in progress isn't erased
+        if (isAutoSave && goalBeingEdited) {
+          goalBeingEdited = {
+            ...goalBeingEdited,
+            objectives: goalBeingEdited.objectives.map((objective, objectiveIndex) => ({
+              ...objective,
+              resources: objectives[objectiveIndex].resources,
+            })),
+          };
+        }
+
         setValue('goalForEditing', goalBeingEdited);
       }
 
@@ -231,16 +255,27 @@ function Navigator({
   };
 
   const onSaveDraftOetObjectives = async (isAutoSave = false) => {
-    // Prevent user from making changes to objectives during auto-save.
-    setSavingLoadScreen(isAutoSave);
-
     const fieldArrayName = 'objectivesWithoutGoals';
     const currentObjectives = getValues(fieldArrayName);
     const otherEntityIds = recipients.map((otherEntity) => otherEntity.activityRecipientId);
 
+    if (!isAutoSave && !validateListOfResources(currentObjectives.map((o) => o.resources).flat())) {
+      // make an attempt to focus on the first invalid resource
+      // having a sticky header complicates this enough to make me not want to do this perfectly
+      // right out of the gate
+      const invalid = document.querySelector('.usa-error-message + .ttahub-resource-repeater input');
+      if (invalid) {
+        invalid.focus();
+      }
+      return;
+    }
+
+    // Prevent user from making changes to objectives during auto-save.
+    setSavingLoadScreen(isAutoSave);
+
     // Save objectives.
     try {
-      const newObjectives = await saveObjectivesForReport(
+      let newObjectives = await saveObjectivesForReport(
         {
           objectivesWithoutGoals: objectivesWithValidResourcesOnly(
             currentObjectives.map((objective) => (
@@ -251,6 +286,17 @@ function Navigator({
           region: formData.regionId,
         },
       );
+
+      // if we are autosaving, we want to preserve the resources that were added in the UI
+      // whether or not they are valid (although nothing is saved to the database)
+      // this is a convenience so that a work in progress isn't erased
+      if (isAutoSave && newObjectives) {
+        newObjectives = newObjectives.map((objective, objectiveIndex) => ({
+          ...objective,
+          resources: currentObjectives[objectiveIndex].resources,
+        }));
+      }
+
       // Set updated objectives.
       setValue('objectivesWithoutGoals', newObjectives);
       updateLastSaveTime(moment());
@@ -289,6 +335,12 @@ function Navigator({
     );
 
     if (areGoalsValid !== true) {
+      // make an attempt to focus on the first invalid field
+      const invalid = document.querySelector('.usa-form :invalid:not(fieldset), .usa-form-group--error textarea, usa-form-group--error input');
+      if (invalid) {
+        invalid.focus();
+      }
+
       return;
     }
 

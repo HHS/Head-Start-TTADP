@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -11,7 +11,7 @@ import QuestionTooltip from './QuestionTooltip';
 import URLInput from '../URLInput';
 import UnusedData from './UnusedData';
 import colors from '../../colors';
-import './ResourceRepeater.css';
+import './ResourceRepeater.scss';
 import { OBJECTIVE_LINK_ERROR } from './constants';
 
 export default function ResourceRepeater({
@@ -25,8 +25,6 @@ export default function ResourceRepeater({
   userCanEdit,
   editingFromActivityReport,
 }) {
-  const resourcesWrapper = useRef();
-
   const readOnly = !editingFromActivityReport
   && ((goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed' || !userCanEdit);
 
@@ -95,7 +93,7 @@ export default function ResourceRepeater({
 
       { userCanEdit ? (
         <FormGroup error={error.props.children}>
-          <div ref={resourcesWrapper}>
+          <div>
             <Label htmlFor="resources" className={fixedResources.length ? 'text-bold' : ''}>
               {!fixedResources.length ? 'Link to TTA resource used' : 'Add resource link'}
               <QuestionTooltip
@@ -103,7 +101,7 @@ export default function ResourceRepeater({
               />
             </Label>
             <span className="usa-hint">
-              Enter one resource per field. To enter multiple resources, select “Add new resource”
+              Enter one resource per field. To enter more resources, select “Add new resource”
             </span>
             {error.props.children ? OBJECTIVE_LINK_ERROR : null}
             <div className="ttahub-resource-repeater">
