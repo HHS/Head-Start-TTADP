@@ -1,7 +1,11 @@
 import { CronJob } from 'cron';
 import updateGrantsRecipients from './updateGrantsRecipients';
 import {
-  approvedDigest, changesRequestedDigest, collaboratorDigest, submittedDigest, granteeApprovedDigest
+  approvedDigest,
+  changesRequestedDigest,
+  collaboratorDigest,
+  submittedDigest,
+  granteeApprovedDigest,
 } from './mailer';
 import {
   DIGEST_SUBJECT_FREQ, EMAIL_DIGEST_FREQ,
