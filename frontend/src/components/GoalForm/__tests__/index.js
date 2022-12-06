@@ -656,7 +656,7 @@ describe('create goal', () => {
     const save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
 
-    await screen.findByText('Enter one resource per field. Valid resource links must:');
+    await screen.findByText('Enter one resource per field. Valid resource links must start with http:// or https://');
 
     userEvent.clear(resourceOne);
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
@@ -675,7 +675,7 @@ describe('create goal', () => {
 
     userEvent.click(save);
 
-    await screen.findByText(/Enter one resource per field. Valid resource links must:/i);
+    await screen.findByText('Enter one resource per field. Valid resource links must start with http:// or https://');
 
     addNewResource = await screen.findByRole('button', { name: 'Add new resource' });
     userEvent.click(addNewResource);
