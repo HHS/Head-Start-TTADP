@@ -291,8 +291,8 @@ async function generateResourceList(
       if (r2.recipientCount - r1.recipientCount === 0) {
         if (r2.participantCount - r1.participantCount === 0) {
           // Break tie on url
-          const url1 = r1.url.toUpperCase().replace(' ', ''); // ignore upper and lowercase
-          const url2 = r2.url.toUpperCase().replace(' ', ''); // ignore upper and lowercase
+          const url1 = r1.url ? r1.url.toUpperCase().replace(' ', '') : ''; // ignore upper and lowercase
+          const url2 = r2.url ? r2.url.toUpperCase().replace(' ', '') : ''; // ignore upper and lowercase
           if (url1 < url2) {
             return -1;
           }
