@@ -242,6 +242,7 @@ export const EMAIL_ACTIONS = {
   SUBMITTED_DIGEST: 'approverAssignedDigest',
   APPROVED_DIGEST: 'reportApprovedDigest',
   GRANTEE_REPORT_APPROVED: 'granteeReportApproved',
+  GRANTEE_REPORT_APPROVED_DIGEST: 'granteeReportApprovedDigest',
 };
 
 export const EMAIL_DIGEST_FREQ = {
