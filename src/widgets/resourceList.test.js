@@ -257,19 +257,25 @@ describe('Resources list widget', () => {
     const res = await resourceList(scopes);
     expect(res.length).toBe(3);
 
+    expect(res[0].name).toBe(ECLKC_RESOURCE_URL);
     expect(res[0].url).toBe(ECLKC_RESOURCE_URL);
     expect(res[0].count).toBe(2);
     expect(res[0].reportCount).toBe(2);
+    expect(res[0].participantCount).toBe(22);
     expect(res[0].recipientCount).toBe(1);
 
+    expect(res[1].name).toBe(NONECLKC_RESOURCE_URL);
     expect(res[1].url).toBe(NONECLKC_RESOURCE_URL);
     expect(res[1].count).toBe(2);
     expect(res[1].reportCount).toBe(2);
+    expect(res[1].participantCount).toBe(22);
     expect(res[1].recipientCount).toBe(1);
 
     expect(res[2].name).toBe('none');
+    expect(res[2].url).toBe(null);
     expect(res[2].count).toBe(1);
     expect(res[2].reportCount).toBe(1);
+    expect(res[2].participantCount).toBe(11);
     expect(res[2].recipientCount).toBe(0);
   });
 
@@ -278,14 +284,18 @@ describe('Resources list widget', () => {
     const res = await resourceList(scopes);
     expect(res.length).toBe(2);
 
+    expect(res[0].name).toBe(ECLKC_RESOURCE_URL);
     expect(res[0].url).toBe(ECLKC_RESOURCE_URL);
     expect(res[0].count).toBe(2);
     expect(res[0].reportCount).toBe(2);
+    expect(res[0].participantCount).toBe(22);
     expect(res[0].recipientCount).toBe(1);
 
+    expect(res[1].name).toBe(NONECLKC_RESOURCE_URL);
     expect(res[1].url).toBe(NONECLKC_RESOURCE_URL);
     expect(res[1].count).toBe(2);
     expect(res[1].reportCount).toBe(2);
+    expect(res[0].participantCount).toBe(22);
     expect(res[1].recipientCount).toBe(1);
   });
 
@@ -296,11 +306,13 @@ describe('Resources list widget', () => {
 
     expect(domains[0].domain).toBe(RESOURCE_DOMAIN.ECLKC);
     expect(domains[0].count).toBe(2);
+    expect(domains[0].resourceCount).toBe(1);
     expect(domains[0].reportCount).toBe(2);
     expect(domains[0].recipientCount).toBe(1);
 
     expect(domains[1].domain).toBe(NONECLKC_DOMAIN);
     expect(domains[1].count).toBe(2);
+    expect(domains[1].resourceCount).toBe(1);
     expect(domains[1].reportCount).toBe(2);
     expect(domains[1].recipientCount).toBe(1);
   });

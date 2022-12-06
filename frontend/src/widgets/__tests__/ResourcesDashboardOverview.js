@@ -12,29 +12,67 @@ describe('Resource Dashboard Overview Widget', () => {
   it('handles undefined data', async () => {
     renderResourcesDashboardOverview({ data: undefined });
 
-    expect(screen.getByText(/0 eclkc resources of 0/i)).toBeInTheDocument();
-    expect(screen.getByText(/0 non-eclkc resources of 0/i)).toBeInTheDocument();
-    expect(screen.getByText(/0 no resources of 0/i)).toBeInTheDocument();
+    expect(screen.getByText(/^[ \t]*Recipients rec'd resources\r?\n?[ \t]*0 of 0/i)).toBeInTheDocument();
+    expect(screen.getByText(/^[ \t]*Recipients rec'd ECLKC resources\r?\n?[ \t]*0 of 0/i)).toBeInTheDocument();
+    expect(screen.getByText(/^[ \t]*Recipients rec'd non-ECLKC resources\r?\n?[ \t]*0 of 0/i)).toBeInTheDocument();
+    expect(screen.getByText(/^[ \t]*Recipients rec'd no resources\r?\n?[ \t]*0 of 0/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/^[ \t]*Reports include resources\r?\n?[ \t]*0 of 0/i)).toBeInTheDocument();
+    expect(screen.getByText(/^[ \t]*Reports include ECLKC resources\r?\n?[ \t]*0 of 0/i)).toBeInTheDocument();
+    expect(screen.getByText(/^[ \t]*Reports include non-ECLKC resources\r?\n?[ \t]*0 of 0/i)).toBeInTheDocument();
+    expect(screen.getByText(/^[ \t]*Reports include no resources\r?\n?[ \t]*0 of 0/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/^[ \t]*ECLKC Resources\r?\n?[ \t]*0 of 0/i)).toBeInTheDocument();
+    expect(screen.getByText(/^[ \t]*Non-ECLKC Resources\r?\n?[ \t]*0 of 0/i)).toBeInTheDocument();
   });
 
   it('shows the correct data', async () => {
     const data = {
-      numEclkc: '50',
-      totalNumEclkc: '100',
-      numEclkcPercentage: '50%',
-      numNonEclkc: '40',
-      totalNumNonEclkc: '200',
-      numNonEclkcPercentage: '20%',
-      numNoResources: '30',
-      totalNumNoResources: '300',
-      numNoResourcesPercentage: '10%',
+      report: {
+        num: '1,721',
+        numResources: '661',
+        percentResources: '38.41%',
+        numNoResources: '1,060',
+        percentNoResources: '61.59%',
+        numEclkc: '634',
+        percentEclkc: '36.84%',
+        numNonEclkc: '101',
+        percentNonEclkc: '5.87%',
+      },
+      recipient: {
+        num: '231',
+        numResources: '220',
+        percentResources: '95.24%',
+        numNoResources: '11',
+        percentNoResources: '4.76%',
+        numEclkc: '219',
+        percentEclkc: '94.81%',
+        numNonEclkc: '83',
+        percentNonEclkc: '35.93%',
+      },
+      resource: {
+        num: '606',
+        numEclkc: '500',
+        percentEclkc: '82.51%',
+        numNonEclkc: '106',
+        percentNonEclkc: '17.49%',
+      },
     };
 
     renderResourcesDashboardOverview({ data });
 
-    expect(screen.getByText(/50 eclkc resources of 100/i)).toBeInTheDocument();
-    expect(screen.getByText(/40 non-eclkc resources of 200/i)).toBeInTheDocument();
-    expect(screen.getByText(/30 no resources of 300/i)).toBeInTheDocument();
+    expect(screen.getByText(/^[ \t]*Recipients rec'd resources\r?\n?[ \t]*220 of 231/i)).toBeInTheDocument();
+    expect(screen.getByText(/^[ \t]*Recipients rec'd ECLKC resources\r?\n?[ \t]*219 of 231/i)).toBeInTheDocument();
+    expect(screen.getByText(/^[ \t]*Recipients rec'd non-ECLKC resources\r?\n?[ \t]*83 of 231/i)).toBeInTheDocument();
+    expect(screen.getByText(/^[ \t]*Recipients rec'd no resources\r?\n?[ \t]*11 of 231/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/^[ \t]*Reports include resources\r?\n?[ \t]*661 of 1,721/i)).toBeInTheDocument();
+    expect(screen.getByText(/^[ \t]*Reports include ECLKC resources\r?\n?[ \t]*634 of 1,721/i)).toBeInTheDocument();
+    expect(screen.getByText(/^[ \t]*Reports include non-ECLKC resources\r?\n?[ \t]*101 of 1,721/i)).toBeInTheDocument();
+    expect(screen.getByText(/^[ \t]*Reports include no resources\r?\n?[ \t]*1,060 of 1,721/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/^[ \t]*ECLKC Resources\r?\n?[ \t]*500 of 606/i)).toBeInTheDocument();
+    expect(screen.getByText(/^[ \t]*Non-ECLKC Resources\r?\n?[ \t]*106 of 606/i)).toBeInTheDocument();
   });
 
   it('renders loading when loading', async () => {

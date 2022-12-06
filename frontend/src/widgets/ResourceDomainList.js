@@ -11,7 +11,7 @@ const renderResourceDomainList = (data) => {
           {resource.domain}
         </td>
         <td>
-          {resource.urlCount}
+          {resource.resourceCount}
         </td>
         <td>
           {resource.reportCount}

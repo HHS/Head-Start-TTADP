@@ -15,6 +15,9 @@ const renderResourceList = (data) => {
           {resource.reportCount}
         </td>
         <td>
+          {resource.participantCount}
+        </td>
+        <td>
           {resource.recipientCount}
         </td>
       </tr>
@@ -27,7 +30,7 @@ function ResourceList({ data, loading }) {
   return (
     <TableWidget
       data={data}
-      headings={['Resource', 'Number of activities', 'Number of recipients']}
+      headings={['Resource', 'Number of activities', 'Number of participants', 'Number of recipients']}
       loading={loading}
       loadingLabel="Resource list loading"
       title="Resources in Activity Reports"

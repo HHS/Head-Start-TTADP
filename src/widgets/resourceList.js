@@ -13,9 +13,7 @@ import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../constants';
 export async function resourceData(scopes) {
   // Query Database for all Resources within the scope.
   const reports = await ActivityReport.findAll({
-    attributes: [
-      'id',
-    ],
+    attributes: ['id', 'numberOfParticipants'],
     where: {
       [Op.and]: [
         scopes.activityReport,
@@ -199,7 +197,10 @@ export async function resourceData(scopes) {
     const recipients = reports
       .filter((r) => r.id === data.activityReportId)
       .map((r) => r['activityRecipients.grant.recipientId']);
-    return { ...data, recipients };
+    const participants = reports
+      .filter((r) => r.id === data.activityReportId)
+      .reduce((accumulator, r) => accumulator + r.numberOfParticipants, 0);
+    return { ...data, recipients, participants };
   });
 
   return { resources: resourcesWithRecipients, reports };
@@ -214,7 +215,12 @@ async function generateResourceList(
 
   let resourceCounts = res.reduce(
     (resources, resource) => {
-      const { activityReportId, url, domain } = resource;
+      const {
+        activityReportId,
+        url,
+        domain,
+        recipients,
+      } = resource;
       const exists = resources.find((o) => o.url === url);
       if (exists) {
         exists.reports.add(activityReportId);
@@ -229,12 +235,19 @@ async function generateResourceList(
         url,
         count: 1,
         reports: new Set([activityReportId]),
-        recipients: new Set(resource.recipients),
+        recipients: new Set(recipients),
       }];
     },
     [],
   );
 
+  resourceCounts = resourceCounts.map((rc) => ({
+    ...rc,
+    participantCount: [...rc.reports]
+      .reduce((acc, reportId) => acc + reports
+        .filter((r) => r.id === reportId)
+        .reduce((a, r) => a + r.numberOfParticipants, 0), 0),
+  }));
   resourceCounts = resourceCounts.map((rc) => ({
     ...rc,
     reportCount: rc.reports.size,
@@ -256,12 +269,18 @@ async function generateResourceList(
       const allRecipeintIds = new Set([...reports.map((r) => r['activityRecipients.grant.recipientId'])].flat());
       const allRecipientIdsWithResources = new Set([...res.map((r) => r.recipients)].flat());
       const noneRecipeintCnt = (allRecipeintIds.size - allRecipientIdsWithResources.size);
+      const allReportIdsWithoutResources = new Set([...allReportIds]
+        .filter((r) => !allReportIdsWithResources.has(r)));
+      const noneParticipantCount = reports
+        .filter((r) => allReportIdsWithoutResources.has(r.id))
+        .reduce((accumulator, r) => accumulator + r.numberOfParticipants, 0);
       resourceCounts.push({
         name: 'none',
         url: null,
         count: noneCnt,
         reportCount: noneCnt,
         recipientCount: noneRecipeintCnt,
+        participantCount: noneParticipantCount,
       });
     }
   }
@@ -270,15 +289,18 @@ async function generateResourceList(
   resourceCounts.sort((r1, r2) => {
     if (r2.reportCount - r1.reportCount === 0) {
       if (r2.recipientCount - r1.recipientCount === 0) {
-        // Break tie on url
-        const url1 = r1.url.toUpperCase().replace(' ', ''); // ignore upper and lowercase
-        const url2 = r2.url.toUpperCase().replace(' ', ''); // ignore upper and lowercase
-        if (url1 < url2) {
-          return -1;
+        if (r2.participantCount - r1.participantCount === 0) {
+          // Break tie on url
+          const url1 = r1.url.toUpperCase().replace(' ', ''); // ignore upper and lowercase
+          const url2 = r2.url.toUpperCase().replace(' ', ''); // ignore upper and lowercase
+          if (url1 < url2) {
+            return -1;
+          }
+          if (url1 > url2) {
+            return 1;
+          }
         }
-        if (url1 > url2) {
-          return 1;
-        }
+        return r2.participantCount - r1.participantCount;
       }
       return r2.recipientCount - r1.recipientCount;
     }
@@ -305,7 +327,7 @@ async function generateResourceDomainList(
     if (exists) {
       reports.forEach(exists.reports.add, exists.reports);
       recipients.forEach(exists.recipients.add, exists.recipients);
-      exists.urls.add(url);
+      exists.resources.add(url);
       exists.count += count;
       return domains;
     }
@@ -315,7 +337,7 @@ async function generateResourceDomainList(
       count,
       reports,
       recipients: new Set(resource.recipients),
-      urls: new Set([url]),
+      resources: new Set([url]),
     }];
   }, []);
 
@@ -323,7 +345,7 @@ async function generateResourceDomainList(
     ...dc,
     reportCount: dc.reports.size,
     recipientCount: dc.recipients.size,
-    urlCount: dc.urls.size,
+    resourceCount: dc.resources.size,
   }));
 
   if (removeLists) {
@@ -331,7 +353,7 @@ async function generateResourceDomainList(
       ...dc,
       reports: undefined,
       recipients: undefined,
-      urls: undefined,
+      resources: undefined,
     }));
   }
 
