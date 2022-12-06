@@ -1,16 +1,19 @@
 import { createTransport } from 'nodemailer';
+import { QueryTypes } from 'sequelize';
 import Email from 'email-templates';
 import * as path from 'path';
+import { sequelize } from '../../models';
 import { auditLogger, logger } from '../../logger';
 import newQueue from '../queue';
 import { EMAIL_ACTIONS, EMAIL_DIGEST_FREQ, USER_SETTINGS } from '../../constants';
-import { usersWithSetting } from '../../services/userSettings';
+import { userSettingOverridesById, usersWithSetting } from '../../services/userSettings';
 import {
   activityReportsWhereCollaboratorByDate,
   activityReportsChangesRequestedByDate,
   activityReportsSubmittedByDate,
   activityReportsApprovedByDate,
 } from '../../services/activityReports';
+import { userById } from '../../services/users';
 
 export const notificationQueue = newQueue('notifications');
 export const notificationDigestQueue = newQueue('digestNotifications');
@@ -515,6 +518,68 @@ export async function approvedDigest(freq, subjectFreq) {
       notificationDigestQueue.add(EMAIL_ACTIONS.APPROVED_DIGEST, data);
       return data;
     });
+    return Promise.all(records);
+  } catch (err) {
+    logger.info(`MAILER: ApprovedDigest with key ${USER_SETTINGS.EMAIL.KEYS.APPROVAL} freq ${freq} error ${err}`);
+    throw err;
+  }
+}
+
+export async function granteeApprovedDigest(freq, subjectFreq) {
+  const date = frequencyToInterval(freq);
+  logger.info(`MAILER: Starting GranteeApprovedDigest with freq ${freq}`);
+  try {
+    if (!date) {
+      throw new Error('date is null');
+    }
+
+    // Get all reports approved by date.
+    const reports = await activityReportsApprovedByDate(null, date);
+    const reportIds = reports.map((r) => r.id);
+
+    // Get all specialists that are subscribed to GRANTEE_APPROVAL notifications given this freq.
+    // FIXME: TTAHUB-1253
+    let specialists = await sequelize.query(`
+      SELECT DISTINCT u.id
+      FROM "ActivityReports" a
+      JOIN "ActivityRecipients" ar
+      ON a.id = ar."activityReportId"
+      JOIN "Grants" gr
+      ON ar."grantId" = gr.id
+      JOIN "Users" u
+      ON LOWER(gr."programSpecialistEmail") = LOWER(u.email)
+      WHERE a.id in (${reportIds.join(',')})
+    `, { type: QueryTypes.SELECT });
+
+    specialists = await Promise.all(specialists.map(async (ps) => {
+      const setting = await userSettingOverridesById(
+        ps.id,
+        USER_SETTINGS.EMAIL.KEYS.GRANTEE_APPROVAL,
+      );
+
+      if (setting && setting.value === freq) return ps;
+      return null;
+    }));
+
+    specialists = specialists.filter((s) => s !== null);
+
+    const users = await Promise.all(
+      specialists.map(async (s) => userById(s.id)),
+    );
+
+    const records = users.map((user) => {
+      const data = {
+        user,
+        reports,
+        type: EMAIL_ACTIONS.GRANTEE_APPROVED_DIGEST,
+        freq,
+        subjectFreq,
+      };
+
+      notificationDigestQueue.add(EMAIL_ACTIONS.GRANTEE_APPROVED_DIGEST, data);
+      return data;
+    });
+
     return Promise.all(records);
   } catch (err) {
     logger.info(`MAILER: ApprovedDigest with key ${USER_SETTINGS.EMAIL.KEYS.APPROVAL} freq ${freq} error ${err}`);

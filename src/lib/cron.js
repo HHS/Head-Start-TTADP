@@ -1,7 +1,7 @@
 import { CronJob } from 'cron';
 import updateGrantsRecipients from './updateGrantsRecipients';
 import {
-  approvedDigest, changesRequestedDigest, collaboratorDigest, submittedDigest,
+  approvedDigest, changesRequestedDigest, collaboratorDigest, submittedDigest, granteeApprovedDigest
 } from './mailer';
 import {
   DIGEST_SUBJECT_FREQ, EMAIL_DIGEST_FREQ,
@@ -37,6 +37,7 @@ const runDailyEmailJob = () => {
       await changesRequestedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
       await submittedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
       await approvedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
+      await granteeApprovedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
     } catch (error) {
       auditLogger.error(`Error processing Daily Email Digest job: ${error}`);
       logger.error(`Daily Email Digest Error: ${error.stack}`);
@@ -53,6 +54,7 @@ const runWeeklyEmailJob = () => {
       await changesRequestedDigest(EMAIL_DIGEST_FREQ.WEEKLY, DIGEST_SUBJECT_FREQ.WEEKLY);
       await submittedDigest(EMAIL_DIGEST_FREQ.WEEKLY, DIGEST_SUBJECT_FREQ.WEEKLY);
       await approvedDigest(EMAIL_DIGEST_FREQ.WEEKLY, DIGEST_SUBJECT_FREQ.WEEKLY);
+      await granteeApprovedDigest(EMAIL_DIGEST_FREQ.WEEKLY, DIGEST_SUBJECT_FREQ.WEEKLY);
     } catch (error) {
       auditLogger.error(`Error processing Weekly Email Digest job: ${error}`);
       logger.error(`Weekly Email Digest Error: ${error.stack}`);
@@ -80,6 +82,7 @@ const runMonthlyEmailJob = () => {
       await changesRequestedDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
       await submittedDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
       await approvedDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
+      await granteeApprovedDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
     } catch (error) {
       auditLogger.error(`Error processing Monthly Email Digest job: ${error}`);
       logger.error(`Monthly Email Digest Error: ${error.stack}`);
