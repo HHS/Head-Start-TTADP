@@ -19,6 +19,7 @@ export default async function logEmailNotification(job, success, result) {
     template;
   let newCollaborator; let newApprover; let
     collabArray;
+  let programSpecialists;
   let collaboratorEmailAddresses;
   const { data } = job;
   const { report } = data;
@@ -45,6 +46,11 @@ export default async function logEmailNotification(job, success, result) {
         collaboratorEmailAddresses = activityReportCollaborators.map((c) => c.user.email);
         emailTo = [author ? author.email : '', ...collaboratorEmailAddresses];
         template = path.resolve(emailTemplatePath, 'report_approved', 'subject.pug');
+        break;
+      case EMAIL_ACTIONS.GRANTEE_REPORT_APPROVED:
+        programSpecialists = data.programSpecialists;
+        emailTo = programSpecialists.map((ps) => ps.email);
+        template = path.resolve(emailTemplatePath, 'grantee_report_approved', 'subject.pug');
         break;
       default:
         break;
