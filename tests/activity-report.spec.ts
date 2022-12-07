@@ -48,9 +48,12 @@ test.describe("Activity Report", () => {
     await page.getByLabel('Number of participants involved *').fill('5');
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
+    await page.getByRole('button', { name: 'Supporting attachments not started' }).click(); 
+    await page.getByRole('button', { name: 'Goals and objectives not started' }).click(); 
+
     // create the first goal
     await page.getByTestId('label').locator('div').filter({ hasText: '- Select -' }).nth(2).click();
-    await page.locator('#react-select-15-option-0').getByText('Create new goal').click();
+    await page.locator('#react-select-17-option-0').getByText('Create new goal').click();
     await page.getByTestId('textarea').click();
     await page.getByTestId('textarea').fill('g1');
     await page.getByText('Yes').click();
@@ -60,8 +63,21 @@ test.describe("Activity Report", () => {
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('g1o1');
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-21-option-0').click();
+    await page.locator('#react-select-23-option-0').click();
     await blur(page);
+
+    // save draft doesn't work with invalid resources
+    await page.getByRole('textbox', { name: 'Resource 1' }).fill('banana banana banana');
+    await page.getByRole('button', { name: 'Save draft' }).click();
+
+    await expect(page.getByText('Enter one resource per field. Valid resource links must start with http:// or https://')).toBeVisible();
+
+    await page.getByRole('textbox', { name: 'Resource 1' }).clear();
+    await page.getByRole('textbox', { name: 'Resource 1' }).fill('https://banana.banana.com');
+
+    // save draft does work with valid resources
+    await page.getByRole('button', { name: 'Save draft' }).click();
+
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
     await page.keyboard.type('hello');
     await page.getByRole('button', { name: 'Save goal' }).click();
@@ -79,7 +95,7 @@ test.describe("Activity Report", () => {
     await page.getByTestId('textarea').fill('g2');
     await page.getByRole('group', { name: 'Is this a Recipient TTA Plan Agreement (RTTAPA) goal?*' }).getByText('Yes').click();
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-25-option-0').click();
+    await page.locator('#react-select-27-option-0').click();
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('g2o1');
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
