@@ -19,6 +19,7 @@ import FilterSpecialistSelect from './FilterSpecialistSelect';
 import FilterStateSelect from './FilterStateSelect';
 import FilterOtherEntitiesSelect from './FilterOtherEntitiesSelect';
 import FilterParticipantsSelect from './FilterParticipantsSelect';
+import MyReportsSelect from './MyReportsSelect';
 
 const EMPTY_MULTI_SELECT = {
   is: [],
@@ -277,6 +278,21 @@ export const targetPopulationsFilter = {
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterPopulationSelect
       inputId={`population-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const myReportsFilter = {
+  id: 'myReports',
+  display: 'My reports',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <MyReportsSelect
+      inputId={`my-reports-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />
