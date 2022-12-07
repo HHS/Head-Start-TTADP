@@ -23,6 +23,7 @@
 - [ ] Boundary diagram updated
 - [ ] Logical Data Model updated
 - [ ] [Architectural Decision Records](https://adr.github.io/) written for major infrastructure decisions
+- [ ] UI review complete
 
 ### Production Deploy
 

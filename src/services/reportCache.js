@@ -1,3 +1,5 @@
+import { isValidResourceUrl } from '../lib/urlUtils';
+
 const { Op } = require('sequelize');
 const {
   ActivityReportGoal,
@@ -67,7 +69,9 @@ const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) =>
 };
 
 const cacheResources = async (objectiveId, activityReportObjectiveId, resources = []) => {
-  const resourceUrls = resources.map((resource) => resource.userProvidedUrl);
+  const resourceUrls = resources
+    .map((resource) => resource.userProvidedUrl)
+    .filter((url) => isValidResourceUrl(url));
   const resourcesSet = new Set(resourceUrls);
   const originalAROResources = await ActivityReportObjectiveResource.findAll({
     where: { activityReportObjectiveId },
@@ -175,7 +179,7 @@ const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) 
 
 const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   const {
-    files, resources, topics, ttaProvided, status,
+    files, resources, topics, ttaProvided, status, order,
   } = metadata;
   const objectiveId = objective.dataValues
     ? objective.dataValues.id
@@ -199,6 +203,7 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
       title: objective.title,
       status: status || objective.status,
       ttaProvided,
+      arOrder: order + 1,
     }, {
       where: { id: activityReportObjectiveId },
       individualHooks: true,

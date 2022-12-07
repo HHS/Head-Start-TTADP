@@ -106,7 +106,9 @@ const deleteHandler = async (req, res) => {
         res.sendStatus(403);
         return;
       }
-      const rf = file.reportFiles.find((r) => r.reportId === reportId);
+      const rf = file.reportFiles.find(
+        (r) => r.activityReportId === parseInt(reportId, DECIMAL_BASE),
+      );
       if (rf) {
         await deleteActivityReportFile(rf.id);
       }
@@ -324,7 +326,7 @@ const uploadHandler = async (req, res) => {
     await addToScanQueue({ key: metadata.key });
     return updateStatus(metadata.id, QUEUED);
   } catch (err) {
-    auditLogger.error(`${logContext} Failed to queue ${metadata.originalFileName}. Error: ${err}`);
+    auditLogger.error(`${logContext} ${logContext.namespace}:uploadHander Failed to queue ${metadata.originalFileName}. Error: ${err}`);
     return updateStatus(metadata.id, QUEUEING_FAILED);
   }
 };
@@ -392,7 +394,9 @@ const uploadObjectivesFile = async (req, res) => {
         return handleErrors(req, res, err, logContext);
       }
     }));
-    res.status(200).send(scanQueue);
+    if (!res.writableEnded) {
+      res.status(200).send(scanQueue);
+    }
   } catch (err) {
     return handleErrors(req, res, err, logContext);
   }
@@ -405,7 +409,7 @@ const uploadObjectivesFile = async (req, res) => {
       await addToScanQueue({ key: queueItem.key });
       return updateStatus(queueItem.id, QUEUED);
     } catch (err) {
-      auditLogger.error(`${logContext} Failed to queue ${queueItem.originalFileName}. Error: ${err}`);
+      auditLogger.error(`${logContext} ${logContext.namespace}:uploadObjectivesFile Failed to queue ${queueItem.originalFileName}. Error: ${err}`);
       return updateStatus(queueItem.id, QUEUEING_FAILED);
     }
   }));

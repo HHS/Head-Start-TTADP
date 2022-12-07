@@ -108,6 +108,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: true,
     },
+    rtrOrder: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'Objective',

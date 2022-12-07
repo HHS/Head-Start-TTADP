@@ -285,6 +285,7 @@ describe('reportCache', () => {
         resources,
         topics: topicsForThisObjective,
         ttaProvided: null,
+        order: 1,
       };
       await cacheObjectiveMetadata(objective, report.id, metadata);
       const aro = await ActivityReportObjective.findOne({
@@ -308,6 +309,7 @@ describe('reportCache', () => {
         .toEqual(mockObjectiveResources[0].userProvidedUrl);
 
       expect(aro.activityReportObjectiveTopics.length).toEqual(1);
+      expect(aro.arOrder).toEqual(2);
       expect(aro.activityReportObjectiveTopics[0].topicId).toEqual(mockObjectiveTopics[0].topicId);
     });
     it('add and remove from cache', async () => {
@@ -348,9 +350,10 @@ describe('reportCache', () => {
 
       const metadata = {
         files: filesForThisObjective,
-        resources: resourcesForThisObjective,
+        resources: [...resourcesForThisObjective, { userProvidedUrl: '1302 Subpart A—Eligibility, Recruitment, Selection, Enrollment, and Attendance | ECLKC (hhs.gov)' }],
         topics: topicsForThisObjective,
         ttaProvided: null,
+        order: 0,
       };
 
       await cacheObjectiveMetadata(objective, report.id, metadata);
@@ -382,6 +385,7 @@ describe('reportCache', () => {
         resources: [],
         topics: [],
         ttaProvided: null,
+        order: 0,
       };
       await cacheObjectiveMetadata(objective, report.id, metadata);
       const aro = await ActivityReportObjective.findOne({
