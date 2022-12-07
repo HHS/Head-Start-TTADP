@@ -175,8 +175,8 @@ module.exports = {
             SELECT
               f1.id "objectiveFileId",
               f2.id "objectiveFileIdOrig",
-              eo.id "objectiveId",
-              eo."sourceId"
+              ao.id "objectiveId",
+              ao."sourceId"
             FROM "AffectedObjectives" ao
             LEFT JOIN "ObjectiveFiles" f1
             ON ao."id" = f1."objectiveId"
@@ -208,8 +208,8 @@ module.exports = {
             SELECT
               r1.id "objectiveResourceId",
               r2.id "objectiveResourceIdOrig",
-              eo.id "objectiveId",
-              eo."sourceId"
+              ao.id "objectiveId",
+              ao."sourceId"
             FROM "AffectedObjectives" ao
             LEFT JOIN "ObjectiveResources" r1
             ON ao."id" = r1."objectiveId"
@@ -241,8 +241,8 @@ module.exports = {
             SELECT
               t1.id "objectiveTopicId",
               t2.id "objectiveTopicIdOrig",
-              eo.id "objectiveId",
-              eo."sourceId"
+              ao.id "objectiveId",
+              ao."sourceId"
             FROM "AffectedObjectives" ao
             LEFT JOIN "ObjectiveTopics" t1
             ON ao."id" = t1."objectiveId"
@@ -277,7 +277,7 @@ module.exports = {
               aro2.id "activityReportObjectiveIdOrig",
               aro1."activityReportId",
               aro1."objectiveId",
-              eo."sourceId"
+              ao."sourceId"
             FROM "AffectedObjectives" ao
             JOIN "ActivityReportObjectives" aro1
             ON aro1."objectiveId" = ao.id
@@ -319,8 +319,8 @@ module.exports = {
           SELECT 'FullDuplicateObjectivesUpdated', count(*)
           FROM "FullDuplicateObjectivesUpdated"
           UNION
-          SELECT 'AdvancableDuplicateObjectivesUpdated', count(*)
-          FROM "AdvancableDuplicateObjectivesUpdated"
+          SELECT 'AdvanceableDuplicateObjectivesUpdated', count(*)
+          FROM "AdvanceableDuplicateObjectivesUpdated"
           UNION
           SELECT 'FalseRestartDuplicateObjectivesUpdated', count(*)
           FROM "FalseRestartDuplicateObjectivesUpdated"
