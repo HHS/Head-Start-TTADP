@@ -136,10 +136,13 @@ test.describe("Activity Report", () => {
     
     await expect(page.getByTestId('accordionItem_activity-summary').getByText('Recipient', {exact: true})).toBeVisible();
     await expect(page.getByTestId('accordionItem_activity-summary').getByText('Regional Office', {exact: true})).toBeVisible();
+    await expect(page.getByTestId('accordionItem_activity-summary').getByText('Training', {exact: true})).toBeVisible();
+    await expect(page.getByTestId('accordionItem_activity-summary').getByText('Virtual', {exact: true})).toBeVisible();
     await expect(page.getByText('Recipient or other entity', {exact: true})).toBeVisible();
     await expect(page.getByText('Activity participants', {exact: true})).toBeVisible();
     await expect(page.getByText('Collaborating specialists', {exact: true})).toBeVisible();
     await expect(page.getByText('Target populations addressed', {exact: true})).toBeVisible();
+    await expect(page.getByText('TTA provided', {exact: true})).toBeVisible();
 
     await expect(page.getByText('Goal: g1')).toBeVisible();
     await expect(page.getByText('Objective: g1o1')).toBeVisible();

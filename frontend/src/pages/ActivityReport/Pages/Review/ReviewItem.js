@@ -41,6 +41,18 @@ const ReviewItem = ({
         case 'other-entity':
           result = 'Other entity';
           break;
+        case 'technical-assistance':
+          result = 'Technical assistance';
+          break;
+        case 'training':
+          result = 'Training';
+          break;
+        case 'in-person':
+            result = 'In person';
+            break;
+        case 'virtual':
+          result = 'Virtual';
+          break;
         default:
           break;
       }
