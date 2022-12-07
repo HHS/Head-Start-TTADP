@@ -6,6 +6,7 @@ import {
 import {
   getGoalsByActivityRecipient, recipientById, recipientsByName,
 } from '../../services/recipient';
+import SCOPES from '../../middleware/scopeConstants';
 
 jest.mock('../../services/recipient', () => ({
   recipientById: jest.fn(),
@@ -17,8 +18,16 @@ jest.mock('../../services/recipient', () => ({
 
 jest.mock('../../services/accessValidation');
 
+const mockUserById = {
+  permissions: [{ scopeId: SCOPES.READ_REPORTS, regionId: 1 }],
+};
+
+jest.mock('../../services/users', () => ({
+  userById: jest.fn(() => mockUserById),
+}));
+
 describe('getRecipient', () => {
-  const recipientWhere = { name: 'Mr Thaddeus Q Recipient' };
+  const recipientWhere = { name: 'Mr Thaddeus Q Recipient', grants: [{ regionId: 1 }] };
 
   const mockResponse = {
     attachment: jest.fn(),
@@ -38,6 +47,9 @@ describe('getRecipient', () => {
         'region.in': 1,
         modelType: 'grant',
       },
+      session: {
+        userId: 1,
+      },
     };
     recipientById.mockResolvedValue(recipientWhere);
     await getRecipient(req, mockResponse);
@@ -52,6 +64,9 @@ describe('getRecipient', () => {
       query: {
         'region.in': 1,
         modelType: 'grant',
+      },
+      session: {
+        userId: 1,
       },
     };
     recipientById.mockResolvedValue(null);

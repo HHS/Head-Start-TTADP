@@ -54,7 +54,7 @@
     "uuid": "^8.3.2"
   },
   "engines": {
-    "node": "16.17.0"
+    "node": "16.18.1"
   },
   "scripts": {
     "start": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts start",
@@ -81,7 +81,9 @@
     "node-fetch": "^2.6.7",
     "nth-check": "^2.0.1",
     "tar": "^4.4.18",
-    "d3-color": "^3.1.0"
+    "d3-color": "^3.1.0",
+    "minimatch": "^3.0.5",
+    "decode-uri-component": "^0.2.1"
   },
   "eslintConfig": {
     "root": true,

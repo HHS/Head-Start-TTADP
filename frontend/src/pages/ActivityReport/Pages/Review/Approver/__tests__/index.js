@@ -135,12 +135,17 @@ describe('Approver review page', () => {
           id: 4, status: REPORT_STATUSES.APPROVED, note: null, User: { id: 4, fullName: 'approver 4' },
         },
       ];
-      renderReview(REPORT_STATUSES.NEEDS_ACTION, () => { }, true, approverWithNotes);
+
+      const onFormReview = jest.fn();
+      const reviewed = true;
+      const calculatedStatus = REPORT_STATUSES.NEEDS_ACTION;
+      renderReview(calculatedStatus, onFormReview, reviewed, approverWithNotes);
+
       expect(await screen.findByText(/these are my needs action notes 2\./i)).toBeVisible();
       expect(await screen.findByText(/no creator notes/i)).toBeVisible();
       expect(await screen.findByText(/these are my approved notes 1\./i)).toBeVisible();
 
-      const statuses = screen.queryAllByLabelText('Choose report status (Required)');
+      const statuses = screen.queryAllByLabelText('Choose report status *');
       expect(statuses.length).toBe(1);
     });
 

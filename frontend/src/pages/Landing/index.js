@@ -51,6 +51,14 @@ export function renderTotal(offset, perPage, activePage, reportsCount) {
   return `${from}-${to} of ${reportsCount}`;
 }
 
+export function getAppliedRegion(filters) {
+  const regionFilters = filters.filter((f) => f.topic === 'region').map((r) => r.query);
+  if (regionFilters && regionFilters.length > 0) {
+    return regionFilters[0];
+  }
+  return null;
+}
+
 function Landing() {
   const { user } = useContext(UserContext);
 
@@ -93,15 +101,7 @@ function Landing() {
   const [downloadAlertsError, setDownloadAlertsError] = useState(false);
   const downloadAllAlertsButtonRef = useRef();
 
-  function getAppliedRegion() {
-    const regionFilters = filters.filter((f) => f.topic === 'region').map((r) => r.query);
-    if (regionFilters && regionFilters.length > 0) {
-      return regionFilters[0];
-    }
-    return null;
-  }
-
-  const appliedRegionNumber = getAppliedRegion();
+  const appliedRegionNumber = getAppliedRegion(filters);
 
   const ariaLiveContext = useContext(AriaLiveContext);
 
@@ -190,10 +190,10 @@ function Landing() {
 
   const regionLabel = () => {
     if (defaultRegion === 14) {
-      return 'All regions';
+      return 'all regions';
     }
     if (defaultRegion > 0) {
-      return `Region ${defaultRegion.toString()}`;
+      return `region ${defaultRegion.toString()}`;
     }
     return '';
   };

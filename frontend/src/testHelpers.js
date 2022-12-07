@@ -15,8 +15,11 @@ export const convertToResponse = (
     [isAlerts ? 'alerts' : 'rows']: [...previous[isAlerts ? 'alerts' : 'rows'], report],
     recipients: [...previous.recipients, ...recipients],
     [isAlerts ? 'alertsCount' : 'count']: count,
+    topics: [],
   };
-}, { [isAlerts ? 'alertsCount' : 'count']: count, [isAlerts ? 'alerts' : 'rows']: [], recipients: [] });
+}, {
+  [isAlerts ? 'alertsCount' : 'count']: count, [isAlerts ? 'alerts' : 'rows']: [], recipients: [], topics: [],
+});
 
 export const withText = (text) => (content, node) => {
   const hasText = (n) => n.textContent === text;
@@ -28,32 +31,31 @@ export const withText = (text) => (content, node) => {
   return nodeHasText && childrenDontHaveText;
 };
 
-export function mockWindowProperty(property, value) {
-  const { [property]: originalProperty } = window;
-  delete window[property];
+function mockProperty(obj, property, value) {
+  const { [property]: originalProperty } = obj;
+  // eslint-disable-next-line no-param-reassign
+  delete obj[property];
   beforeAll(() => {
-    Object.defineProperty(window, property, {
+    Object.defineProperty(obj, property, {
       configurable: true,
       writable: true,
       value,
     });
   });
   afterAll(() => {
-    window[property] = originalProperty;
+    // eslint-disable-next-line no-param-reassign
+    obj[property] = originalProperty;
   });
 }
 
 export function mockDocumentProperty(property, value) {
-  const { [property]: originalProperty } = document;
-  delete document[property];
-  beforeAll(() => {
-    Object.defineProperty(document, property, {
-      configurable: true,
-      writable: true,
-      value,
-    });
-  });
-  afterAll(() => {
-    document[property] = originalProperty;
-  });
+  mockProperty(document, property, value);
+}
+
+export function mockNavigatorProperty(property, value) {
+  mockProperty(navigator, property, value);
+}
+
+export function mockWindowProperty(property, value) {
+  mockProperty(window, property, value);
 }

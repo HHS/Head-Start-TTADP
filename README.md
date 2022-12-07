@@ -35,7 +35,7 @@ those services are already running on your machine.
 #### Docker
 
 1. Make sure Docker is installed. To check run `docker ps`.
-2. Make sure you have Node 16.17.0 installed.
+2. Make sure you have Node 16.18.1 installed.
 4. Copy `.env.example` to `.env`.
 6. Change the `FONTAWESOME_NPM_AUTH_TOKEN`, `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the team Keybase account. If you don't have access to Keybase, please ask in the acf-head-start-eng slack channel for access.
 7. Optionally, set `CURRENT_USER` to your current user's uid:gid. This will cause files created by docker compose to be owned by your user instead of root.
@@ -92,6 +92,10 @@ You may run into some issues running the docker commands on Windows:
  * If you run into `Permission Denied` errors see [this issue](https://github.com/docker/for-win/issues/3385#issuecomment-501931980)
  * You can try to speed up execution time on windows with solutions posted to [this issue](https://github.com/docker/for-win/issues/1936)
 
+### Coverage reports
+
+On the frontend, the lcov and HTML files are generated as normal, however on the backend, the folders are tested separately. The command `yarn coverage:backend` will concatenate the lcov files and also generate an HTML file. However, this provess requires `lcov` to be installed on a user's computer. On Apple, you can use Homebrew - `brew install lcov`. On a Windows machine, your path may vary, but two options include WSL and [this chocolatey package](https://community.chocolatey.org/packages/lcov).
+
 ## Yarn Commands
 
 | Docker Command | Description| Host Command | Local only Command |
@@ -118,6 +122,7 @@ You may run into some issues running the docker commands on Windows:
 | | Run `yarn lint:ci` for both the frontend and backend | `yarn lint:all`| |
 | | Host the open api 3 spec using [redoc](https://github.com/Redocly/redoc) at `localhost:5003` | `yarn docs:serve` | |
 | | Run cucumber tests | `yarn cucumber` | |
+| | Collect backend coverage report | `yarn coverage:backend` ||
 
 ## Infrastructure
 
@@ -436,6 +441,38 @@ You should also update it where it is specified this README file.
 
 You would then need to rebuild the relevant browser images (docker will likely need to pull new ones) and run ```yarn docker:deps``` to rebuild your dependencies.
 If you are using NVM, you can set intall a new node version with ```nvm install VERSION``` and set it to be the default version of node via ```nvm alias default VERSION```.
+
+## Removing, creating and binding a service from the command line
+In the past, we've needed to destroy and recreate particular services (for example, redis). This can be done through the Cloud.gov UI, through the Terraform architecture, and through the cloud foundry command line interface. The following are instructions for using the cloud foundry CLI (```cf```) for this.
+
+- Login and target the environment you wish to make changes to. (```cf login --sso```).
+- You can use ```cf services``` to list your services
+- Remember that you can use ```cf help COMMAND``` to get the documentation for a particular command
+
+To delete and recreate a service (this should not be done lightly, as it is a destructive action)
+
+1  Unbind a service:
+```cf us APP_NAME SERVICE```
+ex:
+```cf us tta-smarthub-staging ttahub-redis-staging```
+
+2  Delete a service:
+```cf ds SERVICE```
+ex:
+```cf ds ttahub-redis-staging```
+
+3  Create a service:
+```cf cs SERVICE_TYPE SERVICE_LABEL SERVICE```
+ex:
+```cf cs aws-elasticache-redis redis-dev ttahub-redis-staging```
+
+4  Bind a service:
+```cf bs APP_NAME SERVICE```
+ex:
+```cf bs ttahub-smarthub-staging ttahub-redis-staging```
+
+Finally, trigger a redeploy through the Circle CI UI. By triggering a deploy rather than restaging, we are allowing cloud.gov
+
 
 <!-- Links -->
 

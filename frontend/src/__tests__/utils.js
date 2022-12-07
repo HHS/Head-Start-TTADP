@@ -57,8 +57,8 @@ describe('filtersToQueryString', () => {
         query: '2021/11/13-2021/12/13',
       },
     ];
-    const str = filtersToQueryString(filters, 11);
-    expect(str).toBe(`region.in[]=14&startDate.win=${encodeURIComponent('2021/11/13-2021/12/13')}&region.in[]=11`);
+    const str = filtersToQueryString(filters, 14);
+    expect(str).toBe(`startDate.win=${encodeURIComponent('2021/11/13-2021/12/13')}&region.in[]=14`);
   });
 });
 
@@ -85,5 +85,9 @@ describe('formatDateRange', () => {
     });
 
     expect(str).toBe('06/07/2021-06/08/2021');
+  });
+  it('returns a blank string if nothing is passed in', () => {
+    const str = formatDateRange();
+    expect(str).toBe('');
   });
 });

@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen, act,
+  render, screen, act, waitFor,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
@@ -17,6 +17,14 @@ import { mockWindowProperty } from '../../../../testHelpers';
 
 const memoryHistory = createMemoryHistory();
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
+
+const defaultStatuses = {
+  total: 0,
+  'Not started': 0,
+  'In progress': 0,
+  Closed: 0,
+  Suspended: 0,
+};
 
 describe('Goals and Objectives', () => {
   const goals = [{
@@ -120,28 +128,17 @@ describe('Goals and Objectives', () => {
     fetchMock.reset();
     // Default.
     const goalsUrl = `/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&createDate.win=${yearToDate}`;
-    fetchMock.get(goalsUrl, { count: 1, goalRows: goals });
+    fetchMock.get(goalsUrl, { count: 1, goalRows: goals, statuses: defaultStatuses });
 
     // Filters Status.
     const filterStatusUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20started';
-    fetchMock.get(filterStatusUrl, { count: 1, goalRows: filterStatusGoals });
+    fetchMock.get(filterStatusUrl, {
+      count: 1, goalRows: filterStatusGoals, statuses: defaultStatuses,
+    });
 
     // No Filters.
     const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
-    fetchMock.get(noFilterUrl, { count: 2, goalRows: noFilterGoals });
-
-    const statusRes = {
-      total: 0, 'Not started': 0, 'In progress': 0, Closed: 0, Suspended: 0,
-    };
-
-    const goalStatusGraph = `/api/widgets/goalStatusGraph?createDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
-    fetchMock.get(goalStatusGraph, statusRes);
-
-    const goalStatusGraphWStatus = '/api/widgets/goalStatusGraph?status.in[]=Not%20started&region.in[]=1&recipientId.ctn[]=401';
-    fetchMock.get(goalStatusGraphWStatus, statusRes);
-
-    const goalStatusGraphUnfiltered = '/api/widgets/goalStatusGraph?region.in[]=1&recipientId.ctn[]=401';
-    fetchMock.get(goalStatusGraphUnfiltered, statusRes);
+    fetchMock.get(noFilterUrl, { count: 2, goalRows: noFilterGoals, statuses: defaultStatuses });
   });
 
   afterEach(() => {
@@ -151,23 +148,17 @@ describe('Goals and Objectives', () => {
   it('renders the Goals and Objectives page appropriately', async () => {
     act(() => renderGoalsAndObjectives());
     expect(await screen.findByText('TTA goals and objectives')).toBeVisible();
-    expect(screen.getAllByRole('cell')[0].querySelector('.fa-clock')).toBeTruthy();
-    expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
-    expect(screen.getAllByRole('cell')[1]).toHaveTextContent('06/15/2021');
-    expect(screen.getAllByRole('cell')[2]).toHaveTextContent(/this is goal text 1/i);
-    expect(screen.getAllByRole('cell')[3]).toHaveTextContent(/Human ResourcesSafety PracticesProgram Planning and Ser/i);
-    expect(screen.getAllByRole('cell')[4]).toHaveTextContent('5 Objectives');
   });
 
   it('renders correctly when filter is changed', async () => {
     // Default with 2 Rows.
     const goalsUrl = `/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5&createDate.win=${yearToDate}`;
-    fetchMock.get(goalsUrl, { count: 2, goalRows: noFilterGoals }, { overwriteRoutes: true });
+    fetchMock.get(goalsUrl,
+      { count: 2, goalRows: noFilterGoals, statuses: defaultStatuses }, { overwriteRoutes: true });
 
     act(() => renderGoalsAndObjectives());
 
     expect(await screen.findByText(/1-2 of 2/i)).toBeVisible();
-    expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/in progress/i);
 
     // Change Filter and Apply.
     userEvent.click(await screen.findByRole('button', { name: /open filters for this page/i }));
@@ -183,27 +174,60 @@ describe('Goals and Objectives', () => {
 
     // Expect 1 Row.
     expect(await screen.findByText(/1-1 of 1/i)).toBeVisible();
-    expect(screen.getAllByRole('cell')[0]).toHaveTextContent(/not started/i);
+    const notStartedStatuses = await screen.findAllByText(/not started/i);
+    expect(notStartedStatuses.length).toBe(5);
   });
 
   it('renders correctly when filter is removed', async () => {
     act(() => renderGoalsAndObjectives());
-    expect(await screen.findByText(/1-1 of 1/i)).toBeVisible();
     const removeFilter = await screen.findByRole('button', { name: /this button removes the filter/i });
     userEvent.click(removeFilter);
 
-    await screen.findByRole('cell', { name: /in progress/i });
-    await screen.findByRole('cell', { name: '06/15/2021' });
-    await screen.findByRole('cell', { name: /this is goal text 1/i });
-    await screen.findByRole('cell', { name: /Human Resources/i });
-    await screen.findByRole('cell', { name: '5 Objectives' });
-
-    await screen.findByRole('cell', { name: /not started/i });
-    await screen.findByRole('cell', { name: '07/15/2021' });
-    await screen.findByRole('cell', { name: /this is goal text 2/i });
-    await screen.findByRole('cell', { name: '1 Objective' });
+    await screen.findByText(/this is goal text 1/i);
+    await screen.findByText(/this is goal text 2/i);
 
     expect(await screen.findByText(/1-2 of 2/i)).toBeVisible();
+  });
+
+  it('will update goals status', async () => {
+    fetchMock.restore();
+
+    const response = [{
+      id: 4598,
+      goalStatus: 'Not Started',
+      createdOn: '2021-06-15',
+      goalText: 'This is goal text 1.',
+      goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
+      objectiveCount: 5,
+      goalNumbers: ['G-4598'],
+      reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
+      objectives: [],
+    },
+    ];
+
+    const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
+    fetchMock.get(noFilterUrl, { count: 2, goalRows: response, statuses: defaultStatuses });
+
+    act(() => renderGoalsAndObjectives());
+
+    const statusMenuToggle = await screen.findByRole('button', { name: 'Change status for goal 4598' });
+    fetchMock.restore();
+    expect(fetchMock.called()).toBe(false);
+    fetchMock.put('/api/goals/changeStatus', [response[0]]);
+    userEvent.click(statusMenuToggle);
+    userEvent.click(await screen.findByRole('button', { name: /In Progress/i }));
+    expect(fetchMock.called()).toBeTruthy();
+  });
+
+  it('will sort by the dropdown', async () => {
+    act(() => renderGoalsAndObjectives());
+
+    fetchMock.restore();
+    fetchMock.get('/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=asc&offset=0&limit=10', { count: 1, goalRows: goals, statuses: defaultStatuses });
+    const sortCreated = await screen.findByTestId('sortGoalsBy');
+    userEvent.selectOptions(sortCreated, 'createdOn-asc');
+
+    await waitFor(() => expect(fetchMock.called()).toBeTruthy());
   });
 
   it('sorts by created on desc when new goals are created', async () => {
@@ -216,9 +240,74 @@ describe('Goals and Objectives', () => {
         { id: 2, ...goals[0] },
         { id: 3, ...goals[0] },
       ],
+      statuses: defaultStatuses,
     });
     act(() => renderGoalsAndObjectives([1]));
     // If api request contains 3 we know it included the desired sort.
     expect(await screen.findByText(/1-3 of 3/i)).toBeVisible();
+  });
+
+  it('handles a fetch error', async () => {
+    fetchMock.restore();
+    // Created New Goal.
+    const newGoalsUrl = '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=10';
+    fetchMock.get(newGoalsUrl, 500);
+    act(() => renderGoalsAndObjectives([1]));
+
+    expect(await screen.findByText(/Unable to fetch goals/i)).toBeVisible();
+  });
+
+  it('adjusts items per page', async () => {
+    fetchMock.restore();
+
+    const goalToUse = {
+      id: 0,
+      goalStatus: 'Not Started',
+      createdOn: '2021-06-15',
+      goalText: '',
+      goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
+      objectiveCount: 5,
+      goalNumbers: ['G-4598'],
+      reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
+      objectives: [],
+    };
+    const goalCount = 60;
+    const goalsToDisplay = [];
+    // eslint-disable-next-line no-plusplus
+    for (let i = 1; i <= goalCount; i++) {
+      const goalText = `This is goal text ${i}.`;
+      goalsToDisplay.push({ ...goalToUse, id: i, goalText });
+    }
+    const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
+    fetchMock.get(noFilterUrl,
+      {
+        count: goalCount,
+        goalRows: goalsToDisplay.slice(0, 10),
+        statuses: defaultStatuses,
+      });
+
+    // Render.
+    act(() => renderGoalsAndObjectives());
+
+    // Assert initial.
+    expect(await screen.findByText(/1-10 of 60/i)).toBeVisible();
+    let goalsPerPage = screen.queryAllByTestId('goalCard');
+    expect(goalsPerPage.length).toBe(10);
+
+    // Change per page.
+    const noFilterUrlMore = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=25';
+    fetchMock.get(noFilterUrlMore,
+      {
+        count: goalCount,
+        goalRows: goalsToDisplay.slice(0, 25),
+        statuses: defaultStatuses,
+      });
+    const perPageDropDown = await screen.findByRole('combobox', { name: /select goals per page/i });
+    userEvent.selectOptions(perPageDropDown, '25');
+
+    // Assert per page change.
+    expect(await screen.findByText(/1-25 of 60/i)).toBeVisible();
+    goalsPerPage = screen.queryAllByTestId('goalCard');
+    expect(goalsPerPage.length).toBe(25);
   });
 });

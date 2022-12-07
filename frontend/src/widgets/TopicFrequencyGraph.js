@@ -140,7 +140,7 @@ export function TopicFrequencyGraphWidget({
       yaxis: {
         tickformat: ',.0d',
         title: {
-          standoff: 60,
+          standoff: 80,
           text: 'Number of Activity Reports',
           font: {
             color: colors.textInk,
@@ -172,8 +172,8 @@ export function TopicFrequencyGraphWidget({
   }
 
   return (
-    <Container className="ttahub--topic-frequency-graph overflow-x-scroll" padding={3} loading={loading} loadingLabel="Topic frequency loading">
-      <Grid row className="position-relative margin-bottom-2">
+    <Container className="ttahub--topic-frequency-graph" paddingX={3} paddingY={3} loading={loading} loadingLabel="Topic frequency loading">
+      <Grid row className="margin-bottom-2">
         <Grid className="flex-align-self-center" desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}>
           <h2 className="ttahub--dashboard-widget-heading margin-0">Number of Activity Reports by Topic</h2>
         </Grid>
@@ -185,7 +185,7 @@ export function TopicFrequencyGraphWidget({
             ariaName="Change topic graph order menu"
             initialValue={{
               value: SORT_ORDER.DESC,
-              label: 'High to Low',
+              label: 'High to low',
             }}
             applied={order}
             onApply={onApplySort}
@@ -193,7 +193,7 @@ export function TopicFrequencyGraphWidget({
               [
                 {
                   value: SORT_ORDER.DESC,
-                  label: 'High to Low',
+                  label: 'High to low',
                 },
                 {
                   value: SORT_ORDER.ALPHA,
@@ -217,7 +217,7 @@ export function TopicFrequencyGraphWidget({
       </Grid>
       { showAccessibleData
         ? <AccessibleWidgetData caption="Number of Activity Reports by Topic Table" columnHeadings={columnHeadings} rows={tableRows} />
-        : <div data-testid="bars" className="tta-dashboard--bar-graph-container" ref={bars} /> }
+        : <div data-testid="bars" className="tta-dashboard--bar-graph-container overflow-x-scroll overflow-y-hidden padding-y-1" ref={bars} /> }
 
     </Container>
   );

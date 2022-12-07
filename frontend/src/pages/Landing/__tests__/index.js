@@ -11,7 +11,7 @@ import userEvent from '@testing-library/user-event';
 import { v4 as uuidv4 } from 'uuid';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
-import Landing from '../index';
+import Landing, { getAppliedRegion } from '../index';
 import activityReports, { activityReportsSorted, generateXFakeReports, overviewRegionOne } from '../mocks';
 import { getAllAlertsDownloadURL } from '../../../fetchers/helpers';
 import { filtersToQueryString } from '../../../utils';
@@ -62,10 +62,12 @@ describe('Landing Page', () => {
   });
   beforeEach(async () => {
     fetchMock.get(base, response);
+
     fetchMock.get(baseAlerts, {
       alertsCount: 0,
       alerts: [],
       recipients: [],
+      topics: [],
     });
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
     const user = {
@@ -77,7 +79,6 @@ describe('Landing Page', () => {
         },
       ],
     };
-
     renderLanding(user);
     await screen.findByText('Activity reports');
   });
@@ -538,9 +539,12 @@ describe('handleApplyAlertFilters', () => {
       count: 0,
       rows: [],
       recipients: [],
+      topics: [],
     });
     fetchMock.get(`${defaultOverviewUrl}&${inTest}`, overviewRegionOne);
-    fetchMock.get(`${baseAlerts}&${inTest}`, { alertsCount: 0, alerts: [], recipients: [] });
+    fetchMock.get(`${baseAlerts}&${inTest}`, {
+      alertsCount: 0, alerts: [], recipients: [], topics: [],
+    });
   });
 
   afterEach(() => fetchMock.restore());
@@ -585,5 +589,12 @@ describe('handleApplyAlertFilters', () => {
     expect(mockAnnounce).toHaveBeenCalled();
     // wait for everything to finish loading
     await waitFor(() => expect(screen.queryByText(/Loading data/i)).toBeNull());
+  });
+});
+
+describe('getAppliedRegion', () => {
+  it('returns null where appropriate', () => {
+    const appliedRegion = getAppliedRegion([]);
+    expect(appliedRegion).toBeNull();
   });
 });
