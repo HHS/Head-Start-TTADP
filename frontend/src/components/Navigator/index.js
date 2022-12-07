@@ -317,6 +317,8 @@ function Navigator({
         },
       );
 
+      console.log(newObjectives);
+
       // if we are autosaving, we want to preserve the resources that were added in the UI
       // whether or not they are valid (although nothing is saved to the database)
       // this is a convenience so that a work in progress isn't erased
