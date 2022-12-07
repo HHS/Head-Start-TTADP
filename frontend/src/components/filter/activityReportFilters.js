@@ -7,6 +7,7 @@ import {
   SELECT_CONDITIONS,
   FILTER_CONDITIONS,
   REGION_CONDITIONS,
+  MY_REPORTS_FILTER_CONDITIONS,
 } from '../../Constants';
 import FilterDateRange from './FilterDateRange';
 import FilterInput from './FilterInput';
@@ -24,6 +25,11 @@ import MyReportsSelect from './MyReportsSelect';
 const EMPTY_MULTI_SELECT = {
   is: [],
   'is not': [],
+};
+
+const EMPTY_MY_REPORTS_MULTI_SELECT = {
+  'where I\'m the': [],
+  'where I\'m not the': [],
 };
 
 const EMPTY_SINGLE_SELECT = {
@@ -287,12 +293,12 @@ export const targetPopulationsFilter = {
 export const myReportsFilter = {
   id: 'myReports',
   display: 'My reports',
-  conditions: FILTER_CONDITIONS,
-  defaultValues: EMPTY_MULTI_SELECT,
+  conditions: MY_REPORTS_FILTER_CONDITIONS,
+  defaultValues: EMPTY_MY_REPORTS_MULTI_SELECT,
   displayQuery: handleArrayQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
     <MyReportsSelect
-      inputId={`my-reports-${condition}-${id}`}
+      inputId={`my-reports-${id}`}
       onApply={onApplyQuery}
       query={query}
     />
