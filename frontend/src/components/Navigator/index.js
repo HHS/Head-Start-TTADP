@@ -276,8 +276,6 @@ function Navigator({
     const currentObjectives = getValues(fieldArrayName);
     const otherEntityIds = recipients.map((otherEntity) => otherEntity.activityRecipientId);
 
-    console.log({ currentObjectives });
-
     let invalidResources = false;
     const invalidResourceIndices = [];
 
@@ -290,8 +288,6 @@ function Navigator({
         }
       });
     }
-
-    console.log({ invalidResources, invalidResourceIndices, isAutoSave });
 
     if (!isAutoSave && invalidResources) {
       // make an attempt to focus on the first invalid resource
@@ -309,8 +305,6 @@ function Navigator({
 
     // Save objectives.
     try {
-      console.log('we made it to the try');
-
       let newObjectives = await saveObjectivesForReport(
         {
           objectivesWithoutGoals: objectivesWithValidResourcesOnly(
@@ -322,8 +316,6 @@ function Navigator({
           region: formData.regionId,
         },
       );
-
-      console.log(newObjectives);
 
       // if we are autosaving, we want to preserve the resources that were added in the UI
       // whether or not they are valid (although nothing is saved to the database)
@@ -346,7 +338,7 @@ function Navigator({
       updateErrorMessage('');
 
       // we have to do this here, after the form data has been updated
-      if (isAutoSave && goalForEditing) {
+      if (isAutoSave) {
         invalidResourceIndices.forEach((index) => {
           setError(`${fieldArrayName}[${index}].resources`, { message: OBJECTIVE_RESOURCES });
         });
