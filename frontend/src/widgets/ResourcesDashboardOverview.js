@@ -72,11 +72,11 @@ const DASHBOARD_FIELDS = {
         key="recipient-resources"
         icon={faLink}
         showTooltip={showTooltip}
-        label1={`${data.recipient.numResources === 1 ? 'Recipients rec\'d resource' : 'Recipients rec\'d resources'}`}
+        label1={`${data.recipient.numResources === 1 ? 'Recipient rec\'d resources' : 'Recipients rec\'d resources'}`}
         label2={`${data.recipient.numResources} of ${data.recipient.num}`}
         iconColor={colors.success}
         backgroundColor={colors.successLighter}
-        tooltipText={data.recipient.numResources === 1 ? 'Recipients rec\'d resource' : 'Recipients rec\'d resources'}
+        tooltipText={data.recipient.numResources === 1 ? 'Recipient rec\'d resources' : 'Recipients rec\'d resources'}
         data={data.recipient.percentResources}
       />
     ),
@@ -87,11 +87,11 @@ const DASHBOARD_FIELDS = {
         key="recipient-eclkc"
         icon={faLink}
         showTooltip={showTooltip}
-        label1={`${data.recipient.numEclkc === 1 ? 'Recipients rec\'d ECLKC resource' : 'Recipients rec\'d ECLKC resources'}`}
+        label1={`${data.recipient.numEclkc === 1 ? 'Recipient rec\'d ECLKC resources' : 'Recipients rec\'d ECLKC resources'}`}
         label2={`${data.recipient.numEclkc} of ${data.recipient.num}`}
         iconColor={colors.success}
         backgroundColor={colors.successLighter}
-        tooltipText={data.recipient.numEclkc === 1 ? 'Recipients rec\'d ECLKC resource' : 'Recipients rec\'d ECLKC resources'}
+        tooltipText={data.recipient.numEclkc === 1 ? 'Recipient rec\'d ECLKC resources' : 'Recipients rec\'d ECLKC resources'}
         data={data.recipient.percentEclkc}
       />
     ),
@@ -102,11 +102,11 @@ const DASHBOARD_FIELDS = {
         key="recipient-noneclkc"
         icon={faExternalLink}
         showTooltip={showTooltip}
-        label1={`${data.recipient.numNonEclkc === 1 ? 'Recipients rec\'d non-ECLKC resource' : 'Recipients rec\'d non-ECLKC resources'}`}
+        label1={`${data.recipient.numNonEclkc === 1 ? 'Recipient rec\'d non-ECLKC resources' : 'Recipients rec\'d non-ECLKC resources'}`}
         label2={`${data.recipient.numNonEclkc} of ${data.recipient.num}`}
         iconColor={colors.ttahubMediumBlue}
         backgroundColor={colors.ttahubBlueLight}
-        tooltipText={data.recipient.numNonEclkc === 1 ? 'Recipients rec\'d non-ECLKC resource' : 'Recipients rec\'d non-ECLKC resources'}
+        tooltipText={data.recipient.numNonEclkc === 1 ? 'Recipient rec\'d non-ECLKC resources' : 'Recipients rec\'d non-ECLKC resources'}
         data={data.recipient.percentNonEclkc}
       />
     ),
@@ -117,11 +117,11 @@ const DASHBOARD_FIELDS = {
         key="recipient-noresources"
         icon={faLinkSlash}
         showTooltip={showTooltip}
-        label1={`${data.recipient.numNoResources === 1 ? 'Recipients rec\'d no resource' : 'Recipients rec\'d no resources'}`}
+        label1={`${data.recipient.numNoResources === 1 ? 'Recipient rec\'d no resources' : 'Recipients rec\'d no resources'}`}
         label2={`${data.recipient.numNoResources} of ${data.recipient.num}`}
         iconColor={colors.ttahubOrange}
         backgroundColor={colors.ttahubOrangeLight}
-        tooltipText={data.recipient.numNoResources === 1 ? 'Recipients rec\'d no resource' : 'Recipients rec\'d no resources'}
+        tooltipText={data.recipient.numNoResources === 1 ? 'Recipient rec\'d no resources' : 'Recipients rec\'d no resources'}
         data={data.recipient.percentNoResources}
       />
     ),
