@@ -1,4 +1,5 @@
-import { devices } from "@playwright/test";
+/* eslint-disable import/no-extraneous-dependencies */
+import { devices } from '@playwright/test';
 
 // see https://playwright.dev/docs/api/class-testconfig
 export default {

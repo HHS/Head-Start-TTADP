@@ -9,7 +9,7 @@ export const GOAL_MISSING_OBJECTIVE = 'Select a TTA objective';
 export const GOALS_EMPTY = 'Select a recipent\'s goal';
 export const OBJECTIVE_TITLE = 'Enter an objective';
 export const OBJECTIVE_ROLE = 'Select a specialist role';
-export const OBJECTIVE_RESOURCES = 'Each resource should be a valid link';
+export const OBJECTIVE_RESOURCES = 'Each resource should be a valid link. Invalid resources will not be saved.';
 export const OBJECTIVE_TTA = 'Describe the TTA provided';
 export const OBJECTIVE_TOPICS = 'Select at least one topic';
 

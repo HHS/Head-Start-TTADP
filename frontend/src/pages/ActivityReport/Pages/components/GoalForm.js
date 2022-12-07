@@ -120,7 +120,8 @@ export default function GoalForm({
     onUpdateDate(goal.endDate ? goal.endDate : defaultEndDate);
   }, [defaultEndDate, goal.endDate, onUpdateDate]);
 
-  const [objectives, setObjectives] = useState([]);
+  // objectives for the objective select, blood for the blood god, etc
+  const [objectiveOptions, setObjectiveOptions] = useState([]);
 
   /*
    * this use effect fetches
@@ -132,7 +133,7 @@ export default function GoalForm({
         setIsAppLoading(true);
         setAppLoadingText('Loading');
         const data = await goalsByIdsAndActivityReport(goal.goalIds, reportId);
-        setObjectives(data[0].objectives);
+        setObjectiveOptions(data[0].objectives);
       } finally {
         setIsAppLoading(false);
       }
@@ -141,7 +142,7 @@ export default function GoalForm({
     if (goal.goalIds.length) {
       fetchData();
     } else {
-      setObjectives([]);
+      setObjectiveOptions([]);
     }
   }, [goal.goalIds, reportId, setAppLoadingText, setIsAppLoading]);
 
@@ -184,7 +185,7 @@ export default function GoalForm({
       />
 
       <Objectives
-        objectives={objectives}
+        objectiveOptions={objectiveOptions}
         topicOptions={topicOptions}
         goalStatus={status}
         noObjectiveError={errors.goalForEditing && errors.goalForEditing.objectives

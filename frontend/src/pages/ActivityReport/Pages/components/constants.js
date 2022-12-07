@@ -31,7 +31,7 @@ export const OBJECTIVE_PROP = PropTypes.shape({
     label: PropTypes.string,
   })),
   resources: PropTypes.arrayOf(PropTypes.shape({
-    value: PropTypes.number,
+    value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     label: PropTypes.string,
   })),
   activityReports: PropTypes.arrayOf(
