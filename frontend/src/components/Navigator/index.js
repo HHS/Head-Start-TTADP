@@ -187,13 +187,15 @@ function Navigator({
     let invalidResources = false;
     const invalidResourceIndices = [];
 
+    if (objectives) {
     // refire the objective resource validation
-    objectives.forEach((objective, index) => {
-      if (!validateListOfResources(objective.resources)) {
-        invalidResources = true;
-        invalidResourceIndices.push(index);
-      }
-    });
+      objectives.forEach((objective, index) => {
+        if (!validateListOfResources(objective.resources)) {
+          invalidResources = true;
+          invalidResourceIndices.push(index);
+        }
+      });
+    }
 
     if (!isAutoSave && invalidResources) {
       // make an attempt to focus on the first invalid resource
