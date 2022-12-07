@@ -177,36 +177,6 @@ export const unflattenResourcesUsed = (array) => {
   return array.map((value) => ({ value }));
 };
 
-/**
- * Goals created are editable until the report is loaded again. The report used to
- * not update freshly created goals with their DB id once saved, but this caused
- * any additional updates to create a brand new goal instead of updating the old goal.
- * We now use the goal created in the DB. However this means we no longer know if the
- * goal should be editable or not, since it was loaded from the DB. This method takes
- * the list of newly created goals and grabs their names, placed in the `editableGoals`
- * variable. Then all goals returned form the API (the report object passed into this
- * method) have their name compared against the list of fresh goals. The UI then uses
- * the `new` property to determine if a goal should be editable or not.
- * @param {*} report the freshly updated report
- * @returns {function} function that can be used by `setState` to update
- * formData
- */
-export const updateGoals = (report) => (oldFormData) => {
-  const oldGoals = oldFormData.goals || [];
-  const newGoals = report.goals || [];
-
-  const goalsThatUsedToBeNew = oldGoals.filter((goal) => goal.new);
-  const goalsFreshlySavedInDB = goalsThatUsedToBeNew.map((goal) => goal.name);
-  const goals = newGoals.map((goal) => {
-    const goalEditable = goalsFreshlySavedInDB.includes(goal.name);
-    return {
-      ...goal,
-      new: goalEditable,
-    };
-  });
-  return { ...oldFormData, goals, objectivesWithoutGoals: report.objectivesWithoutGoals };
-};
-
 function ActivityReport({
   match, location, region,
 }) {

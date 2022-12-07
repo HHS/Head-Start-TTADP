@@ -7,7 +7,7 @@ import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
 
 import { mockWindowProperty, withText } from '../../../testHelpers';
-import { unflattenResourcesUsed, findWhatsChanged, updateGoals } from '../index';
+import { unflattenResourcesUsed, findWhatsChanged } from '../index';
 import {
   REPORT_STATUSES,
 } from '../../../Constants';
@@ -92,37 +92,6 @@ describe('ActivityReport', () => {
 
       const startDate = await screen.findByRole('textbox', { name: /start date/i });
       expect(startDate).toBeVisible();
-    });
-  });
-
-  describe('updateGoals', () => {
-    it('sets new goals as such', () => {
-      const report = {
-        goals: [{
-          id: 123,
-          name: 'name',
-        }],
-      };
-      const updateFn = updateGoals(report);
-      const { goals } = updateFn({ goals: [{ id: 'id', name: 'name', new: true }] });
-
-      expect(goals.length).toBe(1);
-      expect(goals[0].id).toBe(123);
-      expect(goals[0].new).toBeTruthy();
-    });
-
-    it('sets old goals as such', () => {
-      const report = {
-        goals: [{
-          id: 123,
-          name: 'name',
-        }],
-      };
-      const updateFn = updateGoals(report);
-      const { goals } = updateFn({ goals: [{ id: 'id', name: 'name' }] });
-      expect(goals.length).toBe(1);
-      expect(goals[0].id).toBe(123);
-      expect(goals[0].new).toBeFalsy();
     });
   });
 
