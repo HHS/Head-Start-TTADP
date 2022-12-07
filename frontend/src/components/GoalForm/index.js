@@ -857,7 +857,7 @@ export default function GoalForm({
           <div className="margin-top-4">
             { !showForm ? <Button type="submit">Submit goal</Button> : null }
             { showForm ? <Button type="button" onClick={() => onSaveAndContinue(false)}>Save and continue</Button> : null }
-            <Button type="button" outline onClick={onSaveDraft}>Save draft</Button>
+            { showForm ? <Button type="button" outline onClick={onSaveDraft}>Save draft</Button> : null }
             { showForm && !createdGoals.length ? (
               <Link
                 to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
