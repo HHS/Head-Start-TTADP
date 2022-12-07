@@ -1,3 +1,5 @@
+import { isValidResourceUrl } from '../lib/urlUtils';
+
 const { Op } = require('sequelize');
 const {
   ActivityReportGoal,
@@ -37,7 +39,9 @@ const cacheFiles = async (activityReportObjectiveId, files = []) => {
 };
 
 const cacheResources = async (activityReportObjectiveId, resources = []) => {
-  const resourceUrls = resources.map((resource) => resource.userProvidedUrl);
+  const resourceUrls = resources
+    .map((resource) => resource.userProvidedUrl)
+    .filter((url) => isValidResourceUrl(url));
   const resourcesSet = new Set(resourceUrls);
   const originalAROResources = await ActivityReportObjectiveResource.findAll({
     where: { activityReportObjectiveId },
