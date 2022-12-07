@@ -225,9 +225,11 @@ describe('Navigator', () => {
   });
 
   it('publishes to socket', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
     const updatePage = jest.fn();
     const updateForm = jest.fn();
-    renderNavigator('second', () => {}, () => {}, updatePage, updateForm);
+    renderNavigator('second', onSubmit, onSave, updatePage, updateForm);
 
     jest.runOnlyPendingTimers();
     expect(send).toHaveBeenCalled();
@@ -235,7 +237,6 @@ describe('Navigator', () => {
     userEvent.click(await screen.findByRole('button', { name: 'first page Not Started' }));
     await waitFor(() => expect(updateForm).toHaveBeenCalledWith(
       { ...initialData, second: null },
-      true,
     ));
     await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
 

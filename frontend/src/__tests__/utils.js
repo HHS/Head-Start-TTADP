@@ -57,8 +57,8 @@ describe('filtersToQueryString', () => {
         query: '2021/11/13-2021/12/13',
       },
     ];
-    const str = filtersToQueryString(filters, 14);
-    expect(str).toBe(`startDate.win=${encodeURIComponent('2021/11/13-2021/12/13')}&region.in[]=14`);
+    const str = filtersToQueryString(filters);
+    expect(str).toBe(`region.in[]=14&startDate.win=${encodeURIComponent('2021/11/13-2021/12/13')}`);
   });
 });
 
