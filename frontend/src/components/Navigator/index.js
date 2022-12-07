@@ -26,7 +26,7 @@ import {
 import SideNav from './components/SideNav';
 import NavigatorHeader from './components/NavigatorHeader';
 import DismissingComponentWrapper from '../DismissingComponentWrapper';
-import { validateGoals } from '../../pages/ActivityReport/Pages/components/goalValidator';
+import { OBJECTIVE_RESOURCES, validateGoals } from '../../pages/ActivityReport/Pages/components/goalValidator';
 import { saveGoalsForReport, saveObjectivesForReport } from '../../fetchers/activityReports';
 import GoalFormContext from '../../GoalFormContext';
 import { validateObjectives } from '../../pages/ActivityReport/Pages/components/objectiveValidator';
@@ -184,7 +184,18 @@ function Navigator({
     const endDate = getValues('goalEndDate');
     const isRttapa = getValues('goalIsRttapa');
 
-    if (!isAutoSave && !validateListOfResources(objectives.map((o) => o.resources).flat())) {
+    let invalidResources = false;
+    const invalidResourceIndices = [];
+
+    // refire the objective resource validation
+    objectives.forEach((objective, index) => {
+      if (!validateListOfResources(objective.resources)) {
+        invalidResources = true;
+        invalidResourceIndices.push(index);
+      }
+    });
+
+    if (!isAutoSave && invalidResources) {
       // make an attempt to focus on the first invalid resource
       // having a sticky header complicates this enough to make me not want to do this perfectly
       // right out of the gate
@@ -247,6 +258,12 @@ function Navigator({
 
       updateErrorMessage('');
       updateLastSaveTime(moment());
+      // we have to do this here, after the form data has been updated
+      if (isAutoSave && goalForEditing) {
+        invalidResourceIndices.forEach((index) => {
+          setError(`${fieldArrayName}[${index}].resources`, { message: OBJECTIVE_RESOURCES });
+        });
+      }
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     } finally {
