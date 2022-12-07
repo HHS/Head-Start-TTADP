@@ -53,6 +53,16 @@ export function Pill({
   const ariaButtonText = `This button removes the filter: ${filterName} ${condition} ${queryValue}`;
   const queryShortValue = determineQuery(false);
 
+  const determineConditionText = () => {
+    if (!condition) {
+      return null;
+    }
+    if (topic === 'myReports') {
+      return condition;
+    }
+    return condition.toLowerCase();
+  };
+
   return (
     <span className="filter-pill text-middle margin-right-05 padding-top-1 margin-bottom-105">
       {isFirst ? null : <strong> AND </strong>}
@@ -61,7 +71,7 @@ export function Pill({
           {filterName}
         </strong>
         {' '}
-        {condition ? condition.toLowerCase() : null}
+        {determineConditionText()}
       </span>
       <span className="filter-pill-container smart-hub-border-blue-primary border-2px margin-right-1 radius-pill padding-right-1 padding-left-2 padding-y-05">
         <span aria-label={queryValue}>
