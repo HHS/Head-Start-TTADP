@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import React from 'react';
+import React, { useContext } from 'react';
 import userEvent from '@testing-library/user-event';
 import {
   render, screen, waitFor, within, act,
@@ -12,6 +12,7 @@ import UserContext from '../../../UserContext';
 import { NOT_STARTED, IN_PROGRESS } from '../constants';
 import NetworkContext from '../../../NetworkContext';
 import AppLoadingContext from '../../../AppLoadingContext';
+import GoalFormContext from '../../../GoalFormContext';
 
 // mocks for socket provider
 const send = jest.fn();
@@ -34,6 +35,20 @@ const Input = ({ name, required }) => {
       name={name}
       ref={register({ required })}
     />
+  );
+};
+
+const OETest = () => {
+  const { isObjectivesFormClosed } = useContext(GoalFormContext);
+  return (
+    <>
+      <h1>
+        {
+      isObjectivesFormClosed ? 'Objective form closed' : 'Objective form open'
+    }
+
+      </h1>
+    </>
   );
 };
 
@@ -476,5 +491,97 @@ describe('Navigator', () => {
     jest.advanceTimersByTime(1000 * 60 * 2);
     fetchMock.post('api/activity-reports/objectives', []);
     expect(fetchMock.called('api/activity-reports/objectives')).toBe(false);
+  });
+
+  it('opens the objectives form if the objectives are invalid', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <OETest />
+      ),
+    }];
+
+    const oeData = {
+      ...initialData,
+      activityRecipientType: 'other-entity',
+      objectives: [
+        {
+          taste: 'kind of bitter',
+        },
+      ],
+    };
+
+    act(() => renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages, oeData));
+
+    expect(await screen.findByText('Objective form open')).toBeVisible();
+  });
+
+  it('opens the objectives form if there are no objectives', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <OETest />
+      ),
+    }];
+
+    const oeData = {
+      ...initialData,
+      activityRecipientType: 'other-entity',
+      objectives: [],
+    };
+
+    act(() => renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages, oeData));
+
+    expect(await screen.findByText('Objective form open')).toBeVisible();
+  });
+
+  it('handles invalid OE resources in the auto save', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <OETest />
+      ),
+    }];
+
+    const oeData = {
+      ...initialData,
+      activityRecipientType: 'other-entity',
+      objectives: [
+        {
+          title: 'objective',
+          topics: ['test'],
+          ttaProvided: 'tta provided',
+          resources: [{
+            value: 'WHAT THE DEVIL IS THIS',
+          }],
+        },
+      ],
+    };
+
+    act(() => renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages, oeData));
+
+    expect(await screen.findByText('Objective form open')).toBeVisible();
+    jest.advanceTimersByTime(1000 * 60 * 2);
   });
 });
