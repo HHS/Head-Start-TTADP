@@ -51,33 +51,33 @@ const resourcesOverview = {
 
 const resourcesOverviewRegionOne = {
   report: {
-    num: '1,721',
-    numResources: '661',
-    percentResources: '38.41%',
-    numNoResources: '1,060',
-    percentNoResources: '61.59%',
-    numEclkc: '634',
-    percentEclkc: '36.84%',
-    numNonEclkc: '101',
-    percentNonEclkc: '5.87%',
+    num: '1,000',
+    numResources: '751',
+    percentResources: '75.1%',
+    numNoResources: '251',
+    percentNoResources: '25.1%',
+    numEclkc: '501',
+    percentEclkc: '50.1%',
+    numNonEclkc: '249',
+    percentNonEclkc: '24.9%',
   },
   recipient: {
-    num: '231',
-    numResources: '220',
-    percentResources: '95.24%',
-    numNoResources: '11',
-    percentNoResources: '4.76%',
-    numEclkc: '219',
-    percentEclkc: '94.81%',
-    numNonEclkc: '83',
-    percentNonEclkc: '35.93%',
+    num: '100',
+    numResources: '76',
+    percentResources: '76%',
+    numNoResources: '24',
+    percentNoResources: '24%',
+    numEclkc: '50',
+    percentEclkc: '50%',
+    numNonEclkc: '26',
+    percentNonEclkc: '26%',
   },
   resource: {
-    num: '606',
+    num: '750',
     numEclkc: '500',
-    percentEclkc: '82.51%',
-    numNonEclkc: '106',
-    percentNonEclkc: '17.49%',
+    percentEclkc: '66.67%',
+    numNonEclkc: '250',
+    percentNonEclkc: '33.33%',
   },
 };
 
@@ -160,6 +160,7 @@ describe('Resources Dashboard page', () => {
     renderResourcesDashboard(user);
     expect(await screen.findByText(/resources dashboard/i)).toBeVisible();
 
+    console.log(screen);
     // Resource List (initial).
     expect(screen.getByText(/resources in activity reports/i)).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /resource/i })).toBeInTheDocument(3);
@@ -177,27 +178,37 @@ describe('Resources Dashboard page', () => {
 
     // Overview (initial).
     expect(screen.getByText(/95.24%/i)).toBeInTheDocument();
-    expect(screen.getByText(/^[ \t]*Recipients rec'd resources\r?\n?[ \t]*220 of 231/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*recipients rec'd resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/220 of 231/i)).toBeInTheDocument();
     expect(screen.getByText(/94.81%/i)).toBeInTheDocument();
-    expect(screen.getByText(/^[ \t]*Recipients rec'd ECLKC resources\r?\n?[ \t]*219 of 231/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*recipients rec'd eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/219 of 231/i)).toBeInTheDocument();
     expect(screen.getByText(/35.93%/i)).toBeInTheDocument();
-    expect(screen.getByText(/^[ \t]*Recipients rec'd non-ECLKC resources\r?\n?[ \t]*83 of 231/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*recipients rec'd non-eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/83 of 231/i)).toBeInTheDocument();
     expect(screen.getByText(/4.76%/i)).toBeInTheDocument();
-    expect(screen.getByText(/^[ \t]*Recipients rec'd no resources\r?\n?[ \t]*11 of 231/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*recipients rec'd no resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/11 of 231/i)).toBeInTheDocument();
 
     expect(screen.getByText(/38.41%/i)).toBeInTheDocument();
-    expect(screen.getByText(/^[ \t]*Reports include resources\r?\n?[ \t]*661 of 1,721/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*reports include resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/661 of 1,721/i)).toBeInTheDocument();
     expect(screen.getByText(/36.84%/i)).toBeInTheDocument();
-    expect(screen.getByText(/^[ \t]*Reports include ECLKC resources\r?\n?[ \t]*634 of 1,721/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*reports include eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/634 of 1,721/i)).toBeInTheDocument();
     expect(screen.getByText(/5.87%/i)).toBeInTheDocument();
-    expect(screen.getByText(/^[ \t]*Reports include non-ECLKC resources\r?\n?[ \t]*101 of 1,721/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*reports include non-eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/101 of 1,721/i)).toBeInTheDocument();
     expect(screen.getByText(/61.59%/i)).toBeInTheDocument();
-    expect(screen.getByText(/^[ \t]*Reports include no resources\r?\n?[ \t]*1,060 of 1,721/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*reports include no resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/1,060 of 1,721/i)).toBeInTheDocument();
 
     expect(screen.getByText(/82.51%/i)).toBeInTheDocument();
-    expect(screen.getByText(/^[ \t]*ECLKC Resources\r?\n?[ \t]*500 of 606/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/500 of 606/i)).toBeInTheDocument();
     expect(screen.getByText(/17.49%/i)).toBeInTheDocument();
-    expect(screen.getByText(/^[ \t]*Non-ECLKC Resources\r?\n?[ \t]*106 of 606/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*non-eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/106 of 606/i)).toBeInTheDocument();
 
     // Remove existing filter.
     const remove = await screen.findByRole('button', { name: /This button removes the filter/i });
@@ -226,15 +237,47 @@ describe('Resources Dashboard page', () => {
 
     // Resource List (region filter).
     expect(await screen.findByRole('heading', { name: /resources in activity reports/i })).toBeVisible();
-    expect(await screen.findByRole('cell', { name: /resource url 4/i })).toBeVisible();
-    expect(await screen.findByRole('cell', { name: /500/i })).toBeVisible();
+    expect(screen.getByRole('columnheader', { name: /resource/i })).toBeInTheDocument(3);
+    expect(screen.getByRole('columnheader', { name: /number of activities/i })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /number of participants/i })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /number of recipients/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /Resource URL 4/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /12/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /11/i })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: /10/i })).toBeInTheDocument();
 
     // Overview (region filter).
-    expect(screen.getByText(/20%/i)).toBeInTheDocument();
-    expect(screen.getByText(/2 eclkc resources of 10/i)).toBeInTheDocument();
-    expect(screen.getByText(/30%/i)).toBeInTheDocument();
-    expect(screen.getByText(/3 non-eclkc resources of 10/i)).toBeInTheDocument();
-    expect(screen.getByText(/40%/i)).toBeInTheDocument();
-    expect(screen.getByText(/4 no resources of 10/i)).toBeInTheDocument();
+    expect(screen.getByText(/76%/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*recipients rec'd resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/76 of 100/i)).toBeInTheDocument();
+    expect(screen.getByText(/50%/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*recipients rec'd eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/50 of 100/i)).toBeInTheDocument();
+    expect(screen.getByText(/26%/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*recipients rec'd non-eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/26 of 100/i)).toBeInTheDocument();
+    expect(screen.getByText(/24%/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*recipients rec'd no resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/24 of 100/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/75.1%/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*reports include resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/751 of 1,000/i)).toBeInTheDocument();
+    expect(screen.getByText(/50.1%/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*reports include eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/501 of 1,000/i)).toBeInTheDocument();
+    expect(screen.getByText(/24.9%/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*reports include non-eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/249 of 1,000/i)).toBeInTheDocument();
+    expect(screen.getByText(/25.1%/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*reports include no resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/251 of 1,000/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/66.67%/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/500 of 750/i)).toBeInTheDocument();
+    expect(screen.getByText(/33.33%/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*non-eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/250 of 750/i)).toBeInTheDocument();
   });
 });
