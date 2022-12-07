@@ -190,7 +190,7 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
   const objectiveIds = objectives.map((o) => o.objectiveId);
 
   // Get all the reports that use the objectives
-  const allObjectiveReports = await sequelize.models.ActivityReport.findAll({
+  const allReports = await sequelize.models.ActivityReport.findAll({
     attributes: ['id', 'calculatedStatus', 'endDate'],
     include: [
       {
@@ -211,10 +211,9 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
     ],
   });
 
-  // Get Approved Reports that might set the status.
-  const approvedReports = allObjectiveReports.filter(
-    (a) => a.calculatedStatus === REPORT_STATUSES.APPROVED,
-  );
+  const approvedReports = allReports.filter((report) => (
+    report.calculatedStatus === REPORT_STATUSES.APPROVED
+  ));
 
   // Only change the status if we have an approved report using the objective.
   if (approvedReports.length) {
@@ -223,11 +222,28 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
       const relevantARs = approvedReports.filter(
         (a) => a.activityReportObjectives.find((aro) => aro.objectiveId === o),
       );
-        // Get latest report by end date.
-      const latestAR = relevantARs.reduce((r, a) => (r.endDate > a.endDate ? r : a));
+
+      if (!relevantARs && !relevantARs.length) {
+        return Promise.resolve();
+      }
+
+      // Get latest report by end date.
+      const latestAR = relevantARs.reduce((r, a) => {
+        if (r && r.endDate) {
+          return r.endDate > a.endDate ? r : a;
+        }
+        return a;
+      }, {
+        endDate: null,
+        activityReportObjectives: [],
+      });
 
       // Get Objective to take status from.
       const aro = latestAR.activityReportObjectives.find(((a) => a.objectiveId === o));
+
+      if (!aro) {
+        return Promise.resolve();
+      }
 
       // Update Objective status.
       return sequelize.models.Objective.update({
@@ -238,17 +254,20 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
       });
     }));
   } else if (isUnlocked) {
-    // If there are no Approved reports set Objective status back to 'Not Started'.
-    const currentReport = allObjectiveReports.find((r) => r.id === activityReportId);
-    const objectiveIdsToReset = currentReport && currentReport.activityReportObjectives
-      ? currentReport.activityReportObjectives.map((a) => a.objectiveId)
+    const report = allReports.find((r) => r.id === activityReportId);
+    const objectivesToReset = report && report.activityReportObjectives
+      ? report.activityReportObjectives.map((a) => a.objectiveId)
       : [];
-    await sequelize.models.Objective.update({
-      status: OBJECTIVE_STATUS.NOT_STARTED,
-    }, {
-      where: { id: objectiveIdsToReset },
-      individualHooks: true,
-    });
+
+    // we don't need to run this query with an empty array I don't think
+    if (objectivesToReset.length) {
+      await sequelize.models.Objective.update({
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+      }, {
+        where: { id: objectivesToReset },
+        individualHooks: true,
+      });
+    }
   }
 };
 const propagateApprovedStatus = async (sequelize, instance, options) => {

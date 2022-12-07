@@ -29,9 +29,13 @@ const GoalTest = () => {
   return (
     <>
       <h1>Goal test</h1>
-      {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-      <label htmlFor="goalName">Name</label>
-      <input type="text" id="goalName" name="goalName" ref={register()} />
+      <div className="usa-error-message">
+        <div className="ttahub-resource-repeater">
+          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+          <label htmlFor="goalName">Name</label>
+          <input type="text" id="goalName" name="goalName" ref={register()} />
+        </div>
+      </div>
     </>
   );
 };
@@ -85,6 +89,7 @@ const initialData = {
   objectivesWithoutGoals: [],
   activityRecipients: [],
   activityRecipientType: 'recipient',
+  'goalForEditing.objectives': [],
 };
 
 describe('Navigator', () => {
@@ -102,7 +107,6 @@ describe('Navigator', () => {
     onUpdateError = jest.fn(),
   ) => {
     render(
-
       <NetworkContext.Provider value={{
         connectionActive: true,
         localStorageAvailable: true,
@@ -156,15 +160,11 @@ describe('Navigator', () => {
     userEvent.click(screen.getByRole('button', { name: 'Save and continue' }));
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(
       {
+        ...initialData,
         pageState: {
           ...initialData.pageState, 2: IN_PROGRESS,
         },
-        regionId: 1,
-        goals: [],
-        objectivesWithoutGoals: [],
         second: 'on',
-        activityRecipientType: 'recipient',
-        activityRecipients: [],
       },
     ));
   });
@@ -362,6 +362,50 @@ describe('Navigator', () => {
     });
     const saveButton = await screen.findByRole('button', { name: /Save goal/i });
     await waitFor(() => expect(saveButton).toBeDisabled());
+  });
+
+  it('won\'t save draft with invalid resources', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <GoalTest />
+      ),
+    }];
+
+    const formData = {
+      ...initialData,
+      activityRecipientType: 'grant',
+      activityRecipients: [],
+      goalForEditing: {
+        isNew: true,
+      },
+      goals: [],
+      goalEndDate: '09/01/2020',
+      goalIsRttapa: 'Yes',
+      goalName: 'goal name',
+      'goalForEditing.objectives': [{
+        title: 'objective',
+        topics: ['test'],
+        ttaProvided: 'tta provided',
+        resources: [{
+          value: 'WHAT THE DEVIL IS THIS',
+        }],
+      }],
+    };
+
+    renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages, formData);
+    const saveGoal = await screen.findByRole('button', { name: 'Save draft' });
+    expect(saveGoal).toBeVisible();
+    fetchMock.restore();
+    act(() => userEvent.click(saveGoal));
+    expect(fetchMock.called()).toBe(false);
   });
 
   it('runs the autosave on the other entity objectives page', async () => {

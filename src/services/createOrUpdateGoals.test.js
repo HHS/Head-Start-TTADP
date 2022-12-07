@@ -208,11 +208,19 @@ describe('createOrUpdateGoals', () => {
       raw: true,
     });
 
+    objectivesOnUpdatedGoal.forEach((o, i) => {
+      expect(o.rtrOrder).toBe(i + 1);
+    });
+
     expect(objectivesOnUpdatedGoal.length).toBe(2);
     const titles = objectivesOnUpdatedGoal.map((obj) => obj.title);
     expect(titles).toContain('This is another objective');
     expect(titles).toContain('This is an objective');
     expect(titles).not.toContain('This objective will be deleted');
+
+    // should always be in the same order, by rtr order
+    const order = objectivesOnUpdatedGoal.map((obj) => obj.rtrOrder);
+    expect(order).toStrictEqual([1, 2]);
 
     const objectiveOnUpdatedGoal = await Objective.findByPk(objective.id, { raw: true });
     expect(objectiveOnUpdatedGoal.id).toBe(objective.id);

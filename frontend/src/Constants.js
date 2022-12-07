@@ -92,6 +92,12 @@ export const REASONS = [
   'Monitoring | Deficiency',
 ];
 
+export const MY_REPORT_ROLES = [
+  'Creator',
+  'Collaborator',
+  'Approver',
+];
+
 // Note that if this topic list is changed, it needs also to be changed in
 // - src/constants.js
 export const TARGET_POPULATIONS = [
