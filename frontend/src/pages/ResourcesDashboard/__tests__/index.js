@@ -160,7 +160,6 @@ describe('Resources Dashboard page', () => {
     renderResourcesDashboard(user);
     expect(await screen.findByText(/resources dashboard/i)).toBeVisible();
 
-    console.log(screen);
     // Resource List (initial).
     expect(screen.getByText(/resources in activity reports/i)).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /resource/i })).toBeInTheDocument(3);
