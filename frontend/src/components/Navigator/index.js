@@ -276,6 +276,8 @@ function Navigator({
     const currentObjectives = getValues(fieldArrayName);
     const otherEntityIds = recipients.map((otherEntity) => otherEntity.activityRecipientId);
 
+    console.log({ currentObjectives });
+
     let invalidResources = false;
     const invalidResourceIndices = [];
 
@@ -288,6 +290,8 @@ function Navigator({
         }
       });
     }
+
+    console.log({ invalidResources, invalidResourceIndices, isAutoSave });
 
     if (!isAutoSave && invalidResources) {
       // make an attempt to focus on the first invalid resource
@@ -305,6 +309,8 @@ function Navigator({
 
     // Save objectives.
     try {
+      console.log('we made it to the try');
+
       let newObjectives = await saveObjectivesForReport(
         {
           objectivesWithoutGoals: objectivesWithValidResourcesOnly(
