@@ -548,7 +548,7 @@ export async function granteeApprovedDigest(freq, subjectFreq) {
       ON ar."grantId" = gr.id
       JOIN "Users" u
       ON LOWER(gr."programSpecialistEmail") = LOWER(u.email)
-      WHERE a.id in (${reportIds.join(',')})
+      WHERE a.id in (${reportIds.join(',') || null})
     `, { type: QueryTypes.SELECT });
 
     // Filter to only those who have opted into this notification setting and freq.
