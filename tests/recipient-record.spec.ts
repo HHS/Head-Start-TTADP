@@ -10,7 +10,7 @@ test.describe('Recipient record', () => {
     await page.getByRole('link', { name: 'TTA History' }).click();
     
     // remove a filter
-    await page.getByRole('button', { name: 'This button removes the filter: Date started is within 01/01/2022-12/06/2022' }).click();
+    await page.getByRole('button', { name: /This button removes the filter: Date started is within/i }).click();
 
     // goals and objectives, add a new goal
     await page.getByRole('link', { name: 'Goals & Objectives' }).click();
