@@ -48,8 +48,8 @@ const ReviewItem = ({
           result = 'Training';
           break;
         case 'in-person':
-            result = 'In person';
-            break;
+          result = 'In person';
+          break;
         case 'virtual':
           result = 'Virtual';
           break;
