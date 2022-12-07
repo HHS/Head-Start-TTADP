@@ -89,6 +89,7 @@ const initialData = {
   objectivesWithoutGoals: [],
   activityRecipients: [],
   activityRecipientType: 'recipient',
+  'goalForEditing.objectives': [],
 };
 
 describe('Navigator', () => {
@@ -159,15 +160,11 @@ describe('Navigator', () => {
     userEvent.click(screen.getByRole('button', { name: 'Save and continue' }));
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(
       {
+        ...initialData,
         pageState: {
           ...initialData.pageState, 2: IN_PROGRESS,
         },
-        regionId: 1,
-        goals: [],
-        objectivesWithoutGoals: [],
         second: 'on',
-        activityRecipientType: 'recipient',
-        activityRecipients: [],
       },
     ));
   });
