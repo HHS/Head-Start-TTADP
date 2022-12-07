@@ -232,7 +232,7 @@ function ActivityReportsTable({
         )}
       </Grid>
 
-      <Container className="landing inline-size-auto maxw-full" padding={0} loading={loading} loadingLabel="Activity reports table loading">
+      <Container className="landing inline-size-auto maxw-full" paddingX={0} paddingY={0} loading={loading} loadingLabel="Activity reports table loading">
         <TableHeader
           title={tableCaption}
           numberOfSelected={numberOfSelectedReports}
@@ -286,7 +286,7 @@ function ActivityReportsTable({
                   report={report}
                   handleReportSelect={handleReportSelect}
                   isChecked={reportCheckboxes[report.id] || false}
-                  openMenuUp={index > displayReports.length - 1}
+                  openMenuUp={index > displayReports.length - 5}
                   numberOfSelectedReports={numberOfSelectedReports}
                   exportSelected={handleDownloadClick}
                 />

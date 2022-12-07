@@ -28,7 +28,8 @@ describe('PrintGoals', () => {
       goalText: 'This is goal text 1.',
       goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
       objectiveCount: 5,
-      goalNumber: 'G-4598',
+      goalNumbers: ['G-4598'],
+      grantNumbers: ['Rattaché au programme'], // copilot came up with this, I hope its not profane
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
       objectives: [],
     },
@@ -39,7 +40,8 @@ describe('PrintGoals', () => {
       goalText: 'This is goal text 2.',
       goalTopics: ['Human Resources', 'Safety Practices'],
       objectiveCount: 5,
-      goalNumber: 'G-4598',
+      goalNumbers: ['G-4598'],
+      grantNumbers: ['Rattaché au programme'],
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
       objectives: [
         {
@@ -48,7 +50,19 @@ describe('PrintGoals', () => {
           grantNumber: '123',
           endDate: '01/01/02',
           reasons: ['Empathy', 'Generosity', 'Friendship'],
-          status: 'Completed',
+          status: 'Complete',
+          activityReports: [
+            {
+              id: 1,
+              displayId: '1234',
+              legacyId: null,
+            },
+            {
+              id: 2,
+              displayId: '1234',
+              legacyId: 'r-1234',
+            },
+          ],
         },
       ],
     },
@@ -86,10 +100,11 @@ describe('PrintGoals', () => {
   };
 
   const filters = [{ topic: 'status', condition: 'is', query: ['Closed'] }];
-  const filteredMockURL = `/api/recipient/${RECIPIENT_ID}/region/${REGION_ID}/goals?sortBy=updatedAt&sortDir=desc&offset=0&limit=false&${filtersToQueryString(filters)}`;
+  const baseMock = `/api/recipient/${RECIPIENT_ID}/region/${REGION_ID}/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=false`;
+  const filteredMockURL = `${baseMock}&${filtersToQueryString(filters)}`;
 
   beforeAll(async () => {
-    fetchMock.get(`/api/recipient/${RECIPIENT_ID}/region/${REGION_ID}/goals?sortBy=updatedAt&sortDir=desc&offset=0&limit=false`, { count: 5, goalRows: goals });
+    fetchMock.get(baseMock, { count: 5, goalRows: goals });
     fetchMock.get(filteredMockURL, { count: 0, goalRows: [] });
   });
 
@@ -112,7 +127,17 @@ describe('PrintGoals', () => {
 
   it('builds a URL to query based on filters provided by window.location.search', async () => {
     delete window.location;
-    window.location = { search: filtersToQueryString(filters) };
+    window.location = {
+      search: filtersToQueryString(filters),
+      state: {
+        sortConfig: {
+          sortBy: 'goalStatus',
+          direction: 'asc',
+          activePage: 1,
+          offset: 0,
+        },
+      },
+    };
 
     act(renderPrintGoals);
 

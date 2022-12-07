@@ -1,7 +1,12 @@
 const {
   Model,
 } = require('sequelize');
-const { beforeValidate, afterUpdate } = require('./hooks/objective');
+const {
+  beforeValidate,
+  beforeUpdate,
+  afterUpdate,
+  afterCreate,
+} = require('./hooks/objective');
 
 /**
  * Objective table. Stores objectives for goals.
@@ -12,12 +17,14 @@ const { beforeValidate, afterUpdate } = require('./hooks/objective');
 module.exports = (sequelize, DataTypes) => {
   class Objective extends Model {
     static associate(models) {
-      Objective.hasMany(models.ActivityReportObjective, { foreignKey: 'objectiveId', as: 'activityReportObjectives' });
       Objective.belongsToMany(models.ActivityReport, {
         through: models.ActivityReportObjective,
         foreignKey: 'objectiveId',
         otherKey: 'activityReportId',
         as: 'activityReports',
+      });
+      Objective.hasMany(models.ActivityReportObjective, {
+        foreignKey: 'objectiveId', as: 'activityReportObjectives',
       });
       Objective.belongsTo(models.OtherEntity, { foreignKey: 'otherEntityId', as: 'otherEntity' });
       Objective.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });
@@ -27,12 +34,6 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'objectiveId',
         otherKey: 'topicId',
         as: 'topics',
-      });
-      Objective.belongsToMany(models.Role, {
-        through: models.ObjectiveRole,
-        foreignKey: 'objectiveId',
-        otherKey: 'roleId',
-        as: 'roles',
       });
       Objective.belongsTo(models.ObjectiveTemplate, { foreignKey: 'objectiveTemplateId', as: 'objectiveTemplate', onDelete: 'cascade' });
       Objective.hasMany(models.ObjectiveFile, { foreignKey: 'objectiveId', as: 'objectiveFiles' });
@@ -101,11 +102,17 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: true,
     },
+    rtrOrder: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'Objective',
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });

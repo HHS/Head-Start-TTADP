@@ -1,10 +1,18 @@
+import { Op } from 'sequelize';
 import { AUTOMATIC_CREATION } from '../../constants';
 
 // When a new resource is added to an objective, add the resource to the template or update the
 // updatedAt value.
 const propagateCreateToTemplate = async (sequelize, instance, options) => {
   const objective = await sequelize.models.Objective.findOne({
-    where: { id: instance.objectiveId },
+    attributes: [
+      'id',
+      'objectiveTemplateId',
+    ],
+    where: {
+      id: instance.objectiveId,
+      objectiveTemplateId: { [Op.not]: null },
+    },
     include: [
       {
         model: sequelize.models.ObjectiveTemplate,
@@ -40,7 +48,14 @@ const propagateCreateToTemplate = async (sequelize, instance, options) => {
 
 const propagateDestroyToTemplate = async (sequelize, instance, options) => {
   const objective = await sequelize.models.Objective.findOne({
-    where: { id: instance.objectiveId },
+    attributes: [
+      'id',
+      'objectiveTemplateId',
+    ],
+    where: {
+      id: instance.objectiveId,
+      objectiveTemplateId: { [Op.not]: null },
+    },
     include: [
       {
         model: sequelize.models.ObjectiveTemplate,

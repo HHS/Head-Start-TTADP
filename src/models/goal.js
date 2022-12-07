@@ -1,7 +1,7 @@
 const { Model } = require('sequelize');
 const { CLOSE_SUSPEND_REASONS } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
-const { beforeValidate, afterUpdate } = require('./hooks/goal');
+const { beforeValidate, beforeUpdate, afterUpdate } = require('./hooks/goal');
 
 /**
  * Goals table. Stores goals for tta.
@@ -12,6 +12,7 @@ const { beforeValidate, afterUpdate } = require('./hooks/goal');
 module.exports = (sequelize, DataTypes) => {
   class Goal extends Model {
     static associate(models) {
+      Goal.hasMany(models.ActivityReportGoal, { foreignKey: 'goalId', as: 'activityReportGoals' });
       Goal.belongsToMany(models.ActivityReport, {
         through: models.ActivityReportGoal,
         foreignKey: 'goalId',
@@ -75,6 +76,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       default: false,
     },
+    isRttapa: {
+      type: DataTypes.ENUM(['Yes', 'No']),
+      allowNull: true,
+    },
     firstNotStartedAt: {
       type: DataTypes.DATE,
       allowNull: true,
@@ -115,11 +120,16 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: true,
     },
+    createdVia: {
+      type: DataTypes.ENUM(['imported', 'activityReport', 'rtr']),
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'Goal',
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });

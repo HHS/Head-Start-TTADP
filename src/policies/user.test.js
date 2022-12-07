@@ -20,6 +20,30 @@ describe('User policies', () => {
     });
   });
 
+  describe('canWriteInAtLeastOneRegion', () => {
+    it('returns true if the user can', () => {
+      const user = {
+        permissions: [{
+          regionId: 1,
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+        }],
+      };
+      const policy = new User(user);
+      expect(policy.canWriteInAtLeastOneRegion()).toBeTruthy();
+    });
+
+    it('returns false if the user cannot', () => {
+      const user = {
+        permissions: [{
+          regionId: 1,
+          scopeId: SCOPES.READ_REPORTS,
+        }],
+      };
+      const policy = new User(user);
+      expect(policy.canWriteInAtLeastOneRegion()).toBeFalsy();
+    });
+  });
+
   describe('isAdmin', () => {
     it('returns true if a user is an admin', () => {
       const user = {
@@ -72,6 +96,24 @@ describe('User policies', () => {
       };
       const policy = new User(userTwo);
       expect(policy.canSeeBehindFeatureFlag('grantee_record_page')).toBeTruthy();
+    });
+  });
+
+  describe('canWriteInRegion', () => {
+    const user = {
+      permissions: [{
+        regionId: 1,
+        scopeId: SCOPES.READ_WRITE_REPORTS,
+      }],
+    };
+    it('is true if the user has read/write permissions', () => {
+      const policy = new User(user);
+      expect(policy.canWriteInRegion(1)).toBeTruthy();
+    });
+
+    it('is false if the user does not have read/write permissions', () => {
+      const policy = new User(user);
+      expect(policy.canWriteInRegion(2)).toBeFalsy();
     });
   });
 });

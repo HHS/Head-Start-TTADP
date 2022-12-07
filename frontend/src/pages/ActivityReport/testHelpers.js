@@ -10,13 +10,14 @@ import ActivityReport from './index';
 import { SCOPE_IDS, REPORT_STATUSES } from '../../Constants';
 import UserContext from '../../UserContext';
 import SocketProvider from '../../components/SocketProvider';
+import AppLoadingContext from '../../AppLoadingContext';
 
 export const history = createMemoryHistory();
 
 const user = {
   id: 1,
   name: 'Walter Burns',
-  role: ['Reporter'],
+  roles: [{ fullName: 'Reporter' }],
   permissions: [
     { regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS },
   ],
@@ -47,7 +48,7 @@ export const formData = () => ({
   resourcesUsed: 'eclkcurl',
   startDate: moment().format('MM/DD/YYYY'),
   targetPopulations: ['target 1'],
-  author: { name: 'test' },
+  author: { name: 'test', roles: { fullName: 'Reporter' } },
   topics: 'first',
   userId: 1,
   goals: [],
@@ -63,16 +64,23 @@ export const renderActivityReport = (id, location = 'activity-summary', showLast
   render(
     <Router history={history}>
       <SocketProvider path="/twiddle-dee-doo">
-        <UserContext.Provider value={{ user: { ...user, id: userId } }}>
-          <ActivityReport
-            match={{ params: { currentPage: location, activityReportId: id }, path: '', url: '' }}
-            location={{
-              state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
-            }}
-            region={1}
-          />
-        </UserContext.Provider>
+        <AppLoadingContext.Provider value={{
+          setIsAppLoading: jest.fn(),
+          setAppLoadingText: jest.fn(),
+        }}
+        >
+          <UserContext.Provider value={{ user: { ...user, id: userId } }}>
+            <ActivityReport
+              match={{ params: { currentPage: location, activityReportId: id }, path: '', url: '' }}
+              location={{
+                state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
+              }}
+              region={1}
+            />
+          </UserContext.Provider>
+        </AppLoadingContext.Provider>
       </SocketProvider>
+
     </Router>,
   );
 };

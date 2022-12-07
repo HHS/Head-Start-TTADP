@@ -1,4 +1,5 @@
 import React from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import { isUndefined } from 'lodash';
 import { Editor } from 'react-draft-wysiwyg';
@@ -21,21 +22,21 @@ const RecipientReviewSection = () => {
       key="Goals"
       basePath="goals-objectives"
       anchor="goals-and-objectives"
-      title="Goals"
+      title="Goals summary"
       canEdit={canEdit}
     >
       {goals.map((goal) => {
         const objectives = goal.objectives || [];
         return (
-          <div key={goal.id}>
-            <div className="grid-row margin-bottom-3 desktop:margin-bottom-0 margin-top-2">
-              <span>
+          <div key={`review-${goal.id}`}>
+            <div className="margin-bottom-3 desktop:margin-bottom-0 margin-top-2">
+              <div>
                 <span className="text-bold">Goal:</span>
                 {' '}
                 {goal.name}
                 {goal.goalNumber && ` (${goal.goalNumber})`}
-              </span>
-              <div className="padding-left-2 margin-top-2">
+              </div>
+              <div className="margin-top-2">
                 <>
                   {objectives.map((objective) => (
                     <div key={objective.id} className="desktop:flex-align-end display-flex flex-column flex-justify-center margin-top-1">
@@ -44,13 +45,53 @@ const RecipientReviewSection = () => {
                         {' '}
                         {objective.title}
                       </div>
-                      <div>
-                        <span className="text-bold">Status:</span>
+                      <div className="margin-top-1">
+                        <span className="text-bold">Topics:</span>
+                        {' '}
+                        {
+                          objective.topics.map((t) => t.name).join(', ')
+                        }
+                      </div>
+                      <div className="margin-top-1">
+                        <span className="text-bold">Resource links:</span>
+                        {' '}
+                        <ul className="usa-list usa-list--unstyled">
+                          {objective.resources.map((r) => (
+                            <li key={uuidv4()}>
+                              <a href={r.value}>{r.value}</a>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="margin-top-1">
+                        <span className="text-bold">Resource attachments:</span>
+                        {' '}
+                        {
+                          objective.files.map((attachment) => (
+                            <li key={attachment.url.url}>
+                              <a
+                                href={attachment.url.url}
+                                target={attachment.originalFileName.endsWith('.txt') ? '_blank' : '_self'}
+                                rel="noreferrer"
+                              >
+                                {
+                                  `${attachment.originalFileName}
+                                   ${attachment.originalFileName.endsWith('.txt')
+                                    ? ' (opens in new tab)'
+                                    : ''}`
+                                }
+                              </a>
+                            </li>
+                          ))
+                        }
+                      </div>
+                      <div className="margin-top-1">
+                        <span className="text-bold">Objective status:</span>
                         {' '}
                         {objective.status}
                       </div>
-                      <div>
-                        <span className="text-bold">TTA Provided:</span>
+                      <div className="margin-top-1">
+                        <span className="text-bold">TTA provided:</span>
                         {' '}
                         <Editor
                           readOnly
