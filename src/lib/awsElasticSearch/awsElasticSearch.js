@@ -113,6 +113,29 @@ const addIndexDocument = async (indexName, id, document, passedClient) => {
   }
 };
 /*
+  Bulk document index.
+  Documents should be in following structure:
+  { "create": { "_index": "movies", "_id": "tt1392214" } }
+  { "title": "Prisoners", "year": 2013 }
+*/
+const bulkIndex = async (documents, indexName, passedClient) => {
+  try {
+    // Initialize the client.
+    const client = passedClient || await getClient();
+
+    // Add a document to an index.
+    const res = await client.bulk({
+      body: documents,
+      refresh: true, // triggers manual refresh.
+    });
+    logger.info(`AWS OpenSearch: Successfully added bulk document's to index ${indexName}`);
+    return res;
+  } catch (error) {
+    auditLogger.error(`AWS OpenSearch Error: Unable to add bulk document's to index '${indexName}': ${error.message}`);
+    throw error;
+  }
+};
+/*
   Search index documents.
 */
 const search = async (indexName, fields, query, passedClient) => {
@@ -213,8 +236,11 @@ const deleteIndex = async (indexName, passedClient) => {
     logger.info(`AWS OpenSearch: Successfully deleted index '${indexName}'`);
     return res;
   } catch (error) {
-    auditLogger.error(`AWS OpenSearch Error: Unable to delete index '${indexName}': ${error.message}`);
-    throw error;
+    const alreadyExisted = error.meta.body.error.type === 'index_not_found_exception';
+    if (!alreadyExisted) {
+      auditLogger.error(`AWS OpenSearch Error: Unable to delete index '${indexName}': ${error.message}`);
+      throw error;
+    }
   }
 };
 
@@ -226,4 +252,5 @@ export {
   search,
   deleteIndexDocument,
   deleteIndex,
+  bulkIndex,
 };

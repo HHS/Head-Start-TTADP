@@ -19,26 +19,8 @@ export const MODEL_MAPPINGS = {
           type: 'date',
           format: 'MM/dd/yyyy',
         },
-        'goals.name': {
+        context: {
           type: 'text',
-        },
-        'goals.status': {
-          type: 'keyword',
-        },
-        'goals.createdAt': {
-          type: 'date',
-        },
-        'goals.updatedAt': {
-          type: 'date',
-        },
-        'goals.objectives.title': {
-          type: 'text',
-        },
-        'goals.objectives.ttaProvided': {
-          type: 'text',
-        },
-        'goals.objectives.status': {
-          type: 'keyword',
         },
       },
     },
