@@ -1,8 +1,10 @@
-import { devices } from "@playwright/test";
+/* eslint-disable import/no-extraneous-dependencies */
+import { devices } from '@playwright/test';
 
 // see https://playwright.dev/docs/api/class-testconfig
 export default {
   testDir: './tests',
+  workers: 2, // changing because of possible data collisions
   expect: {
     /** max time expect() should wait for conditions to be met. */
     timeout: 8000,

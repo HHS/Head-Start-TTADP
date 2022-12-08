@@ -1,0 +1,11 @@
+@use '../../mixins.scss';
+
+@media (min-width: 30em){
+  .ttahub-resource-repeater--add-new .usa-button {
+    margin-top: 0;
+  }
+}
+
+.usa-error-message + .ttahub-resource-repeater input[type="url"] {
+    @include mixins.error;
+}
