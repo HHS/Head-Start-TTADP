@@ -629,7 +629,7 @@ export async function getReport(req, res) {
  */
 export async function getReports(req, res) {
   const query = await setReadRegions(req.query, req.session.userId);
-  const reportsWithCount = await activityReports(query);
+  const reportsWithCount = await activityReports(query, false, req.session.userId);
   if (!reportsWithCount) {
     res.sendStatus(404);
   } else {
@@ -830,6 +830,7 @@ export async function downloadAllReports(req, res) {
     const reports = await getAllDownloadableActivityReports(
       readRegions['region.in'],
       { ...readRegions, limit: null },
+      req.session.userId,
     );
 
     await sendActivityReportCSV(reports, res);
