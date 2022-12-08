@@ -56,7 +56,7 @@ export default function ControlledDatePicker({
     if (newValue.isBefore(min.moment)) {
       return `Please enter a date after ${min.display}`;
     }
-    console.log('Value Check: ', max.moment);
+
     if (newValue.isAfter(max.moment)) {
       return `Please enter a date before ${max.display}`;
     }
