@@ -14,16 +14,16 @@ import NetworkContext from '../../../NetworkContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 import GoalFormContext from '../../../GoalFormContext';
 
+// user mock
+const user = {
+  name: 'test@test.com',
+};
+
 // mocks for socket provider
 const send = jest.fn();
 const socket = { send };
 const store = null;
 const clearStore = jest.fn();
-
-// user mock
-const user = {
-  name: 'test@test.com',
-};
 
 // eslint-disable-next-line react/prop-types
 const Input = ({ name, required }) => {
@@ -40,14 +40,20 @@ const Input = ({ name, required }) => {
 
 const OETest = () => {
   const { isObjectivesFormClosed } = useContext(GoalFormContext);
+  const { register } = useFormContext();
   return (
     <>
       <h1>
-        {
-      isObjectivesFormClosed ? 'Objective form closed' : 'Objective form open'
-    }
+        { isObjectivesFormClosed ? 'Objective form closed' : 'Objective form open' }
 
       </h1>
+      <div className="usa-error-message">
+        <div className="ttahub-resource-repeater">
+          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+          <label htmlFor="goalName">Name</label>
+          <input type="text" id="goalName" name="goalName" ref={register()} />
+        </div>
+      </div>
     </>
   );
 };
@@ -321,7 +327,7 @@ describe('Navigator', () => {
     const saveGoal = await screen.findByRole('button', { name: 'Save goal' });
     expect(saveGoal.textContent).toBe('Save goal');
     expect(saveGoal).toBeVisible();
-    fetchMock.post('/api/activityReports/goals', 200);
+    fetchMock.post('/api/activity-reports/goals', 200);
     await act(async () => userEvent.click(saveGoal));
     expect(saveGoal.textContent).toBe('Save and continue');
   });
@@ -582,6 +588,109 @@ describe('Navigator', () => {
     act(() => renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages, oeData));
 
     expect(await screen.findByText('Objective form open')).toBeVisible();
+    fetchMock.restore();
+    fetchMock.post('/api/activity-reports/objectives', [{
+      title: 'objective',
+      topics: ['test'],
+      ttaProvided: 'tta provided',
+      resources: [{
+        value: 'https://test.com',
+      }],
+    }]);
     jest.advanceTimersByTime(1000 * 60 * 2);
+    await waitFor(() => expect(fetchMock.called()).toBe(false));
+  });
+
+  it('OE auto save with valid resources', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <OETest />
+      ),
+    }];
+
+    const oeData = {
+      ...initialData,
+      activityRecipientType: 'other-entity',
+      objectives: [
+        {
+          title: 'objective',
+          topics: ['test'],
+          ttaProvided: 'tta provided',
+          resources: [{
+            value: 'https://test.com',
+          }],
+        },
+      ],
+    };
+
+    act(() => renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages, oeData));
+
+    expect(await screen.findByText('Objective form open')).toBeVisible();
+    fetchMock.restore();
+    fetchMock.post('/api/activity-reports/objectives', [{
+      title: 'objective',
+      topics: ['test'],
+      ttaProvided: 'tta provided',
+      resources: [{
+        value: 'https://test.com',
+      }],
+    }]);
+    jest.advanceTimersByTime(1000 * 60 * 2);
+    await waitFor(() => expect(fetchMock.called()).toBe(false));
+  });
+
+  it('saves draft for an other entity report', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <OETest />
+      ),
+    }];
+
+    const formData = {
+      ...initialData,
+      activityRecipientType: 'other-entity',
+      activityRecipients: [{ activityRecipientId: 1 }],
+      goalForEditing: null,
+      goals: [],
+      objectivesWithoutGoals: [{
+        title: 'objective',
+        topics: ['test'],
+        ttaProvided: 'tta provided',
+        resources: [{
+          value: 'https://test.com',
+        }],
+      }],
+    };
+
+    renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages, formData);
+    const saveDraft = await screen.findByRole('button', { name: 'Save draft' });
+    expect(saveDraft).toBeVisible();
+    fetchMock.restore();
+    fetchMock.post('/api/activity-reports/objectives', [{
+      title: 'objective',
+      topics: ['test'],
+      ttaProvided: 'tta provided',
+      resources: [{
+        value: 'https://test.com',
+      }],
+    }]);
+    act(() => userEvent.click(saveDraft));
+    await waitFor(() => expect(fetchMock.called()).toBe(true));
   });
 });
