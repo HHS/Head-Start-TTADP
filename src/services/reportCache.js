@@ -107,6 +107,7 @@ const cacheResources = async (objectiveId, activityReportObjectiveId, resources 
               model: Objective,
               as: 'objective',
               required: true,
+              where: { id: objectiveId },
               include: [
                 {
                   model: ActivityReportObjective,
@@ -161,6 +162,7 @@ const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) 
               model: Objective,
               as: 'objective',
               required: true,
+              where: { id: objectiveId },
               include: [
                 {
                   model: ActivityReportObjective,
