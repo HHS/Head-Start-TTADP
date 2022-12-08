@@ -245,21 +245,18 @@ function Navigator({
         goals, goalForEditing: newGoalForEditing,
       } = convertGoalsToFormData(allGoals, grantIds);
 
+      setValue('goalForEditing', newGoalForEditing);
+      setValue('goals', goals);
+      setValue(objectivesFieldArrayName, newGoalForEditing.objectives);
+
       // update form data
       const { status, ...values } = getValues();
       const data = {
         ...formData,
         ...values,
         goals,
-        goalForEditing: newGoalForEditing,
-        [objectivesFieldArrayName]: newGoalForEditing.objectives,
-        pageState: newNavigatorState(),
       };
 
-      setValue('goalForEditing', newGoalForEditing);
-      setValue('goals', goals);
-
-      // setValue(objectivesFieldArrayName, newGoalForEditing.objectives);
       updateFormData(data, true);
 
       updateErrorMessage('');
@@ -428,7 +425,7 @@ function Navigator({
     setValue('goalForEditing.objectives', []);
 
     // the form value is updated but the react state is not
-    // so here we go (todo - why are there two sources of truth?)
+    // so here we go (TODO - why are there two sources of truth?)
     updateFormData({
       ...formData,
       goals: newGoals,
