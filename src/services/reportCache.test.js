@@ -151,9 +151,7 @@ describe('reportCache', () => {
         programSpecialistEmail: user.email,
       },
     });
-    try {
     [report] = await ActivityReport.findOrCreate({ where: { ...mockReport } });
-    } catch (err) { console.log('0000', err, report); throw err; }
     [activityRecipient] = await ActivityRecipient.findOrCreate({
       where: {
         activityReportId: report.id,
@@ -165,9 +163,7 @@ describe('reportCache', () => {
     await Promise.all(mockFiles.map(
       async (mockFile) => File.findOrCreate({ where: { ...mockFile } }),
     ));
-    try {
-      files = await File.findAll({ where: { id: mockFiles.map((mockFile) => mockFile.id) }, order: ['id'] });
-    } catch (err) { console.log('111111', err); }
+    files = await File.findAll({ where: { id: mockFiles.map((mockFile) => mockFile.id) }, order: ['id'] });
     objectiveFiles.push(await ObjectiveFile.findOrCreate({
       where: {
         objectiveId: objective.id,
@@ -240,8 +236,8 @@ describe('reportCache', () => {
         expect(arg).toBeNull();
         expect(aro).toBeNull();
       }
-    // });
-    // it('initial set', async () => {
+      // });
+      // i t('initial set', async () => {
       {
         await ActivityReportGoal.create({ activityReportId: report.id, goalId: goal.id });
         await ActivityReportObjective.create({
@@ -268,8 +264,8 @@ describe('reportCache', () => {
         expect(aro.activityReportObjectiveResources).toEqual([]);
         expect(aro.activityReportObjectiveTopics).toEqual([]);
       }
-    // });
-    // it('add to cache', async () => {
+      // });
+      // i t('add to cache', async () => {
       {
         const filesForThisObjective = await ObjectiveFile.findAll({
           where: {
@@ -319,10 +315,11 @@ describe('reportCache', () => {
 
         expect(aro.activityReportObjectiveTopics.length).toEqual(1);
         expect(aro.arOrder).toEqual(2);
-        expect(aro.activityReportObjectiveTopics[0].topicId).toEqual(mockObjectiveTopics[0].topicId);
+        expect(aro.activityReportObjectiveTopics[0].topicId)
+          .toEqual(mockObjectiveTopics[0].topicId);
       }
-    // });
-    // it('add and remove from cache', async () => {
+      // });
+      // i t('add and remove from cache', async () => {
       {
       // update added or removed files
         await ObjectiveFile.destroy({ where: { objectiveId: objective.id } });
@@ -366,9 +363,7 @@ describe('reportCache', () => {
           ttaProvided: null,
           order: 0,
         };
-        try {
         await cacheObjectiveMetadata(objective, report.id, metadata);
-        } catch (err) { console.log('22222', err); throw err; }
         const aro = await ActivityReportObjective.findOne({
           where: { activityReportId: report.id },
           include: [{
@@ -389,10 +384,11 @@ describe('reportCache', () => {
         expect(aro.activityReportObjectiveResources[0].userProvidedUrl)
           .toEqual(mockObjectiveResources[1].userProvidedUrl);
         expect(aro.activityReportObjectiveTopics.length).toEqual(1);
-        expect(aro.activityReportObjectiveTopics[0].topicId).toEqual(mockObjectiveTopics[1].topicId);
+        expect(aro.activityReportObjectiveTopics[0].topicId)
+          .toEqual(mockObjectiveTopics[1].topicId);
       }
-    // });
-    // it('remove from cache', async () => {
+      // });
+      // i t('remove from cache', async () => {
       {
         const metadata = {
           files: [],
