@@ -27,8 +27,8 @@ export default function ControlledDatePicker({
    */
   const max = useMemo(() => (isStartDate ? {
     display: moment().format(DATE_DISPLAY_FORMAT),
-    moment: moment(),
-    datePicker: moment().format(DATEPICKER_VALUE_FORMAT),
+    moment: moment(maxDate, DATE_DISPLAY_FORMAT),
+    datePicker: moment(maxDate, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT),
     compare: moment(maxDate, DATE_DISPLAY_FORMAT),
   } : {
     display: maxDate,
@@ -56,7 +56,7 @@ export default function ControlledDatePicker({
     if (newValue.isBefore(min.moment)) {
       return `Please enter a date after ${min.display}`;
     }
-
+    console.log('Value Check: ', max.moment);
     if (newValue.isAfter(max.moment)) {
       return `Please enter a date before ${max.display}`;
     }
