@@ -44,7 +44,7 @@ export default function filtersToScopes(filters, options) {
   return Object.keys(models).reduce((scopes, model) => {
     // we make em an object like so
     Object.assign(scopes, {
-      [model]: models[model](filters, options && options[model]),
+      [model]: models[model](filters, options && options[model], options && options.userId),
     });
     return scopes;
   }, {});

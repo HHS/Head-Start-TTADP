@@ -211,7 +211,6 @@ export default function Objective({
   }
 
   const resourcesForRepeater = objectiveResources && objectiveResources.length ? objectiveResources : [{ key: uuidv4(), value: '' }];
-
   const onRemove = () => remove(index);
 
   return (
@@ -333,7 +332,7 @@ Objective.propTypes = {
   fieldArrayName: PropTypes.string.isRequired,
   onObjectiveChange: PropTypes.func.isRequired,
   parentGoal: PropTypes.shape({
-    id: PropTypes.number,
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     status: PropTypes.string,
   }).isRequired,
   initialObjectiveStatus: PropTypes.string.isRequired,

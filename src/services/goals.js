@@ -26,6 +26,7 @@ import {
   destroyActivityReportObjectiveMetadata,
 } from './reportCache';
 import { auditLogger } from '../logger';
+import { isValidResourceUrl } from '../lib/urlUtils';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -265,7 +266,7 @@ export async function saveObjectiveAssociations(
 
   // resources
   const objectiveResources = await Promise.all(
-    resources.filter(({ value }) => value).map(
+    resources.filter(({ value }) => value && isValidResourceUrl(value)).map(
       async ({ value }) => {
         let oresource = await ObjectiveResource.findOne({
           where: {
@@ -360,11 +361,6 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
 
     const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
 
-    const arOrder = objective.activityReportObjectives
-      && objective.activityReportObjectives[0]
-      && objective.activityReportObjectives[0].arOrder
-      ? objective.activityReportObjectives[0].arOrder : null;
-
     return [...objectives, {
       ...objective.dataValues,
       title: objective.title.trim(),
@@ -373,17 +369,16 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
       // Make sure we pass back a list of recipient ids for subsequent saves.
       recipientIds: [objective.getDataValue('otherEntityId')],
       isNew: false,
-      arOrder,
     }];
   }, currentObjectives);
 
-  // Sort by AR Order in place.
   objectivesToSort.sort((o1, o2) => {
-    if (o1.arOrder < o2.arOrder) {
+    if (o1.rtrOrder < o2.rtrOrder) {
       return -1;
     }
     return 1;
   });
+
   return objectivesToSort;
 }
 
