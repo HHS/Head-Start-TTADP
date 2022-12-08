@@ -1,7 +1,7 @@
 import Mock from '@elastic/elasticsearch-mock';
 import {
   createIndex, addIndexDocument, search, updateIndexDocument, deleteIndexDocument, deleteIndex,
-} from './awsElasticSearch';
+} from './awsElasticSearch/awsElasticSearch';
 
 const { Client } = require('@elastic/elasticsearch');
 
@@ -133,7 +133,7 @@ describe('Tests aws elastic search', () => {
     const res = await createIndex(indexName, myMockClient);
     await expect(res.body).toStrictEqual(expectedIndexCreation.body);
   });
-
+// refire the objective resource validation
   it('adds index document', async () => {
     const res = await addIndexDocument(indexName, 1, indexDocumentToAdd, myMockClient);
     await expect(res.body).toStrictEqual(expectedIndexDocument);

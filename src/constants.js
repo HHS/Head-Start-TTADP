@@ -252,3 +252,7 @@ export const DIGEST_SUBJECT_FREQ = {
   WEEKLY: 'weekly',
   MONTHLY: 'monthly',
 };
+
+export const AWS_ELASTIC_SEARCH_INDEXES = {
+  ACTIVITY_REPORTS: 'activityreports',
+};
