@@ -431,7 +431,13 @@ function ActivityReport({
           : data.creatorRole;
         const updatedFields = findWhatsChanged({ ...data, creatorRole }, formData);
         const updatedReport = await saveReport(
-          reportId.current, { ...updatedFields, version: 2, approverUserIds: approverIds }, {},
+          reportId.current, {
+            ...updatedFields,
+            version: 2,
+            approverUserIds:
+            approverIds,
+            pageState: data.pageState,
+          }, {},
         );
 
         let reportData = {

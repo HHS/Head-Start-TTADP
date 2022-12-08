@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
-import React from 'react';
+import React, { useContext } from 'react';
 import userEvent from '@testing-library/user-event';
 import {
   render, screen, waitFor, within, act,
@@ -9,9 +9,16 @@ import {
 import fetchMock from 'fetch-mock';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import Navigator from '../index';
+import UserContext from '../../../UserContext';
 import { NOT_STARTED, IN_PROGRESS } from '../constants';
 import NetworkContext from '../../../NetworkContext';
 import AppLoadingContext from '../../../AppLoadingContext';
+import GoalFormContext from '../../../GoalFormContext';
+
+// user mock
+const user = {
+  name: 'test@test.com',
+};
 
 // eslint-disable-next-line react/prop-types
 const Input = ({ name, required }) => {
@@ -26,14 +33,38 @@ const Input = ({ name, required }) => {
   );
 };
 
+const OETest = () => {
+  const { isObjectivesFormClosed } = useContext(GoalFormContext);
+  const { register } = useFormContext();
+  return (
+    <>
+      <h1>
+        { isObjectivesFormClosed ? 'Objective form closed' : 'Objective form open' }
+
+      </h1>
+      <div className="usa-error-message">
+        <div className="ttahub-resource-repeater">
+          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+          <label htmlFor="goalName">Name</label>
+          <input type="text" id="goalName" name="goalName" ref={register()} />
+        </div>
+      </div>
+    </>
+  );
+};
+
 const GoalTest = () => {
   const { register } = useFormContext();
   return (
     <>
       <h1>Goal test</h1>
-      {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-      <label htmlFor="goalName">Name</label>
-      <input type="text" id="goalName" name="goalName" ref={register()} />
+      <div className="usa-error-message">
+        <div className="ttahub-resource-repeater">
+          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+          <label htmlFor="goalName">Name</label>
+          <input type="text" id="goalName" name="goalName" ref={register()} />
+        </div>
+      </div>
     </>
   );
 };
@@ -87,6 +118,7 @@ const initialData = {
   objectivesWithoutGoals: [],
   activityRecipients: [],
   activityRecipientType: 'recipient',
+  'goalForEditing.objectives': [],
 };
 
 describe('Navigator', () => {
@@ -94,50 +126,6 @@ describe('Navigator', () => {
     jest.useFakeTimers();
     fetchMock.post('/api/activity-reports/goals', 200);
   });
-
-  const TestNavigator = ({
-    currentPage,
-    onSubmit,
-    onSave,
-    updatePage,
-    updateForm,
-    pages,
-    formData,
-    onUpdateError,
-  }) => (
-    <NetworkContext.Provider value={{
-      connectionActive: true,
-      localStorageAvailable: true,
-    }}
-    >
-      <AppLoadingContext.Provider value={{
-        setIsAppLoading: jest.fn(),
-        setAppLoadingText: jest.fn(),
-        isAppLoading: false,
-      }}
-      >
-        <Navigator
-          editable
-          reportId={1}
-          submitted={false}
-          formData={formData}
-          updateFormData={updateForm}
-          onReview={() => {}}
-          isApprover={false}
-          defaultValues={{ first: '', second: '' }}
-          pages={pages}
-          currentPage={currentPage}
-          onFormSubmit={onSubmit}
-          updatePage={updatePage}
-          onSave={onSave}
-          updateErrorMessage={onUpdateError}
-          onResetToDraft={() => {}}
-          updateLastSaveTime={() => {}}
-          isPendingApprover={false}
-        />
-      </AppLoadingContext.Provider>
-    </NetworkContext.Provider>
-  );
 
   // eslint-disable-next-line arrow-body-style
   const renderNavigator = (
@@ -151,18 +139,46 @@ describe('Navigator', () => {
     onUpdateError = jest.fn(),
   ) => {
     render(
-      <TestNavigator
-        currentPage={currentPage}
-        onSubmit={onSubmit}
-        onSave={onSave}
-        updatePage={updatePage}
-        updateForm={updateForm}
-        pages={pages}
-        formData={formData}
-        onUpdateError={onUpdateError}
-      />,
+      <UserContext.Provider value={{ user }}>
+        <NetworkContext.Provider value={{
+          connectionActive: true,
+          localStorageAvailable: true,
+        }}
+        >
+          <AppLoadingContext.Provider value={{
+            setIsAppLoading: jest.fn(),
+            setAppLoadingText: jest.fn(),
+            isAppLoading: false,
+          }}
+          >
+            <Navigator
+              editable
+              reportId={1}
+              submitted={false}
+              formData={formData}
+              updateFormData={updateForm}
+              onReview={() => {}}
+              isApprover={false}
+              defaultValues={{ first: '', second: '' }}
+              pages={pages}
+              currentPage={currentPage}
+              onFormSubmit={onSubmit}
+              updatePage={updatePage}
+              onSave={onSave}
+              updateErrorMessage={onUpdateError}
+              onResetToDraft={() => {}}
+              updateLastSaveTime={() => {}}
+              isPendingApprover={false}
+            />
+          </AppLoadingContext.Provider>
+        </NetworkContext.Provider>
+      </UserContext.Provider>,
     );
   };
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
 
   it('sets dirty forms as "in progress"', async () => {
     renderNavigator();
@@ -182,15 +198,11 @@ describe('Navigator', () => {
     userEvent.click(screen.getByRole('button', { name: 'Save and continue' }));
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(
       {
+        ...initialData,
         pageState: {
           ...initialData.pageState, 2: IN_PROGRESS,
         },
-        regionId: 1,
-        goals: [],
-        objectivesWithoutGoals: [],
         second: 'on',
-        activityRecipientType: 'recipient',
-        activityRecipients: [],
       },
     ));
   });
@@ -293,7 +305,6 @@ describe('Navigator', () => {
     const saveGoal = await screen.findByRole('button', { name: 'Save goal' });
     expect(saveGoal.textContent).toBe('Save goal');
     expect(saveGoal).toBeVisible();
-    fetchMock.post('/api/activityReports/goals', 200);
     await act(async () => userEvent.click(saveGoal));
     expect(saveGoal.textContent).toBe('Save and continue');
   });
@@ -391,6 +402,50 @@ describe('Navigator', () => {
     await waitFor(() => expect(saveButton).toBeDisabled());
   });
 
+  it('won\'t save draft with invalid resources', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <GoalTest />
+      ),
+    }];
+
+    const formData = {
+      ...initialData,
+      activityRecipientType: 'grant',
+      activityRecipients: [],
+      goalForEditing: {
+        isNew: true,
+      },
+      goals: [],
+      goalEndDate: '09/01/2020',
+      goalIsRttapa: 'Yes',
+      goalName: 'goal name',
+      'goalForEditing.objectives': [{
+        title: 'objective',
+        topics: ['test'],
+        ttaProvided: 'tta provided',
+        resources: [{
+          value: 'WHAT THE DEVIL IS THIS',
+        }],
+      }],
+    };
+
+    renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages, formData);
+    const saveGoal = await screen.findByRole('button', { name: 'Save draft' });
+    expect(saveGoal).toBeVisible();
+    fetchMock.restore();
+    act(() => userEvent.click(saveGoal));
+    expect(fetchMock.called()).toBe(false);
+  });
+
   it('runs the autosave on the other entity objectives page', async () => {
     const onSubmit = jest.fn();
     const onSave = jest.fn();
@@ -419,5 +474,200 @@ describe('Navigator', () => {
     jest.advanceTimersByTime(1000 * 60 * 2);
     fetchMock.post('api/activity-reports/objectives', []);
     expect(fetchMock.called('api/activity-reports/objectives')).toBe(false);
+  });
+
+  it('opens the objectives form if the objectives are invalid', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <OETest />
+      ),
+    }];
+
+    const oeData = {
+      ...initialData,
+      activityRecipientType: 'other-entity',
+      objectives: [
+        {
+          taste: 'kind of bitter',
+        },
+      ],
+    };
+
+    act(() => renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages, oeData));
+
+    expect(await screen.findByText('Objective form open')).toBeVisible();
+  });
+
+  it('opens the objectives form if there are no objectives', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <OETest />
+      ),
+    }];
+
+    const oeData = {
+      ...initialData,
+      activityRecipientType: 'other-entity',
+      objectives: [],
+    };
+
+    act(() => renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages, oeData));
+
+    expect(await screen.findByText('Objective form open')).toBeVisible();
+  });
+
+  it('handles invalid OE resources in the auto save', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <OETest />
+      ),
+    }];
+
+    const oeData = {
+      ...initialData,
+      activityRecipientType: 'other-entity',
+      objectives: [
+        {
+          title: 'objective',
+          topics: ['test'],
+          ttaProvided: 'tta provided',
+          resources: [{
+            value: 'WHAT THE DEVIL IS THIS',
+          }],
+        },
+      ],
+    };
+
+    act(() => renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages, oeData));
+
+    expect(await screen.findByText('Objective form open')).toBeVisible();
+    fetchMock.restore();
+    fetchMock.post('/api/activity-reports/objectives', [{
+      title: 'objective',
+      topics: ['test'],
+      ttaProvided: 'tta provided',
+      resources: [{
+        value: 'https://test.com',
+      }],
+    }]);
+    jest.advanceTimersByTime(1000 * 60 * 2);
+    await waitFor(() => expect(fetchMock.called()).toBe(false));
+  });
+
+  it('OE auto save with valid resources', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <OETest />
+      ),
+    }];
+
+    const oeData = {
+      ...initialData,
+      activityRecipientType: 'other-entity',
+      objectives: [
+        {
+          title: 'objective',
+          topics: ['test'],
+          ttaProvided: 'tta provided',
+          resources: [{
+            value: 'https://test.com',
+          }],
+        },
+      ],
+    };
+
+    act(() => renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages, oeData));
+
+    expect(await screen.findByText('Objective form open')).toBeVisible();
+    fetchMock.restore();
+    fetchMock.post('/api/activity-reports/objectives', [{
+      title: 'objective',
+      topics: ['test'],
+      ttaProvided: 'tta provided',
+      resources: [{
+        value: 'https://test.com',
+      }],
+    }]);
+    jest.advanceTimersByTime(1000 * 60 * 2);
+    await waitFor(() => expect(fetchMock.called()).toBe(false));
+  });
+
+  it('saves draft for an other entity report', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <OETest />
+      ),
+    }];
+
+    const formData = {
+      ...initialData,
+      activityRecipientType: 'other-entity',
+      activityRecipients: [{ activityRecipientId: 1 }],
+      goalForEditing: null,
+      goals: [],
+      objectivesWithoutGoals: [{
+        title: 'objective',
+        topics: ['test'],
+        ttaProvided: 'tta provided',
+        resources: [{
+          value: 'https://test.com',
+        }],
+      }],
+    };
+
+    renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages, formData);
+    const saveDraft = await screen.findByRole('button', { name: 'Save draft' });
+    expect(saveDraft).toBeVisible();
+    fetchMock.restore();
+    fetchMock.post('/api/activity-reports/objectives', [{
+      title: 'objective',
+      topics: ['test'],
+      ttaProvided: 'tta provided',
+      resources: [{
+        value: 'https://test.com',
+      }],
+    }]);
+    act(() => userEvent.click(saveDraft));
+    await waitFor(() => expect(fetchMock.called()).toBe(true));
   });
 });
