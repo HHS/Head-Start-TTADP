@@ -53,7 +53,7 @@ test.describe("Activity Report", () => {
 
     // create the first goal
     await page.getByTestId('label').locator('div').filter({ hasText: '- Select -' }).nth(2).click();
-    await page.locator('#react-select-17-option-0').getByText('Create new goal').click();
+    await page.locator('#react-select-15-option-0').getByText('Create new goal').click();
     await page.getByTestId('textarea').click();
     await page.getByTestId('textarea').fill('g1');
     await page.getByText('Yes').click();
@@ -63,7 +63,7 @@ test.describe("Activity Report", () => {
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('g1o1');
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-23-option-0').click();
+    await page.locator('#react-select-21-option-0').click();
     await blur(page);
 
     // save draft doesn't work with invalid resources
@@ -107,7 +107,7 @@ test.describe("Activity Report", () => {
     await page.getByTestId('textarea').fill('g2');
     await page.getByRole('group', { name: 'Is this a Recipient TTA Plan Agreement (RTTAPA) goal?*' }).getByText('Yes').click();
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-27-option-0').click();
+    await page.locator('#react-select-43-option-0').click();
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('g2o1');
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
@@ -154,7 +154,7 @@ test.describe("Activity Report", () => {
     await page.getByRole('textbox', { name: 'Additional notes' }).locator('div').nth(2).click();
     await page.keyboard.type('these are my creator notes');
 
-    const approverDropdown = await page.locator('.css-g1d714-ValueContainer');
+    const approverDropdown = page.locator('.css-g1d714-ValueContainer');
     await approverDropdown.click();
 
     // type our name into the dropdown to filter to just us
