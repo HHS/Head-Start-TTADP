@@ -55,6 +55,17 @@ describe('AccountManagement', () => {
   };
 
   describe('email preferences', () => {
+    it('should not show when the user is unverified', async () => {
+      const unverifiedUser = {
+        name: 'user1',
+        lastLogin: now,
+        validationStatus: [],
+      };
+      renderAM(unverifiedUser);
+      await screen.findByText('Account Management');
+      expect(screen.queryByTestId('email-preferences-form')).toBeNull();
+    });
+
     describe('unsubscribed', () => {
       beforeEach(async () => {
         fetchMock.get('/api/settings/email', unsub);
