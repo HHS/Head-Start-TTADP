@@ -393,7 +393,7 @@ describe('Filter Menu', () => {
 
     userEvent.selectOptions(topics, 'My reports');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
-    userEvent.selectOptions(conditions, 'is');
+    userEvent.selectOptions(conditions, 'where I\'m the');
 
     userEvent.selectOptions(topics, 'Topics');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
@@ -429,7 +429,7 @@ describe('Filter Menu', () => {
 
     userEvent.selectOptions(topics, 'My reports');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
-    userEvent.selectOptions(conditions, 'is');
+    userEvent.selectOptions(conditions, 'where I\'m the');
 
     userEvent.selectOptions(topics, 'Topics');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
