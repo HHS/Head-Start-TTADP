@@ -491,8 +491,10 @@ function Navigator({
 
   const draftSaver = async (isAutoSave = false) => {
     // Determine if we should save draft on auto save.
-    const saveGoalsDraft = isGoalsObjectivesPage && !isGoalFormClosed;
-    const saveObjectivesDraft = isGoalsObjectivesPage && !isObjectivesFormClosed;
+    const saveGoalsDraft = isGoalsObjectivesPage && !isGoalFormClosed && isRecipientReport;
+    const saveObjectivesDraft = (
+      isGoalsObjectivesPage && !isObjectivesFormClosed && isOtherEntityReport
+    );
     if (isOtherEntityReport && saveObjectivesDraft) {
       // Save other-entity draft.
       await onSaveDraftOetObjectives(isAutoSave);
