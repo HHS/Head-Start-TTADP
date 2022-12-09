@@ -11,13 +11,12 @@ import GrantSelect from './GrantSelect';
 import GoalText from './GoalText';
 import GoalDate from './GoalDate';
 import GoalRttapa from './GoalRttapa';
-import Loader from '../Loader';
 import {
   OBJECTIVE_DEFAULTS,
   OBJECTIVE_DEFAULT_ERRORS,
   FORM_FIELD_INDEXES,
 } from './constants';
-import GoalFormLoadingContext from '../../GoalFormLoadingContext';
+import AppLoadingContext from '../../AppLoadingContext';
 import './Form.scss';
 
 export const BEFORE_OBJECTIVES_CREATE_GOAL = 'Enter a goal before adding an objective';
@@ -53,7 +52,7 @@ export default function Form({
   onUploadFiles,
   userCanEdit,
 }) {
-  const { isLoading } = useContext(GoalFormLoadingContext);
+  const { isAppLoading } = useContext(AppLoadingContext);
 
   const onUpdateText = (e) => setGoalName(e.target.value);
 
@@ -97,7 +96,6 @@ export default function Form({
 
   return (
     <div className="ttahub-create-goals-form">
-      <Loader loading={isLoading} loadingLabel="Loading" text="Loading" />
       { fetchError ? <Alert type="error" role="alert">{ fetchError }</Alert> : null}
       <div className="display-flex flex-align-center margin-top-2 margin-bottom-1">
         <h2 className="margin-0">{formTitle}</h2>
@@ -130,7 +128,7 @@ export default function Form({
         possibleGrants={possibleGrants}
         validateGrantNumbers={validateGrantNumbers}
         error={errors[FORM_FIELD_INDEXES.GRANTS]}
-        isLoading={isLoading}
+        isLoading={isAppLoading}
         goalStatus={status}
         userCanEdit={userCanEdit}
       />
@@ -141,7 +139,7 @@ export default function Form({
         isOnReport={isOnReport}
         validateGoalName={validateGoalName}
         onUpdateText={onUpdateText}
-        isLoading={isLoading}
+        isLoading={isAppLoading}
         goalStatus={status}
         userCanEdit={userCanEdit}
       />
@@ -151,7 +149,7 @@ export default function Form({
         isRttapa={isRttapa}
         onBlur={validateIsRttapa}
         onChange={setIsRttapa}
-        isLoading={isLoading}
+        isLoading={isAppLoading}
         goalStatus={status}
         isOnApprovedReport={isOnApprovedReport || false}
         initial={initialRttapa}
@@ -164,7 +162,7 @@ export default function Form({
         endDate={moment(endDate, 'YYYY-MM-DD').format('MM/DD/YYYY')}
         validateEndDate={validateEndDate}
         key={datePickerKey}
-        isLoading={isLoading}
+        isLoading={isAppLoading}
         goalStatus={status}
         userCanEdit={userCanEdit}
       />

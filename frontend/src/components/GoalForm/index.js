@@ -34,7 +34,7 @@ import { DECIMAL_BASE, SCOPE_IDS } from '../../Constants';
 import ReadOnly from './ReadOnly';
 import PlusButton from './PlusButton';
 import colors from '../../colors';
-import GoalFormLoadingContext from '../../GoalFormLoadingContext';
+import AppLoadingContext from '../../AppLoadingContext';
 import useUrlParamState from '../../hooks/useUrlParamState';
 import UserContext from '../../UserContext';
 
@@ -106,7 +106,7 @@ export default function GoalForm({
 
   const [errors, setErrors] = useState(FORM_FIELD_DEFAULT_ERRORS);
 
-  const [isLoading, setIsLoading] = useState(false);
+  const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
 
   const { user } = useContext(UserContext);
 
@@ -189,19 +189,23 @@ export default function GoalForm({
       } catch (err) {
         setFetchError('There was an error loading your goal');
       } finally {
-        setIsLoading(false);
+        setIsAppLoading(false);
       }
     }
 
-    if (!fetchAttempted && !isNew && !isLoading) {
-      setIsLoading(true);
-    }
-
-    // only fetch once, on load, and only if the id isn't 'new'
-    if (!fetchAttempted && !isNew && isLoading) {
+    if (!fetchAttempted && !isNew && !isAppLoading) {
+      setAppLoadingText('Loading');
+      setIsAppLoading(true);
       fetchGoal();
     }
-  }, [errors, fetchAttempted, recipient.id, isNew, isLoading, ids]);
+  }, [errors,
+    fetchAttempted,
+    recipient.id,
+    isNew,
+    isAppLoading,
+    ids,
+    setAppLoadingText,
+    setIsAppLoading]);
 
   // for fetching topic options from API
   useEffect(() => {
@@ -476,7 +480,8 @@ export default function GoalForm({
   // on form submit
   const onSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
+    setAppLoadingText('Submitting');
+    setIsAppLoading(true);
     try {
       // if the goal is a draft, submission should move it to "not started"
       const gs = createdGoals.reduce((acc, goal) => {
@@ -508,13 +513,14 @@ export default function GoalForm({
         type: 'error',
       });
     } finally {
-      setIsLoading(false);
+      setIsAppLoading(false);
     }
   };
 
   const onUploadFiles = async (files, objective, setFileUploadErrorMessage, index) => {
     // The first thing we need to know is... does this objective need to be created?
-    setIsLoading(true);
+    setAppLoadingText('Uploading');
+    setIsAppLoading(true);
 
     // there is some weirdness where an objective may or may not have the "ids" property
     let objectiveIds = objective.ids ? objective.ids : [];
@@ -584,7 +590,7 @@ export default function GoalForm({
     } catch (error) {
       setFileUploadErrorMessage('File(s) could not be uploaded');
     } finally {
-      setIsLoading(false);
+      setIsAppLoading(false);
     }
 
     return null;
@@ -599,8 +605,8 @@ export default function GoalForm({
       }
       return;
     }
-
-    setIsLoading(true);
+    setAppLoadingText('Saving');
+    setIsAppLoading(true);
 
     try {
       let newGoals = [];
@@ -665,7 +671,7 @@ export default function GoalForm({
         type: 'error',
       });
     } finally {
-      setIsLoading(false);
+      setIsAppLoading(false);
     }
   };
 
@@ -691,8 +697,8 @@ export default function GoalForm({
       }
       return;
     }
-
-    setIsLoading(true);
+    setAppLoadingText('Saving');
+    setIsAppLoading(true);
     try {
       const newGoals = selectedGrants.map((g) => ({
         grantId: g.value,
@@ -749,7 +755,7 @@ export default function GoalForm({
         type: 'error',
       });
     } finally {
-      setIsLoading(false);
+      setIsAppLoading(false);
     }
   };
 
@@ -785,7 +791,8 @@ export default function GoalForm({
    * @param {Number} g
    */
   const onRemove = async (g) => {
-    setIsLoading(true);
+    setAppLoadingText('Removing goal');
+    setIsAppLoading(true);
     try {
       const success = await deleteGoal(g.goalIds, regionId);
 
@@ -807,7 +814,7 @@ export default function GoalForm({
         type: 'error',
       });
     } finally {
-      setIsLoading(false);
+      setIsAppLoading(false);
     }
   };
 
@@ -841,26 +848,24 @@ export default function GoalForm({
       </h1>
 
       <Container className="margin-y-3 margin-left-2 width-tablet" paddingX={4} paddingY={5}>
-        <GoalFormLoadingContext.Provider value={{ isLoading }}>
-          { createdGoals.length ? (
-            <>
-              <ReadOnly
-                createdGoals={createdGoals}
-                onRemove={onRemove}
-                onEdit={onEdit}
-                loading={isLoading}
-              />
-              <div className="margin-bottom-4">
-                {!showForm && isNew
-                  ? (
-                    <PlusButton onClick={() => setShowForm(true)} text="Add another goal" />
-                  ) : null }
-              </div>
-            </>
-          ) : null }
+        { createdGoals.length ? (
+          <>
+            <ReadOnly
+              createdGoals={createdGoals}
+              onRemove={onRemove}
+              onEdit={onEdit}
+            />
+            <div className="margin-bottom-4">
+              {!showForm && isNew
+                ? (
+                  <PlusButton onClick={() => setShowForm(true)} text="Add another goal" />
+                ) : null }
+            </div>
+          </>
+        ) : null }
 
-          <form onSubmit={onSubmit}>
-            { showForm && (
+        <form onSubmit={onSubmit}>
+          { showForm && (
             <Form
               fetchError={fetchError}
               onSaveDraft={onSaveDraft}
@@ -895,28 +900,28 @@ export default function GoalForm({
               onUploadFiles={onUploadFiles}
               userCanEdit={canEdit}
             />
-            )}
+          )}
 
-            { canEdit && (isNew || status === 'Draft') && status !== 'Closed' && (
-              <div className="margin-top-4">
-                { !showForm ? <Button type="submit">Submit goal</Button> : null }
-                { showForm ? <Button type="button" onClick={() => onSaveAndContinue(false)}>Save and continue</Button> : null }
-                <Button type="button" outline onClick={onSaveDraft}>Save draft</Button>
-                { showForm && !createdGoals.length ? (
-                  <Link
-                    to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
-                    className=" usa-button usa-button--outline"
-                  >
-                    Cancel
-                  </Link>
-                ) : null }
-                { showForm && createdGoals.length ? (
-                  <Button type="button" outline onClick={clearForm} data-testid="create-goal-form-cancel">Cancel</Button>
-                ) : null }
-              </div>
-            )}
+          { canEdit && (isNew || status === 'Draft') && status !== 'Closed' && (
+          <div className="margin-top-4">
+            { !showForm ? <Button type="submit">Submit goal</Button> : null }
+            { showForm ? <Button type="button" onClick={() => onSaveAndContinue(false)}>Save and continue</Button> : null }
+            { showForm ? <Button type="button" outline onClick={onSaveDraft}>Save draft</Button> : null }
+            { showForm && !createdGoals.length ? (
+              <Link
+                to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
+                className=" usa-button usa-button--outline"
+              >
+                Cancel
+              </Link>
+            ) : null }
+            { showForm && createdGoals.length ? (
+              <Button type="button" outline onClick={clearForm} data-testid="create-goal-form-cancel">Cancel</Button>
+            ) : null }
+          </div>
+          )}
 
-            { canEdit && (!isNew && status !== 'Draft') && status !== 'Closed' && (
+          { canEdit && (!isNew && status !== 'Draft') && status !== 'Closed' && (
             <div className="margin-top-4">
               <Button
                 type="submit"
@@ -934,11 +939,10 @@ export default function GoalForm({
                 Cancel
               </Link>
             </div>
-            ) }
+          ) }
 
-            { alert.message ? <Alert role="alert" className="margin-y-2" type={alert.type}>{alert.message}</Alert> : null }
-          </form>
-        </GoalFormLoadingContext.Provider>
+          { alert.message ? <Alert role="alert" className="margin-y-2" type={alert.type}>{alert.message}</Alert> : null }
+        </form>
       </Container>
     </>
   );

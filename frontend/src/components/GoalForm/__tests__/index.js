@@ -19,6 +19,7 @@ import UserContext from '../../../UserContext';
 import { OBJECTIVE_ERROR_MESSAGES } from '../constants';
 import { REPORT_STATUSES, SCOPE_IDS } from '../../../Constants';
 import { BEFORE_OBJECTIVES_CREATE_GOAL, BEFORE_OBJECTIVES_SELECT_RECIPIENTS } from '../Form';
+import AppLoadingContext from '../../../AppLoadingContext';
 
 const [
   objectiveTitleError, objectiveTopicsError,
@@ -109,11 +110,20 @@ describe('create goal', () => {
           },
         }}
         >
-          <CreateGoal
-            recipient={recipient}
-            regionId="1"
-            isNew={goalId === 'new'}
-          />
+          <AppLoadingContext.Provider value={
+          {
+            setIsAppLoading: jest.fn(),
+            setAppLoadingText: jest.fn(),
+            isAppLoading: false,
+          }
+        }
+          >
+            <CreateGoal
+              recipient={recipient}
+              regionId="1"
+              isNew={goalId === 'new'}
+            />
+          </AppLoadingContext.Provider>
         </UserContext.Provider>
       </Router>
     ));
