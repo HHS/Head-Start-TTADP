@@ -134,7 +134,6 @@ function Navigator({
     }
     return newPageState;
   };
-
   const onSaveForm = async (isAutoSave = false) => {
     setSavingLoadScreen(isAutoSave);
     if (!editable) {
@@ -143,7 +142,6 @@ function Navigator({
     }
     const { status, ...values } = getValues();
     const data = { ...formData, ...values, pageState: newNavigatorState() };
-
     updateFormData(data);
     try {
       // Always clear the previous error message before a save.
@@ -278,7 +276,20 @@ function Navigator({
     const currentObjectives = getValues(fieldArrayName);
     const otherEntityIds = recipients.map((otherEntity) => otherEntity.activityRecipientId);
 
-    if (!isAutoSave && !validateListOfResources(currentObjectives.map((o) => o.resources).flat())) {
+    let invalidResources = false;
+    const invalidResourceIndices = [];
+
+    if (currentObjectives) {
+    // refire the objective resource validation
+      currentObjectives.forEach((objective, index) => {
+        if (!validateListOfResources(objective.resources)) {
+          invalidResources = true;
+          invalidResourceIndices.push(index);
+        }
+      });
+    }
+
+    if (!isAutoSave && invalidResources) {
       // make an attempt to focus on the first invalid resource
       // having a sticky header complicates this enough to make me not want to do this perfectly
       // right out of the gate
@@ -316,10 +327,22 @@ function Navigator({
         }));
       }
 
+      // update form data
+      const { status, ...values } = getValues();
+      const data = { ...formData, ...values, pageState: newNavigatorState() };
+      updateFormData(data);
+
       // Set updated objectives.
       setValue('objectivesWithoutGoals', newObjectives);
       updateLastSaveTime(moment());
       updateErrorMessage('');
+
+      // we have to do this here, after the form data has been updated
+      if (isAutoSave) {
+        invalidResourceIndices.forEach((index) => {
+          setError(`${fieldArrayName}[${index}].resources`, { message: OBJECTIVE_RESOURCES });
+        });
+      }
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     } finally {

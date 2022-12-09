@@ -354,23 +354,29 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       // we can dedupe these using lodash
       exists.resources = uniqBy([
         ...exists.resources,
-        ...objective.activityReportObjectives[0].activityReportObjectiveResources.map(
-          (r) => r,
-        ),
+        ...(objective.activityReportObjectives
+          && objective.activityReportObjectives.length > 0
+          ? objective.activityReportObjectives[0].activityReportObjectiveResources
+            .map((r) => r)
+          : []),
       ], 'value');
 
       exists.topics = uniqBy([
         ...exists.topics,
-        ...objective.activityReportObjectives[0].activityReportObjectiveTopics.map(
-          (t) => t.topic,
-        ),
+        ...(objective.activityReportObjectives
+          && objective.activityReportObjectives.length > 0
+          ? objective.activityReportObjectives[0].activityReportObjectiveTopics
+            .map((t) => t.topic)
+          : []),
       ], 'id');
 
       exists.files = uniqBy([
         ...exists.files,
-        ...objective.activityReportObjectives[0].activityReportObjectiveFiles.map(
-          (f) => ({ ...f.file, url: f.file.url }),
-        ),
+        ...(objective.activityReportObjectives
+          && objective.activityReportObjectives.length > 0
+          ? objective.activityReportObjectives[0].activityReportObjectiveFiles
+            .map((f) => ({ ...f.file, url: f.file.url }))
+          : []),
       ], 'key');
 
       return objectives;
@@ -404,15 +410,21 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       // of the activity report not the state of the objective, which is what
       // we are getting at with this method (getGoalsForReport)
 
-      topics: objective.activityReportObjectives[0].activityReportObjectiveTopics.map(
-        (t) => t.topic.dataValues,
-      ),
-      resources: objective.activityReportObjectives[0].activityReportObjectiveResources.map(
-        (r) => r.dataValues,
-      ),
-      files: objective.activityReportObjectives[0].activityReportObjectiveFiles.map(
-        (f) => ({ ...f.file.dataValues, url: f.file.url }),
-      ),
+      topics: objective.activityReportObjectives
+        && objective.activityReportObjectives.length > 0
+        ? objective.activityReportObjectives[0].activityReportObjectiveTopics
+          .map((t) => t.topic)
+        : [],
+      resources: objective.activityReportObjectives
+        && objective.activityReportObjectives.length > 0
+        ? objective.activityReportObjectives[0].activityReportObjectiveResources
+          .map((r) => r)
+        : [],
+      files: objective.activityReportObjectives
+        && objective.activityReportObjectives.length > 0
+        ? objective.activityReportObjectives[0].activityReportObjectiveFiles
+          .map((f) => ({ ...f.file, url: f.file.url }))
+        : [],
     }];
   }, currentObjectives);
 
@@ -1669,10 +1681,12 @@ export async function getGoalsForReport(reportId) {
         required: true,
       },
       {
+        separate: true,
         model: Objective,
         as: 'objectives',
         include: [
           {
+            required: true,
             model: ActivityReportObjective,
             as: 'activityReportObjectives',
             where: {
@@ -1680,7 +1694,7 @@ export async function getGoalsForReport(reportId) {
             },
             include: [
               {
-
+                separate: true,
                 model: ActivityReportObjectiveTopic,
                 as: 'activityReportObjectiveTopics',
                 required: false,
@@ -1692,6 +1706,7 @@ export async function getGoalsForReport(reportId) {
                 ],
               },
               {
+                separate: true,
                 model: ActivityReportObjectiveFile,
                 as: 'activityReportObjectiveFiles',
                 required: false,
@@ -1703,6 +1718,7 @@ export async function getGoalsForReport(reportId) {
                 ],
               },
               {
+                separate: true,
                 model: ActivityReportObjectiveResource,
                 as: 'activityReportObjectiveResources',
                 required: false,
@@ -1715,6 +1731,7 @@ export async function getGoalsForReport(reportId) {
             as: 'topics',
           },
           {
+            separate: true,
             model: ObjectiveResource,
             as: 'resources',
             attributes: [['userProvidedUrl', 'value']],
