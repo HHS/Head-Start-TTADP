@@ -139,6 +139,7 @@ describe('Navigator', () => {
     pages = defaultPages,
     formData = initialData,
     onUpdateError = jest.fn(),
+    editable = true,
   ) => {
     render(
       <SocketContext.Provider value={{ socket, store, clearStore }}>
@@ -155,7 +156,7 @@ describe('Navigator', () => {
             }}
             >
               <Navigator
-                editable
+                editable={editable}
                 reportId={1}
                 submitted={false}
                 formData={formData}
@@ -190,6 +191,32 @@ describe('Navigator', () => {
     userEvent.click(firstInput);
     const first = await screen.findByRole('button', { name: 'first page In Progress' });
     await waitFor(() => expect(within(first).getByText('In Progress')).toBeVisible());
+  });
+
+  it('doesn\'t allow saving if the form is not editable', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const onUpdateError = jest.fn();
+    const isEditable = false;
+    renderNavigator(
+      'first',
+      onSubmit,
+      onSave,
+      updatePage,
+      updateForm,
+      defaultPages,
+      initialData,
+      onUpdateError,
+      isEditable,
+    );
+
+    fetchMock.restore();
+    expect(fetchMock.called()).toBe(false);
+
+    await act(async () => userEvent.click(await screen.findByRole('button', { name: 'Save draft' })));
+    expect(fetchMock.called()).toBe(false);
   });
 
   it('onContinue calls onSave with correct page position', async () => {
@@ -332,6 +359,54 @@ describe('Navigator', () => {
     expect(saveGoal.textContent).toBe('Save and continue');
   });
 
+  it('handles the case where end date = "Invalid date"', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <>
+          <h1>Goal test</h1>
+        </>
+      ),
+    }];
+
+    const formData = {
+      ...initialData,
+      activityRecipientType: 'grant',
+      activityRecipients: [],
+      goalForEditing: {
+        isNew: true,
+      },
+      goals: [],
+      goalEndDate: 'Invalid date',
+      goalIsRttapa: 'Yes',
+      goalName: 'goal name',
+      'goalForEditing.objectives': [{
+        title: 'objective',
+        topics: ['test'],
+        ttaProvided: 'tta provided',
+        resources: [],
+      }],
+    };
+
+    fetchMock.restore();
+    renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages, formData);
+    const saveGoal = await screen.findByRole('button', { name: 'Save goal' });
+    expect(saveGoal.textContent).toBe('Save goal');
+    expect(saveGoal).toBeVisible();
+    fetchMock.post('/api/activity-reports/goals', 200);
+    await act(async () => userEvent.click(saveGoal));
+    expect(saveGoal.textContent).toBe('Save and continue');
+
+    console.log(fetchMock.calls());
+  });
+
   it('shows an error when save fails', async () => {
     const onSubmit = jest.fn();
     const onSave = jest.fn();
@@ -442,8 +517,16 @@ describe('Navigator', () => {
 
     const formData = {
       ...initialData,
-      activityRecipientType: 'grant',
-      activityRecipients: [],
+      activityRecipientType: 'recipient',
+      activityRecipients: [
+        {
+          id: 1,
+          name: 'recipient',
+          grant: {
+            id: 1,
+          },
+        },
+      ],
       goalForEditing: {
         isNew: true,
       },
