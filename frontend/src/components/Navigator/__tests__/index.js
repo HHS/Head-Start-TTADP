@@ -436,7 +436,7 @@ describe('Navigator', () => {
         isNew: true,
       },
       goals: [],
-      goalEndDate: 'Invalid date',
+      goalEndDate: '09/01/2021',
       goalIsRttapa: 'Yes',
       goalName: 'goal name',
       'goalForEditing.objectives': [{
