@@ -187,13 +187,13 @@ export default async function createAwsElasticSearchIndexes() {
     // Log times.
     logger.info(`
     - Create AWS Elasticsearch Indexes -
-    | Total Reports Indexed (#): ${reportsToIndex[0].length}  |
+    | Total Reports Indexed (#): ${reportsToIndex[0].length} |
     | Total Time: ${finishTotalTime.diff(startTotalTime) / 1000}sec |
     | Clean Index: ${finishCleaningIndex.diff(startCleaningIndex) / 1000}sec |
     | Create Index: ${finishCreatingIndex.diff(startCreatingIndex) / 1000}sec |
     | Get Reports: ${finishGettingReports.diff(startGettingReports) / 1000}sec |
     | Create Import: ${finishCreatingBulk.diff(startCreatingBulk) / 1000}sec |
-    | Create Import: ${finishCreatingBulk.diff(startCreatingBulk) / 1000}sc |
+    | Create Import: ${finishCreatingBulk.diff(startCreatingBulk) / 1000}sec |
     | Creating Bulk Data: ${finishBulkImport.diff(startBulkImport) / 1000}sec |`);
   } catch (error) {
     auditLogger.error(`Search Index Job Error: ${error.message}`);
