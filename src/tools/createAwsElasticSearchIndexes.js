@@ -1,18 +1,13 @@
 /* eslint-disable no-restricted-syntax */
-import { Op } from 'sequelize';
 import moment from 'moment';
 import { auditLogger, logger } from '../logger';
 import {
   getClient, deleteIndex, createIndex, bulkIndex,
 } from '../lib/awsElasticSearch/awsElasticSearch';
 import {
-  ActivityReport,
-  NextStep,
-  ActivityReportObjective,
-  Objective,
-  Goal,
+  sequelize,
 } from '../models';
-import { AWS_ELASTIC_SEARCH_INDEXES, REPORT_STATUSES } from '../constants';
+import { AWS_ELASTIC_SEARCH_INDEXES } from '../constants';
 
 /*
         TTAHUB-870:
@@ -38,116 +33,161 @@ export default async function createAwsElasticSearchIndexes() {
 
     // Get activity reports.
     const startGettingReports = moment();
-    const reportsToIndex = await ActivityReport.findAll({
-      where: {
-        calculatedStatus: REPORT_STATUSES.APPROVED,
-        // id: 21749,
-        //id: 7574,
-      },
-      include: [
-        {
-          model: ActivityReportObjective,
-          as: 'activityReportObjectives',
-          attributes: ['ttaProvided'],
-          /*include: [{
-            model: Objective,
-            as: 'objective',
-            include: [{
-              model: Goal,
-              as: 'goal',
-            },
-            ],
-            attributes: ['id', 'title', 'status'],
-          },
-          ],*/
-        },
-        {
-          model: Goal,
-          as: 'goals',
-          attributes: ['id', 'name'],
-        },
-        /*{
-          model: Objective,
-          as: 'objectives',
-          attributes: ['id', 'title'],
-        },*/
-        {
-          model: NextStep,
-          where: {
-            noteType: {
-              [Op.eq]: 'SPECIALIST',
-            },
-          },
-          attributes: ['note', 'id'],
-          as: 'specialistNextSteps',
-          separate: true,
-          required: false,
-        },
-        {
-          model: NextStep,
-          where: {
-            noteType: {
-              [Op.eq]: 'RECIPIENT',
-            },
-          },
-          attributes: ['note', 'id'],
-          as: 'recipientNextSteps',
-          separate: true,
-          required: false,
-        },
-      ],
+
+    /* We need to use raw sql here otherwise we timeout and run out of memory. */
+    const reportsSql = `
+    -- Create AR temp table.
+    SELECT
+    ar."id",
+    ar."context",
+    ar."startDate",
+    ar."endDate"
+    INTO TEMP TABLE temp_ars
+    FROM "ActivityReports" ar
+    WHERE ar."calculatedStatus" = 'approved'
+    ORDER BY ar."id" DESC;
+
+    -- Recipient Next Steps.
+    SELECT
+    rns."activityReportId",
+    rns."note"
+    INTO TEMP TABLE temp_recipient_next_steps
+    FROM "NextSteps" rns
+    WHERE rns."noteType" ='RECIPIENT'
+    AND rns."activityReportId" IN (SELECT id FROM temp_ars)
+    GROUP BY rns."activityReportId", rns."note"
+    ORDER BY rns."activityReportId";
+
+    -- Specialist Next Steps.
+    SELECT
+    rns."activityReportId",
+    rns."note"
+    INTO TEMP TABLE temp_specialist_next_steps
+    FROM "NextSteps" rns
+    WHERE rns."noteType" ='SPECIALIST'
+    AND rns."activityReportId" IN (SELECT id FROM temp_ars)
+    GROUP BY rns."activityReportId", rns."note"
+    ORDER BY rns."activityReportId";
+
+    -- Goals
+    SELECT
+    arg."activityReportId",
+    arg."name"
+    INTO TEMP TABLE temp_goals
+    FROM "ActivityReportGoals" arg
+    WHERE arg."activityReportId" IN (SELECT id FROM temp_ars)
+    GROUP BY arg."activityReportId", arg."name"
+    ORDER BY arg."activityReportId";
+
+    -- Objectives
+    SELECT
+    aro."activityReportId",
+    aro."ttaProvided"
+    INTO TEMP TABLE temp_objectives
+    FROM "ActivityReportObjectives" aro
+    WHERE aro."activityReportId" IN (SELECT id FROM temp_ars)
+    GROUP BY aro."activityReportId", aro."ttaProvided"
+    ORDER BY aro."activityReportId";`;
+
+    // Query DB.
+    let reportsToIndex;
+    let recipientNextStepsToIndex;
+    let specialistNextStepsToIndex;
+    let goalsToIndex;
+    let objectivesToIndex;
+    await sequelize.transaction(async (transaction) => {
+      // Create Temp Tables.
+      await sequelize.query(
+        reportsSql,
+        { transaction },
+      );
+
+      // Reports.
+      reportsToIndex = await sequelize.query(
+        'SELECT * FROM temp_ars;',
+        { transaction },
+      );
+
+      // Recipient Steps.
+      recipientNextStepsToIndex = await sequelize.query(
+        'SELECT * FROM temp_recipient_next_steps;',
+        { transaction },
+      );
+
+      // Specialist Steps.
+      specialistNextStepsToIndex = await sequelize.query(
+        'SELECT * FROM temp_specialist_next_steps;',
+        { transaction },
+      );
+
+      // Goals.
+      goalsToIndex = await sequelize.query(
+        'SELECT * FROM temp_goals;',
+        { transaction },
+      );
+
+      // objectives.
+      objectivesToIndex = await sequelize.query(
+        'SELECT * FROM temp_objectives;',
+        { transaction },
+      );
     });
+
     const finishGettingReports = moment();
     if (!reportsToIndex.length) {
       logger.info('Search Index Job Info: No reports found to index.');
     }
 
-    //console.log('\n\n\nReports to Index LENGTH: ', reportsToIndex[0].objectives.length);
-    //console.log('\n\n\nReports to OBJ: ', reportsToIndex[0].objectives);
-    //console.log('\n\n\nReports to Index: ', reportsToIndex[0].activityReportObjectives[0].objective.goal);
-
     // Bulk add index documents.
-    logger.info(`Search Index Job Info: Starting indexing of ${reportsToIndex.length} reports...`);
-    const startCreatingBulk = moment();
+    logger.info(`Search Index Job Info: Starting indexing of ${reportsToIndex[0].length} reports...`);
+
     // Build Documents Object Json.
-    /*
+    const startCreatingBulk = moment();
     const documents = [];
     for (let i = 0; i < reportsToIndex.length; i += 1) {
-      const ar = reportsToIndex[i];
+      const ar = reportsToIndex[0][i];
       documents.push({
         create: {
           _index: AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
           _id: ar.id,
         },
       });
+
+      // Get relevant AR records.
+      const arRecipientSteps = recipientNextStepsToIndex[0].filter(
+        (r) => r.activityReportId === ar.id,
+      );
+      const arSpecialistSteps = specialistNextStepsToIndex[0].filter(
+        (s) => s.activityReportId === ar.id,
+      );
+      const arGoalsSteps = goalsToIndex[0].filter((g) => g.activityReportId === ar.id);
+      const arObjectivesSteps = objectivesToIndex[0].filter((o) => o.activityReportId === ar.id);
+
+      // Add to bulk update.
       documents.push({
         context: ar.context,
         startDate: ar.startDate,
         endDate: ar.endDate,
-        specialistNextSteps: [...new Set(ar.specialistNextSteps.map((s) => s.note))],
-        recipientNextSteps: [...new Set(ar.recipientNextSteps.map((r) => r.note))],
-        activityReportObjectives: [
-          ...new Set(ar.activityReportObjectives.map((aro) => aro.ttaProvided)),
-        ],
-        goals: [...new Set(ar.goals.map((g) => g.name))],
-        //objectives: [...new Set(ar.objectives.map((o) => o.title))],
+        recipientNextSteps: arRecipientSteps.map((r) => r.note),
+        specialistNextSteps: arSpecialistSteps.map((s) => s.note),
+        activityReportGoals: arGoalsSteps.map((arg) => arg.name),
+        activityReportObjectives: arObjectivesSteps.map((aro) => aro.ttaProvided),
       });
-    }*/
+    }
     const finishCreatingBulk = moment();
     //console.log('\n\n\n-------- Created: ', documents);
 
     // Bulk update.
     const startBulkImport = moment();
-    /*
     await bulkIndex(documents, AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
-    */
     const finishBulkImport = moment();
-    logger.info(`Search Index Job Info: ...Finished indexing of ${reportsToIndex.length} reports`);
+    logger.info(`Search Index Job Info: ...Finished indexing of ${reportsToIndex[0].length} reports`);
 
     const finishTotalTime = moment();
 
+    // Log times.
     logger.info(`
-    Times:
+    - Create AWS Elasticsearch Indexes Times -
     | Total Time: ${finishTotalTime.diff(startTotalTime) / 1000}sec |
     | Clean Index: ${finishCleaningIndex.diff(startCleaningIndex) / 1000}sec |
     | Create Index: ${finishCreatingIndex.diff(startCreatingIndex) / 1000}sec |
