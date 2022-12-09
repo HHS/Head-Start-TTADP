@@ -144,7 +144,7 @@ export default async function createAwsElasticSearchIndexes() {
     // Build Documents Object Json.
     const startCreatingBulk = moment();
     const documents = [];
-    for (let i = 0; i < reportsToIndex.length; i += 1) {
+    for (let i = 0; i < reportsToIndex[0].length; i += 1) {
       const ar = reportsToIndex[0][i];
       documents.push({
         create: {
@@ -175,7 +175,6 @@ export default async function createAwsElasticSearchIndexes() {
       });
     }
     const finishCreatingBulk = moment();
-    //console.log('\n\n\n-------- Created: ', documents);
 
     // Bulk update.
     const startBulkImport = moment();
@@ -187,7 +186,8 @@ export default async function createAwsElasticSearchIndexes() {
 
     // Log times.
     logger.info(`
-    - Create AWS Elasticsearch Indexes Times -
+    - Create AWS Elasticsearch Indexes -
+    | Total Reports Indexed (#): ${reportsToIndex[0].length}  |
     | Total Time: ${finishTotalTime.diff(startTotalTime) / 1000}sec |
     | Clean Index: ${finishCleaningIndex.diff(startCleaningIndex) / 1000}sec |
     | Create Index: ${finishCreatingIndex.diff(startCreatingIndex) / 1000}sec |
