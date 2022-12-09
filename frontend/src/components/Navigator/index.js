@@ -244,6 +244,8 @@ function Navigator({
         // Find the goal we are editing and put it back with updated values.
         let goalBeingEdited = allGoals.find((g) => g.name === goal.name);
 
+        console.log({ goalBeingEdited });
+
         // if we are autosaving, we want to preserve the resources that were added in the UI
         // whether or not they are valid (although nothing is saved to the database)
         // this is a convenience so that a work in progress isn't erased
