@@ -1692,7 +1692,7 @@ export async function getGoalsForReport(reportId) {
         as: 'objectives',
         include: [
           {
-            separate: true,
+            required: true,
             model: ActivityReportObjective,
             as: 'activityReportObjectives',
             where: {
@@ -1700,7 +1700,7 @@ export async function getGoalsForReport(reportId) {
             },
             include: [
               {
-
+                separate: true,
                 model: ActivityReportObjectiveTopic,
                 as: 'activityReportObjectiveTopics',
                 required: false,
@@ -1712,6 +1712,7 @@ export async function getGoalsForReport(reportId) {
                 ],
               },
               {
+                separate: true,
                 model: ActivityReportObjectiveFile,
                 as: 'activityReportObjectiveFiles',
                 required: false,
@@ -1723,6 +1724,7 @@ export async function getGoalsForReport(reportId) {
                 ],
               },
               {
+                separate: true,
                 model: ActivityReportObjectiveResource,
                 as: 'activityReportObjectiveResources',
                 required: false,
@@ -1735,6 +1737,7 @@ export async function getGoalsForReport(reportId) {
             as: 'topics',
           },
           {
+            separate: true,
             model: ObjectiveResource,
             as: 'resources',
             attributes: [['userProvidedUrl', 'value']],
