@@ -186,7 +186,7 @@ function Navigator({
     const fieldArrayName = 'goalForEditing.objectives';
     const objectives = getValues(fieldArrayName);
     const name = getValues('goalName');
-    const endDate = getValues('goalEndDate');
+    const formEndDate = getValues('goalEndDate');
     const isRttapa = getValues('goalIsRttapa');
 
     let invalidResources = false;
@@ -215,10 +215,12 @@ function Navigator({
     // Prevent user from making changes to goal title during auto-save.
     setSavingLoadScreen(isAutoSave);
 
+    const endDate = formEndDate && formEndDate.toLowerCase() !== 'invalid date' ? formEndDate : '';
+
     const goal = {
       ...goalForEditing,
       name,
-      endDate: endDate && endDate.toLowerCase() !== 'invalid date' ? endDate : '',
+      endDate,
       objectives: objectivesWithValidResourcesOnly(objectives),
       isRttapa,
       regionId: formData.regionId,
