@@ -382,13 +382,34 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
   return objectivesToSort;
 }
 
-export function reduceObjectivesForActivityReport(newObjectives, currentObjectives = []) {
+export function reduceObjectivesForActivityReport(
+  newObjectives,
+  currentObjectives = [],
+  reportId = null,
+) {
   const objectivesToSort = newObjectives.reduce((objectives, objective) => {
+    // we are getting the ARO's for the objective with "seperate: true"
+    // which means it doesn't properly select for ARO id
+    let activityReportObjectives = objective.activityReportObjectives || [];
+
+    // if we have a report id, we want to filter the ARO's to only include the ones for that report
+    if (reportId) {
+      activityReportObjectives = activityReportObjectives
+        .filter((aro) => aro.activityReportId === reportId);
+    }
+
+    // if the objective is not linked to our report, we just don't want it
+    if (!activityReportObjectives.length) {
+      return objectives;
+    }
+
+    // at this point, we can only have a maximum of one ARO, since that's how the link between
+    // objectives and activity report works
+    const [activityReportObjective] = activityReportObjectives;
+
     // check the activity report objective status
-    const objectiveStatus = objective.activityReportObjectives
-      && objective.activityReportObjectives[0]
-      && objective.activityReportObjectives[0].status
-      ? objective.activityReportObjectives[0].status : objective.status;
+    const objectiveStatus = activityReportObjective.status
+      ? activityReportObjective.status : objective.status;
 
     // objectives represent the accumulator in the find below
     // objective is the objective as it is returned from the API
@@ -403,29 +424,20 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       // we can dedupe these using lodash
       exists.resources = uniqBy([
         ...exists.resources,
-        ...(objective.activityReportObjectives
-          && objective.activityReportObjectives.length > 0
-          ? objective.activityReportObjectives[0].activityReportObjectiveResources
-            .map((r) => r.dataValues)
-          : []),
+        ...(activityReportObjective.activityReportObjectiveResources
+          .map((r) => r.dataValues)),
       ], 'value');
 
       exists.topics = uniqBy([
         ...exists.topics,
-        ...(objective.activityReportObjectives
-          && objective.activityReportObjectives.length > 0
-          ? objective.activityReportObjectives[0].activityReportObjectiveTopics
-            .map((t) => t.topic.dataValues)
-          : []),
+        ...(activityReportObjective.activityReportObjectiveTopics
+          .map((t) => t.topic.dataValues)),
       ], 'id');
 
       exists.files = uniqBy([
         ...exists.files,
-        ...(objective.activityReportObjectives
-          && objective.activityReportObjectives.length > 0
-          ? objective.activityReportObjectives[0].activityReportObjectiveFiles
-            .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
-          : []),
+        ...(activityReportObjective.activityReportObjectiveFiles
+          .map((f) => ({ ...f.file.dataValues, url: f.file.url }))),
       ], 'key');
 
       return objectives;
@@ -434,15 +446,11 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
     // since this method is used to rollup both objectives on and off activity reports
     // we need to handle the case where there is TTA provided and TTA not provided
     // NOTE: there will only be one activity report objective, it is queried by activity report id
-    const ttaProvided = objective.activityReportObjectives
-        && objective.activityReportObjectives[0]
-        && objective.activityReportObjectives[0].ttaProvided
-      ? objective.activityReportObjectives[0].ttaProvided : null;
+    const ttaProvided = activityReportObjective.ttaProvided
+      ? activityReportObjective.ttaProvided : null;
 
-    const arOrder = objective.activityReportObjectives
-      && objective.activityReportObjectives[0]
-      && objective.activityReportObjectives[0].arOrder
-      ? objective.activityReportObjectives[0].arOrder : null;
+    const arOrder = activityReportObjective.arOrder
+      ? activityReportObjective.arOrder : null;
 
     const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
 
@@ -461,21 +469,13 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       // of the activity report not the state of the objective, which is what
       // we are getting at with this method (getGoalsForReport)
 
-      topics: objective.activityReportObjectives
-        && objective.activityReportObjectives.length > 0
-        ? objective.activityReportObjectives[0].activityReportObjectiveTopics
-          .map((t) => t.topic.dataValues)
-        : [],
-      resources: objective.activityReportObjectives
-        && objective.activityReportObjectives.length > 0
-        ? objective.activityReportObjectives[0].activityReportObjectiveResources
-          .map((r) => r.dataValues)
-        : [],
-      files: objective.activityReportObjectives
-        && objective.activityReportObjectives.length > 0
-        ? objective.activityReportObjectives[0].activityReportObjectiveFiles
-          .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
-        : [],
+      topics: activityReportObjective.activityReportObjectiveTopics
+        .map((t) => t.topic.dataValues),
+      resources: activityReportObjective.activityReportObjectiveResources
+        .map((r) => r.dataValues),
+      files: activityReportObjective.activityReportObjectiveFiles
+        .map((f) => ({ ...f.file.dataValues, url: f.file.url })),
+
     }];
   }, currentObjectives);
 
@@ -494,8 +494,9 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
  * @param {Object[]} goals
  * @returns {Object[]} array of deduped goals
  */
-function reduceGoals(goals, forReport = false) {
-  const objectivesReducer = forReport ? reduceObjectivesForActivityReport : reduceObjectives;
+function reduceGoals(goals, forReport = false, reportId = null) {
+  const objectivesReducer = forReport && reportId
+    ? reduceObjectivesForActivityReport : reduceObjectives;
 
   const where = (g, currentValue) => (forReport ? g.name === currentValue.name
     && g.status === currentValue.status
@@ -521,6 +522,7 @@ function reduceGoals(goals, forReport = false) {
       existingGoal.objectives = objectivesReducer(
         currentValue.objectives,
         existingGoal.objectives,
+        reportId,
       );
       return previousValues;
     }
@@ -1753,7 +1755,7 @@ export async function getGoalsForReport(reportId) {
 
   // dedupe the goals & objectives
   const forReport = true;
-  return reduceGoals(goals, forReport);
+  return reduceGoals(goals, forReport, reportId);
 }
 
 export async function createOrUpdateGoalsForActivityReport(goals, reportId) {
