@@ -4,55 +4,7 @@ import Select from 'react-select';
 import { useController } from 'react-hook-form/dist/index.ie11';
 import _ from 'lodash';
 import useSpellCheck from '../../../../../../hooks/useSpellCheck';
-import colors from '../../../../../../colors';
-
-import { DropdownIndicator, sortSelect } from '../../../../../../components/MultiSelect';
-
-const styles = {
-  container: (provided, state) => {
-    // To match the focus indicator provided by uswds
-    const outline = state.isFocused ? '0.25rem solid #2491ff;' : '';
-    return {
-      ...provided,
-      outline,
-    };
-  },
-  placeholder: (provided) => ({
-    ...provided,
-    color: '#1b1b1b',
-  }),
-  groupHeading: (provided) => ({
-    ...provided,
-    fontWeight: 'bold',
-    fontFamily: 'SourceSansPro',
-    textTransform: 'capitalize',
-    fontSize: '14px',
-    color: colors.smartHubTextInk,
-    lineHeight: '22px',
-  }),
-  control: (provided, state) => ({
-    height: '',
-    ...provided,
-    borderColor: '#565c65',
-    backgroundColor: 'white',
-    borderRadius: '0',
-    '&:hover': {
-      borderColor: '#565c65',
-    },
-    // Match uswds disabled style
-    opacity: state.isDisabled ? '0.7' : '1',
-  }),
-  indicatorsContainer: (provided) => ({
-    ...provided,
-    // The arrow dropdown icon is too far to the right, this pushes it back to the left
-    marginRight: '4px',
-  }),
-  indicatorSeparator: () => ({ display: 'none' }),
-  menu: (provided) => ({
-    ...provided,
-    zIndex: 2,
-  }),
-};
+import { DropdownIndicator, sortSelect, styles } from '../../../../../../components/MultiSelect';
 
 function ApproverSelect({
   name,
@@ -127,7 +79,7 @@ function ApproverSelect({
       value={getValues(selectValue)}
       onChange={onChange}
       inputId={name}
-      styles={styles}
+      styles={styles()}
       components={{ DropdownIndicator }}
       options={options}
       tabSelectsValue={false}
