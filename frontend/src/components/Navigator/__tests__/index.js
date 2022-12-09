@@ -397,14 +397,69 @@ describe('Navigator', () => {
 
     fetchMock.restore();
     renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages, formData);
-    const saveGoal = await screen.findByRole('button', { name: 'Save goal' });
-    expect(saveGoal.textContent).toBe('Save goal');
-    expect(saveGoal).toBeVisible();
+    const saveGoal = await screen.findByRole('button', { name: 'Save draft' });
     fetchMock.post('/api/activity-reports/goals', 200);
-    await act(async () => userEvent.click(saveGoal));
-    expect(saveGoal.textContent).toBe('Save and continue');
+    expect(fetchMock.called()).toBe(false);
 
-    console.log(fetchMock.calls());
+    act(() => userEvent.click(saveGoal));
+
+    const ajax = fetchMock.lastCall();
+    expect(ajax[0]).toBe('/api/activity-reports/goals');
+    const { endDate } = JSON.parse(ajax[1].body).goals[0];
+    expect(endDate).toBe('');
+
+    expect(fetchMock.called()).toBe(true);
+  });
+
+  it('returns the proper goal to be edited', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <>
+          <h1>Goal test</h1>
+        </>
+      ),
+    }];
+
+    const formData = {
+      ...initialData,
+      activityRecipientType: 'grant',
+      activityRecipients: [],
+      goalForEditing: {
+        isNew: true,
+      },
+      goals: [],
+      goalEndDate: 'Invalid date',
+      goalIsRttapa: 'Yes',
+      goalName: 'goal name',
+      'goalForEditing.objectives': [{
+        title: 'objective',
+        topics: ['test'],
+        ttaProvided: 'tta provided',
+        resources: [],
+      }],
+    };
+
+    fetchMock.restore();
+    renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages, formData);
+    const saveGoal = await screen.findByRole('button', { name: 'Save draft' });
+    fetchMock.post('/api/activity-reports/goals', [{ name: 'goal name', endDate: 'fig pudding' }]);
+    expect(fetchMock.called()).toBe(false);
+
+    act(() => userEvent.click(saveGoal));
+    await waitFor(() => expect(fetchMock.called()).toBe(true));
+    expect(updateForm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        goalForEditing: { name: 'goal name', endDate: 'fig pudding' },
+      }),
+    );
   });
 
   it('shows an error when save fails', async () => {
