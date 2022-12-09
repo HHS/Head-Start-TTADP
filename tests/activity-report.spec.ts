@@ -204,8 +204,7 @@ test.describe("Activity Report", () => {
     await page.getByTestId('form').getByTestId('button').click();
 
     // this is in the 'approved activity reports' table
-    await page.getByRole('rowheader', { name: `R0${regionNumber}-AR-${arNumber}` }).getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).click();
-
+    await page.getByRole('rowheader', { name: `R0${regionNumber}-AR-${arNumber}` }).click();
 
     await expect(page.getByRole('heading', { name: `TTA activity report R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
     await expect(page.getByText(/date approved/i)).toBeVisible();
