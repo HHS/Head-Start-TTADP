@@ -241,6 +241,8 @@ function Navigator({
           },
         );
 
+        console.log({ allGoals });
+
         // Find the goal we are editing and put it back with updated values.
         let goalBeingEdited = allGoals.find((g) => g.name === goal.name);
 
