@@ -297,13 +297,21 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
     const exists = objectives.find((o) => (
       o.title === objective.title.trim() && o.status === objective.status
     ));
+    // eslint-disable-next-line no-nested-ternary
+    const id = objective.getDataValue
+      ? objective.getDataValue('id')
+        ? objective.getDataValue('id')
+        : objective.getDataValue('value')
+      : objective.id;
+    const otherEntityId = objective.getDataValue
+      ? objective.getDataValue('otherEntityId')
+      : objective.otherEntityId;
 
     if (exists) {
-      const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
       exists.ids = [...exists.ids, id];
       // Make sure we pass back a list of recipient ids for subsequent saves.
-      exists.recipientIds = objective.getDataValue('otherEntityId')
-        ? [...exists.recipientIds, objective.getDataValue('otherEntityId')]
+      exists.recipientIds = otherEntityId
+        ? [...exists.recipientIds, otherEntityId]
         : [...exists.recipientIds];
       exists.activityReports = [
         ...(exists.activityReports || []),
@@ -312,16 +320,16 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
       return objectives;
     }
 
-    const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
-
     return [...objectives, {
-      ...objective.dataValues,
+      ...(objective.dataValues
+        ? objective.dataValues
+        : objective),
       title: objective.title.trim(),
       value: id,
       ids: [id],
       // Make sure we pass back a list of recipient ids for subsequent saves.
-      recipientIds: objective.getDataValue('otherEntityId')
-        ? [objective.getDataValue('otherEntityId')]
+      recipientIds: otherEntityId
+        ? [otherEntityId]
         : [],
       isNew: false,
     }];
