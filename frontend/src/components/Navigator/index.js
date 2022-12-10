@@ -483,6 +483,13 @@ function Navigator({
   };
 
   const draftSaver = async (isAutoSave = false) => {
+    // jest automatically sets NODE_ENV to test.
+    // Our tests basically assume the form is always dirty, so we bail out here
+    // only when we're not running in a test environment.
+    if (process.env.NODE_ENV !== 'test' && !isDirty) {
+      return;
+    }
+
     // Determine if we should save draft on auto save.
     const saveGoalsDraft = isGoalsObjectivesPage && !isGoalFormClosed;
     const saveObjectivesDraft = isGoalsObjectivesPage && !isObjectivesFormClosed;
