@@ -150,6 +150,8 @@ export async function retrieveGoalsByIds(req, res) {
     const user = await userById(req.session.userId);
 
     let canView = true;
+    // TODO: There is an opportunity for a performance optimization here by making a single call to
+    // the db for all goals instead of a separate call for each goal.
     goalIds.forEach(async (id) => {
       const goal = await goalByIdWithActivityReportsAndRegions(id);
       const policy = new Goal(user, goal);
