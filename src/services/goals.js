@@ -299,10 +299,12 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
     ));
 
     if (exists) {
-      const { id } = objective;
+      const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
       exists.ids = [...exists.ids, id];
       // Make sure we pass back a list of recipient ids for subsequent saves.
-      exists.recipientIds = [...exists.recipientIds, objective.otherEntityId];
+      exists.recipientIds = objective.getDataValue('otherEntityId')
+        ? [...exists.recipientIds, objective.getDataValue('otherEntityId')]
+        : [...exists.recipientIds];
       exists.activityReports = [
         ...(exists.activityReports || []),
         ...(objective.activityReports || []),
@@ -310,15 +312,17 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
       return objectives;
     }
 
-    const { id } = objective;
+    const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
 
     return [...objectives, {
-      ...objective,
+      ...objective.dataValues,
       title: objective.title.trim(),
       value: id,
       ids: [id],
       // Make sure we pass back a list of recipient ids for subsequent saves.
-      recipientIds: [objective.otherEntityId],
+      recipientIds: objective.getDataValue('otherEntityId')
+        ? [objective.getDataValue('otherEntityId')]
+        : [],
       isNew: false,
     }];
   }, currentObjectives);
