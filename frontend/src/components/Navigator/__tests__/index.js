@@ -220,12 +220,15 @@ describe('Navigator', () => {
   it('calls onSave on navigation', async () => {
     const updatePage = jest.fn();
     const updateForm = jest.fn();
-    renderNavigator('second', () => {}, () => {}, updatePage, updateForm);
+    const onSave = jest.fn();
+    renderNavigator('second', () => {}, onSave, updatePage, updateForm);
 
     // mark the form as dirty so that onSave is called
     userEvent.click(screen.getByTestId('second'));
 
     userEvent.click(await screen.findByRole('button', { name: 'first page Not Started' }));
+
+    await waitFor(() => expect(onSave).toHaveBeenCalled());
 
     await waitFor(() => expect(
       updateForm,
@@ -241,17 +244,12 @@ describe('Navigator', () => {
     process.env.NODE_ENV = 'arctic';
     const updatePage = jest.fn();
     const updateForm = jest.fn();
-    renderNavigator('second', () => {}, () => {}, updatePage, updateForm);
+    const onSave = jest.fn();
+    renderNavigator('second', () => {}, onSave, updatePage, updateForm);
 
     // the form is clean at this point
     userEvent.click(await screen.findByRole('button', { name: 'first page Not Started' }));
-
-    // draftSaver bails out, so updateForm isn't called
-    await waitFor(() => expect(
-      updateForm,
-    ).not.toHaveBeenCalled());
-    // onUpdatePage is still called because it is responsible for calling draftSaver
-    await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
+    await waitFor(() => expect(onSave).not.toHaveBeenCalled());
   });
 
   it('shows the correct buttons on the bottom of the page', async () => {
