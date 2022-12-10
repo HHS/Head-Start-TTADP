@@ -240,8 +240,7 @@ describe('Navigator', () => {
     await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
   });
 
-  it('does not call onSave on navigation if the form is not dirty and NODE_ENV is not test', async () => {
-    process.env.NODE_ENV = 'arctic';
+  it('does not call onSave on navigation if the form is not dirty', async () => {
     const updatePage = jest.fn();
     const updateForm = jest.fn();
     const onSave = jest.fn();

@@ -144,10 +144,7 @@ function Navigator({
     const data = { ...formData, ...values, pageState: newNavigatorState() };
     updateFormData(data);
 
-    // jest automatically sets NODE_ENV to test.
-    // Our tests basically assume the form is always dirty, so we bail out here
-    // only when we're not running in a test environment.
-    if (process.env.NODE_ENV !== 'test' && !isDirty) {
+    if (!isDirty) {
       setIsAppLoading(false);
       return;
     }
