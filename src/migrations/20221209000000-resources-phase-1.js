@@ -1,4 +1,5 @@
 /* eslint-disable max-len */
+// Resources Phase 1: Create and Populate Resources table from all explicitly and implicitly included resources from across ActivityReports, NextSteps, & Objectives
 module.exports = {
   up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(async (transaction) => {
     const SOURCE_FIELD = {
