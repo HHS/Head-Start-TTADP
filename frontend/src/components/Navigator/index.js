@@ -55,6 +55,7 @@ function Navigator({
   errorMessage,
   updateErrorMessage,
   savedToStorageTime,
+  saveWhenClean,
 }) {
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
 
@@ -144,7 +145,7 @@ function Navigator({
     const data = { ...formData, ...values, pageState: newNavigatorState() };
     updateFormData(data);
 
-    if (!isDirty) {
+    if (!saveWhenClean && !isDirty) {
       setIsAppLoading(false);
       return;
     }
@@ -698,6 +699,7 @@ Navigator.propTypes = {
       PropTypes.string,
     ]),
   }),
+  saveWhenClean: PropTypes.bool,
 };
 
 Navigator.defaultProps = {
@@ -710,6 +712,7 @@ Navigator.defaultProps = {
     name: null,
     role: null,
   },
+  saveWhenClean: false,
 };
 
 export default Navigator;

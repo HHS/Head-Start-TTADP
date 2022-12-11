@@ -179,7 +179,7 @@ export const unflattenResourcesUsed = (array) => {
 };
 
 function ActivityReport({
-  match, location, region,
+  match, location, region, saveWhenClean,
 }) {
   const { params: { currentPage, activityReportId } } = match;
 
@@ -660,6 +660,7 @@ function ActivityReport({
           errorMessage={errorMessage}
           updateErrorMessage={updateErrorMessage}
           savedToStorageTime={savedToStorageTime}
+          saveWhenClean={saveWhenClean}
         />
       </NetworkContext.Provider>
     </div>
@@ -670,10 +671,12 @@ ActivityReport.propTypes = {
   match: ReactRouterPropTypes.match.isRequired,
   location: ReactRouterPropTypes.location.isRequired,
   region: PropTypes.number,
+  saveWhenClean: PropTypes.bool,
 };
 
 ActivityReport.defaultProps = {
   region: undefined,
+  saveWhenClean: false,
 };
 
 export default ActivityReport;

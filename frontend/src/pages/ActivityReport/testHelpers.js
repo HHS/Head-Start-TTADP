@@ -74,6 +74,7 @@ export const renderActivityReport = (id, location = 'activity-summary', showLast
               state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
             }}
             region={1}
+            saveWhenClean
           />
         </UserContext.Provider>
       </AppLoadingContext.Provider>
