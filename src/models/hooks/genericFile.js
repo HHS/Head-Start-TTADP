@@ -1,5 +1,5 @@
 const propagateDestroyToFile = async (sequelize, instance, options) => {
-  const file = await sequelize.models.File.FindOne({
+  const file = await sequelize.models.File.findOne({
     where: { id: instance.fileId },
     include: [
       {
