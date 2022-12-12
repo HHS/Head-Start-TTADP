@@ -79,22 +79,22 @@ function CustomizeEmailPreferencesForm({ disabled }) {
           <Grid tablet={{ col: 12 }} desktop={{ col: 8 }} className="desktop:display-block display-none">
             <div className="text-bold">Event</div>
           </Grid>
-          <Grid tablet={{ col: 12 }} desktop={{ col: 4 }} className="desktop:display-block display-none">
+          <Grid tablet={{ col: 12 }} desktop={{ col: 3 }} className="desktop:display-block display-none">
             <div className="text-bold">Frequency</div>
           </Grid>
         </Grid>
 
         {emailTypesMap.map(({ name, description, keyName }) => (
           <Grid row key={keyName}>
-            <Grid tablet={{ col: 12 }} desktop={{ col: 8 }}>
+            <Grid tablet={{ col: 12 }} desktop={{ col: 7 }}>
               <div>
                 { name && <span className="text-italic">{name}</span> }
               </div>
-              <div>
+              <div className="margin-right-2">
                 {description}
               </div>
             </Grid>
-            <Grid tablet={{ col: 12 }} desktop={{ col: 4 }}>
+            <Grid tablet={{ col: 12 }} desktop={{ col: 3 }}>
               <Dropdown
                 id={keyName}
                 name={keyName}
