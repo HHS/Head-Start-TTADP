@@ -1,3 +1,5 @@
+/* eslint-disable react/prop-types */
+/* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import React, { useContext } from 'react';
 import userEvent from '@testing-library/user-event';
@@ -120,7 +122,10 @@ const initialData = {
 };
 
 describe('Navigator', () => {
-  beforeAll(async () => jest.useFakeTimers());
+  beforeAll(async () => {
+    jest.useFakeTimers();
+    fetchMock.post('/api/activity-reports/goals', 200);
+  });
 
   // eslint-disable-next-line arrow-body-style
   const renderNavigator = (
@@ -220,7 +225,8 @@ describe('Navigator', () => {
   it('calls onSave on navigation', async () => {
     const updatePage = jest.fn();
     const updateForm = jest.fn();
-    renderNavigator('second', () => {}, () => {}, updatePage, updateForm);
+    const onSave = jest.fn();
+    renderNavigator('second', jest.fn(), onSave, updatePage, updateForm);
 
     // mark the form as dirty so that onSave is called
     userEvent.click(screen.getByTestId('second'));
@@ -228,7 +234,7 @@ describe('Navigator', () => {
     userEvent.click(await screen.findByRole('button', { name: 'first page Not Started' }));
 
     await waitFor(() => expect(
-      updateForm,
+      onSave,
     ).toHaveBeenCalledWith({
       ...initialData,
       pageState: { ...initialData.pageState, 2: IN_PROGRESS },
@@ -299,7 +305,6 @@ describe('Navigator', () => {
     const saveGoal = await screen.findByRole('button', { name: 'Save goal' });
     expect(saveGoal.textContent).toBe('Save goal');
     expect(saveGoal).toBeVisible();
-    fetchMock.post('/api/activity-reports/goals', 200);
     await act(async () => userEvent.click(saveGoal));
     expect(saveGoal.textContent).toBe('Save and continue');
   });
