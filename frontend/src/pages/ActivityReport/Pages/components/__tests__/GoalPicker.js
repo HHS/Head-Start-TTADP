@@ -104,7 +104,7 @@ describe('GoalPicker', () => {
     await selectEvent.select(selector, [availableGoal.label]);
 
     const input = document.querySelector('[name="goalForEditing"');
-    expect(input.value).toBe(availableGoal.value.string());
+    expect(input.value).toBe(availableGoal.value.toString());
   });
 
   it('properly renders when there is no goal for editing selected', async () => {
