@@ -1,7 +1,7 @@
 const { Model } = require('sequelize');
 const { CLOSE_SUSPEND_REASONS } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
-const { afterDestroy } = require('./hooks/activityReportFile');
+const { afterDestroy } = require('./hooks/activityReportGoal');
 
 module.exports = (sequelize, DataTypes) => {
   class ActivityReportGoal extends Model {
