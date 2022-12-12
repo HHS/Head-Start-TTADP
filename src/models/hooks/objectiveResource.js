@@ -130,6 +130,7 @@ const propagateDestroyToTemplate = async (sequelize, instance, options) => {
       await sequelize.models.ObjectiveTemplateResource.destroy(
         {
           where: { id: otr.id },
+          individualHooks: true,
           transaction: options.transaction,
         },
       );

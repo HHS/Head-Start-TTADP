@@ -1141,6 +1141,7 @@ async function removeActivityReportObjectivesFromReport(reportId, objectiveIdsTo
       where: {
         id: idsToDestroy,
       },
+      individualHooks: true,
     })
     : Promise.resolve();
 }
@@ -1153,6 +1154,7 @@ async function removeActivityReportGoalsFromReport(reportId, currentGoalIds) {
         [Op.notIn]: currentGoalIds,
       },
     },
+    individualHooks: true,
   });
 }
 
@@ -1279,6 +1281,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
         goalId: goalIds,
         activityReportId: reportId,
       },
+      individualHooks: true,
     });
   }
 
@@ -1320,6 +1323,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
         objectiveId: objectiveIds,
         activityReportId: reportId,
       },
+      individualHooks: true,
     });
   }
 
@@ -1329,6 +1333,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
         id: objectivesToDelete,
         onApprovedAR: false,
       },
+      individualHooks: true,
     });
   }
 
@@ -1337,6 +1342,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
       id: goalsToDelete,
       onApprovedAR: false,
     },
+    individualHooks: true,
   });
 }
 
@@ -1817,6 +1823,7 @@ export async function destroyGoal(goalIds) {
         where: {
           objectiveId: { [Op.in]: objectiveIds },
         },
+        individualHooks: true,
       })
       : await Promise.resolve();
 
@@ -1825,6 +1832,7 @@ export async function destroyGoal(goalIds) {
         where: {
           objectiveId: { [Op.in]: objectiveIds },
         },
+        individualHooks: true,
       })
       : await Promise.resolve();
 
@@ -1833,6 +1841,7 @@ export async function destroyGoal(goalIds) {
         where: {
           id: { [Op.in]: objectiveIds },
         },
+        individualHooks: true,
       })
       : await Promise.resolve();
 
@@ -1841,6 +1850,7 @@ export async function destroyGoal(goalIds) {
         where: {
           id: { [Op.in]: goalIds },
         },
+        individualHooks: true,
       })
       : await Promise.resolve();
 
