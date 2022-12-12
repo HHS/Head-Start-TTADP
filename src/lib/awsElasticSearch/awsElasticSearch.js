@@ -226,11 +226,12 @@ const deleteIndexDocument = async (indexName, id, passedClient) => {
   Delete an index.
 */
 const deleteIndex = async (indexName, passedClient) => {
+  let res;
   try {
     // Initialize the client.
     const client = passedClient || await getClient();
 
-    const res = await client.indices.delete({
+    res = await client.indices.delete({
       index: indexName,
     });
     logger.info(`AWS OpenSearch: Successfully deleted index '${indexName}'`);
@@ -241,6 +242,7 @@ const deleteIndex = async (indexName, passedClient) => {
       auditLogger.error(`AWS OpenSearch Error: Unable to delete index '${indexName}': ${error.message}`);
       throw error;
     }
+    return res;
   }
 };
 

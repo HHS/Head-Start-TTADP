@@ -5,9 +5,9 @@ import {
 } from './handlers';
 import {
   search,
-} from '../../lib/awsElasticSearch';
+} from '../../lib/awsElasticSearch/awsElasticSearch';
 
-jest.mock('../../lib/awsElasticSearch', () => ({
+jest.mock('../../lib/awsElasticSearch/awsElasticSearch', () => ({
   search: jest.fn(),
 }));
 
