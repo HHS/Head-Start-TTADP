@@ -183,7 +183,7 @@ export const notifyGranteeReportApproved = (job, transport = defaultTransport) =
   if (SEND_NOTIFICATIONS === 'true') {
     const { id, displayId } = report;
     const recipientNames = recipients.map((r) => r.name);
-    const recipientNamesDisplay = recipientNames.join(', ');
+    const recipientNamesDisplay = recipientNames.join(', ').trim();
 
     logger.info(`MAILER: Notifying program specialists that report ${displayId} was approved because they have grants associated with it.`);
     const addresses = programSpecialists.map((c) => c.email);

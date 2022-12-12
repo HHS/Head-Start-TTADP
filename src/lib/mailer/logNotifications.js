@@ -50,7 +50,7 @@ export default async function logEmailNotification(job, success, result) {
       case EMAIL_ACTIONS.GRANTEE_REPORT_APPROVED:
         programSpecialists = data.programSpecialists;
         emailTo = programSpecialists.map((ps) => ps.email);
-        report.recipientNamesDisplay = data.recipients.map((r) => r.name).join(', ');
+        report.recipientNamesDisplay = data.recipients.map((r) => r.name).join(', ').trim();
         template = path.resolve(emailTemplatePath, 'grantee_report_approved', 'subject.pug');
         break;
       default:
