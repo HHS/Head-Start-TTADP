@@ -101,6 +101,6 @@ describe('other entity report', () => {
     await page.getByRole('button', { name: 'Submit for approval' }).click();
 
     // verify draft report in table
-    page.getByRole('heading', { name: `TTA activity report R0${regionNumber}-AR-${arNumber}` });
+    await expect(page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
   });
 })
