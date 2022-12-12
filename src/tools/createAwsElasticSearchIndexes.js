@@ -12,7 +12,7 @@ import { AWS_ELASTIC_SEARCH_INDEXES } from '../constants';
 /*
         TTAHUB-870:
         This script should be run to create the initial
-        aws elastic search indexes based on the current database date.
+        aws Elasticsearch indexes based on the current database date.
         Running this script will wipe ALL existing indexed data and re-create it.
 */
 export default async function createAwsElasticSearchIndexes() {
@@ -69,7 +69,7 @@ export default async function createAwsElasticSearchIndexes() {
     GROUP BY rns."activityReportId", rns."note"
     ORDER BY rns."activityReportId";
 
-    -- Goals
+    -- Goals.
     SELECT
     arg."activityReportId",
     arg."name"
@@ -79,14 +79,15 @@ export default async function createAwsElasticSearchIndexes() {
     GROUP BY arg."activityReportId", arg."name"
     ORDER BY arg."activityReportId";
 
-    -- Objectives
+    -- Objectives.
     SELECT
     aro."activityReportId",
+    aro."title",
     aro."ttaProvided"
     INTO TEMP TABLE temp_objectives
     FROM "ActivityReportObjectives" aro
     WHERE aro."activityReportId" IN (SELECT id FROM temp_ars)
-    GROUP BY aro."activityReportId", aro."ttaProvided"
+    GROUP BY aro."activityReportId", aro."title", aro."ttaProvided"
     ORDER BY aro."activityReportId";`;
 
     // Query DB.
@@ -171,7 +172,8 @@ export default async function createAwsElasticSearchIndexes() {
         recipientNextSteps: arRecipientSteps.map((r) => r.note),
         specialistNextSteps: arSpecialistSteps.map((s) => s.note),
         activityReportGoals: arGoalsSteps.map((arg) => arg.name),
-        activityReportObjectives: arObjectivesSteps.map((aro) => aro.ttaProvided),
+        activityReportObjectives: arObjectivesSteps.map((aro) => aro.title),
+        activityReportObjectivesTTA: arObjectivesSteps.map((aro) => aro.ttaProvided),
       });
     }
     const finishCreatingBulk = moment();
