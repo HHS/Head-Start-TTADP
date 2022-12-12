@@ -276,9 +276,9 @@ const ActivitySummary = ({
                   name="startDate"
                   value={startDate}
                   setEndDate={setEndDate}
-                  maxDate={endDate}
                   isStartDate
                   inputId="startDate"
+                  endDate={endDate}
                 />
               </FormItem>
             </Grid>
