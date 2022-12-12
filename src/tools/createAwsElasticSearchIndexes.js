@@ -3,7 +3,7 @@ import moment from 'moment';
 import { auditLogger, logger } from '../logger';
 import {
   getClient, deleteIndex, createIndex, bulkIndex,
-} from '../lib/awsElasticSearch/awsElasticSearch';
+} from '../lib/awsElasticSearch/index';
 import {
   sequelize,
 } from '../models';

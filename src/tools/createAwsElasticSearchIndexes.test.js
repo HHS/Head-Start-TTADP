@@ -14,7 +14,7 @@ import db, {
 import createAwsElasticSearchIndexes from './createAwsElasticSearchIndexes';
 import {
   search,
-} from '../lib/awsElasticSearch/awsElasticSearch';
+} from '../lib/awsElasticSearch/index';
 import { AWS_ELASTIC_SEARCH_INDEXES, REPORT_STATUSES } from '../constants';
 import { auditLogger } from '../logger';
 
