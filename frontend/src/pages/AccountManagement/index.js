@@ -59,7 +59,7 @@ const emailTypesMap = [
   },
   {
     name: 'Program Specialists only',
-    description: 'We\'ll email you when an activity report that you are a Program Specialist for is approved.',
+    description: 'One of my recipients\' activity reports is available.',
     keyName: 'emailWhenGranteeReportApprovedProgramSpecialist',
   },
 ];
