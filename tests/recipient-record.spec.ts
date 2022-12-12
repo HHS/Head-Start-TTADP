@@ -49,6 +49,6 @@ test.describe('Recipient record', () => {
     await page.getByRole('button', { name: 'Submit goal' }).click();
 
     // verify the goal appears in the table
-    await expect(page.getByRole('heading', { name: 'Goal G-5RTTAPA'})).toBeVisible();
+    await expect(page.getByText('This is the first goal for this recipient')).toBeVisible();
   });
 });
