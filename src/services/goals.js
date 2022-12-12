@@ -212,6 +212,7 @@ export async function saveObjectiveAssociations(
         },
         objectiveId: objective.id,
       },
+      individualHooks: true,
     });
   }
 
@@ -246,6 +247,7 @@ export async function saveObjectiveAssociations(
         },
         objectiveId: objective.id,
       },
+      individualHooks: true,
     });
   }
 
@@ -279,6 +281,7 @@ export async function saveObjectiveAssociations(
         },
         objectiveId: objective.id,
       },
+      individualHooks: true,
     });
   }
 
@@ -807,16 +810,19 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
         where: {
           objectiveId: orphanedObjectiveIds,
         },
+        individualHooks: true,
       }),
       ObjectiveResource.destroy({
         where: {
           objectiveId: orphanedObjectiveIds,
         },
+        individualHooks: true,
       }),
       ObjectiveTopic.destroy({
         where: {
           objectiveId: orphanedObjectiveIds,
         },
+        individualHooks: true,
       }),
     ]);
   }
@@ -826,6 +832,7 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
       where: {
         id: orphanedObjectiveIds,
       },
+      individualHooks: true,
     })
     : Promise.resolve();
 }

@@ -247,7 +247,7 @@ const cacheGoalMetadata = async (goal, reportId, isRttapa) => {
       where: { id: activityReportGoalId },
       individualHooks: true,
     }),
-    Goal.update({ onAR: true }, { where: { id: goal.id } }),
+    Goal.update({ onAR: true }, { where: { id: goal.id }, individualHooks: true }),
   ]);
 };
 
