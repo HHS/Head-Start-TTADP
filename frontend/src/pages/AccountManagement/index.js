@@ -76,7 +76,7 @@ function CustomizeEmailPreferencesForm({ disabled }) {
     <div>
       <GridContainer>
         <Grid row className="margin-bottom-3">
-          <Grid tablet={{ col: 12 }} desktop={{ col: 8 }} className="desktop:display-block display-none">
+          <Grid tablet={{ col: 12 }} desktop={{ col: 7 }} className="desktop:display-block display-none">
             <div className="text-bold">Event</div>
           </Grid>
           <Grid tablet={{ col: 12 }} desktop={{ col: 3 }} className="desktop:display-block display-none">
