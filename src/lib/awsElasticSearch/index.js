@@ -70,7 +70,7 @@ const getClient = async () => new Client({
   ),
   node: uri,
   // node: 'http://admin:admin@localhost:9200',
-  // cloud: undefined,
+  cloud: undefined,
 });
 /*
   Create an index that can have searchable documents assigned.
