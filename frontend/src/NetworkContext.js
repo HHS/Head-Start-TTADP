@@ -7,13 +7,13 @@ export const isOnlineMode = () => {
   try {
     if (navigator.userAgent) {
       // the first case we want to handle is IE
-      // doesn't support navigator.offline so
+      // neither supports navigator.online so
       // we'll have to figure that out from context
       if (navigator.userAgent.indexOf('Trident') > -1) {
         return true;
       }
 
-      return navigator.online;
+      return navigator.onLine;
     }
   } catch (error) {
     // safer just to return true here, I think

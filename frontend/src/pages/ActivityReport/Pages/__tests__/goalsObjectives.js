@@ -2,7 +2,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import {
-  render, screen, act,
+  render, screen, act, waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
@@ -67,7 +67,7 @@ const RenderGoalsObjectives = ({
     <NetworkContext.Provider value={{ connectionActive, localStorageAvailable: true }}>
       <Router history={history}>
         <FormProvider {...hookForm}>
-          {goalsObjectives.render()}
+          {goalsObjectives.render(null, null, 1, null, null)}
         </FormProvider>
       </Router>
     </NetworkContext.Provider>
@@ -168,12 +168,16 @@ describe('goals objectives', () => {
       const isGoalFormClosed = true;
       const throwFetchError = false;
       const toggleGoalForm = jest.fn();
+      fetchMock.restore();
+      // this API call sets the goal as being edited
+      fetchMock.get('/api/activity-report/1/goals/edit?goalId=1234567', 200);
 
       renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed, throwFetchError, toggleGoalForm);
       const actions = await screen.findByRole('button', { name: /actions for goal 1/i });
-      userEvent.click(actions);
+      act(() => userEvent.click(actions));
       const [button] = await screen.findAllByRole('button', { name: 'Edit' });
       act(() => userEvent.click(button));
+      await waitFor(() => expect(fetchMock.called()).toBe(true));
       expect(toggleGoalForm).toHaveBeenCalledWith(false);
     });
 

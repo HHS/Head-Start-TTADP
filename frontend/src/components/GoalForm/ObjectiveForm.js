@@ -10,7 +10,7 @@ import {
 } from './constants';
 import { REPORT_STATUSES } from '../../Constants';
 import ObjectiveStatus from './ObjectiveStatus';
-import GoalFormLoadingContext from '../../GoalFormLoadingContext';
+import AppLoadingContext from '../../AppLoadingContext';
 
 const [
   objectiveTitleError,
@@ -45,7 +45,7 @@ export default function ObjectiveForm({
     )))
   ), [objective.activityReports]);
 
-  const { isLoading } = useContext(GoalFormLoadingContext);
+  const { isAppLoading } = useContext(AppLoadingContext);
 
   // onchange handlers
   const onChangeTitle = (e) => setObjective({ ...objective, title: e.target.value });
@@ -110,7 +110,7 @@ export default function ObjectiveForm({
         onChangeTitle={onChangeTitle}
         validateObjectiveTitle={validateObjectiveTitle}
         status={status}
-        isLoading={isLoading}
+        isLoading={isAppLoading}
         userCanEdit={userCanEdit}
       />
 
@@ -122,7 +122,7 @@ export default function ObjectiveForm({
         onChangeTopics={onChangeTopics}
         goalStatus={goalStatus}
         isOnReport={isOnReport || false}
-        isLoading={isLoading}
+        isLoading={isAppLoading}
         userCanEdit={userCanEdit}
       />
 
@@ -133,7 +133,7 @@ export default function ObjectiveForm({
         error={errors[OBJECTIVE_FORM_FIELD_INDEXES.RESOURCES]}
         isOnReport={isOnReport || false}
         goalStatus={goalStatus}
-        isLoading={isLoading}
+        isLoading={isAppLoading}
         userCanEdit={userCanEdit}
       />
       { title && (
@@ -142,7 +142,7 @@ export default function ObjectiveForm({
         onChangeFiles={onChangeFiles}
         objective={objective}
         isOnReport={isOnReport || false}
-        isLoading={isLoading}
+        isLoading={isAppLoading}
         onUploadFiles={onUploadFiles}
         index={index}
         goalStatus={goalStatus}
@@ -156,7 +156,7 @@ export default function ObjectiveForm({
         goalStatus={goalStatus}
         onChangeStatus={onChangeStatus}
         inputName={`objective-status-${index}`}
-        isLoading={isLoading}
+        isLoading={isAppLoading}
         userCanEdit={userCanEdit}
       />
 

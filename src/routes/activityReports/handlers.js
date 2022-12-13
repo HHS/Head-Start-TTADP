@@ -26,7 +26,7 @@ import {
 } from '../../services/activityReports';
 import { saveObjectivesForReport, getObjectivesByReportId } from '../../services/objectives';
 import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
-import { goalsForGrants } from '../../services/goals';
+import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../services/goals';
 import { userById, usersWithPermissions } from '../../services/users';
 import {
   APPROVER_STATUSES, REPORT_STATUSES, DECIMAL_BASE, USER_SETTINGS,
@@ -900,6 +900,26 @@ export async function downloadAllAlerts(req, res) {
     const rows = await getAllDownloadableActivityReportAlerts(userId, query);
 
     await sendActivityReportCSV(rows, res);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function setGoalAsActivelyEdited(req, res) {
+  try {
+    const { activityReportId } = req.params;
+    const { goalIds } = req.query;
+    const user = await userById(req.session.userId);
+    const [report] = await activityReportAndRecipientsById(activityReportId);
+    const authorization = new ActivityReport(user, report);
+
+    if (!authorization.canUpdate()) {
+      res.sendStatus(403);
+      return;
+    }
+
+    const goals = await setActivityReportGoalAsActivelyEdited(goalIds, activityReportId);
+    res.json(goals);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
