@@ -38,7 +38,7 @@ const generateEsConfig = () => {
 };
 
 const {
-  uri,
+  // uri,
   access_key,
   secret_key,
 } = generateEsConfig();
@@ -68,7 +68,7 @@ const getClient = async () => new Client({
     },
     'us-gov-west-1',
   ),
-  //node: uri,
+  // node: uri,
   node: 'http://admin:admin@localhost:9200',
   cloud: undefined,
 });
