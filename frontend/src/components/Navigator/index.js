@@ -270,6 +270,7 @@ const Navigator = ({
         }
         console.log({
           richTextEditors: Array.from(richTextEditors),
+          contains: Array.from(richTextEditors).map((rte) => rte.contains(selection.anchorNode)),
           selection: {
             anchorNode: selection.anchorNode,
           },
