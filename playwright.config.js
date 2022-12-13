@@ -13,7 +13,7 @@ const config = {
     timeout: 8000,
   },
   fullyParallel: true,
-  reporter: [['html', { outputFolder: './playwright/report', open: 'always' }]],
+  reporter: [['html', { outputFolder: './playwright/report', open: 'never' }]],
   timeout: 60000,
   globalTimeout: 600000,
   globalSetup: './tests/init/globalSetup.ts',
