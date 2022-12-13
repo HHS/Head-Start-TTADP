@@ -12,6 +12,7 @@ import { auditLogger, logger } from '../../logger';
 const generateEsConfig = () => {
   // Pull from VCAP env variables (cloud.gov)
   if (process.env.VCAP_SERVICES) {
+    auditLogger.error('\n\n\n---VCAP!!!!!!!!!!!!: ');
     const {
       'aws-elasticsearch': [{
         credentials: {
@@ -29,6 +30,10 @@ const generateEsConfig = () => {
     };
   }
 
+  auditLogger.error('\n\n\n---AWS_ELASTICSEARCH_ENDPOINT: ', process.env.AWS_ELASTICSEARCH_ENDPOINT);
+  auditLogger.error('\n\n\n---AWS_ELASTICSEARCH_ACCESS_KEY: ', process.env.AWS_ELASTICSEARCH_ACCESS_KEY);
+  auditLogger.error('\n\n\n---AWS_ELASTICSEARCH_SECRET_KEY: ', process.env.AWS_ELASTICSEARCH_SECRET_KEY);
+
   // Return docker image credentials.
   return {
     uri: process.env.AWS_ELASTICSEARCH_ENDPOINT,
@@ -38,7 +43,7 @@ const generateEsConfig = () => {
 };
 
 const {
-  // uri,
+  uri,
   access_key,
   secret_key,
 } = generateEsConfig();
@@ -68,9 +73,7 @@ const getClient = async () => new Client({
     },
     'us-gov-west-1',
   ),
-  // node: uri,
-  node: 'http://admin:admin@localhost:9200',
-  cloud: undefined,
+  node: uri,
 });
 /*
   Create an index that can have searchable documents assigned.
