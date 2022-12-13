@@ -269,6 +269,8 @@ const Navigator = ({
         goals, goalForEditing: newGoalForEditing,
       } = convertGoalsToFormData(allGoals, grantIds);
 
+      console.log({ goals, newGoalForEditing });
+
       // update form data
       const { status, ...values } = getValues();
 
@@ -281,7 +283,7 @@ const Navigator = ({
         [objectivesFieldArrayName]: newGoalForEditing.objectives,
       };
 
-      console.log({ allowUpdateFormData });
+      console.log({ allowUpdateFormData, data });
 
       if (allowUpdateFormData) {
         updateFormData(data, true);
