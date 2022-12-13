@@ -68,8 +68,8 @@ const getClient = async () => new Client({
     },
     'us-gov-west-1',
   ),
-  node: uri,
-  // node: 'http://admin:admin@localhost:9200',
+  //node: uri,
+  node: 'http://admin:admin@localhost:9200',
   cloud: undefined,
 });
 /*
