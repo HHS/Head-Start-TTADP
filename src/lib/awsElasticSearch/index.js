@@ -38,7 +38,7 @@ const generateEsConfig = () => {
 };
 
 const {
-  // uri,
+  uri,
   access_key,
   secret_key,
 } = generateEsConfig();
@@ -68,8 +68,9 @@ const getClient = async () => new Client({
     },
     'us-gov-west-1',
   ),
-  node: 'http://admin:admin@localhost:9200',
-  cloud: undefined,
+  node: uri,
+  // node: 'http://admin:admin@localhost:9200',
+  // cloud: undefined,
 });
 /*
   Create an index that can have searchable documents assigned.
