@@ -554,6 +554,8 @@ const Navigator = ({
       isGoalsObjectivesPage && !isObjectivesFormClosed && !isRecipientReport
     );
 
+    console.log({ saveGoalsDraft, saveObjectivesDraft, isAutoSave });
+
     if (isOtherEntityReport && saveObjectivesDraft) {
       // Save other-entity draft.
       await onSaveDraftOetObjectives(isAutoSave);
