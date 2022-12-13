@@ -63,13 +63,15 @@ const createAwsConnector = (credentials, region) => {
 const getClient = async () => new Client({
   ...createAwsConnector(
     {
-      node: 'http://opensearch-node1:9200',
+      node: 'https://opensearch-node1:9200',
+      //node: 'http://localhost:9200',
       accessKeyId: 'admin',
       secretAccessKey: 'admin',
     },
     'us-gov-west-1',
   ),
-  node: 'http://opensearch-node1:9200',
+  node: 'https://opensearch-node1:9200',
+  //node: 'http://localhost:9200',
 });
 /*
   Create an index that can have searchable documents assigned.
