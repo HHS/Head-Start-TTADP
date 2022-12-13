@@ -39,6 +39,7 @@
     "db:bootstrap:admin": "node ./build/server/tools/bootstrapAdminCLI.js",
     "db:validation": "node ./build/server/tools/dataValidationCLI.js",
     "db:migrate": "node_modules/.bin/sequelize db:migrate",
+    "db:migrate:create": "npx sequelize-cli migration:generate --name",
     "db:migrate:ci": "cross-env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub node_modules/.bin/sequelize db:migrate",
     "db:migrate:prod": "node_modules/.bin/sequelize db:migrate --options-path .production.sequelizerc",
     "db:migrate:undo": "node_modules/.bin/sequelize db:migrate:undo",

@@ -79,7 +79,7 @@ export const OBJECTIVE_ERROR_MESSAGES = [
   OBJECTIVE_STATUS_ERROR,
 ];
 
-export const validateListOfResources = (resources) => {
+export const validateListOfResources = (resources = []) => {
   if (resources.length > 1 || (resources.length === 1 && resources[0].value)) {
     const allValidResources = resources.reduce((a, c) => {
       if (a && c.value) {

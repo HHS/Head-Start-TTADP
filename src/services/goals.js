@@ -403,23 +403,29 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       // we can dedupe these using lodash
       exists.resources = uniqBy([
         ...exists.resources,
-        ...objective.activityReportObjectives[0].activityReportObjectiveResources.map(
-          (r) => r.dataValues,
-        ),
+        ...(objective.activityReportObjectives
+          && objective.activityReportObjectives.length > 0
+          ? objective.activityReportObjectives[0].activityReportObjectiveResources
+            .map((r) => r.dataValues)
+          : []),
       ], 'value');
 
       exists.topics = uniqBy([
         ...exists.topics,
-        ...objective.activityReportObjectives[0].activityReportObjectiveTopics.map(
-          (t) => t.topic.dataValues,
-        ),
+        ...(objective.activityReportObjectives
+          && objective.activityReportObjectives.length > 0
+          ? objective.activityReportObjectives[0].activityReportObjectiveTopics
+            .map((t) => t.topic.dataValues)
+          : []),
       ], 'id');
 
       exists.files = uniqBy([
         ...exists.files,
-        ...objective.activityReportObjectives[0].activityReportObjectiveFiles.map(
-          (f) => ({ ...f.file.dataValues, url: f.file.url }),
-        ),
+        ...(objective.activityReportObjectives
+          && objective.activityReportObjectives.length > 0
+          ? objective.activityReportObjectives[0].activityReportObjectiveFiles
+            .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
+          : []),
       ], 'key');
 
       return objectives;
@@ -455,15 +461,21 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       // of the activity report not the state of the objective, which is what
       // we are getting at with this method (getGoalsForReport)
 
-      topics: objective.activityReportObjectives[0].activityReportObjectiveTopics.map(
-        (t) => t.topic.dataValues,
-      ),
-      resources: objective.activityReportObjectives[0].activityReportObjectiveResources.map(
-        (r) => r.dataValues,
-      ),
-      files: objective.activityReportObjectives[0].activityReportObjectiveFiles.map(
-        (f) => ({ ...f.file.dataValues, url: f.file.url }),
-      ),
+      topics: objective.activityReportObjectives
+        && objective.activityReportObjectives.length > 0
+        ? objective.activityReportObjectives[0].activityReportObjectiveTopics
+          .map((t) => t.topic.dataValues)
+        : [],
+      resources: objective.activityReportObjectives
+        && objective.activityReportObjectives.length > 0
+        ? objective.activityReportObjectives[0].activityReportObjectiveResources
+          .map((r) => r.dataValues)
+        : [],
+      files: objective.activityReportObjectives
+        && objective.activityReportObjectives.length > 0
+        ? objective.activityReportObjectives[0].activityReportObjectiveFiles
+          .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
+        : [],
     }];
   }, currentObjectives);
 
@@ -1138,6 +1150,42 @@ async function removeActivityReportGoalsFromReport(reportId, currentGoalIds) {
   });
 }
 
+export async function setActivityReportGoalAsActivelyEdited(goalIdsAsString, reportId) {
+  try {
+    // because of the way express works, goalIdsAsString is a string or an array of strings
+    // so we flatmap it here to handle both cases
+    const goalIds = [goalIdsAsString].flatMap((id) => parseInt(id, DECIMAL_BASE));
+
+    // set all other goals back to actively edited: false
+    await ActivityReportGoal.update({
+      isActivelyEdited: false,
+    }, {
+      where: {
+        activityReportId: reportId,
+        goalId: {
+          [Op.notIn]: goalIds,
+        },
+      },
+    });
+
+    return ActivityReportGoal.update({
+      isActivelyEdited: true,
+    }, {
+      where: {
+        activityReportId: reportId,
+        goalId: goalIds,
+      },
+      returning: true,
+    });
+  } catch (error) {
+    auditLogger.error(
+      ` SERVICE:GOALS:setActivityReportGoalsAsActivielyEdited\nunable to update ActivityReportGoals table \n${error}`,
+    );
+
+    return [];
+  }
+}
+
 /// TTAHUB-949: Uncomment to remove Goals not associated
 ///  with any ActivityReportGoals or createVia 'ActivityReport'.
 /*
@@ -1463,11 +1511,17 @@ async function createObjectivesForGoal(goal, objectives, report) {
 
 export async function saveGoalsForReport(goals, report) {
   let currentObjectives = [];
+
+  // actively edited goals represents the goals that are currently being edited on the frontend
+  const activelyEditedGoals = [];
+
   const currentGoals = await Promise.all((goals.map(async (goal) => {
     let newGoals = [];
     const status = goal.status ? goal.status : 'Draft';
     const goalIds = goal.goalIds ? goal.goalIds : [];
     const endDate = goal.endDate && goal.endDate.toLowerCase() !== 'invalid date' ? goal.endDate : null;
+    const isActivelyBeingEditing = goal.isActivelyBeingEditing
+      ? goal.isActivelyBeingEditing : false;
 
     // Check if these goals exist.
     const existingGoals = Array.isArray(goalIds) && goalIds.length > 0
@@ -1499,19 +1553,6 @@ export async function saveGoalsForReport(goals, report) {
       // - And status is not closed.
       // Note: The existing goal should be used regardless if it was created new.
       newGoals = await Promise.all(goal.grantIds.map(async (grantId) => {
-        // const [newGoal] = await Goal.findOrCreate({
-        //   where: {
-        //     name: fields.name,
-        //     grantId,
-        //     status: { [Op.not]: 'Closed' },
-        //   },
-        //   defaults: {
-        //     ...fields,
-        //     status,
-        //     grantId, // If we don't specify the grant it will be created with the old.
-        //     createdVia: 'activityReport',
-        //   },
-        // });
         let newGoal = await Goal.findOne({
           where: {
             name: fields.name,
@@ -1533,7 +1574,7 @@ export async function saveGoalsForReport(goals, report) {
           await newGoal.update({ endDate }, { individualHooks: true });
         }
 
-        await cacheGoalMetadata(newGoal, report.id, isRttapa || null);
+        await cacheGoalMetadata(newGoal, report.id, isRttapa || null, isActivelyBeingEditing);
 
         const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
         currentObjectives = [...currentObjectives, ...newGoalObjectives];
@@ -1570,7 +1611,7 @@ export async function saveGoalsForReport(goals, report) {
         );
         currentObjectives = [...currentObjectives, ...existingGoalObjectives];
 
-        await cacheGoalMetadata(existingGoal, report.id, isRttapa);
+        await cacheGoalMetadata(existingGoal, report.id, isRttapa, isActivelyBeingEditing);
       }));
 
       newGoals = await Promise.all(grantIds.map(async (gId) => {
@@ -1579,19 +1620,6 @@ export async function saveGoalsForReport(goals, report) {
           return existingGoal;
         }
 
-        // const [newGoal] = await Goal.findOrCreate({
-        //   where: {
-        //     [Op.and]: [
-        //       { goalTemplateId: { [Op.not]: null } }, // We need to exclude null matches.
-        //       { goalTemplateId: { [Op.eq]: goalTemplateId } },
-        //     ],
-        //     grantId: gId,
-        //     status: {
-        //       [Op.not]: 'Closed',
-        //     },
-        //   },
-        //   defaults: { ...fields, status },
-        // });
         let newGoal = await Goal.findOne({ // All columns are needed for caching metadata.
           where: {
             [Op.and]: [
@@ -1621,6 +1649,11 @@ export async function saveGoalsForReport(goals, report) {
         const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
         currentObjectives = [...currentObjectives, ...newGoalObjectives];
 
+        if (isActivelyBeingEditing) {
+          // if the goal is flagged as "Active" from the frontend, we want to record that
+          // to update the report later
+          activelyEditedGoals.push(newGoal.id);
+        }
         return newGoal;
       }));
     }
@@ -1675,10 +1708,12 @@ export async function getGoalsForReport(reportId) {
         required: true,
       },
       {
+        separate: true,
         model: Objective,
         as: 'objectives',
         include: [
           {
+            required: true,
             model: ActivityReportObjective,
             as: 'activityReportObjectives',
             where: {
@@ -1686,7 +1721,7 @@ export async function getGoalsForReport(reportId) {
             },
             include: [
               {
-
+                separate: true,
                 model: ActivityReportObjectiveTopic,
                 as: 'activityReportObjectiveTopics',
                 required: false,
@@ -1698,6 +1733,7 @@ export async function getGoalsForReport(reportId) {
                 ],
               },
               {
+                separate: true,
                 model: ActivityReportObjectiveFile,
                 as: 'activityReportObjectiveFiles',
                 required: false,
@@ -1709,6 +1745,7 @@ export async function getGoalsForReport(reportId) {
                 ],
               },
               {
+                separate: true,
                 model: ActivityReportObjectiveResource,
                 as: 'activityReportObjectiveResources',
                 required: false,
@@ -1721,6 +1758,7 @@ export async function getGoalsForReport(reportId) {
             as: 'topics',
           },
           {
+            separate: true,
             model: ObjectiveResource,
             as: 'resources',
             attributes: [['userProvidedUrl', 'value']],

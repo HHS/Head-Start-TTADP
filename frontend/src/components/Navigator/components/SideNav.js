@@ -4,7 +4,7 @@
   defined. Note the nav is no longer stickied once we hit mobile widths (640px)
 */
 import React, {
-  useState, useEffect, useContext,
+  useState, useEffect,
 } from 'react';
 import PropTypes from 'prop-types';
 import { startCase } from 'lodash';
@@ -20,7 +20,6 @@ import { REPORT_STATUSES } from '../../../Constants';
 import {
   NOT_STARTED, IN_PROGRESS, COMPLETE,
 } from '../constants';
-import NetworkContext from '../../../NetworkContext';
 
 const tagClass = (state) => {
   switch (state) {
@@ -80,8 +79,6 @@ function SideNav({
   const onAnimationEnd = () => updateFade(false);
   const DATE_DISPLAY_SAVED_FORMAT = 'MM/DD/YYYY [at] h:mm a';
 
-  const { connectionActive } = useContext(NetworkContext);
-
   return (
     <Sticky className="smart-hub-sidenav" top={100} enabled={!isMobile}>
       <Container paddingX={0} paddingY={0}>
@@ -110,14 +107,13 @@ function SideNav({
             Autosaved on:
             <br />
             <ul className="margin-y-0">
-              {(lastSaveTime && connectionActive)
-                ? (
-                  <li>
-                    our network at
-                    {' '}
-                    {lastSaveTime.format(DATE_DISPLAY_SAVED_FORMAT)}
-                  </li>
-                ) : null}
+              {lastSaveTime && (
+              <li>
+                our network at
+                {' '}
+                {lastSaveTime.format(DATE_DISPLAY_SAVED_FORMAT)}
+              </li>
+              )}
               { savedToStorageTime && (
               <li>
                 your computer at
