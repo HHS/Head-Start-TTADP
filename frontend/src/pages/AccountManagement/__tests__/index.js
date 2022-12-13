@@ -25,7 +25,7 @@ describe('AccountManagement', () => {
     'emailWhenChangeRequested',
     'emailWhenReportApproval',
     'emailWhenReportSubmittedForReview',
-    'emailWhenGranteeReportApprovedProgramSpecialist',
+    'emailWhenRecipientReportApprovedProgramSpecialist',
   ];
 
   const vals = [

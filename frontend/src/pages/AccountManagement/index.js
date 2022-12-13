@@ -60,7 +60,7 @@ const emailTypesMap = [
   {
     name: 'Program Specialists only',
     description: 'One of my recipients\' activity reports is available.',
-    keyName: 'emailWhenGranteeReportApprovedProgramSpecialist',
+    keyName: 'emailWhenRecipientReportApprovedProgramSpecialist',
   },
 ];
 

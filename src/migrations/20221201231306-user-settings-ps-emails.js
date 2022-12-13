@@ -19,22 +19,22 @@ module.exports = {
     await queryInterface.sequelize.query(
       `
         INSERT INTO "UserSettings" ("class", "key", "default", "createdAt", "updatedAt")
-        VALUES ('email', 'emailWhenGranteeReportApprovedProgramSpecialist', '"never"', current_timestamp, current_timestamp)
+        VALUES ('email', 'emailWhenRecipientReportApprovedProgramSpecialist', '"never"', current_timestamp, current_timestamp)
       `,
       { transaction },
     );
 
     await queryInterface.sequelize.query(
       `
-        ALTER TYPE "enum_MailerLogs_action" ADD VALUE 'granteeReportApproved';
-        ALTER TYPE "enum_MailerLogs_action" ADD VALUE 'granteeReportApprovedDigest';
+        ALTER TYPE "enum_MailerLogs_action" ADD VALUE 'recipientReportApproved';
+        ALTER TYPE "enum_MailerLogs_action" ADD VALUE 'recipientReportApprovedDigest';
       `,
     );
   }),
   down: (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => {
     const [[{ id }]] = await queryInterface.sequelize.query(
       `
-        SELECT "id" FROM "UserSettings" WHERE "class" = 'email' AND "key" = 'emailWhenGranteeReportApprovedProgramSpecialist'
+        SELECT "id" FROM "UserSettings" WHERE "class" = 'email' AND "key" = 'emailWhenRecipientReportApprovedProgramSpecialist'
       `,
       { transaction },
     );
@@ -42,7 +42,7 @@ module.exports = {
     await queryInterface.sequelize.query(
       `
         DELETE FROM "UserSettingOverrides" WHERE "userSettingId" = ${id};
-        DELETE FROM "UserSettings" WHERE "class" = 'email' AND "key" = 'emailWhenGranteeReportApprovedProgramSpecialist'
+        DELETE FROM "UserSettings" WHERE "class" = 'email' AND "key" = 'emailWhenRecipientReportApprovedProgramSpecialist'
       `,
       { transaction },
     );
@@ -50,8 +50,8 @@ module.exports = {
     await queryInterface.sequelize.query(
       `
         -- remove references to the deprecated value
-        DELETE FROM "MailerLogs" WHERE "action" = 'granteeReportApproved';
-        DELETE FROM "MailerLogs" WHERE "action" = 'granteeReportApprovedDigest';
+        DELETE FROM "MailerLogs" WHERE "action" = 'recipientReportApproved';
+        DELETE FROM "MailerLogs" WHERE "action" = 'recipientReportApprovedDigest';
 
         -- rename the existing type
         ALTER TYPE "enum_MailerLogs_action" RENAME TO "enum_MailerLogs_action_old";

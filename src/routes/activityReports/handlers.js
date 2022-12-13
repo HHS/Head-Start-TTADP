@@ -39,7 +39,7 @@ import {
   changesRequestedNotification,
   reportApprovedNotification,
   collaboratorAssignedNotification,
-  programSpecialistGranteeReportApprovedNotification,
+  programSpecialistRecipientReportApprovedNotification,
 } from '../../lib/mailer';
 import { activityReportToCsvRecord, extractListOfGoalsAndObjectives } from '../../lib/transform';
 import { userSettingOverridesById } from '../../services/userSettings';
@@ -443,10 +443,10 @@ export async function reviewReport(req, res) {
       // have a grant recipient associated with this report.
       const [, , programSpecialists] = await checkEmailSettings(
         reviewedReport,
-        USER_SETTINGS.EMAIL.KEYS.GRANTEE_APPROVAL,
+        USER_SETTINGS.EMAIL.KEYS.RECIPIENT_APPROVAL,
       );
 
-      programSpecialistGranteeReportApprovedNotification(
+      programSpecialistRecipientReportApprovedNotification(
         report,
         programSpecialists,
         activityRecipients,
