@@ -268,7 +268,12 @@ const Navigator = ({
         if (Array.from(richTextEditors).some((rte) => rte.contains(selection.anchorNode))) {
           allowUpdateFormData = false;
         }
-        console.log({ richTextEditors, selection });
+        console.log({
+          richTextEditors: Array.from(richTextEditors),
+          selection: {
+            anchorNode: selection.anchorNode,
+          },
+        });
       }
 
       const {
