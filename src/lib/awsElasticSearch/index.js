@@ -30,10 +30,6 @@ const generateEsConfig = () => {
     };
   }
 
-  auditLogger.error('\n\n\n---AWS_ELASTICSEARCH_ENDPOINT: ', process.env.AWS_ELASTICSEARCH_ENDPOINT);
-  auditLogger.error('\n\n\n---AWS_ELASTICSEARCH_ACCESS_KEY: ', process.env.AWS_ELASTICSEARCH_ACCESS_KEY);
-  auditLogger.error('\n\n\n---AWS_ELASTICSEARCH_SECRET_KEY: ', process.env.AWS_ELASTICSEARCH_SECRET_KEY);
-
   // Return docker image credentials.
   return {
     uri: process.env.AWS_ELASTICSEARCH_ENDPOINT,
