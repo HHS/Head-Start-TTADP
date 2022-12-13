@@ -11,7 +11,7 @@ services:
       - test-db
     environment:
       - POSTGRES_HOST=test-db
-      - AWS_ELASTICSEARCH_ENDPOINT=http://localhost:9200
+      - AWS_ELASTICSEARCH_ENDPOINT=http://test-backend:9200
       - AWS_ELASTICSEARCH_ACCESS_KEY=admin
       - AWS_ELASTICSEARCH_SECRET_KEY=admin
     volumes:
