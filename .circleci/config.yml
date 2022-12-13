@@ -241,6 +241,8 @@ jobs:
     steps:
       - attach_workspace:
           at: .
+      - setup_remote_docker:
+          version: 20.10.14
       - run:
           name: Start Opensearch
           command: |
