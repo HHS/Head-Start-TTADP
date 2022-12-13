@@ -248,8 +248,14 @@ jobs:
           environment:
             cluster.name: opensearch-cluster
             node.name: opensearch-node1
-            DISABLE_SECURITY_PLUGIN: 1
             discovery.type: single-node
+            discovery.seed_hosts: opensearch-node1
+            network.host: 0.0.0.0
+            network.publish_host: opensearch-node1
+            transport.publish_host: opensearch-node1
+            transport.bind_host: 0.0.0.0
+            transport.publish_port: 0.0.0.0
+            DISABLE_SECURITY_PLUGIN: 1
             AWS_ELASTICSEARCH_ENDPOINT: http://localhost:9200
             AWS_ELASTICSEARCH_ACCESS_KEY: admin
             AWS_ELASTICSEARCH_SECRET_KEY: admin
