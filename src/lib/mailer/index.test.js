@@ -12,7 +12,7 @@ import {
   approvedDigest,
   notificationQueue as notificationQueueMock,
   notificationDigestQueue as notificationDigestQueueMock,
-  notifyGranteeReportApproved,
+  notifyRecipientReportApproved,
 } from '.';
 import {
   EMAIL_ACTIONS, EMAIL_DIGEST_FREQ, REPORT_STATUSES,
@@ -230,10 +230,10 @@ describe('mailer tests', () => {
       }, jsonTransport)).toBeNull();
     });
   });
-  describe('Program Specialists: Grantee Report Approved', () => {
+  describe('Program Specialists: Recipient Report Approved', () => {
     it('Tests that an email is sent', async () => {
       process.env.SEND_NOTIFICATIONS = true;
-      const email = await notifyGranteeReportApproved({
+      const email = await notifyRecipientReportApproved({
         data: {
           report: mockReport,
           programSpecialists: [mockProgramSpecialist],
@@ -250,7 +250,7 @@ describe('mailer tests', () => {
     });
     it('Tests that an email is not sent if no program specialists/recipients', async () => {
       process.env.SEND_NOTIFICATIONS = true;
-      const email = await notifyGranteeReportApproved({
+      const email = await notifyRecipientReportApproved({
         data: {
           report: mockReport,
           programSpecialists: [],
@@ -261,7 +261,7 @@ describe('mailer tests', () => {
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
       process.env.SEND_NOTIFICATIONS = false;
-      await expect(notifyGranteeReportApproved({
+      await expect(notifyRecipientReportApproved({
         data: {
           report: mockReport,
           programSpecialists: [mockProgramSpecialist],
@@ -738,7 +738,7 @@ describe('mailer tests', () => {
         data: {
           reports: [mockReport],
           user: mockProgramSpecialist,
-          type: EMAIL_ACTIONS.GRANTEE_REPORT_APPROVED_DIGEST,
+          type: EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
           freq: EMAIL_DIGEST_FREQ.DAILY,
           subjectFreq: DAILY,
         },
@@ -763,7 +763,7 @@ describe('mailer tests', () => {
         data: {
           reports: [mockReport],
           user: mockProgramSpecialist,
-          type: EMAIL_ACTIONS.GRANTEE_REPORT_APPROVED_DIGEST,
+          type: EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
           freq: EMAIL_DIGEST_FREQ.WEEKLY,
           subjectFreq: WEEKLY,
         },
@@ -788,7 +788,7 @@ describe('mailer tests', () => {
         data: {
           reports: [mockReport],
           user: mockProgramSpecialist,
-          type: EMAIL_ACTIONS.GRANTEE_REPORT_APPROVED_DIGEST,
+          type: EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
           freq: EMAIL_DIGEST_FREQ.MONTHLY,
           subjectFreq: MONTHLY,
         },
@@ -813,7 +813,7 @@ describe('mailer tests', () => {
         data: {
           reports: [],
           user: mockProgramSpecialist,
-          type: EMAIL_ACTIONS.GRANTEE_REPORT_APPROVED_DIGEST,
+          type: EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
           freq: EMAIL_DIGEST_FREQ.MONTHLY,
           subjectFreq: MONTHLY,
         },

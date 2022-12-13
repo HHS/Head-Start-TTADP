@@ -175,7 +175,7 @@ export const notifyReportApproved = (job, transport = defaultTransport) => {
   return null;
 };
 
-export const notifyGranteeReportApproved = (job, transport = defaultTransport) => {
+export const notifyRecipientReportApproved = (job, transport = defaultTransport) => {
   const { report, programSpecialists, recipients } = job.data;
   // Set these inside the function to allow easier testing
   const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
@@ -196,7 +196,7 @@ export const notifyGranteeReportApproved = (job, transport = defaultTransport) =
       htmlToText: { wordWrap: 120 },
     });
     return email.send({
-      template: path.resolve(emailTemplatePath, 'grantee_report_approved'),
+      template: path.resolve(emailTemplatePath, 'recipient_report_approved'),
       message: { to: addresses },
       locals: { reportPath, displayId, recipientNamesDisplay },
     });
@@ -334,7 +334,7 @@ export const reportApprovedNotification = (report, authorWithSetting, collabsWit
  * @param {User[]} programSpecialists
 *  @param {Array<{ id: number, name: string }>} recipients
  */
-export const programSpecialistGranteeReportApprovedNotification = (
+export const programSpecialistRecipientReportApprovedNotification = (
   report,
   programSpecialists,
   recipients,
@@ -346,7 +346,7 @@ export const programSpecialistGranteeReportApprovedNotification = (
       programSpecialists,
       recipients,
     };
-    notificationQueue.add(EMAIL_ACTIONS.GRANTEE_REPORT_APPROVED, data);
+    notificationQueue.add(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED, data);
   } catch (err) {
     auditLogger.error(err);
   }
@@ -525,9 +525,9 @@ export async function approvedDigest(freq, subjectFreq) {
   }
 }
 
-export async function granteeApprovedDigest(freq, subjectFreq) {
+export async function recipientApprovedDigest(freq, subjectFreq) {
   const date = frequencyToInterval(freq);
-  logger.info(`MAILER: Starting GranteeApprovedDigest with freq ${freq}`);
+  logger.info(`MAILER: Starting RecipientApprovedDigest with freq ${freq}`);
   try {
     if (!date) {
       throw new Error('date is null');
@@ -537,7 +537,7 @@ export async function granteeApprovedDigest(freq, subjectFreq) {
     const reports = await activityReportsApprovedByDate(null, date);
     const reportIds = reports.map((r) => r.id);
 
-    // Get all specialists that are subscribed to GRANTEE_APPROVAL notifications given this freq.
+    // Get all specialists that are subscribed to RECIPIENT_APPROVAL notifications given this freq.
     // FIXME: TTAHUB-1253
     let specialists = await sequelize.query(`
       SELECT DISTINCT u.id
@@ -555,7 +555,7 @@ export async function granteeApprovedDigest(freq, subjectFreq) {
     specialists = await Promise.all(specialists.map(async (ps) => {
       const setting = await userSettingOverridesById(
         ps.id,
-        USER_SETTINGS.EMAIL.KEYS.GRANTEE_APPROVAL,
+        USER_SETTINGS.EMAIL.KEYS.RECIPIENT_APPROVAL,
       );
 
       if (setting && setting.value === freq) return ps;
@@ -572,12 +572,12 @@ export async function granteeApprovedDigest(freq, subjectFreq) {
       const data = {
         user,
         reports,
-        type: EMAIL_ACTIONS.GRANTEE_APPROVED_DIGEST,
+        type: EMAIL_ACTIONS.RECIPIENT_APPROVED_DIGEST,
         freq,
         subjectFreq,
       };
 
-      notificationDigestQueue.add(EMAIL_ACTIONS.GRANTEE_APPROVED_DIGEST, data);
+      notificationDigestQueue.add(EMAIL_ACTIONS.RECIPIENT_APPROVED_DIGEST, data);
       return data;
     });
 

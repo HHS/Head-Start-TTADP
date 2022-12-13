@@ -14,7 +14,7 @@ import {
   notificationQueue,
   notifyDigest,
   notificationDigestQueue,
-  notifyGranteeReportApproved,
+  notifyRecipientReportApproved,
 } from './lib/mailer';
 import { EMAIL_ACTIONS } from './constants';
 import logEmailNotification, { logDigestEmailNotification } from './lib/mailer/logNotifications';
@@ -70,13 +70,13 @@ async function start() {
   notificationQueue.process(EMAIL_ACTIONS.SUBMITTED, notifyApproverAssigned);
   notificationQueue.process(EMAIL_ACTIONS.APPROVED, notifyReportApproved);
   notificationQueue.process(EMAIL_ACTIONS.COLLABORATOR_ADDED, notifyCollaboratorAssigned);
-  notificationQueue.process(EMAIL_ACTIONS.GRANTEE_REPORT_APPROVED, notifyGranteeReportApproved);
+  notificationQueue.process(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED, notifyRecipientReportApproved);
 
   notificationDigestQueue.process(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, notifyDigest);
   notificationDigestQueue.process(EMAIL_ACTIONS.SUBMITTED_DIGEST, notifyDigest);
   notificationDigestQueue.process(EMAIL_ACTIONS.APPROVED_DIGEST, notifyDigest);
   notificationDigestQueue.process(EMAIL_ACTIONS.COLLABORATOR_DIGEST, notifyDigest);
-  notificationDigestQueue.process(EMAIL_ACTIONS.GRANTEE_REPORT_APPROVED_DIGEST, notifyDigest);
+  notificationDigestQueue.process(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST, notifyDigest);
 }
 
 // spawn workers and start them
