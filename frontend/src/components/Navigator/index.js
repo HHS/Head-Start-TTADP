@@ -38,6 +38,16 @@ import AppLoadingContext from '../../AppLoadingContext';
 import { convertGoalsToFormData } from '../../pages/ActivityReport/formDataHelpers';
 import { objectivesWithValidResourcesOnly, validateListOfResources } from '../GoalForm/constants';
 
+const shouldUpdateFormData = (isAutoSave) => {
+  if (!isAutoSave) {
+    return false;
+  }
+
+  const richTextEditors = document.querySelectorAll('.rdw-editor-main');
+  const selection = document.getSelection();
+  return !(Array.from(richTextEditors).some((rte) => rte.contains(selection.anchorNode)));
+};
+
 const Navigator = ({
   editable,
   formData,
@@ -255,21 +265,11 @@ const Navigator = ({
        * existing objectives, nor is it an issue if another save happens in between at any point.
        */
 
-      let allowUpdateFormData = true;
-
-      if (isAutoSave) {
-        const richTextEditors = document.querySelectorAll('.rdw-editor-main');
-        const selection = document.getSelection();
-        if (Array.from(richTextEditors).some((rte) => rte.contains(selection.anchorNode))) {
-          allowUpdateFormData = false;
-        }
-      }
+      const allowUpdateFormData = shouldUpdateFormData(isAutoSave);
 
       const {
         goals, goalForEditing: newGoalForEditing,
       } = convertGoalsToFormData(allGoals, grantIds);
-
-      console.log({ goals, newGoalForEditing });
 
       // update form data
       const { status, ...values } = getValues();
@@ -280,10 +280,8 @@ const Navigator = ({
         ...values,
         goals,
         goalForEditing: newGoalForEditing,
-        [objectivesFieldArrayName]: newGoalForEditing.objectives,
+        [objectivesFieldArrayName]: newGoalForEditing ? newGoalForEditing.objectives : null,
       };
-
-      console.log({ allowUpdateFormData, data });
 
       if (allowUpdateFormData) {
         updateFormData(data, true);
@@ -301,7 +299,11 @@ const Navigator = ({
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     } finally {
-      setIsAppLoading(false);
+      // we don't want to update the context if we are autosaving,
+      // since the loading screen isn't shown
+      if (!isAutoSave) {
+        setIsAppLoading(false);
+      }
     }
   };
 
@@ -375,18 +377,14 @@ const Navigator = ({
        * non-autosave save happens, it will create yet another objective. This is not an issue on
        * existing objectives, nor is it an issue if another save happens in between at any point.
        */
-      if (isAutoSave) {
-        const richTextEditors = document.querySelectorAll('.rdw-editor-main');
-        const selection = document.getSelection();
-        if (Array.from(richTextEditors).some((rte) => rte.contains(selection.anchorNode))) {
-          return;
-        }
-      }
+      const allowUpdateFormData = shouldUpdateFormData(isAutoSave);
 
       // update form data
       const { status, ...values } = getValues();
       const data = { ...formData, ...values, pageState: newNavigatorState() };
-      updateFormData(data);
+      if (allowUpdateFormData) {
+        updateFormData(data);
+      }
 
       // Set updated objectives.
       setValue('objectivesWithoutGoals', newObjectives);
