@@ -180,7 +180,6 @@ const Navigator = ({
   };
 
   const onSaveDraftGoal = async (isAutoSave = false) => {
-    console.log('beginning to save draft goal');
     // the goal form only allows for one goal to be open at a time
     // but the objectives are stored in a subfield
     // so we need to access the objectives and bundle them together in order to validate them
@@ -229,8 +228,6 @@ const Navigator = ({
       grantIds,
     };
 
-    console.log('we have prepared a goal');
-
     let allGoals = [...selectedGoals.map((g) => ({ ...g, isActivelyBeingEditing: false })), goal];
 
     // save goal to api, come back with new ids for goal and objectives
@@ -260,21 +257,12 @@ const Navigator = ({
 
       let allowUpdateFormData = true;
 
-      console.log({ isAutoSave });
-
       if (isAutoSave) {
         const richTextEditors = document.querySelectorAll('.rdw-editor-main');
         const selection = document.getSelection();
         if (Array.from(richTextEditors).some((rte) => rte.contains(selection.anchorNode))) {
           allowUpdateFormData = false;
         }
-        console.log({
-          richTextEditors: Array.from(richTextEditors),
-          contains: Array.from(richTextEditors).map((rte) => rte.contains(selection.anchorNode)),
-          selection: {
-            anchorNode: selection.anchorNode,
-          },
-        });
       }
 
       const {
@@ -293,6 +281,8 @@ const Navigator = ({
         [objectivesFieldArrayName]: newGoalForEditing.objectives,
       };
 
+      console.log({ allowUpdateFormData });
+
       if (allowUpdateFormData) {
         updateFormData(data, true);
       }
@@ -307,7 +297,6 @@ const Navigator = ({
         });
       }
     } catch (error) {
-      console.log(error);
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     } finally {
       setIsAppLoading(false);
@@ -559,8 +548,6 @@ const Navigator = ({
     const saveObjectivesDraft = (
       isGoalsObjectivesPage && !isObjectivesFormClosed && !isRecipientReport
     );
-
-    console.log({ saveGoalsDraft, saveObjectivesDraft, isAutoSave });
 
     if (isOtherEntityReport && saveObjectivesDraft) {
       // Save other-entity draft.
