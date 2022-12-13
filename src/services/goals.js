@@ -1192,6 +1192,7 @@ async function removeObjectives(objectivesToRemove, reportId) {
     return Promise.resolve();
   }
 
+  // TODO - when we have an "onAnyReport" flag, we can use that here instead of two SQL statements
   const objectivesToPossiblyDestroy = await Objective.findAll({
     where: {
       createdVia: 'activityReport',
@@ -1212,6 +1213,7 @@ async function removeObjectives(objectivesToRemove, reportId) {
     ],
   });
 
+  // see TODO above, but this can be removed when we have an "onAnyReport" flag
   const objectivesToDefinitelyDestroy = objectivesToPossiblyDestroy
     .filter((o) => !o.activityReports.length);
 
