@@ -36,7 +36,6 @@ executors:
           cluster.name: opensearch-cluster
           node.name: opensearch-node1
           discovery.type: single-node
-          xpack.security.enabled: false
           DISABLE_SECURITY_PLUGIN: true
           ES_JAVA_OPTS: "-Xms256m -Xmx256m"
           vm.max_map_count: 262144
