@@ -30,7 +30,6 @@ import ApprovedActivityReport from './pages/ApprovedActivityReport';
 import RecipientRecord from './pages/RecipientRecord';
 import RecipientSearch from './pages/RecipientSearch';
 import AppWrapper from './components/AppWrapper';
-import SocketProvider, { socketPath } from './components/SocketProvider';
 import AccountManagement from './pages/AccountManagement';
 import Logout from './pages/Logout';
 
@@ -158,12 +157,7 @@ function App() {
           path="/activity-reports/:activityReportId(new|[0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match, location }) => (
             <AppWrapper authenticated logout={logout}>
-              {/* ignoring because you should see what it wants to do with
-                  the closing angle bracket        */}
-              {/* eslint-disable-next-line max-len */}
-              <SocketProvider path={socketPath(match.params.activityReportId, match.params.currentPage)}>
-                <ActivityReport location={location} match={match} />
-              </SocketProvider>
+              <ActivityReport location={location} match={match} />
             </AppWrapper>
           )}
         />

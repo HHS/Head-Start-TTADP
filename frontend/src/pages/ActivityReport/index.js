@@ -13,6 +13,7 @@ import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { useHistory, Redirect } from 'react-router-dom';
 import { Alert, Grid } from '@trussworks/react-uswds';
+import useInterval from '@use-it/interval';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
 import pages from './Pages';
@@ -28,6 +29,7 @@ import {
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
 import useARLocalStorage from '../../hooks/useARLocalStorage';
+import useSocket from '../../hooks/useSocket';
 import { convertGoalsToFormData, convertReportToFormData, findWhatsChanged } from './formDataHelpers';
 
 import {
@@ -118,6 +120,8 @@ function setConnectionActiveWithError(e, setConnectionActive) {
   return connection;
 }
 
+const INTERVAL_DELAY = 10000; // TEN SECONDS
+
 function ActivityReport({
   match, location, region,
 }) {
@@ -126,6 +130,12 @@ function ActivityReport({
   const history = useHistory();
   const [error, updateError] = useState();
   const [loading, updateLoading] = useState(true);
+  const {
+    socket,
+    setSocketPath,
+    socketPath,
+    messageStore,
+  } = useSocket();
 
   const [lastSaveTime, updateLastSaveTime] = useState(null);
 
@@ -182,6 +192,20 @@ function ActivityReport({
   }, [activityReportId, formData]);
 
   const userHasOneRole = useMemo(() => user && user.roles && user.roles.length === 1, [user]);
+
+  const publishLocation = () => {
+    // we have to check to see if the socket is open before we send a message
+    // since the interval could be called while the socket is open but is about to close
+    if (!socket && socket.readyState === socket.OPEN) {
+      socket.send(JSON.stringify({
+        user: user.name,
+        lastSaveTime,
+        channel: socketPath,
+      }));
+    }
+  };
+
+  useInterval(publishLocation, INTERVAL_DELAY);
 
   useDeepCompareEffect(() => {
     const fetch = async () => {
@@ -380,7 +404,9 @@ function ActivityReport({
     }
 
     const page = pages.find((p) => p.position === position);
-    history.push(`/activity-reports/${reportId.current}/${page.path}`, state);
+    const newPath = `/activity-reports/${reportId.current}/${page.path}`;
+    history.push(newPath, state);
+    setSocketPath(newPath);
   };
 
   const onSave = async (data) => {
@@ -552,6 +578,7 @@ function ActivityReport({
       }
       >
         <Navigator
+          socketMessageStore={messageStore}
           key={currentPage}
           editable={editable}
           updatePage={updatePage}
