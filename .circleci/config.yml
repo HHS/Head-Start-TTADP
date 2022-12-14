@@ -334,9 +334,6 @@ jobs:
           name: Seed database
           command: yarn db:seed:ci
       - run:
-          name: Wait for server to start
-          command: ./bin/ping-server
-      - run:
           name: Install playwright dependencies
           command: |
             npx playwright install
