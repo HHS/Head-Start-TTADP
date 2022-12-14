@@ -266,9 +266,6 @@ jobs:
       - setup_remote_docker:
           version: 20.10.14
       - run:
-          name: Wait for Opensearch to start
-          command: ./bin/ping-opensearch;
-      - run:
           name: Audit vulnerability of backend node_modules
           command: |
             chmod 744 ./run-yarn-audit.sh
@@ -333,6 +330,9 @@ jobs:
       - run:
           name: Seed database
           command: yarn db:seed:ci
+      - run:
+          name: Wait for server to start
+          command: ./bin/ping-server
       - run:
           name: Install playwright dependencies
           command: |
