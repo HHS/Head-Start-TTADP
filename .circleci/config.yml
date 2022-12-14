@@ -262,6 +262,8 @@ jobs:
             AWS_ELASTICSEARCH_SECRET_KEY: admin
             bootstrap.memory_lock: 1
             OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+            nofile: 65536
+            port: 9600
           command: |
             docker run -d -p 9200:9200 -p 9600:9600 --name opensearch-node1 opensearchproject/opensearch:1.3.2
       - run:
