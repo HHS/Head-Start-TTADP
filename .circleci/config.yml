@@ -267,8 +267,7 @@ jobs:
           version: 20.10.14
       - run:
           name: Wait for Opensearch to start
-          command: |
-            dockerize -wait tcp://localhost:9200;
+          command: ./bin/ping-opensearch;
       - run:
           name: Audit vulnerability of backend node_modules
           command: |
