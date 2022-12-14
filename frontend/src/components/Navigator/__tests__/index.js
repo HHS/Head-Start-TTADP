@@ -9,7 +9,6 @@ import {
 import fetchMock from 'fetch-mock';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import Navigator from '../index';
-import { SocketContext } from '../../SocketProvider';
 import UserContext from '../../../UserContext';
 import { NOT_STARTED, IN_PROGRESS } from '../constants';
 import NetworkContext from '../../../NetworkContext';
@@ -20,12 +19,6 @@ import GoalFormContext from '../../../GoalFormContext';
 const user = {
   name: 'test@test.com',
 };
-
-// mocks for socket provider
-const send = jest.fn();
-const socket = { send };
-const store = null;
-const clearStore = jest.fn();
 
 // eslint-disable-next-line react/prop-types
 const Input = ({ name, required }) => {
@@ -131,7 +124,6 @@ const initialData = {
 describe('Navigator', () => {
   beforeAll(async () => {
     jest.useFakeTimers();
-    fetchMock.post('/api/activity-reports/goals', 200);
   });
 
   // eslint-disable-next-line arrow-body-style
@@ -147,47 +139,49 @@ describe('Navigator', () => {
     editable = true,
   ) => {
     render(
-      <SocketContext.Provider value={{ socket, store, clearStore }}>
-        <UserContext.Provider value={{ user }}>
-          <NetworkContext.Provider value={{
-            connectionActive: true,
-            localStorageAvailable: true,
+      <UserContext.Provider value={{ user }}>
+        <NetworkContext.Provider value={{
+          connectionActive: true,
+          localStorageAvailable: true,
+        }}
+        >
+          <AppLoadingContext.Provider value={{
+            setIsAppLoading: jest.fn(),
+            setAppLoadingText: jest.fn(),
+            isAppLoading: false,
           }}
           >
-            <AppLoadingContext.Provider value={{
-              setIsAppLoading: jest.fn(),
-              setAppLoadingText: jest.fn(),
-              isAppLoading: false,
-            }}
-            >
-              <Navigator
-                editable={editable}
-                reportId={1}
-                submitted={false}
-                formData={formData}
-                updateFormData={updateForm}
-                onReview={() => {}}
-                isApprover={false}
-                defaultValues={{ first: '', second: '' }}
-                pages={pages}
-                currentPage={currentPage}
-                onFormSubmit={onSubmit}
-                updatePage={updatePage}
-                onSave={onSave}
-                updateErrorMessage={onUpdateError}
-                onResetToDraft={() => {}}
-                updateLastSaveTime={() => {}}
-                isPendingApprover={false}
-              />
-            </AppLoadingContext.Provider>
-          </NetworkContext.Provider>
-        </UserContext.Provider>
-      </SocketContext.Provider>,
+            <Navigator
+              editable={editable}
+              reportId={1}
+              submitted={false}
+              formData={formData}
+              updateFormData={updateForm}
+              onReview={() => {}}
+              isApprover={false}
+              defaultValues={{ first: '', second: '' }}
+              pages={pages}
+              currentPage={currentPage}
+              onFormSubmit={onSubmit}
+              updatePage={updatePage}
+              onSave={onSave}
+              updateErrorMessage={onUpdateError}
+              onResetToDraft={() => {}}
+              updateLastSaveTime={() => {}}
+              isPendingApprover={false}
+            />
+          </AppLoadingContext.Provider>
+        </NetworkContext.Provider>
+      </UserContext.Provider>,
     );
   };
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    fetchMock.post('/api/activity-reports/goals', []);
+  });
+
+  afterEach(() => {
+    fetchMock.restore();
   });
 
   it('sets dirty forms as "in progress"', async () => {
@@ -279,25 +273,6 @@ describe('Navigator', () => {
     await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
   });
 
-  it('publishes to socket', async () => {
-    const onSubmit = jest.fn();
-    const onSave = jest.fn();
-    const updatePage = jest.fn();
-    const updateForm = jest.fn();
-    renderNavigator('second', onSubmit, onSave, updatePage, updateForm);
-
-    jest.runOnlyPendingTimers();
-    expect(send).toHaveBeenCalled();
-
-    userEvent.click(await screen.findByRole('button', { name: 'first page Not Started' }));
-    await waitFor(() => expect(updateForm).toHaveBeenCalledWith(
-      { ...initialData, second: null },
-    ));
-    await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
-
-    expect(clearStore).toHaveBeenCalled();
-  });
-
   it('shows the correct buttons on the bottom of the page', async () => {
     const onSubmit = jest.fn();
     const onSave = jest.fn();
@@ -331,9 +306,7 @@ describe('Navigator', () => {
       label: 'first page',
       review: false,
       render: () => (
-        <>
-          <h1>Goal test</h1>
-        </>
+        <GoalTest />
       ),
     }];
 
@@ -403,7 +376,7 @@ describe('Navigator', () => {
     fetchMock.restore();
     renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages, formData);
     const saveGoal = await screen.findByRole('button', { name: 'Save draft' });
-    fetchMock.post('/api/activity-reports/goals', 200);
+    fetchMock.post('/api/activity-reports/goals', []);
     expect(fetchMock.called()).toBe(false);
 
     act(() => userEvent.click(saveGoal));
@@ -455,15 +428,22 @@ describe('Navigator', () => {
     fetchMock.restore();
     renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages, formData);
     const saveGoal = await screen.findByRole('button', { name: 'Save draft' });
-    fetchMock.post('/api/activity-reports/goals', [{ name: 'goal name', endDate: 'fig pudding' }]);
+    fetchMock.post('/api/activity-reports/goals', [{
+      name: 'goal name',
+      endDate: 'fig pudding',
+      activityReportGoals: [{ isActivelyEdited: true }],
+      objectives: [],
+    }]);
     expect(fetchMock.called()).toBe(false);
-
     act(() => userEvent.click(saveGoal));
     await waitFor(() => expect(fetchMock.called()).toBe(true));
     expect(updateForm).toHaveBeenCalledWith(
       expect.objectContaining({
-        goalForEditing: { name: 'goal name', endDate: 'fig pudding' },
+        goalForEditing: {
+          activityReportGoals: [{ isActivelyEdited: true }], endDate: 'fig pudding', grantIds: [], name: 'goal name', objectives: [],
+        },
       }),
+      true,
     );
   });
 

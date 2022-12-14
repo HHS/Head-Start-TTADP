@@ -5,7 +5,6 @@
   display that item in the content section. The navigator keeps track of the "state" of each page.
 */
 import React, {
-  useEffect,
   useState,
   useContext,
 } from 'react';
@@ -24,8 +23,7 @@ import moment from 'moment';
 import useInterval from '@use-it/interval';
 import Container from '../Container';
 import SocketAlert from '../SocketAlert';
-import { SocketContext, socketPath } from '../SocketProvider';
-import UserContext from '../../UserContext';
+// import UserContext from '../../UserContext';
 
 import {
   IN_PROGRESS, COMPLETE,
@@ -63,6 +61,7 @@ function Navigator({
   errorMessage,
   updateErrorMessage,
   savedToStorageTime,
+  socketMessageStore,
 }) {
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
 
@@ -256,7 +255,7 @@ function Navigator({
 
       setValue('goalForEditing', newGoalForEditing);
       setValue('goals', goals);
-      setValue(objectivesFieldArrayName, newGoalForEditing.objectives);
+      setValue(objectivesFieldArrayName, newGoalForEditing ? newGoalForEditing.objectives : null);
 
       // update form data
       const { status, ...values } = getValues();
@@ -571,24 +570,6 @@ function Navigator({
     };
   });
 
-  const { socket, store, clearStore } = useContext(SocketContext);
-  const { user } = useContext(UserContext);
-
-  const INTERVAL_DELAY = 10000; // TEN SECONDS
-  const publishLocation = () => {
-    socket.send(JSON.stringify({
-      user: user.name,
-      lastSaveTime,
-      channel: socketPath(reportId, currentPage),
-    }));
-  };
-
-  useInterval(publishLocation, INTERVAL_DELAY);
-
-  useEffect(() => {
-    clearStore();
-  }, [clearStore, currentPage]);
-
   return (
     <Grid row gap>
       <Grid className="smart-hub-sidenav-wrapper no-print" col={12} desktop={{ col: 4 }}>
@@ -602,7 +583,7 @@ function Navigator({
         />
       </Grid>
       <Grid className="smart-hub-navigator-wrapper" col={12} desktop={{ col: 8 }}>
-        <SocketAlert store={store} />
+        <SocketAlert store={socketMessageStore} />
         <GoalFormContext.Provider value={{
           isGoalFormClosed,
           isObjectivesFormClosed,
@@ -731,6 +712,8 @@ Navigator.propTypes = {
       PropTypes.string,
     ]),
   }),
+  socketMessageStore: PropTypes.shape({
+  }),
 };
 
 Navigator.defaultProps = {
@@ -739,6 +722,7 @@ Navigator.defaultProps = {
   lastSaveTime: null,
   savedToStorageTime: null,
   errorMessage: '',
+  socketMessageStore: null,
   reportCreator: {
     name: null,
     role: null,
