@@ -246,7 +246,7 @@ jobs:
       - run:
           name: Start Opensearch
           command: |
-           docker run -d -p 9200:9200 -p 9600:9600 --name opensearch-node1 --env discovery.type=single-node --env cluster.name=opensearch-cluster --env node.name=opensearch-node1 --env DISABLE_SECURITY_PLUGIN=true --env AWS_ELASTICSEARCH_ENDPOINT=https://opensearch-cluster:9200 --env AWS_ELASTICSEARCH_ACCESS_KEY=admin --env AWS_ELASTICSEARCH_SECRET_KEY=admin opensearchproject/opensearch:1.3.2
+           docker run -d -p 9200:9200 -p 9600:9600 --name opensearch-node1 --env network.host=127.0.0.1 --env discovery.type=single-node --env cluster.name=opensearch-cluster --env node.name=opensearch-node1 --env DISABLE_SECURITY_PLUGIN=true --env AWS_ELASTICSEARCH_ENDPOINT=https://opensearch-node1:9200 --env AWS_ELASTICSEARCH_ACCESS_KEY=admin --env AWS_ELASTICSEARCH_SECRET_KEY=admin opensearchproject/opensearch:1.3.2
       - run:
           name: Audit vulnerability of backend node_modules
           command: |
