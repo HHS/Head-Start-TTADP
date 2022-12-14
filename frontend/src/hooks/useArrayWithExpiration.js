@@ -29,6 +29,12 @@ export default function useArrayWithExpiration(defaultValue, expiration = TWO_MI
     });
   }, expiration);
 
+  const empty = useCallback(() => {
+    if (state.length) {
+      setState([]);
+    }
+  }, [state.length]);
+
   const push = useCallback((name) => {
     const currentTime = new Date();
     const expirationTime = new Date();
@@ -61,7 +67,7 @@ export default function useArrayWithExpiration(defaultValue, expiration = TWO_MI
 
   // I am saving it this way so that when it is used
   // it is distinguishable from a traditional useState hook
-  const updateState = useMemo(() => ({ push }), [push]);
+  const updateState = useMemo(() => ({ push, empty }), [push, empty]);
 
   return [state, updateState];
 }

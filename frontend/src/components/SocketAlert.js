@@ -10,9 +10,15 @@ import './SocketAlert.css';
 
 const THIRTY_SECONDS = 30 * 1000;
 export default function SocketAlert({ store }) {
-  const [users, { push: pushUser }] = useArrayWithExpiration([], THIRTY_SECONDS);
+  const [users, { push: pushUser, empty }] = useArrayWithExpiration([], THIRTY_SECONDS);
   const isPageVisible = usePageVisibility();
   const isMobile = useMediaQuery({ maxWidth: 1023 });
+
+  useEffect(() => {
+    if (!store) {
+      empty();
+    }
+  }, [empty, store]);
 
   useEffect(() => {
     if (store && store.user && isPageVisible) {

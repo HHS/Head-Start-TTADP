@@ -40,19 +40,21 @@ if (!bypassSockets) {
       const subscriber = redisClient.duplicate();
       await subscriber.connect();
 
-      let channelName = '';
-
       wss.on('connection', async (ws, req) => {
-        channelName = req.url;
+        const channelName = req.url;
+        // subscribe to the channel, the function is a callback for what to
+        // do when a message is received via redis pub/sub
         await subscriber.subscribe(channelName, (message) => {
           ws.send(message);
         });
 
+        // when a message is received via websocket, publish it to redis
         ws.on('message', async (message) => {
           const { channel, ...data } = JSON.parse(message);
           await redisClient.publish(channel, JSON.stringify(data));
         });
 
+        // on close, unsubscribe from the channel
         ws.on('close', async () => subscriber.unsubscribe(channelName));
       });
     } catch (err) {
