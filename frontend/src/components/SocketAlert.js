@@ -8,8 +8,9 @@ import useArrayWithExpiration from '../hooks/useArrayWithExpiration';
 import usePageVisibility from '../hooks/usePageVisibility';
 import './SocketAlert.css';
 
+const THIRTY_SECONDS = 30 * 1000;
 export default function SocketAlert({ store }) {
-  const [users, { push: pushUser }] = useArrayWithExpiration([]);
+  const [users, { push: pushUser }] = useArrayWithExpiration([], THIRTY_SECONDS);
   const isPageVisible = usePageVisibility();
   const isMobile = useMediaQuery({ maxWidth: 1023 });
 
