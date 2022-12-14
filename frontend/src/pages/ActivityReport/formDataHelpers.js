@@ -73,7 +73,7 @@ export const convertGoalsToFormData = (
   // we will just fall back to just using the first matching goal
   if (
     // if any of the goals ids are included in the activelyEditedGoals id array
-    goal.activityReportGoals.some((arGoal) => arGoal.isActivelyEdited)
+    goal.activityReportGoals && goal.activityReportGoals.some((arGoal) => arGoal.isActivelyEdited)
         && !accumulatedData.goalForEditing
   ) {
     // we set it as the goal for editing
