@@ -5,7 +5,7 @@ import {
   render, screen,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import useArrayWithExpiration, { FIVE_MINUTES } from '../useArrayWithExpiration';
+import useArrayWithExpiration, { TWO_MINUTES } from '../useArrayWithExpiration';
 
 const ArrayWithExpirationTest = ({ defaultValue }) => {
   const [users, { push: pushUser }] = useArrayWithExpiration(defaultValue);
@@ -57,7 +57,7 @@ describe('useArrayWithExpiration', () => {
 
   it('deletes expired items from session storage', async () => {
     const tenMinutesAgo = new Date();
-    tenMinutesAgo.setTime(tenMinutesAgo.getTime() - (FIVE_MINUTES * 2));
+    tenMinutesAgo.setTime(tenMinutesAgo.getTime() - (TWO_MINUTES * 2));
 
     renderArrayWithExpirationTest([
       {
