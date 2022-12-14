@@ -1,30 +1,50 @@
+import useInterval from '@use-it/interval';
 import {
   useState,
   useCallback,
   useMemo,
 } from 'react';
 
-export const FIVE_MINUTES = 5 * 60 * 1000;
+export const TWO_MINUTES = 2 * 60 * 1000;
 
-export default function useArrayWithExpiration(defaultValue) {
+export default function useArrayWithExpiration(defaultValue, expiration = TWO_MINUTES) {
   const [state, setState] = useState(defaultValue);
 
-  const push = useCallback((name) => {
+  useInterval(() => {
     const currentTime = new Date();
-    const fiveMinutesFromNow = new Date();
-    fiveMinutesFromNow.setTime(currentTime.getTime() + FIVE_MINUTES);
+    const expirationTime = new Date();
+    expirationTime.setTime(currentTime.getTime() + expiration);
 
     setState((previousState) => {
       const stateWithoutExpired = previousState.filter((currentValue) => {
         const ageOfStoredUser = currentTime - new Date(currentValue.expires);
-        if (ageOfStoredUser > FIVE_MINUTES) {
+        if (ageOfStoredUser > expiration) {
           return false;
         }
 
         return true;
       });
 
-      const expires = fiveMinutesFromNow.toJSON();
+      return [...stateWithoutExpired];
+    });
+  }, expiration);
+
+  const push = useCallback((name) => {
+    const currentTime = new Date();
+    const expirationTime = new Date();
+    expirationTime.setTime(currentTime.getTime() + expiration);
+
+    setState((previousState) => {
+      const stateWithoutExpired = previousState.filter((currentValue) => {
+        const ageOfStoredUser = currentTime - new Date(currentValue.expires);
+        if (ageOfStoredUser > expiration) {
+          return false;
+        }
+
+        return true;
+      });
+
+      const expires = expirationTime.toJSON();
       const existing = stateWithoutExpired.findIndex((item) => name === item.name);
       if (existing !== -1) {
         stateWithoutExpired.splice(existing, 1);
@@ -37,11 +57,10 @@ export default function useArrayWithExpiration(defaultValue) {
 
       return [...stateWithoutExpired, newItemWithDate];
     });
-  }, []);
+  }, [expiration]);
 
   // I am saving it this way so that when it is used
   // it is distinguishable from a traditional useState hook
-  // (we could also build upon this to, for example, splice things)
   const updateState = useMemo(() => ({ push }), [push]);
 
   return [state, updateState];

@@ -122,6 +122,18 @@ function setConnectionActiveWithError(e, setConnectionActive) {
 
 const INTERVAL_DELAY = 10000; // TEN SECONDS
 
+const publishLocation = (socket, socketPath, user, lastSaveTime) => {
+  // we have to check to see if the socket is open before we send a message
+  // since the interval could be called while the socket is open but is about to close
+  if (socket && socket.readyState === socket.OPEN) {
+    socket.send(JSON.stringify({
+      user: user.name,
+      lastSaveTime,
+      channel: socketPath,
+    }));
+  }
+};
+
 function ActivityReport({
   match, location, region,
 }) {
@@ -201,19 +213,12 @@ function ActivityReport({
 
   const userHasOneRole = useMemo(() => user && user.roles && user.roles.length === 1, [user]);
 
-  const publishLocation = () => {
-    // we have to check to see if the socket is open before we send a message
-    // since the interval could be called while the socket is open but is about to close
-    if (socket && socket.readyState === socket.OPEN) {
-      socket.send(JSON.stringify({
-        user: user.name,
-        lastSaveTime,
-        channel: socketPath,
-      }));
-    }
-  };
+  useInterval(() => publishLocation(socket, socketPath, user, lastSaveTime), INTERVAL_DELAY);
 
-  useInterval(publishLocation, INTERVAL_DELAY);
+  // we also have to publish our location when we enter a channel
+  useEffect(() => {
+    publishLocation(socket, socketPath, user, lastSaveTime);
+  }, [socket, socketPath, user, lastSaveTime]);
 
   useDeepCompareEffect(() => {
     const fetch = async () => {
