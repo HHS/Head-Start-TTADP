@@ -98,11 +98,24 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         },
         hoverlabel: {
           font: { color: '#ffffff', size: '16' },
-          bgcolor: colors.smartHubTextInk,
+          bgcolor: colors.textInk,
         },
       }];
 
-    const ticklabelstep = parseInt(data[0].x.length / 12, DECIMAL_BASE);
+    const ticklabelstep = (() => {
+      const value = data[0].x.length;
+      let divisor = 1;
+      if (value > 12) {
+        divisor = 4;
+      }
+
+      if (value > 24) {
+        divisor = 6;
+      }
+
+      return parseInt(value / divisor, DECIMAL_BASE);
+    }
+    )();
 
     // Specify Chart Layout.
     const layout = {
@@ -126,9 +139,11 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
       },
       showlegend: false,
       xaxis: {
+        hovermode: 'closest',
+        showspikes: true,
+        showgrid: true,
         automargin: false,
         tickangle: 0,
-        showgrid: false,
         ticklabelstep,
         b: 0,
         t: 0,
