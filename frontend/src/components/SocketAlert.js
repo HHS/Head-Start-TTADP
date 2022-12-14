@@ -8,17 +8,11 @@ import useArrayWithExpiration from '../hooks/useArrayWithExpiration';
 import usePageVisibility from '../hooks/usePageVisibility';
 import './SocketAlert.css';
 
-const THIRTY_SECONDS = 30 * 1000;
+const THIRTY_SECONDS = 5 * 1000;
 export default function SocketAlert({ store }) {
-  const [users, { push: pushUser, empty }] = useArrayWithExpiration([], THIRTY_SECONDS);
+  const [users, { push: pushUser }] = useArrayWithExpiration([], THIRTY_SECONDS);
   const isPageVisible = usePageVisibility();
   const isMobile = useMediaQuery({ maxWidth: 1023 });
-
-  useEffect(() => {
-    if (!store) {
-      empty();
-    }
-  }, [empty, store]);
 
   useEffect(() => {
     if (store && store.user && isPageVisible) {
@@ -35,6 +29,9 @@ export default function SocketAlert({ store }) {
     ),
   );
 
+  // we want them to be in the same order every time
+  usersToRender.sort();
+
   const message = `${usersToRender.map((user, index) => {
     if (usersToRender.length > 1 && index + 1 === usersToRender.length) {
       return `and ${user}`;
@@ -47,6 +44,7 @@ export default function SocketAlert({ store }) {
       <Alert type="warning">
         <span>
           <span className="usa-prose margin-top-0">{message}</span>
+          {' ' /* a very reasonable framework, react */}
           <span className="usa-prose margin-bottom-0">Check with them before working on this page.</span>
         </span>
       </Alert>

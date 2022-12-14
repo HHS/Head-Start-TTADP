@@ -34,13 +34,13 @@ if (!bypassSockets) {
       });
       await redisClient.connect();
 
-      // We need to set up duplicate connections for subscribing,
-      // as once a client is in "subscribe" mode, it can't send
-      // any other commands (like "publish")
-      const subscriber = redisClient.duplicate();
-      await subscriber.connect();
-
       wss.on('connection', async (ws, req) => {
+        // We need to set up duplicate connections for subscribing,
+        // as once a client is in "subscribe" mode, it can't send
+        // any other commands (like "publish")
+        const subscriber = redisClient.duplicate();
+        await subscriber.connect();
+
         const channelName = req.url;
         // subscribe to the channel, the function is a callback for what to
         // do when a message is received via redis pub/sub
