@@ -191,12 +191,20 @@ function ActivityReport({
     }
   }, [activityReportId, formData]);
 
+  useEffect(() => {
+    if (activityReportId === 'new' || !currentPage) {
+      return;
+    }
+    const newPath = `/activity-reports/${activityReportId}/${currentPage}`;
+    setSocketPath(newPath);
+  }, [activityReportId, currentPage, setSocketPath]);
+
   const userHasOneRole = useMemo(() => user && user.roles && user.roles.length === 1, [user]);
 
   const publishLocation = () => {
     // we have to check to see if the socket is open before we send a message
     // since the interval could be called while the socket is open but is about to close
-    if (!socket && socket.readyState === socket.OPEN) {
+    if (socket && socket.readyState === socket.OPEN) {
       socket.send(JSON.stringify({
         user: user.name,
         lastSaveTime,
@@ -406,7 +414,6 @@ function ActivityReport({
     const page = pages.find((p) => p.position === position);
     const newPath = `/activity-reports/${reportId.current}/${page.path}`;
     history.push(newPath, state);
-    setSocketPath(newPath);
   };
 
   const onSave = async (data) => {
