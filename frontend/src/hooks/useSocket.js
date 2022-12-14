@@ -13,26 +13,16 @@ export default function useSocket(initialPath) {
   const [messageStore, setMessageStore] = useState();
   const socket = useRef({
     send: () => {},
+    close: () => {},
     url: '',
+    readyState: 0,
   });
-  const [sockets, setSockets] = useState([]);
+
   const path = useMemo(() => `${WS_URL}${socketPath}`, [socketPath]);
 
   const clearStore = useCallback(() => {
     setMessageStore();
   }, []);
-
-  // close all unused sockets
-  useEffect(() => {
-    if (!WS_URL || !socketPath) {
-      return;
-    }
-    sockets.forEach((s) => {
-      if (s.url !== path && s.readyState === s.OPEN) {
-        s.close();
-      }
-    });
-  }, [path, socketPath, sockets]);
 
   useEffect(() => {
     if (!WS_URL || !socketPath) {
@@ -42,6 +32,10 @@ export default function useSocket(initialPath) {
     // if we've already created a socket for the current path, return
     if (socket.current && path === socket.current.url) {
       return;
+    }
+
+    if (socket.current && socket.current.readyState === socket.current.OPEN) {
+      socket.current.close();
     }
 
     const s = new WebSocket(path);
@@ -61,8 +55,7 @@ export default function useSocket(initialPath) {
     });
 
     socket.current = s;
-    setSockets([...sockets, s]);
-  }, [clearStore, path, socketPath, sockets]);
+  }, [clearStore, path, socketPath]);
 
   return {
     socketPath,
