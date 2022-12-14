@@ -223,7 +223,7 @@ parameters:
     default: "867221900"
     type: string
   sandbox_new_relic_app_id:
-    default: "867346799"  
+    default: "867346799"
     type: string
 jobs:
   build_and_lint:
@@ -275,9 +275,9 @@ jobs:
       - run:
           name: Run seeders
           command: yarn db:seed:ci
-      - run:
-          name: Wait for opensearch
-          command: ./bin/ping-opensearch
+      # - run:
+      #     name: Wait for opensearch
+      #     command: ./bin/ping-opensearch
       - run:
           name: Test backend
           command:  |
