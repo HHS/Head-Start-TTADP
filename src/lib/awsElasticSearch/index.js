@@ -31,9 +31,9 @@ const generateEsConfig = () => {
 
   // Return docker image credentials.
   return {
-    uri: process.env.AWS_ELASTICSEARCH_ENDPOINT || 'http://opensearch:9200',
-    access_key: process.env.AWS_ELASTICSEARCH_ACCESS_KEY || 'admin',
-    secret_key: process.env.AWS_ELASTICSEARCH_SECRET_KEY || 'admin',
+    uri: process.env.AWS_ELASTICSEARCH_ENDPOINT,
+    access_key: process.env.AWS_ELASTICSEARCH_ACCESS_KEY,
+    secret_key: process.env.AWS_ELASTICSEARCH_SECRET_KEY,
   };
 };
 
