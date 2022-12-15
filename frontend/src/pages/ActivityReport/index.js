@@ -142,12 +142,6 @@ function ActivityReport({
   const history = useHistory();
   const [error, updateError] = useState();
   const [loading, updateLoading] = useState(true);
-  const {
-    socket,
-    setSocketPath,
-    socketPath,
-    messageStore,
-  } = useSocket();
 
   const [lastSaveTime, updateLastSaveTime] = useState(null);
 
@@ -182,6 +176,13 @@ function ActivityReport({
   const [creatorNameWithRole, updateCreatorRoleWithName] = useState('');
   const reportId = useRef();
   const { user } = useContext(UserContext);
+
+  const {
+    socket,
+    setSocketPath,
+    socketPath,
+    messageStore,
+  } = useSocket(user);
 
   const showLastUpdatedTime = (
     location.state && location.state.showLastUpdatedTime && connectionActive
