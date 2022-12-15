@@ -15,6 +15,18 @@ services:
       - REDIS_HOST=redis
       - SMTP_HOST=mailcatcher
       - FONTAWESOME_NPM_AUTH_TOKEN
+      # On an M1 mac, puppeteer install fails with the message:
+      # "The chromium binary is not available for arm64"
+      #
+      # The below instructs the container to skip downloading chromium and use the host's binary instead.
+      # If you're not on an M1 mac, you can comment this out or just leave it, the undefined exports will have no effect.
+      # I installed chromium with brew: `brew install chromium --no-quarantine`
+      #
+      # In ~/.zshrc (in my case) add:
+      # export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+      # export PUPPETEER_EXECUTABLE_PATH=`which chromium`
+      - PUPPETEER_EXECUTABLE_PATH
+      - PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
     volumes:
       - ".:/app:rw"
   frontend:

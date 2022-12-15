@@ -1,10 +1,12 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import '@testing-library/jest-dom';
 import React from 'react';
+import moment from 'moment';
 import { render, screen, act } from '@testing-library/react';
 import { useForm } from 'react-hook-form/dist/index.ie11';
 import userEvent from '@testing-library/user-event';
 import { Grid } from '@trussworks/react-uswds';
+import { DATE_DISPLAY_FORMAT } from '../../Constants';
 
 import ControlledDatePicker from '../ControlledDatePicker';
 
@@ -39,6 +41,7 @@ describe('Controlled Date Picker', () => {
               maxDate={endDate}
               isStartDate
               inputId="startDate"
+              endDate={endDate}
             />
           </Grid>
         </Grid>
@@ -83,6 +86,38 @@ describe('Controlled Date Picker', () => {
 
     act(() => userEvent.clear(sd));
     userEvent.type(sd, '01/03/2021');
+    expect(setEndDate).toHaveBeenCalled();
+  });
+
+  it('can set future start date and adjust end date', async () => {
+    const setEndDate = jest.fn();
+    render(<TestDatePicker setEndDate={setEndDate} />);
+
+    // Enter a future start date.
+    const sd = await screen.findByRole('textbox', { name: /start date/i });
+    const futureDate = moment().add(5, 'days').format(DATE_DISPLAY_FORMAT);
+    userEvent.type(sd, futureDate);
+
+    // Enter a end date before start date.
+    const ed = await screen.findByRole('textbox', { name: /end date/i });
+    const todaysDate = moment().format(DATE_DISPLAY_FORMAT);
+    userEvent.type(ed, todaysDate);
+
+    // Verify error message.
+    const validationMessage = await screen.findByText(`Please enter a date after ${futureDate}`);
+    expect(validationMessage).toBeVisible();
+
+    // End end date after start date.
+    const newEndDate = moment().add(10, 'days').format(DATE_DISPLAY_FORMAT);
+    act(() => userEvent.clear(ed));
+    userEvent.type(ed, newEndDate);
+
+    // Enter start date after end date.
+    const newStartDate = moment().add(22, 'days').format(DATE_DISPLAY_FORMAT);
+    act(() => userEvent.clear(sd));
+    userEvent.type(sd, newStartDate);
+
+    // Check that end date is pushed beyond start date for same number of days.
     expect(setEndDate).toHaveBeenCalled();
   });
 });
