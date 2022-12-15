@@ -8,7 +8,7 @@ import { auditLogger, logger } from '../../logger';
   https://github.com/opensearch-project/opensearch-js/blob/HEAD/USER_GUIDE.md
   https://opensearch.org/docs/latest/api-reference/index-apis/create-index/
 */
-/*
+
 const generateEsConfig = () => {
   // Pull from VCAP env variables (cloud.gov)
   if (process.env.VCAP_SERVICES) {
@@ -31,9 +31,9 @@ const generateEsConfig = () => {
 
   // Return docker image credentials.
   return {
-    uri: process.env.AWS_ELASTICSEARCH_ENDPOINT,
-    access_key: process.env.AWS_ELASTICSEARCH_ACCESS_KEY,
-    secret_key: process.env.AWS_ELASTICSEARCH_SECRET_KEY,
+    uri: process.env.AWS_ELASTICSEARCH_ENDPOINT || 'http://opensearch:9200',
+    access_key: process.env.AWS_ELASTICSEARCH_ACCESS_KEY || 'admin',
+    secret_key: process.env.AWS_ELASTICSEARCH_SECRET_KEY || 'admin',
   };
 };
 
@@ -42,7 +42,6 @@ const {
   access_key,
   secret_key,
 } = generateEsConfig();
-*/
 
 const createAwsConnector = (credentials, region) => {
   class AmazonConnection extends Connection {
@@ -60,17 +59,17 @@ const createAwsConnector = (credentials, region) => {
     Connection: AmazonConnection,
   };
 };
-const nodeAddress = 'http://opensearch:9200';
+
 const getClient = async () => new Client({
   ...createAwsConnector(
     {
-      node: nodeAddress,
-      accessKeyId: 'admin',
-      secretAccessKey: 'admin',
+      node: uri,
+      accessKeyId: access_key,
+      secretAccessKey: secret_key,
     },
     'us-gov-west-1',
   ),
-  node: nodeAddress,
+  node: uri,
 });
 /*
   Create an index that can have searchable documents assigned.
