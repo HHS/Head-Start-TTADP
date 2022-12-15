@@ -19,9 +19,10 @@ import UserContext from '../../../UserContext';
 import { OBJECTIVE_ERROR_MESSAGES } from '../constants';
 import { REPORT_STATUSES, SCOPE_IDS } from '../../../Constants';
 import { BEFORE_OBJECTIVES_CREATE_GOAL, BEFORE_OBJECTIVES_SELECT_RECIPIENTS } from '../Form';
+import AppLoadingContext from '../../../AppLoadingContext';
 
 const [
-  objectiveTitleError, objectiveTopicsError, objectiveResourcesError,
+  objectiveTitleError, objectiveTopicsError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
 const topicsFromApi = [
@@ -109,11 +110,20 @@ describe('create goal', () => {
           },
         }}
         >
-          <CreateGoal
-            recipient={recipient}
-            regionId="1"
-            isNew={goalId === 'new'}
-          />
+          <AppLoadingContext.Provider value={
+          {
+            setIsAppLoading: jest.fn(),
+            setAppLoadingText: jest.fn(),
+            isAppLoading: false,
+          }
+        }
+          >
+            <CreateGoal
+              recipient={recipient}
+              regionId="1"
+              isNew={goalId === 'new'}
+            />
+          </AppLoadingContext.Provider>
         </UserContext.Provider>
       </Router>
     ));
@@ -656,7 +666,7 @@ describe('create goal', () => {
     const save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
 
-    await screen.findByText(objectiveResourcesError);
+    await screen.findByText('Enter one resource per field. Valid resource links must start with http:// or https://');
 
     userEvent.clear(resourceOne);
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
@@ -665,6 +675,14 @@ describe('create goal', () => {
     userEvent.click(addNewResource);
 
     const resourceTwo = await screen.findByRole('textbox', { name: 'Resource 2' });
+    userEvent.type(resourceTwo, 'https://search.marginalia.nu/https://search.marginalia.nu/https://search.marginalia.nu/');
+
+    const saveDraft = await screen.findByRole('button', { name: /save draft/i });
+    userEvent.click(saveDraft);
+
+    await screen.findByText('Enter one resource per field. Valid resource links must start with http:// or https://');
+
+    userEvent.clear(resourceTwo);
     userEvent.type(resourceTwo, 'https://search.marginalia.nu/');
 
     addNewResource = await screen.findByRole('button', { name: 'Add new resource' });
@@ -675,7 +693,7 @@ describe('create goal', () => {
 
     userEvent.click(save);
 
-    await screen.findByText(objectiveResourcesError);
+    await screen.findByText('Enter one resource per field. Valid resource links must start with http:// or https://');
 
     addNewResource = await screen.findByRole('button', { name: 'Add new resource' });
     userEvent.click(addNewResource);

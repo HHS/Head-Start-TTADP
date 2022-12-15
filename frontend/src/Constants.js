@@ -7,9 +7,12 @@ export const AFTER = 'is on or after';
 export const WITHIN = 'is within';
 export const IS = 'is';
 export const IS_NOT = 'is not';
+export const WHERE_IM_THE = 'where I\'m the';
+export const WHERE_IM_NOT_THE = 'where I\'m not the';
 
 export const SELECT_CONDITIONS = [CONTAINS, NOT_CONTAINS];
 export const FILTER_CONDITIONS = [IS, IS_NOT];
+export const MY_REPORTS_FILTER_CONDITIONS = [WHERE_IM_THE, WHERE_IM_NOT_THE];
 export const REGION_CONDITIONS = [IS];
 
 export const QUERY_CONDITIONS = {
@@ -20,6 +23,8 @@ export const QUERY_CONDITIONS = {
   [WITHIN]: 'win',
   [IS]: 'in[]',
   [IS_NOT]: 'nin[]',
+  [WHERE_IM_THE]: 'in[]',
+  [WHERE_IM_NOT_THE]: 'nin[]',
 };
 
 export const DATE_CONDITIONS = [
@@ -90,6 +95,12 @@ export const REASONS = [
   'Monitoring | Area of Concern',
   'Monitoring | Noncompliance',
   'Monitoring | Deficiency',
+];
+
+export const MY_REPORT_ROLES = [
+  'Creator',
+  'Collaborator',
+  'Approver',
 ];
 
 // Note that if this topic list is changed, it needs also to be changed in

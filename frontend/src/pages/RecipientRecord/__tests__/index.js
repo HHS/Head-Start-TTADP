@@ -10,6 +10,7 @@ import RecipientRecord from '../index';
 import { formatDateRange } from '../../../utils';
 import UserContext from '../../../UserContext';
 import { SCOPE_IDS } from '../../../Constants';
+import AppLoadingContext from '../../../AppLoadingContext';
 
 const { ADMIN } = SCOPE_IDS;
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
@@ -96,7 +97,16 @@ describe('recipient record page', () => {
     render(
       <Router history={history}>
         <UserContext.Provider value={{ user }}>
-          <RecipientRecord match={match} />
+          <AppLoadingContext.Provider value={
+          {
+            setIsAppLoading: jest.fn(),
+            setAppLoadingText: jest.fn(),
+            isAppLoading: false,
+          }
+        }
+          >
+            <RecipientRecord match={match} />
+          </AppLoadingContext.Provider>
         </UserContext.Provider>
       </Router>,
     );
