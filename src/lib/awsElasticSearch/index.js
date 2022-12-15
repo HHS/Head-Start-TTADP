@@ -60,7 +60,7 @@ const createAwsConnector = (credentials, region) => {
     Connection: AmazonConnection,
   };
 };
-const nodeAddress = 'http://localhost:9200';
+const nodeAddress = 'http://opensearch:9200';
 const getClient = async () => new Client({
   ...createAwsConnector(
     {
