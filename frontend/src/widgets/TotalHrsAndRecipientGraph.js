@@ -10,6 +10,8 @@ import colors from '../colors';
 import './TotalHrsAndRecipientGraph.scss';
 import { DECIMAL_BASE } from '../Constants';
 
+const HOVER_TEMPLATE = '(%{x}, %{y})<extra></extra>';
+
 export function TotalHrsAndRecipientGraph({ data, loading }) {
   // the state for which lines to show
   const [showTA, setShowTA] = useState(true);
@@ -43,7 +45,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         mode: 'lines+markers',
         x: data[1].x,
         y: data[1].y,
-        hoverinfo: 'y',
+        hovertemplate: HOVER_TEMPLATE,
         line: {
           dash: 'solid',
           width: 3,
@@ -64,7 +66,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         mode: 'lines+markers',
         x: data[0].x,
         y: data[0].y,
-        hoverinfo: 'y',
+        hovertemplate: HOVER_TEMPLATE,
         line: {
           dash: 'dash',
           width: 3,
@@ -86,7 +88,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         mode: 'lines+markers',
         x: data[2].x,
         y: data[2].y,
-        hoverinfo: 'y',
+        hovertemplate: HOVER_TEMPLATE,
         line: {
           dash: 'longdash',
           width: 3,
@@ -102,15 +104,15 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         },
       }];
 
-    const ticklabelstep = (() => {
+    const xTickStep = (() => {
       const value = data[0].x.length;
-      let divisor = 1;
+      let divisor = value;
       if (value > 12) {
-        divisor = 4;
+        divisor = 6;
       }
 
       if (value > 24) {
-        divisor = 6;
+        divisor = 4;
       }
 
       return parseInt(value / divisor, DECIMAL_BASE);
@@ -133,26 +135,20 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
       margin: {
         l: 50,
         t: 0,
-        pad: 10,
         r: 0,
         b: 68,
       },
       showlegend: false,
       xaxis: {
+        showgrid: false,
+        hovermode: 'closest',
+        autotick: false,
         ticks: 'outside',
         tick0: 0,
-        dtick: 0,
-        ticklen: 10,
-        tickwidth: 2,
-        hovermode: 'closest',
-        showspikes: true,
-        // showgrid: true,
-        automargin: false,
-        tickangle: 0,
-        ticklabelstep,
-        b: 0,
-        t: 0,
-        autotypenumbers: 'strict',
+        dtick: xTickStep,
+        ticklen: 14,
+        tickwidth: 1,
+        tickcolor: '#000',
         title: {
           text: 'Date range',
           standoff: 40,
@@ -165,6 +161,9 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
       },
       yaxis: {
         automargin: true,
+        rangemode: 'tozero',
+        tickwidth: 1,
+        tickcolor: 'transparent',
         tickformat: (n) => {
           // if not a whole number, round to 1 decimal place
           if (n % 1 !== 0) {
