@@ -212,18 +212,6 @@ module.exports = {
           --- migrate/merge/delete metadata table values from newer objectives into the older objectives
           affected_objective_files AS (
             SELECT
-<<<<<<< HEAD
-              f1.id "objectiveFileId",
-              f2.id "objectiveFileIdOrig",
-              ao.id "objectiveId",
-              ao."sourceId"
-            FROM "AffectedObjectives" ao
-            LEFT JOIN "ObjectiveFiles" f1
-            ON ao."id" = f1."objectiveId"
-            LEFT JOIN "ObjectiveFiles" f2
-            ON ao."sourceId" = f2."objectiveId"
-            AND f1."fileId" = f2."fileId"
-=======
               current_of.id,
               ao.inheriting_oid,
               current_of."fileId" = target_of."fileId" is_duplicate
@@ -233,7 +221,6 @@ module.exports = {
             LEFT JOIN "ObjectiveFiles" target_of
               ON ao.inheriting_oid = target_of."objectiveId"
             WHERE ao.inheriting_oid <> ao.donor_oid
->>>>>>> cf5ec1541 (initial single-run version)
           ),
           -- Move objective file links from deduped objectives to the inheriting objective, or delete the linking record if the file is a dupe
           migrated_objective_files AS (
@@ -256,18 +243,6 @@ module.exports = {
           ),
           affected_objective_resources AS (
             SELECT
-<<<<<<< HEAD
-              r1.id "objectiveResourceId",
-              r2.id "objectiveResourceIdOrig",
-              ao.id "objectiveId",
-              ao."sourceId"
-            FROM "AffectedObjectives" ao
-            LEFT JOIN "ObjectiveResources" r1
-            ON ao."id" = r1."objectiveId"
-            LEFT JOIN "ObjectiveResources" r2
-            ON ao."sourceId" = r2."objectiveId"
-            AND r1."userProvidedUrl" = r2."userProvidedUrl"
-=======
               current_or.id,
               ao.inheriting_oid,
               current_or."userProvidedUrl" = target_or."userProvidedUrl" is_duplicate
@@ -277,7 +252,6 @@ module.exports = {
             LEFT JOIN "ObjectiveResources" target_or
               ON ao.inheriting_oid = target_or."objectiveId"
             WHERE ao.inheriting_oid <> ao.donor_oid
->>>>>>> cf5ec1541 (initial single-run version)
           ),
           migrated_objective_resources AS (
             UPDATE "ObjectiveResources" r
@@ -299,18 +273,6 @@ module.exports = {
           ),
           affected_objective_topics AS (
             SELECT
-<<<<<<< HEAD
-              t1.id "objectiveTopicId",
-              t2.id "objectiveTopicIdOrig",
-              ao.id "objectiveId",
-              ao."sourceId"
-            FROM "AffectedObjectives" ao
-            LEFT JOIN "ObjectiveTopics" t1
-            ON ao."id" = t1."objectiveId"
-            LEFT JOIN "ObjectiveTopics" t2
-            ON ao."sourceId" = t2."objectiveId"
-            AND t1."topicId" = t2."topicId"
-=======
               current_ot.id,
               ao.inheriting_oid,
               current_ot."topicId" = target_ot."topicId" is_duplicate
@@ -320,7 +282,6 @@ module.exports = {
             LEFT JOIN "ObjectiveTopics" target_ot
               ON ao.inheriting_oid = target_ot."objectiveId"
             WHERE ao.inheriting_oid <> ao.donor_oid
->>>>>>> cf5ec1541 (initial single-run version)
           ),
           migrated_objective_topics AS (
             UPDATE "ObjectiveTopics" r
@@ -343,19 +304,6 @@ module.exports = {
           --- migrate/merge/delete ARO records to use the older objectives
           affected_aros AS (
             SELECT
-<<<<<<< HEAD
-              aro1.id "activityReportObjectiveId",
-              aro2.id "activityReportObjectiveIdOrig",
-              aro1."activityReportId",
-              aro1."objectiveId",
-              ao."sourceId"
-            FROM "AffectedObjectives" ao
-            JOIN "ActivityReportObjectives" aro1
-            ON aro1."objectiveId" = ao.id
-            LEFT JOIN "ActivityReportObjectives" aro2
-            ON aro1."objectiveId" = ao."sourceId"
-            AND aro1."activityReportId" = aro2."activityReportId"
-=======
               current_aaro.id,
               ao.inheriting_oid,
               current_aaro."activityReportId" = target_aaro."activityReportId" is_duplicate
@@ -365,7 +313,6 @@ module.exports = {
             LEFT JOIN "ActivityReportObjectives" target_aaro
               ON ao.inheriting_oid = target_aaro."objectiveId"
             WHERE ao.inheriting_oid <> ao.donor_oid
->>>>>>> cf5ec1541 (initial single-run version)
           ),
           migrated_aros AS (
             UPDATE "ActivityReportObjectives" aro
@@ -398,13 +345,8 @@ module.exports = {
           SELECT 'updated_objectives', count(*)
           FROM updated_objectives
           UNION
-<<<<<<< HEAD
-          SELECT 'AdvanceableDuplicateObjectivesUpdated', count(*)
-          FROM "AdvanceableDuplicateObjectivesUpdated"
-=======
           SELECT 'migrated_objective_files', count(*)
           FROM migrated_objective_files
->>>>>>> cf5ec1541 (initial single-run version)
           UNION
           SELECT 'deleted_objective_files', count(*)
           FROM deleted_objective_files
