@@ -30,7 +30,7 @@ executors:
       - image: opensearchproject/opensearch:1.3.2
         name: opensearch-container
         environment:
-          transport.host: localhost
+          transport.host: 0.0.0.0
           network.host: 0.0.0.0
           http.port: 9200
           cluster.name: opensearch-cluster
@@ -223,7 +223,7 @@ parameters:
     default: "867221900"
     type: string
   sandbox_new_relic_app_id:
-    default: "867346799"  
+    default: "867346799"
     type: string
 jobs:
   build_and_lint:
@@ -277,7 +277,7 @@ jobs:
           command: yarn db:seed:ci
       - run:
           name: Check for opensearch
-          command: curl -XGET http://localhost:9200 -u 'admin:admin' --insecure
+          command: curl -XGET http://localhost:9200 -u 'admin:admin' --insecure;
       - run:
           name: Test backend
           command:  |
