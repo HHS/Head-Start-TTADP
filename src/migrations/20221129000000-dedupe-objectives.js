@@ -19,6 +19,87 @@ module.exports = {
         throw (err);
       }
       try {
+        // The next two repairs are so that Goals and Objectives inheriting status change values from their deduped siblings receive
+        // all the info they need. Trying to perform these fixes later while retaining that inheritance would be very complicated.
+        // -------------------------------------
+        // update Objectives with their proper stage dates from the audit log to repair an issue where the values weren't being set
+        // on status change
+        await queryInterface.sequelize.query(
+        `WITH
+        obj_recovered_dates AS (
+          SELECT
+            data_id recovered_obj_id,
+            MIN(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Not Started') "firstNotStartedAt",
+            MAX(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Not Started') "lastNotStartedAt",
+            MIN(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'In Progress') "firstInProgressAt",
+            MAX(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'In Progress') "lastInProgressAt",
+            MIN(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Suspended') "firstSuspendedAt",
+            MAX(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Suspended') "lastSuspendedAt",
+            MIN(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Complete') "firstCompleteAt",
+            MAX(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Complete') "lastCompleteAt"
+          FROM public."ZALObjectives"
+          WHERE new_row_data ->> 'status' IS NOT NULL
+          GROUP BY 1
+        )
+        UPDATE "Objectives" o
+        SET
+          "firstNotStartedAt" = ord."firstNotStartedAt",
+          "lastNotStartedAt" = ord."lastNotStartedAt",
+          "firstInProgressAt" = ord."firstInProgressAt",
+          "lastInProgressAt" = ord."lastInProgressAt",
+          "firstSuspendedAt" = ord."firstSuspendedAt",
+          "lastSuspendedAt" = ord."lastSuspendedAt",
+          "firstCompleteAt" = ord."firstCompleteAt",
+          "lastCompleteAt" = ord."lastCompleteAt"
+        FROM obj_recovered_dates ord
+        WHERE o.id = recovered_obj_id
+        ;`,
+        { transaction },
+        );
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
+      try {
+        // Update *Goals* with their proper stage dates from the audit log to repair an issue where the values weren't being set
+        // on status change
+        await queryInterface.sequelize.query(
+        `WITH
+        goal_recovered_dates AS (
+          SELECT
+            data_id recovered_goal_id,
+            MIN(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Not Started') "firstNotStartedAt",
+            MAX(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Not Started') "lastNotStartedAt",
+            MIN(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'In Progress') "firstInProgressAt",
+            MAX(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'In Progress') "lastInProgressAt",
+            MIN(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Suspended') "firstCeasedSuspendedAt",
+            MAX(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Suspended') "lastCeasedSuspendedAt",
+            MIN(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Closed') "firstClosedAt",
+            MAX(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Closed') "lastClosedAt"
+          FROM public."ZALGoals"
+          WHERE new_row_data ->> 'status' IS NOT NULL
+          GROUP BY 1
+        )
+        UPDATE "Goals" g
+        SET
+          "firstNotStartedAt" = grd."firstNotStartedAt",
+          "lastNotStartedAt" = grd."lastNotStartedAt",
+          "firstInProgressAt" = grd."firstInProgressAt",
+          "lastInProgressAt" = grd."lastInProgressAt",
+          "firstCeasedSuspendedAt" = grd."firstCeasedSuspendedAt",
+          "lastCeasedSuspendedAt" = grd."lastCeasedSuspendedAt",
+          "firstClosedAt" = grd."firstClosedAt",
+          "lastClosedAt" = grd."lastClosedAt"
+        FROM goal_recovered_dates grd
+        WHERE g.id = recovered_goal_id
+        ;`,
+        { transaction },
+        );
+      } catch (err) {
+        console.error(err); // eslint-disable-line no-console
+        throw (err);
+      }
+      try {
         // 1. collect duplicate objectives based on matching title and goalId
         // 2. Merge two records into the original records
         // 3. Intermediate dataset
@@ -32,147 +113,106 @@ module.exports = {
         // 12. results
         await queryInterface.sequelize.query(
           `WITH
+          -- make easily sortable statuses
+          status_order AS (
+            SELECT
+              'Not Started' AS statname,
+              1 AS statrank
+            UNION SELECT 'In Progress',2
+            UNION SELECT 'Complete', 4
+          ),
           -- collect duplicate objectives based on matching title and goalId
-          "DuplicateObjectives" AS (
+          grouped_objectives AS (
             SELECT
-              a.id "sourceId",
-              a.status "sourceStatus",
-              b.*
-            FROM "Objectives" a
-            JOIN "Objectives" b
-            ON ( COALESCE(a."goalId",0) = COALESCE(b."goalId",0)
-              AND COALESCE(a."otherEntityId",0) = COALESCE(b."otherEntityId",0))
-            AND md5(trim(a.title)) = md5(trim(b.title))
-            AND a.id < b.id
+              *,
+              COALESCE("goalId",0) || '-' || COALESCE("otherEntityId",0) || '-' || MD5(TRIM(title))
+              AS group_id,
+              CASE WHEN status = 'Complete' THEN 1 ELSE 0 END
+              AS seq_end -- Complete objectives end a sequence within a group
+            FROM "Objectives"
           ),
-          -- Merge two records into the original records
-          "FullDuplicateObjectives" AS (
+          -- break groups of duplicates into sets that will be consolidated to a single objective
+          -- when a 'Complete' ends a sequence of duplicate objectives within a group, they form a set
+          -- the complete objective will inherit all the data associated with the objectives of that set
+          objective_sets AS (
             SELECT
-            *
-            FROM "DuplicateObjectives" d
-            WHERE d."sourceStatus" = d.status
+              *,
+                group_id || '-' ||
+                SUM(seq_end) OVER (PARTITION BY group_id ORDER BY "updatedAt" DESC)
+              AS obj_set_id
+            FROM grouped_objectives
           ),
-          -- Intermediate dataset
-          "PartialDuplicateObjectives" AS (
+          set_aggregates AS (
             SELECT
-            *
-            FROM "DuplicateObjectives" d
-            WHERE d."sourceStatus" != d.status
+              obj_set_id AS aggregate_osid,
+              COUNT(*) AS os_count,
+              TRIM(title) trimmed_title,
+              MIN("createdAt") min_createdat,
+              MAX("updatedAt") max_updatedat,
+              MIN("objectiveTemplateId") min_obj_template_id,
+              BOOL_OR("onApprovedAR") any_onapprovedar,
+              MIN("firstNotStartedAt") new_fnotstartedat,
+              MAX("lastNotStartedAt") new_lnotstartedat,
+              MIN("firstInProgressAt") new_finprogressat,
+              MAX("lastInProgressAt") new_linprogressat,
+              MIN("firstCompleteAt") new_fcompleteat,
+              MAX("lastCompleteAt") new_lcompleteat,
+              MIN("firstSuspendedAt") new_fsuspendedat,
+              MAX("lastSuspendedAt") new_lsuspendedat
+            FROM objective_sets
+            GROUP BY 1,3
+            HAVING COUNT(*) > 1
           ),
-          -- Merge two records into the original records using the status of the newer
-          "AdvanceableDuplicateObjectives" AS (
-            SELECT *
-            from "PartialDuplicateObjectives"
-            WHERE
-              CASE
-                WHEN "sourceStatus" = 'Not Started' THEN 1
-                WHEN "sourceStatus" = 'In Progress' THEN 2
-                WHEN "sourceStatus" = 'Complete' THEN 4
-              END
-              <
-              CASE
-                WHEN "status" = 'Not Started' THEN 1
-                WHEN "status" = 'In Progress' THEN 2
-                WHEN "status" = 'Complete' THEN 4
-              END
-          ),
-          -- Merge two records into the original records using the status of the older
-          "FalseRestartDuplicateObjectives" AS (
-            SELECT *
-            from "PartialDuplicateObjectives"
-            WHERE
-              CASE
-                WHEN "sourceStatus" = 'Not Started' THEN 1
-                WHEN "sourceStatus" = 'In Progress' THEN 2
-                WHEN "sourceStatus" = 'Complete' THEN 4
-              END
-              >
-              CASE
-                WHEN "status" = 'Not Started' THEN 1
-                WHEN "status" = 'In Progress' THEN 2
-                WHEN "status" = 'Complete' THEN 4
-              END
-            AND "sourceStatus" != 'Complete'
+          -- Rank objectives within sets to find the objective with the most-advanced status and latest update
+          -- only one set within a dupe group can lack a Complete objective, so at most one objective per dupe group will survive deduping with a non-complete status
+          ranked_objectives AS (
+            SELECT
+              *,
+              ROW_NUMBER() OVER (PARTITION BY obj_set_id ORDER BY statrank DESC, "updatedAt" DESC)
+              AS obj_rank
+            FROM objective_sets os
+            LEFT JOIN status_order so
+              ON status = statname
           ),
           --- for each of the three datasets merge objectives into the older records as described
-          "FullDuplicateObjectivesUpdated" AS (
+          updated_objectives AS (
             UPDATE "Objectives" o
             SET
-              title = TRIM(fdo.title),
-              "createdAt" = LEAST(o."createdAt", fdo."createdAt"),
-              "updatedAt" = GREATEST(o."updatedAt", fdo."updatedAt"),
-              "objectiveTemplateId" = LEAST(o."objectiveTemplateId", fdo."objectiveTemplateId"),
-              "onApprovedAR" = (o."onApprovedAR" OR fdo."onApprovedAR"),
-              "firstNotStartedAt" = LEAST(o."firstNotStartedAt", fdo."firstNotStartedAt"),
-              "lastNotStartedAt" = GREATEST(o."lastNotStartedAt", fdo."lastNotStartedAt"),
-              "firstInProgressAt" = LEAST(o."firstInProgressAt", fdo."firstInProgressAt"),
-              "lastInProgressAt" = GREATEST(o."lastInProgressAt", fdo."lastInProgressAt"),
-              "firstCompleteAt" = LEAST(o."firstCompleteAt", fdo."firstCompleteAt"),
-              "lastCompleteAt" = GREATEST(o."lastCompleteAt", fdo."lastCompleteAt"),
-              "firstSuspendedAt" = LEAST(o."firstSuspendedAt", fdo."firstSuspendedAt"),
-              "lastSuspendedAt" = GREATEST(o."lastSuspendedAt", fdo."lastSuspendedAt")
-            FROM "FullDuplicateObjectives" fdo
-            WHERE o.id = fdo."sourceId"
+              title = trimmed_title,
+              "createdAt" = min_createdat,
+              "updatedAt" = max_updatedat,
+              "objectiveTemplateId" = min_obj_template_id,
+              "onApprovedAR" = any_onapprovedar,
+              "firstNotStartedAt" = new_fnotstartedat,
+              "lastNotStartedAt" = new_lnotstartedat,
+              "firstInProgressAt" = new_finprogressat,
+              "lastInProgressAt" = new_linprogressat,
+              "firstCompleteAt" = new_fcompleteat,
+              "lastCompleteAt" = new_lcompleteat,
+              "firstSuspendedAt" = new_fsuspendedat,
+              "lastSuspendedAt" = new_lsuspendedat
+            FROM ranked_objectives ro
+            JOIN set_aggregates sa
+              ON sa.aggregate_osid = ro.obj_set_id
+            WHERE o.id = ro.id
+              AND ro.obj_rank = 1
+              AND sa.os_count > 1
             RETURNING
-              o.id "objectiveId"
+              o.id
           ),
-          "AdvanceableDuplicateObjectivesUpdated" AS (
-            UPDATE "Objectives" o
-            SET
-              title = TRIM(ado.title),
-              status = ado.status,
-              "createdAt" = LEAST(o."createdAt", ado."createdAt"),
-              "updatedAt" = GREATEST(o."updatedAt", ado."updatedAt"),
-              "objectiveTemplateId" = LEAST(o."objectiveTemplateId", ado."objectiveTemplateId"),
-              "onApprovedAR" = (o."onApprovedAR" OR ado."onApprovedAR"),
-              "firstNotStartedAt" = LEAST(o."firstNotStartedAt", ado."firstNotStartedAt"),
-              "lastNotStartedAt" = GREATEST(o."lastNotStartedAt", ado."lastNotStartedAt"),
-              "firstInProgressAt" = LEAST(o."firstInProgressAt", ado."firstInProgressAt"),
-              "lastInProgressAt" = GREATEST(o."lastInProgressAt", ado."lastInProgressAt"),
-              "firstCompleteAt" = LEAST(o."firstCompleteAt", ado."firstCompleteAt"),
-              "lastCompleteAt" = GREATEST(o."lastCompleteAt", ado."lastCompleteAt"),
-              "firstSuspendedAt" = LEAST(o."firstSuspendedAt", ado."firstSuspendedAt"),
-              "lastSuspendedAt" = GREATEST(o."lastSuspendedAt", ado."lastSuspendedAt")
-            FROM "AdvanceableDuplicateObjectives" ado
-            WHERE o.id = ado."sourceId"
-            RETURNING
-              o.id "objectiveId"
-          ),
-          "FalseRestartDuplicateObjectivesUpdated" AS (
-            UPDATE "Objectives" o
-            SET
-              title = TRIM(frdo.title),
-              "createdAt" = LEAST(o."createdAt", frdo."createdAt"),
-              "updatedAt" = GREATEST(o."updatedAt", frdo."updatedAt"),
-              "objectiveTemplateId" = LEAST(o."objectiveTemplateId", frdo."objectiveTemplateId"),
-              "onApprovedAR" = (o."onApprovedAR" OR frdo."onApprovedAR"),
-              "firstNotStartedAt" = LEAST(o."firstNotStartedAt", frdo."firstNotStartedAt"),
-              "lastNotStartedAt" = GREATEST(o."lastNotStartedAt", frdo."lastNotStartedAt"),
-              "firstInProgressAt" = LEAST(o."firstInProgressAt", frdo."firstInProgressAt"),
-              "lastInProgressAt" = GREATEST(o."lastInProgressAt", frdo."lastInProgressAt"),
-              "firstCompleteAt" = LEAST(o."firstCompleteAt", frdo."firstCompleteAt"),
-              "lastCompleteAt" = GREATEST(o."lastCompleteAt", frdo."lastCompleteAt"),
-              "firstSuspendedAt" = LEAST(o."firstSuspendedAt", frdo."firstSuspendedAt"),
-              "lastSuspendedAt" = GREATEST(o."lastSuspendedAt", frdo."lastSuspendedAt")
-            FROM "FalseRestartDuplicateObjectives" frdo
-            WHERE o.id = frdo."sourceId"
-            RETURNING
-              o.id "objectiveId"
-          ),
-          --- create a unified list of affected objectives
-          "AffectedObjectives" AS (
-            SELECT *
-            FROM "FullDuplicateObjectives"
-            UNION
-            SELECT *
-            FROM "AdvanceableDuplicateObjectives"
-            UNION
-            SELECT *
-            FROM "FalseRestartDuplicateObjectives"
+          -- create a unified list of affected objectives and which objectives inherit their metadata
+          affected_objectives AS (
+            SELECT
+              uo.id inheriting_oid,
+              os.id donor_oid
+            FROM updated_objectives uo
+            JOIN objective_sets os
+              ON uo.id = os.id
           ),
           --- migrate/merge/delete metadata table values from newer objectives into the older objectives
-          "AffectedObjectiveFiles" AS (
+          affected_objective_files AS (
             SELECT
+<<<<<<< HEAD
               f1.id "objectiveFileId",
               f2.id "objectiveFileIdOrig",
               ao.id "objectiveId",
@@ -183,29 +223,40 @@ module.exports = {
             LEFT JOIN "ObjectiveFiles" f2
             ON ao."sourceId" = f2."objectiveId"
             AND f1."fileId" = f2."fileId"
+=======
+              current_of.id,
+              ao.inheriting_oid,
+              current_of."fileId" = target_of."fileId" is_duplicate
+            FROM affected_objectives ao
+            LEFT JOIN "ObjectiveFiles" current_of
+              ON ao.donor_oid = current_of."objectiveId"
+            LEFT JOIN "ObjectiveFiles" target_of
+              ON ao.inheriting_oid = target_of."objectiveId"
+            WHERE ao.inheriting_oid <> ao.donor_oid
+>>>>>>> cf5ec1541 (initial single-run version)
           ),
-          "ObjectiveFilesMigrated" AS (
+          -- Move objective file links from deduped objectives to the inheriting objective, or delete the linking record if the file is a dupe
+          migrated_objective_files AS (
             UPDATE "ObjectiveFiles" f
             SET
-              "objectiveId" = aof."sourceId"
-            FROM "AffectedObjectiveFiles" aof
-            WHERE f.id = aof."objectiveFileId"
-            AND aof."objectiveFileIdOrig" IS NULL
+              "objectiveId" = aof.inheriting_oid
+            FROM affected_objective_files aof
+            WHERE aof.id = f."objectiveId"
+              AND NOT is_duplicate
             RETURNING
-              f.id "objectiveFileId",
-              f."objectiveId"
+              aof.id
           ),
-          "ObjectiveFilesDeleted" AS (
+          deleted_objective_files AS (
             DELETE FROM "ObjectiveFiles" f
-            USING "AffectedObjectiveFiles" aof
-            WHERE f.id = aof."objectiveFileId"
-            AND aof."objectiveFileIdOrig" IS NOT NULL
+            USING affected_objective_files aof
+            WHERE f.id = aof.id
+              AND is_duplicate
             RETURNING
-              f.id "objectiveFileId",
-              f."objectiveId"
+              aof.id
           ),
-          "AffectedObjectiveResources" AS (
+          affected_objective_resources AS (
             SELECT
+<<<<<<< HEAD
               r1.id "objectiveResourceId",
               r2.id "objectiveResourceIdOrig",
               ao.id "objectiveId",
@@ -216,29 +267,39 @@ module.exports = {
             LEFT JOIN "ObjectiveResources" r2
             ON ao."sourceId" = r2."objectiveId"
             AND r1."userProvidedUrl" = r2."userProvidedUrl"
+=======
+              current_or.id,
+              ao.inheriting_oid,
+              current_or."userProvidedUrl" = target_or."userProvidedUrl" is_duplicate
+            FROM affected_objectives ao
+            LEFT JOIN "ObjectiveResources" current_or
+              ON ao.donor_oid = current_or."objectiveId"
+            LEFT JOIN "ObjectiveResources" target_or
+              ON ao.inheriting_oid = target_or."objectiveId"
+            WHERE ao.inheriting_oid <> ao.donor_oid
+>>>>>>> cf5ec1541 (initial single-run version)
           ),
-          "ObjectiveResourcesMigrated" AS (
+          migrated_objective_resources AS (
             UPDATE "ObjectiveResources" r
             SET
-              "objectiveId" = aor."sourceId"
-            FROM "AffectedObjectiveResources" aor
-            WHERE r.id = aor."objectiveResourceId"
-            AND aor."objectiveResourceIdOrig" IS NULL
+              "objectiveId" = aor.inheriting_oid
+            FROM affected_objective_resources aor
+            WHERE aor.id = r."objectiveId"
+              AND NOT is_duplicate
             RETURNING
-              r.id "objectiveResourceId",
-              r."objectiveId"
+              aor.id
           ),
-          "ObjectiveResourcesDeleted" AS (
+          deleted_objective_resources AS (
             DELETE FROM "ObjectiveResources" r
-            USING "AffectedObjectiveResources" aor
-            WHERE r.id = aor."objectiveResourceId"
-            AND aor."objectiveResourceIdOrig" IS NOT NULL
+            USING affected_objective_resources aor
+            WHERE r.id = aor.id
+              AND is_duplicate
             RETURNING
-              r.id "objectiveResourceId",
-              r."objectiveId"
+              aor.id
           ),
-          "AffectedObjectiveTopics" AS (
+          affected_objective_topics AS (
             SELECT
+<<<<<<< HEAD
               t1.id "objectiveTopicId",
               t2.id "objectiveTopicIdOrig",
               ao.id "objectiveId",
@@ -249,30 +310,40 @@ module.exports = {
             LEFT JOIN "ObjectiveTopics" t2
             ON ao."sourceId" = t2."objectiveId"
             AND t1."topicId" = t2."topicId"
+=======
+              current_ot.id,
+              ao.inheriting_oid,
+              current_ot."topicId" = target_ot."topicId" is_duplicate
+            FROM affected_objectives ao
+            LEFT JOIN "ObjectiveTopics" current_ot
+              ON ao.donor_oid = current_ot."objectiveId"
+            LEFT JOIN "ObjectiveTopics" target_ot
+              ON ao.inheriting_oid = target_ot."objectiveId"
+            WHERE ao.inheriting_oid <> ao.donor_oid
+>>>>>>> cf5ec1541 (initial single-run version)
           ),
-          "ObjectiveTopicsMigrated" AS (
-            UPDATE "ObjectiveTopics" t
+          migrated_objective_topics AS (
+            UPDATE "ObjectiveTopics" r
             SET
-              "objectiveId" = aot."sourceId"
-            FROM "AffectedObjectiveTopics" aot
-            WHERE t.id = aot."objectiveTopicId"
-            AND aot."objectiveTopicIdOrig" IS NULL
+              "objectiveId" = aot.inheriting_oid
+            FROM affected_objective_topics aot
+            WHERE aot.id = r."objectiveId"
+              AND NOT is_duplicate
             RETURNING
-              t.id "objectiveTopicId",
-              t."objectiveId"
+              aot.id
           ),
-          "ObjectiveTopicsDeleted" AS (
+          deleted_objective_topics AS (
             DELETE FROM "ObjectiveTopics" t
-            USING "AffectedObjectiveTopics" aot
-            WHERE t.id = aot."objectiveTopicId"
-            AND aot."objectiveTopicIdOrig" IS NOT NULL
+            USING affected_objective_topics aot
+            WHERE t.id = aot.id
+              AND is_duplicate
             RETURNING
-              t.id "objectiveTopicId",
-              t."objectiveId"
+              aot.id
           ),
           --- migrate/merge/delete ARO records to use the older objectives
-          "AffectedActivityReportObjectives" AS (
+          affected_aros AS (
             SELECT
+<<<<<<< HEAD
               aro1.id "activityReportObjectiveId",
               aro2.id "activityReportObjectiveIdOrig",
               aro1."activityReportId",
@@ -284,73 +355,80 @@ module.exports = {
             LEFT JOIN "ActivityReportObjectives" aro2
             ON aro1."objectiveId" = ao."sourceId"
             AND aro1."activityReportId" = aro2."activityReportId"
+=======
+              current_aaro.id,
+              ao.inheriting_oid,
+              current_aaro."activityReportId" = target_aaro."activityReportId" is_duplicate
+            FROM affected_objectives ao
+            LEFT JOIN "ActivityReportObjectives" current_aaro
+              ON ao.donor_oid = current_aaro."objectiveId"
+            LEFT JOIN "ActivityReportObjectives" target_aaro
+              ON ao.inheriting_oid = target_aaro."objectiveId"
+            WHERE ao.inheriting_oid <> ao.donor_oid
+>>>>>>> cf5ec1541 (initial single-run version)
           ),
-          "ActivityReportObjectivesMigrated" AS (
+          migrated_aros AS (
             UPDATE "ActivityReportObjectives" aro
             SET
-              "objectiveId" = earo."sourceId"
-            FROM "AffectedActivityReportObjectives" earo
-            WHERE aro.id = earo."activityReportObjectiveId"
-            AND earo."activityReportObjectiveIdOrig" IS NULL
+              "objectiveId" = aaro.inheriting_oid
+            FROM affected_aros aaro
+            WHERE aaro.id = aro."objectiveId"
+              AND NOT is_duplicate
             RETURNING
-              aro.id "objectiveFileId",
-              aro."activityReportId",
-              aro."objectiveId"
+              aaro.id
           ),
-          "ActivityReportObjectivesDeleted" AS (
+          deleted_aros AS (
             DELETE FROM "ActivityReportObjectives" aro
-            USING "AffectedActivityReportObjectives" earo
-            WHERE aro.id = earo."activityReportObjectiveId"
-            AND earo."activityReportObjectiveIdOrig" IS NOT NULL
+            USING affected_aros aaro
+            WHERE aro.id = aaro.id
+              AND is_duplicate
             RETURNING
-              aro.id "objectiveFileId",
-              aro."activityReportId",
-              aro."objectiveId"
+              aaro.id
           ),
-          --- delete the newer objectives
-          "ObjectivesDeleted" AS (
+          --- delete the donor objectives
+          deleted_objectives AS (
             DELETE FROM "Objectives" o
-            USING "AffectedObjectives" ao
-            WHERE o.id = ao.id
+            USING affected_objectives ao
+            WHERE o.id = ao.donor_oid
+              AND ao.inheriting_oid <> ao.donor_oid
             RETURNING
-              o.id "objectiveId"
+              o.id
           )
           --- results
-          SELECT 'FullDuplicateObjectivesUpdated', count(*)
-          FROM "FullDuplicateObjectivesUpdated"
+          SELECT 'updated_objectives', count(*)
+          FROM updated_objectives
           UNION
+<<<<<<< HEAD
           SELECT 'AdvanceableDuplicateObjectivesUpdated', count(*)
           FROM "AdvanceableDuplicateObjectivesUpdated"
+=======
+          SELECT 'migrated_objective_files', count(*)
+          FROM migrated_objective_files
+>>>>>>> cf5ec1541 (initial single-run version)
           UNION
-          SELECT 'FalseRestartDuplicateObjectivesUpdated', count(*)
-          FROM "FalseRestartDuplicateObjectivesUpdated"
+          SELECT 'deleted_objective_files', count(*)
+          FROM deleted_objective_files
           UNION
-          SELECT 'ObjectiveFilesMigrated', count(*)
-          FROM "ObjectiveFilesMigrated"
+          SELECT 'migrated_objective_resources', count(*)
+          FROM migrated_objective_resources
           UNION
-          SELECT 'ObjectiveFilesDeleted', count(*)
-          FROM "ObjectiveFilesDeleted"
+          SELECT 'deleted_objective_resources', count(*)
+          FROM deleted_objective_resources
           UNION
-          SELECT 'ObjectiveResourcesMigrated', count(*)
-          FROM "ObjectiveResourcesMigrated"
+          SELECT 'migrated_objective_topics', count(*)
+          FROM migrated_objective_topics
           UNION
-          SELECT 'ObjectiveResourcesDeleted', count(*)
-          FROM "ObjectiveResourcesDeleted"
+          SELECT 'deleted_objective_topics', count(*)
+          FROM deleted_objective_topics
           UNION
-          SELECT 'ObjectiveTopicsMigrated', count(*)
-          FROM "ObjectiveTopicsMigrated"
+          SELECT 'migrated_aros', count(*)
+          FROM migrated_aros
           UNION
-          SELECT 'ObjectiveTopicsDeleted', count(*)
-          FROM "ObjectiveTopicsDeleted"
+          SELECT 'deleted_aros', count(*)
+          FROM deleted_aros
           UNION
-          SELECT 'ActivityReportObjectivesMigrated', count(*)
-          FROM "ActivityReportObjectivesMigrated"
-          UNION
-          SELECT 'ActivityReportObjectivesDeleted', count(*)
-          FROM "ActivityReportObjectivesDeleted"
-          UNION
-          SELECT 'ObjectivesDeleted', count(*)
-          FROM "ObjectivesDeleted";
+          SELECT 'deleted_objectives', count(*)
+          FROM deleted_objectives;
         `,
           { transaction },
         );
