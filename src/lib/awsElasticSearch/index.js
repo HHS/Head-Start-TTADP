@@ -64,23 +64,13 @@ const nodeAddress = 'http://localhost:9200';
 const getClient = async () => new Client({
   ...createAwsConnector(
     {
-<<<<<<< HEAD
       node: nodeAddress,
-=======
-      node: 'http://0.0.0.0:9200',
-      // node: 'https://localhost:9200',
->>>>>>> be7c79400da0e45bc62240dcca48e79c173d6761
       accessKeyId: 'admin',
       secretAccessKey: 'admin',
     },
     'us-gov-west-1',
   ),
-<<<<<<< HEAD
   node: nodeAddress,
-=======
-  node: 'http://0.0.0.0:9200',
-  // node: 'https://localhost:9200',
->>>>>>> be7c79400da0e45bc62240dcca48e79c173d6761
 });
 /*
   Create an index that can have searchable documents assigned.
