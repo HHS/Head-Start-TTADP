@@ -276,9 +276,6 @@ jobs:
           name: Run seeders
           command: yarn db:seed:ci
       - run:
-          name: Check for opensearch
-          command: curl -XGET http://opensearch:9200 -u 'admin:admin' --insecure;
-      - run:
           name: Test backend
           command:  |
             chmod 744 ./bin/test-backend-ci
