@@ -30,6 +30,8 @@ const generateEsConfig = () => {
   }
 
   // Return docker image credentials.
+  // eslint-disable-next-line no-console
+  console.log('\n\n\n----- CheckEnv123', process.env.AWS_ELASTICSEARCH_ENDPOINT, process.env.AWS_ELASTICSEARCH_ACCESS_KEY, process.env.AWS_ELASTICSEARCH_SECRET_KEY);
   return {
     uri: process.env.AWS_ELASTICSEARCH_ENDPOINT,
     access_key: process.env.AWS_ELASTICSEARCH_ACCESS_KEY,

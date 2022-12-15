@@ -259,6 +259,10 @@ jobs:
             - .
   test_backend:
     executor: back-end-executor
+    environment:
+        AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
+        AWS_ELASTICSEARCH_ACCESS_KEY: admin
+        AWS_ELASTICSEARCH_SECRET_KEY: admin
     steps:
       - attach_workspace:
           at: .
