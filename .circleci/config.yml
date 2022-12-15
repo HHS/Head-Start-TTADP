@@ -31,7 +31,7 @@ executors:
         name: opensearch-container
         environment:
           transport.host: localhost
-          network.host: 127.0.0.1
+          network.host: 0.0.0.0
           http.port: 9200
           cluster.name: opensearch-cluster
           node.name: opensearch-node1
@@ -276,8 +276,8 @@ jobs:
           name: Run seeders
           command: yarn db:seed:ci
       - run:
-          name: Wait for opensearch
-          command: ./bin/ping-opensearch
+          name: Check for opensearch
+          command: curl -XGET http://localhost:9200 -u 'admin:admin' --insecure
       - run:
           name: Test backend
           command:  |

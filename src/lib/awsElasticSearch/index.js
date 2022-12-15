@@ -8,8 +8,8 @@ import { auditLogger, logger } from '../../logger';
   https://github.com/opensearch-project/opensearch-js/blob/HEAD/USER_GUIDE.md
   https://opensearch.org/docs/latest/api-reference/index-apis/create-index/
 */
-
-/* const generateEsConfig = () => {
+/*
+const generateEsConfig = () => {
   // Pull from VCAP env variables (cloud.gov)
   if (process.env.VCAP_SERVICES) {
     const {
@@ -41,7 +41,8 @@ const {
   uri,
   access_key,
   secret_key,
-} = generateEsConfig(); */
+} = generateEsConfig();
+*/
 
 const createAwsConnector = (credentials, region) => {
   class AmazonConnection extends Connection {
@@ -59,19 +60,17 @@ const createAwsConnector = (credentials, region) => {
     Connection: AmazonConnection,
   };
 };
-
+const nodeAddress = 'http://localhost:9200';
 const getClient = async () => new Client({
   ...createAwsConnector(
     {
-      node: 'http://localhost:9200',
-      // node: 'https://localhost:9200',
+      node: nodeAddress,
       accessKeyId: 'admin',
       secretAccessKey: 'admin',
     },
     'us-gov-west-1',
   ),
-  node: 'http://localhost:9200',
-  // node: 'https://localhost:9200',
+  node: nodeAddress,
 });
 /*
   Create an index that can have searchable documents assigned.
