@@ -8,8 +8,8 @@ import {
 
 const WS_URL = process.env.REACT_APP_WEBSOCKET_URL;
 
-export default function useSocket(initialPath) {
-  const [socketPath, setSocketPath] = useState(initialPath);
+export default function useSocket(user) {
+  const [socketPath, setSocketPath] = useState();
   const [messageStore, setMessageStore] = useState();
   const socket = useRef({
     send: () => {},
@@ -36,6 +36,7 @@ export default function useSocket(initialPath) {
 
     if (socket.current && socket.current.readyState === socket.current.OPEN) {
       socket.current.close();
+      clearStore();
     }
 
     const s = new WebSocket(path);
@@ -44,7 +45,17 @@ export default function useSocket(initialPath) {
     s.binaryType = 'arraybuffer';
 
     // opening a new socket will clear the store
-    s.addEventListener('open', () => clearStore());
+    s.addEventListener('open', () => {
+      clearStore();
+
+      if (user) {
+        socket.current.send(JSON.stringify({
+          user: user.name || 'Anonymous user',
+          lastSaveTime: null,
+          channel: socketPath,
+        }));
+      }
+    });
 
     // Listen for messages
     s.addEventListener('message', (event) => {
@@ -55,7 +66,7 @@ export default function useSocket(initialPath) {
     });
 
     socket.current = s;
-  }, [clearStore, path, socketPath]);
+  }, [clearStore, path, socketPath, user]);
 
   return {
     socketPath,
