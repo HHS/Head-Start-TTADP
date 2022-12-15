@@ -219,6 +219,8 @@ export const USER_SETTINGS = {
       APPROVAL: 'emailWhenReportApproval',
       // Email you when you are added as a collaborator to an activity report.
       COLLABORATOR_ADDED: 'emailWhenAppointedCollaborator',
+      // As a Program Specialist, email you when an AR for one of your grants is approved.
+      RECIPIENT_APPROVAL: 'emailWhenRecipientReportApprovedProgramSpecialist',
     },
     VALUES: {
       NEVER: 'never',
@@ -239,6 +241,8 @@ export const EMAIL_ACTIONS = {
   NEEDS_ACTION_DIGEST: 'changesRequestedDigest',
   SUBMITTED_DIGEST: 'approverAssignedDigest',
   APPROVED_DIGEST: 'reportApprovedDigest',
+  RECIPIENT_REPORT_APPROVED: 'recipientReportApproved',
+  RECIPIENT_REPORT_APPROVED_DIGEST: 'recipientReportApprovedDigest',
 };
 
 export const EMAIL_DIGEST_FREQ = {

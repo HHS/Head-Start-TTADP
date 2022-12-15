@@ -35,3 +35,22 @@ In a nutshell, when you have installed the extension mentioned above and navigat
 - Start recording your interactions with the browser
 
 When you're done, just close the browser and the recorder will stop recording. In some cases you will probably need to do some cleanup of the generated test file, but it's a great way to get started.
+
+# Advancing timers
+
+Playwright doesn't support advancing timers (yet). There is an issue being tracked for this [here](https://github.com/microsoft/playwright/issues/6347). Until it is supported, we can use the workaround proposed in [one of the comments](https://github.com/microsoft/playwright/issues/6347#issuecomment-965887758).
+
+This could be useful for testing behaviors that rely on our autosave logic.
+
+`sinon` is already a project dependency, and a helper for adding it to `window` lives in `tests/common.ts` so we can use it to advance timers like this within a test:
+
+```ts
+import { test, expect } from '@playwright/test';
+import { useClock } from './common';
+
+useClock(test);
+
+test('advance time', async ({ page }) => {
+  await page.evaluate(() => (window as any).__clock.tick(120_000));
+});
+```

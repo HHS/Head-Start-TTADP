@@ -19,8 +19,8 @@
     "worker": "nodemon src/worker.js --exec babel-node",
     "server:debug": "nodemon --inspect=0.0.0.0:9229 src/index.js --exec babel-node",
     "client": "yarn --cwd frontend start",
-    "test": "jest src --runInBand", 
-    "test:ci": "./bin/test-backend-ci",    
+    "test": "jest src --runInBand",
+    "test:ci": "./bin/test-backend-ci",
     "test:all": "yarn test:ci && yarn --cwd frontend test:ci",
     "lint": "eslint src",
     "lint:ci": "eslint -f eslint-formatter-multiple src",
@@ -39,6 +39,7 @@
     "db:bootstrap:admin": "node ./build/server/tools/bootstrapAdminCLI.js",
     "db:validation": "node ./build/server/tools/dataValidationCLI.js",
     "db:migrate": "node_modules/.bin/sequelize db:migrate",
+    "db:migrate:create": "npx sequelize-cli migration:generate --name",
     "db:migrate:ci": "cross-env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub node_modules/.bin/sequelize db:migrate",
     "db:migrate:prod": "node_modules/.bin/sequelize db:migrate --options-path .production.sequelizerc",
     "db:migrate:undo": "node_modules/.bin/sequelize db:migrate:undo",
@@ -213,6 +214,7 @@
     "puppeteer-select": "^1.0.3",
     "redoc-cli": "^0.13.2",
     "selenium-webdriver": "4.3.0",
+    "sinon": "^15.0.0",
     "supertest": "^6.1.3"
   },
   "dependencies": {

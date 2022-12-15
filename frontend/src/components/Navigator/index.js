@@ -31,6 +31,7 @@ import { saveGoalsForReport, saveObjectivesForReport } from '../../fetchers/acti
 import GoalFormContext from '../../GoalFormContext';
 import { validateObjectives } from '../../pages/ActivityReport/Pages/components/objectiveValidator';
 import AppLoadingContext from '../../AppLoadingContext';
+import { convertGoalsToFormData } from '../../pages/ActivityReport/formDataHelpers';
 import { objectivesWithValidResourcesOnly, validateListOfResources } from '../GoalForm/constants';
 
 function Navigator({
@@ -77,11 +78,15 @@ function Navigator({
 
   const pageState = watch('pageState');
   const selectedGoals = watch('goals');
+  const goalForEditing = watch('goalForEditing');
   const selectedObjectivesWithoutGoals = watch('objectivesWithoutGoals');
 
   // App Loading Context.
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
-  const [isGoalFormClosed, toggleGoalForm] = useState(selectedGoals.length > 0);
+  // if we have a goal in the form, we want to say "goal form is not closed"
+  const [isGoalFormClosed, toggleGoalForm] = useState(
+    !(goalForEditing) && selectedGoals && selectedGoals.length > 0,
+  );
   const [weAreAutoSaving, setWeAreAutoSaving] = useState(false);
 
   // Toggle objectives readonly only if all objectives are saved and pass validation.
@@ -100,7 +105,6 @@ function Navigator({
     }
   };
 
-  const goalForEditing = watch('goalForEditing');
   const activityRecipientType = watch('activityRecipientType');
   const isGoalsObjectivesPage = page.path === 'goals-objectives';
   const recipients = watch('activityRecipients');
@@ -142,7 +146,10 @@ function Navigator({
     }
     const { status, ...values } = getValues();
     const data = { ...formData, ...values, pageState: newNavigatorState() };
-    updateFormData(data);
+
+    // TODO: we update the form data in the onSave handler- not seeing why we need to do it twice
+    // leaving this in there as a comment until I can verify that it's not needed
+    // updateFormData(data);
     try {
       // Always clear the previous error message before a save.
       updateErrorMessage();
@@ -176,8 +183,8 @@ function Navigator({
     // the goal form only allows for one goal to be open at a time
     // but the objectives are stored in a subfield
     // so we need to access the objectives and bundle them together in order to validate them
-    const fieldArrayName = 'goalForEditing.objectives';
-    const objectives = getValues(fieldArrayName);
+    const objectivesFieldArrayName = 'goalForEditing.objectives';
+    const objectives = getValues(objectivesFieldArrayName);
     const name = getValues('goalName');
     const endDate = getValues('goalEndDate');
     const isRttapa = getValues('goalIsRttapa');
@@ -210,6 +217,7 @@ function Navigator({
 
     const goal = {
       ...goalForEditing,
+      isActivelyBeingEditing: true,
       name,
       endDate: endDate && endDate.toLowerCase() !== 'invalid date' ? endDate : '',
       objectives: objectivesWithValidResourcesOnly(objectives),
@@ -218,7 +226,7 @@ function Navigator({
       grantIds,
     };
 
-    let allGoals = [...selectedGoals, goal];
+    let allGoals = [...selectedGoals.map((g) => ({ ...g, isActivelyBeingEditing: false })), goal];
 
     // save goal to api, come back with new ids for goal and objectives
     try {
@@ -231,37 +239,33 @@ function Navigator({
             regionId: formData.regionId,
           },
         );
-
-        // Find the goal we are editing and put it back with updated values.
-        let goalBeingEdited = allGoals.find((g) => g.name === goal.name);
-
-        // if we are autosaving, we want to preserve the resources that were added in the UI
-        // whether or not they are valid (although nothing is saved to the database)
-        // this is a convenience so that a work in progress isn't erased
-        if (isAutoSave && goalBeingEdited) {
-          goalBeingEdited = {
-            ...goalBeingEdited,
-            objectives: goalBeingEdited.objectives.map((objective, objectiveIndex) => ({
-              ...objective,
-              resources: objectives[objectiveIndex].resources,
-            })),
-          };
-        }
-
-        setValue('goalForEditing', goalBeingEdited);
       }
+
+      const {
+        goals, goalForEditing: newGoalForEditing,
+      } = convertGoalsToFormData(allGoals, grantIds);
+
+      setValue('goalForEditing', newGoalForEditing);
+      setValue('goals', goals);
+      setValue(objectivesFieldArrayName, newGoalForEditing.objectives);
 
       // update form data
       const { status, ...values } = getValues();
-      const data = { ...formData, ...values, pageState: newNavigatorState() };
-      updateFormData(data);
+      const data = {
+        ...formData,
+        ...values,
+        goals,
+      };
+
+      updateFormData(data, true);
 
       updateErrorMessage('');
       updateLastSaveTime(moment());
+      updateShowSavedDraft(true); // show the saved draft message
       // we have to do this here, after the form data has been updated
       if (isAutoSave && goalForEditing) {
         invalidResourceIndices.forEach((index) => {
-          setError(`${fieldArrayName}[${index}].resources`, { message: OBJECTIVE_RESOURCES });
+          setError(`${objectivesFieldArrayName}[${index}].resources`, { message: OBJECTIVE_RESOURCES });
         });
       }
     } catch (error) {
@@ -334,7 +338,8 @@ function Navigator({
 
       // Set updated objectives.
       setValue('objectivesWithoutGoals', newObjectives);
-      updateLastSaveTime(moment());
+      updateLastSaveTime(moment()); // update the last saved time
+      updateShowSavedDraft(true); // show the saved draft message
       updateErrorMessage('');
 
       // we have to do this here, after the form data has been updated
@@ -362,6 +367,7 @@ function Navigator({
 
     const goal = {
       ...goalForEditing,
+      isActivelyBeingEditing: false,
       name,
       endDate,
       objectives,
@@ -393,9 +399,11 @@ function Navigator({
       newGoals = await saveGoalsForReport(
         {
           goals: [
-            ...selectedGoals,
+            // we make sure to mark all the read only goals as "ActivelyEdited: false"
+            ...selectedGoals.map((g) => ({ ...g, isActivelyBeingEditing: false })),
             {
               ...goal,
+              // we also need to make sure we only send valid objectives to the API
               objectives: objectivesWithValidResourcesOnly(goal.objectives),
             },
           ],
@@ -417,7 +425,7 @@ function Navigator({
     setValue('goalForEditing.objectives', []);
 
     // the form value is updated but the react state is not
-    // so here we go (todo - why are there two sources of truth?)
+    // so here we go (TODO - why are there two sources of truth?)
     updateFormData({
       ...formData,
       goals: newGoals,
@@ -484,8 +492,11 @@ function Navigator({
 
   const draftSaver = async (isAutoSave = false) => {
     // Determine if we should save draft on auto save.
-    const saveGoalsDraft = isGoalsObjectivesPage && !isGoalFormClosed;
-    const saveObjectivesDraft = isGoalsObjectivesPage && !isObjectivesFormClosed;
+    const saveGoalsDraft = isGoalsObjectivesPage && !isGoalFormClosed && isRecipientReport;
+    const saveObjectivesDraft = (
+      isGoalsObjectivesPage && !isObjectivesFormClosed && !isRecipientReport
+    );
+
     if (isOtherEntityReport && saveObjectivesDraft) {
       // Save other-entity draft.
       await onSaveDraftOetObjectives(isAutoSave);
