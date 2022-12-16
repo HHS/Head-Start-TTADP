@@ -1,5 +1,5 @@
 import { find, isUndefined } from 'lodash';
-import { GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
+import { OBJECTIVE_STATUS, GOAL_STATUS } from '../constants';
 import SCOPES from '../middleware/scopeConstants';
 
 export default class Objective {
@@ -18,11 +18,22 @@ export default class Objective {
     return !isUndefined(permissions);
   }
 
+  canUpload() {
+    if (this.objective.status !== OBJECTIVE_STATUS.COMPLETE
+          && (this.objective.otherEntityId
+            || (this.objective.goal
+                && this.objective.goal.status !== GOAL_STATUS.CLOSED
+                && this.objective.goal.grant
+                && this.canWriteInRegion(this.objective.goal.grant.regionId)))) {
+      return true;
+    }
+    return false;
+  }
+
   canUpdate() {
-    if (!this.objective.status !== OBJECTIVE_STATUS.COMPLETE
+    if (!this.objective.onApprovedAR
         && (this.objective.otherEntityId
           || (this.objective.goal
-              && this.objective.goal.status !== GOAL_STATUS.CLOSED
               && this.objective.goal.grant
               && this.canWriteInRegion(this.objective.goal.grant.regionId)))) {
       return true;

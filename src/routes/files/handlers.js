@@ -115,7 +115,7 @@ const deleteHandler = async (req, res) => {
     } else if (objectiveId) {
       const objective = await getObjectiveById(objectiveId);
       const objectivePolicy = new ObjectivePolicy(objective, user);
-      if (!objectivePolicy.canUpdate()) {
+      if (!objectivePolicy.canUpload()) {
         res.sendStatus(403);
         return;
       }
@@ -361,7 +361,7 @@ const uploadObjectivesFile = async (req, res) => {
       const authorizations = await Promise.all(objectiveIds.map(async (objectiveId) => {
         const objective = await getObjectiveById(objectiveId);
         const objectivePolicy = new ObjectivePolicy(objective, user);
-        if (!objective || !objectivePolicy.canUpdate()) {
+        if (!objective || !objectivePolicy.canUpload()) {
           const admin = await validateUserAuthForAdmin(req.session.userId);
           if (!admin) {
             return false;
@@ -431,7 +431,7 @@ const deleteObjectiveFileHandler = async (req, res) => {
       }
       const objective = await getObjectiveById(objectiveId);
       const objectivePolicy = new ObjectivePolicy(objective, user);
-      if (!objectivePolicy.canUpdate()) {
+      if (!objectivePolicy.canUpload()) {
         canUpdate = false;
         res.sendStatus(403);
         return null;
