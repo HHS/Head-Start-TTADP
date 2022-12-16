@@ -51,7 +51,7 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
     // eslint-disable-next-line react/jsx-props-no-spreading
     <FormProvider {...hookForm}>
       <Objectives
-        objectives={objectiveOptions}
+        objectiveOptions={objectiveOptions}
         topicOptions={topicOptions}
         goalId={goalId}
         noObjectiveError={<></>}
@@ -116,7 +116,6 @@ describe('Objectives', () => {
 
   it('removing an existing objective add it back to the list of available objectives', async () => {
     const objectiveOptions = [{
-
       value: 3,
       label: 'Test objective 1',
       title: 'Test objective 1',
