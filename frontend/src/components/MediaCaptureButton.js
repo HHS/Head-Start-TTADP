@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import html2canvas from 'html2canvas';
 import { Button } from '@trussworks/react-uswds';
 
-export default function ElementCaptureButton({ reference, className }) {
+export default function ElementCaptureButton({ reference, className, buttonText }) {
   const capture = async () => {
     try {
       // capture the element, setting the width and height
@@ -11,7 +11,7 @@ export default function ElementCaptureButton({ reference, className }) {
       // and then converting it to a data url
       // and triggering a download
       const canvas = await html2canvas(reference.current, {
-        onclone: (document, element) => {
+        onclone: (_document, element) => {
           // set the first child to be white (we can always make this configurable later)
           element.firstChild.classList.add('bg-white');
 
@@ -37,17 +37,18 @@ export default function ElementCaptureButton({ reference, className }) {
       data-html2canvas-ignore
       className={className}
     >
-      Save image
+      {buttonText}
     </Button>
   );
 }
 
 ElementCaptureButton.propTypes = {
-  // eslint-disable-next-line react/forbid-prop-types
   reference: PropTypes.shape({ current: PropTypes.instanceOf(Element) }).isRequired,
   className: PropTypes.string,
+  buttonText: PropTypes.string,
 };
 
 ElementCaptureButton.defaultProps = {
   className: '',
+  buttonText: 'Save image',
 };
