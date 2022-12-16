@@ -41,6 +41,8 @@ export default function useSocket(user) {
 
     const s = new WebSocket(path);
 
+    console.log('creating new socket', path, s);
+
     // we don't want to send bufferdata, but json
     s.binaryType = 'arraybuffer';
 
