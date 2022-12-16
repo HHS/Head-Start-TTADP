@@ -87,7 +87,7 @@ module.exports = {
         type: Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORT)),
       },
       isAutoDetected: {
-        type: Sequelize.BOOLEAN,
+        type: Sequelize.DataTypes.BOOLEAN,
         default: false,
         allowNull: false,
       },
@@ -102,7 +102,7 @@ module.exports = {
     }, { transaction });
 
     // make table to link resources to activity reports
-    await queryInterface.createTable('NextStepsResources', {
+    await queryInterface.createTable('NextStepResources', {
       id: {
         allowNull: false,
         autoIncrement: true,
