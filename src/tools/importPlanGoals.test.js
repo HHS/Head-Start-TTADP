@@ -2,8 +2,11 @@ import { readFileSync } from 'fs';
 import importGoals from './importPlanGoals';
 import { downloadFile } from '../lib/s3';
 import db, {
-  Role, Topic, RoleTopic, Goal, Grant,
+  Goal, Grant,
 } from '../models';
+import { logger } from '../logger';
+
+jest.mock('../logger');
 
 jest.mock('../lib/s3');
 
@@ -16,75 +19,16 @@ describe('Import TTA plan goals', () => {
   });
 
   describe('for a single region', () => {
-    let roles;
-    let goals;
-    let existingTopics;
-
     beforeAll(async () => {
       try {
         const fileName = 'GranteeTTAPlanTest.csv';
         downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
-        roles = JSON.stringify(await Role.findAll({ raw: true }));
-        goals = JSON.stringify(await Goal.findAll({ raw: true }));
-        existingTopics = JSON.stringify(await Topic.findAll({ raw: true }));
-        await Role.destroy({ where: {}, force: true });
-        await Topic.destroy({ where: {}, force: true });
         await Goal.destroy({ where: {} });
         await importGoals(fileName, 14);
       } catch (error) {
         // eslint-disable-next-line no-console
         console.log(`Unable to setup Import Plan Goals test ${error}`);
       }
-    });
-
-    afterAll(async () => {
-      await Role.destroy({ where: {}, force: true });
-      await Topic.destroy({ where: {}, force: true });
-      await Goal.destroy({ where: {} });
-
-      await Topic.bulkCreate(JSON.parse(existingTopics));
-      await Goal.bulkCreate(JSON.parse(goals));
-      await Role.bulkCreate(JSON.parse(roles));
-
-      await db.sequelize.close();
-    });
-
-    it('should import Topics table', async () => {
-      const topics = await Topic.findAll();
-      expect(topics).toBeDefined();
-      expect(topics.length).toBe(14);
-
-      // test eager loading
-      const topic = await Topic.findOne({
-        where: { name: 'Behavioral / Mental Health' },
-        include: [
-          {
-            model: Role,
-            as: 'roles',
-            attributes: ['name'],
-          },
-        ],
-      });
-      expect(topic.name).toEqual('Behavioral / Mental Health');
-      expect(topic.roles.length).toBe(2);
-      expect(topic.roles).toContainEqual(
-        expect.objectContaining({ name: 'HS' }),
-      );
-
-      expect(topic.roles).toContainEqual(
-        expect.objectContaining({ name: 'FES' }),
-      );
-
-      // test lazy loading
-      const topicRoles = await topic.getRoles();
-      expect(topicRoles.length).toBe(2);
-      expect(topicRoles).toContainEqual(
-        expect.objectContaining({ name: 'HS' }),
-      );
-
-      expect(topicRoles).toContainEqual(
-        expect.objectContaining({ name: 'FES' }),
-      );
     });
 
     it('should import Goals table', async () => {
@@ -116,10 +60,176 @@ describe('Import TTA plan goals', () => {
       );
     });
 
-    it('should import RoleTopics table', async () => {
-      const roleTopics = await RoleTopic.findAll();
-      expect(roleTopics).toBeDefined();
-      expect(roleTopics.length).toBe(20);
+    it('should update status if it is newer', async () => {
+      const fileName = 'GranteeTTAPlanTest.csv';
+      downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+
+      const goalInProgress = await Goal.findOne({
+        where: { status: 'In Progress' },
+      });
+      await goalInProgress.update({
+        status: 'Not Started',
+      });
+      const goalNotStarted = await Goal.findOne({
+        where: { id: goalInProgress.id },
+      });
+      expect(goalNotStarted.status).toBe('Not Started');
+
+      await importGoals(fileName, 14);
+
+      const updatedGoal = await Goal.findOne({
+        where: { id: goalInProgress.id },
+      });
+      expect(updatedGoal.status).toBe('In Progress');
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringContaining(`Updating goal ${goalInProgress.id}: Changing status from Not Started to In Progress`),
+      );
+    });
+
+    it('should not update status if it is older', async () => {
+      const fileName = 'GranteeTTAPlanTest.csv';
+      downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+      // Find a goal that was imported as 'Not Started', change to 'Suspended' and update
+      const goalNotStarted = await Goal.findOne({
+        where: { status: 'Not Started' },
+      });
+      await goalNotStarted.update({
+        status: 'Suspended',
+      });
+      const goalSuspended = await Goal.findOne({
+        where: { id: goalNotStarted.id },
+      });
+      expect(goalSuspended.status).toBe('Suspended');
+
+      await importGoals(fileName, 14);
+
+      const updatedGoal = await Goal.findOne({
+        where: { id: goalNotStarted.id },
+      });
+      expect(updatedGoal.status).toBe('Suspended');
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringContaining(`Skipping goal status update for ${goalNotStarted.id}: goal status Suspended is newer or equal to Not Started`),
+      );
+    });
+
+    it('should update timeframe', async () => {
+      const fileName = 'GranteeTTAPlanTest.csv';
+      downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+      // Find a goal that was imported, change the timeframe and update by running the import script
+      const goalWithTimeframe = await Goal.findOne({
+        where: { timeframe: '6 months' },
+      });
+      expect(goalWithTimeframe.timeframe).toBe('6 months');
+
+      await goalWithTimeframe.update({
+        timeframe: '12 months',
+      });
+      const modifiedGoal = await Goal.findOne({
+        where: { id: goalWithTimeframe.id },
+      });
+      expect(modifiedGoal.timeframe).toBe('12 months');
+
+      await importGoals(fileName, 14);
+
+      const updatedGoal = await Goal.findOne({
+        where: { id: goalWithTimeframe.id },
+      });
+      expect(updatedGoal.timeframe).toBe('6 months');
+    });
+
+    it('should set createdVia when creating a new goal', async () => {
+      const fileName = 'GranteeTTAPlanTest.csv';
+      downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+
+      const aGoal = await Goal.findOne({ where: { createdVia: 'imported' } });
+
+      await aGoal.update({
+        createdVia: null,
+      });
+
+      const goalWithoutCreatedVia = await Goal.findOne({
+        where: { createdVia: null },
+      });
+      expect(goalWithoutCreatedVia.createdVia).toBeNull();
+      // Delete a goal and re-import
+      await Goal.destroy({
+        where: {
+          name: goalWithoutCreatedVia.name,
+          grantId: goalWithoutCreatedVia.grantId,
+        },
+      });
+
+      await importGoals(fileName, 14);
+
+      const importedGoal = await Goal.findOne({
+        where: { name: goalWithoutCreatedVia.name, grantId: goalWithoutCreatedVia.grantId },
+      });
+      expect(importedGoal.createdVia).toBe('imported');
+    });
+
+    it('should not set createdVia when updating an existing goal', async () => {
+      const fileName = 'GranteeTTAPlanTest.csv';
+      downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+
+      const aGoal = await Goal.findOne({ where: { createdVia: 'imported' } });
+
+      await aGoal.update({
+        createdVia: 'rtr',
+      });
+
+      const goalWithRTRCreatedVia = await Goal.findOne({
+        where: { name: aGoal.name, grantId: aGoal.grantId },
+      });
+      expect(goalWithRTRCreatedVia.createdVia).toBe('rtr');
+
+      await importGoals(fileName, 14);
+
+      const importedGoal = await Goal.findOne({
+        where: { name: goalWithRTRCreatedVia.name, grantId: goalWithRTRCreatedVia.grantId },
+      });
+      expect(importedGoal.createdVia).toBe('rtr');
+    });
+
+    it('should set isRttapa when creating a new goal', async () => {
+      const fileName = 'GranteeTTAPlanTest.csv';
+      downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+
+      const aGoal = await Goal.findOne({ where: { isRttapa: 'Yes' } });
+
+      // Delete aGoal and re-import
+      await Goal.destroy({
+        where: {
+          name: aGoal.name,
+          grantId: aGoal.grantId,
+        },
+      });
+
+      await importGoals(fileName, 14);
+
+      const importedGoal = await Goal.findOne({
+        where: { name: aGoal.name, grantId: aGoal.grantId },
+      });
+      expect(importedGoal.isRttapa).toBe('Yes');
+    });
+
+    it('should set isRttapa when updating goal', async () => {
+      const fileName = 'GranteeTTAPlanTest.csv';
+      downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+
+      const aGoal = await Goal.findOne({ where: { isRttapa: 'Yes' } });
+
+      await aGoal.update({
+        isRttapa: 'No',
+      });
+
+      const goalNotRttapa = await Goal.findOne({ where: { isRttapa: 'No' } });
+
+      await importGoals(fileName, 14);
+
+      const importedGoal = await Goal.findOne({
+        where: { name: goalNotRttapa.name, grantId: goalNotRttapa.grantId },
+      });
+      expect(importedGoal.isRttapa).toBe('Yes');
     });
 
     it('is idempotent', async () => {
