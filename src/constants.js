@@ -252,3 +252,26 @@ export const DIGEST_SUBJECT_FREQ = {
   WEEKLY: 'weekly',
   MONTHLY: 'monthly',
 };
+
+export const SOURCE_FIELD = {
+  REPORT: {
+    NONECLKC: 'nonECLKCResourcesUsed',
+    ECLKC: 'ECLKCResourcesUsed',
+    CONTEXT: 'context',
+    NOTES: 'additionalNotes',
+    RESOURCE: 'resource',
+  },
+  NEXTSTEPS: {
+    NOTE: 'note',
+    RESOURCE: 'resource',
+  },
+  OBJECTIVE: {
+    TITLE: 'title',
+    RESOURCE: 'resource',
+  },
+  REPORTOBJECTIVE: {
+    TITLE: 'title',
+    TTAPROVIDED: 'ttaProvided',
+    RESOURCE: 'resource',
+  },
+};
