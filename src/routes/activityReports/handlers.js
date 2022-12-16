@@ -1,4 +1,5 @@
 import stringify from 'csv-stringify/lib/sync';
+import { QueryTypes } from 'sequelize';
 import handleErrors from '../../lib/apiErrorHandler';
 import SCOPES from '../../middleware/scopeConstants';
 import {
@@ -6,6 +7,7 @@ import {
   Role,
   ActivityReportApprover,
   User as UserModel,
+  sequelize,
 } from '../../models';
 import ActivityReport from '../../policies/activityReport';
 import User from '../../policies/user';
@@ -37,6 +39,7 @@ import {
   changesRequestedNotification,
   reportApprovedNotification,
   collaboratorAssignedNotification,
+  programSpecialistRecipientReportApprovedNotification,
 } from '../../lib/mailer';
 import { activityReportToCsvRecord, extractListOfGoalsAndObjectives } from '../../lib/transform';
 import { userSettingOverridesById } from '../../services/userSettings';
@@ -327,7 +330,8 @@ export async function getApprovers(req, res) {
 }
 
 /**
- * Checks if author and collaborators are subscribed to the immediate notifications.
+ * Checks if author and collaborators and program specialists
+ * are subscribed to the immediate notifications.
  *
  * @param {*} report - activity report
  * @param {*} setting - a setting object with "key" and "value" keys
@@ -359,7 +363,41 @@ async function checkEmailSettings(report, setting) {
       return settingsForAllCollabs[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
     }) : [];
 
-  return [authorWithSetting, collabsWithSettings];
+  // FIXME: This should be temporary until we have a solid relationship between
+  // program specialists and grants.
+  // Related: TTAHUB-1253
+  let programSpecialistsToNotify = await sequelize.query(`
+    SELECT DISTINCT u.id
+    FROM "ActivityReports" a
+    JOIN "ActivityRecipients" ar
+    ON a.id = ar."activityReportId"
+    JOIN "Grants" gr
+    ON ar."grantId" = gr.id
+    JOIN "Users" u
+    ON LOWER(gr."programSpecialistEmail") = LOWER(u.email)
+    WHERE a.id = ${report.id}
+  `, { type: QueryTypes.SELECT });
+
+  // For each program specialist ID number, I want to make sure they
+  // are subscribed to immediate notifications given the `setting` key.
+  programSpecialistsToNotify = await Promise.all(programSpecialistsToNotify.map(async (ps) => {
+    const settingForPS = await userSettingOverridesById(ps.id, setting);
+    if (settingForPS && settingForPS.value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY) {
+      return ps;
+    }
+    return null;
+  }));
+
+  // Filter out null values.
+  programSpecialistsToNotify = programSpecialistsToNotify.filter((ps) => ps);
+
+  // The remaining program specialists are subscribed to immediate notifications for this given key.
+  // Convert <Array<{ id: number }>> to <Array<User>>.
+  programSpecialistsToNotify = await Promise.all(
+    programSpecialistsToNotify.map(async (ps) => userById(ps.id)),
+  );
+
+  return [authorWithSetting, collabsWithSettings, programSpecialistsToNotify];
 }
 /**
  * Review a report, setting Approver status to approved or needs action
@@ -389,7 +427,10 @@ export async function reviewReport(req, res) {
       userId,
     });
 
-    const [reviewedReport] = await activityReportAndRecipientsById(activityReportId);
+    const [
+      reviewedReport,
+      activityRecipients,
+    ] = await activityReportAndRecipientsById(activityReportId);
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
       const [authorWithSetting, collabsWithSettings] = await checkEmailSettings(
@@ -397,6 +438,19 @@ export async function reviewReport(req, res) {
         USER_SETTINGS.EMAIL.KEYS.APPROVAL,
       );
       reportApprovedNotification(reviewedReport, authorWithSetting, collabsWithSettings);
+
+      // Notify program specialists of this approval if they
+      // have a grant recipient associated with this report.
+      const [, , programSpecialists] = await checkEmailSettings(
+        reviewedReport,
+        USER_SETTINGS.EMAIL.KEYS.RECIPIENT_APPROVAL,
+      );
+
+      programSpecialistRecipientReportApprovedNotification(
+        report,
+        programSpecialists,
+        activityRecipients,
+      );
     }
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
