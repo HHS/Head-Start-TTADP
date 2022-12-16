@@ -526,8 +526,6 @@ function reduceGoals(goals, forReport = false) {
       return previousValues;
     }
 
-    console.log({ enddate: currentValue.endDate });
-
     const goal = {
       ...currentValue.dataValues,
       goalNumbers: [currentValue.goalNumber],
