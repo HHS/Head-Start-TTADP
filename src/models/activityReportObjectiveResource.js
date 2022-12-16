@@ -1,4 +1,5 @@
 const { Model } = require('sequelize');
+const { SOURCE_FIELD } = require('../constants');
 // const { afterCreate, afterDestroy } = require('./hooks/objectiveResource');
 
 module.exports = (sequelize, DataTypes) => {
@@ -14,6 +15,7 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: 'cascade',
         as: 'activityReportObjective',
       });
+      ActivityReportObjectiveResource.belongsTo(models.Resource, { foreignKey: 'resourceId', as: 'resource' });
     }
   }
   ActivityReportObjectiveResource.init({
@@ -29,6 +31,19 @@ module.exports = (sequelize, DataTypes) => {
     },
     activityReportObjectiveId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    resourceId: {
+      type: DataTypes.INTEGER,
+    },
+    sourceField: {
+      allowNull: true,
+      default: null,
+      type: DataTypes.ENUM(Object.values(SOURCE_FIELD.OBJECTIVE)),
+    },
+    isAutoDetected: {
+      type: DataTypes.BOOLEAN,
+      default: false,
       allowNull: false,
     },
   }, {
