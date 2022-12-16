@@ -198,6 +198,6 @@ export default async function createAwsElasticSearchIndexes() {
     | Create Import: ${finishCreatingBulk.diff(startCreatingBulk) / 1000}sec |
     | Creating Bulk Data: ${finishBulkImport.diff(startBulkImport) / 1000}sec |`);
   } catch (error) {
-    auditLogger.error(`Search Index Job Error: ${error.message}`);
+    auditLogger.error(`Search Index Job Error: ${error}`);
   }
 }
