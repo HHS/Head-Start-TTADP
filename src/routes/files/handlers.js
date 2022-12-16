@@ -289,7 +289,7 @@ const uploadHandler = async (req, res) => {
     } else if (objectiveId) {
       const objective = await getObjectiveById(objectiveId);
       const objectivePolicy = new ObjectivePolicy(objective, user);
-      if (!(objectivePolicy.canUpdate()
+      if (!(objectivePolicy.canUpload()
       || (await validateUserAuthForAdmin(req.session.userId)))) {
         return res.sendStatus(403);
       }

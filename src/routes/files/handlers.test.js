@@ -277,11 +277,16 @@ describe('File Upload', () => {
         canUpload: () => true,
       }));
       uploadFile.mockResolvedValue({ key: 'key' });
-      const response = await request(app)
-        .post('/api/files')
-        .field('objectiveId', objective.dataValues.id)
-        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(200);
+      let response;
+      try {
+        response = await request(app)
+          .post('/api/files')
+          .field('objectiveId', objective.dataValues.id)
+          .attach('file', `${__dirname}/testfiles/testfile.pdf`)
+          .expect(200);
+      } catch (e) {
+        console.log(e);
+      }
       fileId = response.body.id;
       expect(uploadFile).toHaveBeenCalled();
       expect(mockAddToScanQueue).toHaveBeenCalled();
@@ -362,7 +367,7 @@ describe('File Upload', () => {
 
   describe('File Upload Handlers error handling', () => {
     // eslint-disable-next-line jest/no-disabled-tests
-    it.skip('tests a file upload without a report id', async () => {
+    it('tests a file upload without a report id', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => true,
       }));
