@@ -18,6 +18,7 @@ import {
   topicsFilter,
   otherEntitiesFilter,
   participantsFilter,
+  myReportsFilter,
 } from '../activityReportFilters';
 import {
   createDateFilter,
@@ -342,6 +343,7 @@ describe('Filter Menu', () => {
       targetPopulationsFilter,
       topicsFilter,
       otherEntitiesFilter,
+      myReportsFilter,
     ];
 
     const filters = [];
@@ -389,6 +391,10 @@ describe('Filter Menu', () => {
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
+    userEvent.selectOptions(topics, 'My reports');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'where I\'m the');
+
     userEvent.selectOptions(topics, 'Topics');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
@@ -420,6 +426,10 @@ describe('Filter Menu', () => {
     userEvent.selectOptions(topics, 'Target populations');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'My reports');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'where I\'m the');
 
     userEvent.selectOptions(topics, 'Topics');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });

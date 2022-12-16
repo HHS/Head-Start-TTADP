@@ -5,6 +5,6 @@
 /** the <Select /> component **/
 .ttahub-create-goals-form .usa-error-message + .usa-select, 
 /** URL fields are wrapped in a div **/
-.ttahub-create-goals-form .usa-error-message + .ttahub-resource-repeater :invalid  {
+.ttahub-create-goals-form .usa-error-message + .ttahub-resource-repeater input[type="url"] {
     @include mixins.error;
 }
