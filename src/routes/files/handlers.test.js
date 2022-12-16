@@ -332,7 +332,7 @@ describe('File Upload', () => {
 
     it('deletes a objective file', async () => {
       ObjectivePolicy.mockImplementation(() => ({
-        canUpload: () => true,
+        canUpdate: () => true,
       }));
       const file = await File.create({
         objectiveId: objective.dataValues.id,
