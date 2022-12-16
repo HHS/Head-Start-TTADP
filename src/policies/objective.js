@@ -1,4 +1,5 @@
 import { find, isUndefined } from 'lodash';
+import { GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import SCOPES from '../middleware/scopeConstants';
 
 export default class Objective {
@@ -18,9 +19,10 @@ export default class Objective {
   }
 
   canUpdate() {
-    if (!this.objective.onApprovedAR
+    if (!this.objective.status !== OBJECTIVE_STATUS.COMPLETE
         && (this.objective.otherEntityId
           || (this.objective.goal
+              && this.objective.goal.status !== GOAL_STATUS.CLOSED
               && this.objective.goal.grant
               && this.canWriteInRegion(this.objective.goal.grant.regionId)))) {
       return true;
