@@ -10,12 +10,12 @@ const config = {
   outputDir: './playwright/test-results',
   workers: 2, // changing because of possible data collisions
   expect: {
-    timeout: 8000,
+    timeout: 20000,
   },
   fullyParallel: true,
   reporter: [['html', { outputFolder: './playwright/report', open: 'never' }]],
-  timeout: 60000,
-  globalTimeout: 600000,
+  timeout: 300000,
+  globalTimeout: 900000,
   globalSetup: './tests/init/globalSetup.ts',
   projects: [
     {
