@@ -86,7 +86,9 @@
     "restoreTopics": "node ./build/server/tools/restoreTopicsCLI.js",
     "restoreTopics:local": "./node_modules/.bin/babel-node ./src/tools/restoreTopicsCLI.js",
     "coverage:backend": "./bin/build-coverage-report",
-    "docker:coverage:backend": "docker compose run --rm backend chmod 744 ./bin/build-coverage-report && ./bin/build-coverage-report"
+    "docker:coverage:backend": "docker compose run --rm backend chmod 744 ./bin/build-coverage-report && ./bin/build-coverage-report",
+    "createAwsElasticSearchIndexes": "node ./build/server/tools/createAwsElasticSearchIndexesCli.js",
+    "createAwsElasticSearchIndexes:local": "./node_modules/.bin/babel-node ./src/tools/createAwsElasticSearchIndexesCli.js"
   },
   "repository": {
     "type": "git",
