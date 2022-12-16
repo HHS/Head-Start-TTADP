@@ -274,7 +274,7 @@ describe('File Upload', () => {
 
     it('tests a objective file upload', async () => {
       ObjectivePolicy.mockImplementation(() => ({
-        canUpdate: () => true,
+        canUpload: () => true,
       }));
       uploadFile.mockResolvedValue({ key: 'key' });
       const response = await request(app)
@@ -302,7 +302,7 @@ describe('File Upload', () => {
 
     it('allows an admin to upload a objective file', async () => {
       ObjectivePolicy.mockImplementation(() => ({
-        canUpdate: () => false,
+        canUpload: () => false,
       }));
       validateUserAuthForAdmin.mockResolvedValue(true);
       uploadFile.mockResolvedValue({ key: 'key' });
@@ -332,7 +332,7 @@ describe('File Upload', () => {
 
     it('deletes a objective file', async () => {
       ObjectivePolicy.mockImplementation(() => ({
-        canUpdate: () => true,
+        canUpload: () => true,
       }));
       const file = await File.create({
         objectiveId: objective.dataValues.id,
@@ -394,6 +394,22 @@ describe('File Upload', () => {
         .expect(403)
         .then(() => expect(uploadFile).not.toHaveBeenCalled());
     });
+
+    it('tests an unauthorized objective file upload', async () => {
+      validateUserAuthForAdmin.mockResolvedValue(false);
+      ObjectivePolicy.mockImplementation(() => ({
+        canUpload: () => false,
+      }));
+      await request(app)
+        .post('/api/files')
+        .field('objectiveId', objective.dataValues.id)
+        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
+        .expect(403)
+        .then(() => {
+          expect(uploadFile).not.toHaveBeenCalled();
+        });
+    });
+
     it('tests an incorrect file type', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => true,
