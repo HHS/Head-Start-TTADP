@@ -10,3 +10,4 @@ REDIRECT_URI_HOST: https://tta-smarthub-dev.app.cloud.gov
 TTA_SMART_HUB_URI: https://tta-smarthub-dev.app.cloud.gov
 CLAMAV_ENDPOINT: https://clamapi-ttahub-dev.apps.internal:9443
 SEND_NOTIFICATIONS: "true"
+REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-dev.app.cloud.gov
