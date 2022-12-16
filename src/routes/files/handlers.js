@@ -115,7 +115,7 @@ const deleteHandler = async (req, res) => {
     } else if (objectiveId) {
       const objective = await getObjectiveById(objectiveId);
       const objectivePolicy = new ObjectivePolicy(objective, user);
-      if (!objectivePolicy.canUpload()) {
+      if (!objectivePolicy.canUpdate()) {
         res.sendStatus(403);
         return;
       }
@@ -431,7 +431,7 @@ const deleteObjectiveFileHandler = async (req, res) => {
       }
       const objective = await getObjectiveById(objectiveId);
       const objectivePolicy = new ObjectivePolicy(objective, user);
-      if (!objectivePolicy.canUpload()) {
+      if (!objectivePolicy.canUpdate()) {
         canUpdate = false;
         res.sendStatus(403);
         return null;
