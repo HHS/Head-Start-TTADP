@@ -66,6 +66,14 @@ export default function useSocket(user) {
     });
 
     socket.current = s;
+
+    // eslint-disable-next-line consistent-return
+    return () => {
+      // close the open socket
+      if (socket.current && socket.current.readyState === socket.current.OPEN) {
+        socket.current.close();
+      }
+    };
   }, [clearStore, path, socketPath, user]);
 
   return {
