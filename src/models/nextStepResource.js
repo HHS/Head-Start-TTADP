@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { beforeDestroy, afterDestroy } = require('./hooks/nextStepResource');
+// const { beforeDestroy, afterDestroy } = require('./hooks/nextStepResource');
 
 module.exports = (sequelize, DataTypes) => {
   class NextStepResource extends Model {
@@ -23,10 +23,10 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'NextStepResource',
-    hooks: {
-      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
-      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
-    },
+    // hooks: {
+    //   beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
+    //   afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+    // },
   });
   return NextStepResource;
 };

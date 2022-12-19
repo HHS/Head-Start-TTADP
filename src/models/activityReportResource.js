@@ -1,6 +1,6 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
-const { beforeDestroy, afterDestroy } = require('./hooks/activityReportResource');
+// const { beforeDestroy, afterDestroy } = require('./hooks/activityReportResource');
 
 module.exports = (sequelize, DataTypes) => {
   class ActivityReportResource extends Model {
@@ -29,10 +29,10 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'ActivityReportResource',
-    hooks: {
-      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
-      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
-    },
+    // hooks: {
+    //   beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
+    //   afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+    // },
   });
   return ActivityReportResource;
 };
