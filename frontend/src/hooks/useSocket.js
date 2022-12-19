@@ -6,7 +6,7 @@ import {
   useMemo,
 } from 'react';
 
-const WS_URL = process.env.REACT_APP_WEBSOCKET_URL;
+const WS_URL = process.env.REACT_APP_WEBSOCKET_URL || '';
 
 export default function useSocket(user) {
   const [socketPath, setSocketPath] = useState();
