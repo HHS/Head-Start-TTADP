@@ -26,6 +26,7 @@ applications:
       SEND_NOTIFICATIONS: ((SEND_NOTIFICATIONS))
       SMTP_SECURE: ((SMTP_SECURE))
       FROM_EMAIL_ADDRESS: ((FROM_EMAIL_ADDRESS))
+      REACT_APP_WEBSOCKET_URL: ((REACT_APP_WEBSOCKET_URL))
     services:
       - ttahub-((env))
       - ttahub-redis-((env))
