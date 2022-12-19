@@ -145,6 +145,13 @@ const transformRecordByURLToResource = (records, resources) => (
         && resource.resourceId !== null)
     : []);
 
+const leftJoin = (a, b) => a
+  .map((ao) => ({
+    ...b.find((bo) => ao === bo),
+    ...ao,
+  }))
+  .map((o) => o['0']);
+
 // Compare the incomingResources and the currentResources to generate five sets of modifications:
 // new: completely new records to be added.
 // expanded: records that existed already, but now are referenced in additional sourceFields.
@@ -159,7 +166,7 @@ const transformRecordByURLToResource = (records, resources) => (
 // create: new
 // update: expanded, delta, reduced
 // destroy: remove
-const filterResourcesForSync = async (
+const filterResourcesForSync = (
   incomingResources,
   currentResources,
   calculateIsAutoDetectedFunc,
@@ -174,7 +181,7 @@ const filterResourcesForSync = async (
         .length === 0;
       if (isCreated) {
         const created = resources.created
-          .find((r) => r.genericId === resource.genericId);
+          ?.find((r) => r.genericId === resource.genericId);
         if (created) {
           created.sourceFields = [...new Set([...created.sourceFields, ...resource.sourceFields])];
           return resources;
@@ -193,15 +200,19 @@ const filterResourcesForSync = async (
       }
 
       const matchingFromFields = currentResources
-        .filter((oarr) => oarr.genericId === resource.genericId
-        && oarr.resourceId === resource.resourceId);
-      const isExpanded = matchingFromFields.filter((oarr) => resource.sourceFields
-        .filter((sourceField) => oarr.sourceFields.includes(sourceField))
-        .length < resource.sourceFields.length)
-        .length === 0;
+        .filter((cr) => cr.genericId === resource.genericId
+        && cr.resourceId === resource.resourceId);
+      const isExpanded = matchingFromFields
+        .filter((mff) => {
+          const lj = leftJoin(resource.sourceFields, mff.sourceFields);
+          return lj
+            .filter((l) => mff.sourceFields.includes(l))
+            .length < lj.length;
+        })
+        .length > 0;
       if (isExpanded) {
         const expanded = resources.expanded
-          .find((r) => r.genericId === resource.genericId
+          ?.find((r) => r.genericId === resource.genericId
             && r.resourceId === resource.resourceId);
         const matching = matchingFromFields
           .find((r) => r.genericId === resource.genericId
@@ -216,7 +227,7 @@ const filterResourcesForSync = async (
         return {
           created: resources.created,
           expanded: [
-            ...resources.expanded,
+            ...(resources.expanded || []),
             {
               genericId: resource.genericId,
               resourceId: resource.resourceId,
@@ -230,7 +241,7 @@ const filterResourcesForSync = async (
       }
 
       return resources;
-    }, []);
+    }, { created: [], expanded: [] });
   console.log(newExpandedResources);
   // pull all of the removed and reduced resources in a single pass over the currentResources.
   const removedReducedResources = currentResources
@@ -241,7 +252,7 @@ const filterResourcesForSync = async (
         .length === 0;
       if (isRemoved) {
         const removed = resources.removed
-          .find((r) => r.genericId === resource.genericId);
+          ?.find((r) => r.genericId === resource.genericId);
         if (removed) {
           removed.resourceIds = [...removed.resourceIds, resource.resourceId];
           return resources;
@@ -261,13 +272,17 @@ const filterResourcesForSync = async (
       const matchingFromFields = incomingResources
         .filter((rff) => rff.genericId === resource.genericId
         && rff.resourceId === resource.resourceId);
-      const isReduced = matchingFromFields.filter((rff) => resource.sourceFields
-        .filter((sourceField) => rff.sourceFields.includes(sourceField))
-        .length < resource.sourceFields.length)
-        .length === 0;
+      const isReduced = matchingFromFields
+        .filter((mff) => {
+          const lj = leftJoin(resource.sourceFields, mff.sourceFields);
+          return lj
+            .filter((l) => mff.sourceFields.includes(l))
+            .length < lj.length;
+        })
+        .length > 0;
       if (isReduced) {
         const reduced = resources.reduced
-          .find((r) => r.genericId === resource.genericId
+          ?.find((r) => r.genericId === resource.genericId
             && r.resourceId === resource.resourceId);
         const matching = matchingFromFields
           .find((r) => r.genericId === resource.genericId
@@ -292,17 +307,17 @@ const filterResourcesForSync = async (
       }
 
       return resources;
-    }, []);
+    }, { removed: [], reduced: [] });
 
   console.log(removedReducedResources);
   // collect the intersection of the expanded and reduced datasets to generate the delta dataset.
   const deltaFromExpanded = newExpandedResources.expanded
-    .filter((neResource) => removedReducedResources.reduced
+    ?.filter((neResource) => removedReducedResources.reduced
       .filter((rrResource) => neResource.genericId === rrResource.genericId
         && neResource.resourceId === rrResource.resourceId)
       .length > 0);
   const deltaFromReduced = removedReducedResources.expanded
-    .filter((rrResource) => newExpandedResources.reduced
+    ?.filter((rrResource) => newExpandedResources.reduced
       .filter((neResource) => neResource.genericId === rrResource.genericId
         && neResource.resourceId === rrResource.resourceId)
       .length > 0);
@@ -313,14 +328,14 @@ const filterResourcesForSync = async (
       const exists = delta.find((r) => r.genericId === resource.genericId
         && r.resourceId === resource.resourceId);
       const fromReduced = deltaFromReduced
-        .find((r) => r.genericId === resource.genericId
+        ?.find((r) => r.genericId === resource.genericId
         && r.resourceId === resource.resourceId);
       const fromOriginal = currentResources
         .find((r) => r.genericId === resource.genericId
         && r.resourceId === resource.resourceId);
       const deltaSourceFields = resource.sourceFields
         .filter((sourceField) => !fromOriginal.sourceFields.includes(sourceField)
-          || fromReduced.sourceFields.includes(sourceField));
+          || fromReduced?.sourceFields.includes(sourceField));
       if (exists) {
         exists.sourceFields = deltaSourceFields;
         return delta;
@@ -338,8 +353,8 @@ const filterResourcesForSync = async (
       isAutoDetected: calculateIsAutoDetectedFunc(resource.sourceFields),
     }));
   // Remove the records of the delta dataset from the expanded dataset.
-  resourceActions.expanded = newExpandedResources
-    .filter((neResource) => resourceActions.delta
+  resourceActions.expanded = newExpandedResources.expanded
+    ?.filter((neResource) => resourceActions.delta
       .filter((dResource) => dResource.genericId === neResource.genericId
         && dResource.resourceId === neResource.resourceId)
       .length === 0)
@@ -348,14 +363,14 @@ const filterResourcesForSync = async (
       isAutoDetected: calculateIsAutoDetectedFunc(resource.sourceFields),
     }));
   // Remove the records of the delta dataset from the reduced dataset.
-  resourceActions.reduced = removedReducedResources
+  resourceActions.reduced = removedReducedResources.reduced
     .filter((rrResource) => resourceActions.delta
       .filter((dResource) => dResource.genericId === rrResource.genericId
         && dResource.resourceId === rrResource.resourceId)
       .length === 0);
 
   resourceActions.new = newExpandedResources.new
-    .map((resource) => ({
+    ?.map((resource) => ({
       ...resource,
       isAutoDetected: calculateIsAutoDetectedFunc(resource.sourceFields),
     }));
