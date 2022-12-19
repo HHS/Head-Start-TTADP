@@ -4,7 +4,7 @@ import Plotly from 'plotly.js-basic-dist';
 import { Grid } from '@trussworks/react-uswds';
 import withWidgetData from './withWidgetData';
 import AccessibleWidgetData from './AccessibleWidgetData';
-
+import MediaCaptureButton from '../components/MediaCaptureButton';
 import Container from '../components/Container';
 import colors from '../colors';
 import './TotalHrsAndRecipientGraph.scss';
@@ -20,6 +20,9 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
 
   // the dom el for drawing the chart
   const lines = useRef();
+
+  // the dom el for the widget
+  const widget = useRef();
 
   const [showAccessibleData, setShowAccessibleData] = useState(false);
   const [columnHeadings, setColumnHeadings] = useState([]);
@@ -221,16 +224,18 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
   }
 
   return (
-    <Container className="ttahub-total-hours-container shadow-2" paddingX={3} paddingY={3} loading={loading} loadingLabel="Total hours loading">
+    <Container ref={widget} className="ttahub-total-hours-container shadow-2" paddingX={3} paddingY={3} loading={loading} loadingLabel="Total hours loading">
       <div className="ttahub--total-hrs-recipient-graph">
         <Grid row className="position-relative margin-bottom-2">
           <Grid desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}><h2 className="ttahub--dashboard-widget-heading margin-0">Total TTA hours</h2></Grid>
           <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
+            { !showAccessibleData && <MediaCaptureButton className="margin-x-2" reference={widget} buttonText="Save screenshot" /> }
             <button
               type="button"
               className="usa-button--unstyled"
               aria-label={showAccessibleData ? 'display total training and technical assistance hours as graph' : 'display total training and technical assistance hours as table'}
               onClick={toggleType}
+              data-html2canvas-ignore
             >
               {showAccessibleData ? 'Display graph' : 'Display table'}
             </button>
@@ -303,6 +308,7 @@ export function LegendControl({
         name={id}
         checked={selected}
         onChange={handleChange}
+        data-html2canvas-ignore
       />
       <label
         className="usa-checkbox__label padding-right-3"
