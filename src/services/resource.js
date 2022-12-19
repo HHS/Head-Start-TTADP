@@ -67,9 +67,15 @@ const findOrCreateResources = async (urls) => {
 // Helper functions
 // -----------------------------------------------------------------------------
 // Identify if passed sourceFields contain one or more of the autoDetectedFields.
-const calculateIsAutoDetected = (sourceFields, autoDetectedFields) => autoDetectedFields
-  .filter((field) => sourceFields.includes(field))
-  .length > 0;
+const calculateIsAutoDetected = (sourceFields, autoDetectedFields) => (
+  Array.isArray(sourceFields)
+  && sourceFields.length > 0
+  && Array.isArray(autoDetectedFields)
+  && autoDetectedFields.length > 0
+  && autoDetectedFields
+    .filter((field) => sourceFields.includes(field))
+    .length > 0
+);
 
 // Use regex to find all urls within the field
 const collectURLsFromField = (field) => field
@@ -78,42 +84,66 @@ const collectURLsFromField = (field) => field
 
 // Generate a colection of resoruce objects from the list of urls passed
 const resourcesFromField = (
-  tableId,
+  genericId,
   urlsFromField,
   field,
-) => urlsFromField.reduce((resources, url) => {
-  const exists = resources.find((resource) => resource.url === url);
-  if (exists) {
-    exists.sourceFields = [...new Set([...exists.sourceFields, field])];
-    return resources;
-  }
-  return [...resources, {
-    tableId,
-    sourceFields: [field],
-    url,
-  }];
-});
-
-// Merge all the records that share the same url and tableId, collecting all
-// the sourceFields they are from.
-const mergeRecordsByUrlAndTableId = (records) => records
-  .reduce((resources, resource) => {
-    const exists = resources.find((r) => r.tableId === resource.tableId
-      && r.url === resource.url);
+  seed = [],
+) => (typeof genericId === 'number'
+  && genericId === parseInt(genericId, 10)
+  && typeof field === 'string'
+  && Array.isArray(urlsFromField)
+  && Array.isArray(seed)
+  ? urlsFromField.reduce((resources, url) => {
+    const exists = resources.find((resource) => resource.url === url
+      && resource.genericId === genericId);
     if (exists) {
-      exists.sourceFields = [...new Set([...exists.sourceFields, ...resource.sourceFields])];
+      exists.sourceFields = [...new Set([...exists.sourceFields, field])];
       return resources;
     }
-    return [...resources, resource];
-  });
+    return [...resources, {
+      genericId,
+      sourceFields: [field],
+      url,
+    }];
+  }, seed)
+  : seed);
+
+// Merge all the records that share the same url and genericId, collecting all
+// the sourceFields they are from.
+const mergeRecordsByUrlAndGenericId = (records) => (
+  Array.isArray(records)
+    ? records
+      .filter((resource) => (typeof resource.genericId === 'number'
+        && resource.genericId === parseInt(resource.genericId, 10)
+        && typeof resource.url === 'string'
+        && Array.isArray(resource.sourceFields)
+        && resource.sourceFields.length > 0))
+      .reduce((resources, resource) => {
+        const exists = resources.find((r) => r.genericId === resource.genericId
+          && r.url === resource.url);
+        if (exists) {
+          exists.sourceFields = Array.isArray(resource.sourceFields)
+            ? [...new Set([...exists.sourceFields, ...resource.sourceFields])]
+            : exists.sourceFields;
+          return resources;
+        }
+        return [...resources, resource];
+      }, [])
+    : []);
 
 // Replace the url with the corresponding resourceId
-const transformRecordByURLToResource = (records, resources) => records
-  .map((resource) => ({
-    ...resource,
-    resourceId: resources.find((r) => r.url === resource.url).id,
-    url: undefined,
-  }));
+const transformRecordByURLToResource = (records, resources) => (
+  Array.isArray(records)
+  && Array.isArray(resources)
+    ? records
+      .map((resource) => ({
+        ...resource,
+        resourceId: resources.find((r) => r.url === resource.url)?.id,
+        url: undefined,
+      }))
+      .filter((resource) => resource.resourceId !== undefined
+        && resource.resourceId !== null)
+    : []);
 
 // Compare the incomingResources and the currentResources to generate five sets of modifications:
 // new: completely new records to be added.
@@ -134,16 +164,17 @@ const filterResourcesForSync = async (
   currentResources,
   calculateIsAutoDetectedFunc,
 ) => {
+  console.log(1);
   // pull all of the new and expanded resources in a single pass over the incomingResources.
   const newExpandedResources = incomingResources
     .reduce((resources, resource) => {
       const isCreated = currentResources
-        .filter((oarr) => oarr.tableId === resource.tableId
+        .filter((oarr) => oarr.genericId === resource.genericId
           && oarr.resourceId === resource.resourceId)
         .length === 0;
       if (isCreated) {
         const created = resources.created
-          .find((r) => r.tableId === resource.tableId);
+          .find((r) => r.genericId === resource.genericId);
         if (created) {
           created.sourceFields = [...new Set([...created.sourceFields, ...resource.sourceFields])];
           return resources;
@@ -152,7 +183,7 @@ const filterResourcesForSync = async (
           created: [
             ...resources.created,
             {
-              tableId: resource.tableId,
+              genericId: resource.genericId,
               resourceId: resource.resourceId,
               sourceFields: resource.sourceFields,
             },
@@ -162,7 +193,7 @@ const filterResourcesForSync = async (
       }
 
       const matchingFromFields = currentResources
-        .filter((oarr) => oarr.tableId === resource.tableId
+        .filter((oarr) => oarr.genericId === resource.genericId
         && oarr.resourceId === resource.resourceId);
       const isExpanded = matchingFromFields.filter((oarr) => resource.sourceFields
         .filter((sourceField) => oarr.sourceFields.includes(sourceField))
@@ -170,10 +201,10 @@ const filterResourcesForSync = async (
         .length === 0;
       if (isExpanded) {
         const expanded = resources.expanded
-          .find((r) => r.tableId === resource.tableId
+          .find((r) => r.genericId === resource.genericId
             && r.resourceId === resource.resourceId);
         const matching = matchingFromFields
-          .find((r) => r.tableId === resource.tableId
+          .find((r) => r.genericId === resource.genericId
             && r.resourceId === resource.resourceId);
         if (expanded) {
           expanded.sourceFields = [...new Set([
@@ -187,7 +218,7 @@ const filterResourcesForSync = async (
           expanded: [
             ...resources.expanded,
             {
-              tableId: resource.tableId,
+              genericId: resource.genericId,
               resourceId: resource.resourceId,
               sourceFields: [...new Set([
                 ...matching.sourceFields,
@@ -199,17 +230,18 @@ const filterResourcesForSync = async (
       }
 
       return resources;
-    });
+    }, []);
+  console.log(newExpandedResources);
   // pull all of the removed and reduced resources in a single pass over the currentResources.
   const removedReducedResources = currentResources
     .reduce((resources, resource) => {
       const isRemoved = incomingResources
-        .filter((rff) => rff.tableId === resource.tableId
+        .filter((rff) => rff.genericId === resource.genericId
           && rff.resourceId === resource.resourceId)
         .length === 0;
       if (isRemoved) {
         const removed = resources.removed
-          .find((r) => r.tableId === resource.tableId);
+          .find((r) => r.genericId === resource.genericId);
         if (removed) {
           removed.resourceIds = [...removed.resourceIds, resource.resourceId];
           return resources;
@@ -218,7 +250,7 @@ const filterResourcesForSync = async (
           removed: [
             ...resources.removed,
             {
-              tableId: resource.tableId,
+              genericId: resource.genericId,
               resourceIds: [resource.resourceId],
             },
           ],
@@ -227,7 +259,7 @@ const filterResourcesForSync = async (
       }
 
       const matchingFromFields = incomingResources
-        .filter((rff) => rff.tableId === resource.tableId
+        .filter((rff) => rff.genericId === resource.genericId
         && rff.resourceId === resource.resourceId);
       const isReduced = matchingFromFields.filter((rff) => resource.sourceFields
         .filter((sourceField) => rff.sourceFields.includes(sourceField))
@@ -235,10 +267,10 @@ const filterResourcesForSync = async (
         .length === 0;
       if (isReduced) {
         const reduced = resources.reduced
-          .find((r) => r.tableId === resource.tableId
+          .find((r) => r.genericId === resource.genericId
             && r.resourceId === resource.resourceId);
         const matching = matchingFromFields
-          .find((r) => r.tableId === resource.tableId
+          .find((r) => r.genericId === resource.genericId
             && r.resourceId === resource.resourceId);
         if (reduced) {
           reduced.sourceFields = reduced.sourceFields
@@ -250,7 +282,7 @@ const filterResourcesForSync = async (
           reduced: [
             ...resources.reduced,
             {
-              tableId: resource.tableId,
+              genericId: resource.genericId,
               resourceId: resource.resourceId,
               sourceFields: resource.sourceFields
                 .filter((sourceField) => matching.sourceFields.includes(sourceField)),
@@ -260,30 +292,31 @@ const filterResourcesForSync = async (
       }
 
       return resources;
-    });
+    }, []);
 
+  console.log(removedReducedResources);
   // collect the intersection of the expanded and reduced datasets to generate the delta dataset.
   const deltaFromExpanded = newExpandedResources.expanded
     .filter((neResource) => removedReducedResources.reduced
-      .filter((rrResource) => neResource.tableId === rrResource.tableId
+      .filter((rrResource) => neResource.genericId === rrResource.genericId
         && neResource.resourceId === rrResource.resourceId)
       .length > 0);
   const deltaFromReduced = removedReducedResources.expanded
     .filter((rrResource) => newExpandedResources.reduced
-      .filter((neResource) => neResource.tableId === rrResource.tableId
+      .filter((neResource) => neResource.genericId === rrResource.genericId
         && neResource.resourceId === rrResource.resourceId)
       .length > 0);
   const resourceActions = {};
   // Generate the delta dataset
   resourceActions.delta = deltaFromExpanded
     .reduce((delta, resource) => {
-      const exists = delta.find((r) => r.tableId === resource.tableId
+      const exists = delta.find((r) => r.genericId === resource.genericId
         && r.resourceId === resource.resourceId);
       const fromReduced = deltaFromReduced
-        .find((r) => r.tableId === resource.tableId
+        .find((r) => r.genericId === resource.genericId
         && r.resourceId === resource.resourceId);
       const fromOriginal = currentResources
-        .find((r) => r.tableId === resource.tableId
+        .find((r) => r.genericId === resource.genericId
         && r.resourceId === resource.resourceId);
       const deltaSourceFields = resource.sourceFields
         .filter((sourceField) => !fromOriginal.sourceFields.includes(sourceField)
@@ -299,7 +332,7 @@ const filterResourcesForSync = async (
           sourceFields: deltaSourceFields,
         },
       ];
-    })
+    }, [])
     .map((resource) => ({
       ...resource,
       isAutoDetected: calculateIsAutoDetectedFunc(resource.sourceFields),
@@ -307,7 +340,7 @@ const filterResourcesForSync = async (
   // Remove the records of the delta dataset from the expanded dataset.
   resourceActions.expanded = newExpandedResources
     .filter((neResource) => resourceActions.delta
-      .filter((dResource) => dResource.tableId === neResource.tableId
+      .filter((dResource) => dResource.genericId === neResource.genericId
         && dResource.resourceId === neResource.resourceId)
       .length === 0)
     .map((resource) => ({
@@ -317,7 +350,7 @@ const filterResourcesForSync = async (
   // Remove the records of the delta dataset from the reduced dataset.
   resourceActions.reduced = removedReducedResources
     .filter((rrResource) => resourceActions.delta
-      .filter((dResource) => dResource.tableId === rrResource.tableId
+      .filter((dResource) => dResource.genericId === rrResource.genericId
         && dResource.resourceId === rrResource.resourceId)
       .length === 0);
 
@@ -335,7 +368,7 @@ const filterResourcesForSync = async (
       .filter((resource) => resource.sourceFields.length === 0)
       .reduce((resources, resource) => {
         const exists = resources
-          .find((r) => r.tableId === resource.tableId);
+          .find((r) => r.genericId === resource.genericId);
 
         if (exists) {
           exists.resourceIds = [...exists.resourceIds, resource.resourceId];
@@ -353,7 +386,7 @@ const filterResourcesForSync = async (
       }),
   ].reduce((resources, resource) => {
     const exists = resources
-      .find((r) => r.tableId === resource.tableId);
+      .find((r) => r.genericId === resource.genericId);
 
     if (exists) {
       exists.resourceIds = [...exists.resourceIds, resource.resourceIds];
@@ -361,7 +394,7 @@ const filterResourcesForSync = async (
     }
 
     return [...resources, resource];
-  });
+  }, []);
 
   // Remove the empty sourceField records from the reduced dataset.
   resourceActions.reduced = resourceActions.reduced
@@ -426,15 +459,15 @@ const syncResourcesForActivityReport = async (resources) => Promise.all([
 const activityReportIdToGeneric = (resources) => resources
   .map((resource) => ({
     ...resource,
-    tableId: resource.activityReportId,
+    genericId: resource.activityReportId,
     activityReportId: undefined,
   }));
 
 const genericToActivityReportId = (resources) => resources
   .map((resource) => ({
     ...resource,
-    activityReportId: resource.tableId,
-    tableId: undefined,
+    activityReportId: resource.genericId,
+    genericId: undefined,
   }));
 
 // Process the current values on the report into the database for all referenced resources.
@@ -447,7 +480,7 @@ const processActivityReportForResources = async (activityReport, urls) => {
       raw: true,
     });
 
-  // convert to generic tableId to use generic modifier methods
+  // convert to generic genericId to use generic modifier methods
   const currentResourcesGeneric = activityReportIdToGeneric(currentResources);
 
   // Use regex to pull urls from the required fields
@@ -495,9 +528,9 @@ const processActivityReportForResources = async (activityReport, urls) => {
     ),
   ];
 
-  // Merge all the records that share the same url and tableId, collecting all
+  // Merge all the records that share the same url and genericId, collecting all
   // the sourceFields they are from.
-  const incomingResourcesMerged = mergeRecordsByUrlAndTableId(incomingResourcesRaw);
+  const incomingResourcesMerged = mergeRecordsByUrlAndGenericId(incomingResourcesRaw);
 
   // Replace the url with the associated resourceId.
   const incomingResourcesTransformed = transformRecordByURLToResource(
@@ -512,7 +545,7 @@ const processActivityReportForResources = async (activityReport, urls) => {
     calculateIsAutoDetectedForActivityReports,
   );
 
-  // switch from generic tableId to nextStepId, regroup to the create, update, and delete actions.
+  // switch from generic genericId to nextStepId, regroup to the create, update, and delete actions.
   const resourcesToSync = {
     create: genericToActivityReportId(filteredResources.create),
     update: genericToActivityReportId(filteredResources.update),
@@ -550,15 +583,15 @@ const calculateIsAutoDetectedForNextSteps = (
 const nextStepIdToGeneric = (resources) => resources
   .map((resource) => ({
     ...resource,
-    tableId: resource.activityReportId,
+    genericId: resource.activityReportId,
     nextStepId: undefined,
   }));
 
 const genericToNextStepId = (resources) => resources
   .map((resource) => ({
     ...resource,
-    nextStepId: resource.tableId,
-    tableId: undefined,
+    nextStepId: resource.genericId,
+    genericId: undefined,
   }));
 
 // Using the three dataset, each can be run in "parallel" to reduce latency when applied to the
@@ -604,7 +637,7 @@ const processNextStepsForResources = async (nextStep, urls) => {
       raw: true,
     });
 
-  // convert to generic tableId to use generic modifier methods
+  // convert to generic genericId to use generic modifier methods
   const currentResourcesGeneric = nextStepIdToGeneric(currentResources);
 
   // Use regex to pull urls from the required fields
@@ -631,9 +664,9 @@ const processNextStepsForResources = async (nextStep, urls) => {
     ),
   ];
 
-  // Merge all the records that share the same url and tableId, collecting all
+  // Merge all the records that share the same url and genericId, collecting all
   // the sourceFields they are from.
-  const incomingResourcesMerged = mergeRecordsByUrlAndTableId(incomingResourcesRaw);
+  const incomingResourcesMerged = mergeRecordsByUrlAndGenericId(incomingResourcesRaw);
 
   // Replace the url with the associated resourceId.
   const incomingResourcesTransformed = transformRecordByURLToResource(
@@ -648,7 +681,7 @@ const processNextStepsForResources = async (nextStep, urls) => {
     calculateIsAutoDetectedForNextSteps,
   );
 
-  // switch from generic tableId to nextStepId, regroup to the create, update, and delete actions.
+  // switch from generic genericId to nextStepId, regroup to the create, update, and delete actions.
   const resourcesToSync = {
     create: genericToNextStepId(filteredResources.create),
     update: genericToNextStepId(filteredResources.update),
@@ -686,15 +719,15 @@ const calculateIsAutoDetectedForObjectives = (
 const objectiveIdToGeneric = (resources) => resources
   .map((resource) => ({
     ...resource,
-    tableId: resource.objectiveId,
+    genericId: resource.objectiveId,
     objectiveId: undefined,
   }));
 
 const genericToObjectiveId = (resources) => resources
   .map((resource) => ({
     ...resource,
-    objectiveId: resource.tableId,
-    tableId: undefined,
+    objectiveId: resource.genericId,
+    genericId: undefined,
   }));
 
 // Using the three dataset, each can be run in "parallel" to reduce latency when applied to the
@@ -740,7 +773,7 @@ const processObjectivesForResources = async (objective, urls) => {
       raw: true,
     });
 
-  // convert to generic tableId to use generic modifier methods
+  // convert to generic genericId to use generic modifier methods
   const currentResourcesGeneric = nextStepIdToGeneric(currentResources);
 
   // Use regex to pull urls from the required fields
@@ -758,7 +791,7 @@ const processObjectivesForResources = async (objective, urls) => {
   const incomingResourcesRaw = [
     ...resourcesFromField(
       objective.id,
-      urlsFromNote,
+      urlsFromTitle,
       SOURCE_FIELD.OBJECTIVE.TITLE,
     ),
     ...resourcesFromField(
@@ -768,9 +801,9 @@ const processObjectivesForResources = async (objective, urls) => {
     ),
   ];
 
-  // Merge all the records that share the same url and tableId, collecting all
+  // Merge all the records that share the same url and genericId, collecting all
   // the sourceFields they are from.
-  const incomingResourcesMerged = mergeRecordsByUrlAndTableId(incomingResourcesRaw);
+  const incomingResourcesMerged = mergeRecordsByUrlAndGenericId(incomingResourcesRaw);
 
   // Replace the url with the associated resourceId.
   const incomingResourcesTransformed = transformRecordByURLToResource(
@@ -785,7 +818,7 @@ const processObjectivesForResources = async (objective, urls) => {
     calculateIsAutoDetectedForObjectives,
   );
 
-  // switch from generic tableId to nextStepId, regroup to the create, update, and delete actions.
+  // switch from generic genericId to nextStepId, regroup to the create, update, and delete actions.
   const resourcesToSync = {
     create: genericToObjectiveId(filteredResources.create),
     update: genericToObjectiveId(filteredResources.update),
@@ -823,15 +856,15 @@ const calculateIsAutoDetectedForActivityReportObjectives = (
 const activityReportObjectiveIdToGeneric = (resources) => resources
   .map((resource) => ({
     ...resource,
-    tableId: resource.activityReportObjectiveId,
+    genericId: resource.activityReportObjectiveId,
     activityReportObjectiveId: undefined,
   }));
 
 const genericToActivityReportObjectiveId = (resources) => resources
   .map((resource) => ({
     ...resource,
-    activityReportObjectiveId: resource.tableId,
-    tableId: undefined,
+    activityReportObjectiveId: resource.genericId,
+    genericId: undefined,
   }));
 
 // Using the three dataset, each can be run in "parallel" to reduce latency when applied to the
@@ -877,7 +910,7 @@ const processActivityReportObjectivesForResources = async (activityReportObjecti
       raw: true,
     });
 
-  // convert to generic tableId to use generic modifier methods
+  // convert to generic genericId to use generic modifier methods
   const currentResourcesGeneric = activityReportObjectiveIdToGeneric(currentResources);
 
   // Use regex to pull urls from the required fields
@@ -911,9 +944,9 @@ const processActivityReportObjectivesForResources = async (activityReportObjecti
     ),
   ];
 
-  // Merge all the records that share the same url and tableId, collecting all
+  // Merge all the records that share the same url and genericId, collecting all
   // the sourceFields they are from.
-  const incomingResourcesMerged = mergeRecordsByUrlAndTableId(incomingResourcesRaw);
+  const incomingResourcesMerged = mergeRecordsByUrlAndGenericId(incomingResourcesRaw);
 
   // Replace the url with the associated resourceId.
   const incomingResourcesTransformed = transformRecordByURLToResource(
@@ -928,7 +961,7 @@ const processActivityReportObjectivesForResources = async (activityReportObjecti
     calculateIsAutoDetectedForActivityReportObjectives,
   );
 
-  // switch from generic tableId to nextStepId, regroup to the create, update, and delete actions.
+  // switch from generic genericId to nextStepId, regroup to the create, update, and delete actions.
   const resourcesToSync = {
     create: genericToActivityReportObjectiveId(filteredResources.create),
     update: genericToActivityReportObjectiveId(filteredResources.update),
@@ -988,6 +1021,7 @@ export {
   calculateIsAutoDetected,
   collectURLsFromField,
   resourcesFromField,
+  mergeRecordsByUrlAndGenericId,
   transformRecordByURLToResource,
   filterResourcesForSync,
   // ActivityReports Resource Processing
