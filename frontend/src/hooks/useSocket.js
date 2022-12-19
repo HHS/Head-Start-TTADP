@@ -43,7 +43,6 @@ export default function useSocket(user) {
 
     // we don't want to send bufferdata, but json
     s.binaryType = 'arraybuffer';
-    console.log(s, user);
 
     // opening a new socket will clear the store
     s.addEventListener('open', () => {
