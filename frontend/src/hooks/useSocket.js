@@ -46,7 +46,6 @@ export default function useSocket(user) {
 
     // opening a new socket will clear the store
     s.addEventListener('open', () => {
-      console.log('socket opened', s, user);
       clearStore();
 
       if (user) {
