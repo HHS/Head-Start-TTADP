@@ -317,7 +317,7 @@ jobs:
           name: Run playwright tests
           command: yarn e2e:ci
       - store_artifacts:
-          path: playwright-report/
+          path: playwright/
   cucumber_test:
     executor: docker-postgres-executor
     steps:
