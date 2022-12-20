@@ -1,5 +1,5 @@
 import { find, isUndefined } from 'lodash';
-import { REPORT_STATUSES } from '../constants';
+import { REPORT_STATUSES } from '@ttahub/common';
 import SCOPES from '../middleware/scopeConstants';
 
 export default class Goal {

@@ -1,6 +1,6 @@
 import _ from 'lodash';
+import { SCOPE_IDS } from '@ttahub/common';
 import { createRegionalScopeObject, userRegionalPermissions, userGlobalPermissions } from '../PermissionHelpers';
-import { SCOPE_IDS } from '../../../Constants';
 
 const {
   ADMIN,

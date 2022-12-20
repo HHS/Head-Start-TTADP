@@ -1,4 +1,6 @@
-export const RECIPIENT_PARTICIPANTS = [
+Object.defineProperty(exports, '__esModule', { value: true });
+
+const RECIPIENT_PARTICIPANTS = [
   'CEO / CFO / Executive',
   'Center Director / Site Director',
   'Coach',
@@ -13,9 +15,10 @@ export const RECIPIENT_PARTICIPANTS = [
   'Program Support / Administrative Assistant',
   'Teacher / Infant-Toddler Caregiver',
   'Volunteer',
-] as const;
+];
+exports.RECIPIENT_PARTICIPANTS = RECIPIENT_PARTICIPANTS;
 
-export const OTHER_ENTITY_RECIPIENTS = [
+const OTHER_ENTITY_PARTICIPANTS = [
   'HSCO',
   'Local/State Agency(ies)',
   'OCC Regional Office',
@@ -25,14 +28,16 @@ export const OTHER_ENTITY_RECIPIENTS = [
   'State Early Learning System',
   'State Head Start Association',
   'Other',
-] as const;
+];
+exports.OTHER_ENTITY_PARTICIPANTS = OTHER_ENTITY_PARTICIPANTS;
 
-export const ALL_PARTICIPANTS = [
+const ALL_PARTICIPANTS = [
   ...RECIPIENT_PARTICIPANTS,
-  ...OTHER_ENTITY_RECIPIENTS,
-] as const;
+  ...OTHER_ENTITY_PARTICIPANTS,
+];
+exports.ALL_PARTICIPANTS = ALL_PARTICIPANTS;
 
-export const TOPICS = [
+const TOPICS = [
   'Behavioral / Mental Health / Trauma',
   'Child Screening and Assessment',
   'CLASS: Classroom Organization',
@@ -73,9 +78,10 @@ export const TOPICS = [
   'Training and Professional Development',
   'Transition Practices',
   'Transportation',
-] as const;
+];
+exports.TOPICS = TOPICS;
 
-export const REASONS = [
+const REASONS = [
   'Below Competitive Threshold (CLASS)',
   'Below Quality Threshold (CLASS)',
   'Change in Scope',
@@ -93,17 +99,19 @@ export const REASONS = [
   'Monitoring | Area of Concern',
   'Monitoring | Noncompliance',
   'Monitoring | Deficiency',
-] as const;
+];
+exports.REASONS = REASONS;
 
-export const REPORT_STATUSES = {
+const REPORT_STATUSES = {
   DRAFT: 'draft',
   DELETED: 'deleted',
   SUBMITTED: 'submitted',
   APPROVED: 'approved',
   NEEDS_ACTION: 'needs_action',
-} as const;
+};
+exports.REPORT_STATUSES = REPORT_STATUSES;
 
-export const TARGET_POPULATIONS = [
+const TARGET_POPULATIONS = [
   'Infants and Toddlers (ages birth to 3)',
   'Preschool (ages 3-5)',
   'Pregnant Women',
@@ -114,9 +122,10 @@ export const TARGET_POPULATIONS = [
   'Children with Disabilities',
   'Children with Special Health Care Needs',
   'Dual-Language Learners',
-] as const;
+];
+exports.TARGET_POPULATIONS = TARGET_POPULATIONS;
 
-export const USER_ROLES = [
+const USER_ROLES = [
   'Central Office',
   'Other Federal Staff',
   'National Center',
@@ -135,17 +144,49 @@ export const USER_ROLES = [
   'Grantee Specialist',
   'Health Specialist',
   'System Specialist',
-] as const;
+];
+exports.USER_ROLES = USER_ROLES;
 
-export const GOAL_CLOSE_REASONS = [
+const CLOSE_SUSPEND_REASONS = [
   'Duplicate goal',
   'Recipient request',
   'TTA complete',
-] as const;
+  'Key staff turnover / vacancies',
+  'Recipient is not responding',
+  'Regional Office request',
+];
+exports.CLOSE_SUSPEND_REASONS = CLOSE_SUSPEND_REASONS;
 
-export const GOAL_SUSPEND_REASONS = [
+const GOAL_CLOSE_REASONS = [
+  'Duplicate goal',
+  'Recipient request',
+  'TTA complete',
+];
+exports.GOAL_CLOSE_REASONS = GOAL_CLOSE_REASONS;
+
+const GOAL_SUSPEND_REASONS = [
   'Key staff turnover / vacancies',
   'Recipient request',
   'Recipient is not responding',
   'Regional Office request',
-] as const;
+];
+exports.GOAL_SUSPEND_REASONS = GOAL_SUSPEND_REASONS;
+
+const APPROVER_STATUSES = {
+  APPROVED: 'approved',
+  NEEDS_ACTION: 'needs_action',
+};
+exports.APPROVER_STATUSES = APPROVER_STATUSES;
+
+const SCOPE_IDS = {
+  SITE_ACCESS: 1,
+  ADMIN: 2,
+  READ_WRITE_ACTIVITY_REPORTS: 3,
+  READ_ACTIVITY_REPORTS: 4,
+  APPROVE_ACTIVITY_REPORTS: 5,
+  UNLOCK_APPROVED_REPORTS: 6,
+};
+exports.SCOPE_IDS = SCOPE_IDS;
+
+const DECIMAL_BASE = 10;
+exports.DECIMAL_BASE = DECIMAL_BASE;

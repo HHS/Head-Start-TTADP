@@ -31,7 +31,7 @@ commands:
     steps:
       - run:
           name: Combine package-lock.json files to single file
-          command: cat yarn.lock frontend/yarn.lock > << parameters.filename >>
+          command: cat yarn.lock frontend/yarn.lock packages/common/yarn.lock > << parameters.filename >>
   notify_new_relic:
     description: "Notify new relic of a deploy"
     parameters:
@@ -202,7 +202,7 @@ parameters:
     default: "867221900"
     type: string
   sandbox_new_relic_app_id:
-    default: "867346799"  
+    default: "867346799"
     type: string
 jobs:
   build_and_lint:
@@ -212,16 +212,17 @@ jobs:
       - create_combined_yarnlock
       - restore_cache:
           keys:
-            # To manually bust the cache, increment the version e.g. v6-yarn...
-            - v6-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            # To manually bust the cache, increment the version e.g. v10-yarn...
+            - v10-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
             # If checksum is new, restore partial cache
-            - v6-yarn-deps-
+            - v10-yarn-deps-
       - run: yarn deps
       - save_cache:
           paths:
             - node_modules
             - frontend/node_modules
-          key: v6-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            - packages/common/node_modules
+          key: v10-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
       - run:
           name: Lint backend
           command: yarn lint:ci

@@ -16,7 +16,7 @@
     "@fortawesome/react-fontawesome": "^0.1.11",
     "@hookform/error-message": "^0.0.5",
     "@trussworks/react-uswds": "3.0.2",
-    "@ttahub/common": "file:./packages/common",
+    "@ttahub/common": "file:./../packages/common",
     "@use-it/interval": "^1.0.0",
     "draft-js": "^0.11.7",
     "draftjs-to-html": "^0.9.1",

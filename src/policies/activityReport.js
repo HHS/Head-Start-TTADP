@@ -7,8 +7,8 @@
   or get the report.
 */
 import _ from 'lodash';
+import { REPORT_STATUSES } from '@ttahub/common';
 import SCOPES from '../middleware/scopeConstants';
-import { REPORT_STATUSES } from '../constants';
 
 export default class ActivityReport {
   constructor(user, activityReport) {
