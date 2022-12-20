@@ -497,7 +497,7 @@ jobs:
                   REACT_APP_GTM_ID: $GLOBAL_GTM_ID
                   REACT_APP_GTM_AUTH: $DEV_GTM_AUTH
                   REACT_APP_GTM_PREVIEW: $DEV_GTM_PREVIEW
-                  REACT_APP_WEBSOCKET_URL: $DEV_WEBSOCKET_URL
+                  REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-dev.app.cloud.gov
             - cf_deploy:
                 app_name: tta-smarthub-dev
                 auth_client_id: DEV_AUTH_CLIENT_ID
