@@ -285,7 +285,7 @@ describe('File Upload', () => {
           .attach('file', `${__dirname}/testfiles/testfile.pdf`)
           .expect(200);
       } catch (e) {
-        console.log(e);
+        //
       }
       fileId = response.body.id;
       expect(uploadFile).toHaveBeenCalled();
