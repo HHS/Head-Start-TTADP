@@ -11,6 +11,7 @@ import { faPlusCircle } from '@fortawesome/pro-regular-svg-icons';
 import colors from '../../../../colors';
 import './NextStepsRepeater.scss';
 import ControlledDatePicker from '../../../../components/ControlledDatePicker';
+import Req from '../../../../components/Req';
 
 const DEFAULT_STEP_HEIGHT = 80;
 
@@ -108,10 +109,8 @@ export default function NextStepsRepeater({
                 htmlFor={`${stepType}-next-step-${index + 1}`}
               >
                 {`Step ${index + 1}`}
-                <span className="smart-hub--form-required font-family-sans font-ui-xs text-secondary-dark">
-                  {' '}
-                  *
-                </span>
+                {' '}
+                <Req doNotRead />
               </Label>
               {(errors[name]
                 && errors[name][index] && errors[name][index].note)
@@ -130,6 +129,7 @@ export default function NextStepsRepeater({
                   data-testid={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}NextSteps-input`}
                   style={{ height: !heights[index] ? `${DEFAULT_STEP_HEIGHT}px` : heights[index] }}
                   onChange={(e) => onStepTextChanged(e, index)}
+                  required
                 />
                 {canDelete ? (
                   <Button
@@ -158,10 +158,8 @@ export default function NextStepsRepeater({
                 htmlFor={`${stepType}-next-step-date-${index + 1}`}
               >
                 {dateLabel(index)}
-                <span className="smart-hub--form-required font-family-sans font-ui-xs text-secondary-dark">
-                  {' '}
-                  *
-                </span>
+                {' '}
+                <Req doNotRead />
               </Label>
               {(errors[name] && errors[name][index]
                   && errors[name][index].completeDate)
@@ -177,6 +175,7 @@ export default function NextStepsRepeater({
                   name={`${name}[${index}].completeDate`}
                   value={item.completeDate}
                   dataTestId={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}StepCompleteDate-input`}
+                  required
                 />
               </div>
             </FormGroup>

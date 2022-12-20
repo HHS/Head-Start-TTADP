@@ -21,6 +21,7 @@ export default function ControlledDatePicker({
   isStartDate,
   inputId,
   endDate,
+  required,
 }) {
   /**
    * we don't want to compute these fields multiple times if we don't have to,
@@ -114,6 +115,7 @@ export default function ControlledDatePicker({
       minDate={min.datePicker}
       maxDate={max.datePicker}
       onBlur={(e) => handleOnBlur(e)}
+      required={required}
     />
   );
 }
@@ -132,6 +134,7 @@ ControlledDatePicker.propTypes = {
   setEndDate: PropTypes.func,
   inputId: PropTypes.string.isRequired,
   endDate: PropTypes.string,
+  required: PropTypes.bool,
 };
 
 ControlledDatePicker.defaultProps = {
@@ -141,4 +144,5 @@ ControlledDatePicker.defaultProps = {
   isStartDate: false,
   setEndDate: () => {},
   value: '',
+  required: false,
 };

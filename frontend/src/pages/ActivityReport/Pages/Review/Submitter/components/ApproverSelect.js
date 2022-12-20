@@ -136,6 +136,7 @@ function ApproverSelect({
       hideSelectedOptions
       placeholder=""
       isMulti
+      required
     />
   );
 }
