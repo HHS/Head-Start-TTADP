@@ -6,6 +6,11 @@ import {
   REPORT_STATUSES,
 } from '../../Constants';
 
+const ALLOWED_STATUSES_FOR_GOAL_EDITING = [
+  REPORT_STATUSES.DRAFT,
+  REPORT_STATUSES.NEEDS_ACTION,
+];
+
 /**
  * compares two objects using lodash "isEqual" and returns the difference
  * @param {*} object
@@ -86,7 +91,7 @@ export const convertGoalsToFormData = (
     // if any of the goals ids are included in the activelyEditedGoals id array
     goal.activityReportGoals
     && goal.activityReportGoals.some((arGoal) => arGoal.isActivelyEdited
-    && [REPORT_STATUSES.DRAFT, REPORT_STATUSES.NEEDS_ACTION].includes(calculatedStatus)
+    && ALLOWED_STATUSES_FOR_GOAL_EDITING.includes(calculatedStatus)
     && !accumulatedData.goalForEditing)
   ) {
     // we set it as the goal for editing
