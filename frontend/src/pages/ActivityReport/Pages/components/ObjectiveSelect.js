@@ -45,6 +45,7 @@ export default function ObjectiveSelect({
           styles={selectOptionsReset}
           placeholder="- Select -"
           value={selectedObjectives}
+          required
         />
       </Label>
 

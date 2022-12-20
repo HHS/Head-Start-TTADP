@@ -4,6 +4,7 @@ import {
   FormGroup, Label,
 } from '@trussworks/react-uswds';
 import AutomaticResizingTextarea from '../AutomaticResizingTextarea';
+import Req from '../Req';
 
 export default function GoalText({
   error,
@@ -17,11 +18,11 @@ export default function GoalText({
   userCanEdit,
 }) {
   return (
-    <FormGroup error={error.props.children}>
+    <FormGroup error={error.props.children} required>
       <Label htmlFor={inputName} className={isOnReport || goalStatus === 'Closed' ? 'text-bold' : ''}>
         Recipient&apos;s goal
         {' '}
-        {!isOnReport ? <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span> : null }
+        {!isOnReport ? <Req doNotRead /> : null }
       </Label>
       { isOnReport || goalStatus === 'Closed' || !userCanEdit ? (
         <p className="usa-prose margin-top-0">{goalName}</p>

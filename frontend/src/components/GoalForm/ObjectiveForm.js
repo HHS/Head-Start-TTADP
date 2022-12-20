@@ -112,6 +112,7 @@ export default function ObjectiveForm({
         status={status}
         isLoading={isAppLoading}
         userCanEdit={userCanEdit}
+        inputName={`objectiveTitle-${index}`}
       />
 
       <ObjectiveTopics

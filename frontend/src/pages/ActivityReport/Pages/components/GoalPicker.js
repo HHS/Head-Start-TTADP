@@ -141,6 +141,7 @@ const GoalPicker = ({
             }}
             placeholder="- Select -"
             value={goalForEditing}
+            required
           />
         </Label>
         {goalForEditing ? (

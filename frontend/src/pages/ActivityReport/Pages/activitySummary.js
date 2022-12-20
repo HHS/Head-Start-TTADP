@@ -420,6 +420,7 @@ const ActivitySummary = ({
           <FormItem
             label={participantsLabel}
             name="participants"
+            required
           >
             <MultiSelect
               name="participants"
@@ -444,6 +445,7 @@ const ActivitySummary = ({
                   name="numberOfParticipants"
                   type="number"
                   min={1}
+                  required
                   inputRef={
                     register({
                       required: 'Enter number of participants',

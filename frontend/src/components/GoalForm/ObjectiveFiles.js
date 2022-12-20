@@ -8,6 +8,7 @@ import QuestionTooltip from './QuestionTooltip';
 import UnusedData from './UnusedData';
 import ObjectiveFileUploader from '../FileUploader/ObjectiveFileUploader';
 import './ObjectiveFiles.scss';
+import Req from '../Req';
 
 export default function ObjectiveFiles({
   objective,
@@ -78,7 +79,7 @@ export default function ObjectiveFiles({
             <legend>
               {label}
               {' '}
-              <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
+              <Req doNotRead />
               <QuestionTooltip
                 text={(
                   <div>
@@ -107,6 +108,7 @@ export default function ObjectiveFiles({
                     name={`add-objective-files-${objectiveId}-${index}`}
                     checked={useFiles}
                     onChange={() => setUseFiles(true)}
+                    required
                   />
                   <Radio
                     label="No"
@@ -114,6 +116,7 @@ export default function ObjectiveFiles({
                     name={`add-objective-files-${objectiveId}-${index}`}
                     checked={!useFiles}
                     onChange={() => setUseFiles(false)}
+                    required
                   />
                 </>
               )}

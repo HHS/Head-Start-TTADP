@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import {
@@ -53,6 +53,7 @@ export default function Form({
   userCanEdit,
 }) {
   const { isAppLoading } = useContext(AppLoadingContext);
+  const [objectiveJustAdded, setObjectiveJustAdded] = useState(false);
 
   const onUpdateText = (e) => setGoalName(e.target.value);
 
@@ -71,7 +72,24 @@ export default function Form({
     setObjectives(obj);
 
     clearEmptyObjectiveError();
+    setObjectiveJustAdded(true);
   };
+
+  // focus on the new objective
+  useEffect(() => {
+    // we do nothing if the objective was not just added
+    if (!objectiveJustAdded) return;
+
+    // 1) get all the matching fields
+    const objectiveTitleFields = document.querySelectorAll('[name^="objectiveTitle-"]');
+    // 2) bomb out if we don't find any
+    if (!objectiveTitleFields.length) return;
+    // 3) focus on the last one
+    objectiveTitleFields[objectiveTitleFields.length - 1].focus();
+
+    // reset the flag
+    setObjectiveJustAdded(false);
+  }, [objectiveJustAdded]);
 
   const removeObjective = (index) => {
     // copy existing state

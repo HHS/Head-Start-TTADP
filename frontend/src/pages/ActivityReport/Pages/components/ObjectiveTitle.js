@@ -4,6 +4,7 @@ import {
   FormGroup, Label,
 } from '@trussworks/react-uswds';
 import AutomaticResizingTextarea from '../../../../components/AutomaticResizingTextarea';
+import Req from '../../../../components/Req';
 
 export default function ObjectiveTitle({
   error,
@@ -37,7 +38,7 @@ export default function ObjectiveTitle({
       <Label htmlFor={inputName} className={readOnly ? 'text-bold' : ''}>
         TTA objective
         {' '}
-        { !readOnly ? <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span> : null }
+        { !readOnly ? <Req doNotRead /> : null }
       </Label>
       { readOnly && title ? (
         <p className="margin-top-0 usa-prose" data-testid="readonly-objective-text">{title}</p>

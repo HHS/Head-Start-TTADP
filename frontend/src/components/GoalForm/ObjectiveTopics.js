@@ -7,6 +7,7 @@ import {
 import Select from 'react-select';
 import selectOptionsReset from '../selectOptionsReset';
 import UnusedData from './UnusedData';
+import Req from '../Req';
 
 export default function ObjectiveTopics({
   error,
@@ -78,7 +79,7 @@ export default function ObjectiveTopics({
           <>
             Topics
             {' '}
-            <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
+            <Req doNotRead />
           </>
         </Label>
         {error}
@@ -100,6 +101,7 @@ export default function ObjectiveTopics({
           isDisabled={isLoading}
           getOptionLabel={(option) => option.name}
           getOptionValue={(option) => option.id}
+          required
         />
       </FormGroup>
     </>
