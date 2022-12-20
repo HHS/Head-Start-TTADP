@@ -161,6 +161,8 @@ function MultiSelect({
 
   const Selector = canCreate ? Creatable : Select;
 
+  const isRequired = !!(required);
+
   return (
     <Controller
       render={({ onChange: controllerOnChange, value }) => {
@@ -191,6 +193,7 @@ function MultiSelect({
             hideSelectedOptions={multiSelectOptions.hideSelectedOptions}
             placeholder={placeholderText || ''}
             onCreateOption={onCreateOption}
+            required={isRequired}
             isMulti
           />
         );

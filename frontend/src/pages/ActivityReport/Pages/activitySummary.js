@@ -149,6 +149,7 @@ const ActivitySummary = ({
               value="other-entity"
               className="smart-hub--report-checkbox"
               inputRef={register({ required: 'Select one' })}
+              required
             />
           </FormItem>
         </div>
@@ -229,6 +230,7 @@ const ActivitySummary = ({
               value="recipient"
               className="smart-hub--report-checkbox"
               inputRef={register({ required: 'Select one' })}
+              required
             />
             <Radio
               id="requestorRegionalOffice"
@@ -237,6 +239,7 @@ const ActivitySummary = ({
               value="regionalOffice"
               className="smart-hub--report-checkbox"
               inputRef={register({ required: 'Select one' })}
+              required
             />
           </FormItem>
         </div>
@@ -279,6 +282,7 @@ const ActivitySummary = ({
                   isStartDate
                   inputId="startDate"
                   endDate={endDate}
+                  required
                 />
               </FormItem>
             </Grid>
@@ -303,6 +307,7 @@ const ActivitySummary = ({
                   value={endDate}
                   minDate={startDate}
                   key={endDateKey}
+                  required
                 />
               </FormItem>
             </Grid>
@@ -329,6 +334,7 @@ const ActivitySummary = ({
                       max: { value: 99, message: 'Duration must be less than or equal to 99 hours' },
                     })
                   }
+                  required
                 />
               </FormItem>
             </Grid>
@@ -366,6 +372,7 @@ const ActivitySummary = ({
               value="virtual"
               className="smart-hub--report-checkbox"
               inputRef={register({ required: 'Select one' })}
+              required
             />
             <Radio
               id="delivery-method-in-person"
@@ -374,6 +381,7 @@ const ActivitySummary = ({
               value="in-person"
               className="smart-hub--report-checkbox"
               inputRef={register({ required: 'Select one' })}
+              required
             />
           </FormItem>
           <div aria-live="polite">

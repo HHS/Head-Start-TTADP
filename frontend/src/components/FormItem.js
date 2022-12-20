@@ -7,6 +7,7 @@ import {
 } from '@trussworks/react-uswds';
 
 import './FormItem.scss';
+import Req from './Req';
 
 const labelPropTypes = {
   label: PropTypes.node.isRequired,
@@ -70,10 +71,7 @@ function FormItem({
     <>
       {label}
       {required && (
-      <span className="smart-hub--form-required font-family-sans font-ui-xs text-secondary-dark">
-        {' '}
-        *
-      </span>
+      <Req />
       )}
     </>
   );
