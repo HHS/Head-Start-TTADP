@@ -7,6 +7,7 @@ import {
   Role,
   ActivityReportApprover,
   User as UserModel,
+  ActivityReportGoal,
   sequelize,
 } from '../../models';
 import ActivityReport from '../../policies/activityReport';
@@ -605,6 +606,15 @@ export async function submitReport(req, res) {
     // Resubmitting resets any needs_action status to null ("pending" status)
     await ActivityReportApprover.update({ status: null }, {
       where: { status: APPROVER_STATUSES.NEEDS_ACTION, activityReportId },
+      individualHooks: true,
+    });
+
+    // on submit, we should inform the backend that we
+    // are no longer editing any goals (since we are submitting)
+    await ActivityReportGoal.update({
+      isActivelyEdited: false,
+    }, {
+      where: { activityReportId },
       individualHooks: true,
     });
 

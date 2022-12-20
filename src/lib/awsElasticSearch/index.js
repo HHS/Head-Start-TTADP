@@ -1,7 +1,13 @@
 /* eslint-disable camelcase */
 import { Client, Connection } from '@opensearch-project/opensearch';
 import aws4 from 'aws4';
-import { auditLogger, logger } from '../logger';
+import { auditLogger, logger } from '../../logger';
+
+/*
+  Primary Docs:
+  https://github.com/opensearch-project/opensearch-js/blob/HEAD/USER_GUIDE.md
+  https://opensearch.org/docs/latest/api-reference/index-apis/create-index/
+*/
 
 const generateEsConfig = () => {
   // Pull from VCAP env variables (cloud.gov)
@@ -67,10 +73,10 @@ const getClient = async () => new Client({
 /*
   Create an index that can have searchable documents assigned.
 */
-const createIndex = async (indexName, mockClient) => {
+const createIndex = async (indexName, passedClient) => {
   try {
     // Initialize the client.
-    const client = mockClient || await getClient();
+    const client = passedClient || await getClient();
 
     // Create index.
     const res = await client.indices.create({
@@ -87,10 +93,10 @@ const createIndex = async (indexName, mockClient) => {
 /*
   Assign a searchable document to an index.
 */
-const addIndexDocument = async (indexName, id, document, mockClient) => {
+const addIndexDocument = async (indexName, id, document, passedClient) => {
   try {
     // Initialize the client.
-    const client = mockClient || await getClient();
+    const client = passedClient || await getClient();
 
     // Add a document to an index.
     const res = await client.index({
@@ -107,12 +113,35 @@ const addIndexDocument = async (indexName, id, document, mockClient) => {
   }
 };
 /*
-  Search index documents.
+  Bulk document index.
+  Documents should be in following structure:
+  { "create": { "_index": "movies", "_id": "tt1392214" } }
+  { "title": "Prisoners", "year": 2013 }
 */
-const search = async (indexName, fields, query, mockClient) => {
+const bulkIndex = async (documents, indexName, passedClient) => {
   try {
     // Initialize the client.
-    const client = mockClient || await getClient();
+    const client = passedClient || await getClient();
+
+    // Add a document to an index.
+    const res = await client.bulk({
+      body: documents,
+      refresh: true, // triggers manual refresh.
+    });
+    logger.info(`AWS OpenSearch: Successfully added bulk document's to index ${indexName}`);
+    return res;
+  } catch (error) {
+    auditLogger.error(`AWS OpenSearch Error: Unable to add bulk document's to index '${indexName}': ${error.message}`);
+    throw error;
+  }
+};
+/*
+  Search index documents.
+*/
+const search = async (indexName, fields, query, passedClient) => {
+  try {
+    // Initialize the client.
+    const client = passedClient || await getClient();
 
     // Create search body.
     const body = {
@@ -149,10 +178,10 @@ const search = async (indexName, fields, query, mockClient) => {
       },
     };
 */
-const updateIndexDocument = async (indexName, id, body, mockClient) => {
+const updateIndexDocument = async (indexName, id, body, passedClient) => {
   try {
     // Initialize the client.
-    const client = mockClient || await getClient();
+    const client = passedClient || await getClient();
 
     // Update index document.
     const res = await client.update({
@@ -173,10 +202,10 @@ const updateIndexDocument = async (indexName, id, body, mockClient) => {
 /*
   Delete an index document.
 */
-const deleteIndexDocument = async (indexName, id, mockClient) => {
+const deleteIndexDocument = async (indexName, id, passedClient) => {
   try {
     // Initialize the client.
-    const client = mockClient || await getClient();
+    const client = passedClient || await getClient();
 
     // Delete index document.
     const res = await client.delete({
@@ -196,27 +225,34 @@ const deleteIndexDocument = async (indexName, id, mockClient) => {
 /*
   Delete an index.
 */
-const deleteIndex = async (indexName, mockClient) => {
+const deleteIndex = async (indexName, passedClient) => {
+  let res;
   try {
     // Initialize the client.
-    const client = mockClient || await getClient();
+    const client = passedClient || await getClient();
 
-    const res = await client.indices.delete({
+    res = await client.indices.delete({
       index: indexName,
     });
     logger.info(`AWS OpenSearch: Successfully deleted index '${indexName}'`);
     return res;
   } catch (error) {
-    auditLogger.error(`AWS OpenSearch Error: Unable to delete index '${indexName}': ${error.message}`);
-    throw error;
+    const alreadyExisted = error.meta.body.error.type === 'index_not_found_exception';
+    if (!alreadyExisted) {
+      auditLogger.error(`AWS OpenSearch Error: Unable to delete index '${indexName}': ${error.message}`);
+      throw error;
+    }
+    return res;
   }
 };
 
 export {
+  getClient,
   createIndex,
   addIndexDocument,
   updateIndexDocument,
   search,
   deleteIndexDocument,
   deleteIndex,
+  bulkIndex,
 };
