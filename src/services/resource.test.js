@@ -588,6 +588,57 @@ describe('resource', () => {
             destroy: [{ genericId: 1, resourceIds: [5] }],
           });
       });
+      it('expected usage, empty incomingResources', () => {
+        incomingResources = [];
+        expect(filterResourcesForSync(
+          incomingResources,
+          currentResources,
+          calculateIsAutoDetectedFunc,
+        ))
+          .toMatchObject({
+            create: [],
+            update: [],
+            destroy: [{ genericId: 1, resourceIds: [2, 3, 4, 5] }],
+          });
+      });
+      it('expected usage, empty currentResources', () => {
+        currentResources = [];
+        expect(filterResourcesForSync(
+          incomingResources,
+          currentResources,
+          calculateIsAutoDetectedFunc,
+        ))
+          .toMatchObject({
+            create: [
+              {
+                genericId: 1,
+                sourceFields: ['a'],
+                resourceId: 1,
+                isAutoDetected: false,
+              },
+              {
+                genericId: 1,
+                sourceFields: ['b', 'c'],
+                resourceId: 2,
+                isAutoDetected: true,
+              },
+              {
+                genericId: 1,
+                sourceFields: ['d'],
+                resourceId: 3,
+                isAutoDetected: true,
+              },
+              {
+                genericId: 1,
+                sourceFields: ['f'],
+                resourceId: 4,
+                isAutoDetected: false,
+              },
+            ],
+            update: [],
+            destroy: [],
+          });
+      });
     });
   });
   describe('ActivityReports Resource Processing', () => {
