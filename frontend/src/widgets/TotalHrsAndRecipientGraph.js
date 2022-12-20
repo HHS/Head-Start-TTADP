@@ -300,7 +300,7 @@ export function LegendControl({
   }
 
   return (
-    <div className={`usa-checkbox grid-col flex-auto ${shape}`}>
+    <div className={`usa-checkbox grid-col flex-auto ${shape} ttahub-legend-control`}>
       <input
         className="usa-checkbox__input"
         id={id}
