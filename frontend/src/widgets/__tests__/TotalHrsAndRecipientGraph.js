@@ -1,3 +1,4 @@
+/* eslint-disable no-plusplus */
 /* eslint-disable jest/no-disabled-tests */
 import '@testing-library/jest-dom';
 import React from 'react';
@@ -45,49 +46,49 @@ describe('Total Hrs And Recipient Graph Widget', () => {
     renderTotalHrsAndRecipientGraph({ data: TEST_DATA_MONTHS });
 
     const graphTitle = screen.getByRole('heading', { name: /total tta hours/i });
-    await expect(graphTitle).toBeInTheDocument();
-    await expect(document.querySelector('svg')).toBeInTheDocument();
+    expect(graphTitle).toBeInTheDocument();
+    expect(document.querySelector('svg')).toBeInTheDocument();
 
     // Get Trace Nodes.
     const nodes = document.querySelectorAll('.plot .scatterlayer');
 
     // Verify Number of Traces.
-    await expect(nodes[0].childNodes.length).toEqual(3);
+    expect(nodes[0].childNodes.length).toEqual(3);
 
     // Verify Number of 'Recipient Rec TTA' Trace Points.
     // await expect(nodes[0].childNodes[0].childNodes[3].childNodes.length).toEqual(6);
 
     // Verify Number of 'Hours of Training' Trace Points.
-    await expect(nodes[0].childNodes[0].childNodes[3].childNodes.length).toEqual(6);
+    expect(nodes[0].childNodes[0].childNodes[3].childNodes.length).toEqual(6);
 
     // Verify Number of 'Hours of Technical Assistance' Trace Points.
-    await expect(nodes[0].childNodes[1].childNodes[3].childNodes.length).toEqual(6);
+    expect(nodes[0].childNodes[1].childNodes[3].childNodes.length).toEqual(6);
 
     // Verify Number of 'Hours of Both' Trace Points.
-    await expect(nodes[0].childNodes[2].childNodes[3].childNodes.length).toEqual(6);
+    expect(nodes[0].childNodes[2].childNodes[3].childNodes.length).toEqual(6);
   });
 
   it('shows the correct day data', async () => {
     renderTotalHrsAndRecipientGraph({ data: TEST_DATA_DAYS });
 
     const graphTitle = screen.getByRole('heading', { name: /total tta hours/i });
-    await expect(graphTitle).toBeInTheDocument();
-    await expect(document.querySelector('svg')).toBeInTheDocument();
+    expect(graphTitle).toBeInTheDocument();
+    expect(document.querySelector('svg')).toBeInTheDocument();
 
     // Get Trace Nodes.
     const nodes = document.querySelectorAll('.plot .scatterlayer');
 
     // Verify Number of Traces.
-    await expect(nodes[0].childNodes.length).toEqual(3);
+    expect(nodes[0].childNodes.length).toEqual(3);
 
     // Verify Number of 'Recipient Rec TTA' Trace Points.
-    await expect(nodes[0].childNodes[0].childNodes[3].childNodes.length).toEqual(4);
+    expect(nodes[0].childNodes[0].childNodes[3].childNodes.length).toEqual(4);
 
     // Verify Number of 'Hours of Training' Trace Points.
-    await expect(nodes[0].childNodes[1].childNodes[3].childNodes.length).toEqual(4);
+    expect(nodes[0].childNodes[1].childNodes[3].childNodes.length).toEqual(4);
 
     // Verify Number of 'Hours of Technical Assistance' Trace Points.
-    await expect(nodes[0].childNodes[2].childNodes[3].childNodes.length).toEqual(4);
+    expect(nodes[0].childNodes[2].childNodes[3].childNodes.length).toEqual(4);
 
     expect(document.querySelectorAll('.plot .scatterlayer .point').length).toBe(12);
     const training = screen.getByRole('checkbox', { name: /training/i, hidden: true });
@@ -143,7 +144,6 @@ describe('Total Hrs And Recipient Graph Widget', () => {
 
     const cells = [];
 
-    // eslint-disable-next-line no-plusplus
     for (let index = 2; index < 10; index++) {
       cells.push(screen.getByRole('cell', { name: `${index.toString()}` }));
     }
@@ -154,5 +154,34 @@ describe('Total Hrs And Recipient Graph Widget', () => {
     expect(table).toBeInTheDocument();
     fireEvent.click(button);
     expect(table).not.toBeInTheDocument();
+  });
+
+  it('expertly handles large datasets', async () => {
+    const largeDataSet = [{
+      name: 'Hours of Training', x: ['Sep-20', 'Oct-20', 'Nov-20', 'Dec-20', 'Jan-21', 'Feb-21', 'Mar-21', 'Apr-21', 'May-21', 'Jun-21', 'Jul-21', 'Aug-21', 'Sep-21', 'Oct-21', 'Nov-21', 'Dec-21', 'Jan-22', 'Feb-22', 'Mar-22', 'Apr-22', 'May-22', 'Jun-22', 'Jul-22', 'Aug-22', 'Sep-22'], y: [87.5, 209, 406.50000000000006, 439.4, 499.40000000000003, 493.6, 443.5, 555, 527.5, 428.5, 295, 493.5, 533.5, 680.5, 694, 278, 440, 611, 761.5, 534, 495.5, 551, 338.5, 772, 211], month: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
+    }, {
+      name: 'Hours of Technical Assistance', x: ['Sep-20', 'Oct-20', 'Nov-20', 'Dec-20', 'Jan-21', 'Feb-21', 'Mar-21', 'Apr-21', 'May-21', 'Jun-21', 'Jul-21', 'Aug-21', 'Sep-21', 'Oct-21', 'Nov-21', 'Dec-21', 'Jan-22', 'Feb-22', 'Mar-22', 'Apr-22', 'May-22', 'Jun-22', 'Jul-22', 'Aug-22', 'Sep-22'], y: [509.90000000000003, 1141.8999999999994, 1199.3999999999996, 1109.6999999999998, 1302.3999999999996, 1265.3999999999996, 1404.6, 1328, 1257.5, 1170, 1069.5, 1178, 1215.5, 1426.5, 1219.5, 1063, 1151, 1316, 1436, 1400, 1518.5, 1353, 1238, 1202, 578], month: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
+    }, {
+      name: 'Hours of Both', x: ['Sep-20', 'Oct-20', 'Nov-20', 'Dec-20', 'Jan-21', 'Feb-21', 'Mar-21', 'Apr-21', 'May-21', 'Jun-21', 'Jul-21', 'Aug-21', 'Sep-21', 'Oct-21', 'Nov-21', 'Dec-21', 'Jan-22', 'Feb-22', 'Mar-22', 'Apr-22', 'May-22', 'Jun-22', 'Jul-22', 'Aug-22', 'Sep-22'], y: [55, 134.5, 173, 137.5, 190, 248.8, 234.3, 230, 193.5, 187.5, 200.5, 202.5, 224.5, 299.5, 155, 206.5, 209.5, 251.5, 234, 206, 235.5, 245, 279.5, 274.5, 155.5], month: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
+    }];
+    renderTotalHrsAndRecipientGraph({ data: largeDataSet });
+
+    // confirm the number of labels
+    const labels = document.querySelectorAll('.xaxislayer-above .xtick text');
+    expect(labels.length).toBe(5);
+
+    // confirm the label content
+    const labelText = Array.from(labels).map((label) => label.textContent);
+    expect(labelText).toEqual(['Sep-20', 'Mar-21', 'Sep-21', 'Mar-22', 'Sep-22']);
+
+    // confirm the number of points
+    const traces = document.querySelectorAll('.plot .scatterlayer .trace.scatter');
+    expect(traces.length).toBe(3);
+
+    for (let i = 0; i < traces.length; i++) {
+      const trace = traces[i];
+      const points = trace.querySelectorAll('.points path');
+      expect(points.length).toBe(25);
+    }
   });
 });
