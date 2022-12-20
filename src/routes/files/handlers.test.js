@@ -1,5 +1,6 @@
 import { validate } from 'uuid';
 import waitFor from 'wait-for-expect';
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   File,
   ActivityReport,
@@ -14,7 +15,7 @@ import db, {
 import app from '../../app';
 import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
 import * as scanQueue from '../../services/scanQueue';
-import { REPORT_STATUSES, FILE_STATUSES } from '../../constants';
+import { FILE_STATUSES } from '../../constants';
 import ActivityReportPolicy from '../../policies/activityReport';
 import ObjectivePolicy from '../../policies/objective';
 import * as Files from '../../services/files';

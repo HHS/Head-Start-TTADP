@@ -20,11 +20,6 @@ export const GOALS_PER_PAGE = 5;
 
 export const SEARCH_RESULTS_PER_PAGE = 23;
 
-export const APPROVER_STATUSES = {
-  APPROVED: 'approved',
-  NEEDS_ACTION: 'needs_action',
-};
-
 export const AUTOMATIC_CREATION = 'Automatic';
 export const CURATED_CREATION = 'Curated';
 export const CREATION_METHOD = [

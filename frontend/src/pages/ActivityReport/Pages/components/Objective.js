@@ -4,8 +4,8 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   useController, useFormContext,
 } from 'react-hook-form/dist/index.ie11';
+import { REPORT_STATUSES } from '@ttahub/common';
 import ObjectiveTitle from './ObjectiveTitle';
-import { REPORT_STATUSES } from '../../../../Constants';
 import ObjectiveTopics from '../../../../components/GoalForm/ObjectiveTopics';
 import ResourceRepeater from '../../../../components/GoalForm/ResourceRepeater';
 import ObjectiveFiles from '../../../../components/GoalForm/ObjectiveFiles';

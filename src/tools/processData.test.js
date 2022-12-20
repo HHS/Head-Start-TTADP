@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   sequelize,
   ActivityReport,
@@ -16,7 +17,6 @@ import {
 import processData, {
   truncateAuditTables, hideUsers, hideRecipientsGrants, bootstrapUsers,
 } from './processData';
-import { REPORT_STATUSES } from '../constants';
 
 jest.mock('../logger');
 

@@ -1,4 +1,5 @@
 import moment from 'moment';
+import { SCOPE_IDS } from '@ttahub/common';
 
 export const CONTAINS = 'contains';
 export const NOT_CONTAINS = 'does not contain';
@@ -35,15 +36,6 @@ export const DATE_CONDITIONS = [
 ];
 
 export const DATE_FORMAT = 'MM/DD/YYYY';
-
-export const SCOPE_IDS = {
-  SITE_ACCESS: 1,
-  ADMIN: 2,
-  READ_WRITE_ACTIVITY_REPORTS: 3,
-  READ_ACTIVITY_REPORTS: 4,
-  APPROVE_ACTIVITY_REPORTS: 5,
-  UNLOCK_APPROVED_REPORTS: 6,
-};
 
 export const REGIONAL_SCOPES = {
   [SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS]: {
@@ -132,20 +124,10 @@ export const REGIONS = [
   12,
 ];
 
-export const DECIMAL_BASE = 10;
-
 export const managerReportStatuses = [
   'needs_action',
   'approved',
 ];
-
-export const REPORT_STATUSES = {
-  DRAFT: 'draft',
-  DELETED: 'deleted',
-  SUBMITTED: 'submitted',
-  NEEDS_ACTION: 'needs_action',
-  APPROVED: 'approved',
-};
 
 export const MODEL_TYPES = {
   ACTIVITY_REPORT: 'activityReport',

@@ -6,9 +6,9 @@ import {
 } from '@testing-library/react';
 import selectEvent from 'react-select-event';
 import fetchMock from 'fetch-mock';
+import { SCOPE_IDS } from '@ttahub/common';
 import FilterStateSelect from '../FilterStateSelect';
 import UserContext from '../../../UserContext';
-import { SCOPE_IDS } from '../../../Constants';
 
 const { findByText } = screen;
 const { READ_ACTIVITY_REPORTS } = SCOPE_IDS;
