@@ -21,6 +21,7 @@ import rolesRouter from './roles';
 import transactionWrapper from './transactionWrapper';
 import search from './search';
 import settingsRouter from './settings';
+import { currentUserId } from '../services/currentUser';
 
 export const loginPath = '/login';
 
@@ -59,7 +60,7 @@ router.use('/search', search);
 router.use('/settings', settingsRouter);
 
 const getUser = async (req, res) => {
-  const { userId } = req.session;
+  const userId = await currentUserId(req, res);
   try {
     const user = await userById(userId);
     res.json(user.toJSON());

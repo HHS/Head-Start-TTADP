@@ -22,22 +22,22 @@ describe('currentUser', () => {
     const mockSession = jest.fn();
     const mockLocals = jest.fn();
 
-    test('can retrieve userId from the session', () => {
+    test('can retrieve userId from the session', async () => {
       const mockRequest = { session: mockSession };
       const mockResponse = { locals: mockLocals };
 
       mockSession.userId = 5;
 
-      expect(currentUserId(mockRequest, mockResponse)).toEqual(5);
+      expect(await currentUserId(mockRequest, mockResponse)).toEqual(5);
     });
 
-    test('can retrieve userId from the response locals', () => {
+    test('can retrieve userId from the response locals', async () => {
       const mockRequest = {};
       const mockResponse = { locals: mockLocals };
 
       mockLocals.userId = 10;
 
-      expect(currentUserId(mockRequest, mockResponse)).toEqual(10);
+      expect(await currentUserId(mockRequest, mockResponse)).toEqual(10);
     });
   });
 
