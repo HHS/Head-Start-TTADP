@@ -1,5 +1,6 @@
 const { Op } = require('sequelize');
-const { REPORT_STATUSES, OBJECTIVE_STATUS } = require('../../constants');
+const { REPORT_STATUSES } = require('@ttahub/common');
+const { OBJECTIVE_STATUS } = require('../../constants');
 const { auditLogger } = require('../../logger');
 const { findOrCreateGoalTemplate } = require('./goal');
 const { findOrCreateObjectiveTemplate } = require('./objective');

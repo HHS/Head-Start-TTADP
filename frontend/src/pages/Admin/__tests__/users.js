@@ -9,8 +9,8 @@ import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import moment from 'moment';
+import { SCOPE_IDS } from '@ttahub/common';
 import Users, { setFeatureFromURL } from '../users';
-import { SCOPE_IDS } from '../../../Constants';
 
 describe('User Page', () => {
   beforeEach(async () => {
