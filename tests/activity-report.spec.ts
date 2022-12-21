@@ -13,7 +13,6 @@ async function getFullName(page) {
 
 test.describe("Activity Report", () => {
   test('can create an AR with multiple goals, submit for review, and review', async ({ page }) => {
-    test.slow();
     const fullName = await getFullName(page);
 
     await page.getByRole('link', { name: 'Activity Reports' }).click();
@@ -22,31 +21,30 @@ test.describe("Activity Report", () => {
     const heading = await page.getByRole('heading', { name: /activity report for region \d/i });
     const regionNumber = await heading.textContent().then((text) => text!.match(/\d/)![0]);
 
-    await page.getByRole('group', { name: 'Was this activity for a recipient or other entity? *' }).locator('label').filter({ hasText: 'Recipient' }).click();
+    await page.getByRole('group', { name: 'Was this activity for a recipient or other entity?' }).locator('label').filter({ hasText: 'Recipient' }).click();
     await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
     await page.locator('#react-select-3-option-0-0').click();
     await blur(page);
     await page.locator('#targetPopulations div').filter({ hasText: '- Select -' }).nth(1).click();
     await page.locator('#react-select-7-option-0').click();
     await blur(page);
-    await page.getByRole('group', { name: 'Who requested this activity? Use "Regional Office" for TTA not requested by recipient. *' }).locator('label').filter({ hasText: 'Regional Office' }).click();
+    await page.getByRole('group', { name: 'Who requested this activity? Use "Regional Office" for TTA not requested by recipient.' }).locator('label').filter({ hasText: 'Regional Office' }).click();
     await page.getByRole('group', { name: 'Reason for activity' }).getByTestId('label').locator('div').filter({ hasText: '- Select -' }).nth(2).click();
     await page.locator('#react-select-9-option-0').click();
     await blur(page);
-    await page.getByLabel('Start date *mm/dd/yyyy').click();
-    await page.getByLabel('Start date *mm/dd/yyyy').fill('12/01/2020');
-    await page.getByLabel('End date *mm/dd/yyyy').click();
-    await page.getByLabel('End date *mm/dd/yyyy').fill('12/01/2050');
-    await page.getByLabel('Duration in hours (round to the nearest half hour) *').click();
-    await page.getByLabel('Duration in hours (round to the nearest half hour) *').fill('5');
-    await page.getByRole('group', { name: 'What TTA was provided *' }).getByText('Training').click();
+    await page.getByLabel(/Start date/i).click();
+    await page.getByLabel(/Start date/i).fill('12/01/2020');
+    await page.getByLabel(/End date/i).fill('12/01/2050');
+    await page.getByLabel('Duration in hours (round to the nearest half hour)').click();
+    await page.getByLabel('Duration in hours (round to the nearest half hour)').fill('5');
+    await page.getByRole('group', { name: 'What TTA was provided' }).getByText('Training').click();
     await page.getByText('Virtual').click();
     await page.getByText('Video').click();
     await page.locator('#participants div').filter({ hasText: '- Select -' }).nth(1).click();
     await page.locator('#react-select-11-option-0').click();
     await blur(page);
-    await page.getByLabel('Number of participants involved *').click();
-    await page.getByLabel('Number of participants involved *').fill('5');
+    await page.getByLabel('Number of participants involved').click();
+    await page.getByLabel('Number of participants involved').fill('5');
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
     await page.getByRole('button', { name: 'Supporting attachments not started' }).click(); 
@@ -59,11 +57,10 @@ test.describe("Activity Report", () => {
     await page.getByTestId('textarea').fill('g1');
     await page.getByText('Yes').click();
     await page.getByRole('button', { name: 'Save goal' }).click();
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await page.locator('.css-512wcj-control > .css-1fdsijx-ValueContainer').click();
     await page.keyboard.press('Enter');
-    await page.getByLabel('TTA objective *').click();
-    await page.getByLabel('TTA objective *').fill('g1o1');
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await page.locator('[name="goalForEditing.objectives[0].title"]').fill('g1o1');
+    await page.locator('.css-512wcj-control > .css-1fdsijx-ValueContainer').click();
     await page.locator('#react-select-21-option-0').click();
     await blur(page);
 
@@ -101,18 +98,18 @@ test.describe("Activity Report", () => {
 
     // create the second goal
     await page.getByRole('button', { name: 'Add new goal' }).click();
-    await page.locator('.css-g1d714-ValueContainer').click();
+    await page.locator('.css-1fdsijx-ValueContainer').click();
     await page.keyboard.type('Create new goal');
     await page.keyboard.press('Enter');
     await page.getByTestId('textarea').click();
     await page.getByTestId('textarea').fill('g2');
-    await page.getByRole('group', { name: 'Is this a Recipient TTA Plan Agreement (RTTAPA) goal?*' }).getByText('Yes').click();
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await page.getByRole('group', { name: 'Is this a Recipient TTA Plan Agreement (RTTAPA) goal?' }).getByText('Yes').click();
+    await page.locator('.css-512wcj-control > .css-1fdsijx-ValueContainer').click();
     await page.locator('#react-select-51-option-0').click();
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('g2o1');
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.keyboard.press('Enter');
+    await page.locator('.css-512wcj-control > .css-1fdsijx-ValueContainer').click();
+    await page.locator('#react-select-55-option-0').click();
     await blur(page);
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
     await page.keyboard.type('hello');    
@@ -141,12 +138,12 @@ test.describe("Activity Report", () => {
     // fill out next steps
     await page.getByTestId('specialistNextSteps-input').click();
     await page.getByTestId('specialistNextSteps-input').fill('1');
-    await page.getByLabel('When do you anticipate completing step 1? *').click();
-    await page.getByLabel('When do you anticipate completing step 1? *').fill('12/01/2050');
+    await page.getByLabel('When do you anticipate completing step 1?').click();
+    await page.getByLabel('When do you anticipate completing step 1?').fill('12/01/2050');
     await page.getByTestId('recipientNextSteps-input').click();
     await page.getByTestId('recipientNextSteps-input').fill('2');
-    await page.getByLabel('When does the recipient anticipate completing step 1? *').click();
-    await page.getByLabel('When does the recipient anticipate completing step 1? *').fill('12/01/2050');
+    await page.getByLabel('When does the recipient anticipate completing step 1?').click();
+    await page.getByLabel('When does the recipient anticipate completing step 1?').fill('12/01/2050');
 
     // move to review and submit
     await page.getByRole('button', { name: 'Save and continue' }).click();
@@ -155,7 +152,7 @@ test.describe("Activity Report", () => {
     await page.getByRole('textbox', { name: 'Additional notes' }).locator('div').nth(2).click();
     await page.keyboard.type('these are my creator notes');
 
-    const approverDropdown = page.locator('.css-g1d714-ValueContainer');
+    const approverDropdown = page.locator('.css-1fdsijx-ValueContainer');
     await approverDropdown.click();
 
     // type our name into the dropdown to filter to just us

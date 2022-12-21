@@ -33,21 +33,20 @@ describe('other entity report', () => {
     await page.locator('#targetPopulations div').filter({ hasText: '- Select -' }).nth(1).click();
     await page.locator('#react-select-19-option-0').click();
     await page.locator('.smart-hub-activity-report > div:nth-child(2) > div:nth-child(2)').click();
-    await page.getByRole('group', { name: 'Who requested this activity? Use "Regional Office" for TTA not requested by recipient. *' }).locator('label').filter({ hasText: 'Recipient' }).click();
+    await page.getByRole('group', { name: 'Who requested this activity? Use "Regional Office" for TTA not requested by recipient.' }).locator('label').filter({ hasText: 'Recipient' }).click();
     await page.getByRole('group', { name: 'Reason for activity' }).getByTestId('label').locator('div').filter({ hasText: '- Select -' }).nth(2).click();
     await page.locator('#react-select-21-option-0').click();
     await page.getByLabel(/Start date/i).fill('04/05/2021');
-    await page.getByLabel('End date *mm/dd/yyyy').fill('05/07/2021');
-    await page.getByLabel('Duration in hours (round to the nearest half hour) *').fill('2');
-    await page.getByRole('group', { name: 'What TTA was provided *' }).getByText('Training').click();
+    await page.getByLabel(/end date/i).fill('05/07/2021');
+    await page.getByLabel('Duration in hours (round to the nearest half hour)').fill('2');
+    await page.getByRole('group', { name: 'What TTA was provided' }).getByText('Training').click();
     await page.getByText('Virtual').click();
     await page.getByText('Video').click();
     await page.locator('#participants div').filter({ hasText: '- Select -' }).nth(1).click();
     await page.locator('#react-select-23-option-1').click();
     await page.locator('#react-select-23-option-3').click();
     await page.locator('.smart-hub-activity-report > div:nth-child(2) > div').first().click();
-    await page.getByLabel('Number of participants involved *').click();
-    await page.getByLabel('Number of participants involved *').fill('3');   
+    await page.getByLabel(/Number of participants involved/i).fill('3');   
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
     // fill out the objectives form
@@ -59,7 +58,7 @@ describe('other entity report', () => {
     await page.getByTestId('textInput').fill('asdfasdf');
 
     // select a topic
-    await page.locator('.css-125guah-control').click();
+    await page.locator('[for="objectivesWithoutGoals[0].topics"]').click();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
 
@@ -79,16 +78,16 @@ describe('other entity report', () => {
     // fill out next steps
     await page.getByTestId('specialistNextSteps-input').click();
     await page.getByTestId('specialistNextSteps-input').fill('1');
-    await page.getByLabel('When do you anticipate completing step 1? *').click();
-    await page.getByLabel('When do you anticipate completing step 1? *').fill('12/01/2050');
+    await page.getByLabel('When do you anticipate completing step 1?').click();
+    await page.getByLabel('When do you anticipate completing step 1?').fill('12/01/2050');
     await page.getByTestId('recipientNextSteps-input').click();
     await page.getByTestId('recipientNextSteps-input').fill('2');
-    await page.getByLabel('When does the other entity anticipate completing step 1? *').click();
-    await page.getByLabel('When does the other entity anticipate completing step 1? *').fill('12/01/2050');
+    await page.getByLabel('When does the other entity anticipate completing step 1?').click();
+    await page.getByLabel('When does the other entity anticipate completing step 1?').fill('12/01/2050');
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
     // select an approver
-    await page.locator('.css-g1d714-ValueContainer').click();
+    await page.locator('.css-1fdsijx-ValueContainer').click();
     await page.locator('#react-select-33-option-0').click();
     
     // extract the AR number from the URL:

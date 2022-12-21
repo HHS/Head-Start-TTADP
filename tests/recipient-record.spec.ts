@@ -40,7 +40,9 @@ test.describe('Recipient record', () => {
     await page.getByTestId('textInput').fill('http://www.fish-banana-garbage-man.com');
     await page.getByRole('button', { name: 'Save draft' }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();
-    await page.locator('.css-g1d714-ValueContainer').click();
+
+    // topics
+    await page.locator('.css-1fdsijx-ValueContainer').click();
     await page.locator('#react-select-3-option-2').click();
 
     // first click blurs
