@@ -139,6 +139,113 @@ describe('resource', () => {
       });
     });
     describe('collectURLsFromField', () => {
+      let field;
+      beforeEach(() => {
+        field = 'abc http://google.com abc';
+      });
+      it('expected usage, single', () => {
+        expect(collectURLsFromField(field)).toEqual(['http://google.com']);
+      });
+      it('expected usage, multiple', () => {
+        field = 'abc http://google.com http://github.com abc';
+        expect(collectURLsFromField(field)).toEqual(['http://google.com', 'http://github.com']);
+      });
+      it('expected usage, multiple dedupe', () => {
+        field = 'abc http://google.com http://google.com abc';
+        expect(collectURLsFromField(field)).toEqual(['http://google.com']);
+      });
+      it('bulk success', () => {
+        field = `
+        http://foo.com/blah_blah
+        http://foo.com/blah_blah/
+        http://foo.com/blah_blah_(wikipedia)
+        http://foo.com/blah_blah_(wikipedia)_(again)
+        http://www.example.com/wpstyle/?p=364
+        https://www.example.com/foo/?bar=baz&inga=42&quux
+        http://userid:password@example.com:8080
+        http://userid:password@example.com:8080/
+        http://userid@example.com
+        http://userid@example.com/
+        http://userid@example.com:8080
+        http://userid@example.com:8080/
+        http://userid:password@example.com
+        http://userid:password@example.com/
+        http://142.42.1.1/
+        http://142.42.1.1:8080/
+        http://foo.com/blah_(wikipedia)#cite-1
+        http://foo.com/blah_(wikipedia)_blah#cite-1
+        http://foo.com/(something)?after=parens
+        http://code.google.com/events/#&product=browser
+        http://j.mp
+        ftp://foo.bar/baz
+        http://foo.bar/?q=Test%20URL-encoded%20stuff
+        http://1337.net
+        http://223.255.255.254
+        https://foo_bar.example.com/
+        `;
+        expect(collectURLsFromField(field).length).toEqual(26);
+      });
+      it('bulk non-match', () => {
+        field = `
+        http://✪df.ws/123
+        http://➡.ws/䨹
+        http://⌘.ws
+        http://⌘.ws/
+        http://☺.damowmow.com/
+        http://مثال.إختبار
+        http://例子.测试
+        http://उदाहरण.परीक्षा
+        http://-.~_!$&'()*+,;=:%40:80%2f::::::@example.com
+        http://a.b-c.de
+        http://
+        http://.
+        http://..
+        http://../
+        http://?
+        http://??
+        http://??/
+        http://#
+        http://##
+        http://##/
+        //
+        //a
+        ///a
+        ///
+        http:///a
+        foo.com
+        rdar://1234
+        h://test
+        http:// shouldfail.com
+        :// should fail
+        http://-error-.invalid/
+        http://a.b--c.de/
+        http://-a.b.co
+        http://a.b-.co
+        http://123.123.123
+        http://3628126748
+        `;
+        expect(collectURLsFromField(field).length).toEqual(0);
+      });
+      it('fail to empty, null field', () => {
+        field = null;
+        expect(collectURLsFromField(field).length).toEqual(0);
+      });
+      it('fail to empty, undefined field', () => {
+        field = undefined;
+        expect(collectURLsFromField(field).length).toEqual(0);
+      });
+      it('fail to empty, number field', () => {
+        field = 0;
+        expect(collectURLsFromField(field).length).toEqual(0);
+      });
+      it('fail to empty, array field', () => {
+        field = [];
+        expect(collectURLsFromField(field).length).toEqual(0);
+      });
+      it('fail to empty, object field', () => {
+        field = {};
+        expect(collectURLsFromField(field).length).toEqual(0);
+      });
     });
     describe('resourcesFromField', () => {
       let genericId;
@@ -635,6 +742,124 @@ describe('resource', () => {
                 isAutoDetected: false,
               },
             ],
+            update: [],
+            destroy: [],
+          });
+      });
+      it('expected usage, empty incomingResources and currentResources', () => {
+        incomingResources = [];
+        currentResources = [];
+        expect(filterResourcesForSync(
+          incomingResources,
+          currentResources,
+          calculateIsAutoDetectedFunc,
+        ))
+          .toMatchObject({
+            create: [],
+            update: [],
+            destroy: [],
+          });
+      });
+      it('fail to empty object, undefined incomingResources', () => {
+        incomingResources = undefined;
+        expect(filterResourcesForSync(
+          incomingResources,
+          currentResources,
+          calculateIsAutoDetectedFunc,
+        ))
+          .toMatchObject({
+            create: [],
+            update: [],
+            destroy: [],
+          });
+      });
+      it('fail to empty object, number incomingResources', () => {
+        incomingResources = 0;
+        expect(filterResourcesForSync(
+          incomingResources,
+          currentResources,
+          calculateIsAutoDetectedFunc,
+        ))
+          .toMatchObject({
+            create: [],
+            update: [],
+            destroy: [],
+          });
+      });
+      it('fail to empty object, string incomingResources', () => {
+        incomingResources = 'a';
+        expect(filterResourcesForSync(
+          incomingResources,
+          currentResources,
+          calculateIsAutoDetectedFunc,
+        ))
+          .toMatchObject({
+            create: [],
+            update: [],
+            destroy: [],
+          });
+      });
+      it('fail to empty object, object incomingResources', () => {
+        incomingResources = {};
+        expect(filterResourcesForSync(
+          incomingResources,
+          currentResources,
+          calculateIsAutoDetectedFunc,
+        ))
+          .toMatchObject({
+            create: [],
+            update: [],
+            destroy: [],
+          });
+      });
+      it('fail to empty object, undefined currentResources', () => {
+        currentResources = undefined;
+        expect(filterResourcesForSync(
+          incomingResources,
+          currentResources,
+          calculateIsAutoDetectedFunc,
+        ))
+          .toMatchObject({
+            create: [],
+            update: [],
+            destroy: [],
+          });
+      });
+      it('fail to empty object, number currentResources', () => {
+        currentResources = 0;
+        expect(filterResourcesForSync(
+          incomingResources,
+          currentResources,
+          calculateIsAutoDetectedFunc,
+        ))
+          .toMatchObject({
+            create: [],
+            update: [],
+            destroy: [],
+          });
+      });
+      it('fail to empty object, string currentResources', () => {
+        currentResources = 'a';
+        expect(filterResourcesForSync(
+          incomingResources,
+          currentResources,
+          calculateIsAutoDetectedFunc,
+        ))
+          .toMatchObject({
+            create: [],
+            update: [],
+            destroy: [],
+          });
+      });
+      it('fail to empty object, object currentResources', () => {
+        currentResources = {};
+        expect(filterResourcesForSync(
+          incomingResources,
+          currentResources,
+          calculateIsAutoDetectedFunc,
+        ))
+          .toMatchObject({
+            create: [],
             update: [],
             destroy: [],
           });
