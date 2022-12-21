@@ -78,9 +78,18 @@ const calculateIsAutoDetected = (sourceFields, autoDetectedFields) => (
 );
 
 // Use regex to find all urls within the field
-const collectURLsFromField = (field) => field
-  .match(VALID_URL_REGEX || 'g')
-  .filter((url) => url.match([a-zA-Z]));
+const collectURLsFromField = (field) => {
+  if (typeof field !== 'string') return [];
+  const urls = field.match(VALID_URL_REGEX) || [];
+  return urls
+    .reduce((matches, match) => {
+      const exists = matches.find((m) => m === match);
+      if (exists) {
+        return matches;
+      }
+      return [...matches, match];
+    }, []);
+};
 
 // Generate a colection of resoruce objects from the list of urls passed
 const resourcesFromField = (
@@ -145,18 +154,6 @@ const transformRecordByURLToResource = (records, resources) => (
         && resource.resourceId !== null)
     : []);
 
-const leftJoin = (a, b) => a
-  .map((ao) => ({
-    ...b.find((bo) => ao === bo),
-    ...ao,
-  }))
-  .map((o) => o['0']);
-
-const leftOuterJoin = (a, b) => a.filter((ao) => !b.includes(ao));
-const rightOuterJoin = (a, b) => leftOuterJoin(b, a);
-
-//const innerJoin
-
 // Compare the incomingResources and the currentResources to generate five sets of modifications:
 // new: completely new records to be added.
 // expanded: records that existed already, but now are referenced in additional sourceFields.
@@ -176,16 +173,25 @@ const filterResourcesForSync = (
   currentResources,
   calculateIsAutoDetectedFunc,
 ) => {
+  if (!Array.isArray(incomingResources)
+    || !Array.isArray(currentResources)) {
+    return {
+      create: [],
+      update: [],
+      destroy: [],
+    };
+  }
   // pull all of the new and expanded resources in a single pass over the incomingResources.
   const newExpandedResources = incomingResources
     .reduce((resources, resource) => {
-      const isCreated = currentResources
-        .filter((oarr) => oarr.genericId === resource.genericId
-          && oarr.resourceId === resource.resourceId)
-        .length === 0;
+      const matchingFromFields = currentResources
+        .filter((cr) => cr.genericId === resource.genericId
+        && cr.resourceId === resource.resourceId);
+      const isCreated = matchingFromFields.length === 0;
       if (isCreated) {
         const created = resources.created
-          ?.find((r) => r.genericId === resource.genericId);
+          ?.find((r) => r.genericId === resource.genericId
+          && r.resourceId === resource.resourceId);
         if (created) {
           created.sourceFields = [...new Set([...created.sourceFields, ...resource.sourceFields])];
           return resources;
@@ -203,16 +209,10 @@ const filterResourcesForSync = (
         };
       }
 
-      const matchingFromFields = currentResources
-        .filter((cr) => cr.genericId === resource.genericId
-        && cr.resourceId === resource.resourceId);
       const isExpanded = matchingFromFields
-        .filter((mff) => {
-          const lj = leftJoin(resource.sourceFields, mff.sourceFields);
-          return lj
-            .filter((l) => mff.sourceFields.includes(l))
-            .length < lj.length;
-        })
+        .filter((mff) => resource.sourceFields
+          .filter((l) => mff.sourceFields.includes(l))
+          .length < resource.sourceFields.length)
         .length > 0;
       if (isExpanded) {
         const expanded = resources.expanded
@@ -277,12 +277,9 @@ const filterResourcesForSync = (
         .filter((rff) => rff.genericId === resource.genericId
         && rff.resourceId === resource.resourceId);
       const isReduced = matchingFromFields
-        .filter((mff) => {
-          const lj = leftJoin(resource.sourceFields, mff.sourceFields);
-          return lj
-            .filter((l) => mff.sourceFields.includes(l))
-            .length < lj.length;
-        })
+        .filter((mff) => resource.sourceFields
+          .filter((l) => mff.sourceFields.includes(l))
+          .length < resource.sourceFields.length)
         .length > 0;
       if (isReduced) {
         const reduced = resources.reduced
