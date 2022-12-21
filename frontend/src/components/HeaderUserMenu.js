@@ -34,11 +34,17 @@ UserMenuNav.propTypes = {
 };
 
 function HeaderUserMenu() {
+  let hasImpersonationKey;
+  try {
+    hasImpersonationKey = window.localStorage.getItem(LOCAL_STORAGE_IMPERSONATION_KEY) !== null;
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn('Local storage may not be available: ', e);
+  }
+
   const { user } = useContext(UserContext);
   const userIsAdmin = isAdmin(user);
-  const [isImpersonating, setIsImpersonating] = useState(
-    window.localStorage.getItem(LOCAL_STORAGE_IMPERSONATION_KEY) !== null,
-  );
+  const [isImpersonating, setIsImpersonating] = useState(hasImpersonationKey);
 
   const menuItems = useMemo(() => [
     { key: 1, label: 'Account Management', to: '/account' },
