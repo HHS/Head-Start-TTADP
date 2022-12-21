@@ -7,6 +7,7 @@
 import React, {
   useState,
   useContext,
+  useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
 import {
@@ -39,7 +40,17 @@ import AppLoadingContext from '../../AppLoadingContext';
 import { convertGoalsToFormData } from '../../pages/ActivityReport/formDataHelpers';
 import { objectivesWithValidResourcesOnly, validateListOfResources } from '../GoalForm/constants';
 
-function Navigator({
+const shouldUpdateFormData = (isAutoSave) => {
+  if (!isAutoSave) {
+    return false;
+  }
+
+  const richTextEditors = document.querySelectorAll('.rdw-editor-main');
+  const selection = document.getSelection();
+  return !(Array.from(richTextEditors).some((rte) => rte.contains(selection.anchorNode)));
+};
+
+const Navigator = ({
   editable,
   formData,
   updateFormData,
@@ -62,10 +73,9 @@ function Navigator({
   updateErrorMessage,
   savedToStorageTime,
   socketMessageStore,
-}) {
+}) => {
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
-
-  const page = pages.find((p) => p.path === currentPage);
+  const page = useMemo(() => pages.find((p) => p.path === currentPage), [currentPage, pages]);
 
   const hookForm = useForm({
     mode: 'onBlur', // putting it to onBlur as the onChange breaks the new goal form
@@ -153,9 +163,6 @@ function Navigator({
     const { status, ...values } = getValues();
     const data = { ...formData, ...values, pageState: newNavigatorState() };
 
-    // TODO: we update the form data in the onSave handler- not seeing why we need to do it twice
-    // leaving this in there as a comment until I can verify that it's not needed
-    // updateFormData(data);
     try {
       // Always clear the previous error message before a save.
       updateErrorMessage();
@@ -218,8 +225,10 @@ function Navigator({
       }
       return;
     }
-    // Prevent user from making changes to goal title during auto-save.
-    setSavingLoadScreen(isAutoSave);
+
+    if (!isAutoSave) {
+      setSavingLoadScreen(isAutoSave);
+    }
 
     const endDate = formEndDate && formEndDate.toLowerCase() !== 'invalid date' ? formEndDate : '';
 
@@ -249,23 +258,39 @@ function Navigator({
         );
       }
 
+      /**
+       * If we are autosaving, and we are currently editing a rich text editor component, do not
+       * update the form data. This is to prevent the rich text editor from losing focus
+       * when the form data is updated.
+       *
+       * This introduces the possibility of a bug with extra objectives - that is, if the user
+       * enters an objective title, starts typing TTA provided, and then the autosave happens,
+       * an objective will be created. If the title is then changed AFTERWARDS, before any other
+       * non-autosave save happens, it will create yet another objective. This is not an issue on
+       * existing objectives, nor is it an issue if another save happens in between at any point.
+       */
+
+      const allowUpdateFormData = shouldUpdateFormData(isAutoSave);
+
       const {
         goals, goalForEditing: newGoalForEditing,
       } = convertGoalsToFormData(allGoals, grantIds);
 
-      setValue('goalForEditing', newGoalForEditing);
-      setValue('goals', goals);
-      setValue(objectivesFieldArrayName, newGoalForEditing ? newGoalForEditing.objectives : null);
-
       // update form data
       const { status, ...values } = getValues();
+
+      // plug in new values
       const data = {
         ...formData,
         ...values,
         goals,
+        goalForEditing: newGoalForEditing,
+        [objectivesFieldArrayName]: newGoalForEditing ? newGoalForEditing.objectives : null,
       };
 
-      updateFormData(data, true);
+      if (allowUpdateFormData) {
+        updateFormData(data, true);
+      }
 
       updateErrorMessage('');
       updateLastSaveTime(moment());
@@ -279,7 +304,11 @@ function Navigator({
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     } finally {
-      setIsAppLoading(false);
+      // we don't want to update the context if we are autosaving,
+      // since the loading screen isn't shown
+      if (!isAutoSave) {
+        setIsAppLoading(false);
+      }
     }
   };
 
@@ -312,8 +341,11 @@ function Navigator({
       return;
     }
 
-    // Prevent user from making changes to objectives during auto-save.
-    setSavingLoadScreen(isAutoSave);
+    // we don't want to change the app loading context if we are autosaving
+    if (!isAutoSave) {
+      // Prevent user from making changes to objectives during auto-save.
+      setSavingLoadScreen(isAutoSave);
+    }
 
     // Save objectives.
     try {
@@ -339,10 +371,25 @@ function Navigator({
         }));
       }
 
+      /**
+       * If we are autosaving, and we are currently editing a rich text editor component, do not
+       * update the form data. This is to prevent the rich text editor from losing focus
+       * when the form data is updated.
+       *
+       * This introduces the possibility of a bug with extra objectives - that is, if the user
+       * enters an objective title, starts typing TTA provided, and then the autosave happens,
+       * an objective will be created. If the title is then changed AFTERWARDS, before any other
+       * non-autosave save happens, it will create yet another objective. This is not an issue on
+       * existing objectives, nor is it an issue if another save happens in between at any point.
+       */
+      const allowUpdateFormData = shouldUpdateFormData(isAutoSave);
+
       // update form data
       const { status, ...values } = getValues();
       const data = { ...formData, ...values, pageState: newNavigatorState() };
-      updateFormData(data);
+      if (allowUpdateFormData) {
+        updateFormData(data);
+      }
 
       // Set updated objectives.
       setValue('objectivesWithoutGoals', newObjectives);
@@ -359,7 +406,9 @@ function Navigator({
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     } finally {
-      setIsAppLoading(false);
+      if (!isAutoSave) {
+        setIsAppLoading(false);
+      }
     }
   };
 
@@ -670,7 +719,7 @@ function Navigator({
       </Grid>
     </Grid>
   );
-}
+};
 
 Navigator.propTypes = {
   onResetToDraft: PropTypes.func.isRequired,

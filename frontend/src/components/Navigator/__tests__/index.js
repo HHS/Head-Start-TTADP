@@ -14,6 +14,7 @@ import { NOT_STARTED, IN_PROGRESS } from '../constants';
 import NetworkContext from '../../../NetworkContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 import GoalFormContext from '../../../GoalFormContext';
+import RichEditor from '../../RichEditor';
 
 // user mock
 const user = {
@@ -55,6 +56,7 @@ const OETest = () => {
 
 const GoalTest = () => {
   const { register } = useFormContext();
+  const mocker = jest.fn();
   return (
     <>
       <h1>Goal test</h1>
@@ -64,6 +66,11 @@ const GoalTest = () => {
           <label htmlFor="goalName">Name</label>
           <input type="text" id="goalName" name="goalName" ref={register()} />
         </div>
+        { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */ }
+        <label>
+          Rich Editor
+          <RichEditor ariaLabel="rich editor" value="test" onChange={mocker} onBlur={mocker} />
+        </label>
       </div>
     </>
   );
@@ -513,6 +520,7 @@ describe('Navigator', () => {
       jest.advanceTimersByTime(1000 * 60 * 2);
     });
     await waitFor(() => expect(fetchMock.called('/api/activity-reports/goals')).toBe(true));
+    await waitFor(() => expect(updateForm).toHaveBeenCalled());
   });
 
   it('disables the save button', async () => {
@@ -815,5 +823,39 @@ describe('Navigator', () => {
     }]);
     act(() => userEvent.click(saveDraft));
     await waitFor(() => expect(fetchMock.called()).toBe(true));
+  });
+
+  it('does not update form data if a rich editor is being edited', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+
+    const previousContains = HTMLDivElement.prototype.contains;
+    HTMLDivElement.prototype.contains = () => true;
+
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <GoalTest />
+      ),
+    }];
+    renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages);
+    fetchMock.restore();
+    expect(fetchMock.called()).toBe(false);
+
+    const ttaProvided = await screen.findByRole('textbox', { name: 'rich editor' });
+    act(() => {
+      ttaProvided.focus();
+      fetchMock.post('/api/activity-reports/goals', []);
+      userEvent.type(screen.getByLabelText('Name'), 'test');
+      jest.advanceTimersByTime(1000 * 60 * 2);
+    });
+    await waitFor(() => expect(fetchMock.called('/api/activity-reports/goals')).toBe(true));
+    HTMLDivElement.prototype.contains = previousContains;
+    expect(updateForm).not.toHaveBeenCalled();
   });
 });

@@ -255,6 +255,7 @@ describe('Goals DB service', () => {
       };
       await saveGoalsForReport([goalWithNewObjective], { id: mockActivityReportId });
       expect(Objective.create).toHaveBeenCalledWith({
+        createdVia: 'activityReport',
         goalId: mockGoalId,
         title: 'title',
         status: 'Not Started',
