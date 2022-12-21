@@ -23,7 +23,7 @@ describe('currentUser', () => {
     const mockLocals = jest.fn();
 
     test('can retrieve userId from the session', async () => {
-      const mockRequest = { session: mockSession };
+      const mockRequest = { session: mockSession, headers: {} };
       const mockResponse = { locals: mockLocals };
 
       mockSession.userId = 5;
@@ -32,7 +32,7 @@ describe('currentUser', () => {
     });
 
     test('can retrieve userId from the response locals', async () => {
-      const mockRequest = {};
+      const mockRequest = { headers: {} };
       const mockResponse = { locals: mockLocals };
 
       mockLocals.userId = 10;
