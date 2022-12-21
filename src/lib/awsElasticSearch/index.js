@@ -93,7 +93,10 @@ const createIndex = async (indexName, passedClient) => {
 /*
   Assign a searchable document to an index.
 */
-const addIndexDocument = async (indexName, id, document, passedClient) => {
+const addIndexDocument = async (job) => {
+  const {
+    indexName, id, document, passedClient,
+  } = job.data;
   try {
     // Initialize the client.
     const client = passedClient || await getClient();
@@ -178,7 +181,10 @@ const search = async (indexName, fields, query, passedClient) => {
       },
     };
 */
-const updateIndexDocument = async (indexName, id, body, passedClient) => {
+const updateIndexDocument = async (job) => {
+  const {
+    indexName, id, body, passedClient,
+  } = job.data;
   try {
     // Initialize the client.
     const client = passedClient || await getClient();
@@ -202,7 +208,10 @@ const updateIndexDocument = async (indexName, id, body, passedClient) => {
 /*
   Delete an index document.
 */
-const deleteIndexDocument = async (indexName, id, passedClient) => {
+const deleteIndexDocument = async (job) => {
+  const {
+    indexName, id, passedClient,
+  } = job.data;
   try {
     // Initialize the client.
     const client = passedClient || await getClient();

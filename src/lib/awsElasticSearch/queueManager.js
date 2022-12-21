@@ -1,39 +1,69 @@
 import newQueue from '../queue';
-import { getClient } from './index';
-import formatModelForAwsElasticsearch from './indexFormatter';
-import models from '../../models';
+// import { getClient } from './index';
 import { logger } from '../../logger';
 import { AWS_ELASTICSEARCH_ACTIONS } from '../../constants';
 
 export const awsElasticsearchQueue = newQueue('awsElasticsearch');
-let client;
+// let client;
 
 /** *
     Add various AWS Elasticsearch operations to the queue.
+    from: src > lib > awsElasticsearch > index.js
 ** */
 
-/* Add Index Document to Queue */
-export async function scheduleAddIndexDocumentJob(instance) {
-  const modelName = instance.constructor.name;
-  const modelType = models[modelName];
-  if (!modelType) {
-    throw new Error(`Model ${instance.constructor.name} was not found`);
+/* Schedule Add Index Document to Queue */
+const scheduleAddIndexDocumentJob = async (id, type, document) => {
+  if (document) {
+    logger.info(
+      `The 'Add Index Document Job' has been added to the queue for ${type} ID: ${id}`,
+    );
+    // Add index document job to queue.
+    const data = {
+      indexName: type,
+      id,
+      document,
+    };
+    awsElasticsearchQueue.add(AWS_ELASTICSEARCH_ACTIONS.ADD_INDEX_DOCUMENT, data);
+    return data;
   }
-
-  // Get client if we don't have one yet.
-  client = client || await getClient();
-
-  logger.info(
-    `The 'Add Index Document Job' has been added to the queue for ${modelName} ID: ${instance.id}`,
-  );
-
-  // Add index document job to queue.
-  awsElasticsearchQueue.add(AWS_ELASTICSEARCH_ACTIONS.ADD_INDEX_DOCUMENT, {
-    indexName: modelName,
-    id: instance.id,
-    document: await formatModelForAwsElasticsearch(instance),
-    passedClient: client,
-  });
-
   return null;
-}
+};
+
+/* Schedule Update Index Document to Queue */
+const scheduleUpdateIndexDocumentJob = async (id, type, document) => {
+  if (document) {
+    logger.info(
+      `The 'Add Index Document Job' has been added to the queue for ${type} ID: ${id}`,
+    );
+    // Add index document job to queue.
+    const data = {
+      indexName: type,
+      id,
+      body: document,
+    };
+    awsElasticsearchQueue.add(AWS_ELASTICSEARCH_ACTIONS.UPDATE_INDEX_DOCUMENT, data);
+    return data;
+  }
+  return null;
+};
+
+/* Schedule Delete Index Document to Queue */
+const scheduleDeleteIndexDocumentJob = async (id, type) => {
+  if (id && type) {
+    logger.info(
+      `The 'Add Index Document Job' has been added to the queue for ${type} ID: ${id}`,
+    );
+    // Add index document job to queue.
+    awsElasticsearchQueue.add(AWS_ELASTICSEARCH_ACTIONS.DELETE_INDEX_DOCUMENT, {
+      indexName: type,
+      id,
+    });
+  }
+  return 'Success';
+};
+
+export {
+  scheduleAddIndexDocumentJob,
+  scheduleUpdateIndexDocumentJob,
+  scheduleDeleteIndexDocumentJob,
+};

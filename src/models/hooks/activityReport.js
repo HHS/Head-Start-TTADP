@@ -1,8 +1,14 @@
 const { Op } = require('sequelize');
-const { REPORT_STATUSES, OBJECTIVE_STATUS } = require('../../constants');
+const { REPORT_STATUSES, OBJECTIVE_STATUS, AWS_ELASTIC_SEARCH_INDEXES } = require('../../constants');
 const { auditLogger } = require('../../logger');
 const { findOrCreateGoalTemplate } = require('./goal');
 const { findOrCreateObjectiveTemplate } = require('./objective');
+const {
+  scheduleAddIndexDocumentJob,
+  scheduleUpdateIndexDocumentJob,
+  scheduleDeleteIndexDocumentJob,
+} = require('../../lib/awsElasticSearch/queueManager');
+const { formatModelForAwsElasticsearch } = require('../../lib/awsElasticSearch/modelMapper');
 
 /**
  * Helper function called by model hooks.
@@ -561,6 +567,16 @@ const beforeCreate = async (instance) => {
   copyStatus(instance);
 };
 
+const afterCreate = async (instance) => {
+  // Index for AWS Elasticsearch.
+  const document = await formatModelForAwsElasticsearch(instance);
+  await scheduleAddIndexDocumentJob(
+    instance.id,
+    AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+    document,
+  );
+};
+
 const beforeUpdate = async (instance) => {
   copyStatus(instance);
 };
@@ -571,6 +587,27 @@ const afterUpdate = async (sequelize, instance, options) => {
   await automaticGoalObjectiveStatusCachingOnApproval(sequelize, instance, options);
   await moveDraftGoalsToNotStartedOnSubmission(sequelize, instance, options);
   await automaticIsRttapaChangeOnApprovalForGoals(sequelize, instance, options);
+
+  // AWS Elasticsearch: Determine if we queue delete or update index document.
+  const changed = instance.changed();
+  if (Array.isArray(changed) && changed.includes('calculatedStatus')) {
+    if (instance.previous('calculatedStatus') !== REPORT_STATUSES.DELETED
+      && instance.calculatedStatus === REPORT_STATUSES.DELETED) {
+      // Delete Index Document for AWS Elasticsearch.
+      await scheduleDeleteIndexDocumentJob(
+        instance.id,
+        AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+      );
+    }
+  } else {
+    // Index for AWS Elasticsearch.
+    const document = await formatModelForAwsElasticsearch(instance);
+    await scheduleUpdateIndexDocumentJob(
+      instance.id,
+      AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+      document,
+    );
+  }
 };
 
 export {
@@ -578,6 +615,7 @@ export {
   propagateApprovedStatus,
   automaticStatusChangeOnApprovalForGoals,
   beforeCreate,
+  afterCreate,
   beforeUpdate,
   afterUpdate,
   moveDraftGoalsToNotStartedOnSubmission,

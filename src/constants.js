@@ -247,7 +247,8 @@ export const EMAIL_ACTIONS = {
 
 export const AWS_ELASTICSEARCH_ACTIONS = {
   ADD_INDEX_DOCUMENT: 'addIndexDocument',
-
+  UPDATE_INDEX_DOCUMENT: 'updateIndexDocument',
+  DELETE_INDEX_DOCUMENT: 'deleteIndexDocument',
 };
 
 export const EMAIL_DIGEST_FREQ = {

@@ -135,7 +135,15 @@ describe('Tests aws elastic search', () => {
   });
 
   it('adds index document', async () => {
-    const res = await addIndexDocument(indexName, 1, indexDocumentToAdd, myMockClient);
+    const job = {
+      data: {
+        indexName,
+        id: 1,
+        document: indexDocumentToAdd,
+        passedClient: myMockClient,
+      },
+    };
+    const res = await addIndexDocument(job);
     await expect(res.body).toStrictEqual(expectedIndexDocument);
   });
 
@@ -145,12 +153,27 @@ describe('Tests aws elastic search', () => {
   });
 
   it('updates index document', async () => {
-    const res = await updateIndexDocument(indexName, 1, indexDocumentToAdd, myMockClient);
+    const job = {
+      data: {
+        indexName,
+        id: 1,
+        document: indexDocumentToAdd,
+        passedClient: myMockClient,
+      },
+    };
+    const res = await updateIndexDocument(job);
     await expect(res.body).toStrictEqual(expectedIndexDocument);
   });
 
   it('deletes index document', async () => {
-    const res = await deleteIndexDocument(indexName, 1, myMockClient);
+    const job = {
+      data: {
+        indexName,
+        id: 1,
+        passedClient: myMockClient,
+      },
+    };
+    const res = await deleteIndexDocument(job);
     await expect(res).toStrictEqual(documentDeletedExpected);
   });
 
