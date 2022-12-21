@@ -11,7 +11,9 @@ export class HTTPError extends Error {
 }
 
 const impersonationHeader = () => {
-  const impersonationId = localStorage.getItem(LOCAL_STORAGE_IMPERSONATION_KEY);
+  if (!window.localStorage) return {};
+
+  const impersonationId = window.localStorage.getItem(LOCAL_STORAGE_IMPERSONATION_KEY);
 
   if (isNaN(impersonationId) || typeof impersonationId === 'undefined') {
     return {};
