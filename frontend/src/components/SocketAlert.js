@@ -5,20 +5,18 @@ import Sticky from 'react-stickynode';
 import { useMediaQuery } from 'react-responsive';
 import UserContext from '../UserContext';
 import useArrayWithExpiration from '../hooks/useArrayWithExpiration';
-import usePageVisibility from '../hooks/usePageVisibility';
 import './SocketAlert.css';
 
-const THIRTY_SECONDS = 5 * 1000;
+const THIRTY_SECONDS = 30 * 1000;
 export default function SocketAlert({ store }) {
   const [users, { push: pushUser }] = useArrayWithExpiration([], THIRTY_SECONDS);
-  const isPageVisible = usePageVisibility();
   const isMobile = useMediaQuery({ maxWidth: 1023 });
 
   useEffect(() => {
-    if (store && store.user && isPageVisible) {
+    if (store && store.user) {
       pushUser(store.user);
     }
-  }, [isPageVisible, pushUser, store]);
+  }, [pushUser, store]);
 
   // we need our current user to avoid printing our own name in the alert
   const { user: { name: currentUser } } = useContext(UserContext);

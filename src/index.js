@@ -50,8 +50,12 @@ if (!bypassSockets) {
 
         // when a message is received via websocket, publish it to redis
         ws.on('message', async (message) => {
-          const { channel, ...data } = JSON.parse(message);
-          await redisClient.publish(channel, JSON.stringify(data));
+          try {
+            const { channel, ...data } = JSON.parse(message);
+            await redisClient.publish(channel, JSON.stringify(data));
+          } catch (err) {
+            auditLogger.error('WEBSOCKET: The following message was unable to be parsed and returned an error: ', message, err);
+          }
         });
 
         // on close, unsubscribe from the channel

@@ -713,6 +713,9 @@ Navigator.propTypes = {
     ]),
   }),
   socketMessageStore: PropTypes.shape({
+    user: PropTypes.shape({
+      name: PropTypes.string,
+    }),
   }),
 };
 
