@@ -16,7 +16,6 @@ const CUSTOM_FORMATTERS = {
       // activityReportObjectives: goalsAndObjectives.map((aro) => aro.title) ,
       // activityReportObjectivesTTA: arObjectivesSteps.map((aro) => aro.ttaProvided),
     };
-    console.log('\n\n\n--- Document: ', document);
 
     return document;
   },
