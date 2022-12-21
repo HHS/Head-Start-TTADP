@@ -104,12 +104,13 @@ test.describe("Activity Report", () => {
     await page.getByTestId('textarea').click();
     await page.getByTestId('textarea').fill('g2');
     await page.getByRole('group', { name: 'Is this a Recipient TTA Plan Agreement (RTTAPA) goal?' }).getByText('Yes').click();
-    await page.locator('.css-512wcj-control > .css-1fdsijx-ValueContainer').click();
-    await page.locator('#react-select-51-option-0').click();
+    await page.locator('.ttahub-objective-select-label').click();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('g2o1');
     await page.locator('.css-512wcj-control > .css-1fdsijx-ValueContainer').click();
-    await page.locator('#react-select-55-option-0').click();
+    await page.locator('#react-select-39-option-0').click();
     await blur(page);
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
     await page.keyboard.type('hello');    

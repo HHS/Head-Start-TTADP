@@ -33,7 +33,7 @@ export default function ObjectiveSelect({
           </ModalToggleButton>
         )}
       </div>
-      <Label>
+      <Label className="ttahub-objective-select-label">
         Select TTA objective
         <Req />
         {noObjectiveError}
