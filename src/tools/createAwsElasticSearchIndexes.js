@@ -133,8 +133,8 @@ export default async function createAwsElasticSearchIndexes() {
       const arSpecialistSteps = specialistNextStepsToIndex.filter(
         (s) => s.activityReportId === ar.id,
       );
-      const arGoalsSteps = goalsToIndex.filter((g) => g.activityReportId === ar.id);
-      const arObjectivesSteps = objectivesToIndex.filter((o) => o.activityReportId === ar.id);
+      const arGoals = goalsToIndex.filter((g) => g.activityReportId === ar.id);
+      const arObjectives = objectivesToIndex.filter((o) => o.activityReportId === ar.id);
 
       // Add to bulk update.
       documents.push({
@@ -143,9 +143,9 @@ export default async function createAwsElasticSearchIndexes() {
         endDate: ar.endDate,
         recipientNextSteps: arRecipientSteps.map((r) => r.note),
         specialistNextSteps: arSpecialistSteps.map((s) => s.note),
-        activityReportGoals: arGoalsSteps.map((arg) => arg.name),
-        activityReportObjectives: arObjectivesSteps.map((aro) => aro.title),
-        activityReportObjectivesTTA: arObjectivesSteps.map((aro) => aro.ttaProvided),
+        activityReportGoals: arGoals.map((arg) => arg.name),
+        activityReportObjectives: arObjectives.map((aro) => aro.title),
+        activityReportObjectivesTTA: arObjectives.map((aro) => aro.ttaProvided),
       });
     }
     const finishCreatingBulk = moment();
