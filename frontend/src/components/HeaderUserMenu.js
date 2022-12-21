@@ -36,6 +36,17 @@ function HeaderUserMenu() {
   const { user } = useContext(UserContext);
   const userIsAdmin = isAdmin(user);
 
+  const onItemClick = () => {
+    const header = document.querySelector('body');
+    header.dispatchEvent(
+      new MouseEvent('mousedown', {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+      }),
+    );
+  };
+
   const menuItems = useMemo(() => [
     { key: 1, label: 'Account Management', to: '/account' },
     {
@@ -71,7 +82,7 @@ function HeaderUserMenu() {
     divider = false,
     space = false,
     showIfAdmin = false,
-    fn = null,
+    fn = onItemClick,
   }) => {
     if (showIfAdmin && !userIsAdmin) return false;
     if (divider) return { key, element: <hr /> };
