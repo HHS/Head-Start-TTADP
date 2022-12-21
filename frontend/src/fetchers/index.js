@@ -1,3 +1,5 @@
+import { LOCAL_STORAGE_IMPERSONATION_KEY } from '../Constants';
+
 export class HTTPError extends Error {
   constructor(statusCode, message, ...params) {
     super(message, ...params);
@@ -7,12 +9,24 @@ export class HTTPError extends Error {
   }
 }
 
+const impersonationHeader = () => {
+  const impersonationId = localStorage.getItem(LOCAL_STORAGE_IMPERSONATION_KEY);
+  if (!impersonationId) {
+    return {};
+  }
+
+  return {
+    'Auth-Impersonation-Id': impersonationId,
+  };
+};
+
 export const get = async (url) => {
   const res = await fetch(url, {
     credentials: 'same-origin',
     headers: {
       'Cache-Control': 'no-cache',
       Pragma: 'no-cache',
+      ...impersonationHeader(),
     },
   });
   if (!res.ok) {
@@ -27,6 +41,7 @@ export const put = async (url, data) => {
     credentials: 'same-origin',
     headers: {
       'Content-Type': 'application/json',
+      ...impersonationHeader(),
     },
     body: JSON.stringify(data),
   });
@@ -42,6 +57,7 @@ export const post = async (url, data) => {
     credentials: 'same-origin',
     headers: {
       'Content-Type': 'application/json',
+      ...impersonationHeader(),
     },
     body: JSON.stringify(data),
   });
@@ -60,6 +76,7 @@ export const destroy = async (url, data) => {
     credentials: 'same-origin',
     headers: {
       'Content-Type': 'application/json',
+      ...impersonationHeader(),
     },
     body: data ? JSON.stringify(data) : '',
   });
