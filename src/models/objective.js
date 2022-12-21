@@ -70,6 +70,10 @@ module.exports = (sequelize, DataTypes) => {
     onApprovedAR: {
       type: DataTypes.BOOLEAN,
     },
+    createdVia: {
+      type: DataTypes.ENUM(['activityReport', 'rtr']),
+      allowNull: true,
+    },
     firstNotStartedAt: {
       type: DataTypes.DATE,
       allowNull: true,
