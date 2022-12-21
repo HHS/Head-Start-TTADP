@@ -8,7 +8,7 @@ import UserInfo from './UserInfo';
 import UserPermissions from './UserPermissions';
 import UserFeatureFlags from './UserFeatureFlags';
 import { userGlobalPermissions, userRegionalPermissions } from './PermissionHelpers';
-import { DECIMAL_BASE } from '../../Constants';
+import { DECIMAL_BASE, LOCAL_STORAGE_IMPERSONATION_KEY } from '../../Constants';
 
 const NUMBER_FIELDS = [
   'homeRegionId',
@@ -26,6 +26,11 @@ function UserSection({ user, onSave, features }) {
   useEffect(() => {
     updateUser(user);
   }, [user]);
+
+  const impersonateUserId = () => {
+    localStorage.setItem(LOCAL_STORAGE_IMPERSONATION_KEY, formUser.id);
+    window.location.href = '/';
+  };
 
   const onUserChange = (e) => {
     if (Array.isArray(e)) {
