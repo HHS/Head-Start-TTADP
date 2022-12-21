@@ -6,10 +6,10 @@ import React from 'react';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import { useForm, FormProvider } from 'react-hook-form/dist/index.ie11';
+import { REPORT_STATUSES, SCOPE_IDS } from '@ttahub/common';
 
 import Submitter from '../index';
 import NetworkContext from '../../../../../../NetworkContext';
-import { REPORT_STATUSES, SCOPE_IDS } from '../../../../../../Constants';
 import UserContext from '../../../../../../UserContext';
 
 const defaultUser = {

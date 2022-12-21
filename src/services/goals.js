@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import { uniqBy } from 'lodash';
+import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import {
   Goal,
   Grant,
@@ -19,7 +20,7 @@ import {
   Program,
   File,
 } from '../models';
-import { DECIMAL_BASE, REPORT_STATUSES, OBJECTIVE_STATUS } from '../constants';
+import { OBJECTIVE_STATUS } from '../constants';
 import {
   cacheObjectiveMetadata,
   cacheGoalMetadata,

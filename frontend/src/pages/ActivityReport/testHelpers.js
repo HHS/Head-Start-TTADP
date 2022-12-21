@@ -6,8 +6,8 @@ import {
   render,
 } from '@testing-library/react';
 import moment from 'moment';
+import { SCOPE_IDS, REPORT_STATUSES } from '@ttahub/common';
 import ActivityReport from './index';
-import { SCOPE_IDS, REPORT_STATUSES } from '../../Constants';
 import UserContext from '../../UserContext';
 import AppLoadingContext from '../../AppLoadingContext';
 

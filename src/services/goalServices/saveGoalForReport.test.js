@@ -1,4 +1,5 @@
 import faker from '@faker-js/faker';
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   Goal,
   Grant,
@@ -15,7 +16,6 @@ import db, {
   ObjectiveTopic,
   ObjectiveResource,
 } from '../../models';
-import { REPORT_STATUSES } from '../../constants';
 import { saveGoalsForReport } from '../goals';
 import { activityReportAndRecipientsById } from '../activityReports';
 
