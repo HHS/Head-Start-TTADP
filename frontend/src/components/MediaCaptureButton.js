@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-// eslint-disable-next-line import/no-unresolved
 import html2canvas from 'html2canvas';
 import { Button } from '@trussworks/react-uswds';
 
