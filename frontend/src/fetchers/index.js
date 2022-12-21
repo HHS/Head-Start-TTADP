@@ -1,3 +1,4 @@
+import { isNaN } from 'lodash';
 import { LOCAL_STORAGE_IMPERSONATION_KEY } from '../Constants';
 
 export class HTTPError extends Error {
@@ -11,7 +12,8 @@ export class HTTPError extends Error {
 
 const impersonationHeader = () => {
   const impersonationId = localStorage.getItem(LOCAL_STORAGE_IMPERSONATION_KEY);
-  if (!impersonationId) {
+
+  if (isNaN(impersonationId) || typeof impersonationId === 'undefined') {
     return {};
   }
 
