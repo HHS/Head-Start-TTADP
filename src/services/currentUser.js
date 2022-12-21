@@ -53,7 +53,7 @@ export async function currentUserId(req, res) {
       return handleErrors(req, res, e);
     }
 
-    return impersonatedUserId;
+    return Number(impersonatedUserId);
   }
 
   return idFromSessionOrLocals();
