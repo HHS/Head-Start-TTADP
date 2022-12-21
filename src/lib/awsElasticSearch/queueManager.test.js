@@ -9,7 +9,6 @@ import db, {
 const mockUser = {
   id: 7194161,
   homeRegionId: 1,
-  context: 'My Search Result Context',
   name: 'user2184932161',
   hsesUsername: 'user2184932161',
   hsesUserId: 'user2184932161',
@@ -18,6 +17,9 @@ const mockUser = {
 
 const reportObject = {
   activityRecipientType: 'recipient',
+  context: 'My Search Result Context',
+  startDate: '12/21/2021',
+  endDate: '06/01/2023',
   submissionStatus: REPORT_STATUSES.DRAFT,
   userId: mockUser.id,
   regionId: 1,

@@ -51,6 +51,7 @@ async function start() {
       auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${result.data}`);
     }
   });
+  // Process AWS Elasticsearch Queue Items.
   awsElasticsearchQueue.process(AWS_ELASTICSEARCH_ACTIONS.ADD_INDEX_DOCUMENT, addIndexDocument);
 
   // Notifications

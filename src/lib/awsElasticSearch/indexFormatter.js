@@ -6,7 +6,7 @@ const CUSTOM_FORMATTERS = {
       // eslint-disable-next-line no-unused-vars
       report, activityRecipients, goalsAndObjectives, objectivesWithoutGoals,
     ] = await activityReportAndRecipientsById(instance.id);
-    return {
+    const document = {
       context: report.context,
       startDate: report.startDate,
       endDate: report.endDate,
@@ -16,6 +16,9 @@ const CUSTOM_FORMATTERS = {
       // activityReportObjectives: goalsAndObjectives.map((aro) => aro.title) ,
       // activityReportObjectivesTTA: arObjectivesSteps.map((aro) => aro.ttaProvided),
     };
+    console.log('\n\n\n--- Document: ', document);
+
+    return document;
   },
 };
 
