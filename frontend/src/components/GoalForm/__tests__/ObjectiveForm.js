@@ -86,7 +86,7 @@ describe('ObjectiveForm', () => {
 
     renderObjectiveForm(objective, removeObjective, setObjectiveError, setObjective);
 
-    const topics = await screen.findByLabelText(/topics \*/i);
+    const topics = await screen.findByLabelText(/topics/i);
     userEvent.click(topics);
 
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
@@ -100,7 +100,7 @@ describe('ObjectiveForm', () => {
     userEvent.click(resourceOne);
     expect(setObjectiveError).toHaveBeenCalledWith(index, [<></>, <></>, <></>]);
 
-    const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
+    const objectiveText = await screen.findByRole('textbox', { name: /TTA objective/i });
     userEvent.click(objectiveText);
     userEvent.click(resourceOne);
 

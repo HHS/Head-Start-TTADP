@@ -145,7 +145,7 @@ describe('Approver review page', () => {
       expect(await screen.findByText(/no creator notes/i)).toBeVisible();
       expect(await screen.findByText(/these are my approved notes 1\./i)).toBeVisible();
 
-      const statuses = screen.queryAllByLabelText('Choose report status *');
+      const statuses = screen.queryAllByLabelText(/Choose report status/i);
       expect(statuses.length).toBe(1);
     });
 
