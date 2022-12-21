@@ -3,7 +3,13 @@ import moment from 'moment';
 import {
   DATE_DISPLAY_FORMAT,
   DATEPICKER_VALUE_FORMAT,
+  REPORT_STATUSES,
 } from '../../Constants';
+
+const ALLOWED_STATUSES_FOR_GOAL_EDITING = [
+  REPORT_STATUSES.DRAFT,
+  REPORT_STATUSES.NEEDS_ACTION,
+];
 
 /**
  * compares two objects using lodash "isEqual" and returns the difference
@@ -65,16 +71,28 @@ export const unflattenResourcesUsed = (array) => {
 
 // this function takes goals returned from the API and parses them appropriately,
 // setting the editable goal (or at least doing its best guess)
+/**
+ *
+ * @param {goal[]} goals
+ * @param {number[]} grantIds
+ * @param {string} calculatedStatus
+ * we need the calculated status to determine whether or not to set the goalForEditing
+ * if we aren't editing, we need to make sure goals is populated so the review section
+ * displays properly
+ * @returns { goal[], goalForEditing }
+ */
 export const convertGoalsToFormData = (
-  goals, grantIds,
+  goals, grantIds, calculatedStatus = REPORT_STATUSES.DRAFT,
 ) => goals.reduce((accumulatedData, goal) => {
   // we are relying on the backend to have properly captured the goalForEditing
   // if there is some breakdown happening, and we have two set,
   // we will just fall back to just using the first matching goal
   if (
     // if any of the goals ids are included in the activelyEditedGoals id array
-    goal.activityReportGoals && goal.activityReportGoals.some((arGoal) => arGoal.isActivelyEdited)
-        && !accumulatedData.goalForEditing
+    goal.activityReportGoals
+    && goal.activityReportGoals.some((arGoal) => arGoal.isActivelyEdited
+    && ALLOWED_STATUSES_FOR_GOAL_EDITING.includes(calculatedStatus)
+    && !accumulatedData.goalForEditing)
   ) {
     // we set it as the goal for editing
     // eslint-disable-next-line no-param-reassign
@@ -110,7 +128,7 @@ export const convertReportToFormData = (fetchedReport) => {
   }));
 
   const { goals, goalForEditing } = convertGoalsToFormData(
-    fetchedReport.goalsAndObjectives, grantIds,
+    fetchedReport.goalsAndObjectives, grantIds, fetchedReport.calculatedStatus,
   );
   const objectivesWithoutGoals = convertObjectivesWithoutGoalsToFormData(
     fetchedReport.objectivesWithoutGoals, otherEntities,
