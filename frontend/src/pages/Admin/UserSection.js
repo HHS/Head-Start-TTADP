@@ -114,6 +114,7 @@ function UserSection({ user, onSave, features }) {
         user={formUser}
         onUserChange={onUserChange}
       />
+      <Button className="margin-bottom-6" onClick={impersonateUserId}>Impersonate user</Button>
       <UserPermissions
         userId={user.id}
         globalPermissions={userGlobalPermissions(formUser)}

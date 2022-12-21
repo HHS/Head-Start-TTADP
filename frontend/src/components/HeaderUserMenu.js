@@ -1,6 +1,6 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Link } from '@trussworks/react-uswds';
+import { Link, Button } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import Avatar from './Avatar';
@@ -10,6 +10,7 @@ import NavLink from './NavLink';
 import UserContext from '../UserContext';
 import isAdmin from '../permissions';
 import colors from '../colors';
+import { LOCAL_STORAGE_IMPERSONATION_KEY } from '../Constants';
 
 function UserMenuNav({ items }) {
   return (
@@ -35,6 +36,9 @@ UserMenuNav.propTypes = {
 function HeaderUserMenu() {
   const { user } = useContext(UserContext);
   const userIsAdmin = isAdmin(user);
+  const [isImpersonating, setIsImpersonating] = useState(
+    window.localStorage.getItem(LOCAL_STORAGE_IMPERSONATION_KEY) !== null,
+  );
 
   const menuItems = useMemo(() => [
     { key: 1, label: 'Account Management', to: '/account' },
@@ -134,6 +138,12 @@ function HeaderUserMenu() {
     clickOutsideRef: () => {},
   };
 
+  const stopImpersonating = () => {
+    window.localStorage.removeItem(LOCAL_STORAGE_IMPERSONATION_KEY);
+    setIsImpersonating(false);
+    window.location.href = '/';
+  };
+
   return (
     <DropdownMenu
       Trigger={Av}
@@ -150,6 +160,13 @@ function HeaderUserMenu() {
             {user.name}
           </span>
         </h4>
+        {isImpersonating && (
+          <div className="display-flex flex-justify-center margin-top-2">
+            <Button type="button" onClick={stopImpersonating}>
+              Stop impersonating
+            </Button>
+          </div>
+        )}
         <UserMenuNav items={menuItems} />
       </div>
     </DropdownMenu>

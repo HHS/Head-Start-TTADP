@@ -13,7 +13,8 @@ import { validateUserAuthForAdmin } from './accessValidation';
  *
  * This function will return the CURRENT_USER_ID if BYPASS_AUTH is enabled,
  * req.session.userId if that is set, or res.locals.userId otherwise.
- * If an "Auth-Impersonation-Id" header is set, and the user is an admin,
+ * If an "Auth-Impersonation-Id" header is set, AND the user (designated by
+ * the req.session or req.locals userId) is an admin,
  * then the user ID from the header will be returned.
  */
 export async function currentUserId(req, res) {
@@ -39,13 +40,13 @@ export async function currentUserId(req, res) {
 
   // There will be an Auth-Impersonation-Id header if the user is impersonating another user.
   // If that is the case, we want to use the impersonated user's ID.
-  const impersonatedUserId = req.headers['Auth-Impersonation-Id'];
+  const impersonatedUserId = JSON.parse(req.headers['auth-impersonation-id']);
   if (impersonatedUserId) {
     // Verify admin access.
     try {
       const userId = idFromSessionOrLocals();
       if (!(await validateUserAuthForAdmin(userId))) {
-        auditLogger.error(`Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the base user (${userId}) is not an admin.`);
+        auditLogger.error(`Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the session user (${userId}) is not an admin.`);
         return res.sendStatus(httpCodes.UNAUTHORIZED);
       }
     } catch (e) {
