@@ -62,6 +62,7 @@ export async function saveObjectivesForReport(objectives, report) {
         savedObjective = await Objective.create({
           ...ObjPros,
           otherEntityId,
+          createdVia: 'activityReport',
         });
       }
 
