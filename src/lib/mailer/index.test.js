@@ -142,8 +142,6 @@ const jsonTransport = createTransport({ jsonTransport: true });
 const oldEnv = process.env;
 process.env.FROM_EMAIL_ADDRESS = 'fake@test.gov';
 
-jest.mock('bull');
-
 describe('mailer tests', () => {
   afterAll(async () => {
     process.env = oldEnv;
