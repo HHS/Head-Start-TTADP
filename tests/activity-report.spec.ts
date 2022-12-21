@@ -13,6 +13,7 @@ async function getFullName(page) {
 
 test.describe("Activity Report", () => {
   test('can create an AR with multiple goals, submit for review, and review', async ({ page }) => {
+    test.slow();
     const fullName = await getFullName(page);
 
     await page.getByRole('link', { name: 'Activity Reports' }).click();
