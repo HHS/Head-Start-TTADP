@@ -141,7 +141,7 @@ describe('create goal', () => {
     await screen.findByText(BEFORE_OBJECTIVES_CREATE_GOAL);
     await screen.findByText(BEFORE_OBJECTIVES_SELECT_RECIPIENTS);
 
-    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal' });
     userEvent.type(goalText, 'This is goal text');
     userEvent.click(addObjectiveButton);
 
@@ -166,7 +166,7 @@ describe('create goal', () => {
     const saveDraft = await screen.findByRole('button', { name: /save draft/i });
     userEvent.click(saveDraft);
 
-    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal' });
     userEvent.type(goalText, 'This is goal text');
 
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
@@ -188,7 +188,7 @@ describe('create goal', () => {
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
     userEvent.click(newObjective);
 
-    const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
+    const objectiveText = await screen.findByRole('textbox', { name: /TTA objective/i });
     userEvent.type(objectiveText, 'test');
 
     const topics = await screen.findByLabelText(/topics \*/i);
@@ -247,7 +247,7 @@ describe('create goal', () => {
 
     await screen.findByText(/Enter the recipient's goal/i);
 
-    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal' });
     userEvent.type(goalText, 'This is goal text');
 
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
@@ -301,7 +301,7 @@ describe('create goal', () => {
     fetchMock.restore();
     fetchMock.post('/api/goals', 500);
 
-    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal' });
     userEvent.type(goalText, 'This is goal text');
 
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
@@ -325,7 +325,7 @@ describe('create goal', () => {
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
     userEvent.click(newObjective);
 
-    const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
+    const objectiveText = await screen.findByRole('textbox', { name: /TTA objective/i });
     userEvent.type(objectiveText, 'test');
 
     const topics = await screen.findByLabelText(/topics \*/i);
@@ -368,7 +368,7 @@ describe('create goal', () => {
 
     await screen.findByRole('heading', { name: 'Goal summary' });
 
-    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal' });
     userEvent.type(goalText, 'This is goal text');
 
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
@@ -381,7 +381,7 @@ describe('create goal', () => {
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
     userEvent.click(newObjective);
 
-    const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
+    const objectiveText = await screen.findByRole('textbox', { name: /TTA objective/i });
     userEvent.type(objectiveText, 'test');
 
     const topics = await screen.findByLabelText(/topics \*/i);
@@ -404,7 +404,7 @@ describe('create goal', () => {
 
     const deleteButton = within(await screen.findByTestId('menu')).getByRole('button', { name: /remove/i });
     userEvent.click(deleteButton);
-    await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    await screen.findByRole('textbox', { name: 'Recipient\'s goal' });
     expect(fetchMock.called()).toBeTruthy();
   });
 
@@ -427,7 +427,7 @@ describe('create goal', () => {
     fetchMock.restore();
     fetchMock.post('/api/goals', postResponse);
 
-    let goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    let goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal' });
     userEvent.type(goalText, 'This is goal text');
 
     let ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
@@ -440,7 +440,7 @@ describe('create goal', () => {
     let newObjective = await screen.findByRole('button', { name: 'Add new objective' });
     userEvent.click(newObjective);
 
-    let objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
+    let objectiveText = await screen.findByRole('textbox', { name: /TTA objective/i });
     userEvent.type(objectiveText, 'test');
 
     let topics = await screen.findByLabelText(/topics \*/i);
@@ -468,7 +468,7 @@ describe('create goal', () => {
 
     await screen.findByTestId('create-goal-form-cancel');
 
-    goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal' });
     userEvent.type(goalText, 'This is more goal text');
 
     ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
@@ -481,7 +481,7 @@ describe('create goal', () => {
     newObjective = await screen.findByRole('button', { name: 'Add new objective' });
     userEvent.click(newObjective);
 
-    objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
+    objectiveText = await screen.findByRole('textbox', { name: /TTA objective/i });
     userEvent.type(objectiveText, 'test');
 
     topics = await screen.findByLabelText(/topics \*/i);
@@ -502,7 +502,7 @@ describe('create goal', () => {
 
     const deleteButton = within(await screen.findByTestId('menu')).getByRole('button', { name: /remove/i });
     userEvent.click(deleteButton);
-    await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    await screen.findByRole('textbox', { name: 'Recipient\'s goal' });
   });
 
   it('allows editing of goals', async () => {
@@ -522,7 +522,7 @@ describe('create goal', () => {
 
     await screen.findByRole('heading', { name: 'Goal summary' });
 
-    let goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    let goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal' });
     userEvent.type(goalText, 'This is goal text');
 
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
@@ -535,7 +535,7 @@ describe('create goal', () => {
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
     userEvent.click(newObjective);
 
-    const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
+    const objectiveText = await screen.findByRole('textbox', { name: /TTA objective/i });
     userEvent.type(objectiveText, 'test');
 
     const topics = await screen.findByLabelText(/topics \*/i);
@@ -556,7 +556,7 @@ describe('create goal', () => {
     const editButton = within(await screen.findByTestId('menu')).getByRole('button', { name: /edit/i });
     userEvent.click(editButton);
 
-    goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal' });
 
     expect(goalText.value).toBe('This is goal text');
     userEvent.type(goalText, ' and I want to meet my goals');
@@ -582,7 +582,7 @@ describe('create goal', () => {
     fetchMock.post('/api/goals', postResponse);
     expect(fetchMock.called()).toBe(false);
 
-    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal' });
     userEvent.type(goalText, 'This is goal text');
 
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
@@ -602,7 +602,7 @@ describe('create goal', () => {
 
     await screen.findByText(objectiveTitleError);
 
-    const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
+    const objectiveText = await screen.findByRole('textbox', { name: /TTA objective/i });
     userEvent.type(objectiveText, 'This is objective text');
 
     userEvent.click(save);
@@ -641,7 +641,7 @@ describe('create goal', () => {
     fetchMock.restore();
     fetchMock.post('/api/goals', postResponse);
 
-    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal' });
     userEvent.type(goalText, 'This is goal text');
 
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
@@ -654,7 +654,7 @@ describe('create goal', () => {
     let newObjective = await screen.findByRole('button', { name: 'Add new objective' });
     userEvent.click(newObjective);
 
-    const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
+    const objectiveText = await screen.findByRole('textbox', { name: /TTA objective/i });
     userEvent.type(objectiveText, 'This is objective text');
 
     const topics = await screen.findByLabelText(/topics \*/i);
@@ -734,7 +734,7 @@ describe('create goal', () => {
     fetchMock.restore();
     fetchMock.post('/api/goals', postResponse);
 
-    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal *' });
+    const goalText = await screen.findByRole('textbox', { name: 'Recipient\'s goal' });
     userEvent.type(goalText, 'This is goal text');
 
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
@@ -745,7 +745,7 @@ describe('create goal', () => {
 
     expect(document.querySelectorAll('ttahub-objective-files').length).toBe(0);
 
-    const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
+    const objectiveText = await screen.findByRole('textbox', { name: /TTA objective/i });
     userEvent.type(objectiveText, 'This is objective text');
 
     const saveDraft = await screen.findByRole('button', { name: /save draft/i });

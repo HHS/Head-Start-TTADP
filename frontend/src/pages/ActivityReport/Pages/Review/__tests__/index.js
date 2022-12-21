@@ -124,7 +124,7 @@ const renderReview = (
   return history;
 };
 
-const selectLabel = 'Approving manager *';
+const selectLabel = /Approving manager/i;
 
 describe('ReviewSubmit', () => {
   describe('when the user is the approving manager', () => {
