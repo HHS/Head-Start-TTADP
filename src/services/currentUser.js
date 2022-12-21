@@ -20,10 +20,10 @@ import { validateUserAuthForAdmin } from './accessValidation';
 export async function currentUserId(req, res) {
   function idFromSessionOrLocals() {
     if (req.session && req.session.userId) {
-      return req.session.userId;
+      return Number(req.session.userId);
     }
     if (res.locals && res.locals.userId) {
-      return res.locals.userId;
+      return Number(res.locals.userId);
     }
     // bypass authorization, used for cucumber UAT and axe accessibility testing
     if (process.env.NODE_ENV !== 'production' && process.env.BYPASS_AUTH === 'true') {
@@ -33,27 +33,34 @@ export async function currentUserId(req, res) {
         req.session.userId = userId;
         req.session.uuid = uuidv4();
       }
-      return userId;
+      return Number(userId);
     }
     return null;
   }
 
   // There will be an Auth-Impersonation-Id header if the user is impersonating another user.
   // If that is the case, we want to use the impersonated user's ID.
-  const impersonatedUserId = JSON.parse(req.headers['auth-impersonation-id']);
-  if (impersonatedUserId) {
-    // Verify admin access.
+  if (req.headers && req.headers['auth-impersonation-id']) {
     try {
-      const userId = idFromSessionOrLocals();
-      if (!(await validateUserAuthForAdmin(userId))) {
-        auditLogger.error(`Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the session user (${userId}) is not an admin.`);
-        return res.sendStatus(httpCodes.UNAUTHORIZED);
+      const impersonatedUserId = JSON.parse(req.headers['auth-impersonation-id']);
+      if (impersonatedUserId) {
+        // Verify admin access.
+        try {
+          const userId = idFromSessionOrLocals();
+          if (!(await validateUserAuthForAdmin(userId))) {
+            auditLogger.error(`Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the session user (${userId}) is not an admin.`);
+            return res.sendStatus(httpCodes.UNAUTHORIZED);
+          }
+        } catch (e) {
+          return handleErrors(req, res, e);
+        }
+
+        return Number(impersonatedUserId);
       }
     } catch (e) {
+      auditLogger.error(`Impersonation failure. Could not parse the Auth-Impersonation-Id header: ${e}`);
       return handleErrors(req, res, e);
     }
-
-    return Number(impersonatedUserId);
   }
 
   return idFromSessionOrLocals();
