@@ -146,7 +146,7 @@ export default function GoalForm({
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
         setIsRttapa(goal.isRttapa);
         initialRttapa.current = goal.isRttapa;
-        setSelectedGrants(formatGrantsFromApi([goal.grant]));
+        setSelectedGrants(formatGrantsFromApi(goal.grants ? goal.grants : [goal.grant]));
         setGoalNumbers(goal.goalNumbers);
         setGoalOnApprovedReport(goal.onApprovedAR);
 
