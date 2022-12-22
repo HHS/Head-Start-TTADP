@@ -161,6 +161,8 @@ const GoalsObjectives = ({
       }
     }
 
+    console.log(setValue);
+
     // clear out the existing value (we need to do this because without it
     // certain objective fields don't clear out)
     setValue('goalForEditing', null);
