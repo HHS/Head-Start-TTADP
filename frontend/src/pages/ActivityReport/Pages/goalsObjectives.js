@@ -165,8 +165,6 @@ const GoalsObjectives = ({
     // certain objective fields don't clear out)
     setValue('goalForEditing', null);
 
-    console.log(setValue);
-
     // make this goal the editable goal
     setValue('goalForEditing', goal);
 
