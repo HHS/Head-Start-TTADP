@@ -22,6 +22,7 @@ const scheduleAddIndexDocumentJob = async (id, type, document) => {
       indexName: type,
       id,
       document,
+      key: AWS_ELASTICSEARCH_ACTIONS.ADD_INDEX_DOCUMENT,
     };
     awsElasticsearchQueue.add(AWS_ELASTICSEARCH_ACTIONS.ADD_INDEX_DOCUMENT, data);
     return data;
@@ -35,11 +36,13 @@ const scheduleUpdateIndexDocumentJob = async (id, type, document) => {
     logger.info(
       `The 'Add Index Document Job' has been added to the queue for ${type} ID: ${id}`,
     );
+
     // Add index document job to queue.
     const data = {
       indexName: type,
       id,
-      body: document,
+      body: { doc: { ...document } },
+      key: AWS_ELASTICSEARCH_ACTIONS.UPDATE_INDEX_DOCUMENT,
     };
     awsElasticsearchQueue.add(AWS_ELASTICSEARCH_ACTIONS.UPDATE_INDEX_DOCUMENT, data);
     return data;
@@ -53,13 +56,15 @@ const scheduleDeleteIndexDocumentJob = async (id, type) => {
     logger.info(
       `The 'Add Index Document Job' has been added to the queue for ${type} ID: ${id}`,
     );
-    // Add index document job to queue.
-    awsElasticsearchQueue.add(AWS_ELASTICSEARCH_ACTIONS.DELETE_INDEX_DOCUMENT, {
+    const data = {
       indexName: type,
       id,
-    });
+      type: AWS_ELASTICSEARCH_ACTIONS.DELETE_INDEX_DOCUMENT,
+    };
+    // Add index document job to queue.
+    awsElasticsearchQueue.add(AWS_ELASTICSEARCH_ACTIONS.DELETE_INDEX_DOCUMENT, data);
   }
-  return 'Success';
+  return null;
 };
 
 export {

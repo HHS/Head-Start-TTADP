@@ -47,10 +47,10 @@ async function start() {
   // AWS Elasticsearch
   awsElasticsearchQueue.on('failed', (job, error) => auditLogger.error(`job ${job.data.key} failed with error ${error}`));
   awsElasticsearchQueue.on('completed', (job, result) => {
-    if (result.status === 200) {
-      logger.info(`job ${job.data.key} completed with status ${result.status} and result ${result.data}`);
+    if (result.status === 200 || result.status === 201 || result.status === 202) {
+      logger.info(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
     } else {
-      auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${result.data}`);
+      auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
     }
   });
   // Process AWS Elasticsearch Queue Items:

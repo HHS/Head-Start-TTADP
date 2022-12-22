@@ -138,6 +138,7 @@ export default async function createAwsElasticSearchIndexes() {
 
       // Add to bulk update.
       documents.push({
+        id: ar.id,
         context: ar.context,
         startDate: ar.startDate,
         endDate: ar.endDate,

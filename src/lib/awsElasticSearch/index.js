@@ -97,22 +97,24 @@ const addIndexDocument = async (job) => {
   const {
     indexName, id, document, passedClient,
   } = job.data;
+  let res;
   try {
     // Initialize the client.
     const client = passedClient || await getClient();
 
     // Add a document to an index.
-    const res = await client.index({
+    res = await client.index({
       index: indexName,
       id,
       body: document,
       refresh: true, // triggers manual refresh.
     });
     logger.info(`AWS OpenSearch: Successfully added document to index ${indexName}`);
-    return res;
+
+    return { data: job.data, status: res.statusCode, res };
   } catch (error) {
     auditLogger.error(`AWS OpenSearch Error: Unable to add document to index '${indexName}': ${error.message}`);
-    throw error;
+    return { data: job.data, status: res.statusCode, res };
   }
 };
 /*
@@ -185,12 +187,13 @@ const updateIndexDocument = async (job) => {
   const {
     indexName, id, body, passedClient,
   } = job.data;
+  let res;
   try {
     // Initialize the client.
     const client = passedClient || await getClient();
 
     // Update index document.
-    const res = await client.update({
+    res = await client.update({
       index: indexName,
       id,
       body,
@@ -198,10 +201,10 @@ const updateIndexDocument = async (job) => {
     });
 
     logger.info(`AWS OpenSearch: Successfully updated document  index ${indexName} for id ${id}`);
-    return res;
+    return { data: job.data, status: res.statusCode, res };
   } catch (error) {
     auditLogger.error(`AWS OpenSearch Error: Unable to update the index '${indexName} for id ${id}': ${error.message}`);
-    throw error;
+    return { data: job.data, status: res.statusCode, res };
   }
 };
 
@@ -212,22 +215,23 @@ const deleteIndexDocument = async (job) => {
   const {
     indexName, id, passedClient,
   } = job.data;
+  let res;
   try {
     // Initialize the client.
     const client = passedClient || await getClient();
 
     // Delete index document.
-    const res = await client.delete({
+    res = await client.delete({
       index: indexName,
       id,
       refresh: true, // triggers manual refresh.
     });
 
     logger.info(`AWS OpenSearch: Successfully deleted document '${id}' for index '${indexName}'`);
-    return res;
+    return { data: job.data, status: res.statusCode, res };
   } catch (error) {
     auditLogger.error(`AWS OpenSearch Error: Unable to delete document '${id}' for index '${indexName}': ${error.message}`);
-    throw error;
+    return { data: job.data, status: res.statusCode, res };
   }
 };
 
