@@ -132,7 +132,7 @@ const GoalsObjectives = ({
     }
   };
 
-  const onEdit = async (goal, index) => {
+  const onEdit = async (goal) => {
     try {
       await setGoalAsActivelyEdited(activityReportId, goal.goalIds);
     } catch (err) {
@@ -161,11 +161,14 @@ const GoalsObjectives = ({
       }
     }
 
+    setValue('goalForEditing', null);
+
+    // const objectives = goal.objectives || [];
+
     // make this goal the editable goal
     setValue('goalForEditing', goal);
-    const objectives = getValues(`goals[${index}].objectives`) || [];
 
-    setValue('goalForEditing.objectives', objectives);
+    // setValue('goalForEditing.objectives', objectives);
     setValue('goalEndDate', moment(goal.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'));
     setValue('goalName', goal.name);
 
