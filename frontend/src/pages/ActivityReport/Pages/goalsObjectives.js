@@ -41,7 +41,6 @@ const GoalsObjectives = ({
   const activityRecipientType = watch('activityRecipientType');
   const activityRecipients = watch('activityRecipients');
   const objectivesWithoutGoals = watch('objectivesWithoutGoals');
-  const activityReportId = watch('id');
   const isRecipientReport = activityRecipientType === 'recipient';
   const isOtherEntityReport = activityRecipientType === 'other-entity';
   const grantIds = isRecipientReport ? activityRecipients.map((r) => {
@@ -134,7 +133,7 @@ const GoalsObjectives = ({
 
   const onEdit = async (goal) => {
     try {
-      await setGoalAsActivelyEdited(activityReportId, goal.goalIds);
+      await setGoalAsActivelyEdited(reportId, goal.goalIds);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('failed to set goal as actively edited with this error:', err);
@@ -219,7 +218,7 @@ const GoalsObjectives = ({
         <Alert noIcon type="info">
           To add goals and objectives, indicate who the activity was for in
           {' '}
-          <Link to={`/activity-reports/${activityReportId}/activity-summary`}>Activity Summary</Link>
+          <Link to={`/activity-reports/${reportId}/activity-summary`}>Activity Summary</Link>
           .
         </Alert>
       )}
