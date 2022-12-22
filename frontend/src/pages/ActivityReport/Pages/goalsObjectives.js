@@ -189,14 +189,11 @@ const GoalsObjectives = ({
   };
 
   // the read only component expects things a little differently
-  const goalsForReview = selectedGoals.map((goal, index) => {
-    const fieldArrayName = `goals[${index}].objectives`;
-    const objectives = getValues(fieldArrayName) || [];
+  const goalsForReview = selectedGoals.map((goal) => {
     return {
       ...goal,
       goalName: goal.name,
       grants: [],
-      objectives,
     };
   });
 
