@@ -31,6 +31,8 @@ export default function ReadOnlyGoal({
     ];
   }
 
+  console.log(goal.objectives);
+
   return (
     <div key={`goal${goal.id}`}>
       <div className="ttahub-goal-form-goal-summary padding-3 position-relative margin-bottom-4">
