@@ -31,7 +31,7 @@ export default function ReadOnlyGoal({
     ];
   }
 
-  console.log(goal.objectives);
+  console.log(goal);
 
   return (
     <div key={`goal${goal.id}`}>
