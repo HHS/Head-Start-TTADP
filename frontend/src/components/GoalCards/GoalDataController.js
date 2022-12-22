@@ -8,11 +8,10 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
-import { DECIMAL_BASE } from '@ttahub/common';
 import { filtersToQueryString } from '../../utils';
 import GoalsTable from './GoalCards';
 import { GoalStatusChart } from '../../widgets/GoalStatusGraph';
-import { GOALS_PER_PAGE } from '../../Constants';
+import { GOALS_PER_PAGE, DECIMAL_BASE } from '../../Constants';
 import './GoalTable.scss';
 import { getRecipientGoals } from '../../fetchers/recipient';
 

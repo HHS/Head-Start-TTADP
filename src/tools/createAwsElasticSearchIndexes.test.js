@@ -1,5 +1,4 @@
 /* eslint-disable dot-notation */
-import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   User,
   ActivityReport,
@@ -16,7 +15,7 @@ import createAwsElasticSearchIndexes from './createAwsElasticSearchIndexes';
 import {
   search,
 } from '../lib/awsElasticSearch/index';
-import { AWS_ELASTIC_SEARCH_INDEXES } from '../constants';
+import { AWS_ELASTIC_SEARCH_INDEXES, REPORT_STATUSES } from '../constants';
 import { auditLogger } from '../logger';
 
 const mockUser = {

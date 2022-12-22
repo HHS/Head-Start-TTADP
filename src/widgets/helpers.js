@@ -1,9 +1,9 @@
 import { Op } from 'sequelize';
-import { REPORT_STATUSES } from '@ttahub/common';
 import {
   ActivityReport,
   sequelize,
 } from '../models';
+import { REPORT_STATUSES } from '../constants';
 
 export async function countOccurrences(scopes, column, possibilities) {
   const allOccurrences = await ActivityReport.findAll({

@@ -6,7 +6,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
 import selectEvent from 'react-select-event';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES } from '../../../../../Constants';
 import Objectives from '../Objectives';
 
 // eslint-disable-next-line react/prop-types

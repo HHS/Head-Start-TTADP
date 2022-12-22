@@ -1,4 +1,4 @@
-const { APPROVER_STATUSES, REPORT_STATUSES } = require('@ttahub/common');
+const { APPROVER_STATUSES, REPORT_STATUSES } = require('../../constants');
 
 /**
  * Helper function called by model hooks.

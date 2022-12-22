@@ -5,12 +5,12 @@ import {
   render, screen,
 } from '@testing-library/react';
 import moment from 'moment';
-import { REPORT_STATUSES } from '@ttahub/common';
 import SideNav from '../SideNav';
 import {
   NOT_STARTED, IN_PROGRESS, COMPLETE,
 } from '../../constants';
 
+import { REPORT_STATUSES } from '../../../../Constants';
 import NetworkContext from '../../../../NetworkContext';
 
 describe('SideNav', () => {

@@ -4,7 +4,7 @@ import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 import { Switch, Route } from 'react-router';
-import { DECIMAL_BASE } from '@ttahub/common';
+import { DECIMAL_BASE } from '../../Constants';
 import { getRecipient } from '../../fetchers/recipient';
 import RecipientTabs from './components/RecipientTabs';
 import { HTTPError } from '../../fetchers';
