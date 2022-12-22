@@ -1,6 +1,6 @@
 import React from 'react';
+import { RECIPIENT_PARTICIPANTS, OTHER_ENTITY_PARTICIPANTS } from '@ttahub/common';
 import FilterSelect from './FilterSelect';
-import { RECIPIENT_PARTICIPANTS, OTHER_ENTITY_PARTICIPANTS } from '../../Constants';
 import { filterSelectProps } from './props';
 
 const AllParticipants = [
