@@ -1,4 +1,4 @@
-import { REPORT_STATUSES } from '../../../Constants';
+import { REPORT_STATUSES } from '@ttahub/common';
 import { convertGoalsToFormData } from '../formDataHelpers';
 
 describe('convertGoalsToFormData', () => {
