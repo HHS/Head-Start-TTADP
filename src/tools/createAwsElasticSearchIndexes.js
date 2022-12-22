@@ -1,5 +1,4 @@
 /* eslint-disable no-restricted-syntax */
-import { Op } from 'sequelize';
 import moment from 'moment';
 import { auditLogger, logger } from '../logger';
 import {
@@ -10,12 +9,10 @@ import {
 } from '../lib/awsElasticSearch/index';
 import {
   sequelize,
-  ActivityReportGoal,
   ActivityReport,
-  NextStep,
-  ActivityReportObjective,
 } from '../models';
 import { AWS_ELASTIC_SEARCH_INDEXES } from '../constants';
+import collectModelData from '../lib/awsElasticSearch/datacollector';
 
 /*
         TTAHUB-870:
@@ -43,10 +40,7 @@ export default async function createAwsElasticSearchIndexes() {
     const startGettingReports = moment();
     // Query DB.
     let reportsToIndex;
-    let recipientNextStepsToIndex;
-    let specialistNextStepsToIndex;
-    let goalsToIndex;
-    let objectivesToIndex;
+    let reportData;
 
     await sequelize.transaction(async (transaction) => {
       // Reports.
@@ -58,53 +52,13 @@ export default async function createAwsElasticSearchIndexes() {
         transaction,
       });
 
+      // Get the report data.
       const reportIds = reportsToIndex.map((report) => report.id);
-      // Recipient Steps.
-      recipientNextStepsToIndex = await NextStep.findAll({
-        attributes: ['activityReportId', 'note'],
-        where: {
-          noteType: 'RECIPIENT',
-          activityReportId: { [Op.in]: reportIds },
-        },
-        group: ['activityReportId', 'note'],
-        order: [['activityReportId', 'ASC']],
-        raw: true,
+      reportData = await collectModelData(
+        reportIds,
+        AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
         transaction,
-      });
-      // Specialist Steps.
-      specialistNextStepsToIndex = await NextStep.findAll({
-        attributes: ['activityReportId', 'note'],
-        where: {
-          noteType: 'SPECIALIST',
-          activityReportId: { [Op.in]: reportIds },
-        },
-        group: ['activityReportId', 'note'],
-        order: [['activityReportId', 'ASC']],
-        raw: true,
-        transaction,
-      });
-      // Goals.
-      goalsToIndex = await ActivityReportGoal.findAll({
-        attributes: ['activityReportId', 'name'],
-        where: {
-          activityReportId: { [Op.in]: reportIds },
-        },
-        group: ['activityReportId', 'name'],
-        order: [['activityReportId', 'ASC']],
-        raw: true,
-        transaction,
-      });
-      // objectives.
-      objectivesToIndex = await ActivityReportObjective.findAll({
-        attributes: ['activityReportId', 'title', 'ttaProvided'],
-        where: {
-          activityReportId: { [Op.in]: reportIds },
-        },
-        group: ['activityReportId', 'title', 'ttaProvided'],
-        order: [['activityReportId', 'ASC']],
-        raw: true,
-        transaction,
-      });
+      );
     });
     const finishGettingReports = moment();
     if (!reportsToIndex.length) {
@@ -113,6 +67,14 @@ export default async function createAwsElasticSearchIndexes() {
 
     // Bulk add index documents.
     logger.info(`Search Index Job Info: Starting indexing of ${reportsToIndex[0].length} reports...`);
+
+    // Extract data.
+    const {
+      recipientNextStepsToIndex,
+      specialistNextStepsToIndex,
+      goalsToIndex,
+      objectivesToIndex,
+    } = reportData;
 
     // Build Documents Object Json.
     const startCreatingBulk = moment();

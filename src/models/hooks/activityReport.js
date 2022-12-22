@@ -8,6 +8,7 @@ const {
   scheduleUpdateIndexDocumentJob,
   scheduleDeleteIndexDocumentJob,
 } = require('../../lib/awsElasticSearch/queueManager');
+const { collectModelData } = require('../../lib/awsElasticSearch/datacollector');
 const { formatModelForAwsElasticsearch } = require('../../lib/awsElasticSearch/modelMapper');
 
 /**
@@ -567,9 +568,21 @@ const beforeCreate = async (instance) => {
   copyStatus(instance);
 };
 
-const afterCreate = async (instance) => {
+const getActivityReportDocument = async (sequelize, instance) => {
+  const data = await collectModelData(
+    instance.id,
+    AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+    sequelize,
+  );
+  return formatModelForAwsElasticsearch(
+    AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+    { ...data, ar: { ...instance.dataValues } },
+  );
+};
+
+const afterCreate = async (sequelize, instance) => {
   // Index for AWS Elasticsearch.
-  const document = await formatModelForAwsElasticsearch(instance);
+  const document = await getActivityReportDocument(sequelize, instance);
   await scheduleAddIndexDocumentJob(
     instance.id,
     AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
@@ -598,15 +611,16 @@ const afterUpdate = async (sequelize, instance, options) => {
         instance.id,
         AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
       );
+    } else if (instance.previous('calculatedStatus') !== REPORT_STATUSES.SUBMITTED
+    && instance.calculatedStatus === REPORT_STATUSES.SUBMITTED) {
+      // Index for AWS Elasticsearch.
+      const document = await getActivityReportDocument(sequelize, instance);
+      await scheduleUpdateIndexDocumentJob(
+        instance.id,
+        AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+        document,
+      );
     }
-  } else {
-    // Index for AWS Elasticsearch.
-    const document = await formatModelForAwsElasticsearch(instance);
-    await scheduleUpdateIndexDocumentJob(
-      instance.id,
-      AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-      document,
-    );
   }
 };
 

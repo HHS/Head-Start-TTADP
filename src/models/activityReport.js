@@ -256,7 +256,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     hooks: {
       beforeCreate: async (instance) => beforeCreate(instance),
-      afterCreate: async (instance) => afterCreate(instance),
+      afterCreate: async (instance) => afterCreate(sequelize, instance),
       beforeUpdate: async (instance) => beforeUpdate(instance),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },

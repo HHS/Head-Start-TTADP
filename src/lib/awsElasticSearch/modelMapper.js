@@ -2,17 +2,25 @@
 import moment from 'moment';
 
 const CUSTOM_FORMATTERS = {
-  ActivityReport: async (instance) => {
+  activityreports: async (data) => {
+    const {
+      ar,
+      recipientNextStepsToIndex,
+      specialistNextStepsToIndex,
+      goalsToIndex,
+      objectivesToIndex,
+    } = data;
+
     const document = {
-      id: instance.id,
-      context: instance.context,
-      startDate: moment(instance.startDate).toISOString(),
-      endDate: moment(instance.endDate).toISOString(),
-      // recipientNextSteps: instance.recipientNextSteps.map((r) => r.note),
-      // specialistNextSteps: instance.specialistNextSteps.map((s) => s.note),
-      // activityReportGoals: goalsAndObjectives.map((arg) => arg.name),
-      // activityReportObjectives: goalsAndObjectives.map((aro) => aro.title) ,
-      // activityReportObjectivesTTA: arObjectivesSteps.map((aro) => aro.ttaProvided),
+      id: ar.id,
+      context: ar.context,
+      startDate: moment(ar.startDate).format(),
+      endDate: moment(ar.endDate).format(),
+      recipientNextSteps: recipientNextStepsToIndex.map((r) => r.note),
+      specialistNextSteps: specialistNextStepsToIndex.map((s) => s.note),
+      activityReportGoals: goalsToIndex.map((arg) => arg.name),
+      activityReportObjectives: objectivesToIndex.map((aro) => aro.title),
+      activityReportObjectivesTTA: objectivesToIndex.map((aro) => aro.ttaProvided),
     };
     return document;
   },
@@ -22,12 +30,11 @@ const CUSTOM_FORMATTERS = {
  * @param {Model} instance Sequelize instance to be formatted.
  * @returns {Promise<object>} A JSON document for storage in Elasticsearch.
  */
-const formatModelForAwsElasticsearch = async (instance) => {
-  const customFormatter = CUSTOM_FORMATTERS[instance.constructor.name];
+const formatModelForAwsElasticsearch = async (indexName, data) => {
+  const customFormatter = CUSTOM_FORMATTERS[indexName];
   if (customFormatter) {
-    return customFormatter(instance);
+    return customFormatter(data);
   }
-
   return null;
 };
 
