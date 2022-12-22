@@ -1,9 +1,9 @@
 import { isEqual } from 'lodash';
 import moment from 'moment';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   DATE_DISPLAY_FORMAT,
   DATEPICKER_VALUE_FORMAT,
-  REPORT_STATUSES,
 } from '../../Constants';
 
 const ALLOWED_STATUSES_FOR_GOAL_EDITING = [
