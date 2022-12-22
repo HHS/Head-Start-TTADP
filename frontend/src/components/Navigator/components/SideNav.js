@@ -14,9 +14,9 @@ import {
 } from '@trussworks/react-uswds';
 import { useMediaQuery } from 'react-responsive';
 import moment from 'moment';
+import { REPORT_STATUSES } from '@ttahub/common';
 import Container from '../../Container';
 import './SideNav.scss';
-import { REPORT_STATUSES } from '../../../Constants';
 import {
   NOT_STARTED, IN_PROGRESS, COMPLETE,
 } from '../constants';

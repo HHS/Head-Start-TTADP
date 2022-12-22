@@ -1,4 +1,5 @@
 import faker from '@faker-js/faker';
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   Goal,
   Grant,
@@ -15,7 +16,6 @@ import db, {
   ObjectiveTopic,
   ObjectiveResource,
 } from '../../models';
-import { REPORT_STATUSES } from '../../constants';
 import { saveGoalsForReport } from '../goals';
 import { activityReportAndRecipientsById } from '../activityReports';
 
@@ -43,6 +43,7 @@ describe('saveGoalsForReport (more tests)', () => {
   let existingObjective;
   let topic;
   let secondTopic;
+  let rtrObjectiveNotOnReport;
 
   // Adding a recipient.
   let addingRecipientReport;
@@ -317,7 +318,10 @@ describe('saveGoalsForReport (more tests)', () => {
       },
     });
 
-    const objectiveIds = arObjectives.map((aro) => aro.objectiveId);
+    const objectiveIds = [
+      ...arObjectives.map((aro) => aro.objectiveId),
+      rtrObjectiveNotOnReport.id,
+    ];
 
     await ActivityReportObjective.destroy({
       where: {
@@ -500,10 +504,19 @@ describe('saveGoalsForReport (more tests)', () => {
 
     expect(beforeObjectives.length).toBe(1);
 
+    const objectiveIds = beforeObjectives.map((bo) => bo.objectiveId);
+
     const [savedReport] = await activityReportAndRecipientsById(activityReportForNewGoal.id);
 
     const goalName = 'This is a brand new goal';
     const [beforeGoal] = beforeGoals;
+
+    rtrObjectiveNotOnReport = await Objective.create({
+      goalId: beforeGoal.goalId,
+      status: 'In Progress',
+      title: 'gabba gabba hey',
+      createdVia: 'rtr',
+    });
 
     const newGoals = [
       {
@@ -541,6 +554,22 @@ describe('saveGoalsForReport (more tests)', () => {
     });
 
     expect(afterObjectives.length).toBe(0);
+
+    const remainingObjectives = await Objective.findAll({
+      where: {
+        id: objectiveIds,
+      },
+    });
+
+    expect(remainingObjectives.length).toBe(0);
+    const unaffectedObjectives = await Objective.findAll({
+      where: {
+        goalId,
+      },
+    });
+
+    expect(unaffectedObjectives.length).toBe(1);
+    expect(unaffectedObjectives[0].id).toBe(rtrObjectiveNotOnReport.id);
   });
 
   it('you can safely reuse objective text', async () => {

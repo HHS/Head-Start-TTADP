@@ -5,11 +5,11 @@ import {
   screen,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { SCOPE_IDS } from '@ttahub/common';
 import FilterPanel from '../FilterPanel';
 import UserContext from '../../../UserContext';
 import { formatDateRange } from '../../../utils';
 import { LANDING_FILTER_CONFIG_WITH_REGIONS } from '../../../pages/Landing/constants';
-import { SCOPE_IDS } from '../../../Constants';
 
 const { READ_ACTIVITY_REPORTS } = SCOPE_IDS;
 

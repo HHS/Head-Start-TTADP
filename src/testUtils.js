@@ -1,6 +1,6 @@
 import faker from '@faker-js/faker';
 
-import { REPORT_STATUSES } from './constants';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   ActivityReport,
   ActivityRecipient,

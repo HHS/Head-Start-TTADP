@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
 import moment from 'moment';
+import { REPORT_STATUSES } from '@ttahub/common';
 import { ActivityReport } from '../models';
-import { REPORT_STATUSES } from '../constants';
 
 function addOrUpdateResponse(traceIndex, res, xValue, valueToAdd, month) {
   // If report is missing duration set value to 0.

@@ -1,7 +1,7 @@
-import filterArray from './utils';
 import {
   ALL_PARTICIPANTS,
-} from '../../constants';
+} from '@ttahub/common';
+import filterArray from './utils';
 
 function onlyValidParticipants(query) {
   if (!Array.isArray(query)) {
