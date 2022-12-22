@@ -97,7 +97,10 @@ export default function ReadOnlyObjective({ objective }) {
 ReadOnlyObjective.propTypes = {
   objective: PropTypes.shape({
     ttaProvided: PropTypes.string,
-    resources: PropTypes.arrayOf(PropTypes.string),
+    resources: PropTypes.arrayOf(PropTypes.shape({
+      key: PropTypes.string,
+      value: PropTypes.string,
+    })),
     topics: PropTypes.arrayOf(PropTypes.shape({
       name: PropTypes.string,
     })),
