@@ -170,7 +170,6 @@ const GoalsObjectives = ({
     // make this goal the editable goal
     setValue('goalForEditing', goal);
 
-    // setValue('goalForEditing.objectives', objectives);
     setValue('goalEndDate', moment(goal.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'));
     setValue('goalName', goal.name);
 
