@@ -61,10 +61,35 @@ import {
   processActivityReportObjectivesForResourcesById,
 } from './resource';
 import { REPORT_STATUSES } from '../constants';
+import { ResourceGroups } from 'aws-sdk';
 
 describe('resource', () => {
   describe('Resource Table', () => {
     describe('findOrCreateResource', () => {
+      let url;
+      beforeEach(() => {
+        url = 'http://google.com';
+      });
+      afterEach(async () => {
+        await ResourceGroups.destroy({
+          where: { url },
+          individualHooks: true,
+        });
+      });
+      it('expected usage, new', async () => {
+        const resource = await findOrCreateResource(url);
+        expect(resource)
+          .toMatchObject({
+            domain: 'google.com',
+            url,
+          });
+        expect(typeof resource.id).toBe('number');
+      });
+      it('expected usage, existing', async () => {
+        const resource1 = await findOrCreateResource(url);
+        const resource2 = await findOrCreateResource(url);
+        expect(resource2).toMatchObject(resource1);
+      });
     });
     describe('findOrCreateResources', () => {
     });
