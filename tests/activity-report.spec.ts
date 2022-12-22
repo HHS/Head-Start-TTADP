@@ -240,9 +240,10 @@ test.describe("Activity Report", () => {
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
     await page.locator('#react-select-19-option-0').click();
 
+    await blur(page);
+
     // add a link to the first goal/first objective
-    await page.getByRole('textbox', { name: 'Resource 1' }).fill('https://www.test.gov');
-    await page.waitForTimeout(5000);
+    await page.getByLabel('Resource 1').fill('https://www.test.gov');
 
     // add TTA
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).fill('TTA was provided');
