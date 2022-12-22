@@ -13,7 +13,6 @@ async function getFullName(page) {
 
 test.describe("Activity Report", () => {
   test('can create an AR with multiple goals, submit for review, and review', async ({ page }) => {
-    test.slow();
     const fullName = await getFullName(page);
 
     await page.getByRole('link', { name: 'Activity Reports' }).click();
@@ -210,5 +209,75 @@ test.describe("Activity Report", () => {
     await expect(page.getByRole('heading', { name: `TTA activity report R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
     await expect(page.getByText(/date approved/i)).toBeVisible();
     await expect(page.getByText(/these are my manager notes/i)).toBeVisible();
+  });
+
+  test('switching objectives properly clears all fields', async ({ page}) => {
+    await page.goto('http://localhost:3000/');
+    // create a new report
+    await page.getByRole('link', { name: 'Activity Reports' }).click();
+    await page.getByRole('button', { name: '+ New Activity Report' }).click();
+
+    // select a recipient
+    await page.getByRole('group', { name: 'Was this activity for a recipient or other entity? *' }).locator('label').filter({ hasText: 'Recipient' }).click();
+    await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
+    await page.locator('#react-select-3-option-0-0').click();
+
+    // navigate to the goals and objectives page
+    await page.getByRole('button', { name: 'Goals and objectives Not Started' }).click();
+
+    // create a new goal
+    await page.getByTestId('label').locator('div').filter({ hasText: '- Select -' }).nth(2).click();
+    await page.locator('#react-select-13-option-0').getByText('Create new goal').click();
+    await page.getByTestId('textarea').fill('test goal 1');
+    await page.getByTestId('form').getByText('No').click();
+
+    // create a new objective
+    await page.getByText('- Select -').click();
+    await page.locator('#react-select-15-option-0').click();
+    await page.getByLabel('TTA objective *').fill('test objective 1');
+
+    // select a topic
+    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await page.locator('#react-select-19-option-0').click();
+
+    // add a link to the first goal/first objective
+    await page.getByRole('textbox', { name: 'Resource 1' }).fill('https://www.test.gov');
+    await page.waitForTimeout(5000);
+
+    // add TTA
+    await page.getByRole('textbox', { name: 'TTA provided for objective' }).fill('TTA was provided');
+
+    // save and create a new goal
+    await page.getByRole('button', { name: 'Save goal' }).click();
+    await page.getByRole('button', { name: 'Add new goal' }).click();
+
+    // create another new goal
+    await page.getByTestId('label').locator('div').filter({ hasText: '- Select -' }).nth(2).click();
+    await page.locator('#react-select-21-option-0').getByText('Create new goal').click();
+    await page.getByTestId('textarea').fill('Test goal 2');    
+    await page.getByRole('group', { name: 'Is this a Recipient TTA Plan Agreement (RTTAPA) goal?*' }).getByText('No').click();
+
+    // create a new objective
+    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await page.locator('#react-select-23-option-0').click();    
+    await page.getByLabel('TTA objective *').fill('test objective 2');
+    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await page.locator('#react-select-27-option-0').click();
+    await page.getByRole('textbox', { name: 'TTA provided for objective' }).fill('TTA was provided');
+    await page.getByRole('button', { name: 'Save goal' }).click();
+
+    await page.getByRole('button', { name: 'Actions for Goal 7' }).click();
+    await page.getByRole('button', { name: 'Edit' }).click();
+
+    await page.waitForTimeout(5000);
+    let resource = page.getByTestId('textInput');
+    expect(resource).toHaveValue('https://www.test.gov');
+
+    await page.getByRole('button', { name: 'Actions for Goal 8' }).click();
+    await page.getByRole('button', { name: 'Edit' }).click();
+
+    resource =  page.getByTestId('textInput');
+    expect(resource).toHaveValue('');
+    await page.getByRole('button', { name: 'Save goal' }).click();
   });
 });

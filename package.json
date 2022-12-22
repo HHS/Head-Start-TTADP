@@ -184,6 +184,7 @@
       "./frontend/",
       "./packages/",
       "./tests/",
+      "./playwright/",
       "./playwright-report/",
       "./test-results/",
       "./playwright.config.js"
