@@ -59,7 +59,7 @@ const scheduleDeleteIndexDocumentJob = async (id, type) => {
     const data = {
       indexName: type,
       id,
-      type: AWS_ELASTICSEARCH_ACTIONS.DELETE_INDEX_DOCUMENT,
+      key: AWS_ELASTICSEARCH_ACTIONS.DELETE_INDEX_DOCUMENT,
     };
     // Add index document job to queue.
     awsElasticsearchQueue.add(AWS_ELASTICSEARCH_ACTIONS.DELETE_INDEX_DOCUMENT, data);
