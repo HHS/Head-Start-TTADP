@@ -4,11 +4,11 @@ import React, {
 import PropTypes from 'prop-types';
 import { useFormContext, useFieldArray } from 'react-hook-form/dist/index.ie11';
 import { Alert } from '@trussworks/react-uswds';
+import { DECIMAL_BASE } from '@ttahub/common';
 import Objective from './Objective';
 import { getTopics } from '../../../../fetchers/topics';
 import PlusButton from '../../../../components/GoalForm/PlusButton';
 import { NEW_OBJECTIVE } from './constants';
-import { DECIMAL_BASE } from '../../../../Constants';
 
 const OBJECTIVE_LABEL = 'objectivesWithoutGoals';
 

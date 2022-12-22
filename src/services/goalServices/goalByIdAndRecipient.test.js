@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   Recipient,
   Grant,
@@ -20,7 +21,7 @@ import db, {
 import { createReport, destroyReport } from '../../testUtils';
 
 import { goalByIdAndRecipient, saveGoalsForReport } from '../goals';
-import { FILE_STATUSES, REPORT_STATUSES } from '../../constants';
+import { FILE_STATUSES } from '../../constants';
 
 describe('goalById', () => {
   let grantRecipient;
