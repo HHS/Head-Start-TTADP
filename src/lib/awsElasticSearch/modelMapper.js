@@ -1,10 +1,13 @@
 /* eslint-disable import/prefer-default-export */
+import moment from 'moment';
+
 const CUSTOM_FORMATTERS = {
   ActivityReport: async (instance) => {
     const document = {
+      id: instance.id,
       context: instance.context,
-      // startDate: instance.startDate,
-      // endDate: instance.endDate,
+      startDate: moment(instance.startDate).toISOString(),
+      endDate: moment(instance.endDate).toISOString(),
       // recipientNextSteps: instance.recipientNextSteps.map((r) => r.note),
       // specialistNextSteps: instance.specialistNextSteps.map((s) => s.note),
       // activityReportGoals: goalsAndObjectives.map((arg) => arg.name),
