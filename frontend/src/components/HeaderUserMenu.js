@@ -37,8 +37,7 @@ function HeaderUserMenu() {
   const userIsAdmin = isAdmin(user);
 
   const onItemClick = () => {
-    const header = document.querySelector('body');
-    header.dispatchEvent(
+    document.querySelector('body').dispatchEvent(
       new MouseEvent('mousedown', {
         bubbles: true,
         cancelable: true,
