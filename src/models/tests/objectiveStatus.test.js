@@ -1,4 +1,3 @@
-import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   ActivityReport,
   ActivityRecipient,
@@ -10,6 +9,7 @@ import db, {
   Recipient,
   Grant,
 } from '..';
+import { REPORT_STATUSES } from '../../constants';
 import { auditLogger } from '../../logger';
 
 const mockUser = {

@@ -1,6 +1,5 @@
 import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
-import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import filtersToScopes from '../index';
 import { auditLogger } from '../../logger';
 
@@ -17,6 +16,7 @@ import db, {
   Role,
   UserRole,
 } from '../../models';
+import { REPORT_STATUSES, APPROVER_STATUSES } from '../../constants';
 import { createReport, destroyReport, createGrant } from '../../testUtils';
 
 const mockUser = {

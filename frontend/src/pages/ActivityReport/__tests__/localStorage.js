@@ -3,7 +3,6 @@ import { screen, act } from '@testing-library/react';
 import moment from 'moment';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
-import { REPORT_STATUSES } from '@ttahub/common';
 import {
   formData, renderActivityReport, recipients,
 } from '../testHelpers';
@@ -11,6 +10,7 @@ import {
 import { mockWindowProperty } from '../../../testHelpers';
 
 import { storageAvailable } from '../../../hooks/helpers';
+import { REPORT_STATUSES } from '../../../Constants';
 
 jest.mock('../../../hooks/helpers');
 

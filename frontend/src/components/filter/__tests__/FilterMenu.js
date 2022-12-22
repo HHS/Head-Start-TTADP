@@ -6,7 +6,6 @@ import {
   act,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { SCOPE_IDS } from '@ttahub/common';
 import FilterMenu from '../FilterMenu';
 import {
   grantNumberFilter,
@@ -28,6 +27,7 @@ import {
   topicsFilter as goalTopicsFilter,
 } from '../goalFilters';
 import UserContext from '../../../UserContext';
+import { SCOPE_IDS } from '../../../Constants';
 import { TTAHISTORY_FILTER_CONFIG } from '../../../pages/RecipientRecord/pages/constants';
 
 const { READ_ACTIVITY_REPORTS } = SCOPE_IDS;

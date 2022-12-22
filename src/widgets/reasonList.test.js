@@ -1,9 +1,9 @@
-import { REPORT_STATUSES, REASONS } from '@ttahub/common';
 import db, {
   ActivityReport, ActivityRecipient, User, Recipient, Grant, NextStep,
 } from '../models';
 import filtersToScopes from '../scopes';
 import reasonList from './reasonList';
+import { REPORT_STATUSES, REASONS } from '../constants';
 import { createOrUpdate } from '../services/activityReports';
 
 const RECIPIENT_ID = 462034;

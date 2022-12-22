@@ -1,8 +1,7 @@
 import _ from 'lodash';
 import { Op } from 'sequelize';
 import moment from 'moment';
-import { REPORT_STATUSES } from '@ttahub/common';
-import { DECIMAL_BASE, REPORTS_PER_PAGE } from '../constants';
+import { REPORT_STATUSES, DECIMAL_BASE, REPORTS_PER_PAGE } from '../constants';
 import orderReportsBy from '../lib/orderReportsBy';
 import filtersToScopes from '../scopes';
 import { setReadRegions } from './accessValidation';
@@ -1400,7 +1399,7 @@ export async function activityReportsWhereCollaboratorByDate(userId, date) {
       id: {
         [Op.in]: sequelize.literal(
           `(SELECT (new_row_data->'activityReportId')::NUMERIC
-        FROM "ZALActivityReportCollaborators"
+        FROM "ZALActivityReportCollaborators" 
         where dml_timestamp > ${date} AND
         (new_row_data->'userId')::NUMERIC = ${userId})`,
         ),
@@ -1442,7 +1441,7 @@ export async function activityReportsChangesRequestedByDate(userId, date) {
           id: {
             [Op.in]: sequelize.literal(
               `(SELECT data_id
-          FROM "ZALActivityReports"
+          FROM "ZALActivityReports" 
           where dml_timestamp > ${date} AND
           (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.NEEDS_ACTION}')`,
             ),
@@ -1480,7 +1479,7 @@ export async function activityReportsSubmittedByDate(userId, date) {
           id: {
             [Op.in]: sequelize.literal(
               `(SELECT data_id
-          FROM "ZALActivityReports"
+          FROM "ZALActivityReports" 
           where dml_timestamp > ${date} AND
           (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.SUBMITTED}')`,
             ),
@@ -1521,7 +1520,7 @@ export async function activityReportsApprovedByDate(userId, date) {
           id: {
             [Op.in]: sequelize.literal(
               `(SELECT data_id
-          FROM "ZALActivityReports"
+          FROM "ZALActivityReports" 
           where dml_timestamp > ${date} AND
           (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.APPROVED}')`,
             ),

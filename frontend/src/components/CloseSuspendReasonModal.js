@@ -4,8 +4,8 @@ import PropTypes from 'prop-types';
 import {
   Form, FormGroup, ErrorMessage, Label, Fieldset, Radio, Textarea,
 } from '@trussworks/react-uswds';
-import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '@ttahub/common';
 import Modal from './Modal';
+import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '../Constants';
 
 const CloseSuspendReasonModal = ({
   modalRef, goalIds, newStatus, onSubmit, resetValues, oldGoalStatus,
