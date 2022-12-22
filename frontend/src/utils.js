@@ -2,12 +2,11 @@ import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
 import htmlToDraft from 'html-to-draftjs';
 import { EditorState, ContentState } from 'draft-js';
+import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
 import {
   GOVERNMENT_HOSTNAME_EXTENSION,
-  REPORT_STATUSES,
   WITHIN,
   QUERY_CONDITIONS,
-  DECIMAL_BASE,
   DATE_FMT,
   DATE_FORMAT,
 } from './Constants';
