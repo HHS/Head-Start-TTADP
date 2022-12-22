@@ -345,6 +345,7 @@ export default {
     if (activityRecipientType === 'other-entity') {
       return validateObjectives(formData.objectivesWithoutGoals) === true;
     }
+
     return activityRecipientType === 'recipient' && validateGoals(formData.goals) === true;
   },
   reviewSection: () => <ReviewSection />,

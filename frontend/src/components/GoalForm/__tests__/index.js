@@ -14,10 +14,10 @@ import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import userEvent from '@testing-library/user-event';
-import { REPORT_STATUSES, SCOPE_IDS } from '@ttahub/common';
 import CreateGoal from '../index';
 import UserContext from '../../../UserContext';
 import { OBJECTIVE_ERROR_MESSAGES } from '../constants';
+import { REPORT_STATUSES, SCOPE_IDS } from '../../../Constants';
 import { BEFORE_OBJECTIVES_CREATE_GOAL, BEFORE_OBJECTIVES_SELECT_RECIPIENTS } from '../Form';
 import AppLoadingContext from '../../../AppLoadingContext';
 

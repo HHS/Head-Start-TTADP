@@ -2,8 +2,8 @@ import React, {
   useEffect, useRef, useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
-import { DECIMAL_BASE } from '@ttahub/common';
 import Modal from './Modal';
+import { DECIMAL_BASE } from '../Constants';
 import { getUserRegions } from '../permissions';
 import './RegionPermissionModal.css';
 

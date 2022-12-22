@@ -1,5 +1,5 @@
-import { TARGET_POPULATIONS } from '@ttahub/common';
 import filterArray from './utils';
+import { TARGET_POPULATIONS } from '../../constants';
 
 export function allowedPopulations(populations) {
   function filterPopulations(population) {

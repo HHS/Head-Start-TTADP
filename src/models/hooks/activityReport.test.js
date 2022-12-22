@@ -1,5 +1,5 @@
 import faker from '@faker-js/faker';
-import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
+import { APPROVER_STATUSES, REPORT_STATUSES } from '../../constants';
 import db, {
   ActivityReport,
   ActivityReportGoal,

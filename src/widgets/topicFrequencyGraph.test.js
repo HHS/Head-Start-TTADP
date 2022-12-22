@@ -1,4 +1,3 @@
-import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   ActivityReport,
   ActivityRecipient,
@@ -12,6 +11,7 @@ import db, {
   UserRole,
 } from '../models';
 import filtersToScopes from '../scopes';
+import { REPORT_STATUSES } from '../constants';
 import topicFrequencyGraph from './topicFrequencyGraph';
 
 const GRANT_ID = 4040;

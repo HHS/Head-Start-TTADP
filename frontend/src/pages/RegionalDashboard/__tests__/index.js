@@ -8,10 +8,10 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
-import { SCOPE_IDS } from '@ttahub/common';
 
 import RegionalDashboard from '../index';
 import { formatDateRange } from '../../../utils';
+import { SCOPE_IDS } from '../../../Constants';
 import UserContext from '../../../UserContext';
 
 const history = createMemoryHistory();

@@ -3,10 +3,10 @@ import PropTypes from 'prop-types';
 import { Redirect } from 'react-router-dom';
 import moment from 'moment-timezone';
 import { Alert } from '@trussworks/react-uswds';
-import { REPORT_STATUSES } from '@ttahub/common';
 
 import Review from './Review';
 import Approved from './Approved';
+import { REPORT_STATUSES } from '../../../../../Constants';
 import Container from '../../../../../components/Container';
 
 const Approver = ({

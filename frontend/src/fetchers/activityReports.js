@@ -1,9 +1,8 @@
 import join from 'url-join';
-import { DECIMAL_BASE } from '@ttahub/common';
 import {
   get, put, post, destroy,
 } from './index';
-import { REPORTS_PER_PAGE, ALERTS_PER_PAGE } from '../Constants';
+import { DECIMAL_BASE, REPORTS_PER_PAGE, ALERTS_PER_PAGE } from '../Constants';
 
 const activityReportUrl = join('/', 'api', 'activity-reports');
 const activityReportAlertUrl = join('/', 'api', 'activity-reports', 'alerts');

@@ -1,5 +1,5 @@
-import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import { submitReport, unlockReport } from './handlers';
+import { APPROVER_STATUSES, REPORT_STATUSES } from '../../constants';
 import * as mailer from '../../lib/mailer';
 import SCOPES from '../../middleware/scopeConstants';
 import db, {
