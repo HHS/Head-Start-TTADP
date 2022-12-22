@@ -57,10 +57,11 @@ test.describe("Activity Report", () => {
     await page.getByTestId('textarea').fill('g1');
     await page.getByText('Yes').click();
     await page.getByRole('button', { name: 'Save goal' }).click();
-    await page.locator('.css-512wcj-control > .css-1fdsijx-ValueContainer').click();
+    await page.getByText('- Select -').click();
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await page.locator('[name="goalForEditing.objectives[0].title"]').fill('g1o1');
-    await page.locator('.css-512wcj-control > .css-1fdsijx-ValueContainer').click();
+    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
     await page.locator('#react-select-21-option-0').click();
     await blur(page);
 
@@ -98,7 +99,7 @@ test.describe("Activity Report", () => {
 
     // create the second goal
     await page.getByRole('button', { name: 'Add new goal' }).click();
-    await page.locator('.css-1fdsijx-ValueContainer').click();
+    await page.locator('.css-g1d714-ValueContainer').click();
     await page.keyboard.type('Create new goal');
     await page.keyboard.press('Enter');
     await page.getByTestId('textarea').click();
@@ -109,8 +110,9 @@ test.describe("Activity Report", () => {
     await page.keyboard.press('Enter');
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('g2o1');
-    await page.locator('.css-512wcj-control > .css-1fdsijx-ValueContainer').click();
-    await page.locator('#react-select-39-option-0').click();
+    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();    
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
     await blur(page);
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
     await page.keyboard.type('hello');    
@@ -153,7 +155,7 @@ test.describe("Activity Report", () => {
     await page.getByRole('textbox', { name: 'Additional notes' }).locator('div').nth(2).click();
     await page.keyboard.type('these are my creator notes');
 
-    const approverDropdown = page.locator('.css-1fdsijx-ValueContainer');
+    const approverDropdown = page.getByLabel(/Approving manager/i)
     await approverDropdown.click();
 
     // type our name into the dropdown to filter to just us
