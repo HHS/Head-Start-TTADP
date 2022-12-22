@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Alert } from '@trussworks/react-uswds';
-import { REPORT_STATUSES } from '@ttahub/common';
 
 import Container from '../../../../../components/Container';
+import { REPORT_STATUSES } from '../../../../../Constants';
 import DraftReview from './Draft';
 import NeedsAction from './NeedsAction';
 import Approved from './Approved';

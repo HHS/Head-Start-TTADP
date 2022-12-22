@@ -6,9 +6,9 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
-import { DECIMAL_BASE } from '@ttahub/common';
 import UserContext from '../../UserContext';
 import { canEditOrCreateGoals } from '../../permissions';
+import { DECIMAL_BASE } from '../../Constants';
 import colors from '../../colors';
 import SelectPagination from '../SelectPagination';
 

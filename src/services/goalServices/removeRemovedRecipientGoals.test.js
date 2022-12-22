@@ -1,5 +1,4 @@
 import faker from '@faker-js/faker';
-import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   Goal,
   Grant,
@@ -10,6 +9,7 @@ import db, {
   ActivityReportGoal,
   ActivityReportObjective,
 } from '../../models';
+import { REPORT_STATUSES } from '../../constants';
 import { activityReportAndRecipientsById, createOrUpdate } from '../activityReports';
 
 describe('removeRemovedRecipientsGoals', () => {

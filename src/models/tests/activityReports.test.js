@@ -1,5 +1,5 @@
-import { REPORT_STATUSES } from '@ttahub/common';
 import db, { User, ActivityReport } from '..';
+import { REPORT_STATUSES } from '../../constants';
 import { activityReportAndRecipientsById } from '../../services/activityReports';
 
 describe('Activity Reports model', () => {

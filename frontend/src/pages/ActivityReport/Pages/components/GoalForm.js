@@ -5,7 +5,6 @@ import PropTypes from 'prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
 import { useController, useFormContext } from 'react-hook-form/dist/index.ie11';
-import { DECIMAL_BASE } from '@ttahub/common';
 import GoalText from '../../../../components/GoalForm/GoalText';
 import { goalsByIdsAndActivityReport } from '../../../../fetchers/goals';
 import Objectives from './Objectives';
@@ -16,6 +15,7 @@ import {
   GOAL_RTTAPA_ERROR,
 } from '../../../../components/GoalForm/constants';
 import { NO_ERROR, ERROR_FORMAT } from './constants';
+import { DECIMAL_BASE } from '../../../../Constants';
 import GoalRttapa from '../../../../components/GoalForm/GoalRttapa';
 import AppLoadingContext from '../../../../AppLoadingContext';
 

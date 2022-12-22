@@ -1,6 +1,6 @@
 import React from 'react';
-import { REASONS } from '@ttahub/common';
 import FilterSelect from './FilterSelect';
+import { REASONS } from '../../Constants';
 import { filterSelectProps } from './props';
 
 const REASONS_OPTIONS = REASONS.map((label, value) => ({ value, label }));

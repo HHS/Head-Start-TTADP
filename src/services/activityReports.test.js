@@ -1,4 +1,3 @@
-import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import db, {
   ActivityReport,
   ActivityReportApprover,
@@ -34,6 +33,7 @@ import {
   activityReportsApprovedByDate,
 } from './activityReports';
 import SCOPES from '../middleware/scopeConstants';
+import { APPROVER_STATUSES, REPORT_STATUSES } from '../constants';
 
 import { createReport, destroyReport } from '../testUtils';
 import { auditLogger } from '../logger';

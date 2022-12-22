@@ -2,9 +2,9 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { SCOPE_IDS } from '@ttahub/common';
 import StatusDropdown from '../StatusDropdown';
 import UserContext from '../../../../UserContext';
+import { SCOPE_IDS } from '../../../../Constants';
 
 const user = {
   permissions: [
