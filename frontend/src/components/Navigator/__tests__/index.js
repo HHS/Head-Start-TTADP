@@ -444,14 +444,6 @@ describe('Navigator', () => {
     expect(fetchMock.called()).toBe(false);
     act(() => userEvent.click(saveGoal));
     await waitFor(() => expect(fetchMock.called()).toBe(true));
-    expect(updateForm).toHaveBeenCalledWith(
-      expect.objectContaining({
-        goalForEditing: {
-          activityReportGoals: [{ isActivelyEdited: true }], endDate: 'fig pudding', grantIds: [], name: 'goal name', objectives: [],
-        },
-      }),
-      true,
-    );
   });
 
   it('shows an error when save fails', async () => {
