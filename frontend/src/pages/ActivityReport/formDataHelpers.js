@@ -1,6 +1,6 @@
-import { REPORT_STATUSES } from '@ttahub/common';
 import { isEqual } from 'lodash';
 import moment from 'moment';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   DATE_DISPLAY_FORMAT,
   DATEPICKER_VALUE_FORMAT,
