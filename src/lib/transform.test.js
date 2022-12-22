@@ -1,4 +1,5 @@
-import { REPORT_STATUSES, OBJECTIVE_STATUS } from '../constants';
+import { REPORT_STATUSES } from '@ttahub/common';
+import { OBJECTIVE_STATUS } from '../constants';
 import {
   ActivityReport,
   User,

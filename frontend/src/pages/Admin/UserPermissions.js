@@ -4,8 +4,9 @@ import _ from 'lodash';
 import {
   Checkbox, Grid, Fieldset,
 } from '@trussworks/react-uswds';
+import { DECIMAL_BASE } from '@ttahub/common';
 
-import { REGIONAL_SCOPES, DECIMAL_BASE } from '../../Constants';
+import { REGIONAL_SCOPES } from '../../Constants';
 import PermissionCheckboxLabel from './components/PermissionCheckboxLabel';
 import CurrentPermissions from './components/CurrentPermissions';
 import RegionDropdown from '../../components/RegionDropdown';

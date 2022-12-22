@@ -6,10 +6,10 @@ import { act } from 'react-dom/test-utils';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
+import { SCOPE_IDS } from '@ttahub/common';
 import RecipientRecord from '../index';
 import { formatDateRange } from '../../../utils';
 import UserContext from '../../../UserContext';
-import { SCOPE_IDS } from '../../../Constants';
 import AppLoadingContext from '../../../AppLoadingContext';
 
 const { ADMIN } = SCOPE_IDS;

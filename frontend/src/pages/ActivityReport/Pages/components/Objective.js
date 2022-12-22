@@ -1,11 +1,13 @@
-import React, { useState, useMemo, useContext } from 'react';
+import React, {
+  useState, useMemo, useContext,
+} from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import {
   useController, useFormContext,
 } from 'react-hook-form/dist/index.ie11';
+import { REPORT_STATUSES } from '@ttahub/common';
 import ObjectiveTitle from './ObjectiveTitle';
-import { REPORT_STATUSES } from '../../../../Constants';
 import ObjectiveTopics from '../../../../components/GoalForm/ObjectiveTopics';
 import ResourceRepeater from '../../../../components/GoalForm/ResourceRepeater';
 import ObjectiveFiles from '../../../../components/GoalForm/ObjectiveFiles';
@@ -46,6 +48,7 @@ export default function Objective({
     label: objective.label || objective.title,
   }))();
   const [selectedObjective, setSelectedObjective] = useState(initialObjective);
+  const [statusForCalculations, setStatusForCalculations] = useState(initialObjectiveStatus);
   const { getValues } = useFormContext();
   const { setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
 
@@ -174,6 +177,10 @@ export default function Objective({
     onChangeTopics(newObjective.topics);
     onChangeFiles(newObjective.files || []);
     onObjectiveChange(newObjective, index); // Call parent on objective change.
+
+    // set a new initial status, which we went to preserve separately from the dropdown
+    // this determines if the title is read only or not
+    setStatusForCalculations(newObjective.status);
   };
 
   const onUploadFile = async (files, _objective, setError) => {
@@ -231,7 +238,7 @@ export default function Objective({
         validateObjectiveTitle={onBlurTitle}
         inputName={objectiveTitleInputName}
         parentGoal={parentGoal}
-        initialObjectiveStatus={initialObjectiveStatus}
+        initialObjectiveStatus={statusForCalculations}
       />
       <ObjectiveTopics
         error={errors.topics

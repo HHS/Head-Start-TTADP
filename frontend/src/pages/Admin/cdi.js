@@ -3,10 +3,10 @@ import ReactRouterPropTypes from 'react-router-prop-types';
 import {
   Grid, SideNav, Alert, Checkbox, Label, TextInput,
 } from '@trussworks/react-uswds';
+import { DECIMAL_BASE } from '@ttahub/common';
 
 import NavLink from '../../components/NavLink';
 import Container from '../../components/Container';
-import { DECIMAL_BASE } from '../../Constants';
 
 import { getCDIGrants, getRecipients, assignCDIGrant } from '../../fetchers/Admin';
 

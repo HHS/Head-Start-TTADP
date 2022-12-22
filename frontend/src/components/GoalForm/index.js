@@ -11,6 +11,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
 import { Alert, Button } from '@trussworks/react-uswds';
+import { DECIMAL_BASE, SCOPE_IDS } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import Container from '../Container';
 import { createOrUpdateGoals, deleteGoal } from '../../fetchers/goals';
@@ -30,7 +31,6 @@ import {
   GOAL_RTTAPA_ERROR,
   objectivesWithValidResourcesOnly,
 } from './constants';
-import { DECIMAL_BASE, SCOPE_IDS } from '../../Constants';
 import ReadOnly from './ReadOnly';
 import PlusButton from './PlusButton';
 import colors from '../../colors';
