@@ -166,6 +166,7 @@ const GoalsObjectives = ({
     // certain objective fields don't clear out)
     setValue('goalForEditing', null);
 
+    console.log('goal', goal);
     // make this goal the editable goal
     setValue('goalForEditing', goal);
 
@@ -187,8 +188,6 @@ const GoalsObjectives = ({
     copyOfSelectedGoals = copyOfSelectedGoals.filter((g) => g.id !== goal.id);
 
     onUpdateGoals(copyOfSelectedGoals);
-
-    console.log({ copyOfSelectedGoals });
   };
 
   // the read only component expects things a little differently
