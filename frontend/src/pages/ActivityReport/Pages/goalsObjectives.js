@@ -93,6 +93,7 @@ const GoalsObjectives = ({
 
         setFetchError(false);
       } catch (error) {
+        console.log({ error });
         setFetchError(true);
       }
     };
