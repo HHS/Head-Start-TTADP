@@ -2,13 +2,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import Plotly from 'plotly.js-basic-dist';
 import { Grid } from '@trussworks/react-uswds';
+import { DECIMAL_BASE } from '@ttahub/common';
 import withWidgetData from './withWidgetData';
 import AccessibleWidgetData from './AccessibleWidgetData';
 import MediaCaptureButton from '../components/MediaCaptureButton';
 import Container from '../components/Container';
 import colors from '../colors';
 import './TotalHrsAndRecipientGraph.scss';
-import { DECIMAL_BASE } from '../Constants';
 
 const HOVER_TEMPLATE = '(%{x}, %{y})<extra></extra>';
 
