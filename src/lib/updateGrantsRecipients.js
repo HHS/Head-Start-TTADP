@@ -67,12 +67,32 @@ export async function processFiles(hashSumHex) {
       // filter out recipient 5 (TTAHUB-705)
       // eslint-disable-next-line max-len
       const recipientsNonDelegates = agency.agencies.agency.filter((a) => grantRecipients.some((gg) => gg.agency_id === a.agency_id && a.agency_id !== '5'));
-      const recipientsForDb = recipientsNonDelegates.map((g) => ({
+      const recipientsForDbTmp = recipientsNonDelegates.map((g) => ({
         id: parseInt(g.agency_id, 10),
         uei: valueFromXML(g.uei),
         name: g.agency_name,
         recipientType: valueFromXML(g.agency_type),
       }));
+
+      // process grants
+      const grantData = await fs.readFile('./temp/grant_award.xml');
+      const grant = JSON.parse(toJson(grantData));
+
+      // temporary workaround for recipient 628 where it's name is coming in as DBA one.
+      // This issue is pending with HSES as of 12/22/22.
+      // HSES is investigating whether they can rename it on their end.
+      // In the meantime, we need to rename in the Hub to eliminate confusion for the users.
+      const recipientsForDb = recipientsForDbTmp.map((r) => {
+        if (r.id === 628) {
+          const grantAward = grant.grant_awards.grant_award.find((g) => g.agency_id === '628' && g.grantee_name !== r.name);
+          return ({
+            id: r.id,
+            uei: r.uei,
+            name: grantAward ? grantAward.grantee_name : r.name,
+            recipientType: r.recipientType,
+          });
+        } return r;
+      });
 
       logger.debug(`updateGrantsRecipients: calling bulkCreate for ${recipientsForDb.length} recipients`);
       await Recipient.bulkCreate(
@@ -82,10 +102,6 @@ export async function processFiles(hashSumHex) {
           transaction,
         },
       );
-
-      // process grants
-      const grantData = await fs.readFile('./temp/grant_award.xml');
-      const grant = JSON.parse(toJson(grantData));
 
       const programData = await fs.readFile('./temp/grant_program.xml');
       const programs = JSON.parse(toJson(programData));
