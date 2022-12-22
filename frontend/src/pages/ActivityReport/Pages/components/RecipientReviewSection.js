@@ -4,17 +4,19 @@ import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import { isUndefined } from 'lodash';
 import { Editor } from 'react-draft-wysiwyg';
 import { getEditorState, reportIsEditable } from '../../../../utils';
-
 import Section from '../Review/ReviewSection';
+import './RecipientReviewSection.scss';
 
 const RecipientReviewSection = () => {
   const { watch } = useFormContext();
   const {
-    goals,
+    goalsAndObjectives,
     calculatedStatus,
   } = watch();
 
   const canEdit = reportIsEditable(calculatedStatus);
+
+  const goals = goalsAndObjectives || [];
 
   return (
     <Section
