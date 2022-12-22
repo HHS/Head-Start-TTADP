@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
-import { REPORT_STATUSES, REASONS } from '@ttahub/common';
 import { ActivityReport } from '../models';
+import { REPORT_STATUSES, REASONS } from '../constants';
 import { countBySingleKey } from './helpers';
 
 export default async function reasonList(scopes) {

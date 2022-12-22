@@ -5,10 +5,12 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
-import { REPORT_STATUSES } from '@ttahub/common';
 
 import { mockWindowProperty, withText } from '../../../testHelpers';
 import { unflattenResourcesUsed, findWhatsChanged } from '../formDataHelpers';
+import {
+  REPORT_STATUSES,
+} from '../../../Constants';
 
 import {
   history,

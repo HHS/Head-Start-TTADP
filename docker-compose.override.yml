@@ -39,7 +39,6 @@ services:
       - "3000:3000"
     volumes:
       - "./frontend:/app:rw"
-      - "./packages:/packages:ro"
       - "./scripts:/app/scripts"
     environment:
       - BACKEND_PROXY=http://backend:8080

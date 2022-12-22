@@ -1,7 +1,6 @@
 import React, { useMemo, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Button } from '@trussworks/react-uswds';
-import { REPORT_STATUSES } from '@ttahub/common';
 import ObjectiveTitle from './ObjectiveTitle';
 import ObjectiveTopics from './ObjectiveTopics';
 import ResourceRepeater from './ResourceRepeater';
@@ -9,6 +8,7 @@ import ObjectiveFiles from './ObjectiveFiles';
 import {
   OBJECTIVE_FORM_FIELD_INDEXES, validateListOfResources, OBJECTIVE_ERROR_MESSAGES,
 } from './constants';
+import { REPORT_STATUSES } from '../../Constants';
 import ObjectiveStatus from './ObjectiveStatus';
 import AppLoadingContext from '../../AppLoadingContext';
 

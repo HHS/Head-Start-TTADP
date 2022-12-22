@@ -6,11 +6,11 @@ import {
   Label, TextInput, Grid, SideNav, Alert, Radio, Fieldset,
 } from '@trussworks/react-uswds';
 import moment from 'moment';
-import { SCOPE_IDS, DECIMAL_BASE } from '@ttahub/common';
 import UserSection from './UserSection';
 import NavLink from '../../components/NavLink';
 import Container from '../../components/Container';
 import { updateUser, getUsers, getFeatures } from '../../fetchers/Admin';
+import { SCOPE_IDS, DECIMAL_BASE } from '../../Constants';
 
 /**
  * Render the left hand user navigation in the Admin UI. Use the user's full name

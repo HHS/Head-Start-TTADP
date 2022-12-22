@@ -8,10 +8,10 @@ import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
-import { SCOPE_IDS } from '@ttahub/common';
 import GoalsObjectives from '../GoalsObjectives';
 import { formatDateRange } from '../../../../utils';
 import UserContext from '../../../../UserContext';
+import { SCOPE_IDS } from '../../../../Constants';
 import FilterContext from '../../../../FilterContext';
 import { mockWindowProperty } from '../../../../testHelpers';
 

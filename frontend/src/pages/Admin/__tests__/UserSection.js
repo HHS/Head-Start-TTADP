@@ -6,8 +6,8 @@ import {
 import selectEvent from 'react-select-event';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
-import { SCOPE_IDS } from '@ttahub/common';
 import UserSection from '../UserSection';
+import { SCOPE_IDS } from '../../../Constants';
 
 const {
   ADMIN,

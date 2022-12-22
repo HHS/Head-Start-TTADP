@@ -6,8 +6,8 @@ import {
 } from '@testing-library/react';
 import { ModalToggleButton } from '@trussworks/react-uswds';
 import userEvent from '@testing-library/user-event';
-import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '@ttahub/common';
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
+import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '../../Constants';
 
 describe('Close Suspend Goal Reason', () => {
   const ModalComponent = (

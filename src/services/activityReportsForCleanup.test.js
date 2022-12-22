@@ -1,5 +1,4 @@
 import faker from '@faker-js/faker';
-import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   ActivityReport,
   ActivityReportApprover,
@@ -11,6 +10,7 @@ import db, {
 import {
   activityReportsForCleanup,
 } from './activityReports';
+import { REPORT_STATUSES } from '../constants';
 
 import { createReport, destroyReport } from '../testUtils';
 

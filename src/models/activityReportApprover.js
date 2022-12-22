@@ -1,5 +1,4 @@
 const { Model } = require('sequelize');
-const { APPROVER_STATUSES } = require('@ttahub/common');
 const {
   afterCreate,
   afterDestroy,
@@ -7,6 +6,7 @@ const {
   afterUpdate,
   afterUpsert,
 } = require('./hooks/activityReportApprover');
+const { APPROVER_STATUSES } = require('../constants');
 
 module.exports = (sequelize, DataTypes) => {
   class ActivityReportApprover extends Model {

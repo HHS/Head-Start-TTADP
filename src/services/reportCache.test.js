@@ -1,5 +1,4 @@
 import { Op } from 'sequelize';
-import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   User,
   Recipient,
@@ -24,6 +23,7 @@ import db, {
 import {
   cacheObjectiveMetadata,
 } from './reportCache';
+import { REPORT_STATUSES } from '../constants';
 
 describe('reportCache', () => {
   const mockUser = {

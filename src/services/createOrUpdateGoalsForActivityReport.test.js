@@ -1,6 +1,6 @@
 /* eslint-disable jest/no-disabled-tests */
 import faker from '@faker-js/faker';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES } from '../constants';
 import { createOrUpdateGoalsForActivityReport } from './goals';
 import { saveObjectivesForReport, getObjectivesByReportId } from './objectives';
 import db, {

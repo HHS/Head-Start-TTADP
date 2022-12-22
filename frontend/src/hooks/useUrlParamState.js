@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { DECIMAL_BASE } from '@ttahub/common';
+import { DECIMAL_BASE } from '../Constants';
 
 /**
  * Takes in a url param, and returns a state variable, a setter for that state variable,

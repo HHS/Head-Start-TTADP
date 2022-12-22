@@ -9,9 +9,9 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
-import { SCOPE_IDS } from '@ttahub/common';
 
 import ApprovedActivityReport from '../index';
+import { SCOPE_IDS } from '../../../Constants';
 
 describe('Activity report print and share view', () => {
   const report = {

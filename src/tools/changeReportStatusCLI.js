@@ -1,7 +1,7 @@
 import { option } from 'yargs';
-import { REPORT_STATUSES } from '@ttahub/common';
 import changeReportStatus from './changeReportStatus';
 import { auditLogger } from '../logger';
+import { REPORT_STATUSES } from '../constants';
 
 const { argv } = option('ids', {
   alias: 'i',
