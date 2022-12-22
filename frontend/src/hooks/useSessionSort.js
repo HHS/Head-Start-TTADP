@@ -1,7 +1,7 @@
 import { useMemo, useContext } from 'react';
-import { DECIMAL_BASE } from '@ttahub/common';
 import useSessionStorage from './useSessionStorage';
 import FilterContext from '../FilterContext';
+import { DECIMAL_BASE } from '../Constants';
 
 const { sessionStorage } = window;
 

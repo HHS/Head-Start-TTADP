@@ -1,5 +1,4 @@
 import waitFor from 'wait-for-expect';
-import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   ActivityRecipient,
   ActivityReport,
@@ -12,6 +11,7 @@ import db, {
   Recipient,
   OtherEntity,
 } from '../models';
+import { REPORT_STATUSES } from '../constants';
 
 import { saveObjectivesForReport, getObjectiveById, getObjectivesByReportId } from './objectives';
 

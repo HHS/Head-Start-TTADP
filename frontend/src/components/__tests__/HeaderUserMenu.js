@@ -5,8 +5,8 @@ import join from 'url-join';
 import {
   screen, render, fireEvent,
 } from '@testing-library/react';
-import { SCOPE_IDS } from '@ttahub/common';
 import App from '../../App';
+import { SCOPE_IDS } from '../../Constants';
 
 describe('HeaderUserMenu', () => {
   const user = { name: 'harry potter' };

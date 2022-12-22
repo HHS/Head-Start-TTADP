@@ -1,7 +1,6 @@
 import join from 'url-join';
-import { DECIMAL_BASE } from '@ttahub/common';
 import { get } from './index';
-import { GOALS_PER_PAGE } from '../Constants';
+import { DECIMAL_BASE, GOALS_PER_PAGE } from '../Constants';
 import { filtersToQueryString } from '../utils';
 
 const recipientUrl = join('/', 'api', 'recipient');

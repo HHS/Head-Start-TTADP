@@ -1,6 +1,5 @@
 import moment from 'moment';
 import faker from '@faker-js/faker';
-import { REPORT_STATUSES } from '@ttahub/common';
 import {
   sequelize,
   User,
@@ -16,7 +15,7 @@ import {
 } from '../../models';
 
 import { getGoalsByActivityRecipient } from '../recipient';
-import { OBJECTIVE_STATUS } from '../../constants';
+import { REPORT_STATUSES, OBJECTIVE_STATUS } from '../../constants';
 
 const NEEDLE = 'This objective title should not appear in recipient 3';
 
