@@ -1,6 +1,6 @@
-import { REPORT_STATUSES } from '@ttahub/common';
 import ActivityReport from './activityReport';
 import SCOPES from '../middleware/scopeConstants';
+import { REPORT_STATUSES } from '../constants';
 
 function activityReport(
   author,

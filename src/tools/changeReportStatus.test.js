@@ -1,8 +1,8 @@
-import { REPORT_STATUSES } from '@ttahub/common';
 import {
   sequelize,
   ActivityReport,
 } from '../models';
+import { REPORT_STATUSES } from '../constants';
 import changeReportStatus from './changeReportStatus';
 
 jest.mock('../logger');

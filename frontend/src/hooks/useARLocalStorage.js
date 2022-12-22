@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES } from '../Constants';
 import useLocalStorage from './useLocalStorage';
 
 /**

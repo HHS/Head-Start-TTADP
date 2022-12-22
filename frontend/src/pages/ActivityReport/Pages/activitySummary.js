@@ -9,10 +9,6 @@ import {
   Fieldset, Radio, Grid, TextInput, Checkbox, Label,
 } from '@trussworks/react-uswds';
 import moment from 'moment';
-import {
-  REASONS as reasons,
-  TARGET_POPULATIONS as targetPopulations,
-} from '@ttahub/common';
 import ReviewPage from './Review/ReviewPage';
 import MultiSelect from '../../../components/MultiSelect';
 import {
@@ -22,6 +18,10 @@ import {
 import FormItem from '../../../components/FormItem';
 import { NOT_STARTED } from '../../../components/Navigator/constants';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
+import {
+  REASONS as reasons,
+  TARGET_POPULATIONS as targetPopulations,
+} from '../../../Constants';
 import ConnectionError from './components/ConnectionError';
 import NetworkContext from '../../../NetworkContext';
 import HookFormRichEditor from '../../../components/HookFormRichEditor';
