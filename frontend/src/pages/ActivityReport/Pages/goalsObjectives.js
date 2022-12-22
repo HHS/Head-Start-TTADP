@@ -93,7 +93,6 @@ const GoalsObjectives = ({
 
         setFetchError(false);
       } catch (error) {
-        console.log({ error });
         setFetchError(true);
       }
     };
@@ -141,52 +140,61 @@ const GoalsObjectives = ({
       console.error('failed to set goal as actively edited with this error:', err);
     }
 
-    const currentlyEditing = getValues('goalForEditing') ? { ...getValues('goalForEditing') } : null;
-    if (currentlyEditing) {
-      const goalForEditingObjectives = getValues('goalForEditing.objectives') ? [...getValues('goalForEditing.objectives')] : [];
-      const name = getValues('goalName');
-      const endDate = getValues('goalEndDate');
-      const isRttapa = getValues('goalIsRttapa');
-      const areGoalsValid = validateGoals(
-        [{
-          ...currentlyEditing,
-          name,
-          endDate,
-          isRttapa,
-          objectives: goalForEditingObjectives,
-        }],
-        setError,
-      );
-      if (areGoalsValid !== true) {
-        return;
+    try {
+      const currentlyEditing = getValues('goalForEditing') ? { ...getValues('goalForEditing') } : null;
+      console.log({ currentlyEditing });
+      if (currentlyEditing) {
+        const goalForEditingObjectives = getValues('goalForEditing.objectives') ? [...getValues('goalForEditing.objectives')] : [];
+        const name = getValues('goalName');
+        const endDate = getValues('goalEndDate');
+        const isRttapa = getValues('goalIsRttapa');
+        const areGoalsValid = validateGoals(
+          [{
+            ...currentlyEditing,
+            name,
+            endDate,
+            isRttapa,
+            objectives: goalForEditingObjectives,
+          }],
+          setError,
+        );
+
+        console.log({ areGoalsValid });
+
+        if (areGoalsValid !== true) {
+          return;
+        }
       }
+
+      // clear out the existing value (we need to do this because without it
+      // certain objective fields don't clear out)
+      setValue('goalForEditing', null);
+
+      // make this goal the editable goal
+      setValue('goalForEditing', goal);
+
+      // setValue('goalForEditing.objectives', objectives);
+      setValue('goalEndDate', moment(goal.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'));
+      setValue('goalName', goal.name);
+
+      const rttapaValue = goal.isRttapa;
+      setValue('goalIsRttapa', rttapaValue);
+
+      console.log({ goal, message: 'about to toggle goal form' });
+      toggleGoalForm(false);
+
+      let copyOfSelectedGoals = selectedGoals.map((g) => ({ ...g }));
+      if (currentlyEditing) {
+        copyOfSelectedGoals.push(currentlyEditing);
+      }
+
+      // remove the goal from the "selected goals"
+      copyOfSelectedGoals = copyOfSelectedGoals.filter((g) => g.id !== goal.id);
+
+      onUpdateGoals(copyOfSelectedGoals);
+    } catch (err) {
+      console.log({ err });
     }
-
-    setValue('goalForEditing', null);
-
-    // const objectives = goal.objectives || [];
-
-    // make this goal the editable goal
-    setValue('goalForEditing', goal);
-
-    // setValue('goalForEditing.objectives', objectives);
-    setValue('goalEndDate', moment(goal.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'));
-    setValue('goalName', goal.name);
-
-    const rttapaValue = goal.isRttapa;
-    setValue('goalIsRttapa', rttapaValue);
-
-    toggleGoalForm(false);
-
-    let copyOfSelectedGoals = selectedGoals.map((g) => ({ ...g }));
-    if (currentlyEditing) {
-      copyOfSelectedGoals.push(currentlyEditing);
-    }
-
-    // remove the goal from the "selected goals"
-    copyOfSelectedGoals = copyOfSelectedGoals.filter((g) => g.id !== goal.id);
-
-    onUpdateGoals(copyOfSelectedGoals);
   };
 
   // the read only component expects things a little differently
