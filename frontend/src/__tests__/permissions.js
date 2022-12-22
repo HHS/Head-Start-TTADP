@@ -1,4 +1,4 @@
-import { SCOPE_IDS } from '@ttahub/common';
+import { SCOPE_IDS } from '../Constants';
 import isAdmin, { hasReadWrite, allRegionsUserHasPermissionTo, getRegionWithReadWrite } from '../permissions';
 
 describe('permissions', () => {

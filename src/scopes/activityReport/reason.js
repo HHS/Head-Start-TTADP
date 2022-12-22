@@ -1,5 +1,5 @@
-import { REASONS } from '@ttahub/common';
 import filterArray from './utils';
+import { REASONS } from '../../constants';
 
 function onlyValidReasons(query) {
   if (!Array.isArray(query)) {

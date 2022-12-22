@@ -1,5 +1,4 @@
 import faker from '@faker-js/faker';
-import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   Recipient,
   Grant,
@@ -10,6 +9,7 @@ import db, {
 import { createReport, destroyReport } from '../../testUtils';
 
 import { goalByIdWithActivityReportsAndRegions } from '../goals';
+import { REPORT_STATUSES } from '../../constants';
 
 describe('goalByIdWithActivityReportsAndRegions', () => {
   let recipientForFirstGrant;

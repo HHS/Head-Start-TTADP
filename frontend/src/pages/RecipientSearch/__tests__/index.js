@@ -12,8 +12,8 @@ import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import { act } from 'react-dom/test-utils';
-import { SCOPE_IDS } from '@ttahub/common';
 import RecipientSearch from '../index';
+import { SCOPE_IDS } from '../../../Constants';
 import { mockWindowProperty } from '../../../testHelpers';
 
 const query = 'ground control';
