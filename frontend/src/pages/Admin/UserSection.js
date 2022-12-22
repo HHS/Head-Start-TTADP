@@ -3,12 +3,12 @@ import PropTypes from 'prop-types';
 import {
   Form, Button,
 } from '@trussworks/react-uswds';
+import { DECIMAL_BASE } from '@ttahub/common';
 
 import UserInfo from './UserInfo';
 import UserPermissions from './UserPermissions';
 import UserFeatureFlags from './UserFeatureFlags';
 import { userGlobalPermissions, userRegionalPermissions } from './PermissionHelpers';
-import { DECIMAL_BASE } from '../../Constants';
 
 const NUMBER_FIELDS = [
   'homeRegionId',

@@ -1,8 +1,8 @@
 import { Op } from 'sequelize';
+import { TOPICS, REPORT_STATUSES } from '@ttahub/common';
 import {
   ActivityReport,
 } from '../models';
-import { REPORT_STATUSES, TOPICS } from '../constants';
 
 export default async function topicFrequencyGraph(scopes) {
   const topicsAndParticipants = await ActivityReport.findAll({

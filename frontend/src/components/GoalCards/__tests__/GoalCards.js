@@ -8,10 +8,10 @@ import userEvent from '@testing-library/user-event';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
+import { SCOPE_IDS } from '@ttahub/common';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
 import GoalCards from '../GoalCards';
-import { SCOPE_IDS } from '../../../Constants';
 import { mockWindowProperty } from '../../../testHelpers';
 
 jest.mock('../../../fetchers/helpers');

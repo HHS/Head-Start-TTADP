@@ -8,9 +8,9 @@ import React from 'react';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import { REPORT_STATUSES } from '@ttahub/common';
 import UserContext from '../../../../../../UserContext';
 import Approver from '../index';
-import { REPORT_STATUSES } from '../../../../../../Constants';
 
 const user = {
   id: 1,
