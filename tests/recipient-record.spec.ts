@@ -23,7 +23,7 @@ test.describe('Recipient record', () => {
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
     // edit that goal to add an objective
-    await page.getByTestId('ellipsis-button').click();
+    await page.getByTestId('ellipsis-button').first().click();
     await page.getByRole('button', { name: 'Edit' }).click();
     await page.getByRole('button', { name: 'Add new objective' }).click();
     await page.getByLabel('TTA objective *').fill('A new objective');
