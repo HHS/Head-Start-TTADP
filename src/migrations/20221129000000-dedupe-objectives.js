@@ -19,12 +19,12 @@ module.exports = {
         throw (err);
       }
       try {
-        // The next two repairs are so that Goals and Objectives inheriting status change values from
-        // their deduped siblings receive all the info they need. Trying to perform these fixes later
-        // while retaining that inheritance would be very complicated.
+        // The next two repairs are so that Goals and Objectives inheriting status change values
+        // from their deduped siblings receive all the info they need. Trying to perform these
+        // fixes later while retaining that inheritance would be very complicated.
         // -------------------------------------
-        // Update Objectives with their proper stage dates from the audit log to repair an issue where
-        // the values weren't being set on status change.
+        // Update Objectives with their proper stage dates from the audit log to repair an issue
+        // where the values weren't being set on status change.
         await queryInterface.sequelize.query(
           `WITH
           obj_recovered_dates AS (
