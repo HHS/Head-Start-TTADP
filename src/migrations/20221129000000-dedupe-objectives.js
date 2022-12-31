@@ -19,41 +19,42 @@ module.exports = {
         throw (err);
       }
       try {
-        // The next two repairs are so that Goals and Objectives inheriting status change values from their deduped siblings receive
-        // all the info they need. Trying to perform these fixes later while retaining that inheritance would be very complicated.
+        // The next two repairs are so that Goals and Objectives inheriting status change values from their
+        // deduped siblings receive all the info they need. Trying to perform these fixes later while
+        // retaining that inheritance would be very complicated.
         // -------------------------------------
-        // update Objectives with their proper stage dates from the audit log to repair an issue where the values weren't being set
-        // on status change
+        // Update Objectives with their proper stage dates from the audit log to repair an issue where the
+        // values weren't being set on status change.
         await queryInterface.sequelize.query(
-        `WITH
-        obj_recovered_dates AS (
-          SELECT
-            data_id recovered_obj_id,
-            MIN(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Not Started') "firstNotStartedAt",
-            MAX(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Not Started') "lastNotStartedAt",
-            MIN(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'In Progress') "firstInProgressAt",
-            MAX(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'In Progress') "lastInProgressAt",
-            MIN(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Suspended') "firstSuspendedAt",
-            MAX(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Suspended') "lastSuspendedAt",
-            MIN(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Complete') "firstCompleteAt",
-            MAX(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Complete') "lastCompleteAt"
-          FROM public."ZALObjectives"
-          WHERE new_row_data ->> 'status' IS NOT NULL
-          GROUP BY 1
-        )
-        UPDATE "Objectives" o
-        SET
-          "firstNotStartedAt" = ord."firstNotStartedAt",
-          "lastNotStartedAt" = ord."lastNotStartedAt",
-          "firstInProgressAt" = ord."firstInProgressAt",
-          "lastInProgressAt" = ord."lastInProgressAt",
-          "firstSuspendedAt" = ord."firstSuspendedAt",
-          "lastSuspendedAt" = ord."lastSuspendedAt",
-          "firstCompleteAt" = ord."firstCompleteAt",
-          "lastCompleteAt" = ord."lastCompleteAt"
-        FROM obj_recovered_dates ord
-        WHERE o.id = recovered_obj_id
-        ;`,
+          `WITH
+          obj_recovered_dates AS (
+            SELECT
+              data_id recovered_obj_id,
+              MIN(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Not Started') "firstNotStartedAt",
+              MAX(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Not Started') "lastNotStartedAt",
+              MIN(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'In Progress') "firstInProgressAt",
+              MAX(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'In Progress') "lastInProgressAt",
+              MIN(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Suspended') "firstSuspendedAt",
+              MAX(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Suspended') "lastSuspendedAt",
+              MIN(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Complete') "firstCompleteAt",
+              MAX(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Complete') "lastCompleteAt"
+            FROM public."ZALObjectives"
+            WHERE new_row_data ->> 'status' IS NOT NULL
+            GROUP BY 1
+          )
+          UPDATE "Objectives" o
+          SET
+            "firstNotStartedAt" = ord."firstNotStartedAt",
+            "lastNotStartedAt" = ord."lastNotStartedAt",
+            "firstInProgressAt" = ord."firstInProgressAt",
+            "lastInProgressAt" = ord."lastInProgressAt",
+            "firstSuspendedAt" = ord."firstSuspendedAt",
+            "lastSuspendedAt" = ord."lastSuspendedAt",
+            "firstCompleteAt" = ord."firstCompleteAt",
+            "lastCompleteAt" = ord."lastCompleteAt"
+          FROM obj_recovered_dates ord
+          WHERE o.id = recovered_obj_id
+          ;`,
         { transaction },
         );
       } catch (err) {
@@ -61,38 +62,38 @@ module.exports = {
         throw (err);
       }
       try {
-        // Update *Goals* with their proper stage dates from the audit log to repair an issue where the values weren't being set
-        // on status change
+        // Update *Goals* with their proper stage dates from the audit log to repair an issue where the values
+        // weren't being set on status change
         await queryInterface.sequelize.query(
-        `WITH
-        goal_recovered_dates AS (
-          SELECT
-            data_id recovered_goal_id,
-            MIN(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Not Started') "firstNotStartedAt",
-            MAX(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Not Started') "lastNotStartedAt",
-            MIN(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'In Progress') "firstInProgressAt",
-            MAX(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'In Progress') "lastInProgressAt",
-            MIN(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Suspended') "firstCeasedSuspendedAt",
-            MAX(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Suspended') "lastCeasedSuspendedAt",
-            MIN(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Closed') "firstClosedAt",
-            MAX(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Closed') "lastClosedAt"
-          FROM public."ZALGoals"
-          WHERE new_row_data ->> 'status' IS NOT NULL
-          GROUP BY 1
-        )
-        UPDATE "Goals" g
-        SET
-          "firstNotStartedAt" = grd."firstNotStartedAt",
-          "lastNotStartedAt" = grd."lastNotStartedAt",
-          "firstInProgressAt" = grd."firstInProgressAt",
-          "lastInProgressAt" = grd."lastInProgressAt",
-          "firstCeasedSuspendedAt" = grd."firstCeasedSuspendedAt",
-          "lastCeasedSuspendedAt" = grd."lastCeasedSuspendedAt",
-          "firstClosedAt" = grd."firstClosedAt",
-          "lastClosedAt" = grd."lastClosedAt"
-        FROM goal_recovered_dates grd
-        WHERE g.id = recovered_goal_id
-        ;`,
+          `WITH
+          goal_recovered_dates AS (
+            SELECT
+              data_id recovered_goal_id,
+              MIN(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Not Started') "firstNotStartedAt",
+              MAX(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Not Started') "lastNotStartedAt",
+              MIN(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'In Progress') "firstInProgressAt",
+              MAX(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'In Progress') "lastInProgressAt",
+              MIN(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Suspended') "firstCeasedSuspendedAt",
+              MAX(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Suspended') "lastCeasedSuspendedAt",
+              MIN(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Closed') "firstClosedAt",
+              MAX(dml_timestamp) FILTER (WHERE new_row_data ->> 'status' = 'Closed') "lastClosedAt"
+            FROM public."ZALGoals"
+            WHERE new_row_data ->> 'status' IS NOT NULL
+            GROUP BY 1
+          )
+          UPDATE "Goals" g
+          SET
+            "firstNotStartedAt" = grd."firstNotStartedAt",
+            "lastNotStartedAt" = grd."lastNotStartedAt",
+            "firstInProgressAt" = grd."firstInProgressAt",
+            "lastInProgressAt" = grd."lastInProgressAt",
+            "firstCeasedSuspendedAt" = grd."firstCeasedSuspendedAt",
+            "lastCeasedSuspendedAt" = grd."lastCeasedSuspendedAt",
+            "firstClosedAt" = grd."firstClosedAt",
+            "lastClosedAt" = grd."lastClosedAt"
+          FROM goal_recovered_dates grd
+          WHERE g.id = recovered_goal_id
+          ;`,
         { transaction },
         );
       } catch (err) {
