@@ -204,19 +204,21 @@ module.exports = {
           affected_objectives AS (
             SELECT
               uo.id inheriting_oid,
-              os.id donor_oid
+              all_o.id donor_oid
             FROM updated_objectives uo
             JOIN objective_sets os
               ON uo.id = os.id
+            JOIN objective_sets all_o
+              ON os.obj_set_id = all_o.obj_set_id
           ),
           --- migrate/merge/delete metadata table values from newer objectives into the older objectives
           affected_objective_files AS (
             SELECT
               current_of.id,
               ao.inheriting_oid,
-              current_of."fileId" = target_of."fileId" is_duplicate
+              COALESCE(current_of."fileId" = target_of."fileId",FALSE) is_duplicate
             FROM affected_objectives ao
-            LEFT JOIN "ObjectiveFiles" current_of
+            JOIN "ObjectiveFiles" current_of
               ON ao.donor_oid = current_of."objectiveId"
             LEFT JOIN "ObjectiveFiles" target_of
               ON ao.inheriting_oid = target_of."objectiveId"
@@ -228,7 +230,7 @@ module.exports = {
             SET
               "objectiveId" = aof.inheriting_oid
             FROM affected_objective_files aof
-            WHERE aof.id = f."objectiveId"
+            WHERE aof.id = f.id
               AND NOT is_duplicate
             RETURNING
               aof.id
@@ -245,9 +247,9 @@ module.exports = {
             SELECT
               current_or.id,
               ao.inheriting_oid,
-              current_or."userProvidedUrl" = target_or."userProvidedUrl" is_duplicate
+              COALESCE(current_or."userProvidedUrl" = target_or."userProvidedUrl",FALSE) is_duplicate
             FROM affected_objectives ao
-            LEFT JOIN "ObjectiveResources" current_or
+            JOIN "ObjectiveResources" current_or
               ON ao.donor_oid = current_or."objectiveId"
             LEFT JOIN "ObjectiveResources" target_or
               ON ao.inheriting_oid = target_or."objectiveId"
@@ -258,7 +260,7 @@ module.exports = {
             SET
               "objectiveId" = aor.inheriting_oid
             FROM affected_objective_resources aor
-            WHERE aor.id = r."objectiveId"
+            WHERE aor.id = r.id
               AND NOT is_duplicate
             RETURNING
               aor.id
@@ -275,9 +277,9 @@ module.exports = {
             SELECT
               current_ot.id,
               ao.inheriting_oid,
-              current_ot."topicId" = target_ot."topicId" is_duplicate
+              COALESCE(current_ot."topicId" = target_ot."topicId",FALSE) is_duplicate
             FROM affected_objectives ao
-            LEFT JOIN "ObjectiveTopics" current_ot
+            JOIN "ObjectiveTopics" current_ot
               ON ao.donor_oid = current_ot."objectiveId"
             LEFT JOIN "ObjectiveTopics" target_ot
               ON ao.inheriting_oid = target_ot."objectiveId"
@@ -288,7 +290,7 @@ module.exports = {
             SET
               "objectiveId" = aot.inheriting_oid
             FROM affected_objective_topics aot
-            WHERE aot.id = r."objectiveId"
+            WHERE aot.id = r.id
               AND NOT is_duplicate
             RETURNING
               aot.id
@@ -301,14 +303,14 @@ module.exports = {
             RETURNING
               aot.id
           ),
-          --- migrate/merge/delete ARO records to use the older objectives
+          --- migrate/merge/delete ARO records to use the top ranked objectives
           affected_aros AS (
             SELECT
               current_aaro.id,
               ao.inheriting_oid,
-              current_aaro."activityReportId" = target_aaro."activityReportId" is_duplicate
+              COALESCE(current_aaro."activityReportId" = target_aaro."activityReportId",FALSE) is_duplicate
             FROM affected_objectives ao
-            LEFT JOIN "ActivityReportObjectives" current_aaro
+            JOIN "ActivityReportObjectives" current_aaro
               ON ao.donor_oid = current_aaro."objectiveId"
             LEFT JOIN "ActivityReportObjectives" target_aaro
               ON ao.inheriting_oid = target_aaro."objectiveId"
@@ -319,7 +321,7 @@ module.exports = {
             SET
               "objectiveId" = aaro.inheriting_oid
             FROM affected_aros aaro
-            WHERE aaro.id = aro."objectiveId"
+            WHERE aaro.id = aro.id
               AND NOT is_duplicate
             RETURNING
               aaro.id
