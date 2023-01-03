@@ -8,7 +8,7 @@ test.describe('Recipient record', () => {
     await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
     await page.getByRole('link', { name: 'Agency 1.a in region 1, Inc.' }).click();
     await page.getByRole('link', { name: 'TTA History' }).click();
-    
+
     // remove a filter
     await page.getByRole('button', { name: /This button removes the filter: Date started is within/i }).click();
 
@@ -17,6 +17,9 @@ test.describe('Recipient record', () => {
     await page.getByRole('link', { name: 'Add new goals' }).click();
 
     // save first goal, without an objective
+    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').first().click();
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('Enter');
     await page.getByTestId('textarea').fill('This is the first goal for this recipient');
     await page.getByRole('button', { name: 'Save draft' }).click();
     await page.getByText('Yes').click();
@@ -40,9 +43,9 @@ test.describe('Recipient record', () => {
     await page.getByTestId('textInput').fill('http://www.fish-banana-garbage-man.com');
     await page.getByRole('button', { name: 'Save draft' }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();
-    await page.locator('.css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-3-option-2').click();
-
+    await page.locator('.css-g1d714-ValueContainer').last().click();
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('Enter');
     // first click blurs
     await page.getByRole('button', { name: 'Save and continue' }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();
