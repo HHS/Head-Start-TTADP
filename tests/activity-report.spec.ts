@@ -11,6 +11,12 @@ async function getFullName(page) {
   return text.replace(/welcome to the tta hub, /i, '');
 }
 
+async function createNewObjective(page) {
+  await page.getByText(/Select TTA objective/i).click();
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+}
+
 test.describe("Activity Report", () => {
   test('can create an AR with multiple goals, submit for review, and review', async ({ page }) => {
     const fullName = await getFullName(page);
@@ -58,12 +64,13 @@ test.describe("Activity Report", () => {
     await page.getByTestId('textarea').fill('g1');
     await page.getByText('Yes').click();
     await page.getByRole('button', { name: 'Save goal' }).click();
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.keyboard.press('Enter');
+   
+    await createNewObjective(page);
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('g1o1');
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-21-option-0').click();
+    await page.getByLabel(/Topics/i).click();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
     await blur(page);
 
     // save draft doesn't work with invalid resources
@@ -100,17 +107,17 @@ test.describe("Activity Report", () => {
 
     // create the second goal
     await page.getByRole('button', { name: 'Add new goal' }).click();
-    await page.locator('.css-g1d714-ValueContainer').click();
+    await page.getByLabel(/select recipient's goal/i).click();
     await page.keyboard.type('Create new goal');
     await page.keyboard.press('Enter');
     await page.getByTestId('textarea').click();
     await page.getByTestId('textarea').fill('g2');
     await page.getByRole('group', { name: 'Is this a Recipient TTA Plan Agreement (RTTAPA) goal?*' }).getByText('Yes').click();
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-35-option-0').click();
+    await createNewObjective(page);
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('g2o1');
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await page.getByLabel(/Topics/i).click();
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
@@ -118,8 +125,8 @@ test.describe("Activity Report", () => {
     await page.getByRole('button', { name: 'Save goal' }).click();
 
     // edit the first goal
-    await page.getByRole('button', { name: 'Actions for Goal 5'}).click();
-    await page.getByRole('button', { name: 'Edit'}).click();
+    await page.getByTestId('ellipsis-button').first().click();
+    await page.getByRole('button', { name: 'Edit' }).click();
 
     // navigate away from the activity report page
     await page.getByRole('link', { name: 'Activity Reports' }).click();
@@ -154,7 +161,7 @@ test.describe("Activity Report", () => {
     await page.getByRole('textbox', { name: 'Additional notes' }).locator('div').nth(2).click();
     await page.keyboard.type('these are my creator notes');
 
-    const approverDropdown = page.locator('.css-g1d714-ValueContainer');
+    const approverDropdown = page.getByLabel(/Approving manager/i);
     await approverDropdown.click();
 
     // type our name into the dropdown to filter to just us
@@ -232,13 +239,13 @@ test.describe("Activity Report", () => {
     await page.getByTestId('form').getByText('No').click();
 
     // create a new objective
-    await page.getByText('- Select -').click();
-    await page.locator('#react-select-15-option-0').click();
+    await createNewObjective(page);
     await page.getByLabel('TTA objective *').fill('test objective 1');
 
     // select a topic
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-19-option-0').click();
+    await page.getByLabel(/Topics/i).click();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
 
     await blur(page);
 
@@ -259,25 +266,29 @@ test.describe("Activity Report", () => {
     await page.getByRole('group', { name: 'Is this a Recipient TTA Plan Agreement (RTTAPA) goal?*' }).getByText('No').click();
 
     // create a new objective
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-23-option-0').click();    
+    await createNewObjective(page);   
     await page.getByLabel('TTA objective *').fill('test objective 2');
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-27-option-0').click();
+
+    // select topics
+    await page.getByLabel(/Topics/i).click();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+
+    // enter tta provided
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).fill('TTA was provided');
     await page.getByRole('button', { name: 'Save goal' }).click();
 
-    await page.getByRole('button', { name: 'Actions for Goal 7' }).click();
+    await page.getByTestId('ellipsis-button').first().click();
     await page.getByRole('button', { name: 'Edit' }).click();
 
-    await page.waitForTimeout(5000);
     let resource = page.getByTestId('textInput');
     expect(resource).toHaveValue('https://www.test.gov');
 
-    await page.getByRole('button', { name: 'Actions for Goal 8' }).click();
+    await page.getByTestId('ellipsis-button').last().click();
     await page.getByRole('button', { name: 'Edit' }).click();
+    await page.waitForTimeout(10000);
 
-    resource =  page.getByTestId('textInput');
+    resource = page.getByTestId('textInput');    
     expect(resource).toHaveValue('');
     await page.getByRole('button', { name: 'Save goal' }).click();
   });
