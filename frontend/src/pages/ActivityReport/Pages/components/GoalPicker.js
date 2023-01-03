@@ -115,8 +115,6 @@ const GoalPicker = ({
     }
   };
 
-  console.log({ goalForEditing });
-
   return (
     <>
       <div className="margin-top-3 position-relative">
