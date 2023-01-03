@@ -144,7 +144,7 @@ describe('Tests aws elastic search', () => {
       },
     };
     const res = await addIndexDocument(job);
-    await expect(res.body).toStrictEqual(expectedIndexDocument);
+    await expect(res.res.body).toStrictEqual(expectedIndexDocument);
   });
 
   it('calls search', async () => {
@@ -162,7 +162,7 @@ describe('Tests aws elastic search', () => {
       },
     };
     const res = await updateIndexDocument(job);
-    await expect(res.body).toStrictEqual(expectedIndexDocument);
+    await expect(res.res.body).toStrictEqual(expectedIndexDocument);
   });
 
   it('deletes index document', async () => {
@@ -174,7 +174,7 @@ describe('Tests aws elastic search', () => {
       },
     };
     const res = await deleteIndexDocument(job);
-    await expect(res).toStrictEqual(documentDeletedExpected);
+    await expect(res.res).toStrictEqual(documentDeletedExpected);
   });
 
   it('deletes index', async () => {
