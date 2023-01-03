@@ -4,7 +4,6 @@ const { auditLogger } = require('../../logger');
 const { findOrCreateGoalTemplate } = require('./goal');
 const { findOrCreateObjectiveTemplate } = require('./objective');
 const {
-  scheduleAddIndexDocumentJob,
   scheduleUpdateIndexDocumentJob,
   scheduleDeleteIndexDocumentJob,
 } = require('../../lib/awsElasticSearch/queueManager');
@@ -580,39 +579,23 @@ const getActivityReportDocument = async (sequelize, instance) => {
   );
 };
 
-const afterCreate = async (sequelize, instance) => {
-  // Index for AWS Elasticsearch.
-  const document = await getActivityReportDocument(sequelize, instance);
-  await scheduleAddIndexDocumentJob(
-    instance.id,
-    AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-    document,
-  );
-};
-
 const beforeUpdate = async (instance) => {
   copyStatus(instance);
 };
-const afterUpdate = async (sequelize, instance, options) => {
-  await propogateSubmissionStatus(sequelize, instance, options);
-  await propagateApprovedStatus(sequelize, instance, options);
-  await automaticStatusChangeOnApprovalForGoals(sequelize, instance, options);
-  await automaticGoalObjectiveStatusCachingOnApproval(sequelize, instance, options);
-  await moveDraftGoalsToNotStartedOnSubmission(sequelize, instance, options);
-  await automaticIsRttapaChangeOnApprovalForGoals(sequelize, instance, options);
 
+const updateAwsElasticsearchIndexes = async (sequelize, instance) => {
   // AWS Elasticsearch: Determine if we queue delete or update index document.
   const changed = instance.changed();
   if (Array.isArray(changed) && changed.includes('calculatedStatus')) {
     if (instance.previous('calculatedStatus') !== REPORT_STATUSES.DELETED
-      && instance.calculatedStatus === REPORT_STATUSES.DELETED) {
+        && instance.calculatedStatus === REPORT_STATUSES.DELETED) {
       // Delete Index Document for AWS Elasticsearch.
       await scheduleDeleteIndexDocumentJob(
         instance.id,
         AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
       );
     } else if (instance.previous('calculatedStatus') !== REPORT_STATUSES.SUBMITTED
-    && instance.calculatedStatus === REPORT_STATUSES.SUBMITTED) {
+      && instance.calculatedStatus === REPORT_STATUSES.SUBMITTED) {
       // Index for AWS Elasticsearch.
       const document = await getActivityReportDocument(sequelize, instance);
       await scheduleUpdateIndexDocumentJob(
@@ -624,12 +607,21 @@ const afterUpdate = async (sequelize, instance, options) => {
   }
 };
 
+const afterUpdate = async (sequelize, instance, options) => {
+  await propogateSubmissionStatus(sequelize, instance, options);
+  await propagateApprovedStatus(sequelize, instance, options);
+  await automaticStatusChangeOnApprovalForGoals(sequelize, instance, options);
+  await automaticGoalObjectiveStatusCachingOnApproval(sequelize, instance, options);
+  await moveDraftGoalsToNotStartedOnSubmission(sequelize, instance, options);
+  await automaticIsRttapaChangeOnApprovalForGoals(sequelize, instance, options);
+  await updateAwsElasticsearchIndexes(sequelize, instance);
+};
+
 export {
   copyStatus,
   propagateApprovedStatus,
   automaticStatusChangeOnApprovalForGoals,
   beforeCreate,
-  afterCreate,
   beforeUpdate,
   afterUpdate,
   moveDraftGoalsToNotStartedOnSubmission,
