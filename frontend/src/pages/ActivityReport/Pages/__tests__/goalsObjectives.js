@@ -101,7 +101,7 @@ const renderGoals = (
 const RenderReview = ({ goals, activityRecipientType = 'recipient', objectivesWithoutGoals = [] }) => {
   const history = createMemoryHistory();
   const hookForm = useForm({
-    defaultValues: { goals, activityRecipientType, objectivesWithoutGoals },
+    defaultValues: { goalsAndObjectives: goals, activityRecipientType, objectivesWithoutGoals },
   });
   return (
     <Router history={history}>
