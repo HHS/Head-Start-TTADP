@@ -175,4 +175,30 @@
   <grantee_name>Department of Human  Services</grantee_name>
   <grant_status>Active</grant_status>
 </grant_award>
+<grant_award>
+  <grant_award_id>12297</grant_award_id>
+  <agency_id>628</agency_id>
+  <region_id>5</region_id>
+  <grant_number>05CH011591</grant_number>
+  <grantee_state>MN</grantee_state>
+  <grant_start_date>2020-08-01</grant_start_date>
+  <grant_end_date>2025-07-31</grant_end_date>
+  <annual_funding_month>August</annual_funding_month>
+  <program_acronym>CH</program_acronym>
+  <grantee_name>Entity name</grantee_name>
+  <grant_status>Active</grant_status>
+</grant_award>
+<grant_award>
+  <grant_award_id>8317</grant_award_id>
+  <agency_id>628</agency_id>
+  <region_id>5</region_id>
+  <grant_number>05CH8398</grant_number>
+  <grantee_state>MN</grantee_state>
+  <grant_start_date>2014-08-01</grant_start_date>
+  <grant_end_date>2020-07-31</grant_end_date>
+  <annual_funding_month>August</annual_funding_month>
+  <program_acronym>CH</program_acronym>
+  <grantee_name>DBA</grantee_name>
+  <grant_status>Inactive</grant_status>
+</grant_award>
 </grant_awards>
