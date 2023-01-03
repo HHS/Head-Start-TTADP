@@ -13,7 +13,7 @@ describe('other entity report', () => {
     await page.getByRole('link', { name: 'Activity Reports' }).click();
     await page.getByRole('button', { name: '+ New Activity Report' }).click();
       
-    const heading = await page.getByRole('heading', { name: /activity report for region \d/i });
+    const heading = page.getByRole('heading', { name: /activity report for region \d/i });
     const regionNumber = await heading.textContent().then((text) => text!.match(/\d/)![0]);
    
     // select two recipiients
@@ -59,7 +59,7 @@ describe('other entity report', () => {
     await page.getByTestId('textInput').fill('asdfasdf');
 
     // select a topic
-    await page.locator('.css-125guah-control').click();
+    await page.getByLabel(/Topics/i).click();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
 
@@ -88,8 +88,11 @@ describe('other entity report', () => {
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
     // select an approver
-    await page.locator('.css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-33-option-0').click();
+    const approverDropdown = page.getByLabel(/Approving manager/i);
+    await approverDropdown.click();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
     
     // extract the AR number from the URL:
     const url = page.url();
