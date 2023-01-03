@@ -236,7 +236,7 @@ const deleteIndexDocument = async (job) => {
       index: indexName,
       body: query,
     });
-    if (res.body.hits.hits.length >= 1) {
+    if (res.body.hits.length >= 1) {
       // Delete index document.
       res = await client.delete({
         index: indexName,
