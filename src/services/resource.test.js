@@ -26,6 +26,7 @@ import {
   findOrCreateResources,
   // Helper functions
   calculateIsAutoDetected,
+  remapAttributes,
   collectURLsFromField,
   resourcesFromField,
   mergeRecordsByUrlAndGenericId,
@@ -34,33 +35,25 @@ import {
   // ActivityReports Resource Processing
   calculateIsAutoDetectedForActivityReports,
   syncResourcesForActivityReport,
-  activityReportIdToGeneric,
-  genericToActivityReportId,
   processActivityReportForResources,
   processActivityReportForResourcesById,
   // NextSteps Resource Processing
   calculateIsAutoDetectedForNextSteps,
-  nextStepIdToGeneric,
-  genericToNextStepId,
   syncResourcesForNextSteps,
   processNextStepsForResources,
   processNextStepsForResourcesById,
   // Objective Resource processing
   calculateIsAutoDetectedForObjectives,
-  objectiveIdToGeneric,
-  genericToObjectiveId,
   syncResourcesForObjectives,
   processObjectivesForResources,
   processObjectivesForResourcesById,
   // ActivityReportObjective Resource Processing
   calculateIsAutoDetectedForActivityReportObjectives,
-  activityReportObjectiveIdToGeneric,
-  genericToActivityReportObjectiveId,
   syncResourcesForActivityReportObjectives,
   processActivityReportObjectivesForResources,
   processActivityReportObjectivesForResourcesById,
 } from './resource';
-import { REPORT_STATUSES } from '../constants';
+import { REPORT_STATUSES, SOURCE_FIELD } from '../constants';
 import { ResourceGroups } from 'aws-sdk';
 
 describe('resource', () => {
@@ -90,8 +83,81 @@ describe('resource', () => {
         const resource2 = await findOrCreateResource(url);
         expect(resource2).toMatchObject(resource1);
       });
+      it('fail to undefined, null url', async () => {
+        url = null;
+        const resource = await findOrCreateResource(url);
+        expect(resource).toBe(undefined);
+      });
+      it('fail to undefined, undefined url', async () => {
+        url = undefined;
+        const resource = await findOrCreateResource(url);
+        expect(resource).toBe(undefined);
+      });
+      it('fail to undefined, number url', async () => {
+        url = 0;
+        const resource = await findOrCreateResource(url);
+        expect(resource).toBe(undefined);
+      });
+      it('fail to undefined, array url', async () => {
+        url = [];
+        const resource = await findOrCreateResource(url);
+        expect(resource).toBe(undefined);
+      });
+      it('fail to undefined, object url', async () => {
+        url = {};
+        const resource = await findOrCreateResource(url);
+        expect(resource).toBe(undefined);
+      });
     });
     describe('findOrCreateResources', () => {
+      let urls;
+      beforeEach(() => {
+        urls = [
+          'http://google.com',
+          'http://github.com',
+          'http://github.com',
+        ];
+      });
+      afterEach(async () => {
+        await ResourceGroups.destroy({
+          where: { url: { [Op.in]: urls } },
+          individualHooks: true,
+        });
+      });
+      it('expected usage, new', async () => {
+        const resources = await findOrCreateResources(urls);
+        expect(resources.length).toBe(3);
+      });
+      it('expected usage, existing', async () => {
+        const resources1 = await findOrCreateResources(urls);
+        const resources2 = await findOrCreateResources(urls);
+        expect(resources2).toMatchObject(resources1);
+      });
+      it('fail to empty array, null urls', async () => {
+        urls = null;
+        const resources = await findOrCreateResources(urls);
+        expect(resources).toMatchObject([]);
+      });
+      it('fail to empty array, undefined urls', async () => {
+        urls = undefined;
+        const resources = await findOrCreateResources(urls);
+        expect(resources).toMatchObject([]);
+      });
+      it('fail to empty array, number urls', async () => {
+        urls = 0;
+        const resources = await findOrCreateResources(urls);
+        expect(resources).toMatchObject([]);
+      });
+      it('fail to empty array, string urls', async () => {
+        urls = 'a';
+        const resources = await findOrCreateResources(urls);
+        expect(resources).toMatchObject([]);
+      });
+      it('fail to empty array, object urls', async () => {
+        urls = {};
+        const resources = await findOrCreateResources(urls);
+        expect(resources).toMatchObject([]);
+      });
     });
   });
   describe('Helper functions', () => {
@@ -161,6 +227,79 @@ describe('resource', () => {
       it('fail with object autoDetectedFields', () => {
         autoDetectedFields = {};
         expect(calculateIsAutoDetected(sourceFields, autoDetectedFields)).toBe(false);
+      });
+    });
+    describe('remapAttributes', () => {
+      let collection;
+      let from;
+      let to;
+      beforeEach(() => {
+        collection = [{ a: 0 }];
+        from = 'a';
+        to = 'b';
+      });
+      it('expected usage', () => {
+        expect(remapAttributes(collection, from, to)).toMatchObject([{ b: 0 }]);
+      });
+      it('fail to empty, null collection', () => {
+        collection = null;
+        expect(remapAttributes(collection, from, to)).toMatchObject([]);
+      });
+      it('fail to empty, undefined collection', () => {
+        collection = undefined;
+        expect(remapAttributes(collection, from, to)).toMatchObject([]);
+      });
+      it('fail to empty, string collection', () => {
+        collection = 'a';
+        expect(remapAttributes(collection, from, to)).toMatchObject([]);
+      });
+      it('fail to empty, number collection', () => {
+        collection = 0;
+        expect(remapAttributes(collection, from, to)).toMatchObject([]);
+      });
+      it('fail to empty, object collection', () => {
+        collection = {};
+        expect(remapAttributes(collection, from, to)).toMatchObject([]);
+      });
+      it('fail to empty, null from', () => {
+        from = null;
+        expect(remapAttributes(collection, from, to)).toMatchObject([]);
+      });
+      it('fail to empty, undefined from', () => {
+        from = undefined;
+        expect(remapAttributes(collection, from, to)).toMatchObject([]);
+      });
+      it('fail to empty, array from', () => {
+        from = [];
+        expect(remapAttributes(collection, from, to)).toMatchObject([]);
+      });
+      it('fail to empty, number from', () => {
+        from = 0;
+        expect(remapAttributes(collection, from, to)).toMatchObject([]);
+      });
+      it('fail to empty, object from', () => {
+        from = {};
+        expect(remapAttributes(collection, from, to)).toMatchObject([]);
+      });
+      it('fail to empty, null to', () => {
+        to = null;
+        expect(remapAttributes(collection, from, to)).toMatchObject([]);
+      });
+      it('fail to empty, undefined to', () => {
+        to = undefined;
+        expect(remapAttributes(collection, from, to)).toMatchObject([]);
+      });
+      it('fail to empty, array to', () => {
+        to = [];
+        expect(remapAttributes(collection, from, to)).toMatchObject([]);
+      });
+      it('fail to empty, number to', () => {
+        to = 0;
+        expect(remapAttributes(collection, from, to)).toMatchObject([]);
+      });
+      it('fail to empty, object to', () => {
+        to = {};
+        expect(remapAttributes(collection, from, to)).toMatchObject([]);
       });
     });
     describe('collectURLsFromField', () => {
@@ -892,11 +1031,90 @@ describe('resource', () => {
     });
   });
   describe('ActivityReports Resource Processing', () => {
+    describe('calculateIsAutoDetectedForActivityReports', () => {
+      let sourceFields;
+      it('expected usage, single', () => {
+        sourceFields = [SOURCE_FIELD.REPORT.CONTEXT];
+        expect(calculateIsAutoDetectedForActivityReports(sourceFields)).toEqual(true);
+      });
+      it('expected usage, multiple', () => {
+        sourceFields = [SOURCE_FIELD.REPORT.CONTEXT, SOURCE_FIELD.REPORT.NOTES];
+        expect(calculateIsAutoDetectedForActivityReports(sourceFields)).toEqual(true);
+      });
+      it('expected usage, multiple with only once auto-detected', () => {
+        sourceFields = [SOURCE_FIELD.REPORT.CONTEXT, SOURCE_FIELD.REPORT.ECLKC];
+        expect(calculateIsAutoDetectedForActivityReports(sourceFields)).toEqual(true);
+      });
+      it('expected usage, non-auto-detected single', () => {
+        sourceFields = [SOURCE_FIELD.REPORT.ECLKC];
+        expect(calculateIsAutoDetectedForActivityReports(sourceFields)).toEqual(false);
+      });
+      it('expected usage, non-auto-detected multiple', () => {
+        sourceFields = [SOURCE_FIELD.REPORT.ECLKC, SOURCE_FIELD.REPORT.NONECLKC];
+        expect(calculateIsAutoDetectedForActivityReports(sourceFields)).toEqual(false);
+      });
+      // Note all fail cases handled by helper function tests for calculateIsAutoDetected
+    });
   });
   describe('NextSteps Resource Processing', () => {
+    describe('calculateIsAutoDetectedForNextSteps', () => {
+      let sourceFields;
+      it('expected usage, single', () => {
+        sourceFields = [SOURCE_FIELD.NEXTSTEPS.NOTE];
+        expect(calculateIsAutoDetectedForNextSteps(sourceFields)).toEqual(true);
+      });
+      it('expected usage, multiple with only once auto-detected', () => {
+        sourceFields = [SOURCE_FIELD.NEXTSTEPS.NOTE, SOURCE_FIELD.NEXTSTEPS.RESOURCE];
+        expect(calculateIsAutoDetectedForNextSteps(sourceFields)).toEqual(true);
+      });
+      it('expected usage, non-auto-detected single', () => {
+        sourceFields = [SOURCE_FIELD.NEXTSTEPS.RESOURCE];
+        expect(calculateIsAutoDetectedForNextSteps(sourceFields)).toEqual(false);
+      });
+      // Note all fail cases handled by helper function tests for calculateIsAutoDetected
+    });
   });
   describe('Objective Resource processing', () => {
+    describe('calculateIsAutoDetectedForObjectives', () => {
+      let sourceFields;
+      it('expected usage, single', () => {
+        sourceFields = [SOURCE_FIELD.OBJECTIVE.TITLE];
+        expect(calculateIsAutoDetectedForObjectives(sourceFields)).toEqual(true);
+      });
+      it('expected usage, multiple with only once auto-detected', () => {
+        sourceFields = [SOURCE_FIELD.OBJECTIVE.TITLE, SOURCE_FIELD.OBJECTIVE.RESOURCE];
+        expect(calculateIsAutoDetectedForObjectives(sourceFields)).toEqual(true);
+      });
+      it('expected usage, non-auto-detected single', () => {
+        sourceFields = [SOURCE_FIELD.OBJECTIVE.RESOURCE];
+        expect(calculateIsAutoDetectedForObjectives(sourceFields)).toEqual(false);
+      });
+      // Note all fail cases handled by helper function tests for calculateIsAutoDetected
+    });
   });
   describe('ActivityReportObjective Resource Processing', () => {
+    describe('calculateIsAutoDetectedForActivityReportObjectives', () => {
+      let sourceFields;
+      it('expected usage, single', () => {
+        sourceFields = [SOURCE_FIELD.REPORTOBJECTIVE.TITLE];
+        expect(calculateIsAutoDetectedForActivityReportObjectives(sourceFields)).toEqual(true);
+      });
+      it('expected usage, multiple', () => {
+        sourceFields = [
+          SOURCE_FIELD.REPORTOBJECTIVE.TITLE,
+          SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED,
+        ];
+        expect(calculateIsAutoDetectedForActivityReportObjectives(sourceFields)).toEqual(true);
+      });
+      it('expected usage, multiple with only once auto-detected', () => {
+        sourceFields = [SOURCE_FIELD.REPORTOBJECTIVE.TITLE, SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE];
+        expect(calculateIsAutoDetectedForActivityReportObjectives(sourceFields)).toEqual(true);
+      });
+      it('expected usage, non-auto-detected single', () => {
+        sourceFields = [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE];
+        expect(calculateIsAutoDetectedForActivityReportObjectives(sourceFields)).toEqual(false);
+      });
+      // Note all fail cases handled by helper function tests for calculateIsAutoDetected
+    });
   });
 });
