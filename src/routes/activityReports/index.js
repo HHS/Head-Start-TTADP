@@ -20,6 +20,7 @@ import {
   downloadAllAlerts,
   getReportsForLocalStorageCleanup,
   saveOtherEntityObjectivesForReport,
+  setGoalAsActivelyEdited,
 } from './handlers';
 import { createGoalsForReport } from '../goals/handlers';
 import { checkActivityReportIdParam } from '../../middleware/checkIdParamMiddleware';
@@ -54,5 +55,6 @@ router.put('/:activityReportId/reset', checkActivityReportIdParam, transactionWr
 router.put('/:activityReportId/review', checkActivityReportIdParam, transactionWrapper(reviewReport));
 router.put('/:activityReportId/submit', checkActivityReportIdParam, transactionWrapper(submitReport));
 router.put('/:activityReportId/unlock', checkActivityReportIdParam, transactionWrapper(unlockReport));
+router.put('/:activityReportId/goals/edit', checkActivityReportIdParam, transactionWrapper(setGoalAsActivelyEdited));
 
 export default router;

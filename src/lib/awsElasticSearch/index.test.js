@@ -1,7 +1,7 @@
 import Mock from '@elastic/elasticsearch-mock';
 import {
   createIndex, addIndexDocument, search, updateIndexDocument, deleteIndexDocument, deleteIndex,
-} from './awsElasticSearch';
+} from './index';
 
 const { Client } = require('@elastic/elasticsearch');
 
