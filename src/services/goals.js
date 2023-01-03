@@ -363,7 +363,7 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
 
     return [...objectives, {
       ...objective.dataValues,
-      title: objective.title.trim(),
+      title: objective.title,
       value: id,
       ids: [id],
       // Make sure we pass back a list of recipient ids for subsequent saves.
@@ -448,7 +448,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
 
     return [...objectives, {
       ...objective.dataValues,
-      title: objective.title.trim(),
+      title: objective.title,
       value: id,
       ids: [id],
       ttaProvided,
