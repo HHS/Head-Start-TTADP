@@ -46,8 +46,8 @@ export default function GoalRttapa({
 
 GoalRttapa.propTypes = {
   inputName: PropTypes.string,
-  isRttapa: PropTypes.string.isRequired,
-  initial: PropTypes.string.isRequired,
+  isRttapa: PropTypes.string,
+  initial: PropTypes.string,
   onChange: PropTypes.func.isRequired,
   onBlur: PropTypes.func.isRequired,
   error: PropTypes.node.isRequired,
@@ -57,6 +57,8 @@ GoalRttapa.propTypes = {
 };
 
 GoalRttapa.defaultProps = {
+  isRttapa: null,
+  initial: null,
   className: 'margin-top-3',
   inputName: 'goal-is-rttapa',
   isLoading: false,
