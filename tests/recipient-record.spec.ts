@@ -40,7 +40,7 @@ test.describe('Recipient record', () => {
     await page.getByTestId('textInput').fill('http://www.fish-banana-garbage-man.com');
     await page.getByRole('button', { name: 'Save draft' }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();
-    await page.getByLabel(/topics/i).click();
+    await page.getByLabel(/topics/i).focus();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
