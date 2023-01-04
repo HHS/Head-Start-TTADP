@@ -1,4 +1,9 @@
-import { awsElasticsearchQueue, scheduleAddIndexDocumentJob } from './queueManager';
+import {
+  awsElasticsearchQueue,
+  scheduleAddIndexDocumentJob,
+  scheduleUpdateIndexDocumentJob,
+  scheduleDeleteIndexDocumentJob,
+} from './queueManager';
 import { REPORT_STATUSES, AWS_ELASTIC_SEARCH_INDEXES } from '../../constants';
 
 import db, {
@@ -46,6 +51,23 @@ describe('queue manager tests', () => {
       report.id,
       AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
       report,
+    );
+    expect(awsElasticsearchQueue.add).toHaveBeenCalled();
+  });
+
+  it('test scheduleUpdateIndexDocumentJob on the awsElasticsearchQueue', async () => {
+    await scheduleUpdateIndexDocumentJob(
+      report.id,
+      AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+      report,
+    );
+    expect(awsElasticsearchQueue.add).toHaveBeenCalled();
+  });
+
+  it('test scheduleDeleteIndexDocumentJob on the awsElasticsearchQueue', async () => {
+    await scheduleDeleteIndexDocumentJob(
+      report.id,
+      AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
     );
     expect(awsElasticsearchQueue.add).toHaveBeenCalled();
   });
