@@ -59,7 +59,7 @@ describe('other entity report', () => {
     await page.getByTestId('textInput').fill('asdfasdf');
 
     // select a topic
-    await page.getByLabel(/Topics/i).click();
+    await page.getByLabel(/Topics/i).focus();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
 

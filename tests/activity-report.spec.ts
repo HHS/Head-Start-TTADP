@@ -68,7 +68,7 @@ test.describe("Activity Report", () => {
     await createNewObjective(page);
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('g1o1');
-    await page.getByLabel(/Topics/i).click();
+    await page.getByLabel(/Topics/i).focus();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
@@ -107,7 +107,7 @@ test.describe("Activity Report", () => {
 
     // create the second goal
     await page.getByRole('button', { name: 'Add new goal' }).click();
-    await page.getByLabel(/select recipient's goal/i).click();
+    await page.getByLabel(/select recipient's goal/i).focus();
     await page.keyboard.type('Create new goal');
     await page.keyboard.press('Enter');
     await page.getByTestId('textarea').click();
@@ -116,7 +116,7 @@ test.describe("Activity Report", () => {
     await createNewObjective(page);
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('g2o1');
-    await page.getByLabel(/Topics/i).click();
+    await page.getByLabel(/Topics/i).focus();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
@@ -243,7 +243,7 @@ test.describe("Activity Report", () => {
     await page.getByLabel('TTA objective *').fill('test objective 1');
 
     // select a topic
-    await page.getByLabel(/Topics/i).click();
+    await page.getByLabel(/Topics/i).focus();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
 
@@ -270,7 +270,7 @@ test.describe("Activity Report", () => {
     await page.getByLabel('TTA objective *').fill('test objective 2');
 
     // select topics
-    await page.getByLabel(/Topics/i).click();
+    await page.getByLabel(/Topics/i).focus();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
 
@@ -278,16 +278,19 @@ test.describe("Activity Report", () => {
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).fill('TTA was provided');
     await page.getByRole('button', { name: 'Save goal' }).click();
 
+    // edit the first goal
     await page.getByTestId('ellipsis-button').first().click();
     await page.getByRole('button', { name: 'Edit' }).click();
 
+    // confirm the resource is loaded back in to the form
     let resource = page.getByTestId('textInput');
     expect(resource).toHaveValue('https://www.test.gov');
 
+    // edit the second goal
     await page.getByTestId('ellipsis-button').last().click();
     await page.getByRole('button', { name: 'Edit' }).click();
-    await page.waitForTimeout(10000);
 
+    // confirm the resources are empty on the second objective
     resource = page.getByTestId('textInput');    
     expect(resource).toHaveValue('');
     await page.getByRole('button', { name: 'Save goal' }).click();
