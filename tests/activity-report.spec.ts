@@ -13,12 +13,13 @@ async function getFullName(page) {
 
 test.describe("Activity Report", () => {
   test('can create an AR with multiple goals, submit for review, and review', async ({ page }) => {
+    test.slow();
     const fullName = await getFullName(page);
 
     await page.getByRole('link', { name: 'Activity Reports' }).click();
     await page.getByRole('button', { name: '+ New Activity Report' }).click();
 
-    const heading = await page.getByRole('heading', { name: /activity report for region \d/i });
+    const heading = page.getByRole('heading', { name: /activity report for region \d/i });
     const regionNumber = await heading.textContent().then((text) => text!.match(/\d/)![0]);
 
     await page.getByRole('group', { name: 'Was this activity for a recipient or other entity? *' }).locator('label').filter({ hasText: 'Recipient' }).click();
@@ -53,7 +54,7 @@ test.describe("Activity Report", () => {
 
     // create the first goal
     await page.getByTestId('label').locator('div').filter({ hasText: '- Select -' }).nth(2).click();
-    await page.locator('#react-select-17-option-0').getByText('Create new goal').click();
+    await page.locator('#react-select-15-option-0').getByText('Create new goal').click();
     await page.getByTestId('textarea').click();
     await page.getByTestId('textarea').fill('g1');
     await page.getByText('Yes').click();
@@ -63,7 +64,7 @@ test.describe("Activity Report", () => {
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('g1o1');
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-23-option-0').click();
+    await page.locator('#react-select-21-option-0').click();
     await blur(page);
 
     // save draft doesn't work with invalid resources
@@ -80,10 +81,22 @@ test.describe("Activity Report", () => {
 
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
     await page.keyboard.type('hello');
+
+    await page.getByRole('button', { name: 'Save draft' }).click();
+    // navigate away
+    await page.getByRole('button', { name: 'Supporting attachments' }).click();
+
+    // navigate back
+    await page.getByRole('button', { name: 'Goals and objectives' }).click();
+
+    // confirm tta provided is still there (form is still open)
+    await page.getByRole('textbox', { name: 'TTA provided for objective' }).click();
+
+    // save goal and go on to create second goal
     await page.getByRole('button', { name: 'Save goal' }).click();
 
     // extract the AR number from the URL:
-    const url = await page.url();
+    const url = page.url();
     const arNumber = url.split('/').find((part) => /^\d+$/.test(part));
 
     // create the second goal
@@ -95,14 +108,28 @@ test.describe("Activity Report", () => {
     await page.getByTestId('textarea').fill('g2');
     await page.getByRole('group', { name: 'Is this a Recipient TTA Plan Agreement (RTTAPA) goal?*' }).getByText('Yes').click();
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-27-option-0').click();
+    await page.locator('#react-select-35-option-0').click();
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('g2o1');
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
     await page.keyboard.press('Enter');
     await blur(page);
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
-    await page.keyboard.type('hello');
+    await page.keyboard.type('hello');    
+    await page.getByRole('button', { name: 'Save goal' }).click();
+
+    // edit the first goal
+    await page.getByRole('button', { name: 'Actions for Goal 5'}).click();
+    await page.getByRole('button', { name: 'Edit'}).click();
+
+    // navigate away from the activity report page
+    await page.getByRole('link', { name: 'Activity Reports' }).click();
+
+    // navigate back to the activity report page & the goals and objectives section
+    await page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).first().click();
+    await page.getByRole('button', { name: 'Goals and objectives' }).click();
+
+    // save the first goal   
     await page.getByRole('button', { name: 'Save goal' }).click();
 
     // move to next steps
@@ -128,7 +155,7 @@ test.describe("Activity Report", () => {
     await page.getByRole('textbox', { name: 'Additional notes' }).locator('div').nth(2).click();
     await page.keyboard.type('these are my creator notes');
 
-    const approverDropdown = await page.locator('.css-g1d714-ValueContainer');
+    const approverDropdown = page.locator('.css-g1d714-ValueContainer');
     await approverDropdown.click();
 
     // type our name into the dropdown to filter to just us
@@ -178,10 +205,9 @@ test.describe("Activity Report", () => {
     await page.getByTestId('form').getByTestId('button').click();
 
     // this is in the 'approved activity reports' table
-    await page.getByRole('rowheader', { name: `R0${regionNumber}-AR-${arNumber}` }).getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).click();
+    await page.getByRole('rowheader', { name: `R0${regionNumber}-AR-${arNumber}` }).click();
 
-
-    await page.getByRole('heading', { name: `TTA activity report R0${regionNumber}-AR-${arNumber}` });
+    await expect(page.getByRole('heading', { name: `TTA activity report R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
     await expect(page.getByText(/date approved/i)).toBeVisible();
     await expect(page.getByText(/these are my manager notes/i)).toBeVisible();
   });

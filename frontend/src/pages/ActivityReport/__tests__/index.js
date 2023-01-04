@@ -7,13 +7,17 @@ import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
 
 import { mockWindowProperty, withText } from '../../../testHelpers';
-import { unflattenResourcesUsed, findWhatsChanged } from '../index';
+import { unflattenResourcesUsed, findWhatsChanged } from '../formDataHelpers';
 import {
   REPORT_STATUSES,
 } from '../../../Constants';
 
 import {
-  history, formData, renderActivityReport, recipients,
+  history,
+  formData,
+  renderActivityReport,
+  recipients,
+  mockGoalsAndObjectives,
 } from '../testHelpers';
 import { HTTPError } from '../../../fetchers';
 
@@ -197,7 +201,7 @@ describe('ActivityReport', () => {
       let alerts = screen.queryByTestId('alert');
       expect(alerts).toBeNull();
       const button = await screen.findByRole('button', { name: 'Save draft' });
-      userEvent.click(button);
+      act(() => userEvent.click(button));
       await waitFor(() => expect(fetchMock.called('/api/activity-reports')).toBeTruthy());
       alerts = await screen.findAllByTestId('alert');
       expect(alerts.length).toBe(2);
@@ -316,7 +320,7 @@ describe('ActivityReport', () => {
       await reactSelectEvent.select(recipientSelectbox, ['Recipient Name']);
 
       const recipientNames = await screen.findByText(/recipient names/i);
-      expect(await within(recipientNames).queryAllByText(/recipient name/i).length).toBe(2);
+      expect(within(recipientNames).queryAllByText(/recipient name/i).length).toBe(2);
 
       information = await screen.findByRole('group', { name: 'Who was the activity for?' });
       const otherEntity = within(information).getByLabelText('Other entity');
@@ -333,6 +337,74 @@ describe('ActivityReport', () => {
 
       const good = unflattenResourcesUsed(['resource']);
       expect(good).toEqual([{ value: 'resource' }]);
+    });
+  });
+
+  describe('actively editable goals', () => {
+    it('loads goals in edit mode', async () => {
+      const data = formData();
+      fetchMock.get('/api/topic', []);
+      fetchMock.get('/api/activity-reports/goals?grantIds=12539', []);
+      fetchMock.get('/api/goals?reportId=1&goalIds=37499', mockGoalsAndObjectives(true));
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        activityRecipientType: 'recipient',
+        activityRecipients: [
+          {
+            id: 12539,
+            activityRecipientId: 12539,
+            name: 'Barton LLC - 04bear012539  - EHS, HS',
+          },
+        ],
+        objectivesWithoutGoals: [],
+        goalsAndObjectives: mockGoalsAndObjectives(true),
+      });
+
+      act(() => renderActivityReport(1, 'goals-objectives', false, 1));
+
+      // expect no read-only goals
+      expect(document.querySelector('.ttahub-goal-form-goal-summary')).toBeNull();
+
+      // expect the form to be open
+      const goalName = await screen.findByLabelText(/Recipient's goal/i, { selector: 'textarea' });
+      expect(goalName.value).toBe('test');
+
+      // we don't need this but its for the symmetry with the below test
+      expect(document.querySelector('textarea[name="goalName"]')).not.toBeNull();
+    });
+
+    it('loads goals in read-only mode', async () => {
+      const data = formData();
+      fetchMock.get('/api/topic', []);
+      fetchMock.get('/api/activity-reports/goals?grantIds=12539', []);
+      // fetchMock.get('/api/goals?reportId=1&goalIds=37499', mockGoalsAndObjectives(true));
+      fetchMock.get('/api/activity-reports/1', {
+        ...data,
+        activityRecipientType: 'recipient',
+        activityRecipients: [
+          {
+            id: 12539,
+            activityRecipientId: 12539,
+            name: 'Barton LLC - 04bear012539  - EHS, HS',
+          },
+        ],
+        objectivesWithoutGoals: [],
+        goalsAndObjectives: mockGoalsAndObjectives(false),
+      });
+
+      act(() => renderActivityReport(1, 'goals-objectives', false, 1));
+
+      await screen.findByRole('heading', { name: 'Goals and objectives' });
+
+      // expect 1 read-only goals
+      const readOnlyGoals = document.querySelectorAll('.ttahub-goal-form-goal-summary');
+      expect(readOnlyGoals.length).toBe(1);
+
+      await screen.findByRole('heading', { name: 'Goal summary' });
+      await screen.findByText('test', { selector: 'p.usa-prose' });
+
+      // we don't expect form controls
+      expect(document.querySelector('textarea[name="goalName"]')).toBeNull();
     });
   });
 });

@@ -17,6 +17,27 @@ executors:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: secretpass
           POSTGRES_DB: ttasmarthub
+  back-end-executor:
+    docker:
+      - image: cimg/node:16.18.1-browsers
+        environment:
+          DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
+      - image: circleci/postgres:12.4-ram
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: secretpass
+          POSTGRES_DB: ttasmarthub
+      - image: opensearchproject/opensearch:1.3.2
+        name: opensearch
+        environment:
+          transport.host: 0.0.0.0
+          network.host: 0.0.0.0
+          http.port: 9200
+          cluster.name: opensearch-cluster
+          node.name: opensearch-node1
+          discovery.type: single-node
+          DISABLE_SECURITY_PLUGIN: true
+          ES_JAVA_OPTS: "-Xms256m -Xmx256m"
   machine-executor:
     machine:
       image: ubuntu-2204:current
@@ -190,7 +211,7 @@ parameters:
     default: "main-ar-redesign"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "fix-url-validation-guards"
+    default: "TTAHUB-1245/fix-date-filters-graph"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -202,7 +223,7 @@ parameters:
     default: "867221900"
     type: string
   sandbox_new_relic_app_id:
-    default: "867346799"  
+    default: "867346799"
     type: string
 jobs:
   build_and_lint:
@@ -237,10 +258,16 @@ jobs:
           paths:
             - .
   test_backend:
-    executor: docker-postgres-executor
+    executor: back-end-executor
+    environment:
+        AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
+        AWS_ELASTICSEARCH_ACCESS_KEY: admin
+        AWS_ELASTICSEARCH_SECRET_KEY: admin
     steps:
       - attach_workspace:
           at: .
+      - setup_remote_docker:
+          version: 20.10.14
       - run:
           name: Audit vulnerability of backend node_modules
           command: |
@@ -317,7 +344,7 @@ jobs:
           name: Run playwright tests
           command: yarn e2e:ci
       - store_artifacts:
-          path: playwright-report/
+          path: playwright/
   cucumber_test:
     executor: docker-postgres-executor
     steps:
