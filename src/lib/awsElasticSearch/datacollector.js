@@ -10,7 +10,10 @@ const collectActivityReportData = async (id, sequelize) => {
       activityReportId: id,
     },
     group: ['activityReportId', 'note'],
-    order: [['activityReportId', 'ASC']],
+    order: [
+      ['activityReportId', 'ASC'],
+      ['note', 'ASC'],
+    ],
     raw: true,
   });
 
@@ -22,7 +25,10 @@ const collectActivityReportData = async (id, sequelize) => {
       activityReportId: id,
     },
     group: ['activityReportId', 'note'],
-    order: [['activityReportId', 'ASC']],
+    order: [
+      ['activityReportId', 'ASC'],
+      ['note', 'ASC'],
+    ],
     raw: true,
   });
   // Goals.
@@ -32,7 +38,10 @@ const collectActivityReportData = async (id, sequelize) => {
       activityReportId: id,
     },
     group: ['activityReportId', 'name'],
-    order: [['activityReportId', 'ASC']],
+    order: [
+      ['activityReportId', 'ASC'],
+      ['name', 'ASC'],
+    ],
     raw: true,
   });
   // objectives.
@@ -42,7 +51,10 @@ const collectActivityReportData = async (id, sequelize) => {
       activityReportId: id,
     },
     group: ['activityReportId', 'title', 'ttaProvided'],
-    order: [['activityReportId', 'ASC']],
+    order: [
+      ['activityReportId', 'ASC'],
+      ['title', 'ASC'],
+    ],
     raw: true,
   });
 
