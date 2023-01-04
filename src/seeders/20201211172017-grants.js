@@ -1,4 +1,5 @@
 const { default: faker } = require('@faker-js/faker');
+const { sample } = require('lodash');
 
 const grants = [
   {
@@ -94,11 +95,21 @@ const baseGrant = {
   endDate: '2032-09-01',
 };
 
+const programTypes = [
+  'Migrant HS',
+  'Migrant EHS',
+  'EHS',
+  'HS',
+  'AIAN HS',
+  'AIAN EHS',
+];
+
 const programs = grants.map((grant) => ({
   ...baseGrant,
   name: faker.company.companyName(),
   id: grant.id,
   grantId: grant.id,
+  programType: sample(programTypes),
 }));
 
 module.exports = {
