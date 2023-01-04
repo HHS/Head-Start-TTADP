@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test';
-import e from 'express';
 
 async function blur(page) {
   await page.getByText('Office of Head Start TTA Hub').click();
@@ -11,27 +10,60 @@ async function getFullName(page) {
   const text = await welcomeText.textContent();
   return text.replace(/welcome to the tta hub, /i, '');
 }
-
+/**
+ * Formats goals from the heading string to use in the "View objective (x)" selectors
+ *
+ * @remarks
+ * A sample heading string: "Goal G-5, G-6RTTAPA"
+ * Would return "G-5G6"
+ * @param headingString - string to extract goals from
+ */
 function getGoals(headingString) {
   const goal1 = headingString.split(' ')[1].split(',')[0];
   const goal2 = headingString.split(' ')[2].split('RTTAPA')[0];
   return `${goal1}${goal2}`;
 }
 
+/**
+ * Extracts a recipient name from the "Activity participant" review section display
+ *
+ * @remarks
+ * A sample Activity participants input: "Agency 1.a in region 1, Inc. - 01HP044444  - ECS"
+ * Would return "Agency 1.a in region 1, Inc."
+ * @param page - the page object
+ */
 async function getRecipient(page) {
   const recipient = await page.locator('[aria-label="Activity participants 1"]');
   const text = await recipient.textContent();
   return text.split('-')[0].trim();
 }
 
+/**
+ * Extracts the grant numbers from the recipients string
+ *
+ * @remarks
+ * A sample Activity participants input: "Agency 1.a in region 1, Inc. - 01HP044444  - ECS, Agency 1.a in region 1, Inc. - 01HP044445"
+ * Would return "01HP044444, 01HP044445"
+ * Note - there is a bug currently that displays the grant number in a descending order, hence a need
+ * to temporarily reverse the returned array to return "01HP044445, 01HP04444" instead
+ * @param recipients - the recipients string
+ */
 async function getGrants(recipients) {
-  const recArray = recipients.split(' , ');
-  const grants = recArray.map((r) => r.split('-')[1]);
+  const recArray = recipients.split(', ');
+  // remove potential elements without grant numbers
+  const recArrayGrants = recArray.filter((el) => el.indexOf(' - ') > 0);
+  const grants = recArrayGrants.map((r) => r.split('-')[1].trim());
+
   // Need to reverse temporarily (bug)
   const temp = grants.reverse();
-  return temp.toString().substring(1);
+  return temp.toString().replace(',', ', ');
 }
 
+/**
+ * Extracts the text of the dropdown's selected value
+ *
+ * @param selectedOption - dropdown
+ */
 async function extractSelectedDisplayedValue(selectedOption) {
   return selectedOption.evaluate(sel => sel.options[sel.options.selectedIndex].textContent);
 };
@@ -246,57 +278,76 @@ test.describe("Activity Report", () => {
     const recipients = await page.locator('span:near(p:text("Recipient names"))').first().textContent();
     const grants = await getGrants(recipients);
 
-    // navigate to the recipient tta records page
+    // navigate to the Recipient TTA Records page
     await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
+    // click on the previously extracted recipient
     await page.getByRole('link', { name: recipient }).click();
+    // navigate to the 'Goals & Objectives page
     await page.getByRole('link', { name: 'Goals & Objectives' }).click();
-
+    // check that previously created goals g1 and g2 are visible
     await expect(page.getByText('g1', {exact: true})).toBeVisible();
     await expect(page.getByText('g2', {exact: true})).toBeVisible();
 
+    // look for the goals heading for the previously created goal, e.g. 'Goal G-6, G-5RTTAPA'
     const g1Goals = page.locator('h3:above(p:text("g1"))').first();
     const g1GoalsTxt = await g1Goals.textContent();
+    // get text for the previously created goal's objectives button, e.g. 'Goal G-5, G-6RTTAPA' will become 'G-5G-6'
     const g1GoalsForObjectives = getGoals(g1GoalsTxt);
+    // strip 'Goals' and 'RTTAPA' from g1GoalsTxt: e.g "Goal G-5, G-6RTTAPA" will become "G-5, G-6"
     const g1GoalsForSelector = g1GoalsTxt ? g1GoalsTxt.substring(5).split('RTTAPA')[0] : '';
+    // use the correct text to locate the topics, e.g. "G-5, G-6"
     const g1Topics = page.locator(`div:right-of(h3:text("${g1GoalsForSelector}"))`).first().locator('p').last();
     const g1TopicsTxt = await g1Topics.textContent();
-
+    // verify the topics for the previously created goal
     expect(g1TopicsTxt).toBe('Behavioral / Mental Health / Trauma');
-
+    // look for the goals heading for the previously created goal, e.g. 'Goal G-8, G-7RTTAPA'
     const g2Goals = page.locator('h3:above(p:text("g2"))').first();
     const g2GoalsTxt = await g2Goals.textContent();
+    // extract text used to locate the correct objective's button, e.g. 'Goal G-8, G-7RTTAPA' will become 'G-7G-8'
     const g2GoalsForObjectives = getGoals(g2GoalsTxt);
+    // extract text used to locate the topics
     const g2Topics = page.locator(`div:right-of(h3:text("${g2GoalsTxt ? g2GoalsTxt.substring(5).split('RTTAPA')[0] : ''}"))`).first().locator('p').getByText('Behavioral / Mental Health / Trauma, CLASS: Classroom Organization');
-
+    // verify the topics for the previously created goal
     expect(g2Topics).toBeVisible();
 
     // expand objectives for g1
     await page.getByRole('button', { name: `Expand objectives for goal ${g1GoalsForObjectives}` }).click();
 
     await expect(page.getByText('g1o1', {exact: true})).toBeVisible();
+    // verify a link to the activity report is found in the objective section
     await expect(page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
     // Access parent with '..' 
     // This one doesn't work needs to be fixed, since the text is 'Grant number' (bug)
     //await expect(page.getByText('g1o1', {exact: true}).locator('..').locator('..').getByText('Grant numbers')).toBeVisible();
+    // verify the grants are visible in the objective section
     await expect(page.getByText('g1o1', {exact: true}).locator('..').locator('..').getByText(grants)).toBeVisible();
+    // verify the reason is visible in the objective section
     await expect(page.getByText('g1o1', {exact: true}).locator('..').locator('..').getByText('Below Competitive Threshold (CLASS)')).toBeVisible();
+    // verify the end date is visible in the objective section
     await expect(page.getByText('g1o1', {exact: true}).locator('..').locator('..').getByText('12/01/2050')).toBeVisible();
+    // verify the correct status for the objective is visible
     await expect(page.getByText('g1o1', {exact: true}).locator('..').locator('..').getByText('Not started')).toBeVisible();
 
     // expand objectives for g2
     await page.getByRole('button', { name: `Expand objectives for goal ${g2GoalsForObjectives}` }).click();
 
     await expect(page.getByText('g2o1', {exact: true})).toBeVisible();
+    // verify a link to the activity report is found in the objective section
     await expect(page.getByText('g2o1', {exact: true}).locator('..').locator('..').getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
     //This one doesn't work (bug)
-    //await expect(page.getByText('g1o1', {exact: true}).locator('..').locator('..').getByText('Grant numbers')).toBeVisible();
-
+    //await expect(page.getByText('g2o1', {exact: true}).locator('..').locator('..').getByText('Grant numbers')).toBeVisible();
+    // verify the grants are visible in the objective section
+    await expect(page.getByText('g2o1', {exact: true}).locator('..').locator('..').getByText(grants)).toBeVisible();
+     // verify the reason is visible in the objective section
     await expect(page.getByText('g2o1', {exact: true}).locator('..').locator('..').getByText('Below Competitive Threshold (CLASS)')).toBeVisible();
+    // verify the end date is visible in the objective section
     await expect(page.getByText('g2o1', {exact: true}).locator('..').locator('..').getByText('12/01/2050')).toBeVisible();
+    // verify the correct status for the objective is visible
     await expect(page.getByText('g2o1', {exact: true}).locator('..').locator('..').getByText('Not started')).toBeVisible();
 
-    //Check g1
+    // check g1
     await page.getByText('g1', { exact: true }).locator('..').locator('..').locator('..').getByRole('button', { name: 'Actions for goal'}).click();
+    // click on the 'Edit' button for 'g1' and verify the correct data is displayed
     await page.getByText('g1', { exact: true }).locator('..').locator('..').locator('..').getByRole('button', { name: 'Edit'}).click();
 
     await expect(page.getByText("This goal is used on an activity report, so some fields can't be edited.")).toBeVisible();
@@ -306,19 +357,22 @@ test.describe("Activity Report", () => {
     await expect(page.getByText(g1TopicsTxt || 'Behavioral / Mental Health / Trauma')).toBeVisible();
     await expect(page.getByRole('link', { name: 'https://banana.banana.com'})).toBeVisible();
     await expect(page.getByRole('radio', { name: 'No' })).toBeChecked();
+
+    // verify the correct value is selected in the Objective status dropdown
     expect(await extractSelectedDisplayedValue(page.getByTestId('dropdown'))).toBe('Not Started');
     // Change g1o1's status
     await page.getByTestId('dropdown').click();
     await page.getByTestId('dropdown').selectOption({ label: 'In Progress' });
     await page.getByRole('button', { name: 'Save'}).click();
 
-    // This one doesn't work at the moment (bug)
-    // expect(await page.getByRole('button', { name: `Expand objectives for goal ${g1GoalsForObjectives}` }).textContent()).toBe('View objectives(1)');
+    // expand the objective for g1
     await page.getByRole('button', { name: `Expand objectives for goal ${g1GoalsForObjectives}` }).click();
+    // verify the 'In Progress' status is now visible
     await expect(page.locator('li').getByText('In Progress')).toBeVisible();
 
     // Check g2
     await page.getByText('g2', { exact: true }).locator('..').locator('..').locator('..').getByRole('button', { name: 'Actions for goal'}).click();
+    // click on the 'Edit' button for 'g1' and verify the correct data is displayed
     await page.getByText('g2', { exact: true }).locator('..').locator('..').locator('..').getByRole('button', { name: 'Edit'}).click();
 
     await expect(page.getByText("This goal is used on an activity report, so some fields can't be edited.")).toBeVisible();
@@ -333,13 +387,14 @@ test.describe("Activity Report", () => {
 
     await page.getByTestId('dropdown').click();
     await page.getByTestId('dropdown').selectOption({ label: 'Complete' });
+    // Instead of saving, cancel out of the 'Edit' form
     await page.getByRole('link', { name: 'Cancel'}).click();
 
-    // expand objectives for g2
+    // expand the objective for g2
     await page.getByRole('button', { name: `Expand objectives for goal ${g2GoalsForObjectives}` }).click();
     // follow the AR link for g2
     await page.getByText('g2', { exact: true }).locator('..').locator('..').locator('..').getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).click();
-
+    // verify the link works by checking whether the recipients are visible
     await expect(page.getByText(`${recipients}`)).toBeVisible();
   });
 });

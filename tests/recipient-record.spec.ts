@@ -17,8 +17,10 @@ test.describe('Recipient record', () => {
     await page.getByRole('link', { name: 'Add new goals' }).click();
 
     // save first goal, without an objective
+    // click inside of the grants multi-select dropdown
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').first().click();
     await page.keyboard.press('Enter');
+    // select a second grant as well
     await page.keyboard.press('Enter');
     await page.getByTestId('textarea').fill('This is the first goal for this recipient');
     await page.getByRole('button', { name: 'Save draft' }).click();
@@ -43,8 +45,10 @@ test.describe('Recipient record', () => {
     await page.getByTestId('textInput').fill('http://www.fish-banana-garbage-man.com');
     await page.getByRole('button', { name: 'Save draft' }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();
+    // locate the topics dropdown
     await page.locator('.css-g1d714-ValueContainer').last().click();
     await page.keyboard.press('Enter');
+    // enter second topic as well
     await page.keyboard.press('Enter');
     // first click blurs
     await page.getByRole('button', { name: 'Save and continue' }).click();
