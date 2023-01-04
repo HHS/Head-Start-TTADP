@@ -76,6 +76,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       default: false,
     },
+    createdVia: {
+      type: DataTypes.ENUM(['activityReport', 'rtr']),
+      allowNull: true,
+    },
     firstNotStartedAt: {
       type: DataTypes.DATE,
       allowNull: true,

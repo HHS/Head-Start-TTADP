@@ -173,11 +173,11 @@ export function TopicFrequencyGraphWidget({
 
   return (
     <Container className="ttahub--topic-frequency-graph" paddingX={3} paddingY={3} loading={loading} loadingLabel="Topic frequency loading">
-      <Grid row className="margin-bottom-2">
+      <Grid row className="margin-bottom-2 bg-white">
         <Grid className="flex-align-self-center" desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}>
           <h2 className="ttahub--dashboard-widget-heading margin-0">Number of Activity Reports by Topic</h2>
         </Grid>
-        <Grid col="auto" gap={1} className="ttahub--topic-frequency-graph-control-row desktop:display-flex desktop:padding-x-2">
+        <Grid col="auto" gap={1} className="ttahub--topic-frequency-graph-control-row desktop:display-flex bg-white desktop:padding-x-2">
           <ButtonSelect
             styleAsSelect
             labelId="tfGraphOrder"
@@ -209,6 +209,7 @@ export function TopicFrequencyGraphWidget({
             className="usa-button--unstyled margin-top-2"
             aria-label={showAccessibleData ? 'display number of activity reports by topic data as graph' : 'display number of activity reports by topic data as table'}
             onClick={toggleType}
+            data-html2canvas-ignore
           >
             {showAccessibleData ? 'Display graph' : 'Display table'}
           </button>

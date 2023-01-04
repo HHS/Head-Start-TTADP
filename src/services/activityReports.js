@@ -1516,7 +1516,7 @@ export async function activityReportsApprovedByDate(userId, date) {
         {
           calculatedStatus: REPORT_STATUSES.APPROVED,
         },
-        {
+        userId && {
           [Op.or]: [{ userId }, { '$activityReportCollaborators.userId$': userId }],
         },
         {
@@ -1529,7 +1529,7 @@ export async function activityReportsApprovedByDate(userId, date) {
             ),
           },
         },
-      ],
+      ].filter(Boolean),
     },
     include: [
       {

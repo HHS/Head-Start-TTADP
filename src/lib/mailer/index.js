@@ -1,16 +1,19 @@
 import { createTransport } from 'nodemailer';
+import { QueryTypes } from 'sequelize';
 import Email from 'email-templates';
 import * as path from 'path';
+import { sequelize } from '../../models';
 import { auditLogger, logger } from '../../logger';
 import newQueue from '../queue';
 import { EMAIL_ACTIONS, EMAIL_DIGEST_FREQ, USER_SETTINGS } from '../../constants';
-import { usersWithSetting } from '../../services/userSettings';
+import { userSettingOverridesById, usersWithSetting } from '../../services/userSettings';
 import {
   activityReportsWhereCollaboratorByDate,
   activityReportsChangesRequestedByDate,
   activityReportsSubmittedByDate,
   activityReportsApprovedByDate,
 } from '../../services/activityReports';
+import { userById } from '../../services/users';
 
 export const notificationQueue = newQueue('notifications');
 export const notificationDigestQueue = newQueue('digestNotifications');
@@ -172,6 +175,35 @@ export const notifyReportApproved = (job, transport = defaultTransport) => {
   return null;
 };
 
+export const notifyRecipientReportApproved = (job, transport = defaultTransport) => {
+  const { report, programSpecialists, recipients } = job.data;
+  // Set these inside the function to allow easier testing
+  const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS } = process.env;
+
+  if (SEND_NOTIFICATIONS === 'true') {
+    const { id, displayId } = report;
+    const recipientNames = recipients.map((r) => r.name);
+    const recipientNamesDisplay = recipientNames.join(', ').trim();
+
+    logger.info(`MAILER: Notifying program specialists that report ${displayId} was approved because they have grants associated with it.`);
+    const addresses = programSpecialists.map((c) => c.email);
+    if (addresses.length === 0) return null;
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
+    const email = new Email({
+      message: { from: FROM_EMAIL_ADDRESS },
+      send,
+      transport,
+      htmlToText: { wordWrap: 120 },
+    });
+    return email.send({
+      template: path.resolve(emailTemplatePath, 'recipient_report_approved'),
+      message: { to: addresses },
+      locals: { reportPath, displayId, recipientNamesDisplay },
+    });
+  }
+
+  return null;
+};
 /**
  * Process function for approverAssigned jobs added to notification queue
  * Sends email to user about new ability to approve a report
@@ -292,6 +324,29 @@ export const reportApprovedNotification = (report, authorWithSetting, collabsWit
       collabsWithSettings,
     };
     notificationQueue.add(EMAIL_ACTIONS.APPROVED, data);
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
+
+/**
+ * @param {ActivityReport} report
+ * @param {User[]} programSpecialists
+*  @param {Array<{ id: number, name: string }>} recipients
+ */
+export const programSpecialistRecipientReportApprovedNotification = (
+  report,
+  programSpecialists,
+  recipients,
+) => {
+  // Send group notification to program specialists
+  try {
+    const data = {
+      report,
+      programSpecialists,
+      recipients,
+    };
+    notificationQueue.add(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED, data);
   } catch (err) {
     auditLogger.error(err);
   }
@@ -463,6 +518,69 @@ export async function approvedDigest(freq, subjectFreq) {
       notificationDigestQueue.add(EMAIL_ACTIONS.APPROVED_DIGEST, data);
       return data;
     });
+    return Promise.all(records);
+  } catch (err) {
+    logger.info(`MAILER: ApprovedDigest with key ${USER_SETTINGS.EMAIL.KEYS.APPROVAL} freq ${freq} error ${err}`);
+    throw err;
+  }
+}
+
+export async function recipientApprovedDigest(freq, subjectFreq) {
+  const date = frequencyToInterval(freq);
+  logger.info(`MAILER: Starting RecipientApprovedDigest with freq ${freq}`);
+  try {
+    if (!date) {
+      throw new Error('date is null');
+    }
+
+    // Get all reports approved by date.
+    const reports = await activityReportsApprovedByDate(null, date);
+    const reportIds = reports.map((r) => r.id);
+
+    // Get all specialists that are subscribed to RECIPIENT_APPROVAL notifications given this freq.
+    // FIXME: TTAHUB-1253
+    let specialists = await sequelize.query(`
+      SELECT DISTINCT u.id
+      FROM "ActivityReports" a
+      JOIN "ActivityRecipients" ar
+      ON a.id = ar."activityReportId"
+      JOIN "Grants" gr
+      ON ar."grantId" = gr.id
+      JOIN "Users" u
+      ON LOWER(gr."programSpecialistEmail") = LOWER(u.email)
+      WHERE a.id in (${reportIds.join(',') || null})
+    `, { type: QueryTypes.SELECT });
+
+    // Filter to only those who have opted into this notification setting and freq.
+    specialists = await Promise.all(specialists.map(async (ps) => {
+      const setting = await userSettingOverridesById(
+        ps.id,
+        USER_SETTINGS.EMAIL.KEYS.RECIPIENT_APPROVAL,
+      );
+
+      if (setting && setting.value === freq) return ps;
+      return null;
+    }));
+
+    specialists = specialists.filter((s) => s !== null);
+
+    const users = await Promise.all(
+      specialists.map(async (s) => userById(s.id)),
+    );
+
+    const records = users.map((user) => {
+      const data = {
+        user,
+        reports,
+        type: EMAIL_ACTIONS.RECIPIENT_APPROVED_DIGEST,
+        freq,
+        subjectFreq,
+      };
+
+      notificationDigestQueue.add(EMAIL_ACTIONS.RECIPIENT_APPROVED_DIGEST, data);
+      return data;
+    });
+
     return Promise.all(records);
   } catch (err) {
     logger.info(`MAILER: ApprovedDigest with key ${USER_SETTINGS.EMAIL.KEYS.APPROVAL} freq ${freq} error ${err}`);
