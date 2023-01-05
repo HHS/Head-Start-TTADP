@@ -237,7 +237,7 @@ module.exports = {
       { transaction },
     );
     const urlRegex = '(?:(?:http(?:s)?|ftp(?:s)?|sftp):\\/\\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\\+~#=]+))?[@])?(?:(?:www\\.)?(?:[a-zA-Z0-9%._\\+~#=]{1,}\\.[a-z]{2,6})|(?:(?:[0-9]{1,3}\\.){3}[0-9]{1,3}))(?:[:](?:[0-9]+))?(?:[\\/](?:[-a-zA-Z0-9@:%_\\+.~#&\\/=()]*))?(?:[?](?:[-a-zA-Z0-9@:%_\\+.~#&\\/=()]*))?)';
-    const domainRegex = '^(?:(?:http|ftp|https|file):\\/\\/)?(?:www\\.)?((?:[\\w%_-]+(?:(?:\\.[\\w%_-]+)+)|(?:\\/[\\w][:])))';
+    const domainRegex = '^(?:(?:http(?:s)?|ftp(?:s)?|sftp):\\/\\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\\+~#=]+))?[@])?(?:(?:www\\.)?([a-zA-Z0-9%._\\+~#=]{1,}\\.[a-z]{2,6})|((?:[0-9]{1,3}\\.){3}[0-9]{1,3})))';
 
     // populate "Resources" and "ActivityReportResources" from current data from reports via nonECLKCResourcesUsed, ECLKCResourcesUsed, context, & additionalNotes
     // 1. Generate a list of all reports where either nonECLKCResourcesUsed or ECLKCResourcesUsed is populated.
@@ -271,7 +271,7 @@ module.exports = {
         SELECT
             arr."activityReportId",
             (regexp_matches(ne.resource,'${urlRegex}','g')) urls,
-            'nonECLKCResourcesUsed' "SourceField",
+            'nonECLKCResourcesUsed' "sourceField",
             arr."createdAt",
             arr."updatedAt"
         FROM "ARResources" arr
@@ -281,7 +281,7 @@ module.exports = {
         SELECT
             arr."activityReportId",
             (regexp_matches(ne.resource,'${urlRegex}','g')) urls,
-            'ECLKCResourcesUsed' "SourceField",
+            'ECLKCResourcesUsed' "sourceField",
             arr."createdAt",
             arr."updatedAt"
         FROM "ARResources" arr
@@ -291,7 +291,7 @@ module.exports = {
         SELECT
           a.id "activityReportId",
           (regexp_matches(a.context,'${urlRegex}','g')) urls,
-          'context' "SourceField",
+          'context' "sourceField",
           a."createdAt",
           a."updatedAt"
         FROM "ActivityReports" a
@@ -300,7 +300,7 @@ module.exports = {
         SELECT
           a.id "activityReportId",
           (regexp_matches(a."additionalNotes",'${urlRegex}','g')) urls,
-          'additionalNotes' "SourceField",
+          'additionalNotes' "sourceField",
           a."createdAt",
           a."updatedAt"
         FROM "ActivityReports" a
@@ -321,7 +321,7 @@ module.exports = {
       "AllARResources" AS (
         SELECT
           carr."activityReportId",
-          carr."SourceField",
+          carr."sourceField",
           (regexp_match(url,'${domainRegex}'))[1] "domain",
           u.url,
           carr."createdAt" "createdAt",
@@ -363,7 +363,7 @@ module.exports = {
       SELECT
         aarr."activityReportId",
         nr."resourceId",
-        ARRAY_AGG(DISTINCT aarr."sourceField") "sourceFields",
+        ARRAY_AGG(DISTINCT aarr."sourceField")::"enum_ActivityReportResources_sourceFields"[] "sourceFields",
         BOOL_OR(aarr."sourceField" IN ('${SOURCE_FIELD.REPORT.CONTEXT}', '${SOURCE_FIELD.REPORT.NOTES}')) "isAutoDetected",
         MIN(aarr."createdAt") "createdAt",
         MAX(aarr."updatedAt") "updatedAt"
@@ -377,18 +377,18 @@ module.exports = {
       ORDER BY
         aarr."activityReportId",
         nr."resourceId",
-        aarr."createdAt",
-        aarr."updatedAt";
+        MIN(aarr."createdAt"),
+        MAX(aarr."updatedAt");
     `, { transaction });
 
-    // populate "Resources" and "NextStepsResources" from current data from "NextSteps" via note
+    // populate "Resources" and "NextStepResources" from current data from "NextSteps" via note
     // 1. Collect all urls from note column in "NextSteps".
     // 2. Extract domain from urls.
     // 3. Generate a distinct list of collected urls.
     // 4. Update "Resources" for all existing urls.
     // 5. Insert distinct domains and urls into "Resources" table.
     // 6. Collect all affected "Resources" records.
-    // 7. Insert all records into "NextStepsResources" linking the "NextSteps" records to their corresponding records in "Resources".
+    // 7. Insert all records into "NextStepResources" linking the "NextSteps" records to their corresponding records in "Resources".
     await queryInterface.sequelize.query(`
     WITH
       "NextStepsUrls" AS (
@@ -434,9 +434,9 @@ module.exports = {
         WHERE nsr."domain" = r."domain"
         AND nsr.url = r.url
         RETURNING
-          id "resourceId",
-          "domain",
-          url
+          r.id "resourceId",
+          r."domain",
+          r.url
       ),
       "NewResources" AS (
         INSERT INTO "Resources" (
@@ -469,7 +469,7 @@ module.exports = {
         SELECT *
         FROM "NewResources"
       )
-      INSERT INTO "NextStepsResources" (
+      INSERT INTO "NextStepResources" (
         "nextStepId",
         "resourceId",
         "sourceFields",
@@ -480,14 +480,14 @@ module.exports = {
       SELECT
         nsud."nextStepId",
         ar."resourceId",
-        ARRAY('${SOURCE_FIELD.NEXTSTEPS.NOTE}') "sourceFields",
+        ARRAY['${SOURCE_FIELD.NEXTSTEPS.NOTE}'] "sourceFields",
         true,
         nsud."createdAt",
         nsud."updatedAt"
       FROM "NextStepsUrlDomain" nsud
       JOIN "AffectedResources" ar
-      ON nsud."domain" = r."domain"
-      AND nsud.url = r.url
+      ON nsud."domain" = ar."domain"
+      AND nsud.url = ar.url
       ORDER BY
         nsud."nextStepId",
         ar."resourceId",
@@ -548,9 +548,9 @@ module.exports = {
         WHERE orr."domain" = r."domain"
         AND orr.url = r.url
         RETURNING
-          id "resourceId",
-          "domain",
-          url
+          r.id "resourceId",
+          r."domain",
+          r.url
       ),
       "NewResources" AS (
         INSERT INTO "Resources" (
@@ -586,7 +586,7 @@ module.exports = {
       UPDATE "ObjectiveResources" "or"
       SET
         "resourceId" = ar."resourceId",
-        "sourceFields" = ARRAY('${SOURCE_FIELD.OBJECTIVE.RESOURCE}'),
+        "sourceFields" = ARRAY['${SOURCE_FIELD.OBJECTIVE.RESOURCE}'],
         "isAutoDetected" = false
       FROM "ObjectiveResourcesUrlDomain" orud
       JOIN "AffectedResources" ar
@@ -696,9 +696,9 @@ module.exports = {
         WHERE odr."domain" = r."domain"
         AND odr.url = r.url
         RETURNING
-          id "resourceId",
-          "domain",
-          url
+          r.id "resourceId",
+          r."domain",
+          r.url
       ),
       "NewResources" AS (
         INSERT INTO "Resources" (
@@ -748,7 +748,7 @@ module.exports = {
         WHERE oud."objectiveId" = r."objectiveId"
         AND oud.url = r."userProvidedUrl"
         RETURNING
-          id "objectiveResourceId"
+          r.id "objectiveResourceId"
       ),
       "NewObjectiveResources" AS (
         INSERT INTO "ObjectiveResources" (
@@ -857,9 +857,9 @@ module.exports = {
         WHERE orr."domain" = r."domain"
         AND orr.url = r.url
         RETURNING
-          id "resourceId",
-          "domain",
-          url
+          r.id "resourceId",
+          r."domain",
+          r.url
       ),
       "NewResources" AS (
         INSERT INTO "Resources" (
@@ -1027,9 +1027,9 @@ module.exports = {
         WHERE odr."domain" = r."domain"
         AND odr.url = r.url
         RETURNING
-          id "resourceId",
-          "domain",
-          url
+          r.id "resourceId",
+          r."domain",
+          r.url
       ),
       "NewResources" AS (
         INSERT INTO "Resources" (
@@ -1078,7 +1078,7 @@ module.exports = {
         AND oud.url = r."userProvidedUrl"
         AND oud."sourceFields" != r."sourceFields"
         RETURNING
-          id "objectiveResourceId"
+          r.id "objectiveResourceId"
       ),
       "NewObjectiveResources" AS (
         INSERT INTO "ActivityReportObjectiveResources" (
