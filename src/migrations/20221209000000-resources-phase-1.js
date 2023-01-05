@@ -188,7 +188,7 @@ module.exports = {
     );
 
     await queryInterface.addColumn(
-      'ActivityReportObjectiveResources',
+      'ObjectiveResources',
       'sourceFields',
       {
         allowNull: true,
