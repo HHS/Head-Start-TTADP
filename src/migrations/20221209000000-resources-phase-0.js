@@ -276,7 +276,7 @@ module.exports = {
             WHERE "or".id = ors.id
             AND orc.cnt = 1
             RETURNING
-                id "objectiveResourceId"
+              "or".id "objectiveResourceId"
         ),
         "NewObjectiveResources" AS (
             INSERT INTO "ObjectiveResources" (
@@ -307,7 +307,7 @@ module.exports = {
             WHERE "or".id = "orc".id
             AND orc.cnt != 1
             RETURNING
-                id "objectiveResourceId"
+              "or".id "objectiveResourceId"
         ),
         "MalformedObjectiveResources" AS (
             SELECT
@@ -322,7 +322,7 @@ module.exports = {
             USING "MalformedObjectiveResources" mor
             WHERE "or".id = "mor".id
             RETURNING
-                id "objectiveResourceId"
+              "or".id "objectiveResourceId"
         ),
         "AffectedObjectiveResources" AS (
           SELECT
