@@ -1125,8 +1125,64 @@ module.exports = {
     `, { transaction });
 
     // Remove unneeded columns
-    await queryInterface.dropColumn('ActivityReportObjectiveResources', 'userProvidedUrl', { transaction });
-    await queryInterface.dropColumn('ObjectiveResources', 'userProvidedUrl', { transaction });
+    await queryInterface.removeColumn('ActivityReportObjectiveResources', 'userProvidedUrl', { transaction });
+    await queryInterface.removeColumn('ObjectiveResources', 'userProvidedUrl', { transaction });
+
+    // Set columns to not allow null
+    await queryInterface.changeColumn(
+      'ActivityReportObjectiveResources',
+      'sourceFields',
+      {
+        type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.OBJECTIVE))),
+        allowNull: false,
+      },
+      { transaction },
+    );
+    await queryInterface.changeColumn(
+      'ActivityReportObjectiveResources',
+      'isAutoDetected',
+      {
+        type: Sequelize.BOOLEAN,
+        allowNull: true,
+      },
+      { transaction },
+    );
+    await queryInterface.changeColumn(
+      'ActivityReportObjectiveResources',
+      'resourceId',
+      {
+        type: Sequelize.BOOLEAN,
+        allowNull: true,
+      },
+      { transaction },
+    );
+    await queryInterface.changeColumn(
+      'ObjectiveResources',
+      'sourceFields',
+      {
+        type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTOBJECTIVE))),
+        allowNull: false,
+      },
+      { transaction },
+    );
+    await queryInterface.changeColumn(
+      'ObjectiveResources',
+      'isAutoDetected',
+      {
+        type: Sequelize.BOOLEAN,
+        allowNull: true,
+      },
+      { transaction },
+    );
+    await queryInterface.changeColumn(
+      'ObjectiveResources',
+      'resourceId',
+      {
+        type: Sequelize.BOOLEAN,
+        allowNull: true,
+      },
+      { transaction },
+    );
   }),
   down: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(async (transaction) => {
     await queryInterface.addColumn(
@@ -1139,6 +1195,14 @@ module.exports = {
       { transaction },
     );
 
+    await queryInterface.sequelize.query(`
+    UPDATE "ObjectiveResources" "or"
+    SET
+      "userProvidedUrl" = r."url"
+    FROM "Resources" r
+    WHERE "or"."resourceId" = r.id;
+    `, { transaction });
+
     await queryInterface.addColumn(
       'ActivityReportObjectiveResources',
       'userProvidedUrl',
@@ -1149,12 +1213,20 @@ module.exports = {
       { transaction },
     );
 
-    await queryInterface.dropColumn('ActivityReportObjectiveResources', 'sourceFields', { transaction });
-    await queryInterface.dropColumn('ActivityReportObjectiveResources', 'isAutoDetected', { transaction });
-    await queryInterface.dropColumn('ActivityReportObjectiveResources', 'resourceId', { transaction });
-    await queryInterface.dropColumn('ObjectiveResources', 'sourceFields', { transaction });
-    await queryInterface.dropColumn('ObjectiveResources', 'isAutoDetected', { transaction });
-    await queryInterface.dropColumn('ObjectiveResources', 'resourceId', { transaction });
+    await queryInterface.sequelize.query(`
+    UPDATE "ActivityReportObjectiveResources" "or"
+    SET
+      "userProvidedUrl" = r."url"
+    FROM "Resources" r
+    WHERE "or"."resourceId" = r.id;
+    `, { transaction });
+
+    await queryInterface.removeColumn('ActivityReportObjectiveResources', 'sourceFields', { transaction });
+    await queryInterface.removeColumn('ActivityReportObjectiveResources', 'isAutoDetected', { transaction });
+    await queryInterface.removeColumn('ActivityReportObjectiveResources', 'resourceId', { transaction });
+    await queryInterface.removeColumn('ObjectiveResources', 'sourceFields', { transaction });
+    await queryInterface.removeColumn('ObjectiveResources', 'isAutoDetected', { transaction });
+    await queryInterface.removeColumn('ObjectiveResources', 'resourceId', { transaction });
     await queryInterface.dropTable('NextStepResources', { transaction });
     await queryInterface.dropTable('ActivityReportResources', { transaction });
     await queryInterface.dropTable('Resources', { transaction });
