@@ -414,7 +414,7 @@ export async function reviewReport(req, res) {
   try {
     const { activityReportId } = req.params;
     const { status, note } = req.body;
-    const { userId } = req.session;
+    const userId = await currentUserId(req, res);
 
     const user = await userById(userId);
     const [report] = await activityReportAndRecipientsById(activityReportId);
@@ -718,7 +718,7 @@ export async function getReports(req, res) {
  * @param {*} res - response
  */
 export async function getReportAlerts(req, res) {
-  const { userId } = req.session;
+  const userId = await currentUserId(req, res);
   const alertsWithCount = await activityReportAlerts(userId, req.query);
 
   if (!alertsWithCount) {
@@ -739,7 +739,7 @@ export async function getReportAlerts(req, res) {
  * @param {*} res - response
  */
 export async function getReportsForLocalStorageCleanup(req, res) {
-  const { userId } = req.session;
+  const userId = await currentUserId(req, res);
   const reportsToCleanup = await activityReportsForCleanup(userId);
 
   if (!reportsToCleanup) {
@@ -917,7 +917,7 @@ export async function downloadAllReports(req, res) {
 
 export async function downloadAllAlerts(req, res) {
   try {
-    const { userId } = req.session;
+    const userId = await currentUserId(req, res);
     const query = await setReadRegions(req.query, userId);
     const rows = await getAllDownloadableActivityReportAlerts(userId, query);
 
