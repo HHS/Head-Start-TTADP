@@ -1131,19 +1131,10 @@ module.exports = {
     // Set columns to not allow null
     await queryInterface.changeColumn(
       'ActivityReportObjectiveResources',
-      'sourceFields',
-      {
-        type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.OBJECTIVE))),
-        allowNull: false,
-      },
-      { transaction },
-    );
-    await queryInterface.changeColumn(
-      'ActivityReportObjectiveResources',
       'isAutoDetected',
       {
         type: Sequelize.BOOLEAN,
-        allowNull: true,
+        allowNull: false,
       },
       { transaction },
     );
@@ -1151,16 +1142,7 @@ module.exports = {
       'ActivityReportObjectiveResources',
       'resourceId',
       {
-        type: Sequelize.BOOLEAN,
-        allowNull: true,
-      },
-      { transaction },
-    );
-    await queryInterface.changeColumn(
-      'ObjectiveResources',
-      'sourceFields',
-      {
-        type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTOBJECTIVE))),
+        type: Sequelize.INTEGER,
         allowNull: false,
       },
       { transaction },
@@ -1170,7 +1152,7 @@ module.exports = {
       'isAutoDetected',
       {
         type: Sequelize.BOOLEAN,
-        allowNull: true,
+        allowNull: false,
       },
       { transaction },
     );
@@ -1178,8 +1160,8 @@ module.exports = {
       'ObjectiveResources',
       'resourceId',
       {
-        type: Sequelize.BOOLEAN,
-        allowNull: true,
+        type: Sequelize.INTEGER,
+        allowNull: false,
       },
       { transaction },
     );
