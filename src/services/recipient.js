@@ -201,7 +201,7 @@ function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
       const { t, r, endDate } = (objective.activityReports || []).reduce((a, report) => ({
         t: [...a.t, ...report.topics],
         r: [...a.r, ...report.reason],
-        endDate: report.endDate > a.endDate ? report.endDate : a.endDate,
+        endDate: new Date(report.endDate) > new Date(a.endDate) ? report.endDate : a.endDate,
       }), { t: [], r: [], endDate: '' });
 
       // previous added objectives have a regularly accessible attribute, the others
@@ -251,7 +251,7 @@ function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
 
   return objectives.sort((a, b) => ((
     a.endDate === b.endDate ? a.id < b.id
-      : a.endDate < b.endDate) ? 1 : -1));
+      : new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
 }
 
 function calculatePreviousStatus(goal) {
