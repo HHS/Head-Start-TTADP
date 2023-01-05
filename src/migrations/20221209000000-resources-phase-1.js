@@ -480,7 +480,7 @@ module.exports = {
       SELECT
         nsud."nextStepId",
         ar."resourceId",
-        ARRAY['${SOURCE_FIELD.NEXTSTEPS.NOTE}'] "sourceFields",
+        ARRAY['${SOURCE_FIELD.NEXTSTEPS.NOTE}']::"enum_NextStepResources_sourceFields"[] "sourceFields",
         true,
         nsud."createdAt",
         nsud."updatedAt"
@@ -510,7 +510,7 @@ module.exports = {
           id "objectiveResourceId",
           (regexp_matches("userProvidedUrl",'${urlRegex}','g')) urls,
           "createdAt",
-          "updatedAt",
+          "updatedAt"
         FROM "ObjectiveResources"
       ),
       "ObjectiveResourcesUrlDomain" AS (
@@ -586,7 +586,7 @@ module.exports = {
       UPDATE "ObjectiveResources" "or"
       SET
         "resourceId" = ar."resourceId",
-        "sourceFields" = ARRAY['${SOURCE_FIELD.OBJECTIVE.RESOURCE}'],
+        "sourceFields" = ARRAY['${SOURCE_FIELD.OBJECTIVE.RESOURCE}']::"enum_ObjectiveResources_sourceFields"[],
         "isAutoDetected" = false
       FROM "ObjectiveResourcesUrlDomain" orud
       JOIN "AffectedResources" ar
@@ -643,8 +643,8 @@ module.exports = {
           o."updatedAt",
           o."onAR",
           o."onApprovedAR",
-          sf."sourceField"
-        FROM "ObjectivesResources" o
+          sf."sourceField"::TEXT "sourceField"
+        FROM "ObjectiveResources" o
         JOIN "Resources" r
         ON o."resourceId" = r.id
         CROSS JOIN UNNEST(o."sourceFields") sf("sourceField")
@@ -665,7 +665,8 @@ module.exports = {
           MAX(oaud."updatedAt") "updatedAt",
           BOOL_OR(oaud."onAR") "onAR",
           BOOL_OR(oaud."onApprovedAR") "onApprovedAR",
-          ARRAY_AGG(DISTINCT oaud."sourceField") "sourceFields"
+          ARRAY_AGG(DISTINCT oaud."sourceField") "sourceFields",
+          BOOL_OR(oaud."sourceField" = '${SOURCE_FIELD.OBJECTIVE.TITLE}') "isAutoDetected"
         FROM "ObjectiveAllUrlDomain" oaud
         GROUP BY
           oaud."objectiveId",
@@ -679,8 +680,8 @@ module.exports = {
           MIN(oud."createdAt") "createdAt",
           MAX(oud."updatedAt") "updatedAt"
         FROM "ObjectiveUrlDomain" oud
-        WHERE NOT('${SOURCE_FIELD.OBJECTIVE.RESOURCE}' = ANY("sourceFields")
-          AND array_length("sourceFields", 1) = 1)
+        WHERE NOT('${SOURCE_FIELD.OBJECTIVE.RESOURCE}' = ANY(oud."sourceFields")
+          AND array_length(oud."sourceFields", 1) = 1)
         GROUP BY
           oud."domain",
           oud.url
@@ -735,10 +736,10 @@ module.exports = {
         UPDATE "ObjectiveResources" r
         SET
           "resourceId" = ar."resourceId",
-          "isAutoDetected" = (r."isAutoDetected" AND oud."isAutoDetected"),
+          "isAutoDetected" = (r."isAutoDetected" OR oud."isAutoDetected"),
           "createdAt" = LEAST(r."createdAt", oud."createdAt"),
           "updatedAt" = GREATEST(r."updatedAt", oud."updatedAt"),
-          "sourceFields" = COALESCE(oud."sourceFields", r."sourceFields"),
+          "sourceFields" = COALESCE(oud."sourceFields"::"enum_ObjectiveResources_sourceFields"[], r."sourceFields"),
           "onAR" = (r."onAR" OR oud."onAR"),
           "onApprovedAR" = (r."onApprovedAR" OR oud."onApprovedAR")
         FROM "ObjectiveUrlDomain" oud
@@ -760,10 +761,10 @@ module.exports = {
           "onApprovedAR",
           "resourceId",
           "isAutoDetected",
-          "sourceField"
+          "sourceFields"
         )
         SELECT
-          oud.usr "userProvidedUrl",
+          oud.url "userProvidedUrl",
           oud."objectiveId",
           oud."createdAt",
           oud."updatedAt",
@@ -771,7 +772,7 @@ module.exports = {
           oud."onApprovedAR",
           ar."resourceId",
           true "isAutoDetected",
-          ARRAY('${SOURCE_FIELD.OBJECTIVE.TITLE}') "sourceFields"
+          ARRAY['${SOURCE_FIELD.OBJECTIVE.TITLE}']::"enum_ObjectiveResources_sourceFields"[] "sourceFields"
         FROM "ObjectiveUrlDomain" oud
         JOIN "AffectedResources" ar
         ON oud."domain" = ar."domain"
@@ -819,7 +820,7 @@ module.exports = {
           id "objectiveResourceId",
           (regexp_matches("userProvidedUrl",'${urlRegex}','g')) urls,
           "createdAt",
-          "updatedAt",
+          "updatedAt"
         FROM "ActivityReportObjectiveResources"
       ),
       "ObjectiveResourcesUrlDomain" AS (
@@ -895,7 +896,7 @@ module.exports = {
       UPDATE "ActivityReportObjectiveResources" "or"
       SET
         "resourceId" = ar."resourceId",
-        "sourceFields" = ARRAY['${SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE}'],
+        "sourceFields" = ARRAY['${SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE}']::"enum_ActivityReportObjectiveResources_sourceFields"[],
         "isAutoDetected" = false
       FROM "ObjectiveResourcesUrlDomain" orud
       JOIN "AffectedResources" ar
@@ -924,24 +925,20 @@ module.exports = {
     WITH
       "ObjectiveTitleUrls" AS (
         SELECT
-          o.id "objectiveId",
+          o.id "activityReportObjectiveId",
           (regexp_matches(o.title,'${urlRegex}','g')) urls,
           o."createdAt",
           o."updatedAt",
-          o."onAR",
-          o."onApprovedAR",
-          '${SOURCE_FIELD.REPORTOBJECTIVE.TITLE}' "sourceField"
+          '${SOURCE_FIELD.REPORTOBJECTIVE.TITLE}'::"enum_ActivityReportObjectiveResources_sourceFields" "sourceField"
         FROM "ActivityReportObjectives" o
       ),
       "ObjectiveTtaProvidedUrls" AS (
         SELECT
-          o.id "objectiveId",
+          o.id "activityReportObjectiveId",
           (regexp_matches(o."ttaProvided",'${urlRegex}','g')) urls,
           o."createdAt",
           o."updatedAt",
-          o."onAR",
-          o."onApprovedAR",
-          '${SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED}' "sourceField"
+          '${SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED}'::"enum_ActivityReportObjectiveResources_sourceFields" "sourceField"
         FROM "ActivityReportObjectives" o
       ),
       "ObjectiveUrls" AS (
@@ -953,27 +950,23 @@ module.exports = {
       ),
       "ObjectiveIncomingUrlDomain" AS (
         SELECT
-          ou."objectiveId",
+          ou."activityReportObjectiveId",
           (regexp_match(u.url, '${domainRegex}'))[1] "domain",
           u.url,
           ou."createdAt",
           ou."updatedAt",
-          ou."onAR",
-          ou."onApprovedAR",
           ou."sourceField"
         FROM "ObjectiveUrls" ou
         CROSS JOIN UNNEST(ou.urls) u(url)
       ),
       "ObjectiveCurrentUrlDomain" AS (
         SELECT
-          o."objectiveId",
+          o."activityReportObjectiveId",
           r."domain",
           r.url,
           o."createdAt",
           o."updatedAt",
-          o."onAR",
-          o."onApprovedAR",
-          sf."sourceField"
+          sf."sourceField" "sourceField"
         FROM "ActivityReportObjectiveResources" o
         JOIN "Resources" r
         ON o."resourceId" = r.id
@@ -988,17 +981,19 @@ module.exports = {
       ),
       "ObjectiveUrlDomain" AS (
         SELECT
-          oaud."objectiveId",
+          oaud."activityReportObjectiveId",
           oaud."domain",
           oaud.url,
           MIN(oaud."createdAt") "createdAt",
           MAX(oaud."updatedAt") "updatedAt",
-          BOOL_OR(oaud."onAR") "onAR",
-          BOOL_OR(oaud."onApprovedAR") "onApprovedAR",
-          ARRAY_AGG(DISTINCT oaud."sourceField") "sourceFields"
+          ARRAY_AGG(DISTINCT oaud."sourceField") "sourceFields",
+          BOOL_OR(oaud."sourceField" in (
+            '${SOURCE_FIELD.REPORTOBJECTIVE.TITLE}'::"enum_ActivityReportObjectiveResources_sourceFields",
+            '${SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED}'::"enum_ActivityReportObjectiveResources_sourceFields"
+          )) "isAutoDetected"
         FROM "ObjectiveAllUrlDomain" oaud
         GROUP BY
-          oaud."objectiveId",
+          oaud."activityReportObjectiveId",
           oaud."domain",
           oaud.url
       ),
@@ -1009,15 +1004,14 @@ module.exports = {
           MIN(oud."createdAt") "createdAt",
           MAX(oud."updatedAt") "updatedAt"
         FROM "ObjectiveUrlDomain" oud
-        WHERE NOT('${SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE}' = ANY("sourceFields")
-          AND array_length("sourceFields", 1) = 1)
+        WHERE NOT('${SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE}'::"enum_ActivityReportObjectiveResources_sourceFields" = ANY(oud."sourceFields")
+          AND array_length(oud."sourceFields", 1) = 1)
         GROUP BY
           oud."domain",
           oud.url
         ORDER BY
           MIN(oud."createdAt")
       ),
-      ,
       "UpdateResources" AS (
         UPDATE "Resources" r
         SET
@@ -1066,19 +1060,19 @@ module.exports = {
         UPDATE "ActivityReportObjectiveResources" r
         SET
           "resourceId" = ar."resourceId",
-          "isAutoDetected" = (r.isAutoDetected AND "isAutoDetected"),
+          "isAutoDetected" = (r."isAutoDetected" OR oud."isAutoDetected"),
           "createdAt" = LEAST(r."createdAt", oud."createdAt"),
-          "updatedAt" = GREATEST(r."updatedAt", oud."updatedAt")
-          "sourceFields" = oud."sourceFields"
+          "updatedAt" = GREATEST(r."updatedAt", oud."updatedAt"),
+          "sourceFields" = COALESCE(oud."sourceFields"::"enum_ActivityReportObjectiveResources_sourceFields"[], r."sourceFields")
         FROM "ObjectiveUrlDomain" oud
         JOIN "AffectedResources" ar
         ON oud."domain" = ar."domain"
         AND oud.url = ar.url
-        WHERE oud."objectiveId" = r."activityReportObjectiveId"
+        WHERE oud."activityReportObjectiveId" = r."activityReportObjectiveId"
         AND oud.url = r."userProvidedUrl"
         AND oud."sourceFields" != r."sourceFields"
         RETURNING
-          r.id "objectiveResourceId"
+          r.id "activityReportObjectiveResourceId"
       ),
       "NewObjectiveResources" AS (
         INSERT INTO "ActivityReportObjectiveResources" (
@@ -1086,50 +1080,46 @@ module.exports = {
           "activityReportObjectiveId",
           "createdAt",
           "updatedAt",
-          "onAR",
-          "onApprovedAR",
           "resourceId",
           "isAutoDetected",
-          "sourceField"
+          "sourceFields"
         )
         SELECT
           oud.url "userProvidedUrl",
-          oud."objectiveId" "activityReportObjectiveId",
+          oud."activityReportObjectiveId",
           oud."createdAt",
           oud."updatedAt",
-          oud."onAR",
-          oud."onApprovedAR",
           ar."resourceId",
-          true "isAutoDetected",
-          oud."objectiveId" "sourceFields"
+          oud."isAutoDetected",
+          oud."sourceFields"::"enum_ActivityReportObjectiveResources_sourceFields"[] "sourceFields"
         FROM "ObjectiveUrlDomain" oud
         JOIN "AffectedResources" ar
         ON oud."domain" = ar."domain"
         AND oud.url = ar.url
-        LEFT JOIN "ObjectiveResources" r
-        ON oud."objectiveId" = r."objectiveId"
+        LEFT JOIN "ActivityReportObjectiveResources" r
+        ON oud."activityReportObjectiveId" = r."activityReportObjectiveId"
         AND oud.url = r."userProvidedUrl"
         WHERE r.id IS NULL
         ORDER BY
           oud."createdAt",
           ar."resourceId"
         RETURNING
-          id "objectiveResourceId"
+          id "activityReportObjectiveResourceId"
       ),
       "AffectedObjectiveResources" AS (
         SELECT
-          "objectiveResourceId",
+          "activityReportObjectiveResourceId",
           'updated' "action"
         FROM "UpdateObjectiveResources"
         UNION
         SELECT
-          "objectiveResourceId",
+          "activityReportObjectiveResourceId",
           'created' "action"
         FROM "NewObjectiveResources"
       )
       SELECT
         "action",
-        count("objectiveResourceId")
+        count("activityReportObjectiveResourceId")
       FROM "AffectedObjectiveResources"
       GROUP BY "action";
     `, { transaction });
