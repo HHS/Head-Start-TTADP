@@ -236,8 +236,8 @@ module.exports = {
       },
       { transaction },
     );
-    const urlRegex = '(?:(?:http(?:s)?|ftp(?:s)?|sftp):\\/\\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\\+~#=]+))?[@])?(?:(?:www\\.)?(?:[a-zA-Z0-9%._\\+~#=]{1,}\\.[a-z]{2,6})|(?:(?:[0-9]{1,3}\\.){3}[0-9]{1,3}))(?:[:](?:[0-9]+))?(?:[\\/](?:[-a-zA-Z0-9@:%_\\+.~#&\\/=()]*))?(?:[?](?:[-a-zA-Z0-9@:%_\\+.~#&\\/=()]*))?)';
-    const domainRegex = '^(?:(?:http(?:s)?|ftp(?:s)?|sftp):\\/\\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\\+~#=]+))?[@])?(?:(?:www\\.)?([a-zA-Z0-9%._\\+~#=]{1,}\\.[a-z]{2,6})|((?:[0-9]{1,3}\\.){3}[0-9]{1,3})))';
+    const urlRegex = '(?:(?:http(?:s)?|ftp(?:s)?|sftp):\\/\\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\\+~#=]+))?[@])?(?:(?:www\\.)?(?:[a-zA-Z0-9%._\\+~#=\\-]{1,}\\.[a-z]{2,6})|(?:(?:[0-9]{1,3}\\.){3}[0-9]{1,3}))(?:[:](?:[0-9]+))?(?:[\\/](?:[-a-zA-Z0-9@:%_\\+.~#&\\/=()]*))?(?:[?](?:[-a-zA-Z0-9@:%_\\+.~#&\\/=()]*))?)';
+    const domainRegex = '^(?:(?:http(?:s)?|ftp(?:s)?|sftp):\\/\\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\\+~#=]+))?[@])?(?:(?:www\\.)?([a-zA-Z0-9%._\\+~#=\\-]{1,}\\.[a-z]{2,6})|((?:[0-9]{1,3}\\.){3}[0-9]{1,3})))';
 
     // populate "Resources" and "ActivityReportResources" from current data from reports via nonECLKCResourcesUsed, ECLKCResourcesUsed, context, & additionalNotes
     // 1. Generate a list of all reports where either nonECLKCResourcesUsed or ECLKCResourcesUsed is populated.
@@ -1123,8 +1123,40 @@ module.exports = {
       FROM "AffectedObjectiveResources"
       GROUP BY "action";
     `, { transaction });
-  }),
-  down: async (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => {
 
+    // Remove unneeded columns
+    await queryInterface.dropColumn('ActivityReportObjectiveResources', 'userProvidedUrl', { transaction });
+    await queryInterface.dropColumn('ObjectiveResources', 'userProvidedUrl', { transaction });
+  }),
+  down: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(async (transaction) => {
+    await queryInterface.addColumn(
+      'ObjectiveResources',
+      'userProvidedUrl',
+      {
+        allowNull: false,
+        type: Sequelize.TEXT,
+      },
+      { transaction },
+    );
+
+    await queryInterface.addColumn(
+      'ActivityReportObjectiveResources',
+      'userProvidedUrl',
+      {
+        allowNull: false,
+        type: Sequelize.TEXT,
+      },
+      { transaction },
+    );
+
+    await queryInterface.dropColumn('ActivityReportObjectiveResources', 'sourceFields', { transaction });
+    await queryInterface.dropColumn('ActivityReportObjectiveResources', 'isAutoDetected', { transaction });
+    await queryInterface.dropColumn('ActivityReportObjectiveResources', 'resourceId', { transaction });
+    await queryInterface.dropColumn('ObjectiveResources', 'sourceFields', { transaction });
+    await queryInterface.dropColumn('ObjectiveResources', 'isAutoDetected', { transaction });
+    await queryInterface.dropColumn('ObjectiveResources', 'resourceId', { transaction });
+    await queryInterface.dropTable('NextStepResources', { transaction });
+    await queryInterface.dropTable('ActivityReportResources', { transaction });
+    await queryInterface.dropTable('Resources', { transaction });
   }),
 };

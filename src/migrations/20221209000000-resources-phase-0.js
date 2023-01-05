@@ -213,7 +213,7 @@ module.exports = {
     AND "userProvidedUrl" = '${fi.old}';
     `, { transaction })));
 
-    const urlRegex = '(?:(?:http|ftp|https|file):\\/\\/)(?:www\\.)?(?:[\\w%_-]+(?:(?:\\.[\\w%_-]+)+)|(?:\\/[\\w][:]))(?:[\\w\\\\\'\'.,@?^=%&:\\/~+#()-]*[\\w@?^=%&\\/~+#-])';
+    const urlRegex = '(?:(?:http(?:s)?|ftp(?:s)?|sftp):\\/\\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\\+~#=]+))?[@])?(?:(?:www\\.)?(?:[a-zA-Z0-9%._\\+~#=\\-]{1,}\\.[a-z]{2,6})|(?:(?:[0-9]{1,3}\\.){3}[0-9]{1,3}))(?:[:](?:[0-9]+))?(?:[\\/](?:[-a-zA-Z0-9@:%_\\+.~#&\\/=()]*))?(?:[?](?:[-a-zA-Z0-9@:%_\\+.~#&\\/=()]*))?)';
 
     // clean "ObjectiveResources"
     // Now that the table has had the correctable values fixed, corrections need to be applied to return the table to its expected structure.
