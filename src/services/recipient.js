@@ -201,7 +201,7 @@ function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
       const { t, r, endDate } = (objective.activityReports || []).reduce((a, report) => ({
         t: [...a.t, ...report.topics],
         r: [...a.r, ...report.reason],
-        endDate: new Date(report.endDate) > new Date(a.endDate) ? report.endDate : a.endDate,
+        endDate: new Date(report.endDate) < new Date(a.endDate) ? a.endDate : report.endDate,
       }), { t: [], r: [], endDate: '' });
 
       // previous added objectives have a regularly accessible attribute, the others
