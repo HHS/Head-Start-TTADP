@@ -182,7 +182,7 @@ module.exports = {
       {
         type: Sequelize.BOOLEAN,
         default: false,
-        allowNull: false,
+        allowNull: true,
       },
       { transaction },
     );
@@ -221,7 +221,7 @@ module.exports = {
       {
         type: Sequelize.BOOLEAN,
         default: false,
-        allowNull: false,
+        allowNull: true,
       },
       { transaction },
     );
