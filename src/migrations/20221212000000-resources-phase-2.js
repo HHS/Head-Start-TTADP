@@ -7,6 +7,9 @@ module.exports = {
         QUEUEING: 'QUEUEING',
         QUEUEING_FAILED: 'QUEUEING_FAILED',
         QUEUED: 'QUEUED',
+        VALIDATION: 'VALIDATION',
+        VALIDATION_FAILED: 'VALIDATION_FAILED',
+        IDENTIFY_CONTENT_TYPE: 'IDENTIFY_CONTENT_TYPE',
         IDENTIFYING_FRAMEWORK: 'IDENTIFYING_FRAMEWORK',
         CAPTURING: 'CAPTURING',
         CAPTURING_FAILED: 'CAPTURING_FAILED',
@@ -43,6 +46,92 @@ module.exports = {
         { transaction },
       );
 
+
+
+      // make table to hold metadata about resources
+      await queryInterface.createTable('ResourceMetadata', {
+        id: {
+          allowNull: false,
+          autoIncrement: true,
+          primaryKey: true,
+          type: Sequelize.INTEGER,
+        },
+        resourceId: {
+          allowNull: true,
+          type: Sequelize.INTEGER,
+          references: {
+            model: {
+              tableName: 'Resources',
+            },
+            key: 'id',
+          },
+        },
+        metaDataStatus: {
+          allowNull: false,
+          default: null,
+          type: Sequelize.DataTypes.ENUM(Object.values(METADATA_PROCESSING_STATES_TYPES)),
+        },
+        responceHeader: {
+          allowNull: true,
+          type: Sequelize.JSON,
+        },
+        contentType: {
+          allowNull: true,
+          type: Sequelize.TEXT,
+        },
+        frameworkType: {
+          allowNull: true,
+          default: null,
+          type: Sequelize.DataTypes.ENUM(Object.values(FRAMEWORK_TYPE)),
+        },
+        siteAccesor: {
+          allowNull: true,
+          default: null,
+          type: Sequelize.DataTypes.STRING,
+        },
+        data: {
+          allowNull: false,
+          type: Sequelize.JSON,
+        },
+        created: {
+          allowNull: true,
+          type: Sequelize.DATE,
+        },
+        changed: {
+          allowNull: true,
+          type: Sequelize.DATE,
+        },
+        title: {
+          allowNull: true,
+          type: Sequelize.TEXT,
+        },
+        field_taxonomy_national_centers: {
+          allowNull: true,
+          type: Sequelize.JSON,
+        },
+        field_taxonomy_topic: {
+          allowNull: true,
+          type: Sequelize.JSON,
+        },
+        langcode: {
+          allowNull: true,
+          type: Sequelize.JSON,
+        },
+        field_content: {
+          allowNull: true,
+          type: Sequelize.JSON,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+      }, { transaction });
+
+      /*
       const fixListActivityReportsECLKC =[
         { name: '10 Actions to Create a Culture of Safety | ECLKC (hhs.gov)', url: 'https://eclkc.ohs.acf.hhs.gov/publication/10-actions-create-culture-safety' },
         { name: '10 Actions to Create a Culture of Safety:(hhs.gov)https://eclkc.ohs.acf.hhs.gov/sites/default/files/pdf/culture-of-safety.pdf', url: 'https://eclkc.ohs.acf.hhs.gov/publication/10-actions-create-culture-safety' },
@@ -1154,83 +1243,8 @@ module.exports = {
         { name: 'Zenger Folkman 17 Leadership Competencies (hhs.gov)', url: '' },
         { name: 'Zoning to Maximize Learning | ECLKC (hhs.gov)', url: '' },
       ];
-
-      // make table to hold metadata about resources
-      await queryInterface.createTable('ResourceMetadata', {
-        id: {
-          allowNull: false,
-          autoIncrement: true,
-          primaryKey: true,
-          type: Sequelize.INTEGER,
-        },
-        resourceId: {
-          allowNull: true,
-          type: Sequelize.INTEGER,
-          references: {
-            model: {
-              tableName: 'Resources',
-            },
-            key: 'id',
-          },
-        },
-        metaDataStatus: {
-          allowNull: false,
-          default: null,
-          type: Sequelize.DataTypes.ENUM(Object.values(METADATA_PROCESSING_STATES_TYPES)),
-        },
-        frameworkType: {
-          allowNull: true,
-          default: null,
-          type: Sequelize.DataTypes.ENUM(Object.values(FRAMEWORK_TYPE)),
-        },
-        siteAccesor: {
-          allowNull: true,
-          default: null,
-          type: Sequelize.DataTypes.STRING,
-        },
-        data: {
-          allowNull: false,
-          type: Sequelize.JSON,
-        },
-        created: {
-          allowNull: true,
-          type: Sequelize.DATE,
-        },
-        changed: {
-          allowNull: true,
-          type: Sequelize.DATE,
-        },
-        title: {
-          allowNull: true,
-          type: Sequelize.TEXT,
-        },
-        field_taxonomy_national_centers: {
-          allowNull: true,
-          type: Sequelize.JSON,
-        },
-        field_taxonomy_topic: {
-          allowNull: true,
-          type: Sequelize.JSON,
-        },
-        langcode: {
-          allowNull: true,
-          type: Sequelize.JSON,
-        },
-        field_content: {
-          allowNull: true,
-          type: Sequelize.JSON,
-        },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-      }, { transaction });
-
-      //await queryInterface.sequelize.query('UPDATE "ActivityReportObjectives" SET "status" = \'Complete\' WHERE "status" = \'Completed\'', { transaction });
+      */
+      // await queryInterface.sequelize.query('UPDATE "ActivityReportObjectives" SET "status" = \'Complete\' WHERE "status" = \'Completed\'', { transaction });
     },
   ),
   down: async () => {
