@@ -146,7 +146,9 @@ export default function GoalForm({
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
         setIsRttapa(goal.isRttapa);
         initialRttapa.current = goal.isRttapa;
-        setSelectedGrants(formatGrantsFromApi([goal.grant]));
+        // We must update with all grants from the DB here,
+        // otherwise we will not update all rolled up goals and objectives.
+        setSelectedGrants(formatGrantsFromApi(goal.grants));
         setGoalNumbers(goal.goalNumbers);
         setGoalOnApprovedReport(goal.onApprovedAR);
 
