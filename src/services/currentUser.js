@@ -38,6 +38,12 @@ export async function currentUserId(req, res) {
     return null;
   }
 
+  // TODO: When we figure out how/if we want to do this in production, we can
+  // remove this early return.
+  if (process.env.NODE_ENV === 'production') {
+    return idFromSessionOrLocals();
+  }
+
   // There will be an Auth-Impersonation-Id header if the user is impersonating another user.
   // If that is the case, we want to use the impersonated user's ID.
   if (req.headers && req.headers['auth-impersonation-id']) {
