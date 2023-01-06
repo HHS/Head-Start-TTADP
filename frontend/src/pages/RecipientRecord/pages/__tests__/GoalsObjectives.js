@@ -148,7 +148,7 @@ describe('Goals and Objectives', () => {
 
   it('renders the Goals and Objectives title appropriately', async () => {
     act(() => renderGoalsAndObjectives());
-    expect(screen.document.title).toEqual('Goals and Objectives - test');
+    expect(document.title).toEqual('Goals and Objectives - test - TTA Hub');
   });
 
   it('renders the Goals and Objectives page appropriately', async () => {
