@@ -258,8 +258,8 @@ export const LOCAL_STORAGE_EDITABLE_KEY = (id) => `ar-can-edit-${id}-${LOCAL_STO
 export const GOAL_CLOSE_REASONS = [
   'Duplicate goal',
   'Recipient request',
-  'TTA complete',
   'Regional Office request',
+  'TTA complete',
 ];
 
 export const GOAL_SUSPEND_REASONS = [
