@@ -212,6 +212,7 @@ export default function RecipientRecord({ match }) {
                 recipientId={recipientId}
                 regionId={regionId}
                 recipient={recipientData}
+                recipientName={recipientName}
               />
             </PageWithHeading>
           )}
