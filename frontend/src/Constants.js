@@ -259,6 +259,7 @@ export const GOAL_CLOSE_REASONS = [
   'Duplicate goal',
   'Recipient request',
   'TTA complete',
+  'Regional Office request',
 ];
 
 export const GOAL_SUSPEND_REASONS = [
