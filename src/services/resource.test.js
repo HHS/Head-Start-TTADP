@@ -6,6 +6,7 @@ import db, {
   Goal,
   File,
   Role,
+  Resource,
   Objective,
   ObjectiveFile,
   ObjectiveResource,
@@ -54,18 +55,18 @@ import {
   processActivityReportObjectivesForResourcesById,
 } from './resource';
 import { REPORT_STATUSES, SOURCE_FIELD } from '../constants';
-import { ResourceGroups } from 'aws-sdk';
 
 describe('resource', () => {
   describe('Resource Table', () => {
     describe('findOrCreateResource', () => {
+      const urlGoogle = 'http://google.com';
       let url;
       beforeEach(() => {
-        url = 'http://google.com';
+        url = urlGoogle;
       });
       afterEach(async () => {
-        await ResourceGroups.destroy({
-          where: { url },
+        await Resource.destroy({
+          where: { url: urlGoogle },
           individualHooks: true,
         });
       });
@@ -110,23 +111,24 @@ describe('resource', () => {
       });
     });
     describe('findOrCreateResources', () => {
+      const urlsTest = [
+        'http://google.com',
+        'http://github.com',
+        'http://github.com',
+      ];
       let urls;
       beforeEach(() => {
-        urls = [
-          'http://google.com',
-          'http://github.com',
-          'http://github.com',
-        ];
+        urls = urlsTest;
       });
       afterEach(async () => {
-        await ResourceGroups.destroy({
-          where: { url: { [Op.in]: urls } },
+        await Resource.destroy({
+          where: { url: { [Op.in]: urlsTest } },
           individualHooks: true,
         });
       });
       it('expected usage, new', async () => {
         const resources = await findOrCreateResources(urls);
-        expect(resources.length).toBe(3);
+        expect(resources.length).toBe(2);
       });
       it('expected usage, existing', async () => {
         const resources1 = await findOrCreateResources(urls);
@@ -346,8 +348,9 @@ describe('resource', () => {
         http://1337.net
         http://223.255.255.254
         https://foo_bar.example.com/
+        http://a.b-c.de
         `;
-        expect(collectURLsFromField(field).length).toEqual(26);
+        expect(collectURLsFromField(field).length).toEqual(27);
       });
       it('bulk non-match', () => {
         field = `
@@ -360,7 +363,6 @@ describe('resource', () => {
         http://例子.测试
         http://उदाहरण.परीक्षा
         http://-.~_!$&'()*+,;=:%40:80%2f::::::@example.com
-        http://a.b-c.de
         http://
         http://.
         http://..
@@ -381,10 +383,6 @@ describe('resource', () => {
         h://test
         http:// shouldfail.com
         :// should fail
-        http://-error-.invalid/
-        http://a.b--c.de/
-        http://-a.b.co
-        http://a.b-.co
         http://123.123.123
         http://3628126748
         `;

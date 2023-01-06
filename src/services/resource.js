@@ -36,17 +36,18 @@ const REPORTOBJECTIVES_AUTODETECTED_FIELDS = [
 // -----------------------------------------------------------------------------
 // Find or create a single resource
 const findOrCreateResource = async (url) => {
-  if (typeof url !== 'string') return undefined;
-  let resource = await Resource.findOne({ where: { url } });
+  if (url === undefined || url === null || typeof url !== 'string') return undefined;
+  let resource = await Resource.findOne({ where: { url }, raw: true, plain: true });
   if (!resource) {
-    resource = await Resource.create({ url });
+    const newResource = await Resource.create({ url });
+    resource = await newResource.get({ plain: true });
   }
   return resource;
 };
 
 // Find or create all resource for the list of urls passed.
 const findOrCreateResources = async (urls) => {
-  if (!Array.isArray(urls)) return [];
+  if (urls === undefined || urls === null || !Array.isArray(urls)) return [];
   let newURLs;
   const filteredUrls = [...new Set(urls.filter((url) => typeof url === 'string'))];
   const currentResources = filteredUrls.length > 0
@@ -56,18 +57,23 @@ const findOrCreateResources = async (urls) => {
           [Op.in]: filteredUrls,
         },
       },
-    })
+      raw: true,
+    }) || []
     : [];
-  if (!currentResources
+  if (currentResources !== undefined
+    || currentResources !== null
     || currentResources.length !== filteredUrls.length) {
     const currentResourceURLs = new Set(currentResources
       .map((currentResource) => currentResource.url));
     newURLs = filteredUrls.filter((url) => !currentResourceURLs.has(url));
   }
   return [
-    ...Promise.all(newURLs.map(async (url) => Resource.create({ url }))),
-    ...currentResources,
-  ];
+    ...await Promise.all(newURLs.map(async (url) => {
+      const resource = await Resource.create({ url });
+      return resource.get({ plain: true });
+    })),
+    ...(currentResources || []),
+  ].sort((a, b) => a.id < b.id);
 };
 
 // -----------------------------------------------------------------------------
