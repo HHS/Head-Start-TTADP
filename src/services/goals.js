@@ -197,6 +197,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         'number',
         'regionId',
         'recipientId',
+        'numberWithProgramTypes',
       ],
       include: [
         {
@@ -515,6 +516,7 @@ function reduceGoals(goals, forReport = false) {
           recipient: currentValue.grant.recipient.dataValues,
           name: currentValue.grant.name,
           goalId: currentValue.id,
+          numberWithProgramTypes: currentValue.grant.numberWithProgramTypes,
         },
       ];
       existingGoal.grantIds = [...existingGoal.grantIds, currentValue.grant.id];
@@ -532,6 +534,7 @@ function reduceGoals(goals, forReport = false) {
       grants: [
         {
           ...currentValue.grant.dataValues,
+          numberWithProgramTypes: currentValue.grant.numberWithProgramTypes,
           recipient: currentValue.grant.recipient.dataValues,
           name: currentValue.grant.name,
           goalId: currentValue.id,
