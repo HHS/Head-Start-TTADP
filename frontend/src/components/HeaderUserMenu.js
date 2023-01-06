@@ -10,7 +10,8 @@ import NavLink from './NavLink';
 import UserContext from '../UserContext';
 import isAdmin from '../permissions';
 import colors from '../colors';
-import { LOCAL_STORAGE_IMPERSONATION_KEY } from '../Constants';
+import { SESSION_STORAGE_IMPERSONATION_KEY } from '../Constants';
+import { storageAvailable } from '../hooks/helpers';
 
 function UserMenuNav({ items }) {
   return (
@@ -34,17 +35,12 @@ UserMenuNav.propTypes = {
 };
 
 function HeaderUserMenu() {
-  let hasImpersonationKey;
-  try {
-    hasImpersonationKey = window.localStorage.getItem(LOCAL_STORAGE_IMPERSONATION_KEY) !== null;
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.warn('Local storage may not be available: ', e);
-  }
-
+  const haveStorage = useMemo(() => storageAvailable('sessionStorage'), []);
   const { user } = useContext(UserContext);
   const userIsAdmin = isAdmin(user);
-  const [isImpersonating, setIsImpersonating] = useState(hasImpersonationKey);
+  const [isImpersonating, setIsImpersonating] = useState(
+    haveStorage && window.sessionStorage.getItem(SESSION_STORAGE_IMPERSONATION_KEY) !== null,
+  );
 
   const menuItems = useMemo(() => [
     { key: 1, label: 'Account Management', to: '/account' },
@@ -145,8 +141,8 @@ function HeaderUserMenu() {
   };
 
   const stopImpersonating = () => {
-    window.localStorage.removeItem(LOCAL_STORAGE_IMPERSONATION_KEY);
     setIsImpersonating(false);
+    window.sessionStorage.removeItem(SESSION_STORAGE_IMPERSONATION_KEY);
     window.location.href = '/';
   };
 

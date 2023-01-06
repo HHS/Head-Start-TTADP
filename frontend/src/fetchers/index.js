@@ -1,5 +1,5 @@
 import { isNaN } from 'lodash';
-import { LOCAL_STORAGE_IMPERSONATION_KEY } from '../Constants';
+import { SESSION_STORAGE_IMPERSONATION_KEY } from '../Constants';
 
 export class HTTPError extends Error {
   constructor(statusCode, message, ...params) {
@@ -11,9 +11,9 @@ export class HTTPError extends Error {
 }
 
 const impersonationHeader = () => {
-  if (!window.localStorage) return {};
+  if (!window.sessionStorage) return {};
 
-  const impersonationId = window.localStorage.getItem(LOCAL_STORAGE_IMPERSONATION_KEY);
+  const impersonationId = window.sessionStorage.getItem(SESSION_STORAGE_IMPERSONATION_KEY);
 
   if (isNaN(impersonationId) || typeof impersonationId === 'undefined') {
     return {};
