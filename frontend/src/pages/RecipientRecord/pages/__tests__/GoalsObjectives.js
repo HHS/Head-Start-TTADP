@@ -111,6 +111,7 @@ describe('Goals and Objectives', () => {
               location={{
                 state: { ids }, hash: '', pathname: '', search: '',
               }}
+              recipientName="test"
             />
           </FilterContext.Provider>
         </UserContext.Provider>
@@ -143,6 +144,11 @@ describe('Goals and Objectives', () => {
 
   afterEach(() => {
     fetchMock.restore();
+  });
+
+  it('renders the Goals and Objectives title appropriately', async () => {
+    act(() => renderGoalsAndObjectives());
+    expect(screen.document.title).toEqual('Goals and Objectives - test');
   });
 
   it('renders the Goals and Objectives page appropriately', async () => {
