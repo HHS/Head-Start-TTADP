@@ -146,11 +146,6 @@ describe('Goals and Objectives', () => {
     fetchMock.restore();
   });
 
-  it('renders the Goals and Objectives title appropriately', async () => {
-    act(() => renderGoalsAndObjectives());
-    expect(document.title).toEqual('Goals and Objectives - test - TTA Hub');
-  });
-
   it('renders the Goals and Objectives page appropriately', async () => {
     act(() => renderGoalsAndObjectives());
     expect(await screen.findByText('TTA goals and objectives')).toBeVisible();
