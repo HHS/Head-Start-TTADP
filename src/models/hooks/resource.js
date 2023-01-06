@@ -1,10 +1,13 @@
-const domainRegex = '^(?:(?:http|ftp|https|file):\\/\\/)?(?:www\\.)?((?:[\\w%_-]+(?:(?:\\.[\\w%_-]+)+)|(?:\\/[\\w][:])))';
+import { VALID_URL_REGEX } from '../../lib/urlUtils';
 
 const autoPopulateDomain = (sequelize, instance, options) => {
   // eslint-disable-next-line no-prototype-builtins
   if (instance.domain === undefined
     || instance.domain === null) {
-    const domain = instance.url.match(domainRegex);
+    let [{ groups }] = instance.url.matchAll(VALID_URL_REGEX);
+    groups = { ...groups };
+    const { host, ip } = groups;
+    const domain = host || ip;
     if (domain) {
       instance.set('domain', domain);
       if (!options.fields.includes('domain')) {
