@@ -11,7 +11,7 @@ import { getUserRegions } from '../../../permissions';
 import GoalDataController from '../../../components/GoalCards/GoalDataController';
 
 export default function GoalsObjectives({
-  recipientId, regionId, recipient, location, recipientName
+  recipientId, regionId, recipient, location, recipientName,
 }) {
   const { user } = useContext(UserContext);
   const regions = useMemo(() => getUserRegions(user), [user]);
