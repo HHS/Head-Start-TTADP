@@ -111,6 +111,7 @@ describe('Goals and Objectives', () => {
               location={{
                 state: { ids }, hash: '', pathname: '', search: '',
               }}
+              recipientName="test"
             />
           </FilterContext.Provider>
         </UserContext.Provider>
