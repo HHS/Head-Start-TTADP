@@ -146,7 +146,8 @@
       "<rootDir>/src/testUtils.js",
       "<rootDir>/src/logger.js",
       "<rootDir>/src/*/coverage/",
-      "<rootDir>/src/coverage/"
+      "<rootDir>/src/coverage/",
+      "<rootDir>/src/worker.js"
     ],
     "testTimeout": 30000,
     "coveragePathIgnorePatterns": [
