@@ -57,6 +57,11 @@ export async function currentUserId(req, res) {
             auditLogger.error(`Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the session user (${userId}) is not an admin.`);
             return res.sendStatus(httpCodes.UNAUTHORIZED);
           }
+
+          if (await validateUserAuthForAdmin(Number(impersonatedUserId))) {
+            auditLogger.error(`Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the impersonated user is an admin.`);
+            return res.sendStatus(httpCodes.UNAUTHORIZED);
+          }
         } catch (e) {
           return handleErrors(req, res, e);
         }
