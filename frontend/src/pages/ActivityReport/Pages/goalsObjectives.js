@@ -3,7 +3,6 @@
 // way they did in thier examples
 /* eslint-disable arrow-body-style */
 import React, { useState, useContext } from 'react';
-import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert, Fieldset } from '@trussworks/react-uswds';
@@ -166,7 +165,7 @@ const GoalsObjectives = ({
     const objectives = getValues(`goals[${index}].objectives`) || [];
 
     setValue('goalForEditing.objectives', objectives);
-    setValue('goalEndDate', moment(goal.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'));
+    setValue('goalEndDate', goal.endDate);
     setValue('goalName', goal.name);
 
     const rttapaValue = goal.isRttapa;
