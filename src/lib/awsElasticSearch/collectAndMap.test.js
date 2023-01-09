@@ -204,7 +204,7 @@ describe('Collect and Map AWS Elasticsearch data', () => {
 
     // Call datacollector.
     const collectedData = await collectModelData(
-      reportOne.id,
+      [reportOne.id],
       AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
       db.sequelize,
     );

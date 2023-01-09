@@ -569,7 +569,7 @@ const beforeCreate = async (instance) => {
 
 const getActivityReportDocument = async (sequelize, instance) => {
   const data = await collectModelData(
-    instance.id,
+    [instance.id],
     AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
     sequelize,
   );
