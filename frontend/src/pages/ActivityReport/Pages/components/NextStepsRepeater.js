@@ -93,7 +93,7 @@ export default function NextStepsRepeater({
 
   const dateLabel = (index) => (stepType === 'recipient'
     ? `When does the ${recipientLabel} anticipate completing step ${index + 1}?`
-    : `When do you anticipate completing specialist's step ${index + 1}?`);
+    : `When do you anticipate completing step ${index + 1}?`);
 
   return (
     <>
