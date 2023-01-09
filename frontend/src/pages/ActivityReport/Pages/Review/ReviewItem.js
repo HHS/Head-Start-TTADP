@@ -77,7 +77,7 @@ const ReviewItem = ({
       </div>
       <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6">
         {values.map((v, index) => (
-          <div aria-label={`${label} ${index + 1}`} key={`${label}${v}`} col={12} className="desktop:flex-align-end display-flex flex-column flex-justify-center">
+          <div aria-label={`${label} ${index + 1}`} key={`${label}${v}`} className="desktop:flex-align-end display-flex flex-column flex-justify-center">
             {Number.isNaN(v) ? '' : v}
           </div>
         ))}
