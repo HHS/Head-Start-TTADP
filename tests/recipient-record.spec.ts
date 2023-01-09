@@ -18,7 +18,7 @@ test.describe('Recipient record', () => {
 
     // save first goal, without an objective
     // click inside of the grants multi-select dropdown
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').first().click();
+    await page.getByLabel(/Recipient grant numbers/i).first().click();
     await page.keyboard.press('Enter');
     // select a second grant as well
     await page.keyboard.press('Enter');
@@ -46,7 +46,7 @@ test.describe('Recipient record', () => {
     await page.getByRole('button', { name: 'Save draft' }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();
     // locate the topics dropdown
-    await page.locator('.css-g1d714-ValueContainer').last().click();
+    await page.getByLabel(/topics/i).last().click();
     await page.keyboard.press('Enter');
     
     // enter second topic as well
