@@ -160,8 +160,7 @@
       "<rootDir>/src/testUtils.js",
       "<rootDir>/src/logger.js",
       "<rootDir>/src/*/coverage/",
-      "<rootDir>/src/coverage/",
-      "<rootDir>/src/worker.js"
+      "<rootDir>/src/coverage/"
     ],
     "coverageThreshold": {
       "global": {
