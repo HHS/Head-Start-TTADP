@@ -98,6 +98,7 @@ const ActivitySummary = ({
       label={label}
       value={value}
       name={name}
+      required={!!requiredMessage}
       className="smart-hub--report-checkbox"
       inputRef={register({
         validate: () => (
