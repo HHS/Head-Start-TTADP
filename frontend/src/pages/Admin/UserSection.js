@@ -10,6 +10,7 @@ import UserFeatureFlags from './UserFeatureFlags';
 import { userGlobalPermissions, userRegionalPermissions } from './PermissionHelpers';
 import { DECIMAL_BASE, SESSION_STORAGE_IMPERSONATION_KEY } from '../../Constants';
 import { storageAvailable } from '../../hooks/helpers';
+import isAdmin from '../../permissions';
 
 const NUMBER_FIELDS = [
   'homeRegionId',
@@ -118,7 +119,13 @@ function UserSection({ user, onSave, features }) {
         onUserChange={onUserChange}
       />
       {process.env.NODE_ENV === 'development' && (
-        <Button className="margin-bottom-6" onClick={impersonateUserId}>Impersonate user</Button>
+        <Button
+          className="margin-bottom-6"
+          onClick={impersonateUserId}
+          disabled={isAdmin(user)}
+        >
+          Impersonate user
+        </Button>
       )}
       <UserPermissions
         userId={user.id}
