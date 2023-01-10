@@ -492,8 +492,8 @@ const syncResourcesForActivityReport = async (resources) => Promise.all([
   ...resources.destroy.map(async (resource) => (resource.resourceIds.length > 0
     ? ActivityReportResource.destroy({
       where: {
-        activityReportId: resources.activityReportId,
-        resourceId: { [Op.in]: resources.resourceIds },
+        activityReportId: resource.activityReportId,
+        resourceId: { [Op.in]: resource.resourceIds },
       },
       individualHooks: true,
     })
@@ -595,6 +595,7 @@ const processActivityReportForResourcesById = async (activityReportId, urls) => 
       {
         model: ActivityReportResource,
         as: 'activityReportResources',
+        required: false,
       },
     ],
   });
@@ -611,20 +612,20 @@ const processActivityReportForResourcesById = async (activityReportId, urls) => 
 // Identify if passed sourceFields contain one or more of the NEXTSTEPS_AUTODETECTED_FIELDS.
 // TODO: verify all values in the sourceFields are in SOURCE_FIELD.NEXTSTEPS
 // and log exceptions
-const calculateIsAutoDetectedForNextSteps = (
+const calculateIsAutoDetectedForNextStep = (
   sourceFields,
 ) => calculateIsAutoDetected(sourceFields, NEXTSTEPS_AUTODETECTED_FIELDS);
 
 // Using the three dataset, each can be run in "parallel" to reduce latency when applied to the
 // database. This should result in better performance.
-const syncResourcesForNextSteps = async (resources) => Promise.all([
+const syncResourcesForNextStep = async (resources) => Promise.all([
   ...resources.create.map(async (resource) => NextStepResource.create({
     nextStepId: resource.nextStepId,
     resourceId: resource.resourceId,
     sourceFields: resource.sourceFields,
     isAutoDetected: resource.isAutoDetected,
   })),
-  ...resources.update.map(async (resource) => ActivityReportResource.update(
+  ...resources.update.map(async (resource) => NextStepResource.update(
     {
       sourceFields: resource.sourceFields,
       isAutoDetected: resource.isAutoDetected,
@@ -638,10 +639,10 @@ const syncResourcesForNextSteps = async (resources) => Promise.all([
     },
   )),
   ...resources.destroy.map(async (resource) => (resource.resourceIds.length > 0
-    ? ActivityReportResource.destroy({
+    ? NextStepResource.destroy({
       where: {
-        nextStepId: resources.nextStepId,
-        resourceId: { [Op.in]: resources.resourceIds },
+        nextStepId: resource.nextStepId,
+        resourceId: { [Op.in]: resource.resourceIds },
       },
       individualHooks: true,
     })
@@ -649,7 +650,7 @@ const syncResourcesForNextSteps = async (resources) => Promise.all([
 ]);
 
 // Process the current values on the report into the database for all referenced resources.
-const processNextStepsForResources = async (nextStep, urls) => {
+const processNextStepForResources = async (nextStep, urls) => {
   // Either used the current resource data from the nextStep passed in or look it up.
   const currentResources = nextStep.nextStepResources
     ? nextStep.nextStepResources
@@ -699,7 +700,7 @@ const processNextStepsForResources = async (nextStep, urls) => {
   const filteredResources = filterResourcesForSync(
     incomingResourcesTransformed,
     currentResourcesGeneric,
-    calculateIsAutoDetectedForNextSteps,
+    calculateIsAutoDetectedForNextStep,
   );
 
   // switch from generic genericId to nextStepId.
@@ -710,25 +711,26 @@ const processNextStepsForResources = async (nextStep, urls) => {
   };
 
   // Save the distinct datasets to the database.
-  return syncResourcesForNextSteps(resourcesToSync);
+  return syncResourcesForNextStep(resourcesToSync);
 };
 
 // Process the current values on the report into the database for all referenced resources for
 // the reportId passed.
-const processNextStepsForResourcesById = async (nextStepId, urls) => {
+const processNextStepForResourcesById = async (nextStepId, urls) => {
   const nextStep = await NextStep.findOne({
     where: { id: nextStepId },
     include: [
       {
         model: NextStepResource,
         as: 'nextStepResources',
+        required: false,
       },
     ],
   });
 
   return nextStep
     && typeof nextStep === 'object'
-    ? processNextStepsForResources(nextStep, urls)
+    ? processNextStepForResources(nextStep, urls)
     : Promise.resolve();
 };
 
@@ -738,13 +740,13 @@ const processNextStepsForResourcesById = async (nextStepId, urls) => {
 // Identify if passed sourceFields contain one or more of the NEXTSTEPS_AUTODETECTED_FIELDS.
 // TODO: verify all values in the sourceFields are in SOURCE_FIELD.OBJECTIVES
 // and log exceptions
-const calculateIsAutoDetectedForObjectives = (
+const calculateIsAutoDetectedForObjective = (
   sourceFields,
 ) => calculateIsAutoDetected(sourceFields, OBJECTIVES_AUTODETECTED_FIELDS);
 
 // Using the three dataset, each can be run in "parallel" to reduce latency when applied to the
 // database. This should result in better performance.
-const syncResourcesForObjectives = async (resources) => Promise.all([
+const syncResourcesForObjective = async (resources) => Promise.all([
   ...resources.create.map(async (resource) => ObjectiveResource.create({
     objectiveId: resource.objectiveId,
     resourceId: resource.resourceId,
@@ -767,8 +769,8 @@ const syncResourcesForObjectives = async (resources) => Promise.all([
   ...resources.destroy.map(async (resource) => (resource.resourceIds.length > 0
     ? ObjectiveResource.destroy({
       where: {
-        objectiveId: resources.objectiveId,
-        resourceId: { [Op.in]: resources.resourceIds },
+        objectiveId: resource.objectiveId,
+        resourceId: { [Op.in]: resource.resourceIds },
       },
       individualHooks: true,
     })
@@ -776,7 +778,7 @@ const syncResourcesForObjectives = async (resources) => Promise.all([
 ]);
 
 // Process the current values on the report into the database for all referenced resources.
-const processObjectivesForResources = async (objective, urls) => {
+const processObjectiveForResources = async (objective, urls) => {
   // Either used the current resource data from the nextStep passed in or look it up.
   const currentResources = objective.objectiveResources
     ? objective.objectiveResources
@@ -827,7 +829,7 @@ const processObjectivesForResources = async (objective, urls) => {
   const filteredResources = filterResourcesForSync(
     incomingResourcesTransformed,
     currentResourcesGeneric,
-    calculateIsAutoDetectedForObjectives,
+    calculateIsAutoDetectedForObjective,
   );
 
   // switch from generic genericId to objectiveId.
@@ -838,25 +840,26 @@ const processObjectivesForResources = async (objective, urls) => {
   };
 
   // Save the distinct datasets to the database.
-  return syncResourcesForObjectives(resourcesToSync);
+  return syncResourcesForObjective(resourcesToSync);
 };
 
 // Process the current values on the report into the database for all referenced resources for
 // the reportId passed.
-const processObjectivesForResourcesById = async (objectiveId, urls) => {
+const processObjectiveForResourcesById = async (objectiveId, urls) => {
   const objective = await Objective.findOne({
     where: { id: objectiveId },
     include: [
       {
         model: ObjectiveResource,
         as: 'objectiveResources',
+        required: false,
       },
     ],
   });
 
   return objective
     && typeof objective === 'object'
-    ? processObjectivesForResources(objective, urls)
+    ? processObjectiveForResources(objective, urls)
     : Promise.resolve();
 };
 
@@ -866,13 +869,13 @@ const processObjectivesForResourcesById = async (objectiveId, urls) => {
 // Identify if passed sourceFields contain one or more of the NEXTSTEPS_AUTODETECTED_FIELDS.
 // TODO: verify all values in the sourceFields are in SOURCE_FIELD.REPORTOBJECTIVES
 // and log exceptions
-const calculateIsAutoDetectedForActivityReportObjectives = (
+const calculateIsAutoDetectedForActivityReportObjective = (
   sourceFields,
 ) => calculateIsAutoDetected(sourceFields, REPORTOBJECTIVES_AUTODETECTED_FIELDS);
 
 // Using the three dataset, each can be run in "parallel" to reduce latency when applied to the
 // database. This should result in better performance.
-const syncResourcesForActivityReportObjectives = async (resources) => Promise.all([
+const syncResourcesForActivityReportObjective = async (resources) => Promise.all([
   ...resources.create.map(async (resource) => ActivityReportObjectiveResource.create({
     activityReportObjectiveId: resource.activityReportObjectiveId,
     resourceId: resource.resourceId,
@@ -895,8 +898,8 @@ const syncResourcesForActivityReportObjectives = async (resources) => Promise.al
   ...resources.destroy.map(async (resource) => (resource.resourceIds.length > 0
     ? ActivityReportObjectiveResource.destroy({
       where: {
-        activityReportObjectiveId: resources.activityReportObjectiveId,
-        resourceId: { [Op.in]: resources.resourceIds },
+        activityReportObjectiveId: resource.activityReportObjectiveId,
+        resourceId: { [Op.in]: resource.resourceIds },
       },
       individualHooks: true,
     })
@@ -904,7 +907,7 @@ const syncResourcesForActivityReportObjectives = async (resources) => Promise.al
 ]);
 
 // Process the current values on the report into the database for all referenced resources.
-const processActivityReportObjectivesForResources = async (activityReportObjective, urls) => {
+const processActivityReportObjectiveForResources = async (activityReportObjective, urls) => {
   // Either used the current resource data from the activityReportObjective passed in or look it up.
   const currentResources = activityReportObjective.objectiveResources
     ? activityReportObjective.objectiveResources
@@ -961,7 +964,7 @@ const processActivityReportObjectivesForResources = async (activityReportObjecti
   const filteredResources = filterResourcesForSync(
     incomingResourcesTransformed,
     currentResourcesGeneric,
-    calculateIsAutoDetectedForActivityReportObjectives,
+    calculateIsAutoDetectedForActivityReportObjective,
   );
 
   // switch from generic genericId to activityReportObjectiveId.
@@ -972,25 +975,26 @@ const processActivityReportObjectivesForResources = async (activityReportObjecti
   };
 
   // Save the distinct datasets to the database.
-  return syncResourcesForObjectives(resourcesToSync);
+  return syncResourcesForObjective(resourcesToSync);
 };
 
 // Process the current values on the report into the database for all referenced resources for
 // the reportId passed.
-const processActivityReportObjectivesForResourcesById = async (activityReportObjectiveId, urls) => {
+const processActivityReportObjectiveForResourcesById = async (activityReportObjectiveId, urls) => {
   const objective = await ActivityReportObjective.findOne({
     where: { id: activityReportObjectiveId },
     include: [
       {
         model: ActivityReportObjectiveResource,
         as: 'activityReportObjectiveResources',
+        required: false,
       },
     ],
   });
 
   return objective
     && typeof objective === 'object'
-    ? processActivityReportObjectivesForResources(objective, urls)
+    ? processActivityReportObjectiveForResources(objective, urls)
     : Promise.resolve();
 };
 
@@ -1037,20 +1041,20 @@ export {
   processActivityReportForResources,
   processActivityReportForResourcesById,
   // NextSteps Resource Processing
-  calculateIsAutoDetectedForNextSteps,
-  syncResourcesForNextSteps,
-  processNextStepsForResources,
-  processNextStepsForResourcesById,
+  calculateIsAutoDetectedForNextStep,
+  syncResourcesForNextStep,
+  processNextStepForResources,
+  processNextStepForResourcesById,
   // Objective Resource processing
-  calculateIsAutoDetectedForObjectives,
-  syncResourcesForObjectives,
-  processObjectivesForResources,
-  processObjectivesForResourcesById,
+  calculateIsAutoDetectedForObjective,
+  syncResourcesForObjective,
+  processObjectiveForResources,
+  processObjectiveForResourcesById,
   // ActivityReportObjective Resource Processing
-  calculateIsAutoDetectedForActivityReportObjectives,
-  syncResourcesForActivityReportObjectives,
-  processActivityReportObjectivesForResources,
-  processActivityReportObjectivesForResourcesById,
+  calculateIsAutoDetectedForActivityReportObjective,
+  syncResourcesForActivityReportObjective,
+  processActivityReportObjectiveForResources,
+  processActivityReportObjectiveForResourcesById,
 
   getResourcesForObjectives,
   getResourcesForActivityReportObjectives,
