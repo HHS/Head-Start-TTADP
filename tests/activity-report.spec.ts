@@ -165,7 +165,7 @@ test.describe("Activity Report", () => {
     await page.keyboard.press('Enter');
     await page.getByTestId('textarea').click();
     await page.getByTestId('textarea').fill('g2');
-    await page.getByRole('group', { name: 'Is this a Recipient TTA Plan Agreement (RTTAPA) goal?*' }).getByText('Yes').click();
+    await page.getByRole('group', { name: 'Goal type*' }).getByText('RTTAPA').click();
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
     await page.locator('#react-select-35-option-0').click();
     await page.getByLabel('TTA objective *').click();
