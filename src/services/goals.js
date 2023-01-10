@@ -345,7 +345,7 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
   // we pass in the existing objectives as the accumulator
   const objectivesToSort = newObjectives.reduce((objectives, objective) => {
     const exists = objectives.find((o) => (
-      o.title === objective.title.trim() && o.status === objective.status
+      o.title.trim() === objective.title.trim() && o.status === objective.status
     ));
 
     if (exists) {
@@ -364,7 +364,7 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
 
     return [...objectives, {
       ...objective.dataValues,
-      title: objective.title.trim(),
+      title: objective.title,
       value: id,
       ids: [id],
       // Make sure we pass back a list of recipient ids for subsequent saves.
@@ -394,7 +394,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
     // objectives represent the accumulator in the find below
     // objective is the objective as it is returned from the API
     const exists = objectives.find((o) => (
-      o.title === objective.title.trim() && o.status === objectiveStatus
+      o.title.trim() === objective.title.trim() && o.status === objectiveStatus
     ));
 
     if (exists) {
@@ -449,7 +449,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
 
     return [...objectives, {
       ...objective.dataValues,
-      title: objective.title.trim(),
+      title: objective.title,
       value: id,
       ids: [id],
       ttaProvided,
