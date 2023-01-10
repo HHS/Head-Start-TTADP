@@ -1,5 +1,3 @@
-const FLAGS = ['grantee_record_page'];
-
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   up: (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => {
@@ -26,7 +24,7 @@ module.exports = {
         ALTER TYPE "enum_Users_flags" RENAME TO "enum_Users_flags_old";
 
         -- create the new type using FLAGS:
-        CREATE TYPE "enum_Users_flags" AS ENUM('${FLAGS.join("', '")}');
+        CREATE TYPE "enum_Users_flags" AS ENUM();
 
         -- update the columns to use the new type
         ALTER TABLE "Users" ALTER COLUMN "flags" set default null;
