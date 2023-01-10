@@ -1,25 +1,13 @@
 import { Op } from 'sequelize';
-import db, {
-  User,
-  Recipient,
-  Grant,
-  Goal,
-  File,
-  Role,
+import {
+  ActivityReportResource,
+  NextStep,
+  NextStepResource,
   Resource,
   Objective,
-  ObjectiveFile,
   ObjectiveResource,
-  ObjectiveTopic,
-  ActivityReport,
-  ActivityRecipient,
-  ActivityReportGoal,
   ActivityReportObjective,
-  ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
-  ActivityReportObjectiveTopic,
-  CollaboratorRole,
-  Topic,
 } from '../models';
 import {
   // Resource Table
@@ -39,22 +27,22 @@ import {
   processActivityReportForResources,
   processActivityReportForResourcesById,
   // NextSteps Resource Processing
-  calculateIsAutoDetectedForNextSteps,
-  syncResourcesForNextSteps,
-  processNextStepsForResources,
-  processNextStepsForResourcesById,
+  calculateIsAutoDetectedForNextStep,
+  syncResourcesForNextStep,
+  processNextStepForResources,
+  processNextStepForResourcesById,
   // Objective Resource processing
-  calculateIsAutoDetectedForObjectives,
-  syncResourcesForObjectives,
-  processObjectivesForResources,
-  processObjectivesForResourcesById,
+  calculateIsAutoDetectedForObjective,
+  syncResourcesForObjective,
+  processObjectiveForResources,
+  processObjectiveForResourcesById,
   // ActivityReportObjective Resource Processing
-  calculateIsAutoDetectedForActivityReportObjectives,
-  syncResourcesForActivityReportObjectives,
-  processActivityReportObjectivesForResources,
-  processActivityReportObjectivesForResourcesById,
+  calculateIsAutoDetectedForActivityReportObjective,
+  syncResourcesForActivityReportObjective,
+  processActivityReportObjectiveForResources,
+  processActivityReportObjectiveForResourcesById,
 } from './resource';
-import { REPORT_STATUSES, SOURCE_FIELD } from '../constants';
+import { REPORT_STATUSES, SOURCE_FIELD, NEXTSTEP_NOTETYPE, OBJECTIVE_STATUS } from '../constants';
 
 describe('resource', () => {
   describe('Resource Table', () => {
@@ -117,6 +105,7 @@ describe('resource', () => {
         'http://github.com',
       ];
       let urls;
+      const sorter = (a, b) => a.id < b.id;
       beforeEach(() => {
         urls = urlsTest;
       });
@@ -133,7 +122,7 @@ describe('resource', () => {
       it('expected usage, existing', async () => {
         const resources1 = await findOrCreateResources(urls);
         const resources2 = await findOrCreateResources(urls);
-        expect(resources2).toMatchObject(resources1);
+        expect(resources2.sort(sorter)).toMatchObject(resources1.sort(sorter));
       });
       it('fail to empty array, null urls', async () => {
         urls = null;
@@ -1053,66 +1042,1126 @@ describe('resource', () => {
       });
       // Note all fail cases handled by helper function tests for calculateIsAutoDetected
     });
+    describe('syncResourcesForActivityReport', () => {
+      let resources;
+      beforeAll(async () => {
+        const urls = [
+          'http://google.com',
+          'http://github.com',
+          'http://cloud.gov',
+          'https://adhocteam.us/',
+        ];
+        resources = await findOrCreateResources(urls);
+      });
+      beforeEach(async () => {
+
+      });
+      afterEach(async () => {
+        await ActivityReportResource.destroy({
+          where: {
+            activityReportId: 9999,
+            resourceId: { [Op.in]: resources.map((r) => r.id) },
+          },
+          individualHooks: true,
+        });
+      });
+      afterAll(async () => {
+        await Resource.destroy({
+          where: { id: { [Op.in]: resources.map((r) => r.id) } },
+          individualHooks: true,
+        });
+      });
+      it('expected usage, insert', async () => {
+        const data = {
+          create: [
+            {
+              activityReportId: 9999,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.REPORT.NONECLKC],
+              isAutoDetected: false,
+            },
+            {
+              activityReportId: 9999,
+              resourceId: resources[1].id,
+              sourceFields: [SOURCE_FIELD.REPORT.NONECLKC],
+              isAutoDetected: false,
+            },
+            {
+              activityReportId: 9999,
+              resourceId: resources[2].id,
+              sourceFields: [SOURCE_FIELD.REPORT.NONECLKC],
+              isAutoDetected: false,
+            },
+            {
+              activityReportId: 9999,
+              resourceId: resources[3].id,
+              sourceFields: [SOURCE_FIELD.REPORT.NONECLKC],
+              isAutoDetected: false,
+            },
+          ],
+          update: [],
+          destroy: [],
+        };
+        await syncResourcesForActivityReport(data);
+        const arResources = await ActivityReportResource.findAll({
+          where: {
+            activityReportId: 9999,
+            resourceId: { [Op.in]: resources.map((r) => r.id) },
+          },
+          include: [
+            { model: Resource, as: 'resource' },
+          ],
+          raw: true,
+        });
+        expect(arResources.length).toEqual(4);
+      });
+      it('expected usage, update', async () => {
+        let data = {
+          create: [
+            {
+              activityReportId: 9999,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.REPORT.NONECLKC],
+              isAutoDetected: false,
+            },
+            {
+              activityReportId: 9999,
+              resourceId: resources[1].id,
+              sourceFields: [SOURCE_FIELD.REPORT.NONECLKC],
+              isAutoDetected: false,
+            },
+            {
+              activityReportId: 9999,
+              resourceId: resources[2].id,
+              sourceFields: [SOURCE_FIELD.REPORT.NONECLKC],
+              isAutoDetected: false,
+            },
+            {
+              activityReportId: 9999,
+              resourceId: resources[3].id,
+              sourceFields: [SOURCE_FIELD.REPORT.NONECLKC],
+              isAutoDetected: false,
+            },
+          ],
+          update: [],
+          destroy: [],
+        };
+        await syncResourcesForActivityReport(data);
+        data = {
+          create: [],
+          update: [
+            {
+              activityReportId: 9999,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.REPORT.NONECLKC, SOURCE_FIELD.REPORT.CONTEXT],
+              isAutoDetected: true,
+            },
+          ],
+          destroy: [],
+        };
+        await syncResourcesForActivityReport(data);
+        const arResources = await ActivityReportResource.findAll({
+          where: { activityReportId: 9999, resourceId: resources[0].id },
+          include: [
+            { model: Resource, as: 'resource' },
+          ],
+          raw: true,
+        });
+        expect(arResources[0].sourceFields.length).toEqual(2);
+        expect(arResources[0].isAutoDetected).toEqual(true);
+      });
+      it('expected usage, delete', async () => {
+        let data = {
+          create: [
+            {
+              activityReportId: 9999,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.REPORT.NONECLKC],
+              isAutoDetected: false,
+            },
+            {
+              activityReportId: 9999,
+              resourceId: resources[1].id,
+              sourceFields: [SOURCE_FIELD.REPORT.NONECLKC],
+              isAutoDetected: false,
+            },
+            {
+              activityReportId: 9999,
+              resourceId: resources[2].id,
+              sourceFields: [SOURCE_FIELD.REPORT.NONECLKC],
+              isAutoDetected: false,
+            },
+            {
+              activityReportId: 9999,
+              resourceId: resources[3].id,
+              sourceFields: [SOURCE_FIELD.REPORT.NONECLKC],
+              isAutoDetected: false,
+            },
+          ],
+          update: [],
+          destroy: [],
+        };
+        await syncResourcesForActivityReport(data);
+        data = {
+          create: [],
+          update: [],
+          destroy: [
+            {
+              activityReportId: 9999,
+              resourceIds: resources.map((r) => r.id),
+            },
+          ],
+        };
+        await syncResourcesForActivityReport(data);
+        const arResources = await ActivityReportResource.findAll({
+          where: {
+            activityReportId: 9999,
+            resourceId: { [Op.in]: resources.map((r) => r.id) },
+          },
+          raw: true,
+        });
+        expect(arResources.length).toEqual(0);
+      });
+      it('expected usage, insert/update/delete', async () => {
+        let data = {
+          create: [
+            {
+              activityReportId: 9999,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.REPORT.NONECLKC],
+              isAutoDetected: false,
+            },
+            {
+              activityReportId: 9999,
+              resourceId: resources[1].id,
+              sourceFields: [SOURCE_FIELD.REPORT.NONECLKC],
+              isAutoDetected: false,
+            },
+            {
+              activityReportId: 9999,
+              resourceId: resources[2].id,
+              sourceFields: [SOURCE_FIELD.REPORT.NONECLKC],
+              isAutoDetected: false,
+            },
+          ],
+          update: [],
+          destroy: [],
+        };
+        await syncResourcesForActivityReport(data);
+        data = {
+          create: [
+            {
+              activityReportId: 9999,
+              resourceId: resources[3].id,
+              sourceFields: [SOURCE_FIELD.REPORT.NONECLKC],
+              isAutoDetected: false,
+            },
+          ],
+          update: [
+            {
+              activityReportId: 9999,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.REPORT.NONECLKC, SOURCE_FIELD.REPORT.CONTEXT],
+              isAutoDetected: true,
+            },
+          ],
+          destroy: [
+            {
+              activityReportId: 9999,
+              resourceIds: [resources[1].id],
+            },
+          ],
+        };
+        await syncResourcesForActivityReport(data);
+        const arResources = await ActivityReportResource.findAll({
+          where: {
+            activityReportId: 9999,
+            resourceId: { [Op.in]: resources.map((r) => r.id) },
+          },
+          raw: true,
+        });
+        expect(arResources.length).toEqual(3);
+        expect(arResources.map((r) => r.resourceId)).toContain(resources[3].id);
+        expect(arResources.map((r) => r.resourceId)).not.toContain(resources[1].id);
+        expect(arResources.find((r) => r.resourceId === resources[0].id).sourceFields.length)
+          .toEqual(2);
+        expect(arResources[0].isAutoDetected).toEqual(true);
+      });
+    });
   });
   describe('NextSteps Resource Processing', () => {
     describe('calculateIsAutoDetectedForNextSteps', () => {
       let sourceFields;
       it('expected usage, single', () => {
         sourceFields = [SOURCE_FIELD.NEXTSTEPS.NOTE];
-        expect(calculateIsAutoDetectedForNextSteps(sourceFields)).toEqual(true);
+        expect(calculateIsAutoDetectedForNextStep(sourceFields)).toEqual(true);
       });
       it('expected usage, multiple with only once auto-detected', () => {
         sourceFields = [SOURCE_FIELD.NEXTSTEPS.NOTE, SOURCE_FIELD.NEXTSTEPS.RESOURCE];
-        expect(calculateIsAutoDetectedForNextSteps(sourceFields)).toEqual(true);
+        expect(calculateIsAutoDetectedForNextStep(sourceFields)).toEqual(true);
       });
       it('expected usage, non-auto-detected single', () => {
         sourceFields = [SOURCE_FIELD.NEXTSTEPS.RESOURCE];
-        expect(calculateIsAutoDetectedForNextSteps(sourceFields)).toEqual(false);
+        expect(calculateIsAutoDetectedForNextStep(sourceFields)).toEqual(false);
       });
       // Note all fail cases handled by helper function tests for calculateIsAutoDetected
+    });
+    describe('syncResourcesForNextStep', () => {
+      let resources;
+      let nextStep;
+      beforeAll(async () => {
+        const urls = [
+          'http://google.com',
+          'http://github.com',
+          'http://cloud.gov',
+          'https://adhocteam.us/',
+        ];
+        resources = await findOrCreateResources(urls);
+
+        console.log(1);
+        [nextStep] = await NextStep.findOrCreate({
+          where: {
+            activityReportId: 9999,
+            note: 'Resource NextStep test. http://google.com',
+            noteType: NEXTSTEP_NOTETYPE.SPECIALIST,
+          },
+          individualHooks: true,
+          raw: true,
+          logging: console.log,
+        });
+        console.log(nextStep);
+      });
+      beforeEach(async () => {
+
+      });
+      afterEach(async () => {
+        await NextStepResource.destroy({
+          where: {
+            nextStepId: nextStep.id,
+            resourceId: { [Op.in]: resources.map((r) => r.id) },
+          },
+          individualHooks: true,
+        });
+      });
+      afterAll(async () => {
+        await Resource.destroy({
+          where: { id: { [Op.in]: resources.map((r) => r.id) } },
+          individualHooks: true,
+        });
+        await NextStep.destroy({
+          where: {
+            id: nextStep.id,
+          },
+          individualHooks: true,
+        });
+      });
+      it('expected usage, insert', async () => {
+        const data = {
+          create: [
+            {
+              nextStepId: nextStep.id,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
+              isAutoDetected: true,
+            },
+            {
+              nextStepId: nextStep.id,
+              resourceId: resources[1].id,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
+              isAutoDetected: true,
+            },
+            {
+              nextStepId: nextStep.id,
+              resourceId: resources[2].id,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
+              isAutoDetected: true,
+            },
+            {
+              nextStepId: nextStep.id,
+              resourceId: resources[3].id,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
+              isAutoDetected: true,
+            },
+          ],
+          update: [],
+          destroy: [],
+        };
+        await syncResourcesForNextStep(data);
+        const nsResources = await NextStepResource.findAll({
+          where: {
+            nextStepId: nextStep.id,
+            resourceId: { [Op.in]: resources.map((r) => r.id) },
+          },
+          include: [
+            { model: Resource, as: 'resource' },
+          ],
+          raw: true,
+        });
+        expect(nsResources.length).toEqual(4);
+      });
+      it('expected usage, update', async () => {
+        let data = {
+          create: [
+            {
+              nextStepId: nextStep.id,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
+              isAutoDetected: true,
+            },
+            {
+              nextStepId: nextStep.id,
+              resourceId: resources[1].id,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
+              isAutoDetected: true,
+            },
+            {
+              nextStepId: nextStep.id,
+              resourceId: resources[2].id,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
+              isAutoDetected: true,
+            },
+            {
+              nextStepId: nextStep.id,
+              resourceId: resources[3].id,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
+              isAutoDetected: true,
+            },
+          ],
+          update: [],
+          destroy: [],
+        };
+        await syncResourcesForNextStep(data);
+        data = {
+          create: [],
+          update: [
+            {
+              nextStepId: nextStep.id,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE, SOURCE_FIELD.NEXTSTEPS.RESOURCE],
+              isAutoDetected: true,
+            },
+          ],
+          destroy: [],
+        };
+        await syncResourcesForNextStep(data);
+        const nsResources = await NextStepResource.findAll({
+          where: { nextStepId: nextStep.id, resourceId: resources[0].id },
+          include: [
+            { model: Resource, as: 'resource' },
+          ],
+          raw: true,
+        });
+        expect(nsResources[0].sourceFields.length).toEqual(2);
+        expect(nsResources[0].isAutoDetected).toEqual(true);
+      });
+      it('expected usage, delete', async () => {
+        let data = {
+          create: [
+            {
+              nextStepId: nextStep.id,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
+              isAutoDetected: true,
+            },
+            {
+              nextStepId: nextStep.id,
+              resourceId: resources[1].id,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
+              isAutoDetected: true,
+            },
+            {
+              nextStepId: nextStep.id,
+              resourceId: resources[2].id,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
+              isAutoDetected: true,
+            },
+            {
+              nextStepId: nextStep.id,
+              resourceId: resources[3].id,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
+              isAutoDetected: true,
+            },
+          ],
+          update: [],
+          destroy: [],
+        };
+        await syncResourcesForNextStep(data);
+        data = {
+          create: [],
+          update: [],
+          destroy: [
+            {
+              nextStepId: nextStep.id,
+              resourceIds: resources.map((r) => r.id),
+            },
+          ],
+        };
+        await syncResourcesForNextStep(data);
+        const nsResources = await NextStepResource.findAll({
+          where: {
+            nextStepId: nextStep.id,
+            resourceId: { [Op.in]: resources.map((r) => r.id) },
+          },
+          raw: true,
+        });
+        expect(nsResources.length).toEqual(0);
+      });
+      it('expected usage, insert/update/delete', async () => {
+        let data = {
+          create: [
+            {
+              nextStepId: nextStep.id,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
+              isAutoDetected: true,
+            },
+            {
+              nextStepId: nextStep.id,
+              resourceId: resources[1].id,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
+              isAutoDetected: true,
+            },
+            {
+              nextStepId: nextStep.id,
+              resourceId: resources[2].id,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
+              isAutoDetected: true,
+            },
+          ],
+          update: [],
+          destroy: [],
+        };
+        await syncResourcesForNextStep(data);
+        data = {
+          create: [
+            {
+              nextStepId: nextStep.id,
+              resourceId: resources[3].id,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE],
+              isAutoDetected: true,
+            },
+          ],
+          update: [
+            {
+              nextStepId: nextStep.id,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.NEXTSTEPS.NOTE, SOURCE_FIELD.NEXTSTEPS.RESOURCE],
+              isAutoDetected: true,
+            },
+          ],
+          destroy: [
+            {
+              nextStepId: nextStep.id,
+              resourceIds: [resources[1].id],
+            },
+          ],
+        };
+        await syncResourcesForNextStep(data);
+        const nsResources = await NextStepResource.findAll({
+          where: {
+            nextStepId: nextStep.id,
+            resourceId: { [Op.in]: resources.map((r) => r.id) },
+          },
+          raw: true,
+        });
+        expect(nsResources.length).toEqual(3);
+        expect(nsResources.map((r) => r.resourceId)).toContain(resources[3].id);
+        expect(nsResources.map((r) => r.resourceId)).not.toContain(resources[1].id);
+        expect(nsResources.find((r) => r.resourceId === resources[0].id).sourceFields.length)
+          .toEqual(2);
+        expect(nsResources[0].isAutoDetected).toEqual(true);
+      });
     });
   });
   describe('Objective Resource processing', () => {
-    describe('calculateIsAutoDetectedForObjectives', () => {
+    describe('calculateIsAutoDetectedForObjective', () => {
       let sourceFields;
       it('expected usage, single', () => {
         sourceFields = [SOURCE_FIELD.OBJECTIVE.TITLE];
-        expect(calculateIsAutoDetectedForObjectives(sourceFields)).toEqual(true);
+        expect(calculateIsAutoDetectedForObjective(sourceFields)).toEqual(true);
       });
       it('expected usage, multiple with only once auto-detected', () => {
         sourceFields = [SOURCE_FIELD.OBJECTIVE.TITLE, SOURCE_FIELD.OBJECTIVE.RESOURCE];
-        expect(calculateIsAutoDetectedForObjectives(sourceFields)).toEqual(true);
+        expect(calculateIsAutoDetectedForObjective(sourceFields)).toEqual(true);
       });
       it('expected usage, non-auto-detected single', () => {
         sourceFields = [SOURCE_FIELD.OBJECTIVE.RESOURCE];
-        expect(calculateIsAutoDetectedForObjectives(sourceFields)).toEqual(false);
+        expect(calculateIsAutoDetectedForObjective(sourceFields)).toEqual(false);
       });
       // Note all fail cases handled by helper function tests for calculateIsAutoDetected
     });
+    describe('syncResourcesForObjective', () => {
+      let resources;
+      let objective;
+      beforeAll(async () => {
+        const urls = [
+          'http://google.com',
+          'http://github.com',
+          'http://cloud.gov',
+          'https://adhocteam.us/',
+        ];
+        resources = await findOrCreateResources(urls);
+        [objective] = await Objective.findOrCreate({
+          where: {
+            goalId: 1,
+            title: 'Resource Objective test. http://google.com',
+            status: OBJECTIVE_STATUS.NOT_STARTED,
+            onAR: false,
+            onApprovedAR: false,
+          },
+          individualHooks: true,
+          raw: true,
+        });
+      });
+      beforeEach(async () => {
+
+      });
+      afterEach(async () => {
+        await ObjectiveResource.destroy({
+          where: {
+            objectiveId: objective.id,
+            resourceId: { [Op.in]: resources.map((r) => r.id) },
+          },
+          individualHooks: true,
+        });
+      });
+      afterAll(async () => {
+        await Resource.destroy({
+          where: { id: { [Op.in]: resources.map((r) => r.id) } },
+          individualHooks: true,
+        });
+        await Objective.destroy({
+          where: { id: objective.id },
+          individualHooks: true,
+        });
+      });
+      it('expected usage, insert', async () => {
+        const data = {
+          create: [
+            {
+              objectiveId: objective.id,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              objectiveId: objective.id,
+              resourceId: resources[1].id,
+              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              objectiveId: objective.id,
+              resourceId: resources[2].id,
+              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              objectiveId: objective.id,
+              resourceId: resources[3].id,
+              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+          ],
+          update: [],
+          destroy: [],
+        };
+        await syncResourcesForObjective(data);
+        const oResources = await ObjectiveResource.findAll({
+          where: {
+            objectiveId: objective.id,
+            resourceId: { [Op.in]: resources.map((r) => r.id) },
+          },
+          include: [
+            { model: Resource, as: 'resource' },
+          ],
+          raw: true,
+        });
+        expect(oResources.length).toEqual(4);
+      });
+      it('expected usage, update', async () => {
+        let data = {
+          create: [
+            {
+              objectiveId: objective.id,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              objectiveId: objective.id,
+              resourceId: resources[1].id,
+              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              objectiveId: objective.id,
+              resourceId: resources[2].id,
+              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              objectiveId: objective.id,
+              resourceId: resources[3].id,
+              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+          ],
+          update: [],
+          destroy: [],
+        };
+        await syncResourcesForObjective(data);
+        data = {
+          create: [],
+          update: [
+            {
+              objectiveId: objective.id,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.OBJECTIVE.TITLE, SOURCE_FIELD.OBJECTIVE.RESOURCE],
+              isAutoDetected: true,
+            },
+          ],
+          destroy: [],
+        };
+        await syncResourcesForObjective(data);
+        const oResources = await ObjectiveResource.findAll({
+          where: { objectiveId: objective.id, resourceId: resources[0].id },
+          include: [
+            { model: Resource, as: 'resource' },
+          ],
+          raw: true,
+        });
+        expect(oResources[0].sourceFields.length).toEqual(2);
+        expect(oResources[0].isAutoDetected).toEqual(true);
+      });
+      it('expected usage, delete', async () => {
+        let data = {
+          create: [
+            {
+              objectiveId: objective.id,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              objectiveId: objective.id,
+              resourceId: resources[1].id,
+              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              objectiveId: objective.id,
+              resourceId: resources[2].id,
+              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              objectiveId: objective.id,
+              resourceId: resources[3].id,
+              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+          ],
+          update: [],
+          destroy: [],
+        };
+        await syncResourcesForObjective(data);
+        data = {
+          create: [],
+          update: [],
+          destroy: [
+            {
+              objectiveId: objective.id,
+              resourceIds: resources.map((r) => r.id),
+            },
+          ],
+        };
+        await syncResourcesForObjective(data);
+        const oResources = await ObjectiveResource.findAll({
+          where: {
+            objectiveId: objective.id,
+            resourceId: { [Op.in]: resources.map((r) => r.id) },
+          },
+          raw: true,
+        });
+        expect(oResources.length).toEqual(0);
+      });
+      it('expected usage, insert/update/delete', async () => {
+        let data = {
+          create: [
+            {
+              objectiveId: objective.id,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              objectiveId: objective.id,
+              resourceId: resources[1].id,
+              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              objectiveId: objective.id,
+              resourceId: resources[2].id,
+              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+          ],
+          update: [],
+          destroy: [],
+        };
+        await syncResourcesForObjective(data);
+        data = {
+          create: [
+            {
+              objectiveId: objective.id,
+              resourceId: resources[3].id,
+              sourceFields: [SOURCE_FIELD.OBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+          ],
+          update: [
+            {
+              objectiveId: objective.id,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.OBJECTIVE.TITLE, SOURCE_FIELD.OBJECTIVE.RESOURCE],
+              isAutoDetected: true,
+            },
+          ],
+          destroy: [
+            {
+              objectiveId: objective.id,
+              resourceIds: [resources[1].id],
+            },
+          ],
+        };
+        await syncResourcesForObjective(data);
+        const oResources = await ObjectiveResource.findAll({
+          where: {
+            objectiveId: objective.id,
+            resourceId: { [Op.in]: resources.map((r) => r.id) },
+          },
+          raw: true,
+        });
+        expect(oResources.length).toEqual(3);
+        expect(oResources.map((r) => r.resourceId)).toContain(resources[3].id);
+        expect(oResources.map((r) => r.resourceId)).not.toContain(resources[1].id);
+        expect(oResources.find((r) => r.resourceId === resources[0].id).sourceFields.length)
+          .toEqual(2);
+        expect(oResources.find((r) => r.resourceId === resources[0].id).isAutoDetected)
+          .toEqual(true);
+      });
+    });
   });
   describe('ActivityReportObjective Resource Processing', () => {
-    describe('calculateIsAutoDetectedForActivityReportObjectives', () => {
+    describe('calculateIsAutoDetectedForActivityReportObjective', () => {
       let sourceFields;
       it('expected usage, single', () => {
         sourceFields = [SOURCE_FIELD.REPORTOBJECTIVE.TITLE];
-        expect(calculateIsAutoDetectedForActivityReportObjectives(sourceFields)).toEqual(true);
+        expect(calculateIsAutoDetectedForActivityReportObjective(sourceFields)).toEqual(true);
       });
       it('expected usage, multiple', () => {
         sourceFields = [
           SOURCE_FIELD.REPORTOBJECTIVE.TITLE,
           SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED,
         ];
-        expect(calculateIsAutoDetectedForActivityReportObjectives(sourceFields)).toEqual(true);
+        expect(calculateIsAutoDetectedForActivityReportObjective(sourceFields)).toEqual(true);
       });
       it('expected usage, multiple with only once auto-detected', () => {
         sourceFields = [SOURCE_FIELD.REPORTOBJECTIVE.TITLE, SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE];
-        expect(calculateIsAutoDetectedForActivityReportObjectives(sourceFields)).toEqual(true);
+        expect(calculateIsAutoDetectedForActivityReportObjective(sourceFields)).toEqual(true);
       });
       it('expected usage, non-auto-detected single', () => {
         sourceFields = [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE];
-        expect(calculateIsAutoDetectedForActivityReportObjectives(sourceFields)).toEqual(false);
+        expect(calculateIsAutoDetectedForActivityReportObjective(sourceFields)).toEqual(false);
       });
       // Note all fail cases handled by helper function tests for calculateIsAutoDetected
+    });
+    describe('syncResourcesForActivityReportObjective', () => {
+      let resources;
+      let objective;
+      let reportObjective;
+      beforeAll(async () => {
+        const urls = [
+          'http://google.com',
+          'http://github.com',
+          'http://cloud.gov',
+          'https://adhocteam.us/',
+        ];
+        resources = await findOrCreateResources(urls);
+        [objective] = await Objective.findOrCreate({
+          where: {
+            goalId: 1,
+            title: 'Resource Objective test. http://google.com',
+            status: OBJECTIVE_STATUS.NOT_STARTED,
+            onAR: false,
+            onApprovedAR: false,
+          },
+          individualHooks: true,
+          raw: true,
+        });
+        [reportObjective] = await ActivityReportObjective.findOrCreate({
+          where: {
+            activityReportId: 9999,
+            objectiveId: objective.id,
+            title: 'Resource Objective test. http://google.com',
+            ttaProvided: 'Resource Objective test. http://google.com',
+            status: OBJECTIVE_STATUS.NOT_STARTED,
+          },
+          individualHooks: true,
+          raw: true,
+        });
+      });
+      beforeEach(async () => {
+
+      });
+      afterEach(async () => {
+        await ActivityReportObjectiveResource.destroy({
+          where: {
+            activityReportObjectiveId: reportObjective.id,
+            resourceId: { [Op.in]: resources.map((r) => r.id) },
+          },
+          individualHooks: true,
+        });
+      });
+      afterAll(async () => {
+        await Resource.destroy({
+          where: { id: { [Op.in]: resources.map((r) => r.id) } },
+          individualHooks: true,
+        });
+        await ActivityReportObjective.destroy({
+          where: { id: reportObjective.id },
+          individualHooks: true,
+        });
+        await Objective.destroy({
+          where: { id: objective.id },
+          individualHooks: true,
+        });
+      });
+      it('expected usage, insert', async () => {
+        const data = {
+          create: [
+            {
+              activityReportObjectiveId: reportObjective.id,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              activityReportObjectiveId: reportObjective.id,
+              resourceId: resources[1].id,
+              sourceFields: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              activityReportObjectiveId: reportObjective.id,
+              resourceId: resources[2].id,
+              sourceFields: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              activityReportObjectiveId: reportObjective.id,
+              resourceId: resources[3].id,
+              sourceFields: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+          ],
+          update: [],
+          destroy: [],
+        };
+        await syncResourcesForActivityReportObjective(data);
+        const oResources = await ActivityReportObjectiveResource.findAll({
+          where: {
+            activityReportObjectiveId: reportObjective.id,
+            resourceId: { [Op.in]: resources.map((r) => r.id) },
+          },
+          include: [
+            { model: Resource, as: 'resource' },
+          ],
+          raw: true,
+        });
+        expect(oResources.length).toEqual(4);
+      });
+      it('expected usage, update', async () => {
+        let data = {
+          create: [
+            {
+              activityReportObjectiveId: reportObjective.id,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              activityReportObjectiveId: reportObjective.id,
+              resourceId: resources[1].id,
+              sourceFields: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              activityReportObjectiveId: reportObjective.id,
+              resourceId: resources[2].id,
+              sourceFields: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              activityReportObjectiveId: reportObjective.id,
+              resourceId: resources[3].id,
+              sourceFields: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+          ],
+          update: [],
+          destroy: [],
+        };
+        await syncResourcesForActivityReportObjective(data);
+        data = {
+          create: [],
+          update: [
+            {
+              activityReportObjectiveId: reportObjective.id,
+              resourceId: resources[0].id,
+              sourceFields: [
+                SOURCE_FIELD.REPORTOBJECTIVE.TITLE,
+                SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE,
+              ],
+              isAutoDetected: true,
+            },
+          ],
+          destroy: [],
+        };
+        await syncResourcesForActivityReportObjective(data);
+        const oResources = await ActivityReportObjectiveResource.findAll({
+          where: { activityReportObjectiveId: reportObjective.id, resourceId: resources[0].id },
+          include: [
+            { model: Resource, as: 'resource' },
+          ],
+          raw: true,
+        });
+        expect(oResources[0].sourceFields.length).toEqual(2);
+        expect(oResources[0].isAutoDetected).toEqual(true);
+      });
+      it('expected usage, delete', async () => {
+        let data = {
+          create: [
+            {
+              activityReportObjectiveId: reportObjective.id,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              activityReportObjectiveId: reportObjective.id,
+              resourceId: resources[1].id,
+              sourceFields: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              activityReportObjectiveId: reportObjective.id,
+              resourceId: resources[2].id,
+              sourceFields: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              activityReportObjectiveId: reportObjective.id,
+              resourceId: resources[3].id,
+              sourceFields: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+          ],
+          update: [],
+          destroy: [],
+        };
+        await syncResourcesForActivityReportObjective(data);
+        data = {
+          create: [],
+          update: [],
+          destroy: [
+            {
+              activityReportObjectiveId: reportObjective.id,
+              resourceIds: resources.map((r) => r.id),
+            },
+          ],
+        };
+        await syncResourcesForActivityReportObjective(data);
+        const oResources = await ActivityReportObjectiveResource.findAll({
+          where: {
+            activityReportObjectiveId: reportObjective.id,
+            resourceId: { [Op.in]: resources.map((r) => r.id) },
+          },
+          raw: true,
+        });
+        expect(oResources.length).toEqual(0);
+      });
+      it('expected usage, insert/update/delete', async () => {
+        let data = {
+          create: [
+            {
+              activityReportObjectiveId: reportObjective.id,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              activityReportObjectiveId: reportObjective.id,
+              resourceId: resources[1].id,
+              sourceFields: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              activityReportObjectiveId: reportObjective.id,
+              resourceId: resources[2].id,
+              sourceFields: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+          ],
+          update: [],
+          destroy: [],
+        };
+        await syncResourcesForActivityReportObjective(data);
+        data = {
+          create: [
+            {
+              activityReportObjectiveId: reportObjective.id,
+              resourceId: resources[3].id,
+              sourceFields: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE],
+              isAutoDetected: false,
+            },
+          ],
+          update: [
+            {
+              activityReportObjectiveId: reportObjective.id,
+              resourceId: resources[0].id,
+              sourceFields: [
+                SOURCE_FIELD.REPORTOBJECTIVE.TITLE,
+                SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE,
+              ],
+              isAutoDetected: true,
+            },
+          ],
+          destroy: [
+            {
+              activityReportObjectiveId: reportObjective.id,
+              resourceIds: [resources[1].id],
+            },
+          ],
+        };
+        await syncResourcesForActivityReportObjective(data);
+        const oResources = await ActivityReportObjectiveResource.findAll({
+          where: {
+            activityReportObjectiveId: reportObjective.id,
+            resourceId: { [Op.in]: resources.map((r) => r.id) },
+          },
+          raw: true,
+        });
+        expect(oResources.length).toEqual(3);
+        expect(oResources.map((r) => r.resourceId)).toContain(resources[3].id);
+        expect(oResources.map((r) => r.resourceId)).not.toContain(resources[1].id);
+        expect(oResources.find((r) => r.resourceId === resources[0].id).sourceFields.length)
+          .toEqual(2);
+        expect(oResources.find((r) => r.resourceId === resources[0].id).isAutoDetected)
+          .toEqual(true);
+      });
     });
   });
 });
