@@ -22,6 +22,7 @@ import { beforeEndDate, afterEndDate, withinEndDate } from './endDate';
 import { withOtherEntities, withoutOtherEntities } from './otherEntities';
 import { withoutParticipants, withParticipants } from './participants';
 import { withMyReports, withoutMyReports } from './myReports';
+import { withText, withoutText } from './text';
 
 export const topicToQuery = {
   reportId: {
@@ -115,8 +116,13 @@ export const topicToQuery = {
     in: (query) => withOtherEntities(query),
     nin: (query) => withoutOtherEntities(query),
   },
+  text: {
+    ctn: (query) => withText(query),
+    nctn: (query) => withoutText(query),
+  },
 };
 
-export function activityReportsFiltersToScopes(filters, options, userId) {
+export async function activityReportsFiltersToScopes(filters, options, userId) {
+  console.log('\n\n\n---------- Here2');
   return createFiltersToScopes(filters, topicToQuery, options, userId);
 }

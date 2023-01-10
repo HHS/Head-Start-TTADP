@@ -16,8 +16,14 @@ import db, {
   Role,
   UserRole,
 } from '../../models';
-import { REPORT_STATUSES, APPROVER_STATUSES } from '../../constants';
+import { REPORT_STATUSES, APPROVER_STATUSES, AWS_ELASTIC_SEARCH_INDEXES } from '../../constants';
 import { createReport, destroyReport, createGrant } from '../../testUtils';
+import {
+  getClient,
+  deleteIndex,
+  createIndex,
+  addIndexDocument,
+} from '../../lib/awsElasticSearch/index';
 
 const mockUser = {
   id: faker.datatype.number(),
@@ -1668,6 +1674,116 @@ describe('filtersToScopes', () => {
       expect(found.length).toBe(1);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([globallyExcludedReport.id]));
+    });
+  });
+
+  describe('text', () => {
+    let client;
+    let includedReport1;
+    let includedReport2;
+    let excludedReport;
+    let possibleIds;
+
+    beforeAll(async () => {
+      // Create ES client.
+      client = await getClient();
+
+      // Create new index
+      await deleteIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
+      await createIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
+
+      // Create reports.
+      const context1 = 'Nothings gonna change my world';
+      const context2 = 'I get by with a little help from my friends';
+      const context3 = 'Try thinking more, if just for your own sake';
+      includedReport1 = await ActivityReport.create(
+        {
+          ...draftReport,
+          context: context1,
+          userId: includedUser1.id,
+        },
+      );
+      includedReport2 = await ActivityReport.create(
+        {
+          ...draftReport,
+          context: context2,
+          userId: includedUser2.id,
+        },
+      );
+      excludedReport = await ActivityReport.create(
+        {
+          ...draftReport,
+          context: context3,
+          userId: excludedUser.id,
+        },
+      );
+      possibleIds = [
+        includedReport1.id,
+        includedReport2.id,
+        excludedReport.id,
+        globallyExcludedReport.id,
+      ];
+
+      // Index reports.
+      await addIndexDocument({
+        data: {
+          indexName: AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+          id: includedReport1.id,
+          document: { id: includedReport1.id, context: context1 },
+        },
+      });
+
+      await addIndexDocument(
+        {
+          data: {
+            indexName: AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+            id: includedReport2.id,
+            document: { id: includedReport2.id, context: context2 },
+          },
+        },
+      );
+
+      await addIndexDocument(
+        {
+          data: {
+            indexName: AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+            id: excludedReport.id,
+            document: { id: excludedReport.id, context: context3 },
+          },
+        },
+      );
+    });
+
+    afterAll(async () => {
+      // Delete indexes.
+      await deleteIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
+
+      // Delete reports.
+      await ActivityReport.destroy({
+        where: { id: possibleIds },
+      });
+    });
+
+    it('return correct text filter search results', async () => {
+      const filters = { 'text.ctn': 'change' };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      console.log('\n\n\nScope: ', scope);
+      // { id: { [Op.in]: [includedReport1.id, includedReport2.id] } }
+      console.log('\n\n\nScopeT: ', scope);
+      const found = await ActivityReport.findAll({
+        logging: console.log,
+        where: {
+          [Op.and]: [
+            scope,
+            //{ id: { [Op.in]: [includedReport1.id, includedReport2.id] } },
+            { id: possibleIds },
+          ],
+        },
+      });
+      console.log('\n\n\nFound:', found);
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
     });
   });
 
