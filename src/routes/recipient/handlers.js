@@ -34,7 +34,7 @@ export async function getGoalsByIdandRecipient(req, res) {
 export async function getRecipient(req, res) {
   try {
     const { recipientId } = req.params;
-    const { grant: scopes } = filtersToScopes(req.query);
+    const { grant: scopes } = await filtersToScopes(req.query);
     const recipient = await recipientById(recipientId, scopes);
     if (!recipient) {
       res.sendStatus(404);
@@ -59,7 +59,7 @@ export async function searchRecipients(req, res) {
     const {
       s, sortBy, direction, offset,
     } = req.query;
-    const { grant: scopes } = filtersToScopes(req.query);
+    const { grant: scopes } = await filtersToScopes(req.query);
     const recipients = await recipientsByName(s, scopes, sortBy, direction, offset);
     if (!recipients) {
       res.sendStatus(404);
