@@ -6,10 +6,11 @@
 - Postgres
 - Bash
 
-## Frameworks
+## Frameworks & Libraries
 - React
 - Express
 - Sequelize
+- Bull
 
 ## Development/Deployment
 - Git/Github
@@ -27,6 +28,7 @@
 - Cloud.gov
 - - RDS, EC2, S3
 - - Kibana
+- Redis
 
 ## Documentation
 - Github
