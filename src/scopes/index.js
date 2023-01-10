@@ -1,12 +1,36 @@
+/* eslint-disable dot-notation */
+import { _ } from 'lodash';
 import { activityReportsFiltersToScopes as activityReport } from './activityReport';
 import { grantsFiltersToScopes as grant } from './grants';
 import { goalsFiltersToScopes as goal } from './goals';
+import { AWS_ELASTIC_SEARCH_INDEXES, DECIMAL_BASE } from '../constants';
+import { search } from '../lib/awsElasticSearch/index';
 
 const models = {
   activityReport,
   grant,
   goal,
 };
+
+async function checkForSearchItems(filters) {
+  let propertyName = '';
+  if (_.has(filters, 'text.ctn')) {
+    propertyName = 'text.ctn';
+  } else if (_.has(filters, 'text.nctn')) {
+    propertyName = 'text.nctn';
+  }
+  if (propertyName) {
+    const searchResult = await search(
+      AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+      [],
+      filters[propertyName],
+    );
+    const reportIds = searchResult.hits.map((r) => parseInt(r['_id'], DECIMAL_BASE));
+    const updatedFilters = { ...filters, [propertyName]: reportIds };
+    return updatedFilters;
+  }
+  return filters;
+}
 
 /**
  * For each model listed, we apply the passed in filters from the express query and
@@ -40,12 +64,14 @@ const models = {
  * @param {} options
  * @returns {obj} scopes
  */
-export default function filtersToScopes(filters, options) {
-  console.log('\n\n\n---------- Here2');
+export default async function filtersToScopes(filters, options) {
+  // Check for AWS Elasticsearch filters.
+  const updatedFilters = await checkForSearchItems(filters);
+
   return Object.keys(models).reduce((scopes, model) => {
     // we make em an object like so
     Object.assign(scopes, {
-      [model]: models[model](filters, options && options[model], options && options.userId),
+      [model]: models[model](updatedFilters, options && options[model], options && options.userId),
     });
     return scopes;
   }, {});

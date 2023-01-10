@@ -52,7 +52,7 @@ export function withinDateRange(dates, property) {
   }, []);
 }
 
-export async function createFiltersToScopes(filters, topicToQuery, options, userId) {
+export function createFiltersToScopes(filters, topicToQuery, options, userId) {
   const validFilters = pickBy(filters, (query, topicAndCondition) => {
     const [topic, condition] = topicAndCondition.split('.');
     if (!(topic in topicToQuery)) {

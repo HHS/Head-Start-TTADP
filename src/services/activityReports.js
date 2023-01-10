@@ -583,7 +583,7 @@ export async function activityReports(
   excludeLegacy = false,
   userId = 0,
 ) {
-  const { activityReport: scopes } = filtersToScopes(filters, { userId });
+  const { activityReport: scopes } = await filtersToScopes(filters, { userId });
 
   const where = {
     calculatedStatus: REPORT_STATUSES.APPROVED,
@@ -840,7 +840,7 @@ export async function activityReportAlerts(userId, {
   ...filters
 }) {
   const updatedFilters = await setReadRegions(filters, userId);
-  const { activityReport: scopes } = filtersToScopes(updatedFilters, { userId });
+  const { activityReport: scopes } = await filtersToScopes(updatedFilters, { userId });
   const reports = await ActivityReport.findAndCountAll(
     {
       where: {
@@ -1317,7 +1317,7 @@ export async function getAllDownloadableActivityReports(
 ) {
   const regions = readRegions || [];
 
-  const { activityReport: scopes } = filtersToScopes(filters, { userId });
+  const { activityReport: scopes } = await filtersToScopes(filters, { userId });
 
   const where = {
     regionId: {
@@ -1331,7 +1331,7 @@ export async function getAllDownloadableActivityReports(
 }
 
 export async function getAllDownloadableActivityReportAlerts(userId, filters) {
-  const { activityReport: scopes } = filtersToScopes(filters, { userId });
+  const { activityReport: scopes } = await filtersToScopes(filters, { userId });
   const where = {
     [Op.and]: scopes,
     [Op.or]: [
