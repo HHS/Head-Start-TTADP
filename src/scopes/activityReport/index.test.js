@@ -935,7 +935,7 @@ describe('filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
 
-      expect(found.map((f) => f.id).sort()).toStrictEqual([possibleIds[1], possibleIds[2]].sort());
+      expect(found.map((f) => f.id)).toStrictEqual([possibleIds[1], possibleIds[2]]);
     });
 
     it('finds reports based on collaborator role', async () => {
@@ -944,7 +944,7 @@ describe('filtersToScopes', () => {
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
-      expect(found.map((f) => f.id).sort()).toStrictEqual([possibleIds[0], possibleIds[1]].sort());
+      expect(found.map((f) => f.id)).toStrictEqual([possibleIds[0], possibleIds[1]]);
     });
 
     it('filters out reports based on collaborator role', async () => {
@@ -953,7 +953,7 @@ describe('filtersToScopes', () => {
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
-      expect(found.map((f) => f.id).sort()).toStrictEqual([possibleIds[2]].sort());
+      expect(found.map((f) => f.id)).toStrictEqual([possibleIds[2]]);
     });
 
     it('only allows valid roles to be passed', async () => {
@@ -962,14 +962,14 @@ describe('filtersToScopes', () => {
       let found = await ActivityReport.findAll({
         where: { [Op.and]: [scope.activityReport, { id: possibleIds }] },
       });
-      expect(found.map((f) => f.id).sort()).toStrictEqual(possibleIds.sort());
+      expect(found.map((f) => f.id)).toStrictEqual(possibleIds);
 
       filters = { 'role.nin': ['Grantee Specialist & Potato Salesman'] };
       scope = filtersToScopes(filters);
       found = await ActivityReport.findAll({
         where: { [Op.and]: [scope.activityReport, { id: possibleIds }] },
       });
-      expect(found.map((f) => f.id).sort()).toStrictEqual(possibleIds.sort());
+      expect(found.map((f) => f.id)).toStrictEqual(possibleIds);
     });
   });
 
