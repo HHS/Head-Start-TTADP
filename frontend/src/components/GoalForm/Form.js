@@ -93,8 +93,6 @@ export default function Form({
 
   const showAlert = isOnReport && status !== 'Closed';
 
-  // console.log(endDate);
-
   return (
     <div className="ttahub-create-goals-form">
       { fetchError ? <Alert type="error" role="alert">{ fetchError }</Alert> : null}
