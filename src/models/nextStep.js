@@ -1,4 +1,5 @@
 const { Model } = require('sequelize');
+const { NEXTSTEP_NOTETYPE } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 
 module.exports = (sequelize, DataTypes) => {
@@ -15,13 +16,13 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes.TEXT,
       validate: {
-        isNull: false,
-        isEmpty: false,
+        notNull: true,
+        notEmpty: true,
       },
     },
     noteType: {
       allowNull: false,
-      type: DataTypes.ENUM('SPECIALIST', 'RECIPIENT'),
+      type: DataTypes.ENUM(Object.values(NEXTSTEP_NOTETYPE)),
     },
     completeDate: {
       type: DataTypes.DATEONLY,

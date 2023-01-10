@@ -21,10 +21,6 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: true,
       primaryKey: true,
     },
-    userProvidedUrl: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
     objectiveId: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -32,10 +28,10 @@ module.exports = (sequelize, DataTypes) => {
     resourceId: {
       type: DataTypes.INTEGER,
     },
-    sourceField: {
+    sourceFields: {
       allowNull: true,
       default: null,
-      type: DataTypes.ENUM(Object.values(SOURCE_FIELD.OBJECTIVE)),
+      type: DataTypes.ARRAY((DataTypes.ENUM(Object.values(SOURCE_FIELD.OBJECTIVE)))),
     },
     isAutoDetected: {
       type: DataTypes.BOOLEAN,

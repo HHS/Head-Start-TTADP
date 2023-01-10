@@ -165,6 +165,11 @@ export const OBJECTIVE_STATUS = {
   COMPLETE: 'Complete',
 };
 
+export const NEXTSTEP_NOTETYPE = {
+  SPECIALIST: 'SPECIALIST',
+  RECIPIENT: 'RECIPIENT',
+};
+
 /*
   Please keep in sync with:
   frontend > src > constants.js

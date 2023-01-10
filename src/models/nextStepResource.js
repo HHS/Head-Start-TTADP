@@ -1,4 +1,5 @@
 const { Model } = require('sequelize');
+const { SOURCE_FIELD } = require('../constants');
 // const { beforeDestroy, afterDestroy } = require('./hooks/nextStepResource');
 
 module.exports = (sequelize, DataTypes) => {
@@ -14,6 +15,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     resourceId: {
       type: DataTypes.INTEGER,
+    },
+    sourceFields: {
+      allowNull: true,
+      default: null,
+      type: DataTypes.ARRAY((DataTypes.ENUM(Object.values(SOURCE_FIELD.NEXTSTEPS)))),
     },
     isAutoDetected: {
       type: DataTypes.BOOLEAN,
