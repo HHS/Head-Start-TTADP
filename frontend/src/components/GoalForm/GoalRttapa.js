@@ -33,12 +33,12 @@ export default function GoalRttapa({
     <FormGroup className={`ttahub-goal-is-rttapa ${className}`} error={error.props.children}>
       <Fieldset onBlur={() => onBlur()}>
         <legend>
-          Is this a Recipient TTA Plan Agreement (RTTAPA) goal?
+          Goal type
           <Req />
         </legend>
         {error}
-        <Radio disabled={isLoading} name={inputName} id={`${inputName}-yes`} label="Yes" checked={isRttapa === 'Yes'} onChange={() => onChange('Yes')} />
-        <Radio disabled={isLoading} name={inputName} id={`${inputName}-no`} label="No" checked={isRttapa === 'No'} onChange={() => onChange('No')} />
+        <Radio disabled={isLoading} name={inputName} id={`${inputName}-yes`} label="RTTAPA" checked={isRttapa === 'Yes'} onChange={() => onChange('Yes')} />
+        <Radio disabled={isLoading} name={inputName} id={`${inputName}-no`} label="Non-RTTAPA" checked={isRttapa === 'No'} onChange={() => onChange('No')} />
       </Fieldset>
     </FormGroup>
   );

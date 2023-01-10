@@ -42,29 +42,29 @@ describe('GoalRttapa', () => {
 
   it('shows the read only view when the goal is closed', async () => {
     renderGoalRttapa('Yes', 'Closed');
-    expect(await screen.findByText('Recipient TTA Plan Agreement (RTTAPA) goal')).toBeVisible();
-    expect(screen.getByText('Yes')).toBeVisible();
+    expect(await screen.findByText('Goal type')).toBeVisible();
+    expect(screen.getByText('RTTAPA')).toBeVisible();
     expect(document.querySelector('input[type="radio"]')).toBeNull();
   });
 
   it('can update RTTAPA if the goal is still a draft', async () => {
     renderGoalRttapa('Yes', 'Draft', jest.fn(), 'Yes');
-    expect(await screen.findByText('Is this a Recipient TTA Plan Agreement (RTTAPA) goal?')).toBeVisible();
-    expect(screen.getByText('Yes')).toBeVisible();
+    expect(await screen.findByText('Goal type')).toBeVisible();
+    expect(screen.getByText('RTTAPA')).toBeVisible();
     expect(document.querySelector('input[type="radio"]')).toBeTruthy();
   });
 
   it('shows the read only when it is initially "yes"', async () => {
     renderGoalRttapa('Yes', 'In Progress', jest.fn(), 'Yes');
-    expect(await screen.findByText('Recipient TTA Plan Agreement (RTTAPA) goal')).toBeVisible();
-    expect(screen.getByText('Yes')).toBeVisible();
+    expect(await screen.findByText('Goal type')).toBeVisible();
+    expect(screen.getByText('RTTAPA')).toBeVisible();
     expect(document.querySelector('input[type="radio"]')).toBeNull();
   });
 
   it('calls on change', async () => {
     const onChange = jest.fn();
     renderGoalRttapa('Yes', 'In Progress', onChange);
-    const radio = screen.getByLabelText('No');
+    const radio = screen.getByLabelText('Non-RTTAPA');
     userEvent.click(radio);
     await waitFor(() => expect(onChange).toHaveBeenCalledWith('No'));
   });
