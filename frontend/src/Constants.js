@@ -259,6 +259,7 @@ export const SESSION_STORAGE_IMPERSONATION_KEY = `auth-impersonation-id-${LOCAL_
 export const GOAL_CLOSE_REASONS = [
   'Duplicate goal',
   'Recipient request',
+  'Regional Office request',
   'TTA complete',
 ];
 
