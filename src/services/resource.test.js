@@ -1167,8 +1167,10 @@ describe('resource', () => {
           ],
           raw: true,
         });
-        expect(arResources[0].sourceFields.length).toEqual(2);
-        expect(arResources[0].isAutoDetected).toEqual(true);
+        expect(arResources.find((r) => r.resourceId === resources[0].id).sourceFields.length)
+          .toEqual(2);
+        expect(arResources.find((r) => r.resourceId === resources[0].id).isAutoDetected)
+          .toEqual(true);
       });
       it('expected usage, delete', async () => {
         let data = {
@@ -1285,7 +1287,8 @@ describe('resource', () => {
         expect(arResources.map((r) => r.resourceId)).not.toContain(resources[1].id);
         expect(arResources.find((r) => r.resourceId === resources[0].id).sourceFields.length)
           .toEqual(2);
-        expect(arResources[0].isAutoDetected).toEqual(true);
+        expect(arResources.find((r) => r.resourceId === resources[0].id).isAutoDetected)
+          .toEqual(true);
       });
     });
   });
