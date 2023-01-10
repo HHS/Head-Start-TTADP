@@ -15,9 +15,10 @@ describe('queryStringToFilters', () => {
 });
 
 describe('decodeQueryParam', () => {
-  it('splits on commas', () => {
-    const q = decodeQueryParam('test,test');
-    expect(q).toStrictEqual(['test', 'test']);
+  it('query contains a comma', () => {
+    const param = 'a,b,c';
+    const query = decodeQueryParam(param);
+    expect(query).toStrictEqual(['a', 'b', 'c']);
   });
 });
 
@@ -41,8 +42,14 @@ describe('filtersToQueryString', () => {
     expect(str).toBe(`region.in[]=14&startDate.win=${encodeURIComponent('2021/11/13-2021/12/13')}`);
   });
 
-  it('adds a region if it is not present in the filters but is passed in', () => {
+  it('there is a region param', () => {
     const filters = [
+      {
+        id: '9ac8381c-2507-4b4a-a30c-6f1f87a00901',
+        topic: 'region',
+        condition: 'is',
+        query: '14',
+      },
       {
         id: '07bc65ed-a4ce-410f-b7be-f685bc8921ed',
         topic: 'startDate',
@@ -50,12 +57,17 @@ describe('filtersToQueryString', () => {
         query: '2021/11/13-2021/12/13',
       },
     ];
-    const str = filtersToQueryString(filters, 14);
-    expect(str).toBe(`startDate.win=${encodeURIComponent('2021/11/13-2021/12/13')}&region.in[]=14`);
+    const str = filtersToQueryString(filters);
+    expect(str).toBe(`region.in[]=14&startDate.win=${encodeURIComponent('2021/11/13-2021/12/13')}`);
   });
 });
 
 describe('formatDateRange', () => {
+  it('nothing in, nothing out', () => {
+    const str = formatDateRange();
+    expect(str).toBe('');
+  });
+
   it('returns a formatted date string', () => {
     const str = formatDateRange({
       lastThirtyDays: false,
