@@ -20,9 +20,11 @@ import {
   Alert,
 } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import useInterval from '@use-it/interval';
 import moment from 'moment';
+import useInterval from '@use-it/interval';
 import Container from '../Container';
+import SocketAlert from '../SocketAlert';
+// import UserContext from '../../UserContext';
 
 import {
   IN_PROGRESS, COMPLETE,
@@ -70,6 +72,7 @@ const Navigator = ({
   errorMessage,
   updateErrorMessage,
   savedToStorageTime,
+  socketMessageStore,
 }) => {
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
   const page = useMemo(() => pages.find((p) => p.path === currentPage), [currentPage, pages]);
@@ -196,7 +199,7 @@ const Navigator = ({
     const objectivesFieldArrayName = 'goalForEditing.objectives';
     const objectives = getValues(objectivesFieldArrayName);
     const name = getValues('goalName');
-    const endDate = getValues('goalEndDate');
+    const formEndDate = getValues('goalEndDate');
     const isRttapa = getValues('goalIsRttapa');
 
     let invalidResources = false;
@@ -227,11 +230,13 @@ const Navigator = ({
       setSavingLoadScreen(isAutoSave);
     }
 
+    const endDate = formEndDate && formEndDate.toLowerCase() !== 'invalid date' ? formEndDate : '';
+
     const goal = {
       ...goalForEditing,
       isActivelyBeingEditing: true,
       name,
-      endDate: endDate && endDate.toLowerCase() !== 'invalid date' ? endDate : '',
+      endDate,
       objectives: objectivesWithValidResourcesOnly(objectives),
       isRttapa,
       regionId: formData.regionId,
@@ -627,6 +632,7 @@ const Navigator = ({
         />
       </Grid>
       <Grid className="smart-hub-navigator-wrapper" col={12} desktop={{ col: 8 }}>
+        <SocketAlert store={socketMessageStore} />
         <GoalFormContext.Provider value={{
           isGoalFormClosed,
           isObjectivesFormClosed,
@@ -755,6 +761,11 @@ Navigator.propTypes = {
       PropTypes.string,
     ]),
   }),
+  socketMessageStore: PropTypes.shape({
+    user: PropTypes.shape({
+      name: PropTypes.string,
+    }),
+  }),
 };
 
 Navigator.defaultProps = {
@@ -763,6 +774,7 @@ Navigator.defaultProps = {
   lastSaveTime: null,
   savedToStorageTime: null,
   errorMessage: '',
+  socketMessageStore: null,
   reportCreator: {
     name: null,
     role: null,

@@ -102,6 +102,7 @@ describe('filtersToScopes', () => {
   let includedUser1;
   let includedUser2;
   let excludedUser;
+  let client;
 
   beforeAll(async () => {
     await User.create(mockUser);
@@ -117,6 +118,12 @@ describe('filtersToScopes', () => {
     }, {
       silent: true,
     });
+    // Create ES client.
+    client = await getClient();
+
+    // Create new index
+    await deleteIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
+    await createIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
   });
 
   afterAll(async () => {
@@ -140,6 +147,10 @@ describe('filtersToScopes', () => {
         id: userIds,
       },
     });
+
+    // Delete indexes.
+    await deleteIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
+
     await db.sequelize.close();
   });
 
@@ -1680,20 +1691,12 @@ describe('filtersToScopes', () => {
   });
 
   describe('text', () => {
-    let client;
     let includedReport1;
     let includedReport2;
     let excludedReport;
     let possibleIds;
 
     beforeAll(async () => {
-      // Create ES client.
-      client = await getClient();
-
-      // Create new index
-      await deleteIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
-      await createIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
-
       // Create reports.
       const context1 = 'Nothings gonna change my world';
       const context2 = 'I get by with a little help from my friends';
@@ -1757,9 +1760,6 @@ describe('filtersToScopes', () => {
     });
 
     afterAll(async () => {
-      // Delete indexes.
-      await deleteIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
-
       // Delete reports.
       await ActivityReport.destroy({
         where: { id: possibleIds },
