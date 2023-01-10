@@ -41,6 +41,7 @@ const models = {
  * @returns {obj} scopes
  */
 export default function filtersToScopes(filters, options) {
+  console.log('\n\n\n---------- Here2');
   return Object.keys(models).reduce((scopes, model) => {
     // we make em an object like so
     Object.assign(scopes, {
