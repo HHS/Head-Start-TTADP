@@ -1767,23 +1767,37 @@ describe('filtersToScopes', () => {
     it('return correct text filter search results', async () => {
       const filters = { 'text.ctn': 'change' };
       const { activityReport: scope } = await filtersToScopes(filters);
-      console.log('\n\n\nScope: ', scope);
-      // { id: { [Op.in]: [includedReport1.id, includedReport2.id] } }
-      console.log('\n\n\nScopeT: ', scope);
       const found = await ActivityReport.findAll({
-        logging: console.log,
         where: {
           [Op.and]: [
             scope,
-            //{ id: { [Op.in]: [includedReport1.id, includedReport2.id] } },
             { id: possibleIds },
           ],
         },
       });
-      console.log('\n\n\nFound:', found);
-      expect(found.length).toBe(2);
+      expect(found.length).toBe(1);
       expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
+        .toEqual(expect.arrayContaining([includedReport1.id]));
+    });
+
+    it('excludes correct text filter search results', async () => {
+      const filters = { 'text.nctn': 'change' };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            { id: possibleIds },
+          ],
+        },
+      });
+      expect(found.length).toBe(3);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([
+          includedReport2.id,
+          excludedReport.id,
+          globallyExcludedReport.id,
+        ]));
     });
   });
 

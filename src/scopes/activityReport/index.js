@@ -122,7 +122,6 @@ export const topicToQuery = {
   },
 };
 
-export async function activityReportsFiltersToScopes(filters, options, userId) {
-  console.log('\n\n\n---------- Here2');
+export function activityReportsFiltersToScopes(filters, options, userId) {
   return createFiltersToScopes(filters, topicToQuery, options, userId);
 }
