@@ -8,9 +8,9 @@ describe('queryStringToFilters', () => {
     const str = 'region.in[]=14&startDate.win=2021/11/13-2021/12/13&gibberish';
     const filters = queryStringToFilters(str);
     expect(filters.length).toBe(2);
-    expect(filters.map((filter) => filter.topic).sort()).toStrictEqual(['region', 'startDate'].sort());
-    expect(filters.map((filter) => filter.condition).sort()).toStrictEqual(['is', 'is within'].sort());
-    expect(filters.map((filter) => filter.query).sort()).toStrictEqual([['14'], '2021/11/13-2021/12/13'].sort());
+    expect(filters.map((filter) => filter.topic)).toStrictEqual(['region', 'startDate']);
+    expect(filters.map((filter) => filter.condition)).toStrictEqual(['is', 'is within']);
+    expect(filters.map((filter) => filter.query)).toStrictEqual([['14'], '2021/11/13-2021/12/13']);
   });
 });
 

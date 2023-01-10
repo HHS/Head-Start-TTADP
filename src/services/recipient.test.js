@@ -506,31 +506,31 @@ describe('Recipient DB service', () => {
     it('sorts based on name', async () => {
       const foundRecipients = await recipientsByName('apple', regionToScope(1), 'name', 'asc', 0);
       expect(foundRecipients.rows.length).toBe(3);
-      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([68, 63, 66].sort());
+      expect(foundRecipients.rows.map((g) => g.id)).toStrictEqual([68, 63, 66]);
     });
 
     it('sorts based on program specialist', async () => {
       const foundRecipients = await recipientsByName('apple', regionToScope(1), 'programSpecialist', 'asc', 0);
       expect(foundRecipients.rows.length).toBe(3);
-      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([66, 63, 68]);
+      expect(foundRecipients.rows.map((g) => g.id)).toStrictEqual([66, 63, 68]);
     });
 
     it('sorts based on grant specialist', async () => {
       const foundRecipients = await recipientsByName('apple', regionToScope(1), 'grantSpecialist', 'asc', 0);
       expect(foundRecipients.rows.length).toBe(3);
-      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([68, 63, 66].sort());
+      expect(foundRecipients.rows.map((g) => g.id)).toStrictEqual([68, 63, 66]);
     });
 
     it('respects sort order', async () => {
       const foundRecipients = await recipientsByName('apple', regionToScope(1), 'name', 'desc', 0);
       expect(foundRecipients.rows.length).toBe(3);
-      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([66, 63, 68].sort());
+      expect(foundRecipients.rows.map((g) => g.id)).toStrictEqual([66, 63, 68]);
     });
 
     it('respects the offset passed in', async () => {
       const foundRecipients = await recipientsByName('apple', regionToScope(1), 'name', 'asc', 1);
       expect(foundRecipients.rows.length).toBe(2);
-      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([63, 66].sort());
+      expect(foundRecipients.rows.map((g) => g.id)).toStrictEqual([63, 66]);
     });
 
     it('finds inactive grants that fall in the accepted range', async () => {
