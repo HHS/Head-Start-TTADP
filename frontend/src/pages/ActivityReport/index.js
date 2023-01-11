@@ -13,6 +13,7 @@ import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { useHistory, Redirect } from 'react-router-dom';
 import { Alert, Grid } from '@trussworks/react-uswds';
+import useInterval from '@use-it/interval';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
 import pages from './Pages';
@@ -28,6 +29,7 @@ import {
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
 import useARLocalStorage from '../../hooks/useARLocalStorage';
+import useSocket from '../../hooks/useSocket';
 import { convertGoalsToFormData, convertReportToFormData, findWhatsChanged } from './formDataHelpers';
 
 import {
@@ -118,6 +120,20 @@ function setConnectionActiveWithError(e, setConnectionActive) {
   return connection;
 }
 
+const INTERVAL_DELAY = 10000; // TEN SECONDS
+
+const publishLocation = (socket, socketPath, user, lastSaveTime) => {
+  // we have to check to see if the socket is open before we send a message
+  // since the interval could be called while the socket is open but is about to close
+  if (socket && socket.readyState === socket.OPEN) {
+    socket.send(JSON.stringify({
+      user: user.name,
+      lastSaveTime,
+      channel: socketPath,
+    }));
+  }
+};
+
 function ActivityReport({
   match, location, region,
 }) {
@@ -161,6 +177,13 @@ function ActivityReport({
   const reportId = useRef();
   const { user } = useContext(UserContext);
 
+  const {
+    socket,
+    setSocketPath,
+    socketPath,
+    messageStore,
+  } = useSocket(user);
+
   const showLastUpdatedTime = (
     location.state && location.state.showLastUpdatedTime && connectionActive
   ) || false;
@@ -181,7 +204,22 @@ function ActivityReport({
     }
   }, [activityReportId, formData]);
 
+  useEffect(() => {
+    if (activityReportId === 'new' || !currentPage) {
+      return;
+    }
+    const newPath = `/activity-reports/${activityReportId}/${currentPage}`;
+    setSocketPath(newPath);
+  }, [activityReportId, currentPage, setSocketPath]);
+
   const userHasOneRole = useMemo(() => user && user.roles && user.roles.length === 1, [user]);
+
+  useInterval(() => publishLocation(socket, socketPath, user, lastSaveTime), INTERVAL_DELAY);
+
+  // we also have to publish our location when we enter a channel
+  useEffect(() => {
+    publishLocation(socket, socketPath, user, lastSaveTime);
+  }, [socket, socketPath, user, lastSaveTime]);
 
   useDeepCompareEffect(() => {
     const fetch = async () => {
@@ -380,7 +418,8 @@ function ActivityReport({
     }
 
     const page = pages.find((p) => p.position === position);
-    history.push(`/activity-reports/${reportId.current}/${page.path}`, state);
+    const newPath = `/activity-reports/${reportId.current}/${page.path}`;
+    history.push(newPath, state);
   };
 
   const onSave = async (data) => {
@@ -552,6 +591,7 @@ function ActivityReport({
       }
       >
         <Navigator
+          socketMessageStore={messageStore}
           key={currentPage}
           editable={editable}
           updatePage={updatePage}
