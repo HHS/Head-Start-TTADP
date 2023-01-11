@@ -509,6 +509,8 @@ async function deleteActivityReportObjectiveFile(req, res) {
           required: true,
         },
       ],
+      hookMetadata: { objectiveIds },
+      individualHooks: true,
     });
 
     res.status(204).send();
