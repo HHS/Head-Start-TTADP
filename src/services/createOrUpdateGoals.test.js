@@ -186,7 +186,7 @@ describe('createOrUpdateGoals', () => {
     expect(createdVias).toContain('activityReport');
     expect(createdVias).toContain('rtr');
 
-    const [, updatedGoal] = newGoals;
+    const updatedGoal = newGoals.find((g) => g.goalIds.includes(goal.id));
     expect(updatedGoal.name).toBe('This is some serious goal text');
     expect(updatedGoal.grantIds.length).toBe(1);
 
@@ -201,22 +201,27 @@ describe('createOrUpdateGoals', () => {
     expect(grantRegions).toContain(1);
     expect(grantRecipients).toContain(recipient.id);
 
-    const objectivesOnUpdatedGoal = await Objective.findAll({
-      where: {
-        goalId: ids,
-      },
-      raw: true,
-    });
-
-    objectivesOnUpdatedGoal.forEach((o, i) => {
-      expect(o.rtrOrder).toBe(i + 1);
-    });
+    const objectivesOnUpdatedGoal = updatedGoal.objectives;
 
     expect(objectivesOnUpdatedGoal.length).toBe(2);
     const titles = objectivesOnUpdatedGoal.map((obj) => obj.title);
     expect(titles).toContain('This is another objective');
     expect(titles).toContain('This is an objective');
     expect(titles).not.toContain('This objective will be deleted');
+
+    // should always be in the same order, by rtr order
+    const order = objectivesOnUpdatedGoal.map((obj) => obj.rtrOrder);
+    expect(order).toStrictEqual([1, 2]);
+
+    const objectiveOnTheGoalWithCreatedVias = await Objective.findAll({
+      attributes: ['id', 'createdVia'],
+      where: {
+        id: objectivesOnUpdatedGoal.map((obj) => obj.id),
+      },
+      order: [['id', 'ASC']],
+    });
+    const objectiveCreatedVias = objectiveOnTheGoalWithCreatedVias.map((obj) => obj.createdVia);
+    expect(objectiveCreatedVias).toStrictEqual([null, 'rtr']);
 
     const objectiveOnUpdatedGoal = await Objective.findByPk(objective.id, { raw: true });
     expect(objectiveOnUpdatedGoal.id).toBe(objective.id);

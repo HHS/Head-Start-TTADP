@@ -42,6 +42,11 @@ module.exports = (sequelize, DataTypes) => {
     closeSuspendContext: {
       type: DataTypes.TEXT,
     },
+    isActivelyEdited: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'ActivityReportGoal',

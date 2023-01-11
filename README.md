@@ -47,11 +47,21 @@ The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-r
 
 Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve documentation files. These files can be found in the `docs/openapi` folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
 
+We use an AWS Opensearch docker image (Elasticsearch fork) and require that the following variables get added to the env file.
+* `AWS_ELASTICSEARCH_ENDPOINT=http://localhost:9200`
+* `AWS_ELASTICSEARCH_ACCESS_KEY=admin`
+* `AWS_ELASTICSEARCH_SECRET_KEY=admin`
+
 #### Local build
 
 You can also run build commands directly on your host (without docker). Make sure you install dependencies when changing execution method. You could see some odd errors if you install dependencies for docker and then run yarn commands directly on the host, especially if you are developing on windows. If you want to use the host yarn commands be sure to run `yarn deps:local` before any other yarn commands. Likewise if you want to use docker make sure you run `yarn docker:deps`.
 
 You must also install and run minio locally to use the file upload functionality. Please comment out `S3_ENDPOINT=http://minio:9000` and uncomment `S3_ENDPOINT=http://localhost:9000` in your .env file.
+
+We use an AWS Opensearch docker image (Elasticsearch fork) and require that the following variables get added to the env file.
+* `AWS_ELASTICSEARCH_ENDPOINT=http://localhost:9200`
+* `AWS_ELASTICSEARCH_ACCESS_KEY=admin`
+* `AWS_ELASTICSEARCH_SECRET_KEY=admin`
 
 #### Precommit hooks
 
@@ -137,6 +147,32 @@ The infrastructure used to run this application can be categorized into two dist
 #### Continuous Integration (CI)
 
 Linting, unit tests, test coverage analysis, and an accessibility scan are all run automatically on each push to the Ad Hoc fork of HHS/Head-Start-TTADP repo and the HHS/Head-Start-TTADP repo. In the Ad Hoc repository, merges to the main branch are blocked if the CI tests do not pass. The continuous integration pipeline is configured via CircleCi. The bulk of CI configurations can be found in this repo's [.circleci/config.yml](.circleci/config.yml) file. For more information on the security audit and scan tools used in the continuous integration pipeline see [ADR 0009](docs/adr/0009-security-scans.md).
+
+#### Creating and Applying a Deploy Key
+
+In order for CircleCi to correctly pull the latest code from Github, we need to create and apply a SSH token to both Github and CircleCi.
+
+The following links outline the steps to take:
+https://circleci.com/docs/github-integration/#create-a-github-deploy-key
+https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent
+
+Steps to create and apply deploy token:
+1. Open the Git Bash CMD window
+2. Enter the following command with your github (admin) e-mail: ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+3. When prompted to enter a file name leave blank and press ENTER
+4. When prompted to enter a PASSPHRASE leave blank and press ENTER (twice)
+5. Search for the file created with the name "id_rsa"
+6. Notice that two files have been created private and public in the .ssh folder
+7. Open the public file and copy the entire contents of the file
+8. In Github to the TTAHUB project and click 'Settings' in the top right corner
+9. Under 'Security' click 'Deploy Keys' then 'Add deploy Key'
+10. Give the key a name 'TTAHUB' and paste the private key contents, CHECK 'Allow write access' then click 'Add Key'
+11. Open the private key file that was created and copy the entire contents of the file
+12. Go to CircleCi and open the 'Head-Start-TTADP' project
+13. Click 'Project settings' in the top right corner
+14. Click 'SSH keys' and scroll down to the section 'Additional SSH Keys'
+15. Click 'Add SSH Key', in 'Hostname' enter github.com then paste the contents of the private file in 'Private Key' section
+16. Click 'Add SSH Key'
 
 #### Continuous Deployment (CD)
 

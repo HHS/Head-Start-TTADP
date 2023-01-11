@@ -12,15 +12,15 @@
     "deps:local": "yarn install && yarn --cwd frontend install",
     "deps": "yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
     "start:local": "concurrently \"yarn server\" \"yarn client\" \"yarn worker\"",
-    "start:ci": "cross-env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub TTA_SMART_HUB_URI=http://localhost:3000 concurrently \"yarn start:web\" \"yarn client\" \"yarn start:worker\"",
+    "start:ci": "cross-env BYPASS_SOCKETS=true POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub TTA_SMART_HUB_URI=http://localhost:3000 concurrently \"yarn start:web\" \"yarn client\"",
     "start:web": "node ./build/server/index.js",
     "start:worker": "node ./build/server/worker.js",
     "server": "nodemon src/index.js --exec babel-node",
     "worker": "nodemon src/worker.js --exec babel-node",
     "server:debug": "nodemon --inspect=0.0.0.0:9229 src/index.js --exec babel-node",
     "client": "yarn --cwd frontend start",
-    "test": "jest src --runInBand", 
-    "test:ci": "./bin/test-backend-ci",    
+    "test": "jest src --runInBand",
+    "test:ci": "./bin/test-backend-ci",
     "test:all": "yarn test:ci && yarn --cwd frontend test:ci",
     "lint": "eslint src",
     "lint:ci": "eslint -f eslint-formatter-multiple src",
@@ -32,11 +32,14 @@
     "docs:serve": "npx redoc-cli serve -p 5003 docs/openapi/index.yaml",
     "cucumber": "./node_modules/.bin/cucumber-js --publish ./cucumber/features/*.feature -f json:./reports/cucumber_report.json && node ./cucumber/index.js",
     "cucumber:ci": "cross-env TTA_SMART_HUB_URI=http://localhost:3000 yarn cucumber",
+    "e2e": "./node_modules/.bin/playwright test",
+    "e2e:ci": "cross-env TTA_SMART_HUB_URI=http://localhost:3000 yarn e2e",
     "migrate:create": "npx sequelize-cli migration:generate --name",
     "db:bootstrap:admin:local": "./node_modules/.bin/babel-node ./src/tools/bootstrapAdminCLI.js",
     "db:bootstrap:admin": "node ./build/server/tools/bootstrapAdminCLI.js",
     "db:validation": "node ./build/server/tools/dataValidationCLI.js",
     "db:migrate": "node_modules/.bin/sequelize db:migrate",
+    "db:migrate:create": "npx sequelize-cli migration:generate --name",
     "db:migrate:ci": "cross-env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub node_modules/.bin/sequelize db:migrate",
     "db:migrate:prod": "node_modules/.bin/sequelize db:migrate --options-path .production.sequelizerc",
     "db:migrate:undo": "node_modules/.bin/sequelize db:migrate:undo",
@@ -83,7 +86,9 @@
     "restoreTopics": "node ./build/server/tools/restoreTopicsCLI.js",
     "restoreTopics:local": "./node_modules/.bin/babel-node ./src/tools/restoreTopicsCLI.js",
     "coverage:backend": "./bin/build-coverage-report",
-    "docker:coverage:backend": "docker compose run --rm backend chmod 744 ./bin/build-coverage-report && ./bin/build-coverage-report"
+    "docker:coverage:backend": "docker compose run --rm backend chmod 744 ./bin/build-coverage-report && ./bin/build-coverage-report",
+    "createAwsElasticSearchIndexes": "node ./build/server/tools/createAwsElasticSearchIndexesCli.js",
+    "createAwsElasticSearchIndexes:local": "./node_modules/.bin/babel-node ./src/tools/createAwsElasticSearchIndexesCli.js"
   },
   "repository": {
     "type": "git",
@@ -141,7 +146,9 @@
       "<rootDir>/src/testUtils.js",
       "<rootDir>/src/logger.js",
       "<rootDir>/src/*/coverage/",
-      "<rootDir>/src/coverage/"
+      "<rootDir>/src/coverage/",
+      "<rootDir>/src/index.js",
+      "<rootDir>/src/worker.js"
     ],
     "testTimeout": 30000,
     "coveragePathIgnorePatterns": [
@@ -154,7 +161,9 @@
       "<rootDir>/src/testUtils.js",
       "<rootDir>/src/logger.js",
       "<rootDir>/src/*/coverage/",
-      "<rootDir>/src/coverage/"
+      "<rootDir>/src/coverage/",
+      "<rootDir>/src/index.js",
+      "<rootDir>/src/worker.js"
     ],
     "coverageThreshold": {
       "global": {
@@ -176,7 +185,11 @@
     "ignore": [
       "./reports/",
       "./cucumber/",
-      "./frontend/"
+      "./frontend/",
+      "./tests/",
+      "./playwright-report/",
+      "./test-results/",
+      "./playwright.config.js"
     ]
   },
   "devDependencies": {
@@ -187,6 +200,7 @@
     "@babel/plugin-transform-runtime": "^7.11.0",
     "@babel/preset-env": "^7.11.5",
     "@cucumber/cucumber": "^7.0.0",
+    "@playwright/test": "^1.28.0",
     "concurrently": "^7.0.0",
     "cross-env": "^7.0.2",
     "depcheck": "^1.2.0",
@@ -201,10 +215,12 @@
     "jest-cli": "^26.4.2",
     "jest-junit": "^12.0.0",
     "nodemon": "^2.0.4",
+    "playwright": "^1.28.0",
     "puppeteer": "^13.1.1",
     "puppeteer-select": "^1.0.3",
     "redoc-cli": "^0.13.2",
     "selenium-webdriver": "4.3.0",
+    "sinon": "^15.0.0",
     "supertest": "^6.1.3"
   },
   "dependencies": {
@@ -237,7 +253,7 @@
     "helmet": "^5.0.1",
     "html-to-text": "^8.1.0",
     "http-codes": "^1.0.0",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.0",
     "lodash": "^4.17.20",
     "md5": "^2.3.0",
     "moment": "^2.29.4",
@@ -246,6 +262,7 @@
     "newrelic": "^8.7.0",
     "nodemailer": "^6.5.0",
     "pg": "^8.3.3",
+    "redis": "^4.0.6",
     "pug": "^3.0.2",
     "sequelize": "^6.12.5",
     "sequelize-cli": "^6.2.0",
@@ -255,6 +272,7 @@
     "validator": "^13.7.0",
     "wait-for-expect": "^3.0.2",
     "winston": "^3.3.3",
+    "ws": "^8.5.0",
     "xml2json": "^0.12.0",
     "yargs": "^17.3.1",
     "yayson": "^2.1.0"
