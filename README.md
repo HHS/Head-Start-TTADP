@@ -150,7 +150,7 @@ Linting, unit tests, test coverage analysis, and an accessibility scan are all r
 
 #### Creating and Applying a Deploy Key
 
-In order for CircleCi to correctly pull that latest code from Github. We need to create and apply a SSH token to both Github and CircleCi.
+In order for CircleCi to correctly pull the latest code from Github, we need to create and apply a SSH token to both Github and CircleCi.
 
 The following links outline the steps to take:
 https://circleci.com/docs/github-integration/#create-a-github-deploy-key

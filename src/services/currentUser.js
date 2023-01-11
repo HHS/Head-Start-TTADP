@@ -1,34 +1,80 @@
 import axios from 'axios';
+import httpCodes from 'http-codes';
 import isEmail from 'validator/lib/isEmail';
 import { v4 as uuidv4 } from 'uuid';
 
 import { logger, auditLogger } from '../logger';
 import findOrCreateUser from './findOrCreateUser';
+import handleErrors from '../lib/apiErrorHandler';
+import { validateUserAuthForAdmin } from './accessValidation';
 
 /**
  * Get Current User ID
  *
  * This function will return the CURRENT_USER_ID if BYPASS_AUTH is enabled,
- * req.session.userId if that is set, or res.locals.userId otherwise
+ * req.session.userId if that is set, or res.locals.userId otherwise.
+ * If an "Auth-Impersonation-Id" header is set, AND the user (designated by
+ * the req.session or req.locals userId) is an admin,
+ * then the user ID from the header will be returned.
  */
-export function currentUserId(req, res) {
-  if (req.session && req.session.userId) {
-    return req.session.userId;
-  }
-  if (res.locals && res.locals.userId) {
-    return res.locals.userId;
-  }
-  // bypass authorization, used for cucumber UAT and axe accessibility testing
-  if (process.env.NODE_ENV !== 'production' && process.env.BYPASS_AUTH === 'true') {
-    const userId = process.env.CURRENT_USER_ID;
-    auditLogger.warn(`Bypassing authentication in authMiddleware - using User ${userId}`);
-    if (req.session) {
-      req.session.userId = userId;
-      req.session.uuid = uuidv4();
+export async function currentUserId(req, res) {
+  function idFromSessionOrLocals() {
+    if (req.session && req.session.userId) {
+      return Number(req.session.userId);
     }
-    return userId;
+    if (res.locals && res.locals.userId) {
+      return Number(res.locals.userId);
+    }
+    // bypass authorization, used for cucumber UAT and axe accessibility testing
+    if (process.env.NODE_ENV !== 'production' && process.env.BYPASS_AUTH === 'true') {
+      const userId = process.env.CURRENT_USER_ID;
+      auditLogger.warn(`Bypassing authentication in authMiddleware - using User ${userId}`);
+      if (req.session) {
+        req.session.userId = userId;
+        req.session.uuid = uuidv4();
+      }
+      return Number(userId);
+    }
+    return null;
   }
-  return null;
+
+  // TODO: When we figure out how/if we want to do this in production, we can
+  // remove this early return.
+  if (process.env.NODE_ENV === 'production') {
+    return idFromSessionOrLocals();
+  }
+
+  // There will be an Auth-Impersonation-Id header if the user is impersonating another user.
+  // If that is the case, we want to use the impersonated user's ID.
+  if (req.headers && req.headers['auth-impersonation-id']) {
+    try {
+      const impersonatedUserId = JSON.parse(req.headers['auth-impersonation-id']);
+      if (impersonatedUserId) {
+        // Verify admin access.
+        try {
+          const userId = idFromSessionOrLocals();
+          if (!(await validateUserAuthForAdmin(userId))) {
+            auditLogger.error(`Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the session user (${userId}) is not an admin.`);
+            return res.sendStatus(httpCodes.UNAUTHORIZED);
+          }
+
+          if (await validateUserAuthForAdmin(Number(impersonatedUserId))) {
+            auditLogger.error(`Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the impersonated user is an admin.`);
+            return res.sendStatus(httpCodes.UNAUTHORIZED);
+          }
+        } catch (e) {
+          return handleErrors(req, res, e);
+        }
+
+        return Number(impersonatedUserId);
+      }
+    } catch (e) {
+      auditLogger.error(`Impersonation failure. Could not parse the Auth-Impersonation-Id header: ${e}`);
+      return handleErrors(req, res, e);
+    }
+  }
+
+  return idFromSessionOrLocals();
 }
 
 /**
