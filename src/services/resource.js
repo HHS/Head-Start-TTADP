@@ -100,7 +100,8 @@ const remapAttributes = (collection, from, to) => (
       const result = c;
       result[to] = result[from];
       result[from] = undefined;
-      return c;
+      delete result[from];
+      return result;
     })
     : []
 );
@@ -233,7 +234,7 @@ const filterResourcesForSync = (
               sourceFields: resource.sourceFields,
             },
           ],
-          reduced: resources.reduced,
+          expanded: resources.expanded,
         };
       }
 
@@ -339,16 +340,17 @@ const filterResourcesForSync = (
     }, { removed: [], reduced: [] });
 
   // collect the intersection of the expanded and reduced datasets to generate the delta dataset.
-  const deltaFromExpanded = newExpandedResources.expanded
-    ?.filter((neResource) => removedReducedResources.reduced
+  const deltaFromExpanded = (newExpandedResources.expanded || [])
+    .filter((neResource) => (removedReducedResources.reduced || [])
       .filter((rrResource) => neResource.genericId === rrResource.genericId
         && neResource.resourceId === rrResource.resourceId)
       .length > 0);
-  const deltaFromReduced = removedReducedResources.expanded
-    ?.filter((rrResource) => newExpandedResources.reduced
+  const deltaFromReduced = (removedReducedResources.reduced || [])
+    .filter((rrResource) => (newExpandedResources.expanded || [])
       .filter((neResource) => neResource.genericId === rrResource.genericId
         && neResource.resourceId === rrResource.resourceId)
       .length > 0);
+
   const resourceActions = {};
   // Generate the delta dataset
   resourceActions.delta = deltaFromExpanded
@@ -392,7 +394,7 @@ const filterResourcesForSync = (
     }));
   // Remove the records of the delta dataset from the reduced dataset.
   resourceActions.reduced = removedReducedResources.reduced
-    .filter((rrResource) => resourceActions.delta
+    .filter((rrResource) => (resourceActions.delta || [])
       .filter((dResource) => dResource.genericId === rrResource.genericId
         && dResource.resourceId === rrResource.resourceId)
       .length === 0);
@@ -912,7 +914,7 @@ const processActivityReportObjectiveForResources = async (activityReportObjectiv
   const currentResources = activityReportObjective.objectiveResources
     ? activityReportObjective.objectiveResources
     : await ActivityReportObjectiveResource.findAll({
-      where: { activityReportObjective: activityReportObjective.id },
+      where: { activityReportObjectiveId: activityReportObjective.id },
       raw: true,
     });
 
@@ -975,7 +977,7 @@ const processActivityReportObjectiveForResources = async (activityReportObjectiv
   };
 
   // Save the distinct datasets to the database.
-  return syncResourcesForObjective(resourcesToSync);
+  return syncResourcesForActivityReportObjective(resourcesToSync);
 };
 
 // Process the current values on the report into the database for all referenced resources for
