@@ -109,6 +109,21 @@ describe('filtersToScopes', () => {
     }, {
       silent: true,
     });
+
+    const granteeSpecialist = await Role.findOne({ where: { fullName: 'Grantee Specialist' } });
+    if (!granteeSpecialist) {
+      await Role.create({ name: 'GS', fullName: 'Grantee Specialist', isSpecialist: true });
+    }
+
+    const systemSpecialist = await Role.findOne({ where: { fullName: 'System Specialist' } });
+    if (!systemSpecialist) {
+      await Role.create({ name: 'SS', fullName: 'System Specialist', isSpecialist: true });
+    }
+
+    const grantsSpecialist = await Role.findOne({ where: { fullName: 'Grants Specialist' } });
+    if (!grantsSpecialist) {
+      await Role.create({ name: 'GS', fullName: 'Grants Specialist', isSpecialist: true });
+    }
   });
 
   afterAll(async () => {
@@ -935,7 +950,7 @@ describe('filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
 
-      expect(found.map((f) => f.id)).toStrictEqual([possibleIds[1], possibleIds[2]]);
+      expect(found.map((f) => f.id).sort()).toStrictEqual([possibleIds[1], possibleIds[2]].sort());
     });
 
     it('finds reports based on collaborator role', async () => {
@@ -944,7 +959,7 @@ describe('filtersToScopes', () => {
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
-      expect(found.map((f) => f.id)).toStrictEqual([possibleIds[0], possibleIds[1]]);
+      expect(found.map((f) => f.id).sort()).toStrictEqual([possibleIds[0], possibleIds[1]].sort());
     });
 
     it('filters out reports based on collaborator role', async () => {
@@ -953,7 +968,7 @@ describe('filtersToScopes', () => {
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
-      expect(found.map((f) => f.id)).toStrictEqual([possibleIds[2]]);
+      expect(found.map((f) => f.id).sort()).toStrictEqual([possibleIds[2]].sort());
     });
 
     it('only allows valid roles to be passed', async () => {
@@ -962,14 +977,14 @@ describe('filtersToScopes', () => {
       let found = await ActivityReport.findAll({
         where: { [Op.and]: [scope.activityReport, { id: possibleIds }] },
       });
-      expect(found.map((f) => f.id)).toStrictEqual(possibleIds);
+      expect(found.map((f) => f.id).sort()).toStrictEqual(possibleIds.sort());
 
       filters = { 'role.nin': ['Grantee Specialist & Potato Salesman'] };
       scope = filtersToScopes(filters);
       found = await ActivityReport.findAll({
         where: { [Op.and]: [scope.activityReport, { id: possibleIds }] },
       });
-      expect(found.map((f) => f.id)).toStrictEqual(possibleIds);
+      expect(found.map((f) => f.id).sort()).toStrictEqual(possibleIds.sort());
     });
   });
 
@@ -1697,7 +1712,7 @@ describe('filtersToScopes', () => {
       });
 
       reportOne = await createReport({
-        id: 2423423,
+        id: faker.datatype.number(),
         activityRecipients: [
           {
             grantId: grantOne.id,
@@ -1705,7 +1720,7 @@ describe('filtersToScopes', () => {
         ],
       });
       reportTwo = await createReport({
-        id: 2423424,
+        id: faker.datatype.number(),
         activityRecipients: [
           {
             grantId: grantOne.id,
@@ -1716,7 +1731,7 @@ describe('filtersToScopes', () => {
         ],
       });
       reportThree = await createReport({
-        id: 2423425,
+        id: faker.datatype.number(),
         activityRecipients: [
           {
             grantId: grantTwo.id,

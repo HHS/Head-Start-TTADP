@@ -44,6 +44,7 @@ import {
 } from '../../lib/mailer';
 import { activityReportToCsvRecord, extractListOfGoalsAndObjectives } from '../../lib/transform';
 import { userSettingOverridesById } from '../../services/userSettings';
+import { currentUserId } from '../../services/currentUser';
 
 const { APPROVE_REPORTS } = SCOPES;
 
@@ -251,7 +252,8 @@ export async function getLegacyReport(req, res) {
       res.sendStatus(404);
       return;
     }
-    const user = await userById(req.session.userId);
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
     const authorization = new ActivityReport(user, report);
 
     if (!authorization.canViewLegacy()) {
@@ -288,7 +290,8 @@ export async function getGoals(req, res) {
  */
 export async function saveOtherEntityObjectivesForReport(req, res) {
   const { objectivesWithoutGoals, activityReportId, region } = req.body;
-  const user = await userById(req.session.userId);
+  const userId = await currentUserId(req, res);
+  const user = await userById(userId);
   const authorization = new User(user);
 
   if (!authorization.canWriteInRegion(parseInt(region, DECIMAL_BASE))) {
@@ -314,7 +317,8 @@ export async function saveOtherEntityObjectivesForReport(req, res) {
  */
 export async function getApprovers(req, res) {
   const { region } = req.query;
-  const user = await userById(req.session.userId);
+  const userId = await currentUserId(req, res);
+  const user = await userById(userId);
   const authorization = new User(user);
 
   if (!authorization.canViewUsersInRegion(parseInt(region, DECIMAL_BASE))) {
@@ -410,7 +414,7 @@ export async function reviewReport(req, res) {
   try {
     const { activityReportId } = req.params;
     const { status, note } = req.body;
-    const { userId } = req.session;
+    const userId = await currentUserId(req, res);
 
     const user = await userById(userId);
     const [report] = await activityReportAndRecipientsById(activityReportId);
@@ -477,7 +481,8 @@ export async function resetToDraft(req, res) {
   try {
     const { activityReportId } = req.params;
 
-    const user = await userById(req.session.userId);
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
     const [report] = await activityReportAndRecipientsById(activityReportId);
     const authorization = new ActivityReport(user, report);
 
@@ -513,7 +518,8 @@ export async function softDeleteReport(req, res) {
     const { activityReportId } = req.params;
 
     const [report] = await activityReportAndRecipientsById(activityReportId);
-    const user = await userById(req.session.userId);
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
     const authorization = new ActivityReport(user, report);
 
     if (!authorization.canDelete()) {
@@ -538,7 +544,8 @@ export async function unlockReport(req, res) {
   try {
     const { activityReportId } = req.params;
     const [report] = await activityReportAndRecipientsById(activityReportId);
-    const user = await userById(req.session.userId);
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
     const authorization = new ActivityReport(user, report);
     if (!authorization.canUnlock()) {
       res.sendStatus(403);
@@ -567,7 +574,8 @@ export async function submitReport(req, res) {
     const { activityReportId } = req.params;
     const { approverUserIds, additionalNotes, creatorRole } = req.body;
 
-    const user = await userById(req.session.userId);
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
     const [report] = await activityReportAndRecipientsById(activityReportId);
     const authorization = new ActivityReport(user, report);
 
@@ -669,7 +677,8 @@ export async function getReport(req, res) {
     res.sendStatus(404);
     return;
   }
-  const user = await userById(req.session.userId);
+  const userId = await currentUserId(req, res);
+  const user = await userById(userId);
   const authorization = new ActivityReport(user, report);
 
   if (!authorization.canGet()) {
@@ -692,8 +701,9 @@ export async function getReport(req, res) {
  * @param {*} res - response
  */
 export async function getReports(req, res) {
-  const query = await setReadRegions(req.query, req.session.userId);
-  const reportsWithCount = await activityReports(query, false, req.session.userId);
+  const userId = await currentUserId(req, res);
+  const query = await setReadRegions(req.query, userId);
+  const reportsWithCount = await activityReports(query, false, userId);
   if (!reportsWithCount) {
     res.sendStatus(404);
   } else {
@@ -708,7 +718,7 @@ export async function getReports(req, res) {
  * @param {*} res - response
  */
 export async function getReportAlerts(req, res) {
-  const { userId } = req.session;
+  const userId = await currentUserId(req, res);
   const alertsWithCount = await activityReportAlerts(userId, req.query);
 
   if (!alertsWithCount) {
@@ -729,7 +739,7 @@ export async function getReportAlerts(req, res) {
  * @param {*} res - response
  */
 export async function getReportsForLocalStorageCleanup(req, res) {
-  const { userId } = req.session;
+  const userId = await currentUserId(req, res);
   const reportsToCleanup = await activityReportsForCleanup(userId);
 
   if (!reportsToCleanup) {
@@ -752,14 +762,14 @@ export async function saveReport(req, res) {
       res.sendStatus(400);
       return;
     }
-    const userId = parseInt(req.session.userId, 10);
+    const userId = await currentUserId(req, res);
     const { activityReportId } = req.params;
     const [report, activityRecipients] = await activityReportAndRecipientsById(activityReportId);
     if (!report) {
       res.sendStatus(404);
       return;
     }
-    const user = await userById(req.session.userId);
+    const user = await userById(userId);
     const authorization = new ActivityReport(user, report);
     if (!authorization.canUpdate()) {
       res.sendStatus(403);
@@ -822,11 +832,11 @@ export async function createReport(req, res) {
       res.sendStatus(400);
       return;
     }
-    const userId = parseInt(req.session.userId, 10);
+    const userId = await currentUserId(req, res);
     newReport.submissionStatus = REPORT_STATUSES.DRAFT;
     newReport.userId = userId;
     newReport.lastUpdatedById = userId;
-    const user = await userById(req.session.userId);
+    const user = await userById(userId);
     const authorization = new ActivityReport(user, newReport);
     if (!authorization.canCreate()) {
       res.sendStatus(403);
@@ -866,7 +876,8 @@ export async function createReport(req, res) {
  */
 export async function downloadReports(req, res) {
   try {
-    const readRegions = await getUserReadRegions(req.session.userId);
+    const userId = await currentUserId(req, res);
+    const readRegions = await getUserReadRegions(userId);
 
     const reports = await getDownloadableActivityReportsByIds(
       readRegions,
@@ -889,12 +900,13 @@ export async function downloadReports(req, res) {
 
 export async function downloadAllReports(req, res) {
   try {
-    const readRegions = await setReadRegions(req.query, req.session.userId);
+    const userId = await currentUserId(req, res);
+    const readRegions = await setReadRegions(req.query, userId);
 
     const reports = await getAllDownloadableActivityReports(
       readRegions['region.in'],
       { ...readRegions, limit: null },
-      req.session.userId,
+      userId,
     );
 
     await sendActivityReportCSV(reports, res);
@@ -905,7 +917,7 @@ export async function downloadAllReports(req, res) {
 
 export async function downloadAllAlerts(req, res) {
   try {
-    const { userId } = req.session;
+    const userId = await currentUserId(req, res);
     const query = await setReadRegions(req.query, userId);
     const rows = await getAllDownloadableActivityReportAlerts(userId, query);
 
@@ -919,7 +931,8 @@ export async function setGoalAsActivelyEdited(req, res) {
   try {
     const { activityReportId } = req.params;
     const { goalIds } = req.query;
-    const user = await userById(req.session.userId);
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
     const [report] = await activityReportAndRecipientsById(activityReportId);
     const authorization = new ActivityReport(user, report);
 
