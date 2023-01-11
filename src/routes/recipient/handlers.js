@@ -7,6 +7,7 @@ import filtersToScopes from '../../scopes';
 import Recipient from '../../policies/recipient';
 import { userById } from '../../services/users';
 import { getUserReadRegions } from '../../services/accessValidation';
+import { currentUserId } from '../../services/currentUser';
 
 const namespace = 'SERVICE:RECIPIENT';
 
@@ -41,7 +42,8 @@ export async function getRecipient(req, res) {
       return;
     }
 
-    const user = await userById(req.session.userId);
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
     const policy = new Recipient(user, recipient);
     if (!policy.canView()) {
       res.sendStatus(401);
@@ -75,7 +77,8 @@ export async function getGoalsByRecipient(req, res) {
   try {
     const { recipientId, regionId } = req.params;
     // Check if user has access to this region.
-    const readRegions = await getUserReadRegions(req.session.userId);
+    const userId = await currentUserId(req, res);
+    const readRegions = await getUserReadRegions(userId);
     if (!readRegions.includes(parseInt(regionId, 10))) {
       res.sendStatus(403);
       return;
