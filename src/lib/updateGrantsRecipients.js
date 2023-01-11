@@ -5,7 +5,7 @@ import axios from 'axios';
 import { keyBy, mapValues } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
-import { fileHash } from './fileUtils';
+// import { fileHash } from './fileUtils';
 import {
   Recipient, Grant, Program, sequelize,
 } from '../models';
@@ -262,13 +262,13 @@ export default async function updateGrantsRecipients(_processFiles = processFile
   logger.debug('updateGrantsRecipients: wrote file from HSES');
 
   const zip = new AdmZip('./hses.zip');
-  const hex = fileHash('./hses.zip');
+  // const hex = fileHash('./hses.zip');
 
   logger.debug('updateGrantsRecipients: extracting zip file');
   // extract to target path. Pass true to overwrite
   zip.extractAllTo('./temp', true);
   logger.debug('updateGrantsRecipients: unzipped files');
 
-  await _processFiles(hex);
+  // await _processFiles(hex);
   logger.info('updateGrantsRecipients: processFiles completed');
 }

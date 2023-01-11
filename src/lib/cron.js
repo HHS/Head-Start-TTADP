@@ -15,6 +15,8 @@ import { logger, auditLogger } from '../logger';
 // Set timing parameters.
 // Run at 4 am ET
 const schedule = '0 4 * * *';
+// Run at every 2 min am ET
+const scheduleTest = '*/2 * * * *';
 // Run daily at 4 pm
 const dailySched = '0 16 * * *';
 // Run at 4 pm every Friday
@@ -104,6 +106,10 @@ export default function runCronJobs() {
     // disable updates for non-production environments
     if (process.env.TTA_SMART_HUB_URI && !process.env.TTA_SMART_HUB_URI.endsWith('app.cloud.gov')) {
       const job = new CronJob(schedule, () => runJob(), null, true, timezone);
+      job.start();
+    }
+    if (process.env.TTA_SMART_HUB_URI && process.env.TTA_SMART_HUB_URI.endsWith('dev.app.cloud.gov')) {
+      const job = new CronJob(scheduleTest, () => runJob(), null, true, timezone);
       job.start();
     }
     const dailyJob = new CronJob(dailySched, () => runDailyEmailJob(), null, true, timezone);
