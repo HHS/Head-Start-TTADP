@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => {
   class NextStep extends Model {
     static associate(models) {
       NextStep.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId' });
+      NextStep.hasMany(models.NextStepResource, { foreignKey: 'nextStepId', as: 'nextStepResources' });
     }
   }
   NextStep.init({

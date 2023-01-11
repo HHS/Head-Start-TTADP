@@ -214,7 +214,7 @@ export async function getObjectivesByReportId(reportId) {
       },
       {
         model: ObjectiveResource,
-        as: 'resources',
+        as: ' objectiveResources',
         // these need to be renamed to match the frontend form names
         attributes: [['userProvidedUrl', 'value']],
       },

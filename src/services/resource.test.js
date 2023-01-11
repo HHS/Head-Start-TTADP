@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import {
+  ActivityReport,
   ActivityReportResource,
   NextStep,
   NextStepResource,
@@ -24,25 +25,25 @@ import {
   // ActivityReports Resource Processing
   calculateIsAutoDetectedForActivityReports,
   syncResourcesForActivityReport,
-  processActivityReportForResources,
+  // processActivityReportForResources,
   processActivityReportForResourcesById,
   // NextSteps Resource Processing
   calculateIsAutoDetectedForNextStep,
   syncResourcesForNextStep,
-  processNextStepForResources,
+  // processNextStepForResources,
   processNextStepForResourcesById,
   // Objective Resource processing
   calculateIsAutoDetectedForObjective,
   syncResourcesForObjective,
-  processObjectiveForResources,
+  // processObjectiveForResources,
   processObjectiveForResourcesById,
   // ActivityReportObjective Resource Processing
   calculateIsAutoDetectedForActivityReportObjective,
   syncResourcesForActivityReportObjective,
-  processActivityReportObjectiveForResources,
+  // processActivityReportObjectiveForResources,
   processActivityReportObjectiveForResourcesById,
 } from './resource';
-import { SOURCE_FIELD, NEXTSTEP_NOTETYPE, OBJECTIVE_STATUS } from '../constants';
+import { REPORT_STATUSES, SOURCE_FIELD, NEXTSTEP_NOTETYPE, OBJECTIVE_STATUS } from '../constants';
 
 describe('resource', () => {
   describe('Resource Table', () => {
@@ -1291,6 +1292,196 @@ describe('resource', () => {
           .toEqual(true);
       });
     });
+    describe('processNextStepForResourcesById', () => {
+      let resources;
+      let activityReport;
+      let deleteReport;
+      const urls = [
+        'http://google.com',
+        'http://github.com',
+        'http://cloud.gov',
+        'https://adhocteam.us/',
+      ];
+      beforeAll(async () => {
+        resources = await findOrCreateResources(urls);
+        [activityReport, deleteReport] = await ActivityReport.findOrCreate({
+          where: {
+            id: 9999,
+            context: 'Resource Report test. http://google.com',
+            submissionStatus: REPORT_STATUSES.DRAFT,
+            calculatedStatus: REPORT_STATUSES.DRAFT,
+            numberOfParticipants: 1,
+            deliveryMethod: 'method',
+            duration: 0,
+            endDate: '2020-01-01T12:00:00Z',
+            startDate: '2020-01-01T12:00:00Z',
+            requester: 'requester',
+            regionId: 1,
+            targetPopulations: [],
+          },
+          individualHooks: true,
+          raw: true,
+        });
+      });
+      beforeEach(async () => {
+      });
+      afterEach(async () => {
+        await ActivityReportResource.destroy({
+          where: { id: activityReport.id },
+          individualHooks: true,
+        });
+      });
+      afterAll(async () => {
+        await Resource.destroy({
+          where: { url: { [Op.in]: urls } },
+          individualHooks: true,
+        });
+        if (deleteReport) {
+          await ActivityReport.destroy({
+            where: { id: activityReport.id },
+            individualHooks: true,
+          });
+        }
+      });
+      it('expected usage, empty urls', async () => {
+        await processActivityReportForResourcesById(activityReport.id, []);
+        const arResources = await ActivityReportResource.findAll({
+          where: { activityReportId: activityReport.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(arResources.length).toEqual(1);
+        expect(arResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(arResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.REPORT.CONTEXT,
+          ].sort());
+      });
+      it('expected usage, with urls', async () => {
+        await processActivityReportForResourcesById(
+          activityReport.id,
+          urls,
+        );
+        const arResources = await ActivityReportResource.findAll({
+          where: { activityReportId: activityReport.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(arResources.length).toEqual(4);
+        expect(arResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(arResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.REPORT.CONTEXT,
+            SOURCE_FIELD.REPORT.RESOURCE,
+          ].sort());
+        expect(arResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[1]).id);
+        expect(arResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.REPORT.RESOURCE,
+          ].sort());
+      });
+      it('expected usage, add and remove urls', async () => {
+        await processActivityReportForResourcesById(
+          activityReport.id,
+          [],
+        );
+        let arResources = await ActivityReportResource.findAll({
+          where: { activityReportId: activityReport.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(arResources.length).toEqual(1);
+        expect(arResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(arResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.REPORT.CONTEXT,
+          ].sort());
+        await processActivityReportForResourcesById(
+          activityReport.id,
+          [urls[0]],
+        );
+        arResources = await ActivityReportResource.findAll({
+          where: { activityReportId: activityReport.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(arResources.length).toEqual(1);
+        expect(arResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(arResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.REPORT.CONTEXT,
+            SOURCE_FIELD.REPORT.RESOURCE,
+          ].sort());
+
+        await processActivityReportForResourcesById(
+          activityReport.id,
+          [urls[1]],
+        );
+        arResources = await ActivityReportResource.findAll({
+          where: { activityReportId: activityReport.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(arResources.length).toEqual(2);
+        expect(arResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(arResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.REPORT.CONTEXT,
+          ].sort());
+        expect(arResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[1]).id);
+        expect(arResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.REPORT.RESOURCE,
+          ].sort());
+
+        await processActivityReportForResourcesById(
+          activityReport.id,
+          urls,
+        );
+        arResources = await ActivityReportResource.findAll({
+          where: { activityReportId: activityReport.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(arResources.length).toEqual(4);
+        expect(arResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(arResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.REPORT.CONTEXT,
+            SOURCE_FIELD.REPORT.RESOURCE,
+          ].sort());
+        expect(arResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[1]).id);
+        expect(arResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.REPORT.RESOURCE,
+          ].sort());
+
+        await processActivityReportForResourcesById(
+          activityReport.id,
+          [],
+        );
+        arResources = await ActivityReportResource.findAll({
+          where: { activityReportId: activityReport.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(arResources.length).toEqual(1);
+        expect(arResources[0]['resource.url']).toEqual(urls[0]);
+        expect(arResources[0].sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.REPORT.CONTEXT,
+          ].sort());
+      });
+    });
   });
   describe('NextSteps Resource Processing', () => {
     describe('calculateIsAutoDetectedForNextSteps', () => {
@@ -1572,6 +1763,184 @@ describe('resource', () => {
         expect(nsResources[0].isAutoDetected).toEqual(true);
       });
     });
+    describe('processNextStepForResourcesById', () => {
+      let resources;
+      let nextStep;
+      const urls = [
+        'http://google.com',
+        'http://github.com',
+        'http://cloud.gov',
+        'https://adhocteam.us/',
+      ];
+      beforeAll(async () => {
+        resources = await findOrCreateResources(urls);
+        [nextStep] = await NextStep.findOrCreate({
+          where: {
+            activityReportId: 9999,
+            note: 'Resource NextStep test. http://google.com',
+            noteType: NEXTSTEP_NOTETYPE.SPECIALIST,
+          },
+          individualHooks: true,
+          raw: true,
+        });
+      });
+      beforeEach(async () => {
+      });
+      afterEach(async () => {
+        await NextStepResource.destroy({
+          where: { nextStepId: nextStep.id },
+          individualHooks: true,
+        });
+      });
+      afterAll(async () => {
+        await Resource.destroy({
+          where: { url: { [Op.in]: urls } },
+          individualHooks: true,
+        });
+        await NextStep.destroy({
+          where: { id: nextStep.id },
+          individualHooks: true,
+        });
+      });
+      it('expected usage, empty urls', async () => {
+        await processNextStepForResourcesById(nextStep.id, []);
+        const nsResources = await NextStepResource.findAll({
+          where: { nextStepId: nextStep.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(nsResources.length).toEqual(1);
+        expect(nsResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(nsResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.NEXTSTEPS.NOTE,
+          ].sort());
+      });
+      it('expected usage, with urls', async () => {
+        await processNextStepForResourcesById(
+          nextStep.id,
+          urls,
+        );
+        const nsResources = await NextStepResource.findAll({
+          where: { nextStepId: nextStep.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(nsResources.length).toEqual(4);
+        expect(nsResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(nsResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.NEXTSTEPS.NOTE,
+            SOURCE_FIELD.OBJECTIVE.RESOURCE,
+          ].sort());
+        expect(nsResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[1]).id);
+        expect(nsResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.OBJECTIVE.RESOURCE,
+          ].sort());
+      });
+      it('expected usage, add and remove urls', async () => {
+        await processNextStepForResourcesById(
+          nextStep.id,
+          [],
+        );
+        let nsResources = await NextStepResource.findAll({
+          where: { nextStepId: nextStep.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(nsResources.length).toEqual(1);
+        expect(nsResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(nsResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.NEXTSTEPS.NOTE,
+          ].sort());
+        await processNextStepForResourcesById(
+          nextStep.id,
+          [urls[0]],
+        );
+        nsResources = await NextStepResource.findAll({
+          where: { nextStepId: nextStep.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(nsResources.length).toEqual(1);
+        expect(nsResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(nsResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.NEXTSTEPS.NOTE,
+            SOURCE_FIELD.OBJECTIVE.RESOURCE,
+          ].sort());
+
+        await processNextStepForResourcesById(
+          nextStep.id,
+          [urls[1]],
+        );
+        nsResources = await NextStepResource.findAll({
+          where: { nextStepId: nextStep.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(nsResources.length).toEqual(2);
+        expect(nsResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(nsResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.NEXTSTEPS.NOTE,
+          ].sort());
+        expect(nsResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[1]).id);
+        expect(nsResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.OBJECTIVE.RESOURCE,
+          ].sort());
+
+        await processNextStepForResourcesById(
+          nextStep.id,
+          urls,
+        );
+        nsResources = await NextStepResource.findAll({
+          where: { nextStepId: nextStep.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(nsResources.length).toEqual(4);
+        expect(nsResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(nsResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.NEXTSTEPS.NOTE,
+            SOURCE_FIELD.OBJECTIVE.RESOURCE,
+          ].sort());
+        expect(nsResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[1]).id);
+        expect(nsResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.OBJECTIVE.RESOURCE,
+          ].sort());
+
+        await processNextStepForResourcesById(
+          nextStep.id,
+          [],
+        );
+        nsResources = await NextStepResource.findAll({
+          where: { nextStepId: nextStep.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(nsResources.length).toEqual(1);
+        expect(nsResources[0]['resource.url']).toEqual(urls[0]);
+        expect(nsResources[0].sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.NEXTSTEPS.NOTE,
+          ].sort());
+      });
+    });
   });
   describe('Objective Resource processing', () => {
     describe('calculateIsAutoDetectedForObjective', () => {
@@ -1851,6 +2220,186 @@ describe('resource', () => {
           .toEqual(2);
         expect(oResources.find((r) => r.resourceId === resources[0].id).isAutoDetected)
           .toEqual(true);
+      });
+    });
+    describe('processObjectiveForResourcesById', () => {
+      let resources;
+      let objective;
+      const urls = [
+        'http://google.com',
+        'http://github.com',
+        'http://cloud.gov',
+        'https://adhocteam.us/',
+      ];
+      beforeAll(async () => {
+        resources = await findOrCreateResources(urls);
+        [objective] = await Objective.findOrCreate({
+          where: {
+            goalId: 1,
+            title: 'Resource Objective test. http://google.com',
+            status: OBJECTIVE_STATUS.NOT_STARTED,
+            onAR: false,
+            onApprovedAR: false,
+          },
+          individualHooks: true,
+          raw: true,
+        });
+      });
+      beforeEach(async () => {
+      });
+      afterEach(async () => {
+        await ObjectiveResource.destroy({
+          where: { objectiveId: objective.id },
+          individualHooks: true,
+        });
+      });
+      afterAll(async () => {
+        await Resource.destroy({
+          where: { url: { [Op.in]: urls } },
+          individualHooks: true,
+        });
+        await Objective.destroy({
+          where: { id: objective.id },
+          individualHooks: true,
+        });
+      });
+      it('expected usage, empty urls', async () => {
+        await processObjectiveForResourcesById(objective.id, []);
+        const oResources = await ObjectiveResource.findAll({
+          where: { objectiveId: objective.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(oResources.length).toEqual(1);
+        expect(oResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(oResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.OBJECTIVE.TITLE,
+          ].sort());
+      });
+      it('expected usage, with urls', async () => {
+        await processObjectiveForResourcesById(
+          objective.id,
+          urls,
+        );
+        const oResources = await ObjectiveResource.findAll({
+          where: { objectiveId: objective.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(oResources.length).toEqual(4);
+        expect(oResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(oResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.OBJECTIVE.TITLE,
+            SOURCE_FIELD.OBJECTIVE.RESOURCE,
+          ].sort());
+        expect(oResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[1]).id);
+        expect(oResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.OBJECTIVE.RESOURCE,
+          ].sort());
+      });
+      it('expected usage, add and remove urls', async () => {
+        await processObjectiveForResourcesById(
+          objective.id,
+          [],
+        );
+        let oResources = await ObjectiveResource.findAll({
+          where: { objectiveId: objective.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(oResources.length).toEqual(1);
+        expect(oResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(oResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.OBJECTIVE.TITLE,
+          ].sort());
+        await processObjectiveForResourcesById(
+          objective.id,
+          [urls[0]],
+        );
+        oResources = await ObjectiveResource.findAll({
+          where: { objectiveId: objective.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(oResources.length).toEqual(1);
+        expect(oResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(oResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.OBJECTIVE.TITLE,
+            SOURCE_FIELD.OBJECTIVE.RESOURCE,
+          ].sort());
+
+        await processObjectiveForResourcesById(
+          objective.id,
+          [urls[1]],
+        );
+        oResources = await ObjectiveResource.findAll({
+          where: { objectiveId: objective.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(oResources.length).toEqual(2);
+        expect(oResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(oResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.OBJECTIVE.TITLE,
+          ].sort());
+        expect(oResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[1]).id);
+        expect(oResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.OBJECTIVE.RESOURCE,
+          ].sort());
+
+        await processObjectiveForResourcesById(
+          objective.id,
+          urls,
+        );
+        oResources = await ObjectiveResource.findAll({
+          where: { objectiveId: objective.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(oResources.length).toEqual(4);
+        expect(oResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(oResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.OBJECTIVE.TITLE,
+            SOURCE_FIELD.OBJECTIVE.RESOURCE,
+          ].sort());
+        expect(oResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[1]).id);
+        expect(oResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.OBJECTIVE.RESOURCE,
+          ].sort());
+
+        await processObjectiveForResourcesById(
+          objective.id,
+          [],
+        );
+        oResources = await ObjectiveResource.findAll({
+          where: { objectiveId: objective.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(oResources.length).toEqual(1);
+        expect(oResources[0]['resource.url']).toEqual(urls[0]);
+        expect(oResources[0].sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.OBJECTIVE.TITLE,
+          ].sort());
       });
     });
   });
@@ -2273,8 +2822,9 @@ describe('resource', () => {
           raw: true,
         });
         expect(oResources.length).toEqual(1);
-        expect(oResources[0]['resource.url']).toEqual(urls[0]);
-        expect(oResources[0].sourceFields.sort())
+        expect(oResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(oResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORTOBJECTIVE.TITLE,
             SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED,

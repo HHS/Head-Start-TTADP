@@ -8,7 +8,7 @@ import {
   Recipient,
   ActivityReportCollaborator,
   ActivityReportObjective,
-  ActivityReportObjectiveResource,
+  Resource,
   Topic,
   Objective,
   File,
@@ -372,8 +372,8 @@ describe('activityReportToCsvRecord', () => {
               as: 'objective',
             },
             {
-              model: ActivityReportObjectiveResource,
-              as: 'activityReportObjectiveResources',
+              model: Resource,
+              as: 'resources',
             },
             {
               model: Topic,
