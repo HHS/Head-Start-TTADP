@@ -1,5 +1,5 @@
 const propagateDestroyToFile = async (sequelize, instance, options) => {
-  const file = await sequelize.models.File.FindOne({
+  const file = await sequelize.models.File.findOne({
     where: { id: instance.fileId },
     include: [
       {
@@ -31,6 +31,7 @@ const propagateDestroyToFile = async (sequelize, instance, options) => {
     && file.objectiveTemplateFiles.length === 0) {
     await sequelize.models.File.destroy({
       where: { id: file.id },
+      individualHooks: true,
       transaction: options.transaction,
     });
   }

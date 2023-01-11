@@ -46,13 +46,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     'createdVia',
     'isRttapa',
     [
-      sequelize.literal(`
-        (
-          SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
-          INNER JOIN "ActivityReportGoals" "arg" ON "arg"."activityReportId" = "ar"."id"
-          WHERE "arg"."goalId" = "Goal"."id"
-        ) > 0
-      `),
+      'onAR',
       'onAnyReport',
     ],
     'onApprovedAR',
@@ -69,13 +63,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         'onApprovedAR',
         'rtrOrder',
         [
-          sequelize.literal(`
-            (
-              SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
-              INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-              WHERE "aro"."objectiveId" = "objectives"."id"
-            ) > 0
-          `),
+          'onAR',
           'onAnyReport',
         ],
       ],
@@ -90,92 +78,55 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
             ['userProvidedUrl', 'value'],
             ['id', 'key'],
             [
-              sequelize.literal(`(
-                SELECT COUNT(aror."id") FROM "ActivityReportObjectiveResources" "aror"
-                INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."id" = "aror"."activityReportObjectiveId"
-                WHERE "aror"."userProvidedUrl" = "objectives->resources"."userProvidedUrl"
-                AND "aro"."objectiveId" = "objectives"."id"
-              ) > 0`),
+              'onAR',
               'onAnyReport',
             ],
             [
-              sequelize.literal(`
-                (
-                  SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
-                  INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                  INNER JOIN "ActivityReportObjectiveResources" "o" ON "o"."activityReportObjectiveId" = "aro"."id"
-                  WHERE "o"."userProvidedUrl" = "objectives->resources"."userProvidedUrl"
-                  AND "aro"."objectiveId" = "objectives"."id"
-                  AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
-                ) > 0
-              `),
+              'onApprovedAR',
               'isOnApprovedReport',
             ],
           ],
         },
         {
-          model: Topic,
-          as: 'topics',
+          model: ObjectiveTopic,
+          as: 'objectiveTopics',
           attributes: [
-            'id',
-            'name',
             [
-              sequelize.literal(`
-                (
-                  SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
-                  INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                  INNER JOIN "ActivityReportObjectiveTopics" "ot" ON "ot"."activityReportObjectiveId" = "aro"."id"
-                  WHERE "aro"."objectiveId" = "objectives"."id"
-                  AND "ot"."topicId" = "objectives->topics"."id"
-                ) > 0
-              `),
+              'onAR',
               'onAnyReport',
             ],
             [
-              sequelize.literal(`
-                (
-                  SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
-                  INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                  INNER JOIN "ActivityReportObjectiveTopics" "ot" ON "ot"."activityReportObjectiveId" = "aro"."id"
-                  WHERE "aro"."objectiveId" = "objectives"."id"  AND "ot"."topicId" = "objectives->topics"."id"
-                  AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
-                ) > 0
-              `),
+              'onApprovedAR',
               'isOnApprovedReport',
             ],
           ],
+          include: [
+            {
+              model: Topic,
+              as: 'topic',
+              attributes: ['id', 'name'],
+            },
+          ],
         },
         {
-          model: File,
-          as: 'files',
-          attributes: {
-            include: [
-              [
-                sequelize.literal(`
-                  (
-                    SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
-                    INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                    INNER JOIN "ActivityReportObjectiveFiles" "of" ON "of"."activityReportObjectiveId" = "aro"."id"
-                    WHERE "aro"."objectiveId" = "objectives"."id" AND "of"."fileId" = "objectives->files"."id"
-                  ) > 0
-                `),
-                'onAnyReport',
-              ],
-              [
-                sequelize.literal(`
-                  (
-                    SELECT COUNT("ar"."id") FROM "ActivityReports" "ar"
-                    INNER JOIN "ActivityReportObjectives" "aro" ON "aro"."activityReportId" = "ar"."id"
-                    INNER JOIN "ActivityReportObjectiveFiles" "of" ON "of"."activityReportObjectiveId" = "aro"."id"
-                    WHERE "aro"."objectiveId" = "objectives"."id"
-                    AND "of"."fileId" = "objectives->files"."id"
-                    AND "ar"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}'
-                  ) > 0
-                `),
-                'isOnApprovedReport',
-              ],
+          model: ObjectiveFile,
+          as: 'objectiveFiles',
+          attributes: [
+            [
+              'onAR',
+              'onAnyReport',
             ],
-          },
+            [
+              'onApprovedAR',
+              'isOnApprovedReport',
+            ],
+          ],
+          include: [
+            {
+              model: File,
+              as: 'file',
+            },
+          ],
         },
         {
           model: ActivityReport,
@@ -262,6 +213,7 @@ export async function saveObjectiveAssociations(
         },
         objectiveId: objective.id,
       },
+      individualHooks: true,
     });
   }
 
@@ -296,6 +248,7 @@ export async function saveObjectiveAssociations(
         },
         objectiveId: objective.id,
       },
+      individualHooks: true,
     });
   }
 
@@ -329,6 +282,7 @@ export async function saveObjectiveAssociations(
         },
         objectiveId: objective.id,
       },
+      individualHooks: true,
     });
   }
 
@@ -347,12 +301,22 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
     const exists = objectives.find((o) => (
       o.title.trim() === objective.title.trim() && o.status === objective.status
     ));
+    // eslint-disable-next-line no-nested-ternary
+    const id = objective.getDataValue
+      ? objective.getDataValue('id')
+        ? objective.getDataValue('id')
+        : objective.getDataValue('value')
+      : objective.id;
+    const otherEntityId = objective.getDataValue
+      ? objective.getDataValue('otherEntityId')
+      : objective.otherEntityId;
 
     if (exists) {
-      const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
       exists.ids = [...exists.ids, id];
       // Make sure we pass back a list of recipient ids for subsequent saves.
-      exists.recipientIds = [...exists.recipientIds, objective.getDataValue('otherEntityId')];
+      exists.recipientIds = otherEntityId
+        ? [...exists.recipientIds, otherEntityId]
+        : [...exists.recipientIds];
       exists.activityReports = [
         ...(exists.activityReports || []),
         ...(objective.activityReports || []),
@@ -360,15 +324,17 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
       return objectives;
     }
 
-    const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
-
     return [...objectives, {
-      ...objective.dataValues,
+      ...(objective.dataValues
+        ? objective.dataValues
+        : objective),
       title: objective.title,
       value: id,
       ids: [id],
       // Make sure we pass back a list of recipient ids for subsequent saves.
-      recipientIds: [objective.getDataValue('otherEntityId')],
+      recipientIds: otherEntityId
+        ? [otherEntityId]
+        : [],
       isNew: false,
     }];
   }, currentObjectives);
@@ -398,7 +364,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
     ));
 
     if (exists) {
-      const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
+      const { id } = objective;
       exists.ids = [...exists.ids, id];
 
       // we can dedupe these using lodash
@@ -407,7 +373,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         ...(objective.activityReportObjectives
           && objective.activityReportObjectives.length > 0
           ? objective.activityReportObjectives[0].activityReportObjectiveResources
-            .map((r) => r.dataValues)
+            .map((r) => r)
           : []),
       ], 'value');
 
@@ -416,7 +382,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         ...(objective.activityReportObjectives
           && objective.activityReportObjectives.length > 0
           ? objective.activityReportObjectives[0].activityReportObjectiveTopics
-            .map((t) => t.topic.dataValues)
+            .map((t) => t.topic)
           : []),
       ], 'id');
 
@@ -425,7 +391,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         ...(objective.activityReportObjectives
           && objective.activityReportObjectives.length > 0
           ? objective.activityReportObjectives[0].activityReportObjectiveFiles
-            .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
+            .map((f) => ({ ...f.file, url: f.file.url }))
           : []),
       ], 'key');
 
@@ -439,13 +405,11 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         && objective.activityReportObjectives[0]
         && objective.activityReportObjectives[0].ttaProvided
       ? objective.activityReportObjectives[0].ttaProvided : null;
-
     const arOrder = objective.activityReportObjectives
       && objective.activityReportObjectives[0]
       && objective.activityReportObjectives[0].arOrder
       ? objective.activityReportObjectives[0].arOrder : null;
-
-    const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
+    const { id } = objective;
 
     return [...objectives, {
       ...objective.dataValues,
@@ -465,17 +429,17 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       topics: objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
         ? objective.activityReportObjectives[0].activityReportObjectiveTopics
-          .map((t) => t.topic.dataValues)
+          .map((t) => t.topic)
         : [],
       resources: objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
         ? objective.activityReportObjectives[0].activityReportObjectiveResources
-          .map((r) => r.dataValues)
+          .map((r) => r)
         : [],
       files: objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
         ? objective.activityReportObjectives[0].activityReportObjectiveFiles
-          .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
+          .map((f) => ({ ...f.file, url: f.file.url }))
         : [],
     }];
   }, currentObjectives);
@@ -530,14 +494,14 @@ function reduceGoals(goals, forReport = false) {
     const goal = {
       ...currentValue.dataValues,
       goalNumbers: [currentValue.goalNumber],
-      goalIds: [currentValue.id],
+      goalIds: [currentValue.dataValues.id],
       grants: [
         {
           ...currentValue.grant.dataValues,
           numberWithProgramTypes: currentValue.grant.numberWithProgramTypes,
           recipient: currentValue.grant.recipient.dataValues,
           name: currentValue.grant.name,
-          goalId: currentValue.id,
+          goalId: currentValue.dataValues.id,
         },
       ],
       grantIds: [currentValue.grant.id],
@@ -740,11 +704,56 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
 }
 
 export async function goalByIdAndRecipient(id, recipientId) {
-  return Goal.findOne(OPTIONS_FOR_GOAL_FORM_QUERY(id, recipientId));
+  const goal = await Goal.findOne(OPTIONS_FOR_GOAL_FORM_QUERY(id, recipientId));
+  goal.objectives = goal.objectives
+    .map((objective) => ({
+      ...objective.dataValues,
+      topics: objective.objectiveTopics
+        .map((objectiveTopic) => ({
+          ...objectiveTopic.dataValues,
+          ...objectiveTopic.topic.dataValues,
+        }))
+        .map((o) => ({ ...o, topic: undefined })),
+      files: objective.objectiveFiles
+        .map((objectiveFile) => ({
+          ...objectiveFile.dataValues,
+          ...objectiveFile.file.dataValues,
+        }))
+        .map((f) => ({ ...f, file: undefined })),
+      resources: objective.resources.map((resource) => ({ ...resource.dataValues })),
+    }))
+    .map((objective) => ({ ...objective, objectiveTopics: undefined, objectiveFiles: undefined }));
+  return goal;
 }
 
 export async function goalsByIdAndRecipient(ids, recipientId) {
-  return reduceGoals(await Goal.findAll(OPTIONS_FOR_GOAL_FORM_QUERY(ids, recipientId)));
+  let goals = await Goal.findAll(OPTIONS_FOR_GOAL_FORM_QUERY(ids, recipientId));
+  goals = goals.map((goal) => ({
+    ...goal,
+    objectives: goal.objectives
+      .map((objective) => ({
+        ...objective.dataValues,
+        topics: objective.objectiveTopics
+          .map((objectiveTopic) => ({
+            ...objectiveTopic.dataValues,
+            ...objectiveTopic.topic.dataValues,
+          }))
+          .map((o) => ({ ...o, topic: undefined })),
+        files: objective.objectiveFiles
+          .map((objectiveFile) => ({
+            ...objectiveFile.dataValues,
+            ...objectiveFile.file.dataValues,
+          }))
+          .map((f) => ({ ...f, file: undefined })),
+        resources: objective.resources.map((resource) => ({ ...resource.dataValues })),
+      }))
+      .map((objective) => ({
+        ...objective,
+        objectiveTopics: undefined,
+        objectiveFiles: undefined,
+      })),
+  }));
+  return reduceGoals(goals);
 }
 
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
@@ -804,16 +813,19 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
         where: {
           objectiveId: orphanedObjectiveIds,
         },
+        individualHooks: true,
       }),
       ObjectiveResource.destroy({
         where: {
           objectiveId: orphanedObjectiveIds,
         },
+        individualHooks: true,
       }),
       ObjectiveTopic.destroy({
         where: {
           objectiveId: orphanedObjectiveIds,
         },
+        individualHooks: true,
       }),
     ]);
   }
@@ -823,6 +835,7 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
       where: {
         id: orphanedObjectiveIds,
       },
+      individualHooks: true,
     })
     : Promise.resolve();
 }
@@ -1132,13 +1145,14 @@ async function removeActivityReportObjectivesFromReport(reportId, objectiveIdsTo
 
   const idsToDestroy = activityReportObjectivesToDestroy.map((arObjective) => arObjective.id);
 
-  await destroyActivityReportObjectiveMetadata(idsToDestroy);
+  await destroyActivityReportObjectiveMetadata(idsToDestroy, objectiveIdsToRemove);
 
   return Array.isArray(idsToDestroy) && idsToDestroy.length > 0
     ? ActivityReportObjective.destroy({
       where: {
         id: idsToDestroy,
       },
+      individualHooks: true,
     })
     : Promise.resolve();
 }
@@ -1151,6 +1165,7 @@ async function removeActivityReportGoalsFromReport(reportId, currentGoalIds) {
         [Op.notIn]: currentGoalIds,
       },
     },
+    individualHooks: true,
   });
 }
 
@@ -1275,6 +1290,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
         goalId: goalIds,
         activityReportId: reportId,
       },
+      individualHooks: true,
     });
   }
 
@@ -1316,6 +1332,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
         objectiveId: objectiveIds,
         activityReportId: reportId,
       },
+      individualHooks: true,
     });
   }
 
@@ -1325,6 +1342,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
         id: objectivesToDelete,
         onApprovedAR: false,
       },
+      individualHooks: true,
     });
   }
 
@@ -1333,6 +1351,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
       id: goalsToDelete,
       onApprovedAR: false,
     },
+    individualHooks: true,
   });
 }
 
@@ -1789,6 +1808,7 @@ export async function destroyGoal(goalIds) {
         where: {
           objectiveId: { [Op.in]: objectiveIds },
         },
+        individualHooks: true,
       })
       : await Promise.resolve();
 
@@ -1797,6 +1817,7 @@ export async function destroyGoal(goalIds) {
         where: {
           objectiveId: { [Op.in]: objectiveIds },
         },
+        individualHooks: true,
       })
       : await Promise.resolve();
 
@@ -1805,6 +1826,7 @@ export async function destroyGoal(goalIds) {
         where: {
           id: { [Op.in]: objectiveIds },
         },
+        individualHooks: true,
       })
       : await Promise.resolve();
 
@@ -1813,6 +1835,7 @@ export async function destroyGoal(goalIds) {
         where: {
           id: { [Op.in]: goalIds },
         },
+        individualHooks: true,
       })
       : await Promise.resolve();
 
