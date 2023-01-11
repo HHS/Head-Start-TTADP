@@ -23,19 +23,19 @@ describe('GoalRttapa', () => {
   describe('only shows checked when the value is one of the two allowed', () => {
     it('yes', async () => {
       renderGoalRttapa('Yes', 'Draft');
-      const radio = await screen.findByRole('radio', { name: 'Yes' });
+      const radio = await screen.findByRole('radio', { name: 'RTTAPA' });
       expect(radio).toBeChecked();
     });
     it('no', async () => {
       renderGoalRttapa('No', 'Draft');
-      const radio = await screen.findByRole('radio', { name: 'No' });
+      const radio = await screen.findByRole('radio', { name: 'Non-RTTAPA' });
       expect(radio).toBeChecked();
     });
     it('bad', async () => {
       renderGoalRttapa('BAD', 'Draft');
-      const yes = await screen.findByRole('radio', { name: 'Yes' });
+      const yes = await screen.findByRole('radio', { name: 'RTTAPA' });
       expect(yes).not.toBeChecked();
-      const no = await screen.findByRole('radio', { name: 'No' });
+      const no = await screen.findByRole('radio', { name: 'Non-RTTAPA' });
       expect(no).not.toBeChecked();
     });
   });
