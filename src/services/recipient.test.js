@@ -512,7 +512,7 @@ describe('Recipient DB service', () => {
     it('sorts based on program specialist', async () => {
       const foundRecipients = await recipientsByName('apple', regionToScope(1), 'programSpecialist', 'asc', 0);
       expect(foundRecipients.rows.length).toBe(3);
-      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([66, 63, 68]);
+      expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([66, 63, 68].sort());
     });
 
     it('sorts based on grant specialist', async () => {
