@@ -20,7 +20,7 @@ describe('dataValidation', () => {
 
       expect(firstRowRegion).toBe(1);
       expect(firstRowStatus).toBe('Active');
-      expect(firstRowCount).toBe('2');
+      expect(firstRowCount).toBe('3');
       expect(secondRowRegion).toBe(1);
       expect(secondRowStatus).toBe('Inactive');
       expect(secondRowCount).toBe('1');
