@@ -20,10 +20,10 @@ export default function GoalRttapa({
     return (
       <div className={className}>
         <p className="usa-prose margin-y-0 text-bold">
-          Recipient TTA Plan Agreement (RTTAPA) goal
+          Goal type
         </p>
         <p className="usa-prose margin-y-0">
-          {isRttapa ? 'Yes' : 'No'}
+          {isRttapa ? 'RTTAPA' : 'Non-RTTAPA'}
         </p>
       </div>
     );
