@@ -1762,7 +1762,7 @@ describe('filtersToScopes', () => {
     afterAll(async () => {
       // Delete reports.
       await ActivityReport.destroy({
-        where: { id: possibleIds },
+        where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
       });
     });
 
@@ -1890,10 +1890,10 @@ describe('filtersToScopes', () => {
     let possibleIds;
 
     beforeAll(async () => {
-      firstReport = await ActivityReport.create({ ...draftReport, id: 95842, createdAt: '2019-01-01T21:00:57.149Z' });
-      secondReport = await ActivityReport.create({ ...draftReport, id: 95843, createdAt: '2020-02-01T21:11:57.149Z' });
-      thirdReport = await ActivityReport.create({ ...draftReport, id: 95844, createdAt: '2021-01-01T21:14:57.149Z' });
-      fourthReport = await ActivityReport.create({ ...draftReport, id: 95845, createdAt: '2023-01-01T21:15:57.149Z' });
+      firstReport = await ActivityReport.create({ ...draftReport, id: 95825, createdAt: '2019-01-01T21:00:57.149Z' });
+      secondReport = await ActivityReport.create({ ...draftReport, id: 95852, createdAt: '2020-02-01T21:11:57.149Z' });
+      thirdReport = await ActivityReport.create({ ...draftReport, id: 95857, createdAt: '2021-01-01T21:14:57.149Z' });
+      fourthReport = await ActivityReport.create({ ...draftReport, id: 95827, createdAt: '2023-01-01T21:15:57.149Z' });
       possibleIds = [
         firstReport.id,
         secondReport.id,
