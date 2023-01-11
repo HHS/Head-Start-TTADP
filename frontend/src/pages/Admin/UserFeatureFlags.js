@@ -9,7 +9,7 @@ export default function UserFeatureFlags({ flags, features, onFeaturesChange }) 
     <Fieldset legend="Advanced features">
       <Grid row gap className="margin-top-3">
         {features.map((f) => (
-          <Grid col={12} key={f.value}>
+          <Grid className="margin-bottom-1" col={12} key={f.value}>
             <Checkbox
               checked={flags.includes(f.value)}
               onChange={(e) => {
