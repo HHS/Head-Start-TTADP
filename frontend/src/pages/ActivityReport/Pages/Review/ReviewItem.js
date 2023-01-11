@@ -28,8 +28,35 @@ const ReviewItem = ({
 
   values = values.map((v) => {
     // If not a valid url, then its most likely just text, so leave it as is
+    // except for several values
     if (!isValidURL(v)) {
-      return v;
+      let result = v;
+      switch (v) {
+        case 'recipient':
+          result = 'Recipient';
+          break;
+        case 'regionalOffice':
+          result = 'Regional Office';
+          break;
+        case 'other-entity':
+          result = 'Other entity';
+          break;
+        case 'technical-assistance':
+          result = 'Technical assistance';
+          break;
+        case 'training':
+          result = 'Training';
+          break;
+        case 'in-person':
+          result = 'In person';
+          break;
+        case 'virtual':
+          result = 'Virtual';
+          break;
+        default:
+          break;
+      }
+      return result;
     }
 
     if (isExternalURL(v) || isInternalGovernmentLink(v)) {
@@ -50,7 +77,7 @@ const ReviewItem = ({
       </div>
       <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6">
         {values.map((v, index) => (
-          <div aria-label={`${label} ${index + 1}`} key={`${label}${v}`} col={12} className="desktop:flex-align-end display-flex flex-column flex-justify-center">
+          <div aria-label={`${label} ${index + 1}`} key={`${label}${v}`} className="desktop:flex-align-end display-flex flex-column flex-justify-center">
             {Number.isNaN(v) ? '' : v}
           </div>
         ))}
