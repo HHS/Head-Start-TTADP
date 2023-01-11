@@ -78,7 +78,7 @@ async function createRegion(region) {
 function defaultGrant() {
   return {
     id: faker.datatype.number({ min: 10000, max: 100000 }),
-    number: `0${faker.datatype.number({ min: 1, max: 9 })}${faker.animal.type()}`,
+    number: `0${faker.datatype.number({ min: 1, max: 9999 })}${faker.animal.type()}`,
     regionId: 10,
     status: 'Active',
     startDate: new Date('2021/01/01'),
