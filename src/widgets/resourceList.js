@@ -1,14 +1,19 @@
 import { Op, QueryTypes } from 'sequelize';
 import {
   ActivityReport,
+  ActivityReportResource,
   ActivityRecipient,
   Grant,
+  NextStep,
+  NextStepResource,
   OtherEntity,
   Recipient,
+  Resource,
   sequelize,
 } from '../models';
 import { formatNumber } from './helpers';
 import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../constants';
+import nextStep from '../models/nextStep';
 
 export async function resourceData(scopes) {
   // Query Database for all Resources within the scope.
@@ -50,6 +55,66 @@ export async function resourceData(scopes) {
             attributes: ['id'],
             where: { [Op.and]: [scopes.otherEntity] },
             required: false,
+          },
+        ],
+      },
+      {
+        model: ActivityReportResource,
+        as: 'activityReportResources',
+        where: { [Op.and]: [scopes.activityReportResource] },
+        separate: true,
+        include: [{
+          model: Resource,
+          as: 'resource',
+          where: { [Op.and]: [scopes.resource] },
+        }],
+      },
+      {
+        model: NextStep,
+        as: 'nextSteps',
+        where: { [Op.and]: [scopes.nextStep] },
+        separate: true,
+        include: [{
+          model: NextStepResource,
+          as: 'nextStepResource',
+          include: [{
+            model: Resource,
+            as: 'resource',
+            where: { [Op.and]: [scopes.resource] },
+          }],
+        }],
+      },
+      {
+        model: ActivityReportObjective,
+        as: 'activityReportObjectives',
+        where: { [Op.and]: [scopes.activityReportObjective] },
+        separate: true,
+        include: [
+          {
+            model: ActivityReportObjectiveResource,
+            as: 'activityReportObjectiveResource',
+            include: [{
+              model: Resource,
+              as: 'resource',
+              where: { [Op.and]: [scopes.resource] },
+            }],
+          },
+          {
+            model: Objective,
+            as: 'objective',
+            where: { [Op.and]: [scopes.objective] },
+            separate: true,
+            include: [
+              {
+                model: ObjectiveResource,
+                as: 'objectiveResource',
+                include: [{
+                  model: Resource,
+                  as: 'resource',
+                  where: { [Op.and]: [scopes.resource] },
+                }],
+              },
+            ],
           },
         ],
       },
