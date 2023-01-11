@@ -285,6 +285,10 @@ export const SOURCE_FIELD = {
   },
 };
 
+export const RESOURCE_DOMAIN = {
+  ECLKC: 'eclkc.ohs.acf.hhs.gov',
+};
+
 export const AWS_ELASTIC_SEARCH_INDEXES = {
   ACTIVITY_REPORTS: 'activityreports',
 };
