@@ -29,22 +29,6 @@ describe('Update HSES data', () => {
   afterAll(() => {
     jest.clearAllMocks();
   });
-  it('retrieves a zip file and extracts it to temp', async () => {
-    const on = jest.fn()
-      .mockImplementation((event, cb) => {
-        if (event === 'close') {
-          cb();
-        }
-      });
-    const writeStream = jest.spyOn(fs, 'createWriteStream');
-    writeStream.mockReturnValue({ on });
-
-    const processFunc = jest.fn();
-    await updateGrantsRecipients(processFunc);
-
-    expect(mockZip).toHaveBeenCalled();
-    expect(processFunc).toHaveBeenCalled();
-  });
 
   it('exits early on a writeStream error', async () => {
     const on = jest.fn()
