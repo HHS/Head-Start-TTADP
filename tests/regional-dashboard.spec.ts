@@ -1,4 +1,7 @@
 import { test, expect } from '@playwright/test';
+import moment from 'moment';
+
+const lastThirtyDays = `${moment().subtract(30, 'days').format('MM/DD/YYYY')}-${moment().format('MM/DD/YYYY')}`;
 
 test('Regional Dashboard', async ({ page }) => {
   //navigate to the dashboard
@@ -6,7 +9,7 @@ test('Regional Dashboard', async ({ page }) => {
   await page.getByRole('link', { name: 'Regional Dashboard' }).click();
 
   // remove one of the filters
-  await page.getByRole('button', { name: 'This button removes the filter: Date started is within 12/11/2022-01/10/2023' }).click();
+  await page.getByRole('button', { name: `This button removes the filter: Date started is within ${lastThirtyDays}` }).click();
 
   // open the filter menu, change the region filter to state code
   await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();
