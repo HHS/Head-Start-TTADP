@@ -228,7 +228,8 @@ export async function processFiles(hashSumHex) {
  *
  * Note - file download needs to happen in deployed environments
  */
-export default async function updateGrantsRecipients(_processFiles = processFiles) {
+// export default async function updateGrantsRecipients(_processFiles = processFiles) {
+export default async function updateGrantsRecipients() {
   logger.info('updateGrantsRecipients: starting');
   logger.debug('updateGrantsRecipients: retrieving file from HSES');
   await axios(process.env.HSES_DATA_FILE_URL, {
