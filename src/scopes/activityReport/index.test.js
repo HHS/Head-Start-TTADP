@@ -1712,7 +1712,7 @@ describe('filtersToScopes', () => {
       });
 
       reportOne = await createReport({
-        id: 2423423,
+        id: faker.datatype.number(),
         activityRecipients: [
           {
             grantId: grantOne.id,
@@ -1720,7 +1720,7 @@ describe('filtersToScopes', () => {
         ],
       });
       reportTwo = await createReport({
-        id: 2423424,
+        id: faker.datatype.number(),
         activityRecipients: [
           {
             grantId: grantOne.id,
@@ -1731,7 +1731,7 @@ describe('filtersToScopes', () => {
         ],
       });
       reportThree = await createReport({
-        id: 2423425,
+        id: faker.datatype.number(),
         activityRecipients: [
           {
             grantId: grantTwo.id,
