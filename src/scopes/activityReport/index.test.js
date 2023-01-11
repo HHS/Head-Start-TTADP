@@ -1767,7 +1767,7 @@ describe('filtersToScopes', () => {
     });
 
     it('return correct text filter search results', async () => {
-      const filters = { 'text.ctn': 'change' };
+      const filters = { 'text.ctn': ['change'] };
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: {
@@ -1783,7 +1783,7 @@ describe('filtersToScopes', () => {
     });
 
     it('excludes correct text filter search results', async () => {
-      const filters = { 'text.nctn': 'change' };
+      const filters = { 'text.nctn': ['change'] };
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: {

@@ -20,10 +20,11 @@ async function checkForSearchItems(filters) {
     propertyName = 'text.nctn';
   }
   if (propertyName) {
+    // Do AWS Elasticsearch.
     const searchResult = await search(
       AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-      [],
-      filters[propertyName],
+      [], // Search all document fields.
+      filters[propertyName][0],
     );
     const reportIds = searchResult.hits.map((r) => parseInt(r['_id'], DECIMAL_BASE));
     const updatedFilters = { ...filters, [propertyName]: reportIds };
