@@ -5,6 +5,7 @@ import { grantsFiltersToScopes as grant } from './grants';
 import { goalsFiltersToScopes as goal } from './goals';
 import { AWS_ELASTIC_SEARCH_INDEXES, DECIMAL_BASE } from '../constants';
 import { search } from '../lib/awsElasticSearch/index';
+import { auditLogger } from '../logger';
 
 const models = {
   activityReport,
@@ -20,15 +21,20 @@ async function checkForSearchItems(filters) {
     propertyName = 'text.nctn';
   }
   if (propertyName) {
+    try {
     // Do AWS Elasticsearch.
-    const searchResult = await search(
-      AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-      [], // Search all document fields.
-      filters[propertyName][0],
-    );
-    const reportIds = searchResult.hits.map((r) => parseInt(r['_id'], DECIMAL_BASE));
-    const updatedFilters = { ...filters, [propertyName]: reportIds };
-    return updatedFilters;
+      const searchResult = await search(
+        AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+        [], // Search all document fields.
+        filters[propertyName][0],
+      );
+      const reportIds = searchResult.hits.map((r) => parseInt(r['_id'], DECIMAL_BASE));
+      const updatedFilters = { ...filters, [propertyName]: reportIds };
+      return updatedFilters;
+    } catch (err) {
+      auditLogger.error('AWS Elasticsearch Filter Search Error: ', err);
+      return filters;
+    }
   }
   return filters;
 }
