@@ -109,6 +109,21 @@ describe('filtersToScopes', () => {
     }, {
       silent: true,
     });
+
+    const granteeSpecialist = await Role.findOne({ where: { fullName: 'Grantee Specialist' } });
+    if (!granteeSpecialist) {
+      await Role.create({ name: 'GS', fullName: 'Grantee Specialist', isSpecialist: true });
+    }
+
+    const systemSpecialist = await Role.findOne({ where: { fullName: 'System Specialist' } });
+    if (!systemSpecialist) {
+      await Role.create({ name: 'SS', fullName: 'System Specialist', isSpecialist: true });
+    }
+
+    const grantsSpecialist = await Role.findOne({ where: { fullName: 'Grants Specialist' } });
+    if (!grantsSpecialist) {
+      await Role.create({ name: 'GS', fullName: 'Grants Specialist', isSpecialist: true });
+    }
   });
 
   afterAll(async () => {
