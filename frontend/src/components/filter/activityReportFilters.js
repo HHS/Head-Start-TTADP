@@ -124,6 +124,22 @@ export const grantNumberFilter = {
   ),
 };
 
+export const textFilter = {
+  id: 'text',
+  display: 'Text',
+  conditions: SELECT_CONDITIONS,
+  defaultValues: EMPTY_TEXT_INPUT,
+  displayQuery: handleStringQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterInput
+      query={query}
+      inputId={`text-${condition}-${id}`}
+      onApply={onApplyQuery}
+      label="Enter text"
+    />
+  ),
+};
+
 export const otherEntitiesFilter = {
   id: 'otherEntities',
   display: 'Other entities',
