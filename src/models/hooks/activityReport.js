@@ -594,8 +594,10 @@ const updateAwsElasticsearchIndexes = async (sequelize, instance) => {
         instance.id,
         AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
       );
-    } else if (instance.previous('calculatedStatus') !== REPORT_STATUSES.SUBMITTED
-      && instance.calculatedStatus === REPORT_STATUSES.SUBMITTED) {
+    } else if ((instance.previous('calculatedStatus') !== REPORT_STATUSES.SUBMITTED
+      && instance.calculatedStatus === REPORT_STATUSES.SUBMITTED)
+      || (instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
+      && instance.calculatedStatus === REPORT_STATUSES.APPROVED)) {
       // Index for AWS Elasticsearch.
       const document = await getActivityReportDocument(sequelize, instance);
       await scheduleUpdateIndexDocumentJob(
