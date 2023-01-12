@@ -148,6 +148,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         'number',
         'regionId',
         'recipientId',
+        'numberWithProgramTypes',
       ],
       include: [
         {
@@ -298,7 +299,7 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
   // we pass in the existing objectives as the accumulator
   const objectivesToSort = newObjectives.reduce((objectives, objective) => {
     const exists = objectives.find((o) => (
-      o.title === objective.title.trim() && o.status === objective.status
+      o.title.trim() === objective.title.trim() && o.status === objective.status
     ));
     // eslint-disable-next-line no-nested-ternary
     const id = objective.getDataValue
@@ -327,7 +328,7 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
       ...(objective.dataValues
         ? objective.dataValues
         : objective),
-      title: objective.title.trim(),
+      title: objective.title,
       value: id,
       ids: [id],
       // Make sure we pass back a list of recipient ids for subsequent saves.
@@ -359,7 +360,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
     // objectives represent the accumulator in the find below
     // objective is the objective as it is returned from the API
     const exists = objectives.find((o) => (
-      o.title === objective.title.trim() && o.status === objectiveStatus
+      o.title.trim() === objective.title.trim() && o.status === objectiveStatus
     ));
 
     if (exists) {
@@ -412,7 +413,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
 
     return [...objectives, {
       ...objective.dataValues,
-      title: objective.title.trim(),
+      title: objective.title,
       value: id,
       ids: [id],
       ttaProvided,
@@ -480,6 +481,7 @@ function reduceGoals(goals, forReport = false) {
           recipient: currentValue.grant.recipient.dataValues,
           name: currentValue.grant.name,
           goalId: currentValue.dataValues.id,
+          numberWithProgramTypes: currentValue.grant.numberWithProgramTypes,
         },
       ];
       existingGoal.grantIds = [...existingGoal.grantIds, currentValue.grant.id];
@@ -497,6 +499,7 @@ function reduceGoals(goals, forReport = false) {
       grants: [
         {
           ...currentValue.grant.dataValues,
+          numberWithProgramTypes: currentValue.grant.numberWithProgramTypes,
           recipient: currentValue.grant.recipient.dataValues,
           name: currentValue.grant.name,
           goalId: currentValue.dataValues.id,
