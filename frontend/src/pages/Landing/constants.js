@@ -15,7 +15,7 @@ import {
   otherEntitiesFilter,
   participantsFilter,
   myReportsFilter,
-  textFilter,
+  reportTextFilter,
 } from '../../components/filter/activityReportFilters';
 
 export const LANDING_BASE_FILTER_CONFIG = [
@@ -30,10 +30,10 @@ export const LANDING_BASE_FILTER_CONFIG = [
   reasonsFilter,
   recipientFilter,
   reportIdFilter,
+  reportTextFilter,
   specialistRoleFilter,
   stateCodeFilter,
   targetPopulationsFilter,
-  textFilter,
   topicsFilter,
 ];
 
@@ -50,9 +50,9 @@ export const LANDING_FILTER_CONFIG_WITH_REGIONS = [
   recipientFilter,
   regionFilter,
   reportIdFilter,
+  reportTextFilter,
   specialistRoleFilter,
   stateCodeFilter,
   targetPopulationsFilter,
-  textFilter,
   topicsFilter,
 ];

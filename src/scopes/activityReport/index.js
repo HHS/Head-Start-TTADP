@@ -22,7 +22,7 @@ import { beforeEndDate, afterEndDate, withinEndDate } from './endDate';
 import { withOtherEntities, withoutOtherEntities } from './otherEntities';
 import { withoutParticipants, withParticipants } from './participants';
 import { withMyReports, withoutMyReports } from './myReports';
-import { withText, withoutText } from './text';
+import { withReportText, withoutReportText } from './reportText';
 
 export const topicToQuery = {
   reportId: {
@@ -116,9 +116,9 @@ export const topicToQuery = {
     in: (query) => withOtherEntities(query),
     nin: (query) => withoutOtherEntities(query),
   },
-  text: {
-    ctn: (query) => withText(query),
-    nctn: (query) => withoutText(query),
+  reportText: {
+    ctn: (query) => withReportText(query),
+    nctn: (query) => withoutReportText(query),
   },
 };
 

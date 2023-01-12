@@ -15,10 +15,10 @@ const models = {
 
 async function checkForSearchItems(filters) {
   let propertyName = '';
-  if (_.has(filters, 'text.ctn')) {
-    propertyName = 'text.ctn';
-  } else if (_.has(filters, 'text.nctn')) {
-    propertyName = 'text.nctn';
+  if (_.has(filters, 'reportText.ctn')) {
+    propertyName = 'reportText.ctn';
+  } else if (_.has(filters, 'reportText.nctn')) {
+    propertyName = 'reportText.nctn';
   }
   if (propertyName) {
     try {

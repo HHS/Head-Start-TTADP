@@ -1705,7 +1705,7 @@ describe('filtersToScopes', () => {
     });
   });
 
-  describe('text', () => {
+  describe('reportText', () => {
     let includedReport1;
     let includedReport2;
     let excludedReport;
@@ -1781,8 +1781,8 @@ describe('filtersToScopes', () => {
       });
     });
 
-    it('return correct text filter search results', async () => {
-      const filters = { 'text.ctn': ['change'] };
+    it('return correct report text filter search results', async () => {
+      const filters = { 'reportText.ctn': ['change'] };
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: {
@@ -1797,8 +1797,8 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([includedReport1.id]));
     });
 
-    it('excludes correct text filter search results', async () => {
-      const filters = { 'text.nctn': ['change'] };
+    it('excludes correct report text filter search results', async () => {
+      const filters = { 'reportText.nctn': ['change'] };
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: {
