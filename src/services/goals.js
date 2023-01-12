@@ -461,24 +461,25 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
 function reduceGoals(goals, forReport = false) {
   const objectivesReducer = forReport ? reduceObjectivesForActivityReport : reduceObjectives;
 
-  const where = (g, currentValue) => (forReport ? g.name === currentValue.name
-    && g.status === currentValue.status
-    && g.isRttapa === currentValue.activityReportGoals[0].isRttapa : g.name === currentValue.name
-    && g.status === currentValue.status);
+  const where = (g, currentValue) => (forReport
+    ? g.name === currentValue.dataValues.name
+      && g.status === currentValue.dataValues.status
+      && g.isRttapa === currentValue.activityReportGoals[0].isRttapa
+    : g.name === currentValue.dataValues.name
+      && g.status === currentValue.dataValues.status);
 
   const r = goals.reduce((previousValues, currentValue) => {
     const existingGoal = previousValues.find((g) => where(g, currentValue));
-
     if (existingGoal) {
-      existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.goalNumber];
-      existingGoal.goalIds = [...existingGoal.goalIds, currentValue.id];
+      existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.dataValues.goalNumber || `G-${currentValue.dataValues.id}`];
+      existingGoal.goalIds = [...existingGoal.goalIds, currentValue.dataValues.id];
       existingGoal.grants = [
         ...existingGoal.grants,
         {
           ...currentValue.grant.dataValues,
           recipient: currentValue.grant.recipient.dataValues,
           name: currentValue.grant.name,
-          goalId: currentValue.id,
+          goalId: currentValue.dataValues.id,
         },
       ];
       existingGoal.grantIds = [...existingGoal.grantIds, currentValue.grant.id];
@@ -491,7 +492,7 @@ function reduceGoals(goals, forReport = false) {
 
     const goal = {
       ...currentValue.dataValues,
-      goalNumbers: [currentValue.goalNumber],
+      goalNumbers: [currentValue.dataValues.goalNumber || `G-${currentValue.dataValues.id}`],
       goalIds: [currentValue.dataValues.id],
       grants: [
         {
