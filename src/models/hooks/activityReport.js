@@ -230,7 +230,7 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
       // Get latest report by end date.
       const latestAR = relevantARs.reduce((r, a) => {
         if (r && r.endDate) {
-          return r.endDate > a.endDate ? r : a;
+          return new Date(r.endDate) > new Date(a.endDate) ? r : a;
         }
         return a;
       }, {

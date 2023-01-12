@@ -208,7 +208,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "main-ar-redesign"
+    default: "websocket-demo"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "TTAHUB-1245/fix-date-filters-graph"
@@ -454,7 +454,8 @@ jobs:
                   REACT_APP_GTM_ENABLED: $SANDBOX_GTM_ENABLED
                   REACT_APP_GTM_ID: $GLOBAL_GTM_ID
                   REACT_APP_GTM_AUTH: $SANDBOX_GTM_AUTH
-                  REACT_APP_GTM_PREVIEW: $SANDBOX_GTM_PREVIEW
+                  REACT_APP_GTM_PREVIEW: $SANDBOX_GTM_PREVIEW           
+                  REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-sandbox.app.cloud.gov       
             - cf_deploy:
                 app_name: tta-smarthub-sandbox
                 auth_client_id: SANDBOX_AUTH_CLIENT_ID
@@ -497,6 +498,7 @@ jobs:
                   REACT_APP_GTM_ID: $GLOBAL_GTM_ID
                   REACT_APP_GTM_AUTH: $DEV_GTM_AUTH
                   REACT_APP_GTM_PREVIEW: $DEV_GTM_PREVIEW
+                  REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-dev.app.cloud.gov
             - cf_deploy:
                 app_name: tta-smarthub-dev
                 auth_client_id: DEV_AUTH_CLIENT_ID
@@ -539,6 +541,7 @@ jobs:
                   REACT_APP_GTM_ID: $GLOBAL_GTM_ID
                   REACT_APP_GTM_AUTH: $STAGING_GTM_AUTH
                   REACT_APP_GTM_PREVIEW: $STAGING_GTM_PREVIEW
+                  REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-staging.app.cloud.gov
             - cf_deploy:
                 app_name: tta-smarthub-staging
                 auth_client_id: STAGING_AUTH_CLIENT_ID
@@ -579,6 +582,7 @@ jobs:
                   REACT_APP_GTM_ID: $GLOBAL_GTM_ID
                   REACT_APP_GTM_AUTH: $PROD_GTM_AUTH
                   REACT_APP_GTM_PREVIEW: $PROD_GTM_PREVIEW
+                  REACT_APP_WEBSOCKET_URL: wss://ttahub.ohs.acf.hhs.gov
             - cf_deploy:
                 app_name: tta-smarthub-prod
                 auth_client_id: PROD_AUTH_CLIENT_ID

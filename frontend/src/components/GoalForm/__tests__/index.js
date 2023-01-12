@@ -798,14 +798,14 @@ describe('create goal', () => {
       endDate: '2021-10-08',
       goalNumbers: ['G-12389'],
       isRttapa: '',
-      grant: {
+      grants: [{
         id: 1,
         number: '1',
         programs: [{
           programType: 'EHS',
         }],
         status: 'Active',
-      },
+      }],
       objectives: [
         {
           id: 1238474,
@@ -836,14 +836,14 @@ describe('create goal', () => {
       endDate: '2021-10-08',
       goalNumbers: ['G-12389'],
       isRttapa: 'Yes',
-      grant: {
+      grants: [{
         id: 1,
         number: '1',
         programs: [{
           programType: 'EHS',
         }],
         status: 'Active',
-      },
+      }],
       objectives: [
         {
           id: 1238474,
@@ -874,14 +874,14 @@ describe('create goal', () => {
       endDate: '2021-10-08',
       goalNumbers: ['G-12389'],
       isRttapa: 'No',
-      grant: {
+      grants: [{
         id: 1,
         number: '1',
         programs: [{
           programType: 'EHS',
         }],
         status: 'Active',
-      },
+      }],
       objectives: [
         {
           id: 1238474,
@@ -922,14 +922,14 @@ describe('create goal', () => {
       endDate: '2021-10-08',
       goalNumbers: ['G-12389'],
       isRttapa: 'Yes',
-      grant: {
+      grants: [{
         id: 1,
         number: '1',
         programs: [{
           programType: 'EHS',
         }],
         status: 'Active',
-      },
+      }],
       objectives: [
         {
           id: 1238474,
