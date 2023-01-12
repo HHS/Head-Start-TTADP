@@ -33,7 +33,7 @@ async function checkForSearchItems(filters) {
       return updatedFilters;
     } catch (err) {
       auditLogger.error('AWS Elasticsearch Filter Search Error: ', err);
-      return filters;
+      return { ...filters, [propertyName]: [] };
     }
   }
   return filters;
