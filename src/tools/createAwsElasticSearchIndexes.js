@@ -113,7 +113,7 @@ export default async function createAwsElasticSearchIndexes() {
       logger.info('Search Index Job Info: No reports found to index.');
     }
     // Bulk add index documents.
-    logger.info(`Search Index Job Info: Starting indexing of ${reportsToIndex[0].length} reports...`);
+    logger.info(`Search Index Job Info: Starting indexing of ${reportsToIndex.length} reports...`);
 
     // Build Documents Object Json.
     const startCreatingBulk = moment();
