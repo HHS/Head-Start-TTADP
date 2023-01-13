@@ -287,6 +287,17 @@ test.describe("Activity Report", () => {
     // check that previously created goals g1 and g2 are visible
     await expect(page.getByText('g1', {exact: true})).toBeVisible();
     await expect(page.getByText('g2', {exact: true})).toBeVisible();
+  test('switching objectives properly clears all fields', async ({ page}) => {
+    await page.goto('http://localhost:3000/');
+    // create a new report
+    await page.getByRole('link', { name: 'Activity Reports' }).click();
+    await page.getByRole('button', { name: '+ New Activity Report' }).click();
+
+    // select a recipient
+    await page.getByRole('group', { name: 'Was this activity for a recipient or other entity? *' }).locator('label').filter({ hasText: 'Recipient' }).click();
+    await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
+    await page.locator('#react-select-3-option-0-0').click();
+  });
 
     // look for the goals heading for the previously created goal, e.g. 'Goal G-6, G-5RTTAPA'
     const g1Goals = page.locator('h3:above(p:text("g1"))').first();
