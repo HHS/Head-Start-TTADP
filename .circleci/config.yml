@@ -17,7 +17,7 @@ executors:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: secretpass
           POSTGRES_DB: ttasmarthub
-  back-end-executor:
+  docker-postgres-elasticsearch-executor:
     docker:
       - image: cimg/node:16.18.1-browsers
         environment:
@@ -258,7 +258,7 @@ jobs:
           paths:
             - .
   test_backend:
-    executor: back-end-executor
+    executor: docker-postgres-elasticsearch-executor
     environment:
         AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
         AWS_ELASTICSEARCH_ACCESS_KEY: admin
@@ -298,6 +298,8 @@ jobs:
     steps:
       - attach_workspace:
           at: .
+      - setup_remote_docker:
+          version: 20.10.14
       - run:
           name: Audit checksums of color files
           command: |
@@ -317,7 +319,11 @@ jobs:
       - store_artifacts:
           path: frontend/coverage/
   test_e2e:
-    executor: docker-postgres-executor
+    executor: docker-postgres-elasticsearch-executor
+    environment:
+        AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
+        AWS_ELASTICSEARCH_ACCESS_KEY: admin
+        AWS_ELASTICSEARCH_SECRET_KEY: admin
     steps:
       - attach_workspace:
           at: .
