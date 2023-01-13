@@ -88,8 +88,9 @@ describe('other entity report', () => {
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
     // select an approver
-    await page.locator('.css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-33-option-0').click();
+    await page.getByLabel(/Approving manager/i).focus();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
     
     // extract the AR number from the URL:
     const url = page.url();

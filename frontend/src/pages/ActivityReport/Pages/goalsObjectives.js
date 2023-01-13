@@ -11,6 +11,7 @@ import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useFormContext, useController } from 'react-hook-form/dist/index.ie11';
 import { Link } from 'react-router-dom';
 import GoalPicker from './components/GoalPicker';
+import { IN_PROGRESS } from '../../../components/Navigator/constants';
 import { getGoals, setGoalAsActivelyEdited } from '../../../fetchers/activityReports';
 import { validateGoals } from './components/goalValidator';
 import RecipientReviewSection from './components/RecipientReviewSection';
@@ -22,6 +23,8 @@ import PlusButton from '../../../components/GoalForm/PlusButton';
 import OtherEntity from './components/OtherEntity';
 import GoalFormContext from '../../../GoalFormContext';
 import ReadOnlyOtherEntityObjectives from '../../../components/GoalForm/ReadOnlyOtherEntityObjectives';
+
+const GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER = '2';
 
 const GoalsObjectives = ({
   reportId,
@@ -42,6 +45,7 @@ const GoalsObjectives = ({
   const activityRecipients = watch('activityRecipients');
   const objectivesWithoutGoals = watch('objectivesWithoutGoals');
   const activityReportId = watch('id');
+  const pageState = getValues('pageState');
   const isRecipientReport = activityRecipientType === 'recipient';
   const isOtherEntityReport = activityRecipientType === 'other-entity';
   const grantIds = isRecipientReport ? activityRecipients.map((r) => {
@@ -134,7 +138,7 @@ const GoalsObjectives = ({
 
   const onEdit = async (goal, index) => {
     try {
-      await setGoalAsActivelyEdited(activityReportId, goal.goalIds);
+      await setGoalAsActivelyEdited(activityReportId, goal.goalIds, pageState);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('failed to set goal as actively edited with this error:', err);
@@ -171,8 +175,14 @@ const GoalsObjectives = ({
 
     const rttapaValue = goal.isRttapa;
     setValue('goalIsRttapa', rttapaValue);
-
     toggleGoalForm(false);
+    setValue(
+      'pageState',
+      {
+        ...pageState,
+        [GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER]: IN_PROGRESS,
+      },
+    );
 
     let copyOfSelectedGoals = selectedGoals.map((g) => ({ ...g }));
     if (currentlyEditing) {
