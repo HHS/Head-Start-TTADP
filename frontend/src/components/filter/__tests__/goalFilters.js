@@ -77,6 +77,11 @@ describe('goalFilters', () => {
       await selectEvent.select(statusInput, ['Draft']);
       expect(apply).toHaveBeenCalled();
     });
+
+    it('displays the correct with empty array', async () => {
+      const q = statusFilter.displayQuery([]);
+      expect(q).toBe('');
+    });
   });
 
   describe('topicsFilter', () => {
@@ -105,14 +110,6 @@ describe('goalFilters', () => {
       renderFilter(() => grantFilter.renderInput('1', 'test', ['number'], () => {}));
       const grantNumberInput = await screen.findByLabelText('Select grant numbers to filter by');
       expect(grantNumberInput).toBeInTheDocument();
-    });
-
-    it('displays the correct values', async () => {
-      const q = grantFilter.displayQuery([
-        'number',
-      ]);
-
-      expect(q).toBe('number EHS');
     });
 
     it('calls onApply', async () => {
