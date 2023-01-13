@@ -63,8 +63,8 @@ function SideNav({
         className={`smart-hub--navigator-link ${page.current ? 'smart-hub--navigator-link-active' : ''}`}
         role="button"
       >
-        <span className="margin-left-2">{page.label}</span>
-        <span className="margin-left-auto margin-right-2">
+        <span className="page-label margin-left-2">{page.label}</span>
+        <span className="page-state margin-left-auto margin-right-2">
           {page.state !== REPORT_STATUSES.DRAFT
             && (
               <Tag className={`smart-hub--tag ${tagClass(page.state)}`}>
