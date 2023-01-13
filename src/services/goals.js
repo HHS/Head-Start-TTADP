@@ -1,6 +1,5 @@
 import { Op } from 'sequelize';
 import { uniqBy } from 'lodash';
-import moment from 'moment';
 import {
   Goal,
   Grant,
@@ -546,7 +545,7 @@ function reduceGoals(goals, forReport = false) {
         currentValue.objectives,
       ),
       isNew: false,
-      endDate: moment(currentValue.endDate, 'MM/DD/YYYY').format('MM/DD/YYYY'),
+      endDate: currentValue.endDate,
     };
 
     if (forReport) {
