@@ -245,7 +245,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         { showAccessibleData
           ? <AccessibleWidgetData caption="Total TTA hours by date and type" columnHeadings={columnHeadings} rows={tableRows} />
           : (
-            <div aria-hidden="true">
+            <div>
               <fieldset className="grid-row ttahub--total-hrs-recipient-graph-legend text-align-center margin-bottom-3 border-0 padding-0">
                 <legend className="margin-bottom-2">Toggle individual lines by checking or unchecking a legend item.</legend>
                 <LegendControl id="show-ta-checkbox" label="Technical Assistance" selected={showTA} setSelected={setShowTA} shape="circle" />
