@@ -19,6 +19,7 @@ import {
   otherEntitiesFilter,
   participantsFilter,
   myReportsFilter,
+  endDateFilter,
 } from '../activityReportFilters';
 import {
   createDateFilter,
@@ -344,6 +345,7 @@ describe('Filter Menu', () => {
       topicsFilter,
       otherEntitiesFilter,
       myReportsFilter,
+      endDateFilter,
     ];
 
     const filters = [];
@@ -388,6 +390,10 @@ describe('Filter Menu', () => {
     userEvent.selectOptions(conditions, 'contains');
 
     userEvent.selectOptions(topics, 'Target populations');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Date ended');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
