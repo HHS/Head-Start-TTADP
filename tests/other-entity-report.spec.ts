@@ -13,7 +13,7 @@ describe('other entity report', () => {
     await page.getByRole('link', { name: 'Activity Reports' }).click();
     await page.getByRole('button', { name: '+ New Activity Report' }).click();
       
-    const heading = await page.getByRole('heading', { name: /activity report for region \d/i });
+    const heading = page.getByRole('heading', { name: /activity report for region \d/i });
     const regionNumber = await heading.textContent().then((text) => text!.match(/\d/)![0]);
    
     // select two recipiients
