@@ -20,6 +20,7 @@ import {
   participantsFilter,
   myReportsFilter,
   reportTextFilter,
+  endDateFilter,
 } from '../activityReportFilters';
 import {
   createDateFilter,
@@ -346,6 +347,7 @@ describe('Filter Menu', () => {
       otherEntitiesFilter,
       myReportsFilter,
       reportTextFilter,
+      endDateFilter,
     ];
 
     const filters = [];
@@ -370,6 +372,10 @@ describe('Filter Menu', () => {
     userEvent.selectOptions(conditions, 'contains');
 
     userEvent.selectOptions(topics, 'Program types');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Date ended');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
