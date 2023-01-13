@@ -24,8 +24,6 @@ import moment from 'moment';
 import useInterval from '@use-it/interval';
 import Container from '../Container';
 import SocketAlert from '../SocketAlert';
-// import UserContext from '../../UserContext';
-
 import {
   IN_PROGRESS, COMPLETE,
 } from './constants';
@@ -412,7 +410,7 @@ const Navigator = ({
     }
   };
 
-  const saveGoalsNavigate = async () => {
+  const onSaveAndContinueGoals = async () => {
     // the goal form only allows for one goal to be open at a time
     // but the objectives are stored in a subfield
     // so we need to access the objectives and bundle them together in order to validate them
@@ -449,52 +447,41 @@ const Navigator = ({
       return;
     }
 
-    let newGoals = selectedGoals;
-
     // save goal to api, come back with new ids for goal and objectives
     try {
-      newGoals = await saveGoalsForReport(
+      // clear out the goal form
+      setValue('goalForEditing', null);
+      setValue('goalName', '');
+      setValue('goalEndDate', '');
+      setValue('goalIsRttapa', '');
+      setValue('goalForEditing.objectives', []);
+
+      // set goals to form data as appropriate
+      setValue('goals', [
+        // we make sure to mark all the read only goals as "ActivelyEdited: false"
+        ...selectedGoals.map((g) => ({ ...g, isActivelyBeingEditing: false })),
         {
-          goals: [
-            // we make sure to mark all the read only goals as "ActivelyEdited: false"
-            ...selectedGoals.map((g) => ({ ...g, isActivelyBeingEditing: false })),
-            {
-              ...goal,
-              // we also need to make sure we only send valid objectives to the API
-              objectives: objectivesWithValidResourcesOnly(goal.objectives),
-            },
-          ],
-          activityReportId: reportId,
-          regionId: formData.regionId,
+          ...goal,
+          // we also need to make sure we only send valid objectives to the API
+          objectives: objectivesWithValidResourcesOnly(goal.objectives),
         },
-      );
+      ]);
+
+      // save report to API
+      const { status, ...values } = getValues();
+      const data = { ...formData, ...values, pageState: newNavigatorState() };
+      await onSave(data);
+
       updateErrorMessage('');
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     }
 
+    // close the goal form
     toggleGoalForm(true);
-    setValue('goals', newGoals);
-    setValue('goalForEditing', null);
-    setValue('goalName', '');
-    setValue('goalEndDate', '');
-    setValue('goalIsRttapa', '');
-    setValue('goalForEditing.objectives', []);
-
-    // the form value is updated but the react state is not
-    // so here we go (TODO - why are there two sources of truth?)
-    updateFormData({
-      ...formData,
-      goals: newGoals,
-      goalForEditing: null,
-      goalName: '',
-      goalEndDate: '',
-      goalIsRttapa: '',
-      'goalForEditing.objectives': [],
-    });
   };
 
-  const onObjectiveFormNavigate = async () => {
+  const onObjectiveSaveAndContinue = async () => {
     // Get other-entity objectives.
     const fieldArrayName = 'objectivesWithoutGoals';
     const objectives = getValues(fieldArrayName);
@@ -507,40 +494,28 @@ const Navigator = ({
 
     const otherEntityIds = recipients.map((otherEntity) => otherEntity.activityRecipientId);
 
-    // Save objectives.
-    let newObjectives;
     try {
-      newObjectives = await saveObjectivesForReport(
-        {
-          objectivesWithoutGoals: objectivesWithValidResourcesOnly(objectives.map((objective) => (
-            { ...objective, recipientIds: otherEntityIds }
-          ))),
-          activityReportId: reportId,
-          region: formData.regionId,
-        },
-      );
+      setValue('objectivesWithoutGoals', objectivesWithValidResourcesOnly(objectives.map((objective) => (
+        { ...objective, recipientIds: otherEntityIds }
+      ))));
+
       updateErrorMessage('');
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
     }
 
-    // Close objective entry and show readonly.
-    setValue('objectivesWithoutGoals', newObjectives);
     toggleObjectiveForm(true);
-
-    // Update form data (formData has otherEntityIds).
-    updateFormData({ ...formData, objectivesWithoutGoals: newObjectives });
   };
 
-  const onGoalFormNavigate = async () => {
+  const onSaveAndContinueGoalsAndObjectives = async () => {
     setSavingLoadScreen();
     try {
       if (isOtherEntityReport) {
         // Save objectives for other-entity report.
-        await onObjectiveFormNavigate();
+        await onObjectiveSaveAndContinue();
       } else {
         // Save goals for recipient report.
-        await saveGoalsNavigate();
+        await onSaveAndContinueGoals();
       }
     } finally {
       setIsAppLoading(false);
@@ -681,7 +656,7 @@ const Navigator = ({
                         {showSaveGoalsAndObjButton
                           ? (
                             <>
-                              <Button className="margin-right-1" type="button" disabled={isAppLoading || weAreAutoSaving} onClick={onGoalFormNavigate}>{`Save ${isOtherEntityReport ? 'objectives' : 'goal'}`}</Button>
+                              <Button className="margin-right-1" type="button" disabled={isAppLoading || weAreAutoSaving} onClick={onSaveAndContinueGoalsAndObjectives}>{`Save ${isOtherEntityReport ? 'objectives' : 'goal'}`}</Button>
                               <Button className="usa-button--outline" type="button" disabled={isAppLoading || weAreAutoSaving} onClick={isOtherEntityReport ? () => onSaveDraftOetObjectives(false) : () => onSaveDraftGoal(false)}>Save draft</Button>
                             </>
                           ) : (
@@ -690,7 +665,6 @@ const Navigator = ({
                               <Button className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
                             </>
                           )}
-
                         {
                           page.position <= 1
                             ? null

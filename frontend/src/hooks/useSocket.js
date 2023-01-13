@@ -32,6 +32,8 @@ export default function useSocket(user) {
       return;
     }
 
+    console.log('Connecting to websocket @', path);
+
     // if we've already created a socket for the current path, return
     if (socket.current && path === socket.current.url) {
       return;
