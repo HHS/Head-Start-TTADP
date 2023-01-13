@@ -179,14 +179,14 @@ test.describe("Activity Report", () => {
     await page.getByRole('button', { name: 'Save goal' }).click();
 
     // assert the goals and objectives section is complete
-    expect(page.locator('#activityReportSideNav-goals-and-objectives').textContent()).toContain('Complete');
+    expect(await page.locator('#activityReportSideNav-goals-and-objectives').textContent()).toContain('Complete');
 
     // edit the first goal
     await page.getByText('g1', { exact: true }).locator('..').locator('..').getByRole('button').click();
     await page.getByRole('button', { name: 'Edit'}).click();
 
     // test to make sure that side nav is updated when a goal is edited
-    expect(page.locator('#activityReportSideNav-goals-and-objectives').textContent()).toContain('In progress');
+    expect(await page.locator('#activityReportSideNav-goals-and-objectives').textContent()).toContain('In progress');
 
     // navigate away from the activity report page
     await page.getByRole('link', { name: 'Activity Reports' }).click();
