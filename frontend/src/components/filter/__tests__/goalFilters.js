@@ -77,6 +77,11 @@ describe('goalFilters', () => {
       await selectEvent.select(statusInput, ['Draft']);
       expect(apply).toHaveBeenCalled();
     });
+
+    it('displays the correct with empty array', async () => {
+      const q = statusFilter.displayQuery([]);
+      expect(q).toBe('');
+    });
   });
 
   describe('topicsFilter', () => {

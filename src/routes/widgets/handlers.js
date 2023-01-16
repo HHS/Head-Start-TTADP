@@ -40,7 +40,7 @@ export async function getWidget(req, res) {
      * The idea is twofold, firstly, that we can expand the options passed to filtersToScopes and
      * also that we can as needed modify the request to add certain objects
      */
-    const scopes = filtersToScopes(
+    const scopes = await filtersToScopes(
       query,
       {
         grant: { subset: true },
