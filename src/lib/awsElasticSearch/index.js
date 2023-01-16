@@ -93,23 +93,28 @@ const createIndex = async (indexName, passedClient) => {
 /*
   Assign a searchable document to an index.
 */
-const addIndexDocument = async (indexName, id, document, passedClient) => {
+const addIndexDocument = async (job) => {
+  const {
+    indexName, id, document, passedClient,
+  } = job.data;
+  let res;
   try {
     // Initialize the client.
     const client = passedClient || await getClient();
 
     // Add a document to an index.
-    const res = await client.index({
+    res = await client.index({
       index: indexName,
       id,
       body: document,
       refresh: true, // triggers manual refresh.
     });
-    logger.info(`AWS OpenSearch: Successfully added document to index ${indexName}`);
-    return res;
+    logger.info(`AWS OpenSearch: Successfully added document ${id} to index ${indexName}`);
+
+    return { data: job.data, status: res.statusCode, res };
   } catch (error) {
     auditLogger.error(`AWS OpenSearch Error: Unable to add document to index '${indexName}': ${error.message}`);
-    throw error;
+    return { data: job.data, status: res.statusCode, res };
   }
 };
 /*
@@ -178,47 +183,76 @@ const search = async (indexName, fields, query, passedClient) => {
       },
     };
 */
-const updateIndexDocument = async (indexName, id, body, passedClient) => {
+const updateIndexDocument = async (job) => {
+  const {
+    indexName, id, body, passedClient,
+  } = job.data;
+  let res;
   try {
     // Initialize the client.
     const client = passedClient || await getClient();
 
     // Update index document.
-    const res = await client.update({
+    res = await client.update({
       index: indexName,
       id,
       body,
+      doc_as_upsert: true, // create if doesn't exist.
       refresh: true, // triggers manual refresh.
     });
 
-    logger.info(`AWS OpenSearch: Successfully updated document  index ${indexName} for id ${id}`);
-    return res;
+    logger.info(`AWS OpenSearch: Successfully updated document index ${indexName} for id ${id}`);
+    return { data: job.data, status: res.statusCode, res };
   } catch (error) {
     auditLogger.error(`AWS OpenSearch Error: Unable to update the index '${indexName} for id ${id}': ${error.message}`);
-    throw error;
+    return { data: job.data, status: res.statusCode, res };
   }
 };
 
 /*
   Delete an index document.
 */
-const deleteIndexDocument = async (indexName, id, passedClient) => {
+const deleteIndexDocument = async (job) => {
+  const {
+    indexName, id, passedClient,
+  } = job.data;
+  let res;
   try {
     // Initialize the client.
     const client = passedClient || await getClient();
 
-    // Delete index document.
-    const res = await client.delete({
-      index: indexName,
-      id,
-      refresh: true, // triggers manual refresh.
-    });
+    // Check document exists.
+    const query = {
+      query: {
+        match: {
+          id: {
+            query: id,
+          },
+        },
+      },
+    };
 
-    logger.info(`AWS OpenSearch: Successfully deleted document '${id}' for index '${indexName}'`);
-    return res;
+    res = await client.search({
+      index: indexName,
+      body: query,
+    });
+    if (res.body.hits.length >= 1) {
+      // Delete index document.
+      res = await client.delete({
+        index: indexName,
+        id,
+        refresh: true, // triggers manual refresh.
+        body: { ignore_unavailable: true },
+      });
+      logger.info(`AWS OpenSearch: Successfully deleted document '${id}' for index '${indexName}'`);
+    } else {
+      logger.warn(`AWS OpenSearch: Unable to locate a document with '${id}' for index to delete'${indexName}'`);
+    }
+
+    return { data: job.data, status: res.statusCode, res };
   } catch (error) {
     auditLogger.error(`AWS OpenSearch Error: Unable to delete document '${id}' for index '${indexName}': ${error.message}`);
-    throw error;
+    return { data: job.data, status: res.statusCode, res };
   }
 };
 
@@ -231,6 +265,7 @@ const deleteIndex = async (indexName, passedClient) => {
     // Initialize the client.
     const client = passedClient || await getClient();
 
+    // Delete.
     res = await client.indices.delete({
       index: indexName,
     });
