@@ -190,6 +190,56 @@ const Navigator = ({
     }
   };
 
+  /**
+   * @summary This function is called when a page is navigated and is somewhat
+   * equivalent to saving a draft. It isn't called if the goal form is closed.
+   */
+  const onSaveDraftGoalForNavigation = async () => {
+    // the goal form only allows for one goal to be open at a time
+    // but the objectives are stored in a subfield
+    // so we need to access the objectives and bundle them together in order to validate them
+    const objectivesFieldArrayName = 'goalForEditing.objectives';
+    const objectives = getValues(objectivesFieldArrayName);
+    const name = getValues('goalName');
+    const formEndDate = getValues('goalEndDate');
+    const isRttapa = getValues('goalIsRttapa');
+
+    const isAutoSave = false;
+    setSavingLoadScreen(isAutoSave);
+
+    const endDate = formEndDate && formEndDate.toLowerCase() !== 'invalid date' ? formEndDate : '';
+
+    const goal = {
+      ...goalForEditing,
+      isActivelyBeingEditing: true,
+      name,
+      endDate,
+      objectives: objectivesWithValidResourcesOnly(objectives),
+      isRttapa,
+      regionId: formData.regionId,
+      grantIds,
+    };
+
+    // the above logic has packaged all the fields into a tidy goal object and we can now
+    // save it to the server and update the form state
+    const allGoals = [...selectedGoals.map((g) => ({ ...g, isActivelyBeingEditing: false })), goal];
+
+    try {
+      setValue('goals', allGoals);
+      const { status, ...values } = getValues();
+      const data = { ...formData, ...values, pageState: newNavigatorState() };
+      await onSave(data);
+
+      updateErrorMessage('');
+      updateLastSaveTime(moment());
+      updateShowSavedDraft(true); // show the saved draft message
+    } catch (error) {
+      updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
+    } finally {
+      setIsAppLoading(false);
+    }
+  };
+
   const onSaveDraftGoal = async (isAutoSave = false) => {
     // the goal form only allows for one goal to be open at a time
     // but the objectives are stored in a subfield
@@ -522,7 +572,12 @@ const Navigator = ({
     }
   };
 
-  const draftSaver = async (isAutoSave = false) => {
+  /**
+   *
+   * @param {boolean} isAutoSave whether or not an autosave is triggering the draft save
+   * @param {boolean} isNavigation whether or not the draft save is triggered by a navigation
+   */
+  const draftSaver = async (isAutoSave = false, isNavigation = false) => {
     // Determine if we should save draft on auto save.
     const saveGoalsDraft = isGoalsObjectivesPage && !isGoalFormClosed && isRecipientReport;
     const saveObjectivesDraft = (
@@ -533,8 +588,17 @@ const Navigator = ({
       // Save other-entity draft.
       await onSaveDraftOetObjectives(isAutoSave);
     } else if (saveGoalsDraft) {
-      // Save recipient draft.
-      await onSaveDraftGoal(isAutoSave);
+      if (!isNavigation) {
+        // Save recipient draft.
+        await onSaveDraftGoal(isAutoSave, isNavigation);
+      } else if (isNavigation) {
+        /**
+         * if we are navigating, we need to follow slightly different logic for saving.
+         * The form data for the whole report should be updated so that the page state is saved.
+         * This also allows for a simpler, less computationally expensive, function call
+         */
+        await onSaveDraftGoalForNavigation();
+      }
     } else {
       // Save regular.
       await onSaveForm(isAutoSave);
@@ -542,7 +606,14 @@ const Navigator = ({
   };
 
   const onUpdatePage = async (index) => {
-    await draftSaver();
+    // name the parameters for clarity
+    const isAutoSave = false;
+    const isNavigation = true;
+
+    // save the current page
+    await draftSaver(isAutoSave, isNavigation);
+
+    // navigate to the next page
     if (index !== page.position) {
       updatePage(index);
       updateShowSavedDraft(false);
