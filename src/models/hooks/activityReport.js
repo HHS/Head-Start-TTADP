@@ -9,6 +9,7 @@ const {
 } = require('../../lib/awsElasticSearch/queueManager');
 const { collectModelData } = require('../../lib/awsElasticSearch/datacollector');
 const { formatModelForAwsElasticsearch } = require('../../lib/awsElasticSearch/modelMapper');
+const { addIndexDocument, deleteIndexDocument } = require('../../lib/awsElasticSearch/index');
 
 /**
  * Helper function called by model hooks.
@@ -590,21 +591,44 @@ const updateAwsElasticsearchIndexes = async (sequelize, instance) => {
     if (instance.previous('calculatedStatus') !== REPORT_STATUSES.DELETED
         && instance.calculatedStatus === REPORT_STATUSES.DELETED) {
       // Delete Index Document for AWS Elasticsearch.
-      await scheduleDeleteIndexDocumentJob(
-        instance.id,
-        AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-      );
+      if (!process.env.CI) {
+        await scheduleDeleteIndexDocumentJob(
+          instance.id,
+          AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+        );
+      } else {
+        // Create a job to run without worker.
+        const job = {
+          data: {
+            indexName: AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+            id: instance.id,
+          },
+        };
+        await deleteIndexDocument(job);
+      }
     } else if ((instance.previous('calculatedStatus') !== REPORT_STATUSES.SUBMITTED
       && instance.calculatedStatus === REPORT_STATUSES.SUBMITTED)
       || (instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
       && instance.calculatedStatus === REPORT_STATUSES.APPROVED)) {
       // Index for AWS Elasticsearch.
       const document = await getActivityReportDocument(sequelize, instance);
-      await scheduleUpdateIndexDocumentJob(
-        instance.id,
-        AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-        document,
-      );
+      if (!process.env.CI) {
+        await scheduleUpdateIndexDocumentJob(
+          instance.id,
+          AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+          document,
+        );
+      } else {
+        // Create a job to run without worker.
+        const job = {
+          data: {
+            indexName: AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+            id: instance.id,
+            document,
+          },
+        };
+        await addIndexDocument(job);
+      }
     }
   }
 };
