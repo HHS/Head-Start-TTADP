@@ -221,38 +221,19 @@ const deleteIndexDocument = async (job) => {
     // Initialize the client.
     const client = passedClient || await getClient();
 
-    // Check document exists.
-    const query = {
-      query: {
-        match: {
-          id: {
-            query: id,
-          },
-        },
-      },
-    };
-
-    res = await client.search({
+    // Delete index document.
+    res = await client.delete({
       index: indexName,
-      body: query,
+      id,
+      refresh: true, // triggers manual refresh.
+      body: { ignore_unavailable: true },
     });
-    if (res.body.hits.length >= 1) {
-      // Delete index document.
-      res = await client.delete({
-        index: indexName,
-        id,
-        refresh: true, // triggers manual refresh.
-        body: { ignore_unavailable: true },
-      });
-      logger.info(`AWS OpenSearch: Successfully deleted document '${id}' for index '${indexName}'`);
-    } else {
-      logger.warn(`AWS OpenSearch: Unable to locate a document with '${id}' for index to delete'${indexName}'`);
-    }
+    logger.info(`AWS OpenSearch: Successfully deleted document '${id}' for index '${indexName}'`);
 
     return { data: job.data, status: res.statusCode, res };
   } catch (error) {
     auditLogger.error(`AWS OpenSearch Error: Unable to delete document '${id}' for index '${indexName}': ${error.message}`);
-    return { data: job.data, status: res.statusCode, res };
+    return { data: job.data, status: res ? res.statusCode : 500, res: res || undefined };
   }
 };
 
