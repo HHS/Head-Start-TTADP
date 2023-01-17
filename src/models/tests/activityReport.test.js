@@ -118,6 +118,8 @@ const mockObjectives = [
   { title: 'objective 2' },
 ];
 
+const ORIGINAL_ENV = process.env;
+
 describe('Activity Reports model', () => {
   let user;
   let recipient;
@@ -128,6 +130,12 @@ describe('Activity Reports model', () => {
   let activityRecipients;
   const goals = [];
   const objectives = [];
+
+  beforeEach(async () => {
+    jest.resetModules(); // clear the cache
+    process.env = { ...ORIGINAL_ENV }; // make a copy
+  });
+
   beforeAll(async () => {
     try {
       user = await User.create({ ...mockUser });
@@ -200,6 +208,7 @@ describe('Activity Reports model', () => {
     }
   });
   afterAll(async () => {
+    process.env = ORIGINAL_ENV; // restore original env
     if (activityRecipients) {
       await Promise.all(activityRecipients
         .map(async (activityRecipient) => ActivityRecipient.destroy({
@@ -243,6 +252,7 @@ describe('Activity Reports model', () => {
   });
 
   it('updateAwsElasticsearchIndexes', async () => {
+    process.env.CI = false;
     // Change status to submitted.
     await reportToIndex.update(
       { calculatedStatus: REPORT_STATUSES.SUBMITTED, submissionStatus: REPORT_STATUSES.SUBMITTED },
