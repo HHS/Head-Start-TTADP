@@ -357,6 +357,12 @@ export default {
       return validateObjectives(formData.objectivesWithoutGoals) === true;
     }
 
+    // if the goal form is open (i.e. the goal for editing is set), the page cannot be complete
+    // at least as far as my thinking goes
+    if (activityRecipientType === 'recipient' && formData.goalForEditing) {
+      return false;
+    }
+
     return activityRecipientType === 'recipient' && validateGoals(formData.goals) === true;
   },
   reviewSection: () => <ReviewSection />,
