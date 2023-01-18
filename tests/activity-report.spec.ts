@@ -393,7 +393,7 @@ test.describe("Activity Report", () => {
     // expand the objective for g1
     await page.getByRole('button', { name: `Expand objectives for goal ${g1GoalsForObjectives}` }).click();
     // verify the 'In Progress' status is now visible
-    await expect(page.locator('li').getByText('In Progress')).toBeVisible();
+    await expect(page.getByRole('listitem').filter({ hasText: 'Objective status In progress' })).toBeVisible();
 
     // Check g2
     await page.getByText('g2', { exact: true }).locator('..').locator('..').locator('..').getByRole('button', { name: 'Actions for goal'}).click();
