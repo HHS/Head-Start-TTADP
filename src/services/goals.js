@@ -373,27 +373,27 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         ...(objective.activityReportObjectives
           && objective.activityReportObjectives.length > 0
           ? objective.activityReportObjectives[0].activityReportObjectiveResources
-            .map((r) => r)
+            .map((r) => r.dataValues)
           : []),
-      ], 'value');
+      ], (e) => e.value);
 
       exists.topics = uniqBy([
         ...exists.topics,
         ...(objective.activityReportObjectives
           && objective.activityReportObjectives.length > 0
           ? objective.activityReportObjectives[0].activityReportObjectiveTopics
-            .map((t) => t.topic)
+            .map((t) => t.topic.dataValues)
           : []),
-      ], 'id');
+      ], (e) => e.id);
 
       exists.files = uniqBy([
         ...exists.files,
         ...(objective.activityReportObjectives
           && objective.activityReportObjectives.length > 0
           ? objective.activityReportObjectives[0].activityReportObjectiveFiles
-            .map((f) => ({ ...f.file, url: f.file.url }))
+            .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
           : []),
-      ], 'key');
+      ], (e) => e.key);
 
       return objectives;
     }
@@ -429,17 +429,17 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       topics: objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
         ? objective.activityReportObjectives[0].activityReportObjectiveTopics
-          .map((t) => t.topic)
+          .map((t) => t.topic.dataValues)
         : [],
       resources: objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
         ? objective.activityReportObjectives[0].activityReportObjectiveResources
-          .map((r) => r)
+          .map((r) => r.dataValues)
         : [],
       files: objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
         ? objective.activityReportObjectives[0].activityReportObjectiveFiles
-          .map((f) => ({ ...f.file, url: f.file.url }))
+          .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
         : [],
     }];
   }, currentObjectives);
@@ -472,7 +472,7 @@ function reduceGoals(goals, forReport = false) {
   const r = goals.reduce((previousValues, currentValue) => {
     const existingGoal = previousValues.find((g) => where(g, currentValue));
     if (existingGoal) {
-      existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.dataValues.goalNumber || `G-${currentValue.dataValues.id}`];
+      existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.goalNumber || `G-${currentValue.dataValues.id}`];
       existingGoal.goalIds = [...existingGoal.goalIds, currentValue.dataValues.id];
       existingGoal.grants = [
         ...existingGoal.grants,
@@ -494,7 +494,7 @@ function reduceGoals(goals, forReport = false) {
 
     const goal = {
       ...currentValue.dataValues,
-      goalNumbers: [currentValue.dataValues.goalNumber || `G-${currentValue.dataValues.id}`],
+      goalNumbers: [currentValue.goalNumber || `G-${currentValue.dataValues.id}`],
       goalIds: [currentValue.dataValues.id],
       grants: [
         {
@@ -576,10 +576,6 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
               ['id', 'key'],
             ],
             required: false,
-          },
-          {
-            model: File,
-            as: 'files',
           },
           {
             model: ActivityReportObjective,
@@ -732,27 +728,34 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
   goals = goals.map((goal) => ({
     ...goal,
     objectives: goal.objectives
-      .map((objective) => ({
-        ...objective.dataValues,
-        topics: objective.objectiveTopics
-          .map((objectiveTopic) => ({
-            ...objectiveTopic.dataValues,
-            ...objectiveTopic.topic.dataValues,
-          }))
-          .map((o) => ({ ...o, topic: undefined })),
-        files: objective.objectiveFiles
-          .map((objectiveFile) => ({
-            ...objectiveFile.dataValues,
-            ...objectiveFile.file.dataValues,
-          }))
-          .map((f) => ({ ...f, file: undefined })),
-        resources: objective.resources.map((resource) => ({ ...resource.dataValues })),
-      }))
-      .map((objective) => ({
-        ...objective,
-        objectiveTopics: undefined,
-        objectiveFiles: undefined,
-      })),
+      .map((objective) => {
+        const o = {
+          ...objective.dataValues,
+          topics: objective.objectiveTopics
+            .map((objectiveTopic) => {
+              const ot = {
+                ...objectiveTopic.dataValues,
+                ...objectiveTopic.topic.dataValues,
+              };
+              delete ot.topic;
+              return ot;
+            }),
+          files: objective.objectiveFiles
+            .map((objectiveFile) => {
+              const of = {
+                ...objectiveFile.dataValues,
+                ...objectiveFile.file.dataValues,
+                // url: objectiveFile.file.url,
+              };
+              delete of.file;
+              return of;
+            }),
+          resources: objective.resources.map((resource) => ({ ...resource.dataValues })),
+        };
+        delete o.objectiveTopics;
+        delete o.objectiveFiles;
+        return o;
+      }),
   }));
   return reduceGoals(goals);
 }
@@ -1751,7 +1754,6 @@ export async function getGoalsForReport(reportId) {
       [[sequelize.col('activityReportGoals.createdAt'), 'asc']],
     ],
   });
-
   // dedupe the goals & objectives
   const forReport = true;
   return reduceGoals(goals, forReport);
