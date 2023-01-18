@@ -1,0 +1,106 @@
+import { readFileSync } from 'fs';
+import createGoal from './goalPilot';
+import { downloadFile } from '../lib/s3';
+import db, {
+  Goal, Grant, GoalTemplate,
+} from '../models';
+
+jest.mock('../logger');
+
+jest.mock('../lib/s3');
+
+const goalName = '(PILOT) Grant recipient will improve teacher-child interactions (as measured by CLASS scores)';
+const fileName = '23CLASSPilotTest.csv';
+
+describe('Goal pilot script', () => {
+  beforeAll(async () => {
+    await Goal.destroy({ where: { name: goalName } });
+    await GoalTemplate.destroy({ where: { templateName: goalName } });
+    downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
+  });
+  afterEach(async () => {
+    await Goal.destroy({ where: { name: goalName } });
+    await GoalTemplate.destroy({ where: { templateName: goalName } });
+  });
+
+  afterAll(async () => {
+    await db.sequelize.close();
+  });
+
+  it('should create goals', async () => {
+    await createGoal(fileName);
+    const allGoals = await Goal.findAll({ where: { name: goalName } });
+    expect(allGoals).toBeDefined();
+    expect(allGoals.length).toBe(7);
+
+    const goal = await Goal.findOne({
+      where: { name: goalName },
+      attributes: ['name', 'status', 'timeframe', 'isFromSmartsheetTtaPlan', 'goalTemplateId'],
+      include: [{
+        model: Grant,
+        as: 'grant',
+        attributes: ['id', 'number', 'regionId'],
+      }],
+    });
+
+    const goalTemplate = await GoalTemplate.findOne(
+      {
+        where: { templateName: goalName },
+        attributes: ['id'],
+      },
+    );
+    expect(goal.name).toBe(goalName);
+    expect(goal.status).toBe('Not Started');
+    expect(goal.timeframe).toBeNull();
+    expect(goal.isFromSmartsheetTtaPlan).toBe(false);
+    expect(goal.goalTemplateId).not.toBeNull();
+    expect(goal.goalTemplateId).toBe(goalTemplate.id);
+    expect(goal.grant).toEqual(
+      expect.objectContaining({
+        id: expect.anything(), number: '01HP044444', recipient: expect.anything(), regionId: 1,
+      }),
+    );
+  });
+
+  it('should create the goal template', async () => {
+    await createGoal(fileName);
+
+    const goalTemplate = await GoalTemplate.findOne({
+      where: { templateName: goalName },
+      attributes: ['id', 'regionId'],
+    });
+
+    expect(goalTemplate).not.toBeNull();
+    expect(goalTemplate.regionId).toBeNull();
+  });
+
+  it('should set createdVia to rtr', async () => {
+    await createGoal(fileName);
+
+    const createdGoal = await Goal.findOne({ where: { name: goalName } });
+
+    expect(createdGoal.createdVia).toBe('rtr');
+  });
+
+  it('should set isRttapa to "No"', async () => {
+    await createGoal(fileName);
+
+    const createdGoal = await Goal.findOne({ where: { name: goalName } });
+
+    expect(createdGoal.isRttapa).toBe('No');
+  });
+
+  it('is idempotent', async () => {
+    await createGoal(fileName);
+
+    const allGoals = await Goal.findAll({ where: { name: goalName } });
+    expect(allGoals).not.toBeNull();
+    expect(allGoals.length).toBe(7);
+
+    await createGoal(fileName);
+
+    const allGoals2 = await Goal.findAll({ where: { name: goalName } });
+    expect(allGoals).not.toBeNull();
+    expect(allGoals2.length).toBe(allGoals.length);
+  });
+});
