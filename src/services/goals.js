@@ -373,27 +373,29 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         ...(objective.activityReportObjectives
           && objective.activityReportObjectives.length > 0
           ? objective.activityReportObjectives[0].activityReportObjectiveResources
-            .map((r) => r)
+            .map((r) => r.dataValues)
           : []),
-      ], 'value');
+      ], (e) => e.value);
+      auditLogger.info(JSON.stringify({ X: 'XZZ', resources: exists.resources, source: objective.activityReportObjectives[0].activityReportObjectiveResources }));
 
       exists.topics = uniqBy([
         ...exists.topics,
         ...(objective.activityReportObjectives
           && objective.activityReportObjectives.length > 0
           ? objective.activityReportObjectives[0].activityReportObjectiveTopics
-            .map((t) => t.topic)
+            .map((t) => t.topic.dataValues)
           : []),
-      ], 'id');
+      ], (e) => e.id);
 
       exists.files = uniqBy([
         ...exists.files,
         ...(objective.activityReportObjectives
           && objective.activityReportObjectives.length > 0
           ? objective.activityReportObjectives[0].activityReportObjectiveFiles
-            .map((f) => ({ ...f.file, url: f.file.url }))
+            .map((f) => ({ ...f.file.dataValues, url: f.file.url.url }))
           : []),
-      ], 'key');
+      ], (e) => e.key);
+      auditLogger.info(JSON.stringify({ X: 'XFF', files: exists.files, source: objective.activityReportObjectives[0].activityReportObjectiveFiles }));
 
       return objectives;
     }
@@ -411,6 +413,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       ? objective.activityReportObjectives[0].arOrder : null;
     const { id } = objective;
 
+    auditLogger.info(JSON.stringify({ XX: 'XY', resources: objective.activityReportObjectives[0].activityReportObjectiveResources }));
     return [...objectives, {
       ...objective.dataValues,
       title: objective.title,
@@ -429,20 +432,22 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       topics: objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
         ? objective.activityReportObjectives[0].activityReportObjectiveTopics
-          .map((t) => t.topic)
+          .map((t) => t.topic.dataValues)
         : [],
       resources: objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
         ? objective.activityReportObjectives[0].activityReportObjectiveResources
-          .map((r) => r)
+          .map((r) => r.dataValues)
         : [],
       files: objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
         ? objective.activityReportObjectives[0].activityReportObjectiveFiles
-          .map((f) => ({ ...f.file, url: f.file.url }))
+          .map((f) => ({ ...f.file.dataValues, url: f.file.url.url }))
         : [],
     }];
   }, currentObjectives);
+
+  auditLogger.info(JSON.stringify({ XX: 'ZZ', newObjectives, objectivesToSort }));
 
   // Sort by AR Order in place.
   objectivesToSort.sort((o1, o2) => {
@@ -1754,9 +1759,11 @@ export async function getGoalsForReport(reportId) {
       [[sequelize.col('activityReportGoals.createdAt'), 'asc']],
     ],
   });
-
   // dedupe the goals & objectives
   const forReport = true;
+  auditLogger.info('XXXX');
+  auditLogger.info(JSON.stringify(goals));
+  auditLogger.info(JSON.stringify(reduceGoals(goals, forReport)));
   return reduceGoals(goals, forReport);
 }
 
