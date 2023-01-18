@@ -1,3 +1,4 @@
+/* eslint-disable dot-notation */
 import db, {
   ActivityReport,
   ActivityRecipient,
@@ -15,6 +16,9 @@ import { auditLogger } from '../../logger';
 import {
   copyStatus,
 } from '../hooks/activityReport';
+import { scheduleUpdateIndexDocumentJob, scheduleDeleteIndexDocumentJob } from '../../lib/awsElasticSearch/queueManager';
+
+jest.mock('../../lib/awsElasticSearch/queueManager');
 
 const mockUser = {
   name: 'Joe Green',
@@ -120,6 +124,7 @@ describe('Activity Reports model', () => {
   let otherEntity;
   const grants = [];
   let report;
+  let reportToIndex;
   let activityRecipients;
   const goals = [];
   const objectives = [];
@@ -143,6 +148,7 @@ describe('Activity Reports model', () => {
       grants[0] = await Grant.findOne({ where: { id: mockGrant[0].id } });
       grants[1] = await Grant.findOne({ where: { id: mockGrant[1].id } });
       report = await ActivityReport.create({ ...sampleReport });
+      reportToIndex = await ActivityReport.create({ ...sampleReport, context: 'AWS Elasticsearch' });
       activityRecipients = await Promise.all([
         await ActivityRecipient.create({ activityReportId: report.id, grantId: grants[0].id }),
         await ActivityRecipient.create({ activityReportId: report.id, grantId: grants[1].id }),
@@ -206,6 +212,7 @@ describe('Activity Reports model', () => {
       await ActivityReportObjective.destroy({ where: { activityReportId: report.id } });
       await ActivityReportGoal.destroy({ where: { activityReportId: report.id } });
       await ActivityReport.destroy({ where: { id: report.id } });
+      await ActivityReport.destroy({ where: { id: reportToIndex.id } });
       await Objective.destroy({ where: { id: objectives.map((o) => o.id) } });
       await Goal.destroy({ where: { id: goals.map((g) => g.id) } });
       await Grant.destroy({ where: { id: grants.map((g) => g.id) } });
@@ -233,6 +240,19 @@ describe('Activity Reports model', () => {
     instance.submissionStatus = REPORT_STATUSES.NEEDS_ACTION;
     copyStatus(instance);
     expect(instance.calculatedStatus).not.toEqual(REPORT_STATUSES.NEEDS_ACTION);
+  });
+
+  it('updateAwsElasticsearchIndexes', async () => {
+    // Change status to submitted.
+    await reportToIndex.update(
+      { calculatedStatus: REPORT_STATUSES.SUBMITTED, submissionStatus: REPORT_STATUSES.SUBMITTED },
+    );
+    expect(scheduleUpdateIndexDocumentJob).toHaveBeenCalled();
+    // Change status to deleted.
+    await reportToIndex.update(
+      { calculatedStatus: REPORT_STATUSES.DELETED, submissionStatus: REPORT_STATUSES.DELETED },
+    );
+    expect(scheduleDeleteIndexDocumentJob).toHaveBeenCalled();
   });
   it('propagateApprovedStatus', async () => {
     const preReport = await ActivityReport.findOne(

@@ -14,7 +14,7 @@ rl.question('Are you sure you want to delete and recreate all search indexes? [y
   }
   try {
     await createAwsElasticSearchIndexes();
-    rl.close();
+    process.exit();
   } catch (e) {
     auditLogger.error(e);
   }

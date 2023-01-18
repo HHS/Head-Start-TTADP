@@ -2,7 +2,9 @@ const { Op, Model } = require('sequelize');
 const moment = require('moment');
 const { REPORT_STATUSES, USER_ROLES } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
-const { beforeCreate, beforeUpdate, afterUpdate } = require('./hooks/activityReport');
+const {
+  beforeCreate, beforeUpdate, afterUpdate,
+} = require('./hooks/activityReport');
 
 const generateCreatorNameWithRole = (ar) => {
   const creatorName = ar.author ? ar.author.name : '';
