@@ -187,8 +187,7 @@
       "./cucumber/",
       "./frontend/",
       "./tests/",
-      "./playwright-report/",
-      "./test-results/",
+      "./playwright/",
       "./playwright.config.js"
     ]
   },
