@@ -376,7 +376,6 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
             .map((r) => r.dataValues)
           : []),
       ], (e) => e.value);
-      auditLogger.info(JSON.stringify({ X: 'XZZ', resources: exists.resources, source: objective.activityReportObjectives[0].activityReportObjectiveResources }));
 
       exists.topics = uniqBy([
         ...exists.topics,
@@ -392,10 +391,9 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         ...(objective.activityReportObjectives
           && objective.activityReportObjectives.length > 0
           ? objective.activityReportObjectives[0].activityReportObjectiveFiles
-            .map((f) => ({ ...f.file.dataValues, url: f.file.url.url }))
+            .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
           : []),
       ], (e) => e.key);
-      auditLogger.info(JSON.stringify({ X: 'XFF', files: exists.files, source: objective.activityReportObjectives[0].activityReportObjectiveFiles }));
 
       return objectives;
     }
@@ -413,7 +411,6 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       ? objective.activityReportObjectives[0].arOrder : null;
     const { id } = objective;
 
-    auditLogger.info(JSON.stringify({ XX: 'XY', resources: objective.activityReportObjectives[0].activityReportObjectiveResources }));
     return [...objectives, {
       ...objective.dataValues,
       title: objective.title,
@@ -442,12 +439,10 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       files: objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
         ? objective.activityReportObjectives[0].activityReportObjectiveFiles
-          .map((f) => ({ ...f.file.dataValues, url: f.file.url.url }))
+          .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
         : [],
     }];
   }, currentObjectives);
-
-  auditLogger.info(JSON.stringify({ XX: 'ZZ', newObjectives, objectivesToSort }));
 
   // Sort by AR Order in place.
   objectivesToSort.sort((o1, o2) => {
@@ -1761,9 +1756,6 @@ export async function getGoalsForReport(reportId) {
   });
   // dedupe the goals & objectives
   const forReport = true;
-  auditLogger.info('XXXX');
-  auditLogger.info(JSON.stringify(goals));
-  auditLogger.info(JSON.stringify(reduceGoals(goals, forReport)));
   return reduceGoals(goals, forReport);
 }
 
