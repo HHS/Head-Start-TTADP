@@ -14,9 +14,6 @@ async function getFullName(page) {
 test.describe("Activity Report Text Search Filter", () => {
   test('can search for text on indexed fields', async ({ page }) => {
 
-    // Set test to slow.
-    test.slow();
-
     // Navigate to app.
     await page.goto('http://localhost:3000/');
 
