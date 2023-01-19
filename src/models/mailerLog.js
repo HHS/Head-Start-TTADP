@@ -3,7 +3,7 @@ const {
 } = require('sequelize');
 const { EMAIL_ACTIONS } = require('../constants');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class MailerLogs extends Model {
   }
   MailerLogs.init({

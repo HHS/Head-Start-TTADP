@@ -1,5 +1,10 @@
 require('newrelic');
 
+// eslint-disable-next-line
+import dotenv from 'dotenv';
+
+dotenv.config();
+
 /* eslint-disable import/first */
 import { WebSocketServer } from 'ws';
 import { createClient } from 'redis';
