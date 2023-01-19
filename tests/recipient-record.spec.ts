@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { blur } from './common';
 
 test.describe('Recipient record', () => {
   test('create a basic goal', async ({ page }) => {  
@@ -45,8 +46,13 @@ test.describe('Recipient record', () => {
     await page.getByTestId('textInput').fill('http://www.fish-banana-garbage-man.com');
     await page.getByRole('button', { name: 'Save draft' }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();
+
+    await blur(page);
+
     // locate the topics dropdown
-    await page.getByLabel(/topics/i).last().click();
+    await page.getByLabel(/topics/i).last().focus();
+    await page.getByLabel(/topics/i).last().focus();
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     
     // enter second topic as well

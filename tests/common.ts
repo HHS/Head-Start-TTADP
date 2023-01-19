@@ -25,3 +25,7 @@ export const useClock = (test: typeof _test) => {
     });
   });
 }
+
+export async function blur(page) {
+  await page.getByText('Office of Head Start TTA Hub').click();
+}

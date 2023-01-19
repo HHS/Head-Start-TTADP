@@ -157,6 +157,8 @@ test.describe("Activity Report Text Search Filter", () => {
   await page.getByTestId('apply-filters-test-id').click();
   await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
 
+  await page.waitForTimeout(1000);
+
   // Doesn't contain context.
   await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();
   await page.getByRole('combobox', { name: 'condition' }).selectOption('does not contain');

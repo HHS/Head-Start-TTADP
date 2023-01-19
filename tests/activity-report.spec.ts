@@ -1,8 +1,5 @@
 import { test, expect } from '@playwright/test';
-
-async function blur(page) {
-  await page.getByText('Office of Head Start TTA Hub').click();
-}
+import { blur } from './common';
 
 async function getFullName(page) {
   await page.goto('/');
@@ -116,8 +113,8 @@ test.describe("Activity Report", () => {
     await page.getByTestId('textarea').fill('g1');
     await page.getByText('Yes').click();
     await page.getByRole('button', { name: 'Save goal' }).click();
-    await page.locator('.css-512wcj-control').click();
-    await page.keyboard.press('ArrowDown');
+    await page.getByLabel(/tta objective/i).focus();
+    await page.keyboard.type('create a new')
     await page.keyboard.press('Enter');
     await page.locator('[name="goalForEditing.objectives[0].title"]').fill('g1o1');
     await page.keyboard.press('Tab');
@@ -159,7 +156,7 @@ test.describe("Activity Report", () => {
 
     // create the second goal
     await page.getByRole('button', { name: 'Add new goal' }).click();
-    await page.locator('.css-1fdsijx-ValueContainer').click();
+    await page.getByLabel('Select recipient\'s goal').focus()
     await page.keyboard.type('Create new goal');
     await page.keyboard.press('Enter');
     await page.getByTestId('textarea').click();
