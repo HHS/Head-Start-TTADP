@@ -13,7 +13,6 @@ async function getFullName(page) {
 
 test.describe("Activity Report Text Search Filter", () => {
   test('can search for text on indexed fields', async ({ page }) => {
-
     // Navigate to app.
     await page.goto('http://localhost:3000/');
 
@@ -31,7 +30,7 @@ test.describe("Activity Report Text Search Filter", () => {
     // Summary page.
 
     // Recipient.
-    await page.getByRole('group', { name: 'Was this activity for a recipient or other entity? *' }).locator('label').filter({ hasText: 'Recipient' }).click();
+    await page.getByRole('group', { name: 'Was this activity for a recipient or other entity?' }).locator('label').filter({ hasText: 'Recipient' }).click();
     await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
     await page.locator('#react-select-3-option-0-0').click();
     await blur(page);
@@ -44,52 +43,45 @@ test.describe("Activity Report Text Search Filter", () => {
     await page.locator('#react-select-7-option-0').click();
     await blur(page);
     // Requested by.
-    await page.getByRole('group', { name: 'Who requested this activity? Use "Regional Office" for TTA not requested by recipient. *' }).locator('label').filter({ hasText: 'Recipient' }).click();
+    await page.getByRole('group', { name: 'Who requested this activity? Use "Regional Office" for TTA not requested by recipient.' }).locator('label').filter({ hasText: 'Recipient' }).click();
     await page.getByRole('group', { name: 'Reason for activity' }).getByText('- Select -').click();
     await page.locator('#react-select-9-option-0').click();
     await blur(page);
     // Start and End Dates.
-    await page.locator('label').filter({ hasText: 'Start date *mm/dd/yyyy' }).getByTestId('date-picker-button').click();
-    await page.getByRole('button', { name: '17 January 2023 Tuesday' }).click();
-    await page.locator('label').filter({ hasText: 'End date *mm/dd/yyyy' }).getByTestId('date-picker-button').click();
-    await page.getByRole('button', { name: '17 January 2023 Tuesday' }).click();
+    await page.getByLabel(/Start date/i).fill('12/01/2020');
+    await page.getByLabel(/End date/i).fill('12/01/2050');
     // Duration.
-    await page.getByLabel('Duration in hours (round to the nearest half hour) *').click();
-    await page.getByLabel('Duration in hours (round to the nearest half hour) *').fill('9.5');
+    await page.getByLabel('Duration in hours (round to the nearest half hour)').click();
+    await page.getByLabel('Duration in hours (round to the nearest half hour)').fill('9.5');
     await page.getByRole('textbox', { name: 'Context' }).locator('div').nth(2).fill('The sky is blue. The ocean is deep.');;
     // Type of tta.
-    await page.getByRole('group', { name: 'What TTA was provided *' }).getByText('Training').click();
+    await page.getByRole('group', { name: 'What TTA was provided' }).getByText('Training').click();
     await page.getByText('In Person').click();
     await page.locator('#participants div').filter({ hasText: '- Select -' }).nth(1).click();
     await page.locator('#react-select-11-option-0').click();
     await blur(page);
     // Number of participants.
     await page.locator('.smart-hub-activity-report > div:nth-child(2) > div').first().click();
-    await page.getByLabel('Number of participants involved *').click();
-    await page.getByLabel('Number of participants involved *').fill('5');
+    await page.getByLabel('Number of participants involved').click();
+    await page.getByLabel('Number of participants involved').fill('5');
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
     // Goals page.
-    await page.getByText('- Select -').click();
-    await page.locator('#react-select-13-option-0').getByText('Create new goal').click();
+    await page.getByTestId('label').locator('div').filter({ hasText: '- Select -' }).nth(2).click();
+    await page.keyboard.type('Create new goal');
+    await page.keyboard.press('Enter');
 
     // Goal title.
-    await page.getByTestId('textarea').click();
-    await page.keyboard.type('Learn how to cook.');
-    // await page.getByTestId('textarea').fill('Learn how to cook.');
+    await page.getByTestId('textarea').fill('Learn how to cook.');
     await blur(page);
 
     // Is RTTAPA.
     await page.getByText('Yes').click();
 
-    // Close date.
-    await page.getByTestId('date-picker-button').click();
-    await page.getByRole('button', { name: '17 January 2023 Tuesday' }).click();
     // Objective.
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
     await page.locator('#react-select-15-option-0').click();
     // Objective title.
-    await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('Prepare your first meal.');
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
     await page.locator('#react-select-19-option-0').click();
