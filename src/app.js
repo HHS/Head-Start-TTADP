@@ -22,7 +22,7 @@ const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 let index;
 
 if (process.env.NODE_ENV === 'production') {
-  index = fs.readFileSync(path.join(__dirname, 'client', 'index.html')).toString();
+  index = fs.readFileSync(path.join(__dirname, '../client', 'index.html')).toString();
 }
 
 const serveIndex = (req, res) => {
