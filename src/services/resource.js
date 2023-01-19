@@ -2,8 +2,12 @@ import { Op } from 'sequelize';
 import {
   ActivityReport,
   ActivityReportResource,
+  ActivityReportGoal,
+  ActivityReportGoalResource,
   ActivityReportObjective,
   ActivityReportObjectiveResource,
+  Goal,
+  GoalResource,
   NextStep,
   NextStepResource,
   Objective,
@@ -20,6 +24,16 @@ const ACTIVITYREPORT_AUTODETECTED_FIELDS = [
 
 const NEXTSTEPS_AUTODETECTED_FIELDS = [
   SOURCE_FIELD.NEXTSTEPS.NOTE,
+];
+
+const GOALS_AUTODETECTED_FIELDS = [
+  SOURCE_FIELD.GOAL.NAME,
+  SOURCE_FIELD.GOAL.TIMEFRAME,
+];
+
+const REPORTGOALS_AUTODETECTED_FIELDS = [
+  SOURCE_FIELD.REPORTGOAL.NAME,
+  SOURCE_FIELD.REPORTGOAL.TIMEFRAME,
 ];
 
 const OBJECTIVES_AUTODETECTED_FIELDS = [
@@ -737,6 +751,276 @@ const processNextStepForResourcesById = async (nextStepId, urls) => {
 };
 
 // -----------------------------------------------------------------------------
+// Goals Resource Processing
+// -----------------------------------------------------------------------------
+// Identify if passed sourceFields contain one or more of the NEXTSTEPS_AUTODETECTED_FIELDS.
+// TODO: verify all values in the sourceFields are in SOURCE_FIELD.GOAL
+// and log exceptions
+const calculateIsAutoDetectedForGoal = (
+  sourceFields,
+) => calculateIsAutoDetected(sourceFields, GOALS_AUTODETECTED_FIELDS);
+
+// Using the three dataset, each can be run in "parallel" to reduce latency when applied to the
+// database. This should result in better performance.
+const syncResourcesForGoal = async (resources) => Promise.all([
+  ...resources.create.map(async (resource) => GoalResource.create({
+    goalId: resource.goalId,
+    resourceId: resource.resourceId,
+    sourceFields: resource.sourceFields,
+    isAutoDetected: resource.isAutoDetected,
+  })),
+  ...resources.update.map(async (resource) => GoalResource.update(
+    {
+      sourceFields: resource.sourceFields,
+      isAutoDetected: resource.isAutoDetected,
+    },
+    {
+      where: {
+        goalId: resource.goalId,
+        resourceId: resource.resourceId,
+      },
+      individualHooks: true,
+    },
+  )),
+  ...resources.destroy.map(async (resource) => (resource.resourceIds.length > 0
+    ? GoalResource.destroy({
+      where: {
+        goalId: resource.goalId,
+        resourceId: { [Op.in]: resource.resourceIds },
+      },
+      individualHooks: true,
+    })
+    : Promise.resolve())),
+]);
+
+// Process the current values on the report into the database for all referenced resources.
+const processGoalForResources = async (goal, urls) => {
+  // Either used the current resource data from the nextStep passed in or look it up.
+  const currentResources = goal.goalResources
+    ? goal.goalResources
+    : await GoalResource.findAll({
+      where: { goalId: goal.id },
+      raw: true,
+    });
+
+  // convert to generic genericId to use generic modifier methods
+  const currentResourcesGeneric = remapAttributes(currentResources, 'goalId', 'genericId');
+
+  // Use regex to pull urls from the required fields
+  const urlsFromName = collectURLsFromField(goal.name);
+  const urlsFromTimeframe = collectURLsFromField(goal.timeframe);
+  const urlsFromResource = urls.map((url) => collectURLsFromField(url)).flat(Infinity);
+
+  // Find or create resources for each of the urls collected.
+  const resourcesWithId = await findOrCreateResources([...new Set([
+    ...urlsFromName,
+    ...urlsFromTimeframe,
+    ...urlsFromResource,
+  ])]);
+
+  // Create an array of resource objects from all the data collected for the field.
+  const incomingResourcesRaw = [
+    ...resourcesFromField(
+      goal.id,
+      urlsFromName,
+      SOURCE_FIELD.GOAL.NAME,
+    ),
+    ...resourcesFromField(
+      goal.id,
+      urlsFromTimeframe,
+      SOURCE_FIELD.GOAL.TIMEFRAME,
+    ),
+    ...resourcesFromField(
+      goal.id,
+      urlsFromResource,
+      SOURCE_FIELD.OBJECTIVE.RESOURCE,
+    ),
+  ];
+
+  // Merge all the records that share the same url and genericId, collecting all
+  // the sourceFields they are from.
+  const incomingResourcesMerged = mergeRecordsByUrlAndGenericId(incomingResourcesRaw);
+
+  // Replace the url with the associated resourceId.
+  const incomingResourcesTransformed = transformRecordByURLToResource(
+    incomingResourcesMerged,
+    resourcesWithId,
+  );
+
+  // filter the intersection of the incomingResources and currentResources into distinct datasets.
+  const filteredResources = filterResourcesForSync(
+    incomingResourcesTransformed,
+    currentResourcesGeneric,
+    calculateIsAutoDetectedForGoal,
+  );
+
+  // switch from generic genericId to goalId.
+  const resourcesToSync = {
+    create: remapAttributes(filteredResources.create, 'genericId', 'goalId'),
+    update: remapAttributes(filteredResources.update, 'genericId', 'goalId'),
+    destroy: remapAttributes(filteredResources.destroy, 'genericId', 'goalId'),
+  };
+
+  // Save the distinct datasets to the database.
+  return syncResourcesForGoal(resourcesToSync);
+};
+
+// Process the current values on the report into the database for all referenced resources for
+// the reportId passed.
+const processGoalForResourcesById = async (goalId, urls) => {
+  const goal = await Goal.findOne({
+    where: { id: goalId },
+    include: [
+      {
+        model: GoalResource,
+        as: 'goalResources',
+        required: false,
+      },
+    ],
+  });
+
+  return goal
+    && typeof goal === 'object'
+    ? processGoalForResources(goal, urls)
+    : Promise.resolve();
+};
+
+// -----------------------------------------------------------------------------
+// Report Goal Resource Processing
+// -----------------------------------------------------------------------------
+// Identify if passed sourceFields contain one or more of the NEXTSTEPS_AUTODETECTED_FIELDS.
+// TODO: verify all values in the sourceFields are in SOURCE_FIELD.REPORTGOAL
+// and log exceptions
+const calculateIsAutoDetectedForActivityReportGoal = (
+  sourceFields,
+) => calculateIsAutoDetected(sourceFields, REPORTGOALS_AUTODETECTED_FIELDS);
+
+// Using the three dataset, each can be run in "parallel" to reduce latency when applied to the
+// database. This should result in better performance.
+const syncResourcesForActivityReportGoal = async (resources) => Promise.all([
+  ...resources.create.map(async (resource) => ActivityReportGoalResource.create({
+    activityReportGoalId: resource.activityReportGoalId,
+    resourceId: resource.resourceId,
+    sourceFields: resource.sourceFields,
+    isAutoDetected: resource.isAutoDetected,
+  })),
+  ...resources.update.map(async (resource) => ActivityReportGoalResource.update(
+    {
+      sourceFields: resource.sourceFields,
+      isAutoDetected: resource.isAutoDetected,
+    },
+    {
+      where: {
+        activityReportGoalId: resource.activityReportGoalId,
+        resourceId: resource.resourceId,
+      },
+      individualHooks: true,
+    },
+  )),
+  ...resources.destroy.map(async (resource) => (resource.resourceIds.length > 0
+    ? ActivityReportGoalResource.destroy({
+      where: {
+        activityReportGoalId: resource.activityReportGoalId,
+        resourceId: { [Op.in]: resource.resourceIds },
+      },
+      individualHooks: true,
+    })
+    : Promise.resolve())),
+]);
+
+// Process the current values on the report into the database for all referenced resources.
+const processActivityReportGoalForResources = async (activityReportGoal, urls) => {
+  // Either used the current resource data from the activityReportGoal passed in or look it up.
+  const currentResources = activityReportGoal.goalResources
+    ? activityReportGoal.goalResources
+    : await ActivityReportGoalResource.findAll({
+      where: { activityReportGoalId: activityReportGoal.id },
+      raw: true,
+    });
+
+  // convert to generic genericId to use generic modifier methods
+  const currentResourcesGeneric = remapAttributes(currentResources, 'activityReportGoalId', 'genericId');
+
+  // Use regex to pull urls from the required fields
+  const urlsFromTitle = collectURLsFromField(activityReportGoal.title);
+  const urlsFromTTAProvided = collectURLsFromField(activityReportGoal.ttaProvided);
+  const urlsFromResource = urls.map((url) => collectURLsFromField(url)).flat(Infinity);
+
+  // Find or create resources for each of the urls collected.
+  const resourcesWithId = await findOrCreateResources([...new Set([
+    ...urlsFromTitle,
+    ...urlsFromTTAProvided,
+    ...urlsFromResource,
+  ])]);
+
+  // Create an array of resource objects from all the data collected for the field.
+  const incomingResourcesRaw = [
+    ...resourcesFromField(
+      activityReportGoal.id,
+      urlsFromTitle,
+      SOURCE_FIELD.REPORTGOAL.TITLE,
+    ),
+    ...resourcesFromField(
+      activityReportGoal.id,
+      urlsFromTTAProvided,
+      SOURCE_FIELD.REPORTGOAL.TTAPROVIDED,
+    ),
+    ...resourcesFromField(
+      activityReportGoal.id,
+      urlsFromResource,
+      SOURCE_FIELD.REPORTGOAL.RESOURCE,
+    ),
+  ];
+
+  // Merge all the records that share the same url and genericId, collecting all
+  // the sourceFields they are from.
+  const incomingResourcesMerged = mergeRecordsByUrlAndGenericId(incomingResourcesRaw);
+
+  // Replace the url with the associated resourceId.
+  const incomingResourcesTransformed = transformRecordByURLToResource(
+    incomingResourcesMerged,
+    resourcesWithId,
+  );
+
+  // filter the intersection of the incomingResources and currentResources into distinct datasets.
+  const filteredResources = filterResourcesForSync(
+    incomingResourcesTransformed,
+    currentResourcesGeneric,
+    calculateIsAutoDetectedForActivityReportGoal,
+  );
+
+  // switch from generic genericId to activityReportGoalId.
+  const resourcesToSync = {
+    create: remapAttributes(filteredResources.create, 'genericId', 'activityReportGoalId'),
+    update: remapAttributes(filteredResources.update, 'genericId', 'activityReportGoalId'),
+    destroy: remapAttributes(filteredResources.destroy, 'genericId', 'activityReportGoalId'),
+  };
+
+  // Save the distinct datasets to the database.
+  return syncResourcesForActivityReportGoal(resourcesToSync);
+};
+
+// Process the current values on the report into the database for all referenced resources for
+// the reportId passed.
+const processActivityReportGoalForResourcesById = async (activityReportGoalId, urls) => {
+  const goal = await ActivityReportGoal.findOne({
+    where: { id: activityReportGoalId },
+    include: [
+      {
+        model: ActivityReportGoalResource,
+        as: 'activityReportGoalResources',
+        required: false,
+      },
+    ],
+  });
+
+  return goal
+    && typeof goal === 'object'
+    ? processActivityReportGoalForResources(goal, urls)
+    : Promise.resolve();
+};
+
+// -----------------------------------------------------------------------------
 // Objectives Resource Processing
 // -----------------------------------------------------------------------------
 // Identify if passed sourceFields contain one or more of the NEXTSTEPS_AUTODETECTED_FIELDS.
@@ -866,7 +1150,7 @@ const processObjectiveForResourcesById = async (objectiveId, urls) => {
 };
 
 // -----------------------------------------------------------------------------
-// Objectives Resource Processing
+// Report Objectives Resource Processing
 // -----------------------------------------------------------------------------
 // Identify if passed sourceFields contain one or more of the NEXTSTEPS_AUTODETECTED_FIELDS.
 // TODO: verify all values in the sourceFields are in SOURCE_FIELD.REPORTOBJECTIVES
@@ -1047,6 +1331,16 @@ export {
   syncResourcesForNextStep,
   processNextStepForResources,
   processNextStepForResourcesById,
+  // Goal Resource processing
+  calculateIsAutoDetectedForGoal,
+  syncResourcesForGoal,
+  processGoalForResources,
+  processGoalForResourcesById,
+  // ActivityReportGoal Resource Processing
+  calculateIsAutoDetectedForActivityReportGoal,
+  syncResourcesForActivityReportGoal,
+  processActivityReportGoalForResources,
+  processActivityReportGoalForResourcesById,
   // Objective Resource processing
   calculateIsAutoDetectedForObjective,
   syncResourcesForObjective,

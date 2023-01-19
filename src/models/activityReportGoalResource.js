@@ -1,31 +1,31 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
-const { afterDestroy } = require('./hooks/activityReportObjectiveResource');
+// const { afterDestroy } = require('./hooks/activityReportGoalResource');
 
 module.exports = (sequelize, DataTypes) => {
-  class ActivityReportObjectiveResource extends Model {
+  class ActivityReportGoalResource extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      ActivityReportObjectiveResource.belongsTo(models.ActivityReportObjective, {
-        foreignKey: 'activityReportObjectiveId',
+      ActivityReportGoalResource.belongsTo(models.ActivityReportGoal, {
+        foreignKey: 'activityReportGoalId',
         onDelete: 'cascade',
-        as: 'activityReportObjective',
+        as: 'activityReportGoal',
       });
-      ActivityReportObjectiveResource.belongsTo(models.Resource, { foreignKey: 'resourceId', as: 'resource' });
+      ActivityReportGoalResource.belongsTo(models.Resource, { foreignKey: 'resourceId', as: 'resource' });
     }
   }
-  ActivityReportObjectiveResource.init({
+  ActivityReportGoalResource.init({
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
     },
-    activityReportObjectiveId: {
+    activityReportGoalId: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
@@ -35,7 +35,7 @@ module.exports = (sequelize, DataTypes) => {
     sourceFields: {
       allowNull: true,
       default: null,
-      type: DataTypes.ARRAY((DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTOBJECTIVE)))),
+      type: DataTypes.ARRAY((DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTGOAL)))),
     },
     isAutoDetected: {
       type: DataTypes.BOOLEAN,
@@ -44,10 +44,10 @@ module.exports = (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
-    modelName: 'ActivityReportObjectiveResource',
-    hooks: {
-      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
-    },
+    modelName: 'ActivityReportGoalResource',
+    // hooks: {
+    //   afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+    // },
   });
-  return ActivityReportObjectiveResource;
+  return ActivityReportGoalResource;
 };

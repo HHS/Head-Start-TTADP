@@ -280,6 +280,16 @@ export const SOURCE_FIELD = {
     NOTE: 'note',
     RESOURCE: 'resource',
   },
+  GOAL: {
+    NAME: 'name',
+    TIMEFRAME: 'timeframe',
+    RESOURCE: 'resource',
+  },
+  REPORTGOAL: {
+    NAME: 'name',
+    TIMEFRAME: 'timeframe',
+    RESOURCE: 'resource',
+  },
   OBJECTIVE: {
     TITLE: 'title',
     RESOURCE: 'resource',
