@@ -178,6 +178,181 @@ module.exports = {
         old: 'https://mypeers.mangoapps.com/ce/pulse/user/teams/project_teams/uploaded_ files?project_id=1360260&folder=6182710',
         new: 'https://mypeers.mangoapps.com/ce/pulse/user/teams/project_teams/uploaded_files?project_id=1360260&folder=6182710',
       },
+      {
+        id: 12220,
+        old: 'https://eclkc.ohs.acf.hhs.gov/es/desarrollo-profesional/articulo/conjuntos-de-materiales-de-capacitacion-de-15- minutos',
+        new: 'https://eclkc.ohs.acf.hhs.gov/es/desarrollo-profesional/articulo/conjuntos-de-materiales-de-capacitacion-de-15-minutos',
+      },
+      {
+        id: 12223,
+        old: 'https://eclkc.ohs.acf.hhs.gov/es/desarrollo-profesional/articulo/conjuntos-de-materiales-de-capacitacion-de-15- minutos',
+        new: 'https://eclkc.ohs.acf.hhs.gov/es/desarrollo-profesional/articulo/conjuntos-de-materiales-de-capacitacion-de-15-minutos',
+      },
+      {
+        id: 12226,
+        old: 'https://eclkc.ohs.acf.hhs.gov/es/desarrollo-profesional/articulo/conjuntos-de-materiales-de-capacitacion-de-15- minutos',
+        new: 'https://eclkc.ohs.acf.hhs.gov/es/desarrollo-profesional/articulo/conjuntos-de-materiales-de-capacitacion-de-15-minutos',
+      },
+      {
+        id: 12229,
+        old: 'https://eclkc.ohs.acf.hhs.gov/es/desarrollo-profesional/articulo/conjuntos-de-materiales-de-capacitacion-de-15- minutos',
+        new: 'https://eclkc.ohs.acf.hhs.gov/es/desarrollo-profesional/articulo/conjuntos-de-materiales-de-capacitacion-de-15-minutos',
+      },
+      {
+        id: 12232,
+        old: 'https://eclkc.ohs.acf.hhs.gov/es/desarrollo-profesional/articulo/conjuntos-de-materiales-de-capacitacion-de-15- minutos',
+        new: 'https://eclkc.ohs.acf.hhs.gov/es/desarrollo-profesional/articulo/conjuntos-de-materiales-de-capacitacion-de-15-minutos',
+      },
+      {
+        id: 12235,
+        old: 'https://eclkc.ohs.acf.hhs.gov/es/desarrollo-profesional/articulo/conjuntos-de-materiales-de-capacitacion-de-15- minutos',
+        new: 'https://eclkc.ohs.acf.hhs.gov/es/desarrollo-profesional/articulo/conjuntos-de-materiales-de-capacitacion-de-15-minutos',
+      },
+      {
+        id: 12238,
+        old: 'https://eclkc.ohs.acf.hhs.gov/es/desarrollo-profesional/articulo/conjuntos-de-materiales-de-capacitacion-de-15- minutos',
+        new: 'https://eclkc.ohs.acf.hhs.gov/es/desarrollo-profesional/articulo/conjuntos-de-materiales-de-capacitacion-de-15-minutos',
+      },
+      {
+        id: 12241,
+        old: 'https://eclkc.ohs.acf.hhs.gov/es/desarrollo-profesional/articulo/conjuntos-de-materiales-de-capacitacion-de-15- minutos',
+        new: 'https://eclkc.ohs.acf.hhs.gov/es/desarrollo-profesional/articulo/conjuntos-de-materiales-de-capacitacion-de-15-minutos',
+      },
+      {
+        id: 12566,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professionaldevelopment/ article/practice-based-coaching-pbc',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-pbc',
+      },
+      {
+        id: 12566,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professionaldevelopment/ article/practice-based-coaching-pbc',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-pbc',
+      },
+      {
+        id: 12568,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professionaldevelopment/ article/practice-based-coaching-pbc',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-pbc',
+      },
+      {
+        id: 12570,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professionaldevelopment/ article/practice-based-coaching-pbc',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-pbc',
+      },
+      {
+        id: 12572,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professionaldevelopment/ article/practice-based-coaching-pbc',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-pbc',
+      },
+      {
+        id: 12574,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professionaldevelopment/ article/practice-based-coaching-pbc',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-pbc',
+      },
+      {
+        id: 12577,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professionaldevelopment/ article/practice-based-coaching-pbc',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-pbc',
+      },
+      {
+        id: 12579,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professionaldevelopment/ article/practice-based-coaching-pbc',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-pbc',
+      },
+      {
+        id: 12581,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professionaldevelopment/ article/practice-based-coaching-pbc',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-pbc',
+      },
+      {
+        id: 12583,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professionaldevelopment/ article/practice-based-coaching-pbc',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-pbc',
+      },
+      {
+        id: 12585,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professionaldevelopment/ article/practice-based-coaching-pbc',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-pbc',
+      },
+      {
+        id: 12642,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-components-implementation-strategies',
+      },
+      {
+        id: 12643,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-components-implementation-strategies',
+      },
+      {
+        id: 12644,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-components-implementation-strategies',
+      },
+      {
+        id: 12645,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-components-implementation-strategies',
+      },
+      {
+        id: 12646,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-components-implementation-strategies',
+      },
+      {
+        id: 12647,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-components-implementation-strategies',
+      },
+      {
+        id: 12648,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-components-implementation-strategies',
+      },
+      {
+        id: 12649,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-components-implementation-strategies',
+      },
+      {
+        id: 12650,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-components-implementation-strategies',
+      },
+      {
+        id: 12651,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-components-implementation-strategies',
+      },
+      {
+        id: 12652,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-components-implementation-strategies',
+      },
+      {
+        id: 12653,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-components-implementation-strategies',
+      },
+      {
+        id: 12654,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-components-implementation-strategies',
+      },
+      {
+        id: 12655,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-components-implementation-strategies',
+      },
+      {
+        id: 12656,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-components-implementation-strategies',
+      },
+      {
+        id: 12657,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-components-implementation-strategies',
+      },
     ];
 
     await Promise.all(fixListObjectiveResources.map(async (fi) => queryInterface.sequelize.query(`
@@ -189,6 +364,16 @@ module.exports = {
 
     // clean "ActivityReportObjectiveResources"
     const fixListActivityReportObjectiveResources = [
+      {
+        id: 152,
+        old: 'https://eclkc.ohs.acf.hhs.gov/humanresources/ home-visitor-supervisors-handbook/home-based-staff-qualifications-knowledgeskills',
+        new: 'https://eclkc.ohs.acf.hhs.gov/program-planning/home-visitor-supervisors-handbook/home-visitor-supervisors-handbook https://eclkc.ohs.acf.hhs.gov/human-resources/home-visitor-supervisors-handbook/home-based-staff-qualifications-knowledge-skills',
+      },
+      {
+        id: 154,
+        old: 'https://eclkc.ohs.acf.hhs.gov/policy/headstart- act/sec-648a-staff-qualifications-development',
+        new: 'https://eclkc.ohs.acf.hhs.gov/policy/head-start-act/sec-648a-staff-qualifications-development',
+      },
       {
         id: 166,
         old: 'http://1302 Subpart E—Family and Community Engagement Program Services | ECLKC (hhs.gov)',
@@ -204,7 +389,77 @@ module.exports = {
         old: 'http://Journeys of Hope and Courage | ECLKC (hhs.gov)',
         new: 'https://eclkc.ohs.acf.hhs.gov/family-engagement/article/journeys-hope-courage',
       },
+      {
+        id: 780,
+        old: 'https://eclkc.ohs.acf.hhs.gov/mental-health/article/understanding-trauma-  healing-adults',
+        data: 'https://eclkc.ohs.acf.hhs.gov/mental-health/article/understanding-trauma-healing-adults',
+      },
+      {
+        id: 2272,
+        old: 'https://nrckids.org/files/CFOC4 pdf- FINAL.pdf',
+        data: 'https://nrckids.org/files/CFOC4%20pdf-%20FINAL.pdf',
+      },
+      {
+        id: 2466,
+        old: 'http://1302 Subpart E—Family and Community Engagement Program Services | ECLKC (hhs.gov)',
+        new: 'https://eclkc.ohs.acf.hhs.gov/policy/45-cfr-chap-xiii/1302-subpart-eligibility-recruitment-selection-enrollment-attendance',
+      },
+      {
+        id: 2467,
+        old: 'http://Parent, Family, and Community Engagement (PFCE) Framework | ECLKC (hhs.gov)',
+        new: 'https://eclkc.ohs.acf.hhs.gov/school-readiness/article/parent-family-community-engagement-pfce-framework',
+      },
+      {
+        id: 2468,
+        old: 'http://Journeys of Hope and Courage | ECLKC (hhs.gov)',
+        new: 'https://eclkc.ohs.acf.hhs.gov/family-engagement/article/journeys-hope-courage',
+      },
+      {
+        id: 2596,
+        old: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/15-minute-service-suites, https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog, ',
+        new: 'https://eclkc.ohs.acf.hhs.gov/professional-development/article/15-minute-service-suites https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
+      },
     ];
+    10585	"https://mypeers.mangoapps.com/ce/pulse/user/teams/project_teams/uploaded_ files?project_id=1360260&folder=6182710"
+    10586	"https://mypeers.mangoapps.com/ce/pulse/user/teams/project_teams/uploaded_ files?project_id=1360260&folder=6182710"
+    10587	"https://mypeers.mangoapps.com/ce/pulse/user/teams/project_teams/uploaded_ files?project_id=1360260&folder=6182710"
+    10588	"https://mypeers.mangoapps.com/ce/pulse/user/teams/project_teams/uploaded_ files?project_id=1360260&folder=6182710"
+    10589	"https://mypeers.mangoapps.com/ce/pulse/user/teams/project_teams/uploaded_ files?project_id=1360260&folder=6182710"
+    10590	"https://mypeers.mangoapps.com/ce/pulse/user/teams/project_teams/uploaded_ files?project_id=1360260&folder=6182710"
+    10591	"https://mypeers.mangoapps.com/ce/pulse/user/teams/project_teams/uploaded_ files?project_id=1360260&folder=6182710"
+    10592	"https://mypeers.mangoapps.com/ce/pulse/user/teams/project_teams/uploaded_ files?project_id=1360260&folder=6182710"
+    11957	"http://eclkc.ohs.hhs.gov/45CFR 1302.11(b)(2) Community Assessment: The Foundation for Program Planning"
+12404	"https://eclkc.ohs.acf.hhs.gov/policy/45-cfr-chap-xiii/1302-102-achieving-program-goals	"
+12699	"http://eclkc.ohs.hhs.gov/45CFR 1302.11(b)(2) Community Assessment: The Foundation for Program Planning"
+13026	"https://eclkc.ohs.acf.hhs.gov/es/desarrollo-profesional/articulo/conjuntos-de-materiales-de-capacitacion-de-15- minutos"
+13029	"https://eclkc.ohs.acf.hhs.gov/es/desarrollo-profesional/articulo/conjuntos-de-materiales-de-capacitacion-de-15- minutos"
+13032	"https://eclkc.ohs.acf.hhs.gov/es/desarrollo-profesional/articulo/conjuntos-de-materiales-de-capacitacion-de-15- minutos"
+13035	"https://eclkc.ohs.acf.hhs.gov/es/desarrollo-profesional/articulo/conjuntos-de-materiales-de-capacitacion-de-15- minutos"
+13038	"https://eclkc.ohs.acf.hhs.gov/es/desarrollo-profesional/articulo/conjuntos-de-materiales-de-capacitacion-de-15- minutos"
+13041	"https://eclkc.ohs.acf.hhs.gov/es/desarrollo-profesional/articulo/conjuntos-de-materiales-de-capacitacion-de-15- minutos"
+13044	"https://eclkc.ohs.acf.hhs.gov/es/desarrollo-profesional/articulo/conjuntos-de-materiales-de-capacitacion-de-15- minutos"
+13047	"https://eclkc.ohs.acf.hhs.gov/es/desarrollo-profesional/articulo/conjuntos-de-materiales-de-capacitacion-de-15- minutos"
+13378	"https://eclkc.ohs.acf.hhs.gov/professionaldevelopment/ article/practice-based-coaching-pbc"
+13380	"https://eclkc.ohs.acf.hhs.gov/professionaldevelopment/ article/practice-based-coaching-pbc"
+13382	"https://eclkc.ohs.acf.hhs.gov/professionaldevelopment/ article/practice-based-coaching-pbc"
+13384	"https://eclkc.ohs.acf.hhs.gov/professionaldevelopment/ article/practice-based-coaching-pbc"
+13385	"https://eclkc.ohs.acf.hhs.gov/professionaldevelopment/ article/practice-based-coaching-pbc"
+13459	"https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies"
+13460	"https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies"
+13461	"https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies"
+13462	"https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies"
+13463	"https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies"
+13464	"https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies"
+13465	"https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies"
+13466	"https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies"
+13467	"https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies"
+13468	"https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies"
+13469	"https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies"
+13470	"https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies"
+13471	"https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies"
+13472	"https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies"
+13473	"https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies"
+13474	"https://eclkc.ohs.acf.hhs.gov/professional- development/article/practice- based-coaching- components-implementation-strategies"
 
     await Promise.all(fixListActivityReportObjectiveResources.map(async (fi) => queryInterface.sequelize.query(`
     UPDATE "ActivityReportObjectiveResources"
@@ -213,7 +468,7 @@ module.exports = {
     AND "userProvidedUrl" = '${fi.old}';
     `, { transaction })));
 
-    const urlRegex = '(?:(?:http(?:s)?|ftp(?:s)?|sftp):\\/\\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\\+~#=]+))?[@])?(?:(?:www\\.)?(?:[a-zA-Z0-9%._\\+~#=\\-]{1,}\\.[a-z]{2,6})|(?:(?:[0-9]{1,3}\\.){3}[0-9]{1,3}))(?:[:](?:[0-9]+))?(?:[\\/](?:[-a-zA-Z0-9@:%_\\+.~#&\\/=()]*))?(?:[?](?:[-a-zA-Z0-9@:%_\\+.~#&\\/=()]*))?)';
+    const urlRegex = '(?:(?:http(?:s)?|ftp(?:s)?|sftp):\\/\\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\\+~#=]+))?[@])?(?:(?:www\\.)?(?:[a-zA-Z0-9%._\\+~#=\\-]{1,}\\.[a-z]{2,6})|(?:(?:[0-9]{1,3}\\.){3}[0-9]{1,3}))(?:[:](?:[0-9]+))?(?:[\\/](?:[-a-zA-Z0-9@:%_\\+.,~#&\\/=()]*[-a-zA-Z0-9@:%_\\+.~#&\\/=()])?)?(?:[?](?:[-a-zA-Z0-9@:%_\\+.~#&\\/=()]*))*)';
 
     // clean "ObjectiveResources"
     // Now that the table has had the correctable values fixed, corrections need to be applied to return the table to its expected structure.
