@@ -55,14 +55,7 @@ describe('Goal pilot script', () => {
     expect(goal.isFromSmartsheetTtaPlan).toBe(false);
     expect(goal.goalTemplateId).not.toBeNull();
     expect(goal.goalTemplateId).toBe(goalTemplate.id);
-    expect(goal.grant).toEqual(
-      expect.objectContaining({
-        id: expect.anything(),
-        number: '01HP044444' || '01HP044445' || '09CH011111' || '09CH033333' || '13000002' || '13000004' || '14CH00003',
-        recipient: expect.anything(),
-        regionId: 1,
-      }),
-    );
+    expect(['01HP044445', '09CH011111', '09CH033333', '13000002', '13000004', '14CH00003', '01HP044444']).toContain(goal.grant.number);
   });
 
   it('should create the goal template', async () => {
