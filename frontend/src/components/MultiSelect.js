@@ -42,6 +42,51 @@ export function sortSelect(a, b) {
   return a.label.toLowerCase().localeCompare(b.label.toLowerCase());
 }
 
+export const styles = (singleRowInput = null) => ({
+  container: (provided, state) => {
+    // To match the focus indicator provided by uswds
+    const outline = state.isFocused ? '0.25rem solid #2491ff;' : '';
+    return {
+      ...provided,
+      outline,
+    };
+  },
+  placeholder: (provided) => ({
+    ...provided,
+    color: '#1b1b1b',
+  }),
+  groupHeading: (provided) => ({
+    ...provided,
+    fontWeight: 'bold',
+    fontFamily: 'SourceSansPro',
+    textTransform: 'capitalize',
+    fontSize: '14px',
+    color: colors.smartHubTextInk,
+    lineHeight: '22px',
+  }),
+  control: (provided, state) => ({
+    height: singleRowInput ? '38px' : '',
+    ...provided,
+    borderColor: '#565c65',
+    backgroundColor: 'white',
+    borderRadius: '0',
+    '&:hover': {
+      borderColor: '#565c65',
+    },
+    // Match uswds disabled style
+    opacity: state.isDisabled ? '0.7' : '1',
+  }),
+  indicatorsContainer: (provided) => ({
+    ...provided,
+    // The arrow dropdown icon is too far to the right, this pushes it back to the left
+    marginRight: '4px',
+  }),
+  indicatorSeparator: () => ({ display: 'none' }),
+  menu: (provided) => ({
+    ...provided,
+    zIndex: 2,
+  }),
+});
 function MultiSelect({
   name,
   options,
@@ -69,52 +114,6 @@ function MultiSelect({
    * in it's stead.
   */
   useSpellCheck(inputId);
-
-  const styles = {
-    container: (provided, state) => {
-      // To match the focus indicator provided by uswds
-      const outline = state.isFocused ? '0.25rem solid #2491ff;' : '';
-      return {
-        ...provided,
-        outline,
-      };
-    },
-    placeholder: (provided) => ({
-      ...provided,
-      color: '#1b1b1b',
-    }),
-    groupHeading: (provided) => ({
-      ...provided,
-      fontWeight: 'bold',
-      fontFamily: 'SourceSansPro',
-      textTransform: 'capitalize',
-      fontSize: '14px',
-      color: colors.smartHubTextInk,
-      lineHeight: '22px',
-    }),
-    control: (provided, state) => ({
-      height: singleRowInput ? '38px' : '',
-      ...provided,
-      borderColor: '#565c65',
-      backgroundColor: 'white',
-      borderRadius: '0',
-      '&:hover': {
-        borderColor: '#565c65',
-      },
-      // Match uswds disabled style
-      opacity: state.isDisabled ? '0.7' : '1',
-    }),
-    indicatorsContainer: (provided) => ({
-      ...provided,
-      // The arrow dropdown icon is too far to the right, this pushes it back to the left
-      marginRight: '4px',
-    }),
-    indicatorSeparator: () => ({ display: 'none' }),
-    menu: (provided) => ({
-      ...provided,
-      zIndex: 2,
-    }),
-  };
 
   /*
    * @param {Array<string> || Array<object>} - value array. Either an array of strings or array
@@ -182,7 +181,7 @@ function MultiSelect({
               }
             }}
             inputId={inputId}
-            styles={styles}
+            styles={styles(singleRowInput)}
             components={{ ...componentReplacements, DropdownIndicator }}
             options={options}
             isDisabled={disabled}

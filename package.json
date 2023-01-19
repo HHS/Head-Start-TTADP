@@ -12,7 +12,7 @@
     "deps:local": "yarn install && yarn --cwd frontend install",
     "deps": "yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
     "start:local": "concurrently \"yarn server\" \"yarn client\" \"yarn worker\"",
-    "start:ci": "cross-env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub TTA_SMART_HUB_URI=http://localhost:3000 concurrently \"yarn start:web\" \"yarn client\" \"yarn start:worker\"",
+    "start:ci": "cross-env BYPASS_SOCKETS=true POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub TTA_SMART_HUB_URI=http://localhost:3000 concurrently \"yarn start:web\" \"yarn client\"",
     "start:web": "node ./build/server/index.js",
     "start:worker": "node ./build/server/worker.js",
     "server": "nodemon src/index.js --exec babel-node",
@@ -146,7 +146,9 @@
       "<rootDir>/src/testUtils.js",
       "<rootDir>/src/logger.js",
       "<rootDir>/src/*/coverage/",
-      "<rootDir>/src/coverage/"
+      "<rootDir>/src/coverage/",
+      "<rootDir>/src/index.js",
+      "<rootDir>/src/worker.js"
     ],
     "testTimeout": 30000,
     "coveragePathIgnorePatterns": [
@@ -159,7 +161,9 @@
       "<rootDir>/src/testUtils.js",
       "<rootDir>/src/logger.js",
       "<rootDir>/src/*/coverage/",
-      "<rootDir>/src/coverage/"
+      "<rootDir>/src/coverage/",
+      "<rootDir>/src/index.js",
+      "<rootDir>/src/worker.js"
     ],
     "coverageThreshold": {
       "global": {
@@ -259,6 +263,7 @@
     "newrelic": "^8.7.0",
     "nodemailer": "^6.5.0",
     "pg": "^8.3.3",
+    "redis": "^4.0.6",
     "pug": "^3.0.2",
     "sequelize": "^6.12.5",
     "sequelize-cli": "^6.2.0",
@@ -268,6 +273,7 @@
     "validator": "^13.7.0",
     "wait-for-expect": "^3.0.2",
     "winston": "^3.3.3",
+    "ws": "^8.5.0",
     "xml2json": "^0.12.0",
     "yargs": "^17.3.1",
     "yayson": "^2.1.0"

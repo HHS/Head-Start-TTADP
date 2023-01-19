@@ -144,7 +144,7 @@ describe('grant filtersToScopes', () => {
   describe('activeWithin', () => {
     it('before', async () => {
       const filters = { 'startDate.bef': '1997/07/31' };
-      const scope = filtersToScopes(filters, { grant: { subset: true } });
+      const scope = await filtersToScopes(filters, { grant: { subset: true } });
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
@@ -155,7 +155,7 @@ describe('grant filtersToScopes', () => {
 
     it('after', async () => {
       const filters = { 'startDate.aft': '1997/07/31' };
-      const scope = filtersToScopes(filters, { grant: { subset: true } });
+      const scope = await filtersToScopes(filters, { grant: { subset: true } });
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
@@ -166,7 +166,7 @@ describe('grant filtersToScopes', () => {
 
     it('within', async () => {
       const filters = { 'startDate.win': '1997/07/31-1997/08/02' };
-      const scope = filtersToScopes(filters, { grant: { subset: true } });
+      const scope = await filtersToScopes(filters, { grant: { subset: true } });
       const found = await Grant.findAll({
         where: {
           [Op.and]: [scope.grant, { id: possibleIds }],
@@ -181,7 +181,7 @@ describe('grant filtersToScopes', () => {
   describe('region', () => {
     it('filters by region', async () => {
       const filters = { 'region.in': [3] };
-      const scope = filtersToScopes(filters, 'grant');
+      const scope = await filtersToScopes(filters, 'grant');
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
@@ -193,7 +193,7 @@ describe('grant filtersToScopes', () => {
   describe('recipientName', () => {
     it('filters by', async () => {
       const filters = { 'recipient.ctn': '13269' };
-      const scope = filtersToScopes(filters);
+      const scope = await filtersToScopes(filters);
       const found = await Recipient.findAll({
         include: [
           {
@@ -208,7 +208,7 @@ describe('grant filtersToScopes', () => {
     });
     it('filters out', async () => {
       const filters = { 'recipient.nctn': '13269' };
-      const scope = filtersToScopes(filters);
+      const scope = await filtersToScopes(filters);
       const found = await Recipient.findAll({
         include: [
           {
@@ -229,7 +229,7 @@ describe('grant filtersToScopes', () => {
   describe('programSpecialist', () => {
     it('filters by', async () => {
       const filters = { 'programSpecialist.ctn': 'Darcy' };
-      const scope = filtersToScopes(filters);
+      const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
@@ -238,7 +238,7 @@ describe('grant filtersToScopes', () => {
     });
     it('filters out', async () => {
       const filters = { 'programSpecialist.nctn': 'Darcy' };
-      const scope = filtersToScopes(filters);
+      const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
@@ -252,7 +252,7 @@ describe('grant filtersToScopes', () => {
   describe('programType', () => {
     it('filters by', async () => {
       const filters = { 'programType.in': ['EHS'] };
-      const scope = filtersToScopes(filters);
+      const scope = await filtersToScopes(filters);
       const found = await Recipient.findAll({
         include: [
           {
@@ -267,7 +267,7 @@ describe('grant filtersToScopes', () => {
     });
     it('filters out', async () => {
       const filters = { 'programType.nin': ['EHS'] };
-      const scope = filtersToScopes(filters);
+      const scope = await filtersToScopes(filters);
       const found = await Recipient.findAll({
         include: [
           {
@@ -287,7 +287,7 @@ describe('grant filtersToScopes', () => {
   describe('grantNumber', () => {
     it('filters by', async () => {
       const filters = { 'grantNumber.ctn': '1195543' };
-      const scope = filtersToScopes(filters);
+      const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
@@ -296,7 +296,7 @@ describe('grant filtersToScopes', () => {
     });
     it('filters out', async () => {
       const filters = { 'grantNumber.nctn': '1195543' };
-      const scope = filtersToScopes(filters);
+      const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
@@ -310,7 +310,7 @@ describe('grant filtersToScopes', () => {
   describe('stateCode', () => {
     it('filters by', async () => {
       const filters = { 'stateCode.ctn': 'AZ' };
-      const scope = filtersToScopes(filters);
+      const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         attributes: ['id', 'stateCode'],
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
