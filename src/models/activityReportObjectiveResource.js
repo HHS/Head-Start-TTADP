@@ -35,7 +35,7 @@ module.exports = (sequelize, DataTypes) => {
     sourceFields: {
       allowNull: true,
       default: null,
-      type: DataTypes.ARRAY((DataTypes.ENUM(Object.values(SOURCE_FIELD.OBJECTIVE)))),
+      type: DataTypes.ARRAY((DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTOBJECTIVE)))),
     },
     isAutoDetected: {
       type: DataTypes.BOOLEAN,
