@@ -114,7 +114,12 @@
   "eslintConfig": {
     "extends": [
       "airbnb-base",
-      "plugin:jest/recommended"
+      "plugin:jest/recommended",
+      "plugin:@typescript-eslint/recommended"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "plugins": [
+      "@typescript-eslint"
     ],
     "ignorePatterns": [
       "node_modules/*"
@@ -201,6 +206,8 @@
     "@babel/preset-typescript": "^7.18.6",
     "@cucumber/cucumber": "^7.0.0",
     "@playwright/test": "^1.28.0",
+    "@typescript-eslint/eslint-plugin": "^5.48.2",
+    "@typescript-eslint/parser": "^5.48.2",
     "concurrently": "^7.0.0",
     "cross-env": "^7.0.2",
     "depcheck": "^1.2.0",
