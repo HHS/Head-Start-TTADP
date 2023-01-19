@@ -14,6 +14,16 @@ module.exports = {
         NOTE: 'note',
         RESOURCE: 'resource',
       },
+      GOAL: {
+        NAME: 'name',
+        TIMEFRAME: 'timeframe',
+        RESOURCE: 'resource',
+      },
+      REPORTGOAL: {
+        NAME: 'name',
+        TIMEFRAME: 'timeframe',
+        RESOURCE: 'resource',
+      },
       OBJECTIVE: {
         TITLE: 'title',
         RESOURCE: 'resource',
@@ -111,7 +121,7 @@ module.exports = {
       },
     }, { transaction });
 
-    // make table to link resources to activity reports
+    // make table to link resources to next steps
     await queryInterface.createTable('NextStepResources', {
       id: {
         allowNull: false,
@@ -143,6 +153,102 @@ module.exports = {
         allowNull: true,
         default: null,
         type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.NEXTSTEPS))),
+      },
+      isAutoDetected: {
+        type: Sequelize.BOOLEAN,
+        default: false,
+        allowNull: false,
+      },
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+    }, { transaction });
+
+    // make table to link resources to goals
+    await queryInterface.createTable('GoalResources', {
+      id: {
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+        type: Sequelize.INTEGER,
+      },
+      goalId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: {
+            tableName: 'Goals',
+          },
+          key: 'id',
+        },
+      },
+      resourceId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: {
+            tableName: 'Resources',
+          },
+          key: 'id',
+        },
+      },
+      sourceFields: {
+        allowNull: true,
+        default: null,
+        type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.GOAL))),
+      },
+      isAutoDetected: {
+        type: Sequelize.BOOLEAN,
+        default: false,
+        allowNull: false,
+      },
+      createdAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+      updatedAt: {
+        allowNull: false,
+        type: Sequelize.DATE,
+      },
+    }, { transaction });
+
+    // make table to link resources to goals
+    await queryInterface.createTable('ActivityReportGoalResources', {
+      id: {
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+        type: Sequelize.INTEGER,
+      },
+      activityReportGoalId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: {
+            tableName: 'ActivityReportGoals',
+          },
+          key: 'id',
+        },
+      },
+      resourceId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: {
+            tableName: 'Resources',
+          },
+          key: 'id',
+        },
+      },
+      sourceFields: {
+        allowNull: true,
+        default: null,
+        type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTGOAL))),
       },
       isAutoDetected: {
         type: Sequelize.BOOLEAN,
@@ -236,7 +342,7 @@ module.exports = {
       },
       { transaction },
     );
-    const urlRegex = '(?:(?:http(?:s)?|ftp(?:s)?|sftp):\\/\\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\\+~#=]+))?[@])?(?:(?:www\\.)?(?:[a-zA-Z0-9%._\\+~#=\\-]{1,}\\.[a-z]{2,6})|(?:(?:[0-9]{1,3}\\.){3}[0-9]{1,3}))(?:[:](?:[0-9]+))?(?:[\\/](?:[-a-zA-Z0-9@:%_\\+.~#&\\/=()]*))?(?:[?](?:[-a-zA-Z0-9@:%_\\+.~#&\\/=()]*))?)';
+    const urlRegex = '(?:(?:http(?:s)?|ftp(?:s)?|sftp):\\/\\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\\+~#=]+))?[@])?(?:(?:www\\.)?(?:[a-zA-Z0-9%._\\+~#=\\-]{1,}\\.[a-z]{2,6})|(?:(?:[0-9]{1,3}\\.){3}[0-9]{1,3}))(?:[:](?:[0-9]+))?(?:[\\/](?:[-a-zA-Z0-9@:%_\\+.,~#&\\/=()]*[-a-zA-Z0-9@:%_\\+.~#&\\/=()])?)?(?:[?](?:[-a-zA-Z0-9@:%_\\+.~#&\\/=()]*))*)';
     const domainRegex = '^(?:(?:http(?:s)?|ftp(?:s)?|sftp):\\/\\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\\+~#=]+))?[@])?(?:(?:www\\.)?([a-zA-Z0-9%._\\+~#=\\-]{1,}\\.[a-z]{2,6})|((?:[0-9]{1,3}\\.){3}[0-9]{1,3})))';
 
     // populate "Resources" and "ActivityReportResources" from current data from reports via nonECLKCResourcesUsed, ECLKCResourcesUsed, context, & additionalNotes
@@ -493,6 +599,288 @@ module.exports = {
         ar."resourceId",
         nsud."createdAt",
         nsud."updatedAt";
+    `, { transaction });
+
+    // populate "Resources" and "GoalResources" from current data from "Goals" via name and timeframe
+    // 1. Collect all urls from name and timeframe columns in "Goals".
+    // 2. Extract domain from urls.
+    // 3. Generate a distinct resource per goal.
+    // 4. Generate a distinct list of collected urls.
+    // 5. Update "Resources" for all existing urls.
+    // 6. Insert distinct domains and urls into "Resources" table.
+    // 7. Collect all affected "Resources" records.
+    // 8. Insert all records into "GoalResources" linking the "Goals" records to their corresponding records in "Resources".
+    await queryInterface.sequelize.query(`
+    WITH
+      "GoalUrls" AS (
+        SELECT
+          g.id "goalId",
+          (regexp_matches(g.name,'${urlRegex}','g')) urls,
+          '${SOURCE_FIELD.GOAL.NAME}' "sourceField",
+          g."createdAt",
+          g."updatedAt"
+        FROM "Goals" g
+        UNION
+        SELECT
+          g.id "goalId",
+          (regexp_matches(g."timeframe",'${urlRegex}','g')) urls,
+          '${SOURCE_FIELD.GOAL.TIMEFRAME}' "sourceField",
+          g."createdAt",
+          g."updatedAt"
+        FROM "Goals" g
+      ),
+      "GoalUrlDomain" AS (
+        SELECT
+          gu."goalId",
+          (regexp_match(u.url, '${domainRegex}'))[1] "domain",
+          u.url,
+          gu."sourceField",
+          gu."createdAt",
+          gu."updatedAt"
+        FROM "GoalUrls" gu
+        CROSS JOIN UNNEST(gu.urls) u(url)
+      ),
+      "FoundGoalResources" AS (
+        SELECT
+          gud."goalId",
+          gud."domain",
+          gud.url,
+          ARRAY_AGG(gud."sourceField") "sourceFields",
+          MIN(gud."createdAt") "createdAt",
+          MAX(gud."updatedAt") "updatedAt"
+        FROM "GoalUrlDomain" gud
+        GROUP BY
+          gud."goalId",
+          gud."domain",
+          gud.url
+        ORDER BY
+          MIN(gud."createdAt")
+      ),
+      "FoundResources" AS (
+        SELECT
+          fgr."domain",
+          fgr.url,
+          MIN(fgr."createdAt") "createdAt",
+          MAX(fgr."updatedAt") "updatedAt"
+        FROM "FoundGoalResources" fgr
+        GROUP BY
+          fgr."domain",
+          fgr.url
+        ORDER BY
+          MIN(fgr."createdAt")
+      ),
+      "UpdateResources" AS (
+        UPDATE "Resources" r
+        SET
+          "createdAt" = LEAST(r."createdAt", fr."createdAt"),
+          "updatedAt" = GREATEST(r."updatedAt", fr."updatedAt")
+        FROM "FoundResources" fr
+        JOIN "Resources" r2
+        ON fr."domain" = r2."domain"
+        AND fr.url = r2.url
+        WHERE fr."domain" = r."domain"
+        AND fr.url = r.url
+        RETURNING
+          r.id "resourceId",
+          r."domain",
+          r.url
+      ),
+      "NewResources" AS (
+        INSERT INTO "Resources" (
+          "domain",
+          "url",
+          "createdAt",
+          "updatedAt"
+        )
+        SELECT
+          fr."domain",
+          fr.url,
+          fr."createdAt",
+          fr."updatedAt"
+        FROM "FoundResources" fr
+        LEFT JOIN "Resources" r
+        ON fr."domain" = r."domain"
+        AND fr.url = r.url
+        WHERE r.id IS NULL
+        ORDER BY
+          fr."createdAt"
+        RETURNING
+          id "resourceId",
+          "domain",
+          url
+      ),
+      "AffectedResources" AS (
+        SELECT *
+        FROM "UpdateResources"
+        UNION
+        SELECT *
+        FROM "NewResources"
+      )
+      INSERT INTO "GoalResources" (
+        "goalId",
+        "resourceId",
+        "sourceFields",
+        "isAutoDetected",
+        "createdAt",
+        "updatedAt"
+      )
+      SELECT
+        fgr."goalId",
+        ar."resourceId",
+        fgr."sourceFields"::"enum_GoalResources_sourceFields"[] "sourceFields",
+        true,
+        fgr."createdAt",
+        fgr."updatedAt"
+      FROM "FoundGoalResources" fgr
+      JOIN "AffectedResources" ar
+      ON fgr."domain" = ar."domain"
+      AND fgr.url = ar.url
+      ORDER BY
+        fgr."goalId",
+        ar."resourceId",
+        fgr."createdAt",
+        fgr."updatedAt";
+    `, { transaction });
+
+    // populate "Resources" and "ActivityReportGoalResources" from current data from "ActivityReportGoals" via name and timeframe
+    // 1. Collect all urls from name and timeframe columns in "ActivityReportGoals".
+    // 2. Extract domain from urls.
+    // 3. Generate a distinct resource per goal.
+    // 4. Generate a distinct list of collected urls.
+    // 5. Update "Resources" for all existing urls.
+    // 6. Insert distinct domains and urls into "Resources" table.
+    // 7. Collect all affected "Resources" records.
+    // 8. Insert all records into "ActivityReportGoalResources" linking the "ActivityReportGoals" records to their corresponding records in "Resources".
+    await queryInterface.sequelize.query(`
+    WITH
+      "GoalUrls" AS (
+        SELECT
+          g.id "activityReportGoalId",
+          (regexp_matches(g.name,'${urlRegex}','g')) urls,
+          '${SOURCE_FIELD.REPORTGOAL.NAME}' "sourceField",
+          g."createdAt",
+          g."updatedAt"
+        FROM "ActivityReportGoals" g
+        UNION
+        SELECT
+          g.id "activityReportGoalId",
+          (regexp_matches(g."timeframe",'${urlRegex}','g')) urls,
+          '${SOURCE_FIELD.REPORTGOAL.TIMEFRAME}' "sourceField",
+          g."createdAt",
+          g."updatedAt"
+        FROM "ActivityReportGoals" g
+      ),
+      "GoalUrlDomain" AS (
+        SELECT
+          gu."activityReportGoalId",
+          (regexp_match(u.url, '${domainRegex}'))[1] "domain",
+          u.url,
+          gu."sourceField",
+          gu."createdAt",
+          gu."updatedAt"
+        FROM "GoalUrls" gu
+        CROSS JOIN UNNEST(gu.urls) u(url)
+      ),
+      "FoundGoalResources" AS (
+        SELECT
+          gud."activityReportGoalId",
+          gud."domain",
+          gud.url,
+          ARRAY_AGG(gud."sourceField") "sourceFields",
+          MIN(gud."createdAt") "createdAt",
+          MAX(gud."updatedAt") "updatedAt"
+        FROM "GoalUrlDomain" gud
+        GROUP BY
+          gud."activityReportGoalId",
+          gud."domain",
+          gud.url
+        ORDER BY
+          MIN(gud."createdAt")
+      ),
+      "FoundResources" AS (
+        SELECT
+          fgr."domain",
+          fgr.url,
+          MIN(fgr."createdAt") "createdAt",
+          MAX(fgr."updatedAt") "updatedAt"
+        FROM "FoundGoalResources" fgr
+        GROUP BY
+          fgr."domain",
+          fgr.url
+        ORDER BY
+          MIN(fgr."createdAt")
+      ),
+      "UpdateResources" AS (
+        UPDATE "Resources" r
+        SET
+          "createdAt" = LEAST(r."createdAt", fr."createdAt"),
+          "updatedAt" = GREATEST(r."updatedAt", fr."updatedAt")
+        FROM "FoundResources" fr
+        JOIN "Resources" r2
+        ON fr."domain" = r2."domain"
+        AND fr.url = r2.url
+        WHERE fr."domain" = r."domain"
+        AND fr.url = r.url
+        RETURNING
+          r.id "resourceId",
+          r."domain",
+          r.url
+      ),
+      "NewResources" AS (
+        INSERT INTO "Resources" (
+          "domain",
+          "url",
+          "createdAt",
+          "updatedAt"
+        )
+        SELECT
+          fr."domain",
+          fr.url,
+          fr."createdAt",
+          fr."updatedAt"
+        FROM "FoundResources" fr
+        LEFT JOIN "Resources" r
+        ON fr."domain" = r."domain"
+        AND fr.url = r.url
+        WHERE r.id IS NULL
+        ORDER BY
+          fr."createdAt"
+        RETURNING
+          id "resourceId",
+          "domain",
+          url
+      ),
+      "AffectedResources" AS (
+        SELECT *
+        FROM "UpdateResources"
+        UNION
+        SELECT *
+        FROM "NewResources"
+      )
+      INSERT INTO "ActivityReportGoalResources" (
+        "activityReportGoalId",
+        "resourceId",
+        "sourceFields",
+        "isAutoDetected",
+        "createdAt",
+        "updatedAt"
+      )
+      SELECT
+        fgr."activityReportGoalId",
+        ar."resourceId",
+        fgr."sourceFields"::"enum_ActivityReportGoalResources_sourceFields"[] "sourceFields",
+        true,
+        fgr."createdAt",
+        fgr."updatedAt"
+      FROM "FoundGoalResources" fgr
+      JOIN "AffectedResources" ar
+      ON fgr."domain" = ar."domain"
+      AND fgr.url = ar.url
+      ORDER BY
+        fgr."activityReportGoalId",
+        ar."resourceId",
+        fgr."createdAt",
+        fgr."updatedAt";
     `, { transaction });
 
     // populate "Resources" from current data from "ObjectiveResources" via userProvidedUrl
