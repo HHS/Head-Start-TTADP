@@ -160,7 +160,6 @@ test.describe("Activity Report Text Search Filter", () => {
   // Doesn't contain context.
   await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();
   await page.getByRole('combobox', { name: 'condition' }).selectOption('does not contain');
-  await page.getByLabel('Enter report text').click();
   await page.getByLabel('Enter report text').fill('the ocean is');
   await page.getByTestId('apply-filters-test-id').click();
   await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).not.toBeVisible();
@@ -168,7 +167,6 @@ test.describe("Activity Report Text Search Filter", () => {
   // Contains goal.
   await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();
   await page.getByRole('combobox', { name: 'condition' }).selectOption('contains');
-  await page.getByLabel('Enter report text').click();
   await page.getByLabel('Enter report text').fill('cook');
   await page.getByTestId('apply-filters-test-id').click();
   await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
@@ -176,7 +174,6 @@ test.describe("Activity Report Text Search Filter", () => {
   // Doesn't contain goal.
   await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();
   await page.getByRole('combobox', { name: 'condition' }).selectOption('does not contain');
-  await page.getByLabel('Enter report text').click();
   await page.getByLabel('Enter report text').fill('cook');
   await page.getByTestId('apply-filters-test-id').click();
   await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).not.toBeVisible();
@@ -184,7 +181,6 @@ test.describe("Activity Report Text Search Filter", () => {
    // Contains objective.
    await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();
    await page.getByRole('combobox', { name: 'condition' }).selectOption('contains');
-   await page.getByLabel('Enter report text').click();
    await page.getByLabel('Enter report text').fill('first meal');
    await page.getByTestId('apply-filters-test-id').click();
    await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
