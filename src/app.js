@@ -53,7 +53,7 @@ app.use((req, res, next) => {
 
 if (process.env.NODE_ENV === 'production') {
   app.use('/index.html', serveIndex);
-  app.use(express.static(path.join(__dirname, 'client'), { index: false }));
+  app.use(express.static(path.join(__dirname, '../client'), { index: false }));
 }
 
 app.use('/api/v1', require('./routes/externalApi').default);
