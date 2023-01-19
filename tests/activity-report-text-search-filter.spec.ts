@@ -82,12 +82,14 @@ test.describe("Activity Report Text Search Filter", () => {
     await page.getByText('Yes').click();
 
     // Objective.
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-15-option-0').click();
+    await page.getByLabel(/Select TTA objective/i).focus();
+    await page.keyboard.type('create');
+    await page.keyboard.press('Enter');
     // Objective title.
     await page.getByLabel('TTA objective *').fill('Prepare your first meal.');
-    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-19-option-0').click();
+    await page.getByLabel(/topics/i).focus();
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('Enter')
     await blur(page);
     // Links.
     await page.getByTestId('textInput').click();
