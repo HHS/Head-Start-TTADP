@@ -44,9 +44,12 @@ test.describe("Activity Report Text Search Filter", () => {
     await blur(page);
     // Requested by.
     await page.getByRole('group', { name: 'Who requested this activity? Use "Regional Office" for TTA not requested by recipient.' }).locator('label').filter({ hasText: 'Recipient' }).click();
-    await page.getByRole('group', { name: 'Reason for activity' }).getByText('- Select -').click();
-    await page.locator('#react-select-9-option-0').click();
+    // reasons
+    await page.getByLabel(/Reasons/i).focus();
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('Enter')
     await blur(page);
+    
     // Start and End Dates.
     await page.getByLabel(/Start date/i).fill('12/01/2020');
     await page.getByLabel(/End date/i).fill('12/01/2050');
