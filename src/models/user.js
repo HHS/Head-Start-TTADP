@@ -21,6 +21,13 @@ module.exports = (sequelize, DataTypes) => {
       User.hasMany(models.UserSettingOverrides, { foreignKey: 'userId', as: 'userSettingOverrides' });
       User.hasMany(models.ActivityReport, { foreignKey: 'userId', as: 'reports', hooks: true });
       User.hasMany(models.UserValidationStatus, { foreignKey: 'userId', as: 'validationStatus' });
+      User.hasMany(models.GroupUser, { foreignKey: 'grantId', as: 'groupUsers' });
+      User.belongsToMany(models.Group, {
+        through: models.GroupUser,
+        foreignKey: 'userId',
+        otherKey: 'groupId',
+        as: 'groups',
+      });
     }
   }
   User.init({
