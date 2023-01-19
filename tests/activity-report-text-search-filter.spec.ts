@@ -131,13 +131,15 @@ test.describe("Activity Report Text Search Filter", () => {
   // add creator notes
   await page.getByRole('textbox', { name: 'Additional notes' }).locator('div').nth(2).click();
   await page.keyboard.type('Sample creator notes');
-  const approverDropdown = page.locator('.css-g1d714-ValueContainer');
+
+  const approverDropdown = page.getByLabel(/Approving manager/i)
   await approverDropdown.click();
 
   // type our name into the dropdown to filter to just us
   await page.keyboard.type(fullName);
   // press Enter to select ourself
   await page.keyboard.press('Enter');
+
   await blur(page);
 
   // extract the AR number from the URL:
