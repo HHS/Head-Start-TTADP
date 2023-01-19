@@ -67,7 +67,7 @@ async function getDataForReports(reportsToIndex, data) {
         aws Elasticsearch indexes based on the current database date.
         Running this script will wipe ALL existing indexed data and re-create it.
 */
-export default async function createAwsElasticSearchIndexes() {
+export default async function createAwsElasticSearchIndexes(batchSize = 100) {
   try {
     // Create client.
     const client = await getClient();
@@ -129,10 +129,9 @@ export default async function createAwsElasticSearchIndexes() {
     let totalCount = 0;
 
     // We need to loop this in increments of 100 (each item has two entries).
-    const bulkSize = 100; // Number to be bulk indexed at once.
     const documentCount = documents.length / 2; // Each items has two entries.
-    const wholeIterations = Math.floor(documentCount / bulkSize);
-    const iterations = documentCount % bulkSize > 0
+    const wholeIterations = Math.floor(documentCount / batchSize);
+    const iterations = documentCount % batchSize > 0
       ? wholeIterations + 1 // Add an extra iteration.
       : wholeIterations;
 
@@ -141,7 +140,7 @@ export default async function createAwsElasticSearchIndexes() {
 
     for (let i = 1; i <= iterations; i += 1) {
       // If we are on the last loop iteration get from 0-remaining.
-      const addToProcess = documents.splice(0, i === iterations ? documents.length : bulkSize * 2);
+      const addToProcess = documents.splice(0, i === iterations ? documents.length : batchSize * 2);
       totalCount += addToProcess.length;
       // Add to bulk import batch.
       toBulkImport.push(bulkIndex(
@@ -154,7 +153,7 @@ export default async function createAwsElasticSearchIndexes() {
     // Wait to Resolve all promises.
     await Promise.all(toBulkImport);
 
-    logger.info(`Search Index Job Info: ...Bulk import completed for ${totalCount / 2} reports in ${iterations} iterations of ${bulkSize} each`);
+    logger.info(`Search Index Job Info: ...Bulk import completed for ${totalCount / 2} reports in ${iterations} iterations of ${batchSize} each`);
     const finishBulkImport = moment();
 
     logger.info(`Search Index Job Info: ...Finished indexing of ${reportsToIndex.length} reports`);
