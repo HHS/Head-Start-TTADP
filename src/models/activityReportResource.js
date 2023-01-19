@@ -19,7 +19,7 @@ module.exports = (sequelize, DataTypes) => {
     sourceFields: {
       allowNull: true,
       default: null,
-      type: DataTypes.ARRAY((DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORT)))),
+      type: DataTypes.ARRAY(DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORT))),
     },
     isAutoDetected: {
       type: DataTypes.BOOLEAN,

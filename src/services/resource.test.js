@@ -2,13 +2,17 @@ import { Op } from 'sequelize';
 import {
   ActivityReport,
   ActivityReportResource,
+  ActivityReportGoal,
+  ActivityReportGoalResource,
+  ActivityReportObjective,
+  ActivityReportObjectiveResource,
+  Goal,
+  GoalResource,
   NextStep,
   NextStepResource,
   Resource,
   Objective,
   ObjectiveResource,
-  ActivityReportObjective,
-  ActivityReportObjectiveResource,
 } from '../models';
 import {
   // Resource Table
@@ -32,6 +36,16 @@ import {
   syncResourcesForNextStep,
   // processNextStepForResources,
   processNextStepForResourcesById,
+  // Goal Resource processing
+  calculateIsAutoDetectedForGoal,
+  syncResourcesForGoal,
+  // processGoalForResources,
+  processGoalForResourcesById,
+  // ActivityReportGoal Resource Processing
+  calculateIsAutoDetectedForActivityReportGoal,
+  syncResourcesForActivityReportGoal,
+  // processActivityReportGoalForResources,
+  processActivityReportGoalForResourcesById,
   // Objective Resource processing
   calculateIsAutoDetectedForObjective,
   syncResourcesForObjective,
@@ -43,7 +57,13 @@ import {
   // processActivityReportObjectiveForResources,
   processActivityReportObjectiveForResourcesById,
 } from './resource';
-import { REPORT_STATUSES, SOURCE_FIELD, NEXTSTEP_NOTETYPE, OBJECTIVE_STATUS } from '../constants';
+import {
+  REPORT_STATUSES,
+  SOURCE_FIELD,
+  NEXTSTEP_NOTETYPE,
+  OBJECTIVE_STATUS,
+  GOAL_STATUS,
+} from '../constants';
 
 describe('resource', () => {
   describe('Resource Table', () => {
@@ -1292,7 +1312,7 @@ describe('resource', () => {
           .toEqual(true);
       });
     });
-    describe('processNextStepForResourcesById', () => {
+    describe('processActivityReportForResourcesById', () => {
       let resources;
       let activityReport;
       let deleteReport;
@@ -1304,24 +1324,30 @@ describe('resource', () => {
       ];
       beforeAll(async () => {
         resources = await findOrCreateResources(urls);
-        [activityReport, deleteReport] = await ActivityReport.findOrCreate({
-          where: {
-            id: 9999,
-            context: 'Resource Report test. http://google.com',
-            submissionStatus: REPORT_STATUSES.DRAFT,
-            calculatedStatus: REPORT_STATUSES.DRAFT,
-            numberOfParticipants: 1,
-            deliveryMethod: 'method',
-            duration: 0,
-            endDate: '2020-01-01T12:00:00Z',
-            startDate: '2020-01-01T12:00:00Z',
-            requester: 'requester',
-            regionId: 1,
-            targetPopulations: [],
-          },
-          individualHooks: true,
-          raw: true,
-        });
+        try {
+          [activityReport, deleteReport] = await ActivityReport.findOrCreate({
+            where: {
+              id: 9999,
+            },
+            defaults: {
+              context: 'Resource Report test. http://google.com',
+              submissionStatus: REPORT_STATUSES.DRAFT,
+              calculatedStatus: REPORT_STATUSES.DRAFT,
+              numberOfParticipants: 1,
+              deliveryMethod: 'method',
+              duration: 0,
+              endDate: '2020-01-01T12:00:00Z',
+              startDate: '2020-01-01T12:00:00Z',
+              requester: 'requester',
+              regionId: 1,
+              targetPopulations: [],
+            },
+            individualHooks: true,
+            raw: true,
+          });
+        } catch (err) {
+          console.log(err);
+        }
       });
       beforeEach(async () => {
       });
@@ -1938,6 +1964,467 @@ describe('resource', () => {
         expect(nsResources[0].sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.NEXTSTEPS.NOTE,
+          ].sort());
+      });
+    });
+  });
+  describe('Goal Resource processing', () => {
+    describe('calculateIsAutoDetectedForGoal', () => {
+      let sourceFields;
+      it('expected usage, single', () => {
+        sourceFields = [SOURCE_FIELD.GOAL.NAME];
+        expect(calculateIsAutoDetectedForGoal(sourceFields)).toEqual(true);
+      });
+      it('expected usage, multiple with only once auto-detected', () => {
+        sourceFields = [SOURCE_FIELD.GOAL.NAME, SOURCE_FIELD.GOAL.RESOURCE];
+        expect(calculateIsAutoDetectedForGoal(sourceFields)).toEqual(true);
+      });
+      it('expected usage, non-auto-detected single', () => {
+        sourceFields = [SOURCE_FIELD.GOAL.RESOURCE];
+        expect(calculateIsAutoDetectedForGoal(sourceFields)).toEqual(false);
+      });
+      // Note all fail cases handled by helper function tests for calculateIsAutoDetected
+    });
+    describe('syncResourcesForGoal', () => {
+      let resources;
+      let goal;
+      beforeAll(async () => {
+        const urls = [
+          'http://google.com',
+          'http://github.com',
+          'http://cloud.gov',
+          'https://adhocteam.us/',
+        ];
+        resources = await findOrCreateResources(urls);
+        [goal] = await Goal.findOrCreate({
+          where: {
+            grantId: 315,
+            name: 'Resource Goal test. http://google.com',
+            status: GOAL_STATUS.NOT_STARTED,
+            onAR: false,
+            onApprovedAR: false,
+          },
+          individualHooks: true,
+          raw: true,
+        });
+      });
+      beforeEach(async () => {
+
+      });
+      afterEach(async () => {
+        await GoalResource.destroy({
+          where: {
+            objectiveId: goal.id,
+            resourceId: { [Op.in]: resources.map((r) => r.id) },
+          },
+          individualHooks: true,
+        });
+      });
+      afterAll(async () => {
+        await Resource.destroy({
+          where: { id: { [Op.in]: resources.map((r) => r.id) } },
+          individualHooks: true,
+        });
+        await Goal.destroy({
+          where: { id: goal.id },
+          individualHooks: true,
+        });
+      });
+      it('expected usage, insert', async () => {
+        const data = {
+          create: [
+            {
+              objectiveId: goal.id,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.GOAL.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              objectiveId: goal.id,
+              resourceId: resources[1].id,
+              sourceFields: [SOURCE_FIELD.GOAL.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              objectiveId: goal.id,
+              resourceId: resources[2].id,
+              sourceFields: [SOURCE_FIELD.GOAL.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              objectiveId: goal.id,
+              resourceId: resources[3].id,
+              sourceFields: [SOURCE_FIELD.GOAL.RESOURCE],
+              isAutoDetected: false,
+            },
+          ],
+          update: [],
+          destroy: [],
+        };
+        await syncResourcesForGoal(data);
+        const gResources = await GoalResource.findAll({
+          where: {
+            goalId: goal.id,
+            resourceId: { [Op.in]: resources.map((r) => r.id) },
+          },
+          include: [
+            { model: Resource, as: 'resource' },
+          ],
+          raw: true,
+        });
+        expect(gResources.length).toEqual(4);
+      });
+      it('expected usage, update', async () => {
+        let data = {
+          create: [
+            {
+              goalId: goal.id,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.GOAL.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              goalId: goal.id,
+              resourceId: resources[1].id,
+              sourceFields: [SOURCE_FIELD.GOAL.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              goalId: goal.id,
+              resourceId: resources[2].id,
+              sourceFields: [SOURCE_FIELD.GOAL.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              goalId: goal.id,
+              resourceId: resources[3].id,
+              sourceFields: [SOURCE_FIELD.GOAL.RESOURCE],
+              isAutoDetected: false,
+            },
+          ],
+          update: [],
+          destroy: [],
+        };
+        await syncResourcesForGoal(data);
+        data = {
+          create: [],
+          update: [
+            {
+              goalId: goal.id,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.GOAL.NAME, SOURCE_FIELD.GOAL.RESOURCE],
+              isAutoDetected: true,
+            },
+          ],
+          destroy: [],
+        };
+        await syncResourcesForGoal(data);
+        const gResources = await GoalResource.findAll({
+          where: { goalId: goal.id, resourceId: resources[0].id },
+          include: [
+            { model: Resource, as: 'resource' },
+          ],
+          raw: true,
+        });
+        expect(gResources[0].sourceFields.length).toEqual(2);
+        expect(gResources[0].isAutoDetected).toEqual(true);
+      });
+      it('expected usage, delete', async () => {
+        let data = {
+          create: [
+            {
+              goalId: goal.id,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.GOAL.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              goalId: goal.id,
+              resourceId: resources[1].id,
+              sourceFields: [SOURCE_FIELD.GOAL.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              goalId: goal.id,
+              resourceId: resources[2].id,
+              sourceFields: [SOURCE_FIELD.GOAL.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              goalId: goal.id,
+              resourceId: resources[3].id,
+              sourceFields: [SOURCE_FIELD.GOAL.RESOURCE],
+              isAutoDetected: false,
+            },
+          ],
+          update: [],
+          destroy: [],
+        };
+        await syncResourcesForGoal(data);
+        data = {
+          create: [],
+          update: [],
+          destroy: [
+            {
+              goalId: goal.id,
+              resourceIds: resources.map((r) => r.id),
+            },
+          ],
+        };
+        await syncResourcesForGoal(data);
+        const gResources = await GoalResource.findAll({
+          where: {
+            goalId: goal.id,
+            resourceId: { [Op.in]: resources.map((r) => r.id) },
+          },
+          raw: true,
+        });
+        expect(gResources.length).toEqual(0);
+      });
+      it('expected usage, insert/update/delete', async () => {
+        let data = {
+          create: [
+            {
+              goalId: goal.id,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.GOAL.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              goalId: goal.id,
+              resourceId: resources[1].id,
+              sourceFields: [SOURCE_FIELD.GOAL.RESOURCE],
+              isAutoDetected: false,
+            },
+            {
+              goalId: goal.id,
+              resourceId: resources[2].id,
+              sourceFields: [SOURCE_FIELD.GOAL.RESOURCE],
+              isAutoDetected: false,
+            },
+          ],
+          update: [],
+          destroy: [],
+        };
+        await syncResourcesForGoal(data);
+        data = {
+          create: [
+            {
+              goalId: goal.id,
+              resourceId: resources[3].id,
+              sourceFields: [SOURCE_FIELD.GOAL.RESOURCE],
+              isAutoDetected: false,
+            },
+          ],
+          update: [
+            {
+              goalId: goal.id,
+              resourceId: resources[0].id,
+              sourceFields: [SOURCE_FIELD.GOAL.NAME, SOURCE_FIELD.GOAL.RESOURCE],
+              isAutoDetected: true,
+            },
+          ],
+          destroy: [
+            {
+              goalId: goal.id,
+              resourceIds: [resources[1].id],
+            },
+          ],
+        };
+        await syncResourcesForGoal(data);
+        const gResources = await GoalResource.findAll({
+          where: {
+            goalId: goal.id,
+            resourceId: { [Op.in]: resources.map((r) => r.id) },
+          },
+          raw: true,
+        });
+        expect(gResources.length).toEqual(3);
+        expect(gResources.map((r) => r.resourceId)).toContain(resources[3].id);
+        expect(gResources.map((r) => r.resourceId)).not.toContain(resources[1].id);
+        expect(gResources.find((r) => r.resourceId === resources[0].id).sourceFields.length)
+          .toEqual(2);
+        expect(gResources.find((r) => r.resourceId === resources[0].id).isAutoDetected)
+          .toEqual(true);
+      });
+    });
+    describe('processGoalForResourcesById', () => {
+      let resources;
+      let goal;
+      const urls = [
+        'http://google.com',
+        'http://github.com',
+        'http://cloud.gov',
+        'https://adhocteam.us/',
+      ];
+      beforeAll(async () => {
+        resources = await findOrCreateResources(urls);
+        [goal] = await Goal.findOrCreate({
+          where: {
+            grantId: 315,
+            name: 'Resource Goal test. http://google.com',
+            status: GOAL_STATUS.NOT_STARTED,
+            onAR: false,
+            onApprovedAR: false,
+          },
+          individualHooks: true,
+          raw: true,
+        });
+      });
+      beforeEach(async () => {
+      });
+      afterEach(async () => {
+        await GoalResource.destroy({
+          where: { goalId: goal.id },
+          individualHooks: true,
+        });
+      });
+      afterAll(async () => {
+        await Resource.destroy({
+          where: { url: { [Op.in]: urls } },
+          individualHooks: true,
+        });
+        await Goal.destroy({
+          where: { id: goal.id },
+          individualHooks: true,
+        });
+      });
+      it('expected usage, empty urls', async () => {
+        await processGoalForResourcesById(goal.id, []);
+        const gResources = await GoalResource.findAll({
+          where: { goalId: goal.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(gResources.length).toEqual(1);
+        expect(gResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(gResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.GOAL.NAME,
+          ].sort());
+      });
+      it('expected usage, with urls', async () => {
+        await processGoalForResourcesById(
+          goal.id,
+          urls,
+        );
+        const gResources = await GoalResource.findAll({
+          where: { goalId: goal.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(gResources.length).toEqual(4);
+        expect(gResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(gResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.GOAL.NAME,
+            SOURCE_FIELD.GOAL.RESOURCE,
+          ].sort());
+        expect(gResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[1]).id);
+        expect(gResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.GOAL.RESOURCE,
+          ].sort());
+      });
+      it('expected usage, add and remove urls', async () => {
+        await processGoalForResourcesById(
+          goal.id,
+          [],
+        );
+        let gResources = await GoalResource.findAll({
+          where: { goalId: goal.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(gResources.length).toEqual(1);
+        expect(gResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(gResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.GOAL.NAME,
+          ].sort());
+        await processGoalForResourcesById(
+          goal.id,
+          [urls[0]],
+        );
+        gResources = await GoalResource.findAll({
+          where: { goalId: goal.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(gResources.length).toEqual(1);
+        expect(gResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(gResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.GOAL.NAME,
+            SOURCE_FIELD.GOAL.RESOURCE,
+          ].sort());
+
+        await processGoalForResourcesById(
+          goal.id,
+          [urls[1]],
+        );
+        gResources = await GoalResource.findAll({
+          where: { goalId: goal.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(gResources.length).toEqual(2);
+        expect(gResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(gResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.GOAL.NAME,
+          ].sort());
+        expect(gResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[1]).id);
+        expect(gResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.GOAL.RESOURCE,
+          ].sort());
+
+        await processGoalForResourcesById(
+          goal.id,
+          urls,
+        );
+        gResources = await GoalResource.findAll({
+          where: { goalId: goal.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(gResources.length).toEqual(4);
+        expect(gResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(gResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.GOAL.NAME,
+            SOURCE_FIELD.GOAL.RESOURCE,
+          ].sort());
+        expect(gResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+          .toEqual(resources.find((r) => r.url === urls[1]).id);
+        expect(gResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.GOAL.RESOURCE,
+          ].sort());
+
+        await processGoalForResourcesById(
+          goal.id,
+          [],
+        );
+        gResources = await GoalResource.findAll({
+          where: { goalId: goal.id },
+          include: [{ model: Resource, as: 'resource' }],
+          raw: true,
+        });
+        expect(gResources.length).toEqual(1);
+        expect(gResources[0]['resource.url']).toEqual(urls[0]);
+        expect(gResources[0].sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.GOAL.NAME,
           ].sort());
       });
     });

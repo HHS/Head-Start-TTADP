@@ -30,6 +30,13 @@ module.exports = (sequelize, DataTypes) => {
         otherKey: 'fileId',
         as: 'files',
       });
+      ActivityReport.hasMany(models.ActivityReportResource, { foreignKey: 'activityReportId', as: 'activityReportResources' });
+      ActivityReport.belongsToMany(models.Resource, {
+        through: models.ActivityReportResource,
+        foreignKey: 'activityReportId',
+        otherKey: 'resourceId',
+        as: 'resources',
+      });
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'specialistNextSteps' });
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'recipientNextSteps' });
       ActivityReport.hasMany(models.ActivityReportApprover, { foreignKey: 'activityReportId', as: 'approvers', hooks: true });
