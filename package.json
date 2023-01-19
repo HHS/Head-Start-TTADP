@@ -20,7 +20,7 @@
     "server:debug": "nodemon --inspect=0.0.0.0:9229 src/index.js --exec babel-node",
     "client": "yarn --cwd frontend start",
     "test": "yarn build && jest build/server/src --runInBand",
-    "test:ci": "yarn build && ./bin/test-backend-ci",
+    "test:ci": "./bin/test-backend-ci",
     "test:all": "yarn test:ci && yarn --cwd frontend test:ci",
     "lint": "eslint src",
     "lint:ci": "eslint -f eslint-formatter-multiple src",
