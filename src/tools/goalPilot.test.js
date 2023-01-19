@@ -19,8 +19,8 @@ describe('Goal pilot script', () => {
     downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
   });
   afterEach(async () => {
-    // await Goal.destroy({ where: { name: goalName } });
-    // await GoalTemplate.destroy({ where: { templateName: goalName } });
+    await Goal.destroy({ where: { name: goalName } });
+    await GoalTemplate.destroy({ where: { templateName: goalName } });
   });
 
   afterAll(async () => {
