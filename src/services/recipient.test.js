@@ -217,7 +217,7 @@ describe('Recipient DB service', () => {
   describe('recipientById', () => {
     it('returns a recipient by recipient id and region id', async () => {
       const query = { 'region.in': ['1'] };
-      const { grant: grantScopes } = filtersToScopes(query);
+      const { grant: grantScopes } = await filtersToScopes(query);
       const recipient3 = await recipientById(75, grantScopes);
 
       // Recipient Name.
@@ -467,9 +467,9 @@ describe('Recipient DB service', () => {
       },
     ];
 
-    function regionToScope(regionId) {
+    async function regionToScope(regionId) {
       const query = { 'region.in': [regionId] };
-      const { grant } = filtersToScopes(query);
+      const { grant } = await filtersToScopes(query);
       return grant;
     }
 
@@ -484,7 +484,7 @@ describe('Recipient DB service', () => {
     });
 
     it('finds based on recipient name', async () => {
-      const foundRecipients = await recipientsByName('apple', regionToScope(1), 'name', 'asc', 0);
+      const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'name', 'asc', 0);
       expect(foundRecipients.rows.length).toBe(3);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(63);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(66);
@@ -492,49 +492,49 @@ describe('Recipient DB service', () => {
     });
 
     it('finds based on recipient id', async () => {
-      const foundRecipients = await recipientsByName('5555', regionToScope(1), 'name', 'asc', 0);
+      const foundRecipients = await recipientsByName('5555', await regionToScope(1), 'name', 'asc', 0);
       expect(foundRecipients.rows.length).toBe(1);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(64);
     });
 
     it('finds based on region', async () => {
-      const foundRecipients = await recipientsByName('banana', regionToScope(2), 'name', 'asc', 0);
+      const foundRecipients = await recipientsByName('banana', await regionToScope(2), 'name', 'asc', 0);
       expect(foundRecipients.rows.length).toBe(1);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(65);
     });
 
     it('sorts based on name', async () => {
-      const foundRecipients = await recipientsByName('apple', regionToScope(1), 'name', 'asc', 0);
+      const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'name', 'asc', 0);
       expect(foundRecipients.rows.length).toBe(3);
       expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([68, 63, 66].sort());
     });
 
     it('sorts based on program specialist', async () => {
-      const foundRecipients = await recipientsByName('apple', regionToScope(1), 'programSpecialist', 'asc', 0);
+      const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'programSpecialist', 'asc', 0);
       expect(foundRecipients.rows.length).toBe(3);
       expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([66, 63, 68].sort());
     });
 
     it('sorts based on grant specialist', async () => {
-      const foundRecipients = await recipientsByName('apple', regionToScope(1), 'grantSpecialist', 'asc', 0);
+      const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'grantSpecialist', 'asc', 0);
       expect(foundRecipients.rows.length).toBe(3);
       expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([68, 63, 66].sort());
     });
 
     it('respects sort order', async () => {
-      const foundRecipients = await recipientsByName('apple', regionToScope(1), 'name', 'desc', 0);
+      const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'name', 'desc', 0);
       expect(foundRecipients.rows.length).toBe(3);
       expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([66, 63, 68].sort());
     });
 
     it('respects the offset passed in', async () => {
-      const foundRecipients = await recipientsByName('apple', regionToScope(1), 'name', 'asc', 1);
+      const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'name', 'asc', 1);
       expect(foundRecipients.rows.length).toBe(2);
       expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([63, 66].sort());
     });
 
     it('finds inactive grants that fall in the accepted range', async () => {
-      const foundRecipients = await recipientsByName('Pumpkin', regionToScope(1), 'name', 'asc', 0);
+      const foundRecipients = await recipientsByName('Pumpkin', await regionToScope(1), 'name', 'asc', 0);
       expect(foundRecipients.rows.length).toBe(2);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(70);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(71);

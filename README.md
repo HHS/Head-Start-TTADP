@@ -47,8 +47,8 @@ The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-r
 
 Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve documentation files. These files can be found in the `docs/openapi` folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
 
-We use an AWS Opensearch docker image (Elasticsearch fork) and require that the following variables get added to the env file.
-* `AWS_ELASTICSEARCH_ENDPOINT=http://localhost:9200`
+We use an AWS OpenSearch docker image (Elasticsearch fork) and require that the following variables get added to the env file.
+* `AWS_ELASTICSEARCH_ENDPOINT=http://opensearch-node1:9200`
 * `AWS_ELASTICSEARCH_ACCESS_KEY=admin`
 * `AWS_ELASTICSEARCH_SECRET_KEY=admin`
 
@@ -58,7 +58,7 @@ You can also run build commands directly on your host (without docker). Make sur
 
 You must also install and run minio locally to use the file upload functionality. Please comment out `S3_ENDPOINT=http://minio:9000` and uncomment `S3_ENDPOINT=http://localhost:9000` in your .env file.
 
-We use an AWS Opensearch docker image (Elasticsearch fork) and require that the following variables get added to the env file.
+We use an AWS OpensSearch docker image (Elasticsearch fork) and require that the following variables get added to the env file.
 * `AWS_ELASTICSEARCH_ENDPOINT=http://localhost:9200`
 * `AWS_ELASTICSEARCH_ACCESS_KEY=admin`
 * `AWS_ELASTICSEARCH_SECRET_KEY=admin`
