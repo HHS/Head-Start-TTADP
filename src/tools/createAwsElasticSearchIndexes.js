@@ -136,22 +136,19 @@ export default async function createAwsElasticSearchIndexes(batchSize = 100) {
       : wholeIterations;
 
     // Bulk import.
-    const toBulkImport = [];
-
     for (let i = 1; i <= iterations; i += 1) {
       // If we are on the last loop iteration get from 0-remaining.
       const addToProcess = documents.splice(0, i === iterations ? documents.length : batchSize * 2);
       totalCount += addToProcess.length;
       // Add to bulk import batch.
-      toBulkImport.push(bulkIndex(
+      // eslint-disable-next-line no-await-in-loop
+      await bulkIndex(
         addToProcess,
         AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
         client,
-      ));
+      );
       logger.info(`- Bulk Group #${i}: Importing ${addToProcess.length} reports`);
     }
-    // Wait to Resolve all promises.
-    await Promise.all(toBulkImport);
 
     logger.info(`Search Index Job Info: ...Bulk import completed for ${totalCount / 2} reports in ${iterations} iterations of ${batchSize} each`);
     const finishBulkImport = moment();
