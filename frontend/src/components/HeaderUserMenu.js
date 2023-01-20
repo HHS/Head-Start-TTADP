@@ -42,6 +42,16 @@ function HeaderUserMenu() {
     haveStorage && window.sessionStorage.getItem(SESSION_STORAGE_IMPERSONATION_KEY) !== null,
   );
 
+  const onItemClick = () => {
+    document.querySelector('body').dispatchEvent(
+      new MouseEvent('mousedown', {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+      }),
+    );
+  };
+
   const menuItems = useMemo(() => [
     { key: 1, label: 'Account Management', to: '/account' },
     {
@@ -77,7 +87,7 @@ function HeaderUserMenu() {
     divider = false,
     space = false,
     showIfAdmin = false,
-    fn = null,
+    fn = onItemClick,
   }) => {
     if (showIfAdmin && !userIsAdmin) return false;
     if (divider) return { key, element: <hr /> };
