@@ -165,7 +165,8 @@
       "<rootDir>/src/coverage/",
       "<rootDir>/src/index.js",
       "<rootDir>/src/worker.js",
-      "<rootDir>/src/app.js"
+      "<rootDir>/src/app.js",
+      "<rootDir>/src/lib/cron.js"
     ],
     "coverageThreshold": {
       "global": {
