@@ -70,7 +70,7 @@ main(){
 			--colors \
 			--logHeapUsage \
 			--coverageDirectory="$(pwd)"/coverage/src/"$target" \
-			--collectCoverageFrom=src/"$target"/**/tools/!(*CLI).js \
+			--collectCoverageFrom="src/$target/**/tools/!(*CLI).js" \
 			--forceExit
 
 			check_exit "$?"	    
