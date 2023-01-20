@@ -45,6 +45,25 @@ describe('User handlers', () => {
       await getPossibleStateCodes(mockRequest, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(response);
     });
+
+    it('handles errors', async () => {
+      Grant.findAll = jest.fn();
+      Grant.findAll.mockResolvedValue([{ stateCode: 'NM' }, { stateCode: 'NV' }, { stateCode: 'AZ' }, { stateCode: 'OK' }, { stateCode: 'MN' }]);
+      userById.mockResolvedValue({
+        permissions: [
+          {
+            regionId: 1,
+          },
+          {
+            regionId: 2,
+          },
+        ],
+      });
+      const end = jest.fn();
+      const status = jest.fn(() => ({ end }));
+      await getPossibleStateCodes({}, { status });
+      expect(status).toHaveBeenCalledWith(500);
+    });
   });
 
   describe('getPossibleCollaborators', () => {
@@ -72,6 +91,17 @@ describe('User handlers', () => {
       });
       await getPossibleCollaborators(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+
+    it('handles errors', async () => {
+      const response = [{ name: 'name', id: 1 }];
+      User.prototype.canViewUsersInRegion = jest.fn().mockReturnValue(true);
+      usersWithPermissions.mockResolvedValue(response);
+      userById.mockResolvedValue({
+        id: 1,
+      });
+      await getPossibleCollaborators({}, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
   });
 });
