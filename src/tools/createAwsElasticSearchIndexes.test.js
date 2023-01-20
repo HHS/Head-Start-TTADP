@@ -49,6 +49,8 @@ const approvedReport = {
   calculatedStatus: REPORT_STATUSES.APPROVED,
 };
 
+jest.mock('bull');
+
 describe('Create AWS Elastic Search Indexes', () => {
   let user;
   let recipient;
