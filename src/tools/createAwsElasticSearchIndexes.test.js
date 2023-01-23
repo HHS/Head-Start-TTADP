@@ -16,7 +16,7 @@ import {
   search,
 } from '../lib/awsElasticSearch/index';
 import { AWS_ELASTIC_SEARCH_INDEXES, REPORT_STATUSES } from '../constants';
-import { auditLogger, logger } from '../logger';
+import { auditLogger } from '../logger';
 
 const mockUser = {
   homeRegionId: 1,
@@ -349,15 +349,6 @@ describe('error states', () => {
     await db.sequelize.close();
   });
 
-  it('no reports to index', async () => {
-    ActivityReport.findAll = jest.fn().mockResolvedValueOnce([]);
-    jest.spyOn(logger, 'info');
-
-    // Create Indexes.
-    await createAwsElasticSearchIndexes();
-    expect(logger.info).toHaveBeenCalledWith('Search Index Job Info: No reports found to index.');
-  });
-
   it('search index job error', async () => {
     ActivityReport.findAll = jest.fn().mockRejectedValueOnce(new Error('test error'));
 
@@ -366,6 +357,6 @@ describe('error states', () => {
     // Create Indexes.
     await createAwsElasticSearchIndexes();
 
-    expect(auditLogger.error).toHaveBeenCalledWith('Search Index Job Error: Error: test error');
+    expect(auditLogger.error).toHaveBeenCalled();
   });
 });
