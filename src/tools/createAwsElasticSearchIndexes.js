@@ -99,8 +99,11 @@ export default async function createAwsElasticSearchIndexes(batchSize = 100) {
         transaction,
       });
 
-      const reportIds = reportsToIndex.map((report) => report.id);
+      if (!reportsToIndex.length) {
+        return;
+      }
 
+      const reportIds = reportsToIndex.map((report) => report.id);
       data = await collectModelData(
         reportIds,
         AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
@@ -111,6 +114,7 @@ export default async function createAwsElasticSearchIndexes(batchSize = 100) {
     const finishGettingReports = moment();
     if (!reportsToIndex.length) {
       logger.info('Search Index Job Info: No reports found to index.');
+      return;
     }
     // Bulk add index documents.
     logger.info(`Search Index Job Info: Starting indexing of ${reportsToIndex.length} reports...`);
