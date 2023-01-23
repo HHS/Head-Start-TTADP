@@ -42,7 +42,9 @@
 }
 
 .smart-hub-drawer-body { 
-  padding: 1rem;
+  overflow-y: auto;
+  margin: .5rem;
+  padding: .5rem;
 }
 
 .smart-hub-drawer-footer {
