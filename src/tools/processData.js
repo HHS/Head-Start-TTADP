@@ -96,7 +96,7 @@ const processHtml = async (input) => {
   return cheerio.load($.html(), null, false).html(); // html minus the html, head and body tags
 };
 
-const convertEmails = (emails) => {
+export const convertEmails = (emails) => {
   if (!emails) {
     return emails;
   }

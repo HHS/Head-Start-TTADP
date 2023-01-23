@@ -14,7 +14,7 @@ import {
   ZALGoal,
 } from '../models';
 import processData, {
-  truncateAuditTables, hideUsers, hideRecipientsGrants, bootstrapUsers,
+  truncateAuditTables, hideUsers, hideRecipientsGrants, bootstrapUsers, convertEmails,
 } from './processData';
 import { REPORT_STATUSES } from '../constants';
 
@@ -304,6 +304,13 @@ describe('processData', () => {
       const user = await User.findOne({ where: { hsesUserId: '51113' } });
       const userPermissions = await Permission.findAll({ where: { userId: user.id } });
       expect(userPermissions.length).toBe(16);
+    });
+  });
+
+  describe('convertEmails', () => {
+    it('handles null emails', async () => {
+      const emails = await convertEmails(null);
+      expect(emails).toBe(null);
     });
   });
 });
