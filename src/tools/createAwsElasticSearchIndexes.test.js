@@ -338,34 +338,34 @@ describe('Create AWS Elastic Search Indexes', () => {
       expect(searchResult.hits[1]['_id']).toBe(reportThree.id.toString());
     });
   });
+});
 
-  describe('error states', () => {
-    afterEach(() => {
-      jest.clearAllMocks();
-    });
+describe('error states', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
 
-    afterAll(async () => {
-      await db.sequelize.close();
-    });
+  afterAll(async () => {
+    await db.sequelize.close();
+  });
 
-    it('no reports to index', async () => {
-      ActivityReport.findAll = jest.fn().mockResolvedValueOnce([]);
-      jest.spyOn(logger, 'info');
+  it('no reports to index', async () => {
+    ActivityReport.findAll = jest.fn().mockResolvedValueOnce([]);
+    jest.spyOn(logger, 'info');
 
-      // Create Indexes.
-      await createAwsElasticSearchIndexes();
-      expect(logger.info).toHaveBeenCalledWith('Search Index Job Info: No reports found to index.');
-    });
+    // Create Indexes.
+    await createAwsElasticSearchIndexes();
+    expect(logger.info).toHaveBeenCalledWith('Search Index Job Info: No reports found to index.');
+  });
 
-    it('search index job error', async () => {
-      ActivityReport.findAll = jest.fn().mockRejectedValueOnce(new Error('test error'));
+  it('search index job error', async () => {
+    ActivityReport.findAll = jest.fn().mockRejectedValueOnce(new Error('test error'));
 
-      jest.spyOn(auditLogger, 'error');
+    jest.spyOn(auditLogger, 'error');
 
-      // Create Indexes.
-      await createAwsElasticSearchIndexes();
+    // Create Indexes.
+    await createAwsElasticSearchIndexes();
 
-      expect(auditLogger.error).toHaveBeenCalledWith('Search Index Job Error: Error: test error');
-    });
+    expect(auditLogger.error).toHaveBeenCalledWith('Search Index Job Error: Error: test error');
   });
 });
