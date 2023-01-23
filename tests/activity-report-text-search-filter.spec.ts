@@ -255,7 +255,7 @@ test.describe("Activity Report Text Search Filter", () => {
 
     // Mix with Report ID.
     await page.getByRole('button', { name: 'open filters for this page' }).click();
-    await page.getByRole('button', { name: 'remove this filter. click apply filters to make your changes' }).click();
+    await page.getByRole('button', { name: 'remove Report text does not contain one small positive thought filter. click apply filters to make your changes' }).click();
     await page.getByRole('button', { name: 'Add new filter' }).click();
     await page.locator('select[name="topic"]').selectOption('reportText');
     await page.locator('select[name="condition"]').selectOption('contains');
@@ -274,16 +274,17 @@ test.describe("Activity Report Text Search Filter", () => {
     await page.getByRole('combobox', { name: 'condition' }).nth(1).selectOption('does not contain');
     await page.getByLabel('Enter a report id').click();
     await page.getByLabel('Enter a report id').fill(`${arNumber}`);
-    await page.getByTestId('apply-filters-test-id').click();await page.getByLabel('Enter a report id').fill('123');
+    await page.getByTestId('apply-filters-test-id').click();
     await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).not.toBeVisible();
 
     // Mix with Topics.
-    await page.getByRole('button', { name: 'open filters for this page' }).click();
     await page.getByRole('button', { name: 'open filters for this page , 2 currently applied' }).click();
     await page.getByRole('combobox', { name: 'topic' }).nth(1).selectOption('topic');
     await page.getByRole('combobox', { name: 'condition' }).nth(1).selectOption('is');
     await page.getByText('Select topics to filter by').click();
-    await page.locator('#react-select-3-option-0').click();
+    await page.keyboard.press('Enter');
+    await page.locator('.ttahub-filter-menu > .smart-hub--dropdown-menu--contents').click();
     await page.getByTestId('apply-filters-test-id').click();
+    await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
   });
 });
