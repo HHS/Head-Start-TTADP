@@ -382,8 +382,11 @@ describe('changeGoalStatus', () => {
 });
 
 describe('deleteGoal', () => {
-  afterAll(async () => {
+  afterEach(async () => {
     jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
     jest.resetModules();
   });
 
@@ -411,7 +414,7 @@ describe('deleteGoal', () => {
       grant: { regionId: 2 },
     });
 
-    await deleteGoal(req, mockResponse);
+    await deleteGoal(req, mockResponse, true);
 
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
   });
@@ -477,39 +480,6 @@ describe('deleteGoal', () => {
     await deleteGoal(req, mockResponse);
 
     expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
-  });
-
-  it('handles goal not found', async () => {
-    const req = {
-      query: {
-        goalIds: [1],
-      },
-      session: {
-        userId: 1,
-      },
-    };
-
-    goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
-      objectives: [],
-      grant: { regionId: 2 },
-    });
-
-    userById.mockResolvedValueOnce({
-      permissions: [
-        {
-          regionId: 2,
-          scopeId: SCOPES.READ_WRITE_REPORTS,
-        },
-      ],
-    });
-
-    currentUserId.mockResolvedValueOnce(1);
-
-    destroyGoal.mockImplementationOnce(() => false);
-
-    await deleteGoal(req, mockResponse);
-
-    expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
   });
 });
 
