@@ -30,7 +30,7 @@ const config = {
         headless: true,
         ignoreHTTPSErrors: true,
         acceptDownloads: true,
-        //launchOptions: { slowMo: 600 },
+        // launchOptions: { slowMo: 500 },
       },
     },
   ],
