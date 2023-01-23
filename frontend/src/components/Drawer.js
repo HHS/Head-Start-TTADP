@@ -11,7 +11,6 @@ import useOnClickOutside from '../hooks/useOnOutsideClick';
 
 const ESCAPE_KEY_CODE = 27;
 
-/* const Container = forwardRef((props, ref) => { */
 export default function Drawer({
   title,
   footer,
@@ -23,8 +22,6 @@ export default function Drawer({
   const [isOpen, setIsOpen] = useState(false);
   const elementRef = useRef(null);
 
-  // Find element with class 'smart-hub-header', and get its height, because
-  // that height will be this element's top offset.
   const headerHeight = useMemo(() => {
     const header = document.querySelector('.smart-hub-header');
     return header ? header.offsetHeight : 0;
