@@ -1,0 +1,56 @@
+@use '../colors.scss' as *;
+
+.smart-hub-drawer {
+  z-index: 99;
+  background: white;
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  max-width: 33%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow-y: auto;
+  // a box shadow with an elevation of 2
+  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.24);
+}
+
+.usa-button.smart-hub-button--no-margin {
+  margin: 0;
+}
+
+// on small devices, set max-width of smart-hub-drawer to 100%;
+@media (max-width: 768px) {
+  .smart-hub-drawer {
+    left: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+.smart-hub-drawer-header {
+  background-color: $base-lightest;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.smart-hub-drawer-header--sticky {
+  position: sticky;
+  top: 0;
+}
+
+.smart-hub-drawer-body { 
+  padding: 1rem;
+}
+
+.smart-hub-drawer-footer {
+  background-color: $base-lightest;
+  padding: 1rem;
+}
+
+.smart-hub-drawer-footer--sticky {
+  position: sticky;
+  bottom: 0;
+}
