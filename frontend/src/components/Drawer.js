@@ -21,6 +21,7 @@ export default function Drawer({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const elementRef = useRef(null);
+  const closeButtonRef = useRef(null);
 
   const headerHeight = useMemo(() => {
     const header = document.querySelector('.smart-hub-header');
@@ -39,6 +40,9 @@ export default function Drawer({
 
   useEffect(() => {
     if (isOpen) {
+      // Focus the closeButtonRef element.
+      closeButtonRef.current.focus();
+
       const onKeyDown = (event) => {
         if (event.keyCode === ESCAPE_KEY_CODE) setIsOpen(false);
       };
@@ -77,6 +81,7 @@ export default function Drawer({
           >
             <span className="text-bold font-serif-lg">{title}</span>
             <button
+              ref={closeButtonRef}
               type="button"
               onClick={() => setIsOpen(false)}
               className="usa-button usa-button--outline smart-hub-button--no-margin"
@@ -88,6 +93,8 @@ export default function Drawer({
 
         <div
           className="smart-hub-drawer-body"
+          // eslint-disable-next-line
+          tabIndex="0"
         >
           {children}
         </div>
