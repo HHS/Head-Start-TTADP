@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { FormGroup, Fieldset, Radio } from '@trussworks/react-uswds';
 import Req from '../Req';
+import Drawer from '../Drawer';
 
 export default function GoalRttapa({
   className,
@@ -15,6 +16,7 @@ export default function GoalRttapa({
   initial,
 }) {
   const readOnly = useMemo(() => goalStatus === 'Closed' || (goalStatus !== 'Draft' && initial === 'Yes'), [goalStatus, initial]);
+  const drawerTriggerRef = useRef(null);
 
   if (readOnly) {
     return (
@@ -35,10 +37,34 @@ export default function GoalRttapa({
         <legend>
           Goal type
           <Req />
+          <button
+            type="button"
+            className="usa-button usa-button--unstyled margin-left-1"
+            ref={drawerTriggerRef}
+          >
+            View goal type guidance
+          </button>
         </legend>
         {error}
         <Radio disabled={isLoading} name={inputName} id={`${inputName}-yes`} label="RTTAPA" checked={isRttapa === 'Yes'} onChange={() => onChange('Yes')} />
         <Radio disabled={isLoading} name={inputName} id={`${inputName}-no`} label="Non-RTTAPA" checked={isRttapa === 'No'} onChange={() => onChange('No')} />
+        <Drawer
+          triggerRef={drawerTriggerRef}
+          stickyHeader
+          stickyFooter
+          title="Goal type guidance"
+        >
+          <h3 className="margin-bottom-0">RTTAPA goal</h3>
+          <p className="margin-top-0">
+            A goal established with the recipient during the annual planning process.
+          </p>
+
+          <h3 className="margin-bottom-0">Non-RTTAPA goal</h3>
+          <p className="margin-top-0">
+            A goal that emerged outside of the annual planning process with the recipient.
+            Not included in the RTTAPA.
+          </p>
+        </Drawer>
       </Fieldset>
     </FormGroup>
   );
