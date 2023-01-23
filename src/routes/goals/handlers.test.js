@@ -503,6 +503,8 @@ describe('deleteGoal', () => {
       ],
     });
 
+    currentUserId.mockResolvedValueOnce(1);
+
     destroyGoal.mockImplementationOnce(() => false);
 
     await deleteGoal(req, mockResponse);
