@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import { uniqBy } from 'lodash';
+import { processObjectiveForResourcesById } from './resource';
 import {
   Goal,
   Grant,
@@ -13,6 +14,7 @@ import {
   ActivityReportObjectiveResource,
   sequelize,
   Recipient,
+  Resource,
   ActivityReport,
   ActivityReportGoal,
   Topic,
@@ -73,10 +75,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
       include: [
         {
           model: ObjectiveResource,
-          as: 'resources',
+          as: 'objectiveResources',
           attributes: [
-            ['userProvidedUrl', 'value'],
-            ['id', 'key'],
             [
               'onAR',
               'onAnyReport',
@@ -85,6 +85,16 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
               'onApprovedAR',
               'isOnApprovedReport',
             ],
+          ],
+          include: [
+            {
+              model: Resource,
+              as: 'resource',
+              attributes: [
+                ['url', 'value'],
+                ['id', 'key'],
+              ],
+            },
           ],
         },
         {
@@ -218,39 +228,12 @@ export async function saveObjectiveAssociations(
   }
 
   // resources
-  const objectiveResources = await Promise.all(
-    resources.filter(({ value }) => value && isValidResourceUrl(value)).map(
-      async ({ value }) => {
-        let oresource = await ObjectiveResource.findOne({
-          where: {
-            userProvidedUrl: value,
-            objectiveId: objective.id,
-          },
-        });
-        if (!oresource) {
-          oresource = await ObjectiveResource.create({
-            userProvidedUrl: value,
-            objectiveId: objective.id,
-          }, { hooks: !!o.objectiveTemplateId });
-        }
-        return oresource;
-      },
-    ),
+  const objectiveResources = await processObjectiveForResourcesById(
+    objective.id,
+    resources
+      .filter(({ value }) => value)
+      .map(({ value }) => value),
   );
-
-  if (deleteUnusedAssociations) {
-    // cleanup objective resources
-    await ObjectiveResource.destroy({
-      where: {
-        id: {
-          [Op.notIn]: objectiveResources.length
-            ? objectiveResources.map((or) => or.id) : [],
-        },
-        objectiveId: objective.id,
-      },
-      individualHooks: true,
-    });
-  }
 
   const objectiveFiles = await Promise.all(
     files.map(
@@ -568,11 +551,11 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
         required: false,
         include: [
           {
-            model: ObjectiveResource,
+            model: Resource,
             separate: true,
             as: 'resources',
             attributes: [
-              ['userProvidedUrl', 'value'],
+              ['url', 'value'],
               ['id', 'key'],
             ],
             required: false,
@@ -661,10 +644,10 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
         required: false,
         include: [
           {
-            model: ObjectiveResource,
+            model: Resource,
             as: 'resources',
             attributes: [
-              ['userProvidedUrl', 'value'],
+              ['url', 'value'],
               ['id', 'key'],
             ],
             required: false,
@@ -1729,7 +1712,14 @@ export async function getGoalsForReport(reportId) {
                 model: ActivityReportObjectiveResource,
                 as: 'activityReportObjectiveResources',
                 required: false,
-                attributes: [['userProvidedUrl', 'value'], ['id', 'key']],
+                attributes: [['id', 'key']],
+                include: [
+                  {
+                    model: Resource,
+                    as: 'resource',
+                    attributes: [['url', 'value']],
+                  },
+                ],
               },
             ],
           },
@@ -1739,9 +1729,9 @@ export async function getGoalsForReport(reportId) {
           },
           {
             separate: true,
-            model: ObjectiveResource,
+            model: Resource,
             as: 'resources',
-            attributes: [['userProvidedUrl', 'value']],
+            attributes: [['url', 'value']],
           },
           {
             model: File,
