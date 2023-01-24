@@ -8,7 +8,7 @@ const {
  * @param {} sequelize
  * @param {*} DataTypes
  */
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class Grant extends Model {
     static associate(models) {
       Grant.belongsTo(models.Region, { foreignKey: 'regionId' });

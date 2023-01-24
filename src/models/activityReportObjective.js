@@ -1,7 +1,7 @@
 const { Model } = require('sequelize');
 const { beforeDestroy } = require('./hooks/activityReportObjective');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ActivityReportObjective extends Model {
     static associate(models) {
       ActivityReportObjective.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });
