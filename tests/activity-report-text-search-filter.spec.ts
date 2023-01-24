@@ -72,6 +72,7 @@ test.describe("Activity Report Text Search Filter", () => {
     // Goals page.
     await page.getByText('- Select -').click();
     await page.locator('#react-select-13-option-0').getByText('Create new goal').click();
+    // await page.waitForTimeout(3000);
 
     // Goal title.
     await page.getByTestId('textarea').click();
@@ -272,6 +273,7 @@ test.describe("Activity Report Text Search Filter", () => {
 
     await page.getByRole('button', { name: 'open filters for this page' }).click();
     await page.getByRole('combobox', { name: 'condition' }).nth(1).selectOption('does not contain');
+    // await page.waitForTimeout(3000);
     await page.getByLabel('Enter a report id').click();
     await page.getByLabel('Enter a report id').fill(`${arNumber}`);
     await page.getByTestId('apply-filters-test-id').click();
@@ -279,13 +281,21 @@ test.describe("Activity Report Text Search Filter", () => {
 
     // Mix with Reasons.
     await page.getByRole('button', { name: 'open filters for this page , 2 currently applied' }).click();
-    await page.getByRole('combobox', { name: 'topic' }).nth(1).selectOption('reasons');
+    await page.getByRole('combobox', { name: 'topic' }).nth(1).selectOption('reason');
     await page.getByRole('combobox', { name: 'condition' }).nth(1).selectOption('is');
-    await page.getByText('Select topics to filter by').click();
+    await page.getByText('Select reasons to filter by').click();
     await page.keyboard.press('Enter');
-    //await page.locator('.ttahub-filter-menu > .smart-hub--dropdown-menu--contents').click();
     await page.getByTestId('apply-filters-test-id').click();
     await page.getByTestId('apply-filters-test-id').click();
     await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
+
+    await page.getByRole('button', { name: 'open filters for this page , 2 currently applied' }).click();
+    await page.getByRole('combobox', { name: 'condition' }).nth(1).selectOption('is not');
+    await page.getByText('Select reasons to filter by').click();
+    await page.keyboard.press('Enter');
+    await page.getByTestId('apply-filters-test-id').click();
+    await page.getByTestId('apply-filters-test-id').click();
+    await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).not.toBeVisible();
+
   });
 });
