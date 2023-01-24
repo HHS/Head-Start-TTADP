@@ -11,8 +11,6 @@ jest.mock('../lib/awsElasticSearch/index', () => ({
   createIndex: jest.fn(),
 }));
 
-jest.mock('bull');
-
 describe('Create AWS Elastic Search Indexes', () => {
   describe('error states', () => {
     afterEach(() => {
