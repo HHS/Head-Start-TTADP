@@ -40,8 +40,9 @@ export default function Drawer({
 
   useEffect(() => {
     if (isOpen) {
-      // Focus the closeButtonRef element.
-      closeButtonRef.current.focus();
+      if (closeButtonRef.current) {
+        closeButtonRef.current.focus();
+      }
 
       const onKeyDown = (event) => {
         if (event.keyCode === ESCAPE_KEY_CODE) setIsOpen(false);
