@@ -1,9 +1,11 @@
+import { processObjectiveForResourcesById } from './resources';
 import db, {
   Objective,
   ObjectiveResource,
   ObjectiveFile,
   Topic,
   ObjectiveTopic,
+  Resource,
 } from '../../models';
 import { saveObjectiveAssociations } from '../goals';
 import { OBJECTIVE_STATUS } from '../../constants';
@@ -20,10 +22,16 @@ describe('saveObjectiveAssociations', () => {
         title: 'Objective 1',
         status: OBJECTIVE_STATUS.IN_PROGRESS,
       });
-
-      resource = await ObjectiveResource.create({
-        userProvidedUrl: 'https://example.com',
-        objectiveId: existingObjective.id,
+      processObjectiveForResourcesById(existingObjective.id, ['https://example.com']);
+      resource = await ObjectiveResource.findOne({
+        attributes: ['objectiveId'],
+        where: { objectiveId: existingObjective.id },
+        include: [{
+          model: Resource,
+          as: 'resource',
+          attributes: ['url'],
+          where: { url: 'https://example.com' },
+        }],
       });
 
       topic1 = await Topic.create({

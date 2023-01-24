@@ -25,7 +25,7 @@ import {
   ActivityReportGoal,
   ActivityReportObjective,
   ActivityReportObjectiveResource,
-  ObjectiveResource,
+  Resource,
   Topic,
   CollaboratorRole,
   Role,
@@ -457,10 +457,10 @@ export async function activityReportAndRecipientsById(activityReportId) {
             ],
           },
           {
-            model: ObjectiveResource,
+            model:Resource,
             as: 'resources',
             attributes: [
-              ['userProvidedUrl', 'value'],
+              ['url', 'value'],
               ['id', 'key'],
             ],
           },

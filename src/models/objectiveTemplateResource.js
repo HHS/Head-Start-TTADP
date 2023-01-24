@@ -19,12 +19,12 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: true,
       primaryKey: true,
     },
-    userProvidedUrl: {
-      type: DataTypes.STRING,
+    resourceId: {
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
     objectiveTemplateId: {
-      type: DataTypes.TEXT,
+      type: DataTypes.INTEGER,
       allowNull: false,
     },
   }, {

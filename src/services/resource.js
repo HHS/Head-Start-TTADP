@@ -17,30 +17,30 @@ import {
 import { VALID_URL_REGEX } from '../lib/urlUtils';
 import { SOURCE_FIELD } from '../constants';
 
-const ACTIVITYREPORT_AUTODETECTED_FIELDS = [
+const REPORT_AUTODETECTED_FIELDS = [
   SOURCE_FIELD.REPORT.CONTEXT,
   SOURCE_FIELD.REPORT.NOTES,
 ];
 
-const NEXTSTEPS_AUTODETECTED_FIELDS = [
+const NEXTSTEP_AUTODETECTED_FIELDS = [
   SOURCE_FIELD.NEXTSTEPS.NOTE,
 ];
 
-const GOALS_AUTODETECTED_FIELDS = [
+const GOAL_AUTODETECTED_FIELDS = [
   SOURCE_FIELD.GOAL.NAME,
   SOURCE_FIELD.GOAL.TIMEFRAME,
 ];
 
-const REPORTGOALS_AUTODETECTED_FIELDS = [
+const REPORTGOAL_AUTODETECTED_FIELDS = [
   SOURCE_FIELD.REPORTGOAL.NAME,
   SOURCE_FIELD.REPORTGOAL.TIMEFRAME,
 ];
 
-const OBJECTIVES_AUTODETECTED_FIELDS = [
+const OBJECTIVE_AUTODETECTED_FIELDS = [
   SOURCE_FIELD.OBJECTIVE.TITLE,
 ];
 
-const REPORTOBJECTIVES_AUTODETECTED_FIELDS = [
+const REPORTOBJECTIVE_AUTODETECTED_FIELDS = [
   SOURCE_FIELD.REPORTOBJECTIVE.TITLE,
   SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED,
 ];
@@ -173,6 +173,29 @@ const mergeRecordsByUrlAndGenericId = (records) => (
       .reduce((resources, resource) => {
         const exists = resources.find((r) => r.genericId === resource.genericId
           && r.url === resource.url);
+        if (exists) {
+          exists.sourceFields = Array.isArray(resource.sourceFields)
+            ? [...new Set([...exists.sourceFields, ...resource.sourceFields])]
+            : exists.sourceFields;
+          return resources;
+        }
+        return [...resources, resource];
+      }, [])
+    : []);
+
+// Merge all the records that share the same resourceId and genericId, collecting all
+// the sourceFields they are from.
+const mergeRecordsByResourceIdAndGenericId = (records) => (
+  Array.isArray(records)
+    ? records
+      .filter((resource) => (typeof resource.genericId === 'number'
+        && resource.genericId === parseInt(resource.genericId, 10)
+        && typeof resource.url === 'string'
+        && Array.isArray(resource.sourceFields)
+        && resource.sourceFields.length > 0))
+      .reduce((resources, resource) => {
+        const exists = resources.find((r) => r.genericId === resource.genericId
+          && r.resourceId === resource.resourceId);
         if (exists) {
           exists.sourceFields = Array.isArray(resource.sourceFields)
             ? [...new Set([...exists.sourceFields, ...resource.sourceFields])]
@@ -473,6 +496,37 @@ const filterResourcesForSync = (
     destroy: resourceActions.removed,
   };
 };
+
+const getResourcesForModel = async (
+  model,
+  genericId,
+  autoDetectedFields,
+  includeAutoDetected = false,
+) => (
+  includeAutoDetected
+    ? model.findAll({
+      where: {
+        id: genericId,
+      },
+      include: [
+        {
+          model: Resource,
+          as: 'resource',
+        },
+      ],
+    })
+    : model.findAll({
+      where: {
+        id: genericId,
+        sourceFields: { [Op.not.contains]: autoDetectedFields },
+      },
+      include: [
+        {
+          model: Resource,
+          as: 'resource',
+        },
+      ],
+    }));
 // -----------------------------------------------------------------------------
 // ActivityReports Resource Processing
 // -----------------------------------------------------------------------------
@@ -481,7 +535,7 @@ const filterResourcesForSync = (
 // TODO: verify all values in the sourceFields are in SOURCE_FIELD.REPORT and log exceptions
 const calculateIsAutoDetectedForActivityReports = (
   sourceFields,
-) => calculateIsAutoDetected(sourceFields, ACTIVITYREPORT_AUTODETECTED_FIELDS);
+) => calculateIsAutoDetected(sourceFields, REPORT_AUTODETECTED_FIELDS);
 
 // Using the five dataset, each can be run in "parallel" to reduce latancy when applied to the
 // database. This should result in better performance.
@@ -599,7 +653,12 @@ const processActivityReportForResources = async (activityReport, urls) => {
   };
 
   // Save the distinct datasets to the database.
-  return syncResourcesForActivityReport(resourcesToSync);
+  await syncResourcesForActivityReport(resourcesToSync);
+  return getResourcesForModel(
+    ActivityReportResource,
+    activityReport.id,
+    REPORT_AUTODETECTED_FIELDS,
+  );
 };
 
 // Process the current values on the report into the database for all referenced resources for
@@ -630,7 +689,7 @@ const processActivityReportForResourcesById = async (activityReportId, urls) => 
 // and log exceptions
 const calculateIsAutoDetectedForNextStep = (
   sourceFields,
-) => calculateIsAutoDetected(sourceFields, NEXTSTEPS_AUTODETECTED_FIELDS);
+) => calculateIsAutoDetected(sourceFields, NEXTSTEP_AUTODETECTED_FIELDS);
 
 // Using the three dataset, each can be run in "parallel" to reduce latency when applied to the
 // database. This should result in better performance.
@@ -727,7 +786,12 @@ const processNextStepForResources = async (nextStep, urls) => {
   };
 
   // Save the distinct datasets to the database.
-  return syncResourcesForNextStep(resourcesToSync);
+  await syncResourcesForNextStep(resourcesToSync);
+  return getResourcesForModel(
+    NextStepResource,
+    nextStep.id,
+    NEXTSTEP_AUTODETECTED_FIELDS,
+  );
 };
 
 // Process the current values on the report into the database for all referenced resources for
@@ -758,7 +822,7 @@ const processNextStepForResourcesById = async (nextStepId, urls) => {
 // and log exceptions
 const calculateIsAutoDetectedForGoal = (
   sourceFields,
-) => calculateIsAutoDetected(sourceFields, GOALS_AUTODETECTED_FIELDS);
+) => calculateIsAutoDetected(sourceFields, GOAL_AUTODETECTED_FIELDS);
 
 // Using the three dataset, each can be run in "parallel" to reduce latency when applied to the
 // database. This should result in better performance.
@@ -862,7 +926,12 @@ const processGoalForResources = async (goal, urls) => {
   };
 
   // Save the distinct datasets to the database.
-  return syncResourcesForGoal(resourcesToSync);
+  await syncResourcesForGoal(resourcesToSync);
+  return getResourcesForModel(
+    GoalResource,
+    goal.id,
+    GOAL_AUTODETECTED_FIELDS,
+  );
 };
 
 // Process the current values on the report into the database for all referenced resources for
@@ -893,7 +962,7 @@ const processGoalForResourcesById = async (goalId, urls) => {
 // and log exceptions
 const calculateIsAutoDetectedForActivityReportGoal = (
   sourceFields,
-) => calculateIsAutoDetected(sourceFields, REPORTGOALS_AUTODETECTED_FIELDS);
+) => calculateIsAutoDetected(sourceFields, REPORTGOAL_AUTODETECTED_FIELDS);
 
 // Using the three dataset, each can be run in "parallel" to reduce latency when applied to the
 // database. This should result in better performance.
@@ -997,7 +1066,12 @@ const processActivityReportGoalForResources = async (activityReportGoal, urls) =
   };
 
   // Save the distinct datasets to the database.
-  return syncResourcesForActivityReportGoal(resourcesToSync);
+  await syncResourcesForActivityReportGoal(resourcesToSync);
+  return getResourcesForModel(
+    ActivityReportGoalResource,
+    activityReportGoal.id,
+    REPORTGOAL_AUTODETECTED_FIELDS,
+  );
 };
 
 // Process the current values on the report into the database for all referenced resources for
@@ -1028,7 +1102,7 @@ const processActivityReportGoalForResourcesById = async (activityReportGoalId, u
 // and log exceptions
 const calculateIsAutoDetectedForObjective = (
   sourceFields,
-) => calculateIsAutoDetected(sourceFields, OBJECTIVES_AUTODETECTED_FIELDS);
+) => calculateIsAutoDetected(sourceFields, OBJECTIVE_AUTODETECTED_FIELDS);
 
 // Using the three dataset, each can be run in "parallel" to reduce latency when applied to the
 // database. This should result in better performance.
@@ -1126,7 +1200,12 @@ const processObjectiveForResources = async (objective, urls) => {
   };
 
   // Save the distinct datasets to the database.
-  return syncResourcesForObjective(resourcesToSync);
+  await syncResourcesForObjective(resourcesToSync);
+  return getResourcesForModel(
+    ObjectiveResource,
+    objective.id,
+    OBJECTIVE_AUTODETECTED_FIELDS,
+  );
 };
 
 // Process the current values on the report into the database for all referenced resources for
@@ -1157,7 +1236,7 @@ const processObjectiveForResourcesById = async (objectiveId, urls) => {
 // and log exceptions
 const calculateIsAutoDetectedForActivityReportObjective = (
   sourceFields,
-) => calculateIsAutoDetected(sourceFields, REPORTOBJECTIVES_AUTODETECTED_FIELDS);
+) => calculateIsAutoDetected(sourceFields, REPORTOBJECTIVE_AUTODETECTED_FIELDS);
 
 // Using the three dataset, each can be run in "parallel" to reduce latency when applied to the
 // database. This should result in better performance.
@@ -1193,7 +1272,7 @@ const syncResourcesForActivityReportObjective = async (resources) => Promise.all
 ]);
 
 // Process the current values on the report into the database for all referenced resources.
-const processActivityReportObjectiveForResources = async (activityReportObjective, urls) => {
+const processActivityReportObjectiveForResources = async (activityReportObjective, urls, resourceIds) => {
   // Either used the current resource data from the activityReportObjective passed in or look it up.
   const currentResources = activityReportObjective.objectiveResources
     ? activityReportObjective.objectiveResources
@@ -1261,7 +1340,12 @@ const processActivityReportObjectiveForResources = async (activityReportObjectiv
   };
 
   // Save the distinct datasets to the database.
-  return syncResourcesForActivityReportObjective(resourcesToSync);
+  await syncResourcesForActivityReportObjective(resourcesToSync);
+  return getResourcesForModel(
+    ActivityReportObjectiveResource,
+    activityReportObjective.id,
+    REPORTOBJECTIVE_AUTODETECTED_FIELDS,
+  );
 };
 
 // Process the current values on the report into the database for all referenced resources for
@@ -1285,29 +1369,65 @@ const processActivityReportObjectiveForResourcesById = async (activityReportObje
 };
 
 // -----------------------------------------------------------------------------
-const getResourcesForObjectives = async (objectiveIds) => ObjectiveResource
-  .findAll({
-    where: { id: objectiveIds },
-    include: [
-      {
-        model: Resource,
-        as: 'resource',
-      },
-    ],
-  });
+const getResourcesForActivityReports = async (
+  reportIds,
+  includeAutoDetected = false,
+) => getResourcesForModel(
+  ActivityReportResource,
+  reportIds,
+  REPORT_AUTODETECTED_FIELDS,
+  includeAutoDetected,
+);
+
+const getResourcesForNextSteps = async (
+  nextStepIds,
+  includeAutoDetected = false,
+) => getResourcesForModel(
+  NextStepResource,
+  nextStepIds,
+  NEXTSTEP_AUTODETECTED_FIELDS,
+  includeAutoDetected,
+);
+
+const getResourcesForGoals = async (
+  goalIds,
+  includeAutoDetected = false,
+) => getResourcesForModel(
+  GoalResource,
+  goalIds,
+  GOAL_AUTODETECTED_FIELDS,
+  includeAutoDetected,
+);
+
+const getResourcesForActivityReportGoals = async (
+  goalIds,
+  includeAutoDetected = false,
+) => getResourcesForModel(
+  ActivityReportGoalResource,
+  goalIds,
+  REPORTGOAL_AUTODETECTED_FIELDS,
+  includeAutoDetected,
+);
+
+const getResourcesForObjectives = async (
+  objectiveIds,
+  includeAutoDetected = false,
+) => getResourcesForModel(
+  ObjectiveResource,
+  objectiveIds,
+  OBJECTIVE_AUTODETECTED_FIELDS,
+  includeAutoDetected,
+);
 
 const getResourcesForActivityReportObjectives = async (
   objectiveIds,
-) => ActivityReportObjectiveResource
-  .findAll({
-    where: { id: objectiveIds },
-    include: [
-      {
-        model: Resource,
-        as: 'resource',
-      },
-    ],
-  });
+  includeAutoDetected = false,
+) => getResourcesForModel(
+  ActivityReportObjectiveResource,
+  objectiveIds,
+  REPORTOBJECTIVE_AUTODETECTED_FIELDS,
+  includeAutoDetected,
+);
 
 export {
   // Resource Table
@@ -1352,6 +1472,10 @@ export {
   processActivityReportObjectiveForResources,
   processActivityReportObjectiveForResourcesById,
 
+  getResourcesForActivityReports,
+  getResourcesForNextSteps,
+  getResourcesForGoals,
+  getResourcesForActivityReportGoals,
   getResourcesForObjectives,
   getResourcesForActivityReportObjectives,
 };
