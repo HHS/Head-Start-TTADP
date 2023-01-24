@@ -1,7 +1,7 @@
 const { Model } = require('sequelize');
 // const { auditLogger } = require('../logger');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ObjectiveTemplateResource extends Model {
     /**
      * Helper method for defining associations.
