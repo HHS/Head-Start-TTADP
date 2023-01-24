@@ -224,12 +224,20 @@ function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
         return { ...acc, topics: [...acc.topics, ...objectiveTopics] };
       }
 
+      // Look up grant number by index.
+      let grantNumberToUse = currentModel.grant.number;
+      const indexOfGoal = goal.ids.indexOf(objective.goalId);
+      if (indexOfGoal !== -1 && goal.grantNumbers[indexOfGoal]) {
+        grantNumberToUse = goal.grantNumbers[indexOfGoal];
+      }
+
       return {
         objectives: [...acc.objectives, {
           ...objective.dataValues,
           title: objective.title.trim(),
           endDate,
-          grantNumbers: [currentModel.grant.number],
+          status: objectiveStatus,
+          grantNumbers: [grantNumberToUse],
           reasons: uniq(r),
           activityReports: objective.activityReports || [],
         }],
