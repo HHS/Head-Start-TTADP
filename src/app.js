@@ -22,7 +22,7 @@ const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 let index;
 
 if (process.env.NODE_ENV === 'production') {
-  index = fs.readFileSync(path.join(__dirname, 'client', 'index.html')).toString();
+  index = fs.readFileSync(path.join(__dirname, '../client', 'index.html')).toString();
 }
 
 const serveIndex = (req, res) => {
@@ -53,7 +53,7 @@ app.use((req, res, next) => {
 
 if (process.env.NODE_ENV === 'production') {
   app.use('/index.html', serveIndex);
-  app.use(express.static(path.join(__dirname, 'client'), { index: false }));
+  app.use(express.static(path.join(__dirname, '../client'), { index: false }));
 }
 
 app.use('/api/v1', require('./routes/externalApi').default);

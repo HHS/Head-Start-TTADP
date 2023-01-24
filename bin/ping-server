@@ -1,9 +1,12 @@
 #!/bin/bash
+
+PORT=$1
+
 # from https://stackoverflow.com/questions/11904772/how-to-create-a-loop-in-bash-that-is-waiting-for-a-webserver-to-respond
 attempt_counter=0
 max_attempts=10
 
-until $(curl --output /dev/null --max-time 10 --silent --head --fail http://localhost:3000); do
+until $(curl --output /dev/null --max-time 10 --silent --head --fail http://localhost:${PORT}); do
     if [ ${attempt_counter} -eq ${max_attempts} ];then
       echo "Max attempts reached"
       exit 1

@@ -1,5 +1,5 @@
 import faker from '@faker-js/faker';
-import db, {
+import {
   ActivityReport,
   ActivityReportApprover,
   ActivityReportCollaborator,
@@ -91,7 +91,8 @@ const approvedReport = {
 
 describe('Activity report cleanup service', () => {
   afterAll(async () => {
-    await db.sequelize.close();
+    // https://stackoverflow.com/questions/47970050/node-js-mocha-sequelize-error-connectionmanager-getconnection-was-called-after-t
+    // await db.sequelize.close();
   });
 
   beforeAll(async () => {
@@ -139,29 +140,34 @@ describe('Activity report cleanup service', () => {
   });
 
   afterAll(async () => {
-    await ActivityReportApprover.destroy({
-      where: {
-        userId: mockApprover.id,
-      },
-    });
-    await ActivityReportCollaborator.destroy({
-      where: {
-        userId: mockCollaborator.id,
-      },
-    });
-    const reportsToDestroy = await ActivityReport.findAll({
-      where: {
-        userId: [mockAuthor.id, mockPhantomUser.id],
-      },
-    });
-    await Promise.all(reportsToDestroy.map((r) => destroyReport(r)));
-    await Grant.destroy({ where: { id: RECIPIENT_ID } });
-    await Recipient.destroy({ where: { id: RECIPIENT_ID } });
-    await User.destroy({
-      where: {
-        id: [mockAuthor.id, mockApprover.id, mockCollaborator.id, mockPhantomUser.id],
-      },
-    });
+    try {
+      await ActivityReportApprover.destroy({
+        where: {
+          userId: mockApprover.id,
+        },
+      });
+      await ActivityReportCollaborator.destroy({
+        where: {
+          userId: mockCollaborator.id,
+        },
+      });
+      const reportsToDestroy = await ActivityReport.findAll({
+        where: {
+          userId: [mockAuthor.id, mockPhantomUser.id],
+        },
+      });
+      await Promise.all(reportsToDestroy.map((r) => destroyReport(r)));
+      await Grant.destroy({ where: { id: RECIPIENT_ID } });
+      await Recipient.destroy({ where: { id: RECIPIENT_ID } });
+      await User.destroy({
+        where: {
+          id: [mockAuthor.id, mockApprover.id, mockCollaborator.id, mockPhantomUser.id],
+        },
+      });
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.log(`Error destroying test data: ${e}`);
+    }
   });
 
   it('returns reports by author', async () => {
