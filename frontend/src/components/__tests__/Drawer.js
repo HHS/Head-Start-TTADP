@@ -28,6 +28,7 @@ describe('Drawer', () => {
       </div>
       <Drawer
         title="Hello"
+        footer="Footer"
         triggerRef={triggerRef}
       >
         Content
