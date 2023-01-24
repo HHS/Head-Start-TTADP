@@ -8,7 +8,7 @@ import {
   Grant,
   Topic,
   File,
-  ObjectiveResource,
+  Resource,
 } from '../models';
 import { removeUnusedGoalsObjectivesFromReport, saveObjectiveAssociations } from './goals';
 import { cacheObjectiveMetadata } from './reportCache';
@@ -213,10 +213,10 @@ export async function getObjectivesByReportId(reportId) {
         as: 'topics',
       },
       {
-        model: ObjectiveResource,
-        as: ' objectiveResources',
+        model: Resource,
+        as: 'Resources',
         // these need to be renamed to match the frontend form names
-        attributes: [['userProvidedUrl', 'value']],
+        attributes: [['url', 'value']],
       },
       {
         model: File,

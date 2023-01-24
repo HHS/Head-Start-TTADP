@@ -1,5 +1,5 @@
 import { isValidResourceUrl } from '../lib/urlUtils';
-
+import {} from './resource';
 const { Op } = require('sequelize');
 const {
   ActivityReportGoal,

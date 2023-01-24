@@ -18,9 +18,9 @@ const recalculateOnAR = async (sequelize, instance, options) => {
       ON r."objectiveId" = aro."objectiveId"
       JOIN "ActivityReportObjectiveResources" aror
       ON aro.id = aror."activityReportObjectiveId"
-      AND r."userProvidedUrl" = aror."userProvidedUrl"
+      AND r."resourceId" = aror."resourceId"
       WHERE r."objectiveId" IN (${objectiveIds.join(',')})
-      AND r."userProvidedUrl" = '${instance.userProvidedUrl}'
+      AND r."resourceId" = ${instance.resourceId}
       AND aro.id != ${instance.activityReportObjectiveId}
       GROUP BY r."id"`;
   } else {
@@ -35,9 +35,9 @@ const recalculateOnAR = async (sequelize, instance, options) => {
       ON r."objectiveId" = aro."objectiveId"
       JOIN "ActivityReportObjectiveResources" aror
       ON aro.id = aror."activityReportObjectiveId"
-      AND r."userProvidedUrl" = aror."userProvidedUrl"
+      AND r."resourceId" = aror."resourceId"
       WHERE arox.id = ${instance.activityReportObjectiveId}
-      AND r."userProvidedUrl" = '${instance.userProvidedUrl}'
+      AND r."resourceId" = ${instance.resourceId}
       AND aro.id != ${instance.activityReportObjectiveId}
       GROUP BY r."id"`;
   }

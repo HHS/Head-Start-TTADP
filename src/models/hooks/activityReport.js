@@ -496,7 +496,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
             "ResourcesOnReport" AS (
               SELECT
                 aro."objectiveId",
-                aror."userProvidedUrl"
+                aror."resourceId"
               FROM "ActivityReportObjectives" aro
               JOIN "ActivityReportObjectiveResources" aror
               ON aro.id = aror."activityReportObjectiveId"
@@ -508,7 +508,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
             FROM "ResourcesOnReport" rr
             WHERE r."onApprovedAR" = false
             AND r."objectiveId" = rr."objectiveId"
-            AND r."userProvidedUrl" = rr."userProvidedUrl";
+            AND r."resourceId" = rr."resourceId";
           `, { transaction: options.transaction }),
           sequelize.query(`
           WITH
