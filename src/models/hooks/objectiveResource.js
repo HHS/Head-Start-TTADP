@@ -51,7 +51,7 @@ const propagateCreateToTemplate = async (sequelize, instance, options) => {
     const [otr] = await sequelize.models.ObjectiveTemplateResource.findOrCreate({
       where: {
         objectiveTemplateId: objective.objectiveTemplateId,
-        userProvidedUrl: instance.userProvidedUrl,
+        resourceId: instance.resourceId,
       },
       transaction: options.transaction,
     });
@@ -95,7 +95,7 @@ const propagateDestroyToTemplate = async (sequelize, instance, options) => {
       attributes: ['id'],
       where: {
         objectiveTemplateId: objective.objectiveTemplateId,
-        userProvidedUrl: instance.userProvidedUrl,
+        resourceId: instance.resourceId,
       },
       include: [
         {

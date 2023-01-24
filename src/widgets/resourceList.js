@@ -1,11 +1,15 @@
 import { Op, QueryTypes } from 'sequelize';
 import {
   ActivityReport,
+  ActivityReportObjective,
+  ActivityReportObjectiveResource,
   ActivityReportResource,
   ActivityRecipient,
   Grant,
   NextStep,
   NextStepResource,
+  Objective,
+  ObjectiveResource,
   OtherEntity,
   Recipient,
   Resource,
@@ -13,7 +17,6 @@ import {
 } from '../models';
 import { formatNumber } from './helpers';
 import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../constants';
-import nextStep from '../models/nextStep';
 
 export async function resourceData(scopes) {
   // Query Database for all Resources within the scope.
