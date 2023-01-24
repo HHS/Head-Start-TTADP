@@ -72,7 +72,6 @@ test.describe("Activity Report Text Search Filter", () => {
     // Goals page.
     await page.getByText('- Select -').click();
     await page.locator('#react-select-13-option-0').getByText('Create new goal').click();
-    // await page.waitForTimeout(3000);
 
     // Goal title.
     await page.getByTestId('textarea').click();
@@ -273,7 +272,6 @@ test.describe("Activity Report Text Search Filter", () => {
 
     await page.getByRole('button', { name: 'open filters for this page' }).click();
     await page.getByRole('combobox', { name: 'condition' }).nth(1).selectOption('does not contain');
-    // await page.waitForTimeout(3000);
     await page.getByLabel('Enter a report id').click();
     await page.getByLabel('Enter a report id').fill(`${arNumber}`);
     await page.getByTestId('apply-filters-test-id').click();
@@ -297,5 +295,18 @@ test.describe("Activity Report Text Search Filter", () => {
     await page.getByTestId('apply-filters-test-id').click();
     await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).not.toBeVisible();
 
+    // Mix with Start Date
+    await page.getByRole('button', { name: 'open filters for this page , 2 currently applied' }).click();
+    await page.getByRole('combobox', { name: 'topic' }).nth(1).selectOption('startDate');
+    await page.getByRole('combobox', { name: 'condition' }).nth(1).selectOption('is');
+    await page.getByTestId('apply-filters-test-id').click();
+    await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
+
+    await page.getByRole('button', { name: 'open filters for this page , 2 currently applied' }).click();
+    await page.getByRole('combobox', { name: 'condition' }).nth(1).selectOption('is on or before');
+    await page.getByTestId('date-picker-external-input').click();
+    await page.getByTestId('date-picker-external-input').fill('01/15/2023');
+    await page.getByTestId('apply-filters-test-id').click();
+    await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).not.toBeVisible();
   });
 });
