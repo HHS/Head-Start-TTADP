@@ -8,7 +8,7 @@ const {
  * @param {} sequelize
  * @param {*} DataTypes
  */
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class RoleTopic extends Model {
     static associate() {
     }
