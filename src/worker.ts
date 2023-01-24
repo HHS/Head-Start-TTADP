@@ -5,6 +5,7 @@ import {} from 'dotenv/config';
 import throng from 'throng';
 import { logger, auditLogger } from './logger';
 import { scanQueue } from './services/scanQueue';
+import { awsElasticsearchQueue } from './lib/awsElasticSearch/queueManager';
 import processFile from './workers/files';
 import {
   notifyApproverAssigned,
@@ -16,13 +17,19 @@ import {
   notificationDigestQueue,
   notifyRecipientReportApproved,
 } from './lib/mailer';
-import { EMAIL_ACTIONS } from './constants';
+
+import {
+  addIndexDocument,
+  updateIndexDocument,
+  deleteIndexDocument,
+} from './lib/awsElasticSearch';
+import { EMAIL_ACTIONS, AWS_ELASTICSEARCH_ACTIONS } from './constants';
 import logEmailNotification, { logDigestEmailNotification } from './lib/mailer/logNotifications';
 
 // Number of workers to spawn
 const workers = process.env.WORKER_CONCURRENCY || 2;
 // Number of jobs per worker. Can be adjusted if clamav is getting bogged down
-const maxJobsPerWorker = process.env.MAX_JOBS_PER_WORKER || 5;
+const maxJobsPerWorker = Number(process.env.MAX_JOBS_PER_WORKER) || 5;
 
 // Pull jobs off the redis queue and process them.
 async function start() {
@@ -36,6 +43,29 @@ async function start() {
     }
   });
   scanQueue.process(maxJobsPerWorker, (job) => processFile(job.data.key));
+
+  // AWS Elasticsearch
+  awsElasticsearchQueue.on('failed', (job, error) => auditLogger.error(`job ${job.data.key} failed with error ${error}`));
+  awsElasticsearchQueue.on('completed', (job, result) => {
+    if (result.status === 200 || result.status === 201 || result.status === 202) {
+      logger.info(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
+    } else {
+      auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
+    }
+  });
+  // Process AWS Elasticsearch Queue Items:
+  // Create Index Document
+  awsElasticsearchQueue.process(AWS_ELASTICSEARCH_ACTIONS.ADD_INDEX_DOCUMENT, addIndexDocument);
+  // Update Index Document
+  awsElasticsearchQueue.process(
+    AWS_ELASTICSEARCH_ACTIONS.UPDATE_INDEX_DOCUMENT,
+    updateIndexDocument,
+  );
+  // Delete Index Document
+  awsElasticsearchQueue.process(
+    AWS_ELASTICSEARCH_ACTIONS.DELETE_INDEX_DOCUMENT,
+    deleteIndexDocument,
+  );
 
   // Notifications
   notificationQueue.on('failed', (job, error) => {
