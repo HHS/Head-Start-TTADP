@@ -277,13 +277,14 @@ test.describe("Activity Report Text Search Filter", () => {
     await page.getByTestId('apply-filters-test-id').click();
     await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).not.toBeVisible();
 
-    // Mix with Topics.
+    // Mix with Reasons.
     await page.getByRole('button', { name: 'open filters for this page , 2 currently applied' }).click();
-    await page.getByRole('combobox', { name: 'topic' }).nth(1).selectOption('topic');
+    await page.getByRole('combobox', { name: 'topic' }).nth(1).selectOption('reasons');
     await page.getByRole('combobox', { name: 'condition' }).nth(1).selectOption('is');
     await page.getByText('Select topics to filter by').click();
     await page.keyboard.press('Enter');
-    await page.locator('.ttahub-filter-menu > .smart-hub--dropdown-menu--contents').click();
+    //await page.locator('.ttahub-filter-menu > .smart-hub--dropdown-menu--contents').click();
+    await page.getByTestId('apply-filters-test-id').click();
     await page.getByTestId('apply-filters-test-id').click();
     await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
   });
