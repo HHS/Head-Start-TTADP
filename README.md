@@ -408,7 +408,7 @@ Our project includes four deployed Postgres databases, one to interact with each
 
     ```bash
     # example
-    node ./build/server/tools/dataValidationCLI.js
+    node ./build/server/src/tools/dataValidationCLI.js
     ```
 
 1. If on prod, disable ssh in space
