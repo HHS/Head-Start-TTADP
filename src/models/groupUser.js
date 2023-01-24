@@ -6,7 +6,7 @@ const {
    * @param {} sequelize
    * @param {*} DataTypes
    */
-module.exports = (sequelize, DataTypes) => {
+export default  (sequelize, DataTypes) => {
   class GroupUser extends Model {
     static associate(models) {
       GroupUser.belongsTo(models.User, { foreignKey: 'userId', onDelete: 'cascade', as: 'user' });

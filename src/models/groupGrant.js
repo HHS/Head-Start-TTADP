@@ -6,7 +6,7 @@ const {
    * @param {} sequelize
    * @param {*} DataTypes
    */
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class GroupGrant extends Model {
     static associate(models) {
       GroupGrant.belongsTo(models.Grant, { foreignKey: 'grantId', onDelete: 'cascade', as: 'grant' });
