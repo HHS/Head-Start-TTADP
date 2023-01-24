@@ -1,5 +1,5 @@
 import { sequelize } from '../models';
-import audit from '../models/auditModelGenerator';
+import { addAuditTransactionSettings, removeFromAuditedTransactions } from '../models/auditModelGenerator';
 import handleErrors from '../lib/apiErrorHandler';
 
 const namespace = 'SERVICE:WRAPPER';
@@ -15,9 +15,9 @@ export default function transactionWrapper(originalFunction) {
       return sequelize.transaction(async () => {
         let result;
         try {
-          await audit.addAuditTransactionSettings(sequelize, null, null, 'transaction', originalFunction.name);
+          await addAuditTransactionSettings(sequelize, null, null, 'transaction', originalFunction.name);
           result = await originalFunction(req, res, next);
-          audit.removeFromAuditedTransactions();
+          removeFromAuditedTransactions();
         } catch (err) {
           error = err;
           throw err;
