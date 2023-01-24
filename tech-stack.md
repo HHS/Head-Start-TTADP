@@ -1,7 +1,7 @@
 # Technical Details for the TTAHUB
 
 ## Languages
-- Javascript/Node.js
+- TypeScript/Javascript/Node.js
 - HTML/CSS
 - Postgres
 - Bash

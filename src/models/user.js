@@ -6,7 +6,7 @@ const featureFlags = [
   'resources_dashboard',
 ];
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
       User.belongsTo(models.Region, { foreignKey: { name: 'homeRegionId', allowNull: true }, as: 'homeRegion' });
@@ -81,4 +81,6 @@ module.exports = (sequelize, DataTypes) => {
   return User;
 };
 
-module.exports.featureFlags = featureFlags;
+export {
+  featureFlags,
+};
