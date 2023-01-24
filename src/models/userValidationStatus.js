@@ -1,6 +1,6 @@
 const { Model } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class UserValidationStatus extends Model {
     static associate(models) {
       UserValidationStatus.belongsTo(models.User, { foreignKey: 'userId' });

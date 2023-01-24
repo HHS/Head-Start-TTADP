@@ -7,7 +7,7 @@ const { afterCreate, afterDestroy } = require('./hooks/objectiveTopic');
    * @param {} sequelize
    * @param {*} DataTypes
    */
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ObjectiveTopic extends Model {
     static associate(models) {
       ObjectiveTopic.belongsTo(models.Objective, { foreignKey: 'objectiveId', onDelete: 'cascade', as: 'objective' });
