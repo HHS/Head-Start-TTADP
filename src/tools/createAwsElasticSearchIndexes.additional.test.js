@@ -4,14 +4,37 @@ import db, {
 } from '../models';
 import createAwsElasticSearchIndexes from './createAwsElasticSearchIndexes';
 import { auditLogger, logger } from '../logger';
+import { bulkIndex } from '../lib/awsElasticSearch';
 
 jest.mock('../lib/awsElasticSearch/index', () => ({
   getClient: jest.fn(() => ({})),
   deleteIndex: jest.fn(),
   createIndex: jest.fn(),
+  bulkIndex: jest.fn(),
+}));
+
+jest.mock('../lib/awsElasticSearch/datacollector', () => ({
+  collectModelData: jest.fn(() => ({
+    recipientNextStepsToIndex: [],
+    specialistNextStepsToIndex: [],
+    goalsToIndex: [],
+    objectivesToIndex: [],
+  })),
 }));
 
 describe('Create AWS Elastic Search Indexes', () => {
+  it('happy path w/batching', async () => {
+    ActivityReport.findAll = jest.fn().mockResolvedValueOnce([
+      { id: 1 },
+      { id: 2 },
+      { id: 3 },
+    ]);
+
+    await createAwsElasticSearchIndexes(1);
+
+    expect(bulkIndex).toHaveBeenCalledTimes(3);
+  });
+
   describe('error states', () => {
     afterEach(() => {
       jest.clearAllMocks();
