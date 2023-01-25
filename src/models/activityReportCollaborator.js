@@ -1,7 +1,7 @@
 const { Model } = require('sequelize');
 const generateFullName = require('./helpers/generateFullName');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ActivityReportCollaborator extends Model {
     static associate(models) {
       ActivityReportCollaborator.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });

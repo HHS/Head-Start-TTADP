@@ -1,5 +1,4 @@
 /* eslint-disable import/prefer-default-export */
-import moment from 'moment';
 
 const CUSTOM_FORMATTERS = {
   activityreports: async (data) => {
@@ -14,8 +13,8 @@ const CUSTOM_FORMATTERS = {
     const document = {
       id: ar.id,
       context: ar.context,
-      startDate: moment(ar.startDate).format(),
-      endDate: moment(ar.endDate).format(),
+      startDate: ar.startDate,
+      endDate: ar.endDate,
       recipientNextSteps: recipientNextStepsToIndex.map((r) => r.note),
       specialistNextSteps: specialistNextStepsToIndex.map((s) => s.note),
       activityReportGoals: goalsToIndex.map((arg) => arg.name),
