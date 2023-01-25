@@ -1,11 +1,10 @@
-import { processObjectiveForResourcesById } from './resources';
+import { processObjectiveForResourcesById, getResourcesForObjectives } from '../resources';
 import db, {
   Objective,
   ObjectiveResource,
   ObjectiveFile,
   Topic,
   ObjectiveTopic,
-  Resource,
 } from '../../models';
 import { saveObjectiveAssociations } from '../goals';
 import { OBJECTIVE_STATUS } from '../../constants';
@@ -23,16 +22,7 @@ describe('saveObjectiveAssociations', () => {
         status: OBJECTIVE_STATUS.IN_PROGRESS,
       });
       processObjectiveForResourcesById(existingObjective.id, ['https://example.com']);
-      resource = await ObjectiveResource.findOne({
-        attributes: ['objectiveId'],
-        where: { objectiveId: existingObjective.id },
-        include: [{
-          model: Resource,
-          as: 'resource',
-          attributes: ['url'],
-          where: { url: 'https://example.com' },
-        }],
-      });
+      [resource] = await getResourcesForObjectives(existingObjective.id);
 
       topic1 = await Topic.create({
         name: 'Dancing in the moonlight',
@@ -80,7 +70,7 @@ describe('saveObjectiveAssociations', () => {
       const resources = [
         {
           key: resource.id,
-          value: resource.userProvidedUrl,
+          value: resource.resource.url,
         },
         {
           key: 'new-resource',
@@ -161,7 +151,7 @@ describe('saveObjectiveAssociations', () => {
       const resources = [
         {
           key: resource.id,
-          value: resource.userProvidedUrl,
+          value: resource.resource.url,
         },
       ];
 

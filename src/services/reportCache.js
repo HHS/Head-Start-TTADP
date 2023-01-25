@@ -1,5 +1,9 @@
 import { isValidResourceUrl } from '../lib/urlUtils';
-import {} from './resource';
+import {
+  getResourcesForActivityReportObjectives,
+  processResourcesForActivityReportObjectives,
+} from './resource';
+
 const { Op } = require('sequelize');
 const {
   ActivityReportGoal,
@@ -70,58 +74,76 @@ const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) =>
 
 const cacheResources = async (objectiveId, activityReportObjectiveId, resources = []) => {
   const resourceUrls = resources
-    .map((resource) => resource.userProvidedUrl)
-    .filter((url) => isValidResourceUrl(url));
-  const resourcesSet = new Set(resourceUrls);
-  const originalAROResources = await ActivityReportObjectiveResource.findAll({
-    where: { activityReportObjectiveId },
-    raw: true,
-  });
-  const originalUrls = originalAROResources.map((resource) => resource.userProvidedUrl);
-  const removedUrls = originalUrls.filter((url) => !resourcesSet.has(url));
-  const currentUrls = new Set(originalUrls.filter((url) => resourcesSet.has(url)));
-  const newUrls = resourceUrls.filter((url) => !currentUrls.has(url));
+    .map((r) => r.resource.url);
+  const originalAROResources = await getResourcesForActivityReportObjectives(
+    activityReportObjectiveId,
+    true,
+  );
+  const aroResources = await processResourcesForActivityReportObjectives(
+    activityReportObjectiveId,
+    resourceUrls,
+  );
+  const newAROResourceIds = aroResources
+    .filter((r) => !!originalAROResources.find((oR) => oR.id === r.id))
+    .map((r) => r.resourceId);
 
-  return Promise.all([
-    ...newUrls.map(async (url) => ActivityReportObjectiveResource.create({
-      activityReportObjectiveId,
-      userProvidedUrl: url,
-    })),
-    removedUrls.length > 0
-      ? ActivityReportObjectiveResource.destroy({
+  return newAROResourceIds.length > 0
+    ? ObjectiveResource.update(
+      { onAR: true },
+      {
         where: {
-          activityReportObjectiveId,
-          userProvidedUrl: { [Op.in]: removedUrls },
+          id: objectiveId,
+          resourceId: { [Op.in]: newAROResourceIds },
         },
-        individualHooks: true,
-        hookMetadata: { objectiveId },
-      })
-      : Promise.resolve(),
-    newUrls.length > 0
-      ? ObjectiveResource.update(
-        { onAR: true },
-        {
-          where: { userProvidedUrl: { [Op.in]: newUrls } },
-          include: [
-            {
-              model: Objective,
-              as: 'objective',
-              required: true,
-              where: { id: objectiveId },
-              include: [
-                {
-                  model: ActivityReportObjective,
-                  as: 'activityReportObjectives',
-                  required: true,
-                  where: { id: activityReportObjectiveId },
-                },
-              ],
-            },
-          ],
-        },
-      )
-      : Promise.resolve(),
-  ]);
+      },
+    )
+    : Promise.resolve();
+
+  // const originalUrls = originalAROResources.map((resource) => resource.userProvidedUrl);
+  // const removedUrls = originalUrls.filter((url) => !resourcesSet.has(url));
+  // const currentUrls = new Set(originalUrls.filter((url) => resourcesSet.has(url)));
+  // const newUrls = resourceUrls.filter((url) => !currentUrls.has(url));
+
+  // return Promise.all([
+  //   ...newUrls.map(async (url) => ActivityReportObjectiveResource.create({
+  //     activityReportObjectiveId,
+  //     userProvidedUrl: url,
+  //   })),
+  //   removedUrls.length > 0
+  //     ? ActivityReportObjectiveResource.destroy({
+  //       where: {
+  //         activityReportObjectiveId,
+  //         userProvidedUrl: { [Op.in]: removedUrls },
+  //       },
+  //       individualHooks: true,
+  //       hookMetadata: { objectiveId },
+  //     })
+  //     : Promise.resolve(),
+  //   newUrls.length > 0
+  //     ? ObjectiveResource.update(
+  //       { onAR: true },
+  //       {
+  //         where: { userProvidedUrl: { [Op.in]: newUrls } },
+  //         include: [
+  //           {
+  //             model: Objective,
+  //             as: 'objective',
+  //             required: true,
+  //             where: { id: objectiveId },
+  //             include: [
+  //               {
+  //                 model: ActivityReportObjective,
+  //                 as: 'activityReportObjectives',
+  //                 required: true,
+  //                 where: { id: activityReportObjectiveId },
+  //               },
+  //             ],
+  //           },
+  //         ],
+  //       },
+  //     )
+  //     : Promise.resolve(),
+  // ]);
 };
 
 const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) => {
