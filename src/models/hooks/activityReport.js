@@ -411,7 +411,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
               ON aro.id != aro2.id
               AND aro."activityReportId" != aro2."activityReportId"
               AND aro2."objectiveId" IN (${objectives.map((o) => o.id).join(',')})
-              LEFT JOIN "ActivityReportObjectiveFiles" arot2
+              LEFT JOIN "ActivityReportObjectiveTopics" arot2
               ON aro2.id = arot2."activityReportObjectiveId"
               AND arot."topicId" = arot2."topicId"
               WHERE arot2."id" IS NULL
