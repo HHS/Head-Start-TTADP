@@ -481,6 +481,36 @@ describe('deleteGoal', () => {
 
     expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
   });
+
+  it('handles no goal to delete', async () => {
+    const req = {
+      query: {
+        goalIds: [1],
+      },
+      session: {
+        userId: 1,
+      },
+    };
+
+    goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
+      objectives: [],
+      grant: { regionId: 2 },
+    });
+
+    userById.mockResolvedValueOnce({
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+        },
+      ],
+    });
+
+    destroyGoal.mockResolvedValueOnce(0);
+    await deleteGoal(req, mockResponse);
+
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
+  });
 });
 
 describe('createGoalsForReport', () => {
