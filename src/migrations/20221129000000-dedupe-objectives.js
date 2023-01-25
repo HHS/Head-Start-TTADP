@@ -101,17 +101,32 @@ module.exports = {
         throw (err);
       }
       try {
-        // 1. collect duplicate objectives based on matching title and goalId
-        // 2. Merge two records into the original records
-        // 3. Intermediate dataset
-        // 4. Merge two records into the original records using the status of the newer
-        // 5. Merge two records into the original records using the status of the older
-        // 7. for each of the three datasets merge objectives into the older records as described
-        // 8. create a unified list of affected objectives
-        // 9. migrate/delete metadata table values from newer objectives into the older objectives
-        // 10. migrate/merge/delete ARO records to use the older objectives
-        // 11. delete the newer objectives
-        // 12. results
+        // 1. Group objectives based on matching title and goalId (or otherEntityId)
+        // 2. Break groups into sets of valid objective status cycles. That is, if one objective
+        //    in the group of potential dupes gets completed but another objective is updated
+        //    afterwards, then the other objective starts a new cycle. This is to prevent
+        //    separate efforts from being collapsed into one. 
+        // 3. Perform aggregations in the set to generate more correct stage start/stops & etc
+        // 4. Rank all the objectives in each set of duplicates to determine which should
+        //    inherit all the work tracked for all the duplicates in that set
+        // 5. Update the top ranked objectives in each set with the aggregate values
+        // 6. Create a list of all objectives in all dupe sets paired with their inheriting
+        //    objectives as returned from step 5.
+        // 7. For each of Resources, Files, and Topics:
+        //    7a. List out the Resources/Files/Topics linked to the 'donor' duplicates and the
+        //        inheriting objective to which they should link, and rank all the link files
+        //        that would become duplicates linking to the same Resource/File/Topic after
+        //        consolidating on the inheriting objective
+        //    7b. Reassign the non-duplicate Resources/Files/Topics to the inheriting objective
+        //    7c. Delete duplicates.
+        // 8. For AROs, do the same as for Resources & etc, but they have their own TTA Provided
+        //    and linking data, so the ARO version of step 7a contains extra info.
+        // 9. Concatenate together any different TTA Provided values into the inheriting ARO
+        // 10. After performing the ARO reassignment, perform a version of step 7 for each of
+        //     Resources(i.e. ActivityReportObjectiveResources), Files, and Topics.
+        // 11. When all the ARO linking records are updated or deleted, return to delete AROs
+        // 12. Delete the newer objectives
+        // 13. Print results
         await queryInterface.sequelize.query(
           `WITH
           -- make easily sortable statuses
@@ -215,14 +230,16 @@ module.exports = {
           --- migrate/merge/delete metadata table values from newer objectives into the older objectives
           affected_objective_files AS (
             SELECT
-              current_of.id,
+              of.id,
               ao.inheriting_oid,
-              COALESCE(current_of."fileId" = target_of."fileId",FALSE) is_duplicate
+              ROW_NUMBER() OVER (
+                PARTITION BY ao.inheriting_oid, of."fileId"
+                ORDER BY "createdAt", of.id
+              ) AS dupe_rank,
+              ao.donor_oid = ao.inheriting_oid AS on_inheriting_obj
             FROM affected_objectives ao
-            JOIN "ObjectiveFiles" current_of
-              ON ao.donor_oid = current_of."objectiveId"
-            LEFT JOIN "ObjectiveFiles" target_of
-              ON ao.inheriting_oid = target_of."objectiveId"
+            JOIN "ObjectiveFiles" of
+              ON ao.donor_oid = of."objectiveId"
             WHERE ao.inheriting_oid <> ao.donor_oid
           ),
           -- Move objective file links from deduped objectives to the inheriting objective, or delete the linking record if the file is a dupe
@@ -232,7 +249,8 @@ module.exports = {
               "objectiveId" = aof.inheriting_oid
             FROM affected_objective_files aof
             WHERE aof.id = f.id
-              AND NOT is_duplicate
+              AND NOT on_inheriting_obj
+              AND dupe_rank = 1
             RETURNING
               aof.id
           ),
@@ -240,21 +258,22 @@ module.exports = {
             DELETE FROM "ObjectiveFiles" f
             USING affected_objective_files aof
             WHERE f.id = aof.id
-              AND is_duplicate
+              AND dupe_rank > 1
             RETURNING
               aof.id
           ),
           affected_objective_resources AS (
             SELECT
-              current_or.id,
+              or_.id,
               ao.inheriting_oid,
-              COALESCE(current_or."userProvidedUrl" = target_or."userProvidedUrl",FALSE) is_duplicate
+              ROW_NUMBER() OVER (
+                PARTITION BY ao.inheriting_oid, or_."userProvidedUrl"
+                ORDER BY "createdAt", or_.id
+              ) AS dupe_rank,
+              ao.donor_oid = ao.inheriting_oid AS on_inheriting_obj
             FROM affected_objectives ao
-            JOIN "ObjectiveResources" current_or
-              ON ao.donor_oid = current_or."objectiveId"
-            LEFT JOIN "ObjectiveResources" target_or
-              ON ao.inheriting_oid = target_or."objectiveId"
-            WHERE ao.inheriting_oid <> ao.donor_oid
+            JOIN "ObjectiveResources" or_
+              ON ao.donor_oid = or_."objectiveId"
           ),
           migrated_objective_resources AS (
             UPDATE "ObjectiveResources" r
@@ -262,7 +281,8 @@ module.exports = {
               "objectiveId" = aor.inheriting_oid
             FROM affected_objective_resources aor
             WHERE aor.id = r.id
-              AND NOT is_duplicate
+              AND NOT on_inheriting_obj
+              AND dupe_rank = 1
             RETURNING
               aor.id
           ),
@@ -270,21 +290,22 @@ module.exports = {
             DELETE FROM "ObjectiveResources" r
             USING affected_objective_resources aor
             WHERE r.id = aor.id
-              AND is_duplicate
+              AND dupe_rank > 1
             RETURNING
               aor.id
           ),
           affected_objective_topics AS (
             SELECT
-              current_ot.id,
+              ot.id,
               ao.inheriting_oid,
-              COALESCE(current_ot."topicId" = target_ot."topicId",FALSE) is_duplicate
+              ROW_NUMBER() OVER (
+                PARTITION BY ao.inheriting_oid, ot."topicId"
+                ORDER BY "createdAt", ot.id
+              ) AS dupe_rank,
+              ao.donor_oid = ao.inheriting_oid AS on_inheriting_obj
             FROM affected_objectives ao
-            JOIN "ObjectiveTopics" current_ot
-              ON ao.donor_oid = current_ot."objectiveId"
-            LEFT JOIN "ObjectiveTopics" target_ot
-              ON ao.inheriting_oid = target_ot."objectiveId"
-            WHERE ao.inheriting_oid <> ao.donor_oid
+            JOIN "ObjectiveTopics" ot
+              ON ao.donor_oid = ot."objectiveId"
           ),
           migrated_objective_topics AS (
             UPDATE "ObjectiveTopics" r
@@ -292,7 +313,8 @@ module.exports = {
               "objectiveId" = aot.inheriting_oid
             FROM affected_objective_topics aot
             WHERE aot.id = r.id
-              AND NOT is_duplicate
+              AND NOT on_inheriting_obj
+              AND dupe_rank = 1
             RETURNING
               aot.id
           ),
@@ -300,38 +322,171 @@ module.exports = {
             DELETE FROM "ObjectiveTopics" t
             USING affected_objective_topics aot
             WHERE t.id = aot.id
-              AND is_duplicate
+              AND dupe_rank > 1
             RETURNING
               aot.id
           ),
           --- migrate/merge/delete ARO records to use the top ranked objectives
+          ranked_aros AS (
+            SELECT
+              aro.id,
+              ao.inheriting_oid,
+              ROW_NUMBER() OVER (
+                PARTITION BY ao.inheriting_oid, aro."activityReportId"
+                ORDER BY "createdAt", aro.id
+              ) AS dupe_rank,
+              ao.donor_oid = ao.inheriting_oid AS on_inheriting_obj,
+              aro."activityReportId" ar_id,
+              aro."ttaProvided" tta_provided
+            FROM affected_objectives ao
+            JOIN "ActivityReportObjectives" aro
+              ON ao.donor_oid = aro."objectiveId"
+          ),
           affected_aros AS (
             SELECT
-              current_aaro.id,
-              ao.inheriting_oid,
-              COALESCE(current_aaro."activityReportId" = target_aaro."activityReportId",FALSE) is_duplicate
-            FROM affected_objectives ao
-            JOIN "ActivityReportObjectives" current_aaro
-              ON ao.donor_oid = current_aaro."objectiveId"
-            LEFT JOIN "ActivityReportObjectives" target_aaro
-              ON ao.inheriting_oid = target_aaro."objectiveId"
-            WHERE ao.inheriting_oid <> ao.donor_oid
+              raro.id,
+              raro.inheriting_oid,
+              raro.dupe_rank,
+              raro.on_inheriting_obj,
+              raro.ar_id,
+              top_rank.id inheriting_aroid
+            FROM ranked_aros raro
+            JOIN ranked_aros top_rank
+              ON raro.inheriting_oid = top_rank.inheriting_oid
+              AND raro.ar_id = top_rank.ar_id
+              AND top_rank.dupe_rank = 1
           ),
+          -- Handle the possibility that different AROs for different duplicate Objs have different ttaProvided
+          -- This is more of a theoretical issue than one we expect to see in the data,
+          -- so it will hopefully do nothing, but this assures that if they do exist, the
+          -- different texts aren't lost, merely concatenated.
+          tta_provided_agg AS (
+            SELECT
+              inheriting_oid,
+              ar_id,
+              STRING_AGG(DISTINCT tta_provided, ', ') tta_provided_concat
+            FROM ranked_aros
+            GROUP BY 1,2
+          ),
+          -- Doing the update here even if it's already on the inheriting objective because of
+          -- the tta provided concatenation
           migrated_aros AS (
             UPDATE "ActivityReportObjectives" aro
             SET
-              "objectiveId" = aaro.inheriting_oid
+              "objectiveId" = aaro.inheriting_oid,
+              "ttaProvided" = tta_provided_concat
             FROM affected_aros aaro
+            JOIN tta_provided_agg tpa
+              ON tpa.inheriting_oid = aaro.inheriting_oid
+              AND aaro.ar_id = tpa.ar_id
             WHERE aaro.id = aro.id
-              AND NOT is_duplicate
+              AND dupe_rank = 1
             RETURNING
               aaro.id
+          ),
+          -- do the same migrations with linking records attaching to AROs as were done with
+          -- linking records attaching to Objectives
+          affected_aro_files AS (
+            SELECT
+              arof.id,
+              aaro.inheriting_aroid,
+              ROW_NUMBER() OVER (
+                PARTITION BY arof."fileId", aaro.inheriting_aroid
+                ORDER BY aaro.dupe_rank, arof.id
+              ) AS dupe_rank,
+              aaro.dupe_rank = 1 AS on_inheriting_aro
+            FROM affected_aros aaro
+            JOIN "ActivityReportObjectiveFiles" arof
+              ON aaro.id = arof."activityReportObjectiveId"
+          ),
+          migrated_aro_files AS (
+            UPDATE "ActivityReportObjectiveFiles" arof
+            SET
+              "activityReportObjectiveId" = inheriting_aroid
+            FROM affected_aro_files aarof
+            WHERE aarof.id = arof.id
+              AND dupe_rank = 1
+              AND NOT on_inheriting_aro
+            RETURNING
+              arof.id
+          ),
+          deleted_aro_files AS (
+            DELETE FROM "ActivityReportObjectiveFiles" arof
+            USING affected_aro_files aarof
+            WHERE aarof.id = arof.id
+              AND dupe_rank > 1
+            RETURNING
+              arof.id
+          ),
+          affected_aro_resources AS (
+            SELECT
+              aror.id,
+              aaro.inheriting_aroid,
+              ROW_NUMBER() OVER (
+                PARTITION BY aaro.inheriting_aroid, aror."userProvidedUrl"
+                ORDER BY aaro.dupe_rank, aror.id
+              ) AS dupe_rank,
+              aaro.dupe_rank = 1 AS on_inheriting_aro
+            FROM affected_aros aaro
+            JOIN "ActivityReportObjectiveResources" aror
+              ON aaro.id = aror."activityReportObjectiveId"
+          ),
+          migrated_aro_resources AS (
+            UPDATE "ActivityReportObjectiveResources" aror
+            SET
+              "activityReportObjectiveId" = inheriting_aroid
+            FROM affected_aro_resources aaror
+            WHERE aaror.id = aror.id
+              AND dupe_rank = 1
+              AND NOT on_inheriting_aro
+            RETURNING
+              aror.id
+          ),
+          deleted_aro_resources AS (
+            DELETE FROM "ActivityReportObjectiveResources" aror
+            USING affected_aro_resources aaror
+            WHERE aaror.id = aror.id
+              AND dupe_rank > 1
+            RETURNING
+              aror.id
+          ),
+          affected_aro_topics AS (
+            SELECT
+              arot.id,
+              aaro.inheriting_aroid,
+              ROW_NUMBER() OVER (
+                PARTITION BY aaro.inheriting_aroid, arot."topicId"
+                ORDER BY aaro.dupe_rank, arot.id
+              ) AS dupe_rank,
+              aaro.dupe_rank = 1 AS on_inheriting_aro
+            FROM affected_aros aaro
+            JOIN "ActivityReportObjectiveTopics" arot
+              ON aaro.id = arot."activityReportObjectiveId"
+          ),
+          migrated_aro_topics AS (
+            UPDATE "ActivityReportObjectiveTopics" arot
+            SET
+              "activityReportObjectiveId" = inheriting_aroid
+            FROM affected_aro_topics aarot
+            WHERE aarot.id = arot.id
+              AND dupe_rank = 1
+              AND NOT on_inheriting_aro
+            RETURNING
+              arot.id
+          ),
+          deleted_aro_topics AS (
+            DELETE FROM "ActivityReportObjectiveTopics" arot
+            USING affected_aro_topics aarot
+            WHERE aarot.id = arot.id
+              AND dupe_rank > 1
+            RETURNING
+              arot.id
           ),
           deleted_aros AS (
             DELETE FROM "ActivityReportObjectives" aro
             USING affected_aros aaro
             WHERE aro.id = aaro.id
-              AND is_duplicate
+              AND dupe_rank > 1
             RETURNING
               aaro.id
           ),
@@ -368,6 +523,24 @@ module.exports = {
           UNION
           SELECT 'migrated_aros', count(*)
           FROM migrated_aros
+          UNION
+          SELECT 'migrated_aro_files', count(*)
+          FROM migrated_aro_files
+          UNION
+          SELECT 'deleted_aro_files', count(*)
+          FROM deleted_aro_files
+          UNION
+          SELECT 'migrated_aro_resources', count(*)
+          FROM migrated_aro_resources
+          UNION
+          SELECT 'deleted_aro_resources', count(*)
+          FROM deleted_aro_resources
+          UNION
+          SELECT 'migrated_aro_topics', count(*)
+          FROM migrated_aro_topics
+          UNION
+          SELECT 'deleted_aro_topics', count(*)
+          FROM deleted_aro_topics
           UNION
           SELECT 'deleted_aros', count(*)
           FROM deleted_aros
