@@ -7,7 +7,7 @@ const { afterDestroy } = require('./hooks/activityReportObjectiveTopic');
    * @param {} sequelize
    * @param {*} DataTypes
    */
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ActivityReportObjectiveTopic extends Model {
     static associate(models) {
       ActivityReportObjectiveTopic.belongsTo(models.ActivityReportObjective, {
