@@ -26,17 +26,18 @@ applications:
       SEND_NOTIFICATIONS: ((SEND_NOTIFICATIONS))
       SMTP_SECURE: ((SMTP_SECURE))
       FROM_EMAIL_ADDRESS: ((FROM_EMAIL_ADDRESS))
+      NODE_MODULES_CACHE: false
     services:
       - ttahub-((env))
       - ttahub-redis-((env))
       - ttahub-document-upload-((env))
       - ttahub-elasticsearch-((env))
     processes:
-    - type: web
-      instances: ((web_instances))
-      command: yarn start:web
-      memory: ((web_memory))
-    - type: worker
-      instances: ((worker_instances))
-      command: yarn start:worker
-      memory: ((worker_memory))
+      - type: web
+        instances: ((web_instances))
+        command: yarn start:web
+        memory: ((web_memory))
+      - type: worker
+        instances: ((worker_instances))
+        command: yarn start:worker
+        memory: ((worker_memory))

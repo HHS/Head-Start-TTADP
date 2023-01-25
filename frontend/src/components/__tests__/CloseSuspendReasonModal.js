@@ -121,6 +121,7 @@ describe('Close Suspend Goal Reason', () => {
     expect(await screen.findByText(GOAL_CLOSE_REASONS[0])).toBeVisible();
     expect(await screen.findByText(GOAL_CLOSE_REASONS[1])).toBeVisible();
     expect(await screen.findByText(GOAL_CLOSE_REASONS[2])).toBeVisible();
+    expect(await screen.findByText(GOAL_CLOSE_REASONS[3])).toBeVisible(); // regional office request
 
     // Verify Context.
     expect(await screen.findByText('Additional context')).toBeVisible();
