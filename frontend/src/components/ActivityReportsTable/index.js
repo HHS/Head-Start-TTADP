@@ -208,7 +208,7 @@ function ActivityReportsTable({
           onClick={() => {
             requestSort(name);
           }}
-          onKeyPress={() => requestSort(name)}
+          onKeyDown={() => requestSort(name)}
           className={`sortable ${sortClassName}`}
           aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'
           }`}
