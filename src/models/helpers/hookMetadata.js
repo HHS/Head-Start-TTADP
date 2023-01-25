@@ -1,9 +1,16 @@
+// check to see if hookMetadata is defined on the options object passed to the hook.
+// this is to allow us to optimize code path within hooks based on data that might
+// be present to the original calling location in code, but difficult to obtain within
+// the hook without additional queries into the database. These additional queries can
+// lead to performance issues.
 const hasHookMetadata = (options) => (options.hookMetadata !== undefined
   && options.hookMetadata !== null);
 
+// check if the metadata has the key passed.
 const hasHookMetadataKey = (options, key) => (options.hookMetadata[key] !== undefined
   && options.hookMetadata[key] !== null);
 
+// check for a singular or plural form of a key, return an array of the values at either form.
 const getSingularOrPluralData = (options, singular, plural) => {
   let data;
   // check to see if singular or plural numbers are validly defined
