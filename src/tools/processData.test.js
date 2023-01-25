@@ -14,7 +14,14 @@ import {
   ZALGoal,
 } from '../models';
 import processData, {
-  truncateAuditTables, hideUsers, hideRecipientsGrants, bootstrapUsers, convertEmails,
+  truncateAuditTables,
+  hideUsers,
+  hideRecipientsGrants,
+  bootstrapUsers,
+  convertEmails,
+  convertName,
+  convertFileName,
+  convertRecipientName,
 } from './processData';
 import { REPORT_STATUSES } from '../constants';
 
@@ -311,6 +318,36 @@ describe('processData', () => {
     it('handles null emails', async () => {
       const emails = await convertEmails(null);
       expect(emails).toBe(null);
+    });
+
+    it('handles emails lacking a @', async () => {
+      const emails = await convertEmails('test,test2@test.com,test3');
+      expect(emails.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)).toBeTruthy();
+    });
+  });
+
+  describe('convertName', () => {
+    it('handles a program specialist not in the hub', async () => {
+      const name = await convertName('test', 'test@test.com');
+      expect(name).toStrictEqual({
+        email: expect.any(String),
+        id: expect.any(Number),
+        name: expect.any(String),
+      });
+    });
+  });
+
+  describe('convertFileName', () => {
+    it('handles null file names', async () => {
+      const fileName = await convertFileName(null);
+      expect(fileName).toBe(null);
+    });
+  });
+
+  describe('convertRecipientName', () => {
+    it('handles null recipient names', async () => {
+      const recipientName = await convertRecipientName(null);
+      expect(recipientName).toBe(null);
     });
   });
 });
