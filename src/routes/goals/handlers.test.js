@@ -382,11 +382,11 @@ describe('changeGoalStatus', () => {
 });
 
 describe('deleteGoal', () => {
-  afterEach(async () => {
+  afterEach(() => {
     jest.clearAllMocks();
   });
 
-  afterAll(async () => {
+  afterAll(() => {
     jest.resetModules();
   });
 
@@ -414,7 +414,7 @@ describe('deleteGoal', () => {
       grant: { regionId: 2 },
     });
 
-    await deleteGoal(req, mockResponse, true);
+    await deleteGoal(req, mockResponse);
 
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
   });
@@ -449,39 +449,6 @@ describe('deleteGoal', () => {
     expect(mockResponse.json).toHaveBeenCalledWith(1);
   });
 
-  it('handles failures', async () => {
-    const req = {
-      query: {
-        goalIds: [1],
-      },
-      session: {
-        userId: 1,
-      },
-    };
-
-    goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
-      objectives: [],
-      grants: [{ regionId: 2 }],
-    });
-
-    userById.mockResolvedValueOnce({
-      permissions: [
-        {
-          regionId: 2,
-          scopeId: SCOPES.READ_WRITE_REPORTS,
-        },
-      ],
-    });
-
-    destroyGoal.mockImplementationOnce(() => {
-      throw new Error();
-    });
-
-    await deleteGoal(req, mockResponse);
-
-    expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
-  });
-
   it('handles no goal to delete', async () => {
     const req = {
       query: {
@@ -510,6 +477,39 @@ describe('deleteGoal', () => {
     await deleteGoal(req, mockResponse);
 
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
+  });
+
+  it('handles failures', async () => {
+    const req = {
+      query: {
+        goalIds: [1],
+      },
+      session: {
+        userId: 1,
+      },
+    };
+
+    goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
+      objectives: [],
+      grants: [{ regionId: 2 }],
+    });
+
+    userById.mockResolvedValueOnce({
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+        },
+      ],
+    });
+
+    destroyGoal.mockImplementationOnce(() => {
+      throw new Error('This is an error');
+    });
+
+    await deleteGoal(req, mockResponse);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
   });
 });
 
@@ -801,7 +801,7 @@ describe('retrieveGoalsByIds', () => {
 
     goalsByIdsAndActivityReport.mockResolvedValueOnce([]);
 
-    await retrieveGoalsByIds(req, mockResponse);
+    await retrieveGoalsByIds(req, mockResponse, true);
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
   });
 
