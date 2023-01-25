@@ -289,7 +289,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
         objectives = await sequelize.models.Objective.findAll({
           attributes: [
             'id',
-            [sequelize.literal('count(DISTINCT "activityReports"."calculatedStatus")'), 'cntApproved'],
+            [sequelize.literal('count(DISTINCT "activityReports"."calculatedStatus")::int'), 'cntApproved'],
           ],
           include: [
             {
@@ -331,7 +331,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
             { onApprovedAR: false },
             {
               where: {
-                id: { [Op.in]: objectives.filter((o) => o.cntApproved === 0).map((o) => o.id) },
+                id: { [Op.in]: objectives.filter((o) => o.dataValues.cntApproved === 0).map((o) => o.id) },
                 onApprovedAR: true,
               },
               transaction: options.transaction,
