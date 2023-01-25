@@ -114,7 +114,7 @@ export const convertEmails = (emails) => {
   return convertedEmails.join(', ');
 };
 
-const convertName = (name, email) => {
+export const convertName = (name, email) => {
   if (!name) {
     return { name, email };
   }
@@ -140,7 +140,7 @@ const convertName = (name, email) => {
   return foundTransformedUser;
 };
 
-const convertFileName = (fileName) => {
+export const convertFileName = (fileName) => {
   if (fileName === null) {
     return fileName;
   }
@@ -148,7 +148,7 @@ const convertFileName = (fileName) => {
   return `${faker.system.fileName()}${extension}`;
 };
 
-const convertRecipientName = (recipientsGrants) => {
+export const convertRecipientName = (recipientsGrants) => {
   if (recipientsGrants === null) {
     return recipientsGrants;
   }
