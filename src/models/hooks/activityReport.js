@@ -331,7 +331,9 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
             { onApprovedAR: false },
             {
               where: {
-                id: { [Op.in]: objectives.filter((o) => o.dataValues.cntApproved === 0).map((o) => o.id) },
+                id: { [Op.in]: objectives
+                  .filter((o) => o.dataValues.cntApproved === 0)
+                  .map((o) => o.id) },
                 onApprovedAR: true,
               },
               transaction: options.transaction,
