@@ -17,6 +17,7 @@ import './index.css';
 function ActivityReportsTable({
   filters,
   tableCaption,
+  exportIdPrefix,
 }) {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -249,6 +250,7 @@ function ActivityReportsTable({
           isDownloading={isDownloading}
           downloadAllButtonRef={downloadAllButtonRef}
           downloadSelectedButtonRef={downloadSelectedButtonRef}
+          exportIdPrefix={exportIdPrefix}
         />
         <div className="usa-table-container--scrollable">
           <Table fullWidth striped>
@@ -300,6 +302,7 @@ function ActivityReportsTable({
 }
 
 ActivityReportsTable.propTypes = {
+  exportIdPrefix: PropTypes.string.isRequired,
   filters: PropTypes.arrayOf(
     PropTypes.shape({
       condition: PropTypes.string,
