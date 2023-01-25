@@ -8,7 +8,7 @@ const {
 } = require('./hooks/activityReportApprover');
 const { APPROVER_STATUSES } = require('../constants');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ActivityReportApprover extends Model {
     static associate(models) {
       ActivityReportApprover.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });
