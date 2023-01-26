@@ -10,7 +10,7 @@ export default (sequelize, DataTypes) => {
   class GroupUser extends Model {
     static associate(models) {
       GroupUser.belongsTo(models.User, { foreignKey: 'userId', onDelete: 'cascade', as: 'user' });
-      GroupUser.belongsTo(models.Group, { foreignKey: 'roleId', onDelete: 'cascade', as: 'role' });
+      GroupUser.belongsTo(models.Group, { foreignKey: 'groupId', onDelete: 'cascade', as: 'group' });
     }
   }
   GroupUser.init({
