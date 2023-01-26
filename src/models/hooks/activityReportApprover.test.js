@@ -1,4 +1,11 @@
+import faker from '@faker-js/faker';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '../../constants';
+import {
+  sequelize,
+  User,
+  ActivityReport,
+  ActivityReportApprover,
+} from '..';
 import {
   calculateReportStatusFromApprovals,
   afterDestroy,
@@ -7,7 +14,47 @@ import {
   afterUpdate,
 } from './activityReportApprover';
 
+const draftObject = {
+  activityRecipientType: 'recipient',
+  regionId: 1,
+  activityRecipients: [{ grantId: 1 }],
+  submissionStatus: REPORT_STATUSES.DRAFT,
+  numberOfParticipants: 1,
+  deliveryMethod: 'method',
+  duration: 0,
+  endDate: '2000-01-01T12:00:00Z',
+  startDate: '2000-01-01T12:00:00Z',
+  requester: 'requester',
+  targetPopulations: ['pop'],
+  reason: ['reason'],
+  participants: ['participants'],
+  topics: ['topics'],
+  ttaType: ['type'],
+  creatorRole: 'TTAC',
+};
+
+const approverUserIds = [
+  faker.datatype.number({ min: 9064284 }),
+  faker.datatype.number({ min: 9064284 }),
+  faker.datatype.number({ min: 9064284 }),
+];
+
+const mockApprovers = approverUserIds.map((id) => ({
+  id,
+  hsesUserId: String(id),
+  hsesUsername: `user${id}`,
+}));
+
 describe('activityReportApprover hooks', () => {
+  beforeAll(async () => {
+    await User.bulkCreate(mockApprovers);
+  });
+
+  afterAll(async () => {
+    await User.destroy({ where: { id: approverUserIds } });
+    await sequelize.close();
+  });
+
   describe('calculateReportStatusFromApprovals', () => {
     it('should return APPROVED if all approvers are APPROVED', () => {
       const approverStatuses = [
@@ -38,175 +85,136 @@ describe('activityReportApprover hooks', () => {
 
   describe('afterDestroy', () => {
     it('updates the calculated status of the report after approval destruction', async () => {
-      const mockActivityReportUpdate = jest.fn();
-      const mockSequelize = {
-        models: {
-          ActivityReport: {
-            findByPk: jest.fn(() => ({ submissionStatus: REPORT_STATUSES.SUBMITTED })),
-            update: mockActivityReportUpdate,
-          },
-          ActivityReportApprover: {
-            findAll: jest.fn(() => [
-              { status: APPROVER_STATUSES.APPROVED },
-              { status: APPROVER_STATUSES.APPROVED },
-              { status: APPROVER_STATUSES.APPROVED },
-            ]),
-          },
-        },
-      };
+      const ar = await ActivityReport.create(
+        { ...draftObject, submissionStatus: REPORT_STATUSES.SUBMITTED },
+      );
+
+      const approvals = approverUserIds.map((userId) => ({
+        activityReportId: ar.id,
+        userId,
+        status: APPROVER_STATUSES.APPROVED,
+      }));
+
+      await ActivityReportApprover.bulkCreate(approvals);
 
       const mockInstance = {
-        activityReportId: 1,
+        activityReportId: ar.id,
       };
 
-      await afterDestroy(mockSequelize, mockInstance);
+      await afterDestroy(sequelize, mockInstance);
 
-      expect(mockActivityReportUpdate).toHaveBeenCalledWith(
-        { calculatedStatus: REPORT_STATUSES.APPROVED },
-        {
-          where: { id: 1 },
-          individualHooks: true,
-        },
-      );
+      const updatedReport = await ActivityReport.findByPk(ar.id);
+
+      expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+
+      await ActivityReportApprover.destroy({ where: { activityReportId: ar.id }, force: true });
+
+      await ActivityReport.destroy({ where: { id: ar.id } });
     });
 
     it('otherwise, it doesn\'t update the calculated status of the report', async () => {
-      const mockActivityReportUpdate = jest.fn();
-      const mockSequelize = {
-        models: {
-          ActivityReport: {
-            findByPk: jest.fn(() => ({ submissionStatus: REPORT_STATUSES.DRAFT })),
-            update: mockActivityReportUpdate,
-          },
-          ActivityReportApprover: {
-            findAll: jest.fn(() => []),
-          },
-        },
-      };
+      const ar = await ActivityReport.create({ ...draftObject });
 
       const mockInstance = {
-        activityReportId: 1,
+        activityReportId: ar.id,
       };
 
-      await afterDestroy(mockSequelize, mockInstance);
+      await afterDestroy(sequelize, mockInstance);
 
-      expect(mockActivityReportUpdate).not.toHaveBeenCalled();
+      const updatedReport = await ActivityReport.findByPk(ar.id);
+      expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
+
+      await ActivityReport.destroy({ where: { id: ar.id } });
     });
   });
 
   describe('afterRestore', () => {
-    it('updates the calculated status of the report after approval destruction', async () => {
-      const mockActivityReportUpdate = jest.fn();
-      const mockSequelize = {
-        models: {
-          ActivityReport: {
-            findByPk: jest.fn(() => ({ submissionStatus: REPORT_STATUSES.SUBMITTED })),
-            update: mockActivityReportUpdate,
-          },
-          ActivityReportApprover: {
-            findAll: jest.fn(() => [
-              { status: APPROVER_STATUSES.APPROVED },
-              { status: APPROVER_STATUSES.APPROVED },
-              { status: APPROVER_STATUSES.APPROVED },
-            ]),
-          },
-        },
-      };
+    it('updates the calculated status of the report after approval restoration', async () => {
+      const ar = await ActivityReport.create(
+        { ...draftObject, submissionStatus: REPORT_STATUSES.SUBMITTED },
+      );
+
+      const approvals = approverUserIds.map((userId) => ({
+        activityReportId: ar.id,
+        userId,
+        status: APPROVER_STATUSES.APPROVED,
+      }));
+
+      await ActivityReportApprover.bulkCreate(approvals);
 
       const mockInstance = {
-        activityReportId: 1,
+        activityReportId: ar.id,
       };
 
-      await afterRestore(mockSequelize, mockInstance);
+      await afterRestore(sequelize, mockInstance);
 
-      expect(mockActivityReportUpdate).toHaveBeenCalledWith(
-        { calculatedStatus: REPORT_STATUSES.APPROVED },
-        {
-          where: { id: 1 },
-          individualHooks: true,
-        },
-      );
+      const updatedReport = await ActivityReport.findByPk(ar.id);
+
+      expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+
+      await ActivityReportApprover.destroy({ where: { activityReportId: ar.id }, force: true });
+
+      await ActivityReport.destroy({ where: { id: ar.id } });
     });
 
     it('otherwise, it doesn\'t update the calculated status of the report', async () => {
-      const mockActivityReportUpdate = jest.fn();
-      const mockSequelize = {
-        models: {
-          ActivityReport: {
-            findByPk: jest.fn(() => ({ submissionStatus: REPORT_STATUSES.DRAFT })),
-            update: mockActivityReportUpdate,
-          },
-          ActivityReportApprover: {
-            findAll: jest.fn(() => []),
-          },
-        },
-      };
+      const ar = await ActivityReport.create({ ...draftObject });
 
       const mockInstance = {
-        activityReportId: 1,
+        activityReportId: ar.id,
       };
 
-      await afterRestore(mockSequelize, mockInstance);
+      await afterRestore(sequelize, mockInstance);
 
-      expect(mockActivityReportUpdate).not.toHaveBeenCalled();
+      const updatedReport = await ActivityReport.findByPk(ar.id);
+      expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
+
+      await ActivityReport.destroy({ where: { id: ar.id } });
     });
   });
 
   describe('afterUpdate', () => {
-    it('updates the calculated status of the report after approval destruction', async () => {
-      const mockActivityReportUpdate = jest.fn();
-      const mockSequelize = {
-        models: {
-          ActivityReport: {
-            findByPk: jest.fn(() => ({ submissionStatus: REPORT_STATUSES.SUBMITTED })),
-            update: mockActivityReportUpdate,
-          },
-          ActivityReportApprover: {
-            findAll: jest.fn(() => [
-              { status: APPROVER_STATUSES.APPROVED },
-              { status: APPROVER_STATUSES.APPROVED },
-              { status: APPROVER_STATUSES.APPROVED },
-            ]),
-          },
-        },
-      };
+    it('updates the calculated status of the report after approval restoration', async () => {
+      const ar = await ActivityReport.create(
+        { ...draftObject, submissionStatus: REPORT_STATUSES.SUBMITTED },
+      );
+
+      const approvals = approverUserIds.map((userId) => ({
+        activityReportId: ar.id,
+        userId,
+        status: APPROVER_STATUSES.APPROVED,
+      }));
+
+      await ActivityReportApprover.bulkCreate(approvals);
 
       const mockInstance = {
-        activityReportId: 1,
+        activityReportId: ar.id,
       };
 
-      await afterUpdate(mockSequelize, mockInstance);
+      await afterUpdate(sequelize, mockInstance);
 
-      expect(mockActivityReportUpdate).toHaveBeenCalledWith(
-        { calculatedStatus: REPORT_STATUSES.APPROVED },
-        {
-          where: { id: 1 },
-          individualHooks: true,
-        },
-      );
+      const updatedReport = await ActivityReport.findByPk(ar.id);
+
+      expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
+
+      await ActivityReportApprover.destroy({ where: { activityReportId: ar.id }, force: true });
+
+      await ActivityReport.destroy({ where: { id: ar.id } });
     });
 
     it('otherwise, it doesn\'t update the calculated status of the report', async () => {
-      const mockActivityReportUpdate = jest.fn();
-      const mockSequelize = {
-        models: {
-          ActivityReport: {
-            findByPk: jest.fn(() => ({ submissionStatus: REPORT_STATUSES.DRAFT })),
-            update: mockActivityReportUpdate,
-          },
-          ActivityReportApprover: {
-            findAll: jest.fn(() => []),
-          },
-        },
-      };
+      const ar = await ActivityReport.create({ ...draftObject });
 
       const mockInstance = {
-        activityReportId: 1,
+        activityReportId: ar.id,
       };
 
-      await afterUpdate(mockSequelize, mockInstance);
+      await afterUpdate(sequelize, mockInstance);
 
-      expect(mockActivityReportUpdate).not.toHaveBeenCalled();
+      const updatedReport = await ActivityReport.findByPk(ar.id);
+      expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
+
+      await ActivityReport.destroy({ where: { id: ar.id } });
     });
   });
 
@@ -236,32 +244,25 @@ describe('activityReportApprover hooks', () => {
     it('calculates status after upsert', async () => {
       const mockActivityReportUpdate = jest.fn();
 
-      const mockSequelize = {
-        models: {
-          ActivityReport: {
-            findByPk: jest.fn(() => ({ submissionStatus: REPORT_STATUSES.SUBMITTED })),
-            update: mockActivityReportUpdate,
-          },
-          ActivityReportApprover: {
-            findAll: jest.fn(() => ([
-              { status: APPROVER_STATUSES.APPROVED },
-              { status: APPROVER_STATUSES.APPROVED },
-              { status: APPROVER_STATUSES.APPROVED },
-            ])),
-          },
-        },
-      };
+      const ar = await ActivityReport.create(
+        { ...draftObject, submissionStatus: REPORT_STATUSES.SUBMITTED },
+      );
+
+      const approvals = approverUserIds.map((userId) => ({
+        activityReportId: ar.id,
+        userId,
+        status: APPROVER_STATUSES.APPROVED,
+      }));
+
+      await ActivityReportApprover.bulkCreate(approvals);
 
       const mockCreated = [{
-        activityReportId: 1,
+        activityReportId: ar.id,
       }];
 
-      await afterUpsert(mockSequelize, mockCreated);
-
-      expect(mockActivityReportUpdate).toHaveBeenCalledWith(
-        { calculatedStatus: REPORT_STATUSES.APPROVED, approvedAt: expect.any(Date) },
-        { where: { id: 1 }, individualHooks: true },
-      );
+      await afterUpsert(sequelize, mockCreated);
+      const updatedReport = await ActivityReport.findByPk(ar.id);
+      expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
     });
     it('doesn\'t calculate status if the report is not submitted', async () => {
       const mockActivityReportUpdate = jest.fn();
