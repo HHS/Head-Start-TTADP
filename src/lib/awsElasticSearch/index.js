@@ -194,7 +194,6 @@ const search = async (indexName, fields, query, passedClient) => {
       const hits = res.body.hits.hits || res.body.hits;
       const hitsToAdd = hits.slice(0, hits.length === calcPageSize ? hits.length - 1 : hits.length);
       totalHits = [...totalHits, ...hitsToAdd];
-      const hitCount = res.body.hits.hits ? res.body.hits.hits.length : res.body.hits.length;
 
       // Increase loop count.
       loopIterations += 1;
