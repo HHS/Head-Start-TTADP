@@ -12,7 +12,7 @@ export default (sequelize, DataTypes) => {
         otherKey: 'userId',
         as: 'users',
       });
-      Group.hasMany(models.GroupGrant, { foreignKey: 'groupId', as: 'groupGroups' });
+      Group.hasMany(models.GroupGrant, { foreignKey: 'groupId', as: 'groupGrants' });
       Group.belongsToMany(models.Grant, {
         through: models.GroupGrant,
         foreignKey: 'groupId',
