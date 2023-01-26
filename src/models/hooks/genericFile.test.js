@@ -1,146 +1,276 @@
+import {
+  sequelize,
+  ActivityReportObjective,
+  ActivityReportObjectiveFile,
+  ObjectiveTemplate,
+  ObjectiveTemplateFile,
+  ObjectiveFile,
+  Objective,
+  File,
+  ActivityReport,
+  ActivityReportFile,
+} from '..';
+import { FILE_STATUSES, OBJECTIVE_STATUS } from '../../constants';
 import { propagateDestroyToFile } from './genericFile';
+import { draftObject, objectiveTemplateGenerator } from './testHelpers';
 
 describe('propagateDestroyToFile', () => {
+  afterAll(async () => {
+    await sequelize.close();
+  });
+
   it('should delete the file if it is not associated with any other models', async () => {
-    const mockFileDestroy = jest.fn();
-    const mockSequelize = {
-      models: {
-        File: {
-          findOne: jest.fn(() => ({
-            reportFiles: [],
-            reportObjectiveFiles: [],
-            objectiveFiles: [],
-            objectiveTemplateFiles: [],
-            id: 1,
-          })),
-          destroy: mockFileDestroy,
-        },
-      },
-    };
-    const mockInstance = {
-      fileId: 1,
-    };
-    const mockOptions = {
-      transaction: {},
-    };
-
-    await propagateDestroyToFile(mockSequelize, mockInstance, mockOptions);
-
-    expect(mockFileDestroy).toHaveBeenCalledWith({
-      where: { id: 1 },
-      transaction: {},
+    const file = await File.create({
+      originalFileName: 'test.pdf',
+      key: 'test.pdf',
+      status: FILE_STATUSES.UPLOADED,
+      fileSize: 123445,
     });
+
+    const mockInstance = {
+      fileId: file.id,
+    };
+
+    const transaction = await sequelize.transaction();
+
+    const mockOptions = {
+      transaction,
+    };
+
+    await propagateDestroyToFile(sequelize, mockInstance, mockOptions);
+
+    const foundFile = await File.findOne({
+      where: { id: file.id },
+      transaction,
+    });
+
+    expect(foundFile).toBeNull();
+
+    await transaction.commit();
   });
 
   it('won\'t destroy the file if its on a report', async () => {
-    const mockFileDestroy = jest.fn();
-    const mockSequelize = {
-      models: {
-        File: {
-          findOne: jest.fn(() => ({
-            reportFiles: [{}],
-            reportObjectiveFiles: [],
-            objectiveFiles: [],
-            objectiveTemplateFiles: [],
-            id: 1,
-          })),
-          destroy: mockFileDestroy,
-        },
-      },
-    };
+    const ar = await ActivityReport.create({ ...draftObject });
+    const file = await File.create({
+      originalFileName: 'test.pdf',
+      key: 'test.pdf',
+      status: FILE_STATUSES.UPLOADED,
+      fileSize: 123445,
+    });
+
+    await ActivityReportFile.create({
+      activityReportId: ar.id,
+      fileId: file.id,
+    });
+
     const mockInstance = {
-      fileId: 1,
+      fileId: file.id,
     };
+
+    const transaction = await sequelize.transaction();
+
     const mockOptions = {
-      transaction: {},
+      transaction,
     };
 
-    await propagateDestroyToFile(mockSequelize, mockInstance, mockOptions);
+    await propagateDestroyToFile(sequelize, mockInstance, mockOptions);
 
-    expect(mockFileDestroy).not.toHaveBeenCalled();
+    const foundFile = await File.findOne({
+      where: { id: file.id },
+      transaction,
+    });
+
+    expect(foundFile).not.toBeNull();
+
+    await ActivityReportFile.destroy({
+      where: { activityReportId: ar.id, fileId: file.id },
+    });
+
+    await File.destroy({
+      where: { id: file.id },
+    });
+
+    await ActivityReport.destroy({
+      where: { id: ar.id },
+    });
+
+    await transaction.commit();
   });
 
   it('won\'t destroy the file if its on a report objective', async () => {
-    const mockFileDestroy = jest.fn();
-    const mockSequelize = {
-      models: {
-        File: {
-          findOne: jest.fn(() => ({
-            reportFiles: [],
-            reportObjectiveFiles: [{}],
-            objectiveFiles: [],
-            objectiveTemplateFiles: [],
-            id: 1,
-          })),
-          destroy: mockFileDestroy,
-        },
-      },
-    };
+    const ar = await ActivityReport.create({ ...draftObject });
+    const objective = await Objective.create({
+      title: 'test',
+      status: OBJECTIVE_STATUS.DRAFT,
+    });
+
+    const file = await File.create({
+      originalFileName: 'test.pdf',
+      key: 'test.pdf',
+      status: FILE_STATUSES.UPLOADED,
+      fileSize: 123445,
+    });
+
+    await ActivityReportObjective.create({
+      activityReportId: ar.id,
+      objectiveId: objective.id,
+    });
+
+    await ActivityReportObjectiveFile.create({
+      activityReportObjectiveId: objective.id,
+      fileId: file.id,
+    });
+
     const mockInstance = {
-      fileId: 1,
+      fileId: file.id,
     };
+
+    const transaction = await sequelize.transaction();
     const mockOptions = {
-      transaction: {},
+      transaction,
     };
 
-    await propagateDestroyToFile(mockSequelize, mockInstance, mockOptions);
+    await propagateDestroyToFile(sequelize, mockInstance, mockOptions);
 
-    expect(mockFileDestroy).not.toHaveBeenCalled();
+    const foundFile = await File.findOne({
+      where: { id: file.id },
+      transaction,
+    });
+
+    expect(foundFile).not.toBeNull();
+
+    await ActivityReportObjectiveFile.destroy({
+      where: { activityReportObjectiveId: objective.id, fileId: file.id },
+      transaction,
+    });
+
+    await ActivityReportObjective.destroy({
+      where: { activityReportId: ar.id, objectiveId: objective.id },
+      transaction,
+    });
+
+    await Objective.destroy({
+      where: { id: objective.id },
+      transaction,
+    });
+
+    await File.destroy({
+      where: { id: file.id },
+      transaction,
+    });
+
+    await ActivityReport.destroy({
+      where: { id: ar.id },
+      transaction,
+    });
+
+    await transaction.commit();
   });
 
   it('won\'t destroy the file if its on an objective', async () => {
-    const mockFileDestroy = jest.fn();
-    const mockSequelize = {
-      models: {
-        File: {
-          findOne: jest.fn(() => ({
-            reportFiles: [],
-            reportObjectiveFiles: [],
-            objectiveFiles: [{}],
-            objectiveTemplateFiles: [],
-            id: 1,
-          })),
-          destroy: mockFileDestroy,
-        },
-      },
-    };
+    const objective = await Objective.create({
+      title: 'test',
+      status: OBJECTIVE_STATUS.DRAFT,
+    });
+
+    const file = await File.create({
+      originalFileName: 'test.pdf',
+      key: 'test.pdf',
+      status: FILE_STATUSES.UPLOADED,
+      fileSize: 123445,
+    });
+
+    await ObjectiveFile.create({
+      objectiveId: objective.id,
+      fileId: file.id,
+    });
+
     const mockInstance = {
-      fileId: 1,
+      fileId: file.id,
     };
+
+    const transaction = await sequelize.transaction();
     const mockOptions = {
-      transaction: {},
+      transaction,
     };
 
-    await propagateDestroyToFile(mockSequelize, mockInstance, mockOptions);
+    await propagateDestroyToFile(sequelize, mockInstance, mockOptions);
 
-    expect(mockFileDestroy).not.toHaveBeenCalled();
+    const foundFile = await File.findOne({
+      where: { id: file.id },
+      transaction,
+    });
+
+    expect(foundFile).not.toBeNull();
+
+    await ObjectiveFile.destroy({
+      where: { objectiveId: objective.id, fileId: file.id },
+      transaction,
+    });
+
+    await Objective.destroy({
+      where: { id: objective.id },
+      transaction,
+    });
+
+    await File.destroy({
+      where: { id: file.id },
+      transaction,
+    });
+
+    await transaction.commit();
   });
 
   it('won\'t destroy the file if its on an objective template', async () => {
-    const mockFileDestroy = jest.fn();
-    const mockSequelize = {
-      models: {
-        File: {
-          findOne: jest.fn(() => ({
-            reportFiles: [],
-            reportObjectiveFiles: [],
-            objectiveFiles: [],
-            objectiveTemplateFiles: [{}],
-            id: 1,
-          })),
-          destroy: mockFileDestroy,
-        },
-      },
-    };
+    const objectiveTemplate = await ObjectiveTemplate.create(
+      objectiveTemplateGenerator('genericFileTest'),
+    );
+
+    const file = await File.create({
+      originalFileName: 'test.pdf',
+      key: 'test.pdf',
+      status: FILE_STATUSES.UPLOADED,
+      fileSize: 123445,
+    });
+
+    await ObjectiveTemplateFile.create({
+      objectiveTemplateId: objectiveTemplate.id,
+      fileId: file.id,
+    });
+
     const mockInstance = {
-      fileId: 1,
+      fileId: file.id,
     };
+
+    const transaction = await sequelize.transaction();
     const mockOptions = {
-      transaction: {},
+      transaction,
     };
 
-    await propagateDestroyToFile(mockSequelize, mockInstance, mockOptions);
+    await propagateDestroyToFile(sequelize, mockInstance, mockOptions);
 
-    expect(mockFileDestroy).not.toHaveBeenCalled();
+    const foundFile = await File.findOne({
+      where: { id: file.id },
+      transaction,
+    });
+
+    expect(foundFile).not.toBeNull();
+
+    await ObjectiveTemplateFile.destroy({
+      where: { objectiveTemplateId: objectiveTemplate.id, fileId: file.id },
+      transaction,
+    });
+
+    await ObjectiveTemplate.destroy({
+      where: { id: objectiveTemplate.id },
+      transaction,
+    });
+
+    await File.destroy({
+      where: { id: file.id },
+      transaction,
+    });
+
+    await transaction.commit();
   });
 });
