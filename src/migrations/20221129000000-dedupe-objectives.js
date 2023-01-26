@@ -105,7 +105,7 @@ module.exports = {
         // 2. Break groups into sets of valid objective status cycles. That is, if one objective
         //    in the group of potential dupes gets completed but another objective is updated
         //    afterwards, then the other objective starts a new cycle. This is to prevent
-        //    separate efforts from being collapsed into one. 
+        //    separate efforts from being collapsed into one.
         // 3. Perform aggregations in the set to generate more correct stage start/stops & etc
         // 4. Rank all the objectives in each set of duplicates to determine which should
         //    inherit all the work tracked for all the duplicates in that set
