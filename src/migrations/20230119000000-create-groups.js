@@ -109,8 +109,26 @@ module.exports = {
     }, { transaction });
   }),
   down: async (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => {
-    await queryInterface.dropTable('Groups', { transaction });
-    await queryInterface.dropTable('GroupUsers', { transaction });
-    await queryInterface.dropTable('GroupGrants', { transaction });
+    await queryInterface.sequelize.query(
+      `
+      SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
+      `,
+      { transaction },
+    );
+    await Promise.all(['Groups', 'GroupUsers', 'GroupGrants'].map(async (table) => {
+      await queryInterface.sequelize.query(
+        ` SELECT "ZAFRemoveAuditingOnTable"('${table}');`,
+        { raw: true, transaction },
+      );
+      // Drop old audit log table
+      await queryInterface.dropTable(`ZAL${table}`, { transaction });
+      await queryInterface.dropTable(table, { transaction });
+    }));
+    await queryInterface.sequelize.query(
+      `
+      SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
+      `,
+      { transaction },
+    );
   }),
 };
