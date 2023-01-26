@@ -25,8 +25,6 @@ import {
   addIndexDocument,
 } from '../../lib/awsElasticSearch/index';
 
-// jest.mock('bull');
-
 const mockUser = {
   id: faker.datatype.number(),
   homeRegionId: 1,
@@ -118,13 +116,6 @@ describe('filtersToScopes', () => {
     }, {
       silent: true,
     });
-    // Create ES client.
-    client = await getClient();
-
-    // Create new index
-    await deleteIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
-    await createIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
-
     const granteeSpecialist = await Role.findOne({ where: { fullName: 'Grantee Specialist' } });
     if (!granteeSpecialist) {
       await Role.create({ name: 'GS', fullName: 'Grantee Specialist', isSpecialist: true });
@@ -215,6 +206,115 @@ describe('filtersToScopes', () => {
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([globallyExcludedReport.id, reportExcluded.id]));
+    });
+  });
+
+  describe('ttaType', () => {
+    let ttaReport1;
+    let ttaReport2;
+    let trainingReport1;
+    let trainingReport2;
+    let bothReport1;
+    let bothReport2;
+    let reportExcluded;
+    let reportIds = [];
+
+    beforeAll(async () => {
+      ttaReport1 = await ActivityReport.create({ ...draftReport, ttaType: ['Technical Assistance'] });
+      ttaReport2 = await ActivityReport.create({ ...draftReport, ttaType: ['technical-assistance'] });
+      trainingReport1 = await ActivityReport.create({ ...draftReport, ttaType: ['training'] });
+      trainingReport2 = await ActivityReport.create({ ...draftReport, ttaType: ['Training'] });
+      bothReport1 = await ActivityReport.create({ ...draftReport, ttaType: ['Both'] });
+      bothReport2 = await ActivityReport.create({ ...draftReport, ttaType: ['training', 'technical-assistance'] });
+      reportExcluded = await ActivityReport.create({ ...draftReport, ttaType: ['balderdash'] });
+
+      reportIds = [
+        ttaReport1.id,
+        ttaReport2.id,
+        trainingReport1.id,
+        trainingReport2.id,
+        bothReport1.id,
+        bothReport2.id,
+        reportExcluded.id,
+      ];
+    });
+
+    afterAll(async () => {
+      await ActivityReport.destroy({
+        where: {
+          id: reportIds,
+        },
+      });
+    });
+
+    it('tta', async () => {
+      const filters = { 'ttaType.ctn': ['tta'] };
+      const scope = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope.activityReport, { id: reportIds }] },
+        logging: console.log,
+      });
+
+      const foundIds = found.map((f) => f.id).sort();
+      console.log({
+        ttaReport1: foundIds.includes(ttaReport1.id),
+        ttaReport2: foundIds.includes(ttaReport2.id),
+        trainingReport1: foundIds.includes(trainingReport1.id),
+        trainingReport2: foundIds.includes(trainingReport2.id),
+        bothReport1: foundIds.includes(bothReport1.id),
+        bothReport2: foundIds.includes(bothReport2.id),
+        reportExcluded: foundIds.includes(reportExcluded.id),
+      });
+
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id).sort())
+        .toEqual(expect.arrayContaining([ttaReport1.id, ttaReport2.id]).sort());
+    });
+    it('training', async () => {
+      const filters = { 'ttaType.ctn': ['training'] };
+      const scope = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope.activityReport, { id: reportIds }] },
+      });
+
+      const foundIds = found.map((f) => f.id).sort();
+      console.log({
+        ttaReport1: foundIds.includes(ttaReport1.id),
+        ttaReport2: foundIds.includes(ttaReport2.id),
+        trainingReport1: foundIds.includes(trainingReport1.id),
+        trainingReport2: foundIds.includes(trainingReport2.id),
+        bothReport1: foundIds.includes(bothReport1.id),
+        bothReport2: foundIds.includes(bothReport2.id),
+        reportExcluded: foundIds.includes(reportExcluded.id),
+      });
+
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id).sort())
+        .toEqual(expect.arrayContaining([trainingReport1.id, trainingReport2.id]).sort());
+    });
+
+    it('both', async () => {
+      const filters = { 'ttaType.ctn': ['both'] };
+      const scope = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope.activityReport, { id: reportIds }] },
+      });
+
+      const foundIds = found.map((f) => f.id).sort();
+      const expectedIds = [bothReport1.id, bothReport2.id].sort();
+      console.log({
+        ttaReport1: foundIds.includes(ttaReport1.id),
+        ttaReport2: foundIds.includes(ttaReport2.id),
+        trainingReport1: foundIds.includes(trainingReport1.id),
+        trainingReport2: foundIds.includes(trainingReport2.id),
+        bothReport1: foundIds.includes(bothReport1.id),
+        bothReport2: foundIds.includes(bothReport2.id),
+        reportExcluded: foundIds.includes(reportExcluded.id),
+      });
+
+      expect(found.length).toBe(2);
+      expect(foundIds)
+        .toEqual(expect.arrayContaining(expectedIds));
     });
   });
 
@@ -1712,6 +1812,13 @@ describe('filtersToScopes', () => {
     let possibleIds;
 
     beforeAll(async () => {
+      // Create ES client.
+      client = await getClient();
+
+      // Create new index
+      await deleteIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
+      await createIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
+
       // Create reports.
       const context1 = 'Nothings gonna change my world';
       const context2 = 'I get by with a little help from my friends';
