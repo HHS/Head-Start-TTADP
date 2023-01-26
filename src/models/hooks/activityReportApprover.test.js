@@ -1,4 +1,3 @@
-import faker from '@faker-js/faker';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '../../constants';
 import {
   sequelize,
@@ -14,44 +13,18 @@ import {
   afterUpdate,
 } from './activityReportApprover';
 
-const draftObject = {
-  activityRecipientType: 'recipient',
-  regionId: 1,
-  activityRecipients: [{ grantId: 1 }],
-  submissionStatus: REPORT_STATUSES.DRAFT,
-  numberOfParticipants: 1,
-  deliveryMethod: 'method',
-  duration: 0,
-  endDate: '2000-01-01T12:00:00Z',
-  startDate: '2000-01-01T12:00:00Z',
-  requester: 'requester',
-  targetPopulations: ['pop'],
-  reason: ['reason'],
-  participants: ['participants'],
-  topics: ['topics'],
-  ttaType: ['type'],
-  creatorRole: 'TTAC',
-};
-
-const approverUserIds = [
-  faker.datatype.number({ min: 9064284 }),
-  faker.datatype.number({ min: 9064284 }),
-  faker.datatype.number({ min: 9064284 }),
-];
-
-const mockApprovers = approverUserIds.map((id) => ({
-  id,
-  hsesUserId: String(id),
-  hsesUsername: `user${id}`,
-}));
+import { draftObject, mockApprovers, approverUserIds } from './testHelpers';
 
 describe('activityReportApprover hooks', () => {
+  const mockUserIds = approverUserIds;
+  const mockUsers = mockApprovers(mockUserIds);
+
   beforeAll(async () => {
-    await User.bulkCreate(mockApprovers);
+    await User.bulkCreate(mockUsers);
   });
 
   afterAll(async () => {
-    await User.destroy({ where: { id: approverUserIds } });
+    await User.destroy({ where: { id: mockUserIds } });
     await sequelize.close();
   });
 
@@ -89,7 +62,7 @@ describe('activityReportApprover hooks', () => {
         { ...draftObject, submissionStatus: REPORT_STATUSES.SUBMITTED },
       );
 
-      const approvals = approverUserIds.map((userId) => ({
+      const approvals = mockUserIds.map((userId) => ({
         activityReportId: ar.id,
         userId,
         status: APPROVER_STATUSES.APPROVED,
@@ -134,7 +107,7 @@ describe('activityReportApprover hooks', () => {
         { ...draftObject, submissionStatus: REPORT_STATUSES.SUBMITTED },
       );
 
-      const approvals = approverUserIds.map((userId) => ({
+      const approvals = mockUserIds.map((userId) => ({
         activityReportId: ar.id,
         userId,
         status: APPROVER_STATUSES.APPROVED,
@@ -179,7 +152,7 @@ describe('activityReportApprover hooks', () => {
         { ...draftObject, submissionStatus: REPORT_STATUSES.SUBMITTED },
       );
 
-      const approvals = approverUserIds.map((userId) => ({
+      const approvals = mockUserIds.map((userId) => ({
         activityReportId: ar.id,
         userId,
         status: APPROVER_STATUSES.APPROVED,
@@ -242,13 +215,11 @@ describe('activityReportApprover hooks', () => {
     });
 
     it('calculates status after upsert', async () => {
-      const mockActivityReportUpdate = jest.fn();
-
       const ar = await ActivityReport.create(
         { ...draftObject, submissionStatus: REPORT_STATUSES.SUBMITTED },
       );
 
-      const approvals = approverUserIds.map((userId) => ({
+      const approvals = mockUserIds.map((userId) => ({
         activityReportId: ar.id,
         userId,
         status: APPROVER_STATUSES.APPROVED,
