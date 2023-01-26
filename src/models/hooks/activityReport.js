@@ -1,8 +1,15 @@
 const { Op } = require('sequelize');
-const { REPORT_STATUSES, OBJECTIVE_STATUS } = require('../../constants');
+const { REPORT_STATUSES, OBJECTIVE_STATUS, AWS_ELASTIC_SEARCH_INDEXES } = require('../../constants');
 const { auditLogger } = require('../../logger');
 const { findOrCreateGoalTemplate } = require('./goal');
 const { findOrCreateObjectiveTemplate } = require('./objective');
+const {
+  scheduleUpdateIndexDocumentJob,
+  scheduleDeleteIndexDocumentJob,
+} = require('../../lib/awsElasticSearch/queueManager');
+const { collectModelData } = require('../../lib/awsElasticSearch/datacollector');
+const { formatModelForAwsElasticsearch } = require('../../lib/awsElasticSearch/modelMapper');
+const { addIndexDocument, deleteIndexDocument } = require('../../lib/awsElasticSearch/index');
 
 /**
  * Helper function called by model hooks.
@@ -190,7 +197,7 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
   const objectiveIds = objectives.map((o) => o.objectiveId);
 
   // Get all the reports that use the objectives
-  const allObjectiveReports = await sequelize.models.ActivityReport.findAll({
+  const allReports = await sequelize.models.ActivityReport.findAll({
     attributes: ['id', 'calculatedStatus', 'endDate'],
     include: [
       {
@@ -211,10 +218,9 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
     ],
   });
 
-  // Get Approved Reports that might set the status.
-  const approvedReports = allObjectiveReports.filter(
-    (a) => a.calculatedStatus === REPORT_STATUSES.APPROVED,
-  );
+  const approvedReports = allReports.filter((report) => (
+    report.calculatedStatus === REPORT_STATUSES.APPROVED
+  ));
 
   // Only change the status if we have an approved report using the objective.
   if (approvedReports.length) {
@@ -223,11 +229,28 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
       const relevantARs = approvedReports.filter(
         (a) => a.activityReportObjectives.find((aro) => aro.objectiveId === o),
       );
-        // Get latest report by end date.
-      const latestAR = relevantARs.reduce((r, a) => (r.endDate > a.endDate ? r : a));
+
+      if (!relevantARs && !relevantARs.length) {
+        return Promise.resolve();
+      }
+
+      // Get latest report by end date.
+      const latestAR = relevantARs.reduce((r, a) => {
+        if (r && r.endDate) {
+          return new Date(r.endDate) > new Date(a.endDate) ? r : a;
+        }
+        return a;
+      }, {
+        endDate: null,
+        activityReportObjectives: [],
+      });
 
       // Get Objective to take status from.
       const aro = latestAR.activityReportObjectives.find(((a) => a.objectiveId === o));
+
+      if (!aro) {
+        return Promise.resolve();
+      }
 
       // Update Objective status.
       return sequelize.models.Objective.update({
@@ -238,17 +261,20 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
       });
     }));
   } else if (isUnlocked) {
-    // If there are no Approved reports set Objective status back to 'Not Started'.
-    const currentReport = allObjectiveReports.find((r) => r.id === activityReportId);
-    const objectiveIdsToReset = currentReport && currentReport.activityReportObjectives
-      ? currentReport.activityReportObjectives.map((a) => a.objectiveId)
+    const report = allReports.find((r) => r.id === activityReportId);
+    const objectivesToReset = report && report.activityReportObjectives
+      ? report.activityReportObjectives.map((a) => a.objectiveId)
       : [];
-    await sequelize.models.Objective.update({
-      status: OBJECTIVE_STATUS.NOT_STARTED,
-    }, {
-      where: { id: objectiveIdsToReset },
-      individualHooks: true,
-    });
+
+    // we don't need to run this query with an empty array I don't think
+    if (objectivesToReset.length) {
+      await sequelize.models.Objective.update({
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+      }, {
+        where: { id: objectivesToReset },
+        individualHooks: true,
+      });
+    }
   }
 };
 const propagateApprovedStatus = async (sequelize, instance, options) => {
@@ -542,9 +568,71 @@ const beforeCreate = async (instance) => {
   copyStatus(instance);
 };
 
+const getActivityReportDocument = async (sequelize, instance) => {
+  const data = await collectModelData(
+    [instance.id],
+    AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+    sequelize,
+  );
+  return formatModelForAwsElasticsearch(
+    AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+    { ...data, ar: { ...instance.dataValues } },
+  );
+};
+
 const beforeUpdate = async (instance) => {
   copyStatus(instance);
 };
+
+const updateAwsElasticsearchIndexes = async (sequelize, instance) => {
+  // AWS Elasticsearch: Determine if we queue delete or update index document.
+  const changed = instance.changed();
+  if (Array.isArray(changed) && changed.includes('calculatedStatus')) {
+    if (instance.previous('calculatedStatus') !== REPORT_STATUSES.DELETED
+        && instance.calculatedStatus === REPORT_STATUSES.DELETED) {
+      // Delete Index Document for AWS Elasticsearch.
+      if (!process.env.CI) {
+        await scheduleDeleteIndexDocumentJob(
+          instance.id,
+          AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+        );
+      } else {
+        // Create a job to run without worker.
+        const job = {
+          data: {
+            indexName: AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+            id: instance.id,
+          },
+        };
+        await deleteIndexDocument(job);
+      }
+    } else if ((instance.previous('calculatedStatus') !== REPORT_STATUSES.SUBMITTED
+      && instance.calculatedStatus === REPORT_STATUSES.SUBMITTED)
+      || (instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
+      && instance.calculatedStatus === REPORT_STATUSES.APPROVED)) {
+      // Index for AWS Elasticsearch.
+      const document = await getActivityReportDocument(sequelize, instance);
+      if (!process.env.CI) {
+        await scheduleUpdateIndexDocumentJob(
+          instance.id,
+          AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+          document,
+        );
+      } else {
+        // Create a job to run without worker.
+        const job = {
+          data: {
+            indexName: AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+            id: instance.id,
+            document,
+          },
+        };
+        await addIndexDocument(job);
+      }
+    }
+  }
+};
+
 const afterUpdate = async (sequelize, instance, options) => {
   await propogateSubmissionStatus(sequelize, instance, options);
   await propagateApprovedStatus(sequelize, instance, options);
@@ -552,6 +640,7 @@ const afterUpdate = async (sequelize, instance, options) => {
   await automaticGoalObjectiveStatusCachingOnApproval(sequelize, instance, options);
   await moveDraftGoalsToNotStartedOnSubmission(sequelize, instance, options);
   await automaticIsRttapaChangeOnApprovalForGoals(sequelize, instance, options);
+  await updateAwsElasticsearchIndexes(sequelize, instance);
 };
 
 export {

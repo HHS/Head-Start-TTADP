@@ -8,19 +8,19 @@
   },
   "scripts": {
     "axe:ci": "axe --exit --show-errors --load-delay 1000 `cat axe-urls` --dir ./reports/",
-    "build": "./node_modules/.bin/babel src -d ./build/server && ./node_modules/.bin/babel config -d build/config",
+    "build": "tsc -p src",
     "deps:local": "yarn install && yarn --cwd frontend install",
     "deps": "yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
     "start:local": "concurrently \"yarn server\" \"yarn client\" \"yarn worker\"",
-    "start:ci": "cross-env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub TTA_SMART_HUB_URI=http://localhost:3000 concurrently \"yarn start:web\" \"yarn client\" \"yarn start:worker\"",
-    "start:web": "node ./build/server/index.js",
-    "start:worker": "node ./build/server/worker.js",
-    "server": "nodemon src/index.js --exec babel-node",
-    "worker": "nodemon src/worker.js --exec babel-node",
+    "start:ci": "cross-env BYPASS_SOCKETS=true POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub TTA_SMART_HUB_URI=http://localhost:3000 concurrently \"yarn start:web\" \"yarn client\"",
+    "start:web": "node ./build/server/src/index.js",
+    "start:worker": "node ./build/server/src/worker.js",
+    "server": "tsx watch src/index.ts",
+    "worker": "tsx watch src/worker.ts",
     "server:debug": "nodemon --inspect=0.0.0.0:9229 src/index.js --exec babel-node",
     "client": "yarn --cwd frontend start",
-    "test": "jest src --runInBand", 
-    "test:ci": "./bin/test-backend-ci",    
+    "test": "yarn build && jest build/server/src --runInBand",
+    "test:ci": "./bin/test-backend-ci",
     "test:all": "yarn test:ci && yarn --cwd frontend test:ci",
     "lint": "eslint src",
     "lint:ci": "eslint -f eslint-formatter-multiple src",
@@ -32,11 +32,14 @@
     "docs:serve": "npx redoc-cli serve -p 5003 docs/openapi/index.yaml",
     "cucumber": "./node_modules/.bin/cucumber-js --publish ./cucumber/features/*.feature -f json:./reports/cucumber_report.json && node ./cucumber/index.js",
     "cucumber:ci": "cross-env TTA_SMART_HUB_URI=http://localhost:3000 yarn cucumber",
+    "e2e": "./node_modules/.bin/playwright test",
+    "e2e:ci": "cross-env TTA_SMART_HUB_URI=http://localhost:3000 yarn e2e",
     "migrate:create": "npx sequelize-cli migration:generate --name",
     "db:bootstrap:admin:local": "./node_modules/.bin/babel-node ./src/tools/bootstrapAdminCLI.js",
-    "db:bootstrap:admin": "node ./build/server/tools/bootstrapAdminCLI.js",
-    "db:validation": "node ./build/server/tools/dataValidationCLI.js",
+    "db:bootstrap:admin": "node ./build/server/src/tools/bootstrapAdminCLI.js",
+    "db:validation": "node ./build/server/src/tools/dataValidationCLI.js",
     "db:migrate": "node_modules/.bin/sequelize db:migrate",
+    "db:migrate:create": "npx sequelize-cli migration:generate --name",
     "db:migrate:ci": "cross-env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub node_modules/.bin/sequelize db:migrate",
     "db:migrate:prod": "node_modules/.bin/sequelize db:migrate --options-path .production.sequelizerc",
     "db:migrate:undo": "node_modules/.bin/sequelize db:migrate:undo",
@@ -69,21 +72,23 @@
     "docker:yarn:fe": "docker-compose run --rm frontend  yarn",
     "docker:yarn:be": "docker-compose run --rm backend yarn",
     "import:reports:local": "./node_modules/.bin/babel-node ./src/tools/importSSActivityReports.js",
-    "import:reports": "node ./build/server/tools/importSSActivityReports.js",
+    "import:reports": "node ./build/server/src/tools/importSSActivityReports.js",
     "import:goals:local": "./node_modules/.bin/babel-node ./src/tools/importTTAPlanGoals.js",
-    "import:goals": "node ./build/server/tools/importTTAPlanGoals.js",
+    "import:goals": "node ./build/server/src/tools/importTTAPlanGoals.js",
     "import:hses:local": "./node_modules/.bin/babel-node ./src/tools/importGrantRecipientsCLI.js --skipdownload",
-    "import:hses": "node ./build/server/tools/importGrantRecipientsCLI.js",
-    "reconcile:legacy": "node ./build/server/tools/reconcileLegacyReports.js",
+    "import:hses": "node ./build/server/src/tools/importGrantRecipientsCLI.js",
+    "reconcile:legacy": "node ./build/server/src/tools/reconcileLegacyReports.js",
     "reconcile:legacy:local": "./node_modules/.bin/babel-node ./src/tools/reconcileLegacyReports.js",
     "processData:local": "./node_modules/.bin/babel-node ./src/tools/processDataCLI.js",
-    "changeReportStatus": "node ./build/server/tools/changeReportStatusCLI.js",
+    "changeReportStatus": "node ./build/server/src/tools/changeReportStatusCLI.js",
     "changeReportStatus:local": "./node_modules/.bin/babel-node ./src/tools/changeReportStatusCLI.js",
     "makecolors": "node ./src/makecolors.js",
-    "restoreTopics": "node ./build/server/tools/restoreTopicsCLI.js",
+    "restoreTopics": "node ./build/server/src/tools/restoreTopicsCLI.js",
     "restoreTopics:local": "./node_modules/.bin/babel-node ./src/tools/restoreTopicsCLI.js",
     "coverage:backend": "./bin/build-coverage-report",
-    "docker:coverage:backend": "docker compose run --rm backend chmod 744 ./bin/build-coverage-report && ./bin/build-coverage-report"
+    "docker:coverage:backend": "docker compose run --rm backend chmod 744 ./bin/build-coverage-report && ./bin/build-coverage-report",
+    "createAwsElasticSearchIndexes": "node ./build/server/src/tools/createAwsElasticSearchIndexesCli.js",
+    "createAwsElasticSearchIndexes:local": "./node_modules/.bin/babel-node ./src/tools/createAwsElasticSearchIndexesCli.js"
   },
   "repository": {
     "type": "git",
@@ -109,13 +114,21 @@
   "eslintConfig": {
     "extends": [
       "airbnb-base",
-      "plugin:jest/recommended"
+      "plugin:jest/recommended",
+      "plugin:@typescript-eslint/recommended"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "plugins": [
+      "@typescript-eslint"
     ],
     "ignorePatterns": [
       "node_modules/*"
     ],
     "rules": {
-      "linebreak-style": 0
+      "linebreak-style": 0,
+      "@typescript-eslint/no-var-requires": 0,
+      "@typescript-eslint/no-unused-vars": 0,
+      "@typescript-eslint/no-empty-function": 0
     }
   },
   "eslint-formatter-multiple": {
@@ -141,7 +154,9 @@
       "<rootDir>/src/testUtils.js",
       "<rootDir>/src/logger.js",
       "<rootDir>/src/*/coverage/",
-      "<rootDir>/src/coverage/"
+      "<rootDir>/src/coverage/",
+      "<rootDir>/src/index.js",
+      "<rootDir>/src/worker.js"
     ],
     "testTimeout": 30000,
     "coveragePathIgnorePatterns": [
@@ -154,7 +169,9 @@
       "<rootDir>/src/testUtils.js",
       "<rootDir>/src/logger.js",
       "<rootDir>/src/*/coverage/",
-      "<rootDir>/src/coverage/"
+      "<rootDir>/src/coverage/",
+      "<rootDir>/src/index.js",
+      "<rootDir>/src/worker.js"
     ],
     "coverageThreshold": {
       "global": {
@@ -176,7 +193,10 @@
     "ignore": [
       "./reports/",
       "./cucumber/",
-      "./frontend/"
+      "./frontend/",
+      "./tests/",
+      "./playwright/",
+      "./playwright.config.js"
     ]
   },
   "devDependencies": {
@@ -186,7 +206,11 @@
     "@babel/node": "^7.10.5",
     "@babel/plugin-transform-runtime": "^7.11.0",
     "@babel/preset-env": "^7.11.5",
+    "@babel/preset-typescript": "^7.18.6",
     "@cucumber/cucumber": "^7.0.0",
+    "@playwright/test": "^1.28.0",
+    "@typescript-eslint/eslint-plugin": "^5.48.2",
+    "@typescript-eslint/parser": "^5.48.2",
     "concurrently": "^7.0.0",
     "cross-env": "^7.0.2",
     "depcheck": "^1.2.0",
@@ -198,14 +222,18 @@
     "eslint-plugin-jsx-a11y": "^6.3.1",
     "eslint-plugin-react": "^7.20.6",
     "jest": "26.6.0",
-    "jest-cli": "^26.4.2",
+    "jest-cli": "26.4.2",
     "jest-junit": "^12.0.0",
     "nodemon": "^2.0.4",
+    "playwright": "^1.28.0",
     "puppeteer": "^13.1.1",
     "puppeteer-select": "^1.0.3",
     "redoc-cli": "^0.13.2",
     "selenium-webdriver": "4.3.0",
-    "supertest": "^6.1.3"
+    "sinon": "^15.0.0",
+    "supertest": "^6.1.3",
+    "tsx": "^3.12.2",
+    "typescript": "4.7.4"
   },
   "dependencies": {
     "@babel/runtime": "^7.12.1",
@@ -237,7 +265,7 @@
     "helmet": "^5.0.1",
     "html-to-text": "^8.1.0",
     "http-codes": "^1.0.0",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.0",
     "lodash": "^4.17.20",
     "md5": "^2.3.0",
     "moment": "^2.29.4",
@@ -247,6 +275,7 @@
     "nodemailer": "^6.5.0",
     "pg": "^8.3.3",
     "pug": "^3.0.2",
+    "redis": "^4.0.6",
     "sequelize": "^6.12.5",
     "sequelize-cli": "^6.2.0",
     "throng": "^5.0.0",
@@ -255,6 +284,7 @@
     "validator": "^13.7.0",
     "wait-for-expect": "^3.0.2",
     "winston": "^3.3.3",
+    "ws": "^8.5.0",
     "xml2json": "^0.12.0",
     "yargs": "^17.3.1",
     "yayson": "^2.1.0"

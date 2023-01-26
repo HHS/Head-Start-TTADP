@@ -18,6 +18,9 @@ import {
   topicsFilter,
   otherEntitiesFilter,
   participantsFilter,
+  myReportsFilter,
+  reportTextFilter,
+  endDateFilter,
 } from '../activityReportFilters';
 import {
   createDateFilter,
@@ -342,6 +345,9 @@ describe('Filter Menu', () => {
       targetPopulationsFilter,
       topicsFilter,
       otherEntitiesFilter,
+      myReportsFilter,
+      reportTextFilter,
+      endDateFilter,
     ];
 
     const filters = [];
@@ -369,6 +375,10 @@ describe('Filter Menu', () => {
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
+    userEvent.selectOptions(topics, 'Date ended');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
     userEvent.selectOptions(topics, 'Reasons');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
@@ -381,6 +391,10 @@ describe('Filter Menu', () => {
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'contains');
 
+    userEvent.selectOptions(topics, 'Report text');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'contains');
+
     userEvent.selectOptions(topics, 'State');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'contains');
@@ -388,6 +402,10 @@ describe('Filter Menu', () => {
     userEvent.selectOptions(topics, 'Target populations');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'My reports');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'where I\'m the');
 
     userEvent.selectOptions(topics, 'Topics');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
@@ -420,6 +438,10 @@ describe('Filter Menu', () => {
     userEvent.selectOptions(topics, 'Target populations');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'My reports');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'where I\'m the');
 
     userEvent.selectOptions(topics, 'Topics');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });

@@ -6,6 +6,7 @@ http://localhost:3000/activity-reports/new/next-steps,
 http://localhost:3000/activity-reports/new/review,
 http://localhost:3000/admin,
 http://localhost:3000/activity-reports/view/9999
+http://localhost:3000/regional-dashboard,
 http://localhost:3000/recipient-tta-records
 http://localhost:3000/recipient-tta-records/1/region/14/profile
 http://localhost:3000/recipient-tta-records/1/region/14/tta-history

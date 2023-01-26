@@ -7,6 +7,7 @@ import {
   SELECT_CONDITIONS,
   FILTER_CONDITIONS,
   REGION_CONDITIONS,
+  MY_REPORTS_FILTER_CONDITIONS,
 } from '../../Constants';
 import FilterDateRange from './FilterDateRange';
 import FilterInput from './FilterInput';
@@ -19,10 +20,16 @@ import FilterSpecialistSelect from './FilterSpecialistSelect';
 import FilterStateSelect from './FilterStateSelect';
 import FilterOtherEntitiesSelect from './FilterOtherEntitiesSelect';
 import FilterParticipantsSelect from './FilterParticipantsSelect';
+import MyReportsSelect from './MyReportsSelect';
 
 const EMPTY_MULTI_SELECT = {
   is: [],
   'is not': [],
+};
+
+const EMPTY_MY_REPORTS_MULTI_SELECT = {
+  'where I\'m the': [],
+  'where I\'m not the': [],
 };
 
 const EMPTY_SINGLE_SELECT = {
@@ -113,6 +120,22 @@ export const grantNumberFilter = {
       inputId={`grantNumber-${condition}-${id}`}
       onApply={onApplyQuery}
       label="Enter a grant number"
+    />
+  ),
+};
+
+export const reportTextFilter = {
+  id: 'reportText',
+  display: 'Report text',
+  conditions: SELECT_CONDITIONS,
+  defaultValues: EMPTY_TEXT_INPUT,
+  displayQuery: handleStringQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterInput
+      query={query}
+      inputId={`reportText-${condition}-${id}`}
+      onApply={onApplyQuery}
+      label="Enter report text"
     />
   ),
 };
@@ -277,6 +300,21 @@ export const targetPopulationsFilter = {
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterPopulationSelect
       inputId={`population-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const myReportsFilter = {
+  id: 'myReports',
+  display: 'My reports',
+  conditions: MY_REPORTS_FILTER_CONDITIONS,
+  defaultValues: EMPTY_MY_REPORTS_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <MyReportsSelect
+      inputId={`my-reports-${id}`}
       onApply={onApplyQuery}
       query={query}
     />

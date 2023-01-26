@@ -8,7 +8,7 @@ const {
  * @param {} sequelize
  * @param {*} DataTypes
  */
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class OtherEntity extends Model {
     static associate(models) {
       OtherEntity.belongsTo(models.ActivityRecipient, { foreignKey: 'id', as: 'activityRecipients' });
