@@ -10,7 +10,7 @@ export default (sequelize, DataTypes) => {
   class GroupGrant extends Model {
     static associate(models) {
       GroupGrant.belongsTo(models.Grant, { foreignKey: 'grantId', onDelete: 'cascade', as: 'grant' });
-      GroupGrant.belongsTo(models.Group, { foreignKey: 'roleId', onDelete: 'cascade', as: 'role' });
+      GroupGrant.belongsTo(models.Group, { foreignKey: 'groupId', onDelete: 'cascade', as: 'group' });
     }
   }
   GroupGrant.init({
