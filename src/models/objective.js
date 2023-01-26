@@ -14,7 +14,7 @@ const {
  * @param {} sequelize
  * @param {*} DataTypes
  */
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class Objective extends Model {
     static associate(models) {
       Objective.belongsToMany(models.ActivityReport, {
@@ -70,6 +70,10 @@ module.exports = (sequelize, DataTypes) => {
     onApprovedAR: {
       type: DataTypes.BOOLEAN,
     },
+    createdVia: {
+      type: DataTypes.ENUM(['activityReport', 'rtr']),
+      allowNull: true,
+    },
     firstNotStartedAt: {
       type: DataTypes.DATE,
       allowNull: true,
@@ -100,6 +104,10 @@ module.exports = (sequelize, DataTypes) => {
     },
     lastCompleteAt: {
       type: DataTypes.DATE,
+      allowNull: true,
+    },
+    rtrOrder: {
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
   }, {

@@ -1,7 +1,7 @@
 const { Model } = require('sequelize');
 const { afterCreate, afterDestroy } = require('./hooks/objectiveResource');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ObjectiveResource extends Model {
     /**
      * Helper method for defining associations.
@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
       primaryKey: true,
     },
     userProvidedUrl: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT,
       allowNull: false,
     },
     objectiveId: {

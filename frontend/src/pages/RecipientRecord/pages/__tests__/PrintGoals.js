@@ -103,9 +103,22 @@ describe('PrintGoals', () => {
   const baseMock = `/api/recipient/${RECIPIENT_ID}/region/${REGION_ID}/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=false`;
   const filteredMockURL = `${baseMock}&${filtersToQueryString(filters)}`;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     fetchMock.get(baseMock, { count: 5, goalRows: goals });
     fetchMock.get(filteredMockURL, { count: 0, goalRows: [] });
+  });
+
+  afterEach(async () => {
+    fetchMock.restore();
+  });
+
+  it('handles a loading error', async () => {
+    fetchMock.restore();
+    fetchMock.get(baseMock, () => {
+      throw new Error();
+    });
+    act(renderPrintGoals);
+    expect(await screen.findByText('Something went wrong')).toBeVisible();
   });
 
   it('renders goals from API', async () => {

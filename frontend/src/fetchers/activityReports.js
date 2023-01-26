@@ -163,3 +163,16 @@ export const resetToDraft = async (reportId) => {
   const response = await put(url);
   return response.json();
 };
+
+export const setGoalAsActivelyEdited = async (reportId, goalIds) => {
+  const params = goalIds.map((goalId) => `goalIds=${goalId}`);
+  const url = join(
+    activityReportUrl,
+    reportId.toString(DECIMAL_BASE),
+    'goals',
+    'edit',
+    `?${params.join('&')}`,
+  );
+  const response = await put(url);
+  return response.json();
+};

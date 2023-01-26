@@ -139,6 +139,7 @@ export default function DropdownMenu({
           aria-pressed={menuIsOpen}
           onBlur={onBlur}
           ref={triggerRef}
+          data-html2canvas-ignore
         >
           <span>
             {buttonText}
@@ -149,6 +150,7 @@ export default function DropdownMenu({
 
       <div
         className="smart-hub--dropdown-menu--contents shadow-2 no-print"
+        data-html2canvas-ignore
         ref={menuContents}
         hidden={!menuIsOpen || disabled}
         style={{ right: direction === 'left' ? '0' : 'auto' }}

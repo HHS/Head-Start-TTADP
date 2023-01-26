@@ -10,8 +10,8 @@ import { Alert, Fieldset } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useFormContext, useController } from 'react-hook-form/dist/index.ie11';
 import { Link } from 'react-router-dom';
-import GoalPicker, { newGoal } from './components/GoalPicker';
-import { getGoals } from '../../../fetchers/activityReports';
+import GoalPicker from './components/GoalPicker';
+import { getGoals, setGoalAsActivelyEdited } from '../../../fetchers/activityReports';
 import { validateGoals } from './components/goalValidator';
 import RecipientReviewSection from './components/RecipientReviewSection';
 import OtherEntityReviewSection from './components/OtherEntityReviewSection';
@@ -38,21 +38,20 @@ const GoalsObjectives = ({
     toggleObjectiveForm,
   } = useContext(GoalFormContext);
 
-  const recipients = watch('activityRecipients');
   const activityRecipientType = watch('activityRecipientType');
   const activityRecipients = watch('activityRecipients');
   const objectivesWithoutGoals = watch('objectivesWithoutGoals');
   const activityReportId = watch('id');
   const isRecipientReport = activityRecipientType === 'recipient';
   const isOtherEntityReport = activityRecipientType === 'other-entity';
-  const grantIds = isRecipientReport ? recipients.map((r) => {
+  const grantIds = isRecipientReport ? activityRecipients.map((r) => {
     if (r.grant) {
       return r.grant.id;
     }
 
     return r.activityRecipientId;
   }) : [];
-  const activityRecipientIds = recipients.map((r) => r.activityRecipientId);
+  const activityRecipientIds = activityRecipients.map((r) => r.activityRecipientId);
 
   const [fetchError, setFetchError] = useState(false);
   const [availableGoals, updateAvailableGoals] = useState([]);
@@ -104,7 +103,11 @@ const GoalsObjectives = ({
 
   const addNewGoal = () => {
     toggleGoalForm(false);
-    setValue('goalForEditing', newGoal(grantIds));
+    // An empty value here means that the Select dropdown will show its placeholder.
+    setValue('goalForEditing', null);
+
+    // newGoal(grantIds) is still passed to the dropdown as part of the `options` prop,
+    // so 'create a new goal' will still be an option.
   };
 
   const onRemove = (goal) => {
@@ -129,7 +132,14 @@ const GoalsObjectives = ({
     }
   };
 
-  const onEdit = (goal, index) => {
+  const onEdit = async (goal, index) => {
+    try {
+      await setGoalAsActivelyEdited(activityReportId, goal.goalIds);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('failed to set goal as actively edited with this error:', err);
+    }
+
     const currentlyEditing = getValues('goalForEditing') ? { ...getValues('goalForEditing') } : null;
     if (currentlyEditing) {
       const goalForEditingObjectives = getValues('goalForEditing.objectives') ? [...getValues('goalForEditing.objectives')] : [];
@@ -188,9 +198,7 @@ const GoalsObjectives = ({
   });
 
   const oeObjectiveEdit = (objectives) => {
-    // const objWithoutGoals = getValues('objectivesWithoutGoals');
     const recipientIds = activityRecipients.map((ar) => ar.activityRecipientId);
-    // const objectivesForEdit = objectives.map((obj) => (
     const objectivesForEdit = objectives.map((obj) => (
       {
         ...obj,
@@ -338,6 +346,7 @@ export default {
     if (activityRecipientType === 'other-entity') {
       return validateObjectives(formData.objectivesWithoutGoals) === true;
     }
+
     return activityRecipientType === 'recipient' && validateGoals(formData.goals) === true;
   },
   reviewSection: () => <ReviewSection />,

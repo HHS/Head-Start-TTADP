@@ -12,6 +12,7 @@ import {
   approvedDigest,
   notificationQueue as notificationQueueMock,
   notificationDigestQueue as notificationDigestQueueMock,
+  notifyRecipientReportApproved,
 } from '.';
 import {
   EMAIL_ACTIONS, EMAIL_DIGEST_FREQ, REPORT_STATUSES,
@@ -90,6 +91,18 @@ const mockReport = {
   approvers: [mockApprover],
 };
 
+const mockProgramSpecialist = {
+  id: 999,
+  homeRegionId: 1,
+  name: 'Mock Program Specialist',
+  email: 'james@bond.com',
+};
+
+const mockRecipient = {
+  id: 999,
+  name: 'ABC Recipient',
+};
+
 const reportObject = {
   activityRecipientType: 'recipient',
   submissionStatus: REPORT_STATUSES.DRAFT,
@@ -128,6 +141,8 @@ const jsonTransport = createTransport({ jsonTransport: true });
 
 const oldEnv = process.env;
 process.env.FROM_EMAIL_ADDRESS = 'fake@test.gov';
+
+jest.mock('bull');
 
 describe('mailer tests', () => {
   afterAll(async () => {
@@ -214,6 +229,46 @@ describe('mailer tests', () => {
       process.env.SEND_NOTIFICATIONS = false;
       await expect(notifyReportApproved({
         data: { report: mockReport },
+      }, jsonTransport)).toBeNull();
+    });
+  });
+  describe('Program Specialists: Recipient Report Approved', () => {
+    it('Tests that an email is sent', async () => {
+      process.env.SEND_NOTIFICATIONS = true;
+      const email = await notifyRecipientReportApproved({
+        data: {
+          report: mockReport,
+          programSpecialists: [mockProgramSpecialist],
+          recipients: [mockRecipient],
+        },
+      }, jsonTransport);
+      expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
+      expect(email.envelope.to).toStrictEqual([mockProgramSpecialist.email]);
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(`${mockRecipient.name}: Activity Report approved in TTA Hub`);
+      expect(message.text).toContain(`${mockReport.displayId}`);
+      expect(message.text).toContain('An Activity Report associated with one of your recipients has been approved.');
+      expect(message.text).toContain(reportPath);
+    });
+    it('Tests that an email is not sent if no program specialists/recipients', async () => {
+      process.env.SEND_NOTIFICATIONS = true;
+      const email = await notifyRecipientReportApproved({
+        data: {
+          report: mockReport,
+          programSpecialists: [],
+          recipients: [mockRecipient],
+        },
+      }, jsonTransport);
+      expect(email).toBe(null);
+    });
+    it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
+      process.env.SEND_NOTIFICATIONS = false;
+      await expect(notifyRecipientReportApproved({
+        data: {
+          report: mockReport,
+          programSpecialists: [mockProgramSpecialist],
+          recipients: [mockRecipient],
+        },
       }, jsonTransport)).toBeNull();
     });
   });
@@ -677,6 +732,104 @@ describe('mailer tests', () => {
       expect(message.text).not.toContain(reportPath);
     });
   });
+
+  describe('Program Specialist: Report approved digest', () => {
+    it('tests that an email is sent for a daily setting', async () => {
+      process.env.SEND_NOTIFICATIONS = true;
+      const email = await notifyDigest({
+        data: {
+          reports: [mockReport],
+          user: mockProgramSpecialist,
+          type: EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
+          freq: EMAIL_DIGEST_FREQ.DAILY,
+          subjectFreq: DAILY,
+        },
+      }, jsonTransport);
+      expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
+      expect(email.envelope.to).toStrictEqual([mockProgramSpecialist.email]);
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe('TTA Hub daily digest: your recipients\' approved Activity Reports');
+      expect(message.text).toContain(`Hello ${mockProgramSpecialist.name}`);
+      expect(message.text).toContain(
+        'Below are your report notifications for today.',
+      );
+      expect(message.text).toContain(
+        'Activity Reports associated with your recipients were approved:',
+      );
+      expect(message.text).toContain(`* ${mockReport.displayId}`);
+      expect(message.text).toContain(reportPath);
+    });
+    it('tests that an email is sent for a weekly setting', async () => {
+      process.env.SEND_NOTIFICATIONS = true;
+      const email = await notifyDigest({
+        data: {
+          reports: [mockReport],
+          user: mockProgramSpecialist,
+          type: EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
+          freq: EMAIL_DIGEST_FREQ.WEEKLY,
+          subjectFreq: WEEKLY,
+        },
+      }, jsonTransport);
+      expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
+      expect(email.envelope.to).toStrictEqual([mockProgramSpecialist.email]);
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe('TTA Hub weekly digest: your recipients\' approved Activity Reports');
+      expect(message.text).toContain(`Hello ${mockProgramSpecialist.name}`);
+      expect(message.text).toContain(
+        'Below are your report notifications for this week.',
+      );
+      expect(message.text).toContain(
+        'Activity Reports associated with your recipients were approved:',
+      );
+      expect(message.text).toContain(`* ${mockReport.displayId}`);
+      expect(message.text).toContain(reportPath);
+    });
+    it('tests that an email is sent for a monthly setting', async () => {
+      process.env.SEND_NOTIFICATIONS = true;
+      const email = await notifyDigest({
+        data: {
+          reports: [mockReport],
+          user: mockProgramSpecialist,
+          type: EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
+          freq: EMAIL_DIGEST_FREQ.MONTHLY,
+          subjectFreq: MONTHLY,
+        },
+      }, jsonTransport);
+      expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
+      expect(email.envelope.to).toStrictEqual([mockProgramSpecialist.email]);
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe('TTA Hub monthly digest: your recipients\' approved Activity Reports');
+      expect(message.text).toContain(`Hello ${mockProgramSpecialist.name}`);
+      expect(message.text).toContain(
+        'Below are your report notifications for this month.',
+      );
+      expect(message.text).toContain(
+        'Activity Reports associated with your recipients were approved:',
+      );
+      expect(message.text).toContain(`* ${mockReport.displayId}`);
+      expect(message.text).toContain(reportPath);
+    });
+    it('tests that an email is sent if there are no approved reports notifications', async () => {
+      process.env.SEND_NOTIFICATIONS = true;
+      const email = await notifyDigest({
+        data: {
+          reports: [],
+          user: mockProgramSpecialist,
+          type: EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
+          freq: EMAIL_DIGEST_FREQ.MONTHLY,
+          subjectFreq: MONTHLY,
+        },
+      }, jsonTransport);
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe('TTA Hub monthly digest: no new approved reports');
+      expect(message.text).toContain(`Hello ${mockProgramSpecialist.name}`);
+      expect(message.text).toContain(
+        'No reports have been approved this month.',
+      );
+      expect(message.text).not.toContain(reportPath);
+    });
+  });
+
   describe('enqueue', () => {
     beforeEach(async () => {
       await User.create(digestMockCollab, { validate: false }, { individualHooks: false });

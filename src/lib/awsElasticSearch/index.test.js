@@ -1,7 +1,7 @@
 import Mock from '@elastic/elasticsearch-mock';
 import {
   createIndex, addIndexDocument, search, updateIndexDocument, deleteIndexDocument, deleteIndex,
-} from './awsElasticSearch';
+} from './index';
 
 const { Client } = require('@elastic/elasticsearch');
 
@@ -135,8 +135,16 @@ describe('Tests aws elastic search', () => {
   });
 
   it('adds index document', async () => {
-    const res = await addIndexDocument(indexName, 1, indexDocumentToAdd, myMockClient);
-    await expect(res.body).toStrictEqual(expectedIndexDocument);
+    const job = {
+      data: {
+        indexName,
+        id: 1,
+        document: indexDocumentToAdd,
+        passedClient: myMockClient,
+      },
+    };
+    const res = await addIndexDocument(job);
+    await expect(res.res.body).toStrictEqual(expectedIndexDocument);
   });
 
   it('calls search', async () => {
@@ -145,13 +153,28 @@ describe('Tests aws elastic search', () => {
   });
 
   it('updates index document', async () => {
-    const res = await updateIndexDocument(indexName, 1, indexDocumentToAdd, myMockClient);
-    await expect(res.body).toStrictEqual(expectedIndexDocument);
+    const job = {
+      data: {
+        indexName,
+        id: 1,
+        document: indexDocumentToAdd,
+        passedClient: myMockClient,
+      },
+    };
+    const res = await updateIndexDocument(job);
+    await expect(res.res.body).toStrictEqual(expectedIndexDocument);
   });
 
   it('deletes index document', async () => {
-    const res = await deleteIndexDocument(indexName, 1, myMockClient);
-    await expect(res).toStrictEqual(documentDeletedExpected);
+    const job = {
+      data: {
+        indexName,
+        id: 1,
+        passedClient: myMockClient,
+      },
+    };
+    const res = await deleteIndexDocument(job);
+    await expect(res.res).toStrictEqual(documentDeletedExpected);
   });
 
   it('deletes index', async () => {
