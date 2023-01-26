@@ -17,47 +17,56 @@ jest.mock('./genericFile', () => ({
 }));
 
 describe('activityReportFile hooks', () => {
+  const mockUserIds = approverUserIds();
+  const mockUsers = mockApprovers(mockUserIds);
+
   beforeAll(async () => {
-    await User.bulkCreate(mockApprovers);
+    await User.bulkCreate(mockUsers);
   });
 
   afterAll(async () => {
-    await User.destroy({ where: { id: approverUserIds } });
+    await User.destroy({ where: { id: mockUserIds } });
     await sequelize.close();
   });
 
   describe('beforeDestroy', () => {
     it('should throw an error if the report is approved', async () => {
+      const transaction = await sequelize.transaction();
+
       const ar = await ActivityReport.create(
         {
           ...draftObject,
           submissionStatus: REPORT_STATUSES.APPROVED,
           calculatedStatus: REPORT_STATUSES.APPROVED,
         },
+        { transaction },
       );
 
       const mockInstance = {
         activityReportId: ar.id,
       };
       const mockOptions = {
-        transaction: {},
+        transaction,
       };
 
       await expect(beforeDestroy(sequelize, mockInstance, mockOptions)).rejects.toThrow('File cannot be removed from approved report.');
-      await ar.destroy();
+      await transaction.rollback();
     });
 
     it('should not throw an error if the report is not approved', async () => {
-      const ar = await ActivityReport.create({ ...draftObject });
+      const transaction = await sequelize.transaction();
+      const ar = await ActivityReport.create({ ...draftObject }, { transaction });
       const mockInstance = {
         activityReportId: ar.id,
       };
       const mockOptions = {
-        transaction: {},
+        transaction,
       };
 
       await expect(beforeDestroy(sequelize, mockInstance, mockOptions))
         .resolves.toBeUndefined();
+
+      await transaction.rollback();
     });
   });
 
