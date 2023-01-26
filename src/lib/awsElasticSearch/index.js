@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 /* eslint-disable camelcase */
 import { Client, Connection } from '@opensearch-project/opensearch';
 import aws4 from 'aws4';
@@ -148,24 +149,58 @@ const search = async (indexName, fields, query, passedClient) => {
     // Initialize the client.
     const client = passedClient || await getClient();
 
-    // Create search body.
-    const body = {
-      size: 2001,
-      query: {
-        multi_match: {
-          query,
-          fields,
-        },
-      },
-    };
+    // Total hits.
+    let totalHits = [];
 
-    // Search an index.
-    const res = await client.search({
-      index: indexName,
-      body,
-    });
+    // Loop vars.
+    let retrieveAgain = false;
+    const pageSize = 10000; // Check ahead if we have any left + 1.
+    const calcPageSize = pageSize - 1;
+    let loopIterations = 0;
+    let res;
+    do {
+    // Create search body.
+      const body = {
+        from: loopIterations === 0 ? 0 : (loopIterations * calcPageSize) - 1,
+        size: pageSize,
+        query: {
+          multi_match: {
+            query,
+            fields,
+          },
+        },
+        sort: [
+          {
+            id: {
+              order: 'asc', // necessary for paging.
+            },
+          },
+        ],
+      };
+
+      // Search an index.
+      res = await client.search({
+        index: indexName,
+        body,
+      });
+
+      // Check if we need to search again.
+      // I don't know why but some times it populates body.hits other times body.hits.hits.
+      retrieveAgain = (res.body.hits && res.body.hits.hits
+        && res.body.hits.hits.length > calcPageSize)
+      || (res.body.hits && res.body.hits.length > calcPageSize);
+
+      // Append hits.
+      const hits = res.body.hits.hits || res.body.hits;
+      const hitsToAdd = hits.slice(0, hits.length === calcPageSize ? hits.length - 1 : hits.length);
+      totalHits = [...totalHits, ...hitsToAdd];
+      const hitCount = res.body.hits.hits ? res.body.hits.hits.length : res.body.hits.length;
+
+      // Increase loop count.
+      loopIterations += 1;
+    } while (retrieveAgain);
     logger.info(`AWS OpenSearch: Successfully searched the index ${indexName} using query '${query}`);
-    return res.body.hits;
+    return { hits: totalHits };
   } catch (error) {
     auditLogger.error(`AWS OpenSearch Error: Unable to search the index '${indexName}' with query '${query}': ${error.message}`);
     throw error;
