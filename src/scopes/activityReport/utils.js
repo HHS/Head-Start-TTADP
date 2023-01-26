@@ -10,19 +10,25 @@ function reportInSubQuery(baseQuery, searchTerms, operator, comparator) {
   return searchTerms.map((term) => sequelize.literal(`"ActivityReport"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(String(term).trim())})`));
 }
 
-export default function filterArray(column, searchTerms, exclude) {
+export default function filterArray(
+  column,
+  searchTerms,
+  exclude,
+  includeOperator = Op.or,
+  excludeOperator = Op.and,
+) {
   if (exclude) {
     return {
       [Op.or]: [
         {
-          [Op.and]: expandArray(column, searchTerms, 'NOT ILIKE'),
+          [excludeOperator]: expandArray(column, searchTerms, 'NOT ILIKE'),
         },
         sequelize.literal(`${column} IS NULL`),
       ],
     };
   }
   return {
-    [Op.or]: expandArray(column, searchTerms, 'ILIKE'),
+    [includeOperator]: expandArray(column, searchTerms, 'ILIKE'),
   };
 }
 
