@@ -38,6 +38,7 @@ export default async function createGoal(fileKey) {
     createdVia: 'rtr',
   };
 
+  let successRecipients = 0;
   try {
     const [dbGoalTemplate] = await GoalTemplate.findOrCreate({
       where: { templateName: goalName },
@@ -55,14 +56,19 @@ export default async function createGoal(fileKey) {
           attributes: ['id'],
         },
       );
-      await Goal.findOrCreate({
-        where: { name: goalName, grantId: grant.id },
-        defaults: { ...goal, grantId: grant.id, goalTemplateId: dbGoalTemplate.id },
-      });
+      if (grant) {
+        await Goal.findOrCreate({
+          where: { name: goalName, grantId: grant.id },
+          defaults: { ...goal, grantId: grant.id, goalTemplateId: dbGoalTemplate.id },
+        });
+        ++successRecipients;
+      } else {
+        logger.info(`Unable to find grant ${number}`);
+      }
     }
   } catch (err) {
     logger.error(err);
     return 0;
   }
-  return recipients.length;
+  return successRecipients;
 }
