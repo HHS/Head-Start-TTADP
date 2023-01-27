@@ -1,6 +1,6 @@
 const { Model } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class UserSettingOverrides extends Model {
     static associate(models) {
       UserSettingOverrides.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
