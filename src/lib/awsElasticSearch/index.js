@@ -144,7 +144,7 @@ const bulkIndex = async (documents, indexName, passedClient) => {
 /*
   Search index documents.
 */
-const search = async (indexName, fields, query, passedClient) => {
+const search = async (indexName, fields, query, passedClient, overridePageSize) => {
   try {
     // Initialize the client.
     const client = passedClient || await getClient();
@@ -154,14 +154,17 @@ const search = async (indexName, fields, query, passedClient) => {
 
     // Loop vars.
     let retrieveAgain = false;
-    const pageSize = 10000; // Check ahead if we have any left + 1.
+    const pageSize = overridePageSize || 10000; // Check ahead if we have any left + 1.
     const calcPageSize = pageSize - 1;
     let loopIterations = 0;
     let res;
     do {
-    // Create search body.
+      // Calc from.
+      const from = loopIterations === 0 ? 0 : (loopIterations * calcPageSize);
+
+      // Create search body.
       const body = {
-        from: loopIterations === 0 ? 0 : (loopIterations * calcPageSize) - 1,
+        from,
         size: pageSize,
         query: {
           multi_match: {
@@ -192,7 +195,7 @@ const search = async (indexName, fields, query, passedClient) => {
 
       // Append hits.
       const hits = res.body.hits.hits || res.body.hits;
-      const hitsToAdd = hits.slice(0, hits.length === calcPageSize ? hits.length - 1 : hits.length);
+      const hitsToAdd = hits.slice(0, hits.length === pageSize ? hits.length - 1 : hits.length);
       totalHits = [...totalHits, ...hitsToAdd];
 
       // Increase loop count.
