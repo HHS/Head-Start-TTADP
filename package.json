@@ -158,7 +158,11 @@
       "<rootDir>/src/*/coverage/",
       "<rootDir>/src/coverage/",
       "<rootDir>/src/index.js",
-      "<rootDir>/src/worker.js"
+      "<rootDir>/src/worker.ts",
+      "<rootDir>/src/app.js",
+      "<rootDir>/src/tools/*CLI.js",
+      "<rootDir>/src/tools/createAwsElasticSearchIndexesCli.js",
+      "<rootDir>/src/tools/importTTAPlanGoals.js"
     ],
     "testTimeout": 30000,
     "coveragePathIgnorePatterns": [
@@ -173,14 +177,20 @@
       "<rootDir>/src/*/coverage/",
       "<rootDir>/src/coverage/",
       "<rootDir>/src/index.js",
-      "<rootDir>/src/worker.js"
+      "<rootDir>/src/worker.ts",
+      "<rootDir>/src/app.js",
+      "<rootDir>/src/lib/cron.js",
+      "<rootDir>/src/tools/*CLI.js",
+      "<rootDir>/src/tools/createAwsElasticSearchIndexesCli.js",
+      "<rootDir>/src/tools/importTTAPlanGoals.js"
+
     ],
     "coverageThreshold": {
       "global": {
-        "statements": 39,
-        "functions": 12,
-        "branches": 25,
-        "lines": 40
+        "statements": 75,
+        "functions": 75,
+        "branches": 75,
+        "lines": 75
       }
     }
   },
