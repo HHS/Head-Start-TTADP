@@ -74,6 +74,8 @@
     "import:reports:local": "./node_modules/.bin/babel-node ./src/tools/importSSActivityReports.js",
     "import:reports": "node ./build/server/src/tools/importSSActivityReports.js",
     "import:goals:local": "./node_modules/.bin/babel-node ./src/tools/importTTAPlanGoals.js",
+    "create:goals": "node ./build/server/src/tools/goalPilotCLI.js",
+    "create:goals:local": "./node_modules/.bin/babel-node ./src/tools/goalPilotCLI.js",
     "import:goals": "node ./build/server/src/tools/importTTAPlanGoals.js",
     "import:hses:local": "./node_modules/.bin/babel-node ./src/tools/importGrantRecipientsCLI.js --skipdownload",
     "import:hses": "node ./build/server/src/tools/importGrantRecipientsCLI.js",

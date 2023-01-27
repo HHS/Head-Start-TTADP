@@ -423,8 +423,18 @@ test.describe("Activity Report", () => {
     await expect(page.getByText(`${recipients}`)).toBeVisible();
   });
 
+  test('switching objectives properly clears all fields', async ({ page}) => {
+    await page.goto('http://localhost:3000/');
+    // create a new report
+    await page.getByRole('link', { name: 'Activity Reports' }).click();
+    await page.getByRole('button', { name: '+ New Activity Report' }).click();
 
-
+    // select a recipient
+    await page.getByRole('group', { name: 'Was this activity for a recipient or other entity? *' }).locator('label').filter({ hasText: 'Recipient' }).click();
+    await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
+    await page.locator('#react-select-3-option-0-0').click();
+  });
+  
   test('multi recipient goal used on an AR', async ({ page }) => {
     await page.goto('http://localhost:3000/');
 
