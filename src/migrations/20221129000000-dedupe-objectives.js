@@ -194,7 +194,6 @@ module.exports = {
           updated_objectives AS (
             UPDATE "Objectives" o
             SET
-              title = trimmed_title,
               "createdAt" = min_createdat,
               "updatedAt" = max_updatedat,
               "objectiveTemplateId" = min_obj_template_id,
