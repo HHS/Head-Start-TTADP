@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import faker from '@faker-js/faker';
-import { REPORT_STATUSES, AUTOMATIC_CREATION } from '../../constants';
+import { REPORT_STATUSES, AUTOMATIC_CREATION, FILE_STATUSES } from '../../constants';
 
 export const draftObject = {
   activityRecipientType: 'recipient',
@@ -32,6 +32,17 @@ export const mockApprovers = (ids) => ids.map((id) => ({
   hsesUserId: String(id),
   hsesUsername: `user${id}`,
 }));
+
+export const fileGenerator = (file = {}) => {
+  const fn = faker.system.commonFileName();
+  return {
+    originalFileName: fn,
+    key: fn,
+    status: FILE_STATUSES.UPLOADED,
+    fileSize: faker.datatype.number({ min: 10000 }),
+    ...file,
+  };
+};
 
 export const objectiveTemplateGenerator = (title, objectiveTemplate = {}) => {
   const secret = 'secret';
