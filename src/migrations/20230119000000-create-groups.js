@@ -24,39 +24,12 @@ module.exports = {
         type: Sequelize.TEXT,
         unique: true,
       },
-      createdAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-      updatedAt: {
-        allowNull: false,
-        type: Sequelize.DATE,
-      },
-    }, { transaction });
-
-    await queryInterface.createTable('GroupUsers', {
-      id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        primaryKey: true,
-        autoIncrement: true,
-      },
       userId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
           model: {
             tableName: 'Users',
-          },
-          key: 'id',
-        },
-      },
-      groupId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: {
-            tableName: 'Groups',
           },
           key: 'id',
         },
@@ -115,7 +88,7 @@ module.exports = {
       `,
       { transaction },
     );
-    await Promise.all(['Groups', 'GroupUsers', 'GroupGrants'].map(async (table) => {
+    await Promise.all(['Groups', 'GroupGrants'].map(async (table) => {
       await queryInterface.sequelize.query(
         ` SELECT "ZAFRemoveAuditingOnTable"('${table}');`,
         { raw: true, transaction },
