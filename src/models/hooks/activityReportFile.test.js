@@ -50,10 +50,9 @@ describe('activityReportFile hooks', () => {
       };
 
       await expect(beforeDestroy(sequelize, mockInstance, mockOptions)).rejects.toThrow('File cannot be removed from approved report.');
-
-      await ActivityReport.destroy({ where: { id: ar.id } }, { transaction });
-
       await transaction.commit();
+
+      await ActivityReport.destroy({ where: { id: ar.id } });
     });
 
     it('should not throw an error if the report is not approved', async () => {
@@ -69,8 +68,8 @@ describe('activityReportFile hooks', () => {
       await expect(beforeDestroy(sequelize, mockInstance, mockOptions))
         .resolves.toBeUndefined();
 
-      await ActivityReport.destroy({ where: { id: ar.id } }, { transaction });
       await transaction.commit();
+      await ActivityReport.destroy({ where: { id: ar.id } });
     });
   });
 
