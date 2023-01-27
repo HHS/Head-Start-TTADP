@@ -5,13 +5,7 @@ const {
 export default (sequelize, DataTypes) => {
   class Group extends Model {
     static associate(models) {
-      Group.hasMany(models.GroupUser, { foreignKey: 'groupId', as: 'groupUsers' });
-      Group.belongsToMany(models.User, {
-        through: models.GroupUser,
-        foreignKey: 'groupId',
-        otherKey: 'userId',
-        as: 'users',
-      });
+      Group.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
       Group.hasMany(models.GroupGrant, { foreignKey: 'groupId', as: 'groupGrants' });
       Group.belongsToMany(models.Grant, {
         through: models.GroupGrant,
@@ -29,6 +23,10 @@ export default (sequelize, DataTypes) => {
       primaryKey: true,
     },
     name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    userId: {
       type: DataTypes.STRING,
       allowNull: false,
     },
