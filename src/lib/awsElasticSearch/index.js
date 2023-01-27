@@ -1,3 +1,4 @@
+/* eslint-disable dot-notation */
 /* eslint-disable no-await-in-loop */
 /* eslint-disable camelcase */
 import { Client, Connection } from '@opensearch-project/opensearch';
@@ -143,8 +144,10 @@ const bulkIndex = async (documents, indexName, passedClient) => {
 };
 /*
   Search index documents.
+  Note: Right now we use search with search_after.
+  This allows use to return all results in batches of 10k.
 */
-const search = async (indexName, fields, query, passedClient, overridePageSize) => {
+const search = async (indexName, fields, query, passedClient, overrideBatchSize) => {
   try {
     // Initialize the client.
     const client = passedClient || await getClient();
@@ -153,54 +156,61 @@ const search = async (indexName, fields, query, passedClient, overridePageSize) 
     let totalHits = [];
 
     // Loop vars.
-    let retrieveAgain = false;
-    const pageSize = overridePageSize || 10000; // Check ahead if we have any left + 1.
-    const calcPageSize = pageSize - 1;
+    const maxLoopIterations = 9;
+    let retrieveAgain = true;
+    const batchSize = overrideBatchSize || 10000; // Default batch size to 10k.
     let loopIterations = 0;
     let res;
-    do {
-      // Calc from.
-      const from = loopIterations === 0 ? 0 : (loopIterations * calcPageSize);
+    let searchAfter;
 
-      // Create search body.
-      const body = {
-        from,
-        size: pageSize,
-        query: {
-          multi_match: {
-            query,
-            fields,
+    // Create search body.
+    let body = {
+      size: batchSize,
+      query: {
+        multi_match: {
+          query,
+          fields,
+        },
+      },
+      sort: [
+        {
+          id: {
+            order: 'asc', // necessary for batch processing.
           },
         },
-        sort: [
-          {
-            id: {
-              order: 'asc', // necessary for paging.
-            },
-          },
-        ],
-      };
+      ],
+    };
 
+    while (retrieveAgain && loopIterations <= maxLoopIterations) {
       // Search an index.
       res = await client.search({
         index: indexName,
         body,
       });
 
-      // Check if we need to search again.
-      // I don't know why but some times it populates body.hits other times body.hits.hits.
-      retrieveAgain = (res.body.hits && res.body.hits.hits
-        && res.body.hits.hits.length > calcPageSize)
-      || (res.body.hits && res.body.hits.length > calcPageSize);
-
-      // Append hits.
+      // Get hits.
       const hits = res.body.hits.hits || res.body.hits;
-      const hitsToAdd = hits.slice(0, hits.length === pageSize ? hits.length - 1 : hits.length);
-      totalHits = [...totalHits, ...hitsToAdd];
 
-      // Increase loop count.
-      loopIterations += 1;
-    } while (retrieveAgain);
+      // Check if these are new results.
+      if (hits && hits.length > 0) {
+        // Append new hits.
+        totalHits = [...totalHits, ...hits];
+
+        // Get search_after from last hit.
+        const lastHit = hits.pop();
+
+        // Set search_after.
+        searchAfter = lastHit.sort;
+
+        // Update search_after.
+        body = { ...body, search_after: searchAfter };
+
+        // Increase loop count.
+        loopIterations += 1;
+      } else {
+        retrieveAgain = false;
+      }
+    }
     logger.info(`AWS OpenSearch: Successfully searched the index ${indexName} using query '${query}`);
     return { hits: totalHits };
   } catch (error) {

@@ -100,24 +100,6 @@ describe('returnsAllResults', () => {
       ['context'],
       'simple',
       null,
-      3,
-    );
-
-    // Assert results.
-    expect(searchResult.hits.length).toBe(3);
-
-    // Check found Ids.
-    const foundIds = searchResult.hits.map((h) => h['_source'].id);
-    expect(foundIds).toStrictEqual([report1.id, report2.id, report3.id]);
-  });
-
-  it('returns all pages of data at one per page', async () => {
-    // Search (set per page to 1 + per page).
-    const searchResult = await search(
-      AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-      ['context'],
-      'simple',
-      null,
       2,
     );
 
@@ -129,14 +111,32 @@ describe('returnsAllResults', () => {
     expect(foundIds).toStrictEqual([report1.id, report2.id, report3.id]);
   });
 
-  it('returns all pages of data at three per page', async () => {
-    // Search (set per page to 1 + per page).
+  it('returns all pages of data at one per page', async () => {
+    // Search.
     const searchResult = await search(
       AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
       ['context'],
       'simple',
       null,
-      4,
+      1,
+    );
+
+    // Assert results.
+    expect(searchResult.hits.length).toBe(3);
+
+    // Check found Ids.
+    const foundIds = searchResult.hits.map((h) => h['_source'].id);
+    expect(foundIds).toStrictEqual([report1.id, report2.id, report3.id]);
+  });
+
+  it('returns all pages of data at three per page', async () => {
+    // Search.
+    const searchResult = await search(
+      AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+      ['context'],
+      'simple',
+      null,
+      3,
     );
 
     // Assert results.
