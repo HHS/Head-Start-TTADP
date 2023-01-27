@@ -16,7 +16,7 @@ import {
 import { draftObject, mockApprovers, approverUserIds } from './testHelpers';
 
 describe('activityReportApprover hooks', () => {
-  const mockUserIds = approverUserIds;
+  const mockUserIds = approverUserIds();
   const mockUsers = mockApprovers(mockUserIds);
 
   beforeAll(async () => {

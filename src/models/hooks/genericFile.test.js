@@ -98,34 +98,35 @@ describe('propagateDestroyToFile', () => {
   });
 
   it('won\'t destroy the file if its on a report objective', async () => {
-    const ar = await ActivityReport.create({ ...draftObject });
+    const transaction = await sequelize.transaction();
+
+    const ar = await ActivityReport.create({ ...draftObject }, { transaction });
     const objective = await Objective.create({
       title: 'test',
       status: OBJECTIVE_STATUS.DRAFT,
-    });
+    }, { transaction });
 
     const file = await File.create({
       originalFileName: 'test.pdf',
       key: 'test.pdf',
       status: FILE_STATUSES.UPLOADED,
       fileSize: 123445,
-    });
+    }, { transaction });
 
-    await ActivityReportObjective.create({
+    const aro = await ActivityReportObjective.create({
       activityReportId: ar.id,
       objectiveId: objective.id,
-    });
+    }, { transaction });
 
     await ActivityReportObjectiveFile.create({
-      activityReportObjectiveId: objective.id,
+      activityReportObjectiveId: aro.id,
       fileId: file.id,
-    });
+    }, { transaction });
 
     const mockInstance = {
       fileId: file.id,
     };
 
-    const transaction = await sequelize.transaction();
     const mockOptions = {
       transaction,
     };
@@ -139,32 +140,8 @@ describe('propagateDestroyToFile', () => {
 
     expect(foundFile).not.toBeNull();
 
-    await ActivityReportObjectiveFile.destroy({
-      where: { activityReportObjectiveId: objective.id, fileId: file.id },
-      transaction,
-    });
-
-    await ActivityReportObjective.destroy({
-      where: { activityReportId: ar.id, objectiveId: objective.id },
-      transaction,
-    });
-
-    await Objective.destroy({
-      where: { id: objective.id },
-      transaction,
-    });
-
-    await File.destroy({
-      where: { id: file.id },
-      transaction,
-    });
-
-    await ActivityReport.destroy({
-      where: { id: ar.id },
-      transaction,
-    });
-
-    await transaction.commit();
+    // rollback deletes all the created files :)
+    await transaction.rollback();
   });
 
   it('won\'t destroy the file if its on an objective', async () => {
