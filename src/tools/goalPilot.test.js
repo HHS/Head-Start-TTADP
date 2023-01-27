@@ -1,10 +1,10 @@
 import { readFileSync } from 'fs';
+import { expect } from '@playwright/test';
 import createGoal from './goalPilot';
 import { downloadFile } from '../lib/s3';
 import db, {
   Goal, Grant, GoalTemplate,
 } from '../models';
-import { expect } from '@playwright/test';
 
 jest.mock('../logger');
 
