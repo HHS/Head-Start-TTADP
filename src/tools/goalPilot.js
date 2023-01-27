@@ -61,7 +61,7 @@ export default async function createGoal(fileKey) {
           where: { name: goalName, grantId: grant.id },
           defaults: { ...goal, grantId: grant.id, goalTemplateId: dbGoalTemplate.id },
         });
-        ++successRecipients;
+        successRecipients = successRecipients + 1;
       } else {
         logger.info(`Unable to find grant ${number}`);
       }
