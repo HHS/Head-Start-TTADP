@@ -4,13 +4,14 @@ import { downloadFile } from '../lib/s3';
 import db, {
   Goal, Grant, GoalTemplate,
 } from '../models';
+import { expect } from '@playwright/test';
 
 jest.mock('../logger');
 
 jest.mock('../lib/s3');
 
 const goalName = '(PILOT) Grant recipient will improve teacher-child interactions (as measured by CLASS scores)';
-const fileName = '23CLASSPilotTest.csv';
+const fileName = 'src/tools/files/23CLASSPilotTest.csv';
 
 describe('Goal pilot script', () => {
   beforeAll(async () => {
@@ -73,7 +74,7 @@ describe('Goal pilot script', () => {
   it('should set createdVia to rtr', async () => {
     await createGoal(fileName);
 
-    const createdGoal = await Goal.findOne({ where: { name: goalName } });
+    const createdGoal = await Goal.findOne({ where: { name: goalName }, attributes: ['createdVia'] });
 
     expect(createdGoal.createdVia).toBe('rtr');
   });
@@ -81,21 +82,39 @@ describe('Goal pilot script', () => {
   it('should set isRttapa to "No"', async () => {
     await createGoal(fileName);
 
-    const createdGoal = await Goal.findOne({ where: { name: goalName } });
+    const createdGoal = await Goal.findOne({ where: { name: goalName }, attributes: ['isRttapa'] });
 
     expect(createdGoal.isRttapa).toBe('No');
+  });
+
+  it('should handle invalid grants gracefully', async () => {
+    const count = await createGoal(fileName);
+
+    const createdGoal = await Goal.findOne({
+      where: { name: goalName },
+      attributes: ['name'],
+      include: [{
+        model: Grant,
+        as: 'grant',
+        attributes: ['id', 'number'],
+        where: { number: '14CH00003' },
+      }],
+    });
+
+    expect(createdGoal).not.toBeNull();
+    expect(count).not.toBe(0);
   });
 
   it('is idempotent', async () => {
     await createGoal(fileName);
 
-    const allGoals = await Goal.findAll({ where: { name: goalName } });
+    const allGoals = await Goal.findAll({ where: { name: goalName }, attributes: ['name'] });
     expect(allGoals).not.toBeNull();
     expect(allGoals.length).toBe(7);
 
     await createGoal(fileName);
 
-    const allGoals2 = await Goal.findAll({ where: { name: goalName } });
+    const allGoals2 = await Goal.findAll({ where: { name: goalName }, attributes: ['name'] });
     expect(allGoals).not.toBeNull();
     expect(allGoals2.length).toBe(allGoals.length);
   });

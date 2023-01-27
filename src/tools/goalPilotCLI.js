@@ -21,8 +21,8 @@ if (!file) {
 createGoal(file).then((recCount) => {
   if (!recCount) {
     logger.error('Error occurred.');
-  } else {
-    logger.info(`Processed ${recCount} Recipients`);
   }
+  logger.info(`Processed ${recCount} Recipients`);
+
   process.exit(0);
 });
