@@ -1,9 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { describe } from 'node:test';
-
-async function blur(page) {
-  await page.getByText('Office of Head Start TTA Hub').click();
-}
+import { blur } from './common';
 
 describe('other entity report', () => {
   test('create a report with two other entities and one objective', async ({ page }) => {
