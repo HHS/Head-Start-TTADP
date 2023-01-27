@@ -3,7 +3,7 @@ const { CREATION_METHOD } = require('../constants');
 const { beforeValidate, beforeUpdate, afterUpdate } = require('./hooks/goalTemplate');
 // const { auditLogger } = require('../logger');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class GoalTemplate extends Model {
     /**
      * Helper method for defining associations.
