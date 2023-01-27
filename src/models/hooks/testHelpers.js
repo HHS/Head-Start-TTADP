@@ -45,14 +45,16 @@ export const fileGenerator = (file = {}) => {
 };
 
 export const objectiveTemplateGenerator = (title, objectiveTemplate = {}) => {
+  const t = title || faker.lorem.sentence(5);
+
   const secret = 'secret';
   const hash = crypto
     .createHmac('md5', secret)
-    .update(title)
+    .update(t)
     .digest('hex');
 
   return {
-    templateTitle: 'test',
+    templateTitle: t,
     creationMethod: AUTOMATIC_CREATION,
     hash,
     regionId: 1,
