@@ -115,7 +115,7 @@ export default function TTAHistory({
             filters={filtersToApply}
             showFilter={false}
             tableCaption="Approved activity reports"
-            exportIdPrefix="ttahistory-"
+            exportIdPrefix="tta-history-"
           />
         </FilterContext.Provider>
       </div>
