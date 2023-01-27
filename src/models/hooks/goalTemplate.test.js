@@ -1,35 +1,23 @@
-// 12,25,36-38,44-48,72-73,77
 import {
   sequelize,
-  User,
-  ActivityReport,
 } from '..';
 import { AUTOMATIC_CREATION, CURATED_CREATION } from '../../constants';
-
-import { beforeValidate, beforeUpdate, afterUpdate } from './goalTemplate';
+import { beforeValidate, beforeUpdate } from './goalTemplate';
 
 describe('GoalTemplate hooks', () => {
   describe('beforeUpdate', () => {
-    it('calls autoPopulateHash', async () => {
+    it('calls autoPopulateHash and templateNameModifiedAt', async () => {
       const mockInstance = {
-        changed: [],
+        changed: jest.fn(() => ['templateName']),
+        templateName: 'test',
+        set: jest.fn(),
       };
       const mockOptions = {
         fields: [],
       };
       beforeUpdate(sequelize, mockInstance, mockOptions);
-      expect(mockOptions.fields).toStrictEqual(['hash']);
-    });
-
-    it('calls autoPopulateTemplateNameModifiedAt', async () => {
-      const mockInstance = {
-        changed: [],
-      };
-      const mockOptions = {
-        fields: [],
-      };
-      beforeUpdate(sequelize, mockInstance, mockOptions);
-      expect(mockOptions.fields).toStrictEqual(['templateNameModifiedAt']);
+      expect(mockInstance.set).toHaveBeenCalled();
+      expect(mockOptions.fields).toStrictEqual(['hash', 'templateNameModifiedAt']);
     });
   });
 
@@ -38,47 +26,51 @@ describe('GoalTemplate hooks', () => {
       it('sets the creation method if the creation method is not set', async () => {
         const mockInstance = {
           creationMethod: null,
-          changed: [],
+          changed: jest.fn(() => []),
+          set: jest.fn(),
         };
         const mockOptions = {
           fields: [],
         };
         beforeValidate(sequelize, mockInstance, mockOptions);
-        expect(mockInstance.creationMethod).toEqual(AUTOMATIC_CREATION);
+        expect(mockInstance.set).toHaveBeenCalledWith('creationMethod', AUTOMATIC_CREATION);
         expect(mockOptions.fields).toEqual(['creationMethod']);
       });
 
       describe('not', () => {
         it('if "changed" is not an array', async () => {
           const mockInstance = {
-            creationMethod: null,
-            changed: null,
+            creationMethod: AUTOMATIC_CREATION,
+            changed: jest.fn(() => null),
+            set: jest.fn(),
           };
           const mockOptions = {
             fields: [],
           };
           beforeValidate(sequelize, mockInstance, mockOptions);
-          expect(mockInstance.creationMethod).toEqual(null);
+          expect(mockInstance.creationMethod).toEqual(AUTOMATIC_CREATION);
           expect(mockOptions.fields).toEqual([]);
         });
 
         it('if changed includes creation method', async () => {
           const mockInstance = {
             creationMethod: null,
-            changed: ['creationMethod'],
+            changed: jest.fn(() => ['creationMethod']),
+            set: jest.fn(),
           };
           const mockOptions = {
             fields: [],
           };
           beforeValidate(sequelize, mockInstance, mockOptions);
           expect(mockInstance.creationMethod).toEqual(null);
-          expect(mockOptions.fields).toEqual([]);
+          expect(mockOptions.fields).toEqual(['creationMethod']);
         });
 
         it('if creation method is already set', async () => {
           const mockInstance = {
-            creationMethod: 'Manual',
-            changed: [],
+            creationMethod: CURATED_CREATION,
+            changed: jest.fn(() => ['creationMethod']),
+            set: jest.fn(),
           };
           const mockOptions = {
             fields: [],
@@ -92,21 +84,26 @@ describe('GoalTemplate hooks', () => {
       describe('autoPopulateHash', () => {
         it('if the hash is not set', async () => {
           const mockInstance = {
-            changed: ['templateName'],
+            changed: jest.fn(() => ['templateName']),
             templateName: 'test',
             hash: '',
+            set: jest.fn(),
           };
           const mockOptions = {
             fields: [],
           };
           beforeValidate(sequelize, mockInstance, mockOptions);
-          expect(mockOptions.fields).toStrictEqual(['hash']);
+          expect(mockOptions.fields).toStrictEqual([
+            'hash',
+            'templateNameModifiedAt',
+            'creationMethod',
+          ]);
         });
 
         describe('not', () => {
           it('if "changed" is not an array', async () => {
             const mockInstance = {
-              changed: null,
+              changed: jest.fn(() => null),
               templateName: 'test',
               hash: '',
             };
@@ -119,15 +116,16 @@ describe('GoalTemplate hooks', () => {
 
           it('if changed does not include template name', async () => {
             const mockInstance = {
-              changed: ['other'],
+              changed: jest.fn(() => []),
               templateName: 'test',
               hash: '',
+              set: jest.fn(),
             };
             const mockOptions = {
               fields: [],
             };
             beforeValidate(sequelize, mockInstance, mockOptions);
-            expect(mockOptions.fields).toStrictEqual([]);
+            expect(mockOptions.fields).toStrictEqual(['creationMethod']);
           });
         });
       });
@@ -135,21 +133,22 @@ describe('GoalTemplate hooks', () => {
       describe('autoPopulateTemplatenameModifiedAt', () => {
         it('if the hash is not set', async () => {
           const mockInstance = {
-            changed: ['templateName'],
+            changed: jest.fn(() => ['templateName']),
             templateName: 'test',
             templateNameModifiedAt: '',
+            set: jest.fn(),
           };
           const mockOptions = {
             fields: [],
           };
           beforeValidate(sequelize, mockInstance, mockOptions);
-          expect(mockOptions.fields).toStrictEqual(['templateNameModifiedAt']);
+          expect(mockOptions.fields).toStrictEqual(['hash', 'templateNameModifiedAt', 'creationMethod']);
         });
 
         describe('not', () => {
           it('if "changed" is not an array', async () => {
             const mockInstance = {
-              changed: null,
+              changed: jest.fn(() => null),
               templateName: 'test',
               templateNameModifiedAt: '',
             };
@@ -162,15 +161,16 @@ describe('GoalTemplate hooks', () => {
 
           it('if changed does not include template name', async () => {
             const mockInstance = {
-              changed: ['other'],
+              changed: jest.fn(() => []),
               templateName: 'test',
               templateNameModifiedAt: '',
+              set: jest.fn(),
             };
             const mockOptions = {
               fields: [],
             };
             beforeValidate(sequelize, mockInstance, mockOptions);
-            expect(mockOptions.fields).toStrictEqual([]);
+            expect(mockOptions.fields).toStrictEqual(['creationMethod']);
           });
         });
       });
