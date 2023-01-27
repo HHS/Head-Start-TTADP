@@ -8,7 +8,7 @@ describe('MediaCaptureButton', () => {
   const RenderCaptureButton = () => {
     const widget = useRef();
     return (
-      <div ref={widget}><MediaCaptureButton reference={widget} /></div>
+      <div ref={widget}><MediaCaptureButton id="mediaCaptureTest" reference={widget} /></div>
     );
   };
   it('renders', () => {
