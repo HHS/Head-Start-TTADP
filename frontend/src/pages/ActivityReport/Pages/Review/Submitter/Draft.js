@@ -136,7 +136,7 @@ const Draft = ({
         <div className="margin-top-3">
           <ApproverStatusList approverStatus={approverStatusList} />
         </div>
-        <Button disabled={!connectionActive} type="submit">Submit for approval</Button>
+        <Button disabled={!connectionActive} id="draft-review-submit" type="submit">Submit for approval</Button>
         { !connectionActive && (
         <Alert type="warning" noIcon>
           There&#39;s an issue with your connection.
@@ -151,6 +151,7 @@ const Draft = ({
         </Alert>
         )}
         <Button
+          id="draft-review-save-draft"
           outline
           type="button"
           onClick={async () => {
