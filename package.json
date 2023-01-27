@@ -74,6 +74,8 @@
     "import:reports:local": "./node_modules/.bin/babel-node ./src/tools/importSSActivityReports.js",
     "import:reports": "node ./build/server/src/tools/importSSActivityReports.js",
     "import:goals:local": "./node_modules/.bin/babel-node ./src/tools/importTTAPlanGoals.js",
+    "create:goals": "node ./build/server/src/tools/goalPilotCLI.js",
+    "create:goals:local": "./node_modules/.bin/babel-node ./src/tools/goalPilotCLI.js",
     "import:goals": "node ./build/server/src/tools/importTTAPlanGoals.js",
     "import:hses:local": "./node_modules/.bin/babel-node ./src/tools/importGrantRecipientsCLI.js --skipdownload",
     "import:hses": "node ./build/server/src/tools/importGrantRecipientsCLI.js",
@@ -156,7 +158,11 @@
       "<rootDir>/src/*/coverage/",
       "<rootDir>/src/coverage/",
       "<rootDir>/src/index.js",
-      "<rootDir>/src/worker.js"
+      "<rootDir>/src/worker.ts",
+      "<rootDir>/src/app.js",
+      "<rootDir>/src/tools/*CLI.js",
+      "<rootDir>/src/tools/createAwsElasticSearchIndexesCli.js",
+      "<rootDir>/src/tools/importTTAPlanGoals.js"
     ],
     "testTimeout": 30000,
     "coveragePathIgnorePatterns": [
@@ -171,14 +177,20 @@
       "<rootDir>/src/*/coverage/",
       "<rootDir>/src/coverage/",
       "<rootDir>/src/index.js",
-      "<rootDir>/src/worker.js"
+      "<rootDir>/src/worker.ts",
+      "<rootDir>/src/app.js",
+      "<rootDir>/src/lib/cron.js",
+      "<rootDir>/src/tools/*CLI.js",
+      "<rootDir>/src/tools/createAwsElasticSearchIndexesCli.js",
+      "<rootDir>/src/tools/importTTAPlanGoals.js"
+
     ],
     "coverageThreshold": {
       "global": {
-        "statements": 39,
-        "functions": 12,
-        "branches": 25,
-        "lines": 40
+        "statements": 75,
+        "functions": 75,
+        "branches": 75,
+        "lines": 75
       }
     }
   },

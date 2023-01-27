@@ -229,13 +229,14 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         <Grid row className="position-relative margin-bottom-2">
           <Grid desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}><h2 className="ttahub--dashboard-widget-heading margin-0">Total TTA hours</h2></Grid>
           <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
-            { !showAccessibleData && <MediaCaptureButton className="margin-x-2" reference={widget} buttonText="Save screenshot" /> }
+            { !showAccessibleData && <MediaCaptureButton id="rd-save-screenshot" className="margin-x-2" reference={widget} buttonText="Save screenshot" /> }
             <button
               type="button"
               className="usa-button--unstyled"
               aria-label={showAccessibleData ? 'display total training and technical assistance hours as graph' : 'display total training and technical assistance hours as table'}
               onClick={toggleType}
               data-html2canvas-ignore
+              id="rd-display-table-tta-total-hours"
             >
               {showAccessibleData ? 'Display graph' : 'Display table'}
             </button>
