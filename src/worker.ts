@@ -29,7 +29,7 @@ import logEmailNotification, { logDigestEmailNotification } from './lib/mailer/l
 // Number of workers to spawn
 const workers = process.env.WORKER_CONCURRENCY || 2;
 // Number of jobs per worker. Can be adjusted if clamav is getting bogged down
-const maxJobsPerWorker = process.env.MAX_JOBS_PER_WORKER || 5;
+const maxJobsPerWorker = Number(process.env.MAX_JOBS_PER_WORKER) || 5;
 
 // Pull jobs off the redis queue and process them.
 async function start() {

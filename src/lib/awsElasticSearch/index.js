@@ -150,7 +150,7 @@ const search = async (indexName, fields, query, passedClient) => {
 
     // Create search body.
     const body = {
-      // size: 20,
+      size: 2001,
       query: {
         multi_match: {
           query,
