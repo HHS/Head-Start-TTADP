@@ -74,10 +74,10 @@ describe('propagateDestroyToFile', () => {
     };
 
     await propagateDestroyToFile(sequelize, mockInstance, mockOptions);
+    await transaction.commit();
 
     const foundFile = await File.findOne({
       where: { id: file.id },
-      transaction,
     });
 
     expect(foundFile).not.toBeNull();
@@ -93,8 +93,6 @@ describe('propagateDestroyToFile', () => {
     await ActivityReport.destroy({
       where: { id: ar.id },
     });
-
-    await transaction.commit();
   });
 
   it('won\'t destroy the file if its on a report objective', async () => {
@@ -133,15 +131,33 @@ describe('propagateDestroyToFile', () => {
 
     await propagateDestroyToFile(sequelize, mockInstance, mockOptions);
 
+    await transaction.commit();
+
     const foundFile = await File.findOne({
       where: { id: file.id },
-      transaction,
     });
 
     expect(foundFile).not.toBeNull();
 
-    // rollback deletes all the created files :)
-    await transaction.rollback();
+    await ActivityReportObjectiveFile.destroy({
+      where: { activityReportObjectiveId: aro.id, fileId: file.id },
+    });
+
+    await File.destroy({
+      where: { id: file.id },
+    });
+
+    await ActivityReportObjective.destroy({
+      where: { id: aro.id },
+    });
+
+    await Objective.destroy({
+      where: { id: objective.id },
+    });
+
+    await ActivityReport.destroy({
+      where: { id: ar.id },
+    });
   });
 
   it('won\'t destroy the file if its on an objective', async () => {
