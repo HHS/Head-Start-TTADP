@@ -4,7 +4,7 @@ import { REPORT_STATUSES, AUTOMATIC_CREATION, FILE_STATUSES } from '../../consta
 
 export const draftObject = {
   activityRecipientType: 'recipient',
-  regionId: 1,
+  regionId: 6,
   activityRecipients: [{ grantId: 1 }],
   submissionStatus: REPORT_STATUSES.DRAFT,
   numberOfParticipants: 1,
