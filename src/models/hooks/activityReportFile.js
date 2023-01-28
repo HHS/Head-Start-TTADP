@@ -1,3 +1,4 @@
+import { REPORT_STATUSES } from '../../constants';
 import { propagateDestroyToFile } from './genericFile';
 
 const checkForUseOnApprovedReport = async (sequelize, instance, options) => {
@@ -5,7 +6,8 @@ const checkForUseOnApprovedReport = async (sequelize, instance, options) => {
     where: { id: instance.activityReportId },
     transaction: options.transaction,
   });
-  if (activityReport.approval.calculatedStatus === 'Approved') {
+
+  if (activityReport.approval.calculatedStatus === REPORT_STATUSES.APPROVED) {
     throw new Error('File cannot be removed from approved report.');
   }
 };

@@ -43,6 +43,7 @@ describe('saveGoalsForReport (more tests)', () => {
   let existingObjective;
   let topic;
   let secondTopic;
+  let rtrObjectiveNotOnReport;
 
   // Adding a recipient.
   let addingRecipientReport;
@@ -301,7 +302,10 @@ describe('saveGoalsForReport (more tests)', () => {
       },
     });
 
-    const objectiveIds = arObjectives.map((aro) => aro.objectiveId);
+    const objectiveIds = [
+      ...arObjectives.map((aro) => aro.objectiveId),
+      rtrObjectiveNotOnReport.id,
+    ];
 
     await ActivityReportObjective.destroy({
       where: { activityReportId: reportIds },
@@ -477,10 +481,19 @@ describe('saveGoalsForReport (more tests)', () => {
 
     expect(beforeObjectives.length).toBe(1);
 
+    const objectiveIds = beforeObjectives.map((bo) => bo.objectiveId);
+
     const [savedReport] = await activityReportAndRecipientsById(activityReportForNewGoal.id);
 
     const goalName = 'This is a brand new goal';
     const [beforeGoal] = beforeGoals;
+
+    rtrObjectiveNotOnReport = await Objective.create({
+      goalId: beforeGoal.goalId,
+      status: 'In Progress',
+      title: 'gabba gabba hey',
+      createdVia: 'rtr',
+    });
 
     const newGoals = [
       {
@@ -518,6 +531,22 @@ describe('saveGoalsForReport (more tests)', () => {
     });
 
     expect(afterObjectives.length).toBe(0);
+
+    const remainingObjectives = await Objective.findAll({
+      where: {
+        id: objectiveIds,
+      },
+    });
+
+    expect(remainingObjectives.length).toBe(0);
+    const unaffectedObjectives = await Objective.findAll({
+      where: {
+        goalId,
+      },
+    });
+
+    expect(unaffectedObjectives.length).toBe(1);
+    expect(unaffectedObjectives[0].id).toBe(rtrObjectiveNotOnReport.id);
   });
 
   it('you can safely reuse objective text', async () => {
@@ -903,32 +932,43 @@ describe('saveGoalsForReport (more tests)', () => {
         goalIds: [rtrGoal.id],
         id: rtrGoal.id,
         name: rtrGoal.name,
-        objectives: [{
-          id: rtrObjective.id,
-          isNew: false,
-          ttaProvided: 'This is some TTA for this guy',
-          title: rtrObjective.title,
-          status: 'In Progress',
-          goalId: rtrGoal.id,
-          files: [],
-          topics: [
-            {
-              name: topic.name,
-              id: topic.id,
-            },
-            {
-              name: secondTopic.name,
-              id: secondTopic.id,
-            },
-          ],
+        objectives: [
+          {
+            isNew: true,
+            ttaProvided: 'This is some TTA for this guy',
+            title: '',
+            status: 'Not Started',
+            goalId: rtrGoal.id,
+            files: [],
+            topics: [],
+            resources: [],
+          },
+          {
+            id: rtrObjective.id,
+            isNew: false,
+            ttaProvided: 'This is some TTA for this guy',
+            title: rtrObjective.title,
+            status: 'In Progress',
+            goalId: rtrGoal.id,
+            files: [],
+            topics: [
+              {
+                name: topic.name,
+                id: topic.id,
+              },
+              {
+                name: secondTopic.name,
+                id: secondTopic.id,
+              },
+            ],
 
-          resources: [
-            {
-              key: 'gibberish-i-THINK-thats-obvious',
-              value: 'https://www.google.com', // a fine resource
-            },
-          ],
-        }],
+            resources: [
+              {
+                key: 'gibberish-i-THINK-thats-obvious',
+                value: 'https://www.google.com', // a fine resource
+              },
+            ],
+          }],
         grantIds: [grantOne.id],
         status: 'In Progress',
       },
@@ -956,8 +996,10 @@ describe('saveGoalsForReport (more tests)', () => {
       },
     });
 
-    expect(afterActivityReportObjectives.length).toBe(1);
-    expect(afterActivityReportObjectives[0].objectiveId).toBe(rtrObjective.id);
+    expect(afterActivityReportObjectives.length).toBe(2);
+    expect(afterActivityReportObjectives.map((o) => o.objectiveId)).toContain(rtrObjective.id);
+    // eslint-disable-next-line max-len
+    const existingObjectiveARO = afterActivityReportObjectives.find((o) => o.objectiveId === rtrObjective.id);
 
     const afterObjectiveTopics = await ObjectiveTopic.findAll({
       where: {
@@ -974,7 +1016,7 @@ describe('saveGoalsForReport (more tests)', () => {
     // and that both are associated with the activity report
     const afterActivityReportObjectiveTopics = await ActivityReportObjectiveTopic.findAll({
       where: {
-        activityReportObjectiveId: afterActivityReportObjectives[0].id,
+        activityReportObjectiveId: existingObjectiveARO.id,
       },
     });
 
@@ -999,7 +1041,7 @@ describe('saveGoalsForReport (more tests)', () => {
 
     const afterActivityReportObjectiveResources = await ActivityReportObjectiveResource.findAll({
       where: {
-        activityReportObjectiveId: afterActivityReportObjectives[0].id,
+        activityReportObjectiveId: existingObjectiveARO.id,
       },
     });
 

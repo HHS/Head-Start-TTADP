@@ -10,7 +10,7 @@ import {
 } from './constants';
 import { REPORT_STATUSES } from '../../Constants';
 import ObjectiveStatus from './ObjectiveStatus';
-import GoalFormLoadingContext from '../../GoalFormLoadingContext';
+import AppLoadingContext from '../../AppLoadingContext';
 
 const [
   objectiveTitleError,
@@ -45,7 +45,7 @@ export default function ObjectiveForm({
     )))
   ), [objective.activityReports]);
 
-  const { isLoading } = useContext(GoalFormLoadingContext);
+  const { isAppLoading } = useContext(AppLoadingContext);
 
   // onchange handlers
   const onChangeTitle = (e) => setObjective({ ...objective, title: e.target.value });
@@ -110,7 +110,7 @@ export default function ObjectiveForm({
         onChangeTitle={onChangeTitle}
         validateObjectiveTitle={validateObjectiveTitle}
         status={status}
-        isLoading={isLoading}
+        isLoading={isAppLoading}
         userCanEdit={userCanEdit}
       />
 
@@ -120,10 +120,9 @@ export default function ObjectiveForm({
         validateObjectiveTopics={validateObjectiveTopics}
         topics={topics}
         onChangeTopics={onChangeTopics}
-        status={status}
         goalStatus={goalStatus}
         isOnReport={isOnReport || false}
-        isLoading={isLoading}
+        isLoading={isAppLoading}
         userCanEdit={userCanEdit}
       />
 
@@ -133,9 +132,8 @@ export default function ObjectiveForm({
         validateResources={validateResources}
         error={errors[OBJECTIVE_FORM_FIELD_INDEXES.RESOURCES]}
         isOnReport={isOnReport || false}
-        status={status}
         goalStatus={goalStatus}
-        isLoading={isLoading}
+        isLoading={isAppLoading}
         userCanEdit={userCanEdit}
       />
       { title && (
@@ -144,12 +142,12 @@ export default function ObjectiveForm({
         onChangeFiles={onChangeFiles}
         objective={objective}
         isOnReport={isOnReport || false}
-        status={status}
-        isLoading={isLoading}
+        isLoading={isAppLoading}
         onUploadFiles={onUploadFiles}
         index={index}
         goalStatus={goalStatus}
         userCanEdit={userCanEdit}
+        selectedObjectiveId={objective.id}
       />
       )}
 
@@ -158,7 +156,7 @@ export default function ObjectiveForm({
         goalStatus={goalStatus}
         onChangeStatus={onChangeStatus}
         inputName={`objective-status-${index}`}
-        isLoading={isLoading}
+        isLoading={isAppLoading}
         userCanEdit={userCanEdit}
       />
 

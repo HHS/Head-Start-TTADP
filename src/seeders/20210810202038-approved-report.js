@@ -75,6 +75,7 @@ const reports = [
     legacyId: null,
     imported: null,
     version: 1,
+    topics: ['Fruit', 'Math', 'Friendship'],
   },
 ];
 

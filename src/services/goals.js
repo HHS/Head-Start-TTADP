@@ -32,6 +32,7 @@ import {
   destroyActivityReportObjectiveMetadata,
 } from './reportCache';
 import { auditLogger } from '../logger';
+import { isValidResourceUrl } from '../lib/urlUtils';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -74,6 +75,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         'id',
         'status',
         'onApprovedAR',
+        'rtrOrder',
         [
           sequelize.literal(`
             (
@@ -89,6 +91,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
       ],
       model: Objective,
       as: 'objectives',
+      order: [['rtrOrder', 'ASC']],
       include: [
         {
           model: ObjectiveResource,
@@ -236,6 +239,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         'number',
         'regionId',
         'recipientId',
+        'numberWithProgramTypes',
       ],
       include: [
         {
@@ -264,14 +268,31 @@ export async function saveObjectiveAssociations(
   files = [],
   deleteUnusedAssociations = false,
 ) {
+  // We need to know if the objectiveTemplateId is populated to know if we
+  // can disable the hooks on the ObjectiveTopic
+  const o = await Objective.findOne({
+    attributes: ['objectiveTemplateId'],
+    where: { id: objective.id },
+    raw: true,
+  });
+
   // topics
   const objectiveTopics = await Promise.all(
-    (topics.map(async (topic) => ObjectiveTopic.findOrCreate({
-      where: {
-        objectiveId: objective.id,
-        topicId: topic.id,
-      },
-    }))),
+    (topics.map(async (topic) => {
+      let otopic = await ObjectiveTopic.findOne({
+        where: {
+          objectiveId: objective.id,
+          topicId: topic.id,
+        },
+      });
+      if (!otopic) {
+        otopic = await ObjectiveTopic.create({
+          objectiveId: objective.id,
+          topicId: topic.id,
+        }, { hooks: !!o.objectiveTemplateId });
+      }
+      return otopic;
+    })),
   );
 
   if (deleteUnusedAssociations) {
@@ -279,7 +300,7 @@ export async function saveObjectiveAssociations(
     await ObjectiveTopic.destroy({
       where: {
         id: {
-          [Op.notIn]: objectiveTopics.length ? objectiveTopics.map(([ot]) => ot.id) : [],
+          [Op.notIn]: objectiveTopics.length ? objectiveTopics.map((ot) => ot.id) : [],
         },
         objectiveId: objective.id,
       },
@@ -288,13 +309,22 @@ export async function saveObjectiveAssociations(
 
   // resources
   const objectiveResources = await Promise.all(
-    resources.filter(({ value }) => value).map(
-      ({ value }) => ObjectiveResource.findOrCreate({
-        where: {
-          userProvidedUrl: value,
-          objectiveId: objective.id,
-        },
-      }),
+    resources.filter(({ value }) => value && isValidResourceUrl(value)).map(
+      async ({ value }) => {
+        let oresource = await ObjectiveResource.findOne({
+          where: {
+            userProvidedUrl: value,
+            objectiveId: objective.id,
+          },
+        });
+        if (!oresource) {
+          oresource = await ObjectiveResource.create({
+            userProvidedUrl: value,
+            objectiveId: objective.id,
+          }, { hooks: !!o.objectiveTemplateId });
+        }
+        return oresource;
+      },
     ),
   );
 
@@ -304,7 +334,7 @@ export async function saveObjectiveAssociations(
       where: {
         id: {
           [Op.notIn]: objectiveResources.length
-            ? objectiveResources.map(([or]) => or.id) : [],
+            ? objectiveResources.map((or) => or.id) : [],
         },
         objectiveId: objective.id,
       },
@@ -313,12 +343,21 @@ export async function saveObjectiveAssociations(
 
   const objectiveFiles = await Promise.all(
     files.map(
-      (file) => ObjectiveFile.findOrCreate({
-        where: {
-          fileId: file.id,
-          objectiveId: objective.id,
-        },
-      }),
+      async (file) => {
+        let ofile = await ObjectiveFile.findOne({
+          where: {
+            fileId: file.id,
+            objectiveId: objective.id,
+          },
+        });
+        if (!ofile) {
+          ofile = await ObjectiveFile.create({
+            fileId: file.id,
+            objectiveId: objective.id,
+          }, { hooks: !!o.objectiveTemplateId });
+        }
+        return ofile;
+      },
     ),
   );
 
@@ -347,9 +386,9 @@ export async function saveObjectiveAssociations(
 export function reduceObjectives(newObjectives, currentObjectives = []) {
   // objectives = accumulator
   // we pass in the existing objectives as the accumulator
-  return newObjectives.reduce((objectives, objective) => {
+  const objectivesToSort = newObjectives.reduce((objectives, objective) => {
     const exists = objectives.find((o) => (
-      o.title === objective.title && o.status === objective.status
+      o.title.trim() === objective.title.trim() && o.status === objective.status
     ));
 
     if (exists) {
@@ -368,6 +407,7 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
 
     return [...objectives, {
       ...objective.dataValues,
+      title: objective.title,
       value: id,
       ids: [id],
       // Make sure we pass back a list of recipient ids for subsequent saves.
@@ -375,10 +415,19 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
       isNew: false,
     }];
   }, currentObjectives);
+
+  objectivesToSort.sort((o1, o2) => {
+    if (o1.rtrOrder < o2.rtrOrder) {
+      return -1;
+    }
+    return 1;
+  });
+
+  return objectivesToSort;
 }
 
 export function reduceObjectivesForActivityReport(newObjectives, currentObjectives = []) {
-  return newObjectives.reduce((objectives, objective) => {
+  const objectivesToSort = newObjectives.reduce((objectives, objective) => {
     // check the activity report objective status
     const objectiveStatus = objective.activityReportObjectives
       && objective.activityReportObjectives[0]
@@ -388,7 +437,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
     // objectives represent the accumulator in the find below
     // objective is the objective as it is returned from the API
     const exists = objectives.find((o) => (
-      o.title === objective.title && o.status === objectiveStatus
+      o.title.trim() === objective.title.trim() && o.status === objectiveStatus
     ));
 
     if (exists) {
@@ -398,23 +447,29 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       // we can dedupe these using lodash
       exists.resources = uniqBy([
         ...exists.resources,
-        ...objective.activityReportObjectives[0].activityReportObjectiveResources.map(
-          (r) => r.dataValues,
-        ),
+        ...(objective.activityReportObjectives
+          && objective.activityReportObjectives.length > 0
+          ? objective.activityReportObjectives[0].activityReportObjectiveResources
+            .map((r) => r.dataValues)
+          : []),
       ], 'value');
 
       exists.topics = uniqBy([
         ...exists.topics,
-        ...objective.activityReportObjectives[0].activityReportObjectiveTopics.map(
-          (t) => t.topic.dataValues,
-        ),
+        ...(objective.activityReportObjectives
+          && objective.activityReportObjectives.length > 0
+          ? objective.activityReportObjectives[0].activityReportObjectiveTopics
+            .map((t) => t.topic.dataValues)
+          : []),
       ], 'id');
 
       exists.files = uniqBy([
         ...exists.files,
-        ...objective.activityReportObjectives[0].activityReportObjectiveFiles.map(
-          (f) => ({ ...f.file.dataValues, url: f.file.url }),
-        ),
+        ...(objective.activityReportObjectives
+          && objective.activityReportObjectives.length > 0
+          ? objective.activityReportObjectives[0].activityReportObjectiveFiles
+            .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
+          : []),
       ], 'key');
 
       return objectives;
@@ -428,32 +483,54 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         && objective.activityReportObjectives[0].ttaProvided
       ? objective.activityReportObjectives[0].ttaProvided : null;
 
+    const arOrder = objective.activityReportObjectives
+      && objective.activityReportObjectives[0]
+      && objective.activityReportObjectives[0].arOrder
+      ? objective.activityReportObjectives[0].arOrder : null;
+
     const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
 
     return [...objectives, {
       ...objective.dataValues,
+      title: objective.title,
       value: id,
       ids: [id],
       ttaProvided,
       status: objectiveStatus, // the status from above, derived from the activity report objective
       isNew: false,
+      arOrder,
 
       // for the associated models, we need to return not the direct associations
       // but those associated through an activity report since those reflect the state
       // of the activity report not the state of the objective, which is what
       // we are getting at with this method (getGoalsForReport)
 
-      topics: objective.activityReportObjectives[0].activityReportObjectiveTopics.map(
-        (t) => t.topic.dataValues,
-      ),
-      resources: objective.activityReportObjectives[0].activityReportObjectiveResources.map(
-        (r) => r.dataValues,
-      ),
-      files: objective.activityReportObjectives[0].activityReportObjectiveFiles.map(
-        (f) => ({ ...f.file.dataValues, url: f.file.url }),
-      ),
+      topics: objective.activityReportObjectives
+        && objective.activityReportObjectives.length > 0
+        ? objective.activityReportObjectives[0].activityReportObjectiveTopics
+          .map((t) => t.topic.dataValues)
+        : [],
+      resources: objective.activityReportObjectives
+        && objective.activityReportObjectives.length > 0
+        ? objective.activityReportObjectives[0].activityReportObjectiveResources
+          .map((r) => r.dataValues)
+        : [],
+      files: objective.activityReportObjectives
+        && objective.activityReportObjectives.length > 0
+        ? objective.activityReportObjectives[0].activityReportObjectiveFiles
+          .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
+        : [],
     }];
   }, currentObjectives);
+
+  // Sort by AR Order in place.
+  objectivesToSort.sort((o1, o2) => {
+    if (o1.arOrder < o2.arOrder) {
+      return -1;
+    }
+    return 1;
+  });
+  return objectivesToSort;
 }
 
 /**
@@ -482,6 +559,7 @@ function reduceGoals(goals, forReport = false) {
           recipient: currentValue.grant.recipient.dataValues,
           name: currentValue.grant.name,
           goalId: currentValue.id,
+          numberWithProgramTypes: currentValue.grant.numberWithProgramTypes,
         },
       ];
       existingGoal.grantIds = [...existingGoal.grantIds, currentValue.grant.id];
@@ -499,6 +577,7 @@ function reduceGoals(goals, forReport = false) {
       grants: [
         {
           ...currentValue.grant.dataValues,
+          numberWithProgramTypes: currentValue.grant.numberWithProgramTypes,
           recipient: currentValue.grant.recipient.dataValues,
           name: currentValue.grant.name,
           goalId: currentValue.id,
@@ -555,11 +634,6 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
                 [Op.ne]: '',
               },
             },
-            {
-              status: {
-                [Op.notIn]: [OBJECTIVE_STATUS.COMPLETE, OBJECTIVE_STATUS.DRAFT],
-              },
-            },
           ],
         },
         attributes: [
@@ -587,7 +661,6 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
           },
           {
             model: ActivityReportObjective,
-            separate: true,
             as: 'activityReportObjectives',
             attributes: [
               'ttaProvided',
@@ -769,26 +842,36 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
     .filter((objective) => !objective.activityReports || !objective.activityReports.length)
     .map((objective) => objective.id);
 
-  await ObjectiveResource.destroy({
-    where: {
-      objectiveId: orphanedObjectiveIds,
-    },
-    individualHooks: true,
-  });
+  if (Array.isArray(orphanedObjectiveIds) && orphanedObjectiveIds.length > 0) {
+    await Promise.all([
+      ObjectiveFile.destroy({
+        where: {
+          objectiveId: orphanedObjectiveIds,
+        },
+        individualHooks: true,
+      }),
+      ObjectiveResource.destroy({
+        where: {
+          objectiveId: orphanedObjectiveIds,
+        },
+        individualHooks: true,
+      }),
+      ObjectiveTopic.destroy({
+        where: {
+          objectiveId: orphanedObjectiveIds,
+        },
+        individualHooks: true,
+      }),
+    ]);
+  }
 
-  await ObjectiveTopic.destroy({
-    where: {
-      objectiveId: orphanedObjectiveIds,
-    },
-    individualHooks: true,
-  });
-
-  return Objective.destroy({
-    where: {
-      id: orphanedObjectiveIds,
-    },
-    individualHooks: true,
-  });
+  return (Array.isArray(orphanedObjectiveIds) && orphanedObjectiveIds.length > 0)
+    ? Objective.destroy({
+      where: {
+        id: orphanedObjectiveIds,
+      },
+    })
+    : Promise.resolve();
 }
 
 /**
@@ -838,21 +921,20 @@ export async function createOrUpdateGoals(goals) {
     if (isRttapa === 'Yes' || isRttapa === 'No') {
       isRttapaValue = isRttapa;
     }
-
+    let newGoal;
     // we first need to see if the goal exists given what ids we have
-    // for new goals, the id will be an empty array
-    let newGoal = await Goal.findOne({
-      where: {
-        grantId,
-        status: { [Op.not]: 'Closed' },
-        id: ids || [],
-      },
-    });
+    if (ids && ids.length) {
+      newGoal = await Goal.findOne({
+        where: {
+          grantId,
+          status: { [Op.not]: 'Closed' },
+          id: ids,
+        },
+      });
+    }
 
-    // In order to reuse goals with matching text we need to do the findOrCreate as the
-    // upsert would not preform the extra checks and logic now required.
     if (!newGoal) {
-      [newGoal] = await Goal.findOrCreate({
+      newGoal = await Goal.findOne({
         where: {
           grantId,
           status: {
@@ -860,11 +942,15 @@ export async function createOrUpdateGoals(goals) {
           },
           name: options.name,
         },
-        defaults: {
+      });
+      if (!newGoal) {
+        newGoal = await Goal.create({
+          grantId,
+          name: options.name,
           status: 'Draft', // if we are creating a goal for the first time, it should be set to 'Draft'
           isFromSmartsheetTtaPlan: false,
-        },
-      });
+        });
+      }
     }
 
     // we can't update this stuff if the goal is on an approved AR
@@ -891,22 +977,25 @@ export async function createOrUpdateGoals(goals) {
     }
 
     const newObjectives = await Promise.all(
-      objectives.map(async (o) => {
+      objectives.map(async (o, index) => {
         const {
           resources,
           topics,
           title,
           files,
           status: objectiveStatus,
-          id: objectiveIds,
-          isNew,
+          id: objectiveIdsMayContainStrings,
         } = o;
+
+        const objectiveIds = [objectiveIdsMayContainStrings]
+          .flat()
+          .filter((id) => parseInt(id, DECIMAL_BASE));
 
         let objective;
 
         // if the objective is complete on both the front and back end
         // we need to handle things a little differently
-        if (objectiveStatus === OBJECTIVE_STATUS.COMPLETE && objectiveIds) {
+        if (objectiveStatus === OBJECTIVE_STATUS.COMPLETE && objectiveIds && objectiveIds.length) {
           objective = await Objective.findOne({
             where: {
               id: objectiveIds,
@@ -914,30 +1003,17 @@ export async function createOrUpdateGoals(goals) {
             },
           });
 
-          return {
-            ...objective.dataValues,
-            topics,
-            resources,
-            files,
-          };
+          if (objective) {
+            return {
+              ...objective.dataValues,
+              topics,
+              resources,
+              files,
+            };
+          }
         }
 
-        if (isNew && !objective) {
-          [objective] = await Objective.findOrCreate({
-            where: {
-              goalId: newGoal.id,
-              title,
-              status: {
-                [Op.not]: OBJECTIVE_STATUS.COMPLETE,
-              },
-            },
-            defaults: {
-              status: objectiveStatus,
-              title,
-              goalId: newGoal.id,
-            },
-          });
-        } else if (objectiveIds) {
+        if (objectiveIds && objectiveIds.length) {
           // this needs to find "complete" objectives as well
           // since we could be moving the status back from the RTR
           objective = await Objective.findOne({
@@ -949,25 +1025,27 @@ export async function createOrUpdateGoals(goals) {
         }
 
         if (!objective) {
-          [objective] = await Objective.findOrCreate({
+          objective = await Objective.findOne({
             where: {
-              status: {
-                [Op.not]: OBJECTIVE_STATUS.COMPLETE,
-              },
-              title,
-              goalId: newGoal.id,
-            },
-            defaults: {
-              status: objectiveStatus,
+              status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
               title,
               goalId: newGoal.id,
             },
           });
+          if (!objective) {
+            objective = await Objective.create({
+              status: objectiveStatus,
+              title,
+              goalId: newGoal.id,
+              createdVia: 'rtr',
+            });
+          }
         }
 
         await objective.update({
           title,
           status: objectiveStatus,
+          rtrOrder: index + 1,
         }, { individualHooks: true });
 
         // save all our objective join tables (ObjectiveResource, ObjectiveTopic, ObjectiveFile)
@@ -997,7 +1075,6 @@ export async function createOrUpdateGoals(goals) {
 
   // we have to do this outside of the transaction otherwise
   // we get the old values
-
   return goalsByIdAndRecipient(goalIds, recipient);
 }
 
@@ -1089,23 +1166,28 @@ export async function goalsForGrants(grantIds) {
 }
 
 async function removeActivityReportObjectivesFromReport(reportId, objectiveIdsToRemove) {
-  const activityReportObjectivesToDestroy = await ActivityReportObjective.findAll({
-    where: {
-      activityReportId: reportId,
-      objectiveId: objectiveIdsToRemove,
-    },
-  });
+  const activityReportObjectivesToDestroy = Array.isArray(objectiveIdsToRemove)
+  && objectiveIdsToRemove.length > 0
+    ? await ActivityReportObjective.findAll({
+      attributes: ['id'],
+      where: {
+        activityReportId: reportId,
+        objectiveId: objectiveIdsToRemove,
+      },
+    })
+    : [];
 
   const idsToDestroy = activityReportObjectivesToDestroy.map((arObjective) => arObjective.id);
 
   await destroyActivityReportObjectiveMetadata(idsToDestroy);
 
-  return ActivityReportObjective.destroy({
-    where: {
-      id: idsToDestroy,
-    },
-    individualHooks: true,
-  });
+  return Array.isArray(idsToDestroy) && idsToDestroy.length > 0
+    ? ActivityReportObjective.destroy({
+      where: {
+        id: idsToDestroy,
+      },
+    })
+    : Promise.resolve();
 }
 
 async function removeActivityReportGoalsFromReport(reportId, currentGoalIds) {
@@ -1120,88 +1202,88 @@ async function removeActivityReportGoalsFromReport(reportId, currentGoalIds) {
   });
 }
 
-/// TTAHUB-949: Uncomment to remove Goals not associated
-///  with any ActivityReportGoals or createVia 'ActivityReport'.
-/*
-export async function removeGoals(goalsToRemove) {
-  // Get goals being used by ActivityReportGoals.
-  const usedGoals = await ActivityReportGoal.findAll({
-    attributes: [
-      'goalId',
-    ],
-    where: {
-      goalId: goalsToRemove,
-    },
-  });
+export async function setActivityReportGoalAsActivelyEdited(goalIdsAsString, reportId) {
+  try {
+    // because of the way express works, goalIdsAsString is a string or an array of strings
+    // so we flatmap it here to handle both cases
+    const goalIds = [goalIdsAsString].flatMap((id) => parseInt(id, DECIMAL_BASE));
 
-  // Get distinct list of goal ids.
-  const usedGoalIds = [...new Set(usedGoals.map((g) => g.goalId))];
-
-  // Create array of goals to delete.
-  const goalsToDelete = goalsToRemove.filter((o) => !usedGoalIds.includes(o));
-
-  // Delete goals not being used that where createdVia 'ActivityReports'.
-  return Goal.destroy({
-    where: {
-      [Op.and]: [
-        {
-          id: goalsToDelete,
+    // set all other goals back to actively edited: false
+    await ActivityReportGoal.update({
+      isActivelyEdited: false,
+    }, {
+      where: {
+        activityReportId: reportId,
+        goalId: {
+          [Op.notIn]: goalIds,
         },
-        {
-          createdVia: 'activityReport',
-        },
-      ],
-    },
-    individualHooks: true,
-  });
-}
-*/
-/// TTAHUB-949: Uncomment to remove Objectives not associated
-///  with any ActivityReportObjectives or createVia 'ActivityReport'.
-/*
-async function removeObjectives(currentObjectiveIds) {
-  // Get objectives being used by ActivityReportObjectives.
-  const usedObjectives = await ActivityReportObjective.findAll({
-    attributes: [
-      'objectiveId',
-    ],
-    where: {
-      objectiveId: currentObjectiveIds,
-    },
-  });
-
-  // Get distinct list of objective ids.
-  const usedObjectiveIds = [...new Set(usedObjectives.map((o) => o.objectiveId))];
-
-  // Create array of objectives to delete.
-  const objectivesToDelete = currentObjectiveIds.filter((o) => !usedObjectiveIds.includes(o));
-
-  // Delete objectives not being used.
-  const objectiveIdsWhere = objectivesToDelete && objectivesToDelete.length ?
-    `g.id IN (${objectivesToDelete.join(',')}) AND ` : '';
-  return Objective.destroy({
-    where: [
-      {
-        id: objectivesToDelete,
       },
-      sequelize.where(
-        sequelize.literal(`
-      (SELECT COUNT(DISTINCT g."id")
-      FROM "Objectives"
-      INNER JOIN "Goals" g ON "Objectives"."goalId" = "g"."id"
-      WHERE ${objectiveIdsWhere}
-       g."createdVia" = 'rtr')`),
-        {
-          [Op.eq]: 0,
+      individualHooks: true,
+    });
+
+    return ActivityReportGoal.update({
+      isActivelyEdited: true,
+    }, {
+      where: {
+        activityReportId: reportId,
+        goalId: goalIds,
+      },
+      individualHooks: true,
+      returning: true,
+    });
+  } catch (error) {
+    auditLogger.error(
+      ` SERVICE:GOALS:setActivityReportGoalsAsActivielyEdited\nunable to update ActivityReportGoals table \n${error}`,
+    );
+
+    return [];
+  }
+}
+
+async function removeObjectives(objectivesToRemove, reportId) {
+  if (!objectivesToRemove.length) {
+    return Promise.resolve();
+  }
+
+  // TODO - when we have an "onAnyReport" flag, we can use that here instead of two SQL statements
+  const objectivesToPossiblyDestroy = await Objective.findAll({
+    where: {
+      createdVia: 'activityReport',
+      id: objectivesToRemove,
+      onApprovedAR: false,
+    },
+    include: [
+      {
+        model: ActivityReport,
+        as: 'activityReports',
+        required: false,
+        where: {
+          id: {
+            [Op.not]: reportId,
+          },
         },
-      ),
+      },
     ],
   });
+
+  // see TODO above, but this can be removed when we have an "onAnyReport" flag
+  const objectivesToDefinitelyDestroy = objectivesToPossiblyDestroy
+    .filter((o) => !o.activityReports.length);
+
+  if (!objectivesToDefinitelyDestroy.length) {
+    return Promise.resolve();
+  }
+
+  return Objective.destroy({
+    where: {
+      id: objectivesToDefinitelyDestroy.map((o) => o.id),
+    },
+  });
 }
-*/
 
 export async function removeRemovedRecipientsGoals(removedRecipientIds, report) {
-  if (!removedRecipientIds) {
+  if (!removedRecipientIds
+    || !(Array.isArray(removedRecipientIds) && removedRecipientIds.length > 0)) {
     return null;
   }
 
@@ -1211,7 +1293,11 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
     attributes: [
       'id',
       [
-        sequelize.literal(`((select count(*) from "ActivityReportGoals" where "ActivityReportGoals"."goalId" = "Goal"."id" and "ActivityReportGoals"."activityReportId" not in (${reportId}))::int > 0)`),
+        sequelize.literal(`
+        ((select count(*)
+        from "ActivityReportGoals"
+        where "ActivityReportGoals"."goalId" = "Goal"."id"
+        and "ActivityReportGoals"."activityReportId" not in (${reportId}))::int > 0)`),
         'onOtherAr',
       ],
     ],
@@ -1233,18 +1319,27 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
   const goalIds = goals.map((goal) => goal.id);
   const goalsToDelete = goals.filter((goal) => !goal.get('onOtherAr')).map((goal) => goal.id);
 
-  await ActivityReportGoal.destroy({
-    where: {
-      goalId: goalIds,
-      activityReportId: reportId,
-    },
-    individualHooks: true,
-  });
+  if (Array.isArray(goalIds) && goalIds.length > 0) {
+    await ActivityReportGoal.destroy({
+      where: {
+        goalId: goalIds,
+        activityReportId: reportId,
+      },
+      individualHooks: true,
+    });
+  }
 
   const objectives = await Objective.findAll({
     attributes: [
       'id',
-      [sequelize.literal(`((select count(*) from "ActivityReportObjectives" where "ActivityReportObjectives"."objectiveId" = "Objective"."id" and "ActivityReportObjectives"."activityReportId" not in (${reportId}))::int > 0)`), 'onOtherAr'],
+      [
+        sequelize.literal(`
+        ((select count(*)
+        from "ActivityReportObjectives"
+        where "ActivityReportObjectives"."objectiveId" = "Objective"."id"
+        and "ActivityReportObjectives"."activityReportId" not in (${reportId}))::int > 0)`),
+        'onOtherAr',
+      ],
     ],
     where: {
       goalId: goalIds,
@@ -1266,21 +1361,25 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
     (objective) => !objective.get('onOtherAr'),
   ).map((objective) => objective.id);
 
-  await ActivityReportObjective.destroy({
-    where: {
-      objectiveId: objectiveIds,
-      activityReportId: reportId,
-    },
-    individualHooks: true,
-  });
+  if (Array.isArray(objectiveIds) && objectiveIds.length > 0) {
+    await ActivityReportObjective.destroy({
+      where: {
+        objectiveId: objectiveIds,
+        activityReportId: reportId,
+      },
+      individualHooks: true,
+    });
+  }
 
-  await Objective.destroy({
-    where: {
-      id: objectivesToDelete,
-      onApprovedAR: false,
-    },
-    individualHooks: true,
-  });
+  if (Array.isArray(objectivesToDelete) && objectivesToDelete.length > 0) {
+    await Objective.destroy({
+      where: {
+        id: objectivesToDelete,
+        onApprovedAR: false,
+      },
+      individualHooks: true,
+    });
+  }
 
   return Goal.destroy({
     where: {
@@ -1306,21 +1405,11 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
 
   const objectiveIdsToRemove = activityReportObjectivesToRemove.map((aro) => aro.objectiveId);
 
-  /// TTAHUB-949: Uncomment to remove unused Goals and Objectives.
-  /*
-  const goals = activityReportObjectivesToRemove.map((aro) => aro.objective.goal);
-  const goalIdsToRemove = goals.filter((g) => g).filter((goal) => {
-    const objectiveIds = goal.objectives.map((o) => o.id);
-    return objectiveIds.every((oId) => objectiveIdsToRemove.includes(oId));
-  }).map((g) => g.id);
-  */
-
   await removeActivityReportObjectivesFromReport(reportId, objectiveIdsToRemove);
-  /// TTAHUB-949: Uncomment to remove unused Goals and Objectives.
-  /*
-  await removeObjectives(objectiveIdsToRemove);
-  return removeGoals(goalIdsToRemove);
-  */
+
+  // attempt to remove objectives that are no longer associated with any ARs
+  // and weren't created on the RTR as a planning exercise
+  await removeObjectives(objectiveIdsToRemove, reportId);
 }
 
 async function createObjectivesForGoal(goal, objectives, report) {
@@ -1335,7 +1424,11 @@ async function createObjectivesForGoal(goal, objectives, report) {
   }
 
   // we don't want to create objectives with blank titles
-  return Promise.all(objectives.filter((o) => o.title).map(async (objective) => {
+  return Promise.all(objectives.filter((o) => o.title
+    || o.ttaProvided
+    || o.topics.length
+    || o.resources.length
+    || o.files.length).map(async (objective, index) => {
     const {
       id,
       isNew,
@@ -1389,6 +1482,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
           ...updatedObjective,
           title: objectiveTitle,
           status: OBJECTIVE_STATUS.NOT_STARTED, // Only the hook should set status.
+          createdVia: 'activityReport',
         });
       } else {
         savedObjective = existingObjective;
@@ -1419,6 +1513,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
         ...metadata,
         status,
         ttaProvided: objective.ttaProvided,
+        order: index,
       },
     );
     return savedObjective;
@@ -1427,18 +1522,26 @@ async function createObjectivesForGoal(goal, objectives, report) {
 
 export async function saveGoalsForReport(goals, report) {
   let currentObjectives = [];
+
+  // actively edited goals represents the goals that are currently being edited on the frontend
+  const activelyEditedGoals = [];
+
   const currentGoals = await Promise.all((goals.map(async (goal) => {
     let newGoals = [];
     const status = goal.status ? goal.status : 'Draft';
     const goalIds = goal.goalIds ? goal.goalIds : [];
     const endDate = goal.endDate && goal.endDate.toLowerCase() !== 'invalid date' ? goal.endDate : null;
+    const isActivelyBeingEditing = goal.isActivelyBeingEditing
+      ? goal.isActivelyBeingEditing : false;
 
     // Check if these goals exist.
-    const existingGoals = await Goal.findAll({
-      where: {
-        id: goalIds,
-      },
-    });
+    const existingGoals = Array.isArray(goalIds) && goalIds.length > 0
+      ? await Goal.findAll({ // All fields are needed.
+        where: {
+          id: goalIds,
+        },
+      })
+      : [];
 
     // we have a param to determine if goals are new
     if (goal.isNew || !existingGoals.length) {
@@ -1461,25 +1564,28 @@ export async function saveGoalsForReport(goals, report) {
       // - And status is not closed.
       // Note: The existing goal should be used regardless if it was created new.
       newGoals = await Promise.all(goal.grantIds.map(async (grantId) => {
-        const [newGoal] = await Goal.findOrCreate({
+        let newGoal = await Goal.findOne({
           where: {
             name: fields.name,
             grantId,
             status: { [Op.not]: 'Closed' },
           },
-          defaults: {
+        });
+        if (!newGoal) {
+          newGoal = await Goal.create({
+            grantId, // If we don't specify the grant it will be created with the old.
             ...fields,
             status,
-            grantId, // If we don't specify the grant it will be created with the old.
+            onApprovedAR,
             createdVia: 'activityReport',
-          },
-        });
+          });
+        }
 
         if (!newGoal.onApprovedAR && endDate && endDate !== 'Invalid date') {
           await newGoal.update({ endDate }, { individualHooks: true });
         }
 
-        await cacheGoalMetadata(newGoal, report.id, isRttapa || null);
+        await cacheGoalMetadata(newGoal, report.id, isRttapa || null, isActivelyBeingEditing);
 
         const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
         currentObjectives = [...currentObjectives, ...newGoalObjectives];
@@ -1516,7 +1622,7 @@ export async function saveGoalsForReport(goals, report) {
         );
         currentObjectives = [...currentObjectives, ...existingGoalObjectives];
 
-        await cacheGoalMetadata(existingGoal, report.id, isRttapa);
+        await cacheGoalMetadata(existingGoal, report.id, isRttapa, isActivelyBeingEditing);
       }));
 
       newGoals = await Promise.all(grantIds.map(async (gId) => {
@@ -1525,19 +1631,25 @@ export async function saveGoalsForReport(goals, report) {
           return existingGoal;
         }
 
-        const [newGoal] = await Goal.findOrCreate({
+        let newGoal = await Goal.findOne({ // All columns are needed for caching metadata.
           where: {
             [Op.and]: [
               { goalTemplateId: { [Op.not]: null } }, // We need to exclude null matches.
               { goalTemplateId: { [Op.eq]: goalTemplateId } },
             ],
+            name: fields.name,
             grantId: gId,
-            status: {
-              [Op.not]: 'Closed',
-            },
+            status: { [Op.not]: 'Closed' },
           },
-          defaults: { ...fields, status },
         });
+        if (!newGoal) {
+          newGoal = await Goal.create({
+            goalTemplateId,
+            grantId: gId,
+            ...fields,
+            status,
+          });
+        }
 
         await newGoal.update({
           ...fields, status, endDate, createdVia: createdVia || 'activityReport',
@@ -1548,6 +1660,11 @@ export async function saveGoalsForReport(goals, report) {
         const newGoalObjectives = await createObjectivesForGoal(newGoal, objectives, report);
         currentObjectives = [...currentObjectives, ...newGoalObjectives];
 
+        if (isActivelyBeingEditing) {
+          // if the goal is flagged as "Active" from the frontend, we want to record that
+          // to update the report later
+          activelyEditedGoals.push(newGoal.id);
+        }
         return newGoal;
       }));
     }
@@ -1602,10 +1719,12 @@ export async function getGoalsForReport(reportId) {
         required: true,
       },
       {
+        separate: true,
         model: Objective,
         as: 'objectives',
         include: [
           {
+            required: true,
             model: ActivityReportObjective,
             as: 'activityReportObjectives',
             where: {
@@ -1613,7 +1732,7 @@ export async function getGoalsForReport(reportId) {
             },
             include: [
               {
-
+                separate: true,
                 model: ActivityReportObjectiveTopic,
                 as: 'activityReportObjectiveTopics',
                 required: false,
@@ -1625,6 +1744,7 @@ export async function getGoalsForReport(reportId) {
                 ],
               },
               {
+                separate: true,
                 model: ActivityReportObjectiveFile,
                 as: 'activityReportObjectiveFiles',
                 required: false,
@@ -1636,6 +1756,7 @@ export async function getGoalsForReport(reportId) {
                 ],
               },
               {
+                separate: true,
                 model: ActivityReportObjectiveResource,
                 as: 'activityReportObjectiveResources',
                 required: false,
@@ -1648,6 +1769,7 @@ export async function getGoalsForReport(reportId) {
             as: 'topics',
           },
           {
+            separate: true,
             model: ObjectiveResource,
             as: 'resources',
             attributes: [['userProvidedUrl', 'value']],
@@ -1678,56 +1800,75 @@ export async function createOrUpdateGoalsForActivityReport(goals, reportId) {
 
 export async function destroyGoal(goalIds) {
   try {
-    const reportsWithGoal = await ActivityReport.findAll({
-      attributes: ['id'],
-      include: [
-        {
-          attributes: ['id'],
-          model: Goal,
-          required: true,
-          where: {
-            id: goalIds,
+    if (typeof goalIds === 'number') {
+      goalIds = [goalIds]; // eslint-disable-line no-param-reassign
+    } else if (!(Array.isArray(goalIds) && goalIds.map((i) => typeof i).every((i) => i === 'number'))) {
+      throw new Error('goalIds is not a number or and array of numbers');
+    }
+    const reportsWithGoal = (Array.isArray(goalIds) && goalIds.length)
+      ? await ActivityReport.findAll({
+        attributes: ['id'],
+        include: [
+          {
+            attributes: ['id'],
+            model: Goal,
+            required: true,
+            where: {
+              id: goalIds,
+            },
+            as: 'goals',
           },
-          as: 'goals',
-        },
-      ],
-    });
+        ],
+      })
+      : [];
 
     const isOnReport = reportsWithGoal.length;
     if (isOnReport) {
       throw new Error('Goal is on an activity report and can\'t be deleted');
     }
-    const objectives = await Objective.findAll({
-      where: {
-        goalId: goalIds,
-      },
-    });
+
+    const objectives = (Array.isArray(goalIds) && goalIds.length)
+      ? await Objective.findAll({
+        attributes: ['id'],
+        where: {
+          goalId: { [Op.in]: goalIds },
+        },
+      })
+      : [];
 
     const objectiveIds = objectives.map((o) => o.id);
 
-    const objectiveTopicsDestroyed = await ObjectiveTopic.destroy({
-      where: {
-        objectiveId: objectiveIds,
-      },
-    });
+    const objectiveTopicsDestroyed = (Array.isArray(objectiveIds) && objectiveIds.length)
+      ? await ObjectiveTopic.destroy({
+        where: {
+          objectiveId: { [Op.in]: objectiveIds },
+        },
+      })
+      : await Promise.resolve();
 
-    const objectiveResourcesDestroyed = await ObjectiveResource.destroy({
-      where: {
-        objectiveId: objectiveIds,
-      },
-    });
+    const objectiveResourcesDestroyed = (Array.isArray(objectiveIds) && objectiveIds.length)
+      ? await ObjectiveResource.destroy({
+        where: {
+          objectiveId: { [Op.in]: objectiveIds },
+        },
+      })
+      : await Promise.resolve();
 
-    const objectivesDestroyed = await Objective.destroy({
-      where: {
-        id: objectiveIds,
-      },
-    });
+    const objectivesDestroyed = (Array.isArray(objectiveIds) && objectiveIds.length)
+      ? await Objective.destroy({
+        where: {
+          id: { [Op.in]: objectiveIds },
+        },
+      })
+      : await Promise.resolve();
 
-    const goalsDestroyed = await Goal.destroy({
-      where: {
-        id: goalIds,
-      },
-    });
+    const goalsDestroyed = (Array.isArray(goalIds) && goalIds.length)
+      ? await Goal.destroy({
+        where: {
+          id: { [Op.in]: goalIds },
+        },
+      })
+      : await Promise.resolve();
 
     return {
       goalsDestroyed,

@@ -82,16 +82,24 @@ describe('createOrUpdateGoals', () => {
       individualHooks: true,
     });
 
+    const goals = await Goal.findAll({
+      where: {
+        grantId: grants.map((g) => g.id),
+      },
+    });
+
+    const goalIds = goals.map((g) => g.id);
+
     await Objective.destroy({
       where: {
-        goalId: goal.id,
+        goalId: goalIds,
       },
       individualHooks: true,
     });
 
     await Goal.destroy({
       where: {
-        id: newGoals.map((g) => g.id),
+        id: goalIds,
       },
       individualHooks: true,
     });
@@ -184,7 +192,7 @@ describe('createOrUpdateGoals', () => {
     expect(createdVias).toContain('activityReport');
     expect(createdVias).toContain('rtr');
 
-    const [, updatedGoal] = newGoals;
+    const updatedGoal = newGoals.find((g) => g.goalIds.includes(goal.id));
     expect(updatedGoal.name).toBe('This is some serious goal text');
     expect(updatedGoal.grantIds.length).toBe(1);
 
@@ -199,18 +207,27 @@ describe('createOrUpdateGoals', () => {
     expect(grantRegions).toContain(1);
     expect(grantRecipients).toContain(recipient.id);
 
-    const objectivesOnUpdatedGoal = await Objective.findAll({
-      where: {
-        goalId: ids,
-      },
-      raw: true,
-    });
+    const objectivesOnUpdatedGoal = updatedGoal.objectives;
 
     expect(objectivesOnUpdatedGoal.length).toBe(2);
     const titles = objectivesOnUpdatedGoal.map((obj) => obj.title);
     expect(titles).toContain('This is another objective');
     expect(titles).toContain('This is an objective');
     expect(titles).not.toContain('This objective will be deleted');
+
+    // should always be in the same order, by rtr order
+    const order = objectivesOnUpdatedGoal.map((obj) => obj.rtrOrder);
+    expect(order).toStrictEqual([1, 2]);
+
+    const objectiveOnTheGoalWithCreatedVias = await Objective.findAll({
+      attributes: ['id', 'createdVia'],
+      where: {
+        id: objectivesOnUpdatedGoal.map((obj) => obj.id),
+      },
+      order: [['id', 'ASC']],
+    });
+    const objectiveCreatedVias = objectiveOnTheGoalWithCreatedVias.map((obj) => obj.createdVia);
+    expect(objectiveCreatedVias).toStrictEqual([null, 'rtr']);
 
     const objectiveOnUpdatedGoal = await Objective.findByPk(objective.id, { raw: true });
     expect(objectiveOnUpdatedGoal.id).toBe(objective.id);
@@ -242,5 +259,77 @@ describe('createOrUpdateGoals', () => {
     expect(newGoal.name).toBe('This is some serious goal text');
     expect(newGoal.grant.id).toBe(grants[1].id);
     expect(newGoal.grant.regionId).toBe(1);
+  });
+
+  it('you can change an objectives status', async () => {
+    const basicGoal = {
+      recipientId: recipient.id,
+      regionId: 1,
+      name: 'This is some serious goal text for an objective that will have its status updated',
+      status: 'Draft',
+    };
+
+    const updatedGoals = await createOrUpdateGoals([
+      {
+        ...basicGoal,
+        isNew: true,
+        grantId: grants[1].id,
+        objectives: [
+          {
+            id: 'new-0',
+            status: 'Not Started',
+            title: 'This is an objective',
+            resources: [
+              {
+                value: 'https://www.test.gov',
+              },
+            ],
+            topics: [
+              {
+                id: topic.id,
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    expect(updatedGoals).toHaveLength(1);
+    const [updatedGoal] = updatedGoals;
+    expect(updatedGoal.objectives).toHaveLength(1);
+    const [updatedObjective] = updatedGoal.objectives;
+    expect(updatedObjective.status).toBe('Not Started');
+
+    const updatedGoals2 = await createOrUpdateGoals([
+      {
+        ...updatedGoal.dataValues,
+        recipientId: recipient.id,
+        grantId: grants[1].id,
+        ids: [updatedGoal.id],
+        objectives: [
+          {
+            title: updatedObjective.title,
+            id: [updatedObjective.id],
+            status: 'Complete',
+            resources: [
+              {
+                value: 'https://www.test.gov',
+              },
+            ],
+            topics: [
+              {
+                id: topic.id,
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    expect(updatedGoals2).toHaveLength(1);
+    const [updatedGoal2] = updatedGoals2;
+    expect(updatedGoal2.objectives).toHaveLength(1);
+    const [updatedObjective2] = updatedGoal2.objectives;
+    expect(updatedObjective2.status).toBe('Complete');
   });
 });

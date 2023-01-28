@@ -2,7 +2,7 @@ const { Op, Model } = require('sequelize');
 const { COLLABORATOR_TYPES, ENTITY_TYPES, CLOSE_SUSPEND_REASONS } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ActivityReportGoal extends Model {
     static associate(models) {
       ActivityReportGoal.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport', hooks: true });
@@ -85,6 +85,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     closeSuspendContext: {
       type: DataTypes.TEXT,
+    },
+    isActivelyEdited: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: true,
     },
   }, {
     sequelize,

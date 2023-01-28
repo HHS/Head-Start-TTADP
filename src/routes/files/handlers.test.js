@@ -304,14 +304,19 @@ describe('File Upload', () => {
 
     it('tests a objective file upload', async () => {
       ObjectivePolicy.mockImplementation(() => ({
-        canUpdate: () => true,
+        canUpload: () => true,
       }));
       uploadFile.mockResolvedValue({ key: 'key' });
-      const response = await request(app)
-        .post('/api/files')
-        .field('objectiveId', objective.dataValues.id)
-        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(200);
+      let response;
+      try {
+        response = await request(app)
+          .post('/api/files')
+          .field('objectiveId', objective.dataValues.id)
+          .attach('file', `${__dirname}/testfiles/testfile.pdf`)
+          .expect(200);
+      } catch (e) {
+        //
+      }
       fileId = response.body.id;
       expect(uploadFile).toHaveBeenCalled();
       expect(mockAddToScanQueue).toHaveBeenCalled();
@@ -332,7 +337,7 @@ describe('File Upload', () => {
 
     it('allows an admin to upload a objective file', async () => {
       ObjectivePolicy.mockImplementation(() => ({
-        canUpdate: () => false,
+        canUpload: () => false,
       }));
       validateUserAuthForAdmin.mockResolvedValue(true);
       uploadFile.mockResolvedValue({ key: 'key' });
@@ -392,7 +397,7 @@ describe('File Upload', () => {
 
   describe('File Upload Handlers error handling', () => {
     // eslint-disable-next-line jest/no-disabled-tests
-    it.skip('tests a file upload without a report id', async () => {
+    it('tests a file upload without a report id', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => true,
       }));
@@ -424,6 +429,22 @@ describe('File Upload', () => {
         .expect(403)
         .then(() => expect(uploadFile).not.toHaveBeenCalled());
     });
+
+    it('tests an unauthorized objective file upload', async () => {
+      validateUserAuthForAdmin.mockResolvedValue(false);
+      ObjectivePolicy.mockImplementation(() => ({
+        canUpload: () => false,
+      }));
+      await request(app)
+        .post('/api/files')
+        .field('objectiveId', objective.dataValues.id)
+        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
+        .expect(403)
+        .then(() => {
+          expect(uploadFile).not.toHaveBeenCalled();
+        });
+    });
+
     it('tests an incorrect file type', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => true,

@@ -12,7 +12,7 @@ export default async function createRequestError({
     const requestErrorBody = {
       operation, uri, method, requestBody, responseBody, responseCode,
     };
-    const requestError = await models.RequestErrors.create(requestErrorBody);
+    const requestError = await models.RequestErrors.create(requestErrorBody, { transaction: null });
     return requestError.id;
   } catch (err) {
     throw new Error('Error creating RequestError entry');

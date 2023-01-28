@@ -1,7 +1,8 @@
 import React, {
-  useEffect, useState, useMemo, useContext, useRef,
+  useEffect, useMemo, useContext, useRef, useState,
 } from 'react';
 import PropTypes from 'prop-types';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
 import { useController, useFormContext } from 'react-hook-form/dist/index.ie11';
 import GoalText from '../../../../components/GoalForm/GoalText';
@@ -22,7 +23,6 @@ export default function GoalForm({
   goal,
   topicOptions,
   reportId,
-  onSaveDraft,
   datePickerKey,
 }) {
   // pull the errors out of the form context
@@ -120,39 +120,31 @@ export default function GoalForm({
     onUpdateDate(goal.endDate ? goal.endDate : defaultEndDate);
   }, [defaultEndDate, goal.endDate, onUpdateDate]);
 
-  const [objectives, setObjectives] = useState([]);
+  // objectives for the objective select, blood for the blood god, etc
+  const [objectiveOptions, setObjectiveOptions] = useState([]);
+
   /*
    * this use effect fetches
    * associated goal data
    */
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     async function fetchData() {
       try {
         setIsAppLoading(true);
         setAppLoadingText('Loading');
         const data = await goalsByIdsAndActivityReport(goal.goalIds, reportId);
-        setObjectives(data[0].objectives);
+        setObjectiveOptions(data[0].objectives);
       } finally {
         setIsAppLoading(false);
       }
     }
 
-    const shouldIFetchData = (
-      goal.goalIds
-      && (
-        !goal.isNew || (
-          goal.isNew
-          && goal.oldGrantIds.filter((g) => g).length
-        )
-      )
-    );
-
-    if (shouldIFetchData) {
+    if (goal.goalIds.length) {
       fetchData();
     } else {
-      setObjectives([]);
+      setObjectiveOptions([]);
     }
-  }, [goal.goalIds, goal.isNew, goal.oldGrantIds, reportId, setAppLoadingText]);
+  }, [goal.goalIds, reportId, setAppLoadingText, setIsAppLoading]);
 
   return (
     <>
@@ -193,12 +185,11 @@ export default function GoalForm({
       />
 
       <Objectives
-        objectives={objectives}
+        objectiveOptions={objectiveOptions}
         topicOptions={topicOptions}
         goalStatus={status}
         noObjectiveError={errors.goalForEditing && errors.goalForEditing.objectives
           ? ERROR_FORMAT(errors.goalForEditing.objectives.message) : NO_ERROR}
-        onSaveDraft={onSaveDraft}
         reportId={parseInt(reportId, DECIMAL_BASE)}
       />
     </>
@@ -227,6 +218,5 @@ GoalForm.propTypes = {
     label: PropTypes.string,
   })).isRequired,
   reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  onSaveDraft: PropTypes.func.isRequired,
   datePickerKey: PropTypes.string.isRequired,
 };

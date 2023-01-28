@@ -8,7 +8,7 @@ const {
  * @param {} sequelize
  * @param {*} DataTypes
  */
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class Grant extends Model {
     static associate(models) {
       Grant.belongsTo(models.Region, { foreignKey: 'regionId', hooks: true });
@@ -85,7 +85,9 @@ module.exports = (sequelize, DataTypes) => {
     recipientInfo: {
       type: DataTypes.VIRTUAL,
       get() {
-        return `${this.recipient.name} - ${this.number} - ${this.recipient.id}`;
+        return this.recipient
+          ? `${this.recipient.name} - ${this.number} - ${this.recipientId}`
+          : `${this.number} - ${this.recipientId}`;
       },
     },
   }, {

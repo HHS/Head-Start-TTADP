@@ -3,7 +3,7 @@ const { COLLABORATOR_TYPES, ENTITY_TYPES, CREATION_METHOD } = require('../consta
 const { beforeValidate, beforeUpdate, afterUpdate } = require('./hooks/objectiveTemplate');
 // const { auditLogger } = require('../logger');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ObjectiveTemplate extends Model {
     /**
      * Helper method for defining associations.

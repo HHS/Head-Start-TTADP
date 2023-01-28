@@ -11,7 +11,7 @@ import { getUserRegions } from '../../../permissions';
 import GoalDataController from '../../../components/GoalCards/GoalDataController';
 
 export default function GoalsObjectives({
-  recipientId, regionId, recipient, location,
+  recipientId, regionId, recipient, location, recipientName,
 }) {
   const { user } = useContext(UserContext);
   const regions = useMemo(() => getUserRegions(user), [user]);
@@ -27,10 +27,8 @@ export default function GoalsObjectives({
   const onRemoveFilter = (id) => {
     const newFilters = [...filters];
     const index = newFilters.findIndex((item) => item.id === id);
-    if (index !== -1) {
-      newFilters.splice(index, 1);
-      setFilters(newFilters);
-    }
+    newFilters.splice(index, 1);
+    setFilters(newFilters);
   };
 
   const filtersToApply = expandFilters(filters);
@@ -44,7 +42,9 @@ export default function GoalsObjectives({
     <>
       <Helmet>
         <title>
-          Goals and Objectives
+          Goals and Objectives -
+          {' '}
+          {recipientName}
         </title>
       </Helmet>
       <div className="margin-x-2 maxw-widescreen" id="recipientGoalsObjectives">
@@ -80,4 +80,9 @@ GoalsObjectives.propTypes = {
     })).isRequired,
   }).isRequired,
   location: ReactRouterPropTypes.location.isRequired,
+  recipientName: PropTypes.string,
+};
+
+GoalsObjectives.defaultProps = {
+  recipientName: '',
 };

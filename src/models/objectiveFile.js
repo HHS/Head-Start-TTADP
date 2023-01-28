@@ -1,7 +1,7 @@
 const { Model } = require('sequelize');
 const { afterCreate, beforeDestroy, afterDestroy } = require('./hooks/objectiveFile');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ObjectiveFile extends Model {
     static associate(models) {
       ObjectiveFile.belongsTo(models.Objective, { foreignKey: 'objectiveId', as: 'objective', hooks: true });

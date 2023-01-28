@@ -144,7 +144,7 @@ describe('Total Hrs and Recipient Graph widget', () => {
 
   it('handles no filters', async () => {
     const query = { };
-    const scopes = filtersToScopes(query);
+    const scopes = await filtersToScopes(query);
     const data = await totalHrsAndRecipientGraph(scopes, query);
     expect(data.length).toBe(3);
   });
@@ -191,7 +191,7 @@ describe('Total Hrs and Recipient Graph widget', () => {
     await createOrUpdate({ ...regionTwoReport, duration: 1.5 });
 
     const query = { 'region.in': ['177'], 'startDate.win': '2021/02/01-2021/07/31' };
-    const scopes = filtersToScopes(query);
+    const scopes = await filtersToScopes(query);
     const data = await totalHrsAndRecipientGraph(scopes, query);
 
     // Overall trace categories.
@@ -229,7 +229,7 @@ describe('Total Hrs and Recipient Graph widget', () => {
     });
 
     const query = { 'region.in': ['188'], 'startDate.win': '2021/06/01-2021/06/30' };
-    const scopes = filtersToScopes(query);
+    const scopes = await filtersToScopes(query);
     const data = await totalHrsAndRecipientGraph(scopes, query);
 
     // Overall trace categories.
@@ -270,7 +270,7 @@ describe('Total Hrs and Recipient Graph widget', () => {
     });
 
     const query = { 'region.in': ['177'], 'startDate.win': '2020/01/01-2020/03/31' };
-    const scopes = filtersToScopes(query);
+    const scopes = await filtersToScopes(query);
     const data = await totalHrsAndRecipientGraph(scopes, query);
 
     // Overall trace categories.
@@ -314,7 +314,7 @@ describe('Total Hrs and Recipient Graph widget', () => {
     });
 
     const query = { 'region.in': ['177'], 'startDate.win': '2021/11/01-2023/06/01' };
-    const scopes = filtersToScopes(query);
+    const scopes = await filtersToScopes(query);
     const data = await totalHrsAndRecipientGraph(scopes, query);
 
     // Overall trace categories.

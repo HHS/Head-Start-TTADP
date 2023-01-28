@@ -1,3 +1,4 @@
+/* eslint-disable dot-notation */
 import db, {
   ActivityReport,
   ActivityRecipient,
@@ -17,6 +18,9 @@ import {
   copyStatus,
 } from '../hooks/approval';
 import { createOrUpdate } from '../../services/activityReports';
+import { scheduleUpdateIndexDocumentJob, scheduleDeleteIndexDocumentJob } from '../../lib/awsElasticSearch/queueManager';
+
+jest.mock('../../lib/awsElasticSearch/queueManager');
 
 const mockUser = {
   name: 'Joe Green',
@@ -52,8 +56,21 @@ const mockOtherEntity = {
   name: 'Regional TTA/Other Specialists',
 };
 
-const mockGrant = {
+const mockGrant = [{
   id: 65535,
+  number: '99CH9998',
+  regionId: 2,
+  status: 'Active',
+  startDate: new Date('2021-02-09T15:13:00.000Z'),
+  endDate: new Date('2021-02-09T15:13:00.000Z'),
+  cdi: false,
+  grantSpecialistName: null,
+  grantSpecialistEmail: null,
+  stateCode: 'NY',
+  annualFundingMonth: 'October',
+},
+{
+  id: 65536,
   number: '99CH9999',
   regionId: 2,
   status: 'Active',
@@ -64,7 +81,7 @@ const mockGrant = {
   grantSpecialistEmail: null,
   stateCode: 'NY',
   annualFundingMonth: 'October',
-};
+}];
 
 const sampleReport = {
   approval: {
@@ -76,7 +93,7 @@ const sampleReport = {
   deliveryMethod: 'method',
   activityRecipientType: 'test',
   creatorRole: 'COR',
-  topics: ['topic'],
+  topics: ['topic', 'topic2', 'red', 'blue', 'declination'],
   participants: ['test'],
   duration: 0,
   endDate: '2020-01-01T12:00:00Z',
@@ -105,42 +122,67 @@ const mockObjectives = [
   { title: 'objective 2' },
 ];
 
+const ORIGINAL_ENV = process.env;
+
 describe('Activity Reports model', () => {
   let user;
   let recipient;
   let otherEntity;
-  let grant;
+  const grants = [];
   let report;
+  let reportToIndex;
+  let activityRecipients;
   const goals = [];
   const objectives = [];
+
+  beforeEach(async () => {
+    jest.resetModules(); // clear the cache
+    process.env = { ...ORIGINAL_ENV }; // make a copy
+  });
+
   beforeAll(async () => {
     try {
       user = await User.create({ ...mockUser });
       recipient = await Recipient.create({ ...mockRecipient });
       otherEntity = await OtherEntity.create({ ...mockOtherEntity });
       await Grant.create({
-        ...mockGrant,
+        ...mockGrant[0],
         recipientId: recipient.id,
         programSpecialistName: user.name,
         programSpecialistEmail: user.email,
       });
-      grant = await Grant.findOne({ where: { id: mockGrant.id } });
-      try {
-        report = await createOrUpdate({
-          ...sampleReport,
-          activityRecipients: [{ grantId: grant.id }, { otherEntityId: otherEntity.id }],
-        });
-      } catch (err) {
-        auditLogger.error(JSON.stringify({ name: 'Activity Reports model', err }));
-      }
+      await Grant.create({
+        ...mockGrant[1],
+        recipientId: recipient.id,
+        programSpecialistName: user.name,
+        programSpecialistEmail: user.email,
+      });
+      grants[0] = await Grant.findOne({ where: { id: mockGrant[0].id } });
+      grants[1] = await Grant.findOne({ where: { id: mockGrant[1].id } });
+      report = await createOrUpdate({
+        ...sampleReport,
+        activityRecipients: [
+          ...grants.map((grant => ({ grantId: grant.id }))),
+          { otherEntityId: otherEntity.id },
+        ],
+      });
       await ActivityRecipient.create({ activityReportId: report.id }, { validation: false });
+      reportToIndex = await createOrUpdate({
+        ...sampleReport,
+        context: 'AWS Elasticsearch',
+      });
+      activityRecipients = await ActivityRecipient.findAll({ where: { activityReportId: report.id } });
       goals[0] = await Goal.create({
         ...mockGoals[0],
-        grantId: grant.id,
+        grantId: grants[0].id,
       });
       goals[1] = await Goal.create({
         ...mockGoals[1],
-        grantId: grant.id,
+        grantId: grants[0].id,
+      });
+      goals[2] = await Goal.create({
+        ...mockGoals[0],
+        grantId: grants[1].id,
       });
       await Promise.all(goals);
       await Promise.all(goals.map(async (goal) => ActivityReportGoal.create({
@@ -156,6 +198,10 @@ describe('Activity Reports model', () => {
         ...mockObjectives[1],
         goalId: goals[1].id,
       });
+      objectives[2] = await Objective.create({
+        ...mockObjectives[0],
+        goalId: goals[2].id,
+      });
       await Promise.all(objectives);
       await Promise.all(objectives.map(async (objective) => ActivityReportObjective.create({
         activityReportId: report.id,
@@ -168,47 +214,54 @@ describe('Activity Reports model', () => {
     }
   });
   afterAll(async () => {
-    await ActivityRecipient.destroy({
-      where: { activityReportId: report.id },
-      individualHooks: true,
-    });
-    await ActivityReportObjective.destroy({
-      where: { activityReportId: report.id },
-      individualHooks: true,
-    });
-    await ActivityReportGoal.destroy({
-      where: { activityReportId: report.id },
-      individualHooks: true,
-    });
-    await ActivityReport.destroy({
-      where: { id: report.id },
-      individualHooks: true,
-    });
-    await Objective.destroy({
-      where: { id: objectives.map((o) => o.id) },
-      individualHooks: true,
-    });
-    await Goal.destroy({
-      where: { grantId: grant.id },
-      individualHooks: true,
-    });
-    await Grant.destroy({
-      where: { id: grant.id },
-      individualHooks: true,
-    });
-    await OtherEntity.destroy({
-      where: { id: otherEntity.id },
-      individualHooks: true,
-    });
-    await Recipient.destroy({
-      where: { id: recipient.id },
-      individualHooks: true,
-    });
-    await User.destroy({
-      where: { id: user.id },
-      individualHooks: true,
-    });
-    await db.sequelize.close();
+    process.env = ORIGINAL_ENV; // restore original env
+    if (activityRecipients) {
+      await Promise.all(activityRecipients
+        .map(async (activityRecipient) => ActivityRecipient.destroy({
+          where: {
+            activityReportId: activityRecipient.activityReportId,
+            grantId: activityRecipient.grantId,
+            otherEntityId: activityRecipient.otherEntityId,
+          },
+        })));
+        await ActivityReportObjective.destroy({
+          where: { activityReportId: report.id },
+          individualHooks: true,
+        });
+        await ActivityReportGoal.destroy({
+          where: { activityReportId: report.id },
+          individualHooks: true,
+        });
+        await ActivityReport.destroy({
+          where: { id: [report.id, reportToIndex.id] },
+          individualHooks: true,
+        });
+        await Objective.destroy({
+          where: { id: objectives.map((o) => o.id) },
+          individualHooks: true,
+        });
+        await Goal.destroy({
+          where: { grantId: grants.map((g) => g.id) },
+          individualHooks: true,
+        });
+        await Grant.destroy({
+          where: { id: grants.map((g) => g.id) },
+          individualHooks: true,
+        });
+        await OtherEntity.destroy({
+          where: { id: otherEntity.id },
+          individualHooks: true,
+        });
+        await Recipient.destroy({
+          where: { id: recipient.id },
+          individualHooks: true,
+        });
+        await User.destroy({
+          where: { id: user.id },
+          individualHooks: true,
+        });
+        await db.sequelize.close();
+    }
   });
 
   it('copyStatus', async () => {
@@ -228,6 +281,20 @@ describe('Activity Reports model', () => {
     instance.approval.submissionStatus = REPORT_STATUSES.NEEDS_ACTION;
     copyStatus(instance.approval);
     expect(instance.approval.calculatedStatus).not.toEqual(REPORT_STATUSES.NEEDS_ACTION);
+  });
+
+  it('updateAwsElasticsearchIndexes', async () => {
+    process.env.CI = false;
+    // Change status to submitted.
+    await reportToIndex.update(
+      { calculatedStatus: REPORT_STATUSES.SUBMITTED, submissionStatus: REPORT_STATUSES.SUBMITTED },
+    );
+    expect(scheduleUpdateIndexDocumentJob).toHaveBeenCalled();
+    // Change status to deleted.
+    await reportToIndex.update(
+      { calculatedStatus: REPORT_STATUSES.DELETED, submissionStatus: REPORT_STATUSES.DELETED },
+    );
+    expect(scheduleDeleteIndexDocumentJob).toHaveBeenCalled();
   });
   it('propagateApprovedStatus', async () => {
     const preReport = await ActivityReport.findOne(
@@ -278,6 +345,11 @@ describe('Activity Reports model', () => {
     expect(goalsPost[0].onApprovedAR).not.toEqual(goalsPre[0].onApprovedAR);
     expect(objectivesPost[0].onApprovedAR).not.toEqual(objectivesPre[0].onApprovedAR);
 
+    expect(goalsPost[0].goalTemplateId).not.toEqual(null);
+    expect(goalsPost[0].goalTemplateId).toEqual(goalsPost[2].goalTemplateId);
+    expect(objectivesPost[0].objectiveTemplateId).not.toEqual(null);
+    expect(objectivesPost[0].objectiveTemplateId).toEqual(objectivesPost[2].objectiveTemplateId);
+
     await Approval.update(
       { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
       {
@@ -310,25 +382,46 @@ describe('Activity Reports model', () => {
   });
 
   it('activityRecipientId', async () => {
-    const activityRecipients = await ActivityRecipient.findAll({
-      where: { activityReportId: report.id },
-    });
-    expect(activityRecipients).not.toEqual(null);
-    expect(activityRecipients[0].activityRecipientId).toEqual(grant.id);
-    expect(activityRecipients[1].activityRecipientId).toEqual(otherEntity.id);
-    expect(activityRecipients[2].activityRecipientId).toEqual(null);
+    expect(activityRecipients[0].activityRecipientId).toEqual(grants[0].id);
+    expect(activityRecipients[1].activityRecipientId).toEqual(grants[1].id);
+    expect(activityRecipients[2].activityRecipientId).toEqual(otherEntity.id);
+    expect(activityRecipients[3].activityRecipientId).toEqual(null);
   });
   it('name', async () => {
     try {
-      const activityRecipients = await ActivityRecipient.findAll({
-        where: { activityReportId: report.id },
-      });
-      expect(activityRecipients[0].name).toEqual(grant.name);
-      expect(activityRecipients[1].name).toEqual(otherEntity.name);
-      expect(activityRecipients[2].name).toEqual(null);
+      const arr = await Promise.all(activityRecipients
+        .map(async (activityRecipient) => ActivityRecipient.findOne({
+          where: {
+            activityReportId: activityRecipient.activityReportId,
+            grantId: activityRecipient.grantId,
+            otherEntityId: activityRecipient.otherEntityId,
+          },
+        })));
+      expect(arr[0].name).toEqual(grants[0].name);
+      expect(arr[1].name).toEqual(grants[1].name);
+      expect(arr[2].name).toEqual(otherEntity.name);
+      expect(arr[3].name).toEqual(null);
     } catch (e) {
       auditLogger.error(JSON.stringify(e));
       throw e;
     }
+  });
+
+  it('sortedTopics', async () => {
+    const r = await ActivityReport.findOne({
+      where: { id: report.id },
+    });
+
+    expect(r.sortedTopics).toStrictEqual(
+      ['topic', 'topic2', 'red', 'blue', 'declination'].sort(),
+    );
+
+    await r.update({ topics: [] });
+
+    const r2 = await ActivityReport.findOne({
+      where: { id: report.id },
+    });
+
+    expect(r2.sortedTopics).toStrictEqual([]);
   });
 });

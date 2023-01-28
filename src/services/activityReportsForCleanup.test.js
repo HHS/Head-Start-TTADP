@@ -1,5 +1,5 @@
 import faker from '@faker-js/faker';
-import db, {
+import {
   ActivityReport,
   User,
   Recipient,
@@ -101,7 +101,8 @@ const approvedReport = {
 
 describe('Activity report cleanup service', () => {
   afterAll(async () => {
-    await db.sequelize.close();
+    // https://stackoverflow.com/questions/47970050/node-js-mocha-sequelize-error-connectionmanager-getconnection-was-called-after-t
+    // await db.sequelize.close();
   });
 
   let reportByMockAuthorWithMockCollaborator;
@@ -154,31 +155,36 @@ describe('Activity report cleanup service', () => {
   });
 
   afterAll(async () => {
-    const reportsToDestroy = await ActivityReport.findAll({
-      include: [{
-        model: Collaborator,
-        as: 'owner',
+    try {
+      const reportsToDestroy = await ActivityReport.findAll({
+        include: [{
+          model: Collaborator,
+          as: 'owner',
+          where: {
+            userId: [mockAuthor.id, mockPhantomUser.id],
+          },
+          required: true,
+        }],
+      });
+      await Promise.all(reportsToDestroy.map((r) => destroyReport(r)));
+      await Grant.destroy({
+        where: { id: RECIPIENT_ID },
+        individualHooks: true,
+      });
+      await Recipient.destroy({
+        where: { id: RECIPIENT_ID },
+        individualHooks: true,
+      });
+      await User.destroy({
         where: {
-          userId: [mockAuthor.id, mockPhantomUser.id],
+          id: [mockAuthor.id, mockApprover.id, mockCollaborator.id, mockPhantomUser.id],
         },
-        required: true,
-      }],
-    });
-    await Promise.all(reportsToDestroy.map((r) => destroyReport(r)));
-    await Grant.destroy({
-      where: { id: RECIPIENT_ID },
-      individualHooks: true,
-    });
-    await Recipient.destroy({
-      where: { id: RECIPIENT_ID },
-      individualHooks: true,
-    });
-    await User.destroy({
-      where: {
-        id: [mockAuthor.id, mockApprover.id, mockCollaborator.id, mockPhantomUser.id],
-      },
-      individualHooks: true,
-    });
+        individualHooks: true,
+      });
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.log(`Error destroying test data: ${e}`);
+    }
   });
 
   it('returns reports by author', async () => {

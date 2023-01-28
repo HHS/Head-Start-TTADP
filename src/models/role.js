@@ -10,7 +10,7 @@ const { beforeDestroy } = require('./hooks/role');
  * @param {*} DataTypes
  */
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class Role extends Model {
     static associate(models) {
       Role.belongsToMany(models.Topic, {

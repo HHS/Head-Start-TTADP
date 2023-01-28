@@ -60,10 +60,8 @@ export default function TTAHistory({
   const onRemoveFilter = (id) => {
     const newFilters = [...filters];
     const index = newFilters.findIndex((item) => item.id === id);
-    if (index !== -1) {
-      newFilters.splice(index, 1);
-      setFilters(newFilters);
-    }
+    newFilters.splice(index, 1);
+    setFilters(newFilters);
   };
 
   const onApply = (newFilters) => {
@@ -116,7 +114,8 @@ export default function TTAHistory({
           <ActivityReportsTable
             filters={filtersToApply}
             showFilter={false}
-            tableCaption="Activity Reports"
+            tableCaption="Approved activity reports"
+            exportIdPrefix="tta-history-"
           />
         </FilterContext.Provider>
       </div>

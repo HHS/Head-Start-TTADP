@@ -19,8 +19,8 @@ export default function ControlledDatePicker({
   maxDate,
   setEndDate,
   isStartDate,
-  onBlur,
   inputId,
+  endDate,
 }) {
   /**
    * we don't want to compute these fields multiple times if we don't have to,
@@ -28,8 +28,8 @@ export default function ControlledDatePicker({
    */
   const max = useMemo(() => (isStartDate ? {
     display: moment().format(DATE_DISPLAY_FORMAT),
-    moment: moment(),
-    datePicker: moment().format(DATEPICKER_VALUE_FORMAT),
+    moment: moment(maxDate, DATE_DISPLAY_FORMAT),
+    datePicker: moment(maxDate, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT),
     compare: moment(maxDate, DATE_DISPLAY_FORMAT),
   } : {
     display: maxDate,
@@ -37,6 +37,13 @@ export default function ControlledDatePicker({
     datePicker: moment(maxDate, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT),
     compare: moment(maxDate, DATE_DISPLAY_FORMAT),
   }), [isStartDate, maxDate]);
+
+  const endDateMax = useMemo(() => ({
+    display: moment().format(DATE_DISPLAY_FORMAT),
+    moment: moment(endDate, DATE_DISPLAY_FORMAT),
+    datePicker: moment(endDate, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT),
+    compare: moment(endDate, DATE_DISPLAY_FORMAT),
+  }), [endDate]);
 
   const min = useMemo(() => ({
     display: minDate,
@@ -83,22 +90,16 @@ export default function ControlledDatePicker({
     }
 
     onFieldBlur(e);
-    onBlur(e);
-  }, [onBlur, onFieldBlur]);
+  }, [onFieldBlur]);
 
   const datePickerOnChange = (d) => {
     if (isStartDate) {
       const newDate = moment(d, DATE_DISPLAY_FORMAT);
       const currentDate = moment(value, DATE_DISPLAY_FORMAT);
-      const isBeforeMax = max.compare.isBefore(newDate);
-      if (isBeforeMax) {
-        const diff = max.compare.diff(currentDate, 'days');
+      if (endDateMax.compare.isBefore(newDate)) {
+        const diff = endDateMax.compare.diff(currentDate, 'days');
         const newEnd = newDate.add(diff, 'days');
-        if (newEnd.isAfter(moment())) {
-          setEndDate(moment().format(DATE_DISPLAY_FORMAT));
-        } else {
-          setEndDate(newEnd.format(DATE_DISPLAY_FORMAT));
-        }
+        setEndDate(newEnd.format(DATE_DISPLAY_FORMAT));
       }
     }
     onChange(d);
@@ -129,15 +130,15 @@ ControlledDatePicker.propTypes = {
   }).isRequired,
   isStartDate: PropTypes.bool,
   setEndDate: PropTypes.func,
-  onBlur: PropTypes.func,
   inputId: PropTypes.string.isRequired,
+  endDate: PropTypes.string,
 };
 
 ControlledDatePicker.defaultProps = {
   minDate: '09/01/2020',
   maxDate: '',
+  endDate: '',
   isStartDate: false,
   setEndDate: () => {},
   value: '',
-  onBlur: () => {},
 };

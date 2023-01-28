@@ -7,10 +7,9 @@ import { OBJECTIVE_PROP, NEW_OBJECTIVE } from './constants';
 import ObjectiveSelect from './ObjectiveSelect';
 
 export default function Objectives({
-  objectives,
+  objectiveOptions,
   topicOptions,
   noObjectiveError,
-  onSaveDraft,
   reportId,
 }) {
   const { errors, getValues, setValue } = useFormContext();
@@ -76,7 +75,7 @@ export default function Objectives({
   const options = [
     NEW_OBJECTIVE(),
     // filter out used objectives and return them in them in a format that react-select understands
-    ...objectives.filter((objective) => !usedObjectiveIds.includes(objective.value)).map(
+    ...objectiveOptions.filter((objective) => !usedObjectiveIds.includes(objective.value)).map(
       (objective) => ({
         ...objective,
         label: objective.title,
@@ -93,6 +92,7 @@ export default function Objectives({
     setUpdatedUsedObjectiveIds();
   };
 
+  const firstObjective = fields.length < 1;
   return (
     <>
       {/*
@@ -101,7 +101,7 @@ export default function Objectives({
         each objective
       */}
 
-      {fields.length < 1
+      {firstObjective
         ? (
           <ObjectiveSelect
             onChange={onInitialObjSelect}
@@ -128,14 +128,13 @@ export default function Objectives({
               remove={removeObjective}
               fieldArrayName={fieldArrayName}
               onObjectiveChange={onObjectiveChange}
-              onSaveDraft={onSaveDraft}
               parentGoal={getValues('goalForEditing')}
               initialObjectiveStatus={objective.status}
               reportId={reportId}
             />
           );
         })}
-      <PlusButton text="Add new objective" onClick={onAddNew} />
+      {firstObjective ? null : <PlusButton text="Add new objective" onClick={onAddNew} /> }
     </>
   );
 }
@@ -145,10 +144,9 @@ Objectives.propTypes = {
     value: PropTypes.number,
     label: PropTypes.string,
   })).isRequired,
-  objectives: PropTypes.arrayOf(
+  objectiveOptions: PropTypes.arrayOf(
     OBJECTIVE_PROP,
   ).isRequired,
   noObjectiveError: PropTypes.node.isRequired,
-  onSaveDraft: PropTypes.func.isRequired,
   reportId: PropTypes.number.isRequired,
 };

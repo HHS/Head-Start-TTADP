@@ -19,6 +19,7 @@ import {
   LEGACY_WARNING,
   getReportsForLocalStorageCleanup,
   saveOtherEntityObjectivesForReport,
+  setGoalAsActivelyEdited,
 } from './handlers';
 import {
   activityReportAndRecipientsById,
@@ -34,6 +35,7 @@ import {
   activityReportsForCleanup,
 } from '../../services/activityReports';
 import { upsertRatifier } from '../../services/collaborators';
+import { setActivityReportGoalAsActivelyEdited } from '../../services/goals';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
 import { userById, usersWithPermissions } from '../../services/users';
@@ -85,6 +87,7 @@ jest.mock('../../services/accessValidation');
 
 jest.mock('../../services/goals', () => ({
   copyGoalsToGrants: jest.fn(),
+  setActivityReportGoalAsActivelyEdited: jest.fn(),
 }));
 
 jest.mock('../../services/users', () => ({
@@ -132,7 +135,7 @@ const mockUser = {
   homeRegionId: 1,
   email: 'mockManager1844@test.gov',
 };
-
+const objectivesWithoutGoals = undefined;
 const report = {
   id: 1,
   resourcesUsed: 'resources',
@@ -140,7 +143,7 @@ const report = {
   approvingManager: mockManager,
   displayId: 'mockreport-1',
   regionId: 1,
-  objectivesWithoutGoals: [],
+  objectivesWithoutGoals,
 };
 
 const activityRecipients = undefined;
@@ -160,7 +163,7 @@ const expected = {
   ...report,
   activityRecipients,
   goalsAndObjectives,
-  objectivesWithoutGoals: [],
+  objectivesWithoutGoals,
 };
 
 describe('Activity Report handlers', () => {
@@ -285,6 +288,7 @@ describe('Activity Report handlers', () => {
           id: 777,
         },
         activityReportCollaborators: [],
+        id: 999999,
       }, [{
         activityRecipientId: 10,
       }]]);
@@ -321,6 +325,7 @@ describe('Activity Report handlers', () => {
           id: 777,
         },
         activityReportCollaborators: [],
+        id: 999999,
       },
       [{
         activityRecipientId: 10,
@@ -607,7 +612,7 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementation(() => ({
         canReset: () => true,
       }));
-      const setStatusResolvedValue = [{ dataValues: { ...result } }, [], []];
+      const setStatusResolvedValue = [{ dataValues: { ...result } }, [], [], []];
       setStatus.mockResolvedValue(setStatusResolvedValue);
       await resetToDraft(request, mockResponse);
       const jsonResponse = {
@@ -872,6 +877,50 @@ describe('Activity Report handlers', () => {
 
       const [[value]] = mockResponse.send.mock.calls;
       expect(value).toEqual('\ufeff');
+    });
+  });
+
+  describe('setGoalAsActivelyEdited', () => {
+    const activeGoalRequest = {
+      ...mockRequest,
+      params: { activityReportId: '1' },
+      query: { goalId: '1' },
+    };
+    it('handlers errors', async () => {
+      ActivityReport.mockImplementationOnce(() => ({
+        canUpdate: () => { throw new Error(); },
+      }));
+
+      userById.mockResolvedValue({});
+      activityReportAndRecipientsById.mockResolvedValue([]);
+      await setGoalAsActivelyEdited(activeGoalRequest, mockResponse);
+      expect(handleErrors).toHaveBeenCalled();
+    });
+
+    it('handles no auth', async () => {
+      ActivityReport.mockImplementationOnce(() => ({
+        canUpdate: () => false,
+      }));
+
+      userById.mockResolvedValue({});
+      activityReportAndRecipientsById.mockResolvedValue([]);
+
+      await setGoalAsActivelyEdited(activeGoalRequest, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+
+    it('handles success', async () => {
+      ActivityReport.mockImplementationOnce(() => ({
+        canUpdate: () => true,
+      }));
+
+      userById.mockResolvedValue({});
+      activityReportAndRecipientsById.mockResolvedValue([]);
+
+      setActivityReportGoalAsActivelyEdited.mockResolvedValueOnce({ message: 'success' });
+
+      await setGoalAsActivelyEdited(activeGoalRequest, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith({ message: 'success' });
     });
   });
 

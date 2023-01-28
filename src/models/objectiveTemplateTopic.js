@@ -7,7 +7,7 @@ const { Model } = require('sequelize');
    * @param {} sequelize
    * @param {*} DataTypes
    */
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ObjectiveTemplateTopic extends Model {
     static associate(models) {
       ObjectiveTemplateTopic.belongsTo(models.ObjectiveTemplate, {

@@ -27,7 +27,7 @@ const findOrCreateObjectiveTemplate = async (
     },
     transaction,
   });
-  return objectiveTemplate[0].id;
+  return { id: objectiveTemplate[0].id, title };
 };
 
 const autoPopulateOnApprovedAR = (sequelize, instance, options) => {
@@ -172,19 +172,19 @@ const propogateStatusToParentGoal = async (sequelize, instance, options) => {
           { onApprovedAR: true },
         ],
       },
+      include: [
+        {
+          model: sequelize.models.Objective,
+          as: 'objectives',
+        },
+      ],
       transaction: options.transaction,
     });
 
     // because of that, there may not be a goal to update
-    if (goal) {
-      const objectives = await sequelize.models.Objective.findAll({
-        where: {
-          goalId,
-        },
-      });
-
+    if (goal && goal.objectives) {
       // if there is, we then need to check to see if it needs to be moved to "in progress"
-      const atLeastOneInProgress = objectives.some(
+      const atLeastOneInProgress = goal.objectives.some(
         (o) => o.status === OBJECTIVE_STATUS.IN_PROGRESS,
       );
 

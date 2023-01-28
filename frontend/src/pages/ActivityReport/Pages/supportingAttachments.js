@@ -35,9 +35,7 @@ const SupportingAttachments = ({
             </ul>
           </Label>
 
-          <span className="usa-hint font-sans-3xs">File types accepted:</span>
-          <br />
-          <span className="usa-hint font-sans-3xs">images, .pdf, .docx, .xlsx, .pptx, .doc, .xls, .ppt, .zip, .txt, .csv (max size 30 MB)</span>
+          <span className="usa-hint font-sans-3xs">Example: .doc, .pdf, .txt, .csv (max size 30 MB)</span>
           { fileError && (<ErrorMessage>{fileError}</ErrorMessage>)}
           <Controller
             name="files"

@@ -15,6 +15,28 @@ const logContext = {
 };
 
 /**
+ *
+ * @param {Object} requestUser
+ * @param {Array} requestUser.roles
+ * @param {String} requestUser.roles.fullName
+ * @param {Number} requestUser.roles.id
+ * @param {Number} userId
+ * @returns Promise
+ */
+export async function createUserRoles(requestUser, userId) {
+  return Promise.all((requestUser.roles.map(async (role) => {
+    const r = await Role.findOne({ where: { fullName: role.fullName } });
+    if (r) {
+      return UserRole.create({
+        roleId: r.id,
+        userId,
+      });
+    }
+    return null;
+  })));
+}
+
+/**
  * Gets one user from the database.
  *
  * @param {*} req - request
@@ -121,16 +143,7 @@ export async function updateUser(req, res) {
       where: { userId },
       individualHooks: true,
     });
-    await Promise.all((requestUser.roles.map(async (role) => {
-      const r = await Role.findOne({ where: { fullName: role.fullName } });
-      if (r) {
-        return UserRole.create({
-          roleId: r.id,
-          userId,
-        });
-      }
-      return null;
-    })));
+    await createUserRoles(requestUser, userId);
 
     auditLogger.warn(`User ${req.session.userId} updated User: ${userId} and set permissions: ${JSON.stringify(requestUser.permissions)}`);
     const user = await userById(userId);

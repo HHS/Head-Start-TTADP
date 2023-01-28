@@ -187,7 +187,7 @@ describe('Update grants and recipients', () => {
     const containsNumber = grants.some((g) => g.number === '02CH01111');
     expect(containsNumber).toBeTruthy();
     const totalGrants = await Grant.findAll({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
-    expect(totalGrants.length).toBe(13);
+    expect(totalGrants.length).toBe(15);
   });
 
   it('includes the grant specialists name and email', async () => {
@@ -217,6 +217,17 @@ describe('Update grants and recipients', () => {
     await processFiles();
     const recipient = await Recipient.findOne({ where: { id: 1119 } });
     expect(recipient).not.toBeNull();
+  });
+
+  it('should rename recipient (628)', async () => {
+    const recipientBefore = await Recipient.findOne({ where: { id: 628 } });
+    expect(recipientBefore).not.toBeNull();
+    await recipientBefore.update({ name: 'DBA' });
+    expect(recipientBefore.name).toBe('DBA');
+    await processFiles();
+    const recipient = await Recipient.findOne({ where: { id: 628 } });
+    expect(recipient).not.toBeNull();
+    expect(recipient.name).toBe('Entity name');
   });
 
   it('should update an existing recipient if it exists in smarthub', async () => {
@@ -269,7 +280,7 @@ describe('Update grants and recipients', () => {
 
   it('sets metadata in audit tables', async () => {
     await processFiles('hex');
-    const grantAuditEntry = await ZALGrant.findOne({ where: { data_id: 11630 } });
+    const grantAuditEntry = await ZALGrant.findOne({ where: { data_id: 11630, dml_type: { [Op.not]: 'DELETE' } } });
     const {
       // eslint-disable-next-line camelcase
       descriptor_id, dml_by, dml_txid, session_sig,

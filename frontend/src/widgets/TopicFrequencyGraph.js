@@ -1,3 +1,5 @@
+/* eslint-disable react/no-unknown-property */
+/* eslint-disable jsx-a11y/no-noninteractive-tabindex */
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import Plotly from 'plotly.js-basic-dist';
@@ -140,7 +142,7 @@ export function TopicFrequencyGraphWidget({
       yaxis: {
         tickformat: ',.0d',
         title: {
-          standoff: 60,
+          standoff: 80,
           text: 'Number of Activity Reports',
           font: {
             color: colors.textInk,
@@ -172,12 +174,12 @@ export function TopicFrequencyGraphWidget({
   }
 
   return (
-    <Container className="ttahub--topic-frequency-graph overflow-x-scroll" paddingX={3} paddingY={3} loading={loading} loadingLabel="Topic frequency loading">
-      <Grid row className="position-relative margin-bottom-2">
+    <Container className="ttahub--topic-frequency-graph" paddingX={3} paddingY={3} loading={loading} loadingLabel="Topic frequency loading">
+      <Grid row className="margin-bottom-2 bg-white">
         <Grid className="flex-align-self-center" desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}>
           <h2 className="ttahub--dashboard-widget-heading margin-0">Number of Activity Reports by Topic</h2>
         </Grid>
-        <Grid col="auto" gap={1} className="ttahub--topic-frequency-graph-control-row desktop:display-flex desktop:padding-x-2">
+        <Grid col="auto" gap={1} className="ttahub--topic-frequency-graph-control-row desktop:display-flex bg-white desktop:padding-x-2">
           <ButtonSelect
             styleAsSelect
             labelId="tfGraphOrder"
@@ -185,7 +187,7 @@ export function TopicFrequencyGraphWidget({
             ariaName="Change topic graph order menu"
             initialValue={{
               value: SORT_ORDER.DESC,
-              label: 'High to Low',
+              label: 'High to low',
             }}
             applied={order}
             onApply={onApplySort}
@@ -193,7 +195,7 @@ export function TopicFrequencyGraphWidget({
               [
                 {
                   value: SORT_ORDER.DESC,
-                  label: 'High to Low',
+                  label: 'High to low',
                 },
                 {
                   value: SORT_ORDER.ALPHA,
@@ -209,15 +211,29 @@ export function TopicFrequencyGraphWidget({
             className="usa-button--unstyled margin-top-2"
             aria-label={showAccessibleData ? 'display number of activity reports by topic data as graph' : 'display number of activity reports by topic data as table'}
             onClick={toggleType}
+            data-html2canvas-ignore
+            id="rd-display-table-topic-frequency"
           >
             {showAccessibleData ? 'Display graph' : 'Display table'}
           </button>
         </Grid>
 
       </Grid>
+
+      {/*
+        While it is indeed bad practice to add a tabindex to a div, it is the solution suggested by
+        Deque, a company that knows far more about accessibility than I, so I'm going with it.
+        - https://dequeuniversity.com/rules/axe/4.3/scrollable-region-focusable
+
+        In addition, I had to add a "no unknown property" eslint rule to ignore the tabindex
+        attribute, which is kind of mysterious but it's eslint's world and I'm just living in it.
+
+        I added them both at the file level since the ternary makes it hard to add them inline.
+      */}
+
       { showAccessibleData
         ? <AccessibleWidgetData caption="Number of Activity Reports by Topic Table" columnHeadings={columnHeadings} rows={tableRows} />
-        : <div data-testid="bars" className="tta-dashboard--bar-graph-container" ref={bars} /> }
+        : <div tabindex="0" data-testid="bars" className="tta-dashboard--bar-graph-container overflow-x-scroll overflow-y-hidden padding-y-1" ref={bars} /> }
 
     </Container>
   );

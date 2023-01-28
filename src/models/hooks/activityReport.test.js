@@ -14,6 +14,15 @@ import db, {
 } from '..';
 import { createOrUpdate } from '../../services/activityReports';
 import { upsertRatifier } from '../../services/collaborators';
+import { unlockReport } from '../../routes/activityReports/handlers';
+import ActivityReportPolicy from '../../policies/activityReport';
+import {
+  moveDraftGoalsToNotStartedOnSubmission,
+  propagateSubmissionStatus,
+} from './activityReport';
+import { auditLogger } from '../../logger';
+
+jest.mock('../../policies/activityReport');
 
 describe('activity report model hooks', () => {
   describe('automatic goal status changes', () => {
@@ -161,7 +170,7 @@ describe('activity report model hooks', () => {
       objective = await Objective.create({
         title: 'Objective 1',
         goalId: goal.id,
-        status: 'In Progress',
+        status: 'Not Started',
       });
 
       await ActivityReportObjective.create({
@@ -192,9 +201,12 @@ describe('activity report model hooks', () => {
       expect(testGoal.status).toEqual('Not Started');
     });
 
-    it('approving the report should set the goal to "in progress"', async () => {
+    it('approving the report should set the goal and objectives to "in progress"', async () => {
+      let testObjective = await Objective.findByPk(objective.id);
+      expect(testObjective.status).toEqual('Not Started');
+
       let testReport = await ActivityReport.findByPk(report.id, { include: [{ model: Approval, as: 'approval' }] });
-      expect(testReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.SUBMITTED);
+      expect(testReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.SUBMITTED);-
 
       await upsertRatifier({
         entityType: ENTITY_TYPES.REPORT,
@@ -209,6 +221,115 @@ describe('activity report model hooks', () => {
 
       const testGoal = await Goal.findByPk(goal.id);
       expect(testGoal.status).toEqual('In Progress');
+
+      testObjective = await Objective.findByPk(objective.id);
+      expect(testObjective.status).toEqual('Complete');
     });
+
+    it('unlocking report adjusts objective status', async () => {
+      const mockResponse = {
+        attachment: jest.fn(),
+        json: jest.fn(),
+        send: jest.fn(),
+        sendStatus: jest.fn(),
+        status: jest.fn(() => ({
+          end: jest.fn(),
+        })),
+      };
+
+      const mockRequest = {
+        session: {
+          userId: mockUser.id,
+        },
+        params: {
+          activityReportId: report.id,
+        },
+      };
+
+      ActivityReportPolicy.mockImplementationOnce(() => ({
+        canUnlock: () => true,
+      }));
+
+      await unlockReport(mockRequest, mockResponse);
+
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(204);
+
+      const testObjective = await Objective.findByPk(objective.id);
+      expect(testObjective.status).toEqual('Not Started');
+    });
+  });
+});
+
+describe('moveDraftGoalsToNotStartedOnSubmission', () => {
+  it('logs an error if one is thrown', async () => {
+    const mockSequelize = {
+      models: {
+        Goal: {
+          findAll: jest.fn(() => []),
+          update: jest.fn(() => {
+            throw new Error('test error');
+          }),
+        },
+        ActivityReport: {},
+      },
+    };
+    const mockInstance = {
+      submissionStatus: REPORT_STATUSES.SUBMITTED,
+      changed: jest.fn(() => ['submissionStatus']),
+      id: 1,
+    };
+    const mockOptions = {
+      transaction: 'transaction',
+    };
+
+    jest.spyOn(auditLogger, 'error');
+
+    await moveDraftGoalsToNotStartedOnSubmission(mockSequelize, mockInstance, mockOptions);
+    expect(auditLogger.error).toHaveBeenCalled();
+  });
+});
+
+describe('propagateSubmissionStatus', () => {
+  it('logs an error if one is thrown updating goals', async () => {
+    const mockSequelize = {
+      fn: jest.fn(),
+      models: {
+        ActivityReport: {
+          findAll: jest.fn(() => []),
+          update: jest.fn(() => {
+            throw new Error('test error');
+          }),
+        },
+        GoalTemplate: {
+          findOrCreate: jest.fn(() => [{ id: 1, name: 'name' }]),
+        },
+        Goal: {
+          findAll: jest.fn(() => [{
+            id: 1,
+            name: 'name',
+            createdAt: new Date(),
+            goalTemplateId: 1,
+            updatedAt: new Date(),
+          }]),
+          update: jest.fn(() => {
+            throw new Error('test error');
+          }),
+        },
+      },
+    };
+    const mockInstance = {
+      submissionStatus: REPORT_STATUSES.SUBMITTED,
+      changed: jest.fn(() => ['submissionStatus']),
+      id: 1,
+      regionId: 1,
+    };
+    const mockOptions = {
+      transaction: 'transaction',
+    };
+
+    jest.spyOn(auditLogger, 'error');
+
+    await propagateSubmissionStatus(mockSequelize, mockInstance, mockOptions);
+    expect(auditLogger.error).toHaveBeenCalled();
   });
 });

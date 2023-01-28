@@ -4,10 +4,13 @@ import Plotly from 'plotly.js-basic-dist';
 import { Grid } from '@trussworks/react-uswds';
 import withWidgetData from './withWidgetData';
 import AccessibleWidgetData from './AccessibleWidgetData';
-
+import MediaCaptureButton from '../components/MediaCaptureButton';
 import Container from '../components/Container';
 import colors from '../colors';
 import './TotalHrsAndRecipientGraph.scss';
+import { DECIMAL_BASE } from '../Constants';
+
+const HOVER_TEMPLATE = '(%{x}, %{y})<extra></extra>';
 
 export function TotalHrsAndRecipientGraph({ data, loading }) {
   // the state for which lines to show
@@ -17,6 +20,9 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
 
   // the dom el for drawing the chart
   const lines = useRef();
+
+  // the dom el for the widget
+  const widget = useRef();
 
   const [showAccessibleData, setShowAccessibleData] = useState(false);
   const [columnHeadings, setColumnHeadings] = useState([]);
@@ -42,7 +48,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         mode: 'lines+markers',
         x: data[1].x,
         y: data[1].y,
-        hoverinfo: 'y',
+        hovertemplate: HOVER_TEMPLATE,
         line: {
           dash: 'solid',
           width: 3,
@@ -63,7 +69,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         mode: 'lines+markers',
         x: data[0].x,
         y: data[0].y,
-        hoverinfo: 'y',
+        hovertemplate: HOVER_TEMPLATE,
         line: {
           dash: 'dash',
           width: 3,
@@ -85,7 +91,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         mode: 'lines+markers',
         x: data[2].x,
         y: data[2].y,
-        hoverinfo: 'y',
+        hovertemplate: HOVER_TEMPLATE,
         line: {
           dash: 'longdash',
           width: 3,
@@ -97,9 +103,24 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         },
         hoverlabel: {
           font: { color: '#ffffff', size: '16' },
-          bgcolor: colors.smartHubTextInk,
+          bgcolor: colors.textInk,
         },
       }];
+
+    const xTickStep = (() => {
+      const value = data[0].x.length;
+      let divisor = value;
+      if (value > 12) {
+        divisor = 6;
+      }
+
+      if (value > 24) {
+        divisor = 4;
+      }
+
+      return parseInt(value / divisor, DECIMAL_BASE);
+    }
+    )();
 
     // Specify Chart Layout.
     const layout = {
@@ -117,20 +138,22 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
       margin: {
         l: 50,
         t: 0,
-        pad: 10,
         r: 0,
         b: 68,
       },
       showlegend: false,
       xaxis: {
-        automargin: false,
-        tickangle: 0,
         showgrid: false,
-        b: 0,
-        t: 0,
-        autotypenumbers: 'strict',
+        hovermode: 'closest',
+        autotick: false,
+        ticks: 'outside',
+        tick0: 0,
+        dtick: xTickStep,
+        ticklen: 14,
+        tickwidth: 1,
+        tickcolor: '#000',
         title: {
-          text: 'Date Range',
+          text: 'Date range',
           standoff: 40,
           font: {
             family: 'Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif',
@@ -141,6 +164,9 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
       },
       yaxis: {
         automargin: true,
+        rangemode: 'tozero',
+        tickwidth: 1,
+        tickcolor: 'transparent',
         tickformat: (n) => {
           // if not a whole number, round to 1 decimal place
           if (n % 1 !== 0) {
@@ -150,7 +176,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         },
         title: {
           standoff: 20,
-          text: 'Number of Hours',
+          text: 'Number of hours',
           font: {
             family: 'Source Sans Pro Web, Helvetica Neue, Helvetica, Roboto, Arial, sans-serif',
             size: 18,
@@ -198,16 +224,19 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
   }
 
   return (
-    <Container className="ttahub-total-hours-container shadow-2" paddingX={3} paddingY={3} loading={loading} loadingLabel="Total hours loading">
+    <Container ref={widget} className="ttahub-total-hours-container shadow-2" paddingX={3} paddingY={3} loading={loading} loadingLabel="Total hours loading">
       <div className="ttahub--total-hrs-recipient-graph">
         <Grid row className="position-relative margin-bottom-2">
-          <Grid desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}><h2 className="ttahub--dashboard-widget-heading margin-0">Total TTA Hours</h2></Grid>
+          <Grid desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}><h2 className="ttahub--dashboard-widget-heading margin-0">Total TTA hours</h2></Grid>
           <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
+            { !showAccessibleData && <MediaCaptureButton id="rd-save-screenshot" className="margin-x-2" reference={widget} buttonText="Save screenshot" /> }
             <button
               type="button"
               className="usa-button--unstyled"
               aria-label={showAccessibleData ? 'display total training and technical assistance hours as graph' : 'display total training and technical assistance hours as table'}
               onClick={toggleType}
+              data-html2canvas-ignore
+              id="rd-display-table-tta-total-hours"
             >
               {showAccessibleData ? 'Display graph' : 'Display table'}
             </button>
@@ -215,9 +244,9 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         </Grid>
 
         { showAccessibleData
-          ? <AccessibleWidgetData caption="Total TTA Hours by Date and Type" columnHeadings={columnHeadings} rows={tableRows} />
+          ? <AccessibleWidgetData caption="Total TTA hours by date and type" columnHeadings={columnHeadings} rows={tableRows} />
           : (
-            <div aria-hidden="true">
+            <div>
               <fieldset className="grid-row ttahub--total-hrs-recipient-graph-legend text-align-center margin-bottom-3 border-0 padding-0">
                 <legend className="margin-bottom-2">Toggle individual lines by checking or unchecking a legend item.</legend>
                 <LegendControl id="show-ta-checkbox" label="Technical Assistance" selected={showTA} setSelected={setShowTA} shape="circle" />
@@ -233,9 +262,6 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
 }
 
 TotalHrsAndRecipientGraph.propTypes = {
-  dateTime: PropTypes.shape({
-    timestamp: PropTypes.string, label: PropTypes.string,
-  }),
   data: PropTypes.oneOfType([
     PropTypes.arrayOf(
       PropTypes.shape({
@@ -249,7 +275,6 @@ TotalHrsAndRecipientGraph.propTypes = {
 };
 
 TotalHrsAndRecipientGraph.defaultProps = {
-  dateTime: { timestamp: '', label: '' },
   data: [
     {
       name: 'Hours of Training', x: [], y: [], month: '',
@@ -276,7 +301,7 @@ export function LegendControl({
   }
 
   return (
-    <div className={`usa-checkbox grid-col flex-auto ${shape}`}>
+    <div className={`usa-checkbox grid-col flex-auto ${shape} ttahub-legend-control`}>
       <input
         className="usa-checkbox__input"
         id={id}
@@ -284,6 +309,7 @@ export function LegendControl({
         name={id}
         checked={selected}
         onChange={handleChange}
+        data-html2canvas-ignore
       />
       <label
         className="usa-checkbox__label padding-right-3"

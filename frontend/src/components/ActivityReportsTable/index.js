@@ -16,8 +16,8 @@ import './index.css';
 
 function ActivityReportsTable({
   filters,
-  onUpdateFilters,
   tableCaption,
+  exportIdPrefix,
 }) {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -209,7 +209,7 @@ function ActivityReportsTable({
           onClick={() => {
             requestSort(name);
           }}
-          onKeyPress={() => requestSort(name)}
+          onKeyDown={() => requestSort(name)}
           className={`sortable ${sortClassName}`}
           aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'
           }`}
@@ -238,7 +238,6 @@ function ActivityReportsTable({
           title={tableCaption}
           numberOfSelected={numberOfSelectedReports}
           toggleSelectAll={toggleSelectAll}
-          onUpdateFilters={onUpdateFilters}
           handleDownloadAll={handleDownloadAllReports}
           handleDownloadClick={handleDownloadClick}
           count={reportsCount}
@@ -251,6 +250,7 @@ function ActivityReportsTable({
           isDownloading={isDownloading}
           downloadAllButtonRef={downloadAllButtonRef}
           downloadSelectedButtonRef={downloadSelectedButtonRef}
+          exportIdPrefix={exportIdPrefix}
         />
         <div className="usa-table-container--scrollable">
           <Table fullWidth striped>
@@ -302,6 +302,7 @@ function ActivityReportsTable({
 }
 
 ActivityReportsTable.propTypes = {
+  exportIdPrefix: PropTypes.string.isRequired,
   filters: PropTypes.arrayOf(
     PropTypes.shape({
       condition: PropTypes.string,
@@ -315,12 +316,7 @@ ActivityReportsTable.propTypes = {
       topic: PropTypes.string,
     }),
   ).isRequired,
-  onUpdateFilters: PropTypes.func,
   tableCaption: PropTypes.string.isRequired,
-};
-
-ActivityReportsTable.defaultProps = {
-  onUpdateFilters: () => { },
 };
 
 export default ActivityReportsTable;

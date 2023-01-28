@@ -1,6 +1,6 @@
 const { Model } = require('sequelize');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class CollaboratorRole extends Model {
     static associate(models) {
       CollaboratorRole.belongsTo(models.Collaborator, { foreignKey: 'collaboratorId', as: 'collaborator', hooks: true });

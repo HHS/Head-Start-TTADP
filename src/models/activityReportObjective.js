@@ -2,7 +2,7 @@ const { Op, Model } = require('sequelize');
 const { COLLABORATOR_TYPES, ENTITY_TYPES } = require('../constants');
 const { beforeDestroy } = require('./hooks/activityReportObjective');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ActivityReportObjective extends Model {
     static associate(models) {
       ActivityReportObjective.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });
@@ -82,6 +82,10 @@ module.exports = (sequelize, DataTypes) => {
     },
     objectiveId: {
       type: DataTypes.INTEGER,
+    },
+    arOrder: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
     title: DataTypes.TEXT,
     status: DataTypes.STRING,

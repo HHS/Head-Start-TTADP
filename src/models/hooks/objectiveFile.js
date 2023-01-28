@@ -27,17 +27,25 @@ const propagateCreateToTemplate = async (sequelize, instance, options) => {
   if (objective
     && objective.objectiveTemplateId !== null
     && objective.objectiveTemplate.creationMethod === AUTOMATIC_CREATION) {
-    const [otf] = await sequelize.models.ObjectiveTemplateFile.findOrCreate({
+    let otf = await sequelize.models.ObjectiveTemplateFile.findOne({
       where: {
         objectiveTemplateId: objective.objectiveTemplateId,
         fileId: instance.fileId,
       },
-      defaults: {
-        objectiveTemplateId: instance.objective.objectiveTemplateId,
-        fileId: instance.fileId,
-      },
       transaction: options.transaction,
     });
+
+    if (!otf) {
+      otf = await sequelize.models.ObjectiveTemplateFile.create(
+        {
+
+          objectiveTemplateId: objective.objectiveTemplateId,
+          fileId: instance.fileId,
+        },
+        { transaction: options.transaction },
+      );
+    }
+
     await sequelize.models.ObjectiveTemplateFile.update(
       {
         updatedAt: new Date(),

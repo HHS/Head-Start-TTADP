@@ -2,7 +2,7 @@ const { Model } = require('sequelize');
 const { afterCreate, beforeDestroy, afterDestroy } = require('./hooks/objectiveTemplateFile');
 // const { auditLogger } = require('../logger');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ObjectiveTemplateFile extends Model {
     static associate(models) {
       ObjectiveTemplateFile.belongsTo(models.ObjectiveTemplate, { foreignKey: 'objectiveTemplateId', as: 'objectiveTemplate', hooks: true });

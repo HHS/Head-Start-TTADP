@@ -174,7 +174,7 @@ describe('Objective status update hook', () => {
       // Reports.
       reportOne = await createOrUpdate({
         ...sampleReport,
-        endDate: '2022-09-30T12:00:00Z',
+        endDate: '2023-01-01T12:00:00Z',
         recipients: [{ grantId: grantOne.id }],
       });
       reportTwo = await createOrUpdate({

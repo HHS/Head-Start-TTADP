@@ -1,11 +1,15 @@
 import { INTERNAL_SERVER_ERROR, NOT_FOUND } from 'http-codes';
 import { getUserReadRegions } from '../../services/accessValidation';
 import {
-  getRecipient, searchRecipients, getGoalsByRecipient,
+  getRecipient,
+  searchRecipients,
+  getGoalsByRecipient,
+  getGoalsByIdandRecipient,
 } from './handlers';
 import {
   getGoalsByActivityRecipient, recipientById, recipientsByName,
 } from '../../services/recipient';
+import { goalsByIdAndRecipient } from '../../services/goals';
 import SCOPES from '../../middleware/scopeConstants';
 
 jest.mock('../../services/recipient', () => ({
@@ -14,6 +18,10 @@ jest.mock('../../services/recipient', () => ({
   getGoalsByActivityRecipient: jest.fn(),
   getUserReadRegions: jest.fn(),
   updateRecipientGoalStatusById: jest.fn(),
+}));
+
+jest.mock('../../services/goals', () => ({
+  goalsByIdAndRecipient: jest.fn(),
 }));
 
 jest.mock('../../services/accessValidation');
@@ -31,7 +39,7 @@ describe('getRecipient', () => {
 
   const mockResponse = {
     attachment: jest.fn(),
-    json: jest.fn((x) => console.log(x)),
+    json: jest.fn(),
     send: jest.fn(),
     sendStatus: jest.fn(),
     status: jest.fn(() => ({
@@ -78,6 +86,30 @@ describe('getRecipient', () => {
     const req = {};
     await getRecipient(req, mockResponse);
     expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+  });
+
+  it('returns unauthorized when user does not have access to region', async () => {
+    const req = {
+      params: {
+        recipientId: 100000,
+      },
+      query: {
+        'region.in': 1,
+        modelType: 'grant',
+      },
+      session: {
+        userId: 1,
+      },
+    };
+    recipientById.mockResolvedValue({
+      ...recipientWhere,
+      grants: [{
+        regionId: 5,
+      }],
+    });
+    await getRecipient(req, mockResponse);
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
+    expect(mockResponse.json).toHaveBeenCalledWith(recipientWhere);
   });
 });
 
@@ -210,5 +242,90 @@ describe('getGoalsByActivityRecipient', () => {
     getUserReadRegions.mockResolvedValue([2]);
     await getGoalsByRecipient(req, mockResponse);
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+  });
+});
+
+describe('getGoalsByIdAndRecipient', () => {
+  it('handles errors', async () => {
+    const req = {
+      params: {
+        recipientId: 100000,
+      },
+      query: {
+        goalIds: [1],
+      },
+    };
+
+    const mockResponse = {
+      attachment: jest.fn(),
+      json: jest.fn(),
+      send: jest.fn(),
+      sendStatus: jest.fn(),
+      status: jest.fn(() => ({
+        end: jest.fn(),
+      })),
+    };
+
+    goalsByIdAndRecipient.mockImplementationOnce(() => {
+      throw new Error('test error');
+    });
+
+    await getGoalsByIdandRecipient(req, mockResponse);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+  });
+
+  it('handles no goals', async () => {
+    const req = {
+      params: {
+        recipientId: 100000,
+      },
+      query: {
+        goalIds: [1],
+      },
+    };
+
+    const mockResponse = {
+      attachment: jest.fn(),
+      json: jest.fn(),
+      send: jest.fn(),
+      sendStatus: jest.fn(),
+      status: jest.fn(() => ({
+        end: jest.fn(),
+      })),
+    };
+
+    goalsByIdAndRecipient.mockResolvedValueOnce([]);
+
+    await getGoalsByIdandRecipient(req, mockResponse);
+
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
+  });
+
+  it('return goals successfully', async () => {
+    const req = {
+      params: {
+        recipientId: 100000,
+      },
+      query: {
+        goalIds: [1],
+      },
+    };
+
+    const mockResponse = {
+      attachment: jest.fn(),
+      json: jest.fn(),
+      send: jest.fn(),
+      sendStatus: jest.fn(),
+      status: jest.fn(() => ({
+        end: jest.fn(),
+      })),
+    };
+
+    goalsByIdAndRecipient.mockResolvedValueOnce([{ name: 'goal' }]);
+
+    await getGoalsByIdandRecipient(req, mockResponse);
+
+    expect(mockResponse.json).toHaveBeenCalledWith([{ name: 'goal' }]);
   });
 });

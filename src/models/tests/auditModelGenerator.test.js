@@ -2,7 +2,7 @@ import faker from '@faker-js/faker';
 import { Model } from 'sequelize';
 import db, { User, ZALUser } from '..';
 import { auditLogger } from '../../logger';
-import audit from '../auditModelGenerator';
+import { generateAuditModel } from '../auditModelGenerator';
 
 describe('Audit System', () => {
   let t;
@@ -110,7 +110,7 @@ describe('Audit System', () => {
           throw (err);
         }
 
-        expect(data)
+        expect(data.sort((a, b) => a.table_name >= b.table_name))
           .toEqual([{
             table_catalog: 'ttasmarthub',
             table_name: 'Tests',
@@ -209,7 +209,7 @@ describe('Audit System', () => {
         ];
         hooks.map((hook) => expect(db.sequelize.hasHook(hook)).toEqual(true));
 
-        const ZALTest = audit.generateAuditModel(db.sequelize, Test);
+        const ZALTest = generateAuditModel(db.sequelize, Test);
 
         let addTest;
         try {

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -11,22 +11,22 @@ import QuestionTooltip from './QuestionTooltip';
 import URLInput from '../URLInput';
 import UnusedData from './UnusedData';
 import colors from '../../colors';
-import './ResourceRepeater.css';
+import './ResourceRepeater.scss';
+import { OBJECTIVE_LINK_ERROR } from './constants';
 
 export default function ResourceRepeater({
   resources,
   setResources,
   error,
   validateResources,
-  status,
   isOnReport,
   isLoading,
   goalStatus,
   userCanEdit,
+  editingFromActivityReport,
 }) {
-  const resourcesWrapper = useRef();
-
-  const readOnly = status === 'Suspended' || status === 'Complete' || (goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed';
+  const readOnly = !editingFromActivityReport
+  && ((goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed' || !userCanEdit);
 
   if (readOnly) {
     const onlyResourcesWithValues = resources.filter((resource) => resource.value);
@@ -39,7 +39,7 @@ export default function ResourceRepeater({
         <p className="usa-prose text-bold margin-bottom-0">Resource links</p>
         <ul className="usa-list usa-list--unstyled">
           {onlyResourcesWithValues.map((resource) => (
-            !(status === 'Complete' || goalStatus === 'Closed') || resource.onAnyReport ? (
+            resource.onAnyReport || goalStatus === 'Not Started' ? (
               <li key={uuidv4()}>
                 <a href={resource.value}>{resource.value}</a>
               </li>
@@ -82,7 +82,7 @@ export default function ResourceRepeater({
     <>
       { fixedResources.length ? (
         <>
-          <p className="usa-prose text-bold margin-bottom-0">Resource links</p>
+          <p className="usa-prose text-bold margin-bottom-0">Link to TTA resource used</p>
           <ul className="usa-list usa-list--unstyled">
             {fixedResources.map((resource) => (
               <li key={resource.key}><a href={resource.value}>{resource.value}</a></li>
@@ -93,14 +93,17 @@ export default function ResourceRepeater({
 
       { userCanEdit ? (
         <FormGroup error={error.props.children}>
-          <div ref={resourcesWrapper}>
+          <div>
             <Label htmlFor="resources" className={fixedResources.length ? 'text-bold' : ''}>
-              {!fixedResources.length ? 'Resource links' : 'Add resource link'}
+              {!fixedResources.length ? 'Link to TTA resource used' : 'Add resource link'}
               <QuestionTooltip
                 text="Copy and paste addresses of web pages describing resources used for this objective. Usually this is an ECLKC page."
               />
             </Label>
-            {error}
+            <span className="usa-hint">
+              Enter one resource per field. To enter more resources, select “Add new resource”
+            </span>
+            {error.props.children ? OBJECTIVE_LINK_ERROR : null}
             <div className="ttahub-resource-repeater">
               { editableResources.map((r, i) => (
                 <div key={r.key} className="display-flex" id="resources">
@@ -148,7 +151,6 @@ ResourceRepeater.propTypes = {
   setResources: PropTypes.func.isRequired,
   error: PropTypes.node.isRequired,
   validateResources: PropTypes.func.isRequired,
-  status: PropTypes.string.isRequired,
   isOnReport: PropTypes.oneOfType([
     PropTypes.bool,
     PropTypes.number,
@@ -156,8 +158,10 @@ ResourceRepeater.propTypes = {
   isLoading: PropTypes.bool,
   goalStatus: PropTypes.string.isRequired,
   userCanEdit: PropTypes.bool.isRequired,
+  editingFromActivityReport: PropTypes.bool,
 };
 
 ResourceRepeater.defaultProps = {
   isLoading: false,
+  editingFromActivityReport: false,
 };

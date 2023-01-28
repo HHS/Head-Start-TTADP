@@ -1,4 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, {
+  useState, useMemo, useContext,
+} from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -21,6 +23,7 @@ import {
   OBJECTIVE_TOPICS,
 } from './goalValidator';
 import { validateListOfResources } from '../../../../components/GoalForm/constants';
+import AppLoadingContext from '../../../../AppLoadingContext';
 import './Objective.scss';
 
 export default function Objective({
@@ -32,7 +35,6 @@ export default function Objective({
   fieldArrayName,
   errors,
   onObjectiveChange,
-  onSaveDraft,
   parentGoal,
   initialObjectiveStatus,
   reportId,
@@ -46,7 +48,9 @@ export default function Objective({
     label: objective.label || objective.title,
   }))();
   const [selectedObjective, setSelectedObjective] = useState(initialObjective);
+  const [statusForCalculations, setStatusForCalculations] = useState(initialObjectiveStatus);
   const { getValues } = useFormContext();
+  const { setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
 
   /**
    * add controllers for all the controlled fields
@@ -162,35 +166,46 @@ export default function Objective({
     setSelectedObjective(newObjective);
     onChangeResources(newObjective.resources);
     onChangeTitle(newObjective.title);
-    onChangeTta(newObjective.ttaProvided || '');
+
+    // we only want to set the tta provided if it already exists, otherwise
+    // we don't want to clear the value in the field
+    if (newObjective.ttaProvided && newObjective.ttaProvided !== '<p></p>') {
+      onChangeTta(newObjective.ttaProvided);
+    }
+
     onChangeStatus(newObjective.status);
     onChangeTopics(newObjective.topics);
     onChangeFiles(newObjective.files || []);
     onObjectiveChange(newObjective, index); // Call parent on objective change.
+
+    // set a new initial status, which we went to preserve separately from the dropdown
+    // this determines if the title is read only or not
+    setStatusForCalculations(newObjective.status);
   };
 
   const onUploadFile = async (files, _objective, setError) => {
-    // we save draft one of two ways, depending on whether it is a
-    // recipient report or not
-    await onSaveDraft();
-
-    // we also need to access the updated form data to
+    // we need to access the updated form data to
     // get the correct objective ids to attach to our API post
     const objectivesField = getValues(fieldArrayName);
-    const objectiveToAttach = objectivesField[index];
+    const objectiveToAttach = objectivesField.find((o) => o.id === selectedObjective.id);
 
     // handle file upload
     try {
+      setIsAppLoading(true);
+      setAppLoadingText('Uploading');
       const data = new FormData();
       data.append('objectiveIds', JSON.stringify(!objectiveToAttach.ids ? [0] : objectiveToAttach.ids));
       files.forEach((file) => {
         data.append('file', file);
       });
 
-      return uploadObjectivesFile(data);
+      const response = await uploadObjectivesFile(data);
+      return response;
     } catch (error) {
       setError('There was an error uploading your file(s).');
       return null;
+    } finally {
+      setIsAppLoading(false);
     }
   };
 
@@ -203,7 +218,6 @@ export default function Objective({
   }
 
   const resourcesForRepeater = objectiveResources && objectiveResources.length ? objectiveResources : [{ key: uuidv4(), value: '' }];
-
   const onRemove = () => remove(index);
 
   return (
@@ -224,7 +238,7 @@ export default function Objective({
         validateObjectiveTitle={onBlurTitle}
         inputName={objectiveTitleInputName}
         parentGoal={parentGoal}
-        initialObjectiveStatus={initialObjectiveStatus}
+        initialObjectiveStatus={statusForCalculations}
       />
       <ObjectiveTopics
         error={errors.topics
@@ -238,9 +252,9 @@ export default function Objective({
         isOnApprovedReport={isOnApprovedReport || false}
         onChangeTopics={onChangeTopics}
         inputName={objectiveTopicsInputName}
-        status={objectiveStatus}
         goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
         userCanEdit
+        editingFromActivityReport
       />
       <ResourceRepeater
         resources={isOnApprovedReport ? [] : resourcesForRepeater}
@@ -251,16 +265,15 @@ export default function Objective({
           : NO_ERROR}
         validateResources={onBlurResources}
         savedResources={savedResources}
-        status={objective.status || 'Not Started'}
         inputName={objectiveResourcesInputName}
         goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
         userCanEdit
+        editingFromActivityReport
       />
       <ObjectiveFiles
         objective={objective}
         files={objectiveFiles}
         onChangeFiles={onChangeFiles}
-        status={objective.status || 'Not Started'}
         isOnReport={isOnReport || false}
         onUploadFiles={onUploadFile}
         index={index}
@@ -269,7 +282,9 @@ export default function Objective({
         reportId={reportId}
         goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
         label="Did you use any TTA resources that aren't available as link?"
+        selectedObjectiveId={selectedObjective.id}
         userCanEdit
+        editingFromActivityReport
       />
       <ObjectiveTta
         ttaProvided={objectiveTta}
@@ -323,9 +338,8 @@ Objective.propTypes = {
   remove: PropTypes.func.isRequired,
   fieldArrayName: PropTypes.string.isRequired,
   onObjectiveChange: PropTypes.func.isRequired,
-  onSaveDraft: PropTypes.func.isRequired,
   parentGoal: PropTypes.shape({
-    id: PropTypes.number,
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     status: PropTypes.string,
   }).isRequired,
   initialObjectiveStatus: PropTypes.string.isRequired,

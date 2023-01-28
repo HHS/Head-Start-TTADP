@@ -9,7 +9,7 @@ const { beforeValidate, afterCreate, beforeUpdate, afterUpdate } = require('./ho
  * @param {} sequelize
  * @param {*} DataTypes
  */
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class Goal extends Model {
     static associate(models) {
       Goal.hasMany(models.ActivityReportGoal, { foreignKey: 'goalId', as: 'activityReportGoals', hooks: true });

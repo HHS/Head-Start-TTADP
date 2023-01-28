@@ -1,9 +1,19 @@
+import faker from '@faker-js/faker';
 import db, {
-  User, Permission,
+  User,
+  Permission,
+  Role,
+  UserRole,
 } from '../../models';
 import { featureFlags } from '../../models/user';
 import {
-  getUsers, getUser, deleteUser, createUser, updateUser, getFeatures,
+  getUsers,
+  getUser,
+  deleteUser,
+  createUser,
+  updateUser,
+  getFeatures,
+  createUserRoles,
 } from './user';
 import handleErrors from '../../lib/apiErrorHandler';
 
@@ -261,5 +271,69 @@ describe('User route handler', () => {
     await createUser(mockRequest, mockResponse);
 
     expect(handleErrors).toHaveBeenCalledTimes(2);
+  });
+
+  describe('createUserRoles', () => {
+    const mockUserTheFirst = {
+      id: faker.datatype.number({ min: 10000, max: 99999 }),
+      name: `${faker.name.firstName()} ${faker.name.lastName()}`,
+      phoneNumber: '555-555-554',
+      hsesUserId: `${faker.datatype.number({ min: 10000, max: 99999 })}`,
+      hsesUsername: faker.internet.email(),
+      hsesAuthorities: ['ROLE_FEDERAL'],
+      email: faker.internet.email(),
+      homeRegionId: 1,
+      lastLogin: new Date('2021-02-09T15:13:00.000Z'),
+      permissions: [],
+      flags: [],
+      roles: [],
+      validationStatus: [],
+    };
+
+    const mockRole = {
+      id: faker.datatype.number({ min: 10000, max: 99999 }),
+      name: faker.random.alpha(3),
+      fullName: faker.name.jobTitle(),
+      isSpecialist: false,
+      mapsTo: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+    };
+
+    let u;
+    let r;
+
+    beforeAll(async () => {
+      r = await Role.create(mockRole);
+      u = await User.create(mockUserTheFirst);
+    });
+
+    afterAll(async () => {
+      await UserRole.destroy({ where: { userId: u.id } });
+      await User.destroy({ where: { id: u.id } });
+      await Role.destroy({ where: { id: r.id } });
+    });
+
+    it('does not create a role when the role doesn\'t exist', async () => {
+      await createUserRoles({
+        roles: [{ fullName: 'does not exist' }],
+      }, u.id);
+
+      const userRoles = await UserRole.findAll({ where: { userId: u.id } });
+
+      expect(userRoles.length).toBe(0);
+    });
+
+    it('Creates a user role', async () => {
+      await createUserRoles({
+        roles: [r],
+      }, u.id);
+
+      const userRoles = await UserRole.findAll({ where: { userId: u.id } });
+
+      expect(userRoles.length).toBe(1);
+      expect(userRoles[0].roleId).toBe(r.id);
+    });
   });
 });

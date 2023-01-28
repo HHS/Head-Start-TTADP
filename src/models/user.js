@@ -3,11 +3,9 @@ const isEmail = require('validator/lib/isEmail');
 const { generateFullName } = require('./helpers/generateFullName');
 const { beforeDestroy } = require('./hooks/user');
 
-const featureFlags = [
-  'recipient_goals_objectives',
-];
+const featureFlags = [];
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
       User.belongsTo(models.Region, { foreignKey: { name: 'homeRegionId', allowNull: true }, as: 'homeRegion', hooks: true });
@@ -91,4 +89,6 @@ module.exports = (sequelize, DataTypes) => {
   return User;
 };
 
-module.exports.featureFlags = featureFlags;
+export {
+  featureFlags,
+};

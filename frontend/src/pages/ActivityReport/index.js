@@ -7,17 +7,17 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import {
-  keyBy, mapValues, startCase, isEqual,
+  keyBy, mapValues, startCase,
 } from 'lodash';
 import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { useHistory, Redirect } from 'react-router-dom';
 import { Alert, Grid } from '@trussworks/react-uswds';
+import useInterval from '@use-it/interval';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import moment from 'moment';
 import pages from './Pages';
 import Navigator from '../../components/Navigator';
-
 import './index.scss';
 import { NOT_STARTED } from '../../components/Navigator/constants';
 import {
@@ -26,11 +26,11 @@ import {
   LOCAL_STORAGE_DATA_KEY,
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
   LOCAL_STORAGE_EDITABLE_KEY,
-  DATE_DISPLAY_FORMAT,
-  DATEPICKER_VALUE_FORMAT,
 } from '../../Constants';
 import { getRegionWithReadWrite } from '../../permissions';
 import useARLocalStorage from '../../hooks/useARLocalStorage';
+import useSocket from '../../hooks/useSocket';
+import { convertGoalsToFormData, convertReportToFormData, findWhatsChanged } from './formDataHelpers';
 
 import {
   submitReport,
@@ -120,92 +120,18 @@ function setConnectionActiveWithError(e, setConnectionActive) {
   return connection;
 }
 
-/**
- * compares two objects using lodash "isEqual" and returns the difference
- * @param {*} object
- * @param {*} base
- * @returns {} containing any new keys/values
- */
-export const findWhatsChanged = (object, base) => {
-  function reduction(accumulator, current) {
-    if (current === 'startDate' || current === 'endDate') {
-      if (!object[current] || !moment(object[current], 'MM/DD/YYYY').isValid()) {
-        accumulator[current] = null;
-        return accumulator;
-      }
-    }
+const INTERVAL_DELAY = 10000; // TEN SECONDS
 
-    if (current === 'creatorRole' && !object[current]) {
-      accumulator[current] = null;
-      return accumulator;
-    }
-
-    // this block intends to fix an issue where multi recipients are removed from a report
-    // after goals have been saved we pass up the removed recipients so that their specific links
-    // to the activity report/goals will be severed on the backend
-    if (current === 'activityRecipients' && !isEqual(base[current], object[current])) {
-      // eslint-disable-next-line max-len
-      const grantIds = object.activityRecipients.map((activityRecipient) => activityRecipient.activityRecipientId);
-      // eslint-disable-next-line max-len
-      accumulator.recipientsWhoHaveGoalsThatShouldBeRemoved = base.activityRecipients.filter((baseData) => (
-        !grantIds.includes(baseData.activityRecipientId)
-      )).map((activityRecipient) => activityRecipient.activityRecipientId);
-
-      // if we change activity recipients we should always ship the goals up as well
-      // we do hit recipients first, so if they were somehow both changed before the API was hit
-      // (unlikely since they are on different parts of the form)
-      // the goals that were changed would overwrite the next line
-      accumulator.goals = base.goals.map((goal) => ({ ...goal, grantIds }));
-    }
-
-    if (!isEqual(base[current], object[current])) {
-      accumulator[current] = object[current];
-    }
-
-    return accumulator;
+const publishLocation = (socket, socketPath, user, lastSaveTime) => {
+  // we have to check to see if the socket is open before we send a message
+  // since the interval could be called while the socket is open but is about to close
+  if (socket && socket.readyState === socket.OPEN) {
+    socket.send(JSON.stringify({
+      user: user.name,
+      lastSaveTime,
+      channel: socketPath,
+    }));
   }
-
-  // we sort these so they traverse in a particular order
-  // (ActivityRecipients before goals, in particular)
-  return Object.keys(object).sort().reduce(reduction, {});
-};
-
-export const unflattenResourcesUsed = (array) => {
-  if (!array) {
-    return [];
-  }
-
-  return array.map((value) => ({ value }));
-};
-
-/**
- * Goals created are editable until the report is loaded again. The report used to
- * not update freshly created goals with their DB id once saved, but this caused
- * any additional updates to create a brand new goal instead of updating the old goal.
- * We now use the goal created in the DB. However this means we no longer know if the
- * goal should be editable or not, since it was loaded from the DB. This method takes
- * the list of newly created goals and grabs their names, placed in the `editableGoals`
- * variable. Then all goals returned form the API (the report object passed into this
- * method) have their name compared against the list of fresh goals. The UI then uses
- * the `new` property to determine if a goal should be editable or not.
- * @param {*} report the freshly updated report
- * @returns {function} function that can be used by `setState` to update
- * formData
- */
-export const updateGoals = (report) => (oldFormData) => {
-  const oldGoals = oldFormData.goals || [];
-  const newGoals = report.goals || [];
-
-  const goalsThatUsedToBeNew = oldGoals.filter((goal) => goal.new);
-  const goalsFreshlySavedInDB = goalsThatUsedToBeNew.map((goal) => goal.name);
-  const goals = newGoals.map((goal) => {
-    const goalEditable = goalsFreshlySavedInDB.includes(goal.name);
-    return {
-      ...goal,
-      new: goalEditable,
-    };
-  });
-  return { ...oldFormData, goals, objectivesWithoutGoals: report.objectivesWithoutGoals };
 };
 
 function ActivityReport({
@@ -251,6 +177,13 @@ function ActivityReport({
   const reportId = useRef();
   const { user } = useContext(UserContext);
 
+  const {
+    socket,
+    setSocketPath,
+    socketPath,
+    messageStore,
+  } = useSocket(user);
+
   const showLastUpdatedTime = (
     location.state && location.state.showLastUpdatedTime && connectionActive
   ) || false;
@@ -260,49 +193,6 @@ function ActivityReport({
     // seeing a save message if they refresh the page after creating a new report.
     history.replace();
   }, [activityReportId, history]);
-
-  const convertGoalsToFormData = (goals, grantIds) => goals.map((goal) => ({ ...goal, grantIds }));
-
-  const convertObjectivesWithoutGoalsToFormData = (
-    objectives, recipientIds,
-  ) => objectives.map((objective) => ({
-    ...objective,
-    recipientIds,
-  }));
-
-  const convertReportToFormData = (fetchedReport) => {
-    let grantIds = [];
-    let otherEntities = [];
-    if (fetchedReport.activityRecipientType === 'recipient' && fetchedReport.activityRecipients) {
-      grantIds = fetchedReport.activityRecipients.map(({ id }) => id);
-    } else {
-      otherEntities = fetchedReport.activityRecipients.map(({ id }) => id);
-    }
-
-    const activityRecipients = fetchedReport.activityRecipients.map((ar) => ({
-      activityRecipientId: ar.id,
-      name: ar.name,
-    }));
-
-    const goals = convertGoalsToFormData(fetchedReport.goalsAndObjectives, grantIds);
-    const objectivesWithoutGoals = convertObjectivesWithoutGoalsToFormData(
-      fetchedReport.objectivesWithoutGoals, otherEntities,
-    );
-    const ECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.ECLKCResourcesUsed);
-    const nonECLKCResourcesUsed = unflattenResourcesUsed(fetchedReport.nonECLKCResourcesUsed);
-    const endDate = fetchedReport.endDate ? moment(fetchedReport.endDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : '';
-    const startDate = fetchedReport.startDate ? moment(fetchedReport.startDate, DATEPICKER_VALUE_FORMAT).format(DATE_DISPLAY_FORMAT) : '';
-    return {
-      ...fetchedReport,
-      activityRecipients,
-      ECLKCResourcesUsed,
-      nonECLKCResourcesUsed,
-      goals,
-      endDate,
-      startDate,
-      objectivesWithoutGoals,
-    };
-  };
 
   // cleanup local storage if the report has been submitted or approved
   useEffect(() => {
@@ -314,7 +204,22 @@ function ActivityReport({
     }
   }, [activityReportId, formData]);
 
+  useEffect(() => {
+    if (activityReportId === 'new' || !currentPage) {
+      return;
+    }
+    const newPath = `/activity-reports/${activityReportId}/${currentPage}`;
+    setSocketPath(newPath);
+  }, [activityReportId, currentPage, setSocketPath]);
+
   const userHasOneRole = useMemo(() => user && user.roles && user.roles.length === 1, [user]);
+
+  useInterval(() => publishLocation(socket, socketPath, user, lastSaveTime), INTERVAL_DELAY);
+
+  // we also have to publish our location when we enter a channel
+  useEffect(() => {
+    publishLocation(socket, socketPath, user, lastSaveTime);
+  }, [socket, socketPath, user, lastSaveTime]);
 
   useDeepCompareEffect(() => {
     const fetch = async () => {
@@ -513,7 +418,8 @@ function ActivityReport({
     }
 
     const page = pages.find((p) => p.position === position);
-    history.push(`/activity-reports/${reportId.current}/${page.path}`, state);
+    const newPath = `/activity-reports/${reportId.current}/${page.path}`;
+    history.push(newPath, state);
   };
 
   const onSave = async (data) => {
@@ -567,15 +473,38 @@ function ActivityReport({
           : data.creatorRole;
         const updatedFields = findWhatsChanged({ ...data, creatorRole }, formData);
         const updatedReport = await saveReport(
-          reportId.current, { ...updatedFields, version: 2, approvers }, {},
+          reportId.current,
+          {
+            ...updatedFields,
+            version: 2,
+            approvers, 
+            pageState: data.pageState,
+          },
+          {},
         );
 
-        updateFormData({
+        let reportData = {
           ...updatedReport,
           startDate: moment(updatedReport.startDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
           endDate: moment(updatedReport.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
-          goals: updatedReport.goalsAndObjectives,
-        }, true);
+        };
+
+        // if we are dealing with a recipient report, we need to do a little magic to
+        // format the goals and objectives appropriately, as well as divide them
+        // by which one is open and which one is not
+        if (updatedReport.activityRecipientType === 'recipient') {
+          const { goalForEditing, goals } = convertGoalsToFormData(
+            updatedReport.goalsAndObjectives,
+            updatedReport.activityRecipients.map((r) => r.activityRecipientId),
+          );
+
+          reportData = {
+            ...reportData,
+            goalForEditing,
+            goals,
+          };
+        }
+        updateFormData(reportData, true);
         setConnectionActive(true);
         updateCreatorRoleWithName(updatedReport.creatorNameWithRole);
       }
@@ -663,12 +592,13 @@ function ActivityReport({
       </Grid>
       <NetworkContext.Provider value={
         {
-          connectionActive: isOnlineMode && connectionActive,
+          connectionActive: isOnlineMode() && connectionActive,
           localStorageAvailable,
         }
       }
       >
         <Navigator
+          socketMessageStore={messageStore}
           key={currentPage}
           editable={editable}
           updatePage={updatePage}

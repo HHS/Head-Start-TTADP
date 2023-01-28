@@ -11,6 +11,7 @@ import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
 import { userById } from '../../services/users';
 import { DECIMAL_BASE } from '../../constants';
+import { currentUserId } from '../../services/currentUser';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -22,7 +23,8 @@ export async function createGoalsForReport(req, res) {
   try {
     const { goals, activityReportId, regionId } = req.body;
 
-    const user = await userById(req.session.userId);
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
 
     const canCreate = new Goal(user, null, regionId).canCreate();
 
@@ -42,7 +44,8 @@ export async function createGoals(req, res) {
   try {
     const { goals } = req.body;
 
-    const user = await userById(req.session.userId);
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
 
     let canCreate = true;
 
@@ -71,7 +74,8 @@ export async function changeGoalStatus(req, res) {
       goalIds, newStatus, closeSuspendReason, closeSuspendContext, oldStatus,
     } = req.body;
 
-    const user = await userById(req.session.userId);
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
     const ids = goalIds.map((id) => parseInt(id, DECIMAL_BASE));
 
     let status = false;
@@ -116,7 +120,8 @@ export async function deleteGoal(req, res) {
     const { goalIds } = req.query;
     const ids = [goalIds].flatMap((id) => parseInt(id, DECIMAL_BASE));
 
-    const user = await userById(req.session.userId);
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
 
     const permissions = await Promise.all(ids.map(async (goalId) => {
       const goal = await goalByIdWithActivityReportsAndRegions(goalId);
@@ -129,7 +134,7 @@ export async function deleteGoal(req, res) {
       return;
     }
 
-    const deletedGoal = await destroyGoal(goalIds);
+    const deletedGoal = await destroyGoal(ids);
 
     if (!deletedGoal) {
       res.sendStatus(404);
@@ -147,16 +152,17 @@ export async function retrieveGoalsByIds(req, res) {
     let { goalIds } = req.query;
     const { reportId } = req.query;
     goalIds = Array.isArray(goalIds) ? goalIds : [goalIds];
-    const user = await userById(req.session.userId);
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
 
-    let canView = true;
-    goalIds.forEach(async (id) => {
+    const permissions = await Promise.all(goalIds.map(async (id) => {
       const goal = await goalByIdWithActivityReportsAndRegions(id);
+
       const policy = new Goal(user, goal);
-      if (!policy.canView()) {
-        canView = false;
-      }
-    });
+      return policy.canView();
+    }));
+
+    const canView = permissions.every((permission) => permission);
 
     if (!canView) {
       res.sendStatus(401);
@@ -166,7 +172,7 @@ export async function retrieveGoalsByIds(req, res) {
     const gIds = goalIds.map((g) => parseInt(g, 10));
     const retrievedGoal = await goalsByIdsAndActivityReport(gIds, reportId);
 
-    if (!retrievedGoal) {
+    if (!retrievedGoal || !retrievedGoal.length) {
       res.sendStatus(404);
       return;
     }
@@ -181,7 +187,8 @@ export async function retrieveGoalByIdAndRecipient(req, res) {
   try {
     const { goalId, recipientId } = req.params;
 
-    const user = await userById(req.session.userId);
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
     const goal = await goalByIdWithActivityReportsAndRegions(goalId);
 
     const policy = new Goal(user, goal);
