@@ -15,6 +15,7 @@ import {
   topicsFilter,
   participantsFilter,
   myReportsFilter,
+  ttaTypeFilter,
 } from '../../components/filter/activityReportFilters';
 
 export const DASHBOARD_FILTER_CONFIG = [
@@ -33,4 +34,5 @@ export const DASHBOARD_FILTER_CONFIG = [
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,
+  ttaTypeFilter,
 ];
