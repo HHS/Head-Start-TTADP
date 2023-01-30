@@ -345,7 +345,7 @@ const ActivitySummary = ({
         <div id="tta" />
         <div className="margin-top-2">
           <FormItem
-            label="What TTA was provided"
+            label="What type of TTA was provided"
             name="ttaType"
             fieldSetWrapper
           >
