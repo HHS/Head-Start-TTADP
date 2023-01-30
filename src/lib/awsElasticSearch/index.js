@@ -207,6 +207,9 @@ const search = async (indexName, fields, query, passedClient, overrideBatchSize)
 
         // Increase loop count.
         loopIterations += 1;
+
+        // If we don't have a sort after (undefined) stop looping.
+        retrieveAgain = searchAfter;
       } else {
         retrieveAgain = false;
       }
