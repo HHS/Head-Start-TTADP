@@ -16,19 +16,20 @@ export default function filterArray(
   exclude,
   includeOperator = Op.or,
   excludeOperator = Op.and,
+  arrayExpansion = expandArray,
 ) {
   if (exclude) {
     return {
       [Op.or]: [
         {
-          [excludeOperator]: expandArray(column, searchTerms, 'NOT ILIKE'),
+          [excludeOperator]: arrayExpansion(column, searchTerms, 'NOT ILIKE'),
         },
         sequelize.literal(`${column} IS NULL`),
       ],
     };
   }
   return {
-    [includeOperator]: expandArray(column, searchTerms, 'ILIKE'),
+    [includeOperator]: arrayExpansion(column, searchTerms, 'ILIKE'),
   };
 }
 

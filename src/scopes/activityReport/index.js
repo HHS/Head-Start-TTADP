@@ -122,8 +122,8 @@ export const topicToQuery = {
     nctn: (query) => withoutReportText(query),
   },
   ttaType: {
-    ctn: (query) => withTtaType(query),
-    nctn: (query) => withoutTtaType(query),
+    in: (query) => withTtaType(query),
+    nin: (query) => withoutTtaType(query),
   },
 };
 

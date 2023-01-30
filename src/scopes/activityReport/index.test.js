@@ -210,29 +210,23 @@ describe('filtersToScopes', () => {
   });
 
   describe('ttaType', () => {
-    let ttaReport1;
-    let ttaReport2;
-    let trainingReport1;
-    let trainingReport2;
+    let ttaReport;
+    let trainingReport;
     let bothReport1;
     let bothReport2;
     let reportExcluded;
     let reportIds = [];
 
     beforeAll(async () => {
-      ttaReport1 = await ActivityReport.create({ ...draftReport, ttaType: ['Technical Assistance'] });
-      ttaReport2 = await ActivityReport.create({ ...draftReport, ttaType: ['technical-assistance'] });
-      trainingReport1 = await ActivityReport.create({ ...draftReport, ttaType: ['training'] });
-      trainingReport2 = await ActivityReport.create({ ...draftReport, ttaType: ['Training'] });
-      bothReport1 = await ActivityReport.create({ ...draftReport, ttaType: ['Both'] });
+      ttaReport = await ActivityReport.create({ ...draftReport, ttaType: ['technical-assistance'] });
+      trainingReport = await ActivityReport.create({ ...draftReport, ttaType: ['training'] });
+      bothReport1 = await ActivityReport.create({ ...draftReport, ttaType: ['training,technical-assistance'] });
       bothReport2 = await ActivityReport.create({ ...draftReport, ttaType: ['training', 'technical-assistance'] });
       reportExcluded = await ActivityReport.create({ ...draftReport, ttaType: ['balderdash'] });
 
       reportIds = [
-        ttaReport1.id,
-        ttaReport2.id,
-        trainingReport1.id,
-        trainingReport2.id,
+        ttaReport.id,
+        trainingReport.id,
         bothReport1.id,
         bothReport2.id,
         reportExcluded.id,
@@ -247,74 +241,80 @@ describe('filtersToScopes', () => {
       });
     });
 
-    it('tta', async () => {
-      const filters = { 'ttaType.ctn': ['tta'] };
-      const scope = await filtersToScopes(filters);
-      const found = await ActivityReport.findAll({
-        where: { [Op.and]: [scope.activityReport, { id: reportIds }] },
-        logging: console.log,
+    describe('tta', () => {
+      it('contains', async () => {
+        const filters = { 'ttaType.in': ['technical-assistance'] };
+        const scope = await filtersToScopes(filters);
+        const found = await ActivityReport.findAll({
+          where: { [Op.and]: [scope.activityReport, { id: reportIds }] },
+        });
+
+        expect(found.length).toBe(1);
+        expect(found.map((f) => f.id))
+          .toEqual(expect.arrayContaining([ttaReport.id]));
       });
 
-      const foundIds = found.map((f) => f.id).sort();
-      console.log({
-        ttaReport1: foundIds.includes(ttaReport1.id),
-        ttaReport2: foundIds.includes(ttaReport2.id),
-        trainingReport1: foundIds.includes(trainingReport1.id),
-        trainingReport2: foundIds.includes(trainingReport2.id),
-        bothReport1: foundIds.includes(bothReport1.id),
-        bothReport2: foundIds.includes(bothReport2.id),
-        reportExcluded: foundIds.includes(reportExcluded.id),
-      });
+      it('does not contain', async () => {
+        const filters = { 'ttaType.in': ['technical-assistance'] };
+        const scope = await filtersToScopes(filters);
+        const found = await ActivityReport.findAll({
+          where: { [Op.and]: [scope.activityReport, { id: reportIds }] },
+        });
 
-      expect(found.length).toBe(2);
-      expect(found.map((f) => f.id).sort())
-        .toEqual(expect.arrayContaining([ttaReport1.id, ttaReport2.id]).sort());
+        expect(found.length).toBe(5);
+        expect(found.map((f) => f.id).includes(ttaReport.id)).toBe(false);
+      });
     });
-    it('training', async () => {
-      const filters = { 'ttaType.ctn': ['training'] };
-      const scope = await filtersToScopes(filters);
-      const found = await ActivityReport.findAll({
-        where: { [Op.and]: [scope.activityReport, { id: reportIds }] },
-      });
+    describe('training', () => {
+      it('contains', async () => {
+        const filters = { 'ttaType.in': ['training'] };
+        const scope = await filtersToScopes(filters);
+        const found = await ActivityReport.findAll({
+          where: { [Op.and]: [scope.activityReport, { id: reportIds }] },
+        });
 
-      const foundIds = found.map((f) => f.id).sort();
-      console.log({
-        ttaReport1: foundIds.includes(ttaReport1.id),
-        ttaReport2: foundIds.includes(ttaReport2.id),
-        trainingReport1: foundIds.includes(trainingReport1.id),
-        trainingReport2: foundIds.includes(trainingReport2.id),
-        bothReport1: foundIds.includes(bothReport1.id),
-        bothReport2: foundIds.includes(bothReport2.id),
-        reportExcluded: foundIds.includes(reportExcluded.id),
+        expect(found.length).toBe(1);
+        expect(found.map((f) => f.id))
+          .toEqual(expect.arrayContaining([trainingReport.id]));
       });
+      it('does not contain', async () => {
+        const filters = { 'ttaType.nin': ['training'] };
+        const scope = await filtersToScopes(filters);
+        const found = await ActivityReport.findAll({
+          where: { [Op.and]: [scope.activityReport, { id: reportIds }] },
+        });
 
-      expect(found.length).toBe(2);
-      expect(found.map((f) => f.id).sort())
-        .toEqual(expect.arrayContaining([trainingReport1.id, trainingReport2.id]).sort());
+        expect(found.length).toBe(5);
+        expect(found.map((f) => f.id).includes(trainingReport.id)).toBe(false);
+      });
     });
 
-    it('both', async () => {
-      const filters = { 'ttaType.ctn': ['both'] };
-      const scope = await filtersToScopes(filters);
-      const found = await ActivityReport.findAll({
-        where: { [Op.and]: [scope.activityReport, { id: reportIds }] },
-      });
+    describe('both', () => {
+      it('contains', async () => {
+        const filters = { 'ttaType.nin': ['training,technical-assistance'] };
+        const scope = await filtersToScopes(filters);
+        const found = await ActivityReport.findAll({
+          where: { [Op.and]: [scope.activityReport, { id: reportIds }] },
+        });
 
-      const foundIds = found.map((f) => f.id).sort();
-      const expectedIds = [bothReport1.id, bothReport2.id].sort();
-      console.log({
-        ttaReport1: foundIds.includes(ttaReport1.id),
-        ttaReport2: foundIds.includes(ttaReport2.id),
-        trainingReport1: foundIds.includes(trainingReport1.id),
-        trainingReport2: foundIds.includes(trainingReport2.id),
-        bothReport1: foundIds.includes(bothReport1.id),
-        bothReport2: foundIds.includes(bothReport2.id),
-        reportExcluded: foundIds.includes(reportExcluded.id),
-      });
+        const foundIds = found.map((f) => f.id).sort();
+        const expectedIds = [bothReport1.id, bothReport2.id].sort();
 
-      expect(found.length).toBe(2);
-      expect(foundIds)
-        .toEqual(expect.arrayContaining(expectedIds));
+        expect(found.length).toBe(2);
+        expect(foundIds)
+          .toEqual(expect.arrayContaining(expectedIds));
+      });
+      it('does not contain', async () => {
+        const filters = { 'ttaType.nin': ['training,technical-assistance'] };
+        const scope = await filtersToScopes(filters);
+        const found = await ActivityReport.findAll({
+          where: { [Op.and]: [scope.activityReport, { id: reportIds }] },
+        });
+
+        expect(found.length).toBe(3);
+        expect(found.map((f) => f.id).includes(bothReport1.id)).toBe(false);
+        expect(found.map((f) => f.id).includes(bothReport2.id)).toBe(false);
+      });
     });
   });
 
