@@ -6,10 +6,11 @@ import { DECIMAL_BASE } from '../../constants';
 import { statesByGrantRegion } from '../../services/grant';
 import { createAndStoreVerificationToken, validateVerificationToken } from '../../services/token';
 import { sendEmailVerificationRequestWithToken } from '../../lib/mailer';
+import { currentUserId } from '../../services/currentUser';
 
 export async function getPossibleCollaborators(req, res) {
   try {
-    const user = await userById(req.session.userId);
+    const user = await userById(await currentUserId(req, res));
     const { region } = req.query;
     const authorization = new UserPolicy(user);
     if (!authorization.canViewUsersInRegion(parseInt(region, DECIMAL_BASE))) {
@@ -26,7 +27,7 @@ export async function getPossibleCollaborators(req, res) {
 
 export async function getPossibleStateCodes(req, res) {
   try {
-    const user = await userById(req.session.userId);
+    const user = await userById(await currentUserId(req, res));
     const regions = user.permissions.map((permission) => permission.regionId);
     const stateCodes = await statesByGrantRegion(regions);
     res.json(stateCodes);
@@ -37,8 +38,8 @@ export async function getPossibleStateCodes(req, res) {
 
 export async function requestVerificationEmail(req, res) {
   try {
-    const user = await userById(req.session.userId);
-    const token = await createAndStoreVerificationToken(req.session.userId, 'email');
+    const user = await userById(await currentUserId(req, res));
+    const token = await createAndStoreVerificationToken(user.id, 'email');
 
     await sendEmailVerificationRequestWithToken(user, token);
     res.sendStatus(200);
@@ -49,14 +50,15 @@ export async function requestVerificationEmail(req, res) {
 
 export async function verifyEmailToken(req, res) {
   const { token } = req.params;
+  const userId = await currentUserId(req, res);
 
-  if (!token || !req.session.userId) {
+  if (!token || !userId) {
     res.sendStatus(400);
     return;
   }
 
   try {
-    const validated = await validateVerificationToken(req.session.userId, token, 'email');
+    const validated = await validateVerificationToken(userId, token, 'email');
     if (!validated) {
       res.sendStatus(403);
       return;

@@ -2,7 +2,9 @@ const { Op, Model } = require('sequelize');
 const moment = require('moment');
 const { REPORT_STATUSES, USER_ROLES } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
-const { beforeCreate, beforeUpdate, afterUpdate } = require('./hooks/activityReport');
+const {
+  beforeCreate, beforeUpdate, afterUpdate,
+} = require('./hooks/activityReport');
 
 const generateCreatorNameWithRole = (ar) => {
   const creatorName = ar.author ? ar.author.name : '';
@@ -13,7 +15,7 @@ const generateCreatorNameWithRole = (ar) => {
   return `${creatorName}${roles}`;
 };
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ActivityReport extends Model {
     static associate(models) {
       ActivityReport.belongsTo(models.User, { foreignKey: 'userId', as: 'author' });

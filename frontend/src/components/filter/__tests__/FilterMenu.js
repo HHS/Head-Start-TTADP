@@ -19,6 +19,7 @@ import {
   otherEntitiesFilter,
   participantsFilter,
   myReportsFilter,
+  reportTextFilter,
   endDateFilter,
 } from '../activityReportFilters';
 import {
@@ -345,6 +346,7 @@ describe('Filter Menu', () => {
       topicsFilter,
       otherEntitiesFilter,
       myReportsFilter,
+      reportTextFilter,
       endDateFilter,
     ];
 
@@ -373,6 +375,10 @@ describe('Filter Menu', () => {
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
+    userEvent.selectOptions(topics, 'Date ended');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
     userEvent.selectOptions(topics, 'Reasons');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
@@ -382,6 +388,10 @@ describe('Filter Menu', () => {
     userEvent.selectOptions(conditions, 'is');
 
     userEvent.selectOptions(topics, 'Recipient name');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'contains');
+
+    userEvent.selectOptions(topics, 'Report text');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'contains');
 

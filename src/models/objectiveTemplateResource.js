@@ -1,7 +1,7 @@
 const { Model } = require('sequelize');
 // const { auditLogger } = require('../logger');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ObjectiveTemplateResource extends Model {
     /**
      * Helper method for defining associations.
@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      ObjectiveTemplateResource.belongsTo(models.ObjectiveTemplate, { foreignKey: 'objectiveTemplateId', onDelete: 'cascade', as: 'objectiveTemplateResource' });
+      ObjectiveTemplateResource.belongsTo(models.ObjectiveTemplate, { foreignKey: 'objectiveTemplateId', onDelete: 'cascade', as: 'objectiveTemplate' });
     }
   }
   ObjectiveTemplateResource.init({
