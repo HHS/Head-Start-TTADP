@@ -10,6 +10,7 @@ import db, {
   Objective,
   ActivityReportGoal,
   ActivityReportObjective,
+  ActivityReportObjectiveResource,
 } from '../../models';
 import { formatModelForAwsElasticsearch } from './modelMapper';
 import { collectModelData } from './datacollector';
@@ -55,6 +56,7 @@ describe('Collect and Map AWS Elasticsearch data', () => {
   let grant;
   let goal;
   let objective;
+  let activityReportObjective;
 
   let reportOne;
 
@@ -130,12 +132,26 @@ describe('Collect and Map AWS Elasticsearch data', () => {
       });
 
       // Create ARO's.
-      await ActivityReportObjective.create({
+      activityReportObjective = await ActivityReportObjective.create({
         activityReportId: reportOne.id,
         objectiveId: objective.id,
         title: 'Reading glasses',
         ttaProvided: 'Go to the library',
         status: 'Complete',
+      });
+
+      // Create Objective Resource
+      await ActivityReportObjectiveResource.create({
+        activityReportObjectiveId: activityReportObjective.id,
+        userProvidedUrl: 'http://test1.gov',
+      });
+      await ActivityReportObjectiveResource.create({
+        activityReportObjectiveId: activityReportObjective.id,
+        userProvidedUrl: 'http://test2.gov',
+      });
+      await ActivityReportObjectiveResource.create({
+        activityReportObjectiveId: activityReportObjective.id,
+        userProvidedUrl: 'http://test3.gov',
       });
     } catch (e) {
       auditLogger.error(JSON.stringify(e));
@@ -145,6 +161,13 @@ describe('Collect and Map AWS Elasticsearch data', () => {
 
   afterAll(async () => {
     try {
+      // Delete objective resource.
+      await ActivityReportObjectiveResource.destroy({
+        where: {
+          activityReportObjectiveId: activityReportObjective.id,
+        },
+      });
+
       // Delete Next Steps.
       await NextStep.destroy({
         where: {
@@ -215,6 +238,7 @@ describe('Collect and Map AWS Elasticsearch data', () => {
       specialistNextStepsToIndex,
       goalsToIndex,
       objectivesToIndex,
+      objectiveResourceLinks,
     } = collectedData;
 
     // Recipient Next Steps.
@@ -246,6 +270,16 @@ describe('Collect and Map AWS Elasticsearch data', () => {
     expect(objectivesToIndex[0].title).toBe('Reading glasses');
     expect(objectivesToIndex[0].ttaProvided).toBe('Go to the library');
 
+    // Objective Resource Links.
+    expect(objectiveResourceLinks).not.toBeNull();
+    expect(objectiveResourceLinks.length).toBe(3);
+    expect(objectiveResourceLinks[0]['activityReportObjective.activityReportId']).toBe(reportOne.id);
+    expect(objectiveResourceLinks[0].userProvidedUrl).toBe('http://test1.gov');
+    expect(objectiveResourceLinks[1]['activityReportObjective.activityReportId']).toBe(reportOne.id);
+    expect(objectiveResourceLinks[1].userProvidedUrl).toBe('http://test2.gov');
+    expect(objectiveResourceLinks[2]['activityReportObjective.activityReportId']).toBe(reportOne.id);
+    expect(objectiveResourceLinks[2].userProvidedUrl).toBe('http://test3.gov');
+
     // Format as AWS Elasticsearch document.
     const document = await formatModelForAwsElasticsearch(
       AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
@@ -276,5 +310,11 @@ describe('Collect and Map AWS Elasticsearch data', () => {
     // Objective TTA.
     expect(document.activityReportObjectivesTTA.length).toBe(1);
     expect(document.activityReportObjectivesTTA[0]).toBe('Go to the library');
+
+    // Objective Resources.
+    expect(document.activityReportObjectiveResources.length).toBe(3);
+    expect(document.activityReportObjectiveResources[0]).toBe('http://test1.gov');
+    expect(document.activityReportObjectiveResources[1]).toBe('http://test2.gov');
+    expect(document.activityReportObjectiveResources[2]).toBe('http://test3.gov');
   });
 });
