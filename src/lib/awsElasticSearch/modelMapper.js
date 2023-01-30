@@ -1,5 +1,14 @@
 /* eslint-disable import/prefer-default-export */
 
+const spaceUrl = (url) => {
+  if (url && url.length) {
+    let returnExplodedUrl = url.replace(/\./g, ' ').replace('http://', '').replace('https://', '').replace('/', '');
+    returnExplodedUrl = returnExplodedUrl.replace('http://', '').replace('https://', '');
+    return returnExplodedUrl;
+  }
+  return '';
+};
+
 const CUSTOM_FORMATTERS = {
   activityreports: async (data) => {
     const {
@@ -22,7 +31,11 @@ const CUSTOM_FORMATTERS = {
       activityReportObjectives: objectivesToIndex.map((aro) => aro.title),
       activityReportObjectivesTTA: objectivesToIndex.map((aro) => aro.ttaProvided),
       activityReportObjectiveResources: objectiveResourceLinks.map((aror) => aror.userProvidedUrl),
+      activityReportObjectiveResourcesSpaced: objectiveResourceLinks.map(
+        (aror) => spaceUrl(aror.userProvidedUrl), // Add a spaced copy of the url.
+      ),
     };
+    // await Promise.all(document);
     return document;
   },
 };

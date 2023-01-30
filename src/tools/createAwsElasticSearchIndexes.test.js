@@ -10,6 +10,7 @@ import db, {
   Objective,
   ActivityReportGoal,
   ActivityReportObjective,
+  ActivityReportObjectiveResource,
 } from '../models';
 import createAwsElasticSearchIndexes from './createAwsElasticSearchIndexes';
 import {
@@ -62,6 +63,9 @@ describe('Create AWS Elastic Search Indexes', () => {
   let reportOne;
   let reportTwo;
   let reportThree;
+
+  let activityReportObjective1;
+  let activityReportObjective2;
 
   beforeAll(async () => {
     try {
@@ -178,14 +182,14 @@ describe('Create AWS Elastic Search Indexes', () => {
       });
 
       // Create ARO's.
-      await ActivityReportObjective.create({
+      activityReportObjective1 = await ActivityReportObjective.create({
         activityReportId: reportOne.id,
         objectiveId: objective.id,
         title: 'Reading glasses',
         ttaProvided: 'Go to the library',
         status: 'Complete',
       });
-      await ActivityReportObjective.create({
+      activityReportObjective2 = await ActivityReportObjective.create({
         activityReportId: reportTwo.id,
         objectiveId: objective.id,
         title: 'How to prepare your work space',
@@ -199,6 +203,24 @@ describe('Create AWS Elastic Search Indexes', () => {
         ttaProvided: 'Search for local activities',
         status: 'Complete',
       });
+
+      // Create ARO resources.
+      await ActivityReportObjectiveResource.create({
+        activityReportObjectiveId: activityReportObjective1.id,
+        userProvidedUrl: 'http://google.com',
+      });
+      await ActivityReportObjectiveResource.create({
+        activityReportObjectiveId: activityReportObjective1.id,
+        userProvidedUrl: 'http://yahoo.com',
+      });
+      await ActivityReportObjectiveResource.create({
+        activityReportObjectiveId: activityReportObjective2.id,
+        userProvidedUrl: 'http://bing.com',
+      });
+      await ActivityReportObjectiveResource.create({
+        activityReportObjectiveId: activityReportObjective2.id,
+        userProvidedUrl: 'https://eclkc.ohs.acf.hhs.gov/',
+      });
     } catch (e) {
       auditLogger.error(JSON.stringify(e));
       throw e;
@@ -207,6 +229,13 @@ describe('Create AWS Elastic Search Indexes', () => {
 
   afterAll(async () => {
     try {
+      // Delete objective resource.
+      await ActivityReportObjectiveResource.destroy({
+        where: {
+          activityReportObjectiveId: [activityReportObjective1.id, activityReportObjective2.id],
+        },
+      });
+
       // Delete Next Steps.
       await NextStep.destroy({
         where: {
@@ -324,6 +353,17 @@ describe('Create AWS Elastic Search Indexes', () => {
     );
     expect(searchResult.hits.length).toBe(1);
     expect(searchResult.hits[0]['_id']).toBe(reportThree.id.toString());
+
+    // ARO Resources.
+    // query = 'https://eclkc.ohs.acf.hhs.gov/';
+    query = 'eclkc';
+    searchResult = await search(
+      AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+      ['activityReportObjectiveResources'],
+      query,
+    );
+    expect(searchResult.hits.length).toBe(1);
+    expect(searchResult.hits[0]['_id']).toBe(reportTwo.id.toString());
 
     // Search all indexes.
     query = 'thousand miles';

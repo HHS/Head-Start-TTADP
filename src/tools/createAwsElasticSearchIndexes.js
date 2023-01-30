@@ -21,6 +21,7 @@ async function getDataForReports(reportsToIndex, data) {
     specialistNextStepsToIndex,
     goalsToIndex,
     objectivesToIndex,
+    objectiveResourceLinks,
   } = data;
   const documents = [];
   for (let i = 0; i < reportsToIndex.length; i += 1) {
@@ -41,6 +42,7 @@ async function getDataForReports(reportsToIndex, data) {
     );
     const arGoals = goalsToIndex.filter((g) => g.activityReportId === ar.id);
     const arObjectives = objectivesToIndex.filter((o) => o.activityReportId === ar.id);
+    const arObjectivesResources = objectiveResourceLinks.filter((o) => o['activityReportObjective.activityReportId'] === ar.id);
 
     // Map to Model.
     const formattedData = formatModelForAwsElasticsearch(
@@ -51,6 +53,7 @@ async function getDataForReports(reportsToIndex, data) {
         specialistNextStepsToIndex: arSpecialistSteps,
         goalsToIndex: arGoals,
         objectivesToIndex: arObjectives,
+        objectiveResourceLinks: arObjectivesResources,
       },
     );
 

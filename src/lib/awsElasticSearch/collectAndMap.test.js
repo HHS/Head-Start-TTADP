@@ -314,7 +314,10 @@ describe('Collect and Map AWS Elasticsearch data', () => {
     // Objective Resources.
     expect(document.activityReportObjectiveResources.length).toBe(3);
     expect(document.activityReportObjectiveResources[0]).toBe('http://test1.gov');
+    expect(document.activityReportObjectiveResourcesSpaced[0]).toBe('test1 gov');
     expect(document.activityReportObjectiveResources[1]).toBe('http://test2.gov');
+    expect(document.activityReportObjectiveResourcesSpaced[1]).toBe('test2 gov');
     expect(document.activityReportObjectiveResources[2]).toBe('http://test3.gov');
+    expect(document.activityReportObjectiveResourcesSpaced[2]).toBe('test3 gov');
   });
 });
