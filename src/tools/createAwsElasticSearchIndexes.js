@@ -1,5 +1,4 @@
 /* eslint-disable no-restricted-syntax */
-import { Op } from 'sequelize';
 import moment from 'moment';
 import { auditLogger, logger } from '../logger';
 import {
@@ -10,20 +9,65 @@ import {
 } from '../lib/awsElasticSearch/index';
 import {
   sequelize,
-  ActivityReportGoal,
   ActivityReport,
-  NextStep,
-  ActivityReportObjective,
 } from '../models';
 import { AWS_ELASTIC_SEARCH_INDEXES } from '../constants';
+import { collectModelData } from '../lib/awsElasticSearch/datacollector';
+import { formatModelForAwsElasticsearch } from '../lib/awsElasticSearch/modelMapper';
 
+async function getDataForReports(reportsToIndex, data) {
+  const {
+    recipientNextStepsToIndex,
+    specialistNextStepsToIndex,
+    goalsToIndex,
+    objectivesToIndex,
+  } = data;
+  const documents = [];
+  for (let i = 0; i < reportsToIndex.length; i += 1) {
+    const ar = reportsToIndex[i];
+    documents.push({
+      create: {
+        _index: AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+        _id: ar.id,
+      },
+    });
+
+    // Get relevant AR records.
+    const arRecipientSteps = recipientNextStepsToIndex.filter(
+      (r) => r.activityReportId === ar.id,
+    );
+    const arSpecialistSteps = specialistNextStepsToIndex.filter(
+      (s) => s.activityReportId === ar.id,
+    );
+    const arGoals = goalsToIndex.filter((g) => g.activityReportId === ar.id);
+    const arObjectives = objectivesToIndex.filter((o) => o.activityReportId === ar.id);
+
+    // Map to Model.
+    const formattedData = formatModelForAwsElasticsearch(
+      AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+      {
+        ar,
+        recipientNextStepsToIndex: arRecipientSteps,
+        specialistNextStepsToIndex: arSpecialistSteps,
+        goalsToIndex: arGoals,
+        objectivesToIndex: arObjectives,
+      },
+    );
+
+    // Add to bulk update.
+    documents.push(formattedData);
+  }
+
+  // Make sure we resolve all async promises.
+  return Promise.all(documents);
+}
 /*
         TTAHUB-870:
         This script should be run to create the initial
         aws Elasticsearch indexes based on the current database date.
         Running this script will wipe ALL existing indexed data and re-create it.
 */
-export default async function createAwsElasticSearchIndexes() {
+export default async function createAwsElasticSearchIndexes(batchSize = 100) {
   try {
     // Create client.
     const client = await getClient();
@@ -43,10 +87,7 @@ export default async function createAwsElasticSearchIndexes() {
     const startGettingReports = moment();
     // Query DB.
     let reportsToIndex;
-    let recipientNextStepsToIndex;
-    let specialistNextStepsToIndex;
-    let goalsToIndex;
-    let objectivesToIndex;
+    let data;
 
     await sequelize.transaction(async (transaction) => {
       // Reports.
@@ -58,102 +99,64 @@ export default async function createAwsElasticSearchIndexes() {
         transaction,
       });
 
+      if (!reportsToIndex.length) {
+        return;
+      }
+
       const reportIds = reportsToIndex.map((report) => report.id);
-      // Recipient Steps.
-      recipientNextStepsToIndex = await NextStep.findAll({
-        attributes: ['activityReportId', 'note'],
-        where: {
-          noteType: 'RECIPIENT',
-          activityReportId: { [Op.in]: reportIds },
-        },
-        group: ['activityReportId', 'note'],
-        order: [['activityReportId', 'ASC']],
-        raw: true,
-        transaction,
-      });
-      // Specialist Steps.
-      specialistNextStepsToIndex = await NextStep.findAll({
-        attributes: ['activityReportId', 'note'],
-        where: {
-          noteType: 'SPECIALIST',
-          activityReportId: { [Op.in]: reportIds },
-        },
-        group: ['activityReportId', 'note'],
-        order: [['activityReportId', 'ASC']],
-        raw: true,
-        transaction,
-      });
-      // Goals.
-      goalsToIndex = await ActivityReportGoal.findAll({
-        attributes: ['activityReportId', 'name'],
-        where: {
-          activityReportId: { [Op.in]: reportIds },
-        },
-        group: ['activityReportId', 'name'],
-        order: [['activityReportId', 'ASC']],
-        raw: true,
-        transaction,
-      });
-      // objectives.
-      objectivesToIndex = await ActivityReportObjective.findAll({
-        attributes: ['activityReportId', 'title', 'ttaProvided'],
-        where: {
-          activityReportId: { [Op.in]: reportIds },
-        },
-        group: ['activityReportId', 'title', 'ttaProvided'],
-        order: [['activityReportId', 'ASC']],
-        raw: true,
-        transaction,
-      });
+      data = await collectModelData(
+        reportIds,
+        AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+        sequelize,
+      );
     });
+
     const finishGettingReports = moment();
     if (!reportsToIndex.length) {
       logger.info('Search Index Job Info: No reports found to index.');
+      return;
     }
-
     // Bulk add index documents.
-    logger.info(`Search Index Job Info: Starting indexing of ${reportsToIndex[0].length} reports...`);
+    logger.info(`Search Index Job Info: Starting indexing of ${reportsToIndex.length} reports...`);
 
     // Build Documents Object Json.
     const startCreatingBulk = moment();
-    const documents = [];
-    for (let i = 0; i < reportsToIndex.length; i += 1) {
-      const ar = reportsToIndex[i];
-      documents.push({
-        create: {
-          _index: AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-          _id: ar.id,
-        },
-      });
-
-      // Get relevant AR records.
-      const arRecipientSteps = recipientNextStepsToIndex.filter(
-        (r) => r.activityReportId === ar.id,
-      );
-      const arSpecialistSteps = specialistNextStepsToIndex.filter(
-        (s) => s.activityReportId === ar.id,
-      );
-      const arGoalsSteps = goalsToIndex.filter((g) => g.activityReportId === ar.id);
-      const arObjectivesSteps = objectivesToIndex.filter((o) => o.activityReportId === ar.id);
-
-      // Add to bulk update.
-      documents.push({
-        context: ar.context,
-        startDate: ar.startDate,
-        endDate: ar.endDate,
-        recipientNextSteps: arRecipientSteps.map((r) => r.note),
-        specialistNextSteps: arSpecialistSteps.map((s) => s.note),
-        activityReportGoals: arGoalsSteps.map((arg) => arg.name),
-        activityReportObjectives: arObjectivesSteps.map((aro) => aro.title),
-        activityReportObjectivesTTA: arObjectivesSteps.map((aro) => aro.ttaProvided),
-      });
-    }
+    logger.info('Search Index Job Info: Gathering and converting model data...');
+    // Convert all reports to documents.
+    const documents = await getDataForReports(reportsToIndex, data);
+    logger.info('Search Index Job Info: ...Gathering and converting model data completed');
     const finishCreatingBulk = moment();
 
     // Bulk update.
     const startBulkImport = moment();
-    await bulkIndex(documents, AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
+    logger.info('Search Index Job Info: Starting bulk import...');
+    let totalCount = 0;
+
+    // We need to loop this in increments of 100 (each item has two entries).
+    const documentCount = documents.length / 2; // Each items has two entries.
+    const wholeIterations = Math.floor(documentCount / batchSize);
+    const iterations = documentCount % batchSize > 0
+      ? wholeIterations + 1 // Add an extra iteration.
+      : wholeIterations;
+
+    // Bulk import.
+    for (let i = 1; i <= iterations; i += 1) {
+      // If we are on the last loop iteration get from 0-remaining.
+      const addToProcess = documents.splice(0, i === iterations ? documents.length : batchSize * 2);
+      totalCount += addToProcess.length;
+      // Add to bulk import batch.
+      // eslint-disable-next-line no-await-in-loop
+      await bulkIndex(
+        addToProcess,
+        AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+        client,
+      );
+      logger.info(`- Bulk Group #${i}: Importing ${addToProcess.length} reports`);
+    }
+
+    logger.info(`Search Index Job Info: ...Bulk import completed for ${totalCount / 2} reports in ${iterations} iterations of ${batchSize} each`);
     const finishBulkImport = moment();
+
     logger.info(`Search Index Job Info: ...Finished indexing of ${reportsToIndex.length} reports`);
 
     const finishTotalTime = moment();

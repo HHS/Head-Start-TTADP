@@ -55,6 +55,18 @@ describe('HeaderUserMenu', () => {
       });
     });
 
+    describe('when navigating', () => {
+      beforeEach(async () => before(true));
+      afterEach(() => fetchMock.restore());
+
+      it('closes', async () => {
+        const adminLink = screen.getByRole('link', { name: 'Admin' });
+        expect(adminLink).toBeVisible();
+        fireEvent.click(adminLink);
+        expect(screen.queryByRole('link', { name: 'Admin' })).toBeNull();
+      });
+    });
+
     describe('logout button', () => {
       beforeEach(async () => before());
       afterEach(() => fetchMock.restore());

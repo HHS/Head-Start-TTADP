@@ -1,7 +1,7 @@
 const { Model } = require('sequelize');
 // const { afterCreate, afterDestroy } = require('./hooks/objectiveResource');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ActivityReportObjectiveResource extends Model {
     /**
      * Helper method for defining associations.

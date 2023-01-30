@@ -1155,7 +1155,10 @@ async function removeActivityReportGoalsFromReport(reportId, currentGoalIds) {
   });
 }
 
-export async function setActivityReportGoalAsActivelyEdited(goalIdsAsString, reportId) {
+export async function setActivityReportGoalAsActivelyEdited(goalIdsAsString, reportId, pageState) {
+  const GOALS_AND_OBJECTIVES_PAGE = '2';
+  const IN_PROGRESS = 'In progress';
+
   try {
     // because of the way express works, goalIdsAsString is a string or an array of strings
     // so we flatmap it here to handle both cases
@@ -1173,6 +1176,19 @@ export async function setActivityReportGoalAsActivelyEdited(goalIdsAsString, rep
       },
     });
 
+    // we also need to update the activity report page state
+    await ActivityReport.update({
+      pageState: {
+        ...pageState,
+        [GOALS_AND_OBJECTIVES_PAGE]: IN_PROGRESS,
+      },
+    }, {
+      where: {
+        id: reportId,
+      },
+    });
+
+    // finally, set the goals that are actively edited to true
     return ActivityReportGoal.update({
       isActivelyEdited: true,
     }, {

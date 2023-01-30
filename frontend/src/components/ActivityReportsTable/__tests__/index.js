@@ -44,6 +44,7 @@ const renderTable = (user, dateTime) => {
             onUpdateFilters={() => { }}
             tableCaption="Activity Reports"
             dateTime={dateTime}
+            exportIdPrefix="activity-reports-"
           />
         </UserContext.Provider>
       </AriaLiveContext.Provider>
