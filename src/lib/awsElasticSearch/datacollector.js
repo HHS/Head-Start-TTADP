@@ -47,7 +47,7 @@ const collectActivityReportData = async (ids, sequelize, transaction) => {
     raw: true,
     transaction,
   });
-  // objectives.
+  // Objectives.
   const objectivesToIndex = await sequelize.models.ActivityReportObjective.findAll({
     attributes: ['activityReportId', 'title', 'ttaProvided'],
     where: {
@@ -62,11 +62,32 @@ const collectActivityReportData = async (ids, sequelize, transaction) => {
     transaction,
   });
 
+  // Objective resource links.
+  const objectiveResourceLinks = await sequelize.models.ActivityReportObjectiveResource.findAll({
+    attributes: ['activityReportObjectiveId', 'userProvidedUrl'],
+    where: {
+      '$activityReportObjective.activityReportId$': ids,
+    },
+    order: [
+      ['activityReportObjectiveId', 'ASC'],
+      ['userProvidedUrl', 'ASC'],
+    ],
+    include: [
+      {
+        attributes: ['activityReportId'],
+        model: sequelize.models.ActivityReportObjective,
+        as: 'activityReportObjective',
+      },
+    ],
+    raw: true,
+    transaction,
+  });
   return {
     recipientNextStepsToIndex,
     specialistNextStepsToIndex,
     goalsToIndex,
     objectivesToIndex,
+    objectiveResourceLinks,
   };
 };
 
