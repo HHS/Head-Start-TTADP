@@ -545,6 +545,7 @@ function reduceGoals(goals, forReport = false) {
         currentValue.objectives,
       ),
       isNew: false,
+      endDate: currentValue.endDate,
     };
 
     if (forReport) {
