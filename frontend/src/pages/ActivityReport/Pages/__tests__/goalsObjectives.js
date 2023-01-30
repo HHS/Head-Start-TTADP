@@ -207,6 +207,22 @@ describe('goals objectives', () => {
       });
       expect(toggleGoalForm).toHaveBeenCalledWith(false);
     });
+
+    it('does not fetch if there are no grants', async () => {
+      const goals = [{
+        name: 'This is a test goal',
+        objectives: [{
+          id: 1,
+          title: 'title',
+          ttaProvided: 'tta',
+          status: 'In Progress',
+        }],
+      }];
+
+      expect(fetchMock.called()).toBe(false);
+      renderGoals([], 'recipient', goals);
+      expect(fetchMock.called()).toBe(false);
+    });
   });
 
   describe('handles fetch error', () => {
@@ -304,22 +320,57 @@ describe('goals objectives', () => {
         const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'recipient', goals });
         expect(complete).toBeTruthy();
       });
+
+      it('is false if goalForEditing is true', () => {
+        const goals = [{
+          name: 'Is goal',
+          endDate: '2021-01-01',
+          isRttapa: 'No',
+          objectives: [{
+            id: 1,
+            title: 'title',
+            ttaProvided: 'tta',
+            status: 'In Progress',
+            topics: ['Hello'],
+            resources: [],
+            roles: ['Chief Inspector'],
+          }],
+        }];
+        const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'recipient', goals, goalForEditing: { name: 'is goal 2' } });
+        expect(complete).toBeFalsy();
+      });
     });
 
-    it('does not fetch if there are no grants', async () => {
-      const goals = [{
-        name: 'This is a test goal',
-        objectives: [{
+    it('isPageComplete is true', async () => {
+      const objectives = [
+        {
           id: 1,
           title: 'title',
           ttaProvided: 'tta',
           status: 'In Progress',
-        }],
-      }];
+          topics: ['Hello'],
+          resources: [],
+          roles: ['Chief Inspector'],
+        },
+        {
+          id: 2,
+          title: 'title',
+          ttaProvided: 'tta',
+          status: 'In Progress',
+          topics: ['Hello'],
+          resources: [],
+          roles: ['Chief Inspector'],
+        },
+      ];
+      const formData = { activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives };
+      const isComplete = goalsObjectives.isPageComplete(formData);
+      expect(isComplete).toBeTruthy();
+    });
 
-      expect(fetchMock.called()).toBe(false);
-      renderGoals([], 'recipient', goals);
-      expect(fetchMock.called()).toBe(false);
+    it('isPageComplete is false', async () => {
+      const formData = { activityRecipientType: 'recipient', goals: [] };
+      const isComplete = goalsObjectives.isPageComplete(formData);
+      expect(isComplete).not.toBeTruthy();
     });
   });
 
@@ -388,38 +439,6 @@ describe('goals objectives', () => {
       expect(await screen.findByRole('link', { name: /http:\/\/test1\.gov/i })).toBeVisible();
       expect(await screen.findByRole('link', { name: /http:\/\/test2\.gov/i })).toBeVisible();
       expect(await screen.findByRole('link', { name: /http:\/\/test3\.gov/i })).toBeVisible();
-    });
-
-    it('isPageComplete is true', async () => {
-      const objectives = [
-        {
-          id: 1,
-          title: 'title',
-          ttaProvided: 'tta',
-          status: 'In Progress',
-          topics: ['Hello'],
-          resources: [],
-          roles: ['Chief Inspector'],
-        },
-        {
-          id: 2,
-          title: 'title',
-          ttaProvided: 'tta',
-          status: 'In Progress',
-          topics: ['Hello'],
-          resources: [],
-          roles: ['Chief Inspector'],
-        },
-      ];
-      const formData = { activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives };
-      const isComplete = goalsObjectives.isPageComplete(formData);
-      expect(isComplete).toBeTruthy();
-    });
-
-    it('isPageComplete is false', async () => {
-      const formData = { activityRecipientType: 'recipient', goals: [] };
-      const isComplete = goalsObjectives.isPageComplete(formData);
-      expect(isComplete).not.toBeTruthy();
     });
   });
 });

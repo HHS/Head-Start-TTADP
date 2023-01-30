@@ -155,14 +155,14 @@ export async function retrieveGoalsByIds(req, res) {
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
 
-    let canView = true;
-    goalIds.forEach(async (id) => {
+    const permissions = await Promise.all(goalIds.map(async (id) => {
       const goal = await goalByIdWithActivityReportsAndRegions(id);
+
       const policy = new Goal(user, goal);
-      if (!policy.canView()) {
-        canView = false;
-      }
-    });
+      return policy.canView();
+    }));
+
+    const canView = permissions.every((permission) => permission);
 
     if (!canView) {
       res.sendStatus(401);
@@ -172,7 +172,7 @@ export async function retrieveGoalsByIds(req, res) {
     const gIds = goalIds.map((g) => parseInt(g, 10));
     const retrievedGoal = await goalsByIdsAndActivityReport(gIds, reportId);
 
-    if (!retrievedGoal) {
+    if (!retrievedGoal || !retrievedGoal.length) {
       res.sendStatus(404);
       return;
     }
