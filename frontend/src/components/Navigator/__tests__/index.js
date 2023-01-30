@@ -10,7 +10,7 @@ import fetchMock from 'fetch-mock';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import Navigator from '../index';
 import UserContext from '../../../UserContext';
-import { NOT_STARTED, IN_PROGRESS } from '../constants';
+import { COMPLETE, NOT_STARTED, IN_PROGRESS } from '../constants';
 import NetworkContext from '../../../NetworkContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 import GoalFormContext from '../../../GoalFormContext';
@@ -513,6 +513,79 @@ describe('Navigator', () => {
     });
     await waitFor(() => expect(fetchMock.called('/api/activity-reports/goals')).toBe(true));
     await waitFor(() => expect(updateForm).toHaveBeenCalled());
+  });
+
+  it('runs the autosave when navigating from the goals and objectives page', async () => {
+    const onSubmit = jest.fn();
+    const onSave = jest.fn();
+    const updatePage = jest.fn();
+    const updateForm = jest.fn();
+
+    const pages = [{
+      position: 1,
+      path: 'goals-objectives',
+      label: 'first page',
+      review: false,
+      render: () => (
+        <GoalTest />
+      ),
+    }, {
+      position: 2,
+      path: 'second',
+      label: 'second page',
+      review: false,
+      render: () => (
+        <Input name="second" required />
+      ),
+    },
+    {
+      position: 3,
+      path: 'third',
+      label: 'third page',
+      review: false,
+      render: () => (
+        <Input name="third" required />
+      ),
+    },
+    {
+      position: 4,
+      label: 'review page',
+      path: 'review',
+      review: true,
+      render: (formData, onFormSubmit) => (
+        <div>
+          <Input name="fourth" required />
+          <button type="button" data-testid="review" onClick={onFormSubmit}>Continue</button>
+        </div>
+      ),
+    }];
+    renderNavigator('goals-objectives', onSubmit, onSave, updatePage, updateForm, pages);
+    fetchMock.restore();
+    expect(fetchMock.called()).toBe(false);
+
+    // mark the form as dirty so that onSave is called
+    userEvent.click(screen.getByRole('textbox', { name: 'Name' }));
+    userEvent.click(await screen.findByRole('button', { name: 'second page Not Started' }));
+
+    await waitFor(() => expect(
+      onSave,
+    ).toHaveBeenCalledWith({
+      ...initialData,
+      goalName: '',
+      goals: [
+        {
+          endDate: '',
+          grantIds: [],
+          isActivelyBeingEditing: true,
+          isRttapa: undefined,
+          name: '',
+          objectives: [],
+          regionId: 1,
+        },
+      ],
+      pageState: { 1: COMPLETE, 2: NOT_STARTED },
+    }));
+    await waitFor(() => expect(updatePage).toHaveBeenCalledWith(2));
   });
 
   it('disables the save button', async () => {

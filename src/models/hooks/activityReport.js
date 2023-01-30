@@ -73,7 +73,7 @@ const moveDraftGoalsToNotStartedOnSubmission = async (sequelize, instance, optio
   }
 };
 
-const propogateSubmissionStatus = async (sequelize, instance, options) => {
+const propagateSubmissionStatus = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
     && changed.includes('submissionStatus')
@@ -126,7 +126,6 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
       )));
     } catch (e) {
       auditLogger.error(JSON.stringify({ e }));
-      throw e;
     }
 
     let objectives;
@@ -178,7 +177,6 @@ const propogateSubmissionStatus = async (sequelize, instance, options) => {
       )));
     } catch (e) {
       auditLogger.error(JSON.stringify({ e }));
-      throw e;
     }
   }
 };
@@ -634,7 +632,7 @@ const updateAwsElasticsearchIndexes = async (sequelize, instance) => {
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
-  await propogateSubmissionStatus(sequelize, instance, options);
+  await propagateSubmissionStatus(sequelize, instance, options);
   await propagateApprovedStatus(sequelize, instance, options);
   await automaticStatusChangeOnApprovalForGoals(sequelize, instance, options);
   await automaticGoalObjectiveStatusCachingOnApproval(sequelize, instance, options);
@@ -646,6 +644,7 @@ const afterUpdate = async (sequelize, instance, options) => {
 export {
   copyStatus,
   propagateApprovedStatus,
+  propagateSubmissionStatus,
   automaticStatusChangeOnApprovalForGoals,
   beforeCreate,
   beforeUpdate,

@@ -872,6 +872,7 @@ describe('Activity Report handlers', () => {
       ...mockRequest,
       params: { activityReportId: '1' },
       query: { goalId: '1' },
+      body: {},
     };
     it('handlers errors', async () => {
       ActivityReport.mockImplementationOnce(() => ({
