@@ -1,10 +1,8 @@
 /* eslint-disable import/prefer-default-export */
 
 const spaceUrl = (url) => {
-  if (url && url.length) {
-    let returnExplodedUrl = url.replace(/\./g, ' ').replace('http://', '').replace('https://', '').replace('/', '');
-    returnExplodedUrl = returnExplodedUrl.replace('http://', '').replace('https://', '');
-    return returnExplodedUrl;
+  if (url && url.length && (url.includes('http://') || url.includes('https://'))) {
+    return url.replace(/\./g, ' ').replace('http://', '').replace('https://', '').replace('/', '');
   }
   return '';
 };
@@ -23,6 +21,10 @@ const CUSTOM_FORMATTERS = {
     const document = {
       id: ar.id,
       context: ar.context,
+      nonECLKCResources: ar.nonECLKCResourcesUsed.map((nr) => nr),
+      nonECLKCResourcesSpaced: ar.nonECLKCResourcesUsed.map((nr) => spaceUrl(nr)),
+      ECLKCResources: ar.ECLKCResourcesUsed.map((er) => er),
+      ECLKCResourcesSpaced: ar.ECLKCResourcesUsed.map((er) => spaceUrl(er)),
       startDate: ar.startDate,
       endDate: ar.endDate,
       recipientNextSteps: recipientNextStepsToIndex.map((r) => r.note),
@@ -35,7 +37,7 @@ const CUSTOM_FORMATTERS = {
         (aror) => spaceUrl(aror.userProvidedUrl), // Add a spaced copy of the url.
       ),
     };
-    // await Promise.all(document);
+
     return document;
   },
 };

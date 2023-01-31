@@ -42,6 +42,8 @@ const draft = {
   topics: ['topics'],
   ttaType: ['type'],
   context: 'Lets give some context.',
+  nonECLKCResourcesUsed: [],
+  ECLKCResourcesUsed: [],
 };
 
 const approvedReport = {
@@ -94,6 +96,8 @@ describe('Create AWS Elastic Search Indexes', () => {
         ...approvedReport,
         context: 'Lets give some',
         userId: user.id,
+        nonECLKCResourcesUsed: ['https://www.youtube.com'],
+        ECLKCResourcesUsed: ['https://www.smartsheet.com'],
       });
       reportTwo = await ActivityReport.create(
         {
@@ -359,11 +363,31 @@ describe('Create AWS Elastic Search Indexes', () => {
     query = 'eclkc';
     searchResult = await search(
       AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-      ['activityReportObjectiveResources'],
+      ['activityReportObjectiveResourcesSpaced'],
       query,
     );
     expect(searchResult.hits.length).toBe(1);
     expect(searchResult.hits[0]['_id']).toBe(reportTwo.id.toString());
+
+    // non ECLKC Resource.
+    query = 'youtube';
+    searchResult = await search(
+      AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+      ['nonECLKCResourcesSpaced'],
+      query,
+    );
+    expect(searchResult.hits.length).toBe(1);
+    expect(searchResult.hits[0]['_id']).toBe(reportOne.id.toString());
+
+    // ECLKC Resource.
+    query = 'smartsheet';
+    searchResult = await search(
+      AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+      ['ECLKCResourcesSpaced'],
+      query,
+    );
+    expect(searchResult.hits.length).toBe(1);
+    expect(searchResult.hits[0]['_id']).toBe(reportOne.id.toString());
 
     // Search all indexes.
     query = 'thousand miles';

@@ -42,6 +42,8 @@ const draft = {
   topics: ['topics'],
   ttaType: ['type'],
   context: 'Lets give some context.',
+  nonECLKCResourcesUsed: [],
+  ECLKCResourcesUsed: [],
 };
 
 const approvedReport = {
@@ -84,6 +86,8 @@ describe('Collect and Map AWS Elasticsearch data', () => {
         ...approvedReport,
         context: 'Lets give some context',
         userId: user.id,
+        nonECLKCResourcesUsed: ['https://www.youtube.com', 'https://www.smartsheet.com'],
+        ECLKCResourcesUsed: ['https://ECLKC1.gov', 'https://ECLKC2.gov'],
       });
 
       // Recipient Next Steps.
@@ -319,5 +323,25 @@ describe('Collect and Map AWS Elasticsearch data', () => {
     expect(document.activityReportObjectiveResourcesSpaced[1]).toBe('test2 gov');
     expect(document.activityReportObjectiveResources[2]).toBe('http://test3.gov');
     expect(document.activityReportObjectiveResourcesSpaced[2]).toBe('test3 gov');
+    /*
+     nonECLKCResourcesUsed: ['https://wwww.youtube.com', 'https://wwww.smartsheet.com'],
+        ECLKCResourcesUsed: ['https://ECLKC1.gov', 'https://ECLKC2.gov'],
+        */
+
+    // Non ECLKC resources.
+    expect(document.nonECLKCResources.length).toBe(2);
+    expect(document.nonECLKCResourcesSpaced.length).toBe(2);
+    expect(document.nonECLKCResources[0]).toBe('https://www.youtube.com');
+    expect(document.nonECLKCResourcesSpaced[0]).toBe('www youtube com');
+    expect(document.nonECLKCResources[1]).toBe('https://www.smartsheet.com');
+    expect(document.nonECLKCResourcesSpaced[1]).toBe('www smartsheet com');
+
+    // ECLKC resources.
+    expect(document.ECLKCResources.length).toBe(2);
+    expect(document.ECLKCResourcesSpaced.length).toBe(2);
+    expect(document.ECLKCResources[0]).toBe('https://ECLKC1.gov');
+    expect(document.ECLKCResourcesSpaced[0]).toBe('ECLKC1 gov');
+    expect(document.ECLKCResources[1]).toBe('https://ECLKC2.gov');
+    expect(document.ECLKCResourcesSpaced[1]).toBe('ECLKC2 gov');
   });
 });

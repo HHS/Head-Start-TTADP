@@ -95,7 +95,6 @@ export default async function createAwsElasticSearchIndexes(batchSize = 100) {
     await sequelize.transaction(async (transaction) => {
       // Reports.
       reportsToIndex = await ActivityReport.findAll({
-        attributes: ['id', 'context', 'startDate', 'endDate'],
         where: { calculatedStatus: 'approved' },
         order: [['id', 'ASC']],
         raw: true,
