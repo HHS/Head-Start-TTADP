@@ -27,8 +27,6 @@ export default function useSocket(user) {
 
   useEffect(() => {
     if (!WS_URL || !socketPath) {
-      console.log('No websocket url or socket path provided. Not connecting to websocket.');
-      console.log({ 'Provided Data': { WS_URL, socketPath } });
       return;
     }
 

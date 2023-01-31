@@ -3,7 +3,9 @@ import PropTypes from 'prop-types';
 import html2canvas from 'html2canvas';
 import { Button } from '@trussworks/react-uswds';
 
-export default function ElementCaptureButton({ reference, className, buttonText }) {
+export default function ElementCaptureButton({
+  reference, className, buttonText, id,
+}) {
   const capture = async () => {
     try {
       // capture the element, setting the width and height
@@ -36,6 +38,7 @@ export default function ElementCaptureButton({ reference, className, buttonText 
       onClick={capture}
       data-html2canvas-ignore
       className={className}
+      id={id}
     >
       {buttonText}
     </Button>
@@ -46,6 +49,7 @@ ElementCaptureButton.propTypes = {
   reference: PropTypes.shape({ current: PropTypes.instanceOf(Element) }).isRequired,
   className: PropTypes.string,
   buttonText: PropTypes.string,
+  id: PropTypes.string.isRequired,
 };
 
 ElementCaptureButton.defaultProps = {
