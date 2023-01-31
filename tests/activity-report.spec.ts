@@ -225,7 +225,7 @@ test.describe('Activity Report', () => {
     await page.getByTestId('textarea').fill('g2');
     await page.getByRole('group', { name: 'Is this a Recipient TTA Plan Agreement (RTTAPA) goal?*' }).getByText('Yes').click();
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
-    await page.locator('#react-select-35-option-0').click();
+    await page.keyboard.press('Enter');
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('g2o1');
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
@@ -235,6 +235,10 @@ test.describe('Activity Report', () => {
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
     await page.keyboard.type('hello');
     await page.getByRole('button', { name: 'Save goal' }).click();
+
+    // assert the goals and objectives section is complete
+    let sideNavTextContent = await page.locator('#activityReportSideNav-goals-and-objectives .page-state').textContent();
+    expect(sideNavTextContent?.match(/Complete/i)).toBeTruthy();
 
     // edit the first goal
     await page.getByText('g1', { exact: true }).locator('..').locator('..').getByRole('button')
@@ -248,6 +252,11 @@ test.describe('Activity Report', () => {
     await page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).first().click();
     await page.getByRole('button', { name: 'Goals and objectives' }).click();
 
+    // test to make sure that side nav is updated when a goal is edited
+    sideNavTextContent = await page.locator('#activityReportSideNav-goals-and-objectives .page-state').textContent();
+
+    expect(sideNavTextContent?.match(/in progress/i)).toBeTruthy();
+    
     // save the first goal
     await page.getByRole('button', { name: 'Save goal' }).click();
 
