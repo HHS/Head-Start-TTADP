@@ -266,11 +266,14 @@ export const ttaTypeFilter = {
   id: 'ttaType',
   display: 'TTA type',
   conditions: FILTER_CONDITIONS,
-  defaultValues: EMPTY_SINGLE_SELECT,
+  defaultValues: {
+    is: 'training',
+    'is not': 'training',
+  },
   displayQuery: displayTtaTypeQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterTTAType
-      inputId={`ttaType-${condition}-${id}`}
+      inputId={`ttaType-${condition.replace(/ /g, '-')}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />

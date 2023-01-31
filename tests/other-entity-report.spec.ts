@@ -36,7 +36,7 @@ describe('other entity report', () => {
     await page.getByLabel(/Start date/i).fill('04/05/2021');
     await page.getByLabel('End date *mm/dd/yyyy').fill('05/07/2021');
     await page.getByLabel('Duration in hours (round to the nearest half hour) *').fill('2');
-    await page.getByRole('group', { name: 'What TTA was provided *' }).getByText('Training').click();
+    await page.getByRole('group', { name: /What type of TTA was provided/i }).getByText('Training').click();
     await page.getByText('Virtual').click();
     await page.getByText('Video').click();
     await page.locator('#participants div').filter({ hasText: '- Select -' }).nth(1).click();
@@ -44,7 +44,7 @@ describe('other entity report', () => {
     await page.locator('#react-select-23-option-3').click();
     await page.locator('.smart-hub-activity-report > div:nth-child(2) > div').first().click();
     await page.getByLabel('Number of participants involved *').click();
-    await page.getByLabel('Number of participants involved *').fill('3');   
+    await page.getByLabel('Number of participants involved *').fill('3');
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
     // fill out the objectives form
@@ -87,7 +87,7 @@ describe('other entity report', () => {
     // select an approver
     await page.locator('.css-g1d714-ValueContainer').click();
     await page.locator('#react-select-33-option-0').click();
-    
+
     // extract the AR number from the URL:
     const url = page.url();
     const arNumber = url.split('/').find((part) => /^\d+$/.test(part));

@@ -1,5 +1,8 @@
+/* eslint-disable jest/no-done-callback */
+/* eslint-disable no-await-in-loop */
+/* eslint-disable no-plusplus */
 import { test, expect, Page } from '@playwright/test';
-import { blur } from './common';
+import { blur } from './common.ts';
 
 async function getFullName(page: Page) {
   await page.goto('/');
@@ -22,9 +25,9 @@ function getGoals(headingString: string) {
 }
 
 /**
- * 
+ *
  * Given a page, returns the region number from the heading text
- * 
+ *
  * @param page {Page}
  * @returns string
  */
@@ -51,10 +54,11 @@ async function getRecipient(page: Page) {
  * Extracts the grant numbers from the recipients string
  *
  * @remarks
- * A sample Activity participants input: "Agency 1.a in region 1, Inc. - 01HP044444  - ECS, Agency 1.a in region 1, Inc. - 01HP044445"
- * Would return "01HP044444, 01HP044445"
- * Note - there is a bug currently that displays the grant number in a descending order, hence a need
- * to temporarily reverse the returned array to return "01HP044445, 01HP04444" instead
+ * A sample Activity participants input: "Agency 1.a in region 1, Inc. - 01HP044444  - ECS,
+ * Agency 1.a in region 1, Inc. - 01HP044445" would return "01HP044444, 01HP044445"
+ * Note - there is a bug currently that displays the grant number in a descending order,
+ * hence a need to temporarily reverse the returned array to return "01HP044445, 01HP04444"
+ * instead
  * @param recipients - the recipients string
  */
 async function getGrants(recipients: string) {
@@ -74,21 +78,40 @@ async function getGrants(recipients: string) {
  * @param selectedOption - dropdown
  */
 async function extractSelectedDisplayedValue(selectedOption) {
-  return selectedOption.evaluate(sel => sel.options[sel.options.selectedIndex].textContent);
-};
+  return selectedOption.evaluate((sel) => sel.options[sel.options.selectedIndex].textContent);
+}
+
+interface ActivitySummaryConfig {
+  recipients?: number;
+  ttaType?: 'Training' | 'Technical Assistance' | 'Both';
+}
+
+const defaultActivitySummaryConfig = {
+  recipients: 2,
+  ttaType: 'Training',
+} as ActivitySummaryConfig;
 
 /**
- * 
+ *
  * @param page {Page}
- * @param recipients {number} how many recipients to select, starting at the top of the list 
+ * @param recipients {number} how many recipients to select, starting at the top of the list
  */
-async function activitySummary(page: Page, recipients: number = 2) {
+async function activitySummary(
+  page: Page,
+  config: ActivitySummaryConfig = defaultActivitySummaryConfig,
+) {
+  const { recipients, ttaType } = { ...config, ...defaultActivitySummaryConfig };
+
   await page.getByRole('group', { name: 'Was this activity for a recipient or other entity? *' }).locator('label').filter({ hasText: 'Recipient' }).click();
   await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
   await page.keyboard.press('ArrowDown');
 
+  if (recipients) {
   // select recipients
-  for (let i = 0; i < recipients; i++) {    
+    for (let i = 0; i < recipients + 1; i++) {
+      await page.keyboard.press('Enter');
+    }
+  } else {
     await page.keyboard.press('Enter');
   }
 
@@ -106,13 +129,13 @@ async function activitySummary(page: Page, recipients: number = 2) {
   await page.getByLabel('Start date *mm/dd/yyyy').fill('12/01/2020');
   await page.getByLabel('End date *mm/dd/yyyy').fill('12/01/2050');
   await page.getByLabel('Duration in hours (round to the nearest half hour) *').fill('5');
-  await page.getByRole('group', { name: 'What TTA was provided *' }).getByText('Training').click();
+  await page.getByRole('group', { name: /What type of TTA was provided/i }).getByText(ttaType || 'Training').click();
   await page.getByText('Virtual').click();
   await page.getByText('Video').click();
-  await page.locator('#participants input').focus()
+  await page.locator('#participants input').focus();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
-  
+
   await blur(page);
   await page.getByLabel('Number of participants involved *').fill('5');
 }
@@ -129,7 +152,7 @@ async function nextSteps(page: Page) {
   await page.getByLabel('When does the recipient anticipate completing step 1? *').fill('12/01/2050');
 }
 
-test.describe("Activity Report", () => {
+test.describe('Activity Report', () => {
   test('can create an AR with multiple goals, submit for review, and review', async ({ page }) => {
     const fullName = await getFullName(page);
 
@@ -142,11 +165,12 @@ test.describe("Activity Report", () => {
 
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
-    await page.getByRole('button', { name: 'Supporting attachments not started' }).click(); 
-    await page.getByRole('button', { name: 'Goals and objectives not started' }).click(); 
+    await page.getByRole('button', { name: 'Supporting attachments not started' }).click();
+    await page.getByRole('button', { name: 'Goals and objectives not started' }).click();
 
     // create the first goal
-    await page.getByTestId('label').locator('div').filter({ hasText: '- Select -' }).nth(2).click();
+    await page.getByTestId('label').locator('div').filter({ hasText: '- Select -' }).nth(2)
+      .click();
     await page.locator('#react-select-15-option-0').getByText('Create new goal').click();
     await page.getByTestId('textarea').click();
     await page.getByTestId('textarea').fill('g1');
@@ -209,12 +233,13 @@ test.describe("Activity Report", () => {
     await page.keyboard.press('Enter');
     await blur(page);
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
-    await page.keyboard.type('hello');    
+    await page.keyboard.type('hello');
     await page.getByRole('button', { name: 'Save goal' }).click();
 
     // edit the first goal
-    await page.getByText('g1', { exact: true }).locator('..').locator('..').getByRole('button').click();
-    await page.getByRole('button', { name: 'Edit'}).click();
+    await page.getByText('g1', { exact: true }).locator('..').locator('..').getByRole('button')
+      .click();
+    await page.getByRole('button', { name: 'Edit' }).click();
 
     // navigate away from the activity report page
     await page.getByRole('link', { name: 'Activity Reports' }).click();
@@ -223,7 +248,7 @@ test.describe("Activity Report", () => {
     await page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).first().click();
     await page.getByRole('button', { name: 'Goals and objectives' }).click();
 
-    // save the first goal   
+    // save the first goal
     await page.getByRole('button', { name: 'Save goal' }).click();
 
     // move to next steps
@@ -265,17 +290,17 @@ test.describe("Activity Report", () => {
     // begin review assertions
     await expect(page.getByText(`${fullName} has requested approval for this activity report`)).toBeVisible();
     await expect(page.getByTestId('accordionButton_activity-summary')).toHaveText('Activity summary');
-    
-    await expect(page.getByTestId('accordionItem_activity-summary').getByText('Recipient', {exact: true})).toBeVisible();
-    await expect(page.getByTestId('accordionItem_activity-summary').getByText('Regional Office', {exact: true})).toBeVisible();
-    await expect(page.getByTestId('accordionItem_activity-summary').getByText('Training', {exact: true})).toBeVisible();
-    await expect(page.getByTestId('accordionItem_activity-summary').getByText('Virtual', {exact: true})).toBeVisible();
+
+    await expect(page.getByTestId('accordionItem_activity-summary').getByText('Recipient', { exact: true })).toBeVisible();
+    await expect(page.getByTestId('accordionItem_activity-summary').getByText('Regional Office', { exact: true })).toBeVisible();
+    await expect(page.getByTestId('accordionItem_activity-summary').getByText('Training', { exact: true })).toBeVisible();
+    await expect(page.getByTestId('accordionItem_activity-summary').getByText('Virtual', { exact: true })).toBeVisible();
     await expect(page.getByTestId('accordionItem_activity-summary').getByText('Virtual')).toBeVisible();
-    await expect(page.getByText('Recipient or other entity', {exact: true})).toBeVisible();
-    await expect(page.getByText('Activity participants', {exact: true})).toBeVisible();
-    await expect(page.getByText('Collaborating specialists', {exact: true})).toBeVisible();
-    await expect(page.getByText('Target populations addressed', {exact: true})).toBeVisible();
-    await expect(page.getByText('TTA provided', {exact: true})).toBeVisible();
+    await expect(page.getByText('Recipient or other entity', { exact: true })).toBeVisible();
+    await expect(page.getByText('Activity participants', { exact: true })).toBeVisible();
+    await expect(page.getByText('Collaborating specialists', { exact: true })).toBeVisible();
+    await expect(page.getByText('Target populations addressed', { exact: true })).toBeVisible();
+    await expect(page.getByText('TTA provided', { exact: true })).toBeVisible();
 
     await expect(page.getByText('Goal: g1')).toBeVisible();
     await expect(page.getByText('Objective: g1o1')).toBeVisible();
@@ -311,13 +336,14 @@ test.describe("Activity Report", () => {
     // navigate to the 'Goals & Objectives page
     await page.getByRole('link', { name: 'Goals & Objectives' }).click();
     // check that previously created goals g1 and g2 are visible
-    await expect(page.getByText('g1', {exact: true})).toBeVisible();
-    await expect(page.getByText('g2', {exact: true})).toBeVisible();
+    await expect(page.getByText('g1', { exact: true })).toBeVisible();
+    await expect(page.getByText('g2', { exact: true })).toBeVisible();
 
     // look for the goals heading for the previously created goal, e.g. 'Goal G-6, G-5RTTAPA'
     const g1Goals = page.locator('h3:above(p:text("g1"))').first();
     const g1GoalsTxt = await g1Goals.textContent();
-    // get text for the previously created goal's objectives button, e.g. 'Goal G-5, G-6RTTAPA' will become 'G-5G-6'
+    // get text for the previously created goal's objectives button,
+    // e.g. 'Goal G-5, G-6RTTAPA' will become 'G-5G-6'
     const g1GoalsForObjectives = getGoals(g1GoalsTxt || '');
     // strip 'Goals' and 'RTTAPA' from g1GoalsTxt: e.g "Goal G-5, G-6RTTAPA" will become "G-5, G-6"
     const g1GoalsForSelector = g1GoalsTxt ? g1GoalsTxt.substring(5).split('RTTAPA')[0] : '';
@@ -329,7 +355,8 @@ test.describe("Activity Report", () => {
     // look for the goals heading for the previously created goal, e.g. 'Goal G-8, G-7RTTAPA'
     const g2Goals = page.locator('h3:above(p:text("g2"))').first();
     const g2GoalsTxt = await g2Goals.textContent();
-    // extract text used to locate the correct objective's button, e.g. 'Goal G-8, G-7RTTAPA' will become 'G-7G-8'
+    // extract text used to locate the correct objective's button,
+    // e.g. 'Goal G-8, G-7RTTAPA' will become 'G-7G-8'
     const g2GoalsForObjectives = getGoals(g2GoalsTxt || '');
     // extract text used to locate the topics
     const g2Topics = page.locator(`div:right-of(h3:text("${g2GoalsTxt ? g2GoalsTxt.substring(5).split('RTTAPA')[0] : ''}"))`).first().locator('p').getByText('Behavioral / Mental Health / Trauma, CLASS: Classroom Organization');
@@ -339,48 +366,52 @@ test.describe("Activity Report", () => {
     // expand objectives for g1
     await page.getByRole('button', { name: `Expand objectives for goal ${g1GoalsForObjectives}` }).click();
 
-    await expect(page.getByText('g1o1', {exact: true})).toBeVisible();
+    await expect(page.getByText('g1o1', { exact: true })).toBeVisible();
     // verify a link to the activity report is found in the objective section
     await expect(page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
-    // Access parent with '..' 
-    await expect(page.getByText('g1o1', {exact: true}).locator('..').locator('..').getByText('Grant numbers')).toBeVisible();
+    // Access parent with '..'
+    await expect(page.getByText('g1o1', { exact: true }).locator('..').locator('..').getByText('Grant numbers')).toBeVisible();
     // verify the grants are visible in the objective section
-    await expect(page.getByText('g1o1', {exact: true}).locator('..').locator('..').getByText(grants)).toBeVisible();    
+    await expect(page.getByText('g1o1', { exact: true }).locator('..').locator('..').getByText(grants)).toBeVisible();
     // verify the reason is visible in the objective section
-    const goalOneContent = await page.getByText('g1o1', {exact: true}).locator('..').locator('..').textContent();
+    const goalOneContent = await page.getByText('g1o1', { exact: true }).locator('..').locator('..').textContent();
     expect(goalOneContent).toContain('Change in Scope');
     // verify the end date is visible in the objective section
-    await expect(page.getByText('g1o1', {exact: true}).locator('..').locator('..').getByText('12/01/2050')).toBeVisible();
+    await expect(page.getByText('g1o1', { exact: true }).locator('..').locator('..').getByText('12/01/2050')).toBeVisible();
     // verify the correct status for the objective is visible
-    await expect(page.getByText('g1o1', {exact: true}).locator('..').locator('..').getByText('Not started')).toBeVisible();
+    await expect(page.getByText('g1o1', { exact: true }).locator('..').locator('..').getByText('Not started')).toBeVisible();
 
     // expand objectives for g2
     await page.getByRole('button', { name: `Expand objectives for goal ${g2GoalsForObjectives}` }).click();
 
-    await expect(page.getByText('g2o1', {exact: true})).toBeVisible();
+    await expect(page.getByText('g2o1', { exact: true })).toBeVisible();
     // verify a link to the activity report is found in the objective section
-    await expect(page.getByText('g2o1', {exact: true}).locator('..').locator('..').getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
-    await expect(page.getByText('g2o1', {exact: true}).locator('..').locator('..').getByText('Grant numbers')).toBeVisible();
+    await expect(page.getByText('g2o1', { exact: true }).locator('..').locator('..').getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
+    await expect(page.getByText('g2o1', { exact: true }).locator('..').locator('..').getByText('Grant numbers')).toBeVisible();
     // verify the grants are visible in the objective section
-    await expect(page.getByText('g2o1', {exact: true}).locator('..').locator('..').getByText(grants)).toBeVisible();
-    const goalTwoContent = await page.getByText('g2o1', {exact: true}).locator('..').locator('..').textContent();
+    await expect(page.getByText('g2o1', { exact: true }).locator('..').locator('..').getByText(grants)).toBeVisible();
+    const goalTwoContent = await page.getByText('g2o1', { exact: true }).locator('..').locator('..').textContent();
     expect(goalTwoContent).toContain('Change in Scope');
     // verify the end date is visible in the objective section
-    await expect(page.getByText('g2o1', {exact: true}).locator('..').locator('..').getByText('12/01/2050')).toBeVisible();
+    await expect(page.getByText('g2o1', { exact: true }).locator('..').locator('..').getByText('12/01/2050')).toBeVisible();
     // verify the correct status for the objective is visible
-    await expect(page.getByText('g2o1', {exact: true}).locator('..').locator('..').getByText('Not started')).toBeVisible();
+    await expect(page.getByText('g2o1', { exact: true }).locator('..').locator('..').getByText('Not started')).toBeVisible();
 
     // check g1
-    await page.getByText('g1', { exact: true }).locator('..').locator('..').locator('..').getByRole('button', { name: 'Actions for goal'}).click();
+    await page.getByText('g1', { exact: true }).locator('..').locator('..').locator('..')
+      .getByRole('button', { name: 'Actions for goal' })
+      .click();
     // click on the 'Edit' button for 'g1' and verify the correct data is displayed
-    await page.getByText('g1', { exact: true }).locator('..').locator('..').locator('..').getByRole('button', { name: 'Edit'}).click();
+    await page.getByText('g1', { exact: true }).locator('..').locator('..').locator('..')
+      .getByRole('button', { name: 'Edit' })
+      .click();
 
     await expect(page.getByText("This goal is used on an activity report, so some fields can't be edited.")).toBeVisible();
     await expect(page.getByText('g1', { exact: true })).toBeVisible();
     await expect(page.getByText('Yes', { exact: true }).first()).toBeVisible();
     await expect(page.getByText('g1o1')).toBeVisible();
     await expect(page.getByText(g1TopicsTxt || 'Behavioral / Mental Health / Trauma')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'https://banana.banana.com'})).toBeVisible();
+    await expect(page.getByRole('link', { name: 'https://banana.banana.com' })).toBeVisible();
     await expect(page.getByRole('radio', { name: 'No' })).toBeChecked();
 
     // verify the correct value is selected in the Objective status dropdown
@@ -388,7 +419,7 @@ test.describe("Activity Report", () => {
     // Change g1o1's status
     await page.getByTestId('dropdown').click();
     await page.getByTestId('dropdown').selectOption({ label: 'In Progress' });
-    await page.getByRole('button', { name: 'Save'}).click();
+    await page.getByRole('button', { name: 'Save' }).click();
 
     // expand the objective for g1
     await page.getByRole('button', { name: `Expand objectives for goal ${g1GoalsForObjectives}` }).click();
@@ -396,9 +427,13 @@ test.describe("Activity Report", () => {
     await expect(page.getByRole('listitem').filter({ hasText: 'Objective status In progress' })).toBeVisible();
 
     // Check g2
-    await page.getByText('g2', { exact: true }).locator('..').locator('..').locator('..').getByRole('button', { name: 'Actions for goal'}).click();
+    await page.getByText('g2', { exact: true }).locator('..').locator('..').locator('..')
+      .getByRole('button', { name: 'Actions for goal' })
+      .click();
     // click on the 'Edit' button for 'g1' and verify the correct data is displayed
-    await page.getByText('g2', { exact: true }).locator('..').locator('..').locator('..').getByRole('button', { name: 'Edit'}).click();
+    await page.getByText('g2', { exact: true }).locator('..').locator('..').locator('..')
+      .getByRole('button', { name: 'Edit' })
+      .click();
 
     await expect(page.getByText("This goal is used on an activity report, so some fields can't be edited.")).toBeVisible();
     await expect(page.getByText('g2', { exact: true })).toBeVisible();
@@ -406,24 +441,24 @@ test.describe("Activity Report", () => {
     await expect(page.getByText('g2o1')).toBeVisible();
     await expect(page.getByText('Behavioral / Mental Health / Trauma')).toBeVisible();
     await expect(page.getByText('CLASS: Classroom Organization')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'https://banana.banana.com'})).not.toBeVisible();
+    await expect(page.getByRole('link', { name: 'https://banana.banana.com' })).not.toBeVisible();
     await expect(page.getByRole('radio', { name: 'No' })).toBeChecked();
     expect(await extractSelectedDisplayedValue(page.getByTestId('dropdown'))).toBe('Not Started');
 
     await page.getByTestId('dropdown').click();
     await page.getByTestId('dropdown').selectOption({ label: 'Complete' });
     // Instead of saving, cancel out of the 'Edit' form
-    await page.getByRole('link', { name: 'Cancel'}).click();
+    await page.getByRole('link', { name: 'Cancel' }).click();
 
     // expand the objective for g2
     await page.getByRole('button', { name: `Expand objectives for goal ${g2GoalsForObjectives}` }).click();
     // follow the AR link for g2
-    await page.getByText('g2', { exact: true }).locator('..').locator('..').locator('..').getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).click();
+    await page.getByText('g2', { exact: true }).locator('..').locator('..').locator('..')
+      .getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` })
+      .click();
     // verify the link works by checking whether the recipients are visible
     await expect(page.getByText(`${recipients}`)).toBeVisible();
   });
-
-
 
   test('multi recipient goal used on an AR', async ({ page }) => {
     await page.goto('http://localhost:3000/');
@@ -435,47 +470,47 @@ test.describe("Activity Report", () => {
     await page.getByRole('link', { name: 'Agency 1.a in region 1, Inc.' }).click();
     await page.getByRole('link', { name: 'Goals & Objectives' }).click();
     await page.getByRole('link', { name: 'Add new goals' }).click();
-  
+
     // select recipients
     await page.getByLabel(/recipient grant numbers/i).focus();
     // both of the top recipients
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await page.keyboard.press('Enter');
-  
+
     // enter goal name
     await page.getByTestId('textarea').fill('This is a goal for multiple grants');
-  
+
     // it's an rttapa goal
     await page.getByText('Yes').click();
-  
+
     // goal end date
     await page.getByLabel(/anticipated close date/i).fill('01/01/2023');
-  
+
     // add new objective
     await page.getByRole('button', { name: 'Add new objective' }).click();
-  
+
     // objective title
     await page.getByLabel('TTA objective *').fill('A new objective');
-  
+
     // objective topic
     await page.getByLabel(/topics/i).focus();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
-  
+
     // save goal
     await page.getByRole('button', { name: 'Save and continue' }).click();
     await page.getByRole('button', { name: 'Submit goal' }).click();
-  
+
     // confirm goal is in RTR
     await expect(page.getByText('This is a goal for multiple grants')).toBeVisible();
     await expect(page.getByRole('heading', { name: /Goal G-(\d), G-(\d)RTTAPA/i }).last()).toBeVisible();
-  
+
     // navigate to the AR page
     await page.getByRole('link', { name: 'Activity Reports' }).click();
     await page.getByRole('button', { name: '+ New Activity Report' }).click();
-  
-    await activitySummary(page, 3);
+
+    await activitySummary(page, { recipients: 3, ttaType: 'Training' });
 
     const regionNumber = await getRegionNumber(page);
 
@@ -494,31 +529,31 @@ test.describe("Activity Report", () => {
     await page.getByTestId('dropdown').selectOption('In Progress');
     await page.getByRole('button', { name: 'Save goal' }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();
-  
+
     // skip supporting attachments
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
     // fill out next steps
-    await nextSteps(page);  
+    await nextSteps(page);
     await page.getByRole('button', { name: 'Save and continue' }).click();
-  
+
     const approverDropdown = page.locator('.css-g1d714-ValueContainer');
     await approverDropdown.click();
-  
+
     // type our name into the dropdown to filter to just us
     await page.keyboard.type(fullName);
     // press Enter to select ourself
     await page.keyboard.press('Enter');
-  
+
     await blur(page);
-  
+
     const url = page.url();
     const arNumber = url.split('/').find((part) => /^\d+$/.test(part));
 
     // submit for approval
-    await page.getByRole('button', { name: 'Submit for approval' }).click(); 
+    await page.getByRole('button', { name: 'Submit for approval' }).click();
     await page.waitForTimeout(5000);
-   
+
     // find the recently created AR in the table and navigate to it
     await page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).first().click();
 
@@ -534,7 +569,7 @@ test.describe("Activity Report", () => {
     await page.getByRole('link', { name: 'Goals & Objectives' }).click();
 
     // confirm goal is in RTR
-    await expect(page.getByText('This is a goal for multiple grants')).toBeVisible();   
+    await expect(page.getByText('This is a goal for multiple grants')).toBeVisible();
 
     // check second recipient
     await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
