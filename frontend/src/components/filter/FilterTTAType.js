@@ -18,7 +18,7 @@ export function displayTtaTypeQuery(q) {
   return '';
 }
 
-export default function FilterTTAType({ onApply, appliedTTAType, inputId }) {
+export default function FilterTTAType({ onApply, query, inputId }) {
   const onApplyTTAType = (e) => {
     const { target: { value } } = e;
     onApply(value);
@@ -28,7 +28,7 @@ export default function FilterTTAType({ onApply, appliedTTAType, inputId }) {
     <>
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */ }
       <label className="sr-only" htmlFor={inputId}>Select tta type to filter by</label>
-      <Dropdown name={inputId} id={inputId} value={appliedTTAType} onChange={onApplyTTAType}>
+      <Dropdown name={inputId} id={inputId} value={query} onChange={onApplyTTAType}>
         <option value="training">
           Training
         </option>
@@ -45,7 +45,7 @@ export default function FilterTTAType({ onApply, appliedTTAType, inputId }) {
 
 FilterTTAType.propTypes = {
   onApply: PropTypes.func.isRequired,
-  appliedTTAType: PropTypes.string.isRequired,
+  query: PropTypes.string.isRequired,
   inputId: PropTypes.string,
 };
 
