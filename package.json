@@ -8,18 +8,18 @@
   },
   "scripts": {
     "axe:ci": "axe --exit --show-errors --load-delay 1000 `cat axe-urls` --dir ./reports/",
-    "build": "./node_modules/.bin/babel src -d ./build/server && ./node_modules/.bin/babel config -d build/config",
+    "build": "tsc -p src",
     "deps:local": "yarn install && yarn --cwd frontend install",
     "deps": "yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
     "start:local": "concurrently \"yarn server\" \"yarn client\" \"yarn worker\"",
     "start:ci": "cross-env BYPASS_SOCKETS=true POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub TTA_SMART_HUB_URI=http://localhost:3000 concurrently \"yarn start:web\" \"yarn client\"",
-    "start:web": "node ./build/server/index.js",
-    "start:worker": "node ./build/server/worker.js",
-    "server": "nodemon src/index.js --exec babel-node",
-    "worker": "nodemon src/worker.js --exec babel-node",
+    "start:web": "node ./build/server/src/index.js",
+    "start:worker": "node ./build/server/src/worker.js",
+    "server": "tsx watch src/index.ts",
+    "worker": "tsx watch src/worker.ts",
     "server:debug": "nodemon --inspect=0.0.0.0:9229 src/index.js --exec babel-node",
     "client": "yarn --cwd frontend start",
-    "test": "jest src --runInBand",
+    "test": "yarn build && jest build/server/src --runInBand",
     "test:ci": "./bin/test-backend-ci",
     "test:all": "yarn test:ci && yarn --cwd frontend test:ci",
     "lint": "eslint src",
@@ -36,8 +36,8 @@
     "e2e:ci": "cross-env TTA_SMART_HUB_URI=http://localhost:3000 yarn e2e",
     "migrate:create": "npx sequelize-cli migration:generate --name",
     "db:bootstrap:admin:local": "./node_modules/.bin/babel-node ./src/tools/bootstrapAdminCLI.js",
-    "db:bootstrap:admin": "node ./build/server/tools/bootstrapAdminCLI.js",
-    "db:validation": "node ./build/server/tools/dataValidationCLI.js",
+    "db:bootstrap:admin": "node ./build/server/src/tools/bootstrapAdminCLI.js",
+    "db:validation": "node ./build/server/src/tools/dataValidationCLI.js",
     "db:migrate": "node_modules/.bin/sequelize db:migrate",
     "db:migrate:create": "npx sequelize-cli migration:generate --name",
     "db:migrate:ci": "cross-env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub node_modules/.bin/sequelize db:migrate",
@@ -72,22 +72,24 @@
     "docker:yarn:fe": "docker-compose run --rm frontend  yarn",
     "docker:yarn:be": "docker-compose run --rm backend yarn",
     "import:reports:local": "./node_modules/.bin/babel-node ./src/tools/importSSActivityReports.js",
-    "import:reports": "node ./build/server/tools/importSSActivityReports.js",
+    "import:reports": "node ./build/server/src/tools/importSSActivityReports.js",
     "import:goals:local": "./node_modules/.bin/babel-node ./src/tools/importTTAPlanGoals.js",
-    "import:goals": "node ./build/server/tools/importTTAPlanGoals.js",
+    "create:goals": "node ./build/server/src/tools/goalPilotCLI.js",
+    "create:goals:local": "./node_modules/.bin/babel-node ./src/tools/goalPilotCLI.js",
+    "import:goals": "node ./build/server/src/tools/importTTAPlanGoals.js",
     "import:hses:local": "./node_modules/.bin/babel-node ./src/tools/importGrantRecipientsCLI.js --skipdownload",
-    "import:hses": "node ./build/server/tools/importGrantRecipientsCLI.js",
-    "reconcile:legacy": "node ./build/server/tools/reconcileLegacyReports.js",
+    "import:hses": "node ./build/server/src/tools/importGrantRecipientsCLI.js",
+    "reconcile:legacy": "node ./build/server/src/tools/reconcileLegacyReports.js",
     "reconcile:legacy:local": "./node_modules/.bin/babel-node ./src/tools/reconcileLegacyReports.js",
     "processData:local": "./node_modules/.bin/babel-node ./src/tools/processDataCLI.js",
-    "changeReportStatus": "node ./build/server/tools/changeReportStatusCLI.js",
+    "changeReportStatus": "node ./build/server/src/tools/changeReportStatusCLI.js",
     "changeReportStatus:local": "./node_modules/.bin/babel-node ./src/tools/changeReportStatusCLI.js",
     "makecolors": "node ./src/makecolors.js",
-    "restoreTopics": "node ./build/server/tools/restoreTopicsCLI.js",
+    "restoreTopics": "node ./build/server/src/tools/restoreTopicsCLI.js",
     "restoreTopics:local": "./node_modules/.bin/babel-node ./src/tools/restoreTopicsCLI.js",
     "coverage:backend": "./bin/build-coverage-report",
     "docker:coverage:backend": "docker compose run --rm backend chmod 744 ./bin/build-coverage-report && ./bin/build-coverage-report",
-    "createAwsElasticSearchIndexes": "node ./build/server/tools/createAwsElasticSearchIndexesCli.js",
+    "createAwsElasticSearchIndexes": "node ./build/server/src/tools/createAwsElasticSearchIndexesCli.js",
     "createAwsElasticSearchIndexes:local": "./node_modules/.bin/babel-node ./src/tools/createAwsElasticSearchIndexesCli.js"
   },
   "repository": {
@@ -114,13 +116,21 @@
   "eslintConfig": {
     "extends": [
       "airbnb-base",
-      "plugin:jest/recommended"
+      "plugin:jest/recommended",
+      "plugin:@typescript-eslint/recommended"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "plugins": [
+      "@typescript-eslint"
     ],
     "ignorePatterns": [
       "node_modules/*"
     ],
     "rules": {
-      "linebreak-style": 0
+      "linebreak-style": 0,
+      "@typescript-eslint/no-var-requires": 0,
+      "@typescript-eslint/no-unused-vars": 0,
+      "@typescript-eslint/no-empty-function": 0
     }
   },
   "eslint-formatter-multiple": {
@@ -148,7 +158,11 @@
       "<rootDir>/src/*/coverage/",
       "<rootDir>/src/coverage/",
       "<rootDir>/src/index.js",
-      "<rootDir>/src/worker.js"
+      "<rootDir>/src/worker.ts",
+      "<rootDir>/src/app.js",
+      "<rootDir>/src/tools/*CLI.js",
+      "<rootDir>/src/tools/createAwsElasticSearchIndexesCli.js",
+      "<rootDir>/src/tools/importTTAPlanGoals.js"
     ],
     "testTimeout": 30000,
     "coveragePathIgnorePatterns": [
@@ -163,14 +177,20 @@
       "<rootDir>/src/*/coverage/",
       "<rootDir>/src/coverage/",
       "<rootDir>/src/index.js",
-      "<rootDir>/src/worker.js"
+      "<rootDir>/src/worker.ts",
+      "<rootDir>/src/app.js",
+      "<rootDir>/src/lib/cron.js",
+      "<rootDir>/src/tools/*CLI.js",
+      "<rootDir>/src/tools/createAwsElasticSearchIndexesCli.js",
+      "<rootDir>/src/tools/importTTAPlanGoals.js"
+
     ],
     "coverageThreshold": {
       "global": {
-        "statements": 39,
-        "functions": 12,
-        "branches": 25,
-        "lines": 40
+        "statements": 75,
+        "functions": 75,
+        "branches": 75,
+        "lines": 75
       }
     }
   },
@@ -198,8 +218,11 @@
     "@babel/node": "^7.10.5",
     "@babel/plugin-transform-runtime": "^7.11.0",
     "@babel/preset-env": "^7.11.5",
+    "@babel/preset-typescript": "^7.18.6",
     "@cucumber/cucumber": "^7.0.0",
     "@playwright/test": "^1.28.0",
+    "@typescript-eslint/eslint-plugin": "^5.48.2",
+    "@typescript-eslint/parser": "^5.48.2",
     "concurrently": "^7.0.0",
     "cross-env": "^7.0.2",
     "depcheck": "^1.2.0",
@@ -211,7 +234,7 @@
     "eslint-plugin-jsx-a11y": "^6.3.1",
     "eslint-plugin-react": "^7.20.6",
     "jest": "26.6.0",
-    "jest-cli": "^26.4.2",
+    "jest-cli": "26.4.2",
     "jest-junit": "^12.0.0",
     "nodemon": "^2.0.4",
     "playwright": "^1.28.0",
@@ -220,7 +243,9 @@
     "redoc-cli": "^0.13.2",
     "selenium-webdriver": "4.3.0",
     "sinon": "^15.0.0",
-    "supertest": "^6.1.3"
+    "supertest": "^6.1.3",
+    "tsx": "^3.12.2",
+    "typescript": "4.7.4"
   },
   "dependencies": {
     "@babel/runtime": "^7.12.1",
@@ -261,8 +286,8 @@
     "newrelic": "^8.7.0",
     "nodemailer": "^6.5.0",
     "pg": "^8.3.3",
-    "redis": "^4.0.6",
     "pug": "^3.0.2",
+    "redis": "^4.0.6",
     "sequelize": "^6.12.5",
     "sequelize-cli": "^6.2.0",
     "throng": "^5.0.0",

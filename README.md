@@ -106,6 +106,8 @@ You may run into some issues running the docker commands on Windows:
 
 On the frontend, the lcov and HTML files are generated as normal, however on the backend, the folders are tested separately. The command `yarn coverage:backend` will concatenate the lcov files and also generate an HTML file. However, this provess requires `lcov` to be installed on a user's computer. On Apple, you can use Homebrew - `brew install lcov`. On a Windows machine, your path may vary, but two options include WSL and [this chocolatey package](https://community.chocolatey.org/packages/lcov).
 
+Another important note for running tests on the backend - we specifically exclude files on the backend that follow the ```*CLI.js``` naming convention (for example, ```adminToolsCLI.js```) from test coverage. This is meant to exclude files intended to be run in the shell. Any functionality in theses files should be imported from a file that is tested. The ```src/tools folder``` is where these files have usually lived and there are lots of great examples of the desired pattern in that folder.
+
 ## Yarn Commands
 
 | Docker Command | Description| Host Command | Local only Command |
@@ -406,7 +408,7 @@ Our project includes four deployed Postgres databases, one to interact with each
 
     ```bash
     # example
-    node ./build/server/tools/dataValidationCLI.js
+    node ./build/server/src/tools/dataValidationCLI.js
     ```
 
 1. If on prod, disable ssh in space
