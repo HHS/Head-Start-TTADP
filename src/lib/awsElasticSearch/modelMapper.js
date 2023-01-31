@@ -1,12 +1,5 @@
 /* eslint-disable import/prefer-default-export */
 
-const spaceUrl = (url) => {
-  if (url && url.length && (url.includes('http://') || url.includes('https://'))) {
-    return url.replace(/\./g, ' ').replace('http://', '').replace('https://', '').replace('/', '');
-  }
-  return '';
-};
-
 const CUSTOM_FORMATTERS = {
   activityreports: async (data) => {
     const {
@@ -21,10 +14,8 @@ const CUSTOM_FORMATTERS = {
     const document = {
       id: ar.id,
       context: ar.context,
-      nonECLKCResources: ar.nonECLKCResourcesUsed.map((nr) => nr),
-      nonECLKCResourcesSpaced: ar.nonECLKCResourcesUsed.map((nr) => spaceUrl(nr)),
-      ECLKCResources: ar.ECLKCResourcesUsed.map((er) => er),
-      ECLKCResourcesSpaced: ar.ECLKCResourcesUsed.map((er) => spaceUrl(er)),
+      nonECLKCResources: ar.nonECLKCResourcesUsed ? ar.nonECLKCResourcesUsed.map((nr) => nr) : [],
+      ECLKCResources: ar.ECLKCResourcesUsed ? ar.ECLKCResourcesUsed.map((er) => er) : [],
       startDate: ar.startDate,
       endDate: ar.endDate,
       recipientNextSteps: recipientNextStepsToIndex.map((r) => r.note),
@@ -33,9 +24,6 @@ const CUSTOM_FORMATTERS = {
       activityReportObjectives: objectivesToIndex.map((aro) => aro.title),
       activityReportObjectivesTTA: objectivesToIndex.map((aro) => aro.ttaProvided),
       activityReportObjectiveResources: objectiveResourceLinks.map((aror) => aror.userProvidedUrl),
-      activityReportObjectiveResourcesSpaced: objectiveResourceLinks.map(
-        (aror) => spaceUrl(aror.userProvidedUrl), // Add a spaced copy of the url.
-      ),
     };
 
     return document;

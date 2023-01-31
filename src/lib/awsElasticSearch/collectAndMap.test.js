@@ -318,11 +318,9 @@ describe('Collect and Map AWS Elasticsearch data', () => {
     // Objective Resources.
     expect(document.activityReportObjectiveResources.length).toBe(3);
     expect(document.activityReportObjectiveResources[0]).toBe('http://test1.gov');
-    expect(document.activityReportObjectiveResourcesSpaced[0]).toBe('test1 gov');
     expect(document.activityReportObjectiveResources[1]).toBe('http://test2.gov');
-    expect(document.activityReportObjectiveResourcesSpaced[1]).toBe('test2 gov');
     expect(document.activityReportObjectiveResources[2]).toBe('http://test3.gov');
-    expect(document.activityReportObjectiveResourcesSpaced[2]).toBe('test3 gov');
+
     /*
      nonECLKCResourcesUsed: ['https://wwww.youtube.com', 'https://wwww.smartsheet.com'],
         ECLKCResourcesUsed: ['https://ECLKC1.gov', 'https://ECLKC2.gov'],
@@ -330,18 +328,12 @@ describe('Collect and Map AWS Elasticsearch data', () => {
 
     // Non ECLKC resources.
     expect(document.nonECLKCResources.length).toBe(2);
-    expect(document.nonECLKCResourcesSpaced.length).toBe(2);
     expect(document.nonECLKCResources[0]).toBe('https://www.youtube.com');
-    expect(document.nonECLKCResourcesSpaced[0]).toBe('www youtube com');
     expect(document.nonECLKCResources[1]).toBe('https://www.smartsheet.com');
-    expect(document.nonECLKCResourcesSpaced[1]).toBe('www smartsheet com');
 
     // ECLKC resources.
     expect(document.ECLKCResources.length).toBe(2);
-    expect(document.ECLKCResourcesSpaced.length).toBe(2);
     expect(document.ECLKCResources[0]).toBe('https://ECLKC1.gov');
-    expect(document.ECLKCResourcesSpaced[0]).toBe('ECLKC1 gov');
     expect(document.ECLKCResources[1]).toBe('https://ECLKC2.gov');
-    expect(document.ECLKCResourcesSpaced[1]).toBe('ECLKC2 gov');
   });
 });
