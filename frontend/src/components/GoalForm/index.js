@@ -135,7 +135,6 @@ export default function GoalForm({
         const [goal] = await goalsByIdAndRecipient(
           ids, recipient.id.toString(),
         );
-
         // for these, the API sends us back things in a format we expect
         setGoalName(goal.name);
         setStatus(goal.status);

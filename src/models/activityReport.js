@@ -15,7 +15,7 @@ const generateCreatorNameWithRole = (ar) => {
   return `${creatorName}${roles}`;
 };
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ActivityReport extends Model {
     static associate(models) {
       ActivityReport.belongsTo(models.User, { foreignKey: 'userId', as: 'author' });

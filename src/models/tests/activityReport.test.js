@@ -89,7 +89,7 @@ const sampleReport = {
   deliveryMethod: 'method',
   activityRecipientType: 'test',
   creatorRole: 'COR',
-  topics: ['topic'],
+  topics: ['topic', 'topic2', 'red', 'blue', 'declination'],
   participants: ['test'],
   duration: 0,
   endDate: '2020-01-01T12:00:00Z',
@@ -362,5 +362,23 @@ describe('Activity Reports model', () => {
       auditLogger.error(JSON.stringify(e));
       throw e;
     }
+  });
+
+  it('sortedTopics', async () => {
+    const r = await ActivityReport.findOne({
+      where: { id: report.id },
+    });
+
+    expect(r.sortedTopics).toStrictEqual(
+      ['topic', 'topic2', 'red', 'blue', 'declination'].sort(),
+    );
+
+    await r.update({ topics: [] });
+
+    const r2 = await ActivityReport.findOne({
+      where: { id: report.id },
+    });
+
+    expect(r2.sortedTopics).toStrictEqual([]);
   });
 });
