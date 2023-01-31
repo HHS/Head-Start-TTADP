@@ -401,3 +401,24 @@ describe('Create AWS Elastic Search Indexes', () => {
     expect(searchResult.hits[1]['_id']).toBe(reportThree.id.toString());
   });
 });
+
+describe('error states', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    await db.sequelize.close();
+  });
+
+  it('search index job error', async () => {
+    ActivityReport.findAll = jest.fn().mockRejectedValueOnce(new Error('test error'));
+
+    jest.spyOn(auditLogger, 'error');
+
+    // Create Indexes.
+    await createAwsElasticSearchIndexes();
+
+    expect(auditLogger.error).toHaveBeenCalled();
+  });
+});
