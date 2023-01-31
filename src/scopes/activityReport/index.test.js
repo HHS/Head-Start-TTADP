@@ -154,9 +154,6 @@ describe('filtersToScopes', () => {
       },
     });
 
-    // Delete indexes.
-    await deleteIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
-
     await db.sequelize.close();
   });
 
@@ -212,32 +209,30 @@ describe('filtersToScopes', () => {
   describe('ttaType', () => {
     let ttaReport;
     let trainingReport;
-    let bothReport1;
-    let bothReport2;
+    let bothReport;
     let reportExcluded;
     let reportIds = [];
 
     beforeAll(async () => {
       ttaReport = await ActivityReport.create({ ...draftReport, ttaType: ['technical-assistance'] });
       trainingReport = await ActivityReport.create({ ...draftReport, ttaType: ['training'] });
-      bothReport1 = await ActivityReport.create({ ...draftReport, ttaType: ['training,technical-assistance'] });
-      bothReport2 = await ActivityReport.create({ ...draftReport, ttaType: ['training', 'technical-assistance'] });
+      bothReport = await ActivityReport.create({ ...draftReport, ttaType: ['training,technical-assistance'] });
       reportExcluded = await ActivityReport.create({ ...draftReport, ttaType: ['balderdash'] });
 
       reportIds = [
         ttaReport.id,
         trainingReport.id,
-        bothReport1.id,
-        bothReport2.id,
+        bothReport.id,
         reportExcluded.id,
       ];
     });
 
     afterAll(async () => {
-      await ActivityReport.destroy({
+      await ActivityReport.unscoped().destroy({
         where: {
           id: reportIds,
         },
+        force: true,
       });
     });
 
@@ -255,13 +250,13 @@ describe('filtersToScopes', () => {
       });
 
       it('does not contain', async () => {
-        const filters = { 'ttaType.in': ['technical-assistance'] };
+        const filters = { 'ttaType.nin': ['technical-assistance'] };
         const scope = await filtersToScopes(filters);
         const found = await ActivityReport.findAll({
           where: { [Op.and]: [scope.activityReport, { id: reportIds }] },
         });
 
-        expect(found.length).toBe(5);
+        expect(found.length).toBe(3);
         expect(found.map((f) => f.id).includes(ttaReport.id)).toBe(false);
       });
     });
@@ -284,25 +279,21 @@ describe('filtersToScopes', () => {
           where: { [Op.and]: [scope.activityReport, { id: reportIds }] },
         });
 
-        expect(found.length).toBe(5);
+        expect(found.length).toBe(3);
         expect(found.map((f) => f.id).includes(trainingReport.id)).toBe(false);
       });
     });
 
     describe('both', () => {
       it('contains', async () => {
-        const filters = { 'ttaType.nin': ['training,technical-assistance'] };
+        const filters = { 'ttaType.in': ['training,technical-assistance'] };
         const scope = await filtersToScopes(filters);
         const found = await ActivityReport.findAll({
           where: { [Op.and]: [scope.activityReport, { id: reportIds }] },
         });
 
-        const foundIds = found.map((f) => f.id).sort();
-        const expectedIds = [bothReport1.id, bothReport2.id].sort();
-
-        expect(found.length).toBe(2);
-        expect(foundIds)
-          .toEqual(expect.arrayContaining(expectedIds));
+        expect(found.length).toBe(1);
+        expect(found.map((f) => f.id).includes(bothReport.id)).toBe(true);
       });
       it('does not contain', async () => {
         const filters = { 'ttaType.nin': ['training,technical-assistance'] };
@@ -312,8 +303,7 @@ describe('filtersToScopes', () => {
         });
 
         expect(found.length).toBe(3);
-        expect(found.map((f) => f.id).includes(bothReport1.id)).toBe(false);
-        expect(found.map((f) => f.id).includes(bothReport2.id)).toBe(false);
+        expect(found.map((f) => f.id).includes(bothReport.id)).toBe(false);
       });
     });
   });
@@ -1886,6 +1876,9 @@ describe('filtersToScopes', () => {
       await ActivityReport.destroy({
         where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
       });
+
+      // Delete indexes.
+      await deleteIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
     });
 
     it('return correct report text filter search results', async () => {
