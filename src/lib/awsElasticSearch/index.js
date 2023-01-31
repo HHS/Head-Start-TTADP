@@ -145,7 +145,7 @@ const bulkIndex = async (documents, indexName, passedClient) => {
 /*
   Search index documents.
   Note: Right now we use search with search_after.
-  This allows use to return all results in batches of 10k.
+  This allows us to return all results in batches of 10k.
 */
 const search = async (indexName, fields, query, passedClient, overrideBatchSize) => {
   try {
