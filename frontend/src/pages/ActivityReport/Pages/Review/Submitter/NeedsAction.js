@@ -44,6 +44,10 @@ const NeedsAction = ({
   return (
     <>
       <h2>Review and re-submit report</h2>
+      <p className="usa-prose">
+        <span className="smart-hub--form-required font-family-sans font-ui-xs">* </span>
+        indicates required field
+      </p>
       <div className="margin-bottom-2">
         {
           !userHasOneRole

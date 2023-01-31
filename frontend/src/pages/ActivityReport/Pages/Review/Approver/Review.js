@@ -47,6 +47,10 @@ const Review = ({
   return (
     <>
       <h2>{pendingOtherApprovals ? 'Pending other approvals' : 'Review and approve report'}</h2>
+      <p className="usa-prose">
+        <span className="smart-hub--form-required font-family-sans font-ui-xs">* </span>
+        indicates required field
+      </p>
       <div className="smart-hub--creator-notes" aria-label="additionalNotes">
         <p>
           <span className="text-bold">Creator notes</span>
