@@ -167,8 +167,8 @@ const search = async (indexName, fields, query, passedClient, overrideBatchSize)
     let body = {
       size: batchSize,
       query: {
-        multi_match: {
-          query,
+        query_string: {
+          query: `*${query}*`,
           fields,
         },
       },

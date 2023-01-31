@@ -363,7 +363,7 @@ describe('Create AWS Elastic Search Indexes', () => {
     query = 'eclkc';
     searchResult = await search(
       AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-      ['activityReportObjectiveResourcesSpaced'],
+      ['activityReportObjectiveResources'],
       query,
     );
     expect(searchResult.hits.length).toBe(1);
@@ -373,7 +373,7 @@ describe('Create AWS Elastic Search Indexes', () => {
     query = 'youtube';
     searchResult = await search(
       AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-      ['nonECLKCResourcesSpaced'],
+      ['nonECLKCResources'],
       query,
     );
     expect(searchResult.hits.length).toBe(1);
@@ -383,7 +383,7 @@ describe('Create AWS Elastic Search Indexes', () => {
     query = 'smartsheet';
     searchResult = await search(
       AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-      ['ECLKCResourcesSpaced'],
+      ['ECLKCResources'],
       query,
     );
     expect(searchResult.hits.length).toBe(1);
