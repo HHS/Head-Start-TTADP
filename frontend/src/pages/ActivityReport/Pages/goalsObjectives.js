@@ -222,6 +222,10 @@ const GoalsObjectives = ({
       <Helmet>
         <title>Goals and objectives</title>
       </Helmet>
+      <p className="usa-prose">
+        <span className="smart-hub--form-required font-family-sans font-ui-xs">* </span>
+        indicates required field
+      </p>
 
       {(!isOtherEntityReport && !isRecipientReport) && (
         <Alert noIcon type="info">

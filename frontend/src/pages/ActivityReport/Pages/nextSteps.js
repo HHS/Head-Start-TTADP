@@ -37,6 +37,10 @@ const NextSteps = ({ activityRecipientType }) => {
       <Helmet>
         <title>Next steps</title>
       </Helmet>
+      <p className="usa-prose">
+        <span className="smart-hub--form-required font-family-sans font-ui-xs">* </span>
+        indicates required field
+      </p>
       <Fieldset id="specialist-field-set" className="smart-hub--report-legend margin-top-3" legend="Specialist&apos;s next steps">
         <NextStepsRepeater
           id="specialist-next-steps-repeater-id"

@@ -75,6 +75,10 @@ const Draft = ({
     <>
       {justSubmitted && <Redirect to={{ pathname: '/activity-reports', state: { message } }} />}
       <h2>Submit Report</h2>
+      <p className="usa-prose">
+        <span className="smart-hub--form-required font-family-sans font-ui-xs">* </span>
+        indicates required field
+      </p>
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onSubmit)}>
         {
           user && user.roles && user.roles.length > 1
