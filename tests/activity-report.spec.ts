@@ -199,7 +199,7 @@ test.describe("Activity Report", () => {
     await page.keyboard.press('Enter');
     await page.getByTestId('textarea').click();
     await page.getByTestId('textarea').fill('g2');
-    await page.getByRole('group', { name: 'Goal type*' }).getByText('RTTAPA').click();
+    await page.getByRole('group', { name: 'Goal type*' }).getByText('RTTAPA', { exact: true }).click();
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
     await page.keyboard.press('Enter');
     await page.getByLabel('TTA objective *').click();
