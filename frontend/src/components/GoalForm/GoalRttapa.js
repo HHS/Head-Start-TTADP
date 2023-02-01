@@ -25,7 +25,7 @@ export default function GoalRttapa({
           Goal type
         </p>
         <p className="usa-prose margin-y-0">
-          {isRttapa ? 'RTTAPA' : 'Non-RTTAPA'}
+          {isRttapa === 'Yes' ? 'RTTAPA' : 'Non-RTTAPA'}
         </p>
       </div>
     );
