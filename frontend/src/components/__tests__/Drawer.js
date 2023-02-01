@@ -10,7 +10,7 @@ describe('Drawer', () => {
   const triggerRef = React.createRef();
   const clickTargetRef = React.createRef();
 
-  const renderDrawer = () => (
+  const renderDrawer = (sticky = false) => (
     <div>
       <div
         ref={clickTargetRef}
@@ -30,6 +30,8 @@ describe('Drawer', () => {
         title="Hello"
         footer="Footer"
         triggerRef={triggerRef}
+        stickyHeader={sticky}
+        stickyFooter={sticky}
       >
         Content
       </Drawer>
@@ -95,5 +97,17 @@ describe('Drawer', () => {
     });
 
     expect(screen.queryByText('Content')).not.toBeInTheDocument();
+  });
+
+  it('has sticky classes when stickyHeader and stickyFooter are true', async () => {
+    render(renderDrawer(true));
+
+    act(() => {
+      const button = screen.getByRole('button', { name: 'Open' });
+      userEvent.click(button);
+    });
+
+    expect(screen.getByText('Footer')).toHaveClass('smart-hub-drawer-footer--sticky');
+    expect(screen.getByText('Hello').parentElement).toHaveClass('smart-hub-drawer-header--sticky');
   });
 });
