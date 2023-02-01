@@ -1,5 +1,5 @@
 import {} from 'dotenv/config';
-import { UNAUTHORIZED } from 'http-codes';
+import { FORBIDDEN, UNAUTHORIZED } from 'http-codes';
 import db, { User, Permission } from '../models';
 import authMiddleware, { login } from './authMiddleware';
 import SCOPES from './scopeConstants';
@@ -31,6 +31,14 @@ describe('authMiddleware', () => {
       regionId: 14,
       scopeId: SCOPES.SITE_ACCESS,
     }],
+  };
+
+  const unAuthdUser = {
+    id: 663491,
+    name: 'unAuth Middleware',
+    hsesUserId: '663491',
+    hsesUsername: 'unauth.middleware',
+    permissions: [],
   };
 
   const setupUser = async (user) => {
@@ -155,5 +163,29 @@ describe('authMiddleware', () => {
     expect(mockResponse.redirect).not.toHaveBeenCalled();
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(UNAUTHORIZED);
     expect(mockNext).not.toHaveBeenCalled();
+  });
+
+  it('returns 403 if user does not have permission to access endpoint', async () => {
+    await setupUser(unAuthdUser);
+    process.env.CURRENT_USER_ID = unAuthdUser.id;
+
+    const mockNext = jest.fn();
+    const mockSession = jest.fn();
+    mockSession.userId = unAuthdUser.id;
+    const mockRequest = {
+      path: '/api/endpoint',
+      session: mockSession,
+    };
+    const mockResponse = {
+      redirect: jest.fn(),
+      sendStatus: jest.fn(),
+    };
+    await authMiddleware(mockRequest, mockResponse, mockNext);
+    expect(mockResponse.redirect).not.toHaveBeenCalled();
+    expect(mockNext).not.toHaveBeenCalled();
+
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(FORBIDDEN);
+
+    await destroyUser(mockUser);
   });
 });

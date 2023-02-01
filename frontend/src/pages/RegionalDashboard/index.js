@@ -170,6 +170,7 @@ export default function RegionalDashboard() {
                 filters={filtersToApply}
                 showFilter={false}
                 tableCaption="Activity reports"
+                exportIdPrefix="rd-"
               />
             </FilterContext.Provider>
           </Grid>
