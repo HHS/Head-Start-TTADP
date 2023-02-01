@@ -19,6 +19,7 @@ jest.mock('../lib/awsElasticSearch/datacollector', () => ({
     specialistNextStepsToIndex: [],
     goalsToIndex: [],
     objectivesToIndex: [],
+    objectiveResourceLinks: [],
   })),
 }));
 
