@@ -217,15 +217,23 @@ const GoalsObjectives = ({
     toggleObjectiveForm(false);
   };
 
+  const isFormOpen = (
+    isRecipientReport && !isGoalFormClosed
+  ) || (
+    isOtherEntityReport && !isObjectivesFormClosed
+  );
+
   return (
     <>
       <Helmet>
         <title>Goals and objectives</title>
       </Helmet>
+      { isFormOpen && (
       <p className="usa-prose">
         <span className="smart-hub--form-required font-family-sans font-ui-xs">* </span>
         indicates required field
       </p>
+      ) }
 
       {(!isOtherEntityReport && !isRecipientReport) && (
         <Alert noIcon type="info">
