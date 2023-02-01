@@ -24,7 +24,7 @@ test.describe('Recipient record', () => {
     await page.keyboard.press('Enter');
     await page.getByTestId('textarea').fill('This is the first goal for this recipient');
     await page.getByRole('button', { name: 'Save draft' }).click();
-    await page.getByText('RTTAPA').first().click();
+    await page.getByText('RTTAPA', { exact: true }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
     // edit that goal to add an objective
