@@ -116,7 +116,7 @@ export default async function totalHrsAndRecipientGraph(scopes, query) {
       // Get X Axis value to use.
       let xValue;
       if (useDays) {
-        xValue = moment(r.startDate).format('MMM-DD-YY');
+        xValue = moment(r.startDate).format('MMM-DD');
       } else if (multipleYrs) {
         xValue = moment(r.startDate).format('MMM-YY');
       } else {
