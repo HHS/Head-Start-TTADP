@@ -107,7 +107,7 @@ export default function Drawer({
           stickyFooter ? 'smart-hub-drawer-footer--sticky' : ''
         }`}
       >
-        footer
+        {footer}
       </div>
       )}
     </div>
