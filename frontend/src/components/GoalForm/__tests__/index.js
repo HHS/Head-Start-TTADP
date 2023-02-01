@@ -795,7 +795,7 @@ describe('create goal', () => {
     fetchMock.get('/api/recipient/1/goals?goalIds=', [{
       name: 'This is a goal name',
       status: 'Not Started',
-      endDate: '2021-10-08',
+      endDate: '10/08/2021',
       goalNumbers: ['G-12389'],
       isRttapa: '',
       grants: [{
@@ -833,7 +833,7 @@ describe('create goal', () => {
     fetchMock.get('/api/recipient/1/goals?goalIds=', [{
       name: 'This is a goal name',
       status: 'Draft',
-      endDate: '2021-10-08',
+      endDate: '10/08/2021',
       goalNumbers: ['G-12389'],
       isRttapa: 'Yes',
       grants: [{
@@ -871,7 +871,7 @@ describe('create goal', () => {
     fetchMock.get('/api/recipient/1/goals?goalIds=', [{
       name: 'This is a goal name',
       status: 'Not Started',
-      endDate: '2021-10-08',
+      endDate: '10/08/2021',
       goalNumbers: ['G-12389'],
       isRttapa: 'No',
       grants: [{
@@ -919,7 +919,7 @@ describe('create goal', () => {
     fetchMock.get('/api/recipient/1/goals?goalIds=', [{
       name: 'This is a goal name',
       status: 'In Progress',
-      endDate: '2021-10-08',
+      endDate: '10/08/2021',
       goalNumbers: ['G-12389'],
       isRttapa: 'Yes',
       grants: [{

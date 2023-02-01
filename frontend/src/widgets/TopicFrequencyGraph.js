@@ -212,6 +212,7 @@ export function TopicFrequencyGraphWidget({
             aria-label={showAccessibleData ? 'display number of activity reports by topic data as graph' : 'display number of activity reports by topic data as table'}
             onClick={toggleType}
             data-html2canvas-ignore
+            id="rd-display-table-topic-frequency"
           >
             {showAccessibleData ? 'Display graph' : 'Display table'}
           </button>
