@@ -128,7 +128,9 @@
       "@typescript-eslint"
     ],
     "ignorePatterns": [
-      "node_modules/*"
+      "node_modules/*",
+      "playwright.config.js",
+      "tests/*"
     ],
     "rules": {
       "linebreak-style": 0,
