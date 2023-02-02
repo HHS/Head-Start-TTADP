@@ -250,7 +250,12 @@ describe('Update grants and recipients', () => {
 
   it('sets metadata in audit tables', async () => {
     await processFiles('hex');
-    const grantAuditEntry = await ZALGrant.findOne({ where: { data_id: 11630, dml_type: { [Op.not]: 'DELETE' } } });
+    const grantAuditEntry = await ZALGrant.findOne({
+      where: { data_id: 11630, dml_type: { [Op.not]: 'DELETE' } },
+      order: [
+        ['id', 'DESC'],
+      ],
+    });
     const {
       // eslint-disable-next-line camelcase
       descriptor_id, dml_by, dml_txid, session_sig,
