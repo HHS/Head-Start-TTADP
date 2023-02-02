@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/quotes */
 import _ from 'lodash';
 import { Op } from 'sequelize';
 import moment from 'moment';
