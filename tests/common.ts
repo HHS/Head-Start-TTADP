@@ -1,4 +1,4 @@
-import { test as _test } from '@playwright/test';
+import { test as _test, Page } from '@playwright/test';
 import path from "path";
 
 /**
@@ -24,4 +24,12 @@ export const useClock = (test: typeof _test) => {
       (window as any).__clock = (window as any).sinon.useFakeTimers();
     });
   });
+}
+
+/**
+ * 
+ * @param page {Page}
+ */
+export async function blur(page: Page) {
+  await page.getByText('Office of Head Start TTA Hub').click();
 }
