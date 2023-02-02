@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import { Op, QueryTypes } from 'sequelize';
 import axios from 'axios';
 import fs from 'mz/fs';
@@ -250,7 +251,12 @@ describe('Update grants and recipients', () => {
 
   it('sets metadata in audit tables', async () => {
     await processFiles('hex');
-    const grantAuditEntry = await ZALGrant.findOne({ where: { data_id: 11630, dml_type: { [Op.not]: 'DELETE' } } });
+    const grantAuditEntry = await ZALGrant.findOne({
+      where: { data_id: 11630, dml_type: { [Op.not]: 'DELETE' } },
+      order: [
+        ['id', 'DESC'],
+      ],
+    });
     const {
       // eslint-disable-next-line camelcase
       descriptor_id, dml_by, dml_txid, session_sig,
