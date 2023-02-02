@@ -337,8 +337,6 @@ test.describe('Activity Report', () => {
     const recipients = await page.locator('span:near(p:text("Recipient names"))').first().textContent();
     const grants = await getGrants(recipients || '');
 
-    console.log(grants);
-
     await page.waitForTimeout(10000);
 
     // navigate to the Recipient TTA Records page
