@@ -208,7 +208,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "websocket-demo"
+    default: "TTAHUB-1340/kw-class-pilot"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "TTAHUB-1245/fix-date-filters-graph"
@@ -233,16 +233,16 @@ jobs:
       - create_combined_yarnlock
       - restore_cache:
           keys:
-            # To manually bust the cache, increment the version e.g. v6-yarn...
-            - v6-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            # To manually bust the cache, increment the version e.g. v7-yarn...
+            - v7-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
             # If checksum is new, restore partial cache
-            - v6-yarn-deps-
+            - v7-yarn-deps-
       - run: yarn deps
       - save_cache:
           paths:
             - node_modules
             - frontend/node_modules
-          key: v6-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+          key: v7-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
       - run:
           name: Lint backend
           command: yarn lint:ci
@@ -341,7 +341,7 @@ jobs:
           command: yarn db:seed:ci
       - run:
           name: Wait for server to start
-          command: ./bin/ping-server
+          command: ./bin/ping-server 3000
       - run:
           name: Install playwright dependencies
           command: |
@@ -370,7 +370,7 @@ jobs:
           command: yarn db:seed:ci
       - run:
           name: Wait for server to start
-          command: ./bin/ping-server
+          command: ./bin/ping-server 3000
       - run:
           name: Run cucumber
           command: |
@@ -385,6 +385,9 @@ jobs:
       - run:
           name: Start up local server
           command: ./bin/prod-style-server
+      - run:
+          name: Wait for server to start
+          command: ./bin/ping-server 8080
       - run:
           name: Pull OWASP ZAP docker image
           command: docker pull owasp/zap2docker-stable:2.11.1

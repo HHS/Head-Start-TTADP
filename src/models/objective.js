@@ -14,7 +14,7 @@ const {
  * @param {} sequelize
  * @param {*} DataTypes
  */
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class Objective extends Model {
     static associate(models) {
       Objective.belongsToMany(models.ActivityReport, {
