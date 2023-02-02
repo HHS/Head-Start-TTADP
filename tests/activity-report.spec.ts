@@ -105,15 +105,10 @@ async function activitySummary(
   await page.getByRole('group', { name: 'Was this activity for a recipient or other entity? *' }).locator('label').filter({ hasText: 'Recipient' }).click();
   await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
 
-  console.log({ recipients });
-
-  await page.waitForTimeout(5000);
-
   if (recipients) {
   // select recipients
     for (let i = 0; i < recipients; i++) {
-      await page.keyboard.press('Enter');
-      await page.waitForTimeout(5000);      
+      await page.keyboard.press('Enter'); 
     }
   } else {
     await page.keyboard.press('Enter');
