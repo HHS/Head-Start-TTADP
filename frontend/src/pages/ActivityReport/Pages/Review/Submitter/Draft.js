@@ -15,6 +15,7 @@ import DismissingComponentWrapper from '../../../../../components/DismissingComp
 import NetworkContext from '../../../../../NetworkContext';
 import ConnectionError from '../../components/ConnectionError';
 import ApproverSelect from './components/ApproverSelect';
+import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
 
 const Draft = ({
   availableApprovers,
@@ -71,19 +72,18 @@ const Draft = ({
     status: 'submitted',
   };
 
+  const showRolesDropdown = user && user.roles && user.roles.length > 1;
+
   return (
     <>
       {justSubmitted && <Redirect to={{ pathname: '/activity-reports', state: { message } }} />}
       <h2>Submit Report</h2>
-      <p className="usa-prose">
-        <span className="smart-hub--form-required font-family-sans font-ui-xs">* </span>
-        indicates required field
-      </p>
-      <Form className="smart-hub--form-large" onSubmit={handleSubmit(onSubmit)}>
+      <IndicatesRequiredField />
+      <Form className="smart-hub--form-large smart-hub--form__draft smart-hub--form" onSubmit={handleSubmit(onSubmit)}>
         {
-          user && user.roles && user.roles.length > 1
+          showRolesDropdown
             ? (
-              <Fieldset className="smart-hub--report-legend margin-top-4" legend="Creator Role">
+              <Fieldset className="smart-hub--report-legend margin-top-4 smart-hub--report-legend__no-legend-margin-top" legend="Creator Role">
                 <FormItem
                   label="Creator role"
                   name="creatorRole"
@@ -104,7 +104,7 @@ const Draft = ({
             )
             : null
         }
-        <Fieldset className="smart-hub--report-legend margin-top-4" legend="Additional Notes">
+        <Fieldset className={`smart-hub--report-legend margin-top-4 ${!showRolesDropdown ? 'smart-hub--report-legend__no-legend-margin-top' : ''}`} legend="Additional Notes">
           <FormItem
             label="Creator notes"
             name="additionalNotes"
