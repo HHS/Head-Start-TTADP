@@ -2,7 +2,7 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-plusplus */
 import { test, expect, Page } from '@playwright/test';
-import { blur } from './common.ts';
+import { blur } from './common';
 
 async function getFullName(page: Page) {
   await page.goto('/');
@@ -100,16 +100,20 @@ async function activitySummary(
   page: Page,
   config: ActivitySummaryConfig = defaultActivitySummaryConfig,
 ) {
-  const { recipients, ttaType } = { ...config, ...defaultActivitySummaryConfig };
+  const { recipients, ttaType } = { ...defaultActivitySummaryConfig, ...config,  };
 
   await page.getByRole('group', { name: 'Was this activity for a recipient or other entity? *' }).locator('label').filter({ hasText: 'Recipient' }).click();
   await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
-  await page.keyboard.press('ArrowDown');
+
+  console.log({ recipients });
+
+  await page.waitForTimeout(5000);
 
   if (recipients) {
   // select recipients
-    for (let i = 0; i < recipients + 1; i++) {
+    for (let i = 0; i < recipients; i++) {
       await page.keyboard.press('Enter');
+      await page.waitForTimeout(5000);      
     }
   } else {
     await page.keyboard.press('Enter');
@@ -337,6 +341,10 @@ test.describe('Activity Report', () => {
 
     const recipients = await page.locator('span:near(p:text("Recipient names"))').first().textContent();
     const grants = await getGrants(recipients || '');
+
+    console.log(grants);
+
+    await page.waitForTimeout(10000);
 
     // navigate to the Recipient TTA Records page
     await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
