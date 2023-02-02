@@ -149,7 +149,7 @@ describe('Tests aws elastic search', () => {
 
   it('calls search', async () => {
     const res = await search(indexName, ['specialist'], 'potter', myMockClient);
-    await expect(res).toStrictEqual(expectedSearchResult.body.hits);
+    await expect(res.hits).toStrictEqual(expectedSearchResult.body.hits);
   });
 
   it('updates index document', async () => {

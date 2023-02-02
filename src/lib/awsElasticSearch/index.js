@@ -1,3 +1,5 @@
+/* eslint-disable dot-notation */
+/* eslint-disable no-await-in-loop */
 /* eslint-disable camelcase */
 import { Client, Connection } from '@opensearch-project/opensearch';
 import aws4 from 'aws4';
@@ -16,16 +18,16 @@ const generateEsConfig = () => {
       'aws-elasticsearch': [{
         credentials: {
           uri,
-          access_key,
-          secret_key,
+          access_key: accessKey,
+          secret_key: secretKey,
         },
       }],
     } = JSON.parse(process.env.VCAP_SERVICES);
 
     return {
       uri,
-      access_key,
-      secret_key,
+      accessKey,
+      secretKey,
     };
   }
 
@@ -39,8 +41,8 @@ const generateEsConfig = () => {
 
 const {
   uri,
-  access_key,
-  secret_key,
+  accessKey,
+  secretKey,
 } = generateEsConfig();
 
 const createAwsConnector = (credentials, region) => {
@@ -63,8 +65,8 @@ const createAwsConnector = (credentials, region) => {
 const getClient = async () => new Client({
   ...createAwsConnector(
     {
-      accessKeyId: access_key,
-      secretAccessKey: secret_key,
+      accessKeyId: accessKey,
+      secretAccessKey: secretKey,
     },
     'us-gov-west-1',
   ),
@@ -142,30 +144,78 @@ const bulkIndex = async (documents, indexName, passedClient) => {
 };
 /*
   Search index documents.
+  Note: Right now we use search with search_after.
+  This allows us to return all results in batches of 10k.
 */
-const search = async (indexName, fields, query, passedClient) => {
+const search = async (indexName, fields, query, passedClient, overrideBatchSize) => {
   try {
     // Initialize the client.
     const client = passedClient || await getClient();
 
+    // Total hits.
+    let totalHits = [];
+
+    // Loop vars.
+    const maxLoopIterations = 9;
+    let retrieveAgain = true;
+    const batchSize = overrideBatchSize || 10000; // Default batch size to 10k.
+    let loopIterations = 0;
+    let res;
+    let searchAfter;
+
     // Create search body.
-    const body = {
-      size: 2001,
+    let body = {
+      size: batchSize,
       query: {
-        multi_match: {
-          query,
+        query_string: {
+          query: `*${query}*`,
           fields,
         },
       },
+      sort: [
+        {
+          id: {
+            order: 'asc', // necessary for batch processing.
+          },
+        },
+      ],
     };
 
-    // Search an index.
-    const res = await client.search({
-      index: indexName,
-      body,
-    });
+    while (retrieveAgain && loopIterations <= maxLoopIterations) {
+      // Search an index.
+      res = await client.search({
+        index: indexName,
+        body,
+      });
+
+      // Get hits.
+      const hits = res.body.hits.hits || res.body.hits;
+
+      // Check if these are new results.
+      if (hits && hits.length > 0) {
+        // Append new hits.
+        totalHits = [...totalHits, ...hits];
+
+        // Get search_after from last hit.
+        const lastHit = hits.pop();
+
+        // Set search_after.
+        searchAfter = lastHit.sort;
+
+        // Update search_after.
+        body = { ...body, search_after: searchAfter };
+
+        // Increase loop count.
+        loopIterations += 1;
+
+        // If we don't have a sort after (undefined) stop looping.
+        retrieveAgain = searchAfter;
+      } else {
+        retrieveAgain = false;
+      }
+    }
     logger.info(`AWS OpenSearch: Successfully searched the index ${indexName} using query '${query}`);
-    return res.body.hits;
+    return { hits: totalHits };
   } catch (error) {
     auditLogger.error(`AWS OpenSearch Error: Unable to search the index '${indexName}' with query '${query}': ${error.message}`);
     throw error;
