@@ -49,10 +49,8 @@ test.describe("Activity Report Text Search Filter", () => {
     await page.locator('#react-select-9-option-0').click();
     await blur(page);
     // Start and End Dates.
-    await page.locator('label').filter({ hasText: 'Start date *mm/dd/yyyy' }).getByTestId('date-picker-button').click();
-    await page.getByRole('button', { name: '17 January 2023 Tuesday' }).click();
-    await page.locator('label').filter({ hasText: 'End date *mm/dd/yyyy' }).getByTestId('date-picker-button').click();
-    await page.getByRole('button', { name: '17 January 2023 Tuesday' }).click();
+    await page.getByLabel('Start date *mm/dd/yyyy').fill('01/17/2023');
+    await page.getByLabel('End date *mm/dd/yyyy').fill('01/17/2023');
     // Duration.
     await page.getByLabel('Duration in hours (round to the nearest half hour) *').click();
     await page.getByLabel('Duration in hours (round to the nearest half hour) *').fill('9.5');
@@ -82,9 +80,6 @@ test.describe("Activity Report Text Search Filter", () => {
     // Is RTTAPA.
     await page.getByText('Yes').click();
 
-    // Close date.
-    await page.getByTestId('date-picker-button').click();
-    await page.getByRole('button', { name: '17 January 2023 Tuesday' }).click();
     // Objective.
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
     await page.locator('#react-select-15-option-0').click();
@@ -109,25 +104,22 @@ test.describe("Activity Report Text Search Filter", () => {
     // Specialist step 1.
     await page.getByTestId('specialistNextSteps-input').click();
     await page.getByTestId('specialistNextSteps-input').fill('Do your best and forget the rest.');
-    await page.getByRole('group', { name: 'Specialist\'s next steps' }).getByTestId('date-picker-button').click();
-    await page.getByRole('button', { name: '17 January 2023 Tuesday' }).click();
+    await page.getByLabel('When do you anticipate completing step 1? *').fill('01/17/2023');
     await page.getByTestId('specialistNextSteps-button').click();
     // Specialist step 2.
     await page.getByLabel('Step 2 *').click();
     await page.getByLabel('Step 2 *').fill('If you can dream it, you can do it.');
-    await page.getByTestId('date-picker-button').nth(1).click();
-    await page.getByRole('button', { name: '17 January 2023 Tuesday' }).click();
+    await page.getByLabel('When do you anticipate completing step 2? *').fill('01/17/2023');
     // Recipient step 1.
     await page.getByTestId('recipientNextSteps-input').click();
     await page.getByTestId('recipientNextSteps-input').fill('Just one small positive thought in the morning can change your whole day.');
-    await page.getByRole('group', { name: 'Recipient\'s next steps' }).getByTestId('date-picker-button').click();
-    await page.getByRole('button', { name: '17 January 2023 Tuesday' }).click();
+    await page.getByLabel('When does the recipient anticipate completing step 1? *').fill('01/17/2023');
    // Recipient step 2.
     await page.getByTestId('recipientNextSteps-button').click();
     await page.getByRole('group', { name: 'Recipient\'s next steps' }).getByLabel('Step 2 *').click();
     await page.getByRole('group', { name: 'Recipient\'s next steps' }).getByLabel('Step 2 *').fill('Virtually nothing is impossible in this world.');
-    await page.getByTestId('date-picker-button').nth(3).click();
-    await page.getByRole('button', { name: '17 January 2023 Tuesday' }).click();
+    await page.getByLabel('When does the recipient anticipate completing step 2? *').fill('01/17/2023');
+    
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
   // Submit page.
@@ -166,6 +158,7 @@ test.describe("Activity Report Text Search Filter", () => {
   await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
 
   // Doesn't contain context.
+  await page.waitForTimeout(1000);
   await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();
   await page.getByRole('combobox', { name: 'condition' }).selectOption('does not contain');
   await page.getByLabel('Enter report text').click();

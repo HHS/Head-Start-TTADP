@@ -21,6 +21,7 @@ function ReportMenu({
   isDownloading,
   downloadAllButtonRef,
   downloadSelectedButtonRef,
+  exportIdPrefix,
 }) {
   const [open, updateOpen] = useState(false);
 
@@ -63,6 +64,7 @@ function ReportMenu({
         className={`usa-button usa-button--outline font-sans-xs margin-left-1 ${openClass}`}
         aria-label={label}
         onClick={() => updateOpen((current) => !current)}
+        id={`${exportIdPrefix}export-button`}
       >
         Export reports
         {' '}
@@ -147,6 +149,7 @@ function ReportMenu({
                     type="button"
                     disabled={downloadError || isDownloading}
                     className="usa-button usa-button--unstyled display-block smart-hub--reports-button smart-hub--button__no-margin"
+                    id={`${exportIdPrefix}export-table`}
                   >
                     Export table data
                   </button>
@@ -161,6 +164,7 @@ function ReportMenu({
                 type="button"
                 disabled={isDownloading}
                 className="usa-button usa-button--unstyled display-block smart-hub--reports-button smart-hub--button__no-margin margin-top-2"
+                id={`${exportIdPrefix}export-reports`}
               >
                 Export selected reports
               </button>
@@ -189,6 +193,7 @@ ReportMenu.propTypes = {
     PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
   ]),
   setDownloadError: PropTypes.func.isRequired,
+  exportIdPrefix: PropTypes.string.isRequired,
 };
 
 ReportMenu.defaultProps = {
