@@ -22,6 +22,7 @@ import PlusButton from '../../../components/GoalForm/PlusButton';
 import OtherEntity from './components/OtherEntity';
 import GoalFormContext from '../../../GoalFormContext';
 import ReadOnlyOtherEntityObjectives from '../../../components/GoalForm/ReadOnlyOtherEntityObjectives';
+import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 
 const GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER = '2';
 
@@ -229,10 +230,7 @@ const GoalsObjectives = ({
         <title>Goals and objectives</title>
       </Helmet>
       { isFormOpen && (
-      <p className="usa-prose">
-        <span className="smart-hub--form-required font-family-sans font-ui-xs">* </span>
-        indicates required field
-      </p>
+      <IndicatesRequiredField />
       ) }
 
       {(!isOtherEntityReport && !isRecipientReport) && (

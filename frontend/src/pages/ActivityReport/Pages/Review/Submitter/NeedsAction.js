@@ -9,6 +9,7 @@ import ApproverStatusList from '../../components/ApproverStatusList';
 import DisplayApproverNotes from '../../components/DisplayApproverNotes';
 import IncompletePages from '../IncompletePages';
 import UserContext from '../../../../../UserContext';
+import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
 
 const NeedsAction = ({
   additionalNotes,
@@ -44,10 +45,7 @@ const NeedsAction = ({
   return (
     <>
       <h2>Review and re-submit report</h2>
-      <p className="usa-prose">
-        <span className="smart-hub--form-required font-family-sans font-ui-xs">* </span>
-        indicates required field
-      </p>
+      <IndicatesRequiredField />
       <div className="margin-bottom-2">
         {
           !userHasOneRole
