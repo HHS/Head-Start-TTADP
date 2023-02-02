@@ -25,7 +25,10 @@ export function withoutTopics(topics) {
   const arTopicsQuery = filterArray('ARRAY_TO_STRING("topics", \',\')', topics, true);
   const objectiveTopicsQuery = filterAssociation(topicTypes, topics, true, '~*');
   const combinedQuery = {
-    [Op.or]: [...arTopicsQuery[Op.or][Op.and].map((t) => t), ...objectiveTopicsQuery[Op.or][Op.and].map((t) => t)],
+    [Op.or]:
+    [
+      { [Op.and]: [...arTopicsQuery[Op.or][0][Op.and].map((t) => t), ...objectiveTopicsQuery[Op.and].map((t) => t)] },
+    ],
   };
   return combinedQuery;
 }
