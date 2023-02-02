@@ -1,5 +1,6 @@
 /* eslint-disable max-len */
 import { Op } from 'sequelize';
+import { sequelize } from '../../models';
 import filterArray, { filterAssociation } from './utils';
 
 const topicTypes = `
@@ -28,6 +29,7 @@ export function withoutTopics(topics) {
     [Op.or]:
     [
       { [Op.and]: [...arTopicsQuery[Op.or][0][Op.and].map((t) => t), ...objectiveTopicsQuery[Op.and].map((t) => t)] },
+      sequelize.literal('"topics" IS NULL'),
     ],
   };
   return combinedQuery;
