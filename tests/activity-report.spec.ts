@@ -585,6 +585,10 @@ test.describe('Activity Report', () => {
     await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
     await page.getByRole('link', { name: 'Agency 2 in region 1, Inc.' }).click();
     await page.getByRole('link', { name: 'Goals & Objectives' }).click();
+
+    // check page title is updated (formerly TTAHUB-1322.spec.ts)
+    expect(await page.title()).toBe('Goals and Objectives - Agency 2 in region 1, Inc. - TTA Hub');
+
     await expect(page.getByText('This is a goal for multiple grants')).toBeVisible();
     await page.getByRole('button', { name: /Expand objectives for goal G-(\d)/i }).click();
     await expect(page.getByText('A new objective')).toBeVisible();
