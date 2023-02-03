@@ -69,7 +69,7 @@ export default function Drawer({
 
   return (
     <div
-      className="smart-hub-drawer bg-white position-fixed pin-right pin-bottom z-100 overflow-y-auto shadow-3 display-flex flex-column flex-justify"
+      className="smart-hub-drawer slide-in-right bg-white position-fixed pin-right pin-bottom z-100 overflow-y-auto shadow-3 display-flex flex-column flex-justify"
       ref={elementRef}
       style={{
         top: headerHeight,
