@@ -107,7 +107,7 @@ describe('Drawer', () => {
       userEvent.click(button);
     });
 
-    expect(screen.getByText('Footer')).toHaveClass('smart-hub-drawer-footer--sticky');
-    expect(screen.getByText('Hello').parentElement).toHaveClass('smart-hub-drawer-header--sticky');
+    expect(screen.getByText('Footer')).toHaveClass('position-sticky');
+    expect(screen.getByText('Hello').parentElement).toHaveClass('position-sticky');
   });
 });
