@@ -14,6 +14,13 @@ export default (sequelize, DataTypes) => {
       Grant.belongsTo(models.Region, { foreignKey: 'regionId' });
       Grant.belongsTo(models.Recipient, { foreignKey: 'recipientId', as: 'recipient' });
       Grant.hasMany(models.Goal, { foreignKey: 'grantId', as: 'goals' });
+      Grant.hasMany(models.GroupGrant, { foreignKey: 'grantId', as: 'groupGrants' });
+      Grant.belongsToMany(models.Group, {
+        through: models.GroupGrant,
+        foreignKey: 'grantId',
+        otherKey: 'groupId',
+        as: 'groups',
+      });
       Grant.hasMany(models.Program, { foreignKey: 'grantId', as: 'programs' });
       Grant.hasMany(models.ActivityRecipient, { foreignKey: 'grantId', as: 'activityRecipients' });
 

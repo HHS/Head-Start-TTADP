@@ -18,7 +18,17 @@ export default async function reasonList(scopes) {
     raw: true,
   });
 
-  const reasons = REASONS.map((reason) => ({ name: reason, count: 0 }));
+  const reasons = REASONS
+    .map((reason) => ({ name: reason, count: 0 }))
+    .sort((a, b) => {
+      if (a.name < b.name) {
+        return -1;
+      }
+      if (a.name > b.name) {
+        return 1;
+      }
+      return 0;
+    });
 
   return countBySingleKey(res, 'reason', reasons);
 }

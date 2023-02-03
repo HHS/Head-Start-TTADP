@@ -31,6 +31,7 @@ const propagateDestroyToFile = async (sequelize, instance, options) => {
     && file.objectiveTemplateFiles.length === 0) {
     await sequelize.models.File.destroy({
       where: { id: file.id },
+      individualHooks: true,
       transaction: options.transaction,
     });
   }
