@@ -11,7 +11,6 @@ describe('GoalRttapa', () => {
     render(<GoalRttapa
       isRttapa={isRttapa}
       onChange={onChange}
-      onBlur={jest.fn()}
       error={<></>}
       isLoading={false}
       goalStatus={goalStatus}
