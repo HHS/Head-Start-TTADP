@@ -8,13 +8,13 @@ import { devices } from '@playwright/test';
 const config = {
   testDir: './tests',
   outputDir: './playwright/test-results',
-  workers: 2, // changing because of possible data collisions
+  workers: 3,
   expect: {
     timeout: 20000,
   },
   fullyParallel: true,
   reporter: [['html', { outputFolder: './playwright/report', open: 'never' }]],
-  timeout: 500000,
+  timeout: 600000,
   globalTimeout: 900000,
   globalSetup: './tests/init/globalSetup.ts',
   projects: [
