@@ -9,6 +9,7 @@ import {
 } from '..';
 import { OBJECTIVE_STATUS } from '../../constants';
 import { objectiveTemplateGenerator } from './testHelpers';
+import { beforeValidate } from './objectiveTopic';
 
 describe('objectiveTopic hooks', () => {
   let topic;
@@ -61,6 +62,19 @@ describe('objectiveTopic hooks', () => {
 
     await ObjectiveTemplate.destroy({
       where: { id: objectiveTemplate.id },
+    });
+  });
+
+  describe('beforeValidate', () => {
+    it('beforeValidate', async () => {
+      const instance = {
+      };
+      instance.set = (name, value) => { instance[name] = value; };
+      const options = {};
+      beforeValidate({}, instance, options);
+      expect(instance.onAR).toBe(false);
+      expect(instance.onApprovedAR).toBe(false);
+      expect(options.fields.sort()).toStrictEqual(['onAR', 'onApprovedAR'].sort());
     });
   });
 
