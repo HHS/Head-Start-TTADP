@@ -287,7 +287,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
         objectives = await sequelize.models.Objective.findAll({
           attributes: [
             'id',
-            [sequelize.literal('count(DISTINCT "activityReports"."calculatedStatus")'), 'cntApproved'],
+            [sequelize.literal('count(DISTINCT "activityReports"."calculatedStatus")::int'), 'cntApproved'],
           ],
           include: [
             {
@@ -313,7 +313,6 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
           ],
           includeIgnoreAttributes: false,
           group: sequelize.literal('"Objective"."id"'),
-          having: sequelize.literal('count(DISTINCT "activityReports"."calculatedStatus") = 0'),
         });
       } catch (e) {
         auditLogger.error(JSON.stringify({
@@ -324,50 +323,108 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
 
       if (objectives && objectives.length > 0) {
         await Promise.all([
+          // update the onApprovedAR for objectives that will no longer be referenced on an
+          // approved AR
           sequelize.models.Objective.update(
             { onApprovedAR: false },
             {
               where: {
-                id: { [Op.in]: objectives.map((o) => o.id) },
+                id: {
+                  [Op.in]: objectives
+                    .filter((o) => o.dataValues.cntApproved === 0)
+                    .map((o) => o.id),
+                },
                 onApprovedAR: true,
               },
               transaction: options.transaction,
               individualHooks: true,
             },
           ),
-          sequelize.models.ObjectiveFile.update(
-            { onApprovedAR: false },
-            {
-              where: {
-                objectiveId: { [Op.in]: objectives.map((o) => o.id) },
-                onApprovedAR: true,
-              },
-              transaction: options.transaction,
-              individualHooks: true,
-            },
-          ),
-          sequelize.models.ObjectiveResource.update(
-            { onApprovedAR: false },
-            {
-              where: {
-                objectiveId: { [Op.in]: objectives.map((o) => o.id) },
-                onApprovedAR: true,
-              },
-              transaction: options.transaction,
-              individualHooks: true,
-            },
-          ),
-          sequelize.models.ObjectiveTopic.update(
-            { onApprovedAR: false },
-            {
-              where: {
-                objectiveId: { [Op.in]: objectives.map((o) => o.id) },
-                onApprovedAR: true,
-              },
-              transaction: options.transaction,
-              individualHooks: true,
-            },
-          ),
+          // update the onApprovedAR for files that will no longer be referenced on an approved AR
+          sequelize.query(`
+          WITH
+            "FilesOnReport" AS (
+              SELECT DISTINCT
+                aro."objectiveId",
+                arof."fileId"
+              FROM "ActivityReportObjectives" aro
+              JOIN "ActivityReportObjectiveFiles" arof
+              ON aro.id = arof."activityReportObjectiveId"
+              AND aro."activityReportId" = ${instance.id}
+              AND aro."objectiveId" IN (${objectives.map((o) => o.id).join(',')})
+              JOIN "ActivityReportObjectives" aro2
+              ON aro.id != aro2.id
+              AND aro."activityReportId" != aro2."activityReportId"
+              AND aro2."objectiveId" IN (${objectives.map((o) => o.id).join(',')})
+              LEFT JOIN "ActivityReportObjectiveFiles" arof2
+              ON aro2.id = arof2."activityReportObjectiveId"
+              AND arof."fileId" = arof2."fileId"
+              WHERE arof2."id" IS NULL
+            )
+            UPDATE "ObjectiveFiles" f
+            SET "onApprovedAR" = false
+            FROM "FilesOnReport" fr
+            WHERE f."onApprovedAR" = true
+            AND f."objectiveId" = fr."objectiveId"
+            AND f."fileId" = fr."fileId";
+          `, { transaction: options.transaction }),
+          // update the onApprovedAR for resources that will no longer be referenced on an
+          // approved AR
+          sequelize.query(`
+          WITH
+            "ResourcesOnReport" AS (
+              SELECT DISTINCT
+                aro."objectiveId",
+                aror."userProvidedUrl"
+              FROM "ActivityReportObjectives" aro
+              JOIN "ActivityReportObjectiveResources" aror
+              ON aro.id = aror."activityReportObjectiveId"
+              AND aro."activityReportId" = ${instance.id}
+              AND aro."objectiveId" IN (${objectives.map((o) => o.id).join(',')})
+              JOIN "ActivityReportObjectives" aro2
+              ON aro.id != aro2.id
+              AND aro."activityReportId" != aro2."activityReportId"
+              AND aro2."objectiveId" IN (${objectives.map((o) => o.id).join(',')})
+              LEFT JOIN "ActivityReportObjectiveResources" aror2
+              ON aro2.id = aror2."activityReportObjectiveId"
+              AND aror."userProvidedUrl" = aror2."userProvidedUrl"
+              WHERE aror2."id" IS NULL
+            )
+            UPDATE "ObjectiveResources" r
+            SET "onApprovedAR" = false
+            FROM "ResourcesOnReport" rr
+            WHERE r."onApprovedAR" = true
+            AND r."objectiveId" = rr."objectiveId"
+            AND r."userProvidedUrl" = rr."userProvidedUrl";
+          `, { transaction: options.transaction }),
+          // update the onApprovedAR for topics that will no longer be referenced on an approved AR
+          sequelize.query(`
+          WITH
+            "TopicsOnReport" AS (
+              SELECT DISTINCT
+                aro."objectiveId",
+                arot."topicId"
+              FROM "ActivityReportObjectives" aro
+              JOIN "ActivityReportObjectiveTopics" arot
+              ON aro.id = arot."activityReportObjectiveId"
+              AND aro."activityReportId" = ${instance.id}
+              AND aro."objectiveId" IN (${objectives.map((o) => o.id).join(',')})
+              JOIN "ActivityReportObjectives" aro2
+              ON aro.id != aro2.id
+              AND aro."activityReportId" != aro2."activityReportId"
+              AND aro2."objectiveId" IN (${objectives.map((o) => o.id).join(',')})
+              LEFT JOIN "ActivityReportObjectiveTopics" arot2
+              ON aro2.id = arot2."activityReportObjectiveId"
+              AND arot."topicId" = arot2."topicId"
+              WHERE arot2."id" IS NULL
+            )
+            UPDATE "ObjectiveTopics" t
+            SET "onApprovedAR" = false
+            FROM "TopicsOnReport" tr
+            WHERE t."onApprovedAR" = true
+            AND t."objectiveId" = tr."objectiveId"
+            AND t."topicId" = tr."topicId";
+          `, { transaction: options.transaction }),
         ]);
       }
 
@@ -474,7 +531,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
           sequelize.query(`
           WITH
             "FilesOnReport" AS (
-              SELECT
+              SELECT DISTINCT
                 aro."objectiveId",
                 arof."fileId"
               FROM "ActivityReportObjectives" aro
@@ -493,7 +550,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
           sequelize.query(`
           WITH
             "ResourcesOnReport" AS (
-              SELECT
+              SELECT DISTINCT
                 aro."objectiveId",
                 aror."resourceId"
               FROM "ActivityReportObjectives" aro
@@ -512,7 +569,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
           sequelize.query(`
           WITH
             "TopicsOnReport" AS (
-              SELECT
+              SELECT DISTINCT
                 aro."objectiveId",
                 arot."topicId"
               FROM "ActivityReportObjectives" aro
