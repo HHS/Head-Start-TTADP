@@ -33,7 +33,7 @@ export default function GoalRttapa({
 
   return (
     <FormGroup className={`ttahub-goal-is-rttapa ${className}`} error={error.props.children}>
-      <Fieldset onBlur={() => onBlur()}>
+      <Fieldset>
         <legend>
           Goal type
           <Req />
