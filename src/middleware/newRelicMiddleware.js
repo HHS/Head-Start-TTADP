@@ -14,9 +14,7 @@ const nr = require('newrelic');
  * @param {*} next - call next middleware
  */
 export function nameTransactionByBase(req, res, next) {
-  if (!process.env.CI) {
-    nr.setTransactionName(`${req.method} ${req.baseUrl}/*`);
-  }
+  nr.setTransactionName(`${req.method} ${req.baseUrl}/*`);
   next();
 }
 
@@ -31,9 +29,6 @@ export function nameTransactionByBase(req, res, next) {
  * @param {*} next - call next middleware
  */
 export function nameTransactionByPath(req, res, next) {
-  if (!process.env.CI) {
-    nr.setTransactionName(`${req.method} ${req.baseUrl}${req.path}`);
-  }
-
+  nr.setTransactionName(`${req.method} ${req.baseUrl}${req.path}`);
   next();
 }
