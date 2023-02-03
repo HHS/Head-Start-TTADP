@@ -5,6 +5,7 @@ import { Helmet } from 'react-helmet';
 import { Fieldset } from '@trussworks/react-uswds';
 import NextStepsRepeater from './components/NextStepsRepeater';
 import ReviewPage from './Review/ReviewPage';
+import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 
 export const isPageComplete = (formData, formState) => {
   const { isValid } = formState;
@@ -37,7 +38,8 @@ const NextSteps = ({ activityRecipientType }) => {
       <Helmet>
         <title>Next steps</title>
       </Helmet>
-      <Fieldset id="specialist-field-set" className="smart-hub--report-legend margin-top-3" legend="Specialist&apos;s next steps">
+      <IndicatesRequiredField />
+      <Fieldset id="specialist-field-set" className="smart-hub--report-legend margin-top-4" legend="Specialist&apos;s next steps">
         <NextStepsRepeater
           id="specialist-next-steps-repeater-id"
           name="specialistNextSteps"

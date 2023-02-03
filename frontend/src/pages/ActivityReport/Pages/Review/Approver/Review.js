@@ -14,6 +14,7 @@ import HookFormRichEditor from '../../../../../components/HookFormRichEditor';
 import ApproverStatusList from '../../components/ApproverStatusList';
 import DisplayApproverNotes from '../../components/DisplayApproverNotes';
 import UserContext from '../../../../../UserContext';
+import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
 
 const Review = ({
   additionalNotes,
@@ -47,6 +48,7 @@ const Review = ({
   return (
     <>
       <h2>{pendingOtherApprovals ? 'Pending other approvals' : 'Review and approve report'}</h2>
+      <IndicatesRequiredField />
       <div className="smart-hub--creator-notes" aria-label="additionalNotes">
         <p>
           <span className="text-bold">Creator notes</span>
@@ -65,8 +67,7 @@ const Review = ({
       }
 
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onFormReview)}>
-
-        <Fieldset className="smart-hub--report-legend margin-top-4" legend="Review and submit report">
+        <Fieldset className="smart-hub--report-legend margin-top-4 smart-hub--report-legend__no-legend-margin-top" legend="Review and submit report">
           <Label htmlFor="note">Add manager notes</Label>
           <div className={`margin-top-1 ${textAreaClass}`}>
             <HookFormRichEditor

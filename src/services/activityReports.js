@@ -217,7 +217,10 @@ async function saveNotes(activityReportId, notes, isRecipientNotes) {
     },
   };
   // Remove any notes that are no longer relevant
-  await NextStep.destroy({ where });
+  await NextStep.destroy({
+    where,
+    individualHooks: true,
+  });
 
   if (notes.length > 0) {
     // If a note has an id, and its content has changed, update to the newer content
@@ -1400,7 +1403,7 @@ export async function activityReportsWhereCollaboratorByDate(userId, date) {
       id: {
         [Op.in]: sequelize.literal(
           `(SELECT (new_row_data->'activityReportId')::NUMERIC
-        FROM "ZALActivityReportCollaborators" 
+        FROM "ZALActivityReportCollaborators"
         where dml_timestamp > ${date} AND
         (new_row_data->'userId')::NUMERIC = ${userId})`,
         ),
@@ -1442,7 +1445,7 @@ export async function activityReportsChangesRequestedByDate(userId, date) {
           id: {
             [Op.in]: sequelize.literal(
               `(SELECT data_id
-          FROM "ZALActivityReports" 
+          FROM "ZALActivityReports"
           where dml_timestamp > ${date} AND
           (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.NEEDS_ACTION}')`,
             ),
@@ -1480,7 +1483,7 @@ export async function activityReportsSubmittedByDate(userId, date) {
           id: {
             [Op.in]: sequelize.literal(
               `(SELECT data_id
-          FROM "ZALActivityReports" 
+          FROM "ZALActivityReports"
           where dml_timestamp > ${date} AND
           (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.SUBMITTED}')`,
             ),
@@ -1521,7 +1524,7 @@ export async function activityReportsApprovedByDate(userId, date) {
           id: {
             [Op.in]: sequelize.literal(
               `(SELECT data_id
-          FROM "ZALActivityReports" 
+          FROM "ZALActivityReports"
           where dml_timestamp > ${date} AND
           (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.APPROVED}')`,
             ),
