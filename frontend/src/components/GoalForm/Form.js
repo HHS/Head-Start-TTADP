@@ -146,7 +146,6 @@ export default function Form({
       <GoalRttapa
         error={errors[FORM_FIELD_INDEXES.IS_RTTAPA]}
         isRttapa={isRttapa}
-        onBlur={validateIsRttapa}
         onChange={setIsRttapa}
         isLoading={isAppLoading}
         goalStatus={status}
