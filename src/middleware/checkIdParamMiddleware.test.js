@@ -1,4 +1,10 @@
-import { checkActivityReportIdParam, checkReportIdParam, checkFileIdParam } from './checkIdParamMiddleware';
+import {
+  checkActivityReportIdParam,
+  checkReportIdParam,
+  checkFileIdParam,
+  checkObjectiveIdParam,
+  checkObjectiveTemplateIdParam,
+} from './checkIdParamMiddleware';
 import { auditLogger } from '../logger';
 
 jest.mock('../lib/apiErrorHandler', () => jest.fn().mockReturnValue(() => Promise.resolve()));
@@ -113,7 +119,7 @@ describe('checkIdParamMiddleware', () => {
       expect(mockNext).toHaveBeenCalled();
     });
 
-    it('throw 400 if param is not string of integer', () => {
+    it('throw 400 if param is not string or integer', () => {
       const mockRequest = {
         path: '/api/endpoint',
         params: {
@@ -138,6 +144,88 @@ describe('checkIdParamMiddleware', () => {
       checkReportIdParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: reportId undefined`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('checkObjectiveIdParam', () => {
+    it('calls next if objective id is string or integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          objectiveId: '2',
+        },
+      };
+
+      checkObjectiveIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('throw 400 if param is not string or integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          objectiveId: '2D',
+        },
+      };
+
+      checkObjectiveIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('throw 400 if param is missing', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {},
+      };
+
+      checkObjectiveIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('checkObjectiveTemplateIdParam', () => {
+    it('calls next if objective id is string or integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          objectiveTemplateId: '2',
+        },
+      };
+
+      checkObjectiveTemplateIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('throw 400 if param is not string or integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          objectiveTemplateId: '2D',
+        },
+      };
+
+      checkObjectiveTemplateIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('throw 400 if param is missing', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {},
+      };
+
+      checkObjectiveTemplateIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalled();
       expect(mockNext).not.toHaveBeenCalled();
     });
   });

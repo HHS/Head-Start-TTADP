@@ -403,6 +403,10 @@ describe('Filter Menu', () => {
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'is');
 
+    userEvent.selectOptions(topics, 'Date ended');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
     userEvent.selectOptions(topics, 'My reports');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
     userEvent.selectOptions(conditions, 'where I\'m the');

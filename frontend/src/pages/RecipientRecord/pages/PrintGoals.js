@@ -67,7 +67,7 @@ export default function PrintGoals({ location, recipientId, regionId }) {
 
   return (
     <div className="margin-top-2 margin-left-2 ttahub-print-goals">
-      <PrintToPdf />
+      <PrintToPdf id="print-goals" />
       <div className="bg-white radius-md shadow-2 margin-right-2">
         {goals.map((goal) => <PrintableGoal key={`printable-goal-${goal.id}`} goal={goal} />)}
       </div>

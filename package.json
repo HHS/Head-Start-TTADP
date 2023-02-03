@@ -74,6 +74,8 @@
     "import:reports:local": "./node_modules/.bin/babel-node ./src/tools/importSSActivityReports.js",
     "import:reports": "node ./build/server/src/tools/importSSActivityReports.js",
     "import:goals:local": "./node_modules/.bin/babel-node ./src/tools/importTTAPlanGoals.js",
+    "create:goals": "node ./build/server/src/tools/goalPilotCLI.js",
+    "create:goals:local": "./node_modules/.bin/babel-node ./src/tools/goalPilotCLI.js",
     "import:goals": "node ./build/server/src/tools/importTTAPlanGoals.js",
     "import:hses:local": "./node_modules/.bin/babel-node ./src/tools/importGrantRecipientsCLI.js --skipdownload",
     "import:hses": "node ./build/server/src/tools/importGrantRecipientsCLI.js",
@@ -102,14 +104,19 @@
     "follow-redirects": "^1.14.8",
     "json-pointer": "0.6.2",
     "marked": "^4.0.10",
-    "minimist": "^1.2.6",
+    "minimist": "^1.2.7",
     "moment": "^2.29.2",
     "nanoid": "^3.2.0",
     "node-fetch": "^2.6.7",
     "protobufjs": "^6.11.3",
     "got": "^11.8.5",
     "undici": "^5.8.0",
-    "selenium-webdriver": "4.3.0"
+    "selenium-webdriver": "4.3.0",
+    "json5": "^2.2.3",
+    "luxon": "^1.23.1",
+    "qs": "^6.9.7",
+    "cookiejar": "^2.1.4",
+    "http-cache-semantics": "^4.1.1"
   },
   "eslintConfig": {
     "extends": [
@@ -156,7 +163,11 @@
       "<rootDir>/src/*/coverage/",
       "<rootDir>/src/coverage/",
       "<rootDir>/src/index.js",
-      "<rootDir>/src/worker.js"
+      "<rootDir>/src/worker.ts",
+      "<rootDir>/src/app.js",
+      "<rootDir>/src/tools/*CLI.js",
+      "<rootDir>/src/tools/createAwsElasticSearchIndexesCli.js",
+      "<rootDir>/src/tools/importTTAPlanGoals.js"
     ],
     "testTimeout": 30000,
     "coveragePathIgnorePatterns": [
@@ -171,14 +182,20 @@
       "<rootDir>/src/*/coverage/",
       "<rootDir>/src/coverage/",
       "<rootDir>/src/index.js",
-      "<rootDir>/src/worker.js"
+      "<rootDir>/src/worker.ts",
+      "<rootDir>/src/app.js",
+      "<rootDir>/src/lib/cron.js",
+      "<rootDir>/src/tools/*CLI.js",
+      "<rootDir>/src/tools/createAwsElasticSearchIndexesCli.js",
+      "<rootDir>/src/tools/importTTAPlanGoals.js"
+
     ],
     "coverageThreshold": {
       "global": {
-        "statements": 39,
-        "functions": 12,
-        "branches": 25,
-        "lines": 40
+        "statements": 75,
+        "functions": 75,
+        "branches": 75,
+        "lines": 75
       }
     }
   },
