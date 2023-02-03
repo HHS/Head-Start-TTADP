@@ -15,10 +15,10 @@ import filterArray from './utils';
  * @returns {string[]} // this might actually be the sequelize literal type
  */
 const expandTypesArrayForQuery = (
-  column: string,
-  searchTerms: string[],
-  operator: string,
-) : string[] => searchTerms.map(
+  column,
+  searchTerms,
+  operator,
+) => searchTerms.map(
   (term) => sequelize.literal(`${column} ${operator} ${sequelize.escape(String(term).trim())}`),
 );
 
@@ -41,7 +41,7 @@ const VALID_TTA_TYPES = [
  * @param {string[]} query
  * @returns {string[]}
  */
-const calculateTtaType = (query: ['technical-assistance' | 'training' | 'training,technical-assistance']) : string[] => [uniq(query.filter((ttaType) => VALID_TTA_TYPES.includes(ttaType))).join(',')];
+const calculateTtaType = (query) => [uniq(query.filter((ttaType) => VALID_TTA_TYPES.includes(ttaType))).join(',')];
 
 /**
  * query for activity reports with a specific tta type
@@ -52,7 +52,7 @@ const calculateTtaType = (query: ['technical-assistance' | 'training' | 'trainin
  * @see calculateTtaType
  */
 
-export function withTtaType(query: ['technical-assistance' | 'training' | 'training,technical-assistance']): WhereOptions {
+export function withTtaType(query) {
   return filterArray('ARRAY_TO_STRING("ttaType", \',\')', calculateTtaType(query), false, Op.or, Op.and, expandTypesArrayForQuery);
 }
 
@@ -63,6 +63,6 @@ export function withTtaType(query: ['technical-assistance' | 'training' | 'train
  * @see withTtaType
  * @see calculateTtaType
  */
-export function withoutTtaType(query: ['technical-assistance' | 'training' | 'training,technical-assistance']): WhereOptions {
+export function withoutTtaType(query) {
   return filterArray('ARRAY_TO_STRING("ttaType", \',\')', calculateTtaType(query), true, Op.or, Op.and, expandTypesArrayForQuery);
 }
