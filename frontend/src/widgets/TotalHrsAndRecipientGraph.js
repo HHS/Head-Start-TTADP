@@ -149,7 +149,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
         ticks: 'outside',
         tick0: 0,
         dtick: xTickStep,
-        ticklen: 14,
+        ticklen: 5,
         tickwidth: 1,
         tickcolor: '#000',
         title: {
