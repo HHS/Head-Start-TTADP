@@ -139,16 +139,17 @@ async function activitySummary(
   await page.getByLabel('Number of participants involved *').fill('5');
 }
 
-async function nextSteps(page: Page) {
+async function nextSteps(page: Page, isForOtherEntity: boolean = false) {
+  // determine label for next steps
+  const label = isForOtherEntity ? 'other entity' : 'recipient';
+
   // fill out next steps
   await page.getByTestId('specialistNextSteps-input').click();
   await page.getByTestId('specialistNextSteps-input').fill('1');
-  await page.getByLabel('When do you anticipate completing step 1? *').click();
   await page.getByLabel('When do you anticipate completing step 1? *').fill('12/01/2050');
   await page.getByTestId('recipientNextSteps-input').click();
   await page.getByTestId('recipientNextSteps-input').fill('2');
-  await page.getByLabel('When does the recipient anticipate completing step 1? *').click();
-  await page.getByLabel('When does the recipient anticipate completing step 1? *').fill('12/01/2050');
+  await page.getByLabel(`When does the ${label} anticipate completing step 1? *`).fill('12/01/2050');
 }
 
 test.describe('Activity Report', () => {
@@ -594,4 +595,88 @@ test.describe('Activity Report', () => {
     await expect(page.getByText('A new objective')).toBeVisible();
     await expect(page.getByText(`Activity reports R01-AR-${arNumber}`)).toBeVisible();
   });
+
+
+  test('create a report with two other entities and one objective', async ({ page }) => {
+    await page.goto('http://localhost:3000/');
+
+    // create a new report
+    await page.getByRole('link', { name: 'Activity Reports' }).click();
+    await page.getByRole('button', { name: '+ New Activity Report' }).click();
+      
+    const heading = page.getByRole('heading', { name: /activity report for region \d/i });
+    const regionNumber = await heading.textContent().then((text) => text!.match(/\d/)![0]); 
+
+    await activitySummary(page, { recipients: 2, ttaType: 'Training' });
+    
+    // select two recipients
+    await page.locator('label').filter({ hasText: 'Other entity' }).click();
+    await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
+    await page.locator('#react-select-3-option-0').click();
+    await page.locator('#react-select-3-option-1').click();
+
+    // cycle through the side nav
+    await page.getByRole('button', { name: 'Goals and objectives Not started' }).click();
+    await page.getByRole('button', { name: 'Supporting attachments Not started' }).click();
+    await page.getByRole('button', { name: 'Next steps Not started' }).click();
+    await page.getByRole('button', { name: 'Review and submit' }).click();    
+    await page.getByRole('button', { name: /activity summary in progress/i }).click();
+
+    // select participants
+    await page.locator('#participants input').focus();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await blur(page);
+
+    // submit the activity summary
+    await page.getByRole('button', { name: 'Save and continue' }).click();
+
+    // fill out the objectives form
+    await page.getByRole('button', { name: 'Add new objective' }).click();
+    await page.getByTestId('textarea').fill('test');
+
+    // fill in an invalid resource
+    await page.getByTestId('textInput').fill('asdfasdf');
+
+    // select a topic
+    await page.locator('.css-125guah-control').click();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+
+    // clear out the invalid resource
+    await page.getByTestId('textInput').fill('');
+
+    // add tta provided
+    await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
+    await page.keyboard.type('hello');
+
+    await page.getByRole('button', { name: 'Save objectives' }).click();
+    await page.getByRole('button', { name: 'Save and continue' }).click();
+
+    // skip supporting attachments
+    await page.getByRole('button', { name: 'Save and continue' }).click();
+   
+    // fill out next steps
+    const isOtherEntity = true;
+    await nextSteps(page, isOtherEntity);
+    await page.getByRole('button', { name: 'Save and continue' }).click();
+
+    // select an approver
+    await page.getByLabel(/Approving manager/i).focus();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    
+    // extract the AR number from the URL:
+    const url = page.url();
+    const arNumber = url.split('/').find((part) => /^\d+$/.test(part));
+
+    await blur(page);
+
+    // submit for approval
+    await page.getByRole('button', { name: 'Submit for approval' }).click();
+
+    // verify draft report in table
+    await expect(page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
+  });
+
 });
