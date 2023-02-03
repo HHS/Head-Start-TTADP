@@ -1,6 +1,5 @@
 import { getAllRoles } from '../../services/roles';
 
-/* eslint-disable import/prefer-default-export */
 export async function allRoles(req, res) {
   const roles = await getAllRoles();
   res.json(roles);

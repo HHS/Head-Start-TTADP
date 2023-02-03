@@ -128,6 +128,7 @@ const afterDestroy = async (sequelize, instance, options) => {
 export {
   propagateCreateToTemplate,
   propagateDestroyToTemplate,
+  checkForUseOnApprovedReport,
   afterCreate,
   beforeDestroy,
   afterDestroy,

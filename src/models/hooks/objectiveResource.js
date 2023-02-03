@@ -45,6 +45,7 @@ const propagateCreateToTemplate = async (sequelize, instance, options) => {
     ],
     transaction: options.transaction,
   });
+
   if (objective
     && objective.objectiveTemplateId !== null
     && objective.objectiveTemplate.creationMethod === AUTOMATIC_CREATION) {
@@ -55,6 +56,7 @@ const propagateCreateToTemplate = async (sequelize, instance, options) => {
       },
       transaction: options.transaction,
     });
+
     await sequelize.models.ObjectiveTemplateResource.update(
       {
         updatedAt: new Date(),
