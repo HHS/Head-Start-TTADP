@@ -37,4 +37,8 @@ describe('hookMetadata', () => {
     expect(getSingularOrPluralData({ hookMetadata: { objectiveId: {} } }, 'objectiveId', 'objectiveIds'))
       .toStrictEqual(undefined);
   });
+  it('getSingularOrPluralData empty', () => {
+    expect(getSingularOrPluralData({ }, 'objectiveId', 'objectiveIds'))
+      .toStrictEqual(undefined);
+  });
 });
