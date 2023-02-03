@@ -23,18 +23,18 @@ export async function createMailerLog({
   success,
   result,
 }) {
-  let logRresult = null;
+  let logResult = null;
   try {
     const mailerLogEntry = {
-      jobId, emailTo, action, subject, activityReports, success, result,
+      jobId, emailTo, action, subject: subject.slice(0, 255), activityReports, success, result,
     };
 
-    logRresult = await sequelize.transaction(async (t) => {
+    logResult = await sequelize.transaction(async (t) => {
       const mailerLog = await models.MailerLogs.create(mailerLogEntry, { transaction: t });
       return mailerLog;
     });
   } catch (err) {
     auditLogger.error(`Error creating a MailerLog entry for job id: ${jobId} error ${err}`);
   }
-  return logRresult;
+  return logResult;
 }

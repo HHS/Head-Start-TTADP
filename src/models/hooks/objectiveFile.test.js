@@ -2,6 +2,7 @@ import {
   sequelize,
 } from '..';
 import {
+  beforeValidate,
   checkForUseOnApprovedReport,
 } from './objectiveFile';
 import { fileGenerator, objectiveTemplateGenerator } from './testHelpers';
@@ -70,6 +71,18 @@ describe('objectiveFile hooks', () => {
           id: objectiveTemplate.id,
         },
       });
+    });
+  });
+  describe('beforeValidate', () => {
+    it('beforeValidate', async () => {
+      const instance = {
+      };
+      instance.set = (name, value) => { instance[name] = value; };
+      const options = {};
+      beforeValidate({}, instance, options);
+      expect(instance.onAR).toBe(false);
+      expect(instance.onApprovedAR).toBe(false);
+      expect(options.fields.sort()).toStrictEqual(['onAR', 'onApprovedAR'].sort());
     });
   });
 

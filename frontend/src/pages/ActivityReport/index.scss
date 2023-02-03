@@ -83,3 +83,8 @@
 .usa-form-group--error .ttahub-resource-repeater :invalid {
   border: 2px solid #b50909;
 }
+
+.smart-hub--form__activity-report-form legend:first-of-type,
+.smart-hub--report-legend__no-legend-margin-top legend{
+  margin-top: 0;
+}
