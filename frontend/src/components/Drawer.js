@@ -69,7 +69,7 @@ export default function Drawer({
 
   return (
     <div
-      className="smart-hub-drawer"
+      className="smart-hub-drawer bg-white position-fixed pin-right pin-bottom z-100 overflow-y-auto shadow-3 display-flex flex-column flex-justify"
       ref={elementRef}
       style={{
         top: headerHeight,
@@ -78,7 +78,7 @@ export default function Drawer({
       <div>
         {title && (
           <div
-            className={`smart-hub-drawer-header ${stickyHeader ? 'smart-hub-drawer-header--sticky' : ''}`}
+            className={`bg-base-lightest padding-105 display-flex flex-row flex-justify flex-align-center ${stickyHeader ? 'position-sticky pin-top' : ''}`}
           >
             <span className="text-bold font-serif-lg">{title}</span>
             <button
@@ -93,7 +93,7 @@ export default function Drawer({
         )}
 
         <div
-          className="smart-hub-drawer-body"
+          className="overflow-y-auto padding-1 margin-1"
           // eslint-disable-next-line
           tabIndex="0"
         >
@@ -103,8 +103,8 @@ export default function Drawer({
 
       {footer && (
       <div
-        className={`smart-hub-drawer-footer ${
-          stickyFooter ? 'smart-hub-drawer-footer--sticky' : ''
+        className={`bg-base-lightest padding-105 ${
+          stickyFooter ? 'position-sticky pin-bottom' : ''
         }`}
       >
         {footer}
