@@ -14,6 +14,71 @@ module.exports = {
       { transaction },
     );
 
+    //   with
+    // "OTR" AS (
+    //   select
+    //     null::int "objectiveResourceId",
+    //     null::int "activityReportObjectiveResourceId",
+    //     id "objectiveTemplateResourceId",
+    //     trim("userProvidedUrl") "url"
+    //   from "ObjectiveTemplateResources"
+    //   EXCEPT
+    //   select
+    //     null::int,
+    //     null::int,
+    //     id,
+    //     (regexp_matches("userProvidedUrl",'(?:(?:http(?:s)?|ftp(?:s)?|sftp):\/\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\+~#=]+))?[@])?(?:(?:www\.)?(?:[a-zA-Z0-9%._\+~#=\-]{1,}\.[a-z]{2,6})|(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3}))(?:[:](?:[0-9]+))?(?:[\/](?:[-a-zA-Z0-9''@\:%_\+.,~#&\/=()]*[-a-zA-Z0-9@:%_\+.~#&\/=()])?)?(?:[?](?:[-a-zA-Z0-9@\:%_\+.~#&\/=()]*))*)','g'))[1] urls
+    //   from "ObjectiveTemplateResources"
+    //   order by 2
+    // ),
+    // "OR" AS (
+    //   select
+    //     id "objectiveResourceId",
+    //     null::int "activityReportObjectiveResourceId",
+    //     null::int "objectiveTemplateResourceId",
+    //     trim("userProvidedUrl") "url"
+    //   from "ObjectiveResources"
+    //   EXCEPT
+    //   select
+    //     id,
+    //     null::int,
+    //     null::int,
+    //     (regexp_matches("userProvidedUrl",'(?:(?:http(?:s)?|ftp(?:s)?|sftp):\/\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\+~#=]+))?[@])?(?:(?:www\.)?(?:[a-zA-Z0-9%._\+~#=\-]{1,}\.[a-z]{2,6})|(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3}))(?:[:](?:[0-9]+))?(?:[\/](?:[-a-zA-Z0-9''@\:%_\+.,~#&\/=()]*[-a-zA-Z0-9@:%_\+.~#&\/=()])?)?(?:[?](?:[-a-zA-Z0-9@\:%_\+.~#&\/=()]*))*)','g'))[1] urls
+    //   from "ObjectiveResources"
+    //   order by 2,1
+    // ),
+    // "AROR" AS (
+    //   select
+    //     null::int "objectiveResourceId",
+    //     id "activityReportObjectiveResourceId",
+    //     null::int "objectiveTemplateResourceId",
+    //     trim("userProvidedUrl") "url"
+    //   from "ActivityReportObjectiveResources"
+    //   EXCEPT
+    //   select
+    //     null::int,
+    //     id,
+    //     null::int,
+    //     (regexp_matches("userProvidedUrl",'(?:(?:http(?:s)?|ftp(?:s)?|sftp):\/\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\+~#=]+))?[@])?(?:(?:www\.)?(?:[a-zA-Z0-9%._\+~#=\-]{1,}\.[a-z]{2,6})|(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3}))(?:[:](?:[0-9]+))?(?:[\/](?:[-a-zA-Z0-9''@\:%_\+.,~#&\/=()]*[-a-zA-Z0-9@:%_\+.~#&\/=()])?)?(?:[?](?:[-a-zA-Z0-9@\:%_\+.~#&\/=()]*))*)','g'))[1] urls
+    //   from "ActivityReportObjectiveResources"
+    //   order by 2
+    // ),
+    // "ALL" AS (
+    // SELECT * FROM "OTR"
+    // UNION
+    // SELECT * FROM "OR"
+    // UNION
+    // SELECT * FROM "AROR"
+    // )
+    // SELECT
+    //   url,
+    //   ARRAY_AGG(DISTINCT "objectiveResourceId") FILTER (WHERE "objectiveResourceId" IS NOT NULL),
+    //   ARRAY_AGG(DISTINCT "activityReportObjectiveResourceId") FILTER (WHERE "activityReportObjectiveResourceId" IS NOT NULL),
+    //   ARRAY_AGG(DISTINCT "objectiveTemplateResourceId") FILTER (WHERE "objectiveTemplateResourceId" IS NOT NULL)
+    // FROM "ALL"
+    // GROUP BY 1
+    // ORDER BY 1
+
     // clean "ObjectiveResources" "ActivityReportObjectiveResources" & "ObjectiveTemplateResources"
     // Some the the issues can be solved with known lookup and replace, this will repopulate valid urls over invalid data.
     // This will allow them to keep the data they would otherwise have lost by manually looking up the url based on the supplied page title.
@@ -187,13 +252,6 @@ module.exports = {
         new: 'https://eclkc.ohs.acf.hhs.gov/human-resources/home-visitor-supervisors-handbook/home-based-staff-qualifications-knowledge-skills',
       },
       {
-        objectiveResourceIds: [743, 744, 745, 746, 747, 748, 749],
-        activityReportObjectiveResourceIds: [],
-        objectiveTemplateResourceId: [],
-        old: '•	https://eclkc.ohs.acf.hhs.gov/human-resources/learning-new-leaders/training-professional-development',
-        new: 'https://eclkc.ohs.acf.hhs.gov/human-resources/learning-new-leaders/training-professional-development',
-      },
-      {
         objectiveResourceIds: [789],
         activityReportObjectiveResourceIds: [780],
         objectiveTemplateResourceId: [],
@@ -213,20 +271,6 @@ module.exports = {
         objectiveTemplateResourceId: [839],
         old: 'https://eclkc.ohs.acf.hhs.gov/ncecdtl Program leaders guide PBCIA resources for practice-based coaching. CLASS crosswalk, 15-minute in-service suite creating a caring community, IPD Beginning Teacher Series',
         data: 'https://eclkc.ohs.acf.hhs.gov/ncecdtl https://eclkc.ohs.acf.hhs.gov/professional-development/article/practice-based-coaching-pbc https://eclkc.ohs.acf.hhs.gov/professional-development/article/crosswalk-15-minute-service-suites-class https://eclkc.ohs.acf.hhs.gov/video/creating-caring-community https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
-      },
-      {
-        objectiveResourceIds: [11621],
-        activityReportObjectiveResourceIds: [12404],
-        objectiveTemplateResourceId: [683],
-        old: 'https://eclkc.ohs.acf.hhs.gov/policy/45-cfr-chap-xiii/1302-102-achieving-program-goals	',
-        new: 'https://eclkc.ohs.acf.hhs.gov/policy/45-cfr-chap-xiii/1302-102-achieving-program-goals',
-      },
-      {
-        objectiveResourceIds: [10868],
-        activityReportObjectiveResourceIds: [],
-        objectiveTemplateResourceId: [],
-        old: '		 https://eclkc.ohs.acf.hhs.gov/policy/45-cfr-chap-xiii/1302-subpart-d-health-program-services',
-        new: 'https://eclkc.ohs.acf.hhs.gov/policy/45-cfr-chap-xiii/1302-subpart-d-health-program-services',
       },
       {
         objectiveResourceIds: [168],
@@ -426,144 +470,7 @@ module.exports = {
           : Promise.resolve,
       ])));
 
-    const urlRegex = '(?:(?:http(?:s)?|ftp(?:s)?|sftp):\\/\\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\\+~#=]+))?[@])?(?:(?:www\\.)?(?:[a-zA-Z0-9%._\\+~#=\\-]{1,}\\.[a-z]{2,6})|(?:(?:[0-9]{1,3}\\.){3}[0-9]{1,3}))(?:[:](?:[0-9]+))?(?:[\\/](?:[-a-zA-Z0-9\'@:%_\\+.,~#&\\/=()]*[-a-zA-Z0-9@:%_\\+.~#&\\/=()])?)?(?:[?](?:[-a-zA-Z0-9@:%_\\+.~#&\\/=()]*))*)';
-
-    // clean "ObjectiveResources"
-    // Now that the table has had the correctable values fixed, corrections need to be applied to return the table to its expected structure.
-    // 1. Find all urls in the current data using regex
-    // 2. Generate a list of records with distinct urls where the current value has some data other then just the url found.
-    // 3. Generate a list of counts urls per record id.
-    // 4. Update records that only contain one url to be only the url.
-    // 5. Insert new records into the table for all records that have multiple urls per record.
-    // 6. Delete the original record that contained multiple urls used in step five.
-    // 7. Generate a list of all malformed data that does not contain a url.
-    // 8. Delete all malformed records identified in step seven.
-    // 9. Collect all records that have been affected.
-    // 10. Return statistics form operation.
-    await queryInterface.sequelize.query(`
-    WITH
-        "ObjectiveResourcesURLs" AS (
-            SELECT
-                id,
-                (regexp_matches("userProvidedUrl",'${urlRegex}','g')) urls,
-                "userProvidedUrl",
-                "objectiveId",
-                "createdAt",
-                "updatedAt",
-                "onAR",
-                "onApprovedAR"
-            FROM "ObjectiveResources"
-        ),
-        "ObjectiveResourcesSource" AS (
-            SELECT
-                ru.id,
-                u.url,
-                ru."userProvidedUrl",
-                ru."objectiveId",
-                ru."createdAt",
-                ru."updatedAt",
-                ru."onAR",
-                ru."onApprovedAR"
-            FROM "ObjectiveResources" r
-            JOIN "ObjectiveResourcesURLs" ru
-            ON r.id = ru.id
-            CROSS JOIN UNNEST(ru.urls) u(url)
-            WHERE r."userProvidedUrl" like '%' || u.url || '%'
-            AND trim(r."userProvidedUrl") != u.url
-            ORDER BY r.id
-        ),
-        "ObjectiveResourcesCounts" AS (
-            SELECT
-                id,
-                count(url) cnt
-            FROM "ObjectiveResourcesSource"
-            GROUP BY id
-        ),
-        "UpdateObjectiveResources" AS (
-            UPDATE "ObjectiveResources" "or"
-            SET
-                "userProvidedUrl" = ors.url
-            FROM "ObjectiveResourcesSource" ors
-            JOIN "ObjectiveResourcesCounts" orc
-            ON ors.id = orc.id
-            WHERE "or".id = ors.id
-            AND orc.cnt = 1
-            RETURNING
-              "or".id "objectiveResourceId"
-        ),
-        "NewObjectiveResources" AS (
-            INSERT INTO "ObjectiveResources" (
-                "userProvidedUrl",
-                "objectiveId",
-                "createdAt",
-                "updatedAt",
-                "onAR",
-                "onApprovedAR"
-            )
-            SELECT
-                ors.url "userProvidedUrl",
-                ors."objectiveId",
-                ors."createdAt",
-                ors."updatedAt",
-                ors."onAR",
-                ors."onApprovedAR"
-            FROM "ObjectiveResourcesSource" ors
-            JOIN "ObjectiveResourcesCounts" orc
-            ON ors.id = orc.id
-            WHERE orc.cnt != 1
-            RETURNING
-                id "objectiveResourceId"
-        ),
-        "DeleteObjectiveResources" AS (
-            DELETE FROM "ObjectiveResources" "or"
-            USING "ObjectiveResourcesCounts" orc
-            WHERE "or".id = "orc".id
-            AND orc.cnt != 1
-            RETURNING
-              "or".id "objectiveResourceId"
-        ),
-        "MalformedObjectiveResources" AS (
-            SELECT
-                r.id
-            FROM "ObjectiveResources" r
-            LEFT JOIN "ObjectiveResourcesURLs" ru
-            ON r.id = ru.id
-            WHERE ru.id IS NULL
-        ),
-        "DeleteMalformedObjectiveResources" AS (
-            DELETE FROM "ObjectiveResources" "or"
-            USING "MalformedObjectiveResources" mor
-            WHERE "or".id = "mor".id
-            RETURNING
-              "or".id "objectiveResourceId"
-        ),
-        "AffectedObjectiveResources" AS (
-          SELECT
-            "objectiveResourceId",
-            'updated' "action"
-          FROM "UpdateObjectiveResources"
-          UNION
-          SELECT
-            "objectiveResourceId",
-            'created' "action"
-          FROM "NewObjectiveResources"
-          UNION
-          SELECT
-            "objectiveResourceId",
-            'replaced' "action"
-          FROM "DeleteObjectiveResources"
-          UNION
-          SELECT
-            "objectiveResourceId",
-            'removed' "action"
-          FROM "DeleteMalformedObjectiveResources"
-        )
-        SELECT
-          "action",
-          count("objectiveResourceId")
-        FROM "AffectedObjectiveResources"
-        GROUP BY "action";
-    `, { transaction });
+    const urlRegex = '(?:(?:http(?:s)?|ftp(?:s)?|sftp):\\/\\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\\+~#=]+))?[@])?(?:(?:www\\.)?(?:[a-zA-Z0-9%._\\+~#=\\-]{1,}\\.[a-z]{2,6})|(?:(?:[0-9]{1,3}\\.){3}[0-9]{1,3}))(?:[:](?:[0-9]+))?(?:[\\/](?:[-a-zA-Z0-9\'\'@\\:%_\\+.,~#&\\/=()]*[-a-zA-Z0-9@\\:%_\\+.~#&\\/=()])?)?(?:[?](?:[-a-zA-Z0-9@\\:%_\\+.~#&\\/=()]*))*)';
 
     // clean "ActivityReportObjectiveResources"
     // Now that the table has had the correctable values fixed, corrections need to be applied to return the table to its expected structure.
@@ -579,8 +486,9 @@ module.exports = {
     // 10. Collect all records per objective and calculate onAR and onApprovedAR.
     // 11. Update ObjectiveResources to sync createdAt, updatedAt, onAR, and onApprovedAR.
     // 12. Insert any new records into ObjectiveResources.
-    // 13. Collect all records that have been affected.
-    // 10. Return statistics form operation.
+    // 13. Insert any new records into ObjectiveTemplateResources.
+    // 14. Collect all records that have been affected.
+    // 15. Return statistics form operation.
     await queryInterface.sequelize.query(`
     WITH
       "ActivityReportObjectiveResourcesURLs" AS (
@@ -764,6 +672,67 @@ module.exports = {
           'created' "action",
           'ObjectiveResources' "table"
         FROM "NewObjectiveResources"
+      ),
+      "ObjectiveResourcesSync" AS (
+        SELECT
+          "o"."objectiveTemplateId",
+          "or"."userProvidedUrl",
+          MIN("or"."createdAt") "createdAt",
+          MAX("or"."updatedAt") "updatedAt"
+        FROM "ObjectiveResources" "or"
+        JOIN "AffectedObjectiveResources" aor
+        ON "or".id = aor."objectiveResourceId"
+        AND aor."action" IN ('updated', 'created')
+        JOIN "Objectives" o
+        ON "or"."objectiveId" = o.id
+        WHERE o."objectiveTemplateId" IS NOT NULL
+        GROUP BY
+          "o"."objectiveTemplateId",
+          "or"."userProvidedUrl"
+      ),
+      "UpdateObjectiveTemplateResources" AS (
+        UPDATE "ObjectiveTemplateResources" "otr"
+        SET
+          "createdAt" = LEAST("otr"."createdAt",ors."createdAt"),
+          "updatedAt" = GREATEST("otr"."updatedAt",ors."updatedAt")
+        FROM "ObjectiveResourcesSync" ors
+        WHERE "otr"."objectiveTemplateId" = ors."objectiveTemplateId"
+        AND "otr"."userProvidedUrl" = ors."userProvidedUrl"
+        RETURNING
+          id "objectiveTemplateResourceId"
+      ),
+      "NewObjectiveTemplateResources" AS (
+        INSERT INTO "ObjectiveTemplateResources" (
+          "userProvidedUrl",
+          "objectiveTemplateId",
+          "createdAt",
+          "updatedAt"
+        )
+        SELECT
+          ors."userProvidedUrl",
+          ors."objectiveTemplateId",
+          ors."createdAt",
+          ors."updatedAt"
+        FROM  "ObjectiveResourcesSync" ors
+        LEFT JOIN "ObjectiveTemplateResources" "otr"
+        ON "otr"."objectiveTemplateId" = ors."objectiveTemplateId"
+        AND "otr"."userProvidedUrl" = ors."userProvidedUrl"
+        WHERE "otr".id IS NULL
+        RETURNING
+          id "objectiveTemplateResourceId"
+      ),
+      "AffectedObjectiveTemplateResources" AS (
+        SELECT
+          "objectiveTemplateResourceId",
+          'updated' "action",
+          'ObjectiveTemplateResources' "table"
+        FROM "UpdateObjectiveTemplateResources"
+        UNION
+        SELECT
+          "objectiveTemplateResourceId",
+          'created' "action",
+          'ObjectiveTemplateResources' "table"
+        FROM "NewObjectiveTemplateResources"
       )
       SELECT
         "table",
@@ -781,7 +750,366 @@ module.exports = {
       FROM "AffectedObjectiveResources"
       GROUP BY
         "table",
+        "action"
+      UNION
+      SELECT
+        "table",
+        "action",
+        count("objectiveTemplateResourceId")
+      FROM "AffectedObjectiveTemplateResources"
+      GROUP BY
+        "table",
         "action";
+    `, { transaction });
+
+    // clean "ObjectiveResources"
+    // Now that the table has had the correctable values fixed, corrections need to be applied to return the table to its expected structure.
+    // 1. Find all urls in the current data using regex
+    // 2. Generate a list of records with distinct urls where the current value has some data other then just the url found.
+    // 3. Generate a list of counts urls per record id.
+    // 4. Update records that only contain one url to be only the url.
+    // 5. Insert new records into the table for all records that have multiple urls per record.
+    // 6. Delete the original record that contained multiple urls used in step five.
+    // 7. Generate a list of all malformed data that does not contain a url.
+    // 8. Delete all malformed records identified in step seven.
+    // 9. Collect all records that have been affected.
+    // 10. Return statistics form operation.
+    await queryInterface.sequelize.query(`
+    WITH
+        "ObjectiveResourcesURLs" AS (
+            SELECT
+                id,
+                (regexp_matches("userProvidedUrl",'${urlRegex}','g')) urls,
+                "userProvidedUrl",
+                "objectiveId",
+                "createdAt",
+                "updatedAt",
+                "onAR",
+                "onApprovedAR"
+            FROM "ObjectiveResources"
+        ),
+        "ObjectiveResourcesSource" AS (
+            SELECT
+                ru.id,
+                u.url,
+                ru."userProvidedUrl",
+                ru."objectiveId",
+                ru."createdAt",
+                ru."updatedAt",
+                ru."onAR",
+                ru."onApprovedAR"
+            FROM "ObjectiveResources" r
+            JOIN "ObjectiveResourcesURLs" ru
+            ON r.id = ru.id
+            CROSS JOIN UNNEST(ru.urls) u(url)
+            WHERE r."userProvidedUrl" like '%' || u.url || '%'
+            AND trim(r."userProvidedUrl") != u.url
+            ORDER BY r.id
+        ),
+        "ObjectiveResourcesCounts" AS (
+            SELECT
+                id,
+                count(url) cnt
+            FROM "ObjectiveResourcesSource"
+            GROUP BY id
+        ),
+        "UpdateObjectiveResources" AS (
+            UPDATE "ObjectiveResources" "or"
+            SET
+                "userProvidedUrl" = ors.url
+            FROM "ObjectiveResourcesSource" ors
+            JOIN "ObjectiveResourcesCounts" orc
+            ON ors.id = orc.id
+            WHERE "or".id = ors.id
+            AND orc.cnt = 1
+            RETURNING
+              "or".id "objectiveResourceId"
+        ),
+        "NewObjectiveResources" AS (
+            INSERT INTO "ObjectiveResources" (
+                "userProvidedUrl",
+                "objectiveId",
+                "createdAt",
+                "updatedAt",
+                "onAR",
+                "onApprovedAR"
+            )
+            SELECT
+                ors.url "userProvidedUrl",
+                ors."objectiveId",
+                ors."createdAt",
+                ors."updatedAt",
+                ors."onAR",
+                ors."onApprovedAR"
+            FROM "ObjectiveResourcesSource" ors
+            JOIN "ObjectiveResourcesCounts" orc
+            ON ors.id = orc.id
+            WHERE orc.cnt != 1
+            RETURNING
+                id "objectiveResourceId"
+        ),
+        "DeleteObjectiveResources" AS (
+            DELETE FROM "ObjectiveResources" "or"
+            USING "ObjectiveResourcesCounts" orc
+            WHERE "or".id = "orc".id
+            AND orc.cnt != 1
+            RETURNING
+              "or".id "objectiveResourceId"
+        ),
+        "MalformedObjectiveResources" AS (
+            SELECT
+                r.id
+            FROM "ObjectiveResources" r
+            LEFT JOIN "ObjectiveResourcesURLs" ru
+            ON r.id = ru.id
+            WHERE ru.id IS NULL
+        ),
+        "DeleteMalformedObjectiveResources" AS (
+            DELETE FROM "ObjectiveResources" "or"
+            USING "MalformedObjectiveResources" mor
+            WHERE "or".id = "mor".id
+            RETURNING
+              "or".id "objectiveResourceId"
+        ),
+        "AffectedObjectiveResources" AS (
+          SELECT
+            "objectiveResourceId",
+            'updated' "action",
+            'ObjectiveResources' "table"
+          FROM "UpdateObjectiveResources"
+          UNION
+          SELECT
+            "objectiveResourceId",
+            'created' "action",
+            'ObjectiveResources' "table"
+          FROM "NewObjectiveResources"
+          UNION
+          SELECT
+            "objectiveResourceId",
+            'replaced' "action",
+            'ObjectiveResources' "table"
+          FROM "DeleteObjectiveResources"
+          UNION
+          SELECT
+            "objectiveResourceId",
+            'removed' "action",
+            'ObjectiveResources' "table"
+          FROM "DeleteMalformedObjectiveResources"
+        ),
+        "ObjectiveResourcesSync" AS (
+          SELECT
+            "o"."objectiveTemplateId",
+            "or"."userProvidedUrl",
+            MIN("or"."createdAt") "createdAt",
+            MAX("or"."updatedAt") "updatedAt"
+          FROM "ObjectiveResources" "or"
+          JOIN "AffectedObjectiveResources" aor
+          ON "or".id = aor."objectiveResourceId"
+          AND aor."action" IN ('updated', 'created')
+          JOIN "Objectives" o
+          ON "or"."objectiveId" = o.id
+          WHERE o."objectiveTemplateId" IS NOT NULL
+          GROUP BY
+            "o"."objectiveTemplateId",
+            "or"."userProvidedUrl"
+        ),
+        "UpdateObjectiveTemplateResources" AS (
+          UPDATE "ObjectiveTemplateResources" "otr"
+          SET
+            "createdAt" = LEAST("otr"."createdAt",ors."createdAt"),
+            "updatedAt" = GREATEST("otr"."updatedAt",ors."updatedAt")
+          FROM "ObjectiveResourcesSync" ors
+          WHERE "otr"."objectiveTemplateId" = ors."objectiveTemplateId"
+          AND "otr"."userProvidedUrl" = ors."userProvidedUrl"
+          RETURNING
+            id "objectiveTemplateResourceId"
+        ),
+        "NewObjectiveTemplateResources" AS (
+          INSERT INTO "ObjectiveTemplateResources" (
+            "userProvidedUrl",
+            "objectiveTemplateId",
+            "createdAt",
+            "updatedAt"
+          )
+          SELECT
+            ors."userProvidedUrl",
+            ors."objectiveTemplateId",
+            ors."createdAt",
+            ors."updatedAt"
+          FROM  "ObjectiveResourcesSync" ors
+          LEFT JOIN "ObjectiveTemplateResources" "otr"
+          ON "otr"."objectiveTemplateId" = ors."objectiveTemplateId"
+          AND "otr"."userProvidedUrl" = ors."userProvidedUrl"
+          WHERE "otr".id IS NULL
+          RETURNING
+            id "objectiveTemplateResourceId"
+        ),
+        "AffectedObjectiveTemplateResources" AS (
+          SELECT
+            "objectiveTemplateResourceId",
+            'updated' "action",
+            'ObjectiveTemplateResources' "table"
+          FROM "UpdateObjectiveTemplateResources"
+          UNION
+          SELECT
+            "objectiveTemplateResourceId",
+            'created' "action",
+            'ObjectiveTemplateResources' "table"
+          FROM "NewObjectiveTemplateResources"
+        )
+        SELECT
+          "table",
+          "action",
+          count("objectiveResourceId")
+        FROM "AffectedObjectiveResources"
+        GROUP BY
+          "table",
+          "action"
+        UNION
+        SELECT
+          "table",
+          "action",
+          count("objectiveTemplateResourceId")
+        FROM "AffectedObjectiveTemplateResources"
+        GROUP BY
+          "table",
+          "action";
+    `, { transaction });
+
+    // clean "ObjectiveTemplateResources"
+    // Now that the table has had the correctable values fixed, corrections need to be applied to return the table to its expected structure.
+    // 1. Find all urls in the current data using regex
+    // 2. Generate a list of records with distinct urls where the current value has some data other then just the url found.
+    // 3. Generate a list of counts urls per record id.
+    // 4. Update records that only contain one url to be only the url.
+    // 5. Insert new records into the table for all records that have multiple urls per record.
+    // 6. Delete the original record that contained multiple urls used in step five.
+    // 7. Generate a list of all malformed data that does not contain a url.
+    // 8. Delete all malformed records identified in step seven.
+    // 9. Collect all records that have been affected.
+    // 10. Return statistics form operation.
+    await queryInterface.sequelize.query(`
+    WITH
+        "ObjectiveTemplateResourcesURLs" AS (
+            SELECT
+                id,
+                (regexp_matches("userProvidedUrl",'${urlRegex}','g')) urls,
+                "userProvidedUrl",
+                "objectiveTemplateId",
+                "createdAt",
+                "updatedAt"
+            FROM "ObjectiveTemplateResources"
+        ),
+        "ObjectiveTemplateResourcesSource" AS (
+            SELECT
+                ru.id,
+                u.url,
+                ru."userProvidedUrl",
+                ru."objectiveTemplateId",
+                ru."createdAt",
+                ru."updatedAt"
+            FROM "ObjectiveTemplateResources" r
+            JOIN "ObjectiveTemplateResourcesURLs" ru
+            ON r.id = ru.id
+            CROSS JOIN UNNEST(ru.urls) u(url)
+            WHERE r."userProvidedUrl" like '%' || u.url || '%'
+            AND trim(r."userProvidedUrl") != u.url
+            ORDER BY r.id
+        ),
+        "ObjectiveTemplateResourcesCounts" AS (
+            SELECT
+                id,
+                count(url) cnt
+            FROM "ObjectiveTemplateResourcesSource"
+            GROUP BY id
+        ),
+        "UpdateObjectiveTemplateResources" AS (
+            UPDATE "ObjectiveTemplateResources" "or"
+            SET
+                "userProvidedUrl" = ors.url
+            FROM "ObjectiveTemplateResourcesSource" ors
+            JOIN "ObjectiveTemplateResourcesCounts" orc
+            ON ors.id = orc.id
+            WHERE "or".id = ors.id
+            AND orc.cnt = 1
+            RETURNING
+              "or".id "objectiveTemplateResourceId"
+        ),
+        "NewObjectiveTemplateResources" AS (
+            INSERT INTO "ObjectiveTemplateResources" (
+                "userProvidedUrl",
+                "objectiveTemplateId",
+                "createdAt",
+                "updatedAt"
+            )
+            SELECT
+                ors.url "userProvidedUrl",
+                ors."objectiveTemplateId",
+                ors."createdAt",
+                ors."updatedAt"
+            FROM "ObjectiveTemplateResourcesSource" ors
+            JOIN "ObjectiveTemplateResourcesCounts" orc
+            ON ors.id = orc.id
+            WHERE orc.cnt != 1
+            RETURNING
+                id "objectiveTemplateResourceId"
+        ),
+        "DeleteObjectiveTemplateResources" AS (
+            DELETE FROM "ObjectiveTemplateResources" "or"
+            USING "ObjectiveTemplateResourcesCounts" orc
+            WHERE "or".id = "orc".id
+            AND orc.cnt != 1
+            RETURNING
+              "or".id "objectiveTemplateResourceId"
+        ),
+        "MalformedObjectiveTemplateResources" AS (
+            SELECT
+                r.id
+            FROM "ObjectiveTemplateResources" r
+            LEFT JOIN "ObjectiveTemplateResourcesURLs" ru
+            ON r.id = ru.id
+            WHERE ru.id IS NULL
+        ),
+        "DeleteMalformedObjectiveTemplateResources" AS (
+            DELETE FROM "ObjectiveTemplateResources" "or"
+            USING "MalformedObjectiveTemplateResources" mor
+            WHERE "or".id = "mor".id
+            RETURNING
+              "or".id "objectiveTemplateResourceId"
+        ),
+        "AffectedObjectiveTemplateResources" AS (
+          SELECT
+            "objectiveTemplateResourceId",
+            'updated' "action",
+            'ObjectiveTemplateResources' "table"
+          FROM "UpdateObjectiveTemplateResources"
+          UNION
+          SELECT
+            "objectiveTemplateResourceId",
+            'created' "action",
+            'ObjectiveTemplateResources' "table"
+          FROM "NewObjectiveTemplateResources"
+          UNION
+          SELECT
+            "objectiveTemplateResourceId",
+            'replaced' "action",
+            'ObjectiveTemplateResources' "table"
+          FROM "DeleteObjectiveTemplateResources"
+          UNION
+          SELECT
+            "objectiveTemplateResourceId",
+            'removed' "action",
+            'ObjectiveTemplateResources' "table"
+          FROM "DeleteMalformedObjectiveTemplateResources"
+        )
+        SELECT
+          "table",
+          "action",
+          count("objectiveTemplateResourceId")
+        FROM "AffectedObjectiveTemplateResources"
+        GROUP BY
+          "table",
+          "action";
     `, { transaction });
   }),
 };
