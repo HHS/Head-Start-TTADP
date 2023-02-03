@@ -156,10 +156,7 @@ const search = async (indexName, fields, query, passedClient, overrideBatchSize)
     let totalHits = [];
 
     // Loop vars.
-    const maxLoopIterations = 9;
-    let retrieveAgain = true;
     const batchSize = overrideBatchSize || 10000; // Default batch size to 10k.
-    let loopIterations = 0;
     let res;
     let searchAfter;
 
@@ -180,8 +177,9 @@ const search = async (indexName, fields, query, passedClient, overrideBatchSize)
         },
       ],
     };
-
-    while (retrieveAgain && loopIterations <= maxLoopIterations) {
+    // Use a FOR loop to force synchronous requests.
+    // This will help us keep the ES queue down.
+    for (let i = 1; i <= 5; i += 1) {
       // Search an index.
       res = await client.search({
         index: indexName,
@@ -205,13 +203,12 @@ const search = async (indexName, fields, query, passedClient, overrideBatchSize)
         // Update search_after.
         body = { ...body, search_after: searchAfter };
 
-        // Increase loop count.
-        loopIterations += 1;
-
         // If we don't have a sort after (undefined) stop looping.
-        retrieveAgain = searchAfter;
+        if (!searchAfter) {
+          break; // Exit loop.
+        }
       } else {
-        retrieveAgain = false;
+        break; // Exit loop.
       }
     }
     logger.info(`AWS OpenSearch: Successfully searched the index ${indexName} using query '${query}`);
