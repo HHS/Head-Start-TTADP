@@ -115,11 +115,6 @@ module.exports = {
         default: null,
         type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORT))),
       },
-      isAutoDetected: {
-        type: Sequelize.DataTypes.BOOLEAN,
-        default: false,
-        allowNull: false,
-      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
@@ -162,11 +157,6 @@ module.exports = {
         allowNull: true,
         default: null,
         type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.NEXTSTEPS))),
-      },
-      isAutoDetected: {
-        type: Sequelize.BOOLEAN,
-        default: false,
-        allowNull: false,
       },
       createdAt: {
         allowNull: false,
@@ -211,11 +201,6 @@ module.exports = {
         default: null,
         type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.GOAL))),
       },
-      isAutoDetected: {
-        type: Sequelize.BOOLEAN,
-        default: false,
-        allowNull: false,
-      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
@@ -259,11 +244,6 @@ module.exports = {
         default: null,
         type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.GOALTEMPLATE))),
       },
-      isAutoDetected: {
-        type: Sequelize.BOOLEAN,
-        default: false,
-        allowNull: false,
-      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
@@ -271,6 +251,16 @@ module.exports = {
       updatedAt: {
         allowNull: false,
         type: Sequelize.DATE,
+      },
+      onAR: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+      },
+      onApprovedAR: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
       },
     }, { transaction });
 
@@ -307,11 +297,6 @@ module.exports = {
         default: null,
         type: Sequelize.DataTypes.ARRAY(Sequelize.DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTGOAL))),
       },
-      isAutoDetected: {
-        type: Sequelize.BOOLEAN,
-        default: false,
-        allowNull: false,
-      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
@@ -335,17 +320,6 @@ module.exports = {
           },
           key: 'id',
         },
-      },
-      { transaction },
-    );
-
-    await queryInterface.addColumn(
-      'ObjectiveResources',
-      'isAutoDetected',
-      {
-        type: Sequelize.BOOLEAN,
-        default: false,
-        allowNull: true,
       },
       { transaction },
     );
@@ -380,17 +354,6 @@ module.exports = {
 
     await queryInterface.addColumn(
       'ObjectiveTemplateResources',
-      'isAutoDetected',
-      {
-        type: Sequelize.BOOLEAN,
-        default: false,
-        allowNull: true,
-      },
-      { transaction },
-    );
-
-    await queryInterface.addColumn(
-      'ObjectiveTemplateResources',
       'sourceFields',
       {
         allowNull: true,
@@ -419,17 +382,6 @@ module.exports = {
 
     await queryInterface.addColumn(
       'ActivityReportObjectiveResources',
-      'isAutoDetected',
-      {
-        type: Sequelize.BOOLEAN,
-        default: false,
-        allowNull: true,
-      },
-      { transaction },
-    );
-
-    await queryInterface.addColumn(
-      'ActivityReportObjectiveResources',
       'sourceFields',
       {
         allowNull: true,
@@ -439,7 +391,7 @@ module.exports = {
       { transaction },
     );
 
-    const urlRegex =     '(?:(?:http(?:s)?|ftp(?:s)?|sftp):\\/\\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\\+~#=]+))?[@])?(?:(?:www\\.)?(?:[a-zA-Z0-9%._\\+~#=\\-]{1,}\\.[a-z]{2,6})|(?:(?:[0-9]{1,3}\\.){3}[0-9]{1,3}))(?:[:](?:[0-9]+))?(?:[\\/](?:[-a-zA-Z0-9\'\'@\\:%_\\+.,~#&\\/=()]*[-a-zA-Z0-9@\\:%_\\+.~#&\\/=()])?)?(?:[?](?:[-a-zA-Z0-9@\\:%_\\+.~#&\\/=()]*))*)';
+    const urlRegex = '(?:(?:http(?:s)?|ftp(?:s)?|sftp):\\/\\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\\+~#=]+))?[@])?(?:(?:www\\.)?(?:[a-zA-Z0-9%._\\+~#=\\-]{1,}\\.[a-z]{2,6})|(?:(?:[0-9]{1,3}\\.){3}[0-9]{1,3}))(?:[:](?:[0-9]+))?(?:[\\/](?:[-a-zA-Z0-9\'\'@\\:%_\\+.,~#&\\/=()]*[-a-zA-Z0-9@\\:%_\\+.~#&\\/=()])?)?(?:[?](?:[-a-zA-Z0-9@\\:%_\\+.~#&\\/=()]*))*)';
     const domainRegex = '^(?:(?:http(?:s)?|ftp(?:s)?|sftp):\\/\\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\\+~#=]+))?[@])?(?:(?:www\\.)?([a-zA-Z0-9%._\\+~#=\\-]{1,}\\.[a-z]{2,6})|((?:[0-9]{1,3}\\.){3}[0-9]{1,3})))';
 
     // populate "Resources" and "ActivityReportResources" from current data from reports via nonECLKCResourcesUsed, ECLKCResourcesUsed, context, & additionalNotes
@@ -559,7 +511,6 @@ module.exports = {
         "activityReportId",
         "resourceId",
         "sourceFields",
-        "isAutoDetected",
         "createdAt",
         "updatedAt"
       )
@@ -567,7 +518,6 @@ module.exports = {
         aarr."activityReportId",
         nr."resourceId",
         ARRAY_AGG(DISTINCT aarr."sourceField")::"enum_ActivityReportResources_sourceFields"[] "sourceFields",
-        BOOL_OR(aarr."sourceField" IN ('${SOURCE_FIELD.REPORT.CONTEXT}', '${SOURCE_FIELD.REPORT.NOTES}')) "isAutoDetected",
         MIN(aarr."createdAt") "createdAt",
         MAX(aarr."updatedAt") "updatedAt"
       FROM "AllARResources" aarr
@@ -676,7 +626,6 @@ module.exports = {
         "nextStepId",
         "resourceId",
         "sourceFields",
-        "isAutoDetected",
         "createdAt",
         "updatedAt"
       )
@@ -684,7 +633,6 @@ module.exports = {
         nsud."nextStepId",
         ar."resourceId",
         ARRAY['${SOURCE_FIELD.NEXTSTEPS.NOTE}']::"enum_NextStepResources_sourceFields"[] "sourceFields",
-        true,
         nsud."createdAt",
         nsud."updatedAt"
       FROM "NextStepsUrlDomain" nsud
@@ -817,7 +765,6 @@ module.exports = {
         "goalId",
         "resourceId",
         "sourceFields",
-        "isAutoDetected",
         "createdAt",
         "updatedAt"
       )
@@ -825,7 +772,6 @@ module.exports = {
         fgr."goalId",
         ar."resourceId",
         fgr."sourceFields"::"enum_GoalResources_sourceFields"[] "sourceFields",
-        true,
         fgr."createdAt",
         fgr."updatedAt"
       FROM "FoundGoalResources" fgr
@@ -958,7 +904,6 @@ module.exports = {
         "goalTemplateId",
         "resourceId",
         "sourceFields",
-        "isAutoDetected",
         "createdAt",
         "updatedAt"
       )
@@ -966,7 +911,6 @@ module.exports = {
         fgr."goalTemplateId",
         ar."resourceId",
         fgr."sourceFields"::"enum_GoalTemplateResources_sourceFields"[] "sourceFields",
-        true,
         fgr."createdAt",
         fgr."updatedAt"
       FROM "FoundGoalTemplateResources" fgr
@@ -1099,7 +1043,6 @@ module.exports = {
         "activityReportGoalId",
         "resourceId",
         "sourceFields",
-        "isAutoDetected",
         "createdAt",
         "updatedAt"
       )
@@ -1107,7 +1050,6 @@ module.exports = {
         fgr."activityReportGoalId",
         ar."resourceId",
         fgr."sourceFields"::"enum_ActivityReportGoalResources_sourceFields"[] "sourceFields",
-        true,
         fgr."createdAt",
         fgr."updatedAt"
       FROM "FoundGoalResources" fgr
@@ -1212,8 +1154,7 @@ module.exports = {
       UPDATE "ObjectiveResources" "or"
       SET
         "resourceId" = ar."resourceId",
-        "sourceFields" = ARRAY['${SOURCE_FIELD.OBJECTIVE.RESOURCE}']::"enum_ObjectiveResources_sourceFields"[],
-        "isAutoDetected" = false
+        "sourceFields" = ARRAY['${SOURCE_FIELD.OBJECTIVE.RESOURCE}']::"enum_ObjectiveResources_sourceFields"[]
       FROM "ObjectiveResourcesUrlDomain" orud
       JOIN "AffectedResources" ar
       ON orud."domain" = ar."domain"
@@ -1362,7 +1303,6 @@ module.exports = {
         UPDATE "ObjectiveResources" r
         SET
           "resourceId" = ar."resourceId",
-          "isAutoDetected" = (r."isAutoDetected" OR oud."isAutoDetected"),
           "createdAt" = LEAST(r."createdAt", oud."createdAt"),
           "updatedAt" = GREATEST(r."updatedAt", oud."updatedAt"),
           "sourceFields" = COALESCE(oud."sourceFields"::"enum_ObjectiveResources_sourceFields"[], r."sourceFields"),
@@ -1386,7 +1326,6 @@ module.exports = {
           "onAR",
           "onApprovedAR",
           "resourceId",
-          "isAutoDetected",
           "sourceFields"
         )
         SELECT
@@ -1397,7 +1336,6 @@ module.exports = {
           oud."onAR",
           oud."onApprovedAR",
           ar."resourceId",
-          true "isAutoDetected",
           ARRAY['${SOURCE_FIELD.OBJECTIVE.TITLE}']::"enum_ObjectiveResources_sourceFields"[] "sourceFields"
         FROM "ObjectiveUrlDomain" oud
         JOIN "AffectedResources" ar
@@ -1428,6 +1366,298 @@ module.exports = {
         "action",
         count("objectiveResourceId")
       FROM "AffectedObjectiveResources"
+      GROUP BY "action";
+    `, { transaction });
+
+    // populate "Resources" from current data from "ObjectiveTemplateResources" via userProvidedUrl
+    // 1. Collect all urls from userProvidedUrl column in "ObjectiveTemplateResources".
+    // 2. Extract domain from urls.
+    // 3. Generate a distinct list of collected urls.
+    // 4. Update "Resources" for all existing urls.
+    // 5. Insert distinct domains and urls into "Resources" table.
+    // 6. Collect all affected "Resources" records.
+    // 7. Update "ObjectiveTemplateResources" records to their corresponding records in "Resources".
+    await queryInterface.sequelize.query(`
+    WITH
+      "ObjectiveTemplateResourcesURLs" AS (
+        SELECT
+          id "objectiveTemplateResourceId",
+          (regexp_matches("userProvidedUrl",'${urlRegex}','g')) urls,
+          "createdAt",
+          "updatedAt"
+        FROM "ObjectiveTemplateResources"
+      ),
+      "ObjectiveTemplateResourcesUrlDomain" AS (
+        SELECT
+          oru."objectiveTemplateResourceId",
+          (regexp_match(u.url, '${domainRegex}'))[1] "domain",
+          u.url,
+          oru."createdAt",
+          oru."updatedAt"
+        FROM "ObjectiveTemplateResourcesURLs" oru
+        CROSS JOIN UNNEST(oru.urls) u(url)
+      ),
+      "ObjectiveTemplateResourcesResources" AS (
+        SELECT
+          orud."domain",
+          orud.url,
+          MIN(orud."createdAt") "createdAt",
+          MAX(orud."updatedAt") "updatedAt"
+        FROM "ObjectiveTemplateResourcesUrlDomain" orud
+        GROUP BY
+          orud."domain",
+          orud.url
+        ORDER BY
+          MIN(orud."createdAt")
+      ),
+      "UpdateResources" AS (
+        UPDATE "Resources" r
+        SET
+          "createdAt" = LEAST(r."createdAt", orr."createdAt"),
+          "updatedAt" = GREATEST(r."updatedAt", orr."updatedAt")
+        FROM "ObjectiveTemplateResourcesResources" orr
+        JOIN "Resources" r2
+        ON orr."domain" = r2."domain"
+        AND orr.url = r2.url
+        WHERE orr."domain" = r."domain"
+        AND orr.url = r.url
+        RETURNING
+          r.id "resourceId",
+          r."domain",
+          r.url
+      ),
+      "NewResources" AS (
+        INSERT INTO "Resources" (
+          "domain",
+          "url",
+          "createdAt",
+          "updatedAt"
+        )
+        SELECT
+          orr."domain",
+          orr.url,
+          orr."createdAt",
+          orr."updatedAt"
+        FROM "ObjectiveTemplateResourcesResources" orr
+        LEFT JOIN "Resources" r
+        ON orr."domain" = r."domain"
+        AND orr.url = r.url
+        WHERE r.id IS NULL
+        ORDER BY
+          orr."createdAt"
+        RETURNING
+          id "resourceId",
+          "domain",
+          url
+      ),
+      "AffectedResources" AS (
+        SELECT *
+        FROM "UpdateResources"
+        UNION
+        SELECT *
+        FROM "NewResources"
+      )
+      UPDATE "ObjectiveTemplateResources" "or"
+      SET
+        "resourceId" = ar."resourceId",
+        "sourceFields" = ARRAY['${SOURCE_FIELD.OBJECTIVE.RESOURCE}']::"enum_ObjectiveTemplateResources_sourceFields"[],
+      FROM "ObjectiveTemplateResourcesUrlDomain" orud
+      JOIN "AffectedResources" ar
+      ON orud."domain" = ar."domain"
+      AND orud.url = ar.url
+      WHERE "or".id = orud."objectiveTemplateResourceId";
+    `, { transaction });
+
+    // populate "Resources" and "ObjectiveTemplateResources" from current data from "ObjectiveTemplates" via title
+    // 1. Collect all urls from title column in "ObjectiveTemplates".
+    // 2. Extract domain from urls.
+    // 3. Collect all current resource records in the format of the incoming records.
+    // 4. Union the incoming and current resource records.
+    // 5. Group the incoming and current records to correctly populate the sourceFields
+    // 6. Generate a distinct list of collected urls excluding records solely from a current record.
+    // 4. Update "Resources" for all existing urls.
+    // 5. Insert distinct domains and urls into "Resources" table.
+    // 6. Collect all affected "Resources" records.
+    // 7. Update "ObjectiveTemplateResources" for all exiting urls.
+    // 8. Insert "ObjectiveTemplateResources" for newly found urls.
+    // 9. Collect all records that have been affected.
+    // 10. Return statistics form operation.
+    await queryInterface.sequelize.query(`
+    WITH
+      "ObjectiveTemplateUrls" AS (
+        SELECT
+          o.id "objectiveTemplateId",
+          (regexp_matches(o.title,'${urlRegex}','g')) urls,
+          o."createdAt",
+          o."updatedAt"
+        FROM "ObjectiveTemplates" o
+      ),
+      "ObjectiveTemplateTitleUrlDomain" AS (
+        SELECT
+          ou."objectiveTemplateId",
+          (regexp_match(u.url, '${domainRegex}'))[1] "domain",
+          u.url,
+          ou."createdAt",
+          ou."updatedAt",
+          '${SOURCE_FIELD.OBJECTIVE.TITLE}' "sourceField"
+        FROM "ObjectiveTemplateUrls" ou
+        CROSS JOIN UNNEST(ou.urls) u(url)
+      ),
+      "ObjectiveTemplateCurrentUrlDomain" AS (
+        SELECT
+          o."objectiveTemplateId",
+          r."domain",
+          r.url,
+          o."createdAt",
+          o."updatedAt",
+          sf."sourceField"::TEXT "sourceField"
+        FROM "ObjectiveTemplateResources" o
+        JOIN "Resources" r
+        ON o."resourceId" = r.id
+        CROSS JOIN UNNEST(o."sourceFields") sf("sourceField")
+      ),
+      "ObjectiveTemplateAllUrlDomain" AS (
+        SELECT *
+        FROM "ObjectiveTemplateTitleUrlDomain"
+        UNION
+        SELECT *
+        FROM "ObjectiveTemplateCurrentUrlDomain"
+      ),
+      "ObjectiveTemplateUrlDomain" AS (
+        SELECT
+          oaud."objectiveTemplateId",
+          oaud."domain",
+          oaud.url,
+          MIN(oaud."createdAt") "createdAt",
+          MAX(oaud."updatedAt") "updatedAt",
+          ARRAY_AGG(DISTINCT oaud."sourceField") "sourceFields",
+          BOOL_OR(oaud."sourceField" = '${SOURCE_FIELD.OBJECTIVETEMPLATE.TITLE}') "isAutoDetected"
+        FROM "ObjectiveTemplateAllUrlDomain" oaud
+        GROUP BY
+          oaud."objectiveTemplateId",
+          oaud."domain",
+          oaud.url
+      ),
+      "ObjectiveTemplateDetectedResources" AS (
+        SELECT
+          oud."domain",
+          oud.url,
+          MIN(oud."createdAt") "createdAt",
+          MAX(oud."updatedAt") "updatedAt"
+        FROM "ObjectiveTemplateUrlDomain" oud
+        WHERE NOT('${SOURCE_FIELD.OBJECTIVETEMPLATE.RESOURCE}' = ANY(oud."sourceFields")
+          AND array_length(oud."sourceFields", 1) = 1)
+        GROUP BY
+          oud."domain",
+          oud.url
+        ORDER BY
+          MIN(oud."createdAt")
+      ),
+      "UpdateResources" AS (
+        UPDATE "Resources" r
+        SET
+          "createdAt" = LEAST(r."createdAt", odr."createdAt"),
+          "updatedAt" = GREATEST(r."updatedAt", odr."updatedAt")
+        FROM "ObjectiveTemplateDetectedResources" odr
+        WHERE odr."domain" = r."domain"
+        AND odr.url = r.url
+        RETURNING
+          r.id "resourceId",
+          r."domain",
+          r.url
+      ),
+      "NewResources" AS (
+        INSERT INTO "Resources" (
+          "domain",
+          "url",
+          "createdAt",
+          "updatedAt"
+        )
+        SELECT
+          odr."domain",
+          odr.url,
+          odr."createdAt",
+          odr."updatedAt"
+        FROM "ObjectiveTemplateDetectedResources" odr
+        LEFT JOIN "Resources" r
+        ON odr."domain" = r."domain"
+        AND odr.url = r.url
+        WHERE r.id IS NULL
+        ORDER BY
+          odr."createdAt"
+        RETURNING
+          id "resourceId",
+          "domain",
+          url
+      ),
+      "AffectedResources" AS (
+        SELECT *
+        FROM "UpdateResources"
+        UNION
+        SELECT *
+        FROM "NewResources"
+      ),
+      "UpdateObjectiveTemplateResources" AS (
+        UPDATE "ObjectiveTemplateResources" r
+        SET
+          "resourceId" = ar."resourceId",
+          "createdAt" = LEAST(r."createdAt", oud."createdAt"),
+          "updatedAt" = GREATEST(r."updatedAt", oud."updatedAt"),
+          "sourceFields" = COALESCE(oud."sourceFields"::"enum_ObjectiveTemplateResources_sourceFields"[], r."sourceFields")
+        FROM "ObjectiveTemplateUrlDomain" oud
+        JOIN "AffectedResources" ar
+        ON oud."domain" = ar."domain"
+        AND oud.url = ar.url
+        WHERE oud."objectiveTemplateId" = r."objectiveTemplateId"
+        AND oud.url = r."userProvidedUrl"
+        RETURNING
+          r.id "objectiveTemplateResourceId"
+      ),
+      "NewObjectiveTemplateResources" AS (
+        INSERT INTO "ObjectiveTemplateResources" (
+          "userProvidedUrl",
+          "objectiveTemplateId",
+          "createdAt",
+          "updatedAt",
+          "resourceId",
+          "sourceFields"
+        )
+        SELECT
+          oud.url "userProvidedUrl",
+          oud."objectiveTemplateId",
+          oud."createdAt",
+          oud."updatedAt",
+          ar."resourceId",
+          ARRAY['${SOURCE_FIELD.OBJECTIVETEMPLATE.TITLE}']::"enum_ObjectiveTemplateResources_sourceFields"[] "sourceFields"
+        FROM "ObjectiveTemplateUrlDomain" oud
+        JOIN "AffectedResources" ar
+        ON oud."domain" = ar."domain"
+        AND oud.url = ar.url
+        LEFT JOIN "ObjectiveTemplateResources" r
+        ON oud."objectiveTemplateId" = r."objectiveTemplateId"
+        AND oud.url = r."userProvidedUrl"
+        WHERE r.id IS NULL
+        ORDER BY
+          oud."createdAt",
+          ar."resourceId"
+        RETURNING
+          id "objectiveTemplateResourceId"
+      ),
+      "AffectedObjectiveTemplateResources" AS (
+        SELECT
+          "objectiveTemplateResourceId",
+          'updated' "action"
+        FROM "UpdateObjectiveTemplateResources"
+        UNION
+        SELECT
+          "objectiveTemplateResourceId",
+          'created' "action"
+        FROM "NewObjectiveTemplateResources"
+      )
+      SELECT
+        "action",
+        count("objectiveTemplateResourceId")
+      FROM "AffectedObjectiveTemplateResources"
       GROUP BY "action";
     `, { transaction });
 
@@ -1522,8 +1752,7 @@ module.exports = {
       UPDATE "ActivityReportObjectiveResources" "or"
       SET
         "resourceId" = ar."resourceId",
-        "sourceFields" = ARRAY['${SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE}']::"enum_ActivityReportObjectiveResources_sourceFields"[],
-        "isAutoDetected" = false
+        "sourceFields" = ARRAY['${SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE}']::"enum_ActivityReportObjectiveResources_sourceFields"[]
       FROM "ObjectiveResourcesUrlDomain" orud
       JOIN "AffectedResources" ar
       ON orud."domain" = ar."domain"
@@ -1612,11 +1841,7 @@ module.exports = {
           oaud.url,
           MIN(oaud."createdAt") "createdAt",
           MAX(oaud."updatedAt") "updatedAt",
-          ARRAY_AGG(DISTINCT oaud."sourceField") "sourceFields",
-          BOOL_OR(oaud."sourceField" in (
-            '${SOURCE_FIELD.REPORTOBJECTIVE.TITLE}'::"enum_ActivityReportObjectiveResources_sourceFields",
-            '${SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED}'::"enum_ActivityReportObjectiveResources_sourceFields"
-          )) "isAutoDetected"
+          ARRAY_AGG(DISTINCT oaud."sourceField") "sourceFields"
         FROM "ObjectiveAllUrlDomain" oaud
         GROUP BY
           oaud."activityReportObjectiveId",
@@ -1686,7 +1911,6 @@ module.exports = {
         UPDATE "ActivityReportObjectiveResources" r
         SET
           "resourceId" = ar."resourceId",
-          "isAutoDetected" = (r."isAutoDetected" OR oud."isAutoDetected"),
           "createdAt" = LEAST(r."createdAt", oud."createdAt"),
           "updatedAt" = GREATEST(r."updatedAt", oud."updatedAt"),
           "sourceFields" = COALESCE(oud."sourceFields"::"enum_ActivityReportObjectiveResources_sourceFields"[], r."sourceFields")
@@ -1707,7 +1931,6 @@ module.exports = {
           "createdAt",
           "updatedAt",
           "resourceId",
-          "isAutoDetected",
           "sourceFields"
         )
         SELECT
@@ -1716,7 +1939,6 @@ module.exports = {
           oud."createdAt",
           oud."updatedAt",
           ar."resourceId",
-          oud."isAutoDetected",
           oud."sourceFields"::"enum_ActivityReportObjectiveResources_sourceFields"[] "sourceFields"
         FROM "ObjectiveUrlDomain" oud
         JOIN "AffectedResources" ar
@@ -1752,18 +1974,10 @@ module.exports = {
 
     // Remove unneeded columns
     await queryInterface.removeColumn('ActivityReportObjectiveResources', 'userProvidedUrl', { transaction });
+    await queryInterface.removeColumn('ObjectiveTemplateResources', 'userProvidedUrl', { transaction });
     await queryInterface.removeColumn('ObjectiveResources', 'userProvidedUrl', { transaction });
 
     // Set columns to not allow null
-    await queryInterface.changeColumn(
-      'ActivityReportObjectiveResources',
-      'isAutoDetected',
-      {
-        type: Sequelize.BOOLEAN,
-        allowNull: false,
-      },
-      { transaction },
-    );
     await queryInterface.changeColumn(
       'ActivityReportObjectiveResources',
       'resourceId',
@@ -1774,10 +1988,10 @@ module.exports = {
       { transaction },
     );
     await queryInterface.changeColumn(
-      'ObjectiveResources',
-      'isAutoDetected',
+      'ObjectiveTemplateResources',
+      'resourceId',
       {
-        type: Sequelize.BOOLEAN,
+        type: Sequelize.INTEGER,
         allowNull: false,
       },
       { transaction },
