@@ -98,13 +98,6 @@ module.exports = {
         new: 'https://eclkc.ohs.acf.hhs.gov/policy/45-cfr-chap-xiii/1302-subpart-eligibility-recruitment-selection-enrollment-attendance',
       },
       {
-        objectiveResourceIds: [450, 449],
-        activityReportObjectiveResourceIds: [],
-        objectiveTemplateResourceId: [],
-        old: '2-	Head Start Program Performance Standards- 1302.91 Staff qualifications and competency requirements https://eclkc.ohs.acf.hhs.gov/policy/45-cfr-chap-xiii/1302-91-staff-qualifications-competency-requirements',
-        new: 'https://eclkc.ohs.acf.hhs.gov/policy/45-cfr-chap-xiii/1302-91-staff-qualifications-competency-requirements',
-      },
-      {
         objectiveResourceIds: [2729],
         activityReportObjectiveResourceIds: [],
         objectiveTemplateResourceId: [],
@@ -306,13 +299,6 @@ module.exports = {
         objectiveTemplateResourceId: [],
         old: 'https://eclkc.ohs.acf.hhs.gov/program-planning/article/program-planning-cycle  Management Systems Wheel https://eclkc.ohs.acf.hhs.gov/organizational-leadership/article/management-systems-wheel',
         new: 'https://eclkc.ohs.acf.hhs.gov/program-planning/article/program-planning-cycle https://eclkc.ohs.acf.hhs.gov/organizational-leadership/article/management-systems-wheel',
-      },
-      {
-        objectiveResourceIds: [765, 766, 767],
-        activityReportObjectiveResourceIds: [754, 755, 756],
-        objectiveTemplateResourceId: [],
-        old: 'https://eclkc.ohs.acf.hhs.gov/publication/active-supervision-toolkit •	https://eclkc.ohs.acf.hhs.gov/publication/guiding-questions-active-supervision-safety •	https://eclkc.ohs.acf.hhs.gov/publication/10-actions-create-culture-safety',
-        new: 'https://eclkc.ohs.acf.hhs.gov/publication/active-supervision-toolkit https://eclkc.ohs.acf.hhs.gov/publication/guiding-questions-active-supervision-safety https://eclkc.ohs.acf.hhs.gov/publication/10-actions-create-culture-safety',
       },
       {
         objectiveResourceIds: [1282],
