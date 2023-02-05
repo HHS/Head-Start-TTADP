@@ -167,9 +167,18 @@ const search = async (indexName, fields, query, passedClient, overrideBatchSize)
     let body = {
       size: batchSize,
       query: {
-        query_string: {
-          query: `*${query}*`,
-          fields,
+        bool: {
+          should: [
+            { match_phrase: { context: { slop: 0, query } } },
+            { match_phrase: { nonECLKCResources: { slop: 0, query } } },
+            { match_phrase: { ECLKCResources: { slop: 0, query } } },
+            { match_phrase: { recipientNextSteps: { slop: 0, query } } },
+            { match_phrase: { specialistNextSteps: { slop: 0, query } } },
+            { match_phrase: { activityReportGoals: { slop: 0, query } } },
+            { match_phrase: { activityReportObjectives: { slop: 0, query } } },
+            { match_phrase: { activityReportObjectivesTTA: { slop: 0, query } } },
+            { match_phrase: { activityReportObjectiveResources: { slop: 0, query } } },
+          ],
         },
       },
       sort: [
