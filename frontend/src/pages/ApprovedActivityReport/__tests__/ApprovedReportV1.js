@@ -1,4 +1,3 @@
-import faker from '@faker-js/faker';
 import { calculateGoalsAndObjectives } from '../components/ApprovedReportV1';
 
 describe('calculateGoalsAndObjectives', () => {
