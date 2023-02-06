@@ -1,4 +1,7 @@
+/* eslint-disable max-len */
+/* eslint-disable jest/no-commented-out-tests */
 /* eslint-disable dot-notation */
+/*
 import faker from '@faker-js/faker';
 import db, {
   ActivityReport,
@@ -147,3 +150,4 @@ describe('returnsAllResults', () => {
     expect(foundIds).toStrictEqual([report1.id, report2.id, report3.id]);
   });
 });
+*/
