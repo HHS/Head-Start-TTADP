@@ -40,16 +40,7 @@ test.describe('Activity Report Text Search Filter', () => {
     // Report text filter search.
     await page.getByRole('button', { name: 'open filters for this page' }).click();
 
-    await page.waitForTimeout(2000);
-
-    const topicSelector = page.$$('select[name="topic"]');
-
-    await page.waitForTimeout(2000);
-
-    // if there are no filters, add one
-    if (!topicSelector) {
-      await page.getByRole('button', { name: 'add new filter' }).click();
-    }
+    await page.getByRole('button', { name: 'add new filter' }).click(); 
 
     await page.waitForTimeout(2000);
 
