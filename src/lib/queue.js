@@ -42,18 +42,5 @@ const {
 export { generateRedisConfig };
 
 export default function newQueue(queName) {
-  const queue = new Queue(queName, `redis://${host}:${port}`, redisOpts);
-
-  if (queue) {
-    queue.on('error', (error) => {
-      logger.error(`Queue error: ${JSON.stringify(error)}`);
-
-      // Throw the error if we aren't in CI, because we probably want to know about it.
-      if (!process.env.CI) {
-        throw error;
-      }
-    });
-  }
-
-  return queue;
+  return new Queue(queName, `redis://${host}:${port}`, redisOpts);
 }
