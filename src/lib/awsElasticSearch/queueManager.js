@@ -4,7 +4,12 @@ import { logger } from '../../logger';
 import { AWS_ELASTICSEARCH_ACTIONS } from '../../constants';
 
 export const awsElasticsearchQueue = newQueue('awsElasticsearch');
-// let client;
+
+awsElasticsearchQueue.on('error', (error) => {
+  if (error.name === 'MaxRetriesPerRequestError') {
+    logger.error('Max retries per request error');
+  }
+});
 
 /** *
     Add various AWS Elasticsearch operations to the queue.
