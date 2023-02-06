@@ -1,4 +1,5 @@
 import Queue from 'bull';
+import { logger } from '../logger';
 
 const generateRedisConfig = () => {
   if (process.env.VCAP_SERVICES) {
@@ -41,5 +42,20 @@ const {
 export { generateRedisConfig };
 
 export default function newQueue(queName) {
-  return new Queue(queName, `redis://${host}:${port}`, redisOpts);
+  const queue = new Queue(queName, `redis://${host}:${port}`, redisOpts);
+
+  if (queue) {
+    queue.on('error', (error) => {
+      if (error.name === 'MaxRetriesPerRequestError') {
+        logger.error('Max retries per request error');
+      }
+
+      // Throw the error if we aren't in CI, because we probably want to know about it.
+      if (!process.env.ci) {
+        throw error;
+      }
+    });
+  }
+
+  return queue;
 }
