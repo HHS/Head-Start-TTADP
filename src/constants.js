@@ -266,3 +266,15 @@ export const DIGEST_SUBJECT_FREQ = {
 export const AWS_ELASTIC_SEARCH_INDEXES = {
   ACTIVITY_REPORTS: 'activityreports',
 };
+
+export const AWS_ELASTIC_SEARCH_FIELDS = [
+  'context',
+  'nonECLKCResources',
+  'ECLKCResources',
+  'recipientNextSteps',
+  'specialistNextSteps',
+  'activityReportGoals',
+  'activityReportObjectives',
+  'activityReportObjectivesTTA',
+  'activityReportObjectiveResources',
+];

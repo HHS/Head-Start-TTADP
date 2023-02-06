@@ -4,6 +4,7 @@
 import { Client, Connection } from '@opensearch-project/opensearch';
 import aws4 from 'aws4';
 import { auditLogger, logger } from '../../logger';
+import { wildCardQuery, matchPhraseQuery } from './queryGenerator';
 
 /*
   Primary Docs:
@@ -142,6 +143,7 @@ const bulkIndex = async (documents, indexName, passedClient) => {
     throw error;
   }
 };
+
 /*
   Search index documents.
 */
@@ -155,26 +157,16 @@ const search = async (indexName, fields, query, passedClient) => {
     // If we have more than one word (term) then use phrase matching
     // If we have only one word (term) use query string with wildcards.
     // Site Ref: https://opensearch.org/docs/latest/opensearch/query-dsl/full-text/
-    const queryBody = query.trim().split(' ').length <= 1
+    const isWildCardMatch = query.trim().split(' ').length <= 1;
+    const queryBody = isWildCardMatch
       ? {
-        query_string: {
-          query: `*${query}*`,
-          fields,
+        bool: {
+          should: wildCardQuery(fields, query),
         },
       }
       : {
         bool: {
-          should: [
-            { match_phrase: { context: { slop: 0, query } } },
-            { match_phrase: { nonECLKCResources: { slop: 0, query } } },
-            { match_phrase: { ECLKCResources: { slop: 0, query } } },
-            { match_phrase: { recipientNextSteps: { slop: 0, query } } },
-            { match_phrase: { specialistNextSteps: { slop: 0, query } } },
-            { match_phrase: { activityReportGoals: { slop: 0, query } } },
-            { match_phrase: { activityReportObjectives: { slop: 0, query } } },
-            { match_phrase: { activityReportObjectivesTTA: { slop: 0, query } } },
-            { match_phrase: { activityReportObjectiveResources: { slop: 0, query } } },
-          ],
+          should: matchPhraseQuery(fields, query),
         },
       };
 
