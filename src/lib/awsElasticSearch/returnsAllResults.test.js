@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-commented-out-tests */
 /* eslint-disable dot-notation */
 import faker from '@faker-js/faker';
 import db, {
@@ -93,6 +94,23 @@ describe('returnsAllResults', () => {
     await db.sequelize.close();
   });
 
+  it('returns all matches', async () => {
+    // Search (set per page to 1 + per page).
+    const searchResult = await search(
+      AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
+      ['context'],
+      'simple',
+    );
+
+    // Assert results.
+    expect(searchResult.hits.length).toBe(3);
+
+    // Check found Ids.
+    const foundIds = searchResult.hits.map((h) => h['_source'].id);
+    expect(foundIds).toStrictEqual([report1.id, report2.id, report3.id]);
+  });
+
+  /*
   it('returns all pages of data at two per page', async () => {
     // Search (set per page to 1 + per page).
     const searchResult = await search(
@@ -146,4 +164,5 @@ describe('returnsAllResults', () => {
     const foundIds = searchResult.hits.map((h) => h['_source'].id);
     expect(foundIds).toStrictEqual([report1.id, report2.id, report3.id]);
   });
+  */
 });

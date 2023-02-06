@@ -35,7 +35,6 @@ export default function Form({
   validateGoalName,
   validateEndDate,
   validateGrantNumbers,
-  validateIsRttapa,
   validateGoalNameAndRecipients,
   objectives,
   setObjectives,
@@ -146,7 +145,6 @@ export default function Form({
       <GoalRttapa
         error={errors[FORM_FIELD_INDEXES.IS_RTTAPA]}
         isRttapa={isRttapa}
-        onBlur={validateIsRttapa}
         onChange={setIsRttapa}
         isLoading={isAppLoading}
         goalStatus={status}
@@ -202,7 +200,6 @@ Form.propTypes = {
   validateGoalName: PropTypes.func.isRequired,
   validateEndDate: PropTypes.func.isRequired,
   validateGrantNumbers: PropTypes.func.isRequired,
-  validateIsRttapa: PropTypes.func.isRequired,
   isRttapa: PropTypes.string.isRequired,
   setIsRttapa: PropTypes.func.isRequired,
   setObjectiveError: PropTypes.func.isRequired,

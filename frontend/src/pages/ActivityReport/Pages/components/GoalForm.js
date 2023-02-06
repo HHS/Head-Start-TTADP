@@ -84,7 +84,6 @@ export default function GoalForm({
   const {
     field: {
       onChange: onUpdateRttapa,
-      onBlur: onBlurRttapa,
       value: isRttapa,
       name: goalIsRttapaInputName,
     },
@@ -165,7 +164,6 @@ export default function GoalForm({
         error={errors.goalIsRttapa ? ERROR_FORMAT(errors.goalIsRttapa.message) : NO_ERROR}
         isRttapa={isRttapa}
         onChange={onUpdateRttapa}
-        onBlur={onBlurRttapa}
         inputName={goalIsRttapaInputName}
         goalStatus={status}
         isOnApprovedReport={goal.onApprovedAR || false}
