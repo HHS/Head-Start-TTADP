@@ -878,7 +878,6 @@ export default function GoalForm({
               isRttapa={isRttapa}
               setIsRttapa={setIsRttapa}
               initialRttapa={initialRttapa.current}
-              validateIsRttapa={validateIsRttapa}
               errors={errors}
               validateGoalName={validateGoalName}
               validateEndDate={validateEndDate}
