@@ -1,5 +1,4 @@
 import Queue from 'bull';
-import { logger } from '../logger';
 
 const generateRedisConfig = () => {
   if (process.env.VCAP_SERVICES) {
