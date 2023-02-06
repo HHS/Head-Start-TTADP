@@ -17,6 +17,17 @@ import cookieSession from './middleware/sessionMiddleware';
 import { logger, auditLogger, requestLogger } from './logger';
 import runCronJobs from './lib/cron';
 
+process.on('uncaughtException', (err) => {
+  logger.error(`Uncaught exception: ${err.message}`);
+  logger.error(err.stack);
+  /* process.exit(1); */
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error(`Unhandled rejection at: ${promise} reason: ${reason}`);
+  /* process.exit(1); */
+});
+
 const app = express();
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 let index;
