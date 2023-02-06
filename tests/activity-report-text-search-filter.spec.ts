@@ -2,10 +2,17 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Activity Report Text Search Filter', () => {
   test('can search for text on indexed fields', async ({ page }) => {
-    // only run on CI for now
-    if (!process.env.CI) {
-      return;
-    }
+    /** *
+     * Note that to avoid spinning up a queue and worker, this test passing relies on seeded report
+     * data from the sequelize approved report seeders, and the elastic search index being
+     * bootstrapped with the same data via the yarn script "bootstrap-es". If you are having trouble
+     * running it locally and don't want to be bothered with this test, you can uncomment the
+     * following statement to skip it.
+     */
+
+    // if (!process.env.CI) {
+    //   return;
+    // }
 
     // Navigate to app.
     await page.goto('http://localhost:3000/');
