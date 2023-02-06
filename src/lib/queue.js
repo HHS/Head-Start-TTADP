@@ -46,9 +46,7 @@ export default function newQueue(queName) {
 
   if (queue) {
     queue.on('error', (error) => {
-      if (error.name === 'MaxRetriesPerRequestError') {
-        logger.error('Max retries per request error');
-      }
+      logger.error(`Queue error: ${JSON.stringify(error)}`);
 
       // Throw the error if we aren't in CI, because we probably want to know about it.
       if (!process.env.ci) {
