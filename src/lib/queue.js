@@ -49,7 +49,7 @@ export default function newQueue(queName) {
       logger.error(`Queue error: ${JSON.stringify(error)}`);
 
       // Throw the error if we aren't in CI, because we probably want to know about it.
-      if (!process.env.ci) {
+      if (!process.env.CI) {
         throw error;
       }
     });
