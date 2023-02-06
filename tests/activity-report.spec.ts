@@ -479,7 +479,7 @@ test.describe("Activity Report", () => {
   
     // confirm goal is in RTR
     await expect(page.getByText('This is a goal for multiple grants')).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Goal G-(\d), G-(\d)RTTAPA/i }).last()).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Goal G-(\d), G-(\d)RTTAPA/i })).toBeVisible();
   
     // navigate to the AR page
     await page.getByRole('link', { name: 'Activity Reports' }).click();
