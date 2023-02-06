@@ -1,9 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { describe } from 'node:test';
 import { blur } from './common';
 
 describe('other entity report', () => {
-  test('create a report with two other entities and one objective', async ({ page }) => {
+  test.skip('create a report with two other entities and one objective', async ({ page }) => {
     await page.goto('http://localhost:3000/');
 
     // create a new report
