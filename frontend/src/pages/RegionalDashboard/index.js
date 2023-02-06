@@ -1,5 +1,8 @@
-import React, { 
-  useMemo, useContext, useState, useCallback,
+import React, {
+  useMemo,
+  useContext,
+  useState,
+  useCallback,
 } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';

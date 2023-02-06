@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
@@ -28,11 +29,19 @@ const mockFetchWithRegionOne = () => {
   fetchMock.get(defaultBaseUrlWithRegionOne, convertToResponse(activityReports, false, 17));
 };
 
-const renderTable = (user, dateTime) => {
-  render(
+const TableMock = ({ user, dateTime }) => {
+  const [resetPagination, setResetPagination] = React.useState(false);
+  return (
     <MemoryRouter>
       <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
         <UserContext.Provider value={{ user }}>
+          <button
+            type="button"
+            onClick={setResetPagination}
+            data-testid="reset-pagination"
+          >
+            Reset pagination
+          </button>
           <ActivityReportsTable
             filters={[{
               id: '1',
@@ -45,11 +54,17 @@ const renderTable = (user, dateTime) => {
             tableCaption="Activity Reports"
             dateTime={dateTime}
             exportIdPrefix="activity-reports-"
+            resetPagination={resetPagination}
+            setResetPagination={setResetPagination}
           />
         </UserContext.Provider>
       </AriaLiveContext.Provider>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
+};
+
+const renderTable = (user, dateTime) => {
+  render(<TableMock user={user} dateTime={dateTime} />);
 };
 
 describe('Table menus & selections', () => {
@@ -507,5 +522,55 @@ describe('Table sorting', () => {
 
     fireEvent.click(pageTwo);
     await waitFor(() => expect(screen.getByText(/11-17 of 17/i)).toBeVisible());
+  });
+
+  it('resettting pagination calls a fetch', async () => {
+    fetchMock.reset();
+    fetchMock.get(
+      defaultBaseUrlWithRegionOne,
+      convertToResponse(generateXFakeReports(10), false, 17),
+    );
+    const user = {
+      name: 'test@test.com',
+      homeRegionId: 14,
+      permissions: [
+        {
+          scopeId: 3,
+          regionId: 1,
+        },
+      ],
+    };
+
+    renderTable(user);
+
+    const pageTwo = await screen.findByRole('link', {
+      name: /go to page number 2/i,
+    });
+
+    fetchMock.get(
+      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=10&limit=10&region.in[]=1',
+      convertToResponse(generateXFakeReports(10), false, 17),
+    );
+
+    fireEvent.click(pageTwo);
+    await waitFor(() => expect(screen.getByText(/11-17 of 17/i)).toBeVisible());
+
+    const [resetButton] = await screen.findAllByTestId('reset-pagination');
+
+    fetchMock.reset();
+    expect(fetchMock.called()).toBe(false);
+
+    fetchMock.get(
+      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=10&limit=10&region.in[]=1',
+      convertToResponse(generateXFakeReports(10), false, 17),
+    );
+
+    fetchMock.get(
+      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=1',
+      convertToResponse(generateXFakeReports(10), false, 17),
+    );
+
+    act(() => fireEvent.click(resetButton));
+    await waitFor(() => expect(fetchMock.called()).toBe(true));
   });
 });
