@@ -1,6 +1,24 @@
+const reports = require('../mocks/approvedReports');
+
 const recipients = [
   {
+    id: 9997,
+    activityReportId: 9997,
+    grantId: 11,
+    otherEntityId: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
     id: 9998,
+    activityReportId: 9998,
+    grantId: 11,
+    otherEntityId: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: 9999,
     activityReportId: 9999,
     grantId: 11,
     otherEntityId: null,
@@ -9,47 +27,23 @@ const recipients = [
   },
 ];
 
-const reports = [
+const approvers = [
   {
-    id: 9999,
-    additionalNotes: '',
-    numberOfParticipants: 1,
-    deliveryMethod: 'virtual',
-    duration: 99,
-    endDate: new Date('1971/01/01'),
-    startDate: new Date('1970/01/01'),
-    activityRecipientType: 'recipient',
-    requester: 'recipient',
-    calculatedStatus: 'approved',
-    submissionStatus: 'submitted',
-    reason: ['Child Incidents'],
-    targetPopulations: ['Children with disabilities'],
-    participants: ['Regional Head Start Association'],
-    ttaType: ['training'],
-    pageState: JSON.stringify({
-      1: 'Complete', 2: 'Complete', 3: 'Complete', 4: 'Complete',
-    }),
+    activityReportId: 9997,
     userId: 1,
-    lastUpdatedById: 1,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    context: '',
-    regionId: 1,
-    nonECLKCResourcesUsed: ['http://www.website.com'],
-    ECLKCResourcesUsed: ['https://www.website.com'],
-    virtualDeliveryType: 'video',
-    legacyId: null,
-    imported: null,
-    version: 1,
-    topics: ['Fruit', 'Math', 'Friendship'],
+    status: 'approved',
+  },
+  {
+    activityReportId: 9998,
+    userId: 1,
+    status: 'approved',
+  },
+  {
+    activityReportId: 9999,
+    userId: 1,
+    status: 'approved',
   },
 ];
-
-const approvers = [{
-  activityReportId: 9999,
-  userId: 1,
-  status: 'approved',
-}];
 
 module.exports = {
   up: async (queryInterface) => {

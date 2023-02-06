@@ -8,6 +8,8 @@
   },
   "scripts": {
     "axe:ci": "axe --exit --show-errors --load-delay 1000 `cat axe-urls` --dir ./reports/",
+    "bootstrap-es": "node ./build/server/src/tools/bootstrapEsCLI.js",
+    "bootstrap-es:local": "./node_modules/.bin/babel-node ./src/tools/bootstrapEsCLI.js",
     "build": "tsc -p src",
     "deps:local": "yarn install && yarn --cwd frontend install",
     "deps": "yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
@@ -33,7 +35,7 @@
     "cucumber": "./node_modules/.bin/cucumber-js --publish ./cucumber/features/*.feature -f json:./reports/cucumber_report.json && node ./cucumber/index.js",
     "cucumber:ci": "cross-env TTA_SMART_HUB_URI=http://localhost:3000 yarn cucumber",
     "e2e": "./node_modules/.bin/playwright test",
-    "e2e:ci": "cross-env TTA_SMART_HUB_URI=http://localhost:3000 yarn e2e",
+    "e2e:ci": "yarn bootstrap-es && cross-env TTA_SMART_HUB_URI=http://localhost:3000 yarn e2e",
     "migrate:create": "npx sequelize-cli migration:generate --name",
     "db:bootstrap:admin:local": "./node_modules/.bin/babel-node ./src/tools/bootstrapAdminCLI.js",
     "db:bootstrap:admin": "node ./build/server/src/tools/bootstrapAdminCLI.js",
@@ -167,7 +169,8 @@
       "<rootDir>/src/app.js",
       "<rootDir>/src/tools/*CLI.js",
       "<rootDir>/src/tools/createAwsElasticSearchIndexesCli.js",
-      "<rootDir>/src/tools/importTTAPlanGoals.js"
+      "<rootDir>/src/tools/importTTAPlanGoals.js",
+      "<rootDir>/src/tools/bootstrapEs.js"      
     ],
     "testTimeout": 30000,
     "coveragePathIgnorePatterns": [
@@ -187,8 +190,8 @@
       "<rootDir>/src/lib/cron.js",
       "<rootDir>/src/tools/*CLI.js",
       "<rootDir>/src/tools/createAwsElasticSearchIndexesCli.js",
-      "<rootDir>/src/tools/importTTAPlanGoals.js"
-
+      "<rootDir>/src/tools/importTTAPlanGoals.js",
+      "<rootDir>/src/tools/bootstrapEs.js"      
     ],
     "coverageThreshold": {
       "global": {
