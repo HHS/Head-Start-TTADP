@@ -163,10 +163,19 @@ const search = async (indexName, fields, query, passedClient, overrideBatchSize)
     let res;
     let searchAfter;
 
-    // Create search body.
-    let body = {
-      size: batchSize,
-      query: {
+    // Create query section.
+    // ReadMe: 
+    // If we have more than one word (term) then use phrase matching
+    // If we have only one word (term) use query string with wildcards.
+    // Site Ref: https://opensearch.org/docs/latest/opensearch/query-dsl/full-text/
+    const queryBody = query.trim().split(' ').length <= 1
+      ? {
+        query_string: {
+          query: `*${query}*`,
+          fields,
+        },
+      }
+      : {
         bool: {
           should: [
             { match_phrase: { context: { slop: 0, query } } },
@@ -180,7 +189,12 @@ const search = async (indexName, fields, query, passedClient, overrideBatchSize)
             { match_phrase: { activityReportObjectiveResources: { slop: 0, query } } },
           ],
         },
-      },
+      };
+
+    // Create search body.
+    let body = {
+      size: batchSize,
+      query: queryBody,
       sort: [
         {
           id: {
