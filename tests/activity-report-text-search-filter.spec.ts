@@ -9,6 +9,7 @@ test.describe('Activity Report Text Search Filter', () => {
 
     // Navigate to app.
     await page.goto('http://localhost:3000/');
+    await page.getByRole('link', { name: 'Activity Reports' }).click();
 
     // Report text filter search.
     await page.getByRole('button', { name: 'open filters for this page' }).click();
