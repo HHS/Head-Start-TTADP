@@ -142,7 +142,6 @@ const bulkIndex = async (documents, indexName, passedClient) => {
     throw error;
   }
 };
-
 /*
   Search index documents.
 */
@@ -155,8 +154,8 @@ const search = async (indexName, fields, query, passedClient) => {
     const body = {
       size: 2001,
       query: {
-        query_string: {
-          query: `*${query}*`,
+        simple_query_string: {
+          query,
           fields,
         },
       },
@@ -174,7 +173,6 @@ const search = async (indexName, fields, query, passedClient) => {
     throw error;
   }
 };
-
 /*
   Update index document.
 */
