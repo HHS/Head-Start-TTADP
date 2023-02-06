@@ -16,6 +16,7 @@ services:
       - "5432:5432"
     volumes:
       - dbdata:/var/lib/postgresql/data
+    shm_size: 1g
   minio:
     image: minio/minio:RELEASE.2021-01-16T02-19-44Z
     env_file: .env
