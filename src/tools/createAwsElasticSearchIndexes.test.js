@@ -360,7 +360,7 @@ describe('Create AWS Elastic Search Indexes', () => {
 
     // ARO Resources.
     // query = 'https://eclkc.ohs.acf.hhs.gov/';
-    query = 'eclkc';
+    query = 'https://eclkc.ohs.acf.hhs.gov/';
     searchResult = await search(
       AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
       ['activityReportObjectiveResources'],
@@ -370,7 +370,7 @@ describe('Create AWS Elastic Search Indexes', () => {
     expect(searchResult.hits[0]['_id']).toBe(reportTwo.id.toString());
 
     // non ECLKC Resource.
-    query = 'youtube';
+    query = 'https://www.youtube.com';
     searchResult = await search(
       AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
       ['nonECLKCResources'],
@@ -380,7 +380,7 @@ describe('Create AWS Elastic Search Indexes', () => {
     expect(searchResult.hits[0]['_id']).toBe(reportOne.id.toString());
 
     // ECLKC Resource.
-    query = 'smartsheet';
+    query = 'https://www.youtube.com';
     searchResult = await search(
       AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
       ['ECLKCResources'],
