@@ -164,7 +164,7 @@ const search = async (indexName, fields, query, passedClient, overrideBatchSize)
     let searchAfter;
 
     // Create query section.
-    // ReadMe: 
+    // ReadMe:
     // If we have more than one word (term) then use phrase matching
     // If we have only one word (term) use query string with wildcards.
     // Site Ref: https://opensearch.org/docs/latest/opensearch/query-dsl/full-text/
