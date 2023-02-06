@@ -17,6 +17,8 @@ import cookieSession from './middleware/sessionMiddleware';
 import { logger, auditLogger, requestLogger } from './logger';
 import runCronJobs from './lib/cron';
 
+Error.stackTraceLimit = 100;
+
 process.on('_fatalException', (err) => {
   logger.error('Fatal exception', err);
 });
