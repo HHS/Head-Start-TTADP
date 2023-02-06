@@ -100,4 +100,4 @@ const approvedReports = [
   },
 ];
 
-export default approvedReports;
+module.exports = approvedReports;
