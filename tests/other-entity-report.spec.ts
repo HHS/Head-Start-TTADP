@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-disabled-tests */
 import { test, expect } from '@playwright/test';
 import { blur } from './common';
 
