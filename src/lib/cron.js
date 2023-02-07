@@ -16,7 +16,7 @@ import { logger, auditLogger } from '../logger';
 // Run at 4 am ET
 const schedule = '0 4 * * *';
 // Run daily at 4 pm
-const dailySched = '0 16 * * *';
+const dailySched = '0 16 * * 1-5';
 // Run at 4 pm every Friday
 const weeklySched = '0 16 * * 5';
 // Run at 4 pm on the last of the month
