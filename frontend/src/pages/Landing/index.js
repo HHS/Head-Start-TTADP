@@ -328,7 +328,7 @@ function Landing() {
           <ActivityReportsTable
             filters={filtersToApply}
             showFilter={false}
-            tableCaption="Approved activity reports"
+            tableCaption="Test Approved activity reports"
             exportIdPrefix="ar-"
           />
         </FilterContext.Provider>
