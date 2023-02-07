@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 import { blur } from './common';
 
 test.describe('other entity report', () => {
-  test.skip('create a report with two other entities and one objective', async ({ page }) => {
+  test('create a report with two other entities and one objective', async ({ page }) => {
     await page.goto('http://localhost:3000/');
 
     // create a new report
@@ -101,4 +101,4 @@ test.describe('other entity report', () => {
     // verify draft report in table
     await expect(page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
   });
-})
+});

@@ -72,7 +72,9 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByRole('combobox', { name: 'condition' }).selectOption('contains');
     await page.getByLabel('Enter report text').click();
     await page.getByLabel('Enter report text').fill('cook');
+    prs = waitForLandingFilterRequests(page);
     await page.getByTestId('apply-filters-test-id').click();
+    await Promise.all(prs);
     await expect(page.getByRole('row', { name: 'R01-AR-9998' })).toBeVisible();
 
     // Doesn't contain goal.
