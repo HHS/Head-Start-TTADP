@@ -209,6 +209,16 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE,
       },
+      onAR: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+      },
+      onApprovedAR: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+        allowNull: false,
+      },
     }, { transaction });
 
     // make table to link resources to goals
@@ -219,7 +229,7 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      goalId: {
+      goalTemplateId: {
         type: Sequelize.INTEGER,
         allowNull: false,
         references: {
@@ -251,16 +261,6 @@ module.exports = {
       updatedAt: {
         allowNull: false,
         type: Sequelize.DATE,
-      },
-      onAR: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false,
-        allowNull: false,
-      },
-      onApprovedAR: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false,
-        allowNull: false,
       },
     }, { transaction });
 
@@ -393,7 +393,7 @@ module.exports = {
 
     const urlRegex = '(?:(?:http(?:s)?|ftp(?:s)?|sftp):\\/\\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\\+~#=]+))?[@])?(?:(?:www\\.)?(?:[a-zA-Z0-9%._\\+~#=\\-]{1,}\\.[a-z]{2,6})|(?:(?:[0-9]{1,3}\\.){3}[0-9]{1,3}))(?:[:](?:[0-9]+))?(?:[\\/](?:[-a-zA-Z0-9\'\'@\\:%_\\+.,~#&\\/=()]*[-a-zA-Z0-9@\\:%_\\+.~#&\\/=()])?)?(?:[?](?:[-a-zA-Z0-9@\\:%_\\+.~#&\\/=()]*))*)';
     const domainRegex = '^(?:(?:http(?:s)?|ftp(?:s)?|sftp):\\/\\/(?:(?:[a-zA-Z0-9._]+)(?:[:](?:[a-zA-Z0-9%._\\+~#=]+))?[@])?(?:(?:www\\.)?([a-zA-Z0-9%._\\+~#=\\-]{1,}\\.[a-z]{2,6})|((?:[0-9]{1,3}\\.){3}[0-9]{1,3})))';
-
+    try {
     // populate "Resources" and "ActivityReportResources" from current data from reports via nonECLKCResourcesUsed, ECLKCResourcesUsed, context, & additionalNotes
     // 1. Generate a list of all reports where either nonECLKCResourcesUsed or ECLKCResourcesUsed is populated.
     // 2. Collect all urls from nonECLKCResourcesUsed.
@@ -799,21 +799,13 @@ module.exports = {
       "GoalTemplateUrls" AS (
         SELECT
           g.id "goalTemplateId",
-          (regexp_matches(g.name,'${urlRegex}','g')) urls,
+          (regexp_matches(g."templateName",'${urlRegex}','g')) urls,
           '${SOURCE_FIELD.GOAL.NAME}' "sourceField",
           g."createdAt",
           g."updatedAt"
         FROM "GoalTemplates" g
-        UNION
-        SELECT
-          g.id "goalTemplateId",
-          (regexp_matches(g."timeframe",'${urlRegex}','g')) urls,
-          '${SOURCE_FIELD.GOAL.TIMEFRAME}' "sourceField",
-          g."createdAt",
-          g."updatedAt"
-        FROM "GoalTemplates" g
       ),
-      "GoalUrlDomain" AS (
+      "GoalTemplateUrlDomain" AS (
         SELECT
           gu."goalTemplateId",
           (regexp_match(u.url, '${domainRegex}'))[1] "domain",
@@ -1460,7 +1452,7 @@ module.exports = {
       UPDATE "ObjectiveTemplateResources" "or"
       SET
         "resourceId" = ar."resourceId",
-        "sourceFields" = ARRAY['${SOURCE_FIELD.OBJECTIVE.RESOURCE}']::"enum_ObjectiveTemplateResources_sourceFields"[],
+        "sourceFields" = ARRAY['${SOURCE_FIELD.OBJECTIVE.RESOURCE}']::"enum_ObjectiveTemplateResources_sourceFields"[]
       FROM "ObjectiveTemplateResourcesUrlDomain" orud
       JOIN "AffectedResources" ar
       ON orud."domain" = ar."domain"
@@ -1487,7 +1479,7 @@ module.exports = {
       "ObjectiveTemplateUrls" AS (
         SELECT
           o.id "objectiveTemplateId",
-          (regexp_matches(o.title,'${urlRegex}','g')) urls,
+          (regexp_matches(o."templateTitle",'${urlRegex}','g')) urls,
           o."createdAt",
           o."updatedAt"
         FROM "ObjectiveTemplates" o
@@ -2005,6 +1997,7 @@ module.exports = {
       },
       { transaction },
     );
+  } catch (err) { console.log(err); throw err; }
   }),
   down: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(async (transaction) => {
     await queryInterface.addColumn(
