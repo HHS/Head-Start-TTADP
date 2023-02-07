@@ -47,9 +47,10 @@ function ActivityReportsTable({
   useEffect(() => {
     if (resetPagination) {
       setSortConfig({ ...sortConfig, activePage: 1 });
+      setOffset(0); // 0 times perpage = 0
       setResetPagination(false);
     }
-  }, [resetPagination, setResetPagination, setSortConfig, sortConfig]);
+  }, [activePage, perPage, resetPagination, setResetPagination, setSortConfig, sortConfig]);
 
   useEffect(() => {
     async function fetchReports() {
@@ -75,8 +76,17 @@ function ActivityReportsTable({
         setLoading(false);
       }
     }
+
+    /**
+     * we don't want the state updates in reset pagination to trigger a fetch, except the last one
+     */
+
+    if (resetPagination) {
+      return;
+    }
+
     fetchReports();
-  }, [sortConfig, offset, perPage, filters]);
+  }, [sortConfig, offset, perPage, filters, resetPagination]);
 
   const makeReportCheckboxes = (reportsArr, checked) => (
     reportsArr.reduce((obj, r) => ({ ...obj, [r.id]: checked }), {})
