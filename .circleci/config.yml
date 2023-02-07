@@ -6,10 +6,10 @@ executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: cimg/node:16.17.0-browsers
+      - image: cimg/node:16.18.1-browsers
   docker-postgres-executor:
     docker:
-      - image: cimg/node:16.17.0-browsers
+      - image: cimg/node:16.18.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -17,6 +17,27 @@ executors:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: secretpass
           POSTGRES_DB: ttasmarthub
+  docker-postgres-elasticsearch-executor:
+    docker:
+      - image: cimg/node:16.18.1-browsers
+        environment:
+          DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
+      - image: circleci/postgres:12.4-ram
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: secretpass
+          POSTGRES_DB: ttasmarthub
+      - image: opensearchproject/opensearch:1.3.2
+        name: opensearch
+        environment:
+          transport.host: 0.0.0.0
+          network.host: 0.0.0.0
+          http.port: 9200
+          cluster.name: opensearch-cluster
+          node.name: opensearch-node1
+          discovery.type: single-node
+          DISABLE_SECURITY_PLUGIN: true
+          ES_JAVA_OPTS: "-Xms256m -Xmx256m"
   machine-executor:
     machine:
       image: ubuntu-2204:current
@@ -187,10 +208,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "main-ar-redesign"
+    default: "hook-up-phrase-matching-with-limit"
     type: string
   sandbox_git_branch: # change to feature branch to test deployment
-    default: "kw-monthly-cron"
+    default: "TTAHUB-1245/fix-date-filters-graph"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -212,16 +233,16 @@ jobs:
       - create_combined_yarnlock
       - restore_cache:
           keys:
-            # To manually bust the cache, increment the version e.g. v6-yarn...
-            - v6-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            # To manually bust the cache, increment the version e.g. v7-yarn...
+            - v7-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
             # If checksum is new, restore partial cache
-            - v6-yarn-deps-
+            - v7-yarn-deps-
       - run: yarn deps
       - save_cache:
           paths:
             - node_modules
             - frontend/node_modules
-          key: v6-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+          key: v7-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
       - run:
           name: Lint backend
           command: yarn lint:ci
@@ -236,11 +257,19 @@ jobs:
           root: .
           paths:
             - .
+    # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
+    resource_class: large
   test_backend:
-    executor: docker-postgres-executor
+    executor: docker-postgres-elasticsearch-executor
+    environment:
+      AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
+      AWS_ELASTICSEARCH_ACCESS_KEY: admin
+      AWS_ELASTICSEARCH_SECRET_KEY: admin
     steps:
       - attach_workspace:
           at: .
+      - setup_remote_docker:
+          version: 20.10.14
       - run:
           name: Audit vulnerability of backend node_modules
           command: |
@@ -254,14 +283,18 @@ jobs:
           command: yarn db:seed:ci
       - run:
           name: Test backend
-          command: yarn test:ci
-      - store_test_results:
-          path: reports/
+          command: |
+            chmod 744 ./bin/test-backend-ci
+            ./bin/test-backend-ci
+      - run:
+          name: Compress coverage artifacts
+          command: tar -cvzf backend-coverage-artifacts.tar coverage/
       - store_artifacts:
           path: coverage/
-    # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
-    resource_class: large
-
+      - store_artifacts:
+          path: backend-coverage-artifacts.tar
+      - store_test_results:
+          path: reports/
   test_frontend:
     executor: docker-executor
     steps:
@@ -285,6 +318,41 @@ jobs:
           path: frontend/reports/
       - store_artifacts:
           path: frontend/coverage/
+  test_e2e:
+    executor: docker-postgres-elasticsearch-executor
+    environment:
+      AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
+      AWS_ELASTICSEARCH_ACCESS_KEY: admin
+      AWS_ELASTICSEARCH_SECRET_KEY: admin
+    steps:
+      - attach_workspace:
+          at: .
+      - setup_remote_docker:
+          version: 20.10.14
+      - run:
+          name: Start server
+          command: |
+            yarn build
+            BYPASS_AUTH=true CURRENT_USER_ID=5 yarn start:ci
+          background: true
+      - run:
+          name: Run migrations ci
+          command: yarn db:migrate:ci
+      - run:
+          name: Seed database
+          command: yarn db:seed:ci
+      - run:
+          name: Wait for server to start
+          command: ./bin/ping-server 3000
+      - run:
+          name: Install playwright dependencies
+          command: |
+            npx playwright install
+      - run:
+          name: Run playwright tests
+          command: yarn e2e:ci
+      - store_artifacts:
+          path: playwright/
   cucumber_test:
     executor: docker-postgres-executor
     steps:
@@ -304,7 +372,7 @@ jobs:
           command: yarn db:seed:ci
       - run:
           name: Wait for server to start
-          command: ./bin/ping-server
+          command: ./bin/ping-server 3000
       - run:
           name: Run cucumber
           command: |
@@ -319,6 +387,9 @@ jobs:
       - run:
           name: Start up local server
           command: ./bin/prod-style-server
+      - run:
+          name: Wait for server to start
+          command: ./bin/ping-server 8080
       - run:
           name: Pull OWASP ZAP docker image
           command: docker pull owasp/zap2docker-stable:2.11.1
@@ -411,6 +482,7 @@ jobs:
                   REACT_APP_GTM_ID: $GLOBAL_GTM_ID
                   REACT_APP_GTM_AUTH: $SANDBOX_GTM_AUTH
                   REACT_APP_GTM_PREVIEW: $SANDBOX_GTM_PREVIEW
+                  REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-sandbox.app.cloud.gov
             - cf_deploy:
                 app_name: tta-smarthub-sandbox
                 auth_client_id: SANDBOX_AUTH_CLIENT_ID
@@ -461,6 +533,7 @@ jobs:
                   REACT_APP_GTM_ID: $GLOBAL_GTM_ID
                   REACT_APP_GTM_AUTH: $DEV_GTM_AUTH
                   REACT_APP_GTM_PREVIEW: $DEV_GTM_PREVIEW
+                  REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-dev.app.cloud.gov
             - cf_deploy:
                 app_name: tta-smarthub-dev
                 auth_client_id: DEV_AUTH_CLIENT_ID
@@ -511,6 +584,7 @@ jobs:
                   REACT_APP_GTM_ID: $GLOBAL_GTM_ID
                   REACT_APP_GTM_AUTH: $STAGING_GTM_AUTH
                   REACT_APP_GTM_PREVIEW: $STAGING_GTM_PREVIEW
+                  REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-staging.app.cloud.gov
             - cf_deploy:
                 app_name: tta-smarthub-staging
                 auth_client_id: STAGING_AUTH_CLIENT_ID
@@ -559,6 +633,7 @@ jobs:
                   REACT_APP_GTM_ID: $GLOBAL_GTM_ID
                   REACT_APP_GTM_AUTH: $PROD_GTM_AUTH
                   REACT_APP_GTM_PREVIEW: $PROD_GTM_PREVIEW
+                  REACT_APP_WEBSOCKET_URL: wss://ttahub.ohs.acf.hhs.gov
             - cf_deploy:
                 app_name: tta-smarthub-prod
                 auth_client_id: PROD_AUTH_CLIENT_ID
@@ -595,6 +670,9 @@ workflows:
       - test_frontend:
           requires:
             - build_and_lint
+      - test_e2e:
+          requires:
+            - build_and_lint
       - cucumber_test:
           requires:
             - build_and_lint
@@ -608,6 +686,7 @@ workflows:
           requires:
             - test_backend
             - test_frontend
+            - test_e2e
             - cucumber_test
             - dynamic_security_scan
             - accessibility_scan
@@ -634,6 +713,9 @@ workflows:
           requires:
             - build_and_lint
       - test_frontend:
+          requires:
+            - build_and_lint
+      - test_e2e:
           requires:
             - build_and_lint
       - dynamic_security_scan:
