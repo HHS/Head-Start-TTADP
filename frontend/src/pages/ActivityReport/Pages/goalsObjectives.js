@@ -22,6 +22,7 @@ import PlusButton from '../../../components/GoalForm/PlusButton';
 import OtherEntity from './components/OtherEntity';
 import GoalFormContext from '../../../GoalFormContext';
 import ReadOnlyOtherEntityObjectives from '../../../components/GoalForm/ReadOnlyOtherEntityObjectives';
+import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 
 const GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER = '2';
 
@@ -217,11 +218,20 @@ const GoalsObjectives = ({
     toggleObjectiveForm(false);
   };
 
+  const isFormOpen = (
+    isRecipientReport && !isGoalFormClosed
+  ) || (
+    isOtherEntityReport && !isObjectivesFormClosed
+  );
+
   return (
     <>
       <Helmet>
         <title>Goals and objectives</title>
       </Helmet>
+      { isFormOpen && (
+      <IndicatesRequiredField />
+      ) }
 
       {(!isOtherEntityReport && !isRecipientReport) && (
         <Alert noIcon type="info">

@@ -714,7 +714,7 @@ const Navigator = ({
                       formData={formData}
                     />
                     <Form
-                      className="smart-hub--form-large"
+                      className="smart-hub--form-large smart-hub--form__activity-report-form"
                     >
                       {page.render(
                         additionalData,

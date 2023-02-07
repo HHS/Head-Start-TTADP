@@ -214,16 +214,16 @@ describe('Total Hrs and Recipient Graph widget', () => {
     expect(data.length).toEqual(3);
 
     // Hours of Training.
-    expect(data[0].x).toEqual(['10', '15', '20']);
+    expect(data[0].x).toEqual(['Jun-10', 'Jun-15', 'Jun-20']);
     expect(data[0].y).toStrictEqual([1, 0, 0]);
     expect(data[0].month).toStrictEqual(['Jun', 'Jun', 'Jun']);
 
     // Hours of Technical Assistance.
-    expect(data[1].x).toEqual(['10', '15', '20']);
+    expect(data[1].x).toEqual(['Jun-10', 'Jun-15', 'Jun-20']);
     expect(data[1].y).toStrictEqual([0, 2, 4]);
 
     // Both.
-    expect(data[2].x).toEqual(['10', '15', '20']);
+    expect(data[2].x).toEqual(['Jun-10', 'Jun-15', 'Jun-20']);
     expect(data[2].y).toStrictEqual([0, 0, 3.3]);
   });
 

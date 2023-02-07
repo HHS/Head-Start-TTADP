@@ -15,7 +15,7 @@ import {
  * @param {object} report an activity report object
  * @returns an array of two arrays, each of which contains strings
  */
-function calculateGoalsAndObjectives(report) {
+export function calculateGoalsAndObjectives(report) {
   const headings = [];
   const data = [];
 
@@ -51,7 +51,7 @@ function calculateGoalsAndObjectives(report) {
     data.push(objective.title);
 
     headings.push(`TTA Provided ${displayNumber}`);
-    data.push(objective.ActivityReportObjective.ttaProvided);
+    data.push(objective.ttaProvided);
   });
 
   return [headings, data];
