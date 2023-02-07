@@ -115,6 +115,11 @@ function calculateGoalsAndObjectives(report) {
               {goal.name}
             </>
           ),
+          'Goal type': (
+            <>
+              {goal.isRttapa === 'Yes' ? 'RTTAPA' : 'Non-RTTAPA'}
+            </>
+          ),
         },
         striped,
       };
