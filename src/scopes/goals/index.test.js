@@ -226,30 +226,35 @@ describe('goal filtersToScopes', () => {
       where: {
         activityReportId: reportIds,
       },
+      individualHooks: true,
     });
 
     await ObjectiveTopic.destroy({
       where: {
         id: ots.map((ot) => ot.id),
       },
+      individualHooks: true,
     });
 
     await Objective.destroy({
       where: {
         id: objectiveIds,
       },
+      individualHooks: true,
     });
 
     await ActivityReportGoal.destroy({
       where: {
         id: activityReportGoalIds,
       },
+      individualHooks: true,
     });
 
     await Goal.destroy({
       where: {
         id: possibleGoalIds,
       },
+      individualHooks: true,
     });
 
     await Promise.all(
@@ -261,12 +266,14 @@ describe('goal filtersToScopes', () => {
       where: {
         id: [grant.id, otherGrant.id, topicsGrant.id, reasonsGrant.id],
       },
+      individualHooks: true,
     });
 
     await Recipient.destroy({
       where: {
         id: [grant.recipientId, topicsGrant.recipientId, reasonsGrant.recipientId],
       },
+      individualHooks: true,
     });
 
     await db.sequelize.close();

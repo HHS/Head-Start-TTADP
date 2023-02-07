@@ -8,11 +8,14 @@ const CUSTOM_FORMATTERS = {
       specialistNextStepsToIndex,
       goalsToIndex,
       objectivesToIndex,
+      objectiveResourceLinks,
     } = data;
 
     const document = {
       id: ar.id,
       context: ar.context,
+      nonECLKCResources: ar.nonECLKCResourcesUsed ? ar.nonECLKCResourcesUsed.map((nr) => nr) : [],
+      ECLKCResources: ar.ECLKCResourcesUsed ? ar.ECLKCResourcesUsed.map((er) => er) : [],
       startDate: ar.startDate,
       endDate: ar.endDate,
       recipientNextSteps: recipientNextStepsToIndex.map((r) => r.note),
@@ -20,7 +23,9 @@ const CUSTOM_FORMATTERS = {
       activityReportGoals: goalsToIndex.map((arg) => arg.name),
       activityReportObjectives: objectivesToIndex.map((aro) => aro.title),
       activityReportObjectivesTTA: objectivesToIndex.map((aro) => aro.ttaProvided),
+      activityReportObjectiveResources: objectiveResourceLinks.map((aror) => aror.userProvidedUrl),
     };
+
     return document;
   },
 };

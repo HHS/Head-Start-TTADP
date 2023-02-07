@@ -3,7 +3,6 @@
 // way they did in thier examples
 /* eslint-disable arrow-body-style */
 import React, { useState, useContext } from 'react';
-import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert, Fieldset } from '@trussworks/react-uswds';
@@ -11,6 +10,7 @@ import useDeepCompareEffect from 'use-deep-compare-effect';
 import { useFormContext, useController } from 'react-hook-form/dist/index.ie11';
 import { Link } from 'react-router-dom';
 import GoalPicker from './components/GoalPicker';
+import { IN_PROGRESS } from '../../../components/Navigator/constants';
 import { getGoals, setGoalAsActivelyEdited } from '../../../fetchers/activityReports';
 import { validateGoals } from './components/goalValidator';
 import RecipientReviewSection from './components/RecipientReviewSection';
@@ -22,6 +22,9 @@ import PlusButton from '../../../components/GoalForm/PlusButton';
 import OtherEntity from './components/OtherEntity';
 import GoalFormContext from '../../../GoalFormContext';
 import ReadOnlyOtherEntityObjectives from '../../../components/GoalForm/ReadOnlyOtherEntityObjectives';
+import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
+
+const GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER = '2';
 
 const GoalsObjectives = ({
   reportId,
@@ -41,6 +44,7 @@ const GoalsObjectives = ({
   const activityRecipientType = watch('activityRecipientType');
   const activityRecipients = watch('activityRecipients');
   const objectivesWithoutGoals = watch('objectivesWithoutGoals');
+  const pageState = getValues('pageState');
   const isRecipientReport = activityRecipientType === 'recipient';
   const isOtherEntityReport = activityRecipientType === 'other-entity';
   const grantIds = isRecipientReport ? activityRecipients.map((r) => {
@@ -133,7 +137,7 @@ const GoalsObjectives = ({
 
   const onEdit = async (goal) => {
     try {
-      await setGoalAsActivelyEdited(reportId, goal.goalIds);
+      await setGoalAsActivelyEdited(reportId, goal.goalIds, pageState);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('failed to set goal as actively edited with this error:', err);
@@ -167,14 +171,19 @@ const GoalsObjectives = ({
 
     // make this goal the editable goal
     setValue('goalForEditing', goal);
-
-    setValue('goalEndDate', moment(goal.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY'));
+    setValue('goalEndDate', goal.endDate);
     setValue('goalName', goal.name);
 
     const rttapaValue = goal.isRttapa;
     setValue('goalIsRttapa', rttapaValue);
-
     toggleGoalForm(false);
+    setValue(
+      'pageState',
+      {
+        ...pageState,
+        [GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER]: IN_PROGRESS,
+      },
+    );
 
     let copyOfSelectedGoals = selectedGoals.map((g) => ({ ...g }));
     if (currentlyEditing) {
@@ -207,11 +216,20 @@ const GoalsObjectives = ({
     toggleObjectiveForm(false);
   };
 
+  const isFormOpen = (
+    isRecipientReport && !isGoalFormClosed
+  ) || (
+    isOtherEntityReport && !isObjectivesFormClosed
+  );
+
   return (
     <>
       <Helmet>
         <title>Goals and objectives</title>
       </Helmet>
+      { isFormOpen && (
+      <IndicatesRequiredField />
+      ) }
 
       {(!isOtherEntityReport && !isRecipientReport) && (
         <Alert noIcon type="info">
@@ -344,6 +362,12 @@ export default {
 
     if (activityRecipientType === 'other-entity') {
       return validateObjectives(formData.objectivesWithoutGoals) === true;
+    }
+
+    // if the goal form is open (i.e. the goal for editing is set), the page cannot be complete
+    // at least as far as my thinking goes
+    if (activityRecipientType === 'recipient' && formData.goalForEditing) {
+      return false;
     }
 
     return activityRecipientType === 'recipient' && validateGoals(formData.goals) === true;

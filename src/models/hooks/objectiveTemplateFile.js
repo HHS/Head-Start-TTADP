@@ -104,6 +104,7 @@ const propagateDestroyToTemplate = async (sequelize, instance, options) => {
       await sequelize.models.ObjectiveTemplateFile.destroy(
         {
           where: { id: otfs.id },
+          individualHooks: true,
           transaction: options.transaction,
         },
       );
@@ -127,6 +128,7 @@ const afterDestroy = async (sequelize, instance, options) => {
 export {
   propagateCreateToTemplate,
   propagateDestroyToTemplate,
+  checkForUseOnApprovedReport,
   afterCreate,
   beforeDestroy,
   afterDestroy,

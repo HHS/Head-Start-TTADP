@@ -62,15 +62,17 @@ async function getRecipient(page: Page) {
  * to temporarily reverse the returned array to return "01HP044445, 01HP04444" instead
  * @param recipients - the recipients string
  */
-async function getGrants(recipients: string) {
+function getGrants(recipients: string): string[] {
   const recArray = recipients.split(', ');
   // remove potential elements without grant numbers
   const recArrayGrants = recArray.filter((el) => el.indexOf(' - ') > 0);
-  const grants = recArrayGrants.map((r) => r.split('-')[1].trim());
 
-  // Need to reverse temporarily (bug)
-  const temp = grants.reverse();
-  return temp.toString().replace(',', ', ');
+  return recArrayGrants
+    .map((r) => r.split('-')[1].trim())
+    .toString()
+    .replace(',', ' ')
+    .replace(/\s+/g, ' ')
+    .split(' ');
 }
 
 /**
@@ -162,7 +164,7 @@ test.describe('Activity Report', () => {
     await page.locator('#react-select-15-option-0').getByText('Create new goal').click();
     await page.getByTestId('textarea').click();
     await page.getByTestId('textarea').fill('g1');
-    await page.getByText('Yes').click();
+    await page.getByText('RTTAPA', { exact: true }).click();
     await page.getByRole('button', { name: 'Save goal' }).click();
 
     await createNewObjective(page);
@@ -212,8 +214,9 @@ test.describe('Activity Report', () => {
     await page.keyboard.press('Enter');
     await page.getByTestId('textarea').click();
     await page.getByTestId('textarea').fill('g2');
-    await page.getByRole('group', { name: 'Is this a Recipient TTA Plan Agreement (RTTAPA) goal?*' }).getByText('Yes').click();
-    await createNewObjective(page);
+    await page.getByRole('group', { name: 'Goal type*' }).getByText('RTTAPA', { exact: true }).click();
+    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await page.keyboard.press('Enter');
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('g2o1');
     await page.getByLabel(/Topics/i).focus();
@@ -224,6 +227,12 @@ test.describe('Activity Report', () => {
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
     await page.keyboard.type('hello');
     await page.getByRole('button', { name: 'Save goal' }).click();
+
+    // assert the goals and objectives section is complete
+    let sideNavTextContent = await page.locator('#activityReportSideNav-goals-and-objectives .page-state').textContent();
+    if(sideNavTextContent) {
+      expect(sideNavTextContent.match(/Complete/i)).toBeTruthy();
+    }
 
     // edit the first goal
     await page.getByText('g1', { exact: true }).locator('..').locator('..').getByRole('button')
@@ -237,7 +246,13 @@ test.describe('Activity Report', () => {
     await page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).first().click();
     await page.getByRole('button', { name: 'Goals and objectives' }).click();
 
-    // save the first goal
+    // test to make sure that side nav is updated when a goal is edited
+    sideNavTextContent = await page.locator('#activityReportSideNav-goals-and-objectives .page-state').textContent();
+    if(sideNavTextContent) {
+      expect(sideNavTextContent.match(/in progress/i)).toBeTruthy();
+    }    
+
+    // save the first goal   
     await page.getByRole('button', { name: 'Save goal' }).click();
 
     // move to next steps
@@ -316,7 +331,7 @@ test.describe('Activity Report', () => {
     await expect(page.getByText(/these are my manager notes/i)).toBeVisible();
 
     const recipients = await page.locator('span:near(p:text("Recipient names"))').first().textContent();
-    const grants = await getGrants(recipients || '');
+    const grants = getGrants(recipients || '');
 
     // navigate to the Recipient TTA Records page
     await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
@@ -361,7 +376,9 @@ test.describe('Activity Report', () => {
     // Access parent with '..'
     await expect(page.getByText('g1o1', { exact: true }).locator('..').locator('..').getByText('Grant numbers')).toBeVisible();
     // verify the grants are visible in the objective section
-    await expect(page.getByText('g1o1', { exact: true }).locator('..').locator('..').getByText(grants)).toBeVisible();
+    await Promise.all(
+      grants.map(async (grant) => expect(page.getByText('g1o1', { exact: true }).locator('..').locator('..').getByText(grant)).toBeVisible()),
+    );
     // verify the reason is visible in the objective section
     const goalOneContent = await page.getByText('g1o1', { exact: true }).locator('..').locator('..').textContent();
     expect(goalOneContent).toContain('Change in Scope');
@@ -378,8 +395,10 @@ test.describe('Activity Report', () => {
     await expect(page.getByText('g2o1', { exact: true }).locator('..').locator('..').getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
     await expect(page.getByText('g2o1', { exact: true }).locator('..').locator('..').getByText('Grant numbers')).toBeVisible();
     // verify the grants are visible in the objective section
-    await expect(page.getByText('g2o1', { exact: true }).locator('..').locator('..').getByText(grants)).toBeVisible();
-    const goalTwoContent = await page.getByText('g2o1', { exact: true }).locator('..').locator('..').textContent();
+    await Promise.all(
+      grants.map(async (grant) => expect(page.getByText('g2o1', { exact: true }).locator('..').locator('..').getByText(grant)).toBeVisible()),
+    );
+    const goalTwoContent = await page.getByText('g2o1', {exact: true}).locator('..').locator('..').textContent();
     expect(goalTwoContent).toContain('Change in Scope');
     // verify the end date is visible in the objective section
     await expect(page.getByText('g2o1', { exact: true }).locator('..').locator('..').getByText('12/01/2050')).toBeVisible();
@@ -397,7 +416,7 @@ test.describe('Activity Report', () => {
 
     await expect(page.getByText("This goal is used on an activity report, so some fields can't be edited.")).toBeVisible();
     await expect(page.getByText('g1', { exact: true })).toBeVisible();
-    await expect(page.getByText('Yes', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('RTTAPA', { exact: true }).first()).toBeVisible();
     await expect(page.getByText('g1o1')).toBeVisible();
     await expect(page.getByText(g1TopicsTxt || 'Behavioral / Mental Health / Trauma')).toBeVisible();
     await expect(page.getByRole('link', { name: 'https://banana.banana.com' })).toBeVisible();
@@ -426,7 +445,7 @@ test.describe('Activity Report', () => {
 
     await expect(page.getByText("This goal is used on an activity report, so some fields can't be edited.")).toBeVisible();
     await expect(page.getByText('g2', { exact: true })).toBeVisible();
-    await expect(page.getByText('Yes', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('RTTAPA', { exact: true }).first()).toBeVisible();
     await expect(page.getByText('g2o1')).toBeVisible();
     await expect(page.getByText('Behavioral / Mental Health / Trauma')).toBeVisible();
     await expect(page.getByText('CLASS: Classroom Organization')).toBeVisible();
@@ -551,8 +570,8 @@ test.describe('Activity Report', () => {
     await page.getByTestId('textarea').fill('This is a goal for multiple grants');
 
     // it's an rttapa goal
-    await page.getByText('Yes').click();
-
+    await page.getByText('RTTAPA', { exact: true }).click();
+  
     // goal end date
     await page.getByLabel(/anticipated close date/i).fill('01/01/2023');
 

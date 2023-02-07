@@ -24,7 +24,9 @@ export default async function topicFrequencyGraph(scopes) {
 
   topicsAndParticipants.forEach((topicAndParticipant) => {
     TOPICS.forEach((topic, index) => {
-      if (topicAndParticipant.topics.includes(topic)) {
+      if (topicAndParticipant.topics
+        && topicAndParticipant.topics.length
+        && topicAndParticipant.topics.includes(topic)) {
         topicsResponse[index].count += 1;
       }
     });
