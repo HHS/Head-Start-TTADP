@@ -1,8 +1,9 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
 // const { beforeValidate, afterCreate, afterDestroy } = require('./hooks/goalResource');
+const { calculateIsAutoDetectedForGoal } = require('../services/resource');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class GoalResource extends Model {
     /**
      * Helper method for defining associations.
@@ -10,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      GoalResource.belongsTo(models.Goal, { foreignKey: 'goalId', onDelete: 'cascade', as: 'goalResource' });
+      GoalResource.belongsTo(models.Goal, { foreignKey: 'goalId', onDelete: 'cascade', as: 'goal' });
       GoalResource.belongsTo(models.Resource, { foreignKey: 'resourceId', as: 'resource' });
     }
   }
@@ -34,17 +35,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ARRAY((DataTypes.ENUM(Object.values(SOURCE_FIELD.GOAL)))),
     },
     isAutoDetected: {
-      type: DataTypes.BOOLEAN,
-      default: false,
-      allowNull: false,
-    },
-    onAR: {
-      type: DataTypes.BOOLEAN,
-      default: false,
-    },
-    onApprovedAR: {
-      type: DataTypes.BOOLEAN,
-      default: false,
+      type: new DataTypes.VIRTUAL(DataTypes.BOOLEAN, ['sourceFields']),
+      get() {
+        return calculateIsAutoDetectedForGoal(this.get('sourceFields'));
+      },
     },
   }, {
     sequelize,

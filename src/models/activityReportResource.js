@@ -1,8 +1,9 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
 // const { beforeDestroy, afterDestroy } = require('./hooks/activityReportResource');
+const { calculateIsAutoDetectedForActivityReport } = require('../services/resource');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ActivityReportResource extends Model {
     static associate(models) {
       ActivityReportResource.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });
@@ -22,9 +23,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ARRAY(DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORT))),
     },
     isAutoDetected: {
-      type: DataTypes.BOOLEAN,
-      default: false,
-      allowNull: false,
+      type: new DataTypes.VIRTUAL(DataTypes.BOOLEAN, ['sourceFields']),
+      get() {
+        return calculateIsAutoDetectedForActivityReport(this.get('sourceFields'));
+      },
     },
   }, {
     sequelize,
