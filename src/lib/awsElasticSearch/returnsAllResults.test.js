@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/dot-notation */
 import faker from '@faker-js/faker';
 import db, {
   ActivityReport,
