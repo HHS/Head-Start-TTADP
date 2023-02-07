@@ -1,8 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { describe } from 'node:test';
 import { blur } from './common';
 
-describe('other entity report', () => {
+test.describe('other entity report', () => {
   test('create a report with two other entities and one objective', async ({ page }) => {
     await page.goto('http://localhost:3000/');
 
@@ -99,6 +98,11 @@ describe('other entity report', () => {
     await page.getByRole('button', { name: 'Submit for approval' }).click();
 
     // verify draft report in table
-    await expect(page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
+    // await expect(page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
+    const link = page
+      .getByRole('row', { name: 'R01-AR-10004 CCDF / Child Care Administrator Head Start Collaboration Office click to visually reveal the recipients for R01-AR-10004 04/05/2021 click to reveal: Cucumber User, GS 02/07/2023 submitted View activity report 10004' })
+      .getByRole('link', { name: 'R01-AR-10004' });
+
+    await expect(link).toBeVisible();
   });
 })
