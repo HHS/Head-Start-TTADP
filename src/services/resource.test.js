@@ -126,7 +126,11 @@ describe('resource', () => {
         'http://github.com',
       ];
       let urls;
-      const sorter = (a, b) => a.id < b.id;
+      const sorter = (a, b) => {
+        if (a.id < b.id) return -1;
+        if (a.id > b.id) return 1;
+        return 0;
+      };
       beforeEach(() => {
         urls = urlsTest;
       });
@@ -842,26 +846,22 @@ describe('resource', () => {
               genericId: 1,
               sourceFields: ['a'],
               resourceId: 1,
-              isAutoDetected: false,
             }],
             update: [
               {
                 genericId: 1,
                 sourceFields: ['b', 'c'],
                 resourceId: 2,
-                isAutoDetected: true,
               }, // expand
               {
                 genericId: 1,
                 sourceFields: ['d'],
                 resourceId: 3,
-                isAutoDetected: true,
               }, // delta
               {
                 genericId: 1,
                 sourceFields: ['f'],
                 resourceId: 4,
-                isAutoDetected: false,
               }, // reduce
             ],
             destroy: [{ genericId: 1, resourceIds: [5] }],
@@ -893,25 +893,21 @@ describe('resource', () => {
                 genericId: 1,
                 sourceFields: ['a'],
                 resourceId: 1,
-                isAutoDetected: false,
               },
               {
                 genericId: 1,
                 sourceFields: ['b', 'c'],
                 resourceId: 2,
-                isAutoDetected: true,
               },
               {
                 genericId: 1,
                 sourceFields: ['d'],
                 resourceId: 3,
-                isAutoDetected: true,
               },
               {
                 genericId: 1,
                 sourceFields: ['f'],
                 resourceId: 4,
-                isAutoDetected: false,
               },
             ],
             update: [],
@@ -1186,7 +1182,7 @@ describe('resource', () => {
           include: [
             { model: Resource, as: 'resource' },
           ],
-          raw: true,
+          // raw: true,
         });
         expect(arResources.find((r) => r.resourceId === resources[0].id).sourceFields.length)
           .toEqual(2);
@@ -1301,14 +1297,14 @@ describe('resource', () => {
             activityReportId: 9999,
             resourceId: { [Op.in]: resources.map((r) => r.id) },
           },
-          raw: true,
         });
         expect(arResources.length).toEqual(3);
-        expect(arResources.map((r) => r.resourceId)).toContain(resources[3].id);
-        expect(arResources.map((r) => r.resourceId)).not.toContain(resources[1].id);
-        expect(arResources.find((r) => r.resourceId === resources[0].id).sourceFields.length)
+        expect(arResources.map((r) => r.dataValues.resourceId)).toContain(resources[3].id);
+        expect(arResources.map((r) => r.dataValues.resourceId)).not.toContain(resources[1].id);
+        expect(arResources
+          .find((r) => r.dataValues.resourceId === resources[0].id).dataValues.sourceFields.length)
           .toEqual(2);
-        expect(arResources.find((r) => r.resourceId === resources[0].id).isAutoDetected)
+        expect(arResources.find((r) => r.dataValues.resourceId === resources[0].id).isAutoDetected)
           .toEqual(true);
       });
     });
@@ -1327,7 +1323,7 @@ describe('resource', () => {
         try {
           [activityReport, deleteReport] = await ActivityReport.findOrCreate({
             where: {
-              id: 9999,
+              id: 99999,
             },
             defaults: {
               context: 'Resource Report test. http://google.com',
@@ -1374,12 +1370,15 @@ describe('resource', () => {
         const arResources = await ActivityReportResource.findAll({
           where: { activityReportId: activityReport.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(arResources.length).toEqual(1);
-        expect(arResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        console.log(arResources[0].resource);
+        expect(arResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(arResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(arResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORT.CONTEXT,
           ].sort());
@@ -1392,19 +1391,24 @@ describe('resource', () => {
         const arResources = await ActivityReportResource.findAll({
           where: { activityReportId: activityReport.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(arResources.length).toEqual(4);
-        expect(arResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(arResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(arResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(arResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORT.CONTEXT,
             SOURCE_FIELD.REPORT.RESOURCE,
           ].sort());
-        expect(arResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+        expect(arResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(arResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+        expect(arResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORT.RESOURCE,
           ].sort());
@@ -1417,12 +1421,14 @@ describe('resource', () => {
         let arResources = await ActivityReportResource.findAll({
           where: { activityReportId: activityReport.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(arResources.length).toEqual(1);
-        expect(arResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(arResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(arResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(arResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORT.CONTEXT,
           ].sort());
@@ -1433,12 +1439,14 @@ describe('resource', () => {
         arResources = await ActivityReportResource.findAll({
           where: { activityReportId: activityReport.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(arResources.length).toEqual(1);
-        expect(arResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(arResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(arResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(arResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORT.CONTEXT,
             SOURCE_FIELD.REPORT.RESOURCE,
@@ -1451,18 +1459,23 @@ describe('resource', () => {
         arResources = await ActivityReportResource.findAll({
           where: { activityReportId: activityReport.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(arResources.length).toEqual(2);
-        expect(arResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(arResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(arResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(arResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORT.CONTEXT,
           ].sort());
-        expect(arResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+        expect(arResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(arResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+        expect(arResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORT.RESOURCE,
           ].sort());
@@ -1474,19 +1487,24 @@ describe('resource', () => {
         arResources = await ActivityReportResource.findAll({
           where: { activityReportId: activityReport.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(arResources.length).toEqual(4);
-        expect(arResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(arResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(arResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(arResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORT.CONTEXT,
             SOURCE_FIELD.REPORT.RESOURCE,
           ].sort());
-        expect(arResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+        expect(arResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(arResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+        expect(arResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORT.RESOURCE,
           ].sort());
@@ -1498,11 +1516,10 @@ describe('resource', () => {
         arResources = await ActivityReportResource.findAll({
           where: { activityReportId: activityReport.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(arResources.length).toEqual(1);
-        expect(arResources[0]['resource.url']).toEqual(urls[0]);
-        expect(arResources[0].sourceFields.sort())
+        expect(arResources[0].resource.dataValues.url).toEqual(urls[0]);
+        expect(arResources[0].dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORT.CONTEXT,
           ].sort());
@@ -1612,7 +1629,6 @@ describe('resource', () => {
           include: [
             { model: Resource, as: 'resource' },
           ],
-          raw: true,
         });
         expect(nsResources.length).toEqual(4);
       });
@@ -1666,9 +1682,8 @@ describe('resource', () => {
           include: [
             { model: Resource, as: 'resource' },
           ],
-          raw: true,
         });
-        expect(nsResources[0].sourceFields.length).toEqual(2);
+        expect(nsResources[0].dataValues.sourceFields.length).toEqual(2);
         expect(nsResources[0].isAutoDetected).toEqual(true);
       });
       it('expected usage, delete', async () => {
@@ -1719,7 +1734,6 @@ describe('resource', () => {
             nextStepId: nextStep.id,
             resourceId: { [Op.in]: resources.map((r) => r.id) },
           },
-          raw: true,
         });
         expect(nsResources.length).toEqual(0);
       });
@@ -1779,7 +1793,6 @@ describe('resource', () => {
             nextStepId: nextStep.id,
             resourceId: { [Op.in]: resources.map((r) => r.id) },
           },
-          raw: true,
         });
         expect(nsResources.length).toEqual(3);
         expect(nsResources.map((r) => r.resourceId)).toContain(resources[3].id);
@@ -1833,12 +1846,14 @@ describe('resource', () => {
         const nsResources = await NextStepResource.findAll({
           where: { nextStepId: nextStep.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(nsResources.length).toEqual(1);
-        expect(nsResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(nsResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(nsResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(nsResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.NEXTSTEPS.NOTE,
           ].sort());
@@ -1851,19 +1866,24 @@ describe('resource', () => {
         const nsResources = await NextStepResource.findAll({
           where: { nextStepId: nextStep.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(nsResources.length).toEqual(4);
-        expect(nsResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(nsResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(nsResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(nsResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.NEXTSTEPS.NOTE,
             SOURCE_FIELD.OBJECTIVE.RESOURCE,
           ].sort());
-        expect(nsResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+        expect(nsResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(nsResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+        expect(nsResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.OBJECTIVE.RESOURCE,
           ].sort());
@@ -1876,12 +1896,14 @@ describe('resource', () => {
         let nsResources = await NextStepResource.findAll({
           where: { nextStepId: nextStep.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(nsResources.length).toEqual(1);
-        expect(nsResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(nsResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(nsResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(nsResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.NEXTSTEPS.NOTE,
           ].sort());
@@ -1892,12 +1914,14 @@ describe('resource', () => {
         nsResources = await NextStepResource.findAll({
           where: { nextStepId: nextStep.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(nsResources.length).toEqual(1);
-        expect(nsResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(nsResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(nsResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(nsResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.NEXTSTEPS.NOTE,
             SOURCE_FIELD.OBJECTIVE.RESOURCE,
@@ -1910,18 +1934,23 @@ describe('resource', () => {
         nsResources = await NextStepResource.findAll({
           where: { nextStepId: nextStep.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(nsResources.length).toEqual(2);
-        expect(nsResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(nsResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(nsResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(nsResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.NEXTSTEPS.NOTE,
           ].sort());
-        expect(nsResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+        expect(nsResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(nsResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+        expect(nsResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.OBJECTIVE.RESOURCE,
           ].sort());
@@ -1933,19 +1962,24 @@ describe('resource', () => {
         nsResources = await NextStepResource.findAll({
           where: { nextStepId: nextStep.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(nsResources.length).toEqual(4);
-        expect(nsResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(nsResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(nsResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(nsResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.NEXTSTEPS.NOTE,
             SOURCE_FIELD.OBJECTIVE.RESOURCE,
           ].sort());
-        expect(nsResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+        expect(nsResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(nsResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+        expect(nsResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.OBJECTIVE.RESOURCE,
           ].sort());
@@ -1957,11 +1991,10 @@ describe('resource', () => {
         nsResources = await NextStepResource.findAll({
           where: { nextStepId: nextStep.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(nsResources.length).toEqual(1);
-        expect(nsResources[0]['resource.url']).toEqual(urls[0]);
-        expect(nsResources[0].sourceFields.sort())
+        expect(nsResources[0].resource.dataValues.url).toEqual(urls[0]);
+        expect(nsResources[0].dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.NEXTSTEPS.NOTE,
           ].sort());
@@ -2014,7 +2047,7 @@ describe('resource', () => {
       afterEach(async () => {
         await GoalResource.destroy({
           where: {
-            objectiveId: goal.id,
+            goalId: goal.id,
             resourceId: { [Op.in]: resources.map((r) => r.id) },
           },
           individualHooks: true,
@@ -2034,25 +2067,25 @@ describe('resource', () => {
         const data = {
           create: [
             {
-              objectiveId: goal.id,
+              goalId: goal.id,
               resourceId: resources[0].id,
               sourceFields: [SOURCE_FIELD.GOAL.RESOURCE],
               isAutoDetected: false,
             },
             {
-              objectiveId: goal.id,
+              goalId: goal.id,
               resourceId: resources[1].id,
               sourceFields: [SOURCE_FIELD.GOAL.RESOURCE],
               isAutoDetected: false,
             },
             {
-              objectiveId: goal.id,
+              goalId: goal.id,
               resourceId: resources[2].id,
               sourceFields: [SOURCE_FIELD.GOAL.RESOURCE],
               isAutoDetected: false,
             },
             {
-              objectiveId: goal.id,
+              goalId: goal.id,
               resourceId: resources[3].id,
               sourceFields: [SOURCE_FIELD.GOAL.RESOURCE],
               isAutoDetected: false,
@@ -2070,7 +2103,6 @@ describe('resource', () => {
           include: [
             { model: Resource, as: 'resource' },
           ],
-          raw: true,
         });
         expect(gResources.length).toEqual(4);
       });
@@ -2124,9 +2156,8 @@ describe('resource', () => {
           include: [
             { model: Resource, as: 'resource' },
           ],
-          raw: true,
         });
-        expect(gResources[0].sourceFields.length).toEqual(2);
+        expect(gResources[0].dataValues.sourceFields.length).toEqual(2);
         expect(gResources[0].isAutoDetected).toEqual(true);
       });
       it('expected usage, delete', async () => {
@@ -2177,7 +2208,6 @@ describe('resource', () => {
             goalId: goal.id,
             resourceId: { [Op.in]: resources.map((r) => r.id) },
           },
-          raw: true,
         });
         expect(gResources.length).toEqual(0);
       });
@@ -2237,7 +2267,6 @@ describe('resource', () => {
             goalId: goal.id,
             resourceId: { [Op.in]: resources.map((r) => r.id) },
           },
-          raw: true,
         });
         expect(gResources.length).toEqual(3);
         expect(gResources.map((r) => r.resourceId)).toContain(resources[3].id);
@@ -2294,12 +2323,14 @@ describe('resource', () => {
         const gResources = await GoalResource.findAll({
           where: { goalId: goal.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(gResources.length).toEqual(1);
-        expect(gResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(gResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(gResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(gResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.GOAL.NAME,
           ].sort());
@@ -2312,19 +2343,24 @@ describe('resource', () => {
         const gResources = await GoalResource.findAll({
           where: { goalId: goal.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(gResources.length).toEqual(4);
-        expect(gResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(gResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(gResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(gResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.GOAL.NAME,
             SOURCE_FIELD.GOAL.RESOURCE,
           ].sort());
-        expect(gResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+        expect(gResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(gResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+        expect(gResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.GOAL.RESOURCE,
           ].sort());
@@ -2337,12 +2373,14 @@ describe('resource', () => {
         let gResources = await GoalResource.findAll({
           where: { goalId: goal.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(gResources.length).toEqual(1);
-        expect(gResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(gResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(gResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(gResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.GOAL.NAME,
           ].sort());
@@ -2353,12 +2391,14 @@ describe('resource', () => {
         gResources = await GoalResource.findAll({
           where: { goalId: goal.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(gResources.length).toEqual(1);
-        expect(gResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(gResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(gResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(gResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.GOAL.NAME,
             SOURCE_FIELD.GOAL.RESOURCE,
@@ -2371,18 +2411,23 @@ describe('resource', () => {
         gResources = await GoalResource.findAll({
           where: { goalId: goal.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(gResources.length).toEqual(2);
-        expect(gResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(gResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(gResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(gResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.GOAL.NAME,
           ].sort());
-        expect(gResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+        expect(gResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(gResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+        expect(gResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.GOAL.RESOURCE,
           ].sort());
@@ -2394,19 +2439,24 @@ describe('resource', () => {
         gResources = await GoalResource.findAll({
           where: { goalId: goal.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(gResources.length).toEqual(4);
-        expect(gResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(gResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(gResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(gResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.GOAL.NAME,
             SOURCE_FIELD.GOAL.RESOURCE,
           ].sort());
-        expect(gResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+        expect(gResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(gResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+        expect(gResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.GOAL.RESOURCE,
           ].sort());
@@ -2418,11 +2468,10 @@ describe('resource', () => {
         gResources = await GoalResource.findAll({
           where: { goalId: goal.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(gResources.length).toEqual(1);
-        expect(gResources[0]['resource.url']).toEqual(urls[0]);
-        expect(gResources[0].sourceFields.sort())
+        expect(gResources[0].resource.dataValues.url).toEqual(urls[0]);
+        expect(gResources[0].dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.GOAL.NAME,
           ].sort());
@@ -2531,7 +2580,6 @@ describe('resource', () => {
           include: [
             { model: Resource, as: 'resource' },
           ],
-          raw: true,
         });
         expect(oResources.length).toEqual(4);
       });
@@ -2585,9 +2633,8 @@ describe('resource', () => {
           include: [
             { model: Resource, as: 'resource' },
           ],
-          raw: true,
         });
-        expect(oResources[0].sourceFields.length).toEqual(2);
+        expect(oResources[0].dataValues.sourceFields.length).toEqual(2);
         expect(oResources[0].isAutoDetected).toEqual(true);
       });
       it('expected usage, delete', async () => {
@@ -2638,7 +2685,6 @@ describe('resource', () => {
             objectiveId: objective.id,
             resourceId: { [Op.in]: resources.map((r) => r.id) },
           },
-          raw: true,
         });
         expect(oResources.length).toEqual(0);
       });
@@ -2698,7 +2744,6 @@ describe('resource', () => {
             objectiveId: objective.id,
             resourceId: { [Op.in]: resources.map((r) => r.id) },
           },
-          raw: true,
         });
         expect(oResources.length).toEqual(3);
         expect(oResources.map((r) => r.resourceId)).toContain(resources[3].id);
@@ -2755,12 +2800,14 @@ describe('resource', () => {
         const oResources = await ObjectiveResource.findAll({
           where: { objectiveId: objective.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(oResources.length).toEqual(1);
-        expect(oResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.OBJECTIVE.TITLE,
           ].sort());
@@ -2773,19 +2820,24 @@ describe('resource', () => {
         const oResources = await ObjectiveResource.findAll({
           where: { objectiveId: objective.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(oResources.length).toEqual(4);
-        expect(oResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.OBJECTIVE.TITLE,
             SOURCE_FIELD.OBJECTIVE.RESOURCE,
           ].sort());
-        expect(oResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(oResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.OBJECTIVE.RESOURCE,
           ].sort());
@@ -2798,12 +2850,14 @@ describe('resource', () => {
         let oResources = await ObjectiveResource.findAll({
           where: { objectiveId: objective.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(oResources.length).toEqual(1);
-        expect(oResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.OBJECTIVE.TITLE,
           ].sort());
@@ -2814,12 +2868,14 @@ describe('resource', () => {
         oResources = await ObjectiveResource.findAll({
           where: { objectiveId: objective.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(oResources.length).toEqual(1);
-        expect(oResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.OBJECTIVE.TITLE,
             SOURCE_FIELD.OBJECTIVE.RESOURCE,
@@ -2832,18 +2888,23 @@ describe('resource', () => {
         oResources = await ObjectiveResource.findAll({
           where: { objectiveId: objective.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(oResources.length).toEqual(2);
-        expect(oResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.OBJECTIVE.TITLE,
           ].sort());
-        expect(oResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(oResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.OBJECTIVE.RESOURCE,
           ].sort());
@@ -2855,19 +2916,24 @@ describe('resource', () => {
         oResources = await ObjectiveResource.findAll({
           where: { objectiveId: objective.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(oResources.length).toEqual(4);
-        expect(oResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.OBJECTIVE.TITLE,
             SOURCE_FIELD.OBJECTIVE.RESOURCE,
           ].sort());
-        expect(oResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(oResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.OBJECTIVE.RESOURCE,
           ].sort());
@@ -2879,11 +2945,10 @@ describe('resource', () => {
         oResources = await ObjectiveResource.findAll({
           where: { objectiveId: objective.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(oResources.length).toEqual(1);
-        expect(oResources[0]['resource.url']).toEqual(urls[0]);
-        expect(oResources[0].sourceFields.sort())
+        expect(oResources[0].resource.dataValues.url).toEqual(urls[0]);
+        expect(oResources[0].dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.OBJECTIVE.TITLE,
           ].sort());
@@ -3015,7 +3080,6 @@ describe('resource', () => {
           include: [
             { model: Resource, as: 'resource' },
           ],
-          raw: true,
         });
         expect(oResources.length).toEqual(4);
       });
@@ -3072,9 +3136,8 @@ describe('resource', () => {
           include: [
             { model: Resource, as: 'resource' },
           ],
-          raw: true,
         });
-        expect(oResources[0].sourceFields.length).toEqual(2);
+        expect(oResources[0].dataValues.sourceFields.length).toEqual(2);
         expect(oResources[0].isAutoDetected).toEqual(true);
       });
       it('expected usage, delete', async () => {
@@ -3125,7 +3188,6 @@ describe('resource', () => {
             activityReportObjectiveId: reportObjective.id,
             resourceId: { [Op.in]: resources.map((r) => r.id) },
           },
-          raw: true,
         });
         expect(oResources.length).toEqual(0);
       });
@@ -3188,7 +3250,6 @@ describe('resource', () => {
             activityReportObjectiveId: reportObjective.id,
             resourceId: { [Op.in]: resources.map((r) => r.id) },
           },
-          raw: true,
         });
         expect(oResources.length).toEqual(3);
         expect(oResources.map((r) => r.resourceId)).toContain(resources[3].id);
@@ -3261,12 +3322,14 @@ describe('resource', () => {
         const oResources = await ActivityReportObjectiveResource.findAll({
           where: { activityReportObjectiveId: reportObjective.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(oResources.length).toEqual(1);
-        expect(oResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORTOBJECTIVE.TITLE,
             SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED,
@@ -3280,20 +3343,25 @@ describe('resource', () => {
         const oResources = await ActivityReportObjectiveResource.findAll({
           where: { activityReportObjectiveId: reportObjective.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(oResources.length).toEqual(4);
-        expect(oResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORTOBJECTIVE.TITLE,
             SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED,
             SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE,
           ].sort());
-        expect(oResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(oResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE,
           ].sort());
@@ -3306,12 +3374,14 @@ describe('resource', () => {
         let oResources = await ActivityReportObjectiveResource.findAll({
           where: { activityReportObjectiveId: reportObjective.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(oResources.length).toEqual(1);
-        expect(oResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORTOBJECTIVE.TITLE,
             SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED,
@@ -3323,12 +3393,14 @@ describe('resource', () => {
         oResources = await ActivityReportObjectiveResource.findAll({
           where: { activityReportObjectiveId: reportObjective.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(oResources.length).toEqual(1);
-        expect(oResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORTOBJECTIVE.TITLE,
             SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED,
@@ -3342,19 +3414,24 @@ describe('resource', () => {
         oResources = await ActivityReportObjectiveResource.findAll({
           where: { activityReportObjectiveId: reportObjective.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(oResources.length).toEqual(2);
-        expect(oResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORTOBJECTIVE.TITLE,
             SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED,
           ].sort());
-        expect(oResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(oResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE,
           ].sort());
@@ -3366,20 +3443,25 @@ describe('resource', () => {
         oResources = await ActivityReportObjectiveResource.findAll({
           where: { activityReportObjectiveId: reportObjective.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(oResources.length).toEqual(4);
-        expect(oResources.find((r) => r['resource.url'] === urls[0]).resourceId)
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
-        expect(oResources.find((r) => r['resource.url'] === urls[0]).sourceFields.sort())
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORTOBJECTIVE.TITLE,
             SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED,
             SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE,
           ].sort());
-        expect(oResources.find((r) => r['resource.url'] === urls[1]).resourceId)
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(oResources.find((r) => r['resource.url'] === urls[1]).sourceFields.sort())
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
+          .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE,
           ].sort());
@@ -3391,11 +3473,10 @@ describe('resource', () => {
         oResources = await ActivityReportObjectiveResource.findAll({
           where: { activityReportObjectiveId: reportObjective.id },
           include: [{ model: Resource, as: 'resource' }],
-          raw: true,
         });
         expect(oResources.length).toEqual(1);
-        expect(oResources[0]['resource.url']).toEqual(urls[0]);
-        expect(oResources[0].sourceFields.sort())
+        expect(oResources[0].resource.dataValues.url).toEqual(urls[0]);
+        expect(oResources[0].dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.REPORTOBJECTIVE.TITLE,
             SOURCE_FIELD.REPORTOBJECTIVE.TTAPROVIDED,
