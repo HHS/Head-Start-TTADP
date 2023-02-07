@@ -1,5 +1,7 @@
 const { Model } = require('sequelize');
+const { SOURCE_FIELD } = require('../constants');
 // const { auditLogger } = require('../logger');
+const { calculateIsAutoDetectedForObjectiveTemplate } = require('../services/resource');
 
 export default (sequelize, DataTypes) => {
   class ObjectiveTemplateResource extends Model {
@@ -26,6 +28,17 @@ export default (sequelize, DataTypes) => {
     objectiveTemplateId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+    },
+    sourceFields: {
+      allowNull: true,
+      default: null,
+      type: DataTypes.ARRAY((DataTypes.ENUM(Object.values(SOURCE_FIELD.OBJECTIVETEMPLATE)))),
+    },
+    isAutoDetected: {
+      type: new DataTypes.VIRTUAL(DataTypes.BOOLEAN, ['sourceFields']),
+      get() {
+        return calculateIsAutoDetectedForObjectiveTemplate(this.get('sourceFields'));
+      },
     },
   }, {
     sequelize,

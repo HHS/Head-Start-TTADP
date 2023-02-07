@@ -1,8 +1,9 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
 // const { beforeDestroy, afterDestroy } = require('./hooks/nextStepResource');
+const { calculateIsAutoDetectedForNextStep } = require('../services/resource');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class NextStepResource extends Model {
     static associate(models) {
       NextStepResource.belongsTo(models.NextStep, { foreignKey: 'nextStepId', as: 'nextStep' });
@@ -22,9 +23,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ARRAY((DataTypes.ENUM(Object.values(SOURCE_FIELD.NEXTSTEPS)))),
     },
     isAutoDetected: {
-      type: DataTypes.BOOLEAN,
-      default: false,
-      allowNull: false,
+      type: new DataTypes.VIRTUAL(DataTypes.BOOLEAN, ['sourceFields']),
+      get() {
+        return calculateIsAutoDetectedForNextStep(this.get('sourceFields'));
+      },
     },
   }, {
     sequelize,

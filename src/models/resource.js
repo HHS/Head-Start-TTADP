@@ -1,7 +1,7 @@
 const { Model } = require('sequelize');
 const { beforeValidate } = require('./hooks/resource');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class Resource extends Model {
     static associate(models) {
       Resource.hasMany(models.ActivityReportResource, { foreignKey: 'resourceId', as: 'activityReportResources' });

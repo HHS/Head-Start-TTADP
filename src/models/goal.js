@@ -22,6 +22,13 @@ export default (sequelize, DataTypes) => {
       Goal.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
       Goal.hasMany(models.Objective, { foreignKey: 'goalId', as: 'objectives' });
       Goal.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: +'goalTemplates' });
+      Goal.hasMany(models.GoalResource, { foreignKey: 'goalId', as: 'goalResources' });
+      Goal.belongsToMany(models.Resource, {
+        through: models.GoalResource,
+        foreignKey: 'goalId',
+        otherKey: 'resourceId',
+        as: 'resources',
+      });
     }
   }
   Goal.init({

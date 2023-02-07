@@ -1,8 +1,9 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
+const { calculateIsAutoDetectedForActivityReportGoal } = require('../services/resource');
 // const { afterDestroy } = require('./hooks/activityReportGoalResource');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ActivityReportGoalResource extends Model {
     /**
      * Helper method for defining associations.
@@ -38,9 +39,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ARRAY((DataTypes.ENUM(Object.values(SOURCE_FIELD.REPORTGOAL)))),
     },
     isAutoDetected: {
-      type: DataTypes.BOOLEAN,
-      default: false,
-      allowNull: false,
+      type: new DataTypes.VIRTUAL(DataTypes.BOOLEAN, ['sourceFields']),
+      get() {
+        return calculateIsAutoDetectedForActivityReportGoal(this.get('sourceFields'));
+      },
     },
   }, {
     sequelize,
