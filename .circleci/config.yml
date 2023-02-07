@@ -319,6 +319,7 @@ jobs:
           path: frontend/reports/
       - store_artifacts:
           path: frontend/coverage/
+    resource_class: large
   test_e2e:
     executor: docker-postgres-elasticsearch-executor
     environment:
@@ -354,6 +355,7 @@ jobs:
           command: yarn e2e:ci
       - store_artifacts:
           path: playwright/
+    resource_class: large
   cucumber_test:
     executor: docker-postgres-executor
     steps:
@@ -403,6 +405,7 @@ jobs:
           command: ./bin/run-owasp-scan
       - store_artifacts:
           path: reports/owasp_report.html
+    resource_class: large
   accessibility_scan:
     executor: docker-postgres-executor
     steps:
@@ -432,6 +435,7 @@ jobs:
             yarn axe:ci
       - store_artifacts:
           path: reports/
+    resource_class: large
   deploy:
     executor: docker-executor
     steps:
@@ -622,6 +626,7 @@ jobs:
                 env_name: prod
                 new_relic_app_id: << pipeline.parameters.prod_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
+    resource_class: large
 workflows:
   build_test_deploy:
     jobs:
