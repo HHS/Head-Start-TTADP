@@ -144,84 +144,58 @@ const bulkIndex = async (documents, indexName, passedClient) => {
 };
 /*
   Search index documents.
-  Note: Right now we use search with search_after.
-  This allows us to return all results in batches of 10k.
 */
-const search = async (indexName, fields, query, passedClient, overrideBatchSize) => {
+const search = async (indexName, fields, query, passedClient) => {
   try {
     // Initialize the client.
     const client = passedClient || await getClient();
 
-    // Total hits.
-    let totalHits = [];
-
-    // Loop vars.
-    const maxLoopIterations = 9;
-    let retrieveAgain = true;
-    const batchSize = overrideBatchSize || 10000; // Default batch size to 10k.
-    let loopIterations = 0;
-    let res;
-    let searchAfter;
-
-    // Create search body.
-    let body = {
-      size: batchSize,
-      query: {
+    // Create query section.
+    // ReadMe:
+    // If we have more than one word (term) then use phrase matching
+    // If we have only one word (term) use query string with wildcards.
+    // Site Ref: https://opensearch.org/docs/latest/opensearch/query-dsl/full-text/
+    const queryBody = query.trim().split(' ').length <= 1
+      ? {
         query_string: {
           query: `*${query}*`,
           fields,
         },
-      },
-      sort: [
-        {
-          id: {
-            order: 'asc', // necessary for batch processing.
-          },
+      }
+      : {
+        bool: {
+          should: [
+            { match_phrase: { context: { slop: 0, query } } },
+            { match_phrase: { nonECLKCResources: { slop: 0, query } } },
+            { match_phrase: { ECLKCResources: { slop: 0, query } } },
+            { match_phrase: { recipientNextSteps: { slop: 0, query } } },
+            { match_phrase: { specialistNextSteps: { slop: 0, query } } },
+            { match_phrase: { activityReportGoals: { slop: 0, query } } },
+            { match_phrase: { activityReportObjectives: { slop: 0, query } } },
+            { match_phrase: { activityReportObjectivesTTA: { slop: 0, query } } },
+            { match_phrase: { activityReportObjectiveResources: { slop: 0, query } } },
+          ],
         },
-      ],
+      };
+
+    // Create search body.
+    const body = {
+      size: 2001,
+      query: queryBody,
     };
 
-    while (retrieveAgain && loopIterations <= maxLoopIterations) {
-      // Search an index.
-      res = await client.search({
-        index: indexName,
-        body,
-      });
-
-      // Get hits.
-      const hits = res.body.hits.hits || res.body.hits;
-
-      // Check if these are new results.
-      if (hits && hits.length > 0) {
-        // Append new hits.
-        totalHits = [...totalHits, ...hits];
-
-        // Get search_after from last hit.
-        const lastHit = hits.pop();
-
-        // Set search_after.
-        searchAfter = lastHit.sort;
-
-        // Update search_after.
-        body = { ...body, search_after: searchAfter };
-
-        // Increase loop count.
-        loopIterations += 1;
-
-        // If we don't have a sort after (undefined) stop looping.
-        retrieveAgain = searchAfter;
-      } else {
-        retrieveAgain = false;
-      }
-    }
+    // Search an index.
+    const res = await client.search({
+      index: indexName,
+      body,
+    });
     logger.info(`AWS OpenSearch: Successfully searched the index ${indexName} using query '${query}`);
-    return { hits: totalHits };
+    return res.body.hits;
   } catch (error) {
     auditLogger.error(`AWS OpenSearch Error: Unable to search the index '${indexName}' with query '${query}': ${error.message}`);
     throw error;
   }
 };
-
 /*
   Update index document.
 */

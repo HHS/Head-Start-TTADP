@@ -1,5 +1,3 @@
-/* eslint-disable no-underscore-dangle */
-/* eslint-disable dot-notation */
 import db, {
   User,
   ActivityReport,
@@ -95,7 +93,7 @@ describe('Create AWS Elastic Search Indexes', () => {
       // Approved Reports.
       reportOne = await ActivityReport.create({
         ...approvedReport,
-        context: 'Lets give some',
+        context: 'Some houses had lead water in the pipes.',
         userId: user.id,
         nonECLKCResourcesUsed: ['https://www.youtube.com'],
         ECLKCResourcesUsed: ['https://www.smartsheet.com'],
@@ -103,14 +101,14 @@ describe('Create AWS Elastic Search Indexes', () => {
       reportTwo = await ActivityReport.create(
         {
           ...approvedReport,
-          context: 'New context to test',
+          context: 'Students should each pack a water.',
           userId: user.id,
         },
       );
       reportThree = await ActivityReport.create(
         {
           ...approvedReport,
-          context: 'If the search works',
+          context: 'We need to detect any lead in the pipes. Bring a water its going to be hot.',
           userId: user.id,
         },
       );
@@ -298,7 +296,7 @@ describe('Create AWS Elastic Search Indexes', () => {
     await createAwsElasticSearchIndexes();
 
     // Context Search.
-    let query = 'context to test';
+    let query = 'lead water';
     let searchResult = await search(
       AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
       ['context'],
@@ -306,7 +304,7 @@ describe('Create AWS Elastic Search Indexes', () => {
     );
 
     expect(searchResult.hits.length).toBe(1);
-    expect(searchResult.hits[0]._id).toBe(reportTwo.id.toString());
+    expect(searchResult.hits[0]['_id']).toBe(reportOne.id.toString());
 
     // Recipient Next Steps.
     query = 'bold';
@@ -397,9 +395,8 @@ describe('Create AWS Elastic Search Indexes', () => {
       [],
       query,
     );
-    expect(searchResult.hits.length).toBe(2);
-    expect(searchResult.hits[0]._id).toBe(reportOne.id.toString());
-    expect(searchResult.hits[1]._id).toBe(reportThree.id.toString());
+    expect(searchResult.hits.length).toBe(1);
+    expect(searchResult.hits[0]['_id']).toBe(reportOne.id.toString());
   });
 });
 

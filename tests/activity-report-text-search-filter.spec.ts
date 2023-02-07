@@ -96,7 +96,7 @@ test.describe('Activity Report Text Search Filter', () => {
     await blur(page);
 
     // Is RTTAPA.
-    await page.getByText('Yes').click();
+    await page.getByText('RTTAPA', { exact: true }).click();
 
     // Objective.
     await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
