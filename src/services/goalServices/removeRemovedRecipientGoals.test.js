@@ -191,6 +191,8 @@ describe('removeRemovedRecipientsGoals', () => {
       where: {
         activityReportId: reportIds,
       },
+      hookMetadata: { objectiveIds: [firstObjective.id, secondObjective.id, thirdObjective.id] },
+      individualHooks: true,
     });
 
     await Objective.destroy({

@@ -62,6 +62,7 @@ module.exports = {
         updatedAt: now,
         goalTemplateId: 1,
         grantId: 1,
+        onAR: false,
         onApprovedAR: false,
       },
       {
@@ -72,6 +73,7 @@ module.exports = {
         updatedAt: now,
         goalTemplateId: 2,
         grantId: 1,
+        onAR: false,
         onApprovedAR: false,
       },
       {
@@ -82,6 +84,7 @@ module.exports = {
         updatedAt: now,
         goalTemplateId: 3,
         grantId: 1,
+        onAR: false,
         onApprovedAR: false,
       },
       {
@@ -92,6 +95,7 @@ module.exports = {
         updatedAt: now,
         goalTemplateId: 4,
         grantId: 2,
+        onAR: false,
         onApprovedAR: false,
       },
     ];

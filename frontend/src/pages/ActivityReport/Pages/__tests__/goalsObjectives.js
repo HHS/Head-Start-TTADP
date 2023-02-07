@@ -133,6 +133,7 @@ describe('goals objectives', () => {
     it('the display goals section is displayed', async () => {
       renderGoals([1], 'recipient');
       expect(await screen.findByText('Goal summary', { selector: '.margin-bottom-0.margin-top-4' })).toBeVisible();
+      expect(screen.queryByText(/indicates required field/i)).toBeTruthy();
     });
 
     it('the display goals shows a warning if no grants are selected', async () => {
@@ -173,6 +174,7 @@ describe('goals objectives', () => {
       fetchMock.get('/api/activity-report/1/goals/edit?goalId=1234567', 200);
 
       renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed, throwFetchError, toggleGoalForm);
+      expect(screen.queryByText(/indicates required field/i)).toBeNull();
       const actions = await screen.findByRole('button', { name: /actions for goal 1/i });
       act(() => userEvent.click(actions));
       const [button] = await screen.findAllByRole('button', { name: 'Edit' });
