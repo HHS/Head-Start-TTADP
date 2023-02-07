@@ -699,36 +699,6 @@ const syncResourcesForActivityReport = async (
   'activityReportId',
   resources,
 );
-// const syncResourcesForActivityReport = async (resources) => Promise.all([
-//   ...resources.create.map(async (resource) => ActivityReportResource.create({
-//     activityReportId: resource.activityReportId,
-//     resourceId: resource.resourceId,
-//     sourceFields: resource.sourceFields,
-//     isAutoDetected: resource.isAutoDetected,
-//   })),
-//   ...resources.update.map(async (resource) => ActivityReportResource.update(
-//     {
-//       sourceFields: resource.sourceFields,
-//       isAutoDetected: resource.isAutoDetected,
-//     },
-//     {
-//       where: {
-//         activityReportId: resource.activityReportId,
-//         resourceId: resource.resourceId,
-//       },
-//       individualHooks: true,
-//     },
-//   )),
-//   ...resources.destroy.map(async (resource) => (resource.resourceIds.length > 0
-//     ? ActivityReportResource.destroy({
-//       where: {
-//         activityReportId: resource.activityReportId,
-//         resourceId: { [Op.in]: resource.resourceIds },
-//       },
-//       individualHooks: true,
-//     })
-//     : Promise.resolve())),
-// ]);
 
 // Process the current values on the report into the database for all referenced resources.
 const processActivityReportForResources = async (
@@ -745,94 +715,6 @@ const processActivityReportForResources = async (
   urls,
   resourceIds,
 );
-// const processActivityReportForResources = async (activityReport, urls) => {
-//   // Either used the current resource data from the activityReport passed in or look it up.
-//   const currentResources = activityReport.activityReportResources
-//     ? activityReport.activityReportResources
-//     : await ActivityReportResource.findAll({
-//       where: { activityReportId: activityReport.id },
-//       raw: true,
-//     });
-
-//   // convert to generic genericId to use generic modifier methods
-//   const currentResourcesGeneric = remapAttributes(currentResources, 'activityReportId', 'genericId');
-
-//   // Use regex to pull urls from the required fields
-//   const urlsFromECLKC = collectURLsFromField(activityReport.ECLKCResourcesUsed);
-//   const urlsFromNonECLKC = collectURLsFromField(activityReport.nonECLKCResourcesUsed);
-//   const urlsFromContext = collectURLsFromField(activityReport.context);
-//   const urlsFromNotes = collectURLsFromField(activityReport.additionalNotes);
-//   const urlsFromResource = urls.map((url) => collectURLsFromField(url)).flat(Infinity);
-
-//   // Find or create resources for each of the urls collected.
-//   const resourcesWithId = await findOrCreateResources([...new Set([
-//     ...urlsFromECLKC,
-//     ...urlsFromNonECLKC,
-//     ...urlsFromContext,
-//     ...urlsFromNotes,
-//     ...urlsFromResource,
-//   ])]);
-
-//   // Create an array of resource objects from all the data collected for each of the fields.
-//   const incomingResourcesRaw = [
-//     ...resourcesFromField(
-//       activityReport.id,
-//       urlsFromECLKC,
-//       SOURCE_FIELD.REPORT.ECLKC,
-//     ),
-//     ...resourcesFromField(
-//       activityReport.id,
-//       urlsFromNonECLKC,
-//       SOURCE_FIELD.REPORT.NONECLKC,
-//     ),
-//     ...resourcesFromField(
-//       activityReport.id,
-//       urlsFromContext,
-//       SOURCE_FIELD.REPORT.CONTEXT,
-//     ),
-//     ...resourcesFromField(
-//       activityReport.id,
-//       urlsFromNotes,
-//       SOURCE_FIELD.REPORT.NOTES,
-//     ),
-//     ...resourcesFromField(
-//       activityReport.id,
-//       urlsFromResource,
-//       SOURCE_FIELD.REPORT.RESOURCE,
-//     ),
-//   ];
-
-//   // Merge all the records that share the same url and genericId, collecting all
-//   // the sourceFields they are from.
-//   const incomingResourcesMerged = mergeRecordsByUrlAndGenericId(incomingResourcesRaw);
-
-//   // Replace the url with the associated resourceId.
-//   const incomingResourcesTransformed = transformRecordByURLToResource(
-//     incomingResourcesMerged,
-//     resourcesWithId,
-//   );
-
-//   // filter the intersection of the incomingResources and currentResources into distinct datasets.
-//   const filteredResources = filterResourcesForSync(
-//     incomingResourcesTransformed,
-//     currentResourcesGeneric,
-//   );
-
-//   // switch from generic genericId to activityReportId.
-//   const resourcesToSync = {
-//     create: remapAttributes(filteredResources.create, 'genericId', 'activityReportId'),
-//     update: remapAttributes(filteredResources.update, 'genericId', 'activityReportId'),
-//     destroy: remapAttributes(filteredResources.destroy, 'genericId', 'activityReportId'),
-//   };
-
-//   // Save the distinct datasets to the database.
-//   await syncResourcesForActivityReport(resourcesToSync);
-//   return getResourcesForModel(
-//     ActivityReportResource,
-//     activityReport.id,
-//     true,
-//   );
-// };
 
 // Process the current values on the report into the database for all referenced resources for
 // the reportId passed.
@@ -847,6 +729,15 @@ const processActivityReportForResourcesById = async (
   activityReportId,
   urls,
   [],
+);
+
+const getResourcesForActivityReports = async (
+  reportIds,
+  includeAutoDetected = false,
+) => getResourcesForModel(
+  ActivityReportResource,
+  reportIds,
+  includeAutoDetected,
 );
 
 // -----------------------------------------------------------------------------
@@ -868,36 +759,6 @@ const syncResourcesForNextStep = async (
   'nextStepId',
   resources,
 );
-// const syncResourcesForNextStep = async (resources) => Promise.all([
-//   ...resources.create.map(async (resource) => NextStepResource.create({
-//     nextStepId: resource.nextStepId,
-//     resourceId: resource.resourceId,
-//     sourceFields: resource.sourceFields,
-//     isAutoDetected: resource.isAutoDetected,
-//   })),
-//   ...resources.update.map(async (resource) => NextStepResource.update(
-//     {
-//       sourceFields: resource.sourceFields,
-//       isAutoDetected: resource.isAutoDetected,
-//     },
-//     {
-//       where: {
-//         nextStepId: resource.nextStepId,
-//         resourceId: resource.resourceId,
-//       },
-//       individualHooks: true,
-//     },
-//   )),
-//   ...resources.destroy.map(async (resource) => (resource.resourceIds.length > 0
-//     ? NextStepResource.destroy({
-//       where: {
-//         nextStepId: resource.nextStepId,
-//         resourceId: { [Op.in]: resource.resourceIds },
-//       },
-//       individualHooks: true,
-//     })
-//     : Promise.resolve())),
-// ]);
 
 // Process the current values on the report into the database for all referenced resources.
 const processNextStepForResources = async (
@@ -914,72 +775,6 @@ const processNextStepForResources = async (
   urls,
   resourceIds,
 );
-// const processNextStepForResources = async (nextStep, urls) => {
-//   // Either used the current resource data from the nextStep passed in or look it up.
-//   const currentResources = nextStep.nextStepResources
-//     ? nextStep.nextStepResources
-//     : await NextStepResource.findAll({
-//       where: { nextStepId: nextStep.id },
-//       raw: true,
-//     });
-
-//   // convert to generic genericId to use generic modifier methods
-//   const currentResourcesGeneric = remapAttributes(currentResources, 'nextStepId', 'genericId');
-
-//   // Use regex to pull urls from the required fields
-//   const urlsFromNote = collectURLsFromField(nextStep.note);
-//   const urlsFromResource = urls.map((url) => collectURLsFromField(url)).flat(Infinity);
-
-//   // Find or create resources for each of the urls collected.
-//   const resourcesWithId = await findOrCreateResources([...new Set([
-//     ...urlsFromNote,
-//     ...urlsFromResource,
-//   ])]);
-
-//   // Create an array of resource objects from all the data collected for the field.
-//   const incomingResourcesRaw = [
-//     ...resourcesFromField(
-//       nextStep.id,
-//       urlsFromNote,
-//       SOURCE_FIELD.NEXTSTEPS.NOTE,
-//     ),
-//     ...resourcesFromField(
-//       nextStep.id,
-//       urlsFromResource,
-//       SOURCE_FIELD.NEXTSTEPS.RESOURCE,
-//     ),
-//   ];
-
-//   // Merge all the records that share the same url and genericId, collecting all
-//   // the sourceFields they are from.
-//   const incomingResourcesMerged = mergeRecordsByUrlAndGenericId(incomingResourcesRaw);
-
-//   // Replace the url with the associated resourceId.
-//   const incomingResourcesTransformed = transformRecordByURLToResource(
-//     incomingResourcesMerged,
-//     resourcesWithId,
-//   );
-
-//   // filter the intersection of the incomingResources and currentResources into distinct datasets.
-//   const filteredResources = filterResourcesForSync(
-//     incomingResourcesTransformed,
-//     currentResourcesGeneric,
-//   );
-
-//   // switch from generic genericId to nextStepId.
-//   const resourcesToSync = {
-//     create: remapAttributes(filteredResources.create, 'genericId', 'nextStepId'),
-//     update: remapAttributes(filteredResources.update, 'genericId', 'nextStepId'),
-//     destroy: remapAttributes(filteredResources.destroy, 'genericId', 'nextStepId'),
-//   };
-
-//   // Save the distinct datasets to the database.
-//   await syncResourcesForNextStep(resourcesToSync);
-//   return getResourcesForModel(
-//     NextStepResource,
-//     nextStep.id,
-//   );
-// };
 
 // Process the current values on the report into the database for all referenced resources for
 // the reportId passed.
@@ -993,6 +788,15 @@ const processNextStepForResourcesById = async (
   processNextStepForResources,
   nextStepId,
   urls,
+);
+
+const getResourcesForNextSteps = async (
+  nextStepIds,
+  includeAutoDetected = false,
+) => getResourcesForModel(
+  NextStepResource,
+  nextStepIds,
+  includeAutoDetected,
 );
 
 // -----------------------------------------------------------------------------
@@ -1045,6 +849,15 @@ const processGoalForResourcesById = async (
   urls,
 );
 
+const getResourcesForGoals = async (
+  goalIds,
+  includeAutoDetected = false,
+) => getResourcesForModel(
+  GoalResource,
+  goalIds,
+  includeAutoDetected,
+);
+
 // -----------------------------------------------------------------------------
 // Goal Template Resource Processing
 // -----------------------------------------------------------------------------
@@ -1093,6 +906,15 @@ const processGoalTemplateForResourcesById = async (
   processGoalTemplateForResources,
   goalTemplateId,
   urls,
+);
+
+const getResourcesForGoalTemplates = async (
+  goalTemplateIds,
+  includeAutoDetected = false,
+) => getResourcesForModel(
+  GoalTemplateResource,
+  goalTemplateIds,
+  includeAutoDetected,
 );
 
 // -----------------------------------------------------------------------------
@@ -1145,6 +967,16 @@ const processActivityReportGoalForResourcesById = async (
   urls,
 );
 
+const getResourcesForActivityReportGoals = async (
+  goalIds,
+  includeAutoDetected = false,
+) => getResourcesForModel(
+  ActivityReportGoalResource,
+  goalIds,
+  REPORTGOAL_AUTODETECTED_FIELDS,
+  includeAutoDetected,
+);
+
 // -----------------------------------------------------------------------------
 // Objectives Resource Processing
 // -----------------------------------------------------------------------------
@@ -1193,6 +1025,15 @@ const processObjectiveForResourcesById = async (
   processObjectiveForResources,
   objectiveId,
   urls,
+);
+
+const getResourcesForObjectives = async (
+  objectiveIds,
+  includeAutoDetected = false,
+) => getResourcesForModel(
+  ObjectiveResource,
+  objectiveIds,
+  includeAutoDetected,
 );
 
 // -----------------------------------------------------------------------------
@@ -1245,6 +1086,15 @@ const processObjectiveTemplateForResourcesById = async (
   urls,
 );
 
+const getResourcesForObjectiveTemplates = async (
+  objectiveTemplateIds,
+  includeAutoDetected = false,
+) => getResourcesForModel(
+  ObjectiveTemplateResource,
+  objectiveTemplateIds,
+  includeAutoDetected,
+);
+
 // -----------------------------------------------------------------------------
 // Report Objectives Resource Processing
 // -----------------------------------------------------------------------------
@@ -1295,53 +1145,6 @@ const processActivityReportObjectiveForResourcesById = async (
   urls,
 );
 
-// -----------------------------------------------------------------------------
-const getResourcesForActivityReports = async (
-  reportIds,
-  includeAutoDetected = false,
-) => getResourcesForModel(
-  ActivityReportResource,
-  reportIds,
-  includeAutoDetected,
-);
-
-const getResourcesForNextSteps = async (
-  nextStepIds,
-  includeAutoDetected = false,
-) => getResourcesForModel(
-  NextStepResource,
-  nextStepIds,
-  includeAutoDetected,
-);
-
-const getResourcesForGoals = async (
-  goalIds,
-  includeAutoDetected = false,
-) => getResourcesForModel(
-  GoalResource,
-  goalIds,
-  includeAutoDetected,
-);
-
-const getResourcesForActivityReportGoals = async (
-  goalIds,
-  includeAutoDetected = false,
-) => getResourcesForModel(
-  ActivityReportGoalResource,
-  goalIds,
-  REPORTGOAL_AUTODETECTED_FIELDS,
-  includeAutoDetected,
-);
-
-const getResourcesForObjectives = async (
-  objectiveIds,
-  includeAutoDetected = false,
-) => getResourcesForModel(
-  ObjectiveResource,
-  objectiveIds,
-  includeAutoDetected,
-);
-
 const getResourcesForActivityReportObjectives = async (
   objectiveIds,
   includeAutoDetected = false,
@@ -1350,6 +1153,8 @@ const getResourcesForActivityReportObjectives = async (
   objectiveIds,
   includeAutoDetected,
 );
+
+// -----------------------------------------------------------------------------
 
 export {
   // Resource Table
@@ -1365,41 +1170,53 @@ export {
   filterResourcesForSync,
   genericProcessEntityForResourcesById,
   genericProcessEntityForResources,
+  genericSyncResourcesForEntity,
   // ActivityReports Resource Processing
   calculateIsAutoDetectedForActivityReports,
   syncResourcesForActivityReport,
   processActivityReportForResources,
   processActivityReportForResourcesById,
+  getResourcesForActivityReports,
   // NextSteps Resource Processing
   calculateIsAutoDetectedForNextStep,
   syncResourcesForNextStep,
   processNextStepForResources,
   processNextStepForResourcesById,
+  getResourcesForNextSteps,
   // Goal Resource processing
   calculateIsAutoDetectedForGoal,
   syncResourcesForGoal,
   processGoalForResources,
   processGoalForResourcesById,
+  getResourcesForGoals,
+  // Goal Template Resource processing
+  calculateIsAutoDetectedForGoalTemplate,
+  syncResourcesForGoalTemplate,
+  processGoalTemplateForResources,
+  processGoalTemplateForResourcesById,
+  getResourcesForGoalTemplates,
   // ActivityReportGoal Resource Processing
   calculateIsAutoDetectedForActivityReportGoal,
   syncResourcesForActivityReportGoal,
   processActivityReportGoalForResources,
   processActivityReportGoalForResourcesById,
+  getResourcesForActivityReportGoals,
   // Objective Resource processing
   calculateIsAutoDetectedForObjective,
   syncResourcesForObjective,
   processObjectiveForResources,
   processObjectiveForResourcesById,
+  getResourcesForObjectives,
+  // Objective Resource processing
+  calculateIsAutoDetectedForObjectiveTemplate,
+  syncResourcesForObjectiveTemplate,
+  processObjectiveTemplateForResources,
+  processObjectiveTemplateForResourcesById,
+  getResourcesForObjectiveTemplates,
   // ActivityReportObjective Resource Processing
   calculateIsAutoDetectedForActivityReportObjective,
   syncResourcesForActivityReportObjective,
   processActivityReportObjectiveForResources,
   processActivityReportObjectiveForResourcesById,
-
-  getResourcesForActivityReports,
-  getResourcesForNextSteps,
-  getResourcesForGoals,
-  getResourcesForActivityReportGoals,
-  getResourcesForObjectives,
   getResourcesForActivityReportObjectives,
 };
