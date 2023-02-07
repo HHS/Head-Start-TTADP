@@ -285,12 +285,20 @@ export const SOURCE_FIELD = {
     TIMEFRAME: 'timeframe',
     RESOURCE: 'resource',
   },
+  GOALTEMPLATE: {
+    NAME: 'name',
+    RESOURCE: 'resource',
+  },
   REPORTGOAL: {
     NAME: 'name',
     TIMEFRAME: 'timeframe',
     RESOURCE: 'resource',
   },
   OBJECTIVE: {
+    TITLE: 'title',
+    RESOURCE: 'resource',
+  },
+  OBJECTIVETEMPLATE: {
     TITLE: 'title',
     RESOURCE: 'resource',
   },
