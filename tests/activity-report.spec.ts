@@ -487,7 +487,7 @@ test.describe('Activity Report', () => {
       .click();
     await page.locator('#react-select-13-option-0').getByText('Create new goal').click();
     await page.getByTestId('textarea').fill('test goal 1');
-    await page.getByTestId('form').getByText('No').click();
+    await page.getByRole('group', { name: 'Goal type*' }).getByText('RTTAPA', { exact: true }).click();
 
     // create a new objective
     await createNewObjective(page);
@@ -515,7 +515,7 @@ test.describe('Activity Report', () => {
       .click();
     await page.locator('#react-select-21-option-0').getByText('Create new goal').click();
     await page.getByTestId('textarea').fill('Test goal 2');
-    await page.getByRole('group', { name: 'Is this a Recipient TTA Plan Agreement (RTTAPA) goal?*' }).getByText('No').click();
+    await page.getByRole('group', { name: 'Goal type*' }).getByText('RTTAPA', { exact: true }).click();
 
     // create a new objective
     await createNewObjective(page);
