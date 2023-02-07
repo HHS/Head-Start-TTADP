@@ -85,9 +85,7 @@ describe('other entity report', () => {
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
     // select an approver
-    const approverDropdown = page.getByLabel(/Approving manager/i);
-    await approverDropdown.click();
-    await page.keyboard.press('ArrowDown');
+    await page.getByLabel(/Approving manager/i).focus();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     

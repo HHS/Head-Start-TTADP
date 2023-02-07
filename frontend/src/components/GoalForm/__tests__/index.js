@@ -173,7 +173,7 @@ describe('create goal', () => {
     userEvent.type(ed, '08/15/2023');
 
     const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
-    const radio = within(fieldset).getByLabelText('Yes');
+    const radio = within(fieldset).getByLabelText('RTTAPA');
     userEvent.click(radio);
 
     const save = await screen.findByRole('button', { name: /save and continue/i });
@@ -266,7 +266,7 @@ describe('create goal', () => {
     await screen.findByText('Select yes or no');
 
     const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
-    const radio = within(fieldset).getByLabelText('Yes');
+    const radio = within(fieldset).getByLabelText('RTTAPA');
     userEvent.click(radio);
 
     expect(fetchMock.called()).toBe(false);
@@ -308,7 +308,7 @@ describe('create goal', () => {
     userEvent.type(ed, '08/15/2023');
 
     const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
-    const radio = within(fieldset).getByLabelText('Yes');
+    const radio = within(fieldset).getByLabelText('RTTAPA');
     userEvent.click(radio);
 
     const save = await screen.findByRole('button', { name: /save and continue/i });
@@ -375,7 +375,7 @@ describe('create goal', () => {
     userEvent.type(ed, '08/15/2023');
 
     const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
-    const radio = within(fieldset).getByLabelText('Yes');
+    const radio = within(fieldset).getByLabelText('RTTAPA');
     userEvent.click(radio);
 
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
@@ -434,7 +434,7 @@ describe('create goal', () => {
     userEvent.type(ed, '08/15/2023');
 
     let fieldset = document.querySelector('.ttahub-goal-is-rttapa');
-    let radio = within(fieldset).getByLabelText('Yes');
+    let radio = within(fieldset).getByLabelText('RTTAPA');
     userEvent.click(radio);
 
     let newObjective = await screen.findByRole('button', { name: 'Add new objective' });
@@ -475,7 +475,7 @@ describe('create goal', () => {
     userEvent.type(ed, '08/15/2023');
 
     fieldset = document.querySelector('.ttahub-goal-is-rttapa');
-    radio = within(fieldset).getByLabelText('Yes');
+    radio = within(fieldset).getByLabelText('RTTAPA');
     userEvent.click(radio);
 
     newObjective = await screen.findByRole('button', { name: 'Add new objective' });
@@ -529,7 +529,7 @@ describe('create goal', () => {
     userEvent.type(ed, '08/15/2023');
 
     const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
-    const radio = within(fieldset).getByLabelText('Yes');
+    const radio = within(fieldset).getByLabelText('RTTAPA');
     userEvent.click(radio);
 
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
@@ -589,7 +589,7 @@ describe('create goal', () => {
     userEvent.type(ed, '08/15/2023');
 
     const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
-    const radio = within(fieldset).getByLabelText('Yes');
+    const radio = within(fieldset).getByLabelText('RTTAPA');
     userEvent.click(radio);
 
     const cancel = await screen.findByRole('link', { name: 'Cancel' });
@@ -648,7 +648,7 @@ describe('create goal', () => {
     userEvent.type(ed, '08/15/2023');
 
     const fieldset = document.querySelector('.ttahub-goal-is-rttapa');
-    const radio = within(fieldset).getByLabelText('Yes');
+    const radio = within(fieldset).getByLabelText('RTTAPA');
     userEvent.click(radio);
 
     let newObjective = await screen.findByRole('button', { name: 'Add new objective' });
@@ -795,7 +795,7 @@ describe('create goal', () => {
     fetchMock.get('/api/recipient/1/goals?goalIds=', [{
       name: 'This is a goal name',
       status: 'Not Started',
-      endDate: '2021-10-08',
+      endDate: '10/08/2021',
       goalNumbers: ['G-12389'],
       isRttapa: '',
       grants: [{
@@ -833,7 +833,7 @@ describe('create goal', () => {
     fetchMock.get('/api/recipient/1/goals?goalIds=', [{
       name: 'This is a goal name',
       status: 'Draft',
-      endDate: '2021-10-08',
+      endDate: '10/08/2021',
       goalNumbers: ['G-12389'],
       isRttapa: 'Yes',
       grants: [{
@@ -871,7 +871,7 @@ describe('create goal', () => {
     fetchMock.get('/api/recipient/1/goals?goalIds=', [{
       name: 'This is a goal name',
       status: 'Not Started',
-      endDate: '2021-10-08',
+      endDate: '10/08/2021',
       goalNumbers: ['G-12389'],
       isRttapa: 'No',
       grants: [{
@@ -919,7 +919,7 @@ describe('create goal', () => {
     fetchMock.get('/api/recipient/1/goals?goalIds=', [{
       name: 'This is a goal name',
       status: 'In Progress',
-      endDate: '2021-10-08',
+      endDate: '10/08/2021',
       goalNumbers: ['G-12389'],
       isRttapa: 'Yes',
       grants: [{

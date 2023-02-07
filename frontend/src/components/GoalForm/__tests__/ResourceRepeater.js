@@ -22,12 +22,39 @@ describe('ResourceRepeater', () => {
       userCanEdit
     />);
 
-    expect(await screen.findByText('Link to TTA resource used')).toBeVisible();
+    expect(await screen.findByText('Link to TTA resource')).toBeVisible();
     const resources1 = document.querySelector('input[value=\'http://www.resources.com\']');
     expect(resources1).not.toBeNull();
     const resources2 = await screen.findByText('http://www.resources2.com');
     expect(resources2).toBeVisible();
     expect(resources2.tagName).toBe('A');
+    expect(screen.queryAllByText('Copy & paste web address of TTA resource used for this objective. Usually an ECLKC page.').length).toBe(2);
+  });
+
+  it('render with alternate tool tip', async () => {
+    render(<ResourceRepeater
+      error={<></>}
+      resources={[
+        { key: 1, value: 'http://www.resources.com', onAnyReport: false },
+        { key: 1, value: 'http://www.resources2.com', onAnyReport: true },
+      ]}
+      setResources={jest.fn()}
+      validateResources={jest.fn()}
+      status="In Progress"
+      isOnReport={false}
+      isLoading={false}
+      goalStatus="In Progress"
+      userCanEdit
+      toolTipText="Copy & paste web address of TTA resource you'll use for this objective. Usually an ECLKC page."
+    />);
+
+    expect(await screen.findByText('Link to TTA resource')).toBeVisible();
+    const resources1 = document.querySelector('input[value=\'http://www.resources.com\']');
+    expect(resources1).not.toBeNull();
+    const resources2 = await screen.findByText('http://www.resources2.com');
+    expect(resources2).toBeVisible();
+    expect(resources2.tagName).toBe('A');
+    expect(screen.queryAllByText("Copy & paste web address of TTA resource you'll use for this objective. Usually an ECLKC page.").length).toBe(2);
   });
 
   it('shows the read only view for used resources', async () => {

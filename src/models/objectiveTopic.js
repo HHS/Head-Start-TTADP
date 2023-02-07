@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { afterCreate, afterDestroy } = require('./hooks/objectiveTopic');
+const { beforeValidate, afterCreate, afterDestroy } = require('./hooks/objectiveTopic');
 
 /**
    * ObjectiveTopic table. Junction table
@@ -29,10 +29,19 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
+    onAR: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
+    onApprovedAR: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
   }, {
     sequelize,
     modelName: 'ObjectiveTopic',
     hooks: {
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
     },

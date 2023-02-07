@@ -69,7 +69,7 @@ const deleteOnlyFile = async (req, res) => {
 
   const user = await userById(userId);
   const policy = new Users(user);
-  if (!policy.canWriteInAtLeastOneRegion) {
+  if (!policy.canWriteInAtLeastOneRegion()) {
     return res.status(400).send({ error: 'Write permissions required' });
   }
 
@@ -149,11 +149,12 @@ const linkHandler = async (req, res) => {
     reportId,
     reportObjectiveId,
     objectiveId,
-    objectiveTempleteId,
+    objectiveTemplateId,
     fileId,
   } = req.params;
 
   const userId = await currentUserId(req, res);
+
   const user = await userById(userId);
   const [report] = await activityReportAndRecipientsById(reportId);
   const authorization = new ActivityReportPolicy(user, report);
@@ -165,7 +166,7 @@ const linkHandler = async (req, res) => {
   try {
     const file = await getFileById(fileId);
     if (reportId
-      && !(reportId in file.reportFiles.map((r) => r.activityReportId))) {
+      && !(file.reportFiles.map((r) => r.activityReportId).includes(reportId))) {
       createActivityReportFileMetaData(
         file.originalFilename,
         file.fileName,
@@ -173,7 +174,10 @@ const linkHandler = async (req, res) => {
         file.size,
       );
     } else if (reportObjectiveId
-      && !(reportObjectiveId in file.reportObjectiveFiles.map((aro) => aro.reportObjectiveId))) {
+      && !(
+        file.reportObjectiveFiles.map((aro) => aro.reportObjectiveId)
+          .includes(reportObjectiveId)
+      )) {
       createActivityReportObjectiveFileMetaData(
         file.originalFilename,
         file.fileName,
@@ -181,19 +185,22 @@ const linkHandler = async (req, res) => {
         file.size,
       );
     } else if (objectiveId
-      && !(objectiveId in file.objectiveFiles.map((r) => r.objectiveId))) {
+      && !(file.objectiveFiles.map((r) => r.objectiveId).includes(objectiveId))) {
       createObjectiveFileMetaData(
         file.originalFilename,
         file.fileName,
         reportId,
         file.size,
       );
-    } else if (objectiveTempleteId
-      && !(objectiveTempleteId in file.objectiveTemplateFiles.map((r) => r.objectiveTempleteId))) {
+    } else if (objectiveTemplateId
+      && !(
+        file.objectiveTemplateFiles.map((r) => r.objectiveTemplateId)
+          .includes(objectiveTemplateId)
+      )) {
       createObjectiveTemplateFileMetaData(
         file.originalFilename,
         file.fileName,
-        objectiveTempleteId,
+        objectiveTemplateId,
         file.size,
       );
     }
@@ -509,6 +516,8 @@ async function deleteActivityReportObjectiveFile(req, res) {
           required: true,
         },
       ],
+      hookMetadata: { objectiveIds },
+      individualHooks: true,
     });
 
     res.status(204).send();

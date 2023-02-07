@@ -1,6 +1,5 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useContext } from 'react';
-import moment from 'moment';
 import PropTypes from 'prop-types';
 import {
   Alert,
@@ -36,7 +35,6 @@ export default function Form({
   validateGoalName,
   validateEndDate,
   validateGrantNumbers,
-  validateIsRttapa,
   validateGoalNameAndRecipients,
   objectives,
   setObjectives,
@@ -147,7 +145,6 @@ export default function Form({
       <GoalRttapa
         error={errors[FORM_FIELD_INDEXES.IS_RTTAPA]}
         isRttapa={isRttapa}
-        onBlur={validateIsRttapa}
         onChange={setIsRttapa}
         isLoading={isAppLoading}
         goalStatus={status}
@@ -159,7 +156,7 @@ export default function Form({
         error={errors[FORM_FIELD_INDEXES.END_DATE]}
         isOnApprovedReport={isOnApprovedReport}
         setEndDate={setEndDate}
-        endDate={moment(endDate, 'YYYY-MM-DD').format('MM/DD/YYYY')}
+        endDate={endDate}
         validateEndDate={validateEndDate}
         key={datePickerKey}
         isLoading={isAppLoading}
@@ -203,7 +200,6 @@ Form.propTypes = {
   validateGoalName: PropTypes.func.isRequired,
   validateEndDate: PropTypes.func.isRequired,
   validateGrantNumbers: PropTypes.func.isRequired,
-  validateIsRttapa: PropTypes.func.isRequired,
   isRttapa: PropTypes.string.isRequired,
   setIsRttapa: PropTypes.func.isRequired,
   setObjectiveError: PropTypes.func.isRequired,
