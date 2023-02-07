@@ -57,15 +57,17 @@ async function getRecipient(page: Page) {
  * to temporarily reverse the returned array to return "01HP044445, 01HP04444" instead
  * @param recipients - the recipients string
  */
-async function getGrants(recipients: string) {
+function getGrants(recipients: string): string[] {
   const recArray = recipients.split(', ');
   // remove potential elements without grant numbers
   const recArrayGrants = recArray.filter((el) => el.indexOf(' - ') > 0);
-  const grants = recArrayGrants.map((r) => r.split('-')[1].trim());
 
-  // Need to reverse temporarily (bug)
-  const temp = grants.reverse();
-  return temp.toString().replace(',', ', ');
+  return recArrayGrants
+    .map((r) => r.split('-')[1].trim())
+    .toString()
+    .replace(',', ' ')
+    .replace(/\s+/g, ' ')
+    .split(' ');
 }
 
 /**
@@ -314,7 +316,7 @@ test.describe("Activity Report", () => {
     await expect(page.getByText(/these are my manager notes/i)).toBeVisible();
 
     const recipients = await page.locator('span:near(p:text("Recipient names"))').first().textContent();
-    const grants = await getGrants(recipients || '');
+    const grants = getGrants(recipients || '');
 
     // navigate to the Recipient TTA Records page
     await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
@@ -357,7 +359,9 @@ test.describe("Activity Report", () => {
     // Access parent with '..' 
     await expect(page.getByText('g1o1', {exact: true}).locator('..').locator('..').getByText('Grant numbers')).toBeVisible();
     // verify the grants are visible in the objective section
-    await expect(page.getByText('g1o1', {exact: true}).locator('..').locator('..').getByText(grants)).toBeVisible();    
+    await Promise.all(
+      grants.map(async (grant) => expect(page.getByText('g1o1', { exact: true }).locator('..').locator('..').getByText(grant)).toBeVisible()),
+    );
     // verify the reason is visible in the objective section
     const goalOneContent = await page.getByText('g1o1', {exact: true}).locator('..').locator('..').textContent();
     expect(goalOneContent).toContain('Change in Scope');
@@ -374,7 +378,9 @@ test.describe("Activity Report", () => {
     await expect(page.getByText('g2o1', {exact: true}).locator('..').locator('..').getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
     await expect(page.getByText('g2o1', {exact: true}).locator('..').locator('..').getByText('Grant numbers')).toBeVisible();
     // verify the grants are visible in the objective section
-    await expect(page.getByText('g2o1', {exact: true}).locator('..').locator('..').getByText(grants)).toBeVisible();
+    await Promise.all(
+      grants.map(async (grant) => expect(page.getByText('g2o1', { exact: true }).locator('..').locator('..').getByText(grant)).toBeVisible()),
+    );
     const goalTwoContent = await page.getByText('g2o1', {exact: true}).locator('..').locator('..').textContent();
     expect(goalTwoContent).toContain('Change in Scope');
     // verify the end date is visible in the objective section
