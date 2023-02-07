@@ -257,6 +257,8 @@ jobs:
           root: .
           paths:
             - .
+    # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
+    resource_class: large
   test_backend:
     executor: docker-postgres-elasticsearch-executor
     environment:
@@ -293,6 +295,7 @@ jobs:
           path: backend-coverage-artifacts.tar
       - store_test_results:
           path: reports/
+    resource_class: large
   test_frontend:
     executor: docker-executor
     steps:
@@ -316,6 +319,7 @@ jobs:
           path: frontend/reports/
       - store_artifacts:
           path: frontend/coverage/
+    resource_class: large
   test_e2e:
     executor: docker-postgres-elasticsearch-executor
     environment:
@@ -351,6 +355,7 @@ jobs:
           command: yarn e2e:ci
       - store_artifacts:
           path: playwright/
+    resource_class: large
   cucumber_test:
     executor: docker-postgres-executor
     steps:
@@ -377,6 +382,7 @@ jobs:
             yarn cucumber:ci
       - store_artifacts:
           path: reports/
+    resource_class: large
   dynamic_security_scan:
     executor: machine-executor
     steps:
@@ -399,6 +405,7 @@ jobs:
           command: ./bin/run-owasp-scan
       - store_artifacts:
           path: reports/owasp_report.html
+    resource_class: large
   accessibility_scan:
     executor: docker-postgres-executor
     steps:
@@ -428,6 +435,7 @@ jobs:
             yarn axe:ci
       - store_artifacts:
           path: reports/
+    resource_class: large
   deploy:
     executor: docker-executor
     steps:
@@ -618,6 +626,7 @@ jobs:
                 env_name: prod
                 new_relic_app_id: << pipeline.parameters.prod_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
+    resource_class: large
 workflows:
   build_test_deploy:
     jobs:
