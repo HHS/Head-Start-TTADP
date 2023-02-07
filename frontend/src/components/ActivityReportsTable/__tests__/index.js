@@ -37,7 +37,7 @@ const TableMock = ({ user, dateTime }) => {
         <UserContext.Provider value={{ user }}>
           <button
             type="button"
-            onClick={setResetPagination}
+            onClick={() => setResetPagination(!resetPagination)}
             data-testid="reset-pagination"
           >
             Reset pagination
@@ -571,6 +571,19 @@ describe('Table sorting', () => {
     );
 
     act(() => fireEvent.click(resetButton));
+
+    // confirm that the data has been refetched
     await waitFor(() => expect(fetchMock.called()).toBe(true));
+
+    // check the pagination has reset
+    const [pagination] = screen.getAllByText(/1-10 of 17/i);
+    expect(pagination).toBeVisible();
+
+    // check the active page is reset
+    const [activePage] = screen.getAllByRole('link', {
+      name: /go to page number 1/i,
+    });
+
+    expect(activePage).toBeVisible();
   });
 });
