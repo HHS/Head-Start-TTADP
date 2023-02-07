@@ -257,6 +257,8 @@ jobs:
           root: .
           paths:
             - .
+    # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
+    resource_class: large
   test_backend:
     executor: docker-postgres-elasticsearch-executor
     environment:
@@ -293,6 +295,7 @@ jobs:
           path: backend-coverage-artifacts.tar
       - store_test_results:
           path: reports/
+    resource_class: large
   test_frontend:
     executor: docker-executor
     steps:
@@ -377,6 +380,7 @@ jobs:
             yarn cucumber:ci
       - store_artifacts:
           path: reports/
+    resource_class: large
   dynamic_security_scan:
     executor: machine-executor
     steps:
