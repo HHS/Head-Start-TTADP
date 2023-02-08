@@ -383,7 +383,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
             "ResourcesOnReport" AS (
               SELECT DISTINCT
                 aro."objectiveId",
-                aror."userProvidedUrl"
+                aror."resourceId"
               FROM "ActivityReportObjectives" aro
               JOIN "ActivityReportObjectiveResources" aror
               ON aro.id = aror."activityReportObjectiveId"
@@ -395,7 +395,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
               AND aro2."objectiveId" IN (${objectives.map((o) => o.id).join(',')})
               LEFT JOIN "ActivityReportObjectiveResources" aror2
               ON aro2.id = aror2."activityReportObjectiveId"
-              AND aror."userProvidedUrl" = aror2."userProvidedUrl"
+              AND aror."resourceId" = aror2."resourceId"
               WHERE aror2."id" IS NULL
             )
             UPDATE "ObjectiveResources" r
@@ -403,7 +403,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
             FROM "ResourcesOnReport" rr
             WHERE r."onApprovedAR" = true
             AND r."objectiveId" = rr."objectiveId"
-            AND r."userProvidedUrl" = rr."userProvidedUrl";
+            AND r."resourceId" = rr."resourceId";
           `, { transaction: options.transaction }),
           // update the onApprovedAR for topics that will no longer be referenced on an approved AR
           sequelize.query(`

@@ -5,6 +5,7 @@ import db, {
   ObjectiveFile,
   Topic,
   ObjectiveTopic,
+  Resource,
 } from '../../models';
 import { saveObjectiveAssociations } from '../goals';
 import { OBJECTIVE_STATUS } from '../../constants';
@@ -21,8 +22,8 @@ describe('saveObjectiveAssociations', () => {
         title: 'Objective 1',
         status: OBJECTIVE_STATUS.IN_PROGRESS,
       });
-      processObjectiveForResourcesById(existingObjective.id, ['https://example.com']);
-      [resource] = await getResourcesForObjectives(existingObjective.id);
+
+      [resource] = await processObjectiveForResourcesById(existingObjective.id, ['https://example.com']);
 
       topic1 = await Topic.create({
         name: 'Dancing in the moonlight',
@@ -43,24 +44,28 @@ describe('saveObjectiveAssociations', () => {
         where: {
           objectiveId: [existingObjective.id],
         },
+        individualHooks: true,
       });
 
       await ObjectiveTopic.destroy({
         where: {
           objectiveId: [existingObjective.id],
         },
+        individualHooks: true,
       });
 
       await Objective.destroy({
         where: {
           id: [existingObjective.id],
         },
+        individualHooks: true,
       });
 
       await Topic.destroy({
         where: {
           id: [topic1.id, topic2.id],
         },
+        individualHooks: true,
       });
 
       await db.sequelize.close();
@@ -94,10 +99,15 @@ describe('saveObjectiveAssociations', () => {
         where: {
           objectiveId: existingObjective.id,
         },
+        include: [{
+          attributes: ['url'],
+          model: Resource,
+          as: 'resource',
+        }],
       });
 
       expect(savedResources.length).toEqual(2);
-      const urls = savedResources.map((r) => r.userProvidedUrl);
+      const urls = savedResources.map((r) => r.resource.dataValues.url);
       expect(urls).toContain('http://www.example2.com');
       expect(urls).toContain('https://example.com');
 
@@ -124,10 +134,15 @@ describe('saveObjectiveAssociations', () => {
         where: {
           objectiveId: existingObjective.id,
         },
+        include: [{
+          attributes: ['url'],
+          model: Resource,
+          as: 'resource',
+        }],
       });
 
       expect(savedResources.length).toEqual(2);
-      let urls = savedResources.map((r) => r.userProvidedUrl);
+      let urls = savedResources.map((r) => r.resource.dataValues.url);
       expect(urls).toContain('http://www.example2.com');
       expect(urls).toContain('https://example.com');
 
@@ -172,10 +187,15 @@ describe('saveObjectiveAssociations', () => {
         where: {
           objectiveId: existingObjective.id,
         },
+        include: [{
+          attributes: ['url'],
+          model: Resource,
+          as: 'resource',
+        }],
       });
 
       expect(savedResources.length).toEqual(1);
-      urls = savedResources.map((r) => r.userProvidedUrl);
+      urls = savedResources.map((r) => r.resource.dataValues.url);
       expect(urls).toContain('https://example.com');
 
       savedTopics = await ObjectiveTopic.findAll({

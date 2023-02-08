@@ -16,9 +16,10 @@ import db, {
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
   File,
+  Resource,
 } from '../../models';
 import { createReport, destroyReport } from '../../testUtils';
-
+import { processObjectiveForResourcesById } from '../resource';
 import { goalByIdAndRecipient, saveGoalsForReport } from '../goals';
 import { FILE_STATUSES, REPORT_STATUSES } from '../../constants';
 
@@ -82,15 +83,7 @@ describe('goalById', () => {
       objectiveId: objective.id,
     });
 
-    await ObjectiveResource.create({
-      objectiveId: objective.id,
-      userProvidedUrl: 'http://www.google.com',
-    });
-
-    await ObjectiveResource.create({
-      objectiveId: objective.id,
-      userProvidedUrl: 'http://www.google1.com',
-    });
+    await processObjectiveForResourcesById(objective.id, ['http://www.google.com', 'http://www.google1.com']);
 
     file = await File.create({
       originalFileName: 'gibbery-pibbery.txt',
@@ -163,42 +156,54 @@ describe('goalById', () => {
       where: {
         id: aroIds,
       },
+      individualHooks: true,
     });
 
     await ObjectiveTopic.destroy({
       where: {
         objectiveId: objective.id,
       },
+      individualHooks: true,
     });
 
     await ObjectiveFile.destroy({
       where: {
         objectiveId: objective.id,
       },
+      individualHooks: true,
     });
 
     await File.destroy({
       where: {
         id: [file.id, file2.id],
       },
+      individualHooks: true,
     });
 
     await ObjectiveResource.destroy({
       where: {
         objectiveId: objective.id,
       },
+      individualHooks: true,
+    });
+
+    await Resource.destroy({
+      where: { url: ['http://www.google.com', 'http://www.google1.com'] },
+      individualHooks: true,
     });
 
     await Objective.destroy({
       where: {
         goalId: goalOnActivityReport.id,
       },
+      individualHooks: true,
     });
 
     await ActivityReportGoal.destroy({
       where: {
         activityReportId: report.id,
       },
+      individualHooks: true,
     });
 
     await destroyReport(report);
@@ -207,18 +212,21 @@ describe('goalById', () => {
       where: {
         id: goalOnActivityReport.id,
       },
+      individualHooks: true,
     });
 
     await Grant.destroy({
       where: {
         id: grantForReport.id,
       },
+      individualHooks: true,
     });
 
     await Recipient.destroy({
       where: {
         id: grantRecipient.id,
       },
+      individualHooks: true,
     });
 
     await db.sequelize.close();
