@@ -1,4 +1,12 @@
-import { GOAL_STATUS } from '../../constants';
+const { GOAL_STATUS } = require('../../constants');
+const { calculateIsAutoDetectedForNextStep, processNextStepForResourcesById } = require('../../services/resource');
+
+const processForEmbeddedResources = async (sequelize, instance, options) => {
+  const changed = instance.changed();
+  if (calculateIsAutoDetectedForNextStep(changed)) {
+    await processNextStepForResourcesById(instance.id);
+  }
+};
 
 const findOrCreateGoalTemplate = async (sequelize, transaction, regionId, name, createdAt) => {
   const goalTemplate = await sequelize.models.GoalTemplate.findOrCreate({
@@ -151,11 +159,17 @@ const beforeUpdate = async (sequelize, instance, options) => {
   autoPopulateStatusChangeDates(sequelize, instance, options);
 };
 
+const afterCreate = async (sequelize, instance, options) => {
+  await processForEmbeddedResources(sequelize, instance, options);
+};
+
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateName(sequelize, instance, options);
+  await processForEmbeddedResources(sequelize, instance, options);
 };
 
 export {
+  processForEmbeddedResources,
   findOrCreateGoalTemplate,
   // autoPopulateGoalTemplateId,
   autoPopulateOnApprovedAR,
@@ -164,5 +178,6 @@ export {
   propagateName,
   beforeValidate,
   beforeUpdate,
+  afterCreate,
   afterUpdate,
 };

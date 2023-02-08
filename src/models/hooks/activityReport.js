@@ -10,6 +10,14 @@ const {
 const { collectModelData } = require('../../lib/awsElasticSearch/datacollector');
 const { formatModelForAwsElasticsearch } = require('../../lib/awsElasticSearch/modelMapper');
 const { addIndexDocument, deleteIndexDocument } = require('../../lib/awsElasticSearch/index');
+const { calculateIsAutoDetectedForActivityReports, processActivityReportForResourcesById } = require('../../services/resource');
+
+const processForEmbeddedResources = async (sequelize, instance, options) => {
+  const changed = instance.changed();
+  if (calculateIsAutoDetectedForActivityReports(changed)) {
+    await processActivityReportForResourcesById(instance.id);
+  }
+};
 
 /**
  * Helper function called by model hooks.
@@ -783,6 +791,10 @@ const updateAwsElasticsearchIndexes = async (sequelize, instance) => {
   }
 };
 
+const afterCreate = async (sequelize, instance, options) => {
+  await processForEmbeddedResources(sequelize, instance, options);
+};
+
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateSubmissionStatus(sequelize, instance, options);
   await propagateApprovedStatus(sequelize, instance, options);
@@ -790,16 +802,19 @@ const afterUpdate = async (sequelize, instance, options) => {
   await automaticGoalObjectiveStatusCachingOnApproval(sequelize, instance, options);
   await moveDraftGoalsToNotStartedOnSubmission(sequelize, instance, options);
   await automaticIsRttapaChangeOnApprovalForGoals(sequelize, instance, options);
+  await processForEmbeddedResources(sequelize, instance, options);
   await updateAwsElasticsearchIndexes(sequelize, instance);
 };
 
 export {
+  processForEmbeddedResources,
   copyStatus,
   propagateApprovedStatus,
   propagateSubmissionStatus,
   automaticStatusChangeOnApprovalForGoals,
   beforeCreate,
   beforeUpdate,
+  afterCreate,
   afterUpdate,
   moveDraftGoalsToNotStartedOnSubmission,
 };

@@ -1,7 +1,12 @@
 const { Model } = require('sequelize');
 const { CLOSE_SUSPEND_REASONS } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
-const { beforeValidate, beforeUpdate, afterUpdate } = require('./hooks/goal');
+const {
+  beforeValidate,
+  beforeUpdate,
+  afterCreate,
+  afterUpdate,
+} = require('./hooks/goal');
 
 /**
  * Goals table. Stores goals for tta.
@@ -141,6 +146,7 @@ export default (sequelize, DataTypes) => {
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });
