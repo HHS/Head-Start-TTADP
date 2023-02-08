@@ -1,6 +1,5 @@
 import faker from '@faker-js/faker';
-import crypto from 'crypto';
-import { AUTOMATIC_CREATION, GOAL_STATUS, OBJECTIVE_STATUS } from '../../constants';
+import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../constants';
 import SCOPES from '../../middleware/scopeConstants';
 import {
   ActivityReport,
@@ -8,7 +7,6 @@ import {
   ActivityRecipient,
   ActivityReportObjective,
   ActivityReportObjectiveTopic,
-  GoalTemplate,
   Goal,
   Grant,
   NextStep,
@@ -34,13 +32,13 @@ describe('saveReport', () => {
 
   const grantAndRecipientId = faker.datatype.number({ min: 999 });
 
-  let goalTemplate;
   let firstGoal;
   let secondGoal;
   let firstGrant;
   let secondGrant;
   let recipient;
-  let topic;
+  let firstTopic;
+  let secondTopic;
 
   let firstReport;
   let secondReport;
@@ -91,26 +89,16 @@ describe('saveReport', () => {
       regionId: 1,
     });
 
-    topic = await Topic.create({
+    firstTopic = await Topic.create({
       name: 'New topic',
+    });
+
+    secondTopic = await Topic.create({
+      name: 'New topic 2',
     });
 
     // GOAK, I find it very funny
     const goalName = `GOAK ${faker.datatype.number({ min: 999 })}`;
-
-    const secret = 'secret';
-    const hash = crypto
-      .createHmac('md5', secret)
-      .update(goalName)
-      .digest('hex');
-
-    goalTemplate = await GoalTemplate.create({
-      templateName: goalName,
-      creationMethod: AUTOMATIC_CREATION,
-      hash,
-      regionId: 1,
-      templateNameModifiedAt: new Date(),
-    });
 
     firstGoal = await Goal.create({
       name: goalName,
@@ -119,7 +107,6 @@ describe('saveReport', () => {
       isRttapa: 'Yes',
       grantId: grantAndRecipientId,
       status: GOAL_STATUS.DRAFT,
-      goalTemplateId: goalTemplate.id,
     });
 
     secondGoal = await Goal.create({
@@ -129,7 +116,6 @@ describe('saveReport', () => {
       isRttapa: 'Yes',
       grantId: secondGrantId,
       status: GOAL_STATUS.DRAFT,
-      goalTemplateId: goalTemplate.id,
     });
   });
 
@@ -154,10 +140,9 @@ describe('saveReport', () => {
     await ActivityReport.destroy({ where: { id: [firstReport.id, secondReport.id] } });
     await Objective.destroy({ where: { goalId: goalsToDelete.map(({ id }) => id) } });
     await Goal.destroy({ where: { id: goalsToDelete.map(({ id }) => id) } });
-    await GoalTemplate.destroy({ where: { id: goalTemplate.id } });
     await Grant.destroy({ where: { id: [firstGrant.id, secondGrant.id] } });
     await Recipient.destroy({ where: { id: recipient.id } });
-    await Topic.destroy({ where: { id: topic.id } });
+    await Topic.destroy({ where: { id: [firstTopic.id, secondTopic.id] } });
 
     await Permission.destroy({
       where: {
@@ -252,7 +237,7 @@ describe('saveReport', () => {
         label: firstGoal.name,
         objectives: [{
           title: 'first objective for goak',
-          topics: [{ id: topic.id, name: topic.name }],
+          topics: [{ id: firstTopic.id, name: firstTopic.name }],
           resources: [],
           files: [],
           ttaProvided: '<marquee>we are sliding</marquee>\n',
@@ -366,7 +351,7 @@ describe('saveReport', () => {
         label: firstGoal.name,
         objectives: [{
           title: 'second objective for goak',
-          topics: [{ id: topic.id, name: topic.name }],
+          topics: [{ id: secondTopic.id, name: secondTopic.name }],
           resources: [],
           files: [],
           ttaProvided: '<marquee>we are sliding</marquee>\n',
@@ -482,7 +467,6 @@ describe('saveReport', () => {
         grantIds: [secondGrant.id],
         isNew: false,
         initialRttapa: 'No',
-        goalTemplateId: goalTemplate.id,
       }],
       activityRecipients: [{
         activityRecipientId: secondGrant.id,
