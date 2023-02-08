@@ -589,6 +589,19 @@ describe('saveReport', () => {
     const [secondReportObjective] = secondReportObjectives;
     expect(secondReportObjective.title).toBe('second objective for goak');
 
+    // the grants should only have two goals (1 each)
+    const grantGoals = await Goal.findAll({
+      where: {
+        grantId: [firstGrant.id, secondGrant.id],
+      },
+    });
+
+    expect(grantGoals.length).toBe(2);
+    const grantGoalIds = grantGoals.map((g) => g.id);
+
+    expect(grantGoalIds).toContain(firstGoal.id);
+    expect(grantGoalIds).toContain(secondGoal.id);
+
     // confirm the goals are correct and that the goals have correct objectives
     // we should see the same two goals, each with one objective
 
