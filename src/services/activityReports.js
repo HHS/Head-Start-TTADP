@@ -1088,7 +1088,7 @@ export async function createOrUpdate(newActivityReport, report) {
   if (activityRecipientType === 'other-entity' && objectivesWithoutGoals) {
     await saveObjectivesForReport(objectivesWithoutGoals, savedReport);
   } else if (activityRecipientType === 'recipient' && goals) {
-    await saveGoalsForReport(goals, savedReport, recipientsWhoHaveGoalsThatShouldBeRemoved);
+    await saveGoalsForReport(goals, savedReport);
   }
 
   // Approvers are removed if approverUserIds is an empty array
