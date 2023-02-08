@@ -1,6 +1,7 @@
 /* eslint-disable dot-notation */
 /* eslint-disable no-await-in-loop */
 /* eslint-disable camelcase */
+import moment from 'moment';
 import { Client, Connection } from '@opensearch-project/opensearch';
 import aws4 from 'aws4';
 import { auditLogger, logger } from '../../logger';
@@ -197,16 +198,20 @@ const search = async (indexName, fields, query, passedClient, overrideBatchSize)
       ],
     };
 
+    const searchId = Math.floor(Math.random() * 10);
+    const timings = [];
     while (retrieveAgain && loopIterations <= maxLoopIterations) {
+      const startTime = moment();
       // Search an index.
       res = await client.search({
         index: indexName,
         body,
       });
-
+      const endTime = moment();
       // Get hits.
       const hits = res.body.hits.hits || res.body.hits;
-
+      const finishString = `QUERY RESULTS: ${hits.length} - ${endTime.diff(startTime) / 1000}sec`;
+      timings.push(finishString);
       // Check if these are new results.
       if (hits && hits.length > 0) {
         // Append new hits.
@@ -230,6 +235,12 @@ const search = async (indexName, fields, query, passedClient, overrideBatchSize)
         retrieveAgain = false;
       }
     }
+
+    logger.info(`-- START Completed Search #: ${searchId}`);
+    for (let i = 0; i < timings.length; i += 1) {
+      logger.info(`-- Loop: ${searchId}: ${timings[i]}`);
+    }
+    logger.info(`-- END Completed Search #: ${searchId}`);
     logger.info(`AWS OpenSearch: Successfully searched the index ${indexName} using query '${query}`);
     return { hits: totalHits };
   } catch (error) {
