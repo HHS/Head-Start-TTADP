@@ -19,7 +19,12 @@ import {
   Program,
   File,
 } from '../models';
-import { DECIMAL_BASE, REPORT_STATUSES, OBJECTIVE_STATUS } from '../constants';
+import {
+  DECIMAL_BASE,
+  REPORT_STATUSES,
+  OBJECTIVE_STATUS,
+  GOAL_STATUS,
+} from '../constants';
 import {
   cacheObjectiveMetadata,
   cacheGoalMetadata,
@@ -1514,18 +1519,25 @@ export async function saveGoalsForReport(goals, report) {
 
   const currentGoals = await Promise.all((goals.map(async (goal) => {
     let newGoals = [];
-    const status = goal.status ? goal.status : 'Draft';
+    const status = goal.status ? goal.status : GOAL_STATUS.DRAFT;
     const goalIds = goal.goalIds ? goal.goalIds : [];
     const endDate = goal.endDate && goal.endDate.toLowerCase() !== 'invalid date' ? goal.endDate : null;
     const isActivelyBeingEditing = goal.isActivelyBeingEditing
       ? goal.isActivelyBeingEditing : false;
 
+    const existingGrantIds = goal.grantIds ? goal.grantIds : [];
+
+    const where = existingGrantIds.length > 0 ? {
+      grantId: existingGrantIds,
+      id: goalIds,
+    } : {
+      id: goalIds,
+    };
+
     // Check if these goals exist.
     const existingGoals = Array.isArray(goalIds) && goalIds.length > 0
       ? await Goal.findAll({ // All fields are needed.
-        where: {
-          id: goalIds,
-        },
+        where,
       })
       : [];
 
@@ -1554,7 +1566,7 @@ export async function saveGoalsForReport(goals, report) {
           where: {
             name: fields.name,
             grantId,
-            status: { [Op.not]: 'Closed' },
+            status: { [Op.not]: GOAL_STATUS.CLOSED },
           },
         });
         if (!newGoal) {
@@ -1594,8 +1606,6 @@ export async function saveGoalsForReport(goals, report) {
         ...fields
       } = goal;
 
-      const { goalTemplateId } = existingGoals[0];
-
       await Promise.all(existingGoals.map(async (existingGoal) => {
         await existingGoal.update({
           status, endDate, ...fields,
@@ -1620,10 +1630,6 @@ export async function saveGoalsForReport(goals, report) {
 
         let newGoal = await Goal.findOne({ // All columns are needed for caching metadata.
           where: {
-            [Op.and]: [
-              { goalTemplateId: { [Op.not]: null } }, // We need to exclude null matches.
-              { goalTemplateId: { [Op.eq]: goalTemplateId } },
-            ],
             name: fields.name,
             grantId: gId,
             status: { [Op.not]: 'Closed' },
@@ -1632,7 +1638,6 @@ export async function saveGoalsForReport(goals, report) {
 
         if (!newGoal) {
           newGoal = await Goal.create({
-            goalTemplateId,
             grantId: gId,
             ...fields,
             status,
