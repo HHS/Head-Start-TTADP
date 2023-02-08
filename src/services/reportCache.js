@@ -1,7 +1,8 @@
+import { Sequelize } from 'sequelize';
 import { isValidResourceUrl } from '../lib/urlUtils';
 import {
   getResourcesForActivityReportObjectives,
-  processResourcesForActivityReportObjectives,
+  processActivityReportObjectiveForResourcesById,
 } from './resource';
 
 const { Op } = require('sequelize');
@@ -79,25 +80,50 @@ const cacheResources = async (objectiveId, activityReportObjectiveId, resources 
     activityReportObjectiveId,
     true,
   );
-  const aroResources = await processResourcesForActivityReportObjectives(
+  const aroResources = await processActivityReportObjectiveForResourcesById(
     activityReportObjectiveId,
     resourceUrls,
   );
   const newAROResourceIds = aroResources
     .filter((r) => !!originalAROResources.find((oR) => oR.id === r.id))
     .map((r) => r.resourceId);
+  const removedAROResourceIds = originalAROResources
+    .filter((oR) => !!aroResources.find((r) => oR.id === r.id))
+    .map((r) => r.resourceId);
 
-  return newAROResourceIds.length > 0
-    ? ObjectiveResource.update(
-      { onAR: true },
-      {
-        where: {
-          id: objectiveId,
-          resourceId: { [Op.in]: newAROResourceIds },
+  return Promise.all([
+    newAROResourceIds.length > 0
+      ? ObjectiveResource.update(
+        { onAR: true },
+        {
+          where: {
+            id: objectiveId,
+            onAR: false,
+            resourceId: { [Op.in]: newAROResourceIds },
+          },
         },
-      },
-    )
-    : Promise.resolve();
+      )
+      : Promise.resolve(),
+    removedAROResourceIds.length > 0
+      ? ObjectiveResource.update(
+        { onAR: false },
+        {
+          where: {
+            id: objectiveId,
+            onAR: true,
+            resourceId: { [Op.in]: removedAROResourceIds },
+            'ActivityReportObjectives.userEventID': { [Op.is]: null },
+          },
+          include: [{
+            model: ActivityReportObjective,
+            as: 'ActivityReportObjectives',
+            required: false,
+            where: { id: { [Op.not]: activityReportObjectiveId } },
+          }],
+        },
+      )
+      : Promise.resolve(),
+  ]);
 
   // const originalUrls = originalAROResources.map((resource) => resource.userProvidedUrl);
   // const removedUrls = originalUrls.filter((url) => !resourcesSet.has(url));
