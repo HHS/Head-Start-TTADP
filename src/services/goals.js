@@ -1549,7 +1549,7 @@ export async function saveGoalsForReport(goals, report) {
       // - Grant Id.
       // - And status is not closed.
       // Note: The existing goal should be used regardless if it was created new.
-      newGoals = await Promise.all(goal.grantIds.map(async (grantId) => {
+      newGoals = await Promise.all(grantIds.map(async (grantId) => {
         let newGoal = await Goal.findOne({
           where: {
             name: fields.name,
@@ -1613,6 +1613,7 @@ export async function saveGoalsForReport(goals, report) {
 
       newGoals = await Promise.all(grantIds.map(async (gId) => {
         const existingGoal = existingGoals.find((g) => g.grantId === gId);
+
         if (existingGoal) {
           return existingGoal;
         }
@@ -1628,6 +1629,7 @@ export async function saveGoalsForReport(goals, report) {
             status: { [Op.not]: 'Closed' },
           },
         });
+
         if (!newGoal) {
           newGoal = await Goal.create({
             goalTemplateId,
@@ -1659,8 +1661,12 @@ export async function saveGoalsForReport(goals, report) {
   })));
 
   const currentGoalIds = currentGoals.flat().map((g) => g.id);
+
   await removeActivityReportGoalsFromReport(report.id, currentGoalIds);
-  return removeUnusedGoalsObjectivesFromReport(report.id, currentObjectives);
+  return removeUnusedGoalsObjectivesFromReport(
+    report.id,
+    currentObjectives.filter((o) => currentGoalIds.includes(o.goalId)),
+  );
 }
 
 export async function updateGoalStatusById(
