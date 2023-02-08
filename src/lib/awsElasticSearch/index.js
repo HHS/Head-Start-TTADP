@@ -199,6 +199,7 @@ const search = async (indexName, fields, query, passedClient, overrideBatchSize)
     };
 
     const searchId = Math.floor(Math.random() * 10);
+    logger.info(`-- Entered #: ${searchId} - QUERY: '${query}'`);
     const timings = [];
     while (retrieveAgain && loopIterations <= maxLoopIterations) {
       const startTime = moment();
