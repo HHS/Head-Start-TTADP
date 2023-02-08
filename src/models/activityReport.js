@@ -194,6 +194,10 @@ export default (sequelize, DataTypes) => {
     ttaType: {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
+    submittedDate: {
+      type: DataTypes.DATEONLY,
+      get: formatDate,
+    },
     updatedAt: {
       allowNull: false,
       type: DataTypes.DATE,
