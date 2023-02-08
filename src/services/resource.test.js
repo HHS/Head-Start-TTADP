@@ -1320,30 +1320,26 @@ describe('resource', () => {
       ];
       beforeAll(async () => {
         resources = await findOrCreateResources(urls);
-        try {
-          [activityReport, deleteReport] = await ActivityReport.findOrCreate({
-            where: {
-              id: 99999,
-            },
-            defaults: {
-              context: 'Resource Report test. http://google.com',
-              submissionStatus: REPORT_STATUSES.DRAFT,
-              calculatedStatus: REPORT_STATUSES.DRAFT,
-              numberOfParticipants: 1,
-              deliveryMethod: 'method',
-              duration: 0,
-              endDate: '2020-01-01T12:00:00Z',
-              startDate: '2020-01-01T12:00:00Z',
-              requester: 'requester',
-              regionId: 1,
-              targetPopulations: [],
-            },
-            individualHooks: true,
-            raw: true,
-          });
-        } catch (err) {
-          console.log(err);
-        }
+        [activityReport, deleteReport] = await ActivityReport.findOrCreate({
+          where: {
+            id: 99999,
+          },
+          defaults: {
+            context: 'Resource Report test. http://google.com',
+            submissionStatus: REPORT_STATUSES.DRAFT,
+            calculatedStatus: REPORT_STATUSES.DRAFT,
+            numberOfParticipants: 1,
+            deliveryMethod: 'method',
+            duration: 0,
+            endDate: '2020-01-01T12:00:00Z',
+            startDate: '2020-01-01T12:00:00Z',
+            requester: 'requester',
+            regionId: 1,
+            targetPopulations: [],
+          },
+          individualHooks: true,
+          raw: true,
+        });
       });
       beforeEach(async () => {
       });
@@ -1372,7 +1368,6 @@ describe('resource', () => {
           include: [{ model: Resource, as: 'resource' }],
         });
         expect(arResources.length).toEqual(1);
-        console.log(arResources[0].resource);
         expect(arResources
           .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
           .toEqual(resources.find((r) => r.url === urls[0]).id);
