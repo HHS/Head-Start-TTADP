@@ -44,6 +44,14 @@ export default (sequelize, DataTypes) => {
         return calculateIsAutoDetectedForActivityReportObjective(this.get('sourceFields'));
       },
     },
+    userProvidedUrl: {
+      type: new DataTypes.VIRTUAL(DataTypes.TEXT),
+      get() {
+        return this.resource && this.resource.url
+          ? this.resource.url
+          : '';
+      },
+    },
   }, {
     sequelize,
     modelName: 'ActivityReportObjectiveResource',
