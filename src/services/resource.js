@@ -781,6 +781,7 @@ const processNextStepForResources = async (
 const processNextStepForResourcesById = async (
   nextStepId,
   urls,
+  resourceIds,
 ) => genericProcessEntityForResourcesById(
   NextStep,
   NextStepResource,
@@ -788,6 +789,7 @@ const processNextStepForResourcesById = async (
   processNextStepForResources,
   nextStepId,
   urls,
+  resourceIds,
 );
 
 const getResourcesForNextSteps = async (
@@ -899,6 +901,7 @@ const processGoalTemplateForResources = async (
 const processGoalTemplateForResourcesById = async (
   goalTemplateId,
   urls,
+  resourceIds,
 ) => genericProcessEntityForResourcesById(
   GoalTemplate,
   GoalTemplateResource,
@@ -906,6 +909,7 @@ const processGoalTemplateForResourcesById = async (
   processGoalTemplateForResources,
   goalTemplateId,
   urls,
+  resourceIds,
 );
 
 const getResourcesForGoalTemplates = async (
@@ -958,6 +962,7 @@ const processActivityReportGoalForResources = async (
 const processActivityReportGoalForResourcesById = async (
   activityReportGoalId,
   urls,
+  resourceIds,
 ) => genericProcessEntityForResourcesById(
   ActivityReportGoal,
   ActivityReportGoalResource,
@@ -965,6 +970,7 @@ const processActivityReportGoalForResourcesById = async (
   processActivityReportGoalForResources,
   activityReportGoalId,
   urls,
+  resourceIds,
 );
 
 const getResourcesForActivityReportGoals = async (
@@ -1018,6 +1024,7 @@ const processObjectiveForResources = async (
 const processObjectiveForResourcesById = async (
   objectiveId,
   urls,
+  resourceIds,
 ) => genericProcessEntityForResourcesById(
   Objective,
   ObjectiveResource,
@@ -1025,6 +1032,7 @@ const processObjectiveForResourcesById = async (
   processObjectiveForResources,
   objectiveId,
   urls,
+  resourceIds,
 );
 
 const getResourcesForObjectives = async (
@@ -1077,6 +1085,7 @@ const processObjectiveTemplateForResources = async (
 const processObjectiveTemplateForResourcesById = async (
   objectiveTemplateId,
   urls,
+  resourceIds,
 ) => genericProcessEntityForResourcesById(
   ObjectiveTemplate,
   ObjectiveTemplateResource,
@@ -1084,6 +1093,7 @@ const processObjectiveTemplateForResourcesById = async (
   processObjectiveTemplateForResources,
   objectiveTemplateId,
   urls,
+  resourceIds,
 );
 
 const getResourcesForObjectiveTemplates = async (
@@ -1136,6 +1146,7 @@ const processActivityReportObjectiveForResources = async (
 const processActivityReportObjectiveForResourcesById = async (
   activityReportObjectiveId,
   urls,
+  resourceIds,
 ) => genericProcessEntityForResourcesById(
   ActivityReportObjective,
   ActivityReportObjectiveResource,
@@ -1143,6 +1154,7 @@ const processActivityReportObjectiveForResourcesById = async (
   processActivityReportObjectiveForResources,
   activityReportObjectiveId,
   urls,
+  resourceIds,
 );
 
 const getResourcesForActivityReportObjectives = async (
