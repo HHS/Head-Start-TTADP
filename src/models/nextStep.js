@@ -1,6 +1,10 @@
 const { Model } = require('sequelize');
 const { NEXTSTEP_NOTETYPE } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
+const {
+  afterCreate,
+  afterUpdate,
+} = require('./hooks/goal');
 
 export default (sequelize, DataTypes) => {
   class NextStep extends Model {
@@ -32,6 +36,10 @@ export default (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'NextStep',
+    hooks: {
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
+    },
   });
   return NextStep;
 };

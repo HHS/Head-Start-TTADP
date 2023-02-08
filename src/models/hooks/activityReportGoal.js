@@ -1,3 +1,12 @@
+const { calculateIsAutoDetectedForActivityReportGoal, processActivityReportGoalForResourcesById } = require('../../services/resource');
+
+const processForEmbeddedResources = async (sequelize, instance, options) => {
+  const changed = instance.changed();
+  if (calculateIsAutoDetectedForActivityReportGoal(changed)) {
+    await processActivityReportGoalForResourcesById(instance.id);
+  }
+};
+
 const recalculateOnAR = async (sequelize, instance, options) => {
   await sequelize.query(`
     WITH
@@ -19,11 +28,22 @@ const recalculateOnAR = async (sequelize, instance, options) => {
   `, { transaction: options.transaction });
 };
 
+const afterCreate = async (sequelize, instance, options) => {
+  await processForEmbeddedResources(sequelize, instance, options);
+};
+
 const afterDestroy = async (sequelize, instance, options) => {
   await recalculateOnAR(sequelize, instance, options);
 };
 
+const afterUpdate = async (sequelize, instance, options) => {
+  await processForEmbeddedResources(sequelize, instance, options);
+};
+
 export {
+  processForEmbeddedResources,
   recalculateOnAR,
+  afterCreate,
   afterDestroy,
+  afterUpdate,
 };
