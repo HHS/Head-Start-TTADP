@@ -73,6 +73,28 @@ const moveDraftGoalsToNotStartedOnSubmission = async (sequelize, instance, optio
   }
 };
 
+const setSubmittedDate = async (sequelize, instance) => {
+  try {
+    if (instance.previous('calculatedStatus') !== REPORT_STATUSES.SUBMITTED
+      && instance.calculatedStatus === REPORT_STATUSES.SUBMITTED) {
+      // Other > Submitted.
+      await sequelize.models.ActivityReport.update(
+        { submittedDate: instance.submittedDate },
+        { where: { id: instance.id } },
+      );
+    } else if (instance.previous('calculatedStatus') === REPORT_STATUSES.SUBMITTED
+    && instance.calculatedStatus !== REPORT_STATUSES.SUBMITTED) {
+    // Submitted > Other.
+      await sequelize.models.ActivityReport.update(
+        { submittedDate: null },
+        { where: { id: instance.id } },
+      );
+    }
+  } catch (e) {
+    auditLogger.error(JSON.stringify({ e }));
+  }
+};
+
 const propagateSubmissionStatus = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
@@ -791,6 +813,7 @@ const afterUpdate = async (sequelize, instance, options) => {
   await moveDraftGoalsToNotStartedOnSubmission(sequelize, instance, options);
   await automaticIsRttapaChangeOnApprovalForGoals(sequelize, instance, options);
   await updateAwsElasticsearchIndexes(sequelize, instance);
+  await setSubmittedDate(sequelize, instance);
 };
 
 export {
@@ -802,4 +825,5 @@ export {
   beforeUpdate,
   afterUpdate,
   moveDraftGoalsToNotStartedOnSubmission,
+  setSubmittedDate,
 };
