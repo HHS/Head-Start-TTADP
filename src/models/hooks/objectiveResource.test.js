@@ -86,7 +86,7 @@ describe('objectiveResource hooks', () => {
         where: {
           objectiveTemplateId: objectiveTemplate.id,
         },
-        includes: [{
+        include: [{
           model: Resource,
           as: 'resource',
           where: { url },
