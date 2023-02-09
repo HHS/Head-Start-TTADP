@@ -12,7 +12,6 @@ const ALERT_FIELDS = [
   'status',
   'message',
   'title',
-  'userId',
   'endDate',
   'startDate',
 ];
@@ -101,7 +100,6 @@ async function createAlert(req, res) {
         status,
         message,
         title,
-        userId,
         endDate,
         startDate,
       } = req.body;
@@ -110,7 +108,7 @@ async function createAlert(req, res) {
         status,
         message,
         title,
-        userId,
+        userId: req.session.userId,
         endDate,
         startDate,
       });
@@ -150,11 +148,11 @@ async function saveAlert(req, res) {
 
 const router = express.Router();
 
-router.get('/alerts', userAdminAccessMiddleware, transactionWrapper(getAlerts));
-router.get('/alert/:alertId', checkAlertIdParam, userAdminAccessMiddleware, transactionWrapper(getAlert));
-router.post('/alert', userAdminAccessMiddleware, transactionWrapper(createAlert));
-router.patch('/alert/:alertId', checkAlertIdParam, userAdminAccessMiddleware, transactionWrapper(saveAlert));
-router.delete('/alert/:alertId', checkAlertIdParam, userAdminAccessMiddleware, transactionWrapper(deleteAlert));
+router.get('/', userAdminAccessMiddleware, transactionWrapper(getAlerts));
+router.get('/:alertId', checkAlertIdParam, userAdminAccessMiddleware, transactionWrapper(getAlert));
+router.post('/', userAdminAccessMiddleware, transactionWrapper(createAlert));
+router.put('/:alertId', checkAlertIdParam, userAdminAccessMiddleware, transactionWrapper(saveAlert));
+router.delete('/:alertId', checkAlertIdParam, userAdminAccessMiddleware, transactionWrapper(deleteAlert));
 
 export {
   getAlerts,
