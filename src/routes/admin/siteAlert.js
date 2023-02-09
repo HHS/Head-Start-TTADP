@@ -156,11 +156,11 @@ async function saveAlert(req, res) {
 
 const router = express.Router();
 
-router.get('/alerts', userAdminAccessMiddleware, transactionWrapper()); // getAlerts
-router.get('/alert/:alertId', checkAlertIdParam, userAdminAccessMiddleware, transactionWrapper()); // getAlert
-router.post('/alert', userAdminAccessMiddleware, transactionWrapper()); // createAlert
-router.patch('/alert/:alertId', checkAlertIdParam, userAdminAccessMiddleware, transactionWrapper()); // saveAlert
-router.delete('/alert/:alertId', checkAlertIdParam, userAdminAccessMiddleware, transactionWrapper()); // deleteAlert
+router.get('/alerts', userAdminAccessMiddleware, transactionWrapper(getAlerts));
+router.get('/alert/:alertId', checkAlertIdParam, userAdminAccessMiddleware, transactionWrapper(getAlert));
+router.post('/alert', userAdminAccessMiddleware, transactionWrapper(createAlert));
+router.patch('/alert/:alertId', checkAlertIdParam, userAdminAccessMiddleware, transactionWrapper(saveAlert));
+router.delete('/alert/:alertId', checkAlertIdParam, userAdminAccessMiddleware, transactionWrapper(deleteAlert));
 
 export {
   getAlerts,
