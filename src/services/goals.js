@@ -1525,21 +1525,32 @@ export async function saveGoalsForReport(goals, report) {
     const isActivelyBeingEditing = goal.isActivelyBeingEditing
       ? goal.isActivelyBeingEditing : false;
 
-    const existingGrantIds = goal.grantIds ? goal.grantIds : [];
+    /**
+     * when we find existing goals, we should query by grantIds if available
+     * as switching recipients means that the goal ids provided could apply to now unused grant
+     */
 
-    const where = existingGrantIds.length > 0 ? {
-      grantId: existingGrantIds,
-      id: goalIds,
-    } : {
-      id: goalIds,
-    };
+    const existingGrantIds = goal.grantIds && Array.isArray(goal.grantIds) ? goal.grantIds : [];
+    const existingGoalIds = goal.goalIds && Array.isArray(goalIds) ? goal.goalIds : [];
 
-    // Check if these goals exist.
-    const existingGoals = Array.isArray(goalIds) && goalIds.length > 0
-      ? await Goal.findAll({ // All fields are needed.
+    let existingGoals = [];
+    // we only query if there are existing goal ids
+    if (existingGoalIds.length) {
+      const where = {
+        id: existingGoalIds,
+      };
+
+      // if we have grant ids available, we should query by those as well
+      if (existingGrantIds.length) {
+        where.grantId = existingGrantIds;
+      }
+
+      // finally, we can query for existing goals, which simplifies some of loops
+      // further in this file
+      existingGoals = await Goal.findAll({ // All fields are needed.
         where,
-      })
-      : [];
+      });
+    }
 
     // we have a param to determine if goals are new
     if (goal.isNew || !existingGoals.length) {
