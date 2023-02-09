@@ -85,10 +85,7 @@ describe('Approved Activity Report V1 component', () => {
   };
 
   it('should return an array of two arrays, each of which contains strings', () => {
-    const title = 'Gabba Gabba Hey';
-    const ttaProvided = 'We did a thing';
-
-    const result = calculateGoalsAndObjectives({ ...report, title, ttaProvided});
+    const result = calculateGoalsAndObjectives({ ...report, title, ttaProvided });
     expect(result).toStrictEqual([
       [
         'Objective 1',
