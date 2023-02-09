@@ -42,6 +42,8 @@ import {
 } from './Constants';
 import AppLoadingContext from './AppLoadingContext';
 import Loader from './components/Loader';
+import FeatureFlag from './components/FeatureFlag';
+import ResourcesDashboard from './pages/ResourcesDashboard';
 
 function App() {
   const [user, updateUser] = useState();
@@ -166,6 +168,17 @@ function App() {
           render={({ match, location }) => (
             <AppWrapper authenticated logout={logout} padded={false}>
               <RecipientRecord location={location} match={match} user={user} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/resources-dashboard"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="resources_dashboard" renderNotFound>
+                <ResourcesDashboard user={user} />
+              </FeatureFlag>
             </AppWrapper>
           )}
         />
