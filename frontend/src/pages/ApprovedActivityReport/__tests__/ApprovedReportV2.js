@@ -15,7 +15,7 @@ describe('Approved Activity Report V2 component', () => {
         ttaProvided: 'All of it',
       },
       topics: [{ label: 'being fancy' }],
-      resources: [{ value: 'http://www.website.com', userProvidedUrl: 'http://www.OtherEntity.com' }],
+      resources: [{ value: 'http://www.website.com', url: 'http://www.OtherEntity.com' }],
       status: 'Test status',
       files: [
         {

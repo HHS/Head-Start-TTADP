@@ -66,7 +66,7 @@ const collectActivityReportData = async (ids, sequelize, transaction) => {
   const objectiveResourceLinks = await sequelize.models.ActivityReportObjectiveResource.findAll({
     attributes: [
       'activityReportObjectiveId',
-      ['$resource.url$', 'userProvidedUrl'],
+      ['$resource.url$', 'url'],
     ],
     where: {
       '$activityReportObjective.activityReportId$': ids,

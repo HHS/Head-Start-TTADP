@@ -16,6 +16,7 @@ import { formatModelForAwsElasticsearch } from './modelMapper';
 import { collectModelData } from './datacollector';
 import { AWS_ELASTIC_SEARCH_INDEXES, REPORT_STATUSES } from '../../constants';
 import { auditLogger } from '../../logger';
+import { processActivityReportObjectiveForResourcesById } from '../../services/resource';
 
 jest.mock('bull');
 
@@ -145,18 +146,10 @@ describe('Collect and Map AWS Elasticsearch data', () => {
       });
 
       // Create Objective Resource
-      await ActivityReportObjectiveResource.create({
-        activityReportObjectiveId: activityReportObjective.id,
-        userProvidedUrl: 'http://test1.gov',
-      });
-      await ActivityReportObjectiveResource.create({
-        activityReportObjectiveId: activityReportObjective.id,
-        userProvidedUrl: 'http://test2.gov',
-      });
-      await ActivityReportObjectiveResource.create({
-        activityReportObjectiveId: activityReportObjective.id,
-        userProvidedUrl: 'http://test3.gov',
-      });
+      await processActivityReportObjectiveForResourcesById(
+        activityReportObjective.id,
+        ['http://test1.gov', 'http://test2.gov', 'http://test3.gov'],
+      );
     } catch (e) {
       auditLogger.error(JSON.stringify(e));
       throw e;
@@ -278,11 +271,11 @@ describe('Collect and Map AWS Elasticsearch data', () => {
     expect(objectiveResourceLinks).not.toBeNull();
     expect(objectiveResourceLinks.length).toBe(3);
     expect(objectiveResourceLinks[0]['activityReportObjective.activityReportId']).toBe(reportOne.id);
-    expect(objectiveResourceLinks[0].userProvidedUrl).toBe('http://test1.gov');
+    expect(objectiveResourceLinks[0].url).toBe('http://test1.gov');
     expect(objectiveResourceLinks[1]['activityReportObjective.activityReportId']).toBe(reportOne.id);
-    expect(objectiveResourceLinks[1].userProvidedUrl).toBe('http://test2.gov');
+    expect(objectiveResourceLinks[1].url).toBe('http://test2.gov');
     expect(objectiveResourceLinks[2]['activityReportObjective.activityReportId']).toBe(reportOne.id);
-    expect(objectiveResourceLinks[2].userProvidedUrl).toBe('http://test3.gov');
+    expect(objectiveResourceLinks[2].url).toBe('http://test3.gov');
 
     // Format as AWS Elasticsearch document.
     const document = await formatModelForAwsElasticsearch(

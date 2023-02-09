@@ -14,6 +14,7 @@ import {
 import { draftObject } from './testHelpers';
 import { FILE_STATUSES, OBJECTIVE_STATUS } from '../../constants';
 import { beforeDestroy } from './activityReportObjective';
+import { processObjectiveForResourcesById, processActivityReportObjectiveForResourcesById } from '../../services/resource';
 
 describe('activityReportObjective hooks', () => {
   let ar;
@@ -45,16 +46,8 @@ describe('activityReportObjective hooks', () => {
       topicId: topic.id,
     });
 
-    or = await ObjectiveResource.create({
-      objectiveId: objective.id,
-      userProvidedUrl: 'https://gnarlyfootbaths.com',
-    });
-
-    await ActivityReportObjectiveResource.create({
-      activityReportObjectiveId: aro.id,
-      objectiveResourceId: or.id,
-      userProvidedUrl: 'https://gnarlyfootbaths.com',
-    });
+    await processObjectiveForResourcesById(objective.id, ['https://gnarlyfootbaths.com']);
+    await processActivityReportObjectiveForResourcesById(aro.id, ['https://gnarlyfootbaths.com']);
 
     file = await File.create({
       originalFileName: 'the-last-spreadsheet-anyone-will-ever-need.xlsx',

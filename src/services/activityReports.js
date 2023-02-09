@@ -457,7 +457,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
             ],
           },
           {
-            model:Resource,
+            model: Resource,
             as: 'resources',
             attributes: [
               ['url', 'value'],
@@ -1175,8 +1175,9 @@ async function getDownloadableActivityReports(where, separate = true) {
           attributes: ['id', 'title', 'status'],
         },
         {
-          model: ActivityReportObjectiveResource,
-          as: 'activityReportObjectiveResources',
+          model: Resource,
+          as: 'resources',
+          attributes: ['id', 'url'],
         },
         {
           model: Topic,

@@ -23,7 +23,8 @@ const CUSTOM_FORMATTERS = {
       activityReportGoals: goalsToIndex.map((arg) => arg.name),
       activityReportObjectives: objectivesToIndex.map((aro) => aro.title),
       activityReportObjectivesTTA: objectivesToIndex.map((aro) => aro.ttaProvided),
-      activityReportObjectiveResources: objectiveResourceLinks.map((aror) => aror.userProvidedUrl),
+      activityReportObjectiveResources: objectiveResourceLinks
+        .map((aror) => aror.resource.dataValues.url),
     };
 
     return document;
