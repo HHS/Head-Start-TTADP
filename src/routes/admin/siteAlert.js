@@ -1,11 +1,9 @@
 import express from 'express';
 import httpCodes from 'http-codes';
-import { Op } from 'sequelize';
 import { SiteAlert } from '../../models';
 import transactionWrapper from '../transactionWrapper';
 import { checkAlertIdParam } from '../../middleware/checkIdParamMiddleware';
 import userAdminAccessMiddleware from '../../middleware/userAdminAccessMiddleware';
-import { ALERT_STATUSES } from '../../constants';
 import { auditLogger } from '../../logger';
 
 const namespace = 'SERVICE:ADMIN:SITEALERTS';
@@ -23,12 +21,9 @@ const ALERT_FIELDS = [
  *
  * @param {Request} req
  */
-const isValidAlert = (req) => {
+const isValidNewAlert = (req) => {
   const { body } = req;
-
-  const isValid = ALERT_FIELDS.every((field) => body[field]);
-
-  return isValid;
+  return ALERT_FIELDS.every((field) => !!(body[field]));
 };
 
 // since all the functions below are admin only and region agnostic, we can check them all via
@@ -45,6 +40,7 @@ async function getAlerts(req, res) {
     res.json(alerts);
   } catch (err) {
     auditLogger.error(`${namespace}:getAlerts`, err);
+    res.sendStatus(httpCodes.INTERNAL_SERVER_ERROR);
   }
 }
 
@@ -60,6 +56,7 @@ async function getAlert(req, res) {
     res.json(alert);
   } catch (err) {
     auditLogger.error(`${namespace}:getAlert`, err);
+    res.sendStatus(httpCodes.INTERNAL_SERVER_ERROR);
   }
 }
 
@@ -74,12 +71,6 @@ async function deleteAlert(req, res) {
     const alert = await SiteAlert.findOne({
       where: {
         id: alertId,
-        status: {
-          [Op.notIn]: [
-            ALERT_STATUSES.DELETED,
-            ALERT_STATUSES.PUBLISHED,
-          ],
-        },
       },
     });
     if (!alert) {
@@ -90,6 +81,7 @@ async function deleteAlert(req, res) {
     }
   } catch (err) {
     auditLogger.error(`${namespace}:deleteAlert`, err);
+    res.sendStatus(httpCodes.INTERNAL_SERVER_ERROR);
   }
 }
 
@@ -100,7 +92,7 @@ async function deleteAlert(req, res) {
  */
 async function createAlert(req, res) {
   try {
-    const isValid = isValidAlert(req);
+    const isValid = isValidNewAlert(req);
 
     if (!isValid) {
       res.sendStatus(httpCodes.BAD_REQUEST);
@@ -127,6 +119,7 @@ async function createAlert(req, res) {
     }
   } catch (err) {
     auditLogger.error(`${namespace}:createAlert`, err);
+    res.sendStatus(httpCodes.INTERNAL_SERVER_ERROR);
   }
 }
 
@@ -151,6 +144,7 @@ async function saveAlert(req, res) {
     }
   } catch (err) {
     auditLogger.error(`${namespace}:saveAlert`, err);
+    res.sendStatus(httpCodes.INTERNAL_SERVER_ERROR);
   }
 }
 
