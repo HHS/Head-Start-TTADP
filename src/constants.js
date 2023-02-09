@@ -18,6 +18,11 @@ export const FILE_STATUSES = {
   REJECTED: 'REJECTED',
 };
 
+export const ALERT_STATUSES = {
+  DRAFT: 'Draft',
+  PUBLISHED: 'Published',
+};
+
 export const DATE_FORMAT = 'MM/DD/YYYY';
 
 export const DECIMAL_BASE = 10;
