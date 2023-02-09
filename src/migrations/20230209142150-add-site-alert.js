@@ -14,6 +14,12 @@ module.exports = {
       );
 
       await queryInterface.createTable('SiteAlerts', {
+        id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          primaryKey: true,
+          autoIncrement: true,
+        },
         userId: {
           type: Sequelize.DataTypes.INTEGER,
           allowNull: false,
@@ -43,12 +49,40 @@ module.exports = {
         status: {
           type: Sequelize.DataTypes.ENUM(['Draft', 'Published']),
         },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
       }, { transaction });
     },
   ),
-  down: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
+  down: async (queryInterface) => queryInterface.sequelize.transaction(
     async (transaction) => {
+      await queryInterface.sequelize.query(
+        `
+        SELECT "ZAFSetTriggerState"(null, null, null, 'DISABLE');
+        `,
+        { transaction },
+      );
+
+      await queryInterface.sequelize.query(
+        ' SELECT "ZAFRemoveAuditingOnTable"(\'SiteAlerts\');',
+        { raw: true, transaction },
+      );
+      // Drop old audit log table
+      await queryInterface.dropTable('ZALSiteAlerts', { transaction });
       await queryInterface.dropTable('SiteAlerts', { transaction });
+
+      await queryInterface.sequelize.query(
+        `
+        SELECT "ZAFSetTriggerState"(null, null, null, 'ENABLE');
+        `,
+        { transaction },
+      );
     },
   ),
 };
