@@ -1,4 +1,4 @@
-import { processObjectiveForResourcesById, getResourcesForObjectives } from '../resources';
+import { processObjectiveForResourcesById, getResourcesForObjectives } from '../resource';
 import db, {
   Objective,
   ObjectiveResource,

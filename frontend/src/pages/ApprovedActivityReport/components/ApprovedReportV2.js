@@ -26,7 +26,7 @@ function formatObjectiveLinks(resources, isOtherEntity = false) {
     return (
       <ul>
         {resources.map((resource) => {
-          const resourceValue = isOtherEntity ? resource.userProvidedUrl : resource.value;
+          const resourceValue = isOtherEntity ? resource.url : resource.value;
           return (
             <li key={resourceValue}>
               <a

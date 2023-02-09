@@ -1,5 +1,6 @@
 /* eslint-disable jest/no-disabled-tests */
 import faker from '@faker-js/faker';
+import { ResourceGroups } from 'aws-sdk';
 import { createOrUpdateGoals } from './goals';
 import db, {
   Goal,
@@ -9,7 +10,9 @@ import db, {
   Objective,
   ObjectiveResource,
   ObjectiveTopic,
+  Resource,
 } from '../models';
+import { processObjectiveForResourcesById } from './resource';
 
 describe('createOrUpdateGoals', () => {
   afterEach(async () => {
@@ -61,10 +64,7 @@ describe('createOrUpdateGoals', () => {
       status: 'Not Started',
     });
 
-    await ObjectiveResource.create({
-      objectiveId: objective.id,
-      userProvidedUrl: 'https://www.test.gov',
-    });
+    await processObjectiveForResourcesById(objective.id, ['https://www.test.gov']);
   });
 
   afterAll(async () => {
@@ -72,12 +72,19 @@ describe('createOrUpdateGoals', () => {
       where: {
         objectiveId: objective.id,
       },
+      individualHooks: true,
+    });
+
+    await ResourceGroups.destroy({
+      where: { url: 'https://www.test.gov' },
+      individualHooks: true,
     });
 
     await ObjectiveTopic.destroy({
       where: {
         objectiveId: objective.id,
       },
+      individualHooks: true,
     });
 
     const goals = await Goal.findAll({
@@ -92,24 +99,28 @@ describe('createOrUpdateGoals', () => {
       where: {
         goalId: goalIds,
       },
+      individualHooks: true,
     });
 
     await Goal.destroy({
       where: {
         id: goalIds,
       },
+      individualHooks: true,
     });
 
     await Grant.destroy({
       where: {
         id: grants.map((g) => g.id),
       },
+      individualHooks: true,
     });
 
     await Recipient.destroy({
       where: {
         id: recipient.id,
       },
+      individualHooks: true,
     });
 
     await db.sequelize.close();
@@ -242,11 +253,15 @@ describe('createOrUpdateGoals', () => {
       where: {
         objectiveId: objective.id,
       },
-      raw: true,
+      includes: [{
+        attributes: ['url'],
+        model: Resource,
+        as: 'resource',
+      }],
     });
 
     expect(resource.length).toBe(1);
-    expect(resource[0].userProvidedUrl).toBe('https://www.test.gov');
+    expect(resource[0].resource.dataValues.url).toBe('https://www.test.gov');
 
     const newGoal = newGoals.find((g) => g.id !== goal.id);
     expect(newGoal.status).toBe('Draft');
