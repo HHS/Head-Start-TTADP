@@ -1,7 +1,7 @@
 const { calculateIsAutoDetectedForActivityReportGoal, processActivityReportGoalForResourcesById } = require('../../services/resource');
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
-  const changed = instance.changed();
+  const changed = instance.changed() || Object.keys(instance);
   if (calculateIsAutoDetectedForActivityReportGoal(changed)) {
     await processActivityReportGoalForResourcesById(instance.id);
   }

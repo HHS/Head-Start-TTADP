@@ -3,7 +3,7 @@ const { AUTOMATIC_CREATION } = require('../../constants');
 const { calculateIsAutoDetectedForNextStep, processNextStepForResourcesById } = require('../../services/resource');
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
-  const changed = instance.changed();
+  const changed = instance.changed() || Object.keys(instance);
   if (calculateIsAutoDetectedForNextStep(changed)) {
     await processNextStepForResourcesById(instance.id);
   }
