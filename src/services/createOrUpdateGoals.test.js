@@ -253,7 +253,7 @@ describe('createOrUpdateGoals', () => {
       where: {
         objectiveId: objective.id,
       },
-      includes: [{
+      include: [{
         attributes: ['url'],
         model: Resource,
         as: 'resource',
