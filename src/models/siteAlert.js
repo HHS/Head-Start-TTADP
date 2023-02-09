@@ -1,0 +1,55 @@
+const {
+  Model,
+} = require('sequelize');
+const { ALERT_STATUSES } = require('../constants');
+
+const possibleStatuses = Object.values(ALERT_STATUSES);
+
+/**
+   *
+   * @param {} sequelize
+   * @param {*} DataTypes
+   */
+
+export default (sequelize, DataTypes) => {
+  class SiteAlert extends Model {
+    static associate(models) {
+      SiteAlert.belongsTo(models.User, { foreignKey: 'userId', as: 'creator' });
+    }
+  }
+  SiteAlert.init({
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: {
+          tableName: 'Users',
+        },
+        key: 'id',
+      },
+    },
+    startDate: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    endDate: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    title: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    message: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    status: {
+      type: DataTypes.ENUM(possibleStatuses),
+    },
+  }, {
+    sequelize,
+    modelName: 'SiteAlert',
+  });
+  return SiteAlert;
+};
