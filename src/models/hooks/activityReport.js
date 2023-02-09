@@ -10,9 +10,10 @@ const {
 const { collectModelData } = require('../../lib/awsElasticSearch/datacollector');
 const { formatModelForAwsElasticsearch } = require('../../lib/awsElasticSearch/modelMapper');
 const { addIndexDocument, deleteIndexDocument } = require('../../lib/awsElasticSearch/index');
-const { calculateIsAutoDetectedForActivityReports, processActivityReportForResourcesById } = require('../../services/resource');
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
+  // eslint-disable-next-line global-require
+  const { calculateIsAutoDetectedForActivityReports, processActivityReportForResourcesById } = require('../../services/resource');
   const changed = instance.changed() || Object.keys(instance);
   if (calculateIsAutoDetectedForActivityReports(changed)) {
     await processActivityReportForResourcesById(instance.id);
