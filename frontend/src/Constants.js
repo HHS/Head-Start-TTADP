@@ -308,3 +308,10 @@ export const ALL_PARTICIPANTS = [
   ...RECIPIENT_PARTICIPANTS,
   ...OTHER_ENTITY_PARTICIPANTS,
 ];
+
+// note that if this status list is changed, it needs also to be changed in
+// - src/constants.js
+export const ALERT_STATUSES = {
+  PUBLISHED: 'Published',
+  DRAFT: 'Draft',
+};
