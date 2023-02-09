@@ -13,7 +13,7 @@ const { addIndexDocument, deleteIndexDocument } = require('../../lib/awsElasticS
 const { calculateIsAutoDetectedForActivityReports, processActivityReportForResourcesById } = require('../../services/resource');
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
-  const changed = instance.changed();
+  const changed = instance.changed() || Object.keys(instance);
   if (calculateIsAutoDetectedForActivityReports(changed)) {
     await processActivityReportForResourcesById(instance.id);
   }
