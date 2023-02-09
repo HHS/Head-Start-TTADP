@@ -161,7 +161,7 @@ const search = async (indexName, fields, query, passedClient, overrideBatchSize)
     // Loop vars.
     const maxLoopIterations = 9;
     let retrieveAgain = true;
-    const batchSize = overrideBatchSize || 1000; // Default batch size to 10k.
+    const batchSize = overrideBatchSize || 500; // Default batch size to 10k.
     let loopIterations = 0;
     let res;
     let searchAfter;
