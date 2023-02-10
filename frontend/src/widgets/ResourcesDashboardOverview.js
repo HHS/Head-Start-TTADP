@@ -66,153 +66,61 @@ Field.defaultProps = {
   showTooltip: false,
 };
 const DASHBOARD_FIELDS = {
-  'Recipient With Resources': {
+  'Reports with resources': {
     render: (data, showTooltip) => (
       <Field
-        key="recipient-resources"
+        key="report-resources"
         icon={faLink}
         showTooltip={showTooltip}
-        label1={`${data.recipient.numResources === '1' ? 'Recipient rec\'d resources' : 'Recipients rec\'d resources'}`}
-        label2={`${data.recipient.numResources} of ${data.recipient.num}`}
+        label1="Reports with resources"
+        label2={`${data.reports.count} of ${data.reports.total}`}
         iconColor={colors.success}
-        backgroundColor={colors.successLighter}
-        tooltipText={data.recipient.numResources === '1' ? 'Recipient rec\'d resources' : 'Recipients rec\'d resources'}
-        data={data.recipient.percentResources}
+        backgroundColor={colors.ttahubDeepTealLight}
+        tooltipText="Reports with resources"
+        data={data.reports.percent}
       />
     ),
   },
-  'Recipient With ECLKC Resources': {
+  'ECLKC Resources': {
     render: (data, showTooltip) => (
       <Field
-        key="recipient-eclkc"
+        key="eclkc-resources"
         icon={faLink}
         showTooltip={showTooltip}
-        label1={`${data.recipient.numEclkc === '1' ? 'Recipient rec\'d ECLKC resources' : 'Recipients rec\'d ECLKC resources'}`}
-        label2={`${data.recipient.numEclkc} of ${data.recipient.num}`}
+        label1="ECLKC resources"
+        label2={`${data.eclkc.count} of ${data.eclkc.total}`}
         iconColor={colors.success}
-        backgroundColor={colors.successLighter}
-        tooltipText={data.recipient.numEclkc === '1' ? 'Recipient rec\'d ECLKC resources' : 'Recipients rec\'d ECLKC resources'}
-        data={data.recipient.percentEclkc}
+        backgroundColor={colors.ttahubBlueLight}
+        tooltipText="ECLKC resources"
+        data={data.eclkc.percent}
       />
     ),
   },
-  'Recipient With Non ECLKC Resources': {
+  'Recipients reached': {
     render: (data, showTooltip) => (
       <Field
-        key="recipient-noneclkc"
+        key="recipient-reached"
         icon={faExternalLink}
         showTooltip={showTooltip}
-        label1={`${data.recipient.numNonEclkc === '1' ? 'Recipient rec\'d non-ECLKC resources' : 'Recipients rec\'d non-ECLKC resources'}`}
-        label2={`${data.recipient.numNonEclkc} of ${data.recipient.num}`}
+        label1="Recipients reached"
         iconColor={colors.ttahubMediumBlue}
-        backgroundColor={colors.ttahubBlueLight}
-        tooltipText={data.recipient.numNonEclkc === '1' ? 'Recipient rec\'d non-ECLKC resources' : 'Recipients rec\'d non-ECLKC resources'}
-        data={data.recipient.percentNonEclkc}
+        backgroundColor={colors.ttahubMagentaLight}
+        tooltipText="Recipients reached"
+        data={data.recipients.count}
       />
     ),
   },
-  'Recipient With No Resources': {
+  'Participants reached': {
     render: (data, showTooltip) => (
       <Field
-        key="recipient-noresources"
+        key="participants-reached"
         icon={faLinkSlash}
         showTooltip={showTooltip}
-        label1={`${data.recipient.numNoResources === '1' ? 'Recipient rec\'d no resources' : 'Recipients rec\'d no resources'}`}
-        label2={`${data.recipient.numNoResources} of ${data.recipient.num}`}
+        label1="Participants reached"
         iconColor={colors.ttahubOrange}
         backgroundColor={colors.ttahubOrangeLight}
-        tooltipText={data.recipient.numNoResources === '1' ? 'Recipient rec\'d no resources' : 'Recipients rec\'d no resources'}
-        data={data.recipient.percentNoResources}
-      />
-    ),
-  },
-  'Reports With Resources': {
-    render: (data, showTooltip) => (
-      <Field
-        key="reports-resources"
-        icon={faLink}
-        showTooltip={showTooltip}
-        label1={`${data.report.numResources === '1' ? 'Report include resources' : 'Reports include resources'}`}
-        label2={`${data.report.numResources} of ${data.report.num}`}
-        iconColor={colors.success}
-        backgroundColor={colors.successLighter}
-        tooltipText={data.report.numResources === '1' ? 'Report include resources' : 'Reports include resources'}
-        data={data.report.percentResources}
-      />
-    ),
-  },
-  'Reports With ECLKC Resources': {
-    render: (data, showTooltip) => (
-      <Field
-        key="reports-eclkc"
-        icon={faLink}
-        showTooltip={showTooltip}
-        label1={`${data.report.numEclkc === '1' ? 'Report include ECLKC resources' : 'Reports include ECLKC resources'}`}
-        label2={`${data.report.numEclkc} of ${data.report.num}`}
-        iconColor={colors.success}
-        backgroundColor={colors.successLighter}
-        tooltipText={data.report.numEclkc === '1' ? 'Report include ECLKC resources' : 'Reports include ECLKC resources'}
-        data={data.report.percentEclkc}
-      />
-    ),
-  },
-  'Reports With Non ECLKC Resources': {
-    render: (data, showTooltip) => (
-      <Field
-        key="reports-noneclkc"
-        icon={faExternalLink}
-        showTooltip={showTooltip}
-        label1={`${data.report.numNonEclkc === '1' ? 'Report include non-ECLKC resources' : 'Reports include non-ECLKC resources'}`}
-        label2={`${data.report.numNonEclkc} of ${data.report.num}`}
-        iconColor={colors.ttahubMediumBlue}
-        backgroundColor={colors.ttahubBlueLight}
-        tooltipText={data.report.numNonEclkc === '1' ? 'Report include non-ECLKC resources' : 'reports include non-ECLKC resources'}
-        data={data.report.percentNonEclkc}
-      />
-    ),
-  },
-  'Reports With No Resources': {
-    render: (data, showTooltip) => (
-      <Field
-        key="reports-noresources"
-        icon={faLinkSlash}
-        showTooltip={showTooltip}
-        label1={`${data.report.numNoResources === '1' ? 'Report include no resources' : 'Reports include no resources'}`}
-        label2={`${data.report.numNoResources} of ${data.report.num}`}
-        iconColor={colors.ttahubOrange}
-        backgroundColor={colors.ttahubOrangeLight}
-        tooltipText={data.report.numNoResources === '1' ? 'Report include no resources' : 'Reports include no resources'}
-        data={data.report.percentNoResources}
-      />
-    ),
-  },
-  'Resources From ECLKC': {
-    render: (data, showTooltip) => (
-      <Field
-        key="resources-eclkc"
-        icon={faLink}
-        showTooltip={showTooltip}
-        label1={`${data.resource.numEclkc === '1' ? 'ECLKC Resource' : 'ECLKC Resources'}`}
-        label2={`${data.resource.numEclkc} of ${data.resource.num}`}
-        iconColor={colors.success}
-        backgroundColor={colors.successLighter}
-        tooltipText={data.resource.numEclkc === '1' ? 'ECLKC Resource' : 'ECLKC Resources'}
-        data={data.resource.percentEclkc}
-      />
-    ),
-  },
-  'Resources From Non ECLKC': {
-    render: (data, showTooltip) => (
-      <Field
-        key="resources-noneclkc"
-        icon={faExternalLink}
-        showTooltip={showTooltip}
-        label1={`${data.resource.numNonEclkc === '1' ? 'Non-ECLKC Resource' : 'Non-ECLKC Resources'}`}
-        label2={`${data.resource.numNonEclkc} of ${data.resource.num}`}
-        iconColor={colors.ttahubMediumBlue}
-        backgroundColor={colors.ttahubBlueLight}
-        tooltipText={data.resource.numNonEclkc === '1' ? 'Non-ECLKC Resource' : 'Non-ECLKC Resources'}
-        data={data.resource.percentNonEclkc}
+        tooltipText="Participants reached"
+        data={data.participants.count}
       />
     ),
   },
@@ -231,15 +139,23 @@ export function ResourcesDashboardOverviewWidget({
 
 ResourcesDashboardOverviewWidget.propTypes = {
   data: PropTypes.shape({
-    numEclkc: PropTypes.string,
-    totalNumEclkc: PropTypes.string,
-    numEclkcPercentage: PropTypes.string,
-    numNonEclkc: PropTypes.string,
-    totalNumNonEclkc: PropTypes.string,
-    numNonEclkcPercentage: PropTypes.string,
-    numNoResources: PropTypes.string,
-    totalNumNoResources: PropTypes.string,
-    numNoResourcesPercentage: PropTypes.string,
+    reports: PropTypes.shape({
+      count: PropTypes.string,
+      total: PropTypes.string,
+      percent: PropTypes.string,
+    }),
+    eclkc: PropTypes.shape({
+      count: PropTypes.string,
+      total: PropTypes.string,
+      percent: PropTypes.string,
+    }),
+    recipients: PropTypes.shape({
+      count: PropTypes.string,
+    }),
+    participants: PropTypes.shape({
+      count: PropTypes.string,
+    }),
+
   }),
   loading: PropTypes.bool,
   fields: PropTypes.arrayOf(PropTypes.string),
@@ -248,58 +164,30 @@ ResourcesDashboardOverviewWidget.propTypes = {
 
 ResourcesDashboardOverviewWidget.defaultProps = {
   data: {
-    numEclkc: '0',
-    totalNumEclkc: '0',
-    numEclkcPercentage: '0%',
-    numNonEclkc: '0',
-    totalNumNonEclkc: '0',
-    numNonEclkcPercentage: '0%',
-    numNoResources: '0',
-    totalNumNoResources: '0',
-    numNoResourcesPercentage: '0%',
-    report: {
-      num: '0',
-      numResources: '0',
-      percentResources: '0%',
-      numNoResources: '0',
-      percentNoResources: '0%',
-      numEclkc: '0',
-      percentEclkc: '0%',
-      numNonEclkc: '0',
-      percentNonEclkc: '0%',
+    reports: {
+      count: '0',
+      total: '0',
+      percent: '0%',
     },
-    recipient: {
-      num: '0',
-      numResources: '0',
-      percentResources: '0%',
-      numNoResources: '0',
-      percentNoResources: '0%',
-      numEclkc: '0',
-      percentEclkc: '0%',
-      numNonEclkc: '0',
-      percentNonEclkc: '0%',
+    eclkc: {
+      count: '0',
+      total: '0',
+      percent: '0%',
     },
-    resource: {
-      num: '0',
-      numEclkc: '0',
-      percentEclkc: '0%',
-      numNonEclkc: '0',
-      percentNonEclkc: '0%',
+    recipients: {
+      count: '0',
+    },
+    participants: {
+      count: '0',
     },
   },
   loading: false,
   showTooltips: false,
   fields: [
-    'Recipient With Resources',
-    'Recipient With ECLKC Resources',
-    'Recipient With Non ECLKC Resources',
-    'Recipient With No Resources',
-    'Reports With Resources',
-    'Reports With ECLKC Resources',
-    'Reports With Non ECLKC Resources',
-    'Reports With No Resources',
-    'Resources From ECLKC',
-    'Resources From Non ECLKC',
+    'Reports with resources',
+    'ECLKC Resources',
+    'Recipients reached',
+    'Participants reached',
   ],
 
 };

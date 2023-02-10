@@ -1,10 +1,13 @@
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid, GridContainer } from '@trussworks/react-uswds';
 import FilterPanel from '../../components/filter/FilterPanel';
-import ResourceList from '../../widgets/ResourceList';
-import ResourceDomainList from '../../widgets/ResourceDomainList';
+import { allRegionsUserHasPermissionTo } from '../../permissions';
+import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
+import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
+import AriaLiveContext from '../../AriaLiveContext';
 import ResourcesDashboardOverview from '../../widgets/ResourcesDashboardOverview';
 
 import './index.scss';
@@ -13,20 +16,61 @@ import { expandFilters } from '../../utils';
 import UserContext from '../../UserContext';
 import { RESOURCES_DASHBOARD_FILTER_CONFIG } from './constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
-import { showFilterWithMyRegions } from '../regionHelpers';
-import useDefaultFilters from '../filtersHelper';
 
 const FILTER_KEY = 'regional-resources-dashboard-filters';
 export default function ResourcesDashboard() {
   const { user } = useContext(UserContext);
-  const {
-    allRegionsFilters,
-    regions,
-    onApplyFilters,
-    onRemoveFilter,
-    filters,
-    setFilters,
-  } = useDefaultFilters(user, FILTER_KEY);
+  const ariaLiveContext = useContext(AriaLiveContext);
+  const regions = allRegionsUserHasPermissionTo(user);
+  const defaultRegion = user.homeRegionId || regions[0] || 0;
+  const hasMultipleRegions = regions && regions.length > 1;
+  const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
+
+  const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
+    FILTER_KEY,
+    defaultRegion !== 14
+      && defaultRegion !== 0
+      && hasMultipleRegions
+      ? [{
+        id: uuidv4(),
+        topic: 'region',
+        condition: 'is',
+        query: defaultRegion,
+      }]
+      : allRegionsFilters,
+  );
+
+  // Apply filters.
+  const onApplyFilters = (newFilters, addBackDefaultRegions) => {
+    if (addBackDefaultRegions) {
+      // We always want the regions to appear in the URL.
+      setFilters([
+        ...allRegionsFilters,
+        ...newFilters,
+      ]);
+    } else {
+      setFilters([
+        ...newFilters,
+      ]);
+    }
+
+    ariaLiveContext.announce(`${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to reports`);
+  };
+
+  // Remove Filters.
+  const onRemoveFilter = (id, addBackDefaultRegions) => {
+    const newFilters = [...filters];
+    const index = newFilters.findIndex((item) => item.id === id);
+    if (index !== -1) {
+      newFilters.splice(index, 1);
+      if (addBackDefaultRegions) {
+        // We always want the regions to appear in the URL.
+        setFilters([...allRegionsFilters, ...newFilters]);
+      } else {
+        setFilters(newFilters);
+      }
+    }
+  };
 
   const filtersToApply = expandFilters(filters);
 
@@ -43,7 +87,7 @@ export default function ResourcesDashboard() {
           }
         />
         <h1 className="landing">
-          Resources dashboard
+          Resource dashboard
         </h1>
         <Grid className="ttahub-resources-dashboard--filters display-flex flex-wrap flex-align-center margin-y-2">
           <FilterPanel
@@ -55,45 +99,18 @@ export default function ResourcesDashboard() {
             allUserRegions={regions}
           />
         </Grid>
+        <ResourcesDashboardOverview
+          filters={filtersToApply}
+          fields={[
+            'Reports with resources',
+            'ECLKC Resources',
+            'Recipients reached',
+            'Participants reached',
+          ]}
+          showTooltips
+        />
         <GridContainer className="margin-0 padding-0">
-          <ResourcesDashboardOverview
-            filters={filtersToApply}
-            fields={[
-              'Recipient With Resources',
-              'Recipient With ECLKC Resources',
-              'Recipient With Non ECLKC Resources',
-              'Recipient With No Resources',
-            ]}
-            showTooltips
-          />
-          <ResourcesDashboardOverview
-            filters={filtersToApply}
-            fields={[
-              'Reports With Resources',
-              'Reports With ECLKC Resources',
-              'Reports With Non ECLKC Resources',
-              'Reports With No Resources',
-            ]}
-            showTooltips
-          />
-          <ResourcesDashboardOverview
-            filters={filtersToApply}
-            fields={[
-              'Resources From ECLKC',
-              'Resources From Non ECLKC',
-            ]}
-            showTooltips
-          />
-          <Grid>
-            <ResourceList
-              filters={filtersToApply}
-            />
-          </Grid>
-          <Grid>
-            <ResourceDomainList
-              filters={filtersToApply}
-            />
-          </Grid>
+          blah
         </GridContainer>
       </>
     </div>
