@@ -1,6 +1,5 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
-const { calculateIsAutoDetectedForActivityReportGoal } = require('../services/resource');
 // const { afterDestroy } = require('./hooks/activityReportGoalResource');
 
 export default (sequelize, DataTypes) => {
@@ -41,6 +40,8 @@ export default (sequelize, DataTypes) => {
     isAutoDetected: {
       type: new DataTypes.VIRTUAL(DataTypes.BOOLEAN, ['sourceFields']),
       get() {
+        // eslint-disable-next-line global-require
+        const { calculateIsAutoDetectedForActivityReportGoal } = require('../services/resource');
         return calculateIsAutoDetectedForActivityReportGoal(this.get('sourceFields'));
       },
     },

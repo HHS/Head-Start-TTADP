@@ -1,7 +1,6 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
 // const { auditLogger } = require('../logger');
-const { calculateIsAutoDetectedForObjectiveTemplate } = require('../services/resource');
 
 export default (sequelize, DataTypes) => {
   class ObjectiveTemplateResource extends Model {
@@ -37,6 +36,8 @@ export default (sequelize, DataTypes) => {
     isAutoDetected: {
       type: new DataTypes.VIRTUAL(DataTypes.BOOLEAN, ['sourceFields']),
       get() {
+        // eslint-disable-next-line global-require
+        const { calculateIsAutoDetectedForObjectiveTemplate } = require('../services/resource');
         return calculateIsAutoDetectedForObjectiveTemplate(this.get('sourceFields'));
       },
     },
