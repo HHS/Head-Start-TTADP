@@ -3,7 +3,10 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { NavLink as Link, withRouter } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChartColumn, faBorderAll, faUserFriends } from '@fortawesome/free-solid-svg-icons';
+import {
+  faChartColumn, faBorderAll, faUserFriends, faLink,
+} from '@fortawesome/free-solid-svg-icons';
+import FeatureFlag from './FeatureFlag';
 import './SiteNav.scss';
 
 const navLinkClasses = [
@@ -91,6 +94,18 @@ const SiteNav = ({
                       Regional Dashboard
                     </NavLink>
                   </li>
+                  <FeatureFlag flag="resources_dashboard" renderNotFound={false}>
+                    <li>
+                      <NavLink
+                        to="/resources-dashboard"
+                      >
+                        <span className="display-none tablet:display-inline padding-right-105">
+                          <FontAwesomeIcon color="white" icon={faLink} />
+                        </span>
+                        Resources Dashboard
+                      </NavLink>
+                    </li>
+                  </FeatureFlag>
                   <li>
                     <NavLink
                       to="/recipient-tta-records"
