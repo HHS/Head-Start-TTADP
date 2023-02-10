@@ -1,39 +1,39 @@
-import React, { useEffect, useState } from 'react';
-import { SiteAlert } from '@trussworks/react-uswds';
+import React from 'react';
+import PropTypes from 'prop-types';
 import HeaderUserMenu from './HeaderUserMenu';
-import { getSiteAlerts } from '../fetchers/siteAlerts';
 
 import logo1x from '../images/eclkc-blocks-logo-43x56.png';
 import logo2x from '../images/eclkc-blocks-logo-86x111.png';
+import ReadOnlyEditor from './ReadOnlyEditor';
+import SiteAlert from './SiteAlert';
 
-function Header() {
-  const [alert, setAlert] = useState(null);
+function Header({ authenticated, alert }) {
+  const headerClassNames = [
+    'smart-hub-header',
+    'pin-top',
+    'pin-x',
+    'position-fixed',
+    'bg-white',
+    'border-bottom',
+    'border-base-lighter',
+  ];
 
-  useEffect(() => {
-    // fetch alerts
-    async function fetchAlerts() {
-      try {
-        const alertFromApi = await getSiteAlerts();
-        setAlert(alertFromApi);
-      } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error(`There was an error fetching alerts: ${e}`);
-      }
-    }
+  if (!alert) {
+    headerClassNames.push('height-9');
+  }
 
-    fetchAlerts();
-  }, []);
+  if (alert) {
+    headerClassNames.push('has-alerts');
+  }
 
   return (
-    <header className="smart-hub-header height-9 pin-top pin-x position-fixed bg-white border-bottom border-base-lighter" style={{ zIndex: '99998' }}>
-      {alert && (
+    <header className={headerClassNames.join(' ')} style={{ zIndex: '99998' }}>
+      {(alert && authenticated) && (
         <>
           <SiteAlert
-            variant="info"
-            showIcon
-            title={alert.title}
+            heading={alert.title}
           >
-            {alert.message}
+            <ReadOnlyEditor value={alert.message} ariaLabel="alert for the tta hub: " />
           </SiteAlert>
         </>
       )}
@@ -53,5 +53,17 @@ function Header() {
     </header>
   );
 }
+
+Header.propTypes = {
+  authenticated: PropTypes.bool.isRequired,
+  alert: PropTypes.shape({
+    title: PropTypes.string,
+    message: PropTypes.string,
+  }),
+};
+
+Header.defaultProps = {
+  alert: null,
+};
 
 export default Header;
