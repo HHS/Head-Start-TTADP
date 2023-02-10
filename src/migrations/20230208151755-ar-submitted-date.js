@@ -1,14 +1,16 @@
 /* eslint-disable max-len */
 module.exports = {
-  up: async (queryInterface, Sequelize) => {
-    await queryInterface.sequelize.transaction((t) => Promise.all([
-      queryInterface.addColumn(
-        'ActivityReports',
-        'submittedDate',
-        { type: Sequelize.DataTypes.DATEONLY, allowNull: true },
-        { t },
-      ),
-      queryInterface.sequelize.query(`
+  up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(async (t) => {
+    // Add column.
+    await queryInterface.addColumn(
+      'ActivityReports',
+      'submittedDate',
+      { type: Sequelize.DataTypes.DATEONLY, allowNull: true },
+      { t },
+    );
+
+    // Populate.
+    await queryInterface.sequelize.query(`
       UPDATE
       "ActivityReports" ar
         SET
@@ -27,13 +29,11 @@ module.exports = {
           ) s
         WHERE
             ar."id" = s."activityReportId";
-      `, { t }),
-    ]));
-  },
-
-  down: async (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => queryInterface.removeColumn(
+      `, { t });
+  }),
+  down: async (queryInterface) => queryInterface.sequelize.transaction(async (t) => queryInterface.removeColumn(
     'ActivityReports',
     'submittedDate',
-    { transaction },
+    { t },
   )),
 };
