@@ -27,7 +27,7 @@ import {
   transformRecordByURLToResource,
   filterResourcesForSync,
   // ActivityReports Resource Processing
-  calculateIsAutoDetectedForActivityReports,
+  calculateIsAutoDetectedForActivityReport,
   syncResourcesForActivityReport,
   // processActivityReportForResources,
   processActivityReportForResourcesById,
@@ -1035,27 +1035,27 @@ describe('resource', () => {
     });
   });
   describe('ActivityReports Resource Processing', () => {
-    describe('calculateIsAutoDetectedForActivityReports', () => {
+    describe('calculateIsAutoDetectedForActivityReport', () => {
       let sourceFields;
       it('expected usage, single', () => {
         sourceFields = [SOURCE_FIELD.REPORT.CONTEXT];
-        expect(calculateIsAutoDetectedForActivityReports(sourceFields)).toEqual(true);
+        expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(true);
       });
       it('expected usage, multiple', () => {
         sourceFields = [SOURCE_FIELD.REPORT.CONTEXT, SOURCE_FIELD.REPORT.NOTES];
-        expect(calculateIsAutoDetectedForActivityReports(sourceFields)).toEqual(true);
+        expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(true);
       });
       it('expected usage, multiple with only once auto-detected', () => {
         sourceFields = [SOURCE_FIELD.REPORT.CONTEXT, SOURCE_FIELD.REPORT.ECLKC];
-        expect(calculateIsAutoDetectedForActivityReports(sourceFields)).toEqual(true);
+        expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(true);
       });
       it('expected usage, non-auto-detected single', () => {
         sourceFields = [SOURCE_FIELD.REPORT.ECLKC];
-        expect(calculateIsAutoDetectedForActivityReports(sourceFields)).toEqual(false);
+        expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(false);
       });
       it('expected usage, non-auto-detected multiple', () => {
         sourceFields = [SOURCE_FIELD.REPORT.ECLKC, SOURCE_FIELD.REPORT.NONECLKC];
-        expect(calculateIsAutoDetectedForActivityReports(sourceFields)).toEqual(false);
+        expect(calculateIsAutoDetectedForActivityReport(sourceFields)).toEqual(false);
       });
       // Note all fail cases handled by helper function tests for calculateIsAutoDetected
     });
