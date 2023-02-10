@@ -2,7 +2,7 @@ import React, { useContext, useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { Grid, GridContainer } from '@trussworks/react-uswds';
+import { Grid } from '@trussworks/react-uswds';
 import FilterPanel from '../../components/filter/FilterPanel';
 import { allRegionsUserHasPermissionTo } from '../../permissions';
 import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
@@ -109,9 +109,6 @@ export default function ResourcesDashboard() {
           ]}
           showTooltips
         />
-        <GridContainer className="margin-0 padding-0">
-          blah
-        </GridContainer>
       </>
     </div>
 

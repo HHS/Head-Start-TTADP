@@ -81,6 +81,7 @@ describe('Resources Dashboard page', () => {
     // Region 1.
     fetchMock.get(`${resourceOverviewUrl}?${regionInParams}`, resourcesOverviewRegionOne);
 
+    // Remove Region Filter.
     const user = {
       homeRegionId: 14,
       permissions: [{
@@ -144,6 +145,26 @@ describe('Resources Dashboard page', () => {
     expect(await screen.findByText(/148/i)).toBeVisible();
     expect(await screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
     expect(await screen.findByText(/665/i)).toBeVisible();
+    expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
+
+    // Remove filter.
+    const remove = await screen.findByRole('button', { name: /This button removes the filter/i });
+    act(() => userEvent.click(remove));
+
+    expect(await screen.findByText(/resource dashboard/i)).toBeVisible();
+
+    // Overview reverted after remove.
+    expect(screen.getByText(/40.85%/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*reports with resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/8,135 of 19,914/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/79.91%/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/1,819 of 2,365/i)).toBeInTheDocument();
+
+    expect(await screen.findByText(/248/i)).toBeVisible();
+    expect(await screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(await screen.findByText(/765/i)).toBeVisible();
     expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
   });
 });
