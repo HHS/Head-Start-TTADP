@@ -7,6 +7,7 @@ import {
 import fetchMock from 'fetch-mock';
 import { MemoryRouter, Router } from 'react-router';
 import { createMemoryHistory } from 'history';
+import UserContext from '../../UserContext';
 
 import SiteNav from '../SiteNav';
 
@@ -26,7 +27,9 @@ describe('SiteNav', () => {
 
       render(
         <Router history={history}>
-          <SiteNav authenticated admin user={user} />
+          <UserContext.Provider value={{ user }}>
+            <SiteNav authenticated admin user={user} />
+          </UserContext.Provider>
         </Router>,
       );
     });
@@ -48,7 +51,9 @@ describe('SiteNav', () => {
 
       render(
         <MemoryRouter>
-          <SiteNav authenticated user={user} />
+          <UserContext.Provider value={{ user }}>
+            <SiteNav authenticated user={user} />
+          </UserContext.Provider>
         </MemoryRouter>,
       );
     });
