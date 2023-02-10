@@ -118,7 +118,7 @@ export default function AlertReview({ alert, onDelete }) {
             zIndex: 2,
           }}
         >
-          <ReadOnlyEditor key={message} value={message} ariaLabel={`mesage for alert ${alert.id}`} />
+          <ReadOnlyEditor key={message} value={message} ariaLabel={`message for alert ${alert.id}`} />
         </SiteAlert>
       ) : null }
 
