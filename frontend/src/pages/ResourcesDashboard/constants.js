@@ -1,8 +1,8 @@
 /* eslint-disable import/prefer-default-export */
 import {
   regionFilter,
-  startDateFilter,
   endDateFilter,
+  startDateFilter,
   grantNumberFilter,
   programSpecialistFilter,
   programTypeFilter,
@@ -13,13 +13,18 @@ import {
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,
+  otherEntitiesFilter,
   participantsFilter,
+  myReportsFilter,
+  reportTextFilter,
 } from '../../components/filter/activityReportFilters';
 
 export const RESOURCES_DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
   grantNumberFilter,
+  myReportsFilter,
+  otherEntitiesFilter,
   participantsFilter,
   programSpecialistFilter,
   programTypeFilter,
@@ -27,6 +32,7 @@ export const RESOURCES_DASHBOARD_FILTER_CONFIG = [
   recipientFilter,
   regionFilter,
   reportIdFilter,
+  reportTextFilter,
   specialistRoleFilter,
   stateCodeFilter,
   targetPopulationsFilter,

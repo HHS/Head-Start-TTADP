@@ -8,10 +8,10 @@ import { allRegionsUserHasPermissionTo } from '../../permissions';
 import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
 import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
 import AriaLiveContext from '../../AriaLiveContext';
-// import ResourcesDashboardOverview from '../../widgets/ResourcesDashboardOverview';
+import ResourcesDashboardOverview from '../../widgets/ResourcesDashboardOverview';
 
 import './index.scss';
-// import { expandFilters } from '../../utils';
+import { expandFilters } from '../../utils';
 
 import UserContext from '../../UserContext';
 import { RESOURCES_DASHBOARD_FILTER_CONFIG } from './constants';
@@ -72,7 +72,7 @@ export default function ResourcesDashboard() {
     }
   };
 
-  // const filtersToApply = expandFilters(filters);
+  const filtersToApply = expandFilters(filters);
 
   return (
     <div className="ttahub-resources-dashboard">
@@ -87,7 +87,7 @@ export default function ResourcesDashboard() {
           }
         />
         <h1 className="landing">
-          Resources dashboard
+          Resource dashboard
         </h1>
         <Grid className="ttahub-resources-dashboard--filters display-flex flex-wrap flex-align-center margin-y-2">
           <FilterPanel
@@ -99,6 +99,16 @@ export default function ResourcesDashboard() {
             allUserRegions={regions}
           />
         </Grid>
+        <ResourcesDashboardOverview
+          filters={filtersToApply}
+          fields={[
+            'Reports with resources',
+            'ECLKC Resources',
+            'Recipients reached',
+            'Participants reached',
+          ]}
+          showTooltips
+        />
         <GridContainer className="margin-0 padding-0">
           blah
         </GridContainer>
