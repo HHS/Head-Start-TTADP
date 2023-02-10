@@ -1,18 +1,28 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import moment from 'moment';
 import PropTypes from 'prop-types';
-import { Button, Checkbox, SiteAlert } from '@trussworks/react-uswds';
+import {
+  Button,
+  Checkbox,
+  DatePicker,
+  Alert,
+} from '@trussworks/react-uswds';
 import draftToHtml from 'draftjs-to-html';
 import { Editor } from 'react-draft-wysiwyg';
 import { getEditorState } from '../../../utils';
-import './AlertReview.scss';
+import SiteAlert from '../../../components/SiteAlert';
 import Req from '../../../components/Req';
 import { saveSiteAlert, createSiteAlert } from '../../../fetchers/Admin';
+import ReadOnlyEditor from '../../../components/ReadOnlyEditor';
+import { ALERT_STATUSES } from '../../../Constants';
+import './AlertReview.scss';
 
 const BASE_EDITOR_HEIGHT = '10rem';
 
-export default function ReviewAlert({ alert, onDelete }) {
+export default function AlertReview({ alert, onDelete }) {
   const [id, setId] = useState(alert.id);
+  const [notification, setNotification] = useState(null);
   const [isNew, setIsNew] = useState(alert.isNew);
   const [isEditable, setIsEditable] = useState(alert.isNew);
   const [message, setMessage] = useState(alert.message);
@@ -21,6 +31,17 @@ export default function ReviewAlert({ alert, onDelete }) {
   const [endDate, setEndDate] = useState(alert.endDate);
   const [status, setStatus] = useState(alert.status);
   const [isFetching, setIsFetching] = useState(false);
+  const [offset, setOffset] = useState(71);
+
+  useEffect(() => {
+    if (isEditable) {
+      const header = document.querySelector('.smart-hub-header.has-alerts');
+      if (header) {
+        const headerHeight = header.offsetHeight;
+        setOffset(headerHeight);
+      }
+    }
+  }, [isEditable]);
 
   let defaultEditorState;
   if (alert.message) {
@@ -34,6 +55,8 @@ export default function ReviewAlert({ alert, onDelete }) {
 
   const onSubmit = async (e) => {
     e.preventDefault();
+    setNotification(null);
+
     const newAlert = {
       startDate,
       endDate,
@@ -45,24 +68,36 @@ export default function ReviewAlert({ alert, onDelete }) {
     if (isNew) {
       try {
         setIsFetching(true);
-        await createSiteAlert(newAlert);
+        const createdAlert = await createSiteAlert(newAlert);
         setIsNew(false);
         setIsEditable(false);
-        setId(alert.id);
+        setId(createdAlert.id);
+        setNotification({
+          state: 'success',
+          message: 'Your alert was created successfully',
+        });
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.log(`There was an error creating an alert:${err}`);
+        setNotification({
+          state: 'error',
+          message: 'There was an error creating this alert.',
+        });
       } finally {
         setIsFetching(false);
       }
     } else {
       try {
         setIsFetching(true);
-        await saveSiteAlert(id, newAlert);
+        await saveSiteAlert({ id, ...newAlert });
         setIsEditable(false);
+        setNotification({
+          state: 'success',
+          message: 'Your alert was saved successfully',
+        });
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.log(`There was an error updating an alert:${err}`);
+        setNotification({
+          state: 'error',
+          message: 'There was an error updating this alert.',
+        });
       } finally {
         setIsFetching(false);
       }
@@ -70,35 +105,26 @@ export default function ReviewAlert({ alert, onDelete }) {
   };
 
   return (
-    <div className="margin-y-3 padding-1 position-relative">
+    <div className="margin-y-3 padding-2 position-relative shadow-2 radius-md">
+
       {alert.message || alert.title ? (
         <SiteAlert
-          variant="info"
-          showIcon
           heading={title}
+          className="z-index-100"
           style={{
-            minHeight: '6rem', position: 'sticky', top: '71px', zIndex: 2,
+            minHeight: '3rem',
+            position: isEditable ? 'sticky' : 'relative',
+            top: isEditable ? `${offset}px` : 'auto',
+            zIndex: 2,
           }}
         >
-          <>
-            <Checkbox
-              id={`is-editable-${alert.id}`}
-              name={`is-editable-${alert.id}`}
-              className="float-right"
-              label="Edit?"
-              onChange={() => setIsEditable(!isEditable)}
-              checked={isEditable}
-              aria-label="Edit?"
-              disabled={isFetching}
-            />
-            <div className="usa-alert__text" dangerouslySetInnerHTML={{ __html: message }} />
-          </>
+          <ReadOnlyEditor key={message} value={message} ariaLabel={`mesage for alert ${alert.id}`} />
         </SiteAlert>
       ) : null }
 
-      { !isEditable && (startDate || endDate)
-        ? (
-          <div className="display-flex">
+      <div className="display-flex position-relative">
+        { !isEditable && (startDate || endDate) ? (
+          <>
             <p className="usa-prose margin-right-3">
               <span className="text-bold">Start date:</span>
               {' '}
@@ -109,12 +135,28 @@ export default function ReviewAlert({ alert, onDelete }) {
               {' '}
               {endDate}
             </p>
-          </div>
+
+          </>
         )
-        : null }
+          : null }
+        <Checkbox
+          id={`is-editable-${alert.id}`}
+          name={`is-editable-${alert.id}`}
+          className="position-absolute right-0 top-0 margin-top-2 margin-right-1"
+          label="Edit?"
+          onChange={() => {
+            setIsEditable(!isEditable);
+            setNotification(null);
+          }}
+          checked={isEditable}
+          aria-label="Edit?"
+          disabled={isFetching}
+        />
+
+      </div>
 
       {isEditable ? (
-        <form onSubmit={onSubmit} className="maxw-tablet">
+        <form onSubmit={onSubmit} className="maxw-tablet smart-hub-admin__create-alert-form">
 
           <div className="margin-top-3">
             <label htmlFor={`alert-${alert.id}-title`}>
@@ -157,17 +199,14 @@ export default function ReviewAlert({ alert, onDelete }) {
               Start date
               <Req />
             </label>
-            <input
+            <DatePicker
               id={`alert-${alert.id}-start-date`}
-              type="date"
-              className="usa-input"
-              name="startDate"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              name={`alert-${alert.id}-start-date`}
+              defaultValue={moment(startDate, 'MM/DD/YYYY').format('YYYY-MM-DD')}
+              onChange={(date) => setStartDate(date)}
               disabled={isFetching}
               required
             />
-
           </div>
 
           <div className="margin-top-3">
@@ -175,13 +214,11 @@ export default function ReviewAlert({ alert, onDelete }) {
               End date
               <Req />
             </label>
-            <input
+            <DatePicker
               id={`alert-${alert.id}-end-date`}
-              type="date"
-              className="usa-input"
-              name="endDate"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
+              name={`alert-${alert.id}-end-date`}
+              defaultValue={moment(endDate, 'MM/DD/YYYY').format('YYYY-MM-DD')}
+              onChange={(date) => setEndDate(date)}
               disabled={isFetching}
               required
             />
@@ -194,14 +231,17 @@ export default function ReviewAlert({ alert, onDelete }) {
             <select
               id={`alert-${alert.id}-status`}
               className="usa-select"
-              name="status"
+              name={`alert-${alert.id}-status`}
               value={status}
               onChange={(e) => setStatus(e.target.value)}
               disabled={isFetching}
               required
             >
-              <option>Draft</option>
-              <option>Published</option>
+              {Object.values(ALERT_STATUSES).map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
             </select>
           </div>
           <div className="margin-top-2">
@@ -212,11 +252,22 @@ export default function ReviewAlert({ alert, onDelete }) {
           </div>
         </form>
       ) : null }
+      { notification && notification.message && notification.state ? (
+        <div className="margin-top-3">
+          <Alert type={notification.state} slim>
+            <div className="usa-alert__body">
+              <p className="usa-alert__text">
+                {notification.message}
+              </p>
+            </div>
+          </Alert>
+        </div>
+      ) : null}
     </div>
   );
 }
 
-ReviewAlert.propTypes = {
+AlertReview.propTypes = {
   onDelete: PropTypes.func.isRequired,
   alert: PropTypes.shape({
     id: PropTypes.number.isRequired,
