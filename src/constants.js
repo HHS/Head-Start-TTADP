@@ -21,7 +21,7 @@ export const FILE_STATUSES = {
 // note that if this list is changed,
 // it also needs to be changed in frontend/src/Constants.js
 export const ALERT_STATUSES = {
-  DRAFT: 'Draft',
+  UNPUBLISHED: 'Unpublished',
   PUBLISHED: 'Published',
 };
 
