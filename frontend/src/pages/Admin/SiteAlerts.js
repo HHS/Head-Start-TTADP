@@ -49,7 +49,7 @@ export default function SiteAlerts() {
     } catch (err) {
       setNotification({
         state: 'error',
-        message: 'There was an error deleting the alert',
+        message: 'There was an error deleting an alert',
       });
     }
   };
