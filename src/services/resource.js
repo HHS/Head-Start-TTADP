@@ -75,7 +75,9 @@ const findOrCreateResource = async (url) => {
 const findOrCreateResources = async (urls) => {
   if (urls === undefined || urls === null || !Array.isArray(urls)) return [];
   let newURLs;
-  const filteredUrls = [...new Set(urls.filter((url) => typeof url === 'string'))];
+  const filteredUrls = [...new Set(urls
+    .filter((url) => typeof url === 'string')
+    .filter((url) => url))];
   const currentResources = filteredUrls.length > 0
     ? await Resource.findAll({
       where: {
@@ -584,7 +586,9 @@ const genericProcessEntityForResources = async (
   // Use regex to pull urls from the required fields
   const urlsFrom = {};
   columns.forEach((column) => { urlsFrom[column] = collectURLsFromField(entity[column]); });
-  urlsFrom.resource = urls.map((url) => collectURLsFromField(url)).flat(Infinity);
+  urlsFrom.resource = urls && Array.isArray(urls) && urls.length > 0
+    ? urls.map((url) => collectURLsFromField(url)).flat(Infinity)
+    : [];
 
   // Create an array of resource objects from the passed resourceIds
   const incomingResourcesById = resourceIds && Array.isArray(resourceIds)
@@ -686,7 +690,7 @@ const genericSyncResourcesForEntity = async (
 
 // Identify if passed sourceFields contain one or more of the ACTIVITY_REPORT_AUTODETECTED_FIELDS.
 // TODO: verify all values in the sourceFields are in SOURCE_FIELD.REPORT and log exceptions
-const calculateIsAutoDetectedForActivityReports = (
+const calculateIsAutoDetectedForActivityReport = (
   sourceFields,
 ) => calculateIsAutoDetected(sourceFields, REPORT_AUTODETECTED_FIELDS);
 
@@ -1184,7 +1188,7 @@ export {
   genericProcessEntityForResources,
   genericSyncResourcesForEntity,
   // ActivityReports Resource Processing
-  calculateIsAutoDetectedForActivityReports,
+  calculateIsAutoDetectedForActivityReport,
   syncResourcesForActivityReport,
   processActivityReportForResources,
   processActivityReportForResourcesById,
