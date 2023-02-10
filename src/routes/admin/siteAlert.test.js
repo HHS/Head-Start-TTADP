@@ -1,4 +1,5 @@
 import faker from '@faker-js/faker';
+import moment from 'moment';
 import httpCodes from 'http-codes';
 import { ALERT_STATUSES } from '../../constants';
 import SCOPES from '../../middleware/scopeConstants';
@@ -46,7 +47,7 @@ describe('site alert admin handler', () => {
       endDate: faker.date.future(),
       startDate: faker.date.past(),
       message: faker.lorem.sentence(),
-      status: ALERT_STATUSES.DRAFT,
+      status: ALERT_STATUSES.UNPUBLISHED,
       title: faker.lorem.sentence(),
     });
 
@@ -115,7 +116,7 @@ describe('site alert admin handler', () => {
       const existingAlert = await SiteAlert.findOne({
         where: {
           userId: adminUser.id,
-          status: ALERT_STATUSES.DRAFT,
+          status: ALERT_STATUSES.UNPUBLISHED,
         },
       });
 
@@ -127,7 +128,7 @@ describe('site alert admin handler', () => {
           endDate: existingAlert.endDate,
           startDate: existingAlert.startDate,
           message: existingAlert.message,
-          status: ALERT_STATUSES.DRAFT,
+          status: ALERT_STATUSES.UNPUBLISHED,
           title: expect.any(String),
         }),
       );
@@ -173,15 +174,14 @@ describe('site alert admin handler', () => {
   describe('createAlert', () => {
     it('should create a report', async () => {
       const newAlert = {
-        endDate: faker.date.future(),
-        startDate: faker.date.past(),
+        endDate: moment(faker.date.future()).format('MM/DD/YYYY'),
+        startDate: moment(faker.date.past()).format('MM/DD/YYYY'),
         message: faker.lorem.sentence(),
-        status: ALERT_STATUSES.DRAFT,
+        status: ALERT_STATUSES.UNPUBLISHED,
         title: faker.lorem.sentence(),
-        userId: adminUser.id,
       };
 
-      await createAlert({ body: newAlert }, mockResponse);
+      await createAlert({ body: newAlert, session: { userId: adminUser.id } }, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining(newAlert));
     });
 
@@ -201,7 +201,7 @@ describe('site alert admin handler', () => {
         endDate: faker.date.future(),
         startDate: faker.date.past(),
         message: faker.lorem.sentence(),
-        status: ALERT_STATUSES.DRAFT,
+        status: ALERT_STATUSES.UNPUBLISHED,
         title: faker.lorem.sentence(),
         userId: adminUser.id,
       };
@@ -219,7 +219,7 @@ describe('site alert admin handler', () => {
       const existingAlert = await SiteAlert.findOne({
         where: {
           userId: adminUser.id,
-          status: ALERT_STATUSES.DRAFT,
+          status: ALERT_STATUSES.UNPUBLISHED,
         },
       });
 
@@ -245,7 +245,7 @@ describe('site alert admin handler', () => {
           endDate: existingAlert.endDate,
           startDate: existingAlert.startDate,
           message,
-          status: ALERT_STATUSES.DRAFT,
+          status: ALERT_STATUSES.UNPUBLISHED,
           title,
         }),
       );
