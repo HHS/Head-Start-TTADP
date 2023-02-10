@@ -7,8 +7,8 @@ import { ALERT_STATUSES } from '../../Constants';
 import { deleteSiteAlert, getSiteAlerts } from '../../fetchers/Admin';
 import AlertReview from './components/AlertReview';
 
-const DEFAULT_ALERT = {
-  status: ALERT_STATUSES.DRAFT,
+export const DEFAULT_ALERT = {
+  status: ALERT_STATUSES.UNPUBLISHED,
   message: '<span></span>',
   title: '',
   startDate: '',
