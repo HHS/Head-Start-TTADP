@@ -1,7 +1,6 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
 // const { beforeDestroy, afterDestroy } = require('./hooks/nextStepResource');
-const { calculateIsAutoDetectedForNextStep } = require('../services/resource');
 
 export default (sequelize, DataTypes) => {
   class NextStepResource extends Model {
@@ -25,6 +24,8 @@ export default (sequelize, DataTypes) => {
     isAutoDetected: {
       type: new DataTypes.VIRTUAL(DataTypes.BOOLEAN, ['sourceFields']),
       get() {
+        // eslint-disable-next-line global-require
+        const { calculateIsAutoDetectedForNextStep } = require('../services/resource');
         return calculateIsAutoDetectedForNextStep(this.get('sourceFields'));
       },
     },
