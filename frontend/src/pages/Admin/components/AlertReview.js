@@ -106,7 +106,6 @@ export default function AlertReview({ alert, onDelete }) {
 
   return (
     <div className="margin-y-3 padding-2 position-relative shadow-2 radius-md">
-
       {alert.message || alert.title ? (
         <SiteAlert
           heading={title}
@@ -122,7 +121,12 @@ export default function AlertReview({ alert, onDelete }) {
         </SiteAlert>
       ) : null }
 
-      <div className="display-flex position-relative">
+      <div
+        className="desktop:display-flex position-relative maxw-desktop margin-x-auto ttahub-date-indicator"
+        style={{
+          paddingLeft: '4.75rem',
+        }}
+      >
         { !isEditable && (startDate || endDate) ? (
           <>
             <p className="usa-prose margin-right-3">
@@ -152,7 +156,6 @@ export default function AlertReview({ alert, onDelete }) {
           aria-label="Edit?"
           disabled={isFetching}
         />
-
       </div>
 
       {isEditable ? (
