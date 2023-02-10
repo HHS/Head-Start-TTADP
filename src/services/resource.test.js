@@ -1345,7 +1345,7 @@ describe('resource', () => {
       });
       afterEach(async () => {
         await ActivityReportResource.destroy({
-          where: { id: activityReport.id },
+          where: { activityReportId: activityReport.id },
           individualHooks: true,
         });
       });
