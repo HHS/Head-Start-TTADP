@@ -35,7 +35,9 @@ const isValidNewAlert = (req) => {
  */
 async function getAlerts(req, res) {
   try {
-    const alerts = await SiteAlert.findAll();
+    const alerts = await SiteAlert.findAll({
+      order: [['startDate', 'DESC']],
+    });
     res.json(alerts);
   } catch (err) {
     auditLogger.error(`${namespace}:getAlerts`, err);
