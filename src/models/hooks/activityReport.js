@@ -13,9 +13,9 @@ const { addIndexDocument, deleteIndexDocument } = require('../../lib/awsElasticS
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
-  const { calculateIsAutoDetectedForActivityReports, processActivityReportForResourcesById } = require('../../services/resource');
+  const { calculateIsAutoDetectedForActivityReport, processActivityReportForResourcesById } = require('../../services/resource');
   const changed = instance.changed() || Object.keys(instance);
-  if (calculateIsAutoDetectedForActivityReports(changed)) {
+  if (calculateIsAutoDetectedForActivityReport(changed)) {
     await processActivityReportForResourcesById(instance.id);
   }
 };
