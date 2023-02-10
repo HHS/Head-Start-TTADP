@@ -2,6 +2,7 @@ const {
   Model,
 } = require('sequelize');
 const { ALERT_STATUSES } = require('../constants');
+const { formatDate } = require('../lib/modelHelpers');
 
 const possibleStatuses = Object.values(ALERT_STATUSES);
 
@@ -31,10 +32,12 @@ export default (sequelize, DataTypes) => {
     startDate: {
       type: DataTypes.DATE,
       allowNull: false,
+      get: formatDate,
     },
     endDate: {
       type: DataTypes.DATE,
       allowNull: false,
+      get: formatDate,
     },
     title: {
       type: DataTypes.TEXT,
