@@ -348,6 +348,8 @@ describe('Activity Reports model', () => {
     );
     const submittedDate = moment();
     preReport.submittedDate = submittedDate;
+
+    // Submitted.
     await preReport.update(
       { calculatedStatus: REPORT_STATUSES.SUBMITTED, submissionStatus: REPORT_STATUSES.SUBMITTED },
       { individualHooks: true },
@@ -358,6 +360,18 @@ describe('Activity Reports model', () => {
     expect(reportToSubmit.submittedDate).not.toBeNull();
     expect(reportToSubmit.submittedDate).toBe(moment(submittedDate).format('MM/DD/YYYY'));
 
+    // Approved.
+    await ActivityReport.update(
+      { calculatedStatus: REPORT_STATUSES.APPROVED },
+      { where: { id: reportToSubmit.id }, individualHooks: true },
+    );
+    reportToSubmit = await ActivityReport.findOne(
+      { where: { id: reportToSubmit.id } },
+    );
+    expect(reportToSubmit.submittedDate).not.toBeNull();
+    expect(reportToSubmit.submittedDate).toBe(moment(submittedDate).format('MM/DD/YYYY'));
+
+    // Needs Action.
     await ActivityReport.update(
       { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
       { where: { id: reportToSubmit.id }, individualHooks: true },
