@@ -124,3 +124,18 @@ export function checkObjectiveTemplateIdParam(req, res, next) {
   auditLogger.error(msg);
   return res.status(httpCodes.BAD_REQUEST).send(msg);
 }
+
+/**
+ * @param {*} req - request
+ * @param {*} res - response
+ * @param {*} next - next middleware
+ */
+export function checkGroupIdParam(req, res, next) {
+  if (req.params && req.params.groupId && canBeInt(req.params.groupId)) {
+    return next();
+  }
+
+  const msg = `${errorMessage}: groupId ${req.params ? (req.params.groupId || 'undefined') : 'undefined'}`;
+  auditLogger.error(msg);
+  return res.status(httpCodes.BAD_REQUEST).send(msg);
+}
