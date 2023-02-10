@@ -1,7 +1,6 @@
 import { Button } from '@trussworks/react-uswds';
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
-// import { Link } from 'react-router-dom';
 import Container from '../../components/Container';
 import { ALERT_STATUSES } from '../../Constants';
 import { deleteSiteAlert, getSiteAlerts } from '../../fetchers/Admin';
@@ -56,7 +55,7 @@ export default function SiteAlerts() {
       </Helmet>
       <Container>
         <header className="display-flex flex-align-center flex-justify">
-          <h1>Site Alerts</h1>
+          <h1>Site alerts</h1>
           <Button type="button" onClick={createNewAlert}>Create new alert</Button>
         </header>
 
@@ -70,7 +69,6 @@ export default function SiteAlerts() {
               />
             ))}
           </div>
-
         </main>
       </Container>
     </div>
