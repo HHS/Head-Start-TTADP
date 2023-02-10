@@ -89,7 +89,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
           include: [
             {
               model: Resource,
-              as: 'resource',
+              as: 'resources',
               attributes: [
                 ['url', 'value'],
                 ['id', 'key'],
@@ -553,7 +553,6 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
         include: [
           {
             model: Resource,
-            separate: true,
             as: 'resources',
             attributes: [
               ['url', 'value'],
@@ -1745,7 +1744,6 @@ export async function getGoalsForReport(reportId) {
             as: 'topics',
           },
           {
-            separate: true,
             model: Resource,
             as: 'resources',
             attributes: [['url', 'value']],
