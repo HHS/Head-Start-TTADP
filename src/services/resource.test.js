@@ -2837,6 +2837,71 @@ describe('resource', () => {
             SOURCE_FIELD.OBJECTIVE.RESOURCE,
           ].sort());
       });
+      it('expected usage, with resourceIds', async () => {
+        const resource = await Resource.findOne({ where: { url: urls[0] } });
+        await processObjectiveForResourcesById(
+          objective.id,
+          null,
+          [resource.id],
+        );
+        let oResources = await ObjectiveResource.findAll({
+          where: { objectiveId: objective.id },
+          include: [{ model: Resource, as: 'resource' }],
+        });
+        expect(oResources.length).toEqual(1);
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.OBJECTIVE.TITLE,
+            SOURCE_FIELD.OBJECTIVE.RESOURCE,
+          ].sort());
+
+        await processObjectiveForResourcesById(
+          objective.id,
+          null,
+          null,
+        );
+        oResources = await ObjectiveResource.findAll({
+          where: { objectiveId: objective.id },
+          include: [{ model: Resource, as: 'resource' }],
+        });
+        expect(oResources.length).toEqual(1);
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.OBJECTIVE.TITLE,
+            SOURCE_FIELD.OBJECTIVE.RESOURCE,
+          ].sort());
+
+        await processObjectiveForResourcesById(
+          objective.id,
+          null,
+          [resource.id],
+        );
+        oResources = await ObjectiveResource.findAll({
+          where: { objectiveId: objective.id },
+          include: [{ model: Resource, as: 'resource' }],
+        });
+        expect(oResources.length).toEqual(1);
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
+          .toEqual(resources.find((r) => r.url === urls[0]).id);
+        expect(oResources
+          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+          .dataValues.sourceFields.sort())
+          .toEqual([
+            SOURCE_FIELD.OBJECTIVE.TITLE,
+            SOURCE_FIELD.OBJECTIVE.RESOURCE,
+          ].sort());
+      });
       it('expected usage, add and remove urls', async () => {
         await processObjectiveForResourcesById(
           objective.id,
