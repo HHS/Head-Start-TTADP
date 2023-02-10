@@ -586,7 +586,9 @@ const genericProcessEntityForResources = async (
   // Use regex to pull urls from the required fields
   const urlsFrom = {};
   columns.forEach((column) => { urlsFrom[column] = collectURLsFromField(entity[column]); });
-  urlsFrom.resource = urls.map((url) => collectURLsFromField(url)).flat(Infinity);
+  urlsFrom.resource = urls && Array.isArray(urls) && urls.length > 0
+    ? urls.map((url) => collectURLsFromField(url)).flat(Infinity)
+    : [];
 
   // Create an array of resource objects from the passed resourceIds
   const incomingResourcesById = resourceIds && Array.isArray(resourceIds)

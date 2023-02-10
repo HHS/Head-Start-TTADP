@@ -8,6 +8,13 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       ActivityReportGoal.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });
       ActivityReportGoal.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });
+      ActivityReportGoal.hasMany(models.ActivityReportGoalResource, { foreignKey: 'activityReportGoalId', as: 'activityReportGoalResources' });
+      ActivityReportGoal.belongsToMany(models.Resource, {
+        through: models.ActivityReportGoalResource,
+        foreignKey: 'activityReportGoalId',
+        otherKey: 'resourceId',
+        as: 'resources',
+      });
     }
   }
   ActivityReportGoal.init({
