@@ -113,7 +113,7 @@ describe('Resources Dashboard page', () => {
     // Remove existing filter.
 
     // Add region filter.
-    const open = await screen.findByRole('button', { name: /open filters for this page/i });
+    let open = await screen.findByRole('button', { name: /open filters for this page/i });
     act(() => userEvent.click(open));
 
     // Change first filter to Region 1.
@@ -127,7 +127,7 @@ describe('Resources Dashboard page', () => {
     act(() => userEvent.selectOptions(select, 'Region 1'));
 
     // Apply filter menu with Region 1 filter.
-    const apply = await screen.findByRole('button', { name: /apply filters for resources dashboard/i });
+    let apply = await screen.findByRole('button', { name: /apply filters for resources dashboard/i });
     act(() => userEvent.click(apply));
 
     // Verify page render after apply.
@@ -148,9 +148,14 @@ describe('Resources Dashboard page', () => {
     expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
     // Remove filter.
-    const remove = await screen.findByRole('button', { name: /This button removes the filter/i });
-    act(() => userEvent.click(remove));
+    open = await screen.findByRole('button', { name: /open filters for this page/i });
+    act(() => userEvent.click(open));
 
+    const removeBtn = await screen.findByRole('button', { name: /remove region is 1 filter\. click apply filters to make your changes/i });
+    act(() => userEvent.click(removeBtn));
+
+    apply = await screen.findByRole('button', { name: /apply filters for resources dashboard/i });
+    act(() => userEvent.click(apply));
     expect(await screen.findByText(/resource dashboard/i)).toBeVisible();
 
     // Overview reverted after remove.
