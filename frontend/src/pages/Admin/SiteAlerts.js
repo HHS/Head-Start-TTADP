@@ -1,4 +1,4 @@
-import { Button } from '@trussworks/react-uswds';
+import { Button, Alert } from '@trussworks/react-uswds';
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import Container from '../../components/Container';
@@ -18,14 +18,18 @@ export const DEFAULT_ALERT = {
 
 export default function SiteAlerts() {
   const [alerts, setAlerts] = useState([]);
+  const [notification, setNotification] = useState(null);
+
   useEffect(() => {
     async function fetchAlerts() {
       try {
         const alertsFromApi = await getSiteAlerts();
         setAlerts(alertsFromApi);
       } catch (e) {
-        // eslint-disable-next-line no-console
-        console.error(`There was an error fetching alerts:${e}`);
+        setNotification({
+          state: 'error',
+          message: 'There was an error fetching alerts',
+        });
       }
     }
 
@@ -43,8 +47,10 @@ export default function SiteAlerts() {
       }
       setAlerts(alerts.filter((a) => a.id !== alert.id));
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error(`There was an error deleting an alert:${err}`);
+      setNotification({
+        state: 'error',
+        message: 'There was an error deleting the alert',
+      });
     }
   };
 
@@ -60,6 +66,11 @@ export default function SiteAlerts() {
         </header>
 
         <main>
+          {(notification && notification.message) && (
+            <Alert type={notification.state} role="alert">
+              {notification.message}
+            </Alert>
+          )}
           <div>
             {alerts.map((alert) => (
               <AlertReview
