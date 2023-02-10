@@ -69,25 +69,6 @@ export function checkReportIdParam(req, res, next) {
 }
 
 /**
- *  Check reportObjectiveId req param
- *
- * This middleware validates that the Activity Report Objective id supplied
- * by the reportObjectiveId query param is an integer before we proceed with the request
- * @param {*} req - request
- * @param {*} res - response
- * @param {*} next - next middleware
- */
-export function checkReportObjectiveIdParam(req, res, next) {
-  if (req.params && req.params.reportObjectiveId && canBeInt(req.params.reportObjectiveId)) {
-    return next();
-  }
-
-  const msg = `${errorMessage}: reportObjectiveId ${req.params ? (req.params.reportObjectiveId || 'undefined') : 'undefined'}`;
-  auditLogger.error(msg);
-  return res.status(httpCodes.BAD_REQUEST).send(msg);
-}
-
-/**
  *  Check objectiveId req param
  *
  * This middleware validates that the Objective id supplied
