@@ -26,9 +26,7 @@ describe('urlUtils', () => {
 
     it('correctly validates resources', () => {
       validUrls.forEach((url) => {
-        try {
-          expect(isValidResourceUrl(url)).toBe(true);
-        } catch (err) { console.log(err, url); throw err; }
+        expect(isValidResourceUrl(url)).toBe(true);
       });
 
       invalidUrls.forEach((url) => {
