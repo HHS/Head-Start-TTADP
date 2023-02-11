@@ -11,6 +11,7 @@ export default (sequelize, DataTypes) => {
      */
     static associate(models) {
       ObjectiveTemplateResource.belongsTo(models.ObjectiveTemplate, { foreignKey: 'objectiveTemplateId', onDelete: 'cascade', as: 'objectiveTemplate' });
+      ObjectiveTemplateResource.belongsTo(models.Resource, { foreignKey: 'resourceId', as: 'resource' });
     }
   }
   ObjectiveTemplateResource.init({
