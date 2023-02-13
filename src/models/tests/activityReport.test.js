@@ -1,4 +1,5 @@
 /* eslint-disable dot-notation */
+import moment from 'moment';
 import db, {
   ActivityReport,
   ActivityRecipient,
@@ -127,6 +128,7 @@ describe('Activity Reports model', () => {
   const grants = [];
   let report;
   let reportToIndex;
+  let reportToSubmit;
   let activityRecipients;
   const goals = [];
   const objectives = [];
@@ -156,6 +158,7 @@ describe('Activity Reports model', () => {
       grants[0] = await Grant.findOne({ where: { id: mockGrant[0].id } });
       grants[1] = await Grant.findOne({ where: { id: mockGrant[1].id } });
       report = await ActivityReport.create({ ...sampleReport });
+      reportToSubmit = await ActivityReport.create({ ...sampleReport });
       reportToIndex = await ActivityReport.create({ ...sampleReport, context: 'AWS Elasticsearch' });
       activityRecipients = await Promise.all([
         await ActivityRecipient.create({ activityReportId: report.id, grantId: grants[0].id }),
@@ -222,6 +225,7 @@ describe('Activity Reports model', () => {
       await ActivityReportGoal.destroy({ where: { activityReportId: report.id } });
       await ActivityReport.destroy({ where: { id: report.id } });
       await ActivityReport.destroy({ where: { id: reportToIndex.id } });
+      await ActivityReport.destroy({ where: { id: reportToSubmit.id } });
       await Objective.destroy({ where: { id: objectives.map((o) => o.id) } });
       await Goal.destroy({ where: { id: goals.map((g) => g.id) } });
       await Grant.destroy({ where: { id: grants.map((g) => g.id) } });
@@ -336,6 +340,46 @@ describe('Activity Reports model', () => {
 
     expect(goalsPost2[0].onApprovedAR).not.toEqual(goalsPost[0].onApprovedAR);
     expect(objectivesPost2[0].onApprovedAR).not.toEqual(objectivesPost[0].onApprovedAR);
+  });
+
+  it('submittedDate', async () => {
+    const preReport = await ActivityReport.findOne(
+      { where: { id: reportToSubmit.id } },
+    );
+    const submittedDate = moment();
+    preReport.submittedDate = submittedDate;
+
+    // Submitted.
+    await preReport.update(
+      { calculatedStatus: REPORT_STATUSES.SUBMITTED, submissionStatus: REPORT_STATUSES.SUBMITTED },
+      { individualHooks: true },
+    );
+    reportToSubmit = await ActivityReport.findOne(
+      { where: { id: reportToSubmit.id } },
+    );
+    expect(reportToSubmit.submittedDate).not.toBeNull();
+    expect(reportToSubmit.submittedDate).toBe(moment(submittedDate).format('MM/DD/YYYY'));
+
+    // Approved.
+    await ActivityReport.update(
+      { calculatedStatus: REPORT_STATUSES.APPROVED },
+      { where: { id: reportToSubmit.id }, individualHooks: true },
+    );
+    reportToSubmit = await ActivityReport.findOne(
+      { where: { id: reportToSubmit.id } },
+    );
+    expect(reportToSubmit.submittedDate).not.toBeNull();
+    expect(reportToSubmit.submittedDate).toBe(moment(submittedDate).format('MM/DD/YYYY'));
+
+    // Needs Action.
+    await ActivityReport.update(
+      { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
+      { where: { id: reportToSubmit.id }, individualHooks: true },
+    );
+    reportToSubmit = await ActivityReport.findOne(
+      { where: { id: reportToSubmit.id } },
+    );
+    expect(reportToSubmit.submittedDate).toBeNull();
   });
 
   it('activityRecipientId', async () => {
