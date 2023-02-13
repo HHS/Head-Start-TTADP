@@ -749,8 +749,6 @@ const getActivityReportDocument = async (sequelize, instance) => {
   );
 };
 
-
-
 const updateAwsElasticsearchIndexes = async (sequelize, instance) => {
   // AWS Elasticsearch: Determine if we queue delete or update index document.
   const changed = instance.changed();
