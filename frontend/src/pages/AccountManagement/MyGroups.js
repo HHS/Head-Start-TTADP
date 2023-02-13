@@ -1,5 +1,6 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
-import React, { useEffect, useContext, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Controller, useForm } from 'react-hook-form';
 import { Link, useHistory } from 'react-router-dom';
@@ -9,18 +10,27 @@ import { Button, TextInput } from '@trussworks/react-uswds';
 import colors from '../../colors';
 import IndicatesRequiredField from '../../components/IndicatesRequiredField';
 import Req from '../../components/Req';
-import UserContext from '../../UserContext';
 import { getRecipientAndGrantsByUser } from '../../fetchers/recipient';
 import MultiSelect from '../../components/MultiSelect';
-import { createGroup } from '../../fetchers/groups';
+import { createGroup, fetchGroup, updateGroup } from '../../fetchers/groups';
 
-export default function MyGroups() {
+const mapGrants = (grants) => grants.map((grant) => ({
+  value: grant.id,
+  label: grant.name,
+}));
+
+const mapRecipients = (recipients) => recipients.map((recipient) => ({
+  label: recipient.name,
+  options: mapGrants(recipient.grants),
+}));
+
+export default function MyGroups({ match }) {
+  const { groupId } = match.params;
   const [recipients, setRecipients] = useState([]);
   const history = useHistory();
   const [recipientsFetched, setRecipientsFetched] = useState(false);
-  const { user } = useContext(UserContext);
 
-  const { control, handleSubmit } = useForm({
+  const { control, handleSubmit, setValue } = useForm({
     defaultValues: {
       'new-group-name': '',
       'select-recipients-new-group': [],
@@ -28,8 +38,23 @@ export default function MyGroups() {
   });
 
   useEffect(() => {
+    async function getGroup() {
+      try {
+        const existingGroupData = await fetchGroup(groupId);
+        if (existingGroupData) {
+          setValue('new-group-name', existingGroupData.name);
+          setValue('select-recipients-new-group', mapGrants(existingGroupData.grants));
+        }
+      } catch (err) {
+        // todo
+      }
+    }
+
     // load existing group data from API based on query param
-  }, []);
+    if (groupId) {
+      getGroup();
+    }
+  }, [groupId, setValue]);
 
   useEffect(() => {
     // get grants/recipients for user
@@ -37,13 +62,7 @@ export default function MyGroups() {
       try {
         setRecipientsFetched(true);
         const response = await getRecipientAndGrantsByUser();
-        setRecipients(response.map((recipient) => ({
-          label: recipient.name,
-          options: recipient.grants.map((grant) => ({
-            value: grant.id,
-            label: grant.name,
-          })),
-        })));
+        setRecipients(mapRecipients(response));
       } catch (err) {
         //
       }
@@ -55,10 +74,20 @@ export default function MyGroups() {
 
   const onSubmit = async (data) => {
     try {
-      await createGroup({
-        grants: data['select-recipients-new-group'].map(({ value }) => (value)),
-        name: data['new-group-name'],
-      });
+      if (!groupId) {
+        await createGroup({
+          grants: data['select-recipients-new-group'].map(({ value }) => (value)),
+          name: data['new-group-name'],
+        });
+      }
+
+      if (groupId) {
+        await updateGroup({
+          id: groupId,
+          name: data['new-group-name'],
+          grants: data['select-recipients-new-group'].map(({ value }) => (value)),
+        });
+      }
 
       history.push('/account');
     } catch (err) {
@@ -126,7 +155,10 @@ export default function MyGroups() {
           </div>
         </form>
       </div>
-
     </>
   );
 }
+
+MyGroups.propTypes = {
+  match: ReactRouterPropTypes.match.isRequired,
+};

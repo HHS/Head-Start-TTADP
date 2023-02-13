@@ -178,11 +178,19 @@ function App() {
           )}
         />
         <Route
+          path="/account/my-groups/:groupId([0-9]*)"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <MyGroups match={match} />
+            </AppWrapper>
+          )}
+        />
+        <Route
           exact
           path="/account/my-groups"
-          render={() => (
+          render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
-              <MyGroups />
+              <MyGroups match={match} />
             </AppWrapper>
           )}
         />
