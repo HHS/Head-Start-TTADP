@@ -705,7 +705,12 @@ export async function goalByIdAndRecipient(id, recipientId) {
           ...objectiveFile.file.dataValues,
         }))
         .map((f) => ({ ...f, file: undefined })),
-      resources: objective.resources.map((resource) => ({ ...resource.dataValues })),
+      resources: objective.objectiveResources
+        .map((objectiveResource) => ({
+          ...objectiveResource.dataValues,
+          ...objectiveResource.resource.dataValues,
+        }))
+        .map((r) => ({ ...r, resource: undefined })),
     }))
     .map((objective) => ({ ...objective, objectiveTopics: undefined, objectiveFiles: undefined }));
   return goal;
