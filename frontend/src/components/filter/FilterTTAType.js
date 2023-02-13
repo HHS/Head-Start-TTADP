@@ -12,7 +12,7 @@ export function displayTtaTypeQuery(q) {
   }
 
   if (q === 'training,technical-assistance') {
-    return 'Both';
+    return 'Training and technical assistance';
   }
 
   return '';
@@ -36,7 +36,7 @@ export default function FilterTTAType({ onApply, query, inputId }) {
           Technical assistance
         </option>
         <option value="training,technical-assistance">
-          Both
+        Training and technical assistance
         </option>
       </Dropdown>
     </>

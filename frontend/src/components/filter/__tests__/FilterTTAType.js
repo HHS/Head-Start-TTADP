@@ -19,7 +19,7 @@ describe('displayTtaTypeQuery', () => {
   });
 
   it('returns the correct string for both', () => {
-    expect(displayTtaTypeQuery('training,technical-assistance')).toEqual('Both');
+    expect(displayTtaTypeQuery('training,technical-assistance')).toEqual('Training and technical assistance');
   });
 
   it('returns an empty string for an empty string', () => {
