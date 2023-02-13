@@ -36,7 +36,7 @@ export default function FilterTTAType({ onApply, query, inputId }) {
           Technical assistance
         </option>
         <option value="training,technical-assistance">
-        Training and technical assistance
+          Training and technical assistance
         </option>
       </Dropdown>
     </>
