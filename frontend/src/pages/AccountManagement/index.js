@@ -12,7 +12,7 @@ import {
   Link,
   Radio,
 } from '@trussworks/react-uswds';
-import { Link as RouterLink } from 'react-router-dom';
+
 import { useForm, FormProvider, useFormContext } from 'react-hook-form';
 import { useParams } from 'react-router';
 import Avatar from '../../components/Avatar';
@@ -24,7 +24,9 @@ import {
   getEmailSettings,
 } from '../../fetchers/settings';
 import { requestVerificationEmail } from '../../fetchers/users';
+
 import EmailVerifier from './EmailVerifier';
+import Groups from './components/Groups';
 
 const emailPreferenceErrorMessage = 'Please select a frequency preference';
 
@@ -271,6 +273,7 @@ function AccountManagement({ updateUser }) {
   const [verificationEmailSendError, setVerificationEmailSendError] = useState(false);
   const [showVerifier, setShowVerifier] = useState(true);
 
+
   useEffect(() => {
     const emailValidationStatus = user.validationStatus.find(({ type }) => type === 'email');
     if (emailValidationStatus && emailValidationStatus.validatedAt) {
@@ -327,17 +330,7 @@ function AccountManagement({ updateUser }) {
       </div>
 
       {/* Profile box */}
-      <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
-        <h2 className="margin-bottom-1 font-sans-xl">My groups</h2>
-
-        <div className="margin-bottom-3">
-          <p className="usa-prose">You have no groups.</p>
-        </div>
-
-        <div className="margin-bottom-3">
-          <RouterLink to="/account/my-groups" className="usa-button text-white text-no-underline">Create group</RouterLink>
-        </div>
-      </div>
+      <Groups />
 
       {/* Email preferences box */}
       <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
