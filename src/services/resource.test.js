@@ -2878,7 +2878,6 @@ describe('resource', () => {
           .dataValues.sourceFields.sort())
           .toEqual([
             SOURCE_FIELD.OBJECTIVE.TITLE,
-            SOURCE_FIELD.OBJECTIVE.RESOURCE,
           ].sort());
 
         await processObjectiveForResourcesById(
