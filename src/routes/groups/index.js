@@ -14,8 +14,8 @@ const router = express.Router();
 router.get('/', authMiddleware, transactionWrapper(getGroups));
 router.post('/', authMiddleware, transactionWrapper(createGroup));
 
-router.get(':groupId', authMiddleware, checkGroupIdParam, transactionWrapper(getGroup));
-router.put(':groupId', authMiddleware, checkGroupIdParam, transactionWrapper(updateGroup));
-router.delete(':groupId', authMiddleware, checkGroupIdParam, transactionWrapper(deleteGroup));
+router.get('/:groupId', authMiddleware, checkGroupIdParam, transactionWrapper(getGroup));
+router.put('/:groupId', authMiddleware, checkGroupIdParam, transactionWrapper(updateGroup));
+router.delete('/:groupId', authMiddleware, checkGroupIdParam, transactionWrapper(deleteGroup));
 
 export default router;
