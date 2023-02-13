@@ -82,6 +82,25 @@ const moveDraftGoalsToNotStartedOnSubmission = async (sequelize, instance, optio
   }
 };
 
+const setSubmittedDate = (sequelize, instance, options) => {
+  try {
+    if (!options.fields.includes('submittedDate')) {
+      options.fields.push('submittedDate');
+    }
+    if (instance.previous('calculatedStatus') !== REPORT_STATUSES.SUBMITTED
+      && instance.calculatedStatus === REPORT_STATUSES.SUBMITTED) {
+      // Other > Submitted.
+      instance.set('submittedDate', new Date());
+    } else if (instance.calculatedStatus !== REPORT_STATUSES.SUBMITTED
+        && instance.calculatedStatus !== REPORT_STATUSES.APPROVED) {
+      // Submitted > Other.
+      instance.set('submittedDate', null);
+    }
+  } catch (e) {
+    auditLogger.error(JSON.stringify({ e }));
+  }
+};
+
 const propagateSubmissionStatus = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
@@ -739,10 +758,6 @@ const getActivityReportDocument = async (sequelize, instance) => {
   );
 };
 
-const beforeUpdate = async (instance) => {
-  copyStatus(instance);
-};
-
 const updateAwsElasticsearchIndexes = async (sequelize, instance) => {
   // AWS Elasticsearch: Determine if we queue delete or update index document.
   const changed = instance.changed();
@@ -792,6 +807,18 @@ const updateAwsElasticsearchIndexes = async (sequelize, instance) => {
   }
 };
 
+const beforeValidate = async (sequelize, instance, options) => {
+  if (!Array.isArray(options.fields)) {
+    options.fields = []; //eslint-disable-line
+  }
+  setSubmittedDate(sequelize, instance, options);
+};
+
+const beforeUpdate = async (sequelize, instance, options) => {
+  copyStatus(instance);
+  setSubmittedDate(sequelize, instance, options);
+};
+
 const afterCreate = async (sequelize, instance, options) => {
   await processForEmbeddedResources(sequelize, instance, options);
 };
@@ -813,9 +840,11 @@ export {
   propagateApprovedStatus,
   propagateSubmissionStatus,
   automaticStatusChangeOnApprovalForGoals,
+  beforeValidate,
   beforeCreate,
   beforeUpdate,
   afterCreate,
   afterUpdate,
   moveDraftGoalsToNotStartedOnSubmission,
+  setSubmittedDate,
 };
