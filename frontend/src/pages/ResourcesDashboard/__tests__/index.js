@@ -56,9 +56,29 @@ const resourcesOverviewRegionOne = {
   },
 };
 
+const resourcesOverviewRegionTwo = {
+  reports: {
+    count: '6,135',
+    total: '17,914',
+    percent: '1.65%',
+  },
+  eclkc: {
+    count: '818',
+    total: '365',
+    percent: '.66%',
+  },
+  recipients: {
+    count: '148',
+  },
+  participants: {
+    count: '565',
+  },
+};
+
 const allRegions = 'region.in[]=1&region.in[]=2';
 const mockAnnounce = jest.fn();
 const regionInParams = 'region.in[]=1';
+const regionTwoInParams = 'region.in[]=2';
 
 describe('Resources Dashboard page', () => {
   afterEach(() => fetchMock.restore());
@@ -80,6 +100,9 @@ describe('Resources Dashboard page', () => {
 
     // Region 1.
     fetchMock.get(`${resourceOverviewUrl}?${regionInParams}`, resourcesOverviewRegionOne);
+
+    // Region 2.
+    fetchMock.get(`${resourceOverviewUrl}?${regionTwoInParams}`, resourcesOverviewRegionTwo);
 
     // Remove Region Filter.
     const user = {
@@ -117,13 +140,13 @@ describe('Resources Dashboard page', () => {
     act(() => userEvent.click(open));
 
     // Change first filter to Region 1.
-    const [lastTopic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
+    let [lastTopic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
     act(() => userEvent.selectOptions(lastTopic, 'region'));
 
-    const [lastCondition] = Array.from(document.querySelectorAll('[name="condition"]')).slice(-1);
+    let [lastCondition] = Array.from(document.querySelectorAll('[name="condition"]')).slice(-1);
     act(() => userEvent.selectOptions(lastCondition, 'is'));
 
-    const select = await screen.findByRole('combobox', { name: 'Select region to filter by' });
+    let select = await screen.findByRole('combobox', { name: 'Select region to filter by' });
     act(() => userEvent.selectOptions(select, 'Region 1'));
 
     // Apply filter menu with Region 1 filter.
@@ -156,6 +179,55 @@ describe('Resources Dashboard page', () => {
 
     apply = await screen.findByRole('button', { name: /apply filters for resources dashboard/i });
     act(() => userEvent.click(apply));
+    expect(await screen.findByText(/resource dashboard/i)).toBeVisible();
+
+    // Overview reverted after remove.
+    expect(screen.getByText(/40.85%/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*reports with resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/8,135 of 19,914/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/79.91%/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/1,819 of 2,365/i)).toBeInTheDocument();
+
+    expect(await screen.findByText(/248/i)).toBeVisible();
+    expect(await screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(await screen.findByText(/765/i)).toBeVisible();
+    expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
+
+    // Add region filter test pill remove.
+    open = await screen.findByRole('button', { name: /open filters for this page/i });
+    act(() => userEvent.click(open));
+
+    [lastTopic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
+    act(() => userEvent.selectOptions(lastTopic, 'region'));
+
+    [lastCondition] = Array.from(document.querySelectorAll('[name="condition"]')).slice(-1);
+    act(() => userEvent.selectOptions(lastCondition, 'is'));
+
+    select = await screen.findByRole('combobox', { name: 'Select region to filter by' });
+    act(() => userEvent.selectOptions(select, 'Region 2'));
+
+    apply = await screen.findByRole('button', { name: /apply filters for resources dashboard/i });
+    act(() => userEvent.click(apply));
+    expect(await screen.findByText(/resource dashboard/i)).toBeVisible();
+
+    expect(screen.getByText(/1.65%/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*reports with resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/6,135 of 17,914/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/.66%/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/818 of 365/i)).toBeInTheDocument();
+
+    expect(await screen.findByText(/148/i)).toBeVisible();
+    expect(await screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(await screen.findByText(/565/i)).toBeVisible();
+    expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
+
+    // Test filter updates from pill remove.
+    const removePill = await screen.findByRole('button', { name: /this button removes the filter: region is 2/i });
+    act(() => userEvent.click(removePill));
     expect(await screen.findByText(/resource dashboard/i)).toBeVisible();
 
     // Overview reverted after remove.
