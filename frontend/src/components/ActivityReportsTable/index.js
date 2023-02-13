@@ -18,6 +18,8 @@ function ActivityReportsTable({
   filters,
   tableCaption,
   exportIdPrefix,
+  resetPagination,
+  setResetPagination,
 }) {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -40,6 +42,15 @@ function ActivityReportsTable({
 
   const downloadAllButtonRef = useRef();
   const downloadSelectedButtonRef = useRef();
+
+  // a side effect that resets the pagination when the filters change
+  useEffect(() => {
+    if (resetPagination) {
+      setSortConfig({ ...sortConfig, activePage: 1 });
+      setOffset(0); // 0 times perpage = 0
+      setResetPagination(false);
+    }
+  }, [activePage, perPage, resetPagination, setResetPagination, setSortConfig, sortConfig]);
 
   useEffect(() => {
     async function fetchReports() {
@@ -65,8 +76,17 @@ function ActivityReportsTable({
         setLoading(false);
       }
     }
+
+    /**
+     * we don't want the state updates in reset pagination to trigger a fetch, except the last one
+     */
+
+    if (resetPagination) {
+      return;
+    }
+
     fetchReports();
-  }, [sortConfig, offset, perPage, filters]);
+  }, [sortConfig, offset, perPage, filters, resetPagination]);
 
   const makeReportCheckboxes = (reportsArr, checked) => (
     reportsArr.reduce((obj, r) => ({ ...obj, [r.id]: checked }), {})
@@ -317,6 +337,15 @@ ActivityReportsTable.propTypes = {
     }),
   ).isRequired,
   tableCaption: PropTypes.string.isRequired,
+  resetPagination: PropTypes.bool,
+  setResetPagination: PropTypes.func,
+};
+
+ActivityReportsTable.defaultProps = {
+  resetPagination: false,
+  setResetPagination: () => {
+    // do nothing
+  },
 };
 
 export default ActivityReportsTable;
