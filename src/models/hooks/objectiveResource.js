@@ -49,7 +49,7 @@ const propagateCreateToTemplate = async (sequelize, instance, options) => {
   if (objective
     && objective.objectiveTemplateId !== null
     && objective.objectiveTemplate.creationMethod === AUTOMATIC_CREATION) {
-    const [otr] = await sequelize.models.ObjectiveTemplateResource.findOrCreate({
+    const [otr, wasCreated] = await sequelize.models.ObjectiveTemplateResource.findOrCreate({
       where: {
         objectiveTemplateId: objective.objectiveTemplateId,
         resourceId: instance.resourceId,
@@ -57,16 +57,18 @@ const propagateCreateToTemplate = async (sequelize, instance, options) => {
       transaction: options.transaction,
     });
 
-    await sequelize.models.ObjectiveTemplateResource.update(
-      {
-        updatedAt: new Date(),
-      },
-      {
-        where: { id: otr.id },
-        transaction: options.transaction,
-        individualHooks: true,
-      },
-    );
+    if (wasCreated) {
+      await sequelize.models.ObjectiveTemplateResource.update(
+        {
+          updatedAt: new Date(),
+        },
+        {
+          where: { id: otr.id },
+          transaction: options.transaction,
+          individualHooks: true,
+        },
+      );
+    }
   }
 };
 
@@ -117,25 +119,27 @@ const propagateDestroyToTemplate = async (sequelize, instance, options) => {
       ],
       transaction: options.transaction,
     });
-    if (otr.objectiveTemplate.objectives.length > 0) {
-      await sequelize.models.ObjectiveTemplateResource.update(
-        {
-          updatedAt: new Date(),
-        },
-        {
-          where: { id: otr.id },
-          transaction: options.transaction,
-          individualHooks: true,
-        },
-      );
-    } else {
-      await sequelize.models.ObjectiveTemplateResource.destroy(
-        {
-          where: { id: otr.id },
-          individualHooks: true,
-          transaction: options.transaction,
-        },
-      );
+    if (otr) {
+      if (otr.objectiveTemplate.objectives.length > 0) {
+        await sequelize.models.ObjectiveTemplateResource.update(
+          {
+            updatedAt: new Date(),
+          },
+          {
+            where: { id: otr.id },
+            transaction: options.transaction,
+            individualHooks: true,
+          },
+        );
+      } else {
+        await sequelize.models.ObjectiveTemplateResource.destroy(
+          {
+            where: { id: otr.id },
+            individualHooks: true,
+            transaction: options.transaction,
+          },
+        );
+      }
     }
   }
 };
