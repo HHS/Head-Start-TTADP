@@ -552,6 +552,10 @@ const genericProcessEntityForResourcesById = async (
     include: [{
       model: resourceTableModel,
       as: resourceTableAs,
+      include: [{
+        model: Resource,
+        as: 'resource',
+      }],
     }],
   });
 
