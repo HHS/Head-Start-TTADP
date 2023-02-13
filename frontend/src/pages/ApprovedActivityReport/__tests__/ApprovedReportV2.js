@@ -84,6 +84,7 @@ describe('Approved Activity Report V2 component', () => {
       name: 'Goal 2',
       goalNumbers: ['2'],
       objectives: mockObjectives,
+      isRttapa: 'Yes',
     }],
     objectivesWithoutGoals: [],
     additionalNotes: '',
@@ -92,7 +93,31 @@ describe('Approved Activity Report V2 component', () => {
   it('renders a report with multiple goals', async () => {
     render(<ApprovedReportV2 data={report} />);
     expect(await screen.findByText(/Goal 1/i)).toBeInTheDocument();
+    expect(await screen.findByText(/non-rttapa/i)).toBeInTheDocument();
     expect(await screen.findByText(/Goal 2/i)).toBeInTheDocument();
+    expect(screen.queryAllByText(/rttapa/i).length).toBe(2);
+  });
+
+  it('renders a report with multiple steps', async () => {
+    render(<ApprovedReportV2 data={{
+      ...report,
+      recipientNextSteps: [{
+        note: 'First step',
+        completeDate: '2021-01-01',
+      },
+      {
+        note: 'Second step',
+        completeDate: '2022-03-05',
+      },
+      {
+        note: 'Third step',
+        completeDate: '2022-03-05',
+      }],
+    }}
+    />);
+    expect(await screen.findByText(/First Step/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Second Step/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Third Step/i)).toBeInTheDocument();
   });
 
   it('renders an other entity report', async () => {
