@@ -89,7 +89,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
           include: [
             {
               model: Resource,
-              as: 'resources',
+              as: 'resource',
               attributes: [
                 ['url', 'value'],
                 ['id', 'key'],
