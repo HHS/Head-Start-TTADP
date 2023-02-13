@@ -113,4 +113,26 @@ describe('Approved Activity Report V1 component', () => {
     />);
     expect(screen.queryAllByText(/Date submitted:/i).length).toBe(0);
   });
+
+  it('renders without topics', async () => {
+    render(<ApprovedReportV1 data={{
+      ...report, topics: null, submittedDate: '2023-01-09',
+    }}
+    />);
+    expect(await screen.findByRole('heading', { name: /tta activity report boat/i })).toBeInTheDocument();
+    expect(await screen.findByText(/Date submitted:/i)).toBeInTheDocument();
+    expect(await screen.findByText('01/09/2023')).toBeInTheDocument();
+    expect(await screen.findByText(/Topics/i)).toBeInTheDocument();
+  });
+
+  it('renders without author', async () => {
+    render(<ApprovedReportV1 data={{
+      ...report, submittedDate: '2023-01-09', author: null,
+    }}
+    />);
+    expect(await screen.findByRole('heading', { name: /tta activity report boat/i })).toBeInTheDocument();
+    expect(await screen.findByText(/Date submitted:/i)).toBeInTheDocument();
+    expect(await screen.findByText('01/09/2023')).toBeInTheDocument();
+    expect(await screen.findByText(/Topics/i)).toBeInTheDocument();
+  });
 });
