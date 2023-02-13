@@ -1,5 +1,8 @@
 import {
-  getGoalsByActivityRecipient, recipientById, recipientsByName,
+  getGoalsByActivityRecipient,
+  recipientById,
+  recipientsByName,
+  recipientsByUserId,
 } from '../../services/recipient';
 import { goalsByIdAndRecipient } from '../../services/goals';
 import handleErrors from '../../lib/apiErrorHandler';
@@ -27,6 +30,26 @@ export async function getGoalsByIdandRecipient(req, res) {
     }
 
     res.json(goals);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function getRecipientAndGrantsByUser(req, res) {
+  try {
+    const userId = await currentUserId(req, res);
+
+    if (!userId) {
+      res.sendStatus(401);
+    }
+
+    const recipients = await recipientsByUserId(userId);
+    if (!recipients || !recipients.length) {
+      res.sendStatus(404);
+      return;
+    }
+
+    res.json(recipients);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }

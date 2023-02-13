@@ -11,6 +11,8 @@ import {
   Objective,
   ActivityRecipient,
   Topic,
+  Permission,
+  User,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
 import {
@@ -22,6 +24,46 @@ import {
 import filtersToScopes from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
 import goalStatusGraph from '../widgets/goalStatusGraph';
+
+/**
+ *
+ * @param {number} userId
+ * @returns {Promise<Model>} recipient results
+ */
+export async function recipientsByUserId(userId) {
+  const user = await User.findOne({
+    attributes: ['id'],
+    where: {
+      id: userId,
+    },
+    include: [
+      {
+        model: Permission,
+        as: 'permissions',
+      },
+    ],
+  });
+
+  if (!user) {
+    return [];
+  }
+
+  const regions = user.permissions.map((p) => p.regionId);
+
+  return Recipient.findAll({
+    order: [['name', 'ASC']],
+    include: [
+      {
+        model: Grant,
+        as: 'grants',
+        where: {
+          regionId: regions,
+          status: 'Active',
+        },
+      },
+    ],
+  });
+}
 
 export async function allRecipients() {
   return Recipient.findAll({

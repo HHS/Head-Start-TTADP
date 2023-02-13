@@ -57,3 +57,8 @@ export const getRecipientGoals = async (recipientId, regionId, sortBy = 'updated
   const goals = await get(`${recipientGoalsUrl}?sortBy=${sortBy}&sortDir=${sortDir}&offset=${offset}&limit=${limit}${goalsParam && goalsParam.length ? `&${goalsParam.join('&')}` : ''}${filters ? `&${filters}` : ''}`);
   return goals.json();
 };
+
+export const getRecipientAndGrantsByUser = async () => {
+  const recipients = await get(join(recipientUrl, 'user'));
+  return recipients.json();
+};
