@@ -3,7 +3,7 @@ import { _ } from 'lodash';
 import { activityReportsFiltersToScopes as activityReport } from './activityReport';
 import { grantsFiltersToScopes as grant } from './grants';
 import { goalsFiltersToScopes as goal } from './goals';
-import { recipientsFiltersToScopes as recipient } from './recipients';
+// import { recipientsFiltersToScopes as recipient } from './recipients';
 import { AWS_ELASTIC_SEARCH_INDEXES, DECIMAL_BASE } from '../constants';
 import { search } from '../lib/awsElasticSearch/index';
 import { auditLogger } from '../logger';
@@ -12,7 +12,7 @@ const models = {
   activityReport,
   grant,
   goal,
-  recipient,
+  // recipient,
 };
 
 async function checkForSearchItems(filters) {
