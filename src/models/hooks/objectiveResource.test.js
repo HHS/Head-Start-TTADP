@@ -22,22 +22,18 @@ describe('objectiveResource hooks', () => {
   });
 
   beforeEach(async () => {
-    const transaction = await sequelize.transaction();
-
     objectiveTemplate = await ObjectiveTemplate.create(
       objectiveTemplateGenerator(),
-      { transaction, individualHooks: true },
+      { individualHooks: true },
     );
 
     objective = await Objective.create({
       title: 'Random objective title',
       status: OBJECTIVE_STATUS.APPROVED,
       objectiveTemplateId: objectiveTemplate.id,
-    }, { transaction, individualHooks: true });
+    }, { individualHooks: true });
 
     await processObjectiveForResourcesById(objective.id, [url]);
-
-    await transaction.commit();
   });
 
   afterEach(async () => {
