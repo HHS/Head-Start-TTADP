@@ -5,7 +5,7 @@ import join from 'url-join';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
 import {
-  act, render, screen,
+  act, render, screen, fireEvent,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
@@ -79,6 +79,7 @@ const allRegions = 'region.in[]=1&region.in[]=2';
 const mockAnnounce = jest.fn();
 const regionInParams = 'region.in[]=1';
 const regionTwoInParams = 'region.in[]=2';
+const reportIdInParams = 'region.in[]=1&region.in[]=2&reportId.ctn[]=123';
 
 describe('Resources Dashboard page', () => {
   afterEach(() => fetchMock.restore());
@@ -103,6 +104,9 @@ describe('Resources Dashboard page', () => {
 
     // Region 2.
     fetchMock.get(`${resourceOverviewUrl}?${regionTwoInParams}`, resourcesOverviewRegionTwo);
+
+    // Report ID (non-region).
+    fetchMock.get(`${resourceOverviewUrl}?${reportIdInParams}`, resourcesOverviewRegionTwo);
 
     // Remove Region Filter.
     const user = {
@@ -225,12 +229,61 @@ describe('Resources Dashboard page', () => {
     expect(await screen.findByText(/565/i)).toBeVisible();
     expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
-    // Test filter updates from pill remove.
-    const removePill = await screen.findByRole('button', { name: /this button removes the filter: region is 2/i });
+    // Test filter updates from region pill remove.
+    let removePill = await screen.findByRole('button', { name: /this button removes the filter: region is 2/i });
     act(() => userEvent.click(removePill));
     expect(await screen.findByText(/resource dashboard/i)).toBeVisible();
 
     // Overview reverted after remove.
+    expect(screen.getByText(/40.85%/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*reports with resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/8,135 of 19,914/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/79.91%/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/1,819 of 2,365/i)).toBeInTheDocument();
+
+    expect(await screen.findByText(/248/i)).toBeVisible();
+    expect(await screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(await screen.findByText(/765/i)).toBeVisible();
+    expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
+
+    // Add non-region filter.
+    open = await screen.findByRole('button', { name: /open filters for this page/i });
+    act(() => userEvent.click(open));
+
+    [lastTopic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
+    act(() => userEvent.selectOptions(lastTopic, 'Report ID'));
+
+    [lastCondition] = Array.from(document.querySelectorAll('[name="condition"]')).slice(-1);
+    act(() => userEvent.selectOptions(lastCondition, 'contains'));
+
+    const reportIdText = await screen.findByRole('textbox', { name: /enter a report id/i });
+    act(() => fireEvent.change(reportIdText, { target: { value: '123' } }));
+
+    apply = await screen.findByRole('button', { name: /apply filters for resources dashboard/i });
+    act(() => userEvent.click(apply));
+    expect(await screen.findByText(/resource dashboard/i)).toBeVisible();
+
+    expect(screen.getByText(/1.65%/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*reports with resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/6,135 of 17,914/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/.66%/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/818 of 365/i)).toBeInTheDocument();
+
+    expect(await screen.findByText(/148/i)).toBeVisible();
+    expect(await screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(await screen.findByText(/565/i)).toBeVisible();
+    expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
+
+    // Test remove non-region filter pill.
+    removePill = await screen.findByRole('button', { name: /this button removes the filter: report id contains 123/i });
+    act(() => userEvent.click(removePill));
+    expect(await screen.findByText(/resource dashboard/i)).toBeVisible();
+
+    // Shows initial.
     expect(screen.getByText(/40.85%/i)).toBeInTheDocument();
     expect(screen.getAllByText(/^[ \t]*reports with resources[ \t]*$/i)[0]).toBeInTheDocument();
     expect(screen.getByText(/8,135 of 19,914/i)).toBeInTheDocument();
