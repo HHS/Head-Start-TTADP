@@ -66,20 +66,27 @@ describe('Collect and Map AWS Elasticsearch data', () => {
   beforeAll(async () => {
     try {
       // User.
-      user = await User.create({ ...mockUser });
+      user = await User.findOne({ where: { hsesUserId: mockUser.hsesUserId } });
+      if (!user) {
+        user = await User.create({ ...mockUser });
+      }
 
       // Recipient.
-      recipient = await Recipient.create({
-        id: 75165,
-        name: 'Sample Elasticsearch Recipient',
+      [recipient] = await Recipient.findOrCreate({
+        where: {
+          id: 75165,
+          name: 'Sample Elasticsearch Recipient',
+        },
       });
 
       // Grant.
-      grant = await Grant.create({
-        id: 584224,
-        number: 'ES584224',
-        recipientId: recipient.id,
-        regionId: 1,
+      [grant] = await Grant.findOrCreate({
+        where: {
+          id: 584224,
+          number: 'ES584224',
+          recipientId: recipient.id,
+          regionId: 1,
+        },
       });
 
       // Approved Reports.
@@ -271,11 +278,11 @@ describe('Collect and Map AWS Elasticsearch data', () => {
     expect(objectiveResourceLinks).not.toBeNull();
     expect(objectiveResourceLinks.length).toBe(3);
     expect(objectiveResourceLinks[0]['activityReportObjective.activityReportId']).toBe(reportOne.id);
-    expect(objectiveResourceLinks[0].url).toBe('http://test1.gov');
+    expect(objectiveResourceLinks[0]['resource.url']).toBe('http://test1.gov');
     expect(objectiveResourceLinks[1]['activityReportObjective.activityReportId']).toBe(reportOne.id);
-    expect(objectiveResourceLinks[1].url).toBe('http://test2.gov');
+    expect(objectiveResourceLinks[1]['resource.url']).toBe('http://test2.gov');
     expect(objectiveResourceLinks[2]['activityReportObjective.activityReportId']).toBe(reportOne.id);
-    expect(objectiveResourceLinks[2].url).toBe('http://test3.gov');
+    expect(objectiveResourceLinks[2]['resource.url']).toBe('http://test3.gov');
 
     // Format as AWS Elasticsearch document.
     const document = await formatModelForAwsElasticsearch(
