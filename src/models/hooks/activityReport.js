@@ -79,13 +79,11 @@ const setSubmittedDate = async (sequelize, instance) => {
       && instance.calculatedStatus === REPORT_STATUSES.SUBMITTED) {
       // Other > Submitted.
       await sequelize.models.ActivityReport.update(
-        { submittedDate: instance.submittedDate },
+        { submittedDate: new Date() },
         { where: { id: instance.id } },
       );
-    } else if ((instance.previous('calculatedStatus') === REPORT_STATUSES.SUBMITTED
-    || instance.previous('calculatedStatus') === REPORT_STATUSES.APPROVED)
-    && (instance.calculatedStatus !== REPORT_STATUSES.SUBMITTED
-        && instance.calculatedStatus !== REPORT_STATUSES.APPROVED)) {
+    } else if (instance.calculatedStatus !== REPORT_STATUSES.SUBMITTED
+        && instance.calculatedStatus !== REPORT_STATUSES.APPROVED) {
       // Submitted > Other.
       await sequelize.models.ActivityReport.update(
         { submittedDate: null },
