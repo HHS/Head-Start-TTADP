@@ -42,6 +42,7 @@ import {
 } from './Constants';
 import AppLoadingContext from './AppLoadingContext';
 import Loader from './components/Loader';
+import MyGroups from './pages/AccountManagement/MyGroups';
 
 function App() {
   const [user, updateUser] = useState();
@@ -174,6 +175,15 @@ function App() {
           path="/regional-dashboard"
           render={() => (
             <AppWrapper authenticated logout={logout}><RegionalDashboard user={user} /></AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/account/my-groups"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <MyGroups />
+            </AppWrapper>
           )}
         />
         <Route

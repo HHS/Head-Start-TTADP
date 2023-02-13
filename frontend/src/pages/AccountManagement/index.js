@@ -12,6 +12,7 @@ import {
   Link,
   Radio,
 } from '@trussworks/react-uswds';
+import { Link as RouterLink } from 'react-router-dom';
 import { useForm, FormProvider, useFormContext } from 'react-hook-form';
 import { useParams } from 'react-router';
 import Avatar from '../../components/Avatar';
@@ -308,7 +309,7 @@ function AccountManagement({ updateUser }) {
 
       {/* Profile box */}
       <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
-        <h1 className="margin-bottom-1">Profile</h1>
+        <h2 className="margin-bottom-1 font-sans-xl">Profile</h2>
 
         {/* Avatar w/ name */}
         <div className="margin-bottom-3">
@@ -325,9 +326,22 @@ function AccountManagement({ updateUser }) {
         </div>
       </div>
 
+      {/* Profile box */}
+      <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
+        <h2 className="margin-bottom-1 font-sans-xl">My groups</h2>
+
+        <div className="margin-bottom-3">
+          <p className="usa-prose">You have no groups.</p>
+        </div>
+
+        <div className="margin-bottom-3">
+          <RouterLink to="/account/my-groups" className="usa-button text-white text-no-underline">Create group</RouterLink>
+        </div>
+      </div>
+
       {/* Email preferences box */}
       <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
-        <h1 className="margin-bottom-3">Email preferences</h1>
+        <h2 className="margin-bottom-3 font-sans-xl">Email preferences</h2>
 
         {showVerifier && (
           <EmailVerifier token={token} updateUser={updateUser} />
