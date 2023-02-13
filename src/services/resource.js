@@ -581,6 +581,10 @@ const genericProcessEntityForResources = async (
     ? entity[resourceTableAs]
     : await resourceTableModel.findAll({
       where: { [resourceTableForeignKey]: entity.id },
+      include: [{
+        model: Resource,
+        as: 'resource',
+      }],
       raw: true,
     });
 
@@ -955,7 +959,7 @@ const processActivityReportGoalForResources = async (
   urls,
   resourceIds,
 ) => genericProcessEntityForResources(
-  ActivityReportGoal,
+  ActivityReportGoalResource,
   'activityReportGoalResources',
   'activityReportGoalId',
   REPORTGOAL_AUTODETECTED_FIELDS,
