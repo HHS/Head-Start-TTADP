@@ -2,7 +2,6 @@
 import React, {
   useEffect, useState, useRef,
 } from 'react';
-import { uniq } from 'lodash';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid } from '@trussworks/react-uswds';
@@ -16,7 +15,8 @@ import { RECIPIENTS_PER_PAGE } from '../../Constants';
 import './index.css';
 import useSession from '../../hooks/useSession';
 import FilterPanel from '../../components/filter/FilterPanel';
-import useUrlFilters from '../../hooks/useUrlFilters';
+import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
+import { RECIPIENT_SEARCH_FILTER_CONFIG } from './constants';
 
 const DEFAULT_SORT = {
   sortBy: 'name',
@@ -29,7 +29,7 @@ const DEFAULT_CENTRAL_OFFICE_SORT = {
 };
 
 function RecipientSearch({ user }) {
-  const [filters, setFilters] = useUrlFilters([]);
+  const [filters, setFilters] = useSessionFiltersAndReflectInUrl('recipient-search-filters', []);
   const hasCentralOffice = user && user.homeRegionId && user.homeRegionId === 14;
   const regions = getUserRegions(user);
   const [queryAndSort, setQueryAndSort] = useSession('rtr-search', {
@@ -44,11 +44,11 @@ function RecipientSearch({ user }) {
 
   const { query, activePage, sortConfig } = queryAndSort;
 
-  const filterConfig = [];
-  const onRemoveFilter = () => {};
-  const onApplyFilters = () => {};
+  const onRemoveFilter = (filterId) => {
+    const newFilters = filters.map((f) => ({ ...f })).filter((f) => f.id !== filterId);
+    setFilters(newFilters);
+  };
   const applyButtonAria = 'Apply filters';
-  const allUserRegions = uniq(user.permissions.map(({ regionId }) => regionId));
 
   const updateQueryAndSort = (key, value) => {
     const qAndS = { ...queryAndSort };
@@ -63,68 +63,40 @@ function RecipientSearch({ user }) {
     updateQueryAndSort('activePage', ap);
   };
 
-  // const setAppliedRegion = (ar) => {
-  //   updateQueryAndSort('appliedRegion', ar);
-  // };
-
   const inputRef = useRef();
   const offset = (activePage - 1) * RECIPIENTS_PER_PAGE;
 
-  // useEffect(() => {
-    // async function fetchRecipients() {
-      // const filters = [];
-
-      // if (queryAndSort.appliedRegion === 14) {
-      //   getUserRegions(user).forEach((region) => {
-      //     filters.push({
-      //       id: uuidv4(),
-      //       topic: 'region',
-      //       condition: 'is',
-      //       query: region,
-      //     });
-      //   });
-      // } else {
-      //   filters.push({
-      //     id: uuidv4(),
-      //     topic: 'region',
-      //     condition: 'is',
-      //     query: queryAndSort.appliedRegion,
-      //   });
-      // }
-
+  useEffect(() => {
+    async function fetchRecipients() {
       /**
        * if the current query doesn't match the value of the input,
        * we need to handle that first. Changing that will trigger this hook again
        */
-    //   if (query !== inputRef.current.value) {
-    //     if (inputRef.current) {
-    //       setQueryAndSort({ ...queryAndSort, query: inputRef.current.value });
-    //     }
-    //     return;
-    //   }
+      if (query !== inputRef.current.value) {
+        if (inputRef.current) {
+          setQueryAndSort({ ...queryAndSort, query: inputRef.current.value });
+        }
+        return;
+      }
 
-    //   setLoading(true);
+      setLoading(true);
 
-    //   try {
-    //     const response = await searchRecipients(
-    //       query,
-    //       filters,
-    //       { ...sortConfig, offset },
-    //     );
-    //     setResults(response);
-    //   } catch (err) {
-    //     setResults({ count: 0, rows: [] });
-    //   } finally {
-    //     setLoading(false);
-    //   }
-    // }
+      try {
+        const response = await searchRecipients(
+          query,
+          filters,
+          { ...sortConfig, offset },
+        );
+        setResults(response);
+      } catch (err) {
+        setResults({ count: 0, rows: [] });
+      } finally {
+        setLoading(false);
+      }
+    }
 
-    // fetchRecipients();
-  // }, [offset, sortConfig, user, queryAndSort, query, setQueryAndSort, filters]);
-
-  // function onApplyRegion(region) {
-  //   setAppliedRegion(region.value);
-  // }
+    fetchRecipients();
+  }, [offset, sortConfig, user, queryAndSort, query, setQueryAndSort, filters]);
 
   async function requestSort(sortBy) {
     const config = { ...sortConfig };
@@ -169,15 +141,17 @@ function RecipientSearch({ user }) {
               <span className="sr-only">Search for matching recipients</span>
             </button>
           </form>
+        </Grid>
+        <div className="margin-bottom-2">
           <FilterPanel
             filters={filters}
-            filterConfig={filterConfig}
+            filterConfig={RECIPIENT_SEARCH_FILTER_CONFIG}
             onRemoveFilter={onRemoveFilter}
-            onApplyFilters={onApplyFilters}
+            onApplyFilters={setFilters}
             applyButtonAria={applyButtonAria}
-            allUserRegions={allUserRegions}
+            allUserRegions={regions}
           />
-        </Grid>
+        </div>
         <RecipientResults
           recipients={rows}
           loading={loading}
