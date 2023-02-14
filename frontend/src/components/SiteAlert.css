@@ -1,9 +1,22 @@
-@media (min-width: 80rem) { 
+@media (min-width: 64rem) { 
     .usa-site-alert--ttahub .usa-alert__body {
         align-items: center;
         display: grid;
         grid-template-columns: max-content 1fr;
         grid-gap: 0.5rem;    
+        justify-content: left;
+    }
+
+    .has-alerts .usa-site-alert--ttahub .usa-alert {
+        margin-left: 17.5rem;
+    }
+
+    .has-alerts .usa-site-alert--ttahub .usa-alert::before {
+        left: 0;
+    }
+
+    .has-alerts .usa-site-alert--ttahub .usa-alert__body {
+        padding-left: 3rem;
     }
 }
 
