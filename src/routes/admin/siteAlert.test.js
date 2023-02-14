@@ -1,7 +1,7 @@
 import faker from '@faker-js/faker';
 import moment from 'moment';
 import httpCodes from 'http-codes';
-import { ALERT_STATUSES } from '../../constants';
+import { ALERT_STATUSES, ALERT_VARIANTS } from '../../constants';
 import SCOPES from '../../middleware/scopeConstants';
 import {
   User,
@@ -49,6 +49,7 @@ describe('site alert admin handler', () => {
       message: faker.lorem.sentence(),
       status: ALERT_STATUSES.UNPUBLISHED,
       title: faker.lorem.sentence(),
+      variant: ALERT_VARIANTS.INFO,
     });
 
     await SiteAlert.create({
@@ -58,6 +59,7 @@ describe('site alert admin handler', () => {
       message: faker.lorem.sentence(),
       status: ALERT_STATUSES.PUBLISHED,
       title: faker.lorem.sentence(),
+      variant: ALERT_VARIANTS.INFO,
     });
 
     await SiteAlert.create({
@@ -67,6 +69,7 @@ describe('site alert admin handler', () => {
       message: faker.lorem.sentence(),
       status: ALERT_STATUSES.PUBLISHED,
       title: faker.lorem.sentence(),
+      variant: ALERT_VARIANTS.INFO,
     });
   });
 
@@ -125,6 +128,7 @@ describe('site alert admin handler', () => {
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: adminUser.id,
+          variant: existingAlert.variant,
           endDate: existingAlert.endDate,
           startDate: existingAlert.startDate,
           message: existingAlert.message,
@@ -172,13 +176,14 @@ describe('site alert admin handler', () => {
   });
 
   describe('createAlert', () => {
-    it('should create a report', async () => {
+    it('should create an alert', async () => {
       const newAlert = {
         endDate: moment(faker.date.future()).format('MM/DD/YYYY'),
         startDate: moment(faker.date.past()).format('MM/DD/YYYY'),
         message: faker.lorem.sentence(),
         status: ALERT_STATUSES.UNPUBLISHED,
         title: faker.lorem.sentence(),
+        variant: ALERT_VARIANTS.INFO,
       };
 
       await createAlert({ body: newAlert, session: { userId: adminUser.id } }, mockResponse);
@@ -204,6 +209,7 @@ describe('site alert admin handler', () => {
         status: ALERT_STATUSES.UNPUBLISHED,
         title: faker.lorem.sentence(),
         userId: adminUser.id,
+        variant: ALERT_VARIANTS.INFO,
       };
       const oldCreate = SiteAlert.create;
       const mockCreate = jest.fn().mockRejectedValue(new Error('error'));
@@ -247,6 +253,7 @@ describe('site alert admin handler', () => {
           message,
           status: ALERT_STATUSES.UNPUBLISHED,
           title,
+          variant: existingAlert.variant,
         }),
       );
     });
