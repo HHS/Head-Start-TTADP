@@ -3,7 +3,7 @@ export interface Filters {
 }
 
 export interface QueryOptions {
-  userId: string;
+  userId: number;
 
   activityReport: {
     subset: boolean;
