@@ -2,19 +2,21 @@
 import React, {
   useEffect, useState, useRef,
 } from 'react';
+import { uniq } from 'lodash';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid } from '@trussworks/react-uswds';
 import { v4 as uuidv4 } from 'uuid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
-import RegionalSelect from '../../components/RegionalSelect';
 import RecipientResults from './components/RecipientResults';
 import { getUserRegions } from '../../permissions';
 import { searchRecipients } from '../../fetchers/recipient';
 import { RECIPIENTS_PER_PAGE } from '../../Constants';
 import './index.css';
 import useSession from '../../hooks/useSession';
+import FilterPanel from '../../components/filter/FilterPanel';
+import useUrlFilters from '../../hooks/useUrlFilters';
 
 const DEFAULT_SORT = {
   sortBy: 'name',
@@ -27,6 +29,7 @@ const DEFAULT_CENTRAL_OFFICE_SORT = {
 };
 
 function RecipientSearch({ user }) {
+  const [filters, setFilters] = useUrlFilters([]);
   const hasCentralOffice = user && user.homeRegionId && user.homeRegionId === 14;
   const regions = getUserRegions(user);
   const [queryAndSort, setQueryAndSort] = useSession('rtr-search', {
@@ -41,6 +44,12 @@ function RecipientSearch({ user }) {
 
   const { query, activePage, sortConfig } = queryAndSort;
 
+  const filterConfig = [];
+  const onRemoveFilter = () => {};
+  const onApplyFilters = () => {};
+  const applyButtonAria = 'Apply filters';
+  const allUserRegions = uniq(user.permissions.map(({ regionId }) => regionId));
+
   const updateQueryAndSort = (key, value) => {
     const qAndS = { ...queryAndSort };
     setQueryAndSort({ ...qAndS, [key]: value });
@@ -54,68 +63,68 @@ function RecipientSearch({ user }) {
     updateQueryAndSort('activePage', ap);
   };
 
-  const setAppliedRegion = (ar) => {
-    updateQueryAndSort('appliedRegion', ar);
-  };
+  // const setAppliedRegion = (ar) => {
+  //   updateQueryAndSort('appliedRegion', ar);
+  // };
 
   const inputRef = useRef();
   const offset = (activePage - 1) * RECIPIENTS_PER_PAGE;
 
-  useEffect(() => {
-    async function fetchRecipients() {
-      const filters = [];
+  // useEffect(() => {
+    // async function fetchRecipients() {
+      // const filters = [];
 
-      if (queryAndSort.appliedRegion === 14) {
-        getUserRegions(user).forEach((region) => {
-          filters.push({
-            id: uuidv4(),
-            topic: 'region',
-            condition: 'is',
-            query: region,
-          });
-        });
-      } else {
-        filters.push({
-          id: uuidv4(),
-          topic: 'region',
-          condition: 'is',
-          query: queryAndSort.appliedRegion,
-        });
-      }
+      // if (queryAndSort.appliedRegion === 14) {
+      //   getUserRegions(user).forEach((region) => {
+      //     filters.push({
+      //       id: uuidv4(),
+      //       topic: 'region',
+      //       condition: 'is',
+      //       query: region,
+      //     });
+      //   });
+      // } else {
+      //   filters.push({
+      //     id: uuidv4(),
+      //     topic: 'region',
+      //     condition: 'is',
+      //     query: queryAndSort.appliedRegion,
+      //   });
+      // }
 
       /**
        * if the current query doesn't match the value of the input,
        * we need to handle that first. Changing that will trigger this hook again
        */
-      if (query !== inputRef.current.value) {
-        if (inputRef.current) {
-          setQueryAndSort({ ...queryAndSort, query: inputRef.current.value });
-        }
-        return;
-      }
+    //   if (query !== inputRef.current.value) {
+    //     if (inputRef.current) {
+    //       setQueryAndSort({ ...queryAndSort, query: inputRef.current.value });
+    //     }
+    //     return;
+    //   }
 
-      setLoading(true);
+    //   setLoading(true);
 
-      try {
-        const response = await searchRecipients(
-          query,
-          filters,
-          { ...sortConfig, offset },
-        );
-        setResults(response);
-      } catch (err) {
-        setResults({ count: 0, rows: [] });
-      } finally {
-        setLoading(false);
-      }
-    }
+    //   try {
+    //     const response = await searchRecipients(
+    //       query,
+    //       filters,
+    //       { ...sortConfig, offset },
+    //     );
+    //     setResults(response);
+    //   } catch (err) {
+    //     setResults({ count: 0, rows: [] });
+    //   } finally {
+    //     setLoading(false);
+    //   }
+    // }
 
-    fetchRecipients();
-  }, [offset, sortConfig, user, queryAndSort, query, setQueryAndSort]);
+    // fetchRecipients();
+  // }, [offset, sortConfig, user, queryAndSort, query, setQueryAndSort, filters]);
 
-  function onApplyRegion(region) {
-    setAppliedRegion(region.value);
-  }
+  // function onApplyRegion(region) {
+  //   setAppliedRegion(region.value);
+  // }
 
   async function requestSort(sortBy) {
     const config = { ...sortConfig };
@@ -150,18 +159,6 @@ function RecipientSearch({ user }) {
       <div className="ttahub-recipient-search">
         <h1 className="landing">Recipient Records</h1>
         <Grid className="ttahub-recipient-search--filter-row flex-fill display-flex flex-align-center flex-align-self-center flex-row flex-wrap margin-bottom-2">
-          {regions.length > 1
-              && (
-                <div className="margin-right-2">
-                  <RegionalSelect
-                    regions={regions}
-                    onApply={onApplyRegion}
-                    hasCentralOffice={hasCentralOffice}
-                    appliedRegion={queryAndSort.appliedRegion}
-                    disabled={loading}
-                  />
-                </div>
-              )}
           <form role="search" className="ttahub-recipient-search--search-form display-flex" onSubmit={onSubmit}>
             { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */ }
             <label htmlFor="recipientRecordSearch" className="sr-only">Search recipient records by name or grant id</label>
@@ -172,6 +169,14 @@ function RecipientSearch({ user }) {
               <span className="sr-only">Search for matching recipients</span>
             </button>
           </form>
+          <FilterPanel
+            filters={filters}
+            filterConfig={filterConfig}
+            onRemoveFilter={onRemoveFilter}
+            onApplyFilters={onApplyFilters}
+            applyButtonAria={applyButtonAria}
+            allUserRegions={allUserRegions}
+          />
         </Grid>
         <RecipientResults
           recipients={rows}
