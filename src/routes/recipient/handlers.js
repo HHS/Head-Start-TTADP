@@ -1,3 +1,4 @@
+import httpCodes from 'http-codes';
 import {
   getGoalsByActivityRecipient,
   recipientById,
@@ -40,12 +41,13 @@ export async function getRecipientAndGrantsByUser(req, res) {
     const userId = await currentUserId(req, res);
 
     if (!userId) {
-      res.sendStatus(401);
+      res.sendStatus(httpCodes.UNAUTHORIZED);
+      return;
     }
 
     const recipients = await recipientsByUserId(userId);
     if (!recipients || !recipients.length) {
-      res.sendStatus(404);
+      res.sendStatus(httpCodes.NOT_FOUND);
       return;
     }
 
