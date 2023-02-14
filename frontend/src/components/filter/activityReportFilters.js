@@ -20,6 +20,7 @@ import FilterSpecialistSelect from './FilterSpecialistSelect';
 import FilterStateSelect from './FilterStateSelect';
 import FilterOtherEntitiesSelect from './FilterOtherEntitiesSelect';
 import FilterParticipantsSelect from './FilterParticipantsSelect';
+import FilterTTAType, { displayTtaTypeQuery } from './FilterTTAType';
 import MyReportsSelect from './MyReportsSelect';
 
 const EMPTY_MULTI_SELECT = {
@@ -257,6 +258,24 @@ export const regionFilter = {
     <FilterRegionalSelect
       appliedRegion={query}
       onApply={onApplyQuery}
+    />
+  ),
+};
+
+export const ttaTypeFilter = {
+  id: 'ttaType',
+  display: 'TTA type',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: {
+    is: 'training',
+    'is not': 'training',
+  },
+  displayQuery: displayTtaTypeQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterTTAType
+      inputId={`ttaType-${condition.replace(/ /g, '-')}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
     />
   ),
 };
