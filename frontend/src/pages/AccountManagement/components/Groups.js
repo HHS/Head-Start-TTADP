@@ -12,7 +12,7 @@ export default function Groups() {
       setGroups(groups.filter((group) => group.id !== groupId));
     } catch (err) {
       //
-    } 
+    }
   };
 
   useEffect(() => {
