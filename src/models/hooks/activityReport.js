@@ -83,7 +83,9 @@ const setSubmittedDate = (sequelize, instance, options) => {
       // Other > Submitted.
       instance.set('submittedDate', new Date());
     } else if (instance.calculatedStatus !== REPORT_STATUSES.SUBMITTED
-        && instance.calculatedStatus !== REPORT_STATUSES.APPROVED) {
+        && instance.calculatedStatus !== REPORT_STATUSES.APPROVED
+        && instance.calculatedStatus !== REPORT_STATUSES.NEEDS_ACTION
+        && instance.calculatedStatus !== REPORT_STATUSES.DELETED) {
       // Submitted > Other.
       instance.set('submittedDate', null);
     }
