@@ -178,6 +178,10 @@ async function sendActivityReportCSV(reports, res) {
           header: 'Created date',
         },
         {
+          key: 'submittedDate',
+          header: 'Submitted date',
+        },
+        {
           key: 'approvedAt',
           header: 'Approved date',
         },
