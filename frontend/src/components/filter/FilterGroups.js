@@ -11,9 +11,11 @@ export default function FilterGroups({
   const [groups, setGroups] = useState([]);
 
   useEffect(() => {
-    fetchGroups().then((g) => {
-    //   setGroups(g);
-      console.log(g);
+    fetchGroups().then((gr) => {
+      setGroups(gr.map((g) => ({
+        value: g.id,
+        label: g.name,
+      })));
     });
   }, []);
 
@@ -24,7 +26,7 @@ export default function FilterGroups({
     <FilterSelect
       onApply={onApplyClick}
       inputId={inputId}
-      labelText="Select reasons to filter by"
+      labelText="Select group to filter by"
       options={groups}
       selectedValues={query}
     />

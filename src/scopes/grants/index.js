@@ -7,6 +7,7 @@ import { withProgramSpecialist, withoutProgramSpecialist } from './programSpecia
 import { withProgramTypes, withoutProgramTypes } from './programType';
 import { withStateCode } from './stateCode';
 import { withGrantNumber, withoutGrantNumber } from './grantNumber';
+import { withGroup, withoutGroup } from './group';
 
 export const topicToQuery = {
   recipient: {
@@ -38,9 +39,15 @@ export const topicToQuery = {
     in: (query) => withRegion(query),
     nin: (query) => withoutRegion(query),
   },
+  group: {
+    in: (query, options, userId) => withGroup(query, userId),
+    nin: (query, options, userId) => withoutGroup(query, userId),
+  },
 };
 
-export function grantsFiltersToScopes(filters, options) {
+export function grantsFiltersToScopes(filters, options, userId) {
+  console.log({ options });
+
   const isSubset = options && options.subset;
   const validFilters = pickBy(filters, (query, topicAndCondition) => {
     const [topic, condition] = topicAndCondition.split('.');
@@ -63,6 +70,6 @@ export function grantsFiltersToScopes(filters, options) {
       return topicToQuery.activeWithin[condition]([query].flat());
     }
 
-    return topicToQuery[topic][condition]([query].flat());
+    return topicToQuery[topic][condition]([query].flat(), options, userId);
   });
 }

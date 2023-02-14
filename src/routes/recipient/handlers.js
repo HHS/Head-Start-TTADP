@@ -86,7 +86,10 @@ export async function searchRecipients(req, res) {
     const {
       s, sortBy, direction, offset,
     } = req.query;
-    const { grant: scopes } = await filtersToScopes(req.query);
+    const { grant: scopes } = await filtersToScopes(
+      req.query,
+      { userId: await currentUserId(req, res) },
+    );
     const recipients = await recipientsByName(s, scopes, sortBy, direction, offset);
     if (!recipients) {
       res.sendStatus(404);
