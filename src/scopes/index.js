@@ -13,7 +13,6 @@ const models = {
   activityReport,
   grant,
   goal,
-  // recipient,
 };
 
 async function checkForSearchItems(filters) {

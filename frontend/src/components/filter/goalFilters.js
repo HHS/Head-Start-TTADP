@@ -5,26 +5,16 @@ import { formatDateRange } from '../../utils';
 import {
   DATE_CONDITIONS,
   FILTER_CONDITIONS,
+  EMPTY_MULTI_SELECT,
 } from '../../Constants';
 import FilterDateRange from './FilterDateRange';
 import FilterReasonSelect from './FilterReasonSelect';
 import FilterTopicSelect from './FilterTopicSelect';
 import FilterStatus from './FilterStatus';
 import FilterSelect from './FilterSelect';
+import { handleArrayQuery } from './constants';
 
 const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true });
-
-const EMPTY_MULTI_SELECT = {
-  is: [],
-  'is not': [],
-};
-
-const handleArrayQuery = (q) => {
-  if (q.length) {
-    return [q].flat().join(', ');
-  }
-  return '';
-};
 
 export const createDateFilter = {
   id: 'createDate',
