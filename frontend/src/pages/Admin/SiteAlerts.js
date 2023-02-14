@@ -14,6 +14,7 @@ export const DEFAULT_ALERT = {
   endDate: '',
   id: Math.random(),
   isNew: true,
+  variant: 'info',
 };
 
 export default function SiteAlerts() {

@@ -9,7 +9,7 @@ export async function getSiteAlerts(req, res) {
   try {
     const today = moment().format('YYYY-MM-DD');
     const alert = await SiteAlert.findOne({
-      attributes: ['id', 'title', 'message', 'startDate', 'endDate', 'status'],
+      attributes: ['id', 'title', 'message', 'startDate', 'endDate', 'status', 'variant'],
       where: {
         startDate: {
           [Op.lte]: today,

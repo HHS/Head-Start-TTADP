@@ -32,6 +32,7 @@ function Header({ authenticated, alert }) {
         <>
           <SiteAlert
             heading={alert.title}
+            variant={alert.variant}
           >
             <ReadOnlyEditor value={alert.message} ariaLabel="alert for the tta hub: " />
           </SiteAlert>
@@ -59,6 +60,7 @@ Header.propTypes = {
   alert: PropTypes.shape({
     title: PropTypes.string,
     message: PropTypes.string,
+    variant: PropTypes.string,
   }),
 };
 

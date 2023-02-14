@@ -25,6 +25,11 @@ export const ALERT_STATUSES = {
   PUBLISHED: 'Published',
 };
 
+export const ALERT_VARIANTS = {
+  INFO: 'info',
+  EMERGENCY: 'emergency',
+};
+
 export const DATE_FORMAT = 'MM/DD/YYYY';
 
 export const DECIMAL_BASE = 10;
