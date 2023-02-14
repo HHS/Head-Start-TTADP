@@ -1,10 +1,11 @@
 const {
   Model,
 } = require('sequelize');
-const { ALERT_STATUSES } = require('../constants');
+const { ALERT_STATUSES, ALERT_VARIANTS } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 
 const possibleStatuses = Object.values(ALERT_STATUSES);
+const possibleVariants = Object.values(ALERT_VARIANTS);
 
 /**
    *
@@ -49,6 +50,9 @@ export default (sequelize, DataTypes) => {
     },
     status: {
       type: DataTypes.ENUM(possibleStatuses),
+    },
+    variant: {
+      type: DataTypes.ENUM(possibleVariants),
     },
   }, {
     sequelize,

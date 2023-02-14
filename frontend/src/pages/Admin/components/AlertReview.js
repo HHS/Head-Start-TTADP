@@ -15,7 +15,7 @@ import SiteAlert from '../../../components/SiteAlert';
 import Req from '../../../components/Req';
 import { saveSiteAlert, createSiteAlert } from '../../../fetchers/Admin';
 import ReadOnlyEditor from '../../../components/ReadOnlyEditor';
-import { ALERT_STATUSES } from '../../../Constants';
+import { ALERT_STATUSES, ALERT_VARIANTS } from '../../../Constants';
 import './AlertReview.scss';
 
 const BASE_EDITOR_HEIGHT = '10rem';
@@ -27,6 +27,7 @@ export default function AlertReview({ alert, onDelete }) {
   const [isEditable, setIsEditable] = useState(alert.isNew);
   const [message, setMessage] = useState(alert.message);
   const [title, setTitle] = useState(alert.title);
+  const [variant, setVariant] = useState(alert.variant);
   const [startDate, setStartDate] = useState(alert.startDate);
   const [endDate, setEndDate] = useState(alert.endDate);
   const [status, setStatus] = useState(alert.status);
@@ -116,6 +117,7 @@ export default function AlertReview({ alert, onDelete }) {
             top: isEditable ? `${offset}px` : 'auto',
             zIndex: 2,
           }}
+          variant={variant}
         >
           <ReadOnlyEditor key={message} value={message} ariaLabel={`message for alert ${alert.id}`} />
         </SiteAlert>
@@ -176,6 +178,27 @@ export default function AlertReview({ alert, onDelete }) {
               disabled={isFetching}
               required
             />
+          </div>
+          <div className="margin-top-3">
+            <label htmlFor={`alert-${alert.id}-variant`}>
+              Varian
+              <Req />
+            </label>
+            <select
+              id={`alert-${alert.id}-variant`}
+              className="usa-select"
+              name={`alert-${alert.id}-variant`}
+              value={variant}
+              onChange={(e) => setVariant(e.target.value)}
+              disabled={isFetching}
+              required
+            >
+              {Object.values(ALERT_VARIANTS).map((v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="margin-top-3">
@@ -280,5 +303,6 @@ AlertReview.propTypes = {
     endDate: PropTypes.string.isRequired,
     status: PropTypes.string.isRequired,
     isNew: PropTypes.bool,
+    variant: PropTypes.string,
   }).isRequired,
 };

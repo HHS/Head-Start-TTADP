@@ -3,10 +3,12 @@ import PropTypes from 'prop-types';
 import { SiteAlert as BaseSiteAlert } from '@trussworks/react-uswds';
 import './SiteAlert.css';
 
-export default function SiteAlert({ heading, children, style }) {
+export default function SiteAlert({
+  heading, children, style, variant,
+}) {
   return (
     <BaseSiteAlert
-      variant="info"
+      variant={variant}
       heading={heading}
       showIcon
       style={{ ...style }}
@@ -21,6 +23,7 @@ SiteAlert.propTypes = {
   heading: PropTypes.string.isRequired,
   children: PropTypes.node.isRequired,
   style: PropTypes.shape({}),
+  variant: PropTypes.string.isRequired,
 };
 
 SiteAlert.defaultProps = {

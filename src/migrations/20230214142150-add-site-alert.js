@@ -49,6 +49,9 @@ module.exports = {
         status: {
           type: Sequelize.DataTypes.ENUM(['Unpublished', 'Published']),
         },
+        variant: {
+          type: Sequelize.DataTypes.ENUM(['info', 'emergency']),
+        },
         createdAt: {
           allowNull: false,
           type: Sequelize.DATE,

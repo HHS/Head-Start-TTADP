@@ -14,6 +14,7 @@ const ALERT_FIELDS = [
   'title',
   'endDate',
   'startDate',
+  'variant',
 ];
 
 /**
@@ -104,6 +105,7 @@ async function createAlert(req, res) {
         title,
         endDate,
         startDate,
+        variant,
       } = req.body;
 
       const alert = await SiteAlert.create({
@@ -113,6 +115,7 @@ async function createAlert(req, res) {
         userId: req.session.userId,
         endDate,
         startDate,
+        variant,
       });
 
       res.json(alert);
