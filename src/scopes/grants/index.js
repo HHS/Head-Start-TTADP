@@ -46,8 +46,6 @@ export const topicToQuery = {
 };
 
 export function grantsFiltersToScopes(filters, options, userId) {
-  console.log({ options });
-
   const isSubset = options && options.subset;
   const validFilters = pickBy(filters, (query, topicAndCondition) => {
     const [topic, condition] = topicAndCondition.split('.');
