@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '@trussworks/react-uswds';
+import { Alert, Button } from '@trussworks/react-uswds';
 import { fetchGroups, deleteGroup } from '../../../fetchers/groups';
 
 export default function Groups() {
   const [groups, setGroups] = useState(null);
+  const [error, setError] = useState(null);
 
   const onDelete = async (groupId) => {
     try {
       await deleteGroup(groupId);
       setGroups(groups.filter((group) => group.id !== groupId));
     } catch (err) {
-      //
+      setError('There was an error deleting your group');
     }
   };
 
@@ -33,7 +34,7 @@ export default function Groups() {
   return (
     <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
       <h2 className="margin-bottom-1 font-sans-xl">My groups</h2>
-
+      { error ? <Alert type="error" role="alert">{error}</Alert> : null }
       <div className="margin-bottom-3">
         {!groups || !groups.length ? <p className="usa-prose">You have no groups.</p> : (
           <ul className="usa-list usa-list--unstyled maxw-tablet margin-bottom-3">

@@ -6,7 +6,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { Link, useHistory } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import { Button, TextInput } from '@trussworks/react-uswds';
+import { Alert, Button, TextInput } from '@trussworks/react-uswds';
 import colors from '../../colors';
 import IndicatesRequiredField from '../../components/IndicatesRequiredField';
 import Req from '../../components/Req';
@@ -27,6 +27,7 @@ const mapRecipients = (recipients) => recipients.map((recipient) => ({
 export default function MyGroups({ match }) {
   const { groupId } = match.params;
   const [recipients, setRecipients] = useState([]);
+  const [error, setError] = useState(null);
   const history = useHistory();
   const [recipientsFetched, setRecipientsFetched] = useState(false);
 
@@ -46,7 +47,7 @@ export default function MyGroups({ match }) {
           setValue('select-recipients-new-group', mapGrants(existingGroupData.grants));
         }
       } catch (err) {
-        // todo
+        setError('There was an error fetching your group');
       }
     }
 
@@ -64,7 +65,7 @@ export default function MyGroups({ match }) {
         const response = await getRecipientAndGrantsByUser();
         setRecipients(mapRecipients(response));
       } catch (err) {
-        //
+        setError('There was an error fetching your recipients');
       }
     }
     if (!recipientsFetched) {
@@ -91,7 +92,7 @@ export default function MyGroups({ match }) {
 
       history.push('/account');
     } catch (err) {
-      // todo - handle error
+      setError('There was an error saving your group');
     }
   };
 
@@ -136,22 +137,27 @@ export default function MyGroups({ match }) {
 
           </div>
           <div className="margin-top-2">
-            <label htmlFor="select-recipients-new-group" className="display-block margin-bottom-1">
+            <label className="display-block margin-bottom-1">
               Recipients
               {' '}
               <Req />
+              <MultiSelect
+                name="select-recipients-new-group"
+                options={recipients}
+                control={control}
+                simple={false}
+                required="Select at least one"
+              />
             </label>
-            <MultiSelect
-              name="select-recipients-new-group"
-              options={recipients}
-              control={control}
-              simple={false}
-              required="Select at least one"
-            />
           </div>
+          {error && (
+            <Alert type="error" className="margin-top-2">
+              {error}
+            </Alert>
+          )}
           <div className="margin-top-3">
             <Button type="submit" className="margin-top-2">Save group</Button>
-            <Button type="button" outline className="margin-top-2 margin-left-1">Cancel</Button>
+            <Link to="/account" className="usa-button usa-button--outline">Cancel</Link>
           </div>
         </form>
       </div>
