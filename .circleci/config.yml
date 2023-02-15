@@ -412,7 +412,7 @@ jobs:
       - attach_workspace:
           at: .
       - browser-tools/install-chrome:
-          chrome-version: 93.0.4577.63
+          chrome-version: latest
           replace-existing: true
       - browser-tools/install-chromedriver
       - run:
