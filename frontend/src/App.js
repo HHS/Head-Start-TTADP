@@ -174,7 +174,7 @@ function App() {
         />
         <Route
           exact
-          path="/resources"
+          path="/resources-dashboard"
           render={() => (
             <AppWrapper authenticated logout={logout}>
               <FeatureFlag flag="resources_dashboard" renderNotFound>
