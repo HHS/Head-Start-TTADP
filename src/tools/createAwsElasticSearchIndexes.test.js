@@ -1,4 +1,5 @@
-/* eslint-disable dot-notation */
+/* eslint-disable @typescript-eslint/dot-notation */
+/* eslint-disable no-underscore-dangle */
 import db, {
   User,
   ActivityReport,
@@ -325,7 +326,7 @@ describe('Create AWS Elastic Search Indexes', () => {
     );
 
     expect(searchResult.hits.length).toBe(1);
-    expect(searchResult.hits[0]['_id']).toBe(reportThree.id.toString());
+    expect(searchResult.hits[0]._id).toBe(reportThree.id.toString());
 
     // Specialist Next Steps (contains two matches).
     query = 'change';
@@ -335,7 +336,7 @@ describe('Create AWS Elastic Search Indexes', () => {
       query,
     );
     expect(searchResult.hits.length).toBe(1);
-    expect(searchResult.hits[0]['_id']).toBe(reportTwo.id.toString());
+    expect(searchResult.hits[0]._id).toBe(reportTwo.id.toString());
 
     // ARG.
     query = 'book';
@@ -345,7 +346,7 @@ describe('Create AWS Elastic Search Indexes', () => {
       query,
     );
     expect(searchResult.hits.length).toBe(1);
-    expect(searchResult.hits[0]['_id']).toBe(reportOne.id.toString());
+    expect(searchResult.hits[0]._id).toBe(reportOne.id.toString());
 
     // ARO.
     query = 'How to prepare';
@@ -355,7 +356,7 @@ describe('Create AWS Elastic Search Indexes', () => {
       query,
     );
     expect(searchResult.hits.length).toBe(1);
-    expect(searchResult.hits[0]['_id']).toBe(reportTwo.id.toString());
+    expect(searchResult.hits[0]._id).toBe(reportTwo.id.toString());
 
     // ARO TTA.
     query = 'local activities';
@@ -365,7 +366,7 @@ describe('Create AWS Elastic Search Indexes', () => {
       query,
     );
     expect(searchResult.hits.length).toBe(1);
-    expect(searchResult.hits[0]['_id']).toBe(reportThree.id.toString());
+    expect(searchResult.hits[0]._id).toBe(reportThree.id.toString());
 
     // ARO Resources.
     // query = 'https://eclkc.ohs.acf.hhs.gov/';
@@ -376,7 +377,7 @@ describe('Create AWS Elastic Search Indexes', () => {
       query,
     );
     expect(searchResult.hits.length).toBe(1);
-    expect(searchResult.hits[0]['_id']).toBe(reportTwo.id.toString());
+    expect(searchResult.hits[0]._id).toBe(reportTwo.id.toString());
 
     // non ECLKC Resource.
     query = 'youtube';
@@ -386,7 +387,7 @@ describe('Create AWS Elastic Search Indexes', () => {
       query,
     );
     expect(searchResult.hits.length).toBe(1);
-    expect(searchResult.hits[0]['_id']).toBe(reportOne.id.toString());
+    expect(searchResult.hits[0]._id).toBe(reportOne.id.toString());
 
     // ECLKC Resource.
     query = 'smartsheet';
@@ -396,7 +397,7 @@ describe('Create AWS Elastic Search Indexes', () => {
       query,
     );
     expect(searchResult.hits.length).toBe(1);
-    expect(searchResult.hits[0]['_id']).toBe(reportOne.id.toString());
+    expect(searchResult.hits[0]._id).toBe(reportOne.id.toString());
 
     // Search all indexes.
     query = 'thousand miles';
