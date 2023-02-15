@@ -2,30 +2,30 @@ import { Op } from 'sequelize';
 import { Group, Grant, GroupGrant } from '../models';
 
 interface GroupData {
-    userId: number;
-    name: string;
-    id?: number;
-    grants: number[];
+  userId: number;
+  name: string;
+  id?: number;
+  grants: number[];
 }
 
 interface GroupGrantData {
-    id: number;
-    grantId: number;
-    groupId: number;
+  id: number;
+  grantId: number;
+  groupId: number;
 }
 
 interface GrantsResponse {
-    id: number;
-    regionId: number;
-    recipientId: number;
-    status: string;
+  id: number;
+  regionId: number;
+  recipientId: number;
+  status: string;
 }
 
 interface GroupResponse {
-    id: number;
-    name: string;
-    grants: GrantsResponse[];
-    userId: number;
+  id: number;
+  name: string;
+  grants: GrantsResponse[];
+  userId: number;
 }
 
 export async function groups(userId: number): Promise<GroupResponse[]> {
