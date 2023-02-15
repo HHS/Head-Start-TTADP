@@ -64,6 +64,7 @@ export default function AlertReview({ alert, onDelete }) {
       message,
       title,
       status,
+      variant,
     };
 
     if (isNew) {
