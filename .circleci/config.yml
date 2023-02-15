@@ -1,7 +1,6 @@
 version: 2.1
 orbs:
   node: circleci/node@5.0.2
-  # browser-tools: circleci/browser-tools@1.4.1
 executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
@@ -406,36 +405,6 @@ jobs:
       - store_artifacts:
           path: reports/owasp_report.html
     resource_class: large
-  # accessibility_scan:
-  #   executor: docker-postgres-executor
-  #   steps:
-  #     - attach_workspace:
-  #         at: .
-  #     - browser-tools/install-chrome:
-  #         chrome-version: latest
-  #         replace-existing: true
-  #     - browser-tools/install-chromedriver
-  #     - run:
-  #         name: Run migrations ci
-  #         command: yarn db:migrate:ci
-  #     - run:
-  #         name: Build
-  #         command: yarn build
-  #     - run:
-  #         name: Seed database
-  #         command: yarn db:seed:ci
-  #     - run:
-  #         name: Start server
-  #         command: BYPASS_AUTH=true CURRENT_USER_ID=1 yarn start:ci
-  #         background: true
-  #     - run:
-  #         name: Run axe
-  #         command: |
-  #           sleep 10
-  #           yarn axe:ci
-  #     - store_artifacts:
-  #         path: reports/
-  #   resource_class: large
   deploy:
     executor: docker-executor
     steps:
@@ -646,9 +615,6 @@ workflows:
       - dynamic_security_scan:
           requires:
             - build_and_lint
-      # - accessibility_scan:
-      #     requires:
-      #       - build_and_lint
       - deploy:
           requires:
             - test_backend
@@ -656,7 +622,6 @@ workflows:
             - test_e2e
             - cucumber_test
             - dynamic_security_scan
-            # - accessibility_scan
           filters:
             branches:
               only:
