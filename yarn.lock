@@ -10,7 +10,7 @@
     "@jridgewell/gen-mapping" "^0.1.0"
     "@jridgewell/trace-mapping" "^0.3.9"
 
-"@axe-core/cli@4.6.1":
+"@axe-core/cli@4.6.0":
   version "4.6.0"
   resolved "https://registry.yarnpkg.com/@axe-core/cli/-/cli-4.6.0.tgz#85acca6ca7bd5010cdcc4a5f27ac886f7e42c63b"
   integrity sha512-h45BlS8IQt7etmMZdYJeasvDVn53ug+GcX3p41QKvV6JiMXnXBrqawNCWDwPEcVAMSYmCenJvrscB4MerFolOg==
