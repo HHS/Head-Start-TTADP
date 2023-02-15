@@ -7,7 +7,6 @@
     "node": "16.18.1"
   },
   "scripts": {
-    "axe:ci": "axe --exit --show-errors --load-delay 1000 `cat axe-urls` --dir ./reports/",
     "build": "tsc -p src",
     "deps:local": "yarn install && yarn --cwd frontend install",
     "deps": "yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
