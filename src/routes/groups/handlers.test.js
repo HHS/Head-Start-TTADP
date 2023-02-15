@@ -80,7 +80,7 @@ describe('Groups Handlers', () => {
         status: jest.fn(),
       };
       const userId = 1;
-      const groupResponse = { id: 1, name: 'Group 1' };
+      const groupResponse = { id: 1, name: 'Group 1', userId };
       currentUserId.mockReturnValue(userId);
       group.mockReturnValue(groupResponse);
       await getGroup(req, res);
