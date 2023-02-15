@@ -97,8 +97,8 @@
     "url": "git+https://github.com/adhocteam/Head-Start-TTADP.git"
   },
   "resolutions": {
-    "axe-core": "4.3.5",
-    "@axe-core/webdriverjs": "4.3.2",
+    "axe-core": "4.6.3",
+    "@axe-core/webdriverjs": "4.6.0",
     "ansi-regex": "^5.0.1",
     "colors": "1.4.0",
     "follow-redirects": "^1.14.8",

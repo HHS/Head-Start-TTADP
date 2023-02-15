@@ -22,12 +22,12 @@
     commander "^7.1.0"
     selenium-webdriver "^4.0.0-beta.4"
 
-"@axe-core/webdriverjs@4.3.2", "@axe-core/webdriverjs@^4.3.1":
-  version "4.3.2"
-  resolved "https://registry.yarnpkg.com/@axe-core/webdriverjs/-/webdriverjs-4.3.2.tgz#1eb3e76d4811558ca05cde34c9ef503f51de5fee"
-  integrity sha512-04gjm/+L5X6lue1sikeoJKthEAkxbH6+Cq2HzCctPZ5kTuFOKzNS/cGGgJwlMIFIStnNJ2zUtimiDaUDgiw4bQ==
+"@axe-core/webdriverjs@4.6.0", "@axe-core/webdriverjs@^4.3.1":
+  version "4.6.0"
+  resolved "https://registry.yarnpkg.com/@axe-core/webdriverjs/-/webdriverjs-4.6.0.tgz#f4be38036638910db637440c86b331fb96ff9b83"
+  integrity sha512-Xs88fPiqCK5rBtDWVAWYoKwKHNcyfjXk5HO/hYZtDz4weyOsMq4ENsXRWGGOaq93+994h5/DdkrdbNIRbP1iZQ==
   dependencies:
-    axe-core "^4.3.3"
+    axe-core "^4.6.1"
 
 "@babel/cli@^7.11.6":
   version "7.19.3"
@@ -2916,10 +2916,10 @@ aws4@^1.11.0:
   resolved "https://registry.yarnpkg.com/aws4/-/aws4-1.11.0.tgz#d61f46d83b2519250e2784daf5b09479a8b41c59"
   integrity sha512-xh1Rl34h6Fi1DC2WWKfxUTVqRsNnr6LsKz2+hfwDxQJWmrx8+c7ylaqBMcHfl1U1r2dsifOvKX3LQuLNZ+XSvA==
 
-axe-core@4.3.5, axe-core@^4.3.3, axe-core@^4.4.3:
-  version "4.3.5"
-  resolved "https://registry.yarnpkg.com/axe-core/-/axe-core-4.3.5.tgz#78d6911ba317a8262bfee292aeafcc1e04b49cc5"
-  integrity sha512-WKTW1+xAzhMS5dJsxWkliixlO/PqC4VhmO9T4juNYcaTg9jzWiJsou6m5pxWYGfigWbwzJWeFY6z47a+4neRXA==
+axe-core@4.6.3, axe-core@^4.3.3, axe-core@^4.4.3, axe-core@^4.6.1:
+  version "4.6.3"
+  resolved "https://registry.yarnpkg.com/axe-core/-/axe-core-4.6.3.tgz#fc0db6fdb65cc7a80ccf85286d91d64ababa3ece"
+  integrity sha512-/BQzOX780JhsxDnPpH4ZiyrJAzcd8AfzFPkv+89veFSr1rcMjuq2JDCwypKaPeB6ljHp9KjXhPpjgCvQlWYuqg==
 
 axios@^0.21.2:
   version "0.21.4"
