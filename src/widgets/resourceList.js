@@ -1,6 +1,8 @@
 import { Op, QueryTypes } from 'sequelize';
 import {
   ActivityReport,
+  ActivityReportGoal,
+  ActivityReportGoalResource,
   ActivityReportObjective,
   ActivityReportObjectiveResource,
   ActivityReportResource,
@@ -8,11 +10,12 @@ import {
   Grant,
   NextStep,
   NextStepResource,
+  Goal,
   Objective,
-  ObjectiveResource,
   OtherEntity,
   Recipient,
   Resource,
+  Topic,
   sequelize,
 } from '../models';
 import { formatNumber } from './helpers';
@@ -20,255 +23,320 @@ import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../constants';
 
 export async function resourceData(scopes) {
   // Query Database for all Resources within the scope.
-  const reports = await ActivityReport.findAll({
-    attributes: ['id', 'numberOfParticipants'],
-    where: {
-      [Op.and]: [
-        scopes.activityReport,
-        { calculatedStatus: REPORT_STATUSES.APPROVED },
-      ],
-    },
-    include: [
-      {
-        model: ActivityRecipient,
-        as: 'activityRecipients',
-        attributes: ['id'],
-        where: { [Op.and]: [scopes.activityRecipient] },
-        required: true,
-        include: [
-          {
-            model: Grant,
-            as: 'grant',
-            attributes: ['recipientId'],
-            where: { [Op.and]: [scopes.grant] },
-            required: true,
-            include: [
-              {
-                model: Recipient,
-                as: 'recipient',
-                attributes: ['id'],
-                where: { [Op.and]: [scopes.recipient] },
-                required: false,
-              },
-            ],
-          },
-          {
-            model: OtherEntity,
-            as: 'otherEntity',
-            attributes: ['id'],
-            where: { [Op.and]: [scopes.otherEntity] },
-            required: false,
-          },
+  let reports;
+  try {
+    reports = await ActivityReport.findAll({
+      attributes: ['id', 'numberOfParticipants', 'topics'],
+      where: {
+        [Op.and]: [
+          scopes.report,
+          { calculatedStatus: REPORT_STATUSES.APPROVED },
         ],
       },
-      {
-        model: ActivityReportResource,
-        as: 'activityReportResources',
-        where: { [Op.and]: [scopes.activityReportResource] },
-        separate: true,
-        include: [{
+      include: [
+        {
+          model: ActivityRecipient,
+          as: 'activityRecipients',
+          attributes: ['id'],
+          // where: { [Op.and]: [scopes.activityRecipient] },
+          required: true,
+          include: [
+            {
+              model: Grant,
+              as: 'grant',
+              attributes: ['id', 'recipientId'],
+              // where: { [Op.and]: [scopes.grant] },
+              required: false,
+            },
+            {
+              model: OtherEntity,
+              as: 'otherEntity',
+              attributes: ['id'],
+              // where: { [Op.and]: [scopes.otherEntity] },
+              required: false,
+            },
+          ],
+        },
+        {
           model: Resource,
-          as: 'resource',
-          where: { [Op.and]: [scopes.resource] },
-        }],
-      },
-      {
-        model: NextStep,
-        as: 'nextSteps',
-        where: { [Op.and]: [scopes.nextStep] },
-        separate: true,
-        include: [{
-          model: NextStepResource,
-          as: 'nextStepResource',
+          as: 'resources',
+          attributes: ['id', 'url', 'domain'],
+          through: {
+            attributes: ['sourceFields'],
+          },
+          // where: { [Op.and]: [scopes.resource] },
+          required: false,
+        },
+        {
+          model: NextStep,
+          as: 'specialistNextSteps',
+          attributes: ['id'],
+          // where: { [Op.and]: [scopes.nextStep] },
           include: [{
             model: Resource,
-            as: 'resource',
-            where: { [Op.and]: [scopes.resource] },
+            as: 'resources',
+            attributes: ['id', 'url', 'domain'],
+            through: {
+              attributes: ['sourceFields'],
+            },
+            // where: { [Op.and]: [scopes.resource] },
+            required: false,
           }],
-        }],
-      },
-      {
-        model: ActivityReportObjective,
-        as: 'activityReportObjectives',
-        where: { [Op.and]: [scopes.activityReportObjective] },
-        separate: true,
-        include: [
-          {
-            model: ActivityReportObjectiveResource,
-            as: 'activityReportObjectiveResource',
-            include: [{
+        },
+        {
+          model: NextStep,
+          as: 'recipientNextSteps',
+          attributes: ['id'],
+          // where: { [Op.and]: [scopes.nextStep] },
+          include: [{
+            model: Resource,
+            as: 'resources',
+            attributes: ['id', 'url', 'domain'],
+            through: {
+              attributes: ['sourceFields'],
+            },
+            // where: { [Op.and]: [scopes.resource] },
+            required: false,
+          }],
+        },
+        {
+          model: ActivityReportObjective,
+          as: 'activityReportObjectives',
+          attributes: ['id'],
+          // where: { [Op.and]: [scopes.activityReportObjective] },
+          separate: true,
+          include: [
+            {
               model: Resource,
-              as: 'resource',
-              where: { [Op.and]: [scopes.resource] },
-            }],
-          },
-          {
-            model: Objective,
-            as: 'objective',
-            where: { [Op.and]: [scopes.objective] },
-            separate: true,
-            include: [
-              {
-                model: ObjectiveResource,
-                as: 'objectiveResource',
-                include: [{
-                  model: Resource,
-                  as: 'resource',
-                  where: { [Op.and]: [scopes.resource] },
-                }],
+              as: 'resources',
+              attributes: ['id', 'url', 'domain'],
+              through: {
+                attributes: ['sourceFields'],
               },
-            ],
-          },
-        ],
-      },
-    ],
-    raw: true,
-  });
-
+              // where: { [Op.and]: [scopes.resource] },
+              required: false,
+            },
+            {
+              model: Objective,
+              as: 'objective',
+              attributes: ['id', 'goalId'],
+              // where: { [Op.and]: [scopes.objective] },
+              required: true,
+            },
+            {
+              model: Topic,
+              as: 'topics',
+              attributes: ['id', 'name'],
+              // where: { [Op.and]: [scopes.topic] },
+            },
+          ],
+        },
+        {
+          model: ActivityReportGoal,
+          as: 'activityReportGoals',
+          attributes: ['id', 'goalId'],
+          // where: { [Op.and]: [scopes.activityReportGoal] },
+          separate: true,
+          include: [
+            {
+              model: Resource,
+              as: 'resources',
+              attributes: ['id', 'url', 'domain'],
+              through: {
+                attributes: ['sourceFields'],
+              },
+              // where: { [Op.and]: [scopes.resource] },
+              required: false,
+            },
+            {
+              model: Goal,
+              as: 'goal',
+              attributes: ['id'],
+              where: { [Op.and]: [scopes.goal] },
+              required: true,
+            },
+          ],
+        },
+      ],
+    });
+  } catch (err) { console.log(err); throw err; }
+  console.log(reports);
   const reportIds = reports.map((r) => r.id);
-  // to get correct escaping https://regex101.com/ code generator works well
-  const urlRegex = '(?:(?:http|ftp|https|file):\\/\\/)(?:www\\.)?(?:[\\w%_-]+(?:(?:\\.[\\w%_-]+)+)|(?:\\/[\\w][:]))(?:[\\w\\\\\'\'.,@?^=%&:\\/~+#()-]*[\\w@?^=%&\\/~+#-])';
-  const domainRegex = '^(?:(?:http|ftp|https|file):\\/\\/)?(?:www\\.)?((?:[\\w%_-]+(?:(?:\\.[\\w%_-]+)+)|(?:\\/[\\w][:])))';
+  let reportResources;
+  try {
+    reportResources = reports.reduce((reportData, report) => {
+      const x = null;
+      // collect topics from the objectives and the activity report
+      let objectiveTopics = [];
+      if (report.activityReportObjectives
+        && Array.isArray(report.activityReportObjectives)
+        && report.activityReportObjectives.length > 0) {
+        objectiveTopics = report.activityReportObjectives
+          .map((o) => o.topics.map((t) => t.dataValues.name))
+          .flat(2);
+      }
+      const reportTopics = [...new Set([
+        ...report.dataValues.topics,
+        ...objectiveTopics.map((t) => t.name),
+      ])];
 
-  const resources = await sequelize.query(`
-    WITH
-    "ARResources" AS (
-        SELECT
-            id "activityReportId",
-            "nonECLKCResourcesUsed",
-            "ECLKCResourcesUsed",
-            "createdAt",
-            "updatedAt"
-        FROM "ActivityReports" a
-        WHERE a.id in (${reportIds.join(',') || null})
-        AND (( a."nonECLKCResourcesUsed" is not null
-                AND  ARRAY_LENGTH(a."nonECLKCResourcesUsed",1) > 0
-                AND nullIf(a."nonECLKCResourcesUsed"[1],'') IS NOT null)
-        OR (a."ECLKCResourcesUsed" is not null
-            AND  ARRAY_LENGTH(a."ECLKCResourcesUsed",1) > 0
-            AND nullIf(a."ECLKCResourcesUsed"[1],'') IS NOT null))
-        order by ID
-          ),
-          "ARNResources" AS (
-        SELECT
-            arr."activityReportId",
-            (regexp_matches(ne.resource,'${urlRegex}','g')) urls,
-            'nonECLKCResourcesUsed' "SourceField",
-            arr."createdAt",
-            arr."updatedAt"
-        FROM "ARResources" arr
-        CROSS JOIN UNNEST(arr."nonECLKCResourcesUsed") AS ne(resource)
-          ),
-          "AREResources" AS (
-        SELECT
-            arr."activityReportId",
-            (regexp_matches(ne.resource,'${urlRegex}','g')) urls,
-            'ECLKCResourcesUsed' "SourceField",
-            arr."createdAt",
-            arr."updatedAt"
-        FROM "ARResources" arr
-        CROSS JOIN UNNEST(arr."ECLKCResourcesUsed") AS ne(resource)
-          ),
-      "ARCResources" AS (
-        SELECT
-          a.id "activityReportId",
-          (regexp_matches(a.context,'${urlRegex}','g')) urls,
-          'context' "SourceField",
-          a."createdAt",
-          a."updatedAt"
-        FROM "ActivityReports" a
-        WHERE a.id in (${reportIds.join(',') || null})
-      ),
-      "ARAResources" AS (
-        SELECT
-          a.id "activityReportId",
-          (regexp_matches(a."additionalNotes",'${urlRegex}','g')) urls,
-          'additionalNotes' "SourceField",
-          a."createdAt",
-          a."updatedAt"
-        FROM "ActivityReports" a
-        WHERE a.id in (${reportIds.join(',') || null})
-      ),
-      "ClusteredARResources" AS (
-        SELECT *
-        FROM "ARNResources"
-        UNION
-        SELECT *
-        FROM "AREResources"
-        UNION
-        SELECT *
-        FROM "ARCResources"
-        UNION
-        SELECT *
-        FROM "ARAResources"
-      ),
-      "AllARResources" AS (
-        SELECT
-          carr."activityReportId",
-          carr."SourceField",
-          (regexp_match(url,'${domainRegex}'))[1] "domain",
-          u.url,
-          carr."createdAt" "createdAt",
-          carr."updatedAt" "updatedAt"
-        FROM "ClusteredARResources" carr
-        CROSS JOIN UNNEST(carr.urls) u(url)
-        WHERE u.url ~ '[a-zA-Z]' -- URLS need to have atleast one alpha char
-      ),
-      "ORurlsArray" AS (
-        SELECT
-          aro."activityReportId",
-          (regexp_matches("userProvidedUrl",'${urlRegex}','g'))[1] url,
-          r."createdAt",
-          r."updatedAt"
-        FROM "ActivityReportObjectiveResources" r
-        JOIN "ActivityReportObjectives" aro
-        ON r."activityReportObjectiveId" = aro."id"
-        WHERE aro."activityReportId" in (${reportIds.join(',') || null})
-      ),
-      "AllObjectiveResources" AS (
-        SELECT
-          orua."activityReportId",
-          'userProvidedUrl' "SourceField",
-          (regexp_match(orua.url,'${domainRegex}'))[1] "domain",
-          orua.url,
-          orua."createdAt",
-          orua."updatedAt"
-        FROM "ORurlsArray" orua
-        WHERE orua.url ~ '[a-zA-Z]' -- URLS need to have at least one alpha char
-      ),
-      "AllResources" AS (
-        SELECT *
-        FROM "AllARResources"
-        WHERE "domain" ~ '[a-zA-Z]' -- Domains need to have at least one alpha char
-        AND "domain" ~ '.*[.][^.0-9][a-zA-Z0-9]' -- Domains need to have a valid tld
-        UNION
-        SELECT *
-        FROM "AllObjectiveResources"
-        WHERE "domain" ~ '[a-zA-Z]' -- Domains need to have at least one alpha char
-        AND "domain" ~ '.*[.][^.0-9][a-zA-Z0-9]' -- Domains need to have a valid tld
-      )
-      SELECT
-        ar."activityReportId",
-        ARRAY_AGG(ar."SourceField") "SourceFields",
-        ar."domain",
-        ar.url,
-        MIN(ar."createdAt") "createdAt",
-        MAX(ar."updatedAt") "updatedAt"
-      FROM "AllResources" ar
-      GROUP BY
-        ar."activityReportId",
-        ar."domain",
-        ar.url;
-  `, { raw: true, type: QueryTypes.SELECT } /* , { type: QueryTypes.SELECT } */);
+      // collect the recipients
+      let grantRecipients = [];
+      let otherEntityRecipeints = [];
+      if (report.activityRecipients
+        && Array.isArray(report.activityRecipients)
+        && report.activityRecipients.length > 0) {
+        grantRecipients = report.activityRecipients
+          .filter((r) => r.grant !== null)
+          .map((r) => ({
+            grantId: r.grant.dataValues.id,
+            recipientId: r.grant.dataValues.recipientId,
+          }));
+        otherEntityRecipeints = report.activityRecipients
+          .filter((r) => r.otherEntity !== null)
+          .map((r) => ({
+            otherEntityId: r.otherEntity.dataValues.id,
+          }));
+      }
+      const recipients = [
+        ...grantRecipients,
+        ...otherEntityRecipeints,
+      ];
 
+      // resources
+      const resourcesFromReport = report.resources
+        && Array.isArray(report.resources)
+        && report.resources.length > 0
+        ? report.resources.map((r) => ({
+          id: r.dataValues.id,
+          url: r.dataValues.url,
+          domain: r.dataValues.domain,
+          sourceFields: r.ActivityReportResource.dataValues.sourceFields,
+          tableType: 'report',
+          ActivityReportResource: undefined,
+          topics: reportTopics,
+        }))
+        : [];
+      const resourcesFromSpecialistNextStep = report.specialistNextSteps
+        && Array.isArray(report.specialistNextSteps)
+        && report.specialistNextSteps.length > 0
+        ? report.specialistNextSteps
+          .map((sns) => sns.resources.map((r) => ({
+            id: r.dataValues.id,
+            url: r.dataValues.url,
+            domain: r.dataValues.domain,
+            sourceFields: r.NextStepResource.dataValues.sourceFields,
+            tableType: 'specialistNextStep',
+            NextStepResource: undefined,
+            topics: reportTopics,
+          })))
+          .filter((r) => r)
+        : [];
+      const resourcesFromRecipientNextStep = report.recipientNextSteps
+        && Array.isArray(report.recipientNextSteps)
+        && report.recipientNextSteps.length > 0
+        ? report.recipientNextSteps
+          .map((rns) => rns.resources.map((r) => ({
+            id: r.dataValues.id,
+            url: r.dataValues.url,
+            domain: r.dataValues.domain,
+            sourceFields: r.NextStepResource.dataValues.sourceFields,
+            tableType: 'recipientNextStep',
+            NextStepResource: undefined,
+            topics: reportTopics,
+          })))
+          .filter((r) => r)
+        : [];
+      const resourcesFromGoal = report.activityReportGoals
+      && Array.isArray(report.activityReportGoals)
+      && report.activityReportGoals.length > 0
+        ? report.activityReportGoals
+          .map((arg) => arg.resources.map((r) => ({
+            id: r.dataValues.id,
+            url: r.dataValues.url,
+            domain: r.dataValues.domain,
+            sourceFields: r.ActivityReportGoalResource.dataValues.sourceFields,
+            tableType: 'goal',
+            ActivityReportGoalResource: undefined,
+            topics: [...new Set(report.activityReportObjectives
+              .filter((aro) => aro.objective.dataValue.grantId
+                === r.ActivityReportGoalResource.dataValues.goalId)
+              .map((aro) => aro.topics.map((t) => t.dataValues.name))
+              .flat())],
+          })))
+          .filter((r) => r)
+        : [];
+      const resourcesFromObjective = report.activityReportObjectives
+      && Array.isArray(report.activityReportObjectives)
+      && report.activityReportObjectives.length > 0
+        ? report.activityReportObjectives
+          .map((aro) => aro.resources.map((r) => ({
+            id: r.dataValues.id,
+            url: r.dataValues.url,
+            domain: r.dataValues.domain,
+            sourceFields: r.ActivityReportObjectiveResource.dataValues.sourceFields,
+            tableType: 'objective',
+            topics: aro.topics.map((t) => t.dataValues.name),
+          })))
+          .filter((r) => r)
+        : [];
+      const resourceFromFields = [
+        ...resourcesFromReport,
+        ...resourcesFromSpecialistNextStep,
+        ...resourcesFromRecipientNextStep,
+        ...resourcesFromGoal,
+        ...resourcesFromObjective,
+      ].filter((r) => r && r.length > 0).flat();
+      const resourcesReduced = resourceFromFields.reduce((resources, resource) => {
+        const exists = resources.find((r) => r.resourceId === resource.id);
+        if (exists) {
+          exists.topics = [...new Set([
+            ...exists.topics,
+            ...resource.topics,
+          ])];
+          exists.source = [
+            ...exists.source,
+            ...resource.sourceFields
+              .map((sourceField) => ({ table: resource.tableType, field: sourceField })),
+          ].filter((value, index, self) => index === self
+            .findIndex((t) => t.table === value.table && t.field === value.field));
+          return resources;
+        }
+
+        return [
+          ...resources,
+          {
+            resourceId: resource.id,
+            url: resource.url,
+            domain: resource.domain,
+            topics: resource.topics,
+            source: resource.sourceFields
+              .map((sourceField) => ({ table: resource.tableType, field: sourceField }))
+              .filter((value, index, self) => index === self
+                .findIndex((t) => t.table === value.table && t.field === value.field)),
+          },
+        ];
+      }, []);
+      return [
+        ...reportData,
+        ...resourcesReduced.map((resource) => ({
+          activityReportId: report.dataValues.id,
+          numberOfParticipants: report.dataValues.numberOfParticipants,
+          recipients,
+          ...resource,
+        })),
+      ];
+    }, []);
+  } catch (err) { console.log(err); throw err; }
+  const resources = reportResources;
   const resourcesWithRecipients = resources.map((data) => {
-    const recipients = reports
-      .filter((r) => r.id === data.activityReportId)
-      .map((r) => r['activityRecipients.grant.recipientId']);
+    // const recipients = reports
+    //   .filter((r) => r.id === data.activityReportId)
+    //   .map((r) => r['activityRecipients.grant.recipientId']);
     const participants = reports
       .filter((r) => r.id === data.activityReportId)
       .reduce((accumulator, r) => accumulator + r.numberOfParticipants, 0);
-    return { ...data, recipients, participants };
+    return { ...data, /* recipients, */ participants };
   });
 
   return { resources: resourcesWithRecipients, reports };
