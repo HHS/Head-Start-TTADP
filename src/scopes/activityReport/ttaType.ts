@@ -12,12 +12,13 @@ import filterArray from './utils';
  * @param {string} column
  * @param {string[]} searchTerms
  * @param {string} operator
- * @returns {string[]} // this might actually be the sequelize literal type
+ * @returns {string[]} an array of sequelize-literalled SQL
+ * (this might actually be the sequelize literal type but that is unavailable AFAIK)
  */
 const expandTypesArrayForQuery = (
-  column,
-  searchTerms,
-  operator,
+  column: string,
+  searchTerms: string[],
+  operator: string,
 ) : string[] => searchTerms.map(
   (term) => sequelize.literal(`${column} ${operator} ${sequelize.escape(String(term).trim())}`),
 );
