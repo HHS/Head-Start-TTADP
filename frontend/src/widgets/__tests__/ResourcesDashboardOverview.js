@@ -20,21 +20,21 @@ describe('Resource Dashboard Overview Widget', () => {
 
   it('shows the correct data', async () => {
     const data = {
-      reports: {
-        count: '8,135',
-        total: '19,914',
-        percent: '40.85%',
+      report: {
+        numResources: '8,135',
+        num: '19,914',
+        percentResources: '40.85%',
       },
-      eclkc: {
-        count: '1,819',
-        total: '2,365',
-        percent: '79.91%',
+      resource: {
+        numEclkc: '1,819',
+        num: '2,365',
+        percentEclkc: '79.91%',
       },
-      recipients: {
-        count: '248',
+      recipient: {
+        numResources: '248',
       },
-      participants: {
-        count: '765',
+      participant: {
+        numParticipants: '765',
       },
     };
 

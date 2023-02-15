@@ -73,11 +73,11 @@ const DASHBOARD_FIELDS = {
         icon={faLink}
         showTooltip={showTooltip}
         label1="Reports with resources"
-        label2={`${data.reports.count} of ${data.reports.total}`}
+        label2={`${data.report.numResources} of ${data.report.num}`}
         iconColor={colors.success}
         backgroundColor={colors.ttahubDeepTealLight}
         tooltipText="Reports with resources"
-        data={data.reports.percent}
+        data={data.report.percentResources}
       />
     ),
   },
@@ -88,11 +88,11 @@ const DASHBOARD_FIELDS = {
         icon={faLink}
         showTooltip={showTooltip}
         label1="ECLKC resources"
-        label2={`${data.eclkc.count} of ${data.eclkc.total}`}
+        label2={`${data.resource.numEclkc} of ${data.resource.num}`}
         iconColor={colors.success}
         backgroundColor={colors.ttahubBlueLight}
         tooltipText="ECLKC resources"
-        data={data.eclkc.percent}
+        data={data.resource.percentEclkc}
       />
     ),
   },
@@ -106,7 +106,7 @@ const DASHBOARD_FIELDS = {
         iconColor={colors.ttahubMediumBlue}
         backgroundColor={colors.ttahubMagentaLight}
         tooltipText="Recipients reached"
-        data={data.recipients.count}
+        data={data.recipient.numResources}
       />
     ),
   },
@@ -120,7 +120,7 @@ const DASHBOARD_FIELDS = {
         iconColor={colors.ttahubOrange}
         backgroundColor={colors.ttahubOrangeLight}
         tooltipText="Participants reached"
-        data={data.participants.count}
+        data={data.participant.numParticipants}
       />
     ),
   },
@@ -139,21 +139,21 @@ export function ResourcesDashboardOverviewWidget({
 
 ResourcesDashboardOverviewWidget.propTypes = {
   data: PropTypes.shape({
-    reports: PropTypes.shape({
+    report: PropTypes.shape({
+      percentResources: PropTypes.string,
+      numResources: PropTypes.string,
+      num: PropTypes.string,
+    }),
+    resource: PropTypes.shape({
       count: PropTypes.string,
       total: PropTypes.string,
       percent: PropTypes.string,
     }),
-    eclkc: PropTypes.shape({
-      count: PropTypes.string,
-      total: PropTypes.string,
-      percent: PropTypes.string,
+    recipient: PropTypes.shape({
+      numResources: PropTypes.string,
     }),
-    recipients: PropTypes.shape({
-      count: PropTypes.string,
-    }),
-    participants: PropTypes.shape({
-      count: PropTypes.string,
+    participant: PropTypes.shape({
+      numParticipants: PropTypes.string,
     }),
 
   }),
@@ -164,21 +164,21 @@ ResourcesDashboardOverviewWidget.propTypes = {
 
 ResourcesDashboardOverviewWidget.defaultProps = {
   data: {
-    reports: {
-      count: '0',
-      total: '0',
-      percent: '0%',
+    report: {
+      numResources: '0',
+      num: '0',
+      percentResources: '0%',
     },
-    eclkc: {
-      count: '0',
-      total: '0',
-      percent: '0%',
+    resource: {
+      numEclkc: '0',
+      num: '0',
+      percentEclkc: '0%',
     },
-    recipients: {
-      count: '0',
+    recipient: {
+      numResources: '0',
     },
-    participants: {
-      count: '0',
+    participant: {
+      numParticipants: '0',
     },
   },
   loading: false,
@@ -189,7 +189,6 @@ ResourcesDashboardOverviewWidget.defaultProps = {
     'Recipients reached',
     'Participants reached',
   ],
-
 };
 
 export default withWidgetData(ResourcesDashboardOverviewWidget, 'resourcesDashboardOverview');
