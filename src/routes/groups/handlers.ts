@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import httpCodes from 'http-codes';
-import { Group } from '../../models';
+import db from '../../models';
 import { auditLogger } from '../../logger';
 import { currentUserId } from '../../services/currentUser';
 import {
@@ -13,6 +13,7 @@ import {
 import GroupPolicy from '../../policies/group';
 
 const NAMESPACE = 'GROUPS';
+const { Group } = db;
 
 export async function getGroups(req: Request, res: Response) {
   try {
