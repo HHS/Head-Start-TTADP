@@ -201,4 +201,14 @@ describe('Approved Activity Report V2 component', () => {
     />);
     expect(screen.queryAllByText(/Date submitted:/i).length).toBe(0);
   });
+
+  it('renders without activity recipients', async () => {
+    render(<ApprovedReportV2 data={{
+      ...report,
+      activityRecipients: [],
+      activityRecipientType: 'other-entity',
+    }}
+    />);
+    expect(await screen.findByText(/Other entities next steps/i)).toBeInTheDocument();
+  });
 });

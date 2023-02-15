@@ -150,6 +150,13 @@ describe('Approved Activity Report V1 component', () => {
     }}
     />);
     expect(await screen.findByText('Training and Technical Assistance, Virtual (Phone)')).toBeInTheDocument();
+
+    // No delivery type.
+    render(<ApprovedReportV1 data={{
+      ...report, ttaType: ['training'], virtualDeliveryType: null,
+    }}
+    />);
+    expect(await screen.findByText('Training')).toBeInTheDocument();
   });
 
   it('renders approved at', async () => {
