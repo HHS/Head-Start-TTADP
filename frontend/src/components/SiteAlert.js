@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { SiteAlert as BaseSiteAlert } from '@trussworks/react-uswds';
-import './SiteAlert.css';
+import './SiteAlert.scss';
 
 export default function SiteAlert({
   heading, children, style, variant,

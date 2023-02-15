@@ -1,3 +1,5 @@
+@use '../colors.scss' as *;
+
 @media (min-width: 64rem) { 
     .usa-site-alert--ttahub .usa-alert__body {
         align-items: center;
@@ -18,6 +20,11 @@
     .has-alerts .usa-site-alert--ttahub .usa-alert__body {
         padding-left: 3rem;
     }
+}
+
+.usa-site-alert--ttahub.usa-site-alert--emergency,
+.usa-site-alert--ttahub.usa-site-alert--emergency .usa-alert {
+  background-color: $error-dark;
 }
 
 .usa-site-alert--ttahub .usa-alert__heading {
