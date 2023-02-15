@@ -273,7 +273,6 @@ function AccountManagement({ updateUser }) {
   const [verificationEmailSendError, setVerificationEmailSendError] = useState(false);
   const [showVerifier, setShowVerifier] = useState(true);
 
-
   useEffect(() => {
     const emailValidationStatus = user.validationStatus.find(({ type }) => type === 'email');
     if (emailValidationStatus && emailValidationStatus.validatedAt) {
