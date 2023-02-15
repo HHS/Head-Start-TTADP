@@ -19,59 +19,59 @@ const history = createMemoryHistory();
 
 const resourceOverviewUrl = join('api', 'widgets', 'resourcesDashboardOverview');
 const resourcesOverview = {
-  reports: {
-    count: '8,135',
-    total: '19,914',
-    percent: '40.85%',
+  report: {
+    numResources: '8,135',
+    num: '19,914',
+    percentResources: '40.85%',
   },
-  eclkc: {
-    count: '1,819',
-    total: '2,365',
-    percent: '79.91%',
+  resource: {
+    numEclkc: '1,819',
+    num: '2,365',
+    percentEclkc: '79.91%',
   },
-  recipients: {
-    count: '248',
+  recipient: {
+    numResources: '248',
   },
-  participants: {
-    count: '765',
+  participant: {
+    numParticipants: '765',
   },
 };
 
 const resourcesOverviewRegionOne = {
-  reports: {
-    count: '7,135',
-    total: '18,914',
-    percent: '2.65%',
+  report: {
+    numResources: '7,135',
+    num: '18,914',
+    percentResources: '2.65%',
   },
-  eclkc: {
-    count: '819',
-    total: '1,365',
-    percent: '1.66%',
+  resource: {
+    numEclkc: '819',
+    num: '1,365',
+    percentEclkc: '1.66%',
   },
-  recipients: {
-    count: '148',
+  recipient: {
+    numResources: '148',
   },
-  participants: {
-    count: '665',
+  participant: {
+    numParticipants: '665',
   },
 };
 
 const resourcesOverviewRegionTwo = {
-  reports: {
-    count: '6,135',
-    total: '17,914',
-    percent: '1.65%',
+  report: {
+    numResources: '6,135',
+    num: '17,914',
+    percentResources: '1.65%',
   },
-  eclkc: {
-    count: '818',
-    total: '365',
-    percent: '.66%',
+  resource: {
+    numEclkc: '818',
+    num: '365',
+    percentEclkc: '.66%',
   },
-  recipients: {
-    count: '148',
+  recipient: {
+    numResources: '148',
   },
-  participants: {
-    count: '565',
+  participant: {
+    numParticipants: '565',
   },
 };
 
