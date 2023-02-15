@@ -168,4 +168,13 @@ describe('Approved Activity Report V1 component', () => {
     />);
     expect(await screen.findByText(/Other entities/i)).toBeInTheDocument();
   });
+
+  it('renders without resources', async () => {
+    render(<ApprovedReportV1 data={{
+      ...report, ECLKCResourcesUsed: null, nonECLKCResourcesUsed: null,
+    }}
+    />);
+    expect(await screen.findByText('OHS / ECLKC resources')).toBeInTheDocument();
+    expect(await screen.findByText('Non-ECLKC resources')).toBeInTheDocument();
+  });
 });
