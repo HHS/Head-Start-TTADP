@@ -820,5 +820,8 @@ export async function resourcesDashboardOverview(scopes) {
       numNonEclkc: formatNumber(data.resource.numNonEclkc),
       percentNonEclkc: `${formatNumber(data.resource.percentNonEclkc, 2)}%`,
     },
+    participant: {
+      numParticipants: '100',
+    },
   };
 }
