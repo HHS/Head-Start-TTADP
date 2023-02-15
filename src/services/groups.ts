@@ -1,5 +1,7 @@
 import { Op } from 'sequelize';
-import { Group, Grant, GroupGrant } from '../models';
+import db from '../models';
+
+const { Group, Grant, GroupGrant } = db;
 
 interface GroupData {
   userId: number;
