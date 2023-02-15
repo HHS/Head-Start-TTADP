@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faLink, faExternalLink, faLinkSlash,
+  faLink, faCube, faUser, faUserFriends,
 } from '@fortawesome/free-solid-svg-icons';
 import withWidgetData from './withWidgetData';
 import './ResourcesDashboardOverview.css';
@@ -47,7 +47,7 @@ export function Field({
 
 Field.propTypes = {
   label1: PropTypes.string.isRequired,
-  label2: PropTypes.string.isRequired,
+  label2: PropTypes.string,
   data: PropTypes.string.isRequired,
   icon: PropTypes.shape({
     prefix: PropTypes.string,
@@ -64,6 +64,7 @@ Field.propTypes = {
 Field.defaultProps = {
   tooltipText: '',
   showTooltip: false,
+  label2: '',
 };
 const DASHBOARD_FIELDS = {
   'Reports with resources': {
@@ -85,11 +86,11 @@ const DASHBOARD_FIELDS = {
     render: (data, showTooltip) => (
       <Field
         key="eclkc-resources"
-        icon={faLink}
+        icon={faCube}
         showTooltip={showTooltip}
         label1="ECLKC resources"
         label2={`${data.resource.numEclkc} of ${data.resource.num}`}
-        iconColor={colors.success}
+        iconColor={colors.ttahubBlue}
         backgroundColor={colors.ttahubBlueLight}
         tooltipText="ECLKC resources"
         data={data.resource.percentEclkc}
@@ -100,10 +101,10 @@ const DASHBOARD_FIELDS = {
     render: (data, showTooltip) => (
       <Field
         key="recipient-reached"
-        icon={faExternalLink}
+        icon={faUser}
         showTooltip={showTooltip}
         label1="Recipients reached"
-        iconColor={colors.ttahubMediumBlue}
+        iconColor={colors.ttahubMagenta}
         backgroundColor={colors.ttahubMagentaLight}
         tooltipText="Recipients reached"
         data={data.recipient.numResources}
@@ -114,7 +115,7 @@ const DASHBOARD_FIELDS = {
     render: (data, showTooltip) => (
       <Field
         key="participants-reached"
-        icon={faLinkSlash}
+        icon={faUserFriends}
         showTooltip={showTooltip}
         label1="Participants reached"
         iconColor={colors.ttahubOrange}
