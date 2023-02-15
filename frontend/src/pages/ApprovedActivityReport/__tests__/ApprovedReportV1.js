@@ -160,4 +160,12 @@ describe('Approved Activity Report V1 component', () => {
     expect(await screen.findByText(/Date approved:/i)).toBeInTheDocument();
     expect(screen.queryAllByText('02/15/2023').length).toBe(2);
   });
+
+  it('renders other entity', async () => {
+    render(<ApprovedReportV1 data={{
+      ...report, activityRecipientType: 'other-entity',
+    }}
+    />);
+    expect(await screen.findByText(/Other entities/i)).toBeInTheDocument();
+  });
 });
