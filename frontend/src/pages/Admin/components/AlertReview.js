@@ -181,7 +181,7 @@ export default function AlertReview({ alert, onDelete }) {
           </div>
           <div className="margin-top-3">
             <label htmlFor={`alert-${alert.id}-variant`}>
-              Varian
+              Variant
               <Req />
             </label>
             <select
