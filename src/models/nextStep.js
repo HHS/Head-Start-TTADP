@@ -11,6 +11,12 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       NextStep.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId' });
       NextStep.hasMany(models.NextStepResource, { foreignKey: 'nextStepId', as: 'nextStepResources' });
+      NextStep.belongsToMany(models.Resource, {
+        through: models.NextStepResource,
+        foreignKey: 'nextStepId',
+        otherKey: 'resourceId',
+        as: 'resources',
+      });
     }
   }
   NextStep.init({
