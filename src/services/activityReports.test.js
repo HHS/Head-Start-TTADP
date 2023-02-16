@@ -316,7 +316,7 @@ describe('Activity report service', () => {
     });
   });
 
-  const idsToExclude = [9999, 777, 778, 779];
+  const idsToExclude = [9997, 9998, 9999, 777, 778, 779];
 
   describe('Activity Reports DB service', () => {
     beforeAll(async () => {

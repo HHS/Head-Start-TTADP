@@ -76,7 +76,7 @@ function formatMethod(method, delivery) {
 }
 
 function createResourceMarkup(resources) {
-  return resources.map((resource) => {
+  return !resources ? [] : resources.map((resource) => {
     try {
       return <a href={new URL(resource)}>{resource}</a>;
     } catch (err) {
@@ -131,6 +131,7 @@ export default function ApprovedReportV1({ data }) {
   const recipientNextSteps = data.recipientNextSteps.map((step) => step.note);
   const approvedAt = data.approvedAt ? moment(data.approvedAt).format(DATE_DISPLAY_FORMAT) : '';
   const createdAt = moment(data.createdAt).format(DATE_DISPLAY_FORMAT);
+  const submittedAt = data.submittedDate ? moment(data.submittedDate).format(DATE_DISPLAY_FORMAT) : '';
 
   const creator = data.author.fullName || '';
 
@@ -148,11 +149,6 @@ export default function ApprovedReportV1({ data }) {
             {' '}
             {creator}
           </p>
-          <p className="no-print">
-            <strong>Date created:</strong>
-            {' '}
-            {createdAt}
-          </p>
           <p>
             <strong>Collaborators:</strong>
             {' '}
@@ -163,6 +159,20 @@ export default function ApprovedReportV1({ data }) {
             {' '}
             {approvingManagers}
           </p>
+          <p className="no-print">
+            <strong>Date created:</strong>
+            {' '}
+            {createdAt}
+          </p>
+          { submittedAt !== ''
+            ? (
+              <p>
+                <strong>Date submitted:</strong>
+                {' '}
+                {submittedAt}
+              </p>
+            )
+            : null }
           { approvedAt !== ''
             ? (
               <p>
