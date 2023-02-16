@@ -9,7 +9,7 @@ const {
 export default (sequelize, DataTypes) => {
   class ObjectiveFile extends Model {
     static associate(models) {
-      ObjectiveFile.belongsTo(models.Objective, { foreignKey: 'objectiveId', as: 'objective' });
+      ObjectiveFile.belongsTo(models.Objective, { foreignKey: 'objectiveId', onDelete: 'cascade', as: 'objective' });
       ObjectiveFile.belongsTo(models.File, { foreignKey: 'fileId', as: 'file' });
     }
   }
