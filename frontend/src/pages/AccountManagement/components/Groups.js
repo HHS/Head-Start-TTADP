@@ -36,7 +36,7 @@ export default function Groups() {
       <h2 className="margin-bottom-1 font-sans-xl">My groups</h2>
       { error ? <Alert type="error" role="alert">{error}</Alert> : null }
       <div className="margin-bottom-3">
-        {!groups || !groups.length ? <p className="usa-prose">You have no groups.</p> : (
+        {!groups || !groups.length ? <p className="usa-prose">You haven&apos;t created any groups yet</p> : (
           <ul className="usa-list usa-list--unstyled maxw-tablet margin-bottom-3">
             {groups.map((group) => (
               <li key={group.id} className="margin-bottom-3 desktop:display-flex border-bottom border-gray-5 flex-justify padding-2">

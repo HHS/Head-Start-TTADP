@@ -20,7 +20,7 @@ describe('Groups', () => {
   it('renders without crashing', async () => {
     fetchMock.get('/api/groups', []);
     act(renderGroups);
-    expect(screen.getByText(/you have no groups/i)).toBeInTheDocument();
+    expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument();
   });
 
   it('renders groups', async () => {
@@ -49,7 +49,7 @@ describe('Groups', () => {
     act(renderGroups);
 
     await waitFor(() => {
-      expect(screen.getByText(/you have no groups/i)).toBeInTheDocument();
+      expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument();
     });
   });
 
@@ -71,7 +71,7 @@ describe('Groups', () => {
     userEvent.click(screen.getByText(/delete/i));
 
     await waitFor(() => {
-      expect(screen.getByText(/you have no groups/i)).toBeInTheDocument();
+      expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument();
     });
   });
 
