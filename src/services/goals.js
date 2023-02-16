@@ -19,7 +19,9 @@ import {
   Program,
   File,
 } from '../models';
-import { DECIMAL_BASE, REPORT_STATUSES, OBJECTIVE_STATUS } from '../constants';
+import {
+  DECIMAL_BASE, REPORT_STATUSES, OBJECTIVE_STATUS, GOAL_STATUS,
+} from '../constants';
 import {
   cacheObjectiveMetadata,
   cacheGoalMetadata,
@@ -768,7 +770,7 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
 
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
   return Goal.findOne({
-    attributes: ['name', 'id', 'status', 'createdVia'],
+    attributes: ['name', 'id', 'status', 'createdVia', 'previousStatus'],
     where: {
       id: goalId,
     },
@@ -1668,13 +1670,66 @@ export async function saveGoalsForReport(goals, report) {
   return removeUnusedGoalsObjectivesFromReport(report.id, currentObjectives);
 }
 
+/**
+ * Verifies if the goal status transition is allowed
+ * @param {string} oldStatus
+ * @param {string} newStatus
+ * @param {number[]} goalIds
+ * @param {string[]} previousStatus
+ * @returns {boolean} whether or not the transition is allowed
+ */
+export function verifyAllowedGoalStatusTransition(oldStatus, newStatus, previousStatus) {
+  // here is a little matrix of all the allowed status transitions
+  // you can see most are disallowed, but there are a few allowed
+  const ALLOWED_TRANSITIONS = {
+    [GOAL_STATUS.DRAFT]: [],
+    [GOAL_STATUS.NOT_STARTED]: [GOAL_STATUS.CLOSED, GOAL_STATUS.SUSPENDED],
+    [GOAL_STATUS.IN_PROGRESS]: [GOAL_STATUS.CLOSED, GOAL_STATUS.SUSPENDED],
+    [GOAL_STATUS.SUSPENDED]: [GOAL_STATUS.CLOSED],
+    [GOAL_STATUS.CLOSED]: [],
+  };
+
+  // here we handle a weird status and create the array of allowed statuses
+  let allowed = ALLOWED_TRANSITIONS[oldStatus] ? [...ALLOWED_TRANSITIONS[oldStatus]] : [];
+  // if the goal is suspended, we allow both closing it and transitioning to the previous status
+  if (oldStatus === GOAL_STATUS.SUSPENDED) {
+    allowed = [...allowed, ...previousStatus];
+  }
+
+  return allowed.includes(newStatus);
+}
+
+/**
+ * Updates a goal status by id
+ * @param {number[]} goalIds
+ * @param {string} oldStatus
+ * @param {string} newStatus
+ * @param {string} closeSuspendReason
+ * @param {string} closeSuspendContext
+ * @param {string[]} previousStatus
+ * @returns {Promise<Model|boolean>} updated goal
+ */
 export async function updateGoalStatusById(
   goalIds,
   oldStatus,
   newStatus,
   closeSuspendReason,
   closeSuspendContext,
+  previousStatus,
 ) {
+  // first, we verify that the transition is allowed
+  const allowed = verifyAllowedGoalStatusTransition(
+    oldStatus,
+    newStatus,
+    previousStatus,
+  );
+
+  if (!allowed) {
+    auditLogger.error(`UPDATEGOALSTATUSBYID: Goal status transition from ${oldStatus} to ${newStatus} not allowed for goal ${goalIds}`);
+    return false;
+  }
+
+  // finally, if everything is golden, we update the goal
   const g = await Goal.update({
     status: newStatus,
     closeSuspendReason,
@@ -1689,7 +1744,6 @@ export async function updateGoalStatusById(
   });
 
   const [, updated] = g;
-
   return updated;
 }
 
