@@ -1,11 +1,13 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form/dist/index.ie11';
 import {
   Button,
   Label,
-  Textarea,
+  FormGroup,
+  ErrorMessage,
 } from '@trussworks/react-uswds';
+import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   // faAngleUp,
@@ -16,36 +18,113 @@ import { DECIMAL_BASE } from '../../../Constants';
 import Container from '../../../components/Container';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import Req from '../../../components/Req';
-import DatePicker from '../../../components/DatePicker';
+import ControlledDatePicker from '../../../components/ControlledDatePicker';
+import { getRecipientGoals } from '../../../fetchers/recipient';
 
-export default function RTTAPA({ location }) {
-  const { handleSubmit } = useForm();
+const FormItem = ({
+  label, name, required, errors, children,
+}) => (
+  <FormGroup error={errors[name]}>
+    <Label>
+      {label}
+      {required && <Req />}
+      <ReactHookFormError
+        errors={errors}
+        name={name}
+        render={({ message }) => <ErrorMessage>{message}</ErrorMessage>}
+      />
+      {children}
+    </Label>
+  </FormGroup>
+);
+
+FormItem.propTypes = {
+  label: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
+  children: PropTypes.node.isRequired,
+  required: PropTypes.bool,
+  errors: PropTypes.shape({
+    message: PropTypes.string,
+  }).isRequired,
+};
+
+FormItem.defaultProps = {
+  required: false,
+};
+
+export default function RTTAPA({
+  location,
+  recipientNameWithRegion,
+  recipientId,
+  regionId,
+}) {
+  const {
+    control,
+    handleSubmit,
+    watch,
+    register,
+    formState,
+    setError,
+  } = useForm({
+    reviewDate: '',
+    notes: '',
+  });
+
+  const { errors } = formState;
+  const reviewDate = watch('reviewDate');
 
   /**
      * Get the initial goal ids from the query string
      */
-  const initialGoalIds = useMemo(() => {
+  const goalIds = useMemo(() => {
     const { search } = location;
     const params = new URLSearchParams(search);
     return params.getAll('goalId[]').map((id) => parseInt(id, DECIMAL_BASE));
   }, [location]);
 
-  const [initialGoalsFetched] = useState(false);
-  const [goalIds] = useState(initialGoalIds);
+  const [goals, setGoals] = useState([]);
 
   useEffect(() => {
-    if (!initialGoalsFetched) {
+    async function getGoals() {
+      const sortConfig = {
+        sortBy: 'goalName',
+        direction: 'desc',
+        offset: 0,
+      };
+
+      const { goalRows } = await getRecipientGoals(
+        recipientId,
+        regionId,
+        sortConfig.sortBy,
+        sortConfig.direction,
+        sortConfig.offset,
+        false,
+        {},
+        goalIds,
+      );
+      setGoals(goalRows);
+    }
+
+    if (!goals || !goals.length) {
       if (goalIds && goalIds.length) {
-      // fetch goals for rttapa
+        getGoals();
       }
     }
-  }, [goalIds, initialGoalsFetched]);
+  }, [goalIds, goals, recipientId, regionId]);
 
-  const onSubmit = () => {};
+  const onSubmit = (data) => {
+    if (!goalIds || !goalIds.length) {
+      setError('goalIds', { type: 'required', message: 'Please select at least one goal' });
+      return;
+    }
+
+    // eslint-disable-next-line no-console
+    console.log(data);
+  };
 
   return (
     <>
-      <h1 className="page-heading">Recipient name</h1>
+      <h1 className="page-heading margin-left-2">{recipientNameWithRegion}</h1>
       <Container className="margin-y-3 margin-left-2">
         <h2>
           Regional TTA plan agreement (RTTAPA)
@@ -70,16 +149,34 @@ export default function RTTAPA({ location }) {
         <h3>RTTAPA details</h3>
         <form onSubmit={handleSubmit(onSubmit)}>
           <IndicatesRequiredField />
-          <Label>
-            Review Date
-            <Req />
-            <DatePicker />
-          </Label>
+          <FormItem
+            label="Review date"
+            name="reviewDate"
+            errors={errors}
+            required
+          >
+            <ControlledDatePicker
+              name="reviewDate"
+              value={reviewDate}
+              control={control}
+              inputId="reviewDate"
+            />
+          </FormItem>
 
-          <Label>
-            Notes
-            <Textarea name="notes" />
-          </Label>
+          <FormItem
+            label="Notes"
+            name="notes"
+            errors={errors}
+          >
+            <textarea
+              id="notes"
+              name="notes"
+              ref={register()}
+              className="usa-textarea"
+            />
+          </FormItem>
+
+          <input type="hidden" name="goalIds" ref={register()} value={goalIds.join(',')} />
 
           <div className="margin-top-3">
             <Button type="submit">Submit</Button>
@@ -92,10 +189,13 @@ export default function RTTAPA({ location }) {
 }
 
 RTTAPA.propTypes = {
+  recipientNameWithRegion: PropTypes.string.isRequired,
   location: PropTypes.shape({
     pathname: PropTypes.string.isRequired,
     search: PropTypes.string.isRequired,
     hash: PropTypes.string.isRequired,
     key: PropTypes.string,
   }).isRequired,
+  recipientId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+  regionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
 };
