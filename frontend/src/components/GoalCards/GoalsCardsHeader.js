@@ -49,6 +49,15 @@ export default function GoalCardsHeader({
     requestSort(sortBy, direction);
   };
 
+  const rttapaLink = (() => {
+    if (selectedGoalIds && selectedGoalIds.length) {
+      const selectedGoalIdsQuery = selectedGoalIds.map((id) => `goalId[]=${encodeURIComponent(id)}`).join('&');
+      return `/recipient-tta-records/${recipientId}/region/${regionId}/rttapa?${selectedGoalIdsQuery}`;
+    }
+
+    return `/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`;
+  })();
+
   return (
     <div className="padding-x-3">
       <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2">
@@ -132,7 +141,7 @@ export default function GoalCardsHeader({
               </span>
             )}
         <Link
-          to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/rttapa`}
+          to={rttapaLink}
           className="display-flex flex-align-center usa-button usa-button--unstyled margin-left-3 margin-y-0"
         >
           Create RTTAPA
