@@ -109,7 +109,7 @@
     "node-fetch": "^2.6.7",
     "protobufjs": "^6.11.3",
     "got": "^11.8.5",
-    "undici": "^5.8.0",
+    "undici": "^5.10.0",
     "selenium-webdriver": "4.3.0",
     "json5": "^2.2.3",
     "luxon": "^1.23.1",
