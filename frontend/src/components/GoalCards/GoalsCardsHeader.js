@@ -49,6 +49,8 @@ export default function GoalCardsHeader({
     requestSort(sortBy, direction);
   };
 
+  const createRttapa = () => {};
+
   return (
     <div className="padding-x-3">
       <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2">
@@ -67,12 +69,6 @@ export default function GoalCardsHeader({
             </Link>
           </span>
         ) : null }
-        <Button
-          className="display-flex flex-align-center usa-button usa-button--unstyled margin-x-3 margin-y-3"
-          onClick={onPrint}
-        >
-          {`Preview and print ${selectedGoalIds.length > 0 ? 'selected' : ''}`}
-        </Button>
       </div>
       <div className="desktop:display-flex flex-justify ">
         <div className="desktop:display-flex flex-align-center">
@@ -137,6 +133,18 @@ export default function GoalCardsHeader({
                 </Button>
               </span>
             )}
+        <Button
+          className="display-flex flex-align-center usa-button usa-button--unstyled margin-left-3 margin-y-0"
+          onClick={createRttapa}
+        >
+          Create RTTAPA
+        </Button>
+        <Button
+          className="display-flex flex-align-center usa-button usa-button--unstyled margin-left-3 margin-y-0"
+          onClick={onPrint}
+        >
+          {`Preview and print ${selectedGoalIds.length > 0 ? 'selected' : ''}`}
+        </Button>
       </div>
       <div>
         {
