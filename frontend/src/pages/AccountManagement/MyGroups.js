@@ -101,12 +101,11 @@ export default function MyGroups({ match }) {
       <Helmet>
         <title>My groups</title>
       </Helmet>
-      <Link className="margin-top-2 margin-bottom-3 display-inline-block" to="/account">
-        { /** todo: the margin/spacing on this thing is a mess */}
+      <Link className="margin-top-0 margin-bottom-3 display-inline-block" to="/account">
         <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
         Back to Account Management
       </Link>
-      <h1 className="landing">My groups</h1>
+      <h1 className="margin-top-0 landing">My groups</h1>
 
       <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
         <h2 className="margin-bottom-2">Create a group</h2>
