@@ -49,8 +49,6 @@ export default function GoalCardsHeader({
     requestSort(sortBy, direction);
   };
 
-  const createRttapa = () => {};
-
   return (
     <div className="padding-x-3">
       <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2">
@@ -133,14 +131,15 @@ export default function GoalCardsHeader({
                 </Button>
               </span>
             )}
-        <Button
+        <Link
+          to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/rttapa`}
           className="display-flex flex-align-center usa-button usa-button--unstyled margin-left-3 margin-y-0"
-          onClick={createRttapa}
         >
           Create RTTAPA
-        </Button>
+        </Link>
         <Button
-          className="display-flex flex-align-center usa-button usa-button--unstyled margin-left-3 margin-y-0"
+          unstyled
+          className="display-flex flex-align-center margin-left-3 margin-y-0"
           onClick={onPrint}
         >
           {`Preview and print ${selectedGoalIds.length > 0 ? 'selected' : ''}`}
