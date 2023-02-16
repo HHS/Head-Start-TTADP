@@ -16,6 +16,7 @@ import GoalForm from '../../components/GoalForm';
 import PrintGoals from './pages/PrintGoals';
 import FilterContext from '../../FilterContext';
 import { GOALS_OBJECTIVES_FILTER_KEY } from './pages/constants';
+import RTTAPA from './pages/RTTAPA';
 
 function PageWithHeading({
   children,
@@ -245,6 +246,12 @@ export default function RecipientRecord({ match }) {
               recipient={recipientData}
               showRTRnavigation
             />
+          )}
+        />
+        <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/rttapa"
+          render={({ location }) => (
+            <RTTAPA location={location} />
           )}
         />
         <Route
