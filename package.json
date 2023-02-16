@@ -7,7 +7,6 @@
     "node": "16.18.1"
   },
   "scripts": {
-    "axe:ci": "axe --exit --show-errors --load-delay 1000 `cat axe-urls` --dir ./reports/",
     "build": "tsc -p src",
     "deps:local": "yarn install && yarn --cwd frontend install",
     "deps": "yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
@@ -97,8 +96,8 @@
     "url": "git+https://github.com/adhocteam/Head-Start-TTADP.git"
   },
   "resolutions": {
-    "axe-core": "4.3.5",
-    "@axe-core/webdriverjs": "4.3.2",
+    "axe-core": "4.6.3",
+    "@axe-core/webdriverjs": "4.6.0",
     "ansi-regex": "^5.0.1",
     "colors": "1.4.0",
     "follow-redirects": "^1.14.8",
@@ -121,15 +120,21 @@
   "eslintConfig": {
     "extends": [
       "airbnb-base",
+      "airbnb-typescript/base",
       "plugin:jest/recommended",
       "plugin:@typescript-eslint/recommended"
     ],
     "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+      "project": "./src/tsconfig.json"
+    },
     "plugins": [
       "@typescript-eslint"
     ],
     "ignorePatterns": [
-      "node_modules/*"
+      "node_modules/*",
+      "playwright.config.js",
+      "tests/*"
     ],
     "rules": {
       "linebreak-style": 0,
@@ -188,7 +193,6 @@
       "<rootDir>/src/tools/*CLI.js",
       "<rootDir>/src/tools/createAwsElasticSearchIndexesCli.js",
       "<rootDir>/src/tools/importTTAPlanGoals.js"
-
     ],
     "coverageThreshold": {
       "global": {
@@ -217,7 +221,8 @@
     ]
   },
   "devDependencies": {
-    "@axe-core/cli": "4.3.1",
+    "@axe-core/cli": "4.6.0",
+    "@axe-core/playwright": "^4.6.0",
     "@babel/cli": "^7.11.6",
     "@babel/core": "^7.11.6",
     "@babel/node": "^7.10.5",
@@ -226,13 +231,14 @@
     "@babel/preset-typescript": "^7.18.6",
     "@cucumber/cucumber": "^7.0.0",
     "@playwright/test": "^1.28.0",
-    "@typescript-eslint/eslint-plugin": "^5.48.2",
-    "@typescript-eslint/parser": "^5.48.2",
+    "@typescript-eslint/eslint-plugin": "^5.13.0",
+    "@typescript-eslint/parser": "^5.0.0",
     "concurrently": "^7.0.0",
     "cross-env": "^7.0.2",
     "depcheck": "^1.2.0",
     "eslint": "^7.20.0",
     "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-airbnb-typescript": "^17.0.0",
     "eslint-formatter-multiple": "^1.0.0",
     "eslint-plugin-import": "^2.22.0",
     "eslint-plugin-jest": "^25.3.4",
