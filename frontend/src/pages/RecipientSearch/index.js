@@ -27,6 +27,10 @@ const DEFAULT_CENTRAL_OFFICE_SORT = {
   direction: 'asc',
 };
 
+export const determineDefaultSort = (userHasCentralOffice) => (
+  userHasCentralOffice ? DEFAULT_CENTRAL_OFFICE_SORT : DEFAULT_SORT
+);
+
 function RecipientSearch({ user }) {
   const [filters, setFilters] = useSessionFiltersAndReflectInUrl('recipient-search-filters', []);
   const hasCentralOffice = user && user.homeRegionId && user.homeRegionId === 14;
@@ -34,7 +38,7 @@ function RecipientSearch({ user }) {
   const [queryAndSort, setQueryAndSort] = useSession('rtr-search', {
     query: '',
     activePage: 1,
-    sortConfig: hasCentralOffice ? DEFAULT_CENTRAL_OFFICE_SORT : DEFAULT_SORT,
+    sortConfig: determineDefaultSort(hasCentralOffice),
   });
 
   const [results, setResults] = useState({ count: 0, rows: [] });
