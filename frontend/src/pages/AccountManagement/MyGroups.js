@@ -108,7 +108,7 @@ export default function MyGroups({ match }) {
       <h1 className="margin-top-0 landing">My groups</h1>
 
       <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
-        <h2 className="margin-bottom-2">Create a group</h2>
+        <h2 className="margin-bottom-2">Create group</h2>
         <IndicatesRequiredField />
         <form onSubmit={handleSubmit(onSubmit)} className="maxw-mobile-lg">
           <div className="margin-top-4">
