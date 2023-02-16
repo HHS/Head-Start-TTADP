@@ -373,7 +373,18 @@ describe('Activity Reports model', () => {
 
     // Needs Action.
     await ActivityReport.update(
-      { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
+      { calculatedStatus: REPORT_STATUSES.APPROVED },
+      { where: { id: reportToSubmit.id }, individualHooks: true },
+    );
+    reportToSubmit = await ActivityReport.findOne(
+      { where: { id: reportToSubmit.id } },
+    );
+    expect(reportToSubmit.submittedDate).not.toBeNull();
+    expect(reportToSubmit.submittedDate).toBe(moment(submittedDate).format('MM/DD/YYYY'));
+
+    // Reset to Draft.
+    await ActivityReport.update(
+      { calculatedStatus: REPORT_STATUSES.DRAFT },
       { where: { id: reportToSubmit.id }, individualHooks: true },
     );
     reportToSubmit = await ActivityReport.findOne(
