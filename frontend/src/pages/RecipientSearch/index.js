@@ -35,7 +35,6 @@ function RecipientSearch({ user }) {
     query: '',
     activePage: 1,
     sortConfig: hasCentralOffice ? DEFAULT_CENTRAL_OFFICE_SORT : DEFAULT_SORT,
-    appliedRegion: hasCentralOffice ? 14 : regions[0],
   });
 
   const [results, setResults] = useState({ count: 0, rows: [] });
@@ -141,7 +140,7 @@ function RecipientSearch({ user }) {
             </button>
           </form>
         </Grid>
-        <div className="margin-bottom-2">
+        <Grid className="display-flex flex-wrap flex-align-center margin-y-2">
           <FilterPanel
             filters={filters}
             filterConfig={RECIPIENT_SEARCH_FILTER_CONFIG}
@@ -150,7 +149,7 @@ function RecipientSearch({ user }) {
             applyButtonAria={applyButtonAria}
             allUserRegions={regions}
           />
-        </div>
+        </Grid>
         <RecipientResults
           recipients={rows}
           loading={loading}
