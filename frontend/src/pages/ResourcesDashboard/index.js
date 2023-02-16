@@ -11,16 +11,11 @@ import AriaLiveContext from '../../AriaLiveContext';
 import ResourcesDashboardOverview from '../../widgets/ResourcesDashboardOverview';
 
 import './index.scss';
-import { expandFilters, formatDateRange } from '../../utils';
+import { expandFilters } from '../../utils';
 
 import UserContext from '../../UserContext';
 import { RESOURCES_DASHBOARD_FILTER_CONFIG } from './constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
-
-const defaultDate = formatDateRange({
-  lastThirtyDays: true,
-  forDateTime: true,
-});
 
 const FILTER_KEY = 'regional-resources-dashboard-filters';
 export default function ResourcesDashboard() {
@@ -28,47 +23,22 @@ export default function ResourcesDashboard() {
   const ariaLiveContext = useContext(AriaLiveContext);
   const regions = allRegionsUserHasPermissionTo(user);
   const defaultRegion = user.homeRegionId || regions[0] || 0;
+  const hasMultipleRegions = regions && regions.length > 1;
   const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
 
-  const hasCentralOffice = useMemo(() => (
-    user && user.homeRegionId && user.homeRegionId === 14
-  ), [user]);
-
-  const getAllRegionsWithDefaultFilters = () => {
-    const filtersWithAllRegions = [...allRegionsFilters];
-    filtersWithAllRegions.push({
-      id: uuidv4(),
-      topic: 'startDate',
-      condition: 'is within',
-      query: defaultDate,
-    });
-    return filtersWithAllRegions;
-  };
-
-  const centralOfficeWithAllRegionFilters = getAllRegionsWithDefaultFilters();
-
-  const defaultFilters = useMemo(() => {
-    if (hasCentralOffice) {
-      return centralOfficeWithAllRegionFilters;
-    }
-
-    return [
-      {
+  const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
+    FILTER_KEY,
+    defaultRegion !== 14
+      && defaultRegion !== 0
+      && hasMultipleRegions
+      ? [{
         id: uuidv4(),
         topic: 'region',
         condition: 'is',
         query: defaultRegion,
-      },
-      {
-        id: uuidv4(),
-        topic: 'startDate',
-        condition: 'is within',
-        query: defaultDate,
-      },
-    ];
-  }, [defaultRegion, hasCentralOffice, centralOfficeWithAllRegionFilters]);
-
-  const [filters, setFilters] = useSessionFiltersAndReflectInUrl(FILTER_KEY, defaultFilters);
+      }]
+      : allRegionsFilters,
+  );
 
   // Apply filters.
   const onApplyFilters = (newFilters, addBackDefaultRegions) => {
