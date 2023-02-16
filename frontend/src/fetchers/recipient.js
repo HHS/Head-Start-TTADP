@@ -24,7 +24,12 @@ export const searchRecipients = async (query, filters, params = { sortBy: 'name'
   const queryParams = filtersToQueryString(filters);
 
   const recipients = await get(
-    join(recipientUrl, 'search', `${querySearch}&${queryParams}`, `&sortBy=${params.sortBy}&direction=${params.direction}&offset=${params.offset}`),
+    join(
+      recipientUrl,
+      'search',
+      `${querySearch}${queryParams ? `&${queryParams}` : ''}`,
+      `&sortBy=${params.sortBy}&direction=${params.direction}&offset=${params.offset}`,
+    ),
   );
 
   return recipients.json();
