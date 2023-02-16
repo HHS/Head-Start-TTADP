@@ -139,10 +139,11 @@ export async function recipientById(recipientId, grantScopes) {
  * @param {string} query
  * @param {number} regionId
  * @param {string} sortBy
+ * @param {number[]} userRegions
  *
  * @returns {Promise} recipient results
  */
-export async function recipientsByName(query, scopes, sortBy, direction, offset) {
+export async function recipientsByName(query, scopes, sortBy, direction, offset, userRegions) {
   // fix the query
   const q = `%${query}%`;
   const limit = RECIPIENTS_PER_PAGE;
@@ -178,6 +179,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset)
       required: true,
       where: [{
         [Op.and]: [
+          { regionId: userRegions },
           { [Op.and]: scopes },
           {
             [Op.or]: [
