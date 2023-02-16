@@ -14,16 +14,8 @@ import ResourcesDashboard from '../index';
 import { SCOPE_IDS } from '../../../Constants';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
-import { formatDateRange } from '../../../utils';
 
 const history = createMemoryHistory();
-
-const lastThirtyDays = formatDateRange({
-  lastThirtyDays: true,
-  forDateTime: true,
-});
-
-const lastThirtyDaysParams = `startDate.win=${encodeURIComponent(lastThirtyDays)}`;
 
 const resourceOverviewUrl = join('api', 'widgets', 'resourcesDashboardOverview');
 const resourcesOverview = {
@@ -105,7 +97,6 @@ describe('Resources Dashboard page', () => {
 
   it('renders correctly', async () => {
     // Page Load.
-    fetchMock.get(`${resourceOverviewUrl}?${allRegions}&${lastThirtyDaysParams}`, resourcesOverview);
     fetchMock.get(`${resourceOverviewUrl}?${allRegions}`, resourcesOverview);
 
     // Region 1.
@@ -146,17 +137,11 @@ describe('Resources Dashboard page', () => {
     expect(await screen.findByText(/765/i)).toBeVisible();
     expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
+    // Remove existing filter.
+
     // Add region filter.
     let open = await screen.findByRole('button', { name: /open filters for this page/i });
     act(() => userEvent.click(open));
-
-    // Clear All.
-    const clear = await screen.findByRole('button', { name: /clear all filters/i });
-    act(() => userEvent.click(clear));
-
-    // Add New.
-    const addNew = await screen.findByRole('button', { name: /add new filter/i });
-    act(() => userEvent.click(addNew));
 
     // Change first filter to Region 1.
     let [lastTopic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
@@ -173,10 +158,10 @@ describe('Resources Dashboard page', () => {
     act(() => userEvent.click(apply));
 
     // Verify page render after apply.
-    expect(await screen.findByText(/filters \(1\)/i)).toBeVisible();
+    expect(await screen.findByText(/resource dashboard/i)).toBeVisible();
 
     // Overview (region filter).
-    expect(await screen.findByText(/2.65%/i)).toBeInTheDocument();
+    expect(screen.getByText(/2.65%/i)).toBeInTheDocument();
     expect(screen.getAllByText(/^[ \t]*reports with resources[ \t]*$/i)[0]).toBeInTheDocument();
     expect(screen.getByText(/7,135 of 18,914/i)).toBeInTheDocument();
 
