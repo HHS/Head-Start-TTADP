@@ -135,7 +135,7 @@ export default function MyGroups({ match }) {
             />
 
           </div>
-          <div className="margin-top-2">
+          <div className="margin-top-4">
             <label className="display-block margin-bottom-1">
               Recipients
               {' '}
@@ -150,12 +150,12 @@ export default function MyGroups({ match }) {
             </label>
           </div>
           {error && (
-            <Alert type="error" className="margin-top-2">
+            <Alert type="error" className="margin-top-4">
               {error}
             </Alert>
           )}
-          <div className="margin-top-3">
-            <Button type="submit" className="margin-top-2">Save group</Button>
+          <div className="margin-top-4">
+            <Button type="submit">Save group</Button>
             <Link to="/account" className="usa-button usa-button--outline">Cancel</Link>
           </div>
         </form>
