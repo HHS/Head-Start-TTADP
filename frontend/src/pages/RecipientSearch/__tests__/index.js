@@ -313,12 +313,26 @@ describe('the recipient search page', () => {
 
     await waitFor(() => expect(fetchMock.called(urlWithQueryAndNewDirection)).toBeTruthy());
 
+    fetchMock.restore();
+
+    const changeDirectionBack = await screen.findByRole('button', { name: /recipient name\. activate to sort ascending/i });
+    const urlWithQueryAndOldDirection = join(recipientUrl, 'search?s=ground%20control&sortBy=name&direction=asc&offset=0');
+    fetchMock.get(urlWithQueryAndOldDirection, res);
+
+    await waitFor(() => expect(changeDirectionBack).not.toBeDisabled());
+
+    act(() => {
+      fireEvent.click(changeDirectionBack);
+    });
+
+    await waitFor(() => expect(fetchMock.called(urlWithQueryAndOldDirection)).toBeTruthy());
+
     const changeSort = await screen.findByRole('button', { name: /program specialist\. activate to sort ascending/i });
     const changeSortUrl = join(
       recipientUrl,
       'search',
       `?s=${encodeURIComponent(`${query}`)}`,
-      '&sortBy=programSpecialist&direction=desc&offset=0',
+      '&sortBy=programSpecialist&direction=asc&offset=0',
     );
 
     fetchMock.get(changeSortUrl, res);

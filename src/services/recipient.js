@@ -179,7 +179,9 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
       required: true,
       where: [{
         [Op.and]: [
-          { regionId: userRegions },
+          {
+            [Op.and]: { regionId: userRegions },
+          },
           { [Op.and]: scopes },
           {
             [Op.or]: [
