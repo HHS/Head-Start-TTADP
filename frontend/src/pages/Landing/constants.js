@@ -16,6 +16,7 @@ import {
   participantsFilter,
   myReportsFilter,
   reportTextFilter,
+  ttaTypeFilter,
 } from '../../components/filter/activityReportFilters';
 
 export const LANDING_BASE_FILTER_CONFIG = [
@@ -35,6 +36,7 @@ export const LANDING_BASE_FILTER_CONFIG = [
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,
+  ttaTypeFilter,
 ];
 
 export const LANDING_FILTER_CONFIG_WITH_REGIONS = [
@@ -55,4 +57,5 @@ export const LANDING_FILTER_CONFIG_WITH_REGIONS = [
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,
+  ttaTypeFilter,
 ];
