@@ -28,7 +28,34 @@ export default function Drawer({
     return header ? header.offsetHeight : 0;
   }, []);
 
-  useOnClickOutside(useCallback(() => setIsOpen(false), []), [elementRef, triggerRef]);
+  const [focusableElements, setFocusableElements] = useState([]);
+  const [firstFocusableElement, setFirstFocusableElement] = useState(null);
+  const [lastFocusableElement, setLastFocusableElement] = useState(null);
+
+  const close = useCallback(() => {
+    setIsOpen(false);
+    if (triggerRef && triggerRef.current) triggerRef.current.focus();
+  }, [triggerRef]);
+
+  const onCloseClicked = () => close();
+
+  useEffect(() => {
+    if (isOpen) {
+      setFocusableElements(
+        Array.from(elementRef.current.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')),
+      );
+    }
+  }, [elementRef, isOpen]);
+
+  useEffect(() => {
+    if (!focusableElements.length) return;
+    setFirstFocusableElement(focusableElements[0]);
+    setLastFocusableElement(focusableElements[focusableElements.length - 1]);
+  }, [focusableElements]);
+
+  useOnClickOutside(useCallback(() => {
+    close();
+  }, [close]), [elementRef, triggerRef]);
 
   useEffect(() => {
     const triggerElement = triggerRef.current;
@@ -43,19 +70,41 @@ export default function Drawer({
       if (closeButtonRef.current) {
         closeButtonRef.current.focus();
       }
-
-      const onKeyDown = (event) => {
-        if (event.keyCode === ESCAPE_KEY_CODE) setIsOpen(false);
-      };
-      document.addEventListener('keydown', onKeyDown);
-      return () => document.removeEventListener('keydown', onKeyDown);
     }
-    return undefined;
-  }, [isOpen]);
+
+    const onKeyDown = (event) => {
+      if (event.keyCode === ESCAPE_KEY_CODE) {
+        close();
+        return;
+      }
+
+      const isTab = event.key === 'Tab' || event.keyCode === 9;
+
+      if (!isTab) return;
+
+      if (event.shiftKey) {
+        if (document.activeElement === firstFocusableElement) {
+          event.preventDefault();
+          lastFocusableElement.focus();
+        }
+        return;
+      }
+
+      if (document.activeElement === lastFocusableElement) {
+        event.preventDefault();
+        firstFocusableElement.focus();
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [close, isOpen, firstFocusableElement, lastFocusableElement]);
 
   const onEscape = useCallback((event) => {
-    if (event.keyCode === ESCAPE_KEY_CODE) setIsOpen(false);
-  }, [setIsOpen]);
+    if (event.keyCode === ESCAPE_KEY_CODE) {
+      close();
+    }
+  }, [close]);
 
   useEffect(() => {
     document.addEventListener('keydown', onEscape, false);
@@ -84,7 +133,7 @@ export default function Drawer({
             <button
               ref={closeButtonRef}
               type="button"
-              onClick={() => setIsOpen(false)}
+              onClick={onCloseClicked}
               className="usa-button usa-button--outline smart-hub-button--no-margin"
             >
               Close
