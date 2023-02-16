@@ -249,7 +249,7 @@ export default function RecipientRecord({ match }) {
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/rttapa"
+          path="/recipient-tta-records/:recipientId/region/:regionId/rttapa/new"
           render={({ location }) => (
             <RTTAPA location={location} />
           )}

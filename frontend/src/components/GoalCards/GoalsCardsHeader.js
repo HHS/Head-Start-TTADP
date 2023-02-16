@@ -52,10 +52,10 @@ export default function GoalCardsHeader({
   const rttapaLink = (() => {
     if (selectedGoalIds && selectedGoalIds.length) {
       const selectedGoalIdsQuery = selectedGoalIds.map((id) => `goalId[]=${encodeURIComponent(id)}`).join('&');
-      return `/recipient-tta-records/${recipientId}/region/${regionId}/rttapa?${selectedGoalIdsQuery}`;
+      return `/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/new?${selectedGoalIdsQuery}`;
     }
 
-    return `/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`;
+    return `/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/new`;
   })();
 
   return (
