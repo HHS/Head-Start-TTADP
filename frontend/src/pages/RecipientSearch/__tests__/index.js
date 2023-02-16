@@ -12,9 +12,10 @@ import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import { act } from 'react-dom/test-utils';
-import RecipientSearch from '../index';
+import RecipientSearch, { determineDefaultSort } from '../index';
 import { SCOPE_IDS } from '../../../Constants';
 import { mockWindowProperty } from '../../../testHelpers';
+import UserContext from '../../../UserContext';
 
 const query = 'ground control';
 
@@ -120,7 +121,13 @@ const res = {
 const recipientUrl = join('/', 'api', 'recipient');
 
 const renderRecipientSearch = (user) => {
-  render(<Router history={history}><RecipientSearch user={user} /></Router>);
+  render((
+    <Router history={history}>
+      <UserContext.Provider value={{ user }}>
+        <RecipientSearch user={user} />
+      </UserContext.Provider>
+    </Router>
+  ));
 };
 
 describe('the recipient search page', () => {
@@ -131,27 +138,26 @@ describe('the recipient search page', () => {
   });
 
   beforeEach(() => {
-    fetchMock.restore();
-    const url = join(recipientUrl, 'search', '?s=&region.in[]=1&sortBy=name&direction=asc&offset=0');
-    fetchMock.get(url, res);
-    fetchMock.get('/api/recipient/search?s=&region.in[]=1&region.in[]=2&sortBy=regionId&direction=asc&offset=0', res);
+    fetchMock.get('/api/recipient/search?s=&sortBy=name&direction=asc&offset=0', res);
   });
 
   afterEach(() => {
+    fetchMock.restore();
     jest.clearAllMocks();
   });
 
-  it('shows the correct regional select text when user has all regions', () => {
-    const user = {
-      ...userBluePrint,
-      homeRegionId: 14,
-    };
+  describe('the default sort', () => {
+    it('returns regionId if the user has central office', () => {
+      const hasCentralOffice = true;
+      const defaultSort = determineDefaultSort(hasCentralOffice);
+      expect(defaultSort.sortBy).toBe('regionId');
+    });
 
-    fetchMock.get('/api/recipient/search?s=&region.in[]=1&region.in[]=2&sortBy=name&direction=asc&offset=0', res);
-    renderRecipientSearch(user);
-    expect(screen.getByRole('heading', { name: /recipient records/i })).toBeInTheDocument();
-    const regionalSelect = screen.getByRole('button', { name: 'toggle regional select menu' });
-    expect(regionalSelect).toHaveTextContent('All regions');
+    it('returns name if the user is not central office', () => {
+      const hasCentralOffice = false;
+      const defaultSort = determineDefaultSort(hasCentralOffice);
+      expect(defaultSort.sortBy).toBe('name');
+    });
   });
 
   it('the search box works', async () => {
@@ -166,7 +172,7 @@ describe('the recipient search page', () => {
 
     await waitFor(() => expect(button).not.toBeDisabled());
 
-    const url = join(recipientUrl, 'search?s=ground%20control&region.in[]=1&sortBy=name&direction=asc&offset=0');
+    const url = join(recipientUrl, 'search?s=ground%20control&sortBy=name&direction=asc&offset=0');
     fetchMock.get(url, { ...res });
 
     act(() => {
@@ -190,7 +196,7 @@ describe('the recipient search page', () => {
 
     fetchMock.restore();
 
-    const url = join(recipientUrl, 'search?s=ground%20control&region.in[]=1&sortBy=name&direction=asc&offset=0');
+    const url = join(recipientUrl, 'search?s=ground%20control&sortBy=name&direction=asc&offset=0');
     fetchMock.get(url, 500);
 
     act(() => {
@@ -202,71 +208,66 @@ describe('the recipient search page', () => {
     expect(document.querySelectorAll('tbody tr').length).toBe(0);
   });
 
-  it('the regional select works', async () => {
+  it('the filter panel works', async () => {
     const user = { ...userBluePrint };
 
     renderRecipientSearch(user);
-    const url = join(recipientUrl, 'search?s=ground%20control&region.in[]=2&sortBy=name&direction=asc&offset=0');
-
-    fetchMock.get(url, res);
 
     const searchBox = screen.getByRole('searchbox');
     const button = screen.getByRole('button', { name: /search for matching recipients/i });
-    const regionalSelect = screen.getByRole('button', { name: 'toggle regional select menu' });
-
     await waitFor(() => expect(button).not.toBeDisabled());
+
+    const filtersButton = screen.getByRole('button', { name: /open filters/i });
 
     act(() => {
       userEvent.type(searchBox, 'ground control');
-      fireEvent.click(regionalSelect);
+      userEvent.click(filtersButton);
     });
 
-    const region2 = screen.getByRole('button', { name: /select to view data from region 2\. select apply filters button to apply selection/i });
-
+    const topic = document.querySelector('[name="topic"]');
     act(() => {
-      fireEvent.click(region2);
+      userEvent.selectOptions(topic, 'region');
     });
 
-    const applyFilters = screen.getByRole('button', { name: /apply filters for the regional select menu/i });
-
+    const condition = document.querySelector('[name="condition"]');
     act(() => {
-      fireEvent.click(applyFilters);
-      fireEvent.click(button);
+      userEvent.selectOptions(condition, 'is');
     });
 
-    expect(fetchMock.called()).toBeTruthy();
-  });
+    const regionDropdown = document.querySelector('[name="region"]');
+    act(() => {
+      userEvent.selectOptions(regionDropdown, '2');
+    });
 
-  it('the regional select works with all regions', async () => {
     fetchMock.restore();
-    const beforeUrl = join(recipientUrl, 'search', '?s=&region.in[]=1&sortBy=name&direction=asc&offset=0');
-    fetchMock.get(beforeUrl, res);
-
-    const user = { ...userBluePrint, homeRegionId: 14 };
-
-    fetchMock.get('/api/recipient/search?s=&region.in[]=1&region.in[]=2&sortBy=regionId&direction=asc&offset=0', res);
-
-    renderRecipientSearch(user);
-    const url = join(recipientUrl, 'search?s=ground%20control&region.in[]=1&region.in[]=2&sortBy=regionId&direction=asc&offset=0');
+    const url = join(recipientUrl, 'search?s=ground%20control&region.in[]=2&sortBy=name&direction=asc&offset=0');
     fetchMock.get(url, res);
 
-    const searchBox = screen.getByRole('searchbox');
-    const button = screen.getByRole('button', { name: /search for matching recipients/i });
-
-    await waitFor(() => expect(button).not.toBeDisabled());
-
+    const applyFiltersButton = await screen.findByTestId('apply-filters-test-id');
+    expect(fetchMock.called(url)).toBeFalsy();
     act(() => {
-      userEvent.type(searchBox, 'ground control');
-      fireEvent.click(button);
+      userEvent.click(applyFiltersButton);
     });
 
-    expect(fetchMock.called()).toBeTruthy();
+    expect(fetchMock.called(url)).toBeTruthy();
+    fetchMock.restore();
+
+    const urlWithNoFilters = join(recipientUrl, 'search?s=ground%20control&sortBy=name&direction=asc&offset=0');
+    fetchMock.get(urlWithNoFilters, res);
+
+    const removeFilterButton = await screen.findByRole('button', { name: /This button removes the filter: Region is 2/i });
+    act(() => {
+      userEvent.click(removeFilterButton);
+    });
+
+    await waitFor(() => expect(fetchMock.called(urlWithNoFilters)).toBeTruthy());
   });
 
   it('handles an error', async () => {
     const user = { ...userBluePrint };
     renderRecipientSearch(user);
 
+    fetchMock.restore();
     fetchMock.get('/api/recipient/search?s=ground%20control&region=1&sortBy=name&direction=asc&offset=0', 404);
 
     const searchBox = screen.getByRole('searchbox');
@@ -283,24 +284,26 @@ describe('the recipient search page', () => {
   it('requests a sort', async () => {
     const user = { ...userBluePrint };
     renderRecipientSearch(user);
-
-    const url = join(recipientUrl, 'search', `?s=${encodeURIComponent(query)}`, '&region.in[]=1&sortBy=name&direction=asc&offset=0');
-    fetchMock.get(url, res);
+    expect(fetchMock.called()).toBe(true);
 
     const searchBox = screen.getByRole('searchbox');
     const button = screen.getByRole('button', { name: /search for matching recipients/i });
 
     await waitFor(() => expect(button).not.toBeDisabled());
 
+    const urlWithQuery = join(recipientUrl, 'search?s=ground%20control&sortBy=name&direction=asc&offset=0');
+    fetchMock.get(urlWithQuery, res);
+
     act(() => {
       userEvent.type(searchBox, query);
       fireEvent.click(button);
     });
 
-    const changeDirection = await screen.findByRole('button', { name: /recipient name\. activate to sort descending/i });
-    const changeDirectionUrl = join(recipientUrl, 'search', `?s=${encodeURIComponent(query)}`, '&region.in[]=1&sortBy=name&direction=desc&offset=0');
+    await waitFor(() => expect(fetchMock.called(urlWithQuery)).toBeTruthy());
 
-    fetchMock.get(changeDirectionUrl, res);
+    const changeDirection = await screen.findByRole('button', { name: /recipient name\. activate to sort descending/i });
+    const urlWithQueryAndNewDirection = join(recipientUrl, 'search?s=ground%20control&sortBy=name&direction=desc&offset=0');
+    fetchMock.get(urlWithQueryAndNewDirection, res);
 
     await waitFor(() => expect(changeDirection).not.toBeDisabled());
 
@@ -308,39 +311,32 @@ describe('the recipient search page', () => {
       fireEvent.click(changeDirection);
     });
 
+    await waitFor(() => expect(fetchMock.called(urlWithQueryAndNewDirection)).toBeTruthy());
+
     const changeSort = await screen.findByRole('button', { name: /program specialist\. activate to sort ascending/i });
-    const chageSortUrl = join(
+    const changeSortUrl = join(
       recipientUrl,
       'search',
-      `?s=${encodeURIComponent(`${query}major tom`)}`,
-      '&region.in[]=1&sortBy=programSpecialist&direction=desc&offset=0',
+      `?s=${encodeURIComponent(`${query}`)}`,
+      '&sortBy=programSpecialist&direction=desc&offset=0',
     );
 
-    fetchMock.get(chageSortUrl, res);
+    fetchMock.get(changeSortUrl, res);
 
     await waitFor(() => expect(changeSort).not.toBeDisabled());
 
     act(() => {
-      userEvent.type(searchBox, 'major tom');
       fireEvent.click(changeSort);
     });
 
-    const expectedMocks = [
-      '/api/recipient/search?s=&region.in[]=1&sortBy=name&direction=asc&offset=0',
-      '/api/recipient/search?s=ground%20control&region.in[]=1&sortBy=name&direction=asc&offset=0',
-      '/api/recipient/search?s=ground%20control&region.in[]=1&sortBy=name&direction=desc&offset=0',
-      '/api/recipient/search?s=ground%20controlmajor%20tom&region.in[]=1&sortBy=programSpecialist&direction=desc&offset=0',
-    ];
-
-    const mocks = fetchMock.calls().map((call) => call[0]);
-    expect(mocks).toStrictEqual(expectedMocks);
+    await waitFor(() => expect(fetchMock.called(changeSortUrl)).toBeTruthy());
   });
 
   it('requests the next page', async () => {
     const user = { ...userBluePrint };
     renderRecipientSearch(user);
 
-    const url = join(recipientUrl, 'search', `?s=${encodeURIComponent(query)}`, '&region.in[]=1&sortBy=name&direction=asc&offset=0');
+    const url = join(recipientUrl, 'search', `?s=${encodeURIComponent(query)}`, '&sortBy=name&direction=asc&offset=0');
     fetchMock.get(url, res);
 
     const searchBox = screen.getByRole('searchbox');
@@ -354,7 +350,7 @@ describe('the recipient search page', () => {
     });
 
     const next = await screen.findByRole('link', { name: /go to page number 2/i });
-    const nextUrl = join(recipientUrl, 'search', `?s=${encodeURIComponent(query)}`, '&region.in[]=1&sortBy=name&direction=asc&offset=12');
+    const nextUrl = join(recipientUrl, 'search', `?s=${encodeURIComponent(query)}`, '&sortBy=name&direction=asc&offset=12');
 
     fetchMock.get(nextUrl,
       {
