@@ -1,4 +1,11 @@
-@media( min-width: 64em ){
+@media( min-width: 640px){
+    .smart-hub--resources-dashboard-overview  {
+        column-gap: 1rem;
+        row-gap:.5rem;
+    }
+}
+
+@media( min-width: 1024px ){
     .smart-hub--resources-dashboard-overview  {
         gap: 1em;
     }
