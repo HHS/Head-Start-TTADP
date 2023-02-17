@@ -80,7 +80,7 @@ const CloseSuspendReasonModal = ({
           </FormGroup>
           <FormGroup>
             <Fieldset>
-              <Label className="font-weight-normal" htmlFor="close-suspend-reason-context" error>
+              <Label htmlFor="close-suspend-reason-context">
                 Additional context
               </Label>
               <Textarea
