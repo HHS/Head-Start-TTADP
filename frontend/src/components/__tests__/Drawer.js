@@ -110,4 +110,28 @@ describe('Drawer', () => {
     expect(screen.getByText('Footer')).toHaveClass('position-sticky');
     expect(screen.getByText('Hello').parentElement).toHaveClass('position-sticky');
   });
+
+  it('shifts focus when pressing tab', async () => {
+    render(renderDrawer());
+
+    act(() => {
+      const button = screen.getByRole('button', { name: 'Open' });
+      userEvent.click(button);
+    });
+
+    expect(screen.getByText('Content')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus();
+
+    act(() => {
+      userEvent.tab();
+    });
+
+    expect(screen.getByRole('button', { name: 'Open' })).not.toHaveFocus();
+
+    act(() => {
+      userEvent.tab({ shift: true });
+    });
+
+    expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus();
+  });
 });
