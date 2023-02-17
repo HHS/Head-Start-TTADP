@@ -165,7 +165,7 @@ describe('Approved Activity Report V1 component', () => {
     }}
     />);
     expect(await screen.findByText(/Date approved:/i)).toBeInTheDocument();
-    expect(screen.queryAllByText('02/15/2023').length).toBe(2);
+    expect(screen.queryAllByText('02/15/2023').length).toBe(1);
   });
 
   it('renders other entity', async () => {
