@@ -10,7 +10,8 @@ export async function createRttapa(req: Request, res: Response) {
   try {
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
-    const policy = new ActivityReport(user, req.body);
+    const policy = new ActivityReport(user, { regionId: Number(req.body.regionId) });
+
     if (!policy.canCreate()) {
       res.status(httpCodes.FORBIDDEN);
     }
@@ -29,6 +30,8 @@ export async function getRttapa(req: Request, res: Response) {
     const user = await userById(userId);
     const report = await rttapa(Number(req.params.reportId));
     const policy = new ActivityReport(user, report);
+
+
 
     if (!policy.canReadInRegion()) {
       res.status(httpCodes.FORBIDDEN);
