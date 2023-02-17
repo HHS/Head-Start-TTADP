@@ -37,6 +37,11 @@ export interface RttapaResponse {
   regionId: number;
   recipientId: number;
   notes: string;
+  user: {
+    id: number;
+    name: string;
+  }
+  createdAt: Date;
 }
 
 export interface NewRttapaRequest {
