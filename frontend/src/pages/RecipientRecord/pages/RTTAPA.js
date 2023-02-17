@@ -10,8 +10,9 @@ import {
 import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  // faAngleUp,
+  faAngleUp,
   faAngleDown,
+  faTrashCan,
 } from '@fortawesome/free-solid-svg-icons';
 import colors from '../../../colors';
 import { DECIMAL_BASE } from '../../../Constants';
@@ -20,6 +21,7 @@ import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import Req from '../../../components/Req';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
 import { getRecipientGoals } from '../../../fetchers/recipient';
+import GoalCard from '../../../components/GoalCards/GoalCard';
 
 const FormItem = ({
   label, name, required, errors, children,
@@ -76,13 +78,22 @@ export default function RTTAPA({
   /**
      * Get the initial goal ids from the query string
      */
-  const goalIds = useMemo(() => {
+  const initialGoalIds = useMemo(() => {
     const { search } = location;
     const params = new URLSearchParams(search);
     return params.getAll('goalId[]').map((id) => parseInt(id, DECIMAL_BASE));
   }, [location]);
 
+  const [goalIds, setGoalIds] = useState(initialGoalIds);
   const [goals, setGoals] = useState([]);
+  const [showGoals, setShowGoals] = useState(false);
+
+  // update goal ids when goals change
+  useEffect(() => {
+    if (goals && goals.length) {
+      setGoalIds(goals.map((goal) => goal.id));
+    }
+  }, [goals]);
 
   useEffect(() => {
     async function getGoals() {
@@ -122,6 +133,11 @@ export default function RTTAPA({
     console.log(data);
   };
 
+  const onRemove = (goal) => {
+    const newGoals = goals.filter((g) => g.id !== goal.id);
+    setGoals(newGoals);
+  };
+
   return (
     <>
       <h1 className="page-heading margin-left-2">{recipientNameWithRegion}</h1>
@@ -134,7 +150,9 @@ export default function RTTAPA({
         <Button
           type="button"
           className="usa-button--outline usa-button text-no-underline text-middle tta-smarthub--goal-row-objectives tta-smarthub--goal-row-objectives-enabled"
-          onClick={() => {}}
+          onClick={() => {
+            setShowGoals(!showGoals);
+          }}
         >
           View goals
           {goalIds > 1 ? 's' : ''}
@@ -143,8 +161,39 @@ export default function RTTAPA({
             {goalIds.length}
             )
           </strong>
-          <FontAwesomeIcon className="margin-left-1" size="1x" color={colors.ttahubMediumBlue} icon={faAngleDown} />
+          <FontAwesomeIcon className="margin-left-1" size="1x" color={colors.ttahubMediumBlue} icon={showGoals ? faAngleUp : faAngleDown} />
         </Button>
+
+        { showGoals && (
+          goals.map((goal) => (
+            <div className="display-flex flex-align">
+              <GoalCard
+                goal={goal}
+                recipientId={recipientId}
+                regionId={regionId}
+                showCloseSuspendGoalModal={false}
+                performGoalStatusUpdate={false}
+                handleGoalCheckboxSelect={false}
+                hideCheckbox
+                showReadOnlyStatus
+                isChecked={false}
+                hideGoalOptions
+                marginX={0}
+                marginY={2}
+              />
+              <Button
+                type="button"
+                onClick={() => {
+                  onRemove(goal);
+                }}
+                className="flex-align-self-center"
+                unstyled
+              >
+                <FontAwesomeIcon className="margin-left-1 margin-top-2" color={colors.textInk} icon={faTrashCan} />
+              </Button>
+            </div>
+          ))
+        )}
 
         <h3>RTTAPA details</h3>
         <form onSubmit={handleSubmit(onSubmit)}>
