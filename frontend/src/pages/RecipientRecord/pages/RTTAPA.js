@@ -7,21 +7,17 @@ import {
   FormGroup,
   ErrorMessage,
 } from '@trussworks/react-uswds';
+import { useHistory } from 'react-router-dom';
 import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faAngleUp,
-  faAngleDown,
-  faTrashCan,
-} from '@fortawesome/free-solid-svg-icons';
-import colors from '../../../colors';
+import { Helmet } from 'react-helmet';
 import { DECIMAL_BASE } from '../../../Constants';
 import Container from '../../../components/Container';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import Req from '../../../components/Req';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
 import { getRecipientGoals } from '../../../fetchers/recipient';
-import GoalCard from '../../../components/GoalCards/GoalCard';
+import { createRttapa } from '../../../fetchers/rttapa';
+import GoalsToggle from './components/GoalsToggle';
 
 const FormItem = ({
   label, name, required, errors, children,
@@ -74,10 +70,11 @@ export default function RTTAPA({
 
   const { errors } = formState;
   const reviewDate = watch('reviewDate');
+  const history = useHistory();
 
   /**
-     * Get the initial goal ids from the query string
-     */
+   * Get the initial goal ids from the query string
+   */
   const initialGoalIds = useMemo(() => {
     const { search } = location;
     const params = new URLSearchParams(search);
@@ -123,14 +120,28 @@ export default function RTTAPA({
     }
   }, [goalIds, goals, recipientId, regionId]);
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     if (!goalIds || !goalIds.length) {
       setError('goalIds', { type: 'required', message: 'Please select at least one goal' });
       return;
     }
 
-    // eslint-disable-next-line no-console
-    console.log(data);
+    try {
+      await createRttapa({
+        recipientId,
+        regionId,
+        reviewDate: data.reviewDate,
+        notes: data.notes,
+        goalIds,
+      });
+
+      // on success redirect to the recipient record page
+      // todo - this should go to rttapa history
+      history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa-history`);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(error);
+    }
   };
 
   const onRemove = (goal) => {
@@ -140,60 +151,28 @@ export default function RTTAPA({
 
   return (
     <>
-      <h1 className="page-heading margin-left-2">{recipientNameWithRegion}</h1>
+      <Helmet>
+        <title>
+          Create new RTTAPA report for
+          {recipientNameWithRegion}
+        </title>
+      </Helmet>
+      <h1 className="page-heading margin-left-2 margin-top-3">{recipientNameWithRegion}</h1>
       <Container className="margin-y-3 margin-left-2">
         <h2>
           Regional TTA plan agreement (RTTAPA)
         </h2>
 
         <h3>Selected RTTAPA goals</h3>
-        <Button
-          type="button"
-          className="usa-button--outline usa-button text-no-underline text-middle tta-smarthub--goal-row-objectives tta-smarthub--goal-row-objectives-enabled"
-          onClick={() => {
-            setShowGoals(!showGoals);
-          }}
-        >
-          View goals
-          {goalIds > 1 ? 's' : ''}
-          <strong className="margin-left-1">
-            (
-            {goalIds.length}
-            )
-          </strong>
-          <FontAwesomeIcon className="margin-left-1" size="1x" color={colors.ttahubMediumBlue} icon={showGoals ? faAngleUp : faAngleDown} />
-        </Button>
-
-        { showGoals && (
-          goals.map((goal) => (
-            <div className="display-flex flex-align">
-              <GoalCard
-                goal={goal}
-                recipientId={recipientId}
-                regionId={regionId}
-                showCloseSuspendGoalModal={false}
-                performGoalStatusUpdate={false}
-                handleGoalCheckboxSelect={false}
-                hideCheckbox
-                showReadOnlyStatus
-                isChecked={false}
-                hideGoalOptions
-                marginX={0}
-                marginY={2}
-              />
-              <Button
-                type="button"
-                onClick={() => {
-                  onRemove(goal);
-                }}
-                className="flex-align-self-center"
-                unstyled
-              >
-                <FontAwesomeIcon className="margin-left-1 margin-top-2" color={colors.textInk} icon={faTrashCan} />
-              </Button>
-            </div>
-          ))
-        )}
+        <GoalsToggle
+          goals={goals}
+          showGoals={showGoals}
+          setShowGoals={setShowGoals}
+          goalIds={goalIds}
+          onRemove={onRemove}
+          recipientId={recipientId}
+          regionId={regionId}
+        />
 
         <h3>RTTAPA details</h3>
         <form onSubmit={handleSubmit(onSubmit)}>

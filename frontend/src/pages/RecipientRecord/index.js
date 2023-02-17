@@ -17,6 +17,7 @@ import PrintGoals from './pages/PrintGoals';
 import FilterContext from '../../FilterContext';
 import { GOALS_OBJECTIVES_FILTER_KEY } from './pages/constants';
 import RTTAPA from './pages/RTTAPA';
+import RTTAPAHistory from './pages/RTTAPAHistory';
 
 function PageWithHeading({
   children,
@@ -257,6 +258,25 @@ export default function RecipientRecord({ match }) {
               recipientNameWithRegion={recipientNameWithRegion}
               location={location}
             />
+          )}
+        />
+        <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/rttapa-history"
+          render={() => (
+            <PageWithHeading
+              regionId={regionId}
+              recipientId={recipientId}
+              error={error}
+              recipientNameWithRegion={recipientNameWithRegion}
+              backLink={<></>}
+              slug="rttapa-history"
+            >
+              <RTTAPAHistory
+                regionId={regionId}
+                recipientId={recipientId}
+                recipientNameWithRegion={recipientNameWithRegion}
+              />
+            </PageWithHeading>
           )}
         />
         <Route
