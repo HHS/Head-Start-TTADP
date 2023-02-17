@@ -16,8 +16,8 @@ describe('rttapa fetcher', () => {
   });
 
   it('gets rttapas', async () => {
-    fetchMock.get('/api/rttapa', []);
-    await getRttapas();
+    fetchMock.get('/api/rttapa/region/1/recipient/1', []);
+    await getRttapas(1, 1);
 
     expect(fetchMock.called()).toBeTruthy();
   });
