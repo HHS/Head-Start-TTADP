@@ -10,6 +10,7 @@ import './Drawer.scss';
 import useOnClickOutside from '../hooks/useOnOutsideClick';
 
 const ESCAPE_KEY_CODE = 27;
+const TAB_KEY_CODE = 9;
 
 export default function Drawer({
   title,
@@ -76,7 +77,7 @@ export default function Drawer({
         return;
       }
 
-      const isTab = event.key === 'Tab' || event.keyCode === 9;
+      const isTab = event.keyCode === TAB_KEY_CODE;
 
       if (!isTab) return;
 
