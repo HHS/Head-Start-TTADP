@@ -25,6 +25,11 @@ function GoalCard({
   performGoalStatusUpdate,
   handleGoalCheckboxSelect,
   isChecked,
+  hideCheckbox,
+  showReadOnlyStatus,
+  hideGoalOptions,
+  marginX,
+  marginY,
 }) {
   const {
     id, // for keys and such, from the api
@@ -87,14 +92,17 @@ function GoalCard({
       },
     },
   ];
+  const margin = `margin-x-${marginX} margin-y-${marginY}`;
+  const internalLeftMargin = hideCheckbox ? '' : 'margin-left-5';
 
   return (
     <article
-      className="ttahub-goal-card usa-card margin-x-3 margin-y-2 padding-3 radius-lg border smart-hub-border-base-lighter"
+      className={`ttahub-goal-card usa-card padding-3 radius-lg border smart-hub-border-base-lighter ${margin}`}
       data-testid="goalCard"
     >
       <div className="display-flex flex-justify">
         <div className="display-flex flex-align-start flex-row">
+          { !hideCheckbox && (
           <Checkbox
             id={`goal-select-${id}`}
             label=""
@@ -105,7 +113,9 @@ function GoalCard({
             className="margin-right-1"
             data-testid="selectGoalTestId"
           />
+          )}
           <StatusDropdown
+            showReadOnlyStatus={showReadOnlyStatus}
             goalId={id}
             status={goalStatus}
             onUpdateGoalStatus={onUpdateGoalStatus}
@@ -113,12 +123,14 @@ function GoalCard({
             regionId={regionId}
           />
         </div>
+        { !hideGoalOptions && (
         <ContextMenu
           label={contextMenuLabel}
           menuItems={menuItems}
         />
+        )}
       </div>
-      <div className="display-flex flex-wrap margin-y-2 margin-left-5">
+      <div className={`display-flex flex-wrap margin-y-2 ${internalLeftMargin}`}>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-text padding-right-3">
           <h3 className="usa-prose usa-prose margin-y-0">
             Goal
@@ -149,7 +161,7 @@ function GoalCard({
         </div>
       </div>
 
-      <div className="margin-left-5">
+      <div className={internalLeftMargin}>
         <ObjectiveButton
           closeOrOpenObjectives={closeOrOpenObjectives}
           objectiveCount={objectiveCount}
@@ -206,5 +218,19 @@ GoalCard.propTypes = {
   performGoalStatusUpdate: PropTypes.func.isRequired,
   handleGoalCheckboxSelect: PropTypes.func.isRequired,
   isChecked: PropTypes.bool.isRequired,
+  hideCheckbox: PropTypes.bool,
+  showReadOnlyStatus: PropTypes.bool,
+  hideGoalOptions: PropTypes.bool,
+  marginX: PropTypes.number,
+  marginY: PropTypes.number,
 };
+
+GoalCard.defaultProps = {
+  hideCheckbox: false,
+  showReadOnlyStatus: false,
+  hideGoalOptions: false,
+  marginX: 3,
+  marginY: 2,
+};
+
 export default GoalCard;
