@@ -72,4 +72,16 @@ describe('Admin landing page', () => {
     const requestErrors = await screen.findByRole('heading', { name: /requesterrors/i });
     expect(requestErrors).toBeVisible();
   });
+  it('displays the site alerts page', async () => {
+    fetchMock.get('/api/admin/alerts', []);
+    history.push('/admin/site-alerts');
+    render(
+      <Router history={history}>
+        <Admin />
+      </Router>,
+    );
+
+    const heading = await screen.findByRole('heading', { name: /site alerts/i });
+    expect(heading).toBeVisible();
+  });
 });

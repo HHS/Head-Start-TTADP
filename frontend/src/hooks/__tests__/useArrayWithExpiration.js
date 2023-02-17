@@ -2,13 +2,13 @@ import '@testing-library/jest-dom';
 import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import {
-  render, screen,
+  render, screen, act,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import useArrayWithExpiration, { TWO_MINUTES } from '../useArrayWithExpiration';
 
 const ArrayWithExpirationTest = ({ defaultValue }) => {
-  const [users, { push: pushUser }] = useArrayWithExpiration(defaultValue);
+  const [users, { push: pushUser, empty }] = useArrayWithExpiration(defaultValue);
 
   const input = useRef();
 
@@ -23,6 +23,13 @@ const ArrayWithExpirationTest = ({ defaultValue }) => {
         onClick={() => pushUser(input.current.value)}
       >
         Click me
+      </button>
+
+      <button
+        type="button"
+        onClick={() => empty()}
+      >
+        Empty
       </button>
     </>
   );
@@ -49,7 +56,7 @@ describe('useArrayWithExpiration', () => {
     const textBox = await screen.findByRole('textbox');
     userEvent.type(textBox, 'hello');
 
-    const button = await screen.findByRole('button');
+    const button = await screen.findByRole('button', { name: 'Click me' });
     userEvent.click(button);
 
     expect(await screen.findByText('hello')).toBeVisible();
@@ -71,10 +78,20 @@ describe('useArrayWithExpiration', () => {
     const textBox = await screen.findByRole('textbox');
     userEvent.type(textBox, 'hello');
 
-    const button = await screen.findByRole('button');
+    const button = await screen.findByRole('button', { name: 'Click me' });
     userEvent.click(button);
 
     expect(await screen.findByText('hello')).toBeVisible();
     expect(screen.queryByText(/jim/i)).toBeNull();
+
+    userEvent.click(button);
+
+    // verify that only one is visible
+    expect(await screen.findByText('hello')).toBeVisible();
+
+    const emptyButton = await screen.findByRole('button', { name: 'Empty' });
+    act(() => userEvent.click(emptyButton));
+
+    expect(screen.queryByText(/hello/i)).toBeNull();
   });
 });

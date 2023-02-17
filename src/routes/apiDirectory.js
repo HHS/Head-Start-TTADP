@@ -18,6 +18,7 @@ import adminRouter from './admin';
 import goalsRouter from './goals';
 import topicsRouter from './topics';
 import rolesRouter from './roles';
+import siteAlertsRouter from './siteAlerts';
 import transactionWrapper from './transactionWrapper';
 import search from './search';
 import settingsRouter from './settings';
@@ -60,6 +61,7 @@ router.use('/role', rolesRouter);
 router.use('/search', search);
 router.use('/settings', settingsRouter);
 router.use('/rttapa', rttapaRouter);
+router.use('/alerts', siteAlertsRouter);
 
 const getUser = async (req, res) => {
   const userId = await currentUserId(req, res);
