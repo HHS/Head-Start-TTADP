@@ -87,16 +87,26 @@ const mockRttapa = (
   recipientId?: number,
 ): RttapaResponse => ({
   id,
+  createdAt: new Date(),
   regionId: regionId || 1,
   recipientId: recipientId || 1,
   goals: mockGoals,
   notes: 'Notes',
+  user: {
+    id,
+    name: `User ${id}`,
+  },
 });
 
 export async function newRttapa(data: NewRttapaRequest): Promise<RttapaResponse> {
   return Promise.resolve({
     id: 1,
     ...data,
+    createdAt: new Date(),
+    user: {
+      name: `User ${1}`,
+      id: 1,
+    },
     goals: mockGoals,
   });
 }
