@@ -16,6 +16,7 @@ describe('localStorageCleanup', () => {
   afterEach(() => fetchMock.restore());
   const userUrl = join('api', 'user');
   const logoutUrl = join('api', 'logout');
+  const alertsUrl = join('api', 'alerts');
 
   describe('when authenticated, local storage is queried', () => {
     mockWindowProperty('localStorage', {
@@ -29,6 +30,7 @@ describe('localStorageCleanup', () => {
       fetchMock.get(userUrl, { ...user });
       fetchMock.get(logoutUrl, 200);
       fetchMock.get(cleanupUrl, [{ id: 2 }, { id: 3 }]);
+      fetchMock.get(alertsUrl, null);
       render(<App />);
       await screen.findByText('Activity Reports');
     });
@@ -59,6 +61,8 @@ describe('localStorageCleanup', () => {
       getItem: jest.fn(),
     });
 
+    beforeEach(() => fetchMock.get(alertsUrl, null));
+
     it('displays the login button', async () => {
       fetchMock.get(userUrl, 401);
       render(<App />);
@@ -74,6 +78,7 @@ describe('localStorageCleanup', () => {
       fetchMock.get(userUrl, { ...user });
       fetchMock.get(logoutUrl, 200);
       fetchMock.get(cleanupUrl, [{ id: 2 }, { id: 3 }]);
+      fetchMock.get(alertsUrl, null);
       render(<App />);
       await screen.findByText('Activity Reports');
     });
@@ -96,6 +101,7 @@ describe('localStorageCleanup', () => {
       fetchMock.get(userUrl, { ...user });
       fetchMock.get(logoutUrl, 200);
       fetchMock.get(cleanupUrl, 500);
+      fetchMock.get(alertsUrl, null);
       render(<App />);
     });
 
