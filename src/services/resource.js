@@ -508,13 +508,14 @@ const filterResourcesForSync = (
 
 const getResourcesForModel = async (
   model,
+  resourceTableForeignKey,
   genericId,
   includeAutoDetected = false,
 ) => (
   includeAutoDetected
     ? model.findAll({
       where: {
-        id: genericId,
+        [resourceTableForeignKey]: genericId,
       },
       include: [
         {
@@ -525,7 +526,7 @@ const getResourcesForModel = async (
     })
     : model.findAll({
       where: {
-        id: genericId,
+        [resourceTableForeignKey]: genericId,
         sourceFields: { [Op.contains]: 'resource' },
       },
       include: [
@@ -654,6 +655,7 @@ const genericProcessEntityForResources = async (
   await syncFunction(resourcesToSync);
   return getResourcesForModel(
     resourceTableModel,
+    resourceTableForeignKey,
     entity.id,
     true,
   );
@@ -748,6 +750,7 @@ const getResourcesForActivityReports = async (
   includeAutoDetected = false,
 ) => getResourcesForModel(
   ActivityReportResource,
+  'activityReportId',
   reportIds,
   includeAutoDetected,
 );
@@ -809,6 +812,7 @@ const getResourcesForNextSteps = async (
   includeAutoDetected = false,
 ) => getResourcesForModel(
   NextStepResource,
+  'nextStepId',
   nextStepIds,
   includeAutoDetected,
 );
@@ -868,6 +872,7 @@ const getResourcesForGoals = async (
   includeAutoDetected = false,
 ) => getResourcesForModel(
   GoalResource,
+  'goalId',
   goalIds,
   includeAutoDetected,
 );
@@ -929,6 +934,7 @@ const getResourcesForGoalTemplates = async (
   includeAutoDetected = false,
 ) => getResourcesForModel(
   GoalTemplateResource,
+  'goalTemplateId',
   goalTemplateIds,
   includeAutoDetected,
 );
@@ -986,12 +992,12 @@ const processActivityReportGoalForResourcesById = async (
 );
 
 const getResourcesForActivityReportGoals = async (
-  goalIds,
+  activityReportGoalIds,
   includeAutoDetected = false,
 ) => getResourcesForModel(
   ActivityReportGoalResource,
-  goalIds,
-  REPORTGOAL_AUTODETECTED_FIELDS,
+  'activityReportGoalId',
+  activityReportGoalIds,
   includeAutoDetected,
 );
 
@@ -1052,6 +1058,7 @@ const getResourcesForObjectives = async (
   includeAutoDetected = false,
 ) => getResourcesForModel(
   ObjectiveResource,
+  'objectiveId',
   objectiveIds,
   includeAutoDetected,
 );
@@ -1113,6 +1120,7 @@ const getResourcesForObjectiveTemplates = async (
   includeAutoDetected = false,
 ) => getResourcesForModel(
   ObjectiveTemplateResource,
+  'objectiveTemplateId',
   objectiveTemplateIds,
   includeAutoDetected,
 );
@@ -1170,11 +1178,12 @@ const processActivityReportObjectiveForResourcesById = async (
 );
 
 const getResourcesForActivityReportObjectives = async (
-  objectiveIds,
+  activityReportObjectiveIds,
   includeAutoDetected = false,
 ) => getResourcesForModel(
   ActivityReportObjectiveResource,
-  objectiveIds,
+  'activityReportObjectiveId',
+  activityReportObjectiveIds,
   includeAutoDetected,
 );
 
