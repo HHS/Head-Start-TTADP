@@ -6,6 +6,12 @@ import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
 import { newRttapa, rttapa, allRttapas } from '../../services/rttapa';
 
+/**
+ *
+ * @param {Request} req
+ * @param {Request} req
+ * @returns Promise<void>
+ */
 export async function createRttapa(req: Request, res: Response) {
   try {
     const userId = await currentUserId(req, res);
@@ -13,7 +19,7 @@ export async function createRttapa(req: Request, res: Response) {
     const policy = new ActivityReport(user, { regionId: Number(req.body.regionId) });
 
     if (!policy.canCreate()) {
-      res.status(httpCodes.FORBIDDEN);
+      res.sendStatus(httpCodes.FORBIDDEN);
     }
 
     // create the rttapa
@@ -23,7 +29,12 @@ export async function createRttapa(req: Request, res: Response) {
     await handleErrors(req, res, e, 'createRttapa');
   }
 }
-
+/**
+ *
+ * @param {Request} req
+ * @param {Response} res
+ * @returns Promise<void>
+ */
 export async function getRttapa(req: Request, res: Response) {
   try {
     const userId = await currentUserId(req, res);
@@ -31,10 +42,8 @@ export async function getRttapa(req: Request, res: Response) {
     const report = await rttapa(Number(req.params.reportId));
     const policy = new ActivityReport(user, report);
 
-
-
     if (!policy.canReadInRegion()) {
-      res.status(httpCodes.FORBIDDEN);
+      res.sendStatus(httpCodes.FORBIDDEN);
       return;
     }
 
@@ -43,21 +52,26 @@ export async function getRttapa(req: Request, res: Response) {
     await handleErrors(req, res, e, 'getRttapa');
   }
 }
-
+/**
+ * 
+ * @param {Request} req 
+ * @param {Response} res 
+ * @returns Promise<void>
+ */
 export async function getRttapas(req: Request, res: Response) {
   try {
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
-    const policy = new ActivityReport(user, { regionId: req.params.regionId });
+    const policy = new ActivityReport(user, { regionId: Number(req.params.regionId) });
     if (!policy.canReadInRegion()) {
-      res.status(httpCodes.FORBIDDEN);
+      res.sendStatus(httpCodes.FORBIDDEN);
       return;
     }
 
     const regionId = Number(req.params.regionId);
     const recipientId = Number(req.params.recipientId);
-
     const reports = await allRttapas(regionId, recipientId);
+
     res.json(reports);
   } catch (e) {
     await handleErrors(req, res, e, 'getRttapas');
