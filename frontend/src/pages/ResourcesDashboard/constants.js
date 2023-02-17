@@ -4,7 +4,6 @@ import {
   endDateFilter,
   startDateFilter,
   grantNumberFilter,
-  programSpecialistFilter,
   programTypeFilter,
   reasonsFilter,
   recipientFilter,
@@ -15,18 +14,16 @@ import {
   topicsFilter,
   otherEntitiesFilter,
   participantsFilter,
-  myReportsFilter,
   reportTextFilter,
+  ttaTypeFilter,
 } from '../../components/filter/activityReportFilters';
 
 export const RESOURCES_DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
   grantNumberFilter,
-  myReportsFilter,
   otherEntitiesFilter,
   participantsFilter,
-  programSpecialistFilter,
   programTypeFilter,
   reasonsFilter,
   recipientFilter,
@@ -37,4 +34,5 @@ export const RESOURCES_DASHBOARD_FILTER_CONFIG = [
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,
+  ttaTypeFilter,
 ];
