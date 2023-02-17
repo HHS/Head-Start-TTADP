@@ -1,50 +1,7 @@
-interface ARResponse {
-  legacyId: string,
-  number: string,
-  id: number,
-  endDate: string,
-}
-
-interface ObjectiveResponse {
-  id: number,
-  title: string,
-  arNumber: string,
-  ttaProvided: string,
-  endDate: string,
-  reasons: string[],
-  status: string,
-  grantNumbers: string[];
-  activityReports: ARResponse
-}
-
-interface GoalResponse {
-  id: number;
-  ids: number[];
-  goalStatus: string;
-  createdOn: Date;
-  goalText: string;
-  goalNumbers: string[];
-  objectiveCount: number;
-  goalTopics: string[];
-  reasons: string[];
-  previousStatus: string;
-  objectives: ObjectiveResponse[];
-}
-
-interface RttapaResponse {
-  id: number;
-  goals: GoalResponse[];
-  regionId: number;
-  recipientId: number;
-  notes: string;
-}
-
-interface NewRttapaRequest {
-  goalIds: number[];
-  recipientId: number;
-  regionId: number;
-  notes: string;
-}
+import {
+  NewRttapaRequest,
+  RttapaResponse,
+} from './types/rttapa';
 
 const mockGoals = [
   {
@@ -137,17 +94,17 @@ const mockRttapa = (
 });
 
 export async function newRttapa(data: NewRttapaRequest): Promise<RttapaResponse> {
-  return {
+  return Promise.resolve({
     id: 1,
     ...data,
     goals: mockGoals,
-  };
+  });
 }
 
 export async function rttapa(reportId: number): Promise<RttapaResponse> {
-  return mockRttapa(reportId);
+  return Promise.resolve(mockRttapa(reportId));
 }
 
 export async function allRttapas(regionId: number, recipientId: number): Promise<RttapaResponse[]> {
-  return [mockRttapa(1, regionId, recipientId), mockRttapa(2, regionId)];
+  return Promise.resolve([mockRttapa(1, regionId, recipientId), mockRttapa(2, regionId)]);
 }
