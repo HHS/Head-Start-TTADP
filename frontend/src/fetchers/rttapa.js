@@ -4,10 +4,20 @@ import { get, post } from './index';
 const rttapaUrl = join('/', 'api', 'rttapa');
 
 /**
+ * @param {number} regionId
+ * @param {number} recipientId
  * @returns {Promise}
  */
-export const getRttapas = async () => {
-  const rttapas = await get(rttapaUrl);
+export const getRttapas = async (regionId, recipientId) => {
+  const rttapas = await get(
+    join(
+      rttapaUrl,
+      'region',
+      String(regionId),
+      'recipient',
+      String(recipientId),
+    ),
+  );
   return rttapas.json();
 };
 
