@@ -23,9 +23,12 @@ export default function RecipientTabs({ region, recipientId, backLink }) {
           <li className={liClass}>
             <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/goals-objectives`}>Goals & Objectives</NavLink>
           </li>
+          <li className={liClass}>
+            <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/rttapa-history`}>RTTAPA History</NavLink>
+          </li>
         </ul>
       </nav>
-      <FontAwesomeIcon className="margin-left-2 margin-right-1" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
+      { backLink.props.children ? (<FontAwesomeIcon className="margin-left-2 margin-right-1" color={colors.ttahubMediumBlue} icon={faArrowLeft} />) : null }
       {backLink}
     </div>
   );
@@ -34,5 +37,9 @@ export default function RecipientTabs({ region, recipientId, backLink }) {
 RecipientTabs.propTypes = {
   region: PropTypes.string.isRequired,
   recipientId: PropTypes.string.isRequired,
-  backLink: PropTypes.node.isRequired,
+  backLink: PropTypes.node,
+};
+
+RecipientTabs.defaultProps = {
+  backLink: null,
 };
