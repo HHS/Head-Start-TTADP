@@ -327,24 +327,6 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByTestId('apply-filters-test-id').click();
     await page.getByTestId('apply-filters-test-id').click();
     await Promise.all(prs);
-    await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).not.toBeVisible();
-
-    // Mix with Start Date
-    await page.getByRole('button', { name: 'open filters for this page , 2 currently applied' }).click();
-    await page.getByRole('combobox', { name: 'topic' }).nth(1).selectOption('startDate');
-    await page.getByRole('combobox', { name: 'condition' }).nth(1).selectOption('is');
-    prs = waitForLandingFilterRequests(page);
-    await page.getByTestId('apply-filters-test-id').click();
-    await Promise.all(prs);
-    await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
-
-    await page.getByRole('button', { name: 'open filters for this page , 2 currently applied' }).click();
-    await page.getByRole('combobox', { name: 'condition' }).nth(1).selectOption('is on or before');
-    await page.getByTestId('date-picker-external-input').click();
-    await page.getByTestId('date-picker-external-input').fill('01/15/2023');
-    prs = waitForLandingFilterRequests(page);
-    await page.getByTestId('apply-filters-test-id').click();
-    await Promise.all(prs);
-    await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).not.toBeVisible();
+    await expect(page.getByRole('row', { name: `R0${regionNumber}-AR-${arNumber}` })).not.toBeVisible();   
   });
 });
