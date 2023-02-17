@@ -43,6 +43,7 @@ describe('Rttapa Reports route handlers', () => {
           json: jest.fn(),
           end: jest.fn(),
         })),
+        sendStatus: jest.fn(),
         json: jest.fn().mockReturnThis(),
       };
 
@@ -68,13 +69,14 @@ describe('Rttapa Reports route handlers', () => {
           json: jest.fn(),
           end: jest.fn(),
         })),
+        sendStatus: jest.fn(),
         json: jest.fn().mockReturnThis(),
       };
 
       userById.mockImplementationOnce(() => mockUser());
 
       await getRttapas(mockRequest, mockResponse);
-      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
     });
 
     it('should return a 500 if there is an error', async () => {
@@ -88,11 +90,12 @@ describe('Rttapa Reports route handlers', () => {
           json: jest.fn(),
           end: jest.fn(),
         })),
+        sendStatus: jest.fn(),
         json: jest.fn().mockReturnThis(),
       };
       // No params passed, triggers an error
       await getRttapas(mockRequest, mockResponse);
-      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(500);
     });
   });
 
@@ -111,6 +114,7 @@ describe('Rttapa Reports route handlers', () => {
           json: jest.fn(),
           end: jest.fn(),
         })),
+        sendStatus: jest.fn(),
         json: jest.fn().mockReturnThis(),
       };
 
@@ -132,13 +136,14 @@ describe('Rttapa Reports route handlers', () => {
           json: jest.fn(),
           end: jest.fn(),
         })),
+        sendStatus: jest.fn(),
         json: jest.fn().mockReturnThis(),
       };
 
       userById.mockImplementationOnce(() => mockUser(SCOPES.READ_WRITE_REPORTS));
 
       await getRttapa(mockRequest, mockResponse);
-      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
     });
 
     it('checks permssions', async () => {
@@ -155,13 +160,14 @@ describe('Rttapa Reports route handlers', () => {
           json: jest.fn(),
           end: jest.fn(),
         })),
+        sendStatus: jest.fn(),
         json: jest.fn().mockReturnThis(),
       };
 
       userById.mockImplementationOnce(() => mockUser());
 
       await getRttapa(mockRequest, mockResponse);
-      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
     });
   });
 
@@ -205,11 +211,12 @@ describe('Rttapa Reports route handlers', () => {
           json: jest.fn(),
           end: jest.fn(),
         })),
+        sendStatus: jest.fn(),
         json: jest.fn().mockReturnThis(),
       };
 
       await createRttapa(mockRequest, mockResponse);
-      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
     });
 
     it('checks permssions', async () => {
@@ -231,12 +238,13 @@ describe('Rttapa Reports route handlers', () => {
           end: jest.fn(),
         })),
         json: jest.fn().mockReturnThis(),
+        sendStatus: jest.fn(),
       };
 
       userById.mockImplementationOnce(() => mockUser());
 
       await createRttapa(mockRequest, mockResponse);
-      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
     });
   });
 });
