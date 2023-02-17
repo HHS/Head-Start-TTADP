@@ -23,9 +23,7 @@ import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../constants';
 
 export async function resourceData(scopes) {
   // Query Database for all Resources within the scope.
-  let reports;
-  try {
-    reports = await ActivityReport.findAll({
+  let reports = await ActivityReport.findAll({
       attributes: ['id', 'numberOfParticipants', 'topics'],
       where: {
         [Op.and]: [
@@ -159,12 +157,9 @@ export async function resourceData(scopes) {
         },
       ],
     });
-  } catch (err) { console.log(err); throw err; }
-  console.log(reports);
+
   const reportIds = reports.map((r) => r.id);
-  let reportResources;
-  try {
-    reportResources = reports.reduce((reportData, report) => {
+  let reportResources = reports.reduce((reportData, report) => {
       const x = null;
       // collect topics from the objectives and the activity report
       let objectiveTopics = [];
@@ -327,12 +322,8 @@ export async function resourceData(scopes) {
         })),
       ];
     }, []);
-  } catch (err) { console.log(err); throw err; }
   const resources = reportResources;
   const resourcesWithRecipients = resources.map((data) => {
-    // const recipients = reports
-    //   .filter((r) => r.id === data.activityReportId)
-    //   .map((r) => r['activityRecipients.grant.recipientId']);
     const participants = reports
       .filter((r) => r.id === data.activityReportId)
       .reduce((accumulator, r) => accumulator + r.numberOfParticipants, 0);
