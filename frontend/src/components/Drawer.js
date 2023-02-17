@@ -37,8 +37,6 @@ export default function Drawer({
     if (triggerRef && triggerRef.current) triggerRef.current.focus();
   }, [triggerRef]);
 
-  const onCloseClicked = () => close();
-
   useEffect(() => {
     if (isOpen) {
       setFocusableElements(
@@ -133,7 +131,7 @@ export default function Drawer({
             <button
               ref={closeButtonRef}
               type="button"
-              onClick={onCloseClicked}
+              onClick={close}
               className="usa-button usa-button--outline smart-hub-button--no-margin"
             >
               Close
