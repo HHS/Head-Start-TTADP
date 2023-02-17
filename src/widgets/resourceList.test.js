@@ -288,7 +288,6 @@ describe('Resources list widget', () => {
     });
     const { goal: goalScope } = await filtersToScopes({ 'recipientId.ctn': [RECIPIENT_ID] }, 'goal');
     const res = await resourceList({ report: reportScope, goal: goalScope });
-    console.log(JSON.stringify(res));
     expect(res.length).toBe(3);
 
     expect(res[0].name).toBe(ECLKC_RESOURCE_URL);
