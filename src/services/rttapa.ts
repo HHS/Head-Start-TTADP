@@ -25,12 +25,12 @@ const mockGoals = [
         reasons: ['Reason 1', 'Reason 2'],
         status: 'In Progress',
         grantNumbers: ['Grant 1', 'Grant 2'],
-        activityReports: {
+        activityReports: [{
           legacyId: 'Legacy 1',
           number: 'AR 1',
           id: 1,
           endDate: '2021-01-01',
-        },
+        }],
       },
       {
         id: 2,
@@ -41,12 +41,14 @@ const mockGoals = [
         reasons: ['Reason 1', 'Reason 2'],
         status: 'In Progress',
         grantNumbers: ['Grant 1', 'Grant 2'],
-        activityReports: {
-          legacyId: 'Legacy 2',
-          number: 'AR 2',
-          id: 2,
-          endDate: '2021-01-01',
-        },
+        activityReports: [
+          {
+            legacyId: 'Legacy 2',
+            number: 'AR 2',
+            id: 2,
+            endDate: '2021-01-01',
+          },
+        ],
       },
       {
         id: 3,
@@ -57,12 +59,12 @@ const mockGoals = [
         reasons: ['Reason 1', 'Reason 2'],
         status: 'In Progress',
         grantNumbers: ['Grant 1', 'Grant 2'],
-        activityReports: {
+        activityReports: [{
           legacyId: 'Legacy 3',
           number: 'AR 3',
           id: 3,
           endDate: '2021-01-01',
-        },
+        }],
       },
     ],
   },

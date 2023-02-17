@@ -14,7 +14,7 @@ export interface ObjectiveResponse {
   reasons: string[],
   status: string,
   grantNumbers: string[];
-  activityReports: ARResponse
+  activityReports: ARResponse[],
 }
 
 export interface GoalResponse {
