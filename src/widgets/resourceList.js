@@ -161,168 +161,168 @@ export async function resourceData(scopes) {
 
   const reportIds = reports.map((r) => r.id);
   const reportResources = reports.reduce((reportData, report) => {
-      const x = null;
-      // collect topics from the objectives and the activity report
-      let objectiveTopics = [];
-      if (report.activityReportObjectives
-        && Array.isArray(report.activityReportObjectives)
-        && report.activityReportObjectives.length > 0) {
-        objectiveTopics = report.activityReportObjectives
-          .map((o) => o.topics.map((t) => t.dataValues.name))
-          .flat(2);
-      }
-      const reportTopics = [...new Set([
-        ...report.dataValues.topics,
-        ...objectiveTopics.map((t) => t.name),
-      ])];
+    const x = null;
+    // collect topics from the objectives and the activity report
+    let objectiveTopics = [];
+    if (report.activityReportObjectives
+      && Array.isArray(report.activityReportObjectives)
+      && report.activityReportObjectives.length > 0) {
+      objectiveTopics = report.activityReportObjectives
+        .map((o) => o.topics.map((t) => t.dataValues.name))
+        .flat(2);
+    }
+    const reportTopics = [...new Set([
+      ...report.dataValues.topics,
+      ...objectiveTopics.map((t) => t.name),
+    ])];
 
-      // collect the recipients
-      let grantRecipients = [];
-      let otherEntityRecipeints = [];
-      if (report.activityRecipients
-        && Array.isArray(report.activityRecipients)
-        && report.activityRecipients.length > 0) {
-        grantRecipients = report.activityRecipients
-          .filter((r) => r.grant !== null)
-          .map((r) => ({
-            grantId: r.grant.dataValues.id,
-            recipientId: r.grant.dataValues.recipientId,
-          }));
-        otherEntityRecipeints = report.activityRecipients
-          .filter((r) => r.otherEntity !== null)
-          .map((r) => ({
-            otherEntityId: r.otherEntity.dataValues.id,
-          }));
-      }
-      const recipients = [
-        ...grantRecipients,
-        ...otherEntityRecipeints,
-      ];
+    // collect the recipients
+    let grantRecipients = [];
+    let otherEntityRecipeints = [];
+    if (report.activityRecipients
+      && Array.isArray(report.activityRecipients)
+      && report.activityRecipients.length > 0) {
+      grantRecipients = report.activityRecipients
+        .filter((r) => r.grant !== null)
+        .map((r) => ({
+          grantId: r.grant.dataValues.id,
+          recipientId: r.grant.dataValues.recipientId,
+        }));
+      otherEntityRecipeints = report.activityRecipients
+        .filter((r) => r.otherEntity !== null)
+        .map((r) => ({
+          otherEntityId: r.otherEntity.dataValues.id,
+        }));
+    }
+    const recipients = [
+      ...grantRecipients,
+      ...otherEntityRecipeints,
+    ];
 
-      // resources
-      const resourcesFromReport = report.resources
-        && Array.isArray(report.resources)
-        && report.resources.length > 0
-        ? report.resources.map((r) => ({
+    // resources
+    const resourcesFromReport = report.resources
+      && Array.isArray(report.resources)
+      && report.resources.length > 0
+      ? report.resources.map((r) => ({
+        id: r.dataValues.id,
+        url: r.dataValues.url,
+        domain: r.dataValues.domain,
+        sourceFields: r.ActivityReportResource.dataValues.sourceFields,
+        tableType: 'report',
+        ActivityReportResource: undefined,
+        topics: reportTopics,
+      }))
+      : [];
+    const resourcesFromSpecialistNextStep = report.specialistNextSteps
+      && Array.isArray(report.specialistNextSteps)
+      && report.specialistNextSteps.length > 0
+      ? report.specialistNextSteps
+        .map((sns) => sns.resources.map((r) => ({
           id: r.dataValues.id,
           url: r.dataValues.url,
           domain: r.dataValues.domain,
-          sourceFields: r.ActivityReportResource.dataValues.sourceFields,
-          tableType: 'report',
-          ActivityReportResource: undefined,
+          sourceFields: r.NextStepResource.dataValues.sourceFields,
+          tableType: 'specialistNextStep',
+          NextStepResource: undefined,
           topics: reportTopics,
-        }))
-        : [];
-      const resourcesFromSpecialistNextStep = report.specialistNextSteps
-        && Array.isArray(report.specialistNextSteps)
-        && report.specialistNextSteps.length > 0
-        ? report.specialistNextSteps
-          .map((sns) => sns.resources.map((r) => ({
-            id: r.dataValues.id,
-            url: r.dataValues.url,
-            domain: r.dataValues.domain,
-            sourceFields: r.NextStepResource.dataValues.sourceFields,
-            tableType: 'specialistNextStep',
-            NextStepResource: undefined,
-            topics: reportTopics,
-          })))
-          .filter((r) => r)
-        : [];
-      const resourcesFromRecipientNextStep = report.recipientNextSteps
-        && Array.isArray(report.recipientNextSteps)
-        && report.recipientNextSteps.length > 0
-        ? report.recipientNextSteps
-          .map((rns) => rns.resources.map((r) => ({
-            id: r.dataValues.id,
-            url: r.dataValues.url,
-            domain: r.dataValues.domain,
-            sourceFields: r.NextStepResource.dataValues.sourceFields,
-            tableType: 'recipientNextStep',
-            NextStepResource: undefined,
-            topics: reportTopics,
-          })))
-          .filter((r) => r)
-        : [];
-      const resourcesFromGoal = report.activityReportGoals
-      && Array.isArray(report.activityReportGoals)
-      && report.activityReportGoals.length > 0
-        ? report.activityReportGoals
-          .map((arg) => arg.resources.map((r) => ({
-            id: r.dataValues.id,
-            url: r.dataValues.url,
-            domain: r.dataValues.domain,
-            sourceFields: r.ActivityReportGoalResource.dataValues.sourceFields,
-            tableType: 'goal',
-            ActivityReportGoalResource: undefined,
-            topics: [...new Set(report.activityReportObjectives
-              .filter((aro) => aro.objective.dataValue.grantId
-                === r.ActivityReportGoalResource.dataValues.goalId)
-              .map((aro) => aro.topics.map((t) => t.dataValues.name))
-              .flat())],
-          })))
-          .filter((r) => r)
-        : [];
-      const resourcesFromObjective = report.activityReportObjectives
-      && Array.isArray(report.activityReportObjectives)
-      && report.activityReportObjectives.length > 0
-        ? report.activityReportObjectives
-          .map((aro) => aro.resources.map((r) => ({
-            id: r.dataValues.id,
-            url: r.dataValues.url,
-            domain: r.dataValues.domain,
-            sourceFields: r.ActivityReportObjectiveResource.dataValues.sourceFields,
-            tableType: 'objective',
-            topics: aro.topics.map((t) => t.dataValues.name),
-          })))
-          .filter((r) => r)
-        : [];
-      const resourceFromFields = [
-        ...resourcesFromReport,
-        ...resourcesFromSpecialistNextStep,
-        ...resourcesFromRecipientNextStep,
-        ...resourcesFromGoal,
-        ...resourcesFromObjective,
-      ].filter((r) => r && r.length > 0).flat();
-      const resourcesReduced = resourceFromFields.reduce((resources, resource) => {
-        const exists = resources.find((r) => r.resourceId === resource.id);
-        if (exists) {
-          exists.topics = [...new Set([
-            ...exists.topics,
-            ...resource.topics,
-          ])];
-          exists.source = [
-            ...exists.source,
-            ...resource.sourceFields
-              .map((sourceField) => ({ table: resource.tableType, field: sourceField })),
-          ].filter((value, index, self) => index === self
-            .findIndex((t) => t.table === value.table && t.field === value.field));
-          return resources;
-        }
+        })))
+        .filter((r) => r)
+      : [];
+    const resourcesFromRecipientNextStep = report.recipientNextSteps
+      && Array.isArray(report.recipientNextSteps)
+      && report.recipientNextSteps.length > 0
+      ? report.recipientNextSteps
+        .map((rns) => rns.resources.map((r) => ({
+          id: r.dataValues.id,
+          url: r.dataValues.url,
+          domain: r.dataValues.domain,
+          sourceFields: r.NextStepResource.dataValues.sourceFields,
+          tableType: 'recipientNextStep',
+          NextStepResource: undefined,
+          topics: reportTopics,
+        })))
+        .filter((r) => r)
+      : [];
+    const resourcesFromGoal = report.activityReportGoals
+    && Array.isArray(report.activityReportGoals)
+    && report.activityReportGoals.length > 0
+      ? report.activityReportGoals
+        .map((arg) => arg.resources.map((r) => ({
+          id: r.dataValues.id,
+          url: r.dataValues.url,
+          domain: r.dataValues.domain,
+          sourceFields: r.ActivityReportGoalResource.dataValues.sourceFields,
+          tableType: 'goal',
+          ActivityReportGoalResource: undefined,
+          topics: [...new Set(report.activityReportObjectives
+            .filter((aro) => aro.objective.dataValue.grantId
+              === r.ActivityReportGoalResource.dataValues.goalId)
+            .map((aro) => aro.topics.map((t) => t.dataValues.name))
+            .flat())],
+        })))
+        .filter((r) => r)
+      : [];
+    const resourcesFromObjective = report.activityReportObjectives
+    && Array.isArray(report.activityReportObjectives)
+    && report.activityReportObjectives.length > 0
+      ? report.activityReportObjectives
+        .map((aro) => aro.resources.map((r) => ({
+          id: r.dataValues.id,
+          url: r.dataValues.url,
+          domain: r.dataValues.domain,
+          sourceFields: r.ActivityReportObjectiveResource.dataValues.sourceFields,
+          tableType: 'objective',
+          topics: aro.topics.map((t) => t.dataValues.name),
+        })))
+        .filter((r) => r)
+      : [];
+    const resourceFromFields = [
+      ...resourcesFromReport,
+      ...resourcesFromSpecialistNextStep,
+      ...resourcesFromRecipientNextStep,
+      ...resourcesFromGoal,
+      ...resourcesFromObjective,
+    ].filter((r) => r && r.length > 0).flat();
+    const resourcesReduced = resourceFromFields.reduce((resources, resource) => {
+      const exists = resources.find((r) => r.resourceId === resource.id);
+      if (exists) {
+        exists.topics = [...new Set([
+          ...exists.topics,
+          ...resource.topics,
+        ])];
+        exists.source = [
+          ...exists.source,
+          ...resource.sourceFields
+            .map((sourceField) => ({ table: resource.tableType, field: sourceField })),
+        ].filter((value, index, self) => index === self
+          .findIndex((t) => t.table === value.table && t.field === value.field));
+        return resources;
+      }
 
-        return [
-          ...resources,
-          {
-            resourceId: resource.id,
-            url: resource.url,
-            domain: resource.domain,
-            topics: resource.topics,
-            source: resource.sourceFields
-              .map((sourceField) => ({ table: resource.tableType, field: sourceField }))
-              .filter((value, index, self) => index === self
-                .findIndex((t) => t.table === value.table && t.field === value.field)),
-          },
-        ];
-      }, []);
       return [
-        ...reportData,
-        ...resourcesReduced.map((resource) => ({
-          activityReportId: report.dataValues.id,
-          numberOfParticipants: report.dataValues.numberOfParticipants,
-          recipients,
-          ...resource,
-        })),
+        ...resources,
+        {
+          resourceId: resource.id,
+          url: resource.url,
+          domain: resource.domain,
+          topics: resource.topics,
+          source: resource.sourceFields
+            .map((sourceField) => ({ table: resource.tableType, field: sourceField }))
+            .filter((value, index, self) => index === self
+              .findIndex((t) => t.table === value.table && t.field === value.field)),
+        },
       ];
     }, []);
+    return [
+      ...reportData,
+      ...resourcesReduced.map((resource) => ({
+        activityReportId: report.dataValues.id,
+        numberOfParticipants: report.dataValues.numberOfParticipants,
+        recipients,
+        ...resource,
+      })),
+    ];
+  }, []);
   const resources = reportResources;
   const resourcesWithRecipients = resources.map((data) => {
     const participants = reports
