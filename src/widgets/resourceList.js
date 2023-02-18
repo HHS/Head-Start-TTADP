@@ -22,40 +22,56 @@ import { formatNumber } from './helpers';
 import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../constants';
 
 export async function resourceData(scopes) {
+  console.log(JSON.stringify(scopes));
   // Query Database for all Resources within the scope.
-  let reports = await ActivityReport.findAll({
-      attributes: ['id', 'numberOfParticipants', 'topics'],
-      where: {
-        [Op.and]: [
-          scopes.report,
-          { calculatedStatus: REPORT_STATUSES.APPROVED },
+  const reports = await ActivityReport.findAll({
+    attributes: ['id', 'numberOfParticipants', 'topics'],
+    where: {
+      [Op.and]: [
+        scopes.report,
+        { calculatedStatus: REPORT_STATUSES.APPROVED },
+      ],
+    },
+    include: [
+      {
+        model: ActivityRecipient,
+        as: 'activityRecipients',
+        attributes: ['id'],
+        // where: { [Op.and]: [scopes.activityRecipient] },
+        required: true,
+        include: [
+          {
+            model: Grant,
+            as: 'grant',
+            attributes: ['id', 'recipientId'],
+            // where: { [Op.and]: [scopes.grant] },
+            required: false,
+          },
+          {
+            model: OtherEntity,
+            as: 'otherEntity',
+            attributes: ['id'],
+            // where: { [Op.and]: [scopes.otherEntity] },
+            required: false,
+          },
         ],
       },
-      include: [
-        {
-          model: ActivityRecipient,
-          as: 'activityRecipients',
-          attributes: ['id'],
-          // where: { [Op.and]: [scopes.activityRecipient] },
-          required: true,
-          include: [
-            {
-              model: Grant,
-              as: 'grant',
-              attributes: ['id', 'recipientId'],
-              // where: { [Op.and]: [scopes.grant] },
-              required: false,
-            },
-            {
-              model: OtherEntity,
-              as: 'otherEntity',
-              attributes: ['id'],
-              // where: { [Op.and]: [scopes.otherEntity] },
-              required: false,
-            },
-          ],
+      {
+        model: Resource,
+        as: 'resources',
+        attributes: ['id', 'url', 'domain'],
+        through: {
+          attributes: ['sourceFields'],
         },
-        {
+        // where: { [Op.and]: [scopes.resource] },
+        required: false,
+      },
+      {
+        model: NextStep,
+        as: 'specialistNextSteps',
+        attributes: ['id'],
+        // where: { [Op.and]: [scopes.nextStep] },
+        include: [{
           model: Resource,
           as: 'resources',
           attributes: ['id', 'url', 'domain'],
@@ -64,13 +80,32 @@ export async function resourceData(scopes) {
           },
           // where: { [Op.and]: [scopes.resource] },
           required: false,
-        },
-        {
-          model: NextStep,
-          as: 'specialistNextSteps',
-          attributes: ['id'],
-          // where: { [Op.and]: [scopes.nextStep] },
-          include: [{
+        }],
+      },
+      {
+        model: NextStep,
+        as: 'recipientNextSteps',
+        attributes: ['id'],
+        // where: { [Op.and]: [scopes.nextStep] },
+        include: [{
+          model: Resource,
+          as: 'resources',
+          attributes: ['id', 'url', 'domain'],
+          through: {
+            attributes: ['sourceFields'],
+          },
+          // where: { [Op.and]: [scopes.resource] },
+          required: false,
+        }],
+      },
+      {
+        model: ActivityReportObjective,
+        as: 'activityReportObjectives',
+        attributes: ['id'],
+        // where: { [Op.and]: [scopes.activityReportObjective] },
+        separate: true,
+        include: [
+          {
             model: Resource,
             as: 'resources',
             attributes: ['id', 'url', 'domain'],
@@ -79,14 +114,30 @@ export async function resourceData(scopes) {
             },
             // where: { [Op.and]: [scopes.resource] },
             required: false,
-          }],
-        },
-        {
-          model: NextStep,
-          as: 'recipientNextSteps',
-          attributes: ['id'],
-          // where: { [Op.and]: [scopes.nextStep] },
-          include: [{
+          },
+          {
+            model: Objective,
+            as: 'objective',
+            attributes: ['id', 'goalId'],
+            // where: { [Op.and]: [scopes.objective] },
+            required: true,
+          },
+          {
+            model: Topic,
+            as: 'topics',
+            attributes: ['id', 'name'],
+            // where: { [Op.and]: [scopes.topic] },
+          },
+        ],
+      },
+      {
+        model: ActivityReportGoal,
+        as: 'activityReportGoals',
+        attributes: ['id', 'goalId'],
+        // where: { [Op.and]: [scopes.activityReportGoal] },
+        separate: true,
+        include: [
+          {
             model: Resource,
             as: 'resources',
             attributes: ['id', 'url', 'domain'],
@@ -95,68 +146,18 @@ export async function resourceData(scopes) {
             },
             // where: { [Op.and]: [scopes.resource] },
             required: false,
-          }],
-        },
-        {
-          model: ActivityReportObjective,
-          as: 'activityReportObjectives',
-          attributes: ['id'],
-          // where: { [Op.and]: [scopes.activityReportObjective] },
-          separate: true,
-          include: [
-            {
-              model: Resource,
-              as: 'resources',
-              attributes: ['id', 'url', 'domain'],
-              through: {
-                attributes: ['sourceFields'],
-              },
-              // where: { [Op.and]: [scopes.resource] },
-              required: false,
-            },
-            {
-              model: Objective,
-              as: 'objective',
-              attributes: ['id', 'goalId'],
-              // where: { [Op.and]: [scopes.objective] },
-              required: true,
-            },
-            {
-              model: Topic,
-              as: 'topics',
-              attributes: ['id', 'name'],
-              // where: { [Op.and]: [scopes.topic] },
-            },
-          ],
-        },
-        {
-          model: ActivityReportGoal,
-          as: 'activityReportGoals',
-          attributes: ['id', 'goalId'],
-          // where: { [Op.and]: [scopes.activityReportGoal] },
-          separate: true,
-          include: [
-            {
-              model: Resource,
-              as: 'resources',
-              attributes: ['id', 'url', 'domain'],
-              through: {
-                attributes: ['sourceFields'],
-              },
-              // where: { [Op.and]: [scopes.resource] },
-              required: false,
-            },
-            {
-              model: Goal,
-              as: 'goal',
-              attributes: ['id'],
-              where: { [Op.and]: [scopes.goal] },
-              required: true,
-            },
-          ],
-        },
-      ],
-    });
+          },
+          {
+            model: Goal,
+            as: 'goal',
+            attributes: ['id'],
+            where: { [Op.and]: [scopes.goal] },
+            required: true,
+          },
+        ],
+      },
+    ],
+  });
 
   const reportIds = reports.map((r) => r.id);
   let reportResources = reports.reduce((reportData, report) => {
