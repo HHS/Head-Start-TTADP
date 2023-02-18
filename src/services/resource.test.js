@@ -1416,7 +1416,7 @@ describe('resource', () => {
           .toEqual([
             SOURCE_FIELD.REPORT.CONTEXT,
           ].sort());
-          arResources = await processActivityReportForResourcesById(
+        arResources = await processActivityReportForResourcesById(
           activityReport.id,
           [urls[0]],
         );
@@ -3253,7 +3253,10 @@ describe('resource', () => {
         });
       });
       it('expected usage, empty urls', async () => {
-        const oResources = await processActivityReportObjectiveForResourcesById(reportObjective.id, []);
+        const oResources = await processActivityReportObjectiveForResourcesById(
+          reportObjective.id,
+          [],
+        );
         expect(oResources.length).toEqual(1);
         expect(oResources
           .find((r) => r.dataValues.resource.dataValues.url === urls[0]).dataValues.resourceId)
