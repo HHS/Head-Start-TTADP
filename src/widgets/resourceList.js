@@ -160,7 +160,7 @@ export async function resourceData(scopes) {
   });
 
   const reportIds = reports.map((r) => r.id);
-  let reportResources = reports.reduce((reportData, report) => {
+  const reportResources = reports.reduce((reportData, report) => {
       const x = null;
       // collect topics from the objectives and the activity report
       let objectiveTopics = [];
