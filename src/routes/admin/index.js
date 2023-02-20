@@ -5,6 +5,7 @@ import userRouter from './user';
 import recipientRouter from './recipient';
 import grantRouter from './grant';
 import roleRouter from './role';
+import siteAlertRouter from './siteAlert';
 import userAdminAccessMiddleware from '../../middleware/userAdminAccessMiddleware';
 import transactionWrapper from '../transactionWrapper';
 
@@ -18,5 +19,6 @@ router.use('/users', userRouter);
 router.use('/recipients', recipientRouter);
 router.use('/grants', grantRouter);
 router.use('/roles', roleRouter);
+router.use('/alerts', siteAlertRouter);
 
 export default router;
