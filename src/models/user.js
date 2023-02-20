@@ -2,7 +2,7 @@ const { Model } = require('sequelize');
 const isEmail = require('validator/lib/isEmail');
 const generateFullName = require('./helpers/generateFullName');
 
-const featureFlags = [];
+const featureFlags = ['regional_goal_dashboard'];
 
 export default (sequelize, DataTypes) => {
   class User extends Model {
