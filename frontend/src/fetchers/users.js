@@ -8,7 +8,6 @@ export const getStateCodes = async () => {
 
 export const getActiveUsers = async () => {
   const res = await get(join('/', 'api', 'users', 'active-users'));
-  console.log(res);
   return res.blob();
 };
 
