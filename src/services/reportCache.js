@@ -75,7 +75,19 @@ const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) =>
 
 const cacheResources = async (objectiveId, activityReportObjectiveId, resources = []) => {
   const resourceUrls = resources
-    .map((r) => r.resource.url);
+    .map((r) => {
+      if (r.resource && r.resource.url) return r.resource.url;
+      if (r.url) return r.url;
+      return null;
+    })
+    .filter((url) => url);
+  const resourceIds = resources
+    .map((r) => {
+      if (r.resource && r.resource.id) return r.resource.id;
+      if (r.resourceId) return r.resourceId;
+      return null;
+    })
+    .filter((id) => id);
   const originalAROResources = await getResourcesForActivityReportObjectives(
     activityReportObjectiveId,
     true,
@@ -83,12 +95,16 @@ const cacheResources = async (objectiveId, activityReportObjectiveId, resources 
   const aroResources = await processActivityReportObjectiveForResourcesById(
     activityReportObjectiveId,
     resourceUrls,
+    resourceIds,
   );
   const newAROResourceIds = aroResources
-    .filter((r) => !!originalAROResources.find((oR) => oR.id === r.id))
-    .map((r) => r.resourceId);
+    && aroResources.length > 0
+    ? aroResources
+      .filter((r) => !!originalAROResources.find((oR) => oR.id === r.id))
+      .map((r) => r.resourceId)
+    : [];
   const removedAROResourceIds = originalAROResources
-    .filter((oR) => !!aroResources.find((r) => oR.id === r.id))
+    .filter((oR) => !!aroResources?.find((r) => oR.id === r.id))
     .map((r) => r.resourceId);
 
   return Promise.all([
@@ -124,52 +140,6 @@ const cacheResources = async (objectiveId, activityReportObjectiveId, resources 
       )
       : Promise.resolve(),
   ]);
-
-  // const originalUrls = originalAROResources.map((resource) => resource.userProvidedUrl);
-  // const removedUrls = originalUrls.filter((url) => !resourcesSet.has(url));
-  // const currentUrls = new Set(originalUrls.filter((url) => resourcesSet.has(url)));
-  // const newUrls = resourceUrls.filter((url) => !currentUrls.has(url));
-
-  // return Promise.all([
-  //   ...newUrls.map(async (url) => ActivityReportObjectiveResource.create({
-  //     activityReportObjectiveId,
-  //     userProvidedUrl: url,
-  //   })),
-  //   removedUrls.length > 0
-  //     ? ActivityReportObjectiveResource.destroy({
-  //       where: {
-  //         activityReportObjectiveId,
-  //         userProvidedUrl: { [Op.in]: removedUrls },
-  //       },
-  //       individualHooks: true,
-  //       hookMetadata: { objectiveId },
-  //     })
-  //     : Promise.resolve(),
-  //   newUrls.length > 0
-  //     ? ObjectiveResource.update(
-  //       { onAR: true },
-  //       {
-  //         where: { userProvidedUrl: { [Op.in]: newUrls } },
-  //         include: [
-  //           {
-  //             model: Objective,
-  //             as: 'objective',
-  //             required: true,
-  //             where: { id: objectiveId },
-  //             include: [
-  //               {
-  //                 model: ActivityReportObjective,
-  //                 as: 'activityReportObjectives',
-  //                 required: true,
-  //                 where: { id: activityReportObjectiveId },
-  //               },
-  //             ],
-  //           },
-  //         ],
-  //       },
-  //     )
-  //     : Promise.resolve(),
-  // ]);
 };
 
 const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) => {
