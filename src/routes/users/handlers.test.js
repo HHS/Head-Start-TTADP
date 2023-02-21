@@ -3,6 +3,7 @@ import {
   getPossibleStateCodes,
   requestVerificationEmail,
   verifyEmailToken,
+  getActiveUsers,
 } from './handlers';
 import { userById, usersWithPermissions } from '../../services/users';
 import User from '../../policies/user';
@@ -30,10 +31,17 @@ jest.mock('../../services/token', () => ({
 
 const mockResponse = {
   json: jest.fn(),
+  writeHead: jest.fn(),
   sendStatus: jest.fn(),
   status: jest.fn(() => ({
     end: jest.fn(),
   })),
+  on: jest.fn(),
+  write: jest.fn(),
+  end: jest.fn(),
+  once: jest.fn(),
+  emit: jest.fn(),
+  error: jest.fn(),
 };
 
 const mockRequest = {
@@ -210,6 +218,20 @@ describe('User handlers', () => {
       validateVerificationToken.mockRejectedValueOnce(new Error('Problem validating token'));
       await verifyEmailToken(request, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(500);
+    });
+  });
+
+  describe('activeUsers', () => {
+    it('handles activeusers', async () => {
+      const request = {
+        ...mockRequest,
+        params: { token: 'token' },
+      };
+      // currentUserId.mockResolvedValueOnce(1);
+      await getActiveUsers(request, mockResponse);
+      expect(mockResponse.on).toHaveBeenCalled();
+      expect(mockResponse.writeHead).toHaveBeenCalled();
+      expect(mockResponse.error).not.toHaveBeenCalled();
     });
   });
 });
