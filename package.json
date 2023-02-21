@@ -188,7 +188,6 @@
       "<rootDir>/src/tools/*CLI.js",
       "<rootDir>/src/tools/createAwsElasticSearchIndexesCli.js",
       "<rootDir>/src/tools/importTTAPlanGoals.js"
-
     ],
     "coverageThreshold": {
       "global": {
@@ -296,6 +295,7 @@
     "sequelize": "^6.12.5",
     "sequelize-cli": "^6.2.0",
     "throng": "^5.0.0",
+    "through2": "^4.0.2",
     "url-join": "^4.0.1",
     "uuid": "^8.3.2",
     "validator": "^13.7.0",

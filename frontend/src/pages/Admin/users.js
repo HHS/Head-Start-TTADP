@@ -11,6 +11,7 @@ import NavLink from '../../components/NavLink';
 import Container from '../../components/Container';
 import { updateUser, getUsers, getFeatures } from '../../fetchers/Admin';
 import { SCOPE_IDS, DECIMAL_BASE } from '../../Constants';
+import { getActiveUsers } from '../../fetchers/users';
 
 /**
  * Render the left hand user navigation in the Admin UI. Use the user's full name
@@ -181,12 +182,39 @@ function Admin(props) {
     setSelectedFeature(e.target.value);
   };
 
+  const handleActiveUsersDownload = async () => {
+    let csv;
+
+    try {
+      const activeUsers = await getActiveUsers();
+
+      csv = URL.createObjectURL(activeUsers);
+      let a = document.createElement('a');
+      a.href = csv;
+      a.download = 'Users.csv';
+      document.body.appendChild(a);
+      a.click();
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.log(err);
+    } finally {
+      URL.revokeObjectURL(csv);
+    }
+  };
+
   return (
     <>
       <Helmet>
         <title>User Administration</title>
       </Helmet>
       <Container>
+      <button
+          type="button"
+          className="usa-button usa-button--outline ttahub-export-reports"
+          onClick={handleActiveUsersDownload}
+        >
+          Download users
+        </button>
         <h1 className="text-center">User Administration</h1>
         <Grid row gap>
           <Grid col={4}>
