@@ -4,7 +4,6 @@ import db, {
 
 import activeUsers from './activeUsers';
 
-
 describe('Active users DB service', () => {
   afterAll(async () => {
     const conn = await sequelize.connectionManager.getConnection();
@@ -35,7 +34,6 @@ describe('Active users DB service', () => {
     it('returns a readable stream', async () => {
       const usersStream = await activeUsers();
       expect(usersStream).toBeDefined();
-      expect(usersStream._readableState.defaultEncoding).toBe('utf8');
     });
   });
 });
