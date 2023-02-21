@@ -227,7 +227,6 @@ describe('User handlers', () => {
         ...mockRequest,
         params: { token: 'token' },
       };
-      // currentUserId.mockResolvedValueOnce(1);
       await getActiveUsers(request, mockResponse);
       expect(mockResponse.on).toHaveBeenCalled();
       expect(mockResponse.writeHead).toHaveBeenCalled();
