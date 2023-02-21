@@ -23,6 +23,7 @@ import { withOtherEntities, withoutOtherEntities } from './otherEntities';
 import { withoutParticipants, withParticipants } from './participants';
 import { withMyReports, withoutMyReports } from './myReports';
 import { withReportText, withoutReportText } from './reportText';
+import { withTtaType, withoutTtaType } from './ttaType';
 
 export const topicToQuery = {
   reportId: {
@@ -119,6 +120,10 @@ export const topicToQuery = {
   reportText: {
     ctn: (query) => withReportText(query),
     nctn: (query) => withoutReportText(query),
+  },
+  ttaType: {
+    in: (query) => withTtaType(query),
+    nin: (query) => withoutTtaType(query),
   },
 };
 
