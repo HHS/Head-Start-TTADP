@@ -189,7 +189,7 @@ function Admin(props) {
       const activeUsers = await getActiveUsers();
 
       csv = URL.createObjectURL(activeUsers);
-      let a = document.createElement('a');
+      const a = document.createElement('a');
       a.href = csv;
       a.download = 'Users.csv';
       document.body.appendChild(a);
@@ -208,7 +208,7 @@ function Admin(props) {
         <title>User Administration</title>
       </Helmet>
       <Container>
-      <button
+        <button
           type="button"
           className="usa-button usa-button--outline ttahub-export-reports"
           onClick={handleActiveUsersDownload}
