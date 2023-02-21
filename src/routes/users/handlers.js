@@ -85,7 +85,6 @@ export async function getActiveUsers(req, res) {
 
     usersStream.on('end', () => res.end());
     usersStream.pipe(res);
-    
   } catch (error) {
     await handleErrors(req, res, error, { namespace: 'SERVICE:ACTIVEUSERS' });
   }
