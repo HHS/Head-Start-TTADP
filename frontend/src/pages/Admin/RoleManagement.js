@@ -1,25 +1,19 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useEffect, useState } from 'react';
-import { getRoles, saveRoles } from '../../fetchers/Admin';
+import { getRoles } from '../../fetchers/Admin';
 
 export default function RoleManagement() {
   const [roles, setRoles] = useState([]);
-  const [fetchError, setFetchError] = useState(false);
-
   useEffect(() => {
     async function fetchRoles() {
-      try {
-        const rolesFromApi = await getRoles();
-        setRoles(rolesFromApi);
-      } catch (error) {
-        setFetchError(true);
-      }
+      const rolesFromApi = await getRoles();
+      setRoles(rolesFromApi);
     }
 
-    if (!fetchError && roles.length < 1) {
+    if (roles.length < 1) {
       fetchRoles();
     }
-  }, [fetchError, roles.length]);
+  }, [roles.length]);
 
   if (!roles.length) {
     return <div>Loading...</div>;
@@ -27,8 +21,6 @@ export default function RoleManagement() {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    const updatedRoles = await saveRoles(roles.filter((role) => role.fullName && role.name));
-    setRoles(updatedRoles);
   };
 
   return (
@@ -71,9 +63,6 @@ export default function RoleManagement() {
             );
           })}
         </ul>
-        <div className="margin-top-2">
-          <input className="usa-button usa-button--primary" type="submit" value="Save changes" />
-        </div>
       </form>
     </div>
   );
