@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Alert, Dropdown } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -13,6 +13,8 @@ export default function RTTAPAHistory({ regionId, recipientId, recipientNameWith
   });
   const [reports, setReports] = useState(null);
   const [error, setError] = useState(null);
+
+  const sortValue = useMemo(() => `${sortConfig.sortBy}-${sortConfig.direction}`, [sortConfig.direction, sortConfig.sortBy]);
 
   const setSortBy = (e) => {
     const [sortBy, direction] = e.target.value.split('-');
@@ -53,7 +55,7 @@ export default function RTTAPAHistory({ regionId, recipientId, recipientNameWith
               <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="sortBy">Sort by</label>
               <Dropdown
                 onChange={setSortBy}
-                value={`${sortConfig.sortBy}-${sortConfig.direction}`}
+                value={sortValue}
                 className="margin-top-0"
                 id="sortBy"
                 name="sortBy"

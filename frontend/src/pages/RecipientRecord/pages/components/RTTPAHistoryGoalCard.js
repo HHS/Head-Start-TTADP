@@ -53,6 +53,6 @@ RTTAPAHistoryGoalCard.propTypes = {
     notes: PropTypes.string,
     createdAt: PropTypes.string.isRequired,
   }).isRequired,
-  recipientId: PropTypes.number.isRequired,
-  regionId: PropTypes.number.isRequired,
+  recipientId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+  regionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
 };
