@@ -72,12 +72,22 @@ export default function RTTAPA({
   const reviewDate = watch('reviewDate');
   const history = useHistory();
 
+  console.log({
+    location,
+    recipientNameWithRegion,
+    recipientId,
+    regionId,
+    errors,
+    history,
+  });
+
   /**
    * Get the initial goal ids from the query string
    */
   const initialGoalIds = useMemo(() => {
+    console.log({ location });
     const { search } = location;
-    console.log(search);
+    console.log({ search });
     const params = new URLSearchParams(search);
     return params.getAll('goalId[]').map((id) => parseInt(id, DECIMAL_BASE));
   }, [location]);
