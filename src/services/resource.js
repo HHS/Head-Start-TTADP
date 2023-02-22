@@ -251,6 +251,7 @@ const transformRecordByURLToResource = (records, resources) => (
 const filterResourcesForSync = (
   incomingResources,
   currentResources,
+  ignoreDestroy,
 ) => {
   if (!Array.isArray(incomingResources)
     || !Array.isArray(currentResources)) {
@@ -333,7 +334,7 @@ const filterResourcesForSync = (
         .filter((rff) => rff.genericId === resource.genericId
           && rff.resourceId === resource.resourceId)
         .length === 0;
-      if (isRemoved) {
+      if (isRemoved && resource.onApprovedAR !== true) {
         const removed = resources.removed
           ?.find((r) => r.genericId === resource.genericId);
         if (removed) {
@@ -502,7 +503,9 @@ const filterResourcesForSync = (
       ...(resourceActions.delta || []),
       ...(resourceActions.reduced || []),
     ],
-    destroy: resourceActions.removed,
+    destroy: !ignoreDestroy
+      ? resourceActions.removed
+      : [],
   };
 };
 
@@ -547,6 +550,7 @@ const genericProcessEntityForResourcesById = async (
   id,
   urls,
   resourceIds,
+  ignoreDestroy = false,
 ) => {
   const entity = await tableModel.findOne({
     where: { id },
@@ -562,7 +566,7 @@ const genericProcessEntityForResourcesById = async (
 
   return entity
     && typeof entity === 'object'
-    ? processFunction(entity, urls, resourceIds)
+    ? processFunction(entity, urls, resourceIds, ignoreDestroy)
     : Promise.resolve();
 };
 
@@ -576,6 +580,7 @@ const genericProcessEntityForResources = async (
   entity,
   urls,
   resourceIds,
+  ignoreDestroy = false,
 ) => {
   // Either used the current resource data from the entity passed in or look it up.
   const currentResources = entity[resourceTableAs]
@@ -642,6 +647,7 @@ const genericProcessEntityForResources = async (
   const filteredResources = filterResourcesForSync(
     incomingResources,
     currentResourcesGeneric,
+    ignoreDestroy,
   );
 
   // switch from generic genericId to activityReportObjectiveId.
@@ -719,6 +725,7 @@ const processActivityReportForResources = async (
   activityReport,
   urls,
   resourceIds,
+  ignoreDestroy,
 ) => genericProcessEntityForResources(
   ActivityReportResource,
   'activityReportResources',
@@ -728,6 +735,7 @@ const processActivityReportForResources = async (
   activityReport,
   urls,
   resourceIds,
+  ignoreDestroy,
 );
 
 // Process the current values on the report into the database for all referenced resources for
@@ -743,6 +751,7 @@ const processActivityReportForResourcesById = async (
   activityReportId,
   urls,
   [],
+  false,
 );
 
 const getResourcesForActivityReports = async (
@@ -780,6 +789,7 @@ const processNextStepForResources = async (
   nextStep,
   urls,
   resourceIds,
+  ignoreDestroy,
 ) => genericProcessEntityForResources(
   NextStepResource,
   'nextStepResources',
@@ -789,6 +799,7 @@ const processNextStepForResources = async (
   nextStep,
   urls,
   resourceIds,
+  ignoreDestroy,
 );
 
 // Process the current values on the report into the database for all referenced resources for
@@ -805,6 +816,7 @@ const processNextStepForResourcesById = async (
   nextStepId,
   urls,
   resourceIds,
+  false,
 );
 
 const getResourcesForNextSteps = async (
@@ -842,6 +854,7 @@ const processGoalForResources = async (
   goal,
   urls,
   resourceIds,
+  ignoreDestroy,
 ) => genericProcessEntityForResources(
   GoalResource,
   'goalResources',
@@ -851,6 +864,7 @@ const processGoalForResources = async (
   goal,
   urls,
   resourceIds,
+  ignoreDestroy,
 );
 
 // Process the current values on the report into the database for all referenced resources for
@@ -858,6 +872,8 @@ const processGoalForResources = async (
 const processGoalForResourcesById = async (
   goalId,
   urls,
+  resourceIds,
+  ignoreDestroy,
 ) => genericProcessEntityForResourcesById(
   Goal,
   GoalResource,
@@ -865,6 +881,8 @@ const processGoalForResourcesById = async (
   processGoalForResources,
   goalId,
   urls,
+  resourceIds,
+  ignoreDestroy,
 );
 
 const getResourcesForGoals = async (
@@ -902,6 +920,7 @@ const processGoalTemplateForResources = async (
   goalTemplate,
   urls,
   resourceIds,
+  ignoreDestroy,
 ) => genericProcessEntityForResources(
   GoalTemplateResource,
   'goalTemplateResources',
@@ -911,6 +930,7 @@ const processGoalTemplateForResources = async (
   goalTemplate,
   urls,
   resourceIds,
+  ignoreDestroy,
 );
 
 // Process the current values on the report into the database for all referenced resources for
@@ -919,6 +939,7 @@ const processGoalTemplateForResourcesById = async (
   goalTemplateId,
   urls,
   resourceIds,
+  ignoreDestroy,
 ) => genericProcessEntityForResourcesById(
   GoalTemplate,
   GoalTemplateResource,
@@ -927,6 +948,7 @@ const processGoalTemplateForResourcesById = async (
   goalTemplateId,
   urls,
   resourceIds,
+  ignoreDestroy,
 );
 
 const getResourcesForGoalTemplates = async (
@@ -964,6 +986,7 @@ const processActivityReportGoalForResources = async (
   activityReportGoal,
   urls,
   resourceIds,
+  ignoreDestroy,
 ) => genericProcessEntityForResources(
   ActivityReportGoalResource,
   'activityReportGoalResources',
@@ -973,6 +996,7 @@ const processActivityReportGoalForResources = async (
   activityReportGoal,
   urls,
   resourceIds,
+  ignoreDestroy,
 );
 
 // Process the current values on the report into the database for all referenced resources for
@@ -989,6 +1013,7 @@ const processActivityReportGoalForResourcesById = async (
   activityReportGoalId,
   urls,
   resourceIds,
+  false,
 );
 
 const getResourcesForActivityReportGoals = async (
@@ -1026,6 +1051,7 @@ const processObjectiveForResources = async (
   objective,
   urls,
   resourceIds,
+  ignoreDestroy,
 ) => genericProcessEntityForResources(
   ObjectiveResource,
   'objectiveResources',
@@ -1035,6 +1061,7 @@ const processObjectiveForResources = async (
   objective,
   urls,
   resourceIds,
+  ignoreDestroy,
 );
 
 // Process the current values on the report into the database for all referenced resources for
@@ -1043,6 +1070,7 @@ const processObjectiveForResourcesById = async (
   objectiveId,
   urls,
   resourceIds,
+  ignoreDestroy,
 ) => genericProcessEntityForResourcesById(
   Objective,
   ObjectiveResource,
@@ -1051,6 +1079,7 @@ const processObjectiveForResourcesById = async (
   objectiveId,
   urls,
   resourceIds,
+  ignoreDestroy,
 );
 
 const getResourcesForObjectives = async (
@@ -1088,6 +1117,7 @@ const processObjectiveTemplateForResources = async (
   objectiveTemplate,
   urls,
   resourceIds,
+  ignoreDestroy,
 ) => genericProcessEntityForResources(
   ObjectiveTemplateResource,
   'objectiveTemplateResources',
@@ -1097,6 +1127,7 @@ const processObjectiveTemplateForResources = async (
   objectiveTemplate,
   urls,
   resourceIds,
+  ignoreDestroy,
 );
 
 // Process the current values on the report into the database for all referenced resources for
@@ -1105,6 +1136,7 @@ const processObjectiveTemplateForResourcesById = async (
   objectiveTemplateId,
   urls,
   resourceIds,
+  ignoreDestroy,
 ) => genericProcessEntityForResourcesById(
   ObjectiveTemplate,
   ObjectiveTemplateResource,
@@ -1113,6 +1145,7 @@ const processObjectiveTemplateForResourcesById = async (
   objectiveTemplateId,
   urls,
   resourceIds,
+  ignoreDestroy,
 );
 
 const getResourcesForObjectiveTemplates = async (
@@ -1150,6 +1183,7 @@ const processActivityReportObjectiveForResources = async (
   activityReportObjective,
   urls,
   resourceIds,
+  ignoreDestroy,
 ) => genericProcessEntityForResources(
   ActivityReportObjectiveResource,
   'activityReportObjectiveResources',
@@ -1159,6 +1193,7 @@ const processActivityReportObjectiveForResources = async (
   activityReportObjective,
   urls,
   resourceIds,
+  ignoreDestroy,
 );
 
 // Process the current values on the report into the database for all referenced resources for
@@ -1175,6 +1210,7 @@ const processActivityReportObjectiveForResourcesById = async (
   activityReportObjectiveId,
   urls,
   resourceIds,
+  false,
 );
 
 const getResourcesForActivityReportObjectives = async (

@@ -230,12 +230,20 @@ export async function saveObjectiveAssociations(
   }
 
   // resources
-  const objectiveResources = await processObjectiveForResourcesById(
+  let objectiveResources = await processObjectiveForResourcesById(
     objective.id,
     resources
       .filter(({ value }) => value)
       .map(({ value }) => value),
+    [],
+    !deleteUnusedAssociations,
   );
+
+  // filter the returned resources to only those passed to not falsely include prior resources.
+  if (!deleteUnusedAssociations) {
+    objectiveResources = objectiveResources
+      .filter((oR) => resources.map((r) => r.value).includes(oR.resource.dataValues.url));
+  }
 
   const objectiveFiles = await Promise.all(
     files.map(
