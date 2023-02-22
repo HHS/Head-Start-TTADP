@@ -17,7 +17,7 @@ import AriaLiveContext from '../../../AriaLiveContext';
 
 const history = createMemoryHistory();
 
-const resourceOverviewUrl = join('api', 'widgets', 'resourceList');
+const resourceOverviewUrl = join('api', 'widgets', 'resourceDashboardOverview');
 const resourceUseUrl = join('api', 'widgets', 'resourceUse');
 
 const resourceUseDefault = {
