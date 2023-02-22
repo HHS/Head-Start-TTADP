@@ -80,8 +80,8 @@ export default function Llama({ user }) {
                 label="ARs collaborated on"
                 data={statistics.arsCollaboratedOn}
                 icon={faUserFriends}
-                iconColor={colors.success}
-                backgroundColor={colors.successLighter}
+                iconColor={colors.ttahubMediumDeepTeal}
+                backgroundColor={colors.ttahubDeepTealLight}
               />
             </Grid>
             <Grid row gap={1} className="margin-bottom-2">
@@ -103,8 +103,8 @@ export default function Llama({ user }) {
                 label="grants served"
                 data={statistics.grantsServed}
                 icon={faBuilding}
-                iconColor={colors.success}
-                backgroundColor={colors.successLighter}
+                iconColor={colors.ttahubMediumDeepTeal}
+                backgroundColor={colors.ttahubDeepTealLight}
               />
             </Grid>
             <Grid row gap={1}>
