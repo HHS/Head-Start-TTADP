@@ -5,6 +5,15 @@ import { Table, Grid } from '@trussworks/react-uswds';
 import Container from '../components/Container';
 import './HorizontalTableWidget.scss';
 
+const trimLongURLs = (url) => {
+  let newUrl = url;
+  if (newUrl.length >= 40) {
+    newUrl = newUrl.substring(0, 40);
+    newUrl += '...';
+  }
+  return newUrl;
+};
+
 export default function HorizontalTableWidget(
   {
     title,
@@ -49,7 +58,7 @@ export default function HorizontalTableWidget(
                     r.isUrl === 'true'
                       ? (
                         <a style={{ display: 'table-cell' }} title="Links to Resource" aria-label={`Links to Resource ${r.heading}`} href={r.heading} target="_blank" rel="noreferrer">
-                          {r.heading}
+                          {trimLongURLs(r.heading)}
                         </a>
                       )
                       : r.heading
