@@ -28,11 +28,23 @@ function PageWithHeading({
   recipientNameWithRegion,
   backLink,
   slug,
+  hasAlerts,
 }) {
   const headerMargin = backLink.props.children ? 'margin-top-0' : 'margin-top-5';
 
+  // This resizes the site nav content's gap to account for the header if there is an alert
+  useEffect(() => {
+    const appWrapper = document.querySelector('#appWrapper');
+    if (hasAlerts && appWrapper) {
+      const header = document.querySelector('.smart-hub-header.has-alerts');
+      if (header) {
+        appWrapper.style.marginTop = `${appWrapper.style.marginTop + header.offsetHeight}px`;
+      }
+    }
+  }, [hasAlerts]);
+
   return (
-    <>
+    <div>
       <RecipientTabs region={regionId} recipientId={recipientId} backLink={backLink} />
       {
             error ? (
@@ -52,7 +64,7 @@ function PageWithHeading({
               </>
             )
           }
-    </>
+    </div>
   );
 }
 
@@ -64,6 +76,7 @@ PageWithHeading.propTypes = {
   recipientNameWithRegion: PropTypes.string.isRequired,
   backLink: PropTypes.node,
   slug: PropTypes.string,
+  hasAlerts: PropTypes.bool.isRequired,
 };
 
 PageWithHeading.defaultProps = {
@@ -72,7 +85,7 @@ PageWithHeading.defaultProps = {
   slug: '',
 };
 
-export default function RecipientRecord({ match }) {
+export default function RecipientRecord({ match, hasAlerts }) {
   const { recipientId, regionId } = match.params;
 
   const [loading, setLoading] = useState(true);
@@ -148,6 +161,7 @@ export default function RecipientRecord({ match }) {
               error={error}
               recipientNameWithRegion={recipientNameWithRegion}
               slug="tta-history"
+              hasAlerts={hasAlerts}
             >
               <TTAHistory
                 recipientId={recipientId}
@@ -165,6 +179,7 @@ export default function RecipientRecord({ match }) {
               recipientId={recipientId}
               error={error}
               recipientNameWithRegion={recipientNameWithRegion}
+              hasAlerts={hasAlerts}
             >
               <Profile
                 recipientName={recipientName}
@@ -183,6 +198,7 @@ export default function RecipientRecord({ match }) {
               error={error}
               recipientNameWithRegion={`TTA goals for ${recipientNameWithRegion}`}
               slug="print-goals"
+              hasAlerts={hasAlerts}
               backLink={(
                 <Link
                   className="ttahub-recipient-record--tabs_back-to-search margin-top-2 margin-bottom-3 display-inline-block"
@@ -211,6 +227,7 @@ export default function RecipientRecord({ match }) {
               recipientId={recipientId}
               error={error}
               recipientNameWithRegion={recipientNameWithRegion}
+              hasAlerts={hasAlerts}
             >
               <GoalsObjectives
                 location={location}
@@ -293,6 +310,7 @@ export default function RecipientRecord({ match }) {
               recipientId={recipientId}
               error={error}
               recipientNameWithRegion={recipientNameWithRegion}
+              hasAlerts={hasAlerts}
             >
               <Profile
                 recipientName={recipientName}
@@ -308,5 +326,6 @@ export default function RecipientRecord({ match }) {
 }
 
 RecipientRecord.propTypes = {
+  hasAlerts: PropTypes.bool.isRequired,
   match: ReactRouterPropTypes.match.isRequired,
 };
