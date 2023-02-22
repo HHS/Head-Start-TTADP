@@ -15,7 +15,7 @@ import Container from '../../../components/Container';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import Req from '../../../components/Req';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
-import { getRecipientGoals } from '../../../fetchers/recipient';
+// import { getRecipientGoals } from '../../../fetchers/recipient';
 import { createRttapa } from '../../../fetchers/rttapa';
 import GoalsToggle from './components/GoalsToggle';
 
@@ -103,39 +103,39 @@ export default function RTTAPA({
     }
   }, [goals]);
 
-  useEffect(() => {
-    async function getGoals() {
-      try {
-        const sortConfig = {
-          sortBy: 'goalName',
-          direction: 'desc',
-          offset: 0,
-        };
+  // useEffect(() => {
+  //   async function getGoals() {
+  //     try {
+  //       const sortConfig = {
+  //         sortBy: 'goalName',
+  //         direction: 'desc',
+  //         offset: 0,
+  //       };
 
-        const { goalRows } = await getRecipientGoals(
-          recipientId,
-          regionId,
-          sortConfig.sortBy,
-          sortConfig.direction,
-          sortConfig.offset,
-          false,
-          {},
-          goalIds,
-        );
-        console.log(goalRows);
-        setGoals(goalRows);
-      } catch (error) {
-      // eslint-disable-next-line no-console
-        console.error(error);
-      }
-    }
+  //       const { goalRows } = await getRecipientGoals(
+  //         recipientId,
+  //         regionId,
+  //         sortConfig.sortBy,
+  //         sortConfig.direction,
+  //         sortConfig.offset,
+  //         false,
+  //         {},
+  //         goalIds,
+  //       );
+  //       console.log(goalRows);
+  //       setGoals(goalRows);
+  //     } catch (error) {
+  //     // eslint-disable-next-line no-console
+  //       console.error(error);
+  //     }
+  //   }
 
-    if (!goals || !goals.length) {
-      if (goalIds && goalIds.length) {
-        getGoals();
-      }
-    }
-  }, [goalIds, goals, recipientId, regionId]);
+  //   if (!goals || !goals.length) {
+  //     if (goalIds && goalIds.length) {
+  //       getGoals();
+  //     }
+  //   }
+  // }, [goalIds, goals, recipientId, regionId]);
 
   const onSubmit = async (data) => {
     if (!goalIds || !goalIds.length) {
