@@ -3,13 +3,13 @@ import PropTypes from 'prop-types';
 import withWidgetData from './withWidgetData';
 import HorizontalTableWidget from './HorizontalTableWidget';
 
-function ResourceUse({ data, loading, headers }) {
+function ResourceUse({ data, loading }) {
   return (
     <HorizontalTableWidget
       title="Resource use"
       subtitle="Showing the 10 resources cited most often on Activity Reports"
-      headers={headers}
-      data={data}
+      headers={data.headers}
+      data={data.resources}
       loading={loading}
       loadingLabel="Resource use loading"
       firstHeading="Resource URL:"
@@ -19,20 +19,21 @@ function ResourceUse({ data, loading, headers }) {
 
 ResourceUse.propTypes = {
   data: PropTypes.oneOfType([
-    PropTypes.arrayOf(
-      PropTypes.shape({
-        title: PropTypes.string,
-        value: PropTypes.number,
-      }),
-    ), PropTypes.shape({}),
+    PropTypes.shape({
+      headers: PropTypes.arrayOf(PropTypes.string),
+      resources: PropTypes.arrayOf(
+        PropTypes.shape({
+          title: PropTypes.string,
+          value: PropTypes.number,
+        }),
+      ),
+    }),
+    PropTypes.shape({}),
   ]),
   loading: PropTypes.bool.isRequired,
-  headers: PropTypes.arrayOf(PropTypes.string),
 };
-
 ResourceUse.defaultProps = {
-  data: [],
-  headers: [],
+  data: { headers: [], resources: [] },
 };
 
-export default withWidgetData(ResourceUse, 'resourceList');
+export default withWidgetData(ResourceUse, 'resourceUse');

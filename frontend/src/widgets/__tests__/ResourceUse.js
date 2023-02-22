@@ -3,87 +3,87 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import ResourceUse from '../ResourceUse';
 
-const headersData = ['Jan-22', 'Feb-22', 'Mar-22'];
-const testData = [
-  {
-    heading: 'https://eclkc.ohs.acf.hhs.gov/school-readiness/effective-practice-guides/effective-practice-guides',
-    isUrl: 'true',
-    data: [
-      {
-        title: 'Jan-22',
-        value: '17',
-      },
-      {
-        title: 'Feb-22',
-        value: '18',
-      },
-      {
-        title: 'Mar-22',
-        value: '19',
-      },
-      {
-        title: 'total',
-        value: '20',
-      },
-    ],
-  },
-  {
-    heading: 'https://test1.gov',
-    isUrl: 'true',
-    data: [
-      {
-        title: 'Jan-22',
-        value: '21',
-      },
-      {
-        title: 'Feb-22',
-        value: '22',
-      },
-      {
-        title: 'Mar-22',
-        value: '23',
-      },
-      {
-        title: 'total',
-        value: '24',
-      },
-    ],
-  },
-  {
-    heading: 'Non URL',
-    isUrl: 'false',
-    data: [
-      {
-        title: 'Jan-22',
-        value: '25',
-      },
-      {
-        title: 'Feb-22',
-        value: '26',
-      },
-      {
-        title: 'Mar-22',
-        value: '27',
-      },
-      {
-        title: 'total',
-        value: '28',
-      },
-    ],
-
-  },
-];
+const testData = {
+  headers: ['Jan-22', 'Feb-22', 'Mar-22'],
+  resources: [
+    {
+      heading: 'https://eclkc.ohs.acf.hhs.gov/school-readiness/effective-practice-guides/effective-practice-guides',
+      isUrl: 'true',
+      data: [
+        {
+          title: 'Jan-22',
+          value: '17',
+        },
+        {
+          title: 'Feb-22',
+          value: '18',
+        },
+        {
+          title: 'Mar-22',
+          value: '19',
+        },
+        {
+          title: 'total',
+          value: '20',
+        },
+      ],
+    },
+    {
+      heading: 'https://test1.gov',
+      isUrl: 'true',
+      data: [
+        {
+          title: 'Jan-22',
+          value: '21',
+        },
+        {
+          title: 'Feb-22',
+          value: '22',
+        },
+        {
+          title: 'Mar-22',
+          value: '23',
+        },
+        {
+          title: 'total',
+          value: '24',
+        },
+      ],
+    },
+    {
+      heading: 'Non URL',
+      isUrl: 'false',
+      data: [
+        {
+          title: 'Jan-22',
+          value: '25',
+        },
+        {
+          title: 'Feb-22',
+          value: '26',
+        },
+        {
+          title: 'Mar-22',
+          value: '27',
+        },
+        {
+          title: 'total',
+          value: '28',
+        },
+      ],
+    },
+  ],
+};
 
 const renderResourceUse = (data) => {
   render(<ResourceUse
-    headers={headersData}
     data={data}
   />);
 };
 
 describe('Resource Use Widget', () => {
   it('renders correctly without data', async () => {
-    const data = [];
+    const data = { headers: ['Jan-22', 'Feb-22', 'Mar-22'], resources: [] };
     renderResourceUse(data);
 
     expect(screen.getByText(/Resource use/i)).toBeInTheDocument();
