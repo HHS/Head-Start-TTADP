@@ -7,7 +7,7 @@ import { withReasons, withoutReasons } from './reasons';
 import { withRecipientId } from './recipientId';
 import { withRegion, withoutRegion } from './region';
 import { withRoles, withoutRoles } from './role';
-import { withGrantNumber, withoutGrantNumber } from './grantNumber';
+import { afterStartDate, beforeStartDate, withinStartDates } from './startDate';
 
 export const topicToQuery = {
   createDate: {
@@ -15,6 +15,12 @@ export const topicToQuery = {
     aft: (query) => afterCreateDate(query),
     win: (query) => withinCreateDate(query),
     in: (query) => withinCreateDate(query),
+  },
+  startDate: {
+    bef: (query) => beforeStartDate(query),
+    aft: (query) => afterStartDate(query),
+    win: (query) => withinStartDates(query),
+    in: (query) => withinStartDates(query),
   },
   status: {
     in: (query) => withStatus(query),

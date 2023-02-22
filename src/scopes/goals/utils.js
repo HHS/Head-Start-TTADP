@@ -3,6 +3,13 @@ import { sequelize } from '../../models';
 import { filterAssociation as filter } from '../utils';
 
 function goalInSubQuery(baseQuery, searchTerms, operator, comparator) {
+  if (comparator.toLowerCase() === 'between') {
+    const [min, max] = searchTerms;
+    return {
+      [operator]: sequelize.literal(`"Goal"."id" ${operator} (${baseQuery} ${comparator} ${min} AND ${max})`),
+    };
+  }
+
   return searchTerms.map((term) => sequelize.literal(`"Goal"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(String(term).trim())})`));
 }
 
