@@ -1,0 +1,37 @@
+@media(min-width: 1500px) {
+    .celebratory-llama {
+        display: block;
+        position: absolute;
+    }
+}
+
+.celebratory-llama {
+    animation: walk-on-by 5s ease forwards;
+    left: 50px;
+    z-index: 1;
+}
+
+.statistics-content {
+    z-index: 2;
+}
+.statistics-content p,
+.statistics-content h2 {
+   max-width: 100%;
+}
+
+@media(prefers-reduced-motion: reduce) {
+    .celebratory-llama {
+        animation: none;
+    }
+}
+
+
+
+@keyframes walk-on-by {
+    0% {
+        transform: translateX(300%);
+    }
+    100% {
+        transform: translateX(0);
+    }
+}
