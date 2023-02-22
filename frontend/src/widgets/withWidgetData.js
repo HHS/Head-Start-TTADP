@@ -22,30 +22,7 @@ const withWidgetData = (Widget, widgetId) => {
         try {
           updateLoading(true);
           const query = filtersToQueryString(filters);
-          let fetchedData;
-          console.log('ID: ', widgetId);
-          if (widgetId === 'resourceList') {
-            fetchedData = {
-              report: {
-                numResources: '6,135',
-                num: '17,914',
-                percentResources: '1.65%',
-              },
-              resource: {
-                numEclkc: '818',
-                num: '365',
-                percentEclkc: '.66%',
-              },
-              recipient: {
-                numResources: '148',
-              },
-              participant: {
-                numParticipants: '565',
-              },
-            };
-          } else {
-            fetchedData = await fetchWidget(widgetId, query);
-          }
+          const fetchedData = await fetchWidget(widgetId, query);
           updateData(fetchedData);
           updateError('');
         } catch (e) {
