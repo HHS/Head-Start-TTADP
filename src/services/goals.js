@@ -242,7 +242,7 @@ export async function saveObjectiveAssociations(
   // filter the returned resources to only those passed to not falsely include prior resources.
   if (!deleteUnusedAssociations) {
     objectiveResources = objectiveResources
-      .filter((oR) => resources.map((r) => r.value).includes(oR.resource.dataValues.url));
+      ?.filter((oR) => resources.map((r) => r.value).includes(oR.resource.dataValues.url));
   }
 
   const objectiveFiles = await Promise.all(
@@ -753,7 +753,15 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
               delete of.file;
               return of;
             }),
-          resources: objective.resources.map((resource) => ({ ...resource.dataValues })),
+          resources: objective.objectiveResources
+            .map((objectiveResource) => {
+              const oR = {
+                ...objectiveResource.dataValues,
+                ...objectiveResource.resource.dataValues,
+              };
+              delete oR.resource;
+              return oR;
+            }),
         };
         delete o.objectiveTopics;
         delete o.objectiveFiles;
