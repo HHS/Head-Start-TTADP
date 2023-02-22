@@ -94,23 +94,29 @@ export default function RTTAPA({
 
   useEffect(() => {
     async function getGoals() {
-      const sortConfig = {
-        sortBy: 'goalName',
-        direction: 'desc',
-        offset: 0,
-      };
+      try {
+        const sortConfig = {
+          sortBy: 'goalName',
+          direction: 'desc',
+          offset: 0,
+        };
 
-      const { goalRows } = await getRecipientGoals(
-        recipientId,
-        regionId,
-        sortConfig.sortBy,
-        sortConfig.direction,
-        sortConfig.offset,
-        false,
-        {},
-        goalIds,
-      );
-      setGoals(goalRows);
+        const { goalRows } = await getRecipientGoals(
+          recipientId,
+          regionId,
+          sortConfig.sortBy,
+          sortConfig.direction,
+          sortConfig.offset,
+          false,
+          {},
+          goalIds,
+        );
+        console.log(goalRows);
+        setGoals(goalRows);
+      } catch (error) {
+      // eslint-disable-next-line no-console
+        console.error(error);
+      }
     }
 
     if (!goals || !goals.length) {
@@ -135,8 +141,7 @@ export default function RTTAPA({
         goalIds,
       });
 
-      // on success redirect to the recipient record page
-      // todo - this should go to rttapa history
+      // on success redirect to the rttapa history page
       history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa-history`);
     } catch (error) {
       // eslint-disable-next-line no-console
