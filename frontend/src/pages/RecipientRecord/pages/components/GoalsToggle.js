@@ -30,8 +30,8 @@ export default function GoalsToggle({
           setShowGoals(!showGoals);
         }}
       >
-        View goals
-        {goalIds > 1 ? 's' : ''}
+        View goal
+        {goalIds.length > 1 ? 's' : ''}
         <strong className="margin-left-1">
           (
           {goalIds.length}
@@ -64,6 +64,7 @@ export default function GoalsToggle({
                   onRemove(goal);
                 }}
                 className="flex-align-self-center"
+                aria-label={`Remove goal ${goal.id}`}
                 unstyled
               >
                 <FontAwesomeIcon className="margin-left-1 margin-top-2" color={colors.textInk} icon={faTrashCan} />
