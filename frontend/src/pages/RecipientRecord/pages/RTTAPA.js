@@ -108,7 +108,7 @@ export default function RTTAPA({
           sortConfig.direction,
           sortConfig.offset,
           false,
-          {},
+          false,
           goalIds,
         );
         setGoals(goalRows);
