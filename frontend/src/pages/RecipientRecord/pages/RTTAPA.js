@@ -77,6 +77,7 @@ export default function RTTAPA({
    */
   const initialGoalIds = useMemo(() => {
     const { search } = location;
+    console.log(search);
     const params = new URLSearchParams(search);
     return params.getAll('goalId[]').map((id) => parseInt(id, DECIMAL_BASE));
   }, [location]);
