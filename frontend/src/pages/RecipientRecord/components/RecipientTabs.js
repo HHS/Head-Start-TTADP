@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import './RecipientTabs.scss';
 import colors from '../../../colors';
+import FeatureFlag from '../../../components/FeatureFlag';
 
 export default function RecipientTabs({ region, recipientId, backLink }) {
   const linkClass = 'display-block padding-2 ttahub-recipient-record--tabs_link';
@@ -23,9 +24,11 @@ export default function RecipientTabs({ region, recipientId, backLink }) {
           <li className={liClass}>
             <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/goals-objectives`}>Goals & Objectives</NavLink>
           </li>
-          <li className={liClass}>
-            <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/rttapa-history`}>RTTAPA History</NavLink>
-          </li>
+          <FeatureFlag flag="rttapa_form">
+            <li className={liClass}>
+              <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/rttapa-history`}>RTTAPA History</NavLink>
+            </li>
+          </FeatureFlag>
         </ul>
       </nav>
       { backLink && backLink.props && backLink.props.children ? (<FontAwesomeIcon className="margin-left-2 margin-right-1" data-testid="back-link-icon" color={colors.ttahubMediumBlue} icon={faArrowLeft} />) : null }
