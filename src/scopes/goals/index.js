@@ -7,6 +7,7 @@ import { withReasons, withoutReasons } from './reasons';
 import { withRecipientId } from './recipientId';
 import { withRegion, withoutRegion } from './region';
 import { withRoles, withoutRoles } from './role';
+import { containsGrantNumber, doesNotContainGrantNumber, withGrantNumber, withoutGrantNumber } from './grantNumber';
 import { afterStartDate, beforeStartDate, withinStartDates } from './startDate';
 
 export const topicToQuery = {
@@ -48,6 +49,8 @@ export const topicToQuery = {
   grantNumber: {
     in: (query) => withGrantNumber(query),
     nin: (query) => withoutGrantNumber(query),
+    ctn: (query) => containsGrantNumber(query),
+    nctn: (query) => doesNotContainGrantNumber(query),
   },
 };
 
