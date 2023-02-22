@@ -9,6 +9,7 @@ import userEvent from '@testing-library/user-event';
 import RTTAPA from '../RTTAPA';
 import UserContext from '../../../../UserContext';
 import { SCOPE_IDS } from '../../../../Constants';
+import AppLoadingContext from '../../../../AppLoadingContext';
 
 const rttapaUrl = join('/', 'api', 'rttapa');
 const recipientGoalsUrl = join(
@@ -86,18 +87,20 @@ describe('RTTAPA', () => {
   const renderRttapa = () => {
     render(
       <MemoryRouter>
-        <UserContext.Provider value={{ user }}>
-          <RTTAPA
-            recipientId="1"
-            regionId="1"
-            recipientNameWithRegion="Test Recipient"
-            location={{
-              pathname: '/recipient/1/region/1/rttapa',
-              search: '?goalId[]=1&goalId[]=2',
-              hash: '',
-            }}
-          />
-        </UserContext.Provider>
+        <AppLoadingContext.Provider value={{ setIsAppLoading: () => {} }}>
+          <UserContext.Provider value={{ user }}>
+            <RTTAPA
+              recipientId="1"
+              regionId="1"
+              recipientNameWithRegion="Test Recipient"
+              location={{
+                pathname: '/recipient/1/region/1/rttapa',
+                search: '?goalId[]=1&goalId[]=2',
+                hash: '',
+              }}
+            />
+          </UserContext.Provider>
+        </AppLoadingContext.Provider>
       </MemoryRouter>,
     );
   };
@@ -150,7 +153,7 @@ describe('RTTAPA', () => {
     expect(fetchMock.called()).toBe(false);
     fetchMock.post(rttapaUrl, {});
     act(() => {
-      userEvent.click(screen.getByText('Submit'));
+      userEvent.click(screen.getByText('Submit RTTAPA'));
     });
     await waitFor(() => expect(fetchMock.called()).toBe(true));
   });
@@ -176,7 +179,7 @@ describe('RTTAPA', () => {
     expect(fetchMock.called()).toBe(false);
     fetchMock.post(rttapaUrl, 500);
     act(() => {
-      userEvent.click(screen.getByText('Submit'));
+      userEvent.click(screen.getByText('Submit RTTAPA'));
     });
     await waitFor(() => expect(fetchMock.called()).toBe(false));
   });
@@ -219,7 +222,7 @@ describe('RTTAPA', () => {
     expect(fetchMock.called()).toBe(false);
     fetchMock.post(rttapaUrl, {});
     act(() => {
-      userEvent.click(screen.getByText('Submit'));
+      userEvent.click(screen.getByText('Submit RTTAPA'));
     });
     await waitFor(() => expect(fetchMock.called()).toBe(false));
   });

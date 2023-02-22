@@ -46,9 +46,9 @@ export default function RTTAPAHistory({ regionId, recipientId, recipientNameWith
           {recipientNameWithRegion}
         </title>
       </Helmet>
-      <Container>
-        <h2>Reviewed regional TTA plan agreements</h2>
-        <div className="ttahub-rttapa-controls padding-y-4">
+      <Container className="margin-top-4" paddingX={3} paddingY={3}>
+        <h2 className="smart-hub-title-big-serif margin-top-0 margin-bottom-0">Reviewed regional TTA plan agreements</h2>
+        <div className="ttahub-rttapa-controls padding-y-3">
           <div className="desktop:display-flex flex-justify">
             <div className="desktop:display-flex flex-align-center">
               {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}

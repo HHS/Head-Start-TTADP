@@ -59,8 +59,8 @@ export default function GoalCardsHeader({
   })();
 
   return (
-    <div className="padding-x-3">
-      <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2">
+    <div className="padding-x-3 position-relative">
+      <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2 bg-white">
         <h2 className="font-body-lg margin-left-2 margin-right-1 margin-y-3">{title}</h2>
         { showAddNewButton ? (
           <span className="smart-hub--table-controls desktop:margin-x-2 desktop:margin-y-0 margin-2 display-flex flex-row flex-align-center">
@@ -77,7 +77,7 @@ export default function GoalCardsHeader({
           </span>
         ) : null }
       </div>
-      <div className="desktop:display-flex flex-justify ">
+      <div className="desktop:display-flex flex-justify bg-white">
         <div className="desktop:display-flex flex-align-center">
           {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
           <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="sortBy">Sort by</label>
@@ -111,7 +111,7 @@ export default function GoalCardsHeader({
 
       </div>
       <hr className="border-1px border-base-lighter  bg-base-lighter margin-y-3" />
-      <div className="margin-left-3 display-flex flex-row flex-align-center">
+      <div className="margin-left-3 display-flex flex-row flex-align-center position-sticky top-0 bg-white" style={{ zIndex: 2 }}>
         <Checkbox
           label="Select all"
           id="select-all-goal-checkboxes"

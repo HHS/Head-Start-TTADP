@@ -1,4 +1,6 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, {
+  useMemo, useState, useEffect, useContext,
+} from 'react';
 import PropTypes from 'prop-types';
 import { useForm } from 'react-hook-form/dist/index.ie11';
 import {
@@ -8,7 +10,7 @@ import {
   ErrorMessage,
   Alert,
 } from '@trussworks/react-uswds';
-import { useHistory } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
 import { Helmet } from 'react-helmet';
 import { DECIMAL_BASE } from '../../../Constants';
@@ -19,6 +21,7 @@ import ControlledDatePicker from '../../../components/ControlledDatePicker';
 import { getRecipientGoals } from '../../../fetchers/recipient';
 import { createRttapa } from '../../../fetchers/rttapa';
 import GoalsToggle from './components/GoalsToggle';
+import AppLoadingContext from '../../../AppLoadingContext';
 
 const FormItem = ({
   label, name, required, errors, children,
@@ -67,11 +70,14 @@ export default function RTTAPA({
   } = useForm({
     reviewDate: '',
     notes: '',
+    mode: 'onBlur',
   });
 
   const { errors } = formState;
   const reviewDate = watch('reviewDate');
   const history = useHistory();
+
+  const loadingContext = useContext(AppLoadingContext);
 
   /**
    * Get the initial goal ids from the query string
@@ -96,6 +102,7 @@ export default function RTTAPA({
 
   useEffect(() => {
     async function getGoals() {
+      loadingContext.setIsAppLoading(true);
       try {
         const sortConfig = {
           sortBy: 'goalName',
@@ -116,6 +123,8 @@ export default function RTTAPA({
         setGoals(goalRows);
       } catch (error) {
         setFetchError('There was an error fetching your goals');
+      } finally {
+        loadingContext.setIsAppLoading(false);
       }
     }
 
@@ -124,7 +133,7 @@ export default function RTTAPA({
         getGoals();
       }
     }
-  }, [goalIds, goals, recipientId, regionId]);
+  }, [goalIds, goals, loadingContext, recipientId, regionId]);
 
   const onSubmit = async (data) => {
     if (!goalIds || !goalIds.length) {
@@ -133,6 +142,7 @@ export default function RTTAPA({
     }
 
     try {
+      loadingContext.setIsAppLoading(true);
       await createRttapa({
         recipientId,
         regionId,
@@ -145,6 +155,8 @@ export default function RTTAPA({
       history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa-history`);
     } catch (error) {
       setFetchError('Sorry, something went wrong');
+    } finally {
+      loadingContext.setIsAppLoading(false);
     }
   };
 
@@ -162,12 +174,12 @@ export default function RTTAPA({
         </title>
       </Helmet>
       <h1 className="page-heading margin-left-2 margin-top-3">{recipientNameWithRegion}</h1>
-      <Container className="margin-y-3 margin-left-2">
-        <h2>
+      <Container className="margin-y-3 margin-left-2" paddingY={4} paddingX={4}>
+        <h2 className="smart-hub-title-big-serif margin-top-0 margin-bottom-4">
           Regional TTA plan agreement (RTTAPA)
         </h2>
 
-        <h3>Selected RTTAPA goals</h3>
+        <h3 className="font-sans-lg margin-top-0 margin-bottom-2">Selected RTTAPA goals</h3>
         { !fetchError ? (
           <GoalsToggle
             goals={goals}
@@ -180,7 +192,7 @@ export default function RTTAPA({
           />
         ) : <Alert type="error">{fetchError}</Alert> }
 
-        <h3>RTTAPA details</h3>
+        <h3 className="margin-top-4 margin-bottom-0 font-sans-lg">RTTAPA details</h3>
         <form onSubmit={handleSubmit(onSubmit)}>
           <IndicatesRequiredField />
           <FormItem
@@ -213,8 +225,10 @@ export default function RTTAPA({
           <input type="hidden" name="goalIds" ref={register()} value={goalIds.join(',')} />
 
           <div className="margin-top-3">
-            <Button type="submit">Submit</Button>
-            <Button type="button" outline>Cancel</Button>
+            <Button type="submit">Submit RTTAPA</Button>
+            <Link to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals-objectives`} className="usa-button usa-button--outline">
+              Cancel
+            </Link>
           </div>
         </form>
       </Container>
