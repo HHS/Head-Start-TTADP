@@ -648,3 +648,74 @@ export async function resourcesDashboardOverview(scopes) {
     },
   };
 }
+
+/*
+WidgetID: resourceDashboardOverview
+Expected JSON (we have this now):
+
+{
+  report: {
+    numResources: '8,135',
+    num: '19,914',
+    percentResources: '40.85%',
+  },
+  resource: {
+    numEclkc: '1,819',
+    num: '2,365',
+    percentEclkc: '79.91%',
+  },
+  recipient: {
+    numResources: '248',
+  },
+  participant: {
+    numParticipants: '765',
+  },
+}
+
+WidgetID: resourceUse
+Expected JSON:
+- We add a property for all headers.
+- There is a TOTAL entry for each resource.
+- Be sure to include 0 entries for every month in range.
+{
+  headers: ['Jan-22', 'Feb-22'],
+  resources: [
+    {
+      heading: 'https://resource1.gov',
+      isUrl: 'true',
+      data: [
+          {
+            title: 'Jan-22',
+             value: '17',
+          },
+          {
+            title: 'Feb-22',
+            value: '18',
+          },
+          {
+            title: 'total',
+            value: '100',
+          },
+        ],
+    },
+    {
+      heading: 'https://resource2.gov',
+      isUrl: 'true',
+      data: [
+          {
+            title: 'Jan-22',
+             value: '14',
+          },
+          {
+            title: 'Feb-22',
+            value: '20',
+          },
+          {
+            title: 'total',
+            value: '88',
+          },
+        ],
+    },
+  ],
+},
+*/
