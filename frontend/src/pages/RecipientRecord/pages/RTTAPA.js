@@ -6,6 +6,7 @@ import {
   Label,
   FormGroup,
   ErrorMessage,
+  Alert,
 } from '@trussworks/react-uswds';
 import { useHistory } from 'react-router-dom';
 import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
@@ -23,7 +24,7 @@ const FormItem = ({
   label, name, required, errors, children,
 }) => (
   <FormGroup error={errors[name]}>
-    <Label>
+    <Label htmlFor={name}>
       {label}
       {required && <Req />}
       <ReactHookFormError
@@ -83,11 +84,12 @@ export default function RTTAPA({
 
   const [goalIds, setGoalIds] = useState(initialGoalIds);
   const [goals, setGoals] = useState([]);
+  const [fetchError, setFetchError] = useState(null);
   const [showGoals, setShowGoals] = useState(false);
 
   // update goal ids when goals change
   useEffect(() => {
-    if (goals && goals.length) {
+    if (goals && Array.isArray(goals)) {
       setGoalIds(goals.map((goal) => goal.id));
     }
   }, [goals]);
@@ -113,8 +115,7 @@ export default function RTTAPA({
         );
         setGoals(goalRows);
       } catch (error) {
-      // eslint-disable-next-line no-console
-        console.error(error);
+        setFetchError('There was an error fetching your goals');
       }
     }
 
@@ -143,8 +144,7 @@ export default function RTTAPA({
       // on success redirect to the rttapa history page
       history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa-history`);
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error(error);
+      setFetchError('Sorry, something went wrong');
     }
   };
 
@@ -168,15 +168,17 @@ export default function RTTAPA({
         </h2>
 
         <h3>Selected RTTAPA goals</h3>
-        <GoalsToggle
-          goals={goals}
-          showGoals={showGoals}
-          setShowGoals={setShowGoals}
-          goalIds={goalIds}
-          onRemove={onRemove}
-          recipientId={recipientId}
-          regionId={regionId}
-        />
+        { !fetchError ? (
+          <GoalsToggle
+            goals={goals}
+            showGoals={showGoals}
+            setShowGoals={setShowGoals}
+            goalIds={goalIds}
+            onRemove={onRemove}
+            recipientId={recipientId}
+            regionId={regionId}
+          />
+        ) : <Alert type="error">{fetchError}</Alert> }
 
         <h3>RTTAPA details</h3>
         <form onSubmit={handleSubmit(onSubmit)}>
