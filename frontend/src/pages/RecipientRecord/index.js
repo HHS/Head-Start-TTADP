@@ -18,6 +18,7 @@ import FilterContext from '../../FilterContext';
 import { GOALS_OBJECTIVES_FILTER_KEY } from './pages/constants';
 import RTTAPA from './pages/RTTAPA';
 import RTTAPAHistory from './pages/RTTAPAHistory';
+import FeatureFlag from '../../components/FeatureFlag';
 
 function PageWithHeading({
   children,
@@ -254,31 +255,35 @@ export default function RecipientRecord({ match }) {
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/rttapa/new"
           render={({ location }) => (
-            <RTTAPA
-              regionId={regionId}
-              recipientId={recipientId}
-              recipientNameWithRegion={recipientNameWithRegion}
-              location={location}
-            />
+            <FeatureFlag renderNotFound flag="rttapa_form">
+              <RTTAPA
+                regionId={regionId}
+                recipientId={recipientId}
+                recipientNameWithRegion={recipientNameWithRegion}
+                location={location}
+              />
+            </FeatureFlag>
           )}
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/rttapa-history"
           render={() => (
-            <PageWithHeading
-              regionId={regionId}
-              recipientId={recipientId}
-              error={error}
-              recipientNameWithRegion={recipientNameWithRegion}
-              backLink={<></>}
-              slug="rttapa-history"
-            >
-              <RTTAPAHistory
+            <FeatureFlag renderNotFound flag="rttapa_form">
+              <PageWithHeading
                 regionId={regionId}
                 recipientId={recipientId}
+                error={error}
                 recipientNameWithRegion={recipientNameWithRegion}
-              />
-            </PageWithHeading>
+                backLink={<></>}
+                slug="rttapa-history"
+              >
+                <RTTAPAHistory
+                  regionId={regionId}
+                  recipientId={recipientId}
+                  recipientNameWithRegion={recipientNameWithRegion}
+                />
+              </PageWithHeading>
+            </FeatureFlag>
           )}
         />
         <Route

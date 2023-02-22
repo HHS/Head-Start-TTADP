@@ -11,6 +11,7 @@ import { canEditOrCreateGoals } from '../../permissions';
 import { DECIMAL_BASE } from '../../Constants';
 import colors from '../../colors';
 import SelectPagination from '../SelectPagination';
+import FeatureFlag from '../FeatureFlag';
 
 export default function GoalCardsHeader({
   title,
@@ -140,12 +141,14 @@ export default function GoalCardsHeader({
                 </Button>
               </span>
             )}
-        <Link
-          to={rttapaLink}
-          className="display-flex flex-align-center usa-button usa-button--unstyled margin-left-3 margin-y-0"
-        >
-          Create RTTAPA
-        </Link>
+        <FeatureFlag flag="rttapa_form">
+          <Link
+            to={rttapaLink}
+            className="display-flex flex-align-center usa-button usa-button--unstyled margin-left-3 margin-y-0"
+          >
+            Create RTTAPA
+          </Link>
+        </FeatureFlag>
         <Button
           unstyled
           className="display-flex flex-align-center margin-left-3 margin-y-0"
