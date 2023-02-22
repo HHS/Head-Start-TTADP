@@ -53,9 +53,9 @@ export async function getRttapa(req: Request, res: Response) {
   }
 }
 /**
- * 
- * @param {Request} req 
- * @param {Response} res 
+ *
+ * @param {Request} req
+ * @param {Response} res
  * @returns Promise<void>
  */
 export async function getRttapas(req: Request, res: Response) {
