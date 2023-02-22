@@ -95,7 +95,7 @@ describe('Rttapa Reports route handlers', () => {
       };
       // No params passed, triggers an error
       await getRttapas(mockRequest, mockResponse);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(500);
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
   });
 
@@ -143,7 +143,7 @@ describe('Rttapa Reports route handlers', () => {
       userById.mockImplementationOnce(() => mockUser(SCOPES.READ_WRITE_REPORTS));
 
       await getRttapa(mockRequest, mockResponse);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
     });
 
     it('checks permssions', async () => {
@@ -216,7 +216,7 @@ describe('Rttapa Reports route handlers', () => {
       };
 
       await createRttapa(mockRequest, mockResponse);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
+      expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
     });
 
     it('checks permssions', async () => {
