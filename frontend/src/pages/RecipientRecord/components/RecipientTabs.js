@@ -28,7 +28,7 @@ export default function RecipientTabs({ region, recipientId, backLink }) {
           </li>
         </ul>
       </nav>
-      { backLink.props.children ? (<FontAwesomeIcon className="margin-left-2 margin-right-1" color={colors.ttahubMediumBlue} icon={faArrowLeft} />) : null }
+      { backLink && backLink.props && backLink.props.children ? (<FontAwesomeIcon className="margin-left-2 margin-right-1" data-testid="back-link-icon" color={colors.ttahubMediumBlue} icon={faArrowLeft} />) : null }
       {backLink}
     </div>
   );
