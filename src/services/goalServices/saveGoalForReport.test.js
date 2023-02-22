@@ -939,6 +939,22 @@ describe('saveGoalsForReport (more tests)', () => {
 
     const rtrGoal = await Goal.findByPk(existingGoal.id);
     const rtrObjective = await Objective.findByPk(existingObjective.id);
+    // check that our resource are on the objective
+    const beforeObjectiveResources = await ObjectiveResource.findAll({
+      where: {
+        objectiveId: rtrObjective.id,
+      },
+      include: [{
+        attributes: ['url'],
+        model: Resource,
+        as: 'resource',
+        required: true,
+      }],
+    });
+
+    expect(beforeObjectiveResources.length).toBe(1);
+    const beforeUrls = beforeObjectiveResources.map((bor) => bor.resource.dataValues.url);
+    expect(beforeUrls).toContain('http://www.finally-a-url.com');
 
     const newGoals = [
       {
@@ -982,7 +998,6 @@ describe('saveGoalsForReport (more tests)', () => {
                 id: secondTopic.id,
               },
             ],
-
             resources: [
               {
                 key: 'gibberish-i-THINK-thats-obvious',
@@ -1053,15 +1068,16 @@ describe('saveGoalsForReport (more tests)', () => {
       where: {
         objectiveId: rtrObjective.id,
       },
-      includes: [{
+      include: [{
         attributes: ['url'],
         model: Resource,
         as: 'resource',
+        required: true,
       }],
     });
 
     expect(afterObjectiveResources.length).toBe(2);
-    const urls = afterObjectiveResources.map((ar) => ar.resources.dataValues.url);
+    const urls = afterObjectiveResources.map((ar) => ar.resource.dataValues.url);
     expect(urls).toContain('https://www.google.com');
     expect(urls).toContain('http://www.finally-a-url.com');
 
@@ -1069,7 +1085,7 @@ describe('saveGoalsForReport (more tests)', () => {
       where: {
         activityReportObjectiveId: existingObjectiveARO.id,
       },
-      includes: [{
+      include: [{
         attributes: ['url'],
         model: Resource,
         as: 'resource',

@@ -1,6 +1,6 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
-// const { afterDestroy } = require('./hooks/activityReportGoalResource');
+const { afterCreate, afterDestroy } = require('./hooks/activityReportGoalResource');
 
 export default (sequelize, DataTypes) => {
   class ActivityReportGoalResource extends Model {
@@ -48,9 +48,10 @@ export default (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'ActivityReportGoalResource',
-    // hooks: {
-    //   afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
-    // },
+    hooks: {
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+    },
   });
   return ActivityReportGoalResource;
 };

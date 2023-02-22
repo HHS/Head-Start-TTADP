@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import {
+import db, {
   ActivityReport,
   ActivityReportResource,
   ActivityReportGoal,
@@ -66,6 +66,9 @@ import {
 } from '../constants';
 
 describe('resource', () => {
+  afterAll(async () => {
+    await db.sequelize.close();
+  });
   describe('Resource Table', () => {
     describe('findOrCreateResource', () => {
       const urlGoogle = 'http://google.com';
@@ -839,7 +842,6 @@ describe('resource', () => {
         expect(filterResourcesForSync(
           incomingResources,
           currentResources,
-          calculateIsAutoDetectedFunc,
         ))
           .toMatchObject({
             create: [{
@@ -872,7 +874,6 @@ describe('resource', () => {
         expect(filterResourcesForSync(
           incomingResources,
           currentResources,
-          calculateIsAutoDetectedFunc,
         ))
           .toMatchObject({
             create: [],
@@ -885,7 +886,6 @@ describe('resource', () => {
         expect(filterResourcesForSync(
           incomingResources,
           currentResources,
-          calculateIsAutoDetectedFunc,
         ))
           .toMatchObject({
             create: [
@@ -933,7 +933,6 @@ describe('resource', () => {
         expect(filterResourcesForSync(
           incomingResources,
           currentResources,
-          calculateIsAutoDetectedFunc,
         ))
           .toMatchObject({
             create: [],
@@ -946,7 +945,6 @@ describe('resource', () => {
         expect(filterResourcesForSync(
           incomingResources,
           currentResources,
-          calculateIsAutoDetectedFunc,
         ))
           .toMatchObject({
             create: [],
@@ -959,7 +957,6 @@ describe('resource', () => {
         expect(filterResourcesForSync(
           incomingResources,
           currentResources,
-          calculateIsAutoDetectedFunc,
         ))
           .toMatchObject({
             create: [],
@@ -972,7 +969,6 @@ describe('resource', () => {
         expect(filterResourcesForSync(
           incomingResources,
           currentResources,
-          calculateIsAutoDetectedFunc,
         ))
           .toMatchObject({
             create: [],
@@ -985,7 +981,6 @@ describe('resource', () => {
         expect(filterResourcesForSync(
           incomingResources,
           currentResources,
-          calculateIsAutoDetectedFunc,
         ))
           .toMatchObject({
             create: [],
@@ -998,7 +993,6 @@ describe('resource', () => {
         expect(filterResourcesForSync(
           incomingResources,
           currentResources,
-          calculateIsAutoDetectedFunc,
         ))
           .toMatchObject({
             create: [],
@@ -1011,7 +1005,6 @@ describe('resource', () => {
         expect(filterResourcesForSync(
           incomingResources,
           currentResources,
-          calculateIsAutoDetectedFunc,
         ))
           .toMatchObject({
             create: [],
@@ -1024,7 +1017,6 @@ describe('resource', () => {
         expect(filterResourcesForSync(
           incomingResources,
           currentResources,
-          calculateIsAutoDetectedFunc,
         ))
           .toMatchObject({
             create: [],
