@@ -9,6 +9,7 @@ import { withRegion, withoutRegion } from './region';
 import { withRoles, withoutRoles } from './role';
 import { containsGrantNumber, doesNotContainGrantNumber, withGrantNumber, withoutGrantNumber } from './grantNumber';
 import { afterStartDate, beforeStartDate, withinStartDates } from './startDate';
+import { withMyReports, withoutMyReports } from './myReports';
 
 export const topicToQuery = {
   createDate: {
@@ -52,8 +53,12 @@ export const topicToQuery = {
     ctn: (query) => containsGrantNumber(query),
     nctn: (query) => doesNotContainGrantNumber(query),
   },
+  myReports: {
+    in: (query, options, userId) => withMyReports(query, options, userId),
+    nin: (query, options, userId) => withoutMyReports(query, options, userId),
+  },
 };
 
-export function goalsFiltersToScopes(filters, options) {
-  return createFiltersToScopes(filters, topicToQuery, options);
+export function goalsFiltersToScopes(filters, options, userId) {
+  return createFiltersToScopes(filters, topicToQuery, options, userId);
 }
