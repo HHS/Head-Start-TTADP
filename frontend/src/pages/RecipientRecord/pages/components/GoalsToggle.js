@@ -41,37 +41,39 @@ export default function GoalsToggle({
       </Button>
 
       { showGoals && (
-        goals.map((goal) => (
-          <div className="display-flex flex-align">
-            <GoalCard
-              goal={goal}
-              recipientId={recipientId}
-              regionId={regionId}
-              showCloseSuspendGoalModal={false}
-              performGoalStatusUpdate={false}
-              handleGoalCheckboxSelect={false}
-              hideCheckbox
-              showReadOnlyStatus
-              isChecked={false}
-              hideGoalOptions
-              marginX={0}
-              marginY={2}
-            />
-            { onRemove ? (
-              <Button
-                type="button"
-                onClick={() => {
-                  onRemove(goal);
-                }}
-                className="flex-align-self-center"
-                aria-label={`Remove goal ${goal.id}`}
-                unstyled
-              >
-                <FontAwesomeIcon className="margin-left-1 margin-top-2" color={colors.textInk} icon={faTrashCan} />
-              </Button>
-            ) : null }
-          </div>
-        ))
+        <div className="margin-top-3">
+          {goals.map((goal) => (
+            <div className="display-flex flex-align-center">
+              <GoalCard
+                goal={goal}
+                recipientId={recipientId}
+                regionId={regionId}
+                showCloseSuspendGoalModal={false}
+                performGoalStatusUpdate={false}
+                handleGoalCheckboxSelect={false}
+                hideCheckbox
+                showReadOnlyStatus
+                isChecked={false}
+                hideGoalOptions
+                marginX={0}
+                marginY={2}
+              />
+              { onRemove ? (
+                <Button
+                  type="button"
+                  onClick={() => {
+                    onRemove(goal);
+                  }}
+                  className="flex-align-self-center"
+                  aria-label={`Remove goal ${goal.id}`}
+                  unstyled
+                >
+                  <FontAwesomeIcon size="lg" className="margin-left-1" color={colors.textInk} icon={faTrashCan} />
+                </Button>
+              ) : null }
+            </div>
+          ))}
+        </div>
       )}
     </>
   );

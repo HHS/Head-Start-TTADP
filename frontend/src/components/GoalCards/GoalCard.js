@@ -28,8 +28,6 @@ function GoalCard({
   hideCheckbox,
   showReadOnlyStatus,
   hideGoalOptions,
-  marginX,
-  marginY,
 }) {
   const {
     id, // for keys and such, from the api
@@ -92,12 +90,12 @@ function GoalCard({
       },
     },
   ];
-  const margin = `margin-x-${marginX} margin-y-${marginY}`;
+
   const internalLeftMargin = hideCheckbox ? '' : 'margin-left-5';
 
   return (
     <article
-      className={`ttahub-goal-card usa-card padding-3 radius-lg border smart-hub-border-base-lighter width-full ${margin}`}
+      className="ttahub-goal-card usa-card padding-3 radius-lg border smart-hub-border-base-lighter width-full maxw-full"
       data-testid="goalCard"
     >
       <div className="display-flex flex-justify">
@@ -221,16 +219,12 @@ GoalCard.propTypes = {
   hideCheckbox: PropTypes.bool,
   showReadOnlyStatus: PropTypes.bool,
   hideGoalOptions: PropTypes.bool,
-  marginX: PropTypes.number,
-  marginY: PropTypes.number,
 };
 
 GoalCard.defaultProps = {
   hideCheckbox: false,
   showReadOnlyStatus: false,
   hideGoalOptions: false,
-  marginX: 3,
-  marginY: 2,
 };
 
 export default GoalCard;

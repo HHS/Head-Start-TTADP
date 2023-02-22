@@ -10,7 +10,7 @@ export default function RTTAPAHistoryGoalCard({ report, recipientId, regionId })
   return (
     <div className="ttahub-rttapa-list--item usa-card padding-3 radius-lg border smart-hub-border-base-lighter width-full" key={report.id}>
       <div>
-        <h3>
+        <h3 className="font-sans-lg margin-0">
           {report.user.name}
           {' '}
           reviewed

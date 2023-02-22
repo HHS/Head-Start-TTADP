@@ -28,6 +28,8 @@ function PageWithHeading({
   backLink,
   slug,
 }) {
+  const headerMargin = backLink.props.children ? 'margin-top-0' : 'margin-top-5';
+
   return (
     <>
       <RecipientTabs region={regionId} recipientId={recipientId} backLink={backLink} />
@@ -42,7 +44,7 @@ function PageWithHeading({
               </div>
             ) : (
               <>
-                <h1 className={`ttahub-recipient-record--heading ${slug} page-heading margin-top-0 margin-bottom-1 margin-left-2`}>
+                <h1 className={`ttahub-recipient-record--heading ${slug} page-heading ${headerMargin} margin-bottom-1 margin-left-2`}>
                   {recipientNameWithRegion}
                 </h1>
                 {children}
