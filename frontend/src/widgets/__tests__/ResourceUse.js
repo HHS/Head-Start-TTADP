@@ -88,7 +88,7 @@ describe('Resource Use Widget', () => {
 
     expect(screen.getByText(/Resource use/i)).toBeInTheDocument();
     expect(screen.getByText(/Showing the 10 resources cited most often on Activity Reports/i)).toBeInTheDocument();
-    expect(screen.getByText(/Resource URL:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Resource URL/i)).toBeInTheDocument();
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/Mar-22/i)).toBeInTheDocument();
     expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
@@ -100,7 +100,7 @@ describe('Resource Use Widget', () => {
 
     expect(screen.getByText(/Resource use/i)).toBeInTheDocument();
     expect(screen.getByText(/Showing the 10 resources cited most often on Activity Reports/i)).toBeInTheDocument();
-    expect(screen.getByText(/Resource URL:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Resource URL/i)).toBeInTheDocument();
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/Mar-22/i)).toBeInTheDocument();
     expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();

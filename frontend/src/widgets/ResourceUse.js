@@ -12,7 +12,7 @@ function ResourceUse({ data, loading }) {
       data={data.resources}
       loading={loading}
       loadingLabel="Resource use loading"
-      firstHeading="Resource URL:"
+      firstHeading="Resource URL"
     />
   );
 }

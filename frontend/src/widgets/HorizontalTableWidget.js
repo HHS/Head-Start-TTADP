@@ -1,7 +1,7 @@
 /* eslint-disable react/no-array-index-key */
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Table, Grid } from '@trussworks/react-uswds';
+import { Table } from '@trussworks/react-uswds';
 import Container from '../components/Container';
 import './HorizontalTableWidget.scss';
 
@@ -27,13 +27,11 @@ export default function HorizontalTableWidget(
   },
 ) {
   return (
-    <Container className="smarthub-horizontal-table-widget shadow-2" paddingX={3} paddingY={3} loading={loading} loadingLabel={loadingLabel}>
-      <Grid row className="margin-bottom-1">
-        <h2 className="smart-hub--table-widget-heading ttahub--dashboard-widget-heading margin-0">{title}</h2>
-      </Grid>
-      <Grid row className="smarthub-horizontal-table-widget-subtitle margin-bottom-3">
-        {subtitle}
-      </Grid>
+    <Container className="smarthub-horizontal-table-widget shadow-2 padding-top-0" paddingX={0} paddingY={0} loading={loading} loadingLabel={loadingLabel}>
+      <div className="margin-bottom-1 padding-top-3 padding-left-3 margin-bottom-3">
+        <h2 className="smart-hub--table-widget-heading margin-0 font-sans-lg">{title}</h2>
+        <p className="usa-prose margin-0">{subtitle}</p>
+      </div>
       {/* a scrollable element must be keyboard accessible */}
       {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
       <div className="usa-table-container--scrollable margin-top-0" tabIndex={0}>
