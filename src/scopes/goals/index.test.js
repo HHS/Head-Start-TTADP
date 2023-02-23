@@ -668,7 +668,7 @@ describe('goal filtersToScopes', () => {
         expect(names).toContain('Goal 2');
       });
       it('no', async () => {
-        const filters = { 'goalType.in': 'Emergent' };
+        const filters = { 'goalType.in': 'Non-RTTAPA' };
         const { goal: scope } = await filtersToScopes(filters, 'goal');
         const found = await Goal.findAll({
           where: {
@@ -727,7 +727,7 @@ describe('goal filtersToScopes', () => {
         expect(names).not.toContain('Goal 2');
       });
       it('no', async () => {
-        const filters = { 'goalType.nin': 'Emergent' };
+        const filters = { 'goalType.nin': 'Non-RTTAPA' };
         const { goal: scope } = await filtersToScopes(filters, 'goal');
         const found = await Goal.findAll({
           where: {

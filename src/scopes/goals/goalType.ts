@@ -2,7 +2,7 @@ import { Op, WhereOptions } from 'sequelize';
 
 const ENUM = {
   RTTAPA: 'Yes',
-  Emergent: 'No',
+  'Non-RTTAPA': 'No',
 };
 
 const filterQuery = (query: string[]): string[] => query

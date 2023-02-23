@@ -22,7 +22,7 @@ describe('FilterGoalType', () => {
     const onApply = jest.fn();
     renderFilterGoalType('RTTAPA', onApply);
     const select = await findByRole('combobox', { name: /Select goal type to filter by/i });
-    userEvent.selectOptions(select, 'Emergent');
+    userEvent.selectOptions(select, 'Non-RTTAPA');
     expect(onApply).toHaveBeenCalled();
   });
 });
