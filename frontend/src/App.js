@@ -152,7 +152,7 @@ function App() {
           exact
           path="/activity-reports"
           render={({ match }) => (
-            <AppWrapper authenticated logout={logout}>
+            <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
               <LandingLayout>
                 <Landing match={match} />
               </LandingLayout>
