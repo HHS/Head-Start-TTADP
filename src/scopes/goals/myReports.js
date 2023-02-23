@@ -1,7 +1,6 @@
 import { Op } from 'sequelize';
 import { sequelize } from '../../models';
-// this should return an array of activityReport ids.
-// That where clause will be finished when the function is called.
+
 export function myReportsScopes(userId, roles, exclude) {
   let reportSql = '';
   if (roles.includes('Creator')) {
@@ -50,7 +49,6 @@ export function myReportsScopes(userId, roles, exclude) {
 }
 
 export function withMyReports(roles, _options, userId) {
-  console.log("query", roles, "_options", _options, "userId", userId)
   return myReportsScopes(userId, roles, false);
 }
 
