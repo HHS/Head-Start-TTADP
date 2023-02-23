@@ -1,3 +1,6 @@
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { GridContainer, Grid } from '@trussworks/react-uswds';
@@ -46,9 +49,14 @@ export default function Llama({ user }) {
     fetchStatistics();
   }, [user.id]);
 
+  const addWiggler = () => {
+    if (document.querySelector('.celebratory-llama').classList.contains('the-wiggler')) return;
+    document.querySelector('.celebratory-llama').classList.add('the-wiggler');
+  };
+
   return (
     <Container>
-      <div className="position-relative bg-white margin-auto">
+      <div className="position-relative bg-white margin-auto" onClick={addWiggler}>
         <img
           className="celebratory-llama display-none bottom-0"
           src={celebratoryLlama}
