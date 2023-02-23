@@ -2,14 +2,10 @@ import { Op } from 'sequelize';
 import { filterAssociation } from './utils';
 
 const recipientName = `
-SELECT DISTINCT "ActivityReportGoals"."goalId"
-FROM "ActivityReportGoals"
-INNER JOIN "ActivityReports"
-ON "ActivityReportGoals"."activityReportId" = "ActivityReports"."id"
-INNER JOIN "ActivityRecipients"
-ON "ActivityRecipients"."activityReportId" = "ActivityReports"."id"
+SELECT DISTINCT "Goals"."id"
+FROM "Goals"
 INNER JOIN "Grants"
-ON "Grants"."id" = "ActivityRecipients"."grantId"
+ON "Grants"."id" = "Goals"."grantId"
 INNER JOIN "Recipients"
 ON "Recipients"."id" = "Grants"."recipientId"
 WHERE "Recipients".NAME`;
