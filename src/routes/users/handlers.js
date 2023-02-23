@@ -7,6 +7,7 @@ import { statesByGrantRegion } from '../../services/grant';
 import { createAndStoreVerificationToken, validateVerificationToken } from '../../services/token';
 import { sendEmailVerificationRequestWithToken } from '../../lib/mailer';
 import { currentUserId } from '../../services/currentUser';
+import { statisticsByUser } from '../../services/users';
 
 export async function getPossibleCollaborators(req, res) {
   try {
@@ -20,6 +21,17 @@ export async function getPossibleCollaborators(req, res) {
 
     const users = await usersWithPermissions([region], SCOPES.READ_WRITE_REPORTS);
     res.json(users);
+  } catch (error) {
+    await handleErrors(req, res, error, { namespace: 'SERVICE:USER' });
+  }
+}
+
+export async function getUserStatistics(req, res) {
+  try {
+    const user = await userById(await currentUserId(req, res));
+    const regions = user.permissions.map((permission) => permission.regionId);
+    const statistics = await statisticsByUser(user, regions);
+    res.json(statistics);
   } catch (error) {
     await handleErrors(req, res, error, { namespace: 'SERVICE:USER' });
   }
