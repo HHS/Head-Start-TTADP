@@ -19,10 +19,6 @@
 }
 
 @media print {
-  .smart-hub-offset-nav {
-    max-width: none;
-  }
-
   .smart-hub-offset-nav, .ttahub-activity-report-view {
     max-width: none;
   }
@@ -48,7 +44,7 @@
   }
 
   .smart-hub-offset-nav {
-    margin-top: 0;
+    margin-top: 0 !important;
     margin-right: 0;
   }
 
