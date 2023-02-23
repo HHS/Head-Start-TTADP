@@ -17,7 +17,7 @@ export default function FilterGoalType({ onApply, goalType }) {
           RTTAPA
         </option>
         <option>
-          Emergent
+          Non-RTTAPA
         </option>
       </Dropdown>
     </>

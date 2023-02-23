@@ -145,7 +145,7 @@ describe('goalFilters', () => {
       const apply = jest.fn();
       renderFilter(() => goalTypeFilter.renderInput('1', 'is not', 'RTTAPA', apply));
       const goalTypeInput = await screen.findByLabelText('Select goal type to filter by');
-      userEvent.selectOptions(goalTypeInput, 'Emergent');
+      userEvent.selectOptions(goalTypeInput, 'Non-RTTAPA');
       expect(apply).toHaveBeenCalled();
     });
   });
