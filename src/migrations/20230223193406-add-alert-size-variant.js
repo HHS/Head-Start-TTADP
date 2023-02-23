@@ -20,7 +20,7 @@ module.exports = {
         defaultValue: 'standard',
       }, { transaction });
 
-      return queryInterface.sequelize.query('UPDATE "SiteAlerts" SET "size" = \'slim\'', { transaction });
+      return queryInterface.sequelize.query('UPDATE "SiteAlerts" SET "size" = \'standard\'', { transaction });
     });
   },
 
