@@ -70,6 +70,7 @@ describe('goal filtersToScopes', () => {
           isFromSmartsheetTtaPlan: false,
           createdAt: new Date('2021-01-02'),
           grantId: reasonsGrant.id,
+          isRttapa: 'Yes',
         }),
         // goal for topics
         await Goal.create({
@@ -79,6 +80,7 @@ describe('goal filtersToScopes', () => {
           isFromSmartsheetTtaPlan: false,
           createdAt: new Date('2021-01-02'),
           grantId: topicsGrant.id,
+          isRttapa: 'Yes',
         }),
         // goal for status
         await Goal.create({
@@ -88,6 +90,7 @@ describe('goal filtersToScopes', () => {
           isFromSmartsheetTtaPlan: false,
           createdAt: new Date('2021-01-02'),
           grantId: goalGrant.id,
+          isRttapa: 'No',
         }),
         // goal for status
         await Goal.create({
@@ -97,6 +100,7 @@ describe('goal filtersToScopes', () => {
           isFromSmartsheetTtaPlan: false,
           createdAt: new Date('2021-01-02'),
           grantId: goalGrant.id,
+          isRttapa: 'No',
         }),
         // goal for startDate
         await Goal.create({
@@ -639,6 +643,126 @@ describe('goal filtersToScopes', () => {
 
       expect(found.length).toBe(6);
       expect(found[0].name).not.toContain('Goal 7');
+    });
+  });
+
+  describe('goalType', () => {
+    describe('withGoalType', () => {
+      it('RTTAPA', async () => {
+        const filters = { 'goalType.in': 'RTTAPA' };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: possibleGoalIds,
+              },
+            ],
+          },
+        });
+
+        expect(found.length).toBe(2);
+        const names = found.map((f) => f.name);
+        expect(names).toContain('Goal 1');
+        expect(names).toContain('Goal 2');
+      });
+      it('no', async () => {
+        const filters = { 'goalType.in': 'Emergent' };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: possibleGoalIds,
+              },
+            ],
+          },
+        });
+
+        expect(found.length).toBe(2);
+        const names = found.map((f) => f.name);
+        expect(names).toContain('Goal 3');
+        expect(names).toContain('Goal 4');
+      });
+
+      it('other', async () => {
+        const filters = { 'goalType.in': 'false' };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: possibleGoalIds,
+              },
+            ],
+          },
+        });
+
+        expect(possibleGoalIds.length).toBe(7);
+        expect(found.length).toBe(7);
+      });
+    });
+
+    describe('withoutRttapa', () => {
+      it('yes', async () => {
+        const filters = { 'goalType.nin': 'RTTAPA' };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: possibleGoalIds,
+              },
+            ],
+          },
+        });
+
+        expect(found.length).toBe(5);
+        const names = found.map((f) => f.name);
+        expect(names).not.toContain('Goal 1');
+        expect(names).not.toContain('Goal 2');
+      });
+      it('no', async () => {
+        const filters = { 'goalType.nin': 'Emergent' };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: possibleGoalIds,
+              },
+            ],
+          },
+        });
+
+        expect(found.length).toBe(5);
+        const names = found.map((f) => f.name);
+        expect(names).not.toContain('Goal 3');
+        expect(names).not.toContain('Goal 4');
+      });
+
+      it('other', async () => {
+        const filters = { 'goalType.nin': 'false' };
+        const { goal: scope } = await filtersToScopes(filters, 'goal');
+        const found = await Goal.findAll({
+          where: {
+            [Op.and]: [
+              scope,
+              {
+                id: possibleGoalIds,
+              },
+            ],
+          },
+        });
+
+        expect(possibleGoalIds.length).toBe(7);
+        expect(found.length).toBe(7);
+      });
     });
   });
 });
