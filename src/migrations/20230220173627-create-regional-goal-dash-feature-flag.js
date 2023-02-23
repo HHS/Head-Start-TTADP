@@ -26,9 +26,7 @@ module.exports = {
     );
   }),
 
-  // eslint-disable-next-line no-unused-vars
   down: (queryInterface) => queryInterface.sequelize.transaction(async (transaction) => {
-
     await queryInterface.sequelize.query(
       `
         -- remove references to deprecated values
