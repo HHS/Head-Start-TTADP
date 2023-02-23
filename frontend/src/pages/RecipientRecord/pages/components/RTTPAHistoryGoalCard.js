@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 import GoalsToggle from './GoalsToggle';
 
-const FULL_DATE_FORMAT = 'MMMM Do YYYY';
+const FULL_DATE_FORMAT = 'MMMM D YYYY';
 
 export default function RTTAPAHistoryGoalCard({ report, recipientId, regionId }) {
   const [showGoals, setShowGoals] = useState(false);
