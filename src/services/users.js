@@ -118,71 +118,65 @@ export async function statisticsByUser(user, regions, readonly = false) {
   });
 
   // Collaborator's AR where.
-  let collaboratorsArWhere = null;
-
-  // Focus on user as collaborator.
+  let collaboratorReports = [];
   if (!readonly) {
-    collaboratorsArWhere = {
-      userId: user.id,
-    };
-  }
-
-  // Get Collaborated AR's
-  const collaboratorReports = await ActivityReportModel.findAll({
-    where: {
-      regionId: regions,
-      calculatedStatus: REPORT_STATUSES.APPROVED,
-      legacyId: null,
-    },
-    include: [
-      {
-        model: ActivityReportCollaborator,
-        as: 'activityReportCollaborators',
-        required: true,
-        where: collaboratorsArWhere,
+    collaboratorReports = await ActivityReportModel.findAll({
+      where: {
+        regionId: regions,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        legacyId: null,
       },
-    ],
-  });
-
-  // Get Approver AR's.
-  let approverArWhere = null;
-
-  // Focus on user as collaborator.
-  if (!readonly) {
-    approverArWhere = {
-      userId: user.id,
-    };
+      include: [
+        {
+          model: ActivityReportCollaborator,
+          as: 'activityReportCollaborators',
+          required: true,
+          where: {
+            userId: user.id,
+          },
+        },
+      ],
+    });
   }
 
   // Get Approver AR's
-  const approverReports = await ActivityReportModel.findAll({
-    where: {
-      regionId: regions,
-      calculatedStatus: REPORT_STATUSES.APPROVED,
-      legacyId: null,
-    },
-    include: [
-      {
-        model: ActivityReportApprover,
-        as: 'approvers',
-        required: true,
-        where: approverArWhere,
+  let approverReports = [];
+  if (!readonly) {
+    approverReports = await ActivityReportModel.findAll({
+      where: {
+        regionId: regions,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        legacyId: null,
       },
-    ],
-  });
+      include: [
+        {
+          model: ActivityReportApprover,
+          as: 'approvers',
+          required: true,
+          where: {
+            userId: user.id,
+          },
+        },
+      ],
+    });
+  }
 
   // Approved TTA.
   const totalCreatedTTA = createdReports.reduce((acc, obj) => acc + parseInt(obj.duration, DECIMAL_BASE), 0);
-  let createdIds = new Set(createdReports.map((r) => r.id));
+  let totalCollaboratorTTA = 0;
+  let totalApproverTTA = 0;
 
-  // Collaborator TTA.
-  const nonDuplicateCollaborators = collaboratorReports.filter((c) => !createdIds.has(c.id));
-  const totalCollaboratorTTA = nonDuplicateCollaborators.reduce((acc, obj) => acc + parseInt(obj.duration, DECIMAL_BASE), 0);
+  if (!readonly) {
+    // Collaborator TTA.
+    let createdIds = new Set(createdReports.map((r) => r.id));
+    const nonDuplicateCollaborators = collaboratorReports.filter((c) => !createdIds.has(c.id));
+    totalCollaboratorTTA = nonDuplicateCollaborators.reduce((acc, obj) => acc + parseInt(obj.duration, DECIMAL_BASE), 0);
 
-  // Approver TTA.
-  createdIds = new Set(createdIds, nonDuplicateCollaborators.map((r) => r.id));
-  const nonDuplicateApprovers = approverReports.filter((a) => !createdIds.has(a.id));
-  const totalApproverTTA = nonDuplicateApprovers.reduce((acc, obj) => acc + parseInt(obj.duration, DECIMAL_BASE), 0);
+    // Approver TTA.
+    createdIds = new Set(createdIds, nonDuplicateCollaborators.map((r) => r.id));
+    const nonDuplicateApprovers = approverReports.filter((a) => !createdIds.has(a.id));
+    totalApproverTTA = nonDuplicateApprovers.reduce((acc, obj) => acc + parseInt(obj.duration, DECIMAL_BASE), 0);
+  }
 
   // TTA Provided '6 days 5 hours'.
   const totalTTA = totalCreatedTTA + totalCollaboratorTTA + totalApproverTTA;

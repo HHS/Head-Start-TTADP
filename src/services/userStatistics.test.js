@@ -418,7 +418,7 @@ describe('statisticsByUser', () => {
     expect(response.arsCreated).toBe(8);
 
     // Collaborator reports.
-    expect(response.arsCollaboratedOn).toBe(3);
+    expect(response.arsCollaboratedOn).toBe(0);
 
     // TTA provided.
     expect(response.ttaProvided).toBe('7 days 1 hrs');
