@@ -114,6 +114,7 @@ export async function statisticsByUser(user, regions, readonly = false) {
 
   // Get created AR's.
   const createdReports = await ActivityReportModel.findAll({
+    attributes: ['id', 'duration'],
     where: createdArWhere,
   });
 
@@ -121,6 +122,7 @@ export async function statisticsByUser(user, regions, readonly = false) {
   let collaboratorReports = [];
   if (!readonly) {
     collaboratorReports = await ActivityReportModel.findAll({
+      attributes: ['id', 'duration'],
       where: {
         regionId: regions,
         calculatedStatus: REPORT_STATUSES.APPROVED,
@@ -128,6 +130,7 @@ export async function statisticsByUser(user, regions, readonly = false) {
       },
       include: [
         {
+          attributes: ['id'],
           model: ActivityReportCollaborator,
           as: 'activityReportCollaborators',
           required: true,
@@ -143,6 +146,7 @@ export async function statisticsByUser(user, regions, readonly = false) {
   let approverReports = [];
   if (!readonly) {
     approverReports = await ActivityReportModel.findAll({
+      attributes: ['id', 'duration'],
       where: {
         regionId: regions,
         calculatedStatus: REPORT_STATUSES.APPROVED,
@@ -150,6 +154,7 @@ export async function statisticsByUser(user, regions, readonly = false) {
       },
       include: [
         {
+          attributes: ['id'],
           model: ActivityReportApprover,
           as: 'approvers',
           required: true,
