@@ -74,7 +74,7 @@ describe('RTTAPAHistory', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Timmy the Tester reviewed 1 goals on January 1st 2021')).toBeInTheDocument();
+      expect(screen.getByText('Timmy the Tester reviewed 1 goals on January 1 2021')).toBeInTheDocument();
       expect(screen.getByText('This is gooooood soup')).toBeInTheDocument();
     });
   });
