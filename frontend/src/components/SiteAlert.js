@@ -4,7 +4,7 @@ import { SiteAlert as BaseSiteAlert } from '@trussworks/react-uswds';
 import './SiteAlert.scss';
 
 export default function SiteAlert({
-  heading, children, style, variant,
+  heading, children, style, variant, size,
 }) {
   return (
     <BaseSiteAlert
@@ -12,7 +12,7 @@ export default function SiteAlert({
       heading={heading}
       showIcon
       style={{ ...style }}
-      className="usa-site-alert--ttahub"
+      className={`usa-site-alert--ttahub usa-site-alert--ttahub__${size}`}
     >
       {children}
     </BaseSiteAlert>
@@ -24,6 +24,7 @@ SiteAlert.propTypes = {
   children: PropTypes.node.isRequired,
   style: PropTypes.shape({}),
   variant: PropTypes.string.isRequired,
+  size: PropTypes.string.isRequired,
 };
 
 SiteAlert.defaultProps = {

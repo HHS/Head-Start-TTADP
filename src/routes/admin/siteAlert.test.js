@@ -1,7 +1,7 @@
 import faker from '@faker-js/faker';
 import moment from 'moment';
 import httpCodes from 'http-codes';
-import { ALERT_STATUSES, ALERT_VARIANTS } from '../../constants';
+import { ALERT_SIZES, ALERT_STATUSES, ALERT_VARIANTS } from '../../constants';
 import SCOPES from '../../middleware/scopeConstants';
 import {
   User,
@@ -50,6 +50,7 @@ describe('site alert admin handler', () => {
       status: ALERT_STATUSES.UNPUBLISHED,
       title: faker.lorem.sentence(),
       variant: ALERT_VARIANTS.INFO,
+      size: ALERT_SIZES.STANDARD,
     });
 
     await SiteAlert.create({
@@ -60,6 +61,7 @@ describe('site alert admin handler', () => {
       status: ALERT_STATUSES.PUBLISHED,
       title: faker.lorem.sentence(),
       variant: ALERT_VARIANTS.INFO,
+      size: ALERT_SIZES.STANDARD,
     });
 
     await SiteAlert.create({
@@ -70,6 +72,7 @@ describe('site alert admin handler', () => {
       status: ALERT_STATUSES.PUBLISHED,
       title: faker.lorem.sentence(),
       variant: ALERT_VARIANTS.INFO,
+      size: ALERT_SIZES.STANDARD,
     });
   });
 
@@ -134,6 +137,7 @@ describe('site alert admin handler', () => {
           message: existingAlert.message,
           status: ALERT_STATUSES.UNPUBLISHED,
           title: expect.any(String),
+          size: ALERT_STATUSES.STANDARD,
         }),
       );
     });
@@ -254,6 +258,7 @@ describe('site alert admin handler', () => {
           status: ALERT_STATUSES.UNPUBLISHED,
           title,
           variant: existingAlert.variant,
+          size: ALERT_STATUSES.STANDARD,
         }),
       );
     });
