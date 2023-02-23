@@ -3,6 +3,8 @@ const { CLOSE_SUSPEND_REASONS } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 const { beforeValidate, beforeUpdate, afterUpdate } = require('./hooks/goal');
 
+export const RTTAPA_ENUM = ['Yes', 'No'];
+
 /**
  * Goals table. Stores goals for tta.
  *
@@ -81,7 +83,7 @@ export default (sequelize, DataTypes) => {
       default: false,
     },
     isRttapa: {
-      type: DataTypes.ENUM(['Yes', 'No']),
+      type: DataTypes.ENUM(RTTAPA_ENUM),
       allowNull: true,
     },
     firstNotStartedAt: {

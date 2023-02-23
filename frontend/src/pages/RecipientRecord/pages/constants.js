@@ -2,11 +2,16 @@ import {
   specialistRoleFilter, endDateFilter, startDateFilter, myReportsFilter,
 } from '../../../components/filter/activityReportFilters';
 import {
-  statusFilter, createDateFilter, topicsFilter, reasonsFilter, grantNumberFilter,
+  statusFilter, createDateFilter, topicsFilter, reasonsFilter, grantNumberFilter, goalTypeFilter,
 } from '../../../components/filter/goalFilters';
 
 export const getGoalsAndObjectivesFilterConfig = (grantNumberParams) => [
-  createDateFilter, grantNumberFilter(grantNumberParams), reasonsFilter, statusFilter, topicsFilter,
+  createDateFilter,
+  grantNumberFilter(grantNumberParams),
+  reasonsFilter,
+  statusFilter,
+  topicsFilter,
+  goalTypeFilter,
 ];
 
 export const TTAHISTORY_FILTER_CONFIG = [

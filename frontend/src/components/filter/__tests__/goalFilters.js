@@ -8,7 +8,12 @@ import {
   waitFor,
 } from '@testing-library/react';
 import {
-  createDateFilter, reasonsFilter, statusFilter, topicsFilter, grantNumberFilter,
+  createDateFilter,
+  reasonsFilter,
+  statusFilter,
+  topicsFilter,
+  grantNumberFilter,
+  goalTypeFilter,
 } from '../goalFilters';
 import FilterErrorContext from '../FilterErrorContext';
 
@@ -125,6 +130,22 @@ describe('goalFilters', () => {
       renderFilter(() => grantFilter.renderInput('1', 'test', [], apply));
       const grantNumberInput = await screen.findByLabelText('Select grant numbers to filter by');
       await selectEvent.select(grantNumberInput, ['number EHS']);
+      expect(apply).toHaveBeenCalled();
+    });
+  });
+
+  describe('goalTypeFilter', () => {
+    it('renders correctly', async () => {
+      renderFilter(() => goalTypeFilter.renderInput('1', 'is', 'RTTAPA', () => {}));
+      const goalTypeInput = await screen.findByLabelText('Select goal type to filter by');
+      expect(goalTypeInput).toBeInTheDocument();
+    });
+
+    it('calls onApply', async () => {
+      const apply = jest.fn();
+      renderFilter(() => goalTypeFilter.renderInput('1', 'is not', 'RTTAPA', apply));
+      const goalTypeInput = await screen.findByLabelText('Select goal type to filter by');
+      userEvent.selectOptions(goalTypeInput, 'Emergent');
       expect(apply).toHaveBeenCalled();
     });
   });
