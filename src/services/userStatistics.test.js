@@ -28,7 +28,7 @@ const mockUser = {
   name: 'statisticsuser1234',
   hsesUsername: 'user1134265161',
   hsesUserId: 'statisticsuser1234',
-  createdAt: '2023-01-01T21:29:31.727Z'
+  createdAt: '2023-01-01T21:29:31.727Z',
 };
 
 // Other user.
@@ -38,7 +38,7 @@ const otherMockUser = {
   name: 'otherstatisticsuser1234',
   hsesUsername: 'otheruser1134265161',
   hsesUserId: 'otherstatisticsuser1234',
-  createdAt: '2023-01-01T21:29:31.727Z'
+  createdAt: '2023-01-01T21:29:31.727Z',
 };
 
 // Extra user.
@@ -48,7 +48,7 @@ const extraMockUser = {
   name: 'extrastatisticsuser1234',
   hsesUsername: 'extrauser1134265161',
   hsesUserId: 'extrastatisticsuser1234',
-  createdAt: '2023-01-01T21:29:31.727Z'
+  createdAt: '2023-01-01T21:29:31.727Z',
 };
 
 // Outside Region user.
@@ -58,7 +58,7 @@ const outsideRegionMockUser = {
   name: 'outsideRegionstatisticsuser1234',
   hsesUsername: 'outsideRegionuser1134265161',
   hsesUserId: 'outsideRegiontatisticsuser1234',
-  createdAt: '2023-01-01T21:29:31.727Z'
+  createdAt: '2023-01-01T21:29:31.727Z',
 };
 
 const report = {
@@ -332,7 +332,6 @@ describe('statisticsByUser', () => {
   });
 
   afterAll(async () => {
-
     // Delete collaborators.
     await ActivityReportCollaborator.destroy({
       where: {
@@ -340,12 +339,12 @@ describe('statisticsByUser', () => {
       },
     });
 
-
     // Delete Approvers.
     await ActivityReportApprover.destroy({
       where: {
-        activityReportId: [approverReport1.id, approverRegionReport1.id]
-      }, force: true
+        activityReportId: [approverReport1.id, approverRegionReport1.id],
+      },
+      force: true,
     });
 
     // Delete reports.
@@ -361,8 +360,8 @@ describe('statisticsByUser', () => {
           collaboratorReport2.id,
           approverReport1.id,
           approverRegionReport1.id,
-        ]
-      }
+        ],
+      },
     });
 
     // Delete Grants.
@@ -405,7 +404,6 @@ describe('statisticsByUser', () => {
   - 2 approved reports in region.
   */
   it('gets region statistics', async () => {
-
     // Get statistics.
     const response = await statisticsByUser(user, [1], true);
 
@@ -434,7 +432,6 @@ describe('statisticsByUser', () => {
     - 1 report as approver.
     */
   it('gets user statistics', async () => {
-
     // Get statistics.
     const response = await statisticsByUser(user, [1]);
 

@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { Op } from 'sequelize';
 
 import {
@@ -10,7 +11,6 @@ import {
   ActivityReportCollaborator,
   ActivityReportApprover,
 } from '../models';
-import ActivityReport from '../policies/activityReport';
 import { REPORT_STATUSES, DECIMAL_BASE } from '../constants';
 
 export const userAttributes = [
@@ -91,7 +91,6 @@ export async function userEmailIsVerifiedByUserId(userId) {
 
 /* Get Statistics by User */
 export async function statisticsByUser(user, regions, readonly = false) {
-
   // Get days joined.
   const dateJoined = new Date(user.createdAt);
   const todaysDate = new Date();
@@ -110,7 +109,7 @@ export async function statisticsByUser(user, regions, readonly = false) {
     createdArWhere = {
       ...createdArWhere,
       userId: user.id,
-    }
+    };
   }
 
   // Get created AR's.
@@ -157,7 +156,6 @@ export async function statisticsByUser(user, regions, readonly = false) {
 
   // Get Approver AR's
   const approverReports = await ActivityReportModel.findAll({
-    logging: console.log,
     where: {
       regionId: regions,
       calculatedStatus: REPORT_STATUSES.APPROVED,
@@ -174,25 +172,25 @@ export async function statisticsByUser(user, regions, readonly = false) {
   });
 
   // Approved TTA.
-  const totalCreatedTTA = createdReports.reduce(function (acc, obj) { return acc + parseInt(obj.duration, DECIMAL_BASE); }, 0);
+  const totalCreatedTTA = createdReports.reduce((acc, obj) => acc + parseInt(obj.duration, DECIMAL_BASE), 0);
   let createdIds = new Set(createdReports.map((r) => r.id));
 
   // Collaborator TTA.
   const nonDuplicateCollaborators = collaboratorReports.filter((c) => !createdIds.has(c.id));
-  const totalCollaboratorTTA = nonDuplicateCollaborators.reduce(function (acc, obj) { return acc + parseInt(obj.duration, DECIMAL_BASE); }, 0);
+  const totalCollaboratorTTA = nonDuplicateCollaborators.reduce((acc, obj) => acc + parseInt(obj.duration, DECIMAL_BASE), 0);
 
   // Approver TTA.
   createdIds = new Set(createdIds, nonDuplicateCollaborators.map((r) => r.id));
   const nonDuplicateApprovers = approverReports.filter((a) => !createdIds.has(a.id));
-  const totalApproverTTA = nonDuplicateApprovers.reduce(function (acc, obj) { return acc + parseInt(obj.duration, DECIMAL_BASE); }, 0);
+  const totalApproverTTA = nonDuplicateApprovers.reduce((acc, obj) => acc + parseInt(obj.duration, DECIMAL_BASE), 0);
 
   // TTA Provided '6 days 5 hours'.
   const totalTTA = totalCreatedTTA + totalCollaboratorTTA + totalApproverTTA;
   const totalTTADays = Math.floor(totalTTA / 24);
-  const totalTTAHours =  totalTTA - (totalTTADays * 24);
+  const totalTTAHours = totalTTA - (totalTTADays * 24);
   const totalTTASentence = `${totalTTADays >= 1 ? totalTTADays : 0} days ${totalTTAHours} hrs`;
 
-  //...
+  // ...
 
   return {
     daysSinceJoined: totalDaysSinceJoined,

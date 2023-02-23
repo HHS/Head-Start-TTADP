@@ -51,7 +51,7 @@ describe('User handlers', () => {
 
   describe('getUserStatistics', () => {
     it('returns statistics', async () => {
-      const response = { daysSinceJoined: 10, arsCreated: 10};
+      const response = { daysSinceJoined: 10, arsCreated: 10 };
       statisticsByUser.mockResolvedValue(response);
       userById.mockResolvedValue({
         permissions: [
@@ -68,7 +68,7 @@ describe('User handlers', () => {
     });
 
     it('handles errors', async () => {
-      const response = { daysSinceJoined: 10, arsCreated: 10};
+      const response = { daysSinceJoined: 10, arsCreated: 10 };
       statisticsByUser.mockResolvedValue(response);
       userById.mockResolvedValue({
         permissions: [
