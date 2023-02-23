@@ -1,13 +1,12 @@
 import UserPolicy from '../../policies/user';
 import SCOPES from '../../middleware/scopeConstants';
-import { userById, usersWithPermissions } from '../../services/users';
+import { userById, usersWithPermissions, statisticsByUser } from '../../services/users';
 import handleErrors from '../../lib/apiErrorHandler';
 import { DECIMAL_BASE } from '../../constants';
 import { statesByGrantRegion } from '../../services/grant';
 import { createAndStoreVerificationToken, validateVerificationToken } from '../../services/token';
 import { sendEmailVerificationRequestWithToken } from '../../lib/mailer';
 import { currentUserId } from '../../services/currentUser';
-import { statisticsByUser } from '../../services/users';
 
 export async function getPossibleCollaborators(req, res) {
   try {
