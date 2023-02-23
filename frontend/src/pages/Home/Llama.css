@@ -6,7 +6,7 @@
 }
 
 .celebratory-llama {
-    animation: walk-on-by 5s ease forwards;
+    animation: walk-on-by 2s cubic-bezier(.47,1.64,.41,.8) forwards, wiggle 1s ease-in-out forwards;
     left: 50px;
     z-index: 1;
 }
@@ -25,13 +25,19 @@
     }
 }
 
-
+@keyframes wiggle
+{
+  0% { transform: rotate( -10deg ); }
+  100% { transform: rotate( 10deg ); }
+}
 
 @keyframes walk-on-by {
     0% {
-        transform: translateX(300%);
+        transform: translateX(125%);
+
     }
     100% {
         transform: translateX(0);
+
     }
 }
