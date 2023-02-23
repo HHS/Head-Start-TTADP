@@ -1,76 +1,62 @@
 @use '../colors.scss' as *;
 
-.smarthub-horizontal-table-widget {
-  height: calc(100% - 1.5rem);
+@media(min-width: 60em) {
+  .smarthub-horizontal-table-widget .usa-table th {
+    background: #fff;
+    border-bottom: 0px;
+    position: sticky;
+    top: 0;
+    vertical-align: bottom;
+  }
+
+  .smarthub-horizontal-table-widget .usa-table-container--scrollable .smarthub-horizontal-table-first-column {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    max-width: 330px;
+    min-width: 330px;
+    box-shadow: inset 0 0 0 black, inset -1px 0 0 black;
+  }
+
+  .smarthub-horizontal-table-widget .usa-table-container--scrollable .smarthub-horizontal-table-last-column {
+    z-index: 2;
+    position: sticky;
+    right: 0;
+    font-weight: bold;
+    box-shadow: inset 1px 0 0 black, inset 0 0 0 black;
+  }
+
+  .smarthub-horizontal-table-widget .usa-table-container--scrollable th {
+    position: sticky;
+  }
 }
 
-.smarthub-horizontal-table-widget .usa-table-container--scrollable {
-  overflow-x: auto;
-  overflow-y: auto;
-}
+  .smarthub-horizontal-table-widget .usa-table th {
+    min-width: 90px;
+  }
 
-.smarthub-horizontal-table-widget .usa-table {
-  width: 100%;
-  height: 100%;
-}
+  .smarthub-horizontal-table-widget {
+    height: calc(100% - 1.5rem);
+  }
 
-.smarthub-horizontal-table-widget .usa-table caption {
-  margin-bottom: 26px;
-}
+  .smarthub-horizontal-table-widget .usa-table-container--scrollable {
+    overflow-x: auto;
+    overflow-y: auto;
+  }
 
-.smarthub-horizontal-table-widget .usa-table th {
-  min-width: 90px;
-}
+  .smarthub-horizontal-table-widget .usa-table-container--scrollable thead {
+    border-top: 1px solid lightgray;
+  }
 
-.smarthub-horizontal-table-widget .usa-table tr {
-  background-color: #fff;
-  border-bottom: 0px;
-  font-weight: bold;
-}
+  .smarthub-horizontal-table-widget .usa-table td {
+    border: none;
+    text-align: left;
+  }
+  .smarthub-horizontal-table-widget .usa-table td:first-child {
+    white-space: normal;
+  }
 
-.smarthub-horizontal-table-widget .usa-table-container--scrollable  thead {
-  border-top: 1px solid lightgray;
-}
-
-.smarthub-horizontal-table-widget .usa-table th {
-  background: #fff;
-  border-bottom: 0px;
-  position: sticky;
-  top: 0;
-  vertical-align: bottom;
-}
-
-.smarthub-horizontal-table-widget .usa-table td {
-  border: none;
-  text-align: left;
-}
-
-.smarthub-horizontal-table-widget .usa-table-container--scrollable .smarthub-horizontal-table-first-column {
-  position: sticky;
-  left: 0;
-  z-index: 2;
-  max-width: 330px;
-  min-width: 330px;
-  box-shadow: inset 0 0 0 black, inset -1px 0 0 black;
-}
-
-.smarthub-horizontal-table-widget .usa-table-container--scrollable .smarthub-horizontal-table-last-column {
-  z-index: 2;
-  position: sticky;
-  right: 0;
-  font-weight: bold;
-  box-shadow: inset 1px 0 0 black, inset 0 0 0 black;
-}
-
-.smarthub-horizontal-table-widget .usa-table td:first-child {
-  white-space: normal;
-}
-
-.smarthub-horizontal-table-widget .usa-table p:first-child {
-  margin: 0px;
-  padding: 0px;
-}
-
-.smarthub-horizontal-table-widget .usa-table-container--scrollable th {
-  position: sticky;
-}
+  .smarthub-horizontal-table-widget .usa-table p:first-child {
+    margin: 0px;
+    padding: 0px;
+  }

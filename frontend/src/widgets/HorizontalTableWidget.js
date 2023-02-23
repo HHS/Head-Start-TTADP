@@ -27,7 +27,7 @@ export default function HorizontalTableWidget(
   },
 ) {
   return (
-    <Container className="smarthub-horizontal-table-widget shadow-2 padding-top-0" paddingX={0} paddingY={0} loading={loading} loadingLabel={loadingLabel}>
+    <Container className="smarthub-horizontal-table-widget width-full shadow-2 padding-top-0" paddingX={0} paddingY={0} loading={loading} loadingLabel={loadingLabel}>
       <div className="margin-bottom-1 padding-top-3 padding-left-3 margin-bottom-3">
         <h2 className="smart-hub--table-widget-heading margin-0 font-sans-lg">{title}</h2>
         <p className="usa-prose margin-0">{subtitle}</p>
@@ -35,14 +35,14 @@ export default function HorizontalTableWidget(
       {/* a scrollable element must be keyboard accessible */}
       {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
       <div className="usa-table-container--scrollable margin-top-0" tabIndex={0}>
-        <Table fullWidth striped bordered={false}>
+        <Table stackedStyle="default" fullWidth striped bordered={false}>
           <thead>
-            <tr>
+            <tr className="bg-white border-bottom-0 text-bold">
               <th className="smarthub-horizontal-table-first-column">
                 {firstHeading}
               </th>
               {headers.map((h) => <th key={h.replace(' ', '_')} scope="col" className="text-left">{h}</th>)}
-              <th className="smarthub-horizontal-table-last-column">
+              <th className="smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0">
                 {lastHeading}
               </th>
             </tr>
@@ -50,12 +50,12 @@ export default function HorizontalTableWidget(
           <tbody>
             {
             data.map((r, index) => (
-              <tr key={`horizontal_table_row_${index}`}>
-                <td key={`horizontal_table_cell_label${index}`} className="smarthub-horizontal-table-first-column">
+              <tr className="bg-white border-bottom-0 text-bold" key={`horizontal_table_row_${index}`}>
+                <td data-label={firstHeading} key={`horizontal_table_cell_label${index}`} className="smarthub-horizontal-table-first-column">
                   {
                     r.isUrl === 'true'
                       ? (
-                        <a style={{ display: 'table-cell' }} title="Links to Resource" aria-label={`Links to Resource ${r.heading}`} href={r.heading} target="_blank" rel="noreferrer">
+                        <a href={r.heading} target="_blank" rel="noreferrer">
                           {trimLongURLs(r.heading)}
                         </a>
                       )
@@ -63,7 +63,7 @@ export default function HorizontalTableWidget(
                       }
                 </td>
                 {r.data.map((d, cellIndex) => (
-                  <td key={`horizontal_table_cell_${cellIndex}`} className={d.title === 'total' ? 'smarthub-horizontal-table-last-column' : null}>
+                  <td data-label={d.title} key={`horizontal_table_cell_${cellIndex}`} className={d.title === 'total' ? 'smarthub-horizontal-table-last-column' : null}>
                     {d.value}
                   </td>
                 ))}
