@@ -137,7 +137,7 @@ describe('site alert admin handler', () => {
           message: existingAlert.message,
           status: ALERT_STATUSES.UNPUBLISHED,
           title: expect.any(String),
-          size: ALERT_STATUSES.STANDARD,
+          size: ALERT_SIZES.STANDARD,
         }),
       );
     });
@@ -188,6 +188,7 @@ describe('site alert admin handler', () => {
         status: ALERT_STATUSES.UNPUBLISHED,
         title: faker.lorem.sentence(),
         variant: ALERT_VARIANTS.INFO,
+        size: ALERT_SIZES.STANDARD,
       };
 
       await createAlert({ body: newAlert, session: { userId: adminUser.id } }, mockResponse);
@@ -214,6 +215,7 @@ describe('site alert admin handler', () => {
         title: faker.lorem.sentence(),
         userId: adminUser.id,
         variant: ALERT_VARIANTS.INFO,
+        size: ALERT_SIZES.STANDARD,
       };
       const oldCreate = SiteAlert.create;
       const mockCreate = jest.fn().mockRejectedValue(new Error('error'));
@@ -258,7 +260,7 @@ describe('site alert admin handler', () => {
           status: ALERT_STATUSES.UNPUBLISHED,
           title,
           variant: existingAlert.variant,
-          size: ALERT_STATUSES.STANDARD,
+          size: ALERT_SIZES.STANDARD,
         }),
       );
     });
