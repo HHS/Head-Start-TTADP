@@ -309,7 +309,7 @@ export const ALL_PARTICIPANTS = [
   ...OTHER_ENTITY_PARTICIPANTS,
 ];
 
-// note that if this status or variant list is changed, it needs also to be changed in
+// note that if these alert status, size, or variant list is changed, it needs also to be changed in
 // - src/constants.js
 export const ALERT_STATUSES = {
   UNPUBLISHED: 'Unpublished',
@@ -319,4 +319,9 @@ export const ALERT_STATUSES = {
 export const ALERT_VARIANTS = {
   INFO: 'info',
   EMERGENCY: 'emergency',
+};
+
+export const ALERT_SIZES = {
+  SLIM: 'slim',
+  STANDARD: 'standard',
 };

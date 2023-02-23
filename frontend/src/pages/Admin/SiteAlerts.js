@@ -2,7 +2,7 @@ import { Button, Alert } from '@trussworks/react-uswds';
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import Container from '../../components/Container';
-import { ALERT_STATUSES } from '../../Constants';
+import { ALERT_SIZES, ALERT_STATUSES, ALERT_VARIANTS } from '../../Constants';
 import { deleteSiteAlert, getSiteAlerts } from '../../fetchers/Admin';
 import AlertReview from './components/AlertReview';
 
@@ -14,7 +14,8 @@ export const DEFAULT_ALERT = {
   endDate: '',
   id: Math.random(),
   isNew: true,
-  variant: 'info',
+  variant: ALERT_VARIANTS.INFO,
+  size: ALERT_SIZES.STANDARD,
 };
 
 export default function SiteAlerts() {
