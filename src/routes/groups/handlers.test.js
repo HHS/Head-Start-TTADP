@@ -1,5 +1,5 @@
 import httpCodes from 'http-codes';
-import { Group } from '../../models';
+import { Group, Grant } from '../../models';
 import {
   getGroups,
   getGroup,
@@ -20,6 +20,19 @@ jest.mock('../../models', () => ({
     update: jest.fn(),
     destroy: jest.fn(),
   },
+  Grant: {
+    findAll: jest.fn(),
+  },
+}));
+
+jest.mock('../../services/users', () => ({
+  userById: jest.fn(() => ({
+    permissions: [
+      {
+        regionId: 1,
+      },
+    ],
+  })),
 }));
 
 jest.mock('../../services/currentUser', () => ({
@@ -135,9 +148,13 @@ describe('Groups Handlers', () => {
       const res = {
         json: jest.fn(),
         status: jest.fn(),
+        sendStatus: jest.fn(),
       };
       const userId = 1;
       const groupResponse = { id: 1, name: 'Group 1' };
+      Grant.findAll.mockReturnValue([
+        { regionId: 1 },
+      ]);
       currentUserId.mockReturnValue(userId);
       createNewGroup.mockReturnValue(groupResponse);
       await createGroup(req, res);
@@ -155,6 +172,9 @@ describe('Groups Handlers', () => {
         sendStatus: jest.fn(),
       };
       const userId = 1;
+      Grant.findAll.mockReturnValue([
+        { regionId: 1 },
+      ]);
       currentUserId.mockReturnValue(userId);
       createNewGroup.mockRejectedValue(new Error('Error'));
       await createGroup(req, res);
@@ -179,7 +199,6 @@ describe('Groups Handlers', () => {
       };
 
       Group.findOne.mockReturnValue({ id: 1, name: 'Group 1', userId: 1 });
-
       const userId = 1;
       const groupResponse = { id: 1, name: 'Group 1' };
       currentUserId.mockReturnValue(userId);
@@ -227,6 +246,9 @@ describe('Groups Handlers', () => {
       };
       const userId = 1;
       Group.findOne.mockReturnValue({ id: 1, name: 'Group 1', userId: 1 });
+      Grant.findAll.mockReturnValue([
+        { regionId: 1 },
+      ]);
       currentUserId.mockReturnValue(userId);
       editGroup.mockRejectedValue(new Error('Error'));
       await updateGroup(req, res);

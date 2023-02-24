@@ -36,7 +36,7 @@ export default class Group {
   canAddToGroup() {
     return this.grants.every((grant) => (
       this.user.permissions.some((permission) => (
-        permission.regionId === grant.regionId && permission.scopeId === SCOPES.READ_REPORTS
+        permission.regionId === grant.regionId
       ))));
   }
 
