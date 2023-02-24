@@ -2,9 +2,7 @@ const { Model } = require('sequelize');
 const isEmail = require('validator/lib/isEmail');
 const generateFullName = require('./helpers/generateFullName');
 
-const featureFlags = [
-  'resources_dashboard',
-];
+const featureFlags = ['resources_dashboard', 'rttapa_form'];
 
 export default (sequelize, DataTypes) => {
   class User extends Model {
