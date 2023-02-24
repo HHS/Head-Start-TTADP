@@ -1,8 +1,7 @@
 import { Op } from 'sequelize';
-import {
-  // @ts-ignore
-  Goal,
-} from '../../models';
+import db from '../../models';
+
+const { Goal } = db;
 
 export default async function goalsPercentage(scopes) {
   // console.log("--------- scopes.goal");
