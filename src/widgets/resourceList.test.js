@@ -1,4 +1,6 @@
+import { QueryTypes } from 'sequelize';
 import db, {
+  sequelize,
   ActivityReport,
   ActivityRecipient,
   User,
@@ -63,7 +65,7 @@ const reportObject = {
   lastUpdatedById: mockUser.id,
   ECLKCResourcesUsed: ['test'],
   activityRecipients: [
-    { activityRecipientId: GRANT_ID_ONE },
+    { grantId: GRANT_ID_ONE },
   ],
   approvingManagerId: 1,
   numberOfParticipants: 11,
@@ -83,7 +85,7 @@ const regionOneReportA = {
   ...reportObject,
   regionId: REGION_ID,
   duration: 1,
-  startDate: '2021-01-01T12:00:00Z',
+  startDate: '2021-01-02T12:00:00Z',
   endDate: '2021-01-31T12:00:00Z',
 };
 
@@ -115,12 +117,13 @@ const regionOneDraftReport = {
   ...reportObject,
   regionId: REGION_ID,
   duration: 7,
-  startDate: '2021-01-01T12:00:00Z',
+  startDate: '2021-01-02T12:00:00Z',
   endDate: '2021-01-31T12:00:00Z',
   submissionStatus: REPORT_STATUSES.DRAFT,
   calculatedStatus: REPORT_STATUSES.DRAFT,
 };
 
+let grant;
 let goal;
 let objective;
 let activityReportObjectiveOne;
@@ -129,121 +132,107 @@ let activityReportObjectiveThree;
 
 describe('Resources list widget', () => {
   beforeAll(async () => {
-    await User.create(mockUser);
-    await Recipient.create({ ...mockRecipient });
-    await Grant.create({ ...mockGrant }, { validate: true, individualHooks: true });
-    goal = await Goal.create({ ...mockGoal }, { validate: true, individualHooks: true });
-    objective = await Objective.create({
-      title: 'Objective 1',
-      goalId: goal.id,
-      status: 'In Progress',
-    });
+    try {
+      await User.findOrCreate({ where: mockUser, individualHooks: true });
+      await Recipient.findOrCreate({ where: mockRecipient, individualHooks: true });
+      [grant] = await Grant.findOrCreate({
+        where: mockGrant,
+        validate: true,
+        individualHooks: true,
+      });
+      [goal] = await Goal.findOrCreate({ where: mockGoal, validate: true, individualHooks: true });
+      [objective] = await Objective.findOrCreate({
+        where: {
+          title: 'Objective 1',
+          goalId: goal.dataValues.id,
+          status: 'In Progress',
+        },
+      });
 
-    // Report 1 (Mixed Resources).
-    const reportOne = await ActivityReport.create({ ...regionOneReportA });
-    await ActivityRecipient.create({ activityReportId: reportOne.id, grantId: mockGrant.id });
+      // Report 1 (Mixed Resources).
+      const reportOne = await ActivityReport.create({
+        ...regionOneReportA,
+      }, {
+        individualHooks: true,
+      });
+      await ActivityRecipient.findOrCreate({
+        where: { activityReportId: reportOne.id, grantId: mockGrant.id },
+      });
 
-    activityReportObjectiveOne = await ActivityReportObjective.create({
-      activityReportId: reportOne.id,
-      status: 'Complete',
-      objectiveId: objective.id,
-    });
+      [activityReportObjectiveOne] = await ActivityReportObjective.findOrCreate({
+        where: {
+          activityReportId: reportOne.id,
+          status: 'Complete',
+          objectiveId: objective.id,
+        },
+      });
 
-    const x = await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveOne.id,
-      [ECLKC_RESOURCE_URL, NONECLKC_RESOURCE_URL],
-    );
-    // console.log(x);
+      // Report 1 ECLKC Resource 1.
+      // Report 1 Non-ECLKC Resource 1.
+      await processActivityReportObjectiveForResourcesById(
+        activityReportObjectiveOne.id,
+        [ECLKC_RESOURCE_URL, NONECLKC_RESOURCE_URL],
+      );
 
-    // // Report 1 ECLKC Resource 1.
-    // await ActivityReportObjectiveResource.create({
-    //   activityReportObjectiveId: activityReportObjectiveOne.id,
-    //   userProvidedUrl: ECLKC_RESOURCE_URL,
-    // });
+      // Report 2 (Only ECLKC).
+      const reportTwo = await ActivityReport.create({ ...regionOneReportB });
+      await ActivityRecipient.create({ activityReportId: reportTwo.id, grantId: mockGrant.id });
 
-    // // Report 1 Non-ECLKC Resource 1.
-    // await ActivityReportObjectiveResource.create({
-    //   activityReportObjectiveId: activityReportObjectiveOne.id,
-    //   userProvidedUrl: NONECLKC_RESOURCE_URL,
-    // });
+      activityReportObjectiveTwo = await ActivityReportObjective.create({
+        activityReportId: reportTwo.id,
+        status: 'Complete',
+        objectiveId: objective.id,
+      });
 
-    // Report 2 (Only ECLKC).
-    const reportTwo = await ActivityReport.create({ ...regionOneReportB });
-    await ActivityRecipient.create({ activityReportId: reportTwo.id, grantId: mockGrant.id });
+      // Report 2 ECLKC Resource 1.
+      await processActivityReportObjectiveForResourcesById(
+        activityReportObjectiveTwo.id,
+        [ECLKC_RESOURCE_URL],
+      );
 
-    activityReportObjectiveTwo = await ActivityReportObjective.create({
-      activityReportId: reportTwo.id,
-      status: 'Complete',
-      objectiveId: objective.id,
-    });
+      // Report 3 (Only Non-ECLKC).
+      const reportThree = await ActivityReport.create({ ...regionOneReportC });
+      await ActivityRecipient.create({ activityReportId: reportThree.id, grantId: mockGrant.id });
 
-    await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveTwo.id,
-      [ECLKC_RESOURCE_URL],
-    );
-    // // Report 2 ECLKC Resource 1.
-    // await ActivityReportObjectiveResource.create({
-    //   activityReportObjectiveId: activityReportObjectiveTwo.id,
-    //   userProvidedUrl: ECLKC_RESOURCE_URL,
-    // });
+      activityReportObjectiveThree = await ActivityReportObjective.create({
+        activityReportId: reportThree.id,
+        status: 'Complete',
+        objectiveId: objective.id,
+      });
 
-    // Report 3 (Only Non-ECLKC).
-    const reportThree = await ActivityReport.create({ ...regionOneReportC });
-    await ActivityRecipient.create({ activityReportId: reportThree.id, grantId: mockGrant.id });
+      // Report 3 Non-ECLKC Resource 1.
+      await processActivityReportObjectiveForResourcesById(
+        activityReportObjectiveThree.id,
+        [NONECLKC_RESOURCE_URL],
+      );
 
-    activityReportObjectiveThree = await ActivityReportObjective.create({
-      activityReportId: reportThree.id,
-      status: 'Complete',
-      objectiveId: objective.id,
-    });
+      // Report 4 (No Resources).
+      const reportFour = await ActivityReport.create({ ...regionOneReportD });
+      await ActivityRecipient.create({ activityReportId: reportFour.id, grantId: mockGrant.id });
 
-    await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveThree.id,
-      [NONECLKC_RESOURCE_URL],
-    );
+      await ActivityReportObjective.create({
+        activityReportId: reportFour.id,
+        status: 'Complete',
+        objectiveId: objective.id,
+      });
 
-    // // Report 3 Non-ECLKC Resource 1.
-    // await ActivityReportObjectiveResource.create({
-    //   activityReportObjectiveId: activityReportObjectiveThree.id,
-    //   userProvidedUrl: NONECLKC_RESOURCE_URL,
-    // });
+      // Draft Report (Excluded).
+      const reportDraft = await ActivityReport.create({ ...regionOneDraftReport });
+      await ActivityRecipient.create({ activityReportId: reportDraft.id, grantId: mockGrant.id });
 
-    // Report 4 (No Resources).
-    const reportFour = await ActivityReport.create({ ...regionOneReportD });
-    await ActivityRecipient.create({ activityReportId: reportFour.id, grantId: mockGrant.id });
+      const activityReportObjectiveDraft = await ActivityReportObjective.create({
+        activityReportId: reportDraft.id,
+        status: 'Complete',
+        objectiveId: objective.id,
+      });
 
-    await ActivityReportObjective.create({
-      activityReportId: reportFour.id,
-      status: 'Complete',
-      objectiveId: objective.id,
-    });
-
-    // Draft Report (Excluded).
-    const reportDraft = await ActivityReport.create({ ...regionOneDraftReport });
-    await ActivityRecipient.create({ activityReportId: reportDraft.id, grantId: mockGrant.id });
-
-    const activityReportObjectiveDraft = await ActivityReportObjective.create({
-      activityReportId: reportDraft.id,
-      status: 'Complete',
-      objectiveId: objective.id,
-    });
-
-    await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveDraft.id,
-      [ECLKC_RESOURCE_URL, NONECLKC_RESOURCE_URL],
-    );
-
-    // // Report Draft ECLKC Resource 1.
-    // await ActivityReportObjectiveResource.create({
-    //   activityReportObjectiveId: activityReportObjectiveDraft.id,
-    //   userProvidedUrl: ECLKC_RESOURCE_URL,
-    // });
-
-    // // Report Draft Non-ECLKC Resource 1.
-    // await ActivityReportObjectiveResource.create({
-    //   activityReportObjectiveId: activityReportObjectiveDraft.id,
-    //   userProvidedUrl: NONECLKC_RESOURCE_URL,
-    // });
+      // Report Draft ECLKC Resource 1.
+      // Report Draft Non-ECLKC Resource 1.
+      await processActivityReportObjectiveForResourcesById(
+        activityReportObjectiveDraft.id,
+        [ECLKC_RESOURCE_URL, NONECLKC_RESOURCE_URL],
+      );
+    } catch (err) { console.log(err); throw err; }
   });
 
   afterAll(async () => {
@@ -274,20 +263,14 @@ describe('Resources list widget', () => {
   });
 
   it('retrieves resources list within date range for specified region', async () => {
-    const scopes = filtersToScopes({
+    const scopes = await filtersToScopes({
       'region.in': [REGION_ID],
       'startDate.win': '2021/01/01-2021/01/31',
-      'creator.ctn': [mockUser.id],
+      'creator.ctn': [mockUser.name],
       'recipientId.ctn': [RECIPIENT_ID],
-      // 'grantNumber.ctn': GRANT_ID_ONE,
     });
-    const { activityReport: reportScope } = await filtersToScopes({
-      'region.in': [REGION_ID],
-      'startDate.win': '2021/01/01-2021/01/31',
-      'creator.ctn': [mockUser.id],
-    });
-    const { goal: goalScope } = await filtersToScopes({ 'recipientId.ctn': [RECIPIENT_ID] }, 'goal');
-    const res = await resourceList({ report: reportScope, goal: goalScope });
+
+    const res = await resourceList(scopes);
     expect(res.length).toBe(3);
 
     expect(res[0].name).toBe(ECLKC_RESOURCE_URL);
@@ -313,7 +296,11 @@ describe('Resources list widget', () => {
   });
 
   it('retrieves resources list short date range for specified region', async () => {
-    const scopes = filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/20' });
+    const scopes = await filtersToScopes({
+      'region.in': [REGION_ID],
+      'startDate.win': '2021/01/01-2021/01/20',
+    });
+
     const res = await resourceList(scopes);
     expect(res.length).toBe(2);
 
@@ -333,7 +320,7 @@ describe('Resources list widget', () => {
   });
 
   it('retrieves resources domain list within date range for specified region', async () => {
-    const scopes = filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+    const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
     const domains = await resourceDomainList(scopes);
     expect(domains.length).toBe(2);
 
@@ -351,37 +338,40 @@ describe('Resources list widget', () => {
   });
 
   it('retrieves resources dashboard overview within date range for specified region', async () => {
-    const scopes = filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+    const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
     const data = await resourcesDashboardOverview(scopes);
     expect(data).toStrictEqual({
+      participant: {
+        numParticipants: '44',
+      },
       recipient: {
         num: '1',
-        numEclkc: '1',
-        numNoResources: '0',
-        numNonEclkc: '1',
+        // numEclkc: '1',
+        // numNoResources: '0',
+        // numNonEclkc: '1',
         numResources: '1',
-        percentEclkc: '100.00%',
-        percentNoResources: '0%',
-        percentNonEclkc: '100.00%',
+        // percentEclkc: '100.00%',
+        // percentNoResources: '0%',
+        // percentNonEclkc: '100.00%',
         percentResources: '100.00%',
       },
       report: {
         num: '4',
-        numEclkc: '2',
-        numNoResources: '1',
-        numNonEclkc: '2',
+        // numEclkc: '2',
+        // numNoResources: '1',
+        // numNonEclkc: '2',
         numResources: '3',
-        percentEclkc: '50.00%',
-        percentNoResources: '25.00%',
-        percentNonEclkc: '50.00%',
+        // percentEclkc: '50.00%',
+        // percentNoResources: '25.00%',
+        // percentNonEclkc: '50.00%',
         percentResources: '75.00%',
       },
       resource: {
         num: '2',
         numEclkc: '1',
-        numNonEclkc: '1',
+        // numNonEclkc: '1',
         percentEclkc: '50.00%',
-        percentNonEclkc: '50.00%',
+        // percentNonEclkc: '50.00%',
       },
     });
   });

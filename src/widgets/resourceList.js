@@ -24,10 +24,10 @@ import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../constants';
 export async function resourceData(scopes) {
   // Query Database for all Resources within the scope.
   const reports = await ActivityReport.findAll({
-    attributes: ['id', 'numberOfParticipants', 'topics'],
+    attributes: ['id', 'numberOfParticipants', 'topics', 'startDate'],
     where: {
       [Op.and]: [
-        scopes.report,
+        scopes.activityReport,
         { calculatedStatus: REPORT_STATUSES.APPROVED },
       ],
     },
@@ -36,21 +36,18 @@ export async function resourceData(scopes) {
         model: ActivityRecipient,
         as: 'activityRecipients',
         attributes: ['id'],
-        // where: { [Op.and]: [scopes.activityRecipient] },
         required: true,
         include: [
           {
             model: Grant,
             as: 'grant',
             attributes: ['id', 'recipientId'],
-            // where: { [Op.and]: [scopes.grant] },
             required: false,
           },
           {
             model: OtherEntity,
             as: 'otherEntity',
             attributes: ['id'],
-            // where: { [Op.and]: [scopes.otherEntity] },
             required: false,
           },
         ],
@@ -62,14 +59,12 @@ export async function resourceData(scopes) {
         through: {
           attributes: ['sourceFields'],
         },
-        // where: { [Op.and]: [scopes.resource] },
         required: false,
       },
       {
         model: NextStep,
         as: 'specialistNextSteps',
         attributes: ['id'],
-        // where: { [Op.and]: [scopes.nextStep] },
         include: [{
           model: Resource,
           as: 'resources',
@@ -77,15 +72,14 @@ export async function resourceData(scopes) {
           through: {
             attributes: ['sourceFields'],
           },
-          // where: { [Op.and]: [scopes.resource] },
           required: false,
         }],
+        required: false,
       },
       {
         model: NextStep,
         as: 'recipientNextSteps',
         attributes: ['id'],
-        // where: { [Op.and]: [scopes.nextStep] },
         include: [{
           model: Resource,
           as: 'resources',
@@ -93,15 +87,14 @@ export async function resourceData(scopes) {
           through: {
             attributes: ['sourceFields'],
           },
-          // where: { [Op.and]: [scopes.resource] },
           required: false,
         }],
+        required: false,
       },
       {
         model: ActivityReportObjective,
         as: 'activityReportObjectives',
         attributes: ['id'],
-        // where: { [Op.and]: [scopes.activityReportObjective] },
         separate: true,
         include: [
           {
@@ -111,29 +104,26 @@ export async function resourceData(scopes) {
             through: {
               attributes: ['sourceFields'],
             },
-            // where: { [Op.and]: [scopes.resource] },
             required: false,
           },
           {
             model: Objective,
             as: 'objective',
             attributes: ['id', 'goalId'],
-            // where: { [Op.and]: [scopes.objective] },
             required: true,
           },
           {
             model: Topic,
             as: 'topics',
             attributes: ['id', 'name'],
-            // where: { [Op.and]: [scopes.topic] },
           },
         ],
+        required: false,
       },
       {
         model: ActivityReportGoal,
         as: 'activityReportGoals',
         attributes: ['id', 'goalId'],
-        // where: { [Op.and]: [scopes.activityReportGoal] },
         separate: true,
         include: [
           {
@@ -143,17 +133,16 @@ export async function resourceData(scopes) {
             through: {
               attributes: ['sourceFields'],
             },
-            // where: { [Op.and]: [scopes.resource] },
             required: false,
           },
           {
             model: Goal,
             as: 'goal',
             attributes: ['id'],
-            where: { [Op.and]: [scopes.goal] },
             required: true,
           },
         ],
+        required: false,
       },
     ],
   });
@@ -327,11 +316,31 @@ export async function resourceData(scopes) {
     const participants = reports
       .filter((r) => r.id === data.activityReportId)
       .reduce((accumulator, r) => accumulator + r.numberOfParticipants, 0);
-    return { ...data, /* recipients, */ participants };
+    const startDates = reports
+      .filter((r) => r.id === data.activityReportId)
+      .map((r) => r.startDate);
+    return { ...data, /* recipients, */ participants, startDates };
   });
 
   return { resources: resourcesWithRecipients, reports };
 }
+
+const recipientAddUnique = (currentRecipients, newRecipients) => newRecipients
+  .reduce((recipients, recipient) => {
+    const exists = recipients.find((r) => r.recipientId === recipient.recipientId);
+    if (exists) {
+      exists.grantIds = [...new Set([...exists.grantIds, recipient.grantId])];
+      return recipients;
+    }
+
+    return [
+      ...recipients,
+      {
+        recipientId: recipient.recipientId,
+        grantIds: [recipient.grantId],
+      },
+    ];
+  }, currentRecipients);
 
 async function generateResourceList(
   precalculatedData, // data generated from calling resourceData
@@ -339,7 +348,6 @@ async function generateResourceList(
   includeNone, // include none record in result
 ) {
   const { resources: res, reports } = precalculatedData;
-
   let resourceCounts = res.reduce(
     (resources, resource) => {
       const {
@@ -351,7 +359,7 @@ async function generateResourceList(
       const exists = resources.find((o) => o.url === url);
       if (exists) {
         exists.reports.add(activityReportId);
-        resource.recipients.forEach(exists.recipients.add, exists.recipients);
+        exists.recipients = recipientAddUnique(exists.recipients, recipients);
         exists.count += 1;
         return resources;
       }
@@ -362,7 +370,7 @@ async function generateResourceList(
         url,
         count: 1,
         reports: new Set([activityReportId]),
-        recipients: new Set(recipients),
+        recipients: recipientAddUnique([], recipients),
       }];
     },
     [],
@@ -378,7 +386,7 @@ async function generateResourceList(
   resourceCounts = resourceCounts.map((rc) => ({
     ...rc,
     reportCount: rc.reports.size,
-    recipientCount: rc.recipients.size,
+    recipientCount: rc.recipients.length,
   }));
   if (removeLists) {
     resourceCounts = resourceCounts.map((rc) => ({
@@ -394,7 +402,9 @@ async function generateResourceList(
     const noneCnt = (allReportIds.size - allReportIdsWithResources.size);
     if (noneCnt) {
       const allRecipeintIds = new Set([...reports.map((r) => r['activityRecipients.grant.recipientId'])].flat());
-      const allRecipientIdsWithResources = new Set([...res.map((r) => r.recipients)].flat());
+      const allRecipientIdsWithResources = new Set([
+        ...res.map((r) => r.recipients.recipientId),
+      ].flat());
       const noneRecipeintCnt = (allRecipeintIds.size - allRecipientIdsWithResources.size);
       const allReportIdsWithoutResources = new Set([...allReportIds]
         .filter((r) => !allReportIdsWithResources.has(r)));
@@ -558,7 +568,10 @@ export async function resourcesDashboardOverview(scopes) {
   data.recipientIntermediate
     .allRecipeintIds = new Set([...reports.map((r) => r['activityRecipients.grant.recipientId'])].flat());
   data.recipientIntermediate
-    .allRecipientIdsWithResources = new Set([...domainData.map((dd) => [...dd.recipients])].flat());
+    .allRecipientIdsWithResources = recipientAddUnique(
+      [],
+      [...domainData.map((dd) => [...dd.recipients])].flat(),
+    );
   data.recipientIntermediate.allRecipientIdsWithEclkcResources = new Set([
     ...domainData
       .filter((d) => d.domain === RESOURCE_DOMAIN.ECLKC)
@@ -573,8 +586,7 @@ export async function resourcesDashboardOverview(scopes) {
   // recipient based stats
   data.recipient = {};
   data.recipient.num = data.recipientIntermediate.allRecipeintIds.size;
-
-  data.recipient.numResources = data.recipientIntermediate.allRecipientIdsWithResources.size;
+  data.recipient.numResources = data.recipientIntermediate.allRecipientIdsWithResources.length;
   data.recipient
     .percentResources = (data.recipient.numResources / data.recipient.num) * 100.0;
 
@@ -612,38 +624,46 @@ export async function resourcesDashboardOverview(scopes) {
   data.resource.numNonEclkc = data.resourceIntermediate.allNonEclkcResources.size;
   data.resource.percentNonEclkc = (data.resource.numNonEclkc / data.resource.num) * 100.0;
 
+  data.participant = {};
+  data.participant.num = reports
+    .map((r) => ({
+      activityReportId: r.dataValues.id,
+      participants: r.dataValues.numberOfParticipants,
+    }))
+    .reduce((partialSum, r) => partialSum + r.participants, 0);
+
   return {
     report: {
       num: formatNumber(data.report.num),
       numResources: formatNumber(data.report.numResources),
       percentResources: `${formatNumber(data.report.percentResources, 2)}%`,
-      numNoResources: formatNumber(data.report.numNoResources),
-      percentNoResources: `${formatNumber(data.report.percentNoResources, 2)}%`,
-      numEclkc: formatNumber(data.report.numEclkc),
-      percentEclkc: `${formatNumber(data.report.percentEclkc, 2)}%`,
-      numNonEclkc: formatNumber(data.report.numNonEclkc),
-      percentNonEclkc: `${formatNumber(data.report.percentNonEclkc, 2)}%`,
-    },
-    recipient: {
-      num: formatNumber(data.recipient.num),
-      numResources: formatNumber(data.recipient.numResources),
-      percentResources: `${formatNumber(data.recipient.percentResources, 2)}%`,
-      numNoResources: formatNumber(data.recipient.numNoResources),
-      percentNoResources: `${formatNumber(data.recipient.percentNoResources, 2)}%`,
-      numEclkc: formatNumber(data.recipient.numEclkc),
-      percentEclkc: `${formatNumber(data.recipient.percentEclkc, 2)}%`,
-      numNonEclkc: formatNumber(data.recipient.numNonEclkc),
-      percentNonEclkc: `${formatNumber(data.recipient.percentNonEclkc, 2)}%`,
+      // numNoResources: formatNumber(data.report.numNoResources),
+      // percentNoResources: `${formatNumber(data.report.percentNoResources, 2)}%`,
+      // numEclkc: formatNumber(data.report.numEclkc),
+      // percentEclkc: `${formatNumber(data.report.percentEclkc, 2)}%`,
+      // numNonEclkc: formatNumber(data.report.numNonEclkc),
+      // percentNonEclkc: `${formatNumber(data.report.percentNonEclkc, 2)}%`,
     },
     resource: {
       num: formatNumber(data.resource.num),
       numEclkc: formatNumber(data.resource.numEclkc),
       percentEclkc: `${formatNumber(data.resource.percentEclkc, 2)}%`,
-      numNonEclkc: formatNumber(data.resource.numNonEclkc),
-      percentNonEclkc: `${formatNumber(data.resource.percentNonEclkc, 2)}%`,
+      // numNonEclkc: formatNumber(data.resource.numNonEclkc),
+      // percentNonEclkc: `${formatNumber(data.resource.percentNonEclkc, 2)}%`,
+    },
+    recipient: {
+      num: formatNumber(data.recipient.num),
+      numResources: formatNumber(data.recipient.numResources),
+      percentResources: `${formatNumber(data.recipient.percentResources, 2)}%`,
+      // numNoResources: formatNumber(data.recipient.numNoResources),
+      // percentNoResources: `${formatNumber(data.recipient.percentNoResources, 2)}%`,
+      // numEclkc: formatNumber(data.recipient.numEclkc),
+      // percentEclkc: `${formatNumber(data.recipient.percentEclkc, 2)}%`,
+      // numNonEclkc: formatNumber(data.recipient.numNonEclkc),
+      // percentNonEclkc: `${formatNumber(data.recipient.percentNonEclkc, 2)}%`,
     },
     participant: {
-      numParticipants: '100',
+      numParticipants: formatNumber(data.participant.num),
     },
   };
 }
@@ -670,7 +690,28 @@ Expected JSON (we have this now):
     numParticipants: '765',
   },
 }
+*/
+export async function resourceUse(scopes) {
+  // const { resources, reports } = await resourceData(scopes);
+  // const getMonthYear = (date) => {
 
+  //   return ``
+  // };
+  // const clusteredResources = resources.map((resource) => ({
+  //   heading: resource.url,
+  //   isUrl: true,
+  //   data: resource.startDates.reduce((data, startDate) => {
+  //     const currentMonthYear = new Date(startDate).
+  //     const exists = data.find((sd) => new Date(sd).)
+  //   return [
+  //     ...resourceBlocks,
+  //     {
+
+  //     }
+  //   ]
+  // }, []);
+}
+/*
 WidgetID: resourceUse
 Expected JSON:
 - We add a property for all headers.
