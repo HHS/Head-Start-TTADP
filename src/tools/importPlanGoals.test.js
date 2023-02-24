@@ -33,6 +33,9 @@ describe('Import TTA plan goals', () => {
 
     it('should import Goals table', async () => {
       const allGoals = await Goal.findAll();
+      const goalNames = allGoals.map((goal) => goal.name);
+      // eslint-disable-next-line no-console
+      console.log(goalNames);
       expect(allGoals).toBeDefined();
       expect(allGoals.length).toBe(16);
 
