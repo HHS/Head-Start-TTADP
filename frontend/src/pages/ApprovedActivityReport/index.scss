@@ -19,6 +19,11 @@
 }
 
 @media print {
+  .smart-hub-offset-nav {
+    margin-top: 0 !important;
+    margin-right: 0;
+  }
+
   .smart-hub-offset-nav, .ttahub-activity-report-view {
     max-width: none;
   }
@@ -42,12 +47,7 @@
   .ttahub-activity-report-view hr {
     display: none;
   }
-
-  .smart-hub-offset-nav {
-    margin-top: 0 !important;
-    margin-right: 0;
-  }
-
+ 
   .smart-hub-offset-nav > .grid-col-12 {
     margin: 0;
   }
