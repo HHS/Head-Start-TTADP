@@ -12,7 +12,7 @@ export default function SiteAlert({
       heading={heading}
       showIcon
       style={{ ...style }}
-      className="usa-site-alert--ttahub"
+      className="usa-site-alert--ttahub no-print"
     >
       {children}
     </BaseSiteAlert>
