@@ -64,7 +64,6 @@ export async function createGroup(req: Request, res: Response) {
     const groupResponse = await createNewGroup({ ...req.body, userId });
     res.json(groupResponse);
   } catch (e) {
-    console.log(e);
     auditLogger.error(`${NAMESPACE} createGroup ${e}`);
     res.sendStatus(httpCodes.INTERNAL_SERVER_ERROR);
   }
