@@ -9,6 +9,7 @@ import { MemoryRouter, Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 
 import SiteNav from '../SiteNav';
+import UserContext from '../../UserContext';
 
 const history = createMemoryHistory();
 
@@ -20,13 +21,17 @@ describe('SiteNav', () => {
     const userUrl = join('api', 'user');
 
     beforeEach(() => {
-      const user = { name: 'name' };
+      const user = {
+        name: 'name', id: 1, flags: [], roles: [],
+      };
       fetchMock.get(userUrl, { ...user });
       fetchMock.get(logoutUrl, 200);
 
       render(
         <Router history={history}>
-          <SiteNav authenticated admin user={user} hasAlerts={false} />
+          <UserContext.Provider value={{ user }}>
+            <SiteNav authenticated admin user={user} hasAlerts={false} />
+          </UserContext.Provider>
         </Router>,
       );
     });
@@ -48,7 +53,9 @@ describe('SiteNav', () => {
 
       render(
         <MemoryRouter>
-          <SiteNav authenticated user={user} hasAlerts={false} />
+          <UserContext.Provider value={{ user }}>
+            <SiteNav authenticated user={user} hasAlerts={false} />
+          </UserContext.Provider>
         </MemoryRouter>,
       );
     });
@@ -79,7 +86,9 @@ describe('SiteNav', () => {
 
       render(
         <MemoryRouter>
-          <SiteNav authenticated user={user} hasAlerts />
+          <UserContext.Provider value={{ user }}>
+            <SiteNav authenticated user={user} hasAlerts />
+          </UserContext.Provider>
         </MemoryRouter>,
       );
     });
@@ -101,7 +110,9 @@ describe('SiteNav', () => {
       render(
         <MemoryRouter>
           <header className="smart-hub-header.has-alerts">
-            <SiteNav authenticated user={user} hasAlerts />
+            <UserContext.Provider value={{ user }}>
+              <SiteNav authenticated user={user} hasAlerts />
+            </UserContext.Provider>
           </header>
         </MemoryRouter>,
       );
