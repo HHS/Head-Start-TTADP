@@ -18,19 +18,19 @@ const recipientFourName = faker.company.companyName();
 
 const recipients = [
   {
-    id: faker.datatype.number({ min: 1800 }),
+    id: faker.datatype.number({ min: 2800 }),
     name: recipientOneName,
   },
   {
-    id: faker.datatype.number({ min: 1800 }),
+    id: faker.datatype.number({ min: 2800 }),
     name: recipientTwoName,
   },
   {
-    id: faker.datatype.number({ min: 1800 }),
+    id: faker.datatype.number({ min: 2800 }),
     name: recipientThreeName,
   },
   {
-    id: faker.datatype.number({ min: 1800 }),
+    id: faker.datatype.number({ min: 2800 }),
     name: recipientFourName,
   },
 ];
@@ -41,7 +41,7 @@ describe('grant filtersToScopes', () => {
   let mockUser;
   let group;
   const groupName = faker.company.companyName();
-  const specialGrantNumber = String(faker.datatype.number({ min: 1800 }));
+  const specialGrantNumber = String(faker.datatype.number({ min: 2800 }));
   let grantGroupOne;
   let grantGroupTwo;
 
@@ -50,7 +50,7 @@ describe('grant filtersToScopes', () => {
     const grants = await Promise.all([
       Grant.create({
         id: recipients[3].id,
-        number: String(faker.datatype.number({ min: 1800 })),
+        number: String(faker.datatype.number({ min: 2800 })),
         regionId: 4,
         recipientId: recipients[3].id,
         status: 'Active',
@@ -72,7 +72,7 @@ describe('grant filtersToScopes', () => {
       }),
       Grant.create({
         id: recipients[1].id,
-        number: String(faker.datatype.number({ min: 1800 })),
+        number: String(faker.datatype.number({ min: 2800 })),
         regionId: 1,
         recipientId: recipients[1].id,
         status: 'Active',
@@ -83,7 +83,7 @@ describe('grant filtersToScopes', () => {
       }),
       Grant.create({
         id: recipients[2].id,
-        number: String(faker.datatype.number({ min: 1800 })),
+        number: String(faker.datatype.number({ min: 2800 })),
         regionId: 3,
         recipientId: recipients[2].id,
         status: 'Active',
@@ -381,6 +381,7 @@ describe('grant filtersToScopes', () => {
       const filters = { 'group.in': [groupName] };
       const scope = await filtersToScopes(filters, { userId: mockUser.id });
       const found = await Grant.findAll({
+        logging: console.log,
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
 
@@ -394,6 +395,7 @@ describe('grant filtersToScopes', () => {
       const filters = { 'group.nin': [groupName] };
       const scope = await filtersToScopes(filters, { userId: mockUser.id });
       const found = await Grant.findAll({
+        logging: console.log,
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
 
