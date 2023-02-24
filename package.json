@@ -109,7 +109,7 @@
     "node-fetch": "^2.6.7",
     "protobufjs": "^6.11.3",
     "got": "^11.8.5",
-    "undici": "^5.8.0",
+    "undici": "^5.10.0",
     "selenium-webdriver": "4.3.0",
     "json5": "^2.2.3",
     "luxon": "^1.23.1",
@@ -201,7 +201,10 @@
         "branches": 75,
         "lines": 75
       }
-    }
+    },
+    "setupFiles": [
+      "./src/setupTest.js"
+    ]
   },
   "keywords": [],
   "author": "",
@@ -299,7 +302,7 @@
     "pg": "^8.3.3",
     "pug": "^3.0.2",
     "redis": "^4.0.6",
-    "sequelize": "^6.12.5",
+    "sequelize": "^6.28.2",
     "sequelize-cli": "^6.2.0",
     "throng": "^5.0.0",
     "url-join": "^4.0.1",

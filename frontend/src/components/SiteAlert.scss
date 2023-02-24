@@ -1,0 +1,37 @@
+@use '../colors.scss' as *;
+
+@media (min-width: 64rem) { 
+    .usa-site-alert--ttahub .usa-alert__body {
+        align-items: center;
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        grid-gap: 0.5rem;    
+        justify-content: left;
+    }
+
+    .has-alerts .usa-site-alert--ttahub .usa-alert {
+        margin-left: 17.5rem;
+    }
+
+    .has-alerts .usa-site-alert--ttahub .usa-alert::before {
+        left: 0;
+    }
+
+    .has-alerts .usa-site-alert--ttahub .usa-alert__body {
+        padding-left: 3rem;
+    }
+}
+
+.usa-site-alert--ttahub.usa-site-alert--emergency,
+.usa-site-alert--ttahub.usa-site-alert--emergency .usa-alert {
+  background-color: $error-dark;
+}
+
+.usa-site-alert--ttahub .usa-alert__heading {
+   font-size: 1.06rem;
+   margin: 0;
+}
+
+.usa-site-alert--ttahub .public-DraftStyleDefault-block {
+    margin: 0;
+}
