@@ -1,5 +1,5 @@
-import { filterAssociation } from './utils';
 import { uniq } from 'lodash';
+import { filterAssociation } from './utils';
 
 const baseSql = `
   SELECT DISTINCT "ActivityReportGoals"."goalId"
@@ -24,7 +24,7 @@ export function withTtaType(query) {
     return {};
   }
 
-  return filterAssociation(baseSql, ttaTypes, false, "ILIKE");
+  return filterAssociation(baseSql, ttaTypes, false, 'ILIKE');
 }
 
 export function withoutTtaType(query) {
@@ -34,5 +34,5 @@ export function withoutTtaType(query) {
     return {};
   }
 
-  return filterAssociation(baseSql, ttaTypes, false, "NOT ILIKE");
+  return filterAssociation(baseSql, ttaTypes, false, 'NOT ILIKE');
 }

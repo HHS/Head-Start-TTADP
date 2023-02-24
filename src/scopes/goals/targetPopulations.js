@@ -30,7 +30,7 @@ export function withTargetPopulations(targetPopulations) {
 
   populations = populations.map((population) => `%${population}%`);
 
-  return filterAssociation(baseQuery, populations, false, "ILIKE")
+  return filterAssociation(baseQuery, populations, false, 'ILIKE');
 }
 
 export function withoutTargetPopulations(targetPopulations) {
@@ -42,5 +42,5 @@ export function withoutTargetPopulations(targetPopulations) {
 
   populations = populations.map((population) => `%${population}%`);
 
-  return filterAssociation(baseQuery, populations, false, "NOT ILIKE")
+  return filterAssociation(baseQuery, populations, false, 'NOT ILIKE');
 }
