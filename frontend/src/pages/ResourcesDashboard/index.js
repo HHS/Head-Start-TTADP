@@ -9,6 +9,7 @@ import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHel
 import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
 import AriaLiveContext from '../../AriaLiveContext';
 import ResourcesDashboardOverview from '../../widgets/ResourcesDashboardOverview';
+import ResourceUse from '../../widgets/ResourceUse';
 
 import './index.scss';
 import { expandFilters } from '../../utils';
@@ -73,7 +74,6 @@ export default function ResourcesDashboard() {
   };
 
   const filtersToApply = expandFilters(filters);
-
   return (
     <div className="ttahub-resources-dashboard">
       <Helmet titleTemplate="%s - Resources Dashboard - TTA Hub" defaultTitle="TTA Hub - Resources Dashboard" />
@@ -108,6 +108,9 @@ export default function ResourcesDashboard() {
             'Participants reached',
           ]}
           showTooltips
+        />
+        <ResourceUse
+          filters={filtersToApply}
         />
       </>
     </div>

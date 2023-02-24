@@ -192,4 +192,4 @@ ResourcesDashboardOverviewWidget.defaultProps = {
   ],
 };
 
-export default withWidgetData(ResourcesDashboardOverviewWidget, 'resourceList');
+export default withWidgetData(ResourcesDashboardOverviewWidget, 'resourceDashboardOverview');

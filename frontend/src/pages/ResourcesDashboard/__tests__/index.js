@@ -17,7 +17,29 @@ import AriaLiveContext from '../../../AriaLiveContext';
 
 const history = createMemoryHistory();
 
-const resourceOverviewUrl = join('api', 'widgets', 'resourceList');
+const resourceOverviewUrl = join('api', 'widgets', 'resourceDashboardOverview');
+const resourceUseUrl = join('api', 'widgets', 'resourceUse');
+
+const resourceUseDefault = {
+  headers: ['Jan-22'],
+  resources: [
+    {
+      heading: 'https://test1.gov',
+      isUrl: 'true',
+      data: [
+        {
+          title: 'Jan-22',
+          value: '17',
+        },
+        {
+          title: 'total',
+          value: '20',
+        },
+      ],
+    },
+  ],
+};
+
 const resourcesOverview = {
   report: {
     numResources: '8,135',
@@ -56,6 +78,26 @@ const resourcesOverviewRegionOne = {
   },
 };
 
+const resourceUseRegionOne = {
+  headers: ['Jan-22'],
+  resources: [
+    {
+      heading: 'https://test2.gov',
+      isUrl: 'true',
+      data: [
+        {
+          title: 'Jan-22',
+          value: '18',
+        },
+        {
+          title: 'total',
+          value: '21',
+        },
+      ],
+    },
+  ],
+};
+
 const resourcesOverviewRegionTwo = {
   report: {
     numResources: '6,135',
@@ -73,6 +115,26 @@ const resourcesOverviewRegionTwo = {
   participant: {
     numParticipants: '565',
   },
+};
+
+const resourceUseRegionTwo = {
+  headers: ['Jan-22'],
+  resources: [
+    {
+      heading: 'https://test3.gov',
+      isUrl: 'true',
+      data: [
+        {
+          title: 'Jan-22',
+          value: '19',
+        },
+        {
+          title: 'total',
+          value: '22',
+        },
+      ],
+    },
+  ],
 };
 
 const allRegions = 'region.in[]=1&region.in[]=2';
@@ -98,15 +160,19 @@ describe('Resources Dashboard page', () => {
   it('renders correctly', async () => {
     // Page Load.
     fetchMock.get(`${resourceOverviewUrl}?${allRegions}`, resourcesOverview);
+    fetchMock.get(`${resourceUseUrl}?${allRegions}`, resourceUseDefault);
 
     // Region 1.
     fetchMock.get(`${resourceOverviewUrl}?${regionInParams}`, resourcesOverviewRegionOne);
+    fetchMock.get(`${resourceUseUrl}?${regionInParams}`, resourceUseRegionOne);
 
     // Region 2.
     fetchMock.get(`${resourceOverviewUrl}?${regionTwoInParams}`, resourcesOverviewRegionTwo);
+    fetchMock.get(`${resourceUseUrl}?${regionTwoInParams}`, resourceUseRegionTwo);
 
     // Report ID (non-region).
     fetchMock.get(`${resourceOverviewUrl}?${reportIdInParams}`, resourcesOverviewRegionTwo);
+    fetchMock.get(`${resourceUseUrl}?${reportIdInParams}`, resourceUseRegionTwo);
 
     // Remove Region Filter.
     const user = {
@@ -136,6 +202,12 @@ describe('Resources Dashboard page', () => {
     expect(await screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
     expect(await screen.findByText(/765/i)).toBeVisible();
     expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
+
+    // Resource Use (initial).
+    expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
+    expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
+    expect(screen.getByText(/17/i)).toBeInTheDocument();
+    expect(screen.getByText(/20/i)).toBeInTheDocument();
 
     // Remove existing filter.
 
@@ -174,6 +246,10 @@ describe('Resources Dashboard page', () => {
     expect(await screen.findByText(/665/i)).toBeVisible();
     expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
+    // Reason Use.
+    expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
+    expect(screen.getByText(/test2.gov/i)).toBeInTheDocument();
+
     // Remove filter.
     open = await screen.findByRole('button', { name: /open filters for this page/i });
     act(() => userEvent.click(open));
@@ -198,6 +274,12 @@ describe('Resources Dashboard page', () => {
     expect(await screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
     expect(await screen.findByText(/765/i)).toBeVisible();
     expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
+
+    // Resource Use (initial).
+    expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
+    expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
+    expect(screen.getByText(/17/i)).toBeInTheDocument();
+    expect(screen.getByText(/20/i)).toBeInTheDocument();
 
     // Add region filter test pill remove.
     open = await screen.findByRole('button', { name: /open filters for this page/i });
@@ -229,6 +311,11 @@ describe('Resources Dashboard page', () => {
     expect(await screen.findByText(/565/i)).toBeVisible();
     expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
+    // Resource Use.
+    expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
+    expect(screen.getByText(/test3.gov/i)).toBeInTheDocument();
+    expect(screen.getByText(/19/i)).toBeInTheDocument();
+
     // Test filter updates from region pill remove.
     let removePill = await screen.findByRole('button', { name: /this button removes the filter: region is 2/i });
     act(() => userEvent.click(removePill));
@@ -247,6 +334,12 @@ describe('Resources Dashboard page', () => {
     expect(await screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
     expect(await screen.findByText(/765/i)).toBeVisible();
     expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
+
+    // Resource Use (initial).
+    expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
+    expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
+    expect(screen.getByText(/17/i)).toBeInTheDocument();
+    expect(screen.getByText(/20/i)).toBeInTheDocument();
 
     // Add non-region filter.
     open = await screen.findByRole('button', { name: /open filters for this page/i });
@@ -278,6 +371,11 @@ describe('Resources Dashboard page', () => {
     expect(await screen.findByText(/565/i)).toBeVisible();
     expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
 
+    // Resource Use.
+    expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
+    expect(screen.getByText(/test3.gov/i)).toBeInTheDocument();
+    expect(screen.getByText(/19/i)).toBeInTheDocument();
+
     // Test remove non-region filter pill.
     removePill = await screen.findByRole('button', { name: /this button removes the filter: report id contains 123/i });
     act(() => userEvent.click(removePill));
@@ -296,5 +394,11 @@ describe('Resources Dashboard page', () => {
     expect(await screen.getAllByText(/^[ \t]*recipients reached[ \t]*$/i)[0]).toBeInTheDocument();
     expect(await screen.findByText(/765/i)).toBeVisible();
     expect(await screen.getAllByText(/^[ \t]*participants reached[ \t]*$/i)[0]).toBeInTheDocument();
+
+    // Resource Use (initial).
+    expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
+    expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
+    expect(screen.getByText(/17/i)).toBeInTheDocument();
+    expect(screen.getByText(/20/i)).toBeInTheDocument();
   });
 });
