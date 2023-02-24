@@ -7,7 +7,7 @@ import './HorizontalTableWidget.scss';
 
 const trimLongURLs = (url) => {
   let newUrl = url;
-  if (newUrl.length >= 40) {
+  if (newUrl.length >= 35) {
     newUrl = newUrl.substring(0, 40);
     newUrl += '...';
   }
