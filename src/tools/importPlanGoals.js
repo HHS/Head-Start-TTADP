@@ -79,6 +79,7 @@ export async function updateStatus(goal, dbgoal) {
 export default async function importGoals(fileKey, region) {
   const recipients = await parseCsv(fileKey);
   const regionId = region;
+
   try {
     for await (const el of recipients) {
       let currentGrants = [];

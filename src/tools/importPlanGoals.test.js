@@ -246,6 +246,14 @@ describe('Import TTA plan goals', () => {
 
       const goalWithoutCreatedVia = await Goal.findOne({
         where: { createdVia: null },
+        include: [{
+          model: Grant,
+          as: 'grant',
+          where: {
+            regionId,
+          },
+          required: true,
+        }],
       });
       expect(goalWithoutCreatedVia.createdVia).toBeNull();
       // Delete a goal and re-import
