@@ -43,6 +43,7 @@ import {
 } from './Constants';
 import AppLoadingContext from './AppLoadingContext';
 import Loader from './components/Loader';
+import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
 
 function App() {
   const [user, updateUser] = useState();
@@ -193,6 +194,15 @@ function App() {
           path="/regional-dashboard"
           render={() => (
             <AppWrapper authenticated logout={logout}><RegionalDashboard user={user} /></AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/regional-goal-dashboard"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <RegionalGoalDashboard user={user} />
+            </AppWrapper>
           )}
         />
         <Route

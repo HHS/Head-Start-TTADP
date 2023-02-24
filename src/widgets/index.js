@@ -6,6 +6,10 @@ import topicFrequencyGraph from './topicFrequencyGraph';
 import targetPopulationTable from './targetPopulationTable';
 import frequencyGraph from './frequencyGraph';
 import goalStatusGraph from './goalStatusGraph';
+// ----
+// regional goal dashboard
+import goalsByStatus from './regionalGoalDashboard/goalsByStatus';
+import goalsPercentage from './regionalGoalDashboard/goalsPercentage';
 
 /*
   All widgets need to be added to this object
@@ -19,4 +23,7 @@ export default {
   targetPopulationTable,
   frequencyGraph,
   goalStatusGraph,
+
+  goalsByStatus,
+  goalsPercentage,
 };
