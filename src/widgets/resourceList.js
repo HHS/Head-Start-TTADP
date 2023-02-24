@@ -762,6 +762,9 @@ export async function resourceUse(scopes) {
       isUrl: true,
       data: [
         ...resource.startDates.reduce((data, startDate) => {
+          const total = data.find((sd) => sd.title === 'Total');
+          total.cnt += 1;
+
           const currentMonthYear = getMonthYear(startDate);
           const exists = data.find((sd) => sd.title === currentMonthYear);
           if (exists) {
@@ -775,7 +778,7 @@ export async function resourceUse(scopes) {
               cnt: 1,
             },
           ];
-        }, []),
+        }, [{ title: 'Total', cnt: 0 }]),
         ...dateList,
       ]
         .reduce((dates, date) => {
@@ -796,7 +799,7 @@ export async function resourceUse(scopes) {
     }));
 
   return {
-    headers: dateList.map(({ title }) => title),
+    headers: [...dateList.map(({ title }) => title), 'Total'],
     resources: clusteredResources,
   };
 }

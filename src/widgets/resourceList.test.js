@@ -383,17 +383,23 @@ describe('Resources list widget', () => {
     const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
     const data = await resourceUse(scopes);
     expect(data).toStrictEqual({
-      headers: ['Jan-21'],
+      headers: ['Jan-21', 'Total'],
       resources: [
         {
           heading: 'https://eclkc.ohs.acf.hhs.gov/test',
           isUrl: true,
-          data: [{ title: 'Jan-21', value: '2' }],
+          data: [
+            { title: 'Total', value: '2' },
+            { title: 'Jan-21', value: '2' },
+          ],
         },
         {
           heading: 'https://non.test1.gov/a/b/c',
           isUrl: true,
-          data: [{ title: 'Jan-21', value: '2' }],
+          data: [
+            { title: 'Total', value: '2' },
+            { title: 'Jan-21', value: '2' },
+          ],
         },
       ],
     });
