@@ -174,7 +174,7 @@ export function GoalStatusChart({ data, loading }) {
         )
         : (
           <>
-            <div className="border-top border-gray-5">
+            <div className="border-top border-gray-5" data-testid="goalStatusGraph">
               <p className="usa-prose text-bold">
                 {data.total}
                 {' '}
