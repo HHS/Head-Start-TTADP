@@ -53,7 +53,7 @@ export default function HorizontalTableWidget(
               <tr className="bg-white border-bottom-0 text-bold" key={`horizontal_table_row_${index}`}>
                 <td data-label={firstHeading} key={`horizontal_table_cell_label${index}`} className="smarthub-horizontal-table-first-column">
                   {
-                    r.isUrl === 'true'
+                    r.isUrl
                       ? (
                         <a href={r.heading} target="_blank" rel="noreferrer">
                           {trimLongURLs(r.heading)}
