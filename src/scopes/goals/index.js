@@ -8,7 +8,9 @@ import { withRecipientName, withoutRecipientName } from './recipient';
 import { withRecipientId } from './recipientId';
 import { withRegion, withoutRegion } from './region';
 import { withRoles, withoutRoles } from './role';
-import { containsGrantNumber, doesNotContainGrantNumber, withGrantNumber, withoutGrantNumber } from './grantNumber';
+import {
+  containsGrantNumber, doesNotContainGrantNumber, withGrantNumber, withoutGrantNumber,
+} from './grantNumber';
 import { afterStartDate, beforeStartDate, withinStartDates } from './startDate';
 import { afterEndDate, beforeEndDate, withinEndDates } from './endDate';
 import { withMyReports, withoutMyReports } from './myReports';

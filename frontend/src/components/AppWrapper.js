@@ -34,7 +34,7 @@ export default function AppWrapper({
   }
 
   return (
-    <div className="grid-row flex-align-start smart-hub-offset-nav tablet:smart-hub-offset-nav desktop:smart-hub-offset-nav margin-top-9">
+    <div id="appWrapper" className="grid-row flex-align-start smart-hub-offset-nav tablet:smart-hub-offset-nav desktop:smart-hub-offset-nav margin-top-9">
       <div className="grid-col-12">
         <section className="usa-section padding-top-0">
           {content}
