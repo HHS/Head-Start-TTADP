@@ -28,17 +28,17 @@ export function withParticipants(query) {
 
   participants = participants.map((participant) => `%${participant}%`);
 
-  return filterAssociation(baseQuery, participants, false, "ILIKE")
+  return filterAssociation(baseQuery, participants, false, 'ILIKE');
 }
 
 export function withoutParticipants(query) {
   let participants = onlyValidParticipants(query);
 
-  if (!participant.length) {
+  if (!participants.length) {
     return {};
   }
 
   participants = participants.map((participant) => `%${participant}%`);
 
-  return filterAssociation(baseQuery, participant, false, "NOT ILIKE");
+  return filterAssociation(baseQuery, participants, false, 'NOT ILIKE');
 }
