@@ -7,6 +7,7 @@ import { Helmet } from 'react-helmet';
 
 import { fetchUser, fetchLogout } from './fetchers/Auth';
 import { HTTPError } from './fetchers';
+import { getSiteAlerts } from './fetchers/siteAlerts';
 
 import UserContext from './UserContext';
 import SiteNav from './components/SiteNav';
@@ -55,6 +56,24 @@ function App() {
   const [announcements, updateAnnouncements] = useState([]);
   const [isAppLoading, setIsAppLoading] = useState(false);
   const [appLoadingText, setAppLoadingText] = useState('Loading');
+  const [alert, setAlert] = useState(null);
+
+  useEffect(() => {
+    // fetch alerts
+    async function fetchAlerts() {
+      try {
+        const alertFromApi = await getSiteAlerts();
+        setAlert(alertFromApi);
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(`There was an error fetching alerts: ${e}`);
+      }
+    }
+
+    if (authenticated) {
+      fetchAlerts();
+    }
+  }, [authenticated]);
 
   useEffect(() => {
     async function cleanupReports() {
@@ -166,7 +185,12 @@ function App() {
           path="/recipient-tta-records/:recipientId([0-9]*)/region/:regionId([0-9]*)"
           render={({ match, location }) => (
             <AppWrapper authenticated logout={logout} padded={false}>
-              <RecipientRecord location={location} match={match} user={user} />
+              <RecipientRecord
+                location={location}
+                match={match}
+                user={user}
+                hasAlerts={!!(alert)}
+              />
             </AppWrapper>
           )}
         />
@@ -257,12 +281,18 @@ function App() {
 
             {/* Only show the sidebar when the user is authenticated */}
             <UserContext.Provider value={{ user, authenticated, logout }}>
-              <SiteNav admin={admin} authenticated={authenticated} logout={logout} user={user} />
+              <SiteNav
+                admin={admin}
+                authenticated={authenticated}
+                logout={logout}
+                user={user}
+                hasAlerts={!!(alert)}
+              />
             </UserContext.Provider>
           </>
           )}
           <UserContext.Provider value={{ user, authenticated, logout }}>
-            <Header />
+            <Header authenticated alert={alert} />
             <AriaLiveContext.Provider value={{ announce }}>
               {!authenticated && (authError === 403
                 ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>
