@@ -132,107 +132,105 @@ let activityReportObjectiveThree;
 
 describe('Resources list widget', () => {
   beforeAll(async () => {
-    try {
-      await User.findOrCreate({ where: mockUser, individualHooks: true });
-      await Recipient.findOrCreate({ where: mockRecipient, individualHooks: true });
-      [grant] = await Grant.findOrCreate({
-        where: mockGrant,
-        validate: true,
-        individualHooks: true,
-      });
-      [goal] = await Goal.findOrCreate({ where: mockGoal, validate: true, individualHooks: true });
-      [objective] = await Objective.findOrCreate({
-        where: {
-          title: 'Objective 1',
-          goalId: goal.dataValues.id,
-          status: 'In Progress',
-        },
-      });
+    await User.findOrCreate({ where: mockUser, individualHooks: true });
+    await Recipient.findOrCreate({ where: mockRecipient, individualHooks: true });
+    [grant] = await Grant.findOrCreate({
+      where: mockGrant,
+      validate: true,
+      individualHooks: true,
+    });
+    [goal] = await Goal.findOrCreate({ where: mockGoal, validate: true, individualHooks: true });
+    [objective] = await Objective.findOrCreate({
+      where: {
+        title: 'Objective 1',
+        goalId: goal.dataValues.id,
+        status: 'In Progress',
+      },
+    });
 
-      // Report 1 (Mixed Resources).
-      const reportOne = await ActivityReport.create({
-        ...regionOneReportA,
-      }, {
-        individualHooks: true,
-      });
-      await ActivityRecipient.findOrCreate({
-        where: { activityReportId: reportOne.id, grantId: mockGrant.id },
-      });
+    // Report 1 (Mixed Resources).
+    const reportOne = await ActivityReport.create({
+      ...regionOneReportA,
+    }, {
+      individualHooks: true,
+    });
+    await ActivityRecipient.findOrCreate({
+      where: { activityReportId: reportOne.id, grantId: mockGrant.id },
+    });
 
-      [activityReportObjectiveOne] = await ActivityReportObjective.findOrCreate({
-        where: {
-          activityReportId: reportOne.id,
-          status: 'Complete',
-          objectiveId: objective.id,
-        },
-      });
-
-      // Report 1 ECLKC Resource 1.
-      // Report 1 Non-ECLKC Resource 1.
-      await processActivityReportObjectiveForResourcesById(
-        activityReportObjectiveOne.id,
-        [ECLKC_RESOURCE_URL, NONECLKC_RESOURCE_URL],
-      );
-
-      // Report 2 (Only ECLKC).
-      const reportTwo = await ActivityReport.create({ ...regionOneReportB });
-      await ActivityRecipient.create({ activityReportId: reportTwo.id, grantId: mockGrant.id });
-
-      activityReportObjectiveTwo = await ActivityReportObjective.create({
-        activityReportId: reportTwo.id,
+    [activityReportObjectiveOne] = await ActivityReportObjective.findOrCreate({
+      where: {
+        activityReportId: reportOne.id,
         status: 'Complete',
         objectiveId: objective.id,
-      });
+      },
+    });
 
-      // Report 2 ECLKC Resource 1.
-      await processActivityReportObjectiveForResourcesById(
-        activityReportObjectiveTwo.id,
-        [ECLKC_RESOURCE_URL],
-      );
+    // Report 1 ECLKC Resource 1.
+    // Report 1 Non-ECLKC Resource 1.
+    await processActivityReportObjectiveForResourcesById(
+      activityReportObjectiveOne.id,
+      [ECLKC_RESOURCE_URL, NONECLKC_RESOURCE_URL],
+    );
 
-      // Report 3 (Only Non-ECLKC).
-      const reportThree = await ActivityReport.create({ ...regionOneReportC });
-      await ActivityRecipient.create({ activityReportId: reportThree.id, grantId: mockGrant.id });
+    // Report 2 (Only ECLKC).
+    const reportTwo = await ActivityReport.create({ ...regionOneReportB });
+    await ActivityRecipient.create({ activityReportId: reportTwo.id, grantId: mockGrant.id });
 
-      activityReportObjectiveThree = await ActivityReportObjective.create({
-        activityReportId: reportThree.id,
-        status: 'Complete',
-        objectiveId: objective.id,
-      });
+    activityReportObjectiveTwo = await ActivityReportObjective.create({
+      activityReportId: reportTwo.id,
+      status: 'Complete',
+      objectiveId: objective.id,
+    });
 
-      // Report 3 Non-ECLKC Resource 1.
-      await processActivityReportObjectiveForResourcesById(
-        activityReportObjectiveThree.id,
-        [NONECLKC_RESOURCE_URL],
-      );
+    // Report 2 ECLKC Resource 1.
+    await processActivityReportObjectiveForResourcesById(
+      activityReportObjectiveTwo.id,
+      [ECLKC_RESOURCE_URL],
+    );
 
-      // Report 4 (No Resources).
-      const reportFour = await ActivityReport.create({ ...regionOneReportD });
-      await ActivityRecipient.create({ activityReportId: reportFour.id, grantId: mockGrant.id });
+    // Report 3 (Only Non-ECLKC).
+    const reportThree = await ActivityReport.create({ ...regionOneReportC });
+    await ActivityRecipient.create({ activityReportId: reportThree.id, grantId: mockGrant.id });
 
-      await ActivityReportObjective.create({
-        activityReportId: reportFour.id,
-        status: 'Complete',
-        objectiveId: objective.id,
-      });
+    activityReportObjectiveThree = await ActivityReportObjective.create({
+      activityReportId: reportThree.id,
+      status: 'Complete',
+      objectiveId: objective.id,
+    });
 
-      // Draft Report (Excluded).
-      const reportDraft = await ActivityReport.create({ ...regionOneDraftReport });
-      await ActivityRecipient.create({ activityReportId: reportDraft.id, grantId: mockGrant.id });
+    // Report 3 Non-ECLKC Resource 1.
+    await processActivityReportObjectiveForResourcesById(
+      activityReportObjectiveThree.id,
+      [NONECLKC_RESOURCE_URL],
+    );
 
-      const activityReportObjectiveDraft = await ActivityReportObjective.create({
-        activityReportId: reportDraft.id,
-        status: 'Complete',
-        objectiveId: objective.id,
-      });
+    // Report 4 (No Resources).
+    const reportFour = await ActivityReport.create({ ...regionOneReportD });
+    await ActivityRecipient.create({ activityReportId: reportFour.id, grantId: mockGrant.id });
 
-      // Report Draft ECLKC Resource 1.
-      // Report Draft Non-ECLKC Resource 1.
-      await processActivityReportObjectiveForResourcesById(
-        activityReportObjectiveDraft.id,
-        [ECLKC_RESOURCE_URL, NONECLKC_RESOURCE_URL],
-      );
-    } catch (err) { console.log(err); throw err; }
+    await ActivityReportObjective.create({
+      activityReportId: reportFour.id,
+      status: 'Complete',
+      objectiveId: objective.id,
+    });
+
+    // Draft Report (Excluded).
+    const reportDraft = await ActivityReport.create({ ...regionOneDraftReport });
+    await ActivityRecipient.create({ activityReportId: reportDraft.id, grantId: mockGrant.id });
+
+    const activityReportObjectiveDraft = await ActivityReportObjective.create({
+      activityReportId: reportDraft.id,
+      status: 'Complete',
+      objectiveId: objective.id,
+    });
+
+    // Report Draft ECLKC Resource 1.
+    // Report Draft Non-ECLKC Resource 1.
+    await processActivityReportObjectiveForResourcesById(
+      activityReportObjectiveDraft.id,
+      [ECLKC_RESOURCE_URL, NONECLKC_RESOURCE_URL],
+    );
   });
 
   afterAll(async () => {
