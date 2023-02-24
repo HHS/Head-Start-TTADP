@@ -232,8 +232,8 @@ export async function resourceData(scopes) {
         .filter((r) => r)
       : [];
     const resourcesFromGoal = report.activityReportGoals
-    && Array.isArray(report.activityReportGoals)
-    && report.activityReportGoals.length > 0
+      && Array.isArray(report.activityReportGoals)
+      && report.activityReportGoals.length > 0
       ? report.activityReportGoals
         .map((arg) => arg.resources.map((r) => ({
           id: r.dataValues.id,
@@ -251,8 +251,8 @@ export async function resourceData(scopes) {
         .filter((r) => r)
       : [];
     const resourcesFromObjective = report.activityReportObjectives
-    && Array.isArray(report.activityReportObjectives)
-    && report.activityReportObjectives.length > 0
+      && Array.isArray(report.activityReportObjectives)
+      && report.activityReportObjectives.length > 0
       ? report.activityReportObjectives
         .map((aro) => aro.resources.map((r) => ({
           id: r.dataValues.id,
@@ -798,9 +798,19 @@ export async function resourceUse(scopes) {
         })),
     }));
 
+  // Total needs to be the last column.
+  const sortedResourceData = clusteredResources.map((r) => {
+    const newResourceData = [...r.data];
+    newResourceData.push(newResourceData.shift());
+    return {
+      ...r,
+      data: newResourceData,
+    };
+  });
+
   return {
-    headers: [...dateList.map(({ title }) => title), 'Total'],
-    resources: clusteredResources,
+    headers: [...dateList.map(({ title }) => title)],
+    resources: sortedResourceData,
   };
 }
 /*
