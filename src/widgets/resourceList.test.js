@@ -13,7 +13,12 @@ import db, {
   ActivityReportObjectiveResource,
 } from '../models';
 import filtersToScopes from '../scopes';
-import { resourceList, resourceDomainList, resourcesDashboardOverview } from './resourceList';
+import {
+  resourceList,
+  resourceDomainList,
+  resourcesDashboardOverview,
+  resourceUse,
+} from './resourceList';
 import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../constants';
 import { processActivityReportObjectiveForResourcesById } from '../services/resource';
 
@@ -371,6 +376,26 @@ describe('Resources list widget', () => {
         percentEclkc: '50.00%',
         // percentNonEclkc: '50.00%',
       },
+    });
+  });
+
+  it('resourceUse', async () => {
+    const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+    const data = await resourceUse(scopes);
+    expect(data).toStrictEqual({
+      headers: ['Jan-21'],
+      resources: [
+        {
+          heading: 'https://eclkc.ohs.acf.hhs.gov/test',
+          isUrl: true,
+          data: [{ title: 'Jan-21', value: '2' }],
+        },
+        {
+          heading: 'https://non.test1.gov/a/b/c',
+          isUrl: true,
+          data: [{ title: 'Jan-21', value: '2' }],
+        },
+      ],
     });
   });
 });

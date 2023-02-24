@@ -692,24 +692,113 @@ Expected JSON (we have this now):
 }
 */
 export async function resourceUse(scopes) {
-  // const { resources, reports } = await resourceData(scopes);
-  // const getMonthYear = (date) => {
+  const { resources, reports } = await resourceData(scopes);
+  const getMonthYear = (dateStr) => {
+    // Create a Date object from the date string
+    const dateObj = new Date(dateStr);
 
-  //   return ``
-  // };
-  // const clusteredResources = resources.map((resource) => ({
-  //   heading: resource.url,
-  //   isUrl: true,
-  //   data: resource.startDates.reduce((data, startDate) => {
-  //     const currentMonthYear = new Date(startDate).
-  //     const exists = data.find((sd) => new Date(sd).)
-  //   return [
-  //     ...resourceBlocks,
-  //     {
+    // Get the month abbreviation from the month number
+    const monthAbbreviation = new Intl.DateTimeFormat('en-US', { month: 'short' }).format(dateObj);
 
-  //     }
-  //   ]
-  // }, []);
+    // Get the year as a two-digit string
+    const yearStr = dateObj.getFullYear().toString().slice(-2);
+
+    // Concatenate the month abbreviation and year string with a hyphen separator
+    return `${monthAbbreviation}-${yearStr}`;
+  };
+
+  const getMinMax = (data) => {
+    const dateObjects = data
+      // Get an array of all startDates
+      .flatMap((r) => r.startDates)
+      // Convert all dates to Date objects
+      .map((dateString) => new Date(dateString));
+
+    // Find the minimum and maximum dates
+    return {
+      min: new Date(Math.min(...dateObjects)),
+      max: new Date(Math.max(...dateObjects)),
+    };
+  };
+
+  const spanDates = (min, max) => {
+    const startYear = min.getFullYear();
+    const startMonth = min.getMonth();
+    const endYear = max.getFullYear();
+    const endMonth = max.getMonth();
+    const numMonths = (endYear - startYear) * 12 + (endMonth - startMonth) + 1;
+
+    return Array
+      .from({ length: numMonths }, (_, index) => {
+        const year = Math.floor(index / 12) + startYear;
+        const month = (index % 12) + startMonth;
+        const date = new Date(year, month).toLocaleDateString('default', { month: 'long', year: 'numeric' });
+        return getMonthYear(date);
+      })
+      .map((monthYear) => ({ title: monthYear, cnt: 0 }));
+  };
+
+  const minMax = getMinMax(resources);
+  const dateList = spanDates(minMax.min, minMax.max);
+
+  const clusteredResources = resources
+    .reduce((dedupedResources, resource) => {
+      const exists = dedupedResources.find((r) => r.resourceId === resource.resourceId);
+      if (exists) {
+        exists.startDates = [...exists.startDates, ...resource.startDates];
+        return dedupedResources;
+      }
+      return [
+        ...dedupedResources,
+        {
+          resourceId: resource.resourceId,
+          url: resource.url,
+          startDates: resource.startDates,
+        },
+      ];
+    }, [])
+    .map((resource) => ({
+      heading: resource.url,
+      isUrl: true,
+      data: [
+        ...resource.startDates.reduce((data, startDate) => {
+          const currentMonthYear = getMonthYear(startDate);
+          const exists = data.find((sd) => sd.title === currentMonthYear);
+          if (exists) {
+            exists.cnt += 1;
+            return data;
+          }
+          return [
+            ...data,
+            {
+              title: currentMonthYear,
+              cnt: 1,
+            },
+          ];
+        }, []),
+        ...dateList,
+      ]
+        .reduce((dates, date) => {
+          const exists = dates.find((d) => d.title === date.title);
+          if (exists) {
+            exists.cnt += date.cnt;
+            return dates;
+          }
+          return [
+            ...dates,
+            date,
+          ];
+        }, [])
+        .map(({ title, cnt }) => ({
+          title,
+          value: formatNumber(cnt),
+        })),
+    }));
+
+  return {
+    headers: dateList.map(({ title }) => title),
+    resources: clusteredResources,
+  };
 }
 /*
 WidgetID: resourceUse
