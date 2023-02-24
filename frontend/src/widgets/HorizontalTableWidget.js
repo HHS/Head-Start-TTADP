@@ -63,7 +63,7 @@ export default function HorizontalTableWidget(
                       }
                 </td>
                 {r.data.map((d, cellIndex) => (
-                  <td data-label={d.title} key={`horizontal_table_cell_${cellIndex}`} className={d.title === 'total' ? 'smarthub-horizontal-table-last-column' : null}>
+                  <td data-label={d.title} key={`horizontal_table_cell_${cellIndex}`} className={d.title === 'Total' ? 'smarthub-horizontal-table-last-column' : null}>
                     {d.value}
                   </td>
                 ))}
