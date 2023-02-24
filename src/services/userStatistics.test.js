@@ -94,11 +94,13 @@ describe('statisticsByUser', () => {
   let recipientOne;
   let recipientTwo;
   let recipientThree;
+  let recipientFour;
   let recipientOutsideRegion;
   let otherEntity;
   let grantOne;
   let grantTwo;
   let grantThree;
+  let grantFour;
   let grantOutsideRegion;
 
   // Excluded Report.
@@ -135,6 +137,7 @@ describe('statisticsByUser', () => {
     recipientOne = await Recipient.create({ name: 'recipient stat one', id: faker.datatype.number(), uei: faker.datatype.string(12) });
     recipientTwo = await Recipient.create({ name: 'recipient stat two', id: faker.datatype.number(), uei: faker.datatype.string(12) });
     recipientThree = await Recipient.create({ name: 'recipient stat three', id: faker.datatype.number(), uei: faker.datatype.string(12) });
+    recipientFour = await Recipient.create({ name: 'recipient stat four', id: faker.datatype.number(), uei: faker.datatype.string(12) });
     recipientOutsideRegion = await Recipient.create({ name: 'recipient stat outside region', id: faker.datatype.number(), uei: faker.datatype.string(12) });
 
     // Other entity.
@@ -163,6 +166,14 @@ describe('statisticsByUser', () => {
       recipientId: recipientThree.id,
     });
 
+    grantFour = await Grant.create({
+      id: faker.datatype.number(),
+      number: faker.random.alphaNumeric(5),
+      cdi: false,
+      regionId: 1,
+      recipientId: recipientFour.id,
+    });
+
     grantOutsideRegion = await Grant.create({
       id: faker.datatype.number(),
       number: faker.random.alphaNumeric(5),
@@ -177,7 +188,7 @@ describe('statisticsByUser', () => {
         ...report,
         userId: otherUser.id,
         lastUpdatedById: otherUser.id,
-        activityRecipients: { activityRecipientId: recipientOne.id },
+        activityRecipients: { activityRecipientId: recipientFour.id },
         duration: 80,
         activityReportCollaborators: [
           { user: { id: extraUser.id } },
@@ -190,6 +201,12 @@ describe('statisticsByUser', () => {
       userId: extraUser.id,
     });
 
+    // Exclude user activity recipient.
+    await ActivityRecipient.create({
+      activityReportId: excludedUserReport.id,
+      grantId: grantFour.id,
+    });
+
     // Exclude region report.
     excludeRegionReport = await ActivityReport.create(
       {
@@ -198,12 +215,18 @@ describe('statisticsByUser', () => {
         regionId: 2,
         duration: 48.5,
         lastUpdatedById: outsideRegionUser.id,
-        activityRecipients: { activityRecipientId: outsideRegionUser.id },
+        activityRecipients: { activityRecipientId: recipientOutsideRegion.id },
         activityReportCollaborators: [
           { user: { id: outsideRegionUser.id } },
         ],
       },
     );
+
+    // Exclude region Activity Recipient.
+    await ActivityRecipient.create({
+      activityReportId: excludeRegionReport.id,
+      grantId: grantOutsideRegion.id,
+    });
 
     await ActivityReportCollaborator.create({
       activityReportId: excludeRegionReport.id,
@@ -216,10 +239,17 @@ describe('statisticsByUser', () => {
         ...report,
         userId: user.id,
         duration: 22,
+        numberOfParticipants: 2,
         lastUpdatedById: user.id,
         activityRecipients: { activityRecipientId: recipientOne.id },
       },
     );
+
+    // Report 1 Activity Recipient.
+    await ActivityRecipient.create({
+      activityReportId: approvedReport1.id,
+      grantId: grantOne.id,
+    });
 
     approvedReport2 = await ActivityReport.create(
       {
@@ -230,6 +260,12 @@ describe('statisticsByUser', () => {
         activityRecipients: { activityRecipientId: recipientTwo.id },
       },
     );
+
+    // Report 2 Activity Recipient.
+    await ActivityRecipient.create({
+      activityReportId: approvedReport2.id,
+      grantId: grantTwo.id,
+    });
 
     otherEntityApprovedReport = await ActivityReport.create(
       {
@@ -256,6 +292,12 @@ describe('statisticsByUser', () => {
         ],
       },
     );
+
+    // Collaborator Activity Recipient.
+    await ActivityRecipient.create({
+      activityReportId: collaboratorReport1.id,
+      grantId: grantThree.id,
+    });
 
     await ActivityReportCollaborator.create({
       activityReportId: collaboratorReport1.id,
@@ -295,6 +337,12 @@ describe('statisticsByUser', () => {
         duration: 2,
       },
     );
+
+    // Approver Activity Recipient.
+    await ActivityRecipient.create({
+      activityReportId: approverReport1.id,
+      grantId: grantThree.id,
+    });
 
     await ActivityReportApprover.create({
       activityReportId: approverReport1.id,
@@ -347,6 +395,20 @@ describe('statisticsByUser', () => {
       force: true,
     });
 
+    // Delete ActivityRecipient.
+    await ActivityRecipient.destroy({
+      where: {
+        activityReportId:
+          [approvedReport1.id,
+            approvedReport2.id,
+            excludeRegionReport.id,
+            collaboratorReport1.id,
+            approverReport1.id,
+            excludedUserReport.id],
+      },
+      force: true,
+    });
+
     // Delete reports.
     await ActivityReport.destroy({
       where: {
@@ -367,14 +429,18 @@ describe('statisticsByUser', () => {
     // Delete Grants.
     await Grant.destroy({
       where: {
-        id: [grantOne.id, grantTwo.id, grantThree.id, grantOutsideRegion.id],
+        id: [grantOne.id, grantTwo.id, grantThree.id, grantFour.id, grantOutsideRegion.id],
       },
     });
 
     // Delete Recipient.
     await Recipient.destroy({
       where: {
-        id: [recipientOne.id, recipientTwo.id, recipientThree.id, recipientOutsideRegion.id],
+        id: [recipientOne.id,
+          recipientTwo.id,
+          recipientThree.id,
+          recipientFour.id,
+          recipientOutsideRegion.id],
       },
     });
 
@@ -402,6 +468,8 @@ describe('statisticsByUser', () => {
   - 6 region approved reports.
   - 3 collaborator reports.
   - 2 approved reports in region.
+  - 4 distinct grants and recipients.
+  - 9 participants.
   */
   it('gets region statistics', async () => {
     // Get statistics.
@@ -422,6 +490,15 @@ describe('statisticsByUser', () => {
 
     // TTA provided.
     expect(response.ttaProvided).toBe('7 days 1 hrs');
+
+    // Recipients.
+    expect(response.recipientsReached).toBe(4);
+
+    // Grants.
+    expect(response.grantsServed).toBe(4);
+
+    // Participants.
+    expect(response.participantsReached).toBe(9);
   });
   /*
   User Statistics:
@@ -430,6 +507,8 @@ describe('statisticsByUser', () => {
     - 3 created approved reports.
     - 2 collaborator reports.
     - 1 report as approver.
+    - 3 distinct grants and recipients.
+    - 7 participants.
     */
   it('gets user statistics', async () => {
     // Get statistics.
@@ -450,5 +529,14 @@ describe('statisticsByUser', () => {
 
     // TTA provided.
     expect(response.ttaProvided).toBe('3 days 17 hrs');
+
+    // Recipients.
+    expect(response.recipientsReached).toBe(3);
+
+    // Grants.
+    expect(response.grantsServed).toBe(3);
+
+    // Participants.
+    expect(response.participantsReached).toBe(7);
   });
 });
