@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { blur } from './common';
 
-test('caseload management', async ({ page }) => {
+test('my groups', async ({ page }) => {
   // navigate to the app
   await page.goto('http://localhost:3000/');
 

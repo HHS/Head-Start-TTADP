@@ -1,7 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import React from 'react';
 import { FILTER_CONDITIONS, EMPTY_MULTI_SELECT } from '../../Constants';
-import { handleArrayQuery } from './constants';
+import { handleArrayQuery } from './helpers';
 import FilterGroups from './FilterGroups';
 
 export const groupsFilter = {

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import db from '../../models';
 import { auditLogger } from '../../logger';
+import { userById } from '../../services/users';
 import { currentUserId } from '../../services/currentUser';
 import {
   group,
@@ -13,7 +14,7 @@ import {
 import GroupPolicy from '../../policies/group';
 
 const NAMESPACE = 'GROUPS';
-const { Group } = db;
+const { Group, Grant } = db;
 
 export async function getGroups(req: Request, res: Response) {
   try {
@@ -46,9 +47,24 @@ export async function getGroup(req: Request, res: Response) {
 export async function createGroup(req: Request, res: Response) {
   try {
     const userId = await currentUserId(req, res);
+    const grants = await Grant.findAll({
+      where: {
+        id: req.body.grants,
+      },
+    });
+
+    const user = await userById(userId);
+    const policy = new GroupPolicy(user, grants);
+
+    if (!policy.canAddToGroup()) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
     const groupResponse = await createNewGroup({ ...req.body, userId });
     res.json(groupResponse);
   } catch (e) {
+    console.log(e);
     auditLogger.error(`${NAMESPACE} createGroup ${e}`);
     res.sendStatus(httpCodes.INTERNAL_SERVER_ERROR);
   }
