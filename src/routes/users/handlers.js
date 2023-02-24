@@ -7,7 +7,9 @@ import { statesByGrantRegion } from '../../services/grant';
 import { createAndStoreVerificationToken, validateVerificationToken } from '../../services/token';
 import { sendEmailVerificationRequestWithToken } from '../../lib/mailer';
 import { currentUserId } from '../../services/currentUser';
+import { auditLogger } from '../../logger';
 import activeUsers from '../../services/activeUsers';
+import User from '../../policies/user';
 
 export async function getPossibleCollaborators(req, res) {
   try {
@@ -73,12 +75,20 @@ export async function verifyEmailToken(req, res) {
 /**
  * Handler for the active users csv download.
  *
- * @param {*} req - request
- * @param {*} res - response
+ * @param {import('express').Request} req - request
+ * @param {import('express').Response} res - response
  * @returns {*} - active users in a CSV format
  */
 export async function getActiveUsers(req, res) {
   try {
+    const user = await userById(await currentUserId(req, res));
+    const authorization = new User(user);
+
+    if (!authorization.isAdmin()) {
+      auditLogger.warn(`User ${user.id} without permissions attempted to access active users`);
+      res.sendStatus(403); 
+      return;
+    }
     const usersStream = await activeUsers();
 
     res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8' });
