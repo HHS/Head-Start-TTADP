@@ -25,7 +25,7 @@ const resourceUseDefault = {
   resources: [
     {
       heading: 'https://test1.gov',
-      isUrl: 'true',
+      isUrl: true,
       data: [
         {
           title: 'Jan-22',
@@ -83,7 +83,7 @@ const resourceUseRegionOne = {
   resources: [
     {
       heading: 'https://test2.gov',
-      isUrl: 'true',
+      isUrl: true,
       data: [
         {
           title: 'Jan-22',
@@ -122,7 +122,7 @@ const resourceUseRegionTwo = {
   resources: [
     {
       heading: 'https://test3.gov',
-      isUrl: 'true',
+      isUrl: true,
       data: [
         {
           title: 'Jan-22',

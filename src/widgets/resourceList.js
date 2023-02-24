@@ -24,6 +24,7 @@ import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../constants';
 export async function resourceData(scopes) {
   // Query Database for all Resources within the scope.
   const reports = await ActivityReport.findAll({
+    limit: 100,
     attributes: ['id', 'numberOfParticipants', 'topics', 'startDate'],
     where: {
       [Op.and]: [
