@@ -8,7 +8,7 @@ const testData = {
   resources: [
     {
       heading: 'https://eclkc.ohs.acf.hhs.gov/school-readiness/effective-practice-guides/effective-practice-guides',
-      isUrl: 'true',
+      isUrl: true,
       data: [
         {
           title: 'Jan-22',
@@ -30,7 +30,7 @@ const testData = {
     },
     {
       heading: 'https://test1.gov',
-      isUrl: 'true',
+      isUrl: true,
       data: [
         {
           title: 'Jan-22',
@@ -52,7 +52,7 @@ const testData = {
     },
     {
       heading: 'Non URL',
-      isUrl: 'false',
+      isUrl: false,
       data: [
         {
           title: 'Jan-22',
