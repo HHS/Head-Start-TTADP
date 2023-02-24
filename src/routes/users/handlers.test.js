@@ -10,6 +10,7 @@ import User from '../../policies/user';
 import { Grant } from '../../models';
 import { createAndStoreVerificationToken, validateVerificationToken } from '../../services/token';
 import { currentUserId } from '../../services/currentUser';
+import handleErrors from '../../lib/apiErrorHandler';
 
 jest.mock('../../services/users', () => ({
   userById: jest.fn(),
@@ -28,6 +29,8 @@ jest.mock('../../services/token', () => ({
   createAndStoreVerificationToken: jest.fn(),
   validateVerificationToken: jest.fn(),
 }));
+
+jest.mock('../../lib/apiErrorHandler');
 
 const mockResponse = {
   json: jest.fn(),
@@ -222,15 +225,36 @@ describe('User handlers', () => {
   });
 
   describe('activeUsers', () => {
-    it('handles activeusers', async () => {
+    it('handles retrieving active users', async () => {
       const request = {
         ...mockRequest,
-        params: { token: 'token' },
       };
+      User.prototype.isAdmin = jest.fn().mockReturnValue(true);
       await getActiveUsers(request, mockResponse);
       expect(mockResponse.on).toHaveBeenCalled();
       expect(mockResponse.writeHead).toHaveBeenCalled();
       expect(mockResponse.error).not.toHaveBeenCalled();
+    });
+
+    it('does not allow unauthorized requests', async () => {
+      const request = {
+        ...mockRequest,
+      };
+      User.prototype.isAdmin = jest.fn().mockReturnValue(false);
+      await getActiveUsers(request, mockResponse);
+      expect(mockResponse.on).not.toHaveBeenCalled();
+      expect(mockResponse.writeHead).not.toHaveBeenCalled();
+    });
+
+    it('calls the error handler on error', async () => {
+      const request = {
+        ...mockRequest,
+      };
+      User.prototype.isAdmin = jest.fn().mockReturnValue(false);
+      userById.mockResolvedValue(null);
+      await getActiveUsers(request, mockResponse);
+      expect(mockResponse.on).not.toHaveBeenCalled();
+      expect(handleErrors).toHaveBeenCalled();
     });
   });
 });
