@@ -19,12 +19,30 @@ describe('Import TTA plan goals', () => {
   });
 
   describe('for a single region', () => {
+    const regionId = 14;
+
     beforeAll(async () => {
       try {
         const fileName = 'GranteeTTAPlanTest.csv';
         downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
-        await Goal.destroy({ where: {} });
-        await importGoals(fileName, 14);
+        const goals = await Goal.findAll({
+          include: [
+            {
+              model: Grant,
+              as: 'grant',
+              where: {
+                regionId,
+              },
+              required: true,
+            },
+          ],
+        });
+        await Goal.destroy({
+          where: {
+            id: goals.map((goal) => goal.id),
+          },
+        });
+        await importGoals(fileName, regionId);
       } catch (error) {
         // eslint-disable-next-line no-console
         console.log(`Unable to setup Import Plan Goals test ${error}`);
@@ -32,7 +50,18 @@ describe('Import TTA plan goals', () => {
     });
 
     it('should import Goals table', async () => {
-      const allGoals = await Goal.findAll();
+      const allGoals = await Goal.findAll({
+        include: [
+          {
+            model: Grant,
+            as: 'grant',
+            where: {
+              regionId,
+            },
+            required: true,
+          },
+        ],
+      });
       expect(allGoals).toBeDefined();
       expect(allGoals.length).toBe(16);
 
@@ -46,7 +75,9 @@ describe('Import TTA plan goals', () => {
           attributes: ['id', 'number', 'regionId'],
           where: {
             number: '14CH00002',
+            regionId,
           },
+          required: true,
         }],
       });
       expect(goal.name).toBe('Expand children\'s experiences with high quality early learning to prepare them for Kindergarten');
@@ -55,7 +86,7 @@ describe('Import TTA plan goals', () => {
       expect(goal.isFromSmartsheetTtaPlan).toBe(true);
       expect(goal.grant).toEqual(
         expect.objectContaining({
-          id: expect.anything(), number: '14CH00002', recipient: expect.anything(), regionId: 14,
+          id: expect.anything(), number: '14CH00002', recipient: expect.anything(), regionId,
         }),
       );
     });
@@ -66,19 +97,43 @@ describe('Import TTA plan goals', () => {
 
       const goalInProgress = await Goal.findOne({
         where: { status: 'In Progress' },
+        include: [{
+          model: Grant,
+          as: 'grant',
+          where: {
+            regionId,
+          },
+          required: true,
+        }],
       });
       await goalInProgress.update({
         status: 'Not Started',
       });
       const goalNotStarted = await Goal.findOne({
         where: { id: goalInProgress.id },
+        include: [{
+          model: Grant,
+          as: 'grant',
+          where: {
+            regionId,
+          },
+          required: true,
+        }],
       });
       expect(goalNotStarted.status).toBe('Not Started');
 
-      await importGoals(fileName, 14);
+      await importGoals(fileName, regionId);
 
       const updatedGoal = await Goal.findOne({
         where: { id: goalInProgress.id },
+        include: [{
+          model: Grant,
+          as: 'grant',
+          where: {
+            regionId,
+          },
+          required: true,
+        }],
       });
       expect(updatedGoal.status).toBe('In Progress');
       expect(logger.info).toHaveBeenCalledWith(
@@ -92,16 +147,32 @@ describe('Import TTA plan goals', () => {
       // Find a goal that was imported as 'Not Started', change to 'Suspended' and update
       const goalNotStarted = await Goal.findOne({
         where: { status: 'Not Started' },
+        include: [{
+          model: Grant,
+          as: 'grant',
+          where: {
+            regionId,
+          },
+          required: true,
+        }],
       });
       await goalNotStarted.update({
         status: 'Suspended',
       });
       const goalSuspended = await Goal.findOne({
         where: { id: goalNotStarted.id },
+        include: [{
+          model: Grant,
+          as: 'grant',
+          where: {
+            regionId,
+          },
+          required: true,
+        }],
       });
       expect(goalSuspended.status).toBe('Suspended');
 
-      await importGoals(fileName, 14);
+      await importGoals(fileName, regionId);
 
       const updatedGoal = await Goal.findOne({
         where: { id: goalNotStarted.id },
@@ -118,6 +189,14 @@ describe('Import TTA plan goals', () => {
       // Find a goal that was imported, change the timeframe and update by running the import script
       const goalWithTimeframe = await Goal.findOne({
         where: { timeframe: '6 months' },
+        include: [{
+          model: Grant,
+          as: 'grant',
+          where: {
+            regionId,
+          },
+          required: true,
+        }],
       });
       expect(goalWithTimeframe.timeframe).toBe('6 months');
 
@@ -126,10 +205,18 @@ describe('Import TTA plan goals', () => {
       });
       const modifiedGoal = await Goal.findOne({
         where: { id: goalWithTimeframe.id },
+        include: [{
+          model: Grant,
+          as: 'grant',
+          where: {
+            regionId,
+          },
+          required: true,
+        }],
       });
       expect(modifiedGoal.timeframe).toBe('12 months');
 
-      await importGoals(fileName, 14);
+      await importGoals(fileName, regionId);
 
       const updatedGoal = await Goal.findOne({
         where: { id: goalWithTimeframe.id },
@@ -141,7 +228,17 @@ describe('Import TTA plan goals', () => {
       const fileName = 'GranteeTTAPlanTest.csv';
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
 
-      const aGoal = await Goal.findOne({ where: { createdVia: 'imported' } });
+      const aGoal = await Goal.findOne({
+        where: { createdVia: 'imported' },
+        include: [{
+          model: Grant,
+          as: 'grant',
+          where: {
+            regionId,
+          },
+          required: true,
+        }],
+      });
 
       await aGoal.update({
         createdVia: null,
@@ -149,6 +246,14 @@ describe('Import TTA plan goals', () => {
 
       const goalWithoutCreatedVia = await Goal.findOne({
         where: { createdVia: null },
+        include: [{
+          model: Grant,
+          as: 'grant',
+          where: {
+            regionId,
+          },
+          required: true,
+        }],
       });
       expect(goalWithoutCreatedVia.createdVia).toBeNull();
       // Delete a goal and re-import
@@ -159,7 +264,7 @@ describe('Import TTA plan goals', () => {
         },
       });
 
-      await importGoals(fileName, 14);
+      await importGoals(fileName, regionId);
 
       const importedGoal = await Goal.findOne({
         where: { name: goalWithoutCreatedVia.name, grantId: goalWithoutCreatedVia.grantId },
@@ -171,7 +276,17 @@ describe('Import TTA plan goals', () => {
       const fileName = 'GranteeTTAPlanTest.csv';
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
 
-      const aGoal = await Goal.findOne({ where: { createdVia: 'imported' } });
+      const aGoal = await Goal.findOne({
+        where: { createdVia: 'imported' },
+        include: [{
+          model: Grant,
+          as: 'grant',
+          where: {
+            regionId,
+          },
+          required: true,
+        }],
+      });
 
       await aGoal.update({
         createdVia: 'rtr',
@@ -179,13 +294,29 @@ describe('Import TTA plan goals', () => {
 
       const goalWithRTRCreatedVia = await Goal.findOne({
         where: { name: aGoal.name, grantId: aGoal.grantId },
+        include: [{
+          model: Grant,
+          as: 'grant',
+          where: {
+            regionId,
+          },
+          required: true,
+        }],
       });
       expect(goalWithRTRCreatedVia.createdVia).toBe('rtr');
 
-      await importGoals(fileName, 14);
+      await importGoals(fileName, regionId);
 
       const importedGoal = await Goal.findOne({
         where: { name: goalWithRTRCreatedVia.name, grantId: goalWithRTRCreatedVia.grantId },
+        include: [{
+          model: Grant,
+          as: 'grant',
+          where: {
+            regionId,
+          },
+          required: true,
+        }],
       });
       expect(importedGoal.createdVia).toBe('rtr');
     });
@@ -194,7 +325,17 @@ describe('Import TTA plan goals', () => {
       const fileName = 'GranteeTTAPlanTest.csv';
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
 
-      const aGoal = await Goal.findOne({ where: { isRttapa: 'Yes' } });
+      const aGoal = await Goal.findOne({
+        where: { isRttapa: 'Yes' },
+        include: [{
+          model: Grant,
+          as: 'grant',
+          where: {
+            regionId,
+          },
+          required: true,
+        }],
+      });
 
       // Delete aGoal and re-import
       await Goal.destroy({
@@ -204,10 +345,18 @@ describe('Import TTA plan goals', () => {
         },
       });
 
-      await importGoals(fileName, 14);
+      await importGoals(fileName, regionId);
 
       const importedGoal = await Goal.findOne({
         where: { name: aGoal.name, grantId: aGoal.grantId },
+        include: [{
+          model: Grant,
+          as: 'grant',
+          where: {
+            regionId,
+          },
+          required: true,
+        }],
       });
       expect(importedGoal.isRttapa).toBe('Yes');
     });
@@ -216,18 +365,46 @@ describe('Import TTA plan goals', () => {
       const fileName = 'GranteeTTAPlanTest.csv';
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
 
-      const aGoal = await Goal.findOne({ where: { isRttapa: 'Yes' } });
+      const aGoal = await Goal.findOne({
+        where: { isRttapa: 'Yes' },
+        include: [{
+          model: Grant,
+          as: 'grant',
+          where: {
+            regionId,
+          },
+          required: true,
+        }],
+      });
 
       await aGoal.update({
         isRttapa: 'No',
       });
 
-      const goalNotRttapa = await Goal.findOne({ where: { isRttapa: 'No' } });
+      const goalNotRttapa = await Goal.findOne({
+        where: { isRttapa: 'No' },
+        include: [{
+          model: Grant,
+          as: 'grant',
+          where: {
+            regionId,
+          },
+          required: true,
+        }],
+      });
 
-      await importGoals(fileName, 14);
+      await importGoals(fileName, regionId);
 
       const importedGoal = await Goal.findOne({
         where: { name: goalNotRttapa.name, grantId: goalNotRttapa.grantId },
+        include: [{
+          model: Grant,
+          as: 'grant',
+          where: {
+            regionId,
+          },
+          required: true,
+        }],
       });
       expect(importedGoal.isRttapa).toBe('Yes');
     });
@@ -236,12 +413,30 @@ describe('Import TTA plan goals', () => {
       const fileName = 'GranteeTTAPlanTest.csv';
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
 
-      const allGoals = await Goal.findAll();
+      const allGoals = await Goal.findAll({
+        include: [{
+          model: Grant,
+          as: 'grant',
+          where: {
+            regionId,
+          },
+          required: true,
+        }],
+      });
       expect(allGoals).toBeDefined();
 
-      await importGoals(fileName, 14);
+      await importGoals(fileName, regionId);
 
-      const allGoals2 = await Goal.findAll();
+      const allGoals2 = await Goal.findAll({
+        include: [{
+          model: Grant,
+          as: 'grant',
+          where: {
+            regionId,
+          },
+          required: true,
+        }],
+      });
       expect(allGoals2).toBeDefined();
       expect(allGoals2.length).toBe(allGoals.length);
     });
@@ -250,14 +445,20 @@ describe('Import TTA plan goals', () => {
       const fileName = 'R9GranteeTTAPlanTest.csv';
       downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
 
-      const goalsBefore = await Goal.findAll();
-
-      expect(goalsBefore.length).toBe(16);
       await importGoals(fileName, 9);
 
-      const allGoals = await Goal.findAll();
+      const allGoals = await Goal.findAll({
+        include: [{
+          model: Grant,
+          as: 'grant',
+          where: {
+            regionId: 9,
+          },
+          required: true,
+        }],
+      });
       expect(allGoals).toBeDefined();
-      expect(allGoals.length).toBe(17);
+      expect(allGoals.length).toBe(1);
 
       // test eager loading
       const goal = await Goal.findOne({
@@ -267,6 +468,9 @@ describe('Import TTA plan goals', () => {
           model: Grant,
           as: 'grant',
           attributes: ['id', 'number', 'regionId'],
+          where: {
+            regionId: 9,
+          },
         }],
       });
       expect(goal.name).toBe('Demonstrate an understanding of Fiscal requirements for non-federal share.');
