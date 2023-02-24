@@ -210,7 +210,7 @@ parameters:
     default: "put-back-search-after"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "ttahub-1154-resources-page"
+    default: "TTAHUB-379/add-site-alerts"
     type: string
   prod_new_relic_app_id:
     default: "877570491"

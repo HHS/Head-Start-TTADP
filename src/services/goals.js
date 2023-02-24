@@ -1270,6 +1270,13 @@ async function removeObjectives(objectivesToRemove, reportId) {
     return Promise.resolve();
   }
 
+  // cleanup any ObjectiveFiles that are no longer needed
+  await ObjectiveFile.destroy({
+    where: {
+      objectiveId: objectivesToDefinitelyDestroy.map((o) => o.id),
+    },
+  });
+
   return Objective.destroy({
     where: {
       id: objectivesToDefinitelyDestroy.map((o) => o.id),

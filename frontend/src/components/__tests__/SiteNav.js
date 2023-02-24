@@ -7,7 +7,6 @@ import {
 import fetchMock from 'fetch-mock';
 import { MemoryRouter, Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import UserContext from '../../UserContext';
 
 import SiteNav from '../SiteNav';
 
@@ -27,9 +26,7 @@ describe('SiteNav', () => {
 
       render(
         <Router history={history}>
-          <UserContext.Provider value={{ user }}>
-            <SiteNav authenticated admin user={user} />
-          </UserContext.Provider>
+          <SiteNav authenticated admin user={user} hasAlerts={false} />
         </Router>,
       );
     });
@@ -51,9 +48,7 @@ describe('SiteNav', () => {
 
       render(
         <MemoryRouter>
-          <UserContext.Provider value={{ user }}>
-            <SiteNav authenticated user={user} />
-          </UserContext.Provider>
+          <SiteNav authenticated user={user} hasAlerts={false} />
         </MemoryRouter>,
       );
     });
@@ -65,11 +60,55 @@ describe('SiteNav', () => {
 
   describe('when unauthenticated', () => {
     beforeEach(() => {
-      render(<MemoryRouter><SiteNav authenticated={false} /></MemoryRouter>);
+      render(<MemoryRouter><SiteNav authenticated={false} hasAlerts={false} /></MemoryRouter>);
     });
 
     test('nav items are not visible', () => {
       expect(screen.queryAllByRole('link').length).toBe(1);
+    });
+  });
+
+  describe('when authenticated & hasAlerts && no header', () => {
+    afterEach(() => fetchMock.restore());
+
+    const userUrl = join('api', 'user');
+
+    beforeEach(() => {
+      const user = { name: 'name' };
+      fetchMock.get(userUrl, { ...user });
+
+      render(
+        <MemoryRouter>
+          <SiteNav authenticated user={user} hasAlerts />
+        </MemoryRouter>,
+      );
+    });
+
+    test('nav items are visible', () => {
+      expect(screen.queryAllByRole('link').length).not.toBe(0);
+    });
+  });
+
+  describe('when authenticated & hasAlerts && a header', () => {
+    afterEach(() => fetchMock.restore());
+
+    const userUrl = join('api', 'user');
+
+    beforeEach(() => {
+      const user = { name: 'name' };
+      fetchMock.get(userUrl, { ...user });
+
+      render(
+        <MemoryRouter>
+          <header className="smart-hub-header.has-alerts">
+            <SiteNav authenticated user={user} hasAlerts />
+          </header>
+        </MemoryRouter>,
+      );
+    });
+
+    test('nav items are visible', () => {
+      expect(screen.queryAllByRole('link').length).not.toBe(0);
     });
   });
 });
