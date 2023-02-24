@@ -10,7 +10,6 @@ import User from '../../policies/user';
 import { Grant } from '../../models';
 import { createAndStoreVerificationToken, validateVerificationToken } from '../../services/token';
 import { currentUserId } from '../../services/currentUser';
-import handleErrors from '../../lib/apiErrorHandler';
 
 jest.mock('../../services/users', () => ({
   userById: jest.fn(),
@@ -29,8 +28,6 @@ jest.mock('../../services/token', () => ({
   createAndStoreVerificationToken: jest.fn(),
   validateVerificationToken: jest.fn(),
 }));
-
-jest.mock('../../lib/apiErrorHandler');
 
 const mockResponse = {
   json: jest.fn(),
@@ -254,7 +251,7 @@ describe('User handlers', () => {
       userById.mockResolvedValue(null);
       await getActiveUsers(request, mockResponse);
       expect(mockResponse.on).not.toHaveBeenCalled();
-      expect(handleErrors).toHaveBeenCalled();
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
   });
 });
