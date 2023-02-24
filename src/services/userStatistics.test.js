@@ -118,6 +118,7 @@ describe('statisticsByUser', () => {
 
   // Approver On Report.
   let approverReport1;
+  let approverReport2;
   let approverRegionReport1;
 
   beforeAll(async () => {
@@ -312,9 +313,9 @@ describe('statisticsByUser', () => {
     collaboratorReport2 = await ActivityReport.create(
       {
         ...report,
-        userId: otherUser.id,
+        userId: user.id, // Test creator and collaborator.
         duration: 2,
-        lastUpdatedById: otherUser.id,
+        lastUpdatedById: user.id,
         activityRecipients: { activityRecipientId: recipientThree.id },
         activityReportCollaborators: [
           { user: { id: user.id } },
@@ -357,6 +358,31 @@ describe('statisticsByUser', () => {
       },
     });
 
+    // Approver report 2.
+    approverReport2 = await ActivityReport.create(
+      {
+        ...report,
+        userId: user.id, // Cross created with approver.
+        lastUpdatedById: user.id,
+        activityRecipients: { activityRecipientId: recipientThree.id },
+        duration: 1,
+      },
+    );
+
+    await ActivityReportApprover.create({
+      activityReportId: approverReport2.id,
+      userId: user.id,
+    });
+
+    await ActivityReport.update({
+      calculatedStatus: 'approved',
+    }, {
+      where: {
+        id: approverReport2.id,
+      },
+    });
+
+    // Approver Region report.
     approverRegionReport1 = await ActivityReport.create(
       {
         ...report,
@@ -390,7 +416,7 @@ describe('statisticsByUser', () => {
     // Delete Approvers.
     await ActivityReportApprover.destroy({
       where: {
-        activityReportId: [approverReport1.id, approverRegionReport1.id],
+        activityReportId: [approverReport1.id, approverReport2.id, approverRegionReport1.id],
       },
       force: true,
     });
@@ -421,6 +447,7 @@ describe('statisticsByUser', () => {
           collaboratorReport1.id,
           collaboratorReport2.id,
           approverReport1.id,
+          approverReport2.id,
           approverRegionReport1.id,
         ],
       },
@@ -467,9 +494,9 @@ describe('statisticsByUser', () => {
   - 1 region excluded approved report.
   - 6 region approved reports.
   - 3 collaborator reports.
-  - 2 approved reports in region.
+  - 3 approved reports in region.
   - 4 distinct grants and recipients.
-  - 9 participants.
+  - 10 participants.
   */
   it('gets region statistics', async () => {
     // Get statistics.
@@ -483,13 +510,13 @@ describe('statisticsByUser', () => {
     expect(response.daysSinceJoined).toBe(totalDaysSinceJoined);
 
     // Created reports.
-    expect(response.arsCreated).toBe(8);
+    expect(response.arsCreated).toBe(9);
 
     // Collaborator reports.
     expect(response.arsCollaboratedOn).toBe(0);
 
     // TTA provided.
-    expect(response.ttaProvided).toBe('7 days 1 hrs');
+    expect(response.ttaProvided).toBe('7 days 2 hrs');
 
     // Recipients.
     expect(response.recipientsReached).toBe(4);
@@ -498,17 +525,17 @@ describe('statisticsByUser', () => {
     expect(response.grantsServed).toBe(4);
 
     // Participants.
-    expect(response.participantsReached).toBe(9);
+    expect(response.participantsReached).toBe(10);
   });
   /*
   User Statistics:
     - 1 region excluded approved report.
     - 1 globally excluded approved report.
-    - 3 created approved reports.
+    - 5 created approved reports.
     - 2 collaborator reports.
     - 1 report as approver.
     - 3 distinct grants and recipients.
-    - 7 participants.
+    - 8 participants.
     */
   it('gets user statistics', async () => {
     // Get statistics.
@@ -522,13 +549,13 @@ describe('statisticsByUser', () => {
     expect(response.daysSinceJoined).toBe(totalDaysSinceJoined);
 
     // Created reports.
-    expect(response.arsCreated).toBe(3);
+    expect(response.arsCreated).toBe(5);
 
     // Collaborator reports.
     expect(response.arsCollaboratedOn).toBe(2);
 
     // TTA provided.
-    expect(response.ttaProvided).toBe('3 days 17 hrs');
+    expect(response.ttaProvided).toBe('3 days 18 hrs');
 
     // Recipients.
     expect(response.recipientsReached).toBe(3);
@@ -537,6 +564,6 @@ describe('statisticsByUser', () => {
     expect(response.grantsServed).toBe(3);
 
     // Participants.
-    expect(response.participantsReached).toBe(7);
+    expect(response.participantsReached).toBe(8);
   });
 });
