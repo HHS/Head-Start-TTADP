@@ -9,7 +9,6 @@ import { sendEmailVerificationRequestWithToken } from '../../lib/mailer';
 import { currentUserId } from '../../services/currentUser';
 import { auditLogger } from '../../logger';
 import activeUsers from '../../services/activeUsers';
-import User from '../../policies/user';
 
 export async function getPossibleCollaborators(req, res) {
   try {
@@ -82,11 +81,11 @@ export async function verifyEmailToken(req, res) {
 export async function getActiveUsers(req, res) {
   try {
     const user = await userById(await currentUserId(req, res));
-    const authorization = new User(user);
+    const authorization = new UserPolicy(user);
 
     if (!authorization.isAdmin()) {
       auditLogger.warn(`User ${user.id} without permissions attempted to access active users`);
-      res.sendStatus(403); 
+      res.sendStatus(403);
       return;
     }
     const usersStream = await activeUsers();
