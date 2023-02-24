@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faChartColumn, faUserFriends, faUser, faClock, faBuilding,
+  faUser,
 } from '@fortawesome/free-solid-svg-icons';
 import withWidgetData from '../withWidgetData';
 import colors from '../../colors';
