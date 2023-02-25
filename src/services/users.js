@@ -11,8 +11,11 @@ import {
   ActivityReportCollaborator,
   ActivityReportApprover,
   ActivityRecipient,
-  Recipient,
   Grant,
+  Goal,
+  ActivityReportGoal,
+  Objective,
+  ActivityReportObjective,
 } from '../models';
 import { REPORT_STATUSES, DECIMAL_BASE } from '../constants';
 
@@ -135,10 +138,22 @@ export async function statisticsByUser(user, regions, readonly = false) {
         ),
       ), 'grantIds'],
       [sequelize.col('"ActivityReport"."numberOfParticipants"'), 'numberOfParticipants'],
+      [sequelize.fn(
+        'ARRAY_AGG',
+        sequelize.fn(
+          'DISTINCT',
+          sequelize.col('"activityReportGoals."goalId"'),
+        ),
+      ), 'goalIds'],
     ],
     group: ['"ActivityReport"."id"', '"ActivityReport"."duration"', '"ActivityReport"."numberOfParticipants"'],
     where: createdArWhere,
     include: [
+      {
+        model: ActivityReportGoal,
+        as: 'activityReportGoals',
+        attributes: [],
+      },
       {
         model: ActivityRecipient.unscoped(),
         attributes: [],
@@ -157,17 +172,22 @@ export async function statisticsByUser(user, regions, readonly = false) {
 
   // Approved report recipient ids.
   const createdRecipientIds = createdReports.flatMap((r) => r.dataValues.recipientIds).filter((r) => r);
+  let collaboratorRecipientIds = [];
+  let approverRecipientIds = [];
 
   // Grant ids.
   const createdGrantIds = createdReports.flatMap((r) => r.dataValues.grantIds).filter((r) => r);
+  let collaboratorGrantIds = [];
+  let approverGrantIds = [];
+
+  // Goal ids.
+  const createdGoalIds = createdReports.flatMap((r) => r.dataValues.goalIds).filter((r) => r);
+  let collaboratorGoalIds = [];
+  let approverGoalIds = [];
 
   // Additional report roles (if not read only).
   let collaboratorReports = [];
   let approverReports = [];
-  let collaboratorRecipientIds = [];
-  let approverRecipientIds = [];
-  let collaboratorGrantIds = [];
-  let approverGrantIds = [];
 
   if (!readonly) {
     // Get Collaborator's AR (if not read only).
@@ -190,6 +210,13 @@ export async function statisticsByUser(user, regions, readonly = false) {
           ),
         ), 'grantIds'],
         [sequelize.col('"ActivityReport"."numberOfParticipants"'), 'numberOfParticipants'],
+        [sequelize.fn(
+          'ARRAY_AGG',
+          sequelize.fn(
+            'DISTINCT',
+            sequelize.col('"activityReportGoals."goalId"'),
+          ),
+        ), 'goalIds'],
       ],
       group: ['"ActivityReport"."id"', '"ActivityReport"."duration"', '"ActivityReport"."numberOfParticipants"'],
       where: {
@@ -208,6 +235,11 @@ export async function statisticsByUser(user, regions, readonly = false) {
           },
         },
         {
+          model: ActivityReportGoal,
+          as: 'activityReportGoals',
+          attributes: [],
+        },
+        {
           model: ActivityRecipient.unscoped(),
           attributes: [],
           as: 'activityRecipients',
@@ -223,11 +255,14 @@ export async function statisticsByUser(user, regions, readonly = false) {
       ],
     });
 
-    // Collaborator report recipient ids.
+    // Collaborator report Recipient ids.
     collaboratorRecipientIds = collaboratorReports.flatMap((r) => r.dataValues.recipientIds).filter((r) => r);
 
-    // Grant ids.
+    // Collaborator Grant ids.
     collaboratorGrantIds = collaboratorReports.flatMap((r) => r.dataValues.grantIds).filter((r) => r);
+
+    // Collaborator report Goal ids.
+    collaboratorGoalIds = collaboratorReports.flatMap((r) => r.dataValues.goalIds).filter((r) => r);
 
     // Get Approver AR's (if not read only).
     approverReports = await ActivityReportModel.findAll({
@@ -249,6 +284,13 @@ export async function statisticsByUser(user, regions, readonly = false) {
           ),
         ), 'grantIds'],
         [sequelize.col('"ActivityReport"."numberOfParticipants"'), 'numberOfParticipants'],
+        [sequelize.fn(
+          'ARRAY_AGG',
+          sequelize.fn(
+            'DISTINCT',
+            sequelize.col('"activityReportGoals."goalId"'),
+          ),
+        ), 'goalIds'],
       ],
       group: ['"ActivityReport"."id"', '"ActivityReport"."duration"', '"ActivityReport"."numberOfParticipants"'],
       where: {
@@ -265,6 +307,11 @@ export async function statisticsByUser(user, regions, readonly = false) {
           where: {
             userId: user.id,
           },
+        },
+        {
+          model: ActivityReportGoal,
+          as: 'activityReportGoals',
+          attributes: [],
         },
         {
           model: ActivityRecipient.unscoped(),
@@ -287,6 +334,9 @@ export async function statisticsByUser(user, regions, readonly = false) {
 
     // Approver report recipient ids.
     approverGrantIds = approverReports.flatMap((r) => r.dataValues.grantIds).filter((r) => r);
+
+    // Approver report Goal ids.
+    approverGoalIds = approverReports.flatMap((r) => r.dataValues.goalIds).filter((r) => r);
   }
 
   // Approved TTA.
@@ -334,6 +384,9 @@ export async function statisticsByUser(user, regions, readonly = false) {
   // Total distinct grant ids.
   const totalGrantIds = new Set([...createdGrantIds, ...collaboratorGrantIds, ...approverGrantIds]);
 
+  // Total Goals.
+  const totalGoalIds = new Set([...createdGoalIds, ...collaboratorGoalIds, ...approverGoalIds]);
+
   // ...
 
   return {
@@ -344,7 +397,7 @@ export async function statisticsByUser(user, regions, readonly = false) {
     recipientsReached: totalRecipientIds.size,
     grantsServed: totalGrantIds.size,
     participantsReached: totalParticipants,
-    goalsApproved: 0,
+    goalsApproved: totalGoalIds.size,
     objectivesApproved: 0,
   };
 }
