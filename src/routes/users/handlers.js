@@ -29,7 +29,9 @@ export async function getUserStatistics(req, res) {
   try {
     const user = await userById(await currentUserId(req, res));
     const regions = user.permissions.map((permission) => permission.regionId);
-    const statistics = await statisticsByUser(user, regions);
+    const authorization = new UserPolicy(user);
+    const canWrite = regions.every((region) => authorization.canWriteInRegion(region));
+    const statistics = await statisticsByUser(user, regions, canWrite);
     res.json(statistics);
   } catch (error) {
     await handleErrors(req, res, error, { namespace: 'SERVICE:USER' });

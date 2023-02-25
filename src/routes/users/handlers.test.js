@@ -63,6 +63,7 @@ describe('User handlers', () => {
           },
         ],
       });
+      User.prototype.canWriteInRegion = jest.fn().mockReturnValue(true);
       await getUserStatistics(mockRequest, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(response);
     });
@@ -82,6 +83,7 @@ describe('User handlers', () => {
       });
       const end = jest.fn();
       const status = jest.fn(() => ({ end }));
+      User.prototype.canWriteInRegion = jest.fn().mockReturnValue(true);
       await getPossibleStateCodes({}, { status });
       expect(status).toHaveBeenCalledWith(500);
     });
