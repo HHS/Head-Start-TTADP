@@ -1,8 +1,6 @@
 /* eslint-disable jest/no-disabled-tests */
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '../constants';
-import { createOrUpdateGoalsForActivityReport } from './goals';
-import { saveObjectivesForReport, getObjectivesByReportId } from './objectives';
 import db, {
   Goal,
   Grant,
@@ -104,10 +102,18 @@ describe('statisticsByUser', () => {
   let grantOutsideRegion;
 
   // Goals.
-  let goal1;
-  let goal1b;
-  let goal2;
-  let goal3;
+  let goal1; // created report1.
+  let goal1b; // Same report as goal1.
+  let goal2; // Collaborator report.
+  let goal3; // Approver report.
+
+  // Objectives.
+  let obj1; // Goal 1.
+  let obj2; // Goal 1.
+  let obj3; // Goal 1b.
+
+  let obj4; // Goal 2.
+  let obj5; // Goal 3
 
   // Excluded Report.
   let excludedUserReport;
@@ -218,6 +224,47 @@ describe('statisticsByUser', () => {
       previousStatus: 'Not Started',
     });
 
+    // Objectives.
+    obj1 = await Objective.create(
+      {
+        title: 'Statistics Goal 1 - Obj 1',
+        goalId: goal1.id,
+        status: 'Not Started',
+      },
+    );
+
+    obj2 = await Objective.create(
+      {
+        title: 'Statistics Goal 1 - Obj 2',
+        goalId: goal1.id,
+        status: 'Not Started',
+      },
+    );
+
+    obj3 = await Objective.create(
+      {
+        title: 'Statistics Goal 1b - Obj 1',
+        goalId: goal1b.id,
+        status: 'Not Started',
+      },
+    );
+
+    obj4 = await Objective.create(
+      {
+        title: 'Statistics Goal 2 - Obj 1',
+        goalId: goal2.id,
+        status: 'Not Started',
+      },
+    );
+
+    obj5 = await Objective.create(
+      {
+        title: 'Statistics Goal 3 - Obj 1',
+        goalId: goal3.id,
+        status: 'Not Started',
+      },
+    );
+
     // Exclude report.
     excludedUserReport = await ActivityReport.create(
       {
@@ -293,9 +340,28 @@ describe('statisticsByUser', () => {
       goalId: goal1.id,
     });
 
+    // Create approvedReport1 ARO's.
+    await ActivityReportObjective.create({
+      activityReportId: approvedReport1.id,
+      objectiveId: obj1.id,
+      status: 'In Progress',
+    });
+
+    await ActivityReportObjective.create({
+      activityReportId: approvedReport1.id,
+      objectiveId: obj2.id,
+      status: 'In Progress',
+    });
+
     await ActivityReportGoal.create({
       activityReportId: approvedReport1.id,
       goalId: goal1b.id,
+    });
+
+    await ActivityReportObjective.create({
+      activityReportId: approvedReport1.id,
+      objectiveId: obj3.id,
+      status: 'In Progress',
     });
 
     // User created approvedReport2.
@@ -347,6 +413,13 @@ describe('statisticsByUser', () => {
       goalId: goal2.id,
     });
 
+    // Create collaboratorReport1 goal's.
+    await ActivityReportObjective.create({
+      activityReportId: collaboratorReport1.id,
+      objectiveId: obj4.id,
+      status: 'In Progress',
+    });
+
     // Collaborator Activity Recipient.
     await ActivityRecipient.create({
       activityReportId: collaboratorReport1.id,
@@ -396,6 +469,13 @@ describe('statisticsByUser', () => {
     await ActivityReportGoal.create({
       activityReportId: approverReport1.id,
       goalId: goal3.id,
+    });
+
+    // Create approverReport1 ARO
+    await ActivityReportObjective.create({
+      activityReportId: approverReport1.id,
+      objectiveId: obj5.id,
+      status: 'In Progress',
     });
 
     // Approver Activity Recipient.
@@ -480,6 +560,13 @@ describe('statisticsByUser', () => {
       force: true,
     });
 
+    // Delete ActivityReportObjectives.
+    await ActivityReportObjective.destroy({
+      where: {
+        activityReportId: [approvedReport1.id, collaboratorReport1.id, approverReport1.id],
+      },
+    });
+
     // Delete ActivityReportGoals.
     await ActivityReportGoal.destroy({
       where: {
@@ -501,12 +588,6 @@ describe('statisticsByUser', () => {
       force: true,
     });
 
-    await Goal.destroy({
-      where: {
-        grantId: [grantOne.id, grantTwo.id, grantThree.id],
-      },
-    });
-
     // Delete reports.
     await ActivityReport.destroy({
       where: {
@@ -522,6 +603,21 @@ describe('statisticsByUser', () => {
           approverReport2.id,
           approverRegionReport1.id,
         ],
+      },
+    });
+
+    // Delete objectives.
+    await Objective.destroy({
+      where:
+      {
+        id: [obj1.id, obj2.id, obj3.id, obj4.id, obj5.id],
+      },
+    });
+
+    // Delete goals.
+    await Goal.destroy({
+      where: {
+        grantId: [grantOne.id, grantTwo.id, grantThree.id],
       },
     });
 
@@ -570,6 +666,7 @@ describe('statisticsByUser', () => {
   - 4 distinct grants and recipients.
   - 10 participants.
   - 4 Goals.
+  - 5 Objectives.
   */
   it('gets region statistics', async () => {
     // Get statistics.
@@ -602,6 +699,9 @@ describe('statisticsByUser', () => {
 
     // Goals.
     expect(response.goalsApproved).toBe(4);
+
+    // Objectives.
+    expect(response.objectivesApproved).toBe(5);
   });
   /*
   User Statistics:
@@ -613,6 +713,7 @@ describe('statisticsByUser', () => {
     - 3 distinct grants and recipients.
     - 8 participants.
     - 4 Goals.
+    - 5 Objectives.
     */
   it('gets user statistics', async () => {
     // Get statistics.
@@ -645,5 +746,8 @@ describe('statisticsByUser', () => {
 
     // Goals.
     expect(response.goalsApproved).toBe(4);
+
+    // Objectives.
+    expect(response.objectivesApproved).toBe(5);
   });
 });
