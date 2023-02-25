@@ -103,6 +103,12 @@ describe('statisticsByUser', () => {
   let grantFour;
   let grantOutsideRegion;
 
+  // Goals.
+  let goal1;
+  let goal1b;
+  let goal2;
+  let goal3;
+
   // Excluded Report.
   let excludedUserReport;
   let excludeRegionReport;
@@ -183,6 +189,35 @@ describe('statisticsByUser', () => {
       recipientId: recipientOutsideRegion.id,
     });
 
+    // Goals.
+    goal1 = await Goal.create({
+      name: 'Statistics Goal 1',
+      status: 'In Progress',
+      grantId: grantOne.id,
+      previousStatus: 'Not Started',
+    });
+
+    goal1b = await Goal.create({
+      name: 'Statistics Goal 1b',
+      status: 'In Progress',
+      grantId: grantOne.id,
+      previousStatus: 'Not Started',
+    });
+
+    goal2 = await Goal.create({
+      name: 'Statistics Goal 2',
+      status: 'In Progress',
+      grantId: grantTwo.id,
+      previousStatus: 'Not Started',
+    });
+
+    goal3 = await Goal.create({
+      name: 'Statistics Goal 2',
+      status: 'In Progress',
+      grantId: grantThree.id,
+      previousStatus: 'Not Started',
+    });
+
     // Exclude report.
     excludedUserReport = await ActivityReport.create(
       {
@@ -234,7 +269,7 @@ describe('statisticsByUser', () => {
       userId: outsideRegionUser.id,
     });
 
-    // User created reports.
+    // User created approvedReport1.
     approvedReport1 = await ActivityReport.create(
       {
         ...report,
@@ -252,6 +287,18 @@ describe('statisticsByUser', () => {
       grantId: grantOne.id,
     });
 
+    // Create approvedReport1 goal's.
+    await ActivityReportGoal.create({
+      activityReportId: approvedReport1.id,
+      goalId: goal1.id,
+    });
+
+    await ActivityReportGoal.create({
+      activityReportId: approvedReport1.id,
+      goalId: goal1b.id,
+    });
+
+    // User created approvedReport2.
     approvedReport2 = await ActivityReport.create(
       {
         ...report,
@@ -293,6 +340,12 @@ describe('statisticsByUser', () => {
         ],
       },
     );
+
+    // Create collaboratorReport1 goal's.
+    await ActivityReportGoal.create({
+      activityReportId: collaboratorReport1.id,
+      goalId: goal2.id,
+    });
 
     // Collaborator Activity Recipient.
     await ActivityRecipient.create({
@@ -338,6 +391,12 @@ describe('statisticsByUser', () => {
         duration: 2,
       },
     );
+
+    // Create approverReport1 goal's.
+    await ActivityReportGoal.create({
+      activityReportId: approverReport1.id,
+      goalId: goal3.id,
+    });
 
     // Approver Activity Recipient.
     await ActivityRecipient.create({
@@ -421,6 +480,13 @@ describe('statisticsByUser', () => {
       force: true,
     });
 
+    // Delete ActivityReportGoals.
+    await ActivityReportGoal.destroy({
+      where: {
+        activityReportId: [approvedReport1.id, collaboratorReport1.id, approverReport1.id],
+      },
+    });
+
     // Delete ActivityRecipient.
     await ActivityRecipient.destroy({
       where: {
@@ -433,6 +499,12 @@ describe('statisticsByUser', () => {
             excludedUserReport.id],
       },
       force: true,
+    });
+
+    await Goal.destroy({
+      where: {
+        grantId: [grantOne.id, grantTwo.id, grantThree.id],
+      },
     });
 
     // Delete reports.
@@ -497,6 +569,7 @@ describe('statisticsByUser', () => {
   - 3 approved reports in region.
   - 4 distinct grants and recipients.
   - 10 participants.
+  - 4 Goals.
   */
   it('gets region statistics', async () => {
     // Get statistics.
@@ -526,6 +599,9 @@ describe('statisticsByUser', () => {
 
     // Participants.
     expect(response.participantsReached).toBe(10);
+
+    // Goals.
+    expect(response.goalsApproved).toBe(4);
   });
   /*
   User Statistics:
@@ -536,6 +612,7 @@ describe('statisticsByUser', () => {
     - 1 report as approver.
     - 3 distinct grants and recipients.
     - 8 participants.
+    - 4 Goals.
     */
   it('gets user statistics', async () => {
     // Get statistics.
@@ -565,5 +642,8 @@ describe('statisticsByUser', () => {
 
     // Participants.
     expect(response.participantsReached).toBe(8);
+
+    // Goals.
+    expect(response.goalsApproved).toBe(4);
   });
 });
