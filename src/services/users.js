@@ -145,6 +145,13 @@ export async function statisticsByUser(user, regions, readonly = false) {
           sequelize.col('"activityReportGoals."goalId"'),
         ),
       ), 'goalIds'],
+      [sequelize.fn(
+        'ARRAY_AGG',
+        sequelize.fn(
+          'DISTINCT',
+          sequelize.col('"activityReportObjectives."objectiveId"'),
+        ),
+      ), 'objectiveIds'],
     ],
     group: ['"ActivityReport"."id"', '"ActivityReport"."duration"', '"ActivityReport"."numberOfParticipants"'],
     where: createdArWhere,
@@ -152,6 +159,11 @@ export async function statisticsByUser(user, regions, readonly = false) {
       {
         model: ActivityReportGoal,
         as: 'activityReportGoals',
+        attributes: [],
+      },
+      {
+        model: ActivityReportObjective,
+        as: 'activityReportObjectives',
         attributes: [],
       },
       {
@@ -185,6 +197,11 @@ export async function statisticsByUser(user, regions, readonly = false) {
   let collaboratorGoalIds = [];
   let approverGoalIds = [];
 
+  // Goal ids.
+  const createdObjectiveIds = createdReports.flatMap((r) => r.dataValues.objectiveIds).filter((r) => r);
+  let collaboratorObjectiveIds = [];
+  let approverObjectiveIds = [];
+
   // Additional report roles (if not read only).
   let collaboratorReports = [];
   let approverReports = [];
@@ -217,6 +234,13 @@ export async function statisticsByUser(user, regions, readonly = false) {
             sequelize.col('"activityReportGoals."goalId"'),
           ),
         ), 'goalIds'],
+        [sequelize.fn(
+          'ARRAY_AGG',
+          sequelize.fn(
+            'DISTINCT',
+            sequelize.col('"activityReportObjectives."objectiveId"'),
+          ),
+        ), 'objectiveIds'],
       ],
       group: ['"ActivityReport"."id"', '"ActivityReport"."duration"', '"ActivityReport"."numberOfParticipants"'],
       where: {
@@ -237,6 +261,11 @@ export async function statisticsByUser(user, regions, readonly = false) {
         {
           model: ActivityReportGoal,
           as: 'activityReportGoals',
+          attributes: [],
+        },
+        {
+          model: ActivityReportObjective,
+          as: 'activityReportObjectives',
           attributes: [],
         },
         {
@@ -263,6 +292,9 @@ export async function statisticsByUser(user, regions, readonly = false) {
 
     // Collaborator report Goal ids.
     collaboratorGoalIds = collaboratorReports.flatMap((r) => r.dataValues.goalIds).filter((r) => r);
+
+    // Collaborator report Objective ids.
+    collaboratorObjectiveIds = collaboratorReports.flatMap((r) => r.dataValues.objectiveIds).filter((r) => r);
 
     // Get Approver AR's (if not read only).
     approverReports = await ActivityReportModel.findAll({
@@ -291,6 +323,13 @@ export async function statisticsByUser(user, regions, readonly = false) {
             sequelize.col('"activityReportGoals."goalId"'),
           ),
         ), 'goalIds'],
+        [sequelize.fn(
+          'ARRAY_AGG',
+          sequelize.fn(
+            'DISTINCT',
+            sequelize.col('"activityReportObjectives."objectiveId"'),
+          ),
+        ), 'objectiveIds'],
       ],
       group: ['"ActivityReport"."id"', '"ActivityReport"."duration"', '"ActivityReport"."numberOfParticipants"'],
       where: {
@@ -311,6 +350,11 @@ export async function statisticsByUser(user, regions, readonly = false) {
         {
           model: ActivityReportGoal,
           as: 'activityReportGoals',
+          attributes: [],
+        },
+        {
+          model: ActivityReportObjective,
+          as: 'activityReportObjectives',
           attributes: [],
         },
         {
@@ -337,6 +381,9 @@ export async function statisticsByUser(user, regions, readonly = false) {
 
     // Approver report Goal ids.
     approverGoalIds = approverReports.flatMap((r) => r.dataValues.goalIds).filter((r) => r);
+
+    // Approver report Goal ids.
+    approverObjectiveIds = approverReports.flatMap((r) => r.dataValues.objectiveIds).filter((r) => r);
   }
 
   // Approved TTA.
@@ -387,7 +434,8 @@ export async function statisticsByUser(user, regions, readonly = false) {
   // Total Goals.
   const totalGoalIds = new Set([...createdGoalIds, ...collaboratorGoalIds, ...approverGoalIds]);
 
-  // ...
+  // Total Objectives.
+  const totalObjectivesIds = new Set([...createdObjectiveIds, ...collaboratorObjectiveIds, ...approverObjectiveIds]);
 
   return {
     daysSinceJoined: totalDaysSinceJoined,
@@ -398,6 +446,6 @@ export async function statisticsByUser(user, regions, readonly = false) {
     grantsServed: totalGrantIds.size,
     participantsReached: totalParticipants,
     goalsApproved: totalGoalIds.size,
-    objectivesApproved: 0,
+    objectivesApproved: totalObjectivesIds.size,
   };
 }
