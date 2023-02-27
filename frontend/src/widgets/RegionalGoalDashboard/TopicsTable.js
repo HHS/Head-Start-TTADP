@@ -125,7 +125,7 @@ export function TopicsTableWidget({ data, loading }) {
     <>
       <div className="landing inline-size-auto maxw-full bg-white radius-md shadow-2 margin-bottom-3 margin-top-3">
         <div className="usa-table-container--scrollable">
-          <Table fullWidth>
+          <Table fullWidth striped>
             <thead>
               <tr>
                 {renderColumnHeader('Topic', 'topic')}
