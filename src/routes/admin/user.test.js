@@ -29,6 +29,7 @@ const mockUser = {
   email: 'test49@test.com',
   homeRegionId: 1,
   lastLogin: new Date('2021-02-09T15:13:00.000Z'),
+  createdAt: new Date('2021-02-09T15:13:00.000Z'),
   permissions: [
     {
       userId: 49,
