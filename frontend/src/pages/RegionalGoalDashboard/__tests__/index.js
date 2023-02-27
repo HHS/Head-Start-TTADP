@@ -22,6 +22,26 @@ const WIDGET_MOCKS = {
     Suspended: 311,
     Closed: 4514,
   },
+  totalHrsAndRecipientGraph: [
+    {
+      name: 'Hours of Training',
+      x: ['Jul-22', 'Aug-22', 'Sep-22'],
+      y: [338.5, 772, 211],
+      month: [false, false, false],
+    },
+    {
+      name: 'Hours of Technical Assistance',
+      x: ['Jul-22', 'Aug-22', 'Sep-22'],
+      y: [279.5, 274.5, 155.5],
+      month: [false, false, false],
+    },
+    {
+      name: 'Hours of Both',
+      x: ['Jul-22', 'Aug-22', 'Sep-22'],
+      y: [279.5, 274.5, 155.5],
+      month: [false, false, false],
+    },
+  ],
 };
 
 describe('RegionalGoalDashboard', () => {
@@ -97,5 +117,13 @@ describe('RegionalGoalDashboard', () => {
     textStrings.forEach((textString) => {
       expect(within(graph).getByText(textString)).toBeInTheDocument();
     });
+  });
+
+  it('total hours and recipient graph widget', async () => {
+    act(() => {
+      renderRegionalGoalDashboard();
+    });
+
+    expect(await screen.findByRole('heading', { name: 'Total TTA hours' })).toBeInTheDocument();
   });
 });
