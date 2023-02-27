@@ -47,13 +47,13 @@ function Bar({
 
   return (
     <div className="ttahub-goal-bar-container display-flex flex-justify margin-y-2">
-      <span className="width-10 margin-right-4 flex-align-self-center" aria-label={readablePercentage}>
+      <span className="width-10 margin-right-3 flex-align-self-center" aria-label={readablePercentage}>
         {label}
       </span>
       <div className="ttahub-goal-bar height-3 bg-base-lightest flex-6 margin-right-1 width-full" aria-hidden="true">
         <div className="ttahub-goal-bar-color height-full width-full" style={style} />
       </div>
-      <span aria-label={readableRatio} className="width-8 flex-align-self-center text-right padding-left-1">{ratio}</span>
+      <span aria-label={readableRatio} className="width-9 flex-align-self-center text-right padding-left-1">{ratio}</span>
     </div>
   );
 }
@@ -114,7 +114,7 @@ export function GoalStatusChart({ data, loading }) {
   }
 
   return (
-    <Container className="ttahub--goal-status-graph" paddingX={3} paddingY={3} loading={loading} loadingLabel="goal statuses by number loading">
+    <Container className="ttahub--goal-status-graph width-full" paddingX={3} paddingY={3} loading={loading} loadingLabel="goal statuses by number loading">
       <Grid row className="position-relative margin-bottom-1">
         <Grid className="flex-align-self-center desktop:display-flex flex-align-center" desktop={{ col: 'auto' }} mobileLg={{ col: 10 }}>
           <h2 className="margin-0">
@@ -174,7 +174,7 @@ export function GoalStatusChart({ data, loading }) {
         )
         : (
           <>
-            <div className="border-top border-gray-5">
+            <div className="border-top border-gray-5" data-testid="goalStatusGraph">
               <p className="usa-prose text-bold">
                 {data.total}
                 {' '}
@@ -221,4 +221,4 @@ GoalStatusChart.defaultProps = {
   },
 };
 
-export default withWidgetData(GoalStatusChart, 'goalStatusGraph');
+export default withWidgetData(GoalStatusChart, 'goalStatusByGoalName');

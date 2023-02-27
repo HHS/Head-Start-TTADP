@@ -21,7 +21,7 @@ import {
 } from '../constants';
 import filtersToScopes from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
-import goalStatusGraph from '../widgets/goalStatusGraph';
+import goalStatusByGoalName from '../widgets/goalStatusByGoalName';
 
 export async function allRecipients() {
   return Recipient.findAll({
@@ -486,7 +486,7 @@ export async function getGoalsByActivityRecipient(
     goalRows: [],
   });
 
-  const statuses = await goalStatusGraph({
+  const statuses = await goalStatusByGoalName({
     goal: {
       id: allGoalIds,
     },

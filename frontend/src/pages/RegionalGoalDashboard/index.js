@@ -13,6 +13,8 @@ import { DASHBOARD_FILTER_CONFIG } from './constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import FilterPanel from '../../components/filter/FilterPanel';
 import GoalsPercentage from '../../widgets/RegionalGoalDashboard/GoalsPercentage';
+import GoalStatusChart from '../../widgets/RegionalGoalDashboard/GoalStatusChart';
+import TotalHrsAndRecipientGraphWidget from '../../widgets/TotalHrsAndRecipientGraph';
 import TopicsTable from '../../widgets/RegionalGoalDashboard/TopicsTable';
 
 const defaultDate = formatDateRange({
@@ -130,10 +132,20 @@ export default function RegionalGoalDashboard() {
           allUserRegions={regions}
         />
       </Grid>
-      <GridContainer className="margin-0 padding-0">
+      <GridContainer className="margin-bottom-3 padding-0">
         <GoalsPercentage
           filters={filtersToApply}
         />
+      </GridContainer>
+      <Grid row gap="lg">
+        <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }} className="display-flex flex-align-stretch">
+          <GoalStatusChart filters={filtersToApply} />
+        </Grid>
+        <Grid desktop={{ col: 7 }} tabletLg={{ col: 12 }}>
+          <TotalHrsAndRecipientGraphWidget hideYAxis filters={filtersToApply} />
+        </Grid>
+      </Grid>
+      <GridContainer className="margin-y-0 padding-0">
         <TopicsTable
           filters={filtersToApply}
         />
