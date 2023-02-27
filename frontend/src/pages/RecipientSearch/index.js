@@ -1,6 +1,9 @@
 /* eslint-disable react/jsx-no-bind */
 import React, {
-  useEffect, useState, useRef,
+  useEffect,
+  useState,
+  useRef,
+  useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -32,19 +35,32 @@ export const determineDefaultSort = (userHasCentralOffice) => (
 );
 
 function RecipientSearch({ user }) {
-  const [filters, setFilters] = useSessionFiltersAndReflectInUrl('recipient-search-filters', []);
+  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl('recipient-search-filters', []);
+
   const hasCentralOffice = user && user.homeRegionId && user.homeRegionId === 14;
   const regions = getUserRegions(user);
+  const defaultSort = useMemo(() => determineDefaultSort(hasCentralOffice), [hasCentralOffice]);
   const [queryAndSort, setQueryAndSort] = useSession('rtr-search', {
     query: '',
     activePage: 1,
-    sortConfig: determineDefaultSort(hasCentralOffice),
+    sortConfig: defaultSort,
   });
 
   const [results, setResults] = useState({ count: 0, rows: [] });
   const [loading, setLoading] = useState(false);
 
   const { query, activePage, sortConfig } = queryAndSort;
+
+  const setFilters = (newFilters) => {
+    const qAndS = {
+      activePage: 1,
+      sortConfig: defaultSort,
+      query,
+    };
+
+    setQueryAndSort(qAndS);
+    setFiltersInHook(newFilters);
+  };
 
   const onRemoveFilter = (filterId) => {
     const newFilters = filters.map((f) => ({ ...f })).filter((f) => f.id !== filterId);
@@ -69,6 +85,16 @@ function RecipientSearch({ user }) {
   const offset = (activePage - 1) * RECIPIENTS_PER_PAGE;
 
   useEffect(() => {
+    const updateQuery = (q) => {
+      const qAndS = {
+        activePage: 1,
+        sortConfig: defaultSort,
+        query: q,
+      };
+
+      setQueryAndSort(qAndS);
+    };
+
     async function fetchRecipients() {
       /**
        * if the current query doesn't match the value of the input,
@@ -76,7 +102,7 @@ function RecipientSearch({ user }) {
        */
       if (query !== inputRef.current.value) {
         if (inputRef.current) {
-          setQueryAndSort({ ...queryAndSort, query: inputRef.current.value });
+          updateQuery(inputRef.current.value);
         }
         return;
       }
@@ -98,7 +124,7 @@ function RecipientSearch({ user }) {
     }
 
     fetchRecipients();
-  }, [offset, sortConfig, user, queryAndSort, query, setQueryAndSort, filters]);
+  }, [offset, sortConfig, user, queryAndSort, query, setQueryAndSort, filters, defaultSort]);
 
   async function requestSort(sortBy) {
     const config = { ...sortConfig };
@@ -119,7 +145,11 @@ function RecipientSearch({ user }) {
   async function onSubmit(e) {
     e.preventDefault();
     if (inputRef.current) {
-      setQueryAndSort({ ...queryAndSort, query: inputRef.current.value });
+      setQueryAndSort({
+        sortConfig: defaultSort,
+        activePage: 1,
+        query: inputRef.current.value,
+      });
     }
   }
 
