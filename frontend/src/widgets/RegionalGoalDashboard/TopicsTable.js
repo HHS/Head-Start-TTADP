@@ -123,7 +123,7 @@ export function TopicsTableWidget({ data, loading }) {
 
   return (
     <>
-      <div className="landing inline-size-auto maxw-full bg-white radius-md shadow-2 margin-bottom-3 margin-top-3">
+      <div className="landing inline-size-auto maxw-full bg-white radius-md shadow-2 margin-bottom-3">
         <div className="usa-table-container--scrollable">
           <Table fullWidth>
             <thead>
