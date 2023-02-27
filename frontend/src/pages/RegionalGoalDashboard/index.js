@@ -136,11 +136,12 @@ export default function RegionalGoalDashboard() {
           filters={filtersToApply}
         />
       </GridContainer>
-      <Grid row>
-        <Grid desktop={{ col: 4 }} tablet={{ col: 12 }} className="margin-top-2">
+      <Grid row gap="lg">
+        <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }} className="display-flex flex-align-stretch">
           <GoalStatusGraph filters={filtersToApply} />
         </Grid>
-        <Grid desktop={{ col: 8 }} tabletLg={{ col: 12 }}>
+
+        <Grid desktop={{ col: 7 }} tabletLg={{ col: 12 }}>
           <TotalHrsAndRecipientGraphWidget hideYAxis filters={filtersToApply} />
         </Grid>
       </Grid>
