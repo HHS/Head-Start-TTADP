@@ -1,6 +1,6 @@
 const { Op, Model } = require('sequelize');
 const moment = require('moment');
-const { REPORT_STATUSES, USER_ROLES } = require('../constants');
+const { REPORT_STATUSES, USER_ROLES, NEXTSTEP_NOTETYPE } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 const {
   beforeCreate,
@@ -41,8 +41,16 @@ export default (sequelize, DataTypes) => {
         otherKey: 'resourceId',
         as: 'resources',
       });
-      ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'specialistNextSteps' });
-      ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'recipientNextSteps' });
+      ActivityReport.hasMany(models.NextStep, {
+        foreignKey: 'activityReportId',
+        as: 'specialistNextSteps',
+        scope: { noteType: [NEXTSTEP_NOTETYPE.SPECIALIST] },
+      });
+      ActivityReport.hasMany(models.NextStep, {
+        foreignKey: 'activityReportId',
+        as: 'recipientNextSteps',
+        scope: { noteType: [NEXTSTEP_NOTETYPE.RECIPIENT] },
+      });
       ActivityReport.hasMany(models.ActivityReportApprover, { foreignKey: 'activityReportId', as: 'approvers', hooks: true });
       ActivityReport.hasMany(models.ActivityReportGoal, { foreignKey: 'activityReportId', as: 'activityReportGoals' });
       ActivityReport.belongsToMany(models.Goal, {

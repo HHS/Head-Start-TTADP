@@ -1,4 +1,4 @@
-import { Op, QueryTypes } from 'sequelize';
+import { Sequelize, Op, QueryTypes } from 'sequelize';
 import {
   ActivityReport,
   ActivityReportGoal,
@@ -23,303 +23,889 @@ import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../constants';
 
 export async function resourceData(scopes) {
   // Query Database for all Resources within the scope.
-  const reports = await ActivityReport.findAll({
-    attributes: ['id', 'numberOfParticipants', 'topics', 'startDate'],
-    where: {
-      [Op.and]: [
-        scopes.activityReport,
-        { calculatedStatus: REPORT_STATUSES.APPROVED },
+
+  console.log('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
+
+  // const reports = await ActivityReport.findAll({
+  //   attributes: ['id', 'numberOfParticipants', 'topics', 'startDate'],
+  //   where: {
+  //     [Op.and]: [
+  //       scopes.activityReport,
+  //       { calculatedStatus: REPORT_STATUSES.APPROVED },
+  //       {
+  //         [Op.or]: [
+  //           { '$activityRecipients.grantId$': { [Op.eq]: Sequelize.col('activityReportObjectives.objective.goal.grantId') } },
+  //           { '$activityRecipients.otherEntityId$': { [Op.eq]: Sequelize.col('activityReportObjectives.objective.otherEntityId') } },
+  //         ],
+  //       },
+  //       {
+  //         [Op.or]: [
+  //           { '$activityRecipients.grantId$': { [Op.eq]: Sequelize.col('activityReportGoals.goal.grantId') } },
+  //           { '$activityReportGoals.id$': null },
+  //         ],
+  //       },
+  //     ],
+  //   },
+  //   include: [
+  //     {
+  //       model: ActivityRecipient.scope(),
+  //       as: 'activityRecipients',
+  //       attributes: [],
+  //       required: true,
+  //       include: [
+  //         {
+  //           model: Grant.scope(),
+  //           as: 'grant',
+  //           attributes: ['id', 'recipientId'],
+  //           required: false,
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       model: Resource,
+  //       as: 'resources',
+  //       attributes: ['id', 'url', 'domain'],
+  //       through: {
+  //         attributes: ['sourceFields'],
+  //       },
+  //       required: false,
+  //     },
+  //     {
+  //       model: NextStep,
+  //       as: 'specialistNextSteps',
+  //       attributes: ['id'],
+  //       include: [{
+  //         model: Resource,
+  //         as: 'resources',
+  //         attributes: ['id', 'url', 'domain'],
+  //         through: {
+  //           attributes: ['sourceFields'],
+  //         },
+  //         required: false,
+  //       }],
+  //       required: false,
+  //     },
+  //     {
+  //       model: NextStep,
+  //       as: 'recipientNextSteps',
+  //       attributes: ['id'],
+  //       include: [{
+  //         model: Resource,
+  //         as: 'resources',
+  //         attributes: ['id', 'url', 'domain'],
+  //         through: {
+  //           attributes: ['sourceFields'],
+  //         },
+  //         required: false,
+  //       }],
+  //       required: false,
+  //     },
+  //     {
+  //       model: ActivityReportObjective,
+  //       as: 'activityReportObjectives',
+  //       attributes: ['id'],
+  //       // separate: true,
+  //       include: [
+  //         {
+  //           model: Resource,
+  //           as: 'resources',
+  //           attributes: ['id', 'url', 'domain'],
+  //           through: {
+  //             attributes: ['sourceFields'],
+  //           },
+  //           required: false,
+  //         },
+  //         {
+  //           model: Objective,
+  //           as: 'objective',
+  //           attributes: ['id', 'goalId'],
+  //           required: true,
+  //           include: [
+  //             {
+  //               model: Goal,
+  //               as: 'goal',
+  //               attributes: [],
+  //               required: false,
+  //             },
+  //           ],
+  //         },
+  //         {
+  //           model: Topic,
+  //           as: 'topics',
+  //           attributes: ['id', 'name'],
+  //         },
+  //       ],
+  //       required: false,
+  //     },
+  //     {
+  //       model: ActivityReportGoal,
+  //       as: 'activityReportGoals',
+  //       attributes: ['id', 'goalId'],
+  //       // separate: true,
+  //       include: [
+  //         {
+  //           model: Resource,
+  //           as: 'resources',
+  //           attributes: ['id', 'url', 'domain'],
+  //           through: {
+  //             attributes: ['sourceFields'],
+  //           },
+  //           required: false,
+  //         },
+  //         {
+  //           model: Goal,
+  //           as: 'goal',
+  //           attributes: ['id'],
+  //           required: true,
+  //         },
+  //       ],
+  //       required: false,
+  //     },
+  //   ],
+  // });
+
+  console.log('YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY');
+  const [
+    allReports,
+    viaReport,
+    viaSpecialistNextSteps,
+    viaRecipientNextSteps,
+    viaObjectives,
+    viaGoals,
+  ] = await Promise.all([
+    await ActivityReport.findAll({
+      attributes: [
+        'id',
+        'numberOfParticipants',
+        'topics',
+        'startDate',
+        [sequelize.fn(
+          'json_agg',
+          sequelize.fn(
+            'json_build_object',
+            sequelize.literal('\'grantId\''),
+            sequelize.literal('"activityRecipients->grant"."id"'),
+            sequelize.literal('\'recipientId\''),
+            sequelize.literal('"activityRecipients->grant"."recipientId"'),
+            sequelize.literal('\'otherEntityId\''),
+            sequelize.literal('"activityRecipients"."otherEntityId"'),
+          ),
+        ),
+        'recipients'],
       ],
-    },
-    include: [
-      {
-        model: ActivityRecipient,
-        as: 'activityRecipients',
-        attributes: ['id'],
-        required: true,
-        include: [
-          {
-            model: Grant,
-            as: 'grant',
-            attributes: ['id', 'recipientId'],
-            required: false,
-          },
-          {
-            model: OtherEntity,
-            as: 'otherEntity',
-            attributes: ['id'],
-            required: false,
-          },
+      group: [
+        '"ActivityReport"."id"',
+        '"ActivityReport"."numberOfParticipants"',
+        '"ActivityReport"."topics"',
+        '"ActivityReport"."startDate"',
+      ],
+      where: {
+        [Op.and]: [
+          scopes.activityReport,
+          { calculatedStatus: REPORT_STATUSES.APPROVED },
         ],
       },
-      {
-        model: Resource,
-        as: 'resources',
-        attributes: ['id', 'url', 'domain'],
-        through: {
-          attributes: ['sourceFields'],
-        },
-        required: false,
-      },
-      {
-        model: NextStep,
-        as: 'specialistNextSteps',
-        attributes: ['id'],
-        include: [{
-          model: Resource,
-          as: 'resources',
-          attributes: ['id', 'url', 'domain'],
-          through: {
-            attributes: ['sourceFields'],
-          },
-          required: false,
-        }],
-        required: false,
-      },
-      {
-        model: NextStep,
-        as: 'recipientNextSteps',
-        attributes: ['id'],
-        include: [{
-          model: Resource,
-          as: 'resources',
-          attributes: ['id', 'url', 'domain'],
-          through: {
-            attributes: ['sourceFields'],
-          },
-          required: false,
-        }],
-        required: false,
-      },
-      {
-        model: ActivityReportObjective,
-        as: 'activityReportObjectives',
-        attributes: ['id'],
-        separate: true,
-        include: [
-          {
-            model: Resource,
-            as: 'resources',
-            attributes: ['id', 'url', 'domain'],
-            through: {
-              attributes: ['sourceFields'],
-            },
-            required: false,
-          },
-          {
-            model: Objective,
-            as: 'objective',
-            attributes: ['id', 'goalId'],
-            required: true,
-          },
-          {
-            model: Topic,
-            as: 'topics',
-            attributes: ['id', 'name'],
-          },
-        ],
-        required: false,
-      },
-      {
-        model: ActivityReportGoal,
-        as: 'activityReportGoals',
-        attributes: ['id', 'goalId'],
-        separate: true,
-        include: [
-          {
-            model: Resource,
-            as: 'resources',
-            attributes: ['id', 'url', 'domain'],
-            through: {
-              attributes: ['sourceFields'],
-            },
-            required: false,
-          },
-          {
-            model: Goal,
-            as: 'goal',
-            attributes: ['id'],
-            required: true,
-          },
-        ],
-        required: false,
-      },
-    ],
-  });
-
-  const reportIds = reports.map((r) => r.id);
-  const reportResources = reports.reduce((reportData, report) => {
-    const x = null;
-    // collect topics from the objectives and the activity report
-    let objectiveTopics = [];
-    if (report.activityReportObjectives
-      && Array.isArray(report.activityReportObjectives)
-      && report.activityReportObjectives.length > 0) {
-      objectiveTopics = report.activityReportObjectives
-        .map((o) => o.topics.map((t) => t.dataValues.name))
-        .flat(2);
-    }
-    const reportTopics = [...new Set([
-      ...report.dataValues.topics,
-      ...objectiveTopics.map((t) => t.name),
-    ])];
-
-    // collect the recipients
-    let grantRecipients = [];
-    let otherEntityRecipeints = [];
-    if (report.activityRecipients
-      && Array.isArray(report.activityRecipients)
-      && report.activityRecipients.length > 0) {
-      grantRecipients = report.activityRecipients
-        .filter((r) => r.grant !== null)
-        .map((r) => ({
-          grantId: r.grant.dataValues.id,
-          recipientId: r.grant.dataValues.recipientId,
-        }));
-      otherEntityRecipeints = report.activityRecipients
-        .filter((r) => r.otherEntity !== null)
-        .map((r) => ({
-          otherEntityId: r.otherEntity.dataValues.id,
-        }));
-    }
-    const recipients = [
-      ...grantRecipients,
-      ...otherEntityRecipeints,
-    ];
-
-    // resources
-    const resourcesFromReport = report.resources
-      && Array.isArray(report.resources)
-      && report.resources.length > 0
-      ? report.resources.map((r) => ({
-        id: r.dataValues.id,
-        url: r.dataValues.url,
-        domain: r.dataValues.domain,
-        sourceFields: r.ActivityReportResource.dataValues.sourceFields,
-        tableType: 'report',
-        ActivityReportResource: undefined,
-        topics: reportTopics,
-      }))
-      : [];
-    const resourcesFromSpecialistNextStep = report.specialistNextSteps
-      && Array.isArray(report.specialistNextSteps)
-      && report.specialistNextSteps.length > 0
-      ? report.specialistNextSteps
-        .map((sns) => sns.resources.map((r) => ({
-          id: r.dataValues.id,
-          url: r.dataValues.url,
-          domain: r.dataValues.domain,
-          sourceFields: r.NextStepResource.dataValues.sourceFields,
-          tableType: 'specialistNextStep',
-          NextStepResource: undefined,
-          topics: reportTopics,
-        })))
-        .filter((r) => r)
-      : [];
-    const resourcesFromRecipientNextStep = report.recipientNextSteps
-      && Array.isArray(report.recipientNextSteps)
-      && report.recipientNextSteps.length > 0
-      ? report.recipientNextSteps
-        .map((rns) => rns.resources.map((r) => ({
-          id: r.dataValues.id,
-          url: r.dataValues.url,
-          domain: r.dataValues.domain,
-          sourceFields: r.NextStepResource.dataValues.sourceFields,
-          tableType: 'recipientNextStep',
-          NextStepResource: undefined,
-          topics: reportTopics,
-        })))
-        .filter((r) => r)
-      : [];
-    const resourcesFromGoal = report.activityReportGoals
-      && Array.isArray(report.activityReportGoals)
-      && report.activityReportGoals.length > 0
-      ? report.activityReportGoals
-        .map((arg) => arg.resources.map((r) => ({
-          id: r.dataValues.id,
-          url: r.dataValues.url,
-          domain: r.dataValues.domain,
-          sourceFields: r.ActivityReportGoalResource.dataValues.sourceFields,
-          tableType: 'goal',
-          ActivityReportGoalResource: undefined,
-          topics: [...new Set(report.activityReportObjectives
-            .filter((aro) => aro.objective.dataValue.grantId
-              === r.ActivityReportGoalResource.dataValues.goalId)
-            .map((aro) => aro.topics.map((t) => t.dataValues.name))
-            .flat())],
-        })))
-        .filter((r) => r)
-      : [];
-    const resourcesFromObjective = report.activityReportObjectives
-      && Array.isArray(report.activityReportObjectives)
-      && report.activityReportObjectives.length > 0
-      ? report.activityReportObjectives
-        .map((aro) => aro.resources.map((r) => ({
-          id: r.dataValues.id,
-          url: r.dataValues.url,
-          domain: r.dataValues.domain,
-          sourceFields: r.ActivityReportObjectiveResource.dataValues.sourceFields,
-          tableType: 'objective',
-          topics: aro.topics.map((t) => t.dataValues.name),
-        })))
-        .filter((r) => r)
-      : [];
-    const resourceFromFields = [
-      ...resourcesFromReport,
-      ...resourcesFromSpecialistNextStep,
-      ...resourcesFromRecipientNextStep,
-      ...resourcesFromGoal,
-      ...resourcesFromObjective,
-    ].filter((r) => r && r.length > 0).flat();
-    const resourcesReduced = resourceFromFields.reduce((resources, resource) => {
-      const exists = resources.find((r) => r.resourceId === resource.id);
-      if (exists) {
-        exists.topics = [...new Set([
-          ...exists.topics,
-          ...resource.topics,
-        ])];
-        exists.source = [
-          ...exists.source,
-          ...resource.sourceFields
-            .map((sourceField) => ({ table: resource.tableType, field: sourceField })),
-        ].filter((value, index, self) => index === self
-          .findIndex((t) => t.table === value.table && t.field === value.field));
-        return resources;
-      }
-
-      return [
-        ...resources,
+      include: [
         {
-          resourceId: resource.id,
-          url: resource.url,
-          domain: resource.domain,
-          topics: resource.topics,
-          source: resource.sourceFields
-            .map((sourceField) => ({ table: resource.tableType, field: sourceField }))
-            .filter((value, index, self) => index === self
-              .findIndex((t) => t.table === value.table && t.field === value.field)),
+          model: ActivityRecipient.scope(),
+          as: 'activityRecipients',
+          attributes: [],
+          required: true,
+          include: [
+            {
+              model: Grant.scope(),
+              as: 'grant',
+              attributes: [],
+              required: false,
+            },
+          ],
         },
+      ],
+    }),
+    await ActivityReport.findAll({
+      attributes: [
+        'id',
+        'numberOfParticipants',
+        'topics',
+        [sequelize.fn('COALESCE', 'startDate', 'createdAt'), 'startDate'],
+        [sequelize.fn(
+          'json_agg',
+          sequelize.fn(
+            'json_build_object',
+            sequelize.literal('\'grantId\''),
+            sequelize.literal('"activityRecipients->grant"."id"'),
+            sequelize.literal('\'recipientId\''),
+            sequelize.literal('"activityRecipients->grant"."recipientId"'),
+            sequelize.literal('\'otherEntityId\''),
+            sequelize.literal('"activityRecipients"."otherEntityId"'),
+          ),
+        ),
+        'recipients'],
+        [sequelize.fn(
+          'jsonb_agg',
+          sequelize.fn(
+            'jsonb_build_object',
+            sequelize.literal('\'resourceId\''),
+            sequelize.literal('"resources"."id"'),
+            sequelize.literal('\'url\''),
+            sequelize.literal('"resources"."url"'),
+            sequelize.literal('\'domain\''),
+            sequelize.literal('"resources"."domain"'),
+            sequelize.literal('\'sourceFields\''),
+            sequelize.literal('"resources->ActivityReportResource"."sourceFields"'),
+            sequelize.literal('\'tableType\''),
+            sequelize.literal('\'report\''),
+          ),
+        ),
+        'resourceObjects'],
+      ],
+      group: [
+        '"ActivityReport"."id"',
+        '"ActivityReport"."numberOfParticipants"',
+        '"ActivityReport"."topics"',
+        '"ActivityReport"."startDate"',
+      ],
+      where: {
+        [Op.and]: [
+          scopes.activityReport,
+          { calculatedStatus: REPORT_STATUSES.APPROVED },
+        ],
+      },
+      include: [
+        {
+          model: ActivityRecipient.scope(),
+          as: 'activityRecipients',
+          attributes: [],
+          required: true,
+          include: [
+            {
+              model: Grant.scope(),
+              as: 'grant',
+              attributes: [],
+              required: false,
+            },
+          ],
+        },
+        {
+          model: Resource,
+          as: 'resources',
+          attributes: [],
+          through: {
+            attributes: [],
+          },
+          required: true,
+        },
+      ],
+    }),
+    await ActivityReport.findAll({
+      attributes: [
+        'id',
+        'numberOfParticipants',
+        'topics',
+        'startDate',
+        [sequelize.fn(
+          'json_agg',
+          sequelize.fn(
+            'json_build_object',
+            sequelize.literal('\'grantId\''),
+            sequelize.literal('"activityRecipients->grant"."id"'),
+            sequelize.literal('\'recipientId\''),
+            sequelize.literal('"activityRecipients->grant"."recipientId"'),
+            sequelize.literal('\'otherEntityId\''),
+            sequelize.literal('"activityRecipients"."otherEntityId"'),
+          ),
+        ),
+        'recipients'],
+        [sequelize.fn(
+          'jsonb_agg',
+          sequelize.fn(
+            'DISTINCT',
+            sequelize.fn(
+              'jsonb_build_object',
+              sequelize.literal('\'resourceId\''),
+              sequelize.literal('"specialistNextSteps->resources"."id"'),
+              sequelize.literal('\'url\''),
+              sequelize.literal('"specialistNextSteps->resources"."url"'),
+              sequelize.literal('\'domain\''),
+              sequelize.literal('"specialistNextSteps->resources"."domain"'),
+              sequelize.literal('\'sourceFields\''),
+              sequelize.literal('"specialistNextSteps->resources->NextStepResource"."sourceFields"'),
+              sequelize.literal('\'tableType\''),
+              sequelize.literal('\'specialistNextStep\''),
+            ),
+          ),
+        ),
+        'resourceObjects'],
+      ],
+      group: [
+        '"ActivityReport"."id"',
+        '"ActivityReport"."numberOfParticipants"',
+        '"ActivityReport"."topics"',
+        '"ActivityReport"."startDate"',
+      ],
+      where: {
+        [Op.and]: [
+          scopes.activityReport,
+          { calculatedStatus: REPORT_STATUSES.APPROVED },
+        ],
+      },
+      include: [
+        {
+          model: ActivityRecipient.scope(),
+          as: 'activityRecipients',
+          attributes: [],
+          required: true,
+          include: [
+            {
+              model: Grant.scope(),
+              as: 'grant',
+              attributes: [],
+              required: false,
+            },
+          ],
+        },
+        {
+          model: NextStep,
+          as: 'specialistNextSteps',
+          attributes: [],
+          include: [{
+            model: Resource,
+            as: 'resources',
+            attributes: [],
+            through: {
+              attributes: [],
+            },
+            required: true,
+          }],
+          required: true,
+        },
+      ],
+    }),
+    await ActivityReport.findAll({
+      attributes: [
+        'id',
+        'numberOfParticipants',
+        'topics',
+        'startDate',
+        [sequelize.fn(
+          'json_agg',
+          sequelize.fn(
+            'json_build_object',
+            sequelize.literal('\'grantId\''),
+            sequelize.literal('"activityRecipients->grant"."id"'),
+            sequelize.literal('\'recipientId\''),
+            sequelize.literal('"activityRecipients->grant"."recipientId"'),
+            sequelize.literal('\'otherEntityId\''),
+            sequelize.literal('"activityRecipients"."otherEntityId"'),
+          ),
+        ),
+        'recipients'],
+        [sequelize.fn(
+          'jsonb_agg',
+          sequelize.fn(
+            'DISTINCT',
+            sequelize.fn(
+              'jsonb_build_object',
+              sequelize.literal('\'resourceId\''),
+              sequelize.literal('"recipientNextSteps->resources"."id"'),
+              sequelize.literal('\'url\''),
+              sequelize.literal('"recipientNextSteps->resources"."url"'),
+              sequelize.literal('\'domain\''),
+              sequelize.literal('"recipientNextSteps->resources"."domain"'),
+              sequelize.literal('\'sourceFields\''),
+              sequelize.literal('"recipientNextSteps->resources->NextStepResource"."sourceFields"'),
+              sequelize.literal('\'tableType\''),
+              sequelize.literal('\'recipientNextStep\''),
+            ),
+          ),
+        ),
+        'resourceObjects'],
+      ],
+      group: [
+        '"ActivityReport"."id"',
+        '"ActivityReport"."numberOfParticipants"',
+        '"ActivityReport"."topics"',
+        '"ActivityReport"."startDate"',
+      ],
+      where: {
+        [Op.and]: [
+          scopes.activityReport,
+          { calculatedStatus: REPORT_STATUSES.APPROVED },
+        ],
+      },
+      include: [
+        {
+          model: ActivityRecipient.scope(),
+          as: 'activityRecipients',
+          attributes: [],
+          required: true,
+          include: [
+            {
+              model: Grant.scope(),
+              as: 'grant',
+              attributes: [],
+              required: false,
+            },
+          ],
+        },
+        {
+          model: NextStep,
+          as: 'recipientNextSteps',
+          attributes: [],
+          include: [{
+            model: Resource,
+            as: 'resources',
+            attributes: [],
+            through: {
+              attributes: [],
+            },
+            required: true,
+          }],
+          required: true,
+        },
+      ],
+    }),
+    await ActivityReport.findAll({
+      attributes: [
+        'id',
+        'numberOfParticipants',
+        'topics',
+        'startDate',
+        [sequelize.fn(
+          'json_agg',
+          sequelize.fn(
+            'json_build_object',
+            sequelize.literal('\'grantId\''),
+            sequelize.literal('"activityRecipients->grant"."id"'),
+            sequelize.literal('\'recipientId\''),
+            sequelize.literal('"activityRecipients->grant"."recipientId"'),
+            sequelize.literal('\'otherEntityId\''),
+            sequelize.literal('"activityRecipients"."otherEntityId"'),
+          ),
+        ),
+        'recipients'],
+        [sequelize.fn(
+          'jsonb_agg',
+          sequelize.fn(
+            'DISTINCT',
+            sequelize.fn(
+              'jsonb_build_object',
+              sequelize.literal('\'resourceId\''),
+              sequelize.literal('"activityReportObjectives->resources"."id"'),
+              sequelize.literal('\'url\''),
+              sequelize.literal('"activityReportObjectives->resources"."url"'),
+              sequelize.literal('\'domain\''),
+              sequelize.literal('"activityReportObjectives->resources"."domain"'),
+              sequelize.literal('\'sourceFields\''),
+              sequelize.literal('"activityReportObjectives->resources->ActivityReportObjectiveResource"."sourceFields"'),
+              sequelize.literal('\'tableType\''),
+              sequelize.literal('\'recipientNextStep\''),
+              sequelize.literal('\'topics\''),
+              sequelize.literal(`(
+                SELECT ARRAY_AGG(t."name")
+                FROM "ActivityReportObjectiveTopics" arot
+                JOIN "Topics" t
+                ON arot."topicId" = t.id
+                WHERE arot."activityReportObjectiveId" = "activityReportObjectives"."id"
+                GROUP BY TRUE
+              )`),
+            ),
+          ),
+        ),
+        'resourceObjects'],
+      ],
+      group: [
+        '"ActivityReport"."id"',
+        '"ActivityReport"."numberOfParticipants"',
+        '"ActivityReport"."topics"',
+        '"ActivityReport"."startDate"',
+      ],
+      where: {
+        [Op.and]: [
+          scopes.activityReport,
+          { calculatedStatus: REPORT_STATUSES.APPROVED },
+          {
+            [Op.or]: [
+              { '$activityRecipients.grantId$': { [Op.eq]: Sequelize.col('activityReportObjectives.objective.goal.grantId') } },
+              { '$activityRecipients.otherEntityId$': { [Op.eq]: Sequelize.col('activityReportObjectives.objective.otherEntityId') } },
+            ],
+          },
+        ],
+      },
+      include: [
+        {
+          model: ActivityRecipient.scope(),
+          as: 'activityRecipients',
+          attributes: [],
+          required: true,
+          include: [
+            {
+              model: Grant.scope(),
+              as: 'grant',
+              attributes: [],
+              required: false,
+            },
+          ],
+        },
+        {
+          model: ActivityReportObjective,
+          as: 'activityReportObjectives',
+          attributes: [],
+          include: [
+            {
+              model: Resource,
+              as: 'resources',
+              attributes: [],
+              through: {
+                attributes: [],
+              },
+              required: true,
+            },
+            {
+              model: Objective,
+              as: 'objective',
+              attributes: [],
+              required: true,
+              include: [
+                {
+                  model: Goal,
+                  as: 'goal',
+                  attributes: [],
+                  required: false,
+                },
+              ],
+            },
+            {
+              model: Topic,
+              as: 'topics',
+              attributes: [],
+              through: {
+                attributes: [],
+              },
+            },
+          ],
+          required: true,
+        },
+      ],
+    }),
+    await ActivityReport.findAll({
+      attributes: [
+        'id',
+        'numberOfParticipants',
+        'topics',
+        'startDate',
+        [sequelize.fn(
+          'json_agg',
+          sequelize.fn(
+            'json_build_object',
+            sequelize.literal('\'grantId\''),
+            sequelize.literal('"activityRecipients->grant"."id"'),
+            sequelize.literal('\'recipientId\''),
+            sequelize.literal('"activityRecipients->grant"."recipientId"'),
+            sequelize.literal('\'otherEntityId\''),
+            sequelize.literal('"activityRecipients"."otherEntityId"'),
+          ),
+        ),
+        'recipients'],
+        [sequelize.fn(
+          'jsonb_agg',
+          sequelize.fn(
+            'DISTINCT',
+            sequelize.fn(
+              'jsonb_build_object',
+              sequelize.literal('\'resourceId\''),
+              sequelize.literal('"activityReportGoals->resources"."id"'),
+              sequelize.literal('\'url\''),
+              sequelize.literal('"activityReportGoals->resources"."url"'),
+              sequelize.literal('\'domain\''),
+              sequelize.literal('"activityReportGoals->resources"."domain"'),
+              sequelize.literal('\'sourceFields\''),
+              sequelize.literal('"activityReportGoals->resources->ActivityReportGoalResource"."sourceFields"'),
+              sequelize.literal('\'tableType\''),
+              sequelize.literal('\'recipientNextStep\''),
+              sequelize.literal('\'topics\''),
+              sequelize.literal(`(
+                SELECT ARRAY_AGG(t."name")
+                FROM "ActivityReportObjectiveTopics" arot
+                JOIN "Topics" t
+                ON arot."topicId" = t.id
+                WHERE arot."activityReportObjectiveId" = "activityReportObjectives"."id"
+                GROUP BY TRUE
+              )`),
+            ),
+          ),
+        ),
+        'resourceObjects'],
+      ],
+      group: [
+        '"ActivityReport"."id"',
+        '"ActivityReport"."numberOfParticipants"',
+        '"ActivityReport"."topics"',
+        '"ActivityReport"."startDate"',
+      ],
+      where: {
+        [Op.and]: [
+          scopes.activityReport,
+          { calculatedStatus: REPORT_STATUSES.APPROVED },
+          {
+            [Op.or]: [
+              { '$activityRecipients.grantId$': { [Op.eq]: Sequelize.col('activityReportGoals.goal.grantId') } },
+              { '$activityReportGoals.id$': null },
+            ],
+            [Op.or]: [
+              { '$activityReportGoals.goalId$': { [Op.eq]: Sequelize.col('activityReportObjectives.objective.goalId') } },
+              { '$activityReportGoals.id$': null },
+            ],
+          },
+        ],
+      },
+      include: [
+        {
+          model: ActivityRecipient.scope(),
+          as: 'activityRecipients',
+          attributes: [],
+          required: true,
+          include: [
+            {
+              model: Grant.scope(),
+              as: 'grant',
+              attributes: [],
+              required: false,
+            },
+          ],
+        },
+        {
+          model: ActivityReportGoal,
+          as: 'activityReportGoals',
+          attributes: [],
+          // separate: true,
+          include: [
+            {
+              model: Resource,
+              as: 'resources',
+              attributes: [],
+              through: {
+                attributes: [],
+              },
+              required: true,
+            },
+            {
+              model: Goal,
+              as: 'goal',
+              attributes: [],
+              required: true,
+            },
+          ],
+          required: true,
+        },
+        {
+          model: ActivityReportObjective,
+          as: 'activityReportObjectives',
+          attributes: [],
+          include: [
+            {
+              model: Objective,
+              as: 'objective',
+              attributes: [],
+              required: true,
+            },
+            {
+              model: Topic,
+              as: 'topics',
+              attributes: [],
+              through: {
+                attributes: [],
+              },
+            },
+          ],
+          required: true,
+        },
+      ],
+    }),
+  ]);
+  // console.log(viaReport);
+
+  let reports = allReports;
+  reports = viaReport.reduce((clusteredReports, report) => {
+    const exists = clusteredReports.find((r) => r.dataValues.id === report.dataValues.id);
+    if (exists) {
+      exists.dataValues.resourceObjects = [
+        ...(exists.dataValues.resourceObjects
+          ? exists.dataValues.resourceObjects
+          : []),
+        ...report.dataValues.resourceObjects,
       ];
-    }, []);
+      return clusteredReports;
+    }
+
     return [
-      ...reportData,
-      ...resourcesReduced.map((resource) => ({
-        activityReportId: report.dataValues.id,
-        numberOfParticipants: report.dataValues.numberOfParticipants,
-        recipients,
-        ...resource,
-      })),
+      ...clusteredReports,
+      report,
     ];
-  }, []);
-  const resources = reportResources;
+  }, reports);
+
+  reports = viaSpecialistNextSteps.reduce((clusteredReports, report) => {
+    const exists = clusteredReports.find((r) => r.dataValues.id === report.dataValues.id);
+    if (exists) {
+      exists.dataValues.resourceObjects = [
+        ...(exists.dataValues.resourceObjects
+          ? exists.dataValues.resourceObjects
+          : []),
+        ...report.dataValues.resourceObjects,
+      ];
+      return clusteredReports;
+    }
+
+    return [
+      ...clusteredReports,
+      report,
+    ];
+  }, allReports);
+
+  reports = viaRecipientNextSteps.reduce((clusteredReports, report) => {
+    const exists = clusteredReports.find((r) => r.dataValues.id === report.dataValues.id);
+    if (exists) {
+      exists.dataValues.resourceObjects = [
+        ...(exists.dataValues.resourceObjects
+          ? exists.dataValues.resourceObjects
+          : []),
+        ...report.dataValues.resourceObjects,
+      ];
+      return clusteredReports;
+    }
+
+    return [
+      ...clusteredReports,
+      report,
+    ];
+  }, allReports);
+
+  reports = viaObjectives.reduce((clusteredReports, report) => {
+    const exists = clusteredReports.find((r) => r.dataValues.id === report.dataValues.id);
+    if (exists) {
+      exists.dataValues.resourceObjects = [
+        ...(exists.dataValues.resourceObjects
+          ? exists.dataValues.resourceObjects
+          : []),
+        ...report.dataValues.resourceObjects,
+      ];
+      return clusteredReports;
+    }
+
+    return [
+      ...clusteredReports,
+      report,
+    ];
+  }, allReports);
+
+  reports = viaGoals.reduce((clusteredReports, report) => {
+    const exists = clusteredReports.find((r) => r.dataValues.id === report.dataValues.id);
+    if (exists) {
+      exists.dataValues.resourceObjects = [
+        ...(exists.dataValues.resourceObjects
+          ? exists.dataValues.resourceObjects
+          : []),
+        ...report.dataValues.resourceObjects,
+      ];
+      return clusteredReports;
+    }
+
+    return [
+      ...clusteredReports,
+      report,
+    ];
+  }, allReports);
+
+  reports = reports
+    .map((r) => r.dataValues)
+    .map(({
+      id,
+      numberOfParticipants,
+      topics,
+      startDate,
+      recipients,
+      resourceObjects,
+    }) => ({
+      id,
+      numberOfParticipants,
+      topics,
+      startDate,
+      recipients,
+      resources: resourceObjects,
+    }));
+
+  const switchToResourceCentric = (input) => {
+    const output = {};
+    input.forEach(({
+      id,
+      numberOfParticipants,
+      topics,
+      startDate,
+      recipients,
+      resources: resourceObjects,
+    }) => {
+      if (resourceObjects) {
+        resourceObjects.forEach(({
+          resourceId,
+          url,
+          domain,
+          tableType,
+          sourceFields,
+        }) => {
+          if (!output[resourceId]) {
+            output[resourceId] = {
+              resourceId,
+              url,
+              domain,
+              sourceFields: sourceFields.map((sourceField) => ({ tableType, sourceField })),
+              reports: [],
+            };
+          }
+          output[resourceId].reports.push({
+            id,
+            numberOfParticipants,
+            topics,
+            startDate,
+            recipients,
+          });
+        });
+      }
+    });
+    return Object.values(output);
+  };
+  const resources = switchToResourceCentric(reports);
   const resourcesWithRecipients = resources.map((data) => {
-    const participants = reports
-      .filter((r) => r.id === data.activityReportId)
+    const participants = data.reports
       .reduce((accumulator, r) => accumulator + r.numberOfParticipants, 0);
-    const startDates = reports
-      .filter((r) => r.id === data.activityReportId)
+    const startDates = data.reports
       .map((r) => r.startDate);
-    return { ...data, /* recipients, */ participants, startDates };
+    const recipients = data.reports
+      .flatMap((r) => r.recipients)
+      .reduce((currentRecipient, { recipientId, grantId, otherEntityId }) => {
+        const exists = currentRecipient.find((cr) => (
+          cr.recipientId === recipientId
+          || cr.otherEntityId === otherEntityId));
+        if (exists) {
+          exists.grantIds = grantId
+            ? [...new Set([...exists.grantIds, grantId])]
+            : exists.grantId;
+          return currentRecipient;
+        }
+        return [
+          ...currentRecipient,
+          {
+            recipientId,
+            grantIds: [grantId].filter((g) => g),
+            otherEntityId,
+          },
+        ];
+      }, []);
+    return {
+      ...data,
+      participants,
+      startDates,
+      recipients,
+    };
   });
 
   return { resources: resourcesWithRecipients, reports };
@@ -534,19 +1120,17 @@ export async function resourcesDashboardOverview(scopes) {
   // report based intermediate data
   data.reportIntermediate = {};
   data.reportIntermediate
-    .reportsWithResources = new Set([...domainData.map((dd) => [...dd.reports])].flat());
+    .reportsWithResources = new Set(resources.flatMap((r) => r.reports).map((r) => r.id));
   data.reportIntermediate
-    .allRecipientIdsWithEclkcResources = new Set([
-      ...domainData
-        .filter((d) => d.domain === RESOURCE_DOMAIN.ECLKC)
-        .map((dd) => [...dd.reports]),
-    ].flat());
+    .allRecipientIdsWithEclkcResources = new Set(resources
+      .filter((d) => d.domain === RESOURCE_DOMAIN.ECLKC)
+      .flatMap((r) => r.reports)
+      .map((r) => r.id));
   data.reportIntermediate
-    .allRecipientIdsWithNonEclkcResources = new Set([
-      ...domainData
-        .filter((d) => d.domain !== RESOURCE_DOMAIN.ECLKC)
-        .map((dd) => [...dd.reports]),
-    ].flat());
+    .allRecipientIdsWithNonEclkcResources = new Set(resources
+      .filter((d) => d.domain !== RESOURCE_DOMAIN.ECLKC)
+      .flatMap((r) => r.reports)
+      .map((r) => r.id));
 
   // report based stats
   data.report = {};
@@ -566,22 +1150,48 @@ export async function resourcesDashboardOverview(scopes) {
   // recipient based intermediate data
   data.recipientIntermediate = {};
   data.recipientIntermediate
-    .allRecipeintIds = new Set([...reports.map((r) => r['activityRecipients.grant.recipientId'])].flat());
+    .allRecipeintIds = reports
+      .flatMap((r) => r.recipients)
+      .reduce((currentRecipients, recipient) => {
+        const exists = currentRecipients.find((cr) => (
+          (cr.recipientId === recipient.recipientId && recipient.recipientId)
+          || (cr.otherEntityId === recipient.otherEntityId && recipient.otherEntityId)));
+        if (exists) {
+          return currentRecipients;
+        }
+        return [
+          ...currentRecipients,
+          recipient,
+        ];
+      }, []);
   data.recipientIntermediate
-    .allRecipientIdsWithResources = recipientAddUnique(
-      [],
-      [...domainData.map((dd) => [...dd.recipients])].flat(),
-    );
-  data.recipientIntermediate.allRecipientIdsWithEclkcResources = new Set([
-    ...domainData
-      .filter((d) => d.domain === RESOURCE_DOMAIN.ECLKC)
-      .map((dd) => [...dd.recipients]),
-  ].flat());
-  data.recipientIntermediate.allRecipientIdsWithNonEclkcResources = new Set([
-    ...domainData
-      .filter((d) => d.domain !== RESOURCE_DOMAIN.ECLKC)
-      .map((dd) => [...dd.recipients]),
-  ].flat());
+    .allRecipientIdsWithResources = resources
+      .flatMap((r) => r.recipients)
+      .reduce((currentRecipients, recipient) => {
+        const exists = currentRecipients.find((cr) => (
+          (cr.recipientId === recipient.recipientId && recipient.recipientId)
+          || (cr.otherEntityId === recipient.otherEntityId && recipient.otherEntityId)));
+        if (exists) {
+          return currentRecipients;
+        }
+        return [
+          ...currentRecipients,
+          recipient,
+        ];
+      }, []);
+  // TODO: fix
+  data.recipientIntermediate.allRecipientIdsWithEclkcResources = new Set();
+  data.recipientIntermediate.allRecipientIdsWithNonEclkcResources = new Set();
+  // data.recipientIntermediate.allRecipientIdsWithEclkcResources = new Set([
+  //   ...domainData
+  //     .filter((d) => d.domain === RESOURCE_DOMAIN.ECLKC)
+  //     .map((dd) => [...dd.recipients]),
+  // ].flat());
+  // data.recipientIntermediate.allRecipientIdsWithNonEclkcResources = new Set([
+  //   ...domainData
+  //     .filter((d) => d.domain !== RESOURCE_DOMAIN.ECLKC)
+  //     .map((dd) => [...dd.recipients]),
+  // ].flat());
 
   // recipient based stats
   data.recipient = {};
@@ -627,8 +1237,8 @@ export async function resourcesDashboardOverview(scopes) {
   data.participant = {};
   data.participant.num = reports
     .map((r) => ({
-      activityReportId: r.dataValues.id,
-      participants: r.dataValues.numberOfParticipants,
+      activityReportId: r.id,
+      participants: r.numberOfParticipants,
     }))
     .reduce((partialSum, r) => partialSum + r.participants, 0);
 
@@ -691,7 +1301,7 @@ Expected JSON (we have this now):
   },
 }
 */
-export async function resourceUse(scopes) {
+export async function resourceUse(scopes, top = 10) {
   const { resources, reports } = await resourceData(scopes);
   const getMonthYear = (dateStr) => {
     // Create a Date object from the date string
@@ -712,12 +1322,14 @@ export async function resourceUse(scopes) {
       // Get an array of all startDates
       .flatMap((r) => r.startDates)
       // Convert all dates to Date objects
-      .map((dateString) => new Date(dateString));
+      .map((dateString) => new Date(`${dateString}`))
+      .filter((d) => d);
+      console.log(dateObjects);
 
     // Find the minimum and maximum dates
     return {
-      min: new Date(Math.min(...dateObjects)),
-      max: new Date(Math.max(...dateObjects)),
+      min: new Date(Math.min(...dateObjects.slice(0, 3))),
+      max: new Date(Math.max(...dateObjects.slice(0, 3))),
     };
   };
 
@@ -808,9 +1420,19 @@ export async function resourceUse(scopes) {
     };
   });
 
+  // sortedResourceData.sort((a, b) => {
+  //   const aTotal = Number(a.data.find((d) => d.title === 'Total').value);
+  //   const bTotal = Number(b.data.find((d) => d.title === 'Total').value);
+  //   if (aTotal > bTotal) return -1;
+  //   if (aTotal < bTotal) return 1;
+  //   if (a.heading < b.heading) return -1;
+  //   if (a.heading > b.heading) return 1;
+  //   return 0;
+  // });
+
   return {
     headers: [...dateList.map(({ title }) => title)],
-    resources: sortedResourceData,
+    resources: sortedResourceData.slice(0, top),
   };
 }
 /*
