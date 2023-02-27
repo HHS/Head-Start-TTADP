@@ -12,8 +12,8 @@
     z-index: 1;
 }
 
-.the-wiggler {
-    animation: the-wiggler 0.4s cubic-bezier(0.445, 0.050, 0.550, 0.950) forwards !important;
+.celebratory-llama.the-wiggler {
+    animation: the-wiggler 0.4s cubic-bezier(0.445, 0.050, 0.550, 0.950) forwards;
 }
 
 .statistics-content {
