@@ -23,148 +23,6 @@ import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../constants';
 
 export async function resourceData(scopes) {
   // Query Database for all Resources within the scope.
-
-  console.log('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX');
-
-  // const reports = await ActivityReport.findAll({
-  //   attributes: ['id', 'numberOfParticipants', 'topics', 'startDate'],
-  //   where: {
-  //     [Op.and]: [
-  //       scopes.activityReport,
-  //       { calculatedStatus: REPORT_STATUSES.APPROVED },
-  //       {
-  //         [Op.or]: [
-  //           { '$activityRecipients.grantId$': { [Op.eq]: Sequelize.col('activityReportObjectives.objective.goal.grantId') } },
-  //           { '$activityRecipients.otherEntityId$': { [Op.eq]: Sequelize.col('activityReportObjectives.objective.otherEntityId') } },
-  //         ],
-  //       },
-  //       {
-  //         [Op.or]: [
-  //           { '$activityRecipients.grantId$': { [Op.eq]: Sequelize.col('activityReportGoals.goal.grantId') } },
-  //           { '$activityReportGoals.id$': null },
-  //         ],
-  //       },
-  //     ],
-  //   },
-  //   include: [
-  //     {
-  //       model: ActivityRecipient.scope(),
-  //       as: 'activityRecipients',
-  //       attributes: [],
-  //       required: true,
-  //       include: [
-  //         {
-  //           model: Grant.scope(),
-  //           as: 'grant',
-  //           attributes: ['id', 'recipientId'],
-  //           required: false,
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       model: Resource,
-  //       as: 'resources',
-  //       attributes: ['id', 'url', 'domain'],
-  //       through: {
-  //         attributes: ['sourceFields'],
-  //       },
-  //       required: false,
-  //     },
-  //     {
-  //       model: NextStep,
-  //       as: 'specialistNextSteps',
-  //       attributes: ['id'],
-  //       include: [{
-  //         model: Resource,
-  //         as: 'resources',
-  //         attributes: ['id', 'url', 'domain'],
-  //         through: {
-  //           attributes: ['sourceFields'],
-  //         },
-  //         required: false,
-  //       }],
-  //       required: false,
-  //     },
-  //     {
-  //       model: NextStep,
-  //       as: 'recipientNextSteps',
-  //       attributes: ['id'],
-  //       include: [{
-  //         model: Resource,
-  //         as: 'resources',
-  //         attributes: ['id', 'url', 'domain'],
-  //         through: {
-  //           attributes: ['sourceFields'],
-  //         },
-  //         required: false,
-  //       }],
-  //       required: false,
-  //     },
-  //     {
-  //       model: ActivityReportObjective,
-  //       as: 'activityReportObjectives',
-  //       attributes: ['id'],
-  //       // separate: true,
-  //       include: [
-  //         {
-  //           model: Resource,
-  //           as: 'resources',
-  //           attributes: ['id', 'url', 'domain'],
-  //           through: {
-  //             attributes: ['sourceFields'],
-  //           },
-  //           required: false,
-  //         },
-  //         {
-  //           model: Objective,
-  //           as: 'objective',
-  //           attributes: ['id', 'goalId'],
-  //           required: true,
-  //           include: [
-  //             {
-  //               model: Goal,
-  //               as: 'goal',
-  //               attributes: [],
-  //               required: false,
-  //             },
-  //           ],
-  //         },
-  //         {
-  //           model: Topic,
-  //           as: 'topics',
-  //           attributes: ['id', 'name'],
-  //         },
-  //       ],
-  //       required: false,
-  //     },
-  //     {
-  //       model: ActivityReportGoal,
-  //       as: 'activityReportGoals',
-  //       attributes: ['id', 'goalId'],
-  //       // separate: true,
-  //       include: [
-  //         {
-  //           model: Resource,
-  //           as: 'resources',
-  //           attributes: ['id', 'url', 'domain'],
-  //           through: {
-  //             attributes: ['sourceFields'],
-  //           },
-  //           required: false,
-  //         },
-  //         {
-  //           model: Goal,
-  //           as: 'goal',
-  //           attributes: ['id'],
-  //           required: true,
-  //         },
-  //       ],
-  //       required: false,
-  //     },
-  //   ],
-  // });
-
-  console.log('YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY');
   const [
     allReports,
     viaReport,
@@ -723,7 +581,6 @@ export async function resourceData(scopes) {
       ],
     }),
   ]);
-  // console.log(viaReport);
 
   let reports = allReports;
   reports = viaReport.reduce((clusteredReports, report) => {
@@ -1357,9 +1214,7 @@ export async function resourceUse(scopes) {
   };
 
   const minMax = getMinMax(resources);
-  console.log(minMax);
   const dateList = spanDates(minMax.min, minMax.max);
-  const starterValues = dateList.map((d) => ({ title: d, cnt: 0 }));
 
   const clusteredResources = resources
     .map((resource) => ({
@@ -1413,19 +1268,20 @@ export async function resourceUse(scopes) {
     };
   });
 
-  // sortedResourceData.sort((a, b) => {
-  //   const aTotal = Number(a.data.find((d) => d.title === 'Total').value);
-  //   const bTotal = Number(b.data.find((d) => d.title === 'Total').value);
-  //   if (aTotal > bTotal) return -1;
-  //   if (aTotal < bTotal) return 1;
-  //   if (a.heading < b.heading) return -1;
-  //   if (a.heading > b.heading) return 1;
-  //   return 0;
-  // });
+  sortedResourceData.sort((a, b) => {
+    const aTotal = Number(a.data.find((d) => d.title === 'Total').value);
+    const bTotal = Number(b.data.find((d) => d.title === 'Total').value);
+    if (aTotal > bTotal) return -1;
+    if (aTotal < bTotal) return 1;
+    if (a.heading < b.heading) return -1;
+    if (a.heading > b.heading) return 1;
+    return 0;
+  });
 
   return {
     headers: [...dateList.map(({ title }) => title)],
-    resources: sortedResourceData.slice(0, 10),
+    resources: sortedResourceData
+      .slice(0, 10),
   };
 }
 /*
