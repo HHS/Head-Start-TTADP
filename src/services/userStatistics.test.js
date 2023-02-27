@@ -669,8 +669,22 @@ describe('statisticsByUser', () => {
   - 5 Objectives.
   */
   it('gets region statistics', async () => {
+    // Reports for the test.
+    const reportIds = [
+      excludedUserReport.id,
+      excludeRegionReport.id,
+      approvedReport1.id,
+      approvedReport2.id,
+      otherEntityApprovedReport.id,
+      collaboratorReport1.id,
+      collaboratorReport2.id,
+      approverReport1.id,
+      approverReport2.id,
+      approverRegionReport1.id,
+    ];
+
     // Get statistics.
-    const response = await statisticsByUser(user, [1], true);
+    const response = await statisticsByUser(user, [1], true, reportIds);
 
     // Days since joined.
     const todaysDate = new Date();
