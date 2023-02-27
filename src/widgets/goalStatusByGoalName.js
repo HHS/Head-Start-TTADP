@@ -18,7 +18,7 @@ const STATUSES_TO_INCLUDE = [
   GOAL_STATUS.SUSPENDED,
 ];
 
-export default async function goalStatusGraph(scopes) {
+export default async function goalStatusByGoalName(scopes) {
   const goalsFromDb = await Goal.findAll({
     where: {
       [Op.and]: [
