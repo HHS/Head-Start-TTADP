@@ -49,7 +49,7 @@ const emailTypesMap = [
   },
   {
     name: '',
-    description: 'Manager approves an activity report that I created or collaborated on.',
+    description: 'Managers approve an activity report that I created or collaborated on.',
     keyName: 'emailWhenReportApproval',
   },
   {

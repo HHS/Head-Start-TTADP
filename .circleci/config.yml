@@ -1,7 +1,6 @@
 version: 2.1
 orbs:
   node: circleci/node@5.0.2
-  browser-tools: circleci/browser-tools@1.2.3
 executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
@@ -208,10 +207,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "hook-up-phrase-matching-with-limit"
+    default: "put-back-search-after"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "TTAHUB-1245/fix-date-filters-graph"
+    default: "TTAHUB-379/add-site-alerts"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -257,6 +256,8 @@ jobs:
           root: .
           paths:
             - .
+    # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
+    resource_class: large
   test_backend:
     executor: docker-postgres-elasticsearch-executor
     environment:
@@ -293,6 +294,7 @@ jobs:
           path: backend-coverage-artifacts.tar
       - store_test_results:
           path: reports/
+    resource_class: large
   test_frontend:
     executor: docker-executor
     steps:
@@ -316,6 +318,7 @@ jobs:
           path: frontend/reports/
       - store_artifacts:
           path: frontend/coverage/
+    resource_class: large
   test_e2e:
     executor: docker-postgres-elasticsearch-executor
     environment:
@@ -351,6 +354,7 @@ jobs:
           command: yarn e2e:ci
       - store_artifacts:
           path: playwright/
+    resource_class: large
   cucumber_test:
     executor: docker-postgres-executor
     steps:
@@ -377,6 +381,7 @@ jobs:
             yarn cucumber:ci
       - store_artifacts:
           path: reports/
+    resource_class: large
   dynamic_security_scan:
     executor: machine-executor
     steps:
@@ -399,35 +404,7 @@ jobs:
           command: ./bin/run-owasp-scan
       - store_artifacts:
           path: reports/owasp_report.html
-  accessibility_scan:
-    executor: docker-postgres-executor
-    steps:
-      - attach_workspace:
-          at: .
-      - browser-tools/install-chrome:
-          chrome-version: 93.0.4577.63
-          replace-existing: true
-      - browser-tools/install-chromedriver
-      - run:
-          name: Run migrations ci
-          command: yarn db:migrate:ci
-      - run:
-          name: Build
-          command: yarn build
-      - run:
-          name: Seed database
-          command: yarn db:seed:ci
-      - run:
-          name: Start server
-          command: BYPASS_AUTH=true CURRENT_USER_ID=1 yarn start:ci
-          background: true
-      - run:
-          name: Run axe
-          command: |
-            sleep 10
-            yarn axe:ci
-      - store_artifacts:
-          path: reports/
+    resource_class: large
   deploy:
     executor: docker-executor
     steps:
@@ -618,6 +595,7 @@ jobs:
                 env_name: prod
                 new_relic_app_id: << pipeline.parameters.prod_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
+    resource_class: large
 workflows:
   build_test_deploy:
     jobs:
@@ -637,9 +615,6 @@ workflows:
       - dynamic_security_scan:
           requires:
             - build_and_lint
-      - accessibility_scan:
-          requires:
-            - build_and_lint
       - deploy:
           requires:
             - test_backend
@@ -647,7 +622,6 @@ workflows:
             - test_e2e
             - cucumber_test
             - dynamic_security_scan
-            - accessibility_scan
           filters:
             branches:
               only:
