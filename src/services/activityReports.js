@@ -515,11 +515,6 @@ export async function activityReportAndRecipientsById(activityReportId) {
       },
       {
         model: NextStep,
-        where: {
-          noteType: {
-            [Op.eq]: 'SPECIALIST',
-          },
-        },
         attributes: ['note', 'completeDate', 'id'],
         as: 'specialistNextSteps',
         required: false,
@@ -527,11 +522,6 @@ export async function activityReportAndRecipientsById(activityReportId) {
       },
       {
         model: NextStep,
-        where: {
-          noteType: {
-            [Op.eq]: 'RECIPIENT',
-          },
-        },
         attributes: ['note', 'completeDate', 'id'],
         as: 'recipientNextSteps',
         required: false,
@@ -1257,11 +1247,6 @@ async function getDownloadableActivityReports(where, separate = true) {
       },
       {
         model: NextStep,
-        where: {
-          noteType: {
-            [Op.eq]: 'SPECIALIST',
-          },
-        },
         attributes: ['note', 'id'],
         as: 'specialistNextSteps',
         separate,
@@ -1269,11 +1254,6 @@ async function getDownloadableActivityReports(where, separate = true) {
       },
       {
         model: NextStep,
-        where: {
-          noteType: {
-            [Op.eq]: 'RECIPIENT',
-          },
-        },
         attributes: ['note', 'id'],
         as: 'recipientNextSteps',
         separate,

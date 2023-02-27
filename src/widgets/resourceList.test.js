@@ -389,16 +389,16 @@ describe('Resources list widget', () => {
           heading: 'https://eclkc.ohs.acf.hhs.gov/test',
           isUrl: true,
           data: [
-            { title: 'Total', value: '2' },
             { title: 'Jan-21', value: '2' },
+            { title: 'Total', value: '2' },
           ],
         },
         {
           heading: 'https://non.test1.gov/a/b/c',
           isUrl: true,
           data: [
-            { title: 'Total', value: '2' },
             { title: 'Jan-21', value: '2' },
+            { title: 'Total', value: '2' },
           ],
         },
       ],
