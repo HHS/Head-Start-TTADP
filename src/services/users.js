@@ -12,9 +12,7 @@ import {
   ActivityReportApprover,
   ActivityRecipient,
   Grant,
-  Goal,
   ActivityReportGoal,
-  Objective,
   ActivityReportObjective,
 } from '../models';
 import { REPORT_STATUSES, DECIMAL_BASE } from '../constants';
