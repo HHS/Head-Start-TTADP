@@ -139,6 +139,7 @@ export function TopicsTableWidget({ data, loading }) {
             <tbody>
               {sorted.map((row) => (
                 <TopicRow
+                  key={row.topic}
                   topic={row.topic}
                   statuses={row.statuses}
                   total={row.total}
@@ -155,11 +156,19 @@ export function TopicsTableWidget({ data, loading }) {
 TopicsTableWidget.propTypes = {
   data: PropTypes.arrayOf(PropTypes.shape({
     topic: PropTypes.string.isRequired,
-    statuses: PropTypes.arrayOf(PropTypes.shape({
-    })).isRequired,
+    statuses: PropTypes.shape({
+      'Not Started': PropTypes.number,
+      'In Progress': PropTypes.number,
+      Closed: PropTypes.number,
+      Suspended: PropTypes.number,
+    }).isRequired,
     total: PropTypes.number.isRequired,
-  })).isRequired,
+  })),
   loading: PropTypes.bool.isRequired,
+};
+
+TopicsTableWidget.defaultProps = {
+  data: [],
 };
 
 export default withWidgetData(TopicsTableWidget, 'topicsByGoalStatus');
