@@ -1,6 +1,6 @@
 import join from 'url-join';
 import fetchMock from 'fetch-mock';
-import { getStateCodes, requestVerificationEmail } from '../users';
+import { getStateCodes, requestVerificationEmail, getActiveUsers } from '../users';
 
 const usersUrl = join('/', 'api', 'users');
 
@@ -20,5 +20,18 @@ describe('users fetcher', () => {
     );
     const res = await requestVerificationEmail();
     expect(res.status).toBe(200);
+  });
+
+  it('calls /api/users/active-users', async () => {
+    const blob = new Blob(['a,b,c,d'], { type: 'text/csv' });
+    fetchMock.once(
+      join('/', 'api', 'users', 'active-users'), {
+        headers: { 'Content-Type': 'text/csv' },
+        body: blob,
+      }, { sendAsJson: false },
+    );
+    const res = await getActiveUsers();
+    expect(res.type).toBe('text/csv');
+    expect(res.arrayBuffer).toBeDefined();
   });
 });
