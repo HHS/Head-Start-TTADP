@@ -15,6 +15,11 @@ import db, {
   Program,
   Role,
   UserRole,
+  Goal,
+  Objective,
+  ActivityReportObjective,
+  ActivityReportObjectiveTopic,
+  Topic,
 } from '../../models';
 import { REPORT_STATUSES, APPROVER_STATUSES, AWS_ELASTIC_SEARCH_INDEXES } from '../../constants';
 import { createReport, destroyReport, createGrant } from '../../testUtils';
@@ -24,8 +29,6 @@ import {
   createIndex,
   addIndexDocument,
 } from '../../lib/awsElasticSearch/index';
-
-// jest.mock('bull');
 
 const mockUser = {
   id: faker.datatype.number(),
@@ -118,13 +121,6 @@ describe('filtersToScopes', () => {
     }, {
       silent: true,
     });
-    // Create ES client.
-    client = await getClient();
-
-    // Create new index
-    await deleteIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
-    await createIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
-
     const granteeSpecialist = await Role.findOne({ where: { fullName: 'Grantee Specialist' } });
     if (!granteeSpecialist) {
       await Role.create({ name: 'GS', fullName: 'Grantee Specialist', isSpecialist: true });
@@ -162,9 +158,6 @@ describe('filtersToScopes', () => {
         id: userIds,
       },
     });
-
-    // Delete indexes.
-    await deleteIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
 
     await db.sequelize.close();
   });
@@ -215,6 +208,108 @@ describe('filtersToScopes', () => {
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([globallyExcludedReport.id, reportExcluded.id]));
+    });
+  });
+
+  describe('ttaType', () => {
+    let ttaReport;
+    let trainingReport;
+    let bothReport;
+    let reportExcluded;
+    let reportIds = [];
+
+    beforeAll(async () => {
+      ttaReport = await ActivityReport.create({ ...draftReport, ttaType: ['technical-assistance'] });
+      trainingReport = await ActivityReport.create({ ...draftReport, ttaType: ['training'] });
+      bothReport = await ActivityReport.create({ ...draftReport, ttaType: ['training,technical-assistance'] });
+      reportExcluded = await ActivityReport.create({ ...draftReport, ttaType: ['balderdash'] });
+
+      reportIds = [
+        ttaReport.id,
+        trainingReport.id,
+        bothReport.id,
+        reportExcluded.id,
+      ];
+    });
+
+    afterAll(async () => {
+      await ActivityReport.unscoped().destroy({
+        where: {
+          id: reportIds,
+        },
+        force: true,
+      });
+    });
+
+    describe('tta', () => {
+      it('contains', async () => {
+        const filters = { 'ttaType.in': ['technical-assistance'] };
+        const scope = await filtersToScopes(filters);
+        const found = await ActivityReport.findAll({
+          where: { [Op.and]: [scope.activityReport, { id: reportIds }] },
+        });
+
+        expect(found.length).toBe(1);
+        expect(found.map((f) => f.id))
+          .toEqual(expect.arrayContaining([ttaReport.id]));
+      });
+
+      it('does not contain', async () => {
+        const filters = { 'ttaType.nin': ['technical-assistance'] };
+        const scope = await filtersToScopes(filters);
+        const found = await ActivityReport.findAll({
+          where: { [Op.and]: [scope.activityReport, { id: reportIds }] },
+        });
+
+        expect(found.length).toBe(3);
+        expect(found.map((f) => f.id).includes(ttaReport.id)).toBe(false);
+      });
+    });
+    describe('training', () => {
+      it('contains', async () => {
+        const filters = { 'ttaType.in': ['training'] };
+        const scope = await filtersToScopes(filters);
+        const found = await ActivityReport.findAll({
+          where: { [Op.and]: [scope.activityReport, { id: reportIds }] },
+        });
+
+        expect(found.length).toBe(1);
+        expect(found.map((f) => f.id))
+          .toEqual(expect.arrayContaining([trainingReport.id]));
+      });
+      it('does not contain', async () => {
+        const filters = { 'ttaType.nin': ['training'] };
+        const scope = await filtersToScopes(filters);
+        const found = await ActivityReport.findAll({
+          where: { [Op.and]: [scope.activityReport, { id: reportIds }] },
+        });
+
+        expect(found.length).toBe(3);
+        expect(found.map((f) => f.id).includes(trainingReport.id)).toBe(false);
+      });
+    });
+
+    describe('both', () => {
+      it('contains', async () => {
+        const filters = { 'ttaType.in': ['training,technical-assistance'] };
+        const scope = await filtersToScopes(filters);
+        const found = await ActivityReport.findAll({
+          where: { [Op.and]: [scope.activityReport, { id: reportIds }] },
+        });
+
+        expect(found.length).toBe(1);
+        expect(found.map((f) => f.id).includes(bothReport.id)).toBe(true);
+      });
+      it('does not contain', async () => {
+        const filters = { 'ttaType.nin': ['training,technical-assistance'] };
+        const scope = await filtersToScopes(filters);
+        const found = await ActivityReport.findAll({
+          where: { [Op.and]: [scope.activityReport, { id: reportIds }] },
+        });
+
+        expect(found.length).toBe(3);
+        expect(found.map((f) => f.id).includes(bothReport.id)).toBe(false);
+      });
     });
   });
 
@@ -701,9 +796,20 @@ describe('filtersToScopes', () => {
     let includedReport1;
     let includedReport2;
     let excludedReport;
+
+    let recipient;
+    let grant;
+    let goal;
+    let objective;
+    let aro1;
+    let aro2;
+    let topic1;
+    let topic2;
+
     let possibleIds;
 
     beforeAll(async () => {
+      // Reports.
       includedReport1 = await ActivityReport.create({
         ...draftReport,
         topics: ['test', 'test 2'],
@@ -719,11 +825,124 @@ describe('filtersToScopes', () => {
         excludedReport.id,
         globallyExcludedReport.id,
       ];
+
+      // Recipient.
+      recipient = await Recipient.create({
+        id: faker.datatype.number({ min: 64000 }),
+        name: faker.random.alphaNumeric(6),
+        uei: faker.datatype.string(12),
+      });
+
+      // Grant.
+      grant = await Grant.create({
+        number: recipient.id,
+        recipientId: recipient.id,
+        programSpecialistName: faker.name.firstName(),
+        regionId: 1,
+        id: faker.datatype.number({ min: 64000 }),
+      });
+
+      // Goal.
+      goal = await Goal.create({
+        name: 'Topic Goal on activity report',
+        status: 'In Progress',
+        timeframe: '12 months',
+        grantId: grant.id,
+        isFromSmartsheetTtaPlan: false,
+        id: faker.datatype.number({ min: 64000 }),
+      });
+
+      // Objective.
+      objective = await Objective.create({
+        goalId: goal.id,
+        title: 'topic objective test',
+        status: 'Not Started',
+      });
+
+      // Activity report objective.
+      aro1 = await ActivityReportObjective.create({
+        activityReportId: includedReport1.id,
+        objectiveId: objective.id,
+      });
+
+      aro2 = await ActivityReportObjective.create({
+        activityReportId: includedReport2.id,
+        objectiveId: objective.id,
+      });
+
+      // Topic.
+      topic1 = await Topic.create({
+        name: 'Library Books',
+      });
+
+      topic2 = await Topic.create({
+        name: 'Construction Tools',
+      });
+
+      // ARO topic.
+      await ActivityReportObjectiveTopic.create({
+        activityReportObjectiveId: aro1.id,
+        topicId: topic1.id,
+      });
+
+      // ARO topic.
+      await ActivityReportObjectiveTopic.create({
+        activityReportObjectiveId: aro2.id,
+        topicId: topic2.id,
+      });
     });
 
     afterAll(async () => {
+      // Delete aro's.
+      await ActivityReportObjectiveTopic.destroy({
+        where: { activityReportObjectiveId: [aro1.id, aro2.id] },
+      });
+
+      // Delete Topics.
+      await Topic.destroy({
+        where: { id: [topic1.id, topic2.id] },
+      });
+
+      // Delete aro.
+      await ActivityReportObjective.destroy({
+        where: { id: aro1.id },
+      });
+
+      await ActivityReportObjective.destroy({
+        where: { id: aro2.id },
+      });
+
+      // Delete objective.
+      await Objective.destroy({
+        where: {
+          id: objective.id,
+        },
+      });
+
+      // Delete goal.
+      await Goal.destroy({
+        where: {
+          id: goal.id,
+        },
+      });
+
+      // Delete reports.
       await ActivityReport.destroy({
         where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
+      });
+
+      // Delete grant.
+      await Grant.destroy({
+        where: {
+          id: grant.id,
+        },
+      });
+
+      // Delete recipient.
+      await Recipient.destroy({
+        where: {
+          id: recipient.id,
+        },
       });
     });
 
@@ -738,8 +957,55 @@ describe('filtersToScopes', () => {
         .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
     });
 
+    it('includes aro topic with a partial match', async () => {
+      const filters = { 'topic.in': ['books'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([includedReport1.id]));
+    });
+
+    it('includes aro topic and topic with a partial match', async () => {
+      const filters = { 'topic.in': ['tes', 'a test'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
+    });
+
     it('excludes topics that do not partial match', async () => {
       const filters = { 'topic.nin': ['tes'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([excludedReport.id, globallyExcludedReport.id]));
+    });
+
+    it('excludes aro topics that do not partial match', async () => {
+      const filters = { 'topic.nin': ['books'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(3);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([
+          includedReport2.id,
+          excludedReport.id,
+          globallyExcludedReport.id]));
+    });
+
+    it('excludes aro topic and topics that do not partial match', async () => {
+      const filters = { 'topic.nin': ['a test', 'books'] };
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -1712,6 +1978,13 @@ describe('filtersToScopes', () => {
     let possibleIds;
 
     beforeAll(async () => {
+      // Create ES client.
+      client = await getClient();
+
+      // Create new index
+      await deleteIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
+      await createIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
+
       // Create reports.
       const context1 = 'Nothings gonna change my world';
       const context2 = 'I get by with a little help from my friends';
@@ -1779,6 +2052,9 @@ describe('filtersToScopes', () => {
       await ActivityReport.destroy({
         where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
       });
+
+      // Delete indexes.
+      await deleteIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
     });
 
     it('return correct report text filter search results', async () => {
