@@ -1301,7 +1301,7 @@ Expected JSON (we have this now):
   },
 }
 */
-export async function resourceUse(scopes, top = 10) {
+export async function resourceUse(scopes) {
   const { resources, reports } = await resourceData(scopes);
   const getMonthYear = (dateStr) => {
     // Create a Date object from the date string
@@ -1321,15 +1321,21 @@ export async function resourceUse(scopes, top = 10) {
     const dateObjects = data
       // Get an array of all startDates
       .flatMap((r) => r.startDates)
+      .reduce((dates, date) => {
+        const exists = dates.find((d) => d === date);
+        if (exists) {
+          return dates;
+        }
+        return [...dates, date];
+      }, [])
       // Convert all dates to Date objects
       .map((dateString) => new Date(`${dateString}`))
-      .filter((d) => d);
-      console.log(dateObjects);
+      .filter((d) => !Number.isNaN(Date.parse(d)));
 
     // Find the minimum and maximum dates
     return {
-      min: new Date(Math.min(...dateObjects.slice(0, 3))),
-      max: new Date(Math.max(...dateObjects.slice(0, 3))),
+      min: new Date(Math.min(...dateObjects)),
+      max: new Date(Math.max(...dateObjects)),
     };
   };
 
@@ -1351,24 +1357,11 @@ export async function resourceUse(scopes, top = 10) {
   };
 
   const minMax = getMinMax(resources);
+  console.log(minMax);
   const dateList = spanDates(minMax.min, minMax.max);
+  const starterValues = dateList.map((d) => ({ title: d, cnt: 0 }));
 
   const clusteredResources = resources
-    .reduce((dedupedResources, resource) => {
-      const exists = dedupedResources.find((r) => r.resourceId === resource.resourceId);
-      if (exists) {
-        exists.startDates = [...exists.startDates, ...resource.startDates];
-        return dedupedResources;
-      }
-      return [
-        ...dedupedResources,
-        {
-          resourceId: resource.resourceId,
-          url: resource.url,
-          startDates: resource.startDates,
-        },
-      ];
-    }, [])
     .map((resource) => ({
       heading: resource.url,
       isUrl: true,
@@ -1432,7 +1425,7 @@ export async function resourceUse(scopes, top = 10) {
 
   return {
     headers: [...dateList.map(({ title }) => title)],
-    resources: sortedResourceData.slice(0, top),
+    resources: sortedResourceData.slice(0, 10),
   };
 }
 /*
