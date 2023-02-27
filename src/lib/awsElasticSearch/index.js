@@ -18,16 +18,16 @@ const generateEsConfig = () => {
       'aws-elasticsearch': [{
         credentials: {
           uri,
-          access_key,
-          secret_key,
+          access_key: accessKey,
+          secret_key: secretKey,
         },
       }],
     } = JSON.parse(process.env.VCAP_SERVICES);
 
     return {
       uri,
-      access_key,
-      secret_key,
+      accessKey,
+      secretKey,
     };
   }
 
@@ -41,8 +41,8 @@ const generateEsConfig = () => {
 
 const {
   uri,
-  access_key,
-  secret_key,
+  accessKey,
+  secretKey,
 } = generateEsConfig();
 
 const createAwsConnector = (credentials, region) => {
@@ -65,8 +65,8 @@ const createAwsConnector = (credentials, region) => {
 const getClient = async () => new Client({
   ...createAwsConnector(
     {
-      accessKeyId: access_key,
-      secretAccessKey: secret_key,
+      accessKeyId: accessKey,
+      secretAccessKey: secretKey,
     },
     'us-gov-west-1',
   ),

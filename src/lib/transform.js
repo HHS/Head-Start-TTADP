@@ -346,6 +346,7 @@ const arTransformers = [
   transformHTML('additionalNotes'),
   'lastSaved',
   transformDate('createdAt'),
+  transformDate('submittedDate'),
   transformDate('approvedAt'),
   transformGrantModel('programSpecialistName'),
   transformGrantModel('recipientInfo'),

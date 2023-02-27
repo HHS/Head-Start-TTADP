@@ -3,7 +3,7 @@ const moment = require('moment');
 const { REPORT_STATUSES, USER_ROLES } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 const {
-  beforeCreate, beforeUpdate, afterUpdate,
+  beforeCreate, beforeUpdate, afterUpdate, beforeValidate,
 } = require('./hooks/activityReport');
 
 const generateCreatorNameWithRole = (ar) => {
@@ -194,6 +194,11 @@ export default (sequelize, DataTypes) => {
     ttaType: {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
+    submittedDate: {
+      type: DataTypes.DATEONLY,
+      get: formatDate,
+      allowNull: true,
+    },
     updatedAt: {
       allowNull: false,
       type: DataTypes.DATE,
@@ -255,8 +260,9 @@ export default (sequelize, DataTypes) => {
     },
   }, {
     hooks: {
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       beforeCreate: async (instance) => beforeCreate(instance),
-      beforeUpdate: async (instance) => beforeUpdate(instance),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
     sequelize,

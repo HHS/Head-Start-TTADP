@@ -195,6 +195,7 @@ describe('Goals and Objectives', () => {
 
     const response = [{
       id: 4598,
+      ids: [4598],
       goalStatus: 'Not Started',
       createdOn: '2021-06-15',
       goalText: 'This is goal text 1.',
@@ -215,9 +216,16 @@ describe('Goals and Objectives', () => {
     fetchMock.restore();
     expect(fetchMock.called()).toBe(false);
     fetchMock.put('/api/goals/changeStatus', [response[0]]);
-    userEvent.click(statusMenuToggle);
-    userEvent.click(await screen.findByRole('button', { name: /In Progress/i }));
-    expect(fetchMock.called()).toBeTruthy();
+
+    act(() => userEvent.click(statusMenuToggle));
+    act(() => userEvent.click(screen.getByRole('button', { name: /Closed/i })));
+    act(() => userEvent.click(screen.getByRole('radio', { name: /duplicate/i })));
+
+    const submit = await screen.findByRole('button', { name: /change goal status/i });
+
+    act(() => userEvent.click(submit));
+
+    await waitFor(() => expect(fetchMock.called()).toBeTruthy());
   });
 
   it('will sort by the dropdown', async () => {

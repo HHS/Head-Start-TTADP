@@ -336,7 +336,7 @@ const uploadHandler = async (req, res) => {
   }
   try {
     await addToScanQueue({ key: metadata.key });
-    return updateStatus(metadata.id, QUEUED);
+    return await updateStatus(metadata.id, QUEUED);
   } catch (err) {
     auditLogger.error(`${logContext} ${logContext.namespace}:uploadHander Failed to queue ${metadata.originalFileName}. Error: ${err}`);
     return updateStatus(metadata.id, QUEUEING_FAILED);
@@ -420,7 +420,7 @@ const uploadObjectivesFile = async (req, res) => {
         throw new Error('Missing key or id for file status update');
       }
       await addToScanQueue({ key: queueItem.key });
-      return updateStatus(queueItem.id, QUEUED);
+      return await updateStatus(queueItem.id, QUEUED);
     } catch (err) {
       auditLogger.error(`${logContext} ${logContext.namespace}:uploadObjectivesFile Failed to queue ${queueItem.originalFileName}. Error: ${err}`);
       return updateStatus(queueItem.id, QUEUEING_FAILED);

@@ -1,4 +1,6 @@
-import React, { useMemo, useContext } from 'react';
+import React, {
+  useMemo, useContext, useState, useCallback,
+} from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid } from '@trussworks/react-uswds';
@@ -23,11 +25,12 @@ const defaultDate = formatDateRange({
 export default function TTAHistory({
   recipientName, recipientId, regionId,
 }) {
+  const [resetPagination, setResetPagination] = useState(false);
   const filterKey = `ttahistory-filters-${recipientId}`;
   const { user } = useContext(UserContext);
   const regions = useMemo(() => getUserRegions(user), [user]);
 
-  const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
+  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(
     filterKey,
     [
       {
@@ -38,6 +41,11 @@ export default function TTAHistory({
       },
     ],
   );
+
+  const setFilters = useCallback((newFilters) => {
+    setFiltersInHook(newFilters);
+    setResetPagination(true);
+  }, [setFiltersInHook]);
 
   if (!recipientName) {
     return null;
@@ -116,6 +124,8 @@ export default function TTAHistory({
             showFilter={false}
             tableCaption="Approved activity reports"
             exportIdPrefix="tta-history-"
+            resetPagination={resetPagination}
+            setResetPagination={setResetPagination}
           />
         </FilterContext.Provider>
       </div>

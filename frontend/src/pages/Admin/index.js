@@ -7,6 +7,7 @@ import Cdi from './cdi';
 import Diag from './diag';
 import Flags from './Flags';
 import RoleManagement from './RoleManagement';
+import SiteAlerts from './SiteAlerts';
 
 function Admin() {
   return (
@@ -25,6 +26,9 @@ function Admin() {
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/flags">
           Feature flags
         </NavLink>
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/site-alerts">
+          Site alerts
+        </NavLink>
       </div>
       <Switch>
         <Route
@@ -42,6 +46,10 @@ function Admin() {
         <Route
           path="/admin/flags/"
           render={({ match }) => <Flags match={match} />}
+        />
+        <Route
+          path="/admin/site-alerts/"
+          render={({ match }) => <SiteAlerts match={match} />}
         />
         <Route
           path="/admin/roles/"

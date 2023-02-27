@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/dot-notation */
 /* eslint-disable dot-notation */
 import { _ } from 'lodash';
 import { activityReportsFiltersToScopes as activityReport } from './activityReport';

@@ -181,6 +181,7 @@ export default function ApprovedReportV2({ data }) {
   const recipientNextSteps = formatNextSteps(data.recipientNextSteps, nextStepsLabel, false);
   const approvedAt = data.approvedAt ? moment(data.approvedAt).format(DATE_DISPLAY_FORMAT) : '';
   const createdAt = moment(data.createdAt).format(DATE_DISPLAY_FORMAT);
+  const submittedAt = data.submittedDate ? moment(data.submittedDate).format(DATE_DISPLAY_FORMAT) : '';
 
   const creator = data.author.fullName;
 
@@ -197,11 +198,6 @@ export default function ApprovedReportV2({ data }) {
           {' '}
           {creator}
         </p>
-        <p className="no-print">
-          <strong>Date created:</strong>
-          {' '}
-          {createdAt}
-        </p>
         <p>
           <strong>Collaborators:</strong>
           {' '}
@@ -212,6 +208,20 @@ export default function ApprovedReportV2({ data }) {
           {' '}
           {approvingManagers}
         </p>
+        <p className="no-print">
+          <strong>Date created:</strong>
+          {' '}
+          {createdAt}
+        </p>
+        { submittedAt !== ''
+          ? (
+            <p>
+              <strong>Date submitted:</strong>
+              {' '}
+              {submittedAt}
+            </p>
+          )
+          : null }
         { approvedAt !== ''
           ? (
             <p>
