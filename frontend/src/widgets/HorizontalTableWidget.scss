@@ -12,14 +12,14 @@
   .smarthub-horizontal-table-widget .usa-table-container--scrollable .smarthub-horizontal-table-first-column {
     position: sticky;
     left: 0;
-    z-index: 2;
+    z-index: 1;
     max-width: 330px;
     min-width: 330px;
     box-shadow: inset 0 0 0 black, inset -1px 0 0 black;
   }
 
   .smarthub-horizontal-table-widget .usa-table-container--scrollable .smarthub-horizontal-table-last-column {
-    z-index: 2;
+    z-index: 1;
     position: sticky;
     right: 0;
     font-weight: bold;
