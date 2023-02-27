@@ -5,6 +5,7 @@ import React, {
   useContext,
   useMemo,
   useRef,
+  useCallback,
 } from 'react';
 import {
   Alert, Grid, Button,
@@ -69,7 +70,7 @@ function Landing() {
 
   const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
 
-  const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
+  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(
     FILTER_KEY,
     defaultRegion !== 14
       && defaultRegion !== 0
@@ -88,6 +89,7 @@ function Landing() {
   const [reportAlerts, updateReportAlerts] = useState([]);
   const [error, updateError] = useState();
   const [showAlert, updateShowAlert] = useState(true);
+  const [resetPagination, setResetPagination] = useState(false);
 
   const [alertsSortConfig, setAlertsSortConfig] = React.useState({
     sortBy: 'startDate',
@@ -135,6 +137,16 @@ function Landing() {
       downloadAllAlertsButtonRef.current.focus();
     }
   };
+
+  const setFilters = useCallback((newFilters) => {
+    // pass through
+    setFiltersInHook(newFilters);
+
+    // reset pagination
+    setAlertsActivePage(1);
+    setAlertsOffset(0);
+    setResetPagination(true);
+  }, [setFiltersInHook]);
 
   const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
 
@@ -330,6 +342,8 @@ function Landing() {
             showFilter={false}
             tableCaption="Approved activity reports"
             exportIdPrefix="ar-"
+            resetPagination={resetPagination}
+            setResetPagination={setResetPagination}
           />
         </FilterContext.Provider>
       </>

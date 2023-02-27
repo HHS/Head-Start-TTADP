@@ -434,7 +434,8 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       topics: objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
         ? objective.activityReportObjectives[0].activityReportObjectiveTopics
-          .map((t) => t.topic.dataValues)
+          .map((t) => (t.topic ? t.topic.dataValues : null))
+          .filter((t) => t)
         : [],
       resources: objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
@@ -475,55 +476,59 @@ function reduceGoals(goals, forReport = false) {
       && g.status === currentValue.dataValues.status);
 
   const r = goals.reduce((previousValues, currentValue) => {
-    const existingGoal = previousValues.find((g) => where(g, currentValue));
-    if (existingGoal) {
-      existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.goalNumber || `G-${currentValue.dataValues.id}`];
-      existingGoal.goalIds = [...existingGoal.goalIds, currentValue.dataValues.id];
-      existingGoal.grants = [
-        ...existingGoal.grants,
-        {
-          ...currentValue.grant.dataValues,
-          recipient: currentValue.grant.recipient.dataValues,
-          name: currentValue.grant.name,
-          goalId: currentValue.dataValues.id,
-          numberWithProgramTypes: currentValue.grant.numberWithProgramTypes,
-        },
-      ];
-      existingGoal.grantIds = [...existingGoal.grantIds, currentValue.grant.id];
-      existingGoal.objectives = objectivesReducer(
-        currentValue.objectives,
-        existingGoal.objectives,
-      );
+    try {
+      const existingGoal = previousValues.find((g) => where(g, currentValue));
+      if (existingGoal) {
+        existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.goalNumber || `G-${currentValue.dataValues.id}`];
+        existingGoal.goalIds = [...existingGoal.goalIds, currentValue.dataValues.id];
+        existingGoal.grants = [
+          ...existingGoal.grants,
+          {
+            ...currentValue.grant.dataValues,
+            recipient: currentValue.grant.recipient.dataValues,
+            name: currentValue.grant.name,
+            goalId: currentValue.dataValues.id,
+            numberWithProgramTypes: currentValue.grant.numberWithProgramTypes,
+          },
+        ];
+        existingGoal.grantIds = [...existingGoal.grantIds, currentValue.grant.id];
+        existingGoal.objectives = objectivesReducer(
+          currentValue.objectives,
+          existingGoal.objectives,
+        );
+        return previousValues;
+      }
+
+      const goal = {
+        ...currentValue.dataValues,
+        goalNumbers: [currentValue.goalNumber || `G-${currentValue.dataValues.id}`],
+        goalIds: [currentValue.dataValues.id],
+        grants: [
+          {
+            ...currentValue.grant.dataValues,
+            numberWithProgramTypes: currentValue.grant.numberWithProgramTypes,
+            recipient: currentValue.grant.recipient.dataValues,
+            name: currentValue.grant.name,
+            goalId: currentValue.dataValues.id,
+          },
+        ],
+        grantIds: [currentValue.grant.id],
+        objectives: objectivesReducer(
+          currentValue.objectives,
+        ),
+        isNew: false,
+        endDate: currentValue.endDate,
+      };
+
+      if (forReport) {
+        goal.isRttapa = currentValue.activityReportGoals[0].isRttapa;
+        goal.initialRttapa = currentValue.isRttapa;
+      }
+
+      return [...previousValues, goal];
+    } catch (err) {
       return previousValues;
     }
-
-    const goal = {
-      ...currentValue.dataValues,
-      goalNumbers: [currentValue.goalNumber || `G-${currentValue.dataValues.id}`],
-      goalIds: [currentValue.dataValues.id],
-      grants: [
-        {
-          ...currentValue.grant.dataValues,
-          numberWithProgramTypes: currentValue.grant.numberWithProgramTypes,
-          recipient: currentValue.grant.recipient.dataValues,
-          name: currentValue.grant.name,
-          goalId: currentValue.dataValues.id,
-        },
-      ],
-      grantIds: [currentValue.grant.id],
-      objectives: objectivesReducer(
-        currentValue.objectives,
-      ),
-      isNew: false,
-      endDate: currentValue.endDate,
-    };
-
-    if (forReport) {
-      goal.isRttapa = currentValue.activityReportGoals[0].isRttapa;
-      goal.initialRttapa = currentValue.isRttapa;
-    }
-
-    return [...previousValues, goal];
   }, []);
 
   return r;
@@ -768,7 +773,7 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
 
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
   return Goal.findOne({
-    attributes: ['name', 'id', 'status', 'createdVia'],
+    attributes: ['name', 'id', 'status', 'createdVia', 'previousStatus'],
     where: {
       id: goalId,
     },
@@ -1265,6 +1270,13 @@ async function removeObjectives(objectivesToRemove, reportId) {
     return Promise.resolve();
   }
 
+  // cleanup any ObjectiveFiles that are no longer needed
+  await ObjectiveFile.destroy({
+    where: {
+      objectiveId: objectivesToDefinitelyDestroy.map((o) => o.id),
+    },
+  });
+
   return Objective.destroy({
     where: {
       id: objectivesToDefinitelyDestroy.map((o) => o.id),
@@ -1685,13 +1697,66 @@ export async function saveGoalsForReport(goals, report) {
   );
 }
 
+/**
+ * Verifies if the goal status transition is allowed
+ * @param {string} oldStatus
+ * @param {string} newStatus
+ * @param {number[]} goalIds
+ * @param {string[]} previousStatus
+ * @returns {boolean} whether or not the transition is allowed
+ */
+export function verifyAllowedGoalStatusTransition(oldStatus, newStatus, previousStatus) {
+  // here is a little matrix of all the allowed status transitions
+  // you can see most are disallowed, but there are a few allowed
+  const ALLOWED_TRANSITIONS = {
+    [GOAL_STATUS.DRAFT]: [],
+    [GOAL_STATUS.NOT_STARTED]: [GOAL_STATUS.CLOSED, GOAL_STATUS.SUSPENDED],
+    [GOAL_STATUS.IN_PROGRESS]: [GOAL_STATUS.CLOSED, GOAL_STATUS.SUSPENDED],
+    [GOAL_STATUS.SUSPENDED]: [GOAL_STATUS.CLOSED],
+    [GOAL_STATUS.CLOSED]: [],
+  };
+
+  // here we handle a weird status and create the array of allowed statuses
+  let allowed = ALLOWED_TRANSITIONS[oldStatus] ? [...ALLOWED_TRANSITIONS[oldStatus]] : [];
+  // if the goal is suspended, we allow both closing it and transitioning to the previous status
+  if (oldStatus === GOAL_STATUS.SUSPENDED) {
+    allowed = [...allowed, ...previousStatus];
+  }
+
+  return allowed.includes(newStatus);
+}
+
+/**
+ * Updates a goal status by id
+ * @param {number[]} goalIds
+ * @param {string} oldStatus
+ * @param {string} newStatus
+ * @param {string} closeSuspendReason
+ * @param {string} closeSuspendContext
+ * @param {string[]} previousStatus
+ * @returns {Promise<Model|boolean>} updated goal
+ */
 export async function updateGoalStatusById(
   goalIds,
   oldStatus,
   newStatus,
   closeSuspendReason,
   closeSuspendContext,
+  previousStatus,
 ) {
+  // first, we verify that the transition is allowed
+  const allowed = verifyAllowedGoalStatusTransition(
+    oldStatus,
+    newStatus,
+    previousStatus,
+  );
+
+  if (!allowed) {
+    auditLogger.error(`UPDATEGOALSTATUSBYID: Goal status transition from ${oldStatus} to ${newStatus} not allowed for goal ${goalIds}`);
+    return false;
+  }
+
+  // finally, if everything is golden, we update the goal
   const g = await Goal.update({
     status: newStatus,
     closeSuspendReason,
@@ -1706,7 +1771,6 @@ export async function updateGoalStatusById(
   });
 
   const [, updated] = g;
-
   return updated;
 }
 
