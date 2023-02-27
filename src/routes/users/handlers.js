@@ -31,10 +31,9 @@ export async function getUserStatistics(req, res) {
     const regions = user.permissions.map((permission) => permission.regionId);
     const authorization = new UserPolicy(user);
     // Get regions user can write.
-    const writeRegions = regions.filter((region) => authorization.canWriteInRegion(region));
-    // If user can write in one or many regions use those else readonly regions.
-    const regionsToUse = writeRegions.length ? writeRegions : regions;
-    const statistics = await statisticsByUser(user, regionsToUse, !writeRegions.length);
+    const canWrite = regions.some((region) => authorization.canWriteInRegion(region));
+    console.log('\n\n\n------------- Can Write: ', canWrite);
+    const statistics = await statisticsByUser(user, regions, !canWrite);
     res.json(statistics);
   } catch (error) {
     await handleErrors(req, res, error, { namespace: 'SERVICE:USER' });
