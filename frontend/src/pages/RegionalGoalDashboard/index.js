@@ -13,7 +13,7 @@ import { DASHBOARD_FILTER_CONFIG } from './constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import FilterPanel from '../../components/filter/FilterPanel';
 import GoalsPercentage from '../../widgets/RegionalGoalDashboard/GoalsPercentage';
-import GoalStatusGraph from '../../widgets/GoalStatusGraph';
+import GoalStatusChart from '../../widgets/RegionalGoalDashboard/GoalStatusChart';
 import TotalHrsAndRecipientGraphWidget from '../../widgets/TotalHrsAndRecipientGraph';
 import TopicsTable from '../../widgets/RegionalGoalDashboard/TopicsTable';
 
@@ -139,9 +139,8 @@ export default function RegionalGoalDashboard() {
       </GridContainer>
       <Grid row gap="lg">
         <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }} className="display-flex flex-align-stretch">
-          <GoalStatusGraph filters={filtersToApply} />
+          <GoalStatusChart filters={filtersToApply} />
         </Grid>
-
         <Grid desktop={{ col: 7 }} tabletLg={{ col: 12 }}>
           <TotalHrsAndRecipientGraphWidget hideYAxis filters={filtersToApply} />
         </Grid>

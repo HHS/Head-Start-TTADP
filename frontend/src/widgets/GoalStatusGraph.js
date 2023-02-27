@@ -221,4 +221,4 @@ GoalStatusChart.defaultProps = {
   },
 };
 
-export default withWidgetData(GoalStatusChart, 'goalStatusGraph');
+export default withWidgetData(GoalStatusChart, 'goalStatusByGoalName');
