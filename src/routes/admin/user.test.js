@@ -23,6 +23,7 @@ const mockUser = {
   id: 49,
   name: 'Joe Green',
   phoneNumber: '555-555-554',
+  createdAt: new Date(),
   hsesUserId: '49',
   hsesUsername: 'test49@test.com',
   hsesAuthorities: ['ROLE_FEDERAL'],
@@ -92,7 +93,6 @@ describe('User route handler', () => {
 
     // Verify that once the user exists, it will be retrieved
     await getUser(mockRequest, mockResponse);
-
     expect(mockResponse.json).toHaveBeenCalledWith(mockUser);
   });
 
