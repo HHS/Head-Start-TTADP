@@ -15,7 +15,7 @@ const WIDGET_MOCKS = {
     denominator: 37468,
     percentage: 97.62463969253763,
   },
-  goalStatusGraph: {
+  goalsByStatus: {
     total: 14274,
     'Not started': 2505,
     'In progress': 6944,
