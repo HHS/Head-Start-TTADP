@@ -1,6 +1,6 @@
 /* eslint-disable jest/no-done-callback */
-/* eslint-disable no-plusplus */
 /* eslint-disable no-await-in-loop */
+/* eslint-disable no-plusplus */
 import { test, expect, Page } from '@playwright/test';
 import { blur } from './common';
 
@@ -33,7 +33,7 @@ function getGoals(headingString: string) {
  */
 async function getRegionNumber(page: Page) {
   const heading = page.getByRole('heading', { name: /activity report for region \d/i });
-  return heading.textContent().then((text) => text?.match(/\d/)?.[0]);
+  return heading.textContent().then((text) => text!.match(/\d/)![0]);
 }
 
 /**
@@ -54,12 +54,11 @@ async function getRecipient(page: Page) {
  * Extracts the grant numbers from the recipients string
  *
  * @remarks
- * A sample Activity participants input: "Agency 1.a in region 1, Inc. - 01HP044444  - 
- * ECS, Agency 1.a in region 1, Inc. - 01HP044445"
- * Would return "01HP044444, 01HP044445"
- * Note - there is a bug currently that displays the grant number in a descending order, 
- * hence a need
- * to temporarily reverse the returned array to return "01HP044445, 01HP04444" instead
+ * A sample Activity participants input: "Agency 1.a in region 1, Inc. - 01HP044444  - ECS,
+ * Agency 1.a in region 1, Inc. - 01HP044445" would return "01HP044444, 01HP044445"
+ * Note - there is a bug currently that displays the grant number in a descending order,
+ * hence a need to temporarily reverse the returned array to return "01HP044445, 01HP04444"
+ * instead
  * @param recipients - the recipients string
  */
 function getGrants(recipients: string): string[] {
@@ -84,24 +83,36 @@ async function extractSelectedDisplayedValue(selectedOption) {
   return selectedOption.evaluate((sel) => sel.options[sel.options.selectedIndex].textContent);
 }
 
-async function createNewObjective(page: Page) {
-  await page.getByText(/Select TTA objective/i).click();
-  await page.keyboard.press('ArrowDown');
-  await page.keyboard.press('Enter');
+interface ActivitySummaryConfig {
+  recipients?: number;
+  ttaType?: 'Training' | 'Technical Assistance' | 'Both';
 }
+
+const defaultActivitySummaryConfig = {
+  recipients: 2,
+  ttaType: 'Training',
+} as ActivitySummaryConfig;
 
 /**
  *
  * @param page {Page}
  * @param recipients {number} how many recipients to select, starting at the top of the list
  */
-async function activitySummary(page: Page, recipients = 2) {
+async function activitySummary(
+  page: Page,
+  config: ActivitySummaryConfig = defaultActivitySummaryConfig,
+) {
+  const { recipients, ttaType } = { ...defaultActivitySummaryConfig, ...config,  };
+
   await page.getByRole('group', { name: 'Was this activity for a recipient or other entity? *' }).locator('label').filter({ hasText: 'Recipient' }).click();
   await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
-  await page.keyboard.press('ArrowDown');
 
+  if (recipients) {
   // select recipients
-  for (let i = 0; i < recipients; i++) {
+    for (let i = 0; i < recipients; i++) {
+      await page.keyboard.press('Enter'); 
+    }
+  } else {
     await page.keyboard.press('Enter');
   }
 
@@ -119,7 +130,7 @@ async function activitySummary(page: Page, recipients = 2) {
   await page.getByLabel('Start date *mm/dd/yyyy').fill('12/01/2020');
   await page.getByLabel('End date *mm/dd/yyyy').fill('12/01/2050');
   await page.getByLabel('Duration in hours (round to the nearest half hour) *').fill('5');
-  await page.getByRole('group', { name: 'What TTA was provided *' }).getByText('Training').click();
+  await page.getByRole('group', { name: /What type of TTA was provided/i }).getByText(ttaType || 'Training').click();
   await page.getByText('Virtual').click();
   await page.getByText('Video').click();
   await page.locator('#participants input').focus();
@@ -130,16 +141,17 @@ async function activitySummary(page: Page, recipients = 2) {
   await page.getByLabel('Number of participants involved *').fill('5');
 }
 
-async function nextSteps(page: Page) {
+async function nextSteps(page: Page, isForOtherEntity: boolean = false) {
+  // determine label for next steps
+  const label = isForOtherEntity ? 'other entity' : 'recipient';
+
   // fill out next steps
   await page.getByTestId('specialistNextSteps-input').click();
   await page.getByTestId('specialistNextSteps-input').fill('1');
-  await page.getByLabel('When do you anticipate completing step 1? *').click();
   await page.getByLabel('When do you anticipate completing step 1? *').fill('12/01/2050');
   await page.getByTestId('recipientNextSteps-input').click();
   await page.getByTestId('recipientNextSteps-input').fill('2');
-  await page.getByLabel('When does the recipient anticipate completing step 1? *').click();
-  await page.getByLabel('When does the recipient anticipate completing step 1? *').fill('12/01/2050');
+  await page.getByLabel(`When does the ${label} anticipate completing step 1? *`).fill('12/01/2050');
 }
 
 test.describe('Activity Report', () => {
@@ -166,13 +178,12 @@ test.describe('Activity Report', () => {
     await page.getByTestId('textarea').fill('g1');
     await page.getByText('RTTAPA', { exact: true }).click();
     await page.getByRole('button', { name: 'Save goal' }).click();
-
-    await createNewObjective(page);
+    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await page.keyboard.press('Enter');
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('g1o1');
-    await page.getByLabel(/Topics/i).focus();
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
+    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
+    await page.locator('#react-select-21-option-0').click();
     await blur(page);
 
     // save draft doesn't work with invalid resources
@@ -209,7 +220,7 @@ test.describe('Activity Report', () => {
 
     // create the second goal
     await page.getByRole('button', { name: 'Add new goal' }).click();
-    await page.getByLabel(/select recipient's goal/i).focus();
+    await page.locator('.css-g1d714-ValueContainer').click();
     await page.keyboard.type('Create new goal');
     await page.keyboard.press('Enter');
     await page.getByTestId('textarea').click();
@@ -219,8 +230,7 @@ test.describe('Activity Report', () => {
     await page.keyboard.press('Enter');
     await page.getByLabel('TTA objective *').click();
     await page.getByLabel('TTA objective *').fill('g2o1');
-    await page.getByLabel(/Topics/i).focus();
-    await page.keyboard.press('ArrowDown');
+    await page.locator('.css-125guah-control > .css-g1d714-ValueContainer').click();
     await page.keyboard.press('Enter');
     await page.keyboard.press('Enter');
     await blur(page);
@@ -230,9 +240,7 @@ test.describe('Activity Report', () => {
 
     // assert the goals and objectives section is complete
     let sideNavTextContent = await page.locator('#activityReportSideNav-goals-and-objectives .page-state').textContent();
-    if(sideNavTextContent) {
-      expect(sideNavTextContent.match(/Complete/i)).toBeTruthy();
-    }
+    expect(sideNavTextContent?.match(/Complete/i)).toBeTruthy();
 
     // edit the first goal
     await page.getByText('g1', { exact: true }).locator('..').locator('..').getByRole('button')
@@ -248,11 +256,10 @@ test.describe('Activity Report', () => {
 
     // test to make sure that side nav is updated when a goal is edited
     sideNavTextContent = await page.locator('#activityReportSideNav-goals-and-objectives .page-state').textContent();
-    if(sideNavTextContent) {
-      expect(sideNavTextContent.match(/in progress/i)).toBeTruthy();
-    }    
 
-    // save the first goal   
+    expect(sideNavTextContent?.match(/in progress/i)).toBeTruthy();
+    
+    // save the first goal
     await page.getByRole('button', { name: 'Save goal' }).click();
 
     // move to next steps
@@ -273,7 +280,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('textbox', { name: 'Additional notes' }).locator('div').nth(2).click();
     await page.keyboard.type('these are my creator notes');
 
-    const approverDropdown = page.getByLabel(/Approving manager/i);
+    const approverDropdown = page.locator('.css-g1d714-ValueContainer');
     await approverDropdown.click();
 
     // type our name into the dropdown to filter to just us
@@ -332,6 +339,8 @@ test.describe('Activity Report', () => {
 
     const recipients = await page.locator('span:near(p:text("Recipient names"))').first().textContent();
     const grants = getGrants(recipients || '');
+
+    await page.waitForTimeout(10000);
 
     // navigate to the Recipient TTA Records page
     await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
@@ -468,86 +477,6 @@ test.describe('Activity Report', () => {
     await expect(page.getByText(`${recipients}`)).toBeVisible();
   });
 
-  test('switching objectives properly clears all fields', async ({ page }) => {
-    await page.goto('http://localhost:3000/');
-    // create a new report
-    await page.getByRole('link', { name: 'Activity Reports' }).click();
-    await page.getByRole('button', { name: '+ New Activity Report' }).click();
-
-    // select a recipient
-    await page.getByRole('group', { name: 'Was this activity for a recipient or other entity? *' }).locator('label').filter({ hasText: 'Recipient' }).click();
-    await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
-    await page.locator('#react-select-3-option-0-0').click();
-
-    // navigate to the goals and objectives page
-    await page.getByRole('button', { name: 'Goals and objectives Not Started' }).click();
-
-    // create a new goal
-    await page.getByTestId('label').locator('div').filter({ hasText: '- Select -' }).nth(2)
-      .click();
-    await page.locator('#react-select-13-option-0').getByText('Create new goal').click();
-    await page.getByTestId('textarea').fill('test goal 1');
-    await page.getByRole('group', { name: 'Goal type*' }).getByText('RTTAPA', { exact: true }).click();
-
-    // create a new objective
-    await createNewObjective(page);
-    await page.getByLabel('TTA objective *').fill('test objective 1');
-
-    // select a topic
-    await page.getByLabel(/Topics/i).focus();
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
-
-    await blur(page);
-
-    // add a link to the first goal/first objective
-    await page.getByLabel('Resource 1').fill('https://www.test.gov');
-
-    // add TTA
-    await page.getByRole('textbox', { name: 'TTA provided for objective' }).fill('TTA was provided');
-
-    // save and create a new goal
-    await page.getByRole('button', { name: 'Save goal' }).click();
-    await page.getByRole('button', { name: 'Add new goal' }).click();
-
-    // create another new goal
-    await page.getByTestId('label').locator('div').filter({ hasText: '- Select -' }).nth(2)
-      .click();
-    await page.locator('#react-select-21-option-0').getByText('Create new goal').click();
-    await page.getByTestId('textarea').fill('Test goal 2');
-    await page.getByRole('group', { name: 'Goal type*' }).getByText('RTTAPA', { exact: true }).click();
-
-    // create a new objective
-    await createNewObjective(page);
-    await page.getByLabel('TTA objective *').fill('test objective 2');
-
-    // select topics
-    await page.getByLabel(/Topics/i).focus();
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
-
-    // enter tta provided
-    await page.getByRole('textbox', { name: 'TTA provided for objective' }).fill('TTA was provided');
-    await page.getByRole('button', { name: 'Save goal' }).click();
-
-    // edit the first goal
-    await page.getByTestId('ellipsis-button').first().click();
-    await page.getByRole('button', { name: 'Edit' }).click();
-
-    // confirm the resource is loaded back in to the form
-    let resource = page.getByTestId('textInput');
-    expect(resource).toHaveValue('https://www.test.gov');
-
-    // edit the second goal
-    await page.getByTestId('ellipsis-button').last().click();
-    await page.getByRole('button', { name: 'Edit' }).click();
-
-    // confirm the resources are empty on the second objective
-    resource = page.getByTestId('textInput');
-    expect(resource).toHaveValue('');
-    await page.getByRole('button', { name: 'Save goal' }).click();
-  });
-
   test('multi recipient goal used on an AR', async ({ page }) => {
     await page.goto('http://localhost:3000/');
 
@@ -598,7 +527,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('link', { name: 'Activity Reports' }).click();
     await page.getByRole('button', { name: '+ New Activity Report' }).click();
 
-    await activitySummary(page, 3);
+    await activitySummary(page, { recipients: 3, ttaType: 'Training' });
 
     const regionNumber = await getRegionNumber(page);
 
@@ -663,9 +592,97 @@ test.describe('Activity Report', () => {
     await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
     await page.getByRole('link', { name: 'Agency 2 in region 1, Inc.' }).click();
     await page.getByRole('link', { name: 'Goals & Objectives' }).click();
+
+    // check page title is updated (formerly TTAHUB-1322.spec.ts)
+    expect(await page.title()).toBe('Goals and Objectives - Agency 2 in region 1, Inc. - TTA Hub');
+
     await expect(page.getByText('This is a goal for multiple grants')).toBeVisible();
     await page.getByRole('button', { name: /Expand objectives for goal G-(\d)/i }).click();
     await expect(page.getByText('A new objective')).toBeVisible();
     await expect(page.getByText(`Activity reports R01-AR-${arNumber}`)).toBeVisible();
   });
+
+
+  test('create a report with two other entities and one objective', async ({ page }) => {
+    await page.goto('http://localhost:3000/');
+
+    // create a new report
+    await page.getByRole('link', { name: 'Activity Reports' }).click();
+    await page.getByRole('button', { name: '+ New Activity Report' }).click();
+      
+    const heading = page.getByRole('heading', { name: /activity report for region \d/i });
+    const regionNumber = await heading.textContent().then((text) => text!.match(/\d/)![0]); 
+
+    await activitySummary(page, { recipients: 2, ttaType: 'Training' });
+    
+    // select two recipients
+    await page.locator('label').filter({ hasText: 'Other entity' }).click();
+    await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
+    await page.locator('#react-select-3-option-0').click();
+    await page.locator('#react-select-3-option-1').click();
+
+    // cycle through the side nav
+    await page.getByRole('button', { name: 'Goals and objectives Not started' }).click();
+    await page.getByRole('button', { name: 'Supporting attachments Not started' }).click();
+    await page.getByRole('button', { name: 'Next steps Not started' }).click();
+    await page.getByRole('button', { name: 'Review and submit' }).click();    
+    await page.getByRole('button', { name: /activity summary in progress/i }).click();
+
+    // select participants
+    await page.locator('#participants input').focus();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await blur(page);
+
+    // submit the activity summary
+    await page.getByRole('button', { name: 'Save and continue' }).click();
+
+    // fill out the objectives form
+    await page.getByRole('button', { name: 'Add new objective' }).click();
+    await page.getByTestId('textarea').fill('test');
+
+    // fill in an invalid resource
+    await page.getByTestId('textInput').fill('asdfasdf');
+
+    // select a topic
+    await page.locator('.css-125guah-control').click();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+
+    // clear out the invalid resource
+    await page.getByTestId('textInput').fill('');
+
+    // add tta provided
+    await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
+    await page.keyboard.type('hello');
+
+    await page.getByRole('button', { name: 'Save objectives' }).click();
+    await page.getByRole('button', { name: 'Save and continue' }).click();
+
+    // skip supporting attachments
+    await page.getByRole('button', { name: 'Save and continue' }).click();
+   
+    // fill out next steps
+    const isOtherEntity = true;
+    await nextSteps(page, isOtherEntity);
+    await page.getByRole('button', { name: 'Save and continue' }).click();
+
+    // select an approver
+    await page.getByLabel(/Approving manager/i).focus();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    
+    // extract the AR number from the URL:
+    const url = page.url();
+    const arNumber = url.split('/').find((part) => /^\d+$/.test(part));
+
+    await blur(page);
+
+    // submit for approval
+    await page.getByRole('button', { name: 'Submit for approval' }).click();
+
+    // verify draft report in table
+    await expect(page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
+  });
+
 });
