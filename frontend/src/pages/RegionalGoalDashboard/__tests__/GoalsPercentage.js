@@ -3,7 +3,7 @@ import {
   render,
   screen,
 } from '@testing-library/react';
-import { GoalsPercentageWidget } from '../GoalsPercentage';
+import { GoalsPercentageWidget } from '../../../widgets/RegionalGoalDashboard/GoalsPercentage';
 
 const TEST_DATA = {
   numerator: 100,

@@ -79,10 +79,12 @@ describe('PrintGoals', () => {
     ],
   };
 
-  const renderPrintGoals = () => {
-    const location = {
-      state: null, hash: '', pathname: '', search: '',
-    };
+  const baseLocation = {
+    state: null, hash: '', pathname: '', search: '',
+  };
+
+  const renderPrintGoals = (loc = {}) => {
+    const location = { ...baseLocation, ...loc };
 
     render(
       <Router history={memoryHistory}>
@@ -102,10 +104,14 @@ describe('PrintGoals', () => {
   const filters = [{ topic: 'status', condition: 'is', query: ['Closed'] }];
   const baseMock = `/api/recipient/${RECIPIENT_ID}/region/${REGION_ID}/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=false`;
   const filteredMockURL = `${baseMock}&${filtersToQueryString(filters)}`;
+  // const filteredMockURLGoalOne = `${baseMock}&${filtersToQueryString(filterWithJustGoalOne)}`;
+  // FIXME: PrintGoals doesn't build the query string with `goalIds.in[]=`
+  const filteredMockURLGoalOne = '/api/recipient/123456/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=false&goalIds=4598&status.in[]=Closed';
 
   beforeEach(async () => {
     fetchMock.get(baseMock, { count: 5, goalRows: goals });
     fetchMock.get(filteredMockURL, { count: 0, goalRows: [] });
+    fetchMock.get(filteredMockURLGoalOne, { count: 0, goalRows: [goals[0]] });
   });
 
   afterEach(async () => {
@@ -157,5 +163,25 @@ describe('PrintGoals', () => {
     // Expect that the mocked URL, which includes the filtered query was called.
     // This asserts that PrintGoals is respecting filters included in window.location.search.
     expect(fetchMock.called(filteredMockURL)).toBe(true);
+  });
+
+  it('uses the sortConfig from the location prop if it exists', async () => {
+    const loc = {
+      state: {
+        sortConfig: {
+          sortBy: 'goalStatus',
+          direction: 'asc',
+          activePage: 1,
+          offset: 0,
+        },
+        selectedGoalIds: [4598],
+      },
+    };
+
+    act(() => renderPrintGoals(loc));
+
+    expect(fetchMock.called(filteredMockURLGoalOne)).toBe(true);
+    expect(await screen.findByText('This is goal text 1.')).toBeVisible();
+    expect(screen.queryByText('This is goal text 2.')).not.toBeInTheDocument();
   });
 });
