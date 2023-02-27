@@ -32,7 +32,6 @@ export async function getUserStatistics(req, res) {
     const authorization = new UserPolicy(user);
     // Get regions user can write.
     const canWrite = regions.some((region) => authorization.canWriteInRegion(region));
-    console.log('\n\n\n------------- Can Write: ', canWrite);
     const statistics = await statisticsByUser(user, regions, !canWrite);
     res.json(statistics);
   } catch (error) {
