@@ -50,7 +50,7 @@ describe('User handlers', () => {
   });
 
   describe('getUserStatistics', () => {
-    it('returns statistics', async () => {
+    it('returns write statistics', async () => {
       const response = { daysSinceJoined: 10, arsCreated: 10 };
       statisticsByUser.mockResolvedValue(response);
       userById.mockResolvedValue({
@@ -65,6 +65,40 @@ describe('User handlers', () => {
       });
       User.prototype.canWriteInRegion = jest.fn().mockReturnValue(true);
       await getUserStatistics(mockRequest, mockResponse);
+      expect(statisticsByUser).toHaveBeenCalledWith({
+        permissions: [{
+          regionId: 1,
+        },
+        {
+          regionId: 2,
+        }],
+      }, [1, 2], false);
+      expect(mockResponse.json).toHaveBeenCalledWith(response);
+    });
+
+    it('returns readonly statistics', async () => {
+      const response = { daysSinceJoined: 10, arsCreated: 10 };
+      statisticsByUser.mockResolvedValue(response);
+      userById.mockResolvedValue({
+        permissions: [
+          {
+            regionId: 1,
+          },
+          {
+            regionId: 2,
+          },
+        ],
+      });
+      User.prototype.canWriteInRegion = jest.fn().mockReturnValue(false);
+      await getUserStatistics(mockRequest, mockResponse);
+      expect(statisticsByUser).toHaveBeenCalledWith({
+        permissions: [{
+          regionId: 1,
+        },
+        {
+          regionId: 2,
+        }],
+      }, [1, 2], true);
       expect(mockResponse.json).toHaveBeenCalledWith(response);
     });
 
@@ -84,7 +118,7 @@ describe('User handlers', () => {
       const end = jest.fn();
       const status = jest.fn(() => ({ end }));
       User.prototype.canWriteInRegion = jest.fn().mockReturnValue(true);
-      await getPossibleStateCodes({}, { status });
+      await getUserStatistics({}, { status });
       expect(status).toHaveBeenCalledWith(500);
     });
   });
