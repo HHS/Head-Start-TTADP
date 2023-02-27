@@ -381,7 +381,6 @@ describe('grant filtersToScopes', () => {
       const filters = { 'group.in': [groupName] };
       const scope = await filtersToScopes(filters, { userId: mockUser.id });
       const found = await Grant.findAll({
-        logging: console.log,
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
 
@@ -395,7 +394,6 @@ describe('grant filtersToScopes', () => {
       const filters = { 'group.nin': [groupName] };
       const scope = await filtersToScopes(filters, { userId: mockUser.id });
       const found = await Grant.findAll({
-        logging: console.log,
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
 
