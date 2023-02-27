@@ -81,6 +81,7 @@ export default async function activeUsers() {
         "User"."email" AS "email",
         "User"."homeRegionId" AS "homeRegionId",
         to_char("User"."lastLogin" AT TIME ZONE 'EST', 'DD Mon YYYY HH12:MI:SS AM TZ ET') AS "lastLogin",
+        date_part('day',now()::timestamp - "lastLogin") as "days",
         "User"."flags" AS "flags",
         "roles"."roleId" AS "roleId",
         "Role".name AS "roles",
@@ -100,6 +101,7 @@ SELECT
     "ActiveUsers"."homeRegionId" AS "Region",
     string_agg(DISTINCT "ActiveUsers"."roles" :: VARCHAR, ',') AS "Roles",
     "ActiveUsers"."lastLogin" AS "Last login",
+    "ActiveUsers"."days" AS "Days since last login",
     MIN(CASE WHEN "ActiveUsers"."scope" = 'SITE_ACCESS' THEN 'Yes' END) AS "SITE_ACCESS",
     MIN(CASE WHEN "ActiveUsers"."scope" = 'ADMIN' THEN 'Yes' END) AS "ADMIN",
     MIN(CASE WHEN "ActiveUsers"."scope" = 'UNLOCK_APPROVED_REPORTS' THEN 'Yes' END) AS "UNLOCK_APPROVED_REPORTS",
@@ -117,6 +119,7 @@ GROUP BY
     "ActiveUsers"."email",
     "ActiveUsers"."homeRegionId",
     "ActiveUsers"."lastLogin",
+    "ActiveUsers"."days",
     "ActiveUsers"."flags";
       `;
   const src = streamable(sql, convertToCSV);
