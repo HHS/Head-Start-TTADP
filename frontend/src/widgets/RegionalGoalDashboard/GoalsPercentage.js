@@ -52,8 +52,16 @@ GoalsPercentageWidget.propTypes = {
     numerator: PropTypes.number,
     denominator: PropTypes.number,
     percentage: PropTypes.number,
-  }).isRequired,
+  }),
   loading: PropTypes.bool.isRequired,
+};
+
+GoalsPercentageWidget.defaultProps = {
+  data: {
+    numerator: 0,
+    denominator: 0,
+    percentage: 0,
+  },
 };
 
 export default withWidgetData(GoalsPercentageWidget, 'goalsPercentage');
