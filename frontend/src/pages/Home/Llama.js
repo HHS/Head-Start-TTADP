@@ -99,14 +99,14 @@ export default function Llama({ user }) {
                 />
                 <Field
                   label="ARs created"
-                  data={statistics.arsCreated}
+                  data={String(statistics.arsCreated)}
                   icon={faClipboardUser}
                   iconColor={colors.ttahubMediumBlue}
                   backgroundColor={colors.ttahubBlueLight}
                 />
                 <Field
                   label="ARs collaborated on"
-                  data={statistics.arsCollaboratedOn}
+                  data={String(statistics.arsCollaboratedOn)}
                   icon={faUserFriends}
                   iconColor={colors.ttahubMediumDeepTeal}
                   backgroundColor={colors.ttahubDeepTealLight}
@@ -116,21 +116,21 @@ export default function Llama({ user }) {
             <Grid row gap={1} className="margin-bottom-2">
               <Field
                 label="of TTA provided"
-                data={statistics.ttaProvided}
+                data={String(statistics.ttaProvided)}
                 icon={faClock}
                 iconColor={colors.ttahubOrange}
                 backgroundColor={colors.ttahubOrangeLight}
               />
               <Field
                 label="recipients reached"
-                data={statistics.recipientsReached}
+                data={String(statistics.recipientsReached)}
                 icon={faChartColumn}
                 iconColor={colors.ttahubMagenta}
                 backgroundColor={colors.ttahubMagentaLight}
               />
               <Field
                 label="grants served"
-                data={statistics.grantsServed}
+                data={String(statistics.grantsServed)}
                 icon={faBuilding}
                 iconColor={colors.ttahubMediumDeepTeal}
                 backgroundColor={colors.ttahubDeepTealLight}
@@ -139,21 +139,21 @@ export default function Llama({ user }) {
             <Grid row gap={1}>
               <Field
                 label="participants reached"
-                data={statistics.participantsReached}
+                data={String(statistics.participantsReached)}
                 icon={faUserFriends}
                 iconColor={colors.ttahubBlue}
                 backgroundColor={colors.ttahubBlueLighter}
               />
               <Field
                 label="goals approved"
-                data={statistics.goalsApproved}
+                data={String(statistics.goalsApproved)}
                 icon={faCheck}
                 iconColor={colors.ttahubOrange}
                 backgroundColor={colors.ttahubOrangeLight}
               />
               <Field
                 label="objectives approved"
-                data={statistics.objectivesApproved}
+                data={String(statistics.objectivesApproved)}
                 icon={faGear}
                 iconColor={colors.ttahubOrange}
                 backgroundColor={colors.ttahubOrangeLight}
