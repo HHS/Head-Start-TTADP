@@ -210,7 +210,7 @@ parameters:
     default: "put-back-search-after"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "TTAHUB-379/add-site-alerts"
+    default: "mb/TTAHUB-1140/checkbox-to-select-goals"
     type: string
   prod_new_relic_app_id:
     default: "877570491"

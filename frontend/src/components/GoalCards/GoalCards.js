@@ -133,7 +133,7 @@ function GoalCards({
         </Alert>
       </Grid>
       )}
-      <Container className="goals-table maxw-full overflow-x-hidden" paddingX={0} paddingY={0} loading={loading} loadingLabel="Goals table loading">
+      <Container className="goals-table maxw-full position-relative" paddingX={0} paddingY={0} positionRelative loading={loading} loadingLabel="Goals table loading">
         <CloseSuspendReasonModal
           id="close-suspend-reason-modal"
           goalIds={closeSuspendGoalIds}
@@ -163,8 +163,7 @@ function GoalCards({
           perPageChange={perPageChange}
           pageGoalIds={goals.map((g) => g.id)}
         />
-        <div>
-
+        <div className="padding-x-3 padding-y-2">
           {goals.map((goal, index) => (
             <GoalCard
               key={`goal-row-${goal.id}`}
