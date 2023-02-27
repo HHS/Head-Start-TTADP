@@ -14,6 +14,7 @@ import RegionPermissionModal from '../../components/RegionPermissionModal';
 import FilterPanel from '../../components/filter/FilterPanel';
 import GoalsPercentage from '../../widgets/RegionalGoalDashboard/GoalsPercentage';
 import GoalStatusGraph from '../../widgets/GoalStatusGraph';
+import TotalHrsAndRecipientGraphWidget from '../../widgets/TotalHrsAndRecipientGraph';
 
 const defaultDate = formatDateRange({
   lastThirtyDays: true,
@@ -130,14 +131,17 @@ export default function RegionalGoalDashboard() {
           allUserRegions={regions}
         />
       </Grid>
-      <GridContainer className="margin-0 padding-0">
+      <GridContainer className="margin-bottom-2 padding-0">
         <GoalsPercentage
           filters={filtersToApply}
         />
       </GridContainer>
       <Grid row>
-        <Grid desktop={{ col: 6 }} tablet={{ col: 12 }} className="margin-top-2">
+        <Grid desktop={{ col: 4 }} tablet={{ col: 12 }} className="margin-top-2">
           <GoalStatusGraph filters={filtersToApply} />
+        </Grid>
+        <Grid desktop={{ col: 8 }} tabletLg={{ col: 12 }}>
+          <TotalHrsAndRecipientGraphWidget hideYAxis filters={filtersToApply} />
         </Grid>
       </Grid>
     </div>

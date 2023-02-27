@@ -4,13 +4,6 @@ import db from '../../models';
 const { Goal } = db;
 
 export default async function goalsPercentage(scopes) {
-  // console.log("--------- scopes.goal");
-  // console.log(scopes.goal);
-  // console.log("--------- scopes.goal[0]");
-  // console.log(scopes.goal[0]);
-  // console.log("--------- scopes.goal[1]");
-  // console.log(scopes.goal[1]);
-
   const allGoals = await Goal.findAll({
     attributes: ['id'],
     where: {
