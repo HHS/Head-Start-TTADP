@@ -132,11 +132,8 @@ export default function RegionalGoalDashboard() {
           allUserRegions={regions}
         />
       </Grid>
-      <GridContainer className="margin-bottom-2 padding-0">
+      <GridContainer className="margin-bottom-3 padding-0">
         <GoalsPercentage
-          filters={filtersToApply}
-        />
-        <TopicsTable
           filters={filtersToApply}
         />
       </GridContainer>
@@ -149,6 +146,11 @@ export default function RegionalGoalDashboard() {
           <TotalHrsAndRecipientGraphWidget hideYAxis filters={filtersToApply} />
         </Grid>
       </Grid>
+      <GridContainer className="margin-y-0 padding-0">
+        <TopicsTable
+          filters={filtersToApply}
+        />
+      </GridContainer>
     </div>
   );
 }
