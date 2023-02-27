@@ -5,7 +5,6 @@
     }
 }
 
-/*animation: wiggle 0.4s cubic-bezier(0.445, 0.050, 0.550, 0.950*/
 .celebratory-llama {
     animation: walk-on-by 2s cubic-bezier(.47,1.64,.41,.8) forwards;
     left: 50px;
