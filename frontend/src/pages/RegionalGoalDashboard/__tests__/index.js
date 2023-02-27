@@ -2,6 +2,7 @@ import React from 'react';
 import {
   render, screen, act, within,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import RegionalGoalDashboard from '../index';
@@ -54,7 +55,7 @@ describe('RegionalGoalDashboard', () => {
 
   const regionIn = 'region.in[]=1';
 
-  const user = {
+  const userCentralOffice = {
     homeRegionId: 14,
     permissions: [{
       regionId: 1,
@@ -62,7 +63,16 @@ describe('RegionalGoalDashboard', () => {
     }],
   };
 
-  const renderRegionalGoalDashboard = () => {
+  const userNoCentralOffice = {
+    homeRegionId: 1,
+    permissions: [{
+      regionId: 2,
+      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+    }],
+  };
+
+  const renderRegionalGoalDashboard = (u) => {
+    const user = u || userCentralOffice;
     render(
       <UserContext.Provider value={{ user }}>
         <RegionalGoalDashboard />
@@ -125,5 +135,100 @@ describe('RegionalGoalDashboard', () => {
     });
 
     expect(await screen.findByRole('heading', { name: 'Total TTA hours' })).toBeInTheDocument();
+  });
+
+  it('can remove a filter', async () => {
+    act(() => {
+      renderRegionalGoalDashboard();
+    });
+
+    let heading = await screen.findByText(/region 1 goal dashboard/i);
+    expect(heading).toBeVisible();
+
+    const removeDate = await screen.findByRole('button', { name: /this button removes the filter: date started is within/i });
+    act(() => userEvent.click(removeDate));
+
+    heading = await screen.findByText(/region 1 goal dashboard/i);
+    expect(heading).toBeVisible();
+  });
+
+  it('renders the default region if they dont have central office', async () => {
+    act(() => {
+      renderRegionalGoalDashboard(userNoCentralOffice);
+    });
+
+    const heading = await screen.findByText(/region 2 goal dashboard/i);
+    expect(heading).toBeVisible();
+  });
+
+  it('renders different heading if the user has more than one region', async () => {
+    const user = {
+      homeRegionId: 14,
+      permissions: [{
+        regionId: 1,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      }, {
+        regionId: 2,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      }],
+    };
+
+    act(() => {
+      renderRegionalGoalDashboard(user);
+    });
+
+    const heading = await screen.findByText(/regional goal dashboard/i);
+    expect(heading).toBeVisible();
+  });
+
+  it('removing all filters and applying causes the default region to be used (addBackDefaultRegions)', async () => {
+    const user = {
+      homeRegionId: 1,
+      permissions: [{
+        regionId: 1,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      }, {
+        regionId: 2,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      }],
+    };
+
+    act(() => {
+      renderRegionalGoalDashboard(user);
+    });
+
+    const removeButtons = await screen.findAllByRole('button', { name: /this button removes the filter/i });
+    removeButtons.forEach((button) => {
+      act(() => userEvent.click(button));
+    });
+
+    // the region filters are restored to the URL because of addBackDefaultRegions
+    const url = window.location.href;
+    expect(url).toContain('region.in[]=1');
+  });
+
+  it('the user doesnt have region 1 permissions, so the modal shows', () => {
+    const user = {
+      homeRegionId: 14,
+      permissions: [{
+        regionId: 2,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      }],
+    };
+
+    act(() => {
+      renderRegionalGoalDashboard(user);
+    });
+
+    // find text: You need permission to access
+    expect(screen.getByRole('heading', { name: /you need permission to access/i })).toBeInTheDocument();
+
+    // click button "Show filter with my regions"
+    const showFilterButton = screen.getByRole('button', { name: /show filter with my regions/i });
+    act(() => userEvent.click(showFilterButton));
+
+    // url should have region 2
+    const url = window.location.href;
+    expect(url).toContain('region.in[]=2');
   });
 });

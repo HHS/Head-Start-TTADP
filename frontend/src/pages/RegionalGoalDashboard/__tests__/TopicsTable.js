@@ -3,7 +3,7 @@ import {
   render,
   screen,
 } from '@testing-library/react';
-import { TopicsTableWidget } from '../TopicsTable';
+import { TopicsTableWidget } from '../../../widgets/RegionalGoalDashboard/TopicsTable';
 
 const TEST_DATA = [
   {
@@ -59,5 +59,16 @@ describe('Topics Table', () => {
     renderTopicsTable(true);
     const loading = await screen.findByText('Loading...');
     expect(loading).toBeInTheDocument();
+  });
+
+  it('is sortable', async () => {
+    renderTopicsTable();
+
+    const firstHeader = screen.getAllByRole('columnheader')[0];
+    expect(firstHeader).toHaveAttribute('aria-sort', 'descending');
+
+    const firstHeaderButton = firstHeader.querySelector('a');
+    firstHeaderButton.click();
+    expect(firstHeader).toHaveAttribute('aria-sort', 'ascending');
   });
 });
