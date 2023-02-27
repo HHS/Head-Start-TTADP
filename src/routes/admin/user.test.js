@@ -23,7 +23,6 @@ const mockUser = {
   id: 49,
   name: 'Joe Green',
   phoneNumber: '555-555-554',
-  createdAt: new Date(),
   hsesUserId: '49',
   hsesUsername: 'test49@test.com',
   hsesAuthorities: ['ROLE_FEDERAL'],
