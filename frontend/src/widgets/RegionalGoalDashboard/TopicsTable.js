@@ -6,6 +6,7 @@ import {
 } from '@trussworks/react-uswds';
 import withWidgetData from '../withWidgetData';
 import useSessionSort from '../../hooks/useSessionSort';
+import Container from '../../components/Container';
 
 /**
  * statuses
@@ -126,36 +127,36 @@ export function TopicsTableWidget({ data, loading }) {
     );
   };
 
-  if (loading) return (<div>Loading...</div>);
-
   return (
     <>
-      <div className="landing inline-size-auto maxw-full bg-white radius-md shadow-2 margin-bottom-3">
-        <div className="usa-table-container--scrollable">
-          <Table fullWidth striped>
-            <thead>
-              <tr>
-                {renderColumnHeader('Topic', 'topic')}
-                {renderColumnHeader('Not Started', 'statuses.Not Started')}
-                {renderColumnHeader('In Progress', 'statuses.In Progress')}
-                {renderColumnHeader('Closed', 'statuses.Closed')}
-                {renderColumnHeader('Suspended', 'statuses.Suspended')}
-                {renderColumnHeader('Total', 'total')}
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.map((row) => (
-                <TopicRow
-                  key={uuidv4()}
-                  topic={row.topic}
-                  statuses={row.statuses}
-                  total={row.total}
-                />
-              ))}
-            </tbody>
-          </Table>
+      <Container paddingX={3} paddingY={3} loading={loading} loadingLabel="total matched goals loading">
+        <div className="landing inline-size-auto maxw-full margin-bottom-3">
+          <div className="usa-table-container--scrollable">
+            <Table fullWidth striped>
+              <thead>
+                <tr>
+                  {renderColumnHeader('Topic', 'topic')}
+                  {renderColumnHeader('Not Started', 'statuses.Not Started')}
+                  {renderColumnHeader('In Progress', 'statuses.In Progress')}
+                  {renderColumnHeader('Closed', 'statuses.Closed')}
+                  {renderColumnHeader('Suspended', 'statuses.Suspended')}
+                  {renderColumnHeader('Total', 'total')}
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.map((row) => (
+                  <TopicRow
+                    key={uuidv4()}
+                    topic={row.topic}
+                    statuses={row.statuses}
+                    total={row.total}
+                  />
+                ))}
+              </tbody>
+            </Table>
+          </div>
         </div>
-      </div>
+      </Container>
     </>
   );
 }
