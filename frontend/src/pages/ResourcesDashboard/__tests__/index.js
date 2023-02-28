@@ -17,124 +17,126 @@ import AriaLiveContext from '../../../AriaLiveContext';
 
 const history = createMemoryHistory();
 
-const resourceOverviewUrl = join('api', 'widgets', 'resourcesDashboardOverview');
-const resourceUseUrl = join('api', 'widgets', 'resourceUse');
+const resourcesUrl = join('api', 'resources');
 
-const resourceUseDefault = {
-  headers: ['Jan-22'],
-  resources: [
-    {
-      heading: 'https://test1.gov',
-      isUrl: true,
-      data: [
-        {
-          title: 'Jan-22',
-          value: '17',
-        },
-        {
-          title: 'total',
-          value: '20',
-        },
-      ],
+const resourcesDefault = {
+  resourcesDashboardOverview: {
+    report: {
+      numResources: '8,135',
+      num: '19,914',
+      percentResources: '40.85%',
     },
-  ],
-};
-
-const resourcesOverview = {
-  report: {
-    numResources: '8,135',
-    num: '19,914',
-    percentResources: '40.85%',
-  },
-  resource: {
-    numEclkc: '1,819',
-    num: '2,365',
-    percentEclkc: '79.91%',
-  },
-  recipient: {
-    numResources: '248',
-  },
-  participant: {
-    numParticipants: '765',
-  },
-};
-
-const resourcesOverviewRegionOne = {
-  report: {
-    numResources: '7,135',
-    num: '18,914',
-    percentResources: '2.65%',
-  },
-  resource: {
-    numEclkc: '819',
-    num: '1,365',
-    percentEclkc: '1.66%',
-  },
-  recipient: {
-    numResources: '148',
-  },
-  participant: {
-    numParticipants: '665',
-  },
-};
-
-const resourceUseRegionOne = {
-  headers: ['Jan-22'],
-  resources: [
-    {
-      heading: 'https://test2.gov',
-      isUrl: true,
-      data: [
-        {
-          title: 'Jan-22',
-          value: '18',
-        },
-        {
-          title: 'total',
-          value: '21',
-        },
-      ],
+    resource: {
+      numEclkc: '1,819',
+      num: '2,365',
+      percentEclkc: '79.91%',
     },
-  ],
-};
-
-const resourcesOverviewRegionTwo = {
-  report: {
-    numResources: '6,135',
-    num: '17,914',
-    percentResources: '1.65%',
-  },
-  resource: {
-    numEclkc: '818',
-    num: '365',
-    percentEclkc: '.66%',
-  },
-  recipient: {
-    numResources: '148',
-  },
-  participant: {
-    numParticipants: '565',
-  },
-};
-
-const resourceUseRegionTwo = {
-  headers: ['Jan-22'],
-  resources: [
-    {
-      heading: 'https://test3.gov',
-      isUrl: true,
-      data: [
-        {
-          title: 'Jan-22',
-          value: '19',
-        },
-        {
-          title: 'total',
-          value: '22',
-        },
-      ],
+    recipient: {
+      numResources: '248',
     },
-  ],
+    participant: {
+      numParticipants: '765',
+    },
+  },
+  resourcesUse: {
+    headers: ['Jan-22'],
+    resources: [
+      {
+        heading: 'https://test1.gov',
+        isUrl: true,
+        data: [
+          {
+            title: 'Jan-22',
+            value: '17',
+          },
+          {
+            title: 'total',
+            value: '20',
+          },
+        ],
+      },
+    ],
+  },
+};
+
+const resourcesRegion1 = {
+  resourcesDashboardOverview: {
+    report: {
+      numResources: '7,135',
+      num: '18,914',
+      percentResources: '2.65%',
+    },
+    resource: {
+      numEclkc: '819',
+      num: '1,365',
+      percentEclkc: '1.66%',
+    },
+    recipient: {
+      numResources: '148',
+    },
+    participant: {
+      numParticipants: '665',
+    },
+  },
+  resourcesUse: {
+    headers: ['Jan-22'],
+    resources: [
+      {
+        heading: 'https://test2.gov',
+        isUrl: true,
+        data: [
+          {
+            title: 'Jan-22',
+            value: '18',
+          },
+          {
+            title: 'total',
+            value: '21',
+          },
+        ],
+      },
+    ],
+  },
+};
+
+const resourcesRegion2 = {
+  resourcesDashboardOverview: {
+    report: {
+      numResources: '6,135',
+      num: '17,914',
+      percentResources: '1.65%',
+    },
+    resource: {
+      numEclkc: '818',
+      num: '365',
+      percentEclkc: '.66%',
+    },
+    recipient: {
+      numResources: '148',
+    },
+    participant: {
+      numParticipants: '565',
+    },
+  },
+  resourcesUse: {
+    headers: ['Jan-22'],
+    resources: [
+      {
+        heading: 'https://test3.gov',
+        isUrl: true,
+        data: [
+          {
+            title: 'Jan-22',
+            value: '19',
+          },
+          {
+            title: 'total',
+            value: '22',
+          },
+        ],
+      },
+    ],
+  },
 };
 
 const allRegions = 'region.in[]=1&region.in[]=2';
@@ -159,20 +161,16 @@ describe('Resources Dashboard page', () => {
 
   it('renders correctly', async () => {
     // Page Load.
-    fetchMock.get(`${resourceOverviewUrl}?${allRegions}`, resourcesOverview);
-    fetchMock.get(`${resourceUseUrl}?${allRegions}`, resourceUseDefault);
+    fetchMock.get(`${resourcesUrl}?${allRegions}`, resourcesDefault);
 
     // Region 1.
-    fetchMock.get(`${resourceOverviewUrl}?${regionInParams}`, resourcesOverviewRegionOne);
-    fetchMock.get(`${resourceUseUrl}?${regionInParams}`, resourceUseRegionOne);
+    fetchMock.get(`${resourcesUrl}?${regionInParams}`, resourcesRegion1);
 
     // Region 2.
-    fetchMock.get(`${resourceOverviewUrl}?${regionTwoInParams}`, resourcesOverviewRegionTwo);
-    fetchMock.get(`${resourceUseUrl}?${regionTwoInParams}`, resourceUseRegionTwo);
+    fetchMock.get(`${resourcesUrl}?${regionTwoInParams}`, resourcesRegion2);
 
     // Report ID (non-region).
-    fetchMock.get(`${resourceOverviewUrl}?${reportIdInParams}`, resourcesOverviewRegionTwo);
-    fetchMock.get(`${resourceUseUrl}?${reportIdInParams}`, resourceUseRegionTwo);
+    fetchMock.get(`${resourcesUrl}?${reportIdInParams}`, resourcesRegion2);
 
     // Remove Region Filter.
     const user = {

@@ -1,8 +1,13 @@
-import React, { useContext, useMemo } from 'react';
+import React, {
+  useContext,
+  useMemo,
+  useState,
+  useEffect,
+} from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { Grid } from '@trussworks/react-uswds';
+import { Grid, Alert } from '@trussworks/react-uswds';
 import FilterPanel from '../../components/filter/FilterPanel';
 import { allRegionsUserHasPermissionTo } from '../../permissions';
 import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
@@ -10,9 +15,9 @@ import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndRe
 import AriaLiveContext from '../../AriaLiveContext';
 import ResourcesDashboardOverview from '../../widgets/ResourcesDashboardOverview';
 import ResourceUse from '../../widgets/ResourceUse';
-
+import { expandFilters, filtersToQueryString } from '../../utils';
 import './index.scss';
-import { expandFilters } from '../../utils';
+import fetchResourceData from '../../fetchers/Resources';
 
 import UserContext from '../../UserContext';
 import { RESOURCES_DASHBOARD_FILTER_CONFIG } from './constants';
@@ -26,6 +31,9 @@ export default function ResourcesDashboard() {
   const defaultRegion = user.homeRegionId || regions[0] || 0;
   const hasMultipleRegions = regions && regions.length > 1;
   const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [resourcesData, setResourcesData] = useState({});
+  const [error, updateError] = useState();
 
   const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
     FILTER_KEY,
@@ -40,6 +48,21 @@ export default function ResourcesDashboard() {
       }]
       : allRegionsFilters,
   );
+
+  // Remove Filters.
+  const onRemoveFilter = (id, addBackDefaultRegions) => {
+    const newFilters = [...filters];
+    const index = newFilters.findIndex((item) => item.id === id);
+    if (index !== -1) {
+      newFilters.splice(index, 1);
+      if (addBackDefaultRegions) {
+        // We always want the regions to appear in the URL.
+        setFilters([...allRegionsFilters, ...newFilters]);
+      } else {
+        setFilters(newFilters);
+      }
+    }
+  };
 
   // Apply filters.
   const onApplyFilters = (newFilters, addBackDefaultRegions) => {
@@ -58,22 +81,31 @@ export default function ResourcesDashboard() {
     ariaLiveContext.announce(`${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to resources`);
   };
 
-  // Remove Filters.
-  const onRemoveFilter = (id, addBackDefaultRegions) => {
-    const newFilters = [...filters];
-    const index = newFilters.findIndex((item) => item.id === id);
-    if (index !== -1) {
-      newFilters.splice(index, 1);
-      if (addBackDefaultRegions) {
-        // We always want the regions to appear in the URL.
-        setFilters([...allRegionsFilters, ...newFilters]);
-      } else {
-        setFilters(newFilters);
+  const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
+
+  useEffect(() => {
+    async function fetcHResourcesData() {
+      setIsLoading(true);
+      // Filters passed also contains region.
+      const filterQuery = filtersToQueryString(filtersToApply);
+      try {
+        const data = await fetchResourceData(
+          filterQuery,
+        );
+        setResourcesData(data);
+        updateError('');
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.log(e);
+        updateError('Unable to fetch resources');
+      } finally {
+        setIsLoading(false);
       }
     }
-  };
+    // Call resources fetch.
+    fetcHResourcesData();
+  }, [filtersToApply]);
 
-  const filtersToApply = expandFilters(filters);
   return (
     <div className="ttahub-resources-dashboard">
       <Helmet titleTemplate="%s - Resources Dashboard - TTA Hub" defaultTitle="TTA Hub - Resources Dashboard" />
@@ -89,6 +121,13 @@ export default function ResourcesDashboard() {
         <h1 className="landing">
           Resource dashboard
         </h1>
+        <Grid row>
+          {error && (
+            <Alert className="margin-bottom-2" type="error" role="alert">
+              {error}
+            </Alert>
+          )}
+        </Grid>
         <Grid className="ttahub-resources-dashboard--filters display-flex flex-wrap flex-align-center margin-y-2">
           <FilterPanel
             applyButtonAria="apply filters for resources dashboard"
@@ -100,7 +139,8 @@ export default function ResourcesDashboard() {
           />
         </Grid>
         <ResourcesDashboardOverview
-          filters={filtersToApply}
+          data={resourcesData.resourcesDashboardOverview}
+          loading={isLoading}
           fields={[
             'Reports with resources',
             'ECLKC Resources',
@@ -110,7 +150,8 @@ export default function ResourcesDashboard() {
           showTooltips
         />
         <ResourceUse
-          filters={filtersToApply}
+          data={resourcesData.resourcesUse}
+          loading={isLoading}
         />
       </>
     </div>
