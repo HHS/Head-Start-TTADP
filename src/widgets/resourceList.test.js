@@ -20,6 +20,7 @@ import {
   resourcesDashboardOverview,
   resourceUse,
   resourceTopicUse,
+  resourceDashboard,
 } from './resourceList';
 import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../constants';
 import { processActivityReportObjectiveForResourcesById } from '../services/resource';
@@ -422,7 +423,6 @@ describe('Resources list widget', () => {
   it('resourceTopicUse', async () => {
     const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
     const data = await resourceTopicUse(scopes);
-    console.log(data);
     expect(data).toStrictEqual({
       headers: ['Jan-21'],
       topics: [
@@ -432,6 +432,68 @@ describe('Resources list widget', () => {
         { heading: 'Fiscal / Budget', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
         { heading: 'Nutrition', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
         { heading: 'Oral Health', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
+      ],
+    });
+  });
+
+  it('resourceDashboard', async () => {
+    const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+    const data = await resourceDashboard(scopes);
+    console.log(data);
+    expect(data).toStrictEqual({
+      overview: {
+        report: { num: '4', numResources: '3', percentResources: '75.00%' },
+        resource: { num: '2', numEclkc: '1', percentEclkc: '50.00%' },
+        recipient: { num: '1', numResources: '1', percentResources: '100.00%' },
+        participant: { numParticipants: '44' },
+      },
+      use: {
+        headers: ['Jan-21'],
+        resources: [
+          {
+            heading: 'https://eclkc.ohs.acf.hhs.gov/test',
+            isUrl: true,
+            data: [
+              { title: 'Jan-21', value: '2' },
+              { title: 'Total', value: '2' },
+            ],
+          },
+          {
+            heading: 'https://non.test1.gov/a/b/c',
+            isUrl: true,
+            data: [
+              { title: 'Jan-21', value: '2' },
+              { title: 'Total', value: '2' },
+            ],
+          },
+        ],
+      },
+      topicUse: {
+        headers: ['Jan-21'],
+        topics: [
+          { heading: 'ERSEA', isUrl: false, data: [{ title: 'Jan-21', value: '2' }, { title: 'Total', value: '2' }] },
+          { heading: 'Coaching', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
+          { heading: 'Facilities', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
+          { heading: 'Fiscal / Budget', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
+          { heading: 'Nutrition', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
+          { heading: 'Oral Health', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
+        ],
+      },
+      domainList: [
+        {
+          domain: 'eclkc.ohs.acf.hhs.gov',
+          count: 2,
+          reportCount: 2,
+          recipientCount: 1,
+          resourceCount: 1,
+        },
+        {
+          domain: 'non.test1.gov',
+          count: 2,
+          reportCount: 2,
+          recipientCount: 1,
+          resourceCount: 1,
+        },
       ],
     });
   });

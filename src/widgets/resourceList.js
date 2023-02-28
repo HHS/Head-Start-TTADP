@@ -979,11 +979,10 @@ function generateResourceDomainList(
   }));
 
   if (removeLists) {
-    domainCounts = domainCounts.map((dc) => ({
-      ...dc,
-      reports: undefined,
-      recipients: undefined,
-      urls: undefined,
+    domainCounts = domainCounts.map(({
+      domain, count, reportCount, recipientCount, resourceCount,
+    }) => ({
+      domain, count, reportCount, recipientCount, resourceCount,
     }));
   }
 
@@ -1492,6 +1491,6 @@ export async function resourceDashboard(scopes) {
     overview: generateResourcesDashboardOverview(data),
     use: generateResourceUse(data),
     topicUse: generateResourceTopicUse(data),
-    domainList: generateResourceDomainList(data),
+    domainList: generateResourceDomainList(data, true),
   };
 }
