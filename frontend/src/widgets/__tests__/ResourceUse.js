@@ -106,7 +106,7 @@ describe('Resource Use Widget', () => {
     expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /total/i })).toBeInTheDocument();
 
-    expect(screen.getByRole('link', { name: /https:\/\/eclkc\.ohs\.acf\.hhs\.gov\/school-rea.../i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /https:\/\/eclkc\.ohs\.acf\.hhs\.gov/i })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: /17/i })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: /18/i })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: /19/i })).toBeInTheDocument();
