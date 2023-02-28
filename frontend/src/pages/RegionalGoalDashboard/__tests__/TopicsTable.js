@@ -70,5 +70,11 @@ describe('Topics Table', () => {
     const firstHeaderButton = firstHeader.querySelector('a');
     firstHeaderButton.click();
     expect(firstHeader).toHaveAttribute('aria-sort', 'ascending');
+
+    const secondHeader = screen.getAllByRole('columnheader')[1];
+    expect(secondHeader).toHaveAttribute('aria-sort', 'none');
+    const secondHeaderButton = secondHeader.querySelector('a');
+    secondHeaderButton.click();
+    expect(secondHeader).toHaveAttribute('aria-sort', 'descending');
   });
 });
