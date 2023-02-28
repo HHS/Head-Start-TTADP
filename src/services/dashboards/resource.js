@@ -20,7 +20,26 @@ import {
 } from '../../models';
 import { formatNumber } from '../../widgets/helpers';
 import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../../constants';
+import { ExitStatus } from 'typescript';
 
+/**
+ * @typedef {Object} RecipientPrimitive
+ * @property {number?} recipientId
+ * @property {number?} grantId
+ * @property {number?} otherEntityId
+ *
+ * @typedef {Object} Recipient
+ * @property {number?} recipientId
+ * @property {number[]?} grantIds
+ * @property {number?} otherEntityId
+ */
+
+/**
+ * combine and dedupe recipient lists
+ * @param {RecipientPrimitive[]|Recipient[]} source
+ * @param {RecipientPrimitive[]|Recipient[]} adding
+ * @returns {Recipient[]}
+ */
 const reduceRecipients = (source, adding) => adding.reduce((recipients, recipient) => {
   const exists = recipients.find((r) => (
     (r.recipientId === recipient.recipientId && recipient.recipientId)
@@ -43,20 +62,58 @@ const reduceRecipients = (source, adding) => adding.reduce((recipients, recipien
   ];
 }, source);
 
-// merge a set of resources into the full reports list
+/**
+ * @typedef {Object} RespourceDBPrimitive
+ * @property {number} resourceId
+ * @property {string} url
+ * @property {string} domain
+ * @property {string[]} sourceFields
+ * @property {string} tableType
+ * @property {string[]?} topics
+ *
+ * @typedef {Object} RespourcePrimitive
+ * @property {number} resourceId
+ * @property {string} url
+ * @property {string} domain
+ * @property {{ sourceField: string, tableType: string }[]} sourceFields
+ * @property {string[]?} topics
+ *
+ * @typedef {Object} ReportDBData
+ * @property {number} id
+ * @property {number} numberOfParticipants
+ * @property {string[]?} topics
+ * @property {string?} startDate
+ * @property {RecipientPrimitive[]} recipients
+ * @property {RespourceDBPrimitive[]?} resourceObjects
+ *
+ * @typedef {Object} ReportData
+ * @property {number} id
+ * @property {number} numberOfParticipants
+ * @property {string[]?} topics
+ * @property {string?} startDate
+ * @property {RecipientPrimitive[]} recipients
+ * @property {RespourcePrimitive[]?} resourceObjects
+ * */
+
+/**
+ * merge a set of resources into the full reports list
+ * @param {ReportData[]} currentData
+ * @param {ReportDBData[]} additionalData
+ * @returns {ReportData[]}
+ */
 const mergeInResources = (currentData, additionalData) => additionalData.reduce((
   clusteredReports,
   report,
 ) => {
-  const exists = clusteredReports.find((r) => r.dataValues.id === report.dataValues.id);
+  const exists = clusteredReports.find((r) => r.id === report.id);
   if (exists) {
-    exists.dataValues.resourceObjects = [
-      ...(exists.dataValues.resourceObjects
-        ? exists.dataValues.resourceObjects
+    ExitStatus.resourceObjects = [
+      ...(exists.resourceObjects
+        ? exists.resourceObjects
         : []),
-      ...report.dataValues.resourceObjects,
+      ...report.resourceObjects,
     ];
-    exists.dataValues.resourceObjects = (report.dataValues.resourceObjects || [])
+    exists.resourceObjects = (report.resourceObjects || [])
       .reduce((resourceObjects, resourceObject) => {
         const roExists = resourceObjects
           .find((ro) => ro.resourceId === resourceObject.resourceId);
@@ -87,7 +144,7 @@ const mergeInResources = (currentData, additionalData) => additionalData.reduce(
             })),
           },
         ];
-      }, (exists.dataValues.resourceObjects || []));
+      }, (exists.resourceObjects || []));
     return clusteredReports;
   }
 
@@ -97,7 +154,29 @@ const mergeInResources = (currentData, additionalData) => additionalData.reduce(
   ];
 }, currentData);
 
-// restructure the input from report centric to resource centric
+/**
+* @typedef {Object} ReportPrimitive
+* @property {number} id
+* @property {number} numberOfParticipants
+* @property {string[]?} topics
+* @property {string?} startDate
+* @property {RecipientPrimitive[]} recipients
+*
+* @typedef {Object} ResourceData
+* @property {number} resourceId
+* @property {string} url
+* @property {string} domain
+* @property {string[]} sourceFields
+* @property {string} tableType
+* @property {string[]?} topics
+* @property {ReportPrimitive[]} reports
+* */
+
+/**
+ * restructure the input from report centric to resource centric
+ * @param {ReportData[]} input
+ * @returns {ResourceData[]}
+ */
 const switchToResourceCentric = (input) => {
   const output = {};
   input.forEach(({
@@ -276,6 +355,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           ],
         },
       ],
+      raw: true,
     }),
     await ActivityReport.findAll({
       attributes: [
@@ -351,6 +431,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           required: true,
         },
       ],
+      raw: true,
     }),
     await ActivityReport.findAll({
       attributes: [
@@ -435,6 +516,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           required: true,
         },
       ],
+      raw: true,
     }),
     await ActivityReport.findAll({
       attributes: [
@@ -519,6 +601,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           required: true,
         },
       ],
+      raw: true,
     }),
     await ActivityReport.findAll({
       attributes: [
@@ -642,6 +725,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           required: true,
         },
       ],
+      raw: true,
     }),
     await ActivityReport.findAll({
       attributes: [
@@ -776,6 +860,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           required: true,
         },
       ],
+      raw: true,
     }),
   ]);
 
@@ -787,13 +872,20 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
   reports = mergeInResources(reports, viaGoals);
 
   reports = reports
-    .map((r) => ({
-      id: r.dataValues.id,
-      numberOfParticipants: r.dataValues.numberOfParticipants,
-      topics: r.dataValues.topics,
-      startDate: r.dataValues.startDate,
-      recipients: r.dataValues.recipients,
-      resources: r.dataValues.resourceObjects,
+    .map(({
+      id,
+      numberOfParticipants,
+      topics,
+      startDate,
+      recipients,
+      resourceObjects: resources,
+    }) => ({
+      id,
+      numberOfParticipants,
+      topics,
+      startDate,
+      recipients,
+      resources,
     }));
 
   let resourcesWithRecipients = [];
