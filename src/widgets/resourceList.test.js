@@ -180,6 +180,13 @@ describe('Resources list widget', () => {
       },
     });
 
+    await ActivityReportObjectiveTopic.findOrCreate({
+      where: {
+        activityReportObjectiveId: activityReportObjectiveOne.id,
+        topicId: 60,
+      },
+    });
+
     // Report 1 ECLKC Resource 1.
     // Report 1 Non-ECLKC Resource 1.
     await processActivityReportObjectiveForResourcesById(
@@ -443,6 +450,7 @@ describe('Resources list widget', () => {
       headers: ['Jan-21'],
       topics: [
         { heading: 'ERSEA', isUrl: false, data: [{ title: 'Jan-21', value: '2' }, { title: 'Total', value: '2' }] },
+        { heading: 'CLASS: Classroom Organization', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
         { heading: 'Coaching', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
         { heading: 'Facilities', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
         { heading: 'Fiscal / Budget', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
@@ -495,6 +503,7 @@ describe('Resources list widget', () => {
         headers: ['Jan-21'],
         topics: [
           { heading: 'ERSEA', isUrl: false, data: [{ title: 'Jan-21', value: '2' }, { title: 'Total', value: '2' }] },
+          { heading: 'CLASS: Classroom Organization', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
           { heading: 'Coaching', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
           { heading: 'Facilities', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
           { heading: 'Fiscal / Budget', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
