@@ -15,8 +15,6 @@ const FileReviewItem = ({ filename, url, status }) => {
         <div className="flex-align-end display-flex flex-column no-print">
           {approved
           && <a href={url}>Download</a>}
-          {!approved
-          && <div>Not Approved</div>}
         </div>
       </Grid>
     </Grid>
