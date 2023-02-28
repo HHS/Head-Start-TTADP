@@ -202,17 +202,17 @@ function App() {
             <AppWrapper authenticated logout={logout}><RegionalDashboard user={user} /></AppWrapper>
           )}
         />
-        <FeatureFlag flag="regional_goal_dashboard">
-          <Route
-            exact
-            path="/regional-goal-dashboard"
-            render={() => (
-              <AppWrapper authenticated logout={logout}>
+        <Route
+          exact
+          path="/regional-goal-dashboard"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="regional_goal_dashboard" renderNotFound>
                 <RegionalGoalDashboard user={user} />
-              </AppWrapper>
-            )}
-          />
-        </FeatureFlag>
+              </FeatureFlag>
+            </AppWrapper>
+          )}
+        />
         <Route
           exact
           path="/account"
