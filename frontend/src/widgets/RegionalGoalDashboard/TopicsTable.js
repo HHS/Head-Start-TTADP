@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
+import { v4 as uuidv4 } from 'uuid';
 import {
   Table,
 } from '@trussworks/react-uswds';
@@ -71,15 +72,21 @@ export function TopicsTableWidget({ data, loading }) {
         objB = b.statuses;
       }
 
-      if (objA[prop] < objB[prop]) {
-        return direction === 'asc' ? -1 : 1;
+      if (objA[prop].localeCompare) {
+        return objA[prop].localeCompare(objB[prop]) * (direction === 'asc' ? 1 : -1);
       }
+
       if (objA[prop] > objB[prop]) {
         return direction === 'asc' ? 1 : -1;
       }
+
+      if (objA[prop] < objB[prop]) {
+        return direction === 'asc' ? -1 : 1;
+      }
+
       return 0;
     });
-    setSorted(sortedData);
+    setSorted([...sortedData]);
   }, [sortConfig, data]);
 
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
@@ -133,13 +140,13 @@ export function TopicsTableWidget({ data, loading }) {
                 {renderColumnHeader('In Progress', 'statuses.In Progress')}
                 {renderColumnHeader('Closed', 'statuses.Closed')}
                 {renderColumnHeader('Suspended', 'statuses.Suspended')}
-                {renderColumnHeader('Total', 'statuses.Total')}
+                {renderColumnHeader('Total', 'total')}
               </tr>
             </thead>
             <tbody>
               {sorted.map((row) => (
                 <TopicRow
-                  key={row.topic}
+                  key={uuidv4()}
                   topic={row.topic}
                   statuses={row.statuses}
                   total={row.total}
