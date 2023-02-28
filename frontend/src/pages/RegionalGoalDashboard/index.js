@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useMemo } from 'react';
+import React, { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid, GridContainer } from '@trussworks/react-uswds';
@@ -72,20 +72,16 @@ export default function RegionalGoalDashboard() {
 
   const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(FILTER_KEY, defaultFilters);
 
-  const setFilters = useCallback((newFilters) => {
-    setFiltersInHook(newFilters);
-  }, [setFiltersInHook]);
-
   // Apply filters.
   const onApplyFilters = (newFilters, addBackDefaultRegions) => {
     if (addBackDefaultRegions) {
       // We always want the regions to appear in the URL.
-      setFilters([
+      setFiltersInHook([
         ...allRegionsFilters,
         ...newFilters,
       ]);
     } else {
-      setFilters(newFilters);
+      setFiltersInHook(newFilters);
     }
   };
 
@@ -97,9 +93,9 @@ export default function RegionalGoalDashboard() {
       newFilters.splice(index, 1);
       if (addBackDefaultRegions) {
         // We always want the regions to appear in the URL.
-        setFilters([...allRegionsFilters, ...newFilters]);
+        setFiltersInHook([...allRegionsFilters, ...newFilters]);
       } else {
-        setFilters(newFilters);
+        setFiltersInHook(newFilters);
       }
     }
   };
@@ -113,7 +109,7 @@ export default function RegionalGoalDashboard() {
         filters={filters}
         user={user}
         showFilterWithMyRegions={
-          () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
+          () => showFilterWithMyRegions(allRegionsFilters, filters, setFiltersInHook)
         }
       />
       <h1 className="landing">
