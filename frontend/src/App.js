@@ -44,6 +44,7 @@ import {
 import AppLoadingContext from './AppLoadingContext';
 import Loader from './components/Loader';
 import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
+import FeatureFlag from './components/FeatureFlag';
 
 function App() {
   const [user, updateUser] = useState();
@@ -201,15 +202,17 @@ function App() {
             <AppWrapper authenticated logout={logout}><RegionalDashboard user={user} /></AppWrapper>
           )}
         />
-        <Route
-          exact
-          path="/regional-goal-dashboard"
-          render={() => (
-            <AppWrapper authenticated logout={logout}>
-              <RegionalGoalDashboard user={user} />
-            </AppWrapper>
-          )}
-        />
+        <FeatureFlag flag="regional_goal_dashboard">
+          <Route
+            exact
+            path="/regional-goal-dashboard"
+            render={() => (
+              <AppWrapper authenticated logout={logout}>
+                <RegionalGoalDashboard user={user} />
+              </AppWrapper>
+            )}
+          />
+        </FeatureFlag>
         <Route
           exact
           path="/account"
