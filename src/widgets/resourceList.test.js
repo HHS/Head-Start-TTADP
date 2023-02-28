@@ -30,6 +30,7 @@ const GRANT_ID_ONE = 107843;
 const REGION_ID = 14;
 const NONECLKC_DOMAIN = 'non.test1.gov';
 const ECLKC_RESOURCE_URL = `https://${RESOURCE_DOMAIN.ECLKC}/test`;
+const ECLKC_RESOURCE_URL2 = `https://${RESOURCE_DOMAIN.ECLKC}/test2`;
 const NONECLKC_RESOURCE_URL = `https://${NONECLKC_DOMAIN}/a/b/c`;
 
 const mockUser = {
@@ -179,13 +180,6 @@ describe('Resources list widget', () => {
       },
     });
 
-    // await ActivityReportObjectiveTopic.findOrCreate({
-    //   where: {
-    //     activityReportObjectiveId: activityReportObjectiveOne.id,
-    //     topicId:
-    //   },
-    // });
-
     // Report 1 ECLKC Resource 1.
     // Report 1 Non-ECLKC Resource 1.
     await processActivityReportObjectiveForResourcesById(
@@ -222,7 +216,7 @@ describe('Resources list widget', () => {
     // Report 3 Non-ECLKC Resource 1.
     await processActivityReportObjectiveForResourcesById(
       activityReportObjectiveThree.id,
-      [NONECLKC_RESOURCE_URL],
+      [NONECLKC_RESOURCE_URL, ECLKC_RESOURCE_URL2],
     );
 
     // Report 4 (No Resources).
@@ -289,6 +283,44 @@ describe('Resources list widget', () => {
     });
 
     const res = await resourceList(scopes);
+    expect(res.length).toBe(4);
+
+    expect(res[0].name).toBe(ECLKC_RESOURCE_URL);
+    expect(res[0].url).toBe(ECLKC_RESOURCE_URL);
+    expect(res[0].count).toBe(2);
+    expect(res[0].reportCount).toBe(2);
+    expect(res[0].participantCount).toBe(22);
+    expect(res[0].recipientCount).toBe(1);
+
+    expect(res[1].name).toBe(NONECLKC_RESOURCE_URL);
+    expect(res[1].url).toBe(NONECLKC_RESOURCE_URL);
+    expect(res[1].count).toBe(2);
+    expect(res[1].reportCount).toBe(2);
+    expect(res[1].participantCount).toBe(22);
+    expect(res[1].recipientCount).toBe(1);
+
+    expect(res[2].name).toBe(ECLKC_RESOURCE_URL2);
+    expect(res[2].url).toBe(ECLKC_RESOURCE_URL2);
+    expect(res[2].count).toBe(1);
+    expect(res[2].reportCount).toBe(1);
+    expect(res[2].participantCount).toBe(11);
+    expect(res[2].recipientCount).toBe(1);
+
+    expect(res[3].name).toBe('none');
+    expect(res[3].url).toBe(null);
+    expect(res[3].count).toBe(1);
+    expect(res[3].reportCount).toBe(1);
+    expect(res[3].participantCount).toBe(11);
+    expect(res[3].recipientCount).toBe(0);
+  });
+
+  it('retrieves resources list short date range for specified region', async () => {
+    const scopes = await filtersToScopes({
+      'region.in': [REGION_ID],
+      'startDate.win': '2021/01/01-2021/01/20',
+    });
+
+    const res = await resourceList(scopes);
     expect(res.length).toBe(3);
 
     expect(res[0].name).toBe(ECLKC_RESOURCE_URL);
@@ -305,36 +337,12 @@ describe('Resources list widget', () => {
     expect(res[1].participantCount).toBe(22);
     expect(res[1].recipientCount).toBe(1);
 
-    expect(res[2].name).toBe('none');
-    expect(res[2].url).toBe(null);
+    expect(res[2].name).toBe(ECLKC_RESOURCE_URL2);
+    expect(res[2].url).toBe(ECLKC_RESOURCE_URL2);
     expect(res[2].count).toBe(1);
     expect(res[2].reportCount).toBe(1);
     expect(res[2].participantCount).toBe(11);
-    expect(res[2].recipientCount).toBe(0);
-  });
-
-  it('retrieves resources list short date range for specified region', async () => {
-    const scopes = await filtersToScopes({
-      'region.in': [REGION_ID],
-      'startDate.win': '2021/01/01-2021/01/20',
-    });
-
-    const res = await resourceList(scopes);
-    expect(res.length).toBe(2);
-
-    expect(res[0].name).toBe(ECLKC_RESOURCE_URL);
-    expect(res[0].url).toBe(ECLKC_RESOURCE_URL);
-    expect(res[0].count).toBe(2);
-    expect(res[0].reportCount).toBe(2);
-    expect(res[0].participantCount).toBe(22);
-    expect(res[0].recipientCount).toBe(1);
-
-    expect(res[1].name).toBe(NONECLKC_RESOURCE_URL);
-    expect(res[1].url).toBe(NONECLKC_RESOURCE_URL);
-    expect(res[1].count).toBe(2);
-    expect(res[1].reportCount).toBe(2);
-    expect(res[0].participantCount).toBe(22);
-    expect(res[1].recipientCount).toBe(1);
+    expect(res[2].recipientCount).toBe(1);
   });
 
   it('retrieves resources domain list within date range for specified region', async () => {
@@ -343,9 +351,9 @@ describe('Resources list widget', () => {
     expect(domains.length).toBe(2);
 
     expect(domains[0].domain).toBe(RESOURCE_DOMAIN.ECLKC);
-    expect(domains[0].count).toBe(2);
-    expect(domains[0].resourceCount).toBe(1);
-    expect(domains[0].reportCount).toBe(2);
+    expect(domains[0].count).toBe(3);
+    expect(domains[0].resourceCount).toBe(2);
+    expect(domains[0].reportCount).toBe(3);
     expect(domains[0].recipientCount).toBe(1);
 
     expect(domains[1].domain).toBe(NONECLKC_DOMAIN);
@@ -385,10 +393,10 @@ describe('Resources list widget', () => {
         percentResources: '75.00%',
       },
       resource: {
-        num: '2',
-        numEclkc: '1',
+        num: '3',
+        numEclkc: '2',
         // numNonEclkc: '1',
-        percentEclkc: '50.00%',
+        percentEclkc: '66.67%',
         // percentNonEclkc: '50.00%',
       },
     });
@@ -414,6 +422,14 @@ describe('Resources list widget', () => {
           data: [
             { title: 'Jan-21', value: '2' },
             { title: 'Total', value: '2' },
+          ],
+        },
+        {
+          heading: 'https://eclkc.ohs.acf.hhs.gov/test2',
+          isUrl: true,
+          data: [
+            { title: 'Jan-21', value: '1' },
+            { title: 'Total', value: '1' },
           ],
         },
       ],
@@ -442,7 +458,7 @@ describe('Resources list widget', () => {
     expect(data).toStrictEqual({
       overview: {
         report: { num: '4', numResources: '3', percentResources: '75.00%' },
-        resource: { num: '2', numEclkc: '1', percentEclkc: '50.00%' },
+        resource: { num: '3', numEclkc: '2', percentEclkc: '66.67%' },
         recipient: { num: '1', numResources: '1', percentResources: '100.00%' },
         participant: { numParticipants: '44' },
       },
@@ -465,6 +481,14 @@ describe('Resources list widget', () => {
               { title: 'Total', value: '2' },
             ],
           },
+          {
+            heading: 'https://eclkc.ohs.acf.hhs.gov/test2',
+            isUrl: true,
+            data: [
+              { title: 'Jan-21', value: '1' },
+              { title: 'Total', value: '1' },
+            ],
+          },
         ],
       },
       topicUse: {
@@ -481,10 +505,10 @@ describe('Resources list widget', () => {
       domainList: [
         {
           domain: 'eclkc.ohs.acf.hhs.gov',
-          count: 2,
-          reportCount: 2,
+          count: 3,
+          reportCount: 3,
           recipientCount: 1,
-          resourceCount: 1,
+          resourceCount: 2,
         },
         {
           domain: 'non.test1.gov',
