@@ -853,7 +853,6 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
   return { resources: resourcesWithRecipients, reports, topics: topicsWithAdditionalData };
 }
 
-
 const generateResourceList = (
   precalculatedData, // data generated from calling resourceData
   removeLists, // exclude list of report ids and recipient ids from result
