@@ -1,8 +1,8 @@
 @use '../colors.scss' as *;
 
-@media (min-width: 64rem) { 
+@media (min-width: 64rem) {     
+    .usa-site-alert--ttahub__standard .usa-alert__body,
     .usa-site-alert--ttahub__slim .usa-alert__body {
-        align-items: center;
         display: grid;
         grid-template-columns: max-content 1fr;
         grid-gap: 0.5rem;    
@@ -17,6 +17,10 @@
         left: 0;
     }
 
+    .has-alerts .usa-site-alert--ttahub__slim .usa-alert::before {
+        top: -0.5rem;
+    }
+
     .has-alerts .usa-site-alert--ttahub .usa-alert__body {
         padding-left: 3rem;
     }
@@ -27,8 +31,15 @@
   background-color: $error-dark;
 }
 
+.usa-site-alert--ttahub__slim .usa-alert {
+  padding-bottom: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+.usa-site-alert--ttahub__standard .usa-alert__heading,
 .usa-site-alert--ttahub__slim .usa-alert__heading {
    font-size: 1.06rem;
+   line-height: 1.5;
    margin: 0;
 }
 

@@ -33,6 +33,7 @@ export const ALERT_VARIANTS = {
 export const ALERT_SIZES = {
   STANDARD: 'standard',
   SLIM: 'slim',
+  LARGE: 'large',
 };
 
 export const DATE_FORMAT = 'MM/DD/YYYY';

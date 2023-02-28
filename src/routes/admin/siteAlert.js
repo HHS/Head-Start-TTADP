@@ -11,7 +11,6 @@ const namespace = 'SERVICE:ADMIN:SITEALERTS';
 const ALERT_FIELDS = [
   'status',
   'message',
-  'title',
   'endDate',
   'startDate',
   'variant',

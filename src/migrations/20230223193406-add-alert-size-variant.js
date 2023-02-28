@@ -15,12 +15,12 @@ module.exports = {
       );
 
       await queryInterface.addColumn('SiteAlerts', 'size', {
-        type: Sequelize.ENUM('standard', 'slim'),
+        type: Sequelize.ENUM('standard', 'slim', 'large'),
         allowNull: false,
         defaultValue: 'standard',
       }, { transaction });
 
-      return queryInterface.sequelize.query('UPDATE "SiteAlerts" SET "size" = \'standard\'', { transaction });
+      return queryInterface.sequelize.query('UPDATE "SiteAlerts" SET "size" = \'large\'', { transaction });
     });
   },
 
