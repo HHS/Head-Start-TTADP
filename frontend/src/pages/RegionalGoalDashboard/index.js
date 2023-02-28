@@ -8,7 +8,6 @@ import { getUserRegions } from '../../permissions';
 import UserContext from '../../UserContext';
 import { expandFilters, formatDateRange } from '../../utils';
 import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
-import './index.css';
 import { DASHBOARD_FILTER_CONFIG } from './constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import FilterPanel from '../../components/filter/FilterPanel';
