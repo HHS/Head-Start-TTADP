@@ -57,7 +57,7 @@ describe('Topics Table', () => {
 
   it('shows the loading state', async () => {
     renderTopicsTable(true);
-    const loading = await screen.findByText('Loading...');
+    const loading = await screen.findByLabelText('topics table loading');
     expect(loading).toBeInTheDocument();
   });
 

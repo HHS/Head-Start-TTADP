@@ -129,7 +129,7 @@ export function TopicsTableWidget({ data, loading }) {
 
   return (
     <>
-      <Container paddingX={3} paddingY={3} loading={loading} loadingLabel="total matched goals loading">
+      <Container paddingX={3} paddingY={3} loading={loading} loadingLabel="topics table loading">
         <div className="landing inline-size-auto maxw-full margin-bottom-3">
           <div className="usa-table-container--scrollable">
             <Table fullWidth striped>
