@@ -1,7 +1,7 @@
 @use '../colors.scss' as *;
 
 @media (min-width: 64rem) { 
-    .usa-site-alert--ttahub .usa-alert__body {
+    .usa-site-alert--ttahub__slim .usa-alert__body {
         align-items: center;
         display: grid;
         grid-template-columns: max-content 1fr;
@@ -27,7 +27,7 @@
   background-color: $error-dark;
 }
 
-.usa-site-alert--ttahub .usa-alert__heading {
+.usa-site-alert--ttahub__slim .usa-alert__heading {
    font-size: 1.06rem;
    margin: 0;
 }

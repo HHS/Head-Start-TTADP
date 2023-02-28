@@ -30,6 +30,11 @@ export const ALERT_VARIANTS = {
   EMERGENCY: 'emergency',
 };
 
+export const ALERT_SIZES = {
+  STANDARD: 'standard',
+  SLIM: 'slim',
+};
+
 export const DATE_FORMAT = 'MM/DD/YYYY';
 
 export const DECIMAL_BASE = 10;

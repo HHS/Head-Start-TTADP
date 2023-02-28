@@ -1,10 +1,22 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import IdleModal from './IdleModal';
 
 export default function AppWrapper({
-  padded, authenticated, children, logout,
+  padded, authenticated, children, logout, hasAlerts,
 }) {
+  const appWrapperRef = useRef(null);
+
+  // This resizes the site nav content's gap to account for the header if there is an alert
+  useEffect(() => {
+    if (hasAlerts && appWrapperRef.current) {
+      const header = document.querySelector('.smart-hub-header.has-alerts');
+      if (header) {
+        appWrapperRef.current.style.marginTop = `${appWrapperRef.current.style.marginTop + header.offsetHeight}px`;
+      }
+    }
+  }, [hasAlerts]);
+
   if (!authenticated) {
     return children;
   }
@@ -23,7 +35,7 @@ export default function AppWrapper({
 
   if (padded) {
     return (
-      <div className="grid-row maxw-widescreen flex-align-start smart-hub-offset-nav tablet:smart-hub-offset-nav desktop:smart-hub-offset-nav margin-top-9 margin-right-5">
+      <div ref={appWrapperRef} id="appWrapper" className="grid-row maxw-widescreen flex-align-start smart-hub-offset-nav tablet:smart-hub-offset-nav desktop:smart-hub-offset-nav margin-top-9 margin-right-5">
         <div className="grid-col-12 margin-top-2 margin-right-2 margin-left-3">
           <section className="usa-section padding-top-3">
             {content}
@@ -34,7 +46,7 @@ export default function AppWrapper({
   }
 
   return (
-    <div id="appWrapper" className="grid-row flex-align-start smart-hub-offset-nav tablet:smart-hub-offset-nav desktop:smart-hub-offset-nav margin-top-9">
+    <div ref={appWrapperRef} id="appWrapper" className="grid-row flex-align-start smart-hub-offset-nav tablet:smart-hub-offset-nav desktop:smart-hub-offset-nav margin-top-9">
       <div className="grid-col-12">
         <section className="usa-section padding-top-0">
           {content}
@@ -49,9 +61,11 @@ AppWrapper.propTypes = {
   padded: PropTypes.bool,
   children: PropTypes.node.isRequired,
   logout: PropTypes.func.isRequired,
+  hasAlerts: PropTypes.bool,
 };
 
 AppWrapper.defaultProps = {
   authenticated: false,
   padded: true,
+  hasAlerts: false,
 };
