@@ -122,9 +122,11 @@ describe('saveReport', () => {
   afterAll(async () => {
     await ActivityRecipient.destroy({
       where: { activityReportId: [firstReport.id, secondReport.id] },
+      individualHooks: true,
     });
     await NextStep.destroy({
       where: { activityReportId: [firstReport.id, secondReport.id] },
+      individualHooks: true,
     });
 
     const goalsToDelete = await Goal.findAll({
@@ -133,27 +135,49 @@ describe('saveReport', () => {
 
     await ActivityReportGoal.destroy({
       where: { activityReportId: [firstReport.id, secondReport.id] },
+      individualHooks: true,
     });
     await ActivityReportObjective.destroy({
       where: { activityReportId: [firstReport.id, secondReport.id] },
+      individualHooks: true,
     });
-    await ActivityReport.destroy({ where: { id: [firstReport.id, secondReport.id] } });
-    await Objective.destroy({ where: { goalId: goalsToDelete.map(({ id }) => id) } });
-    await Goal.destroy({ where: { id: goalsToDelete.map(({ id }) => id) } });
-    await Grant.destroy({ where: { id: [firstGrant.id, secondGrant.id] } });
-    await Recipient.destroy({ where: { id: recipient.id } });
-    await Topic.destroy({ where: { id: [firstTopic.id, secondTopic.id] } });
+    await ActivityReport.destroy({
+      where: { id: [firstReport.id, secondReport.id] },
+      individualHooks: true,
+    });
+    await Objective.destroy({
+      where: { goalId: goalsToDelete.map(({ id }) => id) },
+      individualHooks: true,
+    });
+    await Goal.destroy({
+      where: { id: goalsToDelete.map(({ id }) => id) },
+      individualHooks: true,
+    });
+    await Grant.destroy({
+      where: { id: [firstGrant.id, secondGrant.id] },
+      individualHooks: true,
+    });
+    await Recipient.destroy({
+      where: { id: recipient.id },
+      individualHooks: true,
+    });
+    await Topic.destroy({
+      where: { id: [firstTopic.id, secondTopic.id] },
+      individualHooks: true,
+    });
 
     await Permission.destroy({
       where: {
         userId: user.id,
       },
+      individualHooks: true,
     });
 
     await User.destroy({
       where: {
         id: user.id,
       },
+      individualHooks: true,
     });
 
     await sequelize.close();
