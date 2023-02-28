@@ -439,7 +439,6 @@ describe('Resources list widget', () => {
   it('resourceDashboard', async () => {
     const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
     const data = await resourceDashboard(scopes);
-    console.log(data);
     expect(data).toStrictEqual({
       overview: {
         report: { num: '4', numResources: '3', percentResources: '75.00%' },
