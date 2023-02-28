@@ -11,6 +11,8 @@ import {
   resourceDomainList,
   resourcesDashboardOverview,
   resourceUse,
+  resourceTopicUse,
+  resourceDashboard,
 } from './resourceList';
 
 /*
@@ -29,4 +31,6 @@ export default {
   resourceDomainList,
   resourcesDashboardOverview,
   resourceUse,
+  resourceTopicUse,
+  resourceDashboard,
 };
