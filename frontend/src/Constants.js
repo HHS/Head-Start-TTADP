@@ -322,6 +322,7 @@ export const ALERT_VARIANTS = {
 };
 
 export const ALERT_SIZES = {
-  SLIM: 'slim',
   STANDARD: 'standard',
+  SLIM: 'slim',
+  LARGE: 'large',
 };

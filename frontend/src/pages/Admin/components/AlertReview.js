@@ -109,7 +109,7 @@ export default function AlertReview({ alert, onDelete }) {
   };
 
   return (
-    <div className="margin-y-3 padding-2 position-relative shadow-2 radius-md">
+    <div className="margin-y-3 padding-2 position-relative shadow-2 radius-md has-alerts">
       {alert.message || alert.title ? (
         <SiteAlert
           heading={title}
@@ -170,7 +170,6 @@ export default function AlertReview({ alert, onDelete }) {
           <div className="margin-top-3">
             <label htmlFor={`alert-${alert.id}-title`}>
               Title
-              <Req />
             </label>
             <input
               id={`alert-${alert.id}-title`}
@@ -180,7 +179,6 @@ export default function AlertReview({ alert, onDelete }) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               disabled={isFetching}
-              required
             />
           </div>
           <div className="margin-top-3">
