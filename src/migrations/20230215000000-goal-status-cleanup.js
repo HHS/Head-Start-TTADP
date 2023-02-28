@@ -19,6 +19,7 @@ module.exports = {
         throw (err);
       }
       try {
+        // set status of draft for non-imported goals without a status.
         await queryInterface.sequelize.query(`
           WITH
             "GoalFixes" AS (
@@ -41,6 +42,7 @@ module.exports = {
           WHERE g.id = gf.id;
           `, { transaction });
 
+        // set status of not started for imported goals without a status.
         await queryInterface.sequelize.query(`
           WITH
             "GoalFixes" AS (
@@ -63,6 +65,7 @@ module.exports = {
           WHERE g.id = gf.id;
           `, { transaction });
 
+        // copy the createdVia from goal this goal was cloned from
         await queryInterface.sequelize.query(`
           WITH
             "GoalFixes" AS (
@@ -79,7 +82,7 @@ module.exports = {
               AND g2."createdVia" IS NOT NULL
               WHERE g."createdVia" IS NULL
               AND arg.id IS NOT NULL
-              AND g2."createdVia" IS NOT NULL
+              AND g2.id IS NOT NULL
               group by 1
               order by g.id
             )
@@ -94,4 +97,7 @@ module.exports = {
       }
     },
   ),
+  // no structral changed to undo, once updates are made the record are unidentifiable from all
+  // others, so a clearing of values set is not posable.
+  down: () => {},
 };
