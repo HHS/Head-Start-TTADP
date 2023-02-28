@@ -274,7 +274,6 @@ describe('Resources list widget', () => {
     });
 
     const res = await resourceList(scopes);
-    console.log(res);
     expect(res.length).toBe(3);
 
     expect(res[0].name).toBe(ECLKC_RESOURCE_URL);
@@ -344,7 +343,6 @@ describe('Resources list widget', () => {
   it('retrieves resources dashboard overview within date range for specified region', async () => {
     const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
     const data = await resourcesDashboardOverview(scopes);
-    console.log(data);
     expect(data).toStrictEqual({
       participant: {
         numParticipants: '44',
