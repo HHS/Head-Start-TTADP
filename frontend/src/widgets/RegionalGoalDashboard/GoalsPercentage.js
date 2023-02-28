@@ -7,15 +7,14 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import withWidgetData from '../withWidgetData';
 import colors from '../../colors';
+import Container from '../../components/Container';
 
 export function GoalsPercentageWidget({ data, loading }) {
-  if (loading) return (<div>Loading...</div>);
-
   const percentage = Math.round(data.percentage * 100) / 100;
 
   return (
-    <div className="goals-percentage-widget">
-      <Grid gap={4} desktop={{ col: 4 }} tablet={{ col: 4 }} mobileLg={{ col: 12 }} className="smart-hub--dashboard-overview-field margin-bottom-1 display-flex bg-white shadow-2 padding-2">
+    <Grid gap={4} desktop={{ col: 4 }} tablet={{ col: 4 }} mobileLg={{ col: 12 }} className="smart-hub--dashboard-overview-field margin-bottom-1 display-flex">
+      <Container paddingX={3} paddingY={3} loading={loading} loadingLabel="total matched goals loading">
         <span className="smart-hub--dashboard-overview-field-icon flex-1 display-flex flex-justify-start flex-align-center">
           <span className="smart-hub--dashboard-overview-field-icon-background display-flex flex-justify-center flex-align-center" style={{ backgroundColor: colors.ttahubMagentaLight }}>
             <FontAwesomeIcon color={colors.ttahubMagenta} icon={faUser} />
@@ -42,8 +41,8 @@ export function GoalsPercentageWidget({ data, loading }) {
             </div>
           </div>
         </span>
-      </Grid>
-    </div>
+      </Container>
+    </Grid>
   );
 }
 
