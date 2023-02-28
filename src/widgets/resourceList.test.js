@@ -11,6 +11,7 @@ import db, {
   Objective,
   ActivityReportObjective,
   ActivityReportObjectiveResource,
+  ActivityReportObjectiveTopic,
 } from '../models';
 import filtersToScopes from '../scopes';
 import {
@@ -18,6 +19,7 @@ import {
   resourceDomainList,
   resourcesDashboardOverview,
   resourceUse,
+  resourceTopicUse,
 } from './resourceList';
 import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../constants';
 import { processActivityReportObjectiveForResourcesById } from '../services/resource';
@@ -82,7 +84,7 @@ const reportObject = {
   targetPopulations: ['pop'],
   reason: ['reason'],
   participants: ['participants'],
-  topics: ['topics'],
+  topics: ['Coaching'],
   ttaType: ['technical-assistance'],
 };
 
@@ -92,6 +94,7 @@ const regionOneReportA = {
   duration: 1,
   startDate: '2021-01-02T12:00:00Z',
   endDate: '2021-01-31T12:00:00Z',
+  topics: ['Coaching', 'ERSEA'],
 };
 
 const regionOneReportB = {
@@ -100,6 +103,7 @@ const regionOneReportB = {
   duration: 2,
   startDate: '2021-01-15T12:00:00Z',
   endDate: '2021-02-15T12:00:00Z',
+  topics: ['Oral Health'],
 };
 
 const regionOneReportC = {
@@ -108,6 +112,7 @@ const regionOneReportC = {
   duration: 3,
   startDate: '2021-01-20T12:00:00Z',
   endDate: '2021-02-28T12:00:00Z',
+  topics: ['Nutrition'],
 };
 
 const regionOneReportD = {
@@ -116,6 +121,7 @@ const regionOneReportD = {
   duration: 3,
   startDate: '2021-01-22T12:00:00Z',
   endDate: '2021-01-31T12:00:00Z',
+  topics: ['Facilities', 'Fiscal / Budget', 'ERSEA'],
 };
 
 const regionOneDraftReport = {
@@ -126,6 +132,7 @@ const regionOneDraftReport = {
   endDate: '2021-01-31T12:00:00Z',
   submissionStatus: REPORT_STATUSES.DRAFT,
   calculatedStatus: REPORT_STATUSES.DRAFT,
+  topics: ['Equity', 'ERSEA'],
 };
 
 let grant;
@@ -170,6 +177,13 @@ describe('Resources list widget', () => {
         objectiveId: objective.id,
       },
     });
+
+    // await ActivityReportObjectiveTopic.findOrCreate({
+    //   where: {
+    //     activityReportObjectiveId: activityReportObjectiveOne.id,
+    //     topicId:
+    //   },
+    // });
 
     // Report 1 ECLKC Resource 1.
     // Report 1 Non-ECLKC Resource 1.
@@ -401,6 +415,23 @@ describe('Resources list widget', () => {
             { title: 'Total', value: '2' },
           ],
         },
+      ],
+    });
+  });
+
+  it('resourceTopicUse', async () => {
+    const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+    const data = await resourceTopicUse(scopes);
+    console.log(data);
+    expect(data).toStrictEqual({
+      headers: ['Jan-21'],
+      topics: [
+        { heading: 'ERSEA', isUrl: false, data: [{ title: 'Jan-21', value: '2' }, { title: 'Total', value: '2' }] },
+        { heading: 'Coaching', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
+        { heading: 'Facilities', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
+        { heading: 'Fiscal / Budget', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
+        { heading: 'Nutrition', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
+        { heading: 'Oral Health', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
       ],
     });
   });
