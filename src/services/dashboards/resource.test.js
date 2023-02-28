@@ -12,8 +12,8 @@ import db, {
   ActivityReportObjective,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
-} from '../models';
-import filtersToScopes from '../scopes';
+} from '../../models';
+import filtersToScopes from '../../scopes';
 import {
   resourceList,
   resourceDomainList,
@@ -21,9 +21,9 @@ import {
   resourceUse,
   resourceTopicUse,
   resourceDashboard,
-} from './resourceList';
-import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../constants';
-import { processActivityReportObjectiveForResourcesById } from '../services/resource';
+} from './resource';
+import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../../constants';
+import { processActivityReportObjectiveForResourcesById } from '../resource';
 
 const RECIPIENT_ID = 46204400;
 const GRANT_ID_ONE = 107843;
