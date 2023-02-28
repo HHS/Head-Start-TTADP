@@ -20,11 +20,11 @@ export function GoalsPercentageWidget({ data, loading }) {
             <FontAwesomeIcon color={colors.ttahubMagenta} icon={faUser} />
           </span>
           <div className="display-flex flex-column flex-justify-start margin-left-4">
-            <h2 className="margin-top-0 margin-bottom-1 text-3xl">
+            <h2 className="margin-top-0 margin-bottom-1 text-bold smart-hub--overview-font-size">
               {percentage}
               %
             </h2>
-            <div className="font-body-md">
+            <div className="">
               <span className="">
                 {data.numerator}
               </span>
