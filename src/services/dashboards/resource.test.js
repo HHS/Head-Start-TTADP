@@ -3,6 +3,7 @@ import db, {
   sequelize,
   ActivityReport,
   ActivityRecipient,
+  Topic,
   User,
   Recipient,
   Grant,
@@ -180,10 +181,16 @@ describe('Resources dashboard', () => {
       },
     });
 
+    const { topicId } = await Topic.findOne({
+      attributes: [['id', 'topicId']],
+      where: { name: 'CLASS: Classroom Organization' },
+      raw: true,
+    });
+    console.log(topicId);
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportObjectiveOne.id,
-        topicId: 60,
+        topicId,
       },
     });
 
