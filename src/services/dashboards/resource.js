@@ -17,9 +17,9 @@ import {
   Resource,
   Topic,
   sequelize,
-} from '../models';
-import { formatNumber } from './helpers';
-import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../constants';
+} from '../../models';
+import { formatNumber } from '../../widgets/helpers';
+import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../../constants';
 
 const reduceRecipients = (source, adding) => adding.reduce((recipients, recipient) => {
   const exists = recipients.find((r) => (
@@ -1478,6 +1478,14 @@ export async function resourceUse(scopes) {
 export async function resourceTopicUse(scopes) {
   const data = await resourceData(scopes, true, false);
   return generateResourceTopicUse(data);
+}
+
+export async function resourceDashboardPhase1(scopes) {
+  const data = await resourceData(scopes);
+  return {
+    overview: generateResourcesDashboardOverview(data),
+    use: generateResourceUse(data),
+  };
 }
 
 export async function resourceDashboard(scopes) {
