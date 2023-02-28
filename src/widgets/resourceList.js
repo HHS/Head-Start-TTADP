@@ -21,7 +21,192 @@ import {
 import { formatNumber } from './helpers';
 import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../constants';
 
-export async function resourceData(scopes) {
+const reduceRecipients = (source, adding) => adding.reduce((recipients, recipient) => {
+  const exists = recipients.find((r) => (
+    (r.recipientId === recipient.recipientId && recipient.recipientId)
+    || (r.otherEntityId === recipient.otherEntityId && recipient.otherEntityId)));
+  if (exists) {
+    return recipients;
+  }
+  return [...recipients, recipient];
+}, source);
+
+// merge a set of resources into the full reports list
+const mergeInResources = (currentData, additionalData) => additionalData.reduce((
+  clusteredReports,
+  report,
+) => {
+  const exists = clusteredReports.find((r) => r.dataValues.id === report.dataValues.id);
+  if (exists) {
+    exists.dataValues.resourceObjects = [
+      ...(exists.dataValues.resourceObjects
+        ? exists.dataValues.resourceObjects
+        : []),
+      ...report.dataValues.resourceObjects,
+    ];
+    exists.dataValues.resourceObjects = (report.dataValues.resourceObjects || [])
+      .reduce((resourceObjects, resourceObject) => {
+        const roExists = resourceObjects
+          .find((ro) => ro.resourceId === resourceObject.resourceId);
+        if (roExists) {
+          roExists.sourceFields = resourceObject.sourceFields
+            .map((sourceField) => ({
+              tableType: resourceObject.tableType,
+              sourceField,
+            }))
+            .reduce((sourceFields, sourceField) => {
+              const sfExists = sourceFields
+                .find((sf) => sf.tableType === sourceField.tableType
+                && sf.sourceField === sourceField.sourceField);
+              if (sfExists) {
+                return sourceFields;
+              }
+              return [...sourceFields, sourceField];
+            }, roExists.sourceFields);
+          return resourceObjects;
+        }
+        return [
+          ...resourceObjects,
+          {
+            ...resourceObject,
+            sourceFields: resourceObject.sourceFields.map((sourceField) => ({
+              tableType: resourceObject.tableType,
+              sourceField,
+            })),
+          },
+        ];
+      }, (exists.dataValues.resourceObjects || []));
+    return clusteredReports;
+  }
+
+  return [
+    ...clusteredReports,
+    report,
+  ];
+}, currentData);
+
+// restructure the input from report centric to resource centric
+const switchToResourceCentric = (input) => {
+  const output = {};
+  input.forEach(({
+    id,
+    numberOfParticipants,
+    topics,
+    startDate,
+    recipients,
+    resources: resourceObjects,
+  }) => {
+    if (resourceObjects) {
+      resourceObjects.forEach(({
+        resourceId,
+        url,
+        domain,
+        tableType,
+        sourceFields,
+        topics: resourceTopics,
+      }) => {
+        if (!output[resourceId]) {
+          output[resourceId] = {
+            resourceId,
+            url,
+            domain,
+            sourceFields,
+            reports: [],
+            topics: resourceTopics,
+          };
+        }
+        output[resourceId].reports.push({
+          id,
+          numberOfParticipants,
+          topics,
+          startDate,
+          recipients,
+        });
+      });
+    }
+  });
+  return Object.values(output);
+};
+
+// restructure the input from report centric to resource centric
+const switchToTopicCentric = (input) => {
+  const output = {};
+  input.forEach(({
+    id,
+    numberOfParticipants,
+    topics,
+    startDate,
+    recipients: recipientObjects,
+    resources: resourceObjects,
+  }) => {
+    if (topics) {
+      topics.forEach((topic) => {
+        if (!output[topic]) {
+          output[topic] = {
+            topic,
+            reports: [],
+            resources: [],
+            recipients: [],
+          };
+        }
+        output[topic].reports.push({
+          id,
+          numberOfParticipants,
+          startDate,
+        });
+        output[topic].resources = (resourceObjects || []).reduce((resources, resource) => {
+          const exists = resources.find((r) => r.resourceId === resource.resourceId);
+          if (exists) {
+            return resources;
+          }
+          return [...resources, resource];
+        }, output[topic].resources);
+        output[topic].recipients = reduceRecipients(output[topic].recipients, recipientObjects);
+      });
+    }
+    if (resourceObjects) {
+      resourceObjects.forEach(({
+        topics: resourceTopics,
+      }) => {
+        if (resourceTopics) {
+          resourceTopics.forEach((topic) => {
+            if (!output[topic]) {
+              output[topic] = {
+                topic,
+                reports: [],
+                resources: [],
+                recipients: [],
+              };
+            }
+            output[topic].reports = [{
+              id,
+              numberOfParticipants,
+              startDate,
+            }].reduce((reports, report) => {
+              const exists = reports.find((r) => r.id === report.id);
+              if (exists) {
+                return reports;
+              }
+              return [...reports, report];
+            }, output[topic].reports);
+            output[topic].resources = (resourceObjects || []).reduce((resources, resource) => {
+              const exists = resources.find((r) => r.resourceId === resource.resourceId);
+              if (exists) {
+                return resources;
+              }
+              return [...resources, resource];
+            }, output[topic].resources);
+            output[topic].recipients = reduceRecipients(output[topic].recipients, recipientObjects);
+          });
+        }
+      });
+    }
+  });
+  return Object.values(output);
+};
+
+// collect all resource data from the db filtered via the scopes
+export async function resourceData(scopes, skipResources = false, skipTopics = false) {
   // Query Database for all Resources within the scope.
   const [
     allReports,
@@ -583,189 +768,77 @@ export async function resourceData(scopes) {
   ]);
 
   let reports = allReports;
-  reports = viaReport.reduce((clusteredReports, report) => {
-    const exists = clusteredReports.find((r) => r.dataValues.id === report.dataValues.id);
-    if (exists) {
-      exists.dataValues.resourceObjects = [
-        ...(exists.dataValues.resourceObjects
-          ? exists.dataValues.resourceObjects
-          : []),
-        ...report.dataValues.resourceObjects,
-      ];
-      return clusteredReports;
-    }
-
-    return [
-      ...clusteredReports,
-      report,
-    ];
-  }, reports);
-
-  reports = viaSpecialistNextSteps.reduce((clusteredReports, report) => {
-    const exists = clusteredReports.find((r) => r.dataValues.id === report.dataValues.id);
-    if (exists) {
-      exists.dataValues.resourceObjects = [
-        ...(exists.dataValues.resourceObjects
-          ? exists.dataValues.resourceObjects
-          : []),
-        ...report.dataValues.resourceObjects,
-      ];
-      return clusteredReports;
-    }
-
-    return [
-      ...clusteredReports,
-      report,
-    ];
-  }, allReports);
-
-  reports = viaRecipientNextSteps.reduce((clusteredReports, report) => {
-    const exists = clusteredReports.find((r) => r.dataValues.id === report.dataValues.id);
-    if (exists) {
-      exists.dataValues.resourceObjects = [
-        ...(exists.dataValues.resourceObjects
-          ? exists.dataValues.resourceObjects
-          : []),
-        ...report.dataValues.resourceObjects,
-      ];
-      return clusteredReports;
-    }
-
-    return [
-      ...clusteredReports,
-      report,
-    ];
-  }, allReports);
-
-  reports = viaObjectives.reduce((clusteredReports, report) => {
-    const exists = clusteredReports.find((r) => r.dataValues.id === report.dataValues.id);
-    if (exists) {
-      exists.dataValues.resourceObjects = [
-        ...(exists.dataValues.resourceObjects
-          ? exists.dataValues.resourceObjects
-          : []),
-        ...report.dataValues.resourceObjects,
-      ];
-      return clusteredReports;
-    }
-
-    return [
-      ...clusteredReports,
-      report,
-    ];
-  }, allReports);
-
-  reports = viaGoals.reduce((clusteredReports, report) => {
-    const exists = clusteredReports.find((r) => r.dataValues.id === report.dataValues.id);
-    if (exists) {
-      exists.dataValues.resourceObjects = [
-        ...(exists.dataValues.resourceObjects
-          ? exists.dataValues.resourceObjects
-          : []),
-        ...report.dataValues.resourceObjects,
-      ];
-      return clusteredReports;
-    }
-
-    return [
-      ...clusteredReports,
-      report,
-    ];
-  }, allReports);
+  reports = mergeInResources(reports, viaReport);
+  reports = mergeInResources(reports, viaSpecialistNextSteps);
+  reports = mergeInResources(reports, viaRecipientNextSteps);
+  reports = mergeInResources(reports, viaObjectives);
+  reports = mergeInResources(reports, viaGoals);
 
   reports = reports
-    .map((r) => r.dataValues)
-    .map(({
-      id,
-      numberOfParticipants,
-      topics,
-      startDate,
-      recipients,
-      resourceObjects,
-    }) => ({
-      id,
-      numberOfParticipants,
-      topics,
-      startDate,
-      recipients,
-      resources: resourceObjects,
+    .map((r) => ({
+      id: r.dataValues.id,
+      numberOfParticipants: r.dataValues.numberOfParticipants,
+      topics: r.dataValues.topics,
+      startDate: r.dataValues.startDate,
+      recipients: r.dataValues.recipients,
+      resources: r.dataValues.resourceObjects,
     }));
 
-  const switchToResourceCentric = (input) => {
-    const output = {};
-    input.forEach(({
-      id,
-      numberOfParticipants,
-      topics,
-      startDate,
-      recipients,
-      resources: resourceObjects,
-    }) => {
-      if (resourceObjects) {
-        resourceObjects.forEach(({
-          resourceId,
-          url,
-          domain,
-          tableType,
-          sourceFields,
-        }) => {
-          if (!output[resourceId]) {
-            output[resourceId] = {
-              resourceId,
-              url,
-              domain,
-              sourceFields: sourceFields.map((sourceField) => ({ tableType, sourceField })),
-              reports: [],
-            };
+  let resourcesWithRecipients = [];
+  if (!skipResources) {
+    const resources = switchToResourceCentric(reports);
+    resourcesWithRecipients = resources.map((data) => {
+      const participants = data.reports
+        .reduce((accumulator, r) => accumulator + r.numberOfParticipants, 0);
+      const startDates = data.reports
+        .map((r) => r.startDate);
+      const recipients = data.reports
+        .flatMap((r) => r.recipients)
+        .reduce((currentRecipient, { recipientId, grantId, otherEntityId }) => {
+          const exists = currentRecipient.find((cr) => (
+            cr.recipientId === recipientId
+            || cr.otherEntityId === otherEntityId));
+          if (exists) {
+            exists.grantIds = grantId
+              ? [...new Set([...exists.grantIds, grantId])]
+              : exists.grantId;
+            return currentRecipient;
           }
-          output[resourceId].reports.push({
-            id,
-            numberOfParticipants,
-            topics,
-            startDate,
-            recipients,
-          });
-        });
-      }
+          return [
+            ...currentRecipient,
+            {
+              recipientId,
+              grantIds: [grantId].filter((g) => g),
+              otherEntityId,
+            },
+          ];
+        }, []);
+      return {
+        ...data,
+        participants,
+        startDates,
+        recipients,
+      };
     });
-    return Object.values(output);
-  };
-  const resources = switchToResourceCentric(reports);
-  const resourcesWithRecipients = resources.map((data) => {
-    const participants = data.reports
-      .reduce((accumulator, r) => accumulator + r.numberOfParticipants, 0);
-    const startDates = data.reports
-      .map((r) => r.startDate);
-    const recipients = data.reports
-      .flatMap((r) => r.recipients)
-      .reduce((currentRecipient, { recipientId, grantId, otherEntityId }) => {
-        const exists = currentRecipient.find((cr) => (
-          cr.recipientId === recipientId
-          || cr.otherEntityId === otherEntityId));
-        if (exists) {
-          exists.grantIds = grantId
-            ? [...new Set([...exists.grantIds, grantId])]
-            : exists.grantId;
-          return currentRecipient;
-        }
-        return [
-          ...currentRecipient,
-          {
-            recipientId,
-            grantIds: [grantId].filter((g) => g),
-            otherEntityId,
-          },
-        ];
-      }, []);
-    return {
-      ...data,
-      participants,
-      startDates,
-      recipients,
-    };
-  });
+  }
 
-  return { resources: resourcesWithRecipients, reports };
+  let topicsWithAdditionalData = [];
+  if (!skipTopics) {
+    const topics = switchToTopicCentric(reports);
+    topicsWithAdditionalData = topics.map((data) => {
+      const participants = data.reports
+        .reduce((accumulator, r) => accumulator + r.numberOfParticipants, 0);
+      const startDates = data.reports
+        .map((r) => r.startDate);
+      return {
+        ...data,
+        participants,
+        startDates,
+      };
+    });
+  }
+
+  return { resources: resourcesWithRecipients, reports, topics: topicsWithAdditionalData };
 }
 
 const recipientAddUnique = (currentRecipients, newRecipients) => newRecipients
@@ -785,74 +858,47 @@ const recipientAddUnique = (currentRecipients, newRecipients) => newRecipients
     ];
   }, currentRecipients);
 
-async function generateResourceList(
+const generateResourceList = (
   precalculatedData, // data generated from calling resourceData
   removeLists, // exclude list of report ids and recipient ids from result
   includeNone, // include none record in result
-) {
+) => {
   const { resources: res, reports } = precalculatedData;
-  let resourceCounts = res.reduce(
-    (resources, resource) => {
-      const {
-        activityReportId,
-        url,
-        domain,
-        recipients,
-      } = resource;
-      const exists = resources.find((o) => o.url === url);
-      if (exists) {
-        exists.reports.add(activityReportId);
-        exists.recipients = recipientAddUnique(exists.recipients, recipients);
-        exists.count += 1;
-        return resources;
-      }
-
-      return [...resources, {
-        domain,
-        name: url,
-        url,
-        count: 1,
-        reports: new Set([activityReportId]),
-        recipients: recipientAddUnique([], recipients),
-      }];
-    },
-    [],
-  );
-
-  resourceCounts = resourceCounts.map((rc) => ({
-    ...rc,
-    participantCount: [...rc.reports]
-      .reduce((acc, reportId) => acc + reports
-        .filter((r) => r.id === reportId)
-        .reduce((a, r) => a + r.numberOfParticipants, 0), 0),
-  }));
-  resourceCounts = resourceCounts.map((rc) => ({
-    ...rc,
-    reportCount: rc.reports.size,
-    recipientCount: rc.recipients.length,
-  }));
+  let resourceCounts = res
+    .map((rc) => ({
+      name: rc.url,
+      url: rc.url,
+      count: rc.reports.length,
+      reportCount: rc.reports.length,
+      participantCount: rc.participants,
+      recipientCount: rc.recipients.length,
+    }));
   if (removeLists) {
     resourceCounts = resourceCounts.map((rc) => ({
       ...rc,
       reports: undefined,
       recipients: undefined,
+      startDates: undefined,
     }));
   }
 
   if (includeNone) {
-    const allReportIds = new Set([...reports.map((r) => r.id)]);
-    const allReportIdsWithResources = new Set([...res.map((r) => r.activityReportId)]);
-    const noneCnt = (allReportIds.size - allReportIdsWithResources.size);
+    const allReportIds = reports.map((r) => r.id);
+    const allReportIdsWithResources = reports
+      .filter((r) => r.resources)
+      .map((r) => r.id);
+    const noneCnt = (allReportIds.length - allReportIdsWithResources.length);
     if (noneCnt) {
-      const allRecipeintIds = new Set([...reports.map((r) => r['activityRecipients.grant.recipientId'])].flat());
-      const allRecipientIdsWithResources = new Set([
-        ...res.map((r) => r.recipients.recipientId),
-      ].flat());
-      const noneRecipeintCnt = (allRecipeintIds.size - allRecipientIdsWithResources.size);
-      const allReportIdsWithoutResources = new Set([...allReportIds]
-        .filter((r) => !allReportIdsWithResources.has(r)));
+      const allRecipeintIds = reduceRecipients([], reports.flatMap((r) => r.recipients));
+      const allRecipientIdsWithResources = reduceRecipients(
+        [],
+        reports.filter((r) => r.resources).flatMap((r) => r.recipients),
+      );
+      const noneRecipeintCnt = (allRecipeintIds.length - allRecipientIdsWithResources.length);
+      const allReportIdsWithoutResources = allReportIds
+        .filter((id) => !allReportIdsWithResources.includes(id));
       const noneParticipantCount = reports
-        .filter((r) => allReportIdsWithoutResources.has(r.id))
+        .filter((r) => allReportIdsWithoutResources.includes(r.id))
         .reduce((accumulator, r) => accumulator + r.numberOfParticipants, 0);
       resourceCounts.push({
         name: 'none',
@@ -887,45 +933,49 @@ async function generateResourceList(
     return r2.reportCount - r1.reportCount;
   });
   return resourceCounts;
-}
+};
 
-async function generateResourceDomainList(
+function generateResourceDomainList(
   precalculatedData, // data generated from calling resourceData
   removeLists, // exclude list of report ids and recipient ids from result
 ) {
-  const data = await generateResourceList(precalculatedData, false, false);
+  const { resources: res } = precalculatedData;
 
-  let domainCounts = data.reduce((domains, resource) => {
-    const {
-      domain,
-      url,
-      count,
-      reports,
-      recipients,
-    } = resource;
-    const exists = domains.find((o) => o.domain === domain);
+  let domainCounts = res.reduce((domains, resource) => {
+    const exists = domains.find((d) => d.domain === resource.domain);
     if (exists) {
-      reports.forEach(exists.reports.add, exists.reports);
-      recipients.forEach(exists.recipients.add, exists.recipients);
-      exists.resources.add(url);
-      exists.count += count;
+      exists.urls = [...new Set([...exists.urls, resource.url])];
+      exists.count += resource.reports.length;
+      exists.recipients = reduceRecipients(exists.recipients, resource.recipients);
+      exists.reports = resource.reports.reduce((reports, report) => {
+        const rExists = reports.find((r) => r.id === report.id);
+        if (rExists) {
+          return reports;
+        }
+        return [
+          ...reports,
+          report,
+        ];
+      }, exists.reports);
       return domains;
     }
-
-    return [...domains, {
-      domain,
-      count,
-      reports,
-      recipients: new Set(resource.recipients),
-      resources: new Set([url]),
-    }];
+    return [
+      ...domains,
+      {
+        domain: resource.domain,
+        urls: [resource.url],
+        count: resource.reports.length,
+        recipients: resource.recipients,
+        reports: resource.reports,
+      },
+    ];
   }, []);
 
   domainCounts = domainCounts.map((dc) => ({
     ...dc,
-    reportCount: dc.reports.size,
-    recipientCount: dc.recipients.size,
-    resourceCount: dc.resources.size,
+    reportCount: dc.reports.length,
+    recipientCount: dc.recipients.length,
+    resourceCount: dc.urls.length,
   }));
 
   if (removeLists) {
@@ -933,7 +983,7 @@ async function generateResourceDomainList(
       ...dc,
       reports: undefined,
       recipients: undefined,
-      resources: undefined,
+      urls: undefined,
     }));
   }
 
@@ -959,35 +1009,26 @@ async function generateResourceDomainList(
   return domainCounts;
 }
 
-export async function resourceList(scopes) {
-  const data = await resourceData(scopes);
-  return generateResourceList(data, true, true);
-}
-export async function resourceDomainList(scopes) {
-  const data = await resourceData(scopes);
-  return generateResourceDomainList(data, true);
-}
+const generateResourcesDashboardOverview = (allData) => {
+  const { resources, reports } = allData;
 
-export async function resourcesDashboardOverview(scopes) {
-  const { resources, reports } = await resourceData(scopes);
-
-  const domainData = await generateResourceDomainList({ resources, reports }, false);
+  // the commented out blocks are for stats that are currently not used
 
   const data = {};
   // report based intermediate data
   data.reportIntermediate = {};
   data.reportIntermediate
     .reportsWithResources = new Set(resources.flatMap((r) => r.reports).map((r) => r.id));
-  data.reportIntermediate
-    .allRecipientIdsWithEclkcResources = new Set(resources
-      .filter((d) => d.domain === RESOURCE_DOMAIN.ECLKC)
-      .flatMap((r) => r.reports)
-      .map((r) => r.id));
-  data.reportIntermediate
-    .allRecipientIdsWithNonEclkcResources = new Set(resources
-      .filter((d) => d.domain !== RESOURCE_DOMAIN.ECLKC)
-      .flatMap((r) => r.reports)
-      .map((r) => r.id));
+  // data.reportIntermediate
+  //   .allRecipientIdsWithEclkcResources = new Set(resources
+  //     .filter((d) => d.domain === RESOURCE_DOMAIN.ECLKC)
+  //     .flatMap((r) => r.reports)
+  //     .map((r) => r.id));
+  // data.reportIntermediate
+  //   .allRecipientIdsWithNonEclkcResources = new Set(resources
+  //     .filter((d) => d.domain !== RESOURCE_DOMAIN.ECLKC)
+  //     .flatMap((r) => r.reports)
+  //     .map((r) => r.id));
 
   // report based stats
   data.report = {};
@@ -998,61 +1039,58 @@ export async function resourcesDashboardOverview(scopes) {
   data.report.numNoResources = data.report.num - data.report.numResources;
   data.report.percentNoResources = (data.report.numNoResources / data.report.num) * 100.0;
 
-  data.report.numEclkc = data.reportIntermediate.allRecipientIdsWithEclkcResources.size;
-  data.report.percentEclkc = (data.report.numEclkc / data.report.num) * 100.0;
+  // data.report.numEclkc = data.reportIntermediate.allRecipientIdsWithEclkcResources.size;
+  // data.report.percentEclkc = (data.report.numEclkc / data.report.num) * 100.0;
 
-  data.report.numNonEclkc = data.reportIntermediate.allRecipientIdsWithNonEclkcResources.size;
-  data.report.percentNonEclkc = (data.report.numNonEclkc / data.report.num) * 100.0;
+  // data.report.numNonEclkc = data.reportIntermediate.allRecipientIdsWithNonEclkcResources.size;
+  // data.report.percentNonEclkc = (data.report.numNonEclkc / data.report.num) * 100.0;
 
   // recipient based intermediate data
   data.recipientIntermediate = {};
   data.recipientIntermediate
-    .allRecipeintIds = reports
-      .flatMap((r) => r.recipients)
-      .reduce((currentRecipients, recipient) => {
-        const exists = currentRecipients.find((cr) => (
-          (cr.recipientId === recipient.recipientId && recipient.recipientId)
-          || (cr.otherEntityId === recipient.otherEntityId && recipient.otherEntityId)));
-        if (exists) {
-          return currentRecipients;
-        }
-        return [
-          ...currentRecipients,
-          recipient,
-        ];
-      }, []);
+    .allRecipientIds = reduceRecipients([], reports.flatMap((r) => r.recipients));
   data.recipientIntermediate
-    .allRecipientIdsWithResources = resources
-      .flatMap((r) => r.recipients)
-      .reduce((currentRecipients, recipient) => {
-        const exists = currentRecipients.find((cr) => (
-          (cr.recipientId === recipient.recipientId && recipient.recipientId)
-          || (cr.otherEntityId === recipient.otherEntityId && recipient.otherEntityId)));
-        if (exists) {
-          return currentRecipients;
-        }
-        return [
-          ...currentRecipients,
-          recipient,
-        ];
-      }, []);
-  // TODO: fix
-  data.recipientIntermediate.allRecipientIdsWithEclkcResources = new Set();
-  data.recipientIntermediate.allRecipientIdsWithNonEclkcResources = new Set();
-  // data.recipientIntermediate.allRecipientIdsWithEclkcResources = new Set([
-  //   ...domainData
-  //     .filter((d) => d.domain === RESOURCE_DOMAIN.ECLKC)
-  //     .map((dd) => [...dd.recipients]),
-  // ].flat());
-  // data.recipientIntermediate.allRecipientIdsWithNonEclkcResources = new Set([
-  //   ...domainData
-  //     .filter((d) => d.domain !== RESOURCE_DOMAIN.ECLKC)
-  //     .map((dd) => [...dd.recipients]),
-  // ].flat());
+    .allRecipientIdsWithResources = reduceRecipients([], resources.flatMap((r) => r.recipients));
+  // data.recipientIntermediate.allRecipientIdsWithEclkcResources = resources
+  //   // filter to ECLKC
+  //   .filter((r) => r.domain === RESOURCE_DOMAIN.ECLKC)
+  //   // Collect recipients
+  //   .flatMap((r) => r.recipients)
+  //   // collect distinct recipients ( or other entities)
+  //   .reduce((currentRecipients, recipient) => {
+  //     const exists = currentRecipients.find((cr) => (
+  //       (cr.recipientId === recipient.recipientId && recipient.recipientId)
+  //       || (cr.otherEntityId === recipient.otherEntityId && recipient.otherEntityId)));
+  //     if (exists) {
+  //       return currentRecipients;
+  //     }
+  //     return [
+  //       ...currentRecipients,
+  //       recipient,
+  //     ];
+  //   }, []);
+  // data.recipientIntermediate.allRecipientIdsWithNonEclkcResources = resources
+  //   // filter to Non-ECLKC
+  //   .filter((r) => r.domain !== RESOURCE_DOMAIN.ECLKC)
+  //   // Collect recipients
+  //   .flatMap((r) => r.recipients)
+  //   // collect distinct recipients ( or other entities)
+  //   .reduce((currentRecipients, recipient) => {
+  //     const exists = currentRecipients.find((cr) => (
+  //       (cr.recipientId === recipient.recipientId && recipient.recipientId)
+  //       || (cr.otherEntityId === recipient.otherEntityId && recipient.otherEntityId)));
+  //     if (exists) {
+  //       return currentRecipients;
+  //     }
+  //     return [
+  //       ...currentRecipients,
+  //       recipient,
+  //     ];
+  //   }, []);
 
   // recipient based stats
   data.recipient = {};
-  data.recipient.num = data.recipientIntermediate.allRecipeintIds.size;
+  data.recipient.num = data.recipientIntermediate.allRecipientIds.length;
   data.recipient.numResources = data.recipientIntermediate.allRecipientIdsWithResources.length;
   data.recipient
     .percentResources = (data.recipient.numResources / data.recipient.num) * 100.0;
@@ -1060,36 +1098,31 @@ export async function resourcesDashboardOverview(scopes) {
   data.recipient.numNoResources = data.recipient.num - data.recipient.numResources;
   data.recipient.percentNoResources = (data.recipient.numNoResources / data.recipient.num) * 100.0;
 
-  data.recipient.numEclkc = data.recipientIntermediate.allRecipientIdsWithEclkcResources.size;
-  data.recipient.percentEclkc = (data.recipient.numEclkc / data.recipient.num) * 100.0;
+  // data.recipient.numEclkc = data.recipientIntermediate.allRecipientIdsWithEclkcResources.size;
+  // data.recipient.percentEclkc = (data.recipient.numEclkc / data.recipient.num) * 100.0;
 
-  data.recipient.numNonEclkc = data.recipientIntermediate.allRecipientIdsWithNonEclkcResources.size;
-  data.recipient.percentNonEclkc = (data.recipient.numNonEclkc / data.recipient.num) * 100.0;
+  // data.recipient.numNonEclkc = data
+  //   .recipientIntermediate.allRecipientIdsWithNonEclkcResources.size;
+  // data.recipient.percentNonEclkc = (data.recipient.numNonEclkc / data.recipient.num) * 100.0;
 
   // resource based intermediate data
   data.resourceIntermediate = {};
   data.resourceIntermediate
-    .allResources = new Set([...domainData.map((dd) => [...dd.resources])].flat());
-  data.resourceIntermediate.allEclkcResources = new Set([
-    ...domainData
-      .filter((d) => d.domain === RESOURCE_DOMAIN.ECLKC)
-      .map((dd) => [...dd.resources]),
-  ].flat());
-  data.resourceIntermediate.allNonEclkcResources = new Set([
-    ...domainData
-      .filter((d) => d.domain !== RESOURCE_DOMAIN.ECLKC)
-      .map((dd) => [...dd.resources]),
-  ].flat());
+    .allResources = resources;
+  data.resourceIntermediate.allEclkcResources = resources
+    .filter((r) => r.domain === RESOURCE_DOMAIN.ECLKC);
+  // data.resourceIntermediate.allNonEclkcResources = resources
+  //   .filter((r) => r.domain !== RESOURCE_DOMAIN.ECLKC);
 
   // resource based stats
   data.resource = {};
-  data.resource.num = data.resourceIntermediate.allResources.size;
+  data.resource.num = data.resourceIntermediate.allResources.length;
 
-  data.resource.numEclkc = data.resourceIntermediate.allEclkcResources.size;
+  data.resource.numEclkc = data.resourceIntermediate.allEclkcResources.length;
   data.resource.percentEclkc = (data.resource.numEclkc / data.resource.num) * 100.0;
 
-  data.resource.numNonEclkc = data.resourceIntermediate.allNonEclkcResources.size;
-  data.resource.percentNonEclkc = (data.resource.numNonEclkc / data.resource.num) * 100.0;
+  // data.resource.numNonEclkc = data.resourceIntermediate.allNonEclkcResources.length;
+  // data.resource.percentNonEclkc = (data.resource.numNonEclkc / data.resource.num) * 100.0;
 
   data.participant = {};
   data.participant.num = reports
@@ -1098,6 +1131,28 @@ export async function resourcesDashboardOverview(scopes) {
       participants: r.numberOfParticipants,
     }))
     .reduce((partialSum, r) => partialSum + r.participants, 0);
+  // data.participant.numEclkc = resources
+  //   .filter((r) => r.domain === RESOURCE_DOMAIN.ECLKC)
+  //   .flatMap((r) => r.reports)
+  //   .reduce((rs, report) => {
+  //     const exists = rs.find((r) => r.id === report.id);
+  //     if (exists) {
+  //       return rs;
+  //     }
+  //     return [...rs, report];
+  //   }, [])
+  //   .reduce((partialSum, r) => partialSum + r.participants, 0);
+  // data.participant.numEclkc = resources
+  //   .filter((r) => r.domain !== RESOURCE_DOMAIN.ECLKC)
+  //   .flatMap((r) => r.reports)
+  //   .reduce((rs, report) => {
+  //     const exists = rs.find((r) => r.id === report.id);
+  //     if (exists) {
+  //       return rs;
+  //     }
+  //     return [...rs, report];
+  //   }, [])
+  //   .reduce((partialSum, r) => partialSum + r.participants, 0);
 
   return {
     report: {
@@ -1133,7 +1188,7 @@ export async function resourcesDashboardOverview(scopes) {
       numParticipants: formatNumber(data.participant.num),
     },
   };
-}
+};
 
 /*
 WidgetID: resourceDashboardOverview
@@ -1158,61 +1213,61 @@ Expected JSON (we have this now):
   },
 }
 */
-export async function resourceUse(scopes) {
-  const { resources, reports } = await resourceData(scopes);
-  const getMonthYear = (dateStr) => {
-    // Create a Date object from the date string
-    const dateObj = new Date(dateStr);
+const getMonthYear = (dateStr) => {
+  // Create a Date object from the date string
+  const dateObj = new Date(dateStr);
 
-    // Get the month abbreviation from the month number
-    const monthAbbreviation = new Intl.DateTimeFormat('en-US', { month: 'short' }).format(dateObj);
+  // Get the month abbreviation from the month number
+  const monthAbbreviation = new Intl.DateTimeFormat('en-US', { month: 'short' }).format(dateObj);
 
-    // Get the year as a two-digit string
-    const yearStr = dateObj.getFullYear().toString().slice(-2);
+  // Get the year as a two-digit string
+  const yearStr = dateObj.getFullYear().toString().slice(-2);
 
-    // Concatenate the month abbreviation and year string with a hyphen separator
-    return `${monthAbbreviation}-${yearStr}`;
+  // Concatenate the month abbreviation and year string with a hyphen separator
+  return `${monthAbbreviation}-${yearStr}`;
+};
+
+const getMinMax = (data) => {
+  const dateObjects = data
+    // Get an array of all startDates
+    .flatMap((r) => r.startDates)
+    .reduce((dates, date) => {
+      const exists = dates.find((d) => d === date);
+      if (exists) {
+        return dates;
+      }
+      return [...dates, date];
+    }, [])
+    // Convert all dates to Date objects
+    .map((dateString) => new Date(`${dateString}`))
+    .filter((d) => !Number.isNaN(Date.parse(d)));
+
+  // Find the minimum and maximum dates
+  return {
+    min: new Date(Math.min(...dateObjects)),
+    max: new Date(Math.max(...dateObjects)),
   };
+};
 
-  const getMinMax = (data) => {
-    const dateObjects = data
-      // Get an array of all startDates
-      .flatMap((r) => r.startDates)
-      .reduce((dates, date) => {
-        const exists = dates.find((d) => d === date);
-        if (exists) {
-          return dates;
-        }
-        return [...dates, date];
-      }, [])
-      // Convert all dates to Date objects
-      .map((dateString) => new Date(`${dateString}`))
-      .filter((d) => !Number.isNaN(Date.parse(d)));
+const spanDates = (min, max) => {
+  const startYear = min.getFullYear();
+  const startMonth = min.getMonth();
+  const endYear = max.getFullYear();
+  const endMonth = max.getMonth();
+  const numMonths = (endYear - startYear) * 12 + (endMonth - startMonth) + 1;
 
-    // Find the minimum and maximum dates
-    return {
-      min: new Date(Math.min(...dateObjects)),
-      max: new Date(Math.max(...dateObjects)),
-    };
-  };
+  return Array
+    .from({ length: numMonths }, (_, index) => {
+      const year = Math.floor(index / 12) + startYear;
+      const month = (index % 12) + startMonth;
+      const date = new Date(year, month).toLocaleDateString('default', { month: 'long', year: 'numeric' });
+      return getMonthYear(date);
+    })
+    .map((monthYear) => ({ title: monthYear, cnt: 0 }));
+};
 
-  const spanDates = (min, max) => {
-    const startYear = min.getFullYear();
-    const startMonth = min.getMonth();
-    const endYear = max.getFullYear();
-    const endMonth = max.getMonth();
-    const numMonths = (endYear - startYear) * 12 + (endMonth - startMonth) + 1;
-
-    return Array
-      .from({ length: numMonths }, (_, index) => {
-        const year = Math.floor(index / 12) + startYear;
-        const month = (index % 12) + startMonth;
-        const date = new Date(year, month).toLocaleDateString('default', { month: 'long', year: 'numeric' });
-        return getMonthYear(date);
-      })
-      .map((monthYear) => ({ title: monthYear, cnt: 0 }));
-  };
-
+const generateResourceUse = (allData) => {
+  const { resources } = allData;
   const minMax = getMinMax(resources);
   const dateList = spanDates(minMax.min, minMax.max);
 
@@ -1283,7 +1338,7 @@ export async function resourceUse(scopes) {
     resources: sortedResourceData
       .slice(0, 10),
   };
-}
+};
 /*
 WidgetID: resourceUse
 Expected JSON:
@@ -1332,3 +1387,111 @@ Expected JSON:
   ],
 },
 */
+
+const generateResourceTopicUse = (allData) => {
+  const { topics } = allData;
+  const minMax = getMinMax(topics);
+  const dateList = spanDates(minMax.min, minMax.max);
+
+  const clusteredTopics = topics
+    .map((topic) => ({
+      heading: topic.topic,
+      isUrl: false,
+      data: [
+        ...topic.startDates.reduce((data, startDate) => {
+          const total = data.find((sd) => sd.title === 'Total');
+          total.cnt += 1;
+
+          const currentMonthYear = getMonthYear(startDate);
+          const exists = data.find((sd) => sd.title === currentMonthYear);
+          if (exists) {
+            exists.cnt += 1;
+            return data;
+          }
+          return [
+            ...data,
+            {
+              title: currentMonthYear,
+              cnt: 1,
+            },
+          ];
+        }, [{ title: 'Total', cnt: 0 }]),
+        ...dateList,
+      ]
+        .reduce((dates, date) => {
+          const exists = dates.find((d) => d.title === date.title);
+          if (exists) {
+            exists.cnt += date.cnt;
+            return dates;
+          }
+          return [
+            ...dates,
+            date,
+          ];
+        }, [])
+        .map(({ title, cnt }) => ({
+          title,
+          value: formatNumber(cnt),
+        })),
+    }));
+
+  // Total needs to be the last column.
+  const sortedTopicData = clusteredTopics.map((r) => {
+    const newTopicData = [...r.data];
+    newTopicData.push(newTopicData.shift());
+    return {
+      ...r,
+      data: newTopicData,
+    };
+  });
+
+  sortedTopicData.sort((a, b) => {
+    const aTotal = Number(a.data.find((d) => d.title === 'Total').value);
+    const bTotal = Number(b.data.find((d) => d.title === 'Total').value);
+    if (aTotal > bTotal) return -1;
+    if (aTotal < bTotal) return 1;
+    if (a.heading < b.heading) return -1;
+    if (a.heading > b.heading) return 1;
+    return 0;
+  });
+
+  return {
+    headers: [...dateList.map(({ title }) => title)],
+    topics: sortedTopicData
+      .slice(0, 10),
+  };
+};
+
+export async function resourceList(scopes) {
+  const data = await resourceData(scopes, false, true);
+  return generateResourceList(data, true, true);
+}
+export async function resourceDomainList(scopes) {
+  const data = await resourceData(scopes, false, true);
+  return generateResourceDomainList(data, true);
+}
+
+export async function resourcesDashboardOverview(scopes) {
+  const data = await resourceData(scopes, false, true);
+  return generateResourcesDashboardOverview(data);
+}
+
+export async function resourceUse(scopes) {
+  const data = await resourceData(scopes, false, true);
+  return generateResourceUse(data);
+}
+
+export async function resourceTopicUse(scopes) {
+  const data = await resourceData(scopes, true, false);
+  return generateResourceTopicUse(data);
+}
+
+export async function resourceDashboard(scopes) {
+  const data = await resourceData(scopes);
+  return {
+    overview: generateResourcesDashboardOverview(data),
+    use: generateResourceUse(data),
+    topicUse: generateResourceTopicUse(data),
+    domainList: generateResourceDomainList(data),
+  };
+}
