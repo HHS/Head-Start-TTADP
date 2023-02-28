@@ -144,7 +144,7 @@ let activityReportObjectiveOne;
 let activityReportObjectiveTwo;
 let activityReportObjectiveThree;
 
-describe('Resources list widget', () => {
+describe('Resources dashboard', () => {
   beforeAll(async () => {
     await User.findOrCreate({ where: mockUser, individualHooks: true });
     await Recipient.findOrCreate({ where: mockRecipient, individualHooks: true });
