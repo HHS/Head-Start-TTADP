@@ -266,6 +266,11 @@ describe('Resources dashboard', () => {
         activityReportObjectiveId: activityReportObjectiveOne.id,
       },
     });
+    await ActivityReportObjectiveTopic.destroy({
+      where: {
+        activityReportObjectiveId: activityReportObjectiveOne.id,
+      },
+    });
 
     await ActivityReportObjective.destroy({ where: { objectiveId: objective.id } });
     await ActivityReport.destroy({ where: { id: ids } });
