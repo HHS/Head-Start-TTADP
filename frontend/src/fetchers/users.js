@@ -6,6 +6,11 @@ export const getStateCodes = async () => {
   return res.json();
 };
 
+export const getActiveUsers = async () => {
+  const res = await get(join('/', 'api', 'users', 'active-users'));
+  return res.blob();
+};
+
 export const requestVerificationEmail = async () => post(join('/', 'api', 'users', 'send-verification-email'));
 
 export const verifyEmailToken = async (token) => {

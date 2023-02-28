@@ -191,6 +191,12 @@ describe('User Page', () => {
       expect(userInfo).toBeVisible();
     });
 
+    it('displays the "Download users" button', async () => {
+      render(<Router history={history}><Users match={{ path: '', url: '', params: { userId: undefined } }} /></Router>);
+      const download = await screen.findByRole('button', { name: 'Download users' });
+      expect(download).toBeVisible();
+    });
+
     describe('saving', () => {
       it('handles errors by displaying an error message', async () => {
         fetchMock.put(userPatchUrl, 500);

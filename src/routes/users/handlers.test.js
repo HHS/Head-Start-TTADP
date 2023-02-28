@@ -3,6 +3,7 @@ import {
   getPossibleStateCodes,
   requestVerificationEmail,
   verifyEmailToken,
+  getActiveUsers,
 } from './handlers';
 import { userById, usersWithPermissions } from '../../services/users';
 import User from '../../policies/user';
@@ -30,10 +31,17 @@ jest.mock('../../services/token', () => ({
 
 const mockResponse = {
   json: jest.fn(),
+  writeHead: jest.fn(),
   sendStatus: jest.fn(),
   status: jest.fn(() => ({
     end: jest.fn(),
   })),
+  on: jest.fn(),
+  write: jest.fn(),
+  end: jest.fn(),
+  once: jest.fn(),
+  emit: jest.fn(),
+  error: jest.fn(),
 };
 
 const mockRequest = {
@@ -209,6 +217,40 @@ describe('User handlers', () => {
       currentUserId.mockResolvedValueOnce(1);
       validateVerificationToken.mockRejectedValueOnce(new Error('Problem validating token'));
       await verifyEmailToken(request, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+    });
+  });
+
+  describe('activeUsers', () => {
+    it('handles retrieving active users', async () => {
+      const request = {
+        ...mockRequest,
+      };
+      User.prototype.isAdmin = jest.fn().mockReturnValue(true);
+      await getActiveUsers(request, mockResponse);
+      expect(mockResponse.on).toHaveBeenCalled();
+      expect(mockResponse.writeHead).toHaveBeenCalled();
+      expect(mockResponse.error).not.toHaveBeenCalled();
+    });
+
+    it('does not allow unauthorized requests', async () => {
+      const request = {
+        ...mockRequest,
+      };
+      User.prototype.isAdmin = jest.fn().mockReturnValue(false);
+      await getActiveUsers(request, mockResponse);
+      expect(mockResponse.on).not.toHaveBeenCalled();
+      expect(mockResponse.writeHead).not.toHaveBeenCalled();
+    });
+
+    it('calls the error handler on error', async () => {
+      const request = {
+        ...mockRequest,
+      };
+      User.prototype.isAdmin = jest.fn().mockReturnValue(false);
+      userById.mockResolvedValue(null);
+      await getActiveUsers(request, mockResponse);
+      expect(mockResponse.on).not.toHaveBeenCalled();
       expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
   });
