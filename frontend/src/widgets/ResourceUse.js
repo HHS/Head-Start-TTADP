@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import withWidgetData from './withWidgetData';
 import HorizontalTableWidget from './HorizontalTableWidget';
 
 function ResourceUse({ data, loading }) {
@@ -36,4 +35,4 @@ ResourceUse.defaultProps = {
   data: { headers: [], resources: [] },
 };
 
-export default withWidgetData(ResourceUse, 'resourceUse');
+export default ResourceUse;

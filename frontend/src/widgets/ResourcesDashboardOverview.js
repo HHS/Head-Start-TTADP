@@ -5,7 +5,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faLink, faCube, faUser, faUserFriends,
 } from '@fortawesome/free-solid-svg-icons';
-import withWidgetData from './withWidgetData';
 import './ResourcesDashboardOverview.css';
 
 import Loader from '../components/Loader';
@@ -192,4 +191,4 @@ ResourcesDashboardOverviewWidget.defaultProps = {
   ],
 };
 
-export default withWidgetData(ResourcesDashboardOverviewWidget, 'resourcesDashboardOverview');
+export default ResourcesDashboardOverviewWidget;
