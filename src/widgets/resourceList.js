@@ -26,9 +26,21 @@ const reduceRecipients = (source, adding) => adding.reduce((recipients, recipien
     (r.recipientId === recipient.recipientId && recipient.recipientId)
     || (r.otherEntityId === recipient.otherEntityId && recipient.otherEntityId)));
   if (exists) {
+    exists.grantIds = [...new Set([
+      ...exists.grantIds,
+      ...(recipient.grantIds || []),
+      recipient.grantId,
+    ])].filter((g) => g);
     return recipients;
   }
-  return [...recipients, recipient];
+  return [
+    ...recipients,
+    {
+      recipientId: recipient.recipientId,
+      grantIds: [...(recipient.grantIds || []), recipient.grantId].filter((g) => g),
+      otherEntityId: recipient.otherEntityId,
+    },
+  ];
 }, source);
 
 // merge a set of resources into the full reports list
@@ -841,22 +853,6 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
   return { resources: resourcesWithRecipients, reports, topics: topicsWithAdditionalData };
 }
 
-const recipientAddUnique = (currentRecipients, newRecipients) => newRecipients
-  .reduce((recipients, recipient) => {
-    const exists = recipients.find((r) => r.recipientId === recipient.recipientId);
-    if (exists) {
-      exists.grantIds = [...new Set([...exists.grantIds, recipient.grantId])];
-      return recipients;
-    }
-
-    return [
-      ...recipients,
-      {
-        recipientId: recipient.recipientId,
-        grantIds: [recipient.grantId],
-      },
-    ];
-  }, currentRecipients);
 
 const generateResourceList = (
   precalculatedData, // data generated from calling resourceData
