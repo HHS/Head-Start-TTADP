@@ -124,8 +124,12 @@ export async function statisticsByUser(user, regions, readonly = false, reportId
     };
   }
 
+  // Additional report roles (if not read only).
+  let collaboratorReports = [];
+  let approverReports = [];
+
   // Get created AR's.
-  const createdReports = await ActivityReportModel.findAll({
+  let createdReports = ActivityReportModel.findAll({
     attributes: [
       [sequelize.col('"ActivityReport"."id"'), 'id'],
       [sequelize.col('"ActivityReport"."duration"'), 'duration'],
@@ -188,33 +192,9 @@ export async function statisticsByUser(user, regions, readonly = false, reportId
     ],
   });
 
-  // Approved report recipient ids.
-  const createdRecipientIds = createdReports.flatMap((r) => r.dataValues.recipientIds).filter((r) => r);
-  let collaboratorRecipientIds = [];
-  let approverRecipientIds = [];
-
-  // Grant ids.
-  const createdGrantIds = createdReports.flatMap((r) => r.dataValues.grantIds).filter((r) => r);
-  let collaboratorGrantIds = [];
-  let approverGrantIds = [];
-
-  // Goal ids.
-  const createdGoalIds = createdReports.flatMap((r) => r.dataValues.goalIds).filter((r) => r);
-  let collaboratorGoalIds = [];
-  let approverGoalIds = [];
-
-  // Goal ids.
-  const createdObjectiveIds = createdReports.flatMap((r) => r.dataValues.objectiveIds).filter((r) => r);
-  let collaboratorObjectiveIds = [];
-  let approverObjectiveIds = [];
-
-  // Additional report roles (if not read only).
-  let collaboratorReports = [];
-  let approverReports = [];
-
   if (!readonly) {
-    // Get Collaborator's AR (if not read only).
-    collaboratorReports = await ActivityReportModel.findAll({
+  // Get Collaborator's AR (if not read only).
+    collaboratorReports = ActivityReportModel.findAll({
       attributes: [
         [sequelize.col('"ActivityReport"."id"'), 'id'],
         [sequelize.col('"ActivityReport"."duration"'), 'duration'],
@@ -290,20 +270,8 @@ export async function statisticsByUser(user, regions, readonly = false, reportId
       ],
     });
 
-    // Collaborator report Recipient ids.
-    collaboratorRecipientIds = collaboratorReports.flatMap((r) => r.dataValues.recipientIds).filter((r) => r);
-
-    // Collaborator Grant ids.
-    collaboratorGrantIds = collaboratorReports.flatMap((r) => r.dataValues.grantIds).filter((r) => r);
-
-    // Collaborator report Goal ids.
-    collaboratorGoalIds = collaboratorReports.flatMap((r) => r.dataValues.goalIds).filter((r) => r);
-
-    // Collaborator report Objective ids.
-    collaboratorObjectiveIds = collaboratorReports.flatMap((r) => r.dataValues.objectiveIds).filter((r) => r);
-
     // Get Approver AR's (if not read only).
-    approverReports = await ActivityReportModel.findAll({
+    approverReports = ActivityReportModel.findAll({
       attributes: [
         [sequelize.col('"ActivityReport"."id"'), 'id'],
         [sequelize.col('"ActivityReport"."duration"'), 'duration'],
@@ -378,6 +346,46 @@ export async function statisticsByUser(user, regions, readonly = false, reportId
         },
       ],
     });
+
+    // Await all three requests (created, collaborators, approved).
+    [createdReports, collaboratorReports, approverReports] = await Promise.all([createdReports, collaboratorReports, approverReports]);
+  } else {
+    // Region only.
+    [createdReports] = await Promise.all([createdReports]);
+  }
+
+  // Approved report recipient ids.
+  const createdRecipientIds = createdReports.flatMap((r) => r.dataValues.recipientIds).filter((r) => r);
+  let collaboratorRecipientIds = [];
+  let approverRecipientIds = [];
+
+  // Grant ids.
+  const createdGrantIds = createdReports.flatMap((r) => r.dataValues.grantIds).filter((r) => r);
+  let collaboratorGrantIds = [];
+  let approverGrantIds = [];
+
+  // Goal ids.
+  const createdGoalIds = createdReports.flatMap((r) => r.dataValues.goalIds).filter((r) => r);
+  let collaboratorGoalIds = [];
+  let approverGoalIds = [];
+
+  // Goal ids.
+  const createdObjectiveIds = createdReports.flatMap((r) => r.dataValues.objectiveIds).filter((r) => r);
+  let collaboratorObjectiveIds = [];
+  let approverObjectiveIds = [];
+
+  if (!readonly) {
+    // Collaborator report Recipient ids.
+    collaboratorRecipientIds = collaboratorReports.flatMap((r) => r.dataValues.recipientIds).filter((r) => r);
+
+    // Collaborator Grant ids.
+    collaboratorGrantIds = collaboratorReports.flatMap((r) => r.dataValues.grantIds).filter((r) => r);
+
+    // Collaborator report Goal ids.
+    collaboratorGoalIds = collaboratorReports.flatMap((r) => r.dataValues.goalIds).filter((r) => r);
+
+    // Collaborator report Objective ids.
+    collaboratorObjectiveIds = collaboratorReports.flatMap((r) => r.dataValues.objectiveIds).filter((r) => r);
 
     // Approver report recipient ids.
     approverRecipientIds = approverReports.flatMap((r) => r.dataValues.recipientIds).filter((r) => r);
