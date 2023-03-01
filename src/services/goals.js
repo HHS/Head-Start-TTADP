@@ -716,7 +716,11 @@ export async function goalByIdAndRecipient(id, recipientId) {
       topics: objective.objectiveTopics
         .map((objectiveTopic) => ({
           ...objectiveTopic.dataValues,
-          ...objectiveTopic.topic.dataValues,
+          ...(
+            objectiveTopic.topic && objectiveTopic.topic.dataValues
+              ? objectiveTopic.topic.dataValues
+              : []
+          ),
         }))
         .map((o) => ({ ...o, topic: undefined })),
       files: objective.objectiveFiles
@@ -743,7 +747,11 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
             .map((objectiveTopic) => {
               const ot = {
                 ...objectiveTopic.dataValues,
-                ...objectiveTopic.topic.dataValues,
+                ...(
+                  objectiveTopic.topic && objectiveTopic.topic.dataValues
+                    ? objectiveTopic.topic.dataValues
+                    : []
+                ),
               };
               delete ot.topic;
               return ot;
@@ -1266,6 +1274,13 @@ async function removeObjectives(objectivesToRemove, reportId) {
   if (!objectivesToDefinitelyDestroy.length) {
     return Promise.resolve();
   }
+
+  // cleanup any ObjectiveFiles that are no longer needed
+  await ObjectiveFile.destroy({
+    where: {
+      objectiveId: objectivesToDefinitelyDestroy.map((o) => o.id),
+    },
+  });
 
   return Objective.destroy({
     where: {
