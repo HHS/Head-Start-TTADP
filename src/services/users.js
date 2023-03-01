@@ -126,8 +126,9 @@ export async function statisticsByUser(user, regions, readonly = false, reportId
     ar."id" = arp."activityReportId"
   LEFT JOIN "Grants" g ON
     arp."grantId" = g."id"
-  WHERE ar."legacyId" IS NULL AND
-  ar."calculatedStatus" = 'approved' AND ar."regionId" IN (${regions.join(',')})
+  WHERE ar."legacyId" IS NULL
+  AND ar."submissionStatus" != 'deleted'
+  AND ar."calculatedStatus" = 'approved' AND ar."regionId" IN (${regions.join(',')})
   ${!readonly ? `AND ar."userId" = ${user.id}` : ''}
   ${reportIds.length ? ` AND ar."id" IN (${reportIds.join(',')})` : ''}
   GROUP BY ar."id", ar."duration", ar."numberOfParticipants";
@@ -182,8 +183,9 @@ export async function statisticsByUser(user, regions, readonly = false, reportId
     ar."id" = arp."activityReportId"
   LEFT JOIN "Grants" g ON
     arp."grantId" = g."id"
-  WHERE ar."legacyId" IS NULL AND
-  ar."calculatedStatus" = 'approved' AND ar."regionId" IN (${regions.join(',')})
+  WHERE ar."legacyId" IS NULL
+  AND ar."submissionStatus" != 'deleted'
+  AND ar."calculatedStatus" = 'approved' AND ar."regionId" IN (${regions.join(',')})
   AND arc."userId" = ${user.id}
   ${reportIds.length ? ` AND ar."id" IN (${reportIds.join(',')})` : ''}
   GROUP BY ar."id", ar."duration", ar."numberOfParticipants";
@@ -237,8 +239,9 @@ export async function statisticsByUser(user, regions, readonly = false, reportId
       ar."id" = arp."activityReportId"
     LEFT JOIN "Grants" g ON
       arp."grantId" = g."id"
-    WHERE ar."legacyId" IS NULL AND
-    ar."calculatedStatus" = 'approved' AND ar."regionId" IN (${regions.join(',')})
+    WHERE ar."legacyId" IS NULL
+    AND ar."submissionStatus" != 'deleted'
+    AND ar."calculatedStatus" = 'approved' AND ar."regionId" IN (${regions.join(',')})
     AND ara."userId" = ${user.id}
     ${reportIds.length ? ` AND ar."id" IN (${reportIds.join(',')})` : ''}
     GROUP BY ar."id", ar."duration", ar."numberOfParticipants";
