@@ -169,17 +169,20 @@ export async function statisticsByUser(user, regions, readonly = false, reportId
       {
         model: ActivityReportGoal,
         as: 'activityReportGoals',
+        separate: true,
         attributes: [],
       },
       {
         model: ActivityReportObjective,
         as: 'activityReportObjectives',
+        separate: true,
         attributes: [],
       },
       {
         model: ActivityRecipient.unscoped(),
         attributes: [],
         as: 'activityRecipients',
+        separate: true,
         required: false,
         include: [
           {
