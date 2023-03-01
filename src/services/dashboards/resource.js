@@ -1,18 +1,13 @@
-import { Sequelize, Op, QueryTypes } from 'sequelize';
+import { Sequelize, Op } from 'sequelize';
 import {
   ActivityReport,
   ActivityReportGoal,
-  ActivityReportGoalResource,
   ActivityReportObjective,
-  ActivityReportObjectiveResource,
-  ActivityReportResource,
   ActivityRecipient,
   Grant,
   NextStep,
-  NextStepResource,
   Goal,
   Objective,
-  OtherEntity,
   Recipient,
   Resource,
   Topic,
@@ -20,7 +15,6 @@ import {
 } from '../../models';
 import { formatNumber } from '../../widgets/helpers';
 import { REPORT_STATUSES, RESOURCE_DOMAIN } from '../../constants';
-import { ExitStatus } from 'typescript';
 
 /**
  * @typedef {Object} RecipientPrimitive
@@ -107,7 +101,7 @@ const mergeInResources = (currentData, additionalData) => additionalData.reduce(
 ) => {
   const exists = clusteredReports.find((r) => r.id === report.id);
   if (exists) {
-    ExitStatus.resourceObjects = [
+    exists.resourceObjects = [
       ...(exists.resourceObjects
         ? exists.resourceObjects
         : []),
