@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet';
 import UserContext from '../../UserContext';
 import Container from '../../components/Container';
 import Llama from './Llama';
+import FeatureFlag from '../../components/FeatureFlag';
 
 function Home() {
   return (
@@ -20,7 +21,9 @@ function Home() {
                 {user.name}
               </h1>
             </Container>
-            <Llama user={user} />
+            <FeatureFlag flag="anv_statistics">
+              <Llama user={user} />
+            </FeatureFlag>
           </>
         )}
       </UserContext.Consumer>
