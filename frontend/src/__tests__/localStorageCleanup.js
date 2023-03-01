@@ -26,8 +26,19 @@ describe('localStorageCleanup', () => {
     });
 
     beforeEach(async () => {
-      const user = { name: 'name' };
+      const user = { name: 'name', permissions: [] };
       fetchMock.get(userUrl, { ...user });
+      fetchMock.get(join((userUrl, 'statistics')), {
+        daysSinceJoined: 1,
+        arsCreated: 17343,
+        arsCollaboratedOn: 0,
+        ttaProvided: '1406 days 12 hrs',
+        recipientsReached: 1573,
+        grantsServed: 2407,
+        participantsReached: 162963,
+        goalsApproved: 30803,
+        objectivesApproved: 53990,
+      });
       fetchMock.get(logoutUrl, 200);
       fetchMock.get(cleanupUrl, [{ id: 2 }, { id: 3 }]);
       fetchMock.get(alertsUrl, null);
@@ -74,7 +85,7 @@ describe('localStorageCleanup', () => {
 
   describe('if local storage is not available', () => {
     beforeEach(async () => {
-      const user = { name: 'name' };
+      const user = { name: 'name', permissions: [] };
       fetchMock.get(userUrl, { ...user });
       fetchMock.get(logoutUrl, 200);
       fetchMock.get(cleanupUrl, [{ id: 2 }, { id: 3 }]);
@@ -97,8 +108,19 @@ describe('localStorageCleanup', () => {
     });
 
     beforeEach(async () => {
-      const user = { name: 'name' };
+      const user = { name: 'name', permissions: [] };
       fetchMock.get(userUrl, { ...user });
+      fetchMock.get(join((userUrl, 'statistics')), {
+        daysSinceJoined: 1,
+        arsCreated: 17343,
+        arsCollaboratedOn: 0,
+        ttaProvided: '1406 days 12 hrs',
+        recipientsReached: 1573,
+        grantsServed: 2407,
+        participantsReached: 162963,
+        goalsApproved: 30803,
+        objectivesApproved: 53990,
+      });
       fetchMock.get(logoutUrl, 200);
       fetchMock.get(cleanupUrl, 500);
       fetchMock.get(alertsUrl, null);

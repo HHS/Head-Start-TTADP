@@ -9,7 +9,7 @@ import App from '../../App';
 import { SCOPE_IDS } from '../../Constants';
 
 describe('HeaderUserMenu', () => {
-  const user = { name: 'harry potter' };
+  const user = { name: 'harry potter', permissions: [] };
   const adminUser = {
     name: 'harry potter',
     permissions: [{ regionId: 1, scopeId: SCOPE_IDS.ADMIN }],
