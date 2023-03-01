@@ -27,9 +27,9 @@ describe('ReviewPage', () => {
     expect(link).toHaveAttribute('href', 'http://localhost:3000');
   });
 
-  it('displays "not approved" if the file has not been approved', async () => {
+  it('does not display the download link if the file has not been approved', async () => {
     render(<RenderFileReviewItem status="" />);
-    const status = await screen.findByText('Not Approved');
-    expect(status).toBeVisible();
+    const link = screen.queryByRole('link');
+    expect(link).toBeNull();
   });
 });
