@@ -129,6 +129,7 @@ export async function statisticsByUser(user, regions, readonly = false, reportId
   WHERE ar."legacyId" IS NULL AND
   ar."calculatedStatus" = 'approved' AND ar."regionId" IN (${regions.join(',')})
   ${!readonly ? `AND ar."userId" = ${user.id}` : ''}
+  ${reportIds.length ? ` AND ar."id" IN (${reportIds.join(',')})` : ''}
   GROUP BY ar."id", ar."duration", ar."numberOfParticipants";
 
   -- Get Created Goals and Objectives.
@@ -183,7 +184,8 @@ export async function statisticsByUser(user, regions, readonly = false, reportId
     arp."grantId" = g."id"
   WHERE ar."legacyId" IS NULL AND
   ar."calculatedStatus" = 'approved' AND ar."regionId" IN (${regions.join(',')})
-  ${!readonly ? `AND arc."userId" = ${user.id}` : ''}
+  AND arc."userId" = ${user.id}
+  ${reportIds.length ? ` AND ar."id" IN (${reportIds.join(',')})` : ''}
   GROUP BY ar."id", ar."duration", ar."numberOfParticipants";
 
   -- Get Created Goals and Objectives.
@@ -237,7 +239,8 @@ export async function statisticsByUser(user, regions, readonly = false, reportId
       arp."grantId" = g."id"
     WHERE ar."legacyId" IS NULL AND
     ar."calculatedStatus" = 'approved' AND ar."regionId" IN (${regions.join(',')})
-    ${!readonly ? `AND ara."userId" = ${user.id}` : ''}
+    AND ara."userId" = ${user.id}
+    ${reportIds.length ? ` AND ar."id" IN (${reportIds.join(',')})` : ''}
     GROUP BY ar."id", ar."duration", ar."numberOfParticipants";
 
     -- Get Created Goals and Objectives.
