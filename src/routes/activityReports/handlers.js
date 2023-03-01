@@ -868,6 +868,7 @@ export async function createReport(req, res) {
     }
     res.json(report);
   } catch (error) {
+    console.log(error);
     await handleErrors(req, res, error, logContext);
   }
 }
