@@ -1,5 +1,6 @@
 /* eslint-disable max-len */
-import { Op } from 'sequelize';
+import { v4 as uuidv4 } from 'uuid';
+import { Op, QueryTypes } from 'sequelize';
 
 import {
   User,
@@ -102,250 +103,170 @@ export async function statisticsByUser(user, regions, readonly = false, reportId
   const totalHours = Math.abs(todaysDate - dateJoined) / 36e5;
   const totalDaysSinceJoined = Math.floor(totalHours / 24);
 
-  // Created AR where.
-  let createdArWhere = {
-    regionId: regions,
-    calculatedStatus: REPORT_STATUSES.APPROVED,
-    legacyId: null,
-  };
-
-  // Focus only on user if has read/write.
-  if (!readonly) {
-    createdArWhere = {
-      ...createdArWhere,
-      userId: user.id,
-    };
-  }
-
-  if (reportIds.length) {
-    createdArWhere = {
-      ...createdArWhere,
-      id: reportIds,
-    };
-  }
-
   // Additional report roles (if not read only).
   let collaboratorReports = [];
   let approverReports = [];
 
+  // CREATED temp table names (needed for unit tests same sql connection).
+  const createdTempTableName = `Z_temp_ars_created_${uuidv4().replaceAll('-', '_')}`;
+  const createdGoalsTempTableName = `Z_temp_goals_and_objs_created_${uuidv4().replaceAll('-', '_')}`;
+
   // Get created AR's.
-  let createdReports = ActivityReportModel.findAll({
-    attributes: [
-      [sequelize.col('"ActivityReport"."id"'), 'id'],
-      [sequelize.col('"ActivityReport"."duration"'), 'duration'],
-      [sequelize.fn(
-        'ARRAY_AGG',
-        sequelize.fn(
-          'DISTINCT',
-          sequelize.col('"activityRecipients->grant"."recipientId"'),
-        ),
-      ), 'recipientIds'],
-      [sequelize.fn(
-        'ARRAY_AGG',
-        sequelize.fn(
-          'DISTINCT',
-          sequelize.col('"activityRecipients->grant"."id"'),
-        ),
-      ), 'grantIds'],
-      [sequelize.col('"ActivityReport"."numberOfParticipants"'), 'numberOfParticipants'],
-      [sequelize.fn(
-        'ARRAY_AGG',
-        sequelize.fn(
-          'DISTINCT',
-          sequelize.col('"activityReportGoals."goalId"'),
-        ),
-      ), 'goalIds'],
-      [sequelize.fn(
-        'ARRAY_AGG',
-        sequelize.fn(
-          'DISTINCT',
-          sequelize.col('"activityReportObjectives."objectiveId"'),
-        ),
-      ), 'objectiveIds'],
-    ],
-    group: ['"ActivityReport"."id"', '"ActivityReport"."duration"', '"ActivityReport"."numberOfParticipants"'],
-    where: createdArWhere,
-    include: [
-      {
-        model: ActivityReportGoal,
-        as: 'activityReportGoals',
-        attributes: [],
-      },
-      {
-        model: ActivityReportObjective,
-        as: 'activityReportObjectives',
-        attributes: [],
-      },
-      {
-        model: ActivityRecipient.unscoped(),
-        attributes: [],
-        as: 'activityRecipients',
-        required: false,
-        include: [
-          {
-            attributes: [],
-            model: Grant.unscoped(),
-            as: 'grant',
-          },
-        ],
-      },
-    ],
-  });
+  const createdArSql = `
+  -- Get report and recipient info.
+  SELECT
+    ar."id",
+    ar."duration",
+    ar."numberOfParticipants",
+    (ARRAY_AGG(DISTINCT arp."grantId")) AS "grantIds",
+    (ARRAY_AGG(DISTINCT g."recipientId")) AS "recipientIds"
+    INTO TEMP ${createdTempTableName}
+  FROM "ActivityReports" ar
+  LEFT JOIN "ActivityRecipients" arp ON
+    ar."id" = arp."activityReportId"
+  LEFT JOIN "Grants" g ON
+    arp."grantId" = g."id"
+  WHERE ar."legacyId" IS NULL AND
+  ar."calculatedStatus" = 'approved' AND ar."regionId" IN (${regions.join(',')})
+  ${!readonly ? `AND ar."userId" = ${user.id}` : ''}
+  GROUP BY ar."id", ar."duration", ar."numberOfParticipants";
+
+  -- Get Created Goals and Objectives.
+  SELECT
+    ar."id",
+    (ARRAY_AGG(DISTINCT arg."goalId")) AS "goalIds",
+    (ARRAY_AGG(DISTINCT aro."objectiveId")) AS "objectiveIds"
+    INTO TEMP ${createdGoalsTempTableName}
+  FROM ${createdTempTableName} ar
+  INNER JOIN "ActivityReportGoals" arg ON
+    ar."id" = arg."activityReportId"
+  INNER JOIN "ActivityReportObjectives" aro ON
+    ar."id" = aro."activityReportId"
+  GROUP BY ar."id";
+
+  -- Final Select.
+  SELECT
+    ar."id",
+    ar."duration",
+    ar."numberOfParticipants",
+    ar."grantIds",
+    ar."recipientIds",
+    g."goalIds",
+    g."objectiveIds"
+  FROM ${createdTempTableName} ar
+  LEFT JOIN ${createdGoalsTempTableName} g ON
+    ar."id" = g."id";
+  `;
+  let createdReports = sequelize.query(createdArSql, { type: QueryTypes.SELECT });
 
   if (!readonly) {
-  // Get Collaborator's AR (if not read only).
-    collaboratorReports = ActivityReportModel.findAll({
-      attributes: [
-        [sequelize.col('"ActivityReport"."id"'), 'id'],
-        [sequelize.col('"ActivityReport"."duration"'), 'duration'],
-        [sequelize.fn(
-          'ARRAY_AGG',
-          sequelize.fn(
-            'DISTINCT',
-            sequelize.col('"activityRecipients->grant"."recipientId"'),
-          ),
-        ), 'recipientIds'],
-        [sequelize.fn(
-          'ARRAY_AGG',
-          sequelize.fn(
-            'DISTINCT',
-            sequelize.col('"activityRecipients->grant"."id"'),
-          ),
-        ), 'grantIds'],
-        [sequelize.col('"ActivityReport"."numberOfParticipants"'), 'numberOfParticipants'],
-        [sequelize.fn(
-          'ARRAY_AGG',
-          sequelize.fn(
-            'DISTINCT',
-            sequelize.col('"activityReportGoals."goalId"'),
-          ),
-        ), 'goalIds'],
-        [sequelize.fn(
-          'ARRAY_AGG',
-          sequelize.fn(
-            'DISTINCT',
-            sequelize.col('"activityReportObjectives."objectiveId"'),
-          ),
-        ), 'objectiveIds'],
-      ],
-      group: ['"ActivityReport"."id"', '"ActivityReport"."duration"', '"ActivityReport"."numberOfParticipants"'],
-      where: {
-        regionId: regions,
-        calculatedStatus: REPORT_STATUSES.APPROVED,
-        legacyId: null,
-      },
-      include: [
-        {
-          attributes: [],
-          model: ActivityReportCollaborator,
-          as: 'activityReportCollaborators',
-          required: true,
-          where: {
-            userId: user.id,
-          },
-        },
-        {
-          model: ActivityReportGoal,
-          as: 'activityReportGoals',
-          attributes: [],
-        },
-        {
-          model: ActivityReportObjective,
-          as: 'activityReportObjectives',
-          attributes: [],
-        },
-        {
-          model: ActivityRecipient.unscoped(),
-          attributes: [],
-          as: 'activityRecipients',
-          required: false,
-          include: [
-            {
-              attributes: [],
-              model: Grant.unscoped(),
-              as: 'grant',
-            },
-          ],
-        },
-      ],
-    });
+    // COLLABORATOR temp table names (needed for unit tests same sql connection).
+    const collaboratorTempTableName = `Z_temp_ars_collaborator_${uuidv4().replaceAll('-', '_')}`;
+    const collaboratorGoalsTempTableName = `Z_temp_goals_and_objs_collaborator_${uuidv4().replaceAll('-', '_')}`;
+
+    // Get Collaborator's AR (if not read only).
+    const collaboratorArSql = `
+  -- Get report and recipient info.
+  SELECT
+    ar."id",
+    ar."duration",
+    ar."numberOfParticipants",
+    (ARRAY_AGG(DISTINCT arp."grantId")) AS "grantIds",
+    (ARRAY_AGG(DISTINCT g."recipientId")) AS "recipientIds"
+    INTO TEMP ${collaboratorTempTableName}
+  FROM "ActivityReports" ar
+  INNER JOIN "ActivityReportCollaborators" arc ON
+    ar."id" = arc."activityReportId"
+  LEFT JOIN "ActivityRecipients" arp ON
+    ar."id" = arp."activityReportId"
+  LEFT JOIN "Grants" g ON
+    arp."grantId" = g."id"
+  WHERE ar."legacyId" IS NULL AND
+  ar."calculatedStatus" = 'approved' AND ar."regionId" IN (${regions.join(',')})
+  ${!readonly ? `AND arc."userId" = ${user.id}` : ''}
+  GROUP BY ar."id", ar."duration", ar."numberOfParticipants";
+
+  -- Get Created Goals and Objectives.
+  SELECT
+    ar."id",
+    (ARRAY_AGG(DISTINCT arg."goalId")) AS "goalIds",
+    (ARRAY_AGG(DISTINCT aro."objectiveId")) AS "objectiveIds"
+    INTO TEMP ${collaboratorGoalsTempTableName}
+  FROM  ${collaboratorTempTableName} ar
+  INNER JOIN "ActivityReportGoals" arg ON
+    ar."id" = arg."activityReportId"
+  INNER JOIN "ActivityReportObjectives" aro ON
+    ar."id" = aro."activityReportId"
+  GROUP BY ar."id";
+
+  -- Final Select.
+  SELECT
+    ar."id",
+    ar."duration",
+    ar."numberOfParticipants",
+    ar."grantIds",
+    ar."recipientIds",
+    g."goalIds",
+    g."objectiveIds"
+  FROM  ${collaboratorTempTableName} ar
+  LEFT JOIN  ${collaboratorGoalsTempTableName} g ON
+    ar."id" = g."id";
+  `;
+    collaboratorReports = sequelize.query(collaboratorArSql, { type: QueryTypes.SELECT });
+
+    // APPROVER temp table names (needed for unit tests same sql connection).
+    const approverTempTableName = `Z_temp_ars_approver_${uuidv4().replaceAll('-', '_')}`;
+    const approverGoalsTempTableName = `Z_temp_goals_and_objs_approver_${uuidv4().replaceAll('-', '_')}`;
 
     // Get Approver AR's (if not read only).
-    approverReports = ActivityReportModel.findAll({
-      attributes: [
-        [sequelize.col('"ActivityReport"."id"'), 'id'],
-        [sequelize.col('"ActivityReport"."duration"'), 'duration'],
-        [sequelize.fn(
-          'ARRAY_AGG',
-          sequelize.fn(
-            'DISTINCT',
-            sequelize.col('"activityRecipients->grant"."recipientId"'),
-          ),
-        ), 'recipientIds'],
-        [sequelize.fn(
-          'ARRAY_AGG',
-          sequelize.fn(
-            'DISTINCT',
-            sequelize.col('"activityRecipients->grant"."id"'),
-          ),
-        ), 'grantIds'],
-        [sequelize.col('"ActivityReport"."numberOfParticipants"'), 'numberOfParticipants'],
-        [sequelize.fn(
-          'ARRAY_AGG',
-          sequelize.fn(
-            'DISTINCT',
-            sequelize.col('"activityReportGoals."goalId"'),
-          ),
-        ), 'goalIds'],
-        [sequelize.fn(
-          'ARRAY_AGG',
-          sequelize.fn(
-            'DISTINCT',
-            sequelize.col('"activityReportObjectives."objectiveId"'),
-          ),
-        ), 'objectiveIds'],
-      ],
-      group: ['"ActivityReport"."id"', '"ActivityReport"."duration"', '"ActivityReport"."numberOfParticipants"'],
-      where: {
-        regionId: regions,
-        calculatedStatus: REPORT_STATUSES.APPROVED,
-        legacyId: null,
-      },
-      include: [
-        {
-          attributes: [],
-          model: ActivityReportApprover,
-          as: 'approvers',
-          required: true,
-          where: {
-            userId: user.id,
-          },
-        },
-        {
-          model: ActivityReportGoal,
-          as: 'activityReportGoals',
-          attributes: [],
-        },
-        {
-          model: ActivityReportObjective,
-          as: 'activityReportObjectives',
-          attributes: [],
-        },
-        {
-          model: ActivityRecipient.unscoped(),
-          attributes: [],
-          as: 'activityRecipients',
-          required: false,
-          include: [
-            {
-              attributes: [],
-              model: Grant.unscoped(),
-              as: 'grant',
-            },
-          ],
-        },
-      ],
-    });
+    const approverArSql = `
+    -- Get report and recipient info.
+    SELECT
+      ar."id",
+      ar."duration",
+      ar."numberOfParticipants",
+      (ARRAY_AGG(DISTINCT arp."grantId")) AS "grantIds",
+      (ARRAY_AGG(DISTINCT g."recipientId")) AS "recipientIds"
+      INTO TEMP ${approverTempTableName}
+    FROM "ActivityReports" ar
+    INNER JOIN "ActivityReportApprovers" ara ON
+      ar."id" = ara."activityReportId"
+    LEFT JOIN "ActivityRecipients" arp ON
+      ar."id" = arp."activityReportId"
+    LEFT JOIN "Grants" g ON
+      arp."grantId" = g."id"
+    WHERE ar."legacyId" IS NULL AND
+    ar."calculatedStatus" = 'approved' AND ar."regionId" IN (${regions.join(',')})
+    ${!readonly ? `AND ara."userId" = ${user.id}` : ''}
+    GROUP BY ar."id", ar."duration", ar."numberOfParticipants";
+
+    -- Get Created Goals and Objectives.
+    SELECT
+      ar."id",
+      (ARRAY_AGG(DISTINCT arg."goalId")) AS "goalIds",
+      (ARRAY_AGG(DISTINCT aro."objectiveId")) AS "objectiveIds"
+      INTO TEMP ${approverGoalsTempTableName}
+    FROM  ${approverTempTableName} ar
+    INNER JOIN "ActivityReportGoals" arg ON
+      ar."id" = arg."activityReportId"
+    INNER JOIN "ActivityReportObjectives" aro ON
+      ar."id" = aro."activityReportId"
+    GROUP BY ar."id";
+
+    -- Final Select.
+    SELECT
+      ar."id",
+      ar."duration",
+      ar."numberOfParticipants",
+      ar."grantIds",
+      ar."recipientIds",
+      g."goalIds",
+      g."objectiveIds"
+    FROM  ${approverTempTableName} ar
+    LEFT JOIN ${approverGoalsTempTableName} g ON
+      ar."id" = g."id";
+    `;
+    approverReports = sequelize.query(approverArSql, { type: QueryTypes.SELECT });
 
     // Await all three requests (created, collaborators, approved).
     [createdReports, collaboratorReports, approverReports] = await Promise.all([createdReports, collaboratorReports, approverReports]);
@@ -355,49 +276,49 @@ export async function statisticsByUser(user, regions, readonly = false, reportId
   }
 
   // Approved report recipient ids.
-  const createdRecipientIds = createdReports.flatMap((r) => r.dataValues.recipientIds).filter((r) => r);
+  const createdRecipientIds = createdReports.flatMap((r) => r.recipientIds).filter((r) => r);
   let collaboratorRecipientIds = [];
   let approverRecipientIds = [];
 
   // Grant ids.
-  const createdGrantIds = createdReports.flatMap((r) => r.dataValues.grantIds).filter((r) => r);
+  const createdGrantIds = createdReports.flatMap((r) => r.grantIds).filter((r) => r);
   let collaboratorGrantIds = [];
   let approverGrantIds = [];
 
   // Goal ids.
-  const createdGoalIds = createdReports.flatMap((r) => r.dataValues.goalIds).filter((r) => r);
+  const createdGoalIds = createdReports.flatMap((r) => r.goalIds).filter((r) => r);
   let collaboratorGoalIds = [];
   let approverGoalIds = [];
 
   // Goal ids.
-  const createdObjectiveIds = createdReports.flatMap((r) => r.dataValues.objectiveIds).filter((r) => r);
+  const createdObjectiveIds = createdReports.flatMap((r) => r.objectiveIds).filter((r) => r);
   let collaboratorObjectiveIds = [];
   let approverObjectiveIds = [];
 
   if (!readonly) {
     // Collaborator report Recipient ids.
-    collaboratorRecipientIds = collaboratorReports.flatMap((r) => r.dataValues.recipientIds).filter((r) => r);
+    collaboratorRecipientIds = collaboratorReports.flatMap((r) => r.recipientIds).filter((r) => r);
 
     // Collaborator Grant ids.
-    collaboratorGrantIds = collaboratorReports.flatMap((r) => r.dataValues.grantIds).filter((r) => r);
+    collaboratorGrantIds = collaboratorReports.flatMap((r) => r.grantIds).filter((r) => r);
 
     // Collaborator report Goal ids.
-    collaboratorGoalIds = collaboratorReports.flatMap((r) => r.dataValues.goalIds).filter((r) => r);
+    collaboratorGoalIds = collaboratorReports.flatMap((r) => r.goalIds).filter((r) => r);
 
     // Collaborator report Objective ids.
-    collaboratorObjectiveIds = collaboratorReports.flatMap((r) => r.dataValues.objectiveIds).filter((r) => r);
+    collaboratorObjectiveIds = collaboratorReports.flatMap((r) => r.objectiveIds).filter((r) => r);
 
     // Approver report recipient ids.
-    approverRecipientIds = approverReports.flatMap((r) => r.dataValues.recipientIds).filter((r) => r);
+    approverRecipientIds = approverReports.flatMap((r) => r.recipientIds).filter((r) => r);
 
     // Approver report recipient ids.
-    approverGrantIds = approverReports.flatMap((r) => r.dataValues.grantIds).filter((r) => r);
+    approverGrantIds = approverReports.flatMap((r) => r.grantIds).filter((r) => r);
 
     // Approver report Goal ids.
-    approverGoalIds = approverReports.flatMap((r) => r.dataValues.goalIds).filter((r) => r);
+    approverGoalIds = approverReports.flatMap((r) => r.goalIds).filter((r) => r);
 
     // Approver report Goal ids.
-    approverObjectiveIds = approverReports.flatMap((r) => r.dataValues.objectiveIds).filter((r) => r);
+    approverObjectiveIds = approverReports.flatMap((r) => r.objectiveIds).filter((r) => r);
   }
 
   // Approved TTA.
