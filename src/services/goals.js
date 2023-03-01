@@ -1388,6 +1388,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
     where: {
       id: goalsToDelete,
       onApprovedAR: false,
+      createdVia: 'activityReport',
     },
     individualHooks: true,
   });

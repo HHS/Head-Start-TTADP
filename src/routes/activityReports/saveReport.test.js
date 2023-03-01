@@ -161,7 +161,7 @@ describe('saveReport', () => {
 
   afterAll(async () => {
     try {
-      const reportIds = [firstReport.id, secondReport.id];
+      const reportIds = [firstReport.id, secondReport.id, thirdReport.id, fourthReport.id];
 
       await ActivityRecipient.destroy({
         where: { activityReportId: reportIds },
@@ -699,7 +699,7 @@ describe('saveReport', () => {
       activityReportCollaborators: [],
       context: '',
       deliveryMethod: null,
-      duration: '',
+      duration: null,
       goals: [],
       recipientNextSteps: [{ id: null, note: '' }],
       recipients: [],
@@ -731,11 +731,7 @@ describe('saveReport', () => {
       approverUserIds: [],
     };
 
-    try {
-      await createReport({ body: requestBody, session: { userId: secondUser.id } }, mockResponse);
-    } catch (err) {
-      console.log(err);
-    }
+    await createReport({ body: requestBody, session: { userId: secondUser.id } }, mockResponse);
 
     let newReports = await ActivityReport.findAll({
       where: {
@@ -798,10 +794,7 @@ describe('saveReport', () => {
 
     expect(allObjectivesForGoals.length).toBe(1);
 
-    const [firstObjective] = allObjectivesForGoals;
-
     // next, we create a second report
-
     const thirdRequestBody = {
       ECLKCResourcesUsed: [],
       activityRecipientType: 'recipient',
@@ -916,8 +909,47 @@ describe('saveReport', () => {
     });
 
     expect(allObjectivesForGoals.length).toBe(2);
-    const goalIds = allObjectivesForGoals.map((o) => o.goalId);
+    let goalIds = allObjectivesForGoals.map((o) => o.goalId);
+    expect(goalIds).toContain(thirdGoal.id);
+    expect(goalIds).toContain(fourthGoal.id);
+
+    const fifthRequestBody = {
+      pageState: {
+        1: 'In progress', 2: 'Not started', 3: 'Not started', 4: 'Not started',
+      },
+      recipientsWhoHaveGoalsThatShouldBeRemoved: [secondGrant.id],
+      activityRecipients: [{
+        activityRecipientId: grantAndRecipientId,
+      }],
+    };
+
+    await saveReport({
+      body: fifthRequestBody,
+      session: { userId: secondUser.id },
+      params: { activityReportId: fourthReport.id },
+    }, mockResponse);
+
+    allObjectivesForGoals = await Objective.findAll({
+      where: {
+        goalId: [thirdGoal.id, fourthGoal.id],
+      },
+    });
+
+    // confirm that the one objective is deleted
+    expect(allObjectivesForGoals.length).toBe(1);
+    goalIds = allObjectivesForGoals.map((o) => o.goalId);
     expect(goalIds).toContain(thirdGoal.id);
     expect(goalIds).not.toContain(fourthGoal.id);
+
+    // but the fourth goal is not
+    const allGoals = await Goal.findAll({
+      where: {
+        id: [thirdGoal.id, fourthGoal.id],
+      },
+    });
+
+    expect(allGoals.length).toBe(2);
+    expect(allGoals.map((g) => g.id)).toContain(fourthGoal.id);
+    expect(allGoals.map((g) => g.id)).toContain(thirdGoal.id);
   });
 });
