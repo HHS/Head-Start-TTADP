@@ -75,7 +75,7 @@ const hsesUsers = [
     name: 'Abby Blue', hsesUsername: 'test.tta.abby', hsesUserId: '53043', email: 'abby.blue@adhocteam.us',
   },
   {
-    name: 'Patrick Deutch', hsesUsername: 'test.tta.patrick', hsesUserId: '53137', email: 'patrick.deutsch@adhocteam.us',
+    name: 'Patrick Deutsch', hsesUsername: 'test.tta.patrick', hsesUserId: '53137', email: 'patrick.deutsch@adhocteam.us',
   },
 ];
 
