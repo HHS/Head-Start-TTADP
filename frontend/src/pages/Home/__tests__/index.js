@@ -10,6 +10,7 @@ describe('Home Page', () => {
   beforeEach(() => {
     const user = {
       name: 'test@test.com',
+      permissions: [],
     };
 
     render(
