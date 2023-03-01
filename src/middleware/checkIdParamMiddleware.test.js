@@ -4,6 +4,7 @@ import {
   checkFileIdParam,
   checkObjectiveIdParam,
   checkObjectiveTemplateIdParam,
+  checkAlertIdParam,
 } from './checkIdParamMiddleware';
 import { auditLogger } from '../logger';
 
@@ -183,6 +184,47 @@ describe('checkIdParamMiddleware', () => {
       };
 
       checkObjectiveIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('checkAlertIdParam', () => {
+    it('calls next if alert id is string or integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          alertId: '1',
+        },
+      };
+
+      checkAlertIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('throw 400 if param is not string or integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          alertId: '2D',
+        },
+      };
+
+      checkAlertIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('throw 400 if param is missing', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {},
+      };
+
+      checkAlertIdParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(auditLogger.error).toHaveBeenCalled();
       expect(mockNext).not.toHaveBeenCalled();

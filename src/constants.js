@@ -18,6 +18,18 @@ export const FILE_STATUSES = {
   REJECTED: 'REJECTED',
 };
 
+// note that if this list is changed,
+// it also needs to be changed in frontend/src/Constants.js
+export const ALERT_STATUSES = {
+  UNPUBLISHED: 'Unpublished',
+  PUBLISHED: 'Published',
+};
+
+export const ALERT_VARIANTS = {
+  INFO: 'info',
+  EMERGENCY: 'emergency',
+};
+
 export const DATE_FORMAT = 'MM/DD/YYYY';
 
 export const DECIMAL_BASE = 10;
