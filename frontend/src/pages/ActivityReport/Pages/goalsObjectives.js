@@ -44,7 +44,6 @@ const GoalsObjectives = ({
   const activityRecipientType = watch('activityRecipientType');
   const activityRecipients = watch('activityRecipients');
   const objectivesWithoutGoals = watch('objectivesWithoutGoals');
-  const activityReportId = watch('id');
   const pageState = getValues('pageState');
   const isRecipientReport = activityRecipientType === 'recipient';
   const isOtherEntityReport = activityRecipientType === 'other-entity';
@@ -136,9 +135,9 @@ const GoalsObjectives = ({
     }
   };
 
-  const onEdit = async (goal, index) => {
+  const onEdit = async (goal) => {
     try {
-      await setGoalAsActivelyEdited(activityReportId, goal.goalIds, pageState);
+      await setGoalAsActivelyEdited(reportId, goal.goalIds, pageState);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('failed to set goal as actively edited with this error:', err);
@@ -160,16 +159,18 @@ const GoalsObjectives = ({
         }],
         setError,
       );
+
       if (areGoalsValid !== true) {
         return;
       }
     }
 
+    // clear out the existing value (we need to do this because without it
+    // certain objective fields don't clear out)
+    setValue('goalForEditing', null);
+
     // make this goal the editable goal
     setValue('goalForEditing', goal);
-    const objectives = getValues(`goals[${index}].objectives`) || [];
-
-    setValue('goalForEditing.objectives', objectives);
     setValue('goalEndDate', goal.endDate);
     setValue('goalName', goal.name);
 
@@ -196,14 +197,11 @@ const GoalsObjectives = ({
   };
 
   // the read only component expects things a little differently
-  const goalsForReview = selectedGoals.map((goal, index) => {
-    const fieldArrayName = `goals[${index}].objectives`;
-    const objectives = getValues(fieldArrayName) || [];
+  const goalsForReview = selectedGoals.map((goal) => {
     return {
       ...goal,
       goalName: goal.name,
       grants: [],
-      objectives,
     };
   });
 
@@ -237,7 +235,7 @@ const GoalsObjectives = ({
         <Alert noIcon type="info">
           To add goals and objectives, indicate who the activity was for in
           {' '}
-          <Link to={`/activity-reports/${activityReportId}/activity-summary`}>Activity Summary</Link>
+          <Link to={`/activity-reports/${reportId}/activity-summary`}>Activity Summary</Link>
           .
         </Alert>
       )}
