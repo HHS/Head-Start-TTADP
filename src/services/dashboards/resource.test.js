@@ -186,7 +186,7 @@ describe('Resources dashboard', () => {
       where: { name: 'CLASS: Classroom Organization' },
       raw: true,
     });
-    console.log(topicId);
+
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
         activityReportObjectiveId: activityReportObjectiveOne.id,
