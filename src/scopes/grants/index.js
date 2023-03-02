@@ -40,8 +40,8 @@ export const topicToQuery = {
     nin: (query) => withoutRegion(query),
   },
   group: {
-    in: (query, options, userId) => withGroup(query, userId),
-    nin: (query, options, userId) => withoutGroup(query, userId),
+    in: (query, _options, userId) => withGroup(query, userId),
+    nin: (query, _options, userId) => withoutGroup(query, userId),
   },
 };
 
