@@ -95,58 +95,54 @@ const reduceRecipients = (source, adding) => adding.reduce((recipients, recipien
  * @param {ReportDBData[]} additionalData
  * @returns {ReportData[]}
  */
-const mergeInResources = (currentData, additionalData) => additionalData.reduce((
-  clusteredReports,
-  report,
-) => {
-  const exists = clusteredReports.find((r) => r.id === report.id);
-  if (exists) {
-    exists.resourceObjects = [
-      ...(exists.resourceObjects
-        ? exists.resourceObjects
-        : []),
-      ...report.resourceObjects,
-    ];
-    exists.resourceObjects = (report.resourceObjects || [])
-      .reduce((resourceObjects, resourceObject) => {
-        const roExists = resourceObjects
-          .find((ro) => ro.resourceId === resourceObject.resourceId);
-        if (roExists) {
-          roExists.sourceFields = resourceObject.sourceFields
-            .map((sourceField) => ({
-              tableType: resourceObject.tableType,
-              sourceField,
-            }))
-            .reduce((sourceFields, sourceField) => {
-              const sfExists = sourceFields
-                .find((sf) => sf.tableType === sourceField.tableType
-                && sf.sourceField === sourceField.sourceField);
-              if (sfExists) {
-                return sourceFields;
-              }
-              return [...sourceFields, sourceField];
-            }, roExists.sourceFields);
-          return resourceObjects;
-        }
-        return [
-          ...resourceObjects,
-          {
-            ...resourceObject,
-            sourceFields: resourceObject.sourceFields.map((sourceField) => ({
-              tableType: resourceObject.tableType,
-              sourceField,
-            })),
-          },
-        ];
-      }, (exists.resourceObjects || []));
-    return clusteredReports;
-  }
-
-  return [
-    ...clusteredReports,
+const mergeInResources = (currentData, additionalData) => additionalData
+  .reduce((
+    clusteredReports,
     report,
-  ];
-}, currentData);
+  ) => {
+    const exists = clusteredReports.find((r) => r.id === report.id);
+    if (exists) {
+      exists.resources = (report.resourceObjects || [])
+        .reduce((resources, resource) => {
+          const roExists = resources
+            .find((ro) => ro.resourceId === resource.resourceId);
+          if (roExists) {
+            roExists.sourceFields = resource.sourceFields
+              .map((sourceField) => ({
+                tableType: resource.tableType,
+                sourceField,
+              }))
+              .reduce((sourceFields, sourceField) => {
+                const sfExists = sourceFields
+                  .find((sf) => sf.tableType === sourceField.tableType
+                  && sf.sourceField === sourceField.sourceField);
+                if (sfExists) {
+                  return sourceFields;
+                }
+                return [...sourceFields, sourceField];
+              }, roExists.sourceFields);
+            return resources;
+          }
+          return [
+            ...resources,
+            {
+              ...resource,
+              sourceFields: resource.sourceFields
+                .map((sourceField) => ({
+                  tableType: resource.tableType,
+                  sourceField,
+                })),
+            },
+          ];
+        }, (exists.resources || []));
+      return clusteredReports;
+    }
+
+    return [
+      ...clusteredReports,
+      report,
+    ];
+  }, currentData);
 
 /**
 * @typedef {Object} ReportPrimitive
@@ -210,7 +206,40 @@ const switchToResourceCentric = (input) => {
       });
     }
   });
-  return Object.values(output);
+  return Object.values(output)
+    .map((data) => {
+      const participants = data.reports
+        .reduce((accumulator, r) => accumulator + r.numberOfParticipants, 0);
+      const startDates = data.reports
+        .map((r) => r.startDate);
+      const recipients = data.reports
+        .flatMap((r) => r.recipients)
+        .reduce((currentRecipient, { recipientId, grantId, otherEntityId }) => {
+          const exists = currentRecipient.find((cr) => (
+            cr.recipientId === recipientId
+            || cr.otherEntityId === otherEntityId));
+          if (exists) {
+            exists.grantIds = grantId
+              ? [...new Set([...exists.grantIds, grantId])]
+              : exists.grantId;
+            return currentRecipient;
+          }
+          return [
+            ...currentRecipient,
+            {
+              recipientId,
+              grantIds: [grantId].filter((g) => g),
+              otherEntityId,
+            },
+          ];
+        }, []);
+      return {
+        ...data,
+        participants,
+        startDates,
+        recipients,
+      };
+    });
 };
 
 // restructure the input from report centric to resource centric
@@ -287,19 +316,38 @@ const switchToTopicCentric = (input) => {
       });
     }
   });
-  return Object.values(output);
+  return Object.values(output)
+    .map((data) => {
+      const participants = data.reports
+        .reduce((accumulator, r) => accumulator + r.numberOfParticipants, 0);
+      const startDates = data.reports
+        .map((r) => r.startDate);
+      return {
+        ...data,
+        participants,
+        startDates,
+      };
+    });
 };
 
 // collect all resource data from the db filtered via the scopes
 export async function resourceData(scopes, skipResources = false, skipTopics = false) {
   // Query Database for all Resources within the scope.
-  const [
-    allReports,
-    viaReport,
-    viaSpecialistNextSteps,
-    viaRecipientNextSteps,
-    viaObjectives,
-    viaGoals,
+  const dbData = {
+    allReports: null,
+    viaReportq: null,
+    viaSpecialistNextSteps: null,
+    viaRecipientNextSteps: null,
+    viaObjectives: null,
+    viaGoals: null,
+  };
+  [
+    dbData.allReports,
+    dbData.viaReport,
+    dbData.viaSpecialistNextSteps,
+    dbData.viaRecipientNextSteps,
+    dbData.viaObjectives,
+    dbData.viaGoals,
   ] = await Promise.all([
     await ActivityReport.findAll({
       attributes: [
@@ -308,15 +356,18 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
         'topics',
         'startDate',
         [sequelize.fn(
-          'json_agg',
+          'jsonb_agg',
           sequelize.fn(
-            'json_build_object',
-            sequelize.literal('\'grantId\''),
-            sequelize.literal('"activityRecipients->grant"."id"'),
-            sequelize.literal('\'recipientId\''),
-            sequelize.literal('"activityRecipients->grant"."recipientId"'),
-            sequelize.literal('\'otherEntityId\''),
-            sequelize.literal('"activityRecipients"."otherEntityId"'),
+            'DISTINCT',
+            sequelize.fn(
+              'jsonb_build_object',
+              sequelize.literal('\'grantId\''),
+              sequelize.literal('"activityRecipients->grant"."id"'),
+              sequelize.literal('\'recipientId\''),
+              sequelize.literal('"activityRecipients->grant"."recipientId"'),
+              sequelize.literal('\'otherEntityId\''),
+              sequelize.literal('"activityRecipients"."otherEntityId"'),
+            ),
           ),
         ),
         'recipients'],
@@ -358,32 +409,43 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
         'topics',
         [sequelize.fn('COALESCE', 'startDate', 'createdAt'), 'startDate'],
         [sequelize.fn(
-          'json_agg',
+          'jsonb_agg',
           sequelize.fn(
-            'json_build_object',
-            sequelize.literal('\'grantId\''),
-            sequelize.literal('"activityRecipients->grant"."id"'),
-            sequelize.literal('\'recipientId\''),
-            sequelize.literal('"activityRecipients->grant"."recipientId"'),
-            sequelize.literal('\'otherEntityId\''),
-            sequelize.literal('"activityRecipients"."otherEntityId"'),
+            'DISTINCT',
+            sequelize.fn(
+              'jsonb_build_object',
+              sequelize.literal('\'grantId\''),
+              sequelize.literal('"activityRecipients->grant"."id"'),
+              sequelize.literal('\'recipientId\''),
+              sequelize.literal('"activityRecipients->grant"."recipientId"'),
+              sequelize.literal('\'otherEntityId\''),
+              sequelize.literal('"activityRecipients"."otherEntityId"'),
+            ),
           ),
         ),
         'recipients'],
         [sequelize.fn(
           'jsonb_agg',
           sequelize.fn(
-            'jsonb_build_object',
-            sequelize.literal('\'resourceId\''),
-            sequelize.literal('"resources"."id"'),
-            sequelize.literal('\'url\''),
-            sequelize.literal('"resources"."url"'),
-            sequelize.literal('\'domain\''),
-            sequelize.literal('"resources"."domain"'),
-            sequelize.literal('\'sourceFields\''),
-            sequelize.literal('"resources->ActivityReportResource"."sourceFields"'),
-            sequelize.literal('\'tableType\''),
-            sequelize.literal('\'report\''),
+            'DISTINCT',
+            sequelize.fn(
+              'jsonb_build_object',
+              sequelize.literal('\'resourceId\''),
+              sequelize.literal('"resources"."id"'),
+              sequelize.literal('\'url\''),
+              sequelize.literal('"resources"."url"'),
+              sequelize.literal('\'domain\''),
+              sequelize.literal('"resources"."domain"'),
+              sequelize.literal('\'sourceFields\''),
+              sequelize.literal(`(
+                SELECT jsonb_agg( DISTINCT jsonb_build_object(
+                  'sourceField', "sourceField",
+                  'tableType', 'report'
+                  ))
+              FROM UNNEST("resources->ActivityReportResource"."sourceFields") SF("sourceField")
+                GROUP BY TRUE
+              )`),
+            ),
           ),
         ),
         'resourceObjects'],
@@ -434,15 +496,18 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
         'topics',
         'startDate',
         [sequelize.fn(
-          'json_agg',
+          'jsonb_agg',
           sequelize.fn(
-            'json_build_object',
-            sequelize.literal('\'grantId\''),
-            sequelize.literal('"activityRecipients->grant"."id"'),
-            sequelize.literal('\'recipientId\''),
-            sequelize.literal('"activityRecipients->grant"."recipientId"'),
-            sequelize.literal('\'otherEntityId\''),
-            sequelize.literal('"activityRecipients"."otherEntityId"'),
+            'DISTINCT',
+            sequelize.fn(
+              'jsonb_build_object',
+              sequelize.literal('\'grantId\''),
+              sequelize.literal('"activityRecipients->grant"."id"'),
+              sequelize.literal('\'recipientId\''),
+              sequelize.literal('"activityRecipients->grant"."recipientId"'),
+              sequelize.literal('\'otherEntityId\''),
+              sequelize.literal('"activityRecipients"."otherEntityId"'),
+            ),
           ),
         ),
         'recipients'],
@@ -459,9 +524,14 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
               sequelize.literal('\'domain\''),
               sequelize.literal('"specialistNextSteps->resources"."domain"'),
               sequelize.literal('\'sourceFields\''),
-              sequelize.literal('"specialistNextSteps->resources->NextStepResource"."sourceFields"'),
-              sequelize.literal('\'tableType\''),
-              sequelize.literal('\'specialistNextStep\''),
+              sequelize.literal(`(
+                SELECT jsonb_agg( DISTINCT jsonb_build_object(
+                  'sourceField', "sourceField",
+                  'tableType', 'specialistNextStep'
+                  ))
+              FROM UNNEST("specialistNextSteps->resources->NextStepResource"."sourceFields") SF("sourceField")
+                GROUP BY TRUE
+              )`),
             ),
           ),
         ),
@@ -519,15 +589,18 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
         'topics',
         'startDate',
         [sequelize.fn(
-          'json_agg',
+          'jsonb_agg',
           sequelize.fn(
-            'json_build_object',
-            sequelize.literal('\'grantId\''),
-            sequelize.literal('"activityRecipients->grant"."id"'),
-            sequelize.literal('\'recipientId\''),
-            sequelize.literal('"activityRecipients->grant"."recipientId"'),
-            sequelize.literal('\'otherEntityId\''),
-            sequelize.literal('"activityRecipients"."otherEntityId"'),
+            'DISTINCT',
+            sequelize.fn(
+              'jsonb_build_object',
+              sequelize.literal('\'grantId\''),
+              sequelize.literal('"activityRecipients->grant"."id"'),
+              sequelize.literal('\'recipientId\''),
+              sequelize.literal('"activityRecipients->grant"."recipientId"'),
+              sequelize.literal('\'otherEntityId\''),
+              sequelize.literal('"activityRecipients"."otherEntityId"'),
+            ),
           ),
         ),
         'recipients'],
@@ -544,9 +617,14 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
               sequelize.literal('\'domain\''),
               sequelize.literal('"recipientNextSteps->resources"."domain"'),
               sequelize.literal('\'sourceFields\''),
-              sequelize.literal('"recipientNextSteps->resources->NextStepResource"."sourceFields"'),
-              sequelize.literal('\'tableType\''),
-              sequelize.literal('\'recipientNextStep\''),
+              sequelize.literal(`(
+                SELECT jsonb_agg( DISTINCT jsonb_build_object(
+                  'sourceField', "sourceField",
+                  'tableType', 'recipientNextStep'
+                  ))
+              FROM UNNEST("recipientNextSteps->resources->NextStepResource"."sourceFields") SF("sourceField")
+                GROUP BY TRUE
+              )`),
             ),
           ),
         ),
@@ -604,15 +682,18 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
         'topics',
         'startDate',
         [sequelize.fn(
-          'json_agg',
+          'jsonb_agg',
           sequelize.fn(
-            'json_build_object',
-            sequelize.literal('\'grantId\''),
-            sequelize.literal('"activityRecipients->grant"."id"'),
-            sequelize.literal('\'recipientId\''),
-            sequelize.literal('"activityRecipients->grant"."recipientId"'),
-            sequelize.literal('\'otherEntityId\''),
-            sequelize.literal('"activityRecipients"."otherEntityId"'),
+            'DISTINCT',
+            sequelize.fn(
+              'jsonb_build_object',
+              sequelize.literal('\'grantId\''),
+              sequelize.literal('"activityRecipients->grant"."id"'),
+              sequelize.literal('\'recipientId\''),
+              sequelize.literal('"activityRecipients->grant"."recipientId"'),
+              sequelize.literal('\'otherEntityId\''),
+              sequelize.literal('"activityRecipients"."otherEntityId"'),
+            ),
           ),
         ),
         'recipients'],
@@ -629,12 +710,17 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
               sequelize.literal('\'domain\''),
               sequelize.literal('"activityReportObjectives->resources"."domain"'),
               sequelize.literal('\'sourceFields\''),
-              sequelize.literal('"activityReportObjectives->resources->ActivityReportObjectiveResource"."sourceFields"'),
-              sequelize.literal('\'tableType\''),
-              sequelize.literal('\'recipientNextStep\''),
+              sequelize.literal(`(
+                SELECT jsonb_agg( DISTINCT jsonb_build_object(
+                  'sourceField', "sourceField",
+                  'tableType', 'objective'
+                  ))
+              FROM UNNEST("activityReportObjectives->resources->ActivityReportObjectiveResource"."sourceFields") SF("sourceField")
+                GROUP BY TRUE
+              )`),
               sequelize.literal('\'topics\''),
               sequelize.literal(`(
-                SELECT ARRAY_AGG(t."name")
+                SELECT ARRAY_AGG(DISTINCT t."name")
                 FROM "ActivityReportObjectiveTopics" arot
                 JOIN "Topics" t
                 ON arot."topicId" = t.id
@@ -728,15 +814,18 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
         'topics',
         'startDate',
         [sequelize.fn(
-          'json_agg',
+          'jsonb_agg',
           sequelize.fn(
-            'json_build_object',
-            sequelize.literal('\'grantId\''),
-            sequelize.literal('"activityRecipients->grant"."id"'),
-            sequelize.literal('\'recipientId\''),
-            sequelize.literal('"activityRecipients->grant"."recipientId"'),
-            sequelize.literal('\'otherEntityId\''),
-            sequelize.literal('"activityRecipients"."otherEntityId"'),
+            'DISTINCT',
+            sequelize.fn(
+              'jsonb_build_object',
+              sequelize.literal('\'grantId\''),
+              sequelize.literal('"activityRecipients->grant"."id"'),
+              sequelize.literal('\'recipientId\''),
+              sequelize.literal('"activityRecipients->grant"."recipientId"'),
+              sequelize.literal('\'otherEntityId\''),
+              sequelize.literal('"activityRecipients"."otherEntityId"'),
+            ),
           ),
         ),
         'recipients'],
@@ -753,9 +842,14 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
               sequelize.literal('\'domain\''),
               sequelize.literal('"activityReportGoals->resources"."domain"'),
               sequelize.literal('\'sourceFields\''),
-              sequelize.literal('"activityReportGoals->resources->ActivityReportGoalResource"."sourceFields"'),
-              sequelize.literal('\'tableType\''),
-              sequelize.literal('\'recipientNextStep\''),
+              sequelize.literal(`(
+                SELECT jsonb_agg( DISTINCT jsonb_build_object(
+                  'sourceField', "sourceField",
+                  'tableType', 'goals'
+                  ))
+              FROM UNNEST("activityReportGoals->resources->ActivityReportGoalResource"."sourceFields") SF("sourceField")
+                GROUP BY TRUE
+              )`),
               sequelize.literal('\'topics\''),
               sequelize.literal(`(
                 SELECT ARRAY_AGG(t."name")
@@ -811,7 +905,6 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           model: ActivityReportGoal,
           as: 'activityReportGoals',
           attributes: [],
-          // separate: true,
           include: [
             {
               model: Resource,
@@ -858,85 +951,28 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
     }),
   ]);
 
-  let reports = allReports;
-  reports = mergeInResources(reports, viaReport);
-  reports = mergeInResources(reports, viaSpecialistNextSteps);
-  reports = mergeInResources(reports, viaRecipientNextSteps);
-  reports = mergeInResources(reports, viaObjectives);
-  reports = mergeInResources(reports, viaGoals);
+  let reports = mergeInResources([], dbData.allReports);
+  delete dbData.allReports;
+  reports = mergeInResources(reports, dbData.viaReport);
+  delete dbData.viaReport;
+  reports = mergeInResources(reports, dbData.viaSpecialistNextSteps);
+  delete dbData.viaSpecialistNextSteps;
+  reports = mergeInResources(reports, dbData.viaRecipientNextSteps);
+  delete dbData.viaRecipientNextSteps;
+  reports = mergeInResources(reports, dbData.viaObjectives);
+  delete dbData.viaObjectives;
+  reports = mergeInResources(reports, dbData.viaGoals);
+  delete dbData.viaGoals;
 
-  reports = reports
-    .map(({
-      id,
-      numberOfParticipants,
-      topics,
-      startDate,
-      recipients,
-      resourceObjects: resources,
-    }) => ({
-      id,
-      numberOfParticipants,
-      topics,
-      startDate,
-      recipients,
-      resources,
-    }));
+  const resources = skipResources
+    ? []
+    : switchToResourceCentric(reports);
 
-  let resourcesWithRecipients = [];
-  if (!skipResources) {
-    const resources = switchToResourceCentric(reports);
-    resourcesWithRecipients = resources.map((data) => {
-      const participants = data.reports
-        .reduce((accumulator, r) => accumulator + r.numberOfParticipants, 0);
-      const startDates = data.reports
-        .map((r) => r.startDate);
-      const recipients = data.reports
-        .flatMap((r) => r.recipients)
-        .reduce((currentRecipient, { recipientId, grantId, otherEntityId }) => {
-          const exists = currentRecipient.find((cr) => (
-            cr.recipientId === recipientId
-            || cr.otherEntityId === otherEntityId));
-          if (exists) {
-            exists.grantIds = grantId
-              ? [...new Set([...exists.grantIds, grantId])]
-              : exists.grantId;
-            return currentRecipient;
-          }
-          return [
-            ...currentRecipient,
-            {
-              recipientId,
-              grantIds: [grantId].filter((g) => g),
-              otherEntityId,
-            },
-          ];
-        }, []);
-      return {
-        ...data,
-        participants,
-        startDates,
-        recipients,
-      };
-    });
-  }
+  const topics = skipTopics
+    ? []
+    : switchToTopicCentric(reports);
 
-  let topicsWithAdditionalData = [];
-  if (!skipTopics) {
-    const topics = switchToTopicCentric(reports);
-    topicsWithAdditionalData = topics.map((data) => {
-      const participants = data.reports
-        .reduce((accumulator, r) => accumulator + r.numberOfParticipants, 0);
-      const startDates = data.reports
-        .map((r) => r.startDate);
-      return {
-        ...data,
-        participants,
-        startDates,
-      };
-    });
-  }
-
-  return { resources: resourcesWithRecipients, reports, topics: topicsWithAdditionalData };
+  return { resources, reports, topics };
 }
 
 const generateResourceList = (
@@ -1091,7 +1127,6 @@ function generateResourceDomainList(
 
 const generateResourcesDashboardOverview = (allData) => {
   const { resources, reports } = allData;
-
   // the commented out blocks are for stats that are currently not used
 
   const data = {};
@@ -1125,6 +1160,7 @@ const generateResourcesDashboardOverview = (allData) => {
   // data.report.numNonEclkc = data.reportIntermediate.allRecipientIdsWithNonEclkcResources.size;
   // data.report.percentNonEclkc = (data.report.numNonEclkc / data.report.num) * 100.0;
 
+  delete data.reportIntermediate;
   // recipient based intermediate data
   data.recipientIntermediate = {};
   data.recipientIntermediate
@@ -1185,6 +1221,7 @@ const generateResourcesDashboardOverview = (allData) => {
   //   .recipientIntermediate.allRecipientIdsWithNonEclkcResources.size;
   // data.recipient.percentNonEclkc = (data.recipient.numNonEclkc / data.recipient.num) * 100.0;
 
+  delete data.recipientIntermediate;
   // resource based intermediate data
   data.resourceIntermediate = {};
   data.resourceIntermediate
@@ -1203,6 +1240,7 @@ const generateResourcesDashboardOverview = (allData) => {
 
   // data.resource.numNonEclkc = data.resourceIntermediate.allNonEclkcResources.length;
   // data.resource.percentNonEclkc = (data.resource.numNonEclkc / data.resource.num) * 100.0;
+  delete data.resourceIntermediate;
 
   data.participant = {};
   data.participant.num = reports
@@ -1293,40 +1331,30 @@ Expected JSON (we have this now):
   },
 }
 */
-const getMonthYear = (dateStr) => {
-  // Create a Date object from the date string
-  const dateObj = new Date(dateStr);
 
-  // Get the month abbreviation from the month number
-  const monthAbbreviation = new Intl.DateTimeFormat('en-US', { month: 'short' }).format(dateObj);
-
-  // Get the year as a two-digit string
-  const yearStr = dateObj.getFullYear().toString().slice(-2);
-
-  // Concatenate the month abbreviation and year string with a hyphen separator
-  return `${monthAbbreviation}-${yearStr}`;
-};
+// Create a Date object from the date string
+// Get the month abbreviation from the month number
+// Get the year as a two-digit string
+// Concatenate the month abbreviation and year string with a hyphen separator
+const getMonthYear = (dateStr) => new Intl
+  .DateTimeFormat('en-US', { month: 'short', year: '2-digit' })
+  .format(new Date(dateStr))
+  .replace(' ', '-');
 
 const getMinMax = (data) => {
   const dateObjects = data
-    // Get an array of all startDates
+    // Get an array of all valid startDates
     .flatMap((r) => r.startDates)
-    .reduce((dates, date) => {
-      const exists = dates.find((d) => d === date);
-      if (exists) {
-        return dates;
-      }
-      return [...dates, date];
-    }, [])
-    // Convert all dates to Date objects
-    .map((dateString) => new Date(`${dateString}`))
+    .map((d) => new Date(`${d}`))
     .filter((d) => !Number.isNaN(Date.parse(d)));
 
   // Find the minimum and maximum dates
   return {
-    min: new Date(Math.min(...dateObjects)),
-    max: new Date(Math.max(...dateObjects)),
+    min: new Date(Math.min.apply(null, dateObjects)),
+    max: new Date(Math.max.apply(null, dateObjects)),
   };
+  // Note: Math.min.apply(null, []) is faster then Math.min(...[])
+  // https://medium.com/coding-at-dawn/the-fastest-way-to-find-minimum-and-maximum-values-in-an-array-in-javascript-2511115f8621
 };
 
 const spanDates = (min, max) => {
@@ -1373,37 +1401,24 @@ const generateResourceUse = (allData) => {
               cnt: 1,
             },
           ];
-        }, [{ title: 'Total', cnt: 0 }]),
-        ...dateList,
+        }, [{ title: 'Total', cnt: 0 }, ...dateList]),
       ]
-        .reduce((dates, date) => {
-          const exists = dates.find((d) => d.title === date.title);
-          if (exists) {
-            exists.cnt += date.cnt;
-            return dates;
-          }
-          return [
-            ...dates,
-            date,
-          ];
-        }, [])
         .map(({ title, cnt }) => ({
           title,
           value: formatNumber(cnt),
         })),
-    }));
+    }))
+    // Total needs to be the last column.
+    .map(({ data, ...properties }) => {
+      const newResourceData = data;
+      newResourceData.push(newResourceData.shift());
+      return {
+        ...properties,
+        data: newResourceData,
+      };
+    });
 
-  // Total needs to be the last column.
-  const sortedResourceData = clusteredResources.map((r) => {
-    const newResourceData = [...r.data];
-    newResourceData.push(newResourceData.shift());
-    return {
-      ...r,
-      data: newResourceData,
-    };
-  });
-
-  sortedResourceData.sort((a, b) => {
+  clusteredResources.sort((a, b) => {
     const aTotal = Number(a.data.find((d) => d.title === 'Total').value);
     const bTotal = Number(b.data.find((d) => d.title === 'Total').value);
     if (aTotal > bTotal) return -1;
@@ -1415,7 +1430,7 @@ const generateResourceUse = (allData) => {
 
   return {
     headers: [...dateList.map(({ title }) => title)],
-    resources: sortedResourceData
+    resources: clusteredResources
       .slice(0, 10),
   };
 };
