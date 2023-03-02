@@ -1379,7 +1379,18 @@ const generateResourceUse = (allData) => {
   const minMax = getMinMax(resources);
   const dateList = spanDates(minMax.min, minMax.max);
 
+  resources.sort((a, b) => {
+    const aTotal = a.startDates.length;
+    const bTotal = b.startDates.length;
+    if (aTotal > bTotal) return -1;
+    if (aTotal < bTotal) return 1;
+    if (a.url < b.url) return -1;
+    if (a.url > b.url) return 1;
+    return 0;
+  });
+
   const clusteredResources = resources
+    .slice(0, 10) // limit to the top 10
     .map((resource) => ({
       heading: resource.url,
       isUrl: true,
@@ -1418,20 +1429,9 @@ const generateResourceUse = (allData) => {
       };
     });
 
-  clusteredResources.sort((a, b) => {
-    const aTotal = Number(a.data.find((d) => d.title === 'Total').value);
-    const bTotal = Number(b.data.find((d) => d.title === 'Total').value);
-    if (aTotal > bTotal) return -1;
-    if (aTotal < bTotal) return 1;
-    if (a.heading < b.heading) return -1;
-    if (a.heading > b.heading) return 1;
-    return 0;
-  });
-
   return {
     headers: [...dateList.map(({ title }) => title)],
-    resources: clusteredResources
-      .slice(0, 10),
+    resources: clusteredResources,
   };
 };
 /*
