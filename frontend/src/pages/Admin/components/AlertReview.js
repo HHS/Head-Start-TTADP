@@ -240,6 +240,12 @@ export default function AlertReview({ alert, onDelete }) {
               handlePastedText={() => false}
               tabIndex="0"
               editorStyle={{ border: '1px solid #565c65', minHeight: BASE_EDITOR_HEIGHT }}
+              toolbar={{
+                options: ['list', 'link'],
+                inline: {
+                  options: ['bold', 'italic'],
+                },
+              }}
             />
 
           </div>
