@@ -108,10 +108,6 @@ const mergeInResources = (currentData, additionalData) => additionalData
             .find((ro) => ro.resourceId === resource.resourceId);
           if (roExists) {
             roExists.sourceFields = resource.sourceFields
-              .map((sourceField) => ({
-                tableType: resource.tableType,
-                sourceField,
-              }))
               .reduce((sourceFields, sourceField) => {
                 const sfExists = sourceFields
                   .find((sf) => sf.tableType === sourceField.tableType
@@ -1412,22 +1408,13 @@ const generateResourceUse = (allData) => {
               cnt: 1,
             },
           ];
-        }, [{ title: 'Total', cnt: 0 }, ...dateList.map((d) => ({ ...d }))]),
+        }, [...dateList.map((d) => ({ ...d })), { title: 'Total', cnt: 0 }]),
       ]
         .map(({ title, cnt }) => ({
           title,
           value: formatNumber(cnt),
         })),
-    }))
-    // Total needs to be the last column.
-    .map(({ data, ...properties }) => {
-      const newResourceData = data;
-      newResourceData.push(newResourceData.shift());
-      return {
-        ...properties,
-        data: newResourceData,
-      };
-    });
+    }));
 
   return {
     headers: [...dateList.map(({ title }) => title)],
@@ -1488,7 +1475,18 @@ const generateResourceTopicUse = (allData) => {
   const minMax = getMinMax(topics);
   const dateList = spanDates(minMax.min, minMax.max);
 
+  topics.sort((a, b) => {
+    const aTotal = a.startDates.length;
+    const bTotal = b.startDates.length;
+    if (aTotal > bTotal) return -1;
+    if (aTotal < bTotal) return 1;
+    if (a.url < b.url) return -1;
+    if (a.url > b.url) return 1;
+    return 0;
+  });
+
   const clusteredTopics = topics
+    .slice(0, 10) // limit to the top 10
     .map((topic) => ({
       heading: topic.topic,
       isUrl: false,
@@ -1510,50 +1508,17 @@ const generateResourceTopicUse = (allData) => {
               cnt: 1,
             },
           ];
-        }, [{ title: 'Total', cnt: 0 }]),
-        ...dateList,
+        }, [...dateList.map((d) => ({ ...d })), { title: 'Total', cnt: 0 }]),
       ]
-        .reduce((dates, date) => {
-          const exists = dates.find((d) => d.title === date.title);
-          if (exists) {
-            exists.cnt += date.cnt;
-            return dates;
-          }
-          return [
-            ...dates,
-            date,
-          ];
-        }, [])
         .map(({ title, cnt }) => ({
           title,
           value: formatNumber(cnt),
         })),
     }));
 
-  // Total needs to be the last column.
-  const sortedTopicData = clusteredTopics.map((r) => {
-    const newTopicData = [...r.data];
-    newTopicData.push(newTopicData.shift());
-    return {
-      ...r,
-      data: newTopicData,
-    };
-  });
-
-  sortedTopicData.sort((a, b) => {
-    const aTotal = Number(a.data.find((d) => d.title === 'Total').value);
-    const bTotal = Number(b.data.find((d) => d.title === 'Total').value);
-    if (aTotal > bTotal) return -1;
-    if (aTotal < bTotal) return 1;
-    if (a.heading < b.heading) return -1;
-    if (a.heading > b.heading) return 1;
-    return 0;
-  });
-
   return {
     headers: [...dateList.map(({ title }) => title)],
-    topics: sortedTopicData
-      .slice(0, 10),
+    topics: clusteredTopics,
   };
 };
 
