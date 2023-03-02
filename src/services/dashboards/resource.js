@@ -1412,7 +1412,7 @@ const generateResourceUse = (allData) => {
               cnt: 1,
             },
           ];
-        }, [{ title: 'Total', cnt: 0 }, ...dateList]),
+        }, [{ title: 'Total', cnt: 0 }, ...dateList.map((d) => ({ ...d }))]),
       ]
         .map(({ title, cnt }) => ({
           title,
