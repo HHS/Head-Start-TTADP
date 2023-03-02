@@ -1480,8 +1480,8 @@ const generateResourceTopicUse = (allData) => {
     const bTotal = b.startDates.length;
     if (aTotal > bTotal) return -1;
     if (aTotal < bTotal) return 1;
-    if (a.url < b.url) return -1;
-    if (a.url > b.url) return 1;
+    if (a.topic < b.topic) return -1;
+    if (a.topic > b.topic) return 1;
     return 0;
   });
 
