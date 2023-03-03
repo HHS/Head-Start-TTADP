@@ -191,12 +191,15 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
     const titleMd5 = md5(title);
 
     const lookupGoalNum = processedObjectivesTitles.get(titleMd5);
+    const goalName = goal ? goal.name : null;
     if (lookupGoalNum) {
-      accum[`goal-${lookupGoalNum}-id`] = `${accum[`goal-${lookupGoalNum}-id`]}\n${goalId}`;
+      // Make sure its not another objective for the same goal.
+      if (goalIds[goalName] && !goalIds[goalName].includes(goalId)) {
+        accum[`goal-${lookupGoalNum}-id`] = `${accum[`goal-${lookupGoalNum}-id`]}\n${goalId}`;
+        goalIds[goalName].push(goalId);
+      }
       return accum;
     }
-
-    const goalName = goal ? goal.name : null;
     const newGoal = goalName && !Object.values(accum).includes(goalName);
 
     if (newGoal) {
