@@ -180,7 +180,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
   let goalNum = 0;
   const goalIds = {};
   let objectiveId;
-  const processedObjectivesTitles = [];
+  const processedObjectivesTitles = new Map();
 
   return objectiveRecords.reduce((prevAccum, objective) => {
     const accum = { ...prevAccum };
@@ -189,17 +189,19 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
     } = objective;
     const goalId = goal ? goal.id : null;
     const titleMd5 = md5(title);
-    if (processedObjectivesTitles.includes(titleMd5)) {
+
+    const lookupGoalNum = processedObjectivesTitles.get(titleMd5);
+    if (lookupGoalNum) {
+      accum[`goal-${lookupGoalNum}-id`] = `${accum[`goal-${lookupGoalNum}-id`]}\n${goalId}`;
       return accum;
     }
 
-    processedObjectivesTitles.push(titleMd5);
     const goalName = goal ? goal.name : null;
     const newGoal = goalName && !Object.values(accum).includes(goalName);
 
     if (newGoal) {
       goalNum += 1;
-
+      processedObjectivesTitles.set(titleMd5, goalNum);
       // Goal Id.
       Object.defineProperty(accum, `goal-${goalNum}-id`, {
         value: `${goalId}`,
@@ -227,10 +229,6 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       });
 
       objectiveNum = 1;
-    } else if (goalIds[goalName] && !goalIds[goalName].includes(goalId)) {
-      // Update existing ids.
-      goalIds[goalName].push(goalId);
-      accum[`goal-${goalNum}-id`] = goalIds[goalName].join('\n');
     }
 
     // goal number should be at least 1
