@@ -422,6 +422,7 @@ describe('activityReportToCsvRecord', () => {
     }));
 
     const output = makeGoalsAndObjectivesObject(objectives);
+    console.log('\n\n\n---Output: ', output);
     expect(output).toEqual({
       'goal-1-id': '2080',
       'goal-1': 'Goal 1',
