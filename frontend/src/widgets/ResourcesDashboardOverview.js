@@ -76,7 +76,7 @@ const DASHBOARD_FIELDS = {
         label2={`${data.report.numResources} of ${data.report.num}`}
         iconColor={colors.success}
         backgroundColor={colors.ttahubDeepTealLight}
-        tooltipText="Reports with resources"
+        tooltipText="AR's that cite at least one resource"
         data={data.report.percentResources}
       />
     ),
@@ -91,7 +91,7 @@ const DASHBOARD_FIELDS = {
         label2={`${data.resource.numEclkc} of ${data.resource.num}`}
         iconColor={colors.ttahubBlue}
         backgroundColor={colors.ttahubBlueLight}
-        tooltipText="ECLKC resources"
+        tooltipText="Percentage of all cited resources that are from ECLKC"
         data={data.resource.percentEclkc}
       />
     ),
@@ -105,7 +105,7 @@ const DASHBOARD_FIELDS = {
         label1="Recipients reached"
         iconColor={colors.ttahubMagenta}
         backgroundColor={colors.ttahubMagentaLight}
-        tooltipText="Recipients reached"
+        tooltipText="Total recipients of ARs that cite at least one resource"
         data={data.recipient.numResources}
       />
     ),
@@ -119,7 +119,7 @@ const DASHBOARD_FIELDS = {
         label1="Participants reached"
         iconColor={colors.ttahubOrange}
         backgroundColor={colors.ttahubOrangeLight}
-        tooltipText="Participants reached"
+        tooltipText="Total participants of ARs that cite at least one resource"
         data={data.participant.numParticipants}
       />
     ),
