@@ -5,7 +5,6 @@ const autoPopulateDomain = (sequelize, instance, options) => {
   if (instance.domain === undefined
     || instance.domain === null) {
     let [{ groups }] = instance.url.matchAll(VALID_URL_REGEX);
-    groups = { ...groups };
     const { host, ip } = groups;
     const domain = host || ip;
     if (domain) {
