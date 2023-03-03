@@ -20,6 +20,9 @@ import {
 } from '../models';
 import { VALID_URL_REGEX } from '../lib/urlUtils';
 import { SOURCE_FIELD } from '../constants';
+import Semaphore from '../lib/semaphore';
+
+const semaphore = new Semaphore(1);
 
 const REPORT_AUTODETECTED_FIELDS = [
   SOURCE_FIELD.REPORT.CONTEXT,
@@ -78,6 +81,7 @@ const findOrCreateResources = async (urls) => {
   const filteredUrls = [...new Set(urls
     .filter((url) => typeof url === 'string')
     .filter((url) => url))];
+  await semaphore.acquire();
   const currentResources = filteredUrls.length > 0
     ? await Resource.findAll({
       where: {
@@ -95,13 +99,15 @@ const findOrCreateResources = async (urls) => {
       .map((currentResource) => currentResource.url));
     newURLs = filteredUrls.filter((url) => !currentResourceURLs.has(url));
   }
-  return [
+  const resources = [
     ...await Promise.all(newURLs.map(async (url) => {
       const resource = await Resource.create({ url });
       return resource.get({ plain: true });
     })),
     ...(currentResources || []),
   ].sort((a, b) => a.id < b.id);
+  semaphore.release();
+  return resources;
 };
 
 // -----------------------------------------------------------------------------

@@ -55,7 +55,7 @@ export default function HorizontalTableWidget(
                   {
                     r.isUrl
                       ? (
-                        <a href={r.heading} target="_blank" rel="noreferrer">
+                        <a href={r.heading} target="_blank" rel="noreferrer" title={r.heading}>
                           {trimLongURLs(r.heading)}
                         </a>
                       )
