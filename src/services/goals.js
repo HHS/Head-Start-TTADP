@@ -366,7 +366,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         ...(objective.activityReportObjectives
           && objective.activityReportObjectives.length > 0
           ? objective.activityReportObjectives[0].activityReportObjectiveResources
-            .map((r) => r.dataValues.resource)
+            .map((r) => r.resource.dataValues)
           : []),
       ], (e) => e.value);
 
@@ -428,7 +428,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       resources: objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
         ? objective.activityReportObjectives[0].activityReportObjectiveResources
-          .map((r) => r.dataValues.resource)
+          .map((r) => r.resource.dataValues)
         : [],
       files: objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
