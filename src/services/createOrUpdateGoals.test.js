@@ -1,6 +1,5 @@
 /* eslint-disable jest/no-disabled-tests */
 import faker from '@faker-js/faker';
-import { ResourceGroups } from 'aws-sdk';
 import { createOrUpdateGoals } from './goals';
 import db, {
   Goal,
