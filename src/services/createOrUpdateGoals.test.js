@@ -74,7 +74,7 @@ describe('createOrUpdateGoals', () => {
       individualHooks: true,
     });
 
-    await ResourceGroups.destroy({
+    await Resource.destroy({
       where: { url: 'https://www.test.gov' },
       individualHooks: true,
     });
