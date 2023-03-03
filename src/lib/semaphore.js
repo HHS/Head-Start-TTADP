@@ -30,7 +30,7 @@ export default class Semaphore {
       const resolve = this.waiting.shift();
       if (resolve) resolve();
     } else {
-      // When no more promises are waiting decrament the current concurrency
+      // When no more promises are waiting decrement the current concurrency
       // eslint-disable-next-line no-plusplus
       this.currentConcurrency--;
     }
