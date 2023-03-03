@@ -331,7 +331,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
   // Query Database for all Resources within the scope.
   const dbData = {
     allReports: null,
-    viaReportq: null,
+    viaReport: null,
     viaSpecialistNextSteps: null,
     viaRecipientNextSteps: null,
     viaObjectives: null,
