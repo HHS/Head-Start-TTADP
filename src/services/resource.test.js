@@ -152,6 +152,13 @@ describe('resource', () => {
         const resources2 = await findOrCreateResources(urls);
         expect(resources2.sort(sorter)).toMatchObject(resources1.sort(sorter));
       });
+      it('expected usage, concurrent existing', async () => {
+        const [resources1, resources2] = await Promise.all([
+          findOrCreateResources(urls),
+          findOrCreateResources(urls),
+        ]);
+        expect(resources2.sort(sorter)).toMatchObject(resources1.sort(sorter));
+      });
       it('fail to empty array, null urls', async () => {
         urls = null;
         const resources = await findOrCreateResources(urls);

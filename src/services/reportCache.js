@@ -7,6 +7,7 @@ import {
 
 const { Op } = require('sequelize');
 const {
+  sequelize,
   ActivityReportGoal,
   ActivityReportObjective,
   ActivityReportObjectiveFile,
@@ -128,7 +129,7 @@ const cacheResources = async (objectiveId, activityReportObjectiveId, resources 
             id: objectiveId,
             onAR: true,
             resourceId: { [Op.in]: removedAROResourceIds },
-            'ActivityReportObjectives.userEventID': { [Op.is]: null },
+            '$"ActivityReportObjectives".id$': { [Op.is]: null },
           },
           include: [{
             model: ActivityReportObjective,
