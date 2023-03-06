@@ -87,7 +87,7 @@ const Review = ({
             dateSubmitted
               ? (
                 <Fieldset className="smart-hub--report-legend margin-top-3" legend="Date Submitted">
-                  <Label className="margin-top-2" htmlFor="date_submitted">{formattedDateSubmitted}</Label>
+                  <Label className="margin-top-1" htmlFor="date_submitted">{formattedDateSubmitted}</Label>
                 </Fieldset>
               )
               : null
