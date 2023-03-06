@@ -11,10 +11,10 @@ const namespace = 'SERVICE:ADMIN:SITEALERTS';
 const ALERT_FIELDS = [
   'status',
   'message',
-  'title',
   'endDate',
   'startDate',
   'variant',
+  'size',
 ];
 
 /**
@@ -106,6 +106,7 @@ async function createAlert(req, res) {
         endDate,
         startDate,
         variant,
+        size,
       } = req.body;
 
       const alert = await SiteAlert.create({
@@ -116,6 +117,7 @@ async function createAlert(req, res) {
         endDate,
         startDate,
         variant,
+        size,
       });
 
       res.json(alert);
