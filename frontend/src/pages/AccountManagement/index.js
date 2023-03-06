@@ -12,6 +12,7 @@ import {
   Link,
   Radio,
 } from '@trussworks/react-uswds';
+
 import { useForm, FormProvider, useFormContext } from 'react-hook-form';
 import { useParams } from 'react-router';
 import Avatar from '../../components/Avatar';
@@ -23,7 +24,9 @@ import {
   getEmailSettings,
 } from '../../fetchers/settings';
 import { requestVerificationEmail } from '../../fetchers/users';
+
 import EmailVerifier from './EmailVerifier';
+import Groups from './components/Groups';
 
 const emailPreferenceErrorMessage = 'Please select a frequency preference';
 
@@ -308,7 +311,7 @@ function AccountManagement({ updateUser }) {
 
       {/* Profile box */}
       <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
-        <h1 className="margin-bottom-1">Profile</h1>
+        <h2 className="margin-bottom-1 font-sans-xl">Profile</h2>
 
         {/* Avatar w/ name */}
         <div className="margin-bottom-3">
@@ -325,9 +328,12 @@ function AccountManagement({ updateUser }) {
         </div>
       </div>
 
+      {/* Profile box */}
+      <Groups />
+
       {/* Email preferences box */}
       <div className="bg-white radius-md shadow-2 margin-bottom-3 padding-3">
-        <h1 className="margin-bottom-3">Email preferences</h1>
+        <h2 className="margin-bottom-3 font-sans-xl">Email preferences</h2>
 
         {showVerifier && (
           <EmailVerifier token={token} updateUser={updateUser} />

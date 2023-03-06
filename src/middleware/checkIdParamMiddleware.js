@@ -107,6 +107,25 @@ export function checkObjectiveTemplateIdParam(req, res, next) {
 }
 
 /**
+ *  Check groupId req param
+ *
+ * This middleware validates that the site alert id supplied
+ * by the alertId query param is an integer before we proceed with the request
+ * @param {*} req - request
+ * @param {*} res - response
+ * @param {*} next - next middleware
+ */
+export function checkGroupIdParam(req, res, next) {
+  if (req.params && req.params.groupId && canBeInt(req.params.groupId)) {
+    return next();
+  }
+
+  const msg = `${errorMessage}: groupId ${req.params ? (req.params.groupId || 'undefined') : 'undefined'}`;
+  auditLogger.error(msg);
+  return res.status(httpCodes.BAD_REQUEST).send(msg);
+}
+
+/**
  *  Check alertId req param
  *
  * This middleware validates that the site alert id supplied

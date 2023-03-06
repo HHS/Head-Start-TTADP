@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import { createFiltersToScopes } from '../utils';
 import { beforeCreateDate, afterCreateDate, withinCreateDate } from './createDate';
 import { withoutStatus, withStatus } from './status';
@@ -22,6 +21,8 @@ import { withoutReportIds, withReportIds } from './reportId';
 import withStateCode from './stateCode';
 import { withReportText, withoutReportText } from './reportText';
 import { withoutTargetPopulations, withTargetPopulations } from './targetPopulations';
+import { withGrantNumber, withoutGrantNumber } from './grantNumber';
+import { withGoalType, withoutGoalType } from './goalType';
 
 export const topicToQuery = {
   createDate: {
@@ -41,6 +42,9 @@ export const topicToQuery = {
     aft: (query) => afterEndDate(query),
     win: (query) => withinEndDates(query),
     in: (query) => withinEndDates(query),
+  goalType: {
+    in: (query) => withGoalType(query),
+    nin: (query) => withoutGoalType(query),
   },
   status: {
     in: (query) => withStatus(query),

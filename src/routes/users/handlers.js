@@ -1,6 +1,6 @@
 import UserPolicy from '../../policies/user';
 import SCOPES from '../../middleware/scopeConstants';
-import { userById, usersWithPermissions } from '../../services/users';
+import { userById, usersWithPermissions, statisticsByUser } from '../../services/users';
 import handleErrors from '../../lib/apiErrorHandler';
 import { DECIMAL_BASE } from '../../constants';
 import { statesByGrantRegion } from '../../services/grant';
@@ -22,6 +22,20 @@ export async function getPossibleCollaborators(req, res) {
 
     const users = await usersWithPermissions([region], SCOPES.READ_WRITE_REPORTS);
     res.json(users);
+  } catch (error) {
+    await handleErrors(req, res, error, { namespace: 'SERVICE:USER' });
+  }
+}
+
+export async function getUserStatistics(req, res) {
+  try {
+    const user = await userById(await currentUserId(req, res));
+    const regions = user.permissions.map((permission) => permission.regionId);
+    const authorization = new UserPolicy(user);
+    // Get regions user can write.
+    const canWrite = regions.some((region) => authorization.canWriteInRegion(region));
+    const statistics = await statisticsByUser(user, regions, !canWrite);
+    res.json(statistics);
   } catch (error) {
     await handleErrors(req, res, error, { namespace: 'SERVICE:USER' });
   }
