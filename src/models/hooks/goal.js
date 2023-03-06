@@ -23,6 +23,16 @@ const findOrCreateGoalTemplate = async (sequelize, transaction, regionId, name, 
   return { id: goalTemplate[0].id, name };
 };
 
+const autoPopulateOnAR = (sequelize, instance, options) => {
+  if (instance.onAR === undefined
+    || instance.onAR === null) {
+    instance.set('onAR', false);
+    if (!options.fields.includes('onAR')) {
+      options.fields.push('onAR');
+    }
+  }
+};
+
 const autoPopulateOnApprovedAR = (sequelize, instance, options) => {
   if (instance.onApprovedAR === undefined
     || instance.onApprovedAR === null) {
@@ -151,6 +161,7 @@ const beforeValidate = async (sequelize, instance, options) => {
   }
 
   // await autoPopulateGoalTemplateId(sequelize, instance, options);
+  autoPopulateOnAR(sequelize, instance, options);
   autoPopulateOnApprovedAR(sequelize, instance, options);
   preventNamChangeWhenOnApprovedAR(sequelize, instance, options);
   autoPopulateStatusChangeDates(sequelize, instance, options);

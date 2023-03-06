@@ -49,6 +49,11 @@ export default function FilterMenu({
   }, [itemLength, items.length]);
 
   const totalValidation = () => {
+    // If we don't have any filter's no need to validate.
+    if (!items.length) {
+      return true;
+    }
+
     const hasErrors = errors.reduce((acc, curr) => {
       if (acc || curr) {
         return true;
@@ -166,6 +171,7 @@ export default function FilterMenu({
     // this will add an empty item into the list if there
     // are no filters, to cut down on user clicking
     if (!items.length) {
+      setErrors([]); // Reset errors.
       onAddFilter();
     }
   };

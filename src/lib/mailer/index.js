@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/return-await */
 import { createTransport } from 'nodemailer';
 import { QueryTypes } from 'sequelize';
 import Email from 'email-templates';

@@ -1,6 +1,7 @@
 const { Op, Model } = require('sequelize');
 const { COLLABORATOR_TYPES, ENTITY_TYPES, CLOSE_SUSPEND_REASONS } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
+const { afterDestroy } = require('./hooks/activityReportGoal');
 
 export default (sequelize, DataTypes) => {
   class ActivityReportGoal extends Model {
@@ -94,6 +95,9 @@ export default (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'ActivityReportGoal',
+    hooks: {
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+    },
   });
   return ActivityReportGoal;
 };

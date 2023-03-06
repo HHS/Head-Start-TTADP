@@ -1,4 +1,4 @@
-import { INTERNAL_SERVER_ERROR, NOT_FOUND } from 'http-codes';
+import { INTERNAL_SERVER_ERROR, NOT_FOUND, BAD_REQUEST } from 'http-codes';
 import { userById } from '../../services/users';
 import SCOPES from '../../middleware/scopeConstants';
 import {
@@ -305,10 +305,44 @@ describe('changeGoalStatus', () => {
     goalByIdWithActivityReportsAndRegions.mockResolvedValue({
       objectives: [],
       grant: { regionId: 2 },
+      previousStatus: 'Was a Fish',
     });
 
     await changeGoalStatus(req, mockResponse);
     expect(mockResponse.json).toHaveBeenCalledWith(goalWhere);
+  });
+
+  it('returns a bad request when the goal status cannot be so updated', async () => {
+    const req = {
+      body: {
+        goalIds: [100000],
+        newStatus: 'New Status',
+        closeSuspendReason: 'TTA complete',
+        closeSuspendContext: 'Sample context.',
+        regionId: 2,
+      },
+      session: {
+        userId: 1,
+      },
+    };
+    updateGoalStatusById.mockResolvedValueOnce(false);
+    userById.mockResolvedValueOnce({
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+        },
+      ],
+    });
+
+    goalByIdWithActivityReportsAndRegions.mockResolvedValue({
+      objectives: [],
+      grant: { regionId: 2 },
+      previousStatus: 'Was a Fish',
+    });
+
+    await changeGoalStatus(req, mockResponse);
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(BAD_REQUEST);
   });
 
   it('returns a 401 based on permissions checks', async () => {

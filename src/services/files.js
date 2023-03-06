@@ -19,6 +19,7 @@ const deleteActivityReportFile = async (id) => ActivityReportFile.destroy({
   where: { id },
   individualHooks: true,
 });
+// TODO GH - need to pass hookMetadata
 const deleteActivityReportObjectiveFile = async (id) => ActivityReportObjectiveFile.destroy({
   where: { id },
   individualHooks: true,

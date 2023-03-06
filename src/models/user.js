@@ -3,7 +3,7 @@ const isEmail = require('validator/lib/isEmail');
 const { generateFullName } = require('./helpers/generateFullName');
 const { beforeDestroy } = require('./hooks/user');
 
-const featureFlags = [];
+const featureFlags = ['rttapa_form', 'anv_statistics'];
 
 export default (sequelize, DataTypes) => {
   class User extends Model {
@@ -28,6 +28,7 @@ export default (sequelize, DataTypes) => {
       User.hasMany(models.ActivityReport, { foreignKey: 'lastUpdatedById', as: 'reports', hooks: true });
       User.hasMany(models.Collaborator, { foreignKey: 'userId', as: 'collaborators', hooks: true });
       User.hasMany(models.UserValidationStatus, { foreignKey: 'userId', as: 'validationStatus' });
+      User.hasMany(models.Group, { foreignKey: 'userId', as: 'groups' });
     }
   }
   User.init({

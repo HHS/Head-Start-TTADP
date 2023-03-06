@@ -56,15 +56,15 @@ function SideNav({
 
   const isMobile = useMediaQuery({ maxWidth: 1023 });
   const navItems = () => pages.map((page) => (
-    <li key={page.label} className="smart-hub--navigator-item">
+    <li key={page.label} id={`activityReportSideNav-${page.label.replace(/ /g, '-').toLowerCase()}`} className="smart-hub--navigator-item">
       <Button
         onClick={page.onNavigation}
         unstyled
         className={`smart-hub--navigator-link ${page.current ? 'smart-hub--navigator-link-active' : ''}`}
         role="button"
       >
-        <span className="margin-left-2">{page.label}</span>
-        <span className="margin-left-auto margin-right-2">
+        <span className="page-label margin-left-2">{page.label}</span>
+        <span className="page-state margin-left-auto margin-right-2">
           {page.state !== REPORT_STATUSES.DRAFT
             && (
               <Tag className={`smart-hub--tag ${tagClass(page.state)}`}>

@@ -308,7 +308,10 @@ describe('saveGoalsForReport (more tests)', () => {
     ];
 
     await ActivityReportObjective.destroy({
-      where: { activityReportId: reportIds },
+      where: {
+        activityReportId: reportIds,
+      },
+      hookMetadata: { objectiveIds },
       individualHooks: true,
     });
 

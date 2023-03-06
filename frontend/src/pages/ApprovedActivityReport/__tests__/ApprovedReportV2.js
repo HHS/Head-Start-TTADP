@@ -159,4 +159,21 @@ describe('Approved Activity Report V2 component', () => {
 
     expect(await screen.findByText(/Virtual: Sandwich/i)).toBeInTheDocument();
   });
+
+  it('submitted date shown', async () => {
+    render(<ApprovedReportV2 data={{
+      ...report, submittedDate: '2023-01-09',
+    }}
+    />);
+    expect(await screen.findByText(/Date submitted:/i)).toBeInTheDocument();
+    expect(await screen.findByText('01/09/2023')).toBeInTheDocument();
+  });
+
+  it('submitted date hidden', async () => {
+    render(<ApprovedReportV2 data={{
+      ...report, submittedDate: null,
+    }}
+    />);
+    expect(screen.queryAllByText(/Date submitted:/i).length).toBe(0);
+  });
 });

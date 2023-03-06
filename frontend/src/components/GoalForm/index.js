@@ -135,7 +135,6 @@ export default function GoalForm({
         const [goal] = await goalsByIdAndRecipient(
           ids, recipient.id.toString(),
         );
-
         // for these, the API sends us back things in a format we expect
         setGoalName(goal.name);
         setStatus(goal.status);
@@ -879,7 +878,6 @@ export default function GoalForm({
               isRttapa={isRttapa}
               setIsRttapa={setIsRttapa}
               initialRttapa={initialRttapa.current}
-              validateIsRttapa={validateIsRttapa}
               errors={errors}
               validateGoalName={validateGoalName}
               validateEndDate={validateEndDate}

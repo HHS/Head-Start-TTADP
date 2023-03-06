@@ -1,12 +1,43 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import HeaderUserMenu from './HeaderUserMenu';
 
 import logo1x from '../images/eclkc-blocks-logo-43x56.png';
 import logo2x from '../images/eclkc-blocks-logo-86x111.png';
+import ReadOnlyEditor from './ReadOnlyEditor';
+import SiteAlert from './SiteAlert';
 
-function Header() {
+function Header({ authenticated, alert }) {
+  const headerClassNames = [
+    'smart-hub-header',
+    'pin-top',
+    'pin-x',
+    'position-fixed',
+    'bg-white',
+    'border-bottom',
+    'border-base-lighter',
+  ];
+
+  if (!alert) {
+    headerClassNames.push('height-9');
+  }
+
+  if (alert) {
+    headerClassNames.push('has-alerts');
+  }
+
   return (
-    <header className="smart-hub-header height-9 pin-top pin-x position-fixed bg-white border-bottom border-base-lighter" style={{ zIndex: '99998' }}>
+    <header className={headerClassNames.join(' ')} style={{ zIndex: '99998' }}>
+      {(alert && authenticated) && (
+        <>
+          <SiteAlert
+            heading={alert.title}
+            variant={alert.variant}
+          >
+            <ReadOnlyEditor value={alert.message} ariaLabel="alert for the tta hub: " />
+          </SiteAlert>
+        </>
+      )}
       <div className="display-flex flex-row flex-align-start height-full flex-justify">
         <div className="display-flex">
           <div className="flex-column flex-align-self-center margin-left-2">
@@ -23,5 +54,18 @@ function Header() {
     </header>
   );
 }
+
+Header.propTypes = {
+  authenticated: PropTypes.bool.isRequired,
+  alert: PropTypes.shape({
+    title: PropTypes.string,
+    message: PropTypes.string,
+    variant: PropTypes.string,
+  }),
+};
+
+Header.defaultProps = {
+  alert: null,
+};
 
 export default Header;

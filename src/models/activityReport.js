@@ -11,6 +11,7 @@ const {
   beforeDestroy,
   afterCreate,
   afterUpdate,
+  beforeValidate,
 } = require('./hooks/activityReport');
 
 // const generateCreatorNameWithRole = (ar) => {
@@ -263,6 +264,11 @@ export default (sequelize, DataTypes) => {
     ttaType: {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
+    submittedDate: {
+      type: DataTypes.DATEONLY,
+      get: formatDate,
+      allowNull: true,
+    },
     updatedAt: {
       allowNull: false,
       type: DataTypes.DATE,
@@ -350,6 +356,7 @@ export default (sequelize, DataTypes) => {
     },
   }, {
     hooks: {
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       beforeCreate: async (instance, options) => beforeCreate(sequelize, instance, options),
       beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
       beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),

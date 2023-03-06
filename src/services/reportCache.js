@@ -10,11 +10,16 @@ const {
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
+  Goal,
+  Objective,
+  ObjectiveFile,
+  ObjectiveResource,
+  ObjectiveTopic,
 } = require('../models');
 const { ENTITY_TYPES } = require('../constants');
 const { upsertCollaborator } = require('./collaborators');
 
-const cacheFiles = async (activityReportObjectiveId, files = []) => {
+const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) => {
   const fileIds = files.map((file) => file.fileId);
   const filesSet = new Set(fileIds);
   const originalAROFiles = await ActivityReportObjectiveFile.findAll({
@@ -38,12 +43,37 @@ const cacheFiles = async (activityReportObjectiveId, files = []) => {
           fileId: { [Op.in]: removedFileIds },
         },
         individualHooks: true,
+        hookMetadata: { objectiveId },
       })
+      : Promise.resolve(),
+    newFilesIds.length > 0
+      ? ObjectiveFile.update(
+        { onAR: true },
+        {
+          where: { fileId: { [Op.in]: newFilesIds } },
+          include: [
+            {
+              model: Objective,
+              as: 'objective',
+              required: true,
+              where: { id: objectiveId },
+              include: [
+                {
+                  model: ActivityReportObjective,
+                  as: 'activityReportObjectives',
+                  required: true,
+                  where: { id: activityReportObjectiveId },
+                },
+              ],
+            },
+          ],
+        },
+      )
       : Promise.resolve(),
   ]);
 };
 
-const cacheResources = async (activityReportObjectiveId, resources = []) => {
+const cacheResources = async (objectiveId, activityReportObjectiveId, resources = []) => {
   const resourceUrls = resources
     .map((resource) => resource.userProvidedUrl)
     .filter((url) => isValidResourceUrl(url));
@@ -69,12 +99,37 @@ const cacheResources = async (activityReportObjectiveId, resources = []) => {
           userProvidedUrl: { [Op.in]: removedUrls },
         },
         individualHooks: true,
+        hookMetadata: { objectiveId },
       })
+      : Promise.resolve(),
+    newUrls.length > 0
+      ? ObjectiveResource.update(
+        { onAR: true },
+        {
+          where: { userProvidedUrl: { [Op.in]: newUrls } },
+          include: [
+            {
+              model: Objective,
+              as: 'objective',
+              required: true,
+              where: { id: objectiveId },
+              include: [
+                {
+                  model: ActivityReportObjective,
+                  as: 'activityReportObjectives',
+                  required: true,
+                  where: { id: activityReportObjectiveId },
+                },
+              ],
+            },
+          ],
+        },
+      )
       : Promise.resolve(),
   ]);
 };
 
-const cacheTopics = async (activityReportObjectiveId, topics = []) => {
+const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) => {
   const topicIds = topics.map((topic) => topic.topicId);
   const topicsSet = new Set(topicIds);
   const originalAROTopics = await ActivityReportObjectiveTopic.findAll({
@@ -99,7 +154,32 @@ const cacheTopics = async (activityReportObjectiveId, topics = []) => {
           topicId: { [Op.in]: removedTopicIds },
         },
         individualHooks: true,
+        hookMetadata: { objectiveId },
       })
+      : Promise.resolve(),
+    newTopicsIds.length > 0
+      ? ObjectiveTopic.update(
+        { onAR: true },
+        {
+          where: { topicId: { [Op.in]: newTopicsIds } },
+          include: [
+            {
+              model: Objective,
+              as: 'objective',
+              required: true,
+              where: { id: objectiveId },
+              include: [
+                {
+                  model: ActivityReportObjective,
+                  as: 'activityReportObjectives',
+                  required: true,
+                  where: { id: activityReportObjectiveId },
+                },
+              ],
+            },
+          ],
+        },
+      )
       : Promise.resolve(),
   ]);
 };
@@ -201,18 +281,21 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     status,
     order,
   } = metadata;
-  const objectiveId = objective.id;
+  const objectiveId = objective.dataValues
+    ? objective.dataValues.id
+    : objective.id;
   let aro = await ActivityReportObjective.findOne({
     where: {
       objectiveId,
       activityReportId: reportId,
     },
+    raw: true,
   });
   if (!aro) {
     aro = await ActivityReportObjective.create({
       objectiveId,
       activityReportId: reportId,
-    });
+    }, { raw: true });
   }
   const { id: activityReportObjectiveId } = aro;
   return Promise.all([
@@ -225,9 +308,13 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
       where: { id: activityReportObjectiveId },
       individualHooks: true,
     }),
-    cacheFiles(activityReportObjectiveId, files),
-    cacheResources(activityReportObjectiveId, resources),
-    cacheTopics(activityReportObjectiveId, topics),
+    Objective.update({ onAR: true }, {
+      where: { id: objectiveId },
+      individualHooks: true,
+    }),
+    cacheFiles(objectiveId, activityReportObjectiveId, files),
+    cacheResources(objectiveId, activityReportObjectiveId, resources),
+    cacheTopics(objectiveId, activityReportObjectiveId, topics),
     cacheObjectiveCollaborators(activityReportObjectiveId),
   ]);
 };
@@ -257,30 +344,36 @@ const cacheGoalMetadata = async (goal, reportId, isRttapa, isActivelyBeingEditin
       }, {
         where: { id: activityReportGoalId },
         individualHooks: true,
-
       }),
       await cacheOGoalCollaborators(activityReportGoalId),
+      Goal.update({ onAR: true }, { where: { id: goal.id }, individualHooks: true }),
     ]);
   }
 
   // otherwise, we create a new one
-  return ActivityReportGoal.create({
-    goalId: goal.id,
-    activityReportId: reportId,
-    name: goal.name,
-    status: goal.status,
-    timeframe: goal.timeframe,
-    closeSuspendReason: goal.closeSuspendReason,
-    closeSuspendContext: goal.closeSuspendContext,
-    endDate: goal.endDate,
-    isRttapa: isRttapa || null,
-    isActivelyEdited: isActivelyBeingEditing || false,
-  }, {
-    individualHooks: true,
-  });
+  return Promise.all([
+    ActivityReportGoal.create({
+      goalId: goal.id,
+      activityReportId: reportId,
+      name: goal.name,
+      status: goal.status,
+      timeframe: goal.timeframe,
+      closeSuspendReason: goal.closeSuspendReason,
+      closeSuspendContext: goal.closeSuspendContext,
+      endDate: goal.endDate,
+      isRttapa: isRttapa || null,
+      isActivelyEdited: isActivelyBeingEditing || false,
+    }, {
+      individualHooks: true,
+    }),
+    Goal.update({ onAR: true }, { where: { id: goal.id }, individualHooks: true }),
+  ]);
 };
 
-async function destroyActivityReportObjectiveMetadata(activityReportObjectiveIdsToRemove) {
+async function destroyActivityReportObjectiveMetadata(
+  activityReportObjectiveIdsToRemove,
+  objectiveIds,
+) {
   return Array.isArray(activityReportObjectiveIdsToRemove)
   && activityReportObjectiveIdsToRemove.length > 0
     ? Promise.all([
@@ -288,18 +381,21 @@ async function destroyActivityReportObjectiveMetadata(activityReportObjectiveIds
         where: {
           activityReportObjectiveId: activityReportObjectiveIdsToRemove,
         },
+        hookMetadata: { objectiveIds },
         individualHooks: true,
       }),
       ActivityReportObjectiveResource.destroy({
         where: {
           activityReportObjectiveId: activityReportObjectiveIdsToRemove,
         },
+        hookMetadata: { objectiveIds },
         individualHooks: true,
       }),
       ActivityReportObjectiveTopic.destroy({
         where: {
           activityReportObjectiveId: activityReportObjectiveIdsToRemove,
         },
+        hookMetadata: { objectiveIds },
         individualHooks: true,
       }),
       Collaborator.destroy({
@@ -307,6 +403,7 @@ async function destroyActivityReportObjectiveMetadata(activityReportObjectiveIds
           entityType: ENTITY_TYPES.REPORTOBJECTIVE,
           entityId: activityReportObjectiveIdsToRemove,
         },
+        hookMetadata: { objectiveIds },
         individualHooks: true,
       }),
     ])

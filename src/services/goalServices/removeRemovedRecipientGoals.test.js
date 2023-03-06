@@ -197,7 +197,10 @@ describe('removeRemovedRecipientsGoals', () => {
     const reportIds = [multiRecipientReport.id, secondReport.id];
 
     await ActivityReportObjective.destroy({
-      where: { activityReportId: reportIds },
+      where: {
+        activityReportId: reportIds,
+      },
+      hookMetadata: { objectiveIds: [firstObjective.id, secondObjective.id, thirdObjective.id] },
       individualHooks: true,
     });
 

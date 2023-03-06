@@ -73,6 +73,7 @@ export default (sequelize, DataTypes) => {
       Objective.belongsTo(models.OtherEntity, { foreignKey: 'otherEntityId', as: 'otherEntity', hooks: true });
       Objective.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });
       Objective.hasMany(models.ObjectiveResource, { foreignKey: 'objectiveId', as: 'resources', hooks: true });
+      Objective.hasMany(models.ObjectiveTopic, { foreignKey: 'objectiveId', as: 'objectiveTopics', hooks: true });
       Objective.belongsToMany(models.Topic, {
         through: models.ObjectiveTopic,
         foreignKey: 'objectiveId',
@@ -118,8 +119,13 @@ export default (sequelize, DataTypes) => {
       },
       onUpdate: 'CASCADE',
     },
+    onAR: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
     onApprovedAR: {
       type: DataTypes.BOOLEAN,
+      default: false,
     },
     createdVia: {
       type: DataTypes.ENUM(['activityReport', 'rtr']),

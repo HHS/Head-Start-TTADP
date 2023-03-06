@@ -189,6 +189,10 @@ async function sendActivityReportCSV(reports, res) {
           header: 'Created date',
         },
         {
+          key: 'submittedDate',
+          header: 'Submitted date',
+        },
+        {
           key: 'approvedAt',
           header: 'Approved date',
         },
@@ -959,6 +963,7 @@ export async function setGoalAsActivelyEdited(req, res) {
   try {
     const { activityReportId } = req.params;
     const { goalIds } = req.query;
+    const { pageState } = req.body;
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
     const [report] = await activityReportAndRecipientsById(activityReportId);
@@ -969,7 +974,7 @@ export async function setGoalAsActivelyEdited(req, res) {
       return;
     }
 
-    const goals = await setActivityReportGoalAsActivelyEdited(goalIds, activityReportId);
+    const goals = await setActivityReportGoalAsActivelyEdited(goalIds, activityReportId, pageState);
     res.json(goals);
   } catch (error) {
     await handleErrors(req, res, error, logContext);

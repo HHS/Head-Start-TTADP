@@ -24,6 +24,7 @@ export default function ResourceRepeater({
   goalStatus,
   userCanEdit,
   editingFromActivityReport,
+  toolTipText,
 }) {
   const readOnly = !editingFromActivityReport
   && ((goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed' || !userCanEdit);
@@ -82,7 +83,7 @@ export default function ResourceRepeater({
     <>
       { fixedResources.length ? (
         <>
-          <p className="usa-prose text-bold margin-bottom-0">Link to TTA resource used</p>
+          <p className="usa-prose text-bold margin-bottom-0">Link to TTA resource</p>
           <ul className="usa-list usa-list--unstyled">
             {fixedResources.map((resource) => (
               <li key={resource.key}><a href={resource.value}>{resource.value}</a></li>
@@ -95,9 +96,9 @@ export default function ResourceRepeater({
         <FormGroup error={error.props.children}>
           <div>
             <Label htmlFor="resources" className={fixedResources.length ? 'text-bold' : ''}>
-              {!fixedResources.length ? 'Link to TTA resource used' : 'Add resource link'}
+              {!fixedResources.length ? 'Link to TTA resource' : 'Add resource link'}
               <QuestionTooltip
-                text="Copy and paste addresses of web pages describing resources used for this objective. Usually this is an ECLKC page."
+                text={toolTipText}
               />
             </Label>
             <span className="usa-hint">
@@ -159,9 +160,11 @@ ResourceRepeater.propTypes = {
   goalStatus: PropTypes.string.isRequired,
   userCanEdit: PropTypes.bool.isRequired,
   editingFromActivityReport: PropTypes.bool,
+  toolTipText: PropTypes.string,
 };
 
 ResourceRepeater.defaultProps = {
   isLoading: false,
   editingFromActivityReport: false,
+  toolTipText: 'Copy & paste web address of TTA resource used for this objective. Usually an ECLKC page.',
 };

@@ -4,7 +4,6 @@ import { logger } from '../../logger';
 import { AWS_ELASTICSEARCH_ACTIONS } from '../../constants';
 
 export const awsElasticsearchQueue = newQueue('awsElasticsearch');
-// let client;
 
 /** *
     Add various AWS Elasticsearch operations to the queue.

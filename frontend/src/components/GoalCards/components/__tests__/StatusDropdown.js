@@ -50,12 +50,7 @@ describe('StatusDropdown', () => {
     userEvent.click(select);
 
     options = await screen.findAllByRole('button');
-    expect(options.length).toBe(4);
-
-    const inProgress = await screen.findByRole('button', { name: /in progress/i });
-    userEvent.click(inProgress);
-
-    expect(onUpdate).toHaveBeenCalledWith('In Progress');
+    expect(options.length).toBe(3);
   });
 
   it('displays the correct number of options for in progress', async () => {
@@ -131,6 +126,15 @@ describe('StatusDropdown', () => {
 
   describe('passes the correct parameters', () => {
     describe('not started', () => {
+      test('does not offer "in progress" as an option', async () => {
+        const onUpdate = jest.fn();
+        renderStatusDropdown('Not Started', onUpdate);
+
+        const select = await screen.findByRole('button', { name: /change status for goal 345345/i });
+        userEvent.click(select);
+
+        expect(screen.queryByRole('button', { name: /in progress/i })).toBeNull();
+      });
       test('suspended', async () => {
         const onUpdate = jest.fn();
         renderStatusDropdown('Not Started', onUpdate);

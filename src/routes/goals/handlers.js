@@ -1,3 +1,4 @@
+import httpCodes from 'http-codes';
 import {
   updateGoalStatusById,
   createOrUpdateGoalsForActivityReport,
@@ -79,21 +80,27 @@ export async function changeGoalStatus(req, res) {
     const ids = goalIds.map((id) => parseInt(id, DECIMAL_BASE));
 
     let status = false;
+    const previousStatus = [];
 
     await Promise.all(ids.map(async (goalId) => {
       if (!status) {
         const goal = await goalByIdWithActivityReportsAndRegions(goalId);
 
         if (!goal) {
-          status = 404;
+          status = httpCodes.NOT_FOUND;
           return status;
         }
 
         if (!new Goal(user, goal).canChangeStatus()) {
-          status = 401;
+          status = httpCodes.UNAUTHORIZED;
           return status;
         }
+
+        if (goal.previousStatus && !previousStatus.includes(goal.previousStatus)) {
+          previousStatus.push(goal.previousStatus);
+        }
       }
+
       return status;
     }));
 
@@ -108,7 +115,14 @@ export async function changeGoalStatus(req, res) {
       newStatus,
       closeSuspendReason,
       closeSuspendContext,
+      previousStatus,
     );
+
+    if (!updatedGoal) {
+      // the updateGoalStatusById function returns false
+      // if the goal status change is not allowed
+      res.sendStatus(httpCodes.BAD_REQUEST);
+    }
 
     res.json(updatedGoal);
   } catch (error) {

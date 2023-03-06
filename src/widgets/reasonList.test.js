@@ -16,7 +16,7 @@ const mockUser = {
   homeRegionId: 1,
   name: 'user5426861',
   hsesUsername: 'user5426861',
-  hsesUserId: '5426861',
+  hsesUserId: '54268610',
 };
 
 const reportObject = {
@@ -130,9 +130,8 @@ const regionOneDraftReport = {
 
 describe('Reason list widget', () => {
   beforeAll(async () => {
-    await User.create(mockUser);
-    await UserRole.create({ userId: mockUser.id, roleId: 1 });
-    await Recipient.create({ name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' });
+    await User.findOrCreate({ where: { ...mockUser } });
+    await Recipient.findOrCreate({ where: { name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' } });
     await Grant.bulkCreate([{
       id: GRANT_ID_ONE, number: GRANT_ID_ONE, recipientId: RECIPIENT_ID, regionId: 3, status: 'Active',
     }, {

@@ -113,7 +113,7 @@ export default function StatusDropdown({
       ];
     }
 
-    if (status === 'In Progress') {
+    if (status === 'In Progress' || status === 'Not Started') {
       return [
         {
           label: 'Closed',

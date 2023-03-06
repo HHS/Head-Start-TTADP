@@ -279,3 +279,8 @@ button:not([disabled]):focus {
 .DayPickerNavigation_button svg  {
 fill: #1B1B1B;
 }
+
+/* ========== plotly overrrides ========== */
+.plotly-notifier {
+  z-index: 99999;
+}

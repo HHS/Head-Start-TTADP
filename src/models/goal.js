@@ -3,6 +3,8 @@ const { COLLABORATOR_TYPES, ENTITY_TYPES, CLOSE_SUSPEND_REASONS } = require('../
 const { formatDate } = require('../lib/modelHelpers');
 const { beforeValidate, afterCreate, beforeUpdate, afterUpdate } = require('./hooks/goal');
 
+export const RTTAPA_ENUM = ['Yes', 'No'];
+
 /**
  * Goals table. Stores goals for tta.
  *
@@ -117,12 +119,16 @@ export default (sequelize, DataTypes) => {
     previousStatus: {
       type: DataTypes.STRING,
     },
+    onAR: {
+      type: DataTypes.BOOLEAN,
+      default: false,
+    },
     onApprovedAR: {
       type: DataTypes.BOOLEAN,
       default: false,
     },
     isRttapa: {
-      type: DataTypes.ENUM(['Yes', 'No']),
+      type: DataTypes.ENUM(RTTAPA_ENUM),
       allowNull: true,
     },
     firstNotStartedAt: {

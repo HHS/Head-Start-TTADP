@@ -24,7 +24,7 @@ test.describe('Recipient record', () => {
     await page.keyboard.press('Enter');
     await page.getByTestId('textarea').fill('This is the first goal for this recipient');
     await page.getByRole('button', { name: 'Save draft' }).click();
-    await page.getByText('Yes').click();
+    await page.getByText('RTTAPA', { exact: true }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
     // edit that goal to add an objective
@@ -45,11 +45,11 @@ test.describe('Recipient record', () => {
     await page.getByTestId('textInput').fill('http://www.fish-banana-garbage-man.com');
     await page.getByRole('button', { name: 'Save draft' }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();
-    // locate the topics dropdown
-    await page.locator('.css-g1d714-ValueContainer').last().click();
+    await page.getByLabel(/topics/i).focus();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
-    // enter second topic as well
-    await page.keyboard.press('Enter');
+
     // first click blurs
     await page.getByRole('button', { name: 'Save and continue' }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();
