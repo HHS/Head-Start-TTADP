@@ -122,9 +122,9 @@ const cacheResources = async (objectiveId, activityReportObjectiveId, resources 
       )
       : Promise.resolve(),
     removedAROResourceIds.length > 0
-      ? ObjectiveResource.update(
-        { onAR: false },
-        {
+      ? (async () => {
+        const resourceNotOnARs = await ObjectiveResource.findAll({
+          attributes: ['id'],
           where: {
             id: objectiveId,
             onAR: true,
@@ -137,8 +137,11 @@ const cacheResources = async (objectiveId, activityReportObjectiveId, resources 
             required: false,
             where: { id: { [Op.not]: activityReportObjectiveId } },
           }],
-        },
-      )
+        });
+        return resourceNotOnARs && resourceNotOnARs.length > 0
+          ? ObjectiveResource.update({ onAR: false }, { where: { id: resourceNotOnARs } })
+          : Promise.resolve();
+      })()
       : Promise.resolve(),
   ]);
 };
