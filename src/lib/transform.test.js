@@ -84,6 +84,15 @@ describe('activityReportToCsvRecord', () => {
       timeframe: 'None',
       createdVia: 'activityReport',
     },
+    // Same goal different recipient.
+    {
+      name: 'Goal 1',
+      id: 2085,
+      status: 'Not Started',
+      grantId: 4,
+      timeframe: 'None',
+      createdVia: 'activityReport',
+    },
   ];
 
   const mockObjectives = [
@@ -136,7 +145,7 @@ describe('activityReportToCsvRecord', () => {
       status: OBJECTIVE_STATUS.COMPLETE,
       goal: mockGoals[2],
     },
-    // Duplicate Objective name for goal 3.
+    // Duplicate Objective name for goal 4.
     {
       id: 18,
       title: 'Objective 3.1',
@@ -150,6 +159,21 @@ describe('activityReportToCsvRecord', () => {
       ttaProvided: 'Training',
       status: OBJECTIVE_STATUS.COMPLETE,
       goal: mockGoals[4],
+    },
+    // Same as goal 1 different recipient.
+    {
+      id: 20,
+      title: 'Objective 1.1',
+      ttaProvided: 'Training',
+      status: OBJECTIVE_STATUS.COMPLETE,
+      goal: mockGoals[5],
+    },
+    {
+      id: 21,
+      title: 'Objective 1.2',
+      ttaProvided: 'Training',
+      status: OBJECTIVE_STATUS.COMPLETE,
+      goal: mockGoals[5],
     },
   ];
 
@@ -446,7 +470,7 @@ describe('activityReportToCsvRecord', () => {
 
     const output = makeGoalsAndObjectivesObject(objectives);
     expect(output).toEqual({
-      'goal-1-id': '2080',
+      'goal-1-id': '2080\n2085',
       'goal-1': 'Goal 1',
       'goal-1-status': 'Not Started',
       'goal-1-created-from': 'activityReport',
