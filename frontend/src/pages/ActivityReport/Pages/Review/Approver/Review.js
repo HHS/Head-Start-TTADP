@@ -1,4 +1,5 @@
 import React, { useContext } from 'react';
+import moment from 'moment-timezone';
 import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import _ from 'lodash';
@@ -7,7 +8,7 @@ import {
 } from '@trussworks/react-uswds';
 import { Editor } from 'react-draft-wysiwyg';
 import IncompletePages from '../IncompletePages';
-import { managerReportStatuses } from '../../../../../Constants';
+import { managerReportStatuses, DATE_DISPLAY_FORMAT } from '../../../../../Constants';
 import { getEditorState } from '../../../../../utils';
 import FormItem from '../../../../../components/FormItem';
 import HookFormRichEditor from '../../../../../components/HookFormRichEditor';
@@ -21,6 +22,7 @@ const Review = ({
   onFormReview,
   approverStatusList,
   pendingOtherApprovals,
+  dateSubmitted,
   pages,
   showDraftViewForApproverAndCreator,
 }) => {
@@ -44,7 +46,7 @@ const Review = ({
   const filtered = pages.filter((p) => !(p.state === 'Complete' || p.review));
   const incompletePages = filtered.map((f) => f.label);
   const hasIncompletePages = incompletePages.length > 0;
-
+  const formattedDateSubmitted = dateSubmitted ? moment(dateSubmitted).format(DATE_DISPLAY_FORMAT) : '';
   return (
     <>
       <h2>{pendingOtherApprovals ? 'Pending other approvals' : 'Review and approve report'}</h2>
@@ -80,24 +82,35 @@ const Review = ({
           </div>
         </Fieldset>
         { !showDraftViewForApproverAndCreator ? (
-          <FormItem
-            name="status"
-            label="Choose report status"
-            className="margin-bottom-3"
-          >
-            <Dropdown
-              id="status"
+          <>
+            {
+            dateSubmitted
+              ? (
+                <Fieldset className="smart-hub--report-legend margin-top-3" legend="Date Submitted">
+                  <Label className="margin-top-2" htmlFor="date_submitted">{formattedDateSubmitted}</Label>
+                </Fieldset>
+              )
+              : null
+            }
+            <FormItem
               name="status"
-              defaultValue={hasBeenReviewed
-                ? thisApprovingManager[0].status : ''}
-              inputRef={register({ required: true })}
+              label="Choose report status"
+              className="margin-bottom-3"
             >
-              <option name="default" value="" disabled hidden>- Select -</option>
-              {managerReportStatuses.map((status) => (
-                <option key={status} value={status}>{_.startCase(status)}</option>
-              ))}
-            </Dropdown>
-          </FormItem>
+              <Dropdown
+                id="status"
+                name="status"
+                defaultValue={hasBeenReviewed
+                  ? thisApprovingManager[0].status : ''}
+                inputRef={register({ required: true })}
+              >
+                <option name="default" value="" disabled hidden>- Select -</option>
+                {managerReportStatuses.map((status) => (
+                  <option key={status} value={status}>{_.startCase(status)}</option>
+                ))}
+              </Dropdown>
+            </FormItem>
+          </>
         ) : <div className="margin-bottom-3" />}
         <ApproverStatusList approverStatus={approverStatusList} />
         {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
@@ -110,6 +123,7 @@ const Review = ({
 Review.propTypes = {
   additionalNotes: PropTypes.string,
   onFormReview: PropTypes.func.isRequired,
+  dateSubmitted: PropTypes.string,
   pendingOtherApprovals: PropTypes.bool,
   approverStatusList: PropTypes.arrayOf(PropTypes.shape({
     approver: PropTypes.string,
@@ -127,6 +141,7 @@ Review.defaultProps = {
   pendingOtherApprovals: false,
   additionalNotes: '',
   approverStatusList: [],
+  dateSubmitted: null,
 };
 
 export default Review;
