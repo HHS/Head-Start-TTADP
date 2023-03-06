@@ -76,6 +76,14 @@ describe('activityReportToCsvRecord', () => {
       timeframe: 'None',
       createdVia: 'activityReport',
     },
+    {
+      name: 'Goal 4',
+      id: 2084,
+      status: 'Not Started',
+      grantId: 3,
+      timeframe: 'None',
+      createdVia: 'activityReport',
+    },
   ];
 
   const mockObjectives = [
@@ -127,6 +135,21 @@ describe('activityReportToCsvRecord', () => {
       ttaProvided: 'Training',
       status: OBJECTIVE_STATUS.COMPLETE,
       goal: mockGoals[2],
+    },
+    // Duplicate Objective name for goal 3.
+    {
+      id: 18,
+      title: 'Objective 3.1',
+      ttaProvided: 'Training',
+      status: OBJECTIVE_STATUS.COMPLETE,
+      goal: mockGoals[4],
+    },
+    {
+      id: 19,
+      title: 'Objective 4.2',
+      ttaProvided: 'Training',
+      status: OBJECTIVE_STATUS.COMPLETE,
+      goal: mockGoals[4],
     },
   ];
 
@@ -422,7 +445,6 @@ describe('activityReportToCsvRecord', () => {
     }));
 
     const output = makeGoalsAndObjectivesObject(objectives);
-    console.log('\n\n\n---Output: ', output);
     expect(output).toEqual({
       'goal-1-id': '2080',
       'goal-1': 'Goal 1',
@@ -472,6 +494,22 @@ describe('activityReportToCsvRecord', () => {
       'objective-3.1-nonResourceLinks': 'TestFile.docx',
       'objective-3.1-ttaProvided': 'Training',
       'objective-3.1-status': 'Complete',
+      'goal-4-id': '2084',
+      'goal-4': 'Goal 4',
+      'goal-4-status': 'Not Started',
+      'goal-4-created-from': 'activityReport',
+      'objective-4.1': 'Objective 3.1',
+      'objective-4.1-topics': 'Topic 1',
+      'objective-4.1-resourcesLinks': 'https://test.gov',
+      'objective-4.1-nonResourceLinks': 'TestFile.docx',
+      'objective-4.1-ttaProvided': 'Training',
+      'objective-4.1-status': 'Complete',
+      'objective-4.2': 'Objective 4.2',
+      'objective-4.2-topics': 'Topic 1',
+      'objective-4.2-resourcesLinks': 'https://test.gov',
+      'objective-4.2-nonResourceLinks': 'TestFile.docx',
+      'objective-4.2-ttaProvided': 'Training',
+      'objective-4.2-status': 'Complete',
     });
   });
 

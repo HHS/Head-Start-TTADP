@@ -188,10 +188,12 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       goal, title, status, ttaProvided, topics, files, resources,
     } = objective;
     const goalId = goal ? goal.id : null;
-    const titleMd5 = md5(title);
+    const md5Title = `${goalId}-${title}`;
+    const titleMd5 = md5(md5Title);
 
     const lookupGoalNum = processedObjectivesTitles.get(titleMd5);
     const goalName = goal ? goal.name : null;
+    const newGoal = goalName && !Object.values(accum).includes(goalName);
     if (lookupGoalNum) {
       // Make sure its not another objective for the same goal.
       if (goalIds[goalName] && !goalIds[goalName].includes(goalId)) {
@@ -200,7 +202,6 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       }
       return accum;
     }
-    const newGoal = goalName && !Object.values(accum).includes(goalName);
 
     if (newGoal) {
       goalNum += 1;
