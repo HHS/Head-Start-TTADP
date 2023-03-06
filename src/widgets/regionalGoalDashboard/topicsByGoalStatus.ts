@@ -1,8 +1,8 @@
 import { Op } from 'sequelize';
-import { TOPICS, GOAL_STATUS } from '../../constants';
+import { TOPICS, GOAL_STATUS, REPORT_STATUSES } from '../../constants';
 import {
   // @ts-ignore
-  Goal, Topic, Objective, ObjectiveTopic,
+  Goal, Topic, Objective, ObjectiveTopic, ActivityReportGoal, ActivityReport,
 } from '../../models';
 
 type Tpc = typeof TOPICS[number];
@@ -49,6 +49,24 @@ export default async function topicsByGoalStatus(scopes): Promise<TopicResponse[
                 attributes: [['name', 'topic']],
               },
             ],
+          },
+        ],
+      },
+      {
+        model: ActivityReportGoal,
+        as: 'activityReportGoals',
+        separate: true,
+        include: [
+          {
+            model: ActivityReport,
+            as: 'activityReport',
+            where: {
+              [Op.and]: {
+                calculatedStatus: {
+                  [Op.eq]: REPORT_STATUSES.APPROVED,
+                },
+              },
+            },
           },
         ],
       },
