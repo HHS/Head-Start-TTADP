@@ -40,7 +40,7 @@ const possibleIds = recipients.map((recipient) => recipient.id);
 describe('grant filtersToScopes', () => {
   let mockUser;
   let group;
-  const groupName = faker.company.companyName();
+  const groupName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
   const specialGrantNumber = String(faker.datatype.number({ min: 2800 }));
   let grantGroupOne;
   let grantGroupTwo;
