@@ -33,6 +33,10 @@ export default function GoalCardsHeader({
   selectedGoalIds,
   perPageChange,
   pageGoalIds,
+  createRttapa,
+  showRttapaValidation,
+  draftSelectedRttapa,
+  nonRttapaSelectedRttapa,
 }) {
   const history = useHistory();
   const { user } = useContext(UserContext);
@@ -49,15 +53,6 @@ export default function GoalCardsHeader({
     const [sortBy, direction] = e.target.value.split('-');
     requestSort(sortBy, direction);
   };
-
-  const rttapaLink = (() => {
-    if (selectedGoalIds && selectedGoalIds.length) {
-      const selectedGoalIdsQuery = selectedGoalIds.map((id) => `goalId[]=${encodeURIComponent(id)}`).join('&');
-      return `/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/new?${selectedGoalIdsQuery}`;
-    }
-
-    return `/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/new`;
-  })();
 
   return (
     <div className="padding-x-3 position-relative">
@@ -142,12 +137,14 @@ export default function GoalCardsHeader({
               </span>
             )}
         <FeatureFlag flag="rttapa_form">
-          <Link
-            to={rttapaLink}
-            className="display-flex flex-align-center usa-button usa-button--unstyled margin-left-3 margin-y-0"
+          <Button
+            unstyled
+            className="display-flex flex-align-center margin-left-3 margin-y-0"
+            onClick={createRttapa}
+            type="button"
           >
             Create RTTAPA
-          </Link>
+          </Button>
         </FeatureFlag>
         <Button
           unstyled
@@ -158,25 +155,56 @@ export default function GoalCardsHeader({
         </Button>
       </div>
       <div>
+        {showRttapaValidation && (
+          <Alert type="error" className="margin-top-3">
+            <div>
+              { draftSelectedRttapa.length ? (
+                <p className="usa-prose margin-top-0">
+                  <strong>{draftSelectedRttapa.map((g) => (`G-${g}`)).join(', ')}</strong>
+                  {' '}
+                  {draftSelectedRttapa.length === 1 ? 'is a' : 'are'}
+                  {' '}
+                  draft
+                  {' '}
+                  {draftSelectedRttapa.length === 1 ? 'goal' : 'goals'}
+                  , and draft goals can&apos;t be added to an RTTAPA. Deselect any draft goals.
+                </p>
+              ) : null}
+              { nonRttapaSelectedRttapa.length ? (
+                <p className="usa-prose margin-top-0">
+                  <strong>{nonRttapaSelectedRttapa.map((g) => (`G-${g}`)).join(', ')}</strong>
+                  {' '}
+                  {nonRttapaSelectedRttapa.length === 1 ? 'is a' : 'are'}
+                  {' '}
+                  non-Rttapa
+                  {' '}
+                  {nonRttapaSelectedRttapa.length === 1 ? 'goal' : 'goals'}
+                  .
+                  Any goals added to a regional agreement must be RTTAPA goals.
+                  Deselect any non-RTTAPA goals.
+                </p>
+              ) : null}
+            </div>
+          </Alert>
+        )}
         {
-              allGoalsChecked && (numberOfSelectedGoals !== count)
-                ? (
-                  <Alert className="margin-top-3" type="info" slim>
-                    {`All ${numberOfSelectedGoals} goals on this page are selected.`}
-                    <button
-                      type="button"
-                      className="usa-button usa-button--unstyled margin-left-1"
-                      onClick={selectAllGoals}
-                    >
-                      {`Select all ${count} goals`}
-                    </button>
-                  </Alert>
-                )
-                : null
+          !showRttapaValidation && allGoalsChecked && (numberOfSelectedGoals !== count)
+            ? (
+              <Alert className="margin-top-3" type="info" slim>
+                {`All ${numberOfSelectedGoals} goals on this page are selected.`}
+                <button
+                  type="button"
+                  className="usa-button usa-button--unstyled margin-left-1"
+                  onClick={selectAllGoals}
+                >
+                  {`Select all ${count} goals`}
+                </button>
+              </Alert>
+            )
+            : null
             }
       </div>
     </div>
-
   );
 }
 
@@ -205,6 +233,10 @@ GoalCardsHeader.propTypes = {
   selectedGoalIds: PropTypes.arrayOf(PropTypes.string).isRequired,
   perPageChange: PropTypes.func.isRequired,
   pageGoalIds: PropTypes.number.isRequired,
+  createRttapa: PropTypes.func.isRequired,
+  showRttapaValidation: PropTypes.bool.isRequired,
+  draftSelectedRttapa: PropTypes.arrayOf(PropTypes.number).isRequired,
+  nonRttapaSelectedRttapa: PropTypes.arrayOf(PropTypes.number).isRequired,
 };
 
 GoalCardsHeader.defaultProps = {
