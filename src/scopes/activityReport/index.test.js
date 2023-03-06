@@ -20,6 +20,8 @@ import db, {
   ActivityReportObjective,
   ActivityReportObjectiveTopic,
   Topic,
+  Group,
+  GroupGrant,
 } from '../../models';
 import {
   REPORT_STATUSES,
@@ -166,6 +168,89 @@ describe('filtersToScopes', () => {
       User.destroy({ where: { id: { [Op.in]: userIds } } }),
     ]);
     await db.sequelize.close();
+  });
+
+  describe('groups', () => {
+    let reportIncluded;
+    let reportExcluded;
+    let possibleIds;
+
+    let group;
+    let grant;
+
+    beforeAll(async () => {
+      group = await Group.create({
+        name: faker.company.companyName(),
+        userId: mockUser.id,
+      });
+
+      grant = await createGrant({
+        userId: mockUser.id,
+        regionId: 1,
+        status: 'Active',
+        name: faker.company.companyName(),
+      });
+
+      await GroupGrant.create({
+        groupId: group.id,
+        grantId: grant.id,
+      });
+
+      reportIncluded = await ActivityReport.create({ ...draftReport });
+      reportExcluded = await ActivityReport.create({ ...draftReport });
+
+      await ActivityRecipient.create({
+        activityReportId: reportIncluded.id,
+        grantId: grant.id,
+      });
+
+      possibleIds = [
+        reportIncluded.id,
+        reportExcluded.id,
+        globallyExcludedReport.id,
+      ];
+    });
+
+    afterAll(async () => {
+      await ActivityRecipient.destroy({
+        where: { activityReportId: [reportIncluded.id, reportExcluded.id] },
+      });
+      await ActivityReport.destroy({
+        where: { id: [reportIncluded.id, reportExcluded.id] },
+      });
+      await GroupGrant.destroy({
+        where: { groupId: group.id },
+      });
+      await Group.destroy({
+        where: { id: group.id },
+      });
+      await Grant.destroy({
+        where: { id: grant.id },
+      });
+    });
+
+    it('filters by group', async () => {
+      const filters = { 'group.in': [group.name] };
+      const scope = await filtersToScopes(filters, { userId: mockUser.id });
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope.activityReport, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([reportIncluded.id]));
+    });
+
+    it('filters out by group', async () => {
+      const filters = { 'group.nin': [group.name] };
+      const scope = await filtersToScopes(filters, { userId: mockUser.id });
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope.activityReport, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      const foundIds = found.map((f) => f.id);
+      expect(foundIds).toContain(reportExcluded.id);
+      expect(foundIds).toContain(globallyExcludedReport.id);
+    });
   });
 
   describe('reportId', () => {

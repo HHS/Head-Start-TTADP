@@ -1,11 +1,19 @@
 import moment from 'moment';
+import faker from '@faker-js/faker';
 import {
-  Recipient, Grant, Program, sequelize,
+  Recipient,
+  Grant,
+  Program,
+  Region,
+  User,
+  Permission,
+  sequelize,
 } from '../models';
 import {
-  allRecipients, recipientById, recipientsByName,
+  allRecipients, recipientById, recipientsByName, recipientsByUserId,
 } from './recipient';
 import filtersToScopes from '../scopes';
+import SCOPES from '../middleware/scopeConstants';
 
 describe('Recipient DB service', () => {
   const recipients = [
@@ -492,8 +500,14 @@ describe('Recipient DB service', () => {
       });
     });
 
+    it('returns only user regions', async () => {
+      const foundRecipients = await recipientsByName('banana', {}, 'name', 'asc', 0, [2]);
+      expect(foundRecipients.rows.length).toBe(1);
+      expect(foundRecipients.rows.map((g) => g.id)).toContain(65);
+    });
+
     it('finds based on recipient name', async () => {
-      const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'name', 'asc', 0);
+      const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'name', 'asc', 0, [1, 2]);
       expect(foundRecipients.rows.length).toBe(3);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(63);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(66);
@@ -501,52 +515,135 @@ describe('Recipient DB service', () => {
     });
 
     it('finds based on recipient id', async () => {
-      const foundRecipients = await recipientsByName('5555', await regionToScope(1), 'name', 'asc', 0);
+      const foundRecipients = await recipientsByName('5555', await regionToScope(1), 'name', 'asc', 0, [1, 2]);
       expect(foundRecipients.rows.length).toBe(1);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(64);
     });
 
     it('finds based on region', async () => {
-      const foundRecipients = await recipientsByName('banana', await regionToScope(2), 'name', 'asc', 0);
+      const foundRecipients = await recipientsByName('banana', await regionToScope(2), 'name', 'asc', 0, [1, 2]);
       expect(foundRecipients.rows.length).toBe(1);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(65);
     });
 
     it('sorts based on name', async () => {
-      const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'name', 'asc', 0);
+      const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'name', 'asc', 0, [1, 2]);
       expect(foundRecipients.rows.length).toBe(3);
       expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([68, 63, 66].sort());
     });
 
     it('sorts based on program specialist', async () => {
-      const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'programSpecialist', 'asc', 0);
+      const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'programSpecialist', 'asc', 0, [1, 2]);
       expect(foundRecipients.rows.length).toBe(3);
       expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([66, 63, 68].sort());
     });
 
     it('sorts based on grant specialist', async () => {
-      const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'grantSpecialist', 'asc', 0);
+      const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'grantSpecialist', 'asc', 0, [1, 2]);
       expect(foundRecipients.rows.length).toBe(3);
       expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([68, 63, 66].sort());
     });
 
     it('respects sort order', async () => {
-      const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'name', 'desc', 0);
+      const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'name', 'desc', 0, [1, 2]);
       expect(foundRecipients.rows.length).toBe(3);
       expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([66, 63, 68].sort());
     });
 
     it('respects the offset passed in', async () => {
-      const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'name', 'asc', 1);
+      const foundRecipients = await recipientsByName('apple', await regionToScope(1), 'name', 'asc', 1, [1, 2]);
       expect(foundRecipients.rows.length).toBe(2);
       expect(foundRecipients.rows.map((g) => g.id).sort()).toStrictEqual([63, 66].sort());
     });
 
     it('finds inactive grants that fall in the accepted range', async () => {
-      const foundRecipients = await recipientsByName('Pumpkin', await regionToScope(1), 'name', 'asc', 0);
+      const foundRecipients = await recipientsByName('Pumpkin', await regionToScope(1), 'name', 'asc', 0, [1, 2]);
       expect(foundRecipients.rows.length).toBe(2);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(70);
       expect(foundRecipients.rows.map((g) => g.id)).toContain(71);
+    });
+  });
+
+  describe('recipientsByUserId', () => {
+    let region;
+    let user;
+    let firstRecipient;
+    let secondRecipient;
+
+    beforeAll(async () => {
+      region = await Region.create({ name: 'Test Region 200', id: 200 });
+      user = await User.create({
+        id: faker.datatype.number(),
+        homeRegionId: 1,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+      });
+
+      await Permission.create({
+        userId: user.id,
+        regionId: region.id,
+        scopeId: SCOPES.READ_REPORTS,
+      });
+
+      firstRecipient = await Recipient.create({
+        id: faker.datatype.number({ min: 1000 }),
+        name: 'Test Recipient 200',
+      });
+
+      secondRecipient = await Recipient.create({
+        id: faker.datatype.number({ min: 1000 }),
+        name: 'Test Recipient 201',
+      });
+
+      await Grant.create({
+        id: faker.datatype.number({ min: 1000 }),
+        recipientId: firstRecipient.id,
+        regionId: region.id,
+        number: String(faker.datatype.number({ min: 1000 })),
+        status: 'Active',
+      });
+
+      await Grant.create({
+        id: faker.datatype.number({ min: 1000 }),
+        recipientId: secondRecipient.id,
+        regionId: region.id,
+        number: String(faker.datatype.number({ min: 1000 })),
+        status: 'Active',
+      });
+
+      await Grant.create({
+        id: faker.datatype.number({ min: 1000 }),
+        recipientId: secondRecipient.id,
+        regionId: region.id,
+        number: String(faker.datatype.number({ min: 1000 })),
+        status: 'Inactive',
+      });
+    });
+
+    afterAll(async () => {
+      await Grant.destroy({ where: { recipientId: [firstRecipient.id, secondRecipient.id] } });
+      await Recipient.destroy({ where: { id: [firstRecipient.id, secondRecipient.id] } });
+      await Permission.destroy({ where: { userId: user.id } });
+      await User.destroy({ where: { id: user.id } });
+      await Region.destroy({ where: { id: region.id } });
+    });
+
+    it('finds grants for the user', async () => {
+      const foundRecipients = await recipientsByUserId(user.id);
+      expect(foundRecipients.length).toBe(2);
+      expect(foundRecipients.map((g) => g.id)).toContain(firstRecipient.id);
+      expect(foundRecipients.map((g) => g.id)).toContain(secondRecipient.id);
+
+      const [first, second] = foundRecipients;
+      expect(first.name).toBe(firstRecipient.name); // check that they are in the right order
+
+      const grants = [...first.grants, ...second.grants];
+      expect(grants.length).toBe(2);
+    });
+
+    it('returns an empty array if the user is not found', async () => {
+      const foundRecipients = await recipientsByUserId(999999999);
+      expect(foundRecipients.length).toBe(0);
     });
   });
 });
