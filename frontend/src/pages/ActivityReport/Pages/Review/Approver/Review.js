@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import moment from 'moment-timezone';
+import moment from 'moment';
 import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form/dist/index.ie11';
 import _ from 'lodash';
@@ -86,9 +86,10 @@ const Review = ({
             {
             dateSubmitted
               ? (
-                <Fieldset className="smart-hub--report-legend margin-top-3" legend="Date Submitted">
+                <>
+                  <Label className="source-sans-pro text-bold margin-top-3" htmlFor="date_submitted">Date Submitted</Label>
                   <Label className="margin-top-1" htmlFor="date_submitted">{formattedDateSubmitted}</Label>
-                </Fieldset>
+                </>
               )
               : null
             }
