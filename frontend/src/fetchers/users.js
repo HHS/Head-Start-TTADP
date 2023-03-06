@@ -16,3 +16,8 @@ export const requestVerificationEmail = async () => post(join('/', 'api', 'users
 export const verifyEmailToken = async (token) => {
   await post(join('/', 'api', 'users', 'verify-email', token));
 };
+
+export const getStatistics = async () => {
+  const res = await get(join('/', 'api', 'users', 'statistics'));
+  return res.json();
+};
