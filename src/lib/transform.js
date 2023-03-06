@@ -188,20 +188,11 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       goal, title, status, ttaProvided, topics, files, resources,
     } = objective;
     const goalId = goal ? goal.id : null;
-    const md5Title = `${goalId}-${title}`;
-    const titleMd5 = md5(md5Title);
+    const titleMd5 = md5(title);
 
-    const lookupGoalNum = processedObjectivesTitles.get(titleMd5);
+    const existingObjectiveTitle = processedObjectivesTitles.get(titleMd5);
     const goalName = goal ? goal.name : null;
     const newGoal = goalName && !Object.values(accum).includes(goalName);
-    if (lookupGoalNum) {
-      // Make sure its not another objective for the same goal.
-      if (goalIds[goalName] && !goalIds[goalName].includes(goalId)) {
-        accum[`goal-${lookupGoalNum}-id`] = `${accum[`goal-${lookupGoalNum}-id`]}\n${goalId}`;
-        goalIds[goalName].push(goalId);
-      }
-      return accum;
-    }
 
     if (newGoal) {
       goalNum += 1;
@@ -233,6 +224,13 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       });
 
       objectiveNum = 1;
+    } else if (existingObjectiveTitle) {
+      // Make sure its not another objective for the same goal.
+      if (goalIds[goalName] && !goalIds[goalName].includes(goalId)) {
+        accum[`goal-${existingObjectiveTitle}-id`] = `${accum[`goal-${existingObjectiveTitle}-id`]}\n${goalId}`;
+        goalIds[goalName].push(goalId);
+      }
+      return accum;
     }
 
     // goal number should be at least 1
