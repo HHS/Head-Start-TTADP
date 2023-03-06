@@ -837,6 +837,7 @@ export async function activityReportAlerts(userId, {
   const { activityReport: scopes } = await filtersToScopes(updatedFilters, { userId });
   const reports = await ActivityReport.findAndCountAll(
     {
+      logging: console.log,
       where: {
         [Op.and]: scopes,
         [Op.or]: [
