@@ -174,7 +174,7 @@ describe('filtersToScopes', () => {
 
     beforeAll(async () => {
       group = await Group.create({
-        name: faker.company.companyName(),
+        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
         userId: mockUser.id,
       });
 
@@ -182,7 +182,7 @@ describe('filtersToScopes', () => {
         userId: mockUser.id,
         regionId: 1,
         status: 'Active',
-        name: faker.company.companyName(),
+        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
       });
 
       await GroupGrant.create({
