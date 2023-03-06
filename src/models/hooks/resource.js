@@ -4,8 +4,7 @@ const autoPopulateDomain = (sequelize, instance, options) => {
   // eslint-disable-next-line no-prototype-builtins
   if (instance.domain === undefined
     || instance.domain === null) {
-    let [{ groups }] = instance.url.matchAll(VALID_URL_REGEX);
-    const { host, ip } = groups;
+    const [{ groups: { host, ip } }] = instance.url.matchAll(VALID_URL_REGEX);
     const domain = host || ip;
     if (domain) {
       instance.set('domain', domain);
