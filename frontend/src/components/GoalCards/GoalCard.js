@@ -16,6 +16,7 @@ import ObjectiveButton from './components/ObjectiveButton';
 import Topics from './components/Topics';
 import './GoalCard.scss';
 import colors from '../../colors';
+import { goalPropTypes } from './constants';
 
 function GoalCard({
   goal,
@@ -28,6 +29,7 @@ function GoalCard({
   hideCheckbox,
   showReadOnlyStatus,
   hideGoalOptions,
+  erroneouslySelected,
 }) {
   const {
     id, // for keys and such, from the api
@@ -93,9 +95,11 @@ function GoalCard({
 
   const internalLeftMargin = hideCheckbox ? '' : 'margin-left-5';
 
+  const border = erroneouslySelected ? 'smart-hub-border-base-error' : 'smart-hub-border-base-lighter';
+
   return (
     <article
-      className="ttahub-goal-card usa-card padding-3 radius-lg border smart-hub-border-base-lighter width-full maxw-full"
+      className={`ttahub-goal-card usa-card padding-3 radius-lg border ${border} width-full maxw-full`}
       data-testid="goalCard"
     >
       <div className="display-flex flex-justify">
@@ -179,35 +183,6 @@ function GoalCard({
   );
 }
 
-export const objectivePropTypes = PropTypes.shape({
-  id: PropTypes.number,
-  title: PropTypes.string,
-  arNumber: PropTypes.string,
-  ttaProvided: PropTypes.string,
-  endDate: PropTypes.string,
-  reasons: PropTypes.arrayOf(PropTypes.string),
-  status: PropTypes.string,
-});
-
-export const goalPropTypes = PropTypes.shape({
-  id: PropTypes.number.isRequired,
-  ids: PropTypes.arrayOf(PropTypes.number),
-  goalStatus: PropTypes.string,
-  createdOn: PropTypes.string.isRequired,
-  goalText: PropTypes.string.isRequired,
-  goalTopics: PropTypes.arrayOf(PropTypes.string).isRequired,
-  reasons: PropTypes.arrayOf(PropTypes.string).isRequired,
-  objectiveCount: PropTypes.number.isRequired,
-  goalNumbers: PropTypes.arrayOf(PropTypes.string.isRequired),
-  objectives: PropTypes.arrayOf(objectivePropTypes),
-  previousStatus: PropTypes.string,
-  isRttapa: PropTypes.string,
-});
-
-goalPropTypes.defaultProps = {
-  goalStatus: null,
-  objectives: [],
-};
 GoalCard.propTypes = {
   goal: goalPropTypes.isRequired,
   recipientId: PropTypes.string.isRequired,
@@ -219,12 +194,14 @@ GoalCard.propTypes = {
   hideCheckbox: PropTypes.bool,
   showReadOnlyStatus: PropTypes.bool,
   hideGoalOptions: PropTypes.bool,
+  erroneouslySelected: PropTypes.bool,
 };
 
 GoalCard.defaultProps = {
   hideCheckbox: false,
   showReadOnlyStatus: false,
   hideGoalOptions: false,
+  erroneouslySelected: false,
 };
 
 export default GoalCard;
