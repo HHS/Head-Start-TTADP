@@ -24,6 +24,7 @@ import { withoutParticipants, withParticipants } from './participants';
 import { withMyReports, withoutMyReports } from './myReports';
 import { withReportText, withoutReportText } from './reportText';
 import { withTtaType, withoutTtaType } from './ttaType';
+import { withGroup, withoutGroup } from './group';
 
 export const topicToQuery = {
   reportId: {
@@ -102,6 +103,10 @@ export const topicToQuery = {
   },
   stateCode: {
     ctn: (query) => withStateCode(query),
+  },
+  group: {
+    in: (query, _options, userId) => withGroup(query, userId),
+    nin: (query, _options, userId) => withoutGroup(query, userId),
   },
   createDate: {
     bef: (query) => beforeCreateDate(query),
