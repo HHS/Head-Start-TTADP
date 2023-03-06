@@ -385,7 +385,7 @@ describe('grant filtersToScopes', () => {
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
 
-      // expect(found.length).toBe(2);
+      expect(found.length).toBe(2);
       const foundGrants = found.map((f) => f.id).sort();
       expect(foundGrants).toEqual(expectedGrants);
     });
@@ -398,7 +398,7 @@ describe('grant filtersToScopes', () => {
         where: { [Op.and]: [scope.grant, { id: possibleIds }] },
       });
 
-      // expect(found.length).toBe(2);
+      expect(found.length).toBe(2);
       const foundGrants = found.map((f) => f.id).sort();
       expectedGrants.forEach((grant) => {
         expect(foundGrants).not.toContain(grant);
