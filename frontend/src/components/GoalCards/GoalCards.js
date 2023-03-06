@@ -132,7 +132,7 @@ function GoalCards({
   );
 
   const selectedGoalIdsButNumerical = selectedCheckBoxes.map((id) => parseInt(id, DECIMAL_BASE));
-  const draftSelectedRttapa = goals.filter((g) => selectedGoalIdsButNumerical.includes(g.id) && g.status === 'Draft').map((g) => g.id);
+  const draftSelectedRttapa = goals.filter((g) => selectedGoalIdsButNumerical.includes(g.id) && g.goalStatus === 'Draft').map((g) => g.id);
   const nonRttapaSelectedRttapa = goals.filter((g) => selectedGoalIdsButNumerical.includes(g.id) && g.isRttapa === 'No').map((g) => g.id);
 
   const rttapaLink = (() => {
@@ -213,7 +213,7 @@ function GoalCards({
               performGoalStatusUpdate={performGoalStatusUpdate}
               handleGoalCheckboxSelect={handleGoalCheckboxSelect}
               isChecked={selectedGoalCheckBoxes[goal.id] || false}
-              erroneouslySelected={[
+              erroneouslySelected={showRttapaValidation && [
                 ...draftSelectedRttapa,
                 ...nonRttapaSelectedRttapa,
               ].includes(goal.id)}
