@@ -283,6 +283,10 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       value: convert(ttaProvided),
       enumerable: true,
     });
+
+    // Add this objective to the tracked list.
+    processedObjectivesTitles.set(titleMd5, goalNum);
+
     objectiveNum += 1;
 
     return accum;
