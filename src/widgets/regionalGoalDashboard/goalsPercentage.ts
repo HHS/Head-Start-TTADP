@@ -1,67 +1,36 @@
 import { Op } from 'sequelize';
-import { REPORT_STATUSES } from '../../constants';
 import db from '../../models';
 
-const { Goal, ActivityReportGoal, ActivityReport } = db;
+const { Goal } = db;
 
 export default async function goalsPercentage(scopes) {
   const allGoals = await Goal.findAll({
     attributes: ['id'],
     where: {
-      [Op.and]: [scopes.goal[0]],
-    },
-    include: [
-      {
-        model: ActivityReportGoal,
-        as: 'activityReportGoals',
-        required: true,
-        attributes: [],
-        include: [
-          {
-            model: ActivityReport,
-            as: 'activityReport',
-            attributes: [],
-            where: {
-              [Op.and]: {
-                calculatedStatus: {
-                  [Op.eq]: REPORT_STATUSES.APPROVED,
-                },
-              },
-            },
+      [Op.and]: [
+        scopes.goal[0],
+        {
+          onApprovedAR: {
+            [Op.eq]: true,
           },
-        ],
-      },
-    ],
+        },
+      ],
+    },
     raw: true,
   });
 
   const filteredGoals = await Goal.findAll({
     attributes: ['id'],
     where: {
-      [Op.and]: [scopes.goal],
-    },
-    include: [
-      {
-        model: ActivityReportGoal,
-        as: 'activityReportGoals',
-        required: true,
-        attributes: [],
-        include: [
-          {
-            model: ActivityReport,
-            as: 'activityReport',
-            attributes: [],
-            where: {
-              [Op.and]: {
-                calculatedStatus: {
-                  [Op.eq]: REPORT_STATUSES.APPROVED,
-                },
-              },
-            },
+      [Op.and]: [
+        scopes.goal,
+        {
+          onApprovedAR: {
+            [Op.eq]: true,
           },
-        ],
-      },
-    ],
+        },
+      ],
+    },
     raw: true,
   });
 
