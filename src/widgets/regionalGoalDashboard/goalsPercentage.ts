@@ -14,11 +14,13 @@ export default async function goalsPercentage(scopes) {
       {
         model: ActivityReportGoal,
         as: 'activityReportGoals',
-        separate: true,
+        required: true,
+        attributes: [],
         include: [
           {
             model: ActivityReport,
             as: 'activityReport',
+            attributes: [],
             where: {
               [Op.and]: {
                 calculatedStatus: {
@@ -42,11 +44,13 @@ export default async function goalsPercentage(scopes) {
       {
         model: ActivityReportGoal,
         as: 'activityReportGoals',
-        separate: true,
+        required: true,
+        attributes: [],
         include: [
           {
             model: ActivityReport,
             as: 'activityReport',
+            attributes: [],
             where: {
               [Op.and]: {
                 calculatedStatus: {
