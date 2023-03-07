@@ -87,8 +87,8 @@ const Review = ({
             dateSubmitted
               ? (
                 <>
-                  <p className="source-sans-pro text-bold margin-top-3 margin-bottom-0" htmlFor="date_submitted">Date Submitted</p>
-                  <p className="margin-top-0" htmlFor="date_submitted">{formattedDateSubmitted}</p>
+                  <p className="source-sans-pro text-bold margin-top-3 margin-bottom-0">Date Submitted</p>
+                  <p className="margin-top-0">{formattedDateSubmitted}</p>
                 </>
               )
               : null
