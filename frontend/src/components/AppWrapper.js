@@ -35,7 +35,7 @@ export default function AppWrapper({
 
   if (padded) {
     return (
-      <div ref={appWrapperRef} id="appWrapper" className="grid-row maxw-widescreen flex-align-start smart-hub-offset-nav tablet:smart-hub-offset-nav desktop:smart-hub-offset-nav margin-top-9 margin-right-5">
+      <div ref={appWrapperRef} id="appWrapper" className="grid-row maxw-widescreen flex-align-start smart-hub-offset-nav tablet:smart-hub-offset-nav desktop:smart-hub-offset-nav desktop:margin-top-9 margin-top-6 margin-right-5">
         <div className="grid-col-12 margin-top-2 margin-right-2 margin-left-3">
           <section className="usa-section padding-top-3">
             {content}
@@ -46,7 +46,7 @@ export default function AppWrapper({
   }
 
   return (
-    <div ref={appWrapperRef} id="appWrapper" className="grid-row flex-align-start smart-hub-offset-nav tablet:smart-hub-offset-nav desktop:smart-hub-offset-nav margin-top-9">
+    <div ref={appWrapperRef} id="appWrapper" className="grid-row flex-align-start smart-hub-offset-nav tablet:smart-hub-offset-nav desktop:smart-hub-offset-nav desktop:margin-top-9 margin-top-6">
       <div className="grid-col-12">
         <section className="usa-section padding-top-0">
           {content}
