@@ -208,7 +208,6 @@ describe('Topics and frequency graph widget', () => {
     const query = { 'region.in': [17], 'startDate.win': '2000/01/01-2000/01/01' };
     const scopes = await filtersToScopes(query);
     const data = await topicFrequencyGraph(scopes);
-    console.log('\n\n\n--Data: ', data);
 
     expect(data).toStrictEqual([
       {
