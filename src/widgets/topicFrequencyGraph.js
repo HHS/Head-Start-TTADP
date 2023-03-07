@@ -1,6 +1,8 @@
 import { Op } from 'sequelize';
 import {
   ActivityReport,
+  Topic,
+  ActivityReportObjective,
 } from '../models';
 import { REPORT_STATUSES, TOPICS } from '../constants';
 
@@ -13,8 +15,17 @@ export default async function topicFrequencyGraph(scopes) {
       [Op.and]: [scopes.activityReport],
       calculatedStatus: REPORT_STATUSES.APPROVED,
     },
-    nest: true,
-    raw: true,
+    include: [{
+      model: ActivityReportObjective,
+      as: 'activityReportObjectives',
+      required: false,
+      include: [
+        {
+          model: Topic,
+          as: 'topics',
+        },
+      ],
+    }],
   });
 
   const topicsResponse = TOPICS.map((topic) => ({
@@ -22,14 +33,21 @@ export default async function topicFrequencyGraph(scopes) {
     count: 0,
   }));
 
-  topicsAndParticipants.forEach((topicAndParticipant) => {
-    TOPICS.forEach((topic, index) => {
-      if (topicAndParticipant.topics
-        && topicAndParticipant.topics.length
-        && topicAndParticipant.topics.includes(topic)) {
-        topicsResponse[index].count += 1;
+  return topicsAndParticipants.reduce((acc, report) => {
+    // Get array of all topics from this reports and this reports objectives.
+    const allTopics = [
+      ...report.topics.map((t) => t),
+      ...report.activityReportObjectives.flatMap((o) => o.topics.map((t) => t.name)),
+    ];
+
+    // Loop all topics array and update totals.
+    allTopics.forEach((topic) => {
+      const topicIndex = acc.findIndex((t) => t.topic === topic);
+      if (topicIndex !== -1) {
+        acc[topicIndex].count += 1;
       }
     });
-  });
-  return topicsResponse;
+
+    return acc;
+  }, topicsResponse);
 }
