@@ -21,7 +21,6 @@ import { withoutReportIds, withReportIds } from './reportId';
 import withStateCode from './stateCode';
 import { withReportText, withoutReportText } from './reportText';
 import { withoutTargetPopulations, withTargetPopulations } from './targetPopulations';
-import { withGrantNumber, withoutGrantNumber } from './grantNumber';
 import { withGoalType, withoutGoalType } from './goalType';
 
 export const topicToQuery = {
@@ -42,6 +41,7 @@ export const topicToQuery = {
     aft: (query) => afterEndDate(query),
     win: (query) => withinEndDates(query),
     in: (query) => withinEndDates(query),
+  },
   goalType: {
     in: (query) => withGoalType(query),
     nin: (query) => withoutGoalType(query),
