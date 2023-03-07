@@ -55,11 +55,13 @@ export default async function topicsByGoalStatus(scopes): Promise<TopicResponse[
       {
         model: ActivityReportGoal,
         as: 'activityReportGoals',
-        separate: true,
+        required: true,
+        attributes: [],
         include: [
           {
             model: ActivityReport,
             as: 'activityReport',
+            attributes: [],
             where: {
               [Op.and]: {
                 calculatedStatus: {
@@ -73,6 +75,8 @@ export default async function topicsByGoalStatus(scopes): Promise<TopicResponse[
     ],
     raw: true,
   }) as QueryResults[];
+
+  console.log('allTopics', allTopics);
 
   let sanitized = allTopics.reduce((acc, goal) => {
     const { status, 'objectives.objectiveTopics.topic.topic': topic } = goal;
