@@ -1,11 +1,8 @@
 import { Op } from 'sequelize';
-import { REPORT_STATUSES } from '../../constants';
 import db from '../../models';
 
 const {
   Goal,
-  ActivityReportGoal,
-  ActivityReport,
   sequelize,
 } = db;
 
@@ -35,30 +32,13 @@ export default async function goalsByStatus(scopes) {
     where: {
       [Op.and]: [
         scopes.goal,
+        {
+          onApprovedAR: {
+            [Op.eq]: true,
+          },
+        },
       ],
     },
-    include: [
-      {
-        model: ActivityReportGoal,
-        as: 'activityReportGoals',
-        required: true,
-        attributes: [],
-        include: [
-          {
-            model: ActivityReport,
-            as: 'activityReport',
-            attributes: [],
-            where: {
-              [Op.and]: {
-                calculatedStatus: {
-                  [Op.eq]: REPORT_STATUSES.APPROVED,
-                },
-              },
-            },
-          },
-        ],
-      },
-    ],
     // BIGINT (type returned from count) gets converted to string. Explicitly set count to int
     attributes: [
       [
