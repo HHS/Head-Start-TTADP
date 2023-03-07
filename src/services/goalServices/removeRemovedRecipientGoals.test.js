@@ -86,6 +86,7 @@ describe('removeRemovedRecipientsGoals', () => {
       status: 'In Progress',
       grantId: grantOne.id,
       previousStatus: 'Not Started',
+      createdVia: 'activityReport',
     });
 
     firstObjective = await Objective.create({
@@ -111,6 +112,7 @@ describe('removeRemovedRecipientsGoals', () => {
       status: 'In Progress',
       grantId: grantTwo.id,
       previousStatus: 'Not Started',
+      createdVia: 'activityReport',
     });
 
     secondObjective = await Objective.create({
@@ -136,6 +138,7 @@ describe('removeRemovedRecipientsGoals', () => {
       status: 'In Progress',
       grantId: grantOne.id,
       previousStatus: 'Not Started',
+      createdVia: 'activityReport',
     });
 
     await ActivityReportGoal.create({
@@ -150,6 +153,7 @@ describe('removeRemovedRecipientsGoals', () => {
       grantId: grantTwo.id,
       previousStatus: 'Not Started',
       onApprovedAR: false,
+      createdVia: 'activityReport',
     });
 
     await ActivityReportGoal.create({
