@@ -61,12 +61,18 @@ describe('RTTAPAHistory', () => {
       goals: [
         {
           id: 1,
-          name: 'Goal 1',
-          status: 'In Progress',
+          goalText: 'Goal 1',
+          goalStatus: 'In Progress',
+          isRttapa: 'Yes',
+          goalTopics: ['Topic 1', 'Topic 2'],
+          objectives: [],
+          goalNumbers: ['G-1'],
         },
       ],
       notes: 'This is gooooood soup',
       createdAt: '2021-01-01',
+      regionId,
+      recipientId,
     }]);
 
     act(() => {
@@ -74,8 +80,17 @@ describe('RTTAPAHistory', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Timmy the Tester reviewed 1 goals on January 1 2021')).toBeInTheDocument();
+      expect(screen.getByText('Timmy the Tester reviewed 1 goals on January 1, 2021')).toBeInTheDocument();
       expect(screen.getByText('This is gooooood soup')).toBeInTheDocument();
+    });
+
+    act(() => {
+      userEvent.click(screen.getByText(/View Goal/i));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Goal 1')).toBeInTheDocument();
+      expect(screen.getByText(/in progress/i)).toBeInTheDocument();
     });
   });
 

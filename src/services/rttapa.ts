@@ -1,3 +1,4 @@
+import faker from '@faker-js/faker';
 import {
   NewRttapaRequest,
   RttapaResponse,
@@ -7,22 +8,23 @@ const mockGoals = [
   {
     id: 1,
     ids: [1, 2, 3],
-    goalStatus: 'In Progress',
+    goalStatus: 'Not Started',
     createdOn: new Date(),
-    goalText: 'Goal 1',
-    goalNumbers: ['1', '2', '3'],
+    goalText: 'The active and engaged Head Start Association provides leadership within the state early childhood community and the state Head Start and Early Head Start community.',
+    goalNumbers: ['19160'],
     objectiveCount: 3,
-    goalTopics: ['Topic 1', 'Topic 2'],
-    reasons: ['Reason 1', 'Reason 2'],
-    previousStatus: 'Not Started',
+    goalTopics: ['Human Resources', 'Parent and Family Engagements'],
+    reasons: ['Ongoing Quality Improvement'],
+    previousStatus: 'null',
+    isRttapa: 'Yes',
     objectives: [
       {
         id: 1,
-        title: 'Objective 1',
+        title: 'The Grantee Specialist (GS) team will support the directors to set a clear direction for the Head Start Association for the next three years.',
         arNumber: 'AR 1',
         ttaProvided: 'TTA 1',
-        endDate: '2021-01-01',
-        reasons: ['Reason 1', 'Reason 2'],
+        endDate: '01/01/2021',
+        reasons: ['Ongoing Quality Improvement'],
         status: 'In Progress',
         grantNumbers: ['Grant 1', 'Grant 2'],
         activityReports: [{
@@ -34,10 +36,10 @@ const mockGoals = [
       },
       {
         id: 2,
-        title: 'Objective 2',
+        title: 'TA staff will provide an opportunity for participants to discuss EPRR planning strategies with other GRs throughout the region.',
         arNumber: 'AR 2',
         ttaProvided: 'TTA 2',
-        endDate: '2021-01-01',
+        endDate: '01/01/2021',
         reasons: ['Reason 1', 'Reason 2'],
         status: 'In Progress',
         grantNumbers: ['Grant 1', 'Grant 2'],
@@ -52,10 +54,10 @@ const mockGoals = [
       },
       {
         id: 3,
-        title: 'Objective 3',
+        title: 'Health Specialist (HS) will present, in detail, the three phases of Emergency Management and the planning components included in each phase.',
         arNumber: 'AR 3',
         ttaProvided: 'TTA 3',
-        endDate: '2021-01-01',
+        endDate: '01/01/2021',
         reasons: ['Reason 1', 'Reason 2'],
         status: 'In Progress',
         grantNumbers: ['Grant 1', 'Grant 2'],
@@ -69,17 +71,18 @@ const mockGoals = [
     ],
   },
   {
-    id: 2,
-    ids: [4, 5, 6],
+    id: 34184,
+    ids: [34184],
     goalStatus: 'In Progress',
     createdOn: new Date(),
-    goalText: 'Goal 2',
-    goalNumbers: ['1', '2', '3'],
-    objectiveCount: 3,
-    goalTopics: ['Topic 1', 'Topic 2'],
+    goalText: 'The HS/EHS Director will have the knowledge, skills and resources needed to be effective in her new role',
+    goalNumbers: ['G-34184'],
+    objectiveCount: 0,
+    goalTopics: ['Community and Self Asssesment'],
     reasons: ['Reason 1', 'Reason 2'],
     previousStatus: 'Not Started',
     objectives: [],
+    isRttapa: 'Yes',
   },
 ];
 
@@ -96,7 +99,7 @@ const mockRttapa = (
   notes: 'Notes',
   user: {
     id,
-    name: `User ${id}`,
+    name: faker.name.findName(),
   },
 });
 

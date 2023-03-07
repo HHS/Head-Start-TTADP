@@ -76,10 +76,11 @@ PageWithHeading.propTypes = {
   recipientNameWithRegion: PropTypes.string.isRequired,
   backLink: PropTypes.node,
   slug: PropTypes.string,
-  hasAlerts: PropTypes.bool.isRequired,
+  hasAlerts: PropTypes.bool,
 };
 
 PageWithHeading.defaultProps = {
+  hasAlerts: false,
   error: '',
   backLink: <Link className="ttahub-recipient-record--tabs_back-to-search margin-top-2 margin-bottom-3 display-inline-block" to="/recipient-tta-records">Back to search</Link>,
   slug: '',
