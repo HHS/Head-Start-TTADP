@@ -9,13 +9,7 @@ import { sequelize } from '../../models';
  * @see withoutGroup
  */
 export function withGroup(query: string[], userId: number): WhereOptions {
-  /**
-   * this looks a little funky but they come from the frontend query string like so:
-   * ?group=group1,group2,group3, and so they are passed through as ['group1,group2,group3']
-   */
   const nameClause = query
-    .map((q) => q.split(','))
-    .flat()
     .map((name) => sequelize.escape(name)).join(',');
   return {
     id: {
@@ -32,8 +26,6 @@ export function withGroup(query: string[], userId: number): WhereOptions {
  */
 export function withoutGroup(query: string[], userId: number): WhereOptions {
   const nameClause = query
-    .map((q) => q.split(','))
-    .flat()
     .map((name) => sequelize.escape(name)).join(',');
   return {
     id: {
