@@ -71,7 +71,7 @@ const SiteNav = ({
           Please leave feedback
         </a>
       </div>
-      <div ref={siteNavContent} className="smart-hub-sitenav display-flex flex-column pin-y position-fixed z-0 padding-top-9 font-ui text-white smart-hub-bg-blue width-15 tablet:width-card desktop:width-card-lg no-print">
+      <div ref={siteNavContent} className="smart-hub-sitenav display-flex flex-column pin-y position-fixed z-0 desktop:padding-top-9 padding-top-6 font-ui text-white smart-hub-bg-blue width-15 tablet:width-card desktop:width-card-lg no-print">
         {authenticated && (
           <div className="smart-hub-sitenav-content-container display-flex flex-column flex-1 overflow-y-scroll">
             <div className="width-full smart-hub-sitenav-separator--after">
