@@ -9,10 +9,17 @@ import db, {
   Region,
   Role,
   UserRole,
+  Goal,
+  ActivityReportObjective,
+  Objective,
+  ActivityReportObjectiveTopic,
+  Topic,
 } from '../models';
 import filtersToScopes from '../scopes';
 import { REPORT_STATUSES } from '../constants';
 import topicFrequencyGraph from './topicFrequencyGraph';
+
+jest.mock('bull');
 
 const GRANT_ID = 4040;
 const RECIPIENT_ID = 5050;
@@ -96,6 +103,24 @@ const regionOneReportWithDifferentTopics = {
 };
 
 describe('Topics and frequency graph widget', () => {
+  // Goals.
+  let firstGoal;
+  let secondGoal;
+  let thirdGoal;
+
+  // Objectives.
+  let firstGoalObjA;
+  let firstGoalObjB;
+  let secondGoalObjA;
+  let thirdGoalObjA;
+
+  // ARO's.
+  let regionOneReportAroA;
+  let regionOneReportAroB;
+  let regionTwoReportAroA;
+  let regionOneReportDistinctDateAroA;
+  let regionOneReportWithDifferentTopicsAroA;
+
   beforeAll(async () => {
     await User.bulkCreate([
       mockUser,
@@ -103,6 +128,22 @@ describe('Topics and frequency graph widget', () => {
       mockUserThree,
     ]);
 
+    // Create Topics.
+    const [coachingTopic] = await Topic.findOrCreate({
+      where: {
+        name: 'Coaching',
+      },
+    });
+    const [communicationTopic] = await Topic.findOrCreate({
+      where: {
+        name: 'Communication',
+      },
+    });
+    const [cultureAndLanguageTopic] = await Topic.findOrCreate({
+      where: {
+        name: 'Culture & Language',
+      },
+    });
     const [grantsSpecialist] = await Role.findOrCreate({
       where: {
         fullName: 'Grants Specialist',
@@ -146,12 +187,141 @@ describe('Topics and frequency graph widget', () => {
       status: 'Active',
       startDate: new Date('2000/01/01'),
     });
+
+    // Create Goals.
+    firstGoal = await Goal.create({
+      name: 'First Topics Goal',
+      status: 'In Progress',
+      grantId: GRANT_ID,
+      previousStatus: 'Not Started',
+      createdVia: 'activityReport',
+    });
+
+    secondGoal = await Goal.create({
+      name: 'Second Topics Goal',
+      status: 'In Progress',
+      grantId: GRANT_ID,
+      previousStatus: 'Not Started',
+      createdVia: 'activityReport',
+    });
+
+    thirdGoal = await Goal.create({
+      name: 'Third Topics Goal',
+      status: 'In Progress',
+      grantId: GRANT_ID,
+      previousStatus: 'Not Started',
+      createdVia: 'activityReport',
+    });
+
+    // Create Objectives.
+    firstGoalObjA = await Objective.create(
+      {
+        title: 'Topics Graph First Goal - Obj A',
+        goalId: firstGoal.id,
+        status: 'Not Started',
+      },
+    );
+
+    firstGoalObjB = await Objective.create(
+      {
+        title: 'Topics Graph First Goal - Obj B',
+        goalId: firstGoal.id,
+        status: 'Not Started',
+      },
+    );
+
+    secondGoalObjA = await Objective.create(
+      {
+        title: 'Topics Graph Second Goal - Obj A',
+        goalId: secondGoal.id,
+        status: 'Not Started',
+      },
+    );
+
+    thirdGoalObjA = await Objective.create(
+      {
+        title: 'Topics Graph Third Goal - Obj A',
+        goalId: thirdGoal.id,
+        status: 'Not Started',
+      },
+    );
+
     await ActivityReport.bulkCreate([
       regionOneReport,
       regionOneReportDistinctDate,
       regionTwoReport,
       regionOneReportWithDifferentTopics,
     ]);
+
+    // Create ARO's.
+    // First ARO.
+    regionOneReportAroA = await ActivityReportObjective.create({
+      activityReportId: regionOneReport.id,
+      objectiveId: firstGoalObjA.id,
+      status: 'In Progress',
+    });
+
+    // First ARO A Topic.
+    await ActivityReportObjectiveTopic.create({
+      activityReportObjectiveId: regionOneReportAroA.id,
+      topicId: coachingTopic.id,
+    });
+
+    regionOneReportAroB = await ActivityReportObjective.create({
+      activityReportId: regionOneReport.id,
+      objectiveId: firstGoalObjB.id,
+      status: 'In Progress',
+    });
+
+    // First ARO B Topic's.
+    await ActivityReportObjectiveTopic.create({
+      activityReportObjectiveId: regionOneReportAroB.id,
+      topicId: coachingTopic.id,
+    });
+
+    await ActivityReportObjectiveTopic.create({
+      activityReportObjectiveId: regionOneReportAroB.id,
+      topicId: communicationTopic.id,
+    });
+
+    // Region Two ARO.
+    regionTwoReportAroA = await ActivityReportObjective.create({
+      activityReportId: regionTwoReport.id,
+      objectiveId: firstGoalObjA.id,
+      status: 'In Progress',
+    });
+
+    // Region Two ARO A Topic.
+    await ActivityReportObjectiveTopic.create({
+      activityReportObjectiveId: regionTwoReportAroA.id,
+      topicId: coachingTopic.id,
+    });
+
+    // Second ARO.
+    regionOneReportDistinctDateAroA = await ActivityReportObjective.create({
+      activityReportId: regionOneReportDistinctDate.id,
+      objectiveId: secondGoalObjA.id,
+      status: 'In Progress',
+    });
+
+    // Second ARO A Topic.
+    await ActivityReportObjectiveTopic.create({
+      activityReportObjectiveId: regionOneReportDistinctDateAroA.id,
+      topicId: cultureAndLanguageTopic.id,
+    });
+
+    // Third ARO.
+    regionOneReportWithDifferentTopicsAroA = await ActivityReportObjective.create({
+      activityReportId: regionOneReportWithDifferentTopics.id,
+      objectiveId: thirdGoalObjA.id,
+      status: 'In Progress',
+    });
+
+    // Third ARO A Topic.
+    await ActivityReportObjectiveTopic.create({
+      activityReportObjectiveId: regionOneReportWithDifferentTopicsAroA.id,
+      topicId: communicationTopic.id,
+    });
 
     await ActivityReportCollaborator.create({
       id: 2000,
@@ -182,7 +352,39 @@ describe('Topics and frequency graph widget', () => {
     const ids = [17772, 17773, 17774, 17775];
     await NextStep.destroy({ where: { activityReportId: ids } });
     await ActivityRecipient.destroy({ where: { activityReportId: ids } });
+    await ActivityReportObjectiveTopic.destroy({
+      where: {
+        activityReportObjectiveId: [
+          regionOneReportAroA.id,
+          regionOneReportAroB.id,
+          regionOneReportDistinctDateAroA.id,
+          regionOneReportWithDifferentTopicsAroA.id,
+          regionTwoReportAroA.id,
+        ],
+      },
+    });
+    await ActivityReportObjective.destroy({
+      where: {
+        objectiveId: [
+          firstGoalObjA.id,
+          firstGoalObjB.id,
+          secondGoalObjA.id,
+          thirdGoalObjA.id,
+        ],
+      },
+    });
     await ActivityReport.destroy({ where: { id: ids } });
+    await Objective.destroy({
+      where: {
+        id: [
+          firstGoalObjA.id,
+          firstGoalObjB.id,
+          secondGoalObjA.id,
+          thirdGoalObjA.id,
+        ],
+      },
+    });
+    await Goal.destroy({ where: { id: [firstGoal.id, secondGoal.id, thirdGoal.id] } });
     await UserRole.destroy({ where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
     await User.destroy({ where: { id: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
     await Grant.destroy({
@@ -232,11 +434,11 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Coaching',
-        count: 1,
+        count: 3, // 1 from AR 3 from ARO's.
       },
       {
         topic: 'Communication',
-        count: 0,
+        count: 2, // 2 from ARO's.
       },
       {
         topic: 'Community and Self-Assessment',
@@ -401,7 +603,7 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Coaching',
-        count: 0,
+        count: 1,
       },
       {
         topic: 'Communication',
@@ -570,11 +772,11 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Coaching',
-        count: 1,
+        count: 3,
       },
       {
         topic: 'Communication',
-        count: 0,
+        count: 2,
       },
       {
         topic: 'Community and Self-Assessment',
@@ -582,7 +784,7 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Culture & Language',
-        count: 0,
+        count: 1,
       },
       {
         topic: 'Curriculum (Instructional or Parenting)',
@@ -715,7 +917,6 @@ describe('Topics and frequency graph widget', () => {
     const query = { 'region.in': [17], 'role.in': ['System Specialist'] };
     const scopes = await filtersToScopes(query);
     const data = await topicFrequencyGraph(scopes);
-
     expect(data).toStrictEqual([
       {
         topic: 'Behavioral / Mental Health / Trauma',
@@ -739,11 +940,11 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Coaching',
-        count: 0,
+        count: 2,
       },
       {
         topic: 'Communication',
-        count: 0,
+        count: 1,
       },
       {
         topic: 'Community and Self-Assessment',
@@ -751,7 +952,7 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Culture & Language',
-        count: 0,
+        count: 1,
       },
       {
         topic: 'Curriculum (Instructional or Parenting)',
