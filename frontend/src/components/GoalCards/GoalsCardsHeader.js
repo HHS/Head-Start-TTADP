@@ -11,6 +11,7 @@ import { canEditOrCreateGoals } from '../../permissions';
 import { DECIMAL_BASE } from '../../Constants';
 import colors from '../../colors';
 import SelectPagination from '../SelectPagination';
+import FeatureFlag from '../FeatureFlag';
 
 export default function GoalCardsHeader({
   title,
@@ -32,6 +33,10 @@ export default function GoalCardsHeader({
   selectedGoalIds,
   perPageChange,
   pageGoalIds,
+  createRttapa,
+  showRttapaValidation,
+  draftSelectedRttapa,
+  nonRttapaSelectedRttapa,
 }) {
   const history = useHistory();
   const { user } = useContext(UserContext);
@@ -50,8 +55,8 @@ export default function GoalCardsHeader({
   };
 
   return (
-    <div className="padding-x-3">
-      <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2">
+    <div className="padding-x-3 position-relative">
+      <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2 bg-white">
         <h2 className="font-body-lg margin-left-2 margin-right-1 margin-y-3">{title}</h2>
         { showAddNewButton ? (
           <span className="smart-hub--table-controls desktop:margin-x-2 desktop:margin-y-0 margin-2 display-flex flex-row flex-align-center">
@@ -67,14 +72,8 @@ export default function GoalCardsHeader({
             </Link>
           </span>
         ) : null }
-        <Button
-          className="display-flex flex-align-center usa-button usa-button--unstyled margin-x-3 margin-y-3"
-          onClick={onPrint}
-        >
-          {`Preview and print ${selectedGoalIds.length > 0 ? 'selected' : ''}`}
-        </Button>
       </div>
-      <div className="desktop:display-flex flex-justify ">
+      <div className="desktop:display-flex flex-justify bg-white">
         <div className="desktop:display-flex flex-align-center">
           {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
           <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="sortBy">Sort by</label>
@@ -108,7 +107,7 @@ export default function GoalCardsHeader({
 
       </div>
       <hr className="border-1px border-base-lighter  bg-base-lighter margin-y-3" />
-      <div className="margin-left-3 display-flex flex-row flex-align-center">
+      <div className="margin-left-3 display-flex flex-row flex-align-center position-sticky top-0 bg-white" style={{ zIndex: 2 }}>
         <Checkbox
           label="Select all"
           id="select-all-goal-checkboxes"
@@ -137,27 +136,75 @@ export default function GoalCardsHeader({
                 </Button>
               </span>
             )}
+        <FeatureFlag flag="rttapa_form">
+          <Button
+            unstyled
+            className="display-flex flex-align-center margin-left-3 margin-y-0"
+            onClick={createRttapa}
+            type="button"
+          >
+            Create RTTAPA
+          </Button>
+        </FeatureFlag>
+        <Button
+          unstyled
+          className="display-flex flex-align-center margin-left-3 margin-y-0"
+          onClick={onPrint}
+        >
+          {`Preview and print ${selectedGoalIds.length > 0 ? 'selected' : ''}`}
+        </Button>
       </div>
       <div>
+        {showRttapaValidation && (
+          <Alert type="error" className="margin-top-3">
+            <div>
+              { draftSelectedRttapa.length ? (
+                <p className="usa-prose margin-top-0">
+                  <strong>{draftSelectedRttapa.map((g) => (`G-${g}`)).join(', ')}</strong>
+                  {' '}
+                  {draftSelectedRttapa.length === 1 ? 'is a' : 'are'}
+                  {' '}
+                  draft
+                  {' '}
+                  {draftSelectedRttapa.length === 1 ? 'goal' : 'goals'}
+                  , and draft goals can&apos;t be added to an RTTAPA. Deselect any draft goals.
+                </p>
+              ) : null}
+              { nonRttapaSelectedRttapa.length ? (
+                <p className="usa-prose margin-top-0">
+                  <strong>{nonRttapaSelectedRttapa.map((g) => (`G-${g}`)).join(', ')}</strong>
+                  {' '}
+                  {nonRttapaSelectedRttapa.length === 1 ? 'is a' : 'are'}
+                  {' '}
+                  non-Rttapa
+                  {' '}
+                  {nonRttapaSelectedRttapa.length === 1 ? 'goal' : 'goals'}
+                  .
+                  Any goals added to a regional agreement must be RTTAPA goals.
+                  Deselect any non-RTTAPA goals.
+                </p>
+              ) : null}
+            </div>
+          </Alert>
+        )}
         {
-              allGoalsChecked && (numberOfSelectedGoals !== count)
-                ? (
-                  <Alert className="margin-top-3" type="info" slim>
-                    {`All ${numberOfSelectedGoals} goals on this page are selected.`}
-                    <button
-                      type="button"
-                      className="usa-button usa-button--unstyled margin-left-1"
-                      onClick={selectAllGoals}
-                    >
-                      {`Select all ${count} goals`}
-                    </button>
-                  </Alert>
-                )
-                : null
+          !showRttapaValidation && allGoalsChecked && (numberOfSelectedGoals !== count)
+            ? (
+              <Alert className="margin-top-3" type="info" slim>
+                {`All ${numberOfSelectedGoals} goals on this page are selected.`}
+                <button
+                  type="button"
+                  className="usa-button usa-button--unstyled margin-left-1"
+                  onClick={selectAllGoals}
+                >
+                  {`Select all ${count} goals`}
+                </button>
+              </Alert>
+            )
+            : null
             }
       </div>
     </div>
-
   );
 }
 
@@ -186,6 +233,10 @@ GoalCardsHeader.propTypes = {
   selectedGoalIds: PropTypes.arrayOf(PropTypes.string).isRequired,
   perPageChange: PropTypes.func.isRequired,
   pageGoalIds: PropTypes.number.isRequired,
+  createRttapa: PropTypes.func.isRequired,
+  showRttapaValidation: PropTypes.bool.isRequired,
+  draftSelectedRttapa: PropTypes.arrayOf(PropTypes.number).isRequired,
+  nonRttapaSelectedRttapa: PropTypes.arrayOf(PropTypes.number).isRequired,
 };
 
 GoalCardsHeader.defaultProps = {
