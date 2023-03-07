@@ -76,11 +76,8 @@ export default async function topicsByGoalStatus(scopes): Promise<TopicResponse[
     raw: true,
   }) as QueryResults[];
 
-  console.log('allTopics', allTopics);
-
   let sanitized = allTopics.reduce((acc, goal) => {
     const { status, 'objectives.objectiveTopics.topic.topic': topic } = goal;
-    // TODO: topic is null for some of these - why?
     if (topic && !acc[topic]) {
       acc[topic] = { ...Object.values(GOAL_STATUS).reduce((a, s) => ({ ...a, [s]: 0 }), {}) };
     }
