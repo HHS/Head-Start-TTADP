@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 
-// TODO: Hmmmmm
+// Currently unused by the frontend.
 export function withReportText(reportIds) {
   return { id: { [Op.in]: reportIds } };
 }
