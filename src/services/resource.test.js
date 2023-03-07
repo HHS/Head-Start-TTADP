@@ -367,7 +367,6 @@ describe('resource', () => {
         http://foo.com/(something)?after=parens
         http://code.google.com/events/#&product=browser
         http://j.mp
-        ftp://foo.bar/baz
         http://foo.bar/?q=Test%20URL-encoded%20stuff
         http://1337.net
         http://223.255.255.254
@@ -378,6 +377,7 @@ describe('resource', () => {
       });
       it('bulk non-match', () => {
         field = `
+        ftp://foo.bar/baz
         http://✪df.ws/123
         http://➡.ws/䨹
         http://⌘.ws
