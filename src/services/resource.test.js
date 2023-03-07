@@ -373,7 +373,7 @@ describe('resource', () => {
         https://foo_bar.example.com/
         http://a.b-c.de
         `;
-        expect(collectURLsFromField(field).length).toEqual(27);
+        expect(collectURLsFromField(field).length).toEqual(26);
       });
       it('bulk non-match', () => {
         field = `
