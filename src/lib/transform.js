@@ -180,7 +180,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
   let goalNum = 0;
   const goalIds = {};
   let objectiveId;
-  const processedObjectivesTitles = [];
+  const processedObjectivesTitles = new Map();
 
   return objectiveRecords.reduce((prevAccum, objective) => {
     const accum = { ...prevAccum };
@@ -189,17 +189,14 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
     } = objective;
     const goalId = goal ? goal.id : null;
     const titleMd5 = md5(title);
-    if (processedObjectivesTitles.includes(titleMd5)) {
-      return accum;
-    }
 
-    processedObjectivesTitles.push(titleMd5);
+    const existingObjectiveTitle = processedObjectivesTitles.get(titleMd5);
     const goalName = goal ? goal.name : null;
     const newGoal = goalName && !Object.values(accum).includes(goalName);
 
     if (newGoal) {
       goalNum += 1;
-
+      processedObjectivesTitles.set(titleMd5, goalNum);
       // Goal Id.
       Object.defineProperty(accum, `goal-${goalNum}-id`, {
         value: `${goalId}`,
@@ -227,10 +224,13 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       });
 
       objectiveNum = 1;
-    } else if (goalIds[goalName] && !goalIds[goalName].includes(goalId)) {
-      // Update existing ids.
-      goalIds[goalName].push(goalId);
-      accum[`goal-${goalNum}-id`] = goalIds[goalName].join('\n');
+    } else if (existingObjectiveTitle) {
+      // Make sure its not another objective for the same goal.
+      if (goalIds[goalName] && !goalIds[goalName].includes(goalId)) {
+        accum[`goal-${existingObjectiveTitle}-id`] = `${accum[`goal-${existingObjectiveTitle}-id`]}\n${goalId}`;
+        goalIds[goalName].push(goalId);
+      }
+      return accum;
     }
 
     // goal number should be at least 1
@@ -283,6 +283,10 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       value: convert(ttaProvided),
       enumerable: true,
     });
+
+    // Add this objective to the tracked list.
+    processedObjectivesTitles.set(titleMd5, goalNum);
+
     objectiveNum += 1;
 
     return accum;
