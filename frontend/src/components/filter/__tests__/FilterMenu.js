@@ -203,6 +203,50 @@ describe('Filter Menu', () => {
     expect(message).toBeVisible();
   });
 
+  /*
+       id: uuidv4(),
+        display: '',
+        conditions: [],
+        */
+
+  it('adds back filter on cancel', async () => {
+    const filters = [
+      {
+        id: 'cancel-filter',
+        display: '',
+        conditions: [],
+      },
+    ];
+
+    // Render.
+    renderFilterMenu(filters);
+
+    // Open menu.
+    const button = screen.getByRole('button', {
+      name: /filters/i,
+    });
+    userEvent.click(button);
+
+    // Add new filter for blur.
+    const addNew = screen.getByRole('button', { name: /Add new filter/i });
+    act(() => userEvent.click(addNew));
+
+    const [topic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
+    expect(topic).toHaveFocus();
+    userEvent.tab();
+    userEvent.tab();
+    userEvent.tab();
+    expect(screen.getByText(/please enter a filter/i)).toBeVisible();
+
+    // Cancel.
+    const cancel = await screen.findByRole('button', { name: /discard changes and close filter menu/i });
+    userEvent.click(cancel);
+
+    // Open filters again.
+    userEvent.click(button);
+    expect(screen.getByText(/Select a filter/i)).toBeVisible();
+  });
+
   it('the clear all button works', async () => {
     const filters = [
       {

@@ -207,7 +207,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "put-back-search-after"
+    default: "none"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "TTAHUB-379/add-site-alerts"

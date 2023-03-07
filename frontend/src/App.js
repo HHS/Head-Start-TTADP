@@ -43,6 +43,7 @@ import {
 } from './Constants';
 import AppLoadingContext from './AppLoadingContext';
 import Loader from './components/Loader';
+import MyGroups from './pages/AccountManagement/MyGroups';
 
 function App() {
   const [user, updateUser] = useState();
@@ -184,7 +185,12 @@ function App() {
           path="/recipient-tta-records/:recipientId([0-9]*)/region/:regionId([0-9]*)"
           render={({ match, location }) => (
             <AppWrapper authenticated logout={logout} padded={false}>
-              <RecipientRecord location={location} match={match} user={user} />
+              <RecipientRecord
+                location={location}
+                match={match}
+                user={user}
+                hasAlerts={!!(alert)}
+              />
             </AppWrapper>
           )}
         />
@@ -193,6 +199,23 @@ function App() {
           path="/regional-dashboard"
           render={() => (
             <AppWrapper authenticated logout={logout}><RegionalDashboard user={user} /></AppWrapper>
+          )}
+        />
+        <Route
+          path="/account/my-groups/:groupId([0-9]*)"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <MyGroups match={match} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/account/my-groups"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <MyGroups match={match} />
+            </AppWrapper>
           )}
         />
         <Route
