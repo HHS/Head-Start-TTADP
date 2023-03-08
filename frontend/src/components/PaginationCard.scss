@@ -1,0 +1,13 @@
+@use '../colors.scss' as *;
+
+/* Selected Page */
+.smart-hub--pagination-card .usa-pagination .usa-current {
+  background-color: $ttahub-medium-blue;
+}
+
+/* Hover on Page Number Button */
+.smart-hub--pagination-card .usa-pagination .usa-pagination__button:hover {
+  border-color: $ttahub-medium-blue;
+  border-bottom-style: solid !important; // Prevent losing bottom border on hover.
+  border-bottom: 1px; // Prevent losing bottom border on hover.
+}
