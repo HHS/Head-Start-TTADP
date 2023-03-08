@@ -5,26 +5,17 @@ import { formatDateRange } from '../../utils';
 import {
   DATE_CONDITIONS,
   FILTER_CONDITIONS,
+  EMPTY_MULTI_SELECT,
 } from '../../Constants';
 import FilterDateRange from './FilterDateRange';
 import FilterReasonSelect from './FilterReasonSelect';
 import FilterTopicSelect from './FilterTopicSelect';
 import FilterStatus from './FilterStatus';
 import FilterSelect from './FilterSelect';
+import FilterGoalType from './FilterGoalType';
+import { handleArrayQuery } from './helpers';
 
 const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true });
-
-const EMPTY_MULTI_SELECT = {
-  is: [],
-  'is not': [],
-};
-
-const handleArrayQuery = (q) => {
-  if (q.length) {
-    return [q].flat().join(', ');
-  }
-  return '';
-};
 
 export const createDateFilter = {
   id: 'createDate',
@@ -125,3 +116,20 @@ export const grantNumberFilter = (possibleGrants) => ({
     />
   ),
 });
+
+export const goalTypeFilter = {
+  id: 'goalType',
+  display: 'Goal type',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: {
+    is: 'RTTAPA',
+    'is not': 'RTTAPA',
+  },
+  displayQuery: handleArrayQuery,
+  renderInput: (_id, _condition, query, onApplyQuery) => (
+    <FilterGoalType
+      onApply={onApplyQuery}
+      goalType={query}
+    />
+  ),
+};

@@ -19,10 +19,13 @@ import {
   ttaTypeFilter,
 } from '../../components/filter/activityReportFilters';
 
+import { groupsFilter } from '../../components/filter/grantFilters';
+
 export const LANDING_BASE_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
   grantNumberFilter,
+  groupsFilter,
   myReportsFilter,
   otherEntitiesFilter,
   participantsFilter,
@@ -40,6 +43,7 @@ export const LANDING_BASE_FILTER_CONFIG = [
 ];
 
 export const LANDING_FILTER_CONFIG_WITH_REGIONS = [
+  groupsFilter,
   startDateFilter,
   endDateFilter,
   grantNumberFilter,
