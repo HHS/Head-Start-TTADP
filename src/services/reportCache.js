@@ -126,20 +126,40 @@ const cacheResources = async (objectiveId, activityReportObjectiveId, resources 
         const resourceNotOnARs = await ObjectiveResource.findAll({
           attributes: ['id'],
           where: {
-            id: objectiveId,
-            onAR: true,
-            resourceId: { [Op.in]: removedAROResourceIds },
-            '$"ActivityReportObjectives".id$': { [Op.is]: null },
+            [Op.and]: [
+              { objectiveId },
+              { onAR: true },
+              { resourceId: { [Op.in]: removedAROResourceIds } },
+              { '$"objective.activityReportObjectives".id$': { [Op.is]: null } },
+            ],
           },
           include: [{
-            model: ActivityReportObjective,
-            as: 'ActivityReportObjectives',
-            required: false,
-            where: { id: { [Op.not]: activityReportObjectiveId } },
+            attributes: [],
+            model: Objective,
+            as: 'objective',
+            required: true,
+            include: [{
+              attributes: [],
+              model: ActivityReportObjective,
+              as: 'activityReportObjectives',
+              required: false,
+              where: { id: { [Op.not]: activityReportObjectiveId } },
+              include: [{
+                attributes: [],
+                model: ActivityReportObjectiveResource,
+                as: 'activityReportObjectiveResources',
+                required: false,
+                where: { resourceId: { [Op.in]: removedAROResourceIds } },
+              }],
+            }],
           }],
+          raw: true,
         });
         return resourceNotOnARs && resourceNotOnARs.length > 0
-          ? ObjectiveResource.update({ onAR: false }, { where: { id: resourceNotOnARs } })
+          ? ObjectiveResource.update(
+            { onAR: false },
+            { where: { id: resourceNotOnARs.map((r) => r.id) } },
+          )
           : Promise.resolve();
       })()
       : Promise.resolve(),
