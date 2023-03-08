@@ -43,6 +43,8 @@ import {
 } from './Constants';
 import AppLoadingContext from './AppLoadingContext';
 import Loader from './components/Loader';
+import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
+import FeatureFlag from './components/FeatureFlag';
 import MyGroups from './pages/AccountManagement/MyGroups';
 
 function App() {
@@ -221,6 +223,17 @@ function App() {
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
               <MyGroups match={match} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/regional-goal-dashboard"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="regional_goal_dashboard" renderNotFound>
+                <RegionalGoalDashboard user={user} />
+              </FeatureFlag>
             </AppWrapper>
           )}
         />
