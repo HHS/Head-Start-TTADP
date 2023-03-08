@@ -30,7 +30,7 @@ export default function FeedTest() {
       <CardGroup>
         {Array.from(entries).map((entry) => (
           <Card
-            gridLayout={{ tablet: { col: 6 } }}
+            gridLayout={{ tablet: { col: 12 } }}
             key={entry.querySelector('id').textContent}
             className="padding-1"
           >
