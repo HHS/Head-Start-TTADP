@@ -28,20 +28,8 @@ function PageWithHeading({
   recipientNameWithRegion,
   backLink,
   slug,
-  hasAlerts,
 }) {
   const headerMargin = backLink.props.children ? 'margin-top-0' : 'margin-top-5';
-
-  // This resizes the site nav content's gap to account for the header if there is an alert
-  useEffect(() => {
-    const appWrapper = document.querySelector('#appWrapper');
-    if (hasAlerts && appWrapper) {
-      const header = document.querySelector('.smart-hub-header.has-alerts');
-      if (header) {
-        appWrapper.style.marginTop = `${appWrapper.style.marginTop + header.offsetHeight}px`;
-      }
-    }
-  }, [hasAlerts]);
 
   return (
     <div>
@@ -76,11 +64,9 @@ PageWithHeading.propTypes = {
   recipientNameWithRegion: PropTypes.string.isRequired,
   backLink: PropTypes.node,
   slug: PropTypes.string,
-  hasAlerts: PropTypes.bool,
 };
 
 PageWithHeading.defaultProps = {
-  hasAlerts: false,
   error: '',
   backLink: <Link className="ttahub-recipient-record--tabs_back-to-search margin-top-2 margin-bottom-3 display-inline-block" to="/recipient-tta-records">Back to search</Link>,
   slug: '',
