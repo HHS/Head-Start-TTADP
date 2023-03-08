@@ -1,7 +1,7 @@
 import moment from 'moment';
 import faker from '@faker-js/faker';
 import { SiteAlert, User, sequelize } from '../../models';
-import { ALERT_STATUSES, ALERT_VARIANTS } from '../../constants';
+import { ALERT_STATUSES, ALERT_VARIANTS, ALERT_SIZES } from '../../constants';
 import { getSiteAlerts } from './handlers';
 
 describe('site alerts', () => {
@@ -26,6 +26,7 @@ describe('site alerts', () => {
       status: ALERT_STATUSES.PUBLISHED,
       title: faker.lorem.sentence(),
       variant: ALERT_VARIANTS.INFO,
+      size: ALERT_SIZES.STANDARD,
     }));
 
     // create a second published alert, the newest one
@@ -37,6 +38,7 @@ describe('site alerts', () => {
       status: ALERT_STATUSES.PUBLISHED,
       title: faker.lorem.sentence(),
       variant: ALERT_VARIANTS.INFO,
+      size: ALERT_SIZES.STANDARD,
     }));
 
     // create a draft alert
@@ -59,6 +61,7 @@ describe('site alerts', () => {
       status: ALERT_STATUSES.PUBLISHED,
       title: faker.lorem.sentence(),
       variant: ALERT_VARIANTS.EMERGENCY,
+      size: ALERT_SIZES.STANDARD,
     }));
 
     // create an alert that hasn't started yet
@@ -70,6 +73,7 @@ describe('site alerts', () => {
       status: ALERT_STATUSES.PUBLISHED,
       title: faker.lorem.sentence(),
       variant: ALERT_VARIANTS.INFO,
+      size: ALERT_SIZES.STANDARD,
     }));
   });
 
@@ -104,6 +108,7 @@ describe('site alerts', () => {
       status: ALERT_STATUSES.PUBLISHED,
       title: newestAlert.title,
       variant: ALERT_VARIANTS.INFO,
+      size: ALERT_SIZES.STANDARD,
     });
   });
 
