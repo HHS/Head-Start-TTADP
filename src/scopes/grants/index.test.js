@@ -11,10 +11,10 @@ import {
   sequelize,
 } from '../../models';
 
-const recipientOneName = faker.company.companyName();
-const recipientTwoName = faker.company.companyName();
-const recipientThreeName = faker.company.companyName();
-const recipientFourName = faker.company.companyName();
+const recipientOneName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
+const recipientTwoName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
+const recipientThreeName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
+const recipientFourName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
 
 const recipients = [
   {
@@ -40,14 +40,15 @@ const possibleIds = recipients.map((recipient) => recipient.id);
 describe('grant filtersToScopes', () => {
   let mockUser;
   let group;
-  const groupName = faker.company.companyName();
+  const groupName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
   const specialGrantNumber = String(faker.datatype.number({ min: 2800 }));
   let grantGroupOne;
   let grantGroupTwo;
+  let grants;
 
   beforeAll(async () => {
     await Promise.all(recipients.map((g) => Recipient.create(g)));
-    const grants = await Promise.all([
+    grants = await Promise.all([
       Grant.create({
         id: recipients[3].id,
         number: String(faker.datatype.number({ min: 2800 })),

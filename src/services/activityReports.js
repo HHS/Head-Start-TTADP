@@ -978,7 +978,6 @@ export async function activityReportAlerts(userId, {
   const { activityReport: scopes } = await filtersToScopes(updatedFilters, { userId });
   const reports = await ActivityReport.findAndCountAll(
     {
-      logging: console.log,
       where: {
         [Op.and]: scopes,
         [Op.or]: [
@@ -1371,12 +1370,7 @@ export async function createOrUpdate(newActivityReport, report) {
       throw new Error(err);
     }
   } else if (activityRecipientType === 'recipient' && goals) {
-    try {
-      await saveGoalsForReport(goals, savedReport, recipientsWhoHaveGoalsThatShouldBeRemoved);
-    } catch (err) {
-      auditLogger.error(JSON.stringify({ name: 'saveGoalsForReport', savedReport, err }));
-      throw new Error(err);
-    }
+    await saveGoalsForReport(goals, savedReport);
   }
 
   // // Approvers are removed if approverUserIds is an empty array

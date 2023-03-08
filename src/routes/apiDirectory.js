@@ -22,6 +22,7 @@ import siteAlertsRouter from './siteAlerts';
 import transactionWrapper from './transactionWrapper';
 import search from './search';
 import settingsRouter from './settings';
+import rttapaRouter from './rttapaReports';
 import groupsRouter from './groups';
 import { currentUserId } from '../services/currentUser';
 
@@ -60,6 +61,7 @@ router.use('/topic', topicsRouter);
 router.use('/role', rolesRouter);
 router.use('/search', search);
 router.use('/settings', settingsRouter);
+router.use('/rttapa', rttapaRouter);
 router.use('/groups', groupsRouter);
 router.use('/alerts', siteAlertsRouter);
 
