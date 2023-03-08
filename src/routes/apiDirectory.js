@@ -23,6 +23,7 @@ import transactionWrapper from './transactionWrapper';
 import search from './search';
 import settingsRouter from './settings';
 import groupsRouter from './groups';
+import feedRouter from './feeds';
 import { currentUserId } from '../services/currentUser';
 
 export const loginPath = '/login';
@@ -62,6 +63,7 @@ router.use('/search', search);
 router.use('/settings', settingsRouter);
 router.use('/groups', groupsRouter);
 router.use('/alerts', siteAlertsRouter);
+router.use('/feeds', feedRouter);
 
 const getUser = async (req, res) => {
   const userId = await currentUserId(req, res);
