@@ -2,10 +2,8 @@ import { Op } from 'sequelize';
 import { TOPICS, GOAL_STATUS } from '../../constants';
 import {
   // @ts-ignore
-  Goal, Topic, Objective, ObjectiveTopic,
+  Goal, Objective, Topic, ActivityReportObjective, ActivityReportObjectiveTopic,
 } from '../../models';
-
-type Tpc = typeof TOPICS[number];
 
 type Status = keyof typeof GOAL_STATUS;
 
@@ -23,8 +21,8 @@ export default async function topicsByGoalStatus(scopes): Promise<TopicResponse[
   type QueryResults = {
     id: number;
     status: Status;
-    'objectives.objectiveTopics.topic.id': number;
-    'objectives.objectiveTopics.topic.topic': Tpc;
+    'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.id': number;
+    'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.topic': typeof TOPICS[number];
   };
 
   const allTopics = await Goal.findAll({
@@ -43,17 +41,23 @@ export default async function topicsByGoalStatus(scopes): Promise<TopicResponse[
       {
         model: Objective,
         as: 'objectives',
-        attributes: [],
         include: [
           {
-            model: ObjectiveTopic,
-            as: 'objectiveTopics',
+            model: ActivityReportObjective,
+            as: 'activityReportObjectives',
             attributes: [],
             include: [
               {
-                model: Topic,
-                as: 'topic',
-                attributes: [['name', 'topic']],
+                model: ActivityReportObjectiveTopic,
+                as: 'activityReportObjectiveTopics',
+                attributes: [],
+                include: [
+                  {
+                    model: Topic,
+                    as: 'topic',
+                    attributes: [['name', 'topic']],
+                  },
+                ],
               },
             ],
           },
@@ -64,7 +68,7 @@ export default async function topicsByGoalStatus(scopes): Promise<TopicResponse[
   }) as QueryResults[];
 
   let sanitized = allTopics.reduce((acc, goal) => {
-    const { status, 'objectives.objectiveTopics.topic.topic': topic } = goal;
+    const { status, 'objectives.activityReportObjectives.activityReportObjectiveTopics.topic.topic': topic } = goal;
     if (topic && !acc[topic]) {
       acc[topic] = { ...Object.values(GOAL_STATUS).reduce((a, s) => ({ ...a, [s]: 0 }), {}) };
     }
