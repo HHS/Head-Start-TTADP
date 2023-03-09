@@ -25,13 +25,22 @@ module.exports = {
         { transaction },
       );
 
-      // Change existing topic.
+      // Insert & Change existing topic.
       await queryInterface.sequelize.query(
-        `UPDATE "Topics"
-         SET
-            "name" = 'Ongoing Monitoring and Continuous Improvement',
-            "updatedAt" = current_timestamp
-        WHERE "name" = 'Ongoing Monitoring Management System'; `,
+        `
+        INSERT INTO "Topics"
+        ("name", "createdAt", "updatedAt")
+        VALUES
+        ('Ongoing Monitoring and Continuous Improvement', current_timestamp, current_timestamp);
+
+        UPDATE "Topics" t1
+        SET
+            "mapsTo" = t2.id,
+            "deletedAt" = current_timestamp
+        FROM "Topics" t2
+        WHERE t1.name = 'Ongoing Monitoring Management System'
+        AND t2.name = 'Ongoing Monitoring and Continuous Improvement'
+        AND t1."deletedAt" IS NULL;`,
         { transaction },
       );
     });
@@ -62,16 +71,20 @@ module.exports = {
       // Revert topic to what it was before.
       await queryInterface.sequelize.query(
         `UPDATE "Topics"
-         SET
-            "name" = 'Ongoing Monitoring Management System',
-            "updatedAt" = current_timestamp
-        WHERE "name" = 'Ongoing Monitoring and Continuous Improvement'; `,
+        SET
+            "mapsTo" = null,
+            "deletedAt" = null
+        WHERE name = 'Ongoing Monitoring Management System'
+        AND "deletedAt" = (
+            SELECT max("deletedAt")
+            FROM "Topics"
+            WHERE name = 'Ongoing Monitoring Management System');`,
         { transaction },
       );
 
-      // Delete added topic
+      // Delete new topics.
       await queryInterface.sequelize.query(
-        'DELETE FROM "Topics" WHERE "name" = \'Fatherhood / Male Caregiving\';',
+        'DELETE FROM "Topics" WHERE "name" IN (\'Fatherhood / Male Caregiving\', \'Ongoing Monitoring and Continuous Improvement\');',
         { transaction },
       );
 
