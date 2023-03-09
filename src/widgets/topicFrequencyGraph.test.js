@@ -70,7 +70,7 @@ const reportObject = {
   targetPopulations: ['pop'],
   reason: ['reason'],
   participants: ['participants', 'genies'],
-  topics: ['Program Planning and Services'],
+  topics: ['Program Planning and Services', 'Child Assessment, Development, Screening'], // One to be mapped from legacy.
   ttaType: ['technical-assistance'],
 };
 
@@ -418,7 +418,7 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Child Screening and Assessment',
-        count: 0,
+        count: 1,
       },
       {
         topic: 'CLASS: Classroom Organization',
@@ -587,7 +587,7 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Child Screening and Assessment',
-        count: 0,
+        count: 1,
       },
       {
         topic: 'CLASS: Classroom Organization',
@@ -756,7 +756,7 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Child Screening and Assessment',
-        count: 0,
+        count: 1,
       },
       {
         topic: 'CLASS: Classroom Organization',
@@ -924,7 +924,7 @@ describe('Topics and frequency graph widget', () => {
       },
       {
         topic: 'Child Screening and Assessment',
-        count: 0,
+        count: 1,
       },
       {
         topic: 'CLASS: Classroom Organization',
