@@ -5,11 +5,11 @@ import userEvent from '@testing-library/user-event';
 import PaginationCard from '../PaginationCard';
 
 describe('PaginationCard', () => {
-  const renderPaginationCard = (handlePageChange = () => {}) => {
+  const renderPaginationCard = (handlePageChange = () => {}, totalCount = 30, offSet = 10) => {
     render(<PaginationCard
       currentPage={2}
-      totalCount={30}
-      offset={10}
+      totalCount={totalCount}
+      offset={offSet}
       perPage={10}
       handlePageChange={handlePageChange}
     />);
@@ -40,5 +40,10 @@ describe('PaginationCard', () => {
     const previousPageBtn = await screen.findByRole('button', { name: /previous page/i });
     userEvent.click(previousPageBtn);
     await waitFor(() => expect(changePage).toHaveBeenCalled());
+  });
+
+  it('handles when off set is greater than total records', async () => {
+    renderPaginationCard(() => {}, 9, 10);
+    expect(await screen.findByText(/0-9 of 9/i)).toBeVisible();
   });
 });
