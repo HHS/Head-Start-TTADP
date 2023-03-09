@@ -279,6 +279,10 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
+        topic: 'Fatherhood / Male Caregiving',
+        count: 0,
+      },
+      {
         topic: 'Fiscal / Budget',
         count: 0,
       },
@@ -307,7 +311,7 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Ongoing Monitoring Management System',
+        topic: 'Ongoing Monitoring and Continuous Improvement',
         count: 0,
       },
       {
@@ -448,6 +452,10 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
+        topic: 'Fatherhood / Male Caregiving',
+        count: 0,
+      },
+      {
         topic: 'Fiscal / Budget',
         count: 0,
       },
@@ -476,7 +484,7 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Ongoing Monitoring Management System',
+        topic: 'Ongoing Monitoring and Continuous Improvement',
         count: 0,
       },
       {
@@ -617,6 +625,10 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
+        topic: 'Fatherhood / Male Caregiving',
+        count: 0,
+      },
+      {
         topic: 'Fiscal / Budget',
         count: 0,
       },
@@ -645,7 +657,7 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Ongoing Monitoring Management System',
+        topic: 'Ongoing Monitoring and Continuous Improvement',
         count: 0,
       },
       {
@@ -786,6 +798,10 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
+        topic: 'Fatherhood / Male Caregiving',
+        count: 0,
+      },
+      {
         topic: 'Fiscal / Budget',
         count: 0,
       },
@@ -814,7 +830,7 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'Ongoing Monitoring Management System',
+        topic: 'Ongoing Monitoring and Continuous Improvement',
         count: 0,
       },
       {
