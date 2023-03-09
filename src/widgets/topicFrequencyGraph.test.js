@@ -461,15 +461,15 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'ERSEA',
-        count: 0,
-      },
-      {
         topic: 'Environmental Health and Safety / EPRR',
         count: 0,
       },
       {
         topic: 'Equity',
+        count: 0,
+      },
+      {
+        topic: 'ERSEA',
         count: 0,
       },
       {
@@ -630,15 +630,15 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'ERSEA',
-        count: 0,
-      },
-      {
         topic: 'Environmental Health and Safety / EPRR',
         count: 0,
       },
       {
         topic: 'Equity',
+        count: 0,
+      },
+      {
+        topic: 'ERSEA',
         count: 0,
       },
       {
@@ -799,15 +799,15 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'ERSEA',
-        count: 0,
-      },
-      {
         topic: 'Environmental Health and Safety / EPRR',
         count: 0,
       },
       {
         topic: 'Equity',
+        count: 0,
+      },
+      {
+        topic: 'ERSEA',
         count: 0,
       },
       {
@@ -967,15 +967,15 @@ describe('Topics and frequency graph widget', () => {
         count: 0,
       },
       {
-        topic: 'ERSEA',
-        count: 0,
-      },
-      {
         topic: 'Environmental Health and Safety / EPRR',
         count: 0,
       },
       {
         topic: 'Equity',
+        count: 0,
+      },
+      {
+        topic: 'ERSEA',
         count: 0,
       },
       {
