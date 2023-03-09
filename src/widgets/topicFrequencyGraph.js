@@ -1,8 +1,9 @@
-import { Op } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
 import {
   ActivityReport,
   Topic,
   ActivityReportObjective,
+  sequelize,
 } from '../models';
 import { REPORT_STATUSES } from '../constants';
 
@@ -28,6 +29,20 @@ export default async function topicFrequencyGraph(scopes) {
     }],
   });
 
+  // Get mappings.
+  const topicMappings = await sequelize.query(`
+  SELECT
+    DISTINCT
+    TT."name",
+    COALESCE(TT2."name", TT."name") AS final_name
+  FROM "Topics" TT
+  LEFT JOIN "Topics" TT2 ON TT."mapsTo" = TT2.ID
+  WHERE TT."deletedAt" IS NULL OR TT."mapsTo" IS NOT NULL
+  ORDER BY TT."name"
+  `, { type: QueryTypes.SELECT });
+
+  const lookUpTopic = new Map(topicMappings.map((i) => [i.name, i.final_name]));
+
   // Get all DB topics.
   const dbTopics = await Topic.findAll({
     attributes: ['id', 'name', 'deletedAt'],
@@ -42,7 +57,7 @@ export default async function topicFrequencyGraph(scopes) {
   return topicsAndParticipants.reduce((acc, report) => {
     // Get array of all topics from this reports and this reports objectives.
     const allTopics = [
-      ...report.topics.map((t) => t),
+      ...report.topics.map((t) => lookUpTopic.get(t)),
       ...report.activityReportObjectives.flatMap((o) => o.topics.map((t) => t.name)),
     ];
 
