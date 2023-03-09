@@ -5,3 +5,10 @@
   font-weight: 500;
   background-color: $ttahub-medium-blue;
 }
+
+@media all and (max-width: 64em){
+  .avatar {
+    height: 2.25rem;
+    width: 2.25rem;
+  }
+}
