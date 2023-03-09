@@ -4,7 +4,7 @@ import {
   Topic,
   ActivityReportObjective,
 } from '../models';
-import { REPORT_STATUSES, TOPICS } from '../constants';
+import { REPORT_STATUSES } from '../constants';
 
 export default async function topicFrequencyGraph(scopes) {
   const topicsAndParticipants = await ActivityReport.findAll({
@@ -28,7 +28,13 @@ export default async function topicFrequencyGraph(scopes) {
     }],
   });
 
-  const topicsResponse = TOPICS.map((topic) => ({
+  // Get all DB topics.
+  const dbTopics = await Topic.findAll({
+    attributes: ['id', 'name', 'deletedAt'],
+    order: [['name', 'ASC']],
+  });
+  const topics = dbTopics.map((t) => t.name);
+  const topicsResponse = topics.map((topic) => ({
     topic,
     count: 0,
   }));
