@@ -108,4 +108,82 @@ describe('Horizontal Table Widget', () => {
     userEvent.click(sortBtn);
     await waitFor(() => expect(requestSort).toHaveBeenCalled());
   });
+
+  it('specifies sort col and direction asc', async () => {
+    const requestSort = jest.fn();
+    const headers = ['col1'];
+    const data = [
+      {
+        heading: 'Row 1 Data',
+        isUrl: false,
+        data: [
+          {
+            title: 'col1',
+            value: '17',
+          },
+        ],
+      },
+    ];
+
+    const sortConfig = {
+      sortBy: 'col1',
+      direction: 'asc',
+      activePage: 1,
+      offset: 0,
+    };
+
+    renderHorizontalTableWidget(
+      headers,
+      data,
+      'First Heading',
+      true,
+      'Last Heading',
+      sortConfig,
+      requestSort,
+    );
+    expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
+    expect(screen.getByText(/Last Heading/i)).toBeInTheDocument();
+
+    const sortElement = screen.getByLabelText('col1. Activate to sort descending');
+    expect(sortElement).toHaveClass('sortable asc');
+  });
+
+  it('specifies sort col and direction desc', async () => {
+    const requestSort = jest.fn();
+    const headers = ['col1'];
+    const data = [
+      {
+        heading: 'Row 1 Data',
+        isUrl: false,
+        data: [
+          {
+            title: 'col1',
+            value: '17',
+          },
+        ],
+      },
+    ];
+
+    const sortConfig = {
+      sortBy: 'col1',
+      direction: 'desc',
+      activePage: 1,
+      offset: 0,
+    };
+
+    renderHorizontalTableWidget(
+      headers,
+      data,
+      'First Heading',
+      true,
+      'Last Heading',
+      sortConfig,
+      requestSort,
+    );
+    expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
+    expect(screen.getByText(/Last Heading/i)).toBeInTheDocument();
+
+    const sortElement = screen.getByLabelText('col1. Activate to sort ascending');
+    expect(sortElement).toHaveClass('sortable desc');
+  });
 });
