@@ -22,6 +22,7 @@ import FilterOtherEntitiesSelect from './FilterOtherEntitiesSelect';
 import FilterParticipantsSelect from './FilterParticipantsSelect';
 import FilterTTAType, { displayTtaTypeQuery } from './FilterTTAType';
 import MyReportsSelect from './MyReportsSelect';
+import FilterGroups from './FilterGroups';
 
 const EMPTY_MULTI_SELECT = {
   is: [],
@@ -349,6 +350,21 @@ export const topicsFilter = {
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterTopicSelect
       inputId={`topic-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const groupsFilter = {
+  id: 'group',
+  display: 'Group',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterGroups
+      inputId={`group-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />

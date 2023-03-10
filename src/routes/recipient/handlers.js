@@ -1,5 +1,9 @@
+import httpCodes from 'http-codes';
 import {
-  getGoalsByActivityRecipient, recipientById, recipientsByName,
+  getGoalsByActivityRecipient,
+  recipientById,
+  recipientsByName,
+  recipientsByUserId,
 } from '../../services/recipient';
 import { goalsByIdAndRecipient } from '../../services/goals';
 import handleErrors from '../../lib/apiErrorHandler';
@@ -27,6 +31,27 @@ export async function getGoalsByIdandRecipient(req, res) {
     }
 
     res.json(goals);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function getRecipientAndGrantsByUser(req, res) {
+  try {
+    const userId = await currentUserId(req, res);
+
+    if (!userId) {
+      res.sendStatus(httpCodes.UNAUTHORIZED);
+      return;
+    }
+
+    const recipients = await recipientsByUserId(userId);
+    if (!recipients || !recipients.length) {
+      res.sendStatus(httpCodes.NOT_FOUND);
+      return;
+    }
+
+    res.json(recipients);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
@@ -61,8 +86,15 @@ export async function searchRecipients(req, res) {
     const {
       s, sortBy, direction, offset,
     } = req.query;
-    const { grant: scopes } = await filtersToScopes(req.query);
-    const recipients = await recipientsByName(s, scopes, sortBy, direction, offset);
+
+    const userId = await currentUserId(req, res);
+    const userRegions = await getUserReadRegions(userId);
+
+    const { grant: scopes } = await filtersToScopes(
+      req.query,
+      { userId },
+    );
+    const recipients = await recipientsByName(s, scopes, sortBy, direction, offset, userRegions);
     if (!recipients) {
       res.sendStatus(404);
       return;

@@ -10,6 +10,11 @@ export const IS_NOT = 'is not';
 export const WHERE_IM_THE = 'where I\'m the';
 export const WHERE_IM_NOT_THE = 'where I\'m not the';
 
+export const EMPTY_MULTI_SELECT = {
+  is: [],
+  'is not': [],
+};
+
 export const SELECT_CONDITIONS = [CONTAINS, NOT_CONTAINS];
 export const FILTER_CONDITIONS = [IS, IS_NOT];
 export const MY_REPORTS_FILTER_CONDITIONS = [WHERE_IM_THE, WHERE_IM_NOT_THE];
