@@ -36,21 +36,21 @@ a:visited {
   background-color: $ttahub-blue;
 }
 
-.smart-hub-title {
-  font-size: 1.25rem;
+smart-hub-title {
+  font-size: 1rem;
 }
 
 header > div {
-  height: 4.5em;
+  height: 3em;
 }
 
 
-@media all and (max-width: 64em){
+@media all and (min-width: 64em){
   header > div {
-    height: 3em;
+    height: 4.5em;
   }
   .smart-hub-title {
-    font-size: 1rem;
+    font-size: 1.25rem;
   }
 }
 
