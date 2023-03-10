@@ -78,6 +78,12 @@ body {
   border-color: $base-lighter;
 }
 
+.smart-hub-border-base-error {
+  border-width: 2px;
+  border-color: $error-dark;
+}
+
+
 .smart-hub-maxw-placard {
   max-width: 34.25rem;
 }
@@ -296,4 +302,9 @@ fill: #1B1B1B;
 /* ========== plotly overrrides ========== */
 .plotly-notifier {
   z-index: 99999;
+}
+
+.smart-hub-title-big-serif {
+  font-size: 30px;
+  font-family: Merriweather, serif;
 }

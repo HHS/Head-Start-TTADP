@@ -22,6 +22,7 @@ const Approver = ({
     additionalNotes,
     calculatedStatus,
     approvers,
+    submittedDate,
   } = formData;
 
   // Approvers should be able to change their review until the report is approved.
@@ -116,6 +117,7 @@ const Approver = ({
             <Review
               pendingOtherApprovals={pendingOtherApprovals}
               additionalNotes={additionalNotes}
+              dateSubmitted={submittedDate}
               onFormReview={onFormReview}
               approverStatusList={approvers}
               pages={pages}
@@ -143,6 +145,7 @@ Approver.propTypes = {
   formData: PropTypes.shape({
     additionalNotes: PropTypes.string,
     calculatedStatus: PropTypes.string,
+    submittedDate: PropTypes.string,
     approvers: PropTypes.arrayOf(
       PropTypes.shape({
         status: PropTypes.string,
