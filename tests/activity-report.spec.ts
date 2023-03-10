@@ -377,7 +377,7 @@ test.describe('Activity Report', () => {
     expect(g2Topics).toBeVisible();
 
     // expand objectives for g1
-    await page.getByRole('button', { name: `Expand objectives for goal ${g1GoalsForObjectives}` }).click();
+    await page.getByRole('button', { name: `View objectives for goal ${g1GoalsForObjectives}` }).click();
 
     await expect(page.getByText('g1o1', { exact: true })).toBeVisible();
     // verify a link to the activity report is found in the objective section
@@ -597,7 +597,7 @@ test.describe('Activity Report', () => {
     expect(await page.title()).toBe('Goals and Objectives - Agency 2 in region 1, Inc. - TTA Hub');
 
     await expect(page.getByText('This is a goal for multiple grants')).toBeVisible();
-    await page.getByRole('button', { name: /Expand objectives for goal G-(\d)/i }).click();
+    await page.getByRole('button', { name: /View objectives for goal G-(\d)/i }).click();
     await expect(page.getByText('A new objective')).toBeVisible();
     await expect(page.getByText(`Activity reports R01-AR-${arNumber}`)).toBeVisible();
   });
