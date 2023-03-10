@@ -397,7 +397,7 @@ test.describe('Activity Report', () => {
     await expect(page.getByText('g1o1', { exact: true }).locator('..').locator('..').getByText('Not started')).toBeVisible();
 
     // expand objectives for g2
-    await page.getByRole('button', { name: `Expand objectives for goal ${g2GoalsForObjectives}` }).click();
+    await page.getByRole('button', { name: `View objectives for goal ${g2GoalsForObjectives}` }).click();
 
     await expect(page.getByText('g2o1', { exact: true })).toBeVisible();
     // verify a link to the activity report is found in the objective section
@@ -439,7 +439,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('button', { name: 'Save' }).click();
 
     // expand the objective for g1
-    await page.getByRole('button', { name: `Expand objectives for goal ${g1GoalsForObjectives}` }).click();
+    await page.getByRole('button', { name: `View objectives for goal ${g1GoalsForObjectives}` }).click();
     // verify the 'In Progress' status is now visible
     await expect(page.getByRole('listitem').filter({ hasText: 'Objective status In progress' })).toBeVisible();
 
@@ -468,7 +468,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('link', { name: 'Cancel' }).click();
 
     // expand the objective for g2
-    await page.getByRole('button', { name: `Expand objectives for goal ${g2GoalsForObjectives}` }).click();
+    await page.getByRole('button', { name: `View objectives for goal ${g2GoalsForObjectives}` }).click();
     // follow the AR link for g2
     await page.getByText('g2', { exact: true }).locator('..').locator('..').locator('..')
       .getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` })
