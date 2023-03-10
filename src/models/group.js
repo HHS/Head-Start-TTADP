@@ -33,7 +33,7 @@ export default (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'Group',
-    timestamps: false,
+    // timestamps: false,
   });
   return Group;
 };

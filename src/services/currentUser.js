@@ -17,6 +17,12 @@ import { validateUserAuthForAdmin } from './accessValidation';
  * the req.session or req.locals userId) is an admin,
  * then the user ID from the header will be returned.
  */
+/**
+ *
+ * @param {*} req
+ * @param {*} res
+ * @returns {Promise<number>} the user id to user or impersonate
+ */
 export async function currentUserId(req, res) {
   function idFromSessionOrLocals() {
     if (req.session && req.session.userId) {
