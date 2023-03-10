@@ -175,18 +175,17 @@ function sortObjectives(a, b) {
  * @param {Object[]} goalRecords
  * @returns {Object} { goals: [], objectives: []}
  */
-function makeGoalsAndObjectivesObjectFromActivityReportGoals(goalRecords) {
+function makeGoalsObjectFromActivityReportGoals(goalRecords) {
   // the number of the goal as it appears in the CSV
-  const goalCsvRecordNumber = 1;
+  let goalCsvRecordNumber = 1;
 
   return goalRecords.reduce((acc, goal) => {
     const goalId = goal ? goal.id : null;
     const goalName = goal ? goal.name : null;
-
-    const goalNameIndex = goalName ? Object.values(acc).findIndex(goalName) : -1;
+    const goalNameIndex = goalName ? Object.values(acc).findIndex((n) => n === goalName) : -1;
 
     // if the goal is new we iterate over the properties and update the accumulator
-    if (goalNameIndex !== -1) {
+    if (goalNameIndex === -1) {
     // goal id
       Object.defineProperty(acc, `goal-${goalCsvRecordNumber}-id`, {
         value: `${goalId}`,
@@ -197,6 +196,7 @@ function makeGoalsAndObjectivesObjectFromActivityReportGoals(goalRecords) {
       Object.defineProperty(acc, `goal-${goalCsvRecordNumber}`, {
         value: goalName,
         enumerable: true,
+        writable: true,
       });
 
       // goal status
@@ -210,18 +210,18 @@ function makeGoalsAndObjectivesObjectFromActivityReportGoals(goalRecords) {
         value: goal.createdVia,
         enumerable: true,
       });
-
+      goalCsvRecordNumber += 1;
     // if the goal is not new, we have fewer properties to update
     } else {
       // get the goal number to with a regex field to update
       const keys = Object.keys(acc);
       const goalNameKey = keys[goalNameIndex];
-      const goalNumber = goalNameKey.match(/goal-(\d+)-/)[1];
+      const goalNumber = goalNameKey.match(/goal-(\d+)/)[1];
       const field = `goal-${goalNumber}-id`;
 
       // update the goal id
       Object.defineProperty(acc, field, {
-        value: `${acc[field]}\n${goalId}}`,
+        value: `${acc[field]}\n${goalId}`,
         writable: true,
         enumerable: true,
       });
@@ -364,7 +364,7 @@ function transformGoalsAndObjectives(report) {
   let obj = {};
   const { activityReportObjectives, activityReportGoals } = report;
 
-  if (activityReportObjectives) {
+  if (activityReportObjectives && activityReportObjectives.length) {
     const objectiveRecords = activityReportObjectives.map((aro) => (
       {
         ...aro.objective,
@@ -377,11 +377,11 @@ function transformGoalsAndObjectives(report) {
     if (objectiveRecords) {
       obj = makeGoalsAndObjectivesObject(objectiveRecords);
     }
-  } else if (activityReportGoals) {
+  } else if (activityReportGoals && activityReportGoals.length) {
     const goals = activityReportGoals.map((arg) => (
-      { ...arg.goal, status: arg.status }
+      { ...(arg.goal.dataValues || arg.goal), status: arg.status }
     ));
-    obj = makeGoalsAndObjectivesObjectFromActivityReportGoals(goals);
+    obj = makeGoalsObjectFromActivityReportGoals(goals);
   }
 
   return obj;
