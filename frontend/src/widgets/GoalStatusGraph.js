@@ -165,14 +165,14 @@ export function GoalStatusChart({ data, loading }) {
               <div className="display-flex flex-justify">
                 <div>
                   {bars.map(({ label }) => (
-                    <div className="display-flex height-6 margin-right-1">
+                    <div key={label} className="display-flex height-6 margin-right-1">
                       <span>{label}</span>
                     </div>
                   ))}
                 </div>
                 <div className="flex-1">
-                  {bars.map(({ percentage, color }) => (
-                    <div className="display-flex height-6">
+                  {bars.map(({ label, percentage, color }) => (
+                    <div key={label} className="display-flex height-6">
                       <div className="display-flex width-full" key={color}>
                         <Bar
                           key={color}
@@ -184,8 +184,8 @@ export function GoalStatusChart({ data, loading }) {
                   ))}
                 </div>
                 <div>
-                  {bars.map(({ ratio, readableRatio }) => (
-                    <div className="display-flex height-6 margin-left-1">
+                  {bars.map(({ label, ratio, readableRatio }) => (
+                    <div key={label} className="display-flex height-6 margin-left-1">
                       <span aria-label={readableRatio}>{ratio}</span>
                     </div>
                   ))}
