@@ -1,18 +1,23 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import HorizontalTableWidget from './HorizontalTableWidget';
+import WidgetContainer from '../components/WidgetContainer';
 
 function ResourceUse({ data, loading }) {
   return (
-    <HorizontalTableWidget
+    <WidgetContainer
       title="Resource use"
       subtitle="Showing the 10 resources cited most often on Activity Reports"
-      headers={data.headers}
-      data={data.resources}
       loading={loading}
       loadingLabel="Resource use loading"
-      firstHeading="Resource URL"
-    />
+      showPaging={false}
+    >
+      <HorizontalTableWidget
+        headers={data.headers}
+        data={data.resources}
+        firstHeading="Resource URL"
+      />
+    </WidgetContainer>
   );
 }
 

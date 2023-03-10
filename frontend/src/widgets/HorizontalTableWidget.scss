@@ -9,7 +9,7 @@
     vertical-align: bottom;
   }
 
-  .smarthub-horizontal-table-widget .usa-table-container--scrollable .smarthub-horizontal-table-first-column {
+  .smarthub-horizontal-table-widget .smarthub-horizontal-table-first-column {
     position: sticky;
     left: 0;
     z-index: 1;
@@ -18,7 +18,7 @@
     box-shadow: inset 0 0 0 black, inset -1px 0 0 black;
   }
 
-  .smarthub-horizontal-table-widget .usa-table-container--scrollable .smarthub-horizontal-table-last-column {
+  .smarthub-horizontal-table-widget .smarthub-horizontal-table-last-column {
     z-index: 1;
     position: sticky;
     right: 0;
@@ -52,6 +52,7 @@
     border: none;
     text-align: left;
   }
+
   .smarthub-horizontal-table-widget .usa-table td:first-child {
     white-space: normal;
   }
