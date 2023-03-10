@@ -105,7 +105,7 @@ const cacheResources = async (objectiveId, activityReportObjectiveId, resources 
       .map((r) => r.resourceId)
     : [];
   const removedAROResourceIds = originalAROResources
-    .filter((oR) => !!aroResources?.find((r) => oR.id === r.id))
+    .filter((oR) => !aroResources?.find((r) => oR.id === r.id))
     .map((r) => r.resourceId);
 
   return Promise.all([
