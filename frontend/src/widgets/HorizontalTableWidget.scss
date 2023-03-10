@@ -33,6 +33,11 @@
 
   .smarthub-horizontal-table-widget .usa-table th {
     min-width: 90px;
+
+  }
+
+  .smarthub-horizontal-table-widget .usa-table thead th[aria-sort] {
+      background-color: white;
   }
 
   .smarthub-horizontal-table-widget {
@@ -60,4 +65,8 @@
   .smarthub-horizontal-table-widget .usa-table p:first-child {
     margin: 0px;
     padding: 0px;
+  }
+
+  .smarthub-horizontal-table-widget .usa-table thead th a {
+    cursor: pointer;
   }
