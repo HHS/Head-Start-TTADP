@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid, GridContainer } from '@trussworks/react-uswds';
 import { v4 as uuidv4 } from 'uuid';
+import moment from 'moment';
 import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
 import { getUserRegions } from '../../permissions';
 import UserContext from '../../UserContext';
@@ -17,8 +18,9 @@ import TotalHrsAndRecipientGraphWidget from '../../widgets/TotalHrsAndRecipientG
 import TopicsTable from '../../widgets/RegionalGoalDashboard/TopicsTable';
 
 const defaultDate = formatDateRange({
-  lastThirtyDays: true,
   forDateTime: true,
+  string: `2022/07/01-${moment().format('YYYY/MM/DD')}`,
+  withSpaces: false,
 });
 
 const FILTER_KEY = 'regional-goal-dashboard-filters';
