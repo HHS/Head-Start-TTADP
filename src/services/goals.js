@@ -22,7 +22,11 @@ import {
   File,
 } from '../models';
 import {
-  DECIMAL_BASE, REPORT_STATUSES, OBJECTIVE_STATUS, GOAL_STATUS,
+  DECIMAL_BASE,
+  REPORT_STATUSES,
+  OBJECTIVE_STATUS,
+  GOAL_STATUS,
+  SOURCE_FIELD,
 } from '../constants';
 import {
   cacheObjectiveMetadata,
@@ -98,6 +102,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
               ],
             },
           ],
+          where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE] } },
         },
         {
           model: ObjectiveTopic,
@@ -574,6 +579,10 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
               ['id', 'key'],
             ],
             required: false,
+            through: {
+              attributes: [],
+              where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.OBJECTIVE.RESOURCE] } },
+            },
           },
           {
             model: ActivityReportObjective,
@@ -666,6 +675,10 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
               ['id', 'key'],
             ],
             required: false,
+            through: {
+              attributes: [],
+              where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.OBJECTIVE.RESOURCE] } },
+            },
           },
           {
             model: ActivityReportObjective,
@@ -1831,6 +1844,7 @@ export async function getGoalsForReport(reportId) {
                     attributes: [['url', 'value']],
                   },
                 ],
+                where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE] } },
               },
             ],
           },
@@ -1842,6 +1856,10 @@ export async function getGoalsForReport(reportId) {
             model: Resource,
             as: 'resources',
             attributes: [['url', 'value']],
+            through: {
+              attributes: [],
+              where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.OBJECTIVE.RESOURCE] } },
+            },
           },
           {
             model: File,
