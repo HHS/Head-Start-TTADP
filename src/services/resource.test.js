@@ -223,7 +223,7 @@ describe('resource', () => {
         expect(calculateIsAutoDetected(sourceFields, autoDetectedFields)).toBe(false);
       });
       it('fail with string sourceFields', () => {
-        sourceFields = 'a';
+        sourceFields = 'm';
         expect(calculateIsAutoDetected(sourceFields, autoDetectedFields)).toBe(false);
       });
       it('fail with object sourceFields', () => {
@@ -247,7 +247,7 @@ describe('resource', () => {
         expect(calculateIsAutoDetected(sourceFields, autoDetectedFields)).toBe(false);
       });
       it('fail with string autoDetectedFields', () => {
-        autoDetectedFields = 'a';
+        autoDetectedFields = 'm';
         expect(calculateIsAutoDetected(sourceFields, autoDetectedFields)).toBe(false);
       });
       it('fail with object autoDetectedFields', () => {

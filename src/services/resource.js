@@ -115,7 +115,7 @@ const findOrCreateResources = async (urls) => {
 // -----------------------------------------------------------------------------
 // Identify if passed sourceFields contain one or more of the autoDetectedFields.
 const calculateIsAutoDetected = (sourceFields, autoDetectedFields) => (
-  !!sourceFields?.some((field) => autoDetectedFields?.includes(field))
+  !!sourceFields?.some?.((field) => autoDetectedFields?.includes?.(field))
 );
 
 // Remap the value of an object attribute to a new attribute
@@ -289,10 +289,11 @@ const filterResourcesForSync = (
         };
       }
 
-      const isExpanded = matchingFromFields.some((mff) => (
-        mff.sourceFields.length > resource.sourceFields.length
-        && resource.sourceFields.every((l) => mff.sourceFields.includes(l))
-      ));
+      const isExpanded = matchingFromFields
+        .filter((mff) => resource.sourceFields
+          .filter((l) => mff.sourceFields.includes(l))
+          .length < resource.sourceFields.length)
+        .length > 0;
       if (isExpanded) {
         const expanded = resources.expanded
           ?.find((r) => r.genericId === resource.genericId
@@ -355,10 +356,11 @@ const filterResourcesForSync = (
       const matchingFromFields = incomingResources
         .filter((rff) => rff.genericId === resource.genericId
         && rff.resourceId === resource.resourceId);
-      const isReduced = matchingFromFields.some((mff) => (
-        mff.sourceFields.some((l) => resource.sourceFields.includes(l))
-        && mff.sourceFields.length < resource.sourceFields.length
-      ));
+      const isReduced = matchingFromFields
+        .filter((mff) => resource.sourceFields
+          .filter((l) => mff.sourceFields.includes(l))
+          .length < resource.sourceFields.length)
+        .length > 0;
       if (isReduced) {
         const reduced = resources.reduced
           ?.find((r) => r.genericId === resource.genericId
