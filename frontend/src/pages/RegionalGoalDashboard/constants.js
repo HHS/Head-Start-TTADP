@@ -1,0 +1,36 @@
+/* eslint-disable import/prefer-default-export */
+import {
+  regionFilter,
+  startDateFilter,
+  endDateFilter,
+  grantNumberFilter,
+  programSpecialistFilter,
+  programTypeFilter,
+  reasonsFilter,
+  recipientFilter,
+  reportIdFilter,
+  stateCodeFilter,
+  targetPopulationsFilter,
+  topicsFilter,
+  participantsFilter,
+  myReportsFilter,
+  ttaTypeFilter,
+} from '../../components/filter/activityReportFilters';
+
+export const DASHBOARD_FILTER_CONFIG = [
+  startDateFilter,
+  endDateFilter,
+  grantNumberFilter,
+  myReportsFilter,
+  participantsFilter,
+  programSpecialistFilter,
+  programTypeFilter,
+  reasonsFilter,
+  recipientFilter,
+  regionFilter,
+  reportIdFilter,
+  stateCodeFilter,
+  targetPopulationsFilter,
+  topicsFilter,
+  ttaTypeFilter,
+];

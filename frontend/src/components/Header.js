@@ -18,10 +18,6 @@ function Header({ authenticated, alert }) {
     'border-base-lighter',
   ];
 
-  if (!alert) {
-    headerClassNames.push('height-9');
-  }
-
   if (alert) {
     headerClassNames.push('has-alerts');
   }
@@ -33,21 +29,22 @@ function Header({ authenticated, alert }) {
           <SiteAlert
             heading={alert.title}
             variant={alert.variant}
+            size={alert.size}
           >
             <ReadOnlyEditor value={alert.message} ariaLabel="alert for the tta hub: " />
           </SiteAlert>
         </>
       )}
-      <div className="display-flex flex-row flex-align-start height-full flex-justify">
-        <div className="display-flex">
-          <div className="flex-column flex-align-self-center margin-left-2">
-            <img src={logo1x} srcSet={`${logo2x} 2x`} width="43" height="56" alt="ECLKC Blocks Logo" className="smart-hub-logo" />
+      <div className="display-flex flex-row flex-align-center flex-justify padding-x-2">
+        <div className="display-flex flex-align-center">
+          <div className="display-flex flex-column flex-align-center">
+            <img src={logo1x} srcSet={`${logo2x} 2x`} alt="ECLKC Blocks Logo" className="flex-align-self-center height-auto desktop:width-5 width-4" />
           </div>
-          <div className="flex-column flex-align-self-center margin-left-2">
+          <div className="flex-column desktop:margin-left-105 margin-left-1">
             <p className="smart-hub-title font-family-sans text-bold margin-y-1">Office of Head Start TTA Hub</p>
           </div>
         </div>
-        <div className="flex-column flex-align-self-center margin-right-2">
+        <div className="flex-column flex-align-self-center">
           <HeaderUserMenu />
         </div>
       </div>
@@ -61,6 +58,7 @@ Header.propTypes = {
     title: PropTypes.string,
     message: PropTypes.string,
     variant: PropTypes.string,
+    size: PropTypes.string,
   }),
 };
 

@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { NavLink as Link, withRouter } from 'react-router-dom';
 import FeatureFlag from './FeatureFlag';
 import './SiteNav.scss';
+import FeatureFlag from './FeatureFlag';
 
 const navLinkClasses = [
   'display-block',
@@ -70,7 +71,7 @@ const SiteNav = ({
           Please leave feedback
         </a>
       </div>
-      <div ref={siteNavContent} className="smart-hub-sitenav display-flex flex-column pin-y position-fixed z-0 padding-top-9 font-ui text-white smart-hub-bg-blue width-15 tablet:width-card desktop:width-card-lg no-print">
+      <div ref={siteNavContent} className="smart-hub-sitenav display-flex flex-column pin-y position-fixed z-0 desktop:padding-top-9 padding-top-6 font-ui text-white smart-hub-bg-blue width-15 tablet:width-card desktop:width-card-lg no-print">
         {authenticated && (
           <div className="smart-hub-sitenav-content-container display-flex flex-column flex-1 overflow-y-scroll">
             <div className="width-full smart-hub-sitenav-separator--after">
@@ -96,6 +97,18 @@ const SiteNav = ({
                       Regional Dashboard
                     </NavLink>
                   </li>
+                  <FeatureFlag flag="regional_goal_dashboard">
+                    <li>
+                      <NavLink
+                        to="/regional-goal-dashboard"
+                      >
+                        <span className="display-none tablet:display-inline padding-right-105">
+                          <FontAwesomeIcon color="white" icon={faBorderAll} />
+                        </span>
+                        Regional Goal Dashboard
+                      </NavLink>
+                    </li>
+                  </FeatureFlag>
                   <FeatureFlag flag="resources_dashboard" renderNotFound={false}>
                     <li>
                       <NavLink
