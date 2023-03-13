@@ -434,14 +434,11 @@ const deltaFromReduced = (removedReducedResources.reduced || []).filter((rrResou
       ...resource,
     }));
   // Remove the records of the delta dataset from the expanded dataset.
-  resourceActions.expanded = newExpandedResources.expanded
-    ?.filter((neResource) => resourceActions.delta
-      .filter((dResource) => dResource.genericId === neResource.genericId
-        && dResource.resourceId === neResource.resourceId)
-      .length === 0)
-    .map((resource) => ({
-      ...resource,
-    }));
+resourceActions.expanded = newExpandedResources.expanded?.filter((neResource) => (
+  !resourceActions.delta?.some((dResource) => (
+    dResource.genericId === neResource.genericId && dResource.resourceId === neResource.resourceId
+  ))
+))?.map((resource) => ({ ...resource }));
   // Remove the records of the delta dataset from the reduced dataset.
   resourceActions.reduced = removedReducedResources.reduced
     .filter((rrResource) => (resourceActions.delta || [])
