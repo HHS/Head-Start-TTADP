@@ -289,11 +289,10 @@ const filterResourcesForSync = (
         };
       }
 
-      const isExpanded = matchingFromFields
-        .filter((mff) => resource.sourceFields
-          .filter((l) => mff.sourceFields.includes(l))
-          .length < resource.sourceFields.length)
-        .length > 0;
+const isExpanded = matchingFromFields.some((mff) => (
+  mff.sourceFields.length > resource.sourceFields.length &&
+  resource.sourceFields.every((l) => mff.sourceFields.includes(l))
+));
       if (isExpanded) {
         const expanded = resources.expanded
           ?.find((r) => r.genericId === resource.genericId
