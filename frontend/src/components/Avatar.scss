@@ -3,5 +3,14 @@
 .avatar {
   font-size: 1.5rem;
   font-weight: 500;
+  height: 2.25rem;
+  width: 2.25rem;
   background-color: $ttahub-medium-blue;
+}
+
+@media all and (min-width: 64em){
+  .avatar {
+    height: 2.5rem;
+    width: 2.5rem;
+  }
 }
