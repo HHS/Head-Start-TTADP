@@ -355,11 +355,10 @@ const isExpanded = matchingFromFields.some((mff) => (
       const matchingFromFields = incomingResources
         .filter((rff) => rff.genericId === resource.genericId
         && rff.resourceId === resource.resourceId);
-      const isReduced = matchingFromFields
-        .filter((mff) => resource.sourceFields
-          .filter((l) => mff.sourceFields.includes(l))
-          .length < resource.sourceFields.length)
-        .length > 0;
+const isReduced = matchingFromFields.some((mff) => (
+  mff.sourceFields.some((l) => resource.sourceFields.includes(l)) &&
+  mff.sourceFields.length < resource.sourceFields.length
+));
       if (isReduced) {
         const reduced = resources.reduced
           ?.find((r) => r.genericId === resource.genericId
