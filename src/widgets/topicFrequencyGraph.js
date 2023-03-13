@@ -8,7 +8,7 @@ import {
 import { REPORT_STATUSES } from '../constants';
 
 export default async function topicFrequencyGraph(scopes) {
-  const topicsAndParticipants = await ActivityReport.findAll({
+  const topicsAndParticipants = await ActivityReport.scope().findAll({
     attributes: [
       'topics',
     ],
@@ -17,12 +17,14 @@ export default async function topicFrequencyGraph(scopes) {
       calculatedStatus: REPORT_STATUSES.APPROVED,
     },
     include: [{
-      model: ActivityReportObjective,
+      attributes: ['activityReportId'],
+      model: ActivityReportObjective.scope(),
       as: 'activityReportObjectives',
       required: false,
       include: [
         {
-          model: Topic,
+          attributes: ['id'],
+          model: Topic.scope(),
           as: 'topics',
         },
       ],
