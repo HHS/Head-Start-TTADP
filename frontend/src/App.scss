@@ -22,13 +22,19 @@ a:visited {
 
 @media all and (min-width: 30em){
   .tablet\:smart-hub-offset-nav {
-    margin-left: 11rem;
+    margin-left: 7.5rem;
+  }
+}
+
+@media all and (min-width: 40em){
+  .tablet\:smart-hub-offset-nav {
+    margin-left: 10rem;
   }
 }
 
 @media all and (min-width: 64em){
   .desktop\:smart-hub-offset-nav {
-    margin-left: 16rem;
+    margin-left: 15rem;
   }
 }
 
@@ -36,14 +42,9 @@ a:visited {
   background-color: $ttahub-blue;
 }
 
-smart-hub-title {
-  font-size: 1rem;
-}
-
 header > div {
   height: 3em;
 }
-
 
 @media all and (min-width: 64em){
   header > div {
