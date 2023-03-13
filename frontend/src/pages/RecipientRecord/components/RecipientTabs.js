@@ -14,7 +14,7 @@ export default function RecipientTabs({ region, recipientId, backLink }) {
   return (
     <div className="ttahub-recipient-record--tabs no-print">
       <nav className="ttahub-recipient-record--tabs_nav bg-white" aria-label="Recipient links">
-        <ul className="display-flex margin-0 margin-bottom-2 padding-0">
+        <ul className="display-flex margin-0 margin-bottom-5 padding-0">
           <li className={liClass}>
             <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/recipient-tta-records/${recipientId}/region/${region}/profile`}>Profile</NavLink>
           </li>
@@ -31,7 +31,7 @@ export default function RecipientTabs({ region, recipientId, backLink }) {
           </FeatureFlag>
         </ul>
       </nav>
-      { backLink && backLink.props && backLink.props.children ? (<FontAwesomeIcon className="margin-left-2 margin-right-1" data-testid="back-link-icon" color={colors.ttahubMediumBlue} icon={faArrowLeft} />) : null }
+      { backLink && backLink.props && backLink.props.children ? (<FontAwesomeIcon className="margin-right-1" data-testid="back-link-icon" color={colors.ttahubMediumBlue} icon={faArrowLeft} />) : null }
       {backLink}
     </div>
   );
