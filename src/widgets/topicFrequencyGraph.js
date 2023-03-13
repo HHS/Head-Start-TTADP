@@ -23,7 +23,7 @@ export default async function topicFrequencyGraph(scopes) {
       required: false,
       include: [
         {
-          attributes: ['id'],
+          attributes: ['id', 'name'],
           model: Topic.scope(),
           as: 'topics',
         },
