@@ -11,6 +11,7 @@ const renderWidgetContainer = (
   subtitle = 'Widget Container Subtitle',
   showPaging = false,
   handlePageChange = () => {},
+  error = null,
 ) => {
   render(
     <>
@@ -25,6 +26,7 @@ const renderWidgetContainer = (
         offset={0}
         perPage={10}
         handlePageChange={handlePageChange}
+        error={error}
       >
         This widget has been contained.
       </WidgetContainer>
@@ -63,5 +65,10 @@ describe('Widget Container', () => {
     renderWidgetContainer(null, null, true);
     expect(screen.getByText(/This widget has been contained./i)).toBeInTheDocument();
     expect(screen.getByText(/1-10 of 100/i)).toBeInTheDocument();
+  });
+
+  it('renders error message', async () => {
+    renderWidgetContainer(null, null, true, () => {}, 'Sample error message');
+    expect(screen.getByText(/Sample error message/i)).toBeInTheDocument();
   });
 });
