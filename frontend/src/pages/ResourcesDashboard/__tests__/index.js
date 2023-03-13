@@ -186,7 +186,6 @@ describe('Resources Dashboard page', () => {
 
     renderResourcesDashboard(user);
     expect(await screen.findByText(/resource dashboard/i)).toBeVisible();
-
     // Overview (initial).
     expect(screen.getByText(/40.85%/i)).toBeInTheDocument();
     expect(screen.getAllByText(/^[ \t]*reports with resources[ \t]*$/i)[0]).toBeInTheDocument();

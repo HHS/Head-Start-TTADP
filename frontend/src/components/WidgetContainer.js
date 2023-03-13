@@ -1,6 +1,7 @@
 /* eslint-disable react/no-array-index-key */
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Grid, Alert } from '@trussworks/react-uswds';
 import Container from './Container';
 import PaginationCard from './PaginationCard';
 
@@ -17,6 +18,7 @@ export default function WidgetContainer(
     offset,
     perPage,
     handlePageChange,
+    error,
   },
 ) {
   return (
@@ -31,6 +33,13 @@ export default function WidgetContainer(
             </div>
           )
       }
+      <Grid row>
+        {error && (
+        <Alert type="error" role="alert">
+          {error}
+        </Alert>
+        )}
+      </Grid>
       <div className="margin-top-0">
         {children}
       </div>
@@ -65,6 +74,7 @@ WidgetContainer.propTypes = {
   offset: PropTypes.number,
   perPage: PropTypes.number,
   handlePageChange: PropTypes.func,
+  error: PropTypes.string,
 };
 
 WidgetContainer.defaultProps = {
@@ -76,4 +86,5 @@ WidgetContainer.defaultProps = {
   offset: 0,
   perPage: 10,
   handlePageChange: () => { },
+  error: null,
 };

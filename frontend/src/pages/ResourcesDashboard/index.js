@@ -3,6 +3,7 @@ import React, {
   useMemo,
   useState,
   useEffect,
+  useCallback,
 } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
@@ -15,6 +16,7 @@ import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndRe
 import AriaLiveContext from '../../AriaLiveContext';
 import ResourcesDashboardOverview from '../../widgets/ResourcesDashboardOverview';
 import ResourceUse from '../../widgets/ResourceUse';
+import ResourcesAssociatedWithTopics from '../../widgets/ResourcesAssociatedWithTopics';
 import { expandFilters, filtersToQueryString } from '../../utils';
 import './index.scss';
 import fetchResourceData from '../../fetchers/Resources';
@@ -29,25 +31,45 @@ export default function ResourcesDashboard() {
   const ariaLiveContext = useContext(AriaLiveContext);
   const regions = allRegionsUserHasPermissionTo(user);
   const defaultRegion = user.homeRegionId || regions[0] || 0;
-  const hasMultipleRegions = regions && regions.length > 1;
   const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
   const [isLoading, setIsLoading] = useState(false);
   const [resourcesData, setResourcesData] = useState({});
   const [error, updateError] = useState();
+  const [resetPagination, setResetPagination] = useState(false);
+  const hasCentralOffice = useMemo(() => (
+    user && user.homeRegionId && user.homeRegionId === 14
+  ), [user]);
 
-  const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
-    FILTER_KEY,
-    defaultRegion !== 14
-      && defaultRegion !== 0
-      && hasMultipleRegions
-      ? [{
+  const getFiltersWithAllRegions = () => {
+    const filtersWithAllRegions = [...allRegionsFilters];
+    return filtersWithAllRegions;
+  };
+  const centralOfficeWithAllRegionFilters = getFiltersWithAllRegions();
+
+  const defaultFilters = useMemo(() => {
+    if (hasCentralOffice) {
+      return centralOfficeWithAllRegionFilters;
+    }
+
+    return [
+      {
         id: uuidv4(),
         topic: 'region',
         condition: 'is',
         query: defaultRegion,
-      }]
-      : allRegionsFilters,
+      },
+    ];
+  }, [defaultRegion, hasCentralOffice, centralOfficeWithAllRegionFilters]);
+
+  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(
+    FILTER_KEY,
+    defaultFilters,
   );
+
+  const setFilters = useCallback((newFilters) => {
+    setFiltersInHook(newFilters);
+    setResetPagination(true);
+  }, [setFiltersInHook]);
 
   // Remove Filters.
   const onRemoveFilter = (id, addBackDefaultRegions) => {
@@ -78,7 +100,7 @@ export default function ResourcesDashboard() {
       ]);
     }
 
-    ariaLiveContext.announce(`${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to resources`);
+    ariaLiveContext.announce(`${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to topics with resources `);
   };
 
   const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
@@ -152,6 +174,12 @@ export default function ResourcesDashboard() {
         <ResourceUse
           data={resourcesData.resourcesUse}
           loading={isLoading}
+        />
+
+        <ResourcesAssociatedWithTopics
+          filters={filters}
+          resetPagination={resetPagination}
+          setResetPagination={setResetPagination}
         />
       </>
     </div>

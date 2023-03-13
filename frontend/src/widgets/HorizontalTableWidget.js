@@ -41,7 +41,7 @@ export default function HorizontalTableWidget(
         break;
     }
     return (
-      <th className="bg-white text-left" scope="col" aria-sort={fullAriaSort}>
+      <th key={displayName.replace(' ', '_')} className="bg-white text-left" scope="col" aria-sort={fullAriaSort}>
         <a
           role="button"
           tabIndex={0}
