@@ -176,60 +176,30 @@ function sortObjectives(a, b) {
  * @returns {Object} { goals: [], objectives: []}
  */
 function makeGoalsObjectFromActivityReportGoals(goalRecords) {
-  // the number of the goal as it appears in the CSV
   let goalCsvRecordNumber = 1;
-
-  return goalRecords.reduce((acc, goal) => {
-    const goalId = goal ? goal.id : null;
-    const goalName = goal ? goal.name : null;
-    const goalNameIndex = goalName ? Object.values(acc).findIndex((n) => n === goalName) : -1;
-
-    // if the goal is new we iterate over the properties and update the accumulator
+  const goals = {};
+  goalRecords.forEach((goal) => {
+    const {
+      id = null,
+      name = null,
+      status = null,
+      createdVia = null,
+    } = goal || {};
+    const goalNameIndex = Object.values(goals).findIndex((n) => n === name);
     if (goalNameIndex === -1) {
-    // goal id
-      Object.defineProperty(acc, `goal-${goalCsvRecordNumber}-id`, {
-        value: `${goalId}`,
-        writable: true,
-        enumerable: true,
-      });
-      // goal name
-      Object.defineProperty(acc, `goal-${goalCsvRecordNumber}`, {
-        value: goalName,
-        enumerable: true,
-        writable: true,
-      });
-
-      // goal status
-      Object.defineProperty(acc, `goal-${goalCsvRecordNumber}-status`, {
-        value: goal.status,
-        enumerable: true,
-      });
-
-      // created via
-      Object.defineProperty(acc, `goal-${goalCsvRecordNumber}-created-from`, {
-        value: goal.createdVia,
-        enumerable: true,
-      });
+      goals[`goal-${goalCsvRecordNumber}-id`] = `${id}`;
+      goals[`goal-${goalCsvRecordNumber}`] = name;
+      goals[`goal-${goalCsvRecordNumber}-status`] = status;
+      goals[`goal-${goalCsvRecordNumber}-created-from`] = createdVia;
       goalCsvRecordNumber += 1;
-    // if the goal is not new, we have fewer properties to update
-    } else {
-      // get the goal number to with a regex field to update
-      const keys = Object.keys(acc);
-      const goalNameKey = keys[goalNameIndex];
-      const goalNumber = goalNameKey.match(/goal-(\d+)/)[1];
-      const field = `goal-${goalNumber}-id`;
-
-      // update the goal id
-      Object.defineProperty(acc, field, {
-        value: `${acc[field]}\n${goalId}`,
-        writable: true,
-        enumerable: true,
-      });
+      return;
     }
-
-    // iterate over the accumulator
-    return acc;
-  }, {});
+    const goalNameKey = Object.keys(goals)[goalNameIndex];
+    const goalNumber = goalNameKey.match(/goal-(\d+)/)[1];
+    const field = `goal-${goalNumber}-id`;
+    goals[field] = `${goals[field]}\n${id}`;
+  });
+  return goals;
 }
 
 /*
