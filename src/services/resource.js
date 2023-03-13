@@ -289,10 +289,10 @@ const filterResourcesForSync = (
         };
       }
 
-const isExpanded = matchingFromFields.some((mff) => (
-  mff.sourceFields.length > resource.sourceFields.length &&
-  resource.sourceFields.every((l) => mff.sourceFields.includes(l))
-));
+      const isExpanded = matchingFromFields.some((mff) => (
+        mff.sourceFields.length > resource.sourceFields.length
+        && resource.sourceFields.every((l) => mff.sourceFields.includes(l))
+      ));
       if (isExpanded) {
         const expanded = resources.expanded
           ?.find((r) => r.genericId === resource.genericId
@@ -329,9 +329,10 @@ const isExpanded = matchingFromFields.some((mff) => (
   // pull all of the removed and reduced resources in a single pass over the currentResources.
   const removedReducedResources = currentResources
     .reduce((resources, resource) => {
-const isRemoved = !incomingResources.some((rff) => (
-  rff.genericId === resource.genericId && rff.resourceId === resource.resourceId
-));
+      const isRemoved = !incomingResources.some((rff) => (
+        rff.genericId === resource.genericId
+        && rff.resourceId === resource.resourceId
+      ));
       if (isRemoved && resource.onApprovedAR !== true) {
         const removed = resources.removed
           ?.find((r) => r.genericId === resource.genericId);
@@ -354,10 +355,10 @@ const isRemoved = !incomingResources.some((rff) => (
       const matchingFromFields = incomingResources
         .filter((rff) => rff.genericId === resource.genericId
         && rff.resourceId === resource.resourceId);
-const isReduced = matchingFromFields.some((mff) => (
-  mff.sourceFields.some((l) => resource.sourceFields.includes(l)) &&
-  mff.sourceFields.length < resource.sourceFields.length
-));
+      const isReduced = matchingFromFields.some((mff) => (
+        mff.sourceFields.some((l) => resource.sourceFields.includes(l))
+        && mff.sourceFields.length < resource.sourceFields.length
+      ));
       if (isReduced) {
         const reduced = resources.reduced
           ?.find((r) => r.genericId === resource.genericId
@@ -388,19 +389,21 @@ const isReduced = matchingFromFields.some((mff) => (
     }, { removed: [], reduced: [] });
 
   // collect the intersection of the expanded and reduced datasets to generate the delta dataset.
-const deltaFromExpanded = (newExpandedResources.expanded || []).filter((neResource) => {
-  const isRemoved = (removedReducedResources.reduced || []).some((rrResource) => (
-    neResource.genericId === rrResource.genericId && neResource.resourceId === rrResource.resourceId
-  ));
-  return isRemoved;
-});
+  const deltaFromExpanded = (newExpandedResources.expanded || []).filter((neResource) => {
+    const isRemoved = (removedReducedResources.reduced || []).some((rrResource) => (
+      neResource.genericId === rrResource.genericId
+      && neResource.resourceId === rrResource.resourceId
+    ));
+    return isRemoved;
+  });
 
-const deltaFromReduced = (removedReducedResources.reduced || []).filter((rrResource) => {
-  const isAdded = (newExpandedResources.expanded || []).some((neResource) => (
-    neResource.genericId === rrResource.genericId && neResource.resourceId === rrResource.resourceId
-  ));
-  return isAdded;
-});
+  const deltaFromReduced = (removedReducedResources.reduced || []).filter((rrResource) => {
+    const isAdded = (newExpandedResources.expanded || []).some((neResource) => (
+      neResource.genericId === rrResource.genericId
+      && neResource.resourceId === rrResource.resourceId
+    ));
+    return isAdded;
+  });
 
   const resourceActions = {};
   // Generate the delta dataset
@@ -433,17 +436,19 @@ const deltaFromReduced = (removedReducedResources.reduced || []).filter((rrResou
       ...resource,
     }));
   // Remove the records of the delta dataset from the expanded dataset.
-resourceActions.expanded = newExpandedResources.expanded?.filter((neResource) => (
-  !resourceActions.delta?.some((dResource) => (
-    dResource.genericId === neResource.genericId && dResource.resourceId === neResource.resourceId
-  ))
-))?.map((resource) => ({ ...resource }));
+  resourceActions.expanded = newExpandedResources.expanded?.filter((neResource) => (
+    !resourceActions.delta?.some((dResource) => (
+      dResource.genericId === neResource.genericId
+      && dResource.resourceId === neResource.resourceId
+    ))
+  ))?.map((resource) => ({ ...resource }));
   // Remove the records of the delta dataset from the reduced dataset.
-resourceActions.reduced = removedReducedResources.reduced?.filter((rrResource) => (
-  !resourceActions.delta?.some((dResource) => (
-    dResource.genericId === rrResource.genericId && dResource.resourceId === rrResource.resourceId
-  ))
-));
+  resourceActions.reduced = removedReducedResources.reduced?.filter((rrResource) => (
+    !resourceActions.delta?.some((dResource) => (
+      dResource.genericId === rrResource.genericId
+      && dResource.resourceId === rrResource.resourceId
+    ))
+  ));
 
   resourceActions.new = newExpandedResources.created
     ?.map((resource) => ({
