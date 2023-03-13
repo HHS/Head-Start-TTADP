@@ -19,7 +19,7 @@ import ResourceUse from '../../widgets/ResourceUse';
 import ResourcesAssociatedWithTopics from '../../widgets/ResourcesAssociatedWithTopics';
 import { expandFilters, filtersToQueryString } from '../../utils';
 import './index.scss';
-import fetchResourceData from '../../fetchers/Resources';
+import { fetchResourceData } from '../../fetchers/Resources';
 
 import UserContext from '../../UserContext';
 import { RESOURCES_DASHBOARD_FILTER_CONFIG } from './constants';

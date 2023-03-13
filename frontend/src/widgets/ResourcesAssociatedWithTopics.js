@@ -4,7 +4,7 @@ import HorizontalTableWidget from './HorizontalTableWidget';
 import WidgetContainer from '../components/WidgetContainer';
 import useSessionSort from '../hooks/useSessionSort';
 import { TOPICS_PER_PAGE } from '../Constants';
-import fetchTopicResources from '../fetchers/Resources';
+import { fetchTopicResources } from '../fetchers/Resources';
 import { filtersToQueryString } from '../utils';
 
 function ResourcesAssociatedWithTopics({ filters, resetPagination, setResetPagination }) {
@@ -14,7 +14,7 @@ function ResourcesAssociatedWithTopics({ filters, resetPagination, setResetPagin
   const [perPage] = useState(TOPICS_PER_PAGE);
   const [topicsCount, setTopicsCount] = useState(0);
   const [sortConfig, setSortConfig] = useSessionSort({
-    sortBy: 'updatedAt',
+    sortBy: '1',
     direction: 'desc',
     activePage: 1,
   }, 'activityReportsTable');

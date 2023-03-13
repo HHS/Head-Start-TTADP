@@ -8,6 +8,7 @@ export const fetchResourceData = async (query) => {
 };
 
 export const fetchTopicResources = async (sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = TOPICS_PER_PAGE, filters) => {
-  const res = await get(join('/', 'api', 'resources', 'topic-resources', `??sortBy=${sortBy}&sortDir=${sortDir}&offset=${offset}&limit=${limit}${filters ? `&${filters}` : ''}`));
+  const request = join('/', 'api', 'resources', 'topic-resources', `?sortBy=${sortBy}&sortDir=${sortDir}&offset=${offset}&limit=${limit}${filters ? `&${filters}` : ''}`);
+  const res = await get(request);
   return res.json();
 };
