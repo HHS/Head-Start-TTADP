@@ -103,6 +103,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
             },
           ],
           where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE] } },
+          required: false,
         },
         {
           model: ObjectiveTopic,
@@ -582,6 +583,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
             through: {
               attributes: [],
               where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.OBJECTIVE.RESOURCE] } },
+              required: false,
             },
           },
           {
@@ -678,6 +680,7 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
             through: {
               attributes: [],
               where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.OBJECTIVE.RESOURCE] } },
+              required: false,
             },
           },
           {
@@ -1859,7 +1862,9 @@ export async function getGoalsForReport(reportId) {
             through: {
               attributes: [],
               where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.OBJECTIVE.RESOURCE] } },
+              required: false,
             },
+            required: false,
           },
           {
             model: File,
