@@ -329,10 +329,9 @@ const isExpanded = matchingFromFields.some((mff) => (
   // pull all of the removed and reduced resources in a single pass over the currentResources.
   const removedReducedResources = currentResources
     .reduce((resources, resource) => {
-      const isRemoved = incomingResources
-        .filter((rff) => rff.genericId === resource.genericId
-          && rff.resourceId === resource.resourceId)
-        .length === 0;
+const isRemoved = !incomingResources.some((rff) => (
+  rff.genericId === resource.genericId && rff.resourceId === resource.resourceId
+));
       if (isRemoved && resource.onApprovedAR !== true) {
         const removed = resources.removed
           ?.find((r) => r.genericId === resource.genericId);
