@@ -115,13 +115,7 @@ const findOrCreateResources = async (urls) => {
 // -----------------------------------------------------------------------------
 // Identify if passed sourceFields contain one or more of the autoDetectedFields.
 const calculateIsAutoDetected = (sourceFields, autoDetectedFields) => (
-  Array.isArray(sourceFields)
-  && sourceFields.length > 0
-  && Array.isArray(autoDetectedFields)
-  && autoDetectedFields.length > 0
-  && autoDetectedFields
-    .filter((field) => sourceFields.includes(field))
-    .length > 0
+  !!sourceFields?.some((field) => autoDetectedFields?.includes(field))
 );
 
 // Remap the value of an object attribute to a new attribute
