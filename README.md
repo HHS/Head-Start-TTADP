@@ -509,7 +509,14 @@ ex:
 ex:
 ```cf bs ttahub-smarthub-staging ttahub-redis-staging```
 
-Finally, trigger a redeploy through the Circle CI UI. By triggering a deploy rather than restaging, we are allowing cloud.gov
+5. Trigger a redeploy through the Circle CI UI (rather than restaging)
+
+6. Finally, you may need to reconfigure the network policies to allow the app to connect to the virus scanning api. Check your network policies with:
+ ```cf network-policies```
+If you see nothing there, you'll need to add an appropriate policy. 
+```cf add-network-policy tta-smarthub-APP_NAME clamav-api-ttahub-APP_NAME --protocol tcp --port 9443```
+ex: 
+```cf add-network-policy tta-smarthub-dev clamav-api-ttahub-dev --protocol tcp --port 9443```
 
 
 <!-- Links -->

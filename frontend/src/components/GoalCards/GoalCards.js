@@ -1,12 +1,16 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useRef, useEffect } from 'react';
+import React, {
+  useState, useRef, useEffect,
+} from 'react';
 import PropTypes from 'prop-types';
+import { useHistory } from 'react-router-dom';
 import { Grid, Alert } from '@trussworks/react-uswds';
 import GoalsCardsHeader from './GoalsCardsHeader';
 import Container from '../Container';
 import GoalCard from './GoalCard';
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
 import { updateGoalStatus } from '../../fetchers/goals';
+import { DECIMAL_BASE } from '../../Constants';
 
 function GoalCards({
   recipientId,
@@ -24,6 +28,9 @@ function GoalCards({
   perPage,
   perPageChange,
 }) {
+  const history = useHistory();
+  const [rttapaValidation, setRttapaValidation] = useState(false);
+
   // Goal select check boxes.
   const [selectedGoalCheckBoxes, setSelectedGoalCheckBoxes] = useState({});
   const [allGoalsChecked, setAllGoalsChecked] = useState(false);
@@ -124,6 +131,31 @@ function GoalCards({
     (g) => selectedGoalCheckBoxes[g],
   );
 
+  const selectedGoalIdsButNumerical = selectedCheckBoxes.map((id) => parseInt(id, DECIMAL_BASE));
+  const draftSelectedRttapa = goals.filter((g) => selectedGoalIdsButNumerical.includes(g.id) && g.goalStatus === 'Draft').map((g) => g.id);
+  const nonRttapaSelectedRttapa = goals.filter((g) => selectedGoalIdsButNumerical.includes(g.id) && g.isRttapa === 'No').map((g) => g.id);
+
+  const rttapaLink = (() => {
+    if (selectedCheckBoxes && selectedCheckBoxes.length) {
+      const selectedGoalIdsQuery = selectedCheckBoxes.map((id) => `goalId[]=${encodeURIComponent(id)}`).join('&');
+      return `/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/new?${selectedGoalIdsQuery}`;
+    }
+
+    return `/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/new`;
+  })();
+
+  const showRttapaValidation = (
+    rttapaValidation && !!(draftSelectedRttapa.length || nonRttapaSelectedRttapa.length)
+  );
+
+  const createRttapa = async () => {
+    if (draftSelectedRttapa.length || nonRttapaSelectedRttapa.length) {
+      setRttapaValidation(true);
+    } else {
+      history.push(rttapaLink);
+    }
+  };
+
   return (
     <>
       {error && (
@@ -133,7 +165,7 @@ function GoalCards({
         </Alert>
       </Grid>
       )}
-      <Container className="goals-table maxw-full overflow-x-hidden" paddingX={0} paddingY={0} loading={loading} loadingLabel="Goals table loading">
+      <Container className="goals-table maxw-full position-relative" paddingX={0} paddingY={0} positionRelative loading={loading} loadingLabel="Goals table loading">
         <CloseSuspendReasonModal
           id="close-suspend-reason-modal"
           goalIds={closeSuspendGoalIds}
@@ -162,9 +194,12 @@ function GoalCards({
           selectedGoalIds={selectedCheckBoxes}
           perPageChange={perPageChange}
           pageGoalIds={goals.map((g) => g.id)}
+          showRttapaValidation={showRttapaValidation}
+          createRttapa={createRttapa}
+          draftSelectedRttapa={draftSelectedRttapa}
+          nonRttapaSelectedRttapa={nonRttapaSelectedRttapa}
         />
-        <div>
-
+        <div className="padding-x-3 padding-y-2">
           {goals.map((goal, index) => (
             <GoalCard
               key={`goal-row-${goal.id}`}
@@ -178,6 +213,10 @@ function GoalCards({
               performGoalStatusUpdate={performGoalStatusUpdate}
               handleGoalCheckboxSelect={handleGoalCheckboxSelect}
               isChecked={selectedGoalCheckBoxes[goal.id] || false}
+              erroneouslySelected={showRttapaValidation && [
+                ...draftSelectedRttapa,
+                ...nonRttapaSelectedRttapa,
+              ].includes(goal.id)}
             />
           ))}
 

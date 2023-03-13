@@ -19,6 +19,7 @@ import useSession from '../../hooks/useSession';
 import FilterPanel from '../../components/filter/FilterPanel';
 import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
 import { RECIPIENT_SEARCH_FILTER_CONFIG } from './constants';
+import { expandFilters } from '../../utils';
 
 const DEFAULT_SORT = {
   sortBy: 'name',
@@ -112,7 +113,7 @@ function RecipientSearch({ user }) {
       try {
         const response = await searchRecipients(
           query,
-          filters,
+          expandFilters(filters),
           { ...sortConfig, offset },
         );
         setResults(response);
