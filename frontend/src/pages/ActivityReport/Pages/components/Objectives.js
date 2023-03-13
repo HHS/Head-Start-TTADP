@@ -39,7 +39,11 @@ export default function Objectives({
   );
 
   const onAddNew = () => {
-    append({ ...NEW_OBJECTIVE() });
+    // create a new objective for the DB
+
+    // when we return, update the form with the new objective
+
+    // append({ ...NEW_OBJECTIVE() });
   };
 
   const setUpdatedUsedObjectiveIds = () => {
