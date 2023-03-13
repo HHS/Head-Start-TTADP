@@ -389,16 +389,19 @@ const isReduced = matchingFromFields.some((mff) => (
     }, { removed: [], reduced: [] });
 
   // collect the intersection of the expanded and reduced datasets to generate the delta dataset.
-  const deltaFromExpanded = (newExpandedResources.expanded || [])
-    .filter((neResource) => (removedReducedResources.reduced || [])
-      .filter((rrResource) => neResource.genericId === rrResource.genericId
-        && neResource.resourceId === rrResource.resourceId)
-      .length > 0);
-  const deltaFromReduced = (removedReducedResources.reduced || [])
-    .filter((rrResource) => (newExpandedResources.expanded || [])
-      .filter((neResource) => neResource.genericId === rrResource.genericId
-        && neResource.resourceId === rrResource.resourceId)
-      .length > 0);
+const deltaFromExpanded = (newExpandedResources.expanded || []).filter((neResource) => {
+  const isRemoved = (removedReducedResources.reduced || []).some((rrResource) => (
+    neResource.genericId === rrResource.genericId && neResource.resourceId === rrResource.resourceId
+  ));
+  return isRemoved;
+});
+
+const deltaFromReduced = (removedReducedResources.reduced || []).filter((rrResource) => {
+  const isAdded = (newExpandedResources.expanded || []).some((neResource) => (
+    neResource.genericId === rrResource.genericId && neResource.resourceId === rrResource.resourceId
+  ));
+  return isAdded;
+});
 
   const resourceActions = {};
   // Generate the delta dataset
