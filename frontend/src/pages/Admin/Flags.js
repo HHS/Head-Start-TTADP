@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 import Container from '../../components/Container';
-import { getFeatures } from '../../fetchers/Admin';
+import { getFeatures, setFeatureFlag } from '../../fetchers/Admin';
 import './Flags.css';
 
 export default function Flags() {
@@ -21,6 +21,23 @@ export default function Flags() {
 
     fetchFeatures();
   }, []);
+
+  const handleOnFeatureFlag = async () => {
+    try {
+      await setFeatureFlag({ flag: 'anv_statistics', on: true });
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.log(err);
+    }
+  };
+  const handleOffFeatureFlag = async () => {
+    try {
+      await setFeatureFlag({ flag: 'anv_statistics', on: false });
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.log(err);
+    }
+  };
 
   return (
     <div>
@@ -47,6 +64,28 @@ export default function Flags() {
                 {' '}
                 &nbsp; &nbsp;
                 <Link to={`/admin/users?flag=${feature}`} aria-label={`view users with the ${feature} feature flag`}>View active users</Link>
+                {' '}
+                &nbsp; &nbsp;
+                {feature === 'anv_statistics' && (
+                <button
+                  type="button"
+                  className="usa-button usa-button--outline ttahub-export-reports"
+                  onClick={handleOnFeatureFlag}
+                >
+                  Turn on for all
+                </button>
+                )}
+                {' '}
+                &nbsp; &nbsp;
+                {feature === 'anv_statistics' && (
+                <button
+                  type="button"
+                  className="usa-button usa-button--outline ttahub-export-reports"
+                  onClick={handleOffFeatureFlag}
+                >
+                  Turn off for all
+                </button>
+                )}
               </li>
             ))}
           </ul>
