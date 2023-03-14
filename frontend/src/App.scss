@@ -36,14 +36,9 @@ a:visited {
   background-color: $ttahub-blue;
 }
 
-smart-hub-title {
-  font-size: 1rem;
-}
-
 header > div {
   height: 3em;
 }
-
 
 @media all and (min-width: 64em){
   header > div {
@@ -77,6 +72,12 @@ body {
 .smart-hub-border-base-lighter {
   border-color: $base-lighter;
 }
+
+.smart-hub-border-base-error {
+  border-width: 2px;
+  border-color: $error-dark;
+}
+
 
 .smart-hub-maxw-placard {
   max-width: 34.25rem;
@@ -296,4 +297,9 @@ fill: #1B1B1B;
 /* ========== plotly overrrides ========== */
 .plotly-notifier {
   z-index: 99999;
+}
+
+.smart-hub-title-big-serif {
+  font-size: 30px;
+  font-family: Merriweather, serif;
 }
