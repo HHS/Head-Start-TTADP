@@ -65,6 +65,12 @@ export const ALERT_VARIANTS = {
   EMERGENCY: 'emergency',
 };
 
+export const ALERT_SIZES = {
+  STANDARD: 'standard',
+  SLIM: 'slim',
+  LARGE: 'large',
+};
+
 export const DATE_FORMAT = 'MM/DD/YYYY';
 
 export const DECIMAL_BASE = 10;
@@ -99,6 +105,7 @@ export const TOPICS = [
   'Equity',
   'Facilities',
   'Family Support Services',
+  'Fatherhood / Male Caregiving',
   'Fiscal / Budget',
   'Five-Year Grant',
   'Home Visiting',
@@ -106,7 +113,7 @@ export const TOPICS = [
   'Leadership / Governance',
   'Learning Environments',
   'Nutrition',
-  'Ongoing Monitoring Management System',
+  'Ongoing Monitoring and Continuous Improvement',
   'Oral Health',
   'Parent and Family Engagement',
   'Partnerships and Community Engagement',

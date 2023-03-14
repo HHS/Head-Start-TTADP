@@ -12,7 +12,7 @@ import { DECIMAL_BASE } from '../Constants';
 
 const HOVER_TEMPLATE = '(%{x}, %{y})<extra></extra>';
 
-export function TotalHrsAndRecipientGraph({ data, loading }) {
+export function TotalHrsAndRecipientGraph({ data, loading, hideYAxis }) {
   // the state for which lines to show
   const [showTA, setShowTA] = useState(true);
   const [showTraining, setShowTraining] = useState(true);
@@ -186,6 +186,16 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
       },
     };
 
+    if (hideYAxis) {
+      layout.yaxis = {
+        ...layout.yaxis,
+        showline: false,
+        autotick: true,
+        ticks: '',
+        showticklabels: false,
+      };
+    }
+
     //  showTA, showTraining, showBoth
     // if false, then its a null for me dude
     // and then away it goes
@@ -196,7 +206,7 @@ export function TotalHrsAndRecipientGraph({ data, loading }) {
 
     // draw the plot
     Plotly.newPlot(lines.current, tracesToDraw, layout, { displayModeBar: false, hovermode: 'none', responsive: true });
-  }, [data, showAccessibleData, showBoth, showTA, showTraining]);
+  }, [data, hideYAxis, showAccessibleData, showBoth, showTA, showTraining]);
 
   useEffect(() => {
     if (!lines || !data || !Array.isArray(data) || !showAccessibleData) {
@@ -272,9 +282,11 @@ TotalHrsAndRecipientGraph.propTypes = {
     ), PropTypes.shape({}),
   ]),
   loading: PropTypes.bool.isRequired,
+  hideYAxis: PropTypes.bool,
 };
 
 TotalHrsAndRecipientGraph.defaultProps = {
+  hideYAxis: false,
   data: [
     {
       name: 'Hours of Training', x: [], y: [], month: '',

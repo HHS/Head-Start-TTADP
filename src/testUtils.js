@@ -21,7 +21,7 @@ import {
 import { auditLogger } from './logger';
 import { createOrUpdate } from './services/activityReports';
 
-import { GOAL_STATUS as GOAL_STATUS_CONST } from './widgets/goalStatusGraph';
+import { GOAL_STATUS as GOAL_STATUS_CONST } from './widgets/goalStatusByGoalName';
 
 const GOAL_STATUS = [Object.values(GOAL_STATUS_CONST)];
 

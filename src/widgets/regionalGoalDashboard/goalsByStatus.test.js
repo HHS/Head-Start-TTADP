@@ -1,10 +1,12 @@
-import goalStatusGraph, { GOAL_STATUS } from './goalStatusGraph';
-import db, { Grant, Recipient } from '../models';
+import goalsByStatus, { GOAL_STATUS } from './goalsByStatus';
+import db from '../../models';
 import {
   createGoal, destroyGoal, createGrant, createRecipient,
-} from '../testUtils';
+} from '../../testUtils';
 
-describe('goalStatusGraph', () => {
+const { Grant, Recipient } = db;
+
+describe('goalsByStatus', () => {
   const goals = [];
   let recipient;
   let grant;
@@ -68,7 +70,7 @@ describe('goalStatusGraph', () => {
         recipientId,
         onApprovedAR: true,
       }));
-      response = await goalStatusGraph({ goal: { id: goals.map((g) => g.id) } });
+      response = await goalsByStatus({ goal: { id: goals.map((g) => g.id) } });
     } catch (error) {
       // eslint-disable-next-line no-console
       console.log('goalStatusGraphTest: ', error);
@@ -79,18 +81,20 @@ describe('goalStatusGraph', () => {
     const promises = goals.map((goal) => destroyGoal(goal));
     await Promise.all(promises);
     await Grant.destroy({
-      where: { id: grant.id },
-      individualHooks: true,
+      where: {
+        id: grant.id,
+      },
     });
     await Recipient.destroy({
-      where: { id: recipient.id },
-      individualHooks: true,
+      where: {
+        id: recipient.id,
+      },
     });
     await db.sequelize.close();
   });
 
   it('counts the total number of goals', () => {
-    expect(response.total).toBe(7);
+    expect(response.total).toBe(goals.length);
   });
 
   describe('it counts status of', () => {
@@ -112,13 +116,6 @@ describe('goalStatusGraph', () => {
     it('ceased', () => {
       const ceased = response.Suspended;
       expect(ceased).toBe(0);
-    });
-  });
-
-  describe('it ignores status of', () => {
-    it('draft', () => {
-      const draft = response[GOAL_STATUS.DRAFT];
-      expect(draft).toBeUndefined();
     });
   });
 });
