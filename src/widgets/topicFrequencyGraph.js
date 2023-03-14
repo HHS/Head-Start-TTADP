@@ -8,27 +8,36 @@ import {
 import { REPORT_STATUSES } from '../constants';
 
 export default async function topicFrequencyGraph(scopes) {
-  const topicsAndParticipants = await ActivityReport.scope().findAll({
-    attributes: [
-      'topics',
-    ],
+  // console.time('overallTime2');
+
+  // Get reports for scopes.
+  const reportsToInclude = await ActivityReport.findAll({
+    attributes: ['id'],
+    raw: true,
     where: {
       [Op.and]: [scopes.activityReport],
       calculatedStatus: REPORT_STATUSES.APPROVED,
     },
-    include: [{
-      attributes: ['activityReportId'],
-      model: ActivityReportObjective.scope(),
-      as: 'activityReportObjectives',
-      required: false,
-      include: [
-        {
-          attributes: ['id', 'name'],
-          model: Topic.scope(),
-          as: 'topics',
-        },
-      ],
-    }],
+  });
+
+  // Get report ids for where.
+  const reportIds = reportsToInclude.map((r) => r.id);
+  const topicsAndParticipants = await sequelize.query(`
+    SELECT
+    ar."id",
+    MAX(ar."topics") as "topics",
+    array_agg(t."name") as "obj_topics"
+  FROM "ActivityReports" ar
+  LEFT JOIN "ActivityReportObjectives" aro
+    ON ar."id" = aro."activityReportId"
+  LEFT JOIN "ActivityReportObjectiveTopics" art
+    ON aro."id" = art."activityReportObjectiveId"
+  LEFT JOIN "Topics" t
+    ON art."topicId" = t.id
+  WHERE ar."id" IN (${reportIds.join(',')})
+  GROUP BY ar."id"
+  `, {
+    type: QueryTypes.SELECT,
   });
 
   // Get mappings.
@@ -56,11 +65,11 @@ export default async function topicFrequencyGraph(scopes) {
     count: 0,
   }));
 
-  return topicsAndParticipants.reduce((acc, report) => {
+  const toReturn = topicsAndParticipants.reduce((acc, report) => {
     // Get array of all topics from this reports and this reports objectives.
     const allTopics = [
       ...report.topics.map((t) => lookUpTopic.get(t)),
-      ...report.activityReportObjectives.flatMap((o) => o.topics.map((t) => t.name)),
+      ...report.obj_topics.filter((o) => o),
     ];
 
     // Loop all topics array and update totals.
@@ -73,4 +82,7 @@ export default async function topicFrequencyGraph(scopes) {
 
     return acc;
   }, topicsResponse);
+
+  // console.timeEnd('overallTime2');
+  return toReturn;
 }
