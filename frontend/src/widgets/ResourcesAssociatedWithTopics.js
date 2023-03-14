@@ -7,11 +7,16 @@ import { TOPICS_PER_PAGE } from '../Constants';
 import { fetchTopicResources } from '../fetchers/Resources';
 import { filtersToQueryString } from '../utils';
 
-function ResourcesAssociatedWithTopics({ filters, resetPagination, setResetPagination }) {
+function ResourcesAssociatedWithTopics({
+  filters,
+  resetPagination,
+  setResetPagination,
+  perPageNumber,
+}) {
   const [topicsWithResources, setTopicsWithResources] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [perPage] = useState(TOPICS_PER_PAGE);
+  const [perPage] = useState(perPageNumber);
   const [topicsCount, setTopicsCount] = useState(0);
   const [sortConfig, setSortConfig] = useSessionSort({
     sortBy: '1',
@@ -22,7 +27,6 @@ function ResourcesAssociatedWithTopics({ filters, resetPagination, setResetPagin
   const { activePage } = sortConfig;
 
   const [offset, setOffset] = useState((activePage - 1) * perPage);
-
   // a side effect that resets the pagination when the filters change
   useEffect(() => {
     if (resetPagination) {
@@ -89,7 +93,7 @@ function ResourcesAssociatedWithTopics({ filters, resetPagination, setResetPagin
       currentPage={activePage}
       totalCount={topicsCount}
       offset={offset}
-      perPage={TOPICS_PER_PAGE}
+      perPage={perPageNumber}
       handlePageChange={handlePageChange}
     >
       <HorizontalTableWidget
@@ -119,11 +123,13 @@ ResourcesAssociatedWithTopics.propTypes = {
   ).isRequired,
   resetPagination: PropTypes.bool,
   setResetPagination: PropTypes.func,
+  perPageNumber: PropTypes.number,
 };
 
 ResourcesAssociatedWithTopics.defaultProps = {
   resetPagination: false,
   setResetPagination: () => {},
+  perPageNumber: TOPICS_PER_PAGE,
 };
 
 export default ResourcesAssociatedWithTopics;

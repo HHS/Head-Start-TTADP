@@ -84,11 +84,15 @@ const resetMockData = {
 const withRegionOne = '&region.in[]=1';
 const withRegionTwo = '&region.in[]=2';
 const base = '/api/resources/topic-resources?sortBy=1&sortDir=desc&offset=0&limit=10';
+const baseOnePerPage = '/api/resources/topic-resources?sortBy=1&sortDir=desc&offset=0&limit=1';
+const basePageTwo = '/api/resources/topic-resources?sortBy=1&sortDir=desc&offset=1&limit=1';
 const defaultBaseUrlWithRegionOne = `${base}${withRegionOne}`;
 const defaultBaseUrlWithRegionTwo = `${base}${withRegionTwo}`;
+const defaultBaseOnePerUrlWithRegionOne = `${baseOnePerPage}${withRegionOne}`;
+const defaultBasePageTwoWithRegionOne = `${basePageTwo}${withRegionOne}`;
 
 // eslint-disable-next-line react/prop-types
-const TableMock = ({ filters }) => {
+const TableMock = ({ filters, perPage }) => {
   const [resetPagination, setResetPagination] = React.useState(false);
   return (
     <>
@@ -103,13 +107,14 @@ const TableMock = ({ filters }) => {
         filters={filters}
         resetPagination={resetPagination}
         setResetPagination={setResetPagination}
+        perPageNumber={perPage}
       />
     </>
   );
 };
 
-const renderResourcesAssociatedWithTopics = (filters) => {
-  render(<TableMock filters={filters} />);
+const renderResourcesAssociatedWithTopics = (filters, perPage = 10) => {
+  render(<TableMock filters={filters} perPage={perPage} />);
 };
 
 describe('Resources Associated with Topics', () => {
@@ -207,5 +212,74 @@ describe('Resources Associated with Topics', () => {
       expect(screen.getByRole('cell', { name: /333/i })).toBeInTheDocument();
       expect(screen.getByRole('cell', { name: /444/i })).toBeInTheDocument();
     });
+  });
+
+  it('handles page change', async () => {
+    fetchMock.get(defaultBaseOnePerUrlWithRegionOne, { count: 2, data: { ...mockData.data } });
+    renderResourcesAssociatedWithTopics([{
+      id: '1',
+      topic: 'region',
+      condition: 'is',
+      query: '1',
+    }], 1);
+
+    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    expect(screen.getByText(/Topics/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
+      expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
+      expect(screen.getByText(/Mar-22/i)).toBeInTheDocument();
+
+      expect(screen.getByRole('link', { name: /https:\/\/official\.gov/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /66/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /77/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /88/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /99/i })).toBeInTheDocument();
+    });
+    expect(screen.getByRole('columnheader', { name: /total/i })).toBeInTheDocument();
+
+    // Click page change.
+    const nextPageBtn = await screen.findByRole('button', { name: /page 2/i });
+    fetchMock.reset();
+    expect(fetchMock.called()).toBe(false);
+    fetchMock.get(defaultBasePageTwoWithRegionOne, { count: 2, data: { ...resetMockData.data } });
+    act(() => fireEvent.click(nextPageBtn));
+    await waitFor(() => expect(fetchMock.called()).toBe(true));
+
+    // Verify reset data.
+    await waitFor(() => {
+      expect(screen.getByText(/Apr-22/i)).toBeInTheDocument();
+      expect(screen.getByText(/May-22/i)).toBeInTheDocument();
+      expect(screen.getByText(/Jun-22/i)).toBeInTheDocument();
+
+      expect(screen.getByRole('link', { name: /https:\/\/official2\.gov/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /111/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /222/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /333/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /444/i })).toBeInTheDocument();
+    });
+
+    // Click < Prev page.
+    const prevPageBtn = await screen.findByRole('button', { name: /previous page/i });
+    fetchMock.reset();
+    expect(fetchMock.called()).toBe(false);
+    fetchMock.get(defaultBaseOnePerUrlWithRegionOne, { count: 2, data: { ...mockData.data } });
+    act(() => fireEvent.click(prevPageBtn));
+    await waitFor(() => expect(fetchMock.called()).toBe(true));
+
+    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    expect(screen.getByText(/Topics/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
+      expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
+      expect(screen.getByText(/Mar-22/i)).toBeInTheDocument();
+
+      expect(screen.getByRole('link', { name: /https:\/\/official\.gov/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /66/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /77/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /88/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /99/i })).toBeInTheDocument();
+    });
+    expect(screen.getByRole('columnheader', { name: /total/i })).toBeInTheDocument();
   });
 });
