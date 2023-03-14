@@ -5,8 +5,8 @@ import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import Flags from '../Flags';
 import userEvent from '@testing-library/user-event';
+import Flags from '../Flags';
 
 const featuresUrl = join('/', 'api', 'admin', 'users', 'features');
 

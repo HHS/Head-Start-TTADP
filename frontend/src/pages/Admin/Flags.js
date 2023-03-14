@@ -62,7 +62,7 @@ export default function Flags() {
                 <button
                   type="button"
                   className="usa-button usa-button--outline ttahub-export-reports"
-                  onClick={ () => handleOnOffFeatureFlag(feature, true) }
+                  onClick={() => handleOnOffFeatureFlag(feature, true)}
                 >
                   Turn on for all
                 </button>
@@ -73,7 +73,7 @@ export default function Flags() {
                 <button
                   type="button"
                   className="usa-button usa-button--outline ttahub-export-reports"
-                  onClick={ () => handleOnOffFeatureFlag(feature, false) }
+                  onClick={() => handleOnOffFeatureFlag(feature, false)}
                 >
                   Turn off for all
                 </button>
