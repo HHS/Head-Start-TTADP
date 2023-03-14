@@ -66,13 +66,19 @@ const RenderApprover = ({
 };
 
 const renderReview = (
-  calculatedStatus, onFormReview, reviewed, approvers = defaultApprover, pages = defaultPages,
+  calculatedStatus,
+  onFormReview,
+  reviewed,
+  approvers = defaultApprover,
+  pages = defaultPages,
+  extraFormData = {},
 ) => {
   const formData = {
     author: { name: 'user', id: 4 },
     additionalNotes: '',
     calculatedStatus,
     approvers,
+    ...extraFormData,
   };
 
   const history = createMemoryHistory();
@@ -118,6 +124,22 @@ describe('Approver review page', () => {
       renderReview(REPORT_STATUSES.SUBMITTED, () => { }, true);
       const notes = await screen.findByLabelText('additionalNotes');
       expect(notes.textContent).toContain('No creator notes');
+    });
+
+    it('shows date submitted', async () => {
+      renderReview(REPORT_STATUSES.SUBMITTED, () => { }, true, defaultApprover, defaultPages, { submittedDate: '2023-03-03' });
+      expect(await screen.findByText(/date submitted/i)).toBeVisible();
+      expect(await screen.findByText('03/03/2023')).toBeVisible();
+    });
+
+    it('hides date submitted if missing', async () => {
+      renderReview(REPORT_STATUSES.SUBMITTED,
+        () => { },
+        true,
+        defaultApprover,
+        defaultPages,
+        { submittedDate: null });
+      expect(screen.queryAllByText(/date submitted/i).length).toBe(0);
     });
 
     it('handles approver reviewing needs action', async () => {

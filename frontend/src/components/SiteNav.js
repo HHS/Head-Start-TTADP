@@ -5,6 +5,7 @@ import { NavLink as Link, withRouter } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartColumn, faBorderAll, faUserFriends } from '@fortawesome/free-solid-svg-icons';
 import './SiteNav.scss';
+import FeatureFlag from './FeatureFlag';
 
 const navLinkClasses = [
   'display-block',
@@ -103,6 +104,18 @@ const SiteNav = ({
                       Regional Dashboard
                     </NavLink>
                   </li>
+                  <FeatureFlag flag="regional_goal_dashboard">
+                    <li>
+                      <NavLink
+                        to="/regional-goal-dashboard"
+                      >
+                        <span className="display-none tablet:display-inline padding-right-105">
+                          <FontAwesomeIcon color="white" icon={faBorderAll} />
+                        </span>
+                        Regional Goal Dashboard
+                      </NavLink>
+                    </li>
+                  </FeatureFlag>
                   <li>
                     <NavLink
                       to="/recipient-tta-records"
