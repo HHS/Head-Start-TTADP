@@ -44,4 +44,15 @@ describe('Flags page', () => {
     userEvent.click(onButton);
     expect(onButton).toBeDefined();
   });
+
+  it('displays "Turn off for all button"', async () => {
+    fetchMock.get(featuresUrl, ['anv_statistics']);
+    const history = createMemoryHistory();
+    render(<Router history={history}><Flags /></Router>);
+    const anvStats = await screen.findByText(/anv_statistics/i);
+    expect(anvStats).toBeVisible();
+    const offButton = await screen.findByText(/turn off for all/i);
+    expect(offButton).toBeVisible();
+    userEvent.click(offButton);
+  });
 });
