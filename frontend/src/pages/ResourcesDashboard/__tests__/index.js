@@ -5,7 +5,7 @@ import join from 'url-join';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
 import {
-  act, render, screen, fireEvent,
+  act, render, screen, fireEvent, waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
@@ -18,6 +18,8 @@ import AriaLiveContext from '../../../AriaLiveContext';
 const history = createMemoryHistory();
 
 const resourcesUrl = join('api', 'resources');
+
+const resourcesAssociatedBase = '/api/resources/topic-resources?sortBy=1&sortDir=desc&offset=0&limit=10';
 
 const resourcesDefault = {
   resourcesDashboardOverview: {
@@ -57,6 +59,37 @@ const resourcesDefault = {
       },
     ],
   },
+};
+
+const resourcesAssociatedDefault = {
+  count: 1,
+  data:
+    {
+      headers: ['Oct-22', 'Nov-22', 'Dec-22'],
+      rows: [{
+        heading: 'https://official1.gov',
+        isUrl: true,
+        data: [
+          {
+            title: 'Oct-22',
+            value: '66',
+          },
+          {
+            title: 'Nov-22',
+            value: '77',
+          },
+          {
+            title: 'Dec-22',
+            value: '88',
+          },
+          {
+            title: 'total',
+            value: '99',
+          },
+        ],
+      },
+      ],
+    },
 };
 
 const resourcesRegion1 = {
@@ -99,6 +132,37 @@ const resourcesRegion1 = {
   },
 };
 
+const resourcesAssociatedRegion1 = {
+  count: 1,
+  data:
+    {
+      headers: ['Oct-22', 'Nov-22', 'Dec-22'],
+      rows: [{
+        heading: 'https://official2.gov',
+        isUrl: true,
+        data: [
+          {
+            title: 'Oct-22',
+            value: '111',
+          },
+          {
+            title: 'Nov-22',
+            value: '222',
+          },
+          {
+            title: 'Dec-22',
+            value: '333',
+          },
+          {
+            title: 'total',
+            value: '444',
+          },
+        ],
+      },
+      ],
+    },
+};
+
 const resourcesRegion2 = {
   resourcesDashboardOverview: {
     report: {
@@ -139,6 +203,37 @@ const resourcesRegion2 = {
   },
 };
 
+const resourcesAssociatedRegion2 = {
+  count: 1,
+  data:
+    {
+      headers: ['Oct-22', 'Nov-22', 'Dec-22'],
+      rows: [{
+        heading: 'https://official3.gov',
+        isUrl: true,
+        data: [
+          {
+            title: 'Oct-22',
+            value: '333',
+          },
+          {
+            title: 'Nov-22',
+            value: '444',
+          },
+          {
+            title: 'Dec-22',
+            value: '555',
+          },
+          {
+            title: 'total',
+            value: '666',
+          },
+        ],
+      },
+      ],
+    },
+};
+
 const allRegions = 'region.in[]=1&region.in[]=2';
 const mockAnnounce = jest.fn();
 const regionInParams = 'region.in[]=1';
@@ -162,17 +257,20 @@ describe('Resources Dashboard page', () => {
   it('renders correctly', async () => {
     // Page Load.
     fetchMock.get(`${resourcesUrl}?${allRegions}`, resourcesDefault);
+    fetchMock.get(`${resourcesAssociatedBase}&${allRegions}`, resourcesAssociatedDefault);
 
     // Region 1.
     fetchMock.get(`${resourcesUrl}?${regionInParams}`, resourcesRegion1);
+    fetchMock.get(`${resourcesAssociatedBase}&${regionInParams}`, resourcesAssociatedRegion1);
 
     // Region 2.
     fetchMock.get(`${resourcesUrl}?${regionTwoInParams}`, resourcesRegion2);
+    fetchMock.get(`${resourcesAssociatedBase}&${regionTwoInParams}`, resourcesAssociatedRegion2);
 
     // Report ID (non-region).
     fetchMock.get(`${resourcesUrl}?${reportIdInParams}`, resourcesRegion2);
+    fetchMock.get(`${resourcesAssociatedBase}&${reportIdInParams}`, resourcesAssociatedRegion2);
 
-    // Remove Region Filter.
     const user = {
       homeRegionId: 14,
       permissions: [{
@@ -186,6 +284,7 @@ describe('Resources Dashboard page', () => {
 
     renderResourcesDashboard(user);
     expect(await screen.findByText(/resource dashboard/i)).toBeVisible();
+
     // Overview (initial).
     expect(screen.getByText(/40.85%/i)).toBeInTheDocument();
     expect(screen.getAllByText(/^[ \t]*reports with resources[ \t]*$/i)[0]).toBeInTheDocument();
@@ -206,7 +305,20 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/17/i)).toBeInTheDocument();
     expect(screen.getByText(/20/i)).toBeInTheDocument();
 
-    // Remove existing filter.
+    // Resources Associated Default.
+    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    expect(screen.getByText(/Topics/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
+      expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
+      expect(screen.getByText(/Dec-22/i)).toBeInTheDocument();
+
+      expect(screen.getByRole('link', { name: /https:\/\/official1\.gov/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /66/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /77/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /88/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /99/i })).toBeInTheDocument();
+    });
 
     // Add region filter.
     let open = await screen.findByRole('button', { name: /open filters for this page/i });
@@ -247,6 +359,20 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test2.gov/i)).toBeInTheDocument();
 
+    // Resources Region 1.
+    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
+      expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
+      expect(screen.getByText(/Dec-22/i)).toBeInTheDocument();
+
+      expect(screen.getByRole('link', { name: /https:\/\/official2\.gov/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /111/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /222/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /333/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /444/i })).toBeInTheDocument();
+    });
+
     // Remove filter.
     open = await screen.findByRole('button', { name: /open filters for this page/i });
     act(() => userEvent.click(open));
@@ -277,6 +403,20 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
     expect(screen.getByText(/17/i)).toBeInTheDocument();
     expect(screen.getByText(/20/i)).toBeInTheDocument();
+
+    // Resources Associated Default.
+    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
+      expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
+      expect(screen.getByText(/Dec-22/i)).toBeInTheDocument();
+
+      expect(screen.getByRole('link', { name: /https:\/\/official1\.gov/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /66/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /77/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /88/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /99/i })).toBeInTheDocument();
+    });
 
     // Add region filter test pill remove.
     open = await screen.findByRole('button', { name: /open filters for this page/i });
@@ -312,6 +452,20 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test3.gov/i)).toBeInTheDocument();
     expect(screen.getByText(/19/i)).toBeInTheDocument();
+
+    // Resources Region 2.
+    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
+      expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
+      expect(screen.getByText(/Dec-22/i)).toBeInTheDocument();
+
+      expect(screen.getByRole('link', { name: /https:\/\/official3\.gov/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /333/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /444/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /555/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /666/i })).toBeInTheDocument();
+    });
 
     // Test filter updates from region pill remove.
     let removePill = await screen.findByRole('button', { name: /this button removes the filter: region is 2/i });
@@ -373,6 +527,20 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/test3.gov/i)).toBeInTheDocument();
     expect(screen.getByText(/19/i)).toBeInTheDocument();
 
+    // Resources Region 2.
+    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
+      expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
+      expect(screen.getByText(/Dec-22/i)).toBeInTheDocument();
+
+      expect(screen.getByRole('link', { name: /https:\/\/official3\.gov/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /333/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /444/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /555/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /666/i })).toBeInTheDocument();
+    });
+
     // Test remove non-region filter pill.
     removePill = await screen.findByRole('button', { name: /this button removes the filter: report id contains 123/i });
     act(() => userEvent.click(removePill));
@@ -397,5 +565,20 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
     expect(screen.getByText(/17/i)).toBeInTheDocument();
     expect(screen.getByText(/20/i)).toBeInTheDocument();
+
+    // Resources Associated Default.
+    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    expect(screen.getByText(/Topics/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
+      expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
+      expect(screen.getByText(/Dec-22/i)).toBeInTheDocument();
+
+      expect(screen.getByRole('link', { name: /https:\/\/official1\.gov/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /66/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /77/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /88/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /99/i })).toBeInTheDocument();
+    });
   });
 });
