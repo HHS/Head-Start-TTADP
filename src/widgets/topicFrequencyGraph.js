@@ -8,57 +8,69 @@ import {
 import { REPORT_STATUSES } from '../constants';
 
 export default async function topicFrequencyGraph(scopes) {
-  // console.time('overallTime2');
-
-  // Get reports for scopes.
-  const reportsToInclude = await ActivityReport.findAll({
-    attributes: ['id'],
-    raw: true,
-    where: {
-      [Op.and]: [scopes.activityReport],
-      calculatedStatus: REPORT_STATUSES.APPROVED,
-    },
-  });
-
-  // Get report ids for where.
-  const reportIds = reportsToInclude.map((r) => r.id);
-  const topicsAndParticipants = await sequelize.query(`
+  const [
+    topicsAndParticipants,
+    topicMappings,
+    dbTopics,
+  ] = await Promise.all([
+    ActivityReport.findAll({
+      attributes: [
+        [
+          sequelize.literal(`(
+            SELECT ARRAY_REMOVE(ARRAY_AGG(DISTINCT  x.topic), null)
+            FROM (
+              SELECT ar.topic
+              FROM UNNEST(COALESCE("ActivityReport"."topics",array[]::varchar[])) ar(topic)
+              UNION
+              SELECT aro.topic
+              FROM UNNEST(ARRAY_AGG("activityReportObjectives->topics".name)) aro(topic)
+            ) x(topic)
+            GROUP BY TRUE
+          )`),
+          'topics',
+        ],
+      ],
+      group: ['"ActivityReport".id'],
+      where: {
+        [Op.and]: [scopes.activityReport],
+      },
+      include: [{
+        attributes: [],
+        model: ActivityReportObjective,
+        as: 'activityReportObjectives',
+        required: false,
+        include: [
+          {
+            attributes: [],
+            model: Topic,
+            as: 'topics',
+            through: {
+              attributes: [],
+            },
+          },
+        ],
+      }],
+    }),
+    // Get mappings.
+    sequelize.query(`
     SELECT
-    ar."id",
-    MAX(ar."topics") as "topics",
-    array_agg(t."name") as "obj_topics"
-  FROM "ActivityReports" ar
-  LEFT JOIN "ActivityReportObjectives" aro
-    ON ar."id" = aro."activityReportId"
-  LEFT JOIN "ActivityReportObjectiveTopics" art
-    ON aro."id" = art."activityReportObjectiveId"
-  LEFT JOIN "Topics" t
-    ON art."topicId" = t.id
-  WHERE ar."id" IN (${reportIds.join(',')})
-  GROUP BY ar."id"
-  `, {
-    type: QueryTypes.SELECT,
-  });
-
-  // Get mappings.
-  const topicMappings = await sequelize.query(`
-  SELECT
-    DISTINCT
-    TT."name",
-    COALESCE(TT2."name", TT."name") AS final_name
-  FROM "Topics" TT
-  LEFT JOIN "Topics" TT2 ON TT."mapsTo" = TT2.ID
-  WHERE TT."deletedAt" IS NULL OR TT."mapsTo" IS NOT NULL
-  ORDER BY TT."name"
-  `, { type: QueryTypes.SELECT });
+      DISTINCT
+      TT."name",
+      COALESCE(TT2."name", TT."name") AS final_name
+    FROM "Topics" TT
+    LEFT JOIN "Topics" TT2 ON TT."mapsTo" = TT2.ID
+    WHERE TT."deletedAt" IS NULL OR TT."mapsTo" IS NOT NULL
+    ORDER BY TT."name"
+    `, { type: QueryTypes.SELECT }),
+    Topic.findAll({
+      attributes: ['id', 'name', 'deletedAt'],
+      order: [['name', 'ASC']],
+    }),
+  ]);
 
   const lookUpTopic = new Map(topicMappings.map((i) => [i.name, i.final_name]));
 
   // Get all DB topics.
-  const dbTopics = await Topic.findAll({
-    attributes: ['id', 'name', 'deletedAt'],
-    order: [['name', 'ASC']],
-  });
   const topics = dbTopics.map((t) => t.name);
   const topicsResponse = topics.map((topic) => ({
     topic,
@@ -67,10 +79,7 @@ export default async function topicFrequencyGraph(scopes) {
 
   const toReturn = topicsAndParticipants.reduce((acc, report) => {
     // Get array of all topics from this reports and this reports objectives.
-    const allTopics = [
-      ...report.topics.map((t) => lookUpTopic.get(t)),
-      ...report.obj_topics.filter((o) => o),
-    ];
+    const allTopics = report.topics.map((t) => lookUpTopic.get(t));
 
     // Loop all topics array and update totals.
     allTopics.forEach((topic) => {
