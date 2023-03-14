@@ -22,7 +22,6 @@ describe('activityReportObjective hooks', () => {
   let objective;
   let aro;
   let file;
-  let or;
 
   beforeAll(async () => {
     ar = await ActivityReport.create({ ...draftObject });
@@ -76,7 +75,7 @@ describe('activityReportObjective hooks', () => {
     });
 
     await ObjectiveResource.destroy({
-      where: { id: or.id },
+      where: { objectiveId: objective.id },
     });
 
     await ActivityReportObjectiveTopic.destroy({
@@ -85,10 +84,6 @@ describe('activityReportObjective hooks', () => {
 
     await Topic.destroy({
       where: { id: topic.id },
-    });
-
-    await Topic.destroy({
-      where: { name: 'Javascript Mastery' },
     });
 
     await ActivityReportObjective.destroy({
