@@ -26,7 +26,7 @@ export default function HorizontalTableWidget(
   },
 ) {
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
-  const renderSortableColumnHeader = (displayName, name) => {
+  const renderSortableColumnHeader = (displayName, name, classValues) => {
     const sortClassName = getClassNamesFor(name);
     let fullAriaSort;
     switch (sortClassName) {
@@ -41,7 +41,7 @@ export default function HorizontalTableWidget(
         break;
     }
     return (
-      <th key={displayName.replace(' ', '_')} className="bg-white text-left" scope="col" aria-sort={fullAriaSort}>
+      <th key={displayName.replace(' ', '_')} className={classValues || 'bg-white text-left'} scope="col" aria-sort={fullAriaSort}>
         <a
           role="button"
           tabIndex={0}
@@ -64,17 +64,29 @@ export default function HorizontalTableWidget(
       <Table stackedStyle="default" fullWidth striped bordered={false}>
         <thead>
           <tr className="bg-white border-bottom-0 text-bold">
-            <th className="smarthub-horizontal-table-first-column">
-              {firstHeading}
-            </th>
+            {
+              enableSorting
+                ? renderSortableColumnHeader(firstHeading, firstHeading.replaceAll(' ', '_'), 'smarthub-horizontal-table-first-column')
+                : (
+                  <th className="smarthub-horizontal-table-first-column">
+                    {firstHeading}
+                  </th>
+                )
+            }
             {
             headers.map((h) => (enableSorting
               ? renderSortableColumnHeader(h, h.replaceAll(' ', '_'))
               : <th key={h.replace(' ', '_')} scope="col" className="text-left">{h}</th>))
             }
-            <th className="smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0">
-              {lastHeading}
-            </th>
+            {
+            enableSorting
+              ? renderSortableColumnHeader(lastHeading, lastHeading.replaceAll(' ', '_'), 'smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0')
+              : (
+                <th className="smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0">
+                  {lastHeading}
+                </th>
+              )
+}
           </tr>
         </thead>
         <tbody>
