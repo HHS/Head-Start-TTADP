@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { NavLink as Link, withRouter } from 'react-router-dom';
-import FeatureFlag from './FeatureFlag';
 import './SiteNav.scss';
 import FeatureFlag from './FeatureFlag';
 
@@ -102,9 +101,6 @@ const SiteNav = ({
                       <NavLink
                         to="/regional-goal-dashboard"
                       >
-                        <span className="display-none tablet:display-inline padding-right-105">
-                          <FontAwesomeIcon color="white" icon={faBorderAll} />
-                        </span>
                         Regional Goal Dashboard
                       </NavLink>
                     </li>

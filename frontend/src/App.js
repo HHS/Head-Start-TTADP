@@ -45,7 +45,6 @@ import {
 import AppLoadingContext from './AppLoadingContext';
 import Loader from './components/Loader';
 import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
-import FeatureFlag from './components/FeatureFlag';
 import MyGroups from './pages/AccountManagement/MyGroups';
 
 function App() {
