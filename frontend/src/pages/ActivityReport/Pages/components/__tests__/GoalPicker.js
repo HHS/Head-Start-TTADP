@@ -47,6 +47,7 @@ const GP = ({ availableGoals, selectedGoals }) => {
           roles={['central office']}
           grantIds={[]}
           reportId={1}
+          updateAvailableGoals={jest.fn()}
         />
       </FormProvider>
     </AppLoadingContext.Provider>

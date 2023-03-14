@@ -125,6 +125,12 @@ export const saveGoalsForReport = async (data) => {
   return goals.json();
 };
 
+export async function createNewGoalsForReport(reportId, grantIds) {
+  const url = join(activityReportUrl, reportId.toString(DECIMAL_BASE), 'goals', 'new');
+  const goals = await post(url, { grantIds });
+  return goals.json();
+}
+
 export const saveObjectivesForReport = async (data) => {
   const url = join(activityReportUrl, 'objectives');
   const objectives = await post(url, data);

@@ -2,7 +2,9 @@
 import _ from 'lodash';
 import { Op } from 'sequelize';
 import moment from 'moment';
-import { REPORT_STATUSES, DECIMAL_BASE, REPORTS_PER_PAGE } from '../constants';
+import {
+  REPORT_STATUSES, DECIMAL_BASE, REPORTS_PER_PAGE, GOAL_STATUS,
+} from '../constants';
 import orderReportsBy from '../lib/orderReportsBy';
 import filtersToScopes from '../scopes';
 import { setReadRegions } from './accessValidation';
@@ -1547,4 +1549,37 @@ export async function activityReportsApprovedByDate(userId, date) {
     ],
   });
   return reports;
+}
+
+/**
+ *
+ */
+export async function newGoalsForReport(grantIds) {
+  const defaultNewGoal = {
+    name: '',
+    status: GOAL_STATUS.NOT_STARTED,
+    onApprovedAR: false,
+  };
+
+  if (!grantIds || !grantIds.length) {
+    throw new Error('No grant ids provided to create a new goal for report');
+  }
+
+  const goals = await Goal.bulkCreate(grantIds.map((grantId) => ({ grantId, ...defaultNewGoal })));
+
+  // we only want to return one object since that's how the frontend expects it
+  return {
+    number: false,
+    objectives: [],
+    name: defaultNewGoal.name,
+    goalNumber: '',
+    isNew: false,
+    endDate: '',
+    onApprovedAR: false,
+    grantIds,
+    goalIds: goals.map((g) => g.id),
+    oldGrantIds: [],
+    status: defaultNewGoal.status,
+    isRttapa: '',
+  };
 }
