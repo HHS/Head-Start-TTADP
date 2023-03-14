@@ -22,17 +22,9 @@ export default function Flags() {
     fetchFeatures();
   }, []);
 
-  const handleOnFeatureFlag = async () => {
+  const handleOnOffFeatureFlag = async (feature, isOn) => {
     try {
-      await setFeatureFlag({ flag: 'anv_statistics', on: true });
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.log(err);
-    }
-  };
-  const handleOffFeatureFlag = async () => {
-    try {
-      await setFeatureFlag({ flag: 'anv_statistics', on: false });
+      await setFeatureFlag({ flag: feature, on: isOn });
     } catch (err) {
       // eslint-disable-next-line no-console
       console.log(err);
@@ -70,7 +62,7 @@ export default function Flags() {
                 <button
                   type="button"
                   className="usa-button usa-button--outline ttahub-export-reports"
-                  onClick={handleOnFeatureFlag}
+                  onClick={ () => handleOnOffFeatureFlag(feature, true) }
                 >
                   Turn on for all
                 </button>
@@ -81,7 +73,7 @@ export default function Flags() {
                 <button
                   type="button"
                   className="usa-button usa-button--outline ttahub-export-reports"
-                  onClick={handleOffFeatureFlag}
+                  onClick={ () => handleOnOffFeatureFlag(feature, false) }
                 >
                   Turn off for all
                 </button>
