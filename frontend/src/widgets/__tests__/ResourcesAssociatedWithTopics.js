@@ -142,6 +142,18 @@ describe('Resources Associated with Topics', () => {
     expect(screen.getByRole('columnheader', { name: /total/i })).toBeInTheDocument();
   });
 
+  it('renders error correctly', async () => {
+    fetchMock.restore();
+    fetchMock.get(defaultBaseUrlWithRegionOne, 500);
+    renderResourcesAssociatedWithTopics([{
+      id: '1',
+      topic: 'region',
+      condition: 'is',
+      query: '1',
+    }]);
+    expect(await screen.findByText(/Unable to fetch resources associated with topics/i)).toBeVisible();
+  });
+
   it('renders correctly with data', async () => {
     fetchMock.get(defaultBaseUrlWithRegionTwo, mockData);
     renderResourcesAssociatedWithTopics([{
