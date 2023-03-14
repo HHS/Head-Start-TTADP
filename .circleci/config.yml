@@ -5,10 +5,10 @@ executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: cimg/node:16.18.1-browsers
+      - image: cimg/node:16.19.1-browsers
   docker-postgres-executor:
     docker:
-      - image: cimg/node:16.18.1-browsers
+      - image: cimg/node:16.19.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -18,7 +18,7 @@ executors:
           POSTGRES_DB: ttasmarthub
   docker-postgres-elasticsearch-executor:
     docker:
-      - image: cimg/node:16.18.1-browsers
+      - image: cimg/node:16.19.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
