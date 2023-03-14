@@ -87,6 +87,10 @@ describe('activityReportObjective hooks', () => {
       where: { id: topic.id },
     });
 
+    await Topic.destroy({
+      where: { name: 'Javascript Mastery' },
+    });
+
     await ActivityReportObjective.destroy({
       where: { id: aro.id },
     });
@@ -128,6 +132,7 @@ describe('activityReportObjective hooks', () => {
       expect(aroFiles.length).toBe(0);
       expect(aroResources.length).toBe(0);
       expect(aroTopics.length).toBe(0);
+      expect(transaction.finished).toBe('commit');
     });
   });
 });
