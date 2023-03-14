@@ -33,6 +33,7 @@ export default async function topicFrequencyGraph(scopes) {
       group: ['"ActivityReport".id'],
       where: {
         [Op.and]: [scopes.activityReport],
+        calculatedStatus: REPORT_STATUSES.APPROVED,
       },
       include: [{
         attributes: [],
@@ -77,7 +78,7 @@ export default async function topicFrequencyGraph(scopes) {
     count: 0,
   }));
 
-  const toReturn = topicsAndParticipants.reduce((acc, report) => {
+  return topicsAndParticipants.reduce((acc, report) => {
     // Get array of all topics from this reports and this reports objectives.
     const allTopics = report.topics.map((t) => lookUpTopic.get(t));
 
@@ -91,7 +92,4 @@ export default async function topicFrequencyGraph(scopes) {
 
     return acc;
   }, topicsResponse);
-
-  // console.timeEnd('overallTime2');
-  return toReturn;
 }
