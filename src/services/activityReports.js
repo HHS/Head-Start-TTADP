@@ -1079,7 +1079,10 @@ export async function createOrUpdate(newActivityReport, report) {
 
   const activityRecipientType = recipientType();
 
-  if (recipientsWhoHaveGoalsThatShouldBeRemoved) {
+  if (
+    recipientsWhoHaveGoalsThatShouldBeRemoved
+    && recipientsWhoHaveGoalsThatShouldBeRemoved.length
+  ) {
     await removeRemovedRecipientsGoals(recipientsWhoHaveGoalsThatShouldBeRemoved, savedReport);
   }
 
