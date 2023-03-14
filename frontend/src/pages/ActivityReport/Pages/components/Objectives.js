@@ -5,12 +5,15 @@ import Objective from './Objective';
 import PlusButton from '../../../../components/GoalForm/PlusButton';
 import { OBJECTIVE_PROP, NEW_OBJECTIVE } from './constants';
 import ObjectiveSelect from './ObjectiveSelect';
+import { createObjectiveForGoal } from '../../../../fetchers/goals';
 
 export default function Objectives({
   objectiveOptions,
   topicOptions,
   noObjectiveError,
   reportId,
+  goalId,
+  regionId,
 }) {
   const { errors, getValues, setValue } = useFormContext();
 
@@ -38,8 +41,11 @@ export default function Objectives({
     fields ? fields.map(({ value }) => value) : [],
   );
 
-  const onAddNew = () => {
-    // create a new objective for the DB
+  const onAddNew = async () => {
+    if (goalId) {
+      // create a new objective for the DB
+      await createObjectiveForGoal(goalId, regionId);
+    }
 
     // when we return, update the form with the new objective
 
@@ -153,4 +159,10 @@ Objectives.propTypes = {
   ).isRequired,
   noObjectiveError: PropTypes.node.isRequired,
   reportId: PropTypes.number.isRequired,
+  goalId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  regionId: PropTypes.number.isRequired,
+};
+
+Objectives.defaultProps = {
+  goalId: null,
 };

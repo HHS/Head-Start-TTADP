@@ -63,6 +63,8 @@ export default function Form({
       return;
     }
 
+    // we need to save a goal here
+
     // copy existing state, add a blank
     const obj = [...objectives.map((o) => ({ ...o })), OBJECTIVE_DEFAULTS(objectives.length)];
     setObjectiveError(obj.length - 1, OBJECTIVE_DEFAULT_ERRORS);

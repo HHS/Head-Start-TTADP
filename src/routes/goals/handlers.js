@@ -7,6 +7,7 @@ import {
   goalByIdWithActivityReportsAndRegions,
   goalByIdAndRecipient,
   destroyGoal,
+  createNewObjectiveForGoal,
 } from '../../services/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
@@ -194,6 +195,28 @@ export async function retrieveGoalsByIds(req, res) {
     res.json(retrievedGoal);
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:RETRIEVE_GOALS_BY_IDS`);
+  }
+}
+
+export async function createObjectiveForGoal(req, res) {
+  try {
+    const { goalId, regionId } = req.params;
+
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+
+    const canCreate = new Goal(user, null, regionId).canCreate();
+
+    if (!canCreate) {
+      res.sendStatus(401);
+      return;
+    }
+
+    const newObjective = await createNewObjectiveForGoal(goalId);
+
+    res.json(newObjective);
+  } catch (error) {
+    await handleErrors(req, res, error, `${logContext}:CREATE_OBJECTIVE_FOR_GOAL`);
   }
 }
 

@@ -47,3 +47,9 @@ export async function deleteGoal(goalIds, regionId) {
   const deleted = await destroy(url, { regionId });
   return deleted.json();
 }
+
+export async function createObjectiveForGoal(goalId, regionId, objectiveData) {
+  const url = join(goalsUrl, String(goalId), 'region', String(regionId), 'objective', 'new');
+  const objective = await post(url, objectiveData);
+  return objective.json();
+}

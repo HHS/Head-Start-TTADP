@@ -24,6 +24,7 @@ export default function GoalForm({
   topicOptions,
   reportId,
   datePickerKey,
+  regionId,
 }) {
   // pull the errors out of the form context
   const { errors, watch } = useFormContext();
@@ -186,9 +187,11 @@ export default function GoalForm({
         objectiveOptions={objectiveOptions}
         topicOptions={topicOptions}
         goalStatus={status}
+        goalId={goal.id}
         noObjectiveError={errors.goalForEditing && errors.goalForEditing.objectives
           ? ERROR_FORMAT(errors.goalForEditing.objectives.message) : NO_ERROR}
         reportId={parseInt(reportId, DECIMAL_BASE)}
+        regionId={regionId}
       />
     </>
   );
@@ -210,6 +213,7 @@ GoalForm.propTypes = {
     isNew: PropTypes.bool,
     onApprovedAR: PropTypes.bool,
     status: PropTypes.string,
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   }).isRequired,
   topicOptions: PropTypes.arrayOf(PropTypes.shape({
     value: PropTypes.number,
@@ -217,4 +221,5 @@ GoalForm.propTypes = {
   })).isRequired,
   reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   datePickerKey: PropTypes.string.isRequired,
+  regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };

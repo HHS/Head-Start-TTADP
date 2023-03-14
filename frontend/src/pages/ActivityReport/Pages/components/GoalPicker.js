@@ -48,9 +48,7 @@ const GoalPicker = ({
   // to re-render appropriately
   const [datePickerKey, setDatePickerKey] = useState('DPKEY-00');
   const activityRecipientType = watch('activityRecipientType');
-
-  // this is commented out because it's used by the code below, which is pending a todo resolve
-  // const { toggleGoalForm } = useContext(GoalFormContext);
+  const regionId = watch('regionId');
 
   const selectedGoals = useWatch({ name: 'goals' });
   const selectedIds = selectedGoals ? selectedGoals.map((g) => g.id) : [];
@@ -149,6 +147,7 @@ const GoalPicker = ({
               topicOptions={topicOptions}
               goal={goalForEditing}
               reportId={reportId}
+              regionId={regionId}
               datePickerKey={datePickerKey}
             />
           </div>

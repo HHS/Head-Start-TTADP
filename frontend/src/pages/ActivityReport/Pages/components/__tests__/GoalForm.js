@@ -41,6 +41,7 @@ describe('GoalForm', () => {
             roles={[]}
             topicOptions={[{ label: 'Coaching', value: 1 }]}
             reportId={1}
+            regionId={1}
           />
         </FormProvider>
       </AppLoadingContext.Provider>

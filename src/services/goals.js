@@ -1967,3 +1967,23 @@ export async function destroyGoal(goalIds) {
     return 0;
   }
 }
+
+export async function createNewObjectiveForGoal(
+  goalId,
+  createdVia = 'activityReport',
+) {
+  const goal = await Goal.findByPk(goalId);
+
+  if (!goal) {
+    throw new Error('goal not found or id not provided');
+  }
+
+  const objective = await Objective.create({
+    goalId: goal.id,
+    grantId: goal.grantId,
+    createdVia,
+    title: '',
+    status: OBJECTIVE_STATUS.NOT_STARTED,
+  });
+  return objective;
+}
