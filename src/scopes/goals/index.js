@@ -22,6 +22,7 @@ import withStateCode from './stateCode';
 import { withReportText, withoutReportText } from './reportText';
 import { withoutTargetPopulations, withTargetPopulations } from './targetPopulations';
 import { withGoalType, withoutGoalType } from './goalType';
+import { withGroup, withoutGroup } from './group';
 
 export const topicToQuery = {
   createDate: {
@@ -113,6 +114,10 @@ export const topicToQuery = {
   },
   stateCode: {
     ctn: (query) => withStateCode(query),
+  },
+  group: {
+    in: (query, _options, userId) => withGroup(query, userId),
+    nin: (query, _options, userId) => withoutGroup(query, userId),
   },
 };
 

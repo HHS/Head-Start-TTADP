@@ -16,11 +16,13 @@ import {
   myReportsFilter,
   ttaTypeFilter,
 } from '../../components/filter/activityReportFilters';
+import { groupsFilter } from '../../components/filter/grantFilters';
 
 export const DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
   grantNumberFilter,
+  groupsFilter,
   myReportsFilter,
   participantsFilter,
   programSpecialistFilter,
