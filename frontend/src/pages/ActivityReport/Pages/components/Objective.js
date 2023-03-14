@@ -14,7 +14,12 @@ import ObjectiveFiles from '../../../../components/GoalForm/ObjectiveFiles';
 import ObjectiveTta from './ObjectiveTta';
 import ObjectiveStatus from './ObjectiveStatus';
 import ObjectiveSelect from './ObjectiveSelect';
-import { OBJECTIVE_PROP, NO_ERROR, ERROR_FORMAT } from './constants';
+import {
+  OBJECTIVE_PROP,
+  NO_ERROR,
+  ERROR_FORMAT,
+  NEW_OBJECTIVE,
+} from './constants';
 import { uploadObjectivesFile } from '../../../../fetchers/File';
 import {
   OBJECTIVE_TITLE,
@@ -44,10 +49,15 @@ export default function Objective({
   const initialObjective = (() => ({
     ...objective,
     id: objective.id || objective.value,
-    value: objective.value || objective.id,
+    value: objective.value || objective.id || null,
     label: objective.label || objective.title,
   }))();
-  const [selectedObjective, setSelectedObjective] = useState(initialObjective);
+
+  const OBJECTIVE_TEMPLATE = NEW_OBJECTIVE();
+
+  const [selectedObjective, setSelectedObjective] = useState(
+    initialObjective.label === OBJECTIVE_TEMPLATE.label ? null : initialObjective,
+  );
   const [statusForCalculations, setStatusForCalculations] = useState(initialObjectiveStatus);
   const { getValues } = useFormContext();
   const { setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
@@ -282,7 +292,7 @@ export default function Objective({
         reportId={reportId}
         goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
         label="Did you use any TTA resources that aren't available as link?"
-        selectedObjectiveId={selectedObjective.id}
+        selectedObjectiveId={(selectedObjective && selectedObjective.id) || 0}
         userCanEdit
         editingFromActivityReport
       />
