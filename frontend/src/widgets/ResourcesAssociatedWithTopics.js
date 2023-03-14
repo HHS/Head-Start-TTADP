@@ -82,6 +82,20 @@ function ResourcesAssociatedWithTopics({
     }
   };
 
+  const requestSort = (sortBy) => {
+    let direction = 'asc';
+    if (
+      sortConfig
+      && sortConfig.sortBy === sortBy
+      && sortConfig.direction === 'asc'
+    ) {
+      direction = 'desc';
+    }
+
+    setOffset(0);
+    setSortConfig({ sortBy, direction, activePage: 1 });
+  };
+
   return (
     <WidgetContainer
       title="Resources associated with topics on Activity Reports"
@@ -100,8 +114,9 @@ function ResourcesAssociatedWithTopics({
         headers={topicsWithResources.headers || []}
         data={topicsWithResources.rows}
         firstHeading="Topic"
-        showPaging
         enableSorting
+        sortConfig={sortConfig}
+        requestSort={requestSort}
       />
     </WidgetContainer>
   );

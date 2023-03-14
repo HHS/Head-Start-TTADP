@@ -180,6 +180,34 @@ describe('Resources Associated with Topics', () => {
     expect(screen.getByRole('columnheader', { name: /total/i })).toBeInTheDocument();
   });
 
+  it('correctly request sort', async () => {
+    fetchMock.get(defaultBaseUrlWithRegionOne, mockData);
+    renderResourcesAssociatedWithTopics([{
+      id: '1',
+      topic: 'region',
+      condition: 'is',
+      query: '1',
+    }]);
+    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /https:\/\/official\.gov/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /66/i })).toBeInTheDocument();
+    });
+
+    const sortReq = 'api/resources/topic-resources?sortBy=Feb-22&sortDir=asc&offset=0&limit=10&region.in[]=1';
+    fetchMock.get(sortReq, resetMockData);
+
+    const sortColBtn = await screen.findByRole('button', { name: /feb-22\. activate to sort ascending/i });
+    act(() => fireEvent.click(sortColBtn));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Apr-22/i)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /https:\/\/official2\.gov/i })).toBeInTheDocument();
+      expect(screen.getByRole('cell', { name: /111/i })).toBeInTheDocument();
+    });
+  });
+
   it('handles resetting pagination', async () => {
     fetchMock.get(defaultBaseUrlWithRegionOne, mockData);
     renderResourcesAssociatedWithTopics([{
