@@ -55,7 +55,7 @@ function ResourcesAssociatedWithTopics({
       } catch (e) {
         // eslint-disable-next-line no-console
         console.log(e);
-        setError('Unable to fetch reports');
+        setError('Unable to fetch resources associated with topics');
       } finally {
         setLoading(false);
       }
