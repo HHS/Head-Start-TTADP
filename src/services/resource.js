@@ -144,7 +144,7 @@ const collectURLsFromField = (field) => {
       if (exists) {
         return matches;
       }
-      return [...matches, match];
+      return [...matches, match.replace(/&nbsp(;)?$/gmi, '')];
     }, []);
 };
 
