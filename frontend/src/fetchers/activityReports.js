@@ -53,7 +53,10 @@ function combineTopics(report, expandedTopics) {
   const reportTopics = expandedTopics.filter((topic) => report.id === topic.activityReportId)
     .map((t) => t.name);
 
-  const exclusiveTopics = new Set([...report.sortedTopics, ...reportTopics]);
+  const exclusiveTopics = new Set([
+    ...report.sortedTopics,
+    ...reportTopics,
+  ]);
   const topicsArr = [...exclusiveTopics];
   topicsArr.sort();
 
@@ -67,25 +70,12 @@ export const getReports = async (sortBy = 'updatedAt', sortDir = 'desc', offset 
     count, rows: rawRows, recipients, topics,
   } = json;
 
-  const expandedTopics = topics.reduce((acc, topic) => {
-    const { name, objectives } = topic;
-    const aros = objectives.map((objective) => objective.activityReportObjectives).flat();
-
-    return [
-      ...acc,
-      ...aros.map((aro) => ({
-        activityReportId: aro.activityReportId,
-        name,
-      })),
-    ];
-  }, []);
-
   const rows = rawRows.map((row) => ({
     ...row,
     activityRecipients: recipients.filter(
       (recipient) => recipient.activityReportId === row.id,
     ),
-    sortedTopics: combineTopics(row, expandedTopics),
+    sortedTopics: combineTopics(row, topics),
   }));
 
   return {
