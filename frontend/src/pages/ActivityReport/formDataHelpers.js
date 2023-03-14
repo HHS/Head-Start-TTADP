@@ -46,7 +46,33 @@ export const findWhatsChanged = (object, base) => {
       // we do hit recipients first, so if they were somehow both changed before the API was hit
       // (unlikely since they are on different parts of the form)
       // the goals that were changed would overwrite the next line
-      accumulator.goals = base.goals.map((goal) => ({ ...goal, grantIds }));
+
+      let currentlyEditing = false;
+
+      accumulator.goals = [
+        ...(base.goals || []),
+        ...(base.goalsAndObjectives || []),
+      ].map((goal) => ({
+        ...goal,
+        grantIds,
+        isActivelyEdited: (() => {
+          // we only want one to be currently editing, so if we've already set this variable,
+          // then we return true
+          if (currentlyEditing) {
+            return false;
+          }
+
+          // otherwise, we if the goal has activityReportGoals, and any of them are actively edited
+          // we affirm this as the case when we send it to the DB.
+          if (goal.activityReportGoals
+            && goal.activityReportGoals.some((arGoal) => arGoal.isActivelyEdited)
+          ) {
+            currentlyEditing = true;
+          }
+
+          return true;
+        })(),
+      }));
     }
 
     if (!isEqual(base[current], object[current])) {
