@@ -35,7 +35,7 @@ export default function WidgetContainer(
       }
       <Grid row>
         {error && (
-        <Alert type="error" role="alert">
+        <Alert className="width-full margin-x-3 margin-bottom-2" type="error" role="alert">
           {error}
         </Alert>
         )}
