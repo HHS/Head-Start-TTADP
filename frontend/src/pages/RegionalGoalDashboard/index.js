@@ -114,12 +114,12 @@ export default function RegionalGoalDashboard() {
           () => showFilterWithMyRegions(allRegionsFilters, filters, setFiltersInHook)
         }
       />
-      <h1 className="landing">
+      <h1 className="landing margin-top-0 margin-bottom-3">
         {userHasOnlyOneRegion ? `Region ${defaultRegion}` : 'Regional'}
         {' '}
         Goal Dashboard
       </h1>
-      <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center margin-y-2">
+      <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center margin-bottom-3">
         <FilterPanel
           applyButtonAria="apply filters for regional dashboard"
           filters={filters}
@@ -129,7 +129,7 @@ export default function RegionalGoalDashboard() {
           allUserRegions={regions}
         />
       </Grid>
-      <GridContainer className="margin-bottom-3 padding-0">
+      <GridContainer className="margin-0 padding-0">
         <GoalsPercentage
           filters={filtersToApply}
         />
