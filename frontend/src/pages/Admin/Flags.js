@@ -58,7 +58,6 @@ export default function Flags() {
                 <Link to={`/admin/users?flag=${feature}`} aria-label={`view users with the ${feature} feature flag`}>View active users</Link>
                 {' '}
                 &nbsp; &nbsp;
-                {feature === 'anv_statistics' && (
                 <button
                   type="button"
                   className="usa-button usa-button--outline ttahub-export-reports"
@@ -66,10 +65,8 @@ export default function Flags() {
                 >
                   Turn on for all
                 </button>
-                )}
                 {' '}
                 &nbsp; &nbsp;
-                {feature === 'anv_statistics' && (
                 <button
                   type="button"
                   className="usa-button usa-button--outline ttahub-export-reports"
@@ -77,7 +74,6 @@ export default function Flags() {
                 >
                   Turn off for all
                 </button>
-                )}
               </li>
             ))}
           </ul>
