@@ -1579,5 +1579,6 @@ export async function newGoalsForReport(grantIds) {
     status: DEFAULT_NEW_GOAL.status,
     isRttapa: '',
     id: goals[0].id,
+    value: goals[0].id,
   };
 }
