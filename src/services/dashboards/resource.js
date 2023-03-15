@@ -1486,7 +1486,6 @@ const generateResourceTopicUse = (allData) => {
   });
 
   const clusteredTopics = topics
-    .slice(0, 10) // limit to the top 10
     .map((topic) => ({
       heading: topic.topic,
       isUrl: false,
@@ -1551,6 +1550,7 @@ export async function resourceDashboardPhase1(scopes) {
   return {
     overview: generateResourcesDashboardOverview(data),
     use: generateResourceUse(data),
+    topicUse: generateResourceTopicUse(data),
   };
 }
 
