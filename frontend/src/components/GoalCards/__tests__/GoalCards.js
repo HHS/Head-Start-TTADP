@@ -351,7 +351,7 @@ describe('Goals Table', () => {
       act(() => renderTable({ goals: goalWithObjectives, goalsCount: 1 }, defaultUser));
       await screen.findByText('TTA goals and objectives');
 
-      const expandObjectives = await screen.findByRole('button', { name: /Expand objectives for goal/i });
+      const expandObjectives = await screen.findByRole('button', { name: /View objectives for goal/i });
       fireEvent.click(expandObjectives);
 
       // Objective 1.
@@ -401,12 +401,12 @@ describe('Goals Table', () => {
       expect(document.querySelector('.ttahub-goal-card__objective-list[hidden]')).toBeInTheDocument();
 
       // Expand Objectives via click.
-      const expandObjectives = await screen.findByRole('button', { name: 'Expand objectives for goal G-4598' });
+      const expandObjectives = await screen.findByRole('button', { name: 'View objectives for goal G-4598' });
       fireEvent.click(expandObjectives);
       expect(document.querySelector('.ttahub-goal-card__objective-list[hidden]')).not.toBeInTheDocument();
 
       // Collapse Objectives via click.
-      const collapseButton = await screen.findByRole('button', { name: 'Collapse objectives for goal G-4598' });
+      const collapseButton = await screen.findByRole('button', { name: 'Hide objectives for goal G-4598' });
       fireEvent.click(collapseButton);
       expect(document.querySelector('.ttahub-goal-card__objective-list[hidden]')).toBeInTheDocument();
     });
