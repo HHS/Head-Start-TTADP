@@ -2,6 +2,7 @@ import React from 'react';
 import {
   render, screen, act, within,
 } from '@testing-library/react';
+import moment from 'moment';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
@@ -48,8 +49,9 @@ const WIDGET_MOCKS = {
 describe('RegionalGoalDashboard', () => {
   const lastThirtyDays = `startDate.win=${encodeURIComponent(
     formatDateRange({
-      lastThirtyDays: true,
       forDateTime: true,
+      string: `2022/07/01-${moment().format('YYYY/MM/DD')}`,
+      withSpaces: false,
     }),
   )}`;
 

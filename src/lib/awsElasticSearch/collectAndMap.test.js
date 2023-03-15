@@ -16,6 +16,7 @@ import { formatModelForAwsElasticsearch } from './modelMapper';
 import { collectModelData } from './datacollector';
 import { AWS_ELASTIC_SEARCH_INDEXES, REPORT_STATUSES } from '../../constants';
 import { auditLogger } from '../../logger';
+import { processActivityReportObjectiveForResourcesById } from '../../services/resource';
 
 jest.mock('bull');
 
@@ -65,20 +66,27 @@ describe('Collect and Map AWS Elasticsearch data', () => {
   beforeAll(async () => {
     try {
       // User.
-      user = await User.create({ ...mockUser });
+      user = await User.findOne({ where: { hsesUserId: mockUser.hsesUserId } });
+      if (!user) {
+        user = await User.create({ ...mockUser });
+      }
 
       // Recipient.
-      recipient = await Recipient.create({
-        id: 75165,
-        name: 'Sample Elasticsearch Recipient',
+      [recipient] = await Recipient.findOrCreate({
+        where: {
+          id: 75165,
+          name: 'Sample Elasticsearch Recipient',
+        },
       });
 
       // Grant.
-      grant = await Grant.create({
-        id: 584224,
-        number: 'ES584224',
-        recipientId: recipient.id,
-        regionId: 1,
+      [grant] = await Grant.findOrCreate({
+        where: {
+          id: 584224,
+          number: 'ES584224',
+          recipientId: recipient.id,
+          regionId: 1,
+        },
       });
 
       // Approved Reports.
@@ -145,18 +153,10 @@ describe('Collect and Map AWS Elasticsearch data', () => {
       });
 
       // Create Objective Resource
-      await ActivityReportObjectiveResource.create({
-        activityReportObjectiveId: activityReportObjective.id,
-        userProvidedUrl: 'http://test1.gov',
-      });
-      await ActivityReportObjectiveResource.create({
-        activityReportObjectiveId: activityReportObjective.id,
-        userProvidedUrl: 'http://test2.gov',
-      });
-      await ActivityReportObjectiveResource.create({
-        activityReportObjectiveId: activityReportObjective.id,
-        userProvidedUrl: 'http://test3.gov',
-      });
+      await processActivityReportObjectiveForResourcesById(
+        activityReportObjective.id,
+        ['http://test1.gov', 'http://test2.gov', 'http://test3.gov'],
+      );
     } catch (e) {
       auditLogger.error(JSON.stringify(e));
       throw e;
@@ -278,11 +278,11 @@ describe('Collect and Map AWS Elasticsearch data', () => {
     expect(objectiveResourceLinks).not.toBeNull();
     expect(objectiveResourceLinks.length).toBe(3);
     expect(objectiveResourceLinks[0]['activityReportObjective.activityReportId']).toBe(reportOne.id);
-    expect(objectiveResourceLinks[0].userProvidedUrl).toBe('http://test1.gov');
+    expect(objectiveResourceLinks[0]['resource.url']).toBe('http://test1.gov');
     expect(objectiveResourceLinks[1]['activityReportObjective.activityReportId']).toBe(reportOne.id);
-    expect(objectiveResourceLinks[1].userProvidedUrl).toBe('http://test2.gov');
+    expect(objectiveResourceLinks[1]['resource.url']).toBe('http://test2.gov');
     expect(objectiveResourceLinks[2]['activityReportObjective.activityReportId']).toBe(reportOne.id);
-    expect(objectiveResourceLinks[2].userProvidedUrl).toBe('http://test3.gov');
+    expect(objectiveResourceLinks[2]['resource.url']).toBe('http://test3.gov');
 
     // Format as AWS Elasticsearch document.
     const document = await formatModelForAwsElasticsearch(
