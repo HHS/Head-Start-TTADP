@@ -1,4 +1,4 @@
-import React, { useMemo, useContext } from 'react';
+import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { useFieldArray, useFormContext } from 'react-hook-form/dist/index.ie11';
 import Objective from './Objective';
@@ -33,24 +33,19 @@ export default function Objectives({
     defaultValues,
   });
 
-  // const [usedObjectiveIds, setUsedObjectiveIds] = useState(
-  //   fields ? fields.map(({ value }) => value) : [],
-  // );
+  const [usedObjectiveIds, setUsedObjectiveIds] = useState(
+    fields ? fields.map(({ value }) => value) : [],
+  );
 
-  const usedObjectiveIds = useMemo(() => (fields ? fields.map(({ value }) => value) : []),
-    [fields]);
-
-  console.log(usedObjectiveIds, fields);
-
-  // const setUpdatedUsedObjectiveIds = () => {
-  //   // If fields have changed get updated list of used Objective ID's.
-  //   const allValues = getValues();
-  //   const fieldArrayGoals = allValues.goalForEditing || [];
-  //   const updatedIds = fieldArrayGoals.objectives
-  //     ? fieldArrayGoals.objectives.map(({ value }) => value)
-  //     : [];
-  //   setUsedObjectiveIds(updatedIds);
-  // };
+  const setUpdatedUsedObjectiveIds = () => {
+    // If fields have changed get updated list of used Objective ID's.
+    const allValues = getValues();
+    const fieldArrayGoals = allValues.goalForEditing || [];
+    const updatedIds = fieldArrayGoals.objectives
+      ? fieldArrayGoals.objectives.map(({ value }) => value)
+      : [];
+    setUsedObjectiveIds(updatedIds);
+  };
 
   const onObjectiveChange = (objective, index) => {
     // 'id','ids','value', and 'label' are not tracked on the form.
@@ -62,7 +57,7 @@ export default function Objectives({
     setValue(`${fieldArrayName}[${index}].ids`, objective.ids);
 
     // If fields have changed get updated list of used Objective ID's.
-    // setUpdatedUsedObjectiveIds();
+    setUpdatedUsedObjectiveIds();
   };
 
   const onAddNew = async () => {
@@ -84,6 +79,7 @@ export default function Objectives({
     append({ ...NEW_OBJECTIVE(), ...newObjective });
 
     onObjectiveChange(newObjective, fields.length - 1);
+    setUpdatedUsedObjectiveIds();
   };
 
   const onInitialObjSelect = async (objective) => {
@@ -109,6 +105,7 @@ export default function Objectives({
 
     append(objectiveToAppend);
     onObjectiveChange(objectiveToAppend, fields.length - 1);
+    setUpdatedUsedObjectiveIds();
   };
 
   const options = [
@@ -128,7 +125,7 @@ export default function Objectives({
     // Remove the objective.
     remove(index);
     // Update this list of available objectives.
-    // setUpdatedUsedObjectiveIds();
+    setUpdatedUsedObjectiveIds();
   };
 
   const firstObjective = fields.length < 1;
