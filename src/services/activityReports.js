@@ -26,6 +26,7 @@ import {
   ActivityReportGoal,
   ActivityReportObjective,
   ActivityReportObjectiveResource,
+  ActivityReportObjectiveTopic,
   ObjectiveResource,
   Topic,
   CollaboratorRole,
@@ -714,29 +715,28 @@ export async function activityReports(
     ],
   });
 
-  const topics = await Topic.findAll({
-    attributes: ['name', 'id'],
+  const arots = await ActivityReportObjectiveTopic.findAll({
     include: [
       {
-        model: Objective,
-        attributes: ['id'],
-        as: 'objectives',
-        required: true,
-        include: {
-          attributes: ['activityReportId', 'objectiveId'],
-          model: ActivityReportObjective,
-          as: 'activityReportObjectives',
-          required: true,
-          where: {
-            activityReportId: reportIds,
-          },
+        model: ActivityReportObjective,
+        as: 'activityReportObjective',
+        where: {
+          activityReportId: reportIds,
         },
+        required: true,
+      },
+      {
+        model: Topic,
+        as: 'topic',
+        required: true,
       },
     ],
-    order: [
-      [sequelize.col('name'), sortDir],
-    ],
   });
+
+  const topics = arots.map((arot) => ({
+    activityReportId: arot.activityReportObjective.activityReportId,
+    name: arot.topic.name,
+  }));
 
   // Get all grant programs at once to reduce DB calls.
   const grantIds = recipients.map((a) => a.grantId);
@@ -749,7 +749,9 @@ export async function activityReports(
   // Populate Activity Recipient info.
   await populateRecipientInfo(recipients, grantPrograms);
 
-  return { ...reports, recipients, topics };
+  return {
+    ...reports, recipients, topics,
+  };
 }
 
 export async function activityReportsForCleanup(userId) {
@@ -1077,7 +1079,10 @@ export async function createOrUpdate(newActivityReport, report) {
 
   const activityRecipientType = recipientType();
 
-  if (recipientsWhoHaveGoalsThatShouldBeRemoved) {
+  if (
+    recipientsWhoHaveGoalsThatShouldBeRemoved
+    && recipientsWhoHaveGoalsThatShouldBeRemoved.length
+  ) {
     await removeRemovedRecipientsGoals(recipientsWhoHaveGoalsThatShouldBeRemoved, savedReport);
   }
 
