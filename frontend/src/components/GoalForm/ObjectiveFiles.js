@@ -121,35 +121,35 @@ export default function ObjectiveFiles({
           </>
         ) }
         {
-                useFiles && !showSaveDraftInfo
-                  ? (
-                    <>
-                      <FormGroup className="ttahub-objective-files-dropzone margin-top-2 margin-bottom-0" error={fileError}>
-                        <Label htmlFor="files">Attach any non-link resources</Label>
-                        <span className="usa-hint display-block">Example file types: .docx, .pdf, .ppt (max size 30 MB)</span>
-                        {fileError
-                      && (
-                        <ErrorMessage className="margin-bottom-1">
-                          {fileError}
-                        </ErrorMessage>
-                      )}
-                        <ObjectiveFileUploader
-                          files={files}
-                          onChange={onChangeFiles}
-                          objective={objective}
-                          upload={onUploadFiles}
-                          id={`files-${objectiveId}`}
-                          index={index}
-                          onBlur={onBlur}
-                          inputName={inputName}
-                          error={fileError}
-                          setError={setFileError}
-                          reportId={reportId}
-                        />
-                      </FormGroup>
-                    </>
-                  )
-                  : null
+          useFiles && !showSaveDraftInfo
+            ? (
+              <>
+                <FormGroup className="ttahub-objective-files-dropzone margin-top-2 margin-bottom-0" error={fileError}>
+                  <Label htmlFor="files">Attach any non-link resources</Label>
+                  <span className="usa-hint display-block">Example file types: .docx, .pdf, .ppt (max size 30 MB)</span>
+                  {fileError
+                && (
+                  <ErrorMessage className="margin-bottom-1">
+                    {fileError}
+                  </ErrorMessage>
+                )}
+                  <ObjectiveFileUploader
+                    files={files}
+                    onChange={onChangeFiles}
+                    objective={objective}
+                    upload={onUploadFiles}
+                    id={`files-${objectiveId}`}
+                    index={index}
+                    onBlur={onBlur}
+                    inputName={inputName}
+                    error={fileError}
+                    setError={setFileError}
+                    reportId={reportId}
+                  />
+                </FormGroup>
+              </>
+            )
+            : null
         }
       </Fieldset>
     </>

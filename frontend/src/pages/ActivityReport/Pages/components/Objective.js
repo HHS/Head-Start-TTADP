@@ -3,9 +3,7 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
-import {
-  useController, useFormContext,
-} from 'react-hook-form/dist/index.ie11';
+import { useController } from 'react-hook-form/dist/index.ie11';
 import ObjectiveTitle from './ObjectiveTitle';
 import { REPORT_STATUSES } from '../../../../Constants';
 import ObjectiveTopics from '../../../../components/GoalForm/ObjectiveTopics';
@@ -49,7 +47,6 @@ export default function Objective({
   }))();
   const [selectedObjective, setSelectedObjective] = useState(initialObjective);
   const [statusForCalculations, setStatusForCalculations] = useState(initialObjectiveStatus);
-  const { getValues } = useFormContext();
   const { setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
 
   /**
@@ -184,17 +181,22 @@ export default function Objective({
   };
 
   const onUploadFile = async (files, _objective, setError) => {
-    // we need to access the updated form data to
-    // get the correct objective ids to attach to our API post
-    const objectivesField = getValues(fieldArrayName);
-    const objectiveToAttach = objectivesField.find((o) => o.id === selectedObjective.id);
-
     // handle file upload
     try {
       setIsAppLoading(true);
       setAppLoadingText('Uploading');
+
+      // we have access to the updated IDS because objectives are automatically
+      // created when "create a new objective" is selected
+      const objectiveIds = selectedObjective.ids;
+
+      // if something has gone wrong, we can't upload the file
+      if (!objectiveIds || !objectiveIds.length) {
+        throw new Error('No objective ids available to upload resource file to');
+      }
+
       const data = new FormData();
-      data.append('objectiveIds', JSON.stringify(!objectiveToAttach.ids ? [0] : objectiveToAttach.ids));
+      data.append('objectiveIds', JSON.stringify(objectiveIds));
       files.forEach((file) => {
         data.append('file', file);
       });
