@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { useFieldArray, useFormContext } from 'react-hook-form/dist/index.ie11';
 import Objective from './Objective';
@@ -6,27 +6,23 @@ import PlusButton from '../../../../components/GoalForm/PlusButton';
 import { OBJECTIVE_PROP, NEW_OBJECTIVE } from './constants';
 import ObjectiveSelect from './ObjectiveSelect';
 import { createObjectiveForGoal } from '../../../../fetchers/goals';
+import AppLoadingContext from '../../../../AppLoadingContext';
 
 export default function Objectives({
   objectiveOptions,
   topicOptions,
   noObjectiveError,
   reportId,
-  goalId,
+  goalIds,
   regionId,
 }) {
   const { errors, getValues, setValue } = useFormContext();
+  const { setIsAppLoading } = useContext(AppLoadingContext);
 
   const fieldArrayName = 'goalForEditing.objectives';
   const objectivesForGoal = getValues(fieldArrayName);
   const defaultValues = objectivesForGoal || [];
 
-  /**
-   * we can use the useFieldArray hook from react hook form to
-   * dynamically generate fields. this also seems to handle weird recursion
-   * errors that I was getting trying to manage existing inputs with
-   * watch/setValue
-   */
   const {
     fields,
     append,
@@ -37,49 +33,82 @@ export default function Objectives({
     defaultValues,
   });
 
-  const [usedObjectiveIds, setUsedObjectiveIds] = useState(
-    fields ? fields.map(({ value }) => value) : [],
-  );
+  // const [usedObjectiveIds, setUsedObjectiveIds] = useState(
+  //   fields ? fields.map(({ value }) => value) : [],
+  // );
 
-  const onAddNew = async () => {
-    if (goalId) {
-      // create a new objective for the DB
-      await createObjectiveForGoal(goalId, regionId);
-    }
+  const usedObjectiveIds = useMemo(() => (fields ? fields.map(({ value }) => value) : []),
+    [fields]);
 
-    // when we return, update the form with the new objective
+  console.log(usedObjectiveIds, fields);
 
-    // append({ ...NEW_OBJECTIVE() });
-  };
-
-  const setUpdatedUsedObjectiveIds = () => {
-    // If fields have changed get updated list of used Objective ID's.
-    const allValues = getValues();
-    const fieldArrayGoals = allValues.goalForEditing || [];
-    const updatedIds = fieldArrayGoals.objectives
-      ? fieldArrayGoals.objectives.map(({ value }) => value)
-      : [];
-    setUsedObjectiveIds(updatedIds);
-  };
-
-  const onInitialObjSelect = (objective) => {
-    append(objective);
-
-    // If fields have changed get updated list of used Objective ID's.
-    setUpdatedUsedObjectiveIds();
-  };
+  // const setUpdatedUsedObjectiveIds = () => {
+  //   // If fields have changed get updated list of used Objective ID's.
+  //   const allValues = getValues();
+  //   const fieldArrayGoals = allValues.goalForEditing || [];
+  //   const updatedIds = fieldArrayGoals.objectives
+  //     ? fieldArrayGoals.objectives.map(({ value }) => value)
+  //     : [];
+  //   setUsedObjectiveIds(updatedIds);
+  // };
 
   const onObjectiveChange = (objective, index) => {
     // 'id','ids','value', and 'label' are not tracked on the form.
     // We need to update these with the new Objective ID.
-    const ObjId = objective.id;
-    setValue(`${fieldArrayName}[${index}].id`, ObjId);
-    setValue(`${fieldArrayName}[${index}].value`, ObjId);
+    const objectiveId = objective.id;
+    setValue(`${fieldArrayName}[${index}].id`, objectiveId);
+    setValue(`${fieldArrayName}[${index}].value`, objectiveId);
     setValue(`${fieldArrayName}[${index}].label`, objective.label);
     setValue(`${fieldArrayName}[${index}].ids`, objective.ids);
 
     // If fields have changed get updated list of used Objective ID's.
-    setUpdatedUsedObjectiveIds();
+    // setUpdatedUsedObjectiveIds();
+  };
+
+  const onAddNew = async () => {
+    let newObjective = {};
+    if (goalIds) {
+      try {
+        setIsAppLoading(true);
+        // create a new objective for the DB
+        newObjective = await createObjectiveForGoal(goalIds, regionId);
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+      } finally {
+        setIsAppLoading(false);
+      }
+    }
+
+    // when we return, update the form with the new objective
+    append({ ...NEW_OBJECTIVE(), ...newObjective });
+
+    onObjectiveChange(newObjective, fields.length - 1);
+  };
+
+  const onInitialObjSelect = async (objective) => {
+    // this will be undefined at the end of the day if
+    // the user didn't select "Create a new objective"
+    let newObjective;
+
+    // let's check to see if "Create a new objective" was selected
+    if (objective.value === 'new') {
+      // if so, the backend WILL BE INVOLVED
+      try {
+        setIsAppLoading(true);
+        newObjective = await createObjectiveForGoal(goalIds, regionId);
+      } catch (e) {
+        // fail gracefully using boilerplate data
+        newObjective = NEW_OBJECTIVE();
+      } finally {
+        setIsAppLoading(false);
+      }
+    }
+
+    const objectiveToAppend = newObjective || objective;
+
+    append(objectiveToAppend);
+    onObjectiveChange(objectiveToAppend, fields.length - 1);
   };
 
   const options = [
@@ -99,7 +128,7 @@ export default function Objectives({
     // Remove the objective.
     remove(index);
     // Update this list of available objectives.
-    setUpdatedUsedObjectiveIds();
+    // setUpdatedUsedObjectiveIds();
   };
 
   const firstObjective = fields.length < 1;
@@ -159,10 +188,10 @@ Objectives.propTypes = {
   ).isRequired,
   noObjectiveError: PropTypes.node.isRequired,
   reportId: PropTypes.number.isRequired,
-  goalId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  goalIds: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.number, PropTypes.string])),
   regionId: PropTypes.number.isRequired,
 };
 
 Objectives.defaultProps = {
-  goalId: null,
+  goalIds: [],
 };

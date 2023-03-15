@@ -5,7 +5,7 @@ import {
   retrieveGoalsByIds,
   retrieveGoalByIdAndRecipient,
   deleteGoal,
-  createObjectiveForGoal,
+  createObjectivesForGoals,
 } from './handlers';
 import transactionWrapper from '../transactionWrapper';
 
@@ -15,6 +15,6 @@ router.get('/', transactionWrapper(retrieveGoalsByIds));
 router.get('/:goalId/recipient/:recipientId', transactionWrapper(retrieveGoalByIdAndRecipient));
 router.put('/changeStatus', transactionWrapper(changeGoalStatus));
 router.delete('/', transactionWrapper(deleteGoal));
-router.post('/:goalId/region/:region/objective/new', transactionWrapper(createObjectiveForGoal));
+router.post('/objectives/new', transactionWrapper(createObjectivesForGoals));
 
 export default router;

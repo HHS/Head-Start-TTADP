@@ -1968,22 +1968,50 @@ export async function destroyGoal(goalIds) {
   }
 }
 
-export async function createNewObjectiveForGoal(
-  goalId,
+export async function createNewObjectivesForGoals(
+  goalIds,
   createdVia = 'activityReport',
 ) {
-  const goal = await Goal.findByPk(goalId);
+  const goals = await Goal.findAll({
+    where: {
+      id: goalIds,
+    },
+  });
 
-  if (!goal) {
+  if (!goals || !goals.length) {
     throw new Error('goal not found or id not provided');
   }
 
-  const objective = await Objective.create({
-    goalId: goal.id,
-    grantId: goal.grantId,
-    createdVia,
+  const defaultObjective = {
     title: '',
     status: OBJECTIVE_STATUS.NOT_STARTED,
-  });
-  return objective;
+  };
+
+  const objectives = await Objective.bulkCreate(
+    goals.map((goal) => ({
+      goalId: goal.id,
+      grantId: goal.grantId,
+      createdVia,
+      onApprovedAR: false,
+      ...defaultObjective,
+    })),
+    { individualHooks: true },
+  );
+
+  return {
+    ...defaultObjective,
+    key: objectives[0].id,
+    id: objectives[0].id,
+    label: 'Create a new objective',
+    goalId: objectives[0].goalId,
+    activityReportObjectives: [],
+    files: [],
+    topics: [],
+    activityReports: [],
+    resources: [],
+    value: 89174,
+    ids: objectives.map((o) => o.id),
+    recipientIds: [],
+    isNew: false,
+  };
 }

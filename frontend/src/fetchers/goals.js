@@ -48,8 +48,8 @@ export async function deleteGoal(goalIds, regionId) {
   return deleted.json();
 }
 
-export async function createObjectiveForGoal(goalId, regionId, objectiveData) {
-  const url = join(goalsUrl, String(goalId), 'region', String(regionId), 'objective', 'new');
-  const objective = await post(url, objectiveData);
+export async function createObjectiveForGoal(goalIds, regionId) {
+  const url = join(goalsUrl, 'objectives', 'new');
+  const objective = await post(url, { goalIds, regionId });
   return objective.json();
 }

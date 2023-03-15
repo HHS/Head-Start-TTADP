@@ -102,7 +102,7 @@ const GoalPicker = ({
         ...goal,
       }
     )),
-  ];
+  ].filter((goal) => goal.label); // NO BLANK TITLES
 
   /**
    *
@@ -120,19 +120,21 @@ const GoalPicker = ({
      */
     let newGoalFromApi;
     if (goal.id === 'new') {
-      setIsAppLoading(true);
       try {
+        setIsAppLoading(true);
         // this function returns essentially the default goal with updated ids
         // and whatever other barebones info we need
-        newGoalFromApi = await createNewGoalsForReport(reportId, grantIds);
+        newGoalFromApi = {
+          ...newGoal(grantIds), // just in case we need any default fields overwritten
+          ...await createNewGoalsForReport(reportId, grantIds),
+        };
         // we need to insert it as a selection
         updateAvailableGoals([...availableGoals, newGoalFromApi]);
-        // and then select it
-        onChange(newGoalFromApi);
       } catch (err) {
         // if something goes wrong, we still want to select a goal
         // the backend will do it's best to handle this case
-        onChange(goal);
+        // but we don't want this newGoal to exist in any way
+        newGoalFromApi = undefined;
       } finally {
         setIsAppLoading(false);
       }
@@ -140,13 +142,13 @@ const GoalPicker = ({
      * if the goal already exists, we don't need to run the same amount of logic here,
      * we've already fetched it's data
      */
-    } else {
-      onChange(goal);
     }
 
     // if the goal is new, we need to use the new goal from the API
     // otherwise, we can just use the goal that was selected
     const goalToUse = newGoalFromApi || goal;
+
+    onChange(goalToUse);
 
     // update the goal date forcefully
     // also update the date picker key to force a re-render

@@ -1551,27 +1551,44 @@ export async function activityReportsApprovedByDate(userId, date) {
   return reports;
 }
 
+const DEFAULT_NEW_GOAL = {
+  name: '',
+  status: GOAL_STATUS.NOT_STARTED,
+  onApprovedAR: false,
+};
+
 /**
  *
+ * @param {number[]} grantIds
+ * @param {string} createdVia
+ * @returns Promise<Goals[]> array of new goals
  */
-export async function newGoalsForReport(grantIds) {
-  const defaultNewGoal = {
-    name: '',
-    status: GOAL_STATUS.NOT_STARTED,
-    onApprovedAR: false,
-  };
-
+async function newGoals(grantIds, createdVia) {
   if (!grantIds || !grantIds.length) {
     throw new Error('No grant ids provided to create a new goal for report');
   }
 
-  const goals = await Goal.bulkCreate(grantIds.map((grantId) => ({ grantId, ...defaultNewGoal })));
+  // create a blank goal for each grant ID
+  return Goal.bulkCreate(grantIds.map((grantId) => (
+    { grantId, ...DEFAULT_NEW_GOAL, createdVia }
+  )), { individualHooks: true });
+}
+
+/**
+ * @param {number[]} grantIds - grant ids
+ * @returns {object} - created goals reduced into a single object for the frontend to consume
+ */
+export async function newGoalsForReport(grantIds) {
+  // create a blank goal for each grant ID, and return the array of goals
+  // indicating that it was created via an activity report
+  const goals = await newGoals(grantIds, 'activityReport');
 
   // we only want to return one object since that's how the frontend expects it
   return {
+    createdVia: 'activityReport',
     number: false,
     objectives: [],
-    name: defaultNewGoal.name,
+    name: DEFAULT_NEW_GOAL.name,
     goalNumber: '',
     isNew: false,
     endDate: '',
@@ -1579,7 +1596,8 @@ export async function newGoalsForReport(grantIds) {
     grantIds,
     goalIds: goals.map((g) => g.id),
     oldGrantIds: [],
-    status: defaultNewGoal.status,
+    status: DEFAULT_NEW_GOAL.status,
     isRttapa: '',
+    id: goals[0].id,
   };
 }

@@ -7,7 +7,7 @@ import {
   goalByIdWithActivityReportsAndRegions,
   goalByIdAndRecipient,
   destroyGoal,
-  createNewObjectiveForGoal,
+  createNewObjectivesForGoals,
 } from '../../services/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
@@ -198,9 +198,9 @@ export async function retrieveGoalsByIds(req, res) {
   }
 }
 
-export async function createObjectiveForGoal(req, res) {
+export async function createObjectivesForGoals(req, res) {
   try {
-    const { goalId, regionId } = req.params;
+    const { goalIds, regionId } = req.body;
 
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
@@ -212,7 +212,7 @@ export async function createObjectiveForGoal(req, res) {
       return;
     }
 
-    const newObjective = await createNewObjectiveForGoal(goalId);
+    const newObjective = await createNewObjectivesForGoals(goalIds);
 
     res.json(newObjective);
   } catch (error) {

@@ -97,6 +97,7 @@ export default function ObjectiveFiles({
               ? (
                 <Alert type="info" headingLevel="h4" slim>
                   Add a TTA objective and save as draft to upload resources.
+                  {selectedObjectiveId}
                 </Alert>
               )
               : (
