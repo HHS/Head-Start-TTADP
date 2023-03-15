@@ -184,6 +184,11 @@ export const OBJECTIVE_STATUS = {
   COMPLETE: 'Complete',
 };
 
+export const NEXTSTEP_NOTETYPE = {
+  SPECIALIST: 'SPECIALIST',
+  RECIPIENT: 'RECIPIENT',
+};
+
 /*
   Please keep in sync with:
   frontend > src > constants.js
@@ -280,6 +285,51 @@ export const DIGEST_SUBJECT_FREQ = {
   DAILY: 'daily',
   WEEKLY: 'weekly',
   MONTHLY: 'monthly',
+};
+
+export const SOURCE_FIELD = {
+  REPORT: {
+    NONECLKC: 'nonECLKCResourcesUsed',
+    ECLKC: 'ECLKCResourcesUsed',
+    CONTEXT: 'context',
+    NOTES: 'additionalNotes',
+    RESOURCE: 'resource',
+  },
+  NEXTSTEPS: {
+    NOTE: 'note',
+    RESOURCE: 'resource',
+  },
+  GOAL: {
+    NAME: 'name',
+    TIMEFRAME: 'timeframe',
+    RESOURCE: 'resource',
+  },
+  GOALTEMPLATE: {
+    NAME: 'name',
+    RESOURCE: 'resource',
+  },
+  REPORTGOAL: {
+    NAME: 'name',
+    TIMEFRAME: 'timeframe',
+    RESOURCE: 'resource',
+  },
+  OBJECTIVE: {
+    TITLE: 'title',
+    RESOURCE: 'resource',
+  },
+  OBJECTIVETEMPLATE: {
+    TITLE: 'title',
+    RESOURCE: 'resource',
+  },
+  REPORTOBJECTIVE: {
+    TITLE: 'title',
+    TTAPROVIDED: 'ttaProvided',
+    RESOURCE: 'resource',
+  },
+};
+
+export const RESOURCE_DOMAIN = {
+  ECLKC: 'eclkc.ohs.acf.hhs.gov',
 };
 
 export const AWS_ELASTIC_SEARCH_INDEXES = {

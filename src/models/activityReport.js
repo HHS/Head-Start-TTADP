@@ -1,9 +1,13 @@
 const { Op, Model } = require('sequelize');
 const moment = require('moment');
-const { REPORT_STATUSES, USER_ROLES } = require('../constants');
+const { REPORT_STATUSES, USER_ROLES, NEXTSTEP_NOTETYPE } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 const {
-  beforeCreate, beforeUpdate, afterUpdate, beforeValidate,
+  beforeCreate,
+  beforeUpdate,
+  afterCreate,
+  afterUpdate,
+  beforeValidate,
 } = require('./hooks/activityReport');
 
 const generateCreatorNameWithRole = (ar) => {
@@ -30,8 +34,23 @@ export default (sequelize, DataTypes) => {
         otherKey: 'fileId',
         as: 'files',
       });
-      ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'specialistNextSteps' });
-      ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'recipientNextSteps' });
+      ActivityReport.hasMany(models.ActivityReportResource, { foreignKey: 'activityReportId', as: 'activityReportResources' });
+      ActivityReport.belongsToMany(models.Resource, {
+        through: models.ActivityReportResource,
+        foreignKey: 'activityReportId',
+        otherKey: 'resourceId',
+        as: 'resources',
+      });
+      ActivityReport.hasMany(models.NextStep, {
+        foreignKey: 'activityReportId',
+        as: 'specialistNextSteps',
+        scope: { noteType: [NEXTSTEP_NOTETYPE.SPECIALIST] },
+      });
+      ActivityReport.hasMany(models.NextStep, {
+        foreignKey: 'activityReportId',
+        as: 'recipientNextSteps',
+        scope: { noteType: [NEXTSTEP_NOTETYPE.RECIPIENT] },
+      });
       ActivityReport.hasMany(models.ActivityReportApprover, { foreignKey: 'activityReportId', as: 'approvers', hooks: true });
       ActivityReport.hasMany(models.ActivityReportGoal, { foreignKey: 'activityReportId', as: 'activityReportGoals' });
       ActivityReport.belongsToMany(models.Goal, {
@@ -263,6 +282,7 @@ export default (sequelize, DataTypes) => {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       beforeCreate: async (instance) => beforeCreate(instance),
       beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
     sequelize,

@@ -1,7 +1,12 @@
 const { Model } = require('sequelize');
 const { CLOSE_SUSPEND_REASONS } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
-const { beforeValidate, beforeUpdate, afterUpdate } = require('./hooks/goal');
+const {
+  beforeValidate,
+  beforeUpdate,
+  afterCreate,
+  afterUpdate,
+} = require('./hooks/goal');
 
 export const RTTAPA_ENUM = ['Yes', 'No'];
 
@@ -24,6 +29,13 @@ export default (sequelize, DataTypes) => {
       Goal.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
       Goal.hasMany(models.Objective, { foreignKey: 'goalId', as: 'objectives' });
       Goal.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: +'goalTemplates' });
+      Goal.hasMany(models.GoalResource, { foreignKey: 'goalId', as: 'goalResources' });
+      Goal.belongsToMany(models.Resource, {
+        through: models.GoalResource,
+        foreignKey: 'goalId',
+        otherKey: 'resourceId',
+        as: 'resources',
+      });
     }
   }
   Goal.init({
@@ -136,6 +148,7 @@ export default (sequelize, DataTypes) => {
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });

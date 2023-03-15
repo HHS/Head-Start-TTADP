@@ -11,6 +11,15 @@ const { collectModelData } = require('../../lib/awsElasticSearch/datacollector')
 const { formatModelForAwsElasticsearch } = require('../../lib/awsElasticSearch/modelMapper');
 const { addIndexDocument, deleteIndexDocument } = require('../../lib/awsElasticSearch/index');
 
+const processForEmbeddedResources = async (sequelize, instance, options) => {
+  // eslint-disable-next-line global-require
+  const { calculateIsAutoDetectedForActivityReport, processActivityReportForResourcesById } = require('../../services/resource');
+  const changed = instance.changed() || Object.keys(instance);
+  if (calculateIsAutoDetectedForActivityReport(changed)) {
+    await processActivityReportForResourcesById(instance.id);
+  }
+};
+
 /**
  * Helper function called by model hooks.
  * Updates current model instance's calculatedStatus field.
@@ -393,7 +402,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
             "ResourcesOnReport" AS (
               SELECT DISTINCT
                 aro."objectiveId",
-                aror."userProvidedUrl"
+                aror."resourceId"
               FROM "ActivityReportObjectives" aro
               JOIN "ActivityReportObjectiveResources" aror
               ON aro.id = aror."activityReportObjectiveId"
@@ -405,7 +414,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
               AND aro2."objectiveId" IN (${objectives.map((o) => o.id).join(',')})
               LEFT JOIN "ActivityReportObjectiveResources" aror2
               ON aro2.id = aror2."activityReportObjectiveId"
-              AND aror."userProvidedUrl" = aror2."userProvidedUrl"
+              AND aror."resourceId" = aror2."resourceId"
               WHERE aror2."id" IS NULL
             )
             UPDATE "ObjectiveResources" r
@@ -413,7 +422,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
             FROM "ResourcesOnReport" rr
             WHERE r."onApprovedAR" = true
             AND r."objectiveId" = rr."objectiveId"
-            AND r."userProvidedUrl" = rr."userProvidedUrl";
+            AND r."resourceId" = rr."resourceId";
           `, { transaction: options.transaction }),
           // update the onApprovedAR for topics that will no longer be referenced on an approved AR
           sequelize.query(`
@@ -570,7 +579,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
             "ResourcesOnReport" AS (
               SELECT DISTINCT
                 aro."objectiveId",
-                aror."userProvidedUrl"
+                aror."resourceId"
               FROM "ActivityReportObjectives" aro
               JOIN "ActivityReportObjectiveResources" aror
               ON aro.id = aror."activityReportObjectiveId"
@@ -582,7 +591,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
             FROM "ResourcesOnReport" rr
             WHERE r."onApprovedAR" = false
             AND r."objectiveId" = rr."objectiveId"
-            AND r."userProvidedUrl" = rr."userProvidedUrl";
+            AND r."resourceId" = rr."resourceId";
           `, { transaction: options.transaction }),
           sequelize.query(`
           WITH
@@ -809,6 +818,10 @@ const beforeUpdate = async (sequelize, instance, options) => {
   setSubmittedDate(sequelize, instance, options);
 };
 
+const afterCreate = async (sequelize, instance, options) => {
+  await processForEmbeddedResources(sequelize, instance, options);
+};
+
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateSubmissionStatus(sequelize, instance, options);
   await propagateApprovedStatus(sequelize, instance, options);
@@ -816,10 +829,12 @@ const afterUpdate = async (sequelize, instance, options) => {
   await automaticGoalObjectiveStatusCachingOnApproval(sequelize, instance, options);
   await moveDraftGoalsToNotStartedOnSubmission(sequelize, instance, options);
   await automaticIsRttapaChangeOnApprovalForGoals(sequelize, instance, options);
+  await processForEmbeddedResources(sequelize, instance, options);
   await updateAwsElasticsearchIndexes(sequelize, instance);
 };
 
 export {
+  processForEmbeddedResources,
   copyStatus,
   propagateApprovedStatus,
   propagateSubmissionStatus,
@@ -827,6 +842,7 @@ export {
   beforeValidate,
   beforeCreate,
   beforeUpdate,
+  afterCreate,
   afterUpdate,
   moveDraftGoalsToNotStartedOnSubmission,
   setSubmittedDate,

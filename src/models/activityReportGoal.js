@@ -1,13 +1,20 @@
 const { Model } = require('sequelize');
 const { CLOSE_SUSPEND_REASONS } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
-const { afterDestroy } = require('./hooks/activityReportGoal');
+const { afterCreate, afterDestroy, afterUpdate } = require('./hooks/activityReportGoal');
 
 export default (sequelize, DataTypes) => {
   class ActivityReportGoal extends Model {
     static associate(models) {
       ActivityReportGoal.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });
       ActivityReportGoal.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });
+      ActivityReportGoal.hasMany(models.ActivityReportGoalResource, { foreignKey: 'activityReportGoalId', as: 'activityReportGoalResources' });
+      ActivityReportGoal.belongsToMany(models.Resource, {
+        through: models.ActivityReportGoalResource,
+        foreignKey: 'activityReportGoalId',
+        otherKey: 'resourceId',
+        as: 'resources',
+      });
     }
   }
   ActivityReportGoal.init({
@@ -52,7 +59,9 @@ export default (sequelize, DataTypes) => {
     sequelize,
     modelName: 'ActivityReportGoal',
     hooks: {
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });
   return ActivityReportGoal;
