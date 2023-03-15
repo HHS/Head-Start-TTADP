@@ -162,8 +162,8 @@ function RecipientSearch({ user }) {
         <title>Recipient TTA Records Search</title>
       </Helmet>
       <div className="ttahub-recipient-search">
-        <h1 className="landing">Recipient Records</h1>
-        <Grid className="ttahub-recipient-search--filter-row flex-fill display-flex flex-align-center flex-align-self-center flex-row flex-wrap margin-bottom-2">
+        <h1 className="landing margin-top-0 margin-bottom-3">Recipient Records</h1>
+        <Grid className="ttahub-recipient-search--filter-row flex-fill display-flex flex-align-center flex-align-self-center flex-row flex-wrap margin-bottom-3">
           <form role="search" className="ttahub-recipient-search--search-form display-flex" onSubmit={onSubmit}>
             { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */ }
             <label htmlFor="recipientRecordSearch" className="sr-only">Search recipient records by name or grant id</label>
@@ -175,7 +175,7 @@ function RecipientSearch({ user }) {
             </button>
           </form>
         </Grid>
-        <Grid className="display-flex flex-wrap flex-align-center margin-y-2">
+        <Grid className="display-flex flex-wrap flex-align-center margin-bottom-3">
           <FilterPanel
             filters={filters}
             filterConfig={RECIPIENT_SEARCH_FILTER_CONFIG}
