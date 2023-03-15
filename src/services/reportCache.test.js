@@ -18,11 +18,13 @@ import db, {
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
   CollaboratorRole,
+  Resource,
   Topic,
 } from '../models';
 import {
   cacheObjectiveMetadata,
 } from './reportCache';
+import { processObjectiveForResourcesById } from './resource';
 import { REPORT_STATUSES } from '../constants';
 
 describe('reportCache', () => {
@@ -80,6 +82,7 @@ describe('reportCache', () => {
   };
 
   const mockReport = {
+    id: 900000,
     submissionStatus: REPORT_STATUSES.DRAFT,
     calculatedStatus: REPORT_STATUSES.DRAFT,
     numberOfParticipants: 1,
@@ -114,13 +117,11 @@ describe('reportCache', () => {
 
   let mockObjectiveTopics;
 
-  const mockObjectiveResources = [{
-    userProvidedUrl: 'https://ttahub.ohs.acf.hhs.gov/',
-  }, {
-    userProvidedUrl: 'https://hses.ohs.acf.hhs.gov/',
-  }, {
-    userProvidedUrl: 'https://eclkc.ohs.acf.hhs.gov/',
-  }];
+  const mockObjectiveResources = [
+    'https://ttahub.ohs.acf.hhs.gov/',
+    'https://hses.ohs.acf.hhs.gov/',
+    'https://eclkc.ohs.acf.hhs.gov/',
+  ];
 
   let user;
   const roles = [];
@@ -170,9 +171,10 @@ describe('reportCache', () => {
         fileId: files[0].id,
       },
     }));
-    objectiveResources.push(await ObjectiveResource.findOrCreate({
-      where: { objectiveId: objective.id, ...mockObjectiveResources[0] },
-    }));
+    objectiveResources.push(await processObjectiveForResourcesById(
+      objective.id,
+      [mockObjectiveResources[0]],
+    ));
     topics.push((await Topic.findOrCreate({ where: { name: 'Coaching' } })));
     topics.push((await Topic.findOrCreate({ where: { name: 'Communication' } })));
     topics.push((await Topic.findOrCreate({ where: { name: 'Community and Self-Assessment' } })));
@@ -186,8 +188,14 @@ describe('reportCache', () => {
     await ObjectiveTopic.destroy({ where: { objectiveId: objective.id } });
     await ObjectiveResource.destroy({ where: { objectiveId: objective.id } });
     await ObjectiveFile.destroy({ where: { objectiveId: objective.id } });
-    await Promise.all(files.map(async (file) => file.destroy()));
-    await activityRecipient.destroy();
+    await ActivityRecipient.destroy({
+      where: {
+        [Op.or]: [
+          { activityReportId: report.id },
+          { grantId: mockGrant.id },
+        ],
+      },
+    });
     await ActivityReportGoal.destroy({ where: { goalId: goal.id } });
     const aroFiles = await ActivityReportObjectiveFile
       .findAll({ include: { model: ActivityReportObjective, as: 'activityReportObjective', where: { objectiveId: objective.id } } });
@@ -211,6 +219,7 @@ describe('reportCache', () => {
       where: { roleId: role.id },
     })));
     await Promise.all(roles.map(async (role) => role.destroy()));
+    await Promise.all(files.map(async (file) => file.destroy()));
     await User.destroy({ where: { id: user.id } });
     await db.sequelize.close();
   });
@@ -227,6 +236,10 @@ describe('reportCache', () => {
           }, {
             model: ActivityReportObjectiveResource,
             as: 'activityReportObjectiveResources',
+            include: [{
+              model: Resource,
+              as: 'resource',
+            }],
           }, {
             model: ActivityReportObjectiveTopic,
             as: 'activityReportObjectiveTopics',
@@ -253,6 +266,10 @@ describe('reportCache', () => {
           }, {
             model: ActivityReportObjectiveResource,
             as: 'activityReportObjectiveResources',
+            include: [{
+              model: Resource,
+              as: 'resource',
+            }],
           }, {
             model: ActivityReportObjectiveTopic,
             as: 'activityReportObjectiveTopics',
@@ -301,6 +318,10 @@ describe('reportCache', () => {
           }, {
             model: ActivityReportObjectiveResource,
             as: 'activityReportObjectiveResources',
+            include: [{
+              model: Resource,
+              as: 'resource',
+            }],
           }, {
             model: ActivityReportObjectiveTopic,
             as: 'activityReportObjectiveTopics',
@@ -310,8 +331,8 @@ describe('reportCache', () => {
         expect(aro.activityReportObjectiveFiles.length).toEqual(1);
         expect(aro.activityReportObjectiveFiles[0].fileId).toEqual(mockFiles[0].id);
         expect(aro.activityReportObjectiveResources.length).toEqual(1);
-        expect(aro.activityReportObjectiveResources[0].userProvidedUrl)
-          .toEqual(mockObjectiveResources[0].userProvidedUrl);
+        expect(aro.activityReportObjectiveResources[0].resource.dataValues.url)
+          .toEqual(mockObjectiveResources[0]);
 
         expect(aro.activityReportObjectiveTopics.length).toEqual(1);
         expect(aro.arOrder).toEqual(2);
@@ -331,9 +352,10 @@ describe('reportCache', () => {
             fileId: mockFiles[1].id,
           },
         }));
-        objectiveResources.push(await ObjectiveResource.findOrCreate({
-          where: { objectiveId: objective.id, ...mockObjectiveResources[1] },
-        }));
+        objectiveResources.push(await processObjectiveForResourcesById(
+          objective.id,
+          [mockObjectiveResources[1]],
+        ));
         objectiveTopics.push(await ObjectiveTopic.findOrCreate({
           where: { objectiveId: objective.id, ...mockObjectiveTopics[1] },
         }));
@@ -355,10 +377,10 @@ describe('reportCache', () => {
             objectiveId: objective.id,
           },
         });
-
+        // TODO: GH - fix
         const metadata = {
           files: filesForThisObjective,
-          resources: [...resourcesForThisObjective, { userProvidedUrl: '1302 Subpart A—Eligibility, Recruitment, Selection, Enrollment, and Attendance | ECLKC (hhs.gov)' }],
+          resources: [...resourcesForThisObjective, { url: '1302 Subpart A—Eligibility, Recruitment, Selection, Enrollment, and Attendance | ECLKC (hhs.gov)' }], // TODO: GH - FIX
           topics: topicsForThisObjective,
           ttaProvided: null,
           order: 0,
@@ -372,6 +394,10 @@ describe('reportCache', () => {
           }, {
             model: ActivityReportObjectiveResource,
             as: 'activityReportObjectiveResources',
+            include: [{
+              model: Resource,
+              as: 'resource',
+            }],
           }, {
             model: ActivityReportObjectiveTopic,
             as: 'activityReportObjectiveTopics',
@@ -381,8 +407,8 @@ describe('reportCache', () => {
         expect(aro.activityReportObjectiveFiles.length).toEqual(1);
         expect(aro.activityReportObjectiveFiles[0].fileId).toEqual(mockFiles[1].id);
         expect(aro.activityReportObjectiveResources.length).toEqual(1);
-        expect(aro.activityReportObjectiveResources[0].userProvidedUrl)
-          .toEqual(mockObjectiveResources[1].userProvidedUrl);
+        expect(aro.activityReportObjectiveResources[0].resource.dataValues.url)
+          .toEqual(mockObjectiveResources[1]);
         expect(aro.activityReportObjectiveTopics.length).toEqual(1);
         expect(aro.activityReportObjectiveTopics[0].topicId)
           .toEqual(mockObjectiveTopics[1].topicId);
@@ -406,6 +432,10 @@ describe('reportCache', () => {
           }, {
             model: ActivityReportObjectiveResource,
             as: 'activityReportObjectiveResources',
+            include: [{
+              model: Resource,
+              as: 'resource',
+            }],
           }, {
             model: ActivityReportObjectiveTopic,
             as: 'activityReportObjectiveTopics',

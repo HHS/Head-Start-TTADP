@@ -21,16 +21,4 @@ describe('Goals Percentage', () => {
     const percentage = await screen.findByText('10%');
     expect(percentage).toBeInTheDocument();
   });
-
-  it('shows the numerator', async () => {
-    renderGoalsPercentage();
-    const numerator = await screen.findByText('100');
-    expect(numerator).toBeInTheDocument();
-  });
-
-  it('shows the denominator', async () => {
-    renderGoalsPercentage();
-    const denominator = await screen.findByText('1000');
-    expect(denominator).toBeInTheDocument();
-  });
 });

@@ -1,5 +1,14 @@
-import { Op } from 'sequelize';
-import { AUTOMATIC_CREATION } from '../../constants';
+const { Op } = require('sequelize');
+const { AUTOMATIC_CREATION } = require('../../constants');
+
+const processForEmbeddedResources = async (sequelize, instance, options) => {
+  // eslint-disable-next-line global-require
+  const { calculateIsAutoDetectedForGoalTemplate, processGoalTemplateForResourcesById } = require('../../services/resource');
+  const changed = instance.changed() || Object.keys(instance);
+  if (calculateIsAutoDetectedForGoalTemplate(changed)) {
+    await processGoalTemplateForResourcesById(instance.id);
+  }
+};
 
 const autoPopulateHash = (sequelize, instance, options) => {
   const changed = instance.changed();
@@ -73,16 +82,23 @@ const beforeUpdate = (sequelize, instance, options) => {
   autoPopulateTemplateNameModifiedAt(sequelize, instance, options);
 };
 
+const afterCreate = async (sequelize, instance, options) => {
+  await processForEmbeddedResources(sequelize, instance, options);
+};
+
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateTemplateName(sequelize, instance, options);
+  await processForEmbeddedResources(sequelize, instance, options);
 };
 
 export {
+  processForEmbeddedResources,
   autoPopulateHash,
   autoPopulateTemplateNameModifiedAt,
   autoPopulateCreationMethod,
   propagateTemplateName,
   beforeValidate,
   beforeUpdate,
+  afterCreate,
   afterUpdate,
 };

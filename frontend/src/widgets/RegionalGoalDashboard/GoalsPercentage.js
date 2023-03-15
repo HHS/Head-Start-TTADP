@@ -24,7 +24,8 @@ export function GoalsPercentageWidget({ data, loading }) {
               {percentage}
               %
             </h2>
-            <div className="">
+            <div>Regional goals</div>
+            {/* <div className="">
               <span className="">
                 {data.numerator}
               </span>
@@ -38,7 +39,7 @@ export function GoalsPercentageWidget({ data, loading }) {
                 {' '}
                 {data.denominator}
               </span>
-            </div>
+            </div> */}
           </div>
         </span>
       </Container>

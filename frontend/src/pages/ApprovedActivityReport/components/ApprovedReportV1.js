@@ -133,7 +133,7 @@ export default function ApprovedReportV1({ data }) {
   const createdAt = moment(data.createdAt).format(DATE_DISPLAY_FORMAT);
   const submittedAt = data.submittedDate ? moment(data.submittedDate).format(DATE_DISPLAY_FORMAT) : '';
 
-  const creator = data.author.fullName || '';
+  const creator = data.author && data.author.fullName ? data.author.fullName : '';
 
   return (
     <>

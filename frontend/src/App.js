@@ -8,13 +8,14 @@ import { Helmet } from 'react-helmet';
 import { fetchUser, fetchLogout } from './fetchers/Auth';
 import { HTTPError } from './fetchers';
 import { getSiteAlerts } from './fetchers/siteAlerts';
-
+import FeatureFlag from './components/FeatureFlag';
 import UserContext from './UserContext';
 import SiteNav from './components/SiteNav';
 import Header from './components/Header';
 
 import Admin from './pages/Admin';
 import RegionalDashboard from './pages/RegionalDashboard';
+import ResourcesDashboard from './pages/ResourcesDashboard';
 import Unauthenticated from './pages/Unauthenticated';
 import NotFound from './pages/NotFound';
 import Home from './pages/Home';
@@ -44,7 +45,6 @@ import {
 import AppLoadingContext from './AppLoadingContext';
 import Loader from './components/Loader';
 import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
-import FeatureFlag from './components/FeatureFlag';
 import MyGroups from './pages/AccountManagement/MyGroups';
 
 function App() {
@@ -202,6 +202,17 @@ function App() {
         />
         <Route
           exact
+          path="/resources-dashboard"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="resources_dashboard" renderNotFound>
+                <ResourcesDashboard user={user} />
+              </FeatureFlag>
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
           path="/regional-dashboard"
           render={() => (
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
@@ -297,22 +308,22 @@ function App() {
       <AppLoadingContext.Provider value={{ isAppLoading, setIsAppLoading, setAppLoadingText }}>
         <BrowserRouter>
           {authenticated && (
-          <>
-            <a className="usa-skipnav" href="#main-content">
-              Skip to main content
-            </a>
+            <>
+              <a className="usa-skipnav" href="#main-content">
+                Skip to main content
+              </a>
 
-            {/* Only show the sidebar when the user is authenticated */}
-            <UserContext.Provider value={{ user, authenticated, logout }}>
-              <SiteNav
-                admin={admin}
-                authenticated={authenticated}
-                logout={logout}
-                user={user}
-                hasAlerts={!!(alert)}
-              />
-            </UserContext.Provider>
-          </>
+              {/* Only show the sidebar when the user is authenticated */}
+              <UserContext.Provider value={{ user, authenticated, logout }}>
+                <SiteNav
+                  admin={admin}
+                  authenticated={authenticated}
+                  logout={logout}
+                  user={user}
+                  hasAlerts={!!(alert)}
+                />
+              </UserContext.Provider>
+            </>
           )}
           <UserContext.Provider value={{ user, authenticated, logout }}>
             <Header authenticated alert={alert} />
