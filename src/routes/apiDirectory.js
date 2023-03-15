@@ -10,6 +10,7 @@ import filesRouter from './files';
 import activityReportsRouter from './activityReports';
 import usersRouter from './users';
 import widgetsRouter from './widgets';
+import resourcesRouter from './resources';
 import recipientRouter from './recipient';
 import { userById } from '../services/users';
 import { auditLogger } from '../logger';
@@ -64,6 +65,7 @@ router.use('/settings', settingsRouter);
 router.use('/rttapa', rttapaRouter);
 router.use('/groups', groupsRouter);
 router.use('/alerts', siteAlertsRouter);
+router.use('/resources', resourcesRouter);
 
 const getUser = async (req, res) => {
   const userId = await currentUserId(req, res);

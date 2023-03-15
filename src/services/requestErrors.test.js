@@ -14,7 +14,12 @@ describe('RequestErrors DB service', () => {
   const responseBody = { error: { foo: 'encountered problems' } };
   const responseCode = '400';
 
+  beforeAll(async () => {
+    await RequestErrors.destroy({ where: { uri } });
+  });
+
   afterAll(async () => {
+    await RequestErrors.destroy({ where: { uri } });
     await db.sequelize.close();
   });
 
@@ -63,7 +68,7 @@ describe('RequestErrors DB service', () => {
         responseBody,
         responseCode,
       });
-      const retrievedRequestErrors = await requestErrors();
+      const retrievedRequestErrors = await requestErrors({ filter: JSON.stringify({ uri }), range: '[0,1]' });
       expect(retrievedRequestErrors).toBeDefined();
       expect(retrievedRequestErrors.count).toBe(1);
       await RequestErrors.destroy({ where: { id: requestErrorId } });
@@ -97,7 +102,9 @@ describe('RequestErrors DB service', () => {
         responseBody,
         responseCode,
       });
-      const retrievedRequestErrors = await requestErrorsByIds(requestErrorId);
+      const retrievedRequestErrors = await requestErrorsByIds({
+        filter: JSON.stringify({ id: requestErrorId }),
+      });
       expect(retrievedRequestErrors).toBeDefined();
       expect(retrievedRequestErrors.length).toBe(1);
       await RequestErrors.destroy({ where: { id: requestErrorId } });
@@ -114,12 +121,16 @@ describe('RequestErrors DB service', () => {
         responseBody,
         responseCode,
       });
-      const retrievedRequestErrors = await requestErrorsByIds(requestErrorId);
+      const retrievedRequestErrors = await requestErrorsByIds({
+        filter: JSON.stringify({ id: requestErrorId }),
+      });
       expect(retrievedRequestErrors).toBeDefined();
       expect(retrievedRequestErrors.length).toBe(1);
       const response = await delRequestErrors({ filter: `{"id":[${requestErrorId}]}` });
       expect(response).toBe(1);
-      const retrievedRequestErrorsAfterDel = await requestErrorsByIds(requestErrorId);
+      const retrievedRequestErrorsAfterDel = await requestErrorsByIds({
+        filter: JSON.stringify({ id: requestErrorId }),
+      });
       expect(retrievedRequestErrorsAfterDel.length).toBe(0);
     });
   });

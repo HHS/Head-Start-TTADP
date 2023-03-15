@@ -46,7 +46,7 @@ const OtherEntityReviewSection = () => {
               <ul className="usa-list usa-list--unstyled">
                 {objective.resources.map((r) => (
                   <li key={uuidv4()}>
-                    <a href={r.userProvidedUrl}>{r.userProvidedUrl}</a>
+                    <a href={r.url}>{r.url}</a>
                   </li>
                 ))}
               </ul>

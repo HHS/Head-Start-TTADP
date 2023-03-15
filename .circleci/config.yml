@@ -440,8 +440,8 @@ jobs:
                   REACT_APP_GTM_ENABLED: $SANDBOX_GTM_ENABLED
                   REACT_APP_GTM_ID: $GLOBAL_GTM_ID
                   REACT_APP_GTM_AUTH: $SANDBOX_GTM_AUTH
-                  REACT_APP_GTM_PREVIEW: $SANDBOX_GTM_PREVIEW           
-                  REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-sandbox.app.cloud.gov       
+                  REACT_APP_GTM_PREVIEW: $SANDBOX_GTM_PREVIEW
+                  REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-sandbox.app.cloud.gov
             - cf_deploy:
                 app_name: tta-smarthub-sandbox
                 auth_client_id: SANDBOX_AUTH_CLIENT_ID

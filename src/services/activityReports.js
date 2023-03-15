@@ -25,9 +25,8 @@ import {
   Program,
   ActivityReportGoal,
   ActivityReportObjective,
-  ActivityReportObjectiveResource,
+  Resource,
   ActivityReportObjectiveTopic,
-  ObjectiveResource,
   Topic,
   CollaboratorRole,
   Role,
@@ -459,10 +458,10 @@ export async function activityReportAndRecipientsById(activityReportId) {
             ],
           },
           {
-            model: ObjectiveResource,
+            model: Resource,
             as: 'resources',
             attributes: [
-              ['userProvidedUrl', 'value'],
+              ['url', 'value'],
               ['id', 'key'],
             ],
           },
@@ -516,11 +515,6 @@ export async function activityReportAndRecipientsById(activityReportId) {
       },
       {
         model: NextStep,
-        where: {
-          noteType: {
-            [Op.eq]: 'SPECIALIST',
-          },
-        },
         attributes: ['note', 'completeDate', 'id'],
         as: 'specialistNextSteps',
         required: false,
@@ -528,11 +522,6 @@ export async function activityReportAndRecipientsById(activityReportId) {
       },
       {
         model: NextStep,
-        where: {
-          noteType: {
-            [Op.eq]: 'RECIPIENT',
-          },
-        },
         attributes: ['note', 'completeDate', 'id'],
         as: 'recipientNextSteps',
         required: false,
@@ -1181,8 +1170,9 @@ async function getDownloadableActivityReports(where, separate = true) {
           attributes: ['id', 'title', 'status'],
         },
         {
-          model: ActivityReportObjectiveResource,
-          as: 'activityReportObjectiveResources',
+          model: Resource,
+          as: 'resources',
+          attributes: ['id', 'url'],
         },
         {
           model: Topic,
@@ -1261,11 +1251,6 @@ async function getDownloadableActivityReports(where, separate = true) {
       },
       {
         model: NextStep,
-        where: {
-          noteType: {
-            [Op.eq]: 'SPECIALIST',
-          },
-        },
         attributes: ['note', 'id'],
         as: 'specialistNextSteps',
         separate,
@@ -1273,11 +1258,6 @@ async function getDownloadableActivityReports(where, separate = true) {
       },
       {
         model: NextStep,
-        where: {
-          noteType: {
-            [Op.eq]: 'RECIPIENT',
-          },
-        },
         attributes: ['note', 'id'],
         as: 'recipientNextSteps',
         separate,

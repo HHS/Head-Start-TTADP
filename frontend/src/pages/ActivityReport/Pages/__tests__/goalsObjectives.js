@@ -393,7 +393,7 @@ describe('goals objectives', () => {
             ttaProvided: 'ttaProvided one',
             status: 'Not Started',
             topics: [{ name: 'Topic 1' }, { name: 'Topic 2' }, { name: 'Topic 3' }],
-            resources: [{ userProvidedUrl: 'http://test1.gov' }, { userProvidedUrl: 'http://test2.gov' }, { userProvidedUrl: 'http://test3.gov' }],
+            resources: [{ url: 'http://test1.gov' }, { url: 'http://test2.gov' }, { url: 'http://test3.gov' }],
             roles: ['Chief Inspector'],
             files: [{ originalFileName: 'test1.txt', url: { url: 'test1.txt' } }],
           },

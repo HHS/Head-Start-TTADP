@@ -10,7 +10,7 @@ import {
   Recipient,
   ActivityReportCollaborator,
   ActivityReportObjective,
-  ActivityReportObjectiveResource,
+  Resource,
   Topic,
   Objective,
   File,
@@ -245,7 +245,7 @@ describe('activityReportToCsvRecord', () => {
       activityReportId: 209914,
       status: OBJECTIVE_STATUS.NOT_STARTED,
       topics: [{ name: 'topic 1' }, { name: 'topic 2' }, { name: 'topic 3' }],
-      activityReportObjectiveResources: [{ userProvidedUrl: 'https://test1.gov' }, { userProvidedUrl: 'https://test2.gov' }],
+      resources: [{ url: 'https://test1.gov' }, { url: 'https://test2.gov' }],
       files: [{ originalFileName: 'file1.txt' }, { originalFileName: 'file2.pdf' }],
       objective: mockObjectives[0],
     },
@@ -419,8 +419,8 @@ describe('activityReportToCsvRecord', () => {
               as: 'objective',
             },
             {
-              model: ActivityReportObjectiveResource,
-              as: 'activityReportObjectiveResources',
+              model: Resource,
+              as: 'resources',
             },
             {
               model: Topic,
@@ -464,7 +464,7 @@ describe('activityReportToCsvRecord', () => {
     const objectives = mockObjectives.map((mo) => ({
       ...mo,
       topics: [{ name: 'Topic 1' }],
-      resources: [{ userProvidedUrl: 'https://test.gov' }],
+      resources: [{ url: 'https://test.gov' }],
       files: [{ originalFileName: 'TestFile.docx' }],
     }));
 
