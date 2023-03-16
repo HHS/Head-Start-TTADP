@@ -177,7 +177,8 @@ export default function ResourcesDashboard() {
         />
 
         <ResourcesAssociatedWithTopics
-          filters={filters}
+          data={resourcesData.topicUse}
+          loading={isLoading}
           resetPagination={resetPagination}
           setResetPagination={setResetPagination}
         />
