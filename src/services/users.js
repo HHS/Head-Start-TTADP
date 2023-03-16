@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 import { v4 as uuidv4 } from 'uuid';
 import { Op, QueryTypes } from 'sequelize';
+import SCOPES from '../middleware/scopeConstants';
 
 import {
   User,
@@ -8,15 +9,10 @@ import {
   Role,
   sequelize,
   UserValidationStatus,
-  ActivityReport as ActivityReportModel,
-  ActivityReportCollaborator,
-  ActivityReportApprover,
-  ActivityRecipient,
-  Grant,
-  ActivityReportGoal,
-  ActivityReportObjective,
 } from '../models';
-import { REPORT_STATUSES, DECIMAL_BASE } from '../constants';
+import { DECIMAL_BASE } from '../constants';
+
+const { SITE_ACCESS } = SCOPES;
 
 export const userAttributes = [
   'id',
@@ -389,4 +385,38 @@ export async function statisticsByUser(user, regions, readonly = false, reportId
     goalsApproved: totalGoalIds.size,
     objectivesApproved: totalObjectivesIds.size,
   };
+}
+
+/**
+ * Sets a give feature flag on or off for a set of active users
+ *
+ * @param {flag:string} flag to set
+ * @param {on:boolean} on specifies whether to set the flag on or off
+ * @returns {Promise<Array>} result as a promise resolving to an array of empty array and the number of records affected
+ */
+export async function setFlag(flag, on = true) {
+  const query = `
+    UPDATE
+    "Users" u
+    SET
+      flags = CASE
+        WHEN ${!!on} THEN CASE
+            WHEN flags @> ARRAY ['${flag}'::"enum_Users_flags"] THEN flags
+            ELSE array_append(flags, '${flag}')
+        END
+        ELSE array_remove(flags, '${flag}')
+      END
+    FROM
+    "Permissions" p
+    WHERE
+      p."userId" = u.id AND
+      p."scopeId" = ${SITE_ACCESS}
+      AND CASE
+        WHEN ${!!on} THEN NOT flags @> ARRAY ['${flag}'::"enum_Users_flags"]
+        ELSE flags @> ARRAY ['${flag}'::"enum_Users_flags"]
+    END;
+  `;
+
+  const result = sequelize.query(query, { type: QueryTypes.UPDATE });
+  return result;
 }

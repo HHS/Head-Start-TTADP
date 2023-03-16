@@ -5,8 +5,11 @@ import {
   verifyEmailToken,
   getUserStatistics,
   getActiveUsers,
+  setFeatureFlag,
 } from './handlers';
-import { userById, usersWithPermissions, statisticsByUser } from '../../services/users';
+import {
+  userById, usersWithPermissions, statisticsByUser, setFlag,
+} from '../../services/users';
 import User from '../../policies/user';
 import { Grant } from '../../models';
 import { createAndStoreVerificationToken, validateVerificationToken } from '../../services/token';
@@ -16,6 +19,7 @@ jest.mock('../../services/users', () => ({
   userById: jest.fn(),
   usersWithPermissions: jest.fn(),
   statisticsByUser: jest.fn(),
+  setFlag: jest.fn(),
 }));
 
 jest.mock('../../services/currentUser', () => ({
@@ -314,6 +318,9 @@ describe('User handlers', () => {
         ...mockRequest,
       };
       User.prototype.isAdmin = jest.fn().mockReturnValue(false);
+      userById.mockResolvedValue({
+        id: 1,
+      });
       await getActiveUsers(request, mockResponse);
       expect(mockResponse.on).not.toHaveBeenCalled();
       expect(mockResponse.writeHead).not.toHaveBeenCalled();
@@ -327,6 +334,40 @@ describe('User handlers', () => {
       userById.mockResolvedValue(null);
       await getActiveUsers(request, mockResponse);
       expect(mockResponse.on).not.toHaveBeenCalled();
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+    });
+  });
+
+  describe('setFeatureFlag', () => {
+    const request = {
+      ...mockRequest,
+      body: {
+        flag: 'anv_statistics',
+        on: false,
+      },
+    };
+    it('handles setting a flag for all users', async () => {
+      const response = [[], 15];
+      setFlag.mockResolvedValue(response);
+      User.prototype.isAdmin = jest.fn().mockReturnValue(true);
+      await setFeatureFlag(request, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith(response);
+      expect(mockResponse.error).not.toHaveBeenCalled();
+    });
+
+    it('does not allow unauthorized requests', async () => {
+      User.prototype.isAdmin = jest.fn().mockReturnValue(false);
+      userById.mockResolvedValue({
+        id: 1,
+      });
+      await setFeatureFlag(request, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+
+    it('calls the error handler on error', async () => {
+      User.prototype.isAdmin = jest.fn().mockReturnValue(false);
+      userById.mockResolvedValue(null);
+      await setFeatureFlag(request, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
   });
