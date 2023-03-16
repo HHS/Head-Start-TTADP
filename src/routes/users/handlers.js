@@ -1,6 +1,8 @@
 import UserPolicy from '../../policies/user';
 import SCOPES from '../../middleware/scopeConstants';
-import { userById, usersWithPermissions, statisticsByUser } from '../../services/users';
+import {
+  userById, usersWithPermissions, statisticsByUser, setFlag,
+} from '../../services/users';
 import handleErrors from '../../lib/apiErrorHandler';
 import { DECIMAL_BASE } from '../../constants';
 import { statesByGrantRegion } from '../../services/grant';
@@ -110,5 +112,32 @@ export async function getActiveUsers(req, res) {
     usersStream.pipe(res);
   } catch (error) {
     await handleErrors(req, res, error, { namespace: 'SERVICE:ACTIVEUSERS' });
+  }
+}
+
+/**
+ * Handler setting of a feature flag.
+ *
+ * @param {import('express').Request} req - request
+ * @param {import('express').Response} res - response
+ * @returns {*} - empty array and a number of users affected
+ */
+export async function setFeatureFlag(req, res) {
+  try {
+    const { flag, on } = req.body;
+
+    const user = await userById(await currentUserId(req, res));
+    const authorization = new UserPolicy(user);
+
+    if (!authorization.isAdmin()) {
+      auditLogger.warn(`User ${user.id} without permissions attempted to set feature flags`);
+      res.sendStatus(403);
+      return;
+    }
+    const result = await setFlag(flag, on);
+
+    res.json(result);
+  } catch (error) {
+    await handleErrors(req, res, error, { namespace: 'SERVICE:USERS' });
   }
 }

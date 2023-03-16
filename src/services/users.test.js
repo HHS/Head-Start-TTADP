@@ -3,7 +3,7 @@ import db, {
 } from '../models';
 
 import {
-  usersWithPermissions, userById, userByEmail,
+  usersWithPermissions, userById, userByEmail, setFlag,
 } from './users';
 
 import SCOPES from '../middleware/scopeConstants';
@@ -121,6 +121,69 @@ describe('Users DB service', () => {
       expect(foundIds.includes(50)).toBeTruthy();
       expect(foundIds.includes(51)).toBeTruthy();
       expect(foundIds.length).toBe(2);
+    });
+  });
+
+  describe('setFlag', () => {
+    const users = [
+      {
+        id: 50,
+        regionId: 5,
+        scopeId: SCOPES.SITE_ACCESS,
+      },
+      {
+        id: 51,
+        regionId: 6,
+        scopeId: SCOPES.SITE_ACCESS,
+      },
+      {
+        id: 52,
+        regionId: 7,
+        scopeId: SCOPES.SITE_ACCESS,
+      },
+      {
+        id: 53,
+        regionId: 5,
+        scopeId: SCOPES.READ_REPORTS,
+      },
+    ];
+    beforeEach(async () => {
+      await Promise.all(
+        users.map((u) => User.create({
+          id: u.id,
+          name: u.id,
+          hsesUsername: u.id,
+          hsesUserId: u.id,
+          permissions: [{
+            userId: u.id,
+            regionId: u.regionId,
+            scopeId: u.scopeId,
+          }],
+        }, { include: [{ model: Permission, as: 'permissions' }] })),
+      );
+    });
+
+    afterEach(async () => {
+      await User.destroy({ where: { id: [50, 51, 52, 53] } });
+    });
+
+    it('adds a flag to users that do not have the flag', async () => {
+      const result = await setFlag('anv_statistics', true);
+      expect(result[1] > 3).toEqual(true);
+      const user = await User.findOne({ where: { id: 50 } });
+      expect(user.flags[0]).toBe('anv_statistics');
+    });
+    it('removes a flag from users that have the flag', async () => {
+      await setFlag('anv_statistics', true);
+      const result = await setFlag('anv_statistics', false);
+      expect(result[1] > 3).toEqual(true);
+      const user = await User.findOne({ where: { id: 50 } });
+      expect(user.flags[0]).toBe(undefined);
+    });
+    it('does not set a flag for users without permissions', async () => {
+      await setFlag('anv_statistics', true);
+      const user = await User.findOne({ where: { id: 53 } });
+      expect(user.flags[0]).toBe(undefined);
     });
   });
 });

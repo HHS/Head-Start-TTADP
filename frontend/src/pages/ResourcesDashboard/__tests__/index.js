@@ -560,4 +560,26 @@ describe('Resources Dashboard page', () => {
       expect(screen.getByRole('cell', { name: /99/i })).toBeInTheDocument();
     });
   });
+
+  it('handles errors by displaying an error message', async () => {
+    // Page Load.
+    fetchMock.get(`${resourcesUrl}?${allRegions}`, 500, { overwriteRoutes: true });
+
+    const user = {
+      homeRegionId: 14,
+      permissions: [{
+        regionId: 1,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      }, {
+        regionId: 2,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      }],
+    };
+
+    renderResourcesDashboard(user);
+
+    const [alert] = await screen.findAllByRole('alert');
+    expect(alert).toBeVisible();
+    expect(alert.textContent).toBe('Unable to fetch resources');
+  });
 });

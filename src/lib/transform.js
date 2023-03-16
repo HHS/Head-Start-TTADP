@@ -170,6 +170,38 @@ function sortObjectives(a, b) {
   return -1;
 }
 
+/**
+ *
+ * @param {Object[]} goalRecords
+ * @returns {Object} { goals: [], objectives: []}
+ */
+function makeGoalsObjectFromActivityReportGoals(goalRecords) {
+  let goalCsvRecordNumber = 1;
+  const goals = {};
+  goalRecords.forEach((goal) => {
+    const {
+      id = null,
+      name = null,
+      status = null,
+      createdVia = null,
+    } = goal || {};
+    const goalNameIndex = Object.values(goals).findIndex((n) => n === name);
+    if (goalNameIndex === -1) {
+      goals[`goal-${goalCsvRecordNumber}-id`] = `${id}`;
+      goals[`goal-${goalCsvRecordNumber}`] = name;
+      goals[`goal-${goalCsvRecordNumber}-status`] = status;
+      goals[`goal-${goalCsvRecordNumber}-created-from`] = createdVia;
+      goalCsvRecordNumber += 1;
+      return;
+    }
+    const goalNameKey = Object.keys(goals)[goalNameIndex];
+    const goalNumber = goalNameKey.match(/goal-(\d+)/)[1];
+    const field = `goal-${goalNumber}-id`;
+    goals[field] = `${goals[field]}\n${id}`;
+  });
+  return goals;
+}
+
 /*
    * Create an object with goals and objectives. Used by transformGoalsAndObjectives
    * @param {Array<Objectives>} objectiveRecords
@@ -300,8 +332,9 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
 */
 function transformGoalsAndObjectives(report) {
   let obj = {};
-  const { activityReportObjectives } = report;
-  if (activityReportObjectives) {
+  const { activityReportObjectives, activityReportGoals } = report;
+
+  if (activityReportObjectives && activityReportObjectives.length) {
     const objectiveRecords = activityReportObjectives.map((aro) => (
       {
         ...aro.objective,
@@ -314,6 +347,11 @@ function transformGoalsAndObjectives(report) {
     if (objectiveRecords) {
       obj = makeGoalsAndObjectivesObject(objectiveRecords);
     }
+  } else if (activityReportGoals && activityReportGoals.length) {
+    const goals = activityReportGoals.map((arg) => (
+      { ...(arg.goal.dataValues || arg.goal), status: arg.status }
+    ));
+    obj = makeGoalsObjectFromActivityReportGoals(goals);
   }
 
   return obj;
