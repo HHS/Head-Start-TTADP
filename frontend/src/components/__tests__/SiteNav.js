@@ -29,7 +29,7 @@ describe('SiteNav', () => {
 
       render(
         <Router history={history}>
-          <UserContext.Provider value={{ user }}>
+          <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
             <SiteNav authenticated admin user={user} hasAlerts={false} />
           </UserContext.Provider>
         </Router>,
@@ -53,7 +53,7 @@ describe('SiteNav', () => {
 
       render(
         <MemoryRouter>
-          <UserContext.Provider value={{ user }}>
+          <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
             <SiteNav authenticated user={user} hasAlerts={false} />
           </UserContext.Provider>
         </MemoryRouter>,
@@ -67,7 +67,13 @@ describe('SiteNav', () => {
 
   describe('when unauthenticated', () => {
     beforeEach(() => {
-      render(<MemoryRouter><SiteNav authenticated={false} hasAlerts={false} /></MemoryRouter>);
+      render(
+        <MemoryRouter>
+          <UserContext.Provider value={{ user: {}, authenticated: false, logout: () => {} }}>
+            <SiteNav authenticated={false} hasAlerts={false} />
+          </UserContext.Provider>
+        </MemoryRouter>,
+      );
     });
 
     test('nav items are not visible', () => {
@@ -86,7 +92,7 @@ describe('SiteNav', () => {
 
       render(
         <MemoryRouter>
-          <UserContext.Provider value={{ user }}>
+          <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
             <SiteNav authenticated user={user} hasAlerts />
           </UserContext.Provider>
         </MemoryRouter>,
@@ -109,11 +115,11 @@ describe('SiteNav', () => {
 
       render(
         <MemoryRouter>
-          <header className="smart-hub-header.has-alerts">
-            <UserContext.Provider value={{ user }}>
+          <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
+            <header className="smart-hub-header.has-alerts">
               <SiteNav authenticated user={user} hasAlerts />
-            </UserContext.Provider>
-          </header>
+            </header>
+          </UserContext.Provider>
         </MemoryRouter>,
       );
     });

@@ -105,7 +105,7 @@ const cacheResources = async (objectiveId, activityReportObjectiveId, resources 
       .map((r) => r.resourceId)
     : [];
   const removedAROResourceIds = originalAROResources
-    .filter((oR) => !!aroResources?.find((r) => oR.id === r.id))
+    .filter((oR) => !aroResources?.find((r) => oR.id === r.id))
     .map((r) => r.resourceId);
 
   return Promise.all([
@@ -242,16 +242,19 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     }, { raw: true });
   }
   const { id: activityReportObjectiveId } = aro;
+  // Updates take longer then selects to settle in the db, as a result this update needs to be
+  // complete prior to calling cacheResources to prevent stale data from being returned. This
+  // results in the following update cannot be in the Promise.all in the return.
+  await ActivityReportObjective.update({
+    title: objective.title,
+    status: status || objective.status,
+    ttaProvided,
+    arOrder: order + 1,
+  }, {
+    where: { id: activityReportObjectiveId },
+    individualHooks: true,
+  });
   return Promise.all([
-    ActivityReportObjective.update({
-      title: objective.title,
-      status: status || objective.status,
-      ttaProvided,
-      arOrder: order + 1,
-    }, {
-      where: { id: activityReportObjectiveId },
-      individualHooks: true,
-    }),
     Objective.update({ onAR: true }, {
       where: { id: objectiveId },
       individualHooks: true,

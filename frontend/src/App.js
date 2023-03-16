@@ -44,6 +44,7 @@ import {
 } from './Constants';
 import AppLoadingContext from './AppLoadingContext';
 import Loader from './components/Loader';
+import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
 import MyGroups from './pages/AccountManagement/MyGroups';
 
 function App() {
@@ -143,7 +144,7 @@ function App() {
         <Route
           path="/activity-reports/legacy/:legacyId([0-9RA\-]*)"
           render={({ match }) => (
-            <AppWrapper authenticated logout={logout}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <LegacyReport
                 match={match}
               />
@@ -154,7 +155,7 @@ function App() {
           exact
           path="/activity-reports"
           render={({ match }) => (
-            <AppWrapper authenticated logout={logout}>
+            <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
               <LandingLayout>
                 <Landing match={match} />
               </LandingLayout>
@@ -164,12 +165,16 @@ function App() {
         <Route
           exact
           path="/"
-          render={() => <AppWrapper authenticated logout={logout}><Home /></AppWrapper>}
+          render={() => (
+            <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
+              <Home />
+            </AppWrapper>
+          )}
         />
         <Route
           path="/activity-reports/view/:activityReportId([0-9]*)"
           render={({ match, location }) => (
-            <AppWrapper authenticated logout={logout}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <ApprovedActivityReport location={location} match={match} user={user} />
             </AppWrapper>
           )}
@@ -177,7 +182,7 @@ function App() {
         <Route
           path="/activity-reports/:activityReportId(new|[0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match, location }) => (
-            <AppWrapper authenticated logout={logout}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <ActivityReport location={location} match={match} />
             </AppWrapper>
           )}
@@ -185,7 +190,7 @@ function App() {
         <Route
           path="/recipient-tta-records/:recipientId([0-9]*)/region/:regionId([0-9]*)"
           render={({ match, location }) => (
-            <AppWrapper authenticated logout={logout} padded={false}>
+            <AppWrapper authenticated logout={logout} padded={false} hasAlerts={!!(alert)}>
               <RecipientRecord
                 location={location}
                 match={match}
@@ -210,7 +215,9 @@ function App() {
           exact
           path="/regional-dashboard"
           render={() => (
-            <AppWrapper authenticated logout={logout}><RegionalDashboard user={user} /></AppWrapper>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+              <RegionalDashboard user={user} />
+            </AppWrapper>
           )}
         />
         <Route
@@ -232,9 +239,20 @@ function App() {
         />
         <Route
           exact
-          path="/account"
+          path="/regional-goal-dashboard"
           render={() => (
             <AppWrapper authenticated logout={logout}>
+              <FeatureFlag flag="regional_goal_dashboard" renderNotFound>
+                <RegionalGoalDashboard user={user} />
+              </FeatureFlag>
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/account"
+          render={() => (
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <AccountManagement updateUser={updateUser} />
             </AppWrapper>
           )}
@@ -243,7 +261,7 @@ function App() {
           exact
           path="/account/verify-email/:token"
           render={() => (
-            <AppWrapper authenticated logout={logout}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <AccountManagement updateUser={updateUser} />
             </AppWrapper>
           )}
@@ -254,24 +272,28 @@ function App() {
           render={() => <Logout />}
         />
         {admin && (
-          <Route
-            path="/admin"
-            render={() => (
-              <AppWrapper authenticated logout={logout}><Admin /></AppWrapper>
-            )}
-          />
+        <Route
+          path="/admin"
+          render={() => (
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}><Admin /></AppWrapper>
+          )}
+        />
         )}
         <Route
           exact
           path="/recipient-tta-records"
           render={() => (
-            <AppWrapper authenticated logout={logout}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <RecipientSearch user={user} />
             </AppWrapper>
           )}
         />
         <Route
-          render={() => <AppWrapper authenticated logout={logout}><NotFound /></AppWrapper>}
+          render={() => (
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+              <NotFound />
+            </AppWrapper>
+          )}
         />
       </Switch>
     </>

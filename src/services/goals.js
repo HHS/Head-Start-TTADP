@@ -22,7 +22,11 @@ import {
   File,
 } from '../models';
 import {
-  DECIMAL_BASE, REPORT_STATUSES, OBJECTIVE_STATUS, GOAL_STATUS,
+  DECIMAL_BASE,
+  REPORT_STATUSES,
+  OBJECTIVE_STATUS,
+  GOAL_STATUS,
+  SOURCE_FIELD,
 } from '../constants';
 import {
   cacheObjectiveMetadata,
@@ -98,6 +102,8 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
               ],
             },
           ],
+          where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE] } },
+          required: false,
         },
         {
           model: ObjectiveTopic,
@@ -574,6 +580,11 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
               ['id', 'key'],
             ],
             required: false,
+            through: {
+              attributes: [],
+              where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.OBJECTIVE.RESOURCE] } },
+              required: false,
+            },
           },
           {
             model: ActivityReportObjective,
@@ -666,6 +677,11 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
               ['id', 'key'],
             ],
             required: false,
+            through: {
+              attributes: [],
+              where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.OBJECTIVE.RESOURCE] } },
+              required: false,
+            },
           },
           {
             model: ActivityReportObjective,
@@ -1396,6 +1412,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
     where: {
       id: goalsToDelete,
       onApprovedAR: false,
+      createdVia: 'activityReport',
     },
     individualHooks: true,
   });
@@ -1539,20 +1556,38 @@ export async function saveGoalsForReport(goals, report) {
 
   const currentGoals = await Promise.all((goals.map(async (goal) => {
     let newGoals = [];
-    const status = goal.status ? goal.status : 'Draft';
+    const status = goal.status ? goal.status : GOAL_STATUS.DRAFT;
     const goalIds = goal.goalIds ? goal.goalIds : [];
     const endDate = goal.endDate && goal.endDate.toLowerCase() !== 'invalid date' ? goal.endDate : null;
     const isActivelyBeingEditing = goal.isActivelyBeingEditing
       ? goal.isActivelyBeingEditing : false;
 
-    // Check if these goals exist.
-    const existingGoals = Array.isArray(goalIds) && goalIds.length > 0
-      ? await Goal.findAll({ // All fields are needed.
-        where: {
-          id: goalIds,
-        },
-      })
-      : [];
+    /**
+     * when we find existing goals, we should query by grantIds if available
+     * as switching recipients means that the goal ids provided could apply to now unused grant
+     */
+
+    const existingGrantIds = goal.grantIds && Array.isArray(goal.grantIds) ? goal.grantIds : [];
+    const existingGoalIds = goal.goalIds && Array.isArray(goalIds) ? goal.goalIds : [];
+
+    let existingGoals = [];
+    // we only query if there are existing goal ids
+    if (existingGoalIds.length) {
+      const where = {
+        id: existingGoalIds,
+      };
+
+      // if we have grant ids available, we should query by those as well
+      if (existingGrantIds.length) {
+        where.grantId = existingGrantIds;
+      }
+
+      // finally, we can query for existing goals, which simplifies some of loops
+      // further in this file
+      existingGoals = await Goal.findAll({ // All fields are needed.
+        where,
+      });
+    }
 
     // we have a param to determine if goals are new
     if (goal.isNew || !existingGoals.length) {
@@ -1574,12 +1609,12 @@ export async function saveGoalsForReport(goals, report) {
       // - Grant Id.
       // - And status is not closed.
       // Note: The existing goal should be used regardless if it was created new.
-      newGoals = await Promise.all(goal.grantIds.map(async (grantId) => {
+      newGoals = await Promise.all(grantIds.map(async (grantId) => {
         let newGoal = await Goal.findOne({
           where: {
             name: fields.name,
             grantId,
-            status: { [Op.not]: 'Closed' },
+            status: { [Op.not]: GOAL_STATUS.CLOSED },
           },
         });
         if (!newGoal) {
@@ -1619,8 +1654,6 @@ export async function saveGoalsForReport(goals, report) {
         ...fields
       } = goal;
 
-      const { goalTemplateId } = existingGoals[0];
-
       await Promise.all(existingGoals.map(async (existingGoal) => {
         await existingGoal.update({
           status, endDate, ...fields,
@@ -1638,24 +1671,21 @@ export async function saveGoalsForReport(goals, report) {
 
       newGoals = await Promise.all(grantIds.map(async (gId) => {
         const existingGoal = existingGoals.find((g) => g.grantId === gId);
+
         if (existingGoal) {
           return existingGoal;
         }
 
         let newGoal = await Goal.findOne({ // All columns are needed for caching metadata.
           where: {
-            [Op.and]: [
-              { goalTemplateId: { [Op.not]: null } }, // We need to exclude null matches.
-              { goalTemplateId: { [Op.eq]: goalTemplateId } },
-            ],
             name: fields.name,
             grantId: gId,
             status: { [Op.not]: 'Closed' },
           },
         });
+
         if (!newGoal) {
           newGoal = await Goal.create({
-            goalTemplateId,
             grantId: gId,
             ...fields,
             status,
@@ -1684,8 +1714,12 @@ export async function saveGoalsForReport(goals, report) {
   })));
 
   const currentGoalIds = currentGoals.flat().map((g) => g.id);
+
   await removeActivityReportGoalsFromReport(report.id, currentGoalIds);
-  return removeUnusedGoalsObjectivesFromReport(report.id, currentObjectives);
+  return removeUnusedGoalsObjectivesFromReport(
+    report.id,
+    currentObjectives.filter((o) => currentGoalIds.includes(o.goalId)),
+  );
 }
 
 /**
@@ -1831,6 +1865,7 @@ export async function getGoalsForReport(reportId) {
                     attributes: [['url', 'value']],
                   },
                 ],
+                where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE] } },
               },
             ],
           },
@@ -1842,6 +1877,12 @@ export async function getGoalsForReport(reportId) {
             model: Resource,
             as: 'resources',
             attributes: [['url', 'value']],
+            through: {
+              attributes: [],
+              where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.OBJECTIVE.RESOURCE] } },
+              required: false,
+            },
+            required: false,
           },
           {
             model: File,
