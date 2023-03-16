@@ -16,11 +16,13 @@ import {
   FORM_FIELD_INDEXES,
 } from './constants';
 import AppLoadingContext from '../../AppLoadingContext';
+import { createObjectiveForGoal } from '../../fetchers/goals';
 import './Form.scss';
 
 export const BEFORE_OBJECTIVES_CREATE_GOAL = 'Enter a goal before adding an objective';
 export const BEFORE_OBJECTIVES_SELECT_RECIPIENTS = 'Select a grant number before adding an objective';
 export default function Form({
+  regionId,
   possibleGrants,
   selectedGrants,
   setSelectedGrants,
@@ -49,12 +51,31 @@ export default function Form({
   clearEmptyObjectiveError,
   onUploadFiles,
   userCanEdit,
+  onSaveDraft,
 }) {
   const { isAppLoading } = useContext(AppLoadingContext);
 
   const onUpdateText = (e) => setGoalName(e.target.value);
 
-  const onAddNewObjectiveClick = () => {
+  const saveNewObjective = async (goalIds) => {
+    // save a new objective on the backend
+    const newObjective = await createObjectiveForGoal(goalIds, regionId);
+
+    // copy existing state, add a blank
+    const obj = [
+      ...objectives.map((o) => ({ ...o })),
+      {
+        ...OBJECTIVE_DEFAULTS(objectives.length),
+        id: newObjective.id,
+        isNew: false,
+      }];
+
+    setObjectiveError(obj.length - 1, OBJECTIVE_DEFAULT_ERRORS);
+    setObjectives(obj);
+    clearEmptyObjectiveError();
+  };
+
+  const onAddNewObjectiveClick = async () => {
     // first we validate the goal text and the recipients
     if (!validateGoalNameAndRecipients([
       BEFORE_OBJECTIVES_CREATE_GOAL,
@@ -64,13 +85,8 @@ export default function Form({
     }
 
     // we need to save a goal here
-
-    // copy existing state, add a blank
-    const obj = [...objectives.map((o) => ({ ...o })), OBJECTIVE_DEFAULTS(objectives.length)];
-    setObjectiveError(obj.length - 1, OBJECTIVE_DEFAULT_ERRORS);
-    setObjectives(obj);
-
-    clearEmptyObjectiveError();
+    // & then save new objective
+    await onSaveDraft(saveNewObjective);
   };
 
   const removeObjective = (index) => {
@@ -252,12 +268,16 @@ Form.propTypes = {
   status: PropTypes.string.isRequired,
   datePickerKey: PropTypes.string.isRequired,
   fetchError: PropTypes.string.isRequired,
-  goalNumbers: PropTypes.arrayOf(PropTypes.string).isRequired,
+  goalNumbers: PropTypes.oneOfType([
+    PropTypes.string, PropTypes.arrayOf(PropTypes.string),
+  ]).isRequired,
   clearEmptyObjectiveError: PropTypes.func.isRequired,
   onUploadFiles: PropTypes.func.isRequired,
   validateGoalNameAndRecipients: PropTypes.func.isRequired,
   initialRttapa: PropTypes.string.isRequired,
   userCanEdit: PropTypes.bool,
+  onSaveDraft: PropTypes.func.isRequired,
+  regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };
 
 Form.defaultProps = {

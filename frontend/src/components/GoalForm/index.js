@@ -448,7 +448,6 @@ export default function GoalForm({
   );
   const isValidDraft = () => (
     validateGrantNumbers()
-    && validateGoalName()
     && validateResourcesOnly()
   );
 
@@ -592,7 +591,7 @@ export default function GoalForm({
     return null;
   };
 
-  const onSaveDraft = async () => {
+  const onSaveDraft = async (callbackForIds) => {
     if (!isValidDraft()) {
       // attempt to focus on the first invalid field
       const invalid = document.querySelector('.usa-form :invalid:not(fieldset), .usa-form-group--error textarea, .usa-form-group--error input, .usa-error-message + .ttahub-resource-repeater input');
@@ -654,12 +653,11 @@ export default function GoalForm({
         type: 'success',
       });
 
-      // if we are not creating a new goal, we want to update the goal ids
-      // for the case of adding a grant to an existing goal. If we are creating a new goal,
-      // we don't keep track of the ids, so we don't need to update them
-      if (!isNew) {
-        const newIds = updatedGoals.flatMap((g) => g.goalIds);
-        setIds(newIds);
+      const newIds = updatedGoals.flatMap((g) => g.goalIds);
+      setIds(newIds);
+
+      if (callbackForIds) {
+        await callbackForIds(newIds);
       }
     } catch (error) {
       setAlert({
@@ -863,6 +861,7 @@ export default function GoalForm({
         <form onSubmit={onSubmit}>
           { showForm && (
             <Form
+              ids={ids}
               fetchError={fetchError}
               onSaveDraft={onSaveDraft}
               possibleGrants={possibleGrants}
@@ -871,7 +870,7 @@ export default function GoalForm({
               goalName={goalName}
               setGoalName={setGoalName}
               recipient={recipient}
-              regionId={regionId}
+              regionId={parseInt(regionId, DECIMAL_BASE)}
               endDate={endDate}
               setEndDate={setEndDate}
               datePickerKey={datePickerKey}

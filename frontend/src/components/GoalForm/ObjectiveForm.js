@@ -137,7 +137,7 @@ export default function ObjectiveForm({
         userCanEdit={userCanEdit}
         toolTipText="Copy & paste web address of TTA resource you'll use for this objective. Usually an ECLKC page."
       />
-      { title && (
+
       <ObjectiveFiles
         files={files ? files.map((f) => ({ ...f, objectiveIds: objective.ids })) : []}
         onChangeFiles={onChangeFiles}
@@ -150,7 +150,6 @@ export default function ObjectiveForm({
         userCanEdit={userCanEdit}
         selectedObjectiveId={objective.id}
       />
-      )}
 
       <ObjectiveStatus
         status={status}
