@@ -8,13 +8,6 @@ const {
 } = require('../../constants');
 const { auditLogger } = require('../../logger');
 
-const validateAndPopulateTier = (sequelize, instance) => {
-  if (instance.tier === undefined
-  || instance.tier === null) {
-    instance.set('tier', 1);
-  }
-};
-
 /**
  * Helper function called by model hooks.
  * Returns calculatedStatus string based on approvals
@@ -68,14 +61,12 @@ const getApprovalByEntityTier = async (
   sequelize,
   entityType,
   entityId,
-  tier,
   options,
 ) => sequelize.models.Approval.findOne({
   attributes: ['submissionStatus', 'calculatedStatus', 'approvedAt', 'ratioRequired'],
   where: {
     entityType,
     entityId,
-    tier,
   },
   transaction: options.transaction,
 });
@@ -84,7 +75,6 @@ const getRatifierStatusesForTier = async (
   sequelize,
   entityType,
   entityId,
-  tier,
   options,
 ) => sequelize.models.Collaborator.findAll({
   attributes: ['status'],
@@ -92,8 +82,7 @@ const getRatifierStatusesForTier = async (
   where: {
     entityType,
     entityId,
-    tier,
-    collaboratorTypes: { [Op.contains]: [`${COLLABORATOR_TYPES.RATIFIER}`] },
+    collaboratorTypes: { [Op.contains]: [`${COLLABORATOR_TYPES.APPROVER}`] },
   },
   transaction: options.transaction,
 });
@@ -102,14 +91,12 @@ const updateApprovalCalculatedStatus = async (
   sequelize,
   entityType,
   entityId,
-  tier,
   updatedFields,
   options,
 ) => sequelize.models.Approval.update(updatedFields, {
   where: {
     entityType,
     entityId,
-    tier,
   },
   individualHooks: true,
   transaction: options.transaction,
@@ -117,12 +104,11 @@ const updateApprovalCalculatedStatus = async (
 
 const propagateCalculatedStatus = async (sequelize, instance, options) => {
   auditLogger.debug(JSON.stringify({ name: 'propagateCalculatedStatus', instance }));
-  if (instance.collaboratorTypes.includes(COLLABORATOR_TYPES.RATIFIER)) {
+  if (instance.collaboratorTypes.includes(COLLABORATOR_TYPES.APPROVER)) {
     const approval = await getApprovalByEntityTier(
       sequelize,
       instance.entityType,
       instance.entityId,
-      instance.tier,
       options,
     );
     auditLogger.debug(JSON.stringify({ name: 'getApprovalByEntityTier', approval }));
@@ -133,7 +119,6 @@ const propagateCalculatedStatus = async (sequelize, instance, options) => {
         sequelize,
         instance.entityType,
         instance.entityId,
-        instance.tier,
         options,
       );
       auditLogger.debug(JSON.stringify({ name: 'getRatifierStatusesForTier', foundRatifierStatuses }));
@@ -175,7 +160,7 @@ const deleteUnusedApprovals = async (sequelize, instance, options) => {
       entityType: instance.entityType,
       entityId: instance.entityId,
       tier: instance.tier,
-      collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.RATIFIER] },
+      collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.APPROVER] },
     },
     transaction: options.transaction,
   });
@@ -236,7 +221,7 @@ const createApproval = async (sequelize, instance, options) => {
   if (Array.isArray(changed)
     && changed.includes('collaboratorTypes')
     && Array.isArray(instance.collaboratorTypes)
-    && instance.collaboratorTypes.includes(COLLABORATOR_TYPES.RATIFIER)) {
+    && instance.collaboratorTypes.includes(COLLABORATOR_TYPES.APPROVER)) {
     await sequelize.models.Approval.findOrCreate(
       {
         where: {
@@ -265,7 +250,6 @@ const cleanUpAllCollaboratorRoles = async (
 });
 
 const beforeValidate = async (sequelize, instance, options) => {
-  await validateAndPopulateTier(sequelize, instance, options);
 };
 
 const beforeCreate = async (sequelize, instance, options) => {

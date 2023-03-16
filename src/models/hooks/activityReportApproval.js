@@ -25,9 +25,7 @@ const moveDraftGoalsToNotStartedOnSubmission = async (sequelize, instance, optio
   const changed = instance.changed();
   if (Array.isArray(changed)
     && changed.includes('submissionStatus')
-    && instance.submissionStatus === REPORT_STATUSES.SUBMITTED
-    && instance.entityType === ENTITY_TYPES.REPORT
-    && instance.tier === 0) {
+    && instance.submissionStatus === REPORT_STATUSES.SUBMITTED) {
     try {
       const goals = await sequelize.models.Goal.findAll({
         where: {
@@ -41,7 +39,7 @@ const moveDraftGoalsToNotStartedOnSubmission = async (sequelize, instance, optio
             as: 'activityReports',
             required: true,
             where: {
-              id: instance.entityId,
+              id: instance.activityReportId,
             },
           },
         ],
@@ -71,9 +69,7 @@ const propagateSubmissionStatusToGoalsAndObjectives = async (sequelize, instance
   const changed = instance.changed();
   if (Array.isArray(changed)
     && changed.includes('submissionStatus')
-    && instance.submissionStatus === REPORT_STATUSES.SUBMITTED
-    && instance.entityType === ENTITY_TYPES.REPORT
-    && instance.tier === 0) {
+    && instance.submissionStatus === REPORT_STATUSES.SUBMITTED) {
     let goals;
     try {
       goals = await sequelize.models.Goal.findAll({
@@ -86,7 +82,7 @@ const propagateSubmissionStatusToGoalsAndObjectives = async (sequelize, instance
             as: 'activityReports',
             required: false,
             where: {
-              id: instance.entityId,
+              id: instance.activityReportId,
             },
           },
         ],
@@ -162,9 +158,7 @@ const propagateSubmissionStatusToGoalsAndObjectives = async (sequelize, instance
 const propagateApprovedStatusForGoalsAndObjectives = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
-    && changed.includes('calculatedStatus')
-    && instance.entityType === ENTITY_TYPES.REPORT
-    && instance.tier === 0) {
+    && changed.includes('calculatedStatus')) {
     if (instance.previous('calculatedStatus') === REPORT_STATUSES.APPROVED
       && instance.calculatedStatus !== REPORT_STATUSES.APPROVED) {
       // eslint-disable-next-line max-len
@@ -174,7 +168,7 @@ const propagateApprovedStatusForGoalsAndObjectives = async (sequelize, instance,
         objectives = await sequelize.models.Objective.findAll({
           attributes: [
             'id',
-            [sequelize.literal('count(DISTINCT "activityReports->approval"."calculatedStatus")'), 'cntApproved'],
+            [sequelize.literal('count(DISTINCT "activityReports->activityReportApproval"."calculatedStatus")'), 'cntApproved'],
           ],
           include: [
             {
@@ -183,7 +177,7 @@ const propagateApprovedStatusForGoalsAndObjectives = async (sequelize, instance,
               as: 'activityReportObjectives',
               required: true,
               where: {
-                activityReportId: instance.id,
+                activityReportId: instance.activityReportId,
               },
             },
             {
@@ -193,17 +187,17 @@ const propagateApprovedStatusForGoalsAndObjectives = async (sequelize, instance,
               as: 'activityReports',
               required: false,
               include: [{
-                model: sequelize.models.Approval,
-                as: 'approval',
+                model: sequelize.models.ActivityReportApproval,
+                as: 'activityReportApproval',
                 required: true,
                 where: { calculatedStatus: REPORT_STATUSES.APPROVED },
               }],
-              where: { id: { [Op.not]: instance.id } },
+              where: { id: { [Op.not]: instance.activityReportId } },
             },
           ],
           includeIgnoreAttributes: false,
           group: sequelize.literal('"Objective"."id"'),
-          having: sequelize.literal('count(DISTINCT "activityReports->approval"."calculatedStatus") = 0'),
+          having: sequelize.literal('count(DISTINCT "activityReports->activityReportApproval"."calculatedStatus") = 0'),
         });
       } catch (e) {
         auditLogger.error(JSON.stringify({
@@ -230,7 +224,7 @@ const propagateApprovedStatusForGoalsAndObjectives = async (sequelize, instance,
         goals = await sequelize.models.Goal.findAll({
           attributes: [
             'id',
-            [sequelize.literal('count(DISTINCT "activityReports->approval"."calculatedStatus")'), 'cntApproved'],
+            [sequelize.literal('count(DISTINCT "activityReports->activityReportApproval"."calculatedStatus")'), 'cntApproved'],
           ],
           include: [
             {
@@ -245,7 +239,7 @@ const propagateApprovedStatusForGoalsAndObjectives = async (sequelize, instance,
                   as: 'activityReportObjectives',
                   required: true,
                   where: {
-                    activityReportId: instance.id,
+                    activityReportId: instance.activityReportId,
                   },
                 },
               ],
@@ -257,17 +251,17 @@ const propagateApprovedStatusForGoalsAndObjectives = async (sequelize, instance,
               as: 'activityReports',
               required: false,
               include: [{
-                model: sequelize.models.Approval,
-                as: 'approval',
+                model: sequelize.models.ActivityReportApproval,
+                as: 'activityReportApproval',
                 required: true,
                 where: { calculatedStatus: REPORT_STATUSES.APPROVED },
               }],
-              where: { id: { [Op.not]: instance.id } },
+              where: { id: { [Op.not]: instance.activityReportId } },
             },
           ],
           includeIgnoreAttributes: false,
           group: sequelize.literal('"Goal"."id"'),
-          having: sequelize.literal('count(DISTINCT "activityReports->approval"."calculatedStatus") = 0'),
+          having: sequelize.literal('count(DISTINCT "activityReports->activityReportApproval"."calculatedStatus") = 0'),
           transaction: options.transaction,
         });
       } catch (e) {

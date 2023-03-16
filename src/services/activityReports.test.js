@@ -40,7 +40,7 @@ import {
   ENTITY_TYPES,
   RATIFIER_STATUSES,
 } from '../constants';
-import { removeRatifier, upsertEditor, upsertRatifier } from './collaborators';
+import { removeReportApprover, upsertReportEditor, upsertReportApprover } from './collaborators';
 import { createReport, destroyReport } from '../testUtils';
 import { auditLogger } from '../logger';
 
@@ -958,8 +958,7 @@ describe('Activity report service', () => {
           ],
         });
         // Soft delete needs_action approver
-        await removeRatifier(
-          ENTITY_TYPES.REPORT,
+        await removeReportApprover(
           report.id,
           mockUserTwo.id,
         );
@@ -1417,11 +1416,9 @@ describe('Activity report service', () => {
         const empty = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
-        await upsertEditor({
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report.id,
+        await upsertReportEditor({
+          activityReportId: report.id,
           userId: digestMockCollabOne.id,
-          tier: 1,
         });
 
         const [dailyDigestReport] = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
@@ -1442,11 +1439,9 @@ describe('Activity report service', () => {
         const empty = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
-        await upsertEditor({
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report.id,
+        await upsertReportEditor({
+          activityReportId: report.id,
           userId: digestMockCollabOne.id,
-          tier: 1,
         });
 
         const [dailyDigestReport] = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
@@ -1465,11 +1460,9 @@ describe('Activity report service', () => {
         const empty = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
-        await upsertEditor({
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report.id,
+        await upsertReportEditor({
+          activityReportId: report.id,
           userId: digestMockCollabOne.id,
-          tier: 1,
         });
 
         const [dailyDigestReport] = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
@@ -1488,11 +1481,9 @@ describe('Activity report service', () => {
         const empty = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
-        await upsertEditor({
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report.id,
+        await upsertReportEditor({
+          activityReportId: report.id,
           userId: digestMockCollabOne.id,
-          tier: 1,
         });
 
         const [dailyDigestReport] = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
@@ -1544,11 +1535,9 @@ describe('Activity report service', () => {
         const empty = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
-        await upsertEditor({
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report.id,
+        await upsertReportEditor({
+          activityReportId: report.id,
           userId: digestMockCollabOne.id,
-          tier: 1,
         });
 
         const [dailyDigestReport] = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
@@ -1580,11 +1569,9 @@ describe('Activity report service', () => {
         const empty = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
-        await upsertEditor({
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report.id,
+        await upsertReportEditor({
+          activityReportId: report.id,
           userId: digestMockCollabOne.id,
-          tier: 1,
         });
 
         const [dailyDigestReport] = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
@@ -1607,11 +1594,9 @@ describe('Activity report service', () => {
         const empty = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
-        await upsertEditor({
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report.id,
+        await upsertReportEditor({
+          activityReportId: report.id,
           userId: digestMockCollabOne.id,
-          tier: 1,
         });
 
         const [dailyDigestReport] = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
@@ -1641,11 +1626,9 @@ describe('Activity report service', () => {
         const empty = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
-        await upsertEditor({
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report.id,
+        await upsertReportEditor({
+          activityReportId: report.id,
           userId: digestMockCollabOne.id,
-          tier: 1,
         });
 
         const [dailyDigestReport] = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
@@ -1695,11 +1678,9 @@ describe('Activity report service', () => {
         const empty = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Approver.
-        await upsertRatifier({
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report.id,
+        await upsertReportApprover({
+          activityReportId: report.id,
           userId: digestMockApprover.id,
-          tier: 1,
         });
         // Change to Draft
         await Approval.update(
@@ -1727,11 +1708,9 @@ describe('Activity report service', () => {
         const empty = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Approver.
-        await upsertRatifier({
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report.id,
+        await upsertReportApprover({
+          activityReportId: report.id,
           userId: digestMockApprover.id,
-          tier: 1,
         });
 
         const [dailyDigestReport] = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
@@ -1747,11 +1726,9 @@ describe('Activity report service', () => {
         const empty = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Approver.
-        await upsertRatifier({
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report.id,
+        await upsertReportApprover({
+          activityReportId: report.id,
           userId: digestMockApprover.id,
-          tier: 1,
         });
         // Change to needs action
         await Approval.update(
@@ -1775,11 +1752,9 @@ describe('Activity report service', () => {
         const empty = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Approver.
-        await upsertRatifier({
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report.id,
+        await upsertReportApprover({
+          activityReportId: report.id,
           userId: digestMockApprover.id,
-          tier: 1,
         });
         // Change to approved
         await Approval.update(
@@ -1836,11 +1811,9 @@ describe('Activity report service', () => {
         const empty = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
-        await upsertEditor({
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report.id,
+        await upsertReportEditor({
+          activityReportId: report.id,
           userId: digestMockCollabOne.id,
-          tier: 1,
         });
         // Change to Draft
         await Approval.update(
@@ -1874,11 +1847,9 @@ describe('Activity report service', () => {
         const empty = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
-        await upsertEditor({
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report.id,
+        await upsertReportEditor({
+          activityReportId: report.id,
           userId: digestMockCollabOne.id,
-          tier: 1,
         });
         // Change to Submitted
         await Approval.update(
@@ -1907,11 +1878,9 @@ describe('Activity report service', () => {
         const empty = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
-        await upsertEditor({
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report.id,
+        await upsertReportEditor({
+          activityReportId: report.id,
           userId: digestMockCollabOne.id,
-          tier: 1,
         });
         // Change to Needs action
         await Approval.update(
@@ -1941,11 +1910,9 @@ describe('Activity report service', () => {
         const empty = await activityReportsApprovedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
-        await upsertEditor({
-          entityType: ENTITY_TYPES.REPORT,
-          entityId: report.id,
+        await upsertReportEditor({
+          activityReportId: report.id,
           userId: digestMockCollabOne.id,
-          tier: 1,
         });
 
         const [dailyDigestReport] = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');

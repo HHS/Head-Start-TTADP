@@ -34,7 +34,7 @@ import {
   getAllDownloadableActivityReportAlerts,
   activityReportsForCleanup,
 } from '../../services/activityReports';
-import { upsertRatifier } from '../../services/collaborators';
+import { upsertReportApprover } from '../../services/collaborators';
 import { setActivityReportGoalAsActivelyEdited } from '../../services/goals';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
@@ -69,9 +69,9 @@ jest.mock('../../services/activityReports', () => ({
 }));
 
 jest.mock('../../services/collaborators', () => ({
-  upsertRatifier: jest.fn(),
-  getCollaborators: jest.fn(() => []),
-  resetAllRatifierStatuses: jest.fn(),
+  upsertReportApprover: jest.fn(),
+  getReportCollaborators: jest.fn(() => []),
+  resetAllReportApproverStatuses: jest.fn(),
 }));
 
 jest.mock('../../services/objectives', () => ({
@@ -295,7 +295,7 @@ describe('Activity Report handlers', () => {
       ActivityReport.mockImplementationOnce(() => ({
         canReview: () => true,
       }));
-      upsertRatifier.mockResolvedValue(mockApproverRecord);
+      upsertReportApprover.mockResolvedValue(mockApproverRecord);
       const approvalNotification = jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
 
       userSettingOverridesById.mockResolvedValue({
@@ -336,7 +336,7 @@ describe('Activity Report handlers', () => {
         canReview: () => true,
       }));
 
-      upsertRatifier.mockResolvedValue(mockApproverRecord);
+      upsertReportApprover.mockResolvedValue(mockApproverRecord);
       const changesRequestedNotification = jest.spyOn(mailer, 'changesRequestedNotification').mockImplementation();
 
       userSettingOverridesById.mockResolvedValue({

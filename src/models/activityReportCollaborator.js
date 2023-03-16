@@ -9,118 +9,58 @@ const {
   afterRestore,
   afterUpdate,
   afterUpsert,
-} = require('./hooks/collaborator');
+} = require('./hooks/activityReportCollaborator');
 const { generateFullName } = require('./helpers/generateFullName');
-const { ENTITY_TYPES, COLLABORATOR_TYPES, RATIFIER_STATUSES } = require('../constants');
+const { COLLABORATOR_TYPES, APPROVAL_STATUSES } = require('../constants');
 
 module.exports = (sequelize, DataTypes) => {
-  class Collaborator extends Model {
+  class ActivityReportCollaborator extends Model {
     static associate(models) {
-      Collaborator.belongsTo(models.ActivityReport, {
-        scope: {
-          '$Collaborator.entityType$': ENTITY_TYPES.REPORT,
-        },
-        foreignKey: 'entityId',
+      ActivityReportCollaborator.belongsTo(models.ActivityReport, {
+        foreignKey: 'activityReportId',
         as: 'report',
         hooks: true,
       });
-      Collaborator.belongsTo(models.ActivityReportGoal, {
-        scope: {
-          '$Collaborator.entityType$': ENTITY_TYPES.REPORTGOAL,
-        },
-        foreignKey: 'entityId',
-        as: 'reportGoal',
+      ActivityReportCollaborator.belongsTo(models.User, {
+        foreignKey: 'userId',
+        as: 'user',
         hooks: true,
       });
-      Collaborator.belongsTo(models.ActivityReportObjective, {
-        scope: {
-          '$Collaborator.entityType$': ENTITY_TYPES.REPORTOBJECTIVE,
-        },
-        foreignKey: 'entityId',
-        as: 'reportObjective',
-        hooks: true,
-      });
-      Collaborator.belongsTo(models.Goal, {
-        scope: {
-          '$Collaborator.entityType$': ENTITY_TYPES.GOAL,
-        },
-        foreignKey: 'entityId',
-        as: 'goal',
-        hooks: true,
-      });
-      Collaborator.belongsTo(models.GoalTemplate, {
-        scope: {
-          '$Collaborator.entityType$': ENTITY_TYPES.GOALTEMPLATE,
-        },
-        foreignKey: 'entityId',
-        as: 'goalTemplate',
-        hooks: true,
-      });
-      Collaborator.belongsTo(models.Objective, {
-        scope: {
-          '$Collaborator.entityType$': ENTITY_TYPES.OBJECTIVE,
-        },
-        foreignKey: 'entityId',
-        as: 'objective',
-        hooks: true,
-      });
-      Collaborator.belongsTo(models.ObjectiveTemplate, {
-        scope: {
-          '$Collaborator.entityType$': ENTITY_TYPES.OBJECTIVETEMPLATE,
-        },
-        foreignKey: 'entityId',
-        as: 'objectiveTemplate',
-        hooks: true,
-      });
-      Collaborator.belongsTo(models.User, { foreignKey: 'userId', as: 'user', hooks: true });
-      // Collaborator.belongsToMany(models.Role, {
-      //   through: models.CollaboratorRole,
-      //   otherKey: 'roleId',
-      //   foreignKey: 'collaboratorId',
-      //   as: 'roles',
-      //   hooks: true,
-      // });
-      Collaborator.belongsToMany(models.Role, {
+      ActivityReportCollaborator.belongsToMany(models.Role, {
         through: models.CollaboratorRole,
         otherKey: 'roleId',
-        foreignKey: 'collaboratorId',
+        foreignKey: 'activityReportCollaboratorId',
         as: 'roles',
         hooks: true,
       });
-      Collaborator.addScope('defaultScope', {
+      ActivityReportCollaborator.addScope('defaultScope', {
         include: [{
           model: models.User,
           as: 'user',
           required: true,
+          through: { attributes: [] },
         }, {
           model: models.Role,
           as: 'roles',
           required: true,
+          through: { attributes: [] },
         }],
       });
-      Collaborator.addScope('withEntityType', (entityType) => ({
-        where: { entityType },
-      }));
-      Collaborator.addScope('asCollaboratorTypes', (collaboratorType) => ({
+      ActivityReportCollaborator.addScope('asCollaboratorTypes', (collaboratorType) => ({
         where: { collaboratorTypes: { [Op.contains]: [collaboratorType] } },
       }));
     }
   }
-  Collaborator.init({
+  ActivityReportCollaborator.init({
     id: {
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
       type: DataTypes.INTEGER,
     },
-    entityType: {
-      allowNull: false,
-      default: null,
-      type: DataTypes.ENUM(Object.keys(ENTITY_TYPES).map((k) => ENTITY_TYPES[k])),
-    },
-    entityId: {
-      allowNull: false,
+    activityReportId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
     collaboratorTypes: {
       allowNull: false,
@@ -137,16 +77,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     status: {
       allowNull: true,
-      type: DataTypes.ENUM(Object.keys(RATIFIER_STATUSES).map((k) => RATIFIER_STATUSES[k])),
+      type: DataTypes.ENUM(Object.keys(APPROVAL_STATUSES).map((k) => APPROVAL_STATUSES[k])),
     },
     note: {
       allowNull: true,
       type: DataTypes.TEXT,
-    },
-    tier: {
-      allowNull: false,
-      default: 1,
-      type: DataTypes.INTEGER,
     },
     createdAt: {
       allowNull: false,
@@ -192,7 +127,7 @@ module.exports = (sequelize, DataTypes) => {
     // }],
     sequelize,
     // paranoid: true,
-    modelName: 'Collaborator',
+    modelName: 'ActivityReportCollaborator',
   });
-  return Collaborator;
+  return ActivityReportCollaborator;
 };

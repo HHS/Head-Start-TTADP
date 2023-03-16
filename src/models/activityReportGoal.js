@@ -11,7 +11,7 @@ export default (sequelize, DataTypes) => {
       ActivityReportGoal.hasMany(models.Collaborator, {
         scope: {
           entityType: ENTITY_TYPES.REPORTGOAL,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.RATIFIER] },
+          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.APPROVER] },
         },
         foreignKey: 'entityId',
         as: 'approvers',

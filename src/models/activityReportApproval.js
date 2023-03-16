@@ -3,7 +3,7 @@ const {
   beforeCreate,
   beforeUpdate,
   afterUpdate,
-} = require('./hooks/approval');
+} = require('./hooks/activityReportApproval');
 // const { validateSubmissionStatus } = require('./validation/approval');
 const {
   ENTITY_TYPES,
@@ -13,95 +13,37 @@ const {
 } = require('../constants');
 
 module.exports = (sequelize, DataTypes) => {
-  class Approval extends Model {
+  class ActivityReportApproval extends Model {
     static associate(models) {
-      Approval.belongsTo(models.ActivityReport, {
+      ActivityReportApproval.belongsTo(models.ActivityReport, {
         scope: {
           entityType: ENTITY_TYPES.REPORT,
         },
-        foreignKey: 'entityId',
+        foreignKey: 'activityReportId',
         as: 'report',
         hooks: true,
       });
-      Approval.belongsTo(models.ActivityReportGoal, {
-        scope: {
-          entityType: ENTITY_TYPES.REPORTGOAL,
-        },
-        foreignKey: 'entityId',
-        as: 'reportGoal',
-        hooks: true,
-      });
-      Approval.belongsTo(models.ActivityReportObjective, {
-        scope: {
-          entityType: ENTITY_TYPES.REPORTOBJECTIVE,
-        },
-        foreignKey: 'entityId',
-        as: 'reportObjective',
-        hooks: true,
-      });
-      Approval.belongsTo(models.Goal, {
-        scope: {
-          entityType: ENTITY_TYPES.GOAL,
-        },
-        foreignKey: 'entityId',
-        as: 'goal',
-        hooks: true,
-      });
-      Approval.belongsTo(models.GoalTemplate, {
-        scope: {
-          entityType: ENTITY_TYPES.GOALTEMPLATE,
-        },
-        foreignKey: 'entityId',
-        as: 'goalTemplate',
-        hooks: true,
-      });
-      Approval.belongsTo(models.Objective, {
-        scope: {
-          entityType: ENTITY_TYPES.OBJECTIVE,
-        },
-        foreignKey: 'entityId',
-        as: 'objective',
-        hooks: true,
-      });
-      Approval.belongsTo(models.ObjectiveTemplate, {
-        scope: {
-          entityType: ENTITY_TYPES.OBJECTIVETEMPLATE,
-        },
-        foreignKey: 'entityId',
-        as: 'objectiveTemplate',
-        hooks: true,
-      });
-      Approval.hasMany(models.Collaborator, {
+      ActivityReportApproval.hasMany(models.ActivityReportCollaborator, {
         scope: {
           where: {
-            entityType: COLLABORATOR_TYPES.RATIFIER,
+            entityType: COLLABORATOR_TYPES.APPROVER,
           },
         },
-        foreignKey: 'entityId',
+        foreignKey: 'activityReportId',
         as: 'reportApprovers',
         hooks: true,
       });
     }
   }
-  Approval.init({
+  ActivityReportApproval.init({
     id: {
       allowNull: false,
       autoIncrement: true,
       primaryKey: true,
       type: DataTypes.INTEGER,
     },
-    entityType: {
+    activityReportId: {
       allowNull: false,
-      default: null,
-      type: DataTypes.ENUM(Object.keys(ENTITY_TYPES).map((k) => ENTITY_TYPES[k])),
-    },
-    entityId: {
-      allowNull: false,
-      type: DataTypes.INTEGER,
-    },
-    tier: {
-      allowNull: true,
-      default: null,
       type: DataTypes.INTEGER,
     },
     ratioRequired: {
@@ -169,5 +111,5 @@ module.exports = (sequelize, DataTypes) => {
     paranoid: false,
     modelName: 'Approval',
   });
-  return Approval;
+  return ActivityReportApproval;
 };

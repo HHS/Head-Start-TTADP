@@ -200,6 +200,7 @@ describe('submitReport', () => {
     expect(needsActionReport.approval.calculatedStatus).toBe(REPORT_STATUSES.NEEDS_ACTION);
 
     // Verify approving managers are set to NEEDS_ACTION.
+    // FIX: this is all wrong
     const approvers = await upsertRatifier({
       attributes: ['status'],
       where: {

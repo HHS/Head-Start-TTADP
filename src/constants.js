@@ -33,10 +33,10 @@ export const COLLABORATOR_TYPES = {
   EDITOR: 'editor',
   OWNER: 'owner',
   INSTANTIATOR: 'instantiator',
-  RATIFIER: 'ratifier',
+  APPROVER: 'approver',
 };
 
-export const RATIFIER_STATUSES = {
+export const APPROVAL_STATUSES = {
   NEEDS_ACTION: 'needs_action',
   APPROVED: 'approved',
 };

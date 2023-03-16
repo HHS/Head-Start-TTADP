@@ -14,10 +14,10 @@ import orderReportsBy from '../lib/orderReportsBy';
 import filtersToScopes from '../scopes';
 import { setReadRegions } from './accessValidation';
 import {
-  syncOwner,
-  syncOwnerInstantiators,
-  syncEditors,
-  syncRatifiers,
+  syncReportOwner,
+  syncReportOwnerInstantiators,
+  syncReportEditors,
+  syncReportApprovers,
 } from './collaborators';
 import {
   ActivityReport,
@@ -89,8 +89,7 @@ export async function batchQuery(query, limit) {
   return finalResult;
 }
 async function saveOwner(activityReportId, collaborator) {
-  return syncOwner(
-    ENTITY_TYPES.REPORT,
+  return syncReportOwner(
     activityReportId,
     [collaborator],
   );
@@ -101,24 +100,21 @@ async function saveOwnerInstantiators(activityReportId, collaborator) {
     throw new Error('No collaborator provided. If creating a report, make sure to provide an `owner`.');
   }
 
-  return syncOwnerInstantiators(
-    ENTITY_TYPES.REPORT,
+  return syncReportOwnerInstantiators(
     activityReportId,
     [collaborator],
   );
 }
 
 async function saveReportCollaborators(activityReportId, collaborators) {
-  return syncEditors(
-    ENTITY_TYPES.REPORT,
+  return syncReportEditors(
     activityReportId,
     collaborators,
   );
 }
 
 async function saveApprovers(activityReportId, collaborators) {
-  return syncRatifiers(
-    ENTITY_TYPES.REPORT,
+  return syncReportApprovers(
     activityReportId,
     collaborators,
   );
@@ -1344,7 +1340,7 @@ export async function createOrUpdate(newActivityReport, report) {
   };
 
   const activityRecipientType = recipientType();
-  
+
   if (
     recipientsWhoHaveGoalsThatShouldBeRemoved
     && recipientsWhoHaveGoalsThatShouldBeRemoved.length

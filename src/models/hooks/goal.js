@@ -1,10 +1,6 @@
-import httpContext from 'express-http-context';
 import {
   GOAL_STATUS,
-  ENTITY_TYPES,
-  COLLABORATOR_TYPES,
 } from '../../constants';
-import { upsertCollaborator } from '../../services/collaborators';
 
 const findOrCreateGoalTemplate = async (sequelize, transaction, regionId, name, createdAt) => {
   const goalTemplate = await sequelize.models.GoalTemplate.findOrCreate({
@@ -141,20 +137,6 @@ const propagateName = async (sequelize, instance, options) => {
   }
 };
 
-
-const autoPopulateCollaborators = async (sequelize, instance, options, collaboratorTypes) => {
-  const loggedUser = httpContext.get('loggedUser') ? Number(httpContext.get('loggedUser')) : undefined;
-  if (loggedUser && typeof loggedUser === 'number') {
-    await upsertCollaborator({
-      entytyType: ENTITY_TYPES.GOAL,
-      entityId: instance.id,
-      collaboratorTypes,
-      userId: loggedUser,
-      tier: 1,
-    });
-  }
-};
-
 const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
@@ -173,22 +155,10 @@ const beforeUpdate = async (sequelize, instance, options) => {
 };
 
 const afterCreate = async (sequelize, instance, options) => {
-  await autoPopulateCollaborators(
-    sequelize,
-    instance,
-    options,
-    [COLLABORATOR_TYPES.OWNER, COLLABORATOR_TYPES.INSTANTIATOR],
-  );
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateName(sequelize, instance, options);
-  await autoPopulateCollaborators(
-    sequelize,
-    instance,
-    options,
-    [COLLABORATOR_TYPES.EDITOR],
-  );
 };
 
 export {
@@ -197,7 +167,6 @@ export {
   autoPopulateOnApprovedAR,
   preventNamChangeWhenOnApprovedAR,
   autoPopulateStatusChangeDates,
-  autoPopulateCollaborators,
   propagateName,
   beforeValidate,
   afterCreate,

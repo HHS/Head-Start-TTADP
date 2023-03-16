@@ -41,61 +41,45 @@ export default (sequelize, DataTypes) => {
       });
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'specialistNextSteps', hooks: true });
       ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'recipientNextSteps', hooks: true });
-      ActivityReport.hasMany(models.Collaborator, {
+      ActivityReport.hasMany(models.ActivityReportCollaborator, {
         scope: {
-          entityType: ENTITY_TYPES.REPORT,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.RATIFIER] },
+          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.APPROVER] },
         },
-        foreignKey: 'entityId',
+        foreignKey: 'activityReportId',
         as: 'approvers',
         hooks: true,
         onDelete: 'cascade',
       });
-      ActivityReport.hasMany(models.Collaborator, {
+      ActivityReport.hasMany(models.ActivityReportCollaborator, {
         scope: {
-          entityType: ENTITY_TYPES.REPORT,
           collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.EDITOR] },
         },
-        foreignKey: 'entityId',
+        foreignKey: 'activityReportId',
         as: 'collaborators',
         hooks: true,
         onDelete: 'cascade',
       });
-      ActivityReport.hasOne(models.Collaborator, {
+      ActivityReport.hasOne(models.ActivityReportCollaborator, {
         scope: {
-          entityType: ENTITY_TYPES.REPORT,
           collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.OWNER] },
         },
-        foreignKey: 'entityId',
+        foreignKey: 'activityReportId',
         as: 'owner',
         hooks: true,
         onDelete: 'cascade',
       });
-      ActivityReport.hasOne(models.Collaborator, {
+      ActivityReport.hasOne(models.ActivityReportCollaborator, {
         scope: {
-          entityType: ENTITY_TYPES.REPORT,
           collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.INSTANTIATOR] },
         },
-        foreignKey: 'entityId',
+        foreignKey: 'activityReportId',
         as: 'instantiator',
         hooks: true,
         onDelete: 'cascade',
       });
-      ActivityReport.hasMany(models.Approval, {
-        scope: {
-          entityType: ENTITY_TYPES.REPORT,
-        },
-        foreignKey: 'entityId',
-        as: 'approvals',
-        hooks: true,
-      });
-      ActivityReport.hasOne(models.Approval, {
-        scope: {
-          entityType: ENTITY_TYPES.REPORT,
-          tier: 0,
-        },
-        foreignKey: 'entityId',
-        as: 'approval',
+      ActivityReport.hasOne(models.ActivityReportApproval, {
+        foreignKey: 'activityReportId',
+        as: 'activityReportApproval',
         hooks: true,
       });
       ActivityReport.hasMany(models.ActivityReportGoal, { foreignKey: 'activityReportId', as: 'activityReportGoals', hooks: true });

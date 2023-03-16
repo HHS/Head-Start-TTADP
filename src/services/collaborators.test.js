@@ -2,10 +2,10 @@ import db, {
   ActivityRecipient, ActivityReport, User, sequelize, UserRole,
 } from '../models';
 import {
-  upsertRatifier,
-  syncRatifiers,
-  setRatifierStatus,
-  removeRatifier,
+  upsertApprover,
+  syncApprovers,
+  setApproverStatus,
+  removeApprover,
 } from './collaborators';
 import { activityReportAndRecipientsById, createOrUpdate } from './activityReports';
 import {
@@ -92,8 +92,8 @@ describe('collaborators services', () => {
     });
     const reportIds = reports.map((report) => report.id);
     await Promise.all(reportIds.map(async (reportId) => Promise.all([
-      removeRatifier(ENTITY_TYPES.REPORT, reportId, mockUser.id),
-      removeRatifier(ENTITY_TYPES.REPORT, reportId, mockUserTwo.id),
+      removeApprover(ENTITY_TYPES.REPORT, reportId, mockUser.id),
+      removeApprover(ENTITY_TYPES.REPORT, reportId, mockUserTwo.id),
     ])));
     await ActivityRecipient.destroy({
       where: { activityReportId: reportIds },
@@ -119,15 +119,15 @@ describe('collaborators services', () => {
       it('calculatedStatus is "needs action" if any approver "needs_action"', async () => {
         const report1 = await createOrUpdate(submittedReport);
         // One approved
-        await upsertRatifier({
+        await upsertApprover({
           entityType: ENTITY_TYPES.REPORT,
           entityId: report1.id,
           userId: mockManager.id,
-          collaboratorTypes: [COLLABORATOR_TYPES.RATIFIER],
+          collaboratorTypes: [COLLABORATOR_TYPES.APPROVER],
           tier: 1,
         });
 
-        await setRatifierStatus(
+        await setApproverStatus(
           ENTITY_TYPES.REPORT,
           report1.id,
           mockManager.id,
@@ -135,17 +135,17 @@ describe('collaborators services', () => {
         );
 
         // One pending
-        await upsertRatifier({
+        await upsertApprover({
           entityType: ENTITY_TYPES.REPORT,
           entityId: report1.id,
           userId: secondMockManager.id,
-          collaboratorTypes: [COLLABORATOR_TYPES.RATIFIER],
+          collaboratorTypes: [COLLABORATOR_TYPES.APPROVER],
           tier: 1,
         });
         // Works with managed transaction
         await sequelize.transaction(async () => {
           // Pending updated to needs_action
-          const approver = await setRatifierStatus(
+          const approver = await setApproverStatus(
             ENTITY_TYPES.REPORT,
             report1.id,
             secondMockManager.id,
@@ -162,14 +162,14 @@ describe('collaborators services', () => {
       it('calculatedStatus is "approved" if all approvers approve', async () => {
         const report2 = await createOrUpdate(submittedReport);
         // One pending
-        await upsertRatifier({
+        await upsertApprover({
           entityType: ENTITY_TYPES.REPORT,
           entityId: report2.id,
           userId: mockManager.id,
           tier: 1,
         });
         // Pending updated to approved
-        const approver = await setRatifierStatus(
+        const approver = await setApproverStatus(
           ENTITY_TYPES.REPORT,
           report2.id,
           mockManager.id,
@@ -185,14 +185,14 @@ describe('collaborators services', () => {
       it('calculatedStatus is "submitted" if approver is pending', async () => {
         const report3 = await createOrUpdate(submittedReport);
         // One approved
-        await upsertRatifier({
+        await upsertApprover({
           entityType: ENTITY_TYPES.REPORT,
           entityId: report3.id,
           userId: mockManager.id,
           status: APPROVER_STATUSES.APPROVED,
         });
         // One pending
-        const approver = await upsertRatifier({
+        const approver = await upsertApprover({
           entityType: ENTITY_TYPES.REPORT,
           entityId: report3.id,
           userId: secondMockManager.id,
@@ -212,9 +212,9 @@ describe('collaborators services', () => {
           note: 'make changes a, b, c',
         };
         // One needs_action
-        await upsertRatifier(needsActionApproval);
+        await upsertApprover(needsActionApproval);
         // One pending
-        await upsertRatifier({
+        await upsertApprover({
           entityType: ENTITY_TYPES.REPORT,
           entityId: report4.id,
           userId: secondMockManager.id,
@@ -222,11 +222,11 @@ describe('collaborators services', () => {
         const [updatedReport] = await activityReportAndRecipientsById(report4.id);
         expect(updatedReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.NEEDS_ACTION);
         // Soft delete needs_action
-        await removeRatifier(ENTITY_TYPES.REPORT, report4.id, mockManager.id);
+        await removeApprover(ENTITY_TYPES.REPORT, report4.id, mockManager.id);
         const [afterDeleteReport] = await activityReportAndRecipientsById(report4.id);
         expect(afterDeleteReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.SUBMITTED);
         // Upsert restores needs_action
-        await upsertRatifier(needsActionApproval);
+        await upsertApprover(needsActionApproval);
         const [afterRestoreReport] = await activityReportAndRecipientsById(report4.id);
         expect(afterRestoreReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.NEEDS_ACTION);
       });
@@ -251,7 +251,7 @@ describe('collaborators services', () => {
         owner: { userId: mockUserTwo.id },
         approvers: [{ userId: mockManager.id }, { userId: secondMockManager.id }],
       });
-      const result = await syncRatifiers(
+      const result = await syncApprovers(
         ENTITY_TYPES.REPORT,
         report.id,
         [{ userId: mockManager.id }, { userId: secondMockManager.id }],
@@ -272,11 +272,11 @@ describe('collaborators services', () => {
         ],
       });
       // remove mockManager
-      const afterRemove = await syncRatifiers(ENTITY_TYPES.REPORT, report.id, []);
+      const afterRemove = await syncApprovers(ENTITY_TYPES.REPORT, report.id, []);
       // check removed
       expect(afterRemove.length).toBe(0);
       // restore
-      const afterRestore = await syncRatifiers(
+      const afterRestore = await syncApprovers(
         ENTITY_TYPES.REPORT,
         report.id,
         [{ userId: mockManager.id }, { userId: secondMockManager.id }],

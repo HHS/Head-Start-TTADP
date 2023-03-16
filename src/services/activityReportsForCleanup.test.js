@@ -11,8 +11,8 @@ import {
 } from './activityReports';
 import { REPORT_STATUSES, ENTITY_TYPES } from '../constants';
 import {
-  upsertRatifier,
-  upsertEditor,
+  upsertReportApprover,
+  upsertReportEditor,
 } from './collaborators';
 
 import { createReport, destroyReport } from '../testUtils';
@@ -139,17 +139,15 @@ describe('Activity report cleanup service', () => {
 
     reportByMockAuthorWithMockCollaborator = await createReport(submittedReport);
 
-    await upsertEditor({
-      entityType: ENTITY_TYPES.REPORT,
-      entityId: reportByMockAuthorWithMockCollaborator.id,
+    await upsertReportEditor({
+      activityReportId: reportByMockAuthorWithMockCollaborator.id,
       userId: mockCollaborator.id,
     });
 
     reportByMockAuthorWithMockApprover = await createReport(submittedReport);
 
-    await upsertRatifier({
-      entityType: ENTITY_TYPES.REPORT,
-      entityId: reportByMockAuthorWithMockApprover.id,
+    await upsertReportApprover({
+      activityReportId: reportByMockAuthorWithMockApprover.id,
       userId: mockApprover.id,
     });
   });

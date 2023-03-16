@@ -27,10 +27,10 @@ import {
   activityReportsForCleanup,
 } from '../../services/activityReports';
 import {
-  upsertRatifier,
-  setRatifierStatus,
-  resetAllRatifierStatuses,
-  getCollaborators,
+  upsertReportApprover,
+  setReportApproverStatus,
+  resetAllReportApproverStatuses,
+  getReportCollaborators,
 } from '../../services/collaborators';
 import { saveObjectivesForReport, getObjectivesByReportId } from '../../services/objectives';
 import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../services/goals';
@@ -440,9 +440,8 @@ export async function reviewReport(req, res) {
       return;
     }
 
-    const savedApprover = await upsertRatifier({
-      entityType: ENTITY_TYPES.REPORT,
-      entityId: activityReportId,
+    const savedApprover = await upsertReportApprover({
+      activityReportId,
       userId,
       status,
       note,
@@ -569,8 +568,7 @@ export async function unlockReport(req, res) {
     }
 
     // Unlocking resets all Approving Managers to NEEDS_ACTION status.
-    await setRatifierStatus(
-      ENTITY_TYPES.REPORT,
+    await setReportApproverStatus(
       activityReportId,
       req.session.userId,
       APPROVER_STATUSES.NEEDS_ACTION,
@@ -613,8 +611,7 @@ export async function submitReport(req, res) {
     }, report);
 
     // Get current approvers for this report for email notification purposes.
-    const currentApprovers = await getCollaborators(
-      ENTITY_TYPES.REPORT,
+    const currentApprovers = await getReportCollaborators(
       activityReportId,
       [COLLABORATOR_TYPES.RATIFIER],
     );
@@ -637,8 +634,7 @@ export async function submitReport(req, res) {
     approverAssignedNotification(savedReport, currentApproversWithSettings);
 
     // Resubmitting resets any needs_action status to null ("pending" status)
-    await resetAllRatifierStatuses(
-      ENTITY_TYPES.REPORT,
+    await resetAllReportApproverStatuses(
       activityReportId,
       APPROVER_STATUSES.NEEDS_ACTION,
     );

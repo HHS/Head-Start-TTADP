@@ -13,7 +13,7 @@ import db, {
   User,
 } from '..';
 import { createOrUpdate } from '../../services/activityReports';
-import { upsertRatifier } from '../../services/collaborators';
+import { upsertReportApprover } from '../../services/collaborators';
 import { unlockReport } from '../../routes/activityReports/handlers';
 import ActivityReportPolicy from '../../policies/activityReport';
 import {
@@ -206,14 +206,12 @@ describe('activity report model hooks', () => {
       expect(testObjective.status).toEqual('Not Started');
 
       let testReport = await ActivityReport.findByPk(report.id, { include: [{ model: Approval, as: 'approval' }] });
-      expect(testReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.SUBMITTED);-
+      expect(testReport.approval.calculatedStatus).toEqual(REPORT_STATUSES.SUBMITTED);
 
-      await upsertRatifier({
-        entityType: ENTITY_TYPES.REPORT,
-        entityId: report.id,
+      await upsertReportApprover({
+        activityReportId: report.id,
         userId: mockApprover.id,
         status: APPROVER_STATUSES.APPROVED,
-        tier: 0,
       });
 
       testReport = await ActivityReport.findByPk(report.id, { include: [{ model: Approval, as: 'approval' }] });

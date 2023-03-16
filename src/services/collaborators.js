@@ -1,16 +1,19 @@
 import { Op } from 'sequelize';
-import { User, Collaborator, Role } from '../models';
+import {
+  User,
+  Collaborator,
+  Role,
+  ActivityReportCollaborator,
+} from '../models';
 import { COLLABORATOR_TYPES } from '../constants';
 import { auditLogger } from '../logger';
 
-export async function upsertCollaborator(values) {
+export async function upsertCollaborator(collaboratorModel, foreignKeyId, values) {
   // Create collaborator, on unique constraint violation do update
   const {
-    entityType,
-    entityId,
+    [foreignKeyId]: genericId,
     collaboratorTypes,
     userId,
-    tier,
     ...others
   } = values;
 
@@ -33,7 +36,12 @@ export async function upsertCollaborator(values) {
   // Try to find a current collaborator
   let collaborator;
   try {
-    collaborator = await Collaborator.findOne({ where: { entityType, entityId, userId } });
+    collaborator = await collaboratorModel.findOne({
+      where: {
+        [foreignKeyId]: genericId,
+        userId,
+      },
+    });
   } catch (err) {
     auditLogger.error(JSON.stringify({
       name: 'upsertCollaborator',
@@ -46,13 +54,19 @@ export async function upsertCollaborator(values) {
   try {
     // Try to find a collaborator that has been deleted
     if (!collaborator) {
-      collaborator = await Collaborator.findOne({
-        where: { entityType, entityId, userId },
+      collaborator = await collaboratorModel.findOne({
+        where: {
+          [foreignKeyId]: genericId,
+          userId,
+        },
         paranoid: false,
       });
       if (collaborator) {
-        collaborator = await Collaborator.restore({
-          where: { entityType, entityId, userId },
+        collaborator = await collaboratorModel.restore({
+          where: {
+            [foreignKeyId]: genericId,
+            userId,
+          },
           paranoid: false,
           individualHooks: true,
         });
@@ -94,7 +108,6 @@ export async function upsertCollaborator(values) {
       try {
         await collaborator.update({
           collaboratorTypes: newCollaboratorTypes,
-          tier,
           ...others,
         }, {
           individualHooks: true,
@@ -113,18 +126,21 @@ export async function upsertCollaborator(values) {
     } else {
       // If not collaborator was found create it
       try {
-        collaborator = await Collaborator.create(
+        collaborator = await collaboratorModel.create(
           {
-            entityType,
-            entityId,
+            [foreignKeyId]: genericId,
             userId,
-            tier,
             collaboratorTypes,
             ...others,
           },
         );
       } catch (err) {
-        collaborator = await Collaborator.findOne({ where: { entityType, entityId, userId } });
+        collaborator = await collaboratorModel.findOne({
+          where: {
+            [foreignKeyId]: genericId,
+            userId,
+          },
+        });
         auditLogger.error(
           JSON.stringify({
             name: 'upsertCollaborator',
@@ -152,8 +168,11 @@ export async function upsertCollaborator(values) {
   try {
     if (collaborator) {
       try {
-        return await Collaborator.findOne({
-          where: { entityType, entityId, userId },
+        return collaboratorModel.findOne({
+          where: {
+            [foreignKeyId]: genericId,
+            userId,
+          },
           include: [
             {
               model: User,
@@ -191,45 +210,82 @@ export async function upsertCollaborator(values) {
   return collaborator;
 }
 
-export async function upsertOwnerInstantiator(values) {
-  return upsertCollaborator({
+export const upsertOwnerInstantiator = async (
+  collaboratorModel,
+  foreignKeyId,
+  values,
+) => upsertCollaborator(
+  collaboratorModel,
+  foreignKeyId,
+  {
     ...values,
     collaboratorTypes: [COLLABORATOR_TYPES.INSTANTIATOR, COLLABORATOR_TYPES.OWNER],
-  });
-}
+  },
+);
 
-export async function upsertInstantiator(values) {
-  return upsertCollaborator({ ...values, collaboratorTypes: [COLLABORATOR_TYPES.INSTANTIATOR] });
-}
+export const upsertInstantiator = async (
+  collaboratorModel,
+  foreignKeyId,
+  values,
+) => upsertCollaborator(
+  collaboratorModel,
+  foreignKeyId,
+  {
+    ...values,
+    collaboratorTypes: [COLLABORATOR_TYPES.INSTANTIATOR],
+  },
+);
 
-export async function upsertOwner(values) {
-  return upsertCollaborator({ ...values, collaboratorTypes: [COLLABORATOR_TYPES.OWNER] });
-}
+export const upsertOwner = async (
+  collaboratorModel,
+  foreignKeyId,
+  values,
+) => upsertCollaborator(
+  collaboratorModel,
+  foreignKeyId,
+  {
+    ...values,
+    collaboratorTypes: [COLLABORATOR_TYPES.OWNER],
+  },
+);
 
-export async function upsertEditor(values) {
-  return upsertCollaborator({ ...values, collaboratorTypes: [COLLABORATOR_TYPES.EDITOR] });
-}
+export const upsertEditor = async (
+  collaboratorModel,
+  foreignKeyId,
+  values,
+) => upsertCollaborator(
+  collaboratorModel,
+  foreignKeyId,
+  {
+    ...values,
+    collaboratorTypes: [COLLABORATOR_TYPES.EDITOR],
+  },
+);
 
-export async function upsertRatifier(values) {
-  return upsertCollaborator({ ...values, collaboratorTypes: [COLLABORATOR_TYPES.RATIFIER] });
-}
+export const upsertApprover = async (
+  collaboratorModel,
+  foreignKeyId,
+  values,
+) => upsertCollaborator(
+  collaboratorModel,
+  foreignKeyId,
+  {
+    ...values,
+    collaboratorTypes: [COLLABORATOR_TYPES.APPROVER],
+  },
+);
 
 export async function syncCollaborators(
-  entityType,
-  entityId,
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
   collaboratorTypes = [],
   perUserData = [],
-  tier = 1,
 ) {
   let preexistingCollaborators;
   try {
-    preexistingCollaborators = await Collaborator.findAll({
-      where: {
-        entityType,
-        entityId,
-        tier,
-      },
-    });
+    preexistingCollaborators = await collaboratorModel
+      .findAll({ where: { [foreignKeyId]: genericId } });
   } catch (err) {
     auditLogger.error(JSON.stringify({ name: 'syncCollaborators', index: 1, err }));
     throw new Error(err);
@@ -256,13 +312,15 @@ export async function syncCollaborators(
           .filter((userData) => userData.userId !== null && userData.userId !== undefined)
         : [];
 
-      await Promise.all(uniquePerUserData.map(async (userData) => upsertCollaborator({
-        ...userData,
-        entityType,
-        entityId,
-        collaboratorTypes,
-        tier,
-      })));
+      await Promise.all(uniquePerUserData.map(async (userData) => upsertCollaborator(
+        collaboratorModel,
+        foreignKeyId,
+        {
+          ...userData,
+          [foreignKeyId]: genericId,
+          collaboratorTypes,
+        },
+      )));
     }
   } catch (err) {
     auditLogger.error(JSON.stringify({ name: 'syncCollaborators', index: 4, err }));
@@ -276,7 +334,7 @@ export async function syncCollaborators(
         const collaboratorsToRemove = preexistingCollaborators
           .filter((a) => !userIds.includes(a.userId))
           .filter((a) => a.collaboratorTypes.includes(collaboratorType));
-        await Promise.all(collaboratorsToRemove.map(async (collaborator) => Collaborator
+        await Promise.all(collaboratorsToRemove.map(async (collaborator) => collaboratorModel
           .update({
             collaboratorTypes: collaborator.collaboratorTypes
               .filter((type) => type !== collaboratorType),
@@ -295,11 +353,9 @@ export async function syncCollaborators(
 
   let collaborators;
   try {
-    collaborators = await Collaborator.findAll({
+    collaborators = await collaboratorModel.findAll({
       where: {
-        entityType,
-        entityId,
-        tier,
+        [foreignKeyId]: genericId,
         collaboratorTypes: { [Op.overlap]: collaboratorTypes },
       },
       include: [
@@ -325,123 +381,203 @@ export async function syncCollaborators(
   return collaborators;
 }
 
-export async function syncOwnerInstantiators(entityType, entityId, perUserData = [], tier = 1) {
-  return syncCollaborators(
-    entityType,
-    entityId,
-    [COLLABORATOR_TYPES.OWNER, COLLABORATOR_TYPES.INSTANTIATOR],
-    perUserData,
-    tier,
-  );
-}
+export const syncOwnerInstantiators = async (
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  perUserData = [],
+) => syncCollaborators(
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  [COLLABORATOR_TYPES.OWNER, COLLABORATOR_TYPES.INSTANTIATOR],
+  perUserData,
+);
 
-export async function syncOwner(entityType, entityId, perUserData = [], tier = 1) {
-  return syncCollaborators(entityType, entityId, [COLLABORATOR_TYPES.OWNER], perUserData, tier);
-}
+export const syncOwner = async (
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  perUserData = [],
+) => syncCollaborators(
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  [COLLABORATOR_TYPES.OWNER],
+  perUserData,
+);
 
-export async function syncInstantiators(entityType, entityId, perUserData = [], tier = 1) {
-  return syncCollaborators(
-    entityType,
-    entityId,
-    [COLLABORATOR_TYPES.INSTANTIATOR],
-    perUserData,
-    tier,
-  );
-}
+export const syncInstantiators = async (
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  perUserData = [],
+) => syncCollaborators(
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  [COLLABORATOR_TYPES.INSTANTIATOR],
+  perUserData,
+);
 
-export async function syncEditors(entityType, entityId, perUserData = [], tier = 1) {
-  return syncCollaborators(entityType, entityId, [COLLABORATOR_TYPES.EDITOR], perUserData, tier);
-}
+export const syncEditors = async (
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  perUserData = [],
+) => syncCollaborators(
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  [COLLABORATOR_TYPES.EDITOR],
+  perUserData,
+);
 
-export async function syncRatifiers(entityType, entityId, perUserData = [], tier = 1) {
-  return syncCollaborators(entityType, entityId, [COLLABORATOR_TYPES.RATIFIER], perUserData, tier);
-}
+export const syncApprovers = async (
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  perUserData = [],
+) => syncCollaborators(
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  [COLLABORATOR_TYPES.APPROVER],
+  perUserData,
+);
 
-export async function getCollaborator(entityType, entityId, userId) {
-  return Collaborator.findOne({
-    where: {
-      entityType,
-      entityId,
-      userId,
-    },
-    include: [
-      { model: User, as: 'user' },
-      { model: Role, as: 'roles' },
-    ],
-  });
-}
+export const getCollaborator = async (
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  userId,
+) => collaboratorModel.findOne({
+  where: {
+    [foreignKeyId]: genericId,
+    userId,
+  },
+  include: [
+    { model: User, as: 'user' },
+    { model: Role, as: 'roles' },
+  ],
+});
 
-export async function getCollaborators(entityType, entityId, collaboratorTypes = []) {
-  return Collaborator.findAll({
-    where: {
-      entityType,
-      entityId,
-      collaboratorTypes: { [Op.overlap]: collaboratorTypes },
-    },
-    include: [
-      { model: User, as: 'user' },
-      { model: Role, as: 'roles' },
-    ],
-  });
-}
+export const getCollaborators = async (
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  collaboratorTypes = [],
+) => collaboratorModel.findAll({
+  where: {
+    [foreignKeyId]: genericId,
+    collaboratorTypes: { [Op.overlap]: collaboratorTypes },
+  },
+  include: [
+    { model: User, as: 'user' },
+    { model: Role, as: 'roles' },
+  ],
+});
 
-export async function setRatifierStatus(entityType, entityId, userId, status) {
-  const ratifier = await getCollaborator(
-    entityType,
-    entityId,
+export async function setApproverStatus(
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  userId,
+  status,
+) {
+  const approver = await getCollaborator(
+    collaboratorModel,
+    foreignKeyId,
+    genericId,
     userId,
   );
-  auditLogger.error(JSON.stringify({ name: 'setRatifierStatus', ratifier }));
-  if (ratifier && ratifier.collaboratorTypes.includes(COLLABORATOR_TYPES.RATIFIER)) {
-    await ratifier.update({ status }, { individualHooks: true });
+  auditLogger.error(JSON.stringify({ name: 'setApproverStatus', approver }));
+  if (approver && approver.collaboratorTypes.includes(COLLABORATOR_TYPES.APPROVER)) {
+    await approver.update({ status }, { individualHooks: true });
     return getCollaborator(
-      entityType,
-      entityId,
+      collaboratorModel,
+      foreignKeyId,
+      genericId,
       userId,
     );
   }
-  throw new Error('No ratifier found for passed values.');
+  throw new Error('No approver found for passed values.');
 }
 
-export async function setRatifierNote(entityType, entityId, userId, note) {
-  const ratifier = await getCollaborator(
-    entityType,
-    entityId,
+export async function setApproverNote(
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  userId,
+  note,
+) {
+  const approver = await getCollaborator(
+    collaboratorModel,
+    foreignKeyId,
+    genericId,
     userId,
   );
-  if (ratifier && ratifier.collaboratorTypes.includes(COLLABORATOR_TYPES.RATIFIER)) {
-    await ratifier.update({ note }, { individualHooks: true });
+  if (approver && approver.collaboratorTypes.includes(COLLABORATOR_TYPES.APPROVER)) {
+    await approver.update({ note }, { individualHooks: true });
     return getCollaborator(
-      entityType,
-      entityId,
+      collaboratorModel,
+      foreignKeyId,
+      genericId,
       userId,
     );
   }
-  throw new Error('No ratifier found for passed values.');
+  throw new Error('No approver found for passed values.');
 }
 
-export async function getCollaboratorsByType(entityType, entityId, collaboratorType) {
-  return Collaborator.findAll({
-    where: {
-      entityType,
-      entityId,
-      collaboratorTypes: { [Op.contains]: [collaboratorType] },
-    },
-  });
-}
+export const getCollaboratorsByType = async (
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  collaboratorType,
+) => collaboratorModel.findAll({
+  where: {
+    [foreignKeyId]: genericId,
+    collaboratorTypes: { [Op.contains]: [collaboratorType] },
+  },
+  include: [
+    { model: User, as: 'user' },
+    { model: Role, as: 'roles' },
+  ],
+});
 
-export async function resetAllRatifierStatuses(entityType, entityId, status, tier = 1) {
-  const ratifiers = await getCollaboratorsByType(entityType, entityId, COLLABORATOR_TYPES.RATIFIER);
+export async function resetAllApproverStatuses(
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  status,
+) {
+  const approvers = await getCollaboratorsByType(
+    collaboratorModel,
+    foreignKeyId,
+    genericId,
+    COLLABORATOR_TYPES.APPROVER,
+  );
   let promises = [];
-  if (ratifiers && ratifiers.length > 0) {
-    promises = ratifiers.filter((ratifier) => ratifier.tier === tier)
-      .map(async (ratifier) => ratifier.update({ status }, { individualHooks: true }));
+  if (approvers && approvers.length > 0) {
+    promises = approvers
+      .map(async (approver) => approver.update({ status }, { individualHooks: true }));
   }
   return Promise.all([...promises]);
 }
 
-export async function addCollaboratorType(entityType, entityId, userIds, collaboratorType) {
-  const collaborator = getCollaborator(entityType, entityId, userIds);
+export async function addCollaboratorType(
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  userIds,
+  collaboratorType,
+) {
+  const collaborator = getCollaborator(
+    collaboratorModel,
+    foreignKeyId,
+    genericId,
+    userIds,
+  );
   const newCollaboratorTypes = [...new Set([
     collaboratorType,
     ...collaborator.collaboratorTypes,
@@ -451,8 +587,19 @@ export async function addCollaboratorType(entityType, entityId, userIds, collabo
   }, { individualHooks: true });
 }
 
-export async function removeCollaboratorType(entityType, entityId, userId, collaboratorType) {
-  const collaborator = getCollaborator(entityType, entityId, userId);
+export async function removeCollaboratorType(
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  userId,
+  collaboratorType,
+) {
+  const collaborator = getCollaborator(
+    collaboratorModel,
+    foreignKeyId,
+    genericId,
+    userId,
+  );
   const newCollaboratorTypes = collaborator.collaboratorTypes
     .filter((type) => type !== collaboratorType);
   await collaborator.update({
@@ -460,26 +607,69 @@ export async function removeCollaboratorType(entityType, entityId, userId, colla
   }, { individualHooks: true });
 }
 
-export async function removeInstantiator(entityType, entityId, userId) {
-  return removeCollaboratorType(entityType, entityId, userId, COLLABORATOR_TYPES.INSTANTIATOR);
-}
+export const removeInstantiator = async (
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  userId,
+) => removeCollaboratorType(
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  userId,
+  COLLABORATOR_TYPES.INSTANTIATOR,
+);
 
-export async function removeOwner(entityType, entityId, userId) {
-  return removeCollaboratorType(entityType, entityId, userId, COLLABORATOR_TYPES.OWNER);
-}
+export const removeOwner = async (
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  userId,
+) => removeCollaboratorType(
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  userId,
+  COLLABORATOR_TYPES.OWNER,
+);
 
-export async function removeEditor(entityType, entityId, userId) {
-  return removeCollaboratorType(entityType, entityId, userId, COLLABORATOR_TYPES.EDITOR);
-}
+export const removeEditor = async (
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  userId,
+) => removeCollaboratorType(
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  userId,
+  COLLABORATOR_TYPES.EDITOR,
+);
 
-export async function removeRatifier(entityType, entityId, userId) {
-  return removeCollaboratorType(entityType, entityId, userId, COLLABORATOR_TYPES.RATIFIER);
-}
+export const removeApprover = async (
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  userId,
+) => removeCollaboratorType(
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  userId,
+  COLLABORATOR_TYPES.APPROVER,
+);
 
-export async function setEditorNote(entityType, entityId, userId, note) {
+export async function setEditorNote(
+  collaboratorModel,
+  foreignKeyId,
+  genericId,
+  userId,
+  note,
+) {
   const editor = await getCollaborator(
-    entityType,
-    entityId,
+    collaboratorModel,
+    foreignKeyId,
+    genericId,
     userId,
   );
   if (editor && editor.collaboratorType.includes(COLLABORATOR_TYPES.EDITOR)) {
@@ -487,3 +677,237 @@ export async function setEditorNote(entityType, entityId, userId, note) {
   }
   throw new Error('No editor found for passed values.');
 }
+
+//----------------------
+
+export const upsertReportCollaborator = async (values) => upsertCollaborator(
+  ActivityReportCollaborator,
+  'activityReportId',
+  values,
+);
+
+export const upsertReportOwnerInstantiator = async (values) => upsertOwnerInstantiator(
+  ActivityReportCollaborator,
+  'activityReportId',
+  values,
+);
+
+export const upsertReportOwner = async (values) => upsertOwner(
+  ActivityReportCollaborator,
+  'activityReportId',
+  values,
+);
+
+export const upsertReportEditor = async (values) => upsertEditor(
+  ActivityReportCollaborator,
+  'activityReportId',
+  values,
+);
+
+export const upsertReportApprover = async (values) => upsertApprover(
+  ActivityReportCollaborator,
+  'activityReportId',
+  values,
+);
+
+export const syncReportCollaborators = async (
+  genericId,
+  collaboratorTypes = [],
+  perUserData = [],
+) => syncCollaborators(
+  ActivityReportCollaborator,
+  'activityReportId',
+  genericId,
+  collaboratorTypes,
+  perUserData,
+);
+
+export const syncReportOwnerInstantiators = async (
+  genericId,
+  perUserData = [],
+) => syncOwnerInstantiators(
+  ActivityReportCollaborator,
+  'activityReportId',
+  genericId,
+  perUserData,
+);
+
+export const syncReportOwner = async (
+  genericId,
+  perUserData = [],
+) => syncOwner(
+  ActivityReportCollaborator,
+  'activityReportId',
+  genericId,
+  perUserData,
+);
+
+export const syncReportInstantiators = async (
+  genericId,
+  perUserData = [],
+) => syncInstantiators(
+  ActivityReportCollaborator,
+  'activityReportId',
+  genericId,
+  perUserData,
+);
+
+export const syncReportEditors = async (
+  genericId,
+  perUserData = [],
+) => syncEditors(
+  ActivityReportCollaborator,
+  'activityReportId',
+  genericId,
+  perUserData,
+);
+
+export const syncReportApprovers = async (
+  genericId,
+  perUserData = [],
+) => syncApprovers(
+  ActivityReportCollaborator,
+  'activityReportId',
+  genericId,
+  perUserData,
+);
+
+export const getReportCollaborator = async (
+  genericId,
+  userId,
+) => getCollaborator(
+  ActivityReportCollaborator,
+  'activityReportId',
+  genericId,
+  userId,
+);
+
+export const getReportCollaborators = async (
+  genericId,
+  collaboratorTypes = [],
+) => getCollaborators(
+  ActivityReportCollaborator,
+  'activityReportId',
+  genericId,
+  collaboratorTypes,
+);
+
+export const setReportApproverStatus = async (
+  genericId,
+  userId,
+  status,
+) => setApproverStatus(
+  ActivityReportCollaborator,
+  'activityReportId',
+  genericId,
+  userId,
+  status,
+);
+
+export const setReportApproverNote = async (
+  genericId,
+  userId,
+  note,
+) => setApproverNote(
+  ActivityReportCollaborator,
+  'activityReportId',
+  genericId,
+  userId,
+  note,
+);
+
+export const getReportCollaboratorsByType = async (
+  genericId,
+  collaboratorType,
+) => getCollaboratorsByType(
+  ActivityReportCollaborator,
+  'activityReportId',
+  genericId,
+  collaboratorType,
+);
+
+export const resetAllReportApproverStatuses = async (
+  genericId,
+  status,
+) => resetAllApproverStatuses(
+  ActivityReportCollaborator,
+  'activityReportId',
+  genericId,
+  status,
+);
+
+export const addReportCollaboratorType = async (
+  genericId,
+  userIds,
+  collaboratorType,
+) => addCollaboratorType(
+  ActivityReportCollaborator,
+  'activityReportId',
+  genericId,
+  userIds,
+  collaboratorType,
+);
+
+export const removeReportCollaboratorType = async (
+  genericId,
+  userId,
+  collaboratorType,
+) => removeCollaboratorType(
+  ActivityReportCollaborator,
+  'activityReportId',
+  genericId,
+  userId,
+  collaboratorType,
+);
+
+export const removeReportInstantiator = async (
+  genericId,
+  userId,
+) => removeInstantiator(
+  ActivityReportCollaborator,
+  'activityReportId',
+  genericId,
+  userId,
+);
+
+export const removeReportOwner = async (
+  genericId,
+  userId,
+) => removeOwner(
+  ActivityReportCollaborator,
+  'activityReportId',
+  genericId,
+  userId,
+);
+
+export const removeReportEditor = async (
+  genericId,
+  userId,
+) => removeEditor(
+  ActivityReportCollaborator,
+  'activityReportId',
+  genericId,
+  userId,
+);
+
+export const removeReportApprover = async (
+  genericId,
+  userId,
+) => removeApprover(
+  ActivityReportCollaborator,
+  'activityReportId',
+  genericId,
+  userId,
+);
+
+export const setReportEditorNote = async (
+  genericId,
+  userId,
+  note,
+) => setEditorNote(
+  ActivityReportCollaborator,
+  'activityReportId',
+  genericId,
+  userId,
+  note,
+);

@@ -17,7 +17,6 @@ const {
   ObjectiveTopic,
 } = require('../models');
 const { ENTITY_TYPES } = require('../constants');
-const { upsertCollaborator } = require('./collaborators');
 
 const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) => {
   const fileIds = files.map((file) => file.fileId);
@@ -181,94 +180,6 @@ const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) 
         },
       )
       : Promise.resolve(),
-  ]);
-};
-
-const cacheObjectiveCollaborators = async (activityReportObjectiveId) => {
-  const currentCollaborators = await Collaborator.findAll({
-    attributes: [
-      'collaboratorTypes',
-      'userId',
-      'status',
-      'note',
-      'tier',
-    ],
-    include: [{
-      attributes: [],
-      model: Objective,
-      as: 'objective',
-      include: [{
-        attributes: [],
-        model: ActivityReportObjective,
-        as: 'activityReportObjectives',
-        where: { id: activityReportObjectiveId },
-        required: true,
-      }],
-      required: true,
-    }],
-  });
-  return Promise.all([
-    ...currentCollaborators.map(async (collaborator) => upsertCollaborator({
-      entityType: ENTITY_TYPES.REPORTOBJECTIVE,
-      entityId: activityReportObjectiveId,
-      collaboratorTypes: collaborator.collaboratorTypes,
-      userId: collaborator.userId,
-      status: collaborator.status,
-      note: collaborator.note,
-      tier: collaborator.tier,
-    })),
-    await Collaborator.destroy({
-      where: {
-        entityType: ENTITY_TYPES.REPORTOBJECTIVE,
-        entityId: activityReportObjectiveId,
-        userId: { [Op.notIn]: currentCollaborators.map((collaborator) => collaborator.userId) },
-      },
-      individualHooks: true,
-    }),
-  ]);
-};
-
-const cacheOGoalCollaborators = async (activityReportGoalId) => {
-  const currentCollaborators = await Collaborator.findAll({
-    attributes: [
-      'collaboratorTypes',
-      'userId',
-      'status',
-      'note',
-      'tier',
-    ],
-    include: [{
-      attributes: [],
-      model: Goal,
-      as: 'goal',
-      include: [{
-        attributes: [],
-        model: ActivityReportGoal,
-        as: 'activityReportGoals',
-        where: { id: activityReportGoalId },
-        required: true,
-      }],
-      required: true,
-    }],
-  });
-  return Promise.all([
-    ...currentCollaborators.map(async (collaborator) => upsertCollaborator({
-      entityType: ENTITY_TYPES.REPORTGOAL,
-      entityId: activityReportGoalId,
-      collaboratorTypes: collaborator.collaboratorTypes,
-      userId: collaborator.userId,
-      status: collaborator.status,
-      note: collaborator.note,
-      tier: collaborator.tier,
-    })),
-    await Collaborator.destroy({
-      where: {
-        entityType: ENTITY_TYPES.REPORTGOAL,
-        entityId: activityReportGoalId,
-        userId: { [Op.notIn]: currentCollaborators.map((collaborator) => collaborator.userId) },
-      },
-      individualHooks: true,
-    }),
   ]);
 };
 
