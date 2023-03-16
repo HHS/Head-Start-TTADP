@@ -1,4 +1,5 @@
 import React from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
 import ContextMenu from '../ContextMenu';
 import ReadOnlyObjective from './ReadOnlyObjective';
@@ -66,7 +67,7 @@ export default function ReadOnlyGoal({
           </div>
         ) : null }
         { goal.objectives.map((objective) => (
-          <ReadOnlyObjective key={`read-only-objective-${objective.id}`} objective={objective} />
+          <ReadOnlyObjective key={`read-only-objective-${objective.id || objective.value || uuidv4()}`} objective={objective} />
         ))}
       </div>
     </div>
