@@ -2029,7 +2029,6 @@ export async function createNewObjectivesForGoals(
 
   return {
     ...defaultObjective,
-    key: objectives[0].id,
     id: objectives[0].id,
     label: 'Create a new objective',
     goalId: objectives[0].goalId,
