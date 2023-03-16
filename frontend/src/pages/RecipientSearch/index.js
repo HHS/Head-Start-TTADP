@@ -175,7 +175,7 @@ function RecipientSearch({ user }) {
             </button>
           </form>
         </Grid>
-        <Grid className="display-flex flex-wrap flex-align-center margin-bottom-3">
+        <Grid className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
           <FilterPanel
             filters={filters}
             filterConfig={RECIPIENT_SEARCH_FILTER_CONFIG}

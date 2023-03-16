@@ -290,7 +290,7 @@ function Landing() {
               && appliedRegionNumber !== 14
               && <NewReport />}
           </Grid>
-          <Grid col={12} className="display-flex flex-wrap margin-bottom-3">
+          <Grid col={12} className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
             <FilterPanel
               applyButtonAria="apply filters for activity reports"
               filters={filters}
