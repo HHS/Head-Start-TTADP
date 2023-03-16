@@ -19,8 +19,6 @@ const history = createMemoryHistory();
 
 const resourcesUrl = join('api', 'resources');
 
-const resourcesAssociatedBase = '/api/resources/topic-resources?sortBy=1&sortDir=desc&offset=0&limit=10';
-
 const resourcesDefault = {
   resourcesDashboardOverview: {
     report: {
@@ -59,37 +57,32 @@ const resourcesDefault = {
       },
     ],
   },
-};
-
-const resourcesAssociatedDefault = {
-  count: 1,
-  data:
-    {
-      headers: ['Oct-22', 'Nov-22', 'Dec-22'],
-      rows: [{
-        heading: 'https://official1.gov',
-        isUrl: true,
-        data: [
-          {
-            title: 'Oct-22',
-            value: '66',
-          },
-          {
-            title: 'Nov-22',
-            value: '77',
-          },
-          {
-            title: 'Dec-22',
-            value: '88',
-          },
-          {
-            title: 'total',
-            value: '99',
-          },
-        ],
-      },
+  topicUse: {
+    headers: ['Oct-22', 'Nov-22', 'Dec-22'],
+    topics: [{
+      heading: 'https://official1.gov',
+      isUrl: true,
+      data: [
+        {
+          title: 'Oct-22',
+          value: '66',
+        },
+        {
+          title: 'Nov-22',
+          value: '77',
+        },
+        {
+          title: 'Dec-22',
+          value: '88',
+        },
+        {
+          title: 'total',
+          value: '99',
+        },
       ],
     },
+    ],
+  },
 };
 
 const resourcesRegion1 = {
@@ -130,37 +123,32 @@ const resourcesRegion1 = {
       },
     ],
   },
-};
-
-const resourcesAssociatedRegion1 = {
-  count: 1,
-  data:
-    {
-      headers: ['Oct-22', 'Nov-22', 'Dec-22'],
-      rows: [{
-        heading: 'https://official2.gov',
-        isUrl: true,
-        data: [
-          {
-            title: 'Oct-22',
-            value: '111',
-          },
-          {
-            title: 'Nov-22',
-            value: '222',
-          },
-          {
-            title: 'Dec-22',
-            value: '333',
-          },
-          {
-            title: 'total',
-            value: '444',
-          },
-        ],
-      },
+  topicUse: {
+    headers: ['Oct-22', 'Nov-22', 'Dec-22'],
+    topics: [{
+      heading: 'https://official2.gov',
+      isUrl: true,
+      data: [
+        {
+          title: 'Oct-22',
+          value: '111',
+        },
+        {
+          title: 'Nov-22',
+          value: '222',
+        },
+        {
+          title: 'Dec-22',
+          value: '333',
+        },
+        {
+          title: 'total',
+          value: '444',
+        },
       ],
     },
+    ],
+  },
 };
 
 const resourcesRegion2 = {
@@ -201,37 +189,32 @@ const resourcesRegion2 = {
       },
     ],
   },
-};
-
-const resourcesAssociatedRegion2 = {
-  count: 1,
-  data:
-    {
-      headers: ['Oct-22', 'Nov-22', 'Dec-22'],
-      rows: [{
-        heading: 'https://official3.gov',
-        isUrl: true,
-        data: [
-          {
-            title: 'Oct-22',
-            value: '333',
-          },
-          {
-            title: 'Nov-22',
-            value: '444',
-          },
-          {
-            title: 'Dec-22',
-            value: '555',
-          },
-          {
-            title: 'total',
-            value: '666',
-          },
-        ],
-      },
+  topicUse: {
+    headers: ['Oct-22', 'Nov-22', 'Dec-22'],
+    topics: [{
+      heading: 'https://official3.gov',
+      isUrl: true,
+      data: [
+        {
+          title: 'Oct-22',
+          value: '333',
+        },
+        {
+          title: 'Nov-22',
+          value: '444',
+        },
+        {
+          title: 'Dec-22',
+          value: '555',
+        },
+        {
+          title: 'total',
+          value: '666',
+        },
       ],
     },
+    ],
+  },
 };
 
 const allRegions = 'region.in[]=1&region.in[]=2';
@@ -257,19 +240,15 @@ describe('Resources Dashboard page', () => {
   it('renders correctly', async () => {
     // Page Load.
     fetchMock.get(`${resourcesUrl}?${allRegions}`, resourcesDefault);
-    fetchMock.get(`${resourcesAssociatedBase}&${allRegions}`, resourcesAssociatedDefault);
 
     // Region 1.
     fetchMock.get(`${resourcesUrl}?${regionInParams}`, resourcesRegion1);
-    fetchMock.get(`${resourcesAssociatedBase}&${regionInParams}`, resourcesAssociatedRegion1);
 
     // Region 2.
     fetchMock.get(`${resourcesUrl}?${regionTwoInParams}`, resourcesRegion2);
-    fetchMock.get(`${resourcesAssociatedBase}&${regionTwoInParams}`, resourcesAssociatedRegion2);
 
     // Report ID (non-region).
     fetchMock.get(`${resourcesUrl}?${reportIdInParams}`, resourcesRegion2);
-    fetchMock.get(`${resourcesAssociatedBase}&${reportIdInParams}`, resourcesAssociatedRegion2);
 
     const user = {
       homeRegionId: 14,
