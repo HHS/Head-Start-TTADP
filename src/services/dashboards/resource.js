@@ -374,7 +374,10 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       where: {
         [Op.and]: [
           scopes.activityReport,
-          { calculatedStatus: REPORT_STATUSES.APPROVED },
+          {
+            calculatedStatus: REPORT_STATUSES.APPROVED,
+            startDate: { [Op.ne]: null },
+          },
         ],
       },
       include: [
@@ -452,7 +455,10 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       where: {
         [Op.and]: [
           scopes.activityReport,
-          { calculatedStatus: REPORT_STATUSES.APPROVED },
+          {
+            calculatedStatus: REPORT_STATUSES.APPROVED,
+            startDate: { [Op.ne]: null },
+          },
         ],
       },
       include: [
@@ -539,7 +545,10 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       where: {
         [Op.and]: [
           scopes.activityReport,
-          { calculatedStatus: REPORT_STATUSES.APPROVED },
+          {
+            calculatedStatus: REPORT_STATUSES.APPROVED,
+            startDate: { [Op.ne]: null },
+          },
         ],
       },
       include: [
@@ -632,7 +641,10 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       where: {
         [Op.and]: [
           scopes.activityReport,
-          { calculatedStatus: REPORT_STATUSES.APPROVED },
+          {
+            calculatedStatus: REPORT_STATUSES.APPROVED,
+            startDate: { [Op.ne]: null },
+          },
         ],
       },
       include: [
@@ -734,7 +746,10 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       where: {
         [Op.and]: [
           scopes.activityReport,
-          { calculatedStatus: REPORT_STATUSES.APPROVED },
+          {
+            calculatedStatus: REPORT_STATUSES.APPROVED,
+            startDate: { [Op.ne]: null },
+          },
           {
             [Op.or]: [
               { '$activityRecipients.grantId$': { [Op.eq]: Sequelize.col('activityReportObjectives.objective.goal.grantId') } },
@@ -866,7 +881,10 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       where: {
         [Op.and]: [
           scopes.activityReport,
-          { calculatedStatus: REPORT_STATUSES.APPROVED },
+          {
+            calculatedStatus: REPORT_STATUSES.APPROVED,
+            startDate: { [Op.ne]: null },
+          },
           {
             [Op.or]: [
               { '$activityRecipients.grantId$': { [Op.eq]: Sequelize.col('activityReportGoals.goal.grantId') } },
