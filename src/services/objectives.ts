@@ -17,7 +17,7 @@ const {
 } = db;
 
 export async function createNewObjectivesForOtherEntity(
-  otherEntityIds: number[]
+  otherEntityIds: number[],
 ): Promise<ObjectiveResponse> {
   const defaultObjective = {
     title: '',
