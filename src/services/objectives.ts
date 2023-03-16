@@ -1,7 +1,12 @@
 import { Op } from 'sequelize';
 import { uniqBy } from 'lodash';
 import { OBJECTIVE_STATUS } from '../constants';
-import {
+import db from '../models';
+import { removeUnusedGoalsObjectivesFromReport, saveObjectiveAssociations } from './goals';
+import { cacheObjectiveMetadata } from './reportCache';
+import { ObjectiveResponse } from './types/objectives';
+
+const {
   Objective,
   ActivityReportObjective,
   Goal,
@@ -9,9 +14,38 @@ import {
   Topic,
   File,
   Resource,
-} from '../models';
-import { removeUnusedGoalsObjectivesFromReport, saveObjectiveAssociations } from './goals';
-import { cacheObjectiveMetadata } from './reportCache';
+} = db;
+
+export async function createNewObjectivesForOtherEntity(
+  otherEntityIds: number[]
+): Promise<ObjectiveResponse> {
+  const defaultObjective = {
+    title: '',
+    status: OBJECTIVE_STATUS.NOT_STARTED,
+    onApprovedAR: false,
+  };
+
+  const objectives = await Objective.bulkCreate(otherEntityIds.map((otherEntityId) => (
+    { ...defaultObjective, otherEntityId }
+  )));
+
+  delete defaultObjective.onApprovedAR;
+
+  return {
+    ...defaultObjective,
+    id: objectives[0].id,
+    label: defaultObjective.title,
+    activityReportObjectives: [],
+    files: [],
+    topics: [],
+    activityReports: [],
+    resources: [],
+    value: objectives[0].id,
+    ids: objectives.map((objective: { id: number }) => objective.id),
+    recipientIds: otherEntityIds,
+    isNew: false,
+  };
+}
 
 export async function saveObjectivesForReport(objectives, report) {
   const updatedObjectives = await Promise.all(objectives.map(async (objective, index) => Promise

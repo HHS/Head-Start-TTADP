@@ -1,8 +1,9 @@
 import React, {
-  useState, useMemo, useContext,
+  useState, useMemo, useContext, useRef,
 } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
+import { ModalToggleButton } from '@trussworks/react-uswds';
 import { useController } from 'react-hook-form/dist/index.ie11';
 import ObjectiveTitle from './ObjectiveTitle';
 import { REPORT_STATUSES } from '../../../../Constants';
@@ -36,6 +37,7 @@ export default function Objective({
   parentGoal,
   initialObjectiveStatus,
   reportId,
+  hideSelect,
 }) {
   // the below is a concession to the fact that the objective may
   // exist pre-migration to the new UI, and might not have complete data
@@ -48,6 +50,7 @@ export default function Objective({
   const [selectedObjective, setSelectedObjective] = useState(initialObjective);
   const [statusForCalculations, setStatusForCalculations] = useState(initialObjectiveStatus);
   const { setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
+  const modalRef = useRef(null);
 
   /**
    * add controllers for all the controlled fields
@@ -224,12 +227,29 @@ export default function Objective({
 
   return (
     <>
-      <ObjectiveSelect
-        onChange={onChangeObjective}
-        selectedObjectives={selectedObjective}
-        options={options}
-        onRemove={onRemove}
-      />
+      {!hideSelect ? (
+        <ObjectiveSelect
+          onChange={onChangeObjective}
+          selectedObjectives={selectedObjective}
+          options={options}
+          onRemove={onRemove}
+        />
+      ) : (
+        <div className="display-flex flex-justify maxw-mobile-lg margin-top-5">
+          <h3 className="margin-0">Objective summary</h3>
+          { onRemove && (
+          <ModalToggleButton
+            modalRef={modalRef}
+            type="button"
+            className="ttahub-objective-select-remove-objective"
+            unstyled
+            onClick={onRemove}
+          >
+            Remove this objective
+          </ModalToggleButton>
+          )}
+        </div>
+      )}
       <ObjectiveTitle
         error={errors.title
           ? ERROR_FORMAT(errors.title.message)
@@ -346,4 +366,9 @@ Objective.propTypes = {
   }).isRequired,
   initialObjectiveStatus: PropTypes.string.isRequired,
   reportId: PropTypes.number.isRequired,
+  hideSelect: PropTypes.bool,
+};
+
+Objective.defaultProps = {
+  hideSelect: false,
 };

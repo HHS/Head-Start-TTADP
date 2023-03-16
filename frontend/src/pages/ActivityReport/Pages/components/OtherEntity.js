@@ -1,11 +1,13 @@
 import React, {
-  useState, useEffect,
+  useState,
+  useEffect,
 } from 'react';
 import PropTypes from 'prop-types';
 import { useFormContext, useFieldArray } from 'react-hook-form/dist/index.ie11';
 import { Alert } from '@trussworks/react-uswds';
 import Objective from './Objective';
 import { getTopics } from '../../../../fetchers/topics';
+import { createObjectiveForOtherEntity } from '../../../../fetchers/objectives';
 import PlusButton from '../../../../components/GoalForm/PlusButton';
 import { NEW_OBJECTIVE } from './constants';
 import { DECIMAL_BASE } from '../../../../Constants';
@@ -13,7 +15,10 @@ import { DECIMAL_BASE } from '../../../../Constants';
 const OBJECTIVE_LABEL = 'objectivesWithoutGoals';
 
 export default function OtherEntity({
-  recipientIds, onSaveDraft, reportId,
+  recipientIds,
+  onSaveDraft,
+  reportId,
+  regionId,
 }) {
   const { errors } = useFormContext();
   const [topicOptions, setTopicOptions] = useState([]);
@@ -38,11 +43,11 @@ export default function OtherEntity({
     defaultValues: [{ ...NEW_OBJECTIVE(), recipientIds }],
   });
 
-  const onAddNew = () => {
-    append({ ...NEW_OBJECTIVE(), recipientIds });
+  const onAddNew = async () => {
+    const newObjective = await createObjectiveForOtherEntity(recipientIds, regionId);
+    const toAppend = { ...NEW_OBJECTIVE(), ...newObjective };
+    append(toAppend);
   };
-
-  const options = [{ ...NEW_OBJECTIVE() }];
 
   return (
     <div>
@@ -65,12 +70,13 @@ export default function OtherEntity({
             key={objective.id}
             objective={objective}
             topicOptions={topicOptions}
-            options={options}
+            options={[]}
             errors={objectiveErrors}
             remove={remove}
             fieldArrayName={OBJECTIVE_LABEL}
             onSaveDraft={onSaveDraft}
             reportId={parseInt(reportId, DECIMAL_BASE)}
+            hideSelect
           />
         );
       })}
@@ -83,4 +89,5 @@ OtherEntity.propTypes = {
   recipientIds: PropTypes.arrayOf(PropTypes.number).isRequired,
   onSaveDraft: PropTypes.func.isRequired,
   reportId: PropTypes.string.isRequired,
+  regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };

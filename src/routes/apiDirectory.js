@@ -25,6 +25,7 @@ import search from './search';
 import settingsRouter from './settings';
 import rttapaRouter from './rttapaReports';
 import groupsRouter from './groups';
+import objectivesRouter from './objectives';
 import { currentUserId } from '../services/currentUser';
 
 export const loginPath = '/login';
@@ -66,6 +67,7 @@ router.use('/rttapa', rttapaRouter);
 router.use('/groups', groupsRouter);
 router.use('/alerts', siteAlertsRouter);
 router.use('/resources', resourcesRouter);
+router.use('/objectives', objectivesRouter);
 
 const getUser = async (req, res) => {
   const userId = await currentUserId(req, res);

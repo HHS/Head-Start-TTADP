@@ -60,6 +60,8 @@ const GoalsObjectives = ({
   const [availableGoals, updateAvailableGoals] = useState([]);
   const hasGrants = grantIds.length > 0;
 
+  const regionId = watch('regionId');
+
   const {
     field: {
       onChange: onUpdateGoals,
@@ -249,6 +251,7 @@ const GoalsObjectives = ({
         recipientIds={activityRecipientIds}
         onSaveDraft={onSaveDraftOetObjectives}
         reportId={reportId}
+        regionId={regionId}
       />
       )}
       {/**
