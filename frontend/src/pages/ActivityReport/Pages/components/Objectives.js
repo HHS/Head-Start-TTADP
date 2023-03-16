@@ -1,5 +1,6 @@
 import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
+import { uniq } from 'lodash';
 import { useFieldArray, useFormContext } from 'react-hook-form/dist/index.ie11';
 import Objective from './Objective';
 import PlusButton from '../../../../components/GoalForm/PlusButton';
@@ -7,6 +8,36 @@ import { OBJECTIVE_PROP, NEW_OBJECTIVE } from './constants';
 import ObjectiveSelect from './ObjectiveSelect';
 import { createObjectiveForGoal } from '../../../../fetchers/goals';
 import AppLoadingContext from '../../../../AppLoadingContext';
+import { DECIMAL_BASE } from '../../../../Constants';
+
+/**
+ * this function takes an array of objectives and returns an array of ids
+ * extracted from the specified keys and flattened into a single array
+ *
+ * @param {Object[]} objectives to iterate over access via keys
+ * @param {string[]} keys to access on each objective
+ * @returns number[] array of ids
+ */
+const produceSetOfIds = (objectives, keys = ['value', 'id', 'ids']) => {
+  if (!objectives || !objectives.length) {
+    return [];
+  }
+
+  const ids = [];
+  objectives.forEach((objective) => {
+    keys.forEach((key) => {
+      // objective[key] could be a number or an array of numbers, or a string
+      if (objective[key]) {
+        ids.push(objective[key]);
+      }
+    });
+  });
+
+  return uniq(
+    // flatten and filter out any non-numeric values
+    ids.flat().filter((id) => (!Number.isNaN(parseInt(id, DECIMAL_BASE)))),
+  );
+};
 
 export default function Objectives({
   objectiveOptions,
@@ -34,16 +65,14 @@ export default function Objectives({
   });
 
   const [usedObjectiveIds, setUsedObjectiveIds] = useState(
-    fields ? fields.map(({ value }) => value) : [],
+    produceSetOfIds(fields),
   );
 
   const setUpdatedUsedObjectiveIds = () => {
     // If fields have changed get updated list of used Objective ID's.
     const allValues = getValues();
     const fieldArrayGoals = allValues.goalForEditing || [];
-    const updatedIds = fieldArrayGoals.objectives
-      ? fieldArrayGoals.objectives.map(({ value }) => value)
-      : [];
+    const updatedIds = produceSetOfIds(fieldArrayGoals.objectives);
     setUsedObjectiveIds(updatedIds);
   };
 
