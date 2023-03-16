@@ -24,55 +24,19 @@ export default (sequelize, DataTypes) => {
         hooks: true,
       });
       Objective.hasMany(models.ActivityReportObjective, {
-        foreignKey: 'objectiveId', as: 'activityReportObjectives', hooks: true,
-      });
-      Objective.hasMany(models.Collaborator, {
-        scope: {
-          entityType: ENTITY_TYPES.OBJECTIVE,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.RATIFIER] },
-        },
-        foreignKey: 'entityId',
-        as: 'approvers',
-        hooks: true,
-      });
-      Objective.hasMany(models.Collaborator, {
-        scope: {
-          entityType: ENTITY_TYPES.OBJECTIVE,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.EDITOR] },
-        },
-        foreignKey: 'entityId',
-        as: 'collaborators',
-        hooks: true,
-      });
-      Objective.hasOne(models.Collaborator, {
-        scope: {
-          entityType: ENTITY_TYPES.OBJECTIVE,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.OWNER] },
-        },
-        foreignKey: 'entityId',
-        as: 'owner',
-        hooks: true,
-      });
-      Objective.hasOne(models.Collaborator, {
-        scope: {
-          entityType: ENTITY_TYPES.OBJECTIVE,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.INSTANTIATOR] },
-        },
-        foreignKey: 'entityId',
-        as: 'instantiator',
-        hooks: true,
-      });
-      Objective.hasMany(models.Approval, {
-        scope: {
-          entityType: ENTITY_TYPES.OBJECTIVE,
-        },
-        foreignKey: 'entityId',
-        as: 'approvals',
+        foreignKey: 'objectiveId',
+        as: 'activityReportObjectives',
         hooks: true,
       });
       Objective.belongsTo(models.OtherEntity, { foreignKey: 'otherEntityId', as: 'otherEntity', hooks: true });
       Objective.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });
-      Objective.hasMany(models.ObjectiveResource, { foreignKey: 'objectiveId', as: 'resources', hooks: true });
+      Objective.hasMany(models.ObjectiveResource, { foreignKey: 'objectiveId', as: 'objectiveResources', hooks: true });
+      Objective.belongsToMany(models.Resource, {
+        through: models.ObjectiveResource,
+        foreignKey: 'objectiveId',
+        otherKey: 'resourceId',
+        as: 'resources',
+      });
       Objective.hasMany(models.ObjectiveTopic, { foreignKey: 'objectiveId', as: 'objectiveTopics', hooks: true });
       Objective.belongsToMany(models.Topic, {
         through: models.ObjectiveTopic,

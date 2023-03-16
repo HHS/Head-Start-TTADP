@@ -16,9 +16,10 @@ import db, {
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
   File,
+  Resource,
 } from '../../models';
 import { createReport, destroyReport } from '../../testUtils';
-
+import { processObjectiveForResourcesById } from '../resource';
 import { goalByIdAndRecipient, saveGoalsForReport } from '../goals';
 import { FILE_STATUSES, REPORT_STATUSES, ENTITY_TYPES } from '../../constants';
 
@@ -82,15 +83,7 @@ describe('goalById', () => {
       objectiveId: objective.id,
     });
 
-    await ObjectiveResource.create({
-      objectiveId: objective.id,
-      userProvidedUrl: 'http://www.google.com',
-    });
-
-    await ObjectiveResource.create({
-      objectiveId: objective.id,
-      userProvidedUrl: 'http://www.google1.com',
-    });
+    await processObjectiveForResourcesById(objective.id, ['http://www.google.com', 'http://www.google1.com']);
 
     file = await File.create({
       originalFileName: 'gibbery-pibbery.txt',
@@ -187,6 +180,7 @@ describe('goalById', () => {
       where: {
         objectiveId: objective.id,
       },
+      individualHooks: true,
     });
 
     await File.destroy({
@@ -200,6 +194,11 @@ describe('goalById', () => {
       where: {
         objectiveId: objective.id,
       },
+      individualHooks: true,
+    });
+
+    await Resource.destroy({
+      where: { url: ['http://www.google.com', 'http://www.google1.com'] },
       individualHooks: true,
     });
 

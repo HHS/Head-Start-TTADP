@@ -295,7 +295,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
     });
 
     // Activity Report Objective: Resources Links.
-    const objResources = resources.map((r) => r.userProvidedUrl);
+    const objResources = resources.map((r) => r.url);
     Object.defineProperty(accum, `objective-${objectiveId}-resourcesLinks`, {
       value: objResources.join('\n'),
       enumerable: true,
@@ -341,7 +341,7 @@ function transformGoalsAndObjectives(report) {
         ttaProvided: aro.ttaProvided,
         topics: aro.topics,
         files: aro.files,
-        resources: aro.activityReportObjectiveResources,
+        resources: aro.resources,
       }
     ));
     if (objectiveRecords) {

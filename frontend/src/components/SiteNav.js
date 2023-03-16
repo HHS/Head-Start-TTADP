@@ -2,8 +2,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { NavLink as Link, withRouter } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChartColumn, faBorderAll, faUserFriends } from '@fortawesome/free-solid-svg-icons';
 import './SiteNav.scss';
 import FeatureFlag from './FeatureFlag';
 
@@ -88,9 +86,6 @@ const SiteNav = ({
                     <NavLink
                       to="/activity-reports"
                     >
-                      <span className="display-none tablet:display-inline padding-right-105">
-                        <FontAwesomeIcon color="white" icon={faChartColumn} />
-                      </span>
                       Activity Reports
                     </NavLink>
                   </li>
@@ -98,9 +93,6 @@ const SiteNav = ({
                     <NavLink
                       to="/regional-dashboard"
                     >
-                      <span className="display-none tablet:display-inline padding-right-105">
-                        <FontAwesomeIcon color="white" icon={faBorderAll} />
-                      </span>
                       Regional Dashboard
                     </NavLink>
                   </li>
@@ -109,10 +101,16 @@ const SiteNav = ({
                       <NavLink
                         to="/regional-goal-dashboard"
                       >
-                        <span className="display-none tablet:display-inline padding-right-105">
-                          <FontAwesomeIcon color="white" icon={faBorderAll} />
-                        </span>
                         Regional Goal Dashboard
+                      </NavLink>
+                    </li>
+                  </FeatureFlag>
+                  <FeatureFlag flag="resources_dashboard" renderNotFound={false}>
+                    <li>
+                      <NavLink
+                        to="/resources-dashboard"
+                      >
+                        Resources Dashboard
                       </NavLink>
                     </li>
                   </FeatureFlag>
@@ -120,9 +118,6 @@ const SiteNav = ({
                     <NavLink
                       to="/recipient-tta-records"
                     >
-                      <span className="display-none tablet:display-inline padding-right-105">
-                        <FontAwesomeIcon color="white" icon={faUserFriends} />
-                      </span>
                       Recipient TTA Records
                     </NavLink>
                   </li>

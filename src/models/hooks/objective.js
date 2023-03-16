@@ -253,7 +253,7 @@ const propagateMetadataToTemplate = async (sequelize, instance, options) => {
       .findOrCreate({
         where: {
           objectiveTemplateId: instance.objectiveTemplateId,
-          userProvidedUrl: resource.userProvidedUrl,
+          resourceId: resource.resourceId,
         },
       })));
 

@@ -1,6 +1,13 @@
-import {
-  GOAL_STATUS,
-} from '../../constants';
+const { GOAL_STATUS } = require('../../constants');
+
+const processForEmbeddedResources = async (sequelize, instance, options) => {
+  // eslint-disable-next-line global-require
+  const { calculateIsAutoDetectedForGoal, processGoalForResourcesById } = require('../../services/resource');
+  const changed = instance.changed() || Object.keys(instance);
+  if (calculateIsAutoDetectedForGoal(changed)) {
+    await processGoalForResourcesById(instance.id);
+  }
+};
 
 const findOrCreateGoalTemplate = async (sequelize, transaction, regionId, name, createdAt) => {
   const goalTemplate = await sequelize.models.GoalTemplate.findOrCreate({
@@ -155,13 +162,16 @@ const beforeUpdate = async (sequelize, instance, options) => {
 };
 
 const afterCreate = async (sequelize, instance, options) => {
+  await processForEmbeddedResources(sequelize, instance, options);
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateName(sequelize, instance, options);
+  await processForEmbeddedResources(sequelize, instance, options);
 };
 
 export {
+  processForEmbeddedResources,
   findOrCreateGoalTemplate,
   // autoPopulateGoalTemplateId,
   autoPopulateOnApprovedAR,
@@ -171,5 +181,6 @@ export {
   beforeValidate,
   afterCreate,
   beforeUpdate,
+  afterCreate,
   afterUpdate,
 };

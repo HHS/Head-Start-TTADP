@@ -3,7 +3,7 @@ const isEmail = require('validator/lib/isEmail');
 const { generateFullName } = require('./helpers/generateFullName');
 const { beforeDestroy } = require('./hooks/user');
 
-const featureFlags = ['rttapa_form', 'anv_statistics', 'regional_goal_dashboard'];
+const featureFlags = ['resources_dashboard', 'rttapa_form', 'anv_statistics', 'regional_goal_dashboard'];
 
 export default (sequelize, DataTypes) => {
   class User extends Model {

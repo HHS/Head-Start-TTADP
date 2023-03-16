@@ -68,6 +68,12 @@ export default (sequelize, DataTypes) => {
         as: 'topics',
         hooks: true,
       });
+      ActivityReportObjective.belongsToMany(models.Resource, {
+        through: models.ActivityReportObjectiveResource,
+        foreignKey: 'activityReportObjectiveId',
+        otherKey: 'resourceId',
+        as: 'resources',
+      });
     }
   }
   ActivityReportObjective.init({

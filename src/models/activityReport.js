@@ -3,6 +3,9 @@ const moment = require('moment');
 const {
   COLLABORATOR_TYPES,
   ENTITY_TYPES,
+  REPORT_STATUSES,
+  USER_ROLES,
+  NEXTSTEP_NOTETYPE,
 } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 const {
@@ -39,8 +42,6 @@ export default (sequelize, DataTypes) => {
         as: 'files',
         hooks: true,
       });
-      ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'specialistNextSteps', hooks: true });
-      ActivityReport.hasMany(models.NextStep, { foreignKey: 'activityReportId', as: 'recipientNextSteps', hooks: true });
       ActivityReport.hasMany(models.ActivityReportCollaborator, {
         scope: {
           collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.APPROVER] },
@@ -80,6 +81,25 @@ export default (sequelize, DataTypes) => {
       ActivityReport.hasOne(models.ActivityReportApproval, {
         foreignKey: 'activityReportId',
         as: 'activityReportApproval',
+        hooks: true,
+      });
+      ActivityReport.hasMany(models.ActivityReportResource, { foreignKey: 'activityReportId', as: 'activityReportResources' });
+      ActivityReport.belongsToMany(models.Resource, {
+        through: models.ActivityReportResource,
+        foreignKey: 'activityReportId',
+        otherKey: 'resourceId',
+        as: 'resources',
+      });
+      ActivityReport.hasMany(models.NextStep, {
+        foreignKey: 'activityReportId',
+        as: 'specialistNextSteps',
+        scope: { noteType: [NEXTSTEP_NOTETYPE.SPECIALIST] },
+        hooks: true,
+      });
+      ActivityReport.hasMany(models.NextStep, {
+        foreignKey: 'activityReportId',
+        as: 'recipientNextSteps',
+        scope: { noteType: [NEXTSTEP_NOTETYPE.RECIPIENT] },
         hooks: true,
       });
       ActivityReport.hasMany(models.ActivityReportGoal, { foreignKey: 'activityReportId', as: 'activityReportGoals', hooks: true });

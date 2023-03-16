@@ -1,4 +1,5 @@
 const { Model } = require('sequelize');
+const { SOURCE_FIELD } = require('../constants');
 const { beforeValidate, afterCreate, afterDestroy } = require('./hooks/objectiveResource');
 
 export default (sequelize, DataTypes) => {
@@ -9,12 +10,8 @@ export default (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      ObjectiveResource.belongsTo(models.Objective, {
-        foreignKey: 'objectiveId',
-        onDelete: 'cascade',
-        as: 'objectiveResource',
-        hooks: true,
-      });
+      ObjectiveResource.belongsTo(models.Objective, { foreignKey: 'objectiveId', onDelete: 'cascade', as: 'objective', hooks: true });
+      ObjectiveResource.belongsTo(models.Resource, { foreignKey: 'resourceId', as: 'resource' });
     }
   }
   ObjectiveResource.init({
@@ -24,13 +21,33 @@ export default (sequelize, DataTypes) => {
       autoIncrement: true,
       primaryKey: true,
     },
-    userProvidedUrl: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
     objectiveId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+    },
+    resourceId: {
+      type: DataTypes.INTEGER,
+    },
+    sourceFields: {
+      allowNull: true,
+      default: null,
+      type: DataTypes.ARRAY((DataTypes.ENUM(Object.values(SOURCE_FIELD.OBJECTIVE)))),
+    },
+    isAutoDetected: {
+      type: new DataTypes.VIRTUAL(DataTypes.BOOLEAN, ['sourceFields']),
+      get() {
+        // eslint-disable-next-line global-require
+        const { calculateIsAutoDetectedForObjective } = require('../services/resource');
+        return calculateIsAutoDetectedForObjective(this.get('sourceFields'));
+      },
+    },
+    userProvidedUrl: {
+      type: new DataTypes.VIRTUAL(DataTypes.TEXT),
+      get() {
+        return this.resource && this.resource.url
+          ? this.resource.url
+          : '';
+      },
     },
     onAR: {
       type: DataTypes.BOOLEAN,

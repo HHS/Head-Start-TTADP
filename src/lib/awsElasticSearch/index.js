@@ -116,7 +116,7 @@ const addIndexDocument = async (job) => {
     return { data: job.data, status: res.statusCode, res };
   } catch (error) {
     auditLogger.error(`AWS OpenSearch Error: Unable to add document to index '${indexName}': ${error.message}`);
-    return { data: job.data, status: res.statusCode, res };
+    return { data: job.data, status: res?.statusCode, res };
   }
 };
 /*

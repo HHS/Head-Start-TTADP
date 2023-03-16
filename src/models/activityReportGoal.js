@@ -1,56 +1,19 @@
 const { Op, Model } = require('sequelize');
 const { COLLABORATOR_TYPES, ENTITY_TYPES, CLOSE_SUSPEND_REASONS } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
-const { afterDestroy } = require('./hooks/activityReportGoal');
+const { afterCreate, afterDestroy, afterUpdate } = require('./hooks/activityReportGoal');
 
 export default (sequelize, DataTypes) => {
   class ActivityReportGoal extends Model {
     static associate(models) {
       ActivityReportGoal.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport', hooks: true });
       ActivityReportGoal.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal', hooks: true });
-      ActivityReportGoal.hasMany(models.Collaborator, {
-        scope: {
-          entityType: ENTITY_TYPES.REPORTGOAL,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.APPROVER] },
-        },
-        foreignKey: 'entityId',
-        as: 'approvers',
-        hooks: true,
-      });
-      ActivityReportGoal.hasMany(models.Collaborator, {
-        scope: {
-          entityType: ENTITY_TYPES.REPORTGOAL,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.EDITOR] },
-        },
-        foreignKey: 'entityId',
-        as: 'collaborators',
-        hooks: true,
-      });
-      ActivityReportGoal.hasOne(models.Collaborator, {
-        scope: {
-          entityType: ENTITY_TYPES.REPORTGOAL,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.OWNER] },
-        },
-        foreignKey: 'entityId',
-        as: 'owner',
-        hooks: true,
-      });
-      ActivityReportGoal.hasOne(models.Collaborator, {
-        scope: {
-          entityType: ENTITY_TYPES.REPORTGOAL,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.INSTANTIATOR] },
-        },
-        foreignKey: 'entityId',
-        as: 'instantiator',
-        hooks: true,
-      });
-      ActivityReportGoal.hasMany(models.Approval, {
-        scope: {
-          entityType: ENTITY_TYPES.REPORTGOAL,
-        },
-        foreignKey: 'entityId',
-        as: 'approvals',
-        hooks: true,
+      ActivityReportGoal.hasMany(models.ActivityReportGoalResource, { foreignKey: 'activityReportGoalId', as: 'activityReportGoalResources' });
+      ActivityReportGoal.belongsToMany(models.Resource, {
+        through: models.ActivityReportGoalResource,
+        foreignKey: 'activityReportGoalId',
+        otherKey: 'resourceId',
+        as: 'resources',
       });
     }
   }
@@ -96,7 +59,9 @@ export default (sequelize, DataTypes) => {
     sequelize,
     modelName: 'ActivityReportGoal',
     hooks: {
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });
   return ActivityReportGoal;

@@ -7,8 +7,11 @@ import db, {
   Objective,
   ObjectiveResource,
   ActivityReport,
+  Resource,
 } from '../../models';
+import { processObjectiveForResourcesById } from '../resource';
 import { auditLogger } from '../../logger';
+import resource from '../../models/resource';
 
 describe('destroyGoal handler', () => {
   const oldFindAll = ActivityReport.findAll;
@@ -46,16 +49,20 @@ describe('destroyGoal handler', () => {
       title: 'Make everything ok',
     });
 
-    await ObjectiveResource.create({
-      userProvidedUrl: 'http://website',
-      objectiveId: objective.id,
-    });
+    await processObjectiveForResourcesById(objective.id, ['http://website.com']);
   });
 
   afterAll(async () => {
     await ObjectiveResource.destroy({
       where: {
         objectiveId: objective.id,
+      },
+      individualHooks: true,
+    });
+
+    await Resource.destroy({
+      where: {
+        url: 'http://website.com',
       },
       individualHooks: true,
     });
@@ -108,9 +115,14 @@ describe('destroyGoal handler', () => {
 
     let foundObjectiveResource = await ObjectiveResource.findAll({
       where: {
-        userProvidedUrl: 'http://website',
         objectiveId: objective.id,
       },
+      include: [{
+        attributes: ['url'],
+        model: Resource,
+        as: 'resource',
+        where: { url: 'http://website.com' },
+      }],
     });
 
     expect(foundGoal.length).toBe(1);
@@ -137,9 +149,14 @@ describe('destroyGoal handler', () => {
 
     foundObjectiveResource = await ObjectiveResource.findAll({
       where: {
-        userProvidedUrl: 'http://website',
         objectiveId: objective.id,
       },
+      include: [{
+        attributes: ['url'],
+        model: Resource,
+        as: 'resource',
+        where: { url: 'http://website.com' },
+      }],
     });
 
     expect(foundGoal.length).toBe(0);

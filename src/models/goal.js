@@ -1,7 +1,12 @@
 const { Op, Model } = require('sequelize');
 const { COLLABORATOR_TYPES, ENTITY_TYPES, CLOSE_SUSPEND_REASONS } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
-const { beforeValidate, afterCreate, beforeUpdate, afterUpdate } = require('./hooks/goal');
+const {
+  beforeValidate,
+  beforeUpdate,
+  afterCreate,
+  afterUpdate,
+} = require('./hooks/goal');
 
 export const RTTAPA_ENUM = ['Yes', 'No'];
 
@@ -25,49 +30,12 @@ export default (sequelize, DataTypes) => {
       Goal.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant', hooks: true });
       Goal.hasMany(models.Objective, { foreignKey: 'goalId', as: 'objectives', hooks: true });
       Goal.belongsTo(models.GoalTemplate, { foreignKey: 'goalTemplateId', as: +'goalTemplates', hooks: true });
-      Goal.hasMany(models.Collaborator, {
-        scope: {
-          entityType: ENTITY_TYPES.GOAL,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.RATIFIER] },
-        },
-        foreignKey: 'entityId',
-        as: 'approvers',
-        hooks: true,
-      });
-      Goal.hasMany(models.Collaborator, {
-        scope: {
-          entityType: ENTITY_TYPES.GOAL,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.EDITOR] },
-        },
-        foreignKey: 'entityId',
-        as: 'collaborators',
-        hooks: true,
-      });
-      Goal.hasOne(models.Collaborator, {
-        scope: {
-          entityType: ENTITY_TYPES.GOAL,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.OWNER] },
-        },
-        foreignKey: 'entityId',
-        as: 'owner',
-        hooks: true,
-      });
-      Goal.hasOne(models.Collaborator, {
-        scope: {
-          entityType: ENTITY_TYPES.GOAL,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.INSTANTIATOR] },
-        },
-        foreignKey: 'entityId',
-        as: 'instantiator',
-        hooks: true,
-      });
-      Goal.hasMany(models.Approval, {
-        scope: {
-          entityType: ENTITY_TYPES.GOAL,
-        },
-        foreignKey: 'entityId',
-        as: 'approvals',
-        hooks: true,
+      Goal.hasMany(models.GoalResource, { foreignKey: 'goalId', as: 'goalResources' });
+      Goal.belongsToMany(models.Resource, {
+        through: models.GoalResource,
+        foreignKey: 'goalId',
+        otherKey: 'resourceId',
+        as: 'resources',
       });
     }
   }
@@ -182,6 +150,7 @@ export default (sequelize, DataTypes) => {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });

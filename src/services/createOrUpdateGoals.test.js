@@ -9,7 +9,9 @@ import db, {
   Objective,
   ObjectiveResource,
   ObjectiveTopic,
+  Resource,
 } from '../models';
+import { processObjectiveForResourcesById } from './resource';
 
 describe('createOrUpdateGoals', () => {
   afterEach(async () => {
@@ -61,10 +63,7 @@ describe('createOrUpdateGoals', () => {
       status: 'Not Started',
     });
 
-    await ObjectiveResource.create({
-      objectiveId: objective.id,
-      userProvidedUrl: 'https://www.test.gov',
-    });
+    await processObjectiveForResourcesById(objective.id, ['https://www.test.gov']);
   });
 
   afterAll(async () => {
@@ -72,6 +71,11 @@ describe('createOrUpdateGoals', () => {
       where: {
         objectiveId: objective.id,
       },
+      individualHooks: true,
+    });
+
+    await Resource.destroy({
+      where: { url: 'https://www.test.gov' },
       individualHooks: true,
     });
 
@@ -248,11 +252,15 @@ describe('createOrUpdateGoals', () => {
       where: {
         objectiveId: objective.id,
       },
-      raw: true,
+      include: [{
+        attributes: ['url'],
+        model: Resource,
+        as: 'resource',
+      }],
     });
 
     expect(resource.length).toBe(1);
-    expect(resource[0].userProvidedUrl).toBe('https://www.test.gov');
+    expect(resource[0].resource.dataValues.url).toBe('https://www.test.gov');
 
     const newGoal = newGoals.find((g) => g.id !== goal.id);
     expect(newGoal.status).toBe('Draft');

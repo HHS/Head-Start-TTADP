@@ -1,6 +1,11 @@
 const { Op, Model } = require('sequelize');
 const { COLLABORATOR_TYPES, ENTITY_TYPES, CREATION_METHOD } = require('../constants');
-const { beforeValidate, beforeUpdate, afterUpdate } = require('./hooks/goalTemplate');
+const {
+  beforeValidate,
+  beforeUpdate,
+  afterCreate,
+  afterUpdate,
+} = require('./hooks/goalTemplate');
 // const { auditLogger } = require('../logger');
 
 export default (sequelize, DataTypes) => {
@@ -24,49 +29,12 @@ export default (sequelize, DataTypes) => {
         as: 'goalTemplates',
         hooks: true,
       });
-      GoalTemplate.hasMany(models.Collaborator, {
-        scope: {
-          entityType: ENTITY_TYPES.GOALTEMPLATE,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.RATIFIER] },
-        },
-        foreignKey: 'entityId',
-        as: 'approvers',
-        hooks: true,
-      });
-      GoalTemplate.hasMany(models.Collaborator, {
-        scope: {
-          entityType: ENTITY_TYPES.GOALTEMPLATE,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.EDITOR] },
-        },
-        foreignKey: 'entityId',
-        as: 'collaborators',
-        hooks: true,
-      });
-      GoalTemplate.hasOne(models.Collaborator, {
-        scope: {
-          entityType: ENTITY_TYPES.GOALTEMPLATE,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.OWNER] },
-        },
-        foreignKey: 'entityId',
-        as: 'owner',
-        hooks: true,
-      });
-      GoalTemplate.hasOne(models.Collaborator, {
-        scope: {
-          entityType: ENTITY_TYPES.GOALTEMPLATE,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.INSTANTIATOR] },
-        },
-        foreignKey: 'entityId',
-        as: 'instantiator',
-        hooks: true,
-      });
-      GoalTemplate.hasMany(models.Approval, {
-        scope: {
-          entityType: ENTITY_TYPES.GOALTEMPLATE,
-        },
-        foreignKey: 'entityId',
-        as: 'approvals',
-        hooks: true,
+      GoalTemplate.hasMany(models.GoalTemplateResource, { foreignKey: 'goalTemplateId', as: 'goalTemplateResources' });
+      GoalTemplate.belongsToMany(models.Resource, {
+        through: models.GoalTemplateResource,
+        foreignKey: 'goalTemplateId',
+        otherKey: 'resourceId',
+        as: 'resources',
       });
     }
   }
@@ -107,6 +75,7 @@ export default (sequelize, DataTypes) => {
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });
