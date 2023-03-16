@@ -34,9 +34,9 @@ function PaginationCard({
         className="margin-3"
         currentPage={currentPage}
         totalPages={getTotalPages()}
-        onClickNext={(e, page) => handlePageChange(page)}
+        onClickNext={() => handlePageChange(currentPage + 1)}
         onClickPrevious={() => handlePageChange(currentPage - 1)}
-        onClickPageNumber={() => handlePageChange(currentPage + 1)}
+        onClickPageNumber={(e, page) => handlePageChange(page)}
       />
     </div>
   );
