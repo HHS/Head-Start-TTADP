@@ -10,7 +10,12 @@ export default (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      ObjectiveResource.belongsTo(models.Objective, { foreignKey: 'objectiveId', onDelete: 'cascade', as: 'objective', hooks: true });
+      ObjectiveResource.belongsTo(models.Objective, {
+        foreignKey: 'objectiveId',
+        onDelete: 'cascade',
+        as: 'objective',
+        hooks: true,
+      });
       ObjectiveResource.belongsTo(models.Resource, { foreignKey: 'resourceId', as: 'resource' });
     }
   }
