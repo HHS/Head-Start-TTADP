@@ -886,7 +886,7 @@ const updateAwsElasticsearchIndexes = async (sequelize, instance) => {
   }
 };
 
-const beforeUpdate = async (instance) => {
+const beforeUpdate = async (sequelize, instance, options) => {
   copyStatus(instance);
   setSubmittedDate(sequelize, instance, options);
 };

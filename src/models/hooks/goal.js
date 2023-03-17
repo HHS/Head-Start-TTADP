@@ -179,7 +179,6 @@ export {
   autoPopulateStatusChangeDates,
   propagateName,
   beforeValidate,
-  afterCreate,
   beforeUpdate,
   afterCreate,
   afterUpdate,

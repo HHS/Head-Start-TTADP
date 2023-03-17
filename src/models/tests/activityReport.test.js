@@ -17,7 +17,7 @@ import { REPORT_STATUSES, ENTITY_TYPES } from '../../constants';
 import { auditLogger } from '../../logger';
 import {
   copyStatus,
-} from '../hooks/approval';
+} from '../hooks/activityReportApproval';
 import { createOrUpdate } from '../../services/activityReports';
 import { scheduleUpdateIndexDocumentJob, scheduleDeleteIndexDocumentJob } from '../../lib/awsElasticSearch/queueManager';
 
@@ -164,7 +164,7 @@ describe('Activity Reports model', () => {
       report = await createOrUpdate({
         ...sampleReport,
         activityRecipients: [
-          ...grants.map((grant => ({ grantId: grant.id }))),
+          ...grants.map((grant) => ({ grantId: grant.id })),
           { otherEntityId: otherEntity.id },
         ],
       });
@@ -174,7 +174,9 @@ describe('Activity Reports model', () => {
         ...sampleReport,
         context: 'AWS Elasticsearch',
       });
-      activityRecipients = await ActivityRecipient.findAll({ where: { activityReportId: report.id } });
+      activityRecipients = await ActivityRecipient.findAll({
+        where: { activityReportId: report.id },
+      });
       goals[0] = await Goal.create({
         ...mockGoals[0],
         grantId: grants[0].id,
@@ -227,43 +229,43 @@ describe('Activity Reports model', () => {
             otherEntityId: activityRecipient.otherEntityId,
           },
         })));
-        await ActivityReportObjective.destroy({
-          where: { activityReportId: report.id },
-          individualHooks: true,
-        });
-        await ActivityReportGoal.destroy({
-          where: { activityReportId: report.id },
-          individualHooks: true,
-        });
-        await ActivityReport.destroy({
-          where: { id: [report.id, reportToIndex.id, reportToSubmit.id] },
-          individualHooks: true,
-        });
-        await Objective.destroy({
-          where: { id: objectives.map((o) => o.id) },
-          individualHooks: true,
-        });
-        await Goal.destroy({
-          where: { grantId: grants.map((g) => g.id) },
-          individualHooks: true,
-        });
-        await Grant.destroy({
-          where: { id: grants.map((g) => g.id) },
-          individualHooks: true,
-        });
-        await OtherEntity.destroy({
-          where: { id: otherEntity.id },
-          individualHooks: true,
-        });
-        await Recipient.destroy({
-          where: { id: recipient.id },
-          individualHooks: true,
-        });
-        await User.destroy({
-          where: { id: user.id },
-          individualHooks: true,
-        });
-        await db.sequelize.close();
+      await ActivityReportObjective.destroy({
+        where: { activityReportId: report.id },
+        individualHooks: true,
+      });
+      await ActivityReportGoal.destroy({
+        where: { activityReportId: report.id },
+        individualHooks: true,
+      });
+      await ActivityReport.destroy({
+        where: { id: [report.id, reportToIndex.id, reportToSubmit.id] },
+        individualHooks: true,
+      });
+      await Objective.destroy({
+        where: { id: objectives.map((o) => o.id) },
+        individualHooks: true,
+      });
+      await Goal.destroy({
+        where: { grantId: grants.map((g) => g.id) },
+        individualHooks: true,
+      });
+      await Grant.destroy({
+        where: { id: grants.map((g) => g.id) },
+        individualHooks: true,
+      });
+      await OtherEntity.destroy({
+        where: { id: otherEntity.id },
+        individualHooks: true,
+      });
+      await Recipient.destroy({
+        where: { id: recipient.id },
+        individualHooks: true,
+      });
+      await User.destroy({
+        where: { id: user.id },
+        individualHooks: true,
+      });
+      await db.sequelize.close();
     }
   });
 

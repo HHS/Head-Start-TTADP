@@ -14,7 +14,7 @@ export default (sequelize, DataTypes) => {
       Grant.belongsTo(models.Region, { foreignKey: 'regionId', hooks: true });
       Grant.belongsTo(models.Recipient, { foreignKey: 'recipientId', as: 'recipient', hooks: true });
       Grant.hasMany(models.Goal, { foreignKey: 'grantId', as: 'goals', hooks: true });
-      Grant.hasMany(models.GroupGrant, { foreignKey: 'grantId', as: 'groupGrants', hooks: true  });
+      Grant.hasMany(models.GroupGrant, { foreignKey: 'grantId', as: 'groupGrants', hooks: true });
       Grant.belongsToMany(models.Group, {
         through: models.GroupGrant,
         foreignKey: 'grantId',
@@ -22,8 +22,8 @@ export default (sequelize, DataTypes) => {
         as: 'groups',
         hooks: true,
       });
-      Grant.hasMany(models.Program, { foreignKey: 'grantId', as: 'programs', hooks: true  });
-      Grant.hasMany(models.ActivityRecipient, { foreignKey: 'grantId', as: 'activityRecipients', hooks: true  });
+      Grant.hasMany(models.Program, { foreignKey: 'grantId', as: 'programs', hooks: true });
+      Grant.hasMany(models.ActivityRecipient, { foreignKey: 'grantId', as: 'activityRecipients', hooks: true });
       Grant.addScope('defaultScope', {
         include: [
           { model: models.Recipient, as: 'recipient' },
