@@ -215,7 +215,6 @@ describe('Resources Dashboard page', () => {
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
     expect(screen.getByText(/17/i)).toBeInTheDocument();
-    screen.debug(undefined, 100000);
     expect(screen.getByText(/26/i)).toBeInTheDocument();
 
     // Remove existing filter.
