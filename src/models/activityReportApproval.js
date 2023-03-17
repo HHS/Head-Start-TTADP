@@ -12,7 +12,7 @@ const {
   REPORT_STATUSES,
 } = require('../constants');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ActivityReportApproval extends Model {
     static associate(models) {
       ActivityReportApproval.belongsTo(models.ActivityReport, {
@@ -109,7 +109,7 @@ module.exports = (sequelize, DataTypes) => {
     // }],
     sequelize,
     paranoid: false,
-    modelName: 'Approval',
+    modelName: 'ActivityReportApproval',
   });
   return ActivityReportApproval;
 };

@@ -23,11 +23,11 @@ export default (sequelize, DataTypes) => {
         as: 'users',
         hooks: true,
       });
-      Role.belongsToMany(models.Collaborator, {
-        through: models.CollaboratorRole,
-        otherKey: 'collaboratorId',
+      Role.belongsToMany(models.ActivityReportCollaborator, {
+        through: models.ActivityReportCollaboratorRole,
+        otherKey: 'activityReportCollaboratorId',
         foreignKey: 'roleId',
-        as: 'collaboratorRoles',
+        as: 'activityReportCollaborators',
         hooks: true,
       });
     }

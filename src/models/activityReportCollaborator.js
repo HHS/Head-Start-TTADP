@@ -13,7 +13,7 @@ const {
 const { generateFullName } = require('./helpers/generateFullName');
 const { COLLABORATOR_TYPES, APPROVAL_STATUSES } = require('../constants');
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ActivityReportCollaborator extends Model {
     static associate(models) {
       ActivityReportCollaborator.belongsTo(models.ActivityReport, {
@@ -27,7 +27,7 @@ module.exports = (sequelize, DataTypes) => {
         hooks: true,
       });
       ActivityReportCollaborator.belongsToMany(models.Role, {
-        through: models.CollaboratorRole,
+        through: models.ActivityReportCollaboratorRole,
         otherKey: 'roleId',
         foreignKey: 'activityReportCollaboratorId',
         as: 'roles',

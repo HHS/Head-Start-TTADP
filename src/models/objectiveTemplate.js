@@ -12,50 +12,6 @@ export default (sequelize, DataTypes) => {
      */
     static associate(models) {
       ObjectiveTemplate.hasMany(models.Objective, { foreignKey: 'objectiveTemplateId', as: 'objectives', hooks: true });
-      ObjectiveTemplate.hasMany(models.Collaborator, {
-        scope: {
-          entityType: ENTITY_TYPES.OBJECTIVETEMPLATE,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.RATIFIER] },
-        },
-        foreignKey: 'entityId',
-        as: 'approvers',
-        hooks: true,
-      });
-      ObjectiveTemplate.hasMany(models.Collaborator, {
-        scope: {
-          entityType: ENTITY_TYPES.OBJECTIVETEMPLATE,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.EDITOR] },
-        },
-        foreignKey: 'entityId',
-        as: 'collaborators',
-        hooks: true,
-      });
-      ObjectiveTemplate.hasOne(models.Collaborator, {
-        scope: {
-          entityType: ENTITY_TYPES.OBJECTIVETEMPLATE,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.OWNER] },
-        },
-        foreignKey: 'entityId',
-        as: 'owner',
-        hooks: true,
-      });
-      ObjectiveTemplate.hasOne(models.Collaborator, {
-        scope: {
-          entityType: ENTITY_TYPES.OBJECTIVETEMPLATE,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.INSTANTIATOR] },
-        },
-        foreignKey: 'entityId',
-        as: 'instantiator',
-        hooks: true,
-      });
-      ObjectiveTemplate.hasMany(models.Approval, {
-        scope: {
-          entityType: ENTITY_TYPES.OBJECTIVETEMPLATE,
-        },
-        foreignKey: 'entityId',
-        as: 'approvals',
-        hooks: true,
-      });
       ObjectiveTemplate.hasMany(models.ObjectiveTemplateResource, { foreignKey: 'objectiveTemplateId', as: 'resources', hooks: true });
       ObjectiveTemplate.belongsToMany(models.Topic, {
         through: models.ObjectiveTemplateTopic,

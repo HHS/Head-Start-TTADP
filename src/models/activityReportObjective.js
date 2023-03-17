@@ -17,50 +17,6 @@ export default (sequelize, DataTypes) => {
         as: 'files',
         hooks: true,
       });
-      ActivityReportObjective.hasMany(models.Collaborator, {
-        scope: {
-          entityType: ENTITY_TYPES.REPORTOBJECTIVE,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.RATIFIER] },
-        },
-        foreignKey: 'entityId',
-        as: 'approvers',
-        hooks: true,
-      });
-      ActivityReportObjective.hasMany(models.Collaborator, {
-        scope: {
-          entityType: ENTITY_TYPES.REPORTOBJECTIVE,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.EDITOR] },
-        },
-        foreignKey: 'entityId',
-        as: 'collaborators',
-        hooks: true,
-      });
-      ActivityReportObjective.hasOne(models.Collaborator, {
-        scope: {
-          entityType: ENTITY_TYPES.REPORTOBJECTIVE,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.OWNER] },
-        },
-        foreignKey: 'entityId',
-        as: 'owner',
-        hooks: true,
-      });
-      ActivityReportObjective.hasOne(models.Collaborator, {
-        scope: {
-          entityType: ENTITY_TYPES.REPORTOBJECTIVE,
-          collaboratorTypes: { [Op.contains]: [COLLABORATOR_TYPES.INSTANTIATOR] },
-        },
-        foreignKey: 'entityId',
-        as: 'instantiator',
-        hooks: true,
-      });
-      ActivityReportObjective.hasMany(models.Approval, {
-        scope: {
-          entityType: ENTITY_TYPES.REPORTOBJECTIVE,
-        },
-        foreignKey: 'entityId',
-        as: 'approvals',
-        hooks: true,
-      });
       ActivityReportObjective.belongsToMany(models.Topic, {
         through: models.ActivityReportObjectiveTopic,
         foreignKey: 'activityReportObjectiveId',

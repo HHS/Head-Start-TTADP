@@ -40,7 +40,13 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'activityReportId',
         otherKey: 'fileId',
         as: 'files',
+        // hooks: true,
+      });
+      ActivityReport.hasMany(models.ActivityReportCollaborator, {
+        foreignKey: 'activityReportId',
+        as: 'allCollaborators',
         hooks: true,
+        onDelete: 'cascade',
       });
       ActivityReport.hasMany(models.ActivityReportCollaborator, {
         scope: {
