@@ -56,7 +56,7 @@ const resourcesDefault = {
         data: [
           {
             title: 'Jan-22',
-            value: '17',
+            value: '177',
           },
           {
             title: 'total',
@@ -214,11 +214,8 @@ describe('Resources Dashboard page', () => {
     // Resource Use (initial).
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/17/i)).toBeInTheDocument();
-    screen.debug(undefined, 100000);
+    expect(screen.getByText(/177/i)).toBeInTheDocument();
     expect(screen.getByText(/26/i)).toBeInTheDocument();
-
-    // Remove existing filter.
 
     // Add region filter.
     let open = await screen.findByRole('button', { name: /open filters for this page/i });
@@ -287,7 +284,7 @@ describe('Resources Dashboard page', () => {
     // Resource Use (initial).
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/17/i)).toBeInTheDocument();
+    expect(screen.getByText(/177/i)).toBeInTheDocument();
     expect(screen.getByText(/26/i)).toBeInTheDocument();
 
     // Add region filter test pill remove.
@@ -347,7 +344,7 @@ describe('Resources Dashboard page', () => {
     // Resource Use (initial).
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/17/i)).toBeInTheDocument();
+    expect(screen.getByText(/177/i)).toBeInTheDocument();
     expect(screen.getByText(/26/i)).toBeInTheDocument();
 
     // Add non-region filter.
@@ -407,7 +404,7 @@ describe('Resources Dashboard page', () => {
     // Resource Use (initial).
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/17/i)).toBeInTheDocument();
+    expect(screen.getByText(/177/i)).toBeInTheDocument();
     expect(screen.getByText(/26/i)).toBeInTheDocument();
   });
 
