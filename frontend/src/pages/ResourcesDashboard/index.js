@@ -4,6 +4,7 @@ import React, {
   useState,
   useEffect,
 } from 'react';
+import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -15,13 +16,19 @@ import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndRe
 import AriaLiveContext from '../../AriaLiveContext';
 import ResourcesDashboardOverview from '../../widgets/ResourcesDashboardOverview';
 import ResourceUse from '../../widgets/ResourceUse';
-import { expandFilters, filtersToQueryString } from '../../utils';
+import { expandFilters, filtersToQueryString, formatDateRange } from '../../utils';
 import './index.scss';
 import fetchResourceData from '../../fetchers/Resources';
 
 import UserContext from '../../UserContext';
 import { RESOURCES_DASHBOARD_FILTER_CONFIG } from './constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
+
+const defaultDate = formatDateRange({
+  forDateTime: true,
+  string: `2022/07/01-${moment().format('YYYY/MM/DD')}`,
+  withSpaces: false,
+});
 
 const FILTER_KEY = 'regional-resources-dashboard-filters';
 export default function ResourcesDashboard() {
@@ -45,8 +52,19 @@ export default function ResourcesDashboard() {
         topic: 'region',
         condition: 'is',
         query: defaultRegion,
+      },
+      {
+        id: uuidv4(),
+        topic: 'startDate',
+        condition: 'is within',
+        query: defaultDate,
       }]
-      : allRegionsFilters,
+      : [...allRegionsFilters, {
+        id: uuidv4(),
+        topic: 'startDate',
+        condition: 'is within',
+        query: defaultDate,
+      }],
   );
 
   // Remove Filters.
