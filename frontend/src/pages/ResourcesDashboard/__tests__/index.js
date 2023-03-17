@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 import '@testing-library/jest-dom';
 import React from 'react';
+import moment from 'moment';
 import join from 'url-join';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
@@ -14,8 +15,16 @@ import ResourcesDashboard from '../index';
 import { SCOPE_IDS } from '../../../Constants';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
+import { formatDateRange } from '../../../utils';
 
 const history = createMemoryHistory();
+
+const defaultDate = formatDateRange({
+  forDateTime: true,
+  string: `2022/07/01-${moment().format('YYYY/MM/DD')}`,
+  withSpaces: false,
+});
+const defaultDateParam = `startDate.win=${encodeURIComponent(defaultDate)}`;
 
 const resourcesUrl = join('api', 'resources');
 
@@ -47,11 +56,11 @@ const resourcesDefault = {
         data: [
           {
             title: 'Jan-22',
-            value: '17',
+            value: '177',
           },
           {
             title: 'total',
-            value: '20',
+            value: '26',
           },
         ],
       },
@@ -161,6 +170,7 @@ describe('Resources Dashboard page', () => {
 
   it('renders correctly', async () => {
     // Page Load.
+    fetchMock.get(`${resourcesUrl}?${allRegions}&${defaultDateParam}`, resourcesDefault);
     fetchMock.get(`${resourcesUrl}?${allRegions}`, resourcesDefault);
 
     // Region 1.
@@ -204,10 +214,8 @@ describe('Resources Dashboard page', () => {
     // Resource Use (initial).
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/17/i)).toBeInTheDocument();
-    expect(screen.getByText(/20/i)).toBeInTheDocument();
-
-    // Remove existing filter.
+    expect(screen.getByText(/177/i)).toBeInTheDocument();
+    expect(screen.getByText(/26/i)).toBeInTheDocument();
 
     // Add region filter.
     let open = await screen.findByRole('button', { name: /open filters for this page/i });
@@ -276,8 +284,8 @@ describe('Resources Dashboard page', () => {
     // Resource Use (initial).
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/17/i)).toBeInTheDocument();
-    expect(screen.getByText(/20/i)).toBeInTheDocument();
+    expect(screen.getByText(/177/i)).toBeInTheDocument();
+    expect(screen.getByText(/26/i)).toBeInTheDocument();
 
     // Add region filter test pill remove.
     open = await screen.findByRole('button', { name: /open filters for this page/i });
@@ -336,8 +344,8 @@ describe('Resources Dashboard page', () => {
     // Resource Use (initial).
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/17/i)).toBeInTheDocument();
-    expect(screen.getByText(/20/i)).toBeInTheDocument();
+    expect(screen.getByText(/177/i)).toBeInTheDocument();
+    expect(screen.getByText(/26/i)).toBeInTheDocument();
 
     // Add non-region filter.
     open = await screen.findByRole('button', { name: /open filters for this page/i });
@@ -396,8 +404,8 @@ describe('Resources Dashboard page', () => {
     // Resource Use (initial).
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/test1.gov/i)).toBeInTheDocument();
-    expect(screen.getByText(/17/i)).toBeInTheDocument();
-    expect(screen.getByText(/20/i)).toBeInTheDocument();
+    expect(screen.getByText(/177/i)).toBeInTheDocument();
+    expect(screen.getByText(/26/i)).toBeInTheDocument();
   });
 
   it('handles errors by displaying an error message', async () => {

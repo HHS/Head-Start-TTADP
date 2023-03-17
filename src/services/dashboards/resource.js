@@ -100,7 +100,7 @@ const mergeInResources = (currentData, additionalData) => additionalData
     clusteredReports,
     report,
   ) => {
-    const exists = clusteredReports.find((r) => r.id === report.id);
+    const exists = clusteredReports.get(report.id);
     if (exists) {
       exists.resources = (report.resourceObjects || [])
         .reduce((resources, resource) => {
@@ -133,11 +133,8 @@ const mergeInResources = (currentData, additionalData) => additionalData
         }, (exists.resources || []));
       return clusteredReports;
     }
-
-    return [
-      ...clusteredReports,
-      report,
-    ];
+    clusteredReports.set(report.id, report);
+    return clusteredReports;
   }, currentData);
 
 /**
@@ -947,18 +944,19 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
     }),
   ]);
 
-  let reports = mergeInResources([], dbData.allReports);
+  let reportsMap = mergeInResources(new Map(), dbData.allReports);
   delete dbData.allReports;
-  reports = mergeInResources(reports, dbData.viaReport);
+  reportsMap = mergeInResources(reportsMap, dbData.viaReport);
   delete dbData.viaReport;
-  reports = mergeInResources(reports, dbData.viaSpecialistNextSteps);
+  reportsMap = mergeInResources(reportsMap, dbData.viaSpecialistNextSteps);
   delete dbData.viaSpecialistNextSteps;
-  reports = mergeInResources(reports, dbData.viaRecipientNextSteps);
+  reportsMap = mergeInResources(reportsMap, dbData.viaRecipientNextSteps);
   delete dbData.viaRecipientNextSteps;
-  reports = mergeInResources(reports, dbData.viaObjectives);
+  reportsMap = mergeInResources(reportsMap, dbData.viaObjectives);
   delete dbData.viaObjectives;
-  reports = mergeInResources(reports, dbData.viaGoals);
+  reportsMap = mergeInResources(reportsMap, dbData.viaGoals);
   delete dbData.viaGoals;
+  const reports = Array.from(reportsMap.values());
 
   const resources = skipResources
     ? []
